@@ -1,0 +1,5 @@
+D:\VBNet 2008 Projects\CaptureTaskManager\DatasetIntegrityPlugin\DatasetIntegrityPlugin\bin\Debug\DatasetIntegrityPlugin.dll
+D:\VBNet 2008 Projects\CaptureTaskManager\DatasetIntegrityPlugin\DatasetIntegrityPlugin\bin\Debug\DatasetIntegrityPlugin.pdb
+D:\VBNet 2008 Projects\CaptureTaskManager\DatasetIntegrityPlugin\DatasetIntegrityPlugin\obj\Debug\ResolveAssemblyReference.cache
+D:\VBNet 2008 Projects\CaptureTaskManager\DatasetIntegrityPlugin\DatasetIntegrityPlugin\obj\Debug\DatasetIntegrityPlugin.dll
+D:\VBNet 2008 Projects\CaptureTaskManager\DatasetIntegrityPlugin\DatasetIntegrityPlugin\obj\Debug\DatasetIntegrityPlugin.pdb

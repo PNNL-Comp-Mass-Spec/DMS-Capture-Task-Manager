@@ -1,0 +1,16 @@
+D:\VBNet 2008 Projects\CaptureTaskManager\CaptureTaskManager\CaptureTaskManager\obj\Debug\ResolveAssemblyReference.cache
+D:\VBNet 2008 Projects\CaptureTaskManager\CaptureTaskManager\CaptureTaskManager\obj\Debug\CaptureTaskManager.Properties.Resources.resources
+D:\VBNet 2008 Projects\CaptureTaskManager\CaptureTaskManager\CaptureTaskManager\obj\Debug\CaptureTaskManager.csproj.GenerateResource.Cache
+D:\VBNet 2008 Projects\CaptureTaskManager\CaptureTaskManager\CaptureTaskManager\bin\Debug\Logging.config
+D:\VBNet 2008 Projects\CaptureTaskManager\CaptureTaskManager\CaptureTaskManager\bin\Debug\CaptureTaskManager.exe.config
+D:\VBNet 2008 Projects\CaptureTaskManager\CaptureTaskManager\CaptureTaskManager\bin\Debug\CaptureTaskManager.exe
+D:\VBNet 2008 Projects\CaptureTaskManager\CaptureTaskManager\CaptureTaskManager\bin\Debug\CaptureTaskManager.pdb
+D:\VBNet 2008 Projects\CaptureTaskManager\CaptureTaskManager\CaptureTaskManager\bin\Debug\Apache.NMS.ActiveMQ.dll
+D:\VBNet 2008 Projects\CaptureTaskManager\CaptureTaskManager\CaptureTaskManager\bin\Debug\Apache.NMS.dll
+D:\VBNet 2008 Projects\CaptureTaskManager\CaptureTaskManager\CaptureTaskManager\bin\Debug\log4net.dll
+D:\VBNet 2008 Projects\CaptureTaskManager\CaptureTaskManager\CaptureTaskManager\bin\Debug\MessageLogger.dll
+D:\VBNet 2008 Projects\CaptureTaskManager\CaptureTaskManager\CaptureTaskManager\bin\Debug\log4net.xml
+D:\VBNet 2008 Projects\CaptureTaskManager\CaptureTaskManager\CaptureTaskManager\obj\Debug\CaptureTaskManager.exe
+D:\VBNet 2008 Projects\CaptureTaskManager\CaptureTaskManager\CaptureTaskManager\obj\Debug\CaptureTaskManager.pdb
+D:\VBNet 2008 Projects\CaptureTaskManager\CaptureTaskManager\CaptureTaskManager\bin\Debug\plugin_info.xml
+D:\VBNet 2008 Projects\CaptureTaskManager\CaptureTaskManager\CaptureTaskManager\bin\Debug\PRISM.dll

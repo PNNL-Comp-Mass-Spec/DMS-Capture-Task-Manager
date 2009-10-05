@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Plugins>
+	<ToolRunners>
+		<ToolRunner
+			Tool="datasetcapture"
+			Class="CaptureToolPlugin.clsPluginMain"
+			AssemblyFile="CaptureToolPlugin.dll"
+		/>
+		<ToolRunner
+			Tool="datasetinfo"
+			Class="DatasetInfoPlugin.clsPluginMain"
+			AssemblyFile="DatasetInfoPlugin.dll"
+		/>
+	</ToolRunners>
+</Plugins>

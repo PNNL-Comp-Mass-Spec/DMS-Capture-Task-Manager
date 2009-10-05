@@ -1,0 +1,5 @@
+D:\VBNet 2008 Projects\CaptureTaskManager\CaptureToolPlugin\CaptureToolPlugin\bin\Debug\CaptureToolPlugin.dll
+D:\VBNet 2008 Projects\CaptureTaskManager\CaptureToolPlugin\CaptureToolPlugin\bin\Debug\CaptureToolPlugin.pdb
+D:\VBNet 2008 Projects\CaptureTaskManager\CaptureToolPlugin\CaptureToolPlugin\obj\Debug\ResolveAssemblyReference.cache
+D:\VBNet 2008 Projects\CaptureTaskManager\CaptureToolPlugin\CaptureToolPlugin\obj\Debug\CaptureToolPlugin.dll
+D:\VBNet 2008 Projects\CaptureTaskManager\CaptureToolPlugin\CaptureToolPlugin\obj\Debug\CaptureToolPlugin.pdb

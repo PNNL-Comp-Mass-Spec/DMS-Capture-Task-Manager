@@ -1,0 +1,5 @@
+D:\VBNet 2008 Projects\CaptureTaskManager\DatasetInfoPlugin\DatasetInfoPlugin\bin\Debug\DatasetInfoPlugin.dll
+D:\VBNet 2008 Projects\CaptureTaskManager\DatasetInfoPlugin\DatasetInfoPlugin\bin\Debug\DatasetInfoPlugin.pdb
+D:\VBNet 2008 Projects\CaptureTaskManager\DatasetInfoPlugin\DatasetInfoPlugin\obj\Debug\ResolveAssemblyReference.cache
+D:\VBNet 2008 Projects\CaptureTaskManager\DatasetInfoPlugin\DatasetInfoPlugin\obj\Debug\DatasetInfoPlugin.dll
+D:\VBNet 2008 Projects\CaptureTaskManager\DatasetInfoPlugin\DatasetInfoPlugin\obj\Debug\DatasetInfoPlugin.pdb
