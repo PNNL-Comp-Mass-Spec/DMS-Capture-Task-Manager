@@ -1,0 +1,10 @@
+D:\VBNet 2008 Projects\CaptureTaskManager\DatasetQualityPlugin\DatasetQualityPlugin\bin\Debug\DatasetQualityPlugin.dll
+D:\VBNet 2008 Projects\CaptureTaskManager\DatasetQualityPlugin\DatasetQualityPlugin\bin\Debug\DatasetQualityPlugin.pdb
+D:\VBNet 2008 Projects\CaptureTaskManager\DatasetQualityPlugin\DatasetQualityPlugin\obj\Debug\ResolveAssemblyReference.cache
+D:\VBNet 2008 Projects\CaptureTaskManager\DatasetQualityPlugin\DatasetQualityPlugin\obj\Debug\DatasetQualityPlugin.dll
+D:\VBNet 2008 Projects\CaptureTaskManager\DatasetQualityPlugin\DatasetQualityPlugin\obj\Debug\DatasetQualityPlugin.pdb
+D:\DMS_Controlled\Capture_Task_Manager\DatasetQualityPlugin\DatasetQualityPlugin\bin\Debug\DatasetQualityPlugin.dll
+D:\DMS_Controlled\Capture_Task_Manager\DatasetQualityPlugin\DatasetQualityPlugin\bin\Debug\DatasetQualityPlugin.pdb
+D:\DMS_Controlled\Capture_Task_Manager\DatasetQualityPlugin\DatasetQualityPlugin\obj\Debug\ResolveAssemblyReference.cache
+D:\DMS_Controlled\Capture_Task_Manager\DatasetQualityPlugin\DatasetQualityPlugin\obj\Debug\DatasetQualityPlugin.dll
+D:\DMS_Controlled\Capture_Task_Manager\DatasetQualityPlugin\DatasetQualityPlugin\obj\Debug\DatasetQualityPlugin.pdb

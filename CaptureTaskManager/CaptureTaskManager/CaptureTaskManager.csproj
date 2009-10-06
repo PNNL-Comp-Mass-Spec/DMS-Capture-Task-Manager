@@ -129,7 +129,11 @@
   <PropertyGroup>
     <PostBuildEvent>copy "$(TargetPath)" "$(SolutionDir)..\DeployedFiles"
 copy "$(TargetDir)*.config" "$(SolutionDir)..\DeployedFiles"
-copy "$(TargetDir)*.dll" "$(SolutionDir)..\DeployedFiles"
+copy "$(TargetDir)Apache.NMS.ActiveMQ.dll" "$(SolutionDir)..\DeployedFiles"
+copy "$(TargetDir)Apache.NMS.dll" "$(SolutionDir)..\DeployedFiles"
+copy "$(TargetDir)log4net.dll" "$(SolutionDir)..\DeployedFiles"
+copy "$(TargetDir)MessageLogger.dll" "$(SolutionDir)..\DeployedFiles"
+copy "$(TargetDir)PRISM.dll" "$(SolutionDir)..\DeployedFiles"
 copy "$(TargetDir)plugin_info.xml" "$(SolutionDir)..\DeployedFiles"
 </PostBuildEvent>
   </PropertyGroup>

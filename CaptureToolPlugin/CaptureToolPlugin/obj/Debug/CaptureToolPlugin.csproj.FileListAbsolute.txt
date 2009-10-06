@@ -3,3 +3,8 @@ D:\VBNet 2008 Projects\CaptureTaskManager\CaptureToolPlugin\CaptureToolPlugin\bi
 D:\VBNet 2008 Projects\CaptureTaskManager\CaptureToolPlugin\CaptureToolPlugin\obj\Debug\ResolveAssemblyReference.cache
 D:\VBNet 2008 Projects\CaptureTaskManager\CaptureToolPlugin\CaptureToolPlugin\obj\Debug\CaptureToolPlugin.dll
 D:\VBNet 2008 Projects\CaptureTaskManager\CaptureToolPlugin\CaptureToolPlugin\obj\Debug\CaptureToolPlugin.pdb
+D:\DMS_Controlled\Capture_Task_Manager\CaptureToolPlugin\CaptureToolPlugin\bin\Debug\CaptureToolPlugin.dll
+D:\DMS_Controlled\Capture_Task_Manager\CaptureToolPlugin\CaptureToolPlugin\bin\Debug\CaptureToolPlugin.pdb
+D:\DMS_Controlled\Capture_Task_Manager\CaptureToolPlugin\CaptureToolPlugin\obj\Debug\ResolveAssemblyReference.cache
+D:\DMS_Controlled\Capture_Task_Manager\CaptureToolPlugin\CaptureToolPlugin\obj\Debug\CaptureToolPlugin.dll
+D:\DMS_Controlled\Capture_Task_Manager\CaptureToolPlugin\CaptureToolPlugin\obj\Debug\CaptureToolPlugin.pdb

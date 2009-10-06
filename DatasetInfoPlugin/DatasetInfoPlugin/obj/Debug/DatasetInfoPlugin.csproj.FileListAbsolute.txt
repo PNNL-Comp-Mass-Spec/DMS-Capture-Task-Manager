@@ -3,3 +3,8 @@ D:\VBNet 2008 Projects\CaptureTaskManager\DatasetInfoPlugin\DatasetInfoPlugin\bi
 D:\VBNet 2008 Projects\CaptureTaskManager\DatasetInfoPlugin\DatasetInfoPlugin\obj\Debug\ResolveAssemblyReference.cache
 D:\VBNet 2008 Projects\CaptureTaskManager\DatasetInfoPlugin\DatasetInfoPlugin\obj\Debug\DatasetInfoPlugin.dll
 D:\VBNet 2008 Projects\CaptureTaskManager\DatasetInfoPlugin\DatasetInfoPlugin\obj\Debug\DatasetInfoPlugin.pdb
+D:\DMS_Controlled\Capture_Task_Manager\DatasetInfoPlugin\DatasetInfoPlugin\bin\Debug\DatasetInfoPlugin.dll
+D:\DMS_Controlled\Capture_Task_Manager\DatasetInfoPlugin\DatasetInfoPlugin\bin\Debug\DatasetInfoPlugin.pdb
+D:\DMS_Controlled\Capture_Task_Manager\DatasetInfoPlugin\DatasetInfoPlugin\obj\Debug\ResolveAssemblyReference.cache
+D:\DMS_Controlled\Capture_Task_Manager\DatasetInfoPlugin\DatasetInfoPlugin\obj\Debug\DatasetInfoPlugin.dll
+D:\DMS_Controlled\Capture_Task_Manager\DatasetInfoPlugin\DatasetInfoPlugin\obj\Debug\DatasetInfoPlugin.pdb
