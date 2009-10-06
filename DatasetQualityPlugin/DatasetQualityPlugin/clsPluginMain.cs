@@ -48,7 +48,7 @@ namespace DatasetQualityPlugin
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
 
 				msg = "Dataset Quality tool is not presently active";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg);
 				retData.EvalCode = EnumEvalCode.EVAL_CODE_NOT_EVALUATED;
 				retData.EvalMsg = msg;
 				retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;

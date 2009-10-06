@@ -431,7 +431,7 @@ namespace CaptureTaskManager
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile,clsLogTools.LogLevels.ERROR,msg);
 					return false;
 				}
-				msg = "Loaded tool runner for StepTool " + stepToolName;
+				msg = "Loaded tool runner for Step Tool " + stepToolName;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 				// Setup the new tool runner

@@ -11,5 +11,15 @@
 			Class="DatasetInfoPlugin.clsPluginMain"
 			AssemblyFile="DatasetInfoPlugin.dll"
 		/>
+		<ToolRunner
+			Tool="datasetintegrity"
+			Class="DatasetIntegrityPlugin.clsPluginMain"
+			AssemblyFile="DatasetIntegrityPlugin.dll"
+		/>
+		<ToolRunner
+			Tool="datasetquality"
+			Class="DatasetQualityPlugin.clsPluginMain"
+			AssemblyFile="DatasetQualityPlugin.dll"
+		/>
 	</ToolRunners>
 </Plugins>
