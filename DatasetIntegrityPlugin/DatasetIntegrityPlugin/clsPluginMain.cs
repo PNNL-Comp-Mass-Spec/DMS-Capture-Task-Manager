@@ -179,7 +179,7 @@ namespace DatasetIntegrityPlugin
 				}
 
 				// Verify size of ser file
-				dataFileSize = GetFileSize(Path.Combine(dataFolder, "acqus"));
+				dataFileSize = GetFileSize(Path.Combine(dataFolder, "ser"));
 				if (dataFileSize <= 0.1F)
 				{
 					msg = "Invalid dataset. ser file too small";
