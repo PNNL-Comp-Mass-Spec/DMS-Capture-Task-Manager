@@ -59,8 +59,14 @@ namespace CaptureTaskManager
 					m_ParamDictionary = null;
 				}
 
+
 				// Get settings from config file
 				m_ParamDictionary = LoadMgrSettingsFromFile();
+
+				// Get directory for main executable
+				string appPath = Application.ExecutablePath;
+				FileInfo fi = new FileInfo(appPath);
+				m_ParamDictionary.Add("ApplicationPath", fi.DirectoryName);
 
 				//Test the settings retrieved from the config file
 				if ( !CheckInitialSettings(m_ParamDictionary) )

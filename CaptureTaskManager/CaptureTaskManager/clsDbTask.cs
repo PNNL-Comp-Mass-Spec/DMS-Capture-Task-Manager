@@ -48,6 +48,13 @@ namespace CaptureTaskManager
 					return m_TaskWasAssigned;
 				}
 			}
+
+			public StringDictionary TaskDictionary 
+			{	get 
+				{ 
+					return m_JobParams;
+				} 
+			}
 		#endregion
 
 		#region "Constructors"

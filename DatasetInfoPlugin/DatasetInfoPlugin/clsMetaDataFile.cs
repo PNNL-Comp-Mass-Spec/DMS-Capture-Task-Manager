@@ -1,0 +1,100 @@
+﻿
+//*********************************************************************************************************
+// Written by Dave Clark for the US Department of Energy 
+// Pacific Northwest National Laboratory, Richland, WA
+// Copyright 2009, Battelle Memorial Institute
+// Created 10/29/2009
+//
+// Last modified 10/29/2009
+//*********************************************************************************************************
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using CaptureTaskManager;
+using System.Xml;
+using System.IO;
+
+namespace DatasetInfoPlugin
+{
+	public class clsMetaDataFile
+	{
+		//*********************************************************************************************************
+		// Creates a metadata file in the dataset folder
+		//**********************************************************************************************************
+
+		#region "Constants"
+			private const string META_FILE_NAME = "metadata.txt";
+		#endregion
+
+		#region "Methods"
+			/// <summary>
+			/// Creates an XML metadata file for a dataset
+			/// </summary>
+			/// <param name="mgrParams">Manager parameters</param>
+			/// <param name="TaskParams">Task parameters</param>
+			public static bool CreateMetadataFile(IMgrParams mgrParams, ITaskParams TaskParams)
+			{
+				string xmlText = "";
+
+				// Create a memory stream to write the metadata document to
+				MemoryStream memStream = new MemoryStream();
+				using (XmlTextWriter xWriter = new XmlTextWriter(memStream,System.Text.Encoding.UTF8))
+				{
+					xWriter.Formatting = Formatting.Indented;
+					xWriter.Indentation = 2;
+
+					// Create the document
+					xWriter.WriteStartDocument(true);
+					// Root level element
+					xWriter.WriteStartElement("Root");
+
+					xWriter.WriteEndElement();	// Root element
+
+					// Loop through the task parameters, selecting only the ones beginning with "meta_"
+					foreach (string testKey in TaskParams.TaskDictionary.Keys)
+					{
+						if (testKey.StartsWith("meta_"))
+						{
+							// This parameter is metadata, so write it out
+							xWriter.WriteElementString(testKey, TaskParams.GetParam(testKey));
+						}
+					}
+
+					// Close the document, but don't close the writer
+					xWriter.WriteEndDocument();
+					xWriter.Flush();
+
+					// Use a streamreader to copy the XML text to a string variable
+					memStream.Seek(0, SeekOrigin.Begin);
+					StreamReader memStreamReader = new StreamReader(memStream);
+					xmlText = memStreamReader.ReadToEnd();
+
+					memStreamReader.Close();
+					memStream.Close();
+
+					// Since the document is now a string, we can get rid of the XMLWriter
+					xWriter.Close();
+				}	// End using
+
+				// Write the string to the output file
+				string svrPath = Path.Combine(TaskParams.GetParam("Storage_Vol_External"), TaskParams.GetParam("Storage_Path"));
+				string dsPath = Path.Combine(svrPath,TaskParams.GetParam("Folder"));
+				string metaFileNamePath = Path.Combine(dsPath, META_FILE_NAME);
+				try
+				{
+					File.WriteAllText(metaFileNamePath, xmlText);
+					string msg = "Metadata file created for dataset " + TaskParams.GetParam("Dataset");
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+					return true;
+				}
+				catch (Exception ex)
+				{
+					string msg = "Exception creating metadata file for dataset " + TaskParams.GetParam("Dataset");
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+					return false;
+				}
+			}	// End sub
+		#endregion
+	}	// End class
+}	// End namespace

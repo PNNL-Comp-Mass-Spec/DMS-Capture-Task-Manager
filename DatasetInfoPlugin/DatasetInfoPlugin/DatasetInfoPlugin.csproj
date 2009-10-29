@@ -52,6 +52,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="clsMetaDataFile.cs" />
     <Compile Include="clsPluginMain.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

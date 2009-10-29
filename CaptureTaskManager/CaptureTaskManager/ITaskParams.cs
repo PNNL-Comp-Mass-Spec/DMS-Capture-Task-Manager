@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Collections.Specialized;
 
 namespace CaptureTaskManager
 {
@@ -20,8 +21,12 @@ namespace CaptureTaskManager
 		// Interface for step task parameters
 		//**********************************************************************************************************
 
+		#region "Properties"
+			StringDictionary TaskDictionary { get; }
+		#endregion
+
 		#region "Methods"
-			string GetParam(string name);
+		string GetParam(string name);
 			bool AddAdditionalParameter(string paramName, string paramValue);
 			void SetParam(string keyName, string value);
 		#endregion

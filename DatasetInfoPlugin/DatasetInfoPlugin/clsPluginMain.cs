@@ -47,16 +47,34 @@ namespace DatasetInfoPlugin
 				msg = "Creating dataset info for dataset '" + dataset + "'";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
 
-				msg = "DatasetInfo tool is not presently active";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg);
-				retData.EvalCode = EnumEvalCode.EVAL_CODE_NOT_EVALUATED;
-				retData.EvalMsg = msg;
-				retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+				if (clsMetaDataFile.CreateMetadataFile(m_MgrParams, m_TaskParams))
+				{
+					// Everything was good
+					msg = "Metadata file created for dataset " + dataset;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
+					retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+				}
+				else
+				{
+					// There was a problem
+					msg = "Problem creating metadata file for dataset " + dataset + ". See local log for details";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg);
+					retData.EvalCode = EnumEvalCode.EVAL_CODE_FAILED;
+					retData.EvalMsg = msg;
+					retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+				}
+
+				//msg = "DatasetInfo tool is not presently active";
+				//clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg);
+				//retData.EvalCode = EnumEvalCode.EVAL_CODE_NOT_EVALUATED;
+				//retData.EvalMsg = msg;
+				//retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
 
 				msg = "Completed clsPluginMain.RunTool()";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 				return retData;
+				
 			}	// End sub
 
 			/// <summary>
