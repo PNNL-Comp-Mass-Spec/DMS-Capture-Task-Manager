@@ -21,5 +21,15 @@
 			Class="DatasetQualityPlugin.clsPluginMain"
 			AssemblyFile="DatasetQualityPlugin.dll"
 		/>
+		<ToolRunner
+			Tool="datasetarchive"
+			Class="DatasetArchivePlugin.clsPluginMain"
+			AssemblyFile="DatasetArchivePlugin.dll"
+		/>
+		<ToolRunner
+			Tool="archiveupdate"
+			Class="DatasetArchivePlugin.clsPluginMain"
+			AssemblyFile="DatasetArchivePlugin.dll"
+		/>
 	</ToolRunners>
 </Plugins>

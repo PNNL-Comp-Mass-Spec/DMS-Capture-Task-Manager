@@ -23,7 +23,7 @@ namespace CaptureTaskManager
 	class clsMessageHandler : IDisposable
 	{
 		//*********************************************************************************************************
-		// Handles sanding and receiving of control and status messages
+		// Handles sending and receiving of control and status messages
 		// Base code provided by Gary Kiebel
 		//**********************************************************************************************************
 
