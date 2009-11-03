@@ -6,6 +6,8 @@
 // Created 10/29/2009
 //
 // Last modified 10/29/2009
+//						11/03/2009 (DAC) - Corrected bug in XML formatting
+//
 //*********************************************************************************************************
 using System;
 using System.Collections.Generic;
@@ -24,7 +26,7 @@ namespace DatasetInfoPlugin
 		//**********************************************************************************************************
 
 		#region "Constants"
-			private const string META_FILE_NAME = "metadata.txt";
+			private const string META_FILE_NAME = "metadata.xml";
 		#endregion
 
 		#region "Methods"
@@ -36,6 +38,7 @@ namespace DatasetInfoPlugin
 			public static bool CreateMetadataFile(IMgrParams mgrParams, ITaskParams TaskParams)
 			{
 				string xmlText = "";
+				string tmpStr;
 
 				// Create a memory stream to write the metadata document to
 				MemoryStream memStream = new MemoryStream();
@@ -49,17 +52,18 @@ namespace DatasetInfoPlugin
 					// Root level element
 					xWriter.WriteStartElement("Root");
 
-					xWriter.WriteEndElement();	// Root element
-
 					// Loop through the task parameters, selecting only the ones beginning with "meta_"
 					foreach (string testKey in TaskParams.TaskDictionary.Keys)
 					{
 						if (testKey.StartsWith("meta_"))
 						{
 							// This parameter is metadata, so write it out
-							xWriter.WriteElementString(testKey, TaskParams.GetParam(testKey));
+							tmpStr = testKey.Replace("meta_", "");
+							xWriter.WriteElementString(tmpStr, TaskParams.GetParam(testKey));
 						}
 					}
+
+					xWriter.WriteEndElement();	// Close root element
 
 					// Close the document, but don't close the writer
 					xWriter.WriteEndDocument();

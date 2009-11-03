@@ -230,7 +230,7 @@ namespace CaptureTaskManager
 							m_ErrorCount++;
 							break;
 						case EnumRequestTaskResult.TaskFound:
-							msg = "Job " + m_Task.GetParam("Job") + " assigned";
+							msg = "Job " + m_Task.GetParam("Job") + ", step " + m_Task.GetParam("Step") + " assigned";
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 							// Update the status
 							m_StatusFile.JobNumber = int.Parse(m_Task.GetParam("Job"));
