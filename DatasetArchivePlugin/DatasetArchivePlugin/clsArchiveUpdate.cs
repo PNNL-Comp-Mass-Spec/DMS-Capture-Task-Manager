@@ -77,10 +77,10 @@ namespace DatasetArchivePlugin
 				}
 
 				// Set path to results folder on storage server
-				m_ResultsFolderPathServer = Path.Combine(m_DSNamePath, m_TaskParams.GetParam("Output_Folder_Name"));
+				m_ResultsFolderPathServer = Path.Combine(m_DSNamePath, m_TaskParams.GetParam("OutputFolderName"));
 
 				// Set the path to the results folder in archive
-				m_ResultsFolderPathArchive = Path.Combine(m_SambaNamePath, m_TaskParams.GetParam("Output_Folder_Name"));
+				m_ResultsFolderPathArchive = Path.Combine(m_SambaNamePath, m_TaskParams.GetParam("OutputFolderName"));
 
 
 				// Determine if the results folder already exists. If not present, copy entire folder and we're done
@@ -119,7 +119,7 @@ namespace DatasetArchivePlugin
 					try
 					{
 						// Open the FTP client
-						m_FtpTools = new clsFtpOperations(m_TaskParams.GetParam("Archive_Server_Name"), m_User, m_Pwd,
+						m_FtpTools = new clsFtpOperations(m_TaskParams.GetParam("Archive_Server"), m_User, m_Pwd,
 																		m_UseTls, m_ServerPort);
 						m_FtpTools.FtpPassive = m_FtpPassive;
 						m_FtpTools.FtpRestart = m_FtpRestart;
@@ -183,6 +183,7 @@ namespace DatasetArchivePlugin
 			{
 				//Copies a list of files to the archive, renaming old files when necessary
 				string archFileName = "";
+				string archPathLinux = "";
 
 				//Print list of files being updated
 				foreach (clsJobData myFileData in filesToUpdate)
@@ -193,7 +194,8 @@ namespace DatasetArchivePlugin
 
 				foreach (clsJobData FileToUpdate in filesToUpdate)
 				{
-					archFileName = clsFileTools.CheckTerminator(dsArchPath, false, "/") + FileToUpdate.RelativeFilePath.Replace("\\", "/");
+					archPathLinux = ConvertSambaPathToLinuxPath(dsArchPath);
+					archFileName = clsFileTools.CheckTerminator(archPathLinux, false, "/") + FileToUpdate.RelativeFilePath.Replace("\\", "/");
 					//Rename file if necessary
 					if (FileToUpdate.RenameFlag)
 					{
@@ -285,7 +287,7 @@ namespace DatasetArchivePlugin
 				{
 					string[] dirsToScan = { svrFolderPath };
 					DirectoryScanner dirScanner = new DirectoryScanner(dirsToScan);
-					dirScanner.PerformScan(ref serverFiles, ",");
+					dirScanner.PerformScan(ref serverFiles, "*");
 				}
 				catch (Exception ex)
 				{

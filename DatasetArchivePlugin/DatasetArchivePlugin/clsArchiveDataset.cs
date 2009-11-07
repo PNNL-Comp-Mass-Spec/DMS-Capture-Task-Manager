@@ -52,7 +52,7 @@ namespace DatasetArchivePlugin
 
 				// Got to here, everything's wonderful!
 				m_Msg = "Archive complete, dataset " + m_TaskParams.GetParam("dataset");
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, m_Msg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
 
 				return true;
 			}	// End sub
