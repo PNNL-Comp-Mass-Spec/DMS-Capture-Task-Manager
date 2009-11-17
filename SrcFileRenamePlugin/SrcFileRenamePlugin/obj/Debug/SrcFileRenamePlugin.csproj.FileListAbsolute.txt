@@ -1,0 +1,5 @@
+D:\DMS_Controlled\Capture_Task_Manager\SrcFileRenamePlugin\SrcFileRenamePlugin\bin\Debug\SrcFileRenamePlugin.dll
+D:\DMS_Controlled\Capture_Task_Manager\SrcFileRenamePlugin\SrcFileRenamePlugin\bin\Debug\SrcFileRenamePlugin.pdb
+D:\DMS_Controlled\Capture_Task_Manager\SrcFileRenamePlugin\SrcFileRenamePlugin\obj\Debug\ResolveAssemblyReference.cache
+D:\DMS_Controlled\Capture_Task_Manager\SrcFileRenamePlugin\SrcFileRenamePlugin\obj\Debug\SrcFileRenamePlugin.dll
+D:\DMS_Controlled\Capture_Task_Manager\SrcFileRenamePlugin\SrcFileRenamePlugin\obj\Debug\SrcFileRenamePlugin.pdb

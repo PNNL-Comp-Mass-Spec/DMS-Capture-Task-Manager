@@ -41,7 +41,7 @@ namespace CaptureToolPlugin
 		#endregion
 
 		#region "Class variables"
-		protected IMgrParams m_MgrParams;
+			protected IMgrParams m_MgrParams;
 			protected int m_SleepInterval = 30;
 			protected string m_Msg = "";
 			protected bool m_ClientServer;	// True = client
