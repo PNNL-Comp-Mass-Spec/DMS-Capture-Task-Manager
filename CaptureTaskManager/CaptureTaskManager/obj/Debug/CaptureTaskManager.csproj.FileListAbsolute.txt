@@ -30,3 +30,4 @@ D:\DMS_Controlled\Capture_Task_Manager\CaptureTaskManager\CaptureTaskManager\obj
 D:\DMS_Controlled\Capture_Task_Manager\CaptureTaskManager\CaptureTaskManager\obj\Debug\CaptureTaskManager.csproj.GenerateResource.Cache
 D:\DMS_Controlled\Capture_Task_Manager\CaptureTaskManager\CaptureTaskManager\obj\Debug\CaptureTaskManager.exe
 D:\DMS_Controlled\Capture_Task_Manager\CaptureTaskManager\CaptureTaskManager\obj\Debug\CaptureTaskManager.pdb
+D:\DMS_Controlled\Capture_Task_Manager\CaptureTaskManager\CaptureTaskManager\obj\Debug\CaptureTaskManager.exe.licenses

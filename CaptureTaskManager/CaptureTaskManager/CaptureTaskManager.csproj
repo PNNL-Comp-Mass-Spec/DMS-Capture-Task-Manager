@@ -41,6 +41,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\RefLib\Apache.NMS.ActiveMQ.dll</HintPath>
     </Reference>
+    <Reference Include="Dart.PowerTCP.Ftp, Version=3.0.5.1, Culture=neutral, PublicKeyToken=5966291b8955e4bb">
+      <Private>False</Private>
+    </Reference>
     <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=1b44e1d426115821, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\RefLib\log4net.dll</HintPath>
@@ -90,6 +93,7 @@
     <Compile Include="IToolRunner.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="licenses.licx" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
