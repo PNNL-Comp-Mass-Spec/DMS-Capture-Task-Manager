@@ -71,6 +71,10 @@ namespace DatasetIntegrityPlugin
 						dataFileNamePath = Path.Combine(datasetFolder,dataset + ".raw");
 						retData.CloseoutType = TestFinniganIonTrapFile(dataFileNamePath);
 						break;
+					case "ltq_ft":
+						dataFileNamePath = Path.Combine(datasetFolder, dataset + ".raw");
+						retData.CloseoutType = TestLTQFTFile(dataFileNamePath);
+						break;
 					case "brukerftms":
 						retData.CloseoutType = TestBrukerFolder(datasetFolder);
 						break;
@@ -98,7 +102,6 @@ namespace DatasetIntegrityPlugin
 			{
 				string msg;
 				float dataFileSize;
-				EnumCloseOutType result = EnumCloseOutType.CLOSEOUT_FAILED;
 
 				// Verify file exists in storage folder
 				if (!File.Exists(dataFileNamePath))
@@ -134,6 +137,40 @@ namespace DatasetIntegrityPlugin
 			}	// End sub
 
 			/// <summary>
+			/// Tests an Orbitrap (LTQ_FT) dataset's integrity
+			/// </summary>
+			/// <param name="dataFileNamePath">Fully qualified path to dataset file</param>
+			/// <returns>Enum indicating success or failure</returns>
+			private EnumCloseOutType TestLTQFTFile(string dataFileNamePath)
+			{
+				string msg;
+				float dataFileSize;
+
+				// Verify file exists in storage folder
+				if (!File.Exists(dataFileNamePath))
+				{
+					msg = "Data file " + dataFileNamePath + " not found";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+
+				// Get size of data file
+				dataFileSize = GetFileSize(dataFileNamePath);
+
+				// Check min size
+				if (dataFileSize < RAW_FILE_MIN_SIXE)
+				{
+					msg = "Data file " + dataFileNamePath + " may be corrupt. Actual file size: " + dataFileSize.ToString("####0.0") +
+								"MB. Min allowable size is " + RAW_FILE_MIN_SIXE.ToString("#0.0");
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+
+				// If we got to here, everything was OK
+				return EnumCloseOutType.CLOSEOUT_SUCCESS;
+			}	// End sub
+
+		/// <summary>
 			/// Tests a bruker folder for integrity
 			/// </summary>
 			/// <param name="datasetNamePath">Fully qualified path to the dataset folder</param>
