@@ -58,6 +58,8 @@ namespace CaptureTaskManager
 			private clsMessageHandler m_MsgHandler;
 			private LoopExitCode m_LoopExitCode;
 			private bool m_Running;
+			private System.Timers.Timer m_StatusTimer;
+			private DateTime m_DurationStart;
 		#endregion
 
 		#region "Delegates"
@@ -159,10 +161,17 @@ namespace CaptureTaskManager
 				m_StatusFile.MgrStatus=EnumMgrStatus.Running;
 				m_StatusFile.WriteStatusFile();
 
+				// Set up the status reporting time
+				m_StatusTimer = new System.Timers.Timer();
+				m_StatusTimer.BeginInit();
+				m_StatusTimer.Enabled = false;
+				m_StatusTimer.Interval = 60000;	// 1 minute
+				m_StatusTimer.EndInit();
+				m_StatusTimer.Elapsed += new System.Timers.ElapsedEventHandler(m_StatusTimer_Elapsed);
 				// Everything worked!
 				return true;
-			}	// End sub
-		
+			}
+
 			/// <summary>
 			/// Main loop for task performance
 			/// </summary>
@@ -253,7 +262,11 @@ namespace CaptureTaskManager
 							}
 
 							// Run the tool plugin
+							m_DurationStart = DateTime.Now;
+							m_StatusTimer.Enabled = true;
 							clsToolReturnData toolResult = m_CapTool.RunTool();
+							m_StatusTimer.Enabled = false;
+
 							switch (toolResult.CloseoutType)
 							{
 								case EnumCloseOutType.CLOSEOUT_FAILED:
@@ -418,6 +431,10 @@ namespace CaptureTaskManager
 				return true;
 			}	// End sub
 
+			/// <summary>
+			/// Sets the tool runner object for this job
+			/// </summary>
+			/// <returns></returns>
 			private bool SetToolRunnerObject()
 			{
 				string msg;
@@ -509,6 +526,18 @@ namespace CaptureTaskManager
 				m_MsgHandler.SendMessage(msg);
 			}	// End sub
 
+			/// <summary>
+			/// Updates the status at m_StatusTimer interval
+			/// </summary>
+			/// <param name="sender"></param>
+			/// <param name="e"></param>
+			void m_StatusTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+			{
+				TimeSpan duration = DateTime.Now - m_DurationStart;
+				int durationMinutes = duration.Minutes;
+				m_StatusFile.Duration = durationMinutes / 60f;
+				m_StatusFile.WriteStatusFile();
+			}	// End sub
 		#endregion
 	}	// End class
 }	// End namespace

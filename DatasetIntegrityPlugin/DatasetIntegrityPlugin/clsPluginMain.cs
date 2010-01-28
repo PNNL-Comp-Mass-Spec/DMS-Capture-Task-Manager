@@ -78,6 +78,8 @@ namespace DatasetIntegrityPlugin
 					case "brukerftms":
 						retData.CloseoutType = TestBrukerFolder(datasetFolder);
 						break;
+					case "thermo_exactive":
+						break;
 					default:
 						msg = "No integrity test avallable for instrument class " + instClass;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg);
@@ -170,7 +172,41 @@ namespace DatasetIntegrityPlugin
 				return EnumCloseOutType.CLOSEOUT_SUCCESS;
 			}	// End sub
 
-		/// <summary>
+			/// <summary>
+			/// Tests an Thermo_Exactive dataset's integrity
+			/// </summary>
+			/// <param name="dataFileNamePath">Fully qualified path to dataset file</param>
+			/// <returns>Enum indicating success or failure</returns>
+			private EnumCloseOutType TestThernoExactiveFile(string dataFileNamePath)
+			{
+				string msg;
+				float dataFileSize;
+
+				// Verify file exists in storage folder
+				if (!File.Exists(dataFileNamePath))
+				{
+					msg = "Data file " + dataFileNamePath + " not found";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+
+				// Get size of data file
+				dataFileSize = GetFileSize(dataFileNamePath);
+
+				// Check min size
+				if (dataFileSize < RAW_FILE_MIN_SIXE)
+				{
+					msg = "Data file " + dataFileNamePath + " may be corrupt. Actual file size: " + dataFileSize.ToString("####0.0") +
+								"MB. Min allowable size is " + RAW_FILE_MIN_SIXE.ToString("#0.0");
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+
+				// If we got to here, everything was OK
+				return EnumCloseOutType.CLOSEOUT_SUCCESS;
+			}	// End sub
+
+			/// <summary>
 			/// Tests a bruker folder for integrity
 			/// </summary>
 			/// <param name="datasetNamePath">Fully qualified path to the dataset folder</param>
