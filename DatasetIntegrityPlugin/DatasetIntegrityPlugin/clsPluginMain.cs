@@ -125,8 +125,8 @@ namespace DatasetIntegrityPlugin
 				// Check min size
 				if (dataFileSize < RAW_FILE_MIN_SIXE)
 				{
-					msg = "Data file " + dataFileNamePath + " may be corrupt. Actual file size: " + dataFileSize.ToString("####0.0") +
-								"MB. Min allowable size is " + RAW_FILE_MIN_SIXE.ToString("#0.0");
+					msg = "Data file " + dataFileNamePath + " may be corrupt. Actual file size: " + dataFileSize.ToString("####0.00") +
+								"MB. Min allowable size is " + RAW_FILE_MIN_SIXE.ToString("#0.00")+ "MB.";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
@@ -168,8 +168,8 @@ namespace DatasetIntegrityPlugin
 				// Check min size
 				if (dataFileSize < RAW_FILE_MIN_SIXE)
 				{
-					msg = "Data file " + dataFileNamePath + " may be corrupt. Actual file size: " + dataFileSize.ToString("####0.0") +
-								"MB. Min allowable size is " + RAW_FILE_MIN_SIXE.ToString("#0.0");
+					msg = "Data file " + dataFileNamePath + " may be corrupt. Actual file size: " + dataFileSize.ToString("####0.00") +
+								"MB. Min allowable size is " + RAW_FILE_MIN_SIXE.ToString("#0.00") + "MB.";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
@@ -202,8 +202,8 @@ namespace DatasetIntegrityPlugin
 				// Check min size
 				if (dataFileSize < RAW_FILE_MIN_SIXE)
 				{
-					msg = "Data file " + dataFileNamePath + " may be corrupt. Actual file size: " + dataFileSize.ToString("####0.0") +
-								"MB. Min allowable size is " + RAW_FILE_MIN_SIXE.ToString("#0.0");
+					msg = "Data file " + dataFileNamePath + " may be corrupt. Actual file size: " + dataFileSize.ToString("####0.00") +
+								"MB. Min allowable size is " + RAW_FILE_MIN_SIXE.ToString("#0.00") + "MB.";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
@@ -236,8 +236,8 @@ namespace DatasetIntegrityPlugin
 				// Check min size
 				if (dataFileSize < RAW_FILE_MIN_SIXE)
 				{
-					msg = "Data file " + dataFileNamePath + " may be corrupt. Actual file size: " + dataFileSize.ToString("####0.0") +
-								"MB. Min allowable size is " + RAW_FILE_MIN_SIXE.ToString("#0.0");
+					msg = "Data file " + dataFileNamePath + " may be corrupt. Actual file size: " + dataFileSize.ToString("####0.00") +
+								"MB. Min allowable size is " + RAW_FILE_MIN_SIXE.ToString("#0.00") + "MB.";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
