@@ -6,6 +6,7 @@
 // Created 10/20/2009
 //
 // Last modified 10/20/2009
+//						02/03/2010 (DAC) - Modified logging to include job number
 //*********************************************************************************************************
 using System;
 using CaptureTaskManager;
@@ -45,13 +46,13 @@ namespace DatasetArchivePlugin
 				// Perform base class operations
 				if (!base.PerformTask()) return false;
 
-				m_Msg = "Archiving dataset " + m_TaskParams.GetParam("dataset");
+				m_Msg = "Archiving dataset " + m_TaskParams.GetParam("dataset") + ", job " + m_TaskParams.GetParam("Job");
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, m_Msg);
 
 				if (!CopyOneFolderToArchive(m_DSNamePath, m_ArchiveNamePath)) return false;
 
 				// Got to here, everything's wonderful!
-				m_Msg = "Archive complete, dataset " + m_TaskParams.GetParam("dataset");
+				m_Msg = "Archive complete, dataset " + m_TaskParams.GetParam("dataset") + ", job " + m_TaskParams.GetParam("Job");
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
 
 				return true;

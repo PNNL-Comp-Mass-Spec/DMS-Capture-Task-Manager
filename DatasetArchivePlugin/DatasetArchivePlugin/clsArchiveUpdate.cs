@@ -6,6 +6,7 @@
 // Created 10/20/2009
 //
 // Last modified 10/20/2009
+//						02/03/2010 (DAC) - Modified logging to include job number
 //*********************************************************************************************************
 using System;
 using System.Collections;
@@ -61,7 +62,7 @@ namespace DatasetArchivePlugin
 				// Perform base class operations
 				if (!base.PerformTask()) return false;
 
-				m_Msg = "Updating dataset " + m_TaskParams.GetParam("dataset");
+				m_Msg = "Updating dataset " + m_TaskParams.GetParam("dataset") + ", job " + m_TaskParams.GetParam("Job");
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, m_Msg);
 
 				m_SambaNamePath = Path.Combine(m_TaskParams.GetParam("Archive_Network_Share_Path"),
@@ -91,7 +92,7 @@ namespace DatasetArchivePlugin
 
 					// Finished with this update task
 					m_Msg = "Completed archive update, dataset " + m_TaskParams.GetParam("dataset") + ", Folder " +
-									m_TaskParams.GetParam("Output_Folder_Name");
+									m_TaskParams.GetParam("Output_Folder_Name") + ", job " + m_TaskParams.GetParam("Job");
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, m_Msg);
 					return true;
 				}	// End "results folder not in archive" actions
@@ -110,7 +111,8 @@ namespace DatasetArchivePlugin
 					if (filesToUpdate.Count < 1)
 					{
 						// No files requiring update were found. Human intervention may be required
-						m_Msg = "No files needing update found for dataset " + m_TaskParams.GetParam("dataset");
+						m_Msg = "No files needing update found for dataset " + m_TaskParams.GetParam("dataset")
+										+ ", job " + m_TaskParams.GetParam("Job");
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, m_Msg);
 						return true;
 					}
@@ -138,7 +140,8 @@ namespace DatasetArchivePlugin
 						}
 						if (!UpdateArchive(filesToUpdate, m_ResultsFolderPathArchive, true, m_FtpTools))
 						{
-							m_Msg = "Error updating archive, dataset " + m_TaskParams.GetParam("dataset");
+							m_Msg = "Error updating archive, dataset " + m_TaskParams.GetParam("dataset")
+										+ ", Job " + m_TaskParams.GetParam("Job");
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
 							LogOperationFailed(m_TaskParams.GetParam("dataset"));
 							m_FtpTools.CloseFTPConnection();

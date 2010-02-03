@@ -6,6 +6,7 @@
 // Created 10/08/2009
 //
 // Last modified 10/08/2009
+//						02/03/2010 (DAC) - Modified logging to include job number
 //*********************************************************************************************************
 using System;
 using CaptureTaskManager;
@@ -50,7 +51,7 @@ namespace DatasetArchivePlugin
 				{
 					// This is an archive operation
 					archOpTool = new clsArchiveDataset(m_MgrParams, m_TaskParams);
-					msg = "Starting archive, dataset " + m_TaskParams.GetParam("Dataset");
+					msg = "Starting archive, job " + m_TaskParams.GetParam("Job") + ", dataset " + m_TaskParams.GetParam("Dataset");
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
 					if (archOpTool.PerformTask())
 					{
@@ -60,14 +61,14 @@ namespace DatasetArchivePlugin
 					{
 						retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 					}
-					msg = "Completed archive, dataset " + m_TaskParams.GetParam("Dataset");
+					msg = "Completed archive, job " + m_TaskParams.GetParam("Job") + ", dataset " + m_TaskParams.GetParam("Dataset");
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
 				}
 				else
 				{
 					// This is an archive update operation
 					archOpTool = new clsArchiveUpdate(m_MgrParams, m_TaskParams);
-					msg = "Starting archive update, dataset " + m_TaskParams.GetParam("Dataset");
+					msg = "Starting archive update, job " + m_TaskParams.GetParam("Job") + ", dataset " + m_TaskParams.GetParam("Dataset");
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
 					if (archOpTool.PerformTask())
 					{
@@ -77,7 +78,7 @@ namespace DatasetArchivePlugin
 					{
 						retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 					}
-					msg = "Completed archive update, dataset " + m_TaskParams.GetParam("Dataset");
+					msg = "Completed archive update, job " + m_TaskParams.GetParam("Job") + ", dataset " + m_TaskParams.GetParam("Dataset");
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
 				}
 				
