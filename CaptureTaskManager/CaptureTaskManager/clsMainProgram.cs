@@ -248,6 +248,10 @@ namespace CaptureTaskManager
 							m_StatusFile.Tool = m_Task.GetParam("StepTool");
 							m_StatusFile.TaskStatus = EnumTaskStatus.Running;
 							m_StatusFile.TaskStatusDetail = EnumTaskStatusDetail.Running_Tool;
+							m_StatusFile.MostRecentJobInfo = DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss tt") +
+																		", Job " + m_Task.GetParam("Job") + ", Step " + m_Task.GetParam("Step") +
+																		", Tool " + m_Task.GetParam("StepTool");
+
 							m_StatusFile.WriteStatusFile();
 
 							// Create the tool runner object
