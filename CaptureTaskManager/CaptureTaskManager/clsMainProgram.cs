@@ -168,6 +168,37 @@ namespace CaptureTaskManager
 				m_StatusTimer.Interval = 60000;	// 1 minute
 				m_StatusTimer.EndInit();
 				m_StatusTimer.Elapsed += new System.Timers.ElapsedEventHandler(m_StatusTimer_Elapsed);
+
+				// Get the most recent job history
+				string historyFile = Path.Combine(m_MgrSettings.GetParam("ApplicationPath"), "History.txt");
+				if (File.Exists(historyFile))
+				{
+					try
+					{
+						// Create an instance of StreamReader to read from a file.
+						// The using statement also closes the StreamReader.
+						using (StreamReader sr = new StreamReader(historyFile))
+						{
+							String line;
+							// Read and display lines from the file until the end of 
+							// the file is reached.
+							while ((line = sr.ReadLine()) != null)
+							{
+								if (line.Contains("RecentJob: "))
+								{
+									string tmpStr = line.Replace("RecentJob: ", "");
+									m_StatusFile.MostRecentJobInfo = tmpStr;
+									break;
+								}
+							}
+						}
+					}
+					catch (Exception ex)
+					{
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+														"Exception readining status history file", ex);
+					}
+				}
 				// Everything worked!
 				return true;
 			}
@@ -322,6 +353,21 @@ namespace CaptureTaskManager
 							break;
 					}	// End switch (taskReturn)
 				}	// End while
+
+				// Write the recent job history file
+				string historyFile = Path.Combine(m_MgrSettings.GetParam("ApplicationPath"), "History.txt");
+				try
+				{
+					using (StreamWriter sw = new StreamWriter(historyFile, false))
+					{
+						sw.WriteLine("RecentJob: " + m_StatusFile.MostRecentJobInfo);
+					}
+				}
+				catch (Exception ex)
+				{
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+													"Exception writing job history file", ex);
+				}
 
 				// Determine cause of loop exit and respond accordingly
 				switch (m_LoopExitCode)
