@@ -8,3 +8,10 @@ D:\DMS_Controlled\Capture_Task_Manager\DatasetQualityPlugin\DatasetQualityPlugin
 D:\DMS_Controlled\Capture_Task_Manager\DatasetQualityPlugin\DatasetQualityPlugin\obj\Debug\ResolveAssemblyReference.cache
 D:\DMS_Controlled\Capture_Task_Manager\DatasetQualityPlugin\DatasetQualityPlugin\obj\Debug\DatasetQualityPlugin.dll
 D:\DMS_Controlled\Capture_Task_Manager\DatasetQualityPlugin\DatasetQualityPlugin\obj\Debug\DatasetQualityPlugin.pdb
+D:\DMS_Controlled\Capture_Task_Manager\DatasetQualityPlugin\DatasetQualityPlugin\bin\Debug\SharedVBNetRoutines.dll
+D:\DMS_Controlled\Capture_Task_Manager\DatasetQualityPlugin\DatasetQualityPlugin\bin\Debug\ICSharpCode.SharpZipLib.dll
+D:\DMS_Controlled\Capture_Task_Manager\DatasetQualityPlugin\DatasetQualityPlugin\bin\Debug\NetCDFReader.dll
+D:\DMS_Controlled\Capture_Task_Manager\DatasetQualityPlugin\DatasetQualityPlugin\bin\Debug\Interop.XRAWFILE2Lib.dll
+D:\DMS_Controlled\Capture_Task_Manager\DatasetQualityPlugin\DatasetQualityPlugin\bin\Debug\DeconWrapper.dll
+D:\DMS_Controlled\Capture_Task_Manager\DatasetQualityPlugin\DatasetQualityPlugin\bin\Debug\ZedGraph.dll
+D:\DMS_Controlled\Capture_Task_Manager\DatasetQualityPlugin\DatasetQualityPlugin\bin\Debug\MSFileInfoScanner.dll
