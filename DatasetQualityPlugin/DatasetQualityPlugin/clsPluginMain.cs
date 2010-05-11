@@ -204,7 +204,7 @@ namespace DatasetQualityPlugin
 					{
 						// Everything went wonderfully
 						result.CloseoutMsg = "Job " + m_TaskParams.GetParam("Job") + ", Step " + m_TaskParams.GetParam("Step") +
-									"completed successfully";
+									" completed successfully";
 						result.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
 					}
 				}
