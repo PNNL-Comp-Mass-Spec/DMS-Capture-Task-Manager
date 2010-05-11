@@ -227,6 +227,15 @@ namespace DatasetArchivePlugin
 			/// <returns></returns>
 			protected bool CopyOneFolderToArchive(string sourceFolder, string destFolder)
 			{
+				// Verify source folder exists
+				if (!Directory.Exists(sourceFolder))
+				{
+					m_Msg = "Source folder " + sourceFolder + " not found";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
+					LogOperationFailed(m_TaskParams.GetParam("dataset"));
+					return false;
+				}
+
 				// Open archive connection
 				if (!OpenArchiveServer()) return false;
 

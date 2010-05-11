@@ -87,6 +87,8 @@ namespace DatasetArchivePlugin
 				// Determine if the results folder already exists. If not present, copy entire folder and we're done
 				if (!Directory.Exists(m_ResultsFolderPathArchive))
 				{
+					m_Msg = "Folder " + m_ResultsFolderPathArchive + " not found. Copying from storage server";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
 					string tmpStr = ConvertSambaPathToLinuxPath(m_ResultsFolderPathArchive);	// Convert to Linux path
 					if (!CopyOneFolderToArchive(m_ResultsFolderPathServer, tmpStr)) return false;
 
@@ -121,6 +123,8 @@ namespace DatasetArchivePlugin
 					try
 					{
 						// Open the FTP client
+						m_Msg = filesToUpdate.Count.ToString() + " files needing update found. Copying to archive now";
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
 						m_FtpTools = new clsFtpOperations(m_TaskParams.GetParam("Archive_Server"), m_User, m_Pwd,
 																		m_UseTls, m_ServerPort);
 						m_FtpTools.FtpPassive = m_FtpPassive;
