@@ -229,6 +229,9 @@ namespace DatasetQualityPlugin
 					case "zipped_s_folders":
 						fileName = "analysis.baf";
 						break;
+					case "dot_uimf_files":
+						fileName = m_TaskParams.GetParam("dataset") + ".uimf";
+						break;
 					default:
 						m_Msg = "clsPluginMain.GetDataFileOrFolderName: Data type " + m_TaskParams.GetParam("rawdatatype") +
 									" not recognized";

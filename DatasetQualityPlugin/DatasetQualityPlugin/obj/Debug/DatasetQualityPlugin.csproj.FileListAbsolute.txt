@@ -15,3 +15,4 @@ D:\DMS_Controlled\Capture_Task_Manager\DatasetQualityPlugin\DatasetQualityPlugin
 D:\DMS_Controlled\Capture_Task_Manager\DatasetQualityPlugin\DatasetQualityPlugin\bin\Debug\DeconWrapper.dll
 D:\DMS_Controlled\Capture_Task_Manager\DatasetQualityPlugin\DatasetQualityPlugin\bin\Debug\ZedGraph.dll
 D:\DMS_Controlled\Capture_Task_Manager\DatasetQualityPlugin\DatasetQualityPlugin\bin\Debug\MSFileInfoScanner.dll
+D:\DMS_Controlled\Capture_Task_Manager\DatasetQualityPlugin\DatasetQualityPlugin\bin\Debug\UIMFLibrary.dll
