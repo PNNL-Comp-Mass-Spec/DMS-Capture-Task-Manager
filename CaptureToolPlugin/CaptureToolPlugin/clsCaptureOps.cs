@@ -481,8 +481,18 @@ namespace CaptureToolPlugin
 				// Set up paths
 				string sourceFolderPath;	// Instrument transfer directory
 				string storageFolderPath = Path.Combine(tempVol, storagePath);	// Directory on storage server where dataset folder goes
-				string datasetFolderPath = Path.Combine(storageFolderPath, dataset);	// Dataset folder complete path
+				string datasetFolderPath;
 
+				// If Storage_Folder_Name <> "", then use it in target folder path. Otherwise use dataset name
+				if (taskParams.GetParam("Storage_Folder_Name") != "")
+				{
+					datasetFolderPath = Path.Combine(storageFolderPath, taskParams.GetParam("Storage_Folder_Name")); // HPLC run folder storage path
+				}
+				else
+				{
+					datasetFolderPath = Path.Combine(storageFolderPath, dataset);	// Dataset folder complete path
+				}
+				
 				// Verify storage folder on storage server exists
 				if (!ValidateFolderPath(storageFolderPath))
 				{
@@ -527,7 +537,17 @@ namespace CaptureToolPlugin
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 				}
 
-				sourceType = GetRawDSType(sourceFolderPath, dataset, ref rawFName);
+				//If Source_Folder_Name is non-blank, use it. Otherwise use dataset name
+				if (taskParams.GetParam("Source_Folder_Name") != "")
+				{
+					sourceType = GetRawDSType(sourceFolderPath, taskParams.GetParam("Source_Folder_Name"), ref rawFName);
+				}
+				else
+				{
+					sourceType = GetRawDSType(sourceFolderPath, dataset, ref rawFName);
+				}
+
+				// Perform copy based on source type
 				switch (sourceType)
 				{
 					case RawDSTypes.None:
