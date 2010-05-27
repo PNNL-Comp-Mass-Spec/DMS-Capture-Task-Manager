@@ -251,7 +251,7 @@ namespace DatasetArchivePlugin
 				tmpStr = sambaPath.Substring(startIndx);
 				
 				// Add on the prefix for the archive
-				tmpStr = @"/nwfs/" + tmpStr;
+				tmpStr = @"/archive/" + tmpStr;
 
 				// Replace and DOS path separators with Linux separators
 				tmpStr = tmpStr.Replace(@"\",@"/");
