@@ -250,7 +250,7 @@ namespace DatasetArchivePlugin
 						retCode = GetRemFileSizeCount(storagePath, ref remTreeSize, ref remTreeFileCount);
 						if (!retCode)
 						{
-							m_ErrMsg = "Error verifying dataset copy";
+							m_ErrMsg = "Error verifying dataset copy: " + m_ErrMsg;
 							return false;
 						}
 						//Get the number of files and total file size from the dataset folder
@@ -258,7 +258,7 @@ namespace DatasetArchivePlugin
 						//Compare the file sizes and counts
 						if ((locTreeSize != remTreeSize) | (locTreeFileCount != remTreeFileCount))
 						{
-							m_ErrMsg = "Error verifying dataset copy";
+							m_ErrMsg = "Error verifying dataset copy: " + m_ErrMsg;
 							return false;
 						}
 					}
