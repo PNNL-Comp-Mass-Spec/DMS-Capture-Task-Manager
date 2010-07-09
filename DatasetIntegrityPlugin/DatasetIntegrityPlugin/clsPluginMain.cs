@@ -6,6 +6,7 @@
 // Created 10/02/2009
 //
 // Last modified 10/02/2009
+//						07/09/2010 (DAC) - Added new definition for BrukerFT_BAF instrument class
 //*********************************************************************************************************
 using System;
 using CaptureTaskManager;
@@ -22,6 +23,7 @@ namespace DatasetIntegrityPlugin
 		#region "Constants"
 			const float RAW_FILE_MIN_SIXE = 0.1F;	//MB
 			const float RAW_FILE_MAX_SIZE = 2048F;	//MB
+			const float BAF_FILE_MIN_SIZE = 1.0F;	//MB
 		#endregion
 
 		#region "Constructors"
@@ -85,6 +87,8 @@ namespace DatasetIntegrityPlugin
 					case "triple_quad":
 						dataFileNamePath = Path.Combine(datasetFolder, dataset + ".raw");
 						retData.CloseoutType = TestTripleQuadFile(dataFileNamePath);
+						break;
+					case "brukerft_baf":
 						break;
 					default:
 						msg = "No integrity test avallable for instrument class " + instClass;
@@ -255,7 +259,6 @@ namespace DatasetIntegrityPlugin
 			{
 				string msg;
 				float dataFileSize;
-				EnumCloseOutType result = EnumCloseOutType.CLOSEOUT_FAILED;
 
 				// Verify 0.ser folder exists
 				if (!Directory.Exists(Path.Combine(datasetNamePath,"0.ser")))
@@ -296,6 +299,38 @@ namespace DatasetIntegrityPlugin
 				if (dataFileSize <= 0.1F)
 				{
 					msg = "Invalid dataset. ser file too small";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+
+				// If we got to here, everything is OK
+				return EnumCloseOutType.CLOSEOUT_SUCCESS;
+			}	// End sub
+
+			/// <summary>
+			/// Tests a BrukerFT_BAF folder for integrity
+			/// </summary>
+			/// <param name="datasetNamePath">Fully qualified path to the dataset folder</param>
+			/// <returns></returns>
+			private EnumCloseOutType TestBrukerFT_BafFolder(string datasetNamePath)
+			{
+				string msg;
+				float dataFileSize;
+
+				// Verify analysis.baf file exists
+				if (!File.Exists(Path.Combine(datasetNamePath, "analysis.baf")))
+				{
+					msg = "Invalid dataset. analysis.baf file now found";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+
+				// Verify size of analysis.baf file
+				dataFileSize = GetFileSize(Path.Combine(datasetNamePath, "analysis.baf"));
+				if (dataFileSize <= BAF_FILE_MIN_SIZE)
+				{
+					msg = "Data file may be corrupt. Actual file size: " + dataFileSize.ToString("####0.00") +
+								"MB. Min allowable size is " + BAF_FILE_MIN_SIZE.ToString("#0.00") + "MB.";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
