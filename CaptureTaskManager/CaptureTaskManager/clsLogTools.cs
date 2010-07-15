@@ -45,9 +45,11 @@ namespace CaptureTaskManager
 			private static readonly ILog m_FileLogger = LogManager.GetLogger("FileLogger");
 			private static readonly ILog m_DbLogger = LogManager.GetLogger("DbLogger");
 			private static readonly ILog m_SysLogger = LogManager.GetLogger("SysLogger");
+			private static readonly ILog m_FtpFileLogger = LogManager.GetLogger("FtpFileLogger");
 			private static string m_FileDate;
 			private static string m_BaseFileName;
 			private static log4net.Appender.FileAppender m_FileAppender;
+			private static log4net.Appender.RollingFileAppender m_FtpLogFileAppender;
 		#endregion
 
 		#region "Properties"
@@ -185,6 +187,15 @@ namespace CaptureTaskManager
 			}	// End sub
 
 			/// <summary>
+			/// Writes an FTP transaction message to the FTP logger
+			/// </summary>
+			/// <param name="inpMsg">Message to log</param>
+			public static void WriteFtpLog(string inpMsg)
+			{
+				if (m_FtpFileLogger.IsDebugEnabled) m_FtpFileLogger.Debug(inpMsg);
+			}	// End sub
+
+			/// <summary>
 			/// Changes the base log file name
 			/// </summary>
 			public static void ChangeLogFileName()
@@ -317,6 +328,31 @@ namespace CaptureTaskManager
 			}	// End sub
 
 			/// <summary>
+			/// Creates a file appender for FTP transaction logging
+			/// </summary>
+			/// <param name="logFileName">Log file name for the appender to use</param>
+			/// <returns>A configured file appender</returns>
+			private static log4net.Appender.RollingFileAppender CreateFtpLogfileAppender(string logFileName)
+			{
+				log4net.Appender.RollingFileAppender ReturnAppender = new log4net.Appender.RollingFileAppender();
+
+				ReturnAppender.Name = "RollingFileAppender";
+				//m_FileDate = DateTime.Now.ToString("MM-dd-yyyy");
+				//m_BaseFileName = logFileName;
+				ReturnAppender.File = "FTPLog_";
+				ReturnAppender.AppendToFile = true;
+				ReturnAppender.RollingStyle = log4net.Appender.RollingFileAppender.RollingMode.Date;
+				ReturnAppender.DatePattern = "yyyyMMdd";
+				log4net.Layout.PatternLayout Layout = new log4net.Layout.PatternLayout();
+				Layout.ConversionPattern = "%message%newline";
+				Layout.ActivateOptions();
+				ReturnAppender.Layout = Layout;
+				ReturnAppender.ActivateOptions();
+
+				return ReturnAppender;
+			}	// End sub
+
+			/// <summary>
 			/// Configures the file logger
 			/// </summary>
 			/// <param name="LogFileName">Base name for log file</param>
@@ -327,6 +363,18 @@ namespace CaptureTaskManager
 				m_FileAppender = CreateFileAppender(LogFileName);
 				curLogger.AddAppender(m_FileAppender);
 				SetFileLogLevel(LogLevel);
+			}	// End sub
+
+			/// <summary>
+			/// Configures the FTP logger
+			/// </summary>
+			/// <param name="logFileName">Name of FTP log file</param>
+			public static void CreateFtpLogFileLogger(string logFileName)
+			{
+				log4net.Repository.Hierarchy.Logger curLogger = (log4net.Repository.Hierarchy.Logger)m_FtpFileLogger.Logger;
+				m_FtpLogFileAppender = CreateFtpLogfileAppender(logFileName);
+				curLogger.AddAppender(m_FtpLogFileAppender);
+				curLogger.Level = log4net.Core.Level.Debug;
 			}	// End sub
 
 			/// <summary>

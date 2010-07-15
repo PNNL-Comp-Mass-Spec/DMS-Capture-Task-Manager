@@ -6,6 +6,7 @@
 // Created 10/08/2009
 //
 // Last modified 10/08/2009
+//						07/14/2010 (DAC) - Modified to use rolling log via Log4Net
 //*********************************************************************************************************
 using System;
 using System.Collections.Generic;
@@ -873,31 +874,35 @@ namespace DatasetArchivePlugin
 							//Strip off password
 							DumStr = DumStr.Substring(0, DumPos + 4) + " XXXX" + System.Environment.NewLine;
 						}
-						Entry += System.Environment.NewLine + CurDate + " ---> " + DumStr;
+//						Entry += System.Environment.NewLine + CurDate + " ---> " + DumStr;
+						Entry += CurDate + " ---> " + DumStr;
 					}
 					else
 					{
-						Entry += System.Environment.NewLine + CurDate + " <--- " + e.Segment.ToString();
+//						Entry += System.Environment.NewLine + CurDate + " <--- " + e.Segment.ToString();
+						Entry += CurDate + " <--- " + e.Segment.ToString();
 					}
-					long Retry = 0;
-					Retry = 10;
-					while (Retry > 0)
-					{
-						try
-						{
-							FileStream Stream = new FileStream(Application.StartupPath + "\\ArchiveFTP.log", FileMode.OpenOrCreate, FileAccess.ReadWrite);
-							Stream.Seek(0, SeekOrigin.End);
-							Stream.Write(System.Text.ASCIIEncoding.ASCII.GetBytes(Entry.ToCharArray()), 0, 
-												System.Text.ASCIIEncoding.ASCII.GetByteCount(Entry.ToCharArray()));
-							Stream.Close();
-							Retry = 0;
-						}
-						catch (Exception ex)
-						{
-							Retry -= 1;
-							if (Retry == 0) return;
-						}
-					}
+					clsLogTools.WriteFtpLog(Entry);
+
+					//long Retry = 0;
+					//Retry = 10;
+					//while (Retry > 0)
+					//{
+					//   try
+					//   {
+					//      FileStream Stream = new FileStream(Application.StartupPath + "\\ArchiveFTP.log", FileMode.OpenOrCreate, FileAccess.ReadWrite);
+					//      Stream.Seek(0, SeekOrigin.End);
+					//      Stream.Write(System.Text.ASCIIEncoding.ASCII.GetBytes(Entry.ToCharArray()), 0, 
+					//                     System.Text.ASCIIEncoding.ASCII.GetByteCount(Entry.ToCharArray()));
+					//      Stream.Close();
+					//      Retry = 0;
+					//   }
+					//   catch (Exception ex)
+					//   {
+					//      Retry -= 1;
+					//      if (Retry == 0) return;
+					//   }
+					//}
 				}
 			}	// End sub
 		#endregion
