@@ -51,7 +51,7 @@ namespace DatasetInfoPlugin
 				{
 					// Everything was good
 					msg = "Metadata file created for dataset " + dataset;
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 					retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
 				}
 				else

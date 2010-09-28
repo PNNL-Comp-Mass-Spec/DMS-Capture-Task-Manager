@@ -234,7 +234,7 @@ namespace SrcFileRenamePlugin
 					string n = Path.Combine(di.Parent.FullName, "x_" + di.Name);
 					di.MoveTo(n);
 					m_Msg = "Renamed directory " + InstFolderPath;
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, m_Msg);
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
 					return true;
 				}
 				catch (Exception ex)
@@ -259,7 +259,7 @@ namespace SrcFileRenamePlugin
 					string n = Path.Combine(fi.DirectoryName, "x_" + fi.Name);
 					fi.MoveTo(n);
 					m_Msg = "Renamed file " + InstFilePath;
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, m_Msg);
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
 					return true;
 				}
 				catch (Exception ex)

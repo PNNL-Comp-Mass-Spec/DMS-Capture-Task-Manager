@@ -63,7 +63,7 @@ namespace DatasetArchivePlugin
 				if (!base.PerformTask()) return false;
 
 				m_Msg = "Updating dataset " + m_TaskParams.GetParam("dataset") + ", job " + m_TaskParams.GetParam("Job");
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, m_Msg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
 
 				m_SambaNamePath = Path.Combine(m_TaskParams.GetParam("Archive_Network_Share_Path"),
 															m_TaskParams.GetParam("Folder"));		// Path to archived dataset for Samba operations
@@ -95,7 +95,7 @@ namespace DatasetArchivePlugin
 					// Finished with this update task
 					m_Msg = "Completed archive update, dataset " + m_TaskParams.GetParam("dataset") + ", Folder " +
 									m_TaskParams.GetParam("Output_Folder_Name") + ", job " + m_TaskParams.GetParam("Job");
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, m_Msg);
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
 					return true;
 				}	// End "results folder not in archive" actions
 				else

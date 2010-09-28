@@ -62,7 +62,7 @@ namespace DatasetArchivePlugin
 						retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 					}
 					msg = "Completed archive, job " + m_TaskParams.GetParam("Job") + ", dataset " + m_TaskParams.GetParam("Dataset");
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 				}
 				else
 				{
@@ -79,7 +79,7 @@ namespace DatasetArchivePlugin
 						retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 					}
 					msg = "Completed archive update, job " + m_TaskParams.GetParam("Job") + ", dataset " + m_TaskParams.GetParam("Dataset");
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 				}
 				
 				msg = "Completed clsPluginMain.RunTool()";
