@@ -150,6 +150,7 @@ namespace DatasetArchivePlugin
 				m_FtpDart = new Dart.PowerTCP.Ftp.Ftp();
 				m_FtpDart.Trace += new SegmentEventHandler(On_FPT_Dart_Trace);	// Subscribe event handler for Trace event
 				m_FtpDart.Username = m_User;
+				m_FtpDart.BlockSize = 1049088; // Roughly 1 MB; value was determined by experimentation
 				TempPassword = m_Pwd;
 				m_FtpDart.Password = DecodePassword(TempPassword);	//Convert encrypted password to real password
 				m_FtpDart.Server = m_Server;

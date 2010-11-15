@@ -24,6 +24,7 @@ namespace DatasetIntegrityPlugin
 			const float RAW_FILE_MIN_SIXE = 0.1F;	//MB
 			const float RAW_FILE_MAX_SIZE = 2048F;	//MB
 			const float BAF_FILE_MIN_SIZE = 1.0F;	//MB
+			const float SER_FILE_MIN_SIZE = 1.0F;	//MB
 		#endregion
 
 		#region "Constructors"
@@ -89,6 +90,10 @@ namespace DatasetIntegrityPlugin
 						retData.CloseoutType = TestTripleQuadFile(dataFileNamePath);
 						break;
 					case "brukerft_baf":
+						retData.CloseoutType = TestBrukerFT_BafFolder(datasetFolder);
+						break;
+					case "brukermaldi_imaging":
+						retData.CloseoutType = TestBrukerMaldiImagingFolder(datasetFolder);
 						break;
 					default:
 						msg = "No integrity test avallable for instrument class " + instClass;
@@ -317,20 +322,75 @@ namespace DatasetIntegrityPlugin
 				string msg;
 				float dataFileSize;
 
-				// Verify analysis.baf file exists
-				if (!File.Exists(Path.Combine(datasetNamePath, "analysis.baf")))
+				// Verify only one .D folder in dataset
+				string[] folderList = Directory.GetDirectories(datasetNamePath, "*.D");
+				if (folderList.Length < 1)
 				{
-					msg = "Invalid dataset. analysis.baf file now found";
+					msg = "Invalid dataset. No .D folders found";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+				else if (folderList.Length > 1)
+				{
+					msg = "Invalid dataset. Multiple .D folders found";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+
+				// Verify analysis.baf file exists
+				if (!File.Exists(Path.Combine(folderList[0], "analysis.baf")))
+				{
+					msg = "Invalid dataset. analysis.baf file not found";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
 				// Verify size of analysis.baf file
-				dataFileSize = GetFileSize(Path.Combine(datasetNamePath, "analysis.baf"));
+				dataFileSize = GetFileSize(Path.Combine(folderList[0], "analysis.baf"));
 				if (dataFileSize <= BAF_FILE_MIN_SIZE)
 				{
-					msg = "Data file may be corrupt. Actual file size: " + dataFileSize.ToString("####0.00") +
+					msg = "Analysis.baf file may be corrupt. Actual file size: " + dataFileSize.ToString("####0.00") +
 								"MB. Min allowable size is " + BAF_FILE_MIN_SIZE.ToString("#0.00") + "MB.";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+
+				// Verify ser file exists
+				if (!File.Exists(Path.Combine(folderList[0], "ser")))
+				{
+					msg = "Invalid dataset. ser file not found";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+
+				// Verify size of ser file
+				dataFileSize = GetFileSize(Path.Combine(folderList[0], "ser"));
+				if (dataFileSize <= SER_FILE_MIN_SIZE)
+				{
+					msg = "ser file may be corrupt. Actual file size: " + dataFileSize.ToString("####0.00") +
+								"MB. Min allowable size is " + SER_FILE_MIN_SIZE.ToString("#0.00") + "MB.";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+
+				// If we got to here, everything is OK
+				return EnumCloseOutType.CLOSEOUT_SUCCESS;
+			}	// End sub
+
+			/// <summary>
+			/// Tests a BrukerMALDI_Imaging folder for integrity
+			/// </summary>
+			/// <param name="datasetNamePath">Fully qualified path to the dataset folder</param>
+			/// <returns></returns>
+			private EnumCloseOutType TestBrukerMaldiImagingFolder(string datasetNamePath)
+			{
+				string msg;
+
+				// Verify at least one zip file exists in dataset folder
+				string[] fileList = Directory.GetFiles(datasetNamePath, "*.zip");
+				if (fileList.Length < 1)
+				{
+					msg = "Invalid dataset. No zip files found";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
