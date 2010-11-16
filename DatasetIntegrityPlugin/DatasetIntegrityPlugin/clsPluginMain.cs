@@ -25,6 +25,7 @@ namespace DatasetIntegrityPlugin
 			const float RAW_FILE_MAX_SIZE = 2048F;	//MB
 			const float BAF_FILE_MIN_SIZE = 1.0F;	//MB
 			const float SER_FILE_MIN_SIZE = 1.0F;	//MB
+			const float FID_FILE_MIN_SIZE = 0.5F;	//MB
 		#endregion
 
 		#region "Constructors"
@@ -356,22 +357,42 @@ namespace DatasetIntegrityPlugin
 				}
 
 				// Verify ser file exists
-				if (!File.Exists(Path.Combine(folderList[0], "ser")))
+				if (File.Exists(Path.Combine(folderList[0], "ser")))
 				{
-					msg = "Invalid dataset. ser file not found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
-					return EnumCloseOutType.CLOSEOUT_FAILED;
+					// ser file found; verify size
+					dataFileSize = GetFileSize(Path.Combine(folderList[0], "ser"));
+					if (dataFileSize <= SER_FILE_MIN_SIZE)
+					{
+						msg = "ser file may be corrupt. Actual file size: " + dataFileSize.ToString("####0.00") +
+									"MB. Min allowable size is " + SER_FILE_MIN_SIZE.ToString("#0.00") + "MB.";
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+						return EnumCloseOutType.CLOSEOUT_FAILED;
+					}
+				}
+				else
+				{
+					// Check to see if a fid file exists instead of a ser file
+					if (File.Exists(Path.Combine(folderList[0], "fid")))
+					{
+						// fid file found; verify size
+						dataFileSize = GetFileSize(Path.Combine(folderList[0], "fid"));
+						if (dataFileSize <= FID_FILE_MIN_SIZE)
+						{
+							msg = "fid file may be corrupt. Actual file size: " + dataFileSize.ToString("####0.00") +
+										"MB. Min allowable size is " + FID_FILE_MIN_SIZE.ToString("#0.00") + "MB.";
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+							return EnumCloseOutType.CLOSEOUT_FAILED;
+						}
+					}
+					else
+					{
+						// No ser or fid file found
+						msg = "Invalid dataset. No ser or fid file found";
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+						return EnumCloseOutType.CLOSEOUT_FAILED;
+					}
 				}
 
-				// Verify size of ser file
-				dataFileSize = GetFileSize(Path.Combine(folderList[0], "ser"));
-				if (dataFileSize <= SER_FILE_MIN_SIZE)
-				{
-					msg = "ser file may be corrupt. Actual file size: " + dataFileSize.ToString("####0.00") +
-								"MB. Min allowable size is " + SER_FILE_MIN_SIZE.ToString("#0.00") + "MB.";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
-					return EnumCloseOutType.CLOSEOUT_FAILED;
-				}
 
 				// If we got to here, everything is OK
 				return EnumCloseOutType.CLOSEOUT_SUCCESS;
