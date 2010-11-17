@@ -29,7 +29,8 @@ namespace CaptureToolPlugin
 				None,
 				File,
 				FolderNoExt,
-				FolderExt
+				FolderExt,
+				BrukerImaging
 			}
 
 			protected enum DatasetFolderState
@@ -374,8 +375,9 @@ namespace CaptureToolPlugin
 			/// <param name="InstFolder">Full path to instrument transfer folder</param>
 			/// <param name="DSName">Dataset name</param>
 			/// <param name="MyName">Return value for full name of file or folder found, if any</param>
+			/// <param name="instClass">Instrument class for dataet to be located</param>
 			/// <returns>Enum specifying type of file/folder found, if any</returns>
-			private RawDSTypes GetRawDSType(string InstFolder, string DSName, ref string MyName)
+			private RawDSTypes GetRawDSType(string InstFolder, string DSName, ref string MyName, string instClass)
 			{
 				//Determines if raw dataset exists as a single file, folder with same name as dataset, or 
 				//	folder with dataset name + extension. Returns enum specifying what was found and MyName
@@ -415,7 +417,12 @@ namespace CaptureToolPlugin
 						{
 							//Found a directory that has no extension
 							MyName = Path.GetFileName(TestFolder);
-							return RawDSTypes.FolderNoExt;
+							//Check the instrument class to determine the appropriate return type
+							if (instClass == "BrukerMALDI_Imaging")
+							{
+								return RawDSTypes.BrukerImaging;
+							}
+							else return RawDSTypes.FolderNoExt;
 						}
 						else
 						{
@@ -540,11 +547,11 @@ namespace CaptureToolPlugin
 				//If Source_Folder_Name is non-blank, use it. Otherwise use dataset name
 				if (taskParams.GetParam("Source_Folder_Name") != "")
 				{
-					sourceType = GetRawDSType(sourceFolderPath, taskParams.GetParam("Source_Folder_Name"), ref rawFName);
+					sourceType = GetRawDSType(sourceFolderPath, taskParams.GetParam("Source_Folder_Name"), ref rawFName, taskParams.GetParam("Instrument_Class"));
 				}
 				else
 				{
-					sourceType = GetRawDSType(sourceFolderPath, dataset, ref rawFName);
+					sourceType = GetRawDSType(sourceFolderPath, dataset, ref rawFName, taskParams.GetParam("Instrument_Class"));
 				}
 
 				// Perform copy based on source type
@@ -641,6 +648,55 @@ namespace CaptureToolPlugin
 						catch (Exception ex)
 						{
 							msg = "Exception copying dataset folder " + Path.Combine(sourceFolderPath, rawFName);
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
+							return EnumCloseOutType.CLOSEOUT_FAILED;
+						}
+						finally
+						{
+							if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+						}
+						break;
+					case RawDSTypes.BrukerImaging:
+						// Dataset found; it's a Bruker imaging folder
+						// First, verify the folder size is constant (indicates acquisition is actually finished)
+						if (!VerifyConstantFolderSize(Path.Combine(sourceFolderPath, rawFName), m_SleepInterval))
+						{
+							msg = "Dataset '" + dataset + "' not ready";
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg);
+							if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+							return EnumCloseOutType.CLOSEOUT_NOT_READY;
+						}
+
+						// Check to see if the folders have been zipped
+						string[] zipFileList = Directory.GetFiles(Path.Combine(sourceFolderPath, rawFName), "*.zip");
+						if (zipFileList.Length < 1)
+						{
+							// Data files haven't been zipped, so throw error
+							msg = "No zip files found in dataset folder " + Path.Combine(sourceFolderPath, rawFName);
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+							return EnumCloseOutType.CLOSEOUT_FAILED;
+						}
+
+						// Make a dateaet folder
+						MakeFolderPath(datasetFolderPath);
+
+						// Copy only the files in the dataset folder to the storage server. Do not copy folders
+						try
+						{
+							string[] fileList = Directory.GetFiles(Path.Combine(sourceFolderPath, rawFName));
+							
+							foreach (string fileToCopy in fileList)
+							{
+								FileInfo fi = new FileInfo(fileToCopy);
+								fi.CopyTo(Path.Combine(datasetFolderPath,fi.Name));
+							}
+							msg = "Copied files in folder " + Path.Combine(sourceFolderPath, rawFName) + " to " + Path.Combine(datasetFolderPath, rawFName);
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
+							return EnumCloseOutType.CLOSEOUT_SUCCESS;
+						}
+						catch (Exception ex)
+						{
+							msg = "Exception copying files in dataset folder " + Path.Combine(sourceFolderPath, rawFName);
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
 							return EnumCloseOutType.CLOSEOUT_FAILED;
 						}
