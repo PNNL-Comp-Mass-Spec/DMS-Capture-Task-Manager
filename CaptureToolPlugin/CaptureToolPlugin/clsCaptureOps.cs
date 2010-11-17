@@ -30,7 +30,8 @@ namespace CaptureToolPlugin
 				File,
 				FolderNoExt,
 				FolderExt,
-				BrukerImaging
+				BrukerImaging,
+				BrukerSpot
 			}
 
 			protected enum DatasetFolderState
@@ -417,12 +418,20 @@ namespace CaptureToolPlugin
 						{
 							//Found a directory that has no extension
 							MyName = Path.GetFileName(TestFolder);
+
 							//Check the instrument class to determine the appropriate return type
-							if (instClass == "BrukerMALDI_Imaging")
+							switch (instClass)
 							{
-								return RawDSTypes.BrukerImaging;
+								case "BrukerMALDI_Imaging":
+									return RawDSTypes.BrukerImaging;
+//									break;
+								case "BrukerMALDI_Spot":
+									return RawDSTypes.BrukerSpot;
+//									break;
+								default:
+									return RawDSTypes.FolderNoExt;
+//									break;
 							}
-							else return RawDSTypes.FolderNoExt;
 						}
 						else
 						{
@@ -562,7 +571,7 @@ namespace CaptureToolPlugin
 						msg = "Dataset " + dataset + ": data file not found";
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb,clsLogTools.LogLevels.ERROR,msg);
 						return EnumCloseOutType.CLOSEOUT_FAILED;
-						break;
+//						break;
 					case RawDSTypes.File:
 						// Dataset found, and it's a single file
 						// First, verify the file size is constant (indicates acquisition is actually finished)
@@ -592,7 +601,7 @@ namespace CaptureToolPlugin
 							if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
 							return EnumCloseOutType.CLOSEOUT_FAILED;
 						}
-						break;
+//						break;
 					case RawDSTypes.FolderExt:
 						// Dataset found in a folder with an extension on the folder name
 						// First, verify the folder size is constant (indicates acquisition is actually finished)
@@ -625,7 +634,7 @@ namespace CaptureToolPlugin
 						{
 							if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
 						}
-						break;
+//						break;
 					case RawDSTypes.FolderNoExt:
 						// Dataset found; it's a folder with no extension on the name
 						// First, verify the folder size is constant (indicates acquisition is actually finished)
@@ -635,6 +644,15 @@ namespace CaptureToolPlugin
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg);
 							if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
 							return EnumCloseOutType.CLOSEOUT_NOT_READY;
+						}
+
+						// Verify the folder doesn't contain a group of ".D" folders
+						string[] folderList = Directory.GetDirectories(Path.Combine(sourceFolderPath, rawFName),"*.D");
+						if (folderList.Length > 0)
+						{
+							msg = "Multiple scan folders found in dataset folder " + Path.Combine(sourceFolderPath, rawFName);
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+							return EnumCloseOutType.CLOSEOUT_FAILED;
 						}
 
 						// Copy the dataset folder to the storage server
@@ -655,7 +673,7 @@ namespace CaptureToolPlugin
 						{
 							if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
 						}
-						break;
+//						break;
 					case RawDSTypes.BrukerImaging:
 						// Dataset found; it's a Bruker imaging folder
 						// First, verify the folder size is constant (indicates acquisition is actually finished)
@@ -704,13 +722,60 @@ namespace CaptureToolPlugin
 						{
 							if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
 						}
-						break;
+//						break;
+					case RawDSTypes.BrukerSpot:
+						// Dataset found; it's a Bruker_Spot instrument type
+						// First, verify the folder size is constant (indicates acquisition is actually finished)
+						if (!VerifyConstantFolderSize(Path.Combine(sourceFolderPath, rawFName), m_SleepInterval))
+						{
+							msg = "Dataset '" + dataset + "' not ready";
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg);
+							if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+							return EnumCloseOutType.CLOSEOUT_NOT_READY;
+						}
+
+						// Verify the dataset folder contains just one data folder, unzipped
+						string[] zipFiles = Directory.GetFiles(Path.Combine(sourceFolderPath, rawFName), "*.zip");
+						string[] dataFolders = Directory.GetDirectories(Path.Combine(sourceFolderPath, rawFName));
+
+						if (zipFiles.Length > 0)
+						{
+							msg = "Zip files found in dataset folder " + Path.Combine(sourceFolderPath, rawFName);
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+							return EnumCloseOutType.CLOSEOUT_FAILED;
+						}
+						else if (dataFolders.Length != 1)
+						{
+							msg = "Multiple data files found in dataset folder " + Path.Combine(sourceFolderPath, rawFName);
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+							return EnumCloseOutType.CLOSEOUT_FAILED;
+						}
+
+						// Copy the dataset folder to the storage server
+						try
+						{
+							clsFileTools.CopyDirectory(Path.Combine(sourceFolderPath, rawFName), datasetFolderPath);
+							msg = "Copied folder " + Path.Combine(sourceFolderPath, rawFName) + " to " + Path.Combine(datasetFolderPath, rawFName);
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
+							return EnumCloseOutType.CLOSEOUT_SUCCESS;
+						}
+						catch (Exception ex)
+						{
+							msg = "Exception copying dataset folder " + Path.Combine(sourceFolderPath, rawFName);
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
+							return EnumCloseOutType.CLOSEOUT_FAILED;
+						}
+						finally
+						{
+							if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+						}
+//						break;
 					default:
 						msg = "Invalid dataset type found: " + sourceType.ToString();
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 						if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
 						return EnumCloseOutType.CLOSEOUT_FAILED;
-						break;
+//						break;
 				}	// End switch
 			}	// End sub
 

@@ -7,6 +7,7 @@
 //
 // Last modified 10/02/2009
 //						07/09/2010 (DAC) - Added new definition for BrukerFT_BAF instrument class
+//						11/17/2010 (DAC) - Added new tests for MALDI imaging and spot instrument classes
 //*********************************************************************************************************
 using System;
 using CaptureTaskManager;
@@ -95,6 +96,9 @@ namespace DatasetIntegrityPlugin
 						break;
 					case "brukermaldi_imaging":
 						retData.CloseoutType = TestBrukerMaldiImagingFolder(datasetFolder);
+						break;
+					case "brukermaldi_spot":
+						retData.CloseoutType = TestBrukerMaldiSpotFolder(datasetFolder);
 						break;
 					default:
 						msg = "No integrity test avallable for instrument class " + instClass;
@@ -402,7 +406,7 @@ namespace DatasetIntegrityPlugin
 			/// Tests a BrukerMALDI_Imaging folder for integrity
 			/// </summary>
 			/// <param name="datasetNamePath">Fully qualified path to the dataset folder</param>
-			/// <returns></returns>
+			/// <returns>Enum indicating success or failure</returns>
 			private EnumCloseOutType TestBrukerMaldiImagingFolder(string datasetNamePath)
 			{
 				string msg;
@@ -412,6 +416,36 @@ namespace DatasetIntegrityPlugin
 				if (fileList.Length < 1)
 				{
 					msg = "Invalid dataset. No zip files found";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+
+				// If we got to here, everything is OK
+				return EnumCloseOutType.CLOSEOUT_SUCCESS;
+			}	// End sub
+
+			/// <summary>
+			/// Tests a BrukerMALDI_Spot folder for integrity
+			/// </summary>
+			/// <param name="datasetNamePath">Fully qualified path to the dataset folder</param>
+			/// <returns>Enum indicating success or failure</returns>
+			private EnumCloseOutType TestBrukerMaldiSpotFolder(string datasetNamePath)
+			{
+				string msg;
+
+				//Verify the dataset folder contains just one data folder, unzipped
+				string[] zipFiles = Directory.GetFiles(datasetNamePath, "*.zip");
+				string[] dataFolders = Directory.GetDirectories(datasetNamePath);
+
+				if (zipFiles.Length > 0)
+				{
+					msg = "Zip files found in dataset folder " + datasetNamePath;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+				else if (dataFolders.Length != 1)
+				{
+					msg = "Multiple data files found in dataset folder " + datasetNamePath;
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
