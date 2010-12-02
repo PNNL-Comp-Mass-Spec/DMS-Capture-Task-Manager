@@ -166,9 +166,9 @@ namespace CaptureTaskManager
 						myCmd.Parameters["@JobCountToPreview"].Value = 10;
 					}
 
-					msg = "clsAnalysisJob.RequestAnalysisJob(), connection string: " + m_BrokerConnStr;
+					msg = "clsCaptureTask.RequestTaskDetailed(), connection string: " + m_BrokerConnStr;
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-					msg = "clsAnalysisJob.RequestAnalysisJob(), printing param list";
+					msg = "clsCaptureTask.RequestTaskDetailed(), printing param list";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 					PrintCommandParams(myCmd);
 
@@ -199,7 +199,7 @@ namespace CaptureTaskManager
 							break;
 						default:
 							//There was an SP error
-							msg = "clsAnalysisJob.RequestAnalysisJob(), SP execution error " + retVal.ToString();
+							msg = "clsCaptureTask.RequestTaskDetailed(), SP execution error " + retVal.ToString();
 							msg += "; Msg text = " + (string)myCmd.Parameters["@message"].Value;
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 							outcome = EnumRequestTaskResult.ResultError;
