@@ -24,14 +24,15 @@ namespace CaptureToolPlugin
 		//**********************************************************************************************************
 
 		#region "Enums"
-			protected enum RawDSTypes
+			public enum RawDSTypes
 			{
 				None,
 				File,
 				FolderNoExt,
 				FolderExt,
 				BrukerImaging,
-				BrukerSpot
+				BrukerSpot,
+				MultiFile
 			}
 
 			protected enum DatasetFolderState
@@ -377,31 +378,35 @@ namespace CaptureToolPlugin
 			/// <param name="DSName">Dataset name</param>
 			/// <param name="MyName">Return value for full name of file or folder found, if any</param>
 			/// <param name="instClass">Instrument class for dataet to be located</param>
-			/// <returns>Enum specifying type of file/folder found, if any</returns>
-			private RawDSTypes GetRawDSType(string InstFolder, string DSName, ref string MyName, string instClass)
+			/// <returns>clsDatasetInfo object containing info on found dataset</returns>
+			private clsDatasetInfo GetRawDSType(string InstFolder, string DSName, string instClass)
 			{
 				//Determines if raw dataset exists as a single file, folder with same name as dataset, or 
-				//	folder with dataset name + extension. Returns enum specifying what was found and MyName
-				// containing full name of file or folder
+				//	folder with dataset name + extension. Returns object containing info on dataset found
 
 				string[] MyInfo = null;
+				clsDatasetInfo datasetInfo = new	clsDatasetInfo();
 
 				//Verify instrument transfer folder exists
 				if (!Directory.Exists(InstFolder))
 				{
-					MyName = "";
-					return RawDSTypes.None;
+					datasetInfo.DatasetType = RawDSTypes.None
+					return datasetInfo;
 				}
 
-				//Check for a file with specified name
-				MyInfo = Directory.GetFiles(InstFolder);
-				foreach (string TestFile in MyInfo)
+				//Get all files with a specified name
+				MyInfo = Directory.GetFiles(InstFolder, DSName + ".*");
+				if (MyInfo.Length > 0)
 				{
-					if (Path.GetFileNameWithoutExtension(TestFile).ToLower() == DSName.ToLower())
+					datasetInfo.FileOrFolderName = DSName;
+					datasetInfo.FileList = MyInfo;
+					if (datasetInfo.FileCount == 1)
 					{
-						MyName = Path.GetFileName(TestFile);
-						return RawDSTypes.File;
+						datasetInfo.DatasetType = RawDSTypes.File;
 					}
+					else datasetInfo.DatasetType = RawDSTypes.MultiFile;
+					
+					return datasetInfo;
 				}
 
 				//Check for a folder with specified name
@@ -417,35 +422,36 @@ namespace CaptureToolPlugin
 						if (string.IsNullOrEmpty(Path.GetExtension(TestFolder)))
 						{
 							//Found a directory that has no extension
-							MyName = Path.GetFileName(TestFolder);
+							datasetInfo.FileOrFolderName = Path.GetFileName(TestFolder);
 
 							//Check the instrument class to determine the appropriate return type
 							switch (instClass)
 							{
 								case "BrukerMALDI_Imaging":
-									return RawDSTypes.BrukerImaging;
-//									break;
+									datasetInfo.DatasetType = RawDSTypes.BrukerImaging;
+									break;
 								case "BrukerMALDI_Spot":
-									return RawDSTypes.BrukerSpot;
-//									break;
+									datasetInfo.DatasetType = RawDSTypes.BrukerSpot;
+									break;
 								default:
-									return RawDSTypes.FolderNoExt;
-//									break;
+									datasetInfo.DatasetType = RawDSTypes.FolderNoExt;
+									break;
 							}
+							return datasetInfo;
 						}
 						else
 						{
 							//Directory name has an extension
-							MyName = Path.GetFileName(TestFolder);
-							return RawDSTypes.FolderExt;
+							datasetInfo.FileOrFolderName = Path.GetFileName(TestFolder);
+							datasetInfo.DatasetType = RawDSTypes.FolderExt;
+							return datasetInfo;
 						}
 					}
 				}
 
 				//If we got to here, then the raw dataset wasn't found, so there was a problem
-				MyName = "";
-
-				return RawDSTypes.None;
+				datasetInfo.DatasetType = RawDSTypes.None;
+				return datasetInfo;
 			}	// End sub
 
 			/// <summary>

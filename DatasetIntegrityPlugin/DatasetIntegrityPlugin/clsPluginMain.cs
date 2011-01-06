@@ -24,9 +24,10 @@ namespace DatasetIntegrityPlugin
 		#region "Constants"
 			const float RAW_FILE_MIN_SIXE = 0.1F;	//MB
 			const float RAW_FILE_MAX_SIZE = 2048F;	//MB
-			const float BAF_FILE_MIN_SIZE = 1.0F;	//MB
-			const float SER_FILE_MIN_SIZE = 1.0F;	//MB
-			const float FID_FILE_MIN_SIZE = 0.5F;	//MB
+			const float BAF_FILE_MIN_SIZE = 0.1F;	//MB
+			const float SER_FILE_MIN_SIZE = 0.016F;	//MB
+			const float FID_FILE_MIN_SIZE = 0.016F;	//MB
+			const float ACQ_METHOD_FILE_MIN_SIZE = 0.005F;	//MB
 		#endregion
 
 		#region "Constructors"
@@ -397,6 +398,37 @@ namespace DatasetIntegrityPlugin
 					}
 				}
 
+				// Check to see if a .M folder exists
+				string[] subFolderList = Directory.GetDirectories(folderList[0], "*.M");
+				if (subFolderList.Length < 0)
+				{
+					msg = "Invalid dataset. No .M folders found";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+				else if (subFolderList.Length > 1)
+				{
+					msg = "Invalid dataset. Multiple .M folders found";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+
+				// Determine if apexAcquisition.method file exists and meets minimum size requirements
+				string methodFolderPath = subFolderList[0];
+				if (!File.Exists(Path.Combine(methodFolderPath,"apexAcquisition.method")))
+				{
+					msg = "Invalid dataset. apexAcquisition.method file not found";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+				dataFileSize = GetFileSize(Path.Combine(methodFolderPath, "apexAcquisition.method"));
+				if (dataFileSize <= ACQ_METHOD_FILE_MIN_SIZE)
+				{
+					msg = "apexAcquisition.method file may be corrupt. Actual file size: " + dataFileSize.ToString("####0.00") +
+								"MB. Min allowable size is " + ACQ_METHOD_FILE_MIN_SIZE.ToString("#0.00") + "MB.";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
 
 				// If we got to here, everything is OK
 				return EnumCloseOutType.CLOSEOUT_SUCCESS;
