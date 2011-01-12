@@ -101,6 +101,9 @@ namespace DatasetIntegrityPlugin
 					case "brukermaldi_spot":
 						retData.CloseoutType = TestBrukerMaldiSpotFolder(datasetFolder);
 						break;
+					case "brukertof_baf":
+						retData.CloseoutType = TestBrukerTof_BafFolder(datasetFolder);
+						break;
 					default:
 						msg = "No integrity test avallable for instrument class " + instClass;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg);
@@ -319,10 +322,81 @@ namespace DatasetIntegrityPlugin
 			}	// End sub
 
 			/// <summary>
+			/// Tests a BrukerTOF_BAF folder for integrity
+			/// </summary>
+			/// <param name="datasetNamePath">Fully qualified path to the dataset folder</param>
+			/// <returns>Enum indicating test result</returns>
+			private EnumCloseOutType TestBrukerTof_BafFolder(string datasetNamePath)
+			{
+				string msg;
+				float dataFileSize;
+
+				// Verify only one .D folder in dataset
+				string[] folderList = Directory.GetDirectories(datasetNamePath, "*.D");
+				if (folderList.Length < 1)
+				{
+					msg = "Invalid dataset. No .D folders found";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+				else if (folderList.Length > 1)
+				{
+					msg = "Invalid dataset. Multiple .D folders found";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+
+				// Verify analysis.baf file exists
+				if (!File.Exists(Path.Combine(folderList[0], "analysis.baf")))
+				{
+					msg = "Invalid dataset. analysis.baf file not found";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+
+				// Verify size of analysis.baf file
+				dataFileSize = GetFileSize(Path.Combine(folderList[0], "analysis.baf"));
+				if (dataFileSize <= BAF_FILE_MIN_SIZE)
+				{
+					msg = "Analysis.baf file may be corrupt. Actual file size: " + dataFileSize.ToString("####0.00") +
+								"MB. Min allowable size is " + BAF_FILE_MIN_SIZE.ToString("#0.00") + "MB.";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+
+				// Check to see if at least one .M folder exists
+				string[] subFolderList = Directory.GetDirectories(folderList[0], "*.M");
+				if (subFolderList.Length < 0)
+				{
+					msg = "Invalid dataset. No .M folders found";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+				else if (subFolderList.Length > 1)
+				{
+					msg = "Invalid dataset. Multiple .M folders found";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+
+				// Determine if at least one .method file exists
+				string[] methodFiles = Directory.GetFiles(subFolderList[0],"*.method");
+				if (methodFiles.Length == 0)
+				{
+					msg = "Invalid dataset. No .method files found";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+
+				// If we got to here, everything is OK
+				return EnumCloseOutType.CLOSEOUT_SUCCESS;
+			}	// End sub
+
+			/// <summary>
 			/// Tests a BrukerFT_BAF folder for integrity
 			/// </summary>
 			/// <param name="datasetNamePath">Fully qualified path to the dataset folder</param>
-			/// <returns></returns>
+			/// <returns>Enum indicating test result</returns>
 			private EnumCloseOutType TestBrukerFT_BafFolder(string datasetNamePath)
 			{
 				string msg;
