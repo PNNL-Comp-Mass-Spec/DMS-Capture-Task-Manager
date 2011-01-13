@@ -50,6 +50,7 @@ namespace CaptureTaskManager
 			private static string m_BaseFileName;
 			private static log4net.Appender.FileAppender m_FileAppender;
 			private static log4net.Appender.RollingFileAppender m_FtpLogFileAppender;
+			private static bool m_FtpLogEnabled = false;
 		#endregion
 
 		#region "Properties"
@@ -192,6 +193,8 @@ namespace CaptureTaskManager
 			/// <param name="inpMsg">Message to log</param>
 			public static void WriteFtpLog(string inpMsg)
 			{
+				if (!m_FtpLogEnabled) return;
+
 				if (m_FtpFileLogger.IsDebugEnabled) m_FtpFileLogger.Debug(inpMsg);
 			}	// End sub
 
@@ -375,6 +378,7 @@ namespace CaptureTaskManager
 				m_FtpLogFileAppender = CreateFtpLogfileAppender(logFileName);
 				curLogger.AddAppender(m_FtpLogFileAppender);
 				curLogger.Level = log4net.Core.Level.Debug;
+				m_FtpLogEnabled = true;
 			}	// End sub
 
 			/// <summary>

@@ -105,7 +105,7 @@ namespace CaptureTaskManager
 				string logFileName = m_MgrSettings.GetParam("logfilename");
 				int debugLevel = int.Parse(m_MgrSettings.GetParam("debuglevel"));
 				clsLogTools.CreateFileLogger(logFileName, debugLevel);
-				clsLogTools.CreateFtpLogFileLogger("Dummy.txt");
+				if (bool.Parse(m_MgrSettings.GetParam("ftplogging"))) clsLogTools.CreateFtpLogFileLogger("Dummy.txt");
 				string logCnStr = m_MgrSettings.GetParam("connectionstring");
 				string moduleName = m_MgrSettings.GetParam("modulename");
 				clsLogTools.CreateDbLogger(logCnStr, moduleName);
