@@ -28,6 +28,8 @@ namespace DatasetIntegrityPlugin
 			const float SER_FILE_MIN_SIZE = 0.016F;	//MB
 			const float FID_FILE_MIN_SIZE = 0.016F;	//MB
 			const float ACQ_METHOD_FILE_MIN_SIZE = 0.005F;	//MB
+			const float SCIEX_WIFF_FILE_MIN_SIZE = 0.1F; //MB
+			const float SCIEX_WIFF_SCAN_FILE_MIN_SIZE = 0.001F; //MB
 		#endregion
 
 		#region "Constructors"
@@ -104,6 +106,9 @@ namespace DatasetIntegrityPlugin
 					case "brukertof_baf":
 						retData.CloseoutType = TestBrukerTof_BafFolder(datasetFolder);
 						break;
+					case "sciex_qtrap":
+						retData.CloseoutType = TestSciexQtrapFile(datasetFolder, dataset);
+						break;
 					default:
 						msg = "No integrity test avallable for instrument class " + instClass;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg);
@@ -117,6 +122,63 @@ namespace DatasetIntegrityPlugin
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 				return retData;
+			}	// End sub
+
+			/// <summary>
+			/// Tests a Sciex QTrap dataset's integrity
+			/// </summary>
+			/// <param name="dataFileNamePath">Fully qualified path to dataset file</param>
+			/// <returns>Enum indicating success or failure</returns>
+			private EnumCloseOutType TestSciexQtrapFile(string dataFileNamePath, string datasetName)
+			{
+				string msg;
+				float dataFileSize;
+				string tempFileNamePath;
+
+				// Verify .wiff file exists in storage folder
+				tempFileNamePath = Path.Combine(dataFileNamePath, datasetName + ".wiff");
+				if (!File.Exists(tempFileNamePath))
+				{
+					msg = "Data file " + tempFileNamePath + " not found";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+
+				// Get size of .wiff file
+				dataFileSize = GetFileSize(tempFileNamePath);
+
+				// Check .wiff file min size
+				if (dataFileSize < SCIEX_WIFF_FILE_MIN_SIZE)
+				{
+					msg = "Data file " + tempFileNamePath + " may be corrupt. Actual file size: " + dataFileSize.ToString("####0.00") +
+								"MB. Min allowable size is " + SCIEX_WIFF_FILE_MIN_SIZE.ToString("#0.00") + "MB.";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+
+				// Verify .wiff.scan file exists in storage folder
+				tempFileNamePath = Path.Combine(dataFileNamePath, datasetName + ".wiff.scan");
+				if (!File.Exists(tempFileNamePath))
+				{
+					msg = "Data file " + tempFileNamePath + " not found";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+
+				// Get size of .wiff.scan file
+				dataFileSize = GetFileSize(tempFileNamePath);
+
+				// Check .wiff.scan file min size
+				if (dataFileSize < SCIEX_WIFF_SCAN_FILE_MIN_SIZE)
+				{
+					msg = "Data file " + tempFileNamePath + " may be corrupt. Actual file size: " + dataFileSize.ToString("####0.00") +
+								"MB. Min allowable size is " + SCIEX_WIFF_SCAN_FILE_MIN_SIZE.ToString("#0.00") + "MB.";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+
+				// If we got to here, everything was OK
+				return EnumCloseOutType.CLOSEOUT_SUCCESS;
 			}	// End sub
 
 			/// <summary>
