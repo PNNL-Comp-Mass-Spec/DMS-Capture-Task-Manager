@@ -1,0 +1,10 @@
+D:\DMS_Controlled\Capture_Task_Manager\ImsDemuxPlugin\ImsDemuxPlugin\obj\Debug\ResolveAssemblyReference.cache
+D:\DMS_Controlled\Capture_Task_Manager\ImsDemuxPlugin\ImsDemuxPlugin\bin\Debug\ImsDemuxPlugin.dll
+D:\DMS_Controlled\Capture_Task_Manager\ImsDemuxPlugin\ImsDemuxPlugin\bin\Debug\ImsDemuxPlugin.pdb
+D:\DMS_Controlled\Capture_Task_Manager\ImsDemuxPlugin\ImsDemuxPlugin\bin\Debug\CaptureTaskManager.exe
+D:\DMS_Controlled\Capture_Task_Manager\ImsDemuxPlugin\ImsDemuxPlugin\bin\Debug\System.Data.SQLite.dll
+D:\DMS_Controlled\Capture_Task_Manager\ImsDemuxPlugin\ImsDemuxPlugin\bin\Debug\Apache.NMS.ActiveMQ.dll
+D:\DMS_Controlled\Capture_Task_Manager\ImsDemuxPlugin\ImsDemuxPlugin\bin\Debug\log4net.dll
+D:\DMS_Controlled\Capture_Task_Manager\ImsDemuxPlugin\ImsDemuxPlugin\bin\Debug\Apache.NMS.dll
+D:\DMS_Controlled\Capture_Task_Manager\ImsDemuxPlugin\ImsDemuxPlugin\obj\Debug\ImsDemuxPlugin.dll
+D:\DMS_Controlled\Capture_Task_Manager\ImsDemuxPlugin\ImsDemuxPlugin\obj\Debug\ImsDemuxPlugin.pdb
