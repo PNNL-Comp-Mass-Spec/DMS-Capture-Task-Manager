@@ -25,7 +25,7 @@ namespace ImsDemuxPlugin
 			/// <param name="mgrParams">Parameters for manager operation</param>
 			/// <param name="taskParams">Parameters for the assigned task</param>
 			/// <returns>Enum indicating task success or failure</returns>
-			public static clsToolReturnData PerformDemux(IMgrParams mgrParams, ITaskParams taskParams)
+			public static clsToolReturnData PerformDemux(IMgrParams mgrParams, ITaskParams taskParams, string uimfFileName)
 			{
 				string msg = "Performing de-multiplexing, dataset " + taskParams.GetParam("Dataset");
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
@@ -33,17 +33,16 @@ namespace ImsDemuxPlugin
 				clsToolReturnData retData = new clsToolReturnData();
 
 				string dataset = taskParams.GetParam("Dataset");
-				string uimfFileName = dataset + ".uimf";
 
 				// Locate data file on storage server
 				string svrPath = Path.Combine(taskParams.GetParam("Storage_Vol_External"), taskParams.GetParam("Storage_Path"));
 				string dsPath = Path.Combine(svrPath, taskParams.GetParam("Folder"));
 				string uimfRemoteFileNamePath = Path.Combine(dsPath, uimfFileName);
-				string uimfLocalFileNamePath = Path.Combine(mgrParams.GetParam("workdir"), uimfFileName);
+				string uimfLocalFileNamePath = Path.Combine(mgrParams.GetParam("workdir"), dataset + ".uimf");
 
 				// Copy uimf file to working directory
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying file from storage server");
-				if (!CopyFile(uimfRemoteFileNamePath, uimfLocalFileNamePath))
+				if (!CopyFile(uimfRemoteFileNamePath, uimfLocalFileNamePath, false))
 				{
 					retData.CloseoutMsg = "Error copying UIMF file to working directory";
 					retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -62,18 +61,23 @@ namespace ImsDemuxPlugin
 				// Rename uimf file on storage server
 				msg = "Renaming uimf file on storage server";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-				if (!RenameFile(uimfRemoteFileNamePath, Path.Combine(dsPath, dataset + "_encoded.uimf")))
+				// If this is a re-run, then encoded file has already been renamed
+				// This is determined by looking for "encoded" in uimf file name
+				if (!uimfFileName.Contains("encoded"))
 				{
-					retData.CloseoutMsg = "Error renaming encoded UIMF file on storage server";
-					retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-					return retData;
+					if (!RenameFile(uimfRemoteFileNamePath, Path.Combine(dsPath, dataset + "_encoded.uimf")))
+					{
+						retData.CloseoutMsg = "Error renaming encoded UIMF file on storage server";
+						retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+						return retData;
+					}
 				}
 
 				// Copy demuxed file to storage server, renaming as datasetname.uimf in the process
 				msg = "Copying de-mulitiplexed file to storage server";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 				string localUimfDecoded = Path.Combine(mgrParams.GetParam("workdir"), dataset + "_decoded.uimf");
-				if (!CopyFile(localUimfDecoded, uimfRemoteFileNamePath))
+				if (!CopyFile(localUimfDecoded, Path.Combine(dsPath, dataset + ".uimf"), true))
 				{
 					retData.CloseoutMsg = "Error copying decoded UIMF file to storage server";
 					retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -135,11 +139,11 @@ namespace ImsDemuxPlugin
 			/// <param name="sourceFileNamePath">Source file</param>
 			/// <param name="TargetFileNamePath">Destination file</param>
 			/// <returns></returns>
-			private static bool CopyFile(string sourceFileNamePath, string TargetFileNamePath)
+			private static bool CopyFile(string sourceFileNamePath, string TargetFileNamePath, bool overWrite)
 			{
 				try
 				{
-					File.Copy(sourceFileNamePath, TargetFileNamePath);
+					File.Copy(sourceFileNamePath, TargetFileNamePath, overWrite);
 					return true;
 				}
 				catch (Exception ex)

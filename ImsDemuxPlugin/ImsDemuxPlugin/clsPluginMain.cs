@@ -50,19 +50,25 @@ namespace ImsDemuxPlugin
 				// Locate data file on storage server
 				string svrPath = Path.Combine(m_TaskParams.GetParam("Storage_Vol_External"), m_TaskParams.GetParam("Storage_Path"));
 				string dsPath = Path.Combine(svrPath, m_TaskParams.GetParam("Folder"));
-				string uimfFileNamePath = Path.Combine(dsPath, dataset + ".uimf");
-				if (!File.Exists(uimfFileNamePath))
+				// Use this name first to test if demux has already been performed once
+				string uimfFileName = dataset + "_encoded.uimf";
+				if (!File.Exists(Path.Combine(dsPath, uimfFileName)))
 				{
-					msg = "UIMF file " + uimfFileNamePath + " not found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile,clsLogTools.LogLevels.ERROR,msg);
-					retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-					retData.CloseoutMsg = msg;
-					msg = "Completed clsPluginMain.RunTool()";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-					return retData;
+					uimfFileName = dataset + ".uimf";
+					if (!File.Exists(Path.Combine(dsPath, uimfFileName)))
+					{
+						msg = "UIMF file not found";
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+						retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+						retData.CloseoutMsg = msg;
+						msg = "Completed clsPluginMain.RunTool()";
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+						return retData;
+					}
 				}
 
 				// Query to determine if demux is needed. Closeout if not required (adding "NonMultiplexed" to eval comment)
+				string uimfFileNamePath = Path.Combine(dsPath, uimfFileName);
 				clsSQLiteTools.UimfQueryResults queryResult = clsSQLiteTools.GetUimfMuxStatus(uimfFileNamePath);
 				if (queryResult == clsSQLiteTools.UimfQueryResults.NonMultiplexed)
 				{
@@ -87,7 +93,7 @@ namespace ImsDemuxPlugin
 				}
 
 				// De-multiplexing is needed
-				retData = clsDemuxTools.PerformDemux(m_MgrParams, m_TaskParams);
+				retData = clsDemuxTools.PerformDemux(m_MgrParams, m_TaskParams, uimfFileName);
 
 				msg = "Completed clsPluginMain.RunTool()";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
