@@ -7,11 +7,8 @@
 // Last modified 03/07/2011
 //*********************************************************************************************************
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using CaptureTaskManager;
 using System.IO;
+using CaptureTaskManager;
 
 namespace ImsDemuxPlugin
 {
@@ -20,24 +17,6 @@ namespace ImsDemuxPlugin
 		//*********************************************************************************************************
 		//Insert general class description here
 		//**********************************************************************************************************
-
-		#region "Constants"
-		#endregion
-
-		#region "Class variables"
-		#endregion
-
-		#region "Delegates"
-		#endregion
-
-		#region "Events"
-		#endregion
-
-		#region "Properties"
-		#endregion
-
-		#region "Constructors"
-		#endregion
 
 		#region "Methods"
 			/// <summary>
@@ -73,7 +52,7 @@ namespace ImsDemuxPlugin
 
 				// Perform demux operation
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Calling demux dll");
-				if (!DemultiplexFile(uimfLocalFileNamePath))
+				if (!DemultiplexFile(uimfLocalFileNamePath, dataset))
 				{
 					retData.CloseoutMsg = "Error demultiplexing UIMF file";
 					retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -128,10 +107,26 @@ namespace ImsDemuxPlugin
 			/// </summary>
 			/// <param name="inputFile">Input file name</param>
 			/// <returns>Enum indicating success or failure</returns>
-			private static bool DemultiplexFile(string inputFile)
+			private static bool DemultiplexFile(string inputFile, string datasetName)
 			{
-				//TODO: Add actual code when received from Anuj
-				return true;
+				FileInfo fi = new FileInfo(inputFile);
+				string folderName = fi.DirectoryName;
+				string outputFile = Path.Combine(folderName, datasetName + "_decoded.uimf");
+				try
+				{
+					string msg = "Starting de-multiplexing, dataset " + datasetName;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+					UIMFDemultiplexer.UIMFDemultiplexer.demultiplex(inputFile, outputFile);
+					msg = "De-multiplexing complete, dataset " + datasetName;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+					return true;
+				}
+				catch (Exception ex)
+				{
+					string msg = "Exception de-multiplexing dataset " + datasetName;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+					return false;
+				}
 			}	// End sub
 
 			/// <summary>

@@ -64,14 +64,30 @@ namespace ImsDemuxPlugin
 				bool deMuxRequired = false;
 				foreach (DataRow currRow in queryResult.Rows)
 				{
-					string testStr = (string)currRow[queryResult.Columns[0]];
+					string testStr = "";
+					object tmpObj = currRow[queryResult.Columns[0]];
+					if (tmpObj == DBNull.Value)
+					{
+						// Null field means demux not required
+						continue;
+					}
+					else
+					{
+						testStr = (string)tmpObj;
 
-					// Empty string means demux not required
-					if (testStr == "") continue;
+						// Empty string means demux not required
+						if (testStr == "") continue;
+					}
 
 					// Get the file name, and check to see if it contains "bit"
-					string fileName = System.IO.Path.GetFileName(uimfFileNamePath).ToLower();
-					if (fileName.Contains("bit")) deMuxRequired = true;
+					string fileName = System.IO.Path.GetFileName(testStr).ToLower();
+					if (fileName.Contains("bit"))
+					{
+						// Filename contains "bit", so de-multiplexing is required
+						deMuxRequired = true;
+						// No need to check additional rows, if any
+						break;
+					}
 				}
 
 				// Return results

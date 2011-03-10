@@ -36,5 +36,10 @@
 			Class="SrcFileRenamePlugin.clsPluginMain"
 			AssemblyFile="SrcFileRenamePlugin.dll"
 		/>
+		<ToolRunner
+			Tool="imsdemultiplex"
+			Class="ImsDemuxPlugin.clsPluginMain"
+			AssemblyFile="ImsDemuxPlugin.dll"
+		/>
 	</ToolRunners>
 </Plugins>

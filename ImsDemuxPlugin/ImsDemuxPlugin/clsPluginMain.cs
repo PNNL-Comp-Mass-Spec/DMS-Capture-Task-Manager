@@ -21,21 +21,6 @@ namespace ImsDemuxPlugin
 		// Main class for plugin
 		//**********************************************************************************************************
 
-		#region "Constants"
-		#endregion
-
-		#region "Class variables"
-		#endregion
-
-		#region "Delegates"
-		#endregion
-
-		#region "Events"
-		#endregion
-
-		#region "Properties"
-		#endregion
-
 		#region "Constructors"
 			public clsPluginMain()
 				: base()
@@ -69,7 +54,7 @@ namespace ImsDemuxPlugin
 				if (!File.Exists(uimfFileNamePath))
 				{
 					msg = "UIMF file " + uimfFileNamePath + " not found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb,clsLogTools.LogLevels.ERROR,msg);
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile,clsLogTools.LogLevels.ERROR,msg);
 					retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 					retData.CloseoutMsg = msg;
 					msg = "Completed clsPluginMain.RunTool()";
