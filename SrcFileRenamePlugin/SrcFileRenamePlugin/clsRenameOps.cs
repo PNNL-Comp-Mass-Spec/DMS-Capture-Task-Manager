@@ -126,7 +126,7 @@ namespace SrcFileRenamePlugin
 				if ((folderArray == null) || (folderArray.Length == 0)) folderFound = false;
 
 				// If no files or folders found, return error
-				if (!(fileFound && folderFound))
+				if (!(fileFound || folderFound))
 				{
 					// No file or folder found
 					msg = "Dataset " + dataset + ": data file and/or folder not found";
