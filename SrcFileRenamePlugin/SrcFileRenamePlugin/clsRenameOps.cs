@@ -115,109 +115,60 @@ namespace SrcFileRenamePlugin
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 				}
 
-				sourceType = GetRawDSType(sourceFolderPath, dataset, ref rawFName);
-				switch (sourceType)
+				// Get a list of files containing the dataset name
+				bool fileFound = true;
+				string[] fileArray = GetMatchingFileNames(sourceFolderPath, dataset);
+				if ((fileArray == null) || (fileArray.Length == 0)) fileFound = false;
+
+				// Get a list of folders containing the dataset name
+				bool folderFound = true;
+				string[] folderArray = GetMatchingFolderNames(sourceFolderPath, dataset);
+				if ((folderArray == null) || (folderArray.Length == 0)) folderFound = false;
+
+				// If no files or folders found, return error
+				if (!(fileFound && folderFound))
 				{
-					case RawDSTypes.None:
-						// No dataset file or folder found
-						msg = "Dataset " + dataset + ": data file not found";
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
-						return EnumCloseOutType.CLOSEOUT_FAILED;
-						break;
-					case RawDSTypes.File:
-						// Dataset found, and it's a single file. Rename the file
-						try
+					// No file or folder found
+					msg = "Dataset " + dataset + ": data file and/or folder not found";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+					if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+
+				// Rename any files found
+				if (fileFound)
+				{
+					foreach (string filePath in fileArray)
+					{
+						if (!RenameInstFile(filePath))
 						{
-							if (RenameInstFile(Path.Combine(sourceFolderPath,rawFName)))
-							{
-								msg = "Renamed file " + Path.Combine(sourceFolderPath, rawFName);
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-								if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
-								return EnumCloseOutType.CLOSEOUT_SUCCESS;
-							}
-							else
-							{
-								msg = "Unable to rename file " + Path.Combine(sourceFolderPath, rawFName);
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-								if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
-								return EnumCloseOutType.CLOSEOUT_FAILED;
-							}
-						}
-						catch (Exception ex)
-						{
-							msg = "Rename exception for dataset " + dataset;
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
+							// Problem was logged by RenameInstFile
 							if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
 							return EnumCloseOutType.CLOSEOUT_FAILED;
 						}
-						break;
-					case RawDSTypes.FolderExt:
-						// Dataset found in a folder with an extension on the folder name. Rename the folder
-						try
+					}
+				}
+
+				// Rename any folders found
+				if (folderFound)
+				{
+					foreach (string folderPath in folderArray)
+					{
+						if (!RenameInstFolder(folderPath))
 						{
-							if (RenameInstFolder(Path.Combine(sourceFolderPath, rawFName)))
-							{
-								msg = "Renamed folder " + Path.Combine(sourceFolderPath, rawFName);
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-								if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
-								return EnumCloseOutType.CLOSEOUT_SUCCESS;
-							}
-							else
-							{
-								msg = "Unable to rename folder " + Path.Combine(sourceFolderPath, rawFName);
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-								if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
-								return EnumCloseOutType.CLOSEOUT_FAILED;
-							}
-						}
-						catch (Exception ex)
-						{
-							msg = "Rename exception for dataset " + dataset;
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
+							// Problem was logged by RenameInstFolder
+							if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
 							return EnumCloseOutType.CLOSEOUT_FAILED;
 						}
-						finally
-						{
-							if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
-						}
-						break;
-					case RawDSTypes.FolderNoExt:
-						// Dataset found; it's a folder with no extension on the name. Rename the folder
-						try
-						{
-							if (RenameInstFolder(Path.Combine(sourceFolderPath, rawFName)))
-							{
-								msg = "Renamed folder " + Path.Combine(sourceFolderPath, rawFName);
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-								if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
-								return EnumCloseOutType.CLOSEOUT_SUCCESS;
-							}
-							else
-							{
-								msg = "Unable to rename folder " + Path.Combine(sourceFolderPath, rawFName);
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-								if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
-								return EnumCloseOutType.CLOSEOUT_FAILED;
-							}
-						}
-						catch (Exception ex)
-						{
-							msg = "Rename exception for dataset " + dataset;
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
-							return EnumCloseOutType.CLOSEOUT_FAILED;
-						}
-						finally
-						{
-							if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
-						}
-						break;
-					default:
-						msg = "Invalid dataset type found: " + sourceType.ToString();
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
-						if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
-						return EnumCloseOutType.CLOSEOUT_FAILED;
-						break;
-				}	// End switch
+					}
+				}
+
+				// Close connection, if open
+				if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+
+				// Report success and exit
+				return EnumCloseOutType.CLOSEOUT_SUCCESS;
+
 			}	// End sub
 
 			/// <summary>
@@ -384,6 +335,28 @@ namespace SrcFileRenamePlugin
 				m_Msg = "Bionet disconnected";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
 				ConnState = false;
+			}	// End sub
+
+			/// <summary>
+			/// Gets a list of files containing the dataset name
+			/// </summary>
+			/// <param name="instFolder">Folder to search</param>
+			/// <param name="dsName">Dataset name to match</param>
+			/// <returns>Array of file paths</returns>
+			private string[] GetMatchingFileNames(string instFolder, string dsName)
+			{
+				return Directory.GetFiles(instFolder, dsName + ".*");
+			}	// End sub
+
+			/// <summary>
+			/// Gets a list of folders containing the dataset name
+			/// </summary>
+			/// <param name="instFolder">Folder to search</param>
+			/// <param name="dsName">Dataset name to match</param>
+			/// <returns>Array of folder paths</returns>
+			private string[] GetMatchingFolderNames(string instFolder, string dsName)
+			{
+				return Directory.GetDirectories(instFolder, dsName + ".*");
 			}	// End sub
 		#endregion
 	}	// End class
