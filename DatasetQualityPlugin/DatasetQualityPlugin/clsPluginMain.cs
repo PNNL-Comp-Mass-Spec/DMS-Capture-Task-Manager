@@ -106,7 +106,7 @@ namespace DatasetQualityPlugin
 				string sourceFolder;
 
 				// Init folder paths based on client/server perspective
-				if (m_TaskParams.GetParam("perspective").ToLower() == "server")
+				if (m_MgrParams.GetParam("perspective").ToLower() == "server")
 				{
 					sourceFolder = m_TaskParams.GetParam("Storage_Vol");
 				}
