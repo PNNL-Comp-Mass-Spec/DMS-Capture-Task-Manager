@@ -309,7 +309,7 @@ namespace CaptureTaskManager
 									msg = m_MgrSettings.GetParam("MgrName") + ": Failure running tool " + m_Task.GetParam("StepTool")
 												+ ", job " + m_Task.GetParam("Job") + ", Dataset " + m_Task.GetParam("Dataset");
 									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
-									m_Task.CloseTask(EnumCloseOutType.CLOSEOUT_FAILED,msg);
+									m_Task.CloseTask(EnumCloseOutType.CLOSEOUT_FAILED, msg, toolResult.EvalCode, toolResult.EvalMsg);
 //									m_StatusFile.UpdateIdle();
 									break;
 								case EnumCloseOutType.CLOSEOUT_NOT_READY:
@@ -323,7 +323,7 @@ namespace CaptureTaskManager
 									msg = m_MgrSettings.GetParam("MgrName") + ": Step complete, tool " + m_Task.GetParam("StepTool")
 												+ ", job " + m_Task.GetParam("Job") + ", Dataset " + m_Task.GetParam("Dataset");
 									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
-									m_Task.CloseTask(toolResult.CloseoutType, toolResult.CloseoutMsg,toolResult.EvalCode,toolResult.EvalMsg);
+									m_Task.CloseTask(toolResult.CloseoutType, toolResult.CloseoutMsg, toolResult.EvalCode, toolResult.EvalMsg);
 									break;
 								default:
 									// Should never get here

@@ -248,15 +248,15 @@ namespace CaptureTaskManager
 			/// Closes a capture pipeline task (Overloaded)
 			/// </summary>
 			/// <param name="taskResult">Enum representing task state</param>
-			/// <param name="compMsg">Message related to task closeout</param>
+            /// <param name="closeoutMsg">Message related to task closeout</param>
 			/// <param name="evalCode">Enum representing evaluation results</param>
 			/// <param name="evalMsg">Message related to evaluation results</param>
-			public override void CloseTask(EnumCloseOutType taskResult, string compMsg, EnumEvalCode evalCode, string evalMsg)
+            public override void CloseTask(EnumCloseOutType taskResult, string closeoutMsg, EnumEvalCode evalCode, string evalMsg)
 			{
 				string msg;
 				int compCode = (int)taskResult;
 
-				if (!SetCaptureTaskComplete(SP_NAME_SET_COMPLETE,m_ConnStr,(int)taskResult,compMsg,(int)evalCode,evalMsg))
+                if (!SetCaptureTaskComplete(SP_NAME_SET_COMPLETE, m_ConnStr, (int)taskResult, closeoutMsg, (int)evalCode, evalMsg))
 				{
 					msg = "Error setting task complete in database, job " + m_JobParams["jobnum"];
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile,clsLogTools.LogLevels.ERROR,msg);
