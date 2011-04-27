@@ -3,7 +3,7 @@
   <Profiles />
   <Settings>
     <Setting Name="MgrActive_Local" Type="System.Boolean" Scope="Application">
-      <Value Profile="(Default)">True</Value>
+      <Value Profile="(Default)">False</Value>
     </Setting>
     <Setting Name="MgrName" Type="System.String" Scope="Application">
       <Value Profile="(Default)">WE16081_CTM</Value>
@@ -12,7 +12,7 @@
       <Value Profile="(Default)">Data Source=proteinseqs;Initial Catalog=Manager_Control_T3;Integrated Security=SSPI</Value>
     </Setting>
     <Setting Name="UsingDefaults" Type="System.Boolean" Scope="Application">
-      <Value Profile="(Default)">False</Value>
+      <Value Profile="(Default)">True</Value>
     </Setting>
   </Settings>
 </SettingsFile>

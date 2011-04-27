@@ -15,6 +15,10 @@ using System.IO;
 
 namespace ImsDemuxPlugin
 {
+	#region "Delegates"
+		public delegate void DelDemuxProgressHandler(float newProgress);
+	#endregion
+
 	public class clsPluginMain : clsToolRunnerBase
 	{
 		//*********************************************************************************************************
@@ -25,7 +29,7 @@ namespace ImsDemuxPlugin
 			public clsPluginMain()
 				: base()
 			{
-				// Does nothing at present
+				clsDemuxTools.DemuxProgress += new DelDemuxProgressHandler(clsDemuxTools_DemuxProgress);
 			}
 		#endregion
 
@@ -52,8 +56,33 @@ namespace ImsDemuxPlugin
 				string dsPath = Path.Combine(svrPath, m_TaskParams.GetParam("Folder"));
 				// Use this name first to test if demux has already been performed once
 				string uimfFileName = dataset + "_encoded.uimf";
-				if (!File.Exists(Path.Combine(dsPath, uimfFileName)))
+				FileInfo fi = new FileInfo(Path.Combine(dsPath, uimfFileName));
+				if (fi.Exists && (fi.Length != 0))
 				{
+					// Do nothing - this will be the file used for demultiplexing
+				}
+				else 
+				{
+					// Was the file zero bytes? If so, then delete it
+					if (fi.Exists && (fi.Length == 0))
+					{
+						try
+						{
+							fi.Delete();
+						}
+						catch (Exception ex)
+						{
+							msg = "Exception deleting 0-byte uimf_encoded file";
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+							retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+							retData.CloseoutMsg = msg;
+							msg = "Completed clsPluginMain.RunTool()";
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+							return retData;
+						}
+					}
+
+					// If we got to here, _encoded uimf file doesn't exist. So, use the other uimf file
 					uimfFileName = dataset + ".uimf";
 					if (!File.Exists(Path.Combine(dsPath, uimfFileName)))
 					{
@@ -117,6 +146,17 @@ namespace ImsDemuxPlugin
 				msg = "Completed clsPluginMain.Setup()";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 			}	// End sub
+		#endregion
+
+		#region "Event handlers"
+			/// <summary>
+			/// Reports progress from demux dll
+			/// </summary>
+			/// <param name="newProgress">Current progress</param>
+			void clsDemuxTools_DemuxProgress(float newProgress)
+			{
+				m_StatusTools.UpdateAndWrite(newProgress);
+			}
 		#endregion
 	}	// End class
 }	// End namespace

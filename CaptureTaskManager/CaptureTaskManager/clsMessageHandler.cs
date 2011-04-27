@@ -208,8 +208,15 @@ namespace CaptureTaskManager
 				if (!this.m_IsDisposed)
 				{
 					ITextMessage textMessage = this.m_StatusSession.CreateTextMessage(message);
-					textMessage.Properties.SetString("ProcessorName", m_MgrSettings.GetParam("MgrName")); 
-					this.m_StatusSender.Send(textMessage);
+					textMessage.Properties.SetString("ProcessorName", m_MgrSettings.GetParam("MgrName"));
+					try
+					{
+						this.m_StatusSender.Send(textMessage);
+					}
+					catch
+					{
+						// Do nothing
+					}
 				}
 				else
 				{

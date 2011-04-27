@@ -5,10 +5,14 @@
 // Created 03/07/2011
 //
 // Last modified 03/07/2011
+//						04/22/2011 (DAC) - Modified to use "real" demultiplexing dll's
 //*********************************************************************************************************
 using System;
 using System.IO;
 using CaptureTaskManager;
+using UIMFDemultiplexer;
+using FileProcessor;
+using System.Threading;
 
 namespace ImsDemuxPlugin
 {
@@ -17,6 +21,28 @@ namespace ImsDemuxPlugin
 		//*********************************************************************************************************
 		//Insert general class description here
 		//**********************************************************************************************************
+
+		#region "Module variables"
+			static UIMFDemultiplexer.UIMFDemultiplexer deMuxTool;
+		#endregion
+
+		#region "Events"
+			// Events used for communication back to clsPluginMain, where the logging and status updates are handled
+			//public static event DelDemuxErrorHandler DemuxError;
+			//public static event DelDemuxMessageHandler DumuxMsg;
+			//public static event DelDumuxExceptionHandler DemuxException;
+			public static event DelDemuxProgressHandler DemuxProgress;
+		#endregion
+
+		#region "Constructor"
+			static clsDemuxTools()
+			{
+				deMuxTool = new UIMFDemultiplexer.UIMFDemultiplexer();
+				deMuxTool.ErrorEvent += new clsProcessFilesBaseClass.MessageEventHandler(deMuxTool_ErrorEvent);
+				deMuxTool.WarningEvent += new clsProcessFilesBaseClass.MessageEventHandler(deMuxTool_WarningEvent);
+				deMuxTool.MessageEvent += new clsProcessFilesBaseClass.MessageEventHandler(deMuxTool_MessageEvent);
+			}
+		#endregion
 
 		#region "Methods"
 			/// <summary>
@@ -51,7 +77,7 @@ namespace ImsDemuxPlugin
 
 				// Perform demux operation
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Calling demux dll");
-				if (!DemultiplexFile(uimfLocalFileNamePath, dataset))
+				if (!DemultiplexFileThreaded(uimfLocalFileNamePath, dataset))
 				{
 					retData.CloseoutMsg = "Error demultiplexing UIMF file";
 					retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -107,12 +133,14 @@ namespace ImsDemuxPlugin
 			}	// End sub
 
 			/// <summary>
-			/// Performs actual de-multiplexing operation
+			/// Performs actual de-multiplexing operation in a separate thread
 			/// </summary>
 			/// <param name="inputFile">Input file name</param>
 			/// <returns>Enum indicating success or failure</returns>
-			private static bool DemultiplexFile(string inputFile, string datasetName)
+			private static bool DemultiplexFileThreaded(string inputFile, string datasetName)
 			{
+				bool success = false;
+
 				FileInfo fi = new FileInfo(inputFile);
 				string folderName = fi.DirectoryName;
 				string outputFile = Path.Combine(folderName, datasetName + "_decoded.uimf");
@@ -120,17 +148,46 @@ namespace ImsDemuxPlugin
 				{
 					string msg = "Starting de-multiplexing, dataset " + datasetName;
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-					UIMFDemultiplexer.UIMFDemultiplexer.demultiplex(inputFile, outputFile);
-					msg = "De-multiplexing complete, dataset " + datasetName;
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-					return true;
+
+					// Create a thread to run the demuxer
+					Thread demuxThread;
+					demuxThread = new Thread(new ThreadStart(() => deMuxTool.Demultiplex(inputFile, outputFile)));
+					// Start the demux thread
+					demuxThread.Start();
+					// Wait until the thread completes
+					//TODO: Does this need a way to abort?
+					while (!demuxThread.Join(5000))
+					{
+						if (DemuxProgress != null) DemuxProgress(deMuxTool.ProgressPercentComplete);
+					}
+
+					// Check to determine if thread exited due to normal completion
+					if (deMuxTool.ProcessingStatus == UIMFDemultiplexer.UIMFDemultiplexer.eProcessingStatus.Complete)
+					{
+						msg = "De-multiplexing complete, dataset " + datasetName;
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+						success = true;
+					}
+					else
+					{
+						// Log the processing status
+						msg = "Demux processing status: " + deMuxTool.ProcessingStatus.ToString();
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+						// Get the error msg
+						string errorMsg = deMuxTool.GetErrorMessage();
+						if (string.IsNullOrEmpty(errorMsg)) errorMsg = "Unknown error";
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMsg);
+						success = false;
+					}
 				}
 				catch (Exception ex)
 				{
 					string msg = "Exception de-multiplexing dataset " + datasetName;
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
-					return false;
+					success = false;
 				}
+
+				return success;
 			}	// End sub
 
 			/// <summary>
@@ -175,6 +232,38 @@ namespace ImsDemuxPlugin
 					return false;
 				}
 			}	// End sub
+		#endregion
+
+		#region "Event handlers"
+			/// <summary>
+			/// Logs a message from the demux dll
+			/// </summary>
+			/// <param name="sender"></param>
+			/// <param name="e"></param>
+			static void deMuxTool_MessageEvent(object sender, MessageEventArgs e)
+			{
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Demux message: " + e.Message);
+			}
+
+			/// <summary>
+			/// Logs a warning from the demux dll
+			/// </summary>
+			/// <param name="sender"></param>
+			/// <param name="e"></param>
+			static void deMuxTool_WarningEvent(object sender, MessageEventArgs e)
+			{
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Demux warning: " + e.Message);
+			}
+
+			/// <summary>
+			/// Logs an error from the debug dll
+			/// </summary>
+			/// <param name="sender"></param>
+			/// <param name="e"></param>
+			static void deMuxTool_ErrorEvent(object sender, MessageEventArgs e)
+			{
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Demux error: " + e.Message);
+			}
 		#endregion
 	}	// End class
 }	// End namespace

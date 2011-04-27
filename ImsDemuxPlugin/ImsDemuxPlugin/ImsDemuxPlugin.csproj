@@ -52,7 +52,7 @@
     </Reference>
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="UIMFDemultiplexer, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="UIMFDemultiplexer, Version=1.0.4128.25792, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\RefLib\UIMFDemultiplexer.dll</HintPath>
     </Reference>
@@ -73,6 +73,8 @@
   -->
   <PropertyGroup>
     <PostBuildEvent>copy "$(TargetPath)" "$(SolutionDir)..\DeployedFiles"
+copy "$(TargetDir)Belov*.dll" "$(SolutionDir)..\DeployedFiles"
+copy "$(TargetDir)UIMF*.dll" "$(SolutionDir)..\DeployedFiles"
 copy "$(TargetDir)*.*" "$(SolutionDir)..\CaptureTaskManager\CaptureTaskManager\bin\Debug"</PostBuildEvent>
   </PropertyGroup>
 </Project>
