@@ -22,7 +22,7 @@ namespace DatasetIntegrityPlugin
 		//**********************************************************************************************************
 
 		#region "Constants"
-			const float RAW_FILE_MIN_SIXE = 0.1F;	//MB
+			const float RAW_FILE_MIN_SIZE = 0.1F;	//MB
 			const float RAW_FILE_MAX_SIZE = 2048F;	//MB
 			const float BAF_FILE_MIN_SIZE = 0.1F;	//MB
 			const float SER_FILE_MIN_SIZE = 0.016F;	//MB
@@ -30,10 +30,15 @@ namespace DatasetIntegrityPlugin
 			const float ACQ_METHOD_FILE_MIN_SIZE = 0.005F;	//MB
 			const float SCIEX_WIFF_FILE_MIN_SIZE = 0.1F; //MB
 			const float SCIEX_WIFF_SCAN_FILE_MIN_SIZE = 0.001F; //MB
+            const float UIMF_FILE_MIN_SIZE = 0.1F;	//MB
 		#endregion
 
-		#region "Constructors"
-			public clsPluginMain()
+        #region "Class-wide variables"
+            clsToolReturnData mRetData = new clsToolReturnData();
+        #endregion
+
+            #region "Constructors"
+            public clsPluginMain()
 					: base()
 				{
 					// Does nothing at present
@@ -53,8 +58,9 @@ namespace DatasetIntegrityPlugin
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 				// Perform base class operations, if any
-				clsToolReturnData retData = base.RunTool();
-				if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED) return retData;
+				mRetData = base.RunTool();
+                if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED) 
+                    return mRetData;
 
 				string dataset = m_TaskParams.GetParam("Dataset");
 
@@ -77,52 +83,80 @@ namespace DatasetIntegrityPlugin
 				{
 					case "finnigan_ion_trap":
 						dataFileNamePath = Path.Combine(datasetFolder,dataset + ".raw");
-						retData.CloseoutType = TestFinniganIonTrapFile(dataFileNamePath);
+                        mRetData.CloseoutType = TestFinniganIonTrapFile(dataFileNamePath);
 						break;
 					case "ltq_ft":
 						dataFileNamePath = Path.Combine(datasetFolder, dataset + ".raw");
-						retData.CloseoutType = TestLTQFTFile(dataFileNamePath);
+                        mRetData.CloseoutType = TestLTQFTFile(dataFileNamePath);
 						break;
 					case "brukerftms":
-						retData.CloseoutType = TestBrukerFolder(datasetFolder);
+                        mRetData.CloseoutType = TestBrukerFolder(datasetFolder);
 						break;
 					case "thermo_exactive":
 						dataFileNamePath = Path.Combine(datasetFolder, dataset + ".raw");
-						retData.CloseoutType = TestThernoExactiveFile(dataFileNamePath);
+                        mRetData.CloseoutType = TestThernoExactiveFile(dataFileNamePath);
 						break;
 					case "triple_quad":
 						dataFileNamePath = Path.Combine(datasetFolder, dataset + ".raw");
-						retData.CloseoutType = TestTripleQuadFile(dataFileNamePath);
+                        mRetData.CloseoutType = TestTripleQuadFile(dataFileNamePath);
 						break;
-					case "brukerft_baf":
-						retData.CloseoutType = TestBrukerFT_BafFolder(datasetFolder);
+                    case "ims_agilent_tof":
+                        dataFileNamePath = Path.Combine(datasetFolder, dataset + ".uimf");
+                        mRetData.CloseoutType = TestIMSAgilentTOF(dataFileNamePath);
+                        break;
+                    case "brukerft_baf":
+                        mRetData.CloseoutType = TestBrukerFT_BafFolder(datasetFolder);
 						break;
 					case "brukermaldi_imaging":
-						retData.CloseoutType = TestBrukerMaldiImagingFolder(datasetFolder);
+                        mRetData.CloseoutType = TestBrukerMaldiImagingFolder(datasetFolder);
 						break;
 					case "brukermaldi_spot":
-						retData.CloseoutType = TestBrukerMaldiSpotFolder(datasetFolder);
+                        mRetData.CloseoutType = TestBrukerMaldiSpotFolder(datasetFolder);
 						break;
 					case "brukertof_baf":
-						retData.CloseoutType = TestBrukerTof_BafFolder(datasetFolder);
+                        mRetData.CloseoutType = TestBrukerTof_BafFolder(datasetFolder);
 						break;
 					case "sciex_qtrap":
-						retData.CloseoutType = TestSciexQtrapFile(datasetFolder, dataset);
+                        mRetData.CloseoutType = TestSciexQtrapFile(datasetFolder, dataset);
 						break;
 					default:
-						msg = "No integrity test avallable for instrument class " + instClass;
+						msg = "No integrity test available for instrument class " + instClass;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg);
-						retData.EvalMsg = msg;
-						retData.EvalCode = EnumEvalCode.EVAL_CODE_NOT_EVALUATED;
-						retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+                        mRetData.EvalMsg = msg;
+                        mRetData.EvalCode = EnumEvalCode.EVAL_CODE_NOT_EVALUATED;
+                        mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
 						break;
 				}	// End switch
 
 				msg = "Completed clsPluginMain.RunTool()";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
-				return retData;
+                return mRetData;
 			}	// End sub
+
+            private void ReportFileSizeTooSmall(string sDataFileDescription, string sFilePath, float fActualSize, float fMinSize)
+            {
+                string msg;
+                msg = sDataFileDescription + " file " + sFilePath + " may be corrupt. Actual file size: " +
+                      fActualSize.ToString("####0.00") + "MB. " +
+                      "Min allowable size is " + fMinSize.ToString("#0.00") + "MB.";
+
+                mRetData.EvalMsg = sDataFileDescription + " file size is less than " + fMinSize.ToString("#0.00") + " MB";
+
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+            }
+
+            private void ReportFileSizeTooLarge(string sDataFileDescription, string sFilePath, float fActualSize, float fMaxSize)
+            {
+                string msg;
+                msg = sDataFileDescription + " file " + sFilePath + " may be corrupt. Actual file size: " +
+                      fActualSize.ToString("####0.00") + "MB. " +
+                      "Max allowable size is " + fMaxSize.ToString("#0.00") + "MB.";
+
+                mRetData.EvalMsg = sDataFileDescription + " file size is more than " + fMaxSize.ToString("#0.00") + " MB";
+
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+            }
 
 			/// <summary>
 			/// Tests a Sciex QTrap dataset's integrity
@@ -131,7 +165,6 @@ namespace DatasetIntegrityPlugin
 			/// <returns>Enum indicating success or failure</returns>
 			private EnumCloseOutType TestSciexQtrapFile(string dataFileNamePath, string datasetName)
 			{
-				string msg;
 				float dataFileSize;
 				string tempFileNamePath;
 
@@ -139,8 +172,8 @@ namespace DatasetIntegrityPlugin
 				tempFileNamePath = Path.Combine(dataFileNamePath, datasetName + ".wiff");
 				if (!File.Exists(tempFileNamePath))
 				{
-					msg = "Data file " + tempFileNamePath + " not found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    mRetData.EvalMsg = "Data file " + tempFileNamePath + " not found";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
@@ -150,9 +183,7 @@ namespace DatasetIntegrityPlugin
 				// Check .wiff file min size
 				if (dataFileSize < SCIEX_WIFF_FILE_MIN_SIZE)
 				{
-					msg = "Data file " + tempFileNamePath + " may be corrupt. Actual file size: " + dataFileSize.ToString("####0.00") +
-								"MB. Min allowable size is " + SCIEX_WIFF_FILE_MIN_SIZE.ToString("#0.00") + "MB.";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    ReportFileSizeTooSmall("Data", tempFileNamePath, dataFileSize, SCIEX_WIFF_FILE_MIN_SIZE);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
@@ -160,8 +191,8 @@ namespace DatasetIntegrityPlugin
 				tempFileNamePath = Path.Combine(dataFileNamePath, datasetName + ".wiff.scan");
 				if (!File.Exists(tempFileNamePath))
 				{
-					msg = "Data file " + tempFileNamePath + " not found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    mRetData.EvalMsg = "Data file " + tempFileNamePath + " not found";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
@@ -171,9 +202,7 @@ namespace DatasetIntegrityPlugin
 				// Check .wiff.scan file min size
 				if (dataFileSize < SCIEX_WIFF_SCAN_FILE_MIN_SIZE)
 				{
-					msg = "Data file " + tempFileNamePath + " may be corrupt. Actual file size: " + dataFileSize.ToString("####0.00") +
-								"MB. Min allowable size is " + SCIEX_WIFF_SCAN_FILE_MIN_SIZE.ToString("#0.00") + "MB.";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    ReportFileSizeTooSmall("Data", tempFileNamePath, dataFileSize, SCIEX_WIFF_SCAN_FILE_MIN_SIZE);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
@@ -186,16 +215,15 @@ namespace DatasetIntegrityPlugin
 			/// </summary>
 			/// <param name="dataFileNamePath">Fully qualified path to dataset file</param>
 			/// <returns>Enum indicating success or failure</returns>
-			private EnumCloseOutType TestFinniganIonTrapFile(string dataFileNamePath)
+            private EnumCloseOutType TestFinniganIonTrapFile(string dataFileNamePath)
 			{
-				string msg;
 				float dataFileSize;
 
 				// Verify file exists in storage folder
 				if (!File.Exists(dataFileNamePath))
 				{
-					msg = "Data file " + dataFileNamePath + " not found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    mRetData.EvalMsg = "Data file " + dataFileNamePath + " not found";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
@@ -203,20 +231,16 @@ namespace DatasetIntegrityPlugin
 				dataFileSize = GetFileSize(dataFileNamePath);
 
 				// Check min size
-				if (dataFileSize < RAW_FILE_MIN_SIXE)
+				if (dataFileSize < RAW_FILE_MIN_SIZE)
 				{
-					msg = "Data file " + dataFileNamePath + " may be corrupt. Actual file size: " + dataFileSize.ToString("####0.00") +
-								"MB. Min allowable size is " + RAW_FILE_MIN_SIXE.ToString("#0.00")+ "MB.";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSize, RAW_FILE_MIN_SIZE);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
 				// Check max size
 				if (dataFileSize > RAW_FILE_MAX_SIZE)
 				{
-					msg = "Data file " + dataFileNamePath + " may be corrupt. Actual file size: " + dataFileSize.ToString("####0.0") +
-								"MB. Max allowable size is " + RAW_FILE_MAX_SIZE.ToString("#####0.0");
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    ReportFileSizeTooLarge("Data", dataFileNamePath, dataFileSize, RAW_FILE_MIN_SIZE);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
@@ -231,14 +255,13 @@ namespace DatasetIntegrityPlugin
 			/// <returns>Enum indicating success or failure</returns>
 			private EnumCloseOutType TestLTQFTFile(string dataFileNamePath)
 			{
-				string msg;
 				float dataFileSize;
 
 				// Verify file exists in storage folder
 				if (!File.Exists(dataFileNamePath))
 				{
-					msg = "Data file " + dataFileNamePath + " not found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    mRetData.EvalMsg = "Data file " + dataFileNamePath + " not found";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
@@ -246,11 +269,9 @@ namespace DatasetIntegrityPlugin
 				dataFileSize = GetFileSize(dataFileNamePath);
 
 				// Check min size
-				if (dataFileSize < RAW_FILE_MIN_SIXE)
+				if (dataFileSize < RAW_FILE_MIN_SIZE)
 				{
-					msg = "Data file " + dataFileNamePath + " may be corrupt. Actual file size: " + dataFileSize.ToString("####0.00") +
-								"MB. Min allowable size is " + RAW_FILE_MIN_SIXE.ToString("#0.00") + "MB.";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSize, RAW_FILE_MIN_SIZE);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
@@ -265,14 +286,13 @@ namespace DatasetIntegrityPlugin
 			/// <returns>Enum indicating success or failure</returns>
 			private EnumCloseOutType TestThernoExactiveFile(string dataFileNamePath)
 			{
-				string msg;
 				float dataFileSize;
 
 				// Verify file exists in storage folder
 				if (!File.Exists(dataFileNamePath))
 				{
-					msg = "Data file " + dataFileNamePath + " not found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    mRetData.EvalMsg = "Data file " + dataFileNamePath + " not found";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
@@ -280,11 +300,9 @@ namespace DatasetIntegrityPlugin
 				dataFileSize = GetFileSize(dataFileNamePath);
 
 				// Check min size
-				if (dataFileSize < RAW_FILE_MIN_SIXE)
+				if (dataFileSize < RAW_FILE_MIN_SIZE)
 				{
-					msg = "Data file " + dataFileNamePath + " may be corrupt. Actual file size: " + dataFileSize.ToString("####0.00") +
-								"MB. Min allowable size is " + RAW_FILE_MIN_SIXE.ToString("#0.00") + "MB.";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSize, RAW_FILE_MIN_SIZE);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
@@ -299,14 +317,13 @@ namespace DatasetIntegrityPlugin
 			/// <returns>Enum indicating success or failure</returns>
 			private EnumCloseOutType TestTripleQuadFile(string dataFileNamePath)
 			{
-				string msg;
 				float dataFileSize;
 
 				// Verify file exists in storage folder
 				if (!File.Exists(dataFileNamePath))
 				{
-					msg = "Data file " + dataFileNamePath + " not found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    mRetData.EvalMsg = "Data file " + dataFileNamePath + " not found";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
@@ -314,11 +331,9 @@ namespace DatasetIntegrityPlugin
 				dataFileSize = GetFileSize(dataFileNamePath);
 
 				// Check min size
-				if (dataFileSize < RAW_FILE_MIN_SIXE)
+				if (dataFileSize < RAW_FILE_MIN_SIZE)
 				{
-					msg = "Data file " + dataFileNamePath + " may be corrupt. Actual file size: " + dataFileSize.ToString("####0.00") +
-								"MB. Min allowable size is " + RAW_FILE_MIN_SIXE.ToString("#0.00") + "MB.";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSize, RAW_FILE_MIN_SIZE);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
@@ -333,14 +348,13 @@ namespace DatasetIntegrityPlugin
 			/// <returns></returns>
 			private EnumCloseOutType TestBrukerFolder(string datasetNamePath)
 			{
-				string msg;
 				float dataFileSize;
 
 				// Verify 0.ser folder exists
 				if (!Directory.Exists(Path.Combine(datasetNamePath,"0.ser")))
 				{
-					msg = "Invalid dataset. 0.ser folder not found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    mRetData.EvalMsg = "Invalid dataset. 0.ser folder not found";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
@@ -348,8 +362,8 @@ namespace DatasetIntegrityPlugin
 				string dataFolder = Path.Combine(datasetNamePath, "0.ser");
 				if (!File.Exists(Path.Combine(dataFolder,"acqus")))
 				{
-					msg = "Invalid dataset. acqus file not found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    mRetData.EvalMsg = "Invalid dataset. acqus file not found";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
@@ -357,16 +371,16 @@ namespace DatasetIntegrityPlugin
 				dataFileSize = GetFileSize(Path.Combine(dataFolder, "acqus"));
 				if (dataFileSize <= 0F)
 				{
-					msg = "Invalid dataset. acqus file contains no data";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    mRetData.EvalMsg = "Invalid dataset. acqus file contains no data";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
 				// Verify ser file present
 				if (!File.Exists(Path.Combine(dataFolder, "ser")))
 				{
-					msg = "Invalid dataset. ser file not found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    mRetData.EvalMsg = "Invalid dataset. ser file not found";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
@@ -374,8 +388,8 @@ namespace DatasetIntegrityPlugin
 				dataFileSize = GetFileSize(Path.Combine(dataFolder, "ser"));
 				if (dataFileSize <= 0.1F)
 				{
-					msg = "Invalid dataset. ser file too small";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    mRetData.EvalMsg = "Invalid dataset. ser file too small";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
@@ -390,39 +404,37 @@ namespace DatasetIntegrityPlugin
 			/// <returns>Enum indicating test result</returns>
 			private EnumCloseOutType TestBrukerTof_BafFolder(string datasetNamePath)
 			{
-				string msg;
 				float dataFileSize;
 
 				// Verify only one .D folder in dataset
 				string[] folderList = Directory.GetDirectories(datasetNamePath, "*.D");
 				if (folderList.Length < 1)
 				{
-					msg = "Invalid dataset. No .D folders found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+					mRetData.EvalMsg = "Invalid dataset. No .D folders found";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 				else if (folderList.Length > 1)
 				{
-					msg = "Invalid dataset. Multiple .D folders found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    mRetData.EvalMsg = "Invalid dataset. Multiple .D folders found";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
 				// Verify analysis.baf file exists
 				if (!File.Exists(Path.Combine(folderList[0], "analysis.baf")))
 				{
-					msg = "Invalid dataset. analysis.baf file not found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    mRetData.EvalMsg = "Invalid dataset. analysis.baf file not found";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
 				// Verify size of analysis.baf file
-				dataFileSize = GetFileSize(Path.Combine(folderList[0], "analysis.baf"));
+                string dataFileNamePath = Path.Combine(folderList[0], "analysis.baf");
+				dataFileSize = GetFileSize(dataFileNamePath);
 				if (dataFileSize <= BAF_FILE_MIN_SIZE)
 				{
-					msg = "Analysis.baf file may be corrupt. Actual file size: " + dataFileSize.ToString("####0.00") +
-								"MB. Min allowable size is " + BAF_FILE_MIN_SIZE.ToString("#0.00") + "MB.";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    ReportFileSizeTooSmall("Analysis.baf", dataFileNamePath, dataFileSize, BAF_FILE_MIN_SIZE);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
@@ -430,14 +442,14 @@ namespace DatasetIntegrityPlugin
 				string[] subFolderList = Directory.GetDirectories(folderList[0], "*.M");
 				if (subFolderList.Length < 0)
 				{
-					msg = "Invalid dataset. No .M folders found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    mRetData.EvalMsg = "Invalid dataset. No .M folders found";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 				else if (subFolderList.Length > 1)
 				{
-					msg = "Invalid dataset. Multiple .M folders found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    mRetData.EvalMsg = "Invalid dataset. Multiple .M folders found";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
@@ -445,8 +457,8 @@ namespace DatasetIntegrityPlugin
 				string[] methodFiles = Directory.GetFiles(subFolderList[0],"*.method");
 				if (methodFiles.Length == 0)
 				{
-					msg = "Invalid dataset. No .method files found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    mRetData.EvalMsg = "Invalid dataset. No .method files found";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
@@ -461,39 +473,37 @@ namespace DatasetIntegrityPlugin
 			/// <returns>Enum indicating test result</returns>
 			private EnumCloseOutType TestBrukerFT_BafFolder(string datasetNamePath)
 			{
-				string msg;
 				float dataFileSize;
 
 				// Verify only one .D folder in dataset
 				string[] folderList = Directory.GetDirectories(datasetNamePath, "*.D");
 				if (folderList.Length < 1)
 				{
-					msg = "Invalid dataset. No .D folders found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    mRetData.EvalMsg = "Invalid dataset. No .D folders found";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 				else if (folderList.Length > 1)
 				{
-					msg = "Invalid dataset. Multiple .D folders found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    mRetData.EvalMsg = "Invalid dataset. Multiple .D folders found";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
 				// Verify analysis.baf file exists
 				if (!File.Exists(Path.Combine(folderList[0], "analysis.baf")))
 				{
-					msg = "Invalid dataset. analysis.baf file not found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    mRetData.EvalMsg = "Invalid dataset. analysis.baf file not found";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
 				// Verify size of analysis.baf file
-				dataFileSize = GetFileSize(Path.Combine(folderList[0], "analysis.baf"));
+                string tempFileNamePath = Path.Combine(folderList[0], "analysis.baf");
+				dataFileSize = GetFileSize(tempFileNamePath);
 				if (dataFileSize <= BAF_FILE_MIN_SIZE)
 				{
-					msg = "Analysis.baf file may be corrupt. Actual file size: " + dataFileSize.ToString("####0.00") +
-								"MB. Min allowable size is " + BAF_FILE_MIN_SIZE.ToString("#0.00") + "MB.";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    ReportFileSizeTooSmall("Analysis.baf", tempFileNamePath, dataFileSize, BAF_FILE_MIN_SIZE);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
@@ -501,12 +511,11 @@ namespace DatasetIntegrityPlugin
 				if (File.Exists(Path.Combine(folderList[0], "ser")))
 				{
 					// ser file found; verify size
-					dataFileSize = GetFileSize(Path.Combine(folderList[0], "ser"));
+                    tempFileNamePath = Path.Combine(folderList[0], "ser");
+					dataFileSize = GetFileSize(tempFileNamePath);
 					if (dataFileSize <= SER_FILE_MIN_SIZE)
 					{
-						msg = "ser file may be corrupt. Actual file size: " + dataFileSize.ToString("####0.00") +
-									"MB. Min allowable size is " + SER_FILE_MIN_SIZE.ToString("#0.00") + "MB.";
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                        ReportFileSizeTooSmall("ser", tempFileNamePath, dataFileSize, SER_FILE_MIN_SIZE);
 						return EnumCloseOutType.CLOSEOUT_FAILED;
 					}
 				}
@@ -516,20 +525,19 @@ namespace DatasetIntegrityPlugin
 					if (File.Exists(Path.Combine(folderList[0], "fid")))
 					{
 						// fid file found; verify size
-						dataFileSize = GetFileSize(Path.Combine(folderList[0], "fid"));
+                        tempFileNamePath = Path.Combine(folderList[0], "fid");
+                        dataFileSize = GetFileSize(tempFileNamePath);
 						if (dataFileSize <= FID_FILE_MIN_SIZE)
 						{
-							msg = "fid file may be corrupt. Actual file size: " + dataFileSize.ToString("####0.00") +
-										"MB. Min allowable size is " + FID_FILE_MIN_SIZE.ToString("#0.00") + "MB.";
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                            ReportFileSizeTooSmall("fid", tempFileNamePath, dataFileSize, FID_FILE_MIN_SIZE);
 							return EnumCloseOutType.CLOSEOUT_FAILED;
 						}
 					}
 					else
 					{
 						// No ser or fid file found
-						msg = "Invalid dataset. No ser or fid file found";
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                        mRetData.EvalMsg = "Invalid dataset. No ser or fid file found";
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 						return EnumCloseOutType.CLOSEOUT_FAILED;
 					}
 				}
@@ -538,14 +546,14 @@ namespace DatasetIntegrityPlugin
 				string[] subFolderList = Directory.GetDirectories(folderList[0], "*.M");
 				if (subFolderList.Length < 0)
 				{
-					msg = "Invalid dataset. No .M folders found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    mRetData.EvalMsg = "Invalid dataset. No .M folders found";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 				else if (subFolderList.Length > 1)
 				{
-					msg = "Invalid dataset. Multiple .M folders found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    mRetData.EvalMsg = "Invalid dataset. Multiple .M folders found";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
@@ -553,16 +561,16 @@ namespace DatasetIntegrityPlugin
 				string methodFolderPath = subFolderList[0];
 				if (!File.Exists(Path.Combine(methodFolderPath,"apexAcquisition.method")))
 				{
-					msg = "Invalid dataset. apexAcquisition.method file not found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    mRetData.EvalMsg = "Invalid dataset. apexAcquisition.method file not found";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
-				dataFileSize = GetFileSize(Path.Combine(methodFolderPath, "apexAcquisition.method"));
+
+                tempFileNamePath = Path.Combine(methodFolderPath, "apexAcquisition.method");
+				dataFileSize = GetFileSize(tempFileNamePath);
 				if (dataFileSize <= ACQ_METHOD_FILE_MIN_SIZE)
 				{
-					msg = "apexAcquisition.method file may be corrupt. Actual file size: " + dataFileSize.ToString("####0.00") +
-								"MB. Min allowable size is " + ACQ_METHOD_FILE_MIN_SIZE.ToString("#0.00") + "MB.";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    ReportFileSizeTooSmall("apexAcquisition.method", tempFileNamePath, dataFileSize, ACQ_METHOD_FILE_MIN_SIZE);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
@@ -577,14 +585,12 @@ namespace DatasetIntegrityPlugin
 			/// <returns>Enum indicating success or failure</returns>
 			private EnumCloseOutType TestBrukerMaldiImagingFolder(string datasetNamePath)
 			{
-				string msg;
-
 				// Verify at least one zip file exists in dataset folder
 				string[] fileList = Directory.GetFiles(datasetNamePath, "*.zip");
 				if (fileList.Length < 1)
 				{
-					msg = "Invalid dataset. No zip files found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    mRetData.EvalMsg = "Invalid dataset. No zip files found";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
@@ -599,7 +605,6 @@ namespace DatasetIntegrityPlugin
 			/// <returns>Enum indicating success or failure</returns>
 			private EnumCloseOutType TestBrukerMaldiSpotFolder(string datasetNamePath)
 			{
-				string msg;
 
 				//Verify the dataset folder contains just one data folder, unzipped
 				string[] zipFiles = Directory.GetFiles(datasetNamePath, "*.zip");
@@ -607,20 +612,102 @@ namespace DatasetIntegrityPlugin
 
 				if (zipFiles.Length > 0)
 				{
-					msg = "Zip files found in dataset folder " + datasetNamePath;
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    mRetData.EvalMsg = "Zip files found in dataset folder " + datasetNamePath;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 				else if (dataFolders.Length != 1)
 				{
-					msg = "Multiple data files found in dataset folder " + datasetNamePath;
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    mRetData.EvalMsg = "Multiple data files found in dataset folder " + datasetNamePath;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
 				// If we got to here, everything is OK
 				return EnumCloseOutType.CLOSEOUT_SUCCESS;
 			}	// End sub
+
+            private EnumCloseOutType TestIMSAgilentTOF(string dataFileNamePath)
+            {
+                float dataFileSize;
+
+                // Verify file exists in storage folder
+                if (!File.Exists(dataFileNamePath))
+                {
+                    mRetData.EvalMsg = "Data file " + dataFileNamePath + " not found";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // Get size of data file
+                dataFileSize = GetFileSize(dataFileNamePath);
+
+                // Check min size
+                if (dataFileSize < UIMF_FILE_MIN_SIZE)
+                {
+                    ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSize, UIMF_FILE_MIN_SIZE);
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // Verify that the pressure columns are in the correct order
+                if (!ValidatePressureInfo(dataFileNamePath))
+                {
+                    mRetData.EvalMsg = "Data file " + dataFileNamePath + " has invalid pressure info in the Frame_Parameters table.  QuadrupolePressure should be less than the RearIonFunnelPressure and the RearIonFunnelPressure should be less than the HighPressureFunnelPressure.";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+
+
+                // If we got to here, everything was OK
+                return EnumCloseOutType.CLOSEOUT_SUCCESS;
+            }	// End sub
+
+            /// <summary>
+            /// Extracts the pressure data from the Frame_Parameters table
+            /// </summary>
+            /// <param name="dataFileNamePath"></param>
+            /// <returns>True if the pressure values are correct; false if the columns have swapped data</returns>
+            protected bool ValidatePressureInfo(string dataFileNamePath)
+            {
+
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Opening UIMF file to read pressure data");
+
+                // Open the file with the UIMFRader
+                UIMFLibrary.DataReader objUimfReader = new UIMFLibrary.DataReader();
+                objUimfReader.OpenUIMF(dataFileNamePath);
+
+                int iFrameCount = objUimfReader.get_NumFramesCurrentFrameType();
+                UIMFLibrary.FrameParameters oFrameParams;
+
+                for (int iFrameIndex = 0; iFrameIndex < iFrameCount; iFrameIndex++)
+                {
+                    oFrameParams = objUimfReader.GetFrameParameters(iFrameIndex);
+
+                    bool bNPressureColumnsArePresent = (oFrameParams.QuadrupolePressure > 0 && 
+                                                        oFrameParams.RearIonFunnelPressure > 0 &&
+                                                        oFrameParams.HighPressureFunnelPressure > 0 && 
+                                                        oFrameParams.IonFunnelTrapPressure > 0);
+
+                    if (bNPressureColumnsArePresent)
+                    {
+                        bool bPressuresAreInCorrectOrder = (oFrameParams.QuadrupolePressure < oFrameParams.RearIonFunnelPressure &&
+                                                            oFrameParams.RearIonFunnelPressure < oFrameParams.HighPressureFunnelPressure);
+
+                        if (!bPressuresAreInCorrectOrder)
+                        {
+                            objUimfReader.CloseUIMF();
+                            return false;
+                        }
+                    }
+
+                    if (iFrameIndex % 100 == 0)
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Validated frame " + oFrameParams.FrameNum);
+
+                }
+
+                objUimfReader.CloseUIMF();
+                return true;
+            }
 
 			/// <summary>
 			/// Initializes the dataset integrity tool
