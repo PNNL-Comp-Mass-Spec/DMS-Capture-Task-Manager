@@ -5,7 +5,7 @@
 // Created 03/07/2011
 //
 // Last modified 03/07/2011
-//						04/22/2011 (DAC) - Modified to use "real" demultiplexing dll's
+//               04/22/2011 (DAC) - Modified to use "real" demultiplexing dll's
 //*********************************************************************************************************
 using System;
 using System.IO;
@@ -60,12 +60,17 @@ namespace ImsDemuxPlugin
 
 				string dataset = taskParams.GetParam("Dataset");
 
+                // Make sure the working directory is empty
+                string workDirPath = mgrParams.GetParam("workdir");
+                ClearWorkingDirectory(workDirPath);
+
 				// Locate data file on storage server
+
 				string svrPath = Path.Combine(taskParams.GetParam("Storage_Vol_External"), taskParams.GetParam("Storage_Path"));
 				string dsPath = Path.Combine(svrPath, taskParams.GetParam("Folder"));
 				string uimfRemoteFileNamePath = Path.Combine(dsPath, uimfFileName);
-				string uimfLocalFileNamePath = Path.Combine(mgrParams.GetParam("workdir"), dataset + ".uimf");
-
+				string uimfLocalFileNamePath = Path.Combine(workDirPath, dataset + ".uimf");
+                
 				// Copy uimf file to working directory
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying file from storage server");
 				if (!CopyFile(uimfRemoteFileNamePath, uimfLocalFileNamePath, false))
@@ -77,12 +82,24 @@ namespace ImsDemuxPlugin
 
 				// Perform demux operation
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Calling demux dll");
-				if (!DemultiplexFileThreaded(uimfLocalFileNamePath, dataset))
-				{
-					retData.CloseoutMsg = "Error demultiplexing UIMF file";
-					retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-					return retData;
-				}
+
+                try
+                {
+                    if (!DemultiplexFileThreaded(uimfLocalFileNamePath, dataset))
+                    {
+                        retData.CloseoutMsg = "Error demultiplexing UIMF file";
+                        retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                        return retData;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    msg = "Exception calling DemultiplexFileThreaded for dataset " + dataset;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                    retData.CloseoutMsg = "Error demultiplexing UIMF file";
+                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    return retData;
+                }
 
 				// Rename uimf file on storage server
 				msg = "Renaming uimf file on storage server";
@@ -132,6 +149,46 @@ namespace ImsDemuxPlugin
 				return retData;
 			}	// End sub
 
+            /// <summary>
+            /// Makes sure the working directory is empty
+            /// </summary>
+            /// <param name="sWorkingDirectory"></param>
+            private static void ClearWorkingDirectory(string sWorkingDirectory)
+            {
+                System.IO.DirectoryInfo diWorkDir = new System.IO.DirectoryInfo(sWorkingDirectory);
+
+                if (diWorkDir.Exists)
+                {
+                    foreach (System.IO.FileInfo fiFile in diWorkDir.GetFiles())
+                    {
+                        try
+                        {
+                            fiFile.Delete();
+                        }
+                        catch (Exception ex)
+                        {
+					        string msg = "Exception deleting file '" + fiFile.Name + "' from work directory";
+					        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                        }
+                        
+                    }
+
+                    foreach (System.IO.DirectoryInfo diSubFolder in diWorkDir.GetDirectories())
+                    {
+                        try
+                        {
+                            diSubFolder.Delete(true);
+                        }
+                        catch (Exception ex)
+                        {
+                            string msg = "Exception deleting folder '" + diSubFolder.Name + "' from work directory";
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                        }
+                    }
+                }
+                
+            }
+
 			/// <summary>
 			/// Performs actual de-multiplexing operation in a separate thread
 			/// </summary>
@@ -152,14 +209,21 @@ namespace ImsDemuxPlugin
 					// Create a thread to run the demuxer
 					Thread demuxThread;
 					demuxThread = new Thread(new ThreadStart(() => deMuxTool.Demultiplex(inputFile, outputFile)));
+
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Starting Demux Thread");
+
 					// Start the demux thread
 					demuxThread.Start();
+
 					// Wait until the thread completes
 					//TODO: Does this need a way to abort?
 					while (!demuxThread.Join(5000))
 					{
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Waiting for thread to complete");
 						if (DemuxProgress != null) DemuxProgress(deMuxTool.ProgressPercentComplete);
 					}
+
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Demux thread completed");
 
 					// Check to determine if thread exited due to normal completion
 					if (deMuxTool.ProcessingStatus == UIMFDemultiplexer.UIMFDemultiplexer.eProcessingStatus.Complete)

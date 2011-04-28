@@ -54,7 +54,8 @@ namespace ImsDemuxPlugin
 				// Locate data file on storage server
 				string svrPath = Path.Combine(m_TaskParams.GetParam("Storage_Vol_External"), m_TaskParams.GetParam("Storage_Path"));
 				string dsPath = Path.Combine(svrPath, m_TaskParams.GetParam("Folder"));
-				// Use this name first to test if demux has already been performed once
+
+                // Use this name first to test if demux has already been performed once
 				string uimfFileName = dataset + "_encoded.uimf";
 				FileInfo fi = new FileInfo(Path.Combine(dsPath, uimfFileName));
 				if (fi.Exists && (fi.Length != 0))
