@@ -652,8 +652,6 @@ namespace DatasetIntegrityPlugin
                 // Verify that the pressure columns are in the correct order
                 if (!ValidatePressureInfo(dataFileNamePath))
                 {
-                    mRetData.EvalMsg = "Data file " + dataFileNamePath + " has invalid pressure info in the Frame_Parameters table.  QuadrupolePressure should be less than the RearIonFunnelPressure and the RearIonFunnelPressure should be less than the HighPressureFunnelPressure.";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -669,6 +667,14 @@ namespace DatasetIntegrityPlugin
             /// <returns>True if the pressure values are correct; false if the columns have swapped data</returns>
             protected bool ValidatePressureInfo(string dataFileNamePath)
             {
+
+                // Example of correct pressures:
+                //   HighPressureFunnelPressure  IonFunnelTrapPressure  RearIonFunnelPressure  QuadrupolePressure
+                //   8.33844                     3.87086                3.92628                0.23302
+
+                // Example of incorrect pressures:
+                //   HighPressureFunnelPressure  IonFunnelTrapPressure  RearIonFunnelPressure  QuadrupolePressure
+                //   4.06285                     9.02253                0.41679                4.13393
 
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Opening UIMF file to read pressure data");
 
@@ -695,6 +701,11 @@ namespace DatasetIntegrityPlugin
 
                         if (!bPressuresAreInCorrectOrder)
                         {
+                            mRetData.EvalMsg = "Data file " + dataFileNamePath + " has invalid pressure info in the Frame_Parameters table for frame " + oFrameParams.FrameNum;
+
+                            string msg = mRetData.EvalMsg + "; QuadrupolePressure should be less than the RearIonFunnelPressure and the RearIonFunnelPressure should be less than the HighPressureFunnelPressure.";
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+
                             objUimfReader.CloseUIMF();
                             return false;
                         }
