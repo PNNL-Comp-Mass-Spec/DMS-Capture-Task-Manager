@@ -217,16 +217,15 @@ namespace ImsDemuxPlugin
 
 					// Wait until the thread completes
 					//TODO: Does this need a way to abort?
-					while (!demuxThread.Join(5000))
+					while (demuxThread != null && !demuxThread.Join(5000))
 					{
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Waiting for thread to complete");
 						if (DemuxProgress != null) DemuxProgress(deMuxTool.ProgressPercentComplete);
 					}
 
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Demux thread completed");
 
 					// Check to determine if thread exited due to normal completion
-					if (deMuxTool.ProcessingStatus == UIMFDemultiplexer.UIMFDemultiplexer.eProcessingStatus.Complete)
+                    if (deMuxTool != null && deMuxTool.ProcessingStatus == UIMFDemultiplexer.UIMFDemultiplexer.eProcessingStatus.Complete)
 					{
 						msg = "De-multiplexing complete, dataset " + datasetName;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
@@ -234,13 +233,25 @@ namespace ImsDemuxPlugin
 					}
 					else
 					{
+                        string errorMsg = "Unknown error";
+
 						// Log the processing status
-						msg = "Demux processing status: " + deMuxTool.ProcessingStatus.ToString();
+                        if (deMuxTool != null)
+                        {
+                            msg = "Demux processing status: " + deMuxTool.ProcessingStatus.ToString();
+                            
+                            // Get the error msg
+                            errorMsg = deMuxTool.GetErrorMessage();
+                            if (string.IsNullOrEmpty(errorMsg)) errorMsg = "Unknown error";
+
+                        }
+                        else
+                        {
+                            msg = "Demux processing status: ??? (deMuxTool is null)";
+                        }
+
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-						// Get the error msg
-						string errorMsg = deMuxTool.GetErrorMessage();
-						if (string.IsNullOrEmpty(errorMsg)) errorMsg = "Unknown error";
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMsg);
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMsg);
 						success = false;
 					}
 				}
