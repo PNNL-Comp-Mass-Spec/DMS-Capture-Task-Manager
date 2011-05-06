@@ -43,6 +43,10 @@ namespace CaptureTaskManager
 		#endregion
 
 		#region "Methods"
+            void ClearCachedInfo();
+            void CreateStatusFlagFile();
+            bool DeleteStatusFlagFile();
+            bool DetectStatusFlagFile();
 			void WriteStatusFile();
 			void UpdateAndWrite(Single PercentComplete);
 			void UpdateAndWrite(EnumTaskStatusDetail Status, Single PercentComplete);

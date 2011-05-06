@@ -18,10 +18,15 @@ namespace CaptureTaskManager
 	{
 		//*********************************************************************************************************
 		// Class to handle status file updates
-		//**********************************************************************************************************
+        //**********************************************************************************************************
 
-		#region "Class variables"
-			//Status file name and location
+
+        #region "Constants"
+            public const string FLAG_FILE_NAME = "flagFile.txt";
+        #endregion
+
+        #region "Class variables"
+        //Status file name and location
 			private string m_FileNamePath = "";
 
 			//Manager name
@@ -211,6 +216,37 @@ namespace CaptureTaskManager
 			#endregion
 
 			#region "Methods"
+
+            /// <summary>
+            /// Returns the folder path that contains the program .exe
+            /// </summary>
+            /// <returns></returns>
+            private string AppFolderPath()
+            {
+                return System.IO.Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath);
+            }
+
+            /// <summary>
+            /// Clears cached status info
+            /// </summary>
+            public void ClearCachedInfo()
+            {
+                m_Progress = 0;
+                m_SpectrumCount = 0;
+                m_Dataset = "";
+                m_JobNumber = 0;
+                m_JobStep = 0;
+                m_Tool = "";
+                m_Duration = 0;
+
+                // Only clear the recent job info if the variable is Nothing
+                if (m_MostRecentJobInfo == null)
+                {
+                    m_MostRecentJobInfo = string.Empty;
+                }
+
+            }
+
 			/// <summary>
 			/// Converts the manager status enum to a string value
 			/// </summary>
@@ -241,7 +277,63 @@ namespace CaptureTaskManager
 				return StatusEnum.ToString("G");
 			}	// End sub
 
-			/// <summary>
+            /// <summary>
+            /// Creates status flag file in same folder as .exe
+            /// </summary>
+            public void CreateStatusFlagFile()
+            {
+                FileInfo TestFileFi = new FileInfo(Path.Combine(this.AppFolderPath(), FLAG_FILE_NAME));
+                StreamWriter Sw = TestFileFi.AppendText();
+
+                Sw.WriteLine(System.DateTime.Now.ToString());
+                Sw.Flush();
+                Sw.Close();
+
+                Sw = null;
+                TestFileFi = null;
+            }
+
+            /// <summary>
+            /// Deletes the status flag file
+            /// </summary>
+            /// <returns></returns>
+            public bool DeleteStatusFlagFile()
+            {
+
+                //Returns True if job request control flag file exists
+                string strFlagFilePath = Path.Combine(this.AppFolderPath(), FLAG_FILE_NAME);
+
+                try
+                {
+                    if (File.Exists(strFlagFilePath))
+                    {
+                        File.Delete(strFlagFilePath);
+                    }
+
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "DeleteStatusFlagFile, " + ex.Message);
+                    return false;
+                }
+
+            }
+
+            /// <summary>
+            /// Checks for presence of status flag file
+            /// </summary>
+            /// <returns></returns>
+            public bool DetectStatusFlagFile()
+            {
+
+                //Returns True if job request control flag file exists
+                string strFlagFilePath = Path.Combine(this.AppFolderPath(), FLAG_FILE_NAME);
+
+                return File.Exists(strFlagFilePath);
+            }
+
+            /// <summary>
 			/// Writes the status file
 			/// </summary>
 			public void WriteStatusFile()
@@ -395,12 +487,14 @@ namespace CaptureTaskManager
 				WriteStatusFile();
 			}	// End sub
 
-			/// <summary>
+            /// <summary>
 			/// Sets status file to show mahager not running
 			/// </summary>
 			/// <param name="MgrError">TRUE if manager not running due to error; FALSE otherwise</param>
 			public void UpdateStopped(bool MgrError)
 			{
+                ClearCachedInfo();
+
 				if (MgrError)
 				{
 					m_MgrStatus = EnumMgrStatus.Stopped_Error;
@@ -409,12 +503,7 @@ namespace CaptureTaskManager
 				{
 					m_MgrStatus = EnumMgrStatus.Stopped;
 				}
-				m_Progress = 0;
-				m_SpectrumCount = 0;
-				m_Dataset = "";
-				m_JobNumber = 0;
-				m_Tool = "";
-				m_Duration = 0;
+				
 				m_TaskStatus = EnumTaskStatus.No_Task;
 				m_TaskStatusDetail = EnumTaskStatusDetail.No_Task;
 
@@ -427,6 +516,8 @@ namespace CaptureTaskManager
 			/// <param name="Local">TRUE if manager disabled locally, otherwise FALSE</param>
 			public void UpdateDisabled(bool Local)
 			{
+                ClearCachedInfo();
+
 				if (Local)
 				{
 					m_MgrStatus = EnumMgrStatus.Disabled_Local;
@@ -435,30 +526,22 @@ namespace CaptureTaskManager
 				{
 					m_MgrStatus = EnumMgrStatus.Disabled_MC;
 				}
-				m_Progress = 0;
-				m_SpectrumCount = 0;
-				m_Dataset = "";
-				m_JobNumber = 0;
-				m_Tool = "";
-				m_Duration = 0;
+
 				m_TaskStatus = EnumTaskStatus.No_Task;
 				m_TaskStatusDetail = EnumTaskStatusDetail.No_Task;
 
 				this.WriteStatusFile();
 			}	// End sub
 
+                  
 			/// <summary>
 			/// Updates status file to show manager in idle state
 			/// </summary>
 			public void UpdateIdle()
 			{
-				m_MgrStatus = EnumMgrStatus.Running;
-				m_Progress = 0;
-				m_SpectrumCount = 0;
-				m_Dataset = "";
-				m_JobNumber = 0;
-				m_Tool = "";
-				m_Duration = 0;
+                ClearCachedInfo();
+
+				m_MgrStatus = EnumMgrStatus.Running;				
 				m_TaskStatus = EnumTaskStatus.No_Task;
 				m_TaskStatusDetail = EnumTaskStatusDetail.No_Task;
 

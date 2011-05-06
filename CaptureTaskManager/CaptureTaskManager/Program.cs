@@ -20,10 +20,6 @@ namespace CaptureTaskManager
 		// Application startup program
 		//**********************************************************************************************************
 
-		#region "Class variables"
-			private static clsMainProgram m_MainProgram;
-		#endregion
-
 		#region "Methods"
 			/// <summary>
 			/// The main entry point for the application.
@@ -32,21 +28,22 @@ namespace CaptureTaskManager
 			static void Main()
 			{
 				bool restart = false;
+                clsMainProgram oMainProgram;
+
 				do
 				{
 					try
 					{
-						if (m_MainProgram == null)
-						{
-							//Initialize the main execution class
-							m_MainProgram = new clsMainProgram();
-							if (!m_MainProgram.InitMgr())
-							{
-								return;
-							}
-						}
-						restart = m_MainProgram.PerformMainLoop();
-						m_MainProgram = null;
+                        //Initialize the main execution class
+                        oMainProgram = new clsMainProgram();
+                        if (!oMainProgram.InitMgr())
+                        {
+                            return;
+                        }
+
+                        restart = oMainProgram.PerformMainLoop();
+
+                        oMainProgram = null;
 					}
 					catch (Exception ex)
 					{

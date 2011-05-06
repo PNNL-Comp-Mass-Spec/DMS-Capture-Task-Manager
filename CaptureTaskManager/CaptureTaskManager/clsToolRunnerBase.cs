@@ -27,6 +27,9 @@ namespace CaptureTaskManager
 			protected IMgrParams m_MgrParams;
 			protected ITaskParams m_TaskParams;
 			protected IStatusFile m_StatusTools;
+
+            protected System.DateTime m_LastConfigDBUpdate = System.DateTime.Now;
+            protected int m_MinutesBetweenConfigDBUpdates = 10;
 		#endregion
 
 		#region "Delegates"
@@ -73,6 +76,41 @@ namespace CaptureTaskManager
 				m_TaskParams = taskParams;
 				m_StatusTools = statusTools;
 			}	// End sub
+
+            protected bool UpdateMgrSettings()
+            {
+                bool bSuccess = true;
+
+                if (m_MinutesBetweenConfigDBUpdates < 1)
+                    m_MinutesBetweenConfigDBUpdates = 1;
+
+                if (System.DateTime.Now.Subtract(m_LastConfigDBUpdate).TotalMinutes >= m_MinutesBetweenConfigDBUpdates)
+                {
+                    m_LastConfigDBUpdate = System.DateTime.Now;
+
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Updating manager settings using Manager Control database");
+
+                    if (!m_MgrParams.LoadMgrSettingsFromDB())
+                    {
+                        // Error retrieving settings from the manager control DB
+                        string msg;
+                        msg = "Error calling m_MgrSettings.LoadMgrSettingsFromDB to update manager settings";
+
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+
+                        bSuccess = false;
+                    }
+                    else
+                    {
+                        // Update the log level
+                        int debugLevel = int.Parse(m_MgrParams.GetParam("debuglevel"));
+                        clsLogTools.SetFileLogLevel(debugLevel);
+                    }
+                }
+
+                return bSuccess;
+            }                   
+
 		#endregion
 	}	// End class
 }	// End namespace

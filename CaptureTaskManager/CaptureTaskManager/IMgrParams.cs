@@ -19,5 +19,7 @@ namespace CaptureTaskManager
 		string GetParam(string ItemKey);
 		void SetParam(string ItemKey, string ItemValue);
 
+        bool LoadMgrSettingsFromDB();
+
 	}	// End interface
 }	// End namespace

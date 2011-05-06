@@ -31,6 +31,7 @@ namespace CaptureTaskManager
 		//**********************************************************************************************************
 
 		#region "Class variables"
+            private const string DEACTIVATED_LOCALLY = "Manager deactivated locally";
 			StringDictionary m_ParamDictionary = null;
 			bool m_MCParamsLoaded = false;
 		#endregion
@@ -44,7 +45,10 @@ namespace CaptureTaskManager
 			{
 				if (!LoadSettings())
 				{
-					throw new ApplicationException("Unable to initialize manager settings class");
+                    if (String.Equals(ErrMsg, DEACTIVATED_LOCALLY))
+                        throw new ApplicationException(DEACTIVATED_LOCALLY);
+                    else
+					    throw new ApplicationException("Unable to initialize manager settings class");
 				}
 			}	// End sub
 
@@ -78,8 +82,8 @@ namespace CaptureTaskManager
 				//Determine if manager is deactivated locally
 				if (!bool.Parse( m_ParamDictionary["MgrActive_Local"]))
 				{
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.WARN, "Manager deactivated locally");
-					ErrMsg = "Manager deactivated locally";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.WARN, DEACTIVATED_LOCALLY);
+                    ErrMsg = DEACTIVATED_LOCALLY;
 					return false;
 				}
 
@@ -123,6 +127,107 @@ namespace CaptureTaskManager
 				return RetDict;
 			}	// End sub
 
+            /// <summary>
+            /// Calls stored procedure AckManagerUpdateRequired to acknowledge that the manager has exited so that an update can be applied
+            /// </summary>
+            public void AckManagerUpdateRequired()
+            {
+                const string SP_NAME_ACKMANAGERUPDATE = "AckManagerUpdateRequired";
+                int RetVal = 0;
+                string ConnectionString = null;
+
+                try
+                {
+                    ConnectionString = this.GetParam("MgrCnfgDbConnectStr");
+
+                    System.Data.SqlClient.SqlConnection MyConnection = new System.Data.SqlClient.SqlConnection(ConnectionString);
+                    MyConnection.Open();
+
+                    //Set up the command object prior to SP execution
+                    System.Data.SqlClient.SqlCommand MyCmd = MyConnection.CreateCommand();
+                    {
+                        MyCmd.CommandType = CommandType.StoredProcedure;
+                        MyCmd.CommandText = SP_NAME_ACKMANAGERUPDATE;
+
+                        MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@Return", SqlDbType.Int));
+                        MyCmd.Parameters["@Return"].Direction = ParameterDirection.ReturnValue;
+
+                        MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@managerName", SqlDbType.VarChar, 128));
+                        MyCmd.Parameters["@managerName"].Direction = ParameterDirection.Input;
+                        MyCmd.Parameters["@managerName"].Value = this.GetParam("MgrName");
+
+                        MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@message", SqlDbType.VarChar, 512));
+                        MyCmd.Parameters["@message"].Direction = ParameterDirection.Output;
+                        MyCmd.Parameters["@message"].Value = "";
+                    }
+
+                    //Execute the SP
+                    RetVal = MyCmd.ExecuteNonQuery();
+
+                }
+                catch (System.Exception ex)
+                {
+                    string strErrorMessage = "Exception calling " + SP_NAME_ACKMANAGERUPDATE;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strErrorMessage + ex.Message);
+                }
+
+            }
+              
+            /// <summary>
+            /// Convert string to bool; default false if an error
+            /// </summary>
+            /// <param name="Value"></param>
+            /// <returns></returns>
+            public static bool CBoolSafe(string Value)
+            {
+                return CBoolSafe(Value, false);
+            }
+
+            public static bool CBoolSafe(string Value, bool DefaultValue)
+            {
+                bool blnValue = DefaultValue;
+
+                if (string.IsNullOrEmpty(Value))
+                    return DefaultValue;
+                else
+                {
+                    if (bool.TryParse(Value, out blnValue))
+                        return blnValue;
+                    else
+                        return DefaultValue;
+                }
+            }
+
+            public static int CIntSafe(string Value, int DefaultValue)
+            {
+                int intValue = DefaultValue;
+
+                if (string.IsNullOrEmpty(Value))
+                    return DefaultValue;
+                else
+                {
+                    if (int.TryParse(Value, out intValue))
+                        return intValue;
+                    else
+                        return DefaultValue;
+                }
+            }
+
+            public static float CSngSafe(string Value, float DefaultValue)
+            {
+                float fValue = DefaultValue;
+
+                if (string.IsNullOrEmpty(Value))
+                    return fValue;
+                else
+                {
+                    if (float.TryParse(Value, out fValue))
+                        return fValue;
+                    else
+                        return fValue;
+                }
+            }
+
 			private bool CheckInitialSettings(StringDictionary InpDict)
 			{
 				string MyMsg = null;
@@ -164,7 +269,7 @@ namespace CaptureTaskManager
 											+ m_ParamDictionary["MgrName"] + "'";
 
 				//Get a table containing data for job
-				 DataTable Dt = null;
+				DataTable Dt = null;
 
 				//Get a datatable holding the parameters for one manager
 				while (RetryCount > 0)
@@ -252,12 +357,22 @@ namespace CaptureTaskManager
 			public string GetParam(string ItemKey)
 			{
 				string RetStr = m_ParamDictionary[ItemKey];
-				return RetStr;
+                if (string.IsNullOrEmpty(RetStr))
+                    return string.Empty;
+                else
+				    return RetStr;
 			}
 
 			public void SetParam(string ItemKey, string ItemValue)
 			{
-				m_ParamDictionary[ItemKey]=ItemValue;
+                if (m_ParamDictionary.ContainsKey(ItemKey))
+                {
+                    m_ParamDictionary[ItemKey] = ItemValue;
+                }
+                else
+                {
+                    m_ParamDictionary.Add(ItemKey, ItemValue);
+                }
 			}
 
 			/// <summary>

@@ -6,12 +6,14 @@
     <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{D33569C6-2077-4502-AFD1-49F077F3F55F}</ProjectGuid>
-    <OutputType>WinExe</OutputType>
+    <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>CaptureTaskManager</RootNamespace>
     <AssemblyName>CaptureTaskManager</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <StartupObject>
+    </StartupObject>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -41,8 +43,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\RefLib\Apache.NMS.ActiveMQ.dll</HintPath>
     </Reference>
-    <Reference Include="Dart.PowerTCP.Ftp, Version=3.0.5.1, Culture=neutral, PublicKeyToken=5966291b8955e4bb">
-      <Private>False</Private>
+    <Reference Include="Dart.PowerTCP.Ftp, Version=3.0.6.2, Culture=neutral, PublicKeyToken=5966291b8955e4bb, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\RefLib\Dart.PowerTCP.Ftp.dll</HintPath>
     </Reference>
     <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=1b44e1d426115821, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -76,6 +79,7 @@
     <Compile Include="cfGlobalStuff.cs" />
     <Compile Include="clsBroadcastCmd.cs" />
     <Compile Include="clsCaptureTask.cs" />
+    <Compile Include="clsCleanupMgrErrors.cs" />
     <Compile Include="clsDbTask.cs" />
     <Compile Include="clsLogTools.cs" />
     <Compile Include="clsMainProgram.cs" />
