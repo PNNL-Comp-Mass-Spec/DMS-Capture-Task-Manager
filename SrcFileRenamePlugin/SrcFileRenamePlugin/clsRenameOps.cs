@@ -71,14 +71,13 @@ namespace SrcFileRenamePlugin
 			/// <returns></returns>
 			public EnumCloseOutType DoOperation(ITaskParams taskParams)
 			{
+                const int CHECK_LOOP_COUNT = 4;
+
 				string dataset = taskParams.GetParam("Dataset");
 				string sourceVol = taskParams.GetParam("Source_Vol");
 				string sourcePath = taskParams.GetParam("Source_Path");
-				string rawFName = "";
-				RawDSTypes sourceType;
 				string pwd = DecodePassword(m_Pwd);
 				string msg;
-				string tempVol;
 
 				msg = "Started clsRenameeOps.DoOperation()";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
@@ -115,59 +114,112 @@ namespace SrcFileRenamePlugin
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 				}
 
-				// Get a list of files containing the dataset name
-				bool fileFound = true;
-				string[] fileArray = GetMatchingFileNames(sourceFolderPath, dataset);
-				if ((fileArray == null) || (fileArray.Length == 0)) fileFound = false;
+                bool fileFound = false;
+                bool folderFound = false;
 
-				// Get a list of folders containing the dataset name
-				bool folderFound = true;
-				string[] folderArray = GetMatchingFolderNames(sourceFolderPath, dataset);
-				if ((folderArray == null) || (folderArray.Length == 0)) folderFound = false;
+                for (int iCheckLoop = 0; iCheckLoop < CHECK_LOOP_COUNT; iCheckLoop++)
+                {
+                    string sDatasetNameBase;
+                    bool bAlreadyRenamed = false;
 
-				// If no files or folders found, return error
-				if (!(fileFound || folderFound))
-				{
-					// No file or folder found
-					msg = "Dataset " + dataset + ": data file and/or folder not found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
-					if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
-					return EnumCloseOutType.CLOSEOUT_FAILED;
-				}
+                    switch (iCheckLoop)
+                    {
+                        case 0:
+                            sDatasetNameBase = String.Copy(dataset);
+                            break;
+                        case 1:
+                            sDatasetNameBase = String.Copy("x_" + dataset);
+                            bAlreadyRenamed = true;
+                            break;
+                        case 2:
+                            sDatasetNameBase = String.Copy(dataset + "-bad");
+                            break;
+                        case 3:
+                            sDatasetNameBase = String.Copy("x_" + dataset + "-bad");
+                            bAlreadyRenamed = true;
+                            break;
+                        default:
+                            sDatasetNameBase = string.Empty;
+                            bAlreadyRenamed = false;
+                            break;
+                    }
 
-				// Rename any files found
-				if (fileFound)
-				{
-					foreach (string filePath in fileArray)
-					{
-						if (!RenameInstFile(filePath))
-						{
-							// Problem was logged by RenameInstFile
-							if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
-							return EnumCloseOutType.CLOSEOUT_FAILED;
-						}
-					}
-				}
+                    if (!String.IsNullOrEmpty(sDatasetNameBase))
+                    {
+                        // Get a list of files containing the dataset name
+                        string[] fileArray = GetMatchingFileNames(sourceFolderPath, sDatasetNameBase);
+                        if (fileArray != null && fileArray.Length > 0)
+                            fileFound = true;
 
-				// Rename any folders found
-				if (folderFound)
-				{
-					foreach (string folderPath in folderArray)
-					{
-						if (!RenameInstFolder(folderPath))
-						{
-							// Problem was logged by RenameInstFolder
-							if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
-							return EnumCloseOutType.CLOSEOUT_FAILED;
-						}
-					}
-				}
+                        // Get a list of folders containing the dataset name
+                        string[] folderArray = GetMatchingFolderNames(sourceFolderPath, sDatasetNameBase);
+                        if (folderArray != null && folderArray.Length > 0)
+                            folderFound = true;
+                  
+                        // If no files or folders found, return error
+                        if (!(fileFound || folderFound))
+                        {
+                            // No file or folder found
+                            // Log a message, but continue on to the next iteration of the for loop
+                            msg = "Dataset " + dataset + ": data file and/or folder not found using " + sDatasetNameBase + ".*";
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                        }
+                        else
+                        {
+                            if (bAlreadyRenamed)
+                            {
+                                msg = "Skipping dataset " + dataset + " since data file and/or folder already renamed to " + sDatasetNameBase;
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                            }
+                            else
+                            {
+                                // Rename any files found
+                                if (fileFound)
+                                {
+                                    foreach (string filePath in fileArray)
+                                    {
+                                        if (!RenameInstFile(filePath))
+                                        {
+                                            // Problem was logged by RenameInstFile
+                                            if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+                                            return EnumCloseOutType.CLOSEOUT_FAILED;
+                                        }
+                                    }
+                                }
 
-				// Close connection, if open
-				if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+                                // Rename any folders found
+                                if (folderFound)
+                                {
+                                    foreach (string folderPath in folderArray)
+                                    {
+                                        if (!RenameInstFolder(folderPath))
+                                        {
+                                            // Problem was logged by RenameInstFolder
+                                            if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+                                            return EnumCloseOutType.CLOSEOUT_FAILED;
+                                        }
+                                    }
+                                }
+                            }
 
-				// Report success and exit
-				return EnumCloseOutType.CLOSEOUT_SUCCESS;
+                            // Success; break out of the for loop
+                            break;
+                        }
+                    }
+                }
+
+                // Close connection, if open
+                if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+
+                if (!(fileFound || folderFound))
+                {
+                    msg = "Dataset " + dataset + ": data file and/or folder not found";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+                else
+                    // Report success and exit
+                    return EnumCloseOutType.CLOSEOUT_SUCCESS;
 
 			}	// End sub
 

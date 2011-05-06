@@ -3,3 +3,8 @@ D:\DMS_Controlled\Capture_Task_Manager\SrcFileRenamePlugin\SrcFileRenamePlugin\b
 D:\DMS_Controlled\Capture_Task_Manager\SrcFileRenamePlugin\SrcFileRenamePlugin\obj\Debug\ResolveAssemblyReference.cache
 D:\DMS_Controlled\Capture_Task_Manager\SrcFileRenamePlugin\SrcFileRenamePlugin\obj\Debug\SrcFileRenamePlugin.dll
 D:\DMS_Controlled\Capture_Task_Manager\SrcFileRenamePlugin\SrcFileRenamePlugin\obj\Debug\SrcFileRenamePlugin.pdb
+F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\SrcFileRenamePlugin\SrcFileRenamePlugin\bin\Debug\SrcFileRenamePlugin.dll
+F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\SrcFileRenamePlugin\SrcFileRenamePlugin\bin\Debug\SrcFileRenamePlugin.pdb
+F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\SrcFileRenamePlugin\SrcFileRenamePlugin\obj\Debug\ResolveAssemblyReference.cache
+F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\SrcFileRenamePlugin\SrcFileRenamePlugin\obj\Debug\SrcFileRenamePlugin.dll
+F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\SrcFileRenamePlugin\SrcFileRenamePlugin\obj\Debug\SrcFileRenamePlugin.pdb
