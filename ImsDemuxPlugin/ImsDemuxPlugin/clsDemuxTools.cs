@@ -23,7 +23,7 @@ namespace ImsDemuxPlugin
 		//**********************************************************************************************************
 
 		#region "Module variables"
-			static UIMFDemultiplexer.UIMFDemultiplexer deMuxTool;
+			static UIMFDemultiplexer.UIMFDemultiplexer m_DeMuxTool;
 		#endregion
 
 		#region "Events"
@@ -37,10 +37,10 @@ namespace ImsDemuxPlugin
 		#region "Constructor"
 			static clsDemuxTools()
 			{
-				deMuxTool = new UIMFDemultiplexer.UIMFDemultiplexer();
-				deMuxTool.ErrorEvent += new clsProcessFilesBaseClass.MessageEventHandler(deMuxTool_ErrorEvent);
-				deMuxTool.WarningEvent += new clsProcessFilesBaseClass.MessageEventHandler(deMuxTool_WarningEvent);
-				deMuxTool.MessageEvent += new clsProcessFilesBaseClass.MessageEventHandler(deMuxTool_MessageEvent);
+				m_DeMuxTool = new UIMFDemultiplexer.UIMFDemultiplexer();
+				m_DeMuxTool.ErrorEvent += new clsProcessFilesBaseClass.MessageEventHandler(deMuxTool_ErrorEvent);
+				m_DeMuxTool.WarningEvent += new clsProcessFilesBaseClass.MessageEventHandler(deMuxTool_WarningEvent);
+				m_DeMuxTool.MessageEvent += new clsProcessFilesBaseClass.MessageEventHandler(deMuxTool_MessageEvent);
 			}
 		#endregion
 
@@ -85,7 +85,7 @@ namespace ImsDemuxPlugin
 
                 try
                 {
-                    if (!DemultiplexFileThreaded(uimfLocalFileNamePath, dataset))
+                    if (!DemultiplexFile(uimfLocalFileNamePath, dataset))
                     {
                         retData.CloseoutMsg = "Error demultiplexing UIMF file";
                         retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -193,9 +193,12 @@ namespace ImsDemuxPlugin
 			/// Performs actual de-multiplexing operation in a separate thread
 			/// </summary>
 			/// <param name="inputFile">Input file name</param>
+            /// <param name="datasetName">Dataset name</param>
 			/// <returns>Enum indicating success or failure</returns>
-			private static bool DemultiplexFileThreaded(string inputFile, string datasetName)
+			private static bool DemultiplexFile(string inputFile, string datasetName)
 			{
+                const int STATUS_DELAY_MSEC = 5000;
+
 				bool success = false;
 
 				FileInfo fi = new FileInfo(inputFile);
@@ -206,26 +209,40 @@ namespace ImsDemuxPlugin
 					string msg = "Starting de-multiplexing, dataset " + datasetName;
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 
-					// Create a thread to run the demuxer
-					Thread demuxThread;
-					demuxThread = new Thread(new ThreadStart(() => deMuxTool.Demultiplex(inputFile, outputFile)));
+                    /*
+                     * Old code that ran the demultiplexer on a separate thread
+                     * Fails to catch and log exceptions thrown by UIMFDemultiplexer.dll
+                     * 
+                        // Create a thread to run the demuxer
+                        Thread demuxThread;
+                        demuxThread = new Thread(new ThreadStart(() => m_DeMuxTool.Demultiplex(inputFile, outputFile)));
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Starting Demux Thread");
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Starting Demux Thread");
 
-					// Start the demux thread
-					demuxThread.Start();
+                        // Start the demux thread
+                        demuxThread.Start();
 
-					// Wait until the thread completes
-					//TODO: Does this need a way to abort?
-					while (demuxThread != null && !demuxThread.Join(5000))
-					{
-						if (DemuxProgress != null) DemuxProgress(deMuxTool.ProgressPercentComplete);
-					}
+                        // Wait until the thread completes
+                        //TODO: Does this need a way to abort?
+                        while (demuxThread != null && !demuxThread.Join(STATUS_DELAY_MSEC))
+                        {
+                            if (DemuxProgress != null) DemuxProgress(m_DeMuxTool.ProgressPercentComplete);
+                        }
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Demux thread completed");
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Demux thread completed");
+                        success = true;
+                    */
+                    
+                    // Create a timer that will be used to log progress
+                    System.Threading.Timer tmrUpdateProgress;
+                    tmrUpdateProgress = new System.Threading.Timer(new TimerCallback(timer_ElapsedEvent));
+                    tmrUpdateProgress.Change(STATUS_DELAY_MSEC, STATUS_DELAY_MSEC);
+                    
+                    success = m_DeMuxTool.Demultiplex(inputFile, outputFile);
+                
 
 					// Check to determine if thread exited due to normal completion
-                    if (deMuxTool != null && deMuxTool.ProcessingStatus == UIMFDemultiplexer.UIMFDemultiplexer.eProcessingStatus.Complete)
+                    if (success && m_DeMuxTool != null && m_DeMuxTool.ProcessingStatus == UIMFDemultiplexer.UIMFDemultiplexer.eProcessingStatus.Complete)
 					{
 						msg = "De-multiplexing complete, dataset " + datasetName;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
@@ -236,18 +253,18 @@ namespace ImsDemuxPlugin
                         string errorMsg = "Unknown error";
 
 						// Log the processing status
-                        if (deMuxTool != null)
+                        if (m_DeMuxTool != null)
                         {
-                            msg = "Demux processing status: " + deMuxTool.ProcessingStatus.ToString();
+                            msg = "Demux processing status: " + m_DeMuxTool.ProcessingStatus.ToString();
                             
                             // Get the error msg
-                            errorMsg = deMuxTool.GetErrorMessage();
+                            errorMsg = m_DeMuxTool.GetErrorMessage();
                             if (string.IsNullOrEmpty(errorMsg)) errorMsg = "Unknown error";
 
                         }
                         else
                         {
-                            msg = "Demux processing status: ??? (deMuxTool is null)";
+                            msg = "Demux processing status: ??? (m_DeMuxTool is null)";
                         }
 
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
@@ -339,6 +356,14 @@ namespace ImsDemuxPlugin
 			{
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Demux error: " + e.Message);
 			}
+
+            static void timer_ElapsedEvent(object stateInfo)
+            {
+                // Update the status if it has changed since the last call
+                if (DemuxProgress != null) 
+                    DemuxProgress(m_DeMuxTool.ProgressPercentComplete);
+            }
+
 		#endregion
 	}	// End class
 }	// End namespace

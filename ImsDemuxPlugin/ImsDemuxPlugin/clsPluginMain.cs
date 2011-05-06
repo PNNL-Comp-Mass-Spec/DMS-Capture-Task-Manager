@@ -19,16 +19,21 @@ namespace ImsDemuxPlugin
 		public delegate void DelDemuxProgressHandler(float newProgress);
 	#endregion
 
-	public class clsPluginMain : clsToolRunnerBase
+    public class clsPluginMain : clsToolRunnerBase
 	{
 		//*********************************************************************************************************
 		// Main class for plugin
 		//**********************************************************************************************************
 
+        #region "Constants"
+            public const int MANAGER_UPDATE_INTERVAL_MINUTES = 10;
+        #endregion
+
 		#region "Constructors"
 			public clsPluginMain()
 				: base()
 			{
+                // Add a handler to catch progress events
 				clsDemuxTools.DemuxProgress += new DelDemuxProgressHandler(clsDemuxTools_DemuxProgress);
 			}
 		#endregion
@@ -48,6 +53,10 @@ namespace ImsDemuxPlugin
 				// Perform base class operations, if any
 				clsToolReturnData retData = base.RunTool();
 				if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED) return retData;
+
+                // Initialize the config DB update interval
+                base.m_LastConfigDBUpdate = System.DateTime.Now;
+                base.m_MinutesBetweenConfigDBUpdates = MANAGER_UPDATE_INTERVAL_MINUTES;
 
 				string dataset = m_TaskParams.GetParam("Dataset");
 
@@ -157,6 +166,9 @@ namespace ImsDemuxPlugin
 			void clsDemuxTools_DemuxProgress(float newProgress)
 			{
 				m_StatusTools.UpdateAndWrite(newProgress);
+
+                // Update the manager settings every MANAGER_UPDATE_INTERVAL_MINUTESS
+                base.UpdateMgrSettings();
 			}
 		#endregion
 	}	// End class
