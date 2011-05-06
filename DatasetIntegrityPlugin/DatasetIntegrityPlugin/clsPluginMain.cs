@@ -606,22 +606,51 @@ namespace DatasetIntegrityPlugin
 			private EnumCloseOutType TestBrukerMaldiSpotFolder(string datasetNamePath)
 			{
 
-				//Verify the dataset folder contains just one data folder, unzipped
+                // Verify the dataset folder doesn't contain any .zip files
 				string[] zipFiles = Directory.GetFiles(datasetNamePath, "*.zip");
-				string[] dataFolders = Directory.GetDirectories(datasetNamePath);
-
 				if (zipFiles.Length > 0)
 				{
                     mRetData.EvalMsg = "Zip files found in dataset folder " + datasetNamePath;
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
-				else if (dataFolders.Length != 1)
-				{
-                    mRetData.EvalMsg = "Multiple data files found in dataset folder " + datasetNamePath;
+
+                // Check whether the dataset folder contains just one data folder or multiple data folders
+                string[] dataFolders = Directory.GetDirectories(datasetNamePath);
+
+                if (dataFolders.Length < 1)
+                {
+                    mRetData.EvalMsg = "No subfolders were found in the dataset folder " + datasetNamePath;
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
-					return EnumCloseOutType.CLOSEOUT_FAILED;
-				}
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+            
+                if (dataFolders.Length > 1)
+                {
+                    // Make sure the subfolders match the naming convention for MALDI spot folders
+                    // Example folder names:
+                    //  0_D4
+                    //  0_E10
+                    //  0_N4
+
+                    const string MALDI_SPOT_FOLDER_REGEX = "^\\d_[A-Z]\\d+$";
+                    System.Text.RegularExpressions.Regex reMaldiSpotFolder;
+                    reMaldiSpotFolder = new System.Text.RegularExpressions.Regex(MALDI_SPOT_FOLDER_REGEX, System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+                    for (int i = 0; i < dataFolders.Length; i++)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.DEBUG, "Test folder " + dataFolders[i] + " against RegEx " + reMaldiSpotFolder.ToString());
+
+                        string sDirName = System.IO.Path.GetFileName(dataFolders[i]);
+                        if (!reMaldiSpotFolder.IsMatch(sDirName, 0))
+                        {
+                            mRetData.EvalMsg = "Dataset folder contains multiple subfolders, but folder " + sDirName + " does not match the expected pattern (" + reMaldiSpotFolder.ToString() + "); see " + datasetNamePath;
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+                            return EnumCloseOutType.CLOSEOUT_FAILED;
+                        }
+
+                    }
+                }
 
 				// If we got to here, everything is OK
 				return EnumCloseOutType.CLOSEOUT_SUCCESS;

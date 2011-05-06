@@ -8,3 +8,8 @@ D:\DMS_Controlled\Capture_Task_Manager\CaptureToolPlugin\CaptureToolPlugin\bin\D
 D:\DMS_Controlled\Capture_Task_Manager\CaptureToolPlugin\CaptureToolPlugin\obj\Debug\ResolveAssemblyReference.cache
 D:\DMS_Controlled\Capture_Task_Manager\CaptureToolPlugin\CaptureToolPlugin\obj\Debug\CaptureToolPlugin.dll
 D:\DMS_Controlled\Capture_Task_Manager\CaptureToolPlugin\CaptureToolPlugin\obj\Debug\CaptureToolPlugin.pdb
+F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\CaptureToolPlugin\CaptureToolPlugin\bin\Debug\CaptureToolPlugin.dll
+F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\CaptureToolPlugin\CaptureToolPlugin\bin\Debug\CaptureToolPlugin.pdb
+F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\CaptureToolPlugin\CaptureToolPlugin\obj\Debug\ResolveAssemblyReference.cache
+F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\CaptureToolPlugin\CaptureToolPlugin\obj\Debug\CaptureToolPlugin.dll
+F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\CaptureToolPlugin\CaptureToolPlugin\obj\Debug\CaptureToolPlugin.pdb

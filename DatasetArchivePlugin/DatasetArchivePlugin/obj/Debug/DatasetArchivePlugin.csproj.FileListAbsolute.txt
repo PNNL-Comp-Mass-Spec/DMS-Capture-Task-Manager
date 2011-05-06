@@ -6,3 +6,10 @@ D:\DMS_Controlled\Capture_Task_Manager\DatasetArchivePlugin\DatasetArchivePlugin
 D:\DMS_Controlled\Capture_Task_Manager\DatasetArchivePlugin\DatasetArchivePlugin\obj\Debug\DatasetArchivePlugin.dll.licenses
 D:\DMS_Controlled\Capture_Task_Manager\DatasetArchivePlugin\DatasetArchivePlugin\obj\Debug\DatasetArchivePlugin.dll
 D:\DMS_Controlled\Capture_Task_Manager\DatasetArchivePlugin\DatasetArchivePlugin\obj\Debug\DatasetArchivePlugin.pdb
+F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\DatasetArchivePlugin\DatasetArchivePlugin\bin\Debug\DatasetArchivePlugin.dll
+F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\DatasetArchivePlugin\DatasetArchivePlugin\bin\Debug\DatasetArchivePlugin.pdb
+F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\DatasetArchivePlugin\DatasetArchivePlugin\obj\Debug\ResolveAssemblyReference.cache
+F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\DatasetArchivePlugin\DatasetArchivePlugin\obj\Debug\DatasetArchivePlugin.dll.licenses
+F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\DatasetArchivePlugin\DatasetArchivePlugin\obj\Debug\DatasetArchivePlugin.dll
+F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\DatasetArchivePlugin\DatasetArchivePlugin\obj\Debug\DatasetArchivePlugin.pdb
+F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\DatasetArchivePlugin\DatasetArchivePlugin\bin\Debug\Dart.PowerTCP.Ftp.dll

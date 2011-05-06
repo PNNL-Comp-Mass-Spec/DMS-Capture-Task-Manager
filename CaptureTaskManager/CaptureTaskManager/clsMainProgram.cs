@@ -115,7 +115,7 @@ namespace CaptureTaskManager
 
 				// Set up the loggers
 				string logFileName = m_MgrSettings.GetParam("logfilename");
-				int debugLevel = int.Parse(m_MgrSettings.GetParam("debuglevel"));
+                int debugLevel = clsMgrSettings.CIntSafe(m_MgrSettings.GetParam("debuglevel"), 4);
 				clsLogTools.CreateFileLogger(logFileName, debugLevel);
                 if (clsMgrSettings.CBoolSafe(m_MgrSettings.GetParam("ftplogging"))) clsLogTools.CreateFtpLogFileLogger("Dummy.txt");
 				string logCnStr = m_MgrSettings.GetParam("connectionstring");
@@ -651,7 +651,7 @@ namespace CaptureTaskManager
                     else
                     {
                         // Update the log level
-                        int debugLevel = int.Parse(m_MgrSettings.GetParam("debuglevel"));
+                        int debugLevel = clsMgrSettings.CIntSafe(m_MgrSettings.GetParam("debuglevel"), 4);
                         clsLogTools.SetFileLogLevel(debugLevel);
                     }
                 }

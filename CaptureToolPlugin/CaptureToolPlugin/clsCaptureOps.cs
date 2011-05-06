@@ -482,8 +482,8 @@ namespace CaptureToolPlugin
 				string storageVol = taskParams.GetParam("Storage_Vol");
 				string storagePath = taskParams.GetParam("Storage_Path");
 				string storageVolExternal = taskParams.GetParam("Storage_Vol_External");
-//				string rawFName = "";
-				RawDSTypes sourceType;
+
+                RawDSTypes sourceType;
 				string pwd = DecodePassword(m_Pwd);
 				string msg;
 				string tempVol;
@@ -574,6 +574,8 @@ namespace CaptureToolPlugin
 					sourceType = datasetInfo.DatasetType;
 				}
 
+                EnumCloseOutType eReturn = EnumCloseOutType.CLOSEOUT_FAILED;
+
 				// Perform copy based on source type
 				switch (sourceType)
 				{
@@ -581,264 +583,337 @@ namespace CaptureToolPlugin
 						// No dataset file or folder found
 						msg = "Dataset " + dataset + ": data file not found";
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb,clsLogTools.LogLevels.ERROR,msg);
-						return EnumCloseOutType.CLOSEOUT_FAILED;
-//						break;
+						eReturn = EnumCloseOutType.CLOSEOUT_FAILED;
+						break;
+
 					case RawDSTypes.File:
-						// Dataset found, and it's a single file
-						// First, verify the file size is constant (indicates acquisition is actually finished)
-						if (!VerifyConstantFileSize(Path.Combine(sourceFolderPath,datasetInfo.FileOrFolderName),m_SleepInterval))
-						{
-							msg = "Dataset '" + dataset + "' not ready";
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb,clsLogTools.LogLevels.WARN,msg);
-							if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
-							return EnumCloseOutType.CLOSEOUT_NOT_READY;
-						}
-						// Copy the file to the dataset folder
-						try
-						{
-							// Make the dataset folder
-							MakeFolderPath(datasetFolderPath);
-							// Copy the raw spectra file
-							File.Copy(Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName),
-								Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName));
-							msg = "Copied file " + Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName) + " to " +
-								Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName);
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile,clsLogTools.LogLevels.INFO,msg);
-							if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
-							return EnumCloseOutType.CLOSEOUT_SUCCESS;
-						}
-						catch (Exception ex) 
-						{
-							msg = "Copy exception for dataset " + dataset;
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb,clsLogTools.LogLevels.ERROR,msg,ex);
-							if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
-							return EnumCloseOutType.CLOSEOUT_FAILED;
-						}
-//						break;
+                        eReturn = CaptureFile(dataset, ref msg, datasetInfo, sourceFolderPath, datasetFolderPath);
+						break;
+
 					case RawDSTypes.FolderExt:
-						// Dataset found in a folder with an extension on the folder name
-						// First, verify the folder size is constant (indicates acquisition is actually finished)
-						if (!VerifyConstantFolderSize(Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName), m_SleepInterval))
-						{
-							msg = "Dataset '" + dataset + "' not ready";
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb,clsLogTools.LogLevels.WARN,msg);
-							if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
-							return EnumCloseOutType.CLOSEOUT_NOT_READY;
-						}
+                        eReturn = CaptureFolderExt(dataset, ref msg, datasetInfo, sourceFolderPath, datasetFolderPath);
+                        break;
 
-						// Copy the dateset folder to the storage server
-						string copySourceDir = Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName);
-						string copyTargetDir = Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName);
-
-						// Make a dataset folder
-						try
-						{
-							// Make a dateaet folder
-							MakeFolderPath(datasetFolderPath);
-						}
-						catch (Exception ex)
-						{
-							msg = "Exception creating dataset folder for dataset " + dataset;
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
-							if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
-							return EnumCloseOutType.CLOSEOUT_FAILED;
-						}
-
-						// Copy the source folder to the dataset folder
-						List<string> filesToSkip = null;
-						int retryCount = 0;
-
-				RetryStart:
-						try
-						{
-							// Copy the dataset folder
-							clsFileTools.CopyDirectory(copySourceDir, copyTargetDir, filesToSkip);
-							msg = "Copied folder " + copySourceDir + " to " + copyTargetDir;
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile,clsLogTools.LogLevels.INFO,msg);
-							if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
-							return EnumCloseOutType.CLOSEOUT_SUCCESS;
-						}
-						catch (Exception ex)
-						{
-							msg = "Copy exception for dataset " + dataset;
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb,clsLogTools.LogLevels.ERROR,msg,ex);
-							// If exception was caused by locked file, create skip list and try again
-							if (ex.Message.Contains("The process cannot access the file") && (retryCount < 1))
-							{
-								filesToSkip = new List<string>();
-								try
-								{
-									string[] fileList = Directory.GetFiles(copySourceDir, "*.mcf_idx*", SearchOption.AllDirectories);
-									foreach (string fileName in fileList)
-									{
-										filesToSkip.Add(fileName);
-									}
-								}
-								catch (Exception ex1)
-								{
-									msg = "Exception getting list of files to skip for dataset " + dataset;
-									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex1);
-									if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
-									return EnumCloseOutType.CLOSEOUT_FAILED;
-								}
-								// Try the capture again using a skip list
-								msg = "Retrying capture using skip list";
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-								retryCount++;
-								goto RetryStart;
-							}
-							else
-							{
-								if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
-								return EnumCloseOutType.CLOSEOUT_FAILED;
-							}
-						}
 					case RawDSTypes.FolderNoExt:
-						// Dataset found; it's a folder with no extension on the name
-						// First, verify the folder size is constant (indicates acquisition is actually finished)
-						if (!VerifyConstantFolderSize(Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName), m_SleepInterval))
-						{
-							msg = "Dataset '" + dataset + "' not ready";
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg);
-							if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
-							return EnumCloseOutType.CLOSEOUT_NOT_READY;
-						}
+                        eReturn = CaptureFolderNoExt(dataset, ref msg, datasetInfo, sourceFolderPath, datasetFolderPath);
+						break;
 
-						// Verify the folder doesn't contain a group of ".D" folders
-						string[] folderList = Directory.GetDirectories(Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName), "*.D");
-						if (folderList.Length > 0)
-						{
-							msg = "Multiple scan folders found in dataset folder " + Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName);
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
-							return EnumCloseOutType.CLOSEOUT_FAILED;
-						}
-
-						// Copy the dataset folder to the storage server
-						try
-						{
-							clsFileTools.CopyDirectory(Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName), datasetFolderPath);
-							msg = "Copied folder " + Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName) + " to " +
-								Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName);
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
-							return EnumCloseOutType.CLOSEOUT_SUCCESS;
-						}
-						catch (Exception ex)
-						{
-							msg = "Exception copying dataset folder " + Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName);
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
-							return EnumCloseOutType.CLOSEOUT_FAILED;
-						}
-						finally
-						{
-							if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
-						}
-//						break;
 					case RawDSTypes.BrukerImaging:
-						// Dataset found; it's a Bruker imaging folder
-						// First, verify the folder size is constant (indicates acquisition is actually finished)
-						if (!VerifyConstantFolderSize(Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName), m_SleepInterval))
-						{
-							msg = "Dataset '" + dataset + "' not ready";
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg);
-							if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
-							return EnumCloseOutType.CLOSEOUT_NOT_READY;
-						}
+                        eReturn = CaptureBrukerImaging(dataset, ref msg, datasetInfo, sourceFolderPath, datasetFolderPath);
+						break;
 
-						// Check to see if the folders have been zipped
-						string[] zipFileList = Directory.GetFiles(Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName), "*.zip");
-						if (zipFileList.Length < 1)
-						{
-							// Data files haven't been zipped, so throw error
-							msg = "No zip files found in dataset folder " + Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName);
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
-							return EnumCloseOutType.CLOSEOUT_FAILED;
-						}
-
-						// Make a dateaet folder
-						MakeFolderPath(datasetFolderPath);
-
-						// Copy only the files in the dataset folder to the storage server. Do not copy folders
-						try
-						{
-							string[] fileList = Directory.GetFiles(Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName));
-							
-							foreach (string fileToCopy in fileList)
-							{
-								FileInfo fi = new FileInfo(fileToCopy);
-								fi.CopyTo(Path.Combine(datasetFolderPath,fi.Name));
-							}
-							msg = "Copied files in folder " + Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName) + " to " +
-								Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName);
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
-							return EnumCloseOutType.CLOSEOUT_SUCCESS;
-						}
-						catch (Exception ex)
-						{
-							msg = "Exception copying files in dataset folder " + Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName);
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
-							return EnumCloseOutType.CLOSEOUT_FAILED;
-						}
-						finally
-						{
-							if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
-						}
-//						break;
 					case RawDSTypes.BrukerSpot:
-						// Dataset found; it's a Bruker_Spot instrument type
-						// First, verify the folder size is constant (indicates acquisition is actually finished)
-						if (!VerifyConstantFolderSize(Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName), m_SleepInterval))
-						{
-							msg = "Dataset '" + dataset + "' not ready";
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg);
-							if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
-							return EnumCloseOutType.CLOSEOUT_NOT_READY;
-						}
+                        eReturn = CaptureBrukerSpot(dataset, ref msg, datasetInfo, sourceFolderPath, datasetFolderPath);
+						break;
 
-						// Verify the dataset folder contains just one data folder, unzipped
-						string[] zipFiles = Directory.GetFiles(Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName), "*.zip");
-						string[] dataFolders = Directory.GetDirectories(Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName));
-
-						if (zipFiles.Length > 0)
-						{
-							msg = "Zip files found in dataset folder " + Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName);
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
-							return EnumCloseOutType.CLOSEOUT_FAILED;
-						}
-						else if (dataFolders.Length != 1)
-						{
-							msg = "Multiple data files found in dataset folder " + Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName);
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
-							return EnumCloseOutType.CLOSEOUT_FAILED;
-						}
-
-						// Copy the dataset folder to the storage server
-						try
-						{
-							clsFileTools.CopyDirectory(Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName), datasetFolderPath);
-							msg = "Copied folder " + Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName) + " to " +
-								Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName);
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
-							return EnumCloseOutType.CLOSEOUT_SUCCESS;
-						}
-						catch (Exception ex)
-						{
-							msg = "Exception copying dataset folder " + Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName);
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
-							return EnumCloseOutType.CLOSEOUT_FAILED;
-						}
-						finally
-						{
-							if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
-						}
-//						break;
 					default:
 						msg = "Invalid dataset type found: " + sourceType.ToString();
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 						if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
-						return EnumCloseOutType.CLOSEOUT_FAILED;
-//						break;
-				}	// End switch
+                        eReturn = EnumCloseOutType.CLOSEOUT_FAILED;
+						break;
+				}
+
+                return eReturn;
+
 			}	// End sub
+        
+            private EnumCloseOutType CaptureFile(string dataset, ref string msg, clsDatasetInfo datasetInfo, string sourceFolderPath, string datasetFolderPath)
+            {
+                // Dataset found, and it's a single file
+                // First, verify the file size is constant (indicates acquisition is actually finished)
+                string copySourceDir = Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName);
+                if (!VerifyConstantFileSize(copySourceDir, m_SleepInterval))
+                {
+                    msg = "Dataset '" + dataset + "' not ready";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg);
+                    if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+                    return EnumCloseOutType.CLOSEOUT_NOT_READY;
+                }
+                // Copy the file to the dataset folder
+                try
+                {
+                    // Make the dataset folder
+                    MakeFolderPath(datasetFolderPath);
+                    // Copy the raw spectra file
+                    File.Copy(copySourceDir,
+                        Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName));
+                    msg = "Copied file " + copySourceDir + " to " +
+                        Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName);
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                    if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+                    return EnumCloseOutType.CLOSEOUT_SUCCESS;
+                }
+                catch (Exception ex)
+                {
+                    msg = "Copy exception for dataset " + dataset;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
+                    if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+            }
+
+            private EnumCloseOutType CaptureFolderExt(string dataset, ref string msg, clsDatasetInfo datasetInfo, string sourceFolderPath, string datasetFolderPath)
+            {
+                // Dataset found in a folder with an extension on the folder name
+
+                string copySourceDir = Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName);
+                string copyTargetDir = Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName);
+
+                if (!VerifyConstantFolderSize(copySourceDir, m_SleepInterval))
+                {
+                    msg = "Dataset '" + dataset + "' not ready";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg);
+                    if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+                    return EnumCloseOutType.CLOSEOUT_NOT_READY;
+                }
+
+                // Copy the dateset folder to the storage server
+
+                // Make a dataset folder
+                try
+                {
+                    // Make a dateaet folder
+                    MakeFolderPath(datasetFolderPath);
+                }
+                catch (Exception ex)
+                {
+                    msg = "Exception creating dataset folder for dataset " + dataset;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
+                    if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // Copy the source folder to the dataset folder
+                List<string> filesToSkip = null;
+                int retryCount = 0;
+
+            RetryStart:
+                try
+                {
+                    // Copy the dataset folder
+                    clsFileTools.CopyDirectory(copySourceDir, copyTargetDir, filesToSkip);
+                    msg = "Copied folder " + copySourceDir + " to " + copyTargetDir;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                    if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+                    return EnumCloseOutType.CLOSEOUT_SUCCESS;
+                }
+                catch (Exception ex)
+                {
+                    msg = "Copy exception for dataset " + dataset;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
+                    // If exception was caused by locked file, create skip list and try again
+                    if (ex.Message.Contains("The process cannot access the file") && (retryCount < 1))
+                    {
+                        filesToSkip = new List<string>();
+                        try
+                        {
+                            string[] fileList = Directory.GetFiles(copySourceDir, "*.mcf_idx*", SearchOption.AllDirectories);
+                            foreach (string fileName in fileList)
+                            {
+                                filesToSkip.Add(fileName);
+                            }
+                        }
+                        catch (Exception ex1)
+                        {
+                            msg = "Exception getting list of files to skip for dataset " + dataset;
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex1);
+                            if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+                            return EnumCloseOutType.CLOSEOUT_FAILED;
+                        }
+                        // Try the capture again using a skip list
+                        msg = "Retrying capture using skip list";
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                        retryCount++;
+                        goto RetryStart;
+                    }
+                    else
+                    {
+                        if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+                        return EnumCloseOutType.CLOSEOUT_FAILED;
+                    }
+                }
+            }
+
+            private EnumCloseOutType CaptureFolderNoExt(string dataset, ref string msg, clsDatasetInfo datasetInfo, string sourceFolderPath, string datasetFolderPath)
+            {
+                // Dataset found; it's a folder with no extension on the name
+                // First, verify the folder size is constant (indicates acquisition is actually finished)
+                string copySourceDir = Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName);
+                if (!VerifyConstantFolderSize(copySourceDir, m_SleepInterval))
+                {
+                    msg = "Dataset '" + dataset + "' not ready";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg);
+                    if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+                    return EnumCloseOutType.CLOSEOUT_NOT_READY;
+                }
+
+                // Verify the folder doesn't contain a group of ".D" folders
+                string[] folderList = Directory.GetDirectories(copySourceDir, "*.D");
+                if (folderList.Length > 0)
+                {
+                    msg = "Multiple scan folders found in dataset folder " + copySourceDir;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // Copy the dataset folder to the storage server
+                try
+                {
+                    clsFileTools.CopyDirectory(copySourceDir, datasetFolderPath);
+                    msg = "Copied folder " + copySourceDir + " to " +
+                        Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName);
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
+                    return EnumCloseOutType.CLOSEOUT_SUCCESS;
+                }
+                catch (Exception ex)
+                {
+                    msg = "Exception copying dataset folder " + copySourceDir;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+                finally
+                {
+                    if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+                }
+            }
+
+            private EnumCloseOutType CaptureBrukerImaging(string dataset, ref string msg, clsDatasetInfo datasetInfo, string sourceFolderPath, string datasetFolderPath)
+            {
+                // Dataset found; it's a Bruker imaging folder
+                // First, verify the folder size is constant (indicates acquisition is actually finished)
+                string copySourceDir = Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName);
+                if (!VerifyConstantFolderSize(copySourceDir, m_SleepInterval))
+                {
+                    msg = "Dataset '" + dataset + "' not ready";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg);
+                    if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+                    return EnumCloseOutType.CLOSEOUT_NOT_READY;
+                }
+
+                // Check to see if the folders have been zipped
+                string[] zipFileList = Directory.GetFiles(copySourceDir, "*.zip");
+                if (zipFileList.Length < 1)
+                {
+                    // Data files haven't been zipped, so throw error
+                    msg = "No zip files found in dataset folder " + copySourceDir;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // Make a dataset folder
+                MakeFolderPath(datasetFolderPath);
+
+                // Copy only the files in the dataset folder to the storage server. Do not copy folders
+                try
+                {
+                    string[] fileList = Directory.GetFiles(copySourceDir);
+
+                    foreach (string fileToCopy in fileList)
+                    {
+                        FileInfo fi = new FileInfo(fileToCopy);
+                        fi.CopyTo(Path.Combine(datasetFolderPath, fi.Name));
+                    }
+                    msg = "Copied files in folder " + copySourceDir + " to " +
+                        Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName);
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
+                    return EnumCloseOutType.CLOSEOUT_SUCCESS;
+                }
+                catch (Exception ex)
+                {
+                    msg = "Exception copying files in dataset folder " + copySourceDir;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+                finally
+                {
+                    if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+                }
+            }
+
+            private EnumCloseOutType CaptureBrukerSpot(string dataset, ref string msg, clsDatasetInfo datasetInfo, string sourceFolderPath, string datasetFolderPath)
+            {
+                // Dataset found; it's a Bruker_Spot instrument type
+                // First, verify the folder size is constant (indicates acquisition is actually finished)
+                string copySourceDir = Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName);
+                if (!VerifyConstantFolderSize(copySourceDir, m_SleepInterval))
+                {
+                    msg = "Dataset '" + dataset + "' not ready";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg);
+                    if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+                    return EnumCloseOutType.CLOSEOUT_NOT_READY;
+                }
+
+                // Verify the dataset folder doesn't contain any .zip files
+                string[] zipFiles = Directory.GetFiles(copySourceDir, "*.zip");
+
+                if (zipFiles.Length > 0)
+                {
+                    msg = "Zip files found in dataset folder " + copySourceDir;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+
+
+                // Check whether the dataset folder contains just one data folder or multiple data folders
+                string[] dataFolders = Directory.GetDirectories(copySourceDir);
+
+                if (dataFolders.Length < 1)
+                {
+                    msg = "No subfolders were found in the dataset folder " + copySourceDir;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+
+                if (dataFolders.Length > 1)
+                {
+                    // Make sure the subfolders match the naming convention for MALDI spot folders
+                    // Example folder names:
+                    //  0_D4
+                    //  0_E10
+                    //  0_N4
+
+                    const string MALDI_SPOT_FOLDER_REGEX = "^\\d_[A-Z]\\d+$";
+                    System.Text.RegularExpressions.Regex reMaldiSpotFolder;
+                    reMaldiSpotFolder = new System.Text.RegularExpressions.Regex(MALDI_SPOT_FOLDER_REGEX, System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+                    for (int i = 0; i < dataFolders.Length; i++)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Test folder " + dataFolders[i] + " against RegEx " + reMaldiSpotFolder.ToString());
+
+                        string sDirName = System.IO.Path.GetFileName(dataFolders[i]);
+                        if (!reMaldiSpotFolder.IsMatch(sDirName, 0))
+                        {
+                            msg = "Dataset folder contains multiple subfolders, but folder " + sDirName + " does not match the expected pattern (" + reMaldiSpotFolder.ToString() + "); see " + copySourceDir;
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                            return EnumCloseOutType.CLOSEOUT_FAILED;
+                        }
+
+                    }
+                }
+
+                // Copy the dataset folder (and all subfolders) to the storage server
+                try
+                {
+                    clsFileTools.CopyDirectory(copySourceDir, datasetFolderPath);
+                    msg = "Copied folder " + copySourceDir + " to " +
+                        Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName);
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
+                    return EnumCloseOutType.CLOSEOUT_SUCCESS;
+                }
+                catch (Exception ex)
+                {
+                    msg = "Exception copying dataset folder " + copySourceDir;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+                finally
+                {
+                    if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+                }
+            }
+
+
 
 			/// <summary>
 			/// Verifies specified folder path exists

@@ -103,7 +103,7 @@ namespace CaptureTaskManager
                     else
                     {
                         // Update the log level
-                        int debugLevel = int.Parse(m_MgrParams.GetParam("debuglevel"));
+                        int debugLevel = clsMgrSettings.CIntSafe(m_MgrParams.GetParam("debuglevel"), 4); 
                         clsLogTools.SetFileLogLevel(debugLevel);
                     }
                 }
