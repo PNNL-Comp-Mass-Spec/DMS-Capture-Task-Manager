@@ -520,9 +520,21 @@ namespace CaptureToolPlugin
 				// Verify storage folder on storage server exists
 				if (!ValidateFolderPath(storageFolderPath))
 				{
-					msg = "Storage folder '" + storageFolderPath + "' does not exist";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
-					return EnumCloseOutType.CLOSEOUT_FAILED;
+					msg = "Storage folder '" + storageFolderPath + "' does not exist; will auto-create";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+
+                    try 
+                    {
+                        System.IO.Directory.CreateDirectory(storageFolderPath);
+                        msg = "Successfully created " + storageFolderPath;
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                    }
+                    catch 
+                    {
+                        msg = "Error creating missing storage folder: " + storageFolderPath;
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                        return EnumCloseOutType.CLOSEOUT_FAILED;
+                    }
 				}
 
 				// Verify dataset folder path doesn't already exist
