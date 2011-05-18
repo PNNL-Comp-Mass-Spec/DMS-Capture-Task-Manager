@@ -92,7 +92,7 @@ namespace CaptureToolPlugin
 
 		#region "Methods"
 			/// <summary>
-			/// Creates specified folder
+			/// Creates specified folder; if the folder already exists, returns true
 			/// </summary>
 			/// <param name="InpPath">Fully qualified path for folder to be created</param>
 			/// <returns>TRUE for success, FALSE for failure</returns>
@@ -101,7 +101,12 @@ namespace CaptureToolPlugin
 				//Create specified directory
 				try
 				{
-					Directory.CreateDirectory(inpPath);
+                    System.IO.DirectoryInfo diFolder;
+                    diFolder = new System.IO.DirectoryInfo(inpPath);
+
+                    if (!diFolder.Exists)
+                        diFolder.Create();
+
 					return true;
 				}
 				catch (Exception ex)
@@ -112,28 +117,105 @@ namespace CaptureToolPlugin
 				}
 			}	// End sub
 
+            private bool MarkSupersededFiles(string folderPath)
+            {
+                bool success = false;
+
+                try
+                {
+                    System.IO.DirectoryInfo diFolder = new System.IO.DirectoryInfo(folderPath);
+                    
+                    if (diFolder.Exists)
+                    {
+                        System.IO.FileInfo[] fiFiles;
+                        System.IO.DirectoryInfo[] diSubFolders;
+                        
+                        string sLogMessage;
+                        string sTargetPath;
+
+                        fiFiles = diFolder.GetFiles();
+
+                        foreach (System.IO.FileInfo fiFile in fiFiles)
+                        {
+                            sTargetPath = System.IO.Path.Combine(diFolder.FullName, "x_" + fiFile.Name);
+
+                            if (System.IO.File.Exists(sTargetPath))
+                            {
+                                // Target exists; delete it
+                                System.IO.File.Delete(sTargetPath);
+                            }
+
+                            fiFile.MoveTo(sTargetPath);
+                        }
+
+                        if (fiFiles.Length > 0)
+                        {
+                            sLogMessage = "Renamed superseded file(s) at " + diFolder.FullName + " to start with x_";
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, sLogMessage);
+                        }
+
+                        diSubFolders = diFolder.GetDirectories();
+
+                        foreach (System.IO.DirectoryInfo diSubFolder in diSubFolders)
+                        {
+                            sTargetPath = System.IO.Path.Combine(diFolder.FullName, "x_" + diSubFolder.Name);
+
+                            if (System.IO.Directory.Exists(sTargetPath))
+                            {
+                                // Target exists; delete it
+                                System.IO.Directory.Delete(sTargetPath, true);
+                            }
+
+                            diSubFolder.MoveTo(sTargetPath);
+                        }
+
+                        if (diSubFolders.Length > 0)
+                        {
+                            sLogMessage = "Renamed superseded folder(s) at " + diFolder.FullName + " to start with x_";
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, sLogMessage);
+                        }
+
+                    }
+
+                    success = true;
+                }
+                catch (Exception ex)
+                {
+                    msg = "Exception renaming files/folders to start with x_ at " + folderPath;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
+                    success = false;
+                }
+
+                return success;
+            }
+
 			/// <summary>
 			/// Checks to determine if specified folder is empty
 			/// </summary>
 			/// <param name="DSFolder">Full path specifying folder to be checked</param>
-			/// <returns>0 if folder is empty, count of files if not empty, -1 if error occurred</returns>
-			private DatasetFolderState IsDSFolderEmpty(string dsFolder)
+			/// <returns>Empty=0, NotEmpty=1, or Error=2</returns>
+            private DatasetFolderState IsDSFolderEmpty(string dsFolder, out int fileCount, out int folderCount)
 			{
 				//Returns count of files or folders if folder is not empty
 				//Returns 0 if folder is empty
 				//returns -1 on error
 
 				string[] Folderstuff = null;
+                fileCount = 0;
+                folderCount = 0;
 
 				try
 				{
 					//Check for files
 					Folderstuff = Directory.GetFiles(dsFolder);
-					if (Folderstuff.GetLength(0) > 0) return DatasetFolderState.NotEmpty;
+                    fileCount = Folderstuff.Length;
 
-					//Check for folders
+                    //Check for folders
 					Folderstuff = Directory.GetDirectories(dsFolder);
-					if (Folderstuff.GetLength(0) > 0) return DatasetFolderState.NotEmpty;
+                    folderCount = Folderstuff.Length;
+
+                    if (fileCount > 0) return DatasetFolderState.NotEmpty;					
+					if (folderCount > 0) return DatasetFolderState.NotEmpty;
 				}
 				catch (Exception ex)
 				{
@@ -144,44 +226,54 @@ namespace CaptureToolPlugin
 				}
 
 				//If we got to here, then the directory is empty
-
 				return DatasetFolderState.Empty;
+
 			}	// End sub
 
 			/// <summary>
-			/// Performs action specified by dsfolderexistsaction mgr param if a dataset folder already exists
+            /// Performs action specified by DSFolderExistsAction mgr param if a dataset folder already exists
 			/// </summary>
 			/// <param name="DSFolder">Full path to dataset folder</param>
 			/// <returns>TRUE for success, FALSE for failure</returns>
 			private bool PerformDSExistsActions(string dsFolder)
 			{
 				bool switchResult = false;
+                int fileCount;
+                int folderCount;
 
-				switch (IsDSFolderEmpty(dsFolder))
+				switch (IsDSFolderEmpty(dsFolder, out fileCount, out folderCount))
 				{
 					case DatasetFolderState.Empty:
-						//Directory is empty, attempt to delete it
-						try
-						{
-							Directory.Delete(dsFolder);
-							switchResult = true;
-						}
-						catch (Exception ex)
-						{
-							msg = "Dataset folder '" + dsFolder + "' already exists and cannot be deleted";
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
-							switchResult = false;
-						}
-						break;
-					case   DatasetFolderState.Error:
+						//Directory is empty; all is good
+                        switchResult = true;
+                        break;
+					case  DatasetFolderState.Error:
 						//There was an error attempting to determine the dataset directory contents
-						//(Error reporting was handled by previous call to IsDSFolderEmpty)
+						//(Error reporting was handled by call to IsDSFolderEmpty above)
 						switchResult = false;
 						break;
-					case  DatasetFolderState.NotEmpty:
-						string DSAction = m_MgrParams.GetParam("dsfolderexistsaction");
+					case DatasetFolderState.NotEmpty:
+                        string DSAction = m_MgrParams.GetParam("DSFolderExistsAction");
 						switch (DSAction.ToLower())
 						{
+                            case "overwrite_single_item":
+                                // If the folder only contains one file or only one subfolder
+                                // then we're likely retrying capture; rename the one file to start with x_
+                                if (fileCount <= 1 && folderCount == 0 ||
+                                    fileCount == 0 && folderCount <= 1)
+                                {
+                                    switchResult = MarkSupersededFiles(dsFolder);
+                                }
+                                else
+                                {
+                                    // Fail the capture task
+                                    msg = "Dataset folder '" + dsFolder + "' already exists and has multiple files or subfolders";
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                                    switchResult = false;
+                                    break;
+                                }
+                                break;
+
 							case "delete":
 								//Attempt to delete dataset folder
 								try
@@ -215,7 +307,7 @@ namespace CaptureToolPlugin
 								switchResult = false;
 								break;
 							default:
-								//An invalid value for dsfolderexistsaction was specified
+                                //An invalid value for DSFolderExistsAction was specified
 								msg = "Dataset folder '" + dsFolder + "' already exists. Invalid action " + DSAction + " specified";
 								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 								switchResult = false;
@@ -516,8 +608,8 @@ namespace CaptureToolPlugin
 				{
 					datasetFolderPath = Path.Combine(storageFolderPath, dataset);	// Dataset folder complete path
 				}
-				
-				// Verify storage folder on storage server exists
+
+                // Verify that the storage folder on storage server does exist; e.g. \\proto-9\VOrbiETD02\2011_2
 				if (!ValidateFolderPath(storageFolderPath))
 				{
 					msg = "Storage folder '" + storageFolderPath + "' does not exist; will auto-create";
@@ -537,10 +629,11 @@ namespace CaptureToolPlugin
                     }
 				}
 
-				// Verify dataset folder path doesn't already exist
+				// Verify dataset folder path doesn't already exist or is empty
+                // Example: \\proto-9\VOrbiETD02\2011_2\PTO_Na_iTRAQ_2_17May11_Owl_11-05-09
 				if (ValidateFolderPath(datasetFolderPath))
 				{
-					// Folder exists, so take action specified in configuration
+					// Dataset folder exists, so take action specified in configuration
 					if (!PerformDSExistsActions(datasetFolderPath)) return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
@@ -642,11 +735,23 @@ namespace CaptureToolPlugin
                     if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
                     return EnumCloseOutType.CLOSEOUT_NOT_READY;
                 }
-                // Copy the file to the dataset folder
+
+                // Make a dataset folder
                 try
                 {
-                    // Make the dataset folder
                     MakeFolderPath(datasetFolderPath);
+                }
+                catch (Exception ex)
+                {
+                    msg = "Exception creating dataset folder at " + datasetFolderPath;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
+                    if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // Copy the file to the dataset folder
+                try
+                {                    
                     // Copy the raw spectra file
                     File.Copy(copySourceDir,
                         Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName));
@@ -680,17 +785,14 @@ namespace CaptureToolPlugin
                     return EnumCloseOutType.CLOSEOUT_NOT_READY;
                 }
 
-                // Copy the dateset folder to the storage server
-
                 // Make a dataset folder
                 try
                 {
-                    // Make a dateaet folder
                     MakeFolderPath(datasetFolderPath);
                 }
                 catch (Exception ex)
                 {
-                    msg = "Exception creating dataset folder for dataset " + dataset;
+                    msg = "Exception creating dataset folder at " + datasetFolderPath;
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
                     if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
                     return EnumCloseOutType.CLOSEOUT_FAILED;
@@ -769,6 +871,15 @@ namespace CaptureToolPlugin
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
 
+                // Verify the folder doesn't contain ".IMF" files
+                string[] fileList = Directory.GetFiles(copySourceDir, "*.imf");
+                if (fileList.Length > 0)
+                {
+                    msg = "Dataset folder contains a series of .IMF files -- upload a .UIMF file instead; " + copySourceDir;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+
                 // Copy the dataset folder to the storage server
                 try
                 {
@@ -814,7 +925,17 @@ namespace CaptureToolPlugin
                 }
 
                 // Make a dataset folder
-                MakeFolderPath(datasetFolderPath);
+                try
+                {
+                    MakeFolderPath(datasetFolderPath);
+                }
+                catch (Exception ex)
+                {
+                    msg = "Exception creating dataset folder at " + datasetFolderPath;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
+                    if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
 
                 // Copy only the files in the dataset folder to the storage server. Do not copy folders
                 try
