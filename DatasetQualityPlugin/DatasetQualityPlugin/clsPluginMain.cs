@@ -179,8 +179,25 @@ namespace DatasetQualityPlugin
 				success = m_MsFileScanner.ProcessMSFileOrFolder(Path.Combine(sourceFolder, inpFileName), outputFolder);
 				if (success)
 				{
-					success = m_MsFileScanner.PostDatasetInfoUseDatasetID(int.Parse(m_TaskParams.GetParam("Dataset_ID")),
-												m_MgrParams.GetParam("connectionstring"), MS_FILE_SCANNER_DS_INFO_SP);
+                    int iPostCount = 0;
+
+                    while (iPostCount <= 2)
+                    {
+                        success = m_MsFileScanner.PostDatasetInfoUseDatasetID(int.Parse(m_TaskParams.GetParam("Dataset_ID")),
+                                                    m_MgrParams.GetParam("connectionstring"), MS_FILE_SCANNER_DS_INFO_SP);
+
+                        if (success)
+                            break;
+                        else
+                        {
+                            // If the error message contains the text "timeout expired" then try again, up to 2 times
+                            if (!m_Msg.ToLower().Contains("timeout expired"))                            
+                                break;
+                        }
+
+                        iPostCount += 1;
+                    }
+
 					if (success)
 					{
 						errorCode = clsMSFileInfoScanner.eMSFileScannerErrorCodes.NoError;
