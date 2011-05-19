@@ -58,7 +58,9 @@ namespace DatasetArchivePlugin
 			public override bool PerformTask()
 			{
 				// ToDo: Add job duration stuff?
-		
+
+                int compareErrorCount;
+
 				// Perform base class operations
 				if (!base.PerformTask()) return false;
 
@@ -100,7 +102,7 @@ namespace DatasetArchivePlugin
 				}	// End "results folder not in archive" actions
 				else
 				{
-					List<clsJobData> filesToUpdate = CompareFolders(m_ResultsFolderPathServer, m_ResultsFolderPathArchive);
+                    List<clsJobData> filesToUpdate = CompareFolders(m_ResultsFolderPathServer, m_ResultsFolderPathArchive, out compareErrorCount);
 					
 					// Check for errors
 					if (filesToUpdate == null)
@@ -115,8 +117,17 @@ namespace DatasetArchivePlugin
 						// No files requiring update were found. Human intervention may be required
 						m_Msg = "No files needing update found for dataset " + m_TaskParams.GetParam("dataset")
 										+ ", job " + m_TaskParams.GetParam("Job");
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, m_Msg);
-						return true;
+                        if (compareErrorCount == 0)
+                        {
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, m_Msg);
+						    return true;
+                        }
+                        else
+                        {
+                            m_Msg += "; however, errors occurred when looking for changed files";
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, m_Msg);
+                            return false;
+                        }
 					}
 
 					// Copy the files needing updating to the archive
@@ -172,10 +183,22 @@ namespace DatasetArchivePlugin
 					}
 				}
 
-				// If we got to here, everything worked OK
-				m_Msg = "Update complete, dataset " + m_TaskParams.GetParam("dataset");
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, m_Msg);
-				return true;
+                if (compareErrorCount == 0)
+                {
+                    // If we got to here, everything worked OK
+                    m_Msg = "Update complete, dataset " + m_TaskParams.GetParam("dataset");
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, m_Msg);
+                    return true;
+                }
+                else
+                {
+                    // Files have been updated, but errors occurred in CompareFolders
+                    m_Msg = "Update complete, dataset " + m_TaskParams.GetParam("dataset");
+                    m_Msg += "; however, errors occurred when looking for changed files";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, m_Msg);
+                    return false;
+                }
+				
 			}	// End sub
 
 			/// <summary>
@@ -265,11 +288,12 @@ namespace DatasetArchivePlugin
 			/// <param name="svrFolderPath">Location of source folder on storage server</param>
 			/// <param name="sambaFolderPath">Samba path to compared folder in archive</param>
 			/// <returns>List of files that need to be copied to the archive</returns>
-			private List<clsJobData> CompareFolders(string svrFolderPath, string sambaFolderPath)
+            private List<clsJobData> CompareFolders(string svrFolderPath, string sambaFolderPath, out int compareErrorCount)
 			{
 				ArrayList serverFiles = null;
 				string archFileName;
 				int compareResult;
+                compareErrorCount = 0;
 				string msg;
 				clsJobData tmpJobData;
 
@@ -341,11 +365,12 @@ namespace DatasetArchivePlugin
 								tmpJobData.RenameFlag = true;
 								returnObject.Add(tmpJobData);
 								break;
-							default:
-								// There was a problem with the file comparison
+                            default:        // Includes FILE_COMPARE_ERROR
+								// There was a problem with the file comparison; abort the update
 								msg = "clsArchiveUpdate.CompareFolders: Error comparing files. Error msg = " + m_ErrMsg;
 								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-								break;
+                                compareErrorCount += 1;
+                                break;
 						}	// End switch
 					}
 					else
