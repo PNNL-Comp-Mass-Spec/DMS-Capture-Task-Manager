@@ -423,7 +423,7 @@ namespace CaptureTaskManager
 					}
 					catch (Exception ex)
 					{
-						//TODO: Figure out appropriate action
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception while writing status file: " + ex.Message);
 					}
 				}
 				catch

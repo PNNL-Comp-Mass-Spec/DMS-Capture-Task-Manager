@@ -34,7 +34,8 @@
 		{
 			CLOSEOUT_SUCCESS = 0,
 			CLOSEOUT_FAILED = 1,
-			CLOSEOUT_NOT_READY = 2
+			CLOSEOUT_NOT_READY = 2,
+            CLOSEOUT_NEED_TO_ABORT_PROCESSING = 3
 		}
 
 		public enum EnumEvalCode : short

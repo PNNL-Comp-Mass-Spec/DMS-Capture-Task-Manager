@@ -18,11 +18,11 @@ namespace CaptureTaskManager
 	{
 		//*********************************************************************************************************
 		// Interface for step tool plugins
-		//**********************************************************************************************************
+        //**********************************************************************************************************
 
-		#region "Methods"
-			void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools);
-			clsToolReturnData RunTool();
+        #region "Methods"
+            void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools);
+			    clsToolReturnData RunTool();
 		#endregion
 	}	// End interface
 }	// End namespace

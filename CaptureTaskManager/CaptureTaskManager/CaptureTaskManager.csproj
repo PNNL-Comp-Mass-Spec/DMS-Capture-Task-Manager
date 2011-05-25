@@ -81,6 +81,7 @@
     <Compile Include="clsCaptureTask.cs" />
     <Compile Include="clsCleanupMgrErrors.cs" />
     <Compile Include="clsDbTask.cs" />
+    <Compile Include="clsFailedResultsCopier.cs" />
     <Compile Include="clsLogTools.cs" />
     <Compile Include="clsMainProgram.cs" />
     <Compile Include="clsMessageHandler.cs" />

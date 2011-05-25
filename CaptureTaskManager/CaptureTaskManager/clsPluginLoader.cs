@@ -43,6 +43,32 @@ namespace CaptureTaskManager
 		#endregion
 
 		#region "Methods"
+
+            /// <summary>
+            /// Set the following to True if debugging
+            /// </summary>
+            /// <remarks>Also uncomment the appropriate case statements in the following two functions</remarks>
+
+            private const bool PLUGIN_DEBUG_MODE_ENABLED = true;
+
+            private static IToolRunner DebugModeGetToolRunner(string className)
+            {
+
+                IToolRunner myToolRunner = null;
+
+                switch (className)
+                {
+                    //case "ImsDemuxPlugin.clsPluginMain":
+                    //    myToolRunner = (IToolRunner)new ImsDemuxPlugin.clsPluginMain();
+                    //    break;
+                
+                    default:
+                        break;
+                }
+
+                return myToolRunner;
+            }
+
 			/// <summary>
 			/// Loads a tool runner object
 			/// </summary>
@@ -58,6 +84,15 @@ namespace CaptureTaskManager
 
 				if (GetPluginInfo(xPath, ref className, ref assyName))
 				{
+                    if (PLUGIN_DEBUG_MODE_ENABLED)
+                    {
+                        myToolRunner = DebugModeGetToolRunner(className);
+                        if ((myToolRunner != null))
+                        {
+                            return myToolRunner;
+                        }
+                    }
+
 					object obj = LoadObject(className, assyName);
 					if (obj != null)
 					{

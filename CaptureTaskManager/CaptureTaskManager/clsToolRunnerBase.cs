@@ -30,6 +30,7 @@ namespace CaptureTaskManager
 
             protected System.DateTime m_LastConfigDBUpdate = System.DateTime.Now;
             protected int m_MinutesBetweenConfigDBUpdates = 10;
+            protected bool m_NeedToAbortProcessing = false;
 		#endregion
 
 		#region "Delegates"
