@@ -8,3 +8,8 @@ D:\DMS_Controlled\Capture_Task_Manager\DatasetInfoPlugin\DatasetInfoPlugin\bin\D
 D:\DMS_Controlled\Capture_Task_Manager\DatasetInfoPlugin\DatasetInfoPlugin\obj\Debug\ResolveAssemblyReference.cache
 D:\DMS_Controlled\Capture_Task_Manager\DatasetInfoPlugin\DatasetInfoPlugin\obj\Debug\DatasetInfoPlugin.dll
 D:\DMS_Controlled\Capture_Task_Manager\DatasetInfoPlugin\DatasetInfoPlugin\obj\Debug\DatasetInfoPlugin.pdb
+F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\DatasetInfoPlugin\DatasetInfoPlugin\bin\Debug\DatasetInfoPlugin.dll
+F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\DatasetInfoPlugin\DatasetInfoPlugin\bin\Debug\DatasetInfoPlugin.pdb
+F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\DatasetInfoPlugin\DatasetInfoPlugin\obj\Debug\ResolveAssemblyReference.cache
+F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\DatasetInfoPlugin\DatasetInfoPlugin\obj\Debug\DatasetInfoPlugin.dll
+F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\DatasetInfoPlugin\DatasetInfoPlugin\obj\Debug\DatasetInfoPlugin.pdb

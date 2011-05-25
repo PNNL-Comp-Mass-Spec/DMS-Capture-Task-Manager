@@ -117,6 +117,11 @@ namespace CaptureToolPlugin
 				}
 			}	// End sub
 
+            /// <summary>
+            /// Renames each file and subfolder at folderPath to start with x_
+            /// </summary>
+            /// <param name="folderPath"></param>
+            /// <returns></returns>
             private bool MarkSupersededFiles(string folderPath)
             {
                 bool success = false;

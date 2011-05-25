@@ -105,15 +105,8 @@ namespace DatasetQualityPlugin
 				clsToolReturnData result = new clsToolReturnData();
 				string sourceFolder;
 
-				// Init folder paths based on client/server perspective
-				if (m_MgrParams.GetParam("perspective").ToLower() == "server")
-				{
-					sourceFolder = m_TaskParams.GetParam("Storage_Vol");
-				}
-				else
-				{
-					sourceFolder = m_TaskParams.GetParam("Storage_Vol_External");
-				}
+				// Always use client perspective for the source folder (allows MSFileInfoScanner to run from any CTM)
+				sourceFolder = m_TaskParams.GetParam("Storage_Vol_External");
 
 				// Set up the rest of the paths
 				sourceFolder = Path.Combine(sourceFolder,m_TaskParams.GetParam("Storage_Path"));
