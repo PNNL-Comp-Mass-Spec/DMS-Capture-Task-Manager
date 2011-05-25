@@ -8,7 +8,6 @@
 //*********************************************************************************************************
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using CaptureTaskManager;
 using System.Data.SQLite;
@@ -16,7 +15,7 @@ using System.Data;
 
 namespace ImsDemuxPlugin
 {
-	public static class clsSQLiteTools
+	public class clsSQLiteTools
 	{
 		//*********************************************************************************************************
 		// Tools for querying SQLite database (UIMF file, in this case)
@@ -41,12 +40,12 @@ namespace ImsDemuxPlugin
 			/// </summary>
 			/// <param name="uimfFileNamePath">Full path to uimf file</param>
 			/// <returns>Enum indicating test results</returns>
-			public static UimfQueryResults GetUimfMuxStatus(string uimfFileNamePath)
+			public UimfQueryResults GetUimfMuxStatus(string uimfFileNamePath)
 			{
 				string connStr = "data source=" + uimfFileNamePath;
 				string sqlStr = DEF_QUERY_STRING;
 
-				// Get at data table containing the multiplexing information for the UIMF file
+				// Get a data table containing the multiplexing information for the UIMF file
 				DataTable queryResult = GetDataTable(sqlStr, connStr);
 
 				// If null returned, there was an error
@@ -55,7 +54,7 @@ namespace ImsDemuxPlugin
 				// If empty table returned, there was an error
 				if (queryResult.Rows.Count < 1)
 				{
-					string msg = "No rows retrieved when querying UIMF file";
+                    string msg = "No rows retrieved when querying UIMF file with " + sqlStr;
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 					return UimfQueryResults.Error;
 				}
@@ -104,7 +103,7 @@ namespace ImsDemuxPlugin
 			/// <param name="cmdStr">SQL query string</param>
 			/// <param name="connStr">Connection string</param>
 			/// <returns>Table containg query results</returns>
-			private static DataTable GetDataTable(string cmdStr, string connStr)
+			private DataTable GetDataTable(string cmdStr, string connStr)
 			{
 				DataTable retTable = new DataTable();
 				int filledRows = 0;

@@ -8,7 +8,6 @@
 //*********************************************************************************************************
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using CaptureTaskManager;
 using System.IO;
@@ -29,12 +28,18 @@ namespace ImsDemuxPlugin
             public const int MANAGER_UPDATE_INTERVAL_MINUTES = 10;
         #endregion
 
-		#region "Constructors"
-			public clsPluginMain()
+        #region "Module variables"
+            protected clsDemuxTools mDemuxTools;
+        #endregion
+
+        #region "Constructors"
+            public clsPluginMain()
 				: base()
 			{
+                mDemuxTools = new clsDemuxTools();
+
                 // Add a handler to catch progress events
-				clsDemuxTools.DemuxProgress += new DelDemuxProgressHandler(clsDemuxTools_DemuxProgress);
+                mDemuxTools.DemuxProgress += new DelDemuxProgressHandler(clsDemuxTools_DemuxProgress);
 			}
 		#endregion
 
@@ -96,7 +101,7 @@ namespace ImsDemuxPlugin
 					uimfFileName = dataset + ".uimf";
 					if (!File.Exists(Path.Combine(dsPath, uimfFileName)))
 					{
-						msg = "UIMF file not found";
+                        msg = "UIMF file not found: " + uimfFileName;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 						retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 						retData.CloseoutMsg = msg;
@@ -108,7 +113,9 @@ namespace ImsDemuxPlugin
 
 				// Query to determine if demux is needed. Closeout if not required (adding "NonMultiplexed" to eval comment)
 				string uimfFileNamePath = Path.Combine(dsPath, uimfFileName);
-				clsSQLiteTools.UimfQueryResults queryResult = clsSQLiteTools.GetUimfMuxStatus(uimfFileNamePath);
+                clsSQLiteTools oSQLiteTools = new clsSQLiteTools();
+
+                clsSQLiteTools.UimfQueryResults queryResult = oSQLiteTools.GetUimfMuxStatus(uimfFileNamePath);
 				if (queryResult == clsSQLiteTools.UimfQueryResults.NonMultiplexed)
 				{
 					// De-mulitiplexing not required, so just report and exit
@@ -132,7 +139,10 @@ namespace ImsDemuxPlugin
 				}
 
 				// De-multiplexing is needed
-				retData = clsDemuxTools.PerformDemux(m_MgrParams, m_TaskParams, uimfFileName);
+                retData = mDemuxTools.PerformDemux(m_MgrParams, m_TaskParams, uimfFileName);
+
+                if (mDemuxTools.OutOfMemoryException)
+                    this.m_NeedToAbortProcessing = true;
 
 				msg = "Completed clsPluginMain.RunTool()";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
