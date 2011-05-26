@@ -558,7 +558,15 @@ namespace CaptureTaskManager
                         msg = m_MgrSettings.GetParam("MgrName") + ": Failure running tool " + m_Task.GetParam("StepTool")
                                     + ", job " + m_Task.GetParam("Job") + ", Dataset " + m_Task.GetParam("Dataset");
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
-                        m_Task.CloseTask(EnumCloseOutType.CLOSEOUT_FAILED, msg, toolResult.EvalCode, toolResult.EvalMsg);
+
+                        string sCloseoutMessage;
+
+                        if (!String.IsNullOrEmpty(toolResult.CloseoutMsg))
+                            sCloseoutMessage = toolResult.CloseoutMsg;
+                        else
+                            sCloseoutMessage = "Failure running tool " + m_Task.GetParam("StepTool");
+
+                        m_Task.CloseTask(EnumCloseOutType.CLOSEOUT_FAILED, sCloseoutMessage, toolResult.EvalCode, toolResult.EvalMsg);
                         break;
 
                     case EnumCloseOutType.CLOSEOUT_NOT_READY:

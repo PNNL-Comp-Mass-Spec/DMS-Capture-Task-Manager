@@ -122,7 +122,7 @@ namespace ImsDemuxPlugin
 					msg = "No de-multiplexing required for dataset " + dataset;
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 					retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
-					retData.EvalMsg = "Non-Multiiplexed";
+                    retData.EvalMsg = "Non-Multiplexed";
 					msg = "Completed clsPluginMain.RunTool()";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 					return retData;
