@@ -141,12 +141,13 @@ namespace ImsDemuxPlugin
                 }
                 catch (Exception ex)
                 {
-                    msg = "Exception calling DemultiplexFileThreaded for dataset " + dataset;
+                    msg = "Exception calling DemultiplexFile for dataset " + dataset;
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
                     retData.CloseoutMsg = "Error demultiplexing UIMF file";
                     retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     return retData;
                 }
+
 
 			    // Look for the demultiplexed .UIMF file
 				string localUimfDecodedFilePath = Path.Combine(workDirPath, dataset + DECODED_UIMF_SUFFIX);
@@ -159,41 +160,9 @@ namespace ImsDemuxPlugin
                     return retData;
                 }
 
-
-                // Make sure the Log_Entries table contains entry "Finished demultiplexing" (with today's date)
-                UIMFDemultiplexer.clsUIMFLogEntryAccessor oUIMFLogEntryAccessor = new UIMFDemultiplexer.clsUIMFLogEntryAccessor();
-                DateTime dtDemultiplexingFinished;
-                string sLogEntryAccessorMsg;
-
-                dtDemultiplexingFinished = oUIMFLogEntryAccessor.GetDemultiplexingFinishDate(localUimfDecodedFilePath, out sLogEntryAccessorMsg);
-
-                if (dtDemultiplexingFinished == System.DateTime.MinValue)
-                {
-                    msg = "Demultiplexing finished message not found in Log_Entries table in " + localUimfDecodedFilePath;
-                    if (!String.IsNullOrEmpty(sLogEntryAccessorMsg))
-                        msg += "; " + sLogEntryAccessorMsg;
-
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                if (!ValidateUIMFLogEntries(localUimfDecodedFilePath))
                     bPostProcessingError = true;
-                }
-                else
-                {
-                    if (System.DateTime.Now.Subtract(dtDemultiplexingFinished).TotalMinutes < 5)
-                    {
-                        msg = "Demultiplexing finished message in Log_Entries table has date " + dtDemultiplexingFinished.ToString();
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-                        bPostProcessingError = false;
-                    }
-                    else
-                    {
-                        msg = "Demultiplexing finished message in Log_Entries table is more than 5 minutes old: " + dtDemultiplexingFinished.ToString() + "; assuming this is a demultiplexing failure";
-                        if (!String.IsNullOrEmpty(sLogEntryAccessorMsg))
-                            msg += "; " + sLogEntryAccessorMsg;
 
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-                        bPostProcessingError = true;
-                    }
-                }
 
                 if (!bPostProcessingError)
                 {
@@ -294,6 +263,91 @@ namespace ImsDemuxPlugin
 				return retData;
 
 			}	// End sub
+
+            /// <summary>
+            /// Examines the Log_Entries table in the UIMF file to make sure the expected log entries are present
+            /// </summary>
+            /// <param name="localUimfDecodedFilePath"></param>
+            /// <returns></returns>
+            private bool ValidateUIMFLogEntries(string localUimfDecodedFilePath)
+            {
+                bool bUIMFIsValid = true;
+                string msg;
+
+                // Make sure the Log_Entries table contains entry "Finished demultiplexing" (with today's date)
+                UIMFDemultiplexer.clsUIMFLogEntryAccessor oUIMFLogEntryAccessor = new UIMFDemultiplexer.clsUIMFLogEntryAccessor();
+                DateTime dtDemultiplexingFinished;
+                string sLogEntryAccessorMsg;
+
+                dtDemultiplexingFinished = oUIMFLogEntryAccessor.GetDemultiplexingFinishDate(localUimfDecodedFilePath, out sLogEntryAccessorMsg);
+
+                if (dtDemultiplexingFinished == System.DateTime.MinValue)
+                {
+                    msg = "Demultiplexing finished message not found in Log_Entries table in " + localUimfDecodedFilePath;
+                    if (!String.IsNullOrEmpty(sLogEntryAccessorMsg))
+                        msg += "; " + sLogEntryAccessorMsg;
+
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    bUIMFIsValid = false;
+                }
+                else
+                {
+                    if (System.DateTime.Now.Subtract(dtDemultiplexingFinished).TotalMinutes < 5)
+                    {
+                        msg = "Demultiplexing finished message in Log_Entries table has date " + dtDemultiplexingFinished.ToString();
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                        bUIMFIsValid = true;
+                    }
+                    else
+                    {
+                        msg = "Demultiplexing finished message in Log_Entries table is more than 5 minutes old: " + dtDemultiplexingFinished.ToString() + "; assuming this is a demultiplexing failure";
+                        if (!String.IsNullOrEmpty(sLogEntryAccessorMsg))
+                            msg += "; " + sLogEntryAccessorMsg;
+
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                        bUIMFIsValid = false;
+                    }
+                }
+
+                if (bUIMFIsValid)
+                {
+                    // Make sure the Log_Entries table contains entry "Applied calibration coefficients to all frames" (with today's date)
+                    DateTime dtCalibrationApplied;
+                    sLogEntryAccessorMsg = string.Empty;
+
+                    dtCalibrationApplied = oUIMFLogEntryAccessor.GetCalibrationFinishDate(localUimfDecodedFilePath, out sLogEntryAccessorMsg);
+
+                    if (dtCalibrationApplied == System.DateTime.MinValue)
+                    {
+                        msg = "Applied calibration message not found in Log_Entries table in " + localUimfDecodedFilePath;
+                        if (!String.IsNullOrEmpty(sLogEntryAccessorMsg))
+                            msg += "; " + sLogEntryAccessorMsg;
+
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                        bUIMFIsValid = false;
+                    }
+                    else
+                    {
+                        if (System.DateTime.Now.Subtract(dtCalibrationApplied).TotalMinutes < 5)
+                        {
+                            msg = "Applied calibration message in Log_Entries table has date " + dtCalibrationApplied.ToString();
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                            bUIMFIsValid = true;
+                        }
+                        else
+                        {
+                            msg = "Applied calibrationmessage in Log_Entries table is more than 5 minutes old: " + dtCalibrationApplied.ToString() + "; assuming this is a demultiplexing failure";
+                            if (!String.IsNullOrEmpty(sLogEntryAccessorMsg))
+                                msg += "; " + sLogEntryAccessorMsg;
+
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                            bUIMFIsValid = false;
+                        }
+                    }
+                }
+
+                return bUIMFIsValid;
+            }
 
             /// <summary>
             /// Makes sure the working directory is empty
