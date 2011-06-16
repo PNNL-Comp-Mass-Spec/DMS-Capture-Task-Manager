@@ -127,12 +127,31 @@ namespace ImsDemuxPlugin
 
                 }
 
+                // Lookup the instrument name
+                string instrumentName = taskParams.GetParam("Instrument_Name");
+                bool bPerformCalibration = false;
+
+                switch (instrumentName.ToLower())
+                {
+                    case "ims_tof_1":
+                    case "ims_tof_2":
+                    case "ims_tof_3":
+                        msg = "Skipping calibration since since instrument is " + instrumentName;
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                        bPerformCalibration = false;
+                        break;
+                    default:
+                        bPerformCalibration = true;
+                        break;
+                }
+                    
+
 				// Perform demux operation
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Calling demux dll");
 
                 try
                 {
-                    if (!DemultiplexFile(uimfLocalEncodedFileNamePath, dataset, bResumeDemultiplexing, out iResumeStartFrame))
+                    if (!DemultiplexFile(uimfLocalEncodedFileNamePath, dataset, bPerformCalibration, bResumeDemultiplexing, out iResumeStartFrame))
                     {
                         retData.CloseoutMsg = "Error demultiplexing UIMF file";
                         retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -160,8 +179,13 @@ namespace ImsDemuxPlugin
                     return retData;
                 }
 
-                if (!ValidateUIMFLogEntries(localUimfDecodedFilePath))
+                if (!ValidateUIMFLogEntries(localUimfDecodedFilePath, bPerformCalibration, retData))
+                {
+                    if (string.IsNullOrEmpty(retData.CloseoutMsg))
+                        retData.CloseoutMsg = "ValidateUIMFLogEntries returned false";
+                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     bPostProcessingError = true;
+                }
 
 
                 if (!bPostProcessingError)
@@ -396,7 +420,8 @@ namespace ImsDemuxPlugin
             /// <param name="inputFile">Input file name</param>
             /// <param name="datasetName">Dataset name</param>
             /// <returns>Enum indicating success or failure</returns>
-            private bool DemultiplexFile(string inputFilePath, string datasetName, bool bResumeDemultiplexing, out int iResumeStartFrame)
+            private bool DemultiplexFile(string inputFilePath, string datasetName, bool bPerformCalibration,
+                                         bool bResumeDemultiplexing, out int iResumeStartFrame)
             {
                 const int STATUS_DELAY_MSEC = 5000;
 
@@ -462,6 +487,10 @@ namespace ImsDemuxPlugin
 
                     // Set additional options
                     m_DeMuxTool.MissingCalTableSearchExternal = true;       // Instruct tool to look for calibration table names in other similarly named .UIMF files if not found in the primary .UIMF file
+
+                    // Disable calibration if processing a .UIMF from the older IMS TOFs
+                    m_DeMuxTool.CalibrateAfterDemultiplexing = bPerformCalibration;
+                                     
 
                     /*
                      * Old code that ran the demultiplexer on a separate thread
@@ -573,7 +602,7 @@ namespace ImsDemuxPlugin
             /// </summary>
             /// <param name="localUimfDecodedFilePath"></param>
             /// <returns></returns>
-            private bool ValidateUIMFLogEntries(string localUimfDecodedFilePath)
+            private bool ValidateUIMFLogEntries(string localUimfDecodedFilePath, bool bCalibratedUIMF, clsToolReturnData retData)
             {
                 bool bUIMFIsValid = true;
                 string msg;
@@ -587,11 +616,12 @@ namespace ImsDemuxPlugin
 
                 if (dtDemultiplexingFinished == System.DateTime.MinValue)
                 {
-                    msg = "Demultiplexing finished message not found in Log_Entries table in " + localUimfDecodedFilePath;
+                    retData.CloseoutMsg = "Demultiplexing finished message not found in Log_Entries table";
+                    msg = retData.CloseoutMsg + " in " + localUimfDecodedFilePath;
                     if (!String.IsNullOrEmpty(sLogEntryAccessorMsg))
                         msg += "; " + sLogEntryAccessorMsg;
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);                    
                     bUIMFIsValid = false;
                 }
                 else
@@ -604,7 +634,8 @@ namespace ImsDemuxPlugin
                     }
                     else
                     {
-                        msg = "Demultiplexing finished message in Log_Entries table is more than 5 minutes old: " + dtDemultiplexingFinished.ToString() + "; assuming this is a demultiplexing failure";
+                        retData.CloseoutMsg = "Demultiplexing finished message in Log_Entries table is more than 5 minutes old";
+                        msg = retData.CloseoutMsg + ": " + dtDemultiplexingFinished.ToString() + "; assuming this is a demultiplexing failure";
                         if (!String.IsNullOrEmpty(sLogEntryAccessorMsg))
                             msg += "; " + sLogEntryAccessorMsg;
 
@@ -613,7 +644,7 @@ namespace ImsDemuxPlugin
                     }
                 }
 
-                if (bUIMFIsValid)
+                if (bUIMFIsValid && bCalibratedUIMF)
                 {
                     // Make sure the Log_Entries table contains entry "Applied calibration coefficients to all frames" (with today's date)
                     DateTime dtCalibrationApplied;
@@ -623,7 +654,8 @@ namespace ImsDemuxPlugin
 
                     if (dtCalibrationApplied == System.DateTime.MinValue)
                     {
-                        msg = "Applied calibration message not found in Log_Entries table in " + localUimfDecodedFilePath;
+                        retData.CloseoutMsg = "Applied calibration message not found in Log_Entries table";
+                        msg = retData.CloseoutMsg + " in " + localUimfDecodedFilePath;
                         if (!String.IsNullOrEmpty(sLogEntryAccessorMsg))
                             msg += "; " + sLogEntryAccessorMsg;
 
@@ -640,7 +672,8 @@ namespace ImsDemuxPlugin
                         }
                         else
                         {
-                            msg = "Applied calibrationmessage in Log_Entries table is more than 5 minutes old: " + dtCalibrationApplied.ToString() + "; assuming this is a demultiplexing failure";
+                            retData.CloseoutMsg = "Applied calibrationmessage in Log_Entries table is more than 5 minutes old";
+                            msg = retData.CloseoutMsg + ": " + dtCalibrationApplied.ToString() + "; assuming this is a demultiplexing failure";
                             if (!String.IsNullOrEmpty(sLogEntryAccessorMsg))
                                 msg += "; " + sLogEntryAccessorMsg;
 
