@@ -256,7 +256,7 @@ namespace ImsDemuxPlugin
 				}
 
 				retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
-				retData.EvalMsg = "De-multiplexed";
+				retData.EvalMsg = "De-multiplexed and calibrated";
                 if (bResumeDemultiplexing)
                     retData.EvalMsg += " (resumed at frame " + iResumeStartFrame + ")";
 
