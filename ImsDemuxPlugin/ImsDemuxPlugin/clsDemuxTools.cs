@@ -208,16 +208,10 @@ namespace ImsDemuxPlugin
 
                 if (!bPostProcessingError)
                 {
-                    // Copy demuxed file to storage server, renaming as datasetname.uimf in the process
-                    msg = "Copying de-mulitiplexed file to storage server";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-                    retryCount = 3;
-                    if (!CopyFile(localUimfDecodedFilePath, Path.Combine(m_DatasetFolderPathRemote, dataset + ".uimf"), true, retryCount))
-                    {
-                        retData.CloseoutMsg = "Error copying decoded UIMF file to storage server";
-                        retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    // Copy the result files to the storage server
+                    if (!CopyFilesToStorageServer(retData, dataset, workDirPath, localUimfDecodedFilePath))
                         bPostProcessingError = true;
-                    }
+
                 }
 
                 if (bPostProcessingError)
@@ -263,6 +257,316 @@ namespace ImsDemuxPlugin
 				return retData;
 
 			}	// End sub
+
+            /// <summary>
+            /// Makes sure the working directory is empty
+            /// </summary>
+            /// <param name="sWorkingDirectory"></param>
+            private void ClearWorkingDirectory(string sWorkingDirectory)
+            {
+                System.IO.DirectoryInfo diWorkDir = new System.IO.DirectoryInfo(sWorkingDirectory);
+
+                if (diWorkDir.Exists)
+                {
+                    foreach (System.IO.FileInfo fiFile in diWorkDir.GetFiles())
+                    {
+                        try
+                        {
+                            fiFile.Delete();
+                        }
+                        catch (Exception ex)
+                        {
+					        string msg = "Exception deleting file '" + fiFile.Name + "' from work directory";
+					        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                        }
+                        
+                    }
+
+                    foreach (System.IO.DirectoryInfo diSubFolder in diWorkDir.GetDirectories())
+                    {
+                        try
+                        {
+                            diSubFolder.Delete(true);
+                        }
+                        catch (Exception ex)
+                        {
+                            string msg = "Exception deleting folder '" + diSubFolder.Name + "' from work directory";
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                        }
+                    }
+                }
+                
+            }
+            /// <summary>
+			/// Copies a file
+			/// </summary>
+			/// <param name="sourceFileNamePath">Source file</param>
+			/// <param name="TargetFileNamePath">Destination file</param>
+			/// <returns></returns>
+			private bool CopyFile(string sourceFileNamePath, string TargetFileNamePath, bool overWrite, int retryCount)
+			{
+                bool bRetryingCopy = false;
+                string msg;
+
+                if (retryCount < 0)
+                    retryCount = 0;
+
+                while (retryCount >= 0)
+                {
+                    try
+                    {
+                        if (bRetryingCopy)
+                        {
+                            msg = "Retrying copy; retryCount = " + retryCount;
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                        }
+
+                        File.Copy(sourceFileNamePath, TargetFileNamePath, overWrite);
+                        return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        msg = "Exception copying file " + sourceFileNamePath + " to " + TargetFileNamePath  + ": " + ex.Message;
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+
+                        System.Threading.Thread.Sleep(2000);
+                        retryCount -= 1;
+                        bRetryingCopy = true;
+                    }
+                 
+                }
+
+                // If we get here, then we were not able to successfully copy the file
+                return false;
+
+			}	// End sub
+
+
+            /// <summary>
+            /// Copies the result files to the storage server
+            /// </summary>
+            /// <param name="retData"></param>
+            /// <param name="dataset"></param>
+            /// <param name="workDirPath"></param>
+            /// <param name="localUimfDecodedFilePath"></param>
+            /// <returns>True if success; otherwise false</returns>
+            private bool CopyFilesToStorageServer(clsToolReturnData retData, string dataset, string workDirPath, string localUimfDecodedFilePath)
+            {
+                string msg;
+                bool bSuccess = true;
+
+                // Copy demuxed file to storage server, renaming as datasetname.uimf in the process
+                msg = "Copying de-mulitiplexed file to storage server";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                int retryCount = 3;
+                if (!CopyFile(localUimfDecodedFilePath, Path.Combine(m_DatasetFolderPathRemote, dataset + ".uimf"), true, retryCount))
+                {
+                    retData.CloseoutMsg = "Error copying decoded UIMF file to storage server";
+                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    bSuccess = false;
+                }
+
+                // Copy file CalibrationLog.txt to the storage server (if it exists)
+                string sCalibrationLogFilePath = Path.Combine(workDirPath, "CalibrationLog.txt");
+
+                if (!System.IO.File.Exists(sCalibrationLogFilePath))
+                {
+                    msg = "Warning: CalibrationLog.txt not found at " + workDirPath;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                }
+                else
+                {
+                    msg = "Copying CalibrationLog.txt file to storage server";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                    retryCount = 3;
+                    if (!CopyFile(sCalibrationLogFilePath, Path.Combine(m_DatasetFolderPathRemote, System.IO.Path.GetFileName(sCalibrationLogFilePath)), true, retryCount))
+                    {
+                        retData.CloseoutMsg = "Error copying CalibrationLog.txt file to storage server";
+                        retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                        bSuccess = false;
+                    }
+                }
+
+                return bSuccess;
+            }
+
+            /// <summary>
+            /// Performs actual de-multiplexing operation in a separate thread
+            /// </summary>
+            /// <param name="inputFile">Input file name</param>
+            /// <param name="datasetName">Dataset name</param>
+            /// <returns>Enum indicating success or failure</returns>
+            private bool DemultiplexFile(string inputFilePath, string datasetName, bool bResumeDemultiplexing, out int iResumeStartFrame)
+            {
+                const int STATUS_DELAY_MSEC = 5000;
+
+                string msg;
+                string sLogEntryAccessorMsg;
+                bool success = false;
+                iResumeStartFrame = 0;
+
+                UIMFDemultiplexer.clsUIMFLogEntryAccessor oUIMFLogEntryAccessor = new UIMFDemultiplexer.clsUIMFLogEntryAccessor();
+
+                FileInfo fi = new FileInfo(inputFilePath);
+                string folderName = fi.DirectoryName;
+                string outputFilePath = Path.Combine(folderName, datasetName + DECODED_UIMF_SUFFIX);
+
+                try
+                {
+                    m_OutOfMemoryException = false;
+
+                    if (bResumeDemultiplexing)
+                    {
+                        string sTempUIMFFilePath = outputFilePath + ".tmp";
+                        if (!System.IO.File.Exists(sTempUIMFFilePath))
+                        {
+                            msg = "Resuming demultiplexing, but .tmp UIMF file not found at " + sTempUIMFFilePath;
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                            m_DeMuxTool.ResumeDemultiplexing = false;
+                        }
+                        else
+                        {
+
+                            int iMaxDemultiplexedFrameNum = oUIMFLogEntryAccessor.GetMaxDemultiplexedFrame(sTempUIMFFilePath, out sLogEntryAccessorMsg);
+                            if (iMaxDemultiplexedFrameNum > 0)
+                            {
+                                iResumeStartFrame = iMaxDemultiplexedFrameNum + 1;
+                                m_DeMuxTool.ResumeDemultiplexing = true;
+                                msg = "Resuming de-multiplexing, dataset " + datasetName + " frame " + iResumeStartFrame;
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                            }
+                            else
+                            {
+                                msg = "Error looking up max demultiplexed frame number from the Log_Entries table in " + sTempUIMFFilePath;
+                                if (!String.IsNullOrEmpty(sLogEntryAccessorMsg))
+                                    msg += "; " + sLogEntryAccessorMsg;
+
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+
+                                m_DeMuxTool.ResumeDemultiplexing = false;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        msg = "Starting de-multiplexing, dataset " + datasetName;
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                        m_DeMuxTool.ResumeDemultiplexing = false;
+                    }
+
+                    // Enable checkpoint file creation
+                    m_DeMuxTool.CreateCheckpointFiles = true;
+                    m_DeMuxTool.CheckpointFrameIntervalMax = MAX_CHECKPOINT_FRAME_INTERVAL;
+                    m_DeMuxTool.CheckpointWriteFrequencyMinutesMax = MAX_CHECKPOINT_WRITE_FREQUENCY_MINUTES;
+                    m_DeMuxTool.CheckpointTargetFolder = m_DatasetFolderPathRemote;
+
+                    // Set additional options
+                    m_DeMuxTool.MissingCalTableSearchExternal = true;       // Instruct tool to look for calibration table names in other similarly named .UIMF files if not found in the primary .UIMF file
+
+                    /*
+                     * Old code that ran the demultiplexer on a separate thread
+                     * Fails to catch and log exceptions thrown by UIMFDemultiplexer.dll
+                     * 
+                        // Create a thread to run the demuxer
+                        Thread demuxThread;
+                        demuxThread = new Thread(new ThreadStart(() => m_DeMuxTool.Demultiplex(inputFile, outputFilePath)));
+
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Starting Demux Thread");
+
+                        // Start the demux thread
+                        demuxThread.Start();
+
+                        // Wait until the thread completes
+                        //TODO: Does this need a way to abort?
+                        while (demuxThread != null && !demuxThread.Join(STATUS_DELAY_MSEC))
+                        {
+                            if (DemuxProgress != null) DemuxProgress(m_DeMuxTool.ProgressPercentComplete);
+                        }
+
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Demux thread completed");
+                        success = true;
+                    */
+
+                    // Create a timer that will be used to log progress
+                    System.Threading.Timer tmrUpdateProgress;
+                    tmrUpdateProgress = new System.Threading.Timer(new TimerCallback(timer_ElapsedEvent));
+                    tmrUpdateProgress.Change(STATUS_DELAY_MSEC, STATUS_DELAY_MSEC);
+
+                    success = m_DeMuxTool.Demultiplex(inputFilePath, outputFilePath);
+
+
+                    // Check to determine if thread exited due to normal completion
+                    if (success && m_DeMuxTool != null &&
+                        m_DeMuxTool.ProcessingStatus == UIMFDemultiplexer.UIMFDemultiplexer.eProcessingStatus.Complete &&
+                        !m_OutOfMemoryException)
+                    {
+                        msg = "De-multiplexing complete, dataset " + datasetName;
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                        success = true;
+                    }
+                    else
+                    {
+                        string errorMsg = "Unknown error";
+                        if (m_OutOfMemoryException)
+                            errorMsg = "OutOfMemory exception was thrown";
+
+                        // Log the processing status
+                        if (m_DeMuxTool != null)
+                        {
+                            msg = "Demux processing status: " + m_DeMuxTool.ProcessingStatus.ToString();
+
+                            // Get the error msg
+                            errorMsg = m_DeMuxTool.GetErrorMessage();
+                            if (string.IsNullOrEmpty(errorMsg))
+                            {
+                                errorMsg = "Unknown error";
+                                if (m_OutOfMemoryException)
+                                    errorMsg = "OutOfMemory exception was thrown";
+                            }
+
+                        }
+                        else
+                        {
+                            msg = "Demux processing status: ??? (m_DeMuxTool is null)";
+                        }
+
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMsg);
+                        success = false;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    msg = "Exception de-multiplexing dataset " + datasetName;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                    success = false;
+                }
+
+                return success;
+            }	// End sub
+
+			/// <summary>
+			/// Renames a file
+			/// </summary>
+			/// <param name="currFileNamePath">Original file name and path</param>
+			/// <param name="newFileNamePath">New file name and path</param>
+			/// <returns></returns>
+			private bool RenameFile(string currFileNamePath, string newFileNamePath)
+			{
+				try
+				{
+					FileInfo fi = new FileInfo(currFileNamePath);
+					fi.MoveTo(newFileNamePath);
+					return true;
+				}
+				catch (Exception ex)
+				{
+					string msg = "Exception renaming file " + currFileNamePath + ": " + ex.Message;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+					return false;
+				}
+			}	// End sub
+
 
             /// <summary>
             /// Examines the Log_Entries table in the UIMF file to make sure the expected log entries are present
@@ -349,263 +653,6 @@ namespace ImsDemuxPlugin
                 return bUIMFIsValid;
             }
 
-            /// <summary>
-            /// Makes sure the working directory is empty
-            /// </summary>
-            /// <param name="sWorkingDirectory"></param>
-            private void ClearWorkingDirectory(string sWorkingDirectory)
-            {
-                System.IO.DirectoryInfo diWorkDir = new System.IO.DirectoryInfo(sWorkingDirectory);
-
-                if (diWorkDir.Exists)
-                {
-                    foreach (System.IO.FileInfo fiFile in diWorkDir.GetFiles())
-                    {
-                        try
-                        {
-                            fiFile.Delete();
-                        }
-                        catch (Exception ex)
-                        {
-					        string msg = "Exception deleting file '" + fiFile.Name + "' from work directory";
-					        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
-                        }
-                        
-                    }
-
-                    foreach (System.IO.DirectoryInfo diSubFolder in diWorkDir.GetDirectories())
-                    {
-                        try
-                        {
-                            diSubFolder.Delete(true);
-                        }
-                        catch (Exception ex)
-                        {
-                            string msg = "Exception deleting folder '" + diSubFolder.Name + "' from work directory";
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
-                        }
-                    }
-                }
-                
-            }
-
-			/// <summary>
-			/// Performs actual de-multiplexing operation in a separate thread
-			/// </summary>
-			/// <param name="inputFile">Input file name</param>
-            /// <param name="datasetName">Dataset name</param>
-			/// <returns>Enum indicating success or failure</returns>
-            private bool DemultiplexFile(string inputFilePath, string datasetName, bool bResumeDemultiplexing, out int iResumeStartFrame)
-			{
-                const int STATUS_DELAY_MSEC = 5000;
-
-                string msg;
-                string sLogEntryAccessorMsg;
-				bool success = false;
-                iResumeStartFrame = 0;
-
-                UIMFDemultiplexer.clsUIMFLogEntryAccessor oUIMFLogEntryAccessor = new UIMFDemultiplexer.clsUIMFLogEntryAccessor();
-
-				FileInfo fi = new FileInfo(inputFilePath);
-				string folderName = fi.DirectoryName;
-                string outputFilePath = Path.Combine(folderName, datasetName + DECODED_UIMF_SUFFIX);
-
-				try
-				{
-                    m_OutOfMemoryException = false;
-
-                    if (bResumeDemultiplexing)
-                    {
-                        string sTempUIMFFilePath = outputFilePath + ".tmp";
-                        if (!System.IO.File.Exists(sTempUIMFFilePath))
-                        {
-                            msg = "Resuming demultiplexing, but .tmp UIMF file not found at " + sTempUIMFFilePath;
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-                            m_DeMuxTool.ResumeDemultiplexing = false;
-                        }
-                        else
-                        {
-
-                            int iMaxDemultiplexedFrameNum = oUIMFLogEntryAccessor.GetMaxDemultiplexedFrame(sTempUIMFFilePath, out sLogEntryAccessorMsg);
-                            if (iMaxDemultiplexedFrameNum > 0)
-                            {
-                                iResumeStartFrame = iMaxDemultiplexedFrameNum + 1;
-                                m_DeMuxTool.ResumeDemultiplexing = true;
-                                msg = "Resuming de-multiplexing, dataset " + datasetName + " frame " + iResumeStartFrame;
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                            }
-                            else
-                            {
-                                msg = "Error looking up max demultiplexed frame number from the Log_Entries table in " + sTempUIMFFilePath;
-                                if (!String.IsNullOrEmpty(sLogEntryAccessorMsg))
-                                    msg += "; " + sLogEntryAccessorMsg;
-
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-
-                                m_DeMuxTool.ResumeDemultiplexing = false;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        msg = "Starting de-multiplexing, dataset " + datasetName;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                        m_DeMuxTool.ResumeDemultiplexing = false;
-                    }
-
-                    // Enable checkpoint file creation
-                    m_DeMuxTool.CreateCheckpointFiles = true;
-                    m_DeMuxTool.CheckpointFrameIntervalMax = MAX_CHECKPOINT_FRAME_INTERVAL;
-                    m_DeMuxTool.CheckpointWriteFrequencyMinutesMax = MAX_CHECKPOINT_WRITE_FREQUENCY_MINUTES;
-                    m_DeMuxTool.CheckpointTargetFolder = m_DatasetFolderPathRemote;
-
-                    /*
-                     * Old code that ran the demultiplexer on a separate thread
-                     * Fails to catch and log exceptions thrown by UIMFDemultiplexer.dll
-                     * 
-                        // Create a thread to run the demuxer
-                        Thread demuxThread;
-                        demuxThread = new Thread(new ThreadStart(() => m_DeMuxTool.Demultiplex(inputFile, outputFilePath)));
-
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Starting Demux Thread");
-
-                        // Start the demux thread
-                        demuxThread.Start();
-
-                        // Wait until the thread completes
-                        //TODO: Does this need a way to abort?
-                        while (demuxThread != null && !demuxThread.Join(STATUS_DELAY_MSEC))
-                        {
-                            if (DemuxProgress != null) DemuxProgress(m_DeMuxTool.ProgressPercentComplete);
-                        }
-
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Demux thread completed");
-                        success = true;
-                    */
-                    
-                    // Create a timer that will be used to log progress
-                    System.Threading.Timer tmrUpdateProgress;
-                    tmrUpdateProgress = new System.Threading.Timer(new TimerCallback(timer_ElapsedEvent));
-                    tmrUpdateProgress.Change(STATUS_DELAY_MSEC, STATUS_DELAY_MSEC);
-
-                    success = m_DeMuxTool.Demultiplex(inputFilePath, outputFilePath);
-                
-
-					// Check to determine if thread exited due to normal completion
-                    if (success && m_DeMuxTool != null && 
-                        m_DeMuxTool.ProcessingStatus == UIMFDemultiplexer.UIMFDemultiplexer.eProcessingStatus.Complete &&
-                        !m_OutOfMemoryException)
-					{
-						msg = "De-multiplexing complete, dataset " + datasetName;
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                        success = true;                        
-					}
-					else
-					{
-                        string errorMsg = "Unknown error";
-                        if (m_OutOfMemoryException)
-                            errorMsg = "OutOfMemory exception was thrown";                        
-
-						// Log the processing status
-                        if (m_DeMuxTool != null)
-                        {
-                            msg = "Demux processing status: " + m_DeMuxTool.ProcessingStatus.ToString();
-                            
-                            // Get the error msg
-                            errorMsg = m_DeMuxTool.GetErrorMessage();
-                            if (string.IsNullOrEmpty(errorMsg))
-                            {
-                                errorMsg = "Unknown error";
-                                if (m_OutOfMemoryException)
-                                    errorMsg = "OutOfMemory exception was thrown";                        
-                            }
-
-                        }
-                        else
-                        {
-                            msg = "Demux processing status: ??? (m_DeMuxTool is null)";
-                        }
-
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMsg);
-						success = false;
-					}
-				}
-				catch (Exception ex)
-				{
-					msg = "Exception de-multiplexing dataset " + datasetName;
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
-					success = false;
-				}
-
-				return success;
-			}	// End sub
-
-			/// <summary>
-			/// Copies a file
-			/// </summary>
-			/// <param name="sourceFileNamePath">Source file</param>
-			/// <param name="TargetFileNamePath">Destination file</param>
-			/// <returns></returns>
-			private bool CopyFile(string sourceFileNamePath, string TargetFileNamePath, bool overWrite, int retryCount)
-			{
-                bool bRetryingCopy = false;
-                string msg;
-
-                if (retryCount < 0)
-                    retryCount = 0;
-
-                while (retryCount >= 0)
-                {
-                    try
-                    {
-                        if (bRetryingCopy)
-                        {
-                            msg = "Retrying copy; retryCount = " + retryCount;
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                        }
-
-                        File.Copy(sourceFileNamePath, TargetFileNamePath, overWrite);
-                        return true;
-                    }
-                    catch (Exception ex)
-                    {
-                        msg = "Exception copying file " + sourceFileNamePath + " to " + TargetFileNamePath  + ": " + ex.Message;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-
-                        System.Threading.Thread.Sleep(2000);
-                        retryCount -= 1;
-                        bRetryingCopy = true;
-                    }
-                 
-                }
-
-                // If we get here, then we were not able to successfully copy the file
-                return false;
-
-			}	// End sub
-
-			/// <summary>
-			/// Renames a file
-			/// </summary>
-			/// <param name="currFileNamePath">Original file name and path</param>
-			/// <param name="newFileNamePath">New file name and path</param>
-			/// <returns></returns>
-			private bool RenameFile(string currFileNamePath, string newFileNamePath)
-			{
-				try
-				{
-					FileInfo fi = new FileInfo(currFileNamePath);
-					fi.MoveTo(newFileNamePath);
-					return true;
-				}
-				catch (Exception ex)
-				{
-					string msg = "Exception renaming file " + currFileNamePath + ": " + ex.Message;
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-					return false;
-				}
-			}	// End sub
 		#endregion
 
 		#region "Event handlers"
