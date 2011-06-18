@@ -23,6 +23,8 @@ namespace ImsDemuxPlugin
         //**********************************************************************************************************
 
         #region "Constants"
+            public const string CALIBRATION_LOG_FILE = "CalibrationLog.txt";
+
             protected const string DECODED_UIMF_SUFFIX = "_decoded.uimf";
 
             protected const int MAX_CHECKPOINT_FRAME_INTERVAL = 50;
@@ -64,15 +66,149 @@ namespace ImsDemuxPlugin
 		#endregion
 
 		#region "Methods"
+
+            /// <summary>
+            /// Calibrate a UIMF file
+            /// </summary>
+            /// <param name="mgrParams"></param>
+            /// <param name="taskParams"></param>
+            /// <param name="uimfFileName"></param>
+            /// <returns></returns>
+            public clsToolReturnData PerformCalibration(IMgrParams mgrParams, ITaskParams taskParams, clsToolReturnData retData)
+            {
+
+                string msg = "Calibrating dataset " + taskParams.GetParam("Dataset");
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+
+                string dataset = taskParams.GetParam("Dataset");
+
+                // Make sure the working directory is empty
+                string workDirPath = mgrParams.GetParam("workdir");
+                ClearWorkingDirectory(workDirPath);
+
+                // Locate data file on storage server
+                // Don't copy it locally; just work with it over the network
+                string svrPath = Path.Combine(taskParams.GetParam("Storage_Vol_External"), taskParams.GetParam("Storage_Path"));
+                m_DatasetFolderPathRemote = Path.Combine(svrPath, taskParams.GetParam("Folder"));
+
+                string sUimfPath = Path.Combine(m_DatasetFolderPathRemote, dataset + ".uimf");
+
+                if (!System.IO.File.Exists(sUimfPath))
+                {
+                    msg = "UIMF file not found on storage server, unable to calibrate: " + sUimfPath;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, "UIMF file not found on storage server, unable to calibrate");
+                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    return retData;
+                }
+
+                // Lookup the instrument name
+                string instrumentName = taskParams.GetParam("Instrument_Name");
+                bool bAutoCalibrate = false;
+                bool bCalibrationFailed = false;
+
+                switch (instrumentName.ToLower())
+                {
+                    case "ims_tof_1":
+                    case "ims_tof_2":
+                    case "ims_tof_3":
+                        msg = "Skipping calibration since instrument is " + instrumentName;
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                        bAutoCalibrate = false;
+                        break;
+                    default:
+                        bAutoCalibrate = true;
+                        break;
+                }
+
+                if (bAutoCalibrate)
+                {
+                    // Count the number of frames
+                    // If fewer than 5 frames, then don't calibrate
+                    UIMFLibrary.DataReader objReader = new UIMFLibrary.DataReader();
+                    objReader.OpenUIMF(sUimfPath);
+
+                    System.Collections.Generic.Dictionary<int, UIMFLibrary.DataReader.udtFrameInfoType> oFrameList;
+                    oFrameList = objReader.GetMasterFrameList();
+
+                    if (oFrameList.Count < 5)
+                    {
+                        if (oFrameList.Count == 0)
+                            msg = "Skipping calibration since .UIMF file has no frames";
+                        else
+                        {
+                            msg = "Skipping calibration since .UIMF file only has " + oFrameList.Count + " frame";
+                            if (oFrameList.Count != 1)
+                                msg += "s";
+                        }
+                        
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                        bAutoCalibrate = false;
+                    }
+                }
+
+                if (bAutoCalibrate)
+                {
+                    // Perform calibration operation
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Calling demux dll to calibrate");
+
+                    try
+                    {
+                        if (!CalibrateFile(sUimfPath, dataset))
+                        {
+                            retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, "Error calibrating UIMF file");
+                            bCalibrationFailed = true;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        msg = "Exception calling CalibrateFile for dataset " + dataset;
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                        retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, "Exception while calibrating UIMF file");
+                        bCalibrationFailed = true;
+                    }
+
+                    if (!bCalibrationFailed)
+                        if (!ValidateUIMFCalibrated(sUimfPath, retData))
+                        {
+                            // Calibration failed
+                            bCalibrationFailed = true;
+                        }
+                    
+
+                    // Copy the CalibrationLog.txt file to the storage server (even if calibration failed)
+                    CopyCalibrationLogToStorageServer(retData, dataset, workDirPath);
+                }
+
+
+                // Update the return data
+                if (bCalibrationFailed)
+                {
+                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    retData.EvalMsg = AppendToString(retData.EvalMsg, " but Calibration failed", "");
+                }
+                else
+                {
+                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+
+                    if (bAutoCalibrate)
+                        retData.EvalMsg = AppendToString(retData.EvalMsg, " and calibrated", "");
+                }
+
+
+                return retData;
+
+            }
+
 			/// <summary>
-			/// Performs de-multiplexing of IMS data files
+			/// Performs demultiplexing of IMS data files
 			/// </summary>
 			/// <param name="mgrParams">Parameters for manager operation</param>
 			/// <param name="taskParams">Parameters for the assigned task</param>
 			/// <returns>Enum indicating task success or failure</returns>
             public clsToolReturnData PerformDemux(IMgrParams mgrParams, ITaskParams taskParams, string uimfFileName)
 			{
-				string msg = "Performing de-multiplexing, dataset " + taskParams.GetParam("Dataset");
+				string msg = "Performing demultiplexing, dataset " + taskParams.GetParam("Dataset");
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 				clsToolReturnData retData = new clsToolReturnData();
@@ -127,30 +263,14 @@ namespace ImsDemuxPlugin
 
                 }
 
-                // Lookup the instrument name
-                string instrumentName = taskParams.GetParam("Instrument_Name");
-                bool bAutoCalibrate = false;
-
-                switch (instrumentName.ToLower())
-                {
-                    case "ims_tof_1":
-                    case "ims_tof_2":
-                    case "ims_tof_3":
-                        msg = "Skipping calibration since instrument is " + instrumentName;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                        bAutoCalibrate = false;
-                        break;
-                    default:
-                        bAutoCalibrate = true;
-                        break;
-                }
-                    
 
 				// Perform demux operation
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Calling demux dll");
 
                 try
                 {
+                    bool bAutoCalibrate = false;
+
                     if (!DemultiplexFile(uimfLocalEncodedFileNamePath, dataset, bResumeDemultiplexing, out iResumeStartFrame, bAutoCalibrate))
                     {
                         retData.CloseoutMsg = "Error demultiplexing UIMF file";
@@ -186,19 +306,6 @@ namespace ImsDemuxPlugin
                     retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     bPostProcessingError = true;
                 }
-
-                bool bCalibrationFailed = false;
-                if (!bPostProcessingError && bAutoCalibrate)
-                {
-                    if (!ValidateUIMFCalibrated(localUimfDecodedFilePath, retData))
-                    {
-                        // Calibration failed
-                        // Set retData.CloseoutType to EnumCloseOutType.CLOSEOUT_FAILED but leave bPostProcessingError false
-                        // We leave bPostProcessingError false because we want the demultiplexed file to get copied to the server anyway
-                        bCalibrationFailed = true;
-                    }
-                }
-
 
                 if (!bPostProcessingError)
                 {
@@ -245,7 +352,7 @@ namespace ImsDemuxPlugin
                 if (!bPostProcessingError)
                 {
                     // Copy the result files to the storage server
-                    if (!CopyFilesToStorageServer(retData, dataset, workDirPath, localUimfDecodedFilePath, bAutoCalibrate))
+                    if (!CopyUIMFFileToStorageServer(retData, dataset, workDirPath, localUimfDecodedFilePath))
                         bPostProcessingError = true;
 
                 }
@@ -286,20 +393,8 @@ namespace ImsDemuxPlugin
 				}
 
                 // Update the return data
-                if (bCalibrationFailed)
-                {
-                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                    retData.EvalMsg = "De-multiplexed, but calibration failed";
-                }
-                else
-                {
-                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
-
-                    if (bAutoCalibrate)
-                        retData.EvalMsg = "De-multiplexed and calibrated";
-                    else
-                        retData.EvalMsg = "De-multiplexed";
-                }
+                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+                retData.EvalMsg = "De-multiplexed";
 				
                 if (bResumeDemultiplexing)
                     retData.EvalMsg += " (resumed at frame " + iResumeStartFrame + ")";
@@ -400,8 +495,8 @@ namespace ImsDemuxPlugin
             /// <param name="workDirPath"></param>
             /// <param name="localUimfDecodedFilePath"></param>
             /// <returns>True if success; otherwise false</returns>
-            private bool CopyFilesToStorageServer(clsToolReturnData retData, string dataset, string workDirPath,
-                                                  string localUimfDecodedFilePath, bool bAutoCalibrated)
+            private bool CopyUIMFFileToStorageServer(clsToolReturnData retData, string dataset,
+                                                     string workDirPath, string localUimfDecodedFilePath)
             {
                 string msg;
                 bool bSuccess = true;
@@ -417,36 +512,155 @@ namespace ImsDemuxPlugin
                     bSuccess = false;
                 }
 
-                if (bAutoCalibrated)
-                {
-                    // Copy file CalibrationLog.txt to the storage server (if it exists)
-                    string sCalibrationLogFilePath = Path.Combine(workDirPath, "CalibrationLog.txt");
-
-                    if (!System.IO.File.Exists(sCalibrationLogFilePath))
-                    {
-                        msg = "Warning: CalibrationLog.txt not found at " + workDirPath;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
-                    }
-                    else
-                    {
-                        msg = "Copying CalibrationLog.txt file to storage server";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-                        retryCount = 3;
-                        if (!CopyFile(sCalibrationLogFilePath, Path.Combine(m_DatasetFolderPathRemote, System.IO.Path.GetFileName(sCalibrationLogFilePath)), true, retryCount))
-                        {
-                            retData.CloseoutMsg = "Error copying CalibrationLog.txt file to storage server";
-                            retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                            bSuccess = false;
-                        }
-                    }
-                }
-              
-
                 return bSuccess;
             }
 
             /// <summary>
-            /// Performs actual de-multiplexing operation in a separate thread
+            /// Copies the result files to the storage server
+            /// </summary>
+            /// <param name="retData"></param>
+            /// <param name="dataset"></param>
+            /// <param name="workDirPath"></param>
+            /// <param name="localUimfDecodedFilePath"></param>
+            /// <returns>True if success; otherwise false</returns>
+            private bool CopyCalibrationLogToStorageServer(clsToolReturnData retData, string dataset, string workDirPath)
+            {
+                string msg;
+                bool bSuccess = true;
+
+                // Copy file CalibrationLog.txt to the storage server (if it exists)
+                string sCalibrationLogFilePath = Path.Combine(workDirPath, CALIBRATION_LOG_FILE);
+                string sTargetFilePath = Path.Combine(m_DatasetFolderPathRemote, CALIBRATION_LOG_FILE);
+
+                if (!System.IO.File.Exists(sCalibrationLogFilePath))
+                {
+                    msg = "CalibrationLog.txt not found at " + workDirPath;
+                    if (System.IO.File.Exists(sTargetFilePath))
+                    {
+                        msg += "; this is OK since " + CALIBRATION_LOG_FILE + " exists at " + m_DatasetFolderPathRemote;
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                    }
+                    else
+                    {
+                        msg += "; in addition, could not find " + CALIBRATION_LOG_FILE + " at " + m_DatasetFolderPathRemote;
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    }
+                    
+                }
+                else
+                {
+                    msg = "Copying CalibrationLog.txt file to storage server";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                    int retryCount = 3;
+                    if (!CopyFile(sCalibrationLogFilePath, sTargetFilePath, true, retryCount))
+                    {
+                        retData.CloseoutMsg = "Error copying CalibrationLog.txt file to storage server";
+                        retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                        bSuccess = false;
+                    }
+                }
+
+                return bSuccess;
+            }
+
+            public static string AppendToString(string sCurrentText, string sNewText)
+            {
+                return AppendToString(sCurrentText, sNewText, "; ");
+            }
+
+            public static string AppendToString(string sCurrentText, string sNewText, string sSeparator)
+            {
+                if (string.IsNullOrEmpty(sCurrentText))
+                    return sNewText;
+                else
+                    return sCurrentText + sSeparator + sNewText;
+            }
+
+
+            /// <summary>
+            /// Performs actual calbration operation
+            /// </summary>
+            /// <param name="inputFile">Input file name</param>
+            /// <param name="datasetName">Dataset name</param>
+            /// <returns>Enum indicating success or failure</returns>
+            private bool CalibrateFile(string inputFilePath, string datasetName)
+            {
+                const int STATUS_DELAY_MSEC = 5000;
+
+                string msg;
+                bool success = false;
+
+                FileInfo fi = new FileInfo(inputFilePath);
+                string folderName = fi.DirectoryName;
+
+                try
+                {
+               
+                    msg = "Starting caibration, dataset " + datasetName;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+
+                    // Set the options
+                    m_DeMuxTool.ResumeDemultiplexing = false;
+                    m_DeMuxTool.CreateCheckpointFiles = false;
+
+                    // Set additional options
+                    m_DeMuxTool.MissingCalTableSearchExternal = true;       // Instruct tool to look for calibration table names in other similarly named .UIMF files if not found in the primary .UIMF file
+
+                    // Disable calibration if processing a .UIMF from the older IMS TOFs
+                    m_DeMuxTool.CalibrateAfterDemultiplexing = true;
+
+                    // Create a timer that will be used to log progress
+                    System.Threading.Timer tmrUpdateProgress;
+                    tmrUpdateProgress = new System.Threading.Timer(new TimerCallback(timer_ElapsedEvent));
+                    tmrUpdateProgress.Change(STATUS_DELAY_MSEC, STATUS_DELAY_MSEC);
+
+                    success = m_DeMuxTool.CalibrateUIMFFile(inputFilePath);
+
+                    // Confirm that things have succeeded
+                    if (success && m_DeMuxTool != null &&
+                        m_DeMuxTool.ProcessingStatus == UIMFDemultiplexer.UIMFDemultiplexer.eProcessingStatus.Complete)
+                    {
+                        msg = "Calibration complete, dataset " + datasetName;
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                        success = true;
+                    }
+                    else
+                    {
+                        string errorMsg = "Unknown error";
+                       
+                        // Log the processing status
+                        if (m_DeMuxTool != null)
+                        {
+                            msg = "Calibration processing status: " + m_DeMuxTool.ProcessingStatus.ToString();
+
+                            // Get the error msg
+                            errorMsg = m_DeMuxTool.GetErrorMessage();
+                            if (string.IsNullOrEmpty(errorMsg))
+                                errorMsg = "Unknown error";
+
+                        }
+                        else
+                        {
+                            msg = "Calibration processing status: ??? (m_DeMuxTool is null)";
+                        }
+
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMsg);
+                        success = false;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    msg = "Exception calibrating dataset " + datasetName;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                    success = false;
+                }
+
+                return success;
+            }
+
+            /// <summary>
+            /// Performs actual demultiplexing operation
             /// </summary>
             /// <param name="inputFile">Input file name</param>
             /// <param name="datasetName">Dataset name</param>
@@ -489,7 +703,7 @@ namespace ImsDemuxPlugin
                             {
                                 iResumeStartFrame = iMaxDemultiplexedFrameNum + 1;
                                 m_DeMuxTool.ResumeDemultiplexing = true;
-                                msg = "Resuming de-multiplexing, dataset " + datasetName + " frame " + iResumeStartFrame;
+                                msg = "Resuming demultiplexing, dataset " + datasetName + " frame " + iResumeStartFrame;
                                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
                             }
                             else
@@ -506,7 +720,7 @@ namespace ImsDemuxPlugin
                     }
                     else
                     {
-                        msg = "Starting de-multiplexing, dataset " + datasetName;
+                        msg = "Starting demultiplexing, dataset " + datasetName;
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
                         m_DeMuxTool.ResumeDemultiplexing = false;
                     }
@@ -523,31 +737,7 @@ namespace ImsDemuxPlugin
                     // Disable calibration if processing a .UIMF from the older IMS TOFs
                     m_DeMuxTool.CalibrateAfterDemultiplexing = bAutoCalibrate;
                                      
-
-                    /*
-                     * Old code that ran the demultiplexer on a separate thread
-                     * Fails to catch and log exceptions thrown by UIMFDemultiplexer.dll
-                     * 
-                        // Create a thread to run the demuxer
-                        Thread demuxThread;
-                        demuxThread = new Thread(new ThreadStart(() => m_DeMuxTool.Demultiplex(inputFile, outputFilePath)));
-
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Starting Demux Thread");
-
-                        // Start the demux thread
-                        demuxThread.Start();
-
-                        // Wait until the thread completes
-                        //TODO: Does this need a way to abort?
-                        while (demuxThread != null && !demuxThread.Join(STATUS_DELAY_MSEC))
-                        {
-                            if (DemuxProgress != null) DemuxProgress(m_DeMuxTool.ProgressPercentComplete);
-                        }
-
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Demux thread completed");
-                        success = true;
-                    */
-
+                   
                     // Create a timer that will be used to log progress
                     System.Threading.Timer tmrUpdateProgress;
                     tmrUpdateProgress = new System.Threading.Timer(new TimerCallback(timer_ElapsedEvent));
@@ -555,13 +745,12 @@ namespace ImsDemuxPlugin
 
                     success = m_DeMuxTool.Demultiplex(inputFilePath, outputFilePath);
 
-
-                    // Check to determine if thread exited due to normal completion
+                    // Confirm that things have succeeded
                     if (success && m_DeMuxTool != null &&
                         m_DeMuxTool.ProcessingStatus == UIMFDemultiplexer.UIMFDemultiplexer.eProcessingStatus.Complete &&
                         !m_OutOfMemoryException)
                     {
-                        msg = "De-multiplexing complete, dataset " + datasetName;
+                        msg = "Demultiplexing complete, dataset " + datasetName;
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
                         success = true;
                     }
@@ -598,7 +787,7 @@ namespace ImsDemuxPlugin
                 }
                 catch (Exception ex)
                 {
-                    msg = "Exception de-multiplexing dataset " + datasetName;
+                    msg = "Exception demultiplexing dataset " + datasetName;
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
                     success = false;
                 }
@@ -698,12 +887,13 @@ namespace ImsDemuxPlugin
 
                 if (dtCalibrationApplied == System.DateTime.MinValue)
                 {
-                    retData.CloseoutMsg = "Applied calibration message not found in Log_Entries table";
-                    msg = retData.CloseoutMsg + " in " + localUimfDecodedFilePath;
+                    string sLogMessage = "Applied calibration message not found in Log_Entries table";
+                    msg = sLogMessage + " in " + localUimfDecodedFilePath;
                     if (!String.IsNullOrEmpty(sLogEntryAccessorMsg))
                         msg += "; " + sLogEntryAccessorMsg;
 
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, sLogMessage);
                     bUIMFCalibrated = false;
                 }
                 else
@@ -716,12 +906,13 @@ namespace ImsDemuxPlugin
                     }
                     else
                     {
-                        retData.CloseoutMsg = "Applied calibration message in Log_Entries table is more than 5 minutes old";
-                        msg = retData.CloseoutMsg + ": " + dtCalibrationApplied.ToString() + "; assuming this is a calibration failure";
+                        string sLogMessage = "Applied calibration message in Log_Entries table is more than 5 minutes old";
+                        msg = sLogMessage + ": " + dtCalibrationApplied.ToString() + "; assuming this is a calibration failure";
                         if (!String.IsNullOrEmpty(sLogEntryAccessorMsg))
                             msg += "; " + sLogEntryAccessorMsg;
 
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                        retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, sLogMessage);
                         bUIMFCalibrated = false;
                     }
                 }

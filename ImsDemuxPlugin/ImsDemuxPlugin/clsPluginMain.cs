@@ -50,6 +50,7 @@ namespace ImsDemuxPlugin
 			/// <returns>Enum indicating success or failure</returns>
 			public override clsToolReturnData RunTool()
 			{
+                const string COULD_NOT_OBTAIN_GOOD_CALIBRATION = "Could not obtain a good calibration";
 				string msg;
 
 				msg = "Starting ImsDemuxPlugin.clsPluginMain.RunTool()";
@@ -74,7 +75,51 @@ namespace ImsDemuxPlugin
 				FileInfo fi = new FileInfo(Path.Combine(dsPath, uimfFileName));
 				if (fi.Exists && (fi.Length != 0))
 				{
-					// Do nothing - this will be the file used for demultiplexing
+					// The _encoded.uimf file will be used for demultiplexing
+                    
+                    // Look for a CalibrationLog.txt file
+                    // If it exists, and if the last line contains "Could not obtain a good calibration"
+                    //   then we do not want to re-demultiplex
+                    // In this case, we want to fail out the job immediately, since demultiplexing succeded, but calibration failed
+
+                    string sCalibrationLogPath = Path.Combine(dsPath, clsDemuxTools.CALIBRATION_LOG_FILE);
+                    if (System.IO.File.Exists(sCalibrationLogPath))
+                    {
+                        System.IO.StreamReader srInFile;
+                        string sLine;
+                        bool bCalibrationError = false;
+                        srInFile = new System.IO.StreamReader(new System.IO.FileStream(sCalibrationLogPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                        while (srInFile.Peek() >= 0)
+                        {
+                            sLine = srInFile.ReadLine();
+
+                            if (!string.IsNullOrEmpty(sLine) && sLine.Trim().Length > 0)
+                            {
+                                if (sLine.Contains(COULD_NOT_OBTAIN_GOOD_CALIBRATION))
+                                    bCalibrationError = true;
+                                else
+                                    // Only count this as a calibration error if the last non-blank line of the file contains the error message
+                                    bCalibrationError = false;
+                            }
+                        }
+
+                        srInFile.Close();
+
+                        if (bCalibrationError)
+                        {
+                            msg = "CalibrationLog.txt file ends with '" + COULD_NOT_OBTAIN_GOOD_CALIBRATION + "'; will not attempt to re-demultiplex the _encoded.uimf file.  If you want to re-demultiplex the _encoded.uimf file, then you should delete the CalibrationLog.txt file";
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+
+                            retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                            retData.CloseoutMsg = "Error calibrating UIMF file; see " + clsDemuxTools.CALIBRATION_LOG_FILE;
+                            retData.EvalMsg = "De-multiplexed but Calibration failed";
+
+							msg = "Completed clsPluginMain.RunTool()";
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+							return retData;
+                        }
+                    }
 				}
 				else 
 				{
@@ -89,9 +134,11 @@ namespace ImsDemuxPlugin
 						{
 							msg = "Exception deleting 0-byte uimf_encoded file";
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
-							retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+							
+                            retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 							retData.CloseoutMsg = msg;
-							msg = "Completed clsPluginMain.RunTool()";
+							
+                            msg = "Completed clsPluginMain.RunTool()";
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 							return retData;
 						}
@@ -103,46 +150,67 @@ namespace ImsDemuxPlugin
 					{
                         msg = "UIMF file not found: " + uimfFileName;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-						retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+						
+                        retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 						retData.CloseoutMsg = msg;
-						msg = "Completed clsPluginMain.RunTool()";
+						
+                        msg = "Completed clsPluginMain.RunTool()";
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 						return retData;
 					}
 				}
 
-				// Query to determine if demux is needed. Closeout if not required (adding "NonMultiplexed" to eval comment)
+				// Query to determine if demux is needed. 
 				string uimfFileNamePath = Path.Combine(dsPath, uimfFileName);
+                bool bMultiplexed = true;
                 clsSQLiteTools oSQLiteTools = new clsSQLiteTools();
 
                 clsSQLiteTools.UimfQueryResults queryResult = oSQLiteTools.GetUimfMuxStatus(uimfFileNamePath);
 				if (queryResult == clsSQLiteTools.UimfQueryResults.NonMultiplexed)
 				{
-					// De-mulitiplexing not required, so just report and exit
+					// De-mulitiplexing not required, but we should still attempt calibration
 					msg = "No de-multiplexing required for dataset " + dataset;
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-					retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
                     retData.EvalMsg = "Non-Multiplexed";
-					msg = "Completed clsPluginMain.RunTool()";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-					return retData;
+                    bMultiplexed = false;
 				}
 				else if (queryResult == clsSQLiteTools.UimfQueryResults.Error)
 				{
 					// There was a problem determining the UIMF file status. Set state and exit
 					msg = "Problem determining UIMF file status for dataset " + dataset;
-					retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+					
+                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 					retData.CloseoutMsg = msg;
-					msg = "Completed clsPluginMain.RunTool()";
+					
+                    msg = "Completed clsPluginMain.RunTool()";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 					return retData;
 				}
 
-				// De-multiplexing is needed
-                retData = mDemuxTools.PerformDemux(m_MgrParams, m_TaskParams, uimfFileName);
+                if (bMultiplexed)
+                {
+                    // De-multiplexing is needed
+                    retData = mDemuxTools.PerformDemux(m_MgrParams, m_TaskParams, uimfFileName);
 
-                if (mDemuxTools.OutOfMemoryException)
-                    this.m_NeedToAbortProcessing = true;
+                    if (mDemuxTools.OutOfMemoryException)
+                    {
+                        if (retData.CloseoutType != EnumCloseOutType.CLOSEOUT_FAILED)
+                        {
+                            retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                            if (string.IsNullOrEmpty(retData.CloseoutMsg))
+                                retData.CloseoutMsg = "Out of memory";
+                        }
+
+                        this.m_NeedToAbortProcessing = true;
+                    }
+                }
+
+
+                if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    // Demultiplexing succeeded, now try to calibrate
+                    retData = mDemuxTools.PerformCalibration(m_MgrParams, m_TaskParams, retData);                   
+                }
 
 				msg = "Completed clsPluginMain.RunTool()";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);

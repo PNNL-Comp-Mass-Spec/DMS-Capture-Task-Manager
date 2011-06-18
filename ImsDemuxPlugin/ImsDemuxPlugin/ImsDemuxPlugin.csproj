@@ -55,6 +55,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\RefLib\UIMFDemultiplexer.dll</HintPath>
     </Reference>
+    <Reference Include="UIMFLibrary, Version=1.3.4178.31547, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\RefLib\UIMFLibrary.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="clsDemuxTools.cs" />
