@@ -141,9 +141,43 @@ namespace ImsDemuxPlugin
                             if (oFrameList.Count != 1)
                                 msg += "s";
                         }
-                        
+
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
                         bAutoCalibrate = false;
+                    }
+                    else
+                    {
+                        // Look for the presence of calibration frames or calibration tables
+                        // If neither exists, then we cannot perform calibration
+                        bool bCalibrationDataExists = false;
+
+                        System.Collections.Generic.Dictionary<int, UIMFLibrary.DataReader.udtFrameInfoType>.Enumerator objFrameEnumerator;
+                        objFrameEnumerator = oFrameList.GetEnumerator();
+                        while (objFrameEnumerator.MoveNext())
+                        {
+                            if (objReader.FrameTypeIntToEnum(objFrameEnumerator.Current.Value.FrameType) == UIMFLibrary.DataReader.iFrameType.Calibration)
+                            {
+                                bCalibrationDataExists = true;
+                                break;
+                            }
+                        }
+
+                        if (!bCalibrationDataExists)
+                        {
+                            // No calibration frames were found
+                            System.Collections.Generic.List<string> sCalibrationTables = objReader.getCalibrationTableNames();
+                            if (sCalibrationTables.Count > 0)
+                            {
+                                bCalibrationDataExists = true;
+                            }
+                            else
+                            {
+                                msg = "Skipping calibration since .UIMF file does not contain any calibration frames or calibration tables";
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                                bAutoCalibrate = false;
+                            }
+
+                        }
                     }
                 }
 
