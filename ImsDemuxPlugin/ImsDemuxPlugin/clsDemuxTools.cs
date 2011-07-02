@@ -81,104 +81,155 @@ namespace ImsDemuxPlugin
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
                 string dataset = taskParams.GetParam("Dataset");
-
-                // Make sure the working directory is empty
                 string workDirPath = mgrParams.GetParam("workdir");
-                ClearWorkingDirectory(workDirPath);
+                string sUimfPath = string.Empty;
 
-                // Locate data file on storage server
-                // Don't copy it locally; just work with it over the network
-                string svrPath = Path.Combine(taskParams.GetParam("Storage_Vol_External"), taskParams.GetParam("Storage_Path"));
-                m_DatasetFolderPathRemote = Path.Combine(svrPath, taskParams.GetParam("Folder"));
+                bool bAutoCalibrate = false;
+                bool bCalibrationFailed = false;
 
-                string sUimfPath = Path.Combine(m_DatasetFolderPathRemote, dataset + ".uimf");
-
-                if (!System.IO.File.Exists(sUimfPath))
+                try
                 {
-                    msg = "UIMF file not found on storage server, unable to calibrate: " + sUimfPath;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-                    retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, "UIMF file not found on storage server, unable to calibrate");
+                    // Make sure the working directory is empty
+                    ClearWorkingDirectory(workDirPath);
+                }
+                catch (Exception ex)
+                {
+                    msg = "Exception clearing working directory in PerformCalibration";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                    retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, "Exception while calibrating UIMF file");
                     retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     return retData;
                 }
 
-                // Lookup the instrument name
-                string instrumentName = taskParams.GetParam("Instrument_Name");
-                bool bAutoCalibrate = false;
-                bool bCalibrationFailed = false;
-
-                switch (instrumentName.ToLower())
+                try 
                 {
-                    case "ims_tof_1":
-                    case "ims_tof_2":
-                    case "ims_tof_3":
-                        msg = "Skipping calibration since instrument is " + instrumentName;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                        bAutoCalibrate = false;
-                        break;
-                    default:
-                        bAutoCalibrate = true;
-                        break;
+                    // Locate data file on storage server
+                    // Don't copy it locally; just work with it over the network
+                    string svrPath = Path.Combine(taskParams.GetParam("Storage_Vol_External"), taskParams.GetParam("Storage_Path"));
+                    m_DatasetFolderPathRemote = Path.Combine(svrPath, taskParams.GetParam("Folder"));
+
+                    sUimfPath = Path.Combine(m_DatasetFolderPathRemote, dataset + ".uimf");
+
+                    if (!System.IO.File.Exists(sUimfPath))
+                    {
+                        msg = "UIMF file not found on storage server, unable to calibrate: " + sUimfPath;
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                        retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, "UIMF file not found on storage server, unable to calibrate");
+                        retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                        return retData;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    msg = "Exception finding UIMF file to calibrate";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                    retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, "Exception while calibrating UIMF file");
+                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    return retData;
+                }
+             
+
+                try 
+                {
+
+                    // Lookup the instrument name
+                    string instrumentName = taskParams.GetParam("Instrument_Name");                  
+
+                    switch (instrumentName.ToLower())
+                    {
+                        case "ims_tof_1":
+                        case "ims_tof_2":
+                        case "ims_tof_3":
+                            msg = "Skipping calibration since instrument is " + instrumentName;
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                            bAutoCalibrate = false;
+                            break;
+                        default:
+                            bAutoCalibrate = true;
+                            break;
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    msg = "Exception determining whether instrument should be calibrated";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                    retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, "Exception while calibrating UIMF file");
+                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    return retData;
                 }
 
                 if (bAutoCalibrate)
                 {
-                    // Count the number of frames
-                    // If fewer than 5 frames, then don't calibrate
-                    UIMFLibrary.DataReader objReader = new UIMFLibrary.DataReader();
-                    objReader.OpenUIMF(sUimfPath);
-
-                    System.Collections.Generic.Dictionary<int, UIMFLibrary.DataReader.udtFrameInfoType> oFrameList;
-                    oFrameList = objReader.GetMasterFrameList();
-
-                    if (oFrameList.Count < 5)
+                    try
                     {
-                        if (oFrameList.Count == 0)
-                            msg = "Skipping calibration since .UIMF file has no frames";
-                        else
-                        {
-                            msg = "Skipping calibration since .UIMF file only has " + oFrameList.Count + " frame";
-                            if (oFrameList.Count != 1)
-                                msg += "s";
-                        }
 
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                        bAutoCalibrate = false;
-                    }
-                    else
-                    {
-                        // Look for the presence of calibration frames or calibration tables
-                        // If neither exists, then we cannot perform calibration
-                        bool bCalibrationDataExists = false;
+                        // Count the number of frames
+                        // If fewer than 5 frames, then don't calibrate
+                        UIMFLibrary.DataReader objReader = new UIMFLibrary.DataReader();
+                        objReader.OpenUIMF(sUimfPath);
 
-                        System.Collections.Generic.Dictionary<int, UIMFLibrary.DataReader.udtFrameInfoType>.Enumerator objFrameEnumerator;
-                        objFrameEnumerator = oFrameList.GetEnumerator();
-                        while (objFrameEnumerator.MoveNext())
-                        {
-                            if (objReader.FrameTypeIntToEnum(objFrameEnumerator.Current.Value.FrameType) == UIMFLibrary.DataReader.iFrameType.Calibration)
-                            {
-                                bCalibrationDataExists = true;
-                                break;
-                            }
-                        }
+                        System.Collections.Generic.Dictionary<int, UIMFLibrary.DataReader.udtFrameInfoType> oFrameList;
+                        oFrameList = objReader.GetMasterFrameList();
 
-                        if (!bCalibrationDataExists)
+                        if (oFrameList.Count < 5)
                         {
-                            // No calibration frames were found
-                            System.Collections.Generic.List<string> sCalibrationTables = objReader.getCalibrationTableNames();
-                            if (sCalibrationTables.Count > 0)
-                            {
-                                bCalibrationDataExists = true;
-                            }
+                            if (oFrameList.Count == 0)
+                                msg = "Skipping calibration since .UIMF file has no frames";
                             else
                             {
-                                msg = "Skipping calibration since .UIMF file does not contain any calibration frames or calibration tables";
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
-                                bAutoCalibrate = false;
+                                msg = "Skipping calibration since .UIMF file only has " + oFrameList.Count + " frame";
+                                if (oFrameList.Count != 1)
+                                    msg += "s";
                             }
 
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                            bAutoCalibrate = false;
+                        }
+                        else
+                        {
+                            // Look for the presence of calibration frames or calibration tables
+                            // If neither exists, then we cannot perform calibration
+                            bool bCalibrationDataExists = false;
+
+                            System.Collections.Generic.Dictionary<int, UIMFLibrary.DataReader.udtFrameInfoType>.Enumerator objFrameEnumerator;
+                            objFrameEnumerator = oFrameList.GetEnumerator();
+                            while (objFrameEnumerator.MoveNext())
+                            {
+                                if (objReader.FrameTypeIntToEnum(objFrameEnumerator.Current.Value.FrameType) == UIMFLibrary.DataReader.iFrameType.Calibration)
+                                {
+                                    bCalibrationDataExists = true;
+                                    break;
+                                }
+                            }
+
+                            if (!bCalibrationDataExists)
+                            {
+                                // No calibration frames were found
+                                System.Collections.Generic.List<string> sCalibrationTables = objReader.getCalibrationTableNames();
+                                if (sCalibrationTables.Count > 0)
+                                {
+                                    bCalibrationDataExists = true;
+                                }
+                                else
+                                {
+                                    msg = "Skipping calibration since .UIMF file does not contain any calibration frames or calibration tables";
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                                    bAutoCalibrate = false;
+                                }
+
+                            }
                         }
                     }
+                    catch (Exception ex)
+                    {
+                        msg = "Exception checking for calibration frames";
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                        retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, "Exception while calibrating UIMF file");
+                        retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                        return retData;
+                    }
+
                 }
 
                 if (bAutoCalibrate)
@@ -203,17 +254,30 @@ namespace ImsDemuxPlugin
                     }
 
                     if (!bCalibrationFailed)
-                        if (!ValidateUIMFCalibrated(sUimfPath, retData))
+                    {
+                        try
                         {
-                            // Calibration failed
-                            bCalibrationFailed = true;
+                            if (!ValidateUIMFCalibrated(sUimfPath, retData))
+                            {
+                                // Calibration failed
+                                bCalibrationFailed = true;
+                            }
                         }
-                    
+                        catch (Exception ex)
+                        {
+                            msg = "Exception validating calibrated .UIMF ifle";
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                            retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, "Exception while calibrating UIMF file");
+                            retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                            return retData;
+                        }
+                     
+                    }
 
                     // Copy the CalibrationLog.txt file to the storage server (even if calibration failed)
                     CopyCalibrationLogToStorageServer(retData, dataset, workDirPath);
+                   
                 }
-
 
                 // Update the return data
                 if (bCalibrationFailed)
@@ -228,8 +292,7 @@ namespace ImsDemuxPlugin
                     if (bAutoCalibrate)
                         retData.EvalMsg = AppendToString(retData.EvalMsg, " and calibrated", "");
                 }
-
-
+         
                 return retData;
 
             }
