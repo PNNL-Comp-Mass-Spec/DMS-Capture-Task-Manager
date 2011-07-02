@@ -242,8 +242,9 @@ namespace ImsDemuxPlugin
 			/// <returns>Enum indicating task success or failure</returns>
             public clsToolReturnData PerformDemux(IMgrParams mgrParams, ITaskParams taskParams, string uimfFileName)
 			{
-				string msg = "Performing demultiplexing, dataset " + taskParams.GetParam("Dataset");
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                string jobNum = taskParams.GetParam("Job");
+                string msg = "Performing demultiplexing, job " + jobNum + ", dataset " + taskParams.GetParam("Dataset");
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 
 				clsToolReturnData retData = new clsToolReturnData();
 
