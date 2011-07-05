@@ -37,7 +37,7 @@ namespace CaptureTaskManager
 				ExceededMaxTaskCount,
 				DisabledMC,
 				DisabledLocally,
-				ExcessiveErrors,
+				ExcessiveRequestErrors,
 				InvalidWorkDir,
 				ShutdownCmdReceived,
                 UpdateRequired,
@@ -56,7 +56,7 @@ namespace CaptureTaskManager
 			private FileSystemWatcher m_FileWatcher;
 			private IToolRunner m_CapTool;
 			private bool m_ConfigChanged = false;
-			private int m_ErrorCount = 0;
+            private int m_TaskRequestErrorCount = 0;
 			private IStatusFile m_StatusFile;
 			private clsMessageHandler m_MsgHandler;
 			private LoopExitCode m_LoopExitCode;
@@ -126,9 +126,9 @@ namespace CaptureTaskManager
                         restartOK = false;
                         break;
 
-                    case LoopExitCode.ExcessiveErrors:
+                    case LoopExitCode.ExcessiveRequestErrors:
                         // Too many errors
-                        msg = "Excessive errors; Manager is disabling itself";
+                        msg = "Excessive errors requesting task; closing manager";
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 
                         // Note: We previously called DisableManagerLocally() to update CaptureTaskManager.config.exe
@@ -144,7 +144,9 @@ namespace CaptureTaskManager
                             m_StatusFile.UpdateDisabled(true);
                         */
 
-                        m_StatusFile.CreateStatusFlagFile();
+                        // Do not create a flag file; intermittent network connectivity is likely resulting in failure to request a task
+                        // This will likely clear up eventually
+                        
                         m_StatusFile.UpdateStopped(true);
 
                         restartOK = false;
@@ -431,9 +433,9 @@ namespace CaptureTaskManager
                         }
 
 					    // Check for excessive number of errors
-					    if (m_ErrorCount > MAX_ERROR_COUNT)
+                        if (m_TaskRequestErrorCount > MAX_ERROR_COUNT)
 					    {
-						    m_LoopExitCode = LoopExitCode.ExcessiveErrors;
+                            m_LoopExitCode = LoopExitCode.ExcessiveRequestErrors;
 						    break;
 					    }
 
@@ -455,7 +457,7 @@ namespace CaptureTaskManager
 
 						    case EnumRequestTaskResult.ResultError:
 							    // Problem with task request; Errors are logged by request method
-							    m_ErrorCount++;
+							    m_TaskRequestErrorCount++;
 							    break;
 
 						    case EnumRequestTaskResult.TaskFound:
