@@ -431,10 +431,10 @@ namespace CaptureToolPlugin
 			/// <summary>
 			/// Checks to see if file size is changing -- possible sign acquisition hasn't finished
 			/// </summary>
-			/// <param name="FileName">Full path specifying file to check</param>
+            /// <param name="FilePath">Full path specifying file to check</param>
 			/// <param name="SleepInt">Interval for checking (seconds)</param>
 			/// <returns>TRUE if file size hasn't changed during SleepInt; FALSE otherwise</returns>
-			private bool VerifyConstantFileSize(string FileName, int SleepInt)
+            private bool VerifyConstantFileSize(string FilePath, int SleepInt)
 			{
 				//Determines if the size of a file changes over specified time interval
 				FileInfo Fi = default(FileInfo);
@@ -447,8 +447,8 @@ namespace CaptureToolPlugin
 					SleepInt = (int)(int.MaxValue / 1000);
 				}
 
-				//Get the initial size of the folder
-				Fi = new FileInfo(FileName);
+				//Get the initial size of the file
+                Fi = new FileInfo(FilePath);
 				InitialFileSize = Fi.Length;
 
 				//Wait for specified sleep interval
@@ -456,7 +456,7 @@ namespace CaptureToolPlugin
 				//Delay for specified interval
 
 				//Get the final size of the file and compare
-				Fi = new FileInfo(FileName);
+                Fi = new FileInfo(FilePath);
 				FinalFileSize = Fi.Length;
 				if (FinalFileSize == InitialFileSize)
 				{
@@ -502,7 +502,8 @@ namespace CaptureToolPlugin
 						datasetInfo.FileOrFolderName = Path.GetFileName(datasetInfo.FileList[0]);
 						datasetInfo.DatasetType = RawDSTypes.File;
 					}
-					else datasetInfo.DatasetType = RawDSTypes.MultiFile;
+					else 
+                        datasetInfo.DatasetType = RawDSTypes.MultiFile;
 					
 					return datasetInfo;
 				}
@@ -732,8 +733,10 @@ namespace CaptureToolPlugin
             {
                 // Dataset found, and it's a single file
                 // First, verify the file size is constant (indicates acquisition is actually finished)
-                string copySourceDir = Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName);
-                if (!VerifyConstantFileSize(copySourceDir, m_SleepInterval))
+                string sourceFilePath = Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName);
+                string targetFilePath = string.Empty;
+
+                if (!VerifyConstantFileSize(sourceFilePath, m_SleepInterval))
                 {
                     msg = "Dataset '" + dataset + "' not ready";
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg);
@@ -741,7 +744,7 @@ namespace CaptureToolPlugin
                     return EnumCloseOutType.CLOSEOUT_NOT_READY;
                 }
 
-                // Make a dataset folder
+                // Make a dataset folder (it's OK if it already exists)
                 try
                 {
                     MakeFolderPath(datasetFolderPath);
@@ -758,13 +761,10 @@ namespace CaptureToolPlugin
                 try
                 {                    
                     // Copy the raw spectra file
-                    File.Copy(copySourceDir,
-                        Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName));
-                    msg = "Copied file " + copySourceDir + " to " +
-                        Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName);
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                    if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
-                    return EnumCloseOutType.CLOSEOUT_SUCCESS;
+                    targetFilePath = Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName);
+                    File.Copy(sourceFilePath, targetFilePath);
+                    msg = "Copied file " + sourceFilePath + " to " + targetFilePath;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);                    
                 }
                 catch (Exception ex)
                 {
@@ -773,6 +773,108 @@ namespace CaptureToolPlugin
                     if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
+
+                bool blnSuccess;
+                blnSuccess = CaptureLCMethodFile(dataset, datasetFolderPath);
+
+                if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+
+                if (blnSuccess)
+                    return EnumCloseOutType.CLOSEOUT_SUCCESS;
+                else
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
+
+            }
+
+            private bool CaptureLCMethodFile(string datasetName, string datasetFolderPath)
+            {
+                const string METHOD_FOLDER_BASE_PATH = "\\\\proto-5\\BionetXfer\\Run_Complete_Trigger\\MethodFiles";
+
+                string msg;
+                bool blnSuccess = true;
+
+                // Look for an LCMethod file associated with this raw spectra file
+                // Files are stored at \\proto-5\BionetXfer\Run_Complete_Trigger\MethodFiles\
+                // TODO: Get this parameter from the manager control DB
+                try
+                {
+                    string strMethodFileFolder;
+                    strMethodFileFolder = System.IO.Path.Combine(METHOD_FOLDER_BASE_PATH, datasetName);
+
+                    System.IO.DirectoryInfo objSourceFolder = new System.IO.DirectoryInfo(strMethodFileFolder);
+
+                    if (objSourceFolder.Exists)
+                    {
+                        // Copy any .XML files to the dataset folder
+                        System.IO.FileInfo[] objFiles;
+                        objFiles = objSourceFolder.GetFiles("*.xml");
+
+                        if (objFiles.Length > 0)
+                        {
+                            // Copy the LCMethod file to the dataset folder
+                            // There should only be one method file, but if the dataset was re-run, then there could be multiple files
+                            for (int i = 0; i < objFiles.Length; i++)
+                            {
+                                string targetFilePath;
+                                if (objFiles[i].Name.ToLower().StartsWith("LCMethod".ToLower()))
+                                    targetFilePath = Path.Combine(datasetFolderPath, objFiles[i].Name);
+                                else
+                                    targetFilePath = Path.Combine(datasetFolderPath, "LCMethod_" + objFiles[i].Name);
+
+                                objFiles[i].CopyTo(targetFilePath, true);
+
+                                msg = "Copied file " + objFiles[i].FullName + " to " + targetFilePath;
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                            }
+
+                            // Rename the source folder to start with x_
+                            try
+                            {
+                                string strRenamedSourceFolder = System.IO.Path.Combine(METHOD_FOLDER_BASE_PATH, "x_" + datasetName);
+                                if (System.IO.Directory.Exists(strRenamedSourceFolder))
+                                {
+                                    // x_ folder already exists; move the files
+                                    for (int i = 0; i < objFiles.Length; i++)
+                                    {
+                                        string targetFilePath = Path.Combine(strRenamedSourceFolder, objFiles[i].Name);
+
+                                        objFiles[i].CopyTo(targetFilePath, true);
+                                        objFiles[i].Delete();
+                                    }
+                                    objSourceFolder.Delete(false);
+                                }
+                                else
+                                {
+                                    // Rename the folder
+                                    objSourceFolder.MoveTo(strRenamedSourceFolder);
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                msg = "Exception renaming source LCMethod LogFile for " + datasetName;
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg, ex);
+                            }
+
+                        }
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    msg = "Exception copying LCMethod file for " + datasetName;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
+                    blnSuccess = false;
+                }
+
+                System.DateTime dtCurrentTime = System.DateTime.Now;
+                if (dtCurrentTime.Hour == 18 || dtCurrentTime.Hour == 19)
+                {
+                    // Time is between 6 pm and 7:59 pm
+                    // Check for folders at METHOD_FOLDER_BASE_PATH that start with x_ and have .xml files that are all at least 14 days old
+                    DeleteOldLCMethodFolders(METHOD_FOLDER_BASE_PATH);
+                }
+
+                return blnSuccess;
             }
 
             private EnumCloseOutType CaptureFolderExt(string dataset, ref string msg, clsDatasetInfo datasetInfo, string sourceFolderPath, string datasetFolderPath)
@@ -814,8 +916,6 @@ namespace CaptureToolPlugin
                     clsFileTools.CopyDirectory(copySourceDir, copyTargetDir, filesToSkip);
                     msg = "Copied folder " + copySourceDir + " to " + copyTargetDir;
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                    if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
-                    return EnumCloseOutType.CLOSEOUT_SUCCESS;
                 }
                 catch (Exception ex)
                 {
@@ -840,6 +940,7 @@ namespace CaptureToolPlugin
                             if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
                             return EnumCloseOutType.CLOSEOUT_FAILED;
                         }
+
                         // Try the capture again using a skip list
                         msg = "Retrying capture using skip list";
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
@@ -852,6 +953,16 @@ namespace CaptureToolPlugin
                         return EnumCloseOutType.CLOSEOUT_FAILED;
                     }
                 }
+
+                bool blnSuccess;
+                blnSuccess = CaptureLCMethodFile(dataset, datasetFolderPath);
+
+                if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+
+                if (blnSuccess)
+                    return EnumCloseOutType.CLOSEOUT_SUCCESS;
+                else
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
             private EnumCloseOutType CaptureFolderNoExt(string dataset, ref string msg, clsDatasetInfo datasetInfo, string sourceFolderPath, string datasetFolderPath)
@@ -892,18 +1003,24 @@ namespace CaptureToolPlugin
                     msg = "Copied folder " + copySourceDir + " to " +
                         Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName);
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
-                    return EnumCloseOutType.CLOSEOUT_SUCCESS;
                 }
                 catch (Exception ex)
                 {
                     msg = "Exception copying dataset folder " + copySourceDir;
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
+                    if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected); 
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
-                finally
-                {
-                    if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
-                }
+
+                bool blnSuccess;
+                blnSuccess = CaptureLCMethodFile(dataset, datasetFolderPath);
+
+                if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+
+                if (blnSuccess)
+                    return EnumCloseOutType.CLOSEOUT_SUCCESS;
+                else
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
             private EnumCloseOutType CaptureBrukerImaging(string dataset, ref string msg, clsDatasetInfo datasetInfo, string sourceFolderPath, string datasetFolderPath)
@@ -1051,7 +1168,61 @@ namespace CaptureToolPlugin
                 }
             }
 
+            private void DeleteOldLCMethodFolders(string sLCMethodsFolderPath)
+            {
+                string msg = string.Empty;
 
+                try
+                {
+                    System.IO.DirectoryInfo diLCMethodsFolder = new System.IO.DirectoryInfo(sLCMethodsFolderPath);
+                    if (diLCMethodsFolder.Exists)
+                    {
+                        System.IO.DirectoryInfo[] diSubfolders;
+                        diSubfolders = diLCMethodsFolder.GetDirectories("x_*");
+
+                        foreach (System.IO.DirectoryInfo diFolder in diSubfolders)
+                        {
+                            bool bSafeToDelete = true;
+
+                            // Make sure all of the files in the folder are at least 14 days old
+                            foreach (System.IO.FileSystemInfo oFileOrFolder in diFolder.GetFileSystemInfos())
+                            {
+                                if (System.DateTime.Now.Subtract(oFileOrFolder.LastWriteTime).TotalDays <= 14)
+                                {
+                                    // File was modified within the last 2 weeks; do not delete this folder
+                                    bSafeToDelete = false;
+                                    break;
+                                }
+
+                            }
+
+                            if (bSafeToDelete)
+                            {
+                                try
+                                {
+                                    msg = "LCMethods folder: " + diFolder.FullName;
+                                    diFolder.Delete(true);
+
+                                    msg = "Deleted old " + msg;
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                                }
+                                catch (Exception ex)
+                                {
+                                    msg = "Exception deleting old " + msg;
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
+                                }
+                                
+                            }
+                        }
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    msg = "Exception looking for old LC Method folders";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
+                }
+            }
 
 			/// <summary>
 			/// Verifies specified folder path exists
