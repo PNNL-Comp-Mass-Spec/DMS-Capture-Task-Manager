@@ -122,6 +122,7 @@ namespace CaptureToolPlugin
             /// </summary>
             /// <param name="folderPath"></param>
             /// <returns></returns>
+            /// <remarks>Does not rename LCMethod*.xml files</remarks>
             private bool MarkSupersededFiles(string folderPath)
             {
                 bool success = false;
@@ -133,24 +134,41 @@ namespace CaptureToolPlugin
                     if (diFolder.Exists)
                     {
                         System.IO.FileInfo[] fiFiles;
+                        System.IO.FileInfo[] fiFilesToSkip;
                         System.IO.DirectoryInfo[] diSubFolders;
                         
                         string sLogMessage;
                         string sTargetPath;
 
                         fiFiles = diFolder.GetFiles();
+                        fiFilesToSkip = diFolder.GetFiles("LCMethod*.xml");
 
                         foreach (System.IO.FileInfo fiFile in fiFiles)
                         {
-                            sTargetPath = System.IO.Path.Combine(diFolder.FullName, "x_" + fiFile.Name);
-
-                            if (System.IO.File.Exists(sTargetPath))
+                            // Rename the file, but only if it is not in fiFilesToSkip
+                            bool bSkipFile = false;
+                            foreach (System.IO.FileInfo fiFileToSkip in fiFilesToSkip)
                             {
-                                // Target exists; delete it
-                                System.IO.File.Delete(sTargetPath);
+                                if (fiFileToSkip.FullName == fiFile.FullName)
+                                {
+                                    bSkipFile = true;
+                                    break;
+                                }
                             }
 
-                            fiFile.MoveTo(sTargetPath);
+                            if (!bSkipFile)
+                            {
+                                sTargetPath = System.IO.Path.Combine(diFolder.FullName, "x_" + fiFile.Name);
+
+                                if (System.IO.File.Exists(sTargetPath))
+                                {
+                                    // Target exists; delete it
+                                    System.IO.File.Delete(sTargetPath);
+                                }
+
+                                fiFile.MoveTo(sTargetPath);
+                            }
+
                         }
 
                         if (fiFiles.Length > 0)
@@ -262,9 +280,9 @@ namespace CaptureToolPlugin
 						switch (DSAction.ToLower())
 						{
                             case "overwrite_single_item":
-                                // If the folder only contains one file or only one subfolder
+                                // If the folder only contains one or two files or only one subfolder
                                 // then we're likely retrying capture; rename the one file to start with x_
-                                if (fileCount <= 1 && folderCount == 0 ||
+                                if (fileCount <= 2 && folderCount == 0 ||
                                     fileCount == 0 && folderCount <= 1)
                                 {
                                     switchResult = MarkSupersededFiles(dsFolder);
