@@ -25,7 +25,6 @@ F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\DatasetQua
 F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\DatasetQualityPlugin\DatasetQualityPlugin\bin\Debug\NetCDFReader.dll
 F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\DatasetQualityPlugin\DatasetQualityPlugin\bin\Debug\Interop.XRAWFILE2Lib.dll
 F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\DatasetQualityPlugin\DatasetQualityPlugin\bin\Debug\DeconWrapper.dll
-F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\DatasetQualityPlugin\DatasetQualityPlugin\bin\Debug\UIMFLibrary.dll
 F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\DatasetQualityPlugin\DatasetQualityPlugin\bin\Debug\ZedGraph.dll
 F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\DatasetQualityPlugin\DatasetQualityPlugin\obj\Debug\ResolveAssemblyReference.cache
 F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\DatasetQualityPlugin\DatasetQualityPlugin\obj\Debug\DatasetQualityPlugin.dll

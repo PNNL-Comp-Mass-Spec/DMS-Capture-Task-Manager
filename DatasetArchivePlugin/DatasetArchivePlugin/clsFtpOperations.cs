@@ -385,6 +385,7 @@ namespace DatasetArchivePlugin
 				}
 				catch (Exception ex)
 				{
+                    m_ErrMsg = "Error in GetDateStartPosition: " + ex.Message;
 					return -1;
 				}
 			}	// End sub
