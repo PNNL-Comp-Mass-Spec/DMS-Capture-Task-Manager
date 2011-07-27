@@ -22,16 +22,26 @@ namespace DatasetIntegrityPlugin
 		//**********************************************************************************************************
 
 		#region "Constants"
-			const float RAW_FILE_MIN_SIZE = 0.1F;	//MB
-			const float RAW_FILE_MAX_SIZE = 2048F;	//MB
-			const float BAF_FILE_MIN_SIZE = 0.1F;	//MB
-			const float SER_FILE_MIN_SIZE = 0.016F;	//MB
-			const float FID_FILE_MIN_SIZE = 0.016F;	//MB
-			const float ACQ_METHOD_FILE_MIN_SIZE = 0.005F;	//MB
-			const float SCIEX_WIFF_FILE_MIN_SIZE = 0.1F; //MB
-			const float SCIEX_WIFF_SCAN_FILE_MIN_SIZE = 0.001F; //MB
-            const float UIMF_FILE_MIN_SIZE = 0.1F;	//MB
-		#endregion
+			// const float RAW_FILE_MIN_SIZE = 0.1F;	        //MB
+			// const float RAW_FILE_MAX_SIZE = 2048F;	        //MB
+            //const float BAF_FILE_MIN_SIZE = 0.1F;	        //MB
+            //const float SER_FILE_MIN_SIZE = 0.016F;	        //MB
+            //const float FID_FILE_MIN_SIZE = 0.016F;	        //MB
+            //const float ACQ_METHOD_FILE_MIN_SIZE = 0.005F;	//MB
+            //const float SCIEX_WIFF_FILE_MIN_SIZE = 0.048F;  //MB
+            //const float SCIEX_WIFF_SCAN_FILE_MIN_SIZE = 0.001F; //MB
+            //const float UIMF_FILE_MIN_SIZE = 0.1F;	        //MB
+
+            const float RAW_FILE_MIN_SIZE_KB = 100;	         
+            const float RAW_FILE_MAX_SIZE_MB = 2048;	     
+            const float BAF_FILE_MIN_SIZE_KB = 100;	        
+            const float SER_FILE_MIN_SIZE_KB = 16;	        
+            const float FID_FILE_MIN_SIZE_KB = 16;	        
+            const float ACQ_METHOD_FILE_MIN_SIZE_KB = 5;	
+            const float SCIEX_WIFF_FILE_MIN_SIZE_KB = 50;   
+            const float SCIEX_WIFF_SCAN_FILE_MIN_SIZE_KB = 1;
+            const float UIMF_FILE_MIN_SIZE_KB = 100;
+        #endregion
 
         #region "Class-wide variables"
             clsToolReturnData mRetData = new clsToolReturnData();
@@ -136,24 +146,34 @@ namespace DatasetIntegrityPlugin
 
             private void ReportFileSizeTooSmall(string sDataFileDescription, string sFilePath, float fActualSize, float fMinSize)
             {
+                string sMinSize;
+                sMinSize = fMinSize.ToString("#0") + " KB";
+
                 string msg;
                 msg = sDataFileDescription + " file " + sFilePath + " may be corrupt. Actual file size: " +
-                      fActualSize.ToString("####0.00") + "MB. " +
-                      "Min allowable size is " + fMinSize.ToString("#0.00") + "MB.";
-
-                mRetData.EvalMsg = sDataFileDescription + " file size is less than " + fMinSize.ToString("#0.00") + " MB";
+                      fActualSize.ToString("####0.0") + " KB. " +
+                      "Min allowable size is " + sMinSize + ".";
+                
+                mRetData.EvalMsg = sDataFileDescription + " file size is less than " + sMinSize;
 
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
             }
 
             private void ReportFileSizeTooLarge(string sDataFileDescription, string sFilePath, float fActualSize, float fMaxSize)
             {
+                string sMaxSize;
+
+                if (fMaxSize / 1024.0 > 1)
+                    sMaxSize = (fMaxSize / 1024.0).ToString("#0.0") + " MB";
+                else
+                    sMaxSize = "Max allowable size is " + fMaxSize.ToString("#0") + " KB";
+
                 string msg;
                 msg = sDataFileDescription + " file " + sFilePath + " may be corrupt. Actual file size: " +
-                      fActualSize.ToString("####0.00") + "MB. " +
-                      "Max allowable size is " + fMaxSize.ToString("#0.00") + "MB.";
+                      fActualSize.ToString("####0.0") + " KB. " +
+                      "Max allowable size is " + sMaxSize + ".";
 
-                mRetData.EvalMsg = sDataFileDescription + " file size is more than " + fMaxSize.ToString("#0.00") + " MB";
+                mRetData.EvalMsg = sDataFileDescription + " file size is more than " + sMaxSize;
 
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
             }
@@ -181,9 +201,9 @@ namespace DatasetIntegrityPlugin
 				dataFileSize = GetFileSize(tempFileNamePath);
 
 				// Check .wiff file min size
-				if (dataFileSize < SCIEX_WIFF_FILE_MIN_SIZE)
+				if (dataFileSize < SCIEX_WIFF_FILE_MIN_SIZE_KB)
 				{
-                    ReportFileSizeTooSmall("Data", tempFileNamePath, dataFileSize, SCIEX_WIFF_FILE_MIN_SIZE);
+                    ReportFileSizeTooSmall("Data", tempFileNamePath, dataFileSize, SCIEX_WIFF_FILE_MIN_SIZE_KB);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
@@ -200,9 +220,9 @@ namespace DatasetIntegrityPlugin
 				dataFileSize = GetFileSize(tempFileNamePath);
 
 				// Check .wiff.scan file min size
-				if (dataFileSize < SCIEX_WIFF_SCAN_FILE_MIN_SIZE)
+                if (dataFileSize < SCIEX_WIFF_SCAN_FILE_MIN_SIZE_KB)
 				{
-                    ReportFileSizeTooSmall("Data", tempFileNamePath, dataFileSize, SCIEX_WIFF_SCAN_FILE_MIN_SIZE);
+                    ReportFileSizeTooSmall("Data", tempFileNamePath, dataFileSize, SCIEX_WIFF_SCAN_FILE_MIN_SIZE_KB);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
@@ -231,16 +251,16 @@ namespace DatasetIntegrityPlugin
 				dataFileSize = GetFileSize(dataFileNamePath);
 
 				// Check min size
-				if (dataFileSize < RAW_FILE_MIN_SIZE)
+                if (dataFileSize < RAW_FILE_MIN_SIZE_KB)
 				{
-                    ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSize, RAW_FILE_MIN_SIZE);
+                    ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSize, RAW_FILE_MIN_SIZE_KB);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
 				// Check max size
-				if (dataFileSize > RAW_FILE_MAX_SIZE)
+                if (dataFileSize > RAW_FILE_MAX_SIZE_MB * 1024)
 				{
-                    ReportFileSizeTooLarge("Data", dataFileNamePath, dataFileSize, RAW_FILE_MIN_SIZE);
+                    ReportFileSizeTooLarge("Data", dataFileNamePath, dataFileSize, RAW_FILE_MIN_SIZE_KB);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
@@ -269,9 +289,9 @@ namespace DatasetIntegrityPlugin
 				dataFileSize = GetFileSize(dataFileNamePath);
 
 				// Check min size
-				if (dataFileSize < RAW_FILE_MIN_SIZE)
+                if (dataFileSize < RAW_FILE_MIN_SIZE_KB)
 				{
-                    ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSize, RAW_FILE_MIN_SIZE);
+                    ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSize, RAW_FILE_MIN_SIZE_KB);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
@@ -300,9 +320,9 @@ namespace DatasetIntegrityPlugin
 				dataFileSize = GetFileSize(dataFileNamePath);
 
 				// Check min size
-				if (dataFileSize < RAW_FILE_MIN_SIZE)
+                if (dataFileSize < RAW_FILE_MIN_SIZE_KB)
 				{
-                    ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSize, RAW_FILE_MIN_SIZE);
+                    ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSize, RAW_FILE_MIN_SIZE_KB);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
@@ -331,9 +351,9 @@ namespace DatasetIntegrityPlugin
 				dataFileSize = GetFileSize(dataFileNamePath);
 
 				// Check min size
-				if (dataFileSize < RAW_FILE_MIN_SIZE)
+                if (dataFileSize < RAW_FILE_MIN_SIZE_KB)
 				{
-                    ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSize, RAW_FILE_MIN_SIZE);
+                    ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSize, RAW_FILE_MIN_SIZE_KB);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
@@ -386,7 +406,7 @@ namespace DatasetIntegrityPlugin
 
 				// Verify size of ser file
 				dataFileSize = GetFileSize(Path.Combine(dataFolder, "ser"));
-				if (dataFileSize <= 0.1F)
+				if (dataFileSize <= 100)
 				{
                     mRetData.EvalMsg = "Invalid dataset. ser file too small";
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
@@ -432,9 +452,9 @@ namespace DatasetIntegrityPlugin
 				// Verify size of analysis.baf file
                 string dataFileNamePath = Path.Combine(folderList[0], "analysis.baf");
 				dataFileSize = GetFileSize(dataFileNamePath);
-				if (dataFileSize <= BAF_FILE_MIN_SIZE)
+                if (dataFileSize <= BAF_FILE_MIN_SIZE_KB)
 				{
-                    ReportFileSizeTooSmall("Analysis.baf", dataFileNamePath, dataFileSize, BAF_FILE_MIN_SIZE);
+                    ReportFileSizeTooSmall("Analysis.baf", dataFileNamePath, dataFileSize, BAF_FILE_MIN_SIZE_KB);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
@@ -501,9 +521,9 @@ namespace DatasetIntegrityPlugin
 				// Verify size of analysis.baf file
                 string tempFileNamePath = Path.Combine(folderList[0], "analysis.baf");
 				dataFileSize = GetFileSize(tempFileNamePath);
-				if (dataFileSize <= BAF_FILE_MIN_SIZE)
+                if (dataFileSize <= BAF_FILE_MIN_SIZE_KB)
 				{
-                    ReportFileSizeTooSmall("Analysis.baf", tempFileNamePath, dataFileSize, BAF_FILE_MIN_SIZE);
+                    ReportFileSizeTooSmall("Analysis.baf", tempFileNamePath, dataFileSize, BAF_FILE_MIN_SIZE_KB);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
@@ -513,9 +533,9 @@ namespace DatasetIntegrityPlugin
 					// ser file found; verify size
                     tempFileNamePath = Path.Combine(folderList[0], "ser");
 					dataFileSize = GetFileSize(tempFileNamePath);
-					if (dataFileSize <= SER_FILE_MIN_SIZE)
+                    if (dataFileSize <= SER_FILE_MIN_SIZE_KB)
 					{
-                        ReportFileSizeTooSmall("ser", tempFileNamePath, dataFileSize, SER_FILE_MIN_SIZE);
+                        ReportFileSizeTooSmall("ser", tempFileNamePath, dataFileSize, SER_FILE_MIN_SIZE_KB);
 						return EnumCloseOutType.CLOSEOUT_FAILED;
 					}
 				}
@@ -527,9 +547,9 @@ namespace DatasetIntegrityPlugin
 						// fid file found; verify size
                         tempFileNamePath = Path.Combine(folderList[0], "fid");
                         dataFileSize = GetFileSize(tempFileNamePath);
-						if (dataFileSize <= FID_FILE_MIN_SIZE)
+                        if (dataFileSize <= FID_FILE_MIN_SIZE_KB)
 						{
-                            ReportFileSizeTooSmall("fid", tempFileNamePath, dataFileSize, FID_FILE_MIN_SIZE);
+                            ReportFileSizeTooSmall("fid", tempFileNamePath, dataFileSize, FID_FILE_MIN_SIZE_KB);
 							return EnumCloseOutType.CLOSEOUT_FAILED;
 						}
 					}
@@ -568,9 +588,9 @@ namespace DatasetIntegrityPlugin
 
                 tempFileNamePath = Path.Combine(methodFolderPath, "apexAcquisition.method");
 				dataFileSize = GetFileSize(tempFileNamePath);
-				if (dataFileSize <= ACQ_METHOD_FILE_MIN_SIZE)
+                if (dataFileSize <= ACQ_METHOD_FILE_MIN_SIZE_KB)
 				{
-                    ReportFileSizeTooSmall("apexAcquisition.method", tempFileNamePath, dataFileSize, ACQ_METHOD_FILE_MIN_SIZE);
+                    ReportFileSizeTooSmall("apexAcquisition.method", tempFileNamePath, dataFileSize, ACQ_METHOD_FILE_MIN_SIZE_KB);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
@@ -672,9 +692,9 @@ namespace DatasetIntegrityPlugin
                 dataFileSize = GetFileSize(dataFileNamePath);
 
                 // Check min size
-                if (dataFileSize < UIMF_FILE_MIN_SIZE)
+                if (dataFileSize < UIMF_FILE_MIN_SIZE_KB)
                 {
-                    ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSize, UIMF_FILE_MIN_SIZE);
+                    ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSize, UIMF_FILE_MIN_SIZE_KB);
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -767,15 +787,15 @@ namespace DatasetIntegrityPlugin
 			}	// End sub
 
 			/// <summary>
-			/// Gets the length of a single file in MB
+			/// Gets the length of a single file in KB
 			/// </summary>
 			/// <param name="fileNamePath">Fully qualified path to input file</param>
-			/// <returns>File size in MB</returns>
+			/// <returns>File size in KB</returns>
 			private float GetFileSize(string fileNamePath)
 			{
 				FileInfo fi = new FileInfo(fileNamePath);
-				Single fileLengthMB = (float)fi.Length / (1024F * 1024F);
-				return fileLengthMB;
+				Single fileLengthKB = (float)fi.Length / (1024F);
+                return fileLengthKB;
 			}	// End sub
 		#endregion
 	}	// End class
