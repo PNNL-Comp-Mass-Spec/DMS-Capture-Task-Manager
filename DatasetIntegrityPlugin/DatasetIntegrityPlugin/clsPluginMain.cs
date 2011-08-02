@@ -24,7 +24,7 @@ namespace DatasetIntegrityPlugin
 		#region "Constants"
 			// const float RAW_FILE_MIN_SIZE = 0.1F;	        //MB
 			// const float RAW_FILE_MAX_SIZE = 2048F;	        //MB
-            //const float BAF_FILE_MIN_SIZE = 0.1F;	        //MB
+            //const float BAF_FILE_MIN_SIZE = 0.1F;	            //MB
             //const float SER_FILE_MIN_SIZE = 0.016F;	        //MB
             //const float FID_FILE_MIN_SIZE = 0.016F;	        //MB
             //const float ACQ_METHOD_FILE_MIN_SIZE = 0.005F;	//MB
@@ -39,7 +39,7 @@ namespace DatasetIntegrityPlugin
             const float FID_FILE_MIN_SIZE_KB = 16;	        
             const float ACQ_METHOD_FILE_MIN_SIZE_KB = 5;	
             const float SCIEX_WIFF_FILE_MIN_SIZE_KB = 50;   
-            const float SCIEX_WIFF_SCAN_FILE_MIN_SIZE_KB = 1;
+            const float SCIEX_WIFF_SCAN_FILE_MIN_SIZE_KB = 0.03F;
             const float UIMF_FILE_MIN_SIZE_KB = 100;
         #endregion
 
