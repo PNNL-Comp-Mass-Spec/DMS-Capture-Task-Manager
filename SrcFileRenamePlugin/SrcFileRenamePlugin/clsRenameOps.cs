@@ -103,7 +103,13 @@ namespace SrcFileRenamePlugin
 					}
 					else
 					{
-						msg = "Error " + m_ShareConnector.ErrorMessage + " connecting to " + sourceFolderPath;
+                        msg = "Error " + m_ShareConnector.ErrorMessage + " connecting to " + sourceFolderPath + " as user " + m_UserName + " using 'secfso'";
+
+                        if (m_ShareConnector.ErrorMessage == "1326")
+                            msg += "; you likely need to change the Capture_Method from secfso to fso";
+                        if (m_ShareConnector.ErrorMessage == "53")
+                            msg += "; the password may need to be reset";
+                            
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 						return EnumCloseOutType.CLOSEOUT_FAILED;
 					}
