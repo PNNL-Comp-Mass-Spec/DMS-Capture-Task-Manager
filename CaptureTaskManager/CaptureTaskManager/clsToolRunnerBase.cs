@@ -24,13 +24,13 @@ namespace CaptureTaskManager
 		#endregion
 
 		#region "Class variables"
-			protected IMgrParams m_MgrParams;
-			protected ITaskParams m_TaskParams;
-			protected IStatusFile m_StatusTools;
+		protected IMgrParams m_MgrParams;
+		protected ITaskParams m_TaskParams;
+		protected IStatusFile m_StatusTools;
 
-            protected System.DateTime m_LastConfigDBUpdate = System.DateTime.Now;
-            protected int m_MinutesBetweenConfigDBUpdates = 10;
-            protected bool m_NeedToAbortProcessing = false;
+		protected System.DateTime m_LastConfigDBUpdate = System.DateTime.UtcNow;
+		protected int m_MinutesBetweenConfigDBUpdates = 10;
+		protected bool m_NeedToAbortProcessing = false;
 		#endregion
 
 		#region "Delegates"
@@ -43,74 +43,74 @@ namespace CaptureTaskManager
 		#endregion
 
 		#region "Constructors"
-			/// <summary>
-			/// Constructor
-			/// </summary>
-			protected clsToolRunnerBase()
-			{
-				// Does nothing at present
-			}	// End sub
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		protected clsToolRunnerBase()
+		{
+			// Does nothing at present
+		}	// End sub
 		#endregion
 
 		#region "Methods"
-			/// <summary>
-			/// Runs the plugin tool. Implements IToolRunner.RunTool method
-			/// </summary>
-			/// <returns>Enum indicating success or failure</returns>
-			public virtual clsToolReturnData RunTool()
+		/// <summary>
+		/// Runs the plugin tool. Implements IToolRunner.RunTool method
+		/// </summary>
+		/// <returns>Enum indicating success or failure</returns>
+		public virtual clsToolReturnData RunTool()
+		{
+			// Does nothing at present, so return success
+			clsToolReturnData retData = new clsToolReturnData();
+			retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+			return retData;
+		}	// End sub
+
+		/// <summary>
+		/// Initializes plugin. Implements IToolRunner.Setup method
+		/// </summary>
+		/// <param name="mgrParams">Parameters for manager operation</param>
+		/// <param name="taskParams">Parameters for the assigned task</param>
+		/// <param name="statusTools">Tools for status reporting</param>
+		public virtual void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
+		{
+			m_MgrParams = mgrParams;
+			m_TaskParams = taskParams;
+			m_StatusTools = statusTools;
+		}	// End sub
+
+		protected bool UpdateMgrSettings()
+		{
+			bool bSuccess = true;
+
+			if (m_MinutesBetweenConfigDBUpdates < 1)
+				m_MinutesBetweenConfigDBUpdates = 1;
+
+			if (System.DateTime.UtcNow.Subtract(m_LastConfigDBUpdate).TotalMinutes >= m_MinutesBetweenConfigDBUpdates)
 			{
-				// Does nothing at present, so return success
-				clsToolReturnData retData = new clsToolReturnData();
-				retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
-				return retData;
-			}	// End sub
+				m_LastConfigDBUpdate = System.DateTime.UtcNow;
 
-			/// <summary>
-			/// Initializes plugin. Implements IToolRunner.Setup method
-			/// </summary>
-			/// <param name="mgrParams">Parameters for manager operation</param>
-			/// <param name="taskParams">Parameters for the assigned task</param>
-			/// <param name="statusTools">Tools for status reporting</param>
-			public virtual void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
-			{
-				m_MgrParams = mgrParams;
-				m_TaskParams = taskParams;
-				m_StatusTools = statusTools;
-			}	// End sub
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Updating manager settings using Manager Control database");
 
-            protected bool UpdateMgrSettings()
-            {
-                bool bSuccess = true;
+				if (!m_MgrParams.LoadMgrSettingsFromDB())
+				{
+					// Error retrieving settings from the manager control DB
+					string msg;
+					msg = "Error calling m_MgrSettings.LoadMgrSettingsFromDB to update manager settings";
 
-                if (m_MinutesBetweenConfigDBUpdates < 1)
-                    m_MinutesBetweenConfigDBUpdates = 1;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 
-                if (System.DateTime.Now.Subtract(m_LastConfigDBUpdate).TotalMinutes >= m_MinutesBetweenConfigDBUpdates)
-                {
-                    m_LastConfigDBUpdate = System.DateTime.Now;
+					bSuccess = false;
+				}
+				else
+				{
+					// Update the log level
+					int debugLevel = clsMgrSettings.CIntSafe(m_MgrParams.GetParam("debuglevel"), 4);
+					clsLogTools.SetFileLogLevel(debugLevel);
+				}
+			}
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Updating manager settings using Manager Control database");
-
-                    if (!m_MgrParams.LoadMgrSettingsFromDB())
-                    {
-                        // Error retrieving settings from the manager control DB
-                        string msg;
-                        msg = "Error calling m_MgrSettings.LoadMgrSettingsFromDB to update manager settings";
-
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-
-                        bSuccess = false;
-                    }
-                    else
-                    {
-                        // Update the log level
-                        int debugLevel = clsMgrSettings.CIntSafe(m_MgrParams.GetParam("debuglevel"), 4); 
-                        clsLogTools.SetFileLogLevel(debugLevel);
-                    }
-                }
-
-                return bSuccess;
-            }                   
+			return bSuccess;
+		}
 
 		#endregion
 	}	// End class

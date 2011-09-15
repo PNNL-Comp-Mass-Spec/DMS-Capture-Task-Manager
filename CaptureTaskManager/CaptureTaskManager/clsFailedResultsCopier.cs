@@ -3,177 +3,185 @@ using CaptureTaskManager;
 
 namespace CaptureTaskManager
 {
-    public class clsFailedResultsCopier
-    {
-        protected const string FAILED_RESULTS_FOLDER_INFO_TEXT = "FailedResultsFolderInfo_";
-        protected const int FAILED_RESULTS_FOLDER_RETAIN_DAYS = 31;
+	public class clsFailedResultsCopier
+	{
+		protected const string FAILED_RESULTS_FOLDER_INFO_TEXT = "FailedResultsFolderInfo_";
+		protected const int FAILED_RESULTS_FOLDER_RETAIN_DAYS = 31;
 
-        protected IMgrParams m_mgrParams;
-        protected ITaskParams m_taskParams;
+		protected IMgrParams m_mgrParams;
+		protected ITaskParams m_taskParams;
 
-        // Constructor
-        public clsFailedResultsCopier(IMgrParams mgrParams, ITaskParams taskParams)
-        {
-            m_mgrParams = mgrParams;
-            m_taskParams = taskParams;
-        }
+		// Constructor
+		public clsFailedResultsCopier(IMgrParams mgrParams, ITaskParams taskParams)
+		{
+			m_mgrParams = mgrParams;
+			m_taskParams = taskParams;
+		}
 
-        public void CopyFailedResultsToArchiveFolder(string ResultsFolderPath)
-        {
-            System.IO.DirectoryInfo diSourceFolder;
-            System.IO.DirectoryInfo diFailedResultsFolder;
-            System.IO.DirectoryInfo diTargetFolder;
+		public void CopyFailedResultsToArchiveFolder(string ResultsFolderPath)
+		{
+			System.IO.DirectoryInfo diSourceFolder;
+			System.IO.DirectoryInfo diFailedResultsFolder;
+			System.IO.DirectoryInfo diTargetFolder;
 
-            string strFailedResultsFolderPath = string.Empty;
-            string strFolderInfoFilePath = string.Empty;
+			string strFailedResultsFolderPath = string.Empty;
+			string strFolderInfoFilePath = string.Empty;
 
-            try
-            {
-                strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
+			try
+			{
+				strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
 
-                if (string.IsNullOrEmpty(strFailedResultsFolderPath))
-                {
-                    // Failed results folder path is not defined; don't try to copy the results anywhere
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "FailedResultsFolderPath is not defined for this manager; cannot copy results");
-                    return;
-                }
+				if (string.IsNullOrEmpty(strFailedResultsFolderPath))
+				{
+					// Failed results folder path is not defined; don't try to copy the results anywhere
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "FailedResultsFolderPath is not defined for this manager; cannot copy results");
+					return;
+				}
 
-                diSourceFolder = new System.IO.DirectoryInfo(ResultsFolderPath);
-                diFailedResultsFolder = new System.IO.DirectoryInfo(strFailedResultsFolderPath);
-                
-                // Make sure the failed results folder exists
-                if (!diFailedResultsFolder.Exists)
-                    diFailedResultsFolder.Create();
+				diSourceFolder = new System.IO.DirectoryInfo(ResultsFolderPath);
+				diFailedResultsFolder = new System.IO.DirectoryInfo(strFailedResultsFolderPath);
 
-                // Define the target folder name to be Dataset_Job_Step
+				// Make sure the failed results folder exists
+				if (!diFailedResultsFolder.Exists)
+					diFailedResultsFolder.Create();
 
-                string strTargetFolder;
+				// Define the target folder name to be Dataset_Job_Step
 
-                strTargetFolder = m_taskParams.GetParam("Dataset");
-                if (string.IsNullOrEmpty(strTargetFolder))
-                    strTargetFolder = "Unknown_Dataset";
+				string strTargetFolder;
 
-                strTargetFolder += "_Job" + m_taskParams.GetParam("Job") + "_Step" + m_taskParams.GetParam("Step");
+				strTargetFolder = m_taskParams.GetParam("Dataset");
+				if (string.IsNullOrEmpty(strTargetFolder))
+					strTargetFolder = "Unknown_Dataset";
 
-                strTargetFolder = System.IO.Path.Combine(diFailedResultsFolder.FullName, strTargetFolder);
-                diTargetFolder = new System.IO.DirectoryInfo(strTargetFolder);
+				strTargetFolder += "_Job" + m_taskParams.GetParam("Job") + "_Step" + m_taskParams.GetParam("Step");
 
-                // Create an info file that describes the saved results
-                try
-                {
-                    strFolderInfoFilePath = System.IO.Path.Combine(diFailedResultsFolder.FullName, FAILED_RESULTS_FOLDER_INFO_TEXT + diTargetFolder.Name + ".txt");
-                    CreateInfoFile(strFolderInfoFilePath, diTargetFolder.Name);
-                }
-                catch (Exception ex)
-                {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating the results folder info file '" + strFolderInfoFilePath + "': " + ex.Message);
-                }
+				strTargetFolder = System.IO.Path.Combine(diFailedResultsFolder.FullName, strTargetFolder);
+				diTargetFolder = new System.IO.DirectoryInfo(strTargetFolder);
 
-                // Make sure the source folder exists
-                if (!diSourceFolder.Exists)
-                {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Source folder not found; cannot copy results: " + ResultsFolderPath);
-                }
-                else
-                {
-                    // Look for failed results folders that were archived over FAILED_RESULTS_FOLDER_RETAIN_DAYS days ago
-                    DeleteOldFailedResultsFolders(diFailedResultsFolder);
+				// Create an info file that describes the saved results
+				try
+				{
+					strFolderInfoFilePath = System.IO.Path.Combine(diFailedResultsFolder.FullName, FAILED_RESULTS_FOLDER_INFO_TEXT + diTargetFolder.Name + ".txt");
+					CreateInfoFile(strFolderInfoFilePath, diTargetFolder.Name);
+				}
+				catch (Exception ex)
+				{
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error creating the results folder info file '" + strFolderInfoFilePath + "': " + ex.Message);
+				}
 
-                    // Create the target folder
-                    if (!diTargetFolder.Exists)
-                        diTargetFolder.Create();
+				// Make sure the source folder exists
+				if (!diSourceFolder.Exists)
+				{
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Source folder not found; cannot copy results: " + ResultsFolderPath);
+				}
+				else
+				{
+					// Look for failed results folders that were archived over FAILED_RESULTS_FOLDER_RETAIN_DAYS days ago
+					DeleteOldFailedResultsFolders(diFailedResultsFolder);
 
-                    // Actually copy files from the source folder to the target folder
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying data files to failed results archive: " + ResultsFolderPath);
+					// Create the target folder
+					if (!diTargetFolder.Exists)
+						diTargetFolder.Create();
 
-                    foreach (System.IO.FileInfo fiFileInfo in diSourceFolder.GetFiles())
-                    {
-                        try
-                        {
-                            fiFileInfo.CopyTo(System.IO.Path.Combine(diTargetFolder.FullName, fiFileInfo.Name), true);
-                        }
-                        catch (Exception ex2)
-                        {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error copying file from " + ResultsFolderPath + " to " + strFailedResultsFolderPath + ": " + ex2.Message);
-                        }
-                    }
+					// Actually copy files from the source folder to the target folder
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying data files to failed results archive: " + ResultsFolderPath);
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copy complete");
-                }
+					foreach (System.IO.FileInfo fiFileInfo in diSourceFolder.GetFiles())
+					{
+						try
+						{
+							fiFileInfo.CopyTo(System.IO.Path.Combine(diTargetFolder.FullName, fiFileInfo.Name), true);
+						}
+						catch (Exception ex2)
+						{
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error copying file from " + ResultsFolderPath + " to " + strFailedResultsFolderPath + ": " + ex2.Message);
+						}
+					}
 
-            }
-            catch (Exception ex)
-            {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error copying results from " + ResultsFolderPath + " to " + strFailedResultsFolderPath + ": " + ex.Message);
-            }
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copy complete");
+				}
 
-        }
+			}
+			catch (Exception ex)
+			{
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error copying results from " + ResultsFolderPath + " to " + strFailedResultsFolderPath + ": " + ex.Message);
+			}
 
-
-        private void CreateInfoFile(string strFolderInfoFilePath, string strResultsFolderName)
-        {
-            System.IO.StreamWriter swArchivedFolderInfoFile;
-            swArchivedFolderInfoFile = new System.IO.StreamWriter(new System.IO.FileStream(strFolderInfoFilePath, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.Read));
-
-            {
-                swArchivedFolderInfoFile.WriteLine("Date\t" + System.DateTime.Now.ToString());
-                swArchivedFolderInfoFile.WriteLine("ResultsFolderName\t" + strResultsFolderName);
-                swArchivedFolderInfoFile.WriteLine("Manager\t" + m_mgrParams.GetParam("MgrName"));
-                if ((m_taskParams != null))
-                {
-                    swArchivedFolderInfoFile.WriteLine("Job\t" + m_taskParams.GetParam("Job"));
-                    swArchivedFolderInfoFile.WriteLine("Step\t" + m_taskParams.GetParam("Step"));
-                    swArchivedFolderInfoFile.WriteLine("StepTool\t" + m_taskParams.GetParam("StepTool"));
-                    swArchivedFolderInfoFile.WriteLine("Dataset\t" + m_taskParams.GetParam("Dataset"));
-                }
-                swArchivedFolderInfoFile.WriteLine("Date\t" + System.DateTime.Now.ToString());
-            }
-
-            swArchivedFolderInfoFile.Close();
-
-        }
+		}
 
 
-        private void DeleteOldFailedResultsFolders(System.IO.DirectoryInfo diFailedResultsFolder)
-        {
-	        System.IO.DirectoryInfo diOldResultsFolder;
+		private void CreateInfoFile(string strFolderInfoFilePath, string strResultsFolderName)
+		{
+			System.IO.StreamWriter swArchivedFolderInfoFile;
+			swArchivedFolderInfoFile = new System.IO.StreamWriter(new System.IO.FileStream(strFolderInfoFilePath, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.Read));
 
-	        string strOldResultsFolderName = null;
-	        string strTargetFilePath = "";
+			{
+				swArchivedFolderInfoFile.WriteLine("Date\t" + System.DateTime.Now.ToString());
+				swArchivedFolderInfoFile.WriteLine("ResultsFolderName\t" + strResultsFolderName);
+				swArchivedFolderInfoFile.WriteLine("Manager\t" + m_mgrParams.GetParam("MgrName"));
+				if ((m_taskParams != null))
+				{
+					swArchivedFolderInfoFile.WriteLine("Job\t" + m_taskParams.GetParam("Job"));
+					swArchivedFolderInfoFile.WriteLine("Step\t" + m_taskParams.GetParam("Step"));
+					swArchivedFolderInfoFile.WriteLine("StepTool\t" + m_taskParams.GetParam("StepTool"));
+					swArchivedFolderInfoFile.WriteLine("Dataset\t" + m_taskParams.GetParam("Dataset"));
+				}
+				swArchivedFolderInfoFile.WriteLine("Date\t" + System.DateTime.Now.ToString());
+			}
 
-	        // Determine the folder archive time by reading the modification times on the ResultsFolderInfo_ files
-            foreach (System.IO.FileInfo fiFileInfo in diFailedResultsFolder.GetFileSystemInfos(FAILED_RESULTS_FOLDER_INFO_TEXT + "*"))
-            {
-		        if (System.DateTime.Now.Subtract(fiFileInfo.LastWriteTime).TotalDays > FAILED_RESULTS_FOLDER_RETAIN_DAYS) {
-			        // File was modified before the threshold; delete the results folder, then rename this file
+			swArchivedFolderInfoFile.Close();
 
-			        try {
-				        strOldResultsFolderName = System.IO.Path.GetFileNameWithoutExtension(fiFileInfo.Name).Substring(FAILED_RESULTS_FOLDER_INFO_TEXT.Length);
-				        diOldResultsFolder = new System.IO.DirectoryInfo(System.IO.Path.Combine(fiFileInfo.DirectoryName, strOldResultsFolderName));
+		}
 
-				        if (diOldResultsFolder.Exists) {
-					        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Deleting old failed results folder: " + diOldResultsFolder.FullName);
 
-					        diOldResultsFolder.Delete(true);
-				        }
+		private void DeleteOldFailedResultsFolders(System.IO.DirectoryInfo diFailedResultsFolder)
+		{
+			System.IO.DirectoryInfo diOldResultsFolder;
 
-				        try {
-					        strTargetFilePath = System.IO.Path.Combine(fiFileInfo.DirectoryName, "x_" + fiFileInfo.Name);
-					        fiFileInfo.CopyTo(strTargetFilePath, true);
-					        fiFileInfo.Delete();
-				        } catch (Exception ex) {
-					        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error renaming failed results info file to " + strTargetFilePath + ": " + ex.Message);
-				        }
+			string strOldResultsFolderName = null;
+			string strTargetFilePath = "";
 
-			        } catch (Exception ex) {
-				        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error deleting old failed results folder: " + ex.Message);
+			// Determine the folder archive time by reading the modification times on the ResultsFolderInfo_ files
+			foreach (System.IO.FileInfo fiFileInfo in diFailedResultsFolder.GetFileSystemInfos(FAILED_RESULTS_FOLDER_INFO_TEXT + "*"))
+			{
+				if (System.DateTime.UtcNow.Subtract(fiFileInfo.LastWriteTimeUtc).TotalDays > FAILED_RESULTS_FOLDER_RETAIN_DAYS)
+				{
+					// File was modified before the threshold; delete the results folder, then rename this file
 
-			        }
+					try
+					{
+						strOldResultsFolderName = System.IO.Path.GetFileNameWithoutExtension(fiFileInfo.Name).Substring(FAILED_RESULTS_FOLDER_INFO_TEXT.Length);
+						diOldResultsFolder = new System.IO.DirectoryInfo(System.IO.Path.Combine(fiFileInfo.DirectoryName, strOldResultsFolderName));
 
-		        }
-	        }
+						if (diOldResultsFolder.Exists)
+						{
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Deleting old failed results folder: " + diOldResultsFolder.FullName);
 
-        }
+							diOldResultsFolder.Delete(true);
+						}
 
-    }
+						try
+						{
+							strTargetFilePath = System.IO.Path.Combine(fiFileInfo.DirectoryName, "x_" + fiFileInfo.Name);
+							fiFileInfo.CopyTo(strTargetFilePath, true);
+							fiFileInfo.Delete();
+						}
+						catch (Exception ex)
+						{
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error renaming failed results info file to " + strTargetFilePath + ": " + ex.Message);
+						}
+
+					}
+					catch (Exception ex)
+					{
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error deleting old failed results folder: " + ex.Message);
+
+					}
+
+				}
+			}
+
+		}
+
+	}
 }

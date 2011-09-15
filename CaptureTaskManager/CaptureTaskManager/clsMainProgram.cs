@@ -23,46 +23,46 @@ namespace CaptureTaskManager
 		//**********************************************************************************************************
 
 		#region "Enums"
-			private enum BroadcastCmdType
-			{
-				Shutdown,
-				ReadConfig,
-				Invalid
-			}
+		private enum BroadcastCmdType
+		{
+			Shutdown,
+			ReadConfig,
+			Invalid
+		}
 
-			private enum LoopExitCode
-			{
-				NoTaskFound,
-				ConfigChanged,
-				ExceededMaxTaskCount,
-				DisabledMC,
-				DisabledLocally,
-				ExcessiveRequestErrors,
-				InvalidWorkDir,
-				ShutdownCmdReceived,
-                UpdateRequired,
-                FlagFile,
-                NeedToAbortProcessing
-			}
+		private enum LoopExitCode
+		{
+			NoTaskFound,
+			ConfigChanged,
+			ExceededMaxTaskCount,
+			DisabledMC,
+			DisabledLocally,
+			ExcessiveRequestErrors,
+			InvalidWorkDir,
+			ShutdownCmdReceived,
+			UpdateRequired,
+			FlagFile,
+			NeedToAbortProcessing
+		}
 		#endregion
 
 		#region "Constants"
-			private const int MAX_ERROR_COUNT = 4;
+		private const int MAX_ERROR_COUNT = 4;
 		#endregion
 
 		#region "Class variables"
-			private clsMgrSettings m_MgrSettings;
-			private clsCaptureTask m_Task;
-			private FileSystemWatcher m_FileWatcher;
-			private IToolRunner m_CapTool;
-			private bool m_ConfigChanged = false;
-            private int m_TaskRequestErrorCount = 0;
-			private IStatusFile m_StatusFile;
-			private clsMessageHandler m_MsgHandler;
-			private LoopExitCode m_LoopExitCode;
-			private bool m_Running;
-			private System.Timers.Timer m_StatusTimer;
-			private DateTime m_DurationStart;
+		private clsMgrSettings m_MgrSettings;
+		private clsCaptureTask m_Task;
+		private FileSystemWatcher m_FileWatcher;
+		private IToolRunner m_CapTool;
+		private bool m_ConfigChanged = false;
+		private int m_TaskRequestErrorCount = 0;
+		private IStatusFile m_StatusFile;
+		private clsMessageHandler m_MsgHandler;
+		private LoopExitCode m_LoopExitCode;
+		private bool m_Running;
+		private System.Timers.Timer m_StatusTimer;
+		private DateTime m_DurationStart;
 		#endregion
 
 		#region "Delegates"
@@ -75,780 +75,779 @@ namespace CaptureTaskManager
 		#endregion
 
 		#region "Constructors"
-			/// <summary>
-			/// Constructor
-			/// </summary>
-			public clsMainProgram()
-			{
-				// Does nothing at present
-			}	// End sub
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		public clsMainProgram()
+		{
+			// Does nothing at present
+		}	// End sub
 		#endregion
 
 		#region "Methods"
 
-            /// <summary>
-            /// Evaluates the LoopExitCode to determine whether or not manager can request another task
-            /// </summary>
-            /// <param name="eLoopExitCode"></param>
-            /// <returns>True if OK to request another task</returns>
-            private bool EvaluateLoopExitCode(LoopExitCode eLoopExitCode)
-            {
-                string msg;
-                bool restartOK = true;
+		/// <summary>
+		/// Evaluates the LoopExitCode to determine whether or not manager can request another task
+		/// </summary>
+		/// <param name="eLoopExitCode"></param>
+		/// <returns>True if OK to request another task</returns>
+		private bool EvaluateLoopExitCode(LoopExitCode eLoopExitCode)
+		{
+			string msg;
+			bool restartOK = true;
 
-                // Determine cause of loop exit and respond accordingly
-                switch (eLoopExitCode)
-                {
-                    case LoopExitCode.ConfigChanged:
-                        // Reload the manager config
-                        msg = "Reloading configuration and restarting manager";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                        // Unsubscribe message handler events and close msssage handler
-                        m_MsgHandler.BroadcastReceived -= OnBroadcastReceived;
-                        m_MsgHandler.CommandReceived -= OnCommandReceived;
-                        m_MsgHandler.Dispose();
-                        restartOK = true;
-                        break;
-
-                    case LoopExitCode.DisabledMC:
-                        // Manager is disabled via manager control db
-                        msg = "Manager disabled in manager control DB";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                        m_StatusFile.UpdateDisabled(false);
-                        restartOK = false;
-                        break;
-
-                    case LoopExitCode.DisabledLocally:
-                        // Manager disabled locally
-                        msg = "Manager disabled locally";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                        m_StatusFile.UpdateDisabled(true);
-                        restartOK = false;
-                        break;
-
-                    case LoopExitCode.ExcessiveRequestErrors:
-                        // Too many errors
-                        msg = "Excessive errors requesting task; closing manager";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-
-                        // Note: We previously called DisableManagerLocally() to update CaptureTaskManager.config.exe
-                        // We now create a flag file instead
-                        // This gives the manager a chance to auto-cleanup things if ManagerErrorCleanupMode is >= 1
-
-                        /*
-                            if (!m_MgrSettings.WriteConfigSetting("MgrActive_Local", "False"))
-                            {
-                                msg = "Error while disabling manager: " + m_MgrSettings.ErrMsg;
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-                            }
-                            m_StatusFile.UpdateDisabled(true);
-                        */
-
-                        // Do not create a flag file; intermittent network connectivity is likely resulting in failure to request a task
-                        // This will likely clear up eventually
-                        
-                        m_StatusFile.UpdateStopped(true);
-
-                        restartOK = false;
-                        break;
-
-                    case LoopExitCode.InvalidWorkDir:
-                        // Working directory not valid
-                        msg = "Working directory problem, disabling manager";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-
-                        // Note: We previously called DisableManagerLocally() to update CaptureTaskManager.config.exe
-                        // We now create a flag file instead
-                        // This gives the manager a chance to auto-cleanup things if ManagerErrorCleanupMode is >= 1
-
-                        /*
-						    if (!m_MgrSettings.WriteConfigSetting("MgrActive_Local", "False"))
-						    {
-							    msg = "Error while disabling manager: " + m_MgrSettings.ErrMsg;
-							    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-						    }
-						    m_StatusFile.UpdateDisabled(true);
-                        */
-
-                        m_StatusFile.CreateStatusFlagFile();
-                        m_StatusFile.UpdateStopped(true);
-
-                        restartOK = false;
-                        break;
-
-                    case LoopExitCode.NoTaskFound:
-                        // No capture task found
-                        msg = "No capture tasks found";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                        m_StatusFile.UpdateStopped(false);
-                        restartOK = false;
-                        break;
-
-                    case LoopExitCode.ShutdownCmdReceived:
-                        // Shutdown command received
-                        msg = "Shutdown command received, closing manager";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                        m_StatusFile.UpdateStopped(false);
-                        restartOK = false;
-                        break;
-
-                    case LoopExitCode.ExceededMaxTaskCount:
-                        // Max number of consecutive jobs reached
-                        msg = "Exceeded maximum job count, closing manager";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                        m_StatusFile.UpdateStopped(false);
-                        restartOK = false;
-                        break;
-
-                    case LoopExitCode.UpdateRequired:
-                        // Manager update required
-                        msg = "Manager update is required, closing manager";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                        m_MgrSettings.AckManagerUpdateRequired();
-                        m_StatusFile.UpdateStopped(false);
-                        restartOK = false;
-                        break;
-
-                    case LoopExitCode.FlagFile:
-                        // Flag file is present
-                        msg = "Flag file exists - unable to continue analysis";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-                        m_StatusFile.UpdateStopped(true);
-                        restartOK = false;
-                        break;
-
-                    case LoopExitCode.NeedToAbortProcessing:
-                        // Step tool set flag NeedToAbortProcessing to true
-                        msg = "NeedToAbortProcessing = true, closing manager";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                        m_StatusFile.UpdateStopped(false);
-                        restartOK = false;
-                        break;
-
-                    default:
-                        // Should never get here
-                        break;
-                }	// End switch
-
-                return restartOK;
-            }
-
-			/// <summary>
-			/// Initializes the manager
-			/// </summary>
-			/// <returns>TRUE for success; FALSE otherwise</returns>
-			public bool InitMgr()
+			// Determine cause of loop exit and respond accordingly
+			switch (eLoopExitCode)
 			{
-				string msg;
+				case LoopExitCode.ConfigChanged:
+					// Reload the manager config
+					msg = "Reloading configuration and restarting manager";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+					// Unsubscribe message handler events and close msssage handler
+					m_MsgHandler.BroadcastReceived -= OnBroadcastReceived;
+					m_MsgHandler.CommandReceived -= OnCommandReceived;
+					m_MsgHandler.Dispose();
+					restartOK = true;
+					break;
 
-				// Get the manager settings
-                // If you get an exception here while debugging in Visual Studio, then be sure 
-                //  that "UsingDefaults" is set to False in CaptureTaskManager.exe.config               
-				try
-				{
-					m_MgrSettings = new clsMgrSettings();
-				}
-				catch (Exception ex)
-				{
-                    // Failures are logged by clsMgrSettings to application event logs;
-                    //  this includes MgrActive_Local = False
-                    // 
-                    // If the DMSCapTaskMgr application log does not exist yet, the SysLogger will create it
-                    // However, in order to do that, the program needs to be running from an elevated (administrative level) command prompt
-                    // Thus, it is advisable to run this program once from an elevated command prompt while MgrActive_Local is set to false
+				case LoopExitCode.DisabledMC:
+					// Manager is disabled via manager control db
+					msg = "Manager disabled in manager control DB";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+					m_StatusFile.UpdateDisabled(false);
+					restartOK = false;
+					break;
 
-                    Console.WriteLine();
-                    Console.WriteLine("Exception instantiating clsMgrSettings: " + ex.Message); 
-					return false;
-				}
+				case LoopExitCode.DisabledLocally:
+					// Manager disabled locally
+					msg = "Manager disabled locally";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+					m_StatusFile.UpdateDisabled(true);
+					restartOK = false;
+					break;
 
-				// Set up the loggers
-				string logFileName = m_MgrSettings.GetParam("logfilename");
-                int debugLevel = clsMgrSettings.CIntSafe(m_MgrSettings.GetParam("debuglevel"), 4);
-				clsLogTools.CreateFileLogger(logFileName, debugLevel);
-                if (clsMgrSettings.CBoolSafe(m_MgrSettings.GetParam("ftplogging"))) clsLogTools.CreateFtpLogFileLogger("Dummy.txt");
-				string logCnStr = m_MgrSettings.GetParam("connectionstring");
-				string moduleName = m_MgrSettings.GetParam("modulename");
-				clsLogTools.CreateDbLogger(logCnStr, moduleName);
+				case LoopExitCode.ExcessiveRequestErrors:
+					// Too many errors
+					msg = "Excessive errors requesting task; closing manager";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 
-				// Make initial log entry
-				msg = "=== Started Capture Task Manager V" + Application.ProductVersion + " ===== ";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+					// Note: We previously called DisableManagerLocally() to update CaptureTaskManager.config.exe
+					// We now create a flag file instead
+					// This gives the manager a chance to auto-cleanup things if ManagerErrorCleanupMode is >= 1
 
-				// Setup the message queue
-				m_MsgHandler = new clsMessageHandler();
-				m_MsgHandler.BrokerUri = m_MsgHandler.BrokerUri = m_MgrSettings.GetParam("MessageQueueURI");
-				m_MsgHandler.CommandQueueName = m_MgrSettings.GetParam("ControlQueueName");
-				m_MsgHandler.BroadcastTopicName = m_MgrSettings.GetParam("BroadcastQueueTopic");
-				m_MsgHandler.StatusTopicName = m_MgrSettings.GetParam("MessageQueueTopicMgrStatus");
-				m_MsgHandler.MgrSettings = m_MgrSettings;
-				if (!m_MsgHandler.Init())
-				{
-					// Most error messages provided by .Init method, but debug message is here for program tracking
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Message handler init error");
-					return false;
-				}
-				else
-				{
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Message handler initialized");
-				}
-
-				//Connect message handler events
-				m_MsgHandler.CommandReceived += new MessageProcessorDelegate(OnCommandReceived);
-				m_MsgHandler.BroadcastReceived += new MessageProcessorDelegate(OnBroadcastReceived);
-
-				// Setup a file watcher for the config file
-				FileInfo fInfo = new FileInfo(Application.ExecutablePath);
-				m_FileWatcher = new FileSystemWatcher();
-				m_FileWatcher.BeginInit();
-				m_FileWatcher.Path = fInfo.DirectoryName;
-				m_FileWatcher.IncludeSubdirectories = false;
-				m_FileWatcher.Filter = m_MgrSettings.GetParam("configfilename");
-				m_FileWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size;
-				m_FileWatcher.EndInit();
-				m_FileWatcher.EnableRaisingEvents = true;
-
-				// Subscribe to the file watcher Changed event
-				m_FileWatcher.Changed += new FileSystemEventHandler(FileWatcherChanged);
-
-				// Set up the tool for getting tasks
-				m_Task = new clsCaptureTask(m_MgrSettings);
-
-				// Set up the status file class
-				string statusFileNameLoc = Path.Combine(fInfo.DirectoryName, "Status.xml");
-				m_StatusFile = new clsStatusFile(statusFileNameLoc);
-				m_StatusFile.MonitorUpdateRequired += new StatusMonitorUpdateReceived(OnStatusMonitorUpdateReceived);
-                m_StatusFile.LogToMsgQueue = clsMgrSettings.CBoolSafe(m_MgrSettings.GetParam("LogStatusToMessageQueue"));
-				m_StatusFile.MgrName = m_MgrSettings.GetParam("MgrName");
-				m_StatusFile.MgrStatus = EnumMgrStatus.Running;
-				m_StatusFile.WriteStatusFile();
-
-				// Set up the status reporting time
-				m_StatusTimer = new System.Timers.Timer();
-				m_StatusTimer.BeginInit();
-				m_StatusTimer.Enabled = false;
-				m_StatusTimer.Interval = 60 * 1000;	// 1 minute
-				m_StatusTimer.EndInit();
-				m_StatusTimer.Elapsed += new System.Timers.ElapsedEventHandler(m_StatusTimer_Elapsed);
-
-				// Get the most recent job history
-				string historyFile = Path.Combine(m_MgrSettings.GetParam("ApplicationPath"), "History.txt");
-				if (File.Exists(historyFile))
-				{
-					try
-					{
-						// Create an instance of StreamReader to read from a file.
-						// The using statement also closes the StreamReader.
-						using (StreamReader sr = new StreamReader(historyFile))
+					/*
+						if (!m_MgrSettings.WriteConfigSetting("MgrActive_Local", "False"))
 						{
-							String line;
-							// Read and display lines from the file until the end of 
-							// the file is reached.
-							while ((line = sr.ReadLine()) != null)
-							{
-								if (line.Contains("RecentJob: "))
-								{
-									string tmpStr = line.Replace("RecentJob: ", "");
-									m_StatusFile.MostRecentJobInfo = tmpStr;
-									break;
-								}
-							}
+							msg = "Error while disabling manager: " + m_MgrSettings.ErrMsg;
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 						}
-					}
-					catch (Exception ex)
-					{
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-														"Exception readining status history file", ex);
-					}
-				}
-				// Everything worked!
-				return true;
+						m_StatusFile.UpdateDisabled(true);
+					*/
+
+					// Do not create a flag file; intermittent network connectivity is likely resulting in failure to request a task
+					// This will likely clear up eventually
+
+					m_StatusFile.UpdateStopped(true);
+
+					restartOK = false;
+					break;
+
+				case LoopExitCode.InvalidWorkDir:
+					// Working directory not valid
+					msg = "Working directory problem, disabling manager";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+
+					// Note: We previously called DisableManagerLocally() to update CaptureTaskManager.config.exe
+					// We now create a flag file instead
+					// This gives the manager a chance to auto-cleanup things if ManagerErrorCleanupMode is >= 1
+
+					/*
+						if (!m_MgrSettings.WriteConfigSetting("MgrActive_Local", "False"))
+						{
+							msg = "Error while disabling manager: " + m_MgrSettings.ErrMsg;
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+						}
+						m_StatusFile.UpdateDisabled(true);
+					*/
+
+					m_StatusFile.CreateStatusFlagFile();
+					m_StatusFile.UpdateStopped(true);
+
+					restartOK = false;
+					break;
+
+				case LoopExitCode.NoTaskFound:
+					// No capture task found
+					msg = "No capture tasks found";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+					m_StatusFile.UpdateStopped(false);
+					restartOK = false;
+					break;
+
+				case LoopExitCode.ShutdownCmdReceived:
+					// Shutdown command received
+					msg = "Shutdown command received, closing manager";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+					m_StatusFile.UpdateStopped(false);
+					restartOK = false;
+					break;
+
+				case LoopExitCode.ExceededMaxTaskCount:
+					// Max number of consecutive jobs reached
+					msg = "Exceeded maximum job count, closing manager";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+					m_StatusFile.UpdateStopped(false);
+					restartOK = false;
+					break;
+
+				case LoopExitCode.UpdateRequired:
+					// Manager update required
+					msg = "Manager update is required, closing manager";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+					m_MgrSettings.AckManagerUpdateRequired();
+					m_StatusFile.UpdateStopped(false);
+					restartOK = false;
+					break;
+
+				case LoopExitCode.FlagFile:
+					// Flag file is present
+					msg = "Flag file exists - unable to continue analysis";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+					m_StatusFile.UpdateStopped(true);
+					restartOK = false;
+					break;
+
+				case LoopExitCode.NeedToAbortProcessing:
+					// Step tool set flag NeedToAbortProcessing to true
+					msg = "NeedToAbortProcessing = true, closing manager";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+					m_StatusFile.UpdateStopped(false);
+					restartOK = false;
+					break;
+
+				default:
+					// Should never get here
+					break;
+			}	// End switch
+
+			return restartOK;
+		}
+
+		/// <summary>
+		/// Initializes the manager
+		/// </summary>
+		/// <returns>TRUE for success; FALSE otherwise</returns>
+		public bool InitMgr()
+		{
+			string msg;
+
+			// Get the manager settings
+			// If you get an exception here while debugging in Visual Studio, then be sure 
+			//  that "UsingDefaults" is set to False in CaptureTaskManager.exe.config               
+			try
+			{
+				m_MgrSettings = new clsMgrSettings();
+			}
+			catch (Exception ex)
+			{
+				// Failures are logged by clsMgrSettings to application event logs;
+				//  this includes MgrActive_Local = False
+				// 
+				// If the DMSCapTaskMgr application log does not exist yet, the SysLogger will create it
+				// However, in order to do that, the program needs to be running from an elevated (administrative level) command prompt
+				// Thus, it is advisable to run this program once from an elevated command prompt while MgrActive_Local is set to false
+
+				Console.WriteLine();
+				Console.WriteLine("Exception instantiating clsMgrSettings: " + ex.Message);
+				return false;
 			}
 
-			/// <summary>
-			/// Main loop for task performance
-			/// </summary>
-			/// <returns>TRUE if loop exits and manager restart is OK, FALSE otherwise</returns>
-			public bool PerformMainLoop()
+			// Set up the loggers
+			string logFileName = m_MgrSettings.GetParam("logfilename");
+			int debugLevel = clsMgrSettings.CIntSafe(m_MgrSettings.GetParam("debuglevel"), 4);
+			clsLogTools.CreateFileLogger(logFileName, debugLevel);
+			if (clsMgrSettings.CBoolSafe(m_MgrSettings.GetParam("ftplogging"))) clsLogTools.CreateFtpLogFileLogger("Dummy.txt");
+			string logCnStr = m_MgrSettings.GetParam("connectionstring");
+			string moduleName = m_MgrSettings.GetParam("modulename");
+			clsLogTools.CreateDbLogger(logCnStr, moduleName);
+
+			// Make initial log entry
+			msg = "=== Started Capture Task Manager V" + Application.ProductVersion + " ===== ";
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+
+			// Setup the message queue
+			m_MsgHandler = new clsMessageHandler();
+			m_MsgHandler.BrokerUri = m_MsgHandler.BrokerUri = m_MgrSettings.GetParam("MessageQueueURI");
+			m_MsgHandler.CommandQueueName = m_MgrSettings.GetParam("ControlQueueName");
+			m_MsgHandler.BroadcastTopicName = m_MgrSettings.GetParam("BroadcastQueueTopic");
+			m_MsgHandler.StatusTopicName = m_MgrSettings.GetParam("MessageQueueTopicMgrStatus");
+			m_MsgHandler.MgrSettings = m_MgrSettings;
+			if (!m_MsgHandler.Init())
 			{
-				bool restartOK;
-				int taskCount = 1;
-				int maxTaskCount = int.Parse(m_MgrSettings.GetParam("maxrepetitions"));
+				// Most error messages provided by .Init method, but debug message is here for program tracking
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Message handler init error");
+				return false;
+			}
+			else
+			{
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Message handler initialized");
+			}
 
-                string msg;
-                System.DateTime dtLastConfigDBUpdate = System.DateTime.Now;
+			//Connect message handler events
+			m_MsgHandler.CommandReceived += new MessageProcessorDelegate(OnCommandReceived);
+			m_MsgHandler.BroadcastReceived += new MessageProcessorDelegate(OnBroadcastReceived);
 
-				m_Running = true;
+			// Setup a file watcher for the config file
+			FileInfo fInfo = new FileInfo(Application.ExecutablePath);
+			m_FileWatcher = new FileSystemWatcher();
+			m_FileWatcher.BeginInit();
+			m_FileWatcher.Path = fInfo.DirectoryName;
+			m_FileWatcher.IncludeSubdirectories = false;
+			m_FileWatcher.Filter = m_MgrSettings.GetParam("configfilename");
+			m_FileWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size;
+			m_FileWatcher.EndInit();
+			m_FileWatcher.EnableRaisingEvents = true;
 
-				// Begin main execution loop
-				while (m_Running)
-				{
+			// Subscribe to the file watcher Changed event
+			m_FileWatcher.Changed += new FileSystemEventHandler(FileWatcherChanged);
 
-                    try 
-                    {
+			// Set up the tool for getting tasks
+			m_Task = new clsCaptureTask(m_MgrSettings);
 
-                        //Verify that an error hasn't left the the system in an odd state
-                        if (StatusFlagFileError())
-                        {
-                            m_LoopExitCode = LoopExitCode.FlagFile;
-                            break;
-                        }
+			// Set up the status file class
+			string statusFileNameLoc = Path.Combine(fInfo.DirectoryName, "Status.xml");
+			m_StatusFile = new clsStatusFile(statusFileNameLoc);
+			m_StatusFile.MonitorUpdateRequired += new StatusMonitorUpdateReceived(OnStatusMonitorUpdateReceived);
+			m_StatusFile.LogToMsgQueue = clsMgrSettings.CBoolSafe(m_MgrSettings.GetParam("LogStatusToMessageQueue"));
+			m_StatusFile.MgrName = m_MgrSettings.GetParam("MgrName");
+			m_StatusFile.MgrStatus = EnumMgrStatus.Running;
+			m_StatusFile.WriteStatusFile();
 
-					    // Check for configuration change
-                        // This variable will be true if the CaptureTaskManager.exe.config file has been updated
-					    if (m_ConfigChanged)
-					    {
-                            // Local config file has changed
-						    m_LoopExitCode = LoopExitCode.ConfigChanged;
-						    break;
-					    }
+			// Set up the status reporting time
+			m_StatusTimer = new System.Timers.Timer();
+			m_StatusTimer.BeginInit();
+			m_StatusTimer.Enabled = false;
+			m_StatusTimer.Interval = 60 * 1000;	// 1 minute
+			m_StatusTimer.EndInit();
+			m_StatusTimer.Elapsed += new System.Timers.ElapsedEventHandler(m_StatusTimer_Elapsed);
 
-                        // Reload the manager control DB settings in case they have changed
-                        // However, only reload every 2 minutes
-                        if (!UpdateMgrSettings(ref dtLastConfigDBUpdate, 2))
-                        {
-                            // Error updating manager settings
-                            m_LoopExitCode = LoopExitCode.UpdateRequired;
-                            break;
-                        }
-
-                        // Check to see if manager is still active
-					    if (!clsMgrSettings.CBoolSafe(m_MgrSettings.GetParam("mgractive")))
-					    {
-						    // Disabled via manager control db
-						    m_LoopExitCode = LoopExitCode.DisabledMC;
-						    break;
-					    }
-
-					    if (!clsMgrSettings.CBoolSafe(m_MgrSettings.GetParam("mgractive_local")))
-					    {
-						    m_LoopExitCode = LoopExitCode.DisabledLocally;
-						    break;
-					    }
-
-                        if (clsMgrSettings.CBoolSafe(m_MgrSettings.GetParam("ManagerUpdateRequired")))
-                        {
-						    m_LoopExitCode = LoopExitCode.UpdateRequired;
-						    break;
-                        }
-
-					    // Check for excessive number of errors
-                        if (m_TaskRequestErrorCount > MAX_ERROR_COUNT)
-					    {
-                            m_LoopExitCode = LoopExitCode.ExcessiveRequestErrors;
-						    break;
-					    }
-
-					    // Check working directory
-					    if (!ValidateWorkingDir())
-					    {
-						    m_LoopExitCode = LoopExitCode.InvalidWorkDir;
-						    break;
-					    }
-
-					    // Attempt to get a capture task
-					    EnumRequestTaskResult taskReturn = m_Task.RequestTask();
-					    switch (taskReturn)
-					    {
-						    case EnumRequestTaskResult.NoTaskFound:
-							    m_Running = false;
-							    m_LoopExitCode = LoopExitCode.NoTaskFound;
-							    break;
-
-						    case EnumRequestTaskResult.ResultError:
-							    // Problem with task request; Errors are logged by request method
-							    m_TaskRequestErrorCount++;
-							    break;
-
-						    case EnumRequestTaskResult.TaskFound:
-
-                                EnumCloseOutType eTaskCloseout;
-                                bool bSuccess = PerformTask(out eTaskCloseout);
-
-                                // Increment and test the task counter
-                                taskCount++;
-                                if (taskCount > int.Parse(m_MgrSettings.GetParam("maxrepetitions")))
-                                {
-                                    m_Running = false;
-                                    m_LoopExitCode = LoopExitCode.ExceededMaxTaskCount;
-                                }
-
-                                if (eTaskCloseout == EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING)
-                                {
-                                    m_Running = false;
-                                    m_LoopExitCode = LoopExitCode.NeedToAbortProcessing;
-                                }
-
-							    break;
-
-						    default:
-							    //Shouldn't ever get here!
-							    break;
-					    }	// End switch (taskReturn)
-
-                    }
-                    catch (Exception ex)
-                    {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in PerformMainLoop", ex);
-                    }
-
-
-				}	// End while
-
-                m_Running = false;
-
-				// Write the recent job history file				
+			// Get the most recent job history
+			string historyFile = Path.Combine(m_MgrSettings.GetParam("ApplicationPath"), "History.txt");
+			if (File.Exists(historyFile))
+			{
 				try
 				{
-                    string historyFile = Path.Combine(m_MgrSettings.GetParam("ApplicationPath"), "History.txt");
-
-					using (StreamWriter sw = new StreamWriter(historyFile, false))
+					// Create an instance of StreamReader to read from a file.
+					// The using statement also closes the StreamReader.
+					using (StreamReader sr = new StreamReader(historyFile))
 					{
-						sw.WriteLine("RecentJob: " + m_StatusFile.MostRecentJobInfo);
+						String line;
+						// Read and display lines from the file until the end of 
+						// the file is reached.
+						while ((line = sr.ReadLine()) != null)
+						{
+							if (line.Contains("RecentJob: "))
+							{
+								string tmpStr = line.Replace("RecentJob: ", "");
+								m_StatusFile.MostRecentJobInfo = tmpStr;
+								break;
+							}
+						}
 					}
 				}
 				catch (Exception ex)
 				{
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-													"Exception writing job history file", ex);
+													"Exception readining status history file", ex);
 				}
+			}
+			// Everything worked!
+			return true;
+		}
 
-                // Evaluate the loop exit code
-                restartOK = EvaluateLoopExitCode(m_LoopExitCode);
+		/// <summary>
+		/// Main loop for task performance
+		/// </summary>
+		/// <returns>TRUE if loop exits and manager restart is OK, FALSE otherwise</returns>
+		public bool PerformMainLoop()
+		{
+			bool restartOK;
+			int taskCount = 1;
+			int maxTaskCount = int.Parse(m_MgrSettings.GetParam("maxrepetitions"));
 
-                if (!restartOK)
-                {
-                    msg = "===== Closing Capture Task Manager =====";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                }
+			string msg;
+			System.DateTime dtLastConfigDBUpdate = System.DateTime.UtcNow;
 
-				return restartOK;
-			}	// End sub
+			m_Running = true;
 
-
-            private bool PerformTask(out EnumCloseOutType eTaskCloseout)
-            {
-                string msg;
-                bool bSuccess = false;
-                eTaskCloseout = EnumCloseOutType.CLOSEOUT_NOT_READY;
-
-                try
-                {
-                    msg = "Job " + m_Task.GetParam("Job") + ", step " + m_Task.GetParam("Step") + " assigned";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-
-                    // Update the status
-                    m_StatusFile.JobNumber = int.Parse(m_Task.GetParam("Job"));
-                    m_StatusFile.Dataset = m_Task.GetParam("Dataset");
-                    m_StatusFile.MgrStatus = EnumMgrStatus.Running;
-                    m_StatusFile.Tool = m_Task.GetParam("StepTool");
-                    m_StatusFile.TaskStatus = EnumTaskStatus.Running;
-                    m_StatusFile.TaskStatusDetail = EnumTaskStatusDetail.Running_Tool;
-                    m_StatusFile.MostRecentJobInfo = DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss tt") +
-                                                                ", Job " + m_Task.GetParam("Job") + ", Step " + m_Task.GetParam("Step") +
-                                                                ", Tool " + m_Task.GetParam("StepTool");
-
-                    m_StatusFile.WriteStatusFile();
-
-                    // Create the tool runner object
-                    if (!SetToolRunnerObject())
-                    {
-                        msg = m_MgrSettings.GetParam("MgrName") + ": Unable to SetToolRunnerObject, job " + m_Task.GetParam("Job")
-                                    + ", Dataset " + m_Task.GetParam("Dataset");
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
-                        m_Task.CloseTask(EnumCloseOutType.CLOSEOUT_FAILED, msg);
-                        m_StatusFile.UpdateIdle();
-                        return false;
-                    }
-
-                    // Run the tool plugin
-                    m_DurationStart = DateTime.Now;
-                    m_StatusTimer.Enabled = true;
-                    clsToolReturnData toolResult = m_CapTool.RunTool();
-                    m_StatusTimer.Enabled = false;
-
-                    eTaskCloseout = toolResult.CloseoutType;
-                    switch (eTaskCloseout)
-                    {
-                        case EnumCloseOutType.CLOSEOUT_FAILED:
-                            msg = m_MgrSettings.GetParam("MgrName") + ": Failure running tool " + m_Task.GetParam("StepTool")
-                                        + ", job " + m_Task.GetParam("Job") + ", Dataset " + m_Task.GetParam("Dataset");
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
-
-                            string sCloseoutMessage;
-
-                            if (!String.IsNullOrEmpty(toolResult.CloseoutMsg))
-                                sCloseoutMessage = toolResult.CloseoutMsg;
-                            else
-                                sCloseoutMessage = "Failure running tool " + m_Task.GetParam("StepTool");
-
-                            m_Task.CloseTask(EnumCloseOutType.CLOSEOUT_FAILED, sCloseoutMessage, toolResult.EvalCode, toolResult.EvalMsg);
-                            break;
-
-                        case EnumCloseOutType.CLOSEOUT_NOT_READY:
-                            msg = m_MgrSettings.GetParam("MgrName") + ": Dataset not ready, tool " + m_Task.GetParam("StepTool")
-                                        + ", job " + m_Task.GetParam("Job") + ", Dataset " + m_Task.GetParam("Dataset");
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg);
-                            m_Task.CloseTask(EnumCloseOutType.CLOSEOUT_NOT_READY, "Dataset " + m_Task.GetParam("Dataset") + " not ready");
-                            break;
-
-                        case EnumCloseOutType.CLOSEOUT_SUCCESS:
-                            msg = m_MgrSettings.GetParam("MgrName") + ": Step complete, tool " + m_Task.GetParam("StepTool")
-                                        + ", job " + m_Task.GetParam("Job") + ", Dataset " + m_Task.GetParam("Dataset");
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
-                            m_Task.CloseTask(toolResult.CloseoutType, toolResult.CloseoutMsg, toolResult.EvalCode, toolResult.EvalMsg);
-                            bSuccess = true;
-                            break;
-
-                        case EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING:
-                            msg = m_MgrSettings.GetParam("MgrName") + ": Failure running tool " + m_Task.GetParam("StepTool")
-                                        + ", job " + m_Task.GetParam("Job") + ", Dataset " + m_Task.GetParam("Dataset")
-                                        + "; CloseOut = NeedToAbortProcessing";
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
-                            m_Task.CloseTask(EnumCloseOutType.CLOSEOUT_FAILED, msg, toolResult.EvalCode, toolResult.EvalMsg);
-                            break;
-
-                        default:
-                            // Should never get here
-                            break;
-                    }	// End switch (toolResult)
-
-                }
-                catch (Exception ex)
-                {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running task", ex);
-
-                    msg = m_MgrSettings.GetParam("MgrName") + ": Failure running tool " + m_Task.GetParam("StepTool")
-                                       + ", job " + m_Task.GetParam("Job") + ", Dataset " + m_Task.GetParam("Dataset")
-                                       + "; CloseOut = Exception";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
-                    m_Task.CloseTask(EnumCloseOutType.CLOSEOUT_FAILED, msg, EnumEvalCode.EVAL_CODE_FAILED, "Exception running tool");
-                }
-
-
-                // Update the status
-                m_StatusFile.ClearCachedInfo();
-
-                m_StatusFile.MgrStatus = EnumMgrStatus.Running;
-                m_StatusFile.TaskStatus = EnumTaskStatus.No_Task;
-                m_StatusFile.TaskStatusDetail = EnumTaskStatusDetail.No_Task;
-                m_StatusFile.WriteStatusFile();
-              
-                return bSuccess;
-            }
-
-		    /// <summary>
-			/// Sets the tool runner object for this job
-			/// </summary>
-			/// <returns></returns>
-			private bool SetToolRunnerObject()
+			// Begin main execution loop
+			while (m_Running)
 			{
-				string msg;
-				string stepToolName = m_Task.GetParam("StepTool");
 
-				// Load the tool runner
-				m_CapTool = clsPluginLoader.GetToolRunner(stepToolName);
-				if (m_CapTool == null)
+				try
 				{
-					msg = "Unable to load tool runner for StepTool " + stepToolName + ": " + clsPluginLoader.ErrMsg;
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile,clsLogTools.LogLevels.ERROR,msg);
-					return false;
+
+					//Verify that an error hasn't left the the system in an odd state
+					if (StatusFlagFileError())
+					{
+						m_LoopExitCode = LoopExitCode.FlagFile;
+						break;
+					}
+
+					// Check for configuration change
+					// This variable will be true if the CaptureTaskManager.exe.config file has been updated
+					if (m_ConfigChanged)
+					{
+						// Local config file has changed
+						m_LoopExitCode = LoopExitCode.ConfigChanged;
+						break;
+					}
+
+					// Reload the manager control DB settings in case they have changed
+					// However, only reload every 2 minutes
+					if (!UpdateMgrSettings(ref dtLastConfigDBUpdate, 2))
+					{
+						// Error updating manager settings
+						m_LoopExitCode = LoopExitCode.UpdateRequired;
+						break;
+					}
+
+					// Check to see if manager is still active
+					if (!clsMgrSettings.CBoolSafe(m_MgrSettings.GetParam("mgractive")))
+					{
+						// Disabled via manager control db
+						m_LoopExitCode = LoopExitCode.DisabledMC;
+						break;
+					}
+
+					if (!clsMgrSettings.CBoolSafe(m_MgrSettings.GetParam("mgractive_local")))
+					{
+						m_LoopExitCode = LoopExitCode.DisabledLocally;
+						break;
+					}
+
+					if (clsMgrSettings.CBoolSafe(m_MgrSettings.GetParam("ManagerUpdateRequired")))
+					{
+						m_LoopExitCode = LoopExitCode.UpdateRequired;
+						break;
+					}
+
+					// Check for excessive number of errors
+					if (m_TaskRequestErrorCount > MAX_ERROR_COUNT)
+					{
+						m_LoopExitCode = LoopExitCode.ExcessiveRequestErrors;
+						break;
+					}
+
+					// Check working directory
+					if (!ValidateWorkingDir())
+					{
+						m_LoopExitCode = LoopExitCode.InvalidWorkDir;
+						break;
+					}
+
+					// Attempt to get a capture task
+					EnumRequestTaskResult taskReturn = m_Task.RequestTask();
+					switch (taskReturn)
+					{
+						case EnumRequestTaskResult.NoTaskFound:
+							m_Running = false;
+							m_LoopExitCode = LoopExitCode.NoTaskFound;
+							break;
+
+						case EnumRequestTaskResult.ResultError:
+							// Problem with task request; Errors are logged by request method
+							m_TaskRequestErrorCount++;
+							break;
+
+						case EnumRequestTaskResult.TaskFound:
+
+							EnumCloseOutType eTaskCloseout;
+							bool bSuccess = PerformTask(out eTaskCloseout);
+
+							// Increment and test the task counter
+							taskCount++;
+							if (taskCount > int.Parse(m_MgrSettings.GetParam("maxrepetitions")))
+							{
+								m_Running = false;
+								m_LoopExitCode = LoopExitCode.ExceededMaxTaskCount;
+							}
+
+							if (eTaskCloseout == EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING)
+							{
+								m_Running = false;
+								m_LoopExitCode = LoopExitCode.NeedToAbortProcessing;
+							}
+
+							break;
+
+						default:
+							//Shouldn't ever get here!
+							break;
+					}	// End switch (taskReturn)
+
 				}
-				msg = "Loaded tool runner for Step Tool " + stepToolName;
+				catch (Exception ex)
+				{
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in PerformMainLoop", ex);
+				}
+
+
+			}	// End while
+
+			m_Running = false;
+
+			// Write the recent job history file				
+			try
+			{
+				string historyFile = Path.Combine(m_MgrSettings.GetParam("ApplicationPath"), "History.txt");
+
+				using (StreamWriter sw = new StreamWriter(historyFile, false))
+				{
+					sw.WriteLine("RecentJob: " + m_StatusFile.MostRecentJobInfo);
+				}
+			}
+			catch (Exception ex)
+			{
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+												"Exception writing job history file", ex);
+			}
+
+			// Evaluate the loop exit code
+			restartOK = EvaluateLoopExitCode(m_LoopExitCode);
+
+			if (!restartOK)
+			{
+				msg = "===== Closing Capture Task Manager =====";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+			}
+
+			return restartOK;
+		}	// End sub
+
+
+		private bool PerformTask(out EnumCloseOutType eTaskCloseout)
+		{
+			string msg;
+			bool bSuccess = false;
+			eTaskCloseout = EnumCloseOutType.CLOSEOUT_NOT_READY;
+
+			try
+			{
+				msg = "Job " + m_Task.GetParam("Job") + ", step " + m_Task.GetParam("Step") + " assigned";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
-				// Setup the new tool runner
-				m_CapTool.Setup(m_MgrSettings, m_Task, m_StatusFile);
+				// Update the status
+				m_StatusFile.JobNumber = int.Parse(m_Task.GetParam("Job"));
+				m_StatusFile.Dataset = m_Task.GetParam("Dataset");
+				m_StatusFile.MgrStatus = EnumMgrStatus.Running;
+				m_StatusFile.Tool = m_Task.GetParam("StepTool");
+				m_StatusFile.TaskStatus = EnumTaskStatus.Running;
+				m_StatusFile.TaskStatusDetail = EnumTaskStatusDetail.Running_Tool;
+				m_StatusFile.MostRecentJobInfo = DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss tt") +
+															", Job " + m_Task.GetParam("Job") + ", Step " + m_Task.GetParam("Step") +
+															", Tool " + m_Task.GetParam("StepTool");
+
+				m_StatusFile.WriteStatusFile();
+
+				// Create the tool runner object
+				if (!SetToolRunnerObject())
+				{
+					msg = m_MgrSettings.GetParam("MgrName") + ": Unable to SetToolRunnerObject, job " + m_Task.GetParam("Job")
+								+ ", Dataset " + m_Task.GetParam("Dataset");
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+					m_Task.CloseTask(EnumCloseOutType.CLOSEOUT_FAILED, msg);
+					m_StatusFile.UpdateIdle();
+					return false;
+				}
+
+				// Run the tool plugin
+				m_DurationStart = DateTime.UtcNow;
+				m_StatusTimer.Enabled = true;
+				clsToolReturnData toolResult = m_CapTool.RunTool();
+				m_StatusTimer.Enabled = false;
+
+				eTaskCloseout = toolResult.CloseoutType;
+				switch (eTaskCloseout)
+				{
+					case EnumCloseOutType.CLOSEOUT_FAILED:
+						msg = m_MgrSettings.GetParam("MgrName") + ": Failure running tool " + m_Task.GetParam("StepTool")
+									+ ", job " + m_Task.GetParam("Job") + ", Dataset " + m_Task.GetParam("Dataset");
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+
+						string sCloseoutMessage;
+
+						if (!String.IsNullOrEmpty(toolResult.CloseoutMsg))
+							sCloseoutMessage = toolResult.CloseoutMsg;
+						else
+							sCloseoutMessage = "Failure running tool " + m_Task.GetParam("StepTool");
+
+						m_Task.CloseTask(EnumCloseOutType.CLOSEOUT_FAILED, sCloseoutMessage, toolResult.EvalCode, toolResult.EvalMsg);
+						break;
+
+					case EnumCloseOutType.CLOSEOUT_NOT_READY:
+						msg = m_MgrSettings.GetParam("MgrName") + ": Dataset not ready, tool " + m_Task.GetParam("StepTool")
+									+ ", job " + m_Task.GetParam("Job") + ", Dataset " + m_Task.GetParam("Dataset");
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg);
+						m_Task.CloseTask(EnumCloseOutType.CLOSEOUT_NOT_READY, "Dataset " + m_Task.GetParam("Dataset") + " not ready");
+						break;
+
+					case EnumCloseOutType.CLOSEOUT_SUCCESS:
+						msg = m_MgrSettings.GetParam("MgrName") + ": Step complete, tool " + m_Task.GetParam("StepTool")
+									+ ", job " + m_Task.GetParam("Job") + ", Dataset " + m_Task.GetParam("Dataset");
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
+						m_Task.CloseTask(toolResult.CloseoutType, toolResult.CloseoutMsg, toolResult.EvalCode, toolResult.EvalMsg);
+						bSuccess = true;
+						break;
+
+					case EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING:
+						msg = m_MgrSettings.GetParam("MgrName") + ": Failure running tool " + m_Task.GetParam("StepTool")
+									+ ", job " + m_Task.GetParam("Job") + ", Dataset " + m_Task.GetParam("Dataset")
+									+ "; CloseOut = NeedToAbortProcessing";
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+						m_Task.CloseTask(EnumCloseOutType.CLOSEOUT_FAILED, msg, toolResult.EvalCode, toolResult.EvalMsg);
+						break;
+
+					default:
+						// Should never get here
+						break;
+				}	// End switch (toolResult)
+
+			}
+			catch (Exception ex)
+			{
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running task", ex);
+
+				msg = m_MgrSettings.GetParam("MgrName") + ": Failure running tool " + m_Task.GetParam("StepTool")
+								   + ", job " + m_Task.GetParam("Job") + ", Dataset " + m_Task.GetParam("Dataset")
+								   + "; CloseOut = Exception";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+				m_Task.CloseTask(EnumCloseOutType.CLOSEOUT_FAILED, msg, EnumEvalCode.EVAL_CODE_FAILED, "Exception running tool");
+			}
+
+
+			// Update the status
+			m_StatusFile.ClearCachedInfo();
+
+			m_StatusFile.MgrStatus = EnumMgrStatus.Running;
+			m_StatusFile.TaskStatus = EnumTaskStatus.No_Task;
+			m_StatusFile.TaskStatusDetail = EnumTaskStatusDetail.No_Task;
+			m_StatusFile.WriteStatusFile();
+
+			return bSuccess;
+		}
+
+		/// <summary>
+		/// Sets the tool runner object for this job
+		/// </summary>
+		/// <returns></returns>
+		private bool SetToolRunnerObject()
+		{
+			string msg;
+			string stepToolName = m_Task.GetParam("StepTool");
+
+			// Load the tool runner
+			m_CapTool = clsPluginLoader.GetToolRunner(stepToolName);
+			if (m_CapTool == null)
+			{
+				msg = "Unable to load tool runner for StepTool " + stepToolName + ": " + clsPluginLoader.ErrMsg;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+				return false;
+			}
+			msg = "Loaded tool runner for Step Tool " + stepToolName;
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+
+			// Setup the new tool runner
+			m_CapTool.Setup(m_MgrSettings, m_Task, m_StatusFile);
+			return true;
+		}	// End sub
+
+		/// <summary>
+		/// Looks for flag file; auto cleans if ManagerErrorCleanupMode is >= 1
+		/// </summary>
+		/// <returns>True if a flag file exists and it was not auto-cleaned; false if no problems</returns>
+		private bool StatusFlagFileError()
+		{
+			bool blnMgrCleanupSuccess = false;
+
+			if (m_StatusFile.DetectStatusFlagFile())
+			{
+				try
+				{
+					clsCleanupMgrErrors objCleanupMgrErrors = new clsCleanupMgrErrors(m_MgrSettings.GetParam("MgrCnfgDbConnectStr"),
+																					  m_MgrSettings.GetParam("MgrName"),
+																					  m_MgrSettings.GetParam("WorkDir"),
+																					  m_StatusFile);
+
+					int CleanupModeVal = clsMgrSettings.CIntSafe(m_MgrSettings.GetParam("ManagerErrorCleanupMode"), 0);
+					blnMgrCleanupSuccess = objCleanupMgrErrors.AutoCleanupManagerErrors(CleanupModeVal);
+
+				}
+				catch (Exception ex)
+				{
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error calling AutoCleanupManagerErrors from PerformMainLoop: " + ex.Message);
+					blnMgrCleanupSuccess = false;
+				}
+
+
+				if (blnMgrCleanupSuccess)
+				{
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Flag file found; automatically cleaned the work directory and deleted the flag file(s)");
+
+					// No error; return false
+					return false;
+				}
+				// Error removing flag file; return true
 				return true;
-			}	// End sub
 
-            /// <summary>
-            /// Looks for flag file; auto cleans if ManagerErrorCleanupMode is >= 1
-            /// </summary>
-            /// <returns>True if a flag file exists and it was not auto-cleaned; false if no problems</returns>
-            private bool StatusFlagFileError()
-            {
-                bool blnMgrCleanupSuccess = false;
+			}
+			// No error; return false
+			return false;
 
-                if (m_StatusFile.DetectStatusFlagFile())
-                {
-                    try
-                    {
-                        clsCleanupMgrErrors objCleanupMgrErrors = new clsCleanupMgrErrors(m_MgrSettings.GetParam("MgrCnfgDbConnectStr"),
-                                                                                          m_MgrSettings.GetParam("MgrName"),
-                                                                                          m_MgrSettings.GetParam("WorkDir"),
-                                                                                          m_StatusFile);
+		}
 
-                        int CleanupModeVal = clsMgrSettings.CIntSafe(m_MgrSettings.GetParam("ManagerErrorCleanupMode"), 0);
-                        blnMgrCleanupSuccess = objCleanupMgrErrors.AutoCleanupManagerErrors(CleanupModeVal);
+		/// <summary>
+		/// Reloads the manager settings from the manager control database 
+		/// if at least MinutesBetweenUpdates minutes have elapsed since the last update
+		/// </summary>
+		/// <param name="dtLastConfigDBUpdate"></param>
+		/// <param name="MinutesBetweenUpdates"></param>
+		/// <returns></returns>
+		private bool UpdateMgrSettings(ref System.DateTime dtLastConfigDBUpdate, double MinutesBetweenUpdates)
+		{
+			bool bSuccess = true;
 
-                    }
-                    catch (Exception ex)
-                    {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error calling AutoCleanupManagerErrors from PerformMainLoop: " + ex.Message);
-                        blnMgrCleanupSuccess = false;
-                    }
+			if (System.DateTime.UtcNow.Subtract(dtLastConfigDBUpdate).TotalMinutes >= MinutesBetweenUpdates)
+			{
+				dtLastConfigDBUpdate = System.DateTime.UtcNow;
 
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Updating manager settings using Manager Control database");
 
-                    if (blnMgrCleanupSuccess)
-                    {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Flag file found; automatically cleaned the work directory and deleted the flag file(s)");
-                        
-                        // No error; return false
-                        return false;
-                    }
-                        // Error removing flag file; return true
-                        return true;
+				if (!m_MgrSettings.LoadMgrSettingsFromDB())
+				{
+					// Error retrieving settings from the manager control DB
+					string msg;
 
-                }
-                    // No error; return false
-                    return false;
-               
-            }
+					if (string.IsNullOrEmpty(m_MgrSettings.ErrMsg))
+						msg = "Error calling m_MgrSettings.LoadMgrSettingsFromDB to update manager settings";
+					else
+						msg = m_MgrSettings.ErrMsg;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 
-            /// <summary>
-            /// Reloads the manager settings from the manager control database 
-            /// if at least MinutesBetweenUpdates minutes have elapsed since the last update
-            /// </summary>
-            /// <param name="dtLastConfigDBUpdate"></param>
-            /// <param name="MinutesBetweenUpdates"></param>
-            /// <returns></returns>
-            private bool UpdateMgrSettings(ref System.DateTime dtLastConfigDBUpdate, double MinutesBetweenUpdates)
-            {
-                bool bSuccess = true;
+					bSuccess = false;
+				}
+				else
+				{
+					// Update the log level
+					int debugLevel = clsMgrSettings.CIntSafe(m_MgrSettings.GetParam("debuglevel"), 4);
+					clsLogTools.SetFileLogLevel(debugLevel);
+				}
+			}
 
-                if (System.DateTime.Now.Subtract(dtLastConfigDBUpdate).TotalMinutes >= MinutesBetweenUpdates)
-                {
-                    dtLastConfigDBUpdate = System.DateTime.Now;
+			return bSuccess;
+		}
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Updating manager settings using Manager Control database");
+		/// <summary>
+		/// Verifies working directory is properly specified
+		/// </summary>
+		/// <returns>TRUE for success, FALSE otherwise</returns>
+		private bool ValidateWorkingDir()
+		{
+			string workingDir = m_MgrSettings.GetParam("WorkDir");
 
-                    if (!m_MgrSettings.LoadMgrSettingsFromDB())
-                    {
-                        // Error retrieving settings from the manager control DB
-                        string msg;
+			if (!Directory.Exists(workingDir))
+			{
+				string msg = "Invalid working directory: " + workingDir;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+				return false;
+			}
 
-                        if (string.IsNullOrEmpty(m_MgrSettings.ErrMsg))
-                            msg = "Error calling m_MgrSettings.LoadMgrSettingsFromDB to update manager settings";
-                        else
-                            msg = m_MgrSettings.ErrMsg;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-
-                        bSuccess = false;
-                    }
-                    else
-                    {
-                        // Update the log level
-                        int debugLevel = clsMgrSettings.CIntSafe(m_MgrSettings.GetParam("debuglevel"), 4);
-                        clsLogTools.SetFileLogLevel(debugLevel);
-                    }
-                }
-
-                return bSuccess;
-            }                   
-
-            /// <summary>
-            /// Verifies working directory is properly specified
-            /// </summary>
-            /// <returns>TRUE for success, FALSE otherwise</returns>
-            private bool ValidateWorkingDir()
-            {
-                string workingDir = m_MgrSettings.GetParam("WorkDir");
-
-                if (!Directory.Exists(workingDir))
-                {
-                    string msg = "Invalid working directory: " + workingDir;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-                    return false;
-                }
-
-                // No problem found
-                return true;
-            }	// End sub
+			// No problem found
+			return true;
+		}	// End sub
 
 		#endregion
 
 		#region "Event handlers"
-			private void FileWatcherChanged(object sender, FileSystemEventArgs e)
+		private void FileWatcherChanged(object sender, FileSystemEventArgs e)
+		{
+			string msg = "clsMainProgram.FileWatcherChanged event received";
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+
+			m_ConfigChanged = true;
+			m_FileWatcher.EnableRaisingEvents = false;
+		}	// End sub
+
+		private void OnBroadcastReceived(string cmdText)
+		{
+			string msg = "clsMainProgram.OnBroadcasetReceived event; message = " + cmdText;
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+
+			clsBroadcastCmd recvCmd;
+
+			// Parse the received message
+			try
 			{
-				string msg = "clsMainProgram.FileWatcherChanged event received";
+				recvCmd = clsXMLTools.ParseBroadcastXML(cmdText);
+			}
+			catch (Exception Ex)
+			{
+				msg = "Exception while parsing broadcast data";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, Ex);
+				return;
+			}
+
+			// Determine if the message applies to this machine
+			if (!recvCmd.MachineList.Contains(m_MgrSettings.GetParam("MgrName")))
+			{
+				// Received command doesn't apply to this manager
+				msg = "Received command not applicable to this manager instance";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+				return;
+			}
 
-				m_ConfigChanged = true;
-				m_FileWatcher.EnableRaisingEvents = false;
-			}	// End sub
-
-			private void OnBroadcastReceived(string cmdText)
+			// Get the command and take appropriate action
+			switch (recvCmd.MachCmd.ToLower())
 			{
-				string msg = "clsMainProgram.OnBroadcasetReceived event; message = " + cmdText;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+				case "shutdown":
+					m_LoopExitCode = LoopExitCode.ShutdownCmdReceived;
+					m_Running = false;
+					break;
+				case "readconfig":
+					msg = "Reload config message received";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+					m_ConfigChanged = true;
+					m_Running = false;
+					break;
+				default:
+					// Invalid command received; do nothing except log it
+					msg = "Invalid broadcast command received: " + cmdText;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+					break;
+			}
+		}	// End sub
 
-				clsBroadcastCmd recvCmd;
+		private void OnCommandReceived(string cmdText)
+		{
+			//TODO: (Future)
+		}	// End sub
 
-				// Parse the received message
-				try
-				{
-					recvCmd = clsXMLTools.ParseBroadcastXML(cmdText);
-				}
-				catch (Exception Ex)
-				{
-					msg = "Exception while parsing broadcast data";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, Ex);
-					return;
-				}
+		void OnStatusMonitorUpdateReceived(string msg)
+		{
+			m_MsgHandler.SendMessage(msg);
+		}	// End sub
 
-				// Determine if the message applies to this machine
-				if (!recvCmd.MachineList.Contains(m_MgrSettings.GetParam("MgrName")))
-				{
-					// Received command doesn't apply to this manager
-					msg = "Received command not applicable to this manager instance";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-					return;
-				}
-
-				// Get the command and take appropriate action
-				switch (recvCmd.MachCmd.ToLower())
-				{
-					case "shutdown":
-						m_LoopExitCode = LoopExitCode.ShutdownCmdReceived;
-						m_Running = false;
-						break;
-					case "readconfig":
-						msg = "Reload config message received";
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-						m_ConfigChanged = true;
-						m_Running = false;
-						break;
-					default:
-						// Invalid command received; do nothing except log it
-						msg = "Invalid broadcast command received: " + cmdText;
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
-						break;
-				}
-			}	// End sub
-
-			private void OnCommandReceived(string cmdText)
-			{
-				//TODO: (Future)
-			}	// End sub
-
-			void OnStatusMonitorUpdateReceived(string msg)
-			{
-				m_MsgHandler.SendMessage(msg);
-			}	// End sub
-
-			/// <summary>
-			/// Updates the status at m_StatusTimer interval
-			/// </summary>
-			/// <param name="sender"></param>
-			/// <param name="e"></param>
-			void m_StatusTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
-			{
-				TimeSpan duration = DateTime.Now - m_DurationStart;
-				int durationMinutes = duration.Minutes;
-				m_StatusFile.Duration = durationMinutes / 60f;
-				m_StatusFile.WriteStatusFile();
-			}	// End sub
+		/// <summary>
+		/// Updates the status at m_StatusTimer interval
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		void m_StatusTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+		{
+			TimeSpan duration = DateTime.UtcNow - m_DurationStart;
+			m_StatusFile.Duration = (Single)duration.TotalHours;
+			m_StatusFile.WriteStatusFile();
+		}	// End sub
 		#endregion
 	}	// End class
 }	// End namespace
