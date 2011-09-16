@@ -100,7 +100,7 @@ namespace CaptureTaskManager
 				// temp debug
 				// Console.WriteLine("--- New connection made ---" + Environment.NewLine); //+ e.ToString()
 				string msg = "Connected to broker";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 			}
 			catch (Exception Ex)
 			{

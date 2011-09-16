@@ -519,7 +519,7 @@ namespace CaptureTaskManager
 			if (!restartOK)
 			{
 				msg = "===== Closing Capture Task Manager =====";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 			}
 
 			return restartOK;
