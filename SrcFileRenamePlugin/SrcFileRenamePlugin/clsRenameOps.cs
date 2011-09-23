@@ -151,6 +151,7 @@ namespace SrcFileRenamePlugin
 
 			bool fileFound = false;
 			bool folderFound = false;
+			bool bLoggedDatasetNotFound = false;
 
 			foreach (string sDatasetNameBase in lstFileNamesToCheck)
 			{
@@ -176,9 +177,13 @@ namespace SrcFileRenamePlugin
 					if (!(fileFound || folderFound))
 					{
 						// No file or folder found
-						// Log a message, but continue on to the next iteration of the for loop
-						msg = "Dataset " + dataset + ": data file and/or folder not found using " + sDatasetNameBase + ".*";
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+						// Log a message for the first item checked in lstFileNamesToCheck
+						if (!bLoggedDatasetNotFound)
+						{
+							msg = "Dataset " + dataset + ": data file and/or folder not found using " + sDatasetNameBase + ".*";
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+							bLoggedDatasetNotFound = true;
+						}
 					}
 					else
 					{
