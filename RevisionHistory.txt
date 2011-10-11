@@ -1,0 +1,66 @@
+Capture Task Manager History
+
+Version 1.2.4294; October 4, 2011
+	- No longer logging "Step complete" messages to the database
+	- No longer logging "Failure running tool" messages to the database
+
+Version 1.2.4283; September 23, 2011
+	- Now logging "dataset not found" only once
+	- Now checking for additional variants of dataset names when renaming
+
+Version 1.2.4276; September 16, 2011
+	- Tweaked log level for two log messages
+
+Version 1.2.4268; September 8, 2011
+	- Now checking for errors 53 and 1326 when connecting to a bionet folder
+
+Version 1.2.4230; August 1, 2011
+	 - Changed minimum WIFF scan file size to 30 bytes
+
+Version 1.2.4225; July 27, 2011
+	 - Decrease minimum size of a .Wiff file to 50 KB
+
+Version 1.2.4224; July 26, 2011
+	 - Updated to Visual Studio 2010 and .NET 4.0
+
+Version 1.2.4220; July 22, 2011
+	- Now ignoring LCMethod*.xml files when checking whether safe to re-try the capture of a dataset
+
+Version 1.2.4213; July 15, 2011
+	- Now copying LCMethod files from \\proto-5\BionetXfer\Run_Complete_Trigger\MethodFiles to the dataset folder during Capture
+		- LCMethod folders are renamed to x_ if the file copy is successful
+		- LCMethod folders that start with x_ and are more than 14 days old are deleted (checking is limited to 6p to 8p daily)
+	- New UIMF Library
+
+Version 1.2.4203; July 5, 2011
+	- No longer disabling manager after excessive errors requesting a task
+
+Version 1.2.4200; July 2, 2011
+	- Added try/catch block to PerformMainLoop and PerformTask
+	- Added try/catch blocks to clsDemuxTools
+	- New version of UIMFLibrary.dll
+
+Version 1.2.4192; June 24, 2011
+	- Updated ImsDemuxPlugin to look for the presence of calibration frames or calibration tables.  
+		- If neither exists, then calibration is not performed.  
+		- This is logged as a warning but is not a fatal error
+
+Version 1.2.4186; June 18, 2011
+	- Now calibrating .UIMF files after demultiplexing.  
+		- If demultiplexing succeeds but calibration fails, the demultiplexed .UIMF file will be copied to the storage server, but the step tool will report processing failed.
+
+Version 1.2.4184; June 16, 2011
+	- Now copying the CalibrationLog.txt file to the storage server at the completion of demultiplexing and calibration
+	- Now skipping calibration when the instrument is IMS_TOF_1, IMS_TOF_2, or IMS_TOF_3
+
+Version 1.2.4183; June 15, 2011
+	- Now calling GetCalibrationFinishDate() to confirm that calibration was performed
+		- We are also calling GetDemultiplexingFinishDate()
+	- Now reporting "De-multiplexed and calibrated" on success
+
+Version 1.2.4162; May 25, 2011
+	- Now returning the Step tool's CloseoutMsg text to the database when a task fails
+	- IMSDemuxPluginUpdates
+		- Updated CopyFile function to support retries
+		- Now creating a CheckPoint file every 50 frames or every 20 minutes
+		- Now resuming demultiplexing using CheckPoint file if it exists
