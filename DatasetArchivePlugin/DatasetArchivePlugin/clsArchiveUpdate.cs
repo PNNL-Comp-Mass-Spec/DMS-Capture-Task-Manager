@@ -29,9 +29,6 @@ namespace DatasetArchivePlugin {
 		const int FILE_COMPARE_NOT_EQUAL = 0;
 		const int FILE_COMPARE_ERROR = 1;
 
-		// Disabled use of hash-based comparisons in October 2011 due to slow file retrieval via tape robot
-		const bool USE_HASH_BASED_COMPARISONS = false;
-
 		#endregion
 
 		#region "Class variables"
@@ -59,8 +56,9 @@ namespace DatasetArchivePlugin {
 		public override bool PerformTask() {
 			// ToDo: Add job duration stuff?
 
+			// Initially set this to true; it will be auto-disabled if an exception occurs while generating the hash
+			bool compareWithHash = true;
 			int compareErrorCount;
-			bool compareWithHash = USE_HASH_BASED_COMPARISONS;
 
 			// Perform base class operations
 			if (!base.PerformTask()) return false;
@@ -319,6 +317,9 @@ namespace DatasetArchivePlugin {
 						compareResult == FILE_COMPARE_ERROR &&
 						m_ErrMsg.ToLower().Contains("Exception generating hash".ToLower())) {
 
+						// The file most likely could not be retrieved by the tape robot
+						// Disable hash-based comparisons for this job
+
 						msg = "clsArchiveUpdate.CompareFolders: Error comparing files. Error msg = " + m_ErrMsg;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 
@@ -386,46 +387,59 @@ namespace DatasetArchivePlugin {
 		/// <summary>
 		/// Compares two files, optionally using a SHA hash
 		/// </summary>
-		/// <param name="InpFile1">Fully qualified path to first file</param>
-		/// <param name="InpFile2">Fully qualified path to second file</param>
+		/// <param name="InpFile1">Fully qualified path to first file (should reside on the Proto storage server)</param>
+		/// <param name="InpFile2">Fully qualified path to second file (should reside in the EMSL archive)</param>
 		/// <returns>Integer representing files equal, not equal, or error</returns>
-		private int CompareTwoFiles(string inpFile1, string inpFile2, bool generateHash) {
+		private int CompareTwoFiles(string srcFileName, string archFileName, bool generateHash) {
 			m_ErrMsg = string.Empty;
 
 			// First compare the file lengths
-			FileInfo fiFile1 = new FileInfo(inpFile1);
-			FileInfo fiFile2 = new FileInfo(inpFile2);
+			FileInfo fiSourceFile = new FileInfo(srcFileName);
+			FileInfo fiArchiveFile = new FileInfo(archFileName);
 
-			if (fiFile1.Length != fiFile2.Length)
+			if (!fiSourceFile.Exists) {
+				m_ErrMsg = "clsArchiveUpdate.CompareTwoFiles: File " + fiSourceFile.FullName + " not found ";
+				return FILE_COMPARE_ERROR;
+			}
+
+			if (!fiArchiveFile.Exists) {
+				return FILE_COMPARE_NOT_EQUAL;
+			}
+
+			if (fiSourceFile.Length != fiArchiveFile.Length)
 				return FILE_COMPARE_NOT_EQUAL;
 
-			if (generateHash) {
+			// Only generate a hash for the files if the archive file was created within the last 35 days
+			// Files older than that may be purged from spinning disk and would thus only reside on tape
+			// Since retrieval from tape can be slow, we won't compute a hash if the file is more than 35 days old
+			if (generateHash && System.DateTime.UtcNow.Subtract(fiArchiveFile.LastWriteTimeUtc).TotalDays < 35) {
 				// Compares two files via SHA hash
-				string file1Hash = string.Empty;	//String version of InpFile1 hash
-				string file2Hash = string.Empty;	//String version of InpFile2 hash
+				string sSourceFileHash = string.Empty;
+				string sArchiveFileHash = string.Empty;
 
-				//Get hash's for both files
-				file1Hash = GenerateHashFromFile(inpFile1);
-				if (string.IsNullOrEmpty(file1Hash)) {
-					//There was a problem. Description is already in m_ErrMsg
-					return FILE_COMPARE_ERROR;
-				}
-				file2Hash = GenerateHashFromFile(inpFile2);
-				if (string.IsNullOrEmpty(file2Hash)) {
+				// Compute the has for each file
+				sSourceFileHash = GenerateHashFromFile(fiSourceFile);
+				if (string.IsNullOrEmpty(sSourceFileHash)) {
 					//There was a problem. Description is already in m_ErrMsg
 					return FILE_COMPARE_ERROR;
 				}
 
-				if (file1Hash == file2Hash) {
+				sArchiveFileHash = GenerateHashFromFile(fiArchiveFile);
+				if (string.IsNullOrEmpty(sArchiveFileHash)) {
+					// There was a problem. Description is already in m_ErrMsg
+					return FILE_COMPARE_ERROR;
+				}
+
+				if (sSourceFileHash == sArchiveFileHash) {
 					return FILE_COMPARE_EQUAL;
 				} else {
-					//Files not equal
 					return FILE_COMPARE_NOT_EQUAL;
 
 				}
 			} else {
 				// Simply compare file dates
-				if (fiFile1.LastWriteTimeUtc > fiFile2.LastWriteTimeUtc)
+				// If the source file is newer; then assume we need to copy
+				if (fiSourceFile.LastWriteTimeUtc > fiArchiveFile.LastWriteTimeUtc)					
 					return FILE_COMPARE_NOT_EQUAL;
 				else
 					return FILE_COMPARE_EQUAL;
@@ -438,7 +452,7 @@ namespace DatasetArchivePlugin {
 		/// </summary>
 		/// <param name="InpFileNamePath">Fully qualified path to file</param>
 		/// <returns>String representation of SHA1 hash</returns>
-		private string GenerateHashFromFile(string InpFileNamePath) {
+		private string GenerateHashFromFile(System.IO.FileInfo fiFile) {
 			// Generates hash code for specified input file
 			byte[] ByteHash = null;
 
@@ -447,23 +461,16 @@ namespace DatasetArchivePlugin {
 
 			m_ErrMsg = "";
 
-			//Verify input file exists
-			if (!File.Exists(InpFileNamePath)) {
-				m_ErrMsg = "clsArchiveUpdate.GenerateHashFromFile: File " + InpFileNamePath + " not found ";
-				return "";
-			}
-
-			FileInfo Fi = new FileInfo(InpFileNamePath);
-			Stream FStream = null;
+			FileStream FStream = null;
 
 			try {
 				//Open the file as a stream for input to the hash class
-				FStream = Fi.OpenRead();
+				FStream = fiFile.OpenRead();
 				//Get the file's hash
 				ByteHash = HashGen.ComputeHash(FStream);
 				return BitConverter.ToString(ByteHash);
 			} catch (Exception ex) {
-				m_ErrMsg = "clsArchiveUpdate.GenerateHashFromFile; Exception generating hash for file " + InpFileNamePath + ": " + ex.Message;
+				m_ErrMsg = "clsArchiveUpdate.GenerateHashFromFile; Exception generating hash for file " + fiFile.FullName + ": " + ex.Message;
 				return "";
 			} finally {
 				if ((FStream != null)) {
@@ -471,6 +478,7 @@ namespace DatasetArchivePlugin {
 				}
 			}
 		}	// End sub
+
 		#endregion
 	}	// End class
 }	// End namespace

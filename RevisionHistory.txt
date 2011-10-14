@@ -1,10 +1,12 @@
 Capture Task Manager History
 
-Version 1.1.4294; October 13, 2011
+Version 1.1.4304; October 14, 2011
+	- Updated DatasetArchive to compute a SHA hash if the file in the archive was modified within the last 35 days
+
+Version 1.1.4303; October 13, 2011
 	- Updated DatasetArchive plugin to simply compare file sizes and file dates when determining whether a file in the archive needs to be updated
 		- Previously computed a SHA hash on each file
 		- Unfortunately, due to a large number of our files being purged from spinning disk and only residing on tape, retrieval via the tape robot is prohibitively slow
-		- Thus, Archive Update operations will no longer use SHA hashes
 
 Version 1.1.4294; October 4, 2011
 	- No longer logging "Step complete" messages to the database
