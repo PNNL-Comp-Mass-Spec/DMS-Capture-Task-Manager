@@ -1,5 +1,11 @@
 Capture Task Manager History
 
+Version 1.1.4370; December 19, 2011
+	- Updated manager settings (m_ParamDictionary) to use a generic string dictionary
+	- Tweaked log messages for DatasetIntegrity plugin
+	- New version of the MSFileInfoScanner
+	- Updated DatasetQuality plugin to send the path to the analysis.baf file to the MSFileInfoScanner for Bruker_FT datasets
+
 Version 1.1.4304; October 14, 2011
 	- Updated DatasetArchive to compute a SHA hash if the file in the archive was modified within the last 35 days
 

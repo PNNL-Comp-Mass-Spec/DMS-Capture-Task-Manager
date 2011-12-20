@@ -239,6 +239,9 @@ namespace DatasetQualityPlugin
 					case "zipped_s_folders":
 						fileName = "analysis.baf";
 						break;
+					case "bruker_ft":
+						fileName = m_TaskParams.GetParam("dataset") + ".d" + "\\" + "analysis.baf";
+						break;
 					case "dot_uimf_files":
 						fileName = m_TaskParams.GetParam("dataset") + ".uimf";
 						break;

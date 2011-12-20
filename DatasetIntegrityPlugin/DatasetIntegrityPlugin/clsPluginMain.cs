@@ -131,7 +131,7 @@ namespace DatasetIntegrityPlugin
 						break;
 					default:
 						msg = "No integrity test available for instrument class " + instClass;
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg);
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
                         mRetData.EvalMsg = msg;
                         mRetData.EvalCode = EnumEvalCode.EVAL_CODE_NOT_EVALUATED;
                         mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
@@ -150,9 +150,9 @@ namespace DatasetIntegrityPlugin
                 sMinSize = fMinSize.ToString("#0") + " KB";
 
                 string msg;
-                msg = sDataFileDescription + " file " + sFilePath + " may be corrupt. Actual file size: " +
-                      fActualSize.ToString("####0.0") + " KB. " +
-                      "Min allowable size is " + sMinSize + ".";
+                msg = sDataFileDescription + " file may be corrupt. Actual file size is " +
+                      fActualSize.ToString("####0.0") + " KB; " +
+					  "min allowable size is " + sMinSize + "; see " + sFilePath;
                 
                 mRetData.EvalMsg = sDataFileDescription + " file size is less than " + sMinSize;
 
@@ -166,12 +166,12 @@ namespace DatasetIntegrityPlugin
                 if (fMaxSize / 1024.0 > 1)
                     sMaxSize = (fMaxSize / 1024.0).ToString("#0.0") + " MB";
                 else
-                    sMaxSize = "Max allowable size is " + fMaxSize.ToString("#0") + " KB";
+                    sMaxSize = fMaxSize.ToString("#0") + " KB";
 
                 string msg;
-                msg = sDataFileDescription + " file " + sFilePath + " may be corrupt. Actual file size: " +
-                      fActualSize.ToString("####0.0") + " KB. " +
-                      "Max allowable size is " + sMaxSize + ".";
+                msg = sDataFileDescription + " file may be corrupt. Actual file size is " +
+                      fActualSize.ToString("####0.0") + " KB; " +
+					  "max allowable size is " + sMaxSize + "; see " + sFilePath;
 
                 mRetData.EvalMsg = sDataFileDescription + " file size is more than " + sMaxSize;
 
