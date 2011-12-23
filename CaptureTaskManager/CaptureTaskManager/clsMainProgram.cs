@@ -13,11 +13,14 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using System.Windows.Forms;
+using System.Runtime.InteropServices;
 
 namespace CaptureTaskManager
 {
+
 	public class clsMainProgram
 	{
+
 		//*********************************************************************************************************
 		// Main program execution loop for application
 		//**********************************************************************************************************
@@ -561,6 +564,18 @@ namespace CaptureTaskManager
 					return false;
 				}
 
+				
+				// Make sure we have enough free space on the drive with the dataset folder
+				if (!ValidateFreeDiskSpace(out msg)) {
+					if (string.IsNullOrEmpty(msg))
+						msg = "Insufficient free space (location undefined)";
+
+					m_Task.CloseTask(EnumCloseOutType.CLOSEOUT_FAILED, msg);
+					m_StatusFile.UpdateIdle();
+					return false;
+
+				}				
+
 				// Run the tool plugin
 				m_DurationStart = DateTime.UtcNow;
 				m_StatusTimer.Enabled = true;
@@ -745,6 +760,134 @@ namespace CaptureTaskManager
 			}
 
 			return bSuccess;
+		}
+
+		[DllImport("kernel32", CharSet = CharSet.Auto)]
+		static extern int GetDiskFreeSpaceEx(
+		 string lpDirectoryName,
+		 out ulong lpFreeBytesAvailable,
+		 out ulong lpTotalNumberOfBytes,
+		 out ulong lpTotalNumberOfFreeBytes);
+
+		protected bool GetDiskFreeSpace(string directoryPath, out long freeBytesAvailableToUser, out long totalDriveCapacityBytes, out long totalNumberOfFreeBytes)
+		{
+
+			ulong freeAvailableUser;
+			ulong totalDriveCapacity;
+			ulong totalFree;
+
+			int iResult;
+
+			iResult = GetDiskFreeSpaceEx(directoryPath, out freeAvailableUser, out totalDriveCapacity, out totalFree);
+
+			if (iResult == 0)
+			{
+				freeBytesAvailableToUser = 0;
+				totalDriveCapacityBytes = 0;
+				totalNumberOfFreeBytes = 0;
+
+				return false;
+			}
+			else
+			{
+				freeBytesAvailableToUser = (long)freeAvailableUser;
+				totalDriveCapacityBytes = (long)totalDriveCapacity;
+				totalNumberOfFreeBytes = (long)totalFree;
+
+				return true;
+			}
+
+		}
+
+		protected string GetStoragePathBase() 
+		{
+			string datasetStoragePathBase = string.Empty;
+			string storagePath = m_Task.GetParam("Storage_Path");
+			int slashLoc = 0;
+
+			// Make sure storagePath only contains the root folder, not several folders
+			// In other words, if storagePath = "VOrbiETD03\2011_4" change it to just "VOrbiETD03"
+			slashLoc = storagePath.IndexOf(@"\");
+			if (slashLoc > 0)
+				storagePath = storagePath.Substring(0, slashLoc);
+			
+			string tmpParam = m_MgrSettings.GetParam("perspective");
+			if (tmpParam.ToLower() == "server")
+			{
+				datasetStoragePathBase = m_Task.GetParam("Storage_Vol");				
+			}
+			else
+			{
+				// Client perspective
+				datasetStoragePathBase = m_Task.GetParam("Storage_Vol_External");
+			}
+
+			datasetStoragePathBase = System.IO.Path.Combine(datasetStoragePathBase, storagePath);
+
+			return datasetStoragePathBase;
+
+		}
+			
+		/// <summary>
+		/// Validates that the dataset storage drive has sufficient free space
+		/// </summary>
+		/// <param name="ErrorMessage"></param>
+		/// <returns>True if OK; false if not enough free space</returns>
+		protected bool ValidateFreeDiskSpace(out string ErrorMessage)
+		{
+			const int DEFAULT_DATASET_STORAGE_MIN_FREE_SPACE_GB = 30;
+
+			long freeBytesAvailableToUser;
+			long totalDriveCapacityBytes;
+			long totalNumberOfFreeBytes;
+
+			string datasetStoragePath = string.Empty;
+			ErrorMessage = string.Empty;
+
+			try
+			{
+				string stepToolLCase = m_Task.GetParam("StepTool").ToLower();
+
+				if (stepToolLCase.Contains("archiveupdate") ||
+					stepToolLCase.Contains("datasetarchive") ||
+					stepToolLCase.Contains("sourcefilerename") )
+				{
+					
+					// We don't need to validate free space with these step tools
+					return true;
+				}
+
+				datasetStoragePath = GetStoragePathBase();
+
+				if (GetDiskFreeSpace(datasetStoragePath, out freeBytesAvailableToUser, out totalDriveCapacityBytes, out totalNumberOfFreeBytes))
+				{
+					double freeSpaceGB = totalNumberOfFreeBytes / 1024.0 / 1024.0 / 1024.0;
+
+					if (freeSpaceGB < DEFAULT_DATASET_STORAGE_MIN_FREE_SPACE_GB) 
+					{
+						ErrorMessage = "Dataset directory drive has less than " + totalNumberOfFreeBytes.ToString() + " GB free: " + ((int)freeSpaceGB).ToString() + " GB";
+
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrorMessage + ": " + datasetStoragePath);					
+						return false;
+					}
+					
+				}
+				else
+				{
+					ErrorMessage = "Error validating dataset storage free drive space (GetDiskFreeSpaceEx returned false)";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrorMessage + ": " + datasetStoragePath);					
+					return false;
+				}
+
+			}
+			catch
+			{
+				ErrorMessage = "Exception validating dataset storage free drive space";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrorMessage + ": " + datasetStoragePath);
+				return false;
+			}
+
+			return true;
 		}
 
 		/// <summary>

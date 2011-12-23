@@ -1,5 +1,9 @@
 Capture Task Manager History
 
+Version 1.1.4373; December 22, 2011
+	- Now validating that the server on which the dataset resides has sufficient free space when performing operations that will write new data to the server
+		- Affects all step tools except ArchiveUpdate, DatasetArchive, and SourceFileRename
+
 Version 1.1.4370; December 19, 2011
 	- Updated manager settings (m_ParamDictionary) to use a generic string dictionary
 	- Tweaked log messages for DatasetIntegrity plugin
