@@ -13,7 +13,7 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using System.Windows.Forms;
-using System.Runtime.InteropServices;
+using System.Runtime.InteropServices;		// Required for call to GetDiskFreeSpaceEx
 
 namespace CaptureTaskManager
 {
@@ -810,17 +810,10 @@ namespace CaptureTaskManager
 			slashLoc = storagePath.IndexOf(@"\");
 			if (slashLoc > 0)
 				storagePath = storagePath.Substring(0, slashLoc);
-			
-			string tmpParam = m_MgrSettings.GetParam("perspective");
-			if (tmpParam.ToLower() == "server")
-			{
-				datasetStoragePathBase = m_Task.GetParam("Storage_Vol");				
-			}
-			else
-			{
-				// Client perspective
-				datasetStoragePathBase = m_Task.GetParam("Storage_Vol_External");
-			}
+
+			// Always use the UNC path defined by Storage_Vol_External when checking drive free space
+			// Example path is: \\Proto-7\
+			datasetStoragePathBase = m_Task.GetParam("Storage_Vol_External");
 
 			datasetStoragePathBase = System.IO.Path.Combine(datasetStoragePathBase, storagePath);
 
@@ -874,16 +867,16 @@ namespace CaptureTaskManager
 				}
 				else
 				{
-					ErrorMessage = "Error validating dataset storage free drive space (GetDiskFreeSpaceEx returned false)";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrorMessage + ": " + datasetStoragePath);					
+					ErrorMessage = "Error validating dataset storage free drive space (GetDiskFreeSpaceEx returned false): " + datasetStoragePath;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrorMessage);					
 					return false;
 				}
 
 			}
-			catch
+			catch (Exception ex)
 			{
-				ErrorMessage = "Exception validating dataset storage free drive space";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrorMessage + ": " + datasetStoragePath);
+				ErrorMessage = "Exception validating dataset storage free drive space: " + datasetStoragePath;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrorMessage + "; " + ex.Message);
 				return false;
 			}
 
