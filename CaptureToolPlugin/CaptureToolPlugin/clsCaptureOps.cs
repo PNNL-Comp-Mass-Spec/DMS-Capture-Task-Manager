@@ -358,7 +358,7 @@ namespace CaptureToolPlugin
 				string n = Path.Combine(di.Parent.FullName, "x_" + di.Name);
 				di.MoveTo(n);
 				msg = "Renamed directory " + DSPath;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 				return true;
 			}
 			catch (Exception ex)
@@ -1026,7 +1026,7 @@ namespace CaptureToolPlugin
 				clsFileTools.CopyDirectory(copySourceDir, datasetFolderPath);
 				msg = "Copied folder " + copySourceDir + " to " +
 					Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName);
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 			}
 			catch (Exception ex)
 			{
@@ -1095,7 +1095,7 @@ namespace CaptureToolPlugin
 				}
 				msg = "Copied files in folder " + copySourceDir + " to " +
 					Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName);
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 				return EnumCloseOutType.CLOSEOUT_SUCCESS;
 			}
 			catch (Exception ex)
@@ -1177,7 +1177,7 @@ namespace CaptureToolPlugin
 				clsFileTools.CopyDirectory(copySourceDir, datasetFolderPath);
 				msg = "Copied folder " + copySourceDir + " to " +
 					Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName);
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 				return EnumCloseOutType.CLOSEOUT_SUCCESS;
 			}
 			catch (Exception ex)

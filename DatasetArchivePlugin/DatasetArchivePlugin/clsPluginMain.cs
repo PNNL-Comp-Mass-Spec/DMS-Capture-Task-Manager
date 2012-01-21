@@ -52,7 +52,7 @@ namespace DatasetArchivePlugin
 					// This is an archive operation
 					archOpTool = new clsArchiveDataset(m_MgrParams, m_TaskParams);
 					msg = "Starting archive, job " + m_TaskParams.GetParam("Job") + ", dataset " + m_TaskParams.GetParam("Dataset");
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 					if (archOpTool.PerformTask())
 					{
 						retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
@@ -61,7 +61,7 @@ namespace DatasetArchivePlugin
 					{
 						retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 					}
-					msg = "Completed archive, job " + m_TaskParams.GetParam("Job") + ", dataset " + m_TaskParams.GetParam("Dataset");
+					msg = "Completed archive, job " + m_TaskParams.GetParam("Job");
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 				}
 				else
@@ -69,7 +69,7 @@ namespace DatasetArchivePlugin
 					// This is an archive update operation
 					archOpTool = new clsArchiveUpdate(m_MgrParams, m_TaskParams);
 					msg = "Starting archive update, job " + m_TaskParams.GetParam("Job") + ", dataset " + m_TaskParams.GetParam("Dataset");
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 					if (archOpTool.PerformTask())
 					{
 						retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
@@ -78,7 +78,7 @@ namespace DatasetArchivePlugin
 					{
 						retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 					}
-					msg = "Completed archive update, job " + m_TaskParams.GetParam("Job") + ", dataset " + m_TaskParams.GetParam("Dataset");
+					msg = "Completed archive update, job " + m_TaskParams.GetParam("Job");
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 				}
 				

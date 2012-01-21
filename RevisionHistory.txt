@@ -1,5 +1,10 @@
 Capture Task Manager History
 
+Version 1.1.4402; January 20, 2012
+	- Changed several log messages from INFO level to DEBUG level
+		- Also changed several messages to only log in the local file and not in the DMS_Capture database
+	- Updated the Dataset Archive plugin to create MD5 staging files using MD5StageFileCreator.dll
+
 Version 1.1.4373; December 22, 2011
 	- Now validating that the server on which the dataset resides has sufficient free space when performing operations that will write new data to the server
 		- Affects all step tools except ArchiveUpdate, DatasetArchive, and SourceFileRename

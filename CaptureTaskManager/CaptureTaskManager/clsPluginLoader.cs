@@ -100,7 +100,7 @@ namespace CaptureTaskManager
 						{
 							myToolRunner = (IToolRunner)obj;
 							msg = "Loaded tool runner: " + className + " from " + assyName;
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 						}
 						catch (Exception ex)
 						{

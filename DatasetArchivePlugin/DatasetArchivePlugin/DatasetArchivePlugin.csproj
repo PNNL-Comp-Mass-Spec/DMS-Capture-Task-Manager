@@ -62,6 +62,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\RefLib\Dart.PowerTCP.Ftp.dll</HintPath>
     </Reference>
+    <Reference Include="MD5StageFileCreator">
+      <HintPath>..\..\RefLib\MD5StageFileCreator.dll</HintPath>
+    </Reference>
     <Reference Include="PRISM, Version=1.0.1993.15422, Culture=neutral">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\DeployedFiles\PRISM.dll</HintPath>

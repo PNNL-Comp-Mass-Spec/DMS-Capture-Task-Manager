@@ -162,7 +162,7 @@ namespace DatasetArchivePlugin
 					// Open the connection (I hope!)
 					if (m_FtpTools.OpenFTPConnection())
 					{
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile,clsLogTools.LogLevels.INFO,"Archive connection opened");
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile,clsLogTools.LogLevels.DEBUG,"Archive connection opened");
 						m_ConnectionOpen=true;
 						return true;
 					}
@@ -170,7 +170,7 @@ namespace DatasetArchivePlugin
 					{
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile,clsLogTools.LogLevels.ERROR,m_FtpTools.ErrMsg);
 						m_FtpTools.CloseFTPConnection();
-						if (m_FtpTools.ErrMsg != "")
+						if (!string.IsNullOrWhiteSpace(m_FtpTools.ErrMsg))
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_FtpTools.ErrMsg);
 						m_Msg = "clsNewArchive.PerformTask: closed FTP connection";
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
@@ -198,9 +198,9 @@ namespace DatasetArchivePlugin
 				try
 				{
 					m_FtpTools.CloseFTPConnection();
-					if (m_FtpTools.ErrMsg == "")
+					if (m_FtpTools.ErrMsg == string.Empty)
 					{
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Closed FTP connection");
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Closed FTP connection");
 						m_ConnectionOpen = false;
 						return true;
 					}

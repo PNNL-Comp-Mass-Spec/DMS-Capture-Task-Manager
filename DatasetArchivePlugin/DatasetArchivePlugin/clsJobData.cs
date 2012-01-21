@@ -18,64 +18,89 @@ namespace DatasetArchivePlugin
 		//**********************************************************************************************************
 
 		#region "Class variables"
-			string m_SvrFileToUpdate = "";	//File, including path on storage server, needing copied
-			string m_SambaFileToUpdate = "";	//File, including path, in archive (for rename operation)
-			bool m_RenameFlag = false;	//Flag specifying if there's alread a file in the archive that needs renamed
-			string m_SvrDSNamePath = null;	//Full path to dataset on storage server
+		string m_SvrFileToUpdate = string.Empty;		// File, including path on storage server, needing copied
+		string m_SambaFileToUpdate = string.Empty;	// File, including path, in archive (for rename operation)
+		bool m_RenameFlag = false;			// Flag specifying if there's alread a file in the archive that needs renamed
+		string m_SvrDSNamePath = null;		// Full path to dataset on storage server
+		bool m_CopySuccess = false;			// Set to true once the file is successfully copied to the archive
 		#endregion
 
 		#region "Properties"
-			public string SvrFileToUpdate
-			{
-				//Full file name and path of file on storage server
-				get { return m_SvrFileToUpdate; }
-				set { m_SvrFileToUpdate = value; }
-			}
 
-			public string SambaFileToUpdate
-			{
-				//Full name and path of file on Samba share
-				get { return m_SambaFileToUpdate; }
-				set { m_SambaFileToUpdate = value; }
-			}
+		/// <summary>
+		/// True if the file is successfully copied to the archive
+		/// </summary>
+		public bool CopySuccess
+		{
+			get { return m_CopySuccess; }
+			set { m_CopySuccess = value; }
+		}
 
-			public bool RenameFlag
-			{
-				//Flag to determine if renaming file in archive is necessary
-				get { return m_RenameFlag; }
-				set { m_RenameFlag = value; }
-			}
+		/// <summary>
+		/// Full file name and path of file on storage server
+		/// </summary>
+		public string SvrFileToUpdate
+		{
+			get { return m_SvrFileToUpdate; }
+			set { m_SvrFileToUpdate = value; }
+		}
 
-			public string SvrDsNamePath
-			{
-				//Dataset name and path on storage server
-				get { return m_SvrDSNamePath; }
-				set { m_SvrDSNamePath = value; }
-			}
+		/// <summary>
+		/// Full name and path of file on Samba share
+		/// </summary>
+		public string SambaFileToUpdate
+		{
+			get { return m_SambaFileToUpdate; }
+			set { m_SambaFileToUpdate = value; }
+		}
 
-			public string RelativeFilePath
-			{
-				//File path relative to dataset folder
-				get { return GetRelativeFilePath(m_SvrFileToUpdate, m_SvrDSNamePath); }
-			}
+		/// <summary>
+		/// Flag to determine if renaming file in archive is necessary
+		/// </summary>
+		public bool RenameFlag
+		{
+			get { return m_RenameFlag; }
+			set { m_RenameFlag = value; }
+		}
 
-			public string FileName
-			{
-				get { return Path.GetFileName(m_SvrFileToUpdate); }
-			}
+		/// <summary>
+		/// Dataset name and path on storage server
+		/// </summary>
+		public string SvrDsNamePath
+		{
+			get { return m_SvrDSNamePath; }
+			set { m_SvrDSNamePath = value; }
+		}
+
+		/// <summary>
+		/// Relative file path (remove parent folder)
+		/// </summary>
+		public string RelativeFilePath
+		{
+			get { return GetRelativeFilePath(m_SvrFileToUpdate, m_SvrDSNamePath); }
+		}
+
+		/// <summary>
+		/// Name of the file (no path info)
+		/// </summary>
+		public string FileName
+		{
+			get { return Path.GetFileName(m_SvrFileToUpdate); }
+		}
 		#endregion
 
 		#region "Methods"
-			/// <summary>
-			/// Converts a full dataset file path to a path relative to the dataset folder
-			/// </summary>
-			/// <param name="InpFile">Full name and path to file on storage server</param>
-			/// <param name="SvrDSNamePath">Full path to dataset on storage server</param>
-			/// <returns>Path for file input file relative to dataset folder</returns>
-			private string GetRelativeFilePath(string InpFile, string SvrDSNamePath)
-			{
-				return InpFile.Replace(SvrDSNamePath, "");
-			}	// End sub
+		/// <summary>
+		/// Converts a full dataset file path to a path relative to the dataset folder
+		/// </summary>
+		/// <param name="InpFile">Full name and path to file on storage server</param>
+		/// <param name="SvrDSNamePath">Full path to dataset on storage server</param>
+		/// <returns>Path for file input file relative to dataset folder</returns>
+		private string GetRelativeFilePath(string InpFile, string SvrDSNamePath)
+		{
+			return InpFile.Replace(SvrDSNamePath, string.Empty);
+		}
 		#endregion
+
 	}	// End class
 }	// End namespace

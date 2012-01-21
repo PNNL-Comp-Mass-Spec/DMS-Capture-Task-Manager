@@ -262,6 +262,11 @@ namespace CaptureTaskManager
 
 				Console.WriteLine();
 				Console.WriteLine("Exception instantiating clsMgrSettings: " + ex.Message);
+				Console.WriteLine();
+				Console.WriteLine();
+				Console.WriteLine("You may need to run this application once from an elevated (administrative level) command prompt so that it can create teh DMSCapTaskMgr application log");
+				Console.WriteLine();
+
 				return false;
 			}
 
@@ -610,7 +615,7 @@ namespace CaptureTaskManager
 					case EnumCloseOutType.CLOSEOUT_SUCCESS:
 						msg = m_MgrSettings.GetParam("MgrName") + ": Step complete, tool " + m_Task.GetParam("StepTool")
 									+ ", job " + m_Task.GetParam("Job") + ", Dataset " + m_Task.GetParam("Dataset");
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 						m_Task.CloseTask(toolResult.CloseoutType, toolResult.CloseoutMsg, toolResult.EvalCode, toolResult.EvalMsg);
 						bSuccess = true;
 						break;

@@ -141,7 +141,7 @@ namespace DatasetArchivePlugin
 			/// <remarks>Assumes password property has been set and password has been encrypted using pwd.exe routine</remarks>
 			public bool OpenFTPConnection()
 			{
-				string TempPassword = "";
+				string TempPassword = string.Empty;
 				string msg;
 
 				msg = "Opening FTP connection";
@@ -194,7 +194,7 @@ namespace DatasetArchivePlugin
 			/// </summary>
 			public void CloseFTPConnection()
 			{
-				m_ErrMsg = "";
+				m_ErrMsg = string.Empty;
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile,clsLogTools.LogLevels.DEBUG,"Closing FTP connection");
 				try
@@ -304,7 +304,7 @@ namespace DatasetArchivePlugin
 				intFileNamePosition = intDatePosition + 13;
 				//
 				//Remove CR symbols from the line
-				ftpStr = ftpStr.Replace("\r", "");
+				ftpStr = ftpStr.Replace("\r", string.Empty);
 
 				if (intDatePosition > 10)
 				{
@@ -401,7 +401,7 @@ namespace DatasetArchivePlugin
 				Listing remList = default(Listing);
 				StringCollection tempCollection = new StringCollection();
 
-				m_ErrMsg = "";
+				m_ErrMsg = string.Empty;
 
 				//Verify FTP connection available
 				if (!m_FtpDart.Connected)
@@ -554,9 +554,9 @@ namespace DatasetArchivePlugin
 			{
 				// Check is peformed by attempting to change remote directory to specified folder.
 				//	If folder doesn't exist, an error occurs and function is set to False
-				string tempFolder = "";
+				string tempFolder = string.Empty;
 
-				m_ErrMsg = "";
+				m_ErrMsg = string.Empty;
 
 				//Verify FTP connection available
 				if (!m_FtpDart.Connected)
@@ -608,7 +608,7 @@ namespace DatasetArchivePlugin
 			{
 				Listing FolderData = null;
 
-				m_ErrMsg = "";
+				m_ErrMsg = string.Empty;
 
 				//Verify FTP connection available
 				if (!m_FtpDart.Connected)
@@ -711,7 +711,7 @@ namespace DatasetArchivePlugin
 					try
 					{
 						m_FtpDart.Invoke(FtpCommand.ChangeDir, CurRemDir);
-						ItemList = m_FtpDart.List("", true);
+						ItemList = m_FtpDart.List(string.Empty, true);
 					}
 					catch (Exception Err)
 					{
@@ -800,7 +800,7 @@ namespace DatasetArchivePlugin
 				}
 
 				// Modify the byte array by shifting alternating bytes up or down and convert back to char, and add to output string
-				string retStr = "";
+				string retStr = string.Empty;
 				for (int byteCntr = 0; byteCntr < pwdBytes.Length; byteCntr++)
 				{
 					if ((byteCntr % 2) == 0)
@@ -866,7 +866,7 @@ namespace DatasetArchivePlugin
 				if (m_LogFile)
 				{
 					string CurDate = System.DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss.ff");
-					string Entry = "";
+					string Entry = string.Empty;
 					if (e.Segment.Sent)
 					{
 						DumStr = e.Segment.ToString();
