@@ -17,7 +17,6 @@ using CaptureTaskManager;
 using System.IO;
 using PRISM.Files;
 using System.Security.Cryptography;
-using MD5StageFileCreator;
 
 namespace DatasetArchivePlugin
 {
@@ -39,9 +38,6 @@ namespace DatasetArchivePlugin
 		string m_ArchiveSharePath = string.Empty;
 		string m_ResultsFolderPathArchive = string.Empty;
 		string m_ResultsFolderPathServer = string.Empty;
-		string m_DatasetName = string.Empty;
-
-		clsMD5StageFileCreator mMD5StageFileCreator;
 
 		#endregion
 
@@ -71,8 +67,6 @@ namespace DatasetArchivePlugin
 			bool copySuccess;
 			bool stageSuccess;
 
-			m_DatasetName = m_TaskParams.GetParam("dataset");
-
 			// Perform base class operations
 			if (!base.PerformTask()) return false;
 
@@ -96,9 +90,6 @@ namespace DatasetArchivePlugin
 
 			// Set the path to the results folder in archive
 			m_ResultsFolderPathArchive = Path.Combine(m_ArchiveSharePath, m_TaskParams.GetParam("OutputFolderName"));
-
-			// Initialize the MD5 stage file creator
-			InitializeMD5StageFileCreator();
 
 
 			// Determine if the results folder already exists. If not present, copy entire folder and we're done
@@ -554,161 +545,6 @@ namespace DatasetArchivePlugin
 		}	// End sub
 
 		/// <summary>
-		/// Create a stagemd5 file for all files (and subfolders) in sResultsFolderPathServer
-		/// </summary>
-		/// <param name="sResultsFolderPathServer"></param>
-		/// <param name="sResultsFolderPathArchive"></param>
-		/// <returns></returns>
-		private bool CreateMD5StagingFile(string sResultsFolderPathServer, string sResultsFolderPathArchive)
-		{
-			string sLocalParentFolderPathForDataset;
-			string sArchiveStoragePathForDataset;
-
-			List<string> lstFilePathsToStage;
-			bool bSuccess;
-
-			try
-			{
-				lstFilePathsToStage = new List<string>();
-
-				// Determine the folder just above sResultsFolderPathServer and just above sResultsFolderPathArchive
-				System.IO.DirectoryInfo diResultsFolderServer = new System.IO.DirectoryInfo(sResultsFolderPathServer);
-				sLocalParentFolderPathForDataset = diResultsFolderServer.Parent.FullName;
-
-				System.IO.DirectoryInfo diResultsFolderArchive = new System.IO.DirectoryInfo(sResultsFolderPathArchive);
-				sArchiveStoragePathForDataset = diResultsFolderArchive.Parent.FullName;
-
-				// Populate lstFilePathsToStage with each file found at sResultsFolderPathServer (including files in subfolders)
-				foreach (System.IO.FileInfo fiFile in diResultsFolderServer.GetFiles("*", SearchOption.AllDirectories))
-				{
-					lstFilePathsToStage.Add(fiFile.FullName);
-				}
-
-				bSuccess = CreateMD5StagingFileWork(lstFilePathsToStage, m_DatasetName, sLocalParentFolderPathForDataset, sArchiveStoragePathForDataset);
-			}
-			catch (Exception ex)
-			{
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception creating MD5 staging file for newly archived files from folder " + sResultsFolderPathServer, ex);
-				return false;
-			}
-
-			return bSuccess;
-		}
-
-		/// <summary>
-		/// Create a stagemd5 file for all files in filesToUpdate
-		/// </summary>
-		/// <param name="sResultsFolderPathServer"></param>
-		/// <param name="sResultsFolderPathArchive"></param>
-		/// <param name="filesToUpdate"></param>
-		/// <returns></returns>
-		private bool CreateMD5StagingFile(string sResultsFolderPathServer, string sResultsFolderPathArchive, List<clsJobData> filesToUpdate)
-		{
-
-			string sLocalParentFolderPathForDataset;
-			string sArchiveStoragePathForDataset;
-
-			List<string> lstFilePathsToStage;
-			bool bSuccess;
-
-			try
-			{
-				lstFilePathsToStage = new List<string>();
-
-				// Determine the folder just above sResultsFolderPathServer and just above sResultsFolderPathArchive
-				System.IO.DirectoryInfo diResultsFolderServer = new System.IO.DirectoryInfo(sResultsFolderPathServer);
-				sLocalParentFolderPathForDataset = diResultsFolderServer.Parent.FullName;
-
-				System.IO.DirectoryInfo diResultsFolderArchive = new System.IO.DirectoryInfo(sResultsFolderPathArchive);
-				sArchiveStoragePathForDataset = diResultsFolderArchive.Parent.FullName;
-
-				// Populate lstFilePathsToStage with each file in filesToUpdate
-				foreach (clsJobData objFileInfo in filesToUpdate)
-				{
-					if (objFileInfo.CopySuccess)
-						lstFilePathsToStage.Add(objFileInfo.SvrFileToUpdate);
-				}
-
-				bSuccess = CreateMD5StagingFileWork(lstFilePathsToStage, m_DatasetName, sLocalParentFolderPathForDataset, sArchiveStoragePathForDataset);
-			}
-			catch (Exception ex)
-			{
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception creating MD5 staging file for newly archived files defined in List filesToUpdate", ex);
-				return false;
-			}
-
-			return bSuccess;
-		}
-
-		private bool CreateMD5StagingFileWork(List<string> lstFilePathsToStage, string sDatasetName, string sLocalParentFolderPathForDataset, string sArchiveStoragePathForDataset)
-		{
-			const string EXTRA_FILES_REGEX = clsMD5StageFileCreator.EXTRA_FILES_SUFFIX + @"(\d+)$";
-
-			System.Text.RegularExpressions.Regex reExtraFiles;
-			System.Text.RegularExpressions.Match reMatch;
-
-			string sDatasetAndSuffix;
-			int iExtraFileNumberNew = 1;
-			bool bSuccess;
-
-			// Convert sArchiveStoragePathForDataset from the form \\a2.emsl.pnl.gov\dmsarch\LTQ_ORB_2_2\CS_PSK_CC_r4_c_1Aug08_Draco_08-07-14
-			// to the form /archive/dmsarch/LTQ_ORB_2_2/CS_PSK_CC_r4_c_1Aug08_Draco_08-07-14
-
-			string sArchiveStoragePathForDatasetUnix = string.Empty;
-			bSuccess = clsMD5StageFileCreator.ConvertArchiveSharePathToArchiveStoragePath(sArchiveStoragePathForDataset, false, ref sArchiveStoragePathForDatasetUnix);
-
-			if (!bSuccess)
-			{
-				string msg = "Error converting the archive folder path (" + sArchiveStoragePathForDataset + ") to the archive storage path (something like /archive/dmsarch/LTQ_ORB_3_1/)";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-				return false;
-			}
-
-
-			// Look for existing stagemd5 or result files for dataset sDatasetName
-			System.Collections.Generic.List<string> lstSearchFileSpec = new System.Collections.Generic.List<string>();
-
-			sDatasetAndSuffix = sDatasetName + clsMD5StageFileCreator.EXTRA_FILES_SUFFIX;
-
-			lstSearchFileSpec.Add(clsMD5StageFileCreator.STAGE_FILE_PREFIX + sDatasetAndSuffix + "*");
-			lstSearchFileSpec.Add(clsMD5StageFileCreator.STAGE_FILE_INPROGRESS_PREFIX + sDatasetAndSuffix + "*");
-			lstSearchFileSpec.Add(clsMD5StageFileCreator.MD5_RESULTS_FILE_PREFIX + sDatasetAndSuffix + "*");
-			lstSearchFileSpec.Add(clsMD5StageFileCreator.MD5_RESULTS_INPROGRESS_FILE_PREFIX + sDatasetAndSuffix + "*");
-
-			System.IO.DirectoryInfo diStagingFolder;
-			diStagingFolder = new System.IO.DirectoryInfo(mMD5StageFileCreator.StagingFolderPath);
-
-			reExtraFiles = new System.Text.RegularExpressions.Regex(EXTRA_FILES_REGEX, System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-
-			// Check for each file in lstSearchFileSpec
-			foreach (string sFileSpec in lstSearchFileSpec)
-			{
-				foreach (System.IO.FileInfo fiFile in diStagingFolder.GetFiles(sFileSpec))
-				{
-					// Examine each file to parse out the number after EXTRA_FILES_SUFFIX
-					// For example, if the filename is results.DatasetName__ExtraFiles001 then we want to parse out "001" and convert that to an integer
-					reMatch = reExtraFiles.Match(fiFile.Name);
-					if (reMatch.Success)
-					{
-						int iStageFileNum;
-
-						if (int.TryParse(reMatch.Groups[1].Value, out iStageFileNum))
-						{
-							// Number parsed out
-							// Adjust iExtraFileNumberNew if necessary
-							if (iStageFileNum >= iExtraFileNumberNew)
-								iExtraFileNumberNew = iStageFileNum + 1;
-						}
-					}
-				}
-			} // foreach (sFileSpec in lstSearchFileSpec)
-
-			return mMD5StageFileCreator.WriteStagingFile(ref lstFilePathsToStage, sDatasetName, sLocalParentFolderPathForDataset, sArchiveStoragePathForDatasetUnix, iExtraFileNumberNew);
-
-		}
-
-
-		/// <summary>
 		/// Generates SHA1 hash for specified file
 		/// </summary>
 		/// <param name="InpFileNamePath">Fully qualified path to file</param>
@@ -746,40 +582,6 @@ namespace DatasetArchivePlugin
 				}
 			}
 		}	// End sub
-
-		#endregion
-
-		#region "MD5StageFileCreator initialization and event handlers"
-
-		private void InitializeMD5StageFileCreator()
-		{
-			string sArchiveStagingFolderPath;
-			sArchiveStagingFolderPath = m_MgrParams.GetParam("HashFileLocation");
-
-			if (string.IsNullOrWhiteSpace(sArchiveStagingFolderPath))
-			{
-				sArchiveStagingFolderPath = MD5StageFileCreator.clsMD5StageFileCreator.DEFAULT_STAGING_FOLDER_PATH;
-				string msg = "Manager parameter HashFileLocation is not defined; will use default path of '" + sArchiveStagingFolderPath + "'";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
-			}
-
-			mMD5StageFileCreator = new MD5StageFileCreator.clsMD5StageFileCreator(sArchiveStagingFolderPath);
-
-			// Attach the events
-			mMD5StageFileCreator.OnErrorEvent += new MD5StageFileCreator.clsMD5StageFileCreator.OnErrorEventEventHandler(MD5ErrorEventHandler);
-			mMD5StageFileCreator.OnMessageEvent += new MD5StageFileCreator.clsMD5StageFileCreator.OnMessageEventEventHandler(MD5MessageEventHandler);
-		}
-
-		private void MD5ErrorEventHandler(string sErrorMessage)
-		{
-			string msg = "MD5StageFileCreator Error: " + sErrorMessage;
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-		}
-
-		private void MD5MessageEventHandler(string sMessage)
-		{
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, sMessage);
-		}
 
 		#endregion
 

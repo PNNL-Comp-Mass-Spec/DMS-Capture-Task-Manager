@@ -11,6 +11,7 @@ using System;
 using CaptureTaskManager;
 using System.IO;
 using PRISM.Files;
+using MD5StageFileCreator;
 
 namespace DatasetArchivePlugin
 {
@@ -21,254 +22,454 @@ namespace DatasetArchivePlugin
 		//**********************************************************************************************************
 
 		#region "Constants"
-			protected const string ARCHIVE = "Archive ";
-			protected const string UPDATE = "Archive update ";
+		protected const string ARCHIVE = "Archive ";
+		protected const string UPDATE = "Archive update ";
 		#endregion
 
 		#region "Class variables"
-			protected IMgrParams m_MgrParams;
-			protected ITaskParams m_TaskParams;
-			protected string m_ErrMsg;
-			protected string m_TempVol;
-			protected string m_DSNamePath;
-			protected string m_ArchiveNamePath;
-			protected string m_Msg;
-			protected clsFtpOperations m_FtpTools;
-			protected string m_User;
-			protected string m_Pwd;
-			protected bool m_UseTls;
-			protected int m_ServerPort;
-			protected int m_FtpTimeOut;
-			protected bool m_FtpPassive;
-			protected bool m_FtpRestart;
-			protected bool m_ConnectionOpen = false;
-			protected string m_ArchiveOrUpdate;
+		protected IMgrParams m_MgrParams;
+		protected ITaskParams m_TaskParams;
+		protected string m_ErrMsg;
+		protected string m_TempVol;
+		protected string m_DSNamePath;
+		protected string m_ArchiveNamePath;
+		protected string m_Msg;
+		protected clsFtpOperations m_FtpTools;
+		protected string m_User;
+		protected string m_Pwd;
+		protected bool m_UseTls;
+		protected int m_ServerPort;
+		protected int m_FtpTimeOut;
+		protected bool m_FtpPassive;
+		protected bool m_FtpRestart;
+		protected bool m_ConnectionOpen = false;
+		protected string m_ArchiveOrUpdate;
+		protected string m_DatasetName = string.Empty;
+
+		clsMD5StageFileCreator mMD5StageFileCreator;
+
 		#endregion
 
 		#region "Properties"
-			/// <summary>
-			/// Implements IArchiveOps.ErrMsg
-			/// </summary>
-			public string ErrMsg
-			{
-				get { return m_ErrMsg;	}
-			}
+		/// <summary>
+		/// Implements IArchiveOps.ErrMsg
+		/// </summary>
+		public string ErrMsg
+		{
+			get { return m_ErrMsg; }
+		}
 		#endregion
 
 		#region "Constructors"
-			public clsOpsBase(IMgrParams MgrParams, ITaskParams TaskParams)
+		public clsOpsBase(IMgrParams MgrParams, ITaskParams TaskParams)
+		{
+			m_MgrParams = MgrParams;
+			m_TaskParams = TaskParams;
+			m_User = m_MgrParams.GetParam("username");
+			m_Pwd = m_MgrParams.GetParam("userpwd");
+			m_UseTls = bool.Parse(m_MgrParams.GetParam("usetls"));
+			m_ServerPort = int.Parse(m_MgrParams.GetParam("serverport"));
+			m_FtpTimeOut = int.Parse(m_MgrParams.GetParam("timeout"));
+			m_FtpPassive = bool.Parse(m_MgrParams.GetParam("passive"));
+			m_FtpRestart = bool.Parse(m_MgrParams.GetParam("restart"));
+			if (m_TaskParams.GetParam("steptool") == "DatasetArchive")
 			{
-				m_MgrParams = MgrParams;
-				m_TaskParams = TaskParams;
-				m_User = m_MgrParams.GetParam("username");
-				m_Pwd = m_MgrParams.GetParam("userpwd");
-				m_UseTls = bool.Parse(m_MgrParams.GetParam("usetls"));
-				m_ServerPort = int.Parse(m_MgrParams.GetParam("serverport"));
-				m_FtpTimeOut = int.Parse(m_MgrParams.GetParam("timeout"));
-				m_FtpPassive = bool.Parse(m_MgrParams.GetParam("passive"));
-				m_FtpRestart = bool.Parse(m_MgrParams.GetParam("restart"));
-				if (m_TaskParams.GetParam("steptool") == "DatasetArchive")
-				{
-					m_ArchiveOrUpdate = ARCHIVE;
-				}
-				else
-				{
-					m_ArchiveOrUpdate = UPDATE;
-				}
-			}	// End sub
+				m_ArchiveOrUpdate = ARCHIVE;
+			}
+			else
+			{
+				m_ArchiveOrUpdate = UPDATE;
+			}
+		}	// End sub
 		#endregion
 
 		#region "Methods"
-			/// <summary>
-			/// Sets up to perform an archive or update task (Implements IArchiveOps.PerformTask)
-			/// Must be overridden in derived class
-			/// </summary>
-			/// <returns>TRUE for success, FALSE for failure</returns>
-			public virtual bool PerformTask()
+		/// <summary>
+		/// Sets up to perform an archive or update task (Implements IArchiveOps.PerformTask)
+		/// Must be overridden in derived class
+		/// </summary>
+		/// <returns>TRUE for success, FALSE for failure</returns>
+		public virtual bool PerformTask()
+		{			
+			m_DatasetName = m_TaskParams.GetParam("dataset");
+
+			//Set client/server perspective & setup paths
+			if (m_MgrParams.GetParam("perspective").ToLower() == "client")
 			{
-				//Set client/server perspective & setup paths
-				if (m_MgrParams.GetParam("perspective").ToLower() == "client")
-				{
-					m_TempVol = m_TaskParams.GetParam("Storage_Vol_External");
-				}
-				else
-				{
-					m_TempVol = m_TaskParams.GetParam("Storage_Vol");
-				}
-				m_DSNamePath = Path.Combine(Path.Combine(m_TempVol, m_TaskParams.GetParam("Storage_Path")),
-									m_TaskParams.GetParam("Folder"));	//Path to dataset on storage server
-				m_ArchiveNamePath = clsFileTools.CheckTerminator(m_TaskParams.GetParam("Archive_Path"), true, "/") +
-									m_TaskParams.GetParam("Folder");		//Path to dataset for FTP operations
+				m_TempVol = m_TaskParams.GetParam("Storage_Vol_External");
+			}
+			else
+			{
+				m_TempVol = m_TaskParams.GetParam("Storage_Vol");
+			}
+			m_DSNamePath = Path.Combine(Path.Combine(m_TempVol, m_TaskParams.GetParam("Storage_Path")),
+								m_TaskParams.GetParam("Folder"));	//Path to dataset on storage server
+			m_ArchiveNamePath = clsFileTools.CheckTerminator(m_TaskParams.GetParam("Archive_Path"), true, "/") +
+								m_TaskParams.GetParam("Folder");		//Path to dataset for FTP operations
 
-				//Verify dataset is in specified location
-				if (!VerifyDSPresent(m_DSNamePath))
-				{
-					m_Msg = "Dataset folder " + m_DSNamePath + " not found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
-					LogOperationFailed(m_TaskParams.GetParam("dataset"));
-					return false;
-				}
+			//Verify dataset is in specified location
+			if (!VerifyDSPresent(m_DSNamePath))
+			{
+				m_Msg = "Dataset folder " + m_DSNamePath + " not found";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
+				LogOperationFailed(m_DatasetName);
+				return false;
+			}
 
-				// Got to here, everything's OK, so let let the derived class take over
+			// Initialize the MD5 stage file creator
+			InitializeMD5StageFileCreator();
+
+			// Got to here, everything's OK, so let let the derived class take over
+			return true;
+		}	// End sub
+
+		/// <summary>
+		/// Verifies specified dataset is present
+		/// </summary>
+		/// <param name="DSNamePath">Fully qualified path to dataset folder</param>
+		/// <returns>TRUE if dataset folder is present; otherwise FALSE</returns>
+		protected bool VerifyDSPresent(string dsNamePath)
+		{
+			//Verifies specified dataset is present
+			if (Directory.Exists(dsNamePath))
+			{
 				return true;
-			}	// End sub
-
-			/// <summary>
-			/// Verifies specified dataset is present
-			/// </summary>
-			/// <param name="DSNamePath">Fully qualified path to dataset folder</param>
-			/// <returns>TRUE if dataset folder is present; otherwise FALSE</returns>
-			protected bool VerifyDSPresent(string dsNamePath)
+			}
+			else
 			{
-				//Verifies specified dataset is present
-				if (Directory.Exists(dsNamePath))
+				return false;
+			}
+		}	// End sub
+
+		/// <summary>
+		/// Writes a database log entry for a failed archive operation
+		/// </summary>
+		/// <param name="DSName">Name of dataset</param>
+		protected void LogOperationFailed(string dsName)
+		{
+			string msg = m_ArchiveOrUpdate + "failed, dataset " + dsName;
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+		}	// End sub
+
+		/// <summary>
+		/// Opens the archive server connection
+		/// </summary>
+		/// <param name="archiveOrUpdate">Indicates whether this is an archive or update operation for logging</param>
+		/// <returns>TRUE for success; otherwise FALSE</returns>
+		protected bool OpenArchiveServer()
+		{
+			try
+			{
+				m_FtpTools = new clsFtpOperations(m_TaskParams.GetParam("Archive_Server"), m_User, m_Pwd,
+																m_UseTls, m_ServerPort);
+
+				// Set the tool parameters
+				m_FtpTools.FtpPassive = m_FtpPassive;
+				m_FtpTools.FtpRestart = m_FtpRestart;
+				m_FtpTools.FtpTimeOut = m_FtpTimeOut;
+				m_FtpTools.UseLogFile = bool.Parse(m_MgrParams.GetParam("ftplogging"));
+
+				// Open the connection (I hope!)
+				if (m_FtpTools.OpenFTPConnection())
 				{
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Archive connection opened");
+					m_ConnectionOpen = true;
 					return true;
 				}
 				else
 				{
-					return false;
-				}
-			}	// End sub
-
-			/// <summary>
-			/// Writes a database log entry for a failed archive operation
-			/// </summary>
-			/// <param name="DSName">Name of dataset</param>
-			protected void LogOperationFailed(string dsName)
-			{
-				string msg = m_ArchiveOrUpdate + "failed, dataset " + dsName;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
-			}	// End sub
-
-			/// <summary>
-			/// Opens the archive server connection
-			/// </summary>
-			/// <param name="archiveOrUpdate">Indicates whether this is an archive or update operation for logging</param>
-			/// <returns>TRUE for success; otherwise FALSE</returns>
-			protected bool OpenArchiveServer()
-			{
-				try
-				{
-					m_FtpTools = new clsFtpOperations(m_TaskParams.GetParam("Archive_Server"), m_User, m_Pwd,
-																	m_UseTls, m_ServerPort);
-					
-					// Set the tool parameters
-					m_FtpTools.FtpPassive = m_FtpPassive;
-					m_FtpTools.FtpRestart = m_FtpRestart;
-					m_FtpTools.FtpTimeOut = m_FtpTimeOut;
-					m_FtpTools.UseLogFile=bool.Parse(m_MgrParams.GetParam("ftplogging"));
-
-					// Open the connection (I hope!)
-					if (m_FtpTools.OpenFTPConnection())
-					{
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile,clsLogTools.LogLevels.DEBUG,"Archive connection opened");
-						m_ConnectionOpen=true;
-						return true;
-					}
-					else
-					{
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile,clsLogTools.LogLevels.ERROR,m_FtpTools.ErrMsg);
-						m_FtpTools.CloseFTPConnection();
-						if (!string.IsNullOrWhiteSpace(m_FtpTools.ErrMsg))
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_FtpTools.ErrMsg);
-						m_Msg = "clsNewArchive.PerformTask: closed FTP connection";
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
-						LogOperationFailed(m_TaskParams.GetParam("dataset"));
-						m_ConnectionOpen=false;
-						return false;
-					}
-				}
-				catch (Exception ex)
-				{
-					m_Msg = "clsOpsBase.OpenArchiveServer: Exception opening server connection";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile,clsLogTools.LogLevels.ERROR,m_Msg,ex);
-					LogOperationFailed(m_TaskParams.GetParam("dataset"));
-					return false;
-				}
-			}	// End sub
-
-			/// <summary>
-			/// Closes an archive connection
-			/// </summary>
-			/// <param name="archiveOrUpdate"></param>
-			/// <returns></returns>
-			protected bool CloseArchiveServer()
-			{
-				try
-				{
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_FtpTools.ErrMsg);
 					m_FtpTools.CloseFTPConnection();
-					if (m_FtpTools.ErrMsg == string.Empty)
-					{
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Closed FTP connection");
-						m_ConnectionOpen = false;
-						return true;
-					}
-					else
-					{
+					if (!string.IsNullOrWhiteSpace(m_FtpTools.ErrMsg))
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_FtpTools.ErrMsg);
-						return false;
-					}
-				}
-				catch (Exception ex)
-				{
-					m_Msg = "clsOpsBase.OpenArchiveServer: Exception closing server connection";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg, ex);
-					LogOperationFailed(m_TaskParams.GetParam("dataset"));
+					m_Msg = "clsNewArchive.PerformTask: closed FTP connection";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
+					LogOperationFailed(m_DatasetName);
+					m_ConnectionOpen = false;
 					return false;
 				}
-			}	// End sub
-
-			/// <summary>
-			/// General method for copying a folder to the archive
-			/// </summary>
-			/// <param name="sourceFolder">Folder name/path to copy</param>
-			/// <param name="destFolder">Folder name/path on archive</param>
-			/// <returns></returns>
-			protected bool CopyOneFolderToArchive(string sourceFolder, string destFolder)
+			}
+			catch (Exception ex)
 			{
-				// Verify source folder exists
-				if (!Directory.Exists(sourceFolder))
+				m_Msg = "clsOpsBase.OpenArchiveServer: Exception opening server connection";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg, ex);
+				LogOperationFailed(m_DatasetName);
+				return false;
+			}
+		}	// End sub
+
+		/// <summary>
+		/// Closes an archive connection
+		/// </summary>
+		/// <param name="archiveOrUpdate"></param>
+		/// <returns></returns>
+		protected bool CloseArchiveServer()
+		{
+			try
+			{
+				m_FtpTools.CloseFTPConnection();
+				if (m_FtpTools.ErrMsg == string.Empty)
 				{
-					m_Msg = "Source folder " + sourceFolder + " not found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
-					LogOperationFailed(m_TaskParams.GetParam("dataset"));
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Closed FTP connection");
+					m_ConnectionOpen = false;
+					return true;
+				}
+				else
+				{
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_FtpTools.ErrMsg);
 					return false;
 				}
+			}
+			catch (Exception ex)
+			{
+				m_Msg = "clsOpsBase.OpenArchiveServer: Exception closing server connection";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg, ex);
+				LogOperationFailed(m_DatasetName);
+				return false;
+			}
+		}	// End sub
 
-				// Open archive connection
-				if (!OpenArchiveServer()) return false;
+		/// <summary>
+		/// General method for copying a folder to the archive
+		/// </summary>
+		/// <param name="sourceFolder">Folder name/path to copy</param>
+		/// <param name="destFolder">Folder name/path on archive</param>
+		/// <returns></returns>
+		protected bool CopyOneFolderToArchive(string sourceFolder, string destFolder)
+		{
+			// Verify source folder exists
+			if (!Directory.Exists(sourceFolder))
+			{
+				m_Msg = "Source folder " + sourceFolder + " not found";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
+				LogOperationFailed(m_DatasetName);
+				return false;
+			}
 
-				// Copy specified folder to archive
-				try
+			// Open archive connection
+			if (!OpenArchiveServer()) return false;
+
+			// Copy specified folder to archive
+			try
+			{
+				if (!m_FtpTools.CopyDirectory(sourceFolder, destFolder, true))
 				{
-					if (!m_FtpTools.CopyDirectory(sourceFolder, destFolder, true))
-					{
-						m_Msg = "Error copying folder " + sourceFolder + ": error " + m_FtpTools.ErrMsg;
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
-						LogOperationFailed(m_TaskParams.GetParam("dataset"));
-						CloseArchiveServer();
-						return false;
-					}
-				}
-				catch (Exception ex)
-				{
-					m_Msg = "clsOpsBase.PerformTask: Exception copying  folder " + sourceFolder;
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg, ex);
-					LogOperationFailed(m_TaskParams.GetParam("dataset"));
+					m_Msg = "Error copying folder " + sourceFolder + ": error " + m_FtpTools.ErrMsg;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
+					LogOperationFailed(m_DatasetName);
 					CloseArchiveServer();
 					return false;
 				}
+			}
+			catch (Exception ex)
+			{
+				m_Msg = "clsOpsBase.PerformTask: Exception copying  folder " + sourceFolder;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg, ex);
+				LogOperationFailed(m_DatasetName);
+				CloseArchiveServer();
+				return false;
+			}
 
-				m_Msg = "Copied folder " + sourceFolder + " to archive";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
+			m_Msg = "Copied folder " + sourceFolder + " to archive";
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
 
-				// Close the archive connection
-				if (!CloseArchiveServer()) return false;
+			// Close the archive connection
+			if (!CloseArchiveServer()) return false;
 
-				// Finished successfully
-				return true;
-			}	// End sub
+			// Finished successfully
+			return true;
+		}	// End sub
+
+		/// <summary>
+		/// Create a stagemd5 file for all files (and subfolders) in sResultsFolderPathServer
+		/// </summary>
+		/// <param name="sResultsFolderPathServer"></param>
+		/// <param name="sResultsFolderPathArchive"></param>
+		/// <returns></returns>
+		protected bool CreateMD5StagingFile(string sResultsFolderPathServer, string sResultsFolderPathArchive)
+		{
+			string sLocalParentFolderPathForDataset;
+			string sArchiveStoragePathForDataset;
+
+			System.Collections.Generic.List<string> lstFilePathsToStage;
+			bool bSuccess;
+
+			try
+			{
+				lstFilePathsToStage = new System.Collections.Generic.List<string>();
+
+				// Determine the folder just above sResultsFolderPathServer and just above sResultsFolderPathArchive
+				System.IO.DirectoryInfo diResultsFolderServer = new System.IO.DirectoryInfo(sResultsFolderPathServer);
+				sLocalParentFolderPathForDataset = diResultsFolderServer.Parent.FullName;
+
+				System.IO.DirectoryInfo diResultsFolderArchive = new System.IO.DirectoryInfo(sResultsFolderPathArchive);
+				sArchiveStoragePathForDataset = diResultsFolderArchive.Parent.FullName;
+
+				// Populate lstFilePathsToStage with each file found at sResultsFolderPathServer (including files in subfolders)
+				foreach (System.IO.FileInfo fiFile in diResultsFolderServer.GetFiles("*", SearchOption.AllDirectories))
+				{
+					lstFilePathsToStage.Add(fiFile.FullName);
+				}
+
+				bSuccess = CreateMD5StagingFileWork(lstFilePathsToStage, m_DatasetName, sLocalParentFolderPathForDataset, sArchiveStoragePathForDataset);
+			}
+			catch (Exception ex)
+			{
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception creating MD5 staging file for newly archived files from folder " + sResultsFolderPathServer, ex);
+				return false;
+			}
+
+			return bSuccess;
+		}
+
+		/// <summary>
+		/// Create a stagemd5 file for all files in filesToUpdate
+		/// </summary>
+		/// <param name="sResultsFolderPathServer"></param>
+		/// <param name="sResultsFolderPathArchive"></param>
+		/// <param name="filesToUpdate"></param>
+		/// <returns></returns>
+		protected bool CreateMD5StagingFile(string sResultsFolderPathServer, string sResultsFolderPathArchive, System.Collections.Generic.List<clsJobData> filesToUpdate)
+		{
+
+			string sLocalParentFolderPathForDataset;
+			string sArchiveStoragePathForDataset;
+
+			System.Collections.Generic.List<string> lstFilePathsToStage;
+			bool bSuccess;
+
+			try
+			{
+				lstFilePathsToStage = new System.Collections.Generic.List<string>();
+
+				// Determine the folder just above sResultsFolderPathServer and just above sResultsFolderPathArchive
+				System.IO.DirectoryInfo diResultsFolderServer = new System.IO.DirectoryInfo(sResultsFolderPathServer);
+				sLocalParentFolderPathForDataset = diResultsFolderServer.Parent.FullName;
+
+				System.IO.DirectoryInfo diResultsFolderArchive = new System.IO.DirectoryInfo(sResultsFolderPathArchive);
+				sArchiveStoragePathForDataset = diResultsFolderArchive.Parent.FullName;
+
+				// Populate lstFilePathsToStage with each file in filesToUpdate
+				foreach (clsJobData objFileInfo in filesToUpdate)
+				{
+					if (objFileInfo.CopySuccess)
+						lstFilePathsToStage.Add(objFileInfo.SvrFileToUpdate);
+				}
+
+				bSuccess = CreateMD5StagingFileWork(lstFilePathsToStage, m_DatasetName, sLocalParentFolderPathForDataset, sArchiveStoragePathForDataset);
+			}
+			catch (Exception ex)
+			{
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception creating MD5 staging file for newly archived files defined in List filesToUpdate", ex);
+				return false;
+			}
+
+			return bSuccess;
+		}
+
+		private bool CreateMD5StagingFileWork(System.Collections.Generic.List<string> lstFilePathsToStage, string sDatasetName, string sLocalParentFolderPathForDataset, string sArchiveStoragePathForDataset)
+		{
+			const string EXTRA_FILES_REGEX = clsMD5StageFileCreator.EXTRA_FILES_SUFFIX + @"(\d+)$";
+
+			System.Text.RegularExpressions.Regex reExtraFiles;
+			System.Text.RegularExpressions.Match reMatch;
+
+			string sDatasetAndSuffix;
+			int iExtraFileNumberNew = 1;
+			bool bSuccess;
+
+			// Convert sArchiveStoragePathForDataset from the form \\a2.emsl.pnl.gov\dmsarch\LTQ_ORB_2_2\
+			// to the form /archive/dmsarch/LTQ_ORB_2_2/
+
+			string sArchiveStoragePathForDatasetUnix = string.Empty;
+			bSuccess = clsMD5StageFileCreator.ConvertArchiveSharePathToArchiveStoragePath(sArchiveStoragePathForDataset, false, ref sArchiveStoragePathForDatasetUnix);
+
+			if (!bSuccess)
+			{
+				string msg = "Error converting the archive folder path (" + sArchiveStoragePathForDataset + ") to the archive storage path (something like /archive/dmsarch/LTQ_ORB_3_1/)";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+				return false;
+			}
+
+
+			// Look for existing stagemd5 or result files for dataset sDatasetName
+			System.Collections.Generic.List<string> lstSearchFileSpec = new System.Collections.Generic.List<string>();
+
+			sDatasetAndSuffix = sDatasetName + clsMD5StageFileCreator.EXTRA_FILES_SUFFIX;
+
+			lstSearchFileSpec.Add(clsMD5StageFileCreator.STAGE_FILE_PREFIX + sDatasetAndSuffix + "*");
+			lstSearchFileSpec.Add(clsMD5StageFileCreator.STAGE_FILE_INPROGRESS_PREFIX + sDatasetAndSuffix + "*");
+			lstSearchFileSpec.Add(clsMD5StageFileCreator.MD5_RESULTS_FILE_PREFIX + sDatasetAndSuffix + "*");
+			lstSearchFileSpec.Add(clsMD5StageFileCreator.MD5_RESULTS_INPROGRESS_FILE_PREFIX + sDatasetAndSuffix + "*");
+
+			System.IO.DirectoryInfo diStagingFolder;
+			diStagingFolder = new System.IO.DirectoryInfo(mMD5StageFileCreator.StagingFolderPath);
+
+			reExtraFiles = new System.Text.RegularExpressions.Regex(EXTRA_FILES_REGEX, System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+			// Check for each file in lstSearchFileSpec
+			foreach (string sFileSpec in lstSearchFileSpec)
+			{
+				foreach (System.IO.FileInfo fiFile in diStagingFolder.GetFiles(sFileSpec))
+				{
+					// Examine each file to parse out the number after EXTRA_FILES_SUFFIX
+					// For example, if the filename is results.DatasetName__ExtraFiles001 then we want to parse out "001" and convert that to an integer
+					reMatch = reExtraFiles.Match(fiFile.Name);
+					if (reMatch.Success)
+					{
+						int iStageFileNum;
+
+						if (int.TryParse(reMatch.Groups[1].Value, out iStageFileNum))
+						{
+							// Number parsed out
+							// Adjust iExtraFileNumberNew if necessary
+							if (iStageFileNum >= iExtraFileNumberNew)
+								iExtraFileNumberNew = iStageFileNum + 1;
+						}
+					}
+				}
+			} // foreach (sFileSpec in lstSearchFileSpec)
+
+			return mMD5StageFileCreator.WriteStagingFile(ref lstFilePathsToStage, sDatasetName, sLocalParentFolderPathForDataset, sArchiveStoragePathForDatasetUnix, iExtraFileNumberNew);
+
+		}
+
 		#endregion
+
+
+		#region "MD5StageFileCreator initialization and event handlers"
+
+		private void InitializeMD5StageFileCreator()
+		{
+			string sArchiveStagingFolderPath;
+			sArchiveStagingFolderPath = m_MgrParams.GetParam("HashFileLocation");
+
+			if (string.IsNullOrWhiteSpace(sArchiveStagingFolderPath))
+			{
+				sArchiveStagingFolderPath = MD5StageFileCreator.clsMD5StageFileCreator.DEFAULT_STAGING_FOLDER_PATH;
+				string msg = "Manager parameter HashFileLocation is not defined; will use default path of '" + sArchiveStagingFolderPath + "'";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+			}
+
+			mMD5StageFileCreator = new MD5StageFileCreator.clsMD5StageFileCreator(sArchiveStagingFolderPath);
+
+			// Attach the events
+			mMD5StageFileCreator.OnErrorEvent += new MD5StageFileCreator.clsMD5StageFileCreator.OnErrorEventEventHandler(MD5ErrorEventHandler);
+			mMD5StageFileCreator.OnMessageEvent += new MD5StageFileCreator.clsMD5StageFileCreator.OnMessageEventEventHandler(MD5MessageEventHandler);
+		}
+
+		private void MD5ErrorEventHandler(string sErrorMessage)
+		{
+			string msg = "MD5StageFileCreator Error: " + sErrorMessage;
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+		}
+
+		private void MD5MessageEventHandler(string sMessage)
+		{
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, sMessage);
+		}
+
+		#endregion
+
 	}	// End class
 }	// End namespace
