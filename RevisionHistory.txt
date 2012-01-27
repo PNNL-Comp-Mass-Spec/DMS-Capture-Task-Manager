@@ -1,5 +1,8 @@
 Capture Task Manager History
 
+Version 1.1.4408; January 26, 2012
+	- Updated DatasetArchivePlugin to merge existing __ExtraFiles staging files with a newly created __ExtraFiles staging file
+
 Version 1.1.4405; January 23, 2012
 	- Updated DatasetArchivePlugin to create an MD5 staging file when initially archiving a dataset
 		- Moved CreateMD5StagingFile into clsOpsBase

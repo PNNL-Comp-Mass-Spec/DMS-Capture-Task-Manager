@@ -90,7 +90,7 @@ namespace DatasetArchivePlugin
 		/// </summary>
 		/// <returns>TRUE for success, FALSE for failure</returns>
 		public virtual bool PerformTask()
-		{			
+		{
 			m_DatasetName = m_TaskParams.GetParam("dataset");
 
 			//Set client/server perspective & setup paths
@@ -374,6 +374,8 @@ namespace DatasetArchivePlugin
 			System.Text.RegularExpressions.Regex reExtraFiles;
 			System.Text.RegularExpressions.Match reMatch;
 
+			System.Collections.Generic.List<string> lstExtraStagingFiles = new System.Collections.Generic.List<string>();
+
 			string sDatasetAndSuffix;
 			int iExtraFileNumberNew = 1;
 			bool bSuccess;
@@ -390,7 +392,6 @@ namespace DatasetArchivePlugin
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 				return false;
 			}
-
 
 			// Look for existing stagemd5 or result files for dataset sDatasetName
 			System.Collections.Generic.List<string> lstSearchFileSpec = new System.Collections.Generic.List<string>();
@@ -425,12 +426,69 @@ namespace DatasetArchivePlugin
 							// Adjust iExtraFileNumberNew if necessary
 							if (iStageFileNum >= iExtraFileNumberNew)
 								iExtraFileNumberNew = iStageFileNum + 1;
+
+							lstExtraStagingFiles.Add(fiFile.FullName);
+
 						}
 					}
 				}
 			} // foreach (sFileSpec in lstSearchFileSpec)
 
-			return mMD5StageFileCreator.WriteStagingFile(ref lstFilePathsToStage, sDatasetName, sLocalParentFolderPathForDataset, sArchiveStoragePathForDatasetUnix, iExtraFileNumberNew);
+			// Create the new stagemd5 file
+			bSuccess = mMD5StageFileCreator.WriteStagingFile(ref lstFilePathsToStage, sDatasetName, sLocalParentFolderPathForDataset, sArchiveStoragePathForDatasetUnix, iExtraFileNumberNew);
+
+			if (bSuccess && lstExtraStagingFiles.Count > 0)
+			{
+				try
+				{
+					// Append the contents of each file in lstExtraStagingFiles to the newly created staging file
+
+					// Open the newly created staging file for Append
+					System.IO.StreamWriter swStageFile;
+					string sLineIn;
+					swStageFile = new System.IO.StreamWriter(new System.IO.FileStream(mMD5StageFileCreator.StagingFilePath, FileMode.Append, FileAccess.Write, FileShare.Read));
+
+					// Append the contents of each file in lstExtraStagingFiles
+					foreach (string sExtraFilePath in lstExtraStagingFiles)
+					{
+						System.IO.StreamReader srExtraStageFile;
+						srExtraStageFile = new System.IO.StreamReader(new System.IO.FileStream(sExtraFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
+
+						while (srExtraStageFile.Peek() > -1)
+						{
+							sLineIn = srExtraStageFile.ReadLine();
+							if (!string.IsNullOrWhiteSpace(sLineIn))
+								swStageFile.WriteLine(sLineIn);
+						}						
+
+						srExtraStageFile.Close();
+					}
+
+					swStageFile.Close();
+
+					// Delete each file in lstExtraStagingFiles
+					foreach (string sExtraFilePath in lstExtraStagingFiles)
+					{
+						try
+						{
+							System.IO.File.Delete(sExtraFilePath);
+						}
+						catch
+						{
+							// Ignore errors deleting the extra staging files
+						}
+
+					}
+				}
+				catch (Exception ex)
+				{
+					// Log the error, but leave bSuccess as True
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error appending extra staging files to " + mMD5StageFileCreator.StagingFilePath, ex);
+				}
+
+			}
+
+			return bSuccess;
 
 		}
 

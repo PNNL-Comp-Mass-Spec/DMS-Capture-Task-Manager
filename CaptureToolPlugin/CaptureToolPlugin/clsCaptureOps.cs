@@ -47,7 +47,11 @@ namespace CaptureToolPlugin
 		protected IMgrParams m_MgrParams;
 		protected int m_SleepInterval = 30;
 		protected string m_Msg = "";
-		protected bool m_ClientServer;	// True = client
+
+		// True means "client" which means we will use paths like \\proto-5\Exact04\2012_1
+		// False means "server" which means we use paths like E:\Exact04\2012_1
+		protected bool m_ClientServer;	
+
 		protected bool m_UseBioNet = false;
 		protected string m_UserName = "";
 		protected string m_Pwd = "";
@@ -593,11 +597,11 @@ namespace CaptureToolPlugin
 		public EnumCloseOutType DoOperation(ITaskParams taskParams)
 		{
 			string dataset = taskParams.GetParam("Dataset");
-			string sourceVol = taskParams.GetParam("Source_Vol");
-			string sourcePath = taskParams.GetParam("Source_Path");
-			string storageVol = taskParams.GetParam("Storage_Vol");
-			string storagePath = taskParams.GetParam("Storage_Path");
-			string storageVolExternal = taskParams.GetParam("Storage_Vol_External");
+			string sourceVol = taskParams.GetParam("Source_Vol");						// Example: \\exact04.bionet\
+			string sourcePath = taskParams.GetParam("Source_Path");						// Example: ProteomicsData\
+			string storageVol = taskParams.GetParam("Storage_Vol");						// Example: E:\
+			string storagePath = taskParams.GetParam("Storage_Path");					// Example: Exact04\2012_1\
+			string storageVolExternal = taskParams.GetParam("Storage_Vol_External");	// Example: \\proto-5\
 
 			RawDSTypes sourceType;
 			string pwd = DecodePassword(m_Pwd);
@@ -611,10 +615,12 @@ namespace CaptureToolPlugin
 			// Setup destination based on client/server switch
 			if (m_ClientServer)
 			{
+				// Example: \\proto-5\
 				tempVol = storageVolExternal;
 			}
 			else
 			{
+				// Example: E:\
 				tempVol = storageVol;
 			}
 
