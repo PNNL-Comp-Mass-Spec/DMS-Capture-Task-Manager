@@ -450,18 +450,27 @@ namespace DatasetArchivePlugin
 
 					// Append the contents of each file in lstExtraStagingFiles
 					foreach (string sExtraFilePath in lstExtraStagingFiles)
-					{
-						System.IO.StreamReader srExtraStageFile;
-						srExtraStageFile = new System.IO.StreamReader(new System.IO.FileStream(sExtraFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
+					{						
 
-						while (srExtraStageFile.Peek() > -1)
+						try
 						{
-							sLineIn = srExtraStageFile.ReadLine();
-							if (!string.IsNullOrWhiteSpace(sLineIn))
-								swStageFile.WriteLine(sLineIn);
-						}						
+							System.IO.StreamReader srExtraStageFile;
+							srExtraStageFile = new System.IO.StreamReader(new System.IO.FileStream(sExtraFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
 
-						srExtraStageFile.Close();
+							while (srExtraStageFile.Peek() > -1)
+							{
+								sLineIn = srExtraStageFile.ReadLine();
+								if (!string.IsNullOrWhiteSpace(sLineIn))
+									swStageFile.WriteLine(sLineIn);
+							}
+
+							srExtraStageFile.Close();
+						}
+						catch (Exception ex)
+						{
+							// Log the error, but continue trying to merge files
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error appending extra staging file " + sExtraFilePath + "to " + mMD5StageFileCreator.StagingFilePath, ex);
+						}
 					}
 
 					swStageFile.Close();
@@ -483,7 +492,7 @@ namespace DatasetArchivePlugin
 				catch (Exception ex)
 				{
 					// Log the error, but leave bSuccess as True
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error appending extra staging files to " + mMD5StageFileCreator.StagingFilePath, ex);
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error appending extra staging files to " + mMD5StageFileCreator.StagingFilePath, ex);
 				}
 
 			}
