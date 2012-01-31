@@ -1,5 +1,9 @@
 Capture Task Manager History
 
+Version 1.1.4413; January 31, 2012
+	- Updated DatasetQualityPlugin to recognize Bruker_Amazon_Ion_Trap datasets (which have an analysis.yep file in a .D folder)
+	- New version of MSFileInfoScanner.dll
+
 Version 1.1.4412; January 30, 2012
 	- Updated CaptureToolPlugin to support connecting to Bionet shares either using Prism.DLL or using clsNetworkConnection
 		- Advantage of clsNetworkConnection is better handling of exceptions

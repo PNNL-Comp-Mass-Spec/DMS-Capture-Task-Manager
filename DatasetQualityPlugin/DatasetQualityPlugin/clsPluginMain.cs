@@ -240,7 +240,12 @@ namespace DatasetQualityPlugin
 						fileName = "analysis.baf";
 						break;
 					case "bruker_ft":
-						fileName = m_TaskParams.GetParam("dataset") + ".d" + "\\" + "analysis.baf";
+						string sInstrumentClass = m_TaskParams.GetParam("Instrument_Class");
+
+						if (sInstrumentClass == "Bruker_Amazon_Ion_Trap")
+							fileName = m_TaskParams.GetParam("dataset") + ".d" + "\\" + "analysis.yep";
+						else
+							fileName = m_TaskParams.GetParam("dataset") + ".d" + "\\" + "analysis.baf";
 						break;
 					case "dot_uimf_files":
 						fileName = m_TaskParams.GetParam("dataset") + ".uimf";
