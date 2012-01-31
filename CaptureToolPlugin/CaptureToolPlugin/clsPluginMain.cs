@@ -68,6 +68,13 @@ namespace CaptureToolPlugin
 
 					retData.CloseoutType = capOpTool.DoOperation(m_TaskParams);
 
+					if (capOpTool.NeedToAbortProcessing)
+					{
+						m_NeedToAbortProcessing = true;
+						if (retData.CloseoutType != EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING)
+							retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING;
+					}
+
 					msg = "clsPluginMain.RunTool(): Completed capture operation";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 				}

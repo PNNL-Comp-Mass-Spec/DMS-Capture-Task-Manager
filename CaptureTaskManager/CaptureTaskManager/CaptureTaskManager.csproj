@@ -85,12 +85,15 @@
     <Compile Include="clsBroadcastCmd.cs" />
     <Compile Include="clsCaptureTask.cs" />
     <Compile Include="clsCleanupMgrErrors.cs" />
+    <Compile Include="clsCodeTest.cs" />
     <Compile Include="clsDbTask.cs" />
     <Compile Include="clsFailedResultsCopier.cs" />
     <Compile Include="clsLogTools.cs" />
     <Compile Include="clsMainProgram.cs" />
     <Compile Include="clsMessageHandler.cs" />
     <Compile Include="clsMgrSettings.cs" />
+    <Compile Include="clsNetworkConnection.cs" />
+    <Compile Include="clsParseCommandLine.cs" />
     <Compile Include="clsPluginLoader.cs" />
     <Compile Include="clsStatusData.cs" />
     <Compile Include="clsStatusFile.cs" />

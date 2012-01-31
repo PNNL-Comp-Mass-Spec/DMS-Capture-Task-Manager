@@ -41,6 +41,13 @@ namespace CaptureToolPlugin
 			NotEmpty,
 			Error
 		}
+
+		protected enum ConnectionType
+		{
+			NotConnected,
+			Prism,
+			DotNET
+		}
 		#endregion
 
 		#region "Class variables"
@@ -50,14 +57,26 @@ namespace CaptureToolPlugin
 
 		// True means "client" which means we will use paths like \\proto-5\Exact04\2012_1
 		// False means "server" which means we use paths like E:\Exact04\2012_1
-		protected bool m_ClientServer;	
+		protected bool m_ClientServer;
 
 		protected bool m_UseBioNet = false;
 		protected string m_UserName = "";
 		protected string m_Pwd = "";
-		protected ShareConnector m_ShareConnector;
-		protected bool m_Connected = false;
+		protected ShareConnector m_ShareConnectorPRISM;
+		protected NetworkConnection m_ShareConnectorDotNET;
+		protected ConnectionType m_ConnectionType = ConnectionType.NotConnected;
+		protected bool m_NeedToAbortProcessing = false;
 		string msg = "";
+
+		#endregion
+
+		#region "Propteries"
+
+		public bool NeedToAbortProcessing
+		{
+			get { return m_NeedToAbortProcessing; }
+		}
+
 		#endregion
 
 		#region "Constructors"
@@ -491,6 +510,31 @@ namespace CaptureToolPlugin
 		}	// End sub
 
 		/// <summary>
+		/// Returns a string that describes the username and connection method currently active
+		/// </summary>
+		/// <returns></returns>
+		protected string GetConnectionDescription()
+		{
+			string sConnectionMode;
+
+			switch (m_ConnectionType) {
+				case ConnectionType.NotConnected:
+					sConnectionMode = " as user " + Environment.UserName + " using fso";
+					break;
+				case ConnectionType.DotNET:
+					sConnectionMode = " as user " + m_UserName + " using CaptureTaskManager.NetworkConnection";
+					break;
+				case ConnectionType.Prism:
+					sConnectionMode = " as user " + m_UserName + " using PRISM.Files.ShareConnector";
+					break;
+				default:
+					sConnectionMode = " via unknown connection mode";
+					break;
+			}
+
+			return sConnectionMode;			
+		}
+		/// <summary>
 		/// Determines if raw dataset exists as a file or folder
 		/// </summary>
 		/// <param name="InstFolder">Full path to instrument transfer folder</param>
@@ -576,18 +620,184 @@ namespace CaptureToolPlugin
 		}	// End sub
 
 		/// <summary>
+		/// Connect to a BioNet share using either m_ShareConnectorPRISM or m_ShareConnectorDotNET
+		/// </summary>
+		/// <param name="userName">Username</param>
+		/// <param name="pwd">Password</param>
+		/// <param name="shareFolderPath">Share path</param>
+		/// <param name="eConnectionType">Connection type enum (ConnectionType.DotNET or ConnectionType.Prism)</param>
+		/// <param name="eCloseoutType">Closeout code (output)</param>
+		/// <returns>True if success, false if an error</returns>
+		private bool ConnectToShare(string userName, string pwd, string shareFolderPath, ConnectionType eConnectionType, ref EnumCloseOutType eCloseoutType)
+		{
+			bool bSuccess;
+
+			if (eConnectionType == ConnectionType.DotNET)
+			{
+				bSuccess = ConnectToShare(userName, pwd, shareFolderPath, ref m_ShareConnectorDotNET, ref eCloseoutType);
+			}
+			else
+			{
+				// Assume Prism Connector
+				bSuccess = ConnectToShare(userName, pwd, shareFolderPath, ref m_ShareConnectorPRISM, ref eCloseoutType);
+			}
+
+			return bSuccess;
+
+		}
+
+		/// <summary>
+		/// Connect to a remote share using a specific username and password
+		/// Uses class PRISM.Files.ShareConnector
+		/// </summary>
+		/// <param name="userName">Username</param>
+		/// <param name="pwd">Password</param>
+		/// <param name="shareFolderPath">Share path</param>
+		/// <param name="MyConn">Connection object (output)</param>
+		/// <param name="eCloseoutType">Closeout code (output)</param>
+		/// <returns>True if success, false if an error</returns>
+		private bool ConnectToShare(string userName, string pwd, string shareFolderPath, ref ShareConnector MyConn, ref EnumCloseOutType eCloseoutType)
+		{
+			eCloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+
+			MyConn = new ShareConnector(userName, pwd);
+			MyConn.Share = shareFolderPath;
+			if (MyConn.Connect())
+			{
+				msg = "Connected to Bionet (" + shareFolderPath + ") as user " + userName + " using PRISM.Files.ShareConnector";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+				m_ConnectionType = ConnectionType.Prism;
+				return true;
+			}
+			else
+			{
+				msg = "Error " + MyConn.ErrorMessage + " connecting to " + shareFolderPath + " as user " + userName + " using 'secfso'";
+
+				if (MyConn.ErrorMessage == "1326")
+					msg += "; you likely need to change the Capture_Method from secfso to fso";
+				if (MyConn.ErrorMessage == "53")
+					msg += "; the password may need to be reset";
+
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+
+				if (MyConn.ErrorMessage == "1219")
+				{
+					// Likely had error "An unexpected network error occurred" while copying a file for a previous dataset
+					// Need to completely exit the capture task manager
+					m_NeedToAbortProcessing = true;
+					eCloseoutType = EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING;
+				}
+				else
+				{
+					eCloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+
+				m_ConnectionType = ConnectionType.NotConnected;
+				return false;
+			}
+
+		}
+
+		/// <summary>
+		/// Connect to a remote share using a specific username and password
+		/// Uses class CaptureTaskManager.NetworkConnection
+		/// </summary>
+		/// <param name="userName">Username</param>
+		/// <param name="pwd">Password</param>
+		/// <param name="shareFolderPath">Share path</param>
+		/// <param name="MyConn">Connection object (output)</param>
+		/// <param name="eCloseoutType">Closeout code (output)</param>
+		/// <returns>True if success, false if an error</returns>
+		private bool ConnectToShare(string userName, string pwd, string shareFolderPath, ref NetworkConnection MyConn, ref EnumCloseOutType eCloseoutType)
+		{
+			eCloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+
+			try
+			{
+				// Make sure shareFolderPath does not end in a back slash
+				if (shareFolderPath.EndsWith(@"\"))
+					shareFolderPath = shareFolderPath.Substring(0, shareFolderPath.Length - 1);
+
+				System.Net.NetworkCredential accessCredentials;
+				accessCredentials = new System.Net.NetworkCredential(userName, pwd, "");
+
+				MyConn = new NetworkConnection(shareFolderPath, accessCredentials);
+
+				msg = "Connected to Bionet (" + shareFolderPath + ") as user " + userName + " using CaptureTaskManager.NetworkConnection";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+				m_ConnectionType = ConnectionType.DotNET;
+
+				eCloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+				return true;
+
+			}
+			catch (Exception ex)
+			{
+				msg = "Error connecting to " + shareFolderPath + " as user " + userName + " (using NetworkConnection class): " + ex.Message;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+
+				if (ex.Message.Contains("An unexpected network error occurred") || ex.Message.Contains("Multiple connections"))
+				{
+					// Need to completely exit the capture task manager
+					m_NeedToAbortProcessing = true;
+					eCloseoutType = EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING;
+				}
+				else
+				{
+					eCloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+
+				m_ConnectionType = ConnectionType.NotConnected;
+				return false;
+
+			}
+
+		}
+
+		/// <summary>
+		/// Disconnect from a bionet share if required
+		/// </summary>
+		private void DisconnectShareIfRequired()
+		{
+			if (m_ConnectionType == ConnectionType.Prism)
+				DisconnectShare(ref m_ShareConnectorPRISM);
+			else if (m_ConnectionType == ConnectionType.DotNET)
+				DisconnectShare(ref m_ShareConnectorDotNET);
+		}
+
+		/// <summary>
 		/// Disconnects a Bionet shared drive
 		/// </summary>
-		/// <param name="MyConn">Connection object for shared drive</param>
+		/// <param name="MyConn">Connection object (class PRISM.Files.ShareConnector) for shared drive</param>
 		/// <param name="ConnState">Return value specifying connection has been closed</param>
-		private void DisconnectShare(ref ShareConnector MyConn, ref bool ConnState)
+		private void DisconnectShare(ref ShareConnector MyConn)
 		{
-			//Disconnects a shared drive
 			MyConn.Disconnect();
+			GC.Collect();
+
 			msg = "Bionet disconnected";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-			ConnState = false;
+			m_ConnectionType = ConnectionType.NotConnected;
+
 		}	// End sub
+
+		/// <summary>
+		/// Disconnects a Bionet shared drive
+		/// </summary>
+		/// <param name="MyConn">Connection object (class CaptureTaskManager.NetworkConnection) for shared drive</param>
+		/// <param name="ConnState">Return value specifying connection has been closed</param>
+		private void DisconnectShare(ref NetworkConnection MyConn)
+		{
+			MyConn.Dispose();
+			MyConn = null;
+			GC.Collect();
+
+			msg = "Bionet disconnected";
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+			m_ConnectionType = ConnectionType.NotConnected;
+
+		}	// End sub
+
 
 		/// <summary>
 		/// Perform a single capture operation
@@ -602,6 +812,14 @@ namespace CaptureToolPlugin
 			string storageVol = taskParams.GetParam("Storage_Vol");						// Example: E:\
 			string storagePath = taskParams.GetParam("Storage_Path");					// Example: Exact04\2012_1\
 			string storageVolExternal = taskParams.GetParam("Storage_Vol_External");	// Example: \\proto-5\
+
+			string shareConnectorType = m_MgrParams.GetParam("ShareConnectorType");		// Should be PRISM or DotNET
+			ConnectionType eConnectionType;
+
+			if (shareConnectorType.ToLower() == "dotnet")
+				eConnectionType = ConnectionType.DotNET;
+			else
+				eConnectionType = ConnectionType.Prism;
 
 			RawDSTypes sourceType;
 			string pwd = DecodePassword(m_Pwd);
@@ -675,25 +893,14 @@ namespace CaptureToolPlugin
 				msg = "Bionet connection required";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
-				m_ShareConnector = new ShareConnector(m_UserName, pwd);
-				m_ShareConnector.Share = sourceFolderPath;
-				if (m_ShareConnector.Connect())
-				{
-					msg = "Connected to Bionet";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-					m_Connected = true;
-				}
-				else
-				{
-					msg = "Error " + m_ShareConnector.ErrorMessage + " connecting to " + sourceFolderPath + " as user " + m_UserName + " using 'secfso'";
+				EnumCloseOutType eCloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
 
-					if (m_ShareConnector.ErrorMessage == "1326")
-						msg += "; you likely need to change the Capture_Method from secfso to fso";
-					if (m_ShareConnector.ErrorMessage == "53")
-						msg += "; the password may need to be reset";
+				if (!ConnectToShare(m_UserName, pwd, sourceFolderPath, eConnectionType, ref eCloseoutType))
+				{
+					if (eCloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
+						eCloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-					return EnumCloseOutType.CLOSEOUT_FAILED;
+					return eCloseoutType;
 				}
 			}
 			else
@@ -750,7 +957,7 @@ namespace CaptureToolPlugin
 				default:
 					msg = "Invalid dataset type found: " + sourceType.ToString();
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
-					if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+					DisconnectShareIfRequired();
 					eReturn = EnumCloseOutType.CLOSEOUT_FAILED;
 					break;
 			}
@@ -770,7 +977,7 @@ namespace CaptureToolPlugin
 			{
 				msg = "Dataset '" + dataset + "' not ready";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg);
-				if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+				DisconnectShareIfRequired();
 				return EnumCloseOutType.CLOSEOUT_NOT_READY;
 			}
 
@@ -783,7 +990,7 @@ namespace CaptureToolPlugin
 			{
 				msg = "Exception creating dataset folder at " + datasetFolderPath;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
-				if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+				DisconnectShareIfRequired();
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -793,21 +1000,21 @@ namespace CaptureToolPlugin
 				// Copy the raw spectra file
 				targetFilePath = Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName);
 				File.Copy(sourceFilePath, targetFilePath);
-				msg = "Copied file " + sourceFilePath + " to " + targetFilePath;
+				msg = "Copied file " + sourceFilePath + " to " + targetFilePath + GetConnectionDescription();
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 			}
 			catch (Exception ex)
 			{
-				msg = "Copy exception for dataset " + dataset;
+				msg = "Copy exception for dataset " + dataset + GetConnectionDescription();
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
-				if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+				DisconnectShareIfRequired();
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
+			DisconnectShareIfRequired();
+
 			bool blnSuccess;
 			blnSuccess = CaptureLCMethodFile(dataset, datasetFolderPath);
-
-			if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
 
 			if (blnSuccess)
 				return EnumCloseOutType.CLOSEOUT_SUCCESS;
@@ -914,11 +1121,20 @@ namespace CaptureToolPlugin
 			string copySourceDir = Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName);
 			string copyTargetDir = Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName);
 
-			if (!VerifyConstantFolderSize(copySourceDir, m_SleepInterval))
+
+			// The following is temporary code to speed captures from the 15T on January 30, 2012
+			int iSleepInterval;
+			if ((System.DateTime.Now.Year == 2012) && (System.DateTime.Now.Month == 1) && (dataset.ToLower().StartsWith("test_0") || dataset.ToLower().StartsWith("2012_1")))
+				iSleepInterval = 5;
+			else
+				iSleepInterval = m_SleepInterval;
+
+
+			if (!VerifyConstantFolderSize(copySourceDir, iSleepInterval))
 			{
 				msg = "Dataset '" + dataset + "' not ready";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg);
-				if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+				DisconnectShareIfRequired();
 				return EnumCloseOutType.CLOSEOUT_NOT_READY;
 			}
 
@@ -931,7 +1147,7 @@ namespace CaptureToolPlugin
 			{
 				msg = "Exception creating dataset folder at " + datasetFolderPath;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
-				if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+				DisconnectShareIfRequired();
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -944,12 +1160,12 @@ namespace CaptureToolPlugin
 			{
 				// Copy the dataset folder
 				clsFileTools.CopyDirectory(copySourceDir, copyTargetDir, filesToSkip);
-				msg = "Copied folder " + copySourceDir + " to " + copyTargetDir;
+				msg = "Copied folder " + copySourceDir + " to " + copyTargetDir + GetConnectionDescription();
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 			}
 			catch (Exception ex)
 			{
-				msg = "Copy exception for dataset " + dataset;
+				msg = "Copy exception for dataset " + dataset + GetConnectionDescription();
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
 				// If exception was caused by locked file, create skip list and try again
 				if (ex.Message.Contains("The process cannot access the file") && (retryCount < 1))
@@ -967,7 +1183,7 @@ namespace CaptureToolPlugin
 					{
 						msg = "Exception getting list of files to skip for dataset " + dataset;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex1);
-						if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+						DisconnectShareIfRequired();
 						return EnumCloseOutType.CLOSEOUT_FAILED;
 					}
 
@@ -979,15 +1195,15 @@ namespace CaptureToolPlugin
 				}
 				else
 				{
-					if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+					DisconnectShareIfRequired();
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 			}
 
+			DisconnectShareIfRequired();
+
 			bool blnSuccess;
 			blnSuccess = CaptureLCMethodFile(dataset, datasetFolderPath);
-
-			if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
 
 			if (blnSuccess)
 				return EnumCloseOutType.CLOSEOUT_SUCCESS;
@@ -1004,7 +1220,7 @@ namespace CaptureToolPlugin
 			{
 				msg = "Dataset '" + dataset + "' not ready";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg);
-				if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+				DisconnectShareIfRequired();
 				return EnumCloseOutType.CLOSEOUT_NOT_READY;
 			}
 
@@ -1031,21 +1247,21 @@ namespace CaptureToolPlugin
 			{
 				clsFileTools.CopyDirectory(copySourceDir, datasetFolderPath);
 				msg = "Copied folder " + copySourceDir + " to " +
-					Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName);
+					Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName) + GetConnectionDescription();
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 			}
 			catch (Exception ex)
 			{
-				msg = "Exception copying dataset folder " + copySourceDir;
+				msg = "Exception copying dataset folder " + copySourceDir + GetConnectionDescription();
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
-				if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+				DisconnectShareIfRequired();
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
+			DisconnectShareIfRequired();
+
 			bool blnSuccess;
 			blnSuccess = CaptureLCMethodFile(dataset, datasetFolderPath);
-
-			if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
 
 			if (blnSuccess)
 				return EnumCloseOutType.CLOSEOUT_SUCCESS;
@@ -1062,7 +1278,7 @@ namespace CaptureToolPlugin
 			{
 				msg = "Dataset '" + dataset + "' not ready";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg);
-				if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+				DisconnectShareIfRequired();
 				return EnumCloseOutType.CLOSEOUT_NOT_READY;
 			}
 
@@ -1085,7 +1301,7 @@ namespace CaptureToolPlugin
 			{
 				msg = "Exception creating dataset folder at " + datasetFolderPath;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
-				if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+				DisconnectShareIfRequired();
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -1100,19 +1316,19 @@ namespace CaptureToolPlugin
 					fi.CopyTo(Path.Combine(datasetFolderPath, fi.Name));
 				}
 				msg = "Copied files in folder " + copySourceDir + " to " +
-					Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName);
+					Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName) + GetConnectionDescription();
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 				return EnumCloseOutType.CLOSEOUT_SUCCESS;
 			}
 			catch (Exception ex)
 			{
-				msg = "Exception copying files in dataset folder " + copySourceDir;
+				msg = "Exception copying files in dataset folder " + copySourceDir + GetConnectionDescription();
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 			finally
 			{
-				if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+				DisconnectShareIfRequired();
 			}
 		}
 
@@ -1125,7 +1341,7 @@ namespace CaptureToolPlugin
 			{
 				msg = "Dataset '" + dataset + "' not ready";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg);
-				if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+				DisconnectShareIfRequired();
 				return EnumCloseOutType.CLOSEOUT_NOT_READY;
 			}
 
@@ -1182,19 +1398,19 @@ namespace CaptureToolPlugin
 			{
 				clsFileTools.CopyDirectory(copySourceDir, datasetFolderPath);
 				msg = "Copied folder " + copySourceDir + " to " +
-					Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName);
+					Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName) + GetConnectionDescription();
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 				return EnumCloseOutType.CLOSEOUT_SUCCESS;
 			}
 			catch (Exception ex)
 			{
-				msg = "Exception copying dataset folder " + copySourceDir;
+				msg = "Exception copying dataset folder " + copySourceDir + GetConnectionDescription();
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 			finally
 			{
-				if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+				DisconnectShareIfRequired();
 			}
 		}
 

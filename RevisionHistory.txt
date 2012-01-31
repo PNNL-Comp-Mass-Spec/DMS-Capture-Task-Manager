@@ -1,5 +1,13 @@
 Capture Task Manager History
 
+Version 1.1.4412; January 30, 2012
+	- Updated CaptureToolPlugin to support connecting to Bionet shares either using Prism.DLL or using clsNetworkConnection
+		- Advantage of clsNetworkConnection is better handling of exceptions
+		- Disadvantage is that you cannot connect to a share more than once as the same user, which the application sometimes thinks is the case if capturing numerous files from the same share
+		- This support was required for capturing data from \\15T_FTICR.bionet\ProteomicsData since network errors were regularly happening, including having problems copying huge files (over 4 GB) 
+	- Added support for parsing command line switches when starting CaptureTaskManager.exe
+		- Use /T to enter CodeTest mode	
+
 Version 1.1.4408; January 26, 2012
 	- Updated DatasetArchivePlugin to merge existing __ExtraFiles staging files with a newly created __ExtraFiles staging file
 
