@@ -159,6 +159,109 @@ namespace DatasetIntegrityPlugin
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
             }
 
+			/// <summary>
+			/// Processes folders in folderList to compare the x_ folder to the non x_ folder
+			/// If the x_ folder is empty or if every file in the x_ folder is also in the non x_ folder, then returns True and optionally deletes the x_ folder
+			/// </summary>
+			/// <param name="folderList">List of folders; must contain exactly 2 entries</param>
+			/// <param name="sSupersededFolderPath"></param>
+			/// <returns>True if this is a superseded folder and it is safe to delete</returns>
+			private bool DetectSupersededFolder(string[] folderList, bool bDeleteIfSuperseded)
+			{
+				string msg;
+				string sNewFolder = string.Empty;
+				string sOldFolder = string.Empty;
+
+				System.IO.DirectoryInfo diOldFolder;
+				System.IO.DirectoryInfo diNewFolder;			
+
+				try
+				{
+					if (folderList.Length != 2)
+					{
+						msg = "folderList passed into DetectSupersededFolder does not contain 2 folders; cannot check for a superseded folder";
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+						return false;
+					}
+
+					diNewFolder = new System.IO.DirectoryInfo(folderList[0]);
+					diOldFolder = new System.IO.DirectoryInfo(folderList[1]);
+
+					if (diNewFolder.Name.ToLower().StartsWith("x_"))
+					{
+						// Swap things around
+						diNewFolder = new System.IO.DirectoryInfo(folderList[1]);
+						diOldFolder = new System.IO.DirectoryInfo(folderList[0]);
+					}
+
+					if (diOldFolder.Name == "x_" + diNewFolder.Name)
+					{
+						// Yes, we have a case of a likely superseded folder
+						// Examine diOldFolder
+
+						msg = "Comparing files in superseded folder (" + diOldFolder.FullName + ") to newer folder (" + diNewFolder.FullName + ")";
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+
+						bool bFolderIsSuperseded = true;
+
+						System.IO.FileInfo[] fiSupersededFiles;
+						fiSupersededFiles = diOldFolder.GetFiles("*", SearchOption.AllDirectories);
+
+						foreach (System.IO.FileInfo fiFile in fiSupersededFiles)
+						{
+							string sNewfilePath = fiFile.FullName.Replace(diOldFolder.FullName, diNewFolder.FullName);
+							System.IO.FileInfo fiNewFile = new System.IO.FileInfo(sNewfilePath);
+
+							if (!fiNewFile.Exists)
+							{
+								msg = "File not found in newer folder: " + fiNewFile.FullName;
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+
+								bFolderIsSuperseded = false;
+								break;
+							}
+
+							if (fiNewFile.Length < fiFile.Length)
+							{
+								msg = "Newer file is smaller than version in superseded folder: " + fiNewFile.FullName;
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+
+								bFolderIsSuperseded = false;
+								break;
+							}
+						}
+
+						if (bFolderIsSuperseded && bDeleteIfSuperseded)
+						{
+							// Delete diOldFolder
+							msg = "Deleting superseded folder: " + diOldFolder.FullName;
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+
+							diOldFolder.Delete(true);
+						}
+						
+						return bFolderIsSuperseded;
+						
+					}
+					else
+					{
+
+						msg = "Folder " + diOldFolder.FullName + " is not a superseded folder for " + diNewFolder.FullName;
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+						return false;
+					}
+
+				}
+				catch (Exception ex)
+				{
+					msg = "Error in DetectSupersededFolder: " + ex.Message;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+					return false;
+				}
+				
+
+			}
+
             private void ReportFileSizeTooLarge(string sDataFileDescription, string sFilePath, float fActualSize, float fMaxSize)
             {
                 string sMaxSize;
@@ -436,9 +539,27 @@ namespace DatasetIntegrityPlugin
 				}
 				else if (folderList.Length > 1)
 				{
-                    mRetData.EvalMsg = "Invalid dataset. Multiple .D folders found";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
-					return EnumCloseOutType.CLOSEOUT_FAILED;
+					bool bInvalid = true;
+
+					if (folderList.Length == 2)
+					{
+						// If two folders are present and one starts with x_ and all of the files inside the one that start with x_ are also in the folder without x_,
+						// then delete the x_ folder
+						bool bDeleteIfSuperseded = true;
+
+						if (DetectSupersededFolder(folderList, bDeleteIfSuperseded))
+						{
+							bInvalid = false;
+						}
+					}
+
+					if (bInvalid)
+					{
+						mRetData.EvalMsg = "Invalid dataset. Multiple .D folders found";
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+						return EnumCloseOutType.CLOSEOUT_FAILED;
+					}
+                    
 				}
 
 				// Verify analysis.baf file exists
@@ -505,9 +626,27 @@ namespace DatasetIntegrityPlugin
 				}
 				else if (folderList.Length > 1)
 				{
-                    mRetData.EvalMsg = "Invalid dataset. Multiple .D folders found";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
-					return EnumCloseOutType.CLOSEOUT_FAILED;
+					bool bInvalid = true;
+
+					if (folderList.Length == 2)
+					{
+						// If two folders are present and one starts with x_ and all of the files inside the one that start with x_ are also in the folder without x_,
+						// then delete the x_ folder
+						bool bDeleteIfSuperseded = true;
+
+						if (DetectSupersededFolder(folderList, bDeleteIfSuperseded))
+						{
+							bInvalid = false;
+						}
+					}
+
+					if (bInvalid)
+					{
+						mRetData.EvalMsg = "Invalid dataset. Multiple .D folders found";
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+						return EnumCloseOutType.CLOSEOUT_FAILED;
+					}
+
 				}
 
 				// Verify analysis.baf file exists
