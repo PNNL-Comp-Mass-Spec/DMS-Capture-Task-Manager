@@ -38,8 +38,12 @@ namespace CaptureToolPlugin
 				msg = "Starting CaptureToolPlugin.clsPluginMain.RunTool()";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
+				// Note that retData.CloseoutMsg will be stored in the Completion_Message field of the database
+				// Similarly, retData.EvalMsg will be stored in the Evaluation_Message field of the database
+				clsToolReturnData retData;
+
 				// Perform base class operations, if any
-				clsToolReturnData retData = base.RunTool();
+				retData = base.RunTool();
 				if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED) return retData;
 
 				string dataset = m_TaskParams.GetParam("Dataset");
@@ -66,7 +70,8 @@ namespace CaptureToolPlugin
 					msg = "clsPluginMain.RunTool(): Starting capture operation";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
-					retData.CloseoutType = capOpTool.DoOperation(m_TaskParams);
+					bool bSuccess;
+					bSuccess = capOpTool.DoOperation(m_TaskParams, ref retData);
 
 					if (capOpTool.NeedToAbortProcessing)
 					{
@@ -89,6 +94,7 @@ namespace CaptureToolPlugin
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 				return retData;
+
 			}	// End sub
 
 			/// <summary>

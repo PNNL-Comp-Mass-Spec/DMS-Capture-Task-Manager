@@ -1,5 +1,10 @@
 Capture Task Manager History
 
+Versoin 1.1.4416; February 3, 2012
+	- Updated CaptureToolPlugin to use CopyDirectoryWithResume when copying 15T_FTICR datasets
+	- Updated CaptureToolPlugin to store error messages in retData.CloseoutMsg (message is stored in Completion_Message in the DB)
+	- New version of Prism.dll
+
 Version 1.1.4413; January 31, 2012
 	- Updated DatasetQualityPlugin to recognize Bruker_Amazon_Ion_Trap datasets (which have an analysis.yep file in a .D folder)
 	- New version of MSFileInfoScanner.dll

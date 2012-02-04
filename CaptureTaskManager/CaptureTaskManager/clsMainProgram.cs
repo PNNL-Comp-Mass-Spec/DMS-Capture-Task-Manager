@@ -564,6 +564,8 @@ namespace CaptureTaskManager
 					msg = m_MgrSettings.GetParam("MgrName") + ": Unable to SetToolRunnerObject, job " + m_Task.GetParam("Job")
 								+ ", Dataset " + m_Task.GetParam("Dataset");
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+
+					msg = "Unable to SetToolRunnerObject";
 					m_Task.CloseTask(EnumCloseOutType.CLOSEOUT_FAILED, msg);
 					m_StatusFile.UpdateIdle();
 					return false;
@@ -609,7 +611,9 @@ namespace CaptureTaskManager
 						msg = m_MgrSettings.GetParam("MgrName") + ": Dataset not ready, tool " + m_Task.GetParam("StepTool")
 									+ ", job " + m_Task.GetParam("Job") + ", Dataset " + m_Task.GetParam("Dataset");
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
-						m_Task.CloseTask(EnumCloseOutType.CLOSEOUT_NOT_READY, "Dataset " + m_Task.GetParam("Dataset") + " not ready");
+
+						msg = "Dataset not ready";
+						m_Task.CloseTask(EnumCloseOutType.CLOSEOUT_NOT_READY, msg);
 						break;
 
 					case EnumCloseOutType.CLOSEOUT_SUCCESS:
@@ -625,6 +629,8 @@ namespace CaptureTaskManager
 									+ ", job " + m_Task.GetParam("Job") + ", Dataset " + m_Task.GetParam("Dataset")
 									+ "; CloseOut = NeedToAbortProcessing";
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+
+						msg = "Error: NeedToAbortProcessing";
 						m_Task.CloseTask(EnumCloseOutType.CLOSEOUT_FAILED, msg, toolResult.EvalCode, toolResult.EvalMsg);
 						break;
 
@@ -642,6 +648,8 @@ namespace CaptureTaskManager
 								   + ", job " + m_Task.GetParam("Job") + ", Dataset " + m_Task.GetParam("Dataset")
 								   + "; CloseOut = Exception";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+
+				msg = "Exception: " + ex.Message;
 				m_Task.CloseTask(EnumCloseOutType.CLOSEOUT_FAILED, msg, EnumEvalCode.EVAL_CODE_FAILED, "Exception running tool");
 			}
 
