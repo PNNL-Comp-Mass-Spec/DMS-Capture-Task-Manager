@@ -42,7 +42,8 @@
 		{
 			EVAL_CODE_SUCCESS = 0,
 			EVAL_CODE_FAILED = 1,
-			EVAL_CODE_NOT_EVALUATED = 2
+			EVAL_CODE_NOT_EVALUATED = 2,
+			EVAL_CODE_NETWORK_ERROR_RETRY_CAPTURE = 3
 		}
 
 		public enum EnumRequestTaskResult : short

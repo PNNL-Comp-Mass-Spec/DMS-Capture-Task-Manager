@@ -67,8 +67,10 @@ namespace CaptureToolPlugin
 		protected bool m_NeedToAbortProcessing = false;
 
 		System.DateTime m_LastProgressUpdate = System.DateTime.Now;
+
 		string m_LastProgressFileName = string.Empty;
 		float m_LastProgressPercent = -1;
+		protected bool mFileCopyEventsWired = false;
 
 		string m_ErrorMessage = string.Empty;
 
@@ -117,14 +119,33 @@ namespace CaptureToolPlugin
 
 			// Wire up the events for clsFileTools
 			// Note that all of the events and methods in clsFileTools are static
-			clsFileTools.CopyingFile += new clsFileTools.CopyingFileEventHandler(OnCopyingFile);
-			clsFileTools.FileCopyProgress += new clsFileTools.FileCopyProgressEventHandler(OnFileCopyProgress);
-			clsFileTools.ResumingFileCopy += new clsFileTools.ResumingFileCopyEventHandler(OnResumingFileCopy);
+			if (!mFileCopyEventsWired)
+			{
+				mFileCopyEventsWired = true;
+				clsFileTools.CopyingFile += new clsFileTools.CopyingFileEventHandler(OnCopyingFile);
+				clsFileTools.FileCopyProgress += new clsFileTools.FileCopyProgressEventHandler(OnFileCopyProgress);
+				clsFileTools.ResumingFileCopy += new clsFileTools.ResumingFileCopyEventHandler(OnResumingFileCopy);
+			}
 
-		}	// End sub
+
+		}
+
 		#endregion
 
 		#region "Methods"
+
+		public void DetachEvents()
+		{
+			// Un-wire the events
+			if (mFileCopyEventsWired)
+			{
+				mFileCopyEventsWired = false;
+				clsFileTools.CopyingFile -= OnCopyingFile;
+				clsFileTools.FileCopyProgress -= OnFileCopyProgress;
+				clsFileTools.ResumingFileCopy -= OnResumingFileCopy;
+			}
+		}
+
 		/// <summary>
 		/// Creates specified folder; if the folder already exists, returns true
 		/// </summary>
@@ -326,21 +347,26 @@ namespace CaptureToolPlugin
 								fileCount == 0 && folderCount <= 1)
 							{
 								if (bCopyWithResume)
-									// Do not rename the folder or file; leave as-is
+									// Do not rename the folder or file; leave as-is and we'll resume the copy
 									switchResult = true;
 								else
 									switchResult = MarkSupersededFiles(dsFolder);
 							}
 							else
 							{
-								// Fail the capture task
-
-								retData.CloseoutMsg = "Dataset folder already exists and has multiple files or subfolders";
-								msg = retData.CloseoutMsg + ": " + dsFolder;
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
-								switchResult = false;
-								break;
+								if (folderCount == 0 && bCopyWithResume)
+									// Do not rename the files; leave as-is and we'll resume the copy
+									switchResult = true;
+								else
+								{
+									// Fail the capture task
+									retData.CloseoutMsg = "Dataset folder already exists and has multiple files or subfolders";
+									msg = retData.CloseoutMsg + ": " + dsFolder;
+									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+									switchResult = false;
+								}
 							}
+
 							break;
 
 						case "delete":
@@ -656,18 +682,18 @@ namespace CaptureToolPlugin
 		/// <param name="eConnectionType">Connection type enum (ConnectionType.DotNET or ConnectionType.Prism)</param>
 		/// <param name="eCloseoutType">Closeout code (output)</param>
 		/// <returns>True if success, false if an error</returns>
-		private bool ConnectToShare(string userName, string pwd, string shareFolderPath, ConnectionType eConnectionType, ref EnumCloseOutType eCloseoutType)
+		private bool ConnectToShare(string userName, string pwd, string shareFolderPath, ConnectionType eConnectionType, ref EnumCloseOutType eCloseoutType, ref EnumEvalCode eEvalCode)
 		{
 			bool bSuccess;
 
 			if (eConnectionType == ConnectionType.DotNET)
 			{
-				bSuccess = ConnectToShare(userName, pwd, shareFolderPath, ref m_ShareConnectorDotNET, ref eCloseoutType);
+				bSuccess = ConnectToShare(userName, pwd, shareFolderPath, ref m_ShareConnectorDotNET, ref eCloseoutType, ref eEvalCode);
 			}
 			else
 			{
 				// Assume Prism Connector
-				bSuccess = ConnectToShare(userName, pwd, shareFolderPath, ref m_ShareConnectorPRISM, ref eCloseoutType);
+				bSuccess = ConnectToShare(userName, pwd, shareFolderPath, ref m_ShareConnectorPRISM, ref eCloseoutType, ref eEvalCode);
 			}
 
 			return bSuccess;
@@ -684,9 +710,10 @@ namespace CaptureToolPlugin
 		/// <param name="MyConn">Connection object (output)</param>
 		/// <param name="eCloseoutType">Closeout code (output)</param>
 		/// <returns>True if success, false if an error</returns>
-		private bool ConnectToShare(string userName, string pwd, string shareFolderPath, ref ShareConnector MyConn, ref EnumCloseOutType eCloseoutType)
+		private bool ConnectToShare(string userName, string pwd, string shareFolderPath, ref ShareConnector MyConn, ref EnumCloseOutType eCloseoutType, ref EnumEvalCode eEvalCode)
 		{
 			eCloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+			eEvalCode = EnumEvalCode.EVAL_CODE_SUCCESS;
 
 			MyConn = new ShareConnector(userName, pwd);
 			MyConn.Share = shareFolderPath;
@@ -716,6 +743,7 @@ namespace CaptureToolPlugin
 					// Need to completely exit the capture task manager
 					m_NeedToAbortProcessing = true;
 					eCloseoutType = EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING;
+					eEvalCode = EnumEvalCode.EVAL_CODE_NETWORK_ERROR_RETRY_CAPTURE;
 				}
 				else
 				{
@@ -738,9 +766,10 @@ namespace CaptureToolPlugin
 		/// <param name="MyConn">Connection object (output)</param>
 		/// <param name="eCloseoutType">Closeout code (output)</param>
 		/// <returns>True if success, false if an error</returns>
-		private bool ConnectToShare(string userName, string pwd, string shareFolderPath, ref NetworkConnection MyConn, ref EnumCloseOutType eCloseoutType)
+		private bool ConnectToShare(string userName, string pwd, string shareFolderPath, ref NetworkConnection MyConn, ref EnumCloseOutType eCloseoutType, ref EnumEvalCode eEvalCode)
 		{
 			eCloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+			eEvalCode = EnumEvalCode.EVAL_CODE_SUCCESS;
 
 			try
 			{
@@ -772,6 +801,7 @@ namespace CaptureToolPlugin
 					// Need to completely exit the capture task manager
 					m_NeedToAbortProcessing = true;
 					eCloseoutType = EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING;
+					eEvalCode = EnumEvalCode.EVAL_CODE_NETWORK_ERROR_RETRY_CAPTURE;
 				}
 				else
 				{
@@ -805,6 +835,7 @@ namespace CaptureToolPlugin
 		{
 			MyConn.Disconnect();
 			GC.Collect();
+			GC.WaitForPendingFinalizers();
 
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Bionet disconnected");
 			m_ConnectionType = ConnectionType.NotConnected;
@@ -821,6 +852,7 @@ namespace CaptureToolPlugin
 			MyConn.Dispose();
 			MyConn = null;
 			GC.Collect();
+			GC.WaitForPendingFinalizers();
 
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Bionet disconnected");
 			m_ConnectionType = ConnectionType.NotConnected;
@@ -868,7 +900,7 @@ namespace CaptureToolPlugin
 			// This determines whether or not we add x_ to an existing file or folder, 
 			// and determines whether we use CopyDirectory or CopyFolderWithResume/CopyFileWithResume
 			bool bCopyWithResume = false;
-			if (sInstrumentClass == "BrukerFT_BAF")
+			if (sInstrumentClass == "BrukerFT_BAF" || sInstrumentClass == "BrukerMALDI_Imaging")
 				bCopyWithResume = true;
 
 			RawDSTypes sourceType;
@@ -956,10 +988,13 @@ namespace CaptureToolPlugin
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 				EnumCloseOutType eCloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+				EnumEvalCode eEvalCode = EnumEvalCode.EVAL_CODE_SUCCESS;
 
-				if (!ConnectToShare(m_UserName, pwd, sourceFolderPath, eConnectionType, ref eCloseoutType))
+				if (!ConnectToShare(m_UserName, pwd, sourceFolderPath, eConnectionType, ref eCloseoutType, ref eEvalCode))
 				{
 					retData.CloseoutType = eCloseoutType;
+					retData.EvalCode = eEvalCode;
+
 					PossiblyStoreErrorMessage(ref retData);
 					if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
 						retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -1312,12 +1347,19 @@ namespace CaptureToolPlugin
 			int retryCount = 0;
 			bool bDoCapture = true;
 			bool bSuccess = false;
+			int iSleepInterval = m_SleepInterval;
 
 			string copySourceDir = Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName);
 			string copyTargetDir = Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName);
 
 
-			if (!VerifyConstantFolderSize(copySourceDir, m_SleepInterval))
+			if (System.DateTime.Now <= new System.DateTime(2012, 2, 8) && sourceFolderPath.StartsWith(@"\\15T_FTICR.bionet\"))
+			{
+				// Override Sleep interval to just 5 seconds when capturing 15T datasets prior to February 8, 2012
+				iSleepInterval = 5;
+			}
+
+			if (!VerifyConstantFolderSize(copySourceDir, iSleepInterval))
 			{
 				msg = "Dataset '" + dataset + "' not ready";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
@@ -1349,7 +1391,8 @@ namespace CaptureToolPlugin
 
 					if (bCopyWithResume)
 					{
-						bSuccess = CopyFolderWithResume(copySourceDir, copyTargetDir, filesToSkip);
+						bool bRecurse = true;
+						bSuccess = CopyFolderWithResume(copySourceDir, copyTargetDir, bRecurse, filesToSkip);
 					}
 					else
 					{
@@ -1460,7 +1503,10 @@ namespace CaptureToolPlugin
 			{
 
 				if (bCopyWithResume)
-					bSuccess = CopyFolderWithResume(copySourceDir, datasetFolderPath);
+				{
+					bool bRecurse = true;
+					bSuccess = CopyFolderWithResume(copySourceDir, datasetFolderPath, bRecurse);
+				}
 				else
 				{
 					clsFileTools.CopyDirectory(copySourceDir, datasetFolderPath);
@@ -1540,7 +1586,8 @@ namespace CaptureToolPlugin
 			{
 				if (bCopyWithResume)
 				{
-					bSuccess = CopyFolderWithResume(copySourceDir, datasetFolderPath);
+					bool bRecurse = false;
+					bSuccess = CopyFolderWithResume(copySourceDir, datasetFolderPath, bRecurse);
 				}
 				else
 				{
@@ -1662,13 +1709,13 @@ namespace CaptureToolPlugin
 			}
 		}
 
-		private bool CopyFolderWithResume(string sSourceFolderPath, string sTargetFolderPath)
+		private bool CopyFolderWithResume(string sSourceFolderPath, string sTargetFolderPath, bool bRecurse)
 		{
 			List<string> filesToSkip = null;
-			return CopyFolderWithResume(sSourceFolderPath, sTargetFolderPath, filesToSkip);
+			return CopyFolderWithResume(sSourceFolderPath, sTargetFolderPath, bRecurse, filesToSkip);
 		}
 
-		private bool CopyFolderWithResume(string sSourceFolderPath, string sTargetFolderPath, List<string> filesToSkip)
+		private bool CopyFolderWithResume(string sSourceFolderPath, string sTargetFolderPath, bool bRecurse, List<string> filesToSkip)
 		{
 			clsFileTools.FileOverwriteMode eFileOverwriteMode = clsFileTools.FileOverwriteMode.OverWriteIfDateOrLengthDiffer;
 			int iFileCountSkipped = 0;
@@ -1688,7 +1735,7 @@ namespace CaptureToolPlugin
 					// Clear any previous errors
 					m_ErrorMessage = string.Empty;
 
-					bSuccess = clsFileTools.CopyDirectoryWithResume(sSourceFolderPath, sTargetFolderPath, true, eFileOverwriteMode, filesToSkip, ref iFileCountSkipped, ref iFileCountResumed, ref iFileCountNewlyCopied);
+					bSuccess = clsFileTools.CopyDirectoryWithResume(sSourceFolderPath, sTargetFolderPath, bRecurse, eFileOverwriteMode, filesToSkip, ref iFileCountSkipped, ref iFileCountResumed, ref iFileCountNewlyCopied);
 					bDoCopy = false;
 
 					if (bSuccess)
@@ -1704,7 +1751,7 @@ namespace CaptureToolPlugin
 
 				}
 				catch (Exception ex)
-				{					
+				{
 					if (string.IsNullOrWhiteSpace(clsFileTools.CurrentSourceFile))
 						msg = "Error while copying directory: ";
 					else
@@ -1901,13 +1948,12 @@ namespace CaptureToolPlugin
 				m_LastProgressUpdate = System.DateTime.Now;
 				m_LastProgressFileName = filename;
 				m_LastProgressPercent = percentComplete;
-
 				string msg = "  copying " + System.IO.Path.GetFileName(filename) + ": " + percentComplete.ToString("0.0") + "% complete";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-
 			}
 
-		}
+
+		}	// End sub
 
 
 		#endregion

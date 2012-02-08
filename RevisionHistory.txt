@@ -1,6 +1,12 @@
 Capture Task Manager History
 
-Versoin 1.1.4416; February 3, 2012
+Version 1.1.4421; February 8, 2012
+	- Capture Plugin now sets EvalCode to 3 (EVAL_CODE_NETWORK_ERROR_RETRY_CAPTURE) if a network error occurs during capture
+		- Stored Procedure SetStepTaskComplete recognizes this code and will auto-retry capture
+	- Fixed bug in Capture Plugin that was wiring up multiple event handlers to the clsFileTools events
+	- Fixed bug in Capture Plugin that was recursively capturing files and folders for Bruker Imaging datasets
+
+Version 1.1.4416; February 3, 2012
 	- Updated CaptureToolPlugin to use CopyDirectoryWithResume when copying 15T_FTICR datasets
 	- Updated CaptureToolPlugin to store error messages in retData.CloseoutMsg (message is stored in Completion_Message in the DB)
 	- New version of Prism.dll

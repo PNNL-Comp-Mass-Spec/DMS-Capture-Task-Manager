@@ -66,6 +66,7 @@ namespace DatasetArchivePlugin
 			int compareErrorCount;
 			bool copySuccess;
 			bool stageSuccess;
+			string ftpErrMsg;
 
 			// Perform base class operations
 			if (!base.PerformTask()) return false;
@@ -80,7 +81,7 @@ namespace DatasetArchivePlugin
 			if (!Directory.Exists(m_ArchiveSharePath))
 			{
 				m_Msg = "Archived dataset folder " + m_ArchiveSharePath + " not found";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
+				LogErrorMessage(m_Msg, "Verify dataset directory exists in archive");
 				LogOperationFailed(m_DatasetName);
 				return false;
 			}
@@ -110,7 +111,10 @@ namespace DatasetArchivePlugin
 				// Create a new stagemd5 file for each file m_ResultsFolderPathServer
 				stageSuccess = CreateMD5StagingFile(m_ResultsFolderPathServer, m_ResultsFolderPathArchive);
 				if (!stageSuccess)
+				{
+					LogErrorMessage("CreateMD5StagingFile returned false", "CreateMD5StagingFile");
 					return false;
+				}					
 
 				if (!copySuccess)
 					return false;
@@ -137,8 +141,11 @@ namespace DatasetArchivePlugin
 				if (filesToUpdate.Count < 1)
 				{
 					// No files requiring update were found. Human intervention may be required
-					m_Msg = "No files needing update found for dataset " + m_DatasetName
-									+ ", job " + m_TaskParams.GetParam("Job");
+					m_Msg = "No files needing update found for dataset " + m_DatasetName + ", job " + m_TaskParams.GetParam("Job");
+					
+					if (string.IsNullOrWhiteSpace(m_Msg))
+						m_Msg = "No files needing update found";
+
 					if (compareErrorCount == 0)
 					{
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, m_Msg);
@@ -147,7 +154,7 @@ namespace DatasetArchivePlugin
 					else
 					{
 						m_Msg += "; however, errors occurred when looking for changed files";
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, m_Msg);
+						LogErrorMessage(m_Msg, "No files requiring update were found. Human intervention may be required", true);
 						return false;
 					}
 				}
@@ -167,12 +174,13 @@ namespace DatasetArchivePlugin
 
 					if (!m_FtpTools.OpenFTPConnection())
 					{
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_FtpTools.ErrMsg);
+						LogErrorMessage(m_FtpTools.ErrMsg, "Open the FTP client");						
 						LogOperationFailed(m_DatasetName);
 						m_FtpTools.CloseFTPConnection();
-						if (!string.IsNullOrWhiteSpace(m_FtpTools.ErrMsg))
+						ftpErrMsg = m_FtpTools.ErrMsg;
+						if (!string.IsNullOrWhiteSpace(ftpErrMsg))
 						{
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_FtpTools.ErrMsg);
+							LogErrorMessage(ftpErrMsg, "Close the FTP client");
 						}
 						return false;
 					}
@@ -182,16 +190,17 @@ namespace DatasetArchivePlugin
 					if (!copySuccess)
 					{
 						m_Msg = "Error updating archive, dataset " + m_DatasetName + ", Job " + m_TaskParams.GetParam("Job");
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
+						LogErrorMessage(m_Msg, "Error updating archive");
 						LogOperationFailed(m_DatasetName);
 						// Do not exit this function yet; we need to call CreateMD5StagingFile
 					}
 
 					// Close the FTP server
 					m_FtpTools.CloseFTPConnection();
-					if (string.IsNullOrWhiteSpace(m_FtpTools.ErrMsg))
+					ftpErrMsg = m_FtpTools.ErrMsg;
+					if (!string.IsNullOrWhiteSpace(ftpErrMsg))
 					{
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_FtpTools.ErrMsg);
+						LogErrorMessage(ftpErrMsg, "Close the FTP client");
 					}
 
 				}
@@ -206,30 +215,28 @@ namespace DatasetArchivePlugin
 				// Create a new stagemd5 file for each file actually copied
 				stageSuccess = CreateMD5StagingFile(m_ResultsFolderPathServer, m_ResultsFolderPathArchive, filesToUpdate);
 				if (!stageSuccess)
-					return false;
-
-				if (!copySuccess)
 				{
+					LogErrorMessage("CreateMD5StagingFile returned false", "CreateMD5StagingFile");
 					return false;
+				}
+
+				if (!copySuccess)				
+					return false;				
+				
+				if (compareErrorCount == 0)
+				{
+					// If we got to here, everything worked OK
+					m_Msg = "Update complete, dataset " + m_DatasetName;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
+					return true;
 				}
 				else
 				{
-
-					if (compareErrorCount == 0)
-					{
-						// If we got to here, everything worked OK
-						m_Msg = "Update complete, dataset " + m_DatasetName;
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
-						return true;
-					}
-					else
-					{
-						// Files have been updated, but errors occurred in CompareFolders
-						m_Msg = "Update complete, dataset " + m_DatasetName;
-						m_Msg += "; however, errors occurred when looking for changed files";
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, m_Msg);
-						return false;
-					}
+					// Files have been updated, but errors occurred in CompareFolders
+					m_Msg = "Update complete, dataset " + m_DatasetName;
+					m_Msg += "; however, errors occurred when looking for changed files";
+					LogErrorMessage(m_Msg, "Files have been updated, but errors occurred in CompareFolders", true);
+					return false;
 				}
 			}
 
@@ -275,6 +282,7 @@ namespace DatasetArchivePlugin
 						return false;
 					}
 				}
+
 				//Copy the file
 				m_Msg = "Updating file " + FileToUpdate.SvrFileToUpdate;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
@@ -282,7 +290,7 @@ namespace DatasetArchivePlugin
 				{
 					//Error copying the file
 					m_Msg = "Error copying file " + FileToUpdate.SvrFileToUpdate + "; " + ftpTools.ErrMsg;
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
+					LogErrorMessage(m_Msg, "Error copying file");
 					return false;
 				}
 
@@ -340,7 +348,7 @@ namespace DatasetArchivePlugin
 			if (!Directory.Exists(svrFolderPath))
 			{
 				msg = "clsArchiveUpdate.CompareFolders: Storage server folder " + svrFolderPath + " not found";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+				LogErrorMessage(msg, "Current Task");
 				return null;
 			}
 
@@ -348,7 +356,7 @@ namespace DatasetArchivePlugin
 			if (!Directory.Exists(sambaFolderPath))
 			{
 				msg = "clsArchiveUpdate.CompareFolders: Archive folder " + sambaFolderPath + " not found";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+				LogErrorMessage(msg, "Current Task");
 				return null;
 			}
 
@@ -362,7 +370,7 @@ namespace DatasetArchivePlugin
 			catch (Exception ex)
 			{
 				msg = "clsArchiveUpdate.CompareFolders: Exception getting file listing, folder " + svrFolderPath;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+				LogErrorMessage(msg, "Exception getting file listing for svrFolderPath");
 				return null;
 			}
 
@@ -375,13 +383,13 @@ namespace DatasetArchivePlugin
 				if (archFileName.Length == 0)
 				{
 					msg = "File name not returned when converting from server path to archive path for file" + svrFileName;
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+					LogErrorMessage(msg, "Current Task");
 					return null;
 				}
 				else if (archFileName == "Error")
 				{
 					msg = "Exception converting server path to archive path for file " + svrFileName + ": " + m_ErrMsg;
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+					LogErrorMessage(msg, "Current Task");
 					return null;
 				}
 
@@ -400,7 +408,7 @@ namespace DatasetArchivePlugin
 						// Disable hash-based comparisons for this job
 
 						msg = "clsArchiveUpdate.CompareFolders: Error comparing files. Error msg = " + m_ErrMsg;
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+						LogErrorMessage(msg, "Current Task");
 
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Disabling hash-based comparisons for this job");
 
@@ -426,7 +434,7 @@ namespace DatasetArchivePlugin
 						default:        // Includes FILE_COMPARE_ERROR
 							// There was a problem with the file comparison; abort the update
 							msg = "clsArchiveUpdate.CompareFolders: Error comparing files. Error msg = " + m_ErrMsg;
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+							LogErrorMessage(msg, "Current Task");
 							compareErrorCount += 1;
 							break;
 					}	// End switch
@@ -582,6 +590,35 @@ namespace DatasetArchivePlugin
 				}
 			}
 		}	// End sub
+
+		/// <summary>
+		/// Write an error message to the log
+		/// If msg is blank, then logs the current task description followed by "empty error message"
+		/// </summary>
+		/// <param name="msg">Error message</param>
+		/// <param name="currentTask">Current task</param>
+		protected void LogErrorMessage(string msg, string currentTask)
+		{
+			LogErrorMessage(msg, currentTask, false);
+		}
+
+		/// <summary>
+		/// Write an error message to the log
+		/// If msg is blank, then logs the current task description followed by "empty error message"
+		/// </summary>
+		/// <param name="msg">Error message</param>
+		/// <param name="currentTask">Current task</param>
+		/// <param name="logDB">True to log to the database in addition to logging to the local log file</param>
+		protected void LogErrorMessage(string msg, string currentTask, bool logDB)
+		{
+			if (string.IsNullOrWhiteSpace(msg))
+				msg = currentTask + ": empty error message";
+
+			if (logDB)
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+			else
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+		}
 
 		#endregion
 

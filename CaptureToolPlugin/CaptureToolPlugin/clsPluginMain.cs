@@ -90,6 +90,9 @@ namespace CaptureToolPlugin
 					retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 
+				capOpTool.DetachEvents();
+				capOpTool = null;
+				
 				msg = "Completed clsPluginMain.RunTool()";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 

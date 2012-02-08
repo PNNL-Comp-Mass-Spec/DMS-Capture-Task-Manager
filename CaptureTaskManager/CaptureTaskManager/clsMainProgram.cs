@@ -604,7 +604,7 @@ namespace CaptureTaskManager
 						else
 							sCloseoutMessage = "Failure running tool " + m_Task.GetParam("StepTool");
 
-						m_Task.CloseTask(EnumCloseOutType.CLOSEOUT_FAILED, sCloseoutMessage, toolResult.EvalCode, toolResult.EvalMsg);
+						m_Task.CloseTask(eTaskCloseout, sCloseoutMessage, toolResult.EvalCode, toolResult.EvalMsg);
 						break;
 
 					case EnumCloseOutType.CLOSEOUT_NOT_READY:
@@ -613,14 +613,14 @@ namespace CaptureTaskManager
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
 
 						msg = "Dataset not ready";
-						m_Task.CloseTask(EnumCloseOutType.CLOSEOUT_NOT_READY, msg);
+						m_Task.CloseTask(eTaskCloseout, msg);
 						break;
 
 					case EnumCloseOutType.CLOSEOUT_SUCCESS:
 						msg = m_MgrSettings.GetParam("MgrName") + ": Step complete, tool " + m_Task.GetParam("StepTool")
 									+ ", job " + m_Task.GetParam("Job") + ", Dataset " + m_Task.GetParam("Dataset");
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-						m_Task.CloseTask(toolResult.CloseoutType, toolResult.CloseoutMsg, toolResult.EvalCode, toolResult.EvalMsg);
+						m_Task.CloseTask(eTaskCloseout, toolResult.CloseoutMsg, toolResult.EvalCode, toolResult.EvalMsg);
 						bSuccess = true;
 						break;
 
@@ -631,7 +631,7 @@ namespace CaptureTaskManager
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 
 						msg = "Error: NeedToAbortProcessing";
-						m_Task.CloseTask(EnumCloseOutType.CLOSEOUT_FAILED, msg, toolResult.EvalCode, toolResult.EvalMsg);
+						m_Task.CloseTask(eTaskCloseout, msg, toolResult.EvalCode, toolResult.EvalMsg);
 						break;
 
 					default:
