@@ -86,8 +86,20 @@ namespace CaptureToolPlugin
 				catch (Exception ex)
 				{
 					msg = "clsPluginMain.RunTool(): Exception during capture operation";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
-					retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+					if (ex.Message.Contains("unknown user name or bad password")) 
+					{
+						// This error randomly occurs; no need to log a full stack trace
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg + ", Logon failure: unknown user name or bad password");
+						// Set the EvalCode to 3 so that capture can be retried
+						retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+						retData.EvalCode = EnumEvalCode.EVAL_CODE_NETWORK_ERROR_RETRY_CAPTURE;
+					}
+					else
+					{
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+						retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+					}
+					
 				}
 
 				capOpTool.DetachEvents();
