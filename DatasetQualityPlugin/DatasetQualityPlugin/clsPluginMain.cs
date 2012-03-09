@@ -169,8 +169,19 @@ namespace DatasetQualityPlugin
 				bool success;
 
 				m_ErrOccurred = false;
+				m_Msg = string.Empty;
+
 				success = m_MsFileScanner.ProcessMSFileOrFolder(Path.Combine(sourceFolder, inpFileName), outputFolder);
-				if (success)
+				if (!success)
+				{
+					// Either a bad result code was returned, or an error event was received
+					if (string.IsNullOrEmpty(m_Msg))
+						m_Msg = "ProcessMSFileOrFolder returned false";
+
+					result.CloseoutMsg = "Job " + m_TaskParams.GetParam("Job") + ", Step " + m_TaskParams.GetParam("Step") + ": " + m_Msg;
+					result.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+				else
 				{
                     int iPostCount = 0;
 
@@ -198,7 +209,7 @@ namespace DatasetQualityPlugin
 					else
 					{
 						errorCode = m_MsFileScanner.ErrorCode;
-						m_Msg = m_Msg = "clsPluginMain.RunMsFileInfoScanner: Error running info scanner. Message = " +
+						m_Msg = "clsPluginMain.RunMsFileInfoScanner: Error running info scanner. Message = " +
 										m_MsFileScanner.GetErrorMessage() + " Result code = " + ((int)m_MsFileScanner.ErrorCode).ToString();
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
 					}
