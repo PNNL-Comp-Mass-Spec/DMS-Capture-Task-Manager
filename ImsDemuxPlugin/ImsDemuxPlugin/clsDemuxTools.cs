@@ -166,11 +166,10 @@ namespace ImsDemuxPlugin
 
                         // Count the number of frames
                         // If fewer than 5 frames, then don't calibrate
-                        UIMFLibrary.DataReader objReader = new UIMFLibrary.DataReader();
-                        objReader.OpenUIMF(sUimfPath);
+						UIMFLibrary.DataReader objReader = new UIMFLibrary.DataReader(sUimfPath);
 
-                        System.Collections.Generic.Dictionary<int, UIMFLibrary.DataReader.udtFrameInfoType> oFrameList;
-                        oFrameList = objReader.GetMasterFrameList();
+                        System.Collections.Generic.Dictionary<int, UIMFLibrary.DataReader.FrameType> oFrameList;
+						oFrameList = objReader.GetMasterFrameList();
 
                         if (oFrameList.Count < 5)
                         {
@@ -192,11 +191,12 @@ namespace ImsDemuxPlugin
                             // If neither exists, then we cannot perform calibration
                             bool bCalibrationDataExists = false;
 
-                            System.Collections.Generic.Dictionary<int, UIMFLibrary.DataReader.udtFrameInfoType>.Enumerator objFrameEnumerator;
+
+							System.Collections.Generic.Dictionary<int, UIMFLibrary.DataReader.FrameType>.Enumerator objFrameEnumerator;
                             objFrameEnumerator = oFrameList.GetEnumerator();
                             while (objFrameEnumerator.MoveNext())
                             {
-                                if (objReader.FrameTypeIntToEnum(objFrameEnumerator.Current.Value.FrameType) == UIMFLibrary.DataReader.iFrameType.Calibration)
+								if (objFrameEnumerator.Current.Value == UIMFLibrary.DataReader.FrameType.Calibration)
                                 {
                                     bCalibrationDataExists = true;
                                     break;
@@ -206,7 +206,7 @@ namespace ImsDemuxPlugin
                             if (!bCalibrationDataExists)
                             {
                                 // No calibration frames were found
-                                System.Collections.Generic.List<string> sCalibrationTables = objReader.getCalibrationTableNames();
+                                System.Collections.Generic.List<string> sCalibrationTables = objReader.GetCalibrationTableNames();
                                 if (sCalibrationTables.Count > 0)
                                 {
                                     bCalibrationDataExists = true;

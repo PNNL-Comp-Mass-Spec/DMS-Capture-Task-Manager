@@ -6,7 +6,211 @@ MSFileInfoScanner
 </name>
 </assembly>
 <members>
-<member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.LoadSettings">
+<member name="M:MSFileInfoScanner.clsTICandBPIPlotter.GetRecentFileInfo(MSFileInfoScanner.clsTICandBPIPlotter.eOutputFileTypes)">
+	<summary>
+ Returns the file name of the recently saved file of the given type
+ </summary>
+	<param name="eFileType">File type to find</param>
+	<returns>File name if found; empty string if this file type was not saved</returns>
+	<remarks>The list of recent files gets cleared each time you call Save2DPlots() or Reset()</remarks>
+</member><member name="M:MSFileInfoScanner.clsTICandBPIPlotter.GetRecentFileInfo(MSFileInfoScanner.clsTICandBPIPlotter.eOutputFileTypes,System.String@,System.String@)">
+	<summary>
+ Returns the file name and path of the recently saved file of the given type
+ </summary>
+	<param name="eFileType">File type to find</param>
+	<param name="strFileName">File name (output)</param>
+	<param name="strFilePath">File Path (output)</param>
+	<returns>True if a match was found; otherwise returns false</returns>
+	<remarks>The list of recent files gets cleared each time you call Save2DPlots() or Reset()</remarks>
+</member><member name="M:MSFileInfoScanner.clsTICandBPIPlotter.InitializeGraphPane(MSFileInfoScanner.clsTICandBPIPlotter.clsChromatogramInfo@,System.String,System.Int32,System.String,System.String,System.Boolean,System.Boolean)">
+	<summary>
+ Plots a BPI or TIC chromatogram
+ </summary>
+	<param name="objData">Data to display</param>
+	<param name="strTitle">Title of the plot</param>
+	<param name="intMSLevelFilter">0 to use all of the data, 1 to use data from MS scans, 2 to use data from MS2 scans, etc.</param>
+	<returns>Zedgraph plot</returns>
+	<remarks></remarks>
+</member><member name="P:MSFileInfoScanner.clsMSFileInfoScanner.CheckFileIntegrity">
+	<summary>
+ When true, then checks the integrity of every file in every folder processed
+ </summary>
+</member><member name="P:MSFileInfoScanner.clsMSFileInfoScanner.DatasetInfoXML">
+	<summary>
+ Returns the dataset info, formatted as XML
+ </summary>
+</member><member name="P:MSFileInfoScanner.clsMSFileInfoScanner.ComputeFileHashes">
+	<summary>
+ When True, then computes an Sha1 hash on every file
+ </summary>
+</member><member name="P:MSFileInfoScanner.clsMSFileInfoScanner.CopyFileLocalOnReadError">
+	<summary>
+ If True, then copies .Raw files to the local drive if unable to read the file over the network
+ </summary>
+</member><member name="P:MSFileInfoScanner.clsMSFileInfoScanner.CreateDatasetInfoFile">
+	<summary>
+ If True, then will create the _DatasetInfo.xml file
+ </summary>
+</member><member name="P:MSFileInfoScanner.clsMSFileInfoScanner.CreateScanStatsFile">
+	<summary>
+ If True, then will create the _ScanStats.txt file
+ </summary>
+</member><member name="P:MSFileInfoScanner.clsMSFileInfoScanner.SaveTICAndBPIPlots">
+	<summary>
+ If True, then saves TIC and BPI plots as PNG files
+ </summary>
+</member><member name="P:MSFileInfoScanner.clsMSFileInfoScanner.SaveLCMS2DPlots">
+	<summary>
+ If True, then saves a 2D plot of m/z vs. Intensity (requires reading every data point in the data file, which will slow down the processing)
+ </summary>
+	<value></value>
+</member><member name="P:MSFileInfoScanner.clsMSFileInfoScanner.ScanStart">
+	<summary>
+ When ScanStart is &gt; 0, then will start processing at the specified scan number
+ </summary>
+</member><member name="P:MSFileInfoScanner.clsMSFileInfoScanner.ScanEnd">
+	<summary>
+ When ScanEnd is &gt; 0, then will stop processing at the specified scan number
+ </summary>
+</member><member name="P:MSFileInfoScanner.clsMSFileInfoScanner.UseCacheFiles">
+	<summary>
+ If True, then saves/loads data from/to the cache files (DatasetTimeFile.txt and FolderIntegrityInfo.txt)
+ If you simply want to create TIC and BPI files, and/or the _DatasetInfo.xml file for a single dataset, then set this to False
+ </summary>
+</member><member name="M:MSFileInfoScanner.clsMSFileInfoScanner.PostDatasetInfoToDB">
+	<summary>
+ Post the most recently determine dataset into XML to the database, using the specified connection string and stored procedure
+ </summary>
+	<returns>True if success; false if failure</returns>
+</member><member name="M:MSFileInfoScanner.clsMSFileInfoScanner.PostDatasetInfoToDB(System.String)">
+	<summary>
+ Post the most recently determine dataset into XML to the database, using the specified connection string and stored procedure
+ </summary>
+	<param name="strDatasetInfoXML">Database info XML</param>
+	<returns>True if success; false if failure</returns>
+</member><member name="M:MSFileInfoScanner.clsMSFileInfoScanner.PostDatasetInfoToDB(System.String,System.String)">
+	<summary>
+ Post the most recently determine dataset into XML to the database, using the specified connection string and stored procedure
+ </summary>
+	<param name="strConnectionString">Database connection string</param>
+	<param name="strStoredProcedure">Stored procedure</param>
+	<returns>True if success; false if failure</returns>
+</member><member name="M:MSFileInfoScanner.clsMSFileInfoScanner.PostDatasetInfoToDB(System.String,System.String,System.String)">
+	<summary>
+ Post the dataset info in strDatasetInfoXML to the database, using the specified connection string and stored procedure
+ </summary>
+	<param name="strDatasetInfoXML">Database info XML</param>
+	<param name="strConnectionString">Database connection string</param>
+	<param name="strStoredProcedure">Stored procedure</param>
+	<returns>True if success; false if failure</returns>
+</member><member name="M:MSFileInfoScanner.clsMSFileInfoScanner.PostDatasetInfoUseDatasetID(System.Int32,System.String,System.String)">
+	<summary>
+ Post the dataset info in strDatasetInfoXML to the database, using the specified connection string and stored procedure
+ This version assumes the stored procedure takes DatasetID as the first parameter
+ </summary>
+	<param name="intDatasetID">Dataset ID to send to the stored procedure</param>
+	<param name="strConnectionString">Database connection string</param>
+	<param name="strStoredProcedure">Stored procedure</param>
+	<returns>True if success; false if failure</returns>
+</member><member name="M:MSFileInfoScanner.clsMSFileInfoScanner.PostDatasetInfoUseDatasetID(System.Int32,System.String,System.String,System.String)">
+	<summary>
+ Post the dataset info in strDatasetInfoXML to the database, using the specified connection string and stored procedure
+ This version assumes the stored procedure takes DatasetID as the first parameter
+ </summary>
+	<param name="intDatasetID">Dataset ID to send to the stored procedure</param>
+	<param name="strDatasetInfoXML">Database info XML</param>
+	<param name="strConnectionString">Database connection string</param>
+	<param name="strStoredProcedure">Stored procedure</param>
+	<returns>True if success; false if failure</returns>
+</member><member name="M:MSFileInfoScanner.clsMSFileInfoScanner.ProcessMSFilesAndRecurseFolders(System.String,System.String,System.Int32)">
+	<summary>
+ Calls ProcessMSFileOrFolder for all files in strInputFilePathOrFolder and below having a known extension
+  Known extensions are:
+   .Raw for Finnigan files
+   .Wiff for Agilent TOF files and for Q-Star files
+   .Baf for Bruker XMASS folders (contains file analysis.baf, and hopefully files scan.xml and Log.txt)
+ For each folder that does not have any files matching a known extension, will then look for special folder names:
+   Folders matching *.Raw for Micromass data
+   Folders matching *.D for Agilent Ion Trap data
+   A folder named 1 for Bruker FTICR-MS data
+ </summary>
+	<param name="strInputFilePathOrFolder">Path to the input file or folder; can contain a wildcard (* or ?)</param>
+	<param name="strOutputFolderPath">Folder to write any results files to</param>
+	<param name="intRecurseFoldersMaxLevels">Maximum folder depth to process; Set to 0 to process all folders</param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:MSFileInfoScanner.clsLCMSDataPlotter.GetRecentFileInfo(MSFileInfoScanner.clsLCMSDataPlotter.eOutputFileTypes)">
+	<summary>
+ Returns the file name of the recently saved file of the given type
+ </summary>
+	<param name="eFileType">File type to find</param>
+	<returns>File name if found; empty string if this file type was not saved</returns>
+	<remarks>The list of recent files gets cleared each time you call Save2DPlots() or Reset()</remarks>
+</member><member name="M:MSFileInfoScanner.clsLCMSDataPlotter.GetRecentFileInfo(MSFileInfoScanner.clsLCMSDataPlotter.eOutputFileTypes,System.String@,System.String@)">
+	<summary>
+ Returns the file name and path of the recently saved file of the given type
+ </summary>
+	<param name="eFileType">File type to find</param>
+	<param name="strFileName">File name (output)</param>
+	<param name="strFilePath">File Path (output)</param>
+	<returns>True if a match was found; otherwise returns false</returns>
+	<remarks>The list of recent files gets cleared each time you call Save2DPlots() or Reset()</remarks>
+</member><member name="M:MSFileInfoScanner.clsLCMSDataPlotter.GetCachedScanByIndex(System.Int32)">
+	<summary>
+ Returns the cached scan data for the scan index
+ </summary>
+	<param name="intIndex"></param>
+	<returns>ScanData class</returns>
+	<remarks></remarks>
+</member><member name="M:MSFileInfoScanner.clsLCMSDataPlotter.InitializeGraphPane(System.String,System.Int32,System.Boolean)">
+	<summary>
+ Creates a 2D plot of m/z vs. scan number, using Intensity as the 3rd dimension to color the data points
+ </summary>
+	<param name="strTitle">Title of the plot</param>
+	<param name="intMSLevelFilter">0 to use all of the data, 1 to use data from MS scans, 2 to use data from MS2 scans, etc.</param>
+	<param name="blnSkipTrimCachedData">When True, then doesn't call TrimCachedData (when making several plots in success, each with a different value for intMSLevelFilter, set blnSkipTrimCachedData to False on the first call and True on subsequent calls)</param>
+	<returns>Zedgraph plot</returns>
+	<remarks></remarks>
+</member><member name="M:MSFileInfoScanner.clsLCMSDataPlotter.IntToEngineeringNotation(System.Int32)">
+	<summary>
+ Converts an integer to engineering notation
+ For example, 50000 will be returned as 50K
+ </summary>
+	<param name="intValue"></param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:MSFileInfoScanner.clsLCMSDataPlotter.TrimCachedData(System.Int32,System.Int32)">
+	<summary>
+ Filters the data stored in mScans to nominally retain the top intTargetDataPointCount data points, sorted by descending intensity
+ </summary>
+	<param name="intTargetDataPointCount">Target max number of data points (see remarks for caveat)</param>
+	<remarks>Note that the number of data points remaining after calling this function may still be
+          more than intTargetDataPointCount, depending on intMinPointsPerSpectrum 
+ For example, if intMinPointsPerSpectrum = 5 and we have 5000 scans, then there will be
+   at least 5*5000 = 25000 data points in memory.  If intTargetDataPointCount = 10000, then 
+   there could be as many as 25000 + 10000 = 25000 points in memory
+</remarks>
+</member><member name="T:MSFileInfoScanner.clsLCMSDataPlotter.clsScanData">
+	<summary>
+ This class tracks the m/z and intensity values for a given scan
+ Be sure to use .IonCount to determine the number of data points, not .IonsMZ.Length
+ If you decrease .IonCount, you can optionally call .ShrinkArrays to reduce the allocated space
+ </summary>
+	<remarks></remarks>
+</member><member name="T:MSFileInfoScanner.clsLCMSDataPlotter.clsOptions">
+	<summary>
+ Options class for clsLCMSDatPlotter
+ </summary>
+	<remarks></remarks>
+</member><member name="T:MSFileInfoScanner.clsLCMSDataPlotter">
+	<summary>
+ This class tracks the m/z and intensity values for a series of spectra
+ It can then create a 2D plot of m/z vs. intensity
+ To keep the plot from being too dense, it will filter the data to show at most MaxPointsToPlot data points
+ Furthermore, it will bin the data by MZResolution m/z units (necessary if the data is not centroided)
+ </summary>
+	<remarks></remarks>
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.LoadSettings">
 	<summary>
  Loads the settings for the defined Xml Settings File.  Assumes names are not case sensitive
  </summary>
@@ -97,6 +301,10 @@ MSFileInfoScanner
 	<return>The function returns the name of the "value" attribute as a Double.  If "value" is "true" returns -1.  If "value" is "false" returns 0.</return>
 </member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.SetIniFilePath(System.String)">
 	<summary>
+ Legacy function name; calls SetXMLFilePath
+ </summary>
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.SetXMLFilePath(System.String)">
+	<summary>
  The function sets the path to the Xml Settings File.
  </summary>
 	<param name="XmlSettingsFilePath">The path to the XML settings file.</param>
@@ -160,71 +368,83 @@ MSFileInfoScanner
 	<summary>
  The function renames a section.
  </summary>
-	<param name="sectionNameOld">The name of the old ini section name.</param>
-	<param name="sectionNameNew">The new name for the ini section.</param>
+	<param name="sectionNameOld">The name of the old XML section name.</param>
+	<param name="sectionNameNew">The new name for the XML section.</param>
 	<return>The function returns a boolean that shows if the change was done.</return>
-</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.#ctor(System.String)">
-	<summary>Initializes a new instance of the IniFileReader.</summary>
-	<param name="IniFileName">The name of the ini file.</param>
-</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.#ctor(System.String,System.Boolean)">
-	<summary>Initializes a new instance of the IniFileReader.</summary>
-	<param name="IniFileName">The name of the ini file.</param>
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.#ctor(System.String)">
+	<summary>Initializes a new instance of the XMLFileReader (non case-sensitive)</summary>
+	<param name="XmlFilename">The name of the XML file.</param>
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.#ctor(System.String,System.Boolean)">
+	<summary>Initializes a new instance of the XMLFileReader.</summary>
+	<param name="XmlFilename">The name of the XML file.</param>
 	<param name="IsCaseSensitive">Case sensitive as boolean.</param>
-</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.InitIniFileReader(System.String,System.Boolean)">
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.InitXMLFileReader(System.String,System.Boolean)">
 	<summary>
  This routine is called by each of the constructors to make the actual assignments.
  </summary>
-</member><member name="P:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.IniFilename">
+</member><member name="P:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.IniFilename">
+	<summary>
+ Legacy property; calls XmlFilename
+ </summary>
+</member><member name="P:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.XmlFilename">
 	<summary>
  This routine returns the name of the ini file.
  </summary>
 	<return>The function returns the name of ini file.</return>
-</member><member name="P:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.Initialized">
+</member><member name="P:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.Initialized">
 	<summary>
  This routine returns a boolean showing if the file was initialized or not.
  </summary>
 	<return>The function returns a Boolean.</return>
-</member><member name="P:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.CaseSensitive">
+</member><member name="P:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.CaseSensitive">
 	<summary>
  This routine returns a boolean showing if the name is case sensitive or not.
  </summary>
 	<return>The function returns a Boolean.</return>
-</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.SetNameCase(System.String)">
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.SetNameCase(System.String)">
 	<summary>
  This routine sets a name.
  </summary>
 	<param name="aName">The name to be set.</param>
 	<return>The function returns a string.</return>
-</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.GetRoot">
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.GetRoot">
 	<summary>
- TBD.
+ Returns the root element of the XML document
  </summary>
-</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.GetLastSection">
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.GetLastSection">
 	<summary>
  The function gets the last section.
  </summary>
 	<return>The function returns the last section as System.Xml.XmlElement.</return>
-</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.GetSection(System.String)">
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.GetSection(System.String)">
 	<summary>
  The function gets a section as System.Xml.XmlElement.
  </summary>
 	<param name="sectionName">The name of a section.</param>
 	<return>The function returns a section as System.Xml.XmlElement.</return>
-</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.GetItem(System.String,System.String)">
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.GetItem(System.String,System.String)">
 	<summary>
  The function gets an item.
  </summary>
 	<param name="sectionName">The name of the section.</param>
 	<param name="keyName">The name of the key.</param>
 	<return>The function returns a XML element.</return>
-</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.SetIniSection(System.String,System.String)">
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.SetIniSection(System.String,System.String)">
+	<summary>
+ Legacy function name; calls SetXMLSection
+ </summary>
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.SetXMLSection(System.String,System.String)">
 	<summary>
  The function sets the ini section name.
  </summary>
 	<param name="oldSection">The name of the old ini section name.</param>
 	<param name="newSection">The new name for the ini section.</param>
 	<return>The function returns a boolean that shows if the change was done.</return>
-</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.SetIniValue(System.String,System.String,System.String)">
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.SetIniValue(System.String,System.String,System.String)">
+	<summary>
+ Legacy function name; calls SetXMLValue
+ </summary>
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.SetXMLValue(System.String,System.String,System.String)">
 	<summary>
  The function sets a new value for the "value" attribute.
  </summary>
@@ -232,20 +452,24 @@ MSFileInfoScanner
 	<param name="keyName">The name of the key.</param>
 	<param name="newValue">The new value for the "value".</param>
 	<return>The function returns a boolean that shows if the change was done.</return>
-</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.DeleteSection(System.String)">
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.DeleteSection(System.String)">
 	<summary>
  The function deletes a section in the file.
  </summary>
 	<param name="sectionName">The name of the section.</param>
 	<return>The function returns a boolean that shows if the delete was completed.</return>
-</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.DeleteItem(System.String,System.String)">
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.DeleteItem(System.String,System.String)">
 	<summary>
  The function deletes a item in a specific section.
  </summary>
 	<param name="sectionName">The name of the section.</param>
 	<param name="keyName">The name of the key.</param>
 	<return>The function returns a boolean that shows if the delete was completed.</return>
-</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.SetIniKey(System.String,System.String,System.String)">
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.SetIniKey(System.String,System.String,System.String)">
+	<summary>
+ Legacy function name; calls SetXmlKey
+ </summary>
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.SetXmlKey(System.String,System.String,System.String)">
 	<summary>
  The function sets a new value for the "key" attribute.
  </summary>
@@ -253,97 +477,253 @@ MSFileInfoScanner
 	<param name="keyName">The name of the key.</param>
 	<param name="newValue">The new value for the "key".</param>
 	<return>The function returns a boolean that shows if the change was done.</return>
-</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.GetIniValue(System.String,System.String)">
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.GetIniValue(System.String,System.String)">
+	<summary>
+ Legacy function name; calls GetXMLValue
+ </summary>
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.GetXMLValue(System.String,System.String)">
 	<summary>
  The function gets the name of the "value" attribute.
  </summary>
 	<param name="sectionName">The name of the section.</param>
 	<param name="keyName">The name of the key.</param>
 	<return>The function returns the name of the "value" attribute.</return>
-</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.GetIniComments(System.String)">
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.GetIniComments(System.String)">
+	<summary>
+ Legacy function name; calls GetXmlSectionComments
+ </summary>
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.GetXmlSectionComments(System.String)">
 	<summary>
  The function gets the comments for a section name.
  </summary>
 	<param name="sectionName">The name of the section.</param>
 	<return>The function returns a string collection with comments</return>
-</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.SetIniComments(System.String,System.Collections.Specialized.StringCollection)">
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.SetIniComments(System.String,System.Collections.Specialized.StringCollection)">
+	<summary>
+ Legacy function name; calls SetXMLComments
+ </summary>
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.SetXMLComments(System.String,System.Collections.Specialized.StringCollection)">
 	<summary>
  The function sets a the comments for a section name.
  </summary>
 	<param name="sectionName">The name of the section.</param>
 	<param name="comments">A string collection.</param>
 	<return>The function returns a Boolean that shows if the change was done.</return>
-</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.UpdateSections">
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.UpdateSections">
 	<summary>
  The subroutine updades the sections.
  </summary>
-</member><member name="P:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.AllSections">
+</member><member name="P:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.AllSections">
 	<summary>
  The subroutine gets the sections.
  </summary>
 	<return>The subroutine returns a strin collection of sections.</return>
-</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.GetItemsInSection(System.String,MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.IniItemTypeEnum)">
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.GetItemsInSection(System.String,MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.XMLItemTypeEnum)">
 	<summary>
  The function gets a collection of items for a section name.
  </summary>
 	<param name="sectionName">The name of the section.</param>
 	<param name="itemType">Item type.</param>
 	<return>The function returns a string colection of items in a section.</return>
-</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.AllKeysInSection(System.String)">
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.AllKeysInSection(System.String)">
 	<summary>The funtions gets a collection of keys in a section.</summary>
 	<param name="sectionName">The name of the section.</param>
 	<return>The function returns a string colection of all the keys in a section.</return>
-</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.AllValuesInSection(System.String)">
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.AllValuesInSection(System.String)">
 	<summary>The funtions gets a collection of values in a section.</summary>
 	<param name="sectionName">The name of the section.</param>
 	<return>The function returns a string colection of all the values in a section.</return>
-</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.AllItemsInSection(System.String)">
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.AllItemsInSection(System.String)">
 	<summary>The funtions gets a collection of items in a section.</summary>
 	<param name="sectionName">The name of the section.</param>
 	<return>The function returns a string colection of all the items in a section.</return>
-</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.GetCustomIniAttribute(System.String,System.String,System.String)">
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.GetCustomIniAttribute(System.String,System.String,System.String)">
 	<summary>The funtions gets a custom attribute name.</summary>
 	<param name="sectionName">The name of the section.</param>
 	<param name="keyName">The name of the key.</param>
 	<param name="attributeName">The name of the attribute.</param>
 	<return>The function returns a string.</return>
-</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.SetCustomIniAttribute(System.String,System.String,System.String,System.String)">
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.SetCustomIniAttribute(System.String,System.String,System.String,System.String)">
 	<summary>The funtions sets a custom attribute name.</summary>
 	<param name="sectionName">The name of the section.</param>
 	<param name="keyName">The name of the key.</param>
 	<param name="attributeName">The name of the attribute.</param>
 	<param name="attributeValue">The value of the attribute.</param>
 	<return>The function returns a Boolean.</return>
-</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.CreateSection(System.String)">
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.CreateSection(System.String)">
 	<summary>The funtions creates a section name.</summary>
 	<param name="sectionName">The name of the section to be created.</param>
 	<return>The function returns a Boolean.</return>
-</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.CreateItem(System.String,System.String,System.String)">
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.CreateItem(System.String,System.String,System.String)">
 	<summary>The funtions creates a section name.</summary>
 	<param name="sectionName">The name of the section.</param>
 	<param name="keyName">The name of the key.</param>
 	<param name="newValue">The new value to be created.</param>
 	<return>The function returns a Boolean.</return>
-</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.ParseLineXml(System.String,System.Xml.XmlDocument)">
-	<summary>It parses a string and adds atribbutes to the System.Xml.XmlDocument.</summary>
-	<param name="s">The name of the string to be parse.</param>
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.ManualParseXmlOrIniFile(System.String)">
+	<summary>
+ Manually read a XML or .INI settings file line-by-line, extracting out any settings in the expected format
+ </summary>
+	<param name="strFilePath"></param>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.ParseLineManual(System.String,System.Xml.XmlDocument@)">
+	<summary>Manually parses a line to extract the settings information
+ Supports the traditional .Ini file format
+ Also supports the 'key="KeyName" value="Value"' method used in XML settings files
+ If success, then adds attributes to the doc object</summary>
+	<param name="strLine">The name of the string to be parse.</param>
 	<param name="doc">The name of the System.Xml.XmlDocument.</param>
-</member><member name="P:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.OutputFilename">
+	<returns>True if success, false if not a recognized line format</returns>
+</member><member name="P:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.OutputFilename">
 	<summary>It Sets or Gets the output file name.</summary>
-</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.Save">
+</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.Save">
 	<summary>It saves the data to the Xml output file.</summary>
-</member><member name="M:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.AsIniFile">
-	<summary>It transforms a XML file to an INI file.</summary>
-	<return>The function returns document formatted as a string.</return>
-</member><member name="P:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.XmlDoc">
+</member><member name="P:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.XmlDoc">
 	<summary>It gets the System.Xml.XmlDocument.</summary>
-</member><member name="P:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader.XML">
+</member><member name="P:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader.XML">
 	<summary>Converts an XML document to a string.</summary>
 	<return>It returns the XML document formatted as a string.</return>
-</member><member name="T:MSFileInfoScanner.XmlSettingsFileAccessor.IniFileReader">
+</member><member name="T:MSFileInfoScanner.XmlSettingsFileAccessor.XMLFileReader">
 	<summary>
- Tools to manipulates INI files.
+ Tools to manipulates XML Settings files.
  </summary>
+</member><member name="M:MSFileInfoScanner.FinniganFileIO.XRawFileIO.ValidateMSScan(System.String,System.Int32@,System.Boolean@,MSFileInfoScanner.FinniganFileIO.FinniganFileReaderBaseClass.MRMScanTypeConstants@,System.Boolean@)">
+	<summary>
+ Examines strFilterText to validate that it is a supported scan type
+ </summary>
+	<param name="strFilterText"></param>
+	<param name="intMSLevel"></param>
+	<param name="blnSIMScan"></param>
+	<param name="eMRMScanType"></param>
+	<param name="blnZoomScan"></param>
+	<returns>True if strFilterText contains a known MS scan type</returns>
+	<remarks></remarks>
+</member><member name="M:MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.ComputeScanStatsSummary(System.Collections.Generic.List{MSFileInfoScanner.DSSummarizer.clsScanStatsEntry}@,MSFileInfoScanner.DSSummarizer.clsDatasetSummaryStats@)">
+	<summary>
+ Summarizes the scan info in objScanStats()
+ </summary>
+	<param name="objScanStats">ScanStats data to parse</param>
+	<param name="objSummaryStats">Stats output</param>
+	<returns>&gt;True if success, false if error</returns>
+	<remarks></remarks>
+</member><member name="M:MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.CreateDatasetInfoFile(System.String,System.String)">
+	<summary>
+ Creates an XML file summarizing the data stored in this class (in mDatasetScanStats, Me.DatasetFileInfo, and Me.SampleInfo)
+ </summary>
+	<param name="strDatasetName">Dataset Name</param>
+	<param name="strDatasetInfoFilePath">File path to write the XML to</param>
+	<returns>True if success; False if failure</returns>
+	<remarks></remarks>
+</member><member name="M:MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.CreateDatasetInfoFile(System.String,System.String,System.Collections.Generic.List{MSFileInfoScanner.DSSummarizer.clsScanStatsEntry}@,MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.udtDatasetFileInfoType@,MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.udtSampleInfoType@)">
+	<summary>
+ Creates an XML file summarizing the data in objScanStats and udtDatasetFileInfo
+ </summary>
+	<param name="strDatasetName">Dataset Name</param>
+	<param name="strDatasetInfoFilePath">File path to write the XML to</param>
+	<param name="objScanStats">Scan stats to parse</param>
+	<param name="udtDatasetFileInfo">Dataset Info</param>
+	<param name="udtSampleInfo">Sample Info</param>
+	<returns>True if success; False if failure</returns>
+	<remarks></remarks>
+</member><member name="M:MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.CreateDatasetInfoXML">
+	<summary>
+ Creates XML summarizing the data stored in this class (in mDatasetScanStats, Me.DatasetFileInfo, and Me.SampleInfo)
+ Auto-determines the dataset name using Me.DatasetFileInfo.DatasetName
+ </summary>
+	<returns>XML (as string)</returns>
+	<remarks></remarks>
+</member><member name="M:MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.CreateDatasetInfoXML(System.String)">
+	<summary>
+ Creates XML summarizing the data stored in this class (in mDatasetScanStats, Me.DatasetFileInfo, and Me.SampleInfo)
+ </summary>
+	<param name="strDatasetName">Dataset Name</param>
+	<returns>XML (as string)</returns>
+	<remarks></remarks>
+</member><member name="M:MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.CreateDatasetInfoXML(System.Collections.Generic.List{MSFileInfoScanner.DSSummarizer.clsScanStatsEntry}@,MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.udtDatasetFileInfoType@)">
+	<summary>
+ Creates XML summarizing the data in objScanStats and udtDatasetFileInfo
+ Auto-determines the dataset name using udtDatasetFileInfo.DatasetName
+ </summary>
+	<param name="objScanStats">Scan stats to parse</param>
+	<param name="udtDatasetFileInfo">Dataset Info</param>
+	<returns>XML (as string)</returns>
+	<remarks></remarks>
+</member><member name="M:MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.CreateDatasetInfoXML(System.Collections.Generic.List{MSFileInfoScanner.DSSummarizer.clsScanStatsEntry}@,MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.udtDatasetFileInfoType@,MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.udtSampleInfoType@)">
+	<summary>
+ Creates XML summarizing the data in objScanStats, udtDatasetFileInfo, and udtSampleInfo
+ Auto-determines the dataset name using udtDatasetFileInfo.DatasetName
+ </summary>
+	<param name="objScanStats">Scan stats to parse</param>
+	<param name="udtDatasetFileInfo">Dataset Info</param>
+	<param name="udtSampleInfo">Sample Info</param>
+	<returns>XML (as string)</returns>
+	<remarks></remarks>
+</member><member name="M:MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.CreateDatasetInfoXML(System.String,System.Collections.Generic.List{MSFileInfoScanner.DSSummarizer.clsScanStatsEntry}@,MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.udtDatasetFileInfoType@)">
+	<summary>
+ Creates XML summarizing the data in objScanStats and udtDatasetFileInfo
+ </summary>
+	<param name="strDatasetName">Dataset Name</param>
+	<param name="objScanStats">Scan stats to parse</param>
+	<param name="udtDatasetFileInfo">Dataset Info</param>
+	<returns>XML (as string)</returns>
+	<remarks></remarks>
+</member><member name="M:MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.CreateDatasetInfoXML(System.String,System.Collections.Generic.List{MSFileInfoScanner.DSSummarizer.clsScanStatsEntry}@,MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.udtDatasetFileInfoType@,MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.udtSampleInfoType@)">
+	<summary>
+ Creates XML summarizing the data in objScanStats and udtDatasetFileInfo
+ </summary>
+	<param name="strDatasetName">Dataset Name</param>
+	<param name="objScanStats">Scan stats to parse</param>
+	<param name="udtDatasetFileInfo">Dataset Info</param>
+	<returns>XML (as string)</returns>
+	<remarks></remarks>
+</member><member name="M:MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.CreateScanStatsFile(System.String,System.String)">
+	<summary>
+ Creates a tab-delimited text file with details on each scan tracked by this class (stored in mDatasetScanStats)
+ </summary>
+	<param name="strDatasetName">Dataset Name</param>
+	<param name="strScanStatsFilePath">File path to write the text file to</param>
+	<returns>True if success; False if failure</returns>
+	<remarks></remarks>
+</member><member name="M:MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.CreateScanStatsFile(System.String,System.String,System.Collections.Generic.List{MSFileInfoScanner.DSSummarizer.clsScanStatsEntry}@,MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.udtDatasetFileInfoType@,MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.udtSampleInfoType@)">
+	<summary>
+ Creates a tab-delimited text file with details on each scan tracked by this class (stored in mDatasetScanStats)
+ </summary>
+	<param name="strDatasetName">Dataset Name</param>
+	<param name="strScanStatsFilePath">File path to write the text file to</param>
+	<param name="objScanStats">Scan stats to parse</param>
+	<param name="udtDatasetFileInfo">Dataset Info</param>
+	<param name="udtSampleInfo">Sample Info</param>
+	<returns>True if success; False if failure</returns>
+	<remarks></remarks>
+</member><member name="M:MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.UpdateDatasetScanType(System.Int32,System.Int32,System.String)">
+	<summary>
+ Updates the scan type information for the specified scan number
+ </summary>
+	<param name="intScanNumber"></param>
+	<param name="intScanType"></param>
+	<param name="strScanTypeName"></param>
+	<returns>True if the scan was found and updated; otherwise false</returns>
+	<remarks></remarks>
+</member><member name="M:MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.UpdateDatasetStatsTextFile(System.String,System.String)">
+	<summary>
+ Updates a tab-delimited text file, adding a new line summarizing the data stored in this class (in mDatasetScanStats and Me.DatasetFileInfo)
+ </summary>
+	<param name="strDatasetName">Dataset Name</param>
+	<param name="strDatasetInfoFilePath">File path to write the XML to</param>
+	<returns>True if success; False if failure</returns>
+	<remarks></remarks>
+</member><member name="M:MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.UpdateDatasetStatsTextFile(System.String,System.String,System.Collections.Generic.List{MSFileInfoScanner.DSSummarizer.clsScanStatsEntry}@,MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.udtDatasetFileInfoType@,MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.udtSampleInfoType@)">
+	<summary>
+ Updates a tab-delimited text file, adding a new line summarizing the data in objScanStats and udtDatasetFileInfo
+ </summary>
+	<param name="strDatasetName">Dataset Name</param>
+	<param name="strDatasetStatsFilePath">Tab-delimited file to create/update</param>
+	<param name="objScanStats">Scan stats to parse</param>
+	<param name="udtDatasetFileInfo">Dataset Info</param>
+	<param name="udtSampleInfo">Sample Info</param>
+	<returns>True if success; False if failure</returns>
+	<remarks></remarks>
 </member><member name="M:MSFileInfoScanner.clsExecuteDatabaseSP.#ctor(System.String)">
 	<summary>
  Constructor
@@ -398,273 +778,96 @@ MSFileInfoScanner
 	<param name="RetryDelaySeconds">Number of seconds to wait between retrying the call to the procedure</param>
 	<returns>Result code returned by SP; -1 if unable to execute SP</returns>
 	<remarks></remarks>
-</member><member name="M:MSFileInfoScanner.clsMSFileInfoProcessorBaseClass.IntToEngineeringNotation(System.Int32)">
+</member><member name="M:MSFileInfoScanner.clsMSFileInfoDataCache.SaveCachedResults">
 	<summary>
- Converts an integer to engineering notation
- For example, 50000 will be returned as 50K
+ Writes out the cache files immediately
  </summary>
-	<param name="intValue"></param>
 	<returns></returns>
 	<remarks></remarks>
-</member><member name="M:MSFileInfoScanner.FinniganFileIO.XRawFileIO.ValidateMSScan(System.String,System.Int32@,System.Boolean@,MSFileInfoScanner.FinniganFileIO.FinniganFileReaderBaseClass.MRMScanTypeConstants@,System.Boolean@)">
+</member><member name="M:MSFileInfoScanner.clsBrukerXmassFolderInfoScanner.DetermineAcqStartTime(System.IO.DirectoryInfo,MSFileInfoScanner.iMSFileInfoProcessor.udtFileInfoType@)">
 	<summary>
- Examines strFilterText to validate that it is a supported scan type
+ Looks for a .m folder then looks for apexAcquisition.method or submethods.xml in that folder
+ Uses the file modification time as the run start time
+ Also looks for the .hdx file in the dataset folder and examine its modification time
  </summary>
-	<param name="strFilterText"></param>
-	<param name="intMSLevel"></param>
-	<param name="blnSIMScan"></param>
-	<param name="eMRMScanType"></param>
-	<param name="blnZoomScan"></param>
-	<returns>True if strFilterText contains a known MS scan type</returns>
+	<param name="ioDatasetFolder"></param>
+	<param name="udtFileInfo"></param>
+	<returns>True if a valid file is found; otherwise false</returns>
 	<remarks></remarks>
-</member><member name="M:MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.ComputeScanStatsSummary(System.Collections.Generic.List{MSFileInfoScanner.DSSummarizer.clsScanStatsEntry}@,MSFileInfoScanner.DSSummarizer.clsDatasetSummaryStats@)">
+</member><member name="M:MSFileInfoScanner.clsParseCommandLine.InvalidParametersPresent(System.Collections.Generic.List{System.String})">
 	<summary>
- Summarizes the scan info in objScanStats()
+ Compares the parameter names in objParameterList with the parameters at the command line
  </summary>
-	<param name="objScanStats">ScanStats data to parse</param>
-	<param name="objSummaryStats">Stats output</param>
-	<returns>&gt;True if success, false if error</returns>
-	<remarks></remarks>
-</member><member name="M:MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.CreateDatasetInfoFile(System.String,System.String)">
+	<param name="objParameterList">Parameter list</param>
+	<returns>True if any of the parameters are not present in strParameterList()</returns>
+</member><member name="M:MSFileInfoScanner.clsParseCommandLine.InvalidParametersPresent(System.String[])">
 	<summary>
- Creates an XML file summarizing the data stored in this class (in mDatasetScanStats and Me.DatasetFileInfo)
+ Compares the parameter names in strParameterList with the parameters at the command line
  </summary>
-	<param name="strDatasetName">Dataset Name</param>
-	<param name="strDatasetInfoFilePath">File path to write the XML to</param>
-	<returns>True if success; False if failure</returns>
-	<remarks></remarks>
-</member><member name="M:MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.CreateDatasetInfoFile(System.String,System.String,System.Collections.Generic.List{MSFileInfoScanner.DSSummarizer.clsScanStatsEntry}@,MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.udtDatasetFileInfoType@)">
+	<param name="strParameterList">Parameter list</param>
+	<returns>True if any of the parameters are not present in strParameterList()</returns>
+</member><member name="M:MSFileInfoScanner.clsParseCommandLine.InvalidParametersPresent(System.String[],System.Boolean)">
 	<summary>
- Creates an XML file summarizing the data in objScanStats and udtDatasetFileInfo
+ Compares the parameter names in strParameterList with the parameters at the command line
  </summary>
-	<param name="strDatasetName">Dataset Name</param>
-	<param name="strDatasetInfoFilePath">File path to write the XML to</param>
-	<param name="objScanStats">Scan stats to parse</param>
-	<param name="udtDatasetFileInfo">Dataset Info</param>
-	<returns>True if success; False if failure</returns>
-	<remarks></remarks>
-</member><member name="M:MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.CreateDatasetInfoXML">
+	<param name="strParameterList">Parameter list</param>
+	<param name="blnCaseSensitive">True to perform case-sensitive matching of the parameter name</param>
+	<returns>True if any of the parameters are not present in strParameterList()</returns>
+</member><member name="M:MSFileInfoScanner.clsParseCommandLine.IsParameterPresent(System.String)">
 	<summary>
- Creates XML summarizing the data stored in this class (in mDatasetScanStats and Me.DatasetFileInfo)
- Auto-determines the dataset name using Me.DatasetFileInfo.DatasetName
+ Look for parameter on the command line
  </summary>
-	<returns>XML (as string)</returns>
-	<remarks></remarks>
-</member><member name="M:MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.CreateDatasetInfoXML(System.String)">
+	<param name="strParameterName">Parameter name</param>
+	<returns>True if present, otherwise false</returns>
+</member><member name="M:MSFileInfoScanner.clsParseCommandLine.ParseCommandLine">
 	<summary>
- Creates XML summarizing the data stored in this class (in mDatasetScanStats and Me.DatasetFileInfo)
- Auto-determines the dataset name using Me.DatasetFileInfo.DatasetName
+ Parse the parameters and switches at the command line; uses / for the switch character and : for the switch parameter character
  </summary>
-	<param name="strDatasetName">Dataset Name</param>
-	<returns>XML (as string)</returns>
-	<remarks></remarks>
-</member><member name="M:MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.CreateDatasetInfoXML(System.Collections.Generic.List{MSFileInfoScanner.DSSummarizer.clsScanStatsEntry}@,MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.udtDatasetFileInfoType@)">
+	<returns>Returns True if any command line parameters were found; otherwise false</returns>
+	<remarks>If /? or /help is found, then returns False and sets mShowHelp to True</remarks>
+</member><member name="M:MSFileInfoScanner.clsParseCommandLine.ParseCommandLine(System.Char)">
 	<summary>
- Creates XML summarizing the data in objScanStats and udtDatasetFileInfo
- Auto-determines the dataset name using udtDatasetFileInfo.DatasetName
+ Parse the parameters and switches at the command line; uses : for the switch parameter character
  </summary>
-	<param name="objScanStats">Scan stats to parse</param>
-	<param name="udtDatasetFileInfo">Dataset Info</param>
-	<returns>XML (as string)</returns>
-	<remarks></remarks>
-</member><member name="M:MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.CreateDatasetInfoXML(System.String,System.Collections.Generic.List{MSFileInfoScanner.DSSummarizer.clsScanStatsEntry}@,MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.udtDatasetFileInfoType@)">
+	<returns>Returns True if any command line parameters were found; otherwise false</returns>
+	<remarks>If /? or /help is found, then returns False and sets mShowHelp to True</remarks>
+</member><member name="M:MSFileInfoScanner.clsParseCommandLine.ParseCommandLine(System.Char,System.Char)">
 	<summary>
- Creates XML summarizing the data in objScanStats and udtDatasetFileInfo
+ Parse the parameters and switches at the command line
  </summary>
-	<param name="strDatasetName">Dataset Name</param>
-	<param name="objScanStats">Scan stats to parse</param>
-	<param name="udtDatasetFileInfo">Dataset Info</param>
-	<returns>XML (as string)</returns>
-	<remarks></remarks>
-</member><member name="M:MSFileInfoScanner.DSSummarizer.clsDatasetStatsSummarizer.UpdateDatasetScanType(System.Int32,System.Int32,System.String)">
+	<param name="chSwitchStartChar"></param>
+	<param name="chSwitchParameterChar"></param>
+	<returns>Returns True if any command line parameters were found; otherwise false</returns>
+	<remarks>If /? or /help is found, then returns False and sets mShowHelp to True</remarks>
+</member><member name="M:MSFileInfoScanner.clsParseCommandLine.RetrieveNonSwitchParameter(System.Int32)">
 	<summary>
- Updates the scan type information for the specified scan number
+ Returns the value of the non-switch parameter at the given index
  </summary>
-	<param name="intScanNumber"></param>
-	<param name="intScanType"></param>
-	<param name="strScanTypeName"></param>
-	<returns>True if the scan was found and updated; otherwise false</returns>
-	<remarks></remarks>
-</member><member name="M:MSFileInfoScanner.clsLCMSDataPlotter.GetRecentFileInfo(MSFileInfoScanner.clsLCMSDataPlotter.eOutputFileTypes)">
+	<param name="intParameterIndex">Parameter index</param>
+	<returns>The value of the parameter at the given index; empty string if no value or invalid index</returns>
+</member><member name="M:MSFileInfoScanner.clsParseCommandLine.RetrieveParameter(System.Int32,System.String@,System.String@)">
 	<summary>
- Returns the file name of the recently saved file of the given type
+ Returns the parameter at the given index
  </summary>
-	<param name="eFileType">File type to find</param>
-	<returns>File name if found; empty string if this file type was not saved</returns>
-	<remarks>The list of recent files gets cleared each time you call Save2DPlots() or Reset()</remarks>
-</member><member name="M:MSFileInfoScanner.clsLCMSDataPlotter.GetRecentFileInfo(MSFileInfoScanner.clsLCMSDataPlotter.eOutputFileTypes,System.String@,System.String@)">
-	<summary>
- Returns the file name and path of the recently saved file of the given type
- </summary>
-	<param name="eFileType">File type to find</param>
-	<param name="strFileName">File name (output)</param>
-	<param name="strFilePath">File Path (output)</param>
-	<returns>True if a match was found; otherwise returns false</returns>
-	<remarks>The list of recent files gets cleared each time you call Save2DPlots() or Reset()</remarks>
-</member><member name="M:MSFileInfoScanner.clsLCMSDataPlotter.GetCachedScanByIndex(System.Int32)">
-	<summary>
- Returns the cached scan data for the scan index
- </summary>
-	<param name="intIndex"></param>
-	<returns>ScanData class</returns>
-	<remarks></remarks>
-</member><member name="M:MSFileInfoScanner.clsLCMSDataPlotter.InitializeGraphPane(System.String,System.Int32,System.Boolean)">
-	<summary>
- Creates a 2D plot of m/z vs. scan number, using Intensity as the 3rd dimension to color the data points
- </summary>
-	<param name="strTitle">Title of the plot</param>
-	<param name="intMSLevelFilter">0 to use all of the data, 1 to use data from MS scans, 2 to use data from MS2 scans, etc.</param>
-	<param name="blnSkipTrimCachedData">When True, then doesn't call TrimCachedData (when making several plots in success, each with a different value for intMSLevelFilter, set blnSkipTrimCachedData to False on the first call and True on subsequent calls)</param>
-	<returns>Zedgraph plot</returns>
-	<remarks></remarks>
-</member><member name="M:MSFileInfoScanner.clsLCMSDataPlotter.TrimCachedData(System.Int32,System.Int32)">
-	<summary>
- Filters the data stored in mScans to nominally retain the top intTargetDataPointCount data points, sorted by descending intensity
- </summary>
-	<param name="intTargetDataPointCount">Target max number of data points (see remarks for caveat)</param>
-	<remarks>Note that the number of data points remaining after calling this function may still be
-          more than intTargetDataPointCount, depending on intMinPointsPerSpectrum 
- For example, if intMinPointsPerSpectrum = 5 and we have 5000 scans, then there will be
-   at least 5*5000 = 25000 data points in memory.  If intTargetDataPointCount = 10000, then 
-   there could be as many as 25000 + 10000 = 25000 points in memory
-</remarks>
-</member><member name="T:MSFileInfoScanner.clsLCMSDataPlotter.clsScanData">
-	<summary>
- This class tracks the m/z and intensity values for a given scan
- Be sure to use .IonCount to determine the number of data points, not .IonsMZ.Length
- If you decrease .IonCount, you can optionally call .ShrinkArrays to reduce the allocated space
- </summary>
-	<remarks></remarks>
-</member><member name="T:MSFileInfoScanner.clsLCMSDataPlotter.clsOptions">
-	<summary>
- Options class for clsLCMSDatPlotter
- </summary>
-	<remarks></remarks>
-</member><member name="T:MSFileInfoScanner.clsLCMSDataPlotter">
-	<summary>
- This class tracks the m/z and intensity values for a series of spectra
- It can then create a 2D plot of m/z vs. intensity
- To keep the plot from being too dense, it will filter the data to show at most MaxPointsToPlot data points
- Furthermore, it will bin the data by MZResolution m/z units (necessary if the data is not centroided)
- </summary>
-	<remarks></remarks>
-</member><member name="M:MSFileInfoScanner.clsTICandBPIPlotter.GetRecentFileInfo(MSFileInfoScanner.clsTICandBPIPlotter.eOutputFileTypes)">
-	<summary>
- Returns the file name of the recently saved file of the given type
- </summary>
-	<param name="eFileType">File type to find</param>
-	<returns>File name if found; empty string if this file type was not saved</returns>
-	<remarks>The list of recent files gets cleared each time you call Save2DPlots() or Reset()</remarks>
-</member><member name="M:MSFileInfoScanner.clsTICandBPIPlotter.GetRecentFileInfo(MSFileInfoScanner.clsTICandBPIPlotter.eOutputFileTypes,System.String@,System.String@)">
-	<summary>
- Returns the file name and path of the recently saved file of the given type
- </summary>
-	<param name="eFileType">File type to find</param>
-	<param name="strFileName">File name (output)</param>
-	<param name="strFilePath">File Path (output)</param>
-	<returns>True if a match was found; otherwise returns false</returns>
-	<remarks>The list of recent files gets cleared each time you call Save2DPlots() or Reset()</remarks>
-</member><member name="M:MSFileInfoScanner.clsTICandBPIPlotter.InitializeGraphPane(MSFileInfoScanner.clsTICandBPIPlotter.clsChromatogramInfo@,System.String,System.Int32)">
-	<summary>
- Plots a BPI or TIC chromatogram
- </summary>
-	<param name="objData">Data to display</param>
-	<param name="strTitle">Title of the plot</param>
-	<param name="intMSLevelFilter">0 to use all of the data, 1 to use data from MS scans, 2 to use data from MS2 scans, etc.</param>
-	<returns>Zedgraph plot</returns>
-	<remarks></remarks>
-</member><member name="P:MSFileInfoScanner.clsMSFileInfoScanner.CheckFileIntegrity">
-	<summary>
- When true, then checks the integrity of every file in every folder processed
- </summary>
-</member><member name="P:MSFileInfoScanner.clsMSFileInfoScanner.DatasetInfoXML">
-	<summary>
- Returns the dataset info, formatted as XML
- </summary>
-</member><member name="P:MSFileInfoScanner.clsMSFileInfoScanner.ComputeFileHashes">
-	<summary>
- When True, then computes an Sha1 hash on every file
- </summary>
-</member><member name="P:MSFileInfoScanner.clsMSFileInfoScanner.CreateDatasetInfoFile">
-	<summary>
- If True, then will create the _DatasetInfo.xml file
- </summary>
-</member><member name="P:MSFileInfoScanner.clsMSFileInfoScanner.SaveTICAndBPIPlots">
-	<summary>
- If True, then saves TIC and BPI plots as PNG files
- </summary>
-</member><member name="P:MSFileInfoScanner.clsMSFileInfoScanner.SaveLCMS2DPlots">
-	<summary>
- If True, then saves a 2D plot of m/z vs. Intensity (requires reading every data point in the data file, which will slow down the processing)
- </summary>
-	<value></value>
-</member><member name="P:MSFileInfoScanner.clsMSFileInfoScanner.UseCacheFiles">
-	<summary>
- If True, then saves/loads data from/to the cache files (DatasetTimeFile.txt and FolderIntegrityInfo.txt)
- If you simply want to create TIC and BPI files, and/or the _DatasetInfo.xml file for a single dataset, then set this to False
- </summary>
-</member><member name="M:MSFileInfoScanner.clsMSFileInfoScanner.PostDatasetInfoToDB">
-	<summary>
- Post the most recently determine dataset into XML to the database, using the specified connection string and stored procedure
- </summary>
-	<returns>True if success; false if failure</returns>
-</member><member name="M:MSFileInfoScanner.clsMSFileInfoScanner.PostDatasetInfoToDB(System.String)">
-	<summary>
- Post the most recently determine dataset into XML to the database, using the specified connection string and stored procedure
- </summary>
-	<param name="strDatasetInfoXML">Database info XML</param>
-	<returns>True if success; false if failure</returns>
-</member><member name="M:MSFileInfoScanner.clsMSFileInfoScanner.PostDatasetInfoToDB(System.String,System.String)">
-	<summary>
- Post the most recently determine dataset into XML to the database, using the specified connection string and stored procedure
- </summary>
-	<param name="strConnectionString">Database connection string</param>
-	<param name="strStoredProcedure">Stored procedure</param>
-	<returns>True if success; false if failure</returns>
-</member><member name="M:MSFileInfoScanner.clsMSFileInfoScanner.PostDatasetInfoToDB(System.String,System.String,System.String)">
-	<summary>
- Post the dataset info in strDatasetInfoXML to the database, using the specified connection string and stored procedure
- </summary>
-	<param name="strDatasetInfoXML">Database info XML</param>
-	<param name="strConnectionString">Database connection string</param>
-	<param name="strStoredProcedure">Stored procedure</param>
-	<returns>True if success; false if failure</returns>
-</member><member name="M:MSFileInfoScanner.clsMSFileInfoScanner.PostDatasetInfoUseDatasetID(System.Int32,System.String,System.String)">
-	<summary>
- Post the dataset info in strDatasetInfoXML to the database, using the specified connection string and stored procedure
- This version assumes the stored procedure takes DatasetID as the first parameter
- </summary>
-	<param name="intDatasetID">Dataset ID to send to the stored procedure</param>
-	<param name="strConnectionString">Database connection string</param>
-	<param name="strStoredProcedure">Stored procedure</param>
-	<returns>True if success; false if failure</returns>
-</member><member name="M:MSFileInfoScanner.clsMSFileInfoScanner.PostDatasetInfoUseDatasetID(System.Int32,System.String,System.String,System.String)">
-	<summary>
- Post the dataset info in strDatasetInfoXML to the database, using the specified connection string and stored procedure
- This version assumes the stored procedure takes DatasetID as the first parameter
- </summary>
-	<param name="intDatasetID">Dataset ID to send to the stored procedure</param>
-	<param name="strDatasetInfoXML">Database info XML</param>
-	<param name="strConnectionString">Database connection string</param>
-	<param name="strStoredProcedure">Stored procedure</param>
-	<returns>True if success; false if failure</returns>
-</member><member name="M:MSFileInfoScanner.clsMSFileInfoScanner.ProcessMSFilesAndRecurseFolders(System.String,System.String,System.Int32)">
-	<summary>
- Calls ProcessMSFileOrFolder for all files in strInputFilePathOrFolder and below having a known extension
-  Known extensions are:
-   .Raw for Finnigan files
-   .Wiff for Agilent TOF files and for Q-Star files
-   .Baf for Bruker XMASS folders (contains file analysis.baf, and hopefully files scan.xml and Log.txt)
- For each folder that does not have any files matching a known extension, will then look for special folder names:
-   Folders matching *.Raw for Micromass data
-   Folders matching *.D for Agilent Ion Trap data
-   A folder named 1 for Bruker FTICR-MS data
- </summary>
-	<param name="strInputFilePathOrFolder">Path to the input file or folder; can contain a wildcard (* or ?)</param>
-	<param name="strOutputFolderPath">Folder to write any results files to</param>
-	<param name="intRecurseFoldersMaxLevels">Maximum folder depth to process; Set to 0 to process all folders</param>
+	<param name="intParameterIndex">Parameter index</param>
+	<param name="strKey">Parameter name (output)</param>
+	<param name="strValue">Value associated with the parameter; empty string if no value (output)</param>
 	<returns></returns>
-	<remarks></remarks>
+</member><member name="M:MSFileInfoScanner.clsParseCommandLine.RetrieveValueForParameter(System.String,System.String@)">
+	<summary>
+ Look for parameter on the command line and returns its value in strValue
+ </summary>
+	<param name="strKey">Parameter name</param>
+	<param name="strValue">Value associated with the parameter; empty string if no value (output)</param>
+	<returns>True if present, otherwise false</returns>
+</member><member name="M:MSFileInfoScanner.clsParseCommandLine.RetrieveValueForParameter(System.String,System.String@,System.Boolean)">
+	<summary>
+ Look for parameter on the command line and returns its value in strValue
+ </summary>
+	<param name="strKey">Parameter name</param>
+	<param name="strValue">Value associated with the parameter; empty string if no value (output)</param>
+	<param name="blnCaseSensitive">True to perform case-sensitive matching of the parameter name</param>
+	<returns>True if present, otherwise false</returns>
 </member><member name="P:MSFileInfoScanner.clsFileIntegrityChecker.ComputeFileHashes">
 	<summary>
  When True, then computes an MD5 hash on every file
@@ -861,7 +1064,7 @@ MSFileInfoScanner
  Overloaded form of XMLFileContainsElements; assumes intMaximumTextFileLinesToCheck = 50
  </summary>
 	<returns>True if this file contains the required element text</returns>
- ''' <remarks></remarks>
+	<remarks></remarks>
 </member><member name="M:MSFileInfoScanner.clsFileIntegrityChecker.XMLFileContainsElements(System.String,System.String[],System.Int32)">
 	<summary>
  Opens the file using a text reader and looks for XML elements specified in strElementsToMatch()
@@ -881,10 +1084,33 @@ MSFileInfoScanner
 	<param name="blnRequiredTextFound">True if the given item was found</param>
 	<param name="blnErrorLogged">Set to True if any items were missing</param>
 	<remarks></remarks>
-</member><member name="M:MSFileInfoScanner.clsMSFileInfoDataCache.SaveCachedResults">
+</member><member name="P:MSFileInfoScanner.clsMSFileInfoProcessorBaseClass.ScanEnd">
 	<summary>
- Writes out the cache files immediately
+ When ScanEnd is &gt; 0, then will stop processing at the specified scan number
  </summary>
+</member><member name="M:MSFileInfoScanner.clsMSFileInfoProcessorBaseClass.GetStartAndEndScans(System.Int32,System.Int32@,System.Int32@)">
+	<summary>
+ Returns the range of scan numbers to process
+ </summary>
+	<param name="intScanCount">Number of scans in the file</param>
+	<param name="intScanStart">1 if mScanStart is zero; otherwise mScanStart</param>
+	<param name="intScanEnd">intScanCount if mScanEnd is zero; otherwise Min(mScanEnd, intScanCount)</param>
+	<remarks></remarks>
+</member><member name="M:MSFileInfoScanner.clsMSFileInfoProcessorBaseClass.GetStartAndEndScans(System.Int32,System.Int32,System.Int32@,System.Int32@)">
+	<summary>
+ Returns the range of scan numbers to process
+ </summary>
+	<param name="intScanCount">Number of scans in the file</param>
+	<param name="intScanNumFirst">The first scan number in the file</param>
+	<param name="intScanStart">1 if mScanStart is zero; otherwise mScanStart</param>
+	<param name="intScanEnd">intScanCount if mScanEnd is zero; otherwise Min(mScanEnd, intScanCount)</param>
+	<remarks></remarks>
+</member><member name="M:MSFileInfoScanner.clsMSFileInfoProcessorBaseClass.IntToEngineeringNotation(System.Int32)">
+	<summary>
+ Converts an integer to engineering notation
+ For example, 50000 will be returned as 50K
+ </summary>
+	<param name="intValue"></param>
 	<returns></returns>
 	<remarks></remarks>
 </member>

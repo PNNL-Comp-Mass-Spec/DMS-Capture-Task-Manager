@@ -1,5 +1,8 @@
 Capture Task Manager History
 
+Version 1.1.4450; March 8, 2012
+	- Updated to use UIMF Library v2.0.4450
+
 Version 1.1.4421; February 8, 2012
 	- Capture Plugin now sets EvalCode to 3 (EVAL_CODE_NETWORK_ERROR_RETRY_CAPTURE) if a network error occurs during capture
 		- Stored Procedure SetStepTaskComplete recognizes this code and will auto-retry capture

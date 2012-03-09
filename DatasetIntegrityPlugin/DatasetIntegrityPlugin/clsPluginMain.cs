@@ -867,15 +867,13 @@ namespace DatasetIntegrityPlugin
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Opening UIMF file to read pressure data");
 
                 // Open the file with the UIMFRader
-                UIMFLibrary.DataReader objUimfReader = new UIMFLibrary.DataReader();
-                objUimfReader.OpenUIMF(dataFileNamePath);
-
-                int iFrameCount = objUimfReader.get_NumFramesCurrentFrameType();
-                UIMFLibrary.FrameParameters oFrameParams;
-
-                for (int iFrameIndex = 0; iFrameIndex < iFrameCount; iFrameIndex++)
+				UIMFLibrary.DataReader objUimfReader = new UIMFLibrary.DataReader(dataFileNamePath);
+				System.Collections.Generic.Dictionary<int, UIMFLibrary.DataReader.FrameType> dctMasterFrameList;
+                dctMasterFrameList= objUimfReader.GetMasterFrameList();
+				
+                foreach (int iFrameNumber in dctMasterFrameList.Keys) 
                 {
-                    oFrameParams = objUimfReader.GetFrameParameters(iFrameIndex);
+					UIMFLibrary.FrameParameters oFrameParams = objUimfReader.GetFrameParameters(iFrameNumber);
 
                     bool bNPressureColumnsArePresent = (oFrameParams.QuadrupolePressure > 0 && 
                                                         oFrameParams.RearIonFunnelPressure > 0 &&
@@ -894,17 +892,17 @@ namespace DatasetIntegrityPlugin
                             string msg = mRetData.EvalMsg + "; QuadrupolePressure should be less than the RearIonFunnelPressure and the RearIonFunnelPressure should be less than the HighPressureFunnelPressure.";
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 
-                            objUimfReader.CloseUIMF();
+                            objUimfReader.Dispose();
                             return false;
                         }
                     }
 
-                    if (iFrameIndex % 100 == 0)
+					if (iFrameNumber % 100 == 0)
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Validated frame " + oFrameParams.FrameNum);
 
                 }
 
-                objUimfReader.CloseUIMF();
+                objUimfReader.Dispose();
                 return true;
             }
 
