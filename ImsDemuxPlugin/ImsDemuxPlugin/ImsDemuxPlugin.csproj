@@ -113,7 +113,8 @@
   -->
   <PropertyGroup>
     <PostBuildEvent>copy "$(TargetPath)" "$(ProjectDir)..\..\DeployedFiles"
-copy "$(TargetDir)Belov*.dll" "$(ProjectDir)..\..\DeployedFiles"
+copy "$(TargetDir)IMSDemultiplexer*.dll" "$(ProjectDir)..\..\DeployedFiles"
+copy "$(TargetDir)MathNet*.dll" "$(ProjectDir)..\..\DeployedFiles"
 copy "$(TargetDir)*UIMF*.dll" "$(ProjectDir)..\..\DeployedFiles"
 copy "$(TargetDir)*.*" "$(ProjectDir)..\..\CaptureTaskManager\CaptureTaskManager\bin\Debug"</PostBuildEvent>
   </PropertyGroup>

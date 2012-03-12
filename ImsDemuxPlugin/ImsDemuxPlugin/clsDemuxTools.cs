@@ -27,7 +27,7 @@ namespace ImsDemuxPlugin
 
             protected const string DECODED_UIMF_SUFFIX = "_decoded.uimf";
 
-            protected const int MAX_CHECKPOINT_FRAME_INTERVAL = 50;
+            protected const int MAX_CHECKPOINT_FRAME_INTERVAL = 200;
             protected const int MAX_CHECKPOINT_WRITE_FREQUENCY_MINUTES = 20;
 
         #endregion
