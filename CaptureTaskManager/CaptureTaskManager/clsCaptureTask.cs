@@ -55,7 +55,7 @@ namespace CaptureTaskManager
 				}
 				else
 				{
-					return "";
+					return string.Empty;
 				}
 			}	// End sub
 
@@ -166,7 +166,7 @@ namespace CaptureTaskManager
 						myCmd.Parameters["@JobCountToPreview"].Value = 10;
 					}
 
-					msg = "clsCaptureTask.RequestTaskDetailed(), connection string: " + m_BrokerConnStr;
+					msg = "clsCaptureTask.RequestTaskDetailed(), connection string: " + m_ConnStr;
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 					msg = "clsCaptureTask.RequestTaskDetailed(), printing param list";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);

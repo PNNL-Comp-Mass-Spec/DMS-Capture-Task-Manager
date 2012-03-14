@@ -33,8 +33,7 @@ namespace CaptureTaskManager
 
 		#region "Class variables"
 			protected IMgrParams m_MgrParams;
-			protected string m_ConnStr;
-			protected string m_BrokerConnStr;
+			protected string m_ConnStr;			
 			protected StringCollection m_ErrorList = new StringCollection();
 			protected bool m_TaskWasAssigned = false;
 			protected StringDictionary m_JobParams = new StringDictionary();
@@ -62,7 +61,6 @@ namespace CaptureTaskManager
 			{
 				m_MgrParams = MgrParams;
 				m_ConnStr = m_MgrParams.GetParam("ConnectionString");
-				m_BrokerConnStr = m_MgrParams.GetParam("brokerconnectionstring");
 			}	// End sub
 		#endregion
 

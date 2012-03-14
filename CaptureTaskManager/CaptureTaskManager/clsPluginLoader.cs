@@ -58,9 +58,9 @@ namespace CaptureTaskManager
 
                 switch (className)
                 {
-                    //case "ImsDemuxPlugin.clsPluginMain":
-                    //    myToolRunner = (IToolRunner)new ImsDemuxPlugin.clsPluginMain();
-                    //    break;
+					//case "ImsDemuxPlugin.clsPluginMain":
+					//    myToolRunner = (IToolRunner)new ImsDemuxPlugin.clsPluginMain();
+					//    break;
                 
                     default:
                         break;

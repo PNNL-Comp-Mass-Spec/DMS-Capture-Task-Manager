@@ -46,6 +46,15 @@ namespace DatasetArchivePlugin
 
 				string dataset = m_TaskParams.GetParam("Dataset");
 
+				// Store the version info in the database
+				if (!StoreToolVersionInfo())
+				{
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
+					retData.CloseoutMsg = "Error determining tool version info";
+					retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+					return retData;
+				}
+
 				// Select appropriate operation tool based on StepTool specification
 				if (m_TaskParams.GetParam("StepTool").ToLower() == "datasetarchive")
 				{
@@ -104,6 +113,47 @@ namespace DatasetArchivePlugin
 				msg = "Completed clsPluginMain.Setup()";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 			}	// End sub
+
+			/// <summary>
+			/// Stores the tool version info in the database
+			/// </summary>
+			/// <remarks></remarks>
+			protected bool StoreToolVersionInfo()
+			{
+
+				string strToolVersionInfo = string.Empty;
+				System.IO.FileInfo ioAppFileInfo = new System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
+				bool bSuccess;
+
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+
+				// Lookup the version of the Dataset Archive plugin
+				string strPluginPath = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "DatasetArchivePlugin.dll");
+				bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strPluginPath);
+				if (!bSuccess)
+					return false;
+
+				// Lookup the version of the MD5StageFileCreator
+				string strMD5StageFileCreatorPath = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "MD5StageFileCreator.dll");
+				bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strMD5StageFileCreatorPath);
+				if (!bSuccess)
+					return false;
+
+				// Store path to CaptureToolPlugin.dll in ioToolFiles
+				System.Collections.Generic.List<System.IO.FileInfo> ioToolFiles = new System.Collections.Generic.List<System.IO.FileInfo>();
+				ioToolFiles.Add(new System.IO.FileInfo(strPluginPath));
+
+				try
+				{
+					return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
+				}
+				catch (System.Exception ex)
+				{
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
+					return false;
+				}
+			}
+
 		#endregion
 	}	// End class
 }	// End namespace

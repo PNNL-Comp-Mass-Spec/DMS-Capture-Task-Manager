@@ -57,6 +57,15 @@ namespace DatasetQualityPlugin
 
 				string dataset = m_TaskParams.GetParam("Dataset");
 
+				// Store the version info in the database
+				if (!StoreToolVersionInfo())
+				{
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
+					retData.CloseoutMsg = "Error determining tool version info";
+					retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+					return retData;
+				}
+
 				msg = "Performing quality checks for dataset '" + dataset + "'";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
 
@@ -280,6 +289,55 @@ namespace DatasetQualityPlugin
 
 				return fileName;
 			}	// End sub
+
+			/// <summary>
+			/// Stores the tool version info in the database
+			/// </summary>
+			/// <remarks></remarks>
+			protected bool StoreToolVersionInfo()
+			{
+
+				string strToolVersionInfo = string.Empty;
+				System.IO.FileInfo ioAppFileInfo = new System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
+				bool bSuccess;
+
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+
+				// Lookup the version of the Capture tool plugin
+				string strPluginPath = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "DatasetQualityPlugin.dll");
+				bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strPluginPath);
+				if (!bSuccess)
+					return false;
+
+				// Lookup the version of the Capture tool plugin
+				string strMSFileInfoScanner = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "MSFileInfoScanner.dll");
+				bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strMSFileInfoScanner);
+				if (!bSuccess)
+					return false;
+
+				// Lookup the version of the Capture tool plugin
+				string strUIMFLibraryPath = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "UIMFLibrary.dll");
+				bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strUIMFLibraryPath);
+				if (!bSuccess)
+					return false;
+
+				// Store path to CaptureToolPlugin.dll in ioToolFiles
+				System.Collections.Generic.List<System.IO.FileInfo> ioToolFiles = new System.Collections.Generic.List<System.IO.FileInfo>();
+				ioToolFiles.Add(new System.IO.FileInfo(strPluginPath));
+				ioToolFiles.Add(new System.IO.FileInfo(strMSFileInfoScanner));
+
+				try
+				{
+					return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, false);
+				}
+				catch (System.Exception ex)
+				{
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
+					return false;
+				}
+
+			}
+
 		#endregion
 
 		#region "Event handlers"

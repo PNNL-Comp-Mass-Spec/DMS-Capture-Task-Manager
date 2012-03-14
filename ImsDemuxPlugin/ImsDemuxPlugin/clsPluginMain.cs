@@ -51,6 +51,8 @@ namespace ImsDemuxPlugin
 		public override clsToolReturnData RunTool()
 		{
 			const string COULD_NOT_OBTAIN_GOOD_CALIBRATION = "Could not obtain a good calibration";
+			
+			bool bUseBelovTransform = true;				// Hard-coding to use BelovTransform.dll
 			string msg;
 
 			msg = "Starting ImsDemuxPlugin.clsPluginMain.RunTool()";
@@ -65,6 +67,15 @@ namespace ImsDemuxPlugin
 			base.m_MinutesBetweenConfigDBUpdates = MANAGER_UPDATE_INTERVAL_MINUTES;
 
 			string dataset = m_TaskParams.GetParam("Dataset");
+
+			// Store the version info in the database
+			if (!StoreToolVersionInfo(bUseBelovTransform))
+			{
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
+				retData.CloseoutMsg = "Error determining version of IMSDemultiplexer";
+				retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+				return retData;
+			}
 
 			// Locate data file on storage server
 			string svrPath = Path.Combine(m_TaskParams.GetParam("Storage_Vol_External"), m_TaskParams.GetParam("Storage_Path"));
@@ -190,7 +201,7 @@ namespace ImsDemuxPlugin
 			if (bMultiplexed)
 			{
 				// De-multiplexing is needed
-				retData = mDemuxTools.PerformDemux(m_MgrParams, m_TaskParams, uimfFileName);
+				retData = mDemuxTools.PerformDemux(m_MgrParams, m_TaskParams, uimfFileName, bUseBelovTransform);
 
 				if (mDemuxTools.OutOfMemoryException)
 				{
@@ -203,6 +214,10 @@ namespace ImsDemuxPlugin
 
 					this.m_NeedToAbortProcessing = true;
 				}
+
+				// Copy the Tool_Version_Info file to the storage server
+				string workDirPath = m_MgrParams.GetParam("workdir");
+				CopyFileToStorageServer(workDirPath, "Tool_Version_Info_ImsDeMultiplex.txt");
 			}
 
 
@@ -234,6 +249,102 @@ namespace ImsDemuxPlugin
 			msg = "Completed clsPluginMain.Setup()";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 		}	// End sub
+
+		protected bool CopyFileToStorageServer(string sourceDirPath, string fileName)
+		{
+			
+            string msg;
+            bool bSuccess = true;
+
+			string svrPath = Path.Combine(m_TaskParams.GetParam("Storage_Vol_External"), m_TaskParams.GetParam("Storage_Path"));
+			string sDatasetFolderPathRemote = Path.Combine(svrPath, m_TaskParams.GetParam("Folder"));
+
+			// Copy file fileName from sourceDirPath to the dataset folder
+			string sSourceFilePath = Path.Combine(sourceDirPath, fileName);
+			string sTargetFilePath = Path.Combine(sDatasetFolderPathRemote, fileName);
+
+            if (!System.IO.File.Exists(sSourceFilePath))
+            {
+				msg = "File not found: " + sSourceFilePath;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);                    
+            }
+            else
+            {
+                int retryCount = 3;
+                if (!clsDemuxTools.CopyFile(sSourceFilePath, sTargetFilePath, true, retryCount))
+                {
+					msg = "Error copying " + fileName + " to storage server";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    bSuccess = false;
+                }
+            }
+
+            return bSuccess;
+
+		}
+
+		/// <summary>
+		/// Stores the tool version info in the database
+		/// </summary>
+		/// <remarks></remarks>
+		protected bool StoreToolVersionInfo(bool bUseBelovTransform)
+		{
+
+			string strToolVersionInfo = string.Empty;
+			string strDemultiplexerPath = string.Empty;
+
+			System.IO.FileInfo ioAppFileInfo = new System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
+			bool bSuccess;
+
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+
+			// Lookup the version of the UIMFDemultiplexer (in the Capture Task Manager folder)
+			string strUIMFDemultiplexerPath = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "UIMFDemultiplexer.dll");
+			bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strUIMFDemultiplexerPath);
+			if (!bSuccess)
+				return false;
+
+			if (bUseBelovTransform)
+			{
+				// This is a C++ app, so we can't use reflection to determine the version
+				// Thus, we don't call base.StoreToolVersionInfoOneFile()
+				strDemultiplexerPath = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "BelovTransform.dll");
+			}
+			else
+			{
+				// Lookup the version of the IMSDemultiplexer
+				strDemultiplexerPath = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "IMSDemultiplexer.dll");
+				bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strDemultiplexerPath);
+				if (!bSuccess)
+					return false;
+			}
+
+			string strAutoCalibrateUIMFPath = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "AutoCalibrateUIMF.dll");
+			bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strAutoCalibrateUIMFPath);
+			if (!bSuccess)
+				return false;
+
+			string strUIMFLibrary = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "UIMFLibrary.dll");
+			bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strUIMFLibrary);
+			if (!bSuccess)
+				return false;
+
+			// Store path to the demultiplexer DLL in ioToolFiles
+			System.Collections.Generic.List<System.IO.FileInfo>ioToolFiles = new System.Collections.Generic.List<System.IO.FileInfo>();
+			ioToolFiles.Add(new System.IO.FileInfo(strDemultiplexerPath));
+
+			try
+			{
+				return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
+			}
+			catch (System.Exception ex)
+			{
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
+				return false;
+			}
+
+		}
+		
 		#endregion
 
 		#region "Event handlers"

@@ -22,16 +22,6 @@ namespace DatasetIntegrityPlugin
 		//**********************************************************************************************************
 
 		#region "Constants"
-			// const float RAW_FILE_MIN_SIZE = 0.1F;	        //MB
-			// const float RAW_FILE_MAX_SIZE = 2048F;	        //MB
-            //const float BAF_FILE_MIN_SIZE = 0.1F;	            //MB
-            //const float SER_FILE_MIN_SIZE = 0.016F;	        //MB
-            //const float FID_FILE_MIN_SIZE = 0.016F;	        //MB
-            //const float ACQ_METHOD_FILE_MIN_SIZE = 0.005F;	//MB
-            //const float SCIEX_WIFF_FILE_MIN_SIZE = 0.048F;  //MB
-            //const float SCIEX_WIFF_SCAN_FILE_MIN_SIZE = 0.001F; //MB
-            //const float UIMF_FILE_MIN_SIZE = 0.1F;	        //MB
-
             const float RAW_FILE_MIN_SIZE_KB = 100;	         
             const float RAW_FILE_MAX_SIZE_MB = 2048;	     
             const float BAF_FILE_MIN_SIZE_KB = 100;	        
@@ -73,6 +63,15 @@ namespace DatasetIntegrityPlugin
                     return mRetData;
 
 				string dataset = m_TaskParams.GetParam("Dataset");
+
+				// Store the version info in the database
+				if (!StoreToolVersionInfo())
+				{
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
+					mRetData.CloseoutMsg = "Error determining tool version info";
+					mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+					return mRetData;
+				}
 
 				msg = "Performing integrity test, dataset '" + dataset + "'";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
@@ -923,6 +922,7 @@ namespace DatasetIntegrityPlugin
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 			}	// End sub
 
+
 			/// <summary>
 			/// Gets the length of a single file in KB
 			/// </summary>
@@ -932,8 +932,56 @@ namespace DatasetIntegrityPlugin
 			{
 				FileInfo fi = new FileInfo(fileNamePath);
 				Single fileLengthKB = (float)fi.Length / (1024F);
-                return fileLengthKB;
-			}	// End sub
+				return fileLengthKB;
+			}
+
+			/// <summary>
+			/// Stores the tool version info in the database
+			/// </summary>
+			/// <remarks></remarks>
+			protected bool StoreToolVersionInfo()
+			{
+
+				string strToolVersionInfo = string.Empty;
+				System.IO.FileInfo ioAppFileInfo = new System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
+				bool bSuccess;
+
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+
+				// Lookup the version of the Capture tool plugin
+				string strPluginPath = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "DatasetIntegrityPlugin.dll");
+				bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strPluginPath);
+				if (!bSuccess)
+					return false;
+
+				// Lookup the version of the Capture tool plugin
+				string strSQLitePath = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "System.Data.SQLite.dll");
+				bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strSQLitePath);
+				if (!bSuccess)
+					return false;
+
+				// Lookup the version of the Capture tool plugin
+				string strUIMFLibraryPath = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "UIMFLibrary.dll");
+				bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strUIMFLibraryPath);
+				if (!bSuccess)
+					return false;
+
+				// Store path to CaptureToolPlugin.dll in ioToolFiles
+				System.Collections.Generic.List<System.IO.FileInfo> ioToolFiles = new System.Collections.Generic.List<System.IO.FileInfo>();
+				ioToolFiles.Add(new System.IO.FileInfo(strPluginPath));
+
+				try
+				{
+					return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, false);
+				}
+				catch (System.Exception ex)
+				{
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
+					return false;
+				}
+
+			}
+
 		#endregion
 	}	// End class
 }	// End namespace

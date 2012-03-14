@@ -1,5 +1,10 @@
 Capture Task Manager History
 
+Version 1.4.4456; March 14, 2012
+	- Now storing the tool version in the database using SetStepTaskToolVersion
+	- Updated ImsDemuxPlugin to allow use of either BelovTransform.dll or IMSDemultiplexer.dll
+		- Currently hard-coded to always use BelovTransform.dll
+
 Version 1.4.4454; March 12, 2012
 	- Updated ImsDemuxPlugin to use C# based demultiplexer (IMSDemultiplexer.dll)
 
