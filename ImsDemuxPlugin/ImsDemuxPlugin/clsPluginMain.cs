@@ -215,9 +215,6 @@ namespace ImsDemuxPlugin
 					this.m_NeedToAbortProcessing = true;
 				}
 
-				// Copy the Tool_Version_Info file to the storage server
-				string workDirPath = m_MgrParams.GetParam("workdir");
-				CopyFileToStorageServer(workDirPath, "Tool_Version_Info_ImsDeMultiplex.txt");
 			}
 
 
@@ -335,7 +332,8 @@ namespace ImsDemuxPlugin
 
 			try
 			{
-				return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
+				bool bSaveToolVersionTextFile = false;
+				return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, bSaveToolVersionTextFile);
 			}
 			catch (System.Exception ex)
 			{

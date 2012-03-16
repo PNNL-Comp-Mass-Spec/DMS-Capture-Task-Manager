@@ -121,6 +121,7 @@ namespace DatasetQualityPlugin
 				sourceFolder = Path.Combine(sourceFolder,m_TaskParams.GetParam("Storage_Path"));
 				sourceFolder = Path.Combine(sourceFolder, m_TaskParams.GetParam("Folder"));
 				string outputFolder = Path.Combine(sourceFolder, "QC");
+				bool bSkipPlots = false;
 
 				// Set up the params for the MS file scanner
 				m_MsFileScanner.DSInfoDBPostingEnabled = false;
@@ -135,7 +136,7 @@ namespace DatasetQualityPlugin
 				m_MsFileScanner.LCMS2DOverviewPlotDivisor = int.Parse(m_TaskParams.GetParam("LCMS2DOverviewPlotDivisor"));
 
 				// Get the input file name
-				string inpFileName = GetDataFileOrFolderName(sourceFolder);
+				string inpFileName = GetDataFileOrFolderName(sourceFolder, out bSkipPlots);
 				if (inpFileName == "Invalid File Type")
 				{
 					// DS quality test not implemented for this file type
@@ -152,6 +153,13 @@ namespace DatasetQualityPlugin
 					result.CloseoutMsg = m_Msg;
 					result.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 					return result;
+				}
+
+				if (bSkipPlots)
+				{
+					// Do not create any plots
+					m_MsFileScanner.SaveTICAndBPIPlots = false;
+					m_MsFileScanner.SaveLCMS2DPlots = false;
 				}
 
 				// Make the output folder
@@ -246,9 +254,10 @@ namespace DatasetQualityPlugin
 			/// Returns the file or folder name for specified dataset based on dataset type
 			/// </summary>
 			/// <returns>Data file or folder name</returns>
-			private string GetDataFileOrFolderName(string inputFolder)
+			private string GetDataFileOrFolderName(string inputFolder, out bool bSkipPlots)
 			{
 				string fileName;
+				bSkipPlots = false;
 
 				// Get the expected file name based on the dataset type
 				switch (m_TaskParams.GetParam("rawdatatype"))
@@ -269,6 +278,10 @@ namespace DatasetQualityPlugin
 						break;
 					case "dot_uimf_files":
 						fileName = m_TaskParams.GetParam("dataset") + ".uimf";
+						break;
+					case "sciex_wiff_files":
+						fileName = m_TaskParams.GetParam("dataset") + ".wiff";
+						bSkipPlots = true;
 						break;
 					default:
 						m_Msg = "clsPluginMain.GetDataFileOrFolderName: Data type " + m_TaskParams.GetParam("rawdatatype") +

@@ -1,5 +1,8 @@
 Capture Task Manager History
 
+Version 1.4.4457; March 15, 2012
+	- No longer creating the Tool_Version_Info_ImsDeMultiplex.txt file during demultiplexing
+
 Version 1.4.4456; March 14, 2012
 	- Now storing the tool version in the database using SetStepTaskToolVersion
 	- Updated ImsDemuxPlugin to allow use of either BelovTransform.dll or IMSDemultiplexer.dll
