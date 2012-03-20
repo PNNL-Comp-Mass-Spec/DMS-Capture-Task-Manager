@@ -377,7 +377,7 @@ namespace DatasetArchivePlugin
 			System.Collections.Generic.List<string> lstExtraStagingFiles = new System.Collections.Generic.List<string>();
 
 			string sDatasetAndSuffix;
-			int iExtraFileNumberNew = 1;
+			int iExtraFileNumber = 1;
 			bool bSuccess;
 
 			// Convert sArchiveStoragePathForDataset from the form \\a2.emsl.pnl.gov\dmsarch\LTQ_ORB_2_2\
@@ -424,8 +424,8 @@ namespace DatasetArchivePlugin
 						{
 							// Number parsed out
 							// Adjust iExtraFileNumberNew if necessary
-							if (iStageFileNum >= iExtraFileNumberNew)
-								iExtraFileNumberNew = iStageFileNum + 1;
+							if (iStageFileNum >= iExtraFileNumber)
+								iExtraFileNumber = iStageFileNum + 1;
 
 							lstExtraStagingFiles.Add(fiFile.FullName);
 
@@ -435,9 +435,12 @@ namespace DatasetArchivePlugin
 			} // foreach (sFileSpec in lstSearchFileSpec)
 
 			// Create the new stagemd5 file
-			bSuccess = mMD5StageFileCreator.WriteStagingFile(ref lstFilePathsToStage, sDatasetName, sLocalParentFolderPathForDataset, sArchiveStoragePathForDatasetUnix, iExtraFileNumberNew);
+			// Copy iExtraFileNumber to iExtraFileNumberNew in case the ExtraFile suffix value gets incremented by mMD5StageFileCreator.WriteStagingFile
+			// If the number does get auto-incremented, then we won't append the contents of lstExtraStagingFiles to the newly created staging file
+			int iExtraFileNumberNew = iExtraFileNumber;
+			bSuccess = mMD5StageFileCreator.WriteStagingFile(ref lstFilePathsToStage, sDatasetName, sLocalParentFolderPathForDataset, sArchiveStoragePathForDatasetUnix, ref iExtraFileNumberNew);
 
-			if (bSuccess && lstExtraStagingFiles.Count > 0)
+			if (bSuccess && lstExtraStagingFiles.Count > 0 && iExtraFileNumberNew == iExtraFileNumber)
 			{
 				try
 				{

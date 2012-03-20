@@ -1,14 +1,17 @@
 Capture Task Manager History
 
-Version 1.4.4457; March 15, 2012
+Version 1.1.4458; March 16, 2012
+	- New version of MD5StageFileCreator.dll that auto-renames the stagemd5 file if a file copy conflict occurs and the suffix ends in __ExtraFiles001
+
+Version 1.1.4457; March 15, 2012
 	- No longer creating the Tool_Version_Info_ImsDeMultiplex.txt file during demultiplexing
 
-Version 1.4.4456; March 14, 2012
+Version 1.1.4456; March 14, 2012
 	- Now storing the tool version in the database using SetStepTaskToolVersion
 	- Updated ImsDemuxPlugin to allow use of either BelovTransform.dll or IMSDemultiplexer.dll
 		- Currently hard-coded to always use BelovTransform.dll
 
-Version 1.4.4454; March 12, 2012
+Version 1.1.4454; March 12, 2012
 	- Updated ImsDemuxPlugin to use C# based demultiplexer (IMSDemultiplexer.dll)
 
 Version 1.1.4450; March 8, 2012
