@@ -36,7 +36,7 @@ namespace CaptureTaskManager
 			protected string m_ConnStr;			
 			protected StringCollection m_ErrorList = new StringCollection();
 			protected bool m_TaskWasAssigned = false;
-			protected StringDictionary m_JobParams = new StringDictionary();
+			protected System.Collections.Generic.Dictionary<string, string> m_JobParams = new System.Collections.Generic.Dictionary<string, string>();
 		#endregion
 
 		#region "Properties"
@@ -48,7 +48,7 @@ namespace CaptureTaskManager
 				}
 			}
 
-			public StringDictionary TaskDictionary 
+			public System.Collections.Generic.Dictionary<string,string> TaskDictionary 
 			{	get 
 				{ 
 					return m_JobParams;
@@ -250,7 +250,7 @@ namespace CaptureTaskManager
 
 				// Fill string dictionary with parameter values
 				m_JobParams.Clear();
-				m_JobParams = new StringDictionary();
+				m_JobParams = new System.Collections.Generic.Dictionary<string, string>();
 				try
 				{
 					foreach (DataRow currRow in dt.Rows)

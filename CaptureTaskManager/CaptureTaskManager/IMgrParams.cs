@@ -7,6 +7,8 @@
 //
 // Last modified 06/16/2009
 //*********************************************************************************************************
+using System.Collections.Generic;
+using System.Collections.Specialized;
 
 namespace CaptureTaskManager
 {
@@ -16,10 +18,18 @@ namespace CaptureTaskManager
 		// Defines interface for manager parameter handling
 		//**********************************************************************************************************
 
+		#region "Properties"
+
+		System.Collections.Generic.Dictionary<string, string> TaskDictionary { get; }
+		
+		#endregion
+
+		#region "Methods"
 		string GetParam(string ItemKey);
 		void SetParam(string ItemKey, string ItemValue);
 
         bool LoadMgrSettingsFromDB();
+		#endregion
 
 	}	// End interface
 }	// End namespace

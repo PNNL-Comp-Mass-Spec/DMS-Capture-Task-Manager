@@ -72,7 +72,7 @@ namespace DatasetArchivePlugin
 			m_FtpTimeOut = int.Parse(m_MgrParams.GetParam("timeout"));
 			m_FtpPassive = bool.Parse(m_MgrParams.GetParam("passive"));
 			m_FtpRestart = bool.Parse(m_MgrParams.GetParam("restart"));
-			if (m_TaskParams.GetParam("steptool") == "DatasetArchive")
+			if (m_TaskParams.GetParam("StepTool") == "DatasetArchive")
 			{
 				m_ArchiveOrUpdate = ARCHIVE;
 			}
@@ -91,7 +91,16 @@ namespace DatasetArchivePlugin
 		/// <returns>TRUE for success, FALSE for failure</returns>
 		public virtual bool PerformTask()
 		{
-			m_DatasetName = m_TaskParams.GetParam("dataset");
+			m_DatasetName = m_TaskParams.GetParam("Dataset");
+
+			if(m_MgrParams.GetParam("MyEmslUpload").ToLower() == "true") {
+				m_Msg = "Bundling changes to dataset " + m_DatasetName + " for transmission to MyEMSL";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
+			
+				Pacifica.DMS_Metadata.MyEMSLUploader myEMSLUL = new Pacifica.DMS_Metadata.MyEMSLUploader();
+				myEMSLUL.StartUpload(m_TaskParams.TaskDictionary, m_MgrParams.TaskDictionary);
+			}
+
 
 			//Set client/server perspective & setup paths
 			if (m_MgrParams.GetParam("perspective").ToLower() == "client")

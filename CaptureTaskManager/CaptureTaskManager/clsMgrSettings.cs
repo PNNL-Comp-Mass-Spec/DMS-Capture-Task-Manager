@@ -36,6 +36,9 @@ namespace CaptureTaskManager {
 
 		#region "Properties"
 		public string ErrMsg { get; set; }
+			public System.Collections.Generic.Dictionary<string,string> TaskDictionary {
+				get { return m_ParamDictionary; }
+			}
 		#endregion
 
 		#region "Methods"
