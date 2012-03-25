@@ -136,8 +136,8 @@ namespace DatasetQualityPlugin
 				m_MsFileScanner.LCMS2DOverviewPlotDivisor = int.Parse(m_TaskParams.GetParam("LCMS2DOverviewPlotDivisor"));
 
 				// Get the input file name
-				string inpFileName = GetDataFileOrFolderName(sourceFolder, out bSkipPlots);
-				if (inpFileName == "Invalid File Type")
+				string sFileOrFolderName = GetDataFileOrFolderName(sourceFolder, out bSkipPlots);
+				if (sFileOrFolderName == "Invalid File Type")
 				{
 					// DS quality test not implemented for this file type
 					result.CloseoutMsg = "";
@@ -147,7 +147,7 @@ namespace DatasetQualityPlugin
 					return result;
 				}
 
-				if (inpFileName == "")
+				if (string.IsNullOrEmpty(sFileOrFolderName))
 				{
 					// There was a problem with getting the file name; Details reported by called method
 					result.CloseoutMsg = m_Msg;
@@ -188,7 +188,7 @@ namespace DatasetQualityPlugin
 				m_ErrOccurred = false;
 				m_Msg = string.Empty;
 
-				success = m_MsFileScanner.ProcessMSFileOrFolder(Path.Combine(sourceFolder, inpFileName), outputFolder);
+				success = m_MsFileScanner.ProcessMSFileOrFolder(Path.Combine(sourceFolder, sFileOrFolderName), outputFolder);
 				if (!success)
 				{
 					// Either a bad result code was returned, or an error event was received
@@ -256,31 +256,36 @@ namespace DatasetQualityPlugin
 			/// <returns>Data file or folder name</returns>
 			private string GetDataFileOrFolderName(string inputFolder, out bool bSkipPlots)
 			{
-				string fileName;
+				string dataset = m_TaskParams.GetParam("Dataset");
+				string sFileOrFolderName;
 				bSkipPlots = false;
 
 				// Get the expected file name based on the dataset type
 				switch (m_TaskParams.GetParam("rawdatatype"))
 				{
 					case "dot_raw_files":
-						fileName = m_TaskParams.GetParam("dataset") + ".raw";
+						sFileOrFolderName = dataset + ".raw";
 						break;
 					case "zipped_s_folders":
-						fileName = "analysis.baf";
+						sFileOrFolderName = "analysis.baf";
 						break;
 					case "bruker_ft":
 						string sInstrumentClass = m_TaskParams.GetParam("Instrument_Class");
 
 						if (sInstrumentClass == "Bruker_Amazon_Ion_Trap")
-							fileName = m_TaskParams.GetParam("dataset") + ".d" + "\\" + "analysis.yep";
+							sFileOrFolderName = dataset + ".d" + "\\" + "analysis.yep";
 						else
-							fileName = m_TaskParams.GetParam("dataset") + ".d" + "\\" + "analysis.baf";
+							sFileOrFolderName = dataset + ".d" + "\\" + "analysis.baf";
 						break;
 					case "dot_uimf_files":
-						fileName = m_TaskParams.GetParam("dataset") + ".uimf";
+						sFileOrFolderName = dataset + ".uimf";
 						break;
 					case "sciex_wiff_files":
-						fileName = m_TaskParams.GetParam("dataset") + ".wiff";
+						sFileOrFolderName = dataset + ".wiff";
+						bSkipPlots = false;
+						break;
+					case "dot_d_folders":
+						sFileOrFolderName = dataset + ".d";
 						bSkipPlots = true;
 						break;
 					default:
@@ -291,16 +296,18 @@ namespace DatasetQualityPlugin
 						return "Invalid File Type";
 				}
 
-				// Test to verify file exists
-				if (!File.Exists(Path.Combine(inputFolder, fileName)))
+				// Test to verify the file (or folder) exists
+				string sFileOrFolderPath = Path.Combine(inputFolder, sFileOrFolderName);
+
+				if (!File.Exists(sFileOrFolderPath) && !Directory.Exists(sFileOrFolderPath))
 				{
-					m_Msg = "clsPluginMain.GetDataFileOrFolderName: File " + Path.Combine(inputFolder, fileName) + " not found";
+					m_Msg = "clsPluginMain.GetDataFileOrFolderName: File " + sFileOrFolderPath + " not found";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
-					m_Msg = "File " + Path.Combine(inputFolder, fileName) + " not found";
-					fileName = "";
+					m_Msg = "File " + sFileOrFolderPath + " not found";
+					sFileOrFolderName = string.Empty;
 				}
 
-				return fileName;
+				return sFileOrFolderName;
 			}	// End sub
 
 			/// <summary>

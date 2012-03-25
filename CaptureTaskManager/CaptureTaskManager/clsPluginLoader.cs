@@ -61,7 +61,11 @@ namespace CaptureTaskManager
 					//case "ImsDemuxPlugin.clsPluginMain":
 					//    myToolRunner = (IToolRunner)new ImsDemuxPlugin.clsPluginMain();
 					//    break;
-                
+
+					//case "DatasetArchivePlugin.clsPluginMain":
+					//    myToolRunner = (IToolRunner)new DatasetArchivePlugin.clsPluginMain();
+					//    break;
+
                     default:
                         break;
                 }

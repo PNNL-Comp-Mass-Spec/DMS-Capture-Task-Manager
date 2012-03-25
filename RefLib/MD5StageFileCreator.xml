@@ -1,0 +1,52 @@
+﻿<?xml version="1.0"?>
+<doc>
+<assembly>
+<name>
+MD5StageFileCreator
+</name>
+</assembly>
+<members>
+<member name="P:MD5StageFileCreator.clsMD5StageFileCreator.ErrorMessage">
+	<summary>
+ Most recent error message
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:MD5StageFileCreator.clsMD5StageFileCreator.PreviewMode">
+	<summary>
+ Set this to True to display the contents of the new stagemd5 file in the console window
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:MD5StageFileCreator.clsMD5StageFileCreator.StagingFilePath">
+	<summary>
+ Full path to the stagemd5 file created by WriteStagingFile
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="P:MD5StageFileCreator.clsMD5StageFileCreator.StagingFolderPath">
+	<summary>
+ Path to the folder in which the stagemd5 file will be created
+ This path is initialized by the class constructor
+ </summary>
+	<value></value>
+	<returns></returns>
+	<remarks></remarks>
+</member><member name="M:MD5StageFileCreator.clsMD5StageFileCreator.WriteStagingFile(System.Collections.Generic.List{System.String}@,System.String,System.String,System.String,System.Int32@)">
+	<summary>
+ Creates a staging file for this dataset, listing each of the files that needs to be restored
+ File paths should look like: /archive/dmsarch/LTQ_ORB_3_1/MG_merc_32_2_21Feb09_Sphinx_08-11-20/MG_merc_32_2_21Feb09_Sphinx_08-11-20.RAW
+ </summary>
+	<param name="lstFilePathsToStage">List of files to include in the stagemd5 file (full paths)</param>
+	<param name="strDatasetName">Name of this dataset; the staging file will be named stagemd5.DatasetName</param>
+	<param name="strLocalParentFolderPathForDataset">The path to the parent folder that the dataset resides in on the storage server</param>
+	<param name="strArchiveStoragePathForDataset">Archive-style path, for example: /archive/dmsarch/LTQ_ORB_3_1/</param>
+	<param name="intExtraFileNumber">If this value is greater than zero, then will append _ExtraFiles### to the stageing file name (e.g. ### will be 001 if intExtraFileNumber = 1)</param>
+	<returns></returns>
+	<remarks>intExtraFileNumber will get auto-incremented if copy of the staging file to the archive storage path fails with error "cannot access the file '...' because it is being used by another process." </remarks>
+</member>
+</members>
+</doc>

@@ -13,7 +13,7 @@ namespace CaptureTaskManager
 
 			Console.WriteLine("Code test mode");
 
-			System.Collections.Generic.Dictionary<string, string> lstCredentials = new System.Collections.Generic.Dictionary<string, string>();
+			System.Collections.Generic.Dictionary<string, string> lstCredentials = new System.Collections.Generic.Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
 
 			string sShareFolderPath = @"\\15T_FTICR.bionet\ProteomicsData";
 

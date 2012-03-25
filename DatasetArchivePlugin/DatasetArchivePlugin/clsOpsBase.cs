@@ -92,15 +92,19 @@ namespace DatasetArchivePlugin
 		public virtual bool PerformTask()
 		{
 			m_DatasetName = m_TaskParams.GetParam("Dataset");
+			bool bMyEmslUpload = false;
 
-			if(m_MgrParams.GetParam("MyEmslUpload").ToLower() == "true") {
-				m_Msg = "Bundling changes to dataset " + m_DatasetName + " for transmission to MyEMSL";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
-			
-				Pacifica.DMS_Metadata.MyEMSLUploader myEMSLUL = new Pacifica.DMS_Metadata.MyEMSLUploader();
-				myEMSLUL.StartUpload(m_TaskParams.TaskDictionary, m_MgrParams.TaskDictionary);
+			if (bool.TryParse(m_MgrParams.GetParam("MyEmslUpload"), out bMyEmslUpload) && bMyEmslUpload)
+			{
+				// Possibly copy this dataset to MyEmsl
+				string sInstrument = m_TaskParams.GetParam("Instrument_Name");
+				string sEUSInstrumentID = m_TaskParams.GetParam("EUS_Instrument_ID");
+
+				if (sInstrument.StartsWith("LTQ_Orb_") && sEUSInstrumentID.Length > 0)
+				{
+					UploadToMyEMSL();
+				}
 			}
-
 
 			//Set client/server perspective & setup paths
 			if (m_MgrParams.GetParam("perspective").ToLower() == "client")
@@ -131,6 +135,34 @@ namespace DatasetArchivePlugin
 			// Got to here, everything's OK, so let let the derived class take over
 			return true;
 		}	// End sub
+
+		/// <summary>
+		/// Use MyEMSLUploader to upload the data to MyEMSL
+		/// </summary>
+		/// <returns>True if success, false if an error</returns>
+		protected bool UploadToMyEMSL()
+		{
+
+			try
+			{
+				m_Msg = "Bundling changes to dataset " + m_DatasetName + " for transmission to MyEMSL";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
+
+				Pacifica.DMS_Metadata.MyEMSLUploader myEMSLUL = new Pacifica.DMS_Metadata.MyEMSLUploader();
+				myEMSLUL.StartUpload(m_TaskParams.TaskDictionary, m_MgrParams.TaskDictionary);
+
+			}
+			catch (Exception ex)
+			{
+				m_Msg = "Exception uploading to MyEMSL";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg, ex);
+				LogOperationFailed(m_DatasetName);
+				return false;
+			}
+			
+			return true;
+
+		}
 
 		/// <summary>
 		/// Verifies specified dataset is present

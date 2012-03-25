@@ -63,11 +63,14 @@ namespace Pacifica.DMS_Metadata
 			this._readServerName = "a3.my.emsl.pnl.gov";
 			this.dbTool = new PRISM.DataBase.clsDBTools(null, "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI");
 
+			/*
+			 * No longer necessary since taskParams containst EUS_Instrument_ID
 			string instLookupSQL = "SELECT EUS_Instrument_ID FROM [V_EUS_Instrument_ID_Lookup] WHERE Instrument_Name = '" + taskParams["Instrument_Name"] + "';";
 			System.Data.DataSet dmsDS = new System.Data.DataSet();
 			Int32 rowCount = 0;
 
 			Boolean dbSuccess = this.dbTool.GetDiscDataSet(instLookupSQL, ref dmsDS, ref rowCount);
+			*/
 
 			if (backgrounder != null) {
 				this._bgw.DoWork += new System.ComponentModel.DoWorkEventHandler(this.SetupMetadataHandler);
@@ -128,7 +131,19 @@ namespace Pacifica.DMS_Metadata
 			Dictionary<string, object> eusInfo = new Dictionary<string, object>();
 
 			eusInfo.Add("groups", groupObject);
-			eusInfo.Add("instrumentId", "34127"); //need to look this up from dms
+
+			string eusInstrumentID = taskParams["EUS_Instrument_ID"];
+			if (string.IsNullOrWhiteSpace(eusInstrumentID))
+			{
+				// This instrument does not have an EUS_Instrument_ID
+				// Use 34127, which is VOrbiETD04
+				eusInfo.Add("instrumentId", "34127");
+			}
+			else
+			{
+				eusInfo.Add("instrumentId", eusInstrumentID);
+			}
+
 			eusInfo.Add("instrumentName", taskParams["Instrument_Name"]);
 			eusInfo.Add("proposalID", "17797");
 			eusInfo.Add("proposalTitle", "");

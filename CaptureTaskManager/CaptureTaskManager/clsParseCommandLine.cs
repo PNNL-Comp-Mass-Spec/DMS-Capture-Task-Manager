@@ -34,7 +34,7 @@ namespace FileProcessor
         public const char ALTERNATE_SWITCH_CHAR = '-';
 
         public const char DEFAULT_SWITCH_PARAM_CHAR = ':';
-        protected System.Collections.Generic.Dictionary<string, string> mSwitches = new System.Collections.Generic.Dictionary<string, string>();
+		protected System.Collections.Generic.Dictionary<string, string> mSwitches = new System.Collections.Generic.Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
 
         protected System.Collections.Generic.List<string> mNonSwitchParameters = new System.Collections.Generic.List<string>();
         protected bool mShowHelp = false;
