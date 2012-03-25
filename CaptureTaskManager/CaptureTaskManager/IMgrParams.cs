@@ -26,6 +26,7 @@ namespace CaptureTaskManager
 
 		#region "Methods"
 		string GetParam(string ItemKey);
+		string GetParam(string ItemKey, string valueIfMissing);
 		void SetParam(string ItemKey, string ItemValue);
 
         bool LoadMgrSettingsFromDB();

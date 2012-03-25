@@ -160,7 +160,7 @@ namespace CaptureTaskManager
 									//NOTE: The connection has to be added here because it didn't exist at the time the command object was created
 									spCmd.Connection = cn;
 									//Change command timeout from 30 second default in attempt to reduce SP execution timeout errors
-									spCmd.CommandTimeout = int.Parse(m_MgrParams.GetParam("cmdtimeout"));
+									spCmd.CommandTimeout = int.Parse(m_MgrParams.GetParam("cmdtimeout", "30"));
 									da.SelectCommand = spCmd;
 									myTimer.Start();
 									da.Fill(ds);

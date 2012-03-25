@@ -27,6 +27,7 @@ namespace CaptureTaskManager
 
 		#region "Methods"
 		string GetParam(string name);
+		string GetParam(string name, string valueIfMissing);
 		bool AddAdditionalParameter(string paramName, string paramValue);
 		void SetParam(string keyName, string value);
 		#endregion

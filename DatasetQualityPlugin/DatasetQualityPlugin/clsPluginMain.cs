@@ -142,7 +142,7 @@ namespace DatasetQualityPlugin
 					// DS quality test not implemented for this file type
 					result.CloseoutMsg = "";
 					result.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
-					result.EvalMsg = "Dataset quality test not implemented for data type " + m_TaskParams.GetParam("rawdatatype");
+					result.EvalMsg = "Dataset quality test not implemented for data type " + m_TaskParams.GetParam("rawdatatype", "???");
 					result.EvalCode = EnumEvalCode.EVAL_CODE_NOT_EVALUATED;
 					return result;
 				}
@@ -257,11 +257,12 @@ namespace DatasetQualityPlugin
 			private string GetDataFileOrFolderName(string inputFolder, out bool bSkipPlots)
 			{
 				string dataset = m_TaskParams.GetParam("Dataset");
+				string rawDataType = m_TaskParams.GetParam("rawdatatype", "UnknownRawDataType");
 				string sFileOrFolderName;
 				bSkipPlots = false;
 
 				// Get the expected file name based on the dataset type
-				switch (m_TaskParams.GetParam("rawdatatype"))
+				switch (rawDataType)
 				{
 					case "dot_raw_files":
 						sFileOrFolderName = dataset + ".raw";
@@ -289,10 +290,10 @@ namespace DatasetQualityPlugin
 						bSkipPlots = true;
 						break;
 					default:
-						m_Msg = "clsPluginMain.GetDataFileOrFolderName: Data type " + m_TaskParams.GetParam("rawdatatype") +
+						m_Msg = "clsPluginMain.GetDataFileOrFolderName: Data type " + rawDataType +
 									" not recognized";
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_Msg);
-						m_Msg = "Data type " + m_TaskParams.GetParam("rawdatatype") + " not recognized";
+						m_Msg = "Data type " + rawDataType + " not recognized";
 						return "Invalid File Type";
 				}
 

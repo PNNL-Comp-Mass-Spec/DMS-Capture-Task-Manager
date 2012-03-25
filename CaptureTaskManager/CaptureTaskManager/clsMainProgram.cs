@@ -381,7 +381,7 @@ namespace CaptureTaskManager
 		{
 			bool restartOK;
 			int taskCount = 1;
-			int maxTaskCount = int.Parse(m_MgrSettings.GetParam("maxrepetitions"));
+			int maxTaskCount = int.Parse(m_MgrSettings.GetParam("maxrepetitions", "1"));
 
 			string msg;
 			System.DateTime dtLastConfigDBUpdate = System.DateTime.UtcNow;
@@ -475,7 +475,7 @@ namespace CaptureTaskManager
 
 							// Increment and test the task counter
 							taskCount++;
-							if (taskCount > int.Parse(m_MgrSettings.GetParam("maxrepetitions")))
+							if (taskCount > int.Parse(m_MgrSettings.GetParam("maxrepetitions", "1")))
 							{
 								m_Running = false;
 								m_LoopExitCode = LoopExitCode.ExceededMaxTaskCount;

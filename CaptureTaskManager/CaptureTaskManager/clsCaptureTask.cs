@@ -49,15 +49,27 @@ namespace CaptureTaskManager
 			/// <returns>Parameter value if found, otherwise empty string</returns>
 			public string GetParam(string name)
 			{
-				if (m_JobParams.ContainsKey(name))
+				return GetParam(name, string.Empty);
+			}
+
+			/// <summary>
+			/// Gets a stored parameter
+			/// </summary>
+			/// <param name="name">Parameter name</param>
+			/// <param name="valueIfMissing">Value to retrun if the parameter does not exist</param>
+			/// <returns>Parameter value if found, otherwise empty string</returns>
+			public string GetParam(string name, string valueIfMissing)
+			{
+				string ItemValue;
+				if (m_JobParams.TryGetValue(name, out ItemValue))
 				{
-					return m_JobParams[name];
+					return ItemValue ?? string.Empty;
 				}
 				else
 				{
-					return string.Empty;
+					return valueIfMissing ?? string.Empty;
 				}
-			}	// End sub
+			}
 
 			/// <summary>
 			/// Adds a parameter
@@ -258,12 +270,12 @@ namespace CaptureTaskManager
 
                 if (!SetCaptureTaskComplete(SP_NAME_SET_COMPLETE, m_ConnStr, (int)taskResult, closeoutMsg, (int)evalCode, evalMsg))
 				{
-					msg = "Error setting task complete in database, job " + m_JobParams["Job"];
+					msg = "Error setting task complete in database, job " + GetParam("Job", "??");
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile,clsLogTools.LogLevels.ERROR,msg);
 				}
 				else
 				{
-					msg = msg = "Successfully set task complete in database, job " + m_JobParams["Job"];
+					msg = msg = "Successfully set task complete in database, job " + GetParam("Job", "??");
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile,clsLogTools.LogLevels.DEBUG,msg);
 				}
 			}	// End sub

@@ -3,6 +3,8 @@ Capture Task Manager History
 Version 1.1.4466; March 24, 2012
 	- Updated DatasetArchivePlugin to optionally push data into MyEMSL
 	- New version of MSFileInfoScanner.dll that uses ProteoWizard to process QTrap datasets
+	- Switched from StringDictionary to Generic.Dictionary<string, string> in ITaskParams
+	- Added StringDictionary to Generic.Dictionary<string, string> to IMgrParams
 
 Version 1.1.4458; March 16, 2012
 	- New version of MD5StageFileCreator.dll that auto-renames the stagemd5 file if a file copy conflict occurs and the suffix ends in __ExtraFiles001

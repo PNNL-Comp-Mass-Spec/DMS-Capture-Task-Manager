@@ -76,7 +76,7 @@ namespace CaptureTaskManager {
 			}
 
 			//Determine if manager is deactivated locally
-			if (!bool.Parse(m_ParamDictionary["MgrActive_Local"])) {
+			if (!bool.Parse(GetParam("MgrActive_Local", "false"))) {
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.WARN, DEACTIVATED_LOCALLY);
 				ErrMsg = DEACTIVATED_LOCALLY;
 				return false;
@@ -342,11 +342,26 @@ namespace CaptureTaskManager {
 		}	// End sub
 
 		public string GetParam(string ItemKey) {
-			string RetStr;
-			if (m_ParamDictionary.TryGetValue(ItemKey, out RetStr))
-				return RetStr;
+			return GetParam(ItemKey, string.Empty);
+		}
+
+		/// <summary>
+		/// Gets a stored parameter
+		/// </summary>
+		/// <param name="name">Parameter name</param>
+		/// <param name="valueIfMissing">Value to retrun if the parameter does not exist</param>
+		/// <returns>Parameter value if found, otherwise empty string</returns>
+		public string GetParam(string ItemKey, string valueIfMissing)
+		{
+			string ItemValue;
+			if (m_ParamDictionary.TryGetValue(ItemKey, out ItemValue))
+			{
+				return ItemValue ?? string.Empty;
+			}
 			else
-				return string.Empty;
+			{
+				return valueIfMissing ?? string.Empty;
+			}
 		}
 
 		public void SetParam(string ItemKey, string ItemValue) {
