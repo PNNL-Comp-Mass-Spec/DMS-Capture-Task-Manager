@@ -258,12 +258,12 @@ namespace CaptureTaskManager
 
                 if (!SetCaptureTaskComplete(SP_NAME_SET_COMPLETE, m_ConnStr, (int)taskResult, closeoutMsg, (int)evalCode, evalMsg))
 				{
-					msg = "Error setting task complete in database, job " + m_JobParams["jobnum"];
+					msg = "Error setting task complete in database, job " + m_JobParams["Job"];
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile,clsLogTools.LogLevels.ERROR,msg);
 				}
 				else
 				{
-					msg = msg = "Successfully set task complete in database, job " + m_JobParams["jobnum"];
+					msg = msg = "Successfully set task complete in database, job " + m_JobParams["Job"];
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile,clsLogTools.LogLevels.DEBUG,msg);
 				}
 			}	// End sub
