@@ -13,7 +13,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Dart.PowerTCP.Ftp;
+#if !DartFTPMissing
+	using Dart.PowerTCP.Ftp;
+#endif
 using PRISM.Files;
 using CaptureTaskManager;
 using System.CodeDom;
@@ -39,7 +41,9 @@ namespace DatasetArchivePlugin
 		#endregion
 
 		#region "Class variables"
+#if !DartFTPMissing
 			private Dart.PowerTCP.Ftp.Ftp m_FtpDart;
+#endif
 			private string m_User;
 			private string m_Pwd;
 			private string m_ErrMsg;
@@ -61,7 +65,14 @@ namespace DatasetArchivePlugin
 
 			public bool Connected
 			{
-				get { return m_FtpDart.Connected; }
+				get 
+				{ 
+#if !DartFTPMissing
+					return m_FtpDart.Connected; 
+#else
+					return false;
+#endif
+				}
 			}
 
 			public int ServerPort
@@ -141,18 +152,20 @@ namespace DatasetArchivePlugin
 			/// <remarks>Assumes password property has been set and password has been encrypted using pwd.exe routine</remarks>
 			public bool OpenFTPConnection()
 			{
-				string TempPassword = string.Empty;
+				string sPassword;
 				string msg;
 
 				msg = "Opening FTP connection";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,msg);
 
+				sPassword = DecodePassword(m_Pwd);	//Convert encrypted password to real password
+
+#if !DartFTPMissing
 				m_FtpDart = new Dart.PowerTCP.Ftp.Ftp();
 				m_FtpDart.Trace += new SegmentEventHandler(On_FPT_Dart_Trace);	// Subscribe event handler for Trace event
 				m_FtpDart.Username = m_User;
 				m_FtpDart.BlockSize = 1049088; // Roughly 1 MB; value was determined by experimentation
-				TempPassword = m_Pwd;
-				m_FtpDart.Password = DecodePassword(TempPassword);	//Convert encrypted password to real password
+				m_FtpDart.Password = sPassword;
 				m_FtpDart.Server = m_Server;
 				m_FtpDart.FileType = FileType.Image;	// binary mode
 				m_FtpDart.DoEvents = false;
@@ -187,6 +200,9 @@ namespace DatasetArchivePlugin
 					m_ErrMsg = "Error opening FTP connection, " + StripPwd(ex.Message);
 					return false;
 				}
+#else
+				return false;
+#endif
 			}	// End sub
 
 			/// <summary>
@@ -199,10 +215,12 @@ namespace DatasetArchivePlugin
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile,clsLogTools.LogLevels.DEBUG,"Closing FTP connection");
 				try
 				{
+#if !DartFTPMissing
 					m_FtpDart.Trace -= On_FPT_Dart_Trace;	// Unsubscribe Trace event
 					m_FtpDart.Close();
 					m_FtpDart.Dispose();
-				}
+#endif
+					}
 				catch (Exception ex)
 				{
 					m_ErrMsg = "clsFTPOperations.CloseFTPConnection, Exception closing connection: " + ex.Message;
@@ -226,6 +244,7 @@ namespace DatasetArchivePlugin
 				long remTreeFileCount = 0;
 				long dumDirCount = 0;
 
+#if !DartFTPMissing
 				//Verify FTP connection available
 				if (!m_FtpDart.Connected)
 				{
@@ -258,7 +277,7 @@ namespace DatasetArchivePlugin
 						//Get the number of files and total file size from the dataset folder
 						locTreeSize = clsFileTools.GetDirectorySize(sourcePath, ref locTreeFileCount, ref dumDirCount);
 						//Compare the file sizes and counts
-						if ((locTreeSize != remTreeSize) | (locTreeFileCount != remTreeFileCount))
+						if ((locTreeSize != remTreeSize) || (locTreeFileCount != remTreeFileCount))
 						{
 							m_ErrMsg = "Error verifying dataset copy: " + m_ErrMsg;
 							return false;
@@ -275,7 +294,10 @@ namespace DatasetArchivePlugin
 
 				//Got to here, so everything's OK
 				return true;
-			}	// End sub
+#else
+				return false;
+#endif
+				}	// End sub
 
 			/// <summary>
 			/// Converts the incoming string from the FTP control into a file size
@@ -398,10 +420,12 @@ namespace DatasetArchivePlugin
 			/// <returns>String collection containing the names of all files found</returns>
 			public StringCollection GetRemFileList(string remFolder, string wildCard)
 			{
-				Listing remList = default(Listing);
 				StringCollection tempCollection = new StringCollection();
 
 				m_ErrMsg = string.Empty;
+
+#if !DartFTPMissing
+				Listing remList = default(Listing);
 
 				//Verify FTP connection available
 				if (!m_FtpDart.Connected)
@@ -424,9 +448,10 @@ namespace DatasetArchivePlugin
 
 				foreach (ListEntry MyItem in remList)
 				{
-					if (MyItem.Type == EntryType.File) tempCollection.Add(MyItem.Name);
+					if (MyItem.Type == EntryType.File) 
+						tempCollection.Add(MyItem.Name);
 				}
-
+#endif
 				return tempCollection;
 			}	// End sub
 
@@ -438,6 +463,8 @@ namespace DatasetArchivePlugin
 			/// <returns>TRUE for success; FALSE for failure</returns>
 			public bool GetFile(string srcFile, string destFile)
 			{
+
+#if !DartFTPMissing
 				FtpFile xferStat = null;
 
 				//Verify FTP connection available
@@ -469,6 +496,9 @@ namespace DatasetArchivePlugin
 					m_ErrMsg = "Error retrieving file " + srcFile + "; " + Err.Message;
 					return false;
 				}
+#else
+				return false;
+#endif
 			}	// End sub
 
 			/// <summary>
@@ -480,6 +510,7 @@ namespace DatasetArchivePlugin
 			/// <returns>TRUE for success; FALSE for failure</returns>
 			public bool PutFile(string srcFile, string destFile, bool verify)
 			{
+#if !DartFTPMissing
 				FtpFile xferStat = null;
 				FileInfo locFileInfo = null;
 				Listing remFileListing = null;
@@ -543,6 +574,9 @@ namespace DatasetArchivePlugin
 					//Verification not required
 					return true;
 				}
+#else
+				return false;
+#endif
 			}	// End sub
 
 			/// <summary>
@@ -558,6 +592,7 @@ namespace DatasetArchivePlugin
 
 				m_ErrMsg = string.Empty;
 
+#if !DartFTPMissing
 				//Verify FTP connection available
 				if (!m_FtpDart.Connected)
 				{
@@ -597,6 +632,9 @@ namespace DatasetArchivePlugin
 					m_ErrMsg = "Error finding directory: " + Err.Message;
 					return EnumFileFolderExists.FindError;
 				}
+#else
+				return EnumFileFolderExists.NotFound;
+#endif
 			}	// End sub
 
 			/// <summary>
@@ -606,9 +644,11 @@ namespace DatasetArchivePlugin
 			/// <returns>FileFolderFound enum value indicating if file was found</returns>
 			public EnumFileFolderExists FileExists(string remFile)
 			{
-				Listing FolderData = null;
 
 				m_ErrMsg = string.Empty;
+
+#if !DartFTPMissing
+				Listing FolderData = null;
 
 				//Verify FTP connection available
 				if (!m_FtpDart.Connected)
@@ -642,6 +682,9 @@ namespace DatasetArchivePlugin
 				{
 					return EnumFileFolderExists.Found;
 				}
+#else
+				return EnumFileFolderExists.NotFound;
+#endif
 			}	// End sub
 
 			/// <summary>
@@ -652,6 +695,7 @@ namespace DatasetArchivePlugin
 			/// <returns>TRUE for success; FALSE for failure</returns>
 			public bool RenameFile(string OldName, string NewName)
 			{
+#if !DartFTPMissing
 				//Verify FTP connection available
 				if (!m_FtpDart.Connected)
 				{
@@ -670,6 +714,9 @@ namespace DatasetArchivePlugin
 					m_ErrMsg = "Exception renaming file " + OldName + ": " + ex.Message;
 					return false;
 				}
+#else
+				return false;
+#endif
 			}	// Ens sub
 
 			/// <summary>
@@ -681,9 +728,11 @@ namespace DatasetArchivePlugin
 			/// <returns>TRUE for success; FALSE for failure</returns>
 			private bool GetRemFileSizeCount(string remoteFolder, ref long totSize, ref long totCount)
 			{
-				System.Collections.Stack DirStack = null;
 				long TempFileCount = 0;
 				long TempFileSize = 0;
+
+#if !DartFTPMissing
+				System.Collections.Stack DirStack = null;
 				Listing ItemList = default(Listing);
 				string CurRemDir = null;
 
@@ -734,14 +783,17 @@ namespace DatasetArchivePlugin
 					}
 				}
 
-				//All finished, so set return values and clean up
+				DirStack = null;
+
+#endif
+				// All finished, so set return values and clean up
 				totCount = TempFileCount;
 				totSize = TempFileSize;
-				DirStack = null;
 
 				return true;
 			}	// End sub
 
+#if !DartFTPMissing
 			/// <summary>
 			/// Examine results of ftp operation and report errors
 			/// </summary>
@@ -778,6 +830,7 @@ namespace DatasetArchivePlugin
 					return true;
 				}
 			}	// End sub
+#endif
 
 			/// <summary>
 			/// Decrypts password received from ini file
@@ -850,6 +903,8 @@ namespace DatasetArchivePlugin
 		#endregion
 
 		#region "Event handlers"
+
+#if !DartFTPMissing
 			/// <summary>
 			/// Create a stream to use for a log file for this session; 
 			/// Write the info to the end of the stream, then close the stream
@@ -907,6 +962,8 @@ namespace DatasetArchivePlugin
 					//}
 				}
 			}	// End sub
+#endif
+
 		#endregion
 	}	// End class
 }	// End namespace
