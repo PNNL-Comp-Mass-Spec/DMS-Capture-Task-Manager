@@ -39,6 +39,20 @@ namespace Pacifica.DMS_Metadata
 			get { return this._metadataObject["bundleName"].ToString(); }
 		}
 
+		public long totalFileSizeToUpload {
+			get;
+			set;
+		}
+
+		public int totalFileCountNew {
+			get;
+			set;
+		}
+
+		public int totalFileCountUpdated {
+			get;
+			set;
+		}
 		public string serverSearchString {
 			get { return this._serverSearchString;  }
 			private set { this._serverSearchString = value; }
@@ -93,10 +107,10 @@ namespace Pacifica.DMS_Metadata
 		private void SetupMetadata(Dictionary<string,string> taskParams, Dictionary<string,string> mgrParams, System.ComponentModel.BackgroundWorker bgw) {
 			
 			//translate values from task/mgr params into usable variables
-			//string perspective = mgrParams["perspective"].ToString();
+			string perspective = mgrParams["perspective"].ToString();
 			
-			string perspective = "server";
-			string driveLocation = perspective == "server" ? taskParams["Storage_Vol_External"].ToString() : taskParams["Storage_Vol"].ToString();
+			//string perspective = "server";
+			string driveLocation = perspective == "client" ? taskParams["Storage_Vol_External"].ToString() : taskParams["Storage_Vol"].ToString();
 			this._pathToArchive = System.IO.Path.Combine(driveLocation, System.IO.Path.Combine(taskParams["Storage_Path"].ToString(), taskParams["Folder"].ToString()));
 			this._archiveMode = taskParams["StepTool"].ToString().ToLower() == "archivedataset" ? ArchiveModes.archive : ArchiveModes.update;
 			this._datasetName = taskParams["Dataset"].ToString();
@@ -207,6 +221,11 @@ namespace Pacifica.DMS_Metadata
       List<Dictionary<string, object>> newFileList = this.RecurseDirectoryTreeNodes(datasetSearchPath, "");
 			if(newFileList.Count == 0) {
 				//no files already exist in MyEMSL, so just upload the lot
+				foreach(Dictionary<string, object> localFile in fileList) {
+					totalFileSizeToUpload += (long)localFile["sizeInBytes"];
+				}
+				totalFileCountNew = fileList.Count;
+				totalFileCountUpdated = 0;
 				return fileList;
 			}
 			//Must have been something already tagged like this dataset, so find the diffs and report them back
@@ -225,6 +244,12 @@ namespace Pacifica.DMS_Metadata
 
 				if (localFile["sha1Hash"].ToString() != itemHashFromServer) {
 					unmatchedList.Add(localFile);
+					totalFileSizeToUpload += (long)localFile["sizeInBytes"];
+					if(string.IsNullOrEmpty(itemHashFromServer)) {
+						totalFileCountNew++;
+					} else {
+						totalFileCountUpdated++;
+					}
 				}
 			}
 

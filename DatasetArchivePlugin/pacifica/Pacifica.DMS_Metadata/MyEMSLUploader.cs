@@ -14,16 +14,51 @@ namespace Pacifica.DMS_Metadata
 		IUpload myEMSLUpload;
 
 		public MyEMSLUploader() {
+			StatusURI = string.Empty;
+			FileCountNew = 0;
+			FileCountUpdated = 0;
+			Bytes = 0;
+			ErrorCode = string.Empty;
 			backgrounder = new System.ComponentModel.BackgroundWorker();
 			statusBackgrounder = new System.ComponentModel.BackgroundWorker();
 			this.myEMSLUpload = new Upload(ref backgrounder);
 			this.myEMSLUpload.TaskCompleted += new TaskCompletedEventHandler(myEMSLUpload_TaskCompleted);
 		}
 
+		#region "Properties"
+
+
+		public string StatusURI {
+			get;
+			private set;
+		}
+
+		public int FileCountNew {
+			get;
+			private set;
+		}
+
+		public int FileCountUpdated {
+			get;
+			private set;
+		}
+
+		public long Bytes {
+			get;
+			private set;
+		}
+
+		public string ErrorCode {
+			get;
+			private set;
+		}
+
+		#endregion
 		void myEMSLUpload_TaskCompleted(string bundleIdentifier, string serverResponse) {
 
 			myEMSLUpload.DataReceivedAndVerified += new DataVerifiedHandler(myEMSLUpload_DataReceivedAndVerified);
 			if(this._mdContainer.newFilesObject.Count > 0) {
+				this.StatusURI = serverResponse + "/xml";
 				myEMSLUpload.BeginUploadMonitoring(serverResponse, this._mdContainer.serverSearchString, this._mdContainer.newFilesObject);
 			}
 		}
@@ -32,6 +67,9 @@ namespace Pacifica.DMS_Metadata
 
 			//generate the metadata object
 			this._mdContainer = new DMSMetadataObject(taskParamsDict, mgrParamsDict, null);
+			this.FileCountUpdated = this._mdContainer.totalFileCountUpdated;
+			this.FileCountNew = this._mdContainer.totalFileCountNew;
+			this.Bytes = this._mdContainer.totalFileSizeToUpload;
 			Dictionary<string, object> md = this._mdContainer.metadataObject;
 
 			Boolean isLoginRequired = Pacifica.Core.Configuration.AuthInstance.LoginRequired;

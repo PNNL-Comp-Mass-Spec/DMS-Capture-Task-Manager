@@ -262,7 +262,9 @@ namespace Pacifica.Core
 					string xmlServerResponse = string.Empty;
 
 					while(loopCount <= maxLoopCount){
+						loopCount++;
 						newDelayTimeSec = initialLoopDelaySec * (int)Math.Pow((double)delayFactor, (double)loopCount);
+						System.Threading.Thread.Sleep(newDelayTimeSec * 1000);
 						xmlServerResponse = EasyHttp.Send(statusURI);
 						if (this.WasDataReceived(xmlServerResponse)) {
 						//TODO: now check to make sure that the data was actually received and checks out on the server by comparing hashes
@@ -280,7 +282,9 @@ namespace Pacifica.Core
 					System.Xml.XmlDocument xmlDoc = new System.Xml.XmlDocument();
 					xmlDoc.LoadXml(xmlServerResponse);
 
-					System.Xml.XmlNode statusElement = xmlDoc.GetElementById("5");
+					//System.Xml.XmlNode statusElement = xmlDoc.GetElementById("5");
+					string query = string.Format("//*[@id='{0}']", 5);
+					System.Xml.XmlNode statusElement = xmlDoc.SelectSingleNode(query);
 					if (statusElement.Attributes["status"].Value.ToLower() == "success" && statusElement.Attributes["message"].Value.ToLower() == "completed") {
 						success = true;
 					}

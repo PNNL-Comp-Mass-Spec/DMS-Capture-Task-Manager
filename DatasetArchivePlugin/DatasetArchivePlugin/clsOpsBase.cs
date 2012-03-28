@@ -35,6 +35,7 @@ namespace DatasetArchivePlugin
 		protected string m_ArchiveNamePath;
 		protected string m_Msg;
 		protected clsFtpOperations m_FtpTools;
+		protected Pacifica.DMS_Metadata.MyEMSLUploader m_myEMSLUL;
 		protected string m_User;
 		protected string m_Pwd;
 		protected bool m_UseTls;
@@ -145,10 +146,24 @@ namespace DatasetArchivePlugin
 
 			try
 			{
-				m_Msg = "Bundling changes to dataset " + m_DatasetName + " for transmission to MyEMSL";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
+			m_Msg = "Bundling changes to dataset " + m_DatasetName + " for transmission to MyEMSL";
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
 
-				Pacifica.DMS_Metadata.MyEMSLUploader myEMSLUL = new Pacifica.DMS_Metadata.MyEMSLUploader();
+			System.DateTime myEMSLStartTime = System.DateTime.Now;
+
+			//Pacifica.DMS_Metadata.MyEMSLUploader myEMSLUL = new Pacifica.DMS_Metadata.MyEMSLUploader();
+			m_myEMSLUL = new Pacifica.DMS_Metadata.MyEMSLUploader();
+			m_myEMSLUL.StartUpload(m_TaskParams.TaskDictionary, m_MgrParams.TaskDictionary);
+
+			System.DateTime myEMSLFinishTime = System.DateTime.Now;
+
+			System.TimeSpan myemslElapsed = myEMSLFinishTime.Subtract(myEMSLStartTime);
+
+
+			m_Msg = "Upload of " + m_DatasetName + " completed in " + myemslElapsed.Seconds + " seconds: " + m_myEMSLUL.FileCountNew + " new files, " + m_myEMSLUL.FileCountUpdated + " updated files, " + m_myEMSLUL.Bytes + " bytes";
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
+
+			m_Msg = "myEMSL statusURI => " + m_myEMSLUL.StatusURI;
 				myEMSLUL.StartUpload(m_TaskParams.TaskDictionary, m_MgrParams.TaskDictionary);
 
 			}
