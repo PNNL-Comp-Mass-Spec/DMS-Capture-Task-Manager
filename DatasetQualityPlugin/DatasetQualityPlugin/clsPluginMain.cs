@@ -23,6 +23,7 @@ namespace DatasetQualityPlugin
 
 		#region "Constants"
 			const string MS_FILE_SCANNER_DS_INFO_SP = "CacheDatasetInfoXML";
+			const string INVALID_FILE_TYPE = "Invalid File Type";
 		#endregion
 
 		#region "Module variables"
@@ -137,7 +138,7 @@ namespace DatasetQualityPlugin
 
 				// Get the input file name
 				string sFileOrFolderName = GetDataFileOrFolderName(sourceFolder, out bSkipPlots);
-				if (sFileOrFolderName == "Invalid File Type")
+				if (sFileOrFolderName == INVALID_FILE_TYPE)
 				{
 					// DS quality test not implemented for this file type
 					result.CloseoutMsg = "";
@@ -265,12 +266,20 @@ namespace DatasetQualityPlugin
 				switch (rawDataType)
 				{
 					case "dot_raw_files":
+						// LTQ_2, LTQ_4, etc.
+						// LTQ_Orb_1, LTQ_Orb_2, etc.
+						// VOrbiETD01, VOrbiETD02, etc.
+						// TSQ_3
+						// Thermo_GC_MS_01
 						sFileOrFolderName = dataset + ".raw";
 						break;
 					case "zipped_s_folders":
+						// 9T_FTICR, 11T_FTICR_B, and 12T_FTICR
 						sFileOrFolderName = "analysis.baf";
 						break;
 					case "bruker_ft":
+						// 12T_FTICR_B, 15T_FTICR, 9T_FTICR_B
+						// Also, Bruker_FT_IonTrap01, which is Bruker_Amazon_Ion_Trap
 						string sInstrumentClass = m_TaskParams.GetParam("Instrument_Class");
 
 						if (sInstrumentClass == "Bruker_Amazon_Ion_Trap")
@@ -279,22 +288,28 @@ namespace DatasetQualityPlugin
 							sFileOrFolderName = dataset + ".d" + "\\" + "analysis.baf";
 						break;
 					case "dot_uimf_files":
+						// IMS_TOF_2, IMS_TOF_3, IMS_TOF_4, IMS_TOF_5, IMS_TOF_6, etc.
 						sFileOrFolderName = dataset + ".uimf";
 						break;
 					case "sciex_wiff_files":
+						// QTrap01
 						sFileOrFolderName = dataset + ".wiff";
 						bSkipPlots = false;
 						break;
 					case "dot_d_folders":
+						// Agilent_GC_MS_01 and Agilent_QTOF_04
 						sFileOrFolderName = dataset + ".d";
-						bSkipPlots = true;
+						bSkipPlots = false;
 						break;
 					default:
-						m_Msg = "clsPluginMain.GetDataFileOrFolderName: Data type " + rawDataType +
-									" not recognized";
+						// Other instruments; do not process
+						// dot_wiff_files: Agilent_TOF2
+						// bruker_maldi_imaging: 12T_FTICR_Imaging, 15T_FTICR_Imaging, and BrukerTOF_Imaging_01
+						// bruker_maldi_spot: BrukerTOF_01
+						m_Msg = "clsPluginMain.GetDataFileOrFolderName: Data type " + rawDataType + " not recognized";
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_Msg);
 						m_Msg = "Data type " + rawDataType + " not recognized";
-						return "Invalid File Type";
+						return INVALID_FILE_TYPE;
 				}
 
 				// Test to verify the file (or folder) exists
