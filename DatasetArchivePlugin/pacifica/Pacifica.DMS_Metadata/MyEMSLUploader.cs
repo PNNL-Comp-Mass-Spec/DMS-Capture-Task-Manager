@@ -15,6 +15,7 @@ namespace Pacifica.DMS_Metadata
 
 		public MyEMSLUploader() {
 			StatusURI = string.Empty;
+			DirectoryLookupPath = string.Empty;
 			FileCountNew = 0;
 			FileCountUpdated = 0;
 			Bytes = 0;
@@ -29,6 +30,11 @@ namespace Pacifica.DMS_Metadata
 
 
 		public string StatusURI {
+			get;
+			private set;
+		}
+
+		public string DirectoryLookupPath {
 			get;
 			private set;
 		}
@@ -59,6 +65,7 @@ namespace Pacifica.DMS_Metadata
 			myEMSLUpload.DataReceivedAndVerified += new DataVerifiedHandler(myEMSLUpload_DataReceivedAndVerified);
 			if(this._mdContainer.newFilesObject.Count > 0) {
 				this.StatusURI = serverResponse + "/xml";
+				this.DirectoryLookupPath = this._mdContainer.serverSearchString;
 				myEMSLUpload.BeginUploadMonitoring(serverResponse, this._mdContainer.serverSearchString, this._mdContainer.newFilesObject);
 			}
 		}

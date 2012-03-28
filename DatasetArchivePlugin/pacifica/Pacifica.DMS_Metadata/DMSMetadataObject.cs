@@ -170,7 +170,7 @@ namespace Pacifica.DMS_Metadata
 			Dictionary<string,string> hashListing = new Dictionary<string,string>();
 
 			foreach (IFileInfoObject fio in this._bundledFileInfo) {
-			  fileListing.Add((Dictionary<string,object>)fio.SerializeToDictionaryObject());
+				fileListing.Add((Dictionary<string,object>)fio.SerializeToDictionaryObject());
 			//  hashListing.Add(fio.RelativeDestinationFullPath, fio.Sha1HashHex);
 			}
 
@@ -218,7 +218,8 @@ namespace Pacifica.DMS_Metadata
 		}
 
 		private List<Dictionary<string, object>> CompareDatasetContents(string datasetSearchPath, List<Dictionary<string,object>> fileList) {
-      List<Dictionary<string, object>> newFileList = this.RecurseDirectoryTreeNodes(datasetSearchPath, "");
+			this.serverSearchString = Pacifica.Core.Configuration.Scheme + this._readServerName + "/" + datasetSearchPath;
+			List<Dictionary<string, object>> newFileList = this.RecurseDirectoryTreeNodes(datasetSearchPath, "");
 			if(newFileList.Count == 0) {
 				//no files already exist in MyEMSL, so just upload the lot
 				foreach(Dictionary<string, object> localFile in fileList) {
@@ -253,60 +254,60 @@ namespace Pacifica.DMS_Metadata
 				}
 			}
 
-      return unmatchedList;
+			return unmatchedList;
 		}
 
-    private List<Dictionary<string, object>> RecurseDirectoryTreeNodes(string datasetSearchPath, string parentFolderName) {
+		private List<Dictionary<string, object>> RecurseDirectoryTreeNodes(string datasetSearchPath, string parentFolderName) {
 
-      //System.IO.Path.AltDirectorySeparatorChar
-      parentFolderName = parentFolderName == string.Empty ? parentFolderName : parentFolderName + "/";
-      string topFolderName = string.Empty;
+			//System.IO.Path.AltDirectorySeparatorChar
+			parentFolderName = parentFolderName == string.Empty ? parentFolderName : parentFolderName + "/";
+			string topFolderName = string.Empty;
 
-      List<Dictionary<string, object>> newFileList = new List<Dictionary<string, object>>();
+			List<Dictionary<string, object>> newFileList = new List<Dictionary<string, object>>();
 
-      //get the xml listing of the dataset directory
-      string URL = Pacifica.Core.Configuration.Scheme + this._readServerName + "/" + datasetSearchPath;
-			this.serverSearchString = URL;
-      string xmlString = EasyHttp.Send(URL, "", EasyHttp.HttpMethod.Get);
+			//get the xml listing of the dataset directory
+			string URL = Pacifica.Core.Configuration.Scheme + this._readServerName + "/" + datasetSearchPath;
+			//this.serverSearchString = URL;
+			string xmlString = EasyHttp.Send(URL, "", EasyHttp.HttpMethod.Get);
 
-      System.Xml.XmlDocument xmlDoc = new System.Xml.XmlDocument();
-      xmlDoc.LoadXml(xmlString);
+			System.Xml.XmlDocument xmlDoc = new System.Xml.XmlDocument();
+			xmlDoc.LoadXml(xmlString);
 
-      System.Xml.XmlDocument dsDocument = new System.Xml.XmlDocument();
-      System.Xml.XmlNode dsDirectoryNode = dsDocument.CreateNode("element", "dir", "");
-      System.Xml.XmlAttribute nameAttr = dsDocument.CreateAttribute("name");
-      nameAttr.Value = System.IO.Path.GetFileName(datasetSearchPath.TrimEnd('/'));
-      dsDirectoryNode.Attributes.Append(nameAttr);
-      System.Xml.XmlAttribute typeAttr = dsDocument.CreateAttribute("type");
-      typeAttr.Value = "2";
-      dsDirectoryNode.Attributes.Append(typeAttr);
-      dsDocument.AppendChild(dsDirectoryNode);
+			System.Xml.XmlDocument dsDocument = new System.Xml.XmlDocument();
+			System.Xml.XmlNode dsDirectoryNode = dsDocument.CreateNode("element", "dir", "");
+			System.Xml.XmlAttribute nameAttr = dsDocument.CreateAttribute("name");
+			nameAttr.Value = System.IO.Path.GetFileName(datasetSearchPath.TrimEnd('/'));
+			dsDirectoryNode.Attributes.Append(nameAttr);
+			System.Xml.XmlAttribute typeAttr = dsDocument.CreateAttribute("type");
+			typeAttr.Value = "2";
+			dsDirectoryNode.Attributes.Append(typeAttr);
+			dsDocument.AppendChild(dsDirectoryNode);
 
-      dsDirectoryNode.InnerXml = xmlDoc.ChildNodes[1].InnerXml;
+			dsDirectoryNode.InnerXml = xmlDoc.ChildNodes[1].InnerXml;
 
-      List<Dictionary<string, object>> recursedDirContents;
-      foreach (System.Xml.XmlNode entry in dsDocument.FirstChild.ChildNodes)
-      {
-        topFolderName = parentFolderName + entry.Attributes["name"].Value;
-        if (entry.Name == "dir") {
-          recursedDirContents = this.RecurseDirectoryTreeNodes(datasetSearchPath.TrimEnd('/') + "/" + entry.Attributes["name"].Value,topFolderName);
-          newFileList.AddRange(recursedDirContents);
-        }
-        else if(entry.Name == "file")
-        {
-          newFileList.Add(new Dictionary<string,object>() { {"name", topFolderName }, { "item_id", entry.Attributes["itemid"].Value}});
-        }
-      }
+			List<Dictionary<string, object>> recursedDirContents;
+			foreach (System.Xml.XmlNode entry in dsDocument.FirstChild.ChildNodes)
+			{
+				topFolderName = parentFolderName + entry.Attributes["name"].Value;
+				if (entry.Name == "dir") {
+					recursedDirContents = this.RecurseDirectoryTreeNodes(datasetSearchPath.TrimEnd('/') + "/" + entry.Attributes["name"].Value,topFolderName);
+					newFileList.AddRange(recursedDirContents);
+				}
+				else if(entry.Name == "file")
+				{
+					newFileList.Add(new Dictionary<string,object>() { {"name", topFolderName }, { "item_id", entry.Attributes["itemid"].Value}});
+				}
+			}
 
 
-      return newFileList;
-    }
+			return newFileList;
+		}
 
 		private Dictionary<string, string> RetrieveItemHashSums(List<Dictionary<string, object>> fileList) {
 			Dictionary<string, string> hashList = new Dictionary<string, string>();
 			string itemID = string.Empty;
 			string itemName = string.Empty;
-			string uriBase = Pacifica.Core.Configuration.Scheme + this._readServerName + "/myemsl/iteminfo/";
+			string uriBase = Pacifica.Core.Configuration.Scheme + this._ingestServerName + "/myemsl/iteminfo/";
 			string uriTail = "/xml";
 			string uri = string.Empty;
 			string itemXmlString = string.Empty;
@@ -323,9 +324,16 @@ namespace Pacifica.DMS_Metadata
 				itemName = item["name"].ToString();
 				itemID = item["item_id"].ToString();
 				uri = uriBase + itemID.ToString() + uriTail;
-				itemXmlString = EasyHttp.Send(uri, "", EasyHttp.HttpMethod.Get);
+				try {
+					itemXmlString = EasyHttp.Send(uri, "", EasyHttp.HttpMethod.Get);
+				} finally {
+					itemXmlString = string.Empty;
+				}
+				
 				itemXml = new System.Xml.XmlDocument();
-				itemXml.LoadXml(itemXmlString);
+				if(!string.IsNullOrEmpty(itemXmlString)) {
+					itemXml.LoadXml(itemXmlString);
+				}
 				hashNode = itemXml.SelectSingleNode("/myemsl/checksum/sha1");
 				if (hashNode != null) {
 					hashSum = hashNode.FirstChild.Value.ToString();
@@ -337,7 +345,7 @@ namespace Pacifica.DMS_Metadata
 			}
 			Console.WriteLine("item:" + itemName + " (" + itemID + ") => " + System.DateTime.Now.Subtract(opStart).Seconds + "sec");
 			return hashList;
-    }
+		}
 
 		private List<IFileInfoObject> CollectFileInformation(
 			string pathToBeArchived, 

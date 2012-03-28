@@ -164,6 +164,11 @@ namespace DatasetArchivePlugin
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
 
 				m_Msg = "myEMSL statusURI => " + m_myEMSLUL.StatusURI;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
+
+				m_Msg = "myEMSL content lookup URI => " + m_myEMSLUL.DirectoryLookupPath;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
+
 				m_myEMSLUL.StartUpload(m_TaskParams.TaskDictionary, m_MgrParams.TaskDictionary);
 
 			}

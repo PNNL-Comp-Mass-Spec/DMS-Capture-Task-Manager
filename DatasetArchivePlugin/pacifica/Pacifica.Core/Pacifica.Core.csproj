@@ -110,6 +110,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>copy "$(ProjectDir)..\Lib\*.dll" "$(ProjectDir)..\..\..\DeployedFiles"
+copy "$(ProjectDir)..\Lib\*.dll"  "$(ProjectDir)..\..\..\CaptureTaskManager\CaptureTaskManager\bin\Debug"
 copy "$(TargetPath)" "$(ProjectDir)..\..\..\DeployedFiles"
 copy "$(TargetDir)*.*" "$(ProjectDir)..\..\..\CaptureTaskManager\CaptureTaskManager\bin\Debug"</PostBuildEvent>
   </PropertyGroup>
