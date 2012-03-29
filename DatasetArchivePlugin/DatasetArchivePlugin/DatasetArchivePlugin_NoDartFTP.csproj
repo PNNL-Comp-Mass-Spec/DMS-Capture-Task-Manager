@@ -85,6 +85,7 @@
     <Compile Include="clsArchiveUpdate.cs" />
     <Compile Include="clsJobData.cs" />
     <Compile Include="clsFtpOperations.cs" />
+    <Compile Include="clsMyEMSLUploadEventArgs.cs" />
     <Compile Include="clsOpsBase.cs" />
     <Compile Include="clsPluginMain.cs" />
     <Compile Include="IArchiveOps.cs" />
