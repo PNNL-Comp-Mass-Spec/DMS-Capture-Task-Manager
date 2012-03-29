@@ -21,7 +21,7 @@ namespace Pacifica.DMS_Metadata
 		private System.ComponentModel.BackgroundWorker _bgw;
 		private string _ingestServerName;
 		private string _readServerName;
-		private PRISM.DataBase.clsDBTools dbTool;
+		//private PRISM.DataBase.clsDBTools dbTool;
 
 		public enum ArchiveModes
 		{
@@ -75,7 +75,7 @@ namespace Pacifica.DMS_Metadata
 			this._bgw = backgrounder;
 			this._ingestServerName = Pacifica.Core.Configuration.ServerHostName;
 			this._readServerName = "a3.my.emsl.pnl.gov";
-			this.dbTool = new PRISM.DataBase.clsDBTools(null, "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI");
+			//this.dbTool = new PRISM.DataBase.clsDBTools(null, "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI");
 
 			/*
 			 * No longer necessary since taskParams containst EUS_Instrument_ID
@@ -108,14 +108,28 @@ namespace Pacifica.DMS_Metadata
 			
 			//translate values from task/mgr params into usable variables
 			string perspective = mgrParams["perspective"].ToString();
-			
-			//string perspective = "server";
+			string subFolder = string.Empty;
+
+			// Determine the drive location based on perspective 
+			// (client perspective means running on a Proto storage server; server perspective means running on another computer)
 			string driveLocation = perspective == "client" ? taskParams["Storage_Vol_External"].ToString() : taskParams["Storage_Vol"].ToString();
 			this._pathToArchive = System.IO.Path.Combine(driveLocation, System.IO.Path.Combine(taskParams["Storage_Path"].ToString(), taskParams["Folder"].ToString()));
-			this._archiveMode = taskParams["StepTool"].ToString().ToLower() == "archivedataset" ? ArchiveModes.archive : ArchiveModes.update;
-			this._datasetName = taskParams["Dataset"].ToString();
-			//this._basePath = this._archiveMode == ArchiveModes.archive ? this._pathToArchive : System.IO.Path.GetDirectoryName(this._pathToArchive);
+			this._archiveMode = taskParams["StepTool"].ToString().ToLower() == "datasetarchive" ? ArchiveModes.archive : ArchiveModes.update;
+			this._datasetName = taskParams["Dataset"].ToString();		
 			this._basePath = this._pathToArchive;
+
+			if (this._archiveMode == ArchiveModes.update)
+			{
+				subFolder = taskParams["OutputFolderName"].ToString();
+				if (!string.IsNullOrWhiteSpace(subFolder))
+				{
+					this._pathToArchive = System.IO.Path.Combine(this._pathToArchive, subFolder);
+				}
+				else
+				{
+					subFolder = string.Empty;
+				}
+			}
 
 			//Calculate the "year_quarter" code used for subfolders within an instrument folder
 			DateTime date_code = DateTime.Parse(taskParams["Created"]);
@@ -196,16 +210,9 @@ namespace Pacifica.DMS_Metadata
 			string datasetSearchPath = searchPathSpecifier.ToString() + datasetSearchPathSB.ToString();
 
 			//returns a dictionary with full relative filepath and sha-1 hex hash
-			fileListing = this.CompareDatasetContents(datasetSearchPath, fileListing);
-
-			string itemPath = string.Empty;
-			
-
-			
+			fileListing = this.CompareDatasetContents(datasetSearchPath, fileListing, subFolder);
 
 			metadataObject.Add("file", fileListing);
-
-
 			metadataObject.Add("type", "single");
 			metadataObject.Add("version", "1.0");
 
@@ -217,9 +224,26 @@ namespace Pacifica.DMS_Metadata
 
 		}
 
-		private List<Dictionary<string, object>> CompareDatasetContents(string datasetSearchPath, List<Dictionary<string,object>> fileList) {
+		/// <summary>
+		/// Query server for files and hash codes
+		/// </summary>
+		/// <param name="datasetSearchPath">Path to query, must end in a forward slash</param>
+		/// <param name="fileList">List of local files</param>
+		/// <param name="subFolder">Optional subfolder to limit the search to (can be empty)</param>
+		/// <returns></returns>
+		private List<Dictionary<string, object>> CompareDatasetContents(string datasetSearchPath, List<Dictionary<string, object>> fileList, string subFolder)
+		{
 			this.serverSearchString = Pacifica.Core.Configuration.Scheme + this._readServerName + "/" + datasetSearchPath;
-			List<Dictionary<string, object>> newFileList = this.RecurseDirectoryTreeNodes(datasetSearchPath, "");
+			
+			List<Dictionary<string, object>> newFileList;
+			if (string.IsNullOrEmpty(subFolder)) {
+				newFileList = this.RecurseDirectoryTreeNodes(datasetSearchPath, "");
+			}
+			else {
+				newFileList = this.RecurseDirectoryTreeNodes(datasetSearchPath + subFolder, subFolder);
+				this.serverSearchString += subFolder;
+			}
+
 			if(newFileList.Count == 0) {
 				//no files already exist in MyEMSL, so just upload the lot
 				foreach(Dictionary<string, object> localFile in fileList) {
@@ -327,7 +351,8 @@ namespace Pacifica.DMS_Metadata
 				try {
 					itemXmlString = EasyHttp.Send(uri, "", EasyHttp.HttpMethod.Get);
 				} finally {
-					itemXmlString = string.Empty;
+					if (String.IsNullOrEmpty(itemXmlString))
+						itemXmlString = string.Empty;
 				}
 				
 				itemXml = new System.Xml.XmlDocument();
@@ -358,7 +383,7 @@ namespace Pacifica.DMS_Metadata
 
 			System.IO.DirectoryInfo archiveDir = new System.IO.DirectoryInfo(pathToBeArchived);
 			if (!archiveDir.Exists) {
-				//throw an appropriate error and exit
+				throw new System.IO.DirectoryNotFoundException("Source directory not found: " + archiveDir);
 			}
 
 			System.IO.FileInfo[] fileList = archiveDir.GetFiles("*.*", System.IO.SearchOption.AllDirectories);

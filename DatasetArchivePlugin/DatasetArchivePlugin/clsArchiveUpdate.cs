@@ -86,11 +86,11 @@ namespace DatasetArchivePlugin
 				return false;
 			}
 
-			// Set path to results folder on storage server
-			m_ResultsFolderPathServer = Path.Combine(m_DSNamePath, m_TaskParams.GetParam("OutputFolderName"));
+			// Set path to results folder on storage server (OutputFolderName might be blank)
+			m_ResultsFolderPathServer = Path.Combine(m_DSNamePath, m_TaskParams.GetParam("OutputFolderName", String.Empty));
 
 			// Set the path to the results folder in archive
-			m_ResultsFolderPathArchive = Path.Combine(m_ArchiveSharePath, m_TaskParams.GetParam("OutputFolderName"));
+			m_ResultsFolderPathArchive = Path.Combine(m_ArchiveSharePath, m_TaskParams.GetParam("OutputFolderName", String.Empty));
 
 
 			// Determine if the results folder already exists. If not present, copy entire folder and we're done

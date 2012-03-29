@@ -34,5 +34,13 @@ namespace DatasetArchivePlugin
 			/// <returns>TRUE for success, FALSE for failure</returns>
 			bool PerformTask();
 		#endregion
+
+			#region "Event Delegates and Classes"
+
+			event MyEMSLUploadEventHandler MyEMSLUploadComplete;
+
+			#endregion
+
 	}	// End interface
+
 }	// End namespace

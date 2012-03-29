@@ -169,7 +169,11 @@ namespace DatasetArchivePlugin
 				m_Msg = "myEMSL content lookup URI => " + m_myEMSLUL.DirectoryLookupPath;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
 
-				m_myEMSLUL.StartUpload(m_TaskParams.TaskDictionary, m_MgrParams.TaskDictionary);
+				// Raise an event with the stats
+
+				Int16 errorCode = 0;
+				MyEMSLUploadEventArgs e = new MyEMSLUploadEventArgs(m_myEMSLUL.FileCountNew, m_myEMSLUL.FileCountUpdated, m_myEMSLUL.Bytes, myemslElapsed.TotalSeconds, m_myEMSLUL.StatusURI, m_myEMSLUL.DirectoryLookupPath, errorCode);
+				OnMyEMSLUploadComplete(e);
 
 			}
 			catch (Exception ex)
@@ -567,6 +571,20 @@ namespace DatasetArchivePlugin
 
 		#endregion
 
+		#region "Event Delegates and Classes"
+
+		public event MyEMSLUploadEventHandler MyEMSLUploadComplete;
+
+		#endregion
+
+		#region "Event Functions"
+
+		public void OnMyEMSLUploadComplete(MyEMSLUploadEventArgs e)
+		{
+			if (MyEMSLUploadComplete != null)
+				MyEMSLUploadComplete(this, e);
+		}
+		#endregion
 
 		#region "MD5StageFileCreator initialization and event handlers"
 
@@ -603,4 +621,6 @@ namespace DatasetArchivePlugin
 		#endregion
 
 	}	// End class
+
+	
 }	// End namespace

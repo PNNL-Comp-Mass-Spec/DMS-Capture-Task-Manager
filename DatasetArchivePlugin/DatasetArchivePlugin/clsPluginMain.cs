@@ -19,8 +19,12 @@ namespace DatasetArchivePlugin
 		// Main class for plugin
 		//**********************************************************************************************************
 
+		#region "Constants"
+		protected const string SP_NAME_STORE_MYEMSL_STATS = "StoreMyEMSLUploadStats";
+		#endregion
+
 		#region "Constructors"
-			public clsPluginMain()
+		public clsPluginMain()
 				: base()
 			{
 				// Does nothing at present
@@ -36,6 +40,7 @@ namespace DatasetArchivePlugin
 			{
 				string msg;
 				IArchiveOps archOpTool = null;
+				string archiveOpDescription = string.Empty;
 
 				msg = "Starting DatasetArchivePlugin.clsPluginMain.RunTool()";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
@@ -45,6 +50,7 @@ namespace DatasetArchivePlugin
 				if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED) return retData;
 
 				string dataset = m_TaskParams.GetParam("Dataset");
+				string job = m_TaskParams.GetParam("Job");
 
 				// Store the version info in the database
 				if (!StoreToolVersionInfo())
@@ -60,37 +66,33 @@ namespace DatasetArchivePlugin
 				{
 					// This is an archive operation
 					archOpTool = new clsArchiveDataset(m_MgrParams, m_TaskParams);
-					msg = "Starting archive, job " + m_TaskParams.GetParam("Job") + ", dataset " + m_TaskParams.GetParam("Dataset");
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-					if (archOpTool.PerformTask())
-					{
-						retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
-					}
-					else
-					{
-						retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-					}
-					msg = "Completed archive, job " + m_TaskParams.GetParam("Job");
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+					archiveOpDescription = "archive";
 				}
 				else
 				{
 					// This is an archive update operation
 					archOpTool = new clsArchiveUpdate(m_MgrParams, m_TaskParams);
-					msg = "Starting archive update, job " + m_TaskParams.GetParam("Job") + ", dataset " + m_TaskParams.GetParam("Dataset");
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-					if (archOpTool.PerformTask())
-					{
-						retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
-					}
-					else
-					{
-						retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-					}
-					msg = "Completed archive update, job " + m_TaskParams.GetParam("Job");
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+					archiveOpDescription = "archive update";
 				}
-				
+
+				// Attach the event handler
+				archOpTool.MyEMSLUploadComplete += new MyEMSLUploadEventHandler(MyEMSLUploadCompleteHandler);
+
+				msg = "Starting " + archiveOpDescription + ", job " + job + ", dataset " + dataset;
+
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+				if (archOpTool.PerformTask())
+				{
+					retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+				}
+				else
+				{
+					retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+				msg = "Completed " + archiveOpDescription + ", job " + job;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+
+
 				msg = "Completed clsPluginMain.RunTool()";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
@@ -113,6 +115,98 @@ namespace DatasetArchivePlugin
 				msg = "Completed clsPluginMain.Setup()";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 			}	// End sub
+
+
+			/// <summary>
+			/// Communicates with database to store the MyEMSL upload stats
+			/// </summary>
+			/// <returns>True for success, False for failure</returns>
+			protected bool StoreMyEMSLUploadStats(int fileCountNew, int fileCountUpdated, Int64 bytes, double uploadTimeSeconds, string statusURI, string contentURI, Int16 errorCode)
+			{
+				
+				bool Outcome = false;
+				int ResCode = 0;
+
+				try
+				{
+
+					//Setup for execution of the stored procedure
+					System.Data.SqlClient.SqlCommand MyCmd = new System.Data.SqlClient.SqlCommand();
+					{
+						MyCmd.CommandType = System.Data.CommandType.StoredProcedure;
+						MyCmd.CommandText = SP_NAME_STORE_MYEMSL_STATS;
+
+						MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@Return", System.Data.SqlDbType.Int));
+						MyCmd.Parameters["@Return"].Direction = System.Data.ParameterDirection.ReturnValue;
+
+						MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@Job", System.Data.SqlDbType.Int));
+						MyCmd.Parameters["@Job"].Direction = System.Data.ParameterDirection.Input;
+						MyCmd.Parameters["@Job"].Value = Convert.ToInt32(m_TaskParams.GetParam("Job"));
+
+						MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@DatasetID", System.Data.SqlDbType.Int));
+						MyCmd.Parameters["@DatasetID"].Direction = System.Data.ParameterDirection.Input;
+						MyCmd.Parameters["@DatasetID"].Value = Convert.ToInt32(m_TaskParams.GetParam("Dataset_ID"));
+
+						MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@Subfolder", System.Data.SqlDbType.VarChar, 128));
+						MyCmd.Parameters["@Subfolder"].Direction = System.Data.ParameterDirection.Input;
+						MyCmd.Parameters["@Subfolder"].Value = m_TaskParams.GetParam("OutputFolderName", string.Empty);
+
+						MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@FileCountNew", System.Data.SqlDbType.Int));
+						MyCmd.Parameters["@FileCountNew"].Direction = System.Data.ParameterDirection.Input;
+						MyCmd.Parameters["@FileCountNew"].Value = fileCountNew;
+
+						MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@FileCountUpdated", System.Data.SqlDbType.Int));
+						MyCmd.Parameters["@FileCountUpdated"].Direction = System.Data.ParameterDirection.Input;
+						MyCmd.Parameters["@FileCountUpdated"].Value = fileCountUpdated;
+
+						MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@Bytes", System.Data.SqlDbType.BigInt));
+						MyCmd.Parameters["@Bytes"].Direction = System.Data.ParameterDirection.Input;
+						MyCmd.Parameters["@Bytes"].Value = bytes;
+
+						MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@UploadTimeSeconds", System.Data.SqlDbType.Real));
+						MyCmd.Parameters["@UploadTimeSeconds"].Direction = System.Data.ParameterDirection.Input;
+						MyCmd.Parameters["@UploadTimeSeconds"].Value = (float)uploadTimeSeconds;
+
+						MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@StatusURI", System.Data.SqlDbType.VarChar, 255));
+						MyCmd.Parameters["@StatusURI"].Direction = System.Data.ParameterDirection.Input;
+						MyCmd.Parameters["@StatusURI"].Value = statusURI;
+
+						MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@ContentURI", System.Data.SqlDbType.VarChar, 255));
+						MyCmd.Parameters["@ContentURI"].Direction = System.Data.ParameterDirection.Input;
+						MyCmd.Parameters["@ContentURI"].Value = contentURI;
+
+						MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@ErrorCode", System.Data.SqlDbType.SmallInt));
+						MyCmd.Parameters["@ErrorCode"].Direction = System.Data.ParameterDirection.Input;
+						MyCmd.Parameters["@ErrorCode"].Value = errorCode;
+
+					}
+
+					string strConnStr = m_MgrParams.GetParam("connectionstring");
+
+					//Execute the SP (retry the call up to 4 times)
+					ResCode = base.ExecuteSP(MyCmd, strConnStr, 4);
+
+					if (ResCode == 0)
+					{
+						Outcome = true;
+					}
+					else
+					{
+						string Msg = "Error " + ResCode.ToString() + " storing tool version for current processing step";
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+						Outcome = false;
+					}
+
+				}
+				catch (Exception ex)
+				{
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception storing the MyEMSL upload stats: " + ex.Message);
+					Outcome = false;
+				}
+
+				return Outcome;
+
+			}
 
 			/// <summary>
 			/// Stores the tool version info in the database
@@ -153,6 +247,12 @@ namespace DatasetArchivePlugin
 					return false;
 				}
 			}
+
+			private void MyEMSLUploadCompleteHandler(object sender, MyEMSLUploadEventArgs e)
+			{
+				StoreMyEMSLUploadStats(e.fileCountNew, e.fileCountUpdated, e.bytes, e.uploadTimeSeconds, e.statusURI, e.contentURI, e.errorCode);
+			}
+
 
 		#endregion
 	}	// End class
