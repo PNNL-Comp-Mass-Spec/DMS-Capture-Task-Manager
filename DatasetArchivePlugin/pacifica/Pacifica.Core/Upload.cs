@@ -153,7 +153,8 @@ namespace Pacifica.Core
 								}
 
 								//Get a real server for us to work with
-								string redirectedServer = Utilities.GetRedirect(new Uri(Configuration.TestAuthUri));
+								//string redirectedServer = Utilities.GetRedirect(new Uri(Configuration.TestAuthUri));
+							string redirectedServer = Pacifica.Core.Configuration.ServerUri;
 
 								string preallocateUrl = redirectedServer + "/myemsl/cgi-bin/preallocate";
 								string preallocateReturn = EasyHttp.Send(preallocateUrl, Auth.GetCookies(), "",
