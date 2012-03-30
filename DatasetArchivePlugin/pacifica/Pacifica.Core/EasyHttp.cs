@@ -41,7 +41,6 @@ namespace Pacifica.Core
             }
         }
 
-        [Obsolete]
         public static string Send(string url, string postData = "", HttpMethod method = HttpMethod.Get,
             string contentType = "", bool sendStringInHeader = false, NetworkCredential loginCredentials = null)
         {

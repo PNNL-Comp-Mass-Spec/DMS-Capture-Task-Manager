@@ -235,21 +235,23 @@ namespace Pacifica.Core
 
 				public void BeginUploadMonitoring(string serverStatusURL, string serverSearchURL, IList fileMetadataObject) {
 					string statusURI = serverStatusURL + "/xml";
-					this.statusBackgrounder.DoWork += new DoWorkEventHandler(UploadMonitorLoop);
-					this.statusBackgrounder.RunWorkerCompleted += new RunWorkerCompletedEventHandler(backgrounder_RunWorkerCompleted);
+					//this.statusBackgrounder.DoWork += new DoWorkEventHandler(UploadMonitorLoop);
+					//this.statusBackgrounder.RunWorkerCompleted += new RunWorkerCompletedEventHandler(backgrounder_RunWorkerCompleted);
 					Dictionary<string, object> args = new Dictionary<string, object>() { { "statusURI", statusURI }, { "fileMetadataObject", fileMetadataObject }, { "serverSearchURL", serverSearchURL}  };
-					this.statusBackgrounder.RunWorkerAsync(args);
-
-				}
-
-				void  backgrounder_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e) {
-					Boolean success = (bool)e.Result;
+					Boolean success = this.UploadMonitorLoop(args);
+					//this.statusBackgrounder.RunWorkerAsync(args);
 					DataReceivedAndVerified(success);
 				}
 
-				void UploadMonitorLoop(object sender, DoWorkEventArgs e) {
-					System.ComponentModel.BackgroundWorker bgw = (System.ComponentModel.BackgroundWorker)sender;
-					Dictionary<string, object> args = (Dictionary<string, object>)e.Argument;
+				//void  backgrounder_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e) {
+				//  Boolean success = (bool)e.Result;
+				//  DataReceivedAndVerified(success);
+				//}
+
+				//void UploadMonitorLoop(object sender, DoWorkEventArgs e) {
+				Boolean UploadMonitorLoop(Dictionary<string,object> args){
+					//System.ComponentModel.BackgroundWorker bgw = (System.ComponentModel.BackgroundWorker)sender;
+					//Dictionary<string, object> args = (Dictionary<string, object>)e.Argument;
 					string statusURI = args["statusURI"].ToString();
 					string serverSearchURI = args["serverSearchURL"].ToString();
 					List<Dictionary<string, object>> fileMetadataObject = (List<Dictionary<string, object>>)args["fileMetadataObject"];
@@ -269,12 +271,12 @@ namespace Pacifica.Core
 						xmlServerResponse = EasyHttp.Send(statusURI);
 						if (this.WasDataReceived(xmlServerResponse)) {
 						//TODO: now check to make sure that the data was actually received and checks out on the server by comparing hashes
-							e.Result = true;
-							return;
+							//e.Result = true;
+							return true;
 						}
 					}
-					e.Result = false;
-					return;
+					//e.Result = false;
+					return false;
 				}
 
 				private Boolean WasDataReceived(string xmlServerResponse){
@@ -283,8 +285,9 @@ namespace Pacifica.Core
 					System.Xml.XmlDocument xmlDoc = new System.Xml.XmlDocument();
 					xmlDoc.LoadXml(xmlServerResponse);
 
-					//System.Xml.XmlNode statusElement = xmlDoc.GetElementById("5");
-					string query = string.Format("//*[@id='{0}']", 5);
+					//System.Xml.XmlNode statusElement = xmlDoc.GetElementById("3");
+					//check the "verified" entry to make sure everything came through ok
+					string query = string.Format("//*[@id='{0}']", 3);
 					System.Xml.XmlNode statusElement = xmlDoc.SelectSingleNode(query);
 					if (statusElement.Attributes["status"].Value.ToLower() == "success" && statusElement.Attributes["message"].Value.ToLower() == "completed") {
 						success = true;
@@ -292,10 +295,6 @@ namespace Pacifica.Core
 
 					return success;
 				}
-
-				//private Boolean VerifyWithServer(string serverSearchURL, List<Dictionary<string, object>> filesObject) {
-					
-				//}
 
 				public string GenerateSha1Hash(string fullFilePath)
 				{

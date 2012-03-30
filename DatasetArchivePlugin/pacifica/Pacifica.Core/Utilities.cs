@@ -31,7 +31,7 @@ namespace Pacifica.Core
                     _hashProvider = new SHA1Managed();
                 }
 
-                fileHash = _hashProvider.ComputeHash(fi.OpenRead());
+								fileHash = _hashProvider.ComputeHash(new System.IO.FileStream(fi.FullName, FileMode.Open, FileAccess.Read, FileShare.Read));
                 hashString = ToHexString(fileHash);
             }
 
@@ -54,14 +54,15 @@ namespace Pacifica.Core
 
         public static string ToHexString(byte[] buffer)
         {
-            StringBuilder genSHA1 = new StringBuilder();
+					return BitConverter.ToString(buffer).ToLower();
+						//StringBuilder genSHA1 = new StringBuilder();
 
-            foreach (byte b in buffer)
-            {
-                genSHA1.AppendFormat("{0:X2}", b);
-            }
+						//foreach (byte b in buffer)
+						//{
+						//    genSHA1.AppendFormat("{0:X2}", b);
+						//}
 
-            return genSHA1.ToString().ToLower();
+						//return genSHA1.ToString().ToLower();
         }
 
         public static Dictionary<string, object> JsonToObject(string jsonString)

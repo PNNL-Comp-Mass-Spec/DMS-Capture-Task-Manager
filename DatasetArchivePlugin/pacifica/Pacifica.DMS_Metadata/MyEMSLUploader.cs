@@ -74,6 +74,7 @@ namespace Pacifica.DMS_Metadata
 
 			//generate the metadata object
 			this._mdContainer = new DMSMetadataObject(taskParamsDict, mgrParamsDict, null);
+			Pacifica.Core.Configuration.LocalTempDirectory = mgrParamsDict["workdir"];
 			this.FileCountUpdated = this._mdContainer.totalFileCountUpdated;
 			this.FileCountNew = this._mdContainer.totalFileCountNew;
 			this.Bytes = this._mdContainer.totalFileSizeToUpload;
@@ -87,7 +88,7 @@ namespace Pacifica.DMS_Metadata
 			if(successfulVerification) {
 				//delete the cached zip/tar file
 				string bundleName = this._mdContainer.bundleName;
-				System.IO.FileInfo bundleObject = new System.IO.FileInfo(System.IO.Path.Combine(System.IO.Path.GetTempPath(), bundleName));
+				System.IO.FileInfo bundleObject = new System.IO.FileInfo(System.IO.Path.Combine(Pacifica.Core.Configuration.LocalTempDirectory, bundleName));
 				if(bundleObject.Exists) {
 					bundleObject.Delete();
 				}

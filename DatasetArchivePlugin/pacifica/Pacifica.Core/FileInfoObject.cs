@@ -159,7 +159,8 @@ namespace Pacifica.Core
 			FileInfo fi = new FileInfo(fullFilePath);
 			if (fi.Exists) {
 				SHA1Managed hashProvider = new SHA1Managed();
-				byte[] fileHash = hashProvider.ComputeHash(fi.OpenRead());
+				byte[] fileHash = hashProvider.ComputeHash(new System.IO.FileStream(fi.FullName, FileMode.Open, FileAccess.Read, FileShare.Read));
+				//byte[] fileHash = hashProvider.ComputeHash(fi.OpenRead());
 				hashString = Utilities.ToHexString(fileHash);
 			}
 
