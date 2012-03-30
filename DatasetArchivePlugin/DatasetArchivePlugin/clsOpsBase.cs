@@ -144,6 +144,8 @@ namespace DatasetArchivePlugin
 		protected bool UploadToMyEMSL()
 		{
 
+			System.TimeSpan myemslElapsed = new System.TimeSpan();
+
 			try
 			{
 				m_Msg = "Bundling changes to dataset " + m_DatasetName + " for transmission to MyEMSL";
@@ -157,7 +159,7 @@ namespace DatasetArchivePlugin
 
 				System.DateTime myEMSLFinishTime = System.DateTime.Now;
 
-				System.TimeSpan myemslElapsed = myEMSLFinishTime.Subtract(myEMSLStartTime);
+				myemslElapsed = myEMSLFinishTime.Subtract(myEMSLStartTime);
 
 
 				m_Msg = "Upload of " + m_DatasetName + " completed in " + myemslElapsed.TotalSeconds.ToString("0.0") + " seconds: " + m_myEMSLUL.FileCountNew + " new files, " + m_myEMSLUL.FileCountUpdated + " updated files, " + m_myEMSLUL.Bytes + " bytes";
@@ -170,9 +172,7 @@ namespace DatasetArchivePlugin
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
 
 				// Raise an event with the stats
-
-				Int16 errorCode = 0;
-				MyEMSLUploadEventArgs e = new MyEMSLUploadEventArgs(m_myEMSLUL.FileCountNew, m_myEMSLUL.FileCountUpdated, m_myEMSLUL.Bytes, myemslElapsed.TotalSeconds, m_myEMSLUL.StatusURI, m_myEMSLUL.DirectoryLookupPath, errorCode);
+				MyEMSLUploadEventArgs e = new MyEMSLUploadEventArgs(m_myEMSLUL.FileCountNew, m_myEMSLUL.FileCountUpdated, m_myEMSLUL.Bytes, myemslElapsed.TotalSeconds, m_myEMSLUL.StatusURI, m_myEMSLUL.DirectoryLookupPath, iErrorCode: 0);
 				OnMyEMSLUploadComplete(e);
 
 			}
@@ -181,6 +181,21 @@ namespace DatasetArchivePlugin
 				m_Msg = "Exception uploading to MyEMSL";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg, ex);
 				LogOperationFailed(m_DatasetName);
+
+				// Raise an event with the stats
+
+				int errorCode = ex.Message.GetHashCode();
+				if (errorCode == 0)
+					errorCode = 1;
+
+				MyEMSLUploadEventArgs e;
+				if (m_myEMSLUL == null)
+					e = new MyEMSLUploadEventArgs(0, 0, 0, myemslElapsed.TotalSeconds, string.Empty, string.Empty, errorCode);
+				else
+					e = new MyEMSLUploadEventArgs(m_myEMSLUL.FileCountNew, m_myEMSLUL.FileCountUpdated, m_myEMSLUL.Bytes, myemslElapsed.TotalSeconds, m_myEMSLUL.StatusURI, m_myEMSLUL.DirectoryLookupPath, errorCode);
+
+				OnMyEMSLUploadComplete(e);
+
 				return false;
 			}
 

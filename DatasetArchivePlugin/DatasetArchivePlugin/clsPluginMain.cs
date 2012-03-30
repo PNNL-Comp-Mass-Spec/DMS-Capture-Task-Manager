@@ -121,7 +121,7 @@ namespace DatasetArchivePlugin
 			/// Communicates with database to store the MyEMSL upload stats
 			/// </summary>
 			/// <returns>True for success, False for failure</returns>
-			protected bool StoreMyEMSLUploadStats(int fileCountNew, int fileCountUpdated, Int64 bytes, double uploadTimeSeconds, string statusURI, string contentURI, Int16 errorCode)
+			protected bool StoreMyEMSLUploadStats(int fileCountNew, int fileCountUpdated, Int64 bytes, double uploadTimeSeconds, string statusURI, string contentURI, int errorCode)
 			{
 				
 				bool Outcome = false;
@@ -175,7 +175,7 @@ namespace DatasetArchivePlugin
 						MyCmd.Parameters["@ContentURI"].Direction = System.Data.ParameterDirection.Input;
 						MyCmd.Parameters["@ContentURI"].Value = contentURI;
 
-						MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@ErrorCode", System.Data.SqlDbType.SmallInt));
+						MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@ErrorCode", System.Data.SqlDbType.Int));
 						MyCmd.Parameters["@ErrorCode"].Direction = System.Data.ParameterDirection.Input;
 						MyCmd.Parameters["@ErrorCode"].Value = errorCode;
 

@@ -11,9 +11,9 @@ namespace DatasetArchivePlugin
 		public readonly double uploadTimeSeconds;
 		public readonly string statusURI;
 		public readonly string contentURI;
-		public readonly Int16 errorCode;
+		public readonly int errorCode;
 
-		public MyEMSLUploadEventArgs(int iFileCountNew, int iFileCountUpdated, Int64 iBytes, double dUploadTimeSeconds, string sStatusURI, string sContentURI, Int16 iErrorCode)
+		public MyEMSLUploadEventArgs(int iFileCountNew, int iFileCountUpdated, Int64 iBytes, double dUploadTimeSeconds, string sStatusURI, string sContentURI, int iErrorCode)
 		{
 			fileCountNew = iFileCountNew;
 			fileCountUpdated = iFileCountUpdated;
