@@ -454,6 +454,12 @@ namespace CaptureTaskManager
 						break;
 					}
 
+					// Delete temp files between 1:00 am and 1:30 am, or after every 50 tasks
+					if (taskCount == 1 && System.DateTime.Now.Hour == 1 && System.DateTime.Now.Minute < 30 || taskCount % 50 == 0)
+					{
+						RemoveOldTempFiles();
+					}
+
 					// Attempt to get a capture task
 					EnumRequestTaskResult taskReturn = m_Task.RequestTask();
 					switch (taskReturn)
@@ -666,6 +672,106 @@ namespace CaptureTaskManager
 		}
 
 		/// <summary>
+		/// Look for and remove old .tar, .zip, and .tmp files
+		/// </summary>
+		protected void RemoveOldTempFiles()
+		{
+			int iAgedTempFilesHours = 12;
+			RemoveOldTempFiles (iAgedTempFilesHours, new System.Collections.Generic.List< System.Collections.Generic.KeyValuePair<string, string> >());
+		}
+
+		/// <summary>
+		/// Look for and remove old .tar, .zip, and .tmp files
+		/// </summary>
+		/// <param name="iAgedTempFilesHours"></param>
+		protected void RemoveOldTempFiles(int iAgedTempFilesHours, System.Collections.Generic.List< System.Collections.Generic.KeyValuePair<string, string> > lstSearchSpecsAddnl)
+        {
+			System.Collections.Generic.Dictionary<string, int> lstDeletionStats;
+
+            try
+            {
+				lstDeletionStats = new System.Collections.Generic.Dictionary<string, int>();
+
+				if (iAgedTempFilesHours < 2)
+					iAgedTempFilesHours = 2;
+
+                // In the following dictioinary, the key name is the path to the folder to check
+                // The value is an optional filemask
+                System.Collections.Generic.List< System.Collections.Generic.KeyValuePair<string, string> > lstSearchSpecs;
+
+                lstSearchSpecs = new System.Collections.Generic.List< System.Collections.Generic.KeyValuePair<string, string> >();
+
+                string sTempFolder = System.IO.Path.GetTempPath();
+                lstSearchSpecs.Add(new System.Collections.Generic.KeyValuePair<string, string>(sTempFolder, "*.tmp"));
+                lstSearchSpecs.Add(new System.Collections.Generic.KeyValuePair<string, string>(sTempFolder, "*.zip"));
+                lstSearchSpecs.Add(new System.Collections.Generic.KeyValuePair<string, string>(sTempFolder, "*.tar"));
+
+				if (lstSearchSpecsAddnl != null)
+				{
+					foreach (System.Collections.Generic.KeyValuePair<string, string> oItem in lstSearchSpecsAddnl)
+					{
+						lstSearchSpecs.Add(oItem); 
+					}
+				}
+
+                // Process each entry in lstSearchSpecs
+                foreach (System.Collections.Generic.KeyValuePair<string, string> oEntry in lstSearchSpecs) {
+					System.IO.DirectoryInfo diFolder = new System.IO.DirectoryInfo(oEntry.Key);
+
+					if (diFolder.Exists)
+					{
+						int iDeleteCount = 0;
+						foreach (System.IO.FileInfo fiFile in diFolder.GetFiles(oEntry.Value))
+						{
+							try
+							{
+								if (System.DateTime.UtcNow.Subtract(fiFile.LastWriteTimeUtc).TotalHours > iAgedTempFilesHours)
+								{
+									fiFile.Delete();
+									iDeleteCount += 1;
+								}
+							}
+							catch {
+								// Ignore exceptions
+							}
+						}
+
+						if (iDeleteCount > 0)
+						{
+							int iTotalDeleted = 0;
+							if (lstDeletionStats.TryGetValue(diFolder.FullName, out iTotalDeleted))
+								lstDeletionStats[diFolder.FullName] = iTotalDeleted + iDeleteCount;								
+							else
+								lstDeletionStats[diFolder.FullName] = iDeleteCount;
+						}
+
+					}
+				}
+
+				if (lstDeletionStats.Count > 0)
+				{
+					foreach (System.Collections.Generic.KeyValuePair<string, int> oItem in lstDeletionStats)
+					{
+						string msg = "Deleted " + oItem.Value + " temp file";
+						if (oItem.Value > 1)
+							msg += "s";
+
+						msg += " over " + iAgedTempFilesHours + " hours old in folder " + oItem.Key;
+
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+					}
+
+				}
+
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception removing old temp files: " + ex.Message);
+            }
+        }
+
+
+		/// <summary>
 		/// Sets the tool runner object for this job
 		/// </summary>
 		/// <returns></returns>
@@ -713,7 +819,7 @@ namespace CaptureTaskManager
 				}
 				catch (Exception ex)
 				{
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error calling AutoCleanupManagerErrors from PerformMainLoop: " + ex.Message);
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error calling AutoCleanupManagerErrors from StatusFlagFileError: " + ex.Message);
 					blnMgrCleanupSuccess = false;
 				}
 

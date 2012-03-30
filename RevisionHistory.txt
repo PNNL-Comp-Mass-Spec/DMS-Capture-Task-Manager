@@ -1,5 +1,8 @@
 Capture Task Manager History
 
+Version 1.0.4472; March 30, 2012
+	- Now occasionally removing old temp files in the system temp folder
+
 Version 1.0.4470; March 28, 2012
 	- Updated the MyEMSL component of the DatasetArchivePlugin to only process the files in subfolders when running an archive update job
 	- Now calling procedure StoreMyEMSLUploadStats to store MyEMSL upload stats in the DMS_Capture DB
