@@ -100,11 +100,13 @@ namespace DatasetArchivePlugin
 				// Possibly copy this dataset to MyEmsl
 				string sInstrument = m_TaskParams.GetParam("Instrument_Name");
 				string sEUSInstrumentID = m_TaskParams.GetParam("EUS_Instrument_ID");
+                int iMaxMyEMSLUploadAttempts = 3;
 
 				if (sInstrument.StartsWith("LTQ_Orb_") && sEUSInstrumentID.Length > 0)
 				{
-					UploadToMyEMSL();
+					UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts);
 				}
+
 			}
 
 			//Set client/server perspective & setup paths
@@ -136,6 +138,23 @@ namespace DatasetArchivePlugin
 			// Got to here, everything's OK, so let let the derived class take over
 			return true;
 		}	// End sub
+
+        protected bool UploadToMyEMSLWithRetry(int maxAttempts)
+        {
+            bool bSuccess = false;
+            int iAttempts = 0;
+
+            if (maxAttempts < 1)
+                maxAttempts = 1;
+
+            while (!bSuccess && iAttempts < maxAttempts) 
+            {
+                iAttempts += 1;
+                bSuccess = UploadToMyEMSL();
+            }
+
+            return bSuccess;
+        }
 
 		/// <summary>
 		/// Use MyEMSLUploader to upload the data to MyEMSL
