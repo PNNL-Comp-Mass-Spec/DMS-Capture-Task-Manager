@@ -458,6 +458,7 @@ namespace CaptureTaskManager
 					if (taskCount == 1 && System.DateTime.Now.Hour == 1 && System.DateTime.Now.Minute < 30 || taskCount % 50 == 0)
 					{
 						RemoveOldTempFiles();
+						RemoveOldFTPLogFiles();
 					}
 
 					// Attempt to get a capture task
@@ -669,6 +670,49 @@ namespace CaptureTaskManager
 			m_StatusFile.WriteStatusFile();
 
 			return bSuccess;
+		}
+
+		/// <summary>
+		/// Look for and remove FTPLog_ files that were created over 64 days ago in the application folder
+		/// </summary>
+		protected void RemoveOldFTPLogFiles()
+		{
+			int iAgedLogFileDays = 64;
+			RemoveOldFTPLogFiles(iAgedLogFileDays);
+		}
+
+		/// <summary>
+		/// Look for and remove FTPLog_ files that were created over iAgedLogFileDays days ago in the application folder
+		/// </summary>
+		protected void RemoveOldFTPLogFiles(int iAgedLogFileDays)
+		{
+
+			if (iAgedLogFileDays < 7)
+				iAgedLogFileDays = 7;
+
+			try
+			{
+				System.IO.FileInfo fiApplication = new System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
+
+				foreach (System.IO.FileInfo fiFile in fiApplication.Directory.GetFiles("FTPlog_*"))
+				{
+					try
+					{
+						if (System.DateTime.UtcNow.Subtract(fiFile.LastWriteTimeUtc).TotalDays > iAgedLogFileDays)
+						{
+							fiFile.Delete();
+						}
+					}
+					catch {
+						// Ignore exceptions
+					}
+				}
+
+			}
+			catch (Exception ex)
+			{
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception removing old FTP log files: " + ex.Message);
+			}
 		}
 
 		/// <summary>
