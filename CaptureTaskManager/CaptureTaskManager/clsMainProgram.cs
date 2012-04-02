@@ -264,7 +264,7 @@ namespace CaptureTaskManager
 				Console.WriteLine("Exception instantiating clsMgrSettings: " + ex.Message);
 				Console.WriteLine();
 				Console.WriteLine();
-				Console.WriteLine("You may need to run this application once from an elevated (administrative level) command prompt so that it can create teh DMSCapTaskMgr application log");
+				Console.WriteLine("You may need to run this application once from an elevated (administrative level) command prompt so that it can create the DMSCapTaskMgr application log");
 				Console.WriteLine();
 
 				return false;
@@ -791,8 +791,18 @@ namespace CaptureTaskManager
 			msg = "Loaded tool runner for Step Tool " + stepToolName;
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
-			// Setup the new tool runner
-			m_CapTool.Setup(m_MgrSettings, m_Task, m_StatusFile);
+			try
+			{
+				// Setup the new tool runner
+				m_CapTool.Setup(m_MgrSettings, m_Task, m_StatusFile);
+			}
+			catch (Exception ex)
+			{
+				msg = "Exception calling CapTool.Setup(): " + ex.Message;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+				return false;
+			}
+
 			return true;
 		}	// End sub
 

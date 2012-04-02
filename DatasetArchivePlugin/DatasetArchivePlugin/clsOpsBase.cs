@@ -102,7 +102,7 @@ namespace DatasetArchivePlugin
 				string sEUSInstrumentID = m_TaskParams.GetParam("EUS_Instrument_ID");
                 int iMaxMyEMSLUploadAttempts = 3;
 
-				if (sInstrument.StartsWith("LTQ_Orb_") && sEUSInstrumentID.Length > 0)
+				if (sEUSInstrumentID.Length > 0)
 				{
 					UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts);
 				}
@@ -151,6 +151,12 @@ namespace DatasetArchivePlugin
             {
                 iAttempts += 1;
                 bSuccess = UploadToMyEMSL();
+
+				if (!bSuccess && iAttempts < maxAttempts)
+				{
+					// Wait 5 seconds, then retry
+					System.Threading.Thread.Sleep(5000);
+				}
             }
 
             return bSuccess;

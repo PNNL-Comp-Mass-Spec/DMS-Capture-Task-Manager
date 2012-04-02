@@ -239,7 +239,7 @@ namespace DatasetArchivePlugin
 
 				try
 				{
-					return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
+					return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, false);
 				}
 				catch (System.Exception ex)
 				{

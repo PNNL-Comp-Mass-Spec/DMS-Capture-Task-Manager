@@ -250,7 +250,7 @@ namespace CaptureTaskManager
 		protected bool SetStepTaskToolVersion(string strToolVersionInfo, System.Collections.Generic.List<System.IO.FileInfo> ioToolFiles)
 		{
 
-			return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, true);
+			return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, false);
 		}
 
 		/// <summary>
@@ -258,7 +258,7 @@ namespace CaptureTaskManager
 		/// </summary>
 		/// <param name="strToolVersionInfo">Version info (maximum length is 900 characters)</param>
 		/// <param name="ioToolFiles">FileSystemInfo list of program files related to the step tool</param>
-		/// <param name="blnSaveToolVersionTextFile">if true, then creates a text file with the tool version information</param>
+		/// <param name="blnSaveToolVersionTextFile">If true, then creates a text file with the tool version information</param>
 		/// <returns>True for success, False for failure</returns>
 		/// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
 		protected bool SetStepTaskToolVersion(string strToolVersionInfo, System.Collections.Generic.List<System.IO.FileInfo> ioToolFiles, bool blnSaveToolVersionTextFile)

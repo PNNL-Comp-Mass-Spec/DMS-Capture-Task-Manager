@@ -10,7 +10,6 @@
 //*********************************************************************************************************
 using System;
 using CaptureTaskManager;
-using MSFileInfoScanner;
 using System.IO;
 
 namespace DatasetQualityPlugin
@@ -27,7 +26,7 @@ namespace DatasetQualityPlugin
 		#endregion
 
 		#region "Module variables"
-			clsMSFileInfoScanner m_MsFileScanner;
+			MSFileInfoScannerInterfaces.iMSFileInfoScanner m_MsFileScanner;
 			string m_Msg;
 			bool m_ErrOccurred = false;
 		#endregion
@@ -70,12 +69,6 @@ namespace DatasetQualityPlugin
 				msg = "Performing quality checks for dataset '" + dataset + "'";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
 
-				//msg = "Dataset Quality tool is not presently active";
-				//clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg);
-				//retData.EvalCode = EnumEvalCode.EVAL_CODE_NOT_EVALUATED;
-				//retData.EvalMsg = msg;
-				//retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
-
 				retData = RunMsFileInfoScanner();
 
 				msg = "Completed clsPluginMain.RunTool()";
@@ -83,6 +76,61 @@ namespace DatasetQualityPlugin
 
 				return retData;
 			}	// End sub
+
+
+			private MSFileInfoScannerInterfaces.iMSFileInfoScanner LoadMSFileInfoScanner(string strMSFileInfoScannerDLLPath)
+			{
+				const string MsDataFileReaderClass = "MSFileInfoScanner.clsMSFileInfoScanner";
+
+				MSFileInfoScannerInterfaces.iMSFileInfoScanner objMSFileInfoScanner = null;
+
+				try
+				{
+					if (!System.IO.File.Exists(strMSFileInfoScannerDLLPath))
+					{
+						string msg = "DLL not found: " + strMSFileInfoScannerDLLPath;
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+					}
+					else
+					{
+						object obj = null;
+						obj = LoadObject(MsDataFileReaderClass, strMSFileInfoScannerDLLPath);
+						if (obj != null)
+						{				
+							objMSFileInfoScanner = (MSFileInfoScannerInterfaces.iMSFileInfoScanner)obj;
+							string msg = "Loaded MSFileInfoScanner from " + strMSFileInfoScannerDLLPath;
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+						}
+
+					}
+
+				}
+				catch (Exception ex)
+				{
+					Console.WriteLine("Exception loading class " + MsDataFileReaderClass + ": " + ex.Message);
+				}
+
+				return objMSFileInfoScanner;
+			}
+
+			private object LoadObject(string className, string strDLLFilePath)
+			{
+				object obj = null;
+				try
+				{
+					// Dynamically load the specified class from strDLLFilePath
+					System.Reflection.Assembly assem;
+					assem = System.Reflection.Assembly.LoadFrom(strDLLFilePath);
+					Type dllType = assem.GetType(className, false, true);
+					obj = Activator.CreateInstance(dllType);
+				}
+				catch (Exception ex)
+				{
+					string msg = "Exception loading DLL " + strDLLFilePath + ": " + ex.Message;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+				}
+				return obj;			
+			}
 
 			/// <summary>
 			/// Initializes the dataset quality tool
@@ -97,10 +145,19 @@ namespace DatasetQualityPlugin
 
 				base.Setup(mgrParams, taskParams, statusTools);
 
-				// Initialize MSFileScanner class
-				m_MsFileScanner = new clsMSFileInfoScanner();
-				m_MsFileScanner.ErrorEvent += new clsMSFileInfoScanner.ErrorEventEventHandler(m_MsFileScanner_ErrorEvent);
-				m_MsFileScanner.MessageEvent += new clsMSFileInfoScanner.MessageEventEventHandler(m_MsFileScanner_MessageEvent);
+				string strMSFileInfoScannerPath = GetMSFileInfoScannerDLLPath();
+				if (string.IsNullOrEmpty(strMSFileInfoScannerPath))
+					throw new System.NotSupportedException("Manager parameter 'MSFileInfoScannerDir' is not defined");
+
+				if (!System.IO.File.Exists(strMSFileInfoScannerPath)) {
+					throw new System.IO.FileNotFoundException("File Not Found: " + strMSFileInfoScannerPath);
+				}
+
+				// Initialize the MSFileScanner class
+				m_MsFileScanner = LoadMSFileInfoScanner(strMSFileInfoScannerPath);
+
+				m_MsFileScanner.ErrorEvent += new MSFileInfoScannerInterfaces.iMSFileInfoScanner.ErrorEventEventHandler(m_MsFileScanner_ErrorEvent);
+				m_MsFileScanner.MessageEvent += new MSFileInfoScannerInterfaces.iMSFileInfoScanner.MessageEventEventHandler(m_MsFileScanner_MessageEvent);
 
 				msg = "Completed clsPluginMain.Setup()";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
@@ -183,7 +240,7 @@ namespace DatasetQualityPlugin
 				}
 				
 				// Call the file scanner DLL
-				clsMSFileInfoScanner.eMSFileScannerErrorCodes errorCode;
+				MSFileInfoScannerInterfaces.iMSFileInfoScanner.eMSFileScannerErrorCodes errorCode;
 				bool success;
 
 				m_ErrOccurred = false;
@@ -222,7 +279,7 @@ namespace DatasetQualityPlugin
 
 					if (success)
 					{
-						errorCode = clsMSFileInfoScanner.eMSFileScannerErrorCodes.NoError;
+						errorCode = MSFileInfoScannerInterfaces.iMSFileInfoScanner.eMSFileScannerErrorCodes.NoError;
 					}
 					else
 					{
@@ -232,7 +289,7 @@ namespace DatasetQualityPlugin
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
 					}
 
-					if ((errorCode != clsMSFileInfoScanner.eMSFileScannerErrorCodes.NoError) || m_ErrOccurred)
+					if ((errorCode != MSFileInfoScannerInterfaces.iMSFileInfoScanner.eMSFileScannerErrorCodes.NoError) || m_ErrOccurred)
 					{
 						// Either a bad result code was returned, or an error event was received
 						result.CloseoutMsg = "Job " + m_TaskParams.GetParam("Job") + ", Step " + m_TaskParams.GetParam("Step") +
@@ -327,6 +384,19 @@ namespace DatasetQualityPlugin
 			}	// End sub
 
 			/// <summary>
+			/// Construct the full path to the MSFileInfoScanner.DLL
+			/// </summary>
+			/// <returns></returns>
+			protected string GetMSFileInfoScannerDLLPath()
+			{
+				string strMSFileInfoScannerFolder = m_MgrParams.GetParam("MSFileInfoScannerDir", string.Empty);
+				if (string.IsNullOrEmpty(strMSFileInfoScannerFolder))
+					return string.Empty;
+				else
+					return System.IO.Path.Combine(strMSFileInfoScannerFolder, "MSFileInfoScanner.dll");
+			}
+
+			/// <summary>
 			/// Stores the tool version info in the database
 			/// </summary>
 			/// <remarks></remarks>
@@ -345,22 +415,27 @@ namespace DatasetQualityPlugin
 				if (!bSuccess)
 					return false;
 
-				// Lookup the version of the Capture tool plugin
-				string strMSFileInfoScanner = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "MSFileInfoScanner.dll");
-				bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strMSFileInfoScanner);
-				if (!bSuccess)
-					return false;
+				// Lookup the version of the MSFileInfoScanner DLL
+				string strMSFileInfoScannerPath = GetMSFileInfoScannerDLLPath();
+				if (!string.IsNullOrEmpty(strMSFileInfoScannerPath))
+				{
+					bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strMSFileInfoScannerPath);
+					if (!bSuccess)
+						return false;
+				}
 
-				// Lookup the version of the Capture tool plugin
+				// Lookup the version of the UIMFLibrary DLL
 				string strUIMFLibraryPath = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "UIMFLibrary.dll");
 				bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strUIMFLibraryPath);
 				if (!bSuccess)
 					return false;
 
-				// Store path to CaptureToolPlugin.dll in ioToolFiles
+				// Store path to CaptureToolPlugin.dll and MSFileInfoScanner.dll in ioToolFiles
 				System.Collections.Generic.List<System.IO.FileInfo> ioToolFiles = new System.Collections.Generic.List<System.IO.FileInfo>();
 				ioToolFiles.Add(new System.IO.FileInfo(strPluginPath));
-				ioToolFiles.Add(new System.IO.FileInfo(strMSFileInfoScanner));
+				
+				if (!string.IsNullOrEmpty(strMSFileInfoScannerPath))
+					ioToolFiles.Add(new System.IO.FileInfo(strMSFileInfoScannerPath));
 
 				try
 				{

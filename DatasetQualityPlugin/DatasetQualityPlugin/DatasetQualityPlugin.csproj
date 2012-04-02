@@ -43,9 +43,8 @@
       <HintPath>..\..\DeployedFiles\CaptureTaskManager.exe</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="MSFileInfoScanner, Version=1.1.3777.28611, Culture=neutral, processorArchitecture=x86">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\RefLib\MSFileInfoScanner.dll</HintPath>
+    <Reference Include="MSFileInfoScannerInterfaces">
+      <HintPath>..\..\RefLib\MSFileInfoScannerInterfaces.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
