@@ -83,12 +83,13 @@ namespace DatasetQualityPlugin
 				const string MsDataFileReaderClass = "MSFileInfoScanner.clsMSFileInfoScanner";
 
 				MSFileInfoScannerInterfaces.iMSFileInfoScanner objMSFileInfoScanner = null;
+				string msg;
 
 				try
 				{
 					if (!System.IO.File.Exists(strMSFileInfoScannerDLLPath))
 					{
-						string msg = "DLL not found: " + strMSFileInfoScannerDLLPath;
+						msg = "DLL not found: " + strMSFileInfoScannerDLLPath;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 					}
 					else
@@ -98,7 +99,7 @@ namespace DatasetQualityPlugin
 						if (obj != null)
 						{				
 							objMSFileInfoScanner = (MSFileInfoScannerInterfaces.iMSFileInfoScanner)obj;
-							string msg = "Loaded MSFileInfoScanner from " + strMSFileInfoScannerDLLPath;
+							msg = "Loaded MSFileInfoScanner from " + strMSFileInfoScannerDLLPath;
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 						}
 
@@ -107,7 +108,8 @@ namespace DatasetQualityPlugin
 				}
 				catch (Exception ex)
 				{
-					Console.WriteLine("Exception loading class " + MsDataFileReaderClass + ": " + ex.Message);
+					msg = "Exception loading class " + MsDataFileReaderClass + ": " + ex.Message;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 				}
 
 				return objMSFileInfoScanner;
