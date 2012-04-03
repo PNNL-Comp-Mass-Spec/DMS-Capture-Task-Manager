@@ -261,11 +261,13 @@ namespace CaptureTaskManager
 				// Thus, it is advisable to run this program once from an elevated command prompt while MgrActive_Local is set to false
 
 				Console.WriteLine();
+				Console.WriteLine("===============================================================");
 				Console.WriteLine("Exception instantiating clsMgrSettings: " + ex.Message);
-				Console.WriteLine();
+				Console.WriteLine("===============================================================");
 				Console.WriteLine();
 				Console.WriteLine("You may need to run this application once from an elevated (administrative level) command prompt so that it can create the DMSCapTaskMgr application log");
 				Console.WriteLine();
+				System.Threading.Thread.Sleep(500);
 
 				return false;
 			}

@@ -94,7 +94,13 @@ namespace CaptureTaskManager
 							catch (Exception ex)
 							{
 								string errMsg = "Critical exception starting application";
+								Console.WriteLine("===============================================================");
+								Console.WriteLine(errMsg);
+								Console.WriteLine("===============================================================");								
+
 								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.FATAL, errMsg, ex);
+								System.Threading.Thread.Sleep(500);
+
 								return;
 							}
 						} while (restart);
