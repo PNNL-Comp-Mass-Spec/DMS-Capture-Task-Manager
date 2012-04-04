@@ -28,6 +28,8 @@ namespace Pacifica.DMS_Metadata
 			archive, update
 		}
 
+		#region "Properties"
+		
 		public Dictionary<string, object> metadataObject {
 			get { return this._metadataObject; } 
 			private set {
@@ -70,6 +72,8 @@ namespace Pacifica.DMS_Metadata
 				return Utilities.ObjectToJson(this._metadataObject);
 			}
 		}
+		
+		#endregion
 
 		public DMSMetadataObject(System.Collections.Generic.Dictionary<string, string> taskParams, System.Collections.Generic.Dictionary<string, string> mgrParams, System.ComponentModel.BackgroundWorker backgrounder) {
 			this._bgw = backgrounder;
@@ -143,6 +147,7 @@ namespace Pacifica.DMS_Metadata
 			Dictionary<string, object> metadataObject = new Dictionary<string, object>();
 			List<Dictionary<string, string>> groupObject = new List<Dictionary<string, string>>();
 
+			//Set up the MyEMSL tagging information
 			groupObject.Add(new Dictionary<string, string>() {
 				{ "name", taskParams["Instrument_Name"] }, { "type", "omics.dms.instrument" }
 			});
@@ -180,8 +185,9 @@ namespace Pacifica.DMS_Metadata
 			metadataObject.Add("creationDate", Pacifica.Core.ExtensionMethods.ToUnixTime(DateTime.UtcNow).ToString());
 			metadataObject.Add("eusInfo", eusInfo);
 
+			//Start generating the file-level information for inclusion in the metadata file
 			List<Dictionary<string,object>> fileListing = new List<Dictionary<string,object>>();
-			Dictionary<string,string> hashListing = new Dictionary<string,string>();
+			//Dictionary<string,string> hashListing = new Dictionary<string,string>();
 
 			foreach (IFileInfoObject fio in this._bundledFileInfo) {
 				fileListing.Add((Dictionary<string,object>)fio.SerializeToDictionaryObject());
@@ -254,7 +260,9 @@ namespace Pacifica.DMS_Metadata
 				return fileList;
 			}
 			//Must have been something already tagged like this dataset, so find the diffs and report them back
-			Dictionary<string, string> hashList = this.RetrieveItemHashSums(newFileList);
+			Dictionary<string, string> hashList;
+
+			hashList = this.RetrieveItemHashSums(newFileList);
 
 			List<Dictionary<string, object>> unmatchedList = new List<Dictionary<string, object>>();
 			string itemAddress = string.Empty;
@@ -292,7 +300,28 @@ namespace Pacifica.DMS_Metadata
 			//get the xml listing of the dataset directory
 			string URL = Pacifica.Core.Configuration.Scheme + this._readServerName + "/" + datasetSearchPath;
 			//this.serverSearchString = URL;
-			string xmlString = EasyHttp.Send(URL, "", EasyHttp.HttpMethod.Get);
+			string xmlString = string.Empty;
+			bool retrievalSuccess = false;
+			int retrievalAttempts = 0;
+			int maxAttempts = 3;
+
+			while(!retrievalSuccess && retrievalAttempts < maxAttempts) {
+				try {
+					retrievalAttempts++;
+					xmlString = EasyHttp.Send(URL, "", EasyHttp.HttpMethod.Get);
+					if(!string.IsNullOrEmpty(xmlString)) {
+						retrievalSuccess = true;
+					}
+				} catch {
+					if(retrievalAttempts >= maxAttempts) {
+						xmlString = string.Empty;
+					} else {
+						//wait 5 seconds, then retry
+						System.Threading.Thread.Sleep(5000);
+						continue;
+					}
+				}
+			}
 
 			System.Xml.XmlDocument xmlDoc = new System.Xml.XmlDocument();
 			xmlDoc.LoadXml(xmlString);
@@ -343,16 +372,36 @@ namespace Pacifica.DMS_Metadata
 			System.DateTime endTime;
 			System.TimeSpan elapsed;
 			System.DateTime opStart = System.DateTime.Now;
+
+			Boolean retrievalSuccess;
+			int retrievalAttempts;
+			int maxAttempts = 3;
+
 			foreach (Dictionary<string, object> item in fileList) {
+				retrievalSuccess = false;
+				retrievalAttempts = 0;
+
 				startTime = System.DateTime.Now;
 				itemName = item["name"].ToString();
 				itemID = item["item_id"].ToString();
 				uri = uriBase + itemID.ToString() + uriTail;
-				try {
-					itemXmlString = EasyHttp.Send(uri, "", EasyHttp.HttpMethod.Get);
-				} finally {
-					if (String.IsNullOrEmpty(itemXmlString))
-						itemXmlString = string.Empty;
+
+				while(!retrievalSuccess && retrievalAttempts < maxAttempts) {
+					try {
+						retrievalAttempts++;
+						itemXmlString = EasyHttp.Send(uri, "", EasyHttp.HttpMethod.Get);
+						if(!string.IsNullOrEmpty(itemXmlString)) {
+							retrievalSuccess = true;
+						}
+					} catch {
+						if(retrievalAttempts >= maxAttempts) {
+							itemXmlString = string.Empty;
+						} else {
+							//wait 5 seconds, then retry
+							System.Threading.Thread.Sleep(5000);
+							continue;
+						}
+					}
 				}
 				
 				itemXml = new System.Xml.XmlDocument();
