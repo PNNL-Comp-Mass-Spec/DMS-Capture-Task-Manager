@@ -287,7 +287,7 @@ namespace Pacifica.Core
 
 					//System.Xml.XmlNode statusElement = xmlDoc.GetElementById("3");
 					//check the "verified" entry to make sure everything came through ok
-					string query = string.Format("//*[@id='{0}']", 3);
+					string query = string.Format("//*[@id='{0}']", 5);
 					System.Xml.XmlNode statusElement = xmlDoc.SelectSingleNode(query);
 					if (statusElement.Attributes["status"].Value.ToLower() == "success" && statusElement.Attributes["message"].Value.ToLower() == "completed") {
 						success = true;
