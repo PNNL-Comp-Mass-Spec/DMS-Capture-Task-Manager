@@ -54,7 +54,7 @@ namespace Pacifica.Core
 
         public static string ToHexString(byte[] buffer)
         {
-					return BitConverter.ToString(buffer).ToLower();
+					return BitConverter.ToString(buffer).Replace("-", string.Empty).ToLower();
 						//StringBuilder genSHA1 = new StringBuilder();
 
 						//foreach (byte b in buffer)

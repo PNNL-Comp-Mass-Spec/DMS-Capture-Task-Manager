@@ -575,7 +575,7 @@ namespace DatasetArchivePlugin
 				FStream = fiFile.OpenRead();
 				//Get the file's hash
 				ByteHash = HashGen.ComputeHash(FStream);
-				return BitConverter.ToString(ByteHash);
+				return BitConverter.ToString(ByteHash).Replace("-", string.Empty).ToLower();
 			}
 			catch (Exception ex)
 			{
