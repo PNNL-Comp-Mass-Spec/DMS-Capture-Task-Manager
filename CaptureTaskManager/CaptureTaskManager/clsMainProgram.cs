@@ -580,9 +580,10 @@ namespace CaptureTaskManager
 					return false;
 				}
 
-				
+
 				// Make sure we have enough free space on the drive with the dataset folder
-				if (!ValidateFreeDiskSpace(out msg)) {
+				if (!ValidateFreeDiskSpace(out msg))
+				{
 					if (string.IsNullOrEmpty(msg))
 						msg = "Insufficient free space (location undefined)";
 
@@ -590,7 +591,7 @@ namespace CaptureTaskManager
 					m_StatusFile.UpdateIdle();
 					return false;
 
-				}				
+				}
 
 				// Run the tool plugin
 				m_DurationStart = DateTime.UtcNow;
@@ -705,7 +706,8 @@ namespace CaptureTaskManager
 							fiFile.Delete();
 						}
 					}
-					catch {
+					catch
+					{
 						// Ignore exceptions
 					}
 				}
@@ -722,99 +724,96 @@ namespace CaptureTaskManager
 		/// </summary>
 		protected void RemoveOldTempFiles()
 		{
+			// Remove .tmp, .zip, and .tar files over 12 hours old in the Windows Temp folder
 			int iAgedTempFilesHours = 12;
-			RemoveOldTempFiles (iAgedTempFilesHours, new System.Collections.Generic.List< System.Collections.Generic.KeyValuePair<string, string> >());
+			string sTempFolderPath = System.IO.Path.GetTempPath();
+			RemoveOldTempFiles(iAgedTempFilesHours, sTempFolderPath);
+
+			// Remove .Tar files over 24 hours in the Capture Task Manager's work directory
+			List<string> lstSearchSpecs = new List<string>();
+			lstSearchSpecs.Add("*.tar");
+			sTempFolderPath = m_MgrSettings.GetParam("WorkDir");
+			iAgedTempFilesHours = 24;
+			RemoveOldTempFiles(iAgedTempFilesHours, sTempFolderPath, lstSearchSpecs);
+		}
+
+		protected void RemoveOldTempFiles(int iAgedTempFilesHours, string sTempFolderPath)
+		{			
+			// This list tracks the file specs to search for in folder sTempFolderPath
+			List<string> lstSearchSpecs = new List<string>();
+
+			lstSearchSpecs.Add("*.tmp");
+			lstSearchSpecs.Add("*.zip");
+			lstSearchSpecs.Add("*.tar");
+
+			RemoveOldTempFiles(iAgedTempFilesHours, sTempFolderPath, lstSearchSpecs);
 		}
 
 		/// <summary>
 		/// Look for and remove old .tar, .zip, and .tmp files
 		/// </summary>
-		/// <param name="iAgedTempFilesHours"></param>
-		protected void RemoveOldTempFiles(int iAgedTempFilesHours, System.Collections.Generic.List< System.Collections.Generic.KeyValuePair<string, string> > lstSearchSpecsAddnl)
-        {
-			System.Collections.Generic.Dictionary<string, int> lstDeletionStats;
+		/// <param name="iAgedTempFilesHours">Files more than this many hours old will be deleted</param>
+		/// <param name="sTempFolderPath">Path to the folder to look for and delete old files</param>
+		/// <param name="lstSearchSpecs">File specs to search for in folder sTempFolderPath, e.g. "*.txt"</param>
+		protected void RemoveOldTempFiles(int iAgedTempFilesHours, string sTempFolderPath, List<string> lstSearchSpecs)
+		{
+			int iTotalDeleted;
+			string msg;
 
-            try
-            {
-				lstDeletionStats = new System.Collections.Generic.Dictionary<string, int>();
+			try
+			{
+				iTotalDeleted = 0;
 
 				if (iAgedTempFilesHours < 2)
 					iAgedTempFilesHours = 2;
 
-                // In the following dictioinary, the key name is the path to the folder to check
-                // The value is an optional filemask
-                System.Collections.Generic.List< System.Collections.Generic.KeyValuePair<string, string> > lstSearchSpecs;
-
-                lstSearchSpecs = new System.Collections.Generic.List< System.Collections.Generic.KeyValuePair<string, string> >();
-
-                string sTempFolder = System.IO.Path.GetTempPath();
-                lstSearchSpecs.Add(new System.Collections.Generic.KeyValuePair<string, string>(sTempFolder, "*.tmp"));
-                lstSearchSpecs.Add(new System.Collections.Generic.KeyValuePair<string, string>(sTempFolder, "*.zip"));
-                lstSearchSpecs.Add(new System.Collections.Generic.KeyValuePair<string, string>(sTempFolder, "*.tar"));
-
-				if (lstSearchSpecsAddnl != null)
+				System.IO.DirectoryInfo diFolder = new System.IO.DirectoryInfo(sTempFolderPath);
+				if (!diFolder.Exists)
 				{
-					foreach (System.Collections.Generic.KeyValuePair<string, string> oItem in lstSearchSpecsAddnl)
-					{
-						lstSearchSpecs.Add(oItem); 
-					}
+					msg = "Folder not found: " + sTempFolderPath;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+					return;
 				}
 
-                // Process each entry in lstSearchSpecs
-                foreach (System.Collections.Generic.KeyValuePair<string, string> oEntry in lstSearchSpecs) {
-					System.IO.DirectoryInfo diFolder = new System.IO.DirectoryInfo(oEntry.Key);
-
-					if (diFolder.Exists)
+				// Process each entry in lstSearchSpecs
+				foreach (string sSpec in lstSearchSpecs)
+				{
+					int iDeleteCount = 0;
+					foreach (System.IO.FileInfo fiFile in diFolder.GetFiles(sSpec))
 					{
-						int iDeleteCount = 0;
-						foreach (System.IO.FileInfo fiFile in diFolder.GetFiles(oEntry.Value))
+						try
 						{
-							try
+							if (System.DateTime.UtcNow.Subtract(fiFile.LastWriteTimeUtc).TotalHours > iAgedTempFilesHours)
 							{
-								if (System.DateTime.UtcNow.Subtract(fiFile.LastWriteTimeUtc).TotalHours > iAgedTempFilesHours)
-								{
-									fiFile.Delete();
-									iDeleteCount += 1;
-								}
-							}
-							catch {
-								// Ignore exceptions
+								fiFile.Delete();
+								iDeleteCount += 1;
 							}
 						}
-
-						if (iDeleteCount > 0)
+						catch
 						{
-							int iTotalDeleted = 0;
-							if (lstDeletionStats.TryGetValue(diFolder.FullName, out iTotalDeleted))
-								lstDeletionStats[diFolder.FullName] = iTotalDeleted + iDeleteCount;								
-							else
-								lstDeletionStats[diFolder.FullName] = iDeleteCount;
+							// Ignore exceptions
 						}
-
 					}
+
+					iTotalDeleted += iDeleteCount;
 				}
 
-				if (lstDeletionStats.Count > 0)
+				if (iTotalDeleted > 0)
 				{
-					foreach (System.Collections.Generic.KeyValuePair<string, int> oItem in lstDeletionStats)
-					{
-						string msg = "Deleted " + oItem.Value + " temp file";
-						if (oItem.Value > 1)
-							msg += "s";
+					msg = "Deleted " + iTotalDeleted + " temp file";
+					if (iTotalDeleted > 1)
+						msg += "s";
 
-						msg += " over " + iAgedTempFilesHours + " hours old in folder " + oItem.Key;
-
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-					}
-
+					msg += " over " + iAgedTempFilesHours + " hours old in folder " + sTempFolderPath;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 				}
 
-            }
-            catch (Exception ex)
-            {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception removing old temp files: " + ex.Message);
-            }
-        }
+			}
+			catch (Exception ex)
+			{
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception removing old temp files: " + ex.Message);
+			}
+		}
 
 
 		/// <summary>
@@ -974,7 +973,7 @@ namespace CaptureTaskManager
 
 		}
 
-		protected string GetStoragePathBase() 
+		protected string GetStoragePathBase()
 		{
 			string datasetStoragePathBase = string.Empty;
 			string storagePath = m_Task.GetParam("Storage_Path");
@@ -995,7 +994,7 @@ namespace CaptureTaskManager
 			return datasetStoragePathBase;
 
 		}
-			
+
 		/// <summary>
 		/// Validates that the dataset storage drive has sufficient free space
 		/// </summary>
@@ -1018,9 +1017,9 @@ namespace CaptureTaskManager
 
 				if (stepToolLCase.Contains("archiveupdate") ||
 					stepToolLCase.Contains("datasetarchive") ||
-					stepToolLCase.Contains("sourcefilerename") )
+					stepToolLCase.Contains("sourcefilerename"))
 				{
-					
+
 					// We don't need to validate free space with these step tools
 					return true;
 				}
@@ -1031,19 +1030,19 @@ namespace CaptureTaskManager
 				{
 					double freeSpaceGB = totalNumberOfFreeBytes / 1024.0 / 1024.0 / 1024.0;
 
-					if (freeSpaceGB < DEFAULT_DATASET_STORAGE_MIN_FREE_SPACE_GB) 
+					if (freeSpaceGB < DEFAULT_DATASET_STORAGE_MIN_FREE_SPACE_GB)
 					{
 						ErrorMessage = "Dataset directory drive has less than " + totalNumberOfFreeBytes.ToString() + " GB free: " + ((int)freeSpaceGB).ToString() + " GB";
 
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrorMessage + ": " + datasetStoragePath);					
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrorMessage + ": " + datasetStoragePath);
 						return false;
 					}
-					
+
 				}
 				else
 				{
 					ErrorMessage = "Error validating dataset storage free drive space (GetDiskFreeSpaceEx returned false): " + datasetStoragePath;
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrorMessage);					
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrorMessage);
 					return false;
 				}
 

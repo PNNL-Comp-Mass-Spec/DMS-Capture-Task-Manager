@@ -97,7 +97,7 @@ namespace CaptureTaskManager {
 
 		private System.Collections.Generic.Dictionary<string, string> LoadMgrSettingsFromFile() {
 			// Load initial settings into string dictionary for return
-			System.Collections.Generic.Dictionary<string, string> RetDict = new System.Collections.Generic.Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+			Dictionary<string, string> RetDict = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
 			string TempStr;
 
 			//				My.Settings.Reload()
