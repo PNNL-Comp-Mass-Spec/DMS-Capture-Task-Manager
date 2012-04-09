@@ -3,33 +3,33 @@
 // Written by Dave Clark for the US Department of Energy 
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
-// Created 09/15/2009
+// Created 06/16/2009
 //
-// Last modified 09/15/2009
+// Last modified 06/16/2009
 //*********************************************************************************************************
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Collections.Specialized;
 
 namespace CaptureTaskManager
 {
-	public interface ITaskParams
+	public interface IMgrParams
 	{
 		//*********************************************************************************************************
-		// Interface for step task parameters
+		// Defines interface for manager parameter handling
 		//**********************************************************************************************************
 
 		#region "Properties"
+
 		System.Collections.Generic.Dictionary<string, string> TaskDictionary { get; }
+		
 		#endregion
 
 		#region "Methods"
-		string GetParam(string name);
-		string GetParam(string name, string valueIfMissing);
-		bool AddAdditionalParameter(string paramName, string paramValue);
-		void SetParam(string keyName, string value);
+		string GetParam(string ItemKey);
+		string GetParam(string ItemKey, string valueIfMissing);
+		void SetParam(string ItemKey, string ItemValue);
+
+        bool LoadMgrSettingsFromDB();
 		#endregion
+
 	}	// End interface
 }	// End namespace

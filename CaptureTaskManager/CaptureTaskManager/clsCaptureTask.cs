@@ -11,6 +11,7 @@ using System;
 using System.Data.SqlClient;
 using System.Data;
 using System.Windows.Forms;
+using CaptureTaskManager;
 
 namespace CaptureTaskManager
 {

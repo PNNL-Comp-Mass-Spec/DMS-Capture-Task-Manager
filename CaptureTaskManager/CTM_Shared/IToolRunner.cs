@@ -8,9 +8,6 @@
 // Last modified 09/15/2009
 //*********************************************************************************************************
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace CaptureTaskManager
 {
@@ -22,7 +19,7 @@ namespace CaptureTaskManager
 
         #region "Methods"
             void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools);
-			    clsToolReturnData RunTool();
+			clsToolReturnData RunTool();
 		#endregion
 	}	// End interface
 }	// End namespace

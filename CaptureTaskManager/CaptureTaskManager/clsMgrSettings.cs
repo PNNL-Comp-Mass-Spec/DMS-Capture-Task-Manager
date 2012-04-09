@@ -14,10 +14,10 @@ using System.Text;
 using System.Data.SqlClient;
 using System.Data;
 using System.IO;
-using System.Collections.Specialized;
 using System.Xml;
 using System.Configuration;
 using System.Windows.Forms;
+using CaptureTaskManager;
 
 namespace CaptureTaskManager {
 	public class clsMgrSettings : IMgrParams {
@@ -160,54 +160,6 @@ namespace CaptureTaskManager {
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strErrorMessage + ex.Message);
 			}
 
-		}
-
-		/// <summary>
-		/// Convert string to bool; default false if an error
-		/// </summary>
-		/// <param name="Value"></param>
-		/// <returns></returns>
-		public static bool CBoolSafe(string Value) {
-			return CBoolSafe(Value, false);
-		}
-
-		public static bool CBoolSafe(string Value, bool DefaultValue) {
-			bool blnValue = DefaultValue;
-
-			if (string.IsNullOrEmpty(Value))
-				return DefaultValue;
-			else {
-				if (bool.TryParse(Value, out blnValue))
-					return blnValue;
-				else
-					return DefaultValue;
-			}
-		}
-
-		public static int CIntSafe(string Value, int DefaultValue) {
-			int intValue = DefaultValue;
-
-			if (string.IsNullOrEmpty(Value))
-				return DefaultValue;
-			else {
-				if (int.TryParse(Value, out intValue))
-					return intValue;
-				else
-					return DefaultValue;
-			}
-		}
-
-		public static float CSngSafe(string Value, float DefaultValue) {
-			float fValue = DefaultValue;
-
-			if (string.IsNullOrEmpty(Value))
-				return fValue;
-			else {
-				if (float.TryParse(Value, out fValue))
-					return fValue;
-				else
-					return fValue;
-			}
 		}
 
 		private bool CheckInitialSettings(System.Collections.Generic.Dictionary<string, string> InpDict) {

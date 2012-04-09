@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using CaptureTaskManager;
 
 namespace CaptureTaskManager
 {
@@ -106,7 +107,7 @@ namespace CaptureTaskManager
 				else
 				{
 					// Update the log level
-					int debugLevel = clsMgrSettings.CIntSafe(m_MgrParams.GetParam("debuglevel"), 4);
+					int debugLevel = clsConversion.CIntSafe(m_MgrParams.GetParam("debuglevel"), 4);
 					clsLogTools.SetFileLogLevel(debugLevel);
 				}
 			}
@@ -270,7 +271,7 @@ namespace CaptureTaskManager
 			bool Outcome = false;
 			int ResCode = 0;
 
-			int debugLevel = clsMgrSettings.CIntSafe(m_MgrParams.GetParam("debuglevel"), 4);
+			int debugLevel = clsConversion.CIntSafe(m_MgrParams.GetParam("debuglevel"), 4);
 			string workingDir = m_MgrParams.GetParam("WorkDir");
 			if (string.IsNullOrWhiteSpace(workingDir))
 			{

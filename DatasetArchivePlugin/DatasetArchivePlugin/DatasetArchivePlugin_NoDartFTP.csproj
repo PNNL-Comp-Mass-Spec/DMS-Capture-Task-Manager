@@ -53,10 +53,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CaptureTaskManager, Version=1.0.3566.18819, Culture=neutral, processorArchitecture=x86">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\DeployedFiles\CaptureTaskManager.exe</HintPath>
-      <Private>False</Private>
+    <Reference Include="CTM_Shared">
+      <HintPath>..\..\DeployedFiles\CTM_Shared.dll</HintPath>
     </Reference>
     <Reference Include="MD5StageFileCreator">
       <HintPath>..\..\RefLib\MD5StageFileCreator.dll</HintPath>

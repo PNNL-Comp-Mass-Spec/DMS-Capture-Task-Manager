@@ -370,7 +370,7 @@ namespace DatasetArchivePlugin
 			catch (Exception ex)
 			{
 				msg = "clsArchiveUpdate.CompareFolders: Exception getting file listing, folder " + svrFolderPath;
-				LogErrorMessage(msg, "Exception getting file listing for svrFolderPath");
+				LogErrorMessage(msg + "; " + ex.Message, "Exception getting file listing for svrFolderPath");
 				return null;
 			}
 

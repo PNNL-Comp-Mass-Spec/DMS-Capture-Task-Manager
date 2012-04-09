@@ -1,5 +1,9 @@
 Capture Task Manager History
 
+Version 1.2.4482; April 9, 2012
+	- Moved interfaces, cfGlobalStuff, and other shared classes into CTM_Interfaces.dll
+	- Updated all plugins to use CTM_Interfaces.dll instead of CaptureTaskManager.exe
+
 Version 1.1.4475; April 2, 2012
 	- Updated the DatasetQuality plugin to dynamically load clsMSFileInfoScanner from within MSFileInfoScannerInterfaces.dll, which is stored at C:\DMS_Programs\MSFileInfoScanner
 		- Allowed us to remove all of the Proteowizard-related DLLs from the Capture Task Manager program folder

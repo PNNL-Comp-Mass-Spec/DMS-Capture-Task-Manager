@@ -14,6 +14,7 @@ using System.Text;
 using System.IO;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;		// Required for call to GetDiskFreeSpaceEx
+using CaptureTaskManager;
 
 namespace CaptureTaskManager
 {
@@ -274,9 +275,9 @@ namespace CaptureTaskManager
 
 			// Set up the loggers
 			string logFileName = m_MgrSettings.GetParam("logfilename");
-			int debugLevel = clsMgrSettings.CIntSafe(m_MgrSettings.GetParam("debuglevel"), 4);
+			int debugLevel = clsConversion.CIntSafe(m_MgrSettings.GetParam("debuglevel"), 4);
 			clsLogTools.CreateFileLogger(logFileName, debugLevel);
-			if (clsMgrSettings.CBoolSafe(m_MgrSettings.GetParam("ftplogging"))) clsLogTools.CreateFtpLogFileLogger("Dummy.txt");
+			if (clsConversion.CBoolSafe(m_MgrSettings.GetParam("ftplogging"))) clsLogTools.CreateFtpLogFileLogger("Dummy.txt");
 			string logCnStr = m_MgrSettings.GetParam("connectionstring");
 			string moduleName = m_MgrSettings.GetParam("modulename");
 			clsLogTools.CreateDbLogger(logCnStr, moduleName);
@@ -328,7 +329,7 @@ namespace CaptureTaskManager
 			string statusFileNameLoc = Path.Combine(fInfo.DirectoryName, "Status.xml");
 			m_StatusFile = new clsStatusFile(statusFileNameLoc);
 			m_StatusFile.MonitorUpdateRequired += new StatusMonitorUpdateReceived(OnStatusMonitorUpdateReceived);
-			m_StatusFile.LogToMsgQueue = clsMgrSettings.CBoolSafe(m_MgrSettings.GetParam("LogStatusToMessageQueue"));
+			m_StatusFile.LogToMsgQueue = clsConversion.CBoolSafe(m_MgrSettings.GetParam("LogStatusToMessageQueue"));
 			m_StatusFile.MgrName = m_MgrSettings.GetParam("MgrName");
 			m_StatusFile.MgrStatus = EnumMgrStatus.Running;
 			m_StatusFile.WriteStatusFile();
@@ -423,20 +424,20 @@ namespace CaptureTaskManager
 					}
 
 					// Check to see if manager is still active
-					if (!clsMgrSettings.CBoolSafe(m_MgrSettings.GetParam("mgractive")))
+					if (!clsConversion.CBoolSafe(m_MgrSettings.GetParam("mgractive")))
 					{
 						// Disabled via manager control db
 						m_LoopExitCode = LoopExitCode.DisabledMC;
 						break;
 					}
 
-					if (!clsMgrSettings.CBoolSafe(m_MgrSettings.GetParam("mgractive_local")))
+					if (!clsConversion.CBoolSafe(m_MgrSettings.GetParam("mgractive_local")))
 					{
 						m_LoopExitCode = LoopExitCode.DisabledLocally;
 						break;
 					}
 
-					if (clsMgrSettings.CBoolSafe(m_MgrSettings.GetParam("ManagerUpdateRequired")))
+					if (clsConversion.CBoolSafe(m_MgrSettings.GetParam("ManagerUpdateRequired")))
 					{
 						m_LoopExitCode = LoopExitCode.UpdateRequired;
 						break;
@@ -868,7 +869,7 @@ namespace CaptureTaskManager
 																					  m_MgrSettings.GetParam("WorkDir"),
 																					  m_StatusFile);
 
-					int CleanupModeVal = clsMgrSettings.CIntSafe(m_MgrSettings.GetParam("ManagerErrorCleanupMode"), 0);
+					int CleanupModeVal = clsConversion.CIntSafe(m_MgrSettings.GetParam("ManagerErrorCleanupMode"), 0);
 					blnMgrCleanupSuccess = objCleanupMgrErrors.AutoCleanupManagerErrors(CleanupModeVal);
 
 				}
@@ -928,7 +929,7 @@ namespace CaptureTaskManager
 				else
 				{
 					// Update the log level
-					int debugLevel = clsMgrSettings.CIntSafe(m_MgrSettings.GetParam("debuglevel"), 4);
+					int debugLevel = clsConversion.CIntSafe(m_MgrSettings.GetParam("debuglevel"), 4);
 					clsLogTools.SetFileLogLevel(debugLevel);
 				}
 			}

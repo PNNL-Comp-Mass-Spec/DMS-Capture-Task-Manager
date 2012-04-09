@@ -12,8 +12,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Data.SqlClient;
-using System.Collections.Specialized;
 using System.Data;
+using CaptureTaskManager;
 
 namespace CaptureTaskManager
 {
@@ -33,8 +33,8 @@ namespace CaptureTaskManager
 
 		#region "Class variables"
 			protected IMgrParams m_MgrParams;
-			protected string m_ConnStr;			
-			protected StringCollection m_ErrorList = new StringCollection();
+			protected string m_ConnStr;
+			protected List<string> m_ErrorList = new List<string>();
 			protected bool m_TaskWasAssigned = false;
 			protected System.Collections.Generic.Dictionary<string, string> m_JobParams = new System.Collections.Generic.Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
 		#endregion

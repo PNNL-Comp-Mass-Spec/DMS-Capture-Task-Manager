@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("CaptureTaskManager")]
+[assembly: AssemblyTitle("CTM_Interfaces")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("PNNL")]
-[assembly: AssemblyProduct("CaptureTaskManager")]
-[assembly: AssemblyCopyright("Copyright © PNNL 2009")]
+[assembly: AssemblyProduct("CTM_Interfaces")]
+[assembly: AssemblyCopyright("Copyright © PNNL 2012")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("a96002f4-dd3d-4954-89b9-cfac64ac0ed6")]
+[assembly: Guid("f1649386-8690-4975-9fcf-61c703757059")]
 
 // Version information for an assembly consists of the following four values:
 //
@@ -33,4 +33,3 @@ using System.Runtime.InteropServices;
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
 [assembly: AssemblyVersion("1.2.*")]
-//[assembly: AssemblyFileVersion("1.0.0.0")]
