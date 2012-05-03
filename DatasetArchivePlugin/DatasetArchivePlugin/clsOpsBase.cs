@@ -48,6 +48,9 @@ namespace DatasetArchivePlugin
 		protected string m_DatasetName = string.Empty;
 
 		protected System.DateTime mLastStatusUpdateTime = System.DateTime.UtcNow;
+		protected System.Collections.Generic.Queue<string> mLogMsgQueue;
+		protected string mMostRecentLogMessage = string.Empty;
+		protected System.Timers.Timer mMsgQueueTimer;
 
 		clsMD5StageFileCreator mMD5StageFileCreator;
 
@@ -83,6 +86,14 @@ namespace DatasetArchivePlugin
 			{
 				m_ArchiveOrUpdate = UPDATE;
 			}
+
+			mLogMsgQueue = new System.Collections.Generic.Queue<string>();
+			mMsgQueueTimer = new System.Timers.Timer();
+
+			mMsgQueueTimer.Interval = 1000;
+			mMsgQueueTimer.Elapsed += new System.Timers.ElapsedEventHandler(MsgQueueTimer_Elapsed);
+			mMsgQueueTimer.Enabled = true;
+
 		}	// End sub
 		#endregion
 
@@ -638,10 +649,23 @@ namespace DatasetArchivePlugin
 
 		#region "Event Handlers"
 
+		void MsgQueueTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+		{
+			while (mLogMsgQueue.Count > 0)
+			{
+				string msg = mLogMsgQueue.Dequeue();
+				if (string.Compare(msg, mMostRecentLogMessage) != 0)
+				{
+					mMostRecentLogMessage = string.Copy(msg);
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+				}
+			}
+		}
+
 		void myEMSLUpload_DebugEvent(string callingFunction, string currentTask)
 		{
 			string msg = "  ... " + callingFunction + ": " + currentTask;
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+			mLogMsgQueue.Enqueue(msg);
 		}
 
 		void myEMSLUpload_ErrorEvent(string callingFunction, string errorMessage)
@@ -657,7 +681,7 @@ namespace DatasetArchivePlugin
 			{
 				mLastStatusUpdateTime = System.DateTime.UtcNow;
 				string msg = "  ... uploading " + bundleIdentifier + ", " + percentCompleted.ToString() + "% complete for " + (totalBytesToSend / 1024.0).ToString("0,000") + " KB";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+				mLogMsgQueue.Enqueue(msg);
 			}
 		}		
 

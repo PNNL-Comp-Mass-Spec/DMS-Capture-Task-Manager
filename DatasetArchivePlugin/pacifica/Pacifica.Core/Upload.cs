@@ -321,18 +321,30 @@ namespace Pacifica.Core
 				loopCount++;
 				newDelayTimeSec = initialLoopDelaySec * (int)Math.Pow((double)delayFactor, (double)loopCount);
 
-				if (newDelayTimeSec < 120)
-					RaiseDebugEvent("UploadMonitorLoop", "Sleep for " + newDelayTimeSec + " seconds");
-				else
-					RaiseDebugEvent("UploadMonitorLoop", "Sleep for " + newDelayTimeSec + " seconds (" + (newDelayTimeSec / 60.0).ToString("0.0") + " minutes)");
+				if (newDelayTimeSec > 5)
+				{
+					if (newDelayTimeSec < 120)
+						RaiseDebugEvent("UploadMonitorLoop", "Sleep for " + newDelayTimeSec + " seconds");
+					else
+						RaiseDebugEvent("UploadMonitorLoop", "Sleep for " + newDelayTimeSec + " seconds (" + (newDelayTimeSec / 60.0).ToString("0.0") + " minutes)");
+				}
 
 				totalSleepSeconds += newDelayTimeSec;
 
 				System.Threading.Thread.Sleep(newDelayTimeSec * 1000);
-				xmlServerResponse = EasyHttp.Send(statusURI);
-				if (this.WasDataReceived(xmlServerResponse))
+
+				try
 				{
-					return true;
+					xmlServerResponse = EasyHttp.Send(statusURI);
+					if (this.WasDataReceived(xmlServerResponse))
+					{
+						return true;
+					}
+
+				}
+				catch (Exception ex)
+				{
+					RaiseErrorEvent("UploadMonitorLoop", ex.Message);
 				}
 				
 				if (loopCount == 1)
@@ -349,44 +361,52 @@ namespace Pacifica.Core
 		{
 			Boolean success = false;
 
-			System.Xml.XmlDocument xmlDoc = new System.Xml.XmlDocument();
-			xmlDoc.LoadXml(xmlServerResponse);
-
-			// Example XML:
-			//
-			// <?xml version="1.0"?>
-			// <myemsl>
-			// 	<status username='70000'>
-			// 		<transaction id='111177' />
-			// 		<step id='0' message='completed' status='SUCCESS' />
-			// 		<step id='1' message='completed' status='SUCCESS' />
-			// 		<step id='2' message='completed' status='SUCCESS' />
-			// 		<step id='3' message='completed' status='SUCCESS' />
-			// 		<step id='4' message='completed' status='SUCCESS' />
-			// 		<step id='5' message='completed' status='SUCCESS' />
-			// 		<step id='6' message='verified' status='SUCCESS' />
-			// 	</status>
-			// </myemsl>
-			// 
-			// Step IDs correspond to:
-			// 0: Submitted
-			// 1: Received
-			// 2: Processing
-			// 3: Verified
-			// 4: Stored
-			// 5: Available   (status will be "ERROR" if user doesn't have upload permissions for a proposal; 
-			//                 for example https://a4.my.emsl.pnl.gov/myemsl/cgi-bin/status/1042281/xml shows message 
-			//                 "You(47943) do not have upload permissions to proposal 17797"
-			//                 for user svc-dms on May 3, 2012)
-			// 6: Archived    (status will be "UNKNOWN" if not yet verified)
-
-			// Check the "stored" entry (ID=4) to make sure everything came through ok
-
-			string query = string.Format("//*[@id='{0}']", 4);
-			System.Xml.XmlNode statusElement = xmlDoc.SelectSingleNode(query);
-			if (statusElement.Attributes["status"].Value.ToLower() == "success" && statusElement.Attributes["message"].Value.ToLower() == "completed")
+			try
 			{
-				success = true;
+				System.Xml.XmlDocument xmlDoc = new System.Xml.XmlDocument();
+				xmlDoc.LoadXml(xmlServerResponse);
+
+				// Example XML:
+				//
+				// <?xml version="1.0"?>
+				// <myemsl>
+				// 	<status username='70000'>
+				// 		<transaction id='111177' />
+				// 		<step id='0' message='completed' status='SUCCESS' />
+				// 		<step id='1' message='completed' status='SUCCESS' />
+				// 		<step id='2' message='completed' status='SUCCESS' />
+				// 		<step id='3' message='completed' status='SUCCESS' />
+				// 		<step id='4' message='completed' status='SUCCESS' />
+				// 		<step id='5' message='completed' status='SUCCESS' />
+				// 		<step id='6' message='verified' status='SUCCESS' />
+				// 	</status>
+				// </myemsl>
+				// 
+				// Step IDs correspond to:
+				// 0: Submitted
+				// 1: Received
+				// 2: Processing
+				// 3: Verified
+				// 4: Stored
+				// 5: Available   (status will be "ERROR" if user doesn't have upload permissions for a proposal; 
+				//                 for example https://a4.my.emsl.pnl.gov/myemsl/cgi-bin/status/1042281/xml shows message 
+				//                 "You(47943) do not have upload permissions to proposal 17797"
+				//                 for user svc-dms on May 3, 2012)
+				// 6: Archived    (status will be "UNKNOWN" if not yet verified)
+
+				// Check the "stored" entry (ID=4) to make sure everything came through ok
+
+				string query = string.Format("//*[@id='{0}']", 4);
+				System.Xml.XmlNode statusElement = xmlDoc.SelectSingleNode(query);
+				if (statusElement.Attributes["status"].Value.ToLower() == "success" && statusElement.Attributes["message"].Value.ToLower() == "completed")
+				{
+					success = true;
+				}
+
+			}
+			catch (Exception ex)
+			{
+				RaiseErrorEvent("WasDataReceived", ex.Message);
 			}
 
 			return success;
