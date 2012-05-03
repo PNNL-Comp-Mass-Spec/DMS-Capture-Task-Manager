@@ -975,6 +975,9 @@ namespace CaptureToolPlugin
 					if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
 						retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 
+					if (string.IsNullOrEmpty(retData.CloseoutMsg))
+						retData.CloseoutMsg = "PerformDSExistsActions returned false";
+
 					return false;
 				}
 			}
@@ -998,6 +1001,9 @@ namespace CaptureToolPlugin
 					PossiblyStoreErrorMessage(ref retData);
 					if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
 						retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+
+					if (string.IsNullOrEmpty(retData.CloseoutMsg))
+						retData.CloseoutMsg = "Error connecting to Bionet share";
 
 					return false;
 				}
@@ -1069,7 +1075,15 @@ namespace CaptureToolPlugin
 			if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
 				return true;
 			else
+			{
+				if (string.IsNullOrEmpty(retData.CloseoutMsg))
+				{
+					retData.CloseoutMsg = string.Copy(msg);
+					if (string.IsNullOrEmpty(retData.CloseoutMsg))
+						retData.CloseoutMsg = "Unknown error performing capture";
+				}
 				return false;
+			}
 
 		}	// End sub
 

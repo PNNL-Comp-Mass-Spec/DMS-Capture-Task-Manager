@@ -65,11 +65,19 @@ namespace DatasetArchivePlugin
 				// Create a new stagemd5 file for each file m_DSNamePath
 				stageSuccess = CreateMD5StagingFile(m_DSNamePath, sResultsFolderPathArchive);
 				if (!stageSuccess)
+				{
+					if (string.IsNullOrEmpty(m_ErrMsg))
+						m_ErrMsg = "Error creating the MD5 staging file";
 					return false;
+				}
 
 				if (!copySuccess)
-					return false;
+				{
+					if (string.IsNullOrEmpty(m_ErrMsg))
+						m_ErrMsg = "Error copying folder to the archive";
 
+					return false;
+				}
 
 				// Got to here, everything's wonderful!
 				m_Msg = "Archive complete, dataset " + m_TaskParams.GetParam("dataset") + ", job " + m_TaskParams.GetParam("Job");

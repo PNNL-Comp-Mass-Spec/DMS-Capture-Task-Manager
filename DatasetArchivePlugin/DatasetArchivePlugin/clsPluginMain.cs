@@ -88,6 +88,7 @@ namespace DatasetArchivePlugin
 				else
 				{
 					retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+					retData.CloseoutMsg = archOpTool.ErrMsg;
 				}
 				msg = "Completed " + archiveOpDescription + ", job " + job;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);

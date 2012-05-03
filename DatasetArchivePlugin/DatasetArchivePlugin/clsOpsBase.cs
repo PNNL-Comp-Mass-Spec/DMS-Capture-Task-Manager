@@ -29,7 +29,7 @@ namespace DatasetArchivePlugin
 		#region "Class variables"
 		protected IMgrParams m_MgrParams;
 		protected ITaskParams m_TaskParams;
-		protected string m_ErrMsg;
+		protected string m_ErrMsg = string.Empty;
 		protected string m_TempVol;
 		protected string m_DSNamePath;
 		protected string m_ArchiveNamePath;
@@ -303,12 +303,14 @@ namespace DatasetArchivePlugin
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
 					LogOperationFailed(m_DatasetName);
 					m_ConnectionOpen = false;
+					m_ErrMsg = string.Copy("Unable to open the FTP connection");
 					return false;
 				}
 			}
 			catch (Exception ex)
 			{
 				m_Msg = "clsOpsBase.OpenArchiveServer: Exception opening server connection";
+				m_ErrMsg = string.Copy(m_Msg);
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg, ex);
 				LogOperationFailed(m_DatasetName);
 				return false;
@@ -334,12 +336,14 @@ namespace DatasetArchivePlugin
 				else
 				{
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_FtpTools.ErrMsg);
+					m_ErrMsg = "Error closing the FTP connection: " + m_FtpTools.ErrMsg;
 					return false;
 				}
 			}
 			catch (Exception ex)
 			{
 				m_Msg = "clsOpsBase.OpenArchiveServer: Exception closing server connection";
+				m_ErrMsg = string.Copy(m_Msg);
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg, ex);
 				LogOperationFailed(m_DatasetName);
 				return false;
@@ -358,6 +362,7 @@ namespace DatasetArchivePlugin
 			if (!Directory.Exists(sourceFolder))
 			{
 				m_Msg = "Source folder " + sourceFolder + " not found";
+				m_ErrMsg = string.Copy(m_Msg);
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
 				LogOperationFailed(m_DatasetName);
 				return false;
@@ -372,6 +377,7 @@ namespace DatasetArchivePlugin
 				if (!m_FtpTools.CopyDirectory(sourceFolder, destFolder, true))
 				{
 					m_Msg = "Error copying folder " + sourceFolder + ": error " + m_FtpTools.ErrMsg;
+					m_ErrMsg = string.Copy(m_Msg);
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
 					LogOperationFailed(m_DatasetName);
 					CloseArchiveServer();
@@ -380,7 +386,8 @@ namespace DatasetArchivePlugin
 			}
 			catch (Exception ex)
 			{
-				m_Msg = "clsOpsBase.PerformTask: Exception copying  folder " + sourceFolder;
+				m_Msg = "clsOpsBase.PerformTask: Exception copying folder " + sourceFolder;
+				m_ErrMsg = string.Copy(m_Msg);
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg, ex);
 				LogOperationFailed(m_DatasetName);
 				CloseArchiveServer();

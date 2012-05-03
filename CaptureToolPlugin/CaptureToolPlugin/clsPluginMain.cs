@@ -98,15 +98,18 @@ namespace CaptureToolPlugin
 					if (ex.Message.Contains("unknown user name or bad password")) 
 					{
 						// This error randomly occurs; no need to log a full stack trace
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg + ", Logon failure: unknown user name or bad password");
+						msg += ", Logon failure: unknown user name or bad password";
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 						// Set the EvalCode to 3 so that capture can be retried
 						retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 						retData.EvalCode = EnumEvalCode.EVAL_CODE_NETWORK_ERROR_RETRY_CAPTURE;
+						retData.CloseoutMsg = msg;
 					}
 					else
 					{
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
 						retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+						retData.CloseoutMsg = msg;
 					}
 					
 				}
