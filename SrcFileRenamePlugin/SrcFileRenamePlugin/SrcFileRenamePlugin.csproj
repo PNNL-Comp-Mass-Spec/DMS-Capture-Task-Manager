@@ -57,7 +57,7 @@
     </Reference>
     <Reference Include="PRISM, Version=1.0.1993.15422, Culture=neutral">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\DeployedFiles\PRISM.dll</HintPath>
+      <HintPath>..\..\RefLib\PRISM.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
