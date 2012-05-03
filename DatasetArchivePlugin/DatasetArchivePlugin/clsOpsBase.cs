@@ -47,6 +47,8 @@ namespace DatasetArchivePlugin
 		protected string m_ArchiveOrUpdate;
 		protected string m_DatasetName = string.Empty;
 
+		protected System.DateTime mLastStatusUpdateTime = System.DateTime.UtcNow;
+
 		clsMD5StageFileCreator mMD5StageFileCreator;
 
 		#endregion
@@ -101,6 +103,7 @@ namespace DatasetArchivePlugin
 				string sInstrument = m_TaskParams.GetParam("Instrument_Name");
 				string sEUSInstrumentID = m_TaskParams.GetParam("EUS_Instrument_ID");
                 int iMaxMyEMSLUploadAttempts = 3;
+				mLastStatusUpdateTime = System.DateTime.UtcNow;
 
 				if (sEUSInstrumentID.Length > 0)
 				{
@@ -180,6 +183,15 @@ namespace DatasetArchivePlugin
 
 				//Pacifica.DMS_Metadata.MyEMSLUploader myEMSLUL = new Pacifica.DMS_Metadata.MyEMSLUploader();
 				m_myEMSLUL = new Pacifica.DMS_Metadata.MyEMSLUploader();
+				
+				// Attach the events
+				m_myEMSLUL.DebugEvent += new Pacifica.Core.DebugEventHandler(myEMSLUpload_DebugEvent);
+				m_myEMSLUL.ErrorEvent += new Pacifica.Core.DebugEventHandler(myEMSLUpload_ErrorEvent);
+				m_myEMSLUL.StatusUpdate += new Pacifica.Core.StatusUpdateEventHandler(myEMSLUpload_StatusUpdate);
+				m_myEMSLUL.TaskCompleted += new Pacifica.Core.TaskCompletedEventHandler(myEMSLUpload_TaskCompleted);
+				m_myEMSLUL.DataReceivedAndVerified += new Pacifica.Core.DataVerifiedHandler(myEMSLUpload_DataReceivedAndVerified);
+
+				// Start the upload
 				m_myEMSLUL.StartUpload(m_TaskParams.TaskDictionary, m_MgrParams.TaskDictionary);
 
 				System.DateTime myEMSLFinishTime = System.DateTime.Now;
@@ -617,7 +629,42 @@ namespace DatasetArchivePlugin
 
 		#endregion
 
-		#region "Event Functions"
+		#region "Event Handlers"
+
+		void myEMSLUpload_DebugEvent(string callingFunction, string currentTask)
+		{
+			string msg = "  ... " + callingFunction + ": " + currentTask;
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+		}
+
+		void myEMSLUpload_ErrorEvent(string callingFunction, string errorMessage)
+		{
+			string msg = "MyEmslUpload error in function " + callingFunction + ": " + errorMessage;
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+		}
+		
+		void myEMSLUpload_StatusUpdate(string bundleIdentifier, int percentCompleted, long totalBytesSent, long totalBytesToSend, string averageUploadSpeed)
+		{
+			// Note that AverageUploadSpeed sometimes contains a comment and doesn't ever contain a speed (as of 5/3/2012), so we'll just ignore it
+			if (System.DateTime.UtcNow.Subtract(mLastStatusUpdateTime).TotalSeconds >= 60)
+			{
+				mLastStatusUpdateTime = System.DateTime.UtcNow;
+				string msg = "  ... uploading " + bundleIdentifier + ", " + percentCompleted.ToString() + "% complete for " + (totalBytesToSend / 1024.0).ToString("0,000") + " KB";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+			}
+		}		
+
+		void myEMSLUpload_TaskCompleted(string bundleIdentifier, string serverResponse)
+		{
+			string msg = "  ... MyEmsl upload task complete for " + bundleIdentifier + ": " + serverResponse;
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);			
+		}
+	
+		void myEMSLUpload_DataReceivedAndVerified(bool successfulVerification)
+		{
+			string msg = "  ... DataReceivedAndVerified success = " + successfulVerification;
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);			
+		}
 
 		public void OnMyEMSLUploadComplete(MyEMSLUploadEventArgs e)
 		{

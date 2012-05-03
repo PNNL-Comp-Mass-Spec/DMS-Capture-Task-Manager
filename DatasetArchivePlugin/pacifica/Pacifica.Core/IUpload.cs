@@ -34,8 +34,9 @@ namespace Pacifica.Core
 				/// </summary>
 				/// <remarks>Works off of an independent background process that talks
 				/// to an URL from the backend server</remarks>
+				event DebugEventHandler DebugEvent;
+				event DebugEventHandler ErrorEvent;
 				event StatusUpdateEventHandler StatusUpdate;
-
 				event TaskCompletedEventHandler TaskCompleted;
 				event DataVerifiedHandler DataReceivedAndVerified;
 		}

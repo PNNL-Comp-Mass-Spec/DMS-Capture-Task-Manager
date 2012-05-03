@@ -23,7 +23,15 @@ namespace Pacifica.DMS_Metadata
 			backgrounder = new System.ComponentModel.BackgroundWorker();
 			statusBackgrounder = new System.ComponentModel.BackgroundWorker();
 			this.myEMSLUpload = new Upload(ref backgrounder);
+
+			// Attach the events			
+			this.myEMSLUpload.DebugEvent += new DebugEventHandler(myEMSLUpload_DebugEvent);
+			this.myEMSLUpload.ErrorEvent += new DebugEventHandler(myEMSLUpload_ErrorEvent);
+			this.myEMSLUpload.StatusUpdate += new StatusUpdateEventHandler(myEMSLUpload_StatusUpdate);
 			this.myEMSLUpload.TaskCompleted += new TaskCompletedEventHandler(myEMSLUpload_TaskCompleted);
+
+			// Note: we'll attach the DataReceivedAndVerified handler later in function myEMSLUpload_TaskCompleted
+			// this.myEMSLUpload.DataReceivedAndVerified += new DataVerifiedHandler(myEMSLUpload_DataReceivedAndVerified);
 		}
 
 		#region "Properties"
@@ -60,6 +68,39 @@ namespace Pacifica.DMS_Metadata
 		}
 
 		#endregion
+
+		#region "Event Handlers"
+
+		public event DebugEventHandler DebugEvent;
+
+		void myEMSLUpload_DebugEvent(string callingFunction, string currentTask) {
+			if (DebugEvent != null)
+			{
+				DebugEvent(callingFunction, currentTask);
+			}
+		}
+
+		public event DebugEventHandler ErrorEvent;
+
+		void myEMSLUpload_ErrorEvent(string callingFunction, string errorMessage)
+		{
+			if (ErrorEvent != null)
+			{
+				ErrorEvent(callingFunction, errorMessage);
+			}
+		}
+
+		public event StatusUpdateEventHandler StatusUpdate;
+
+		void myEMSLUpload_StatusUpdate(string bundleIdentifier, int percentCompleted, long totalBytesSent, long totalBytesToSend, string averageUploadSpeed) {
+			if (StatusUpdate != null)
+			{
+				StatusUpdate(bundleIdentifier, percentCompleted, totalBytesSent, totalBytesToSend, averageUploadSpeed);
+			}
+		}
+
+		public event TaskCompletedEventHandler TaskCompleted;
+
 		void myEMSLUpload_TaskCompleted(string bundleIdentifier, string serverResponse) {
 
 			myEMSLUpload.DataReceivedAndVerified += new DataVerifiedHandler(myEMSLUpload_DataReceivedAndVerified);
@@ -68,7 +109,35 @@ namespace Pacifica.DMS_Metadata
 				this.DirectoryLookupPath = this._mdContainer.serverSearchString;
 				myEMSLUpload.BeginUploadMonitoring(serverResponse, this._mdContainer.serverSearchString, this._mdContainer.newFilesObject);
 			}
+
+			if (TaskCompleted != null)
+			{
+				TaskCompleted(bundleIdentifier, serverResponse);
+			}
 		}
+
+		public event DataVerifiedHandler DataReceivedAndVerified;
+
+		void myEMSLUpload_DataReceivedAndVerified(bool successfulVerification)
+		{
+			if (successfulVerification)
+			{
+				//delete the cached zip/tar file
+				string bundleName = this._mdContainer.bundleName;
+				System.IO.FileInfo bundleObject = new System.IO.FileInfo(System.IO.Path.Combine(Pacifica.Core.Configuration.LocalTempDirectory, bundleName));
+				if (bundleObject.Exists)
+				{
+					bundleObject.Delete();
+				}
+			}
+
+			if (DataReceivedAndVerified != null)
+			{
+				DataReceivedAndVerified(successfulVerification);
+			}
+		}
+
+		#endregion
 
 		public void StartUpload(System.Collections.Generic.Dictionary<string, string> taskParamsDict, System.Collections.Generic.Dictionary<string, string> mgrParamsDict) {
 
@@ -84,15 +153,5 @@ namespace Pacifica.DMS_Metadata
 			this.myEMSLUpload.ProcessMetadata(md);		
 		}
 
-		void myEMSLUpload_DataReceivedAndVerified(bool successfulVerification) {
-			if(successfulVerification) {
-				//delete the cached zip/tar file
-				string bundleName = this._mdContainer.bundleName;
-				System.IO.FileInfo bundleObject = new System.IO.FileInfo(System.IO.Path.Combine(Pacifica.Core.Configuration.LocalTempDirectory, bundleName));
-				if(bundleObject.Exists) {
-					bundleObject.Delete();
-				}
-			}
-		}
 	}
 }
