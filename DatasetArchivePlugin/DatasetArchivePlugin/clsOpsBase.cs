@@ -676,12 +676,14 @@ namespace DatasetArchivePlugin
 		
 		void myEMSLUpload_StatusUpdate(string bundleIdentifier, int percentCompleted, long totalBytesSent, long totalBytesToSend, string averageUploadSpeed)
 		{
-			// Note that AverageUploadSpeed sometimes contains a comment and doesn't ever contain a speed (as of 5/3/2012), so we'll just ignore it
-			if (System.DateTime.UtcNow.Subtract(mLastStatusUpdateTime).TotalSeconds >= 60)
+			// Note that AverageUploadSpeed does not actually contain speed (as of 5/3/2012); it sometimes contains a comment, but we'll just ignore it
+
+			if (System.DateTime.UtcNow.Subtract(mLastStatusUpdateTime).TotalSeconds >= 60 && percentCompleted > 0)
 			{
 				mLastStatusUpdateTime = System.DateTime.UtcNow;
 				string msg = "  ... uploading " + bundleIdentifier + ", " + percentCompleted.ToString() + "% complete for " + (totalBytesToSend / 1024.0).ToString("0,000") + " KB";
-				mLogMsgQueue.Enqueue(msg);
+				if (!mLogMsgQueue.Contains(msg))
+					mLogMsgQueue.Enqueue(msg);
 			}
 		}		
 

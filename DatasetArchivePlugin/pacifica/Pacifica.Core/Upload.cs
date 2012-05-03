@@ -321,12 +321,12 @@ namespace Pacifica.Core
 				loopCount++;
 				newDelayTimeSec = initialLoopDelaySec * (int)Math.Pow((double)delayFactor, (double)loopCount);
 
-				if (newDelayTimeSec > 5)
+				if (newDelayTimeSec > 10)
 				{
 					if (newDelayTimeSec < 120)
 						RaiseDebugEvent("UploadMonitorLoop", "Sleep for " + newDelayTimeSec + " seconds");
 					else
-						RaiseDebugEvent("UploadMonitorLoop", "Sleep for " + newDelayTimeSec + " seconds (" + (newDelayTimeSec / 60.0).ToString("0.0") + " minutes)");
+						RaiseDebugEvent("UploadMonitorLoop", "Sleep for " + (newDelayTimeSec / 60.0).ToString("0.0") + " minutes");
 				}
 
 				totalSleepSeconds += newDelayTimeSec;
