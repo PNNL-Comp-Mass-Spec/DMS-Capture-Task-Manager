@@ -118,7 +118,7 @@ namespace Pacifica.DMS_Metadata
 
 		public event DataVerifiedHandler DataReceivedAndVerified;
 
-		void myEMSLUpload_DataReceivedAndVerified(bool successfulVerification)
+		void myEMSLUpload_DataReceivedAndVerified(bool successfulVerification, string errorMessage)
 		{
 			if (successfulVerification)
 			{
@@ -133,7 +133,7 @@ namespace Pacifica.DMS_Metadata
 
 			if (DataReceivedAndVerified != null)
 			{
-				DataReceivedAndVerified(successfulVerification);
+				DataReceivedAndVerified(successfulVerification, errorMessage);
 			}
 		}
 

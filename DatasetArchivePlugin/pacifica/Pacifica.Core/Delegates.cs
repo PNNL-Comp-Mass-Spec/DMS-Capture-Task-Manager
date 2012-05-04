@@ -8,5 +8,5 @@
 
 	public delegate void TaskCompletedEventHandler(string bundleIdentifier, string serverResponse);
 
-	public delegate void DataVerifiedHandler(bool successfulVerification);
+	public delegate void DataVerifiedHandler(bool successfulVerification, string errorMessage);
 }

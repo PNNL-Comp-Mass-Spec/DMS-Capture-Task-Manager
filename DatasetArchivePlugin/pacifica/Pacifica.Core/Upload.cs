@@ -88,11 +88,11 @@ namespace Pacifica.Core
 
 		public event DataVerifiedHandler DataReceivedAndVerified;
 
-		private void ReportDataReceivedAndVerified(bool success)
+		private void ReportDataReceivedAndVerified(bool success, string errorMessage)
 		{
 			if (DataReceivedAndVerified != null)
 			{
-				DataReceivedAndVerified(success);
+				DataReceivedAndVerified(success, errorMessage);
 			}
 		}
 
@@ -270,9 +270,10 @@ namespace Pacifica.Core
 			//this.statusBackgrounder.DoWork += new DoWorkEventHandler(UploadMonitorLoop);
 			//this.statusBackgrounder.RunWorkerCompleted += new RunWorkerCompletedEventHandler(backgrounder_RunWorkerCompleted);
 			Dictionary<string, object> args = new Dictionary<string, object>() { { "statusURI", statusURI }, { "fileMetadataObject", fileMetadataObject }, { "serverSearchURL", serverSearchURL } };
-			Boolean success = this.UploadMonitorLoop(args);
+			string errorMessage;
+			Boolean success = this.UploadMonitorLoop(args, out errorMessage);
 			//this.statusBackgrounder.RunWorkerAsync(args);
-			DataReceivedAndVerified(success);
+			DataReceivedAndVerified(success, errorMessage);
 		}
 
 		//void  backgrounder_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e) {
@@ -281,13 +282,14 @@ namespace Pacifica.Core
 		//}
 
 		//void UploadMonitorLoop(object sender, DoWorkEventArgs e) {
-		Boolean UploadMonitorLoop(Dictionary<string, object> args)
+		Boolean UploadMonitorLoop(Dictionary<string, object> args, out string errorMessage)
 		{
 			//System.ComponentModel.BackgroundWorker bgw = (System.ComponentModel.BackgroundWorker)sender;
 			//Dictionary<string, object> args = (Dictionary<string, object>)e.Argument;
 			string statusURI = args["statusURI"].ToString();
 			string serverSearchURI = args["serverSearchURL"].ToString();
 			List<Dictionary<string, object>> fileMetadataObject = (List<Dictionary<string, object>>)args["fileMetadataObject"];
+			errorMessage = string.Empty;
 
 			// Start at a 4 second delay, increase the delay every loop up to 12 times
 			// Delay times are:
@@ -315,6 +317,8 @@ namespace Pacifica.Core
 			int totalSleepSeconds = 0;
 
 			string xmlServerResponse = string.Empty;
+			bool abortNow;
+			string dataReceivedMessage;
 
 			while (loopCount <= maxLoopCount)
 			{
@@ -336,9 +340,15 @@ namespace Pacifica.Core
 				try
 				{
 					xmlServerResponse = EasyHttp.Send(statusURI);
-					if (this.WasDataReceived(xmlServerResponse))
+					if (this.WasDataReceived(xmlServerResponse, out abortNow, out dataReceivedMessage))
 					{
 						return true;
+					}
+
+					if (abortNow)
+					{
+						errorMessage = string.Copy(dataReceivedMessage);
+						return false;
 					}
 
 				}
@@ -357,9 +367,11 @@ namespace Pacifica.Core
 			return false;
 		}
 
-		private Boolean WasDataReceived(string xmlServerResponse)
+		private Boolean WasDataReceived(string xmlServerResponse, out bool abortNow, out string dataReceivedMessage)
 		{
 			Boolean success = false;
+			abortNow = false;
+			dataReceivedMessage = string.Empty;
 
 			try
 			{
@@ -394,13 +406,24 @@ namespace Pacifica.Core
 				//                 for user svc-dms on May 3, 2012)
 				// 6: Archived    (status will be "UNKNOWN" if not yet verified)
 
-				// Check the "stored" entry (ID=4) to make sure everything came through ok
+				// Check the "available" entry (ID=5) to make sure everything came through ok
 
-				string query = string.Format("//*[@id='{0}']", 4);
+				string query = string.Format("//*[@id='{0}']", 5);
 				System.Xml.XmlNode statusElement = xmlDoc.SelectSingleNode(query);
-				if (statusElement.Attributes["status"].Value.ToLower() == "success" && statusElement.Attributes["message"].Value.ToLower() == "completed")
+
+				string message = statusElement.Attributes["message"].Value;
+				string status = statusElement.Attributes["status"].Value;
+
+				if (status.ToLower() == "success" && message.ToLower() == "completed")
 				{
+					dataReceivedMessage = "Data is available";
 					success = true;
+				}
+
+				if (message.Contains("do not have upload permissions"))
+				{
+					dataReceivedMessage = "Aborting upload due to permissions error: " + message;
+					abortNow = true;
 				}
 
 			}

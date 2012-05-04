@@ -692,11 +692,20 @@ namespace DatasetArchivePlugin
 			string msg = "  ... MyEmsl upload task complete for " + bundleIdentifier + ": " + serverResponse;
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);			
 		}
-	
-		void myEMSLUpload_DataReceivedAndVerified(bool successfulVerification)
+
+		void myEMSLUpload_DataReceivedAndVerified(bool successfulVerification, string errorMessage)
 		{
-			string msg = "  ... DataReceivedAndVerified success = " + successfulVerification;
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);			
+			string msg;
+			if (successfulVerification)
+			{
+				msg = "  ... DataReceivedAndVerified success = true";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+			}
+			else
+			{
+				msg = "  ... DataReceivedAndVerified success = false: " + errorMessage;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+			}
 		}
 
 		public void OnMyEMSLUploadComplete(MyEMSLUploadEventArgs e)
