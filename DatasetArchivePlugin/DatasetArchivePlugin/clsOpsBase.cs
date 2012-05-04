@@ -30,12 +30,17 @@ namespace DatasetArchivePlugin
 		protected IMgrParams m_MgrParams;
 		protected ITaskParams m_TaskParams;
 		protected string m_ErrMsg = string.Empty;
+		protected string m_WarningMsg = string.Empty;
 		protected string m_TempVol;
 		protected string m_DSNamePath;
 		protected string m_ArchiveNamePath;
 		protected string m_Msg;
 		protected clsFtpOperations m_FtpTools;
+		
 		protected Pacifica.DMS_Metadata.MyEMSLUploader m_myEMSLUL;
+		protected bool m_MyEmslUploadPermissionsError;
+		protected bool m_MyEmslUploadSuccess;
+
 		protected string m_User;
 		protected string m_Pwd;
 		protected bool m_UseTls;
@@ -64,6 +69,12 @@ namespace DatasetArchivePlugin
 		{
 			get { return m_ErrMsg; }
 		}
+
+		public string WarningMsg
+		{
+			get { return m_WarningMsg; }
+		}
+
 		#endregion
 
 		#region "Constructors"
@@ -107,6 +118,7 @@ namespace DatasetArchivePlugin
 		{
 			m_DatasetName = m_TaskParams.GetParam("Dataset");
 			bool bMyEmslUpload = false;
+			bool bMyEmslUploadSuccess = true;
 
 			if (bool.TryParse(m_MgrParams.GetParam("MyEmslUpload"), out bMyEmslUpload) && bMyEmslUpload)
 			{
@@ -118,7 +130,7 @@ namespace DatasetArchivePlugin
 
 				if (sEUSInstrumentID.Length > 0)
 				{
-					UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts);
+					bMyEmslUploadSuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts);
 				}
 
 			}
@@ -153,10 +165,22 @@ namespace DatasetArchivePlugin
 			return true;
 		}	// End sub
 
+		protected string AppendToString(string text, string append)
+		{
+			if (string.IsNullOrEmpty(text))
+				text = string.Empty;
+			else
+				text += "; ";
+
+			return text + append;
+		}
+
         protected bool UploadToMyEMSLWithRetry(int maxAttempts)
         {
             bool bSuccess = false;
             int iAttempts = 0;
+			m_MyEmslUploadPermissionsError = false;
+			m_MyEmslUploadSuccess = false;
 
             if (maxAttempts < 1)
                 maxAttempts = 1;
@@ -166,6 +190,9 @@ namespace DatasetArchivePlugin
                 iAttempts += 1;
                 bSuccess = UploadToMyEMSL();
 
+				if (m_MyEmslUploadPermissionsError)
+					break;
+
 				if (!bSuccess && iAttempts < maxAttempts)
 				{
 					// Wait 5 seconds, then retry
@@ -173,7 +200,16 @@ namespace DatasetArchivePlugin
 				}
             }
 
-            return bSuccess;
+			if (bSuccess && !m_MyEmslUploadSuccess)
+			{
+				m_WarningMsg = AppendToString(m_WarningMsg, "UploadToMyEMSL reports True but m_MyEmslUploadSuccess is False");
+			}
+			else
+			{
+				m_WarningMsg = AppendToString(m_WarningMsg, "UploadToMyEMSL reports False");
+			}
+					
+			return bSuccess && m_MyEmslUploadSuccess;
         }
 
 		/// <summary>
@@ -310,7 +346,7 @@ namespace DatasetArchivePlugin
 					m_FtpTools.CloseFTPConnection();
 					if (!string.IsNullOrWhiteSpace(m_FtpTools.ErrMsg))
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_FtpTools.ErrMsg);
-					m_Msg = "clsNewArchive.PerformTask: closed FTP connection";
+					m_Msg = "Closed FTP connection";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
 					LogOperationFailed(m_DatasetName);
 					m_ConnectionOpen = false;
@@ -397,7 +433,7 @@ namespace DatasetArchivePlugin
 			}
 			catch (Exception ex)
 			{
-				m_Msg = "clsOpsBase.PerformTask: Exception copying folder " + sourceFolder;
+				m_Msg = "Exception copying folder " + sourceFolder;
 				m_ErrMsg = string.Copy(m_Msg);
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg, ex);
 				LogOperationFailed(m_DatasetName);
@@ -690,7 +726,8 @@ namespace DatasetArchivePlugin
 		void myEMSLUpload_TaskCompleted(string bundleIdentifier, string serverResponse)
 		{
 			string msg = "  ... MyEmsl upload task complete for " + bundleIdentifier + ": " + serverResponse;
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);			
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+			m_MyEmslUploadSuccess = true;
 		}
 
 		void myEMSLUpload_DataReceivedAndVerified(bool successfulVerification, string errorMessage)
@@ -700,11 +737,19 @@ namespace DatasetArchivePlugin
 			{
 				msg = "  ... DataReceivedAndVerified success = true";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+				m_MyEmslUploadSuccess = true;
 			}
 			else
 			{
 				msg = "  ... DataReceivedAndVerified success = false: " + errorMessage;
+				if (errorMessage.Contains("do not have upload permissions"))
+				{
+					m_WarningMsg = AppendToString(m_WarningMsg, errorMessage);
+					m_MyEmslUploadPermissionsError = true;
+				}
+
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+				m_MyEmslUploadSuccess = false;
 			}
 		}
 

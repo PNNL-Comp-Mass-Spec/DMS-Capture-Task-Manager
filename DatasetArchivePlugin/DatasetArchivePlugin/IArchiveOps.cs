@@ -25,6 +25,7 @@ namespace DatasetArchivePlugin
 			/// Error message from archive ops result
 			/// </summary>
 			string ErrMsg { get; }
+			string WarningMsg { get; }
 		#endregion
 
 		#region "Methods"
