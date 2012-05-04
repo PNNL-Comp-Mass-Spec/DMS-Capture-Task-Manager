@@ -356,6 +356,8 @@ namespace Pacifica.Core
 
             int percent = 0;
             long sent = 0;
+			System.DateTime lastStatusUpdateTime = System.DateTime.UtcNow;
+
             RaiseStatusUpdate(filePath, percent, sent, contentLength, string.Empty);
             while (contentStream.Position < contentLength)
             {
@@ -369,7 +371,12 @@ namespace Pacifica.Core
                 sent = contentStream.Position;
                 percent = (int)Math.Round((((double)sent / (double)contentLength) * 100));
 
-                RaiseStatusUpdate(filePath, percent, sent, contentLength, string.Empty);
+				if (System.DateTime.UtcNow.Subtract(lastStatusUpdateTime).TotalSeconds >= 2)
+				{
+					// Limit status updates to every 2 seconds
+					lastStatusUpdateTime = System.DateTime.UtcNow;
+					RaiseStatusUpdate(filePath, percent, sent, contentLength, string.Empty);
+				}
             }
             contentStream.Flush();
             oRequestStream.Close();

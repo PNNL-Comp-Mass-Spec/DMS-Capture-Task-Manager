@@ -203,6 +203,13 @@ namespace DatasetArchivePlugin
 						LogErrorMessage(ftpErrMsg, "Close the FTP client");
 					}
 
+					string msg = "Updated " + filesToUpdate.Count + " file";
+					if (filesToUpdate.Count != 1)
+						msg += "s";
+					msg += " via FTP";
+
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+					
 				}
 				catch (Exception ex)
 				{

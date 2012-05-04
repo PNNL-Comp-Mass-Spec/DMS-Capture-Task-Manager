@@ -37,7 +37,6 @@ namespace DatasetArchivePlugin
 		protected string m_Msg;
 		protected clsFtpOperations m_FtpTools;
 		
-		protected Pacifica.DMS_Metadata.MyEMSLUploader m_myEMSLUL;
 		protected bool m_MyEmslUploadPermissionsError;
 		protected bool m_MyEmslUploadSuccess;
 
@@ -53,9 +52,9 @@ namespace DatasetArchivePlugin
 		protected string m_DatasetName = string.Empty;
 
 		protected System.DateTime mLastStatusUpdateTime = System.DateTime.UtcNow;
-		protected System.Collections.Generic.Queue<string> mLogMsgQueue;
+
 		protected string mMostRecentLogMessage = string.Empty;
-		protected System.Timers.Timer mMsgQueueTimer;
+		protected System.DateTime mMostRecentLogTime = System.DateTime.UtcNow;
 
 		clsMD5StageFileCreator mMD5StageFileCreator;
 
@@ -98,13 +97,6 @@ namespace DatasetArchivePlugin
 				m_ArchiveOrUpdate = UPDATE;
 			}
 
-			mLogMsgQueue = new System.Collections.Generic.Queue<string>();
-			mMsgQueueTimer = new System.Timers.Timer();
-
-			mMsgQueueTimer.Interval = 1000;
-			mMsgQueueTimer.Elapsed += new System.Timers.ElapsedEventHandler(MsgQueueTimer_Elapsed);
-			mMsgQueueTimer.Enabled = true;
-
 		}	// End sub
 		#endregion
 
@@ -126,6 +118,7 @@ namespace DatasetArchivePlugin
 				string sInstrument = m_TaskParams.GetParam("Instrument_Name");
 				string sEUSInstrumentID = m_TaskParams.GetParam("EUS_Instrument_ID");
                 int iMaxMyEMSLUploadAttempts = 3;
+				mMostRecentLogTime = System.DateTime.UtcNow;
 				mLastStatusUpdateTime = System.DateTime.UtcNow;
 
 				if (sEUSInstrumentID.Length > 0)
@@ -200,14 +193,11 @@ namespace DatasetArchivePlugin
 				}
             }
 
-			if (bSuccess && !m_MyEmslUploadSuccess)
-			{
-				m_WarningMsg = AppendToString(m_WarningMsg, "UploadToMyEMSL reports True but m_MyEmslUploadSuccess is False");
-			}
-			else
-			{
+			if (!bSuccess)
 				m_WarningMsg = AppendToString(m_WarningMsg, "UploadToMyEMSL reports False");
-			}
+
+			if (bSuccess && !m_MyEmslUploadSuccess)
+				m_WarningMsg = AppendToString(m_WarningMsg, "UploadToMyEMSL reports True but m_MyEmslUploadSuccess is False");
 					
 			return bSuccess && m_MyEmslUploadSuccess;
         }
@@ -218,8 +208,9 @@ namespace DatasetArchivePlugin
 		/// <returns>True if success, false if an error</returns>
 		protected bool UploadToMyEMSL()
 		{
-
-			System.TimeSpan myemslElapsed = new System.TimeSpan();
+			bool success;
+			System.TimeSpan tsElapsedTime = new System.TimeSpan();
+			Pacifica.DMS_Metadata.MyEMSLUploader myEMSLUL = null;
 
 			try
 			{
@@ -228,37 +219,37 @@ namespace DatasetArchivePlugin
 
 				System.DateTime myEMSLStartTime = System.DateTime.Now;
 
-				//Pacifica.DMS_Metadata.MyEMSLUploader myEMSLUL = new Pacifica.DMS_Metadata.MyEMSLUploader();
-				m_myEMSLUL = new Pacifica.DMS_Metadata.MyEMSLUploader();
-				
+				myEMSLUL = new Pacifica.DMS_Metadata.MyEMSLUploader();
+
 				// Attach the events
-				m_myEMSLUL.DebugEvent += new Pacifica.Core.DebugEventHandler(myEMSLUpload_DebugEvent);
-				m_myEMSLUL.ErrorEvent += new Pacifica.Core.DebugEventHandler(myEMSLUpload_ErrorEvent);
-				m_myEMSLUL.StatusUpdate += new Pacifica.Core.StatusUpdateEventHandler(myEMSLUpload_StatusUpdate);
-				m_myEMSLUL.TaskCompleted += new Pacifica.Core.TaskCompletedEventHandler(myEMSLUpload_TaskCompleted);
-				m_myEMSLUL.DataReceivedAndVerified += new Pacifica.Core.DataVerifiedHandler(myEMSLUpload_DataReceivedAndVerified);
+				myEMSLUL.DebugEvent += new Pacifica.Core.DebugEventHandler(myEMSLUpload_DebugEvent);
+				myEMSLUL.ErrorEvent += new Pacifica.Core.DebugEventHandler(myEMSLUpload_ErrorEvent);
+				myEMSLUL.StatusUpdate += new Pacifica.Core.StatusUpdateEventHandler(myEMSLUpload_StatusUpdate);
+				myEMSLUL.TaskCompleted += new Pacifica.Core.TaskCompletedEventHandler(myEMSLUpload_TaskCompleted);
+				myEMSLUL.DataReceivedAndVerified += new Pacifica.Core.DataVerifiedHandler(myEMSLUpload_DataReceivedAndVerified);
 
 				// Start the upload
-				m_myEMSLUL.StartUpload(m_TaskParams.TaskDictionary, m_MgrParams.TaskDictionary);
+				myEMSLUL.StartUpload(m_TaskParams.TaskDictionary, m_MgrParams.TaskDictionary);
 
 				System.DateTime myEMSLFinishTime = System.DateTime.Now;
 
-				myemslElapsed = myEMSLFinishTime.Subtract(myEMSLStartTime);
+				tsElapsedTime = myEMSLFinishTime.Subtract(myEMSLStartTime);
 
 
-				m_Msg = "Upload of " + m_DatasetName + " completed in " + myemslElapsed.TotalSeconds.ToString("0.0") + " seconds: " + m_myEMSLUL.FileCountNew + " new files, " + m_myEMSLUL.FileCountUpdated + " updated files, " + m_myEMSLUL.Bytes + " bytes";
+				m_Msg = "Upload of " + m_DatasetName + " completed in " + tsElapsedTime.TotalSeconds.ToString("0.0") + " seconds: " + myEMSLUL.FileCountNew + " new files, " + myEMSLUL.FileCountUpdated + " updated files, " + myEMSLUL.Bytes + " bytes";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
 
-				m_Msg = "myEMSL statusURI => " + m_myEMSLUL.StatusURI;
+				m_Msg = "myEMSL statusURI => " + myEMSLUL.StatusURI;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
 
-				m_Msg = "myEMSL content lookup URI => " + m_myEMSLUL.DirectoryLookupPath;
+				m_Msg = "myEMSL content lookup URI => " + myEMSLUL.DirectoryLookupPath;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
 
 				// Raise an event with the stats
-				MyEMSLUploadEventArgs e = new MyEMSLUploadEventArgs(m_myEMSLUL.FileCountNew, m_myEMSLUL.FileCountUpdated, m_myEMSLUL.Bytes, myemslElapsed.TotalSeconds, m_myEMSLUL.StatusURI, m_myEMSLUL.DirectoryLookupPath, iErrorCode: 0);
+				MyEMSLUploadEventArgs e = new MyEMSLUploadEventArgs(myEMSLUL.FileCountNew, myEMSLUL.FileCountUpdated, myEMSLUL.Bytes, tsElapsedTime.TotalSeconds, myEMSLUL.StatusURI, myEMSLUL.DirectoryLookupPath, iErrorCode: 0);
 				OnMyEMSLUploadComplete(e);
 
+				success = true;
 			}
 			catch (Exception ex)
 			{
@@ -273,17 +264,30 @@ namespace DatasetArchivePlugin
 					errorCode = 1;
 
 				MyEMSLUploadEventArgs e;
-				if (m_myEMSLUL == null)
-					e = new MyEMSLUploadEventArgs(0, 0, 0, myemslElapsed.TotalSeconds, string.Empty, string.Empty, errorCode);
+				if (myEMSLUL == null)
+					e = new MyEMSLUploadEventArgs(0, 0, 0, tsElapsedTime.TotalSeconds, string.Empty, string.Empty, errorCode);
 				else
-					e = new MyEMSLUploadEventArgs(m_myEMSLUL.FileCountNew, m_myEMSLUL.FileCountUpdated, m_myEMSLUL.Bytes, myemslElapsed.TotalSeconds, m_myEMSLUL.StatusURI, m_myEMSLUL.DirectoryLookupPath, errorCode);
+					e = new MyEMSLUploadEventArgs(myEMSLUL.FileCountNew, myEMSLUL.FileCountUpdated, myEMSLUL.Bytes, tsElapsedTime.TotalSeconds, myEMSLUL.StatusURI, myEMSLUL.DirectoryLookupPath, errorCode);
 
 				OnMyEMSLUploadComplete(e);
 
-				return false;
+				success = false;
+			}
+			finally
+			{
+				// Detach the event handlers
+				if (myEMSLUL != null)
+				{
+					myEMSLUL.DebugEvent -= myEMSLUpload_DebugEvent;
+					myEMSLUL.ErrorEvent -= myEMSLUpload_ErrorEvent;
+					myEMSLUL.StatusUpdate -= myEMSLUpload_StatusUpdate;
+					myEMSLUL.TaskCompleted -= myEMSLUpload_TaskCompleted;
+					myEMSLUL.DataReceivedAndVerified -= myEMSLUpload_DataReceivedAndVerified;
+				}
 			}
 
-			return true;
+
+			return success;
 
 		}
 
@@ -685,23 +689,20 @@ namespace DatasetArchivePlugin
 
 		#region "Event Handlers"
 
-		void MsgQueueTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+		void LogStatusMessageSkipDuplicate(string message)
 		{
-			while (mLogMsgQueue.Count > 0)
+			if (string.Compare(message, mMostRecentLogMessage) != 0 || System.DateTime.UtcNow.Subtract(mMostRecentLogTime).TotalSeconds >= 60)
 			{
-				string msg = mLogMsgQueue.Dequeue();
-				if (string.Compare(msg, mMostRecentLogMessage) != 0)
-				{
-					mMostRecentLogMessage = string.Copy(msg);
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-				}
+				mMostRecentLogMessage = string.Copy(message);
+				mMostRecentLogTime = System.DateTime.UtcNow;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, message);
 			}
 		}
 
 		void myEMSLUpload_DebugEvent(string callingFunction, string currentTask)
 		{
 			string msg = "  ... " + callingFunction + ": " + currentTask;
-			mLogMsgQueue.Enqueue(msg);
+			LogStatusMessageSkipDuplicate(msg);
 		}
 
 		void myEMSLUpload_ErrorEvent(string callingFunction, string errorMessage)
@@ -717,9 +718,8 @@ namespace DatasetArchivePlugin
 			if (System.DateTime.UtcNow.Subtract(mLastStatusUpdateTime).TotalSeconds >= 60 && percentCompleted > 0)
 			{
 				mLastStatusUpdateTime = System.DateTime.UtcNow;
-				string msg = "  ... uploading " + bundleIdentifier + ", " + percentCompleted.ToString() + "% complete for " + (totalBytesToSend / 1024.0).ToString("0,000") + " KB";
-				if (!mLogMsgQueue.Contains(msg))
-					mLogMsgQueue.Enqueue(msg);
+				string msg = "  ... uploading " + bundleIdentifier + ", " + percentCompleted.ToString() + "% complete for " + (totalBytesToSend / 1024.0).ToString("#,##0") + " KB";
+				LogStatusMessageSkipDuplicate(msg);
 			}
 		}		
 

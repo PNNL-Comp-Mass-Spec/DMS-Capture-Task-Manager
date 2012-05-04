@@ -29,9 +29,7 @@ namespace Pacifica.DMS_Metadata
 			this.myEMSLUpload.ErrorEvent += new DebugEventHandler(myEMSLUpload_ErrorEvent);
 			this.myEMSLUpload.StatusUpdate += new StatusUpdateEventHandler(myEMSLUpload_StatusUpdate);
 			this.myEMSLUpload.TaskCompleted += new TaskCompletedEventHandler(myEMSLUpload_TaskCompleted);
-
-			// Note: we'll attach the DataReceivedAndVerified handler later in function myEMSLUpload_TaskCompleted
-			// this.myEMSLUpload.DataReceivedAndVerified += new DataVerifiedHandler(myEMSLUpload_DataReceivedAndVerified);
+			this.myEMSLUpload.DataReceivedAndVerified += new DataVerifiedHandler(myEMSLUpload_DataReceivedAndVerified);
 		}
 
 		#region "Properties"
@@ -103,7 +101,6 @@ namespace Pacifica.DMS_Metadata
 
 		void myEMSLUpload_TaskCompleted(string bundleIdentifier, string serverResponse) {
 
-			myEMSLUpload.DataReceivedAndVerified += new DataVerifiedHandler(myEMSLUpload_DataReceivedAndVerified);
 			if(this._mdContainer.newFilesObject.Count > 0) {
 				this.StatusURI = serverResponse + "/xml";
 				this.DirectoryLookupPath = this._mdContainer.serverSearchString;

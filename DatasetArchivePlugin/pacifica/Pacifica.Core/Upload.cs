@@ -17,6 +17,7 @@ namespace Pacifica.Core
 		private BackgroundWorker statusBackgrounder;
 		private string _bundleIdentifier = string.Empty;
 		private const string bundleExtension = ".tar";
+
 		#endregion
 
 		#region Constructor
@@ -28,7 +29,10 @@ namespace Pacifica.Core
 			this._topLevelBackgrounder = backgrounder;
 			statusBackgrounder = new BackgroundWorker();
 
+			// Note that EasyHttp is a static class with a static event
+			// Be careful about instantiating this class multiple times
 			EasyHttp.StatusUpdate += new StatusUpdateEventHandler(EasyHttp_StatusUpdate);
+
 			//TODO - remove
 			//EasyHttp.TaskCompleted += new TaskCompletedEventHandler(EasyHttp_TaskCompleted);
 		}
@@ -60,8 +64,7 @@ namespace Pacifica.Core
 
 		private void EasyHttp_StatusUpdate(string bundleIdentifier, int percentCompleted, long totalBytesSent, long totalBytesToSend, string averageUploadSpeed)
 		{
-			RaiseStatusUpdate(bundleIdentifier, percentCompleted,
-					totalBytesSent, totalBytesToSend, averageUploadSpeed);
+			RaiseStatusUpdate(bundleIdentifier, percentCompleted, totalBytesSent, totalBytesToSend, averageUploadSpeed);
 		}
 
 		public event StatusUpdateEventHandler StatusUpdate;
@@ -291,51 +294,27 @@ namespace Pacifica.Core
 			List<Dictionary<string, object>> fileMetadataObject = (List<Dictionary<string, object>>)args["fileMetadataObject"];
 			errorMessage = string.Empty;
 
-			// Start at a 4 second delay, increase the delay every loop up to 12 times
-			// Delay times are:
-			//    4 seconds
-			//    8 seconds
-			//   16 seconds
-			//   24 seconds
-			//   40 seconds
-			//   64 seconds
-			//  104 seconds (1.7 minutes)
-			//  168 seconds (2.8 minutes)
-			//  272 seconds (4.5 minutes)
-			//  436 seconds (7.3 minutes)
-			//  700 seconds (11.7 minutes)
-			// 1124 seconds (18.7 minutes)
-			// 1800 seconds (30.0 minutes)
-			//
-			// Maximum total wait time is 79.3 minutes
+			// Start at a 4 second delay, increase the delay every loop until the delay is 120 seconds
+			// Maximum wait time is 90 minutes
 
-			int initialLoopDelaySec = 4;
-			int maxLoopCount = 12;
-			int loopCount = 0;
-			int newDelayTimeSec = 0;
-			double delayFactor = 1.6;
-			int totalSleepSeconds = 0;
+			int currentLoopDelaySec = 4;
+			int maxLoopDelaySec = 300;		// 5 minutes
+			int iterations = 1;
+			int maxWaitTimeMinutes = 90;
 
 			string xmlServerResponse = string.Empty;
 			bool abortNow;
 			string dataReceivedMessage;
+			System.DateTime dtStartTime = System.DateTime.UtcNow;
 
-			while (loopCount <= maxLoopCount)
+			while (System.DateTime.UtcNow.Subtract(dtStartTime).TotalMinutes < maxWaitTimeMinutes)
 			{
-				loopCount++;
-				newDelayTimeSec = initialLoopDelaySec * (int)Math.Pow((double)delayFactor, (double)loopCount);
-
-				if (newDelayTimeSec > 10)
+				if (currentLoopDelaySec > 10)
 				{
-					if (newDelayTimeSec < 120)
-						RaiseDebugEvent("UploadMonitorLoop", "Sleep for " + newDelayTimeSec + " seconds");
-					else
-						RaiseDebugEvent("UploadMonitorLoop", "Sleep for " + (newDelayTimeSec / 60.0).ToString("0.0") + " minutes");
+					RaiseDebugEvent("UploadMonitorLoop", "Waiting " + currentLoopDelaySec + " seconds");
 				}
 
-				totalSleepSeconds += newDelayTimeSec;
-
-				System.Threading.Thread.Sleep(newDelayTimeSec * 1000);
+				System.Threading.Thread.Sleep(currentLoopDelaySec * 1000);
 
 				try
 				{
@@ -357,11 +336,20 @@ namespace Pacifica.Core
 					RaiseErrorEvent("UploadMonitorLoop", ex.Message);
 				}
 				
-				if (loopCount == 1)
+				if (iterations == 1)
 					RaiseDebugEvent("UploadMonitorLoop", "Data not yet ready; see " + statusURI);
+
+				iterations++;
+				if (currentLoopDelaySec < maxLoopDelaySec)
+				{
+					currentLoopDelaySec *= 2;
+					if (currentLoopDelaySec > maxLoopDelaySec)
+						currentLoopDelaySec = maxLoopDelaySec;
+				}
+
 			}
 
-			RaiseErrorEvent("UploadMonitorLoop", "Data not received after waiting " + (totalSleepSeconds / 60.0).ToString("0.0") + " minutes");
+			RaiseErrorEvent("UploadMonitorLoop", "Data not received after waiting " + System.DateTime.UtcNow.Subtract(dtStartTime).TotalMinutes.ToString("0.0") + " minutes");
 
 			//e.Result = false;
 			return false;
