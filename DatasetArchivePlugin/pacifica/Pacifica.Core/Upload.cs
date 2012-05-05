@@ -420,6 +420,9 @@ namespace Pacifica.Core
 				RaiseErrorEvent("WasDataReceived", ex.Message);
 			}
 
+			string logoutURL = Configuration.ServerUri + "/myemsl/logout";
+			string response = EasyHttp.Send(logoutURL, Auth.GetCookies(), "", EasyHttp.HttpMethod.Get, "", false, null);
+
 			return success;
 		}
 
