@@ -834,8 +834,7 @@ namespace CaptureToolPlugin
 		private void DisconnectShare(ref ShareConnector MyConn)
 		{
 			MyConn.Disconnect();
-			GC.Collect();
-			GC.WaitForPendingFinalizers();
+			PRISM.Processes.clsProgRunner.GarbageCollectNow();
 
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Bionet disconnected");
 			m_ConnectionType = ConnectionType.NotConnected;
@@ -851,8 +850,7 @@ namespace CaptureToolPlugin
 		{
 			MyConn.Dispose();
 			MyConn = null;
-			GC.Collect();
-			GC.WaitForPendingFinalizers();
+			PRISM.Processes.clsProgRunner.GarbageCollectNow();
 
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Bionet disconnected");
 			m_ConnectionType = ConnectionType.NotConnected;

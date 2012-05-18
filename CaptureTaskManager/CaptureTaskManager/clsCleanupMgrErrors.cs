@@ -166,8 +166,7 @@ namespace CaptureTaskManager
 	        }
 
 	        //Try to ensure there are no open objects with file handles
-	        GC.Collect();
-	        GC.WaitForPendingFinalizers();
+			PRISM.Processes.clsProgRunner.GarbageCollectNow();
 	        System.Threading.Thread.Sleep(HoldoffMilliseconds);
 
 	        diWorkFolder = new System.IO.DirectoryInfo(WorkDir);
