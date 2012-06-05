@@ -121,7 +121,7 @@ namespace DatasetArchivePlugin
 				mMostRecentLogTime = System.DateTime.UtcNow;
 				mLastStatusUpdateTime = System.DateTime.UtcNow;
 
-				if (sEUSInstrumentID.Length > 0)
+				if (sEUSInstrumentID.Length > 0 && !sInstrument.ToLower().Contains("fticr"))
 				{
 					bMyEmslUploadSuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts);
 				}

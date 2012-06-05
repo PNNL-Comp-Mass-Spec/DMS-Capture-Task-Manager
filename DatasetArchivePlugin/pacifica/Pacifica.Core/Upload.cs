@@ -464,6 +464,7 @@ namespace Pacifica.Core
 			string bundleFilePath = Path.Combine(tempDir.FullName, cacheFileName);
 
 			string statusMessage = "Saving bundle: " + bundleFilePath;
+			System.Collections.Generic.List<string> warningMessages;
 			int percentComplete = 0;
 			RaiseStatusUpdate(this._bundleIdentifier, percentComplete, 0, 0, statusMessage);
 
@@ -473,7 +474,12 @@ namespace Pacifica.Core
 						RaiseStatusUpdate(this._bundleIdentifier, e.PercentDone, 0, 0, statusMessage);
 					};
 
-			Utilities.CreateTar(pathList.Values, bundleFilePath, update);
+			Utilities.CreateTar(pathList.Values, bundleFilePath, update, out warningMessages);
+
+			foreach (string warningMsg in warningMessages)
+			{
+				RaiseErrorEvent("CreateTar", warningMsg);
+			}
 
 			statusMessage = "Save bundle complete:";
 			percentComplete = 100;

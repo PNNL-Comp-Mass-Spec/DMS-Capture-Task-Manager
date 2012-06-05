@@ -357,9 +357,11 @@ namespace Pacifica.Core
             return location.Scheme + "://" + location.Host;
         }
 
-        public static void CreateTar(IEnumerable<FileInfoObject> files, string outputFile, 
-            EventHandler<ProgressEventArgs> progressUpdate)
+        public static void CreateTar(IEnumerable<FileInfoObject> files, string outputFile,
+			EventHandler<ProgressEventArgs> progressUpdate, out System.Collections.Generic.List<string> warningMessages)
         {
+			warningMessages = new System.Collections.Generic.List<string>();
+
             string path = System.Reflection.Assembly.GetExecutingAssembly().Location;
             FileInfo fi = new FileInfo(path);
             path = Path.Combine(fi.DirectoryName, "7z.dll");
@@ -372,9 +374,18 @@ namespace Pacifica.Core
                 compressor.ArchiveFormat = OutArchiveFormat.Tar;
 
                 Dictionary<string, string> fileDict = new Dictionary<string, string>();
+				string dictionaryValue = string.Empty;
                 foreach (var file in files)
                 {
-                    fileDict.Add(file.RelativeDestinationFullPath, file.AbsoluteLocalPath);
+					if (fileDict.TryGetValue(file.RelativeDestinationFullPath, out dictionaryValue))
+					{
+						string msg = "Skipped file '" + file.RelativeDestinationFullPath + "' since already present in dictionary fileDict.  Existing entry has value '" + dictionaryValue + "' while new item has value '" + file.AbsoluteLocalPath + "'";
+						warningMessages.Add(msg);
+					}
+					else
+					{
+						fileDict.Add(file.RelativeDestinationFullPath, file.AbsoluteLocalPath);
+					}
                 }
 
                 compressor.CompressFileDictionary(fileDict, outputStream);
