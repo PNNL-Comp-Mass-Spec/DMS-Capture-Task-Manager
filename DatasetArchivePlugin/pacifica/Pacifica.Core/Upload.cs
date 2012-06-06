@@ -145,8 +145,17 @@ namespace Pacifica.Core
 				string fullLocalPath = localPath;
 				string hash = fileItem["sha1Hash"].ToString();
 				FileInfoObject fiObj = new FileInfoObject(fullLocalPath, relativePath, hash);
-				fileListObject.Add(fullLocalPath, fiObj);
-				newFileObj.Add((Dictionary<string, object>)fiObj.SerializeToDictionaryObject());
+
+				if (fiObj.RelativeDestinationFullPath.ToLower() == "metadata.txt")
+				{
+					// We must skip this file since MyEMSL stores a special metadata.txt file at the root
+					RaiseErrorEvent("ProcessMetadata", "Skipping metadata.txt file at '" + fiObj.AbsoluteLocalPath + "' due to name conflict with the MyEmsl metadata.txt file");
+				}
+				else
+				{
+					fileListObject.Add(fullLocalPath, fiObj);
+					newFileObj.Add((Dictionary<string, object>)fiObj.SerializeToDictionaryObject());
+				}
 			}
 
 			RaiseDebugEvent("ProcessMetadata", "Bundling " + newFileObj.Count + " files");
@@ -162,6 +171,7 @@ namespace Pacifica.Core
 				sw.Write(mdJson);
 			}
 
+			// Add the metadata.txt file
 			FileInfoObject mdFileObject = new FileInfoObject(mdTextFile.FullName, string.Empty);
 			mdFileObject.DestinationFileName = "metadata.txt";
 			fileListObject.Add(mdFileObject.Sha1HashHex, mdFileObject);
