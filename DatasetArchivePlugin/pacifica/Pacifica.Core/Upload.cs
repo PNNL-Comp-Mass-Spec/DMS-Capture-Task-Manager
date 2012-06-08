@@ -171,12 +171,14 @@ namespace Pacifica.Core
 				sw.Write(mdJson);
 			}
 
-			// Add the metadata.txt file
-			FileInfoObject mdFileObject = new FileInfoObject(mdTextFile.FullName, string.Empty);
-			mdFileObject.DestinationFileName = "metadata.txt";
-			fileListObject.Add(mdFileObject.Sha1HashHex, mdFileObject);
+			// Prior to June 2012, we would add the metadat.txt file to fileListObject
+			// We now send that information into BundleFiles using the metadataFilePath parameter
+			// Deprecated code:
+			//  FileInfoObject mdFileObject = new FileInfoObject(mdTextFile.FullName, string.Empty);
+			//  mdFileObject.DestinationFileName = "metadata.txt";
+			//  fileListObject.Add(mdFileObject.Sha1HashHex, mdFileObject);
 
-			FileInfo zipFi = BundleFiles(fileListObject, metadataObject["bundleName"].ToString());
+			FileInfo zipFi = BundleFiles(fileListObject, mdTextFile.FullName, metadataObject["bundleName"].ToString());
 
 			if (Configuration.UploadFiles)
 			{
@@ -448,7 +450,7 @@ namespace Pacifica.Core
 
 		#region  Member Methods
 
-		private FileInfo BundleFiles(SortedDictionary<string, FileInfoObject> pathList, string bundleId)
+		private FileInfo BundleFiles(SortedDictionary<string, FileInfoObject> pathList, string metadataFilePath, string bundleId)
 		{
 			string message = string.Empty;
 
@@ -474,7 +476,6 @@ namespace Pacifica.Core
 			string bundleFilePath = Path.Combine(tempDir.FullName, cacheFileName);
 
 			string statusMessage = "Saving bundle: " + bundleFilePath;
-			System.Collections.Generic.List<string> warningMessages;
 			int percentComplete = 0;
 			RaiseStatusUpdate(this._bundleIdentifier, percentComplete, 0, 0, statusMessage);
 
@@ -484,12 +485,7 @@ namespace Pacifica.Core
 						RaiseStatusUpdate(this._bundleIdentifier, e.PercentDone, 0, 0, statusMessage);
 					};
 
-			Utilities.CreateTar(pathList.Values, bundleFilePath, update, out warningMessages);
-
-			foreach (string warningMsg in warningMessages)
-			{
-				RaiseErrorEvent("CreateTar", warningMsg);
-			}
+			CreateTar(pathList.Values, metadataFilePath, bundleFilePath, update);		
 
 			statusMessage = "Save bundle complete:";
 			percentComplete = 100;
@@ -505,5 +501,87 @@ namespace Pacifica.Core
 		}
 
 		#endregion
+
+		/// <summary>
+		/// Create a Tar file using SevenZipSharp
+		/// Compression rate is ~2 GB/minute
+		/// </summary>
+		/// <param name="files"></param>
+		/// <param name="metadataFilePath"></param>
+		/// <param name="outputFilePath"></param>
+		/// <param name="warningMessages"></param>
+		private void CreateTar(IEnumerable<FileInfoObject> sourceFilePaths, string metadataFilePath, string outputFilePath,
+			EventHandler<SevenZip.ProgressEventArgs> progressUpdate)
+		{
+
+			string path = System.Reflection.Assembly.GetExecutingAssembly().Location;
+			System.IO.FileInfo fi = new System.IO.FileInfo(path);
+			path = System.IO.Path.Combine(fi.DirectoryName, "7z.dll");
+			SevenZip.SevenZipCompressor.SetLibraryPath(path);
+			
+			// This list tracks the full paths of the files to be added to the .tar file
+			// We pass this list to the compressor when using function CompressFiles()
+			System.Collections.Generic.List<string> sourceFilePathsFull = new System.Collections.Generic.List<string>();
+			
+			// This dictionary keeps track of the target file paths within the .tar file
+			// Key is the target file path, while value is the source file path
+			// We pass this dictionary to the compressor when using function CompressFileDictionary()
+			Dictionary<string, string> fileDict = new Dictionary<string, string>();
+
+			SevenZip.SevenZipCompressor compressor = new SevenZip.SevenZipCompressor();
+			compressor.Compressing += progressUpdate;
+			compressor.ArchiveFormat = SevenZip.OutArchiveFormat.Tar;
+
+			// First create the tar file using the files in sourceFilePaths
+			// Populate a generic list with the full paths to the source files, then call compressor.CompressFiles() 
+			// This function will examine the source files to determine the common path that they all share
+			// It will remove that common path when storing the files in the .tar file
+			using (System.IO.FileStream tarFileStream = System.IO.File.Create(outputFilePath))
+			{
+
+				string dictionaryValue = string.Empty;
+				fileDict.Clear();
+
+				foreach (FileInfoObject file in sourceFilePaths)
+				{
+					if (fileDict.TryGetValue(file.RelativeDestinationFullPath, out dictionaryValue))
+					{
+						RaiseErrorEvent("CreateTar", "Skipped file '" + file.RelativeDestinationFullPath + "' since already present in dictionary fileDict.  Existing entry has value '" + dictionaryValue + "' while new item has value '" + file.AbsoluteLocalPath + "'");
+					}
+					else
+					{
+						if (string.Compare(file.RelativeDestinationFullPath.ToLower(), "metadata.txt") == 0)
+							RaiseErrorEvent("CreateTar", "Skipping metadata.txt file at '" + file.AbsoluteLocalPath + "' due to name conflict with the MyEmsl metadata.txt file");
+						else
+						{
+							fileDict.Add(file.RelativeDestinationFullPath, file.AbsoluteLocalPath);
+							sourceFilePathsFull.Add(file.AbsoluteLocalPath);
+						}
+
+					}					
+				}
+
+				compressor.CompressFiles(tarFileStream, sourceFilePathsFull.ToArray());
+			}
+
+			// Wait 500 msec
+			System.Threading.Thread.Sleep(500);
+
+			// Now append the metadata file
+			// To append more files, we need to close the stream, then re-open it and seek to 1024 bytes before the end of the file
+			// The reason for 1024 bytes is that Seven zip writes two 512 byte blocks of zeroes to the of the .Tar to signify the end of the .tar
+			using (System.IO.FileStream tarFileStream = new System.IO.FileStream(outputFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Write, System.IO.FileShare.Read))
+			{
+				tarFileStream.Seek(-1024, System.IO.SeekOrigin.End);
+
+				fileDict.Clear();
+				fileDict.Add("metadata.txt", metadataFilePath);
+
+				compressor.CompressFileDictionary(fileDict, tarFileStream);
+			}
+
+		}
+
 	}
+
 }
