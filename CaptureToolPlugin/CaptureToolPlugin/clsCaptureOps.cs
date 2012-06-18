@@ -601,6 +601,8 @@ namespace CaptureToolPlugin
 			//Determines if raw dataset exists as a single file, folder with same name as dataset, or 
 			//	folder with dataset name + extension. Returns object containing info on dataset found
 
+			bool bLookForDatasetFile = true;
+
 			string[] MyInfo = null;
 			clsDatasetInfo datasetInfo = new clsDatasetInfo();
 
@@ -611,66 +613,89 @@ namespace CaptureToolPlugin
 				return datasetInfo;
 			}
 
-			//Get all files with a specified name
-			MyInfo = Directory.GetFiles(InstFolder, DSName + ".*");
-			if (MyInfo.Length > 0)
+			switch (instClass)
 			{
-				datasetInfo.FileOrFolderName = DSName;
-				datasetInfo.FileList = MyInfo;
-				if (datasetInfo.FileCount == 1)
+				case "BrukerMALDI_Imaging":
+					bLookForDatasetFile = false;
+					break;
+				default:
+					bLookForDatasetFile = true;
+					break;
+			}
+
+			// First look for a file with name DSName, if not found, look for a folder
+			// If bLookForDatasetFile=False, then we do the reverse: first look for a folder, then look for a file
+			for (int iIteration = 0; iIteration < 2; ++iIteration)
+			{
+				if (bLookForDatasetFile)
 				{
-					datasetInfo.FileOrFolderName = Path.GetFileName(datasetInfo.FileList[0]);
-					datasetInfo.DatasetType = RawDSTypes.File;
+					//Get all files with a specified name
+					MyInfo = Directory.GetFiles(InstFolder, DSName + ".*");
+					if (MyInfo.Length > 0)
+					{
+						datasetInfo.FileOrFolderName = DSName;
+						datasetInfo.FileList = MyInfo;
+						if (datasetInfo.FileCount == 1)
+						{
+							datasetInfo.FileOrFolderName = Path.GetFileName(datasetInfo.FileList[0]);
+							datasetInfo.DatasetType = RawDSTypes.File;
+						}
+						else
+							datasetInfo.DatasetType = RawDSTypes.MultiFile;
+
+						return datasetInfo;
+					}
 				}
 				else
-					datasetInfo.DatasetType = RawDSTypes.MultiFile;
-
-				return datasetInfo;
-			}
-
-			//Check for a folder with specified name
-			MyInfo = Directory.GetDirectories(InstFolder);
-			foreach (string TestFolder in MyInfo)
-			{
-				//Using Path.GetFileNameWithoutExtension on folders is cheezy, but it works. I did this
-				//	because the Path class methods that deal with directories ignore the possibilty there
-				//	might be an extension. Apparently when sending in a string, Path can't tell a file from
-				//	a directory
-				if (Path.GetFileNameWithoutExtension(TestFolder).ToLower() == DSName.ToLower())
 				{
-					if (string.IsNullOrEmpty(Path.GetExtension(TestFolder)))
+					//Check for a folder with specified name
+					MyInfo = Directory.GetDirectories(InstFolder);
+					foreach (string TestFolder in MyInfo)
 					{
-						//Found a directory that has no extension
-						datasetInfo.FileOrFolderName = Path.GetFileName(TestFolder);
-
-						//Check the instrument class to determine the appropriate return type
-						switch (instClass)
+						//Using Path.GetFileNameWithoutExtension on folders is cheezy, but it works. I did this
+						//	because the Path class methods that deal with directories ignore the possibilty there
+						//	might be an extension. Apparently when sending in a string, Path can't tell a file from
+						//	a directory
+						if (Path.GetFileNameWithoutExtension(TestFolder).ToLower() == DSName.ToLower())
 						{
-							case "BrukerMALDI_Imaging":
-								datasetInfo.DatasetType = RawDSTypes.BrukerImaging;
-								break;
-							case "BrukerMALDI_Spot":
-								datasetInfo.DatasetType = RawDSTypes.BrukerSpot;
-								break;
-							default:
-								datasetInfo.DatasetType = RawDSTypes.FolderNoExt;
-								break;
+							if (string.IsNullOrEmpty(Path.GetExtension(TestFolder)))
+							{
+								//Found a directory that has no extension
+								datasetInfo.FileOrFolderName = Path.GetFileName(TestFolder);
+
+								//Check the instrument class to determine the appropriate return type
+								switch (instClass)
+								{
+									case "BrukerMALDI_Imaging":
+										datasetInfo.DatasetType = RawDSTypes.BrukerImaging;
+										break;
+									case "BrukerMALDI_Spot":
+										datasetInfo.DatasetType = RawDSTypes.BrukerSpot;
+										break;
+									default:
+										datasetInfo.DatasetType = RawDSTypes.FolderNoExt;
+										break;
+								}
+								return datasetInfo;
+							}
+							else
+							{
+								//Directory name has an extension
+								datasetInfo.FileOrFolderName = Path.GetFileName(TestFolder);
+								datasetInfo.DatasetType = RawDSTypes.FolderExt;
+								return datasetInfo;
+							}
 						}
-						return datasetInfo;
-					}
-					else
-					{
-						//Directory name has an extension
-						datasetInfo.FileOrFolderName = Path.GetFileName(TestFolder);
-						datasetInfo.DatasetType = RawDSTypes.FolderExt;
-						return datasetInfo;
 					}
 				}
+
+				bLookForDatasetFile = !bLookForDatasetFile;
 			}
 
-			//If we got to here, then the raw dataset wasn't found, so there was a problem
+			//If we got to here, then the raw dataset wasn't found (either as a file or a folder), so there was a problem
 			datasetInfo.DatasetType = RawDSTypes.None;
 			return datasetInfo;
+
 		}	// End sub
 
 		/// <summary>

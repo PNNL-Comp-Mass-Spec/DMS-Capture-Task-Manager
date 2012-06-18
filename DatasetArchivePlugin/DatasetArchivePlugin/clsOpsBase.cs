@@ -123,7 +123,8 @@ namespace DatasetArchivePlugin
 
 				if (sEUSInstrumentID.Length > 0 && !sInstrument.ToLower().Contains("fticr"))
 				{
-					bMyEmslUploadSuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts);
+					if (sInstrument == "Exact03" || sInstrument == "LTQ_Orb_2")
+						bMyEmslUploadSuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts);
 				}
 
 			}
