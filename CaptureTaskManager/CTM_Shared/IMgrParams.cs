@@ -29,6 +29,8 @@ namespace CaptureTaskManager
 		void SetParam(string ItemKey, string ItemValue);
 
         bool LoadMgrSettingsFromDB();
+		bool LoadMgrSettingsFromDB(bool logConnectionErrors);
+
 		#endregion
 
 	}	// End interface

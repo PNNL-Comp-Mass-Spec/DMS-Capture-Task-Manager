@@ -194,10 +194,23 @@ namespace CaptureTaskManager {
 		}	// End sub
 
 		public bool LoadMgrSettingsFromDB() {
-			return LoadMgrSettingsFromDB(ref m_ParamDictionary);
+			bool logConnectionErrors = true;
+			return LoadMgrSettingsFromDB(ref m_ParamDictionary, logConnectionErrors);
 		}	// End sub
 
-		public bool LoadMgrSettingsFromDB(ref System.Collections.Generic.Dictionary<string, string> MgrSettingsDict) {
+		public bool LoadMgrSettingsFromDB(bool logConnectionErrors)
+		{
+			return LoadMgrSettingsFromDB(ref m_ParamDictionary, logConnectionErrors);
+		}	// End sub
+
+		public bool LoadMgrSettingsFromDB(ref System.Collections.Generic.Dictionary<string, string> MgrSettingsDict)
+		{
+			bool logConnectionErrors = true;
+			return LoadMgrSettingsFromDB(ref m_ParamDictionary, logConnectionErrors);
+		}
+
+		public bool LoadMgrSettingsFromDB(ref System.Collections.Generic.Dictionary<string, string> MgrSettingsDict, bool logConnectionErrors)
+		{
 			//Requests manager parameters from database. Input string specifies view to use. Performs retries if necessary.
 			short RetryCount = 3;
 			string MyMsg = null;
@@ -248,21 +261,32 @@ namespace CaptureTaskManager {
 					RetryCount -= 1;
 					MyMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Exception getting manager settings from database: " + ex.Message;
 					MyMsg = MyMsg + ", RetryCount = " + RetryCount.ToString();
-					WriteErrorMsg(MyMsg);
+					if (logConnectionErrors)
+						WriteErrorMsg(MyMsg);
 					//Delay for 5 seconds before trying again
 					System.Threading.Thread.Sleep(5000);
 				}
 			}
 
-			//If loop exited due to errors, return false
+			// If loop exited due to errors, return false
 			if (RetryCount < 1) {
 				ErrMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Excessive failures attempting to retrieve manager settings from database";
-				WriteErrorMsg(ErrMsg);
-				Dt.Dispose();
+				if (logConnectionErrors)
+					WriteErrorMsg(MyMsg);
 				return false;
 			}
 
-			//Verify at least one row returned
+			// Validate that the data table object is initialized
+			if (Dt == null)
+			{
+				// Data table not initialized
+				ErrMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Dt datatable is null; using " + DBConnectionString;
+				if (logConnectionErrors)
+					WriteErrorMsg(ErrMsg);
+				return false;
+			}
+
+			// Verify at least one row returned
 			if (Dt.Rows.Count < 1) {
 				//Wrong number of rows returned
 				ErrMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Manager " + ManagerName + " not defined in the manager control database; using " + DBConnectionString;
@@ -271,7 +295,7 @@ namespace CaptureTaskManager {
 				return false;
 			}
 
-			//Fill a string dictionary with the manager parameters that have been found
+			// Fill a string dictionary with the manager parameters that have been found
 			try {
 				foreach (DataRow TestRow in Dt.Rows) {
 					//Add the column heading and value to the dictionary
@@ -291,6 +315,7 @@ namespace CaptureTaskManager {
 			} finally {
 				Dt.Dispose();
 			}
+
 		}	// End sub
 
 		public string GetParam(string ItemKey) {
