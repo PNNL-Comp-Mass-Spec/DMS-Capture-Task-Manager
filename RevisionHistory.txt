@@ -1,5 +1,8 @@
 Capture Task Manager History
 
+Version 1.2.4582; July 23, 2012
+	- Added support for determining acquisition times and scan counts for bruker_maldi_imaging datasets
+
 Version 1.2.4582; July 18, 2012
 	- Decreased the number of error messages logged when unable to contact the manager control DB during the middle of an analysis task
 

@@ -360,14 +360,33 @@ namespace DatasetQualityPlugin
 						sFileOrFolderName = dataset + ".d";
 						bSkipPlots = false;
 						break;
+
+					case "bruker_maldi_imaging":
+						// bruker_maldi_imaging: 12T_FTICR_Imaging, 15T_FTICR_Imaging, and BrukerTOF_Imaging_01
+						// Find the name of the first zip file
+						bSkipPlots = true;
+						System.IO.DirectoryInfo diFolder = new System.IO.DirectoryInfo(inputFolder);
+						System.IO.FileInfo[] fiFiles;
+						fiFiles = diFolder.GetFiles("0_R*.zip");
+
+						if (fiFiles != null && fiFiles.Length > 0)
+						{
+							sFileOrFolderName = fiFiles[0].Name;
+						}
+						else
+						{
+							m_Msg = "Did not find any 0_R*.zip files in the dataset folder";
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "clsPluginMain.GetDataFileOrFolderName: " + m_Msg);
+							return INVALID_FILE_TYPE;
+						}
+						break;
+
 					default:
 						// Other instruments; do not process
 						// dot_wiff_files: Agilent_TOF2
-						// bruker_maldi_imaging: 12T_FTICR_Imaging, 15T_FTICR_Imaging, and BrukerTOF_Imaging_01
 						// bruker_maldi_spot: BrukerTOF_01
-						m_Msg = "clsPluginMain.GetDataFileOrFolderName: Data type " + rawDataType + " not recognized";
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_Msg);
 						m_Msg = "Data type " + rawDataType + " not recognized";
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "clsPluginMain.GetDataFileOrFolderName: " + m_Msg);
 						return INVALID_FILE_TYPE;
 				}
 
