@@ -261,7 +261,10 @@ namespace DatasetArchivePlugin
 					retCode = ReportFTPResults(Results);
 					if (!retCode)
 					{
-						m_ErrMsg = "Unable to copy dataset";
+						if (string.IsNullOrEmpty(m_ErrMsg))
+							m_ErrMsg = "Unable to copy dataset";
+						else
+							m_ErrMsg = "Unable to copy dataset: " + m_ErrMsg;
 						return false;
 					}
 					//Verify successful copy

@@ -428,9 +428,9 @@ namespace DatasetArchivePlugin
 			{
 				if (!m_FtpTools.CopyDirectory(sourceFolder, destFolder, true))
 				{
-					m_Msg = "Error copying folder " + sourceFolder + ": error " + m_FtpTools.ErrMsg;
+					m_Msg = "Error copying folder by ftp: " + m_FtpTools.ErrMsg;
 					m_ErrMsg = string.Copy(m_Msg);
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg + "; " + sourceFolder);
 					LogOperationFailed(m_DatasetName);
 					CloseArchiveServer();
 					return false;
@@ -438,9 +438,9 @@ namespace DatasetArchivePlugin
 			}
 			catch (Exception ex)
 			{
-				m_Msg = "Exception copying folder " + sourceFolder;
+				m_Msg = "Error copying folder by ftp: " + ex.Message;
 				m_ErrMsg = string.Copy(m_Msg);
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg, ex);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg + "; " + sourceFolder, ex);
 				LogOperationFailed(m_DatasetName);
 				CloseArchiveServer();
 				return false;

@@ -54,8 +54,13 @@ namespace CaptureToolPlugin
 		protected IMgrParams m_MgrParams;
 		protected int m_SleepInterval = 30;
 
-		// True means "client" which means we will use paths like \\proto-5\Exact04\2012_1
-		// False means "server" which means we use paths like E:\Exact04\2012_1
+		// True means MgrParam "perspective" =  "client" which means we will use paths like \\proto-5\Exact04\2012_1
+		// False means MgrParam "perspective" = "server" which means we use paths like E:\Exact04\2012_1
+		//
+		// The capture task managers running on the Proto-x server have "perspective" = "server"
+		// Capture tasks that occur on the Proto-x server should be limited to certain instruments via table T_Processor_Instrument in the DMS_Capture DB
+		// If a capture task manager running on a Proto-x server has the DatasetCapture tool enabled, yet does not have an entry in T_Processor_Instrument, 
+		//  then no capture tasks are allowed to be assigned to avoid drive path problems
 		protected bool m_ClientServer;
 
 		protected bool m_UseBioNet = false;
@@ -96,6 +101,8 @@ namespace CaptureToolPlugin
 			m_MgrParams = mgrParams;
 
 			//Get client/server perspective
+			// True means MgrParam "perspective" =  "client" which means we will use paths like \\proto-5\Exact04\2012_1
+			// False means MgrParam "perspective" = "server" which means we use paths like E:\Exact04\2012_1
 			string tmpParam = m_MgrParams.GetParam("perspective");
 			if (tmpParam.ToLower() == "client")
 			{
@@ -934,7 +941,9 @@ namespace CaptureToolPlugin
 
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Started clsCaptureOps.DoOperation()");
 
-			// Setup destination based on client/server switch
+			// Setup destination folder based on client/server switch
+			// True means MgrParam "perspective" =  "client" which means we will use paths like \\proto-5\Exact04\2012_1
+			// False means MgrParam "perspective" = "server" which means we use paths like E:\Exact04\2012_1
 			if (m_ClientServer)
 			{
 				// Example: \\proto-5\
