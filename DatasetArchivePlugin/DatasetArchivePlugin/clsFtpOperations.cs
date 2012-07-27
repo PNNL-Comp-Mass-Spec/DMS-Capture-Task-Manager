@@ -265,24 +265,38 @@ namespace DatasetArchivePlugin
 							m_ErrMsg = "Unable to copy dataset";
 						else
 							m_ErrMsg = "Unable to copy dataset: " + m_ErrMsg;
+
 						return false;
 					}
 					//Verify successful copy
 					if (verifyCopy)
 					{
+						m_ErrMsg = "";
 						//Get the number of files and total file size from the FTP server
 						retCode = GetRemFileSizeCount(storagePath, ref remTreeSize, ref remTreeFileCount);
 						if (!retCode)
 						{
-							m_ErrMsg = "Error verifying dataset copy: " + m_ErrMsg;
+							if (string.IsNullOrEmpty(m_ErrMsg))
+								m_ErrMsg = "Error verifying dataset copy";
+							else
+								m_ErrMsg = "Error verifying dataset copy: " + m_ErrMsg;
+
 							return false;
 						}
 						//Get the number of files and total file size from the dataset folder
 						locTreeSize = clsFileTools.GetDirectorySize(sourcePath, ref locTreeFileCount, ref dumDirCount);
-						//Compare the file sizes and counts
-						if ((locTreeSize != remTreeSize) || (locTreeFileCount != remTreeFileCount))
+						
+						// Compare the file sizes
+						if (locTreeSize != remTreeSize)
 						{
-							m_ErrMsg = "Error verifying dataset copy: " + m_ErrMsg;
+							m_ErrMsg = "Error verifying dataset copy: file size mismatch with " + locTreeSize + " bytes local vs. " + remTreeSize + " bytes remote";
+							return false;
+						}
+
+						// Compare the file counts
+						if (locTreeFileCount != remTreeFileCount)
+						{
+							m_ErrMsg = "Error verifying dataset copy; file count mismatch with " + locTreeFileCount + " files local vs. " + remTreeFileCount + " files remote";
 							return false;
 						}
 					}
