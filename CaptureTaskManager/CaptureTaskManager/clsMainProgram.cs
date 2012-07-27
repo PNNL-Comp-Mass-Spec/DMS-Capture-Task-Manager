@@ -67,6 +67,7 @@ namespace CaptureTaskManager
 		private bool m_Running;
 		private System.Timers.Timer m_StatusTimer;
 		private DateTime m_DurationStart;
+		private bool m_ManagerDeactivatedLocally = false;
 		#endregion
 
 		#region "Delegates"
@@ -76,6 +77,12 @@ namespace CaptureTaskManager
 		#endregion
 
 		#region "Properties"
+
+		public bool ManagerDeactivatedLocally
+		{
+			get { return m_ManagerDeactivatedLocally; }
+		}
+
 		#endregion
 
 		#region "Constructors"
@@ -254,21 +261,28 @@ namespace CaptureTaskManager
 			}
 			catch (Exception ex)
 			{
-				// Failures are logged by clsMgrSettings to application event logs;
-				//  this includes MgrActive_Local = False
-				// 
-				// If the DMSCapTaskMgr application log does not exist yet, the SysLogger will create it
-				// However, in order to do that, the program needs to be running from an elevated (administrative level) command prompt
-				// Thus, it is advisable to run this program once from an elevated command prompt while MgrActive_Local is set to false
+				if (String.Equals(ex.Message, clsMgrSettings.DEACTIVATED_LOCALLY))
+				{
+					m_ManagerDeactivatedLocally = true;
+				}
+				else
+				{
+					// Failures are logged by clsMgrSettings to application event logs;
+					//  this includes MgrActive_Local = False
+					// 
+					// If the DMSCapTaskMgr application log does not exist yet, the Log4Net SysLogger will create it (see file Logging.config)
+					// However, in order to do that, the program needs to be running from an elevated (administrative level) command prompt
+					// Thus, it is advisable to run this program once from an elevated command prompt while MgrActive_Local is set to false
 
-				Console.WriteLine();
-				Console.WriteLine("===============================================================");
-				Console.WriteLine("Exception instantiating clsMgrSettings: " + ex.Message);
-				Console.WriteLine("===============================================================");
-				Console.WriteLine();
-				Console.WriteLine("You may need to run this application once from an elevated (administrative level) command prompt so that it can create the DMSCapTaskMgr application log");
-				Console.WriteLine();
-				System.Threading.Thread.Sleep(500);
+					Console.WriteLine();
+					Console.WriteLine("===============================================================");
+					Console.WriteLine("Exception instantiating clsMgrSettings: " + ex.Message);
+					Console.WriteLine("===============================================================");
+					Console.WriteLine();
+					Console.WriteLine("You may need to run this application once from an elevated (administrative level) command prompt so that it can create the DMSCapTaskMgr application log");
+					Console.WriteLine();
+					System.Threading.Thread.Sleep(500);
+				}
 
 				return false;
 			}
@@ -676,6 +690,22 @@ namespace CaptureTaskManager
 			return bSuccess;
 		}
 
+		public void PostTestLogMessage()
+		{
+			try
+			{
+				string sMessage = "Test log message: " + System.DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss tt");
+				Console.WriteLine("Posting test log message to the DMSCapTaskMgr Windows event log");
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.INFO, sMessage);
+				Console.WriteLine(" ... Success!");
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine("Error writing to event log: " + ex.Message);
+			}
+
+		}
+
 		/// <summary>
 		/// Look for and remove FTPLog_ files that were created over 64 days ago in the application folder
 		/// </summary>
@@ -739,7 +769,7 @@ namespace CaptureTaskManager
 		}
 
 		protected void RemoveOldTempFiles(int iAgedTempFilesHours, string sTempFolderPath)
-		{			
+		{
 			// This list tracks the file specs to search for in folder sTempFolderPath
 			List<string> lstSearchSpecs = new List<string>();
 

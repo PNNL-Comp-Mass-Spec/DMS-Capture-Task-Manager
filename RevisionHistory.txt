@@ -1,5 +1,8 @@
 Capture Task Manager History
 
+Version 1.2.4590; July 26, 2012
+	- Added command line switch /EL, which can be used to create the DMSCapTaskMgr Windows event log, then exit the program
+
 Version 1.2.4582; July 23, 2012
 	- Added support for determining acquisition times and scan counts for bruker_maldi_imaging datasets
 
