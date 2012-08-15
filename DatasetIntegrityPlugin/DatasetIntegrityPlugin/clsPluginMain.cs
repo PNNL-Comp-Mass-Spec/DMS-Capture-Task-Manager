@@ -339,36 +339,8 @@ namespace DatasetIntegrityPlugin
 		/// <returns>Enum indicating success or failure</returns>
 		private EnumCloseOutType TestFinniganIonTrapFile(string dataFileNamePath)
 		{
-			float dataFileSize;
-
-			// Verify file exists in storage folder
-			if (!File.Exists(dataFileNamePath))
-			{
-				mRetData.EvalMsg = "Data file " + dataFileNamePath + " not found";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
-				return EnumCloseOutType.CLOSEOUT_FAILED;
-			}
-
-			// Get size of data file
-			dataFileSize = GetFileSize(dataFileNamePath);
-
-			// Check min size
-			if (dataFileSize < RAW_FILE_MIN_SIZE_KB)
-			{
-				ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSize, RAW_FILE_MIN_SIZE_KB);
-				return EnumCloseOutType.CLOSEOUT_FAILED;
-			}
-
-			// Check max size
-			if (dataFileSize > RAW_FILE_MAX_SIZE_MB * 1024)
-			{
-				ReportFileSizeTooLarge("Data", dataFileNamePath, dataFileSize, RAW_FILE_MIN_SIZE_KB);
-				return EnumCloseOutType.CLOSEOUT_FAILED;
-			}
-
-			// If we got to here, everything was OK
-			return EnumCloseOutType.CLOSEOUT_SUCCESS;
-		}	// End sub
+			return TestThermoRawFile(dataFileNamePath, RAW_FILE_MIN_SIZE_KB, RAW_FILE_MAX_SIZE_MB);
+		}
 
 		/// <summary>
 		/// Tests an Orbitrap (LTQ_FT) dataset's integrity
@@ -377,29 +349,8 @@ namespace DatasetIntegrityPlugin
 		/// <returns>Enum indicating success or failure</returns>
 		private EnumCloseOutType TestLTQFTFile(string dataFileNamePath)
 		{
-			float dataFileSize;
-
-			// Verify file exists in storage folder
-			if (!File.Exists(dataFileNamePath))
-			{
-				mRetData.EvalMsg = "Data file " + dataFileNamePath + " not found";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
-				return EnumCloseOutType.CLOSEOUT_FAILED;
-			}
-
-			// Get size of data file
-			dataFileSize = GetFileSize(dataFileNamePath);
-
-			// Check min size
-			if (dataFileSize < RAW_FILE_MIN_SIZE_KB)
-			{
-				ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSize, RAW_FILE_MIN_SIZE_KB);
-				return EnumCloseOutType.CLOSEOUT_FAILED;
-			}
-
-			// If we got to here, everything was OK
-			return EnumCloseOutType.CLOSEOUT_SUCCESS;
-		}	// End sub
+			return TestThermoRawFile(dataFileNamePath, RAW_FILE_MIN_SIZE_KB, 100000);
+		}
 
 		/// <summary>
 		/// Tests an Thermo_Exactive dataset's integrity
@@ -408,29 +359,8 @@ namespace DatasetIntegrityPlugin
 		/// <returns>Enum indicating success or failure</returns>
 		private EnumCloseOutType TestThermoExactiveFile(string dataFileNamePath)
 		{
-			float dataFileSize;
-
-			// Verify file exists in storage folder
-			if (!File.Exists(dataFileNamePath))
-			{
-				mRetData.EvalMsg = "Data file " + dataFileNamePath + " not found";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
-				return EnumCloseOutType.CLOSEOUT_FAILED;
-			}
-
-			// Get size of data file
-			dataFileSize = GetFileSize(dataFileNamePath);
-
-			// Check min size
-			if (dataFileSize < RAW_FILE_MIN_SIZE_KB)
-			{
-				ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSize, RAW_FILE_MIN_SIZE_KB);
-				return EnumCloseOutType.CLOSEOUT_FAILED;
-			}
-
-			// If we got to here, everything was OK
-			return EnumCloseOutType.CLOSEOUT_SUCCESS;
-		}	// End sub
+			return TestThermoRawFile(dataFileNamePath, RAW_FILE_MIN_SIZE_KB, 100000);
+		}
 
 		/// <summary>
 		/// Tests an Triple Quad (TSQ) dataset's integrity
@@ -439,29 +369,74 @@ namespace DatasetIntegrityPlugin
 		/// <returns>Enum indicating success or failure</returns>
 		private EnumCloseOutType TestTripleQuadFile(string dataFileNamePath)
 		{
+			return TestThermoRawFile(dataFileNamePath, RAW_FILE_MIN_SIZE_KB, 100000);
+		}
+
+		/// <summary>
+		/// Test a Thermo .Raw file's integrity
+		/// If the .Raw file is not found, then looks for a .mgf file, .mzXML, or .mzML file
+		/// </summary>
+		/// <param name="dataFileNamePath">Fully qualified path to dataset file</param>
+		/// <param name="minFileSizeKB">Minimum allowed file size</param>
+		/// <param name="maxFileSizeMB">Maximum allowed file size</param>
+		/// <returns></returns>
+		private EnumCloseOutType TestThermoRawFile(string dataFileNamePath, float minFileSizeKB, float maxFileSizeMB)
+		{
 			float dataFileSize;
 
 			// Verify file exists in storage folder
 			if (!File.Exists(dataFileNamePath))
 			{
-				mRetData.EvalMsg = "Data file " + dataFileNamePath + " not found";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
-				return EnumCloseOutType.CLOSEOUT_FAILED;
+				// File not found; look for alternate extensions
+				System.Collections.Generic.List<string> lstAlternateExtensions = new System.Collections.Generic.List<string>();
+				bool bAlternateFound = false;
+				lstAlternateExtensions.Add("mgf");
+				lstAlternateExtensions.Add("mzXML");
+				lstAlternateExtensions.Add("mzML");
+
+				foreach (string altExtension in lstAlternateExtensions)
+				{
+					string dataFileNamePathAlt = System.IO.Path.ChangeExtension(dataFileNamePath, altExtension);
+					if (File.Exists(dataFileNamePathAlt))
+					{
+						mRetData.EvalMsg = "Raw file not found, but ." + altExtension + " file exists";
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, mRetData.EvalMsg);
+						minFileSizeKB = 25;
+						maxFileSizeMB = 100000;
+						dataFileNamePath = dataFileNamePathAlt;
+						bAlternateFound=true;
+						break;
+					}
+				}
+				
+				if (!bAlternateFound)
+				{
+					mRetData.EvalMsg = "Data file " + dataFileNamePath + " not found";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
 			}
 
 			// Get size of data file
 			dataFileSize = GetFileSize(dataFileNamePath);
 
 			// Check min size
-			if (dataFileSize < RAW_FILE_MIN_SIZE_KB)
+			if (dataFileSize < minFileSizeKB)
 			{
-				ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSize, RAW_FILE_MIN_SIZE_KB);
+				ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSize, minFileSizeKB);
+				return EnumCloseOutType.CLOSEOUT_FAILED;
+			}
+
+			// Check max size
+			if (dataFileSize > maxFileSizeMB * 1024)
+			{
+				ReportFileSizeTooLarge("Data", dataFileNamePath, dataFileSize, maxFileSizeMB);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
 			// If we got to here, everything was OK
 			return EnumCloseOutType.CLOSEOUT_SUCCESS;
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Tests a bruker folder for integrity

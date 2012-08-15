@@ -62,12 +62,22 @@ namespace CaptureTaskManager
 		private bool m_ConfigChanged = false;
 		private int m_TaskRequestErrorCount = 0;
 		private IStatusFile m_StatusFile;
+
 		private clsMessageHandler m_MsgHandler;
+		private bool m_MsgQueueInitSuccess = false;
+	
 		private LoopExitCode m_LoopExitCode;
+
+		private string m_MgrName = "Unknown";
+		private string m_StepTool = "Unknown";
+		private string m_Job = "Unknown";
+		private string m_Dataset = "Unknown";
+
 		private bool m_Running;
 		private System.Timers.Timer m_StatusTimer;
 		private DateTime m_DurationStart;
 		private bool m_ManagerDeactivatedLocally = false;
+		
 		#endregion
 
 		#region "Delegates"
@@ -115,9 +125,12 @@ namespace CaptureTaskManager
 					msg = "Reloading configuration and restarting manager";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 					// Unsubscribe message handler events and close msssage handler
-					m_MsgHandler.BroadcastReceived -= OnBroadcastReceived;
-					m_MsgHandler.CommandReceived -= OnCommandReceived;
-					m_MsgHandler.Dispose();
+					if (m_MsgQueueInitSuccess)
+					{
+						m_MsgHandler.BroadcastReceived -= OnBroadcastReceived;
+						m_MsgHandler.CommandReceived -= OnCommandReceived;
+						m_MsgHandler.Dispose();
+					}
 					restartOK = true;
 					break;
 
@@ -287,40 +300,44 @@ namespace CaptureTaskManager
 				return false;
 			}
 
+			// Update the cached values for this manager and job
+			m_MgrName = m_MgrSettings.GetParam("MgrName");
+			m_StepTool = "Unknown";
+			m_Job = "Unknown";
+			m_Dataset = "Unknown";
+		
 			// Set up the loggers
 			string logFileName = m_MgrSettings.GetParam("logfilename");
 			int debugLevel = clsConversion.CIntSafe(m_MgrSettings.GetParam("debuglevel"), 4);
 			clsLogTools.CreateFileLogger(logFileName, debugLevel);
 			if (clsConversion.CBoolSafe(m_MgrSettings.GetParam("ftplogging"))) clsLogTools.CreateFtpLogFileLogger("Dummy.txt");
 			string logCnStr = m_MgrSettings.GetParam("connectionstring");
-			string moduleName = m_MgrSettings.GetParam("modulename");
-			clsLogTools.CreateDbLogger(logCnStr, moduleName);
+			
+			clsLogTools.CreateDbLogger(logCnStr, "CaptureTaskMan: " + m_MgrName);
 
 			// Make initial log entry
 			msg = "=== Started Capture Task Manager V" + Application.ProductVersion + " ===== ";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 
 			// Setup the message queue
+			m_MsgQueueInitSuccess = false;
 			m_MsgHandler = new clsMessageHandler();
 			m_MsgHandler.BrokerUri = m_MsgHandler.BrokerUri = m_MgrSettings.GetParam("MessageQueueURI");
 			m_MsgHandler.CommandQueueName = m_MgrSettings.GetParam("ControlQueueName");
 			m_MsgHandler.BroadcastTopicName = m_MgrSettings.GetParam("BroadcastQueueTopic");
 			m_MsgHandler.StatusTopicName = m_MgrSettings.GetParam("MessageQueueTopicMgrStatus");
 			m_MsgHandler.MgrSettings = m_MgrSettings;
-			if (!m_MsgHandler.Init())
-			{
-				// Most error messages provided by .Init method, but debug message is here for program tracking
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Message handler init error");
-				return false;
-			}
-			else
-			{
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Message handler initialized");
-			}
 
-			//Connect message handler events
-			m_MsgHandler.CommandReceived += new MessageProcessorDelegate(OnCommandReceived);
-			m_MsgHandler.BroadcastReceived += new MessageProcessorDelegate(OnBroadcastReceived);
+			// Initialize the message queue
+			// Start this in a separate thread so that we can abort the initialization if necessary
+			InitializeMessageQueue();
+
+			if (m_MsgQueueInitSuccess)
+			{
+				//Connect message handler events
+				m_MsgHandler.CommandReceived += new MessageProcessorDelegate(OnCommandReceived);
+				m_MsgHandler.BroadcastReceived += new MessageProcessorDelegate(OnBroadcastReceived);
+			}
 
 			// Setup a file watcher for the config file
 			FileInfo fInfo = new FileInfo(Application.ExecutablePath);
@@ -344,7 +361,7 @@ namespace CaptureTaskManager
 			m_StatusFile = new clsStatusFile(statusFileNameLoc);
 			m_StatusFile.MonitorUpdateRequired += new StatusMonitorUpdateReceived(OnStatusMonitorUpdateReceived);
 			m_StatusFile.LogToMsgQueue = clsConversion.CBoolSafe(m_MgrSettings.GetParam("LogStatusToMessageQueue"));
-			m_StatusFile.MgrName = m_MgrSettings.GetParam("MgrName");
+			m_StatusFile.MgrName = m_MgrName;
 			m_StatusFile.MgrStatus = EnumMgrStatus.Running;
 			m_StatusFile.WriteStatusFile();
 
@@ -388,6 +405,41 @@ namespace CaptureTaskManager
 			}
 			// Everything worked!
 			return true;
+		}
+
+		private bool InitializeMessageQueue()
+		{
+
+			System.Threading.Thread worker = new System.Threading.Thread(InitializeMessageQueueWork);
+			worker.Start();
+
+			// Wait a maximum of 15 seconds
+			if (!worker.Join(15000))
+			{
+				worker.Abort();
+				m_MsgQueueInitSuccess = false;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to initialize the message queue (timeout after 15 seconds)");
+			}
+
+			return m_MsgQueueInitSuccess;
+		}
+
+		private void InitializeMessageQueueWork()
+		{
+
+			if (!m_MsgHandler.Init())
+			{
+				// Most error messages provided by .Init method, but debug message is here for program tracking
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Message handler init error");
+				m_MsgQueueInitSuccess = false;
+			}
+			else
+			{
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Message handler initialized");
+				m_MsgQueueInitSuccess = true;
+			}
+
+			return;
 		}
 
 		/// <summary>
@@ -561,32 +613,39 @@ namespace CaptureTaskManager
 		private bool PerformTask(out EnumCloseOutType eTaskCloseout)
 		{
 			string msg;
+			string stepNumber;
 			bool bSuccess = false;
 			eTaskCloseout = EnumCloseOutType.CLOSEOUT_NOT_READY;
 
 			try
 			{
-				msg = "Job " + m_Task.GetParam("Job") + ", step " + m_Task.GetParam("Step") + " assigned";
+				// Cache the job parameters
+				m_StepTool = m_Task.GetParam("StepTool");
+				m_Job = m_Task.GetParam("Job");
+				m_Dataset = m_Task.GetParam("Dataset");
+				stepNumber = m_Task.GetParam("Step");
+
+				msg = "Job " + m_Job + ", step " + stepNumber + " assigned";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 				// Update the status
-				m_StatusFile.JobNumber = int.Parse(m_Task.GetParam("Job"));
-				m_StatusFile.Dataset = m_Task.GetParam("Dataset");
+				m_StatusFile.JobNumber = int.Parse(m_Job);
+				m_StatusFile.Dataset = m_Dataset;
 				m_StatusFile.MgrStatus = EnumMgrStatus.Running;
-				m_StatusFile.Tool = m_Task.GetParam("StepTool");
+				m_StatusFile.Tool = m_StepTool;
 				m_StatusFile.TaskStatus = EnumTaskStatus.Running;
 				m_StatusFile.TaskStatusDetail = EnumTaskStatusDetail.Running_Tool;
 				m_StatusFile.MostRecentJobInfo = DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss tt") +
-															", Job " + m_Task.GetParam("Job") + ", Step " + m_Task.GetParam("Step") +
-															", Tool " + m_Task.GetParam("StepTool");
+															", Job " + m_Job + ", Step " + stepNumber +
+															", Tool " + m_StepTool;
 
 				m_StatusFile.WriteStatusFile();
 
 				// Create the tool runner object
-				if (!SetToolRunnerObject())
+				if (!SetToolRunnerObject(m_StepTool))
 				{
-					msg = m_MgrSettings.GetParam("MgrName") + ": Unable to SetToolRunnerObject, job " + m_Task.GetParam("Job")
-								+ ", Dataset " + m_Task.GetParam("Dataset");
+					msg = m_MgrName + ": Unable to SetToolRunnerObject, job " + m_Job
+								+ ", Dataset " + m_Dataset;
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 
 					msg = "Unable to SetToolRunnerObject";
@@ -618,8 +677,8 @@ namespace CaptureTaskManager
 				switch (eTaskCloseout)
 				{
 					case EnumCloseOutType.CLOSEOUT_FAILED:
-						msg = m_MgrSettings.GetParam("MgrName") + ": Failure running tool " + m_Task.GetParam("StepTool")
-									+ ", job " + m_Task.GetParam("Job") + ", Dataset " + m_Task.GetParam("Dataset");
+						msg = m_MgrName + ": Failure running tool " + m_StepTool
+									+ ", job " + m_Job + ", Dataset " + m_Dataset;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 
 						string sCloseoutMessage;
@@ -627,14 +686,13 @@ namespace CaptureTaskManager
 						if (!String.IsNullOrEmpty(toolResult.CloseoutMsg))
 							sCloseoutMessage = toolResult.CloseoutMsg;
 						else
-							sCloseoutMessage = "Failure running tool " + m_Task.GetParam("StepTool");
+							sCloseoutMessage = "Failure running tool " + m_StepTool;
 
 						m_Task.CloseTask(eTaskCloseout, sCloseoutMessage, toolResult.EvalCode, toolResult.EvalMsg);
 						break;
 
 					case EnumCloseOutType.CLOSEOUT_NOT_READY:
-						msg = m_MgrSettings.GetParam("MgrName") + ": Dataset not ready, tool " + m_Task.GetParam("StepTool")
-									+ ", job " + m_Task.GetParam("Job") + ", Dataset " + m_Task.GetParam("Dataset");
+						msg = m_MgrName + ": Dataset not ready, tool " + m_StepTool + ", job " + m_Job + ", Dataset " + m_Dataset;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
 
 						msg = "Dataset not ready";
@@ -642,16 +700,15 @@ namespace CaptureTaskManager
 						break;
 
 					case EnumCloseOutType.CLOSEOUT_SUCCESS:
-						msg = m_MgrSettings.GetParam("MgrName") + ": Step complete, tool " + m_Task.GetParam("StepTool")
-									+ ", job " + m_Task.GetParam("Job") + ", Dataset " + m_Task.GetParam("Dataset");
+						msg = m_MgrName + ": Step complete, tool " + m_StepTool + ", job " + m_Job + ", Dataset " + m_Dataset;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 						m_Task.CloseTask(eTaskCloseout, toolResult.CloseoutMsg, toolResult.EvalCode, toolResult.EvalMsg);
 						bSuccess = true;
 						break;
 
 					case EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING:
-						msg = m_MgrSettings.GetParam("MgrName") + ": Failure running tool " + m_Task.GetParam("StepTool")
-									+ ", job " + m_Task.GetParam("Job") + ", Dataset " + m_Task.GetParam("Dataset")
+						msg = m_MgrName + ": Failure running tool " + m_StepTool
+									+ ", job " + m_Job + ", Dataset " + m_Dataset
 									+ "; CloseOut = NeedToAbortProcessing";
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 
@@ -669,8 +726,8 @@ namespace CaptureTaskManager
 			{
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running task", ex);
 
-				msg = m_MgrSettings.GetParam("MgrName") + ": Failure running tool " + m_Task.GetParam("StepTool")
-								   + ", job " + m_Task.GetParam("Job") + ", Dataset " + m_Task.GetParam("Dataset")
+				msg = m_MgrName + ": Failure running tool " + m_StepTool
+								   + ", job " + m_Job + ", Dataset " + m_Dataset
 								   + "; CloseOut = Exception";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 
@@ -851,10 +908,9 @@ namespace CaptureTaskManager
 		/// Sets the tool runner object for this job
 		/// </summary>
 		/// <returns></returns>
-		private bool SetToolRunnerObject()
+		private bool SetToolRunnerObject(string stepToolName)
 		{
 			string msg;
-			string stepToolName = m_Task.GetParam("StepTool");
 
 			// Load the tool runner
 			m_CapTool = clsPluginLoader.GetToolRunner(stepToolName);
@@ -895,7 +951,7 @@ namespace CaptureTaskManager
 				try
 				{
 					clsCleanupMgrErrors objCleanupMgrErrors = new clsCleanupMgrErrors(m_MgrSettings.GetParam("MgrCnfgDbConnectStr"),
-																					  m_MgrSettings.GetParam("MgrName"),
+																					  m_MgrName,
 																					  m_MgrSettings.GetParam("WorkDir"),
 																					  m_StatusFile);
 
@@ -1044,7 +1100,7 @@ namespace CaptureTaskManager
 
 			try
 			{
-				string stepToolLCase = m_Task.GetParam("StepTool").ToLower();
+				string stepToolLCase = m_StepTool.ToLower();
 
 				if (stepToolLCase.Contains("archiveupdate") ||
 					stepToolLCase.Contains("datasetarchive") ||
@@ -1139,7 +1195,7 @@ namespace CaptureTaskManager
 			}
 
 			// Determine if the message applies to this machine
-			if (!recvCmd.MachineList.Contains(m_MgrSettings.GetParam("MgrName")))
+			if (!recvCmd.MachineList.Contains(m_MgrName))
 			{
 				// Received command doesn't apply to this manager
 				msg = "Received command not applicable to this manager instance";
@@ -1175,7 +1231,8 @@ namespace CaptureTaskManager
 
 		void OnStatusMonitorUpdateReceived(string msg)
 		{
-			m_MsgHandler.SendMessage(msg);
+			if (m_MsgQueueInitSuccess)
+				m_MsgHandler.SendMessage(msg);
 		}	// End sub
 
 		/// <summary>

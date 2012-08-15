@@ -34,10 +34,14 @@ namespace CaptureTaskManager
 		public const string DEACTIVATED_LOCALLY = "Manager deactivated locally";
 		System.Collections.Generic.Dictionary<string, string> m_ParamDictionary = null;
 		bool m_MCParamsLoaded = false;
+		string m_ErrMsg = "";
 		#endregion
 
 		#region "Properties"
-		public string ErrMsg { get; set; }
+		public string ErrMsg {
+			get { return m_ErrMsg; }
+		}
+
 		public System.Collections.Generic.Dictionary<string, string> TaskDictionary
 		{
 			get { return m_ParamDictionary; }
@@ -49,16 +53,16 @@ namespace CaptureTaskManager
 		{
 			if (!LoadSettings())
 			{
-				if (String.Equals(ErrMsg, DEACTIVATED_LOCALLY))
+				if (String.Equals(m_ErrMsg, DEACTIVATED_LOCALLY))
 					throw new ApplicationException(DEACTIVATED_LOCALLY);
 				else
-					throw new ApplicationException("Unable to initialize manager settings class: " + ErrMsg);
+					throw new ApplicationException("Unable to initialize manager settings class: " + m_ErrMsg);
 			}
 		}	// End sub
 
 		public bool LoadSettings()
 		{
-			ErrMsg = "";
+			m_ErrMsg = "";
 
 			// If the param dictionary exists, it needs to be cleared out
 			if (m_ParamDictionary != null)
@@ -87,7 +91,7 @@ namespace CaptureTaskManager
 			if (!bool.Parse(GetParam("MgrActive_Local", "false")))
 			{
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.WARN, DEACTIVATED_LOCALLY);
-				ErrMsg = DEACTIVATED_LOCALLY;
+				m_ErrMsg = DEACTIVATED_LOCALLY;
 				return false;
 			}
 
@@ -187,8 +191,8 @@ namespace CaptureTaskManager
 			//Verify manager settings dictionary exists
 			if (InpDict == null)
 			{
-				ErrMsg = "clsMgrSettings.CheckInitialSettings(); Manager parameter string dictionary not found";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.ERROR, ErrMsg);
+				m_ErrMsg = "clsMgrSettings.CheckInitialSettings(); Manager parameter string dictionary not found";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.ERROR, m_ErrMsg);
 				return false;
 			}
 
@@ -196,9 +200,9 @@ namespace CaptureTaskManager
 			string strValue = string.Empty;
 			if (!InpDict.TryGetValue("UsingDefaults", out strValue))
 			{
-				ErrMsg = "clsMgrSettings.CheckInitialSettings(); 'UsingDefaults' entry not found in Config file";
-				Console.WriteLine(ErrMsg);
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.ERROR, ErrMsg);
+				m_ErrMsg = "clsMgrSettings.CheckInitialSettings(); 'UsingDefaults' entry not found in Config file";
+				Console.WriteLine(m_ErrMsg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.ERROR, m_ErrMsg);
 			}
 			else
 			{
@@ -208,9 +212,9 @@ namespace CaptureTaskManager
 				{
 					if (blnValue)
 					{
-						ErrMsg = "clsMgrSettings.CheckInitialSettings(); Config file problem, contains UsingDefaults=True";
-						Console.WriteLine(ErrMsg);
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.ERROR, ErrMsg);
+						m_ErrMsg = "clsMgrSettings.CheckInitialSettings(); Config file problem, contains UsingDefaults=True";
+						Console.WriteLine(m_ErrMsg);
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.ERROR, m_ErrMsg);
 						return false;
 					}
 				}
@@ -240,43 +244,71 @@ namespace CaptureTaskManager
 		public bool LoadMgrSettingsFromDB(ref System.Collections.Generic.Dictionary<string, string> MgrSettingsDict, bool logConnectionErrors)
 		{
 			//Requests manager parameters from database. Input string specifies view to use. Performs retries if necessary.
+
+			string managerName = string.Empty;
+			string mgrSettingsGroup = string.Empty;
+
+			DataTable dtSettings;
+			bool returnErrorIfNoParameters;
+			bool skipExistingParameters;
+			bool success;
+
+			managerName = this.GetParam("MgrName", "");
+
+			if (string.IsNullOrEmpty(managerName))
+			{
+				m_ErrMsg = "MgrName parameter not found in m_ParamDictionary; it should be defined in the CaptureTaskManager.exe.config file";
+				WriteErrorMsg(m_ErrMsg);
+				return false;	
+			}
+
+			returnErrorIfNoParameters = true;
+			success = LoadMgrSettingsFromDBWork(managerName, out dtSettings, logConnectionErrors, returnErrorIfNoParameters);
+			if (!success)
+			{
+				return false;
+			}
+
+			skipExistingParameters = false;
+			success = StoreParameters(dtSettings, skipExistingParameters, managerName);
+
+			mgrSettingsGroup = this.GetParam("MgrSettingGroupName", "");
+			if (!string.IsNullOrEmpty(mgrSettingsGroup))
+			{
+				// This manager has group-based settings defined; load them now
+
+				returnErrorIfNoParameters = false;
+				success = LoadMgrSettingsFromDBWork(mgrSettingsGroup, out dtSettings, logConnectionErrors, returnErrorIfNoParameters);
+
+				if (success)
+				{
+					skipExistingParameters = true;
+					success = StoreParameters(dtSettings, skipExistingParameters, managerName);
+				}
+			}
+
+			return success;
+
+
+		}	// End sub
+
+		private bool LoadMgrSettingsFromDBWork(string managerName, out DataTable dtSettings, bool logConnectionErrors, bool returnErrorIfNoParameters)
+		{
+
 			short RetryCount = 3;
-			string MyMsg = null;
-			string ParamKey = null;
-			string ParamVal = null;
+			string DBConnectionString = this.GetParam("MgrCnfgDbConnectStr", "");
+			dtSettings = null;
 
-			string ManagerName = string.Empty;
-			string DBConnectionString = string.Empty;
-
-			try
+			if (string.IsNullOrEmpty(DBConnectionString))
 			{
-				ManagerName = m_ParamDictionary["MgrName"];
-			}
-			catch
-			{
-				ErrMsg = "MgrName parameter not found in m_ParamDictionary; it should be defined in the CaptureTaskManager.exe.config file";
-				WriteErrorMsg(ErrMsg);
+				m_ErrMsg = "MgrCnfgDbConnectStr parameter not found in m_ParamDictionary; it should be defined in the CaptureTaskManager.exe.config file";
+				WriteErrorMsg(m_ErrMsg);
 				return false;
 			}
 
-			try
-			{
-				DBConnectionString = MgrSettingsDict["MgrCnfgDbConnectStr"];
-			}
-			catch
-			{
-				ErrMsg = "MgrCnfgDbConnectStr parameter not found in m_ParamDictionary; it should be defined in the CaptureTaskManager.exe.config file";
-				WriteErrorMsg(ErrMsg);
-				return false;
-			}
+			string SqlStr = "SELECT ParameterName, ParameterValue FROM V_MgrParams WHERE ManagerName = '" + managerName + "'";
 
-			string SqlStr = "SELECT ParameterName, ParameterValue FROM V_MgrParams WHERE ManagerName = '"
-										+ ManagerName + "'";
-
-			//Get a table containing data for job
-			DataTable Dt = null;
-
-			//Get a datatable holding the parameters for one manager
+			//Get a datatable holding the parameters for this manager
 			while (RetryCount > 0)
 			{
 				try
@@ -288,7 +320,7 @@ namespace CaptureTaskManager
 							using (DataSet Ds = new DataSet())
 							{
 								Da.Fill(Ds);
-								Dt = Ds.Tables[0];
+								dtSettings = Ds.Tables[0];
 								//Ds
 							}
 							//Da
@@ -300,7 +332,7 @@ namespace CaptureTaskManager
 				catch (System.Exception ex)
 				{
 					RetryCount -= 1;
-					MyMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Exception getting manager settings from database: " + ex.Message;
+					string MyMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Exception getting manager settings from database: " + ex.Message;
 					MyMsg = MyMsg + ", RetryCount = " + RetryCount.ToString();
 					if (logConnectionErrors)
 						WriteErrorMsg(MyMsg);
@@ -312,64 +344,79 @@ namespace CaptureTaskManager
 			// If loop exited due to errors, return false
 			if (RetryCount < 1)
 			{
-				ErrMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Excessive failures attempting to retrieve manager settings from database";
+				m_ErrMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Excessive failures attempting to retrieve manager settings from database";
 				if (logConnectionErrors)
-					WriteErrorMsg(MyMsg);
+					WriteErrorMsg(m_ErrMsg);
 				return false;
 			}
 
 			// Validate that the data table object is initialized
-			if (Dt == null)
+			if (dtSettings == null)
 			{
 				// Data table not initialized
-				ErrMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Dt datatable is null; using " + DBConnectionString;
+				m_ErrMsg = "clsMgrSettings.LoadMgrSettingsFromDB; dtSettings datatable is null; using " + DBConnectionString;
 				if (logConnectionErrors)
-					WriteErrorMsg(ErrMsg);
+					WriteErrorMsg(m_ErrMsg);
 				return false;
 			}
 
 			// Verify at least one row returned
-			if (Dt.Rows.Count < 1)
+			if (dtSettings.Rows.Count < 1 && returnErrorIfNoParameters)
 			{
 				//Wrong number of rows returned
-				ErrMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Manager " + ManagerName + " not defined in the manager control database; using " + DBConnectionString;
-				WriteErrorMsg(ErrMsg);
-				Dt.Dispose();
+				m_ErrMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Manager " + managerName + " not defined in the manager control database; using " + DBConnectionString;
+				WriteErrorMsg(m_ErrMsg);
+				dtSettings.Dispose();
 				return false;
 			}
+
+			return true;
+
+		}
+
+		public bool StoreParameters(DataTable dtSettings, bool skipExistingParameters, string managerName)
+		{
+			string ParamKey = null;
+			string ParamVal = null;
+			bool success;
 
 			// Fill a string dictionary with the manager parameters that have been found
 			try
 			{
-				foreach (DataRow TestRow in Dt.Rows)
+				foreach (DataRow oRow in dtSettings.Rows)
 				{
 					//Add the column heading and value to the dictionary
-					ParamKey = DbCStr(TestRow[Dt.Columns["ParameterName"]]);
-					ParamVal = DbCStr(TestRow[Dt.Columns["ParameterValue"]]);
+					ParamKey = DbCStr(oRow[dtSettings.Columns["ParameterName"]]);
+					ParamVal = DbCStr(oRow[dtSettings.Columns["ParameterValue"]]);
+
 					if (m_ParamDictionary.ContainsKey(ParamKey))
 					{
-						m_ParamDictionary[ParamKey] = ParamVal;
+						if (!skipExistingParameters)
+						{
+							m_ParamDictionary[ParamKey] = ParamVal;
+						}
 					}
 					else
 					{
 						m_ParamDictionary.Add(ParamKey, ParamVal);
 					}
 				}
-				return true;
+				success = true;
 			}
 			catch (System.Exception ex)
 			{
-				ErrMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Exception filling string dictionary from table: " + ex.Message;
-				WriteErrorMsg(ErrMsg);
-				return false;
+				m_ErrMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Exception filling string dictionary from table for manager '" + managerName + "': " + ex.Message;
+				WriteErrorMsg(m_ErrMsg);
+				success = false;
 			}
 			finally
 			{
-				Dt.Dispose();
+				if (dtSettings != null)
+					dtSettings.Dispose();
 			}
 
-		}	// End sub
-
+			return success;
+		}
 		public string GetParam(string ItemKey)
 		{
 			return GetParam(ItemKey, string.Empty);
@@ -416,7 +463,7 @@ namespace CaptureTaskManager
 		public bool WriteConfigSetting(string Key, string Value)
 		{
 
-			ErrMsg = "";
+			m_ErrMsg = "";
 
 			//Load the config document
 			XmlDocument MyDoc = LoadConfigDocument();
@@ -431,7 +478,7 @@ namespace CaptureTaskManager
 
 			if (MyNode == null)
 			{
-				ErrMsg = "clsMgrSettings.WriteConfigSettings; appSettings node not found";
+				m_ErrMsg = "clsMgrSettings.WriteConfigSettings; appSettings node not found";
 				return false;
 			}
 
@@ -447,7 +494,7 @@ namespace CaptureTaskManager
 				else
 				{
 					//Key was not found
-					ErrMsg = "clsMgrSettings.WriteConfigSettings; specified key not found: " + Key;
+					m_ErrMsg = "clsMgrSettings.WriteConfigSettings; specified key not found: " + Key;
 					return false;
 				}
 				MyDoc.Save(GetConfigFilePath());
@@ -455,7 +502,7 @@ namespace CaptureTaskManager
 			}
 			catch (System.Exception ex)
 			{
-				ErrMsg = "clsMgrSettings.WriteConfigSettings; Exception updating settings file: " + ex.Message;
+				m_ErrMsg = "clsMgrSettings.WriteConfigSettings; Exception updating settings file: " + ex.Message;
 				return false;
 
 			}
@@ -477,7 +524,7 @@ namespace CaptureTaskManager
 			}
 			catch (System.Exception ex)
 			{
-				ErrMsg = "clsMgrSettings.LoadConfigDocument; Exception loading settings file: " + ex.Message;
+				m_ErrMsg = "clsMgrSettings.LoadConfigDocument; Exception loading settings file: " + ex.Message;
 				return null;
 			}
 		}	// End sub

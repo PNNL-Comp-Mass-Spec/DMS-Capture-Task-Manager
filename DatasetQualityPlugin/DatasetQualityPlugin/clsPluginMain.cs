@@ -196,13 +196,14 @@ namespace DatasetQualityPlugin
 				m_MsFileScanner.LCMS2DOverviewPlotDivisor = int.Parse(m_TaskParams.GetParam("LCMS2DOverviewPlotDivisor"));
 
 				// Get the input file name
-				string sFileOrFolderName = GetDataFileOrFolderName(sourceFolder, out bSkipPlots);
+				string rawDataType = "???";
+				string sFileOrFolderName = GetDataFileOrFolderName(sourceFolder, out bSkipPlots, out rawDataType);
 				if (sFileOrFolderName == INVALID_FILE_TYPE)
 				{
 					// DS quality test not implemented for this file type
 					result.CloseoutMsg = "";
 					result.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
-					result.EvalMsg = "Dataset quality test not implemented for data type " + m_TaskParams.GetParam("rawdatatype", "???");
+					result.EvalMsg = "Dataset quality test not implemented for data type " + rawDataType;
 					result.EvalCode = EnumEvalCode.EVAL_CODE_NOT_EVALUATED;
 					return result;
 				}
@@ -314,12 +315,14 @@ namespace DatasetQualityPlugin
 			/// Returns the file or folder name for specified dataset based on dataset type
 			/// </summary>
 			/// <returns>Data file or folder name</returns>
-			private string GetDataFileOrFolderName(string inputFolder, out bool bSkipPlots)
+			private string GetDataFileOrFolderName(string inputFolder, out bool bSkipPlots, out string rawDataType)
 			{
 				string dataset = m_TaskParams.GetParam("Dataset");
-				string rawDataType = m_TaskParams.GetParam("rawdatatype", "UnknownRawDataType");
 				string sFileOrFolderName;
+				bool bIsFile = true;
 				bSkipPlots = false;
+
+				rawDataType = m_TaskParams.GetParam("rawdatatype", "UnknownRawDataType");
 
 				// Get the expected file name based on the dataset type
 				switch (rawDataType)
@@ -331,10 +334,12 @@ namespace DatasetQualityPlugin
 						// TSQ_3
 						// Thermo_GC_MS_01
 						sFileOrFolderName = dataset + ".raw";
+						bIsFile = true;
 						break;
 					case "zipped_s_folders":
 						// 9T_FTICR, 11T_FTICR_B, and 12T_FTICR
 						sFileOrFolderName = "analysis.baf";
+						bIsFile = true;
 						break;
 					case "bruker_ft":
 						// 12T_FTICR_B, 15T_FTICR, 9T_FTICR_B
@@ -345,19 +350,24 @@ namespace DatasetQualityPlugin
 							sFileOrFolderName = dataset + ".d" + "\\" + "analysis.yep";
 						else
 							sFileOrFolderName = dataset + ".d" + "\\" + "analysis.baf";
+						
+							bIsFile = true;
 						break;
 					case "dot_uimf_files":
 						// IMS_TOF_2, IMS_TOF_3, IMS_TOF_4, IMS_TOF_5, IMS_TOF_6, etc.
 						sFileOrFolderName = dataset + ".uimf";
+						bIsFile = true;
 						break;
 					case "sciex_wiff_files":
 						// QTrap01
 						sFileOrFolderName = dataset + ".wiff";
+						bIsFile = true;
 						bSkipPlots = false;
 						break;
 					case "dot_d_folders":
 						// Agilent_GC_MS_01 and Agilent_QTOF_04
 						sFileOrFolderName = dataset + ".d";
+						bIsFile = false;
 						bSkipPlots = false;
 						break;
 
@@ -372,6 +382,7 @@ namespace DatasetQualityPlugin
 						if (fiFiles != null && fiFiles.Length > 0)
 						{
 							sFileOrFolderName = fiFiles[0].Name;
+							bIsFile = true;
 						}
 						else
 						{
@@ -393,15 +404,49 @@ namespace DatasetQualityPlugin
 				// Test to verify the file (or folder) exists
 				string sFileOrFolderPath = Path.Combine(inputFolder, sFileOrFolderName);
 
-				if (!File.Exists(sFileOrFolderPath) && !Directory.Exists(sFileOrFolderPath))
+				if (bIsFile && !File.Exists(sFileOrFolderPath))
 				{
-					m_Msg = "clsPluginMain.GetDataFileOrFolderName: File " + sFileOrFolderPath + " not found";
+					// File not found; look for alternate extensions
+					System.Collections.Generic.List<string> lstAlternateExtensions = new System.Collections.Generic.List<string>();
+					bool bAlternateFound = false;
+					lstAlternateExtensions.Add("mgf");
+					lstAlternateExtensions.Add("mzXML");
+					lstAlternateExtensions.Add("mzML");
+
+					foreach (string altExtension in lstAlternateExtensions)
+					{
+						string dataFileNamePathAlt = System.IO.Path.ChangeExtension(sFileOrFolderPath, altExtension);
+						if (File.Exists(dataFileNamePathAlt))
+						{
+							m_Msg = "Data file not found, but ." + altExtension + " file exists";
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
+							bAlternateFound = true;
+							sFileOrFolderPath = INVALID_FILE_TYPE;
+							sFileOrFolderName = INVALID_FILE_TYPE;
+							rawDataType = altExtension + " file";
+							break;
+						}
+					}
+
+					if (!bAlternateFound)
+					{
+						m_Msg = "clsPluginMain.GetDataFileOrFolderName: File " + sFileOrFolderPath + " not found";
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
+						m_Msg = "File " + sFileOrFolderPath + " not found";
+						sFileOrFolderName = string.Empty;
+					}
+				}
+
+				if (!bIsFile && !Directory.Exists(sFileOrFolderPath))
+				{
+					m_Msg = "clsPluginMain.GetDataFileOrFolderName: Folder " + sFileOrFolderPath + " not found";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
-					m_Msg = "File " + sFileOrFolderPath + " not found";
+					m_Msg = "Folder " + sFileOrFolderPath + " not found";
 					sFileOrFolderName = string.Empty;
 				}
 
 				return sFileOrFolderName;
+
 			}	// End sub
 
 			/// <summary>
