@@ -7,6 +7,7 @@
 // Last modified 03/07/2011
 //               04/22/2011 dac - Modified to use "real" demultiplexing dll's
 //				 03/12/2012 mem - Replaced BelovTransform.dll with IMSDemultiplexer.dll
+//				 08/28/2012 mem - Removed option to use BelovTransform
 //*********************************************************************************************************
 using System;
 using System.IO;
@@ -29,7 +30,7 @@ namespace ImsDemuxPlugin
 		protected const string DECODED_UIMF_SUFFIX = "_decoded.uimf";
 
 		protected const int MAX_CHECKPOINT_FRAME_INTERVAL = 200;
-		protected const int MAX_CHECKPOINT_FRAME_INTERVAL_BELOV = 50;
+		// Deprecated: protected const int MAX_CHECKPOINT_FRAME_INTERVAL_BELOV = 50;
 		protected const int MAX_CHECKPOINT_WRITE_FREQUENCY_MINUTES = 20;
 
 		#endregion
@@ -828,10 +829,15 @@ namespace ImsDemuxPlugin
 
 				// Enable checkpoint file creation
 				m_DeMuxTool.CreateCheckpointFiles = true;
+				/*
+				 * Deprecated:
+				 * 
 				if (bUseBelovTransform)
 					m_DeMuxTool.CheckpointFrameIntervalMax = MAX_CHECKPOINT_FRAME_INTERVAL_BELOV;
 				else
-					m_DeMuxTool.CheckpointFrameIntervalMax = MAX_CHECKPOINT_FRAME_INTERVAL;
+				 */
+
+				m_DeMuxTool.CheckpointFrameIntervalMax = MAX_CHECKPOINT_FRAME_INTERVAL;
 
 				m_DeMuxTool.CheckpointWriteFrequencyMinutesMax = MAX_CHECKPOINT_WRITE_FREQUENCY_MINUTES;
 				m_DeMuxTool.CheckpointTargetFolder = m_DatasetFolderPathRemote;
@@ -842,8 +848,12 @@ namespace ImsDemuxPlugin
 				// Disable calibration if processing a .UIMF from the older IMS TOFs
 				m_DeMuxTool.CalibrateAfterDemultiplexing = bAutoCalibrate;
 
+				/*
+				 * Deprecated
+				 *
 				// Define whether to use BelovTransform.dll or IMSDemultiplexer.dll
 				m_DeMuxTool.UseBelovTransform = bUseBelovTransform;
+				*/
 
 				// Create a timer that will be used to log progress
 				System.Threading.Timer tmrUpdateProgress;

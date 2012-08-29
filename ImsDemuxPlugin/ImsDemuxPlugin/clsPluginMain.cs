@@ -52,7 +52,7 @@ namespace ImsDemuxPlugin
 		{
 			const string COULD_NOT_OBTAIN_GOOD_CALIBRATION = "Could not obtain a good calibration";
 			
-			bool bUseBelovTransform = true;				// Hard-coding to use BelovTransform.dll
+			bool bUseBelovTransform = false;				// Hard-coding to no longer use BelovTransform.dll
 			string msg;
 
 			msg = "Starting ImsDemuxPlugin.clsPluginMain.RunTool()";

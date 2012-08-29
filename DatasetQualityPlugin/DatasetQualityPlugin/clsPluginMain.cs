@@ -365,7 +365,7 @@ namespace DatasetQualityPlugin
 						bSkipPlots = false;
 						break;
 					case "dot_d_folders":
-						// Agilent_GC_MS_01 and Agilent_QTOF_04
+						// Agilent_GC_MS_01, AgQTOF03, AgQTOF04
 						sFileOrFolderName = dataset + ".d";
 						bIsFile = false;
 						bSkipPlots = false;
