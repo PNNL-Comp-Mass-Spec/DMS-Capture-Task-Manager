@@ -710,6 +710,9 @@ namespace ImsDemuxPlugin
 				// Disable calibration if processing a .UIMF from the older IMS TOFs
 				m_DeMuxTool.CalibrateAfterDemultiplexing = true;
 
+				// Use all of the cores
+				m_DeMuxTool.CPUCoresToUse = -1;
+
 				// Create a timer that will be used to log progress
 				System.Threading.Timer tmrUpdateProgress;
 				tmrUpdateProgress = new System.Threading.Timer(new TimerCallback(timer_ElapsedEvent));
