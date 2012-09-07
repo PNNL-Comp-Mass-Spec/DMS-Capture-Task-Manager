@@ -295,8 +295,7 @@ namespace DatasetQualityPlugin
 					if ((errorCode != MSFileInfoScannerInterfaces.iMSFileInfoScanner.eMSFileScannerErrorCodes.NoError) || m_ErrOccurred)
 					{
 						// Either a bad result code was returned, or an error event was received
-						result.CloseoutMsg = "Job " + m_TaskParams.GetParam("Job") + ", Step " + m_TaskParams.GetParam("Step") +
-									": MSFileInfoScanner error.";
+						result.CloseoutMsg = "MSFileInfoScanner error";
 						result.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 					}
 					else
