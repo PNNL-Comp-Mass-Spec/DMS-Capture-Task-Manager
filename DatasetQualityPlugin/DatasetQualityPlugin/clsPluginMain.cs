@@ -391,6 +391,12 @@ namespace DatasetQualityPlugin
 						}
 						break;
 
+					case "bruker_tof_baf":
+						sFileOrFolderName = dataset + ".d";
+						bIsFile = false;
+						bSkipPlots = false;
+						break;
+
 					default:
 						// Other instruments; do not process
 						// dot_wiff_files: Agilent_TOF2
