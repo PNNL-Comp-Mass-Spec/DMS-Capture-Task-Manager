@@ -31,6 +31,7 @@ namespace DatasetIntegrityPlugin
 		const float SCIEX_WIFF_FILE_MIN_SIZE_KB = 50;
 		const float SCIEX_WIFF_SCAN_FILE_MIN_SIZE_KB = 0.03F;
 		const float UIMF_FILE_MIN_SIZE_KB = 100;
+		const float AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB = 50;
 		#endregion
 
 		#region "Class-wide variables"
@@ -128,6 +129,9 @@ namespace DatasetIntegrityPlugin
 				case "sciex_qtrap":
 					mRetData.CloseoutType = TestSciexQtrapFile(datasetFolder, dataset);
 					break;
+				case "agilent_tof_v2":
+					mRetData.CloseoutType = TestAgilentTOFV2Folder(datasetFolder);
+					break;
 				default:
 					msg = "No integrity test available for instrument class " + instClass;
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
@@ -142,6 +146,44 @@ namespace DatasetIntegrityPlugin
 
 			return mRetData;
 		}	// End sub
+		
+		/// <summary>
+		/// If folderList contains exactly two folders then calls DetectSupersededFolder Detect and delete the extra x_ folder (if appropriate)
+		/// Returns True if folderList contains just one folder, or if able to successfully delete the extra x_ folder
+		/// </summary>
+		/// <param name="folderList"></param>
+		/// <param name="folderDescription"></param>
+		/// <returns>True if success; false if a problem</returns>
+		private bool PossiblyRenameSupersededFolder(string[] folderList, string folderDescription)
+		{
+			bool bInvalid = true;
+
+			if (folderList.Length == 1)
+				return true;
+
+			if (folderList.Length == 2)
+			{
+				// If two folders are present and one starts with x_ and all of the files inside the one that start with x_ are also in the folder without x_,
+				// then delete the x_ folder
+				bool bDeleteIfSuperseded = true;
+
+				if (DetectSupersededFolder(folderList, bDeleteIfSuperseded))
+				{
+					bInvalid = false;
+				}
+			}
+
+			if (bInvalid)
+			{
+				mRetData.EvalMsg = "Invalid dataset. Multiple " + folderDescription + " folders found";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				return false;
+			}
+			else
+			{
+				return true;
+			}
+		}
 
 		private void ReportFileSizeTooSmall(string sDataFileDescription, string sFilePath, float fActualSize, float fMinSize)
 		{
@@ -280,6 +322,93 @@ namespace DatasetIntegrityPlugin
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 		}
 
+
+		/// <summary>
+		/// Tests a Agilent_TOF_V2 folder for integrity
+		/// </summary>
+		/// <param name="datasetNamePath">Fully qualified path to the dataset folder</param>
+		/// <returns>Enum indicating test result</returns>
+		private EnumCloseOutType TestAgilentTOFV2Folder(string datasetNamePath)
+		{
+			float dataFileSize;
+
+			string instName = m_TaskParams.GetParam("Instrument_Name");
+
+			// Verify only one .D folder in dataset
+			string[] folderList = Directory.GetDirectories(datasetNamePath, "*.D");
+			if (folderList.Length < 1)
+			{
+				mRetData.EvalMsg = "Invalid dataset. No .D folders found";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				return EnumCloseOutType.CLOSEOUT_FAILED;
+			}
+			else if (folderList.Length > 1)
+			{				
+				if (!PossiblyRenameSupersededFolder(folderList, ".D"))
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+			}
+
+			// Look for AcqData folder below .D folder
+			string[] acqDataFolderList = Directory.GetDirectories(folderList[0], "AcqData");
+			if (folderList.Length < 1)
+			{
+				mRetData.EvalMsg = "Invalid dataset. .D folder does not contain an AcqData subfolder";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				return EnumCloseOutType.CLOSEOUT_FAILED;
+			}
+			else if (folderList.Length > 1)
+			{
+				mRetData.EvalMsg = "Invalid dataset. Multiple AcqData folders found in .D folder";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				return EnumCloseOutType.CLOSEOUT_FAILED;
+			}
+
+			// The AcqData folder should contain one or more .Bin files, for example MSScan.bin, MSPeak.bin, and MSProfile.bin
+			// Verify that the MSScan.bin file exists
+			string tempFileNamePath = Path.Combine(acqDataFolderList[0], "MSScan.bin");
+			if (!File.Exists(tempFileNamePath))
+			{
+				mRetData.EvalMsg = "Invalid dataset. MSScan.bin file not found in the AcqData folder";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				return EnumCloseOutType.CLOSEOUT_FAILED;
+			}
+
+			// Verify size of MSScan.bin file
+			dataFileSize = GetFileSize(tempFileNamePath);
+			if (dataFileSize <= AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB)
+			{
+				ReportFileSizeTooSmall("MSScan.bin", tempFileNamePath, dataFileSize, AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB);
+				return EnumCloseOutType.CLOSEOUT_FAILED;
+			}
+
+			// The AcqData folder should contain file MSTS.xml
+			tempFileNamePath = Path.Combine(acqDataFolderList[0], "MSTS.xml");
+			if (!File.Exists(tempFileNamePath))
+			{
+				mRetData.EvalMsg = "Invalid dataset. MSTS.xml file not found in the AcqData folder";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				return EnumCloseOutType.CLOSEOUT_FAILED;
+			}
+
+			// Check to see if a .M folder exists
+			string[] subFolderList = Directory.GetDirectories(acqDataFolderList[0], "*.m");
+			if (subFolderList == null || subFolderList.Length < 1)
+			{
+				mRetData.EvalMsg = "Invalid dataset. No .m folders found found in the AcqData folder";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				return EnumCloseOutType.CLOSEOUT_FAILED;
+			}
+			else if (subFolderList.Length > 1)
+			{
+				mRetData.EvalMsg = "Invalid dataset. Multiple .m folders found in the AcqData folder";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				return EnumCloseOutType.CLOSEOUT_FAILED;
+			}
+
+			// If we got to here, everything is OK
+			return EnumCloseOutType.CLOSEOUT_SUCCESS;
+		}	// End sub
+		
 		/// <summary>
 		/// Tests a Sciex QTrap dataset's integrity
 		/// </summary>
@@ -513,27 +642,8 @@ namespace DatasetIntegrityPlugin
 			}
 			else if (folderList.Length > 1)
 			{
-				bool bInvalid = true;
-
-				if (folderList.Length == 2)
-				{
-					// If two folders are present and one starts with x_ and all of the files inside the one that start with x_ are also in the folder without x_,
-					// then delete the x_ folder
-					bool bDeleteIfSuperseded = true;
-
-					if (DetectSupersededFolder(folderList, bDeleteIfSuperseded))
-					{
-						bInvalid = false;
-					}
-				}
-
-				if (bInvalid)
-				{
-					mRetData.EvalMsg = "Invalid dataset. Multiple .D folders found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				if (!PossiblyRenameSupersededFolder(folderList, ".D"))
 					return EnumCloseOutType.CLOSEOUT_FAILED;
-				}
-
 			}
 
 			// Verify analysis.baf file exists
@@ -602,27 +712,8 @@ namespace DatasetIntegrityPlugin
 			}
 			else if (folderList.Length > 1)
 			{
-				bool bInvalid = true;
-
-				if (folderList.Length == 2)
-				{
-					// If two folders are present and one starts with x_ and all of the files inside the one that start with x_ are also in the folder without x_,
-					// then delete the x_ folder
-					bool bDeleteIfSuperseded = true;
-
-					if (DetectSupersededFolder(folderList, bDeleteIfSuperseded))
-					{
-						bInvalid = false;
-					}
-				}
-
-				if (bInvalid)
-				{
-					mRetData.EvalMsg = "Invalid dataset. Multiple .D folders found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
-					return EnumCloseOutType.CLOSEOUT_FAILED;
-				}
-
+				if (!PossiblyRenameSupersededFolder(folderList, ".D"))
+					return EnumCloseOutType.CLOSEOUT_FAILED;				
 			}
 
 			// Verify analysis.baf file exists
