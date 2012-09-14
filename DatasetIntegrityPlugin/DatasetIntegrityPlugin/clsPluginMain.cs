@@ -10,8 +10,8 @@
 //						11/17/2010 (DAC) - Added new tests for MALDI imaging and spot instrument classes
 //*********************************************************************************************************
 using System;
-using CaptureTaskManager;
 using System.IO;
+using CaptureTaskManager;
 
 namespace DatasetIntegrityPlugin
 {
@@ -32,6 +32,8 @@ namespace DatasetIntegrityPlugin
 		const float SCIEX_WIFF_SCAN_FILE_MIN_SIZE_KB = 0.03F;
 		const float UIMF_FILE_MIN_SIZE_KB = 100;
 		const float AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB = 50;
+		const float AGILENT_DATA_MS_FILE_MIN_SIZE_KB = 75;
+
 		#endregion
 
 		#region "Class-wide variables"
@@ -89,47 +91,60 @@ namespace DatasetIntegrityPlugin
 			msg = "Instrument class: " + instClass;
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
-			switch (instClass.ToLower())
+			clsInstrumentClassInfo.eInstrumentClass instrumentClass = clsInstrumentClassInfo.GetInstrumentClass(instClass);
+			if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Unknown)
 			{
-				case "finnigan_ion_trap":
-					dataFileNamePath = Path.Combine(datasetFolder, dataset + ".raw");
+				msg = "Instrument class not recognized: " + instClass;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+				mRetData.CloseoutMsg = msg;
+				mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+				return mRetData;
+			}
+
+			switch (instrumentClass)
+			{
+				case clsInstrumentClassInfo.eInstrumentClass.Finnigan_Ion_Trap:
+					dataFileNamePath = Path.Combine(datasetFolder, dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
 					mRetData.CloseoutType = TestFinniganIonTrapFile(dataFileNamePath);
 					break;
-				case "ltq_ft":
-					dataFileNamePath = Path.Combine(datasetFolder, dataset + ".raw");
+				case clsInstrumentClassInfo.eInstrumentClass.LTQ_FT:
+					dataFileNamePath = Path.Combine(datasetFolder, dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
 					mRetData.CloseoutType = TestLTQFTFile(dataFileNamePath);
 					break;
-				case "brukerftms":
+				case clsInstrumentClassInfo.eInstrumentClass.BRUKERFTMS:
 					mRetData.CloseoutType = TestBrukerFolder(datasetFolder);
 					break;
-				case "thermo_exactive":
-					dataFileNamePath = Path.Combine(datasetFolder, dataset + ".raw");
+				case clsInstrumentClassInfo.eInstrumentClass.Thermo_Exactive:
+					dataFileNamePath = Path.Combine(datasetFolder, dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
 					mRetData.CloseoutType = TestThermoExactiveFile(dataFileNamePath);
 					break;
-				case "triple_quad":
-					dataFileNamePath = Path.Combine(datasetFolder, dataset + ".raw");
+				case clsInstrumentClassInfo.eInstrumentClass.Triple_Quad:
+					dataFileNamePath = Path.Combine(datasetFolder, dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
 					mRetData.CloseoutType = TestTripleQuadFile(dataFileNamePath);
 					break;
-				case "ims_agilent_tof":
-					dataFileNamePath = Path.Combine(datasetFolder, dataset + ".uimf");
+				case clsInstrumentClassInfo.eInstrumentClass.IMS_Agilent_TOF:
+					dataFileNamePath = Path.Combine(datasetFolder, dataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION);
 					mRetData.CloseoutType = TestIMSAgilentTOF(dataFileNamePath);
 					break;
-				case "brukerft_baf":
+				case clsInstrumentClassInfo.eInstrumentClass.BrukerFT_BAF:
 					mRetData.CloseoutType = TestBrukerFT_BafFolder(datasetFolder);
 					break;
-				case "brukermaldi_imaging":
+				case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging:
 					mRetData.CloseoutType = TestBrukerMaldiImagingFolder(datasetFolder);
 					break;
-				case "brukermaldi_spot":
+				case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Spot:
 					mRetData.CloseoutType = TestBrukerMaldiSpotFolder(datasetFolder);
 					break;
-				case "brukertof_baf":
+				case clsInstrumentClassInfo.eInstrumentClass.BrukerTOF_BAF:
 					mRetData.CloseoutType = TestBrukerTof_BafFolder(datasetFolder);
 					break;
-				case "sciex_qtrap":
+				case clsInstrumentClassInfo.eInstrumentClass.Sciex_QTrap:
 					mRetData.CloseoutType = TestSciexQtrapFile(datasetFolder, dataset);
 					break;
-				case "agilent_tof_v2":
+				case clsInstrumentClassInfo.eInstrumentClass.Agilent_Ion_Trap:
+					mRetData.CloseoutType = TestAgilentIonTrapFolder(datasetFolder);
+					break;
+				case clsInstrumentClassInfo.eInstrumentClass.Agilent_TOF_V2:
 					mRetData.CloseoutType = TestAgilentTOFV2Folder(datasetFolder);
 					break;
 				default:
@@ -322,7 +337,53 @@ namespace DatasetIntegrityPlugin
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 		}
 
+		/// <summary>
+		/// Tests a Agilent_Ion_Trap folder for integrity
+		/// </summary>
+		/// <param name="datasetNamePath">Fully qualified path to the dataset folder</param>
+		/// <returns>Enum indicating test result</returns>
+		private EnumCloseOutType TestAgilentIonTrapFolder(string datasetNamePath)
+		{
+			float dataFileSize;
 
+			string instName = m_TaskParams.GetParam("Instrument_Name");
+
+			// Verify only one .D folder in dataset
+			string[] folderList = Directory.GetDirectories(datasetNamePath, "*.D");
+			if (folderList.Length < 1)
+			{
+				mRetData.EvalMsg = "Invalid dataset. No .D folders found";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				return EnumCloseOutType.CLOSEOUT_FAILED;
+			}
+			else if (folderList.Length > 1)
+			{
+				if (!PossiblyRenameSupersededFolder(folderList, clsInstrumentClassInfo.DOT_D_EXTENSION))
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+			}
+
+			// Look for Data.MS file in the .D folder
+			string tempFileNamePath = Path.Combine(folderList[0], "DATA.MS");
+			if (!File.Exists(tempFileNamePath))
+			{
+				mRetData.EvalMsg = "Invalid dataset. DATA.MS file not found in the .D folder";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				return EnumCloseOutType.CLOSEOUT_FAILED;
+			}
+
+			// Verify size of the DATA.MS file
+			dataFileSize = GetFileSize(tempFileNamePath);
+			if (dataFileSize <= AGILENT_DATA_MS_FILE_MIN_SIZE_KB)
+			{
+				ReportFileSizeTooSmall("DATA.MS", tempFileNamePath, dataFileSize, AGILENT_DATA_MS_FILE_MIN_SIZE_KB);
+				return EnumCloseOutType.CLOSEOUT_FAILED;
+			}
+
+			// If we got to here, everything is OK
+			return EnumCloseOutType.CLOSEOUT_SUCCESS;
+
+		}	// End sub
+		
 		/// <summary>
 		/// Tests a Agilent_TOF_V2 folder for integrity
 		/// </summary>
@@ -344,7 +405,7 @@ namespace DatasetIntegrityPlugin
 			}
 			else if (folderList.Length > 1)
 			{				
-				if (!PossiblyRenameSupersededFolder(folderList, ".D"))
+				if (!PossiblyRenameSupersededFolder(folderList, clsInstrumentClassInfo.DOT_D_EXTENSION))
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -373,7 +434,7 @@ namespace DatasetIntegrityPlugin
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
-			// Verify size of MSScan.bin file
+			// Verify size of the MSScan.bin file
 			dataFileSize = GetFileSize(tempFileNamePath);
 			if (dataFileSize <= AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB)
 			{
@@ -420,7 +481,7 @@ namespace DatasetIntegrityPlugin
 			string tempFileNamePath;
 
 			// Verify .wiff file exists in storage folder
-			tempFileNamePath = Path.Combine(dataFileNamePath, datasetName + ".wiff");
+			tempFileNamePath = Path.Combine(dataFileNamePath, datasetName + clsInstrumentClassInfo.DOT_WIFF_EXTENSION);
 			if (!File.Exists(tempFileNamePath))
 			{
 				mRetData.EvalMsg = "Data file " + tempFileNamePath + " not found";
@@ -593,7 +654,7 @@ namespace DatasetIntegrityPlugin
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
-			// Verify size of acqus file
+			// Verify size of the acqus file
 			dataFileSize = GetFileSize(Path.Combine(dataFolder, "acqus"));
 			if (dataFileSize <= 0F)
 			{
@@ -610,7 +671,7 @@ namespace DatasetIntegrityPlugin
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
-			// Verify size of ser file
+			// Verify size of the ser file
 			dataFileSize = GetFileSize(Path.Combine(dataFolder, "ser"));
 			if (dataFileSize <= 100)
 			{
@@ -642,7 +703,7 @@ namespace DatasetIntegrityPlugin
 			}
 			else if (folderList.Length > 1)
 			{
-				if (!PossiblyRenameSupersededFolder(folderList, ".D"))
+				if (!PossiblyRenameSupersededFolder(folderList, clsInstrumentClassInfo.DOT_D_EXTENSION))
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -654,7 +715,7 @@ namespace DatasetIntegrityPlugin
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
-			// Verify size of analysis.baf file
+			// Verify size of the analysis.baf file
 			string dataFileNamePath = Path.Combine(folderList[0], "analysis.baf");
 			dataFileSize = GetFileSize(dataFileNamePath);
 			if (dataFileSize <= BAF_FILE_MIN_SIZE_KB)
@@ -712,7 +773,7 @@ namespace DatasetIntegrityPlugin
 			}
 			else if (folderList.Length > 1)
 			{
-				if (!PossiblyRenameSupersededFolder(folderList, ".D"))
+				if (!PossiblyRenameSupersededFolder(folderList, clsInstrumentClassInfo.DOT_D_EXTENSION))
 					return EnumCloseOutType.CLOSEOUT_FAILED;				
 			}
 
@@ -724,7 +785,7 @@ namespace DatasetIntegrityPlugin
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
-			// Verify size of analysis.baf file
+			// Verify size of the analysis.baf file
 			string tempFileNamePath = Path.Combine(folderList[0], "analysis.baf");
 			dataFileSize = GetFileSize(tempFileNamePath);
 			if (dataFileSize <= BAF_FILE_MIN_SIZE_KB)

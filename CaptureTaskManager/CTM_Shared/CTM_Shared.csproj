@@ -43,6 +43,7 @@
   <ItemGroup>
     <Compile Include="cfGlobalStuff.cs" />
     <Compile Include="clsFailedResultsCopier.cs" />
+    <Compile Include="clsInstrumentClassInfo.cs" />
     <Compile Include="clsLogTools.cs" />
     <Compile Include="clsNetworkConnection.cs" />
     <Compile Include="clsStatusData.cs" />
