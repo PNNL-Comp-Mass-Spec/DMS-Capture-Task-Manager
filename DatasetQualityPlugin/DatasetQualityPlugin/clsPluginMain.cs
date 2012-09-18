@@ -134,8 +134,11 @@ namespace DatasetQualityPlugin
 				case clsInstrumentClassInfo.eInstrumentClass.Finnigan_Ion_Trap:
 				case clsInstrumentClassInfo.eInstrumentClass.LTQ_FT:
 				case clsInstrumentClassInfo.eInstrumentClass.Thermo_Exactive:
-				case clsInstrumentClassInfo.eInstrumentClass.Triple_Quad:
 					dataFilePathRemote = Path.Combine(datasetFolder, m_Dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
+					break;
+				case clsInstrumentClassInfo.eInstrumentClass.Triple_Quad:
+					// Quameter crashes on TSQ files; skip them
+					dataFilePathRemote = string.Empty;
 					break;
 				default:
 					dataFilePathRemote = string.Empty;
