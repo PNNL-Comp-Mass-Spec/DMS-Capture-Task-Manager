@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -38,11 +38,12 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CTM_Shared">
+    <Reference Include="CTM_Shared, Version=1.2.4643.27917, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\DeployedFiles\CTM_Shared.dll</HintPath>
     </Reference>
-    <Reference Include="MSFileInfoScannerInterfaces">
-      <HintPath>..\..\RefLib\MSFileInfoScannerInterfaces.dll</HintPath>
+    <Reference Include="PRISM">
+      <HintPath>..\..\RefLib\PRISM.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
@@ -58,6 +59,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="clsMetaDataFile.cs" />
     <Compile Include="clsPluginMain.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

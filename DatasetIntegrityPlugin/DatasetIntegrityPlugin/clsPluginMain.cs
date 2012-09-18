@@ -86,15 +86,15 @@ namespace DatasetIntegrityPlugin
 			string dataFileNamePath;
 
 			// Select which tests will be performed based on instrument class
-			string instClass = m_TaskParams.GetParam("Instrument_Class");
+			string instClassName = m_TaskParams.GetParam("Instrument_Class");
 
-			msg = "Instrument class: " + instClass;
+			msg = "Instrument class: " + instClassName;
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
-			clsInstrumentClassInfo.eInstrumentClass instrumentClass = clsInstrumentClassInfo.GetInstrumentClass(instClass);
+			clsInstrumentClassInfo.eInstrumentClass instrumentClass = clsInstrumentClassInfo.GetInstrumentClass(instClassName);
 			if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Unknown)
 			{
-				msg = "Instrument class not recognized: " + instClass;
+				msg = "Instrument class not recognized: " + instClassName;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 				mRetData.CloseoutMsg = msg;
 				mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -148,7 +148,7 @@ namespace DatasetIntegrityPlugin
 					mRetData.CloseoutType = TestAgilentTOFV2Folder(datasetFolder);
 					break;
 				default:
-					msg = "No integrity test available for instrument class " + instClass;
+					msg = "No integrity test available for instrument class " + instClassName;
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
 					mRetData.EvalMsg = msg;
 					mRetData.EvalCode = EnumEvalCode.EVAL_CODE_NOT_EVALUATED;
