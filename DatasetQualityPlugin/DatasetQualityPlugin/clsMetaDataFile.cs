@@ -6,7 +6,8 @@
 // Created 10/29/2009
 //
 // Last modified 10/29/2009
-//						11/03/2009 (DAC) - Corrected bug in XML formatting
+//               11/03/2009 mem - Corrected bug in XML formatting
+//               09/17/2012 mem - Moved from the DatasetInfo plugin to the DatasetQuality plugin
 //
 //*********************************************************************************************************
 using System;
@@ -17,7 +18,7 @@ using CaptureTaskManager;
 using System.Xml;
 using System.IO;
 
-namespace DatasetInfoPlugin
+namespace DatasetQualityPlugin
 {
 	public class clsMetaDataFile
 	{
@@ -52,13 +53,13 @@ namespace DatasetInfoPlugin
 					// Root level element
 					xWriter.WriteStartElement("Root");
 
-					// Loop through the task parameters, selecting only the ones beginning with "meta_"
+					// Loop through the task parameters, selecting only the ones beginning with "Meta_"
 					foreach (string testKey in TaskParams.TaskDictionary.Keys)
 					{
-						if (testKey.StartsWith("meta_"))
+						if (testKey.StartsWith("Meta_"))
 						{
 							// This parameter is metadata, so write it out
-							tmpStr = testKey.Replace("meta_", "");
+							tmpStr = testKey.Replace("Meta_", "");
 							xWriter.WriteElementString(tmpStr, TaskParams.GetParam(testKey));
 						}
 					}
