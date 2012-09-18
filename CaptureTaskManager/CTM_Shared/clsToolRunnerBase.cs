@@ -139,6 +139,18 @@ namespace CaptureTaskManager
 
 		}
 
+		protected void DeleteFileIgnoreErrors(string sFilePath)
+		{
+			try
+			{
+				System.IO.File.Delete(sFilePath);
+			}
+			catch
+			{
+				// Ignore errors here
+			}
+		}
+
 		protected int ExecuteSP(System.Data.SqlClient.SqlCommand spCmd, string connStr, int MaxRetryCount)
 		{
 			int resCode = -9999;

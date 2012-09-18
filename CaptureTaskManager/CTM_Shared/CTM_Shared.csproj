@@ -34,6 +34,9 @@
     <Reference Include="log4net">
       <HintPath>..\..\RefLib\log4net.dll</HintPath>
     </Reference>
+    <Reference Include="PRISM">
+      <HintPath>..\..\RefLib\PRISM.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="Microsoft.CSharp" />
@@ -46,6 +49,7 @@
     <Compile Include="clsInstrumentClassInfo.cs" />
     <Compile Include="clsLogTools.cs" />
     <Compile Include="clsNetworkConnection.cs" />
+    <Compile Include="clsRunDosProgram.cs" />
     <Compile Include="clsStatusData.cs" />
     <Compile Include="clsToolReturnData.cs" />
     <Compile Include="clsToolRunnerBase.cs" />
