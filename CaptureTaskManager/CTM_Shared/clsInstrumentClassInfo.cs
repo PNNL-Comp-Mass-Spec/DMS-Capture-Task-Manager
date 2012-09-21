@@ -62,29 +62,6 @@ namespace CaptureTaskManager
 		public const string DOT_CDF_EXTENSION = ".cdf";
 		#endregion
 
-		#region "Instrument Class Constants"
-		public const string INST_CLASS_FINNIGAN_ION_TRAP = "finnigan_ion_trap";
-		public const string INST_CLASS_LTQ_FT = "ltq_ft";
-		public const string INST_CLASS_TRIPLE_QUAD = "triple_quad";
-		public const string INST_CLASS_THERMO_EXACTIVE = "thermo_exactive";
-		public const string INST_CLASS_AGILENT_ION_TRAP = "agilent_ion_trap";
-		public const string INST_CLASS_AGILENT_TOF = "agilent_tof";
-		public const string INST_CLASS_AGILENT_TOF_V2 = "agilent_tof_v2";
-		public const string INST_CLASS_BRUKER_AMAZON_ION_TRAP = "bruker_amazon_ion_trap";
-		public const string INST_CLASS_BRUKERFT_BAF = "brukerft_baf";
-		public const string INST_CLASS_BRUKERFTMS = "brukerftms";
-		public const string INST_CLASS_BRUKERMALDI_IMAGING = "brukermaldi_imaging";
-		public const string INST_CLASS_BRUKERMALDI_SPOT = "brukermaldi_spot";
-		public const string INST_CLASS_BRUKERTOF_BAF = "brukertof_baf";
-		public const string INST_CLASS_DATA_FOLDERS = "data_folders";
-		public const string INST_CLASS_FINNIGAN_FTICR = "finnigan_fticr";
-		public const string INST_CLASS_IMS_AGILENT_TOF = "ims_agilent_tof";
-		public const string INST_CLASS_MICROMASS_QTOF = "micromass_qtof";
-		public const string INST_CLASS_QSTAR_QTOF = "qstar_qtof";
-		public const string INST_CLASS_SCIEX_QTRAP = "sciex_qtrap";
-		public const string INST_CLASS_SCIEX_TRIPLETOF = "sciex_tripletof";
-		#endregion
-
 		#region "Enums"
 
 		public enum eRawDataType
@@ -126,7 +103,8 @@ namespace CaptureTaskManager
 			Micromass_QTOF = 17,		// QTOF_MM1								(last used in 2007)
 			QStar_QTOF = 18,			// QTOF_1322							(last used in 2003)
 			Sciex_QTrap = 19,			// QTrap01
-			Sciex_TripleTOF = 20		// WashU_TripleTOF5600
+			Sciex_TripleTOF = 20,		// WashU_TripleTOF5600
+			PrepHPLC = 21				// PrepHPLC1, PrepHPLC2
 		}
 
 		#endregion
