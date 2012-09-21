@@ -189,15 +189,16 @@ namespace DatasetInfoPlugin
 
 			// Set up the params for the MS file scanner
 			m_MsFileScanner.DSInfoDBPostingEnabled = false;
-			m_MsFileScanner.SaveTICAndBPIPlots = bool.Parse(m_TaskParams.GetParam("SaveTICAndBPIPlots"));
-			m_MsFileScanner.SaveLCMS2DPlots = bool.Parse(m_TaskParams.GetParam("SaveLCMS2DPlots"));
-			m_MsFileScanner.ComputeOverallQualityScores = bool.Parse(m_TaskParams.GetParam("ComputeOverallQualityScores"));
-			m_MsFileScanner.CreateDatasetInfoFile = bool.Parse(m_TaskParams.GetParam("CreateDatasetInfoFile"));
-			m_MsFileScanner.LCMS2DPlotMZResolution = float.Parse(m_TaskParams.GetParam("LCMS2DPlotMZResolution"));
-			m_MsFileScanner.LCMS2DPlotMaxPointsToPlot = int.Parse(m_TaskParams.GetParam("LCMS2DPlotMaxPointsToPlot"));
-			m_MsFileScanner.LCMS2DPlotMinPointsPerSpectrum = int.Parse(m_TaskParams.GetParam("LCMS2DPlotMinPointsPerSpectrum"));
-			m_MsFileScanner.LCMS2DPlotMinIntensity = float.Parse(m_TaskParams.GetParam("LCMS2DPlotMinIntensity"));
-			m_MsFileScanner.LCMS2DOverviewPlotDivisor = int.Parse(m_TaskParams.GetParam("LCMS2DOverviewPlotDivisor"));
+			m_MsFileScanner.SaveTICAndBPIPlots = m_TaskParams.GetParam("SaveTICAndBPIPlots", false);
+			m_MsFileScanner.SaveLCMS2DPlots = m_TaskParams.GetParam("SaveLCMS2DPlots", false);
+			m_MsFileScanner.ComputeOverallQualityScores = m_TaskParams.GetParam("ComputeOverallQualityScores", false);
+			m_MsFileScanner.CreateDatasetInfoFile = m_TaskParams.GetParam("CreateDatasetInfoFile", false);
+
+			m_MsFileScanner.LCMS2DPlotMZResolution = m_TaskParams.GetParam("LCMS2DPlotMZResolution", (float)0.4);
+			m_MsFileScanner.LCMS2DPlotMaxPointsToPlot = m_TaskParams.GetParam("LCMS2DPlotMaxPointsToPlot", 500000);
+			m_MsFileScanner.LCMS2DPlotMinPointsPerSpectrum = m_TaskParams.GetParam("LCMS2DPlotMinPointsPerSpectrum", 2);
+			m_MsFileScanner.LCMS2DPlotMinIntensity = m_TaskParams.GetParam("LCMS2DPlotMinIntensity", (float)0);
+			m_MsFileScanner.LCMS2DOverviewPlotDivisor = m_TaskParams.GetParam("LCMS2DOverviewPlotDivisor", 10);
 
 			// Get the input file name
 			string rawDataTypeName = "???";
@@ -275,11 +276,14 @@ namespace DatasetInfoPlugin
 			else
 			{
 				int iPostCount = 0;
+				int iDatasetID;
+				string connectionString = m_MgrParams.GetParam("connectionstring");
+
+				iDatasetID = m_TaskParams.GetParam("Dataset_ID", 0);
 
 				while (iPostCount <= 2)
 				{
-					success = m_MsFileScanner.PostDatasetInfoUseDatasetID(int.Parse(m_TaskParams.GetParam("Dataset_ID")),
-												m_MgrParams.GetParam("connectionstring"), MS_FILE_SCANNER_DS_INFO_SP);
+					success = m_MsFileScanner.PostDatasetInfoUseDatasetID(iDatasetID, connectionString, MS_FILE_SCANNER_DS_INFO_SP);
 
 					if (success)
 						break;
@@ -335,7 +339,18 @@ namespace DatasetInfoPlugin
 			bool bIsFile = true;
 			bSkipPlots = false;
 
+			// Determine the Instrument Class and RawDataType
+			string instClassName = m_TaskParams.GetParam("Instrument_Class");
 			rawDataTypeName = m_TaskParams.GetParam("rawdatatype", "UnknownRawDataType");
+
+			clsInstrumentClassInfo.eInstrumentClass instrumentClass = clsInstrumentClassInfo.GetInstrumentClass(instClassName);
+			if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Unknown)
+			{
+				m_Msg = "Instrument class not recognized: " + instClassName;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
+				return UNKNOWN_FILE_TYPE;
+			}
+
 			clsInstrumentClassInfo.eRawDataType rawDataType = clsInstrumentClassInfo.GetRawDataType(rawDataTypeName);
 			if (rawDataType == clsInstrumentClassInfo.eRawDataType.Unknown)
 			{
@@ -385,10 +400,17 @@ namespace DatasetInfoPlugin
 					bSkipPlots = false;
 					break;
 				case clsInstrumentClassInfo.eRawDataType.AgilentDFolder:
-					// Agilent_GC_MS_01, AgQTOF03, AgQTOF04
+					// Agilent_GC_MS_01, AgQTOF03, AgQTOF04, PrepHPLC1
 					sFileOrFolderName = dataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
 					bIsFile = false;
 					bSkipPlots = false;
+
+					if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.PrepHPLC)
+					{
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Skipping MSFileInfoScanner since PrepHPLC dataset");
+						return INVALID_FILE_TYPE;
+					}
+
 					break;
 
 				case clsInstrumentClassInfo.eRawDataType.BrukerMALDIImaging:

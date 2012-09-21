@@ -73,6 +73,75 @@ namespace CaptureTaskManager
 			}
 
 			/// <summary>
+			/// Gets a stored parameter
+			/// </summary>
+			/// <param name="name">Parameter name</param>
+			/// <param name="valueIfMissing">Value to retrun if the parameter does not exist</param>
+			/// <returns>Parameter value if found, otherwise empty string</returns>
+			public bool GetParam(string name, bool valueIfMissing)
+			{
+				string valueText;
+				bool value;
+				if (m_JobParams.TryGetValue(name, out valueText))
+				{
+					if (bool.TryParse(valueText, out value))
+						return value;
+					else
+						return valueIfMissing;
+				}
+				else
+				{
+					return valueIfMissing;
+				}
+			}
+
+			/// <summary>
+			/// Gets a stored parameter
+			/// </summary>
+			/// <param name="name">Parameter name</param>
+			/// <param name="valueIfMissing">Value to retrun if the parameter does not exist</param>
+			/// <returns>Parameter value if found, otherwise empty string</returns>
+			public float GetParam(string name, float valueIfMissing)
+			{
+				string valueText;
+				float value;
+				if (m_JobParams.TryGetValue(name, out valueText))
+				{
+					if (float.TryParse(valueText, out value))
+						return value;
+					else
+						return valueIfMissing;
+				}
+				else
+				{
+					return valueIfMissing;
+				}
+			}
+		
+			/// <summary>
+			/// Gets a stored parameter
+			/// </summary>
+			/// <param name="name">Parameter name</param>
+			/// <param name="valueIfMissing">Value to retrun if the parameter does not exist</param>
+			/// <returns>Parameter value if found, otherwise empty string</returns>
+			public int GetParam(string name, int valueIfMissing)
+			{
+				string valueText;
+				int value;
+				if (m_JobParams.TryGetValue(name, out valueText))
+				{
+					if (int.TryParse(valueText, out value))
+						return value;
+					else
+						return valueIfMissing;
+				}
+				else
+				{
+					return valueIfMissing;
+				}
+			}
+
+			/// <summary>
 			/// Adds a parameter
 			/// </summary>
 			/// <param name="paramName">Name of parameter</param>
