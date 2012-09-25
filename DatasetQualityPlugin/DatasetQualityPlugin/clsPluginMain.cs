@@ -359,11 +359,22 @@ namespace DatasetQualityPlugin
 		/// <returns></returns>
 		protected string GetQuameterPath()
 		{
+			// Look for parameter 64bitQuameter
+			// To add this to a job, use the following command in SSMS:
+			// exec AddUpdateJobParameter 976722, 'JobParameters', '64bitQuameter', 'True'
+			bool bUse64Bit = m_TaskParams.GetParam("64bitQuameter", false);
+
 			string sQuameterFolder = m_MgrParams.GetParam("QuameterProgLoc", string.Empty);
+
 			if (string.IsNullOrEmpty(sQuameterFolder))
 				return string.Empty;
 			else
-				return Path.Combine(sQuameterFolder, "Quameter.exe");
+			{
+				if (bUse64Bit)
+					return Path.Combine(sQuameterFolder, "64bit\\Quameter.exe");
+				else
+					return Path.Combine(sQuameterFolder, "Quameter.exe");
+			}
 		}
 
 
@@ -750,7 +761,9 @@ namespace DatasetQualityPlugin
 
 				// Copy the appropriate config file to the working directory
 				string configFileNameSource;
-				string configFileNameTarget;
+
+				string configFilePathSource;
+				string configFilePathTarget;
 
 				switch (instrumentClass)
 				{
@@ -771,17 +784,24 @@ namespace DatasetQualityPlugin
 						break;
 				}
 
-				configFileNameSource = Path.Combine(fiQuameter.Directory.FullName, configFileNameSource);
-				configFileNameTarget = Path.Combine(m_WorkDir, "quameter.cfg");
+				configFilePathSource = Path.Combine(fiQuameter.Directory.FullName, configFileNameSource);
+				configFilePathTarget = Path.Combine(m_WorkDir, "quameter.cfg");
 
-				if (!System.IO.File.Exists(configFileNameSource))
+				if (!System.IO.File.Exists(configFilePathSource) && fiQuameter.Directory.FullName.ToLower().EndsWith("64bit"))
 				{
-					mRetData.CloseoutMsg = "Quameter parameter file not found " + configFileNameSource;
+					// Using the 64-bit version of quameter
+					// Look for the .cfg file up one directory
+					configFilePathSource = Path.Combine(fiQuameter.Directory.Parent.FullName, configFileNameSource);
+				}
+
+				if (!System.IO.File.Exists(configFilePathSource))
+				{
+					mRetData.CloseoutMsg = "Quameter parameter file not found " + configFilePathSource;
 					mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 					return false;
 				}
 
-				System.IO.File.Copy(configFileNameSource, configFileNameTarget, false);
+				System.IO.File.Copy(configFilePathSource, configFilePathTarget, true);
 
 				// Copy the .Raw file to the working directory
 				if (m_DebugLevel >= 4)
@@ -793,7 +813,7 @@ namespace DatasetQualityPlugin
 
 				try
 				{
-					System.IO.File.Copy(dataFilePathRemote, dataFilePathLocal);
+					System.IO.File.Copy(dataFilePathRemote, dataFilePathLocal, true);
 				}
 				catch (Exception ex)
 				{
