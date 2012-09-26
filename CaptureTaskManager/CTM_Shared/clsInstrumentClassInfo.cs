@@ -13,18 +13,28 @@ namespace CaptureTaskManager
 		//
 		//Agilent ion trap data, Agilent TOF data
 		public const string RAW_DATA_TYPE_DOT_D_FOLDERS = "dot_d_folders";
+
 		//FTICR data, including instrument 3T_FTICR, 7T_FTICR, 9T_FTICR, 11T_FTICR, 11T_FTICR_B, and 12T_FTICR 
 		public const string RAW_DATA_TYPE_ZIPPED_S_FOLDERS = "zipped_s_folders";
+
 		//Micromass QTOF data
 		public const string RAW_DATA_TYPE_DOT_RAW_FOLDER = "dot_raw_folder";
+
 		//Finnigan ion trap/LTQ-FT data
 		public const string RAW_DATA_TYPE_DOT_RAW_FILES = "dot_raw_files";
+
 		//Agilent/QSTAR TOF data
 		public const string RAW_DATA_TYPE_DOT_WIFF_FILES = "dot_wiff_files";
+
+		//Sciex QTrap data
+		public const string RAW_DATA_TYPE_SCIEX_WIFF_FILES = "sciex_wiff_files";
+
 		//IMS_UIMF (IMS_Agilent_TOF in DMS)
 		public const string RAW_DATA_TYPE_DOT_UIMF_FILES = "dot_uimf_files";
+
 		//mzXML
 		public const string RAW_DATA_TYPE_DOT_MZXML_FILES = "dot_mzxml_files";
+
 		//mzML
 		public const string RAW_DATA_TYPE_DOT_MZML_FILES = "dot_mzml_files";
 
@@ -78,7 +88,8 @@ namespace CaptureTaskManager
 			BrukerFTFolder = 9,			// .D folder is the analysis.baf file; there is also .m subfolder that has a apexAcquisition.method file
 			BrukerMALDISpot = 10,		// has a .EMF file and a single sub-folder that has an acqu file and fid file
 			BrukerMALDIImaging = 11,	// Series of zipped subfolders, with names like 0_R00X329.zip; subfolders inside the .Zip files have fid files
-			BrukerTOFBaf = 12			// Used by Maxis01; Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
+			BrukerTOFBaf = 12,			// Used by Maxis01; Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
+			SciexWiffFile = 13
 		}
 
 		public enum eInstrumentClass
@@ -155,6 +166,8 @@ namespace CaptureTaskManager
 					return eRawDataType.ThermoRawFile;
 				case RAW_DATA_TYPE_DOT_WIFF_FILES:
 					return eRawDataType.AgilentQStarWiffFile;
+				case RAW_DATA_TYPE_SCIEX_WIFF_FILES:
+					return eRawDataType.SciexWiffFile;
 				case RAW_DATA_TYPE_DOT_UIMF_FILES:
 					return eRawDataType.UIMF;
 				case RAW_DATA_TYPE_DOT_MZXML_FILES:
@@ -190,6 +203,8 @@ namespace CaptureTaskManager
 				return RAW_DATA_TYPE_DOT_RAW_FILES;
 			case eRawDataType.AgilentQStarWiffFile:
 				return RAW_DATA_TYPE_DOT_WIFF_FILES;
+			case eRawDataType.SciexWiffFile:
+				return RAW_DATA_TYPE_SCIEX_WIFF_FILES;
 			case eRawDataType.UIMF:
 				return RAW_DATA_TYPE_DOT_UIMF_FILES;
 			case eRawDataType.mzXML:

@@ -393,12 +393,14 @@ namespace DatasetInfoPlugin
 					sFileOrFolderName = dataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION;
 					bIsFile = true;
 					break;
-				case clsInstrumentClassInfo.eRawDataType.AgilentQStarWiffFile:
+			
+				case clsInstrumentClassInfo.eRawDataType.SciexWiffFile:
 					// QTrap01
 					sFileOrFolderName = dataset + clsInstrumentClassInfo.DOT_WIFF_EXTENSION;
 					bIsFile = true;
 					bSkipPlots = false;
 					break;
+
 				case clsInstrumentClassInfo.eRawDataType.AgilentDFolder:
 					// Agilent_GC_MS_01, AgQTOF03, AgQTOF04, PrepHPLC1
 					sFileOrFolderName = dataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
@@ -442,8 +444,8 @@ namespace DatasetInfoPlugin
 
 				default:
 					// Other instruments; do not process
-					// dot_wiff_files: Agilent_TOF2
-					// bruker_maldi_spot: BrukerTOF_01
+					// dot_wiff_files (AgilentQStarWiffFile): AgTOF02
+					// bruker_maldi_spot (BrukerMALDISpot): BrukerTOF_01
 					m_Msg = "Data type " + rawDataType + " not recognized";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "clsPluginMain.GetDataFileOrFolderName: " + m_Msg);
 					return INVALID_FILE_TYPE;
