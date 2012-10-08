@@ -33,6 +33,7 @@ namespace DatasetIntegrityPlugin
 		const float UIMF_FILE_MIN_SIZE_KB = 100;
 		const float AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB = 50;
 		const float AGILENT_DATA_MS_FILE_MIN_SIZE_KB = 75;
+		const float MCF_FILE_MIN_SIZE_KB = 2000;		// Malding imaging file
 
 		#endregion
 
@@ -127,10 +128,13 @@ namespace DatasetIntegrityPlugin
 					mRetData.CloseoutType = TestIMSAgilentTOF(dataFileNamePath);
 					break;
 				case clsInstrumentClassInfo.eInstrumentClass.BrukerFT_BAF:
-					mRetData.CloseoutType = TestBrukerFT_BafFolder(datasetFolder);
+					mRetData.CloseoutType = TestBrukerFT_Folder(datasetFolder, requireBAFFile:true, requireMCFFile:false);
 					break;
 				case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging:
 					mRetData.CloseoutType = TestBrukerMaldiImagingFolder(datasetFolder);
+					break;
+				case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging_V2:
+					mRetData.CloseoutType = TestBrukerFT_Folder(datasetFolder, requireBAFFile:false, requireMCFFile:false);
 					break;
 				case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Spot:
 					mRetData.CloseoutType = TestBrukerMaldiSpotFolder(datasetFolder);
@@ -344,7 +348,7 @@ namespace DatasetIntegrityPlugin
 		/// <returns>Enum indicating test result</returns>
 		private EnumCloseOutType TestAgilentIonTrapFolder(string datasetNamePath)
 		{
-			float dataFileSize;
+			float dataFileSizeKB;
 
 			string instName = m_TaskParams.GetParam("Instrument_Name");
 
@@ -372,10 +376,10 @@ namespace DatasetIntegrityPlugin
 			}
 
 			// Verify size of the DATA.MS file
-			dataFileSize = GetFileSize(tempFileNamePath);
-			if (dataFileSize <= AGILENT_DATA_MS_FILE_MIN_SIZE_KB)
+			dataFileSizeKB = GetFileSize(tempFileNamePath);
+			if (dataFileSizeKB <= AGILENT_DATA_MS_FILE_MIN_SIZE_KB)
 			{
-				ReportFileSizeTooSmall("DATA.MS", tempFileNamePath, dataFileSize, AGILENT_DATA_MS_FILE_MIN_SIZE_KB);
+				ReportFileSizeTooSmall("DATA.MS", tempFileNamePath, dataFileSizeKB, AGILENT_DATA_MS_FILE_MIN_SIZE_KB);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -391,7 +395,7 @@ namespace DatasetIntegrityPlugin
 		/// <returns>Enum indicating test result</returns>
 		private EnumCloseOutType TestAgilentTOFV2Folder(string datasetNamePath)
 		{
-			float dataFileSize;
+			float dataFileSizeKB;
 
 			string instName = m_TaskParams.GetParam("Instrument_Name");
 
@@ -435,10 +439,10 @@ namespace DatasetIntegrityPlugin
 			}
 
 			// Verify size of the MSScan.bin file
-			dataFileSize = GetFileSize(tempFileNamePath);
-			if (dataFileSize <= AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB)
+			dataFileSizeKB = GetFileSize(tempFileNamePath);
+			if (dataFileSizeKB <= AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB)
 			{
-				ReportFileSizeTooSmall("MSScan.bin", tempFileNamePath, dataFileSize, AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB);
+				ReportFileSizeTooSmall("MSScan.bin", tempFileNamePath, dataFileSizeKB, AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -477,7 +481,7 @@ namespace DatasetIntegrityPlugin
 		/// <returns>Enum indicating success or failure</returns>
 		private EnumCloseOutType TestSciexQtrapFile(string dataFileNamePath, string datasetName)
 		{
-			float dataFileSize;
+			float dataFileSizeKB;
 			string tempFileNamePath;
 
 			// Verify .wiff file exists in storage folder
@@ -490,12 +494,12 @@ namespace DatasetIntegrityPlugin
 			}
 
 			// Get size of .wiff file
-			dataFileSize = GetFileSize(tempFileNamePath);
+			dataFileSizeKB = GetFileSize(tempFileNamePath);
 
 			// Check .wiff file min size
-			if (dataFileSize < SCIEX_WIFF_FILE_MIN_SIZE_KB)
+			if (dataFileSizeKB < SCIEX_WIFF_FILE_MIN_SIZE_KB)
 			{
-				ReportFileSizeTooSmall("Data", tempFileNamePath, dataFileSize, SCIEX_WIFF_FILE_MIN_SIZE_KB);
+				ReportFileSizeTooSmall("Data", tempFileNamePath, dataFileSizeKB, SCIEX_WIFF_FILE_MIN_SIZE_KB);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -509,12 +513,12 @@ namespace DatasetIntegrityPlugin
 			}
 
 			// Get size of .wiff.scan file
-			dataFileSize = GetFileSize(tempFileNamePath);
+			dataFileSizeKB = GetFileSize(tempFileNamePath);
 
 			// Check .wiff.scan file min size
-			if (dataFileSize < SCIEX_WIFF_SCAN_FILE_MIN_SIZE_KB)
+			if (dataFileSizeKB < SCIEX_WIFF_SCAN_FILE_MIN_SIZE_KB)
 			{
-				ReportFileSizeTooSmall("Data", tempFileNamePath, dataFileSize, SCIEX_WIFF_SCAN_FILE_MIN_SIZE_KB);
+				ReportFileSizeTooSmall("Data", tempFileNamePath, dataFileSizeKB, SCIEX_WIFF_SCAN_FILE_MIN_SIZE_KB);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -572,7 +576,7 @@ namespace DatasetIntegrityPlugin
 		/// <returns></returns>
 		private EnumCloseOutType TestThermoRawFile(string dataFileNamePath, float minFileSizeKB, float maxFileSizeMB)
 		{
-			float dataFileSize;
+			float dataFileSizeKB;
 
 			// Verify file exists in storage folder
 			if (!File.Exists(dataFileNamePath))
@@ -608,19 +612,19 @@ namespace DatasetIntegrityPlugin
 			}
 
 			// Get size of data file
-			dataFileSize = GetFileSize(dataFileNamePath);
+			dataFileSizeKB = GetFileSize(dataFileNamePath);
 
 			// Check min size
-			if (dataFileSize < minFileSizeKB)
+			if (dataFileSizeKB < minFileSizeKB)
 			{
-				ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSize, minFileSizeKB);
+				ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSizeKB, minFileSizeKB);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
 			// Check max size
-			if (dataFileSize > maxFileSizeMB * 1024)
+			if (dataFileSizeKB > maxFileSizeMB * 1024)
 			{
-				ReportFileSizeTooLarge("Data", dataFileNamePath, dataFileSize, maxFileSizeMB);
+				ReportFileSizeTooLarge("Data", dataFileNamePath, dataFileSizeKB, maxFileSizeMB);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -635,7 +639,7 @@ namespace DatasetIntegrityPlugin
 		/// <returns></returns>
 		private EnumCloseOutType TestBrukerFolder(string datasetNamePath)
 		{
-			float dataFileSize;
+			float dataFileSizeKB;
 
 			// Verify 0.ser folder exists
 			if (!Directory.Exists(Path.Combine(datasetNamePath, "0.ser")))
@@ -655,8 +659,8 @@ namespace DatasetIntegrityPlugin
 			}
 
 			// Verify size of the acqus file
-			dataFileSize = GetFileSize(Path.Combine(dataFolder, "acqus"));
-			if (dataFileSize <= 0F)
+			dataFileSizeKB = GetFileSize(Path.Combine(dataFolder, "acqus"));
+			if (dataFileSizeKB <= 0F)
 			{
 				mRetData.EvalMsg = "Invalid dataset. acqus file contains no data";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
@@ -672,8 +676,8 @@ namespace DatasetIntegrityPlugin
 			}
 
 			// Verify size of the ser file
-			dataFileSize = GetFileSize(Path.Combine(dataFolder, "ser"));
-			if (dataFileSize <= 100)
+			dataFileSizeKB = GetFileSize(Path.Combine(dataFolder, "ser"));
+			if (dataFileSizeKB <= 100)
 			{
 				mRetData.EvalMsg = "Invalid dataset. ser file too small";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
@@ -691,7 +695,7 @@ namespace DatasetIntegrityPlugin
 		/// <returns>Enum indicating test result</returns>
 		private EnumCloseOutType TestBrukerTof_BafFolder(string datasetNamePath)
 		{
-			float dataFileSize;
+			float dataFileSizeKB;
 
 			// Verify only one .D folder in dataset
 			string[] folderList = Directory.GetDirectories(datasetNamePath, "*.D");
@@ -717,10 +721,10 @@ namespace DatasetIntegrityPlugin
 
 			// Verify size of the analysis.baf file
 			string dataFileNamePath = Path.Combine(folderList[0], "analysis.baf");
-			dataFileSize = GetFileSize(dataFileNamePath);
-			if (dataFileSize <= BAF_FILE_MIN_SIZE_KB)
+			dataFileSizeKB = GetFileSize(dataFileNamePath);
+			if (dataFileSizeKB <= BAF_FILE_MIN_SIZE_KB)
 			{
-				ReportFileSizeTooSmall("Analysis.baf", dataFileNamePath, dataFileSize, BAF_FILE_MIN_SIZE_KB);
+				ReportFileSizeTooSmall("Analysis.baf", dataFileNamePath, dataFileSizeKB, BAF_FILE_MIN_SIZE_KB);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -752,16 +756,21 @@ namespace DatasetIntegrityPlugin
 			return EnumCloseOutType.CLOSEOUT_SUCCESS;
 		}	// End sub
 
+
 		/// <summary>
-		/// Tests a BrukerFT_BAF folder for integrity
+		/// Tests a BrukerFT folder for integrity
 		/// </summary>
 		/// <param name="datasetNamePath">Fully qualified path to the dataset folder</param>
+		/// <param name="requireBAFFile">Set to True to require that the analysis.baf file be present</param>
+		/// <param name="requireMCFFile">Set to True to require that the analysis.baf file be present</param>
 		/// <returns>Enum indicating test result</returns>
-		private EnumCloseOutType TestBrukerFT_BafFolder(string datasetNamePath)
+		private EnumCloseOutType TestBrukerFT_Folder(string datasetNamePath, bool requireBAFFile, bool requireMCFFile)
 		{
-			float dataFileSize;
+			float dataFileSizeKB;
 
 			string instName = m_TaskParams.GetParam("Instrument_Name");
+			string tempFileNamePath = string.Empty;
+			bool fileExists = false;
 
 			// Verify only one .D folder in dataset
 			string[] folderList = Directory.GetDirectories(datasetNamePath, "*.D");
@@ -778,45 +787,82 @@ namespace DatasetIntegrityPlugin
 			}
 
 			// Verify analysis.baf file exists
-			if (!File.Exists(Path.Combine(folderList[0], "analysis.baf")))
+			tempFileNamePath = Path.Combine(folderList[0], "analysis.baf");
+			fileExists = File.Exists(tempFileNamePath);
+			if (!fileExists && requireBAFFile)
 			{
 				mRetData.EvalMsg = "Invalid dataset. analysis.baf file not found";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
-			// Verify size of the analysis.baf file
-			string tempFileNamePath = Path.Combine(folderList[0], "analysis.baf");
-			dataFileSize = GetFileSize(tempFileNamePath);
-			if (dataFileSize <= BAF_FILE_MIN_SIZE_KB)
+			if (fileExists)
 			{
-				ReportFileSizeTooSmall("Analysis.baf", tempFileNamePath, dataFileSize, BAF_FILE_MIN_SIZE_KB);
+				// Verify size of the analysis.baf file
+				dataFileSizeKB = GetFileSize(tempFileNamePath);
+				if (dataFileSizeKB <= BAF_FILE_MIN_SIZE_KB)
+				{
+					ReportFileSizeTooSmall("Analysis.baf", tempFileNamePath, dataFileSizeKB, BAF_FILE_MIN_SIZE_KB);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+			}
+
+			
+			// Verify that at least one .mcf file exists
+			DirectoryInfo diDatasetFolder = new DirectoryInfo(folderList[0]);
+			tempFileNamePath = string.Empty;
+			dataFileSizeKB = 0;
+			fileExists = false;
+			foreach (FileInfo fiFile in diDatasetFolder.GetFiles("*.mcf"))
+			{
+				if (fiFile.Length > dataFileSizeKB * 1024)
+				{
+					dataFileSizeKB = (float)fiFile.Length / (1024F); 
+					tempFileNamePath = fiFile.Name;
+					fileExists = true;
+				}
+			}
+
+			if (!fileExists && requireMCFFile)
+			{
+				mRetData.EvalMsg = "Invalid dataset. .mcf file not found";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
-			// Verify ser file exists
-			if (File.Exists(Path.Combine(folderList[0], "ser")))
+			if (fileExists)
 			{
-				// ser file found; verify size
-				tempFileNamePath = Path.Combine(folderList[0], "ser");
-				dataFileSize = GetFileSize(tempFileNamePath);
-				if (dataFileSize <= SER_FILE_MIN_SIZE_KB)
+				// Verify size of the largest .mcf file
+				if (dataFileSizeKB <= MCF_FILE_MIN_SIZE_KB)
 				{
-					ReportFileSizeTooSmall("ser", tempFileNamePath, dataFileSize, SER_FILE_MIN_SIZE_KB);
+					ReportFileSizeTooSmall(".MCF", tempFileNamePath, dataFileSizeKB, MCF_FILE_MIN_SIZE_KB);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+			}
+
+			// Verify ser file (if it exists)
+			tempFileNamePath = Path.Combine(folderList[0], "ser");
+			if (File.Exists(tempFileNamePath))
+			{
+				// ser file found; verify its size				
+				dataFileSizeKB = GetFileSize(tempFileNamePath);
+				if (dataFileSizeKB <= SER_FILE_MIN_SIZE_KB)
+				{
+					ReportFileSizeTooSmall("ser", tempFileNamePath, dataFileSizeKB, SER_FILE_MIN_SIZE_KB);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 			}
 			else
 			{
 				// Check to see if a fid file exists instead of a ser file
-				if (File.Exists(Path.Combine(folderList[0], "fid")))
+				tempFileNamePath = Path.Combine(folderList[0], "fid");
+				if (File.Exists(tempFileNamePath))
 				{
-					// fid file found; verify size
-					tempFileNamePath = Path.Combine(folderList[0], "fid");
-					dataFileSize = GetFileSize(tempFileNamePath);
-					if (dataFileSize <= FID_FILE_MIN_SIZE_KB)
+					// fid file found; verify size					
+					dataFileSizeKB = GetFileSize(tempFileNamePath);
+					if (dataFileSizeKB <= FID_FILE_MIN_SIZE_KB)
 					{
-						ReportFileSizeTooSmall("fid", tempFileNamePath, dataFileSize, FID_FILE_MIN_SIZE_KB);
+						ReportFileSizeTooSmall("fid", tempFileNamePath, dataFileSizeKB, FID_FILE_MIN_SIZE_KB);
 						return EnumCloseOutType.CLOSEOUT_FAILED;
 					}
 				}
@@ -858,16 +904,17 @@ namespace DatasetIntegrityPlugin
 			}
 
 			tempFileNamePath = Path.Combine(methodFolderPath, "apexAcquisition.method");
-			dataFileSize = GetFileSize(tempFileNamePath);
-			if (dataFileSize <= ACQ_METHOD_FILE_MIN_SIZE_KB)
+			dataFileSizeKB = GetFileSize(tempFileNamePath);
+			if (dataFileSizeKB <= ACQ_METHOD_FILE_MIN_SIZE_KB)
 			{
-				ReportFileSizeTooSmall("apexAcquisition.method", tempFileNamePath, dataFileSize, ACQ_METHOD_FILE_MIN_SIZE_KB);
+				ReportFileSizeTooSmall("apexAcquisition.method", tempFileNamePath, dataFileSizeKB, ACQ_METHOD_FILE_MIN_SIZE_KB);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
 			// If we got to here, everything is OK
 			return EnumCloseOutType.CLOSEOUT_SUCCESS;
 		}	// End sub
+
 
 		/// <summary>
 		/// Tests a BrukerMALDI_Imaging folder for integrity
@@ -949,7 +996,7 @@ namespace DatasetIntegrityPlugin
 
 		private EnumCloseOutType TestIMSAgilentTOF(string dataFileNamePath)
 		{
-			float dataFileSize;
+			float dataFileSizeKB;
 
 			// Verify file exists in storage folder
 			if (!File.Exists(dataFileNamePath))
@@ -960,12 +1007,12 @@ namespace DatasetIntegrityPlugin
 			}
 
 			// Get size of data file
-			dataFileSize = GetFileSize(dataFileNamePath);
+			dataFileSizeKB = GetFileSize(dataFileNamePath);
 
 			// Check min size
-			if (dataFileSize < UIMF_FILE_MIN_SIZE_KB)
+			if (dataFileSizeKB < UIMF_FILE_MIN_SIZE_KB)
 			{
-				ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSize, UIMF_FILE_MIN_SIZE_KB);
+				ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSizeKB, UIMF_FILE_MIN_SIZE_KB);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 

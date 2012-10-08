@@ -202,7 +202,8 @@ namespace DatasetInfoPlugin
 
 			// Get the input file name
 			string rawDataTypeName = "???";
-			string sFileOrFolderName = GetDataFileOrFolderName(sourceFolder, out bSkipPlots, out rawDataTypeName);
+			clsInstrumentClassInfo.eInstrumentClass instrumentClass = clsInstrumentClassInfo.eInstrumentClass.Unknown;
+			string sFileOrFolderName = GetDataFileOrFolderName(sourceFolder, out bSkipPlots, out rawDataTypeName, out instrumentClass);
 
 			if (sFileOrFolderName == UNKNOWN_FILE_TYPE)
 			{
@@ -215,9 +216,9 @@ namespace DatasetInfoPlugin
 			if (sFileOrFolderName == INVALID_FILE_TYPE)
 			{
 				// DS quality test not implemented for this file type
-				result.CloseoutMsg = "";
+				result.CloseoutMsg = string.Empty;
 				result.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
-				result.EvalMsg = "Dataset quality test not implemented for data type " + rawDataTypeName;
+				result.EvalMsg = "Dataset quality test not implemented for data type " + rawDataTypeName + ", instrument class " + clsInstrumentClassInfo.GetInstrumentClassName(instrumentClass);
 				result.EvalCode = EnumEvalCode.EVAL_CODE_NOT_EVALUATED;
 				return result;
 			}
@@ -332,18 +333,20 @@ namespace DatasetInfoPlugin
 		/// </summary>
 		/// <returns>Data file or folder name; empty string if not found</returns>
 		/// <remarks>Will return UNKNOWN_FILE_TYPE or INVALID_FILE_TYPE in special circumstances</remarks>
-		private string GetDataFileOrFolderName(string inputFolder, out bool bSkipPlots, out string rawDataTypeName)
+		private string GetDataFileOrFolderName(string inputFolder, out bool bSkipPlots, out string rawDataTypeName, out clsInstrumentClassInfo.eInstrumentClass instrumentClass)
 		{
 			string dataset = m_TaskParams.GetParam("Dataset");
 			string sFileOrFolderName;
 			bool bIsFile = true;
+			bool bSkipIfDatasetFileMissing = false;
+
 			bSkipPlots = false;
 
 			// Determine the Instrument Class and RawDataType
 			string instClassName = m_TaskParams.GetParam("Instrument_Class");
 			rawDataTypeName = m_TaskParams.GetParam("rawdatatype", "UnknownRawDataType");
 
-			clsInstrumentClassInfo.eInstrumentClass instrumentClass = clsInstrumentClassInfo.GetInstrumentClass(instClassName);
+			instrumentClass = clsInstrumentClassInfo.GetInstrumentClass(instClassName);
 			if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Unknown)
 			{
 				m_Msg = "Instrument class not recognized: " + instClassName;
@@ -379,12 +382,19 @@ namespace DatasetInfoPlugin
 				case clsInstrumentClassInfo.eRawDataType.BrukerFTFolder:
 					// 12T_FTICR_B, 15T_FTICR, 9T_FTICR_B
 					// Also, Bruker_FT_IonTrap01, which is Bruker_Amazon_Ion_Trap
-					string sInstrumentClass = m_TaskParams.GetParam("Instrument_Class");
+					// 15T_FTICR_Imaging datasets with instrument class BrukerMALDI_Imaging_V2 will also have bruker_ft format; however, they may not have analysis.baf files
 
-					if (sInstrumentClass == "Bruker_Amazon_Ion_Trap")
+					if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Bruker_Amazon_Ion_Trap)
 						sFileOrFolderName = dataset + clsInstrumentClassInfo.DOT_D_EXTENSION + "\\" + "analysis.yep";
 					else
+					{
 						sFileOrFolderName = dataset + clsInstrumentClassInfo.DOT_D_EXTENSION + "\\" + "analysis.baf";
+						if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging_V2)
+						{
+							// Imaging datasets may not have an analysis.baf file; that's OK
+							bSkipIfDatasetFileMissing = true;
+						}
+					}
 
 					bIsFile = true;
 					break;
@@ -456,6 +466,13 @@ namespace DatasetInfoPlugin
 
 			if (bIsFile && !File.Exists(sFileOrFolderPath))
 			{
+				if (bSkipIfDatasetFileMissing)
+				{
+					m_Msg = "Skipping since " + sFileOrFolderName + " file does not exist";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "clsPluginMain.GetDataFileOrFolderName: " + m_Msg);
+					return INVALID_FILE_TYPE;
+				}
+
 				// File not found; look for alternate extensions
 				System.Collections.Generic.List<string> lstAlternateExtensions = new System.Collections.Generic.List<string>();
 				bool bAlternateFound = false;

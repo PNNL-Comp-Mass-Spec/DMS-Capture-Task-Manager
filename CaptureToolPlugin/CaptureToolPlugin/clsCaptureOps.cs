@@ -908,9 +908,11 @@ namespace CaptureToolPlugin
 			string sInstrumentClass = taskParams.GetParam("Instrument_Class");
 
 			string shareConnectorType = m_MgrParams.GetParam("ShareConnectorType");		// Should be PRISM or DotNET
+			string computerName = GetCurrentComputerName();
+
 			ConnectionType eConnectionType;
 
-			if ((GetCurrentComputerName() == "MONROE3") && dataset == "BW_20_2011_0909_1_01_2284")
+			if ((computerName.ToUpper() == "MONROE3") && dataset == "BW_20_2011_0909_1_01_2284")
 			{
 				// Override sourceVol, sourcePath, and m_UseBioNet when processing BW_20_2011_0909_1_01_2284 on Monroe3
 				sourceVol = "\\\\protoapps\\";
@@ -944,6 +946,19 @@ namespace CaptureToolPlugin
 			// Setup destination folder based on client/server switch
 			// True means MgrParam "perspective" =  "client" which means we will use paths like \\proto-5\Exact04\2012_1
 			// False means MgrParam "perspective" = "server" which means we use paths like E:\Exact04\2012_1
+
+			if (!m_ClientServer)
+			{
+				// Look for job parameter Storage_Server_Name in storageVolExternal
+				// If m_ClientServer=false but storageVolExternal does not contain Storage_Server_Name then auto-switch m_ClientServer to true
+
+				if (!storageVolExternal.ToLower().Contains(computerName.ToLower()))
+				{
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Auto-changing m_ClientServer to True (perspective=client) because " + storageVolExternal + " does not contain " + computerName);
+					m_ClientServer = true;
+				}
+			}
+
 			if (m_ClientServer)
 			{
 				// Example: \\proto-5\
