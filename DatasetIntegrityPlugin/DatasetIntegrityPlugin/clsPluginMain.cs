@@ -808,7 +808,8 @@ namespace DatasetIntegrityPlugin
 			}
 
 			
-			// Verify that at least one .mcf file exists
+			// Check whether any .mcf files exist
+			// Note that "*.mcf" will match files with extension .mcf and files with extension .mcf_idx
 			DirectoryInfo diDatasetFolder = new DirectoryInfo(folderList[0]);
 			tempFileNamePath = string.Empty;
 			dataFileSizeKB = 0;
@@ -825,7 +826,7 @@ namespace DatasetIntegrityPlugin
 
 			if (!fileExists && requireMCFFile)
 			{
-				mRetData.EvalMsg = "Invalid dataset. .mcf file not found";
+				mRetData.EvalMsg = "Invalid dataset; .mcf file not found";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
@@ -833,9 +834,15 @@ namespace DatasetIntegrityPlugin
 			if (fileExists)
 			{
 				// Verify size of the largest .mcf file
-				if (dataFileSizeKB <= MCF_FILE_MIN_SIZE_KB)
+				float minSizeKb;
+				if (tempFileNamePath.ToLower() == "Storage.mcf_idx".ToLower())
+					minSizeKb = 4;
+				else
+					minSizeKb = MCF_FILE_MIN_SIZE_KB;
+
+				if (dataFileSizeKB <= minSizeKb)
 				{
-					ReportFileSizeTooSmall(".MCF", tempFileNamePath, dataFileSizeKB, MCF_FILE_MIN_SIZE_KB);
+					ReportFileSizeTooSmall(".MCF", tempFileNamePath, dataFileSizeKB, minSizeKb);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 			}

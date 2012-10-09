@@ -44,7 +44,7 @@ namespace DatasetInfoPlugin
 
 		#region "Methods"
 		/// <summary>
-		/// Runs the dataset quality step tool
+		/// Runs the dataset info step tool
 		/// </summary>
 		/// <returns>Enum indicating success or failure</returns>
 		public override clsToolReturnData RunTool()
@@ -138,7 +138,7 @@ namespace DatasetInfoPlugin
 		}
 
 		/// <summary>
-		/// Initializes the dataset quality tool
+		/// Initializes the dataset info tool
 		/// </summary>
 		/// <param name="mgrParams">Parameters for manager operation</param>
 		/// <param name="taskParams">Parameters for the assigned task</param>
@@ -201,9 +201,9 @@ namespace DatasetInfoPlugin
 			m_MsFileScanner.LCMS2DOverviewPlotDivisor = m_TaskParams.GetParam("LCMS2DOverviewPlotDivisor", 10);
 
 			// Get the input file name
-			string rawDataTypeName = "???";
+			clsInstrumentClassInfo.eRawDataType rawDataType = clsInstrumentClassInfo.eRawDataType.Unknown;
 			clsInstrumentClassInfo.eInstrumentClass instrumentClass = clsInstrumentClassInfo.eInstrumentClass.Unknown;
-			string sFileOrFolderName = GetDataFileOrFolderName(sourceFolder, out bSkipPlots, out rawDataTypeName, out instrumentClass);
+			string sFileOrFolderName = GetDataFileOrFolderName(sourceFolder, out bSkipPlots, out rawDataType, out instrumentClass);
 
 			if (sFileOrFolderName == UNKNOWN_FILE_TYPE)
 			{
@@ -218,7 +218,7 @@ namespace DatasetInfoPlugin
 				// DS quality test not implemented for this file type
 				result.CloseoutMsg = string.Empty;
 				result.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
-				result.EvalMsg = "Dataset quality test not implemented for data type " + rawDataTypeName + ", instrument class " + clsInstrumentClassInfo.GetInstrumentClassName(instrumentClass);
+				result.EvalMsg = "Dataset info test not implemented for data type " + clsInstrumentClassInfo.GetRawDataTypeName(rawDataType) + ", instrument class " + clsInstrumentClassInfo.GetInstrumentClassName(instrumentClass);
 				result.EvalCode = EnumEvalCode.EVAL_CODE_NOT_EVALUATED;
 				return result;
 			}
@@ -329,22 +329,45 @@ namespace DatasetInfoPlugin
 		}	// End sub
 
 		/// <summary>
+		/// Looks for a zip file matching "0_R*X*.zip"
+		/// </summary>
+		/// <param name="diDatasetFolder">Dataset folder</param>
+		/// <returns>Returns the file name if found, otherwise an empty string</returns>
+		private string CheckForBrukerImagingZipFiles(System.IO.DirectoryInfo diDatasetFolder)
+		{
+			
+			System.IO.FileInfo[] fiFiles;
+			fiFiles = diDatasetFolder.GetFiles("0_R*X*.zip");
+
+			if (fiFiles != null && fiFiles.Length > 0)
+			{
+				return fiFiles[0].Name;
+			}
+			else
+			{
+				return string.Empty;
+			}
+			 
+		}
+
+		/// <summary>
 		/// Returns the file or folder name for specified dataset based on dataset type
 		/// </summary>
 		/// <returns>Data file or folder name; empty string if not found</returns>
 		/// <remarks>Will return UNKNOWN_FILE_TYPE or INVALID_FILE_TYPE in special circumstances</remarks>
-		private string GetDataFileOrFolderName(string inputFolder, out bool bSkipPlots, out string rawDataTypeName, out clsInstrumentClassInfo.eInstrumentClass instrumentClass)
+		private string GetDataFileOrFolderName(string inputFolder, out bool bSkipPlots, out clsInstrumentClassInfo.eRawDataType rawDataType, out clsInstrumentClassInfo.eInstrumentClass instrumentClass)
 		{
 			string dataset = m_TaskParams.GetParam("Dataset");
 			string sFileOrFolderName;
 			bool bIsFile = true;
-			bool bSkipIfDatasetFileMissing = false;
 
 			bSkipPlots = false;
+			instrumentClass = clsInstrumentClassInfo.eInstrumentClass.Unknown;
+			rawDataType = clsInstrumentClassInfo.eRawDataType.Unknown;
 
 			// Determine the Instrument Class and RawDataType
 			string instClassName = m_TaskParams.GetParam("Instrument_Class");
-			rawDataTypeName = m_TaskParams.GetParam("rawdatatype", "UnknownRawDataType");
+			string rawDataTypeName = m_TaskParams.GetParam("rawdatatype", "UnknownRawDataType");
 
 			instrumentClass = clsInstrumentClassInfo.GetInstrumentClass(instClassName);
 			if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Unknown)
@@ -354,13 +377,15 @@ namespace DatasetInfoPlugin
 				return UNKNOWN_FILE_TYPE;
 			}
 
-			clsInstrumentClassInfo.eRawDataType rawDataType = clsInstrumentClassInfo.GetRawDataType(rawDataTypeName);
+			rawDataType = clsInstrumentClassInfo.GetRawDataType(rawDataTypeName);
 			if (rawDataType == clsInstrumentClassInfo.eRawDataType.Unknown)
 			{
 				m_Msg = "RawDataType not recognized: " + rawDataTypeName;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
 				return UNKNOWN_FILE_TYPE;
 			}
+
+			System.IO.DirectoryInfo diDatasetFolder = new System.IO.DirectoryInfo(inputFolder);
 
 			// Get the expected file name based on the dataset type
 			switch (rawDataType)
@@ -374,30 +399,29 @@ namespace DatasetInfoPlugin
 					sFileOrFolderName = dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION;
 					bIsFile = true;
 					break;
+
 				case clsInstrumentClassInfo.eRawDataType.ZippedSFolders:
 					// 9T_FTICR, 11T_FTICR_B, and 12T_FTICR
 					sFileOrFolderName = "analysis.baf";
 					bIsFile = true;
 					break;
+
 				case clsInstrumentClassInfo.eRawDataType.BrukerFTFolder:
 					// 12T_FTICR_B, 15T_FTICR, 9T_FTICR_B
 					// Also, Bruker_FT_IonTrap01, which is Bruker_Amazon_Ion_Trap
-					// 15T_FTICR_Imaging datasets with instrument class BrukerMALDI_Imaging_V2 will also have bruker_ft format; however, they may not have analysis.baf files
-
-					if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Bruker_Amazon_Ion_Trap)
-						sFileOrFolderName = dataset + clsInstrumentClassInfo.DOT_D_EXTENSION + "\\" + "analysis.yep";
-					else
-					{
-						sFileOrFolderName = dataset + clsInstrumentClassInfo.DOT_D_EXTENSION + "\\" + "analysis.baf";
-						if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging_V2)
-						{
-							// Imaging datasets may not have an analysis.baf file; that's OK
-							bSkipIfDatasetFileMissing = true;
-						}
-					}
-
+					// 15T_FTICR_Imaging datasets with instrument class BrukerMALDI_Imaging_V2 will also have bruker_ft format; however, instead of an analysis.baf file, they might have a .mcf file
+					
 					bIsFile = true;
+					if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Bruker_Amazon_Ion_Trap)
+						sFileOrFolderName = System.IO.Path.Combine(dataset + clsInstrumentClassInfo.DOT_D_EXTENSION, "analysis.yep");
+					else
+						sFileOrFolderName = System.IO.Path.Combine(dataset + clsInstrumentClassInfo.DOT_D_EXTENSION, "analysis.baf");
+
+					if (!File.Exists(Path.Combine(diDatasetFolder.FullName, sFileOrFolderName)))
+						sFileOrFolderName = CheckForBrukerImagingZipFiles(diDatasetFolder);
+					
 					break;
+
 				case clsInstrumentClassInfo.eRawDataType.UIMF:
 					// IMS_TOF_2, IMS_TOF_3, IMS_TOF_4, IMS_TOF_5, IMS_TOF_6, etc.
 					sFileOrFolderName = dataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION;
@@ -408,14 +432,12 @@ namespace DatasetInfoPlugin
 					// QTrap01
 					sFileOrFolderName = dataset + clsInstrumentClassInfo.DOT_WIFF_EXTENSION;
 					bIsFile = true;
-					bSkipPlots = false;
 					break;
 
 				case clsInstrumentClassInfo.eRawDataType.AgilentDFolder:
 					// Agilent_GC_MS_01, AgQTOF03, AgQTOF04, PrepHPLC1
 					sFileOrFolderName = dataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
 					bIsFile = false;
-					bSkipPlots = false;
 
 					if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.PrepHPLC)
 					{
@@ -428,28 +450,23 @@ namespace DatasetInfoPlugin
 				case clsInstrumentClassInfo.eRawDataType.BrukerMALDIImaging:
 					// bruker_maldi_imaging: 12T_FTICR_Imaging, 15T_FTICR_Imaging, and BrukerTOF_Imaging_01
 					// Find the name of the first zip file
-					bSkipPlots = true;
-					System.IO.DirectoryInfo diFolder = new System.IO.DirectoryInfo(inputFolder);
-					System.IO.FileInfo[] fiFiles;
-					fiFiles = diFolder.GetFiles("0_R*.zip");
 
-					if (fiFiles != null && fiFiles.Length > 0)
-					{
-						sFileOrFolderName = fiFiles[0].Name;
-						bIsFile = true;
-					}
-					else
+					sFileOrFolderName = CheckForBrukerImagingZipFiles(diDatasetFolder);
+					bSkipPlots = true;
+					bIsFile = true;
+
+					if (string.IsNullOrEmpty(sFileOrFolderName))
 					{
 						m_Msg = "Did not find any 0_R*.zip files in the dataset folder";
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "clsPluginMain.GetDataFileOrFolderName: " + m_Msg);
 						return INVALID_FILE_TYPE;
 					}
+					
 					break;
 
 				case clsInstrumentClassInfo.eRawDataType.BrukerTOFBaf:
 					sFileOrFolderName = dataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
 					bIsFile = false;
-					bSkipPlots = false;
 					break;
 
 				default:
@@ -462,27 +479,23 @@ namespace DatasetInfoPlugin
 			}
 
 			// Test to verify the file (or folder) exists
-			string sFileOrFolderPath = Path.Combine(inputFolder, sFileOrFolderName);
+			string sFileOrFolderPath = Path.Combine(diDatasetFolder.FullName, sFileOrFolderName);
 
 			if (bIsFile && !File.Exists(sFileOrFolderPath))
 			{
-				if (bSkipIfDatasetFileMissing)
-				{
-					m_Msg = "Skipping since " + sFileOrFolderName + " file does not exist";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "clsPluginMain.GetDataFileOrFolderName: " + m_Msg);
-					return INVALID_FILE_TYPE;
-				}
 
 				// File not found; look for alternate extensions
 				System.Collections.Generic.List<string> lstAlternateExtensions = new System.Collections.Generic.List<string>();
 				bool bAlternateFound = false;
+				string dataFileNamePathAlt;
+
 				lstAlternateExtensions.Add("mgf");
 				lstAlternateExtensions.Add("mzXML");
 				lstAlternateExtensions.Add("mzML");
 
 				foreach (string altExtension in lstAlternateExtensions)
 				{
-					string dataFileNamePathAlt = System.IO.Path.ChangeExtension(sFileOrFolderPath, altExtension);
+					dataFileNamePathAlt = System.IO.Path.ChangeExtension(sFileOrFolderPath, altExtension);
 					if (File.Exists(dataFileNamePathAlt))
 					{
 						m_Msg = "Data file not found, but ." + altExtension + " file exists";
@@ -492,6 +505,32 @@ namespace DatasetInfoPlugin
 						sFileOrFolderName = INVALID_FILE_TYPE;
 						rawDataTypeName = altExtension + " file";
 						break;
+					}
+				}
+
+				if (!bAlternateFound)
+				{
+					DirectoryInfo diDotDFolder = new DirectoryInfo(Path.Combine(diDatasetFolder.FullName, dataset + clsInstrumentClassInfo.DOT_D_EXTENSION));
+
+					if (diDotDFolder.Exists)
+					{
+						// Look for a .mcf file in the .D folder						
+
+						string mcfFileName = string.Empty;
+						Int64 mcfFileSizeBytes = 0;
+
+						foreach (FileInfo fiFile in diDotDFolder.GetFiles("*.mcf"))
+						{
+							// Determine the largest .mcf file
+							if (fiFile.Length > mcfFileSizeBytes)
+							{
+								mcfFileSizeBytes = fiFile.Length;
+								mcfFileName = fiFile.Name;
+								bAlternateFound = true;
+								sFileOrFolderName = diDotDFolder.Name;
+							}
+						}
+
 					}
 				}
 
@@ -515,7 +554,7 @@ namespace DatasetInfoPlugin
 			return sFileOrFolderName;
 
 		}	// End sub
-
+			
 		/// <summary>
 		/// Construct the full path to the MSFileInfoScanner.DLL
 		/// </summary>
