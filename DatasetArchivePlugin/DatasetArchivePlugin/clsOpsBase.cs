@@ -123,7 +123,7 @@ namespace DatasetArchivePlugin
 
 				if (sEUSInstrumentID.Length > 0 && !sInstrument.ToLower().Contains("fticr"))
 				{
-					if (sInstrument == "Exact03" || sInstrument == "LTQ_Orb_2")
+					if (sInstrument == "Exact03" || sInstrument == "LTQ_Orb_2" || sInstrument == "LTQ_Orb_3")
 					{
 						if (System.DateTime.Now.Hour % 6 == 0)
 						{

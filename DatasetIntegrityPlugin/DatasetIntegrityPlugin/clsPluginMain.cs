@@ -33,7 +33,7 @@ namespace DatasetIntegrityPlugin
 		const float UIMF_FILE_MIN_SIZE_KB = 100;
 		const float AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB = 50;
 		const float AGILENT_DATA_MS_FILE_MIN_SIZE_KB = 75;
-		const float MCF_FILE_MIN_SIZE_KB = 2000;		// Malding imaging file
+		const float MCF_FILE_MIN_SIZE_KB = 150;		// Malding imaging file
 
 		#endregion
 
@@ -135,6 +135,21 @@ namespace DatasetIntegrityPlugin
 					break;
 				case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging_V2:
 					mRetData.CloseoutType = TestBrukerFT_Folder(datasetFolder, requireBAFFile:false, requireMCFFile:false);
+					if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
+					{
+						// Try BrukerMALDI_Imaging
+						clsToolReturnData oRetDataAlt = new clsToolReturnData();
+						oRetDataAlt.CloseoutType = TestBrukerMaldiImagingFolder(datasetFolder);
+						if (oRetDataAlt.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
+						{
+							// The dataset actually consists of a series of .Zip files, not a .D folder
+							// Count this as a success
+							msg = "Dataset marked eInstrumentClass.BrukerMALDI_Imaging_V2 is actually eInstrumentClass.BrukerMALDI_Imaging (series of .Zip files); assuming integrity is correct";
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+							mRetData = oRetDataAlt;
+							mRetData.EvalMsg = "Dataset is BrukerMALDI_Imaging (series of .Zip files) not BrukerMALDI_Imaging_V2 (.D folder)";
+						}
+					}
 					break;
 				case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Spot:
 					mRetData.CloseoutType = TestBrukerMaldiSpotFolder(datasetFolder);
