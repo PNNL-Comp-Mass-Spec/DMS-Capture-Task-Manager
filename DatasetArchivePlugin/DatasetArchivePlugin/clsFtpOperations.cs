@@ -237,6 +237,7 @@ namespace DatasetArchivePlugin
 			/// <returns>TRUE for success; FALSE for failure</returns>
 			public bool CopyDirectory(string sourcePath, string storagePath, bool verifyCopy)
 			{
+#if !DartFTPMissing
 				bool retCode = false;
 				long locTreeSize = 0;
 				long remTreeSize = 0;
@@ -244,7 +245,6 @@ namespace DatasetArchivePlugin
 				long remTreeFileCount = 0;
 				long dumDirCount = 0;
 
-#if !DartFTPMissing
 				//Verify FTP connection available
 				if (!m_FtpDart.Connected)
 				{
