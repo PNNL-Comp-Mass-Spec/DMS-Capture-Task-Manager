@@ -603,7 +603,7 @@ namespace CaptureToolPlugin
 		/// <param name="MyName">Return value for full name of file or folder found, if any</param>
 		/// <param name="instClass">Instrument class for dataet to be located</param>
 		/// <returns>clsDatasetInfo object containing info on found dataset</returns>
-		private clsDatasetInfo GetRawDSType(string InstFolder, string DSName, string instClass)
+		private clsDatasetInfo GetRawDSType(string InstFolder, string DSName, clsInstrumentClassInfo.eInstrumentClass instrumentClass)
 		{
 			//Determines if raw dataset exists as a single file, folder with same name as dataset, or 
 			//	folder with dataset name + extension. Returns object containing info on dataset found
@@ -620,9 +620,10 @@ namespace CaptureToolPlugin
 				return datasetInfo;
 			}
 
-			switch (instClass)
+			switch (instrumentClass)
 			{
-				case "BrukerMALDI_Imaging":
+				case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging:
+				case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging_V2:
 					bLookForDatasetFile = false;
 					break;
 				default:
@@ -671,12 +672,12 @@ namespace CaptureToolPlugin
 								datasetInfo.FileOrFolderName = Path.GetFileName(TestFolder);
 
 								//Check the instrument class to determine the appropriate return type
-								switch (instClass)
+								switch (instrumentClass)
 								{
-									case "BrukerMALDI_Imaging":
+									case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging:
 										datasetInfo.DatasetType = RawDSTypes.BrukerImaging;
 										break;
-									case "BrukerMALDI_Spot":
+									case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Spot:
 										datasetInfo.DatasetType = RawDSTypes.BrukerSpot;
 										break;
 									default:
@@ -905,8 +906,9 @@ namespace CaptureToolPlugin
 			string storagePath = taskParams.GetParam("Storage_Path");					// Example: Exact04\2012_1\
 			string storageVolExternal = taskParams.GetParam("Storage_Vol_External");	// Example: \\proto-5\
 
-			string sInstrumentClass = taskParams.GetParam("Instrument_Class");
-
+			string instClassName = taskParams.GetParam("Instrument_Class");
+			clsInstrumentClassInfo.eInstrumentClass instrumentClass = clsInstrumentClassInfo.GetInstrumentClass(instClassName);
+			
 			string shareConnectorType = m_MgrParams.GetParam("ShareConnectorType");		// Should be PRISM or DotNET
 			string computerName = GetCurrentComputerName();
 
@@ -932,8 +934,14 @@ namespace CaptureToolPlugin
 			// This determines whether or not we add x_ to an existing file or folder, 
 			// and determines whether we use CopyDirectory or CopyFolderWithResume/CopyFileWithResume
 			bool bCopyWithResume = false;
-			if (sInstrumentClass == "BrukerFT_BAF" || sInstrumentClass == "BrukerMALDI_Imaging")
-				bCopyWithResume = true;
+			switch (instrumentClass)
+			{
+				case clsInstrumentClassInfo.eInstrumentClass.BrukerFT_BAF:
+				case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging:
+				case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging_V2:
+					bCopyWithResume = true;
+					break;
+			}
 
 			RawDSTypes sourceType;
 			string pwd = DecodePassword(m_Pwd);
@@ -1066,12 +1074,12 @@ namespace CaptureToolPlugin
 
 			if (!string.IsNullOrWhiteSpace(sSourceFolderName))
 			{
-				datasetInfo = GetRawDSType(sourceFolderPath, sSourceFolderName, sInstrumentClass);
+				datasetInfo = GetRawDSType(sourceFolderPath, sSourceFolderName, instrumentClass);
 				sourceType = datasetInfo.DatasetType;
 			}
 			else
 			{
-				datasetInfo = GetRawDSType(sourceFolderPath, dataset, sInstrumentClass);
+				datasetInfo = GetRawDSType(sourceFolderPath, dataset, instrumentClass);
 				sourceType = datasetInfo.DatasetType;
 			}
 

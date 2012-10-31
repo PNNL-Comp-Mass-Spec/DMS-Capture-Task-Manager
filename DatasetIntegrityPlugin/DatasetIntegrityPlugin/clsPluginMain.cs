@@ -39,6 +39,7 @@ namespace DatasetIntegrityPlugin
 
 		#region "Class-wide variables"
 		clsToolReturnData mRetData = new clsToolReturnData();
+		string mDatasetName = String.Empty;
 		#endregion
 
 		#region "Constructors"
@@ -66,7 +67,7 @@ namespace DatasetIntegrityPlugin
 			if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
 				return mRetData;
 
-			string dataset = m_TaskParams.GetParam("Dataset");
+			mDatasetName = m_TaskParams.GetParam("Dataset");
 
 			// Store the version info in the database
 			if (!StoreToolVersionInfo())
@@ -77,13 +78,13 @@ namespace DatasetIntegrityPlugin
 				return mRetData;
 			}
 
-			msg = "Performing integrity test, dataset '" + dataset + "'";
+			msg = "Performing integrity test, dataset '" + mDatasetName + "'";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
 
 			// Set up the file paths
 			string storageVolExt = m_TaskParams.GetParam("Storage_Vol_External");
 			string storagePath = m_TaskParams.GetParam("Storage_Path");
-			string datasetFolder = Path.Combine(storageVolExt, Path.Combine(storagePath, dataset));
+			string datasetFolder = Path.Combine(storageVolExt, Path.Combine(storagePath, mDatasetName));
 			string dataFileNamePath;
 
 			// Select which tests will be performed based on instrument class
@@ -105,36 +106,36 @@ namespace DatasetIntegrityPlugin
 			switch (instrumentClass)
 			{
 				case clsInstrumentClassInfo.eInstrumentClass.Finnigan_Ion_Trap:
-					dataFileNamePath = Path.Combine(datasetFolder, dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
+					dataFileNamePath = Path.Combine(datasetFolder, mDatasetName + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
 					mRetData.CloseoutType = TestFinniganIonTrapFile(dataFileNamePath);
 					break;
 				case clsInstrumentClassInfo.eInstrumentClass.LTQ_FT:
-					dataFileNamePath = Path.Combine(datasetFolder, dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
+					dataFileNamePath = Path.Combine(datasetFolder, mDatasetName + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
 					mRetData.CloseoutType = TestLTQFTFile(dataFileNamePath);
 					break;
 				case clsInstrumentClassInfo.eInstrumentClass.BRUKERFTMS:
 					mRetData.CloseoutType = TestBrukerFolder(datasetFolder);
 					break;
 				case clsInstrumentClassInfo.eInstrumentClass.Thermo_Exactive:
-					dataFileNamePath = Path.Combine(datasetFolder, dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
+					dataFileNamePath = Path.Combine(datasetFolder, mDatasetName + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
 					mRetData.CloseoutType = TestThermoExactiveFile(dataFileNamePath);
 					break;
 				case clsInstrumentClassInfo.eInstrumentClass.Triple_Quad:
-					dataFileNamePath = Path.Combine(datasetFolder, dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
+					dataFileNamePath = Path.Combine(datasetFolder, mDatasetName + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
 					mRetData.CloseoutType = TestTripleQuadFile(dataFileNamePath);
 					break;
 				case clsInstrumentClassInfo.eInstrumentClass.IMS_Agilent_TOF:
-					dataFileNamePath = Path.Combine(datasetFolder, dataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION);
+					dataFileNamePath = Path.Combine(datasetFolder, mDatasetName + clsInstrumentClassInfo.DOT_UIMF_EXTENSION);
 					mRetData.CloseoutType = TestIMSAgilentTOF(dataFileNamePath);
 					break;
 				case clsInstrumentClassInfo.eInstrumentClass.BrukerFT_BAF:
-					mRetData.CloseoutType = TestBrukerFT_Folder(datasetFolder, requireBAFFile:true, requireMCFFile:false);
+					mRetData.CloseoutType = TestBrukerFT_Folder(datasetFolder, requireBAFFile:true, requireMCFFile:false, instrumentClass: instrumentClass);
 					break;
 				case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging:
 					mRetData.CloseoutType = TestBrukerMaldiImagingFolder(datasetFolder);
 					break;
 				case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging_V2:
-					mRetData.CloseoutType = TestBrukerFT_Folder(datasetFolder, requireBAFFile:false, requireMCFFile:false);
+					mRetData.CloseoutType = TestBrukerFT_Folder(datasetFolder, requireBAFFile: false, requireMCFFile: false, instrumentClass: instrumentClass);
 					if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
 					{
 						// Try BrukerMALDI_Imaging
@@ -158,7 +159,7 @@ namespace DatasetIntegrityPlugin
 					mRetData.CloseoutType = TestBrukerTof_BafFolder(datasetFolder);
 					break;
 				case clsInstrumentClassInfo.eInstrumentClass.Sciex_QTrap:
-					mRetData.CloseoutType = TestSciexQtrapFile(datasetFolder, dataset);
+					mRetData.CloseoutType = TestSciexQtrapFile(datasetFolder, mDatasetName);
 					break;
 				case clsInstrumentClassInfo.eInstrumentClass.Agilent_Ion_Trap:
 					mRetData.CloseoutType = TestAgilentIonTrapFolder(datasetFolder);
@@ -181,59 +182,6 @@ namespace DatasetIntegrityPlugin
 			return mRetData;
 		}	// End sub
 		
-		/// <summary>
-		/// If folderList contains exactly two folders then calls DetectSupersededFolder Detect and delete the extra x_ folder (if appropriate)
-		/// Returns True if folderList contains just one folder, or if able to successfully delete the extra x_ folder
-		/// </summary>
-		/// <param name="folderList"></param>
-		/// <param name="folderDescription"></param>
-		/// <returns>True if success; false if a problem</returns>
-		private bool PossiblyRenameSupersededFolder(string[] folderList, string folderDescription)
-		{
-			bool bInvalid = true;
-
-			if (folderList.Length == 1)
-				return true;
-
-			if (folderList.Length == 2)
-			{
-				// If two folders are present and one starts with x_ and all of the files inside the one that start with x_ are also in the folder without x_,
-				// then delete the x_ folder
-				bool bDeleteIfSuperseded = true;
-
-				if (DetectSupersededFolder(folderList, bDeleteIfSuperseded))
-				{
-					bInvalid = false;
-				}
-			}
-
-			if (bInvalid)
-			{
-				mRetData.EvalMsg = "Invalid dataset. Multiple " + folderDescription + " folders found";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
-				return false;
-			}
-			else
-			{
-				return true;
-			}
-		}
-
-		private void ReportFileSizeTooSmall(string sDataFileDescription, string sFilePath, float fActualSize, float fMinSize)
-		{
-			string sMinSize;
-			sMinSize = fMinSize.ToString("#0") + " KB";
-
-			string msg;
-			msg = sDataFileDescription + " file may be corrupt. Actual file size is " +
-				  fActualSize.ToString("####0.0") + " KB; " +
-				  "min allowable size is " + sMinSize + "; see " + sFilePath;
-
-			mRetData.EvalMsg = sDataFileDescription + " file size is less than " + sMinSize;
-
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
-		}
-
 		/// <summary>
 		/// Processes folders in folderList to compare the x_ folder to the non x_ folder
 		/// If the x_ folder is empty or if every file in the x_ folder is also in the non x_ folder, then returns True and optionally deletes the x_ folder
@@ -337,6 +285,71 @@ namespace DatasetIntegrityPlugin
 
 		}
 
+		/// <summary>
+		/// Looks file files matching fileSpec
+		/// For matching files, copies the or moves them up one folder
+		/// If matchDatasetName is true then requires that the file start with the name of the dataset
+		/// </summary>
+		/// <param name="diDatasetFolder"></param>
+		/// <param name="fileSpec">Files to match, for example *.mis</param>
+		/// <param name="matchDatasetName">True if filenames must start with mDatasetName</param>
+		/// <param name="copyFile">True to copy the file, false to move it</param>
+		private void MoveOrCopyUpOneLevel(DirectoryInfo diDatasetFolder, string fileSpec, bool matchDatasetName, bool copyFile)
+		{
+			foreach (FileInfo fiFile in diDatasetFolder.GetFiles(fileSpec))
+			{
+				if (!matchDatasetName || Path.GetFileNameWithoutExtension(fiFile.Name).ToLower().StartsWith(mDatasetName.ToLower()))
+				{
+					string newPath = Path.Combine(fiFile.Directory.Parent.FullName, fiFile.Name);
+					if (!File.Exists(newPath))
+					{
+						if (copyFile)
+							fiFile.CopyTo(newPath, true);
+						else
+							fiFile.MoveTo(newPath);
+					}
+				}
+			}
+		}
+
+		/// <summary>
+		/// If folderList contains exactly two folders then calls DetectSupersededFolder Detect and delete the extra x_ folder (if appropriate)
+		/// Returns True if folderList contains just one folder, or if able to successfully delete the extra x_ folder
+		/// </summary>
+		/// <param name="folderList"></param>
+		/// <param name="folderDescription"></param>
+		/// <returns>True if success; false if a problem</returns>
+		private bool PossiblyRenameSupersededFolder(string[] folderList, string folderDescription)
+		{
+			bool bInvalid = true;
+
+			if (folderList.Length == 1)
+				return true;
+
+			if (folderList.Length == 2)
+			{
+				// If two folders are present and one starts with x_ and all of the files inside the one that start with x_ are also in the folder without x_,
+				// then delete the x_ folder
+				bool bDeleteIfSuperseded = true;
+
+				if (DetectSupersededFolder(folderList, bDeleteIfSuperseded))
+				{
+					bInvalid = false;
+				}
+			}
+
+			if (bInvalid)
+			{
+				mRetData.EvalMsg = "Invalid dataset. Multiple " + folderDescription + " folders found";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				return false;
+			}
+			else
+			{
+				return true;
+			}
+		}
+
 		private void ReportFileSizeTooLarge(string sDataFileDescription, string sFilePath, float fActualSize, float fMaxSize)
 		{
 			string sMaxSize;
@@ -356,19 +369,34 @@ namespace DatasetIntegrityPlugin
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 		}
 
+		private void ReportFileSizeTooSmall(string sDataFileDescription, string sFilePath, float fActualSize, float fMinSize)
+		{
+			string sMinSize;
+			sMinSize = fMinSize.ToString("#0") + " KB";
+
+			string msg;
+			msg = sDataFileDescription + " file may be corrupt. Actual file size is " +
+				  fActualSize.ToString("####0.0") + " KB; " +
+				  "min allowable size is " + sMinSize + "; see " + sFilePath;
+
+			mRetData.EvalMsg = sDataFileDescription + " file size is less than " + sMinSize;
+
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+		}
+
 		/// <summary>
 		/// Tests a Agilent_Ion_Trap folder for integrity
 		/// </summary>
-		/// <param name="datasetNamePath">Fully qualified path to the dataset folder</param>
+		/// <param name="datasetFolderPath">Fully qualified path to the dataset folder</param>
 		/// <returns>Enum indicating test result</returns>
-		private EnumCloseOutType TestAgilentIonTrapFolder(string datasetNamePath)
+		private EnumCloseOutType TestAgilentIonTrapFolder(string datasetFolderPath)
 		{
 			float dataFileSizeKB;
 
 			string instName = m_TaskParams.GetParam("Instrument_Name");
 
 			// Verify only one .D folder in dataset
-			string[] folderList = Directory.GetDirectories(datasetNamePath, "*.D");
+			string[] folderList = Directory.GetDirectories(datasetFolderPath, "*.D");
 			if (folderList.Length < 1)
 			{
 				mRetData.EvalMsg = "Invalid dataset. No .D folders found";
@@ -406,16 +434,16 @@ namespace DatasetIntegrityPlugin
 		/// <summary>
 		/// Tests a Agilent_TOF_V2 folder for integrity
 		/// </summary>
-		/// <param name="datasetNamePath">Fully qualified path to the dataset folder</param>
+		/// <param name="datasetFolderPath">Fully qualified path to the dataset folder</param>
 		/// <returns>Enum indicating test result</returns>
-		private EnumCloseOutType TestAgilentTOFV2Folder(string datasetNamePath)
+		private EnumCloseOutType TestAgilentTOFV2Folder(string datasetFolderPath)
 		{
 			float dataFileSizeKB;
 
 			string instName = m_TaskParams.GetParam("Instrument_Name");
 
 			// Verify only one .D folder in dataset
-			string[] folderList = Directory.GetDirectories(datasetNamePath, "*.D");
+			string[] folderList = Directory.GetDirectories(datasetFolderPath, "*.D");
 			if (folderList.Length < 1)
 			{
 				mRetData.EvalMsg = "Invalid dataset. No .D folders found";
@@ -650,14 +678,14 @@ namespace DatasetIntegrityPlugin
 		/// <summary>
 		/// Tests a bruker folder for integrity
 		/// </summary>
-		/// <param name="datasetNamePath">Fully qualified path to the dataset folder</param>
+		/// <param name="datasetFolderPath">Fully qualified path to the dataset folder</param>
 		/// <returns></returns>
-		private EnumCloseOutType TestBrukerFolder(string datasetNamePath)
+		private EnumCloseOutType TestBrukerFolder(string datasetFolderPath)
 		{
 			float dataFileSizeKB;
 
 			// Verify 0.ser folder exists
-			if (!Directory.Exists(Path.Combine(datasetNamePath, "0.ser")))
+			if (!Directory.Exists(Path.Combine(datasetFolderPath, "0.ser")))
 			{
 				mRetData.EvalMsg = "Invalid dataset. 0.ser folder not found";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
@@ -665,7 +693,7 @@ namespace DatasetIntegrityPlugin
 			}
 
 			// Verify acqus file exists
-			string dataFolder = Path.Combine(datasetNamePath, "0.ser");
+			string dataFolder = Path.Combine(datasetFolderPath, "0.ser");
 			if (!File.Exists(Path.Combine(dataFolder, "acqus")))
 			{
 				mRetData.EvalMsg = "Invalid dataset. acqus file not found";
@@ -706,14 +734,14 @@ namespace DatasetIntegrityPlugin
 		/// <summary>
 		/// Tests a BrukerTOF_BAF folder for integrity
 		/// </summary>
-		/// <param name="datasetNamePath">Fully qualified path to the dataset folder</param>
+		/// <param name="datasetFolderPath">Fully qualified path to the dataset folder</param>
 		/// <returns>Enum indicating test result</returns>
-		private EnumCloseOutType TestBrukerTof_BafFolder(string datasetNamePath)
+		private EnumCloseOutType TestBrukerTof_BafFolder(string datasetFolderPath)
 		{
 			float dataFileSizeKB;
 
 			// Verify only one .D folder in dataset
-			string[] folderList = Directory.GetDirectories(datasetNamePath, "*.D");
+			string[] folderList = Directory.GetDirectories(datasetFolderPath, "*.D");
 			if (folderList.Length < 1)
 			{
 				mRetData.EvalMsg = "Invalid dataset. No .D folders found";
@@ -775,11 +803,11 @@ namespace DatasetIntegrityPlugin
 		/// <summary>
 		/// Tests a BrukerFT folder for integrity
 		/// </summary>
-		/// <param name="datasetNamePath">Fully qualified path to the dataset folder</param>
+		/// <param name="datasetFolderPath">Fully qualified path to the dataset folder</param>
 		/// <param name="requireBAFFile">Set to True to require that the analysis.baf file be present</param>
 		/// <param name="requireMCFFile">Set to True to require that the analysis.baf file be present</param>
 		/// <returns>Enum indicating test result</returns>
-		private EnumCloseOutType TestBrukerFT_Folder(string datasetNamePath, bool requireBAFFile, bool requireMCFFile)
+		private EnumCloseOutType TestBrukerFT_Folder(string datasetFolderPath, bool requireBAFFile, bool requireMCFFile, clsInstrumentClassInfo.eInstrumentClass instrumentClass)
 		{
 			float dataFileSizeKB;
 
@@ -788,7 +816,7 @@ namespace DatasetIntegrityPlugin
 			bool fileExists = false;
 
 			// Verify only one .D folder in dataset
-			string[] folderList = Directory.GetDirectories(datasetNamePath, "*.D");
+			string[] folderList = Directory.GetDirectories(datasetFolderPath, "*.D");
 			if (folderList.Length < 1)
 			{
 				mRetData.EvalMsg = "Invalid dataset. No .D folders found";
@@ -901,6 +929,16 @@ namespace DatasetIntegrityPlugin
 				}
 			}
 
+			if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging_V2)
+			{
+				// Look for any files that match Dataset.mis or Dataset.jpg, and, if found, copy them up one folder
+
+				MoveOrCopyUpOneLevel(diDatasetFolder, "*.mis", matchDatasetName: true, copyFile: true);
+				MoveOrCopyUpOneLevel(diDatasetFolder, "*.bak", matchDatasetName: true, copyFile: true);
+				MoveOrCopyUpOneLevel(diDatasetFolder, "*.jpg", matchDatasetName: false, copyFile: true);
+			}
+			
+
 			// Check to see if a .M folder exists
 			string[] subFolderList = Directory.GetDirectories(folderList[0], "*.M");
 			if (subFolderList == null || subFolderList.Length < 1)
@@ -937,16 +975,15 @@ namespace DatasetIntegrityPlugin
 			return EnumCloseOutType.CLOSEOUT_SUCCESS;
 		}	// End sub
 
-
 		/// <summary>
 		/// Tests a BrukerMALDI_Imaging folder for integrity
 		/// </summary>
-		/// <param name="datasetNamePath">Fully qualified path to the dataset folder</param>
+		/// <param name="datasetFolderPath">Fully qualified path to the dataset folder</param>
 		/// <returns>Enum indicating success or failure</returns>
-		private EnumCloseOutType TestBrukerMaldiImagingFolder(string datasetNamePath)
+		private EnumCloseOutType TestBrukerMaldiImagingFolder(string datasetFolderPath)
 		{
 			// Verify at least one zip file exists in dataset folder
-			string[] fileList = Directory.GetFiles(datasetNamePath, "*.zip");
+			string[] fileList = Directory.GetFiles(datasetFolderPath, "*.zip");
 			if (fileList.Length < 1)
 			{
 				mRetData.EvalMsg = "Invalid dataset. No zip files found";
@@ -961,26 +998,26 @@ namespace DatasetIntegrityPlugin
 		/// <summary>
 		/// Tests a BrukerMALDI_Spot folder for integrity
 		/// </summary>
-		/// <param name="datasetNamePath">Fully qualified path to the dataset folder</param>
+		/// <param name="datasetFolderPath">Fully qualified path to the dataset folder</param>
 		/// <returns>Enum indicating success or failure</returns>
-		private EnumCloseOutType TestBrukerMaldiSpotFolder(string datasetNamePath)
+		private EnumCloseOutType TestBrukerMaldiSpotFolder(string datasetFolderPath)
 		{
 
 			// Verify the dataset folder doesn't contain any .zip files
-			string[] zipFiles = Directory.GetFiles(datasetNamePath, "*.zip");
+			string[] zipFiles = Directory.GetFiles(datasetFolderPath, "*.zip");
 			if (zipFiles.Length > 0)
 			{
-				mRetData.EvalMsg = "Zip files found in dataset folder " + datasetNamePath;
+				mRetData.EvalMsg = "Zip files found in dataset folder " + datasetFolderPath;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
 			// Check whether the dataset folder contains just one data folder or multiple data folders
-			string[] dataFolders = Directory.GetDirectories(datasetNamePath);
+			string[] dataFolders = Directory.GetDirectories(datasetFolderPath);
 
 			if (dataFolders.Length < 1)
 			{
-				mRetData.EvalMsg = "No subfolders were found in the dataset folder " + datasetNamePath;
+				mRetData.EvalMsg = "No subfolders were found in the dataset folder " + datasetFolderPath;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
@@ -1004,7 +1041,7 @@ namespace DatasetIntegrityPlugin
 					string sDirName = System.IO.Path.GetFileName(dataFolders[i]);
 					if (!reMaldiSpotFolder.IsMatch(sDirName, 0))
 					{
-						mRetData.EvalMsg = "Dataset folder contains multiple subfolders, but folder " + sDirName + " does not match the expected pattern (" + reMaldiSpotFolder.ToString() + "); see " + datasetNamePath;
+						mRetData.EvalMsg = "Dataset folder contains multiple subfolders, but folder " + sDirName + " does not match the expected pattern (" + reMaldiSpotFolder.ToString() + "); see " + datasetFolderPath;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 						return EnumCloseOutType.CLOSEOUT_FAILED;
 					}
