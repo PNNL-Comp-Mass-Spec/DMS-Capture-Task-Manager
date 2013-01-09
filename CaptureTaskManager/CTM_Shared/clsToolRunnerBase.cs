@@ -31,6 +31,8 @@ namespace CaptureTaskManager
 		protected ITaskParams m_TaskParams;
 		protected IStatusFile m_StatusTools;
 
+		protected PRISM.Files.clsFileTools m_FileTools;
+
 		protected System.DateTime m_LastConfigDBUpdate = System.DateTime.UtcNow;
 		protected int m_MinutesBetweenConfigDBUpdates = 10;
 		protected bool m_NeedToAbortProcessing = false;
@@ -79,6 +81,8 @@ namespace CaptureTaskManager
 			m_MgrParams = mgrParams;
 			m_TaskParams = taskParams;
 			m_StatusTools = statusTools;
+
+			m_FileTools = new PRISM.Files.clsFileTools(m_MgrParams.GetParam("MgrName", "CaptureTaskManager"), 1);
 		}
 
 		protected bool UpdateMgrSettings()

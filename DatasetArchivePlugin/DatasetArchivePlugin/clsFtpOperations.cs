@@ -137,11 +137,8 @@ namespace DatasetArchivePlugin
 			/// <param name="Pwd">Account password</param>
 			/// <param name="UseTLS">TRUE to use TLS security settings</param>
 			/// <param name="ServerPort">Port for TLS connections</param>
-			public clsFtpOperations(string Server, string User, string Pwd, bool UseTLS, int ServerPort)
+			public clsFtpOperations(string Server, string User, string Pwd, bool UseTLS, int ServerPort) : this(Server, User, Pwd)
 			{
-   			 m_Server = Server;
-   			 m_User = User;
-   			 m_Pwd = Pwd;
    			 m_UseTLS = UseTLS;
    			 m_ServerPort = ServerPort;
 			}	// End sub

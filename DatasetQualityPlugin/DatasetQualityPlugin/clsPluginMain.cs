@@ -39,7 +39,6 @@ namespace DatasetQualityPlugin
 		clsRunDosProgram CmdRunner;
 		PRISM.DataBase.clsExecuteDatabaseSP mExecuteSP;
 
-		PRISM.Files.clsFileTools m_FileTools;
 		System.DateTime mLastStatusUpdate = System.DateTime.UtcNow;
 		System.DateTime mQuameterStartTime = System.DateTime.UtcNow;
 
@@ -49,7 +48,7 @@ namespace DatasetQualityPlugin
 		public clsPluginMain()
 			: base()
 		{
-			m_FileTools = new PRISM.Files.clsFileTools(m_MgrParams.GetParam("MgrName", "CaptureTaskManager"), 1);
+			
 		}
 
 		#endregion
