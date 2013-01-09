@@ -56,7 +56,8 @@ namespace DatasetArchivePlugin
 		protected string mMostRecentLogMessage = string.Empty;
 		protected System.DateTime mMostRecentLogTime = System.DateTime.UtcNow;
 
-		clsMD5StageFileCreator mMD5StageFileCreator;
+		protected clsMD5StageFileCreator mMD5StageFileCreator;
+		protected clsFileTools m_FileTools;
 
 		#endregion
 
@@ -88,6 +89,7 @@ namespace DatasetArchivePlugin
 			m_FtpTimeOut = int.Parse(m_MgrParams.GetParam("timeout"));
 			m_FtpPassive = bool.Parse(m_MgrParams.GetParam("passive"));
 			m_FtpRestart = bool.Parse(m_MgrParams.GetParam("restart"));
+			
 			if (m_TaskParams.GetParam("StepTool") == "DatasetArchive")
 			{
 				m_ArchiveOrUpdate = ARCHIVE;
@@ -96,6 +98,9 @@ namespace DatasetArchivePlugin
 			{
 				m_ArchiveOrUpdate = UPDATE;
 			}
+
+			// Instantiate m_FileTools
+			m_FileTools = new PRISM.Files.clsFileTools(m_MgrParams.GetParam("MgrName", "CaptureTaskManager"), 1);
 
 		}	// End sub
 		#endregion

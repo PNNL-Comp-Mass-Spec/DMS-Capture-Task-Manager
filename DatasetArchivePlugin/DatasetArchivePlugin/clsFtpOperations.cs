@@ -54,6 +54,8 @@ namespace DatasetArchivePlugin
 			private int m_FtpTimeout = 30000;	// 30 seconds
 			private bool m_FtpPassive = true;	// use "PASV" on connection instead of "PORT"
 			private bool m_FtpRestart = false;	// file has to be received in single transfer
+
+			private clsFileTools m_FileTools;
 		#endregion
 
 		#region "Properties"
@@ -124,6 +126,7 @@ namespace DatasetArchivePlugin
    			 m_Server = Server;
    			 m_User = User;
    			 m_Pwd = Pwd;
+			 m_FileTools = new clsFileTools("DatasetArchivePlugin", 1);
 			}	// End sub
 
 			/// <summary>
@@ -268,6 +271,7 @@ namespace DatasetArchivePlugin
 
 						return false;
 					}
+
 					//Verify successful copy
 					if (verifyCopy)
 					{
@@ -284,7 +288,7 @@ namespace DatasetArchivePlugin
 							return false;
 						}
 						//Get the number of files and total file size from the dataset folder
-						locTreeSize = clsFileTools.GetDirectorySize(sourcePath, ref locTreeFileCount, ref dumDirCount);
+						locTreeSize = m_FileTools.GetDirectorySize(sourcePath, ref locTreeFileCount, ref dumDirCount);
 						
 						// Compare the file sizes
 						if (locTreeSize != remTreeSize)

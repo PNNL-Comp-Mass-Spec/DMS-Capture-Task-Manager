@@ -1,5 +1,8 @@
 Capture Task Manager History
 
+Version 1.2.4756; January 9, 2013
+	- New version of PRISM.dll; requires instantiating PRISM.Files.clsFileTools to use most of the functions
+
 Version 1.2.4590; July 26, 2012
 	- Added command line switch /EL, which can be used to create the DMSCapTaskMgr Windows event log, then exit the program
 

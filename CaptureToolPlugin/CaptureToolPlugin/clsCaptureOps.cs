@@ -71,6 +71,8 @@ namespace CaptureToolPlugin
 		protected ConnectionType m_ConnectionType = ConnectionType.NotConnected;
 		protected bool m_NeedToAbortProcessing = false;
 
+		protected clsFileTools m_FileTools;
+
 		System.DateTime m_LastProgressUpdate = System.DateTime.Now;
 
 		string m_LastProgressFileName = string.Empty;
@@ -124,14 +126,16 @@ namespace CaptureToolPlugin
 			//Sleep interval for "is dataset complete" testing
 			m_SleepInterval = int.Parse(m_MgrParams.GetParam("sleepinterval"));
 
-			// Wire up the events for clsFileTools
+			// Instantiate m_FileTools
+			m_FileTools = new clsFileTools(m_MgrParams.GetParam("MgrName", "CaptureTaskManager"), 1);
+
 			// Note that all of the events and methods in clsFileTools are static
 			if (!mFileCopyEventsWired)
 			{
 				mFileCopyEventsWired = true;
-				clsFileTools.CopyingFile += new clsFileTools.CopyingFileEventHandler(OnCopyingFile);
-				clsFileTools.FileCopyProgress += new clsFileTools.FileCopyProgressEventHandler(OnFileCopyProgress);
-				clsFileTools.ResumingFileCopy += new clsFileTools.ResumingFileCopyEventHandler(OnResumingFileCopy);
+				m_FileTools.CopyingFile += new clsFileTools.CopyingFileEventHandler(OnCopyingFile);
+				m_FileTools.FileCopyProgress += new clsFileTools.FileCopyProgressEventHandler(OnFileCopyProgress);
+				m_FileTools.ResumingFileCopy += new clsFileTools.ResumingFileCopyEventHandler(OnResumingFileCopy);
 			}
 
 
@@ -144,12 +148,12 @@ namespace CaptureToolPlugin
 		public void DetachEvents()
 		{
 			// Un-wire the events
-			if (mFileCopyEventsWired)
+			if (mFileCopyEventsWired && m_FileTools != null)
 			{
 				mFileCopyEventsWired = false;
-				clsFileTools.CopyingFile -= OnCopyingFile;
-				clsFileTools.FileCopyProgress -= OnFileCopyProgress;
-				clsFileTools.ResumingFileCopy -= OnResumingFileCopy;
+				m_FileTools.CopyingFile -= OnCopyingFile;
+				m_FileTools.FileCopyProgress -= OnFileCopyProgress;
+				m_FileTools.ResumingFileCopy -= OnResumingFileCopy;
 			}
 		}
 
@@ -496,28 +500,29 @@ namespace CaptureToolPlugin
 		/// <param name="FolderName">Full path specifying folder to check</param>
 		/// <param name="SleepInt">Interval for checking (seconds)</param>
 		/// <returns>TRUE if folder size hasn't changed during SleepInt; FALSE otherwise</returns>
-		private bool VerifyConstantFolderSize(string FolderName, int SleepInt)
+		private bool VerifyConstantFolderSize(string FolderName, int SleepIntervalSeconds)
 		{
 
 			//Determines if the size of a folder changes over specified time interval
 			long InitialFolderSize = 0;
 			long FinalFolderSize = 0;
 
-			//Verify maximum sleep interval
-			if (((long)SleepInt * 1000) > int.MaxValue)
-			{
-				SleepInt = (int)(int.MaxValue / 1000);
-			}
+			// Sleep interval should be between 1 second and 15 minutes (900 seconds)
+			if (SleepIntervalSeconds > 900)
+				SleepIntervalSeconds = 900;
+			
+			if (SleepIntervalSeconds < 1)
+				SleepIntervalSeconds = 1;
 
 			//Get the initial size of the folder
-			InitialFolderSize = clsFileTools.GetDirectorySize(FolderName);
+			InitialFolderSize = m_FileTools.GetDirectorySize(FolderName);
 
 			//Wait for specified sleep interval
-			System.Threading.Thread.Sleep(SleepInt * 1000);
+			System.Threading.Thread.Sleep(SleepIntervalSeconds * 1000);
 			//Delay for specified interval
 
 			//Get the final size of the folder and compare
-			FinalFolderSize = clsFileTools.GetDirectorySize(FolderName);
+			FinalFolderSize = m_FileTools.GetDirectorySize(FolderName);
 			if (FinalFolderSize == InitialFolderSize)
 			{
 				return true;
@@ -535,25 +540,26 @@ namespace CaptureToolPlugin
 		/// <param name="FilePath">Full path specifying file to check</param>
 		/// <param name="SleepInt">Interval for checking (seconds)</param>
 		/// <returns>TRUE if file size hasn't changed during SleepInt; FALSE otherwise</returns>
-		private bool VerifyConstantFileSize(string FilePath, int SleepInt)
+		private bool VerifyConstantFileSize(string FilePath, int SleepIntervalSeconds)
 		{
 			//Determines if the size of a file changes over specified time interval
 			FileInfo Fi = default(FileInfo);
 			long InitialFileSize = 0;
 			long FinalFileSize = 0;
 
-			//Verify maximum sleep interval
-			if (((long)SleepInt * 1000) > int.MaxValue)
-			{
-				SleepInt = (int)(int.MaxValue / 1000);
-			}
+			// Sleep interval should be between 1 second and 15 minutes (900 seconds)
+			if (SleepIntervalSeconds > 900)
+				SleepIntervalSeconds = 900;
+
+			if (SleepIntervalSeconds < 1)
+				SleepIntervalSeconds = 1;
 
 			//Get the initial size of the file
 			Fi = new FileInfo(FilePath);
 			InitialFileSize = Fi.Length;
 
 			//Wait for specified sleep interval
-			System.Threading.Thread.Sleep(SleepInt * 1000);
+			System.Threading.Thread.Sleep(SleepIntervalSeconds * 1000);
 			//Delay for specified interval
 
 			//Get the final size of the file and compare
@@ -1182,7 +1188,7 @@ namespace CaptureToolPlugin
 					System.IO.FileInfo fiSourceFile = new System.IO.FileInfo(sourceFilePath);
 					bool bResumed = false;
 
-					bSuccess = clsFileTools.CopyFileWithResume(fiSourceFile, targetFilePath, ref bResumed);
+					bSuccess = m_FileTools.CopyFileWithResume(fiSourceFile, targetFilePath, ref bResumed);
 				}
 				else
 				{
@@ -1421,13 +1427,6 @@ namespace CaptureToolPlugin
 			string copySourceDir = Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName);
 			string copyTargetDir = Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName);
 
-
-			if (System.DateTime.Now <= new System.DateTime(2012, 2, 8) && sourceFolderPath.StartsWith(@"\\15T_FTICR.bionet\"))
-			{
-				// Override Sleep interval to just 5 seconds when capturing 15T datasets prior to February 8, 2012
-				iSleepInterval = 5;
-			}
-
 			if (!VerifyConstantFolderSize(copySourceDir, iSleepInterval))
 			{
 				msg = "Dataset '" + dataset + "' not ready";
@@ -1465,7 +1464,7 @@ namespace CaptureToolPlugin
 					}
 					else
 					{
-						clsFileTools.CopyDirectory(copySourceDir, copyTargetDir, filesToSkip);
+						m_FileTools.CopyDirectory(copySourceDir, copyTargetDir, filesToSkip);
 						bSuccess = true;
 					}
 
@@ -1578,7 +1577,7 @@ namespace CaptureToolPlugin
 				}
 				else
 				{
-					clsFileTools.CopyDirectory(copySourceDir, datasetFolderPath);
+					m_FileTools.CopyDirectory(copySourceDir, datasetFolderPath);
 					bSuccess = true;
 				}
 
@@ -1760,7 +1759,7 @@ namespace CaptureToolPlugin
 			// Copy the dataset folder (and all subfolders) to the storage server
 			try
 			{
-				clsFileTools.CopyDirectory(copySourceDir, datasetFolderPath);
+				m_FileTools.CopyDirectory(copySourceDir, datasetFolderPath);
 				msg = "Copied folder " + copySourceDir + " to " +
 					Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName) + GetConnectionDescription();
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
@@ -1804,7 +1803,7 @@ namespace CaptureToolPlugin
 					// Clear any previous errors
 					m_ErrorMessage = string.Empty;
 
-					bSuccess = clsFileTools.CopyDirectoryWithResume(sSourceFolderPath, sTargetFolderPath, bRecurse, eFileOverwriteMode, filesToSkip, ref iFileCountSkipped, ref iFileCountResumed, ref iFileCountNewlyCopied);
+					bSuccess = m_FileTools.CopyDirectoryWithResume(sSourceFolderPath, sTargetFolderPath, bRecurse, eFileOverwriteMode, filesToSkip, ref iFileCountSkipped, ref iFileCountResumed, ref iFileCountNewlyCopied);
 					bDoCopy = false;
 
 					if (bSuccess)
@@ -1821,10 +1820,10 @@ namespace CaptureToolPlugin
 				}
 				catch (Exception ex)
 				{
-					if (string.IsNullOrWhiteSpace(clsFileTools.CurrentSourceFile))
+					if (string.IsNullOrWhiteSpace(m_FileTools.CurrentSourceFile))
 						msg = "Error while copying directory: ";
 					else
-						msg = "Error while copying " + clsFileTools.CurrentSourceFile + ": ";
+						msg = "Error while copying " + m_FileTools.CurrentSourceFile + ": ";
 
 					m_ErrorMessage = string.Copy(msg);
 
@@ -1836,8 +1835,8 @@ namespace CaptureToolPlugin
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 
 					bDoCopy = false;
-					if (clsFileTools.CurrentCopyStatus == clsFileTools.CopyStatus.BufferedCopy ||
-						clsFileTools.CurrentCopyStatus == clsFileTools.CopyStatus.BufferedCopyResume)
+					if (m_FileTools.CurrentCopyStatus == clsFileTools.CopyStatus.BufferedCopy ||
+						m_FileTools.CurrentCopyStatus == clsFileTools.CopyStatus.BufferedCopyResume)
 					{
 						// Exception occurred during the middle of a buffered copy
 						// If at least 10 seconds have elapsed, then auto-retry the copy again

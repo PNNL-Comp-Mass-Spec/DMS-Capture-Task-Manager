@@ -39,6 +39,7 @@ namespace DatasetQualityPlugin
 		clsRunDosProgram CmdRunner;
 		PRISM.DataBase.clsExecuteDatabaseSP mExecuteSP;
 
+		PRISM.Files.clsFileTools m_FileTools;
 		System.DateTime mLastStatusUpdate = System.DateTime.UtcNow;
 		System.DateTime mQuameterStartTime = System.DateTime.UtcNow;
 
@@ -48,8 +49,9 @@ namespace DatasetQualityPlugin
 		public clsPluginMain()
 			: base()
 		{
-			// Does nothing at present
-		}	// End sub
+			m_FileTools = new PRISM.Files.clsFileTools(m_MgrParams.GetParam("MgrName", "CaptureTaskManager"), 1);
+		}
+
 		#endregion
 
 		#region "Methods"
@@ -339,7 +341,7 @@ namespace DatasetQualityPlugin
 				if (System.IO.File.Exists(sSourceFilePath))
 				{
 					sTargetFilePath = System.IO.Path.Combine(sTargetFolder, sFileName);
-					PRISM.Files.clsFileTools.CopyFile(sSourceFilePath, sTargetFilePath, true);
+					m_FileTools.CopyFile(sSourceFilePath, sTargetFilePath, true);
 				}
 			}
 			catch (Exception ex)
