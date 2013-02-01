@@ -68,7 +68,12 @@ namespace DatasetArchivePlugin
 				{
 					if (string.IsNullOrEmpty(m_ErrMsg))
 						m_ErrMsg = "Error creating the MD5 staging file";
-					return false;
+
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_ErrMsg + " for " + m_DatasetName);
+
+					// Temporarily ignoring, effective January 31, 2013 at 10:45 pm
+					// return false;
+					m_WarningMsg = "CreateMD5StagingFile returned false";
 				}
 
 				if (!copySuccess)

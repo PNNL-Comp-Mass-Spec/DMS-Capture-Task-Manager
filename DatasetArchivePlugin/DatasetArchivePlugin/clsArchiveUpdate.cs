@@ -112,8 +112,11 @@ namespace DatasetArchivePlugin
 				stageSuccess = CreateMD5StagingFile(m_ResultsFolderPathServer, m_ResultsFolderPathArchive);
 				if (!stageSuccess)
 				{
-					LogErrorMessage("CreateMD5StagingFile returned false", "CreateMD5StagingFile");
-					return false;
+					LogErrorMessage("CreateMD5StagingFile returned false for " + m_DatasetName, "CreateMD5StagingFile");
+
+					// Temporarily ignoring, effective January 31, 2013 at 10:45 pm
+					// return false;
+					m_WarningMsg = "CreateMD5StagingFile returned false";
 				}					
 
 				if (!copySuccess)
@@ -222,9 +225,12 @@ namespace DatasetArchivePlugin
 				// Create a new stagemd5 file for each file actually copied
 				stageSuccess = CreateMD5StagingFile(m_ResultsFolderPathServer, m_ResultsFolderPathArchive, filesToUpdate);
 				if (!stageSuccess)
-				{
-					LogErrorMessage("CreateMD5StagingFile returned false", "CreateMD5StagingFile");
-					return false;
+				{					
+					LogErrorMessage("CreateMD5StagingFile returned false for " + m_DatasetName, "CreateMD5StagingFile");
+
+					// Temporarily ignoring, effective January 31, 2013 at 10:45 pm
+					// return false;
+					m_WarningMsg = "CreateMD5StagingFile returned false";
 				}
 
 				if (!copySuccess)				
