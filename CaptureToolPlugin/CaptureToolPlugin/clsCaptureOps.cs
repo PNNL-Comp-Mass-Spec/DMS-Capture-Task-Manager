@@ -776,7 +776,7 @@ namespace CaptureToolPlugin
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 
-				if (MyConn.ErrorMessage == "1219")
+				if (MyConn.ErrorMessage == "1219" || MyConn.ErrorMessage == "1203")
 				{
 					// Likely had error "An unexpected network error occurred" while copying a file for a previous dataset
 					// Need to completely exit the capture task manager
