@@ -171,25 +171,54 @@ namespace DatasetQualityPlugin
 					return mRetData;
 				}
 
-				bool bSuccess;
-				bSuccess = ProcessThermoRawFile(dataFilePathRemote, instrumentClass, fiQuameter);
-
-				if (bSuccess)
+				System.IO.FileInfo fiDataFile = new System.IO.FileInfo(dataFilePathRemote);
+				if (!fiDataFile.Exists)
 				{
-					mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+					// File has likely been purged from the storage server
+					// Look in the Aurora archive (a2.emsl.pnl.gov) using samba
+					string dataFilePathArchive = Path.Combine(m_TaskParams.GetParam("Archive_Network_Share_Path"), m_TaskParams.GetParam("Folder"), fiDataFile.Name);
+					
+					System.IO.FileInfo fiDataFileInArchive = new System.IO.FileInfo(dataFilePathArchive);
+					if (fiDataFileInArchive.Exists)
+					{
+						// Update dataFilePathRemote using the archive file path
+						msg = "Dataset file not found on storage server (" + dataFilePathRemote  + "), but was found in the archive at " + dataFilePathArchive;
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+						dataFilePathRemote = dataFilePathArchive;
+					}
+					else
+					{
+						dataFilePathRemote = string.Empty;
+						msg = "Dataset file not found on storage server (" + dataFilePathRemote + ") or in the archive (" + dataFilePathRemote + ")";
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+					}
+
 				}
+
+				if (string.IsNullOrEmpty(dataFilePathRemote))
+					mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 				else
 				{
-					// Quameter failed
-					// Copy the Quameter log file to the Dataset's QC folder
-					// We only save the log file if an error occurs since it typically doesn't contain any useful information
-					bSuccess = CopyFilesToDatasetFolder(datasetFolder);
+					bool bSuccess;
+					bSuccess = ProcessThermoRawFile(dataFilePathRemote, instrumentClass, fiQuameter);
 
-					if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
-						mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+					if (bSuccess)
+					{
+						mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+					}
+					else
+					{
+						// Quameter failed
+						// Copy the Quameter log file to the Dataset's QC folder
+						// We only save the log file if an error occurs since it typically doesn't contain any useful information
+						bSuccess = CopyFilesToDatasetFolder(datasetFolder);
 
+						if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
+							mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+
+					}
 				}
-				
+
 			}
 			else
 			{
@@ -355,7 +384,7 @@ namespace DatasetQualityPlugin
 		}
 
 		/// <summary>
-		/// Construct the full path to the MSFileInfoScanner.DLL
+		/// Construct the full path to Quameter.exe
 		/// </summary>
 		/// <returns></returns>
 		protected string GetQuameterPath()
@@ -814,7 +843,7 @@ namespace DatasetQualityPlugin
 
 				try
 				{
-					System.IO.File.Copy(dataFilePathRemote, dataFilePathLocal, true);
+					m_FileTools.CopyFile(dataFilePathRemote, dataFilePathLocal, true);				
 				}
 				catch (Exception ex)
 				{
