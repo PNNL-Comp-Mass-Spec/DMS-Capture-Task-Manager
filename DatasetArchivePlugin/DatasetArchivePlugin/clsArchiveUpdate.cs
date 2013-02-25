@@ -68,6 +68,8 @@ namespace DatasetArchivePlugin
 			bool stageSuccess;
 			string ftpErrMsg;
 
+			bool accessDeniedViaSamba = false;
+
 			// Perform base class operations
 			if (!base.PerformTask()) return false;
 
@@ -80,10 +82,36 @@ namespace DatasetArchivePlugin
 			// Verify dataset directory exists in archive
 			if (!Directory.Exists(m_ArchiveSharePath))
 			{
-				m_Msg = "Archived dataset folder " + m_ArchiveSharePath + " not found";
+
+				m_Msg = "Archived dataset folder not found: " + m_ArchiveSharePath;
 				LogErrorMessage(m_Msg, "Verify dataset directory exists in archive");
-				LogOperationFailed(m_DatasetName);
-				return false;
+
+				// Dataset folder not found; look for the parent folder
+				System.IO.DirectoryInfo diParentFolder = new System.IO.DirectoryInfo(m_ArchiveSharePath).Parent;
+				if (diParentFolder.Exists)
+				{
+					// Parent folder exists; can we enumerate its files and folders?
+					try
+					{
+						System.IO.FileSystemInfo[] fiChildren = diParentFolder.GetFileSystemInfos();
+
+					}
+					catch (Exception ex)
+					{
+						if (ex.Message.Contains("Access") && ex.Message.Contains("is denied"))
+							accessDeniedViaSamba = true;
+					}
+
+					if (accessDeniedViaSamba)
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Parent folder exists, but directory security issues are not allowing us to view the subdirectories; will assume all files should be updated via FTP");
+
+				}
+
+				if (!accessDeniedViaSamba)
+				{
+					LogOperationFailed(m_DatasetName);
+					return false;
+				}
 			}
 
 			// Set path to results folder on storage server (OutputFolderName might be blank)
@@ -94,13 +122,13 @@ namespace DatasetArchivePlugin
 
 
 			// Determine if the results folder already exists. If not present, copy entire folder and we're done
-			if (!Directory.Exists(m_ResultsFolderPathArchive))
+			if (accessDeniedViaSamba || !Directory.Exists(m_ResultsFolderPathArchive))
 			{
 				m_Msg = "Folder " + m_ResultsFolderPathArchive + " not found. Copying from storage server";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
-				string tmpStr = ConvertSambaPathToLinuxPath(m_ResultsFolderPathArchive);	// Convert to Linux path
+				string resultsFolderPathLinux = ConvertSambaPathToLinuxPath(m_ResultsFolderPathArchive);	// Convert to Linux path
 
-				copySuccess = CopyOneFolderToArchive(m_ResultsFolderPathServer, tmpStr);
+				copySuccess = CopyOneFolderToArchive(m_ResultsFolderPathServer, resultsFolderPathLinux);
 				if (!copySuccess)
 				{
 					// If the folder was created in the archive then do not exit this function yet; we need to call CreateMD5StagingFile
