@@ -69,7 +69,7 @@ namespace DatasetInfoPlugin
 				return retData;
 			}
 
-			msg = "Performing quality checks for dataset '" + dataset + "'";
+			msg = "Running DatasetInfo on dataset '" + dataset + "'";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
 
 			retData = RunMsFileInfoScanner();
@@ -319,8 +319,7 @@ namespace DatasetInfoPlugin
 				else
 				{
 					// Everything went wonderfully
-					result.CloseoutMsg = "Job " + m_TaskParams.GetParam("Job") + ", Step " + m_TaskParams.GetParam("Step") +
-								" completed successfully";
+					result.CloseoutMsg = string.Empty;
 					result.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
 				}
 			}

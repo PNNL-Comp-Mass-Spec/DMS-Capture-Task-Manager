@@ -1119,7 +1119,7 @@ namespace CaptureTaskManager
 
 					if (freeSpaceGB < DEFAULT_DATASET_STORAGE_MIN_FREE_SPACE_GB)
 					{
-						ErrorMessage = "Dataset directory drive has less than " + totalNumberOfFreeBytes.ToString() + " GB free: " + ((int)freeSpaceGB).ToString() + " GB";
+						ErrorMessage = "Dataset directory drive has less than " + DEFAULT_DATASET_STORAGE_MIN_FREE_SPACE_GB.ToString("0") + "GB free: " + freeSpaceGB.ToString("0.00") + " GB available";
 
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ErrorMessage + ": " + datasetStoragePath);
 						return false;
