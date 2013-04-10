@@ -220,8 +220,12 @@ namespace ImsDemuxPlugin
 
 			if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
 			{
-				// Demultiplexing succeeded, now try to calibrate
-				retData = mDemuxTools.PerformCalibration(m_MgrParams, m_TaskParams, retData);
+				// Demultiplexing succeeded (or skipped)
+
+				bool bCalibrate = m_TaskParams.GetParam("PerformCalibration", true);
+
+				if (bCalibrate)
+					retData = mDemuxTools.PerformCalibration(m_MgrParams, m_TaskParams, retData);
 			}
 
 			msg = "Completed clsPluginMain.RunTool()";

@@ -408,7 +408,7 @@ namespace DatasetInfoPlugin
 				case clsInstrumentClassInfo.eRawDataType.BrukerFTFolder:
 					// 12T_FTICR_B, 15T_FTICR, 9T_FTICR_B
 					// Also, Bruker_FT_IonTrap01, which is Bruker_Amazon_Ion_Trap
-					// 15T_FTICR_Imaging datasets with instrument class BrukerMALDI_Imaging_V2 will also have bruker_ft format; however, instead of an analysis.baf file, they might have a .mcf file
+					// 12T_FTICR_Imaging and 15T_FTICR_Imaging datasets with instrument class BrukerMALDI_Imaging_V2 will also have bruker_ft format; however, instead of an analysis.baf file, they might have a .mcf file
 					
 					bIsFile = true;
 					if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Bruker_Amazon_Ion_Trap)

@@ -1588,9 +1588,9 @@ namespace CaptureToolPlugin
 
 			// Verify the folder doesn't contain a group of ".D" folders
 			string[] folderList = Directory.GetDirectories(copySourceDir, "*.D");
-			if (folderList.Length > 0)
+			if (folderList.Length > 1)
 			{
-				retData.CloseoutMsg = "Multiple scan folders found in dataset folder";
+				retData.CloseoutMsg = "Multiple .D folders found in dataset folder";
 				msg = retData.CloseoutMsg + " " + copySourceDir;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 				retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
