@@ -1154,9 +1154,23 @@ namespace CaptureTaskManager
 
 			if (!Directory.Exists(workingDir))
 			{
-				string msg = "Invalid working directory: " + workingDir;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-				return false;
+				string alternateWorkDir = @"E:\CapMan_WorkDir";
+
+				if (Directory.Exists(alternateWorkDir))
+				{
+					// Auto-update the working directory
+					m_MgrSettings.SetParam("WorkDir", alternateWorkDir);
+
+					string msg = "Invalid working directory: " + workingDir + "; automatically switched to " + alternateWorkDir;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+				}
+				else
+				{
+					string msg = "Invalid working directory: " + workingDir;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+
+					return false;
+				}
 			}
 
 			// No problem found

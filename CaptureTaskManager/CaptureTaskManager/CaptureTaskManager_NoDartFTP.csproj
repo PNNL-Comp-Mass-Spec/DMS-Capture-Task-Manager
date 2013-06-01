@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -121,6 +121,10 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\DatasetArchivePlugin\DatasetArchivePlugin\DatasetArchivePlugin_NoDartFTP.csproj">
+      <Project>{0874E937-E8F5-4449-A32F-7F1010E84670}</Project>
+      <Name>DatasetArchivePlugin_NoDartFTP</Name>
+    </ProjectReference>
     <ProjectReference Include="..\CTM_Shared\CTM_Shared.csproj">
       <Project>{7D07F054-0D29-45DD-9B22-71D0768BC3C3}</Project>
       <Name>CTM_Shared</Name>

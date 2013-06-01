@@ -140,9 +140,16 @@ namespace Pacifica.DMS_Metadata
 			double yq = (double)date_code.Month / 12.0 * 4.0;
 			int yearQuarter = (int)Math.Ceiling(yq);
 			string date_code_string = date_code.Year.ToString() + "_" + yearQuarter.ToString();
+			bool recurse = true;
+			string sValue;
+
+			if (taskParams.TryGetValue(MyEMSLUploader.RECURSIVE_UPLOAD, out sValue))
+			{
+				bool.TryParse(sValue, out recurse);
+			}
 
 			//grab file information from this dataset directory
-			this._bundledFileInfo = this.CollectFileInformation(this._pathToArchive, this._archiveMode, this._basePath, bgw);
+			this._bundledFileInfo = this.CollectFileInformation(this._pathToArchive, this._archiveMode, this._basePath, recurse, bgw);
 
 			Dictionary<string, object> metadataObject = new Dictionary<string, object>();
 			List<Dictionary<string, string>> groupObject = new List<Dictionary<string, string>>();
@@ -425,6 +432,7 @@ namespace Pacifica.DMS_Metadata
 			string pathToBeArchived, 
 			ArchiveModes archiveOrUpdateMode, 
 			string baseDSPath,
+			bool recurse,
 			System.ComponentModel.BackgroundWorker worker
 		)
 		{
@@ -435,7 +443,13 @@ namespace Pacifica.DMS_Metadata
 				throw new System.IO.DirectoryNotFoundException("Source directory not found: " + archiveDir);
 			}
 
-			System.IO.FileInfo[] fileList = archiveDir.GetFiles("*.*", System.IO.SearchOption.AllDirectories);
+			System.IO.SearchOption eSearchOption;
+			if (recurse)
+				eSearchOption = System.IO.SearchOption.AllDirectories;
+			else
+				eSearchOption = System.IO.SearchOption.TopDirectoryOnly;
+
+			System.IO.FileInfo[] fileList = archiveDir.GetFiles("*.*", eSearchOption);
 			IFileInfoObject fio;
 
 			double fracCompleted = 0.0;

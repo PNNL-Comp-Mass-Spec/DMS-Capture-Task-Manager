@@ -142,7 +142,7 @@ namespace CaptureTaskManager
 			}
 
 			/// <summary>
-			/// Adds a parameter
+			/// Adds (or updates) a parameter
 			/// </summary>
 			/// <param name="paramName">Name of parameter</param>
 			/// <param name="paramValue">Value for parameter</param>
@@ -151,7 +151,11 @@ namespace CaptureTaskManager
 			{
 				try
 				{
-					m_JobParams.Add(paramName, paramValue);
+					if (m_JobParams.ContainsKey(paramName))
+						m_JobParams[paramName] = paramValue;
+					else
+						m_JobParams.Add(paramName, paramValue);
+
 					return true;
 				}
 				catch (Exception ex)

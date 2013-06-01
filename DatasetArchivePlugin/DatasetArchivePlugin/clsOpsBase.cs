@@ -122,7 +122,10 @@ namespace DatasetArchivePlugin
 				// Possibly copy this dataset to MyEmsl
 				string sInstrument = m_TaskParams.GetParam("Instrument_Name");
 				string sEUSInstrumentID = m_TaskParams.GetParam("EUS_Instrument_ID");
-                int iMaxMyEMSLUploadAttempts = 3;
+                
+				int iMaxMyEMSLUploadAttempts = 3;
+				bool recurse = true;
+
 				mMostRecentLogTime = System.DateTime.UtcNow;
 				mLastStatusUpdateTime = System.DateTime.UtcNow;
 
@@ -132,14 +135,14 @@ namespace DatasetArchivePlugin
 					{
 						if (System.DateTime.Now.Hour % 6 == 0)
 						{
-							bMyEmslUploadSuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts);
+							bMyEmslUploadSuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts, recurse);
 						}
 					}
 				}
 
 			}
 
-			//Set client/server perspective & setup paths
+			// Set client/server perspective & setup paths
 			if (m_MgrParams.GetParam("perspective").ToLower() == "client")
 			{
 				m_TempVol = m_TaskParams.GetParam("Storage_Vol_External");
@@ -179,7 +182,7 @@ namespace DatasetArchivePlugin
 			return text + append;
 		}
 
-        protected bool UploadToMyEMSLWithRetry(int maxAttempts)
+		protected bool UploadToMyEMSLWithRetry(int maxAttempts, bool recurse)
         {
             bool bSuccess = false;
             int iAttempts = 0;
@@ -192,7 +195,7 @@ namespace DatasetArchivePlugin
             while (!bSuccess && iAttempts < maxAttempts) 
             {
                 iAttempts += 1;
-                bSuccess = UploadToMyEMSL();
+				bSuccess = UploadToMyEMSL(recurse);
 
 				if (m_MyEmslUploadPermissionsError)
 					break;
@@ -217,7 +220,7 @@ namespace DatasetArchivePlugin
 		/// Use MyEMSLUploader to upload the data to MyEMSL
 		/// </summary>
 		/// <returns>True if success, false if an error</returns>
-		protected bool UploadToMyEMSL()
+		protected bool UploadToMyEMSL(bool recurse)
 		{
 			bool success;
 			System.TimeSpan tsElapsedTime = new System.TimeSpan();
@@ -238,6 +241,8 @@ namespace DatasetArchivePlugin
 				myEMSLUL.StatusUpdate += new Pacifica.Core.StatusUpdateEventHandler(myEMSLUpload_StatusUpdate);
 				myEMSLUL.TaskCompleted += new Pacifica.Core.TaskCompletedEventHandler(myEMSLUpload_TaskCompleted);
 				myEMSLUL.DataReceivedAndVerified += new Pacifica.Core.DataVerifiedHandler(myEMSLUpload_DataReceivedAndVerified);
+
+				m_TaskParams.AddAdditionalParameter(Pacifica.DMS_Metadata.MyEMSLUploader.RECURSIVE_UPLOAD, recurse.ToString());
 
 				// Start the upload
 				myEMSLUL.StartUpload(m_TaskParams.TaskDictionary, m_MgrParams.TaskDictionary);

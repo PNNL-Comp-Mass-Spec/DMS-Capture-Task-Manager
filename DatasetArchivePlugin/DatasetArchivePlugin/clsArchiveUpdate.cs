@@ -120,6 +120,29 @@ namespace DatasetArchivePlugin
 			// Set the path to the results folder in archive
 			m_ResultsFolderPathArchive = Path.Combine(m_ArchiveSharePath, m_TaskParams.GetParam("OutputFolderName", String.Empty));
 
+			bool pushDatasetToMyEmsl = m_TaskParams.GetParam("PushDatasetToMyEMSL", false);				
+
+			if (pushDatasetToMyEmsl)
+			{
+				m_Msg = "Pushing dataset folder to MyEMSL";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
+				
+				mMostRecentLogTime = System.DateTime.UtcNow;
+				mLastStatusUpdateTime = System.DateTime.UtcNow;
+
+				int iMaxMyEMSLUploadAttempts = 2;
+				bool recurse = false;
+
+				copySuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts, recurse);
+							
+				if (!copySuccess)
+					return false;
+
+				// Finished with this update task
+				m_Msg = "Completed push to MyEMSL, dataset " + m_DatasetName + ", job " + m_TaskParams.GetParam("Job");
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
+				return true;
+			}
 
 			// Determine if the results folder already exists. If not present, copy entire folder and we're done
 			if (accessDeniedViaSamba || !Directory.Exists(m_ResultsFolderPathArchive))

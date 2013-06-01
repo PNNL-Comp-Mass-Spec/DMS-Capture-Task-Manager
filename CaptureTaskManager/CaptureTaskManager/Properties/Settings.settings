@@ -6,7 +6,7 @@
       <Value Profile="(Default)">True</Value>
     </Setting>
     <Setting Name="MgrName" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">Monroe_CTM</Value>
+      <Value Profile="(Default)">Proto-9_CTM</Value>
     </Setting>
     <Setting Name="MgrCnfgDbConnectStr" Type="System.String" Scope="Application">
       <Value Profile="(Default)">Data Source=proteinseqs;Initial Catalog=Manager_Control;Integrated Security=SSPI</Value>

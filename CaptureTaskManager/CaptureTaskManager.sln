@@ -5,6 +5,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CaptureTaskManager", "Captu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CTM_Shared", "CTM_Shared\CTM_Shared.csproj", "{7D07F054-0D29-45DD-9B22-71D0768BC3C3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DatasetArchivePlugin", "..\DatasetArchivePlugin\DatasetArchivePlugin\DatasetArchivePlugin.csproj", "{FC0E683A-38BE-494C-93F1-65747197DCD7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -19,6 +21,10 @@ Global
 		{7D07F054-0D29-45DD-9B22-71D0768BC3C3}.Debug|x86.Build.0 = Debug|x86
 		{7D07F054-0D29-45DD-9B22-71D0768BC3C3}.Release|x86.ActiveCfg = Release|x86
 		{7D07F054-0D29-45DD-9B22-71D0768BC3C3}.Release|x86.Build.0 = Release|x86
+		{FC0E683A-38BE-494C-93F1-65747197DCD7}.Debug|x86.ActiveCfg = Debug|x86
+		{FC0E683A-38BE-494C-93F1-65747197DCD7}.Debug|x86.Build.0 = Debug|x86
+		{FC0E683A-38BE-494C-93F1-65747197DCD7}.Release|x86.ActiveCfg = Release|x86
+		{FC0E683A-38BE-494C-93F1-65747197DCD7}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

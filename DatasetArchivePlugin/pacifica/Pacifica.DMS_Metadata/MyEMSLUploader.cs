@@ -8,6 +8,8 @@ namespace Pacifica.DMS_Metadata
 {
 	public class MyEMSLUploader
 	{
+		public const string RECURSIVE_UPLOAD = "MyEMSL_Recurse";
+
 		System.ComponentModel.BackgroundWorker backgrounder;
 		System.ComponentModel.BackgroundWorker statusBackgrounder;
 		DMSMetadataObject _mdContainer;

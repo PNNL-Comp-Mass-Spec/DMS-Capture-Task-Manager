@@ -123,6 +123,8 @@ namespace Pacifica.Core
 				metadataObject.Add("bundleName", bundleName);
 			}
 
+			// ToDo: Add "subdir" key and value
+
 			// Grab the list of files from the top-level "file" object
 			SortedDictionary<string, FileInfoObject> fileListObject = new SortedDictionary<string, FileInfoObject>();
 			IList fileList = (List<Dictionary<string, object>>)metadataObject["file"];

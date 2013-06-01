@@ -389,6 +389,15 @@ namespace CaptureTaskManager
 					ParamKey = DbCStr(oRow[dtSettings.Columns["ParameterName"]]);
 					ParamVal = DbCStr(oRow[dtSettings.Columns["ParameterValue"]]);
 
+					if (ParamKey.ToLower() == "perspective" && System.Environment.MachineName.ToLower().StartsWith("monroe"))
+					{
+						if (ParamVal.ToLower() == "server")
+						{
+							ParamVal = "client";
+							Console.WriteLine("StoreParameters: Overriding manager perspective to be 'client'");
+						}
+					}
+
 					if (m_ParamDictionary.ContainsKey(ParamKey))
 					{
 						if (!skipExistingParameters)
