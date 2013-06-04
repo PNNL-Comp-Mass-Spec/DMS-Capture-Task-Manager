@@ -10,7 +10,9 @@
 //						11/17/2010 (DAC) - Added new tests for MALDI imaging and spot instrument classes
 //*********************************************************************************************************
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using CaptureTaskManager;
 
 namespace DatasetIntegrityPlugin
@@ -349,6 +351,31 @@ namespace DatasetIntegrityPlugin
 				return true;
 			}
 		}
+
+		private bool PositiveNegativeMethodFolders(List<string> subFolderList)
+		{
+			if (subFolderList == null)
+				return false;
+
+			if (subFolderList.Count == 2)
+			{
+				if (subFolderList[0].IndexOf("_neg", 0, StringComparison.CurrentCultureIgnoreCase) >= 0 &&
+					subFolderList[1].IndexOf("_pos", 0, StringComparison.CurrentCultureIgnoreCase) >= 0)
+				{
+					return true;
+				}
+
+				if (subFolderList[1].IndexOf("_neg", 0, StringComparison.CurrentCultureIgnoreCase) >= 0 &&
+	                subFolderList[0].IndexOf("_pos", 0, StringComparison.CurrentCultureIgnoreCase) >= 0)
+				{
+					return true;
+				}
+
+			}
+
+			return false;
+		}
+
 
 		private void ReportFileSizeTooLarge(string sDataFileDescription, string sFilePath, float fActualSize, float fMaxSize)
 		{
@@ -772,18 +799,24 @@ namespace DatasetIntegrityPlugin
 			}
 
 			// Check to see if at least one .M folder exists
-			string[] subFolderList = Directory.GetDirectories(folderList[0], "*.M");
-			if (subFolderList.Length < 0)
+			List<string> subFolderList = Directory.GetDirectories(folderList[0], "*.M").ToList<string>();
+
+			if (subFolderList == null || subFolderList.Count < 1)
 			{
 				mRetData.EvalMsg = "Invalid dataset. No .M folders found";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
-			else if (subFolderList.Length > 1)
+			else if (subFolderList.Count > 1)
 			{
-				mRetData.EvalMsg = "Invalid dataset. Multiple .M folders found";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
-				return EnumCloseOutType.CLOSEOUT_FAILED;
+				// Multiple .M folders
+				// Allow this if there are two folders, and one contains _neg and one contains _pos
+				if (!PositiveNegativeMethodFolders(subFolderList))
+				{
+					mRetData.EvalMsg = "Invalid dataset. Multiple .M folders found";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
 			}
 
 			// Determine if at least one .method file exists
@@ -940,18 +973,24 @@ namespace DatasetIntegrityPlugin
 			
 
 			// Check to see if a .M folder exists
-			string[] subFolderList = Directory.GetDirectories(folderList[0], "*.M");
-			if (subFolderList == null || subFolderList.Length < 1)
+			List<string> subFolderList = Directory.GetDirectories(folderList[0], "*.M").ToList<string>();
+
+			if (subFolderList == null || subFolderList.Count < 1)
 			{
 				mRetData.EvalMsg = "Invalid dataset. No .M folders found";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
-			else if (subFolderList.Length > 1)
+			else if (subFolderList.Count > 1)
 			{
-				mRetData.EvalMsg = "Invalid dataset. Multiple .M folders found";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
-				return EnumCloseOutType.CLOSEOUT_FAILED;
+				// Multiple .M folders
+				// Allow this if there are two folders, and one contains _neg and one contains _pos
+				if (!PositiveNegativeMethodFolders(subFolderList))
+				{
+					mRetData.EvalMsg = "Invalid dataset. Multiple .M folders found";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
 			}
 
 			// Determine if apexAcquisition.method file exists and meets minimum size requirements
