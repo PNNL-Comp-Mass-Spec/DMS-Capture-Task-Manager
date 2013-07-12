@@ -418,22 +418,58 @@ namespace DatasetArchivePlugin
 		}	// End sub
 
 		/// <summary>
+		/// Determine the total size of all files in the specified folder (including subdirectories)
+		/// </summary>
+		/// <param name="sourceFolderPath"></param>
+		/// <returns>Total size, in GB</returns>
+		protected float ComputeFolderSizeGB(string sourceFolderPath)
+		{
+			DirectoryInfo diSourceFolder = new DirectoryInfo(sourceFolderPath);
+
+			string msg = "Determing the total size of " + sourceFolderPath;
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+
+			if (!diSourceFolder.Exists)
+			{
+				msg = "Source folder not found by ComputeFolderSizeGB: " + sourceFolderPath;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+
+				return 0;
+			}
+			float folderSizeGB = 0;
+
+			foreach (FileInfo fiFile in diSourceFolder.GetFiles("*", SearchOption.AllDirectories))
+			{
+				folderSizeGB += (float)(fiFile.Length / 1024.0 / 1024.0 / 1024.0);
+			}
+
+			msg = "  Total size: " + folderSizeGB.ToString("0.0") + " GB";
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+
+			return folderSizeGB;
+
+		}
+
+		/// <summary>
 		/// General method for copying a folder to the archive
 		/// </summary>
 		/// <param name="sourceFolder">Folder name/path to copy</param>
 		/// <param name="destFolder">Folder name/path on archive</param>
 		/// <returns></returns>
-		protected bool CopyOneFolderToArchive(string sourceFolder, string destFolder)
+		protected bool CopyOneFolderToArchive(string sourceFolderPath, string destFolderPath)
 		{
 			// Verify source folder exists
-			if (!Directory.Exists(sourceFolder))
+			if (!Directory.Exists(sourceFolderPath))
 			{
-				m_Msg = "Source folder " + sourceFolder + " not found";
+				m_Msg = "Source folder " + sourceFolderPath + " not found";
 				m_ErrMsg = string.Copy(m_Msg);
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
 				LogOperationFailed(m_DatasetName);
 				return false;
 			}
+
+			m_Msg = "Copying " + sourceFolderPath + " to " + destFolderPath + " via FTP";
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.DEBUG, m_Msg);
 
 			// Open archive connection
 			if (!OpenArchiveServer()) return false;
@@ -441,11 +477,11 @@ namespace DatasetArchivePlugin
 			// Copy specified folder to archive
 			try
 			{
-				if (!m_FtpTools.CopyDirectory(sourceFolder, destFolder, true))
+				if (!m_FtpTools.CopyDirectory(sourceFolderPath, destFolderPath, true))
 				{
 					m_Msg = "Error copying folder by ftp: " + m_FtpTools.ErrMsg;
 					m_ErrMsg = string.Copy(m_Msg);
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg + "; " + sourceFolder);
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg + "; " + sourceFolderPath);
 					LogOperationFailed(m_DatasetName);
 					CloseArchiveServer();
 					return false;
@@ -455,13 +491,13 @@ namespace DatasetArchivePlugin
 			{
 				m_Msg = "Error copying folder by ftp: " + ex.Message;
 				m_ErrMsg = string.Copy(m_Msg);
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg + "; " + sourceFolder, ex);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg + "; " + sourceFolderPath, ex);
 				LogOperationFailed(m_DatasetName);
 				CloseArchiveServer();
 				return false;
 			}
 
-			m_Msg = "Copied folder " + sourceFolder + " to archive";
+			m_Msg = "Copied folder " + sourceFolderPath + " to archive";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
 
 			// Close the archive connection

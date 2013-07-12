@@ -35,9 +35,15 @@ namespace DatasetArchivePlugin
 
 		#region "Class variables"
 
-		string m_ArchiveSharePath = string.Empty;
-		string m_ResultsFolderPathArchive = string.Empty;
-		string m_ResultsFolderPathServer = string.Empty;
+		string m_ArchiveSharePath = string.Empty;				// The dataset folder path in the archive, for example: \\a2.emsl.pnl.gov\dmsarch\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25
+		string m_ResultsFolderPathArchive = string.Empty;		// The target path to copy the data to, for example:    \\a2.emsl.pnl.gov\dmsarch\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25\SIC201304300029_Auto938684
+		string m_ResultsFolderPathServer = string.Empty;		// The source path of the dataset folder (or dataset job results folder) to archive, for example: \\proto-7\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25\SIC201304300029_Auto938684
+
+		#endregion
+
+		#region "Auto-Properties"
+
+		public bool CreateDatasetFolderInArchiveIfMissing { get; set; }
 
 		#endregion
 
@@ -50,7 +56,8 @@ namespace DatasetArchivePlugin
 		public clsArchiveUpdate(IMgrParams MgrParams, ITaskParams TaskParams)
 			: base(MgrParams, TaskParams)
 		{
-		}	// End sub
+			CreateDatasetFolderInArchiveIfMissing = false;
+		}
 		#endregion
 
 		#region "Methods"
@@ -83,8 +90,16 @@ namespace DatasetArchivePlugin
 			if (!Directory.Exists(m_ArchiveSharePath))
 			{
 
-				m_Msg = "Archived dataset folder not found: " + m_ArchiveSharePath;
-				LogErrorMessage(m_Msg, "Verify dataset directory exists in archive");
+				if (CreateDatasetFolderInArchiveIfMissing)
+				{
+					string msg = "Archived dataset folder not found; will create it at " + m_ArchiveSharePath;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+				}
+				else				
+				{
+					m_Msg = "Archived dataset folder not found: " + m_ArchiveSharePath;
+					LogErrorMessage(m_Msg, "Verify dataset directory exists in archive");					
+				}
 
 				// Dataset folder not found; look for the parent folder
 				System.IO.DirectoryInfo diParentFolder = new System.IO.DirectoryInfo(m_ArchiveSharePath).Parent;
@@ -107,8 +122,8 @@ namespace DatasetArchivePlugin
 
 				}
 
-				if (!accessDeniedViaSamba)
-				{
+				if (!accessDeniedViaSamba && !CreateDatasetFolderInArchiveIfMissing)
+				{					
 					LogOperationFailed(m_DatasetName);
 					return false;
 				}
@@ -182,6 +197,13 @@ namespace DatasetArchivePlugin
 			}
 			else
 			{
+				if (accessDeniedViaSamba)
+					m_Msg = "Unable to determine if " + m_ResultsFolderPathArchive + " exists since accessDeniedViaSamba = True";
+				else
+					m_Msg = "Folder " + m_ResultsFolderPathArchive + " exists; comparing remote files to local files";
+
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
+
 				List<clsJobData> filesToUpdate = CompareFolders(m_ResultsFolderPathServer, m_ResultsFolderPathArchive, out compareErrorCount, ref compareWithHash);
 
 				// Check for errors

@@ -50,7 +50,26 @@ namespace DatasetArchivePlugin
 				m_Msg = "Archiving dataset " + m_TaskParams.GetParam("dataset") + ", job " + m_TaskParams.GetParam("Job");
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, m_Msg);
 
-				copySuccess = CopyOneFolderToArchive(m_DSNamePath, m_ArchiveNamePath);
+				// Determine the total size of the source folder
+				// If over 5 GB, then we should use the Archive Update mechanism which will support retrying the archive
+				float folderSizeGB = ComputeFolderSizeGB(m_DSNamePath);
+
+				if (folderSizeGB >= 5)
+				{
+
+					m_Msg = "Dataset " + m_TaskParams.GetParam("dataset")  + " is " + folderSizeGB.ToString("0") + " GB; will use the ArchiveUpdate mechanism since this supports resuming an interrupted FTP operation";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, m_Msg);
+
+					clsArchiveUpdate oArchiveUpdate = new clsArchiveUpdate(m_MgrParams, m_TaskParams);
+					oArchiveUpdate.CreateDatasetFolderInArchiveIfMissing = true;
+
+					copySuccess = oArchiveUpdate.PerformTask();
+					return copySuccess;
+				}
+				else
+				{
+					copySuccess = CopyOneFolderToArchive(m_DSNamePath, m_ArchiveNamePath);
+				}
 
 				// Set the path to the results folder in archive
 				string sResultsFolderPathArchive = System.IO.Path.Combine(m_TaskParams.GetParam("Archive_Network_Share_Path"), m_TaskParams.GetParam("folder"));

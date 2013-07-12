@@ -203,7 +203,8 @@ namespace DatasetInfoPlugin
 			// Get the input file name
 			clsInstrumentClassInfo.eRawDataType rawDataType = clsInstrumentClassInfo.eRawDataType.Unknown;
 			clsInstrumentClassInfo.eInstrumentClass instrumentClass = clsInstrumentClassInfo.eInstrumentClass.Unknown;
-			string sFileOrFolderName = GetDataFileOrFolderName(sourceFolder, out bSkipPlots, out rawDataType, out instrumentClass);
+			bool bBrukerDotDBaf;
+			string sFileOrFolderName = GetDataFileOrFolderName(sourceFolder, out bSkipPlots, out rawDataType, out instrumentClass, out bBrukerDotDBaf);
 
 			if (sFileOrFolderName == UNKNOWN_FILE_TYPE)
 			{
@@ -268,11 +269,29 @@ namespace DatasetInfoPlugin
 			if (!success)
 			{
 				// Either a bad result code was returned, or an error event was received
-				if (string.IsNullOrEmpty(m_Msg))
-					m_Msg = "ProcessMSFileOrFolder returned false";
 
-				result.CloseoutMsg = "Job " + m_TaskParams.GetParam("Job") + ", Step " + m_TaskParams.GetParam("Step") + ": " + m_Msg;
-				result.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+				if (bBrukerDotDBaf)
+				{
+					// 12T_FTICR_B datasets (with .D folders and analysis.baf and/or fid files) sometimes work with MSFileInfoscanner, and sometimes don't
+					// The problem is that ProteoWizard doesn't support certain forms of these datasets
+					// In particular, small datasets (lasting just a few seconds) don't work
+					
+					result.CloseoutMsg = string.Empty;
+					result.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+					result.EvalMsg = "MSFileInfoScanner error for data type " + clsInstrumentClassInfo.GetRawDataTypeName(rawDataType) + ", instrument class " + clsInstrumentClassInfo.GetInstrumentClassName(instrumentClass);
+					result.EvalCode = EnumEvalCode.EVAL_CODE_NOT_EVALUATED;
+					return result;
+
+				}
+				else
+				{
+
+					if (string.IsNullOrEmpty(m_Msg))
+						m_Msg = "ProcessMSFileOrFolder returned false";
+
+					result.CloseoutMsg = "Job " + m_TaskParams.GetParam("Job") + ", Step " + m_TaskParams.GetParam("Step") + ": " + m_Msg;
+					result.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+				}
 			}
 			else
 			{
@@ -310,7 +329,14 @@ namespace DatasetInfoPlugin
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
 				}
 
+				bool bFailJob = false;
+
 				if ((errorCode != MSFileInfoScannerInterfaces.iMSFileInfoScanner.eMSFileScannerErrorCodes.NoError) || m_ErrOccurred)
+				{
+
+				}
+
+				if (bFailJob)
 				{
 					// Either a bad result code was returned, or an error event was received
 					result.CloseoutMsg = "MSFileInfoScanner error";
@@ -354,7 +380,7 @@ namespace DatasetInfoPlugin
 		/// </summary>
 		/// <returns>Data file or folder name; empty string if not found</returns>
 		/// <remarks>Will return UNKNOWN_FILE_TYPE or INVALID_FILE_TYPE in special circumstances</remarks>
-		private string GetDataFileOrFolderName(string inputFolder, out bool bSkipPlots, out clsInstrumentClassInfo.eRawDataType rawDataType, out clsInstrumentClassInfo.eInstrumentClass instrumentClass)
+		private string GetDataFileOrFolderName(string inputFolder, out bool bSkipPlots, out clsInstrumentClassInfo.eRawDataType rawDataType, out clsInstrumentClassInfo.eInstrumentClass instrumentClass, out bool bBrukerDotDBaf)
 		{
 			string dataset = m_TaskParams.GetParam("Dataset");
 			string sFileOrFolderName;
@@ -363,6 +389,7 @@ namespace DatasetInfoPlugin
 			bSkipPlots = false;
 			instrumentClass = clsInstrumentClassInfo.eInstrumentClass.Unknown;
 			rawDataType = clsInstrumentClassInfo.eRawDataType.Unknown;
+			bBrukerDotDBaf = false;
 
 			// Determine the Instrument Class and RawDataType
 			string instClassName = m_TaskParams.GetParam("Instrument_Class");
@@ -412,9 +439,14 @@ namespace DatasetInfoPlugin
 					
 					bIsFile = true;
 					if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Bruker_Amazon_Ion_Trap)
+					{
 						sFileOrFolderName = System.IO.Path.Combine(dataset + clsInstrumentClassInfo.DOT_D_EXTENSION, "analysis.yep");
+					}
 					else
+					{
 						sFileOrFolderName = System.IO.Path.Combine(dataset + clsInstrumentClassInfo.DOT_D_EXTENSION, "analysis.baf");
+						bBrukerDotDBaf = true;
+					}
 
 					if (!File.Exists(Path.Combine(diDatasetFolder.FullName, sFileOrFolderName)))
 						sFileOrFolderName = CheckForBrukerImagingZipFiles(diDatasetFolder);
