@@ -131,7 +131,7 @@ namespace DatasetArchivePlugin
 				mLastStatusUpdateTime = System.DateTime.UtcNow;
 
 				int iMaxMyEMSLUploadAttempts = 2;
-				bool recurse = false;
+				bool recurse = m_TaskParams.GetParam("PushDatasetRecurse", false);
 
 				copySuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts, recurse);
 							
