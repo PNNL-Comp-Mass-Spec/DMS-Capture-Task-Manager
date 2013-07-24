@@ -222,6 +222,9 @@ namespace ImsDemuxPlugin
 			{
 				// Demultiplexing succeeded (or skipped)
 
+				// Determine whether or not calibration should be performed
+				// Note that stored procedure GetJobParamTable in the DMS_Capture database
+				// sets this value based on the value in column Perform_Calibration of table T_Instrument_Name in the DMS5 database
 				bool bCalibrate = m_TaskParams.GetParam("PerformCalibration", true);
 
 				if (bCalibrate)
