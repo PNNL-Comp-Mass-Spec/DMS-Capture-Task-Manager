@@ -120,6 +120,7 @@ copy "$(TargetDir)Belov*.dll" "$(ProjectDir)..\..\DeployedFiles"
 copy "$(TargetDir)IMSDemultiplexer*.dll" "$(ProjectDir)..\..\DeployedFiles"
 copy "$(TargetDir)MathNet*.dll" "$(ProjectDir)..\..\DeployedFiles"
 copy "$(TargetDir)*UIMF*.dll" "$(ProjectDir)..\..\DeployedFiles"
-copy "$(TargetDir)*.*" "$(ProjectDir)..\..\CaptureTaskManager\CaptureTaskManager\bin\Debug"</PostBuildEvent>
+copy "$(TargetDir)*.*" "$(ProjectDir)..\..\CaptureTaskManager\CaptureTaskManager\bin\Debug"
+copy "$(TargetDir)*.*" "$(ProjectDir)..\..\CaptureTaskManager\CaptureTaskManager\bin\Debug_NoDartFTP"</PostBuildEvent>
   </PropertyGroup>
 </Project>

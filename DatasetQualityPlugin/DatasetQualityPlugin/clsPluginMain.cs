@@ -23,7 +23,7 @@ namespace DatasetQualityPlugin
 
 		#region "Constants and Enums"
 		int MAX_QUAMETER_RUNTIME_MINUTES = 150;
-		
+
 		string STORE_QUAMETER_RESULTS_SP_NAME = "StoreQuameterResults";
 		string QUAMETER_IDFREE_METRICS_FILE = "Quameter_IDFree.tsv";
 		string QUAMETER_CONSOLE_OUTPUT_FILE = "Quameter_Console_Output.txt";
@@ -48,7 +48,7 @@ namespace DatasetQualityPlugin
 		public clsPluginMain()
 			: base()
 		{
-			
+
 		}
 
 		#endregion
@@ -107,6 +107,7 @@ namespace DatasetQualityPlugin
 
 			// Determine whether or not we will run Quameter
 			// At present we only process Thermo .Raw files
+			// Furthermore, if the file only contains MS/MS spectra, then it cannot be processed with Quameter
 
 			// Set up the file paths
 			string storageVolExt = m_TaskParams.GetParam("Storage_Vol_External");
@@ -130,12 +131,22 @@ namespace DatasetQualityPlugin
 				return mRetData;
 			}
 
+			// Defie the generic Quameter skip reason
+			string skipReason = "instrument class " + instClassName;
+
 			switch (instrumentClass)
 			{
 				case clsInstrumentClassInfo.eInstrumentClass.Finnigan_Ion_Trap:
 				case clsInstrumentClassInfo.eInstrumentClass.LTQ_FT:
 				case clsInstrumentClassInfo.eInstrumentClass.Thermo_Exactive:
 					dataFilePathRemote = Path.Combine(datasetFolder, m_Dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
+
+					// Confirm that the file has MS1 spectra (since Quameter requires that they be present)
+					if (!QuameterCanProcessDataset(m_DatasetID, m_Dataset, datasetFolder, ref skipReason))
+					{
+						dataFilePathRemote = string.Empty;
+					}
+
 					break;
 				case clsInstrumentClassInfo.eInstrumentClass.Triple_Quad:
 					// Quameter crashes on TSQ files; skip them
@@ -177,12 +188,12 @@ namespace DatasetQualityPlugin
 					// File has likely been purged from the storage server
 					// Look in the Aurora archive (a2.emsl.pnl.gov) using samba
 					string dataFilePathArchive = Path.Combine(m_TaskParams.GetParam("Archive_Network_Share_Path"), m_TaskParams.GetParam("Folder"), fiDataFile.Name);
-					
+
 					System.IO.FileInfo fiDataFileInArchive = new System.IO.FileInfo(dataFilePathArchive);
 					if (fiDataFileInArchive.Exists)
 					{
 						// Update dataFilePathRemote using the archive file path
-						msg = "Dataset file not found on storage server (" + dataFilePathRemote  + "), but was found in the archive at " + dataFilePathArchive;
+						msg = "Dataset file not found on storage server (" + dataFilePathRemote + "), but was found in the archive at " + dataFilePathArchive;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 						dataFilePathRemote = dataFilePathArchive;
 					}
@@ -222,7 +233,8 @@ namespace DatasetQualityPlugin
 			}
 			else
 			{
-				msg = "Skipping Quameter since instrument class " + instClassName;
+				msg = "Skipping Quameter since " + skipReason;
+				mRetData.EvalMsg = string.Copy(msg);
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 			}
 
@@ -237,7 +249,7 @@ namespace DatasetQualityPlugin
 
 		protected void ClearWorkDir()
 		{
-			
+
 			try
 			{
 				System.IO.DirectoryInfo diWorkDir = new System.IO.DirectoryInfo(m_WorkDir);
@@ -316,7 +328,7 @@ namespace DatasetQualityPlugin
 			catch (Exception ex)
 			{
 				mRetData.CloseoutMsg = "Error converting Quameter results to XML";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg + ": " + ex.Message);				
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg + ": " + ex.Message);
 				return false;
 			}
 
@@ -326,9 +338,9 @@ namespace DatasetQualityPlugin
 
 		protected bool CopyFilesToDatasetFolder(string datasetFolder)
 		{
-			
 
-			try 
+
+			try
 			{
 				System.IO.DirectoryInfo diDatasetQCFolder = new System.IO.DirectoryInfo(System.IO.Path.Combine(datasetFolder, "QC"));
 
@@ -350,11 +362,11 @@ namespace DatasetQualityPlugin
 			{
 				mRetData.CloseoutMsg = "Error creating the Dataest QC folder";
 				mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg + ": " + ex.Message);				
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg + ": " + ex.Message);
 				return false;
 			}
 
-			return true;			
+			return true;
 		}
 
 		protected bool CopyFileToServer(string sFileName, string sSourceFolder, string sTargetFolder)
@@ -362,7 +374,7 @@ namespace DatasetQualityPlugin
 			string sSourceFilePath;
 			string sTargetFilePath;
 
-			try 
+			try
 			{
 				sSourceFilePath = System.IO.Path.Combine(sSourceFolder, sFileName);
 
@@ -376,11 +388,11 @@ namespace DatasetQualityPlugin
 			{
 				mRetData.CloseoutMsg = "Error copying file " + sFileName + " to Dataset folder";
 				mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg + ": " + ex.Message);				
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg + ": " + ex.Message);
 				return false;
 			}
 
-			return true;			
+			return true;
 		}
 
 		/// <summary>
@@ -599,6 +611,42 @@ namespace DatasetQualityPlugin
 
 		}
 
+		protected bool ParseDatasetInfoFile(string datasetFolderPath, string datasetName, out int scanCount, out int scanCountMS)
+		{
+			var fiDatasetInfo = new FileInfo(Path.Combine(datasetFolderPath, "QC", datasetName + "_DatasetInfo.xml"));
+			bool success = false;
+
+			scanCount = 0;
+			scanCountMS = 0;
+
+			if (fiDatasetInfo.Exists)
+			{
+				using (var xmlReader = new System.Xml.XmlTextReader(new FileStream(fiDatasetInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.Write)))
+				{
+					while (xmlReader.Read())
+					{
+						
+						if (xmlReader.NodeType == System.Xml.XmlNodeType.Element)
+						{
+							if (xmlReader.Name == "ScanCount")
+							{
+								scanCount = xmlReader.ReadElementContentAsInt();
+								success = true;
+							}
+
+							if (xmlReader.Name == "ScanCountMS")
+							{
+								scanCountMS = xmlReader.ReadElementContentAsInt();
+								success = true;
+							}
+						}
+					}
+				}
+			}
+
+			return success;
+		}
+
 		protected bool PostProcessMetricsFile(string metricsOutputFileName)
 		{
 			string sLineIn;
@@ -650,7 +698,7 @@ namespace DatasetQualityPlugin
 			return true;
 
 		}
-		
+
 		protected bool PostQuameterResultsToDB(string sXMLResults)
 		{
 			// This Connection String points to the DMS_Capture database
@@ -843,7 +891,7 @@ namespace DatasetQualityPlugin
 
 				try
 				{
-					m_FileTools.CopyFile(dataFilePathRemote, dataFilePathLocal, true);				
+					m_FileTools.CopyFile(dataFilePathRemote, dataFilePathLocal, true);
 				}
 				catch (Exception ex)
 				{
@@ -881,6 +929,67 @@ namespace DatasetQualityPlugin
 			return true;
 		}
 
+		protected bool QuameterCanProcessDataset(int datasetID, string datasetName, string datasetFolderPath, ref string skipReason)
+		{
+
+			string sql =
+				" SELECT SUM(Scan_Count) AS Scans, " +
+					   " SUM(CASE WHEN Scan_Type IN ('HMS', 'MS', 'Zoom-MS') THEN Scan_Count ELSE 0 END) AS MS_Scans" +
+				" FROM S_DMS_V_Dataset_Scans " +
+				" WHERE (Dataset_ID = " + datasetID + ") ";
+
+			string sConnectionString = null;
+			sConnectionString = m_MgrParams.GetParam("connectionstring");
+
+			int scanCount = 0;
+			int scanCountMS = 0;
+
+			using (var cnDB = new System.Data.SqlClient.SqlConnection(sConnectionString))
+			{
+				cnDB.Open();
+
+				using (var cmd = new System.Data.SqlClient.SqlCommand(sql, cnDB))
+				{
+					var reader = cmd.ExecuteReader();
+
+					if (reader.Read())
+					{
+						if (!reader.IsDBNull(0))
+							scanCount = reader.GetInt32(0);
+
+						if (!reader.IsDBNull(1))
+							scanCountMS = reader.GetInt32(1);
+					}
+				}
+			}
+
+			if (scanCount == 0)
+			{
+				// Scan stats data is not yet in DMS
+				// Look for the _DatasetInfo.xml file in the QC folder below the dataset folder
+
+				ParseDatasetInfoFile(datasetFolderPath, datasetName, out scanCount, out scanCountMS);
+
+			}
+
+
+			if (scanCount > 0)
+			{
+				if (scanCountMS == 0)
+				{
+					skipReason = "dataset does not have any HMS or MS spectra";
+					return false;
+				}
+
+				return true;
+			}
+
+
+			// The DatasetInfo.xml file was not found
+			// We don't know if Quameter can process the dataset or not, so we'll err on the side of "Sure, let's give it a try"
+			return true;
+
+		}
 
 		/// <summary>
 		/// Read the Quameter results files, convert to XML, and post to DMS
@@ -1035,7 +1144,7 @@ namespace DatasetQualityPlugin
 					}
 					mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 					return false;
-				}				
+				}
 			}
 			catch (Exception ex)
 			{
