@@ -34,7 +34,7 @@ namespace CaptureTaskManager.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("Proto-9_CTM")]
+        [global::System.Configuration.DefaultSettingValueAttribute("Monroe_CTM")]
         public string MgrName {
             get {
                 return ((string)(this["MgrName"]));

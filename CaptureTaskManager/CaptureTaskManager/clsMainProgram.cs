@@ -72,6 +72,7 @@ namespace CaptureTaskManager
 		private string m_StepTool = "Unknown";
 		private string m_Job = "Unknown";
 		private string m_Dataset = "Unknown";
+		private int m_DebugLevel = 4;
 
 		private bool m_Running;
 		private System.Timers.Timer m_StatusTimer;
@@ -308,8 +309,9 @@ namespace CaptureTaskManager
 		
 			// Set up the loggers
 			string logFileName = m_MgrSettings.GetParam("logfilename");
-			int debugLevel = clsConversion.CIntSafe(m_MgrSettings.GetParam("debuglevel"), 4);
-			clsLogTools.CreateFileLogger(logFileName, debugLevel);
+			m_DebugLevel = clsConversion.CIntSafe(m_MgrSettings.GetParam("debuglevel"), 4);
+			clsLogTools.CreateFileLogger(logFileName, m_DebugLevel);
+
 			if (clsConversion.CBoolSafe(m_MgrSettings.GetParam("ftplogging"))) clsLogTools.CreateFtpLogFileLogger("Dummy.txt");
 			string logCnStr = m_MgrSettings.GetParam("connectionstring");
 			
@@ -1015,8 +1017,8 @@ namespace CaptureTaskManager
 				else
 				{
 					// Update the log level
-					int debugLevel = clsConversion.CIntSafe(m_MgrSettings.GetParam("debuglevel"), 4);
-					clsLogTools.SetFileLogLevel(debugLevel);
+					m_DebugLevel = clsConversion.CIntSafe(m_MgrSettings.GetParam("debuglevel"), 4);
+					clsLogTools.SetFileLogLevel(m_DebugLevel);
 				}
 			}
 

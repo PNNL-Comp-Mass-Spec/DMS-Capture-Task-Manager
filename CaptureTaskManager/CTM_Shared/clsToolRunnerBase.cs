@@ -9,6 +9,7 @@
 //*********************************************************************************************************
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using CaptureTaskManager;
@@ -33,9 +34,19 @@ namespace CaptureTaskManager
 
 		protected PRISM.Files.clsFileTools m_FileTools;
 
+		protected PRISM.DataBase.clsExecuteDatabaseSP m_ExecuteSP;
+
 		protected System.DateTime m_LastConfigDBUpdate = System.DateTime.UtcNow;
 		protected int m_MinutesBetweenConfigDBUpdates = 10;
 		protected bool m_NeedToAbortProcessing = false;
+
+		protected string m_WorkDir;
+		protected string m_Dataset;
+		protected int m_Job;
+
+		protected int m_DatasetID;
+		protected int m_DebugLevel;
+
 		#endregion
 
 		#region "Delegates"
@@ -53,8 +64,17 @@ namespace CaptureTaskManager
 		/// </summary>
 		protected clsToolRunnerBase()
 		{
-			// Does nothing at present
+			// Does nothing; see the Setup method for constructor-like behavior
 		}	// End sub
+
+		/// <summary>
+		/// Destructor
+		/// </summary>
+		~clsToolRunnerBase()
+		{
+			DetachExecuteSpEvents();
+		}
+
 		#endregion
 
 		#region "Methods"
@@ -65,7 +85,7 @@ namespace CaptureTaskManager
 		public virtual clsToolReturnData RunTool()
 		{
 			// Does nothing at present, so return success
-			clsToolReturnData retData = new clsToolReturnData();
+			var retData = new clsToolReturnData();
 			retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
 			return retData;
 		}	// End sub
@@ -83,6 +103,29 @@ namespace CaptureTaskManager
 			m_StatusTools = statusTools;
 
 			m_FileTools = new PRISM.Files.clsFileTools(m_MgrParams.GetParam("MgrName", "CaptureTaskManager"), 1);
+
+			// This Connection String points to the DMS_Capture database
+			string sConnectionString = m_MgrParams.GetParam("connectionstring");
+			m_ExecuteSP = new PRISM.DataBase.clsExecuteDatabaseSP(sConnectionString);
+
+			AttachExecuteSpEvents();
+
+			m_WorkDir = m_MgrParams.GetParam("workdir");
+
+			m_Dataset = m_TaskParams.GetParam("Dataset");
+
+			if (!int.TryParse(m_TaskParams.GetParam("Dataset_ID"), out m_DatasetID))
+			{
+				m_DatasetID = 0;
+			}
+			
+			if (!int.TryParse(m_TaskParams.GetParam("Job"), out m_Job))
+			{
+				m_Job = 0;
+			}
+
+			m_DebugLevel = clsConversion.CIntSafe(m_MgrParams.GetParam("debuglevel"), 4);
+
 		}
 
 		protected bool UpdateMgrSettings()
@@ -112,8 +155,8 @@ namespace CaptureTaskManager
 				else
 				{
 					// Update the log level
-					int debugLevel = clsConversion.CIntSafe(m_MgrParams.GetParam("debuglevel"), 4);
-					clsLogTools.SetFileLogLevel(debugLevel);
+					m_DebugLevel = clsConversion.CIntSafe(m_MgrParams.GetParam("debuglevel"), 4);
+					clsLogTools.SetFileLogLevel(m_DebugLevel);
 				}
 			}
 
@@ -147,7 +190,7 @@ namespace CaptureTaskManager
 		{
 			try
 			{
-				System.IO.File.Delete(sFilePath);
+				File.Delete(sFilePath);
 			}
 			catch
 			{
@@ -174,7 +217,7 @@ namespace CaptureTaskManager
 				//Multiple retry loop for handling SP execution failures
 				try
 				{
-					using (System.Data.SqlClient.SqlConnection cn = new System.Data.SqlClient.SqlConnection(connStr))
+					using (var cn = new System.Data.SqlClient.SqlConnection(connStr))
 					{
 						cn.Open();
 						spCmd.Connection = cn;
@@ -221,13 +264,13 @@ namespace CaptureTaskManager
 
 			try
 			{
-				strToolVersionFilePath = System.IO.Path.Combine(strFolderPath, "Tool_Version_Info_" + m_TaskParams.GetParam("StepTool") + ".txt");
+				strToolVersionFilePath = Path.Combine(strFolderPath, "Tool_Version_Info_" + m_TaskParams.GetParam("StepTool") + ".txt");
 
-				using (System.IO.StreamWriter swToolVersionFile = new System.IO.StreamWriter(new System.IO.FileStream(strToolVersionFilePath, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.ReadWrite))) {
+				using (var swToolVersionFile = new StreamWriter(new FileStream(strToolVersionFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))) {
 
 					swToolVersionFile.WriteLine("Date: " + System.DateTime.Now.ToString(DATE_TIME_FORMAT));
-					swToolVersionFile.WriteLine("Dataset: " + m_TaskParams.GetParam("Dataset"));
-					swToolVersionFile.WriteLine("Job: " + m_TaskParams.GetParam("Job"));
+					swToolVersionFile.WriteLine("Dataset: " + m_Dataset);
+					swToolVersionFile.WriteLine("Job: " + m_Job);
 					swToolVersionFile.WriteLine("Step: " + m_TaskParams.GetParam("Step"));
 					swToolVersionFile.WriteLine("Tool: " + m_TaskParams.GetParam("StepTool"));
 					swToolVersionFile.WriteLine("ToolVersionInfo:");
@@ -255,7 +298,7 @@ namespace CaptureTaskManager
 		/// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
 		protected bool SetStepTaskToolVersion(string strToolVersionInfo)
 		{
-			return SetStepTaskToolVersion(strToolVersionInfo, new System.Collections.Generic.List<System.IO.FileInfo>());
+			return SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>());
 		}
 
 		/// <summary>
@@ -265,7 +308,7 @@ namespace CaptureTaskManager
 		/// <param name="ioToolFiles">FileSystemInfo list of program files related to the step tool</param>
 		/// <returns>True for success, False for failure</returns>
 		/// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
-		protected bool SetStepTaskToolVersion(string strToolVersionInfo, System.Collections.Generic.List<System.IO.FileInfo> ioToolFiles)
+		protected bool SetStepTaskToolVersion(string strToolVersionInfo, List<FileInfo> ioToolFiles)
 		{
 
 			return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, false);
@@ -279,7 +322,7 @@ namespace CaptureTaskManager
 		/// <param name="blnSaveToolVersionTextFile">If true, then creates a text file with the tool version information</param>
 		/// <returns>True for success, False for failure</returns>
 		/// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
-		protected bool SetStepTaskToolVersion(string strToolVersionInfo, System.Collections.Generic.List<System.IO.FileInfo> ioToolFiles, bool blnSaveToolVersionTextFile)
+		protected bool SetStepTaskToolVersion(string strToolVersionInfo, List<FileInfo> ioToolFiles, bool blnSaveToolVersionTextFile)
 		{
 
 			string strExeInfo = string.Empty;
@@ -288,24 +331,22 @@ namespace CaptureTaskManager
 			bool Outcome = false;
 			int ResCode = 0;
 
-			int debugLevel = clsConversion.CIntSafe(m_MgrParams.GetParam("debuglevel"), 4);
-			string workingDir = m_MgrParams.GetParam("WorkDir");
-			if (string.IsNullOrWhiteSpace(workingDir))
+			if (string.IsNullOrWhiteSpace(m_WorkDir))
 			{
 				return false;
 			}
 
 			if ((ioToolFiles != null))
 			{
-				foreach (System.IO.FileInfo ioFileInfo in ioToolFiles)
+				foreach (FileInfo fiFile in ioToolFiles)
 				{
 					try
 					{
-						if (ioFileInfo.Exists)
+						if (fiFile.Exists)
 						{
-							strExeInfo = AppendToComment(strExeInfo, ioFileInfo.Name + ": " + ioFileInfo.LastWriteTime.ToString(DATE_TIME_FORMAT));
+							strExeInfo = AppendToComment(strExeInfo, fiFile.Name + ": " + fiFile.LastWriteTime.ToString(DATE_TIME_FORMAT));
 
-							if (debugLevel >= 5)
+							if (m_DebugLevel >= 5)
 							{
 								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "EXE Info: " + strExeInfo);
 							}
@@ -313,7 +354,7 @@ namespace CaptureTaskManager
 						}
 						else
 						{
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Tool file not found: " + ioFileInfo.FullName);
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Tool file not found: " + fiFile.FullName);
 						}
 
 					}
@@ -336,11 +377,11 @@ namespace CaptureTaskManager
 
 			if (blnSaveToolVersionTextFile)
 			{
-				SaveToolVersionInfoFile(workingDir, strToolVersionInfoCombined);
+				SaveToolVersionInfoFile(m_WorkDir, strToolVersionInfoCombined);
 			}
 
 			//Setup for execution of the stored procedure
-			System.Data.SqlClient.SqlCommand MyCmd = new System.Data.SqlClient.SqlCommand();
+			var MyCmd = new System.Data.SqlClient.SqlCommand();
 			{
 				MyCmd.CommandType = System.Data.CommandType.StoredProcedure;
 				MyCmd.CommandText = SP_NAME_SET_TASK_TOOL_VERSION;
@@ -393,9 +434,9 @@ namespace CaptureTaskManager
 
 			try
 			{
-				System.IO.FileInfo ioFileInfo = new System.IO.FileInfo(strDLLFilePath);
+				var fiFile = new FileInfo(strDLLFilePath);
 
-				if (!ioFileInfo.Exists)
+				if (!fiFile.Exists)
 				{
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "File not found by StoreToolVersionInfoOneFile: " + strDLLFilePath);
 					return false;
@@ -404,7 +445,7 @@ namespace CaptureTaskManager
 				else
 				{
 					System.Reflection.AssemblyName oAssemblyName;
-					oAssemblyName = System.Reflection.Assembly.LoadFrom(ioFileInfo.FullName).GetName();
+					oAssemblyName = System.Reflection.Assembly.LoadFrom(fiFile.FullName).GetName();
 
 					string strNameAndVersion = null;
 					strNameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version.ToString();
@@ -420,7 +461,7 @@ namespace CaptureTaskManager
 				//  <startup useLegacyV2RuntimeActivationPolicy="true">
 				//    <supportedRuntime version="v4.0" />
 				//  </startup>
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for " + System.IO.Path.GetFileName(strDLLFilePath) + ": " + ex.Message);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for " + Path.GetFileName(strDLLFilePath) + ": " + ex.Message);
 			}
 
 			return false;
@@ -428,5 +469,43 @@ namespace CaptureTaskManager
 		}
 
 		#endregion
+
+		#region "Events"
+
+		private void AttachExecuteSpEvents()
+		{
+			try
+			{				
+				m_ExecuteSP.DBErrorEvent += new PRISM.DataBase.clsExecuteDatabaseSP.DBErrorEventEventHandler(m_ExecuteSP_DBErrorEvent);
+			}
+			catch
+			{
+				// Ignore errors here
+			}
+		}
+
+		private void DetachExecuteSpEvents()
+		{
+			try
+			{
+				if (m_ExecuteSP != null)
+				{
+					m_ExecuteSP.DBErrorEvent -= m_ExecuteSP_DBErrorEvent;
+				}
+			}
+			catch
+			{
+				// Ignore errors here
+			}
+		}
+
+		private void m_ExecuteSP_DBErrorEvent(string Message)
+		{
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Stored procedure execution error: " + Message);
+		}
+
+
+		#endregion
+
 	}	// End class
 }	// End namespace
