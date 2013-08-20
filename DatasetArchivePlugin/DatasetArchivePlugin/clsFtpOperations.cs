@@ -965,7 +965,7 @@ namespace DatasetArchivePlugin
 					//{
 					//   try
 					//   {
-					//      FileStream Stream = new FileStream(Application.StartupPath + "\\ArchiveFTP.log", FileMode.OpenOrCreate, FileAccess.ReadWrite);
+					//      FileStream Stream = new FileStream(Application.StartupPath + @"\ArchiveFTP.log", FileMode.OpenOrCreate, FileAccess.ReadWrite);
 					//      Stream.Seek(0, SeekOrigin.End);
 					//      Stream.Write(System.Text.ASCIIEncoding.ASCII.GetBytes(Entry.ToCharArray()), 0, 
 					//                     System.Text.ASCIIEncoding.ASCII.GetByteCount(Entry.ToCharArray()));

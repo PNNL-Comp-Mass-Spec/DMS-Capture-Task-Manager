@@ -35,13 +35,12 @@ namespace DatasetIntegrityPlugin
 		const float UIMF_FILE_MIN_SIZE_KB = 50;
 		const float AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB = 50;
 		const float AGILENT_DATA_MS_FILE_MIN_SIZE_KB = 75;
-		const float MCF_FILE_MIN_SIZE_KB = 150;		// Malding imaging file
+		const float MCF_FILE_MIN_SIZE_KB = 15;		// Malding imaging file
 
 		#endregion
 
 		#region "Class-wide variables"
-		clsToolReturnData mRetData = new clsToolReturnData();
-		string mDatasetName = String.Empty;
+		clsToolReturnData mRetData = new clsToolReturnData();		
 		#endregion
 
 		#region "Constructors"
@@ -69,8 +68,6 @@ namespace DatasetIntegrityPlugin
 			if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
 				return mRetData;
 
-			mDatasetName = m_TaskParams.GetParam("Dataset");
-
 			// Store the version info in the database
 			if (!StoreToolVersionInfo())
 			{
@@ -80,13 +77,13 @@ namespace DatasetIntegrityPlugin
 				return mRetData;
 			}
 
-			msg = "Performing integrity test, dataset '" + mDatasetName + "'";
+			msg = "Performing integrity test, dataset '" + m_Dataset + "'";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
 
 			// Set up the file paths
 			string storageVolExt = m_TaskParams.GetParam("Storage_Vol_External");
 			string storagePath = m_TaskParams.GetParam("Storage_Path");
-			string datasetFolder = Path.Combine(storageVolExt, Path.Combine(storagePath, mDatasetName));
+			string datasetFolder = Path.Combine(storageVolExt, Path.Combine(storagePath, m_Dataset));
 			string dataFileNamePath;
 
 			// Select which tests will be performed based on instrument class
@@ -108,26 +105,26 @@ namespace DatasetIntegrityPlugin
 			switch (instrumentClass)
 			{
 				case clsInstrumentClassInfo.eInstrumentClass.Finnigan_Ion_Trap:
-					dataFileNamePath = Path.Combine(datasetFolder, mDatasetName + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
+					dataFileNamePath = Path.Combine(datasetFolder, m_Dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
 					mRetData.CloseoutType = TestFinniganIonTrapFile(dataFileNamePath);
 					break;
 				case clsInstrumentClassInfo.eInstrumentClass.LTQ_FT:
-					dataFileNamePath = Path.Combine(datasetFolder, mDatasetName + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
+					dataFileNamePath = Path.Combine(datasetFolder, m_Dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
 					mRetData.CloseoutType = TestLTQFTFile(dataFileNamePath);
 					break;
 				case clsInstrumentClassInfo.eInstrumentClass.BRUKERFTMS:
 					mRetData.CloseoutType = TestBrukerFolder(datasetFolder);
 					break;
 				case clsInstrumentClassInfo.eInstrumentClass.Thermo_Exactive:
-					dataFileNamePath = Path.Combine(datasetFolder, mDatasetName + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
+					dataFileNamePath = Path.Combine(datasetFolder, m_Dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
 					mRetData.CloseoutType = TestThermoExactiveFile(dataFileNamePath);
 					break;
 				case clsInstrumentClassInfo.eInstrumentClass.Triple_Quad:
-					dataFileNamePath = Path.Combine(datasetFolder, mDatasetName + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
+					dataFileNamePath = Path.Combine(datasetFolder, m_Dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
 					mRetData.CloseoutType = TestTripleQuadFile(dataFileNamePath);
 					break;
 				case clsInstrumentClassInfo.eInstrumentClass.IMS_Agilent_TOF:
-					dataFileNamePath = Path.Combine(datasetFolder, mDatasetName + clsInstrumentClassInfo.DOT_UIMF_EXTENSION);
+					dataFileNamePath = Path.Combine(datasetFolder, m_Dataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION);
 					mRetData.CloseoutType = TestIMSAgilentTOF(dataFileNamePath);
 					break;
 				case clsInstrumentClassInfo.eInstrumentClass.BrukerFT_BAF:
@@ -161,7 +158,7 @@ namespace DatasetIntegrityPlugin
 					mRetData.CloseoutType = TestBrukerTof_BafFolder(datasetFolder);
 					break;
 				case clsInstrumentClassInfo.eInstrumentClass.Sciex_QTrap:
-					mRetData.CloseoutType = TestSciexQtrapFile(datasetFolder, mDatasetName);
+					mRetData.CloseoutType = TestSciexQtrapFile(datasetFolder, m_Dataset);
 					break;
 				case clsInstrumentClassInfo.eInstrumentClass.Agilent_Ion_Trap:
 					mRetData.CloseoutType = TestAgilentIonTrapFolder(datasetFolder);
@@ -294,13 +291,13 @@ namespace DatasetIntegrityPlugin
 		/// </summary>
 		/// <param name="diDatasetFolder"></param>
 		/// <param name="fileSpec">Files to match, for example *.mis</param>
-		/// <param name="matchDatasetName">True if filenames must start with mDatasetName</param>
+		/// <param name="matchDatasetName">True if filenames must start with m_Dataset</param>
 		/// <param name="copyFile">True to copy the file, false to move it</param>
 		private void MoveOrCopyUpOneLevel(DirectoryInfo diDatasetFolder, string fileSpec, bool matchDatasetName, bool copyFile)
 		{
 			foreach (FileInfo fiFile in diDatasetFolder.GetFiles(fileSpec))
 			{
-				if (!matchDatasetName || Path.GetFileNameWithoutExtension(fiFile.Name).ToLower().StartsWith(mDatasetName.ToLower()))
+				if (!matchDatasetName || Path.GetFileNameWithoutExtension(fiFile.Name).ToLower().StartsWith(m_Dataset.ToLower()))
 				{
 					string newPath = Path.Combine(fiFile.Directory.Parent.FullName, fiFile.Name);
 					if (!File.Exists(newPath))
@@ -890,6 +887,7 @@ namespace DatasetIntegrityPlugin
 			tempFileNamePath = string.Empty;
 			dataFileSizeKB = 0;
 			fileExists = false;
+			long mcfFileSizeMax = 0;
 			foreach (FileInfo fiFile in diDatasetFolder.GetFiles("*.mcf"))
 			{
 				if (fiFile.Length > dataFileSizeKB * 1024)
@@ -898,6 +896,9 @@ namespace DatasetIntegrityPlugin
 					tempFileNamePath = fiFile.Name;
 					fileExists = true;
 				}
+
+				if (fiFile.Length > mcfFileSizeMax)
+					mcfFileSizeMax = fiFile.Length;
 			}
 
 			if (!fileExists && requireMCFFile)
@@ -931,8 +932,12 @@ namespace DatasetIntegrityPlugin
 				dataFileSizeKB = GetFileSize(tempFileNamePath);
 				if (dataFileSizeKB <= SER_FILE_MIN_SIZE_KB)
 				{
-					ReportFileSizeTooSmall("ser", tempFileNamePath, dataFileSizeKB, SER_FILE_MIN_SIZE_KB);
-					return EnumCloseOutType.CLOSEOUT_FAILED;
+					// If on the 15T and the ser file is small but the .mcf file is not empty, then this is OK
+					if (!(instName == "15T_FTICR" && mcfFileSizeMax > 0))
+					{
+						ReportFileSizeTooSmall("ser", tempFileNamePath, dataFileSizeKB, SER_FILE_MIN_SIZE_KB);
+						return EnumCloseOutType.CLOSEOUT_FAILED;
+					}
 				}
 			}
 			else
@@ -985,7 +990,8 @@ namespace DatasetIntegrityPlugin
 			{
 				// Multiple .M folders
 				// Allow this if there are two folders, and one contains _neg and one contains _pos
-				if (!PositiveNegativeMethodFolders(subFolderList))
+				// Also allow this if on the 15T
+				if (!PositiveNegativeMethodFolders(subFolderList) && instName != "15T_FTICR")
 				{
 					mRetData.EvalMsg = "Invalid dataset. Multiple .M folders found";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
