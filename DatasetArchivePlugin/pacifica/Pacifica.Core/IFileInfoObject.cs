@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace Pacifica.Core
 {
@@ -15,7 +16,12 @@ namespace Pacifica.Core
         DateTime SubmittedTime { get; }
         string CreationTimeStamp { get; }
         string SubmittedTimeStamp { get; }
-        string SerializeData();
-        IDictionary SerializeToDictionaryObject();
+		
+		/*
+		 * Code deprecated in August 2013
+		 * 
+         * string SerializeData();
+		 */
+		Dictionary<string, object> SerializeToDictionaryObject();
     }
 }

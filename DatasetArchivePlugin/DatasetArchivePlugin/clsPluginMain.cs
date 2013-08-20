@@ -49,9 +49,6 @@ namespace DatasetArchivePlugin
 				clsToolReturnData retData = base.RunTool();
 				if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED) return retData;
 
-				string dataset = m_TaskParams.GetParam("Dataset");
-				string job = m_TaskParams.GetParam("Job");
-
 				// Store the version info in the database
 				if (!StoreToolVersionInfo())
 				{
@@ -78,7 +75,7 @@ namespace DatasetArchivePlugin
 				// Attach the event handler
 				archOpTool.MyEMSLUploadComplete += new MyEMSLUploadEventHandler(MyEMSLUploadCompleteHandler);
 
-				msg = "Starting " + archiveOpDescription + ", job " + job + ", dataset " + dataset;
+				msg = "Starting " + archiveOpDescription + ", job " + m_Job + ", dataset " + m_Dataset;
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 				if (archOpTool.PerformTask())
@@ -94,7 +91,7 @@ namespace DatasetArchivePlugin
 				if (!string.IsNullOrEmpty(archOpTool.WarningMsg))
 					retData.EvalMsg = archOpTool.WarningMsg;
 
-				msg = "Completed " + archiveOpDescription + ", job " + job;
+				msg = "Completed " + archiveOpDescription + ", job " + m_Job;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 
 

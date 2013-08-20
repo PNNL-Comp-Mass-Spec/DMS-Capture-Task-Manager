@@ -63,43 +63,6 @@ namespace Pacifica.Core
             }
         }
 
-        //public static HttpWebResponse GetResponse(this HttpWebRequest request, string authType, string userName,
-        //    SecureString password, string domain, bool throwExceptions = true)
-        //{
-        //    HttpWebResponse response = null;
-        //    Uri uri = request.RequestUri;
-        //    try
-        //    {
-        //        request.AllowAutoRedirect = false;
-        //        bool redirected = false;
-        //        do
-        //        {
-        //            NetworkCredential cred = new NetworkCredential(userName, password, domain);
-        //            request.UseDefaultCredentials = false;
-        //            request.Credentials = cred;
-
-        //            request.AllowAutoRedirect = false;
-        //            response = request.GetResponse() as HttpWebResponse;
-        //            if (response.StatusCode == HttpStatusCode.Redirect)
-        //            {
-        //                uri = new Uri(response.GetResponseHeader("Location"));
-        //                redirected = true;
-        //            }
-        //            else
-        //            {
-        //                redirected = false;
-        //            }
-        //        } while (redirected);
-        //    }
-        //    catch
-        //    {
-        //        if (throwExceptions)
-        //        {
-        //            throw;
-        //        }
-        //        ret = null;
-        //    }
-        //    return ret;
-        //}
+      
     }
 }

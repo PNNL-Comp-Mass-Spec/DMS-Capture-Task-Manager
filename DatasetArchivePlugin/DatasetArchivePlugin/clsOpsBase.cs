@@ -223,15 +223,13 @@ namespace DatasetArchivePlugin
 		protected bool UploadToMyEMSL(bool recurse)
 		{
 			bool success;
-			System.TimeSpan tsElapsedTime = new System.TimeSpan();
+			System.DateTime dtStartTime = System.DateTime.UtcNow;
 			Pacifica.DMS_Metadata.MyEMSLUploader myEMSLUL = null;
 
 			try
 			{
 				m_Msg = "Bundling changes to dataset " + m_DatasetName + " for transmission to MyEMSL";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
-
-				System.DateTime myEMSLStartTime = System.DateTime.Now;
 
 				myEMSLUL = new Pacifica.DMS_Metadata.MyEMSLUploader();
 
@@ -247,11 +245,10 @@ namespace DatasetArchivePlugin
 				// Start the upload
 				myEMSLUL.StartUpload(m_TaskParams.TaskDictionary, m_MgrParams.TaskDictionary);
 
-				System.DateTime myEMSLFinishTime = System.DateTime.Now;
+				System.DateTime myEMSLFinishTime = System.DateTime.UtcNow;
 
-				tsElapsedTime = myEMSLFinishTime.Subtract(myEMSLStartTime);
-
-
+				var tsElapsedTime = myEMSLFinishTime.Subtract(dtStartTime);
+				
 				m_Msg = "Upload of " + m_DatasetName + " completed in " + tsElapsedTime.TotalSeconds.ToString("0.0") + " seconds: " + myEMSLUL.FileCountNew + " new files, " + myEMSLUL.FileCountUpdated + " updated files, " + myEMSLUL.Bytes + " bytes";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
 
@@ -278,6 +275,8 @@ namespace DatasetArchivePlugin
 				int errorCode = ex.Message.GetHashCode();
 				if (errorCode == 0)
 					errorCode = 1;
+
+				var tsElapsedTime = System.DateTime.UtcNow.Subtract(dtStartTime);
 
 				MyEMSLUploadEventArgs e;
 				if (myEMSLUL == null)

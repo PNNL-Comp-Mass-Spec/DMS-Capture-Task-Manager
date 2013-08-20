@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using Pacifica.Core;
@@ -21,7 +22,11 @@ namespace Pacifica.DMS_Metadata
 		private System.ComponentModel.BackgroundWorker _bgw;
 		private string _ingestServerName;
 		private string _readServerName;
-		//private PRISM.DataBase.clsDBTools dbTool;
+
+		/* August 2013: To be deleted
+		 * 
+		 * private PRISM.DataBase.clsDBTools dbTool;
+		*/
 
 		public enum ArchiveModes
 		{
@@ -79,9 +84,11 @@ namespace Pacifica.DMS_Metadata
 			this._bgw = backgrounder;
 			this._ingestServerName = Pacifica.Core.Configuration.ServerHostName;
 			this._readServerName = "a3.my.emsl.pnl.gov";
-			//this.dbTool = new PRISM.DataBase.clsDBTools(null, "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI");
 
-			/*
+			/* August 2013: To be deleted
+			 * 
+			 * this.dbTool = new PRISM.DataBase.clsDBTools(null, "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI");
+			
 			 * No longer necessary since taskParams containst EUS_Instrument_ID
 			string instLookupSQL = "SELECT EUS_Instrument_ID FROM [V_EUS_Instrument_ID_Lookup] WHERE Instrument_Name = '" + taskParams["Instrument_Name"] + "';";
 			System.Data.DataSet dmsDS = new System.Data.DataSet();
@@ -108,18 +115,28 @@ namespace Pacifica.DMS_Metadata
 			e.Result = this._metadataObject;
 		}
 
-		private void SetupMetadata(Dictionary<string,string> taskParams, Dictionary<string,string> mgrParams, System.ComponentModel.BackgroundWorker bgw) {
+		private void SetupMetadata(Dictionary<string, string> taskParams, Dictionary<string, string> mgrParams, System.ComponentModel.BackgroundWorker bgw) {
 			
 			//translate values from task/mgr params into usable variables
-			string perspective = mgrParams["perspective"].ToString();
+			string perspective = mgrParams["perspective"];
 			string subFolder = string.Empty;
+			string driveLocation;
 
 			// Determine the drive location based on perspective 
 			// (client perspective means running on a Proto storage server; server perspective means running on another computer)
-			string driveLocation = perspective == "client" ? taskParams["Storage_Vol_External"].ToString() : taskParams["Storage_Vol"].ToString();
-			this._pathToArchive = System.IO.Path.Combine(driveLocation, System.IO.Path.Combine(taskParams["Storage_Path"].ToString(), taskParams["Folder"].ToString()));
-			this._archiveMode = taskParams["StepTool"].ToString().ToLower() == "datasetarchive" ? ArchiveModes.archive : ArchiveModes.update;
-			this._datasetName = taskParams["Dataset"].ToString();		
+			if (perspective == "client")
+				driveLocation = taskParams["Storage_Vol_External"];
+			else
+				driveLocation = taskParams["Storage_Vol"];
+
+			this._pathToArchive = Path.Combine(driveLocation, taskParams["Storage_Path"], taskParams["Folder"]);
+			
+			if (taskParams["StepTool"].ToLower() == "datasetarchive")
+				this._archiveMode = ArchiveModes.archive;
+			else
+				this._archiveMode = ArchiveModes.update;
+
+			this._datasetName = taskParams["Dataset"];		
 			this._basePath = this._pathToArchive;
 
 			if (this._archiveMode == ArchiveModes.update)
@@ -127,7 +144,7 @@ namespace Pacifica.DMS_Metadata
 				subFolder = taskParams["OutputFolderName"].ToString();
 				if (!string.IsNullOrWhiteSpace(subFolder))
 				{
-					this._pathToArchive = System.IO.Path.Combine(this._pathToArchive, subFolder);
+					this._pathToArchive = Path.Combine(this._pathToArchive, subFolder);
 				}
 				else
 				{
@@ -298,7 +315,7 @@ namespace Pacifica.DMS_Metadata
 
 		private List<Dictionary<string, object>> RecurseDirectoryTreeNodes(string datasetSearchPath, string parentFolderName) {
 
-			//System.IO.Path.AltDirectorySeparatorChar
+			//Path.AltDirectorySeparatorChar
 			parentFolderName = parentFolderName == string.Empty ? parentFolderName : parentFolderName + "/";
 			string topFolderName = string.Empty;
 
@@ -336,7 +353,7 @@ namespace Pacifica.DMS_Metadata
 			System.Xml.XmlDocument dsDocument = new System.Xml.XmlDocument();
 			System.Xml.XmlNode dsDirectoryNode = dsDocument.CreateNode("element", "dir", "");
 			System.Xml.XmlAttribute nameAttr = dsDocument.CreateAttribute("name");
-			nameAttr.Value = System.IO.Path.GetFileName(datasetSearchPath.TrimEnd('/'));
+			nameAttr.Value = Path.GetFileName(datasetSearchPath.TrimEnd('/'));
 			dsDirectoryNode.Attributes.Append(nameAttr);
 			System.Xml.XmlAttribute typeAttr = dsDocument.CreateAttribute("type");
 			typeAttr.Value = "2";
@@ -438,18 +455,18 @@ namespace Pacifica.DMS_Metadata
 		{
 			List<IFileInfoObject> fileCollection = new List<IFileInfoObject>();
 
-			System.IO.DirectoryInfo archiveDir = new System.IO.DirectoryInfo(pathToBeArchived);
+			DirectoryInfo archiveDir = new DirectoryInfo(pathToBeArchived);
 			if (!archiveDir.Exists) {
-				throw new System.IO.DirectoryNotFoundException("Source directory not found: " + archiveDir);
+				throw new DirectoryNotFoundException("Source directory not found: " + archiveDir);
 			}
 
-			System.IO.SearchOption eSearchOption;
+			SearchOption eSearchOption;
 			if (recurse)
-				eSearchOption = System.IO.SearchOption.AllDirectories;
+				eSearchOption = SearchOption.AllDirectories;
 			else
-				eSearchOption = System.IO.SearchOption.TopDirectoryOnly;
+				eSearchOption = SearchOption.TopDirectoryOnly;
 
-			System.IO.FileInfo[] fileList = archiveDir.GetFiles("*.*", eSearchOption);
+			FileInfo[] fileList = archiveDir.GetFiles("*.*", eSearchOption);
 			IFileInfoObject fio;
 
 			double fracCompleted = 0.0;
@@ -459,21 +476,25 @@ namespace Pacifica.DMS_Metadata
 			if (worker != null) { worker.ReportProgress(0); }
 
 			//generate file size sum for status purposes
-			long totalFileSize = 0; //how much data is there to crunch?
-			long runningFileSize = 0; //how much data we've crunched so far
-			foreach (System.IO.FileInfo fi in fileList) {
+			long totalFileSize = 0;				// how much data is there to crunch?
+			long runningFileSize = 0;			// how much data we've crunched so far
+			foreach (FileInfo fi in fileList) {
 				totalFileSize += fi.Length;
 			}
 
-			foreach (System.IO.FileInfo fi in fileList) {
+			foreach (FileInfo fi in fileList) {
 				runningFileSize += fi.Length;
 				fracCompleted = ((double)runningFileSize / (double)totalFileSize);
 				percentCompleted = (int)Math.Ceiling(fracCompleted * 100.0);
-				if (worker != null) { worker.ReportProgress(percentCompleted, "Hashing: " + fi.Name); }
+				if (worker != null)
+					worker.ReportProgress(percentCompleted, "Hashing: " + fi.Name);
+
 				fio = new FileInfoObject(fi.FullName, FileInfoObject.GenerateRelativePath(fi.Directory.FullName, baseDSPath));
 				fileCollection.Add(fio);
 			}
-			if (worker != null) { worker.ReportProgress(100); }
+
+			if (worker != null) 
+				worker.ReportProgress(100);
 
 			return fileCollection;
 		}

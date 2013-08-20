@@ -82,6 +82,30 @@ namespace DatasetArchivePlugin
 
 			m_Msg = "Updating dataset " + m_DatasetName + ", job " + m_TaskParams.GetParam("Job");
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
+			
+			bool pushDatasetToMyEmsl = m_TaskParams.GetParam("PushDatasetToMyEMSL", false);
+
+			if (pushDatasetToMyEmsl)
+			{
+				m_Msg = "Pushing dataset folder to MyEMSL";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
+
+				mMostRecentLogTime = System.DateTime.UtcNow;
+				mLastStatusUpdateTime = System.DateTime.UtcNow;
+
+				int iMaxMyEMSLUploadAttempts = 2;
+				bool recurse = m_TaskParams.GetParam("PushDatasetRecurse", false);
+
+				copySuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts, recurse);
+
+				if (!copySuccess)
+					return false;
+
+				// Finished with this update task
+				m_Msg = "Completed push to MyEMSL, dataset " + m_DatasetName + ", job " + m_TaskParams.GetParam("Job");
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
+				return true;
+			}
 
 			m_ArchiveSharePath = Path.Combine(m_TaskParams.GetParam("Archive_Network_Share_Path"),
 														m_TaskParams.GetParam("Folder"));		// Path to archived dataset for Samba operations
@@ -134,30 +158,6 @@ namespace DatasetArchivePlugin
 
 			// Set the path to the results folder in archive
 			m_ResultsFolderPathArchive = Path.Combine(m_ArchiveSharePath, m_TaskParams.GetParam("OutputFolderName", String.Empty));
-
-			bool pushDatasetToMyEmsl = m_TaskParams.GetParam("PushDatasetToMyEMSL", false);				
-
-			if (pushDatasetToMyEmsl)
-			{
-				m_Msg = "Pushing dataset folder to MyEMSL";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
-				
-				mMostRecentLogTime = System.DateTime.UtcNow;
-				mLastStatusUpdateTime = System.DateTime.UtcNow;
-
-				int iMaxMyEMSLUploadAttempts = 2;
-				bool recurse = m_TaskParams.GetParam("PushDatasetRecurse", false);
-
-				copySuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts, recurse);
-							
-				if (!copySuccess)
-					return false;
-
-				// Finished with this update task
-				m_Msg = "Completed push to MyEMSL, dataset " + m_DatasetName + ", job " + m_TaskParams.GetParam("Job");
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
-				return true;
-			}
 
 			// Determine if the results folder already exists. If not present, copy entire folder and we're done
 			if (accessDeniedViaSamba || !Directory.Exists(m_ResultsFolderPathArchive))
@@ -350,10 +350,16 @@ namespace DatasetArchivePlugin
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
 			}
 
+			archPathLinux = ConvertSambaPathToLinuxPath(dsArchPath);
+			archPathLinux = clsFileTools.CheckTerminator(archPathLinux, false, "/");
+
 			foreach (clsJobData FileToUpdate in filesToUpdate)
 			{
-				archPathLinux = ConvertSambaPathToLinuxPath(dsArchPath);
-				archFileName = clsFileTools.CheckTerminator(archPathLinux, false, "/") + FileToUpdate.RelativeFilePath.Replace("\\", "/");
+				archFileName = FileToUpdate.RelativeFilePath.Replace(@"\", "/");
+				if (!archFileName.StartsWith("/"))
+					archFileName = "/" + archFileName;
+				archFileName = archPathLinux + archFileName;
+
 				//Rename file if necessary
 				if (FileToUpdate.RenameFlag)
 				{
@@ -407,10 +413,10 @@ namespace DatasetArchivePlugin
 			tmpStr = sambaPath.Substring(startIndx);
 
 			// Add on the prefix for the archive
-			tmpStr = @"/archive/" + tmpStr;
+			tmpStr = "/archive/" + tmpStr;
 
 			// Replace and DOS path separators with Linux separators
-			tmpStr = tmpStr.Replace(@"\", @"/");
+			tmpStr = tmpStr.Replace(@"\", "/");
 
 			return tmpStr;
 		}	// End sub
@@ -423,7 +429,7 @@ namespace DatasetArchivePlugin
 		/// <returns>List of files that need to be copied to the archive</returns>
 		private List<clsJobData> CompareFolders(string svrFolderPath, string sambaFolderPath, out int compareErrorCount, ref bool compareWithHash)
 		{
-			ArrayList serverFiles = null;
+			List<string> serverFiles = null;
 			string archFileName;
 			int compareResult;
 			compareErrorCount = 0;
@@ -449,9 +455,9 @@ namespace DatasetArchivePlugin
 			// Get a list of all the folders in the server folder
 			try
 			{
-				string[] dirsToScan = { svrFolderPath };
+				var dirsToScan = new List<string> { svrFolderPath };
 				DirectoryScanner dirScanner = new DirectoryScanner(dirsToScan);
-				dirScanner.PerformScan(ref serverFiles, "*");
+				serverFiles = dirScanner.PerformScan("*");
 			}
 			catch (Exception ex)
 			{

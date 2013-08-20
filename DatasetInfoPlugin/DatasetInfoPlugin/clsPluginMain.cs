@@ -58,8 +58,6 @@ namespace DatasetInfoPlugin
 			clsToolReturnData retData = base.RunTool();
 			if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED) return retData;
 
-			string dataset = m_TaskParams.GetParam("Dataset");
-
 			// Store the version info in the database
 			if (!StoreToolVersionInfo())
 			{
@@ -69,7 +67,7 @@ namespace DatasetInfoPlugin
 				return retData;
 			}
 
-			msg = "Running DatasetInfo on dataset '" + dataset + "'";
+			msg = "Running DatasetInfo on dataset '" + m_Dataset + "'";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
 
 			retData = RunMsFileInfoScanner();
@@ -289,7 +287,7 @@ namespace DatasetInfoPlugin
 					if (string.IsNullOrEmpty(m_Msg))
 						m_Msg = "ProcessMSFileOrFolder returned false";
 
-					result.CloseoutMsg = "Job " + m_TaskParams.GetParam("Job") + ", Step " + m_TaskParams.GetParam("Step") + ": " + m_Msg;
+					result.CloseoutMsg = "Job " + m_Job + ", Step " + m_TaskParams.GetParam("Step") + ": " + m_Msg;
 					result.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 			}
@@ -382,7 +380,6 @@ namespace DatasetInfoPlugin
 		/// <remarks>Will return UNKNOWN_FILE_TYPE or INVALID_FILE_TYPE in special circumstances</remarks>
 		private string GetDataFileOrFolderName(string inputFolder, out bool bSkipPlots, out clsInstrumentClassInfo.eRawDataType rawDataType, out clsInstrumentClassInfo.eInstrumentClass instrumentClass, out bool bBrukerDotDBaf)
 		{
-			string dataset = m_TaskParams.GetParam("Dataset");
 			string sFileOrFolderName;
 			bool bIsFile = true;
 
@@ -422,7 +419,7 @@ namespace DatasetInfoPlugin
 					// VOrbiETD01, VOrbiETD02, etc.
 					// TSQ_3
 					// Thermo_GC_MS_01
-					sFileOrFolderName = dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION;
+					sFileOrFolderName = m_Dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION;
 					bIsFile = true;
 					break;
 
@@ -440,11 +437,11 @@ namespace DatasetInfoPlugin
 					bIsFile = true;
 					if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Bruker_Amazon_Ion_Trap)
 					{
-						sFileOrFolderName = System.IO.Path.Combine(dataset + clsInstrumentClassInfo.DOT_D_EXTENSION, "analysis.yep");
+						sFileOrFolderName = System.IO.Path.Combine(m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION, "analysis.yep");
 					}
 					else
 					{
-						sFileOrFolderName = System.IO.Path.Combine(dataset + clsInstrumentClassInfo.DOT_D_EXTENSION, "analysis.baf");
+						sFileOrFolderName = System.IO.Path.Combine(m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION, "analysis.baf");
 						bBrukerDotDBaf = true;
 					}
 
@@ -455,19 +452,19 @@ namespace DatasetInfoPlugin
 
 				case clsInstrumentClassInfo.eRawDataType.UIMF:
 					// IMS_TOF_2, IMS_TOF_3, IMS_TOF_4, IMS_TOF_5, IMS_TOF_6, etc.
-					sFileOrFolderName = dataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION;
+					sFileOrFolderName = m_Dataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION;
 					bIsFile = true;
 					break;
 			
 				case clsInstrumentClassInfo.eRawDataType.SciexWiffFile:
 					// QTrap01
-					sFileOrFolderName = dataset + clsInstrumentClassInfo.DOT_WIFF_EXTENSION;
+					sFileOrFolderName = m_Dataset + clsInstrumentClassInfo.DOT_WIFF_EXTENSION;
 					bIsFile = true;
 					break;
 
 				case clsInstrumentClassInfo.eRawDataType.AgilentDFolder:
 					// Agilent_GC_MS_01, AgQTOF03, AgQTOF04, PrepHPLC1
-					sFileOrFolderName = dataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
+					sFileOrFolderName = m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
 					bIsFile = false;
 
 					if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.PrepHPLC)
@@ -496,7 +493,7 @@ namespace DatasetInfoPlugin
 					break;
 
 				case clsInstrumentClassInfo.eRawDataType.BrukerTOFBaf:
-					sFileOrFolderName = dataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
+					sFileOrFolderName = m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
 					bIsFile = false;
 					break;
 
@@ -541,7 +538,7 @@ namespace DatasetInfoPlugin
 
 				if (!bAlternateFound)
 				{
-					DirectoryInfo diDotDFolder = new DirectoryInfo(Path.Combine(diDatasetFolder.FullName, dataset + clsInstrumentClassInfo.DOT_D_EXTENSION));
+					DirectoryInfo diDotDFolder = new DirectoryInfo(Path.Combine(diDatasetFolder.FullName, m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION));
 
 					if (diDotDFolder.Exists)
 					{

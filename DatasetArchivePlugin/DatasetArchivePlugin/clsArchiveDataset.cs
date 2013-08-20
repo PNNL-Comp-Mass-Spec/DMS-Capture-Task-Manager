@@ -47,7 +47,7 @@ namespace DatasetArchivePlugin
 				// Perform base class operations
 				if (!base.PerformTask()) return false;
 
-				m_Msg = "Archiving dataset " + m_TaskParams.GetParam("dataset") + ", job " + m_TaskParams.GetParam("Job");
+				m_Msg = "Archiving dataset " + m_DatasetName + ", job " + m_TaskParams.GetParam("Job");
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, m_Msg);
 
 				// Determine the total size of the source folder
@@ -57,7 +57,7 @@ namespace DatasetArchivePlugin
 				if (folderSizeGB >= 5)
 				{
 
-					m_Msg = "Dataset " + m_TaskParams.GetParam("dataset")  + " is " + folderSizeGB.ToString("0") + " GB; will use the ArchiveUpdate mechanism since this supports resuming an interrupted FTP operation";
+					m_Msg = "Dataset " + m_DatasetName  + " is " + folderSizeGB.ToString("0") + " GB; will use the ArchiveUpdate mechanism since this supports resuming an interrupted FTP operation";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, m_Msg);
 
 					clsArchiveUpdate oArchiveUpdate = new clsArchiveUpdate(m_MgrParams, m_TaskParams);
@@ -104,7 +104,7 @@ namespace DatasetArchivePlugin
 				}
 
 				// Got to here, everything's wonderful!
-				m_Msg = "Archive complete, dataset " + m_TaskParams.GetParam("dataset") + ", job " + m_TaskParams.GetParam("Job");
+				m_Msg = "Archive complete, dataset " + m_DatasetName + ", job " + m_TaskParams.GetParam("Job");
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
 
 				return true;

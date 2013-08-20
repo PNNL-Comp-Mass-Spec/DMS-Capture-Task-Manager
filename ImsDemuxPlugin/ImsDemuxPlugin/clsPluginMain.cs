@@ -66,8 +66,6 @@ namespace ImsDemuxPlugin
 			base.m_LastConfigDBUpdate = System.DateTime.UtcNow;
 			base.m_MinutesBetweenConfigDBUpdates = MANAGER_UPDATE_INTERVAL_MINUTES;
 
-			string dataset = m_TaskParams.GetParam("Dataset");
-
 			// Store the version info in the database
 			if (!StoreToolVersionInfo(bUseBelovTransform))
 			{
@@ -82,7 +80,7 @@ namespace ImsDemuxPlugin
 			string dsPath = Path.Combine(svrPath, m_TaskParams.GetParam("Folder"));
 
 			// Use this name first to test if demux has already been performed once
-			string uimfFileName = dataset + "_encoded.uimf";
+			string uimfFileName = m_Dataset + "_encoded.uimf";
 			FileInfo fi = new FileInfo(Path.Combine(dsPath, uimfFileName));
 			if (fi.Exists && (fi.Length != 0))
 			{
@@ -156,7 +154,7 @@ namespace ImsDemuxPlugin
 				}
 
 				// If we got to here, _encoded uimf file doesn't exist. So, use the other uimf file
-				uimfFileName = dataset + ".uimf";
+				uimfFileName = m_Dataset + ".uimf";
 				if (!File.Exists(Path.Combine(dsPath, uimfFileName)))
 				{
 					msg = "UIMF file not found: " + uimfFileName;
@@ -180,7 +178,7 @@ namespace ImsDemuxPlugin
 			if (queryResult == clsSQLiteTools.UimfQueryResults.NonMultiplexed)
 			{
 				// De-mulitiplexing not required, but we should still attempt calibration
-				msg = "No de-multiplexing required for dataset " + dataset;
+				msg = "No de-multiplexing required for dataset " + m_Dataset;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 				retData.EvalMsg = "Non-Multiplexed";
 				bMultiplexed = false;
@@ -188,7 +186,7 @@ namespace ImsDemuxPlugin
 			else if (queryResult == clsSQLiteTools.UimfQueryResults.Error)
 			{
 				// There was a problem determining the UIMF file status. Set state and exit
-				msg = "Problem determining UIMF file status for dataset " + dataset;
+				msg = "Problem determining UIMF file status for dataset " + m_Dataset;
 
 				retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 				retData.CloseoutMsg = msg;

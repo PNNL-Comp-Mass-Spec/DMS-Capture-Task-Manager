@@ -13,8 +13,12 @@ namespace Pacifica.Core
 	{
 		#region Private Members
 
-		private BackgroundWorker _topLevelBackgrounder;
-		private BackgroundWorker statusBackgrounder;
+		/* August 2013: To be deleted
+		 *
+		 * private BackgroundWorker _topLevelBackgrounder;
+		 * private BackgroundWorker statusBackgrounder;
+		 */
+
 		private string _bundleIdentifier = string.Empty;
 		private const string bundleExtension = ".tar";
 
@@ -26,15 +30,17 @@ namespace Pacifica.Core
 		{
 			backgrounder.WorkerReportsProgress = true;
 			backgrounder.WorkerSupportsCancellation = true;
-			this._topLevelBackgrounder = backgrounder;
-			statusBackgrounder = new BackgroundWorker();
+
+			/* August 2013: To be deleted
+			 *
+			 * this._topLevelBackgrounder = backgrounder;
+			 * statusBackgrounder = new BackgroundWorker();
+			 */
 
 			// Note that EasyHttp is a static class with a static event
-			// Be careful about instantiating this class multiple times
+			// Be careful about instantiating this class (Upload) multiple times
 			EasyHttp.StatusUpdate += new StatusUpdateEventHandler(EasyHttp_StatusUpdate);
-
-			//TODO - remove
-			//EasyHttp.TaskCompleted += new TaskCompletedEventHandler(EasyHttp_TaskCompleted);
+			
 		}
 
 		#endregion
@@ -156,7 +162,7 @@ namespace Pacifica.Core
 				else
 				{
 					fileListObject.Add(fullLocalPath, fiObj);
-					newFileObj.Add((Dictionary<string, object>)fiObj.SerializeToDictionaryObject());
+					newFileObj.Add(fiObj.SerializeToDictionaryObject());
 				}
 			}
 
@@ -173,7 +179,7 @@ namespace Pacifica.Core
 				sw.Write(mdJson);
 			}
 
-			// Prior to June 2012, we would add the metadat.txt file to fileListObject
+			// Prior to June 2012, we would add the metadata.txt file to fileListObject
 			// We now send that information into BundleFiles using the metadataFilePath parameter
 			// Deprecated code:
 			//  FileInfoObject mdFileObject = new FileInfoObject(mdTextFile.FullName, string.Empty);
@@ -191,8 +197,12 @@ namespace Pacifica.Core
 							loginCredentials.Password, loginCredentials.Domain);
 				}
 
-				//Get a real server for us to work with
-				//string redirectedServer = Utilities.GetRedirect(new Uri(Configuration.TestAuthUri));
+				/* August 2013: To be deleted
+				 *
+				 * Get a real server for us to work with
+				 * string redirectedServer = Utilities.GetRedirect(new Uri(Configuration.TestAuthUri));
+				 */
+
 				string redirectedServer = Pacifica.Core.Configuration.ServerUri;
 				string preallocateUrl = redirectedServer + "/myemsl/cgi-bin/preallocate";
 
@@ -284,21 +294,35 @@ namespace Pacifica.Core
 		public void BeginUploadMonitoring(string serverStatusURL, string serverSearchURL, IList fileMetadataObject)
 		{
 			string statusURI = serverStatusURL + "/xml";
-			//this.statusBackgrounder.DoWork += new DoWorkEventHandler(UploadMonitorLoop);
-			//this.statusBackgrounder.RunWorkerCompleted += new RunWorkerCompletedEventHandler(backgrounder_RunWorkerCompleted);
+
+			/* August 2013: To be deleted
+			 *
+			 * this.statusBackgrounder.DoWork += new DoWorkEventHandler(UploadMonitorLoop);
+			 * this.statusBackgrounder.RunWorkerCompleted += new RunWorkerCompletedEventHandler(backgrounder_RunWorkerCompleted);
+			 */
+
 			Dictionary<string, object> args = new Dictionary<string, object>() { { "statusURI", statusURI }, { "fileMetadataObject", fileMetadataObject }, { "serverSearchURL", serverSearchURL } };
 			string errorMessage;
 			Boolean success = this.UploadMonitorLoop(args, out errorMessage);
-			//this.statusBackgrounder.RunWorkerAsync(args);
+
+			/* August 2013: To be deleted
+			 *
+			 * //this.statusBackgrounder.RunWorkerAsync(args);
+			 */
+
 			DataReceivedAndVerified(success, errorMessage);
 		}
 
-		//void  backgrounder_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e) {
-		//  Boolean success = (bool)e.Result;
-		//  DataReceivedAndVerified(success);
-		//}
+		/* August 2013: To be deleted
+		 *
+		 * void  backgrounder_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e) {
+		 *   Boolean success = (bool)e.Result;
+		 *   DataReceivedAndVerified(success);
+		 * }
+		
+		 * void UploadMonitorLoop(object sender, DoWorkEventArgs e) {
+		*/
 
-		//void UploadMonitorLoop(object sender, DoWorkEventArgs e) {
 		Boolean UploadMonitorLoop(Dictionary<string, object> args, out string errorMessage)
 		{
 			//System.ComponentModel.BackgroundWorker bgw = (System.ComponentModel.BackgroundWorker)sender;
@@ -456,8 +480,6 @@ namespace Pacifica.Core
 		{
 			string message = string.Empty;
 
-			ProgressReportingInfo pri = null;
-
 			if (pathList.Count == 0)
 			{
 				message = "Transport Aborted, no files found";
@@ -466,8 +488,6 @@ namespace Pacifica.Core
 			else
 			{
 				message = "Preparing Files for Transport";
-				pri = new ProgressReportingInfo(bundleId, message, 0, 0, 0, new TimeSpan());
-				pri.TotalTaskCount = pathList.Count;
 			}
 
 			DirectoryInfo tempDir = Utilities.GetTempDirectory();

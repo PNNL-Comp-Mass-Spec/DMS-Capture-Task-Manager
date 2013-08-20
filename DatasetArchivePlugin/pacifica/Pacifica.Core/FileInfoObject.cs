@@ -11,23 +11,25 @@ namespace Pacifica.Core
 	{
 		#region Constructor
 
-		public FileInfoObject(string absoluteLocalFullPath, string relativeDestinationDirectory,
-				string sha1Hash = "") {
+		public FileInfoObject(string absoluteLocalFullPath, string relativeDestinationDirectory, string sha1Hash = "")
+		{
 			this.AbsoluteLocalPath = absoluteLocalFullPath;
 			this._relativeDestinationDirectory = relativeDestinationDirectory;
 			this.File = new FileInfo(this.AbsoluteLocalPath);
-			if (sha1Hash != string.Empty && sha1Hash.Length == 40) {
+			if (sha1Hash != string.Empty && sha1Hash.Length == 40)
+			{
 				this.Sha1HashHex = sha1Hash;
 			}
-			else {
-				this.Sha1HashHex = FileInfoObject.GenerateSha1Hash(AbsoluteLocalPath);
+			else
+			{
+				this.Sha1HashHex = Utilities.GenerateSha1Hash(AbsoluteLocalPath);
 			}
 		}
 
 		#endregion
 
 		#region Private Members
-		
+
 		private FileInfo File { get; set; }
 
 		#endregion
@@ -37,106 +39,137 @@ namespace Pacifica.Core
 		public string AbsoluteLocalPath { get; private set; }
 
 		private string _relativeDestinationDirectory;
-		public string RelativeDestinationDirectory {
-			get {
-				return this._relativeDestinationDirectory.Replace("\\", "/").TrimStart(new char[] { '/' });
+		public string RelativeDestinationDirectory
+		{
+			get
+			{
+				return ConvertWindowsPathToUnix(this._relativeDestinationDirectory);
 			}
-			private set {
+			private set
+			{
 				this._relativeDestinationDirectory = value;
 			}
 		}
 
 		private string _relativeDestinationFullPath;
-		public string RelativeDestinationFullPath {
-			get {
+		public string RelativeDestinationFullPath
+		{
+			get
+			{
 				string fileName;
-				if (!string.IsNullOrWhiteSpace(DestinationFileName)) {
+				if (!string.IsNullOrWhiteSpace(DestinationFileName))
+				{
 					fileName = DestinationFileName;
 				}
-				else {
+				else
+				{
 					fileName = FileName;
 				}
-				return Path.Combine(this.RelativeDestinationDirectory,
-						fileName).Replace("\\", "/").TrimStart(new char[] { '/' });
+				string fullPath = Path.Combine(this.RelativeDestinationDirectory, fileName);
+				return ConvertWindowsPathToUnix(fullPath);
 			}
-			set {
+			set
+			{
 				_relativeDestinationFullPath = value;
 			}
 		}
 
 		public string _desinationFileName;
-		public string DestinationFileName {
-			get {
+		public string DestinationFileName
+		{
+			get
+			{
 				return _desinationFileName;
 			}
-			set {
+			set
+			{
 				_desinationFileName = value;
 			}
 		}
 
-		public string FileName {
-			get {
+		public string FileName
+		{
+			get
+			{
 				return File.Name;
 			}
 		}
 
-		public string Sha1HashHex {
+		public string Sha1HashHex
+		{
 			get;
 			private set;
 		}
 
-		public long FileSizeInBytes {
-			get {
+		public long FileSizeInBytes
+		{
+			get
+			{
 				return File.Length;
 			}
 		}
 
-		public DateTime CreationTime {
-			get {
+		public DateTime CreationTime
+		{
+			get
+			{
 				return File.CreationTime;
 			}
 		}
 
 		private DateTime _submittedTime = DateTime.Now;
-		public DateTime SubmittedTime {
-			get {
+		public DateTime SubmittedTime
+		{
+			get
+			{
 				return _submittedTime;
 			}
 		}
 
-		public string CreationTimeStamp {
-			get {
+		public string CreationTimeStamp
+		{
+			get
+			{
 				return this.File.CreationTime.ToUnixTime().ToString();
 			}
 		}
 
-		public string SubmittedTimeStamp {
-			get {
+		public string SubmittedTimeStamp
+		{
+			get
+			{
 				return this.SubmittedTime.ToUnixTime().ToString();
 			}
 		}
 
-		public string SerializeData() {
-			//JsonObject jso = new JsonObject(this.SerializeToDictionaryObject());
-			//return jso.ToString();
-			return SerializeToJson();
-		}
+		/*
+		 * Code deprecated in August 2013
+		 * 
+			public string SerializeData()
+			{
+				//JsonObject jso = new JsonObject(this.SerializeToDictionaryObject());
+				//return jso.ToString();
+				return SerializeToJson();
+			}
 
-		public string SerializeToJson()
+			public string SerializeToJson()
+			{
+				JsonObject jso = new JsonObject();
+				jso.Put("sha1Hash", this.Sha1HashHex);
+				jso.Put("destinationDirectory", this.RelativeDestinationDirectory);
+				jso.Put("localFilePath", this.AbsoluteLocalPath);
+				jso.Put("fileName", this.FileName);
+				jso.Put("sizeInBytes", this.File.Length);
+				jso.Put("creationDate", this.CreationTimeStamp);
+
+				return jso.ToString();
+			}
+		 * 
+		*/
+
+
+		public Dictionary<string, object> SerializeToDictionaryObject()
 		{
-			JsonObject jso = new JsonObject();
-			jso.Put("sha1Hash", this.Sha1HashHex);
-			jso.Put("destinationDirectory", this.RelativeDestinationDirectory);
-			jso.Put("localFilePath", this.AbsoluteLocalPath);
-			jso.Put("fileName", this.FileName);
-			jso.Put("sizeInBytes", this.File.Length);
-			jso.Put("creationDate", this.CreationTimeStamp);
-
-			return jso.ToString();
-		}
-
-
-		public IDictionary SerializeToDictionaryObject() {
 			Dictionary<string, object> d = new Dictionary<string, object>();
 
 			d.Add("sha1Hash", this.Sha1HashHex);
@@ -151,29 +184,31 @@ namespace Pacifica.Core
 
 		#endregion
 
+		#region Methods
+
+		/// <summary>
+		/// Converts a windows path of the form \\proto-7\VOrbi05\2013_2\QC_Shew_13_02_500ng_15May13_Lynx_12-12-04\metadata.xml
+		/// to the unix form proto-7/VOrbi05/2013_2/QC_Shew_13_02_500ng_15May13_Lynx_12-12-04/metadata.xml
+		/// </summary>
+		/// <param name="path">Unix-style path</param>
+		/// <returns></returns>
+		/// <remarks>Removes any leading slashes</remarks>
+		protected string ConvertWindowsPathToUnix(string path)
+		{
+			return path.Replace(@"\", "/").TrimStart(new char[] { '/' });
+		}
+		#endregion
+
 		#region Static Methods
 
-		public static string GenerateSha1Hash(string fullFilePath) {
-			string hashString = string.Empty;
+		public static string GenerateRelativePath(string absoluteLocalPath, string basePath)
+		{
+			if (absoluteLocalPath.ToLower().StartsWith(basePath.ToLower()))
+				return absoluteLocalPath.Substring(basePath.Length);
+			else
+				throw new InvalidDataException("Cannot generate relative path in GenerateRelativePath since local path (" + absoluteLocalPath + ") does not contain base path (" + basePath + ")");
 
-			FileInfo fi = new FileInfo(fullFilePath);
-			if (fi.Exists) {
-				SHA1Managed hashProvider = new SHA1Managed();
-				byte[] fileHash = hashProvider.ComputeHash(new System.IO.FileStream(fi.FullName, FileMode.Open, FileAccess.Read, FileShare.Read));
-				//byte[] fileHash = hashProvider.ComputeHash(fi.OpenRead());
-				hashString = Utilities.ToHexString(fileHash);
-			}
-
-			return hashString;
-		}
-
-		//public override string ToString() {
-		//  var s = this.SerializeToJson();
-		//  return s;//this.SerializeToJson();
-		//}
-
-		public static string GenerateRelativePath(string absoluteLocalPath, string basePath) {
-			return absoluteLocalPath.Replace(basePath, "");
+			// Oldreturn absoluteLocalPath.Replace(basePath, "");
 		}
 
 		#endregion

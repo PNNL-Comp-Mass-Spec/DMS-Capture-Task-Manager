@@ -55,9 +55,7 @@ namespace CaptureToolPlugin
 					return retData;
 				}
 
-				string dataset = m_TaskParams.GetParam("Dataset");
-
-				msg = "Capturing dataset '" + dataset + "'";
+				msg = "Capturing dataset '" + m_Dataset + "'";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
 
 				// Determine if instrument is on Bionet

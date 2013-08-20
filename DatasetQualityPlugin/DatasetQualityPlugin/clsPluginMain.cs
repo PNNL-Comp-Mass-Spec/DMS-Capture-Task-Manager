@@ -31,13 +31,7 @@ namespace DatasetQualityPlugin
 
 		#region "Class-wide variables"
 		clsToolReturnData mRetData = new clsToolReturnData();
-		string m_WorkDir;
-		string m_Dataset;
-		int m_DatasetID;
-		int m_DebugLevel;
-
-		clsRunDosProgram CmdRunner;
-		PRISM.DataBase.clsExecuteDatabaseSP mExecuteSP;
+	
 
 		System.DateTime mLastStatusUpdate = System.DateTime.UtcNow;
 		System.DateTime mQuameterStartTime = System.DateTime.UtcNow;
@@ -70,15 +64,6 @@ namespace DatasetQualityPlugin
 			if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
 				return mRetData;
 
-			m_WorkDir = m_MgrParams.GetParam("workdir");
-
-			m_Dataset = m_TaskParams.GetParam("Dataset");
-			if (!int.TryParse(m_TaskParams.GetParam("Dataset_ID"), out m_DatasetID))
-			{
-				m_DatasetID = 0;
-			}
-			m_DebugLevel = clsConversion.CIntSafe(m_MgrParams.GetParam("debuglevel"), 4);
-
 			if (m_DebugLevel >= 5)
 			{
 				msg = "Creating dataset info for dataset '" + m_Dataset + "'";
@@ -105,9 +90,27 @@ namespace DatasetQualityPlugin
 				mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
 			}
 
-			// Determine whether or not we will run Quameter
-			// At present we only process Thermo .Raw files
-			// Furthermore, if the file only contains MS/MS spectra, then it cannot be processed with Quameter
+			bool success = ConditionallyRunQuameter();
+		
+			ClearWorkDir();
+
+			if (!success)
+				return mRetData;
+
+			msg = "Completed clsPluginMain.RunTool()";
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+
+			return mRetData;
+
+		}	// End sub
+
+		/// <summary>
+		/// Determine whether or not we will run Quameter
+		/// </summary>
+		/// <returns>True if success (including if Quameter was skipped); false if an error</returns>
+		/// <remarks>At present we only process Thermo .Raw files. Furthermore, if the file only contains MS/MS spectra, then it cannot be processed with Quameter</remarks>
+		protected bool ConditionallyRunQuameter()
+		{
 
 			// Set up the file paths
 			string storageVolExt = m_TaskParams.GetParam("Storage_Vol_External");
@@ -118,7 +121,7 @@ namespace DatasetQualityPlugin
 
 			string instClassName = m_TaskParams.GetParam("Instrument_Class");
 
-			msg = "Instrument class: " + instClassName;
+			string msg = "Instrument class: " + instClassName;
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 			clsInstrumentClassInfo.eInstrumentClass instrumentClass = clsInstrumentClassInfo.GetInstrumentClass(instClassName);
@@ -128,10 +131,10 @@ namespace DatasetQualityPlugin
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 				mRetData.CloseoutMsg = msg;
 				mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-				return mRetData;
+				return false;
 			}
 
-			// Defie the generic Quameter skip reason
+			// Define the generic Quameter skip reason
 			string skipReason = "instrument class " + instClassName;
 
 			switch (instrumentClass)
@@ -167,85 +170,81 @@ namespace DatasetQualityPlugin
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
 				mRetData.CloseoutMsg = "Error determining tool version info";
 				mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-				return mRetData;
+				return false;
 			}
 
-			if (bRunQuameter)
+			if (!bRunQuameter)
 			{
-				string quameterExePath = GetQuameterPath();
-				System.IO.FileInfo fiQuameter = new System.IO.FileInfo(quameterExePath);
+				msg = "Skipped Quameter since " + skipReason;
+				mRetData.EvalMsg = string.Copy(msg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+				return true;
+			}
 
-				if (!fiQuameter.Exists)
+			string quameterExePath = GetQuameterPath();
+			System.IO.FileInfo fiQuameter = new System.IO.FileInfo(quameterExePath);
+
+			if (!fiQuameter.Exists)
+			{
+				mRetData.CloseoutMsg = "Quameter not found at " + quameterExePath;
+				mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+				return false;
+			}
+
+			System.IO.FileInfo fiDataFile = new System.IO.FileInfo(dataFilePathRemote);
+			if (!fiDataFile.Exists)
+			{
+				// File has likely been purged from the storage server
+				// Look in the Aurora archive (a2.emsl.pnl.gov) using samba
+				string dataFilePathArchive = Path.Combine(m_TaskParams.GetParam("Archive_Network_Share_Path"), m_TaskParams.GetParam("Folder"), fiDataFile.Name);
+
+				System.IO.FileInfo fiDataFileInArchive = new System.IO.FileInfo(dataFilePathArchive);
+				if (fiDataFileInArchive.Exists)
 				{
-					mRetData.CloseoutMsg = "Quameter not found at " + quameterExePath;
-					mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-					return mRetData;
+					// Update dataFilePathRemote using the archive file path
+					msg = "Dataset file not found on storage server (" + dataFilePathRemote + "), but was found in the archive at " + dataFilePathArchive;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+					dataFilePathRemote = dataFilePathArchive;
 				}
-
-				System.IO.FileInfo fiDataFile = new System.IO.FileInfo(dataFilePathRemote);
-				if (!fiDataFile.Exists)
-				{
-					// File has likely been purged from the storage server
-					// Look in the Aurora archive (a2.emsl.pnl.gov) using samba
-					string dataFilePathArchive = Path.Combine(m_TaskParams.GetParam("Archive_Network_Share_Path"), m_TaskParams.GetParam("Folder"), fiDataFile.Name);
-
-					System.IO.FileInfo fiDataFileInArchive = new System.IO.FileInfo(dataFilePathArchive);
-					if (fiDataFileInArchive.Exists)
-					{
-						// Update dataFilePathRemote using the archive file path
-						msg = "Dataset file not found on storage server (" + dataFilePathRemote + "), but was found in the archive at " + dataFilePathArchive;
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-						dataFilePathRemote = dataFilePathArchive;
-					}
-					else
-					{
-						dataFilePathRemote = string.Empty;
-						msg = "Dataset file not found on storage server (" + dataFilePathRemote + ") or in the archive (" + dataFilePathRemote + ")";
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-					}
-
-				}
-
-				if (string.IsNullOrEmpty(dataFilePathRemote))
-					mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 				else
 				{
-					bool bSuccess;
-					bSuccess = ProcessThermoRawFile(dataFilePathRemote, instrumentClass, fiQuameter);
-
-					if (bSuccess)
-					{
-						mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
-					}
-					else
-					{
-						// Quameter failed
-						// Copy the Quameter log file to the Dataset's QC folder
-						// We only save the log file if an error occurs since it typically doesn't contain any useful information
-						bSuccess = CopyFilesToDatasetFolder(datasetFolder);
-
-						if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
-							mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-
-					}
+					dataFilePathRemote = string.Empty;
+					msg = "Dataset file not found on storage server (" + dataFilePathRemote + ") or in the archive (" + dataFilePathRemote + ")";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+					mRetData.CloseoutMsg = "Dataset file not found on storage server or in the archive";
 				}
 
+			}
+
+			if (string.IsNullOrEmpty(dataFilePathRemote))
+			{
+				mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+				return false;
+			}
+				
+
+			bool bSuccess;
+			bSuccess = ProcessThermoRawFile(dataFilePathRemote, instrumentClass, fiQuameter);
+
+			if (bSuccess)
+			{
+				mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
 			}
 			else
 			{
-				msg = "Skipping Quameter since " + skipReason;
-				mRetData.EvalMsg = string.Copy(msg);
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+				// Quameter failed
+				// Copy the Quameter log file to the Dataset's QC folder
+				// We only save the log file if an error occurs since it typically doesn't contain any useful information
+				bSuccess = CopyFilesToDatasetFolder(datasetFolder);
+
+				if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
+					mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+
 			}
 
-			ClearWorkDir();
-
-			msg = "Completed clsPluginMain.RunTool()";
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-
-			return mRetData;
-
-		}	// End sub
+			return bSuccess;
+		
+		}
 
 		protected void ClearWorkDir()
 		{
@@ -302,15 +301,13 @@ namespace DatasetQualityPlugin
 			System.Text.StringBuilder sbXML = new System.Text.StringBuilder();
 			sXMLResults = string.Empty;
 
-			string sJobNum = m_TaskParams.GetParam("Job");
-
 			try
 			{
 				sbXML.Append("<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\"?>");
 				sbXML.Append("<Quameter_Results>");
 
 				sbXML.Append("<Dataset>" + m_Dataset + "</Dataset>");
-				sbXML.Append("<Job>" + sJobNum + "</Job>");
+				sbXML.Append("<Job>" + m_Job + "</Job>");
 
 				sbXML.Append("<Measurements>");
 
@@ -714,8 +711,7 @@ namespace DatasetQualityPlugin
 		protected bool PostQuameterResultsToDB(int intDatasetID, string sXMLResults)
 		{
 			// This Connection String points to the DMS_Capture database
-			string sConnectionString = null;
-			sConnectionString = m_MgrParams.GetParam("connectionstring");
+			string sConnectionString = m_MgrParams.GetParam("connectionstring");
 
 			return PostQuameterResultsToDB(intDatasetID, sXMLResults, sConnectionString, STORE_QUAMETER_RESULTS_SP_NAME);
 
@@ -797,10 +793,9 @@ namespace DatasetQualityPlugin
 					objCommand.Parameters["@ResultsXML"].Value = sXMLResultsClean;
 				}
 
-				mExecuteSP = new PRISM.DataBase.clsExecuteDatabaseSP(sConnectionString);
-				AttachExecuteSpEvents();
+				m_ExecuteSP.DBConnectionString = sConnectionString;
 
-				intResult = mExecuteSP.ExecuteSP(objCommand, MAX_RETRY_COUNT, SEC_BETWEEN_RETRIES);
+				intResult = m_ExecuteSP.ExecuteSP(objCommand, MAX_RETRY_COUNT, SEC_BETWEEN_RETRIES);
 
 				if (intResult == PRISM.DataBase.clsExecuteDatabaseSP.RET_VAL_OK)
 				{
@@ -820,11 +815,6 @@ namespace DatasetQualityPlugin
 				mRetData.CloseoutMsg = "Exception storing Quameter Results in database";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg, ex);
 				blnSuccess = false;
-			}
-			finally
-			{
-				DetachExecuteSpEvents();
-				mExecuteSP = null;
 			}
 
 			return blnSuccess;
@@ -1053,7 +1043,7 @@ namespace DatasetQualityPlugin
 
 		protected bool RunQuameter(System.IO.FileInfo fiQuameter, string dataFileName, string metricsOutputFileName)
 		{
-
+			clsRunDosProgram CmdRunner = null;
 			try
 			{
 				// Construct the command line arguments
@@ -1064,7 +1054,7 @@ namespace DatasetQualityPlugin
 				mQuameterStartTime = System.DateTime.UtcNow;
 				mLastStatusUpdate = System.DateTime.UtcNow;
 
-				AttachCmdrunnerEvents();
+				AttachCmdrunnerEvents(CmdRunner);
 
 				// Create a batch file to run the command
 				// Capture the console output (including output to the error stream) via redirection symbols: 
@@ -1155,7 +1145,7 @@ namespace DatasetQualityPlugin
 			}
 			finally
 			{
-				DetachCmdrunnerEvents();
+				DetachCmdrunnerEvents(CmdRunner);
 			}
 
 			return true;
@@ -1225,7 +1215,7 @@ namespace DatasetQualityPlugin
 
 		#region "Event handlers"
 
-		private void AttachCmdrunnerEvents()
+		private void AttachCmdrunnerEvents(clsRunDosProgram CmdRunner)
 		{
 			try
 			{
@@ -1238,19 +1228,7 @@ namespace DatasetQualityPlugin
 			}
 		}
 
-		private void AttachExecuteSpEvents()
-		{
-			try
-			{
-				mExecuteSP.DBErrorEvent += new PRISM.DataBase.clsExecuteDatabaseSP.DBErrorEventEventHandler(mExecuteSP_DBErrorEvent);
-			}
-			catch
-			{
-				// Ignore errors here
-			}
-		}
-
-		private void DetachCmdrunnerEvents()
+		private void DetachCmdrunnerEvents(clsRunDosProgram CmdRunner)
 		{
 			try
 			{
@@ -1258,21 +1236,6 @@ namespace DatasetQualityPlugin
 				{
 					CmdRunner.LoopWaiting -= CmdRunner_LoopWaiting;
 					CmdRunner.Timeout -= CmdRunner_Timeout;
-				}
-			}
-			catch
-			{
-				// Ignore errors here
-			}
-		}
-
-		private void DetachExecuteSpEvents()
-		{
-			try
-			{
-				if (mExecuteSP != null)
-				{
-					mExecuteSP.DBErrorEvent -= mExecuteSP_DBErrorEvent;
 				}
 			}
 			catch
@@ -1294,11 +1257,6 @@ namespace DatasetQualityPlugin
 				mLastStatusUpdate = System.DateTime.UtcNow;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Quameter running; " + System.DateTime.UtcNow.Subtract(mQuameterStartTime).TotalMinutes + " minutes elapsed");
 			}
-		}
-
-		void mExecuteSP_DBErrorEvent(string Message)
-		{
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Stored procedure execution error: " + Message);
 		}
 
 		#endregion

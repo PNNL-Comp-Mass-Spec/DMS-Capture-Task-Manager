@@ -31,7 +31,12 @@
 			Class="DatasetArchivePlugin.clsPluginMain"
 			AssemblyFile="DatasetArchivePlugin.dll"
 		/>
-		<ToolRunner
+    <ToolRunner
+			Tool="archiveupdatetest"
+			Class="DatasetArchivePlugin.clsPluginMain"
+			AssemblyFile="DatasetArchivePlugin.dll"
+		/>    
+    <ToolRunner
 			Tool="sourcefilerename"
 			Class="SrcFileRenamePlugin.clsPluginMain"
 			AssemblyFile="SrcFileRenamePlugin.dll"

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using Pacifica.Core;
@@ -13,7 +14,7 @@ namespace Pacifica.DMS_Metadata
 		System.ComponentModel.BackgroundWorker backgrounder;
 		System.ComponentModel.BackgroundWorker statusBackgrounder;
 		DMSMetadataObject _mdContainer;
-		IUpload myEMSLUpload;
+		Upload myEMSLUpload;
 
 		public MyEMSLUploader() {
 			StatusURI = string.Empty;
@@ -123,7 +124,7 @@ namespace Pacifica.DMS_Metadata
 			{
 				//delete the cached zip/tar file
 				string bundleName = this._mdContainer.bundleName;
-				System.IO.FileInfo bundleObject = new System.IO.FileInfo(System.IO.Path.Combine(Pacifica.Core.Configuration.LocalTempDirectory, bundleName));
+				FileInfo bundleObject = new FileInfo(Path.Combine(Pacifica.Core.Configuration.LocalTempDirectory, bundleName));
 				if (bundleObject.Exists)
 				{
 					bundleObject.Delete();

@@ -80,10 +80,10 @@ namespace ImsDemuxPlugin
 		public clsToolReturnData PerformCalibration(IMgrParams mgrParams, ITaskParams taskParams, clsToolReturnData retData)
 		{
 
-			string msg = "Calibrating dataset " + taskParams.GetParam("Dataset");
+			string dataset = taskParams.GetParam("Dataset");
+			string msg = "Calibrating dataset " + dataset;
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
-			string dataset = taskParams.GetParam("Dataset");
 			string workDirPath = mgrParams.GetParam("workdir");
 			string sUimfPath = string.Empty;
 
@@ -309,12 +309,12 @@ namespace ImsDemuxPlugin
 		public clsToolReturnData PerformDemux(IMgrParams mgrParams, ITaskParams taskParams, string uimfFileName, bool bUseBelovTransform)
 		{
 			string jobNum = taskParams.GetParam("Job");
-			string msg = "Performing demultiplexing, job " + jobNum + ", dataset " + taskParams.GetParam("Dataset");
+			string dataset = taskParams.GetParam("Dataset");
+			string msg = "Performing demultiplexing, job " + jobNum + ", dataset " + dataset;
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 
 			clsToolReturnData retData = new clsToolReturnData();
 
-			string dataset = taskParams.GetParam("Dataset");
 			bool bPostProcessingError = false;
 
 			// Make sure the working directory is empty
