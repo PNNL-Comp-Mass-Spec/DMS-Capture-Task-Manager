@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <Plugins>
 	<ToolRunners>
 		<ToolRunner
@@ -31,12 +31,17 @@
 			Class="DatasetArchivePlugin.clsPluginMain"
 			AssemblyFile="DatasetArchivePlugin.dll"
 		/>
-    <ToolRunner
-			Tool="archiveupdatetest"
-			Class="DatasetArchivePlugin.clsPluginMain"
-			AssemblyFile="DatasetArchivePlugin.dll"
-		/>    
-    <ToolRunner
+	    <ToolRunner
+				Tool="archiveupdatetest"
+				Class="DatasetArchivePlugin.clsPluginMain"
+				AssemblyFile="DatasetArchivePlugin.dll"
+		/>
+	    <ToolRunner
+				Tool="archiveverify"
+				Class="ArchiveVerifyPlugin.clsPluginMain"
+				AssemblyFile="ArchiveVerifyPlugin.dll"
+		/>
+	    <ToolRunner
 			Tool="sourcefilerename"
 			Class="SrcFileRenamePlugin.clsPluginMain"
 			AssemblyFile="SrcFileRenamePlugin.dll"

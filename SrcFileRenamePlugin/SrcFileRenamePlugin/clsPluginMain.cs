@@ -54,9 +54,7 @@ namespace SrcFileRenamePlugin
 				return retData;
 			}
 
-			string dataset = m_TaskParams.GetParam("Dataset");
-
-			msg = "Renaming dataset '" + dataset + "'";
+			msg = "Renaming dataset '" + m_Dataset + "'";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
 
 			// Determine if instrument is on Bionet
