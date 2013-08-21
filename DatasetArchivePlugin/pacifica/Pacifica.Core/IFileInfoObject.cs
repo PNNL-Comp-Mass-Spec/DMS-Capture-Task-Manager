@@ -18,10 +18,11 @@ namespace Pacifica.Core
         string SubmittedTimeStamp { get; }
 		
 		/*
-		 * Code deprecated in August 2013
+		 * August 2013: To be deleted
 		 * 
          * string SerializeData();
-		 */
-		Dictionary<string, object> SerializeToDictionaryObject();
+		*/
+
+		Dictionary<string, string> SerializeToDictionaryObject();
     }
 }

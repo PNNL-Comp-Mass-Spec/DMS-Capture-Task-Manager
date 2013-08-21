@@ -42,15 +42,24 @@ namespace Pacifica.Core
 			}
 		}
 
-		public static string Send(string url, string postData = "", HttpMethod method = HttpMethod.Get,
-			string contentType = "", bool sendStringInHeader = false, NetworkCredential loginCredentials = null)
+		public static string Send(
+			string url, 
+			string postData = "", 
+			HttpMethod method = HttpMethod.Get,
+			string contentType = "", 
+			bool sendStringInHeader = false, 
+			NetworkCredential loginCredentials = null)
 		{
 			return Send(url, new CookieContainer(), postData, method, contentType, sendStringInHeader, loginCredentials);
 		}
 
-		public static string Send(string url, CookieContainer cookies,
-			string postData = "", HttpMethod method = HttpMethod.Get,
-			string contentType = "", bool sendStringInHeader = false,
+		public static string Send(
+			string url, 
+			CookieContainer cookies,
+			string postData = "", 
+			HttpMethod method = HttpMethod.Get,
+			string contentType = "", 
+			bool sendStringInHeader = false,
 			NetworkCredential loginCredentials = null)
 		{
 			Uri uri = new Uri(url);
@@ -89,7 +98,7 @@ namespace Pacifica.Core
 			{
 				request.Headers.Add("X-Json-Data", postData);
 			}
-
+			
 			// Set form/post content-type if necessary
 			if (method == HttpMethod.Post && !string.IsNullOrEmpty(postData) && contentType == "")
 			{
@@ -97,7 +106,7 @@ namespace Pacifica.Core
 			}
 
 			// Set Content-Type
-			if (!string.IsNullOrEmpty(contentType) && method == HttpMethod.Post)
+			if (method == HttpMethod.Post && !string.IsNullOrEmpty(contentType))
 			{
 				request.ContentType = contentType;
 				request.ContentLength = postData.Length;

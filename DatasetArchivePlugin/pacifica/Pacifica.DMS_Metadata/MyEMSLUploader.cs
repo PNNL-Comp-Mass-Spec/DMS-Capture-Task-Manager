@@ -107,7 +107,7 @@ namespace Pacifica.DMS_Metadata
 			if(this._mdContainer.newFilesObject.Count > 0) {
 				this.StatusURI = serverResponse + "/xml";
 				this.DirectoryLookupPath = this._mdContainer.serverSearchString;
-				myEMSLUpload.BeginUploadMonitoring(serverResponse, this._mdContainer.serverSearchString, this._mdContainer.newFilesObject);
+				myEMSLUpload.BeginUploadMonitoring(serverResponse, this._mdContainer.serverSearchString);
 			}
 
 			if (TaskCompleted != null)

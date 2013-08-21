@@ -53,10 +53,12 @@ namespace Pacifica.Core
 				string scheme;
 				if (UseSecureDataTransfer)
 				{
+					// https
 					scheme = SecuredScheme;
 				}
 				else
 				{
+					// http
 					scheme = UnsecuredScheme;
 				}
 				return scheme + "://";

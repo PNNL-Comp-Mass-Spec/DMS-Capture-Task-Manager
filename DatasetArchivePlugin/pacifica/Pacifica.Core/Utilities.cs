@@ -57,6 +57,34 @@ namespace Pacifica.Core
 			return BitConverter.ToString(buffer).Replace("-", string.Empty).ToLower();
 		}
 
+		public static int ToIntSafe(string valueText)
+		{
+			return ToIntSafe(valueText, 0);
+		}
+
+		public static int ToIntSafe(string valueText, int valueIfError)
+		{
+			int value;
+			if (int.TryParse(valueText, out value))
+				return value;
+
+			return valueIfError;
+		}
+
+		public static long ToLongSafe(string valueText)
+		{
+			return ToLongSafe(valueText, 0);
+		}
+
+		public static long ToLongSafe(string valueText, long valueIfError) 
+		{
+			long value;
+			if (long.TryParse(valueText, out value))
+				return value;
+
+			return valueIfError;
+		}
+
 		public static Dictionary<string, object> JsonToObject(string jsonString)
 		{
 			JsonObject jso = (JsonObject)JsonConvert.Import(jsonString);

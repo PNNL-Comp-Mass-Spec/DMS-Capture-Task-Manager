@@ -11,19 +11,37 @@ namespace Pacifica.Core
 	{
 		#region Constructor
 
+		/// <summary>
+		/// Instantiate a new FileInfoObject, including computing the Sha-1 hash of the file
+		/// </summary>
+		/// <param name="absoluteLocalFullPath">Full path to the local file</param>
+		/// <param name="baseDSPath">Base dataset folder path</param>
+		public FileInfoObject(string absoluteLocalFullPath, string baseDSPath)
+		{
+			this.AbsoluteLocalPath = absoluteLocalFullPath;
+			this.File = new FileInfo(this.AbsoluteLocalPath);
+			this._relativeDestinationDirectory = GenerateRelativePath(File.Directory.FullName, baseDSPath);
+
+			this.Sha1HashHex = Utilities.GenerateSha1Hash(AbsoluteLocalPath);
+
+		}
+
+		/// <summary>
+		/// Instantiate a new FileInfoObject; auto-computes the Sha-1 hash if sha1Hash is blank or is not exactly 40 characters long
+		/// </summary>
+		/// <param name="absoluteLocalFullPath">Full path to the local file</param>
+		/// <param name="relativeDestinationDirectory">Folder in archive in which to store the file; empty string means to store in the dataset folder</param>
+		/// <param name="sha1Hash">Sha-1 hash for the file; if blank then the has will be auto-computed</param>
 		public FileInfoObject(string absoluteLocalFullPath, string relativeDestinationDirectory, string sha1Hash = "")
 		{
 			this.AbsoluteLocalPath = absoluteLocalFullPath;
-			this._relativeDestinationDirectory = relativeDestinationDirectory;
 			this.File = new FileInfo(this.AbsoluteLocalPath);
-			if (sha1Hash != string.Empty && sha1Hash.Length == 40)
-			{
+			this._relativeDestinationDirectory = relativeDestinationDirectory;
+
+			if (!string.IsNullOrWhiteSpace(sha1Hash) && sha1Hash.Length == 40)
 				this.Sha1HashHex = sha1Hash;
-			}
 			else
-			{
 				this.Sha1HashHex = Utilities.GenerateSha1Hash(AbsoluteLocalPath);
-			}
 		}
 
 		#endregion
@@ -36,9 +54,17 @@ namespace Pacifica.Core
 
 		#region IFileInfoObject Members
 
-		public string AbsoluteLocalPath { get; private set; }
+		public string AbsoluteLocalPath
+		{
+			get;
+			private set;
+		}
 
 		private string _relativeDestinationDirectory;
+
+		/// <summary>
+		/// Relative destination directory, with Unix-style slashes
+		/// </summary>
 		public string RelativeDestinationDirectory
 		{
 			get
@@ -74,16 +100,16 @@ namespace Pacifica.Core
 			}
 		}
 
-		public string _desinationFileName;
+		public string _destinationFileName;
 		public string DestinationFileName
 		{
 			get
 			{
-				return _desinationFileName;
+				return _destinationFileName;
 			}
 			set
 			{
-				_desinationFileName = value;
+				_destinationFileName = value;
 			}
 		}
 
@@ -95,6 +121,9 @@ namespace Pacifica.Core
 			}
 		}
 
+		/// <summary>
+		/// Sha-1 hash of the file
+		/// </summary>
 		public string Sha1HashHex
 		{
 			get;
@@ -168,15 +197,15 @@ namespace Pacifica.Core
 		*/
 
 
-		public Dictionary<string, object> SerializeToDictionaryObject()
+		public Dictionary<string, string> SerializeToDictionaryObject()
 		{
-			Dictionary<string, object> d = new Dictionary<string, object>();
+			var d = new Dictionary<string, string>();
 
 			d.Add("sha1Hash", this.Sha1HashHex);
 			d.Add("destinationDirectory", this.RelativeDestinationDirectory);
 			d.Add("localFilePath", this.AbsoluteLocalPath);
 			d.Add("fileName", this.FileName);
-			d.Add("sizeInBytes", this.File.Length);
+			d.Add("sizeInBytes", this.File.Length.ToString());
 			d.Add("creationDate", this.CreationTimeStamp);
 
 			return d;

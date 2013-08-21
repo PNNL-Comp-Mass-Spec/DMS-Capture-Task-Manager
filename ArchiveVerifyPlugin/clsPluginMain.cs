@@ -17,9 +17,6 @@ namespace ArchiveVerifyPlugin
 		#region "Class-wide variables"
 		clsToolReturnData mRetData = new clsToolReturnData();
 
-		System.DateTime mLastStatusUpdate = System.DateTime.UtcNow;
-		System.DateTime mQuameterStartTime = System.DateTime.UtcNow;
-
 		#endregion
 
 		#region "Constructors"
@@ -33,14 +30,14 @@ namespace ArchiveVerifyPlugin
 
 		#region "Methods"
 		/// <summary>
-		/// Runs the dataset info step tool
+		/// Runs the Archive Verify step tool
 		/// </summary>
 		/// <returns>Enum indicating success or failure</returns>
 		public override clsToolReturnData RunTool()
 		{
 			string msg;
 			
-			msg = "Starting DatasetQualityPlugin.clsPluginMain.RunTool()";
+			msg = "Starting ArchiveVerifyPlugin.clsPluginMain.RunTool()";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 			// Perform base class operations, if any
@@ -50,11 +47,11 @@ namespace ArchiveVerifyPlugin
 		
 			if (m_DebugLevel >= 5)
 			{
-				msg = "Creating dataset info for dataset '" + m_Dataset + "'";
+				msg = "Verifying files in MyEMSL for dataset '" + m_Dataset + "'";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 			}
 
-			// Perform work here
+			// ToDo: Perform work here
 			bool success = false;
 
 			if (success)

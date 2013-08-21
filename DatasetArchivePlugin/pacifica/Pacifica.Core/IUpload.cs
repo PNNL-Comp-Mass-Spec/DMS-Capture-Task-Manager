@@ -27,7 +27,7 @@ namespace Pacifica.Core
 				/// <returns>Returns Hex-encoded hash string</returns>
 				string GenerateSha1Hash(string fileName);
 
-				void BeginUploadMonitoring(string bundleIdentifier, string serverSearchURL, IList fileMetadataObject);
+				void BeginUploadMonitoring(string bundleIdentifier, string serverSearchURL);
 
 				/// <summary>
 				/// Returns status for the file in question from the server

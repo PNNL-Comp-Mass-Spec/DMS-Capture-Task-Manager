@@ -11,12 +11,12 @@ namespace Pacifica.Core
     public static class ExtensionMethods
     {
         /// <summary>
-        /// Convert a DateTime type to a UNIX timpestamp.
+        /// Convert a DateTime type to a UNIX timestamp.
         /// </summary>
         /// <param name="dt">A DateTime to be converted.</param>
         /// <returns>Seconds since January 1st, 1970 00:00:00 UTC.</returns>
         /// <remarks>Inputing a DateTime with Kind set to anything other than DateTimeKind.Utc 
-        /// will convert the structure to UTC before adjusting to the UNIX epoch.</returns>
+		/// will convert the structure to UTC before adjusting to the UNIX epoch.</remarks>
         public static ulong ToUnixTime(this DateTime dt)
         {
             if (dt.Kind != DateTimeKind.Utc)
@@ -28,6 +28,12 @@ namespace Pacifica.Core
             return (ulong)Math.Round(t.TotalSeconds);
         }
 
+		/// <summary>
+		/// Determine the Description attribute of a given enum value
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="enumerationValue"></param>
+		/// <returns>Description attribute, or simply enum.ToString</returns>
         public static string GetDescription<T>(this object enumerationValue) where T : struct
         {
             Type type = enumerationValue.GetType();

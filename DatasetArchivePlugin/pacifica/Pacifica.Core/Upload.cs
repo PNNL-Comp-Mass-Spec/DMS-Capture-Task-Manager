@@ -17,7 +17,7 @@ namespace Pacifica.Core
 		 *
 		 * private BackgroundWorker _topLevelBackgrounder;
 		 * private BackgroundWorker statusBackgrounder;
-		 */
+		*/
 
 		private string _bundleIdentifier = string.Empty;
 		private const string bundleExtension = ".tar";
@@ -35,7 +35,7 @@ namespace Pacifica.Core
 			 *
 			 * this._topLevelBackgrounder = backgrounder;
 			 * statusBackgrounder = new BackgroundWorker();
-			 */
+			*/
 
 			// Note that EasyHttp is a static class with a static event
 			// Be careful about instantiating this class (Upload) multiple times
@@ -134,7 +134,7 @@ namespace Pacifica.Core
 			// Grab the list of files from the top-level "file" object
 			SortedDictionary<string, FileInfoObject> fileListObject = new SortedDictionary<string, FileInfoObject>();
 			IList fileList = (List<Dictionary<string, object>>)metadataObject["file"];
-			List<Dictionary<string, object>> newFileObj = new List<Dictionary<string, object>>();
+			var newFileObj = new List<Dictionary<string, string>>();
 
 			if (fileList.Count == 0)
 			{
@@ -201,7 +201,7 @@ namespace Pacifica.Core
 				 *
 				 * Get a real server for us to work with
 				 * string redirectedServer = Utilities.GetRedirect(new Uri(Configuration.TestAuthUri));
-				 */
+				*/
 
 				string redirectedServer = Pacifica.Core.Configuration.ServerUri;
 				string preallocateUrl = redirectedServer + "/myemsl/cgi-bin/preallocate";
@@ -291,7 +291,7 @@ namespace Pacifica.Core
 			mdTextFile.Delete();
 		}
 
-		public void BeginUploadMonitoring(string serverStatusURL, string serverSearchURL, IList fileMetadataObject)
+		public void BeginUploadMonitoring(string serverStatusURL, string serverSearchURL)
 		{
 			string statusURI = serverStatusURL + "/xml";
 
@@ -299,16 +299,17 @@ namespace Pacifica.Core
 			 *
 			 * this.statusBackgrounder.DoWork += new DoWorkEventHandler(UploadMonitorLoop);
 			 * this.statusBackgrounder.RunWorkerCompleted += new RunWorkerCompletedEventHandler(backgrounder_RunWorkerCompleted);
-			 */
+			*/
 
-			Dictionary<string, object> args = new Dictionary<string, object>() { { "statusURI", statusURI }, { "fileMetadataObject", fileMetadataObject }, { "serverSearchURL", serverSearchURL } };
+			// Dictionary<string, object> args = new Dictionary<string, object>() { { "statusURI", statusURI }, { "fileMetadataObject", fileMetadataObject }, { "serverSearchURL", serverSearchURL } };
+			Dictionary<string, object> args = new Dictionary<string, object>() { { "statusURI", statusURI }, { "serverSearchURL", serverSearchURL } };
 			string errorMessage;
 			Boolean success = this.UploadMonitorLoop(args, out errorMessage);
 
 			/* August 2013: To be deleted
 			 *
 			 * //this.statusBackgrounder.RunWorkerAsync(args);
-			 */
+			*/
 
 			DataReceivedAndVerified(success, errorMessage);
 		}
@@ -329,7 +330,12 @@ namespace Pacifica.Core
 			//Dictionary<string, object> args = (Dictionary<string, object>)e.Argument;
 			string statusURI = args["statusURI"].ToString();
 			string serverSearchURI = args["serverSearchURL"].ToString();
-			List<Dictionary<string, object>> fileMetadataObject = (List<Dictionary<string, object>>)args["fileMetadataObject"];
+
+			/* August 2013: To be deleted
+			 * 
+			 * List<Dictionary<string, object>> fileMetadataObject = (List<Dictionary<string, object>>)args["fileMetadataObject"];
+		    */
+
 			errorMessage = string.Empty;
 
 			// Start at a 4 second delay, increase the delay every loop until the delay is 120 seconds
