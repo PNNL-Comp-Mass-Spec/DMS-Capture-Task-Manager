@@ -76,7 +76,7 @@ namespace Pacifica.Core
 			return ToLongSafe(valueText, 0);
 		}
 
-		public static long ToLongSafe(string valueText, long valueIfError) 
+		public static long ToLongSafe(string valueText, long valueIfError)
 		{
 			long value;
 			if (long.TryParse(valueText, out value))
@@ -100,6 +100,13 @@ namespace Pacifica.Core
 		public static Dictionary<string, object> JsonObjectToDictionary(JsonObject jso)
 		{
 			Dictionary<string, object> d = new Dictionary<string, object>();
+
+			if (jso == null)
+			{
+				Console.WriteLine("Skipping null item in JsonObjectToDictionary");
+				return d;
+			}
+
 			foreach (string key in jso.Names)
 			{
 				if (jso[key] == null)
@@ -117,24 +124,121 @@ namespace Pacifica.Core
 				}
 				else if (value.GetType().Name == "JsonArray")
 				{
-					tmpJsa = value as JsonArray;
-					d.Add(key, JsonArrayToList(tmpJsa));
+					try
+					{
+						tmpJsa = value as JsonArray;
+						switch (key)
+						{
+							case "users":
+								// EUS User IDs are always integers
+								d.Add(key, JsonArrayToIntList(tmpJsa));
+								break;
+
+							case "proposals":
+								// EUS Proposals are usually integers, but not always
+ 								// Thus, store as strings
+								d.Add(key, JsonArrayToStringList(tmpJsa));
+								break;
+
+							default:
+								if (tmpJsa.Count == 0)
+								{
+									d.Add(key, new List<Dictionary<string, object>>());
+								}
+								else
+								{
+									object nextValue = tmpJsa.GetValue(0);
+									string typeName = nextValue.GetType().Name;
+
+									if (typeName == "String" || typeName == "JsonNumber")
+										d.Add(key, JsonArrayToStringList(tmpJsa));
+									else
+										d.Add(key, JsonArrayToDictionaryList(tmpJsa));
+								}
+								break;
+						}
+
+					}
+					catch (Exception ex)
+					{
+						Console.WriteLine("Error in parsing a JsonArray in JsonObjectToDictionary:" + ex.Message);
+					}
+
 				}
 				else
 				{
 					d.Add(key, value);
 				}
 			}
+
 			return d;
 		}
 
-		public static List<Dictionary<string, object>> JsonArrayToList(JsonArray jsa)
+		public static List<string> JsonArrayToStringList(JsonArray jsa)
+		{
+			List<string> l = new List<string>();
+
+			while (jsa.Length > 0)
+			{
+				object value = jsa.Pop();
+				string typeName = value.GetType().Name;
+				if (typeName == "JsonNumber" || typeName == "String")
+				{
+					l.Add(value.ToString());
+				}
+				else
+				{
+					throw new InvalidCastException("JsonArrayToStringList cannot process an item of type " + typeName);
+				}
+			}
+
+			return l;
+		}
+
+		public static List<int> JsonArrayToIntList(JsonArray jsa)
+		{
+			List<string> lstStrings = JsonArrayToStringList(jsa);
+			List<int> lstInts = new List<int>();
+
+			foreach (string item in lstStrings)
+			{
+				int value;
+				if (int.TryParse(item, out value))
+					lstInts.Add(value);
+				else
+					throw new InvalidCastException("JsonArrayToIntList cannot convert item '" + value + "' to an integer");
+			}
+
+			return lstInts;
+		}
+
+		public static List<Dictionary<string, object>> JsonArrayToDictionaryList(JsonArray jsa)
 		{
 			List<Dictionary<string, object>> l = new List<Dictionary<string, object>>();
 			while (jsa.Length > 0)
 			{
-				JsonObject jso = jsa.Pop() as JsonObject;
-				l.Add(JsonObjectToDictionary(jso));
+				object value = jsa.Pop();
+				if (value.GetType().Name == "JsonNumber")
+				{
+					var dctValue = new Dictionary<string, object>();
+					dctValue.Add(value.ToString(), string.Empty);
+					l.Add(dctValue);
+				}
+				else if (value.GetType().Name == "String")
+				{
+					var dctValue = new Dictionary<string, object>();
+					dctValue.Add(value.ToString(), string.Empty);
+					l.Add(dctValue);
+				}
+				else if (value.GetType().Name == "JsonObject")
+				{
+					JsonObject jso = (JsonObject)value;
+					l.Add(JsonObjectToDictionary(jso));
+				}
+				else
+				{
+					Console.WriteLine("Unsupported JsonArrayList type: " + value.GetType().Name);
+				}
 			}
 			return l;
 		}

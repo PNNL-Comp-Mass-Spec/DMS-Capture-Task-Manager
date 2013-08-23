@@ -27,7 +27,7 @@ namespace Pacifica.Core
 			[Description("POST")]
 			Post = 1,
 			[Description("PUT")]
-			Put = 2,
+			Put = 2
 		}
 
 		public static event StatusUpdateEventHandler StatusUpdate;
@@ -42,31 +42,154 @@ namespace Pacifica.Core
 			}
 		}
 
-		public static string Send(
-			string url, 
-			string postData = "", 
-			HttpMethod method = HttpMethod.Get,
-			string contentType = "", 
-			bool sendStringInHeader = false, 
+		public static bool GetFile(
+			string url,
+			CookieContainer cookies,
+			string downloadFilePath,
+			int timeoutSeconds = 100,
 			NetworkCredential loginCredentials = null)
 		{
-			return Send(url, new CookieContainer(), postData, method, contentType, sendStringInHeader, loginCredentials);
+			double maxTimeoutHours = 24;
+			HttpWebRequest request = InitializeRequest(url, ref cookies, ref timeoutSeconds, loginCredentials, maxTimeoutHours);
+
+			// Prepare the request object
+			HttpMethod method = HttpMethod.Get;
+			request.Method = method.GetDescription<HttpMethod>();
+			request.PreAuthenticate = false;
+
+
+			// Receive response		
+			HttpWebResponse response = null;
+			try
+			{
+				request.Timeout = timeoutSeconds * 1000;
+				response = (HttpWebResponse)request.GetResponse();
+
+				if (response.StatusCode == HttpStatusCode.OK)
+				{
+					// Download the file
+
+					Stream ReceiveStream = response.GetResponseStream();
+
+					byte[] buffer = new byte[32767];
+					FileStream outFile = new FileStream(downloadFilePath, FileMode.Create);
+
+					int bytesRead;
+					while((bytesRead = ReceiveStream.Read(buffer, 0, buffer.Length)) != 0)
+						outFile.Write(buffer, 0, bytesRead);
+
+					outFile.Close();
+
+				}
+				else
+				{
+					throw new WebException("HTTP response code not OK: " + response.StatusCode + ", " + response.StatusDescription);
+				}
+			}
+			catch (WebException ex)
+			{
+				string responseData = string.Empty;
+				if (ex.Response != null)
+				{
+					using (StreamReader sr = new StreamReader(ex.Response.GetResponseStream()))
+					{
+						int maxLines = 20;
+						int linesRead = 0;
+						while (sr.Peek() > -1 && linesRead < maxLines)
+						{
+							responseData += sr.ReadLine() + Environment.NewLine;
+							linesRead++;
+						}
+					}
+				}
+				throw new Exception(responseData, ex);
+			}
+			finally
+			{
+				if (response != null)
+				{
+					((IDisposable)response).Dispose();
+				}
+			}
+
+			return true;
+		}
+		
+		public static WebHeaderCollection GetHeaders(		
+			string url, 
+			int timeoutSeconds = 100)
+		{
+			return GetHeaders(url,  new CookieContainer(), timeoutSeconds);
 		}
 
-		public static string Send(
+		public static WebHeaderCollection GetHeaders(		
 			string url, 
 			CookieContainer cookies,
-			string postData = "", 
-			HttpMethod method = HttpMethod.Get,
-			string contentType = "", 
-			bool sendStringInHeader = false,
+			int timeoutSeconds = 100,
 			NetworkCredential loginCredentials = null)
+		{
+			double maxTimeoutHours = 0.1;
+			HttpWebRequest request = InitializeRequest(url, ref cookies, ref timeoutSeconds, loginCredentials, maxTimeoutHours);
+
+			// Prepare the request object
+			request.Method = "HEAD";
+			request.PreAuthenticate = false;
+
+			// Receive response
+			WebResponse response = null;
+			try
+			{
+				request.Timeout = timeoutSeconds * 1000;
+				response = request.GetResponse();
+
+				return response.Headers;
+				
+			}
+			catch (WebException ex)
+			{
+				string responseData;
+				if (ex.Response != null)
+				{
+					using (StreamReader sr = new StreamReader(ex.Response.GetResponseStream()))
+					{
+						responseData = sr.ReadToEnd();
+					}
+				}
+				else
+				{
+					responseData = string.Empty;
+				}
+				throw new Exception(responseData, ex);
+			}
+			finally
+			{
+				if (response != null)
+				{
+					((IDisposable)response).Dispose();
+				}
+			}
+			
+		}
+
+		public static HttpWebRequest InitializeRequest(
+			string url, 
+			ref CookieContainer cookies, 
+			ref int timeoutSeconds, 
+			NetworkCredential loginCredentials, 
+			double maxTimeoutHours = 24)
 		{
 			Uri uri = new Uri(url);
 			string cleanUserName = Utilities.GetUserName(true);
 
 			HttpWebRequest request = (HttpWebRequest)WebRequest.Create(uri);
 			Configuration.SetProxy(request);
+
+			if (timeoutSeconds < 3)
+				timeoutSeconds = 3;
+			
+			int maxTimeoutHoursInt = (int)(maxTimeoutHours * 60 * 60);
+			if (timeoutSeconds > maxTimeoutHoursInt)
+				timeoutSeconds = maxTimeoutHoursInt;
 
 			if (loginCredentials == null)
 			{
@@ -89,6 +212,96 @@ namespace Pacifica.Core
 			cookie.Domain = "pnl.gov";
 			cookies.Add(cookie);
 			request.CookieContainer = cookies;
+			return request;
+		}
+
+		public static string Send(
+			string url,
+			out HttpStatusCode responseStatusCode, 
+			int timeoutSeconds = 100)
+		{
+			string postData = "";
+			return Send(url, out responseStatusCode, postData, HttpMethod.Get, timeoutSeconds);
+		}
+
+		public static string Send(
+			string url,
+			CookieContainer cookies,
+			out HttpStatusCode responseStatusCode, 
+			int timeoutSeconds = 100)
+		{
+			string postData = "";
+			return Send(url, cookies, out responseStatusCode, postData, HttpMethod.Get, timeoutSeconds);
+		}
+
+		public static string Send(
+			string url,
+			out HttpStatusCode responseStatusCode, 
+			string postData,
+			HttpMethod method = HttpMethod.Get,
+			int timeoutSeconds = 100)
+		{
+			string contentType = "";
+			bool sendStringInHeader = false;
+			NetworkCredential loginCredentials = null;
+
+			return Send(url, new CookieContainer(), out responseStatusCode, postData, method, timeoutSeconds, contentType, sendStringInHeader, loginCredentials);
+		}
+
+		public static string Send(
+			string url,
+			out HttpStatusCode responseStatusCode, 
+			string postData, 
+			HttpMethod method,
+			int timeoutSeconds,
+			string contentType, 
+			bool sendStringInHeader, 
+			NetworkCredential loginCredentials)
+		{
+			return Send(url, new CookieContainer(), out responseStatusCode, postData, method, timeoutSeconds, contentType, sendStringInHeader, loginCredentials);
+		}
+
+		public static string Send(
+			string url,
+			CookieContainer cookies,
+			out HttpStatusCode responseStatusCode, 
+			string postData,
+			HttpMethod method,
+			int timeoutSeconds,
+			NetworkCredential loginCredentials)
+		{
+			string contentType = "";
+			bool sendStringInHeader = false;
+			return Send(url, new CookieContainer(), out responseStatusCode, postData, method, timeoutSeconds, contentType, sendStringInHeader, loginCredentials);
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="url"></param>
+		/// <param name="cookies"></param>
+		/// <param name="postData"></param>
+		/// <param name="method"></param>
+		/// <param name="timeoutSeconds"></param>
+		/// <param name="contentType"></param>
+		/// <param name="sendStringInHeader"></param>
+		/// <param name="loginCredentials"></param>
+		/// <returns>Response data</returns>
+		public static string Send(
+			string url, 
+			CookieContainer cookies,
+			out HttpStatusCode responseStatusCode, 
+			string postData = "", 
+			HttpMethod method = HttpMethod.Get,
+			int timeoutSeconds = 100,
+			string contentType = "", 
+			bool sendStringInHeader = false,
+			NetworkCredential loginCredentials = null)
+		{
+
+			double maxTimeoutHours = 24;
+			HttpWebRequest request = InitializeRequest(url, ref cookies, ref timeoutSeconds, loginCredentials, maxTimeoutHours);
+			responseStatusCode = HttpStatusCode.NotFound;
 
 			// Prepare the request object
 			request.Method = method.GetDescription<HttpMethod>();
@@ -123,14 +336,18 @@ namespace Pacifica.Core
 
 			// Receive response
 			string responseData;
-			WebResponse response = null;
+			HttpWebResponse response = null;
 			try
 			{
-				response = request.GetResponse();
+				request.Timeout = timeoutSeconds * 1000;
+				response = (HttpWebResponse)request.GetResponse();
+				responseStatusCode = response.StatusCode;
+
 				using (StreamReader sr = new StreamReader(response.GetResponseStream()))
 				{
 					responseData = sr.ReadToEnd();
 				}
+				
 			}
 			catch (WebException ex)
 			{

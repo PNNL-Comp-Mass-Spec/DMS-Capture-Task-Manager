@@ -266,15 +266,15 @@ namespace Pacifica.Core
 		{
 			get
 			{
-				if (!IsDefaultLoginRequired())
+				if (!IsExplicitLoginRequired())
 				{
 					//DefaultCredentials worked, so we can move on.
 					//The authentication cookie was saved.
 					return false;
 				}
 
-				//DefaultCredentials might not work, so lets try any cookies
-				//that might be on the machine.
+				// DefaultCredentials might not work, so lets try any cookies
+				// that might be on the machine.
 				if (TestCookieLogin())
 				{
 					return false;
@@ -300,62 +300,87 @@ namespace Pacifica.Core
 			}
 		}
 
-		private bool IsDefaultLoginRequired()
+		/// <summary>
+		/// Determine whether an explicit login will be required
+		/// </summary>
+		/// <returns></returns>
+		private bool IsExplicitLoginRequired()
 		{
 			bool result = false;
 			try
 			{
-				Uri uri = _location;
-				bool redirected = false;
 				CookieContainer cookieJar = new CookieContainer();
 
-				do
+				if (GetAuthCookies(out cookieJar))
 				{
-					HttpWebRequest request = WebRequest.Create(uri) as HttpWebRequest;
-					request.CookieContainer = cookieJar;
-					request.UseDefaultCredentials = true;
-					request.AllowAutoRedirect = false;
-
-					request.CookieContainer = cookieJar;
-
-					using (HttpWebResponse resp = request.GetResponse() as HttpWebResponse)
-					{
-						if ((resp.StatusCode & HttpStatusCode.Redirect) == HttpStatusCode.Redirect)
-						{
-							string redirect = resp.GetResponseHeader("Location");
-							if (redirect.StartsWith("http"))
-							{
-								uri = new Uri(redirect);
-							}
-							else if (redirect.StartsWith("/"))
-							{
-								uri = new Uri(uri.Scheme + "://" + uri.Host + redirect);
-							}
-							else
-							{
-								throw new ApplicationException("https and http are the only supported schemes in this method.");
-							}
-
-							redirected = true;
-							if (resp.Cookies.Count > 0)
-							{
-								cookieJar.Add(resp.Cookies);
-							}
-						}
-						else
-						{
-							SaveCookies(cookieJar);
-							result = false;
-							redirected = false;
-						}
-					}
-				} while (redirected);
+					SaveCookies(cookieJar);
+					result = false;
+				}
 			}
 			catch
 			{
+				// Error occurred; integrated authentication did not work (Negotiate protocol) 
+				// Explicit credentials will be required
 				result = true;
 			}
 			return result;
+		}
+
+		/// <summary>
+		/// Contacts the MyEMSL auth service to obtain cookies for the currently logged in user
+		/// </summary>
+		/// <param name="cookieJar">Cookie jar</param>
+		/// <returns>True if success; false if an error</returns>
+		/// <remarks>Any exceptions that occur will need to be handled by the caller</remarks>
+		public bool GetAuthCookies(out CookieContainer cookieJar)
+		{
+			Uri uri = _location;
+			bool redirected = false;
+			bool success = false;
+			cookieJar = new CookieContainer();
+
+			do
+			{
+				HttpWebRequest request = WebRequest.Create(uri) as HttpWebRequest;
+				request.CookieContainer = cookieJar;
+				request.UseDefaultCredentials = true;
+				request.AllowAutoRedirect = false;
+
+				request.CookieContainer = cookieJar;
+
+				using (HttpWebResponse resp = request.GetResponse() as HttpWebResponse)
+				{
+					success = true;
+					if ((resp.StatusCode & HttpStatusCode.Redirect) == HttpStatusCode.Redirect)
+					{
+						string redirect = resp.GetResponseHeader("Location");
+						if (redirect.StartsWith("http"))
+						{
+							uri = new Uri(redirect);
+						}
+						else if (redirect.StartsWith("/"))
+						{
+							uri = new Uri(uri.Scheme + "://" + uri.Host + redirect);
+						}
+						else
+						{
+							throw new ApplicationException("https and http are the only supported schemes in this method.");
+						}
+
+						redirected = true;
+						if (resp.Cookies.Count > 0)
+						{
+							cookieJar.Add(resp.Cookies);
+						}
+					}
+					else
+					{
+						redirected = false;
+					}
+				}
+			} while (redirected);
+
+			return success;
 		}
 
 		private bool TestCookieLogin()

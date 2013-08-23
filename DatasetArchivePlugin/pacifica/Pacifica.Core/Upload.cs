@@ -205,17 +205,23 @@ namespace Pacifica.Core
 
 				string redirectedServer = Pacifica.Core.Configuration.ServerUri;
 				string preallocateUrl = redirectedServer + "/myemsl/cgi-bin/preallocate";
+				int timeoutSeconds = 10;
+
 
 				RaiseDebugEvent("ProcessMetadata", "Preallocating with " + preallocateUrl);
-				string preallocateReturn = EasyHttp.Send(preallocateUrl, Auth.GetCookies(), "",
-						EasyHttp.HttpMethod.Get, "", false, newCred);
+				string postData = "";
+				HttpStatusCode responseStatusCode;
+
+				string preallocateReturn = EasyHttp.Send(preallocateUrl, Auth.GetCookies(), 
+					out responseStatusCode, postData,
+					EasyHttp.HttpMethod.Get, timeoutSeconds, newCred);
 
 				//TODO - This method really needs to be informed which data upload schemes (e.g. http and https) are allowed
 				//The server is the only reliable method to get this information.  'preallocate' needs to return a
 				//list of supported upload schemes...
 				//Once we know which schemes are supported server side, we can take into consideration user preferences.
 				//If the user doesn't mind uploading data unsecured, then that might be preferred as it will speed the upload.
-				//For now, we are defaulting to https.
+				//For now, we are defaulting to http.
 				string scheme = "http";
 
 				//This is just a local configuration that states which is preferred.
@@ -266,8 +272,12 @@ namespace Pacifica.Core
 				string finishUrl = serverUri + "/myemsl/cgi-bin/finish" + location;
 
 				RaiseDebugEvent("ProcessMetadata", "Sending finish via " + finishUrl);
-				string finishResult = EasyHttp.Send(finishUrl, Auth.GetCookies(), "",
-						EasyHttp.HttpMethod.Get, "", false, newCred);
+				timeoutSeconds = 10;
+				postData = "";
+
+				string finishResult = EasyHttp.Send(finishUrl, Auth.GetCookies(),
+					out responseStatusCode, postData,
+					EasyHttp.HttpMethod.Get, timeoutSeconds, newCred);
 
 				//The finish CGI script returns "Location:[URL]\nAccepted\n" on success...
 				string finishRegex = @"(^Status:(?<url>.*)\n)?(?<accepted>^Accepted)\n";
@@ -324,6 +334,10 @@ namespace Pacifica.Core
 		 * void UploadMonitorLoop(object sender, DoWorkEventArgs e) {
 		*/
 
+		//
+		// August 2013: Function likely to be deleted
+		//
+
 		Boolean UploadMonitorLoop(Dictionary<string, object> args, out string errorMessage)
 		{
 			//System.ComponentModel.BackgroundWorker bgw = (System.ComponentModel.BackgroundWorker)sender;
@@ -362,7 +376,10 @@ namespace Pacifica.Core
 
 				try
 				{
-					xmlServerResponse = EasyHttp.Send(statusURI);
+					int timeoutSeconds = 5;
+					HttpStatusCode responseStatusCode;
+
+					xmlServerResponse = EasyHttp.Send(statusURI, out responseStatusCode, timeoutSeconds);
 					if (this.WasDataReceived(xmlServerResponse, out abortNow, out dataReceivedMessage))
 					{
 						return true;
@@ -467,7 +484,9 @@ namespace Pacifica.Core
 			if (success)
 			{
 				string logoutURL = Configuration.ServerUri + "/myemsl/logout";
-				string response = EasyHttp.Send(logoutURL, Auth.GetCookies(), "", EasyHttp.HttpMethod.Get, "", false, null);
+				int timeoutSeconds = 5;
+				HttpStatusCode responseStatusCode;
+				string response = EasyHttp.Send(logoutURL, Auth.GetCookies(), out responseStatusCode, timeoutSeconds);
 			}
 
 			return success;
