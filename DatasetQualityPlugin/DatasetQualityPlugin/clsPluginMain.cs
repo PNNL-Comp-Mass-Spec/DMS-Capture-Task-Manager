@@ -1102,13 +1102,11 @@ namespace DatasetQualityPlugin
 					mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 					return false;
 				}
-				else
+				
+				if (m_DebugLevel >= 4)
 				{
-					if (m_DebugLevel >= 4)
-					{
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Quameter Complete");
-					}
-				}
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Quameter Complete");
+				}				
 
 				System.Threading.Thread.Sleep(100);
 

@@ -37,10 +37,16 @@ namespace DatasetIntegrityPlugin
 		const float AGILENT_DATA_MS_FILE_MIN_SIZE_KB = 75;
 		const float MCF_FILE_MIN_SIZE_KB = 15;		// Malding imaging file
 
+		int MAX_AGILENT_TO_UIMF_RUNTIME_MINUTES = 30;
+
 		#endregion
 
 		#region "Class-wide variables"
-		clsToolReturnData mRetData = new clsToolReturnData();		
+		
+		protected clsToolReturnData mRetData = new clsToolReturnData();
+		protected DateTime mAgilentToUIMFStartTime;
+		protected DateTime mLastStatusUpdate;
+
 		#endregion
 
 		#region "Constructors"
@@ -88,6 +94,7 @@ namespace DatasetIntegrityPlugin
 
 			// Select which tests will be performed based on instrument class
 			string instClassName = m_TaskParams.GetParam("Instrument_Class");
+			string instrumentName = m_TaskParams.GetParam("Instrument_Name");
 
 			msg = "Instrument class: " + instClassName;
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
@@ -124,6 +131,21 @@ namespace DatasetIntegrityPlugin
 					mRetData.CloseoutType = TestTripleQuadFile(dataFileNamePath);
 					break;
 				case clsInstrumentClassInfo.eInstrumentClass.IMS_Agilent_TOF:
+					if (instrumentName.StartsWith("IMS08"))
+					{
+						// Need to first convert the .d folder to a .UIMF file
+						if (!ConvertAgilentDFolderToUIMF(datasetFolder))
+						{
+							if (string.IsNullOrEmpty(mRetData.CloseoutMsg))
+							{
+								mRetData.CloseoutMsg = "Unknown error converting the Agilent .D to folder to a .UIMF file";
+								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg);
+							}
+
+							mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+						}
+					}
+
 					dataFileNamePath = Path.Combine(datasetFolder, m_Dataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION);
 					mRetData.CloseoutType = TestIMSAgilentTOF(dataFileNamePath);
 					break;
@@ -180,7 +202,130 @@ namespace DatasetIntegrityPlugin
 
 			return mRetData;
 		}	// End sub
-		
+
+		private bool ConvertAgilentDFolderToUIMF(string datasetFolderPath)
+		{
+			clsRunDosProgram CmdRunner = null;
+			bool success = false;
+
+			try
+			{
+				// Construct the command line arguments to run the AgilentToUIMFConverter
+				string dotDFolderPath = Path.Combine(datasetFolderPath, m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION);
+				string uimfOutputFilePath = Path.Combine(m_WorkDir, m_Dataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION);
+
+				// Syntax:
+				// AgilentToUIMFConverter.exe [Agilent .d Folder] [Directory to insert file (optional)]
+				//
+				string CmdStr = clsConversion.PossiblyQuotePath(dotDFolderPath) + " " + clsConversion.PossiblyQuotePath(m_WorkDir);
+				string managerName = m_MgrParams.GetParam("MgrName", "UnknownManager");
+				string consoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, "AgilentToUIMF_ConsoleOutput_" + managerName + ".txt");
+
+				CmdRunner = new clsRunDosProgram(m_WorkDir);
+				mAgilentToUIMFStartTime = System.DateTime.UtcNow;
+				mLastStatusUpdate = System.DateTime.UtcNow;
+
+				AttachCmdrunnerEvents(CmdRunner);
+
+				string exePath = m_MgrParams.GetParam("AgilentToUIMFProgLoc");
+				exePath = Path.Combine(exePath, "AgilentToUimfConverter.exe");
+
+				if (!File.Exists(exePath))
+				{
+					mRetData.CloseoutMsg = "AgilentToUIMFConverter not found at " + exePath;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg);
+					return false;
+				}
+
+				CmdRunner.CreateNoWindow = false;
+				CmdRunner.EchoOutputToConsole = false;
+				CmdRunner.CacheStandardOutput = false;
+				CmdRunner.WriteConsoleOutputToFile = true;
+				CmdRunner.ConsoleOutputFilePath = consoleOutputFilePath;
+
+				int iMaxRuntimeSeconds = MAX_AGILENT_TO_UIMF_RUNTIME_MINUTES * 60;
+				bool bSuccess = CmdRunner.RunProgram(exePath, CmdStr, "AgilentToUIMFConverter", true, iMaxRuntimeSeconds);
+
+				ParseConsoleOutputFileForErrors(consoleOutputFilePath);
+
+				if (!bSuccess)
+				{
+					mRetData.CloseoutMsg = "Error running the AgilentToUIMFConverter";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg);
+
+					if (CmdRunner.ExitCode != 0)
+					{
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "AgilentToUIMFConverter returned a non-zero exit code: " + CmdRunner.ExitCode.ToString());
+					}
+					else
+					{
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to AgilentToUIMFConverter failed (but exit code is 0)");
+					}
+
+					return false;
+				}
+
+				System.Threading.Thread.Sleep(100);
+				
+				// Copy the .UIMF file to the dataset folder
+				var fiUIMF = new FileInfo(uimfOutputFilePath);
+				if (!fiUIMF.Exists)
+				{
+					mRetData.CloseoutMsg = "AgilentToUIMFConverter did not create a .UIMF file";
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg + ": " + uimfOutputFilePath);
+					return false;
+				}
+
+				if (m_DebugLevel >= 4)
+				{
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying .UIMF file to the dataset folder");
+				}
+
+				string targetFilePath = Path.Combine(datasetFolderPath, fiUIMF.Name);
+				fiUIMF.CopyTo(targetFilePath, true);
+
+				if (m_DebugLevel >= 4)
+				{
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copy complete");
+				}
+
+				try
+				{
+					// Delete the local copy
+					fiUIMF.Delete();
+				}
+				catch (Exception ex)
+				{
+					// Do not treat this as a fatal error
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception deleting local copy of the new .UIMF file " + fiUIMF.FullName + ": " + ex.Message);
+				}
+
+				try
+				{
+					// Delete the console output file
+					File.Delete(consoleOutputFilePath);
+				}
+				catch
+				{
+					// Do not treat this as a fatal error
+				}
+
+				success = true;
+			}
+			catch (Exception ex)
+			{
+				mRetData.CloseoutMsg = "Exception converting .D folder to a UIMF file";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg + ": " + ex.Message);
+				return false;
+			}
+			finally
+			{
+				DetachCmdrunnerEvents(CmdRunner);
+			}
+
+			return success;
+		}
+
 		/// <summary>
 		/// Processes folders in folderList to compare the x_ folder to the non x_ folder
 		/// If the x_ folder is empty or if every file in the x_ folder is also in the non x_ folder, then returns True and optionally deletes the x_ folder
@@ -311,6 +456,67 @@ namespace DatasetIntegrityPlugin
 			}
 		}
 
+		protected void ParseConsoleOutputFileForErrors(string sConsoleOutputFilePath)
+		{
+			string sLineIn = string.Empty;
+			bool blnUnhandledException = false;
+			string sExceptionText = string.Empty;
+
+			try
+			{
+				if (System.IO.File.Exists(sConsoleOutputFilePath))
+				{
+					using (System.IO.StreamReader srInFile = new System.IO.StreamReader(new System.IO.FileStream(sConsoleOutputFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite)))
+					{
+
+						while (srInFile.Peek() > -1)
+						{
+							sLineIn = srInFile.ReadLine();
+
+							if (!string.IsNullOrEmpty(sLineIn))
+							{
+								if (blnUnhandledException)
+								{
+									if (string.IsNullOrEmpty(sExceptionText))
+									{
+										sExceptionText = string.Copy(sLineIn);
+									}
+									else
+									{
+										sExceptionText = ";" + sLineIn;
+									}
+								}
+								else if (sLineIn.StartsWith("Error:"))
+								{
+									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "AgilentToUIMFConverter error: " + sLineIn);
+								}
+								else if (sLineIn.StartsWith("Exception in"))
+								{
+									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "AgilentToUIMFConverter error: " + sLineIn);
+								}
+								else if (sLineIn.StartsWith("Unhandled Exception"))
+								{
+									clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "AgilentToUIMFConverter error: " + sLineIn);
+									blnUnhandledException = true;
+								}
+							}
+						}
+					}
+
+					if (!string.IsNullOrEmpty(sExceptionText))
+					{
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, sExceptionText);
+					}
+				}
+
+			}
+			catch (Exception ex)
+			{
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in ParseConsoleOutputFileForErrors: " + ex.Message);
+			}
+
+		}
+
 		/// <summary>
 		/// If folderList contains exactly two folders then calls DetectSupersededFolder Detect and delete the extra x_ folder (if appropriate)
 		/// Returns True if folderList contains just one folder, or if able to successfully delete the extra x_ folder
@@ -348,6 +554,7 @@ namespace DatasetIntegrityPlugin
 				return true;
 			}
 		}
+
 
 		private bool PositiveNegativeMethodFolders(List<string> subFolderList)
 		{
@@ -1264,6 +1471,55 @@ namespace DatasetIntegrityPlugin
 				return false;
 			}
 
+		}
+
+		#endregion
+
+
+		#region "Event handlers"
+
+		private void AttachCmdrunnerEvents(clsRunDosProgram CmdRunner)
+		{
+			try
+			{
+				CmdRunner.LoopWaiting += new clsRunDosProgram.LoopWaitingEventHandler(CmdRunner_LoopWaiting);
+				CmdRunner.Timeout += new clsRunDosProgram.TimeoutEventHandler(CmdRunner_Timeout);
+			}
+			catch
+			{
+				// Ignore errors here
+			}
+		}
+
+		private void DetachCmdrunnerEvents(clsRunDosProgram CmdRunner)
+		{
+			try
+			{
+				if (CmdRunner != null)
+				{
+					CmdRunner.LoopWaiting -= CmdRunner_LoopWaiting;
+					CmdRunner.Timeout -= CmdRunner_Timeout;
+				}
+			}
+			catch
+			{
+				// Ignore errors here
+			}
+		}
+
+		void CmdRunner_Timeout()
+		{
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CmdRunner timeout reported");
+		}
+
+		void CmdRunner_LoopWaiting()
+		{
+
+			if (System.DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalSeconds >= 300)
+			{
+				mLastStatusUpdate = System.DateTime.UtcNow;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "AgilentToUIMFConverter running; " + System.DateTime.UtcNow.Subtract(mAgilentToUIMFStartTime).TotalMinutes + " minutes elapsed");
+			}
 		}
 
 		#endregion

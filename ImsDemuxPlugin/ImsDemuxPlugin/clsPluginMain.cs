@@ -40,6 +40,7 @@ namespace ImsDemuxPlugin
 
 			// Add a handler to catch progress events
 			mDemuxTools.DemuxProgress += new DelDemuxProgressHandler(clsDemuxTools_DemuxProgress);
+			mDemuxTools.BinCentricTableProgress += new DelDemuxProgressHandler(clsDemuxTools_BinCentricTableProgress);
 		}
 		#endregion
 
@@ -220,13 +221,18 @@ namespace ImsDemuxPlugin
 			{
 				// Demultiplexing succeeded (or skipped)
 
-				// Determine whether or not calibration should be performed
-				// Note that stored procedure GetJobParamTable in the DMS_Capture database
-				// sets this value based on the value in column Perform_Calibration of table T_Instrument_Name in the DMS5 database
-				bool bCalibrate = m_TaskParams.GetParam("PerformCalibration", true);
+				// Add the bin-centric tables if not yet present
+				retData = mDemuxTools.AddBinCentricTablesIfMissing(m_MgrParams, m_TaskParams, retData);
+				if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
+				{
+					// Determine whether or not calibration should be performed
+					// Note that stored procedure GetJobParamTable in the DMS_Capture database
+					// sets this value based on the value in column Perform_Calibration of table T_Instrument_Name in the DMS5 database
+					bool bCalibrate = m_TaskParams.GetParam("PerformCalibration", true);
 
-				if (bCalibrate)
-					retData = mDemuxTools.PerformCalibration(m_MgrParams, m_TaskParams, retData);
+					if (bCalibrate)
+						retData = mDemuxTools.PerformCalibration(m_MgrParams, m_TaskParams, retData);
+				}
 			}
 
 			msg = "Completed clsPluginMain.RunTool()";
@@ -351,17 +357,35 @@ namespace ImsDemuxPlugin
 		#endregion
 
 		#region "Event handlers"
+		
 		/// <summary>
 		/// Reports progress from demux dll
 		/// </summary>
-		/// <param name="newProgress">Current progress</param>
+		/// <param name="newProgress">Current progress (value between 0 and 100)</param>
 		void clsDemuxTools_DemuxProgress(float newProgress)
 		{
-			m_StatusTools.UpdateAndWrite(newProgress);
+			// Multipling by 0.5 since we're assuming that demultiplexing will take 50% of the time will addition of bin-centric tables will take 50% of the time
+			m_StatusTools.UpdateAndWrite(0 + newProgress * 0.50f);
 
 			// Update the manager settings every MANAGER_UPDATE_INTERVAL_MINUTESS
 			base.UpdateMgrSettings();
 		}
+
+
+		/// <summary>
+		/// Reports progress for the addition of bin-centric tables
+		/// </summary>
+		/// <param name="newProgress">Current progress (value between 0 and 100)</param>
+		void clsDemuxTools_BinCentricTableProgress(float newProgress)
+		{
+			// Multipling by 0.5 since we're assuming that demultiplexing will take 50% of the time will addition of bin-centric tables will take 50% of the time
+			m_StatusTools.UpdateAndWrite(50 + newProgress * 0.50f);
+
+			// Update the manager settings every MANAGER_UPDATE_INTERVAL_MINUTESS
+			base.UpdateMgrSettings();
+		}
+
+
 		#endregion
 	}	// End class
 }	// End namespace
