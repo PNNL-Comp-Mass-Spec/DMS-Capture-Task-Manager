@@ -1070,7 +1070,7 @@ namespace CaptureTaskManager
 
 			// Make sure storagePath only contains the root folder, not several folders
 			// In other words, if storagePath = "VOrbiETD03\2011_4" change it to just "VOrbiETD03"
-			slashLoc = storagePath.IndexOf(@"\");
+			slashLoc = storagePath.IndexOf(Path.DirectorySeparatorChar);
 			if (slashLoc > 0)
 				storagePath = storagePath.Substring(0, slashLoc);
 

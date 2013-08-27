@@ -45,12 +45,14 @@ namespace Pacifica.Core
 		public static bool GetFile(
 			string url,
 			CookieContainer cookies,
+			out HttpStatusCode responseStatusCode,
 			string downloadFilePath,
 			int timeoutSeconds = 100,
 			NetworkCredential loginCredentials = null)
 		{
 			double maxTimeoutHours = 24;
 			HttpWebRequest request = InitializeRequest(url, ref cookies, ref timeoutSeconds, loginCredentials, maxTimeoutHours);
+			responseStatusCode = HttpStatusCode.NotFound;
 
 			// Prepare the request object
 			HttpMethod method = HttpMethod.Get;
@@ -64,8 +66,9 @@ namespace Pacifica.Core
 			{
 				request.Timeout = timeoutSeconds * 1000;
 				response = (HttpWebResponse)request.GetResponse();
+				responseStatusCode = response.StatusCode;
 
-				if (response.StatusCode == HttpStatusCode.OK)
+				if (responseStatusCode == HttpStatusCode.OK)
 				{
 					// Download the file
 
@@ -102,6 +105,7 @@ namespace Pacifica.Core
 						}
 					}
 				}
+				responseStatusCode = ((HttpWebResponse)ex.Response).StatusCode;
 				throw new Exception(responseData, ex);
 			}
 			finally
@@ -117,30 +121,34 @@ namespace Pacifica.Core
 		
 		public static WebHeaderCollection GetHeaders(		
 			string url, 
+			out HttpStatusCode responseStatusCode,
 			int timeoutSeconds = 100)
 		{
-			return GetHeaders(url,  new CookieContainer(), timeoutSeconds);
+			return GetHeaders(url, new CookieContainer(), out responseStatusCode, timeoutSeconds);
 		}
 
 		public static WebHeaderCollection GetHeaders(		
 			string url, 
 			CookieContainer cookies,
+			out HttpStatusCode responseStatusCode,
 			int timeoutSeconds = 100,
 			NetworkCredential loginCredentials = null)
 		{
 			double maxTimeoutHours = 0.1;
 			HttpWebRequest request = InitializeRequest(url, ref cookies, ref timeoutSeconds, loginCredentials, maxTimeoutHours);
+			responseStatusCode = HttpStatusCode.NotFound;
 
 			// Prepare the request object
 			request.Method = "HEAD";
 			request.PreAuthenticate = false;
 
 			// Receive response
-			WebResponse response = null;
+			HttpWebResponse response = null;
 			try
 			{
 				request.Timeout = timeoutSeconds * 1000;
-				response = request.GetResponse();
+				response = (HttpWebResponse)request.GetResponse();
+				responseStatusCode = response.StatusCode;
 
 				return response.Headers;
 				
@@ -159,6 +167,10 @@ namespace Pacifica.Core
 				{
 					responseData = string.Empty;
 				}
+				if (string.IsNullOrWhiteSpace(responseData))
+					responseData = ex.Message;
+
+				responseStatusCode = ((HttpWebResponse)ex.Response).StatusCode;
 				throw new Exception(responseData, ex);
 			}
 			finally
@@ -217,7 +229,7 @@ namespace Pacifica.Core
 
 		public static string Send(
 			string url,
-			out HttpStatusCode responseStatusCode, 
+			out HttpStatusCode responseStatusCode,
 			int timeoutSeconds = 100)
 		{
 			string postData = "";
@@ -362,6 +374,7 @@ namespace Pacifica.Core
 				{
 					responseData = string.Empty;
 				}
+				responseStatusCode = ((HttpWebResponse)ex.Response).StatusCode;
 				throw new Exception(responseData, ex);
 			}
 			finally

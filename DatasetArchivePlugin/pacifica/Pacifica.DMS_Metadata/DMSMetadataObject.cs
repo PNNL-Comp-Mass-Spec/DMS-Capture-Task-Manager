@@ -413,7 +413,9 @@ namespace Pacifica.DMS_Metadata
 				try
 				{
 					retrievalAttempts++;
-					xmlString = EasyHttp.Send(URL, "", EasyHttp.HttpMethod.Get);
+					System.Net.HttpStatusCode responseStatusCode;
+					string postData = "";
+					xmlString = EasyHttp.Send(URL, out responseStatusCode, postData, EasyHttp.HttpMethod.Get);
 					if (!string.IsNullOrEmpty(xmlString))
 					{
 						retrievalSuccess = true;
@@ -513,7 +515,9 @@ namespace Pacifica.DMS_Metadata
 					try
 					{
 						retrievalAttempts++;
-						itemXmlString = EasyHttp.Send(uri, "", EasyHttp.HttpMethod.Get);
+						System.Net.HttpStatusCode responseStatusCode;
+						string postData = "";
+						itemXmlString = EasyHttp.Send(uri, out responseStatusCode, postData, EasyHttp.HttpMethod.Get);
 						if (!string.IsNullOrEmpty(itemXmlString))
 						{
 							retrievalSuccess = true;

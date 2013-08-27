@@ -186,6 +186,92 @@ namespace CaptureTaskManager
 
 		}
 
+		public static bool CleanWorkDir(string WorkDir)
+		{
+			float HoldoffSeconds = 0.1f;
+			string strFailureMessage;
+
+			return CleanWorkDir(WorkDir, HoldoffSeconds, out strFailureMessage);
+		}
+
+		public static bool CleanWorkDir(string WorkDir, float HoldoffSeconds, out string strFailureMessage)
+		{
+
+			int HoldoffMilliseconds = 0;
+
+			string strCurrentFile = string.Empty;
+			string strCurrentSubfolder = string.Empty;
+
+			strFailureMessage = string.Empty;
+
+			try
+			{
+				HoldoffMilliseconds = Convert.ToInt32(HoldoffSeconds * 1000);
+				if (HoldoffMilliseconds < 100)
+					HoldoffMilliseconds = 100;
+				if (HoldoffMilliseconds > 300000)
+					HoldoffMilliseconds = 300000;
+			}
+			catch (Exception)
+			{
+				HoldoffMilliseconds = 3000;
+			}
+
+			//Try to ensure there are no open objects with file handles
+			PRISM.Processes.clsProgRunner.GarbageCollectNow();
+			System.Threading.Thread.Sleep(HoldoffMilliseconds);
+
+			var diWorkFolder = new System.IO.DirectoryInfo(WorkDir);
+
+			// Delete the files
+			try
+			{
+				if (!diWorkFolder.Exists)
+				{
+					strFailureMessage = "Working directory does not exist";
+					return false;
+				}
+
+				foreach (System.IO.FileInfo fiFile in diWorkFolder.GetFiles())
+				{
+					try
+					{
+						fiFile.Delete();
+					}
+					catch (Exception)
+					{
+						// Make sure the readonly bit is not set
+						// The manager will try to delete the file the next time is starts
+						fiFile.Attributes = fiFile.Attributes & (~System.IO.FileAttributes.ReadOnly);
+					}
+				}
+			}
+			catch (Exception Ex)
+			{
+				strFailureMessage = "Error deleting files in working directory";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsGlobal.ClearWorkDir(), " + strFailureMessage + " " + WorkDir + ": " + Ex.Message);
+				return false;
+			}
+
+			// Delete the sub directories
+			try
+			{
+				foreach (System.IO.DirectoryInfo diSubDirectory in diWorkFolder.GetDirectories())
+				{
+					diSubDirectory.Delete(true);
+				}
+			}
+			catch (Exception Ex)
+			{
+				strFailureMessage = "Error deleting subfolder " + strCurrentSubfolder;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strFailureMessage + " in working directory: " + Ex.Message);
+				return false;
+			}
+
+			return true;
+
+		}
+
 		protected void DeleteFileIgnoreErrors(string sFilePath)
 		{
 			try

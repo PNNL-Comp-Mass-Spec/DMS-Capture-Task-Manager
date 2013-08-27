@@ -51,7 +51,7 @@ namespace CaptureTaskManager
 		//Task duration
 		private float m_Duration = 0;
 
-		//Progess (in percent)
+		//Progess (value between 0 and 100)
 		private float m_Progress = 0;
 
 		//Current operation (freeform string)
@@ -382,7 +382,7 @@ namespace CaptureTaskManager
 				XWriter.WriteElementString("Status", ConvertTaskStatusToString(m_TaskStatus));
 				XWriter.WriteElementString("Duration", m_Duration.ToString("##0.0"));
 				XWriter.WriteElementString("DurationMinutes", (60f * m_Duration).ToString("##0.0"));
-				XWriter.WriteElementString("Progress", m_Progress.ToString("##0.00"));
+				XWriter.WriteElementString("Progress", m_Progress.ToString("##0.00"));		// value between 0 and 100
 				XWriter.WriteElementString("CurrentOperation", m_CurrentOperation);
 				XWriter.WriteStartElement("TaskDetails");
 				XWriter.WriteElementString("Status", ConvertTaskDetailStatusToString(m_TaskStatusDetail));
@@ -449,7 +449,7 @@ namespace CaptureTaskManager
 		/// Updates status file
 		/// (Overload to update when completion percentage is only change)
 		/// </summary>
-		/// <param name="PercentComplete">Job completion percentage</param>
+		/// <param name="PercentComplete">Job completion percentage (between 0 and 100)</param>
 		public void UpdateAndWrite(float PercentComplete)
 		{
 			m_Progress = PercentComplete;
@@ -462,27 +462,11 @@ namespace CaptureTaskManager
 		/// (Overload to update file when status and completion percentage change)
 		/// </summary>
 		/// <param name="Status">Job status enum</param>
-		/// <param name="PercentComplete">Job completion percentage</param>
+		/// <param name="PercentComplete">Job completion percentage (value between 0 and 100)</param>
 		public void UpdateAndWrite(EnumTaskStatusDetail Status, float PercentComplete)
 		{
 			m_TaskStatusDetail = Status;
 			m_Progress = PercentComplete;
-
-			WriteStatusFile();
-		}	// End sub
-
-		/// <summary>
-		/// Updates status file
-		/// (Overload to provide Sequest DTA count)
-		/// </summary>
-		/// <param name="Status">Job status enum</param>
-		/// <param name="PercentComplete">Job completion percentage</param>
-		/// <param name="DTACount">Number of DTA files found for Sequest analysis</param>
-		public void UpdateAndWrite(EnumTaskStatusDetail Status, float PercentComplete, int DTACount)
-		{
-			m_TaskStatusDetail = Status;
-			m_Progress = PercentComplete;
-			m_SpectrumCount = DTACount;
 
 			WriteStatusFile();
 		}	// End sub
