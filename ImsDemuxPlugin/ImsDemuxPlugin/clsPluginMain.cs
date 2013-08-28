@@ -460,8 +460,8 @@ namespace ImsDemuxPlugin
 		/// <param name="newProgress">Current progress (value between 0 and 100)</param>
 		void clsDemuxTools_DemuxProgress(float newProgress)
 		{
-			// Multipling by 0.5 since we're assuming that demultiplexing will take 50% of the time while addition of bin-centric tables will take 50% of the time
-			m_StatusTools.UpdateAndWrite(0 + newProgress * 0.50f);
+			// Multipling by 0.9 since we're assuming that demultiplexing will take 90% of the time while addition of bin-centric tables will take 10% of the time
+			m_StatusTools.UpdateAndWrite(0 + newProgress * 0.90f);
 
 			// Update the manager settings every MANAGER_UPDATE_INTERVAL_MINUTESS
 			base.UpdateMgrSettings();
@@ -474,8 +474,8 @@ namespace ImsDemuxPlugin
 		/// <param name="newProgress">Current progress (value between 0 and 100)</param>
 		void clsDemuxTools_BinCentricTableProgress(float newProgress)
 		{
-			// Multipling by 0.5 since we're assuming that demultiplexing will take 50% of the time while addition of bin-centric tables will take 50% of the time
-			m_StatusTools.UpdateAndWrite(50 + newProgress * 0.50f);
+			// Multipling by 0.1 since we're assuming that demultiplexing will take 90% of the time while addition of bin-centric tables will take 10% of the time
+			m_StatusTools.UpdateAndWrite(90 + newProgress * 0.10f);
 
 			// Update the manager settings every MANAGER_UPDATE_INTERVAL_MINUTESS
 			base.UpdateMgrSettings();
