@@ -253,6 +253,23 @@ namespace Pacifica.Core
 			return l;
 		}
 
+		public static void Logout(CookieContainer cookieJar)
+		{
+			// Logout using https://my.emsl.pnl.gov/myemsl/logout
+			try
+			{
+				int timeoutSeconds = 3;
+				HttpStatusCode responseStatusCode;
+
+				EasyHttp.Send(Configuration.SearchServerUri + "/myemsl/logout", cookieJar, out responseStatusCode, timeoutSeconds);
+			}
+			catch (Exception ex)
+			{
+				// Report errors to the console, but do not throw an exception
+				Console.WriteLine("Error calling the logout service: " + ex.Message);
+			}
+		}
+
 		/* August 2013: To be deleted
 		 *
 		 *

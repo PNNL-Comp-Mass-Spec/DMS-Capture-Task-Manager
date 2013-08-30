@@ -80,7 +80,7 @@ namespace Pacifica.Core
 					Stream ReceiveStream = response.GetResponseStream();
 
 					byte[] buffer = new byte[32767];
-					FileStream outFile = new FileStream(downloadFilePath, FileMode.Create);
+					FileStream outFile = new FileStream(downloadFilePath, FileMode.Create, FileAccess.Write, FileShare.Read);
 
 					int bytesRead;
 					while ((bytesRead = ReceiveStream.Read(buffer, 0, buffer.Length)) != 0)

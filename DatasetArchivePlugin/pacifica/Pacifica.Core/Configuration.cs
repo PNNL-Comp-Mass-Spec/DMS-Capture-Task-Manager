@@ -70,7 +70,7 @@ namespace Pacifica.Core
 			}
 		}
 
-		public static string	BundlePath
+		public static string BundlePath
 		{
 			get
 			{
@@ -82,21 +82,49 @@ namespace Pacifica.Core
 			}
 		}
 
-		private static string _serverHostName = "ingest.my.emsl.pnl.gov";
-		public static string ServerHostName
+		private static string _apiRelativePath = "/myemsl/api/";
+
+		/// <summary>
+		/// By default, returns https://my.emsl.pnl.gov/myemsl/api/
+		/// </summary>
+		public static string ApiUri
 		{
 			get
 			{
-				return _serverHostName;
-			}
-			set
-			{
-				_serverHostName = value;
+				return SearchServerUri + _apiRelativePath;
 			}
 		}
 
-		private static string _serverUri = string.Empty;
-		public static string ServerUri
+		private static string _elasticSearchRelativePath = "/myemsl/elasticsearch/";
+
+		/// <summary>
+		/// By default, returns https://my.emsl.pnl.gov/myemsl/elasticsearch/
+		/// </summary>
+		public static string ElasticSearchUri
+		{
+			get
+			{
+				return SearchServerUri + _elasticSearchRelativePath;
+			}
+		}
+
+		private static string _ingestServerHostName = "ingest.my.emsl.pnl.gov";
+		public static string IngestServerHostName
+		{
+			get
+			{
+				return _ingestServerHostName;
+			}
+			set
+			{
+				_ingestServerHostName = value;
+			}
+		}
+
+		/// <summary>
+		/// By default, returns https://ingest.my.emsl.pnl.gov
+		/// </summary>
+		public static string IngestServerUri
 		{
 			get
 			{
@@ -109,16 +137,54 @@ namespace Pacifica.Core
 				{
 					scheme = UnsecuredScheme;
 				}
-				return scheme + "://" + ServerHostName;
+				return scheme + "://" + IngestServerHostName;
+			}
+		}
+
+
+		private static string _searchServerHostName = "my.emsl.pnl.gov";
+		public static string SearchServerHostName
+		{
+			get
+			{
+				return _searchServerHostName;
+			}
+			set
+			{
+				_searchServerHostName = value;
+			}
+		}
+
+		/// <summary>
+		/// By default, returns https://my.emsl.pnl.gov
+		/// </summary>
+		public static string SearchServerUri
+		{
+			get
+			{
+				string scheme;
+				if (UseSecureDataTransfer)
+				{
+					scheme = SecuredScheme;
+				}
+				else
+				{
+					scheme = UnsecuredScheme;
+				}
+				return scheme + "://" + SearchServerHostName;
 			}
 		}
 
 		private static string _testAuthRelativePath = "/myemsl/testauth/";
+
+		/// <summary>
+		/// By default, returns https://ingest.my.emsl.pnl.gov/myemsl/testauth/
+		/// </summary>
 		public static string TestAuthUri
 		{
 			get
 			{
-				return ServerUri + _testAuthRelativePath;
+				return IngestServerUri + _testAuthRelativePath;
 			}
 		}
 

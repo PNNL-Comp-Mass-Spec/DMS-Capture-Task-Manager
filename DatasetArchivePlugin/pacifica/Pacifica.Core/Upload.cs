@@ -134,7 +134,7 @@ namespace Pacifica.Core
 				metadataObject.Add("bundleName", bundleName);
 			}
 
-			var fileList = (List<Pacifica.Core.FileInfoObject>)metadataObject["file"];
+			var fileList = (List<FileInfoObject>)metadataObject["file"];
 
 			if (fileList.Count == 0)
 			{
@@ -161,7 +161,7 @@ namespace Pacifica.Core
 					// We must skip this file since MyEMSL stores a special metadata.txt file at the root of the .tar file
 					// The alternative would be to create a tar file with all of the data files (and folders) in a subfolder named data
 					// In this case we would define the data as version 1.2 instead of 1.0
-					//   metadataObject.Add("version", "1.2");
+					//   metadataObject.Add("version", "1.2.0");
 					// However, creating a .tar file with the data in this layout is tricky with 7-zip, so we'll just skip metadata.txt files, which really shouldn't hurt anything
 
 					RaiseErrorEvent("ProcessMetadata", "Skipping metadata.txt file at '" + fiObj.AbsoluteLocalPath + "' due to name conflict with the MyEmsl metadata.txt file");
@@ -201,18 +201,18 @@ namespace Pacifica.Core
 			}
 
 			// Call the testauth service to obtain a cookie for this session
-			string authURL = Pacifica.Core.Configuration.TestAuthUri;
+			string authURL = Configuration.TestAuthUri;
 			Auth auth = new Auth(new Uri(authURL));
 
 			mCookieJar = null;
 			if (!auth.GetAuthCookies(out mCookieJar))
 			{
-				string msg = "Auto-login to " + Pacifica.Core.Configuration.TestAuthUri + " failed authentication";
+				string msg = "Auto-login to " + Configuration.TestAuthUri + " failed authentication";
 				RaiseErrorEvent("ProcessMetadata", msg);
 				throw new ApplicationException(msg);
 			}
 
-			string redirectedServer = Pacifica.Core.Configuration.ServerUri;
+			string redirectedServer = Configuration.IngestServerUri;
 			string preallocateUrl = redirectedServer + "/myemsl/cgi-bin/preallocate";
 			int timeoutSeconds = 10;
 
@@ -248,6 +248,7 @@ namespace Pacifica.Core
 			}
 			else
 			{
+				Utilities.Logout(mCookieJar);
 				RaiseErrorEvent("ProcessMetadata", "Preallocate did not return a server: " + preallocateReturn);
 				throw new ApplicationException(string.Format("Preallocate {0} did not return a server.",
 						preallocateUrl));
@@ -263,6 +264,7 @@ namespace Pacifica.Core
 			}
 			else
 			{
+				Utilities.Logout(mCookieJar);
 				RaiseErrorEvent("ProcessMetadata", "Preallocate did not return a location: " + preallocateReturn);
 				throw new ApplicationException(string.Format("Preallocate {0} did not return a location.",
 						preallocateUrl));
@@ -308,6 +310,7 @@ namespace Pacifica.Core
 			}
 			else
 			{
+				Utilities.Logout(mCookieJar);
 				throw new ApplicationException(finishUrl + " failed with message: " + finishResult);
 			}
 
@@ -320,6 +323,7 @@ namespace Pacifica.Core
 				// Ignore errors here
 			}
 
+			Utilities.Logout(mCookieJar);
 			return success;
 		}
 

@@ -95,7 +95,7 @@ namespace Pacifica.DMS_Metadata
 			 * this._bgw = backgrounder;
 			 */
 			  
-			this._ingestServerName = Pacifica.Core.Configuration.ServerHostName;
+			this._ingestServerName = Pacifica.Core.Configuration.IngestServerHostName;
 
 			/* August 2013: To be deleted
 			 * 
@@ -254,7 +254,7 @@ namespace Pacifica.DMS_Metadata
 			 * metadataObject.Add("type", "single");
 			*/
 
-			metadataObject.Add("version", "1.2");
+			metadataObject.Add("version", "1.2.0");
 
 			this._metadataObject = metadataObject;
 			this._unmatchedFilesToUpload = lstUnmatchedFiles;
