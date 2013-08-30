@@ -380,8 +380,8 @@ namespace CaptureTaskManager
 				XWriter.WriteStartElement("Task");
 				XWriter.WriteElementString("Tool", m_Tool);
 				XWriter.WriteElementString("Status", ConvertTaskStatusToString(m_TaskStatus));
-				XWriter.WriteElementString("Duration", m_Duration.ToString("##0.0"));
-				XWriter.WriteElementString("DurationMinutes", (60f * m_Duration).ToString("##0.0"));
+				XWriter.WriteElementString("Duration", m_Duration.ToString("##0.00"));
+				XWriter.WriteElementString("DurationMinutes", (60 * m_Duration).ToString("##0.00"));
 				XWriter.WriteElementString("Progress", m_Progress.ToString("##0.00"));		// value between 0 and 100
 				XWriter.WriteElementString("CurrentOperation", m_CurrentOperation);
 				XWriter.WriteStartElement("TaskDetails");
