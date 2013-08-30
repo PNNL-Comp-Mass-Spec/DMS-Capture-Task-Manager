@@ -334,10 +334,10 @@ namespace CaptureTaskManager
 			/// Closes a capture pipeline task (Overloaded)
 			/// </summary>
 			/// <param name="taskResult">Enum representing task state</param>
-						/// <param name="closeoutMsg">Message related to task closeout</param>
+			/// <param name="closeoutMsg">Message related to task closeout</param>
 			/// <param name="evalCode">Enum representing evaluation results</param>
 			/// <param name="evalMsg">Message related to evaluation results</param>
-						public override void CloseTask(EnumCloseOutType taskResult, string closeoutMsg, EnumEvalCode evalCode, string evalMsg)
+			public override void CloseTask(EnumCloseOutType taskResult, string closeoutMsg, EnumEvalCode evalCode, string evalMsg)
 			{
 				string msg;
 				int compCode = (int)taskResult;
@@ -357,9 +357,12 @@ namespace CaptureTaskManager
 			/// <summary>
 			/// Database calls to set a capture task complete
 			/// </summary>
-			/// <param name="SpName">Name of SetComplete stored procedure</param>
-			/// <param name="CompletionCode">Integer representation of completion code</param>
+			/// <param name="spName">Name of SetComplete stored procedure</param>
 			/// <param name="ConnStr">Db connection string</param>
+			/// <param name="compCode">Integer representation of completion code</param>
+			/// <param name="compCode">Completion message</param>
+			/// <param name="evalCode">Integer representation of evaluation code</param>
+			/// <param name="evalMsg">Evaluation message</param>
 			/// <returns>TRUE for sucesss; FALSE for failure</returns>
 			public bool SetCaptureTaskComplete(string spName, string connStr, int compCode, string compMsg, int evalCode, string evalMsg)
 			{

@@ -43,6 +43,7 @@ namespace DatasetArchivePlugin
 
 		#region "Auto-Properties"
 
+		[Obsolete("No longer needed since using MyEMSL")]
 		public bool CreateDatasetFolderInArchiveIfMissing { get; set; }
 
 		#endregion
@@ -66,16 +67,7 @@ namespace DatasetArchivePlugin
 		/// </summary>
 		/// <returns>TRUE for success, FALSE for failure</returns>
 		public override bool PerformTask()
-		{
-
-			// Initially set this to true; it will be auto-disabled if an exception occurs while generating the hash
-			bool compareWithHash = true;
-			int compareErrorCount;
-			bool copySuccess;
-			bool stageSuccess;
-			string ftpErrMsg;
-
-			bool accessDeniedViaSamba = false;
+		{		
 
 			// Perform base class operations
 			if (!base.PerformTask()) return false;
@@ -85,7 +77,7 @@ namespace DatasetArchivePlugin
 			
 			bool pushDatasetToMyEmsl = m_TaskParams.GetParam("PushDatasetToMyEMSL", false);
 
-			if (pushDatasetToMyEmsl)
+			if (pushDatasetToMyEmsl || ALWAYS_USE_MYEMSL)
 			{
 				m_Msg = "Pushing dataset folder to MyEMSL";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
@@ -95,17 +87,41 @@ namespace DatasetArchivePlugin
 
 				int iMaxMyEMSLUploadAttempts = 2;
 				bool recurse = m_TaskParams.GetParam("PushDatasetRecurse", false);
+				if (ALWAYS_USE_MYEMSL)
+					recurse = true;
 
-				copySuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts, recurse);
+				bool copySuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts, recurse);
 
 				if (!copySuccess)
 					return false;
 
+			}
+
+			if (ALWAYS_USE_MYEMSL)
+			{
 				// Finished with this update task
-				m_Msg = "Completed push to MyEMSL, dataset " + m_DatasetName + ", job " + m_TaskParams.GetParam("Job");
+				m_Msg = "Completed push to MyEMSL, dataset " + m_DatasetName + ", Folder " +
+								m_TaskParams.GetParam("Output_Folder_Name") + ", job " + m_TaskParams.GetParam("Job");
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
 				return true;
 			}
+
+			bool success = PerformTaskUseFTP();
+
+			return success;
+		}
+
+		[Obsolete("No longer needed since using MyEMSL")]
+		protected bool PerformTaskUseFTP()
+		{
+			// Initially set this to true; it will be auto-disabled if an exception occurs while generating the hash
+			bool compareWithHash = true;
+			int compareErrorCount;
+			bool copySuccess;
+			bool stageSuccess;
+			string ftpErrMsg;
+
+			bool accessDeniedViaSamba = false;
 
 			m_ArchiveSharePath = Path.Combine(m_TaskParams.GetParam("Archive_Network_Share_Path"),
 														m_TaskParams.GetParam("Folder"));		// Path to archived dataset for Samba operations
@@ -337,6 +353,7 @@ namespace DatasetArchivePlugin
 		/// <param name="verifyUpdate">TRUE if verification of successful copy is required; otherwise FALSE</param>
 		/// <param name="ftpTools">A clsFtpOperations object</param>
 		/// <returns>TRUE for success; FALSE for failure</returns>
+		[Obsolete("No longer needed since using MyEMSL")]
 		private bool UpdateArchive(List<clsJobData> filesToUpdate, string dsArchPath, bool verifyUpdate, clsFtpOperations ftpTools)
 		{
 			//Copies a list of files to the archive, renaming old files when necessary

@@ -58,21 +58,42 @@ namespace DatasetArchivePlugin
 					return retData;
 				}
 
-				// Select appropriate operation tool based on StepTool specification
-				if (m_TaskParams.GetParam("StepTool").ToLower() == "datasetarchive")
+				if (clsOpsBase.ALWAYS_USE_MYEMSL)
 				{
-					// This is an archive operation
-					archOpTool = new clsArchiveDataset(m_MgrParams, m_TaskParams, m_StatusTools);
-					archiveOpDescription = "archive";
+					// Always use clsArchiveUpdate for both archiving new datasets and updating existing datasets
+
+					if (m_TaskParams.GetParam("StepTool").ToLower() == "datasetarchive")
+					{
+						// This is an archive operation
+						archOpTool = new clsArchiveUpdate(m_MgrParams, m_TaskParams, m_StatusTools);
+						archiveOpDescription = "archive";
+					}
+					else
+					{
+						// This is an archive update operation
+						archOpTool = new clsArchiveUpdate(m_MgrParams, m_TaskParams, m_StatusTools);
+						archiveOpDescription = "archive update";
+					}
+
 				}
 				else
 				{
-					// This is an archive update operation
-					archOpTool = new clsArchiveUpdate(m_MgrParams, m_TaskParams, m_StatusTools);
-					archiveOpDescription = "archive update";
+					// Select appropriate operation tool based on StepTool specification
+					if (m_TaskParams.GetParam("StepTool").ToLower() == "datasetarchive")
+					{
+						// This is an archive operation
+						archOpTool = new clsArchiveDataset(m_MgrParams, m_TaskParams, m_StatusTools);
+						archiveOpDescription = "archive";
+					}
+					else
+					{
+						// This is an archive update operation
+						archOpTool = new clsArchiveUpdate(m_MgrParams, m_TaskParams, m_StatusTools);
+						archiveOpDescription = "archive update";
+					}
 				}
-
-				// Attach the event handler
+			
+				// Attach the MyEMSL Upload event handler
 				archOpTool.MyEMSLUploadComplete += new MyEMSLUploadEventHandler(MyEMSLUploadCompleteHandler);
 
 				msg = "Starting " + archiveOpDescription + ", job " + m_Job + ", dataset " + m_Dataset;
@@ -211,9 +232,9 @@ namespace DatasetArchivePlugin
 			/// <remarks></remarks>
 			protected bool StoreToolVersionInfo()
 			{
-
+				
 				string strToolVersionInfo = string.Empty;
-				System.IO.FileInfo ioAppFileInfo = new System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
+				var ioAppFileInfo = new System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
 				bool bSuccess;
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
@@ -224,14 +245,14 @@ namespace DatasetArchivePlugin
 				if (!bSuccess)
 					return false;
 
-				// Lookup the version of the MD5StageFileCreator
-				string strMD5StageFileCreatorPath = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "MD5StageFileCreator.dll");
+				// Lookup the version of the MyEMSLReader
+				string strMD5StageFileCreatorPath = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "MyEMSLReader.dll");
 				bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strMD5StageFileCreatorPath);
 				if (!bSuccess)
 					return false;
 
-				// Store path to CaptureToolPlugin.dll in ioToolFiles
-				System.Collections.Generic.List<System.IO.FileInfo> ioToolFiles = new System.Collections.Generic.List<System.IO.FileInfo>();
+				// Store path to DatasetArchivePlugin.dll in ioToolFiles
+				var ioToolFiles = new System.Collections.Generic.List<System.IO.FileInfo>();
 				ioToolFiles.Add(new System.IO.FileInfo(strPluginPath));
 
 				try

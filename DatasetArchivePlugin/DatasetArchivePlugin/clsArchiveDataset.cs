@@ -13,6 +13,7 @@ using CaptureTaskManager;
 
 namespace DatasetArchivePlugin
 {
+	[Obsolete("No longer needed since using MyEMSL")]
 	class clsArchiveDataset : clsOpsBase
 	{
 		//*********************************************************************************************************

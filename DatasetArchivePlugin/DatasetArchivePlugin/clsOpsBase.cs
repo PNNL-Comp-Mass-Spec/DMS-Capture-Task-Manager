@@ -24,6 +24,8 @@ namespace DatasetArchivePlugin
 		#region "Constants"
 		protected const string ARCHIVE = "Archive ";
 		protected const string UPDATE = "Archive update ";
+
+		public const bool ALWAYS_USE_MYEMSL = true;
 		#endregion
 
 		#region "Class variables"
@@ -33,8 +35,9 @@ namespace DatasetArchivePlugin
 
 		protected string m_ErrMsg = string.Empty;
 		protected string m_WarningMsg = string.Empty;
-		protected string m_TempVol;
 		protected string m_DSNamePath;
+		
+		[Obsolete("No longer needed since using MyEMSL")]
 		protected string m_ArchiveNamePath;
 		protected string m_Msg;
 		protected clsFtpOperations m_FtpTools;
@@ -120,48 +123,56 @@ namespace DatasetArchivePlugin
 		public virtual bool PerformTask()
 		{
 			m_DatasetName = m_TaskParams.GetParam("Dataset");
-			bool bMyEmslUpload = false;
-			bool bMyEmslUploadSuccess = true;
-
-			if (bool.TryParse(m_MgrParams.GetParam("MyEmslUpload"), out bMyEmslUpload) && bMyEmslUpload)
+		
+			/*
+			 * August 2013: To be deleted
+			 */
+			if (!ALWAYS_USE_MYEMSL)
 			{
-				// Possibly copy this dataset to MyEmsl
-				string sInstrument = m_TaskParams.GetParam("Instrument_Name");
-				string sEUSInstrumentID = m_TaskParams.GetParam("EUS_Instrument_ID");
-
-				int iMaxMyEMSLUploadAttempts = 3;
-				bool recurse = true;
-
-				mMostRecentLogTime = System.DateTime.UtcNow;
-				mLastStatusUpdateTime = System.DateTime.UtcNow;
-				mLastProgressUpdateTime = System.DateTime.UtcNow;
-
-				if (sEUSInstrumentID.Length > 0 && !sInstrument.ToLower().Contains("fticr"))
+				bool bMyEmslUpload = false;
+				bool bMyEmslUploadSuccess = true;
+				if (bool.TryParse(m_MgrParams.GetParam("MyEmslUpload"), out bMyEmslUpload) && bMyEmslUpload)
 				{
-					if (sInstrument == "Exact03" || sInstrument == "LTQ_Orb_2" || sInstrument == "LTQ_Orb_3")
+					// Possibly copy this dataset to MyEmsl
+					string sInstrument = m_TaskParams.GetParam("Instrument_Name");
+					string sEUSInstrumentID = m_TaskParams.GetParam("EUS_Instrument_ID");
+
+					int iMaxMyEMSLUploadAttempts = 3;
+					bool recurse = true;
+
+					mMostRecentLogTime = System.DateTime.UtcNow;
+					mLastStatusUpdateTime = System.DateTime.UtcNow;
+					mLastProgressUpdateTime = System.DateTime.UtcNow;
+
+					if (sEUSInstrumentID.Length > 0 && !sInstrument.ToLower().Contains("fticr"))
 					{
-						if (System.DateTime.Now.Hour % 6 == 0)
+						if (sInstrument == "Exact03" || sInstrument == "LTQ_Orb_2" || sInstrument == "LTQ_Orb_3")
 						{
-							bMyEmslUploadSuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts, recurse);
+							if (System.DateTime.Now.Hour % 6 == 0)
+							{
+								bMyEmslUploadSuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts, recurse);
+							}
 						}
 					}
 				}
-
 			}
 
 			// Set client/server perspective & setup paths
+			string baseStoragePath;
 			if (m_MgrParams.GetParam("perspective").ToLower() == "client")
 			{
-				m_TempVol = m_TaskParams.GetParam("Storage_Vol_External");
+				baseStoragePath = m_TaskParams.GetParam("Storage_Vol_External");
 			}
 			else
 			{
-				m_TempVol = m_TaskParams.GetParam("Storage_Vol");
+				baseStoragePath = m_TaskParams.GetParam("Storage_Vol");
 			}
-			m_DSNamePath = Path.Combine(Path.Combine(m_TempVol, m_TaskParams.GetParam("Storage_Path")),
-								m_TaskParams.GetParam("Folder"));	//Path to dataset on storage server
-			m_ArchiveNamePath = clsFileTools.CheckTerminator(m_TaskParams.GetParam("Archive_Path"), true, "/") +
-								m_TaskParams.GetParam("Folder");		//Path to dataset for FTP operations
+
+			//Path to dataset on storage server
+			m_DSNamePath = Path.Combine(Path.Combine(baseStoragePath, m_TaskParams.GetParam("Storage_Path")), m_TaskParams.GetParam("Folder"));
+
+			//Path to dataset for FTP operations
+			m_ArchiveNamePath = clsFileTools.CheckTerminator(m_TaskParams.GetParam("Archive_Path"), true, "/") + m_TaskParams.GetParam("Folder");		
 
 			//Verify dataset is in specified location
 			if (!VerifyDSPresent(m_DSNamePath))
@@ -172,11 +183,15 @@ namespace DatasetArchivePlugin
 				return false;
 			}
 
-			// Initialize the MD5 stage file creator
-			InitializeMD5StageFileCreator();
+			if (!ALWAYS_USE_MYEMSL)
+			{
+				// Initialize the MD5 stage file creator
+				InitializeMD5StageFileCreator();
+			}
 
 			// Got to here, everything's OK, so let let the derived class take over
 			return true;
+
 		}	// End sub
 
 		protected string AppendToString(string text, string append)
@@ -342,6 +357,7 @@ namespace DatasetArchivePlugin
 		/// </summary>
 		/// <param name="archiveOrUpdate">Indicates whether this is an archive or update operation for logging</param>
 		/// <returns>TRUE for success; otherwise FALSE</returns>
+		[Obsolete("No longer needed since using MyEMSL")]
 		protected bool OpenArchiveServer()
 		{
 			try
@@ -391,6 +407,7 @@ namespace DatasetArchivePlugin
 		/// </summary>
 		/// <param name="archiveOrUpdate"></param>
 		/// <returns></returns>
+		[Obsolete("No longer needed since using MyEMSL")]
 		protected bool CloseArchiveServer()
 		{
 			try
@@ -458,6 +475,7 @@ namespace DatasetArchivePlugin
 		/// <param name="sourceFolder">Folder name/path to copy</param>
 		/// <param name="destFolder">Folder name/path on archive</param>
 		/// <returns></returns>
+		[Obsolete("No longer needed since using MyEMSL")]
 		protected bool CopyOneFolderToArchive(string sourceFolderPath, string destFolderPath)
 		{
 			// Verify source folder exists
@@ -515,6 +533,7 @@ namespace DatasetArchivePlugin
 		/// <param name="sResultsFolderPathServer"></param>
 		/// <param name="sResultsFolderPathArchive"></param>
 		/// <returns></returns>
+		[Obsolete("No longer needed since using MyEMSL")]
 		protected bool CreateMD5StagingFile(string sResultsFolderPathServer, string sResultsFolderPathArchive)
 		{
 			string sLocalParentFolderPathForDataset;
@@ -558,6 +577,7 @@ namespace DatasetArchivePlugin
 		/// <param name="sResultsFolderPathArchive"></param>
 		/// <param name="filesToUpdate"></param>
 		/// <returns></returns>
+		[Obsolete("No longer needed since using MyEMSL")]
 		protected bool CreateMD5StagingFile(string sResultsFolderPathServer, string sResultsFolderPathArchive, System.Collections.Generic.List<clsJobData> filesToUpdate)
 		{
 
@@ -596,6 +616,7 @@ namespace DatasetArchivePlugin
 			return bSuccess;
 		}
 
+		[Obsolete("No longer needed since using MyEMSL")]
 		private bool CreateMD5StagingFileWork(System.Collections.Generic.List<string> lstFilePathsToStage, string sDatasetName, string sLocalParentFolderPathForDataset, string sArchiveStoragePathForDataset)
 		{
 			const string EXTRA_FILES_REGEX = clsMD5StageFileCreator.EXTRA_FILES_SUFFIX + @"(\d+)$";
@@ -811,6 +832,7 @@ namespace DatasetArchivePlugin
 
 		#region "MD5StageFileCreator initialization and event handlers"
 
+		[Obsolete("No longer needed since using MyEMSL")]
 		private void InitializeMD5StageFileCreator()
 		{
 			string sArchiveStagingFolderPath;
@@ -830,12 +852,14 @@ namespace DatasetArchivePlugin
 			mMD5StageFileCreator.OnMessageEvent += new MD5StageFileCreator.clsMD5StageFileCreator.OnMessageEventEventHandler(MD5MessageEventHandler);
 		}
 
+		[Obsolete("No longer needed since using MyEMSL")]
 		private void MD5ErrorEventHandler(string sErrorMessage)
 		{
 			string msg = "MD5StageFileCreator Error: " + sErrorMessage;
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 		}
 
+		[Obsolete("No longer needed since using MyEMSL")]
 		private void MD5MessageEventHandler(string sMessage)
 		{
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, sMessage);

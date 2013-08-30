@@ -24,6 +24,7 @@ using System.Collections.Specialized;
 
 namespace DatasetArchivePlugin
 {
+	[Obsolete("No longer needed since using MyEMSL")]
 	class clsFtpOperations
 	{
 		//*********************************************************************************************************
