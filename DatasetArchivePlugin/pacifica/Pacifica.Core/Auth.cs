@@ -326,16 +326,28 @@ namespace Pacifica.Core
 			return result;
 		}
 
+		public bool GetAuthCookies(out CookieContainer cookieJar)
+		{
+			Uri uri = _location;
+			bool redirected;
+			Uri finalUri;
+			cookieJar = null;
+
+			bool success = GetAuthCookies(uri, ref cookieJar, out redirected, out finalUri);
+
+			return success;
+		}
+
 		/// <summary>
 		/// Contacts the MyEMSL auth service to obtain cookies for the currently logged in user
 		/// </summary>
 		/// <param name="cookieJar">Cookie jar</param>
 		/// <returns>True if success; false if an error</returns>
 		/// <remarks>Any exceptions that occur will need to be handled by the caller</remarks>
-		public bool GetAuthCookies(out CookieContainer cookieJar)
+		public bool GetAuthCookies(Uri uri, ref CookieContainer cookieJar, out bool redirected, out Uri finalUri)
 		{
-			Uri uri = _location;
-			bool redirected = false;
+			
+			redirected = false;
 			bool success = false;
 			cookieJar = new CookieContainer();
 
@@ -379,6 +391,8 @@ namespace Pacifica.Core
 					}
 				}
 			} while (redirected);
+
+			finalUri = uri;
 
 			return success;
 		}
@@ -449,8 +463,12 @@ namespace Pacifica.Core
 
 			string[] urls =
             {
+				/* Test URLs:
                 // "https://myemsl-dev0.emsl.pnl.gov/myemsl/testauth",
                 // "https://a9.my.emsl.pnl.gov/myemsl/testauth",
+				 */
+
+				// Official URL
                 "https://ingest.my.emsl.pnl.gov/myemsl/testauth"
             };
 

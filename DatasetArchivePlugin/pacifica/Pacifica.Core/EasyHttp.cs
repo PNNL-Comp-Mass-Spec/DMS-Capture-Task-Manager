@@ -4,10 +4,12 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Text;
 using System.Xml;
 using System.Xml.XPath;
+using ICSharpCode.SharpZipLib.Tar;
 
 namespace Pacifica.Core
 {
@@ -30,15 +32,18 @@ namespace Pacifica.Core
 			Put = 2
 		}
 
+		protected const int TAR_BLOCK_SIZE_BYTES = 512;
+
 		public static event StatusUpdateEventHandler StatusUpdate;
 
-		private static void RaiseStatusUpdate(string bundleIdentifier,
-			int percentCompleted, long totalBytesSent,
-			long totalBytesToSend, string averageUploadSpeed)
+		private static void RaiseStatusUpdate(
+			string bundleIdentifier,
+			double percentCompleted, long totalBytesSent,
+			long totalBytesToSend, string statusMessage)
 		{
 			if (StatusUpdate != null)
 			{
-				StatusUpdate(bundleIdentifier, percentCompleted, totalBytesSent, totalBytesToSend, averageUploadSpeed);
+				StatusUpdate(null, new StatusEventArgs(bundleIdentifier, percentCompleted, totalBytesSent, totalBytesToSend, statusMessage));
 			}
 		}
 
@@ -78,7 +83,7 @@ namespace Pacifica.Core
 					FileStream outFile = new FileStream(downloadFilePath, FileMode.Create);
 
 					int bytesRead;
-					while((bytesRead = ReceiveStream.Read(buffer, 0, buffer.Length)) != 0)
+					while ((bytesRead = ReceiveStream.Read(buffer, 0, buffer.Length)) != 0)
 						outFile.Write(buffer, 0, bytesRead);
 
 					outFile.Close();
@@ -118,17 +123,17 @@ namespace Pacifica.Core
 
 			return true;
 		}
-		
-		public static WebHeaderCollection GetHeaders(		
-			string url, 
+
+		public static WebHeaderCollection GetHeaders(
+			string url,
 			out HttpStatusCode responseStatusCode,
 			int timeoutSeconds = 100)
 		{
 			return GetHeaders(url, new CookieContainer(), out responseStatusCode, timeoutSeconds);
 		}
 
-		public static WebHeaderCollection GetHeaders(		
-			string url, 
+		public static WebHeaderCollection GetHeaders(
+			string url,
 			CookieContainer cookies,
 			out HttpStatusCode responseStatusCode,
 			int timeoutSeconds = 100,
@@ -151,7 +156,7 @@ namespace Pacifica.Core
 				responseStatusCode = response.StatusCode;
 
 				return response.Headers;
-				
+
 			}
 			catch (WebException ex)
 			{
@@ -180,14 +185,14 @@ namespace Pacifica.Core
 					((IDisposable)response).Dispose();
 				}
 			}
-			
+
 		}
 
 		public static HttpWebRequest InitializeRequest(
-			string url, 
-			ref CookieContainer cookies, 
-			ref int timeoutSeconds, 
-			NetworkCredential loginCredentials, 
+			string url,
+			ref CookieContainer cookies,
+			ref int timeoutSeconds,
+			NetworkCredential loginCredentials,
 			double maxTimeoutHours = 24)
 		{
 			Uri uri = new Uri(url);
@@ -198,7 +203,7 @@ namespace Pacifica.Core
 
 			if (timeoutSeconds < 3)
 				timeoutSeconds = 3;
-			
+
 			int maxTimeoutHoursInt = (int)(maxTimeoutHours * 60 * 60);
 			if (timeoutSeconds > maxTimeoutHoursInt)
 				timeoutSeconds = maxTimeoutHoursInt;
@@ -239,7 +244,7 @@ namespace Pacifica.Core
 		public static string Send(
 			string url,
 			CookieContainer cookies,
-			out HttpStatusCode responseStatusCode, 
+			out HttpStatusCode responseStatusCode,
 			int timeoutSeconds = 100)
 		{
 			string postData = "";
@@ -248,7 +253,7 @@ namespace Pacifica.Core
 
 		public static string Send(
 			string url,
-			out HttpStatusCode responseStatusCode, 
+			out HttpStatusCode responseStatusCode,
 			string postData,
 			HttpMethod method = HttpMethod.Get,
 			int timeoutSeconds = 100)
@@ -262,12 +267,12 @@ namespace Pacifica.Core
 
 		public static string Send(
 			string url,
-			out HttpStatusCode responseStatusCode, 
-			string postData, 
+			out HttpStatusCode responseStatusCode,
+			string postData,
 			HttpMethod method,
 			int timeoutSeconds,
-			string contentType, 
-			bool sendStringInHeader, 
+			string contentType,
+			bool sendStringInHeader,
 			NetworkCredential loginCredentials)
 		{
 			return Send(url, new CookieContainer(), out responseStatusCode, postData, method, timeoutSeconds, contentType, sendStringInHeader, loginCredentials);
@@ -276,7 +281,7 @@ namespace Pacifica.Core
 		public static string Send(
 			string url,
 			CookieContainer cookies,
-			out HttpStatusCode responseStatusCode, 
+			out HttpStatusCode responseStatusCode,
 			string postData,
 			HttpMethod method,
 			int timeoutSeconds,
@@ -284,7 +289,7 @@ namespace Pacifica.Core
 		{
 			string contentType = "";
 			bool sendStringInHeader = false;
-			return Send(url, new CookieContainer(), out responseStatusCode, postData, method, timeoutSeconds, contentType, sendStringInHeader, loginCredentials);
+			return Send(url, cookies, out responseStatusCode, postData, method, timeoutSeconds, contentType, sendStringInHeader, loginCredentials);
 		}
 
 		/// <summary>
@@ -300,13 +305,13 @@ namespace Pacifica.Core
 		/// <param name="loginCredentials"></param>
 		/// <returns>Response data</returns>
 		public static string Send(
-			string url, 
+			string url,
 			CookieContainer cookies,
-			out HttpStatusCode responseStatusCode, 
-			string postData = "", 
+			out HttpStatusCode responseStatusCode,
+			string postData = "",
 			HttpMethod method = HttpMethod.Get,
 			int timeoutSeconds = 100,
-			string contentType = "", 
+			string contentType = "",
 			bool sendStringInHeader = false,
 			NetworkCredential loginCredentials = null)
 		{
@@ -323,7 +328,7 @@ namespace Pacifica.Core
 			{
 				request.Headers.Add("X-Json-Data", postData);
 			}
-			
+
 			// Set form/post content-type if necessary
 			if (method == HttpMethod.Post && !string.IsNullOrEmpty(postData) && contentType == "")
 			{
@@ -359,7 +364,7 @@ namespace Pacifica.Core
 				{
 					responseData = sr.ReadToEnd();
 				}
-				
+
 			}
 			catch (WebException ex)
 			{
@@ -435,7 +440,8 @@ namespace Pacifica.Core
 			return XmlReader.Create(new StringReader(response));
 		}
 
-		private static void CheckDavAttributes(string url, string filePath)
+		[Obsolete("Unused")]
+		private static void CheckDavAttributes(string url)
 		{
 			byte[] buffer;
 			XmlReader reader;
@@ -482,7 +488,7 @@ namespace Pacifica.Core
 			}
 		}
 
-		[Obsolete]
+		[Obsolete("Use SendFileListToDavAsTar")]
 		public static string SendFileToDav(string url, string serverBaseAddress,
 			 string filePath, NetworkCredential loginCredentials = null, bool createNewFile = true)
 		{
@@ -490,12 +496,12 @@ namespace Pacifica.Core
 				loginCredentials, createNewFile);
 		}
 
+		[Obsolete("Use SendFileListToDavAsTar")]
 		public static string SendFileToDav(string url, string serverBaseAddress,
 			string filePath, CookieContainer cookies,
 			NetworkCredential loginCredentials = null, bool createNewFile = true)
 		{
 			FileInfo fi = new FileInfo(filePath);
-			string createFileResponse;
 
 			Uri baseUri = new Uri(serverBaseAddress);
 
@@ -506,8 +512,8 @@ namespace Pacifica.Core
 
 			if (!createNewFile)
 			{
-				CheckDavAttributes(uploadUri.AbsoluteUri, filePath);
-				createFileResponse = SendFileToDav(url, serverBaseAddress,
+				CheckDavAttributes(uploadUri.AbsoluteUri);
+				string createFileResponse = SendFileToDav(url, serverBaseAddress,
 					filePath, cookies, loginCredentials, true);
 				return createFileResponse;
 			}
@@ -534,7 +540,7 @@ namespace Pacifica.Core
 				i2 = c2;
 			}
 
-			//TODO - remove NGT 7/11/2011
+			//TODO - remove NGT 7/11/2011 (Nate Trimble)
 			//If Negotiate is added to the CredentialCache it will be used instead of Basic.
 			//The problem occurs when your computer is not part of the domain and yet still
 			//has a clear path to a4.my.emsl.pnl.gov.
@@ -545,6 +551,7 @@ namespace Pacifica.Core
 			HttpWebRequest oWebRequest = (HttpWebRequest)WebRequest.Create(credCheckUri);
 
 			oWebRequest.CookieContainer = cookies;
+
 			//TODO - pass proxy in as a parameter to keep this class clean.
 			Configuration.SetProxy(oWebRequest);
 
@@ -574,6 +581,7 @@ namespace Pacifica.Core
 				cookies = new CookieContainer();
 			}
 			oWebRequest.CookieContainer = cookies;
+
 			//TODO - pass proxy in as a parameter to keep this class clean.
 			Configuration.SetProxy(oWebRequest);
 
@@ -590,11 +598,13 @@ namespace Pacifica.Core
 
 			Stream oRequestStream = oWebRequest.GetRequestStream();
 
-			int percent = 0;
+			double percentComplete = 0;		// Value between 0 and 100
 			long sent = 0;
 			System.DateTime lastStatusUpdateTime = System.DateTime.UtcNow;
 
-			RaiseStatusUpdate(filePath, percent, sent, contentLength, string.Empty);
+			RaiseStatusUpdate(filePath, percentComplete, sent, contentLength, string.Empty);
+
+
 			while (contentStream.Position < contentLength)
 			{
 				contentBuffer = br.ReadBytes(chunkSize);
@@ -605,13 +615,14 @@ namespace Pacifica.Core
 				}
 
 				sent = contentStream.Position;
-				percent = (int)Math.Round((((double)sent / (double)contentLength) * 100));
+				if (contentLength > 0)
+					percentComplete = (double)sent / (double)contentLength * 100;
 
 				if (System.DateTime.UtcNow.Subtract(lastStatusUpdateTime).TotalSeconds >= 2)
 				{
 					// Limit status updates to every 2 seconds
 					lastStatusUpdateTime = System.DateTime.UtcNow;
-					RaiseStatusUpdate(filePath, percent, sent, contentLength, string.Empty);
+					RaiseStatusUpdate(filePath, percentComplete, sent, contentLength, string.Empty);
 				}
 			}
 			contentStream.Flush();
@@ -619,11 +630,13 @@ namespace Pacifica.Core
 			contentStream.Close();
 			contentStream = null;
 
+
 			RaiseStatusUpdate(filePath, 100, sent, contentLength, string.Empty);
 
 			WebResponse response = null;
 			try
 			{
+				// The response should be empty if everything worked
 				response = oWebRequest.GetResponse();
 				using (StreamReader sr = new StreamReader(response.GetResponseStream()))
 				{
@@ -654,6 +667,326 @@ namespace Pacifica.Core
 			}
 
 			return responseData;
+		}
+
+		public static string SendFileListToDavAsTar(string url, string serverBaseAddress,
+			SortedDictionary<string, FileInfoObject> fileListObject,
+			string metadataFilePath,
+			CookieContainer cookies,
+			NetworkCredential loginCredentials = null)
+		{
+
+			Uri baseUri = new Uri(serverBaseAddress);
+			Uri uploadUri = new Uri(baseUri, url);
+
+			string credUriStr = url.Substring(0, url.LastIndexOf('/'));
+			Uri credCheckUri = new Uri(baseUri, credUriStr);
+
+			ICredentials i1;
+			ICredentials i2;
+			CredentialCache c1 = new CredentialCache();
+			CredentialCache c2 = new CredentialCache();
+
+			if (loginCredentials == null)
+			{
+				loginCredentials = CredentialCache.DefaultNetworkCredentials;
+				i1 = loginCredentials;
+				i2 = loginCredentials;
+			}
+			else
+			{
+				//Basic authentication cannot be used with DefaultNetworkCredentials.
+				c1.Add(credCheckUri, "Basic", new NetworkCredential(loginCredentials.UserName,
+					loginCredentials.SecurePassword));
+				i1 = c1;
+				c2.Add(uploadUri, "Basic", new NetworkCredential(loginCredentials.UserName,
+					loginCredentials.SecurePassword));
+				i2 = c2;
+			}
+
+			//TODO - remove NGT 7/11/2011 (Nate Trimble)
+			//If Negotiate is added to the CredentialCache it will be used instead of Basic.
+			//The problem occurs when your computer is not part of the domain and yet still
+			//has a clear path to a4.my.emsl.pnl.gov.
+			//c1.Add(credCheckUri, "Negotiate", (NetworkCredential)loginCredentials);
+			//c2.Add(uploadUri, "Negotiate", (NetworkCredential)loginCredentials);
+
+			// Make a HEAD request to register the proper authentication stuff
+			HttpWebRequest oWebRequest = (HttpWebRequest)WebRequest.Create(credCheckUri);
+
+			oWebRequest.CookieContainer = cookies;
+
+			//TODO - pass proxy in as a parameter to keep this class clean.
+			Configuration.SetProxy(oWebRequest);
+
+			oWebRequest.Method = WebRequestMethods.Http.Head;
+			oWebRequest.Credentials = i1;
+			oWebRequest.PreAuthenticate = true;
+			oWebRequest.KeepAlive = true;
+			oWebRequest.UnsafeAuthenticatedConnectionSharing = true;
+
+			using (WebResponse oWResponse = oWebRequest.GetResponse()) { }
+
+			var fiMetadataFile = new FileInfo(metadataFilePath);
+
+			// Compute the total number of bytes that will be written to the tar file
+			long contentLength = ComputeTarFileSize(fileListObject, fiMetadataFile);
+			
+			double percentComplete = 0;		// Value between 0 and 100
+			long bytesWritten = 0;
+			string bundleIdentifier = "Memory stream tar file";
+			System.DateTime lastStatusUpdateTime = System.DateTime.UtcNow;
+
+			RaiseStatusUpdate(bundleIdentifier, percentComplete, bytesWritten, contentLength, string.Empty);
+
+			// Set this to True to debug things and create the .tar file locally instead of sending to the server
+			bool writeToDisk = false;
+
+			if (!writeToDisk)
+			{
+				// Make the request
+				oWebRequest = (HttpWebRequest)WebRequest.Create(uploadUri);
+
+				if (cookies == null)
+				{
+					cookies = new CookieContainer();
+				}
+				oWebRequest.CookieContainer = cookies;
+
+				//TODO - pass proxy in as a parameter to keep this class clean.
+				Configuration.SetProxy(oWebRequest);
+
+				oWebRequest.Credentials = i2;
+				oWebRequest.PreAuthenticate = true;
+				oWebRequest.KeepAlive = true;
+				oWebRequest.Method = WebRequestMethods.Http.Put;
+				oWebRequest.AllowWriteStreamBuffering = false;
+				oWebRequest.Accept = "*/*";
+				oWebRequest.Expect = null;
+				oWebRequest.Timeout = -1;
+				oWebRequest.ReadWriteTimeout = -1;
+				oWebRequest.ContentLength = contentLength;
+
+			}
+
+			Stream oRequestStream;
+			if (writeToDisk)
+				oRequestStream = new FileStream(@"E:\CapMan_WorkDir\TestFile.tar", FileMode.Create, FileAccess.Write, FileShare.Read);
+			else
+				oRequestStream = oWebRequest.GetRequestStream();
+
+			// Use SharpZipLib to create the tar file on-the-fly and directly push into the request stream
+			// This way, the .tar file is never actually created on a local hard drive
+			// Code modeled after https://github.com/icsharpcode/SharpZipLib/wiki/GZip-and-Tar-Samples
+
+
+			TarOutputStream tarOutputStream = new TarOutputStream(oRequestStream);
+			
+			var dctDirectoryEntries = new SortedSet<string>();			
+
+			// Add the metadata.txt file
+			AppendFileToTar(tarOutputStream, fiMetadataFile, "metadata.txt", ref bytesWritten);
+
+			// Add the "data" directory, which will hold all of the files
+			// Need a dummy "data" directory to do this
+			var diTempFolder = Utilities.GetTempDirectory();
+			var diDummyDataFolder = new DirectoryInfo(Path.Combine(diTempFolder.FullName, "data"));
+			if (!diDummyDataFolder.Exists)
+				diDummyDataFolder.Create();
+
+			AppendFolderToTar(tarOutputStream, diDummyDataFolder, "data", ref bytesWritten);
+
+			foreach (var fileToArchive in fileListObject)
+			{
+				var fiSourceFile = new FileInfo(fileToArchive.Key);
+
+				if (!string.IsNullOrEmpty(fileToArchive.Value.RelativeDestinationDirectory))
+				{
+					if (!dctDirectoryEntries.Contains(fiSourceFile.Directory.FullName))
+					{
+						// Make a directory entry
+						AppendFolderToTar(tarOutputStream, fiSourceFile.Directory, "data/" + fileToArchive.Value.RelativeDestinationDirectory, ref bytesWritten);
+
+						dctDirectoryEntries.Add(fiSourceFile.Directory.FullName);						
+					}
+				}
+
+				AppendFileToTar(tarOutputStream, fiSourceFile, "data/" + fileToArchive.Value.RelativeDestinationFullPath, ref bytesWritten);
+
+				if (System.DateTime.UtcNow.Subtract(lastStatusUpdateTime).TotalSeconds >= 2)
+				{
+					// Limit status updates to every 2 seconds
+					RaiseStatusUpdate(bundleIdentifier, percentComplete, bytesWritten, contentLength, string.Empty);
+					lastStatusUpdateTime = System.DateTime.UtcNow;
+				}
+			}
+
+			// Close the tar file memory stream (to flush the buffers)
+			tarOutputStream.IsStreamOwner = false;
+			tarOutputStream.Close();
+			bytesWritten += TAR_BLOCK_SIZE_BYTES;
+
+			RaiseStatusUpdate(bundleIdentifier, 100, bytesWritten, contentLength, string.Empty);
+
+			// Close the request
+			oRequestStream.Close();
+
+			RaiseStatusUpdate("In-memory tar file", 100, contentLength, contentLength, string.Empty);
+
+			if (writeToDisk)
+				return string.Empty;
+
+			string responseData;
+
+			WebResponse response = null;
+			try
+			{
+				// The response should be empty if everything worked
+				response = oWebRequest.GetResponse();
+				using (StreamReader sr = new StreamReader(response.GetResponseStream()))
+				{
+					responseData = sr.ReadToEnd();
+				}
+			}
+			catch (WebException ex)
+			{
+				if (ex.Response != null)
+				{
+					using (StreamReader sr = new StreamReader(ex.Response.GetResponseStream()))
+					{
+						responseData = sr.ReadToEnd();
+					}
+				}
+				else
+				{
+					responseData = string.Empty;
+				}
+				throw new Exception(responseData, ex);
+			}
+			finally
+			{
+				if (response != null)
+				{
+					((IDisposable)response).Dispose();
+				}
+			}
+
+			return responseData;
+		}
+
+
+		protected static long AddTarFileContentLength(long fileSizeBytes)
+		{
+
+			// Header block for current file
+			long contentLength = TAR_BLOCK_SIZE_BYTES;
+
+			// File contents
+			long fileBlocks = (int)Math.Ceiling(fileSizeBytes / (double)TAR_BLOCK_SIZE_BYTES);
+			contentLength += fileBlocks * TAR_BLOCK_SIZE_BYTES;
+
+			return contentLength;
+		}
+
+		private static long ComputeTarFileSize(SortedDictionary<string, FileInfoObject> fileListObject, FileInfo fiMetadataFile)
+		{
+			long contentLength = 0;
+
+			// Add the metadata file
+			if (fiMetadataFile.Exists)
+			{
+				contentLength += AddTarFileContentLength(fiMetadataFile.Length);
+			}
+
+			// Add the data/ directory
+			contentLength += TAR_BLOCK_SIZE_BYTES;
+
+			// Add the files to be archived
+			foreach (var fileToArchive in fileListObject)
+			{
+				contentLength += AddTarFileContentLength(fileToArchive.Value.FileSizeInBytes);
+
+				long addonBytes = AddTarFileContentLength(fileToArchive.Value.FileSizeInBytes);
+				Console.WriteLine(fileToArchive.Value.FileSizeInBytes + "\t" + addonBytes + "\t" + fileToArchive.Value.RelativeDestinationFullPath);
+			}
+
+			var lstDirectoryEntries = GetUniqueRelativeDestinationDirectory(fileListObject);
+
+			// Add the directories for hte files
+			foreach (var directoryName in lstDirectoryEntries)
+			{
+				if (!string.IsNullOrEmpty(directoryName))
+				{
+					contentLength += TAR_BLOCK_SIZE_BYTES;
+				}
+			}
+
+			// Append one empty block (appended by SharpZipLib at the end of the .tar file
+			contentLength += TAR_BLOCK_SIZE_BYTES;
+
+			// Round up contentLength to the nearest 10240 bytes
+			int recordCount = (int)Math.Ceiling(contentLength / (double)TarBuffer.DefaultRecordSize);
+			contentLength = recordCount * TarBuffer.DefaultRecordSize;
+
+			return contentLength;
+		}
+
+		private static void AppendFolderToTar(TarOutputStream tarOutputStream, DirectoryInfo diFolder, string pathInArchive, ref long bytesWritten)
+		{
+			TarEntry tarEntry = TarEntry.CreateEntryFromFile(diFolder.FullName);
+
+			// Override the name
+			if (!pathInArchive.EndsWith("/"))
+				pathInArchive += "/";
+
+			tarEntry.Name = pathInArchive;
+			tarOutputStream.PutNextEntry(tarEntry);
+			bytesWritten += 512;
+			
+		}
+
+		private static List<string> GetUniqueRelativeDestinationDirectory(SortedDictionary<string, FileInfoObject> fileListObject)
+		{
+
+			var lstDirectoryEntries = (from item in fileListObject.Values
+									   group item by item.RelativeDestinationDirectory into g
+									   select g.Key).ToList<string>();
+			return lstDirectoryEntries;
+		}
+
+		private static void AppendFileToTar(TarOutputStream tarOutputStream, FileInfo fiSourceFile, string destFilenameInTar, ref long bytesWritten)
+		{
+			using (Stream inputStream = new FileStream(fiSourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+			{
+				long fileSize = fiSourceFile.Length;
+
+				// Create a tar entry named as appropriate. You can set the name to anything,
+				// but avoid names starting with drive or UNC.
+
+				TarEntry entry = TarEntry.CreateTarEntry(destFilenameInTar);
+
+				// Must set size, otherwise TarOutputStream will fail when output exceeds.
+				entry.Size = fileSize;
+
+				// Add the entry to the tar stream, before writing the data.
+				tarOutputStream.PutNextEntry(entry);
+
+				// this is copied from TarArchive.WriteEntryCore
+				byte[] localBuffer = new byte[32 * 1024];
+				while (true)
+				{
+					int numRead = inputStream.Read(localBuffer, 0, localBuffer.Length);
+					if (numRead <= 0)
+					{
+						break;
+					}
+					tarOutputStream.Write(localBuffer, 0, numRead);
+				}
+
+				bytesWritten += AddTarFileContentLength(fiSourceFile.Length);
+
+			}
+			tarOutputStream.CloseEntry();
 		}
 	}
 }

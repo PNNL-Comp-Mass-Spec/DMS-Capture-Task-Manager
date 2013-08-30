@@ -53,8 +53,8 @@ namespace DatasetArchivePlugin
 		/// </summary>
 		/// <param name="MgrParams">Manager parameters</param>
 		/// <param name="TaskParasms">Task parameters</param>
-		public clsArchiveUpdate(IMgrParams MgrParams, ITaskParams TaskParams)
-			: base(MgrParams, TaskParams)
+		public clsArchiveUpdate(IMgrParams MgrParams, ITaskParams TaskParams, IStatusFile StatusTools)
+			: base(MgrParams, TaskParams, StatusTools)
 		{
 			CreateDatasetFolderInArchiveIfMissing = false;
 		}

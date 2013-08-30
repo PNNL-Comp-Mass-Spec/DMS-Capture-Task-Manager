@@ -20,19 +20,6 @@ namespace Pacifica.Core
 			}
 		}
 
-		private static bool _uploadFiles = true;
-		public static bool UploadFiles
-		{
-			get
-			{
-				return _uploadFiles;
-			}
-			set
-			{
-				_uploadFiles = value;
-			}
-		}
-
 		public static bool _useSecureDataTransfer = true;
 		public static bool UseSecureDataTransfer
 		{
@@ -83,7 +70,7 @@ namespace Pacifica.Core
 			}
 		}
 
-		public static string TemporaryBundlePath
+		public static string	BundlePath
 		{
 			get
 			{

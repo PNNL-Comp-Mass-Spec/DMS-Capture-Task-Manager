@@ -28,8 +28,8 @@ namespace DatasetArchivePlugin
 			/// </summary>
 			/// <param name="MgrParams">Manager parameters</param>
 			/// <param name="TaskParams">Task parameters</param>
-			public clsArchiveDataset(IMgrParams MgrParams, ITaskParams TaskParams)
-				: base(MgrParams, TaskParams)
+		public clsArchiveDataset(IMgrParams MgrParams, ITaskParams TaskParams, IStatusFile StatusTools)
+				: base(MgrParams, TaskParams, StatusTools)
 			{
 			}	// End sub
 		#endregion
@@ -60,7 +60,7 @@ namespace DatasetArchivePlugin
 					m_Msg = "Dataset " + m_DatasetName  + " is " + folderSizeGB.ToString("0") + " GB; will use the ArchiveUpdate mechanism since this supports resuming an interrupted FTP operation";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, m_Msg);
 
-					clsArchiveUpdate oArchiveUpdate = new clsArchiveUpdate(m_MgrParams, m_TaskParams);
+					clsArchiveUpdate oArchiveUpdate = new clsArchiveUpdate(m_MgrParams, m_TaskParams, m_StatusTools);
 					oArchiveUpdate.CreateDatasetFolderInArchiveIfMissing = true;
 
 					copySuccess = oArchiveUpdate.PerformTask();

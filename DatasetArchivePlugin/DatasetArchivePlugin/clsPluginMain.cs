@@ -62,13 +62,13 @@ namespace DatasetArchivePlugin
 				if (m_TaskParams.GetParam("StepTool").ToLower() == "datasetarchive")
 				{
 					// This is an archive operation
-					archOpTool = new clsArchiveDataset(m_MgrParams, m_TaskParams);
+					archOpTool = new clsArchiveDataset(m_MgrParams, m_TaskParams, m_StatusTools);
 					archiveOpDescription = "archive";
 				}
 				else
 				{
 					// This is an archive update operation
-					archOpTool = new clsArchiveUpdate(m_MgrParams, m_TaskParams);
+					archOpTool = new clsArchiveUpdate(m_MgrParams, m_TaskParams, m_StatusTools);
 					archiveOpDescription = "archive update";
 				}
 
@@ -123,7 +123,7 @@ namespace DatasetArchivePlugin
 			/// Communicates with database to store the MyEMSL upload stats
 			/// </summary>
 			/// <returns>True for success, False for failure</returns>
-			protected bool StoreMyEMSLUploadStats(int fileCountNew, int fileCountUpdated, Int64 bytes, double uploadTimeSeconds, string statusURI, string contentURI, int errorCode)
+			protected bool StoreMyEMSLUploadStats(int fileCountNew, int fileCountUpdated, Int64 bytes, double uploadTimeSeconds, string statusURI, int errorCode)
 			{
 				
 				bool Outcome = false;
@@ -173,14 +173,9 @@ namespace DatasetArchivePlugin
 						MyCmd.Parameters["@StatusURI"].Direction = System.Data.ParameterDirection.Input;
 						MyCmd.Parameters["@StatusURI"].Value = statusURI;
 
-						MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@ContentURI", System.Data.SqlDbType.VarChar, 255));
-						MyCmd.Parameters["@ContentURI"].Direction = System.Data.ParameterDirection.Input;
-						MyCmd.Parameters["@ContentURI"].Value = contentURI;
-
 						MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@ErrorCode", System.Data.SqlDbType.Int));
 						MyCmd.Parameters["@ErrorCode"].Direction = System.Data.ParameterDirection.Input;
 						MyCmd.Parameters["@ErrorCode"].Value = errorCode;
-
 					}
 
 					string strConnStr = m_MgrParams.GetParam("connectionstring");
@@ -252,7 +247,7 @@ namespace DatasetArchivePlugin
 
 			private void MyEMSLUploadCompleteHandler(object sender, MyEMSLUploadEventArgs e)
 			{
-				StoreMyEMSLUploadStats(e.fileCountNew, e.fileCountUpdated, e.bytes, e.uploadTimeSeconds, e.statusURI, e.contentURI, e.errorCode);
+				StoreMyEMSLUploadStats(e.fileCountNew, e.fileCountUpdated, e.bytes, e.uploadTimeSeconds, e.statusURI, e.errorCode);
 			}
 
 

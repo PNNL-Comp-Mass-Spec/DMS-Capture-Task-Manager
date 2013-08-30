@@ -22,17 +22,19 @@ namespace Pacifica.Core
 		private string _bundleIdentifier = string.Empty;
 		private const string bundleExtension = ".tar";
 
+		private CookieContainer mCookieJar;
+
 		#endregion
 
 		#region Constructor
 
-		public Upload(ref BackgroundWorker backgrounder)
+		public Upload()
 		{
-			backgrounder.WorkerReportsProgress = true;
-			backgrounder.WorkerSupportsCancellation = true;
 
 			/* August 2013: To be deleted
 			 *
+			 * backgrounder.WorkerReportsProgress = true;
+			 * backgrounder.WorkerSupportsCancellation = true;
 			 * this._topLevelBackgrounder = backgrounder;
 			 * statusBackgrounder = new BackgroundWorker();
 			*/
@@ -40,7 +42,7 @@ namespace Pacifica.Core
 			// Note that EasyHttp is a static class with a static event
 			// Be careful about instantiating this class (Upload) multiple times
 			EasyHttp.StatusUpdate += new StatusUpdateEventHandler(EasyHttp_StatusUpdate);
-			
+
 		}
 
 		#endregion
@@ -48,60 +50,55 @@ namespace Pacifica.Core
 
 		#region Events and Handlers
 
-		public event DebugEventHandler DebugEvent;
+		public event MessageEventHandler DebugEvent;
+		public event MessageEventHandler ErrorEvent;
+		public event UploadCompletedEventHandler UploadCompleted;
+		public event StatusUpdateEventHandler StatusUpdate;
+
 
 		public void RaiseDebugEvent(string callingFunction, string currentTask)
 		{
 			if (DebugEvent != null)
 			{
-				DebugEvent(callingFunction, currentTask);
+				DebugEvent(this, new MessageEventArgs(callingFunction, currentTask));
 			}
 		}
-
-		public event DebugEventHandler ErrorEvent;
 
 		public void RaiseErrorEvent(string callingFunction, string errorMessage)
 		{
 			if (ErrorEvent != null)
 			{
-				ErrorEvent(callingFunction, errorMessage);
+				ErrorEvent(this, new MessageEventArgs(callingFunction, errorMessage));
 			}
 		}
 
-		private void EasyHttp_StatusUpdate(string bundleIdentifier, int percentCompleted, long totalBytesSent, long totalBytesToSend, string averageUploadSpeed)
-		{
-			RaiseStatusUpdate(bundleIdentifier, percentCompleted, totalBytesSent, totalBytesToSend, averageUploadSpeed);
-		}
 
-		public event StatusUpdateEventHandler StatusUpdate;
-
-		public void RaiseStatusUpdate(string bundleIdentifier,
-				int percentCompleted, long totalBytesSent,
-				long totalBytesToSend, string averageUploadSpeed)
+		void EasyHttp_StatusUpdate(object sender, StatusEventArgs e)
 		{
 			if (StatusUpdate != null)
 			{
-				StatusUpdate(bundleIdentifier, percentCompleted, totalBytesSent, totalBytesToSend, averageUploadSpeed);
+				StatusUpdate(this, e);
 			}
 		}
 
-		public event TaskCompletedEventHandler TaskCompleted;
-
-		private void RaiseTaskCompleted(string bundleIdentifier, string serverResponse)
+		/* August 2013: To be deleted
+		 *
+		public void RaiseStatusUpdate(string bundleIdentifier,
+				double percentCompleted, long totalBytesSent,
+				long totalBytesToSend, string statusMessage)
 		{
-			if (TaskCompleted != null)
+			if (StatusUpdate != null)
 			{
-				TaskCompleted(bundleIdentifier, serverResponse);
+				StatusUpdate(this, new StatusEventArgs(bundleIdentifier, percentCompleted, totalBytesSent, totalBytesToSend, statusMessage));
 			}
 		}
+		*/
 
-		public event DataVerifiedHandler DataReceivedAndVerified;
-
-		private void ReportDataReceivedAndVerified(bool success, string errorMessage)
+		private void RaiseUploadCompleted(string bundleIdentifier, string serverResponse)
 		{
-			if (DataReceivedAndVerified != null)
+			if (UploadCompleted != null)
 			{
-				DataReceivedAndVerified(success, errorMessage);
+				UploadCompleted(this, new UploadCompletedEventArgs(bundleIdentifier, serverResponse));
 			}
 		}
 
@@ -109,15 +106,23 @@ namespace Pacifica.Core
 
 		#region IUpload Members
 
-		public void ProcessMetadata(IDictionary metadataObject)
+		public bool StartUpload(IDictionary metadataObject, out string statusURL)
 		{
-			NetworkCredential cred = CredentialCache.DefaultNetworkCredentials;
-			ProcessMetadata(metadataObject, cred);
+			NetworkCredential cred = null;
+			return StartUpload(metadataObject, cred, out statusURL);
 		}
 
-		public void ProcessMetadata(IDictionary metadataObject, NetworkCredential loginCredentials)
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="metadataObject"></param>
+		/// <param name="loginCredentials"></param>
+		/// <param name="?"></param>
+		/// <returns>True if successfully uploaded, false if an error</returns>
+		public bool StartUpload(IDictionary metadataObject, NetworkCredential loginCredentials, out string statusURL)
 		{
 			string timestamp = DateTime.Now.ToString("yyyyMMddHHmmssffffff");
+			statusURL = string.Empty;
 
 			string bundleName = timestamp + bundleExtension;
 			if (metadataObject.Contains("bundleName") && metadataObject["bundleName"] is string)
@@ -129,39 +134,41 @@ namespace Pacifica.Core
 				metadataObject.Add("bundleName", bundleName);
 			}
 
-			// ToDo: Add "subdir" key and value
-
-			// Grab the list of files from the top-level "file" object
-			SortedDictionary<string, FileInfoObject> fileListObject = new SortedDictionary<string, FileInfoObject>();
-			IList fileList = (List<Dictionary<string, object>>)metadataObject["file"];
-			var newFileObj = new List<Dictionary<string, string>>();
+			var fileList = (List<Pacifica.Core.FileInfoObject>)metadataObject["file"];
 
 			if (fileList.Count == 0)
 			{
 				RaiseDebugEvent("ProcessMetadata", "File list is empty; nothing to do");
-				RaiseTaskCompleted(bundleName, "");
-				return;
+				RaiseUploadCompleted(bundleName, "");
+				return true;
 			}
 
-			foreach (object file in fileList)
+			// Grab the list of files from the top-level "file" object
+			// Keys in this dictionary are the source file path; values are metadata about the file
+			SortedDictionary<string, FileInfoObject> fileListObject = new SortedDictionary<string, FileInfoObject>();
+
+			// This is a list of dictionary objects
+			// Dictionary keys will be sha1Hash, destinationDirectory, and fileName
+			var newFileObj = new List<Dictionary<string, string>>();
+
+			foreach (var file in fileList)
 			{
-				Dictionary<string, object> fileItem = (Dictionary<string, object>)file;
-				string localPath = fileItem["localFilePath"].ToString();
-				string relativePath = fileItem["destinationDirectory"].ToString();
-				string fileName = fileItem["fileName"].ToString();
-				//string fullLocalPath = Path.Combine(localPath, fileName);
-				string fullLocalPath = localPath;
-				string hash = fileItem["sha1Hash"].ToString();
-				FileInfoObject fiObj = new FileInfoObject(fullLocalPath, relativePath, hash);
+
+				FileInfoObject fiObj = new FileInfoObject(file.AbsoluteLocalPath, file.RelativeDestinationDirectory, file.Sha1HashHex);
 
 				if (fiObj.RelativeDestinationFullPath.ToLower() == "metadata.txt")
 				{
-					// We must skip this file since MyEMSL stores a special metadata.txt file at the root
+					// We must skip this file since MyEMSL stores a special metadata.txt file at the root of the .tar file
+					// The alternative would be to create a tar file with all of the data files (and folders) in a subfolder named data
+					// In this case we would define the data as version 1.2 instead of 1.0
+					//   metadataObject.Add("version", "1.2");
+					// However, creating a .tar file with the data in this layout is tricky with 7-zip, so we'll just skip metadata.txt files, which really shouldn't hurt anything
+
 					RaiseErrorEvent("ProcessMetadata", "Skipping metadata.txt file at '" + fiObj.AbsoluteLocalPath + "' due to name conflict with the MyEmsl metadata.txt file");
 				}
 				else
 				{
-					fileListObject.Add(fullLocalPath, fiObj);
+					fileListObject.Add(file.AbsoluteLocalPath, fiObj);
 					newFileObj.Add(fiObj.SerializeToDictionaryObject());
 				}
 			}
@@ -170,8 +177,8 @@ namespace Pacifica.Core
 			metadataObject["file"] = newFileObj;
 
 			string mdJson = Utilities.ObjectToJson(metadataObject);
-			DirectoryInfo tmpDir = Utilities.GetTempDirectory();
 
+			// Create the metadata.txt file
 			string metadataFilename = Path.GetTempFileName();
 			FileInfo mdTextFile = new FileInfo(metadataFilename);
 			using (StreamWriter sw = mdTextFile.CreateText())
@@ -179,314 +186,138 @@ namespace Pacifica.Core
 				sw.Write(mdJson);
 			}
 
-			// Prior to June 2012, we would add the metadata.txt file to fileListObject
-			// We now send that information into BundleFiles using the metadataFilePath parameter
-			// Deprecated code:
-			//  FileInfoObject mdFileObject = new FileInfoObject(mdTextFile.FullName, string.Empty);
-			//  mdFileObject.DestinationFileName = "metadata.txt";
-			//  fileListObject.Add(mdFileObject.Sha1HashHex, mdFileObject);
-
-			FileInfo zipFi = BundleFiles(fileListObject, mdTextFile.FullName, metadataObject["bundleName"].ToString());
-
-			if (Configuration.UploadFiles)
-			{
-				NetworkCredential newCred = null;
-				if (loginCredentials != null)
-				{
-					newCred = new NetworkCredential(loginCredentials.UserName,
-							loginCredentials.Password, loginCredentials.Domain);
-				}
-
-				/* August 2013: To be deleted
-				 *
-				 * Get a real server for us to work with
-				 * string redirectedServer = Utilities.GetRedirect(new Uri(Configuration.TestAuthUri));
-				*/
-
-				string redirectedServer = Pacifica.Core.Configuration.ServerUri;
-				string preallocateUrl = redirectedServer + "/myemsl/cgi-bin/preallocate";
-				int timeoutSeconds = 10;
-
-
-				RaiseDebugEvent("ProcessMetadata", "Preallocating with " + preallocateUrl);
-				string postData = "";
-				HttpStatusCode responseStatusCode;
-
-				string preallocateReturn = EasyHttp.Send(preallocateUrl, Auth.GetCookies(), 
-					out responseStatusCode, postData,
-					EasyHttp.HttpMethod.Get, timeoutSeconds, newCred);
-
-				//TODO - This method really needs to be informed which data upload schemes (e.g. http and https) are allowed
-				//The server is the only reliable method to get this information.  'preallocate' needs to return a
-				//list of supported upload schemes...
-				//Once we know which schemes are supported server side, we can take into consideration user preferences.
-				//If the user doesn't mind uploading data unsecured, then that might be preferred as it will speed the upload.
-				//For now, we are defaulting to http.
-				string scheme = "http";
-
-				//This is just a local configuration that states which is preferred.
-				//It doesn't inform what is supported on the server.
-				if (Configuration.UseSecureDataTransfer)
-				{
-					scheme = Configuration.SecuredScheme;
-				}
-				else
-				{
-					scheme = Configuration.UnsecuredScheme;
-				}
-
-				string server = null;
-				string serverRegex = @"^Server:[\t ]*(?<server>.*)$";
-				Match m = Regex.Match(preallocateReturn, serverRegex, RegexOptions.Multiline);
-				if (m.Success)
-				{
-					server = m.Groups["server"].Value.Trim();
-				}
-				else
-				{
-					RaiseErrorEvent("ProcessMetadata", "Preallocate did not return a server: " + preallocateReturn);
-					throw new ApplicationException(string.Format("Preallocate {0} did not return a server.",
-							preallocateUrl));
-				}
-
-				string location = null;
-				string locRegex = @"^Location:[\t ]*(?<loc>.*)$";
-				m = Regex.Match(preallocateReturn, locRegex, RegexOptions.Multiline);
-				if (m.Success)
-				{
-					location = m.Groups["loc"].Value.Trim();
-				}
-				else
-				{
-					RaiseErrorEvent("ProcessMetadata", "Preallocate did not return a location: " + preallocateReturn);
-					throw new ApplicationException(string.Format("Preallocate {0} did not return a location.",
-							preallocateUrl));
-				}
-
-				string serverUri = scheme + "://" + server;
-
-				string storageUrl = serverUri + location;
-
-				RaiseDebugEvent("ProcessMetadata", "Sending file to " + storageUrl);
-				string resp = EasyHttp.SendFileToDav(location, serverUri, zipFi.FullName, Auth.GetCookies(), newCred);
-				string finishUrl = serverUri + "/myemsl/cgi-bin/finish" + location;
-
-				RaiseDebugEvent("ProcessMetadata", "Sending finish via " + finishUrl);
-				timeoutSeconds = 10;
-				postData = "";
-
-				string finishResult = EasyHttp.Send(finishUrl, Auth.GetCookies(),
-					out responseStatusCode, postData,
-					EasyHttp.HttpMethod.Get, timeoutSeconds, newCred);
-
-				//The finish CGI script returns "Location:[URL]\nAccepted\n" on success...
-				string finishRegex = @"(^Status:(?<url>.*)\n)?(?<accepted>^Accepted)\n";
-				string locationUrl = string.Empty;
-				m = Regex.Match(finishResult, finishRegex, RegexOptions.Multiline);
-				if (m.Groups["accepted"].Success && !m.Groups["url"].Success)
-				{
-					RaiseTaskCompleted(bundleName, finishResult);
-				}
-				else if (m.Groups["accepted"].Success && m.Groups["url"].Success)
-				{
-					locationUrl = m.Groups["url"].Value.Trim();
-					RaiseTaskCompleted(bundleName, locationUrl);
-				}
-				else
-				{
-					throw new ApplicationException(finishUrl + " failed with message: " + finishResult);
-				}
-			}
-
-			mdTextFile.Delete();
-		}
-
-		public void BeginUploadMonitoring(string serverStatusURL, string serverSearchURL)
-		{
-			string statusURI = serverStatusURL + "/xml";
+			string bundleNameFull = metadataObject["bundleName"].ToString();
 
 			/* August 2013: To be deleted
 			 *
-			 * this.statusBackgrounder.DoWork += new DoWorkEventHandler(UploadMonitorLoop);
-			 * this.statusBackgrounder.RunWorkerCompleted += new RunWorkerCompletedEventHandler(backgrounder_RunWorkerCompleted);
-			*/
+			 * FileInfo fiTarFile = BundleFiles(fileListObject, mdTextFile.FullName, bundleNameFull);
+			 */
 
-			// Dictionary<string, object> args = new Dictionary<string, object>() { { "statusURI", statusURI }, { "fileMetadataObject", fileMetadataObject }, { "serverSearchURL", serverSearchURL } };
-			Dictionary<string, object> args = new Dictionary<string, object>() { { "statusURI", statusURI }, { "serverSearchURL", serverSearchURL } };
-			string errorMessage;
-			Boolean success = this.UploadMonitorLoop(args, out errorMessage);
-
-			/* August 2013: To be deleted
-			 *
-			 * //this.statusBackgrounder.RunWorkerAsync(args);
-			*/
-
-			DataReceivedAndVerified(success, errorMessage);
-		}
-
-		/* August 2013: To be deleted
-		 *
-		 * void  backgrounder_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e) {
-		 *   Boolean success = (bool)e.Result;
-		 *   DataReceivedAndVerified(success);
-		 * }
-		
-		 * void UploadMonitorLoop(object sender, DoWorkEventArgs e) {
-		*/
-
-		//
-		// August 2013: Function likely to be deleted
-		//
-
-		Boolean UploadMonitorLoop(Dictionary<string, object> args, out string errorMessage)
-		{
-			//System.ComponentModel.BackgroundWorker bgw = (System.ComponentModel.BackgroundWorker)sender;
-			//Dictionary<string, object> args = (Dictionary<string, object>)e.Argument;
-			string statusURI = args["statusURI"].ToString();
-			string serverSearchURI = args["serverSearchURL"].ToString();
-
-			/* August 2013: To be deleted
-			 * 
-			 * List<Dictionary<string, object>> fileMetadataObject = (List<Dictionary<string, object>>)args["fileMetadataObject"];
-		    */
-
-			errorMessage = string.Empty;
-
-			// Start at a 4 second delay, increase the delay every loop until the delay is 120 seconds
-			// Maximum wait time is 90 minutes
-
-			int currentLoopDelaySec = 4;
-			int maxLoopDelaySec = 300;		// 5 minutes
-			int iterations = 1;
-			int maxWaitTimeMinutes = 90;
-
-			string xmlServerResponse = string.Empty;
-			bool abortNow;
-			string dataReceivedMessage;
-			System.DateTime dtStartTime = System.DateTime.UtcNow;
-
-			while (System.DateTime.UtcNow.Subtract(dtStartTime).TotalMinutes < maxWaitTimeMinutes)
+			NetworkCredential newCred = null;
+			if (loginCredentials != null)
 			{
-				if (currentLoopDelaySec > 10)
-				{
-					RaiseDebugEvent("UploadMonitorLoop", "Waiting " + currentLoopDelaySec + " seconds");
-				}
-
-				System.Threading.Thread.Sleep(currentLoopDelaySec * 1000);
-
-				try
-				{
-					int timeoutSeconds = 5;
-					HttpStatusCode responseStatusCode;
-
-					xmlServerResponse = EasyHttp.Send(statusURI, out responseStatusCode, timeoutSeconds);
-					if (this.WasDataReceived(xmlServerResponse, out abortNow, out dataReceivedMessage))
-					{
-						return true;
-					}
-
-					if (abortNow)
-					{
-						errorMessage = string.Copy(dataReceivedMessage);
-						return false;
-					}
-
-				}
-				catch (Exception ex)
-				{
-					RaiseErrorEvent("UploadMonitorLoop", ex.Message);
-				}
-				
-				if (iterations == 1)
-					RaiseDebugEvent("UploadMonitorLoop", "Data not yet ready; see " + statusURI);
-
-				iterations++;
-				if (currentLoopDelaySec < maxLoopDelaySec)
-				{
-					currentLoopDelaySec *= 2;
-					if (currentLoopDelaySec > maxLoopDelaySec)
-						currentLoopDelaySec = maxLoopDelaySec;
-				}
-
+				newCred = new NetworkCredential(loginCredentials.UserName,
+						loginCredentials.Password, loginCredentials.Domain);
 			}
 
-			RaiseErrorEvent("UploadMonitorLoop", "Data not received after waiting " + System.DateTime.UtcNow.Subtract(dtStartTime).TotalMinutes.ToString("0.0") + " minutes");
+			// Call the testauth service to obtain a cookie for this session
+			string authURL = Pacifica.Core.Configuration.TestAuthUri;
+			Auth auth = new Auth(new Uri(authURL));
 
-			//e.Result = false;
-			return false;
-		}
+			mCookieJar = null;
+			if (!auth.GetAuthCookies(out mCookieJar))
+			{
+				string msg = "Auto-login to " + Pacifica.Core.Configuration.TestAuthUri + " failed authentication";
+				RaiseErrorEvent("ProcessMetadata", msg);
+				throw new ApplicationException(msg);
+			}
 
-		private Boolean WasDataReceived(string xmlServerResponse, out bool abortNow, out string dataReceivedMessage)
-		{
-			Boolean success = false;
-			abortNow = false;
-			dataReceivedMessage = string.Empty;
+			string redirectedServer = Pacifica.Core.Configuration.ServerUri;
+			string preallocateUrl = redirectedServer + "/myemsl/cgi-bin/preallocate";
+			int timeoutSeconds = 10;
+
+
+			RaiseDebugEvent("ProcessMetadata", "Preallocating with " + preallocateUrl);
+			string postData = "";
+			HttpStatusCode responseStatusCode;
+
+			string preallocateReturn = EasyHttp.Send(preallocateUrl, mCookieJar,
+				out responseStatusCode, postData,
+				EasyHttp.HttpMethod.Get, timeoutSeconds, newCred);
+
+			string scheme = "http";
+
+			//This is just a local configuration that states which is preferred.
+			//It doesn't inform what is supported on the server.
+			if (Configuration.UseSecureDataTransfer)
+			{
+				scheme = Configuration.SecuredScheme;
+			}
+			else
+			{
+				scheme = Configuration.UnsecuredScheme;
+			}
+
+			string server = null;
+			var reServerName = new Regex(@"^Server:[\t ]*(?<server>.*)$", RegexOptions.Multiline);
+			Match m = reServerName.Match(preallocateReturn);
+
+			if (m.Success)
+			{
+				server = m.Groups["server"].Value.Trim();
+			}
+			else
+			{
+				RaiseErrorEvent("ProcessMetadata", "Preallocate did not return a server: " + preallocateReturn);
+				throw new ApplicationException(string.Format("Preallocate {0} did not return a server.",
+						preallocateUrl));
+			}
+
+			string location = null;
+			var reLocation = new Regex(@"^Location:[\t ]*(?<loc>.*)$", RegexOptions.Multiline);
+
+			m = reLocation.Match(preallocateReturn);
+			if (m.Success)
+			{
+				location = m.Groups["loc"].Value.Trim();
+			}
+			else
+			{
+				RaiseErrorEvent("ProcessMetadata", "Preallocate did not return a location: " + preallocateReturn);
+				throw new ApplicationException(string.Format("Preallocate {0} did not return a location.",
+						preallocateUrl));
+			}
+
+			string serverUri = scheme + "://" + server;
+
+			string storageUrl = serverUri + location;
+
+			RaiseDebugEvent("ProcessMetadata", "Sending file to " + storageUrl);
+
+			// The response data will likely be empty
+			//string resp = EasyHttp.SendFileToDav(location, serverUri, fiTarFile.FullName, mCookieJar, newCred);
+			string resp = EasyHttp.SendFileListToDavAsTar(location, serverUri, fileListObject, mdTextFile.FullName, mCookieJar, newCred);
+
+			string finishUrl = serverUri + "/myemsl/cgi-bin/finish" + location;
+			RaiseDebugEvent("ProcessMetadata", "Sending finish via " + finishUrl);
+			timeoutSeconds = 10;
+			postData = "";
+
+			string finishResult = EasyHttp.Send(finishUrl, mCookieJar,
+				out responseStatusCode, postData,
+				EasyHttp.HttpMethod.Get, timeoutSeconds, newCred);
+
+			// The finish CGI script returns "Status:[URL]\nAccepted\n" on success...
+			// This RegEx looks for Accepted in the text, optionally preceded by a Status: line
+			var reStatusURL = new Regex(@"(^Status:(?<url>.*)\n)?(?<accepted>^Accepted)\n", RegexOptions.Multiline);
+			bool success = false;
+
+			m = reStatusURL.Match(finishResult);
+			if (m.Groups["accepted"].Success && !m.Groups["url"].Success)
+			{
+				// File was accepted, but the Status URL is empty
+				// This likely indicates a problem
+				RaiseUploadCompleted(bundleName, finishResult);
+				success = false;
+			}
+			else if (m.Groups["accepted"].Success && m.Groups["url"].Success)
+			{
+				statusURL = m.Groups["url"].Value.Trim();
+				RaiseUploadCompleted(bundleName, statusURL);
+				success = true;
+			}
+			else
+			{
+				throw new ApplicationException(finishUrl + " failed with message: " + finishResult);
+			}
 
 			try
 			{
-				System.Xml.XmlDocument xmlDoc = new System.Xml.XmlDocument();
-				xmlDoc.LoadXml(xmlServerResponse);
-
-				// Example XML:
-				//
-				// <?xml version="1.0"?>
-				// <myemsl>
-				// 	<status username='70000'>
-				// 		<transaction id='111177' />
-				// 		<step id='0' message='completed' status='SUCCESS' />
-				// 		<step id='1' message='completed' status='SUCCESS' />
-				// 		<step id='2' message='completed' status='SUCCESS' />
-				// 		<step id='3' message='completed' status='SUCCESS' />
-				// 		<step id='4' message='completed' status='SUCCESS' />
-				// 		<step id='5' message='completed' status='SUCCESS' />
-				// 		<step id='6' message='verified' status='SUCCESS' />
-				// 	</status>
-				// </myemsl>
-				// 
-				// Step IDs correspond to:
-				// 0: Submitted
-				// 1: Received
-				// 2: Processing
-				// 3: Verified
-				// 4: Stored
-				// 5: Available   (status will be "ERROR" if user doesn't have upload permissions for a proposal; 
-				//                 for example https://a4.my.emsl.pnl.gov/myemsl/cgi-bin/status/1042281/xml shows message 
-				//                 "You(47943) do not have upload permissions to proposal 17797"
-				//                 for user svc-dms on May 3, 2012)
-				// 6: Archived    (status will be "UNKNOWN" if not yet verified)
-
-				// Check the "available" entry (ID=5) to make sure everything came through ok
-
-				string query = string.Format("//*[@id='{0}']", 5);
-				System.Xml.XmlNode statusElement = xmlDoc.SelectSingleNode(query);
-
-				string message = statusElement.Attributes["message"].Value;
-				string status = statusElement.Attributes["status"].Value;
-
-				if (status.ToLower() == "success" && message.ToLower() == "completed")
-				{
-					dataReceivedMessage = "Data is available";
-					success = true;
-				}
-
-				if (message.Contains("do not have upload permissions"))
-				{
-					dataReceivedMessage = "Aborting upload due to permissions error: " + message;
-					abortNow = true;
-				}
-
+				mdTextFile.Delete();
 			}
-			catch (Exception ex)
+			catch
 			{
-				RaiseErrorEvent("WasDataReceived", ex.Message);
-			}
-
-			if (success)
-			{
-				string logoutURL = Configuration.ServerUri + "/myemsl/logout";
-				int timeoutSeconds = 5;
-				HttpStatusCode responseStatusCode;
-				string response = EasyHttp.Send(logoutURL, Auth.GetCookies(), out responseStatusCode, timeoutSeconds);
+				// Ignore errors here
 			}
 
 			return success;
@@ -501,6 +332,8 @@ namespace Pacifica.Core
 
 		#region  Member Methods
 
+		/* August 2013: To be deleted
+		 *
 		private FileInfo BundleFiles(SortedDictionary<string, FileInfoObject> pathList, string metadataFilePath, string bundleId)
 		{
 			string message = string.Empty;
@@ -523,7 +356,8 @@ namespace Pacifica.Core
 			string bundleFilePath = Path.Combine(tempDir.FullName, cacheFileName);
 
 			string statusMessage = "Saving bundle: " + bundleFilePath;
-			int percentComplete = 0;
+			double percentComplete = 0;
+
 			RaiseStatusUpdate(this._bundleIdentifier, percentComplete, 0, 0, statusMessage);
 
 			EventHandler<SevenZip.ProgressEventArgs> update = (s, e) =>
@@ -532,7 +366,7 @@ namespace Pacifica.Core
 						RaiseStatusUpdate(this._bundleIdentifier, e.PercentDone, 0, 0, statusMessage);
 					};
 
-			CreateTar(pathList.Values, metadataFilePath, bundleFilePath, update);		
+			CreateTar(pathList.Values, metadataFilePath, bundleFilePath, update);
 
 			statusMessage = "Save bundle complete:";
 			percentComplete = 100;
@@ -546,8 +380,6 @@ namespace Pacifica.Core
 			Trace.WriteLine(retFi.FullName);
 			return retFi;
 		}
-
-		#endregion
 
 		/// <summary>
 		/// Create a Tar file using SevenZipSharp
@@ -565,11 +397,11 @@ namespace Pacifica.Core
 			System.IO.FileInfo fi = new System.IO.FileInfo(path);
 			path = System.IO.Path.Combine(fi.DirectoryName, "7z.dll");
 			SevenZip.SevenZipCompressor.SetLibraryPath(path);
-			
+
 			// This list tracks the full paths of the files to be added to the .tar file
 			// We pass this list to the compressor when using function CompressFiles()
-			System.Collections.Generic.List<string> sourceFilePathsFull = new System.Collections.Generic.List<string>();
-			
+			var sourceFilePathsFull = new System.Collections.Generic.List<string>();
+
 			// This dictionary keeps track of the target file paths within the .tar file
 			// Key is the target file path, while value is the source file path
 			// We pass this dictionary to the compressor when using function CompressFileDictionary()
@@ -605,7 +437,7 @@ namespace Pacifica.Core
 							sourceFilePathsFull.Add(file.AbsoluteLocalPath);
 						}
 
-					}					
+					}
 				}
 
 				compressor.CompressFiles(tarFileStream, sourceFilePathsFull.ToArray());
@@ -628,6 +460,10 @@ namespace Pacifica.Core
 			}
 
 		}
+
+		 */
+
+		#endregion
 
 	}
 

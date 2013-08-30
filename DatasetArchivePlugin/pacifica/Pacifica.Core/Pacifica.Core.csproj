@@ -54,16 +54,20 @@
     <CodeAnalysisFailOnMissingRules>false</CodeAnalysisFailOnMissingRules>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Jayrock, Version=0.9.8316.0, Culture=neutral">
-      <HintPath>..\Lib\Jayrock.dll</HintPath>
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="ICSharpCode.SharpZipLib">
+      <HintPath>..\..\..\RefLib\ICSharpCode.SharpZipLib.dll</HintPath>
     </Reference>
-    <Reference Include="Jayrock.Json, Version=0.9.8316.0, Culture=neutral">
-      <HintPath>..\Lib\Jayrock.Json.dll</HintPath>
+    <Reference Include="Jayrock, Version=0.9.12915.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\RefLib\Jayrock.dll</HintPath>
+    </Reference>
+    <Reference Include="Jayrock.Json, Version=0.9.12915.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\RefLib\Jayrock.Json.dll</HintPath>
     </Reference>
     <Reference Include="SevenZipSharp, Version=0.64.3890.29348, Culture=neutral, PublicKeyToken=20de82c62b055c88, processorArchitecture=MSIL">
-      <HintPath>..\Lib\SevenZipSharp.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\RefLib\SevenZipSharp.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.ServiceModel" />
@@ -71,6 +75,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Auth.cs" />
+    <Compile Include="EventArgs.cs" />
     <Compile Include="Exceptions.cs" />
     <Compile Include="Schema\Action.cs" />
     <Compile Include="Configuration.cs" />
@@ -105,9 +110,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy "$(ProjectDir)..\Lib\*.dll" "$(ProjectDir)..\..\..\DeployedFiles"
-copy "$(ProjectDir)..\Lib\*.dll"  "$(ProjectDir)..\..\..\CaptureTaskManager\CaptureTaskManager\bin\Debug"
-copy "$(TargetPath)" "$(ProjectDir)..\..\..\DeployedFiles"
+    <PostBuildEvent>copy "$(TargetPath)" "$(ProjectDir)..\..\..\DeployedFiles"
 copy "$(TargetDir)*.*" "$(ProjectDir)..\..\..\CaptureTaskManager\CaptureTaskManager\bin\Debug"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

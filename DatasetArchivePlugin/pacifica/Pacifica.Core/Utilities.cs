@@ -38,6 +38,16 @@ namespace Pacifica.Core
 			return hashString;
 		}
 
+		public static string GetDictionaryValue(Dictionary<string, string> dictionary, string keyName, string valueIfMissing)
+		{
+			string value;
+
+			if (dictionary.TryGetValue(keyName, out value))
+				return value;
+			else
+				return valueIfMissing;
+		}
+
 		public static DirectoryInfo GetTempDirectory()
 		{
 			DirectoryInfo di;
