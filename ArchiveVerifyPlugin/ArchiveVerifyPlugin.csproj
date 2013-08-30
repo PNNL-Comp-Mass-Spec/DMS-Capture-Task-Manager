@@ -40,6 +40,9 @@
     <Reference Include="MyEMSLReader">
       <HintPath>..\RefLib\MyEMSLReader.dll</HintPath>
     </Reference>
+    <Reference Include="Pacifica.Core">
+      <HintPath>..\DeployedFiles\Pacifica.Core.dll</HintPath>
+    </Reference>
     <Reference Include="PRISM">
       <HintPath>..\RefLib\PRISM.dll</HintPath>
     </Reference>

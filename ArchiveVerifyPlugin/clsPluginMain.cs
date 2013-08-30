@@ -1,6 +1,8 @@
 ﻿using System;
 using CaptureTaskManager;
+using Pacifica.Core;
 using System.Collections.Generic;
+using System.Net;
 
 namespace ArchiveVerifyPlugin
 {
@@ -17,6 +19,9 @@ namespace ArchiveVerifyPlugin
 		#region "Class-wide variables"
 		clsToolReturnData mRetData = new clsToolReturnData();
 
+		protected double mPercentComplete;
+		protected DateTime mLastProgressUpdateTime = DateTime.UtcNow;
+
 		#endregion
 
 		#region "Constructors"
@@ -32,7 +37,7 @@ namespace ArchiveVerifyPlugin
 		/// <summary>
 		/// Runs the Archive Verify step tool
 		/// </summary>
-		/// <returns>Enum indicating success or failure</returns>
+		/// <returns>Class with completionCode, completionMessage, evaluationCode, and evaluationMessage</returns>
 		public override clsToolReturnData RunTool()
 		{
 			string msg;
@@ -51,9 +56,15 @@ namespace ArchiveVerifyPlugin
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 			}
 
-			// ToDo: Perform work here
-			bool success = false;
+			// Set this to Success for now
+			mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
 
+			// Examine the MyEMSL ingest status page
+			bool success = CheckUploadStatus();
+
+			if (success)
+				success = VisibleInElasticSearch();
+			
 			if (success)
 			{
 				// Everything was good
@@ -66,14 +77,10 @@ namespace ArchiveVerifyPlugin
 			}
 			else
 			{
-				// There was a problem
-				msg = "Problem verifying data in MyEMSL for dataset " + m_Dataset + ". See local log for details";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg);
-				mRetData.EvalCode = EnumEvalCode.EVAL_CODE_FAILED;
-				mRetData.EvalMsg = msg;
-				mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+				// There was a problem	
+				if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
+					mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
 			}
-
 			
 			msg = "Completed clsPluginMain.RunTool()";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
@@ -82,91 +89,140 @@ namespace ArchiveVerifyPlugin
 
 		}	// End sub
 
-
-
-		protected bool CheckUploadStatus(string statusURI, out string errorMessage)
+		protected bool CheckUploadStatus()
 		{
 
-		
-			errorMessage = string.Empty;
-
 			// Monitor the upload status for 60 seconds
-			// If still not complete after 60 seconds, then this manager will tell the DMS_Capture DB to bump the Next_Try value by 15 minutes and reset the state to 2
+			// If still not complete after 60 seconds, then this manager will return completionCode CLOSEOUT_NOT_READY=2 
+			// which will tell the DMS_Capture DB to reset the task to state 2 and bump up the Next_Try value by 5 minutes
 			const int MAX_WAIT_TIME_SECONDS = 60;
 
 			DateTime dtStartTime = DateTime.UtcNow;
 
-			// Call the testauth service to obtain a cookie for this session
-			string authURL = MyEMSLReader.MyEMSLBase.MYEMSL_URI_BASE + "testauth";
-			Auth auth = new Auth(new Uri(authURL));
+			string statusURI = m_TaskParams.GetParam("MyEMSL_Status_URI", "");
 
-			if (cookieJar == null)
+			if (string.IsNullOrEmpty(statusURI))
 			{
-				if (!auth.GetAuthCookies(out cookieJar))
-				{
-					ReportError("Auto-login to ingest.my.emsl.pnl.gov failed authentication");
-					return string.Empty;
-				}
+				string msg = "MyEMSL_Status_URI is empty; cannot verify upload status";
+				mRetData.CloseoutMsg = msg;
+				mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+				return false;
 			}
 
+			// Call the testauth service to obtain a cookie for this session
+			string authURL = Configuration.TestAuthUri;
+			Auth auth = new Auth(new Uri(authURL));
 
+			CookieContainer cookieJar = null;
+			if (!auth.GetAuthCookies(out cookieJar))
+			{
+				string msg = "Auto-login to " + Configuration.TestAuthUri + " failed authentication";
+				mRetData.CloseoutMsg = "Failed to obtain MyEMSL session cookie";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+				return false;
+			}
+
+			int exceptionCount = 0;
 			while (DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds < MAX_WAIT_TIME_SECONDS)
 			{
-				if (currentLoopDelaySec > 10)
-				{
-					RaiseDebugEvent("UploadMonitorLoop", "Waiting " + currentLoopDelaySec + " seconds");
-				}
-
-				System.Threading.Thread.Sleep(currentLoopDelaySec * 1000);
-
+				
 				try
 				{
 					int timeoutSeconds = 5;
 					HttpStatusCode responseStatusCode;
 
-					xmlServerResponse = EasyHttp.Send(statusURI, out responseStatusCode, timeoutSeconds);
+					string xmlServerResponse = EasyHttp.Send(statusURI, out responseStatusCode, timeoutSeconds);
+					
+					bool abortNow;
+					string dataReceivedMessage;
+
 					if (this.WasDataReceived(xmlServerResponse, out abortNow, out dataReceivedMessage))
 					{
-
-						string logoutURL = Configuration.ServerUri + "/myemsl/logout";
-						timeoutSeconds = 5;
-						string response = EasyHttp.Send(logoutURL, mCookieJar, out responseStatusCode, timeoutSeconds);
-
+						Utilities.Logout(cookieJar);
 						return true;
 					}
 
 					if (abortNow)
 					{
-						errorMessage = string.Copy(dataReceivedMessage);
+						mRetData.CloseoutMsg = dataReceivedMessage;
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, dataReceivedMessage);
+						Utilities.Logout(cookieJar);
 						return false;
 					}
 
 				}
 				catch (Exception ex)
 				{
-					RaiseErrorEvent("UploadMonitorLoop", ex.Message);
+					exceptionCount++;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception checking upload status", ex);
+					if (exceptionCount >= 3)
+						break;
 				}
 
-				if (iterations == 1)
-					RaiseDebugEvent("UploadMonitorLoop", "Data not yet ready; see " + statusURI);
-
-				iterations++;
-				if (currentLoopDelaySec < maxLoopDelaySec)
-				{
-					currentLoopDelaySec *= 2;
-					if (currentLoopDelaySec > maxLoopDelaySec)
-						currentLoopDelaySec = maxLoopDelaySec;
-				}
+				exceptionCount = 0;
+			
+				// Sleep for 5 seconds
+				System.Threading.Thread.Sleep(5000);
 
 			}
 
-			RaiseErrorEvent("UploadMonitorLoop", "Data not received after waiting " + System.DateTime.UtcNow.Subtract(dtStartTime).TotalMinutes.ToString("0.0") + " minutes");
-
-			//e.Result = false;
 			return false;
 		}
 
-		private Boolean WasDataReceived(string xmlServerResponse, out bool abortNow, out string dataReceivedMessage)
+		
+			
+		protected bool CompareToFilesOnDisk(List<MyEMSLReader.ArchivedFileInfo>lstArchivedFiles)
+		{
+
+			// TODO: Compare the files in lstArchivedFiles to those actually on disk
+
+			return false;
+
+		}
+
+		protected Boolean CreateMD5StageFile(List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles)
+		{
+			return false;
+
+		}
+
+		protected Boolean VisibleInElasticSearch()
+		{
+			var reader = new MyEMSLReader.Reader();
+			reader.IncludeAllRevisions = false;
+
+			// Attach events
+			reader.ErrorEvent += new MyEMSLReader.MyEMSLBase.MessageEventHandler(reader_ErrorEvent);
+			reader.MessageEvent += new MyEMSLReader.MyEMSLBase.MessageEventHandler(reader_MessageEvent);
+			reader.ProgressEvent += new MyEMSLReader.MyEMSLBase.ProgressEventHandler(reader_ProgressEvent);
+
+			string subDir = m_TaskParams.GetParam("Output_Folder_Name", "");
+
+			var lstArchivedFiles = reader.FindFilesByDatasetID(m_DatasetID, subDir);
+
+			if (lstArchivedFiles.Count == 0)
+			{
+				string msg = "Elastic search did not find any files for Dataset_ID " + m_DatasetID;
+					if (!string.IsNullOrEmpty(subDir))
+						msg += " and subdirectory " + subDir;
+
+				mRetData.CloseoutMsg = msg;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+				return false;
+			}
+
+
+			bool success = CompareToFilesOnDisk(lstArchivedFiles);
+
+			if (success)
+				success = CreateMD5StageFile(lstArchivedFiles);
+
+			return success;
+
+		}
+
+		protected bool WasDataReceived(string xmlServerResponse, out bool abortNow, out string dataReceivedMessage)
 		{
 			Boolean success = false;
 			abortNow = false;
@@ -221,40 +277,44 @@ namespace ArchiveVerifyPlugin
 
 				if (message.Contains("do not have upload permissions"))
 				{
-					dataReceivedMessage = "Aborting upload due to permissions error: " + message;
+					dataReceivedMessage = "Permissions error: " + message;
 					abortNow = true;
 				}
 
 			}
 			catch (Exception ex)
 			{
-				RaiseErrorEvent("WasDataReceived", ex.Message);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in WasDataReceived", ex);
 			}
 
 			return success;
 		}
 
+		#endregion
 
-		void myEMSLUpload_DataReceivedAndVerified(bool successfulVerification, string errorMessage)
+		#region "Event Handlers"
+		void reader_ErrorEvent(object sender, MyEMSLReader.MessageEventArgs e)
 		{
-			string msg;
-			if (successfulVerification)
-			{
-				msg = "  ... DataReceivedAndVerified success = true";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-				m_MyEmslUploadSuccess = true;
-			}
-			else
-			{
-				msg = "  ... DataReceivedAndVerified success = false: " + errorMessage;
-				if (errorMessage.Contains("do not have upload permissions"))
-				{
-					m_WarningMsg = AppendToString(m_WarningMsg, errorMessage);
-					m_MyEmslUploadPermissionsError = true;
-				}
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEMSLReader: " + e.Message);
+		}
 
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-				m_MyEmslUploadSuccess = false;
+		void reader_MessageEvent(object sender, MyEMSLReader.MessageEventArgs e)
+		{
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, e.Message);
+		}
+
+		void reader_ProgressEvent(object sender, MyEMSLReader.ProgressEventArgs e)
+		{
+			string msg = "Percent complete: " + e.PercentComplete.ToString("0.0") + "%";
+
+			if (e.PercentComplete > mPercentComplete || DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds >= 30)
+			{				
+				if (DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds >= 1)
+				{
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+					mPercentComplete = e.PercentComplete;
+					mLastProgressUpdateTime = DateTime.UtcNow;
+				}
 			}
 		}
 
