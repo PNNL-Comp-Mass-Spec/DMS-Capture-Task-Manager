@@ -18,17 +18,25 @@ namespace Pacifica.Core
 		 * private BackgroundWorker _topLevelBackgrounder;
 		 * private BackgroundWorker statusBackgrounder;
 		*/
-
+	
 		private string _bundleIdentifier = string.Empty;
 		private const string bundleExtension = ".tar";
 
 		private CookieContainer mCookieJar;
 
+		private string mTransferFolderPath;
+		private string mJobNumber;
+
 		#endregion
 
 		#region Constructor
 
-		public Upload()
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="transferFolderPath">Transfer foler path for this dataset, for example \\proto-4\DMS3_Xfer\SysVirol_IFT001_Pool_17_B_10x_27Aug13_Tiger_13-07-36</param>
+		/// <param name="mJob">DMS Data Capture job number</param>
+		public Upload(string transferFolderPath, string jobNumber)
 		{
 
 			/* August 2013: To be deleted
@@ -43,6 +51,8 @@ namespace Pacifica.Core
 			// Be careful about instantiating this class (Upload) multiple times
 			EasyHttp.StatusUpdate += new StatusUpdateEventHandler(EasyHttp_StatusUpdate);
 
+			mTransferFolderPath = transferFolderPath;
+			mJobNumber = jobNumber;
 		}
 
 		#endregion
@@ -94,11 +104,11 @@ namespace Pacifica.Core
 		}
 		*/
 
-		private void RaiseUploadCompleted(string bundleIdentifier, string serverResponse)
+		private void RaiseUploadCompleted(string serverResponse)
 		{
 			if (UploadCompleted != null)
 			{
-				UploadCompleted(this, new UploadCompletedEventArgs(bundleIdentifier, serverResponse));
+				UploadCompleted(this, new UploadCompletedEventArgs(serverResponse));
 			}
 		}
 
@@ -124,24 +134,21 @@ namespace Pacifica.Core
 			string timestamp = DateTime.Now.ToString("yyyyMMddHHmmssffffff");
 			statusURL = string.Empty;
 
-			string bundleName = timestamp + bundleExtension;
-			if (metadataObject.Contains("bundleName") && metadataObject["bundleName"] is string)
-			{
-				metadataObject["bundleName"] += "_" + bundleName;
-			}
-			else
-			{
-				metadataObject.Add("bundleName", bundleName);
-			}
+			/* August 2013: To be deleted 
+			 * 
+				string bundleName = timestamp + bundleExtension;
+				if (metadataObject.Contains("bundleName") && metadataObject["bundleName"] is string)
+				{
+					metadataObject["bundleName"] += "_" + bundleName;
+				}
+				else
+				{
+					metadataObject.Add("bundleName", bundleName);
+				}
+			 *
+			 */
 
 			var fileList = (List<FileInfoObject>)metadataObject["file"];
-
-			if (fileList.Count == 0)
-			{
-				RaiseDebugEvent("ProcessMetadata", "File list is empty; nothing to do");
-				RaiseUploadCompleted(bundleName, "");
-				return true;
-			}
 
 			// Grab the list of files from the top-level "file" object
 			// Keys in this dictionary are the source file path; values are metadata about the file
@@ -156,24 +163,32 @@ namespace Pacifica.Core
 
 				FileInfoObject fiObj = new FileInfoObject(file.AbsoluteLocalPath, file.RelativeDestinationDirectory, file.Sha1HashHex);
 
-				if (fiObj.RelativeDestinationFullPath.ToLower() == "metadata.txt")
-				{
-					// We must skip this file since MyEMSL stores a special metadata.txt file at the root of the .tar file
-					// The alternative would be to create a tar file with all of the data files (and folders) in a subfolder named data
-					// In this case we would define the data as version 1.2 instead of 1.0
-					//   metadataObject.Add("version", "1.2.0");
-					// However, creating a .tar file with the data in this layout is tricky with 7-zip, so we'll just skip metadata.txt files, which really shouldn't hurt anything
+				/* August 2013: To be deleted
+				 *
+				 * We no longer need to skip metadata.txt files since the metadata file is now v1.2.0
+				 * 
+					if (fiObj.RelativeDestinationFullPath.ToLower() == EasyHttp.MYEMSL_METADATA_FILE_NAME.ToLower())
+					{
+						// We must skip this file since MyEMSL stores a special metadata.txt file at the root of the .tar file
+						// The alternative would be to create a tar file with all of the data files (and folders) in a subfolder named data
+						// In this case we would define the data as version 1.2.0 instead of 1.0.0
+					
+						// Creating a .tar file with the data in this layout is tricky with 7-zip, but straightforward with SharpZipLib.Tar
 
-					RaiseErrorEvent("ProcessMetadata", "Skipping metadata.txt file at '" + fiObj.AbsoluteLocalPath + "' due to name conflict with the MyEmsl metadata.txt file");
-				}
-				else
-				{
-					fileListObject.Add(file.AbsoluteLocalPath, fiObj);
-					newFileObj.Add(fiObj.SerializeToDictionaryObject());
-				}
+						RaiseErrorEvent("ProcessMetadata", "Skipping metadata.txt file at '" + fiObj.AbsoluteLocalPath + "' due to name conflict with the MyEmsl metadata.txt file");
+					}
+					else
+					{
+						fileListObject.Add(file.AbsoluteLocalPath, fiObj);
+						newFileObj.Add(fiObj.SerializeToDictionaryObject());
+					}
+				 */
+
+				fileListObject.Add(file.AbsoluteLocalPath, fiObj);
+				newFileObj.Add(fiObj.SerializeToDictionaryObject());
+				
 			}
 
-			RaiseDebugEvent("ProcessMetadata", "Bundling " + newFileObj.Count + " files");
 			metadataObject["file"] = newFileObj;
 
 			string mdJson = Utilities.ObjectToJson(metadataObject);
@@ -186,10 +201,36 @@ namespace Pacifica.Core
 				sw.Write(mdJson);
 			}
 
-			string bundleNameFull = metadataObject["bundleName"].ToString();
+			try
+			{
+				// Copy the Metadata.txt file to the transfer folder, then delete the local copy
+				if (!string.IsNullOrEmpty(mTransferFolderPath))
+				{
+					var fiTargetFile = new FileInfo(Path.Combine(mTransferFolderPath, Utilities.GetMetadataFilenameForJob(mJobNumber)));
+					if (!fiTargetFile.Directory.Exists)
+						fiTargetFile.Directory.Create();
+
+					mdTextFile.CopyTo(fiTargetFile.FullName, true);
+				}
+
+			}
+			catch
+			{
+				// Ignore errors here
+			}
+
+
+			if (fileList.Count == 0)
+			{
+				RaiseDebugEvent("ProcessMetadata", "File list is empty; nothing to do");
+				RaiseUploadCompleted("");
+				return true;
+			}
 
 			/* August 2013: To be deleted
 			 *
+			 * string bundleNameFull = metadataObject["bundleName"].ToString();
+			 * RaiseDebugEvent("ProcessMetadata", "Bundling " + newFileObj.Count + " files");
 			 * FileInfo fiTarFile = BundleFiles(fileListObject, mdTextFile.FullName, bundleNameFull);
 			 */
 
@@ -299,13 +340,13 @@ namespace Pacifica.Core
 			{
 				// File was accepted, but the Status URL is empty
 				// This likely indicates a problem
-				RaiseUploadCompleted(bundleName, finishResult);
+				RaiseUploadCompleted(finishResult);
 				success = false;
 			}
 			else if (m.Groups["accepted"].Success && m.Groups["url"].Success)
 			{
 				statusURL = m.Groups["url"].Value.Trim();
-				RaiseUploadCompleted(bundleName, statusURL);
+				RaiseUploadCompleted(statusURL);
 				success = true;
 			}
 			else
@@ -316,6 +357,7 @@ namespace Pacifica.Core
 
 			try
 			{
+				// Delete the local temporary file
 				mdTextFile.Delete();
 			}
 			catch

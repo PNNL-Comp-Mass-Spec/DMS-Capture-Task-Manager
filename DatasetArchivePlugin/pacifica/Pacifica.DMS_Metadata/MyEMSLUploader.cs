@@ -20,7 +20,11 @@ namespace Pacifica.DMS_Metadata
 		DMSMetadataObject _mdContainer;
 		Upload myEMSLUpload;
 
-		public MyEMSLUploader() {
+		protected Dictionary<string, string> m_MgrParams;
+		protected Dictionary<string, string> m_TaskParams;
+
+		public MyEMSLUploader(Dictionary<string, string> mgrParams, Dictionary<string, string> taskParams)
+		{
 			StatusURI = string.Empty;
 			FileCountNew = 0;
 			FileCountUpdated = 0;
@@ -33,7 +37,24 @@ namespace Pacifica.DMS_Metadata
 			statusBackgrounder = new System.ComponentModel.BackgroundWorker();
 			 */
 
-			this.myEMSLUpload = new Upload();
+			m_MgrParams = mgrParams;
+			m_TaskParams = taskParams;
+
+			string transferFolderPath = Utilities.GetDictionaryValue(m_TaskParams, "TransferFolderPath", "");
+			if (string.IsNullOrEmpty(transferFolderPath))
+				throw new ArgumentNullException("Job parameters do not have TransferFolderPath defined; unable to continue");
+
+			string datasetName = Utilities.GetDictionaryValue(m_TaskParams, "Dataset", "");
+			if (string.IsNullOrEmpty(transferFolderPath))
+				throw new ArgumentNullException("Job parameters do not have Dataset defined; unable to continue");
+
+			transferFolderPath = Path.Combine(transferFolderPath, datasetName);
+
+			string jobNumber = Utilities.GetDictionaryValue(m_TaskParams, "Job", "");
+			if (string.IsNullOrEmpty(jobNumber))
+				throw new ArgumentNullException("Job parameters do not have Job defined; unable to continue");
+
+			this.myEMSLUpload = new Upload(transferFolderPath, jobNumber);
 
 			// Attach the events			
 			this.myEMSLUpload.DebugEvent +=new MessageEventHandler(myEMSLUpload_DebugEvent);
@@ -74,7 +95,7 @@ namespace Pacifica.DMS_Metadata
 
 		#endregion
 
-		public void StartUpload(Dictionary<string, string> taskParams, Dictionary<string, string> mgrParams, out string statusURL)
+		public void StartUpload(out string statusURL)
 		{
 
 			statusURL = string.Empty;
@@ -84,9 +105,9 @@ namespace Pacifica.DMS_Metadata
 			this._mdContainer.ProgressEvent += new DMSMetadataObject.ProgressEventHandler(_mdContainer_ProgressEvent);
 
 			// Look for files to upload, compute a Sha-1 hash for each, and compare those hashes to existing files in MyEMSL
-			this._mdContainer.SetupMetadata(taskParams, mgrParams);
+			this._mdContainer.SetupMetadata(m_TaskParams, m_MgrParams);
 
-			Pacifica.Core.Configuration.LocalTempDirectory = mgrParams["workdir"];
+			Pacifica.Core.Configuration.LocalTempDirectory = Utilities.GetDictionaryValue(m_MgrParams, "workdir", "");
 			this.FileCountUpdated = this._mdContainer.TotalFileCountUpdated;
 			this.FileCountNew = this._mdContainer.TotalFileCountNew;
 			this.Bytes = this._mdContainer.TotalFileSizeToUpload;
@@ -107,14 +128,16 @@ namespace Pacifica.DMS_Metadata
 
 			/* August 2013: To be deleted 
 			 * No longer needed since we're creating the tar file on-the-fly
+			 * 
+				// Delete the cached tar file
+				string bundleName = this._mdContainer.BundleName;
+				FileInfo bundleObject = new FileInfo(Path.Combine(Pacifica.Core.Configuration.LocalTempDirectory, bundleName));
+				if (bundleObject.Exists)
+				{
+					bundleObject.Delete();
+				}
+			 *
 			 */
-			// Delete the cached tar file
-			string bundleName = this._mdContainer.BundleName;
-			FileInfo bundleObject = new FileInfo(Path.Combine(Pacifica.Core.Configuration.LocalTempDirectory, bundleName));
-			if (bundleObject.Exists)
-			{
-				bundleObject.Delete();
-			}
 
 		}
 
@@ -144,7 +167,7 @@ namespace Pacifica.DMS_Metadata
 			{
 				// Multiplying by 0.25 because we're assuming 25% of the time is required for _mdContainer to compute the Sha-1 hashes of files to be uploaded while 75% of the time is required to create and upload the .tar file				
 				double percentCompleteOverall = 25 + e.PercentCompleted * 0.75;
-				StatusUpdate(this, new StatusEventArgs(e.BundleIdentifier, percentCompleteOverall, e.TotalBytesSent, e.TotalBytesToSend, e.StatusMessage));
+				StatusUpdate(this, new StatusEventArgs(percentCompleteOverall, e.TotalBytesSent, e.TotalBytesToSend, e.StatusMessage));
 			}
 		}
 
@@ -162,7 +185,7 @@ namespace Pacifica.DMS_Metadata
 			{
 				// Multiplying by 0.25 because we're assuming 25% of the time is required for _mdContainer to compute the Sha-1 hashes of files to be uploaded while 75% of the time is required to create and upload the .tar file
 				double percentCompleteOverall = 0 + e.PercentComplete * 0.25;
-				StatusUpdate(this, new StatusEventArgs("", percentCompleteOverall, 0, _mdContainer.TotalFileSizeToUpload, ""));
+				StatusUpdate(this, new StatusEventArgs(percentCompleteOverall, 0, _mdContainer.TotalFileSizeToUpload, ""));
 			}
 			
 		}

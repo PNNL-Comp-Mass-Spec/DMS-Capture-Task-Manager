@@ -156,6 +156,9 @@ namespace DatasetArchivePlugin
 					}
 				}
 			}
+			/*
+			 * August 2013: Delete from here to previous "To be deleted"
+			 */
 
 			// Set client/server perspective & setup paths
 			string baseStoragePath;
@@ -178,6 +181,7 @@ namespace DatasetArchivePlugin
 			if (!VerifyDSPresent(m_DSNamePath))
 			{
 				m_Msg = "Dataset folder " + m_DSNamePath + " not found";
+				m_ErrMsg = string.Copy(m_Msg);
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
 				LogOperationFailed(m_DatasetName);
 				return false;
@@ -213,6 +217,16 @@ namespace DatasetArchivePlugin
 			if (maxAttempts < 1)
 				maxAttempts = 1;
 
+			if (Environment.UserName.ToLower() != "svc-dms")
+			{
+				// The current user is not svc-dms
+				// Uploaded files will be associated with the wrong username and thus will not be visible to all DMS Users
+				m_ErrMsg = "Files must be uploaded to MyEMSL using the svc-dms account; aborting";
+				Console.WriteLine(m_ErrMsg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_ErrMsg);
+				return false;
+			}
+			
 			while (!bSuccess && iAttempts < maxAttempts)
 			{
 				iAttempts += 1;
@@ -249,7 +263,7 @@ namespace DatasetArchivePlugin
 				m_Msg = "Bundling changes to dataset " + m_DatasetName + " for transmission to MyEMSL";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
 
-				myEMSLUL = new Pacifica.DMS_Metadata.MyEMSLUploader();
+				myEMSLUL = new Pacifica.DMS_Metadata.MyEMSLUploader(m_MgrParams.TaskDictionary, m_TaskParams.TaskDictionary);
 
 				// Attach the events
 
@@ -263,7 +277,7 @@ namespace DatasetArchivePlugin
 				string statusURL;
 
 				// Start the upload
-				myEMSLUL.StartUpload(m_TaskParams.TaskDictionary, m_MgrParams.TaskDictionary, out statusURL);
+				myEMSLUL.StartUpload(out statusURL);
 
 				System.DateTime myEMSLFinishTime = System.DateTime.UtcNow;
 
@@ -287,6 +301,7 @@ namespace DatasetArchivePlugin
 			catch (Exception ex)
 			{
 				m_Msg = "Exception uploading to MyEMSL";
+				m_ErrMsg = string.Copy(m_Msg);
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg, ex);
 				LogOperationFailed(m_DatasetName);
 
@@ -792,7 +807,7 @@ namespace DatasetArchivePlugin
 			if (System.DateTime.UtcNow.Subtract(mLastStatusUpdateTime).TotalSeconds >= 60 && e.PercentCompleted > 0)
 			{
 				mLastStatusUpdateTime = System.DateTime.UtcNow;
-				string msg = "  ... uploading " + e.BundleIdentifier + ", " + e.PercentCompleted.ToString("0.0") + "% complete for " + (e.TotalBytesToSend / 1024.0).ToString("#,##0") + " KB";
+				string msg = "  ... uploading, " + e.PercentCompleted.ToString("0.0") + "% complete for " + (e.TotalBytesToSend / 1024.0).ToString("#,##0") + " KB";
 				if (!(string.IsNullOrEmpty(e.StatusMessage)))
 					msg += "; " + e.StatusMessage;
 
@@ -810,7 +825,7 @@ namespace DatasetArchivePlugin
 
 		void myEMSLUL_UploadCompleted(object sender, Pacifica.Core.UploadCompletedEventArgs e)
 		{
-			string msg = "  ... MyEmsl upload task complete for " + e.BundleIdentifier;
+			string msg = "  ... MyEmsl upload task complete";
 			
 			// Note that e.ServerResponse will simply have the StatusURL if the upload succeeded
 			// If a problem occurred, then e.ServerResponse will either have the full server reponse, or may even be blank

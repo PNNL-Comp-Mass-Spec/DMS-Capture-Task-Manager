@@ -101,7 +101,7 @@ namespace DatasetArchivePlugin
 			{
 				// Finished with this update task
 				m_Msg = "Completed push to MyEMSL, dataset " + m_DatasetName + ", Folder " +
-								m_TaskParams.GetParam("Output_Folder_Name") + ", job " + m_TaskParams.GetParam("Job");
+								m_TaskParams.GetParam("OutputFolderName") + ", job " + m_TaskParams.GetParam("Job");
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
 				return true;
 			}
@@ -206,7 +206,7 @@ namespace DatasetArchivePlugin
 
 				// Finished with this update task
 				m_Msg = "Completed archive update, dataset " + m_DatasetName + ", Folder " +
-								m_TaskParams.GetParam("Output_Folder_Name") + ", job " + m_TaskParams.GetParam("Job");
+								m_TaskParams.GetParam("OutputFolderName") + ", job " + m_TaskParams.GetParam("Job");
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
 				return true;
 

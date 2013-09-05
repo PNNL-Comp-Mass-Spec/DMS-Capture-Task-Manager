@@ -33,17 +33,17 @@ namespace Pacifica.Core
 		}
 
 		protected const int TAR_BLOCK_SIZE_BYTES = 512;
+		public const string MYEMSL_METADATA_FILE_NAME = "metadata.txt";
 
 		public static event StatusUpdateEventHandler StatusUpdate;
 
 		private static void RaiseStatusUpdate(
-			string bundleIdentifier,
 			double percentCompleted, long totalBytesSent,
 			long totalBytesToSend, string statusMessage)
 		{
 			if (StatusUpdate != null)
 			{
-				StatusUpdate(null, new StatusEventArgs(bundleIdentifier, percentCompleted, totalBytesSent, totalBytesToSend, statusMessage));
+				StatusUpdate(null, new StatusEventArgs(percentCompleted, totalBytesSent, totalBytesToSend, statusMessage));
 			}
 		}
 
@@ -602,7 +602,7 @@ namespace Pacifica.Core
 			long sent = 0;
 			System.DateTime lastStatusUpdateTime = System.DateTime.UtcNow;
 
-			RaiseStatusUpdate(filePath, percentComplete, sent, contentLength, string.Empty);
+			RaiseStatusUpdate(percentComplete, sent, contentLength, string.Empty);
 
 
 			while (contentStream.Position < contentLength)
@@ -622,7 +622,7 @@ namespace Pacifica.Core
 				{
 					// Limit status updates to every 2 seconds
 					lastStatusUpdateTime = System.DateTime.UtcNow;
-					RaiseStatusUpdate(filePath, percentComplete, sent, contentLength, string.Empty);
+					RaiseStatusUpdate(percentComplete, sent, contentLength, string.Empty);
 				}
 			}
 			contentStream.Flush();
@@ -631,7 +631,7 @@ namespace Pacifica.Core
 			contentStream = null;
 
 
-			RaiseStatusUpdate(filePath, 100, sent, contentLength, string.Empty);
+			RaiseStatusUpdate(100, sent, contentLength, string.Empty);
 
 			WebResponse response = null;
 			try
@@ -734,10 +734,9 @@ namespace Pacifica.Core
 			
 			double percentComplete = 0;		// Value between 0 and 100
 			long bytesWritten = 0;
-			string bundleIdentifier = "Memory stream tar file";
 			System.DateTime lastStatusUpdateTime = System.DateTime.UtcNow;
 
-			RaiseStatusUpdate(bundleIdentifier, percentComplete, bytesWritten, contentLength, string.Empty);
+			RaiseStatusUpdate(percentComplete, bytesWritten, contentLength, string.Empty);
 
 			// Set this to True to debug things and create the .tar file locally instead of sending to the server
 			bool writeToDisk = false;
@@ -771,7 +770,7 @@ namespace Pacifica.Core
 
 			Stream oRequestStream;
 			if (writeToDisk)
-				oRequestStream = new FileStream(@"E:\CapMan_WorkDir\TestFile.tar", FileMode.Create, FileAccess.Write, FileShare.Read);
+				oRequestStream = new FileStream(@"E:\CapMan_WorkDir\TestFile2.tar", FileMode.Create, FileAccess.Write, FileShare.Read);
 			else
 				oRequestStream = oWebRequest.GetRequestStream();
 
@@ -785,7 +784,7 @@ namespace Pacifica.Core
 			var dctDirectoryEntries = new SortedSet<string>();			
 
 			// Add the metadata.txt file
-			AppendFileToTar(tarOutputStream, fiMetadataFile, "metadata.txt", ref bytesWritten);
+			AppendFileToTar(tarOutputStream, fiMetadataFile, MYEMSL_METADATA_FILE_NAME, ref bytesWritten);
 
 			// Add the "data" directory, which will hold all of the files
 			// Need a dummy "data" directory to do this
@@ -816,7 +815,7 @@ namespace Pacifica.Core
 				if (System.DateTime.UtcNow.Subtract(lastStatusUpdateTime).TotalSeconds >= 2)
 				{
 					// Limit status updates to every 2 seconds
-					RaiseStatusUpdate(bundleIdentifier, percentComplete, bytesWritten, contentLength, string.Empty);
+					RaiseStatusUpdate(percentComplete, bytesWritten, contentLength, string.Empty);
 					lastStatusUpdateTime = System.DateTime.UtcNow;
 				}
 			}
@@ -826,12 +825,12 @@ namespace Pacifica.Core
 			tarOutputStream.Close();
 			bytesWritten += TAR_BLOCK_SIZE_BYTES;
 
-			RaiseStatusUpdate(bundleIdentifier, 100, bytesWritten, contentLength, string.Empty);
+			RaiseStatusUpdate(100, bytesWritten, contentLength, string.Empty);
 
 			// Close the request
 			oRequestStream.Close();
 
-			RaiseStatusUpdate("In-memory tar file", 100, contentLength, contentLength, string.Empty);
+			RaiseStatusUpdate(100, contentLength, contentLength, string.Empty);
 
 			if (writeToDisk)
 				return string.Empty;
@@ -875,11 +874,18 @@ namespace Pacifica.Core
 		}
 
 
-		protected static long AddTarFileContentLength(long fileSizeBytes)
+		protected static long AddTarFileContentLength(string pathInArchive, long fileSizeBytes)
 		{
 
 			// Header block for current file
 			long contentLength = TAR_BLOCK_SIZE_BYTES;
+
+			if (pathInArchive.Length > 100)
+			{ 
+				// Need to add one or more additional header blocks since this file has an extra long file path
+				int extraBlocks = (int)(Math.Ceiling(pathInArchive.Length / 512.0));
+				contentLength += TAR_BLOCK_SIZE_BYTES * extraBlocks;
+			}
 
 			// File contents
 			long fileBlocks = (int)Math.Ceiling(fileSizeBytes / (double)TAR_BLOCK_SIZE_BYTES);
@@ -895,7 +901,7 @@ namespace Pacifica.Core
 			// Add the metadata file
 			if (fiMetadataFile.Exists)
 			{
-				contentLength += AddTarFileContentLength(fiMetadataFile.Length);
+				contentLength += AddTarFileContentLength(MYEMSL_METADATA_FILE_NAME, fiMetadataFile.Length);
 			}
 
 			// Add the data/ directory
@@ -904,15 +910,18 @@ namespace Pacifica.Core
 			// Add the files to be archived
 			foreach (var fileToArchive in fileListObject)
 			{
-				contentLength += AddTarFileContentLength(fileToArchive.Value.FileSizeInBytes);
+				string pathInArchive = "data/" + fileToArchive.Value.RelativeDestinationDirectory;
+				long addonBytes = AddTarFileContentLength(pathInArchive, fileToArchive.Value.FileSizeInBytes);
 
-				long addonBytes = AddTarFileContentLength(fileToArchive.Value.FileSizeInBytes);
-				Console.WriteLine(fileToArchive.Value.FileSizeInBytes + "\t" + addonBytes + "\t" + fileToArchive.Value.RelativeDestinationFullPath);
+				contentLength += addonBytes;
+
+				// Uncomment to debug
+				// Console.WriteLine(fileToArchive.Value.FileSizeInBytes + "\t" + addonBytes + "\t" + fileToArchive.Value.RelativeDestinationFullPath);
 			}
 
 			var lstDirectoryEntries = GetUniqueRelativeDestinationDirectory(fileListObject);
 
-			// Add the directories for hte files
+			// Add the directories for the files
 			foreach (var directoryName in lstDirectoryEntries)
 			{
 				if (!string.IsNullOrEmpty(directoryName))
@@ -983,7 +992,7 @@ namespace Pacifica.Core
 					tarOutputStream.Write(localBuffer, 0, numRead);
 				}
 
-				bytesWritten += AddTarFileContentLength(fiSourceFile.Length);
+				bytesWritten += AddTarFileContentLength(destFilenameInTar, fiSourceFile.Length);
 
 			}
 			tarOutputStream.CloseEntry();

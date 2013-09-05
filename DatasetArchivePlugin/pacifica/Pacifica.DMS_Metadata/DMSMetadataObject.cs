@@ -22,10 +22,10 @@ namespace Pacifica.DMS_Metadata
 		private List<FileInfoObject> _unmatchedFilesToUpload;
 
 		private string _serverSearchString = string.Empty;
-		private string _ingestServerName;
 
 		/* August 2013: To be deleted
 		 * 
+		 * private string _ingestServerName;
 		 * private System.ComponentModel.BackgroundWorker _bgw;
 		 * private PRISM.DataBase.clsDBTools dbTool;
 		*/
@@ -46,10 +46,14 @@ namespace Pacifica.DMS_Metadata
 			}
 		}
 
-		public string BundleName
-		{
-			get { return this._metadataObject["bundleName"].ToString(); }
-		}
+		/* August 2013: To be deleted 
+		 * 
+			public string BundleName
+			{
+				get { return this._metadataObject["bundleName"].ToString(); }
+			}
+		 *
+		 */
 
 		public long TotalFileSizeToUpload
 		{
@@ -94,11 +98,10 @@ namespace Pacifica.DMS_Metadata
 			 *
 			 * this._bgw = backgrounder;
 			 */
-			  
-			this._ingestServerName = Pacifica.Core.Configuration.IngestServerHostName;
 
 			/* August 2013: To be deleted
 			 * 
+			 * this._ingestServerName = Pacifica.Core.Configuration.IngestServerHostName;
 			 * this.dbTool = new PRISM.DataBase.clsDBTools(null, "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI");
 			
 			 * No longer necessary since taskParams contains EUS_Instrument_ID
@@ -117,7 +120,7 @@ namespace Pacifica.DMS_Metadata
 			}
 			else
 			{
-			 */		
+			 */
 		}
 
 		/* August 2013: To be deleted
@@ -133,63 +136,16 @@ namespace Pacifica.DMS_Metadata
 		public void SetupMetadata(Dictionary<string, string> taskParams, Dictionary<string, string> mgrParams)
 		{
 
-			//translate values from task/mgr params into usable variables
-			string perspective = Utilities.GetDictionaryValue(mgrParams, "perspective", "client");
-			string driveLocation;
+			string datasetName;
+			string datasetInstrument;
+			int datasetID;
+			string subFolder;
 
-			// Determine the drive location based on perspective 
-			// (client perspective means running on a Proto storage server; server perspective means running on another computer)
-			if (perspective == "client")
-				driveLocation = Utilities.GetDictionaryValue(taskParams, "Storage_Vol_External", "");
-			else
-				driveLocation = Utilities.GetDictionaryValue(taskParams, "Storage_Vol", "");
-
-			// Construct the dataset folder path
-			string pathToArchive = Utilities.GetDictionaryValue(taskParams, "Folder", "");
-			pathToArchive = Path.Combine(Utilities.GetDictionaryValue(taskParams, "Storage_Path", ""), pathToArchive);
-			pathToArchive = Path.Combine(driveLocation, pathToArchive);
-
-			string datasetName = Utilities.GetDictionaryValue(taskParams, "Dataset", "");
-			string datasetInstrument = Utilities.GetDictionaryValue(taskParams, "Instrument_Name", "");
-			int datasetID = Utilities.ToIntSafe(Utilities.GetDictionaryValue(taskParams, "Dataset_ID", ""), 0);
-			string baseDSPath = pathToArchive;
-			string subFolder = string.Empty;
-
-			ArchiveModes archiveMode;
-			if (Utilities.GetDictionaryValue(taskParams, "StepTool", "").ToLower() == "datasetarchive")
-				archiveMode = ArchiveModes.archive;
-			else
-				archiveMode = ArchiveModes.update;
-
-			if (archiveMode == ArchiveModes.update)
-			{
-				subFolder = Utilities.GetDictionaryValue(taskParams, "OutputFolderName", "").ToString();
-
-				if (!string.IsNullOrWhiteSpace(subFolder))
-					pathToArchive = Path.Combine(pathToArchive, subFolder);
-				else
-					subFolder = string.Empty;
-			}
+			List<FileInfoObject> lstDatasetFilesToArchive = FindDatasetFilesToArchive(taskParams, mgrParams, out datasetName, out datasetInstrument, out datasetID, out subFolder);
 
 			// Calculate the "year_quarter" code used for subfolders within an instrument folder
 			// This value is based on the date the dataset was created in DMS
-			string datasetDate = Utilities.GetDictionaryValue(taskParams, "Created", "");
-			DateTime date_code = DateTime.Parse(datasetDate);
-			double yq = (double)date_code.Month / 12.0 * 4.0;
-			int yearQuarter = (int)Math.Ceiling(yq);
-			string datasetDateCodeString = date_code.Year.ToString() + "_" + yearQuarter.ToString();
-
-			bool recurse = true;
-			string sValue;
-
-			if (taskParams.TryGetValue(MyEMSLUploader.RECURSIVE_UPLOAD, out sValue))
-			{
-				bool.TryParse(sValue, out recurse);
-			}
-
-			// Grab file information from this dataset directory
-			// This process will also compute the Sha-1 hash value for each file
-			var lstDatasetFilesToArchive = this.CollectFileInformation(pathToArchive, baseDSPath, recurse);
+			string datasetDateCodeString = GetDatasetYearQuarter(taskParams);
 
 			// Keys in this object are key names; values are either strings or dictionary objects or even a list of dictionary objects
 			var metadataObject = new Dictionary<string, object>();
@@ -312,6 +268,7 @@ namespace Pacifica.DMS_Metadata
 
 				ReportProgress(fracCompleted * 100.0, "Hashing files: " + fi.Name);
 
+				// This constructor will auto-compute the Sha-1 hash value for the file
 				fio = new FileInfoObject(fi.FullName, baseDSPath);
 				fileCollection.Add(fio);
 			}
@@ -396,6 +353,71 @@ namespace Pacifica.DMS_Metadata
 			}
 
 			return lstUnmatchedFiles;
+		}
+
+
+		public List<FileInfoObject> FindDatasetFilesToArchive(Dictionary<string, string> taskParams, Dictionary<string, string> mgrParams, out string datasetName, out string datasetInstrument, out int datasetID, out string subFolder)
+		{
+			//translate values from task/mgr params into usable variables
+			string perspective = Utilities.GetDictionaryValue(mgrParams, "perspective", "client");
+			string driveLocation;
+
+			// Determine the drive location based on perspective 
+			// (client perspective means running on a Proto storage server; server perspective means running on another computer)
+			if (perspective == "client")
+				driveLocation = Utilities.GetDictionaryValue(taskParams, "Storage_Vol_External", "");
+			else
+				driveLocation = Utilities.GetDictionaryValue(taskParams, "Storage_Vol", "");
+
+			// Construct the dataset folder path
+			string pathToArchive = Utilities.GetDictionaryValue(taskParams, "Folder", "");
+			pathToArchive = Path.Combine(Utilities.GetDictionaryValue(taskParams, "Storage_Path", ""), pathToArchive);
+			pathToArchive = Path.Combine(driveLocation, pathToArchive);
+
+			datasetName = Utilities.GetDictionaryValue(taskParams, "Dataset", "");
+			datasetInstrument = Utilities.GetDictionaryValue(taskParams, "Instrument_Name", "");
+			datasetID = Utilities.ToIntSafe(Utilities.GetDictionaryValue(taskParams, "Dataset_ID", ""), 0);
+			string baseDSPath = pathToArchive;
+			subFolder = string.Empty;
+
+			ArchiveModes archiveMode;
+			if (Utilities.GetDictionaryValue(taskParams, "StepTool", "").ToLower() == "datasetarchive")
+				archiveMode = ArchiveModes.archive;
+			else
+				archiveMode = ArchiveModes.update;
+
+			if (archiveMode == ArchiveModes.update)
+			{
+				subFolder = Utilities.GetDictionaryValue(taskParams, "OutputFolderName", "").ToString();
+
+				if (!string.IsNullOrWhiteSpace(subFolder))
+					pathToArchive = Path.Combine(pathToArchive, subFolder);
+				else
+					subFolder = string.Empty;
+			}
+
+			bool recurse = true;
+			string sValue;
+
+			if (taskParams.TryGetValue(MyEMSLUploader.RECURSIVE_UPLOAD, out sValue))
+			{
+				bool.TryParse(sValue, out recurse);
+			}
+
+			// Grab file information from this dataset directory
+			// This process will also compute the Sha-1 hash value for each file
+			return CollectFileInformation(pathToArchive, baseDSPath, recurse);			
+		}
+
+		public static string GetDatasetYearQuarter(Dictionary<string, string> taskParams)
+		{
+			string datasetDate = Utilities.GetDictionaryValue(taskParams, "Created", "");
+			DateTime date_code = DateTime.Parse(datasetDate);
+			double yq = (double)date_code.Month / 12.0 * 4.0;
+			int yearQuarter = (int)Math.Ceiling(yq);
+			string datasetDateCodeString = date_code.Year.ToString() + "_" + yearQuarter.ToString();
+
+			return datasetDateCodeString;
 		}
 
 		protected void ReportProgress(double percentComplete)

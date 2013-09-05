@@ -35,8 +35,6 @@ namespace Pacifica.Core
 	public class StatusEventArgs : EventArgs
 	{
 
-		public readonly string BundleIdentifier;
-
 		/// <summary>
 		/// Value between 0 and 100
 		/// </summary>
@@ -46,9 +44,8 @@ namespace Pacifica.Core
 		public readonly long TotalBytesToSend;
 		public readonly string StatusMessage;
 
-		public StatusEventArgs(string bundleIdentifier, double percentCompleted, long totalBytesSent, long totalBytesToSend, string statusMessage)
+		public StatusEventArgs(double percentCompleted, long totalBytesSent, long totalBytesToSend, string statusMessage)
 		{
-			BundleIdentifier = bundleIdentifier;
 			PercentCompleted = percentCompleted;
 			TotalBytesSent = totalBytesSent;
 			TotalBytesToSend = totalBytesToSend;
@@ -58,12 +55,10 @@ namespace Pacifica.Core
 
 	public class UploadCompletedEventArgs : EventArgs
 	{
-		public readonly string BundleIdentifier;
 		public readonly string ServerResponse;
 
-		public UploadCompletedEventArgs(string bundleIdentifier, string serverResponse)
+		public UploadCompletedEventArgs(string serverResponse)
 		{
-			BundleIdentifier = bundleIdentifier;
 			ServerResponse = serverResponse;
 		}
 	}

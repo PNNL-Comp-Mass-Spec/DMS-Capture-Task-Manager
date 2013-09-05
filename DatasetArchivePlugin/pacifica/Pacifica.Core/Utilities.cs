@@ -7,11 +7,9 @@ using System.Security;
 using System.Security.Cryptography;
 using System.Security.Principal;
 using System.Text;
-using Jayrock;
 using Jayrock.Json;
 using Jayrock.Json.Conversion;
 using Microsoft.Win32;
-using SevenZip;
 
 namespace Pacifica.Core
 {
@@ -43,9 +41,13 @@ namespace Pacifica.Core
 			string value;
 
 			if (dictionary.TryGetValue(keyName, out value))
-				return value;
+			{
+				return value ?? valueIfMissing;
+			}
 			else
+			{
 				return valueIfMissing;
+			}
 		}
 
 		public static DirectoryInfo GetTempDirectory()
@@ -339,6 +341,11 @@ namespace Pacifica.Core
 			return string.Format("{0} {1}", num, unit);
 		}
 		*/
+
+		public static string GetMetadataFilenameForJob(string jobNumber)
+		{
+			return "MyEMSL_metadata_CaptureJob_" + jobNumber + ".txt";
+		}
 
 		public static string GetUserName(bool cleanDomain = false)
 		{
