@@ -126,7 +126,7 @@ namespace CaptureTaskManager
 				// Returns True if no problems; otherwise, returns false
 
 				string strValue = string.Empty;
-				string[] strValidParameters = new string[] {"T", "EL"};
+				string[] strValidParameters = new string[] {"T", "EL", "Test"};
 
 				try
 				{
@@ -140,6 +140,11 @@ namespace CaptureTaskManager
 						{
 							// Query objParseCommandLine to see if various parameters are present
 							if (objParseCommandLine.IsParameterPresent("T"))
+							{
+								mCodeTestMode = true;
+							}
+
+							if (objParseCommandLine.IsParameterPresent("Test"))
 							{
 								mCodeTestMode = true;
 							}

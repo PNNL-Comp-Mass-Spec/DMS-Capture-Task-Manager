@@ -676,14 +676,14 @@ namespace CaptureTaskManager
 				m_StatusTimer.Enabled = false;
 
 				eTaskCloseout = toolResult.CloseoutType;
+				string sCloseoutMessage;
+
 				switch (eTaskCloseout)
 				{
 					case EnumCloseOutType.CLOSEOUT_FAILED:
 						msg = m_MgrName + ": Failure running tool " + m_StepTool
 									+ ", job " + m_Job + ", Dataset " + m_Dataset;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-
-						string sCloseoutMessage;
 
 						if (!String.IsNullOrEmpty(toolResult.CloseoutMsg))
 							sCloseoutMessage = toolResult.CloseoutMsg;
@@ -697,8 +697,12 @@ namespace CaptureTaskManager
 						msg = m_MgrName + ": Dataset not ready, tool " + m_StepTool + ", job " + m_Job + ", Dataset " + m_Dataset;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
 
-						msg = "Dataset not ready";
-						m_Task.CloseTask(eTaskCloseout, msg);
+						sCloseoutMessage = "Dataset not ready";
+
+						if (!String.IsNullOrEmpty(toolResult.CloseoutMsg))
+							sCloseoutMessage += ": " + toolResult.CloseoutMsg;
+
+						m_Task.CloseTask(eTaskCloseout, sCloseoutMessage);
 						break;
 
 					case EnumCloseOutType.CLOSEOUT_SUCCESS:
@@ -714,8 +718,8 @@ namespace CaptureTaskManager
 									+ "; CloseOut = NeedToAbortProcessing";
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 
-						msg = "Error: NeedToAbortProcessing";
-						m_Task.CloseTask(eTaskCloseout, msg, toolResult.EvalCode, toolResult.EvalMsg);
+						sCloseoutMessage = "Error: NeedToAbortProcessing";
+						m_Task.CloseTask(eTaskCloseout, sCloseoutMessage, toolResult.EvalCode, toolResult.EvalMsg);
 						break;
 
 					default:
@@ -810,21 +814,25 @@ namespace CaptureTaskManager
 		}
 
 		/// <summary>
-		/// Look for and remove old .tar, .zip, and .tmp files
+		/// Look for and remove old .tmp and .zip files
 		/// </summary>
 		protected void RemoveOldTempFiles()
 		{
-			// Remove .tmp, .zip, and .tar files over 12 hours old in the Windows Temp folder
+			// Remove .tmp and .zip files over 12 hours old in the Windows Temp folder
 			int iAgedTempFilesHours = 12;
 			string sTempFolderPath = System.IO.Path.GetTempPath();
 			RemoveOldTempFiles(iAgedTempFilesHours, sTempFolderPath);
 
-			// Remove .Tar files over 24 hours in the Capture Task Manager's work directory
-			List<string> lstSearchSpecs = new List<string>();
-			lstSearchSpecs.Add("*.tar");
-			sTempFolderPath = m_MgrSettings.GetParam("WorkDir");
-			iAgedTempFilesHours = 24;
-			RemoveOldTempFiles(iAgedTempFilesHours, sTempFolderPath, lstSearchSpecs);
+			/* August 2013: To be deleted
+			 * 
+				// Remove .Tar files over 24 hours in the Capture Task Manager's work directory
+				List<string> lstSearchSpecs = new List<string>();
+				lstSearchSpecs.Add("*.tar");
+				sTempFolderPath = m_MgrSettings.GetParam("WorkDir");
+				iAgedTempFilesHours = 24;
+				RemoveOldTempFiles(iAgedTempFilesHours, sTempFolderPath, lstSearchSpecs);
+			 */
+
 		}
 
 		protected void RemoveOldTempFiles(int iAgedTempFilesHours, string sTempFolderPath)
@@ -834,13 +842,12 @@ namespace CaptureTaskManager
 
 			lstSearchSpecs.Add("*.tmp");
 			lstSearchSpecs.Add("*.zip");
-			lstSearchSpecs.Add("*.tar");
 
 			RemoveOldTempFiles(iAgedTempFilesHours, sTempFolderPath, lstSearchSpecs);
 		}
 
 		/// <summary>
-		/// Look for and remove old .tar, .zip, and .tmp files
+		/// Look for and remove files
 		/// </summary>
 		/// <param name="iAgedTempFilesHours">Files more than this many hours old will be deleted</param>
 		/// <param name="sTempFolderPath">Path to the folder to look for and delete old files</param>
