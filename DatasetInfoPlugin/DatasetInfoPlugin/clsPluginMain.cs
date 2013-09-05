@@ -542,7 +542,7 @@ namespace DatasetInfoPlugin
 
 					if (diDotDFolder.Exists)
 					{
-						// Look for a .mcf file in the .D folder						
+						// Look for a .mcf file in the .D folder
 
 						string mcfFileName = string.Empty;
 						Int64 mcfFileSizeBytes = 0;
@@ -560,6 +560,17 @@ namespace DatasetInfoPlugin
 						}
 
 					}
+					else
+					{
+						// Look for any .D folder; operator may have placed the wrong .D folder in this dataset folder
+						var diDotDFolders = diDatasetFolder.GetDirectories("*.d");
+						if (diDotDFolders.Length > 0)
+						{
+							m_Msg = "Dataset folder has a misnamed .D folder inside it.  Found " + diDotDFolders[0].Name + " but expecting " + m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
+							return string.Empty;
+						}
+					}
 				}
 
 				if (!bAlternateFound)
@@ -567,7 +578,7 @@ namespace DatasetInfoPlugin
 					m_Msg = "clsPluginMain.GetDataFileOrFolderName: File " + sFileOrFolderPath + " not found";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
 					m_Msg = "File " + sFileOrFolderPath + " not found";
-					sFileOrFolderName = string.Empty;
+					return string.Empty;
 				}
 			}
 

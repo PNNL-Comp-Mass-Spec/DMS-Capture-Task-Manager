@@ -150,13 +150,13 @@ namespace DatasetIntegrityPlugin
 					mRetData.CloseoutType = TestIMSAgilentTOF(dataFileNamePath);
 					break;
 				case clsInstrumentClassInfo.eInstrumentClass.BrukerFT_BAF:
-					mRetData.CloseoutType = TestBrukerFT_Folder(datasetFolder, requireBAFFile:true, requireMCFFile:false, instrumentClass: instrumentClass);
+					mRetData.CloseoutType = TestBrukerFT_Folder(datasetFolder, requireBAFFile: true, requireMCFFile: false, instrumentClass: instrumentClass, instrumentName: instrumentName);
 					break;
 				case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging:
 					mRetData.CloseoutType = TestBrukerMaldiImagingFolder(datasetFolder);
 					break;
 				case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging_V2:
-					mRetData.CloseoutType = TestBrukerFT_Folder(datasetFolder, requireBAFFile: false, requireMCFFile: false, instrumentClass: instrumentClass);
+					mRetData.CloseoutType = TestBrukerFT_Folder(datasetFolder, requireBAFFile: false, requireMCFFile: false, instrumentClass: instrumentClass, instrumentName: instrumentName);
 					if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
 					{
 						// Try BrukerMALDI_Imaging
@@ -177,7 +177,7 @@ namespace DatasetIntegrityPlugin
 					mRetData.CloseoutType = TestBrukerMaldiSpotFolder(datasetFolder);
 					break;
 				case clsInstrumentClassInfo.eInstrumentClass.BrukerTOF_BAF:
-					mRetData.CloseoutType = TestBrukerTof_BafFolder(datasetFolder);
+					mRetData.CloseoutType = TestBrukerTof_BafFolder(datasetFolder, instrumentName);
 					break;
 				case clsInstrumentClassInfo.eInstrumentClass.Sciex_QTrap:
 					mRetData.CloseoutType = TestSciexQtrapFile(datasetFolder, m_Dataset);
@@ -967,7 +967,7 @@ namespace DatasetIntegrityPlugin
 		/// </summary>
 		/// <param name="datasetFolderPath">Fully qualified path to the dataset folder</param>
 		/// <returns>Enum indicating test result</returns>
-		private EnumCloseOutType TestBrukerTof_BafFolder(string datasetFolderPath)
+		private EnumCloseOutType TestBrukerTof_BafFolder(string datasetFolderPath, string instrumentName)
 		{
 			float dataFileSizeKB;
 
@@ -1014,12 +1014,16 @@ namespace DatasetIntegrityPlugin
 			else if (subFolderList.Count > 1)
 			{
 				// Multiple .M folders
-				// Allow this if there are two folders, and one contains _neg and one contains _pos
-				if (!PositiveNegativeMethodFolders(subFolderList))
+				// This is OK for the Buker Imaging instruments
+				if (!instrumentName.ToLower().Contains("imaging"))
 				{
-					mRetData.EvalMsg = "Invalid dataset. Multiple .M folders found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
-					return EnumCloseOutType.CLOSEOUT_FAILED;
+					// It's also OK if there are two folders, and one contains _neg and one contains _pos
+					if (!PositiveNegativeMethodFolders(subFolderList))
+					{
+						mRetData.EvalMsg = "Invalid dataset. Multiple .M folders found";
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+						return EnumCloseOutType.CLOSEOUT_FAILED;
+					}
 				}
 			}
 
@@ -1044,11 +1048,10 @@ namespace DatasetIntegrityPlugin
 		/// <param name="requireBAFFile">Set to True to require that the analysis.baf file be present</param>
 		/// <param name="requireMCFFile">Set to True to require that the analysis.baf file be present</param>
 		/// <returns>Enum indicating test result</returns>
-		private EnumCloseOutType TestBrukerFT_Folder(string datasetFolderPath, bool requireBAFFile, bool requireMCFFile, clsInstrumentClassInfo.eInstrumentClass instrumentClass)
+		private EnumCloseOutType TestBrukerFT_Folder(string datasetFolderPath, bool requireBAFFile, bool requireMCFFile, clsInstrumentClassInfo.eInstrumentClass instrumentClass, string instrumentName)
 		{
 			float dataFileSizeKB;
 
-			string instName = m_TaskParams.GetParam("Instrument_Name");
 			string tempFileNamePath = string.Empty;
 			bool fileExists = false;
 
@@ -1140,7 +1143,7 @@ namespace DatasetIntegrityPlugin
 				if (dataFileSizeKB <= SER_FILE_MIN_SIZE_KB)
 				{
 					// If on the 15T and the ser file is small but the .mcf file is not empty, then this is OK
-					if (!(instName == "15T_FTICR" && mcfFileSizeMax > 0))
+					if (!(instrumentName == "15T_FTICR" && mcfFileSizeMax > 0))
 					{
 						ReportFileSizeTooSmall("ser", tempFileNamePath, dataFileSizeKB, SER_FILE_MIN_SIZE_KB);
 						return EnumCloseOutType.CLOSEOUT_FAILED;
@@ -1165,7 +1168,7 @@ namespace DatasetIntegrityPlugin
 				{
 					// No ser or fid file found
 					// Ignore this error if on the 15T
-					if (instName != "15T_FTICR")
+					if (instrumentName != "15T_FTICR")
 					{
 						mRetData.EvalMsg = "Invalid dataset. No ser or fid file found";
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
@@ -1198,7 +1201,7 @@ namespace DatasetIntegrityPlugin
 				// Multiple .M folders
 				// Allow this if there are two folders, and one contains _neg and one contains _pos
 				// Also allow this if on the 15T
-				if (!PositiveNegativeMethodFolders(subFolderList) && instName != "15T_FTICR")
+				if (!PositiveNegativeMethodFolders(subFolderList) && instrumentName != "15T_FTICR" && !instrumentName.ToLower().Contains("imaging"))
 				{
 					mRetData.EvalMsg = "Invalid dataset. Multiple .M folders found";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
