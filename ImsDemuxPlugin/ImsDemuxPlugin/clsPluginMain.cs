@@ -88,8 +88,15 @@ namespace ImsDemuxPlugin
 			}
 
 			// Determine whether or not calibration should be performed
+			//
 			// Note that stored procedure GetJobParamTable in the DMS_Capture database
 			// sets this value based on the value in column Perform_Calibration of table T_Instrument_Name in the DMS5 database
+			//
+			// Furthermore, if the value for Perform_Calibration is changed for a given instrument, then you must update the job parameters
+			// using UpdateParametersForJob for any jobs that need to be re-run
+			//   exec dbo.UpdateParametersForJob 356778
+			//   exec dbo.GetJobStepParamsAsTable 356778, 3
+
 
 			CalibrationMode calibrationMode;
 			double calibrationSlope = 0;
@@ -116,7 +123,7 @@ namespace ImsDemuxPlugin
 				//   then we need to examine table T_Log_Entries for messages regarding manual calibration
 				// If manual calibration values are found, then we should cache the calibration slope and intercept values
 				//   and apply them to the new demultiplexed file and skip auto-calibration
-				// If manual calibration vales are not found, then we want to fail out the job immediately, 
+				// If manual calibration values are not found, then we want to fail out the job immediately, 
 				//   since demultiplexing succeeded, but calibration failed, and manual calibration was not performed
 
 				var calibrationError = CheckForCalibrationError(dsPath);

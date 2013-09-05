@@ -1586,8 +1586,8 @@ namespace CaptureToolPlugin
 				return false;
 			}
 
-			// Verify the folder doesn't contain a group of ".D" folders
-			string[] folderList = Directory.GetDirectories(copySourceDir, "*.D");
+			// Verify the folder doesn't contain a group of ".d" folders
+			string[] folderList = Directory.GetDirectories(copySourceDir, "*.d");
 			if (folderList.Length > 1)
 			{
 				retData.CloseoutMsg = "Multiple .D folders found in dataset folder";
