@@ -43,6 +43,9 @@
     <Reference Include="Pacifica.Core">
       <HintPath>..\DeployedFiles\Pacifica.Core.dll</HintPath>
     </Reference>
+    <Reference Include="Pacifica.DMS_Metadata">
+      <HintPath>..\DeployedFiles\Pacifica.DMS_Metadata.dll</HintPath>
+    </Reference>
     <Reference Include="PRISM">
       <HintPath>..\RefLib\PRISM.dll</HintPath>
     </Reference>
@@ -52,6 +55,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="clsHashInfo.cs" />
     <Compile Include="clsPluginMain.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
