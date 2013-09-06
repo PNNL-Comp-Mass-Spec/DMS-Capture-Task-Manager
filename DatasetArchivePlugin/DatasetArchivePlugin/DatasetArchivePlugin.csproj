@@ -38,7 +38,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;DartFTPMissing</DefineConstants>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
@@ -55,6 +55,10 @@
   <ItemGroup>
     <Reference Include="CTM_Shared">
       <HintPath>..\..\DeployedFiles\CTM_Shared.dll</HintPath>
+    </Reference>
+    <Reference Include="Dart.PowerTCP.Ftp, Version=3.0.6.2, Culture=neutral, PublicKeyToken=5966291b8955e4bb, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\RefLib\Dart.PowerTCP.Ftp.dll</HintPath>
     </Reference>
     <Reference Include="MD5StageFileCreator">
       <HintPath>..\..\RefLib\MD5StageFileCreator.dll</HintPath>

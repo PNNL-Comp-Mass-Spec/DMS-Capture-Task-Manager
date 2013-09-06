@@ -63,7 +63,7 @@ namespace DatasetArchivePlugin
 
 		#region "Methods"
 		/// <summary>
-		/// Performs an archive update task (oeverides base)
+		/// Performs an archive update task (overrides base)
 		/// </summary>
 		/// <returns>TRUE for success, FALSE for failure</returns>
 		public override bool PerformTask()
@@ -74,10 +74,13 @@ namespace DatasetArchivePlugin
 
 			m_Msg = "Updating dataset " + m_DatasetName + ", job " + m_TaskParams.GetParam("Job");
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
-			
+
+			string instrumentName = m_TaskParams.GetParam("Instrument_Name");
+			bool onlyUseMyEMSL = OnlyUseMyEMSL(instrumentName);
+
 			bool pushDatasetToMyEmsl = m_TaskParams.GetParam("PushDatasetToMyEMSL", false);
 
-			if (pushDatasetToMyEmsl || ALWAYS_USE_MYEMSL)
+			if (pushDatasetToMyEmsl || onlyUseMyEMSL)
 			{
 				m_Msg = "Pushing dataset folder to MyEMSL";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
@@ -87,7 +90,7 @@ namespace DatasetArchivePlugin
 
 				int iMaxMyEMSLUploadAttempts = 2;
 				bool recurse = m_TaskParams.GetParam("PushDatasetRecurse", false);
-				if (ALWAYS_USE_MYEMSL)
+				if (onlyUseMyEMSL)
 					recurse = true;
 
 				bool copySuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts, recurse);
@@ -97,7 +100,7 @@ namespace DatasetArchivePlugin
 
 			}
 
-			if (ALWAYS_USE_MYEMSL)
+			if (onlyUseMyEMSL)
 			{
 				// Finished with this update task
 				m_Msg = "Completed push to MyEMSL, dataset " + m_DatasetName + ", Folder " +

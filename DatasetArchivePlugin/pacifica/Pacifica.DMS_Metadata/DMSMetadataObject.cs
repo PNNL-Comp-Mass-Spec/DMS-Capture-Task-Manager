@@ -356,7 +356,13 @@ namespace Pacifica.DMS_Metadata
 		}
 
 
-		public List<FileInfoObject> FindDatasetFilesToArchive(Dictionary<string, string> taskParams, Dictionary<string, string> mgrParams, out string datasetName, out string datasetInstrument, out int datasetID, out string subFolder)
+		public List<FileInfoObject> FindDatasetFilesToArchive(
+			Dictionary<string, string> taskParams, 
+			Dictionary<string, string> mgrParams, 
+			out string datasetName, 
+			out string datasetInstrument, 
+			out int datasetID, 
+			out string subFolder)
 		{
 			//translate values from task/mgr params into usable variables
 			string perspective = Utilities.GetDictionaryValue(mgrParams, "perspective", "client");

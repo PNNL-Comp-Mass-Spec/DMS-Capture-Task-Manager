@@ -58,7 +58,10 @@ namespace DatasetArchivePlugin
 					return retData;
 				}
 
-				if (clsOpsBase.ALWAYS_USE_MYEMSL)
+				string instrumentName = m_TaskParams.GetParam("Instrument_Name");
+				bool onlyUseMyEMSL = clsOpsBase.OnlyUseMyEMSL(instrumentName);
+
+				if (onlyUseMyEMSL)
 				{
 					// Always use clsArchiveUpdate for both archiving new datasets and updating existing datasets
 

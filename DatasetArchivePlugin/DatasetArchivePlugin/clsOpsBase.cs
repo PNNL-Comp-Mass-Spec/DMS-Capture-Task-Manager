@@ -9,9 +9,10 @@
 //*********************************************************************************************************
 using System;
 using CaptureTaskManager;
-using System.IO;
 using PRISM.Files;
 using MD5StageFileCreator;
+using System.Collections.Generic;
+using System.IO;
 
 namespace DatasetArchivePlugin
 {
@@ -25,7 +26,6 @@ namespace DatasetArchivePlugin
 		protected const string ARCHIVE = "Archive ";
 		protected const string UPDATE = "Archive update ";
 
-		public const bool ALWAYS_USE_MYEMSL = true;
 		#endregion
 
 		#region "Class variables"
@@ -115,6 +115,20 @@ namespace DatasetArchivePlugin
 		#endregion
 
 		#region "Methods"
+
+		public static bool OnlyUseMyEMSL(string instrumentName)
+		{
+			var lstInstrumentsforMyEMSL = new List<string>();
+
+			//lstInstrumentsforMyEMSL.Add("VOrbiETD02");
+			//lstInstrumentsforMyEMSL.Add("VOrbiETD03");
+
+			if (lstInstrumentsforMyEMSL.Contains(instrumentName))
+				return true;
+			else
+				return false;
+		}
+
 		/// <summary>
 		/// Sets up to perform an archive or update task (Implements IArchiveOps.PerformTask)
 		/// Must be overridden in derived class
@@ -123,42 +137,9 @@ namespace DatasetArchivePlugin
 		public virtual bool PerformTask()
 		{
 			m_DatasetName = m_TaskParams.GetParam("Dataset");
-		
-			/*
-			 * August 2013: To be deleted
-			 */
-			if (!ALWAYS_USE_MYEMSL)
-			{
-				bool bMyEmslUpload = false;
-				bool bMyEmslUploadSuccess = true;
-				if (bool.TryParse(m_MgrParams.GetParam("MyEmslUpload"), out bMyEmslUpload) && bMyEmslUpload)
-				{
-					// Possibly copy this dataset to MyEmsl
-					string sInstrument = m_TaskParams.GetParam("Instrument_Name");
-					string sEUSInstrumentID = m_TaskParams.GetParam("EUS_Instrument_ID");
 
-					int iMaxMyEMSLUploadAttempts = 3;
-					bool recurse = true;
-
-					mMostRecentLogTime = System.DateTime.UtcNow;
-					mLastStatusUpdateTime = System.DateTime.UtcNow;
-					mLastProgressUpdateTime = System.DateTime.UtcNow;
-
-					if (sEUSInstrumentID.Length > 0 && !sInstrument.ToLower().Contains("fticr"))
-					{
-						if (sInstrument == "Exact03" || sInstrument == "LTQ_Orb_2" || sInstrument == "LTQ_Orb_3")
-						{
-							if (System.DateTime.Now.Hour % 6 == 0)
-							{
-								bMyEmslUploadSuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts, recurse);
-							}
-						}
-					}
-				}
-			}
-			/*
-			 * August 2013: Delete from here to previous "To be deleted"
-			 */
+			string instrumentName = m_TaskParams.GetParam("Instrument_Name");
+			bool onlyUseMyEMSL = OnlyUseMyEMSL(instrumentName);
 
 			// Set client/server perspective & setup paths
 			string baseStoragePath;
@@ -187,7 +168,7 @@ namespace DatasetArchivePlugin
 				return false;
 			}
 
-			if (!ALWAYS_USE_MYEMSL)
+			if (!onlyUseMyEMSL)
 			{
 				// Initialize the MD5 stage file creator
 				InitializeMD5StageFileCreator();

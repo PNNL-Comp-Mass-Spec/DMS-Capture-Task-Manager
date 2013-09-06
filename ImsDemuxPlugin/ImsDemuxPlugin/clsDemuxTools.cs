@@ -879,8 +879,6 @@ namespace ImsDemuxPlugin
 		/// <returns>Enum indicating success or failure</returns>
 		private bool CalibrateFile(string inputFilePath, string datasetName)
 		{
-			const int STATUS_DELAY_MSEC = 5000;
-
 			string msg;
 			bool success = false;
 
