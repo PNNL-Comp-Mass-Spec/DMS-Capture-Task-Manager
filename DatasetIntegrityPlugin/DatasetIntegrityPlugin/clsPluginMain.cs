@@ -157,6 +157,11 @@ namespace DatasetIntegrityPlugin
 					break;
 				case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging_V2:
 					mRetData.CloseoutType = TestBrukerFT_Folder(datasetFolder, requireBAFFile: false, requireMCFFile: false, instrumentClass: instrumentClass, instrumentName: instrumentName);
+					
+					// Check for message "Multiple .d folders"
+					if (mRetData.EvalMsg.Contains("Multiple " + clsInstrumentClassInfo.DOT_D_EXTENSION + " folders"))
+						break;
+
 					if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
 					{
 						// Try BrukerMALDI_Imaging
