@@ -120,8 +120,11 @@ namespace DatasetArchivePlugin
 		{
 			var lstInstrumentsforMyEMSL = new List<string>();
 
-			//lstInstrumentsforMyEMSL.Add("VOrbiETD02");
-			//lstInstrumentsforMyEMSL.Add("VOrbiETD03");
+			lstInstrumentsforMyEMSL.Add("VPro01");
+			//lstInstrumentsforMyEMSL.Add("15T_FTICR");
+			//lstInstrumentsforMyEMSL.Add("15T_FTICR_Imaging");
+			//lstInstrumentsforMyEMSL.Add("12T_FTICR_Imaging");
+			//lstInstrumentsforMyEMSL.Add("12T_FTICR_B");
 
 			if (lstInstrumentsforMyEMSL.Contains(instrumentName))
 				return true;
