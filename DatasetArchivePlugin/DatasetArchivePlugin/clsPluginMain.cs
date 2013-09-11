@@ -23,6 +23,10 @@ namespace DatasetArchivePlugin
 		protected const string SP_NAME_STORE_MYEMSL_STATS = "StoreMyEMSLUploadStats";
 		#endregion
 
+		#region "Class-wide Variables"
+		bool mSubmittedToMyEMSL;
+		#endregion
+
 		#region "Constructors"
 		public clsPluginMain()
 				: base()
@@ -41,6 +45,7 @@ namespace DatasetArchivePlugin
 				string msg;
 				IArchiveOps archOpTool = null;
 				string archiveOpDescription = string.Empty;
+				mSubmittedToMyEMSL = false;
 
 				msg = "Starting DatasetArchivePlugin.clsPluginMain.RunTool()";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
@@ -64,17 +69,14 @@ namespace DatasetArchivePlugin
 				if (onlyUseMyEMSL)
 				{
 					// Always use clsArchiveUpdate for both archiving new datasets and updating existing datasets
+					archOpTool = new clsArchiveUpdate(m_MgrParams, m_TaskParams, m_StatusTools);
 
 					if (m_TaskParams.GetParam("StepTool").ToLower() == "datasetarchive")
 					{
-						// This is an archive operation
-						archOpTool = new clsArchiveUpdate(m_MgrParams, m_TaskParams, m_StatusTools);
 						archiveOpDescription = "archive";
 					}
 					else
 					{
-						// This is an archive update operation
-						archOpTool = new clsArchiveUpdate(m_MgrParams, m_TaskParams, m_StatusTools);
 						archiveOpDescription = "archive update";
 					}
 
@@ -115,9 +117,14 @@ namespace DatasetArchivePlugin
 				if (!string.IsNullOrEmpty(archOpTool.WarningMsg))
 					retData.EvalMsg = archOpTool.WarningMsg;
 
+				if (mSubmittedToMyEMSL)
+				{
+					// Note that stored procedure SetStepTaskComplete will update MyEMSL State values if retData.EvalCode = 4
+					retData.EvalCode = EnumEvalCode.EVAL_CODE_SUBMITTED_TO_MYEMSL;
+				}
+				
 				msg = "Completed " + archiveOpDescription + ", job " + m_Job;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-
 
 				msg = "Completed clsPluginMain.RunTool()";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
@@ -152,6 +159,8 @@ namespace DatasetArchivePlugin
 				
 				bool Outcome = false;
 				int ResCode = 0;
+
+				mSubmittedToMyEMSL = true;
 
 				try
 				{
@@ -271,7 +280,7 @@ namespace DatasetArchivePlugin
 
 			private void MyEMSLUploadCompleteHandler(object sender, MyEMSLUploadEventArgs e)
 			{
-				StoreMyEMSLUploadStats(e.fileCountNew, e.fileCountUpdated, e.bytes, e.uploadTimeSeconds, e.statusURI, e.errorCode);
+				StoreMyEMSLUploadStats(e.fileCountNew, e.fileCountUpdated, e.bytes, e.uploadTimeSeconds, e.statusURI, e.errorCode);				
 			}
 
 

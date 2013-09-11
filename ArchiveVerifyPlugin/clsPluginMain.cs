@@ -75,7 +75,6 @@ namespace ArchiveVerifyPlugin
 				// Confirm that the files are visible in elastic search
 				// If data is found, then CreateOrUpdateMD5ResultsFile will also be called
 				success = VisibleInElasticSearch(out metadataFilePath);
-
 				
 				if (success && !string.IsNullOrEmpty(metadataFilePath))
 				{
@@ -92,6 +91,10 @@ namespace ArchiveVerifyPlugin
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 				}
 				mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+
+				// Note that stored procedure SetStepTaskComplete will update MyEMSL State values if mRetData.EvalCode = 5
+				mRetData.EvalCode = EnumEvalCode.EVAL_CODE_VERIFIED_IN_MYEMSL;
+					
 			}
 			else
 			{
@@ -250,7 +253,7 @@ namespace ArchiveVerifyPlugin
 
 				// Metadata file was missing or empty; compare to local files on disk
 
-				// Look for files to upload, compute a Sha-1 hash for each, and compare those hashes to existing files in MyEMSL
+				// Look for files that should have been uploaded, compute a Sha-1 hash for each, and compare those hashes to existing files in MyEMSL
 
 				string datasetInstrument;
 				int datasetID;

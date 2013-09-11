@@ -35,7 +35,7 @@ namespace DatasetIntegrityPlugin
 		const float UIMF_FILE_MIN_SIZE_KB = 50;
 		const float AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB = 50;
 		const float AGILENT_DATA_MS_FILE_MIN_SIZE_KB = 75;
-		const float MCF_FILE_MIN_SIZE_KB = 15;		// Malding imaging file
+		const float MCF_FILE_MIN_SIZE_KB = 5;		// Malding imaging file
 
 		int MAX_AGILENT_TO_UIMF_RUNTIME_MINUTES = 30;
 
