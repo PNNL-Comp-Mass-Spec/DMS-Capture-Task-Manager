@@ -122,6 +122,10 @@ namespace DatasetArchivePlugin
 					// Note that stored procedure SetStepTaskComplete will update MyEMSL State values if retData.EvalCode = 4
 					retData.EvalCode = EnumEvalCode.EVAL_CODE_SUBMITTED_TO_MYEMSL;
 				}
+				else if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
+				{
+					retData.EvalCode = EnumEvalCode.EVAL_CODE_SKIPPED_MYEMSL_UPLOAD;
+				}
 				
 				msg = "Completed " + archiveOpDescription + ", job " + m_Job;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
