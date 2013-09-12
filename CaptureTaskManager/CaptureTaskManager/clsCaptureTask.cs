@@ -57,7 +57,7 @@ namespace CaptureTaskManager
 		/// Gets a stored parameter
 		/// </summary>
 		/// <param name="name">Parameter name</param>
-		/// <param name="valueIfMissing">Value to retrun if the parameter does not exist</param>
+		/// <param name="valueIfMissing">Value to return if the parameter does not exist</param>
 		/// <returns>Parameter value if found, otherwise empty string</returns>
 		public string GetParam(string name, string valueIfMissing)
 		{
@@ -76,7 +76,7 @@ namespace CaptureTaskManager
 		/// Gets a stored parameter
 		/// </summary>
 		/// <param name="name">Parameter name</param>
-		/// <param name="valueIfMissing">Value to retrun if the parameter does not exist</param>
+		/// <param name="valueIfMissing">Value to return if the parameter does not exist</param>
 		/// <returns>Parameter value if found, otherwise empty string</returns>
 		public bool GetParam(string name, bool valueIfMissing)
 		{
@@ -99,7 +99,7 @@ namespace CaptureTaskManager
 		/// Gets a stored parameter
 		/// </summary>
 		/// <param name="name">Parameter name</param>
-		/// <param name="valueIfMissing">Value to retrun if the parameter does not exist</param>
+		/// <param name="valueIfMissing">Value to return if the parameter does not exist</param>
 		/// <returns>Parameter value if found, otherwise empty string</returns>
 		public float GetParam(string name, float valueIfMissing)
 		{
@@ -122,7 +122,7 @@ namespace CaptureTaskManager
 		/// Gets a stored parameter
 		/// </summary>
 		/// <param name="name">Parameter name</param>
-		/// <param name="valueIfMissing">Value to retrun if the parameter does not exist</param>
+		/// <param name="valueIfMissing">Value to return if the parameter does not exist</param>
 		/// <returns>Parameter value if found, otherwise empty string</returns>
 		public int GetParam(string name, int valueIfMissing)
 		{

@@ -739,7 +739,7 @@ namespace Pacifica.Core
 			RaiseStatusUpdate(percentComplete, bytesWritten, contentLength, string.Empty);
 
 			// Set this to True to debug things and create the .tar file locally instead of sending to the server
-			bool writeToDisk = false;
+			bool writeToDisk = false;		// aka Writefile or Savefile
 
 			if (!writeToDisk)
 			{
@@ -770,7 +770,7 @@ namespace Pacifica.Core
 
 			Stream oRequestStream;
 			if (writeToDisk)
-				oRequestStream = new FileStream(@"E:\CapMan_WorkDir\TestFile2.tar", FileMode.Create, FileAccess.Write, FileShare.Read);
+				oRequestStream = new FileStream(@"E:\CapMan_WorkDir\TestFile3.tar", FileMode.Create, FileAccess.Write, FileShare.Read);
 			else
 				oRequestStream = oWebRequest.GetRequestStream();
 
@@ -877,15 +877,21 @@ namespace Pacifica.Core
 		protected static long AddTarFileContentLength(string pathInArchive, long fileSizeBytes)
 		{
 
-			// Header block for current file
-			long contentLength = TAR_BLOCK_SIZE_BYTES;
+			long contentLength = 0;
 
-			if (pathInArchive.Length > 100)
-			{ 
-				// Need to add one or more additional header blocks since this file has an extra long file path
+			if (pathInArchive.Length >= 99)
+			{
+				// SharpZipLib will add two extra 512 byte blocks since this file has an extra long file path 
+				//  (if the path is over 512 chars then SharpZipLib will add 3 blocks, etc.)				
+				//
+				// The first block will have filename "././@LongLink" and placeholder metadata (file date, file size, etc.)
+				// The next block will have the actual long filename
 				int extraBlocks = (int)(Math.Ceiling(pathInArchive.Length / 512.0));
-				contentLength += TAR_BLOCK_SIZE_BYTES * extraBlocks;
+				contentLength += TAR_BLOCK_SIZE_BYTES + TAR_BLOCK_SIZE_BYTES * extraBlocks;
 			}
+
+			// Header block for current file
+			contentLength += TAR_BLOCK_SIZE_BYTES;
 
 			// File contents
 			long fileBlocks = (int)Math.Ceiling(fileSizeBytes / (double)TAR_BLOCK_SIZE_BYTES);
@@ -897,45 +903,86 @@ namespace Pacifica.Core
 		private static long ComputeTarFileSize(SortedDictionary<string, FileInfoObject> fileListObject, FileInfo fiMetadataFile)
 		{
 			long contentLength = 0;
+			long addonBytes;
 
-			// Add the metadata file
-			if (fiMetadataFile.Exists)
+			bool debugMode = true;
+
+			if (debugMode)
 			{
-				contentLength += AddTarFileContentLength(MYEMSL_METADATA_FILE_NAME, fiMetadataFile.Length);
+				Console.WriteLine();
+				Console.WriteLine("FileSize".PadRight(12) + "addonBytes".PadRight(12) + "StartOffset".PadRight(13) + "FilePath");
 			}
 
+			// Add the metadata file
+			addonBytes = AddTarFileContentLength(MYEMSL_METADATA_FILE_NAME, fiMetadataFile.Length);
+
+			if (debugMode)
+				Console.WriteLine(fiMetadataFile.Length.ToString().PadRight(12) + addonBytes.ToString().PadRight(12) + contentLength.ToString().PadRight(13) + "metadata.txt");
+
+			contentLength += addonBytes;
+
 			// Add the data/ directory
+			
+			if (debugMode)
+				Console.WriteLine("0".PadRight(12) + TAR_BLOCK_SIZE_BYTES.ToString().PadRight(12) + contentLength.ToString().PadRight(13) + "data\\");
+
 			contentLength += TAR_BLOCK_SIZE_BYTES;
+
+			var dctDirectoryEntries = new SortedSet<string>();
 
 			// Add the files to be archived
 			foreach (var fileToArchive in fileListObject)
 			{
-				string pathInArchive = "data/" + fileToArchive.Value.RelativeDestinationDirectory;
-				long addonBytes = AddTarFileContentLength(pathInArchive, fileToArchive.Value.FileSizeInBytes);
+				var fiSourceFile = new FileInfo(fileToArchive.Key);
 
+				if (!string.IsNullOrEmpty(fileToArchive.Value.RelativeDestinationDirectory))
+				{
+					if (!dctDirectoryEntries.Contains(fiSourceFile.Directory.FullName))
+					{
+						if (debugMode)
+							Console.WriteLine(
+								"0".PadRight(12) + 
+								TAR_BLOCK_SIZE_BYTES.ToString().PadRight(12) + 
+								contentLength.ToString().PadRight(13) + 
+								PRISM.Files.clsFileTools.CompactPathString(fiSourceFile.Directory.FullName + "\\", 75));
+
+						contentLength += TAR_BLOCK_SIZE_BYTES;
+
+						dctDirectoryEntries.Add(fiSourceFile.Directory.FullName);
+					}
+				}
+
+				string pathInArchive = "data/" + fileToArchive.Value.RelativeDestinationDirectory + fileToArchive.Value.FileName;
+				addonBytes = AddTarFileContentLength(pathInArchive, fileToArchive.Value.FileSizeInBytes);
+
+				if (debugMode)
+					Console.WriteLine(
+						fileToArchive.Value.FileSizeInBytes.ToString().PadRight(12) + 
+						addonBytes.ToString().ToString().PadRight(12) + 
+						contentLength.ToString().PadRight(13) + 
+						PRISM.Files.clsFileTools.CompactPathString(fileToArchive.Value.RelativeDestinationFullPath, 73));
+			
 				contentLength += addonBytes;
 
-				// Uncomment to debug
-				// Console.WriteLine(fileToArchive.Value.FileSizeInBytes + "\t" + addonBytes + "\t" + fileToArchive.Value.RelativeDestinationFullPath);
-			}
-
-			var lstDirectoryEntries = GetUniqueRelativeDestinationDirectory(fileListObject);
-
-			// Add the directories for the files
-			foreach (var directoryName in lstDirectoryEntries)
-			{
-				if (!string.IsNullOrEmpty(directoryName))
-				{
-					contentLength += TAR_BLOCK_SIZE_BYTES;
-				}
-			}
+			}			
 
 			// Append one empty block (appended by SharpZipLib at the end of the .tar file
+			if (debugMode)
+				Console.WriteLine("0".PadRight(12) + TAR_BLOCK_SIZE_BYTES.ToString().PadRight(12) + contentLength.ToString().PadRight(13) + "512 block at end of .tar");
+
 			contentLength += TAR_BLOCK_SIZE_BYTES;
 
 			// Round up contentLength to the nearest 10240 bytes
 			int recordCount = (int)Math.Ceiling(contentLength / (double)TarBuffer.DefaultRecordSize);
+			long finalPadderLength = recordCount * TarBuffer.DefaultRecordSize - contentLength;
+
+			if (debugMode)
+				Console.WriteLine("0".PadRight(12) + finalPadderLength.ToString().PadRight(12) + contentLength.ToString().PadRight(13) + "Padder block at end (to make multiple of " + TarBuffer.DefaultRecordSize + ")");
+
 			contentLength = recordCount * TarBuffer.DefaultRecordSize;
+
+			if (debugMode)
+				Console.WriteLine("0".PadRight(12) + "0".PadRight(12) + contentLength.ToString().PadRight(13) + "End of file");
 
 			return contentLength;
 		}

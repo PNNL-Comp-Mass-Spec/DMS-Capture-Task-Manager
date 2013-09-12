@@ -153,19 +153,26 @@ namespace Pacifica.Core
 								break;
 
 							default:
-								if (tmpJsa.Count == 0)
+								if (tmpJsa == null || tmpJsa.Count == 0)
 								{
 									d.Add(key, new List<Dictionary<string, object>>());
 								}
 								else
 								{
 									object nextValue = tmpJsa.GetValue(0);
-									string typeName = nextValue.GetType().Name;
-
-									if (typeName == "String" || typeName == "JsonNumber")
-										d.Add(key, JsonArrayToStringList(tmpJsa));
+									if (nextValue == null)
+									{
+										d.Add(key, new List<Dictionary<string, object>>());
+									}
 									else
-										d.Add(key, JsonArrayToDictionaryList(tmpJsa));
+									{
+										string typeName = nextValue.GetType().Name;
+
+										if (typeName == "String" || typeName == "JsonNumber")
+											d.Add(key, JsonArrayToStringList(tmpJsa));
+										else
+											d.Add(key, JsonArrayToDictionaryList(tmpJsa));
+									}
 								}
 								break;
 						}

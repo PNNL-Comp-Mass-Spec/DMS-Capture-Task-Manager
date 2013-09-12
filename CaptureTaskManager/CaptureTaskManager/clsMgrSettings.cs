@@ -435,7 +435,7 @@ namespace CaptureTaskManager
 		/// Gets a stored parameter
 		/// </summary>
 		/// <param name="name">Parameter name</param>
-		/// <param name="valueIfMissing">Value to retrun if the parameter does not exist</param>
+		/// <param name="valueIfMissing">Value to return if the parameter does not exist</param>
 		/// <returns>Parameter value if found, otherwise empty string</returns>
 		public string GetParam(string ItemKey, string valueIfMissing)
 		{

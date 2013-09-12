@@ -177,7 +177,11 @@ namespace CaptureTaskManager
 					catch (System.Exception ex)
 					{
 						myTimer.Stop();
-						retryCount -= 1;
+						if (ex.Message.Contains("permission was denied"))
+							retryCount = 0;
+						else
+							retryCount -= 1;
+
 						msg = "clsDBTask.ExecuteSP(), exception filling data adapter, " + ex.Message;
 						msg += ". ResCode = " + resCode.ToString() + ". Retry count = " + retryCount.ToString();
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
@@ -192,8 +196,12 @@ namespace CaptureTaskManager
 						//Reset the connection timer
 						myTimer.Reset();
 					}
-					//Wait 10 seconds before retrying
-					System.Threading.Thread.Sleep(10000);
+
+					if (retryCount > 0)
+					{
+						//Wait 10 seconds before retrying
+						System.Threading.Thread.Sleep(10000);
+					}
 				}
 
 				if (retryCount < 1)
