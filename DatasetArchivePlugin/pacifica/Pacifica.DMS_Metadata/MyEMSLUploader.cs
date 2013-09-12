@@ -11,12 +11,6 @@ namespace Pacifica.DMS_Metadata
 	{
 		public const string RECURSIVE_UPLOAD = "MyEMSL_Recurse";
 		
-		/* August 2013: To be deleted
-		 *
-		System.ComponentModel.BackgroundWorker backgrounder;
-		System.ComponentModel.BackgroundWorker statusBackgrounder;
-		 */
-
 		DMSMetadataObject _mdContainer;
 		Upload myEMSLUpload;
 
@@ -30,12 +24,6 @@ namespace Pacifica.DMS_Metadata
 			FileCountUpdated = 0;
 			Bytes = 0;
 			ErrorCode = string.Empty;
-
-			/* August 2013: To be deleted
-			 *
-			backgrounder = new System.ComponentModel.BackgroundWorker();
-			statusBackgrounder = new System.ComponentModel.BackgroundWorker();
-			 */
 
 			m_MgrParams = mgrParams;
 			m_TaskParams = taskParams;
@@ -112,33 +100,10 @@ namespace Pacifica.DMS_Metadata
 			this.FileCountNew = this._mdContainer.TotalFileCountNew;
 			this.Bytes = this._mdContainer.TotalFileSizeToUpload;
 
-			/*
-			 * August 2013: To be deleted
-			 * 
-			 * This call is updating the locally cached cookie container
-			 * Instead, obtain the cookies using an Auth call
-			 *
-			Boolean isLoginRequired = Pacifica.Core.Configuration.AuthInstance.LoginRequired;
-			 */
-
 			this.myEMSLUpload.StartUpload(this._mdContainer.MetadataObject, out statusURL);
 
 			if (!string.IsNullOrEmpty(statusURL))
 				this.StatusURI = statusURL + "/xml";
-
-			/* August 2013: To be deleted 
-			 * No longer needed since we're creating the tar file on-the-fly
-			 * 
-				// Delete the cached tar file
-				string bundleName = this._mdContainer.BundleName;
-				FileInfo bundleObject = new FileInfo(Path.Combine(Pacifica.Core.Configuration.LocalTempDirectory, bundleName));
-				if (bundleObject.Exists)
-				{
-					bundleObject.Delete();
-				}
-			 *
-			 */
-
 		}
 
 		#region "Events and Event Handlers"

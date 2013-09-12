@@ -823,16 +823,6 @@ namespace CaptureTaskManager
 			string sTempFolderPath = System.IO.Path.GetTempPath();
 			RemoveOldTempFiles(iAgedTempFilesHours, sTempFolderPath);
 
-			/* August 2013: To be deleted
-			 * 
-				// Remove .Tar files over 24 hours in the Capture Task Manager's work directory
-				List<string> lstSearchSpecs = new List<string>();
-				lstSearchSpecs.Add("*.tar");
-				sTempFolderPath = m_MgrSettings.GetParam("WorkDir");
-				iAgedTempFilesHours = 24;
-				RemoveOldTempFiles(iAgedTempFilesHours, sTempFolderPath, lstSearchSpecs);
-			 */
-
 		}
 
 		protected void RemoveOldTempFiles(int iAgedTempFilesHours, string sTempFolderPath)

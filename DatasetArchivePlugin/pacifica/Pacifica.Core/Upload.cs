@@ -12,12 +12,6 @@ namespace Pacifica.Core
 	public class Upload : IUpload
 	{
 		#region Private Members
-
-		/* August 2013: To be deleted
-		 *
-		 * private BackgroundWorker _topLevelBackgrounder;
-		 * private BackgroundWorker statusBackgrounder;
-		*/
 	
 		private string _bundleIdentifier = string.Empty;
 		private const string bundleExtension = ".tar";
@@ -38,14 +32,6 @@ namespace Pacifica.Core
 		/// <param name="mJob">DMS Data Capture job number</param>
 		public Upload(string transferFolderPath, string jobNumber)
 		{
-
-			/* August 2013: To be deleted
-			 *
-			 * backgrounder.WorkerReportsProgress = true;
-			 * backgrounder.WorkerSupportsCancellation = true;
-			 * this._topLevelBackgrounder = backgrounder;
-			 * statusBackgrounder = new BackgroundWorker();
-			*/
 
 			// Note that EasyHttp is a static class with a static event
 			// Be careful about instantiating this class (Upload) multiple times
@@ -91,19 +77,6 @@ namespace Pacifica.Core
 			}
 		}
 
-		/* August 2013: To be deleted
-		 *
-		public void RaiseStatusUpdate(string bundleIdentifier,
-				double percentCompleted, long totalBytesSent,
-				long totalBytesToSend, string statusMessage)
-		{
-			if (StatusUpdate != null)
-			{
-				StatusUpdate(this, new StatusEventArgs(bundleIdentifier, percentCompleted, totalBytesSent, totalBytesToSend, statusMessage));
-			}
-		}
-		*/
-
 		private void RaiseUploadCompleted(string serverResponse)
 		{
 			if (UploadCompleted != null)
@@ -134,20 +107,6 @@ namespace Pacifica.Core
 			string timestamp = DateTime.Now.ToString("yyyyMMddHHmmssffffff");
 			statusURL = string.Empty;
 
-			/* August 2013: To be deleted 
-			 * 
-				string bundleName = timestamp + bundleExtension;
-				if (metadataObject.Contains("bundleName") && metadataObject["bundleName"] is string)
-				{
-					metadataObject["bundleName"] += "_" + bundleName;
-				}
-				else
-				{
-					metadataObject.Add("bundleName", bundleName);
-				}
-			 *
-			 */
-
 			var fileList = (List<FileInfoObject>)metadataObject["file"];
 
 			// Grab the list of files from the top-level "file" object
@@ -161,28 +120,7 @@ namespace Pacifica.Core
 			foreach (var file in fileList)
 			{
 
-				FileInfoObject fiObj = new FileInfoObject(file.AbsoluteLocalPath, file.RelativeDestinationDirectory, file.Sha1HashHex);
-
-				/* August 2013: To be deleted
-				 *
-				 * We no longer need to skip metadata.txt files since the metadata file is now v1.2.0
-				 * 
-					if (fiObj.RelativeDestinationFullPath.ToLower() == EasyHttp.MYEMSL_METADATA_FILE_NAME.ToLower())
-					{
-						// We must skip this file since MyEMSL stores a special metadata.txt file at the root of the .tar file
-						// The alternative would be to create a tar file with all of the data files (and folders) in a subfolder named data
-						// In this case we would define the data as version 1.2.0 instead of 1.0.0
-					
-						// Creating a .tar file with the data in this layout is tricky with 7-zip, but straightforward with SharpZipLib.Tar
-
-						RaiseErrorEvent("ProcessMetadata", "Skipping metadata.txt file at '" + fiObj.AbsoluteLocalPath + "' due to name conflict with the MyEmsl metadata.txt file");
-					}
-					else
-					{
-						fileListObject.Add(file.AbsoluteLocalPath, fiObj);
-						newFileObj.Add(fiObj.SerializeToDictionaryObject());
-					}
-				 */
+				var fiObj = new FileInfoObject(file.AbsoluteLocalPath, file.RelativeDestinationDirectory, file.Sha1HashHex);
 
 				fileListObject.Add(file.AbsoluteLocalPath, fiObj);
 				newFileObj.Add(fiObj.SerializeToDictionaryObject());
@@ -226,13 +164,6 @@ namespace Pacifica.Core
 				RaiseUploadCompleted("");
 				return true;
 			}
-
-			/* August 2013: To be deleted
-			 *
-			 * string bundleNameFull = metadataObject["bundleName"].ToString();
-			 * RaiseDebugEvent("ProcessMetadata", "Bundling " + newFileObj.Count + " files");
-			 * FileInfo fiTarFile = BundleFiles(fileListObject, mdTextFile.FullName, bundleNameFull);
-			 */
 
 			NetworkCredential newCred = null;
 			if (loginCredentials != null)
@@ -377,137 +308,6 @@ namespace Pacifica.Core
 		#endregion
 
 		#region  Member Methods
-
-		/* August 2013: To be deleted
-		 *
-		private FileInfo BundleFiles(SortedDictionary<string, FileInfoObject> pathList, string metadataFilePath, string bundleId)
-		{
-			string message = string.Empty;
-
-			if (pathList.Count == 0)
-			{
-				message = "Transport Aborted, no files found";
-				return null;
-			}
-			else
-			{
-				message = "Preparing Files for Transport";
-			}
-
-			DirectoryInfo tempDir = Utilities.GetTempDirectory();
-
-			string cacheFileName;
-			cacheFileName = bundleId;
-
-			string bundleFilePath = Path.Combine(tempDir.FullName, cacheFileName);
-
-			string statusMessage = "Saving bundle: " + bundleFilePath;
-			double percentComplete = 0;
-
-			RaiseStatusUpdate(this._bundleIdentifier, percentComplete, 0, 0, statusMessage);
-
-			EventHandler<SevenZip.ProgressEventArgs> update = (s, e) =>
-					{
-						statusMessage = "Saving bundle: " + bundleFilePath;
-						RaiseStatusUpdate(this._bundleIdentifier, e.PercentDone, 0, 0, statusMessage);
-					};
-
-			CreateTar(pathList.Values, metadataFilePath, bundleFilePath, update);
-
-			statusMessage = "Save bundle complete:";
-			percentComplete = 100;
-			RaiseStatusUpdate(this._bundleIdentifier, percentComplete, 0, 0, statusMessage);
-
-			FileInfo retFi = new FileInfo(bundleFilePath);
-			string newPath = Path.Combine(tempDir.FullName, cacheFileName);
-			retFi.MoveTo(newPath);
-
-			retFi = new FileInfo(newPath);
-			Trace.WriteLine(retFi.FullName);
-			return retFi;
-		}
-
-		/// <summary>
-		/// Create a Tar file using SevenZipSharp
-		/// Compression rate is ~2 GB/minute
-		/// </summary>
-		/// <param name="files"></param>
-		/// <param name="metadataFilePath"></param>
-		/// <param name="outputFilePath"></param>
-		/// <param name="warningMessages"></param>
-		private void CreateTar(IEnumerable<FileInfoObject> sourceFilePaths, string metadataFilePath, string outputFilePath,
-			EventHandler<SevenZip.ProgressEventArgs> progressUpdate)
-		{
-
-			string path = System.Reflection.Assembly.GetExecutingAssembly().Location;
-			System.IO.FileInfo fi = new System.IO.FileInfo(path);
-			path = System.IO.Path.Combine(fi.DirectoryName, "7z.dll");
-			SevenZip.SevenZipCompressor.SetLibraryPath(path);
-
-			// This list tracks the full paths of the files to be added to the .tar file
-			// We pass this list to the compressor when using function CompressFiles()
-			var sourceFilePathsFull = new System.Collections.Generic.List<string>();
-
-			// This dictionary keeps track of the target file paths within the .tar file
-			// Key is the target file path, while value is the source file path
-			// We pass this dictionary to the compressor when using function CompressFileDictionary()
-			Dictionary<string, string> fileDict = new Dictionary<string, string>();
-
-			SevenZip.SevenZipCompressor compressor = new SevenZip.SevenZipCompressor();
-			compressor.Compressing += progressUpdate;
-			compressor.ArchiveFormat = SevenZip.OutArchiveFormat.Tar;
-
-			// First create the tar file using the files in sourceFilePaths
-			// Populate a generic list with the full paths to the source files, then call compressor.CompressFiles() 
-			// This function will examine the source files to determine the common path that they all share
-			// It will remove that common path when storing the files in the .tar file
-			using (System.IO.FileStream tarFileStream = System.IO.File.Create(outputFilePath))
-			{
-
-				string dictionaryValue = string.Empty;
-				fileDict.Clear();
-
-				foreach (FileInfoObject file in sourceFilePaths)
-				{
-					if (fileDict.TryGetValue(file.RelativeDestinationFullPath, out dictionaryValue))
-					{
-						RaiseErrorEvent("CreateTar", "Skipped file '" + file.RelativeDestinationFullPath + "' since already present in dictionary fileDict.  Existing entry has value '" + dictionaryValue + "' while new item has value '" + file.AbsoluteLocalPath + "'");
-					}
-					else
-					{
-						if (string.Compare(file.RelativeDestinationFullPath.ToLower(), "metadata.txt") == 0)
-							RaiseErrorEvent("CreateTar", "Skipping metadata.txt file at '" + file.AbsoluteLocalPath + "' due to name conflict with the MyEmsl metadata.txt file");
-						else
-						{
-							fileDict.Add(file.RelativeDestinationFullPath, file.AbsoluteLocalPath);
-							sourceFilePathsFull.Add(file.AbsoluteLocalPath);
-						}
-
-					}
-				}
-
-				compressor.CompressFiles(tarFileStream, sourceFilePathsFull.ToArray());
-			}
-
-			// Wait 500 msec
-			System.Threading.Thread.Sleep(500);
-
-			// Now append the metadata file
-			// To append more files, we need to close the stream, then re-open it and seek to 1024 bytes before the end of the file
-			// The reason for 1024 bytes is that Seven zip writes two 512 byte blocks of zeroes to the of the .Tar to signify the end of the .tar
-			using (System.IO.FileStream tarFileStream = new System.IO.FileStream(outputFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Write, System.IO.FileShare.Read))
-			{
-				tarFileStream.Seek(-1024, System.IO.SeekOrigin.End);
-
-				fileDict.Clear();
-				fileDict.Add("metadata.txt", metadataFilePath);
-
-				compressor.CompressFileDictionary(fileDict, tarFileStream);
-			}
-
-		}
-
-		 */
 
 		#endregion
 

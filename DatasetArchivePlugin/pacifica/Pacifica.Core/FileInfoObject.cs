@@ -171,32 +171,6 @@ namespace Pacifica.Core
 			}
 		}
 
-		/*
-		 * Code deprecated in August 2013
-		 * 
-			public string SerializeData()
-			{
-				//JsonObject jso = new JsonObject(this.SerializeToDictionaryObject());
-				//return jso.ToString();
-				return SerializeToJson();
-			}
-
-			public string SerializeToJson()
-			{
-				JsonObject jso = new JsonObject();
-				jso.Put("sha1Hash", this.Sha1HashHex);
-				jso.Put("destinationDirectory", this.RelativeDestinationDirectory);
-				jso.Put("localFilePath", this.AbsoluteLocalPath);
-				jso.Put("fileName", this.FileName);
-				jso.Put("sizeInBytes", this.File.Length);
-				jso.Put("creationDate", this.CreationTimeStamp);
-
-				return jso.ToString();
-			}
-		 * 
-		*/
-
-
 		public Dictionary<string, string> SerializeToDictionaryObject()
 		{
 			var d = new Dictionary<string, string>();
@@ -204,11 +178,6 @@ namespace Pacifica.Core
 			d.Add("sha1Hash", this.Sha1HashHex);
 			d.Add("destinationDirectory", this.RelativeDestinationDirectory);			// Reported as "subDir" by the MyEMSL Elastic Search
 			d.Add("fileName", this.FileName);
-
-			// August 2013 note: these 3 entries are likely not needed or even used by the MyEMSL Uploader
-			// d.Add("localFilePath", this.AbsoluteLocalPath);
-			// d.Add("sizeInBytes", this.File.Length.ToString());
-			// d.Add("creationDate", this.CreationTimeStamp);
 
 			return d;
 		}

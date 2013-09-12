@@ -16,12 +16,6 @@ namespace Pacifica.Core
         DateTime SubmittedTime { get; }
         string CreationTimeStamp { get; }
         string SubmittedTimeStamp { get; }
-		
-		/*
-		 * August 2013: To be deleted
-		 * 
-         * string SerializeData();
-		*/
 
 		Dictionary<string, string> SerializeToDictionaryObject();
     }

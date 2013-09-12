@@ -10,25 +10,12 @@ namespace Pacifica.DMS_Metadata
 {
 	public class DMSMetadataObject
 	{
-		/* August 2013: To be deleted
-		 * 
-		 * private Dictionary<string, string> _taskParams;
-		 * private Dictionary<string, string> _mgrParams;
-		 */
-
 		private Dictionary<string, object> _metadataObject;
 
 		// List of new or changed files
 		private List<FileInfoObject> _unmatchedFilesToUpload;
 
 		private string _serverSearchString = string.Empty;
-
-		/* August 2013: To be deleted
-		 * 
-		 * private string _ingestServerName;
-		 * private System.ComponentModel.BackgroundWorker _bgw;
-		 * private PRISM.DataBase.clsDBTools dbTool;
-		*/
 
 		public enum ArchiveModes
 		{
@@ -45,15 +32,6 @@ namespace Pacifica.DMS_Metadata
 				this._metadataObject = value;
 			}
 		}
-
-		/* August 2013: To be deleted 
-		 * 
-			public string BundleName
-			{
-				get { return this._metadataObject["bundleName"].ToString(); }
-			}
-		 *
-		 */
 
 		public long TotalFileSizeToUpload
 		{
@@ -92,46 +70,11 @@ namespace Pacifica.DMS_Metadata
 
 		#endregion
 
+		/// <summary>
+		/// Constructor
+		/// </summary>
 		public DMSMetadataObject()
-		{
-			/* August 2013: To be deleted
-			 *
-			 * this._bgw = backgrounder;
-			 */
-
-			/* August 2013: To be deleted
-			 * 
-			 * this._ingestServerName = Pacifica.Core.Configuration.IngestServerHostName;
-			 * this.dbTool = new PRISM.DataBase.clsDBTools(null, "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI");
-			
-			 * No longer necessary since taskParams contains EUS_Instrument_ID
-			string instLookupSQL = "SELECT EUS_Instrument_ID FROM [V_EUS_Instrument_ID_Lookup] WHERE Instrument_Name = '" + taskParams["Instrument_Name"] + "';";
-			System.Data.DataSet dmsDS = new System.Data.DataSet();
-			Int32 rowCount = 0;
-
-			Boolean dbSuccess = this.dbTool.GetDiscDataSet(instLookupSQL, ref dmsDS, ref rowCount);
-			
-
-			if (backgrounder != null)
-			{
-				this._bgw.DoWork += new System.ComponentModel.DoWorkEventHandler(this.SetupMetadataHandler);
-				this._bgw.WorkerReportsProgress = true;
-				this._bgw.RunWorkerAsync();
-			}
-			else
-			{
-			 */
-		}
-
-		/* August 2013: To be deleted
-		 *
-		private void SetupMetadataHandler(object sender, System.ComponentModel.DoWorkEventArgs e)
-		{
-			System.ComponentModel.BackgroundWorker worker = (System.ComponentModel.BackgroundWorker)sender;
-			this.SetupMetadata(this._taskParams, this._mgrParams, worker);
-			e.Result = this._metadataObject;
-		}
-		*/
+		{ }
 
 		public void SetupMetadata(Dictionary<string, string> taskParams, Dictionary<string, string> mgrParams)
 		{
@@ -204,11 +147,6 @@ namespace Pacifica.DMS_Metadata
 			var lstUnmatchedFiles = this.CompareDatasetContentsElasticSearch(lstDatasetFilesToArchive, subFolder, datasetID);
 
 			metadataObject.Add("file", lstUnmatchedFiles);
-
-			/* August 2013: To be deleted
-			 * 
-			 * metadataObject.Add("type", "single");
-			*/
 
 			metadataObject.Add("version", "1.2.0");
 
