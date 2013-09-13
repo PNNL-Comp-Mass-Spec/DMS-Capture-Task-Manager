@@ -233,6 +233,13 @@ namespace Pacifica.DMS_Metadata
 
 			// Find all files in MyEMSL for this dataset
 			var reader = new MyEMSLReader.Reader();
+			reader.IncludeAllRevisions = false;
+
+			// Attach events
+			reader.ErrorEvent += new MyEMSLReader.MessageEventHandler(reader_ErrorEvent);
+			reader.MessageEvent += new MyEMSLReader.MessageEventHandler(reader_MessageEvent);
+			reader.ProgressEvent += new MyEMSLReader.ProgressEventHandler(reader_ProgressEvent);
+
 			List<ArchivedFileInfo> lstFilesInMyEMSL;
 
 			lstFilesInMyEMSL = reader.FindFilesByDatasetID(datasetID, subFolder);
@@ -390,6 +397,22 @@ namespace Pacifica.DMS_Metadata
 			if (ProgressEvent != null)
 				ProgressEvent(this, e);
 		}
+
+		void reader_ErrorEvent(object sender, MyEMSLReader.MessageEventArgs e)
+		{
+			Console.WriteLine("Error in MyEMSLReader: " + e.Message);
+		}
+
+		void reader_MessageEvent(object sender, MyEMSLReader.MessageEventArgs e)
+		{
+			// Console.WriteLine("MyEMSLReader: " + e.Message);
+		}
+
+		void reader_ProgressEvent(object sender, MyEMSLReader.ProgressEventArgs e)
+		{
+			// Console.WriteLine("MyEMSLReader Percent complete: " + e.PercentComplete.ToString("0.0") + "%");
+		}
+
 		#endregion
 	}
 

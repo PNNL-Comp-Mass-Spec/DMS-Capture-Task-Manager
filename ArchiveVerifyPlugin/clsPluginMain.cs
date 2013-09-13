@@ -697,9 +697,9 @@ namespace ArchiveVerifyPlugin
 				reader.IncludeAllRevisions = false;
 
 				// Attach events
-				reader.ErrorEvent += new MyEMSLReader.MyEMSLBase.MessageEventHandler(reader_ErrorEvent);
-				reader.MessageEvent += new MyEMSLReader.MyEMSLBase.MessageEventHandler(reader_MessageEvent);
-				reader.ProgressEvent += new MyEMSLReader.MyEMSLBase.ProgressEventHandler(reader_ProgressEvent);
+				reader.ErrorEvent += new MyEMSLReader.MessageEventHandler(reader_ErrorEvent);
+				reader.MessageEvent += new MyEMSLReader.MessageEventHandler(reader_MessageEvent);
+				reader.ProgressEvent += new MyEMSLReader.ProgressEventHandler(reader_ProgressEvent);
 
 				string subDir = m_TaskParams.GetParam("OutputFolderName", "");
 
@@ -884,7 +884,6 @@ namespace ArchiveVerifyPlugin
 				}
 			}
 		}
-
 
 		#endregion
 
