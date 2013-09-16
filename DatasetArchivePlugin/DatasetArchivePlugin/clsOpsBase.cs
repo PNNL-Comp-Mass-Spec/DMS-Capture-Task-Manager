@@ -118,18 +118,22 @@ namespace DatasetArchivePlugin
 
 		public static bool OnlyUseMyEMSL(string instrumentName)
 		{
-			var lstInstrumentsforMyEMSL = new List<string>();
+			var lstExclusionPrefix = new List<string>();
 
-			lstInstrumentsforMyEMSL.Add("VPro01");
-			lstInstrumentsforMyEMSL.Add("15T_FTICR");
-			lstInstrumentsforMyEMSL.Add("15T_FTICR_Imaging");
-			lstInstrumentsforMyEMSL.Add("12T_FTICR_Imaging");
-			lstInstrumentsforMyEMSL.Add("12T_FTICR_B");
+			lstExclusionPrefix.Add("DMS_Pipeline_Data");
+			lstExclusionPrefix.Add("QExact");
+			lstExclusionPrefix.Add("QTrap");
+			lstExclusionPrefix.Add("VOrbi05");
+			lstExclusionPrefix.Add("VOrbiETD");
 
-			if (lstInstrumentsforMyEMSL.Contains(instrumentName))
-				return true;
-			else
-				return false;
+			foreach (string prefix in lstExclusionPrefix)
+			{
+				if (instrumentName.StartsWith(prefix))
+					return false;
+			}
+
+			return true;
+			
 		}
 
 		/// <summary>
