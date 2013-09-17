@@ -108,8 +108,13 @@ namespace Pacifica.Core
 							linesRead++;
 						}
 					}
+					responseStatusCode = ((HttpWebResponse)ex.Response).StatusCode;
 				}
-				responseStatusCode = ((HttpWebResponse)ex.Response).StatusCode;
+				else
+				{
+					if (ex.Message.Contains("timed out"))
+						responseStatusCode = HttpStatusCode.RequestTimeout;
+				}
 				throw new Exception(responseData, ex);
 			}
 			finally
@@ -159,22 +164,23 @@ namespace Pacifica.Core
 			}
 			catch (WebException ex)
 			{
-				string responseData;
+				string responseData = string.Empty;
 				if (ex.Response != null)
 				{
 					using (StreamReader sr = new StreamReader(ex.Response.GetResponseStream()))
 					{
 						responseData = sr.ReadToEnd();
 					}
+					responseStatusCode = ((HttpWebResponse)ex.Response).StatusCode;
 				}
 				else
 				{
-					responseData = string.Empty;
+					if (ex.Message.Contains("timed out"))
+						responseStatusCode = HttpStatusCode.RequestTimeout;
 				}
 				if (string.IsNullOrWhiteSpace(responseData))
 					responseData = ex.Message;
 
-				responseStatusCode = ((HttpWebResponse)ex.Response).StatusCode;
 				throw new Exception(responseData, ex);
 			}
 			finally
@@ -367,18 +373,20 @@ namespace Pacifica.Core
 			}
 			catch (WebException ex)
 			{
+				responseData = string.Empty;
 				if (ex.Response != null)
 				{
 					using (StreamReader sr = new StreamReader(ex.Response.GetResponseStream()))
 					{
 						responseData = sr.ReadToEnd();
 					}
+					responseStatusCode = ((HttpWebResponse)ex.Response).StatusCode;
 				}
 				else
 				{
-					responseData = string.Empty;
+					if (ex.Message.Contains("timed out"))
+						responseStatusCode = HttpStatusCode.RequestTimeout;
 				}
-				responseStatusCode = ((HttpWebResponse)ex.Response).StatusCode;
 				throw new Exception(responseData, ex);
 			}
 			finally
