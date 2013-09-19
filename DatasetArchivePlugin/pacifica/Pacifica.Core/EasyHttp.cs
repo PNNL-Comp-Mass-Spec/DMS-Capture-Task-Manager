@@ -980,8 +980,9 @@ namespace Pacifica.Core
 			contentLength += TAR_BLOCK_SIZE_BYTES;
 
 			// Round up contentLength to the nearest 10240 bytes
-			int recordCount = (int)Math.Ceiling(contentLength / (double)TarBuffer.DefaultRecordSize);
-			long finalPadderLength = recordCount * TarBuffer.DefaultRecordSize - contentLength;
+			// Note that recordCount is a long to prevent overflow errors when computing finalPadderLength
+			long recordCount = (long)Math.Ceiling(contentLength / (double)TarBuffer.DefaultRecordSize);
+			long finalPadderLength = (recordCount * TarBuffer.DefaultRecordSize) - contentLength;
 
 			if (debugMode)
 				Console.WriteLine("0".PadRight(12) + finalPadderLength.ToString().PadRight(12) + contentLength.ToString().PadRight(13) + "Padder block at end (to make multiple of " + TarBuffer.DefaultRecordSize + ")");

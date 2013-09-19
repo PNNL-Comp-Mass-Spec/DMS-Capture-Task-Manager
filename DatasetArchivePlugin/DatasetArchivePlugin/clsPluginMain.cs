@@ -25,6 +25,8 @@ namespace DatasetArchivePlugin
 
 		#region "Class-wide Variables"
 		bool mSubmittedToMyEMSL;
+		bool mMyEMSLAlreadyUpToDate;
+
 		#endregion
 
 		#region "Constructors"
@@ -46,6 +48,7 @@ namespace DatasetArchivePlugin
 			IArchiveOps archOpTool = null;
 			string archiveOpDescription = string.Empty;
 			mSubmittedToMyEMSL = false;
+			mMyEMSLAlreadyUpToDate = false;
 
 			msg = "Starting DatasetArchivePlugin.clsPluginMain.RunTool()";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
@@ -121,8 +124,11 @@ namespace DatasetArchivePlugin
 			{
 				if (mSubmittedToMyEMSL)
 				{
-					// Note that stored procedure SetStepTaskComplete will update MyEMSL State values if retData.EvalCode = 4
-					retData.EvalCode = EnumEvalCode.EVAL_CODE_SUBMITTED_TO_MYEMSL;
+					// Note that stored procedure SetStepTaskComplete will update MyEMSL State values if retData.EvalCode is 4 or 7
+					if (mMyEMSLAlreadyUpToDate)
+						retData.EvalCode = EnumEvalCode.EVAL_CODE_MYEMSL_IS_ALREADY_UP_TO_DATE;
+					else
+						retData.EvalCode = EnumEvalCode.EVAL_CODE_SUBMITTED_TO_MYEMSL;
 				}
 				else
 				{
@@ -168,6 +174,8 @@ namespace DatasetArchivePlugin
 			int ResCode = 0;
 
 			mSubmittedToMyEMSL = true;
+			if (fileCountNew == 0 && fileCountUpdated == 0)
+				mMyEMSLAlreadyUpToDate = true;
 
 			try
 			{
