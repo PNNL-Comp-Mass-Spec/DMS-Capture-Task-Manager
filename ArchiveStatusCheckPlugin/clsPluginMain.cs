@@ -103,7 +103,7 @@ namespace ArchiveStatusCheckPlugin
 				string msg = "Could not find any MyEMSL_Status_URIs; cannot verify archive status";
 				mRetData.CloseoutMsg = msg;
 				mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg + " for job " + m_Job);
 				return false;
 			}
 
@@ -139,14 +139,14 @@ namespace ArchiveStatusCheckPlugin
 					if (this.WasDataVerified(xmlServerResponse, out abortNow, out dataVerificationMessage))
 					{
 						verifiedCount++;
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, dataVerificationMessage);
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, dataVerificationMessage + ", job " + m_Job + ", " + statusURI);
 						continue;
 					}
 
 					if (abortNow)
 					{
 						mRetData.CloseoutMsg = dataVerificationMessage;
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, dataVerificationMessage);
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, dataVerificationMessage + ", job " + m_Job);
 						Utilities.Logout(cookieJar);
 						return false;
 					}
@@ -159,11 +159,11 @@ namespace ArchiveStatusCheckPlugin
 					exceptionCount++;
 					if (exceptionCount < 3)
 					{
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception verifying archive status: " + ex.Message);
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception verifying archive status for job " + m_Job + ": " + ex.Message);
 					}
 					else
 					{
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception verifying archive status: ", ex);
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception verifying archive status for job " + m_Job + ": ", ex);
 						break;
 					}
 				}
