@@ -121,10 +121,10 @@ namespace DatasetArchivePlugin
 			var lstExclusionPrefix = new List<string>();
 
 			lstExclusionPrefix.Add("DMS_Pipeline_Data");
-			lstExclusionPrefix.Add("QExact");
+			//                .Add("QExact");
 			lstExclusionPrefix.Add("QTrap");
-			lstExclusionPrefix.Add("VOrbi05");
-			lstExclusionPrefix.Add("VOrbiETD");
+			//                .Add("VOrbi05");
+			lstExclusionPrefix.Add("VOrbiETD03");
 
 			foreach (string prefix in lstExclusionPrefix)
 			{

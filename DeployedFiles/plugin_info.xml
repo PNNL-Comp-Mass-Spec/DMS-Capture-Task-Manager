@@ -51,5 +51,10 @@
 			Class="ImsDemuxPlugin.clsPluginMain"
 			AssemblyFile="ImsDemuxPlugin.dll"
 		/>
+		<ToolRunner
+			Tool="archivestatuscheck"
+			Class="ArchiveStatusCheckPlugin.clsPluginMain"
+			AssemblyFile="ArchiveStatusCheckPlugin.dll"
+		/>
 	</ToolRunners>
 </Plugins>

@@ -96,6 +96,7 @@ namespace ArchiveStatusCheckPlugin
 			// First obtain a list of status URIs to check
 			int retryCount = 2;
 			var lstURIs = GetStatusURIs(retryCount);
+			var lstUnverifiedURIs = new List<string>();
 
 			if (lstURIs.Count == 0)
 			{
@@ -138,6 +139,7 @@ namespace ArchiveStatusCheckPlugin
 					if (this.WasDataVerified(xmlServerResponse, out abortNow, out dataVerificationMessage))
 					{
 						verifiedCount++;
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, dataVerificationMessage);
 						continue;
 					}
 
@@ -148,6 +150,8 @@ namespace ArchiveStatusCheckPlugin
 						Utilities.Logout(cookieJar);
 						return false;
 					}
+
+					lstUnverifiedURIs.Add(statusURI);
 
 				}
 				catch (Exception ex)
@@ -169,11 +173,22 @@ namespace ArchiveStatusCheckPlugin
 			}
 
 			Utilities.Logout(cookieJar);
-			
+
 			if (verifiedCount == lstURIs.Count)
 				return true;
 			else
+			{
+				string msg;
+				if (verifiedCount == 0)
+				{
+					msg = "MyEMSL archive status not yet verified; see " + lstUnverifiedURIs.First();
+				}
+				else 
+					msg = "MyEMSL archive status partially verified (success count = " + verifiedCount + ", unverified count = " + lstUnverifiedURIs.Count() + "); first not verified: " + lstUnverifiedURIs.First();
+
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 				return false;
+			}
 
 		}
 
@@ -181,13 +196,22 @@ namespace ArchiveStatusCheckPlugin
 		{
 			var lstURIs = new List<string>();
 
+			// This Connection String points to the DMS_Capture database
 			string connectionString = m_MgrParams.GetParam("connectionstring");
+
+			// First look for a specific Status_URI for this job			
+			string statusURI = m_TaskParams.GetParam("MyEMSL_Status_URI", "");
+
+			if (!string.IsNullOrEmpty(statusURI))
+			{
+				lstURIs.Add(statusURI);
+				return lstURIs;
+			}
 
 			try
 			{
-				// This Connection String points to the DMS_Capture database
-				
-				string sql = "SELECT Status_URI FROM V_MyEMSL_Uploads WHERE Dataset_ID = " + m_DatasetID + " AND Job < " + m_Job;
+			
+				string sql = "SELECT Status_URI FROM V_MyEMSL_Uploads WHERE Dataset_ID = " + m_DatasetID + " AND Job <= " + m_Job + " AND ISNULL(StatusNum, 0) > 0";
 
 				while (retryCount > 0)
 				{
@@ -202,7 +226,14 @@ namespace ArchiveStatusCheckPlugin
 
 							while (reader.Read())
 							{
-								lstURIs.Add(reader.GetString(0));
+								
+								if (!Convert.IsDBNull(reader.GetValue(0)))
+								{
+									string value = (string)reader.GetValue(0);
+									if (!string.IsNullOrEmpty(value))
+										lstURIs.Add(value);
+								}
+								
 							}
 						}
 						break;
