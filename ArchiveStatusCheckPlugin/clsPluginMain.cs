@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.IO;
 using System.Data.SqlClient;
+using System.Text.RegularExpressions;
 
 namespace ArchiveStatusCheckPlugin
 {
@@ -55,9 +56,21 @@ namespace ArchiveStatusCheckPlugin
 
 			// Set this to Success for now
 			mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+			bool success = false;
 
-			// Examine the MyEMSL ingest status page
-			bool success = CheckArchiveStatus();
+			try
+			{
+				// Examine the MyEMSL ingest status page
+				success = CheckArchiveStatus();
+			}
+			catch (Exception ex)
+			{
+				msg = "Exception checking archive status";
+				mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+				mRetData.CloseoutMsg = msg + ": " + ex.Message;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+			}
+			
 
 			if (success)
 			{
@@ -94,11 +107,14 @@ namespace ArchiveStatusCheckPlugin
 			// Examine the upload status for any uploads for this dataset, filtering on job number to ignore jobs created after this job
 			
 			// First obtain a list of status URIs to check
+			// Keys are StatusNum integers, values are StatusURI strings
 			int retryCount = 2;
-			var lstURIs = GetStatusURIs(retryCount);
+			var dctURIs = GetStatusURIs(retryCount);
+
+			var dctVerifiedURIs = new Dictionary<int, string>();
 			var lstUnverifiedURIs = new List<string>();
 
-			if (lstURIs.Count == 0)
+			if (dctURIs.Count == 0)
 			{
 				string msg = "Could not find any MyEMSL_Status_URIs; cannot verify archive status";
 				mRetData.CloseoutMsg = msg;
@@ -120,10 +136,9 @@ namespace ArchiveStatusCheckPlugin
 				return false;
 			}
 
-			int exceptionCount = 0;
-			int verifiedCount = 0;
+			int exceptionCount = 0;			
 
-			foreach (var statusURI in lstURIs)
+			foreach (var statusInfo in dctURIs)
 			{
 
 				try
@@ -131,15 +146,15 @@ namespace ArchiveStatusCheckPlugin
 					int timeoutSeconds = 5;
 					HttpStatusCode responseStatusCode;
 
-					string xmlServerResponse = EasyHttp.Send(statusURI, out responseStatusCode, timeoutSeconds);
+					string xmlServerResponse = EasyHttp.Send(statusInfo.Value, out responseStatusCode, timeoutSeconds);
 
 					bool abortNow;
 					string dataVerificationMessage;
 
 					if (this.WasDataVerified(xmlServerResponse, out abortNow, out dataVerificationMessage))
 					{
-						verifiedCount++;
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, dataVerificationMessage + ", job " + m_Job + ", " + statusURI);
+						dctVerifiedURIs.Add(statusInfo.Key, statusInfo.Value);
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, dataVerificationMessage + ", job " + m_Job + ", " + dctVerifiedURIs.Values);
 						continue;
 					}
 
@@ -151,7 +166,7 @@ namespace ArchiveStatusCheckPlugin
 						return false;
 					}
 
-					lstUnverifiedURIs.Add(statusURI);
+					lstUnverifiedURIs.Add(statusInfo.Value);
 
 				}
 				catch (Exception ex)
@@ -174,17 +189,23 @@ namespace ArchiveStatusCheckPlugin
 
 			Utilities.Logout(cookieJar);
 
-			if (verifiedCount == lstURIs.Count)
+			if (dctVerifiedURIs.Count > 0)
+			{ 
+				// Update the Verified flag in T_MyEMSL_Uploads
+				UpdateVerifiedURIs(dctVerifiedURIs);
+			}
+
+			if (dctVerifiedURIs.Count == dctURIs.Count)
 				return true;
 			else
 			{
 				string msg;
-				if (verifiedCount == 0)
+				if (dctVerifiedURIs.Count == 0)
 				{
 					msg = "MyEMSL archive status not yet verified; see " + lstUnverifiedURIs.First();
 				}
-				else 
-					msg = "MyEMSL archive status partially verified (success count = " + verifiedCount + ", unverified count = " + lstUnverifiedURIs.Count() + "); first not verified: " + lstUnverifiedURIs.First();
+				else
+					msg = "MyEMSL archive status partially verified (success count = " + dctVerifiedURIs.Count + ", unverified count = " + lstUnverifiedURIs.Count() + "); first not verified: " + lstUnverifiedURIs.First();
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 				return false;
@@ -192,9 +213,9 @@ namespace ArchiveStatusCheckPlugin
 
 		}
 
-		protected List<string> GetStatusURIs(int retryCount)
+		protected Dictionary<int, string> GetStatusURIs(int retryCount)
 		{
-			var lstURIs = new List<string>();
+			var lstURIs = new Dictionary<int, string>();
 
 			// This Connection String points to the DMS_Capture database
 			string connectionString = m_MgrParams.GetParam("connectionstring");
@@ -204,14 +225,26 @@ namespace ArchiveStatusCheckPlugin
 
 			if (!string.IsNullOrEmpty(statusURI))
 			{
-				lstURIs.Add(statusURI);
+				// Parse out the StatusID from the URI
+				var reGetStatusNum = new Regex(@"(\d+)/xml", RegexOptions.IgnoreCase);
+				var reMatch = reGetStatusNum.Match(statusURI);
+				if (!reMatch.Success)
+					throw new Exception("Could not find Status ID in StatusURI: " + statusURI);
+
+				int statusNum;
+				int.TryParse(reMatch.Groups[1].Value.ToString(), out statusNum);
+				
+				if (statusNum <= 0)
+					throw new Exception("Status ID is 0 in StatusURI: " + statusURI);
+
+				lstURIs.Add(statusNum, statusURI);
 				return lstURIs;
 			}
 
 			try
 			{
-			
-				string sql = "SELECT Status_URI FROM V_MyEMSL_Uploads WHERE Dataset_ID = " + m_DatasetID + " AND Job <= " + m_Job + " AND ISNULL(StatusNum, 0) > 0";
+
+				string sql = "SELECT StatusNum, Status_URI FROM V_MyEMSL_Uploads WHERE Dataset_ID = " + m_DatasetID + " AND Job <= " + m_Job + " AND ISNULL(StatusNum, 0) > 0";
 
 				while (retryCount > 0)
 				{
@@ -226,14 +259,14 @@ namespace ArchiveStatusCheckPlugin
 
 							while (reader.Read())
 							{
-								
-								if (!Convert.IsDBNull(reader.GetValue(0)))
+								int statusNum = reader.GetInt32(0);						
+
+								if (!Convert.IsDBNull(reader.GetValue(1)))
 								{
-									string value = (string)reader.GetValue(0);
+									string value = (string)reader.GetValue(1);
 									if (!string.IsNullOrEmpty(value))
-										lstURIs.Add(value);
-								}
-								
+										lstURIs.Add(statusNum, value);
+								}								
 							}
 						}
 						break;
@@ -257,6 +290,55 @@ namespace ArchiveStatusCheckPlugin
 			}
 
 			return lstURIs;
+		}
+
+		protected bool UpdateVerifiedURIs(Dictionary<int, string> dctVerifiedURIs)
+		{
+			const string SP_NAME = "SetMyEMSLUploadVerified";
+
+			try
+			{
+				string statusNums = string.Join(",", (from item in dctVerifiedURIs select item.Key));
+
+				var cmd = new SqlCommand(SP_NAME);
+				cmd.CommandType = System.Data.CommandType.StoredProcedure;
+				
+				cmd.Parameters.Add("@Return", System.Data.SqlDbType.Int);
+				cmd.Parameters["@Return"].Direction = System.Data.ParameterDirection.ReturnValue;
+
+				cmd.Parameters.Add("@DatasetID", System.Data.SqlDbType.Int);
+				cmd.Parameters["@DatasetID"].Direction = System.Data.ParameterDirection.Input;
+				cmd.Parameters["@DatasetID"].Value = m_DatasetID;
+
+				cmd.Parameters.Add("@StatusNumList", System.Data.SqlDbType.VarChar, 1024);
+				cmd.Parameters["@StatusNumList"].Direction = System.Data.ParameterDirection.Input;
+				cmd.Parameters["@StatusNumList"].Value = statusNums;
+
+				cmd.Parameters.Add("@message", System.Data.SqlDbType.VarChar, 512);
+				cmd.Parameters["@message"].Direction = System.Data.ParameterDirection.Output;
+
+				var paramDatasetID = cmd.CreateParameter();
+
+				m_ExecuteSP.TimeoutSeconds = 20;
+				var resCode = m_ExecuteSP.ExecuteSP(cmd, 2);
+
+				if (resCode == 0)
+					return true;
+				else
+				{
+					var msg = "Error " + resCode + " calling stored procedure " + SP_NAME;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+					return false;
+				}
+
+			}
+			catch (Exception ex)
+			{
+				var msg = "Exceptiong calling stored procedure " + SP_NAME;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+				return false;
+			}
+
 		}
 
 		protected bool WasDataVerified(string xmlServerResponse, out bool abortNow, out string dataVerificationMessage)

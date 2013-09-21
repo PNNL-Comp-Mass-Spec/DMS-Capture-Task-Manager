@@ -143,6 +143,7 @@ namespace DatasetIntegrityPlugin
 							}
 
 							mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+							break;
 						}
 					}
 

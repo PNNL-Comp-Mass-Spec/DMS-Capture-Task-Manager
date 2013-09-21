@@ -40,6 +40,10 @@
     <Reference Include="Pacifica.Core">
       <HintPath>..\DeployedFiles\Pacifica.Core.dll</HintPath>
     </Reference>
+    <Reference Include="PRISM, Version=2.2.5003.27413, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\DeployedFiles\PRISM.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
