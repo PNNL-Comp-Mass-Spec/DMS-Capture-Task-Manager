@@ -136,32 +136,30 @@ namespace ArchiveStatusCheckPlugin
 				return false;
 			}
 
-			int exceptionCount = 0;			
+			int exceptionCount = 0;
+			var statusChecker = new MyEMSLStatusCheck();
 
 			foreach (var statusInfo in dctURIs)
 			{
+				string statusURI = statusInfo.Value;
 
 				try
 				{
-					int timeoutSeconds = 5;
-					HttpStatusCode responseStatusCode;
 
-					string xmlServerResponse = EasyHttp.Send(statusInfo.Value, out responseStatusCode, timeoutSeconds);
+					bool accessDenied;
+					string statusMessage;
 
-					bool abortNow;
-					string dataVerificationMessage;
-
-					if (this.WasDataVerified(xmlServerResponse, out abortNow, out dataVerificationMessage))
+					if (statusChecker.IngestStepCompleted(statusURI, MyEMSLStatusCheck.StatusStep.Archived, cookieJar, out accessDenied, out statusMessage))
 					{
 						dctVerifiedURIs.Add(statusInfo.Key, statusInfo.Value);
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, dataVerificationMessage + ", job " + m_Job + ", " + dctVerifiedURIs.Values);
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, statusMessage + ", job " + m_Job + ", " + dctVerifiedURIs.Values);
 						continue;
 					}
 
-					if (abortNow)
+					if (accessDenied)
 					{
-						mRetData.CloseoutMsg = dataVerificationMessage;
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, dataVerificationMessage + ", job " + m_Job);
+						mRetData.CloseoutMsg = statusMessage;
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, statusMessage + ", job " + m_Job);
 						Utilities.Logout(cookieJar);
 						return false;
 					}
@@ -215,7 +213,7 @@ namespace ArchiveStatusCheckPlugin
 
 		protected Dictionary<int, string> GetStatusURIs(int retryCount)
 		{
-			var lstURIs = new Dictionary<int, string>();
+			var dctURIs = new Dictionary<int, string>();
 
 			// This Connection String points to the DMS_Capture database
 			string connectionString = m_MgrParams.GetParam("connectionstring");
@@ -237,8 +235,8 @@ namespace ArchiveStatusCheckPlugin
 				if (statusNum <= 0)
 					throw new Exception("Status ID is 0 in StatusURI: " + statusURI);
 
-				lstURIs.Add(statusNum, statusURI);
-				return lstURIs;
+				dctURIs.Add(statusNum, statusURI);
+				return dctURIs;
 			}
 
 			try
@@ -265,7 +263,7 @@ namespace ArchiveStatusCheckPlugin
 								{
 									string value = (string)reader.GetValue(1);
 									if (!string.IsNullOrEmpty(value))
-										lstURIs.Add(statusNum, value);
+										dctURIs.Add(statusNum, value);
 								}								
 							}
 						}
@@ -289,7 +287,7 @@ namespace ArchiveStatusCheckPlugin
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 			}
 
-			return lstURIs;
+			return dctURIs;
 		}
 
 		protected bool UpdateVerifiedURIs(Dictionary<int, string> dctVerifiedURIs)
@@ -340,76 +338,7 @@ namespace ArchiveStatusCheckPlugin
 			}
 
 		}
-
-		protected bool WasDataVerified(string xmlServerResponse, out bool abortNow, out string dataVerificationMessage)
-		{
-			bool success = false;
-			abortNow = false;
-			dataVerificationMessage = string.Empty;
-
-			try
-			{
-				System.Xml.XmlDocument xmlDoc = new System.Xml.XmlDocument();
-				xmlDoc.LoadXml(xmlServerResponse);
-
-				// Example XML:
-				//
-				// <?xml version="1.0"?>
-				// <myemsl>
-				// 	<status username='70000'>
-				// 		<transaction id='111177' />
-				// 		<step id='0' message='completed' status='SUCCESS' />
-				// 		<step id='1' message='completed' status='SUCCESS' />
-				// 		<step id='2' message='completed' status='SUCCESS' />
-				// 		<step id='3' message='completed' status='SUCCESS' />
-				// 		<step id='4' message='completed' status='SUCCESS' />
-				// 		<step id='5' message='completed' status='SUCCESS' />
-				// 		<step id='6' message='verified' status='SUCCESS' />
-				// 	</status>
-				// </myemsl>
-				// 
-				// Step IDs correspond to:
-				// 0: Submitted
-				// 1: Received
-				// 2: Processing
-				// 3: Verified
-				// 4: Stored
-				// 5: Available   (status will be "ERROR" if user doesn't have upload permissions for a proposal; 
-				//                 for example https://a4.my.emsl.pnl.gov/myemsl/cgi-bin/status/1042281/xml shows message 
-				//                 "You(47943) do not have upload permissions to proposal 17797"
-				//                 for user svc-dms on May 3, 2012)
-				// 6: Archived    (status will be "UNKNOWN" if not yet verified)
-
-				// Check the "Archived" entry (ID=6) to make sure the data has been fully verified
-
-				string query = string.Format("//*[@id='{0}']", 6);
-				System.Xml.XmlNode statusElement = xmlDoc.SelectSingleNode(query);
-
-				string message = statusElement.Attributes["message"].Value;
-				string status = statusElement.Attributes["status"].Value;
-
-				if (status.ToLower() == "success" && message.ToLower() == "verified")
-				{
-					dataVerificationMessage = "Data is verified";
-					success = true;
-				}
-
-				if (message.Contains("do not have upload permissions"))
-				{
-					dataVerificationMessage = "Permissions error: " + message;
-					abortNow = true;
-				}
-
-			}
-			catch (Exception ex)
-			{
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in WasDataVerified", ex);
-				return false;
-			}
-
-			return success;
-		}
-
+	
 		#endregion
 
 

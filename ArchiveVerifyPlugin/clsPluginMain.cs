@@ -145,29 +145,27 @@ namespace ArchiveVerifyPlugin
 			}
 
 			int exceptionCount = 0;
+			var statusChecker = new MyEMSLStatusCheck();
+
 			while (DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds < MAX_WAIT_TIME_SECONDS)
 			{
 
 				try
 				{
-					int timeoutSeconds = 5;
-					HttpStatusCode responseStatusCode;
 
-					string xmlServerResponse = EasyHttp.Send(statusURI, out responseStatusCode, timeoutSeconds);
+					bool accessDenied;
+					string statusMessage;
 
-					bool abortNow;
-					string dataReceivedMessage;
-
-					if (this.WasDataReceived(xmlServerResponse, out abortNow, out dataReceivedMessage))
+					if (statusChecker.IngestStepCompleted(statusURI, MyEMSLStatusCheck.StatusStep.Available, cookieJar, out accessDenied, out statusMessage))
 					{
 						Utilities.Logout(cookieJar);
 						return true;
 					}
 
-					if (abortNow)
+					if (accessDenied)
 					{
-						mRetData.CloseoutMsg = dataReceivedMessage;
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, dataReceivedMessage);
+						mRetData.CloseoutMsg = statusMessage;
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, statusMessage);
 						Utilities.Logout(cookieJar);
 						return false;
 					}
@@ -193,6 +191,8 @@ namespace ArchiveVerifyPlugin
 				System.Threading.Thread.Sleep(5000);
 
 			}
+
+			Utilities.Logout(cookieJar);
 
 			return false;
 		}
@@ -733,76 +733,7 @@ namespace ArchiveVerifyPlugin
 			return success;
 
 		}
-		
-		protected bool WasDataReceived(string xmlServerResponse, out bool abortNow, out string dataReceivedMessage)
-		{
-			bool success = false;
-			abortNow = false;
-			dataReceivedMessage = string.Empty;
-
-			try
-			{
-				System.Xml.XmlDocument xmlDoc = new System.Xml.XmlDocument();
-				xmlDoc.LoadXml(xmlServerResponse);
-
-				// Example XML:
-				//
-				// <?xml version="1.0"?>
-				// <myemsl>
-				// 	<status username='70000'>
-				// 		<transaction id='111177' />
-				// 		<step id='0' message='completed' status='SUCCESS' />
-				// 		<step id='1' message='completed' status='SUCCESS' />
-				// 		<step id='2' message='completed' status='SUCCESS' />
-				// 		<step id='3' message='completed' status='SUCCESS' />
-				// 		<step id='4' message='completed' status='SUCCESS' />
-				// 		<step id='5' message='completed' status='SUCCESS' />
-				// 		<step id='6' message='verified' status='SUCCESS' />
-				// 	</status>
-				// </myemsl>
-				// 
-				// Step IDs correspond to:
-				// 0: Submitted
-				// 1: Received
-				// 2: Processing
-				// 3: Verified
-				// 4: Stored
-				// 5: Available   (status will be "ERROR" if user doesn't have upload permissions for a proposal; 
-				//                 for example https://a4.my.emsl.pnl.gov/myemsl/cgi-bin/status/1042281/xml shows message 
-				//                 "You(47943) do not have upload permissions to proposal 17797"
-				//                 for user svc-dms on May 3, 2012)
-				// 6: Archived    (status will be "UNKNOWN" if not yet verified)
-
-				// Check the "available" entry (ID=5) to make sure everything came through ok
-
-				string query = string.Format("//*[@id='{0}']", 5);
-				System.Xml.XmlNode statusElement = xmlDoc.SelectSingleNode(query);
-
-				string message = statusElement.Attributes["message"].Value;
-				string status = statusElement.Attributes["status"].Value;
-
-				if (status.ToLower() == "success" && message.ToLower() == "completed")
-				{
-					dataReceivedMessage = "Data is available";
-					success = true;
-				}
-
-				if (message.Contains("do not have upload permissions"))
-				{
-					dataReceivedMessage = "Permissions error: " + message;
-					abortNow = true;
-				}
-
-			}
-			catch (Exception ex)
-			{
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in WasDataReceived", ex);
-				return false;
-			}
-
-			return success;
-		}
-
+				
 		protected bool WriteMD5ResultsFile(Dictionary<string, clsHashInfo> lstMD5Results, string md5ResultsFilePath, bool useTempFile)
 		{
 			string currentStep = "initializing";

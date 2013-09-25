@@ -10,6 +10,9 @@ namespace Pacifica.DMS_Metadata
 {
 	public class DMSMetadataObject
 	{
+		// Maximum number of files (per dataset) to archive
+		public const int MAX_FILES_TO_ARCHIVE = 1000;
+
 		private Dictionary<string, object> _metadataObject;
 
 		// List of new or changed files
@@ -185,6 +188,11 @@ namespace Pacifica.DMS_Metadata
 
 			List<FileInfo> fileList = archiveDir.GetFiles("*.*", eSearchOption).ToList<FileInfo>();
 			FileInfoObject fio;
+
+			if (fileList.Count >= MAX_FILES_TO_ARCHIVE)
+			{
+				throw new ArgumentOutOfRangeException("Source directory has over " + MAX_FILES_TO_ARCHIVE + " files; files must be zipped before upload to MyEMSL");
+			}
 
 			double fracCompleted = 0.0;
 			int fileCount = fileList.Count;

@@ -237,7 +237,7 @@ namespace DatasetArchivePlugin
 				}
 				else
 				{
-					string Msg = "Error " + ResCode.ToString() + " storing tool version for current processing step";
+					string Msg = "Error " + ResCode.ToString() + " storing MyEMSL Upload Stats";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
 					Outcome = false;
 				}

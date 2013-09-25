@@ -118,19 +118,21 @@ namespace DatasetArchivePlugin
 
 		public static bool OnlyUseMyEMSL(string instrumentName)
 		{
+			/*
 			var lstExclusionPrefix = new List<string>();
 
-			lstExclusionPrefix.Add("DMS_Pipeline_Data");
-			//                .Add("QExact");
-			lstExclusionPrefix.Add("QTrap");
-			//                .Add("VOrbi05");
-			lstExclusionPrefix.Add("VOrbiETD03");
+			//lstExclusionPrefix.Add("DMS_Pipeline_Data");
+			//                  .Add("QExact");
+			//                  .Add("QTrap");
+			//                  .Add("VOrbi05");
+			//                  .Add("VOrbiETD03");
 
 			foreach (string prefix in lstExclusionPrefix)
 			{
 				if (instrumentName.StartsWith(prefix))
 					return false;
 			}
+			*/
 
 			return true;
 			
@@ -208,7 +210,7 @@ namespace DatasetArchivePlugin
 			if (Environment.UserName.ToLower() != "svc-dms")
 			{
 				// The current user is not svc-dms
-				// Uploaded files will be associated with the wrong username and thus will not be visible to all DMS Users
+				// Uploaded files would be associated with the wrong username and thus would not be visible to all DMS Users
 				m_ErrMsg = "Files must be uploaded to MyEMSL using the svc-dms account; aborting";
 				Console.WriteLine(m_ErrMsg);
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_ErrMsg);
