@@ -11,8 +11,32 @@ namespace Pacifica.Core
 {
 	public class Upload : IUpload
 	{
+		public struct udtUploadMetadata
+		{
+			public int DatasetID;
+			public int DataPackageID;
+			public string SubFolder;
+			public string DatasetName;			// Only used for datasets; not Data Packages
+			public string DateCodeString;		// Only used for datasets; not Data Packages
+			public string DMSInstrumentName;	// Only used for datasets; not Data Packages
+			public string EUSInstrumentID;		// Only used for datasets; not Data Packages
+			public string EUSProposalID;		// Only used for datasets; not Data Packages
+
+			public void Clear()
+			{
+				DatasetID = 0;
+				DataPackageID = 0;
+				SubFolder = string.Empty;
+				DatasetName = string.Empty;
+				DateCodeString = string.Empty;
+				DMSInstrumentName = string.Empty;
+				EUSInstrumentID = string.Empty;
+				EUSProposalID = string.Empty;
+			}
+		}
+
 		#region Private Members
-	
+
 		private string _bundleIdentifier = string.Empty;
 		private const string bundleExtension = ".tar";
 
@@ -24,6 +48,77 @@ namespace Pacifica.Core
 		#endregion
 
 		#region Constructor
+
+		public static Dictionary<string, object> CreateMetadataObject(Upload.udtUploadMetadata uploadMetadata, List<FileInfoObject> lstUnmatchedFiles)
+		{
+			// Keys in this object are key names; values are either strings or dictionary objects or even a list of dictionary objects
+			Dictionary<string, object> metadataObject = new Dictionary<string, object>();
+			var groupObject = new List<Dictionary<string, string>>();
+
+			// Set up the MyEMSL tagging information
+
+			if (uploadMetadata.DatasetID > 0)
+			{
+				groupObject.Add(new Dictionary<string, string>() {
+					{ "name", uploadMetadata.DMSInstrumentName }, { "type", "omics.dms.instrument" } });
+				groupObject.Add(new Dictionary<string, string>() {
+					{ "name", uploadMetadata.DateCodeString }, { "type", "omics.dms.date_code" } });
+				groupObject.Add(new Dictionary<string, string>() {
+					{ "name", uploadMetadata.DatasetName }, { "type", "omics.dms.dataset" } });
+				groupObject.Add(new Dictionary<string, string>() {
+					{ "name", uploadMetadata.DatasetID.ToString() }, { "type", "omics.dms.dataset_id" } });
+			}
+			else if (uploadMetadata.DataPackageID > 0)
+			{
+				groupObject.Add(new Dictionary<string, string>() {
+					{ "name", uploadMetadata.DataPackageID.ToString() }, { "type", "omics.dms.datapackage_id" } });
+			}
+			else
+			{
+				throw new ArgumentOutOfRangeException("Must define a DatasetID or a DataPackageID; cannot create the metadata object");
+			}
+
+			var eusInfo = new Dictionary<string, object>();
+
+			eusInfo.Add("groups", groupObject);
+
+			if (uploadMetadata.DatasetID > 0)
+			{
+				if (string.IsNullOrWhiteSpace(uploadMetadata.EUSInstrumentID))
+				{
+					// This instrument does not have an EUS_Instrument_ID
+					// Use 34127, which is VOrbiETD04
+					eusInfo.Add("instrumentId", "34127");
+				}
+				else
+				{
+					eusInfo.Add("instrumentId", uploadMetadata.EUSInstrumentID);
+				}
+
+				eusInfo.Add("instrumentName", uploadMetadata.DMSInstrumentName);
+
+				if (string.IsNullOrWhiteSpace(uploadMetadata.EUSProposalID))
+				{
+					// This dataset does not have an EUS_Proposal_ID
+					// Use 17797, which is "Development of High Throughput Proteomic Production Operations"
+					eusInfo.Add("proposalID", "17797");
+				}
+				else
+				{
+					eusInfo.Add("proposalID", uploadMetadata.EUSProposalID);
+				}
+			}
+
+			metadataObject.Add("bundleName", "omics_dms");
+			metadataObject.Add("creationDate", Pacifica.Core.ExtensionMethods.ToUnixTime(DateTime.UtcNow).ToString());
+			metadataObject.Add("eusInfo", eusInfo);
+
+			metadataObject.Add("file", lstUnmatchedFiles);
+
+			metadataObject.Add("version", "1.2.0");
+
+			return metadataObject;
+		}
 
 		/// <summary>
 		/// 
@@ -89,7 +184,7 @@ namespace Pacifica.Core
 
 		#region IUpload Members
 
-		public bool StartUpload(IDictionary metadataObject, out string statusURL)
+		public bool StartUpload(Dictionary<string, object> metadataObject, out string statusURL)
 		{
 			NetworkCredential cred = null;
 			return StartUpload(metadataObject, cred, out statusURL);
@@ -102,7 +197,7 @@ namespace Pacifica.Core
 		/// <param name="loginCredentials"></param>
 		/// <param name="?"></param>
 		/// <returns>True if successfully uploaded, false if an error</returns>
-		public bool StartUpload(IDictionary metadataObject, NetworkCredential loginCredentials, out string statusURL)
+		public bool StartUpload(Dictionary<string, object> metadataObject, NetworkCredential loginCredentials, out string statusURL)
 		{
 			string timestamp = DateTime.Now.ToString("yyyyMMddHHmmssffffff");
 			statusURL = string.Empty;
@@ -124,7 +219,7 @@ namespace Pacifica.Core
 
 				fileListObject.Add(file.AbsoluteLocalPath, fiObj);
 				newFileObj.Add(fiObj.SerializeToDictionaryObject());
-				
+
 			}
 
 			metadataObject["file"] = newFileObj;

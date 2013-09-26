@@ -81,77 +81,21 @@ namespace Pacifica.DMS_Metadata
 
 		public void SetupMetadata(Dictionary<string, string> taskParams, Dictionary<string, string> mgrParams)
 		{
+			Upload.udtUploadMetadata uploadMetadata;
 
-			string datasetName;
-			string datasetInstrument;
-			int datasetID;
-			string subFolder;
-
-			List<FileInfoObject> lstDatasetFilesToArchive = FindDatasetFilesToArchive(taskParams, mgrParams, out datasetName, out datasetInstrument, out datasetID, out subFolder);
+			uploadMetadata.EUSInstrumentID = Utilities.GetDictionaryValue(taskParams, "EUS_Instrument_ID", "");
+			uploadMetadata.EUSProposalID = Utilities.GetDictionaryValue(taskParams, "EUS_Proposal_ID", "");
+			
+			List<FileInfoObject> lstDatasetFilesToArchive = FindDatasetFilesToArchive(taskParams, mgrParams, out uploadMetadata);
 
 			// Calculate the "year_quarter" code used for subfolders within an instrument folder
 			// This value is based on the date the dataset was created in DMS
 			string datasetDateCodeString = GetDatasetYearQuarter(taskParams);
 
-			// Keys in this object are key names; values are either strings or dictionary objects or even a list of dictionary objects
-			var metadataObject = new Dictionary<string, object>();
-			var groupObject = new List<Dictionary<string, string>>();
-
-			// Set up the MyEMSL tagging information
-
-			groupObject.Add(new Dictionary<string, string>() {
-				{ "name", datasetInstrument }, { "type", "omics.dms.instrument" }
-			});
-			groupObject.Add(new Dictionary<string, string>() {
-				{ "name", datasetDateCodeString }, { "type", "omics.dms.date_code" }
-			});
-			groupObject.Add(new Dictionary<string, string>() {
-				{ "name", datasetName }, { "type", "omics.dms.dataset" }
-			});
-			groupObject.Add(new Dictionary<string, string>() {
-				{ "name", datasetID.ToString() }, { "type", "omics.dms.dataset_id" }
-			});
-
-			var eusInfo = new Dictionary<string, object>();
-
-			eusInfo.Add("groups", groupObject);
-
-			string eusInstrumentID = Utilities.GetDictionaryValue(taskParams, "EUS_Instrument_ID", "");
-			if (string.IsNullOrWhiteSpace(eusInstrumentID))
-			{
-				// This instrument does not have an EUS_Instrument_ID
-				// Use 34127, which is VOrbiETD04
-				eusInfo.Add("instrumentId", "34127");
-			}
-			else
-			{
-				eusInfo.Add("instrumentId", eusInstrumentID);
-			}
-
-			eusInfo.Add("instrumentName", datasetInstrument);
-
-			string eusProposalID = Utilities.GetDictionaryValue(taskParams, "EUS_Proposal_ID", "");
-			if (string.IsNullOrWhiteSpace(eusProposalID))
-			{
-				// This dataset does not have an EUS_Proposal_ID
-				// Use 17797, which is "Development of High Throughput Proteomic Production Operations"
-				eusInfo.Add("proposalID", "17797");
-			}
-			else
-			{
-				eusInfo.Add("proposalID", eusProposalID);
-			}
-
-			metadataObject.Add("bundleName", "omics_dms");
-			metadataObject.Add("creationDate", Pacifica.Core.ExtensionMethods.ToUnixTime(DateTime.UtcNow).ToString());
-			metadataObject.Add("eusInfo", eusInfo);
-
 			// Find the files that are new or need to be updated
-			var lstUnmatchedFiles = this.CompareDatasetContentsElasticSearch(lstDatasetFilesToArchive, subFolder, datasetID);
+			List<FileInfoObject> lstUnmatchedFiles = this.CompareDatasetContentsElasticSearch(lstDatasetFilesToArchive, uploadMetadata);
 
-			metadataObject.Add("file", lstUnmatchedFiles);
-
-			metadataObject.Add("version", "1.2.0");
+			Dictionary<string, object> metadataObject = Upload.CreateMetadataObject(uploadMetadata, lstUnmatchedFiles);
 
 			this._metadataObject = metadataObject;
 			this._unmatchedFilesToUpload = lstUnmatchedFiles;
@@ -233,8 +177,7 @@ namespace Pacifica.DMS_Metadata
 		/// <returns></returns>
 		private List<FileInfoObject> CompareDatasetContentsElasticSearch(
 			List<FileInfoObject> fileList,
-			string subFolder,
-			int datasetID)
+			Upload.udtUploadMetadata uploadMetadata)
 		{
 
 			TotalFileSizeToUpload = 0;
@@ -250,7 +193,7 @@ namespace Pacifica.DMS_Metadata
 
 			List<ArchivedFileInfo> lstFilesInMyEMSL;
 
-			lstFilesInMyEMSL = reader.FindFilesByDatasetID(datasetID, subFolder);
+			lstFilesInMyEMSL = reader.FindFilesByDatasetID(uploadMetadata.DatasetID, uploadMetadata.SubFolder);
 
 			if (lstFilesInMyEMSL.Count == 0)
 			{
@@ -312,11 +255,12 @@ namespace Pacifica.DMS_Metadata
 		public List<FileInfoObject> FindDatasetFilesToArchive(
 			Dictionary<string, string> taskParams, 
 			Dictionary<string, string> mgrParams, 
-			out string datasetName, 
-			out string datasetInstrument, 
-			out int datasetID, 
-			out string subFolder)
+			out Upload.udtUploadMetadata uploadMetadata)
 		{
+
+			uploadMetadata = new Upload.udtUploadMetadata();
+			uploadMetadata.Clear();			
+			
 			//translate values from task/mgr params into usable variables
 			string perspective = Utilities.GetDictionaryValue(mgrParams, "perspective", "client");
 			string driveLocation;
@@ -331,13 +275,13 @@ namespace Pacifica.DMS_Metadata
 			// Construct the dataset folder path
 			string pathToArchive = Utilities.GetDictionaryValue(taskParams, "Folder", "");
 			pathToArchive = Path.Combine(Utilities.GetDictionaryValue(taskParams, "Storage_Path", ""), pathToArchive);
-			pathToArchive = Path.Combine(driveLocation, pathToArchive);
+			pathToArchive = Path.Combine(driveLocation, pathToArchive);			
 
-			datasetName = Utilities.GetDictionaryValue(taskParams, "Dataset", "");
-			datasetInstrument = Utilities.GetDictionaryValue(taskParams, "Instrument_Name", "");
-			datasetID = Utilities.ToIntSafe(Utilities.GetDictionaryValue(taskParams, "Dataset_ID", ""), 0);
+			uploadMetadata.DatasetName = Utilities.GetDictionaryValue(taskParams, "Dataset", "");
+			uploadMetadata.DMSInstrumentName = Utilities.GetDictionaryValue(taskParams, "Instrument_Name", "");
+			uploadMetadata.DatasetID = Utilities.ToIntSafe(Utilities.GetDictionaryValue(taskParams, "Dataset_ID", ""), 0);
 			string baseDSPath = pathToArchive;
-			subFolder = string.Empty;
+			uploadMetadata.SubFolder = string.Empty;
 
 			ArchiveModes archiveMode;
 			if (Utilities.GetDictionaryValue(taskParams, "StepTool", "").ToLower() == "datasetarchive")
@@ -347,12 +291,12 @@ namespace Pacifica.DMS_Metadata
 
 			if (archiveMode == ArchiveModes.update)
 			{
-				subFolder = Utilities.GetDictionaryValue(taskParams, "OutputFolderName", "").ToString();
+				uploadMetadata.SubFolder = Utilities.GetDictionaryValue(taskParams, "OutputFolderName", "").ToString();
 
-				if (!string.IsNullOrWhiteSpace(subFolder))
-					pathToArchive = Path.Combine(pathToArchive, subFolder);
+				if (!string.IsNullOrWhiteSpace(uploadMetadata.SubFolder))
+					pathToArchive = Path.Combine(pathToArchive, uploadMetadata.SubFolder);
 				else
-					subFolder = string.Empty;
+					uploadMetadata.SubFolder = string.Empty;
 			}
 
 			bool recurse = true;
