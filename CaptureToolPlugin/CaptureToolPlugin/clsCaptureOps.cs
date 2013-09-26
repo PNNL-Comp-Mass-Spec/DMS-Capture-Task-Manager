@@ -931,7 +931,7 @@ namespace CaptureToolPlugin
 
 			string instClassName = taskParams.GetParam("Instrument_Class");
 			clsInstrumentClassInfo.eInstrumentClass instrumentClass = clsInstrumentClassInfo.GetInstrumentClass(instClassName);
-			
+
 			string shareConnectorType = m_MgrParams.GetParam("ShareConnectorType");		// Should be PRISM or DotNET
 			string computerName = GetCurrentComputerName();
 
@@ -1129,7 +1129,7 @@ namespace CaptureToolPlugin
 					break;
 
 				case RawDSTypes.FolderNoExt:
-					CaptureFolderNoExt(dataset, ref msg, ref retData, datasetInfo, sourceFolderPath, datasetFolderPath, bCopyWithResume);
+					CaptureFolderNoExt(dataset, ref msg, ref retData, datasetInfo, sourceFolderPath, datasetFolderPath, bCopyWithResume, instrumentClass);
 					break;
 
 				case RawDSTypes.BrukerImaging:
@@ -1569,15 +1569,24 @@ namespace CaptureToolPlugin
 			return bSuccess;
 		}
 
-		private bool CaptureFolderNoExt(string dataset, ref string msg, ref clsToolReturnData retData, clsDatasetInfo datasetInfo, string sourceFolderPath, string datasetFolderPath, bool bCopyWithResume)
+		private bool CaptureFolderNoExt(
+			string dataset, 
+			ref string msg, 
+			ref clsToolReturnData retData, 
+			clsDatasetInfo datasetInfo, 
+			string sourceFolderPath, 
+			string datasetFolderPath, 
+			bool bCopyWithResume,
+			clsInstrumentClassInfo.eInstrumentClass instrumentClass)
 		{
 			// Dataset found; it's a folder with no extension on the name
 
 			bool bSuccess = false;
 
+			var diSourceDir = new DirectoryInfo(Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName));
+
 			// First, verify the folder size is constant (indicates acquisition is actually finished)
-			string copySourceDir = Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName);
-			if (!VerifyConstantFolderSize(copySourceDir, m_SleepInterval, ref retData))
+			if (!VerifyConstantFolderSize(diSourceDir.FullName, m_SleepInterval, ref retData))
 			{
 				msg = "Dataset '" + dataset + "' not ready";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
@@ -1587,25 +1596,47 @@ namespace CaptureToolPlugin
 			}
 
 			// Verify the folder doesn't contain a group of ".d" folders
-			string[] folderList = Directory.GetDirectories(copySourceDir, "*.d");
-			if (folderList.Length > 1)
+			if (diSourceDir.GetDirectories("*.d", SearchOption.TopDirectoryOnly).Length > 1)
 			{
 				retData.CloseoutMsg = "Multiple .D folders found in dataset folder";
-				msg = retData.CloseoutMsg + " " + copySourceDir;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+				msg = retData.CloseoutMsg + " " + diSourceDir.FullName;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 				retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 				return false;
 			}
 
 			// Verify the folder doesn't contain ".IMF" files
-			string[] fileList = Directory.GetFiles(copySourceDir, "*.imf");
-			if (fileList.Length > 0)
+			if (diSourceDir.GetFiles("*.imf", SearchOption.TopDirectoryOnly).Length > 0)
 			{
 				retData.CloseoutMsg = "Dataset folder contains a series of .IMF files -- upload a .UIMF file instead";
-				msg = retData.CloseoutMsg + " " + copySourceDir;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+				msg = retData.CloseoutMsg + " " + diSourceDir.FullName;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 				retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 				return false;
+			}
+
+
+			if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Sciex_QTrap)
+			{
+				// Make sure that it doesn't have more than 2 subfolders (it typically won't have any, but we'll allow 2)				
+				if (diSourceDir.GetDirectories("*", SearchOption.TopDirectoryOnly).Length > 2)
+				{
+					retData.CloseoutMsg = "Dataset folder has more than 2 subfolders";
+					msg = retData.CloseoutMsg + " " + diSourceDir.FullName;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+					retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+					return false;
+				}
+
+				// Verify that the folder has a .wiff or a .wiff.scan file
+				if (diSourceDir.GetFiles("*.wiff*", SearchOption.TopDirectoryOnly).Length == 0)
+				{
+					retData.CloseoutMsg = "Dataset folder does not contain any .wiff files";
+					msg = retData.CloseoutMsg + " " + diSourceDir.FullName;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+					retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+					return false;
+				}
 			}
 
 			// Copy the dataset folder to the storage server
@@ -1615,24 +1646,24 @@ namespace CaptureToolPlugin
 				if (bCopyWithResume)
 				{
 					bool bRecurse = true;
-					bSuccess = CopyFolderWithResume(copySourceDir, datasetFolderPath, bRecurse, ref retData);
+					bSuccess = CopyFolderWithResume(diSourceDir.FullName, datasetFolderPath, bRecurse, ref retData);
 				}
 				else
 				{
-					m_FileTools.CopyDirectory(copySourceDir, datasetFolderPath);
+					m_FileTools.CopyDirectory(diSourceDir.FullName, datasetFolderPath);
 					bSuccess = true;
 				}
 
 				if (bSuccess)
 				{
-					msg = "Copied folder " + copySourceDir + " to " +
+					msg = "Copied folder " + diSourceDir.FullName + " to " +
 						Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName) + GetConnectionDescription();
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 				}
 			}
 			catch (Exception ex)
 			{
-				msg = "Exception copying dataset folder " + copySourceDir + GetConnectionDescription();
+				msg = "Exception copying dataset folder " + diSourceDir.FullName + GetConnectionDescription();
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
 
 				HandleCopyException(ref retData, ex);
@@ -1680,7 +1711,7 @@ namespace CaptureToolPlugin
 				// Data files haven't been zipped, so throw error
 				retData.CloseoutMsg = "No zip files found in dataset folder";
 				msg = retData.CloseoutMsg + " at " + datasetFolderPath;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 				DisconnectShareIfRequired();
 
 				retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -1776,7 +1807,7 @@ namespace CaptureToolPlugin
 			{
 				retData.CloseoutMsg = "Zip files found in dataset folder";
 				msg = retData.CloseoutMsg + " " + copySourceDir;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 				retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 				return false;
 			}
@@ -1789,7 +1820,7 @@ namespace CaptureToolPlugin
 			{
 				retData.CloseoutMsg = "No subfolders were found in the dataset folder ";
 				msg = retData.CloseoutMsg + " " + copySourceDir;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 				retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 				return false;
 			}
@@ -1815,7 +1846,7 @@ namespace CaptureToolPlugin
 					{
 						retData.CloseoutMsg = "Dataset folder contains multiple subfolders, but folder " + sDirName + " does not match the expected pattern";
 						msg = retData.CloseoutMsg + " (" + reMaldiSpotFolder.ToString() + "); see " + copySourceDir;
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 						retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 						return false;
 					}

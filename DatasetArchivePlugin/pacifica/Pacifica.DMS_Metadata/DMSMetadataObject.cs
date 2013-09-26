@@ -10,8 +10,17 @@ namespace Pacifica.DMS_Metadata
 {
 	public class DMSMetadataObject
 	{
-		// Maximum number of files (per dataset) to archive
-		public const int MAX_FILES_TO_ARCHIVE = 1000;
+				
+		/// <summary>
+		/// Maximum number of files to archive
+		/// </summary>
+		/// <remarks>
+		/// If uploading an entire dataset folder and all of its subfolders via a DatasetArchive operation, 
+		///   then this value applies to all files in the dataset folder (and subfolders)
+		/// If uploading just one dataset subfolder via an ArchiveUpdate operation, 
+		///   then this value applies to all files in that subfolder
+		/// </remarks>
+		public const int MAX_FILES_TO_ARCHIVE = 500;
 
 		private Dictionary<string, object> _metadataObject;
 
