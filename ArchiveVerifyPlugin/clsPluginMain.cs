@@ -255,12 +255,10 @@ namespace ArchiveVerifyPlugin
 
 				// Look for files that should have been uploaded, compute a Sha-1 hash for each, and compare those hashes to existing files in MyEMSL
 
-				string datasetInstrument;
-				int datasetID;
-				string subFolder;
+				Upload.udtUploadMetadata uploadMetadata;
 
 				var oDatasetFileMetadata = new DMSMetadataObject();
-				List<FileInfoObject> lstDatasetFilesLocal = oDatasetFileMetadata.FindDatasetFilesToArchive(m_TaskParams.TaskDictionary, m_MgrParams.TaskDictionary, out datasetName, out datasetInstrument, out datasetID, out subFolder);
+				List<FileInfoObject> lstDatasetFilesLocal = oDatasetFileMetadata.FindDatasetFilesToArchive(m_TaskParams.TaskDictionary, m_MgrParams.TaskDictionary, out uploadMetadata);
 
 				if (lstDatasetFilesLocal.Count == 0)
 				{
