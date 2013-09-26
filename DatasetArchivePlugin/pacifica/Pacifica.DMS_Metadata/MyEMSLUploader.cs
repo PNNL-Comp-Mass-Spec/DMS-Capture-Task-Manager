@@ -143,7 +143,7 @@ namespace Pacifica.DMS_Metadata
 				UploadCompleted(this, e);
 			}
 		}
-					
+
 		void _mdContainer_ProgressEvent(object sender, ProgressEventArgs e)
 		{
 			if (StatusUpdate != null)

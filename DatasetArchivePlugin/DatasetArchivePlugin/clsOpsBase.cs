@@ -269,15 +269,13 @@ namespace DatasetArchivePlugin
 				// Start the upload
 				myEMSLUL.StartUpload(out statusURL);
 
-				System.DateTime myEMSLFinishTime = System.DateTime.UtcNow;
-
-				var tsElapsedTime = myEMSLFinishTime.Subtract(dtStartTime);
+				var tsElapsedTime = System.DateTime.UtcNow.Subtract(dtStartTime);
 
 				m_Msg = "Upload of " + m_DatasetName + " completed in " + tsElapsedTime.TotalSeconds.ToString("0.0") + " seconds: " + myEMSLUL.FileCountNew + " new files, " + myEMSLUL.FileCountUpdated + " updated files, " + myEMSLUL.Bytes + " bytes";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
 
 				m_Msg = "myEMSL statusURI => " + myEMSLUL.StatusURI;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
 
 				// Raise an event with the stats
 				// This will cause clsPluginMain to call StoreMyEMSLUploadStats to store the results in the database (stored procedure StoreMyEMSLUploadStats)

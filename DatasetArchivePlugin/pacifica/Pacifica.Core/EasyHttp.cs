@@ -912,7 +912,7 @@ namespace Pacifica.Core
 			long contentLength = 0;
 			long addonBytes;
 
-			bool debugMode = true;
+			bool debugMode = false;
 
 			if (debugMode)
 			{

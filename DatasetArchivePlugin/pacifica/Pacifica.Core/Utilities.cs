@@ -281,7 +281,10 @@ namespace Pacifica.Core
 
 		public static string GetMetadataFilenameForJob(string jobNumber)
 		{
-			return "MyEMSL_metadata_CaptureJob_" + jobNumber + ".txt";
+			if (string.IsNullOrWhiteSpace(jobNumber))
+				return "MyEMSL_metadata_CaptureJob_000000.txt";
+			else
+				return "MyEMSL_metadata_CaptureJob_" + jobNumber + ".txt";
 		}
 
 		public static string GetUserName(bool cleanDomain = false)
