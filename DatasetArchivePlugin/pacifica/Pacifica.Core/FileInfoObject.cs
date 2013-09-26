@@ -204,11 +204,9 @@ namespace Pacifica.Core
 		public static string GenerateRelativePath(string absoluteLocalPath, string basePath)
 		{
 			if (absoluteLocalPath.ToLower().StartsWith(basePath.ToLower()))
-				return absoluteLocalPath.Substring(basePath.Length);
+				return absoluteLocalPath.Substring(basePath.Length).TrimStart(new char[] { '/', '\\' });
 			else
-				throw new InvalidDataException("Cannot generate relative path in GenerateRelativePath since local path (" + absoluteLocalPath + ") does not contain base path (" + basePath + ")");
-
-			// Oldreturn absoluteLocalPath.Replace(basePath, "");
+				throw new InvalidDataException("Cannot generate relative path in GenerateRelativePath since local path (" + absoluteLocalPath + ") does not contain base path (" + basePath + ")");			
 		}
 
 		#endregion
