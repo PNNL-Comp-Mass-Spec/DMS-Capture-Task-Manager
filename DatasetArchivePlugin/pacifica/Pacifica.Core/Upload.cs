@@ -121,10 +121,11 @@ namespace Pacifica.Core
 		}
 
 		/// <summary>
-		/// 
+		/// Constructor
 		/// </summary>
 		/// <param name="transferFolderPath">Transfer foler path for this dataset, for example \\proto-4\DMS3_Xfer\SysVirol_IFT001_Pool_17_B_10x_27Aug13_Tiger_13-07-36</param>
 		/// <param name="mJob">DMS Data Capture job number</param>
+		/// <remarks>The metadata.txt file will be copied to the transfer folder</remarks>
 		public Upload(string transferFolderPath, string jobNumber)
 		{
 

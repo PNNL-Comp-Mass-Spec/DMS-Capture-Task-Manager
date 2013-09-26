@@ -90,7 +90,7 @@ namespace Pacifica.DMS_Metadata
 
 			// Calculate the "year_quarter" code used for subfolders within an instrument folder
 			// This value is based on the date the dataset was created in DMS
-			string datasetDateCodeString = GetDatasetYearQuarter(taskParams);
+			uploadMetadata.DateCodeString = GetDatasetYearQuarter(taskParams);
 
 			// Find the files that are new or need to be updated
 			List<FileInfoObject> lstUnmatchedFiles = this.CompareDatasetContentsElasticSearch(lstDatasetFilesToArchive, uploadMetadata);
