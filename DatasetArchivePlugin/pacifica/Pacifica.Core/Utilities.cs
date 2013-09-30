@@ -30,7 +30,11 @@ namespace Pacifica.Core
 				_hashProvider = new SHA1Managed();
 			}
 
-			fileHash = _hashProvider.ComputeHash(new System.IO.FileStream(fi.FullName, FileMode.Open, FileAccess.Read, FileShare.Read));
+			using (var sourceFile = new System.IO.FileStream(fi.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+			{
+				fileHash = _hashProvider.ComputeHash(sourceFile);
+			}
+			
 			hashString = ToHexString(fileHash);
 
 			return hashString;

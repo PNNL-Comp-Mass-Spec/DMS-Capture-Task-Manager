@@ -390,6 +390,14 @@ namespace Pacifica.Core
 						redirected = false;
 					}
 				}
+
+				if (uri.AbsoluteUri.EndsWith("error/nopersonid"))
+				{
+					// Current user is not known to MyEMSL (could be a service account or a new user)
+					finalUri = uri;
+					return false;
+				}
+
 			} while (redirected);
 
 			finalUri = uri;
