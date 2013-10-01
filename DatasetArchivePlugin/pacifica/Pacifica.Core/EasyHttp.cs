@@ -178,6 +178,7 @@ namespace Pacifica.Core
 					if (ex.Message.Contains("timed out"))
 						responseStatusCode = HttpStatusCode.RequestTimeout;
 				}
+
 				if (string.IsNullOrWhiteSpace(responseData))
 					responseData = ex.Message;
 
@@ -385,9 +386,14 @@ namespace Pacifica.Core
 				else
 				{
 					if (ex.Message.Contains("timed out"))
-						responseStatusCode = HttpStatusCode.RequestTimeout;
+						responseStatusCode = HttpStatusCode.RequestTimeout;					
 				}
-				throw new Exception(responseData, ex);
+
+				if (string.IsNullOrWhiteSpace(responseData))
+					throw new Exception(ex.Message, ex);
+				else
+					throw new Exception(responseData, ex);					
+				
 			}
 			finally
 			{
