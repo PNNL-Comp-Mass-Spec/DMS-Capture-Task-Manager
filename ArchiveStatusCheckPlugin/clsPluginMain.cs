@@ -4,7 +4,6 @@ using Pacifica.Core;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.IO;
 using System.Data.SqlClient;
 using System.Text.RegularExpressions;
 
@@ -23,8 +22,7 @@ namespace ArchiveStatusCheckPlugin
 		#endregion
 
 		#region "Constructors"
-		public clsPluginMain()
-			: base()
+		public clsPluginMain()			
 		{
 
 		}
@@ -38,9 +36,7 @@ namespace ArchiveStatusCheckPlugin
 		/// <returns>Class with completionCode, completionMessage, evaluationCode, and evaluationMessage</returns>
 		public override clsToolReturnData RunTool()
 		{
-			string msg;
-
-			msg = "Starting ArchiveStatusCheckPlugin.clsPluginMain.RunTool()";
+			string msg = "Starting ArchiveStatusCheckPlugin.clsPluginMain.RunTool()";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 			// Perform base class operations, if any
@@ -108,15 +104,16 @@ namespace ArchiveStatusCheckPlugin
 			
 			// First obtain a list of status URIs to check
 			// Keys are StatusNum integers, values are StatusURI strings
-			int retryCount = 2;
+			const int retryCount = 2;
 			var dctURIs = GetStatusURIs(retryCount);
 
 			var dctVerifiedURIs = new Dictionary<int, string>();
 			var lstUnverifiedURIs = new List<string>();
+			string msg;
 
 			if (dctURIs.Count == 0)
 			{
-				string msg = "Could not find any MyEMSL_Status_URIs; cannot verify archive status";
+				msg = "Could not find any MyEMSL_Status_URIs; cannot verify archive status";
 				mRetData.CloseoutMsg = msg;
 				mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg + " for job " + m_Job);
@@ -125,12 +122,12 @@ namespace ArchiveStatusCheckPlugin
 
 			// Call the testauth service to obtain a cookie for this session
 			string authURL = Configuration.TestAuthUri;
-			Auth auth = new Auth(new Uri(authURL));
+			var auth = new Auth(new Uri(authURL));
 
-			CookieContainer cookieJar = null;
+			CookieContainer cookieJar;
 			if (!auth.GetAuthCookies(out cookieJar))
 			{
-				string msg = "Auto-login to " + Configuration.TestAuthUri + " failed authentication";
+				msg = "Auto-login to " + Configuration.TestAuthUri + " failed authentication";
 				mRetData.CloseoutMsg = "Failed to obtain MyEMSL session cookie";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 				return false;
@@ -195,20 +192,16 @@ namespace ArchiveStatusCheckPlugin
 
 			if (dctVerifiedURIs.Count == dctURIs.Count)
 				return true;
-			else
+			
+			if (dctVerifiedURIs.Count == 0)
 			{
-				string msg;
-				if (dctVerifiedURIs.Count == 0)
-				{
-					msg = "MyEMSL archive status not yet verified; see " + lstUnverifiedURIs.First();
-				}
-				else
-					msg = "MyEMSL archive status partially verified (success count = " + dctVerifiedURIs.Count + ", unverified count = " + lstUnverifiedURIs.Count() + "); first not verified: " + lstUnverifiedURIs.First();
-
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-				return false;
+				msg = "MyEMSL archive status not yet verified; see " + lstUnverifiedURIs.First();
 			}
+			else
+				msg = "MyEMSL archive status partially verified (success count = " + dctVerifiedURIs.Count + ", unverified count = " + lstUnverifiedURIs.Count() + "); first not verified: " + lstUnverifiedURIs.First();
 
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+			return false;
 		}
 
 		protected Dictionary<int, string> GetStatusURIs(int retryCount)
@@ -230,7 +223,7 @@ namespace ArchiveStatusCheckPlugin
 					throw new Exception("Could not find Status ID in StatusURI: " + statusURI);
 
 				int statusNum;
-				int.TryParse(reMatch.Groups[1].Value.ToString(), out statusNum);
+				int.TryParse(reMatch.Groups[1].Value, out statusNum);
 				
 				if (statusNum <= 0)
 					throw new Exception("Status ID is 0 in StatusURI: " + statusURI);
@@ -242,7 +235,7 @@ namespace ArchiveStatusCheckPlugin
 			try
 			{
 
-				string sql = "SELECT StatusNum, Status_URI FROM V_MyEMSL_Uploads WHERE Dataset_ID = " + m_DatasetID + " AND Job <= " + m_Job + " AND ISNULL(StatusNum, 0) > 0";
+				string sql = "SELECT StatusNum, Status_URI FROM V_MyEMSL_Uploads WHERE Dataset_ID = " + m_DatasetID + " AND Job <= " + m_Job + " AND ISNULL(StatusNum, 0) > 0 AND ErrorCode <> 101";
 
 				while (retryCount > 0)
 				{
@@ -261,7 +254,7 @@ namespace ArchiveStatusCheckPlugin
 
 								if (!Convert.IsDBNull(reader.GetValue(1)))
 								{
-									string value = (string)reader.GetValue(1);
+									var value = (string)reader.GetValue(1);
 									if (!string.IsNullOrEmpty(value))
 										dctURIs.Add(statusNum, value);
 								}								
@@ -273,7 +266,7 @@ namespace ArchiveStatusCheckPlugin
 					{
 						retryCount -= 1;
 						string msg = "ArchiveStatusCheckPlugin, GetStatusURIs; Exception querying database: " + ex.Message + "; ConnectionString: " + connectionString;
-						msg += ", RetryCount = " + retryCount.ToString();
+						msg += ", RetryCount = " + retryCount;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 
 						//Delay for 5 second before trying again
@@ -298,9 +291,11 @@ namespace ArchiveStatusCheckPlugin
 			{
 				string statusNums = string.Join(",", (from item in dctVerifiedURIs select item.Key));
 
-				var cmd = new SqlCommand(SP_NAME);
-				cmd.CommandType = System.Data.CommandType.StoredProcedure;
-				
+				var cmd = new SqlCommand(SP_NAME)
+				{
+					CommandType = System.Data.CommandType.StoredProcedure
+				};
+
 				cmd.Parameters.Add("@Return", System.Data.SqlDbType.Int);
 				cmd.Parameters["@Return"].Direction = System.Data.ParameterDirection.ReturnValue;
 
@@ -315,24 +310,19 @@ namespace ArchiveStatusCheckPlugin
 				cmd.Parameters.Add("@message", System.Data.SqlDbType.VarChar, 512);
 				cmd.Parameters["@message"].Direction = System.Data.ParameterDirection.Output;
 
-				var paramDatasetID = cmd.CreateParameter();
-
 				m_ExecuteSP.TimeoutSeconds = 20;
 				var resCode = m_ExecuteSP.ExecuteSP(cmd, 2);
 
 				if (resCode == 0)
 					return true;
-				else
-				{
-					var msg = "Error " + resCode + " calling stored procedure " + SP_NAME;
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-					return false;
-				}
-
+				
+				var msg = "Error " + resCode + " calling stored procedure " + SP_NAME;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+				return false;
 			}
 			catch (Exception ex)
 			{
-				var msg = "Exceptiong calling stored procedure " + SP_NAME;
+				const string msg = "Exceptiong calling stored procedure " + SP_NAME;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
 				return false;
 			}
