@@ -13,7 +13,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Text.RegularExpressions;
+using System.Threading;
 using CaptureTaskManager;
+using UIMFLibrary;
 
 namespace DatasetIntegrityPlugin
 {
@@ -37,7 +41,7 @@ namespace DatasetIntegrityPlugin
 		const float AGILENT_DATA_MS_FILE_MIN_SIZE_KB = 75;
 		const float MCF_FILE_MIN_SIZE_KB = 5;		// Malding imaging file
 
-		int MAX_AGILENT_TO_UIMF_RUNTIME_MINUTES = 30;
+		const int MAX_AGILENT_TO_UIMF_RUNTIME_MINUTES = 30;
 
 		#endregion
 
@@ -51,7 +55,6 @@ namespace DatasetIntegrityPlugin
 
 		#region "Constructors"
 		public clsPluginMain()
-			: base()
 		{
 			// Does nothing at present
 		}	// End sub
@@ -64,9 +67,7 @@ namespace DatasetIntegrityPlugin
 		/// <returns>Enum indicating success or failure</returns>
 		public override clsToolReturnData RunTool()
 		{
-			string msg;
-
-			msg = "Starting DatasetIntegrityPlugin.clsPluginMain.RunTool()";
+			string msg = "Starting DatasetIntegrityPlugin.clsPluginMain.RunTool()";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 			// Perform base class operations, if any
@@ -166,8 +167,11 @@ namespace DatasetIntegrityPlugin
 					if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
 					{
 						// Try BrukerMALDI_Imaging
-						clsToolReturnData oRetDataAlt = new clsToolReturnData();
-						oRetDataAlt.CloseoutType = TestBrukerMaldiImagingFolder(datasetFolder);
+						var oRetDataAlt = new clsToolReturnData
+						{
+							CloseoutType = TestBrukerMaldiImagingFolder(datasetFolder)
+						};
+
 						if (oRetDataAlt.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
 						{
 							// The dataset actually consists of a series of .Zip files, not a .D folder
@@ -212,7 +216,6 @@ namespace DatasetIntegrityPlugin
 		private bool ConvertAgilentDFolderToUIMF(string datasetFolderPath)
 		{
 			clsRunDosProgram CmdRunner = null;
-			bool success = false;
 
 			try
 			{
@@ -225,11 +228,11 @@ namespace DatasetIntegrityPlugin
 				//
 				string CmdStr = clsConversion.PossiblyQuotePath(dotDFolderPath) + " " + clsConversion.PossiblyQuotePath(m_WorkDir);
 				string managerName = m_MgrParams.GetParam("MgrName", "UnknownManager");
-				string consoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, "AgilentToUIMF_ConsoleOutput_" + managerName + ".txt");
+				string consoleOutputFilePath = Path.Combine(m_WorkDir, "AgilentToUIMF_ConsoleOutput_" + managerName + ".txt");
 
 				CmdRunner = new clsRunDosProgram(m_WorkDir);
-				mAgilentToUIMFStartTime = System.DateTime.UtcNow;
-				mLastStatusUpdate = System.DateTime.UtcNow;
+				mAgilentToUIMFStartTime = DateTime.UtcNow;
+				mLastStatusUpdate = DateTime.UtcNow;
 
 				AttachCmdrunnerEvents(CmdRunner);
 
@@ -249,7 +252,7 @@ namespace DatasetIntegrityPlugin
 				CmdRunner.WriteConsoleOutputToFile = true;
 				CmdRunner.ConsoleOutputFilePath = consoleOutputFilePath;
 
-				int iMaxRuntimeSeconds = MAX_AGILENT_TO_UIMF_RUNTIME_MINUTES * 60;
+				const int iMaxRuntimeSeconds = MAX_AGILENT_TO_UIMF_RUNTIME_MINUTES * 60;
 				bool bSuccess = CmdRunner.RunProgram(exePath, CmdStr, "AgilentToUIMFConverter", true, iMaxRuntimeSeconds);
 
 				ParseConsoleOutputFileForErrors(consoleOutputFilePath);
@@ -261,7 +264,7 @@ namespace DatasetIntegrityPlugin
 
 					if (CmdRunner.ExitCode != 0)
 					{
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "AgilentToUIMFConverter returned a non-zero exit code: " + CmdRunner.ExitCode.ToString());
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "AgilentToUIMFConverter returned a non-zero exit code: " + CmdRunner.ExitCode);
 					}
 					else
 					{
@@ -271,7 +274,7 @@ namespace DatasetIntegrityPlugin
 					return false;
 				}
 
-				System.Threading.Thread.Sleep(100);
+				Thread.Sleep(100);
 				
 				// Copy the .UIMF file to the dataset folder
 				var fiUIMF = new FileInfo(uimfOutputFilePath);
@@ -311,12 +314,12 @@ namespace DatasetIntegrityPlugin
 					// Delete the console output file
 					File.Delete(consoleOutputFilePath);
 				}
+				// ReSharper disable once EmptyGeneralCatchClause
 				catch
 				{
 					// Do not treat this as a fatal error
 				}
 
-				success = true;
 			}
 			catch (Exception ex)
 			{
@@ -329,7 +332,7 @@ namespace DatasetIntegrityPlugin
 				DetachCmdrunnerEvents(CmdRunner);
 			}
 
-			return success;
+			return true;
 		}
 
 		/// <summary>
@@ -337,16 +340,11 @@ namespace DatasetIntegrityPlugin
 		/// If the x_ folder is empty or if every file in the x_ folder is also in the non x_ folder, then returns True and optionally deletes the x_ folder
 		/// </summary>
 		/// <param name="folderList">List of folders; must contain exactly 2 entries</param>
-		/// <param name="sSupersededFolderPath"></param>
+		/// <param name="bDeleteIfSuperseded"></param>
 		/// <returns>True if this is a superseded folder and it is safe to delete</returns>
 		private bool DetectSupersededFolder(string[] folderList, bool bDeleteIfSuperseded)
 		{
 			string msg;
-			string sNewFolder = string.Empty;
-			string sOldFolder = string.Empty;
-
-			System.IO.DirectoryInfo diOldFolder;
-			System.IO.DirectoryInfo diNewFolder;
 
 			try
 			{
@@ -357,14 +355,14 @@ namespace DatasetIntegrityPlugin
 					return false;
 				}
 
-				diNewFolder = new System.IO.DirectoryInfo(folderList[0]);
-				diOldFolder = new System.IO.DirectoryInfo(folderList[1]);
+				var diNewFolder = new DirectoryInfo(folderList[0]);
+				var diOldFolder = new DirectoryInfo(folderList[1]);
 
 				if (diNewFolder.Name.ToLower().StartsWith("x_"))
 				{
 					// Swap things around
-					diNewFolder = new System.IO.DirectoryInfo(folderList[1]);
-					diOldFolder = new System.IO.DirectoryInfo(folderList[0]);
+					diNewFolder = new DirectoryInfo(folderList[1]);
+					diOldFolder = new DirectoryInfo(folderList[0]);
 				}
 
 				if (diOldFolder.Name == "x_" + diNewFolder.Name)
@@ -377,13 +375,12 @@ namespace DatasetIntegrityPlugin
 
 					bool bFolderIsSuperseded = true;
 
-					System.IO.FileInfo[] fiSupersededFiles;
-					fiSupersededFiles = diOldFolder.GetFiles("*", SearchOption.AllDirectories);
+					FileInfo[] fiSupersededFiles = diOldFolder.GetFiles("*", SearchOption.AllDirectories);
 
-					foreach (System.IO.FileInfo fiFile in fiSupersededFiles)
+					foreach (FileInfo fiFile in fiSupersededFiles)
 					{
 						string sNewfilePath = fiFile.FullName.Replace(diOldFolder.FullName, diNewFolder.FullName);
-						System.IO.FileInfo fiNewFile = new System.IO.FileInfo(sNewfilePath);
+						var fiNewFile = new FileInfo(sNewfilePath);
 
 						if (!fiNewFile.Exists)
 						{
@@ -416,14 +413,10 @@ namespace DatasetIntegrityPlugin
 					return bFolderIsSuperseded;
 
 				}
-				else
-				{
-
-					msg = "Folder " + diOldFolder.FullName + " is not a superseded folder for " + diNewFolder.FullName;
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-					return false;
-				}
-
+				
+				msg = "Folder " + diOldFolder.FullName + " is not a superseded folder for " + diNewFolder.FullName;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+				return false;
 			}
 			catch (Exception ex)
 			{
@@ -436,7 +429,7 @@ namespace DatasetIntegrityPlugin
 		}
 
 		/// <summary>
-		/// Looks file files matching fileSpec
+		/// Looks files matching fileSpec
 		/// For matching files, copies the or moves them up one folder
 		/// If matchDatasetName is true then requires that the file start with the name of the dataset
 		/// </summary>
@@ -450,13 +443,16 @@ namespace DatasetIntegrityPlugin
 			{
 				if (!matchDatasetName || Path.GetFileNameWithoutExtension(fiFile.Name).ToLower().StartsWith(m_Dataset.ToLower()))
 				{
-					string newPath = Path.Combine(fiFile.Directory.Parent.FullName, fiFile.Name);
-					if (!File.Exists(newPath))
+					if (fiFile.Directory != null && fiFile.Directory.Parent != null)
 					{
-						if (copyFile)
-							fiFile.CopyTo(newPath, true);
-						else
-							fiFile.MoveTo(newPath);
+						string newPath = Path.Combine(fiFile.Directory.Parent.FullName, fiFile.Name);
+						if (!File.Exists(newPath))
+						{
+							if (copyFile)
+								fiFile.CopyTo(newPath, true);
+							else
+								fiFile.MoveTo(newPath);
+						}
 					}
 				}
 			}
@@ -464,20 +460,19 @@ namespace DatasetIntegrityPlugin
 
 		protected void ParseConsoleOutputFileForErrors(string sConsoleOutputFilePath)
 		{
-			string sLineIn = string.Empty;
 			bool blnUnhandledException = false;
 			string sExceptionText = string.Empty;
 
 			try
 			{
-				if (System.IO.File.Exists(sConsoleOutputFilePath))
+				if (File.Exists(sConsoleOutputFilePath))
 				{
-					using (System.IO.StreamReader srInFile = new System.IO.StreamReader(new System.IO.FileStream(sConsoleOutputFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite)))
+					using (var srInFile = new StreamReader(new FileStream(sConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
 					{
 
 						while (srInFile.Peek() > -1)
 						{
-							sLineIn = srInFile.ReadLine();
+							string sLineIn = srInFile.ReadLine();
 
 							if (!string.IsNullOrEmpty(sLineIn))
 							{
@@ -541,7 +536,7 @@ namespace DatasetIntegrityPlugin
 			{
 				// If two folders are present and one starts with x_ and all of the files inside the one that start with x_ are also in the folder without x_,
 				// then delete the x_ folder
-				bool bDeleteIfSuperseded = true;
+				const bool bDeleteIfSuperseded = true;
 
 				if (DetectSupersededFolder(folderList, bDeleteIfSuperseded))
 				{
@@ -555,10 +550,8 @@ namespace DatasetIntegrityPlugin
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return false;
 			}
-			else
-			{
-				return true;
-			}
+			
+			return true;
 		}
 
 
@@ -596,10 +589,9 @@ namespace DatasetIntegrityPlugin
 			else
 				sMaxSize = fMaxSize.ToString("#0") + " KB";
 
-			string msg;
-			msg = sDataFileDescription + " file may be corrupt. Actual file size is " +
-				  fActualSize.ToString("####0.0") + " KB; " +
-				  "max allowable size is " + sMaxSize + "; see " + sFilePath;
+			string msg = sDataFileDescription + " file may be corrupt. Actual file size is " +
+			             fActualSize.ToString("####0.0") + " KB; " +
+			             "max allowable size is " + sMaxSize + "; see " + sFilePath;
 
 			mRetData.EvalMsg = sDataFileDescription + " file size is more than " + sMaxSize;
 
@@ -608,13 +600,11 @@ namespace DatasetIntegrityPlugin
 
 		private void ReportFileSizeTooSmall(string sDataFileDescription, string sFilePath, float fActualSize, float fMinSize)
 		{
-			string sMinSize;
-			sMinSize = fMinSize.ToString("#0") + " KB";
+			string sMinSize = fMinSize.ToString("#0") + " KB";
 
-			string msg;
-			msg = sDataFileDescription + " file may be corrupt. Actual file size is " +
-				  fActualSize.ToString("####0.0") + " KB; " +
-				  "min allowable size is " + sMinSize + "; see " + sFilePath;
+			string msg = sDataFileDescription + " file may be corrupt. Actual file size is " +
+			             fActualSize.ToString("####0.0") + " KB; " +
+			             "min allowable size is " + sMinSize + "; see " + sFilePath;
 
 			mRetData.EvalMsg = sDataFileDescription + " file size is less than " + sMinSize;
 
@@ -628,9 +618,6 @@ namespace DatasetIntegrityPlugin
 		/// <returns>Enum indicating test result</returns>
 		private EnumCloseOutType TestAgilentIonTrapFolder(string datasetFolderPath)
 		{
-			float dataFileSizeKB;
-
-			string instName = m_TaskParams.GetParam("Instrument_Name");
 
 			// Verify only one .D folder in dataset
 			string[] folderList = Directory.GetDirectories(datasetFolderPath, "*.D");
@@ -640,7 +627,8 @@ namespace DatasetIntegrityPlugin
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
-			else if (folderList.Length > 1)
+			
+			if (folderList.Length > 1)
 			{
 				if (!PossiblyRenameSupersededFolder(folderList, clsInstrumentClassInfo.DOT_D_EXTENSION))
 					return EnumCloseOutType.CLOSEOUT_FAILED;
@@ -656,7 +644,7 @@ namespace DatasetIntegrityPlugin
 			}
 
 			// Verify size of the DATA.MS file
-			dataFileSizeKB = GetFileSize(tempFileNamePath);
+			float dataFileSizeKB = GetFileSize(tempFileNamePath);
 			if (dataFileSizeKB <= AGILENT_DATA_MS_FILE_MIN_SIZE_KB)
 			{
 				ReportFileSizeTooSmall("DATA.MS", tempFileNamePath, dataFileSizeKB, AGILENT_DATA_MS_FILE_MIN_SIZE_KB);
@@ -675,10 +663,6 @@ namespace DatasetIntegrityPlugin
 		/// <returns>Enum indicating test result</returns>
 		private EnumCloseOutType TestAgilentTOFV2Folder(string datasetFolderPath)
 		{
-			float dataFileSizeKB;
-
-			string instName = m_TaskParams.GetParam("Instrument_Name");
-
 			// Verify only one .D folder in dataset
 			string[] folderList = Directory.GetDirectories(datasetFolderPath, "*.D");
 			if (folderList.Length < 1)
@@ -687,7 +671,8 @@ namespace DatasetIntegrityPlugin
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
-			else if (folderList.Length > 1)
+			
+			if (folderList.Length > 1)
 			{				
 				if (!PossiblyRenameSupersededFolder(folderList, clsInstrumentClassInfo.DOT_D_EXTENSION))
 					return EnumCloseOutType.CLOSEOUT_FAILED;
@@ -701,7 +686,8 @@ namespace DatasetIntegrityPlugin
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
-			else if (folderList.Length > 1)
+			
+			if (folderList.Length > 1)
 			{
 				mRetData.EvalMsg = "Invalid dataset. Multiple AcqData folders found in .D folder";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
@@ -719,7 +705,7 @@ namespace DatasetIntegrityPlugin
 			}
 
 			// Verify size of the MSScan.bin file
-			dataFileSizeKB = GetFileSize(tempFileNamePath);
+			float dataFileSizeKB = GetFileSize(tempFileNamePath);
 			if (dataFileSizeKB <= AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB)
 			{
 				ReportFileSizeTooSmall("MSScan.bin", tempFileNamePath, dataFileSizeKB, AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB);
@@ -737,13 +723,14 @@ namespace DatasetIntegrityPlugin
 
 			// Check to see if a .M folder exists
 			string[] subFolderList = Directory.GetDirectories(acqDataFolderList[0], "*.m");
-			if (subFolderList == null || subFolderList.Length < 1)
+			if (subFolderList.Length < 1)
 			{
 				mRetData.EvalMsg = "Invalid dataset. No .m folders found found in the AcqData folder";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
-			else if (subFolderList.Length > 1)
+			
+			if (subFolderList.Length > 1)
 			{
 				mRetData.EvalMsg = "Invalid dataset. Multiple .m folders found in the AcqData folder";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
@@ -753,19 +740,17 @@ namespace DatasetIntegrityPlugin
 			// If we got to here, everything is OK
 			return EnumCloseOutType.CLOSEOUT_SUCCESS;
 		}	// End sub
-		
+
 		/// <summary>
 		/// Tests a Sciex QTrap dataset's integrity
 		/// </summary>
 		/// <param name="dataFileNamePath">Fully qualified path to dataset file</param>
+		/// <param name="datasetName"></param>
 		/// <returns>Enum indicating success or failure</returns>
 		private EnumCloseOutType TestSciexQtrapFile(string dataFileNamePath, string datasetName)
 		{
-			float dataFileSizeKB;
-			string tempFileNamePath;
-
 			// Verify .wiff file exists in storage folder
-			tempFileNamePath = Path.Combine(dataFileNamePath, datasetName + clsInstrumentClassInfo.DOT_WIFF_EXTENSION);
+			string tempFileNamePath = Path.Combine(dataFileNamePath, datasetName + clsInstrumentClassInfo.DOT_WIFF_EXTENSION);
 			if (!File.Exists(tempFileNamePath))
 			{
 				mRetData.EvalMsg = "Data file " + tempFileNamePath + " not found";
@@ -774,7 +759,7 @@ namespace DatasetIntegrityPlugin
 			}
 
 			// Get size of .wiff file
-			dataFileSizeKB = GetFileSize(tempFileNamePath);
+			float dataFileSizeKB = GetFileSize(tempFileNamePath);
 
 			// Check .wiff file min size
 			if (dataFileSizeKB < SCIEX_WIFF_FILE_MIN_SIZE_KB)
@@ -856,13 +841,11 @@ namespace DatasetIntegrityPlugin
 		/// <returns></returns>
 		private EnumCloseOutType TestThermoRawFile(string dataFileNamePath, float minFileSizeKB, float maxFileSizeMB)
 		{
-			float dataFileSizeKB;
-
 			// Verify file exists in storage folder
 			if (!File.Exists(dataFileNamePath))
 			{
 				// File not found; look for alternate extensions
-				System.Collections.Generic.List<string> lstAlternateExtensions = new System.Collections.Generic.List<string>();
+				var lstAlternateExtensions = new List<string>();
 				bool bAlternateFound = false;
 				lstAlternateExtensions.Add("mgf");
 				lstAlternateExtensions.Add("mzXML");
@@ -870,7 +853,7 @@ namespace DatasetIntegrityPlugin
 
 				foreach (string altExtension in lstAlternateExtensions)
 				{
-					string dataFileNamePathAlt = System.IO.Path.ChangeExtension(dataFileNamePath, altExtension);
+					string dataFileNamePathAlt = Path.ChangeExtension(dataFileNamePath, altExtension);
 					if (File.Exists(dataFileNamePathAlt))
 					{
 						mRetData.EvalMsg = "Raw file not found, but ." + altExtension + " file exists";
@@ -892,7 +875,7 @@ namespace DatasetIntegrityPlugin
 			}
 
 			// Get size of data file
-			dataFileSizeKB = GetFileSize(dataFileNamePath);
+			float dataFileSizeKB = GetFileSize(dataFileNamePath);
 
 			// Check min size
 			if (dataFileSizeKB < minFileSizeKB)
@@ -919,8 +902,6 @@ namespace DatasetIntegrityPlugin
 		/// <returns></returns>
 		private EnumCloseOutType TestBrukerFolder(string datasetFolderPath)
 		{
-			float dataFileSizeKB;
-
 			// Verify 0.ser folder exists
 			if (!Directory.Exists(Path.Combine(datasetFolderPath, "0.ser")))
 			{
@@ -939,7 +920,7 @@ namespace DatasetIntegrityPlugin
 			}
 
 			// Verify size of the acqus file
-			dataFileSizeKB = GetFileSize(Path.Combine(dataFolder, "acqus"));
+			float dataFileSizeKB = GetFileSize(Path.Combine(dataFolder, "acqus"));
 			if (dataFileSizeKB <= 0F)
 			{
 				mRetData.EvalMsg = "Invalid dataset. acqus file contains no data";
@@ -972,11 +953,10 @@ namespace DatasetIntegrityPlugin
 		/// Tests a BrukerTOF_BAF folder for integrity
 		/// </summary>
 		/// <param name="datasetFolderPath">Fully qualified path to the dataset folder</param>
+		/// <param name="instrumentName"></param>
 		/// <returns>Enum indicating test result</returns>
 		private EnumCloseOutType TestBrukerTof_BafFolder(string datasetFolderPath, string instrumentName)
 		{
-			float dataFileSizeKB;
-
 			// Verify only one .D folder in dataset
 			string[] folderList = Directory.GetDirectories(datasetFolderPath, "*.D");
 			if (folderList.Length < 1)
@@ -985,7 +965,8 @@ namespace DatasetIntegrityPlugin
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
-			else if (folderList.Length > 1)
+			
+			if (folderList.Length > 1)
 			{
 				if (!PossiblyRenameSupersededFolder(folderList, clsInstrumentClassInfo.DOT_D_EXTENSION))
 					return EnumCloseOutType.CLOSEOUT_FAILED;
@@ -1001,7 +982,7 @@ namespace DatasetIntegrityPlugin
 
 			// Verify size of the analysis.baf file
 			string dataFileNamePath = Path.Combine(folderList[0], "analysis.baf");
-			dataFileSizeKB = GetFileSize(dataFileNamePath);
+			float dataFileSizeKB = GetFileSize(dataFileNamePath);
 			if (dataFileSizeKB <= BAF_FILE_MIN_SIZE_KB)
 			{
 				ReportFileSizeTooSmall("Analysis.baf", dataFileNamePath, dataFileSizeKB, BAF_FILE_MIN_SIZE_KB);
@@ -1009,15 +990,16 @@ namespace DatasetIntegrityPlugin
 			}
 
 			// Check to see if at least one .M folder exists
-			List<string> subFolderList = Directory.GetDirectories(folderList[0], "*.M").ToList<string>();
+			List<string> subFolderList = Directory.GetDirectories(folderList[0], "*.M").ToList();
 
-			if (subFolderList == null || subFolderList.Count < 1)
+			if (subFolderList.Count < 1)
 			{
 				mRetData.EvalMsg = "Invalid dataset. No .M folders found";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
-			else if (subFolderList.Count > 1)
+			
+			if (subFolderList.Count > 1)
 			{
 				// Multiple .M folders
 				// This is OK for the Buker Imaging instruments
@@ -1053,13 +1035,12 @@ namespace DatasetIntegrityPlugin
 		/// <param name="datasetFolderPath">Fully qualified path to the dataset folder</param>
 		/// <param name="requireBAFFile">Set to True to require that the analysis.baf file be present</param>
 		/// <param name="requireMCFFile">Set to True to require that the analysis.baf file be present</param>
+		/// <param name="instrumentClass"></param>
+		/// <param name="instrumentName"></param>
 		/// <returns>Enum indicating test result</returns>
 		private EnumCloseOutType TestBrukerFT_Folder(string datasetFolderPath, bool requireBAFFile, bool requireMCFFile, clsInstrumentClassInfo.eInstrumentClass instrumentClass, string instrumentName)
 		{
 			float dataFileSizeKB;
-
-			string tempFileNamePath = string.Empty;
-			bool fileExists = false;
 
 			// Verify only one .D folder in dataset
 			string[] folderList = Directory.GetDirectories(datasetFolderPath, "*.D");
@@ -1069,15 +1050,16 @@ namespace DatasetIntegrityPlugin
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
-			else if (folderList.Length > 1)
+			
+			if (folderList.Length > 1)
 			{
 				if (!PossiblyRenameSupersededFolder(folderList, clsInstrumentClassInfo.DOT_D_EXTENSION))
 					return EnumCloseOutType.CLOSEOUT_FAILED;				
 			}
 
 			// Verify analysis.baf file exists
-			tempFileNamePath = Path.Combine(folderList[0], "analysis.baf");
-			fileExists = File.Exists(tempFileNamePath);
+			string tempFileNamePath = Path.Combine(folderList[0], "analysis.baf");
+			bool fileExists = File.Exists(tempFileNamePath);
 			if (!fileExists && requireBAFFile)
 			{
 				mRetData.EvalMsg = "Invalid dataset. analysis.baf file not found";
@@ -1099,7 +1081,7 @@ namespace DatasetIntegrityPlugin
 			
 			// Check whether any .mcf files exist
 			// Note that "*.mcf" will match files with extension .mcf and files with extension .mcf_idx
-			DirectoryInfo diDatasetFolder = new DirectoryInfo(folderList[0]);
+			var diDatasetFolder = new DirectoryInfo(folderList[0]);
 			tempFileNamePath = string.Empty;
 			dataFileSizeKB = 0;
 			fileExists = false;
@@ -1108,7 +1090,7 @@ namespace DatasetIntegrityPlugin
 			{
 				if (fiFile.Length > dataFileSizeKB * 1024)
 				{
-					dataFileSizeKB = (float)fiFile.Length / (1024F); 
+					dataFileSizeKB = fiFile.Length / (1024F); 
 					tempFileNamePath = fiFile.Name;
 					fileExists = true;
 				}
@@ -1194,20 +1176,24 @@ namespace DatasetIntegrityPlugin
 			
 
 			// Check to see if a .M folder exists
-			List<string> subFolderList = Directory.GetDirectories(folderList[0], "*.M").ToList<string>();
+			List<string> subFolderList = Directory.GetDirectories(folderList[0], "*.M").ToList();
 
-			if (subFolderList == null || subFolderList.Count < 1)
+			if (subFolderList.Count < 1)
 			{
 				mRetData.EvalMsg = "Invalid dataset. No .M folders found";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
-			else if (subFolderList.Count > 1)
+			
+			if (subFolderList.Count > 1)
 			{
 				// Multiple .M folders
 				// Allow this if there are two folders, and one contains _neg and one contains _pos
-				// Also allow this if on the 15T
-				if (!PositiveNegativeMethodFolders(subFolderList) && instrumentName != "15T_FTICR" && !instrumentName.ToLower().Contains("imaging"))
+				// Also allow this if on the 15T and on Maxis_01
+				if (!PositiveNegativeMethodFolders(subFolderList) && 
+					instrumentName != "15T_FTICR" && 
+					instrumentName != "Maxis_01" && 
+					!instrumentName.ToLower().Contains("imaging"))
 				{
 					mRetData.EvalMsg = "Invalid dataset. Multiple .M folders found";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
@@ -1292,21 +1278,19 @@ namespace DatasetIntegrityPlugin
 				//  0_N4
 
 				const string MALDI_SPOT_FOLDER_REGEX = "^\\d_[A-Z]\\d+$";
-				System.Text.RegularExpressions.Regex reMaldiSpotFolder;
-				reMaldiSpotFolder = new System.Text.RegularExpressions.Regex(MALDI_SPOT_FOLDER_REGEX, System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+				var reMaldiSpotFolder = new Regex(MALDI_SPOT_FOLDER_REGEX, RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-				for (int i = 0; i < dataFolders.Length; i++)
+				foreach (string folder in dataFolders)
 				{
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.DEBUG, "Test folder " + dataFolders[i] + " against RegEx " + reMaldiSpotFolder.ToString());
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.DEBUG, "Test folder " + folder + " against RegEx " + reMaldiSpotFolder);
 
-					string sDirName = System.IO.Path.GetFileName(dataFolders[i]);
-					if (!reMaldiSpotFolder.IsMatch(sDirName, 0))
+					string sDirName = Path.GetFileName(folder);
+					if (sDirName != null && !reMaldiSpotFolder.IsMatch(sDirName, 0))
 					{
-						mRetData.EvalMsg = "Dataset folder contains multiple subfolders, but folder " + sDirName + " does not match the expected pattern (" + reMaldiSpotFolder.ToString() + "); see " + datasetFolderPath;
+						mRetData.EvalMsg = "Dataset folder contains multiple subfolders, but folder " + sDirName + " does not match the expected pattern (" + reMaldiSpotFolder + "); see " + datasetFolderPath;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 						return EnumCloseOutType.CLOSEOUT_FAILED;
 					}
-
 				}
 			}
 
@@ -1316,8 +1300,6 @@ namespace DatasetIntegrityPlugin
 
 		private EnumCloseOutType TestIMSAgilentTOF(string dataFileNamePath)
 		{
-			float dataFileSizeKB;
-
 			// Verify file exists in storage folder
 			if (!File.Exists(dataFileNamePath))
 			{
@@ -1327,7 +1309,7 @@ namespace DatasetIntegrityPlugin
 			}
 
 			// Get size of data file
-			dataFileSizeKB = GetFileSize(dataFileNamePath);
+			float dataFileSizeKB = GetFileSize(dataFileNamePath);
 
 			// Check min size
 			if (dataFileSizeKB < UIMF_FILE_MIN_SIZE_KB)
@@ -1366,13 +1348,12 @@ namespace DatasetIntegrityPlugin
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Opening UIMF file to read pressure data");
 
 			// Open the file with the UIMFRader
-			UIMFLibrary.DataReader objUimfReader = new UIMFLibrary.DataReader(dataFileNamePath);
-			System.Collections.Generic.Dictionary<int, UIMFLibrary.DataReader.FrameType> dctMasterFrameList;
-			dctMasterFrameList = objUimfReader.GetMasterFrameList();
+			var objUimfReader = new DataReader(dataFileNamePath);
+			Dictionary<int, DataReader.FrameType> dctMasterFrameList = objUimfReader.GetMasterFrameList();
 
 			foreach (int iFrameNumber in dctMasterFrameList.Keys)
 			{
-				UIMFLibrary.FrameParameters oFrameParams = objUimfReader.GetFrameParameters(iFrameNumber);
+				FrameParameters oFrameParams = objUimfReader.GetFrameParameters(iFrameNumber);
 
 				bool bNPressureColumnsArePresent = (oFrameParams.QuadrupolePressure > 0 &&
 													oFrameParams.RearIonFunnelPressure > 0 &&
@@ -1430,8 +1411,8 @@ namespace DatasetIntegrityPlugin
 		/// <returns>File size in KB</returns>
 		private float GetFileSize(string fileNamePath)
 		{
-			FileInfo fi = new FileInfo(fileNamePath);
-			Single fileLengthKB = (float)fi.Length / (1024F);
+			var fi = new FileInfo(fileNamePath);
+			Single fileLengthKB = fi.Length / (1024F);
 			return fileLengthKB;
 		}
 
@@ -1443,38 +1424,42 @@ namespace DatasetIntegrityPlugin
 		{
 
 			string strToolVersionInfo = string.Empty;
-			System.IO.FileInfo ioAppFileInfo = new System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
-			bool bSuccess;
+			var ioAppFileInfo = new FileInfo(Assembly.GetExecutingAssembly().Location);
 
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
 
+			if (ioAppFileInfo.DirectoryName == null)
+				return false;
+
 			// Lookup the version of the Capture tool plugin
-			string strPluginPath = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "DatasetIntegrityPlugin.dll");
-			bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strPluginPath);
+			string strPluginPath = Path.Combine(ioAppFileInfo.DirectoryName, "DatasetIntegrityPlugin.dll");
+			bool bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strPluginPath);
 			if (!bSuccess)
 				return false;
 
 			// Lookup the version of the Capture tool plugin
-			string strSQLitePath = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "System.Data.SQLite.dll");
+			string strSQLitePath = Path.Combine(ioAppFileInfo.DirectoryName, "System.Data.SQLite.dll");
 			bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strSQLitePath);
 			if (!bSuccess)
 				return false;
 
 			// Lookup the version of the Capture tool plugin
-			string strUIMFLibraryPath = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "UIMFLibrary.dll");
+			string strUIMFLibraryPath = Path.Combine(ioAppFileInfo.DirectoryName, "UIMFLibrary.dll");
 			bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strUIMFLibraryPath);
 			if (!bSuccess)
 				return false;
 
 			// Store path to CaptureToolPlugin.dll in ioToolFiles
-			System.Collections.Generic.List<System.IO.FileInfo> ioToolFiles = new System.Collections.Generic.List<System.IO.FileInfo>();
-			ioToolFiles.Add(new System.IO.FileInfo(strPluginPath));
+			var ioToolFiles = new List<FileInfo>
+			{
+				new FileInfo(strPluginPath)
+			};
 
 			try
 			{
-				return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, false);
+				return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, false);
 			}
-			catch (System.Exception ex)
+			catch (Exception ex)
 			{
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
 				return false;
@@ -1491,9 +1476,10 @@ namespace DatasetIntegrityPlugin
 		{
 			try
 			{
-				CmdRunner.LoopWaiting += new clsRunDosProgram.LoopWaitingEventHandler(CmdRunner_LoopWaiting);
-				CmdRunner.Timeout += new clsRunDosProgram.TimeoutEventHandler(CmdRunner_Timeout);
+				CmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
+				CmdRunner.Timeout += CmdRunner_Timeout;
 			}
+			// ReSharper disable once EmptyGeneralCatchClause
 			catch
 			{
 				// Ignore errors here
@@ -1510,6 +1496,7 @@ namespace DatasetIntegrityPlugin
 					CmdRunner.Timeout -= CmdRunner_Timeout;
 				}
 			}
+			// ReSharper disable once EmptyGeneralCatchClause
 			catch
 			{
 				// Ignore errors here
@@ -1524,10 +1511,10 @@ namespace DatasetIntegrityPlugin
 		void CmdRunner_LoopWaiting()
 		{
 
-			if (System.DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalSeconds >= 300)
+			if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalSeconds >= 300)
 			{
-				mLastStatusUpdate = System.DateTime.UtcNow;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "AgilentToUIMFConverter running; " + System.DateTime.UtcNow.Subtract(mAgilentToUIMFStartTime).TotalMinutes + " minutes elapsed");
+				mLastStatusUpdate = DateTime.UtcNow;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "AgilentToUIMFConverter running; " + DateTime.UtcNow.Subtract(mAgilentToUIMFStartTime).TotalMinutes + " minutes elapsed");
 			}
 		}
 
