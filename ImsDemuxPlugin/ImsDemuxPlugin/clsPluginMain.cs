@@ -7,8 +7,6 @@
 // Last modified 03/07/2011
 //*********************************************************************************************************
 using System;
-using System.Collections.Generic;
-using System.Text;
 using CaptureTaskManager;
 using System.IO;
 using System.Data.SQLite;
@@ -47,13 +45,12 @@ namespace ImsDemuxPlugin
 
 		#region "Constructors"
 		public clsPluginMain()
-			: base()
 		{
 			mDemuxTools = new clsDemuxTools();
 
 			// Add a handler to catch progress events
-			mDemuxTools.DemuxProgress += new DelDemuxProgressHandler(clsDemuxTools_DemuxProgress);
-			mDemuxTools.BinCentricTableProgress += new DelDemuxProgressHandler(clsDemuxTools_BinCentricTableProgress);
+			mDemuxTools.DemuxProgress += clsDemuxTools_DemuxProgress;
+			mDemuxTools.BinCentricTableProgress += clsDemuxTools_BinCentricTableProgress;
 		}
 		#endregion
 
@@ -64,10 +61,7 @@ namespace ImsDemuxPlugin
 		/// <returns>Enum indicating success or failure</returns>
 		public override clsToolReturnData RunTool()
 		{
-			
-			string msg;
-
-			msg = "Starting ImsDemuxPlugin.clsPluginMain.RunTool()";
+			string msg = "Starting ImsDemuxPlugin.clsPluginMain.RunTool()";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 			// Perform base class operations, if any
@@ -75,8 +69,8 @@ namespace ImsDemuxPlugin
 			if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED) return retData;
 
 			// Initialize the config DB update interval
-			base.m_LastConfigDBUpdate = System.DateTime.UtcNow;
-			base.m_MinutesBetweenConfigDBUpdates = MANAGER_UPDATE_INTERVAL_MINUTES;
+			m_LastConfigDBUpdate = DateTime.UtcNow;
+			m_MinutesBetweenConfigDBUpdates = MANAGER_UPDATE_INTERVAL_MINUTES;
 
 			// Store the version info in the database
 			if (!StoreToolVersionInfo())
@@ -196,7 +190,7 @@ namespace ImsDemuxPlugin
 			// Query to determine if demux is needed. 
 			string uimfFileNamePath = Path.Combine(dsPath, uimfFileName);
 			bool bMultiplexed = true;
-			clsSQLiteTools oSQLiteTools = new clsSQLiteTools();
+			var oSQLiteTools = new clsSQLiteTools();
 
 			clsSQLiteTools.UimfQueryResults queryResult = oSQLiteTools.GetUimfMuxStatus(uimfFileNamePath);
 			if (queryResult == clsSQLiteTools.UimfQueryResults.NonMultiplexed)
@@ -234,7 +228,7 @@ namespace ImsDemuxPlugin
 							retData.CloseoutMsg = "Out of memory";
 					}
 
-					this.m_NeedToAbortProcessing = true;
+					m_NeedToAbortProcessing = true;
 				}
 
 			}
@@ -245,6 +239,7 @@ namespace ImsDemuxPlugin
 				// Demultiplexing succeeded (or skipped)
 
 				// Add the bin-centric tables if not yet present
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Adding bin-centric tables to the .uimf file");
 				retData = mDemuxTools.AddBinCentricTablesIfMissing(m_MgrParams, m_TaskParams, retData);
 				if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
 				{
@@ -286,15 +281,13 @@ namespace ImsDemuxPlugin
 			string sCalibrationLogPath = Path.Combine(dsPath, clsDemuxTools.CALIBRATION_LOG_FILE);
 			bool bCalibrationError = false;
 
-			if (System.IO.File.Exists(sCalibrationLogPath))
+			if (File.Exists(sCalibrationLogPath))
 			{
-				System.IO.StreamReader srInFile;
-				string sLine;
-				srInFile = new System.IO.StreamReader(new System.IO.FileStream(sCalibrationLogPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+				var srInFile = new StreamReader(new FileStream(sCalibrationLogPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
 				while (srInFile.Peek() >= 0)
 				{
-					sLine = srInFile.ReadLine();
+					string sLine = srInFile.ReadLine();
 
 					if (!string.IsNullOrEmpty(sLine) && sLine.Trim().Length > 0)
 					{
@@ -330,7 +323,7 @@ namespace ImsDemuxPlugin
 			if (oReader.TableExists("Log_Entries"))
 			{
 				string connectionString = "Data Source = " + decodedUimfFilePath + "; Version=3; DateTimeFormat=Ticks;";
-				using (SQLiteConnection cnUIMF = new SQLiteConnection(connectionString))
+				using (var cnUIMF = new SQLiteConnection(connectionString))
 				{
 					cnUIMF.Open();
 					SQLiteCommand cmdLogEntries = cnUIMF.CreateCommand();
@@ -361,7 +354,7 @@ namespace ImsDemuxPlugin
 				}
 			}
 
-			if (manuallyCalibrated && calibrationSlope == 0)
+			if (manuallyCalibrated && Math.Abs(calibrationSlope) < Double.Epsilon)
 			{
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Found message 'Manually applied calibration coefficients' but could not determine slope or intercept manually applied");
 				manuallyCalibrated = false;
@@ -383,15 +376,15 @@ namespace ImsDemuxPlugin
 			string sSourceFilePath = Path.Combine(sourceDirPath, fileName);
 			string sTargetFilePath = Path.Combine(sDatasetFolderPathRemote, fileName);
 
-            if (!System.IO.File.Exists(sSourceFilePath))
+            if (!File.Exists(sSourceFilePath))
             {
 				msg = "File not found: " + sSourceFilePath;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);                    
             }
             else
             {
-                int retryCount = 3;
-                if (!clsDemuxTools.CopyFileWithRetry(sSourceFilePath, sTargetFilePath, true, retryCount))
+	            const int retryCount = 3;
+	            if (!clsDemuxTools.CopyFileWithRetry(sSourceFilePath, sTargetFilePath, true, retryCount))
                 {
 					msg = "Error copying " + fileName + " to storage server";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
@@ -399,7 +392,7 @@ namespace ImsDemuxPlugin
                 }
             }
 
-            return bSuccess;
+			return bSuccess;
 
 		}
 
@@ -411,45 +404,48 @@ namespace ImsDemuxPlugin
 		{
 
 			string strToolVersionInfo = string.Empty;
-			string strDemultiplexerPath = string.Empty;
 
-			System.IO.FileInfo ioAppFileInfo = new System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
-			bool bSuccess;
+			var ioAppFileInfo = new FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
 
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
 
+			if (ioAppFileInfo.DirectoryName == null)
+				return false;
+
 			// Lookup the version of the UIMFDemultiplexer (in the Capture Task Manager folder)
-			string strUIMFDemultiplexerPath = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "UIMFDemultiplexer.dll");
-			bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strUIMFDemultiplexerPath);
+			string strUIMFDemultiplexerPath = Path.Combine(ioAppFileInfo.DirectoryName, "UIMFDemultiplexer.dll");
+			bool bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strUIMFDemultiplexerPath);
 			if (!bSuccess)
 				return false;
 
 			// Lookup the version of the IMSDemultiplexer
-			strDemultiplexerPath = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "IMSDemultiplexer.dll");
+			string strDemultiplexerPath = Path.Combine(ioAppFileInfo.DirectoryName, "IMSDemultiplexer.dll");
 			bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strDemultiplexerPath);
 			if (!bSuccess)
 				return false;
 
-			string strAutoCalibrateUIMFPath = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "AutoCalibrateUIMF.dll");
+			string strAutoCalibrateUIMFPath = Path.Combine(ioAppFileInfo.DirectoryName, "AutoCalibrateUIMF.dll");
 			bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strAutoCalibrateUIMFPath);
 			if (!bSuccess)
 				return false;
 
-			string strUIMFLibrary = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "UIMFLibrary.dll");
+			string strUIMFLibrary = Path.Combine(ioAppFileInfo.DirectoryName, "UIMFLibrary.dll");
 			bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strUIMFLibrary);
 			if (!bSuccess)
 				return false;
 
 			// Store path to the demultiplexer DLL in ioToolFiles
-			System.Collections.Generic.List<System.IO.FileInfo>ioToolFiles = new System.Collections.Generic.List<System.IO.FileInfo>();
-			ioToolFiles.Add(new System.IO.FileInfo(strDemultiplexerPath));
+			var ioToolFiles = new System.Collections.Generic.List<FileInfo>
+			{
+				new FileInfo(strDemultiplexerPath)
+			};
 
 			try
 			{
-				bool bSaveToolVersionTextFile = false;
-				return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, bSaveToolVersionTextFile);
+				const bool bSaveToolVersionTextFile = false;
+				return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, bSaveToolVersionTextFile);
 			}
-			catch (System.Exception ex)
+			catch (Exception ex)
 			{
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
 				return false;
@@ -471,7 +467,7 @@ namespace ImsDemuxPlugin
 			m_StatusTools.UpdateAndWrite(0 + newProgress * 0.90f);
 
 			// Update the manager settings every MANAGER_UPDATE_INTERVAL_MINUTESS
-			base.UpdateMgrSettings();
+			UpdateMgrSettings();
 		}
 
 
@@ -485,7 +481,7 @@ namespace ImsDemuxPlugin
 			m_StatusTools.UpdateAndWrite(90 + newProgress * 0.10f);
 
 			// Update the manager settings every MANAGER_UPDATE_INTERVAL_MINUTESS
-			base.UpdateMgrSettings();
+			UpdateMgrSettings();
 		}
 
 

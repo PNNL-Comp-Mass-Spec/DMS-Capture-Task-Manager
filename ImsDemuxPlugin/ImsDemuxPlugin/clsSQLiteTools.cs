@@ -7,8 +7,6 @@
 // Last modified 03/07/2011
 //*********************************************************************************************************
 using System;
-using System.Collections.Generic;
-using System.Text;
 using CaptureTaskManager;
 using System.Data.SQLite;
 using System.Data;
@@ -43,7 +41,7 @@ namespace ImsDemuxPlugin
 			public UimfQueryResults GetUimfMuxStatus(string uimfFileNamePath)
 			{
 				string connStr = "data source=" + uimfFileNamePath;
-				string sqlStr = DEF_QUERY_STRING;
+				const string sqlStr = DEF_QUERY_STRING;
 
 				// Get a data table containing the multiplexing information for the UIMF file
 				DataTable queryResult = GetDataTable(sqlStr, connStr);
@@ -54,7 +52,7 @@ namespace ImsDemuxPlugin
 				// If empty table returned, there was an error
 				if (queryResult.Rows.Count < 1)
 				{
-                    string msg = "No rows retrieved when querying UIMF file with " + sqlStr;
+                    const string msg = "No rows retrieved when querying UIMF file with " + sqlStr;
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 					return UimfQueryResults.Error;
 				}
@@ -63,20 +61,17 @@ namespace ImsDemuxPlugin
 				bool deMuxRequired = false;
 				foreach (DataRow currRow in queryResult.Rows)
 				{
-					string testStr = "";
 					object tmpObj = currRow[queryResult.Columns[0]];
 					if (tmpObj == DBNull.Value)
 					{
 						// Null field means demux not required
 						continue;
 					}
-					else
-					{
-						testStr = (string)tmpObj;
+					
+					var testStr = (string)tmpObj;
 
-						// Empty string means demux not required
-						if (testStr == "") continue;
-					}
+					// Empty string means demux not required
+					if (String.IsNullOrEmpty(testStr)) continue;
 
 					// Get the file name, and check to see if it contains "bit"
 					string fileName = System.IO.Path.GetFileName(testStr).ToLower();
@@ -94,7 +89,8 @@ namespace ImsDemuxPlugin
 				{
 					return UimfQueryResults.Multiplexed;
 				}
-				else return UimfQueryResults.NonMultiplexed;
+				
+				return UimfQueryResults.NonMultiplexed;
 			}	// End sub
 
 			/// <summary>
@@ -105,20 +101,19 @@ namespace ImsDemuxPlugin
 			/// <returns>Table containg query results</returns>
 			private DataTable GetDataTable(string cmdStr, string connStr)
 			{
-				DataTable retTable = new DataTable();
-				int filledRows = 0;
+				var retTable = new DataTable();
 
-				using (SQLiteConnection cn = new SQLiteConnection(connStr))
+				using (var cn = new SQLiteConnection(connStr))
 				{
-					using (SQLiteDataAdapter da = new SQLiteDataAdapter())
+					using (var da = new SQLiteDataAdapter())
 					{
-						using (SQLiteCommand cmd = new SQLiteCommand(cmdStr, cn))
+						using (var cmd = new SQLiteCommand(cmdStr, cn))
 						{
 							cmd.CommandType = CommandType.Text;
 							da.SelectCommand = cmd;
 							try
 							{
-								filledRows = da.Fill(retTable);
+								da.Fill(retTable);
 							}
 							catch (Exception ex)
 							{
