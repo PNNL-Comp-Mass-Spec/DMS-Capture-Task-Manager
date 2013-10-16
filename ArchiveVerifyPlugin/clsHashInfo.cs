@@ -43,9 +43,9 @@ namespace ArchiveVerifyPlugin
 
 		public clsHashInfo(string hashCode, string myEmslFileID)
 		{
-			this.Clear();
-			this.HashCode = hashCode;
-			this.MyEMSLFileID = myEmslFileID;
+			Clear();
+			HashCode = hashCode;
+			MyEMSLFileID = myEmslFileID;
 		}
 
 		public void Clear()
@@ -56,8 +56,8 @@ namespace ArchiveVerifyPlugin
 
 		public bool IsMatch(clsHashInfo comparisonValue)
 		{
-			if (string.Equals(this.HashCode, comparisonValue.HashCode) &&
-				string.Equals(this.MyEMSLFileID, comparisonValue.MyEMSLFileID))
+			if (string.Equals(HashCode, comparisonValue.HashCode) &&
+				string.Equals(MyEMSLFileID, comparisonValue.MyEMSLFileID))
 				return true;
 			else
 				return false;
