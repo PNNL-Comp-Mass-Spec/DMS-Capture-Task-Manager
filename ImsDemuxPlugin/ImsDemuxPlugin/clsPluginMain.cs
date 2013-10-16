@@ -41,6 +41,7 @@ namespace ImsDemuxPlugin
 
 		#region "Module variables"
 		protected clsDemuxTools mDemuxTools;
+		protected bool mDemultiplexingPerformed;
 		#endregion
 
 		#region "Constructors"
@@ -189,7 +190,8 @@ namespace ImsDemuxPlugin
 
 			// Query to determine if demux is needed. 
 			string uimfFileNamePath = Path.Combine(dsPath, uimfFileName);
-			bool bMultiplexed = true;
+			bool mDemultiplexingPerformed = true;
+
 			var oSQLiteTools = new clsSQLiteTools();
 
 			clsSQLiteTools.UimfQueryResults queryResult = oSQLiteTools.GetUimfMuxStatus(uimfFileNamePath);
@@ -199,7 +201,7 @@ namespace ImsDemuxPlugin
 				msg = "No de-multiplexing required for dataset " + m_Dataset;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 				retData.EvalMsg = "Non-Multiplexed";
-				bMultiplexed = false;
+				mDemultiplexingPerformed = false;
 			}
 			else if (queryResult == clsSQLiteTools.UimfQueryResults.Error)
 			{
@@ -214,7 +216,7 @@ namespace ImsDemuxPlugin
 				return retData;
 			}
 
-			if (bMultiplexed)
+			if (mDemultiplexingPerformed)
 			{
 				// De-multiplexing is needed
 				retData = mDemuxTools.PerformDemux(m_MgrParams, m_TaskParams, uimfFileName);
@@ -230,17 +232,38 @@ namespace ImsDemuxPlugin
 
 					m_NeedToAbortProcessing = true;
 				}
-
-			}
-
+			}			
 
 			if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
 			{
 				// Demultiplexing succeeded (or skipped)
 
+				// Lookup the current .uimf file size
+				var fiUIMF = new FileInfo(uimfFileNamePath);
+				if (!fiUIMF.Exists)
+				{
+					msg = "UIMF File not found: " + uimfFileNamePath;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+					retData.CloseoutMsg = msg;
+					retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+					return retData;
+				}
+
+				var fileSizeGBStart = fiUIMF.Length / 1024.0 / 1024.0 / 1024.0;
+
 				// Add the bin-centric tables if not yet present
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Adding bin-centric tables to the .uimf file");
 				retData = mDemuxTools.AddBinCentricTablesIfMissing(m_MgrParams, m_TaskParams, retData);
+
+				fiUIMF.Refresh();
+				var fileSizeGBEnd = fiUIMF.Length / 1024.0 / 1024.0 / 1024.0;
+				var sizeIncrease = fileSizeGBEnd - fileSizeGBStart;
+				double percentIncrease = 0;
+				if (fileSizeGBStart > 0)
+					percentIncrease = sizeIncrease / fileSizeGBStart * 100;
+
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "UIMF file grew by " + sizeIncrease.ToString("0.0") + " GB; now " + fileSizeGBEnd.ToString("0") + " GB; " + percentIncrease.ToString("0" + "% increase"));
+
 				if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
 				{
 
@@ -477,8 +500,17 @@ namespace ImsDemuxPlugin
 		/// <param name="newProgress">Current progress (value between 0 and 100)</param>
 		void clsDemuxTools_BinCentricTableProgress(float newProgress)
 		{
-			// Multipling by 0.1 since we're assuming that demultiplexing will take 90% of the time while addition of bin-centric tables will take 10% of the time
-			m_StatusTools.UpdateAndWrite(90 + newProgress * 0.10f);
+			float progressOverall;
+
+			if (mDemultiplexingPerformed)
+			{			
+				// Multipling by 0.1 since we're assuming that demultiplexing will take 90% of the time while addition of bin-centric tables will take 10% of the time
+				progressOverall = 90 + newProgress * 0.10f;
+			}
+			else
+				 progressOverall = newProgress;
+
+			m_StatusTools.UpdateAndWrite(progressOverall);
 
 			// Update the manager settings every MANAGER_UPDATE_INTERVAL_MINUTESS
 			UpdateMgrSettings();
