@@ -261,7 +261,7 @@ namespace ImsDemuxPlugin
 				if (fileSizeGBStart > 0)
 					foldIncrease = fileSizeGBEnd / fileSizeGBStart;
 
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "UIMF file size increased from " + fileSizeGBStart.ToString("0.0") + " GB to " + fileSizeGBEnd.ToString("0.0") + " GB, a " + foldIncrease.ToString("0.0" + " fold increase"));
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "UIMF file size increased from " + fileSizeGBStart.ToString("0.00") + " GB to " + fileSizeGBEnd.ToString("0.00") + " GB, a " + foldIncrease.ToString("0.0" + " fold increase"));
 
 				if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
 				{
