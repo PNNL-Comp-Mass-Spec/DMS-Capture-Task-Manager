@@ -257,12 +257,11 @@ namespace ImsDemuxPlugin
 
 				fiUIMF.Refresh();
 				var fileSizeGBEnd = fiUIMF.Length / 1024.0 / 1024.0 / 1024.0;
-				var sizeIncrease = fileSizeGBEnd - fileSizeGBStart;
 				double foldIncrease = 0;
 				if (fileSizeGBStart > 0)
 					foldIncrease = fileSizeGBEnd / fileSizeGBStart;
 
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "UIMF file grew by " + sizeIncrease.ToString("0.0") + " GB; now " + fileSizeGBEnd.ToString("0") + " GB; " + foldIncrease.ToString("0.0" + " fold increase"));
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "UIMF file size increased from " + fileSizeGBStart.ToString("0.0") + " GB to " + fileSizeGBEnd.ToString("0.0") + " GB, a " + foldIncrease.ToString("0.0" + " fold increase"));
 
 				if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
 				{
