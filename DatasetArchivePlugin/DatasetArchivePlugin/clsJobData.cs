@@ -18,23 +18,23 @@ namespace DatasetArchivePlugin
 		//**********************************************************************************************************
 
 		#region "Class variables"
-		string m_SvrFileToUpdate = string.Empty;		// File, including path on storage server, needing copied
+		string m_SvrFileToUpdate = string.Empty;	// File, including path on storage server, needing copied
 		string m_SambaFileToUpdate = string.Empty;	// File, including path, in archive (for rename operation)
-		bool m_RenameFlag = false;			// Flag specifying if there's alread a file in the archive that needs renamed
-		string m_SvrDSNamePath = null;		// Full path to dataset on storage server
-		bool m_CopySuccess = false;			// Set to true once the file is successfully copied to the archive
+		string m_SvrDSNamePath ;					// Full path to dataset on storage server
+
+		public clsJobData()
+		{
+			CopySuccess = false;
+		}
+
 		#endregion
 
 		#region "Properties"
 
 		/// <summary>
-		/// True if the file is successfully copied to the archive
+		/// True if the file has been successfully copied to the archive
 		/// </summary>
-		public bool CopySuccess
-		{
-			get { return m_CopySuccess; }
-			set { m_CopySuccess = value; }
-		}
+		public bool CopySuccess { get; set; }
 
 		/// <summary>
 		/// Full file name and path of file on storage server
@@ -55,13 +55,9 @@ namespace DatasetArchivePlugin
 		}
 
 		/// <summary>
-		/// Flag to determine if renaming file in archive is necessary
+		/// Flag specifying if there's already a file in the archive that needs renamed
 		/// </summary>
-		public bool RenameFlag
-		{
-			get { return m_RenameFlag; }
-			set { m_RenameFlag = value; }
-		}
+		public bool RenameFlag { get; set; }
 
 		/// <summary>
 		/// Dataset name and path on storage server

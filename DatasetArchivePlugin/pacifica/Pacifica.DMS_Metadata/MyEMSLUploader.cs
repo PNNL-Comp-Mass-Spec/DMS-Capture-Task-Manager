@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using Pacifica.Core;
 
 namespace Pacifica.DMS_Metadata
@@ -42,13 +40,13 @@ namespace Pacifica.DMS_Metadata
 			if (string.IsNullOrEmpty(jobNumber))
 				throw new ArgumentNullException("Job parameters do not have Job defined; unable to continue");
 
-			this.myEMSLUpload = new Upload(transferFolderPath, jobNumber);
+			myEMSLUpload = new Upload(transferFolderPath, jobNumber);
 
 			// Attach the events			
-			this.myEMSLUpload.DebugEvent +=new MessageEventHandler(myEMSLUpload_DebugEvent);
-			this.myEMSLUpload.ErrorEvent +=new MessageEventHandler(myEMSLUpload_ErrorEvent);
-			this.myEMSLUpload.StatusUpdate +=new StatusUpdateEventHandler(myEMSLUpload_StatusUpdate);
-			this.myEMSLUpload.UploadCompleted +=new UploadCompletedEventHandler(myEMSLUpload_UploadCompleted);
+			myEMSLUpload.DebugEvent += myEMSLUpload_DebugEvent;
+			myEMSLUpload.ErrorEvent += myEMSLUpload_ErrorEvent;
+			myEMSLUpload.StatusUpdate += myEMSLUpload_StatusUpdate;
+			myEMSLUpload.UploadCompleted += myEMSLUpload_UploadCompleted;
 
 		}
 
@@ -86,24 +84,22 @@ namespace Pacifica.DMS_Metadata
 		public void StartUpload(out string statusURL)
 		{
 
-			statusURL = string.Empty;
-
 			// Instantiate the metadata object
-			this._mdContainer = new DMSMetadataObject();
-			this._mdContainer.ProgressEvent += new DMSMetadataObject.ProgressEventHandler(_mdContainer_ProgressEvent);
+			_mdContainer = new DMSMetadataObject();
+			_mdContainer.ProgressEvent += _mdContainer_ProgressEvent;
 
 			// Look for files to upload, compute a Sha-1 hash for each, and compare those hashes to existing files in MyEMSL
-			this._mdContainer.SetupMetadata(m_TaskParams, m_MgrParams);
+			_mdContainer.SetupMetadata(m_TaskParams, m_MgrParams);
 
-			Pacifica.Core.Configuration.LocalTempDirectory = Utilities.GetDictionaryValue(m_MgrParams, "workdir", "");
-			this.FileCountUpdated = this._mdContainer.TotalFileCountUpdated;
-			this.FileCountNew = this._mdContainer.TotalFileCountNew;
-			this.Bytes = this._mdContainer.TotalFileSizeToUpload;
+			Configuration.LocalTempDirectory = Utilities.GetDictionaryValue(m_MgrParams, "workdir", "");
+			FileCountUpdated = _mdContainer.TotalFileCountUpdated;
+			FileCountNew = _mdContainer.TotalFileCountNew;
+			Bytes = _mdContainer.TotalFileSizeToUpload;
 
-			this.myEMSLUpload.StartUpload(this._mdContainer.MetadataObject, out statusURL);
+			myEMSLUpload.StartUpload(_mdContainer.MetadataObject, out statusURL);			
 
 			if (!string.IsNullOrEmpty(statusURL))
-				this.StatusURI = statusURL + "/xml";
+				StatusURI = statusURL + "/xml";
 		}
 
 		#region "Events and Event Handlers"

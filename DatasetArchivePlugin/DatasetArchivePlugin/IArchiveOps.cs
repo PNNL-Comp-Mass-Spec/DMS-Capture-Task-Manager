@@ -7,10 +7,6 @@
 //
 // Last modified 10/19/2009
 //*********************************************************************************************************
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace DatasetArchivePlugin
 {

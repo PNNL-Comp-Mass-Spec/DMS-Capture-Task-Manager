@@ -8,10 +8,12 @@
 // Last modified 10/20/2009
 //*********************************************************************************************************
 using System;
+using System.Threading;
 using CaptureTaskManager;
+using Pacifica.Core;
+using Pacifica.DMS_Metadata;
 using PRISM.Files;
 using MD5StageFileCreator;
-using System.Collections.Generic;
 using System.IO;
 
 namespace DatasetArchivePlugin
@@ -36,11 +38,17 @@ namespace DatasetArchivePlugin
 		protected string m_ErrMsg = string.Empty;
 		protected string m_WarningMsg = string.Empty;
 		protected string m_DSNamePath;
-		
+
+#if !DartFTPMissing
 		[Obsolete("No longer needed since using MyEMSL")]
 		protected string m_ArchiveNamePath;
+#endif
+
 		protected string m_Msg;
+
+#if !DartFTPMissing
 		protected clsFtpOperations m_FtpTools;
+#endif
 
 		protected bool m_MyEmslUploadSuccess;
 
@@ -55,11 +63,11 @@ namespace DatasetArchivePlugin
 		protected string m_ArchiveOrUpdate;
 		protected string m_DatasetName = string.Empty;
 
-		protected System.DateTime mLastStatusUpdateTime = System.DateTime.UtcNow;
-		protected System.DateTime mLastProgressUpdateTime = System.DateTime.UtcNow;
+		protected DateTime mLastStatusUpdateTime = DateTime.UtcNow;
+		protected DateTime mLastProgressUpdateTime = DateTime.UtcNow;
 
 		protected string mMostRecentLogMessage = string.Empty;
-		protected System.DateTime mMostRecentLogTime = System.DateTime.UtcNow;
+		protected DateTime mMostRecentLogTime = DateTime.UtcNow;
 
 		protected clsMD5StageFileCreator mMD5StageFileCreator;
 		protected clsFileTools m_FileTools;
@@ -97,8 +105,6 @@ namespace DatasetArchivePlugin
 			m_FtpPassive = bool.Parse(m_MgrParams.GetParam("passive"));
 			m_FtpRestart = bool.Parse(m_MgrParams.GetParam("restart"));
 
-			
-
 			if (m_TaskParams.GetParam("StepTool") == "DatasetArchive")
 			{
 				m_ArchiveOrUpdate = ARCHIVE;
@@ -109,7 +115,7 @@ namespace DatasetArchivePlugin
 			}
 
 			// Instantiate m_FileTools
-			m_FileTools = new PRISM.Files.clsFileTools(m_MgrParams.GetParam("MgrName", "CaptureTaskManager"), 1);
+			m_FileTools = new clsFileTools(m_MgrParams.GetParam("MgrName", "CaptureTaskManager"), 1);
 
 		}	// End sub
 		#endregion
@@ -135,7 +141,7 @@ namespace DatasetArchivePlugin
 			*/
 
 			return true;
-			
+
 		}
 
 		/// <summary>
@@ -147,8 +153,10 @@ namespace DatasetArchivePlugin
 		{
 			m_DatasetName = m_TaskParams.GetParam("Dataset");
 
+#if !DartFTPMissing
 			string instrumentName = m_TaskParams.GetParam("Instrument_Name");
 			bool onlyUseMyEMSL = OnlyUseMyEMSL(instrumentName);
+#endif
 
 			// Set client/server perspective & setup paths
 			string baseStoragePath;
@@ -164,8 +172,10 @@ namespace DatasetArchivePlugin
 			//Path to dataset on storage server
 			m_DSNamePath = Path.Combine(Path.Combine(baseStoragePath, m_TaskParams.GetParam("Storage_Path")), m_TaskParams.GetParam("Folder"));
 
+#if !DartFTPMissing
 			//Path to dataset for FTP operations
-			m_ArchiveNamePath = clsFileTools.CheckTerminator(m_TaskParams.GetParam("Archive_Path"), true, "/") + m_TaskParams.GetParam("Folder");		
+			m_ArchiveNamePath = clsFileTools.CheckTerminator(m_TaskParams.GetParam("Archive_Path"), true, "/") + m_TaskParams.GetParam("Folder");
+#endif
 
 			//Verify dataset is in specified location
 			if (!VerifyDSPresent(m_DSNamePath))
@@ -177,11 +187,13 @@ namespace DatasetArchivePlugin
 				return false;
 			}
 
+#if !DartFTPMissing
 			if (!onlyUseMyEMSL)
 			{
 				// Initialize the MD5 stage file creator
 				InitializeMD5StageFileCreator();
 			}
+#endif
 
 			// Got to here, everything's OK, so let let the derived class take over
 			return true;
@@ -216,7 +228,7 @@ namespace DatasetArchivePlugin
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_ErrMsg);
 				return false;
 			}
-			
+
 			while (!bSuccess && iAttempts < maxAttempts)
 			{
 				iAttempts += 1;
@@ -225,7 +237,7 @@ namespace DatasetArchivePlugin
 				if (!bSuccess && iAttempts < maxAttempts)
 				{
 					// Wait 5 seconds, then retry
-					System.Threading.Thread.Sleep(5000);
+					Thread.Sleep(5000);
 				}
 			}
 
@@ -245,31 +257,31 @@ namespace DatasetArchivePlugin
 		protected bool UploadToMyEMSL(bool recurse)
 		{
 			bool success;
-			System.DateTime dtStartTime = System.DateTime.UtcNow;
-			Pacifica.DMS_Metadata.MyEMSLUploader myEMSLUL = null;
+			DateTime dtStartTime = DateTime.UtcNow;
+			MyEMSLUploader myEMSLUL = null;
 
 			try
 			{
 				m_Msg = "Bundling changes to dataset " + m_DatasetName + " for transmission to MyEMSL";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
 
-				myEMSLUL = new Pacifica.DMS_Metadata.MyEMSLUploader(m_MgrParams.TaskDictionary, m_TaskParams.TaskDictionary);
+				myEMSLUL = new MyEMSLUploader(m_MgrParams.TaskDictionary, m_TaskParams.TaskDictionary);
 
 				// Attach the events
 
-				myEMSLUL.DebugEvent += new Pacifica.Core.DebugEventHandler(myEMSLUL_DebugEvent);
-				myEMSLUL.ErrorEvent += new Pacifica.Core.DebugEventHandler(myEMSLUL_ErrorEvent);
-				myEMSLUL.StatusUpdate += new Pacifica.Core.StatusUpdateEventHandler(myEMSLUL_StatusUpdate);
-				myEMSLUL.UploadCompleted += new Pacifica.Core.UploadCompletedEventHandler(myEMSLUL_UploadCompleted);
+				myEMSLUL.DebugEvent += myEMSLUL_DebugEvent;
+				myEMSLUL.ErrorEvent += myEMSLUL_ErrorEvent;
+				myEMSLUL.StatusUpdate += myEMSLUL_StatusUpdate;
+				myEMSLUL.UploadCompleted += myEMSLUL_UploadCompleted;
 
-				m_TaskParams.AddAdditionalParameter(Pacifica.DMS_Metadata.MyEMSLUploader.RECURSIVE_UPLOAD, recurse.ToString());
+				m_TaskParams.AddAdditionalParameter(MyEMSLUploader.RECURSIVE_UPLOAD, recurse.ToString());
 
 				string statusURL;
 
 				// Start the upload
 				myEMSLUL.StartUpload(out statusURL);
 
-				var tsElapsedTime = System.DateTime.UtcNow.Subtract(dtStartTime);
+				var tsElapsedTime = DateTime.UtcNow.Subtract(dtStartTime);
 
 				m_Msg = "Upload of " + m_DatasetName + " completed in " + tsElapsedTime.TotalSeconds.ToString("0.0") + " seconds: " + myEMSLUL.FileCountNew + " new files, " + myEMSLUL.FileCountUpdated + " updated files, " + myEMSLUL.Bytes + " bytes";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
@@ -279,7 +291,7 @@ namespace DatasetArchivePlugin
 
 				// Raise an event with the stats
 				// This will cause clsPluginMain to call StoreMyEMSLUploadStats to store the results in the database (stored procedure StoreMyEMSLUploadStats)
-				MyEMSLUploadEventArgs e = new MyEMSLUploadEventArgs(myEMSLUL.FileCountNew, myEMSLUL.FileCountUpdated, myEMSLUL.Bytes, tsElapsedTime.TotalSeconds, statusURL, iErrorCode: 0);
+				var e = new MyEMSLUploadEventArgs(myEMSLUL.FileCountNew, myEMSLUL.FileCountUpdated, myEMSLUL.Bytes, tsElapsedTime.TotalSeconds, statusURL, iErrorCode: 0);
 				OnMyEMSLUploadComplete(e);
 
 				m_StatusTools.UpdateAndWrite(100);
@@ -299,7 +311,7 @@ namespace DatasetArchivePlugin
 				if (errorCode == 0)
 					errorCode = 1;
 
-				var tsElapsedTime = System.DateTime.UtcNow.Subtract(dtStartTime);
+				var tsElapsedTime = DateTime.UtcNow.Subtract(dtStartTime);
 
 				MyEMSLUploadEventArgs e;
 				if (myEMSLUL == null)
@@ -330,31 +342,26 @@ namespace DatasetArchivePlugin
 		/// <summary>
 		/// Verifies specified dataset is present
 		/// </summary>
-		/// <param name="DSNamePath">Fully qualified path to dataset folder</param>
+		/// <param name="dsNamePath">Fully qualified path to dataset folder</param>
 		/// <returns>TRUE if dataset folder is present; otherwise FALSE</returns>
 		protected bool VerifyDSPresent(string dsNamePath)
 		{
 			//Verifies specified dataset is present
-			if (Directory.Exists(dsNamePath))
-			{
-				return true;
-			}
-			else
-			{
-				return false;
-			}
+			return Directory.Exists(dsNamePath);
+
 		}	// End sub
 
 		/// <summary>
 		/// Writes a database log entry for a failed archive operation
 		/// </summary>
-		/// <param name="DSName">Name of dataset</param>
+		/// <param name="dsName">Name of dataset</param>
 		protected void LogOperationFailed(string dsName)
 		{
 			string msg = m_ArchiveOrUpdate + "failed, dataset " + dsName;
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 		}	// End sub
 
+#if !DartFTPMissing
 		/// <summary>
 		/// Opens the archive server connection
 		/// </summary>
@@ -438,6 +445,7 @@ namespace DatasetArchivePlugin
 				return false;
 			}
 		}	// End sub
+#endif
 
 		/// <summary>
 		/// Determine the total size of all files in the specified folder (including subdirectories)
@@ -446,7 +454,7 @@ namespace DatasetArchivePlugin
 		/// <returns>Total size, in GB</returns>
 		protected float ComputeFolderSizeGB(string sourceFolderPath)
 		{
-			DirectoryInfo diSourceFolder = new DirectoryInfo(sourceFolderPath);
+			var diSourceFolder = new DirectoryInfo(sourceFolderPath);
 
 			string msg = "Determing the total size of " + sourceFolderPath;
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
@@ -472,6 +480,7 @@ namespace DatasetArchivePlugin
 
 		}
 
+#if !DartFTPMissing
 		/// <summary>
 		/// General method for copying a folder to the archive
 		/// </summary>
@@ -756,6 +765,7 @@ namespace DatasetArchivePlugin
 			return bSuccess;
 
 		}
+#endif
 
 		#endregion
 
@@ -769,32 +779,32 @@ namespace DatasetArchivePlugin
 
 		void LogStatusMessageSkipDuplicate(string message)
 		{
-			if (string.Compare(message, mMostRecentLogMessage) != 0 || System.DateTime.UtcNow.Subtract(mMostRecentLogTime).TotalSeconds >= 60)
+			if (String.Equals(message, mMostRecentLogMessage) || DateTime.UtcNow.Subtract(mMostRecentLogTime).TotalSeconds >= 60)
 			{
 				mMostRecentLogMessage = string.Copy(message);
-				mMostRecentLogTime = System.DateTime.UtcNow;
+				mMostRecentLogTime = DateTime.UtcNow;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, message);
 			}
 		}
 
-		void myEMSLUL_DebugEvent(object sender, Pacifica.Core.MessageEventArgs e)
+		void myEMSLUL_DebugEvent(object sender, MessageEventArgs e)
 		{
 			string msg = "  ... " + e.CallingFunction + ": " + e.Message;
 			LogStatusMessageSkipDuplicate(msg);
 		}
 
-		void myEMSLUL_ErrorEvent(object sender, Pacifica.Core.MessageEventArgs e)
+		void myEMSLUL_ErrorEvent(object sender, MessageEventArgs e)
 		{
 			string msg = "MyEmslUpload error in function " + e.CallingFunction + ": " + e.Message;
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 		}
 
-		void myEMSLUL_StatusUpdate(object sender, Pacifica.Core.StatusEventArgs e)
+		void myEMSLUL_StatusUpdate(object sender, StatusEventArgs e)
 		{
 
-			if (System.DateTime.UtcNow.Subtract(mLastStatusUpdateTime).TotalSeconds >= 60 && e.PercentCompleted > 0)
+			if (DateTime.UtcNow.Subtract(mLastStatusUpdateTime).TotalSeconds >= 60 && e.PercentCompleted > 0)
 			{
-				mLastStatusUpdateTime = System.DateTime.UtcNow;
+				mLastStatusUpdateTime = DateTime.UtcNow;
 				string msg = "  ... uploading, " + e.PercentCompleted.ToString("0.0") + "% complete for " + (e.TotalBytesToSend / 1024.0).ToString("#,##0") + " KB";
 				if (!(string.IsNullOrEmpty(e.StatusMessage)))
 					msg += "; " + e.StatusMessage;
@@ -803,18 +813,18 @@ namespace DatasetArchivePlugin
 			}
 
 
-			if (System.DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds >= 3 && e.PercentCompleted > 0)
+			if (DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds >= 3 && e.PercentCompleted > 0)
 			{
-				mLastProgressUpdateTime = System.DateTime.UtcNow;
+				mLastProgressUpdateTime = DateTime.UtcNow;
 				m_StatusTools.UpdateAndWrite((float)e.PercentCompleted);
-			}			
-			
+			}
+
 		}
 
-		void myEMSLUL_UploadCompleted(object sender, Pacifica.Core.UploadCompletedEventArgs e)
+		void myEMSLUL_UploadCompleted(object sender, UploadCompletedEventArgs e)
 		{
 			string msg = "  ... MyEmsl upload task complete";
-			
+
 			// Note that e.ServerResponse will simply have the StatusURL if the upload succeeded
 			// If a problem occurred, then e.ServerResponse will either have the full server reponse, or may even be blank
 			if (string.IsNullOrEmpty(e.ServerResponse))
@@ -835,6 +845,7 @@ namespace DatasetArchivePlugin
 
 		#region "MD5StageFileCreator initialization and event handlers"
 
+#if !DartFTPMissing
 		[Obsolete("No longer needed since using MyEMSL")]
 		private void InitializeMD5StageFileCreator()
 		{
@@ -867,6 +878,7 @@ namespace DatasetArchivePlugin
 		{
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, sMessage);
 		}
+#endif
 
 		#endregion
 

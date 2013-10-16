@@ -9,17 +9,12 @@
 //						07/14/2010 (DAC) - Modified to use rolling log via Log4Net
 //*********************************************************************************************************
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
 #if !DartFTPMissing
 	using Dart.PowerTCP.Ftp;
 #endif
+using System.Text.RegularExpressions;
 using PRISM.Files;
 using CaptureTaskManager;
-using System.CodeDom;
-using System.Windows.Forms;
 using System.Collections.Specialized;
 
 namespace DatasetArchivePlugin
@@ -897,7 +892,7 @@ namespace DatasetArchivePlugin
 			private string StripPwd(string inpStr)
 			{
 				//Replaces the password returned by the Dart FTP control error message with "xxxxx"
-				return System.Text.RegularExpressions.Regex.Replace(inpStr, "PASS \\w*", "PASS xxxxxxx");
+				return Regex.Replace(inpStr, "PASS \\w*", "PASS xxxxxxx");
 			}	// End sub
 
 			/// <summary>

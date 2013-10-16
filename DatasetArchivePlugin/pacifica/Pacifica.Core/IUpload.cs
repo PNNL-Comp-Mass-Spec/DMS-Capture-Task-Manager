@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Net;
 
 namespace Pacifica.Core
@@ -9,22 +8,24 @@ namespace Pacifica.Core
 		/// <summary>
 		/// Receives an dictionary object with appropriate name-value pairs of metadata information
 		/// </summary>
-		/// <param name="MetadataObject"></param>
+		/// <param name="metadataObject"></param>
+		/// <param name="statusURL"></param>
 		/// <remarks>Raises event with URL of status monitor page from server backend</remarks>
 		bool StartUpload(Dictionary<string, object> metadataObject, out string statusURL);
 
 		/// <summary>
 		/// Receives an dictionary object with appropriate name-value pairs of metadata information
 		/// </summary>
-		/// <param name="MetadataObject"></param>
-		/// <param name="LoginCredentials"></param>
+		/// <param name="metadataObject"></param>
+		/// <param name="loginCredentials"></param>
+		/// <param name="statusURL"></param>
 		/// <remarks>Raises event with URL of status monitor page from server backend</remarks>
 		bool StartUpload(Dictionary<string, object> metadataObject, NetworkCredential loginCredentials, out string statusURL);
 
 		/// <summary>
 		/// Generates a SHA-1 style hash of a given file
 		/// </summary>
-		/// <param name="FullFilePath">Path to the file</param>
+		/// <param name="fileName">Path to the file</param>
 		/// <returns>Returns Hex-encoded hash string</returns>
 		string GenerateSha1Hash(string fileName);
 

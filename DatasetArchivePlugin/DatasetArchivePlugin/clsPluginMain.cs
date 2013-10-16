@@ -9,6 +9,11 @@
 //						02/03/2010 (DAC) - Modified logging to include job number
 //*********************************************************************************************************
 using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using System.IO;
+using System.Reflection;
 using CaptureTaskManager;
 
 namespace DatasetArchivePlugin
@@ -31,7 +36,6 @@ namespace DatasetArchivePlugin
 
 		#region "Constructors"
 		public clsPluginMain()
-			: base()
 		{
 			// Does nothing at present
 		}	// End sub
@@ -44,13 +48,12 @@ namespace DatasetArchivePlugin
 		/// <returns>Enum indicating success or failure</returns>
 		public override clsToolReturnData RunTool()
 		{
-			string msg;
-			IArchiveOps archOpTool = null;
-			string archiveOpDescription = string.Empty;
+			IArchiveOps archOpTool;
+			string archiveOpDescription;
 			mSubmittedToMyEMSL = false;
 			mMyEMSLAlreadyUpToDate = false;
 
-			msg = "Starting DatasetArchivePlugin.clsPluginMain.RunTool()";
+			string msg = "Starting DatasetArchivePlugin.clsPluginMain.RunTool()";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 			// Perform base class operations, if any
@@ -66,23 +69,26 @@ namespace DatasetArchivePlugin
 				return retData;
 			}
 
+#if !DartFTPMissing
 			string instrumentName = m_TaskParams.GetParam("Instrument_Name");
-			bool onlyUseMyEMSL = clsOpsBase.OnlyUseMyEMSL(instrumentName);
+			onlyUseMyEMSL = clsOpsBase.OnlyUseMyEMSL(instrumentName);
 
 			if (onlyUseMyEMSL)
 			{
-				// Always use clsArchiveUpdate for both archiving new datasets and updating existing datasets
-				archOpTool = new clsArchiveUpdate(m_MgrParams, m_TaskParams, m_StatusTools);
+#endif
+			// Always use clsArchiveUpdate for both archiving new datasets and updating existing datasets
+			archOpTool = new clsArchiveUpdate(m_MgrParams, m_TaskParams, m_StatusTools);
 
-				if (m_TaskParams.GetParam("StepTool").ToLower() == "datasetarchive")
-				{
-					archiveOpDescription = "archive";
-				}
-				else
-				{
-					archiveOpDescription = "archive update";
-				}
+			if (m_TaskParams.GetParam("StepTool").ToLower() == "datasetarchive")
+			{
+				archiveOpDescription = "archive";
+			}
+			else
+			{
+				archiveOpDescription = "archive update";
+			}
 
+#if !DartFTPMissing
 			}
 			else
 			{
@@ -100,9 +106,10 @@ namespace DatasetArchivePlugin
 					archiveOpDescription = "archive update";
 				}
 			}
+#endif
 
 			// Attach the MyEMSL Upload event handler
-			archOpTool.MyEMSLUploadComplete += new MyEMSLUploadEventHandler(MyEMSLUploadCompleteHandler);
+			archOpTool.MyEMSLUploadComplete += MyEMSLUploadCompleteHandler;
 
 			msg = "Starting " + archiveOpDescription + ", job " + m_Job + ", dataset " + m_Dataset;
 
@@ -170,8 +177,7 @@ namespace DatasetArchivePlugin
 		protected bool StoreMyEMSLUploadStats(int fileCountNew, int fileCountUpdated, Int64 bytes, double uploadTimeSeconds, string statusURI, int errorCode)
 		{
 
-			bool Outcome = false;
-			int ResCode = 0;
+			bool Outcome;
 
 			mSubmittedToMyEMSL = true;
 			if (fileCountNew == 0 && fileCountUpdated == 0)
@@ -181,55 +187,55 @@ namespace DatasetArchivePlugin
 			{
 
 				//Setup for execution of the stored procedure
-				System.Data.SqlClient.SqlCommand MyCmd = new System.Data.SqlClient.SqlCommand();
+				var MyCmd = new SqlCommand();
 				{
-					MyCmd.CommandType = System.Data.CommandType.StoredProcedure;
+					MyCmd.CommandType = CommandType.StoredProcedure;
 					MyCmd.CommandText = SP_NAME_STORE_MYEMSL_STATS;
 
-					MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@Return", System.Data.SqlDbType.Int));
-					MyCmd.Parameters["@Return"].Direction = System.Data.ParameterDirection.ReturnValue;
+					MyCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int));
+					MyCmd.Parameters["@Return"].Direction = ParameterDirection.ReturnValue;
 
-					MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@Job", System.Data.SqlDbType.Int));
-					MyCmd.Parameters["@Job"].Direction = System.Data.ParameterDirection.Input;
+					MyCmd.Parameters.Add(new SqlParameter("@Job", SqlDbType.Int));
+					MyCmd.Parameters["@Job"].Direction = ParameterDirection.Input;
 					MyCmd.Parameters["@Job"].Value = Convert.ToInt32(m_TaskParams.GetParam("Job"));
 
-					MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@DatasetID", System.Data.SqlDbType.Int));
-					MyCmd.Parameters["@DatasetID"].Direction = System.Data.ParameterDirection.Input;
+					MyCmd.Parameters.Add(new SqlParameter("@DatasetID", SqlDbType.Int));
+					MyCmd.Parameters["@DatasetID"].Direction = ParameterDirection.Input;
 					MyCmd.Parameters["@DatasetID"].Value = Convert.ToInt32(m_TaskParams.GetParam("Dataset_ID"));
 
-					MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@Subfolder", System.Data.SqlDbType.VarChar, 128));
-					MyCmd.Parameters["@Subfolder"].Direction = System.Data.ParameterDirection.Input;
+					MyCmd.Parameters.Add(new SqlParameter("@Subfolder", SqlDbType.VarChar, 128));
+					MyCmd.Parameters["@Subfolder"].Direction = ParameterDirection.Input;
 					MyCmd.Parameters["@Subfolder"].Value = m_TaskParams.GetParam("OutputFolderName", string.Empty);
 
-					MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@FileCountNew", System.Data.SqlDbType.Int));
-					MyCmd.Parameters["@FileCountNew"].Direction = System.Data.ParameterDirection.Input;
+					MyCmd.Parameters.Add(new SqlParameter("@FileCountNew", SqlDbType.Int));
+					MyCmd.Parameters["@FileCountNew"].Direction = ParameterDirection.Input;
 					MyCmd.Parameters["@FileCountNew"].Value = fileCountNew;
 
-					MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@FileCountUpdated", System.Data.SqlDbType.Int));
-					MyCmd.Parameters["@FileCountUpdated"].Direction = System.Data.ParameterDirection.Input;
+					MyCmd.Parameters.Add(new SqlParameter("@FileCountUpdated", SqlDbType.Int));
+					MyCmd.Parameters["@FileCountUpdated"].Direction = ParameterDirection.Input;
 					MyCmd.Parameters["@FileCountUpdated"].Value = fileCountUpdated;
 
-					MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@Bytes", System.Data.SqlDbType.BigInt));
-					MyCmd.Parameters["@Bytes"].Direction = System.Data.ParameterDirection.Input;
+					MyCmd.Parameters.Add(new SqlParameter("@Bytes", SqlDbType.BigInt));
+					MyCmd.Parameters["@Bytes"].Direction = ParameterDirection.Input;
 					MyCmd.Parameters["@Bytes"].Value = bytes;
 
-					MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@UploadTimeSeconds", System.Data.SqlDbType.Real));
-					MyCmd.Parameters["@UploadTimeSeconds"].Direction = System.Data.ParameterDirection.Input;
+					MyCmd.Parameters.Add(new SqlParameter("@UploadTimeSeconds", SqlDbType.Real));
+					MyCmd.Parameters["@UploadTimeSeconds"].Direction = ParameterDirection.Input;
 					MyCmd.Parameters["@UploadTimeSeconds"].Value = (float)uploadTimeSeconds;
 
-					MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@StatusURI", System.Data.SqlDbType.VarChar, 255));
-					MyCmd.Parameters["@StatusURI"].Direction = System.Data.ParameterDirection.Input;
+					MyCmd.Parameters.Add(new SqlParameter("@StatusURI", SqlDbType.VarChar, 255));
+					MyCmd.Parameters["@StatusURI"].Direction = ParameterDirection.Input;
 					MyCmd.Parameters["@StatusURI"].Value = statusURI;
 
-					MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@ErrorCode", System.Data.SqlDbType.Int));
-					MyCmd.Parameters["@ErrorCode"].Direction = System.Data.ParameterDirection.Input;
+					MyCmd.Parameters.Add(new SqlParameter("@ErrorCode", SqlDbType.Int));
+					MyCmd.Parameters["@ErrorCode"].Direction = ParameterDirection.Input;
 					MyCmd.Parameters["@ErrorCode"].Value = errorCode;
 				}
 
 				string strConnStr = m_MgrParams.GetParam("connectionstring");
 
 				//Execute the SP (retry the call up to 4 times)
-				ResCode = base.ExecuteSP(MyCmd, strConnStr, 4);
+				int ResCode = ExecuteSP(MyCmd, strConnStr, 4);
 
 				if (ResCode == 0)
 				{
@@ -237,7 +243,7 @@ namespace DatasetArchivePlugin
 				}
 				else
 				{
-					string Msg = "Error " + ResCode.ToString() + " storing MyEMSL Upload Stats";
+					string Msg = "Error " + ResCode + " storing MyEMSL Upload Stats";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
 					Outcome = false;
 				}
@@ -261,32 +267,39 @@ namespace DatasetArchivePlugin
 		{
 
 			string strToolVersionInfo = string.Empty;
-			var ioAppFileInfo = new System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
-			bool bSuccess;
+			var ioAppFileInfo = new FileInfo(Assembly.GetExecutingAssembly().Location);
 
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
 
+			if (string.IsNullOrEmpty(ioAppFileInfo.DirectoryName))
+			{
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot determine the parent folder name of DLL " + Assembly.GetExecutingAssembly().FullName);
+				return false;
+			}
+
 			// Lookup the version of the Dataset Archive plugin
-			string strPluginPath = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "DatasetArchivePlugin.dll");
-			bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strPluginPath);
+			string strPluginPath = Path.Combine(ioAppFileInfo.DirectoryName, "DatasetArchivePlugin.dll");
+			bool bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strPluginPath);
 			if (!bSuccess)
 				return false;
 
 			// Lookup the version of the MyEMSLReader
-			string strMD5StageFileCreatorPath = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "MyEMSLReader.dll");
+			string strMD5StageFileCreatorPath = Path.Combine(ioAppFileInfo.DirectoryName, "MyEMSLReader.dll");
 			bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strMD5StageFileCreatorPath);
 			if (!bSuccess)
 				return false;
 
 			// Store path to DatasetArchivePlugin.dll in ioToolFiles
-			var ioToolFiles = new System.Collections.Generic.List<System.IO.FileInfo>();
-			ioToolFiles.Add(new System.IO.FileInfo(strPluginPath));
+			var ioToolFiles = new List<FileInfo>
+			{
+				new FileInfo(strPluginPath)
+			};
 
 			try
 			{
-				return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, false);
+				return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, false);
 			}
-			catch (System.Exception ex)
+			catch (Exception ex)
 			{
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
 				return false;

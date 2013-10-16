@@ -72,7 +72,6 @@
   <ItemGroup>
     <Compile Include="Auth.cs" />
     <Compile Include="EventArgs.cs" />
-    <Compile Include="Exceptions.cs" />
     <Compile Include="MyEMSLStatusCheck.cs" />
     <Compile Include="Schema\Action.cs" />
     <Compile Include="Configuration.cs" />

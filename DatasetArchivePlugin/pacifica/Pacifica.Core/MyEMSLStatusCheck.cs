@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Text;
+using System.Xml;
 
 namespace Pacifica.Core
 {
@@ -10,13 +8,13 @@ namespace Pacifica.Core
 	{
 		public enum StatusStep
 		{
-			Submitted=0,		// .tar file submitted
-			Received=1,			// .tar file received
-			Processing=2,		// .tar file being processed
-			Verified=3,			// .tar file contents validated
-			Stored=4,			// .tar file contents copied to Aurora
-			Available=5,		// Available in Elastic Search
-			Archived=6			// Sha-1 hash values of files in Aurora validated against expected hash values
+			Submitted = 0,		// .tar file submitted
+			Received = 1,		// .tar file received
+			Processing = 2,		// .tar file being processed
+			Verified = 3,		// .tar file contents validated
+			Stored = 4,			// .tar file contents copied to Aurora
+			Available = 5,		// Available in Elastic Search
+			Archived = 6		// Sha-1 hash values of files in Aurora validated against expected hash values
 		}
 
 		public string ErrorMessage
@@ -30,7 +28,7 @@ namespace Pacifica.Core
 		/// </summary>
 		public MyEMSLStatusCheck()
 		{
-			this.ErrorMessage = string.Empty;
+			ErrorMessage = string.Empty;
 		}
 
 		/// <summary>
@@ -38,20 +36,19 @@ namespace Pacifica.Core
 		/// </summary>
 		/// <param name="statusURI"></param>
 		/// <param name="stepNum"></param>
-		/// <param name="abortNow"></param>
+		/// <param name="accessDenied"></param>
 		/// <param name="statusMessage"></param>
 		/// <returns>True if step stepNum has completed</returns>
 		public bool IngestStepCompleted(string statusURI, StatusStep stepNum, out bool accessDenied, out string statusMessage)
 		{
-			bool success = false;
 			accessDenied = false;
 			statusMessage = string.Empty;
 
 			// Call the testauth service to obtain a cookie for this session
 			string authURL = Configuration.TestAuthUri;
-			Auth auth = new Auth(new Uri(authURL));
+			var auth = new Auth(new Uri(authURL));
 
-			CookieContainer cookieJar = null;
+			CookieContainer cookieJar;
 			if (!auth.GetAuthCookies(out cookieJar))
 			{
 				string msg = "Auto-login to " + Configuration.TestAuthUri + " failed authentication";
@@ -59,7 +56,7 @@ namespace Pacifica.Core
 				return false;
 			}
 
-			success = IngestStepCompleted(statusURI, stepNum, cookieJar, out accessDenied, out statusMessage);
+			bool success = IngestStepCompleted(statusURI, stepNum, cookieJar, out accessDenied, out statusMessage);
 
 			Utilities.Logout(cookieJar);
 
@@ -81,12 +78,12 @@ namespace Pacifica.Core
 			accessDenied = false;
 			statusMessage = string.Empty;
 
-			int timeoutSeconds = 5;
+			const int timeoutSeconds = 5;
 			HttpStatusCode responseStatusCode;
 
 			string xmlServerResponse = EasyHttp.Send(statusURI, out responseStatusCode, timeoutSeconds);
 
-			System.Xml.XmlDocument xmlDoc = new System.Xml.XmlDocument();
+			var xmlDoc = new XmlDocument();
 			xmlDoc.LoadXml(xmlServerResponse);
 
 			// Example XML:
@@ -118,30 +115,36 @@ namespace Pacifica.Core
 			// 6: Archived    (status will be "UNKNOWN" if not yet verified)
 
 			string query = string.Format("//*[@id='{0}']", (int)stepNum);
-			System.Xml.XmlNode statusElement = xmlDoc.SelectSingleNode(query);
+			XmlNode statusElement = xmlDoc.SelectSingleNode(query);
 
-			string message = statusElement.Attributes["message"].Value;
-			string status = statusElement.Attributes["status"].Value;
-
-			if (status.ToLower() == "success")
+			if (statusElement != null && statusElement.Attributes != null)
 			{
-				if (message.ToLower() == "completed")
-				{
-					statusMessage = "Step is complete";
-					success = true;
-				}
+				string message = statusElement.Attributes["message"].Value;
+				string status = statusElement.Attributes["status"].Value;
 
-				if (message.ToLower() == "verified")
+				if (!string.IsNullOrEmpty(message) && !string.IsNullOrEmpty(status))
 				{
-					statusMessage = "Data is verified";
-					success = true;
-				}
-			}
+					if (status.ToLower() == "success")
+					{
+						if (message.ToLower() == "completed")
+						{
+							statusMessage = "Step is complete";
+							success = true;
+						}
 
-			if (!success && message.Contains("do not have upload permissions"))
-			{
-				statusMessage = "Permissions error: " + message;
-				accessDenied = true;
+						if (message.ToLower() == "verified")
+						{
+							statusMessage = "Data is verified";
+							success = true;
+						}
+					}
+
+					if (!success && message.Contains("do not have upload permissions"))
+					{
+						statusMessage = "Permissions error: " + message;
+						accessDenied = true;
+					}
+				}
 			}
 
 			return success;
@@ -151,7 +154,7 @@ namespace Pacifica.Core
 		{
 			OnErrorMessage(new MessageEventArgs(callingFunction, message));
 
-			this.ErrorMessage = string.Copy(message);
+			ErrorMessage = string.Copy(message);
 		}
 
 		#region "Events"

@@ -3,8 +3,6 @@ using System.ComponentModel;
 using System.Reflection;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
-using System.Net;
-using System.Security;
 
 namespace Pacifica.Core
 {
@@ -34,6 +32,7 @@ namespace Pacifica.Core
 		/// <typeparam name="T"></typeparam>
 		/// <param name="enumerationValue"></param>
 		/// <returns>Description attribute, or simply enum.ToString</returns>
+		// ReSharper disable once UnusedTypeParameter
         public static string GetDescription<T>(this object enumerationValue) where T : struct
         {
             Type type = enumerationValue.GetType();
@@ -44,11 +43,11 @@ namespace Pacifica.Core
 
             //Tries to find a DescriptionAttribute for a potential friendly name for the enum
             MemberInfo[] memberInfo = type.GetMember(enumerationValue.ToString());
-            if (memberInfo != null && memberInfo.Length > 0)
+            if (memberInfo.Length > 0)
             {
                 object[] attrs = memberInfo[0].GetCustomAttributes(typeof(DescriptionAttribute), false);
 
-                if (attrs != null && attrs.Length > 0)
+                if (attrs.Length > 0)
                 {
                     //Pull out the description value
                     return ((DescriptionAttribute)attrs[0]).Description;
@@ -60,9 +59,9 @@ namespace Pacifica.Core
 
         public static T DeepClone<T>(this T a)
         {
-            using (MemoryStream stream = new MemoryStream())
+            using (var stream = new MemoryStream())
             {
-                BinaryFormatter formatter = new BinaryFormatter();
+                var formatter = new BinaryFormatter();
                 formatter.Serialize(stream, a);
                 stream.Position = 0;
                 return (T)formatter.Deserialize(stream);

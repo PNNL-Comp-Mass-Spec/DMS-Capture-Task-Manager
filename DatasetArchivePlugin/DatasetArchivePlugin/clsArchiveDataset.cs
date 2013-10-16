@@ -13,6 +13,8 @@ using CaptureTaskManager;
 
 namespace DatasetArchivePlugin
 {
+#if !DartFTPMissing
+
 	[Obsolete("No longer needed since using MyEMSL")]
 	class clsArchiveDataset : clsOpsBase
 	{
@@ -24,11 +26,13 @@ namespace DatasetArchivePlugin
 		#endregion
 
 		#region "Constructors"
-			/// <summary>
-			/// Constructor
-			/// </summary>
-			/// <param name="MgrParams">Manager parameters</param>
-			/// <param name="TaskParams">Task parameters</param>
+
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="MgrParams">Manager parameters</param>
+		/// <param name="TaskParams">Task parameters</param>
+		/// <param name="StatusTools">Status tools</param>
 		public clsArchiveDataset(IMgrParams MgrParams, ITaskParams TaskParams, IStatusFile StatusTools)
 				: base(MgrParams, TaskParams, StatusTools)
 			{
@@ -43,7 +47,6 @@ namespace DatasetArchivePlugin
 			public override bool PerformTask()
 			{
 				bool copySuccess;
-				bool stageSuccess;
 
 				// Perform base class operations
 				if (!base.PerformTask()) return false;
@@ -61,16 +64,16 @@ namespace DatasetArchivePlugin
 					m_Msg = "Dataset " + m_DatasetName  + " is " + folderSizeGB.ToString("0") + " GB; will use the ArchiveUpdate mechanism since this supports resuming an interrupted FTP operation";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, m_Msg);
 
-					clsArchiveUpdate oArchiveUpdate = new clsArchiveUpdate(m_MgrParams, m_TaskParams, m_StatusTools);
-					oArchiveUpdate.CreateDatasetFolderInArchiveIfMissing = true;
+					var oArchiveUpdate = new clsArchiveUpdate(m_MgrParams, m_TaskParams, m_StatusTools)
+					{
+						CreateDatasetFolderInArchiveIfMissing = true
+					};
 
 					copySuccess = oArchiveUpdate.PerformTask();
 					return copySuccess;
 				}
-				else
-				{
-					copySuccess = CopyOneFolderToArchive(m_DSNamePath, m_ArchiveNamePath);
-				}
+				
+				copySuccess = CopyOneFolderToArchive(m_DSNamePath, m_ArchiveNamePath);
 
 				// Set the path to the results folder in archive
 				string sResultsFolderPathArchive = System.IO.Path.Combine(m_TaskParams.GetParam("Archive_Network_Share_Path"), m_TaskParams.GetParam("folder"));
@@ -83,7 +86,7 @@ namespace DatasetArchivePlugin
 				}
 
 				// Create a new stagemd5 file for each file m_DSNamePath
-				stageSuccess = CreateMD5StagingFile(m_DSNamePath, sResultsFolderPathArchive);
+				bool stageSuccess = CreateMD5StagingFile(m_DSNamePath, sResultsFolderPathArchive);
 				if (!stageSuccess)
 				{
 					if (string.IsNullOrEmpty(m_ErrMsg))
@@ -112,4 +115,6 @@ namespace DatasetArchivePlugin
 			}	// End sub
 		#endregion
 	}	// End class
-}	// End namespace
+#endif
+
+	}	// End namespace

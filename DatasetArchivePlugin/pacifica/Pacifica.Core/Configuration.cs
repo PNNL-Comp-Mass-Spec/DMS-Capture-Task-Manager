@@ -1,5 +1,4 @@
 ﻿using System;
-using System.ComponentModel;
 using System.IO;
 using System.Net;
 
@@ -7,29 +6,29 @@ namespace Pacifica.Core
 {
 	public class Configuration
 	{
-		private static string _localTempDirectory = Path.GetTempPath();
+		private static string mLocalTempDirectory = Path.GetTempPath();
 		public static string LocalTempDirectory
 		{
 			get
 			{
-				return _localTempDirectory;
+				return mLocalTempDirectory;
 			}
 			set
 			{
-				_localTempDirectory = value;
+				mLocalTempDirectory = value;
 			}
 		}
 
-		public static bool _useSecureDataTransfer = true;
+		public static bool mUseSecureDataTransfer = true;
 		public static bool UseSecureDataTransfer
 		{
 			get
 			{
-				return _useSecureDataTransfer;
+				return mUseSecureDataTransfer;
 			}
 			set
 			{
-				_useSecureDataTransfer = value;
+				mUseSecureDataTransfer = value;
 			}
 		}
 
@@ -52,21 +51,21 @@ namespace Pacifica.Core
 			}
 		}
 
-		public static string _unsecuredScheme = "http";
+		private const string UNSECURED_SCHEME = "http";
 		public static string UnsecuredScheme
 		{
 			get
 			{
-				return _unsecuredScheme;
+				return UNSECURED_SCHEME;
 			}
 		}
 
-		public static string _securedScheme = "https";
+		private const string SECURED_SCHEME = "https";
 		public static string SecuredScheme
 		{
 			get
 			{
-				return _securedScheme;
+				return SECURED_SCHEME;
 			}
 		}
 
@@ -74,28 +73,15 @@ namespace Pacifica.Core
 		{
 			get
 			{
-				return Configuration.LocalTempDirectory;
+				return LocalTempDirectory;
 			}
 			set
 			{
-				Configuration.LocalTempDirectory = value;
+				LocalTempDirectory = value;
 			}
 		}
 
-		private static string _apiRelativePath = "/myemsl/api/";
-
-		/// <summary>
-		/// By default, returns https://my.emsl.pnl.gov/myemsl/api/
-		/// </summary>
-		public static string ApiUri
-		{
-			get
-			{
-				return SearchServerUri + _apiRelativePath;
-			}
-		}
-
-		private static string _elasticSearchRelativePath = "/myemsl/elasticsearch/";
+		private const string ELASTIC_SEARCH_RELATIVE_PATH = "/myemsl/elasticsearch/";
 
 		/// <summary>
 		/// By default, returns https://my.emsl.pnl.gov/myemsl/elasticsearch/
@@ -104,20 +90,20 @@ namespace Pacifica.Core
 		{
 			get
 			{
-				return SearchServerUri + _elasticSearchRelativePath;
+				return SearchServerUri + ELASTIC_SEARCH_RELATIVE_PATH;
 			}
 		}
 
-		private static string _ingestServerHostName = "ingest.my.emsl.pnl.gov";
+		private static string mIngestServerHostName = "ingest.my.emsl.pnl.gov";
 		public static string IngestServerHostName
 		{
 			get
 			{
-				return _ingestServerHostName;
+				return mIngestServerHostName;
 			}
 			set
 			{
-				_ingestServerHostName = value;
+				mIngestServerHostName = value;
 			}
 		}
 
@@ -142,16 +128,16 @@ namespace Pacifica.Core
 		}
 
 
-		private static string _searchServerHostName = "my.emsl.pnl.gov";
+		private static string mSearchServerHostName = "my.emsl.pnl.gov";
 		public static string SearchServerHostName
 		{
 			get
 			{
-				return _searchServerHostName;
+				return mSearchServerHostName;
 			}
 			set
 			{
-				_searchServerHostName = value;
+				mSearchServerHostName = value;
 			}
 		}
 
@@ -175,7 +161,7 @@ namespace Pacifica.Core
 			}
 		}
 
-		private static string _testAuthRelativePath = "/myemsl/testauth/";
+		private const string TEST_AUTH_RELATIVE_PATH = "/myemsl/testauth/";
 
 		/// <summary>
 		/// By default, returns https://ingest.my.emsl.pnl.gov/myemsl/testauth/
@@ -184,33 +170,33 @@ namespace Pacifica.Core
 		{
 			get
 			{
-				return IngestServerUri + _testAuthRelativePath;
+				return IngestServerUri + TEST_AUTH_RELATIVE_PATH;
 			}
 		}
 
-		private static string _httpProxyUrl = string.Empty;
+		private static string mHttpProxyUrl = string.Empty;
 		public static string HttpProxyUrl
 		{
 			get
 			{
-				return _httpProxyUrl;
+				return mHttpProxyUrl;
 			}
 			set
 			{
-				_httpProxyUrl = value;
+				mHttpProxyUrl = value;
 
 			}
 		}
 
 		public static void SetProxy(HttpWebRequest oWebRequest)
 		{
-			if (!string.IsNullOrWhiteSpace(Configuration.HttpProxyUrl))
+			if (!string.IsNullOrWhiteSpace(HttpProxyUrl))
 			{
-				oWebRequest.Proxy = new WebProxy(new Uri(Configuration.HttpProxyUrl));
+				oWebRequest.Proxy = new WebProxy(new Uri(HttpProxyUrl));
 			}
 		}
 
-		private static Auth _authInstance;
+		private static Auth mAuthInstance;
 		/// <summary>
 		/// Gets the most up to date Auth object that should be used for testing authentication, 
 		/// and setting (explicit) and saving (implicit) cookies.
@@ -222,17 +208,16 @@ namespace Pacifica.Core
 			{
 				try
 				{
-					if (_authInstance == null ||
-					_authInstance.Location != TestAuthUri)
+					if (mAuthInstance == null || mAuthInstance.Location != TestAuthUri)
 					{
-						_authInstance = new Auth(new Uri(Configuration.TestAuthUri));
+						mAuthInstance = new Auth(new Uri(TestAuthUri));
 					}
 				}
 				catch
 				{
 					return null;
 				}
-				return _authInstance;
+				return mAuthInstance;
 			}
 		}
 	}

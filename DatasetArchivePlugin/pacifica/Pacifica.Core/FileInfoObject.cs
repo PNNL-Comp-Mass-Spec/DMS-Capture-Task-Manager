@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
-using System.Security.Cryptography;
-using Jayrock.Json;
 
 namespace Pacifica.Core
 {
@@ -18,11 +16,16 @@ namespace Pacifica.Core
 		/// <param name="baseDSPath">Base dataset folder path</param>
 		public FileInfoObject(string absoluteLocalFullPath, string baseDSPath)
 		{
-			this.AbsoluteLocalPath = absoluteLocalFullPath;
-			this.File = new FileInfo(this.AbsoluteLocalPath);
-			this._relativeDestinationDirectory = GenerateRelativePath(File.Directory.FullName, baseDSPath);
+			AbsoluteLocalPath = absoluteLocalFullPath;
+			File = new FileInfo(AbsoluteLocalPath);
+			if (File.Directory != null)
+			{
+				mRelativeDestinationDirectory = GenerateRelativePath(File.Directory.FullName, baseDSPath);
+			}
+			else
+				mRelativeDestinationDirectory = string.Empty;
 
-			this.Sha1HashHex = Utilities.GenerateSha1Hash(AbsoluteLocalPath);
+			Sha1HashHex = Utilities.GenerateSha1Hash(AbsoluteLocalPath);
 
 		}
 
@@ -34,14 +37,14 @@ namespace Pacifica.Core
 		/// <param name="sha1Hash">Sha-1 hash for the file; if blank then the has will be auto-computed</param>
 		public FileInfoObject(string absoluteLocalFullPath, string relativeDestinationDirectory, string sha1Hash = "")
 		{
-			this.AbsoluteLocalPath = absoluteLocalFullPath;
-			this.File = new FileInfo(this.AbsoluteLocalPath);
-			this._relativeDestinationDirectory = relativeDestinationDirectory;
+			AbsoluteLocalPath = absoluteLocalFullPath;
+			File = new FileInfo(AbsoluteLocalPath);
+			mRelativeDestinationDirectory = relativeDestinationDirectory;
 
 			if (!string.IsNullOrWhiteSpace(sha1Hash) && sha1Hash.Length == 40)
-				this.Sha1HashHex = sha1Hash;
+				Sha1HashHex = sha1Hash;
 			else
-				this.Sha1HashHex = Utilities.GenerateSha1Hash(AbsoluteLocalPath);
+				Sha1HashHex = Utilities.GenerateSha1Hash(AbsoluteLocalPath);
 		}
 
 		#endregion
@@ -60,7 +63,7 @@ namespace Pacifica.Core
 			private set;
 		}
 
-		private string _relativeDestinationDirectory;
+		private readonly string mRelativeDestinationDirectory;
 
 		/// <summary>
 		/// Relative destination directory, with Unix-style slashes
@@ -69,15 +72,10 @@ namespace Pacifica.Core
 		{
 			get
 			{
-				return ConvertWindowsPathToUnix(this._relativeDestinationDirectory);
-			}
-			private set
-			{
-				this._relativeDestinationDirectory = value;
+				return ConvertWindowsPathToUnix(mRelativeDestinationDirectory);
 			}
 		}
 
-		private string _relativeDestinationFullPath;
 		public string RelativeDestinationFullPath
 		{
 			get
@@ -91,13 +89,9 @@ namespace Pacifica.Core
 				{
 					fileName = FileName;
 				}
-				string fullPath = Path.Combine(this.RelativeDestinationDirectory, fileName);
+				string fullPath = Path.Combine(RelativeDestinationDirectory, fileName);
 				return ConvertWindowsPathToUnix(fullPath);
-			}
-			set
-			{
-				_relativeDestinationFullPath = value;
-			}
+			}			
 		}
 
 		public string _destinationFileName;
@@ -146,12 +140,12 @@ namespace Pacifica.Core
 			}
 		}
 
-		private DateTime _submittedTime = DateTime.Now;
+		private readonly DateTime mSubmittedTime = DateTime.Now;
 		public DateTime SubmittedTime
 		{
 			get
 			{
-				return _submittedTime;
+				return mSubmittedTime;
 			}
 		}
 
@@ -159,7 +153,7 @@ namespace Pacifica.Core
 		{
 			get
 			{
-				return this.File.CreationTime.ToUnixTime().ToString();
+				return File.CreationTime.ToUnixTime().ToString(CultureInfo.InvariantCulture);
 			}
 		}
 
@@ -167,7 +161,7 @@ namespace Pacifica.Core
 		{
 			get
 			{
-				return this.SubmittedTime.ToUnixTime().ToString();
+				return SubmittedTime.ToUnixTime().ToString(CultureInfo.InvariantCulture);
 			}
 		}
 
@@ -175,9 +169,9 @@ namespace Pacifica.Core
 		{
 			var d = new Dictionary<string, string>();
 
-			d.Add("sha1Hash", this.Sha1HashHex);
-			d.Add("destinationDirectory", this.RelativeDestinationDirectory);			// Reported as "subDir" by the MyEMSL Elastic Search
-			d.Add("fileName", this.FileName);
+			d.Add("sha1Hash", Sha1HashHex);
+			d.Add("destinationDirectory", RelativeDestinationDirectory);			// Reported as "subDir" by the MyEMSL Elastic Search
+			d.Add("fileName", FileName);
 
 			return d;
 		}
@@ -195,7 +189,7 @@ namespace Pacifica.Core
 		/// <remarks>Removes any leading slashes</remarks>
 		protected string ConvertWindowsPathToUnix(string path)
 		{
-			return path.Replace(@"\", "/").TrimStart(new char[] { '/' });
+			return path.Replace(@"\", "/").TrimStart(new[] { '/' });
 		}
 		#endregion
 
@@ -204,9 +198,9 @@ namespace Pacifica.Core
 		public static string GenerateRelativePath(string absoluteLocalPath, string basePath)
 		{
 			if (absoluteLocalPath.ToLower().StartsWith(basePath.ToLower()))
-				return absoluteLocalPath.Substring(basePath.Length).TrimStart(new char[] { '/', '\\' });
-			else
-				throw new InvalidDataException("Cannot generate relative path in GenerateRelativePath since local path (" + absoluteLocalPath + ") does not contain base path (" + basePath + ")");			
+				return absoluteLocalPath.Substring(basePath.Length).TrimStart(new[] { '/', '\\' });
+			
+			throw new InvalidDataException("Cannot generate relative path in GenerateRelativePath since local path (" + absoluteLocalPath + ") does not contain base path (" + basePath + ")");
 		}
 
 		#endregion

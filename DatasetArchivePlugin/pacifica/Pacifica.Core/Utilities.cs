@@ -3,13 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
-using System.Security;
 using System.Security.Cryptography;
 using System.Security.Principal;
-using System.Text;
 using Jayrock.Json;
 using Jayrock.Json.Conversion;
-using Microsoft.Win32;
 
 namespace Pacifica.Core
 {
@@ -19,8 +16,7 @@ namespace Pacifica.Core
 		public static string GenerateSha1Hash(string filePath)
 		{
 			byte[] fileHash;
-			string hashString = string.Empty;
-			FileInfo fi = new FileInfo(filePath);
+			var fi = new FileInfo(filePath);
 
 			if (!fi.Exists)
 				throw new FileNotFoundException("File not found in GenerateSha1Hash: " + filePath);
@@ -30,12 +26,12 @@ namespace Pacifica.Core
 				_hashProvider = new SHA1Managed();
 			}
 
-			using (var sourceFile = new System.IO.FileStream(fi.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+			using (var sourceFile = new FileStream(fi.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
 			{
 				fileHash = _hashProvider.ComputeHash(sourceFile);
 			}
 			
-			hashString = ToHexString(fileHash);
+			string hashString = ToHexString(fileHash);
 
 			return hashString;
 		}
@@ -48,10 +44,8 @@ namespace Pacifica.Core
 			{
 				return value ?? valueIfMissing;
 			}
-			else
-			{
-				return valueIfMissing;
-			}
+			
+			return valueIfMissing;
 		}
 
 		public static DirectoryInfo GetTempDirectory()
@@ -103,19 +97,19 @@ namespace Pacifica.Core
 
 		public static Dictionary<string, object> JsonToObject(string jsonString)
 		{
-			JsonObject jso = (JsonObject)JsonConvert.Import(jsonString);
+			var jso = (JsonObject)JsonConvert.Import(jsonString);
 			return JsonObjectToDictionary(jso);
 		}
 
 		public static string ObjectToJson(IDictionary mdObject)
 		{
-			JsonObject jso = new JsonObject(mdObject);
+			var jso = new JsonObject(mdObject);
 			return jso.ToString();
 		}
 
 		public static Dictionary<string, object> JsonObjectToDictionary(JsonObject jso)
 		{
-			Dictionary<string, object> d = new Dictionary<string, object>();
+			var d = new Dictionary<string, object>();
 
 			if (jso == null)
 			{
@@ -131,18 +125,16 @@ namespace Pacifica.Core
 				}
 
 				object value = jso[key];
-				JsonObject tmpJso = null;
-				JsonArray tmpJsa = null;
 				if (value.GetType().Name == "JsonObject")
 				{
-					tmpJso = value as JsonObject;
+					var tmpJso = value as JsonObject;
 					d.Add(key, JsonObjectToDictionary(tmpJso));  //Recurse!
 				}
 				else if (value.GetType().Name == "JsonArray")
 				{
 					try
 					{
-						tmpJsa = value as JsonArray;
+						var tmpJsa = value as JsonArray;
 						switch (key)
 						{
 							case "users":
@@ -180,7 +172,6 @@ namespace Pacifica.Core
 								}
 								break;
 						}
-
 					}
 					catch (Exception ex)
 					{
@@ -199,7 +190,7 @@ namespace Pacifica.Core
 
 		public static List<string> JsonArrayToStringList(JsonArray jsa)
 		{
-			List<string> l = new List<string>();
+			var lstItems = new List<string>();
 
 			while (jsa.Length > 0)
 			{
@@ -207,7 +198,7 @@ namespace Pacifica.Core
 				string typeName = value.GetType().Name;
 				if (typeName == "JsonNumber" || typeName == "String")
 				{
-					l.Add(value.ToString());
+					lstItems.Add(value.ToString());
 				}
 				else
 				{
@@ -215,13 +206,13 @@ namespace Pacifica.Core
 				}
 			}
 
-			return l;
+			return lstItems;
 		}
 
 		public static List<int> JsonArrayToIntList(JsonArray jsa)
 		{
 			List<string> lstStrings = JsonArrayToStringList(jsa);
-			List<int> lstInts = new List<int>();
+			var lstInts = new List<int>();
 
 			foreach (string item in lstStrings)
 			{
@@ -237,7 +228,7 @@ namespace Pacifica.Core
 
 		public static List<Dictionary<string, object>> JsonArrayToDictionaryList(JsonArray jsa)
 		{
-			List<Dictionary<string, object>> l = new List<Dictionary<string, object>>();
+			var lstItems = new List<Dictionary<string, object>>();
 			while (jsa.Length > 0)
 			{
 				object value = jsa.Pop();
@@ -245,25 +236,25 @@ namespace Pacifica.Core
 				{
 					var dctValue = new Dictionary<string, object>();
 					dctValue.Add(value.ToString(), string.Empty);
-					l.Add(dctValue);
+					lstItems.Add(dctValue);
 				}
 				else if (value.GetType().Name == "String")
 				{
 					var dctValue = new Dictionary<string, object>();
 					dctValue.Add(value.ToString(), string.Empty);
-					l.Add(dctValue);
+					lstItems.Add(dctValue);
 				}
 				else if (value.GetType().Name == "JsonObject")
 				{
-					JsonObject jso = (JsonObject)value;
-					l.Add(JsonObjectToDictionary(jso));
+					var jso = (JsonObject)value;
+					lstItems.Add(JsonObjectToDictionary(jso));
 				}
 				else
 				{
 					Console.WriteLine("Unsupported JsonArrayList type: " + value.GetType().Name);
 				}
 			}
-			return l;
+			return lstItems;
 		}
 
 		public static void Logout(CookieContainer cookieJar)
@@ -271,7 +262,7 @@ namespace Pacifica.Core
 			// Logout using https://my.emsl.pnl.gov/myemsl/logout
 			try
 			{
-				int timeoutSeconds = 3;
+				const int timeoutSeconds = 3;
 				HttpStatusCode responseStatusCode;
 
 				EasyHttp.Send(Configuration.SearchServerUri + "/myemsl/logout", cookieJar, out responseStatusCode, timeoutSeconds);
@@ -293,15 +284,20 @@ namespace Pacifica.Core
 
 		public static string GetUserName(bool cleanDomain = false)
 		{
-			string userName = WindowsIdentity.GetCurrent().Name;
-
-			if (cleanDomain)
+			var userIdent = WindowsIdentity.GetCurrent();
+			if (userIdent != null)
 			{
-				userName = userName.Substring(userName.IndexOf('\\') + 1);
+				string userName = userIdent.Name;
+
+				if (cleanDomain)
+				{
+					userName = userName.Substring(userName.IndexOf('\\') + 1);
+				}
+
+				return userName;
 			}
-
-			return userName;
+			
+			return "UnknownUser";
 		}
-
 	}
 }

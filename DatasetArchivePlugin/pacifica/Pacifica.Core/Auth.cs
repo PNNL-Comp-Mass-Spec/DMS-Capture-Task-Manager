@@ -5,7 +5,6 @@ using System.Net;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security;
 using System.Text;
-using System.Net.Security;
 
 namespace Pacifica.Core
 {
@@ -50,7 +49,7 @@ namespace Pacifica.Core
 
 			try
 			{
-				CookieContainer cc = Auth.GetCookies();
+				CookieContainer cc = GetCookies();
 				if (cc == null)
 				{
 					return false;
@@ -483,7 +482,7 @@ namespace Pacifica.Core
 			foreach (var url in urls)
 			{
 				Console.WriteLine("Clearing cookies.");
-				Auth.ClearCookies();
+				ClearCookies();
 
 				Console.WriteLine("Working with " + url);
 
@@ -524,7 +523,7 @@ namespace Pacifica.Core
 				try
 				{
 					HttpWebRequest request = WebRequest.Create(url) as HttpWebRequest;
-					if (Auth.SetCookies(request))
+					if (SetCookies(request))
 					{
 						Console.WriteLine("Testing Cookie at " + url);
 

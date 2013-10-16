@@ -1,15 +1,11 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Text;
-using System.Xml;
-using System.Xml.XPath;
 using ICSharpCode.SharpZipLib.Tar;
+using PRISM.Files;
 
 namespace Pacifica.Core
 {
@@ -55,12 +51,11 @@ namespace Pacifica.Core
 			int timeoutSeconds = 100,
 			NetworkCredential loginCredentials = null)
 		{
-			double maxTimeoutHours = 24;
-			HttpWebRequest request = InitializeRequest(url, ref cookies, ref timeoutSeconds, loginCredentials, maxTimeoutHours);
+			HttpWebRequest request = InitializeRequest(url, ref cookies, ref timeoutSeconds, loginCredentials, maxTimeoutHours: 24);
 			responseStatusCode = HttpStatusCode.NotFound;
 
 			// Prepare the request object
-			HttpMethod method = HttpMethod.Get;
+			const HttpMethod method = HttpMethod.Get;
 			request.Method = method.GetDescription<HttpMethod>();
 			request.PreAuthenticate = false;
 
@@ -77,13 +72,18 @@ namespace Pacifica.Core
 				{
 					// Download the file
 
-					Stream ReceiveStream = response.GetResponseStream();
+					Stream responseStream = response.GetResponseStream();
 
-					byte[] buffer = new byte[32767];
-					using (FileStream outFile = new FileStream(downloadFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+					if (responseStream == null)
+					{
+						throw new WebException("Response stream is null");
+					}
+
+					var buffer = new byte[32767];
+					using (var outFile = new FileStream(downloadFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 					{
 						int bytesRead;
-						while ((bytesRead = ReceiveStream.Read(buffer, 0, buffer.Length)) != 0)
+						while ((bytesRead = responseStream.Read(buffer, 0, buffer.Length)) != 0)
 							outFile.Write(buffer, 0, bytesRead);
 					}
 
@@ -98,16 +98,21 @@ namespace Pacifica.Core
 				string responseData = string.Empty;
 				if (ex.Response != null)
 				{
-					using (StreamReader sr = new StreamReader(ex.Response.GetResponseStream()))
+					Stream responseStream = ex.Response.GetResponseStream();
+					if (responseStream != null)
 					{
-						int maxLines = 20;
-						int linesRead = 0;
-						while (sr.Peek() > -1 && linesRead < maxLines)
+						using (var sr = new StreamReader(responseStream))
 						{
-							responseData += sr.ReadLine() + Environment.NewLine;
-							linesRead++;
+							const int maxLines = 20;
+							int linesRead = 0;
+							while (sr.Peek() > -1 && linesRead < maxLines)
+							{
+								responseData += sr.ReadLine() + Environment.NewLine;
+								linesRead++;
+							}
 						}
 					}
+
 					responseStatusCode = ((HttpWebResponse)ex.Response).StatusCode;
 				}
 				else
@@ -143,7 +148,7 @@ namespace Pacifica.Core
 			int timeoutSeconds = 100,
 			NetworkCredential loginCredentials = null)
 		{
-			double maxTimeoutHours = 0.1;
+			const double maxTimeoutHours = 0.1;
 			HttpWebRequest request = InitializeRequest(url, ref cookies, ref timeoutSeconds, loginCredentials, maxTimeoutHours);
 			responseStatusCode = HttpStatusCode.NotFound;
 
@@ -167,9 +172,13 @@ namespace Pacifica.Core
 				string responseData = string.Empty;
 				if (ex.Response != null)
 				{
-					using (StreamReader sr = new StreamReader(ex.Response.GetResponseStream()))
+					Stream responseStream = ex.Response.GetResponseStream();
+					if (responseStream != null)
 					{
-						responseData = sr.ReadToEnd();
+						using (var sr = new StreamReader(responseStream))
+						{
+							responseData = sr.ReadToEnd();
+						}
 					}
 					responseStatusCode = ((HttpWebResponse)ex.Response).StatusCode;
 				}
@@ -201,16 +210,16 @@ namespace Pacifica.Core
 			NetworkCredential loginCredentials,
 			double maxTimeoutHours = 24)
 		{
-			Uri uri = new Uri(url);
+			var uri = new Uri(url);
 			string cleanUserName = Utilities.GetUserName(true);
 
-			HttpWebRequest request = (HttpWebRequest)WebRequest.Create(uri);
+			var request = (HttpWebRequest)WebRequest.Create(uri);
 			Configuration.SetProxy(request);
 
 			if (timeoutSeconds < 3)
 				timeoutSeconds = 3;
 
-			int maxTimeoutHoursInt = (int)(maxTimeoutHours * 60 * 60);
+			var maxTimeoutHoursInt = (int)(maxTimeoutHours * 60 * 60);
 			if (timeoutSeconds > maxTimeoutHoursInt)
 				timeoutSeconds = maxTimeoutHoursInt;
 
@@ -220,9 +229,8 @@ namespace Pacifica.Core
 			}
 			else
 			{
-				CredentialCache c = new CredentialCache();
-				c.Add(new Uri(url), "Basic", new NetworkCredential(loginCredentials.UserName,
-					loginCredentials.SecurePassword));
+				var c = new CredentialCache();
+				c.Add(new Uri(url), "Basic", new NetworkCredential(loginCredentials.UserName, loginCredentials.SecurePassword));
 				request.Credentials = c;
 			}
 
@@ -231,8 +239,10 @@ namespace Pacifica.Core
 				cookies = new CookieContainer();
 			}
 
-			Cookie cookie = new Cookie("user_name", cleanUserName);
-			cookie.Domain = "pnl.gov";
+			var cookie = new Cookie("user_name", cleanUserName)
+			{
+				Domain = "pnl.gov"
+			};
 			cookies.Add(cookie);
 			request.CookieContainer = cookies;
 			return request;
@@ -243,7 +253,7 @@ namespace Pacifica.Core
 			out HttpStatusCode responseStatusCode,
 			int timeoutSeconds = 100)
 		{
-			string postData = "";
+			const string postData = "";
 			return Send(url, out responseStatusCode, postData, HttpMethod.Get, timeoutSeconds);
 		}
 
@@ -253,7 +263,7 @@ namespace Pacifica.Core
 			out HttpStatusCode responseStatusCode,
 			int timeoutSeconds = 100)
 		{
-			string postData = "";
+			const string postData = "";
 			return Send(url, cookies, out responseStatusCode, postData, HttpMethod.Get, timeoutSeconds);
 		}
 
@@ -264,8 +274,8 @@ namespace Pacifica.Core
 			HttpMethod method = HttpMethod.Get,
 			int timeoutSeconds = 100)
 		{
-			string contentType = "";
-			bool sendStringInHeader = false;
+			const string contentType = "";
+			const bool sendStringInHeader = false;
 			NetworkCredential loginCredentials = null;
 
 			return Send(url, new CookieContainer(), out responseStatusCode, postData, method, timeoutSeconds, contentType, sendStringInHeader, loginCredentials);
@@ -293,8 +303,8 @@ namespace Pacifica.Core
 			int timeoutSeconds,
 			NetworkCredential loginCredentials)
 		{
-			string contentType = "";
-			bool sendStringInHeader = false;
+			const string contentType = "";
+			const bool sendStringInHeader = false;
 			return Send(url, cookies, out responseStatusCode, postData, method, timeoutSeconds, contentType, sendStringInHeader, loginCredentials);
 		}
 
@@ -303,6 +313,7 @@ namespace Pacifica.Core
 		/// </summary>
 		/// <param name="url"></param>
 		/// <param name="cookies"></param>
+		/// <param name="responseStatusCode"></param>
 		/// <param name="postData"></param>
 		/// <param name="method"></param>
 		/// <param name="timeoutSeconds"></param>
@@ -322,8 +333,7 @@ namespace Pacifica.Core
 			NetworkCredential loginCredentials = null)
 		{
 
-			double maxTimeoutHours = 24;
-			HttpWebRequest request = InitializeRequest(url, ref cookies, ref timeoutSeconds, loginCredentials, maxTimeoutHours);
+			HttpWebRequest request = InitializeRequest(url, ref cookies, ref timeoutSeconds, loginCredentials, maxTimeoutHours: 24);
 			responseStatusCode = HttpStatusCode.NotFound;
 
 			// Prepare the request object
@@ -345,39 +355,44 @@ namespace Pacifica.Core
 			if (method == HttpMethod.Post && !string.IsNullOrEmpty(contentType))
 			{
 				request.ContentType = contentType;
-				request.ContentLength = postData.Length;
+				if (postData != null)
+				{
+					request.ContentLength = postData.Length;
+				}
 			}
 
 			// Write POST data, if POST
 			if (method == HttpMethod.Post)
 			{
-				using (StreamWriter sw = new StreamWriter(request.GetRequestStream()))
+				using (var sw = new StreamWriter(request.GetRequestStream()))
 				{
 					sw.Write(postData);
 				}
 			}
 
 			// Receive response
-			string responseData;
+			string responseData = string.Empty;
 			HttpWebResponse response = null;
 			try
 			{
 				request.Timeout = timeoutSeconds * 1000;
 				response = (HttpWebResponse)request.GetResponse();
 				responseStatusCode = response.StatusCode;
+				Stream responseStream = response.GetResponseStream();
 
-				using (StreamReader sr = new StreamReader(response.GetResponseStream()))
+				if (responseStream != null)
 				{
-					responseData = sr.ReadToEnd();
+					using (var sr = new StreamReader(responseStream))
+					{
+						responseData = sr.ReadToEnd();
+					}
 				}
-
 			}
 			catch (WebException ex)
 			{
-				responseData = string.Empty;
 				if (ex.Response != null)
 				{
-					using (StreamReader sr = new StreamReader(ex.Response.GetResponseStream()))
+					using (var sr = new StreamReader(ex.Response.GetResponseStream()))
 					{
 						responseData = sr.ReadToEnd();
 					}
@@ -386,290 +401,14 @@ namespace Pacifica.Core
 				else
 				{
 					if (ex.Message.Contains("timed out"))
-						responseStatusCode = HttpStatusCode.RequestTimeout;					
+						responseStatusCode = HttpStatusCode.RequestTimeout;
 				}
 
 				if (string.IsNullOrWhiteSpace(responseData))
 					throw new Exception(ex.Message, ex);
 				else
-					throw new Exception(responseData, ex);					
-				
-			}
-			finally
-			{
-				if (response != null)
-				{
-					((IDisposable)response).Dispose();
-				}
-			}
+					throw new Exception(responseData, ex);
 
-			return responseData;
-		}
-
-		private static byte[] CreatePropFindRequest(List<string> properties)
-		{
-			XmlWriterSettings settings = new XmlWriterSettings();
-			settings.Encoding = Encoding.UTF8;
-
-			MemoryStream stream = new MemoryStream();
-			XmlWriter writer = XmlWriter.Create(stream, settings);
-
-			writer.WriteStartElement("D", "propfind", "DAV:");
-			writer.WriteStartElement("prop", "DAV:");
-
-			foreach (string p in properties)
-			{
-				string ns, localName;
-				ParsePropertyName(p, out ns, out localName);
-				writer.WriteElementString(localName, "DAV:", null);
-			}
-
-			writer.WriteEndElement();
-			writer.WriteEndElement();
-			writer.Flush();
-			return stream.ToArray();
-		}
-
-		private static void ParsePropertyName(string myProperty, out string ns, out string localName)
-		{
-			int index = 0;
-			if (string.IsNullOrEmpty(myProperty))
-			{
-				throw new ArgumentNullException("myProperty");
-			}
-
-			index = Math.Max(myProperty.LastIndexOfAny(new Char[] { '/', ':', '#' }) + 1, 0);
-
-			ns = myProperty.Substring(0, index);
-			localName = myProperty.Substring(index);
-		}
-
-		private static XmlReader ParsePropFindResponse(string response)
-		{
-			if (string.IsNullOrEmpty(response))
-			{
-				throw new ArgumentNullException("response");
-			}
-			return XmlReader.Create(new StringReader(response));
-		}
-
-		[Obsolete("Unused")]
-		private static void CheckDavAttributes(string url)
-		{
-			byte[] buffer;
-			XmlReader reader;
-			HttpWebRequest request;
-
-			var al = new List<string>();
-			al.Add("getlastmodified");
-			al.Add("getcontentlength");
-			al.Add("resourcetype");
-
-			buffer = CreatePropFindRequest(al);
-			request = (HttpWebRequest)WebRequest.Create(url);
-			Configuration.SetProxy(request);
-
-			request.Method = "PROPFIND";
-			request.ContentType = "text/xml";
-			request.Headers.Add("Translate", "f");
-			request.Headers.Add("Depth", "0");
-			request.SendChunked = true;
-
-			Stream stream = request.GetRequestStream();
-			stream.Write(buffer, 0, buffer.Length);
-			stream.Flush();
-			stream.Dispose();
-
-			WebResponse response = null;
-
-			try
-			{
-				response = request.GetResponse();
-			}
-			catch (Exception ex)
-			{
-				Debug.Print(ex.Message);
-			}
-
-			if (response != null)
-			{
-				string content = new StreamReader(response.GetResponseStream()).ReadToEnd();
-				reader = ParsePropFindResponse(content);
-				XmlNamespaceManager nsmgr = new XmlNamespaceManager(reader.NameTable);
-				nsmgr.AddNamespace("dav", "DAV:");
-				XPathDocument doc = new XPathDocument(reader);
-			}
-		}
-
-		[Obsolete("Use SendFileListToDavAsTar")]
-		public static string SendFileToDav(string url, string serverBaseAddress,
-			 string filePath, NetworkCredential loginCredentials = null, bool createNewFile = true)
-		{
-			return SendFileToDav(url, serverBaseAddress, filePath, new CookieContainer(),
-				loginCredentials, createNewFile);
-		}
-
-		[Obsolete("Use SendFileListToDavAsTar")]
-		public static string SendFileToDav(string url, string serverBaseAddress,
-			string filePath, CookieContainer cookies,
-			NetworkCredential loginCredentials = null, bool createNewFile = true)
-		{
-			FileInfo fi = new FileInfo(filePath);
-
-			Uri baseUri = new Uri(serverBaseAddress);
-
-			Uri uploadUri = new Uri(baseUri, url);
-
-			string credUriStr = url.Substring(0, url.LastIndexOf('/'));
-			Uri credCheckUri = new Uri(baseUri, credUriStr);
-
-			if (!createNewFile)
-			{
-				CheckDavAttributes(uploadUri.AbsoluteUri);
-				string createFileResponse = SendFileToDav(url, serverBaseAddress,
-					filePath, cookies, loginCredentials, true);
-				return createFileResponse;
-			}
-
-			ICredentials i1;
-			ICredentials i2;
-			CredentialCache c1 = new CredentialCache();
-			CredentialCache c2 = new CredentialCache();
-
-			if (loginCredentials == null)
-			{
-				loginCredentials = CredentialCache.DefaultNetworkCredentials;
-				i1 = loginCredentials;
-				i2 = loginCredentials;
-			}
-			else
-			{
-				//Basic authentication cannot be used with DefaultNetworkCredentials.
-				c1.Add(credCheckUri, "Basic", new NetworkCredential(loginCredentials.UserName,
-					loginCredentials.SecurePassword));
-				i1 = c1;
-				c2.Add(uploadUri, "Basic", new NetworkCredential(loginCredentials.UserName,
-					loginCredentials.SecurePassword));
-				i2 = c2;
-			}
-
-			//TODO - remove NGT 7/11/2011 (Nate Trimble)
-			//If Negotiate is added to the CredentialCache it will be used instead of Basic.
-			//The problem occurs when your computer is not part of the domain and yet still
-			//has a clear path to a4.my.emsl.pnl.gov.
-			//c1.Add(credCheckUri, "Negotiate", (NetworkCredential)loginCredentials);
-			//c2.Add(uploadUri, "Negotiate", (NetworkCredential)loginCredentials);
-
-			// Make a HEAD request to register the proper authentication stuff
-			HttpWebRequest oWebRequest = (HttpWebRequest)WebRequest.Create(credCheckUri);
-
-			oWebRequest.CookieContainer = cookies;
-
-			//TODO - pass proxy in as a parameter to keep this class clean.
-			Configuration.SetProxy(oWebRequest);
-
-			oWebRequest.Method = WebRequestMethods.Http.Head;
-			oWebRequest.Credentials = i1;
-			oWebRequest.PreAuthenticate = true;
-			oWebRequest.KeepAlive = true;
-			oWebRequest.UnsafeAuthenticatedConnectionSharing = true;
-
-			using (WebResponse oWResponse = oWebRequest.GetResponse()) { }
-
-			long triggerPoint = fi.Length / 20;
-			int triggerCount = 1;
-
-			string responseData;
-			long contentLength = fi.Length;
-			FileStream contentStream = fi.Open(FileMode.Open, FileAccess.Read);
-			BinaryReader br = new BinaryReader(contentStream);
-			byte[] contentBuffer = new Byte[32767];
-			int chunkSize = 32767;
-
-			// Make the request
-			oWebRequest = (HttpWebRequest)WebRequest.Create(uploadUri);
-
-			if (cookies == null)
-			{
-				cookies = new CookieContainer();
-			}
-			oWebRequest.CookieContainer = cookies;
-
-			//TODO - pass proxy in as a parameter to keep this class clean.
-			Configuration.SetProxy(oWebRequest);
-
-			oWebRequest.Credentials = i2;
-			oWebRequest.PreAuthenticate = true;
-			oWebRequest.KeepAlive = true;
-			oWebRequest.Method = WebRequestMethods.Http.Put;
-			oWebRequest.AllowWriteStreamBuffering = false;
-			oWebRequest.Accept = "*/*";
-			oWebRequest.Expect = null;
-			oWebRequest.Timeout = -1;
-			oWebRequest.ReadWriteTimeout = -1;
-			oWebRequest.ContentLength = contentLength;
-
-			Stream oRequestStream = oWebRequest.GetRequestStream();
-
-			double percentComplete = 0;		// Value between 0 and 100
-			long sent = 0;
-			System.DateTime lastStatusUpdateTime = System.DateTime.UtcNow;
-
-			RaiseStatusUpdate(percentComplete, sent, contentLength, string.Empty);
-
-
-			while (contentStream.Position < contentLength)
-			{
-				contentBuffer = br.ReadBytes(chunkSize);
-				oRequestStream.Write(contentBuffer, 0, contentBuffer.Length);
-				if (contentStream.Position >= triggerCount * triggerPoint)
-				{
-					triggerCount += 1;
-				}
-
-				sent = contentStream.Position;
-				if (contentLength > 0)
-					percentComplete = (double)sent / (double)contentLength * 100;
-
-				if (System.DateTime.UtcNow.Subtract(lastStatusUpdateTime).TotalSeconds >= 2)
-				{
-					// Limit status updates to every 2 seconds
-					lastStatusUpdateTime = System.DateTime.UtcNow;
-					RaiseStatusUpdate(percentComplete, sent, contentLength, string.Empty);
-				}
-			}
-			contentStream.Flush();
-			oRequestStream.Close();
-			contentStream.Close();
-			contentStream = null;
-
-
-			RaiseStatusUpdate(100, sent, contentLength, string.Empty);
-
-			WebResponse response = null;
-			try
-			{
-				// The response should be empty if everything worked
-				response = oWebRequest.GetResponse();
-				using (StreamReader sr = new StreamReader(response.GetResponseStream()))
-				{
-					responseData = sr.ReadToEnd();
-				}
-			}
-			catch (WebException ex)
-			{
-				if (ex.Response != null)
-				{
-					using (StreamReader sr = new StreamReader(ex.Response.GetResponseStream()))
-					{
-						responseData = sr.ReadToEnd();
-					}
-				}
-				else
-				{
-					responseData = string.Empty;
-				}
-				throw new Exception(responseData, ex);
 			}
 			finally
 			{
@@ -689,16 +428,16 @@ namespace Pacifica.Core
 			NetworkCredential loginCredentials = null)
 		{
 
-			Uri baseUri = new Uri(serverBaseAddress);
-			Uri uploadUri = new Uri(baseUri, url);
+			var baseUri = new Uri(serverBaseAddress);
+			var uploadUri = new Uri(baseUri, url);
 
 			string credUriStr = url.Substring(0, url.LastIndexOf('/'));
-			Uri credCheckUri = new Uri(baseUri, credUriStr);
+			var credCheckUri = new Uri(baseUri, credUriStr);
 
 			ICredentials i1;
 			ICredentials i2;
-			CredentialCache c1 = new CredentialCache();
-			CredentialCache c2 = new CredentialCache();
+			var c1 = new CredentialCache();
+			var c2 = new CredentialCache();
 
 			if (loginCredentials == null)
 			{
@@ -717,19 +456,11 @@ namespace Pacifica.Core
 				i2 = c2;
 			}
 
-			//TODO - remove NGT 7/11/2011 (Nate Trimble)
-			//If Negotiate is added to the CredentialCache it will be used instead of Basic.
-			//The problem occurs when your computer is not part of the domain and yet still
-			//has a clear path to a4.my.emsl.pnl.gov.
-			//c1.Add(credCheckUri, "Negotiate", (NetworkCredential)loginCredentials);
-			//c2.Add(uploadUri, "Negotiate", (NetworkCredential)loginCredentials);
-
 			// Make a HEAD request to register the proper authentication stuff
-			HttpWebRequest oWebRequest = (HttpWebRequest)WebRequest.Create(credCheckUri);
+			var oWebRequest = (HttpWebRequest)WebRequest.Create(credCheckUri);
 
 			oWebRequest.CookieContainer = cookies;
 
-			//TODO - pass proxy in as a parameter to keep this class clean.
 			Configuration.SetProxy(oWebRequest);
 
 			oWebRequest.Method = WebRequestMethods.Http.Head;
@@ -738,16 +469,14 @@ namespace Pacifica.Core
 			oWebRequest.KeepAlive = true;
 			oWebRequest.UnsafeAuthenticatedConnectionSharing = true;
 
-			using (WebResponse oWResponse = oWebRequest.GetResponse()) { }
-
 			var fiMetadataFile = new FileInfo(metadataFilePath);
 
 			// Compute the total number of bytes that will be written to the tar file
 			long contentLength = ComputeTarFileSize(fileListObject, fiMetadataFile);
-			
-			double percentComplete = 0;		// Value between 0 and 100
+
+			const double percentComplete = 0;		// Value between 0 and 100
 			long bytesWritten = 0;
-			System.DateTime lastStatusUpdateTime = System.DateTime.UtcNow;
+			DateTime lastStatusUpdateTime = DateTime.UtcNow;
 
 			RaiseStatusUpdate(percentComplete, bytesWritten, contentLength, string.Empty);
 
@@ -765,7 +494,6 @@ namespace Pacifica.Core
 				}
 				oWebRequest.CookieContainer = cookies;
 
-				//TODO - pass proxy in as a parameter to keep this class clean.
 				Configuration.SetProxy(oWebRequest);
 
 				oWebRequest.Credentials = i2;
@@ -792,9 +520,9 @@ namespace Pacifica.Core
 			// Code modeled after https://github.com/icsharpcode/SharpZipLib/wiki/GZip-and-Tar-Samples
 
 
-			TarOutputStream tarOutputStream = new TarOutputStream(oRequestStream);
-			
-			var dctDirectoryEntries = new SortedSet<string>();			
+			var tarOutputStream = new TarOutputStream(oRequestStream);
+
+			var dctDirectoryEntries = new SortedSet<string>();
 
 			// Add the metadata.txt file
 			AppendFileToTar(tarOutputStream, fiMetadataFile, MYEMSL_METADATA_FILE_NAME, ref bytesWritten);
@@ -814,22 +542,25 @@ namespace Pacifica.Core
 
 				if (!string.IsNullOrEmpty(fileToArchive.Value.RelativeDestinationDirectory))
 				{
+					if (fiSourceFile.Directory == null)
+						throw new DirectoryNotFoundException("Cannot access the parent folder for the source file: " + fileToArchive.Value.RelativeDestinationFullPath);
+
 					if (!dctDirectoryEntries.Contains(fiSourceFile.Directory.FullName))
 					{
 						// Make a directory entry
 						AppendFolderToTar(tarOutputStream, fiSourceFile.Directory, "data/" + fileToArchive.Value.RelativeDestinationDirectory, ref bytesWritten);
 
-						dctDirectoryEntries.Add(fiSourceFile.Directory.FullName);						
+						dctDirectoryEntries.Add(fiSourceFile.Directory.FullName);
 					}
 				}
 
 				AppendFileToTar(tarOutputStream, fiSourceFile, "data/" + fileToArchive.Value.RelativeDestinationFullPath, ref bytesWritten);
 
-				if (System.DateTime.UtcNow.Subtract(lastStatusUpdateTime).TotalSeconds >= 2)
+				if (DateTime.UtcNow.Subtract(lastStatusUpdateTime).TotalSeconds >= 2)
 				{
 					// Limit status updates to every 2 seconds
 					RaiseStatusUpdate(percentComplete, bytesWritten, contentLength, string.Empty);
-					lastStatusUpdateTime = System.DateTime.UtcNow;
+					lastStatusUpdateTime = DateTime.UtcNow;
 				}
 			}
 
@@ -848,26 +579,35 @@ namespace Pacifica.Core
 			if (writeToDisk)
 				return string.Empty;
 
-			string responseData;
+			string responseData = string.Empty;
 
 			WebResponse response = null;
 			try
 			{
 				// The response should be empty if everything worked
 				response = oWebRequest.GetResponse();
-				using (StreamReader sr = new StreamReader(response.GetResponseStream()))
+				var responseStream = response.GetResponseStream();
+				if (responseStream != null)
 				{
-					responseData = sr.ReadToEnd();
+					using (var sr = new StreamReader(responseStream))
+					{
+						responseData = sr.ReadToEnd();
+					}
 				}
 			}
 			catch (WebException ex)
 			{
 				if (ex.Response != null)
 				{
-					using (StreamReader sr = new StreamReader(ex.Response.GetResponseStream()))
+					var responseStream = ex.Response.GetResponseStream();
+					if (responseStream != null)
 					{
-						responseData = sr.ReadToEnd();
+						using (var sr = new StreamReader(responseStream))
+						{
+							responseData = sr.ReadToEnd();
+						}
 					}
+					
 				}
 				else
 				{
@@ -899,7 +639,7 @@ namespace Pacifica.Core
 				//
 				// The first block will have filename "././@LongLink" and placeholder metadata (file date, file size, etc.)
 				// The next block will have the actual long filename
-				int extraBlocks = (int)(Math.Ceiling(pathInArchive.Length / 512.0));
+				var extraBlocks = (int)(Math.Ceiling(pathInArchive.Length / 512.0));
 				contentLength += TAR_BLOCK_SIZE_BYTES + TAR_BLOCK_SIZE_BYTES * extraBlocks;
 			}
 
@@ -916,7 +656,6 @@ namespace Pacifica.Core
 		private static long ComputeTarFileSize(SortedDictionary<string, FileInfoObject> fileListObject, FileInfo fiMetadataFile)
 		{
 			long contentLength = 0;
-			long addonBytes;
 
 			bool debugMode = false;
 
@@ -927,7 +666,7 @@ namespace Pacifica.Core
 			}
 
 			// Add the metadata file
-			addonBytes = AddTarFileContentLength(MYEMSL_METADATA_FILE_NAME, fiMetadataFile.Length);
+			long addonBytes = AddTarFileContentLength(MYEMSL_METADATA_FILE_NAME, fiMetadataFile.Length);
 
 			if (debugMode)
 				Console.WriteLine(fiMetadataFile.Length.ToString().PadRight(12) + addonBytes.ToString().PadRight(12) + contentLength.ToString().PadRight(13) + "metadata.txt");
@@ -935,7 +674,7 @@ namespace Pacifica.Core
 			contentLength += addonBytes;
 
 			// Add the data/ directory
-			
+
 			if (debugMode)
 				Console.WriteLine("0".PadRight(12) + TAR_BLOCK_SIZE_BYTES.ToString().PadRight(12) + contentLength.ToString().PadRight(13) + "data\\");
 
@@ -950,14 +689,17 @@ namespace Pacifica.Core
 
 				if (!string.IsNullOrEmpty(fileToArchive.Value.RelativeDestinationDirectory))
 				{
+					if (fiSourceFile.Directory == null)
+						throw new DirectoryNotFoundException("Cannot access the parent folder for the source file: " + fileToArchive.Value.RelativeDestinationFullPath);
+
 					if (!dctDirectoryEntries.Contains(fiSourceFile.Directory.FullName))
 					{
 						if (debugMode)
 							Console.WriteLine(
-								"0".PadRight(12) + 
-								TAR_BLOCK_SIZE_BYTES.ToString().PadRight(12) + 
-								contentLength.ToString().PadRight(13) + 
-								PRISM.Files.clsFileTools.CompactPathString(fiSourceFile.Directory.FullName + "\\", 75));
+								"0".PadRight(12) +
+								TAR_BLOCK_SIZE_BYTES.ToString().PadRight(12) +
+								contentLength.ToString().PadRight(13) +
+								clsFileTools.CompactPathString(fiSourceFile.Directory.FullName + "\\", 75));
 
 						contentLength += TAR_BLOCK_SIZE_BYTES;
 
@@ -970,14 +712,14 @@ namespace Pacifica.Core
 
 				if (debugMode)
 					Console.WriteLine(
-						fileToArchive.Value.FileSizeInBytes.ToString().PadRight(12) + 
-						addonBytes.ToString().ToString().PadRight(12) + 
-						contentLength.ToString().PadRight(13) + 
-						PRISM.Files.clsFileTools.CompactPathString(fileToArchive.Value.RelativeDestinationFullPath, 73));
-			
+						fileToArchive.Value.FileSizeInBytes.ToString().PadRight(12) +
+						addonBytes.ToString().ToString().PadRight(12) +
+						contentLength.ToString().PadRight(13) +
+						clsFileTools.CompactPathString(fileToArchive.Value.RelativeDestinationFullPath, 73));
+
 				contentLength += addonBytes;
 
-			}			
+			}
 
 			// Append one empty block (appended by SharpZipLib at the end of the .tar file
 			if (debugMode)
@@ -987,7 +729,7 @@ namespace Pacifica.Core
 
 			// Round up contentLength to the nearest 10240 bytes
 			// Note that recordCount is a long to prevent overflow errors when computing finalPadderLength
-			long recordCount = (long)Math.Ceiling(contentLength / (double)TarBuffer.DefaultRecordSize);
+			var recordCount = (long)Math.Ceiling(contentLength / (double)TarBuffer.DefaultRecordSize);
 			long finalPadderLength = (recordCount * TarBuffer.DefaultRecordSize) - contentLength;
 
 			if (debugMode)
@@ -1012,16 +754,7 @@ namespace Pacifica.Core
 			tarEntry.Name = pathInArchive;
 			tarOutputStream.PutNextEntry(tarEntry);
 			bytesWritten += 512;
-			
-		}
 
-		private static List<string> GetUniqueRelativeDestinationDirectory(SortedDictionary<string, FileInfoObject> fileListObject)
-		{
-
-			var lstDirectoryEntries = (from item in fileListObject.Values
-									   group item by item.RelativeDestinationDirectory into g
-									   select g.Key).ToList<string>();
-			return lstDirectoryEntries;
 		}
 
 		private static void AppendFileToTar(TarOutputStream tarOutputStream, FileInfo fiSourceFile, string destFilenameInTar, ref long bytesWritten)
@@ -1042,7 +775,7 @@ namespace Pacifica.Core
 				tarOutputStream.PutNextEntry(entry);
 
 				// this is copied from TarArchive.WriteEntryCore
-				byte[] localBuffer = new byte[32 * 1024];
+				var localBuffer = new byte[32 * 1024];
 				while (true)
 				{
 					int numRead = inputStream.Read(localBuffer, 0, localBuffer.Length);

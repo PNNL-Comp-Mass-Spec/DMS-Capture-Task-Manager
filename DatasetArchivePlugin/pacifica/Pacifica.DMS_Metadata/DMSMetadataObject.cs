@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using Pacifica.Core;
 using MyEMSLReader;
+using MessageEventArgs = MyEMSLReader.MessageEventArgs;
+using ProgressEventArgs = Pacifica.Core.ProgressEventArgs;
 
 namespace Pacifica.DMS_Metadata
 {
@@ -22,12 +23,10 @@ namespace Pacifica.DMS_Metadata
 		/// </remarks>
 		public const int MAX_FILES_TO_ARCHIVE = 500;
 
-		private Dictionary<string, object> _metadataObject;
+		private Dictionary<string, object> mMetadataObject;
 
 		// List of new or changed files
-		private List<FileInfoObject> _unmatchedFilesToUpload;
-
-		private string _serverSearchString = string.Empty;
+		private List<FileInfoObject> mUnmatchedFilesToUpload;
 
 		public enum ArchiveModes
 		{
@@ -38,11 +37,7 @@ namespace Pacifica.DMS_Metadata
 
 		public Dictionary<string, object> MetadataObject
 		{
-			get { return this._metadataObject; }
-			private set
-			{
-				this._metadataObject = value;
-			}
+			get { return mMetadataObject; }			
 		}
 
 		public long TotalFileSizeToUpload
@@ -65,18 +60,14 @@ namespace Pacifica.DMS_Metadata
 
 		public List<FileInfoObject> UnmatchedFilesToUpload
 		{
-			get { return this._unmatchedFilesToUpload; }
-			private set
-			{
-				this._unmatchedFilesToUpload = value;
-			}
+			get { return mUnmatchedFilesToUpload; }
 		}
 
 		public string MetadataObjectJSON
 		{
 			get
 			{
-				return Utilities.ObjectToJson(this._metadataObject);
+				return Utilities.ObjectToJson(mMetadataObject);
 			}
 		}
 
@@ -102,12 +93,12 @@ namespace Pacifica.DMS_Metadata
 			uploadMetadata.DateCodeString = GetDatasetYearQuarter(taskParams);
 
 			// Find the files that are new or need to be updated
-			List<FileInfoObject> lstUnmatchedFiles = this.CompareDatasetContentsElasticSearch(lstDatasetFilesToArchive, uploadMetadata);
+			List<FileInfoObject> lstUnmatchedFiles = CompareDatasetContentsElasticSearch(lstDatasetFilesToArchive, uploadMetadata);
 
 			Dictionary<string, object> metadataObject = Upload.CreateMetadataObject(uploadMetadata, lstUnmatchedFiles);
 
-			this._metadataObject = metadataObject;
-			this._unmatchedFilesToUpload = lstUnmatchedFiles;
+			mMetadataObject = metadataObject;
+			mUnmatchedFilesToUpload = lstUnmatchedFiles;
 
 		}
 
@@ -117,7 +108,6 @@ namespace Pacifica.DMS_Metadata
 		/// <param name="pathToBeArchived">Folder path to be archived</param>
 		/// <param name="baseDSPath">Base dataset folder path</param>
 		/// <param name="recurse">True to recurse</param>
-		/// <param name="worker">Background worker for reporting progress (can be null)</param>
 		/// <returns></returns>
 		private List<FileInfoObject> CollectFileInformation(
 			string pathToBeArchived,
@@ -127,7 +117,7 @@ namespace Pacifica.DMS_Metadata
 		{
 			var fileCollection = new List<FileInfoObject>();
 
-			DirectoryInfo archiveDir = new DirectoryInfo(pathToBeArchived);
+			var archiveDir = new DirectoryInfo(pathToBeArchived);
 			if (!archiveDir.Exists)
 			{
 				throw new DirectoryNotFoundException("Source directory not found: " + archiveDir);
@@ -139,8 +129,7 @@ namespace Pacifica.DMS_Metadata
 			else
 				eSearchOption = SearchOption.TopDirectoryOnly;
 
-			List<FileInfo> fileList = archiveDir.GetFiles("*.*", eSearchOption).ToList<FileInfo>();
-			FileInfoObject fio;
+			List<FileInfo> fileList = archiveDir.GetFiles("*.*", eSearchOption).ToList();
 
 			if (fileList.Count >= MAX_FILES_TO_ARCHIVE)
 			{
@@ -148,7 +137,6 @@ namespace Pacifica.DMS_Metadata
 			}
 
 			double fracCompleted = 0.0;
-			int fileCount = fileList.Count;
 
 			// Generate file size sum for status purposes
 			long totalFileSize = 0;				// how much data is there to crunch?
@@ -163,12 +151,12 @@ namespace Pacifica.DMS_Metadata
 				runningFileSize += fi.Length;
 
 				if (totalFileSize > 0)
-					fracCompleted = ((double)runningFileSize / (double)totalFileSize);
+					fracCompleted = (runningFileSize / (double)totalFileSize);
 
 				ReportProgress(fracCompleted * 100.0, "Hashing files: " + fi.Name);
 
 				// This constructor will auto-compute the Sha-1 hash value for the file
-				fio = new FileInfoObject(fi.FullName, baseDSPath);
+				var fio = new FileInfoObject(fi.FullName, baseDSPath);
 				fileCollection.Add(fio);
 			}
 
@@ -182,7 +170,7 @@ namespace Pacifica.DMS_Metadata
 		/// Query server for files and hash codes
 		/// </summary>
 		/// <param name="fileList">List of local files</param>
-		/// <param name="subFolder">Optional subfolder to limit the search to (can be empty)</param>
+		/// <param name="uploadMetadata">Upload metadata</param>
 		/// <returns></returns>
 		private List<FileInfoObject> CompareDatasetContentsElasticSearch(
 			List<FileInfoObject> fileList,
@@ -192,17 +180,17 @@ namespace Pacifica.DMS_Metadata
 			TotalFileSizeToUpload = 0;
 
 			// Find all files in MyEMSL for this dataset
-			var reader = new MyEMSLReader.Reader();
-			reader.IncludeAllRevisions = false;
+			var reader = new Reader
+			{
+				IncludeAllRevisions = false
+			};
 
 			// Attach events
-			reader.ErrorEvent += new MyEMSLReader.MessageEventHandler(reader_ErrorEvent);
-			reader.MessageEvent += new MyEMSLReader.MessageEventHandler(reader_MessageEvent);
-			reader.ProgressEvent += new MyEMSLReader.ProgressEventHandler(reader_ProgressEvent);
+			reader.ErrorEvent += reader_ErrorEvent;
+			reader.MessageEvent += reader_MessageEvent;
+			reader.ProgressEvent += reader_ProgressEvent;
 
-			List<ArchivedFileInfo> lstFilesInMyEMSL;
-
-			lstFilesInMyEMSL = reader.FindFilesByDatasetID(uploadMetadata.DatasetID, uploadMetadata.SubFolder);
+			List<ArchivedFileInfo> lstFilesInMyEMSL = reader.FindFilesByDatasetID(uploadMetadata.DatasetID, uploadMetadata.SubFolder);
 
 			if (lstFilesInMyEMSL.Count == 0)
 			{
@@ -219,7 +207,7 @@ namespace Pacifica.DMS_Metadata
 
 			// Keys in this dictionary are relative file paths
 			// Values are the sha-1 hash values for the file
-			Dictionary<string, string> dctFilesInMyEMSLSha1Hash = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+			var dctFilesInMyEMSLSha1Hash = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
 
 			foreach (var archiveFile in lstFilesInMyEMSL)
 			{
@@ -300,7 +288,7 @@ namespace Pacifica.DMS_Metadata
 
 			if (archiveMode == ArchiveModes.update)
 			{
-				uploadMetadata.SubFolder = Utilities.GetDictionaryValue(taskParams, "OutputFolderName", "").ToString();
+				uploadMetadata.SubFolder = Utilities.GetDictionaryValue(taskParams, "OutputFolderName", "");
 
 				if (!string.IsNullOrWhiteSpace(uploadMetadata.SubFolder))
 					pathToArchive = Path.Combine(pathToArchive, uploadMetadata.SubFolder);
@@ -325,9 +313,9 @@ namespace Pacifica.DMS_Metadata
 		{
 			string datasetDate = Utilities.GetDictionaryValue(taskParams, "Created", "");
 			DateTime date_code = DateTime.Parse(datasetDate);
-			double yq = (double)date_code.Month / 12.0 * 4.0;
-			int yearQuarter = (int)Math.Ceiling(yq);
-			string datasetDateCodeString = date_code.Year.ToString() + "_" + yearQuarter.ToString();
+			double yq = date_code.Month / 12.0 * 4.0;
+			var yearQuarter = (int)Math.Ceiling(yq);
+			string datasetDateCodeString = date_code.Year + "_" + yearQuarter;
 
 			return datasetDateCodeString;
 		}
@@ -339,7 +327,7 @@ namespace Pacifica.DMS_Metadata
 
 		protected void ReportProgress(double percentComplete, string currentTask)
 		{
-			OnProgressUpdate(new Pacifica.Core.ProgressEventArgs(percentComplete, currentTask));
+			OnProgressUpdate(new ProgressEventArgs(percentComplete, currentTask));
 		}
 
 
@@ -347,24 +335,24 @@ namespace Pacifica.DMS_Metadata
 
 		public event ProgressEventHandler ProgressEvent;
 
-		public delegate void ProgressEventHandler(object sender, Pacifica.Core.ProgressEventArgs e);
+		public delegate void ProgressEventHandler(object sender, ProgressEventArgs e);
 
 		#endregion
 
 		#region "Event Functions"
 
-		public void OnProgressUpdate(Pacifica.Core.ProgressEventArgs e)
+		public void OnProgressUpdate(ProgressEventArgs e)
 		{
 			if (ProgressEvent != null)
 				ProgressEvent(this, e);
 		}
 
-		void reader_ErrorEvent(object sender, MyEMSLReader.MessageEventArgs e)
+		void reader_ErrorEvent(object sender, MessageEventArgs e)
 		{
 			Console.WriteLine("Error in MyEMSLReader: " + e.Message);
 		}
 
-		void reader_MessageEvent(object sender, MyEMSLReader.MessageEventArgs e)
+		void reader_MessageEvent(object sender, MessageEventArgs e)
 		{
 			// Console.WriteLine("MyEMSLReader: " + e.Message);
 		}

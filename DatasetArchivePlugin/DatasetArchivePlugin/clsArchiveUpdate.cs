@@ -9,10 +9,7 @@
 //						02/03/2010 (DAC) - Modified logging to include job number
 //*********************************************************************************************************
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using CaptureTaskManager;
 using System.IO;
 using PRISM.Files;
@@ -43,21 +40,27 @@ namespace DatasetArchivePlugin
 
 		#region "Auto-Properties"
 
+#if !DartFTPMissing
 		[Obsolete("No longer needed since using MyEMSL")]
 		public bool CreateDatasetFolderInArchiveIfMissing { get; set; }
+#endif
 
 		#endregion
 
 		#region "Constructors"
+
 		/// <summary>
 		/// Constructor
 		/// </summary>
 		/// <param name="MgrParams">Manager parameters</param>
-		/// <param name="TaskParasms">Task parameters</param>
+		/// <param name="TaskParams">Task parameters</param>
+		/// <param name="StatusTools"></param>
 		public clsArchiveUpdate(IMgrParams MgrParams, ITaskParams TaskParams, IStatusFile StatusTools)
 			: base(MgrParams, TaskParams, StatusTools)
 		{
-			CreateDatasetFolderInArchiveIfMissing = false;
+#if !DartFTPMissing
+				CreateDatasetFolderInArchiveIfMissing = false;
+#endif
 		}
 		#endregion
 
@@ -67,7 +70,7 @@ namespace DatasetArchivePlugin
 		/// </summary>
 		/// <returns>TRUE for success, FALSE for failure</returns>
 		public override bool PerformTask()
-		{		
+		{
 
 			// Perform base class operations
 			if (!base.PerformTask()) return false;
@@ -75,8 +78,12 @@ namespace DatasetArchivePlugin
 			m_Msg = "Updating dataset " + m_DatasetName + ", job " + m_TaskParams.GetParam("Job");
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
 
+			bool onlyUseMyEMSL = true;
+
+#if !DartFTPMissing
 			string instrumentName = m_TaskParams.GetParam("Instrument_Name");
 			bool onlyUseMyEMSL = OnlyUseMyEMSL(instrumentName);
+#endif
 
 			bool pushDatasetToMyEmsl = m_TaskParams.GetParam("PushDatasetToMyEMSL", false);
 
@@ -85,10 +92,10 @@ namespace DatasetArchivePlugin
 				m_Msg = "Pushing dataset folder to MyEMSL";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
 
-				mMostRecentLogTime = System.DateTime.UtcNow;
-				mLastStatusUpdateTime = System.DateTime.UtcNow;
+				mMostRecentLogTime = DateTime.UtcNow;
+				mLastStatusUpdateTime = DateTime.UtcNow;
 
-				int iMaxMyEMSLUploadAttempts = 2;
+				const int iMaxMyEMSLUploadAttempts = 2;
 				bool recurse = m_TaskParams.GetParam("PushDatasetRecurse", false);
 				if (onlyUseMyEMSL)
 					recurse = true;
@@ -109,11 +116,15 @@ namespace DatasetArchivePlugin
 				return true;
 			}
 
+#if DartFTPMissing
+			return true;			
+#else
 			bool success = PerformTaskUseFTP();
-
 			return success;
+#endif
 		}
 
+#if !DartFTPMissing
 		[Obsolete("No longer needed since using MyEMSL")]
 		protected bool PerformTaskUseFTP()
 		{
@@ -413,6 +424,7 @@ namespace DatasetArchivePlugin
 			return true;
 
 		}	// End sub
+#endif
 
 		/// <summary>
 		/// Converts the Samba version of an archive path to a Linux version of the path
@@ -621,7 +633,7 @@ namespace DatasetArchivePlugin
 			// Only generate a hash for the files if the archive file was created within the last 35 days
 			// Files older than that may be purged from spinning disk and would thus only reside on tape
 			// Since retrieval from tape can be slow, we won't compute a hash if the file is more than 35 days old
-			if (generateHash && System.DateTime.UtcNow.Subtract(fiArchiveFile.LastWriteTimeUtc).TotalDays < 35)
+			if (generateHash && DateTime.UtcNow.Subtract(fiArchiveFile.LastWriteTimeUtc).TotalDays < 35)
 			{
 				// Compares two files via SHA hash
 				string sSourceFileHash = string.Empty;
@@ -669,7 +681,7 @@ namespace DatasetArchivePlugin
 		/// </summary>
 		/// <param name="InpFileNamePath">Fully qualified path to file</param>
 		/// <returns>String representation of SHA1 hash</returns>
-		private string GenerateHashFromFile(System.IO.FileInfo fiFile)
+		private string GenerateHashFromFile(FileInfo fiFile)
 		{
 			// Generates hash code for specified input file
 			byte[] ByteHash = null;
