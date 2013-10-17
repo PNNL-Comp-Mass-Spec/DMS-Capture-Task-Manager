@@ -9,11 +9,9 @@
 //*********************************************************************************************************
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Data.SqlClient;
 using System.Data;
-using CaptureTaskManager;
 
 namespace CaptureTaskManager
 {
@@ -152,7 +150,7 @@ namespace CaptureTaskManager
 					{
 						using (SqlConnection cn = new SqlConnection(connStr))
 						{
-							cn.InfoMessage += new SqlInfoMessageEventHandler(OnInfoMessage);
+							cn.InfoMessage += OnInfoMessage;
 							using (SqlDataAdapter da = new SqlDataAdapter())
 							{
 								using (DataSet ds = new DataSet())

@@ -10,8 +10,6 @@
 using System;
 using System.Xml;
 using System.IO;
-using MessageLogger;
-using CaptureTaskManager;
 
 namespace CaptureTaskManager
 {

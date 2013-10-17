@@ -8,9 +8,6 @@
 // Last modified 09/10/2009
 //*********************************************************************************************************
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Windows.Forms;
 
 namespace CaptureTaskManager
 {

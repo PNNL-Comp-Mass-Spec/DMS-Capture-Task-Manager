@@ -8,9 +8,6 @@
 // Last modified 06/26/2009
 //*********************************************************************************************************
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Apache.NMS;
 using Apache.NMS.ActiveMQ;
 using Apache.NMS.ActiveMQ.Commands;
@@ -259,8 +256,8 @@ namespace CaptureTaskManager
 		/// </summary>
 		public void RegisterListeners()
 		{
-			m_CommandConsumer.Listener += new MessageListener(OnCommandReceived);
-			m_BroadcastConsumer.Listener += new MessageListener(OnBroadcastReceived);
+			m_CommandConsumer.Listener += OnCommandReceived;
+			m_BroadcastConsumer.Listener += OnBroadcastReceived;
 		}	// End sub
 		#endregion
 	}	// End class
