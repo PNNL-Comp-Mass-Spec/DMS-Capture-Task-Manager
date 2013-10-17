@@ -471,8 +471,10 @@ namespace Pacifica.Core
 
 			var fiMetadataFile = new FileInfo(metadataFilePath);
 
+			bool debugMode = true;
+
 			// Compute the total number of bytes that will be written to the tar file
-			long contentLength = ComputeTarFileSize(fileListObject, fiMetadataFile);
+			long contentLength = ComputeTarFileSize(fileListObject, fiMetadataFile, debugMode);
 
 			const double percentComplete = 0;		// Value between 0 and 100
 			long bytesWritten = 0;
@@ -481,7 +483,7 @@ namespace Pacifica.Core
 			RaiseStatusUpdate(percentComplete, bytesWritten, contentLength, string.Empty);
 
 			// Set this to True to debug things and create the .tar file locally instead of sending to the server
-			bool writeToDisk = false;		// aka Writefile or Savefile
+			bool writeToDisk = debugMode;		// aka Writefile or Savefile
 
 			if (!writeToDisk)
 			{
@@ -653,11 +655,9 @@ namespace Pacifica.Core
 			return contentLength;
 		}
 
-		private static long ComputeTarFileSize(SortedDictionary<string, FileInfoObject> fileListObject, FileInfo fiMetadataFile)
+		private static long ComputeTarFileSize(SortedDictionary<string, FileInfoObject> fileListObject, FileInfo fiMetadataFile, bool debugMode)
 		{
 			long contentLength = 0;
-
-			bool debugMode = false;
 
 			if (debugMode)
 			{
@@ -694,14 +694,17 @@ namespace Pacifica.Core
 
 					if (!dctDirectoryEntries.Contains(fiSourceFile.Directory.FullName))
 					{
+						string dirPathInArchive = "data/" + fileToArchive.Value.RelativeDestinationDirectory + "/";
+						addonBytes = AddTarFileContentLength(dirPathInArchive, 0);
+
 						if (debugMode)
 							Console.WriteLine(
 								"0".PadRight(12) +
-								TAR_BLOCK_SIZE_BYTES.ToString().PadRight(12) +
+								addonBytes.ToString().PadRight(12) +
 								contentLength.ToString().PadRight(13) +
-								clsFileTools.CompactPathString(fiSourceFile.Directory.FullName + "\\", 75));
+								clsFileTools.CompactPathString(dirPathInArchive, 75));
 
-						contentLength += TAR_BLOCK_SIZE_BYTES;
+						contentLength += addonBytes;
 
 						dctDirectoryEntries.Add(fiSourceFile.Directory.FullName);
 					}
@@ -753,7 +756,7 @@ namespace Pacifica.Core
 
 			tarEntry.Name = pathInArchive;
 			tarOutputStream.PutNextEntry(tarEntry);
-			bytesWritten += 512;
+			bytesWritten += AddTarFileContentLength(pathInArchive, 0);
 
 		}
 
