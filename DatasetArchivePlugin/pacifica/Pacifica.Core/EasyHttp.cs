@@ -471,7 +471,7 @@ namespace Pacifica.Core
 
 			var fiMetadataFile = new FileInfo(metadataFilePath);
 
-			bool debugMode = true;
+			const bool debugMode = false;
 
 			// Compute the total number of bytes that will be written to the tar file
 			long contentLength = ComputeTarFileSize(fileListObject, fiMetadataFile, debugMode);
@@ -483,8 +483,14 @@ namespace Pacifica.Core
 			RaiseStatusUpdate(percentComplete, bytesWritten, contentLength, string.Empty);
 
 			// Set this to True to debug things and create the .tar file locally instead of sending to the server
-			bool writeToDisk = debugMode;		// aka Writefile or Savefile
+			const bool writeToDisk = debugMode; // aka Writefile or Savefile
 
+			if (writeToDisk && Environment.MachineName.IndexOf("proto", StringComparison.CurrentCultureIgnoreCase) >= 0)
+			{
+				throw new Exception("Should not have writeToDisk set to True when running on a Proto-x server");
+			}
+
+			// ReSharper disable once ConditionIsAlwaysTrueOrFalse
 			if (!writeToDisk)
 			{
 				// Make the request
@@ -512,6 +518,8 @@ namespace Pacifica.Core
 			}
 
 			Stream oRequestStream;
+			
+			// ReSharper disable once ConditionIsAlwaysTrueOrFalse
 			if (writeToDisk)
 				oRequestStream = new FileStream(@"E:\CapMan_WorkDir\TestFile3.tar", FileMode.Create, FileAccess.Write, FileShare.Read);
 			else
@@ -578,6 +586,7 @@ namespace Pacifica.Core
 
 			RaiseStatusUpdate(100, contentLength, contentLength, string.Empty);
 
+			// ReSharper disable once ConditionIsAlwaysTrueOrFalse
 			if (writeToDisk)
 				return string.Empty;
 
@@ -716,7 +725,7 @@ namespace Pacifica.Core
 				if (debugMode)
 					Console.WriteLine(
 						fileToArchive.Value.FileSizeInBytes.ToString().PadRight(12) +
-						addonBytes.ToString().ToString().PadRight(12) +
+						addonBytes.ToString().PadRight(12) +
 						contentLength.ToString().PadRight(13) +
 						clsFileTools.CompactPathString(fileToArchive.Value.RelativeDestinationFullPath, 73));
 
