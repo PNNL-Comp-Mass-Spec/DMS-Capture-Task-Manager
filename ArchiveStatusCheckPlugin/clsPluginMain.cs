@@ -235,7 +235,7 @@ namespace ArchiveStatusCheckPlugin
 			try
 			{
 
-				string sql = "SELECT StatusNum, Status_URI FROM V_MyEMSL_Uploads WHERE Dataset_ID = " + m_DatasetID + " AND Job <= " + m_Job + " AND ISNULL(StatusNum, 0) > 0 AND ErrorCode <> 101";
+				string sql = "SELECT StatusNum, Status_URI FROM V_MyEMSL_Uploads WHERE Dataset_ID = " + m_DatasetID + " AND Job <= " + m_Job + " AND ISNULL(StatusNum, 0) > 0 AND ErrorCode NOT IN (-1, 101)";
 
 				while (retryCount > 0)
 				{
