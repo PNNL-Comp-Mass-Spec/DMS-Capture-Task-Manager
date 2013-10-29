@@ -161,8 +161,6 @@ namespace ArchiveStatusCheckPlugin
 						return false;
 					}
 
-					lstUnverifiedURIs.Add(statusInfo.Value);
-
 				}
 				catch (Exception ex)
 				{
@@ -178,6 +176,7 @@ namespace ArchiveStatusCheckPlugin
 					}
 				}
 
+				lstUnverifiedURIs.Add(statusInfo.Value);
 				exceptionCount = 0;
 
 			}
@@ -193,12 +192,16 @@ namespace ArchiveStatusCheckPlugin
 			if (dctVerifiedURIs.Count == dctURIs.Count)
 				return true;
 			
+			string firstUnverified = "??";
+			if (lstUnverifiedURIs.Count > 0)
+				firstUnverified = lstUnverifiedURIs.First();
+
 			if (dctVerifiedURIs.Count == 0)
 			{
-				msg = "MyEMSL archive status not yet verified; see " + lstUnverifiedURIs.First();
+				msg = "MyEMSL archive status not yet verified; see " + firstUnverified;
 			}
 			else
-				msg = "MyEMSL archive status partially verified (success count = " + dctVerifiedURIs.Count + ", unverified count = " + lstUnverifiedURIs.Count() + "); first not verified: " + lstUnverifiedURIs.First();
+				msg = "MyEMSL archive status partially verified (success count = " + dctVerifiedURIs.Count + ", unverified count = " + lstUnverifiedURIs.Count() + "); first not verified: " + firstUnverified;
 
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 			return false;

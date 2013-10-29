@@ -135,6 +135,10 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\ArchiveStatusCheckPlugin\ArchiveStatusCheckPlugin.csproj">
+      <Project>{D63AD810-5835-49D6-B14F-334E6EA2CB40}</Project>
+      <Name>ArchiveStatusCheckPlugin</Name>
+    </ProjectReference>
     <ProjectReference Include="..\CTM_Shared\CTM_Shared.csproj">
       <Project>{7D07F054-0D29-45DD-9B22-71D0768BC3C3}</Project>
       <Name>CTM_Shared</Name>

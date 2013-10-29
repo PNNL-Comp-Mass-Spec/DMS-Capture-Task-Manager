@@ -78,7 +78,7 @@ namespace Pacifica.Core
 			accessDenied = false;
 			statusMessage = string.Empty;
 
-			const int timeoutSeconds = 5;
+			const int timeoutSeconds = 30;
 			HttpStatusCode responseStatusCode;
 
 			string xmlServerResponse = EasyHttp.Send(statusURI, out responseStatusCode, timeoutSeconds);

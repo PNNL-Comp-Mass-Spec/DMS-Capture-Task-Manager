@@ -63,6 +63,10 @@ namespace CaptureTaskManager
 					//    myToolRunner = (IToolRunner)new DatasetArchivePlugin.clsPluginMain();
 					//    break;
 
+					case "ArchiveStatusCheckPlugin.clsPluginMain":
+						myToolRunner = (IToolRunner)new ArchiveStatusCheckPlugin.clsPluginMain();
+					    break;
+
                     default:
                         break;
                 }
