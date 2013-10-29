@@ -38,7 +38,7 @@ namespace CaptureTaskManager
 			: base(mgrParams)
 		{
 			m_JobParams.Clear();
-		}	// End sub
+		}
 		#endregion
 
 		#region "Methods"
@@ -163,7 +163,7 @@ namespace CaptureTaskManager
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
 				return false;
 			}
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Stores a parameter
@@ -177,7 +177,7 @@ namespace CaptureTaskManager
 				value = "";
 			}
 			m_JobParams[keyName] = value;
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Wrapper for requesting a task from the database
@@ -202,7 +202,7 @@ namespace CaptureTaskManager
 			}
 
 			return retVal;
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Detailed step request
@@ -297,7 +297,7 @@ namespace CaptureTaskManager
 				outcome = EnumRequestTaskResult.ResultError;
 			}
 			return outcome;
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Closes a capture pipeline task (Overloaded)
@@ -306,7 +306,7 @@ namespace CaptureTaskManager
 		public override void CloseTask(EnumCloseOutType taskResult)
 		{
 			CloseTask(taskResult, "", EnumEvalCode.EVAL_CODE_SUCCESS, "");
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Closes a capture pipeline task (Overloaded)
@@ -316,7 +316,7 @@ namespace CaptureTaskManager
 		public override void CloseTask(EnumCloseOutType taskResult, string closeoutMsg)
 		{
 			CloseTask(taskResult, closeoutMsg, EnumEvalCode.EVAL_CODE_SUCCESS, "");
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Closes a capture pipeline task (Overloaded)
@@ -327,7 +327,7 @@ namespace CaptureTaskManager
 		public override void CloseTask(EnumCloseOutType taskResult, string closeoutMsg, EnumEvalCode evalCode)
 		{
 			CloseTask(taskResult, closeoutMsg, evalCode, "");
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Closes a capture pipeline task (Overloaded)
@@ -351,7 +351,7 @@ namespace CaptureTaskManager
 				msg = msg = "Successfully set task complete in database, job " + GetParam("Job", "??");
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 			}
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Database calls to set a capture task complete
@@ -436,7 +436,7 @@ namespace CaptureTaskManager
 			}
 
 			return Outcome;
-		}	// End sub
+		}
 		#endregion
 	}	// End class
 }	// End namespace

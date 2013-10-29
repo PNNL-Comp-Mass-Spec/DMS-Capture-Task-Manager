@@ -110,7 +110,7 @@ namespace CaptureTaskManager
 				string msg = "Exception creating broker connection";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, Ex);
 			}
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Create the message broker communication objects and register the listener function
@@ -147,7 +147,7 @@ namespace CaptureTaskManager
 				DestroyConnection();
 				return false;
 			}
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Command listener function. Received commands will cause this to be called
@@ -171,7 +171,7 @@ namespace CaptureTaskManager
 				Msg = "clsMessageHandler().OnCommandReceived: No event handlers assigned";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg);
 			}
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Broadcast listener function. Received Broadcasts will cause this to be called
@@ -195,7 +195,7 @@ namespace CaptureTaskManager
 				Msg = "clsMessageHandler().OnBroadcastReceived: No event handlers assigned";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg);
 			}
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Sends a status message
@@ -220,7 +220,7 @@ namespace CaptureTaskManager
 			{
 				throw new ObjectDisposedException(this.GetType().FullName);
 			}
-		}	// End sub
+		}
 		#endregion
 
 		#region "Cleanup"
@@ -236,7 +236,7 @@ namespace CaptureTaskManager
 				string msg = "Message connection closed";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 			}
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Implements IDisposable interface
@@ -248,7 +248,7 @@ namespace CaptureTaskManager
 				this.DestroyConnection();
 				this.m_IsDisposed = true;
 			}
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Registers the command and broadcast listeners under control of main program.
@@ -258,7 +258,7 @@ namespace CaptureTaskManager
 		{
 			m_CommandConsumer.Listener += OnCommandReceived;
 			m_BroadcastConsumer.Listener += OnBroadcastReceived;
-		}	// End sub
+		}
 		#endregion
 	}	// End class
 }	// End namespace

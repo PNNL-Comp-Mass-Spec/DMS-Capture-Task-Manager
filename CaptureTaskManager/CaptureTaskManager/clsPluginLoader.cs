@@ -8,6 +8,7 @@
 // Last modified 09/22/2009
 //*********************************************************************************************************
 using System;
+using System.Reflection;
 using System.Xml;
 using System.IO;
 
@@ -46,7 +47,7 @@ namespace CaptureTaskManager
             /// </summary>
             /// <remarks>Also uncomment the appropriate case statements in the following two functions</remarks>
 
-            private const bool PLUGIN_DEBUG_MODE_ENABLED = true;
+#if PLUGIN_DEBUG_MODE_ENABLED
 
             private static IToolRunner DebugModeGetToolRunner(string className)
             {
@@ -73,6 +74,7 @@ namespace CaptureTaskManager
 
                 return myToolRunner;
             }
+#endif
 
 			/// <summary>
 			/// Loads a tool runner object
@@ -81,14 +83,14 @@ namespace CaptureTaskManager
 			/// <returns>An object meeting the IToolRunner interface</returns>
 			public static IToolRunner GetToolRunner(string toolName)
 			{
-				string msg;
-				string xPath = "//ToolRunners/ToolRunner[@Tool='" + toolName.ToLower() + "']";
+	            string xPath = "//ToolRunners/ToolRunner[@Tool='" + toolName.ToLower() + "']";
 				string className = "";
 				string assyName = "";
 				IToolRunner myToolRunner = null;
 
 				if (GetPluginInfo(xPath, ref className, ref assyName))
 				{
+#if PLUGIN_DEBUG_MODE_ENABLED
                     if (PLUGIN_DEBUG_MODE_ENABLED)
                     {
                         myToolRunner = DebugModeGetToolRunner(className);
@@ -97,8 +99,10 @@ namespace CaptureTaskManager
                             return myToolRunner;
                         }
                     }
+#endif
 
 					object obj = LoadObject(className, assyName);
+					string msg;
 					if (obj != null)
 					{
 						try
@@ -119,7 +123,7 @@ namespace CaptureTaskManager
 					}
 				}
 				return myToolRunner;
-			}	// End sub
+			}
 
 			/// <summary>
 			/// Retrieves data for specified plugin from plugin info config file
@@ -130,8 +134,7 @@ namespace CaptureTaskManager
 			/// <returns>TRUE for success, FALSE for failure</returns>
 			private static bool GetPluginInfo(string xPath, ref string className, ref string assyName)
 			{
-				XmlDocument doc = new XmlDocument();
-				XmlNodeList nodeList;
+				var doc = new XmlDocument();
 				string strPluginInfo = string.Empty;
 
 				try
@@ -146,11 +149,17 @@ namespace CaptureTaskManager
 					doc.Load(GetPluginInfoFilePath(m_pluginConfigFile));
 					XmlElement root = doc.DocumentElement;
 
+					if (root == null)
+					{
+						ErrMsg = "Error in GetPluginInfo: root element not found in " + m_pluginConfigFile;
+						return false;
+					}
+
 					// Find the element that matches the tool name
-					nodeList = root.SelectNodes(xPath);
+					XmlNodeList nodeList = root.SelectNodes(xPath);
 
 					// Make sure exactly 1 element found and retrieve its information
-					if (nodeList.Count == 1)
+					if (nodeList != null && nodeList.Count == 1)
 					{
 						foreach (XmlElement el in nodeList)
 						{
@@ -166,10 +175,10 @@ namespace CaptureTaskManager
 				}
 				catch (Exception ex)
 				{
-					ErrMsg = "Error in GetPluginInfo:" + ex.Message + "; " + strPluginInfo;
+					ErrMsg = "Error in GetPluginInfo: " + ex.Message + "; " + strPluginInfo;
 					return false;
 				}
-			}	// End sub
+			}
 
 			/// <summary>
 			/// Gets the path to the plugin info config file
@@ -178,9 +187,12 @@ namespace CaptureTaskManager
 			/// <returns>Path to plugin info file</returns>
 			private static string GetPluginInfoFilePath(string PluginInfoFileName)
 			{
-				FileInfo fi = new FileInfo(System.Windows.Forms.Application.ExecutablePath);
+				var fi = new FileInfo(System.Windows.Forms.Application.ExecutablePath);
+				if (fi.DirectoryName == null)
+					throw new DirectoryNotFoundException("Could not determine parent folder path for the exe");
+				
 				return Path.Combine(fi.DirectoryName, PluginInfoFileName);
-			}	// End sub
+			}
 
 			/// <summary>
 			/// Loads the specifed dll
@@ -194,8 +206,7 @@ namespace CaptureTaskManager
 				try
 				{
 					// Build instance of tool runner class from class and assembly names
-					System.Reflection.Assembly assem;
-					assem = System.Reflection.Assembly.LoadFrom(GetPluginInfoFilePath(assyName));
+					Assembly assem = Assembly.LoadFrom(GetPluginInfoFilePath(assyName));
 					Type dllType = assem.GetType(className, false, true);
 					obj = Activator.CreateInstance(dllType);
 				}
@@ -204,7 +215,7 @@ namespace CaptureTaskManager
 					ErrMsg = "clsPluginLoader.LoadObject(), exception: " + ex.Message;
 				}
 				return obj;
-			}	// End sub
+			}
 		#endregion
-	}	// End class
-}	// End namespace
+	}
+}

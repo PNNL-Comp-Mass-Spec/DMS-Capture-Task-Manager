@@ -27,9 +27,9 @@ namespace CaptureTaskManager
 			/// <returns>String dictionary of command sections</returns>
 			public static StringDictionary ParseCommandXML(string InputXML)
 			{
-				StringDictionary returnDict = new StringDictionary();
+				var returnDict = new StringDictionary();
 
-				XmlDocument doc = new XmlDocument();
+				var doc = new XmlDocument();
 				doc.LoadXml(InputXML);
 
 				try
@@ -48,7 +48,7 @@ namespace CaptureTaskManager
 				{
 					throw new Exception("", Ex);	// Message parameter left blank because it is handled at higher level
 				}
-			}	// End sub
+			}
 
 			/// <summary>
 			/// Converts broadcast XML string into a dictionary of strings
@@ -57,11 +57,11 @@ namespace CaptureTaskManager
 			/// <returns>String dictionary of broadcast sections</returns>
 			public static clsBroadcastCmd ParseBroadcastXML(string InputXML)
 			{
-				clsBroadcastCmd returnedData = new clsBroadcastCmd();
+				var returnedData = new clsBroadcastCmd();
 
 				try
 				{
-					XmlDocument doc = new XmlDocument();
+					var doc = new XmlDocument();
 					doc.LoadXml(InputXML);
 
 					// Get list of managers this command applies to
@@ -80,7 +80,7 @@ namespace CaptureTaskManager
 				{
 					throw new Exception("Exception while parsing broadcast string", Ex);
 				}
-			}	// End sub
+			}
 		#endregion
-	}	// End class
-}	// End namespace
+	}
+}

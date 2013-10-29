@@ -100,7 +100,7 @@ namespace CaptureTaskManager
 		public clsMainProgram()
 		{
 			// Does nothing at present
-		}	// End sub
+		}
 		#endregion
 
 		#region "Methods"
@@ -600,7 +600,7 @@ namespace CaptureTaskManager
 			}
 
 			return restartOK;
-		}	// End sub
+		}
 
 
 		private void PerformTask(out EnumCloseOutType eTaskCloseout)
@@ -923,7 +923,7 @@ namespace CaptureTaskManager
 			}
 
 			return true;
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Looks for flag file; auto cleans if ManagerErrorCleanupMode is >= 1
@@ -1159,7 +1159,7 @@ namespace CaptureTaskManager
 
 			// No problem found
 			return true;
-		}	// End sub
+		}
 
 		#endregion
 
@@ -1171,7 +1171,7 @@ namespace CaptureTaskManager
 
 			m_ConfigChanged = true;
 			m_FileWatcher.EnableRaisingEvents = false;
-		}	// End sub
+		}
 
 		private void OnBroadcastReceived(string cmdText)
 		{
@@ -1220,18 +1220,18 @@ namespace CaptureTaskManager
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
 					break;
 			}
-		}	// End sub
+		}
 
 		private void OnCommandReceived(string cmdText)
 		{
 			//TODO: (Future)
-		}	// End sub
+		}
 
 		void OnStatusMonitorUpdateReceived(string msg)
 		{
 			if (m_MsgQueueInitSuccess)
 				m_MsgHandler.SendMessage(msg);
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Updates the status at m_StatusTimer interval
@@ -1243,7 +1243,7 @@ namespace CaptureTaskManager
 			TimeSpan duration = DateTime.UtcNow - m_DurationStart;
 			m_StatusFile.Duration = (Single)duration.TotalHours;
 			m_StatusFile.WriteStatusFile();
-		}	// End sub
+		}
 		#endregion
 	}	// End class
 }	// End namespace

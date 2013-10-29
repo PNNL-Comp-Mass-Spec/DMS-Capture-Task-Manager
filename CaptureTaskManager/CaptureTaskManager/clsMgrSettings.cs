@@ -54,7 +54,7 @@ namespace CaptureTaskManager
 				else
 					throw new ApplicationException("Unable to initialize manager settings class: " + m_ErrMsg);
 			}
-		}	// End sub
+		}
 
 		public bool LoadSettings()
 		{
@@ -103,7 +103,7 @@ namespace CaptureTaskManager
 
 			//No problems found
 			return true;
-		}	// End sub
+		}
 
 		private System.Collections.Generic.Dictionary<string, string> LoadMgrSettingsFromFile()
 		{
@@ -134,7 +134,7 @@ namespace CaptureTaskManager
 			RetDict.Add("UsingDefaults", TempStr);
 
 			return RetDict;
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Calls stored procedure AckManagerUpdateRequired to acknowledge that the manager has exited so that an update can be applied
@@ -218,18 +218,18 @@ namespace CaptureTaskManager
 
 			//No problems found
 			return true;
-		}	// End sub
+		}
 
 		public bool LoadMgrSettingsFromDB()
 		{
 			bool logConnectionErrors = true;
 			return LoadMgrSettingsFromDB(ref m_ParamDictionary, logConnectionErrors);
-		}	// End sub
+		}
 
 		public bool LoadMgrSettingsFromDB(bool logConnectionErrors)
 		{
 			return LoadMgrSettingsFromDB(ref m_ParamDictionary, logConnectionErrors);
-		}	// End sub
+		}
 
 		public bool LoadMgrSettingsFromDB(ref System.Collections.Generic.Dictionary<string, string> MgrSettingsDict)
 		{
@@ -286,7 +286,7 @@ namespace CaptureTaskManager
 			return success;
 
 
-		}	// End sub
+		}
 
 		private bool LoadMgrSettingsFromDBWork(string managerName, out DataTable dtSettings, bool logConnectionErrors, bool returnErrorIfNoParameters)
 		{
@@ -532,7 +532,7 @@ namespace CaptureTaskManager
 				m_ErrMsg = "clsMgrSettings.LoadConfigDocument; Exception loading settings file: " + ex.Message;
 				return null;
 			}
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Specifies the full name and path for the application config file
@@ -541,7 +541,7 @@ namespace CaptureTaskManager
 		private string GetConfigFilePath()
 		{
 			return Application.ExecutablePath + ".config";
-		}	// End sub
+		}
 
 		private string DbCStr(object InpObj)
 		{

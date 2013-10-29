@@ -59,7 +59,7 @@ namespace CaptureTaskManager
 			{
 				m_MgrParams = MgrParams;
 				m_ConnStr = m_MgrParams.GetParam("ConnectionString");
-			}	// End sub
+			}
 		#endregion
 
 		#region "Methods"
@@ -113,7 +113,7 @@ namespace CaptureTaskManager
 				{
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, s);
 				}
-			}	// End sub
+			}
 
 			/// <summary>
 			/// Method for executing a db stored procedure, assuming no data table is returned
@@ -125,7 +125,7 @@ namespace CaptureTaskManager
 			{
 				DataTable dummyTable = null;
 				return ExecuteSP(spCmd, ref dummyTable, connStr);
-			}	// End sub
+			}
 
 			/// <summary>
 			/// Method for executing a db stored procedure if a data table is to be returned
@@ -211,7 +211,7 @@ namespace CaptureTaskManager
 				}
 
 				return resCode;
-			}	// End sub
+			}
 
 			/// <summary>
 			/// Debugging routine for printing SP calling params
@@ -232,7 +232,7 @@ namespace CaptureTaskManager
 				}
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parameter list:" + myMsg);
-			}	// End sub
+			}
 
 			protected virtual bool FillParamDict(DataTable dt)
 			{
@@ -273,7 +273,7 @@ namespace CaptureTaskManager
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
 					return false;
 				}
-			}	// End sub
+			}
 
 			protected string DbCStr(object InpObj)
 			{
@@ -286,7 +286,7 @@ namespace CaptureTaskManager
 				{
 					return InpObj.ToString();
 				}
-			}	// End sub
+			}
 
 			protected float DbCSng(object InpObj)
 			{
@@ -299,7 +299,7 @@ namespace CaptureTaskManager
 				{
 					return (float)InpObj;
 				}
-			}	// End sub
+			}
 
 			protected double DbCDbl(object InpObj)
 			{
@@ -312,7 +312,7 @@ namespace CaptureTaskManager
 				{
 					return (double)InpObj;
 				}
-			}	// End sub
+			}
 
 			protected int DbCInt(object InpObj)
 			{
@@ -325,7 +325,7 @@ namespace CaptureTaskManager
 				{
 					return (int)InpObj;
 				}
-			}	// End sub
+			}
 
 			protected long DbCLng(object InpObj)
 			{
@@ -338,7 +338,7 @@ namespace CaptureTaskManager
 				{
 					return (long)InpObj;
 				}
-			}	// End sub
+			}
 
 			protected decimal DbCDec(object InpObj)
 			{
@@ -351,7 +351,7 @@ namespace CaptureTaskManager
 				{
 					return (decimal)InpObj;
 				}
-			}	// End sub
+			}
 
 			protected short DbCShort(object InpObj)
 			{
@@ -364,7 +364,7 @@ namespace CaptureTaskManager
 				{
 					return (short)InpObj;
 				}
-			}	// End sub
+			}
 		#endregion
 
 		#region "Event handlers"
@@ -389,7 +389,7 @@ namespace CaptureTaskManager
 					errString.Append(", Server: " + err.Server);
 					m_ErrorList.Add(errString.ToString());
 				}
-			}	// End sub
+			}
 		#endregion
 	}	// End class
 }	// End namespace

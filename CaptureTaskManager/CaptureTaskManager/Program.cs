@@ -116,7 +116,7 @@ namespace CaptureTaskManager
 
 				}
 
-			}	// End sub
+			}
 
 			private static bool SetOptionsUsingCommandLineParameters(FileProcessor.clsParseCommandLine objParseCommandLine)
 			{

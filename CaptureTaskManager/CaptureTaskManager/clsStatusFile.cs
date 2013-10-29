@@ -207,7 +207,7 @@ namespace CaptureTaskManager
 			m_Dataset = "";
 			m_JobNumber = 0;
 			m_Tool = "";
-		}	// End sub
+		}
 		#endregion
 
 		#region "Events"
@@ -254,7 +254,7 @@ namespace CaptureTaskManager
 		private string ConvertMgrStatusToString(EnumMgrStatus StatusEnum)
 		{
 			return StatusEnum.ToString("G");
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Converts the task status enum to a string value
@@ -264,7 +264,7 @@ namespace CaptureTaskManager
 		private string ConvertTaskStatusToString(EnumTaskStatus StatusEnum)
 		{
 			return StatusEnum.ToString("G");
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Converts the manager status enum to a string value
@@ -274,7 +274,7 @@ namespace CaptureTaskManager
 		private string ConvertTaskDetailStatusToString(EnumTaskStatusDetail StatusEnum)
 		{
 			return StatusEnum.ToString("G");
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Creates status flag file in same folder as .exe
@@ -431,7 +431,7 @@ namespace CaptureTaskManager
 
 			//Log to a message queue
 			if (m_LogToMsgQueue) LogStatusToMessageQueue(XMLText);
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Writes the status to the message queue
@@ -441,7 +441,7 @@ namespace CaptureTaskManager
 		{
 			if (MonitorUpdateRequired != null) MonitorUpdateRequired(strStatusXML);
 
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Updates status file
@@ -453,7 +453,7 @@ namespace CaptureTaskManager
 			m_Progress = PercentComplete;
 
 			WriteStatusFile();
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Updates status file
@@ -467,7 +467,7 @@ namespace CaptureTaskManager
 			m_Progress = PercentComplete;
 
 			WriteStatusFile();
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Sets status file to show mahager not running
@@ -490,7 +490,7 @@ namespace CaptureTaskManager
 			m_TaskStatusDetail = EnumTaskStatusDetail.No_Task;
 
 			WriteStatusFile();
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Updates status file to show manager disabled
@@ -513,7 +513,7 @@ namespace CaptureTaskManager
 			m_TaskStatusDetail = EnumTaskStatusDetail.No_Task;
 
 			this.WriteStatusFile();
-		}	// End sub
+		}
 
 
 		/// <summary>
@@ -528,7 +528,7 @@ namespace CaptureTaskManager
 			m_TaskStatusDetail = EnumTaskStatusDetail.No_Task;
 
 			WriteStatusFile();
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Initializes the status from a file, if file exists
@@ -570,7 +570,7 @@ namespace CaptureTaskManager
 				return;
 
 			}
-		}	// End sub
+		}
 		#endregion
 	}	// End class
 }	// End namespace
