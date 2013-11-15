@@ -81,6 +81,19 @@ namespace Pacifica.Core
 			}
 		}
 
+		private const string API_RELATIVE_PATH = "/myemsl/api/";
+
+		/// <summary>
+		/// By default, returns https://my.emsl.pnl.gov/myemsl/api/
+		/// </summary>
+		public static string ApiUri
+		{
+			get
+			{
+				return SearchServerUri + API_RELATIVE_PATH;
+			}
+		}
+
 		private const string ELASTIC_SEARCH_RELATIVE_PATH = "/myemsl/elasticsearch/";
 
 		/// <summary>

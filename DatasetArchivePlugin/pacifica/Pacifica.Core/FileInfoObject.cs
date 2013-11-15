@@ -21,6 +21,11 @@ namespace Pacifica.Core
 			if (File.Directory != null)
 			{
 				mRelativeDestinationDirectory = GenerateRelativePath(File.Directory.FullName, baseDSPath);
+
+				if (!string.IsNullOrWhiteSpace(mRelativeDestinationDirectory) && Path.IsPathRooted(mRelativeDestinationDirectory))
+					throw new ArgumentException(
+						"The relative destination directory returned from GenerateRelativePath is rooted; it must be relative: " +
+						mRelativeDestinationDirectory + " for " + absoluteLocalFullPath);
 			}
 			else
 				mRelativeDestinationDirectory = string.Empty;
@@ -39,7 +44,15 @@ namespace Pacifica.Core
 		{
 			AbsoluteLocalPath = absoluteLocalFullPath;
 			File = new FileInfo(AbsoluteLocalPath);
+
+			if (string.IsNullOrWhiteSpace(relativeDestinationDirectory))
+				relativeDestinationDirectory = string.Empty;
+
 			mRelativeDestinationDirectory = relativeDestinationDirectory;
+
+			if (!string.IsNullOrWhiteSpace(mRelativeDestinationDirectory) && Path.IsPathRooted(mRelativeDestinationDirectory))
+				throw new ArgumentException("Relative Destination Directory cannot be rooted; it must be relative: " +
+				                            mRelativeDestinationDirectory + " for " + absoluteLocalFullPath);
 
 			if (!string.IsNullOrWhiteSpace(sha1Hash) && sha1Hash.Length == 40)
 				Sha1HashHex = sha1Hash;
