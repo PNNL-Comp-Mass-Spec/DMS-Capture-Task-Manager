@@ -18,174 +18,174 @@ using System.IO;
 
 namespace DatasetArchivePlugin
 {
-	class clsOpsBase : IArchiveOps
-	{
-		//*********************************************************************************************************
-		// Base class for archive and archive update operations classes. This class should always be overridden.
-		//**********************************************************************************************************
+    class clsOpsBase : IArchiveOps
+    {
+        //*********************************************************************************************************
+        // Base class for archive and archive update operations classes. This class should always be overridden.
+        //**********************************************************************************************************
 
-		#region "Constants"
-		protected const string ARCHIVE = "Archive ";
-		protected const string UPDATE = "Archive update ";
+        #region "Constants"
+        protected const string ARCHIVE = "Archive ";
+        protected const string UPDATE = "Archive update ";
 
-		#endregion
+        #endregion
 
-		#region "Class variables"
-		protected IMgrParams m_MgrParams;
-		protected ITaskParams m_TaskParams;
-		protected IStatusFile m_StatusTools;
+        #region "Class variables"
+        protected IMgrParams m_MgrParams;
+        protected ITaskParams m_TaskParams;
+        protected IStatusFile m_StatusTools;
 
-		protected string m_ErrMsg = string.Empty;
-		protected string m_WarningMsg = string.Empty;
-		protected string m_DSNamePath;
+        protected string m_ErrMsg = string.Empty;
+        protected string m_WarningMsg = string.Empty;
+        protected string m_DSNamePath;
 
 #if !DartFTPMissing
 		[Obsolete("No longer needed since using MyEMSL")]
 		protected string m_ArchiveNamePath;
 #endif
 
-		protected string m_Msg;
+        protected string m_Msg;
 
 #if !DartFTPMissing
 		protected clsFtpOperations m_FtpTools;
 #endif
 
-		protected bool m_MyEmslUploadSuccess;
+        protected bool m_MyEmslUploadSuccess;
 
-		protected string m_User;
-		protected string m_Pwd;
-		protected bool m_UseTls;
-		protected int m_ServerPort;
-		protected int m_FtpTimeOut;
-		protected bool m_FtpPassive;
-		protected bool m_FtpRestart;
-		protected bool m_ConnectionOpen = false;
-		protected string m_ArchiveOrUpdate;
-		protected string m_DatasetName = string.Empty;
+        protected string m_User;
+        protected string m_Pwd;
+        protected bool m_UseTls;
+        protected int m_ServerPort;
+        protected int m_FtpTimeOut;
+        protected bool m_FtpPassive;
+        protected bool m_FtpRestart;
+        protected bool m_ConnectionOpen = false;
+        protected string m_ArchiveOrUpdate;
+        protected string m_DatasetName = string.Empty;
 
-		protected DateTime mLastStatusUpdateTime = DateTime.UtcNow;
-		protected DateTime mLastProgressUpdateTime = DateTime.UtcNow;
+        protected DateTime mLastStatusUpdateTime = DateTime.UtcNow;
+        protected DateTime mLastProgressUpdateTime = DateTime.UtcNow;
 
-		protected string mMostRecentLogMessage = string.Empty;
-		protected DateTime mMostRecentLogTime = DateTime.UtcNow;
+        protected string mMostRecentLogMessage = string.Empty;
+        protected DateTime mMostRecentLogTime = DateTime.UtcNow;
 
-		protected clsMD5StageFileCreator mMD5StageFileCreator;
-		protected clsFileTools m_FileTools;
+        protected clsMD5StageFileCreator mMD5StageFileCreator;
+        protected clsFileTools m_FileTools;
 
-		#endregion
+        #endregion
 
-		#region "Properties"
-		/// <summary>
-		/// Implements IArchiveOps.ErrMsg
-		/// </summary>
-		public string ErrMsg
-		{
-			get { return m_ErrMsg; }
-		}
+        #region "Properties"
+        /// <summary>
+        /// Implements IArchiveOps.ErrMsg
+        /// </summary>
+        public string ErrMsg
+        {
+            get { return m_ErrMsg; }
+        }
 
-		public string WarningMsg
-		{
-			get { return m_WarningMsg; }
-		}
+        public string WarningMsg
+        {
+            get { return m_WarningMsg; }
+        }
 
-		#endregion
+        #endregion
 
-		#region "Constructors"
-		public clsOpsBase(IMgrParams MgrParams, ITaskParams TaskParams, IStatusFile StatusTools)
-		{
-			m_MgrParams = MgrParams;
-			m_TaskParams = TaskParams;
-			m_StatusTools = StatusTools;
+        #region "Constructors"
+        public clsOpsBase(IMgrParams MgrParams, ITaskParams TaskParams, IStatusFile StatusTools)
+        {
+            m_MgrParams = MgrParams;
+            m_TaskParams = TaskParams;
+            m_StatusTools = StatusTools;
 
-			m_User = m_MgrParams.GetParam("username");
-			m_Pwd = m_MgrParams.GetParam("userpwd");
-			m_UseTls = bool.Parse(m_MgrParams.GetParam("usetls"));
-			m_ServerPort = int.Parse(m_MgrParams.GetParam("serverport"));
-			m_FtpTimeOut = int.Parse(m_MgrParams.GetParam("timeout"));
-			m_FtpPassive = bool.Parse(m_MgrParams.GetParam("passive"));
-			m_FtpRestart = bool.Parse(m_MgrParams.GetParam("restart"));
+            m_User = m_MgrParams.GetParam("username");
+            m_Pwd = m_MgrParams.GetParam("userpwd");
+            m_UseTls = bool.Parse(m_MgrParams.GetParam("usetls"));
+            m_ServerPort = int.Parse(m_MgrParams.GetParam("serverport"));
+            m_FtpTimeOut = int.Parse(m_MgrParams.GetParam("timeout"));
+            m_FtpPassive = bool.Parse(m_MgrParams.GetParam("passive"));
+            m_FtpRestart = bool.Parse(m_MgrParams.GetParam("restart"));
 
-			if (m_TaskParams.GetParam("StepTool") == "DatasetArchive")
-			{
-				m_ArchiveOrUpdate = ARCHIVE;
-			}
-			else
-			{
-				m_ArchiveOrUpdate = UPDATE;
-			}
+            if (m_TaskParams.GetParam("StepTool") == "DatasetArchive")
+            {
+                m_ArchiveOrUpdate = ARCHIVE;
+            }
+            else
+            {
+                m_ArchiveOrUpdate = UPDATE;
+            }
 
-			// Instantiate m_FileTools
-			m_FileTools = new clsFileTools(m_MgrParams.GetParam("MgrName", "CaptureTaskManager"), 1);
+            // Instantiate m_FileTools
+            m_FileTools = new clsFileTools(m_MgrParams.GetParam("MgrName", "CaptureTaskManager"), 1);
 
-		}	// End sub
-		#endregion
+        }	// End sub
+        #endregion
 
-		#region "Methods"
+        #region "Methods"
 
-		public static bool OnlyUseMyEMSL(string instrumentName)
-		{
-			/*
-			var lstExclusionPrefix = new List<string>();
+        public static bool OnlyUseMyEMSL(string instrumentName)
+        {
+            /*
+            var lstExclusionPrefix = new List<string>();
 
-			//lstExclusionPrefix.Add("DMS_Pipeline_Data");
-			//                  .Add("QExact");
-			//                  .Add("QTrap");
-			//                  .Add("VOrbi05");
-			//                  .Add("VOrbiETD03");
+            //lstExclusionPrefix.Add("DMS_Pipeline_Data");
+            //                  .Add("QExact");
+            //                  .Add("QTrap");
+            //                  .Add("VOrbi05");
+            //                  .Add("VOrbiETD03");
 
-			foreach (string prefix in lstExclusionPrefix)
-			{
-				if (instrumentName.StartsWith(prefix))
-					return false;
-			}
-			*/
+            foreach (string prefix in lstExclusionPrefix)
+            {
+                if (instrumentName.StartsWith(prefix))
+                    return false;
+            }
+            */
 
-			return true;
+            return true;
 
-		}
+        }
 
-		/// <summary>
-		/// Sets up to perform an archive or update task (Implements IArchiveOps.PerformTask)
-		/// Must be overridden in derived class
-		/// </summary>
-		/// <returns>TRUE for success, FALSE for failure</returns>
-		public virtual bool PerformTask()
-		{
-			m_DatasetName = m_TaskParams.GetParam("Dataset");
+        /// <summary>
+        /// Sets up to perform an archive or update task (Implements IArchiveOps.PerformTask)
+        /// Must be overridden in derived class
+        /// </summary>
+        /// <returns>TRUE for success, FALSE for failure</returns>
+        public virtual bool PerformTask()
+        {
+            m_DatasetName = m_TaskParams.GetParam("Dataset");
 
 #if !DartFTPMissing
 			string instrumentName = m_TaskParams.GetParam("Instrument_Name");
 			bool onlyUseMyEMSL = OnlyUseMyEMSL(instrumentName);
 #endif
 
-			// Set client/server perspective & setup paths
-			string baseStoragePath;
-			if (m_MgrParams.GetParam("perspective").ToLower() == "client")
-			{
-				baseStoragePath = m_TaskParams.GetParam("Storage_Vol_External");
-			}
-			else
-			{
-				baseStoragePath = m_TaskParams.GetParam("Storage_Vol");
-			}
+            // Set client/server perspective & setup paths
+            string baseStoragePath;
+            if (m_MgrParams.GetParam("perspective").ToLower() == "client")
+            {
+                baseStoragePath = m_TaskParams.GetParam("Storage_Vol_External");
+            }
+            else
+            {
+                baseStoragePath = m_TaskParams.GetParam("Storage_Vol");
+            }
 
-			//Path to dataset on storage server
-			m_DSNamePath = Path.Combine(Path.Combine(baseStoragePath, m_TaskParams.GetParam("Storage_Path")), m_TaskParams.GetParam("Folder"));
+            //Path to dataset on storage server
+            m_DSNamePath = Path.Combine(Path.Combine(baseStoragePath, m_TaskParams.GetParam("Storage_Path")), m_TaskParams.GetParam("Folder"));
 
 #if !DartFTPMissing
 			//Path to dataset for FTP operations
 			m_ArchiveNamePath = clsFileTools.CheckTerminator(m_TaskParams.GetParam("Archive_Path"), true, "/") + m_TaskParams.GetParam("Folder");
 #endif
 
-			//Verify dataset is in specified location
-			if (!VerifyDSPresent(m_DSNamePath))
-			{
-				m_Msg = "Dataset folder " + m_DSNamePath + " not found";
-				m_ErrMsg = string.Copy(m_Msg);
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
-				LogOperationFailed(m_DatasetName);
-				return false;
-			}
+            //Verify dataset is in specified location
+            if (!VerifyDSPresent(m_DSNamePath))
+            {
+                m_Msg = "Dataset folder " + m_DSNamePath + " not found";
+                m_ErrMsg = string.Copy(m_Msg);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
+                LogOperationFailed(m_DatasetName);
+                return false;
+            }
 
 #if !DartFTPMissing
 			if (!onlyUseMyEMSL)
@@ -195,171 +195,182 @@ namespace DatasetArchivePlugin
 			}
 #endif
 
-			// Got to here, everything's OK, so let let the derived class take over
-			return true;
+            // Got to here, everything's OK, so let let the derived class take over
+            return true;
 
-		}	// End sub
+        }	// End sub
 
-		protected string AppendToString(string text, string append)
-		{
-			if (string.IsNullOrEmpty(text))
-				text = string.Empty;
-			else
-				text += "; ";
+        protected string AppendToString(string text, string append)
+        {
+            if (string.IsNullOrEmpty(text))
+                text = string.Empty;
+            else
+                text += "; ";
 
-			return text + append;
-		}
+            return text + append;
+        }
 
-		protected bool UploadToMyEMSLWithRetry(int maxAttempts, bool recurse)
-		{
-			bool bSuccess = false;
-			int iAttempts = 0;
-			m_MyEmslUploadSuccess = false;
+        protected bool UploadToMyEMSLWithRetry(int maxAttempts, bool recurse, bool debugMode)
+        {
+            bool bSuccess = false;
+            int iAttempts = 0;
+            m_MyEmslUploadSuccess = false;
 
-			if (maxAttempts < 1)
-				maxAttempts = 1;
+            if (maxAttempts < 1)
+                maxAttempts = 1;
 
-			if (Environment.UserName.ToLower() != "svc-dms")
-			{
-				// The current user is not svc-dms
-				// Uploaded files would be associated with the wrong username and thus would not be visible to all DMS Users
-				m_ErrMsg = "Files must be uploaded to MyEMSL using the svc-dms account; aborting";
-				Console.WriteLine(m_ErrMsg);
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_ErrMsg);
-				return false;
-			}
+            if (Environment.UserName.ToLower() != "svc-dms")
+            {
+                // The current user is not svc-dms
+                // Uploaded files would be associated with the wrong username and thus would not be visible to all DMS Users
+                m_ErrMsg = "Files must be uploaded to MyEMSL using the svc-dms account; aborting";
+                Console.WriteLine(m_ErrMsg);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_ErrMsg);
+                return false;
+            }
 
-			while (!bSuccess && iAttempts < maxAttempts)
-			{
-				iAttempts += 1;
-				bSuccess = UploadToMyEMSL(recurse);
+            while (!bSuccess && iAttempts < maxAttempts)
+            {
+                iAttempts += 1;
+                bSuccess = UploadToMyEMSL(recurse, debugMode);
 
-				if (!bSuccess && iAttempts < maxAttempts)
-				{
-					// Wait 5 seconds, then retry
-					Thread.Sleep(5000);
-				}
-			}
+                if (debugMode)
+                    break;
 
-			if (!bSuccess)
-				m_WarningMsg = AppendToString(m_WarningMsg, "UploadToMyEMSL reports False");
+                if (!bSuccess && iAttempts < maxAttempts)
+                {
+                    // Wait 5 seconds, then retry
+                    Thread.Sleep(5000);
+                }
+            }
 
-			if (bSuccess && !m_MyEmslUploadSuccess)
-				m_WarningMsg = AppendToString(m_WarningMsg, "UploadToMyEMSL reports True but m_MyEmslUploadSuccess is False");
+            if (!bSuccess)
+            {
+                if (debugMode)
+                    m_WarningMsg = "Debug mode was enabled; thus, .tar file was created locally and not uploaded to MyEMSL";
+                else
+                    m_WarningMsg = AppendToString(m_WarningMsg, "UploadToMyEMSL reports False");
+            }
 
-			return bSuccess && m_MyEmslUploadSuccess;
-		}
+            if (bSuccess && !m_MyEmslUploadSuccess)
+                m_WarningMsg = AppendToString(m_WarningMsg, "UploadToMyEMSL reports True but m_MyEmslUploadSuccess is False");
 
-		/// <summary>
-		/// Use MyEMSLUploader to upload the data to MyEMSL
-		/// </summary>
-		/// <returns>True if success, false if an error</returns>
-		protected bool UploadToMyEMSL(bool recurse)
-		{
-			bool success;
-			DateTime dtStartTime = DateTime.UtcNow;
-			MyEMSLUploader myEMSLUL = null;
+            return bSuccess && m_MyEmslUploadSuccess;
+        }
 
-			try
-			{
-				m_Msg = "Bundling changes to dataset " + m_DatasetName + " for transmission to MyEMSL";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
+        /// <summary>
+        /// Use MyEMSLUploader to upload the data to MyEMSL
+        /// </summary>
+        /// <returns>True if success, false if an error</returns>
+        protected bool UploadToMyEMSL(bool recurse, bool debugMode)
+        {
+            bool success;
+            DateTime dtStartTime = DateTime.UtcNow;
+            MyEMSLUploader myEMSLUL = null;
 
-				myEMSLUL = new MyEMSLUploader(m_MgrParams.TaskDictionary, m_TaskParams.TaskDictionary);
+            try
+            {
+                m_Msg = "Bundling changes to dataset " + m_DatasetName + " for transmission to MyEMSL";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
 
-				// Attach the events
+                myEMSLUL = new MyEMSLUploader(m_MgrParams.TaskDictionary, m_TaskParams.TaskDictionary);
 
-				myEMSLUL.DebugEvent += myEMSLUL_DebugEvent;
-				myEMSLUL.ErrorEvent += myEMSLUL_ErrorEvent;
-				myEMSLUL.StatusUpdate += myEMSLUL_StatusUpdate;
-				myEMSLUL.UploadCompleted += myEMSLUL_UploadCompleted;
+                // Attach the events
 
-				m_TaskParams.AddAdditionalParameter(MyEMSLUploader.RECURSIVE_UPLOAD, recurse.ToString());
+                myEMSLUL.DebugEvent += myEMSLUL_DebugEvent;
+                myEMSLUL.ErrorEvent += myEMSLUL_ErrorEvent;
+                myEMSLUL.StatusUpdate += myEMSLUL_StatusUpdate;
+                myEMSLUL.UploadCompleted += myEMSLUL_UploadCompleted;
 
-				string statusURL;
+                m_TaskParams.AddAdditionalParameter(MyEMSLUploader.RECURSIVE_UPLOAD, recurse.ToString());
 
-				// Start the upload
-				myEMSLUL.StartUpload(out statusURL);
+                string statusURL;
 
-				var tsElapsedTime = DateTime.UtcNow.Subtract(dtStartTime);
+                // Start the upload
+                myEMSLUL.StartUpload(debugMode, out statusURL);
 
-				m_Msg = "Upload of " + m_DatasetName + " completed in " + tsElapsedTime.TotalSeconds.ToString("0.0") + " seconds: " + myEMSLUL.FileCountNew + " new files, " + myEMSLUL.FileCountUpdated + " updated files, " + myEMSLUL.Bytes + " bytes";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
+                var tsElapsedTime = DateTime.UtcNow.Subtract(dtStartTime);
 
-				m_Msg = "myEMSL statusURI => " + myEMSLUL.StatusURI;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
+                m_Msg = "Upload of " + m_DatasetName + " completed in " + tsElapsedTime.TotalSeconds.ToString("0.0") + " seconds: " + myEMSLUL.FileCountNew + " new files, " + myEMSLUL.FileCountUpdated + " updated files, " + myEMSLUL.Bytes + " bytes";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
 
-				// Raise an event with the stats
-				// This will cause clsPluginMain to call StoreMyEMSLUploadStats to store the results in the database (stored procedure StoreMyEMSLUploadStats)
-				var e = new MyEMSLUploadEventArgs(myEMSLUL.FileCountNew, myEMSLUL.FileCountUpdated, myEMSLUL.Bytes, tsElapsedTime.TotalSeconds, statusURL, iErrorCode: 0);
-				OnMyEMSLUploadComplete(e);
+                if (debugMode)
+                    return false;
 
-				m_StatusTools.UpdateAndWrite(100);
+                m_Msg = "myEMSL statusURI => " + myEMSLUL.StatusURI;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
 
-				success = true;
-			}
-			catch (Exception ex)
-			{
-				m_Msg = "Exception uploading to MyEMSL";
-				m_ErrMsg = string.Copy(m_Msg);
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg, ex);
-				LogOperationFailed(m_DatasetName);
+                // Raise an event with the stats
+                // This will cause clsPluginMain to call StoreMyEMSLUploadStats to store the results in the database (stored procedure StoreMyEMSLUploadStats)
+                var e = new MyEMSLUploadEventArgs(myEMSLUL.FileCountNew, myEMSLUL.FileCountUpdated, myEMSLUL.Bytes, tsElapsedTime.TotalSeconds, statusURL, iErrorCode: 0);
+                OnMyEMSLUploadComplete(e);
 
-				// Raise an event with the stats
+                m_StatusTools.UpdateAndWrite(100);
 
-				int errorCode = ex.Message.GetHashCode();
-				if (errorCode == 0)
-					errorCode = 1;
+                success = true;
+            }
+            catch (Exception ex)
+            {
+                m_Msg = "Exception uploading to MyEMSL";
+                m_ErrMsg = string.Copy(m_Msg);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg, ex);
+                LogOperationFailed(m_DatasetName);
 
-				var tsElapsedTime = DateTime.UtcNow.Subtract(dtStartTime);
+                // Raise an event with the stats
 
-				MyEMSLUploadEventArgs e;
-				if (myEMSLUL == null)
-					e = new MyEMSLUploadEventArgs(0, 0, 0, tsElapsedTime.TotalSeconds, string.Empty, errorCode);
-				else
-					e = new MyEMSLUploadEventArgs(myEMSLUL.FileCountNew, myEMSLUL.FileCountUpdated, myEMSLUL.Bytes, tsElapsedTime.TotalSeconds, myEMSLUL.StatusURI, errorCode);
+                int errorCode = ex.Message.GetHashCode();
+                if (errorCode == 0)
+                    errorCode = 1;
 
-				OnMyEMSLUploadComplete(e);
+                var tsElapsedTime = DateTime.UtcNow.Subtract(dtStartTime);
 
-				success = false;
-			}
-			finally
-			{
-				// Detach the event handlers
-				if (myEMSLUL != null)
-				{
-					myEMSLUL.DebugEvent -= myEMSLUL_DebugEvent;
-					myEMSLUL.ErrorEvent -= myEMSLUL_ErrorEvent;
-					myEMSLUL.StatusUpdate -= myEMSLUL_StatusUpdate;
-					myEMSLUL.UploadCompleted -= myEMSLUL_UploadCompleted;
-				}
-			}
+                MyEMSLUploadEventArgs e;
+                if (myEMSLUL == null)
+                    e = new MyEMSLUploadEventArgs(0, 0, 0, tsElapsedTime.TotalSeconds, string.Empty, errorCode);
+                else
+                    e = new MyEMSLUploadEventArgs(myEMSLUL.FileCountNew, myEMSLUL.FileCountUpdated, myEMSLUL.Bytes, tsElapsedTime.TotalSeconds, myEMSLUL.StatusURI, errorCode);
 
-			return success;
+                OnMyEMSLUploadComplete(e);
 
-		}
+                success = false;
+            }
+            finally
+            {
+                // Detach the event handlers
+                if (myEMSLUL != null)
+                {
+                    myEMSLUL.DebugEvent -= myEMSLUL_DebugEvent;
+                    myEMSLUL.ErrorEvent -= myEMSLUL_ErrorEvent;
+                    myEMSLUL.StatusUpdate -= myEMSLUL_StatusUpdate;
+                    myEMSLUL.UploadCompleted -= myEMSLUL_UploadCompleted;
+                }
+            }
 
-		/// <summary>
-		/// Verifies specified dataset is present
-		/// </summary>
-		/// <param name="dsNamePath">Fully qualified path to dataset folder</param>
-		/// <returns>TRUE if dataset folder is present; otherwise FALSE</returns>
-		protected bool VerifyDSPresent(string dsNamePath)
-		{
-			//Verifies specified dataset is present
-			return Directory.Exists(dsNamePath);
+            return success;
 
-		}	// End sub
+        }
 
-		/// <summary>
-		/// Writes a database log entry for a failed archive operation
-		/// </summary>
-		/// <param name="dsName">Name of dataset</param>
-		protected void LogOperationFailed(string dsName)
-		{
-			string msg = m_ArchiveOrUpdate + "failed, dataset " + dsName;
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
-		}	// End sub
+        /// <summary>
+        /// Verifies specified dataset is present
+        /// </summary>
+        /// <param name="dsNamePath">Fully qualified path to dataset folder</param>
+        /// <returns>TRUE if dataset folder is present; otherwise FALSE</returns>
+        protected bool VerifyDSPresent(string dsNamePath)
+        {
+            //Verifies specified dataset is present
+            return Directory.Exists(dsNamePath);
+
+        }	// End sub
+
+        /// <summary>
+        /// Writes a database log entry for a failed archive operation
+        /// </summary>
+        /// <param name="dsName">Name of dataset</param>
+        protected void LogOperationFailed(string dsName)
+        {
+            string msg = m_ArchiveOrUpdate + "failed, dataset " + dsName;
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+        }	// End sub
 
 #if !DartFTPMissing
 		/// <summary>
@@ -447,38 +458,38 @@ namespace DatasetArchivePlugin
 		}	// End sub
 #endif
 
-		/// <summary>
-		/// Determine the total size of all files in the specified folder (including subdirectories)
-		/// </summary>
-		/// <param name="sourceFolderPath"></param>
-		/// <returns>Total size, in GB</returns>
-		protected float ComputeFolderSizeGB(string sourceFolderPath)
-		{
-			var diSourceFolder = new DirectoryInfo(sourceFolderPath);
+        /// <summary>
+        /// Determine the total size of all files in the specified folder (including subdirectories)
+        /// </summary>
+        /// <param name="sourceFolderPath"></param>
+        /// <returns>Total size, in GB</returns>
+        protected float ComputeFolderSizeGB(string sourceFolderPath)
+        {
+            var diSourceFolder = new DirectoryInfo(sourceFolderPath);
 
-			string msg = "Determing the total size of " + sourceFolderPath;
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            string msg = "Determing the total size of " + sourceFolderPath;
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
-			if (!diSourceFolder.Exists)
-			{
-				msg = "Source folder not found by ComputeFolderSizeGB: " + sourceFolderPath;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+            if (!diSourceFolder.Exists)
+            {
+                msg = "Source folder not found by ComputeFolderSizeGB: " + sourceFolderPath;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 
-				return 0;
-			}
-			float folderSizeGB = 0;
+                return 0;
+            }
+            float folderSizeGB = 0;
 
-			foreach (FileInfo fiFile in diSourceFolder.GetFiles("*", SearchOption.AllDirectories))
-			{
-				folderSizeGB += (float)(fiFile.Length / 1024.0 / 1024.0 / 1024.0);
-			}
+            foreach (FileInfo fiFile in diSourceFolder.GetFiles("*", SearchOption.AllDirectories))
+            {
+                folderSizeGB += (float)(fiFile.Length / 1024.0 / 1024.0 / 1024.0);
+            }
 
-			msg = "  Total size: " + folderSizeGB.ToString("0.0") + " GB";
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            msg = "  Total size: " + folderSizeGB.ToString("0.0") + " GB";
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
-			return folderSizeGB;
+            return folderSizeGB;
 
-		}
+        }
 
 #if !DartFTPMissing
 		/// <summary>
@@ -767,83 +778,83 @@ namespace DatasetArchivePlugin
 		}
 #endif
 
-		#endregion
+        #endregion
 
-		#region "Event Delegates and Classes"
+        #region "Event Delegates and Classes"
 
-		public event MyEMSLUploadEventHandler MyEMSLUploadComplete;
+        public event MyEMSLUploadEventHandler MyEMSLUploadComplete;
 
-		#endregion
+        #endregion
 
-		#region "Event Handlers"
+        #region "Event Handlers"
 
-		void LogStatusMessageSkipDuplicate(string message)
-		{
-			if (String.Equals(message, mMostRecentLogMessage) || DateTime.UtcNow.Subtract(mMostRecentLogTime).TotalSeconds >= 60)
-			{
-				mMostRecentLogMessage = string.Copy(message);
-				mMostRecentLogTime = DateTime.UtcNow;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, message);
-			}
-		}
+        void LogStatusMessageSkipDuplicate(string message)
+        {
+            if (String.Equals(message, mMostRecentLogMessage) || DateTime.UtcNow.Subtract(mMostRecentLogTime).TotalSeconds >= 60)
+            {
+                mMostRecentLogMessage = string.Copy(message);
+                mMostRecentLogTime = DateTime.UtcNow;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, message);
+            }
+        }
 
-		void myEMSLUL_DebugEvent(object sender, MessageEventArgs e)
-		{
-			string msg = "  ... " + e.CallingFunction + ": " + e.Message;
-			LogStatusMessageSkipDuplicate(msg);
-		}
+        void myEMSLUL_DebugEvent(object sender, MessageEventArgs e)
+        {
+            string msg = "  ... " + e.CallingFunction + ": " + e.Message;
+            LogStatusMessageSkipDuplicate(msg);
+        }
 
-		void myEMSLUL_ErrorEvent(object sender, MessageEventArgs e)
-		{
-			string msg = "MyEmslUpload error in function " + e.CallingFunction + ": " + e.Message;
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-		}
+        void myEMSLUL_ErrorEvent(object sender, MessageEventArgs e)
+        {
+            string msg = "MyEmslUpload error in function " + e.CallingFunction + ": " + e.Message;
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+        }
 
-		void myEMSLUL_StatusUpdate(object sender, StatusEventArgs e)
-		{
+        void myEMSLUL_StatusUpdate(object sender, StatusEventArgs e)
+        {
 
-			if (DateTime.UtcNow.Subtract(mLastStatusUpdateTime).TotalSeconds >= 60 && e.PercentCompleted > 0)
-			{
-				mLastStatusUpdateTime = DateTime.UtcNow;
-				string msg = "  ... uploading, " + e.PercentCompleted.ToString("0.0") + "% complete for " + (e.TotalBytesToSend / 1024.0).ToString("#,##0") + " KB";
-				if (!(string.IsNullOrEmpty(e.StatusMessage)))
-					msg += "; " + e.StatusMessage;
+            if (DateTime.UtcNow.Subtract(mLastStatusUpdateTime).TotalSeconds >= 60 && e.PercentCompleted > 0)
+            {
+                mLastStatusUpdateTime = DateTime.UtcNow;
+                string msg = "  ... uploading, " + e.PercentCompleted.ToString("0.0") + "% complete for " + (e.TotalBytesToSend / 1024.0).ToString("#,##0") + " KB";
+                if (!(string.IsNullOrEmpty(e.StatusMessage)))
+                    msg += "; " + e.StatusMessage;
 
-				LogStatusMessageSkipDuplicate(msg);
-			}
+                LogStatusMessageSkipDuplicate(msg);
+            }
 
 
-			if (DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds >= 3 && e.PercentCompleted > 0)
-			{
-				mLastProgressUpdateTime = DateTime.UtcNow;
-				m_StatusTools.UpdateAndWrite((float)e.PercentCompleted);
-			}
+            if (DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds >= 3 && e.PercentCompleted > 0)
+            {
+                mLastProgressUpdateTime = DateTime.UtcNow;
+                m_StatusTools.UpdateAndWrite((float)e.PercentCompleted);
+            }
 
-		}
+        }
 
-		void myEMSLUL_UploadCompleted(object sender, UploadCompletedEventArgs e)
-		{
-			string msg = "  ... MyEmsl upload task complete";
+        void myEMSLUL_UploadCompleted(object sender, UploadCompletedEventArgs e)
+        {
+            string msg = "  ... MyEmsl upload task complete";
 
-			// Note that e.ServerResponse will simply have the StatusURL if the upload succeeded
-			// If a problem occurred, then e.ServerResponse will either have the full server reponse, or may even be blank
-			if (string.IsNullOrEmpty(e.ServerResponse))
-				msg += ": empty server reponse";
-			else
-				msg += ": " + e.ServerResponse;
+            // Note that e.ServerResponse will simply have the StatusURL if the upload succeeded
+            // If a problem occurred, then e.ServerResponse will either have the full server reponse, or may even be blank
+            if (string.IsNullOrEmpty(e.ServerResponse))
+                msg += ": empty server reponse";
+            else
+                msg += ": " + e.ServerResponse;
 
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-			m_MyEmslUploadSuccess = true;
-		}
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            m_MyEmslUploadSuccess = true;
+        }
 
-		public void OnMyEMSLUploadComplete(MyEMSLUploadEventArgs e)
-		{
-			if (MyEMSLUploadComplete != null)
-				MyEMSLUploadComplete(this, e);
-		}
-		#endregion
+        public void OnMyEMSLUploadComplete(MyEMSLUploadEventArgs e)
+        {
+            if (MyEMSLUploadComplete != null)
+                MyEMSLUploadComplete(this, e);
+        }
+        #endregion
 
-		#region "MD5StageFileCreator initialization and event handlers"
+        #region "MD5StageFileCreator initialization and event handlers"
 
 #if !DartFTPMissing
 		[Obsolete("No longer needed since using MyEMSL")]
@@ -880,9 +891,9 @@ namespace DatasetArchivePlugin
 		}
 #endif
 
-		#endregion
+        #endregion
 
-	}	// End class
+    }	// End class
 
 
 }	// End namespace

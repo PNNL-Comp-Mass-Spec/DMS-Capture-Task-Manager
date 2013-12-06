@@ -78,7 +78,7 @@ namespace DatasetArchivePlugin
 			m_Msg = "Updating dataset " + m_DatasetName + ", job " + m_TaskParams.GetParam("Job");
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
 
-			bool onlyUseMyEMSL = true;
+			const bool onlyUseMyEMSL = true;
 
 #if !DartFTPMissing
 			string instrumentName = m_TaskParams.GetParam("Instrument_Name");
@@ -100,7 +100,10 @@ namespace DatasetArchivePlugin
 				if (onlyUseMyEMSL)
 					recurse = true;
 
-				bool copySuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts, recurse);
+				// Set this to true to create the .tar file locally and thus not upload the data to MyEMSL
+				const bool debugMode = false;
+
+				bool copySuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts, recurse, debugMode);
 
 				if (!copySuccess)
 					return false;
@@ -433,8 +436,6 @@ namespace DatasetArchivePlugin
 		/// <returns>Linux version of input path</returns>
 		private string ConvertSambaPathToLinuxPath(string sambaPath)
 		{
-			string tmpStr;
-
 			// Find index of string "dmsarch" in Samba path
 			int startIndx = sambaPath.IndexOf("dmsarch");
 			if (startIndx < 0)
@@ -442,7 +443,7 @@ namespace DatasetArchivePlugin
 				//TODO: Substring wasn't found - this is an error that has to be handled.
 				return string.Empty;
 			}
-			tmpStr = sambaPath.Substring(startIndx);
+			string tmpStr = sambaPath.Substring(startIndx);
 
 			// Add on the prefix for the archive
 			tmpStr = "/archive/" + tmpStr;
@@ -458,15 +459,14 @@ namespace DatasetArchivePlugin
 		/// </summary>
 		/// <param name="svrFolderPath">Location of source folder on storage server</param>
 		/// <param name="sambaFolderPath">Samba path to compared folder in archive</param>
+		/// <param name="compareErrorCount"></param>
+		/// <param name="compareWithHash"></param>
 		/// <returns>List of files that need to be copied to the archive</returns>
 		private List<clsJobData> CompareFolders(string svrFolderPath, string sambaFolderPath, out int compareErrorCount, ref bool compareWithHash)
 		{
-			List<string> serverFiles = null;
-			string archFileName;
-			int compareResult;
+			List<string> serverFiles;
 			compareErrorCount = 0;
 			string msg;
-			clsJobData tmpJobData;
 
 			// Verify server folder exists
 			if (!Directory.Exists(svrFolderPath))
@@ -488,7 +488,7 @@ namespace DatasetArchivePlugin
 			try
 			{
 				var dirsToScan = new List<string> { svrFolderPath };
-				DirectoryScanner dirScanner = new DirectoryScanner(dirsToScan);
+				var dirScanner = new DirectoryScanner(dirsToScan);
 				serverFiles = dirScanner.PerformScan("*");
 			}
 			catch (Exception ex)
@@ -499,18 +499,19 @@ namespace DatasetArchivePlugin
 			}
 
 			// Loop through results folder file list, checking for archive copies and comparing if archive copy present
-			List<clsJobData> returnObject = new List<clsJobData>();
+			var returnObject = new List<clsJobData>();
 			foreach (string svrFileName in serverFiles)
 			{
 				// Convert the file name on the server to its equivalent in the archive
-				archFileName = ConvertServerPathToArchivePath(svrFolderPath, sambaFolderPath, svrFileName);
+				string archFileName = ConvertServerPathToArchivePath(svrFolderPath, sambaFolderPath, svrFileName);
 				if (archFileName.Length == 0)
 				{
 					msg = "File name not returned when converting from server path to archive path for file" + svrFileName;
 					LogErrorMessage(msg, "Current Task");
 					return null;
 				}
-				else if (archFileName == "Error")
+				
+				if (archFileName == "Error")
 				{
 					msg = "Exception converting server path to archive path for file " + svrFileName + ": " + m_ErrMsg;
 					LogErrorMessage(msg, "Current Task");
@@ -518,10 +519,11 @@ namespace DatasetArchivePlugin
 				}
 
 				// Determine if file exists in archive
+				clsJobData tmpJobData;
 				if (File.Exists(archFileName))
 				{
 					// File exists in archive, so compare the server and archive versions
-					compareResult = CompareTwoFiles(svrFileName, archFileName, compareWithHash);
+					int compareResult = CompareTwoFiles(svrFileName, archFileName, compareWithHash);
 
 					if (compareWithHash &&
 						compareResult == FILE_COMPARE_ERROR &&
@@ -548,11 +550,13 @@ namespace DatasetArchivePlugin
 							break;
 						case FILE_COMPARE_NOT_EQUAL:
 							// Add the server file to the list of files to be copied
-							tmpJobData = new clsJobData();
-							tmpJobData.SvrFileToUpdate = svrFileName;
-							tmpJobData.SambaFileToUpdate = archFileName;
-							tmpJobData.SvrDsNamePath = svrFolderPath;
-							tmpJobData.RenameFlag = true;
+							tmpJobData = new clsJobData
+							{
+								SvrFileToUpdate = svrFileName,
+								SambaFileToUpdate = archFileName,
+								SvrDsNamePath = svrFolderPath,
+								RenameFlag = true
+							};
 							returnObject.Add(tmpJobData);
 							break;
 						default:        // Includes FILE_COMPARE_ERROR
@@ -566,11 +570,13 @@ namespace DatasetArchivePlugin
 				else
 				{
 					// File doesn't exist in archive, so add it to the list of files to be copied
-					tmpJobData = new clsJobData();
-					tmpJobData.SvrFileToUpdate = svrFileName;
-					tmpJobData.SambaFileToUpdate = archFileName;
-					tmpJobData.SvrDsNamePath = svrFolderPath;
-					tmpJobData.RenameFlag = false;
+					tmpJobData = new clsJobData
+					{
+						SvrFileToUpdate = svrFileName,
+						SambaFileToUpdate = archFileName,
+						SvrDsNamePath = svrFolderPath,
+						RenameFlag = false
+					};
 					returnObject.Add(tmpJobData);
 				}
 			}	// End foreach
@@ -605,16 +611,17 @@ namespace DatasetArchivePlugin
 		/// <summary>
 		/// Compares two files, optionally using a SHA hash
 		/// </summary>
-		/// <param name="InpFile1">Fully qualified path to first file (should reside on the Proto storage server)</param>
-		/// <param name="InpFile2">Fully qualified path to second file (should reside in the EMSL archive)</param>
+		/// <param name="srcFileName">Fully qualified path to first file (should reside on the Proto storage server)</param>
+		/// <param name="archFileName">Fully qualified path to second file (should reside in the EMSL archive)</param>
+		/// <param name="generateHash"></param>
 		/// <returns>Integer representing files equal, not equal, or error</returns>
 		private int CompareTwoFiles(string srcFileName, string archFileName, bool generateHash)
 		{
 			m_ErrMsg = string.Empty;
 
 			// First compare the file lengths
-			FileInfo fiSourceFile = new FileInfo(srcFileName);
-			FileInfo fiArchiveFile = new FileInfo(archFileName);
+			var fiSourceFile = new FileInfo(srcFileName);
+			var fiArchiveFile = new FileInfo(archFileName);
 
 			if (!fiSourceFile.Exists)
 			{
@@ -636,18 +643,16 @@ namespace DatasetArchivePlugin
 			if (generateHash && DateTime.UtcNow.Subtract(fiArchiveFile.LastWriteTimeUtc).TotalDays < 35)
 			{
 				// Compares two files via SHA hash
-				string sSourceFileHash = string.Empty;
-				string sArchiveFileHash = string.Empty;
 
 				// Compute the has for each file
-				sSourceFileHash = GenerateHashFromFile(fiSourceFile);
+				string sSourceFileHash = GenerateHashFromFile(fiSourceFile);
 				if (string.IsNullOrEmpty(sSourceFileHash))
 				{
 					//There was a problem. Description is already in m_ErrMsg
 					return FILE_COMPARE_ERROR;
 				}
 
-				sArchiveFileHash = GenerateHashFromFile(fiArchiveFile);
+				string sArchiveFileHash = GenerateHashFromFile(fiArchiveFile);
 				if (string.IsNullOrEmpty(sArchiveFileHash))
 				{
 					// There was a problem. Description is already in m_ErrMsg
@@ -655,39 +660,31 @@ namespace DatasetArchivePlugin
 				}
 
 				if (sSourceFileHash == sArchiveFileHash)
-				{
 					return FILE_COMPARE_EQUAL;
-				}
-				else
-				{
+				else	
 					return FILE_COMPARE_NOT_EQUAL;
-
-				}
 			}
+			
+			// Simply compare file dates
+			// If the source file is newer; then assume we need to copy
+			if (fiSourceFile.LastWriteTimeUtc > fiArchiveFile.LastWriteTimeUtc)
+				return FILE_COMPARE_NOT_EQUAL;
 			else
-			{
-				// Simply compare file dates
-				// If the source file is newer; then assume we need to copy
-				if (fiSourceFile.LastWriteTimeUtc > fiArchiveFile.LastWriteTimeUtc)
-					return FILE_COMPARE_NOT_EQUAL;
-				else
-					return FILE_COMPARE_EQUAL;
-			}
+				return FILE_COMPARE_EQUAL;
 
 		}	// End sub
 
 		/// <summary>
 		/// Generates SHA1 hash for specified file
 		/// </summary>
-		/// <param name="InpFileNamePath">Fully qualified path to file</param>
+		/// <param name="fiFile">Fileinfo object</param>
 		/// <returns>String representation of SHA1 hash</returns>
 		private string GenerateHashFromFile(FileInfo fiFile)
 		{
 			// Generates hash code for specified input file
-			byte[] ByteHash = null;
 
 			//Holds hash value returned from hash generator
-			SHA1CryptoServiceProvider HashGen = new SHA1CryptoServiceProvider();
+			var HashGen = new SHA1CryptoServiceProvider();
 
 			m_ErrMsg = string.Empty;
 
@@ -698,7 +695,7 @@ namespace DatasetArchivePlugin
 				//Open the file as a stream for input to the hash class
 				FStream = fiFile.OpenRead();
 				//Get the file's hash
-				ByteHash = HashGen.ComputeHash(FStream);
+				byte[] ByteHash = HashGen.ComputeHash(FStream);
 				return BitConverter.ToString(ByteHash).Replace("-", string.Empty).ToLower();
 			}
 			catch (Exception ex)

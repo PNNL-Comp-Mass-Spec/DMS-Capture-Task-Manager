@@ -136,17 +136,37 @@ namespace Pacifica.Core
 		public bool StartUpload(Dictionary<string, object> metadataObject, out string statusURL)
 		{
 			NetworkCredential loginCredentials = null;
-			return StartUpload(metadataObject, loginCredentials, out statusURL);
+			const bool debugMode = false;
+
+			// ReSharper disable once ExpressionIsAlwaysNull
+			return StartUpload(metadataObject, loginCredentials, debugMode, out statusURL);
 		}
+
+
+		public bool StartUpload(Dictionary<string, object> metadataObject, bool debugMode, out string statusURL)
+		{
+			NetworkCredential loginCredentials = null;
+			
+			// ReSharper disable once ExpressionIsAlwaysNull
+			return StartUpload(metadataObject, loginCredentials, debugMode, out statusURL);
+		}
+
+		public bool StartUpload(Dictionary<string, object> metadataObject, NetworkCredential loginCredentials, out string statusURL)
+		{
+			const bool debugMode = false;
+			return StartUpload(metadataObject, loginCredentials, debugMode, out statusURL);
+		}
+
 
 		/// <summary>
 		/// 
 		/// </summary>
 		/// <param name="metadataObject"></param>
 		/// <param name="loginCredentials"></param>
+		/// <param name="debugMode">Set to true to create a .tar file locally instead of actually uploading it</param>
 		/// <param name="statusURL"></param>
 		/// <returns>True if successfully uploaded, false if an error</returns>
-		public bool StartUpload(Dictionary<string, object> metadataObject, NetworkCredential loginCredentials, out string statusURL)
+		public bool StartUpload(Dictionary<string, object> metadataObject, NetworkCredential loginCredentials, bool debugMode, out string statusURL)
 		{
 			statusURL = string.Empty;
 			ErrorMessage = string.Empty;
@@ -244,8 +264,8 @@ namespace Pacifica.Core
 
 			string scheme;
 
-			//This is just a local configuration that states which is preferred.
-			//It doesn't inform what is supported on the server.
+			// This is just a local configuration that states which is preferred.
+			// It doesn't inform what is supported on the server.
 			if (Configuration.UseSecureDataTransfer)
 			{
 				scheme = Configuration.SecuredScheme;		// https
@@ -294,7 +314,16 @@ namespace Pacifica.Core
 			RaiseDebugEvent("ProcessMetadata", "Sending file to " + storageUrl);
 
 			// The response data will likely be empty
-			EasyHttp.SendFileListToDavAsTar(location, serverUri, fileListObject, mdTextFile.FullName, mCookieJar, newCred);
+			EasyHttp.SendFileListToDavAsTar(location, serverUri, fileListObject, mdTextFile.FullName, mCookieJar, newCred, debugMode);
+
+			if (debugMode)
+			{
+				// A .tar file was created locally; it was not sent to the server
+				// Thus, do not call "finish"
+				// Instead, simply logout
+				Utilities.Logout(mCookieJar);
+				return false;
+			}
 
 			string finishUrl = serverUri + "/myemsl/cgi-bin/finish" + location;
 			RaiseDebugEvent("ProcessMetadata", "Sending finish via " + finishUrl);

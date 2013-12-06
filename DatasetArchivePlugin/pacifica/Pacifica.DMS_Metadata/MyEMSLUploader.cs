@@ -81,7 +81,7 @@ namespace Pacifica.DMS_Metadata
 
 		#endregion
 
-		public void StartUpload(out string statusURL)
+		public void StartUpload(bool debugMode, out string statusURL)
 		{
 
 			// Instantiate the metadata object
@@ -96,7 +96,7 @@ namespace Pacifica.DMS_Metadata
 			FileCountNew = _mdContainer.TotalFileCountNew;
 			Bytes = _mdContainer.TotalFileSizeToUpload;
 
-			myEMSLUpload.StartUpload(_mdContainer.MetadataObject, out statusURL);			
+			myEMSLUpload.StartUpload(_mdContainer.MetadataObject, debugMode, out statusURL);			
 
 			if (!string.IsNullOrEmpty(statusURL))
 				StatusURI = statusURL + "/xml";
