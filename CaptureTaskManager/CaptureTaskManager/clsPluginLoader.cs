@@ -60,13 +60,13 @@ namespace CaptureTaskManager
 					//    myToolRunner = (IToolRunner)new ImsDemuxPlugin.clsPluginMain();
 					//    break;
 
-					//case "DatasetArchivePlugin.clsPluginMain":
-					//    myToolRunner = (IToolRunner)new DatasetArchivePlugin.clsPluginMain();
-					//    break;
+					case "DatasetArchivePlugin.clsPluginMain":
+						myToolRunner = (IToolRunner)new DatasetArchivePlugin.clsPluginMain();
+						break;
 
-					case "ArchiveStatusCheckPlugin.clsPluginMain":
-						myToolRunner = (IToolRunner)new ArchiveStatusCheckPlugin.clsPluginMain();
-					    break;
+					//case "ArchiveStatusCheckPlugin.clsPluginMain":
+					//    myToolRunner = (IToolRunner)new ArchiveStatusCheckPlugin.clsPluginMain();
+					//    break;
 
                     default:
                         break;
@@ -91,13 +91,10 @@ namespace CaptureTaskManager
 				if (GetPluginInfo(xPath, ref className, ref assyName))
 				{
 #if PLUGIN_DEBUG_MODE_ENABLED
-                    if (PLUGIN_DEBUG_MODE_ENABLED)
+                    myToolRunner = DebugModeGetToolRunner(className);
+                    if ((myToolRunner != null))
                     {
-                        myToolRunner = DebugModeGetToolRunner(className);
-                        if ((myToolRunner != null))
-                        {
-                            return myToolRunner;
-                        }
+                        return myToolRunner;
                     }
 #endif
 

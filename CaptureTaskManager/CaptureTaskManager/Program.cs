@@ -98,12 +98,27 @@ namespace CaptureTaskManager
 
 								oMainProgram = null;
 							}
+							catch (System.Security.SecurityException ex)
+							{
+								const string errMsg = "Security exception";
+
+								Console.WriteLine();
+								Console.WriteLine(@"===============================================================");
+								Console.WriteLine(errMsg + @": " + ex.Message);
+								Console.WriteLine(@"===============================================================");
+								Console.WriteLine();
+								Console.WriteLine(@"You may need to start this application once from an elevated (administrative level) command prompt using the /EL switch so that it can create the " + clsMainProgram.CUSTOM_LOG_NAME + @" application log");
+								Console.WriteLine();
+							}
 							catch (Exception ex)
 							{
-								string errMsg = "Critical exception starting application";
-								Console.WriteLine("===============================================================");
-								Console.WriteLine(errMsg);
-								Console.WriteLine("===============================================================");
+								const string errMsg = "Critical exception starting application";
+
+								Console.WriteLine();
+								Console.WriteLine(@"===============================================================");
+								Console.WriteLine(errMsg + @": " + ex.Message);
+								Console.WriteLine(@"===============================================================");
+								Console.WriteLine();
 
 								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.FATAL, errMsg, ex);
 								System.Threading.Thread.Sleep(500);
@@ -170,24 +185,24 @@ namespace CaptureTaskManager
 
 				try
 				{
-					Console.WriteLine("This program processes DMS analysis jobs for PRISM. Normal operation is to run the program without any command line switches.");
+					Console.WriteLine(@"This program processes DMS analysis jobs for PRISM. Normal operation is to run the program without any command line switches.");
 					Console.WriteLine();
-					Console.WriteLine("Program syntax:" + Environment.NewLine + System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location) + " [/EL] [/T]");
-					Console.WriteLine();
-
-					Console.WriteLine("Use /EL to post a test message to the Windows Event Log named 'DMSCapTaskMgr' then exit the program. When setting up the Capture Task Manager on a new computer, you should call this command once from a Windows Command Prompt that you started using 'Run as Administrator'");
-					Console.WriteLine();
-					Console.WriteLine("Use /T to start the program in code test mode.");
+					Console.WriteLine(@"Program syntax:" + Environment.NewLine + System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location) + @" [/EL] [/T]");
 					Console.WriteLine();
 
-					Console.WriteLine("Program written by Dave Clark and Matthew Monroe for the Department of Energy (PNNL, Richland, WA)");
+					Console.WriteLine(@"Use /EL to post a test message to the Windows Event Log named 'DMSCapTaskMgr' then exit the program. When setting up the Capture Task Manager on a new computer, you should call this command once from a Windows Command Prompt that you started using 'Run as Administrator'");
+					Console.WriteLine();
+					Console.WriteLine(@"Use /T to start the program in code test mode.");
 					Console.WriteLine();
 
-					Console.WriteLine("This is version " + System.Windows.Forms.Application.ProductVersion + " (" + PROGRAM_DATE + ")");
+					Console.WriteLine(@"Program written by Dave Clark and Matthew Monroe for the Department of Energy (PNNL, Richland, WA)");
 					Console.WriteLine();
 
-					Console.WriteLine("E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com");
-					Console.WriteLine("Website: http://ncrr.pnnl.gov/ or http://www.sysbio.org/resources/staff/");
+					Console.WriteLine(@"This is version " + System.Windows.Forms.Application.ProductVersion + @" (" + PROGRAM_DATE + @")");
+					Console.WriteLine();
+
+					Console.WriteLine(@"E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com");
+					Console.WriteLine(@"Website: http://ncrr.pnnl.gov/ or http://www.sysbio.org/resources/staff/");
 					Console.WriteLine();
 
 

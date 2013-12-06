@@ -9,6 +9,7 @@
 //*********************************************************************************************************
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;		// Required for call to GetDiskFreeSpaceEx
@@ -49,6 +50,10 @@ namespace CaptureTaskManager
 
 		#region "Constants"
 		private const int MAX_ERROR_COUNT = 4;
+
+		private const string CUSTOM_LOG_SOURCE_NAME = "Capture Task Manager";
+		public const string CUSTOM_LOG_NAME = "DMSCapTaskMgr";
+
 		#endregion
 
 		#region "Class variables"
@@ -284,11 +289,11 @@ namespace CaptureTaskManager
 					// Thus, it is advisable to run this program once from an elevated command prompt while MgrActive_Local is set to false
 
 					Console.WriteLine();
-					Console.WriteLine("===============================================================");
-					Console.WriteLine("Exception instantiating clsMgrSettings: " + ex.Message);
-					Console.WriteLine("===============================================================");
+					Console.WriteLine(@"===============================================================");
+					Console.WriteLine(@"Exception instantiating clsMgrSettings: " + ex.Message);
+					Console.WriteLine(@"===============================================================");
 					Console.WriteLine();
-					Console.WriteLine("You may need to run this application once from an elevated (administrative level) command prompt so that it can create the DMSCapTaskMgr application log");
+					Console.WriteLine(@"You may need to start this application once from an elevated (administrative level) command prompt using the /EL switch so that it can create the " + CUSTOM_LOG_NAME + @" application log");
 					Console.WriteLine();
 					System.Threading.Thread.Sleep(500);
 				}
@@ -302,6 +307,15 @@ namespace CaptureTaskManager
 			m_Job = "Unknown";
 			m_Dataset = "Unknown";
 		
+			// Confirm that the application event log exists
+			{
+				if (!EventLog.SourceExists(CUSTOM_LOG_SOURCE_NAME))
+				{
+					var SourceData = new EventSourceCreationData(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME);
+					EventLog.CreateEventSource(SourceData);
+				}
+			}
+
 			// Set up the loggers
 			string logFileName = m_MgrSettings.GetParam("logfilename");
 			m_DebugLevel = clsConversion.CIntSafe(m_MgrSettings.GetParam("debuglevel"), 4);
@@ -744,13 +758,13 @@ namespace CaptureTaskManager
 			try
 			{
 				string sMessage = "Test log message: " + DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss tt");
-				Console.WriteLine("Posting test log message to the DMSCapTaskMgr Windows event log");
+				Console.WriteLine(@"Posting test log message to the " + CUSTOM_LOG_NAME + @" Windows event log");
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.INFO, sMessage);
-				Console.WriteLine(" ... Success!");
+				Console.WriteLine(@" ... Success!");
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine("Error writing to event log: " + ex.Message);
+				Console.WriteLine(@"Error writing to event log: " + ex.Message);
 			}
 
 		}

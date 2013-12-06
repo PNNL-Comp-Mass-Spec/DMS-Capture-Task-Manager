@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CaptureTaskManager_Debug", "CaptureTaskManager\CaptureTaskManager_Debug.csproj", "{93485E0E-3A78-4118-B36B-BA71334752AF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CaptureTaskManager_Debug_Archive", "CaptureTaskManager\CaptureTaskManager_Debug_Archive.csproj", "{5188F87C-12F1-4629-BD78-8E1004FF0B6E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CTM_Shared", "CTM_Shared\CTM_Shared.csproj", "{7D07F054-0D29-45DD-9B22-71D0768BC3C3}"
 EndProject
@@ -23,15 +23,15 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{93485E0E-3A78-4118-B36B-BA71334752AF}.Debug|Any CPU.ActiveCfg = Debug|x86
-		{93485E0E-3A78-4118-B36B-BA71334752AF}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
-		{93485E0E-3A78-4118-B36B-BA71334752AF}.Debug|x64.ActiveCfg = Debug|x86
-		{93485E0E-3A78-4118-B36B-BA71334752AF}.Debug|x86.ActiveCfg = Debug|x86
-		{93485E0E-3A78-4118-B36B-BA71334752AF}.Debug|x86.Build.0 = Debug|x86
-		{93485E0E-3A78-4118-B36B-BA71334752AF}.Release|Any CPU.ActiveCfg = Release|x86
-		{93485E0E-3A78-4118-B36B-BA71334752AF}.Release|Mixed Platforms.ActiveCfg = Release|x86
-		{93485E0E-3A78-4118-B36B-BA71334752AF}.Release|x64.ActiveCfg = Release|x86
-		{93485E0E-3A78-4118-B36B-BA71334752AF}.Release|x86.ActiveCfg = Release|x86
+		{5188F87C-12F1-4629-BD78-8E1004FF0B6E}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{5188F87C-12F1-4629-BD78-8E1004FF0B6E}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
+		{5188F87C-12F1-4629-BD78-8E1004FF0B6E}.Debug|x64.ActiveCfg = Debug|x86
+		{5188F87C-12F1-4629-BD78-8E1004FF0B6E}.Debug|x86.ActiveCfg = Debug|x86
+		{5188F87C-12F1-4629-BD78-8E1004FF0B6E}.Debug|x86.Build.0 = Debug|x86
+		{5188F87C-12F1-4629-BD78-8E1004FF0B6E}.Release|Any CPU.ActiveCfg = Release|x86
+		{5188F87C-12F1-4629-BD78-8E1004FF0B6E}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{5188F87C-12F1-4629-BD78-8E1004FF0B6E}.Release|x64.ActiveCfg = Release|x86
+		{5188F87C-12F1-4629-BD78-8E1004FF0B6E}.Release|x86.ActiveCfg = Release|x86
 		{7D07F054-0D29-45DD-9B22-71D0768BC3C3}.Debug|Any CPU.ActiveCfg = Debug|x86
 		{7D07F054-0D29-45DD-9B22-71D0768BC3C3}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
 		{7D07F054-0D29-45DD-9B22-71D0768BC3C3}.Debug|Mixed Platforms.Build.0 = Debug|x86
