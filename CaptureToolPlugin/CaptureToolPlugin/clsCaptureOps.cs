@@ -933,7 +933,7 @@ namespace CaptureToolPlugin
 			clsInstrumentClassInfo.eInstrumentClass instrumentClass = clsInstrumentClassInfo.GetInstrumentClass(instClassName);
 
 			string shareConnectorType = m_MgrParams.GetParam("ShareConnectorType");		// Should be PRISM or DotNET
-			string computerName = GetCurrentComputerName();
+			string computerName = Environment.MachineName;
 
 			ConnectionType eConnectionType;
 
@@ -1429,7 +1429,7 @@ namespace CaptureToolPlugin
 			}
 
 			System.DateTime dtCurrentTime = System.DateTime.Now;
-			if (dtCurrentTime.Hour == 18 || dtCurrentTime.Hour == 19 || (GetCurrentComputerName() == "MONROE3"))
+			if (dtCurrentTime.Hour == 18 || dtCurrentTime.Hour == 19 || (Environment.MachineName.ToUpper() == "MONROE3"))
 			{
 				// Time is between 6 pm and 7:59 pm
 				// Check for folders at METHOD_FOLDER_BASE_PATH that start with x_ and have .lcmethod files that are all at least 14 days old
@@ -2025,19 +2025,6 @@ namespace CaptureToolPlugin
 				msg = "Exception looking for old LC Method folders";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg, ex);
 			}
-		}
-
-		/// <summary>
-		/// Returns the name of the computer running this code
-		/// </summary>
-		/// <returns></returns>
-		private string GetCurrentComputerName()
-		{
-			string sName = Environment.GetEnvironmentVariable("COMPUTERNAME");
-			if (string.IsNullOrWhiteSpace(sName))
-				return string.Empty;
-			else
-				return sName;
 		}
 
 		/// <summary>
