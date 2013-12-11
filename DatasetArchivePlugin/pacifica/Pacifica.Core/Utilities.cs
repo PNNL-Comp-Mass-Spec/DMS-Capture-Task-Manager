@@ -262,7 +262,7 @@ namespace Pacifica.Core
 			// Logout using https://my.emsl.pnl.gov/myemsl/logout
 			try
 			{
-				const int timeoutSeconds = 3;
+				const int timeoutSeconds = 10;
 				HttpStatusCode responseStatusCode;
 
 				EasyHttp.Send(Configuration.SearchServerUri + "/myemsl/logout", cookieJar, out responseStatusCode, timeoutSeconds);

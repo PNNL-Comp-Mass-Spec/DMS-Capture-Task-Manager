@@ -146,7 +146,7 @@ namespace Pacifica.Core
 		public bool StartUpload(Dictionary<string, object> metadataObject, bool debugMode, out string statusURL)
 		{
 			NetworkCredential loginCredentials = null;
-			
+
 			// ReSharper disable once ExpressionIsAlwaysNull
 			return StartUpload(metadataObject, loginCredentials, debugMode, out statusURL);
 		}
@@ -166,7 +166,8 @@ namespace Pacifica.Core
 		/// <param name="debugMode">Set to true to create a .tar file locally instead of actually uploading it</param>
 		/// <param name="statusURL"></param>
 		/// <returns>True if successfully uploaded, false if an error</returns>
-		public bool StartUpload(Dictionary<string, object> metadataObject, NetworkCredential loginCredentials, bool debugMode, out string statusURL)
+		public bool StartUpload(Dictionary<string, object> metadataObject, NetworkCredential loginCredentials, bool debugMode,
+								out string statusURL)
 		{
 			statusURL = string.Empty;
 			ErrorMessage = string.Empty;
@@ -234,7 +235,7 @@ namespace Pacifica.Core
 			if (loginCredentials != null)
 			{
 				newCred = new NetworkCredential(loginCredentials.UserName,
-						loginCredentials.Password, loginCredentials.Domain);
+												loginCredentials.Password, loginCredentials.Domain);
 			}
 
 			// Call the testauth service to obtain a cookie for this session
@@ -245,13 +246,13 @@ namespace Pacifica.Core
 			if (!auth.GetAuthCookies(out mCookieJar))
 			{
 				ErrorMessage = "Auto-login to " + Configuration.TestAuthUri + " failed authentication";
-				RaiseErrorEvent("ProcessMetadata", ErrorMessage);
+				RaiseErrorEvent("Upload.StartUpload", ErrorMessage);
 				throw new ApplicationException(ErrorMessage);
 			}
 
 			string redirectedServer = Configuration.IngestServerUri;
 			string preallocateUrl = redirectedServer + "/myemsl/cgi-bin/preallocate";
-			int timeoutSeconds = 10;
+			int timeoutSeconds = 30;
 
 
 			RaiseDebugEvent("ProcessMetadata", "Preallocating with " + preallocateUrl);
@@ -259,8 +260,8 @@ namespace Pacifica.Core
 			HttpStatusCode responseStatusCode;
 
 			string preallocateReturn = EasyHttp.Send(preallocateUrl, mCookieJar,
-				out responseStatusCode, postData,
-				EasyHttp.HttpMethod.Get, timeoutSeconds, newCred);
+													 out responseStatusCode, postData,
+													 EasyHttp.HttpMethod.Get, timeoutSeconds, newCred);
 
 			string scheme;
 
@@ -268,11 +269,11 @@ namespace Pacifica.Core
 			// It doesn't inform what is supported on the server.
 			if (Configuration.UseSecureDataTransfer)
 			{
-				scheme = Configuration.SecuredScheme;		// https
+				scheme = Configuration.SecuredScheme; // https
 			}
 			else
 			{
-				scheme = Configuration.UnsecuredScheme;		// http
+				scheme = Configuration.UnsecuredScheme; // http
 			}
 
 			string server;
@@ -287,7 +288,7 @@ namespace Pacifica.Core
 			{
 				Utilities.Logout(mCookieJar);
 				ErrorMessage = "Preallocate did not return a server: " + preallocateReturn;
-				RaiseErrorEvent("ProcessMetadata", ErrorMessage);
+				RaiseErrorEvent("Upload.StartUpload", ErrorMessage);
 				throw new ApplicationException(string.Format("Preallocate {0} did not return a server.", preallocateUrl));
 			}
 
@@ -303,7 +304,7 @@ namespace Pacifica.Core
 			{
 				Utilities.Logout(mCookieJar);
 				ErrorMessage = "Preallocate did not return a location: " + preallocateReturn;
-				RaiseErrorEvent("ProcessMetadata", ErrorMessage);
+				RaiseErrorEvent("Upload.StartUpload", ErrorMessage);
 				throw new ApplicationException(string.Format("Preallocate {0} did not return a location.", preallocateUrl));
 			}
 
@@ -314,7 +315,8 @@ namespace Pacifica.Core
 			RaiseDebugEvent("ProcessMetadata", "Sending file to " + storageUrl);
 
 			// The response data will likely be empty
-			EasyHttp.SendFileListToDavAsTar(location, serverUri, fileListObject, mdTextFile.FullName, mCookieJar, newCred, debugMode);
+			EasyHttp.SendFileListToDavAsTar(location, serverUri, fileListObject, mdTextFile.FullName, mCookieJar, newCred,
+											debugMode);
 
 			if (debugMode)
 			{
@@ -325,40 +327,67 @@ namespace Pacifica.Core
 				return false;
 			}
 
+			// Upload succeeded; call the finish URL
+			// This call is typically fast, but has been observed to take well over 10 seconds
+			// Thus, using a timeout of 5 minutes
 			string finishUrl = serverUri + "/myemsl/cgi-bin/finish" + location;
 			RaiseDebugEvent("ProcessMetadata", "Sending finish via " + finishUrl);
-			timeoutSeconds = 10;
-			postData = "";
+			timeoutSeconds = 300;
+			postData = string.Empty;
 
-			string finishResult = EasyHttp.Send(finishUrl, mCookieJar,
-				out responseStatusCode, postData,
-				EasyHttp.HttpMethod.Get, timeoutSeconds, newCred);
+			bool success = false;
+			bool finishError = false;
+			string finishErrorMsg = string.Empty;
 
-			// The finish CGI script returns "Status:[URL]\nAccepted\n" on success...
-			// This RegEx looks for Accepted in the text, optionally preceded by a Status: line
-			var reStatusURL = new Regex(@"(^Status:(?<url>.*)\n)?(?<accepted>^Accepted)\n", RegexOptions.Multiline);
-			bool success;
-
-			m = reStatusURL.Match(finishResult);
-			if (m.Groups["accepted"].Success && !m.Groups["url"].Success)
+			try
 			{
-				// File was accepted, but the Status URL is empty
-				// This likely indicates a problem
-				ErrorMessage = "File was accepted, but the Status URL is empty; " + finishResult;
-				RaiseUploadCompleted(finishResult);
-				success = false;
+				string finishResult = EasyHttp.Send(finishUrl, mCookieJar,
+													out responseStatusCode, postData,
+													EasyHttp.HttpMethod.Get, timeoutSeconds, newCred);
+
+
+				// The finish CGI script returns "Status:[URL]\nAccepted\n" on success...
+				// This RegEx looks for Accepted in the text, optionally preceded by a Status: line
+				var reStatusURL = new Regex(@"(^Status:(?<url>.*)\n)?(?<accepted>^Accepted)\n", RegexOptions.Multiline);
+
+
+				m = reStatusURL.Match(finishResult);
+				if (m.Groups["accepted"].Success && !m.Groups["url"].Success)
+				{
+					// File was accepted, but the Status URL is empty
+					// This likely indicates a problem
+					ErrorMessage = "File was accepted, but the Status URL is empty; " + finishResult;
+					RaiseUploadCompleted(finishResult);
+					
+					// ReSharper disable once RedundantAssignment
+					success = false;
+				}
+				else if (m.Groups["accepted"].Success && m.Groups["url"].Success)
+				{
+					statusURL = m.Groups["url"].Value.Trim();
+					RaiseUploadCompleted(statusURL);
+					success = true;
+				}
+				else
+				{
+					Utilities.Logout(mCookieJar);
+					ErrorMessage = "Upload failed with message: " + finishResult;
+					finishError = true;
+					finishErrorMsg = finishUrl + " failed with message: " + finishResult;
+				}
+
 			}
-			else if (m.Groups["accepted"].Success && m.Groups["url"].Success)
-			{
-				statusURL = m.Groups["url"].Value.Trim();
-				RaiseUploadCompleted(statusURL);
-				success = true;
-			}
-			else
+			catch (Exception ex)
 			{
 				Utilities.Logout(mCookieJar);
-				ErrorMessage = "Upload failed with message: " + finishResult;
-				throw new ApplicationException(finishUrl + " failed with message: " + finishResult);
+				ErrorMessage = "Exception calling MyEMSL finish: " + ex.Message;
+				finishErrorMsg = ErrorMessage + ", StackTrace: " + ex.StackTrace;
+			}
+
+			if (finishError)
+			{
+				RaiseErrorEvent("Upload.StartUpload", ErrorMessage);
+				throw new ApplicationException(finishErrorMsg);
 			}
 
 			try
@@ -395,19 +424,14 @@ namespace Pacifica.Core
 
 			if (uploadMetadata.DatasetID > 0)
 			{
-				groupObject.Add(new Dictionary<string, string>
-				{	{ "name", uploadMetadata.DMSInstrumentName }, { "type", "omics.dms.instrument" } });
-				groupObject.Add(new Dictionary<string, string>
-				{	{ "name", uploadMetadata.DateCodeString }, { "type", "omics.dms.date_code" } });
-				groupObject.Add(new Dictionary<string, string>
-				{	{ "name", uploadMetadata.DatasetName }, { "type", "omics.dms.dataset" } });
-				groupObject.Add(new Dictionary<string, string>
-				{	{ "name", uploadMetadata.DatasetID.ToString(CultureInfo.InvariantCulture) }, { "type", "omics.dms.dataset_id" } });
+				groupObject.Add(new Dictionary<string, string> { { "name", uploadMetadata.DMSInstrumentName }, { "type", "omics.dms.instrument" } });
+				groupObject.Add(new Dictionary<string, string> { { "name", uploadMetadata.DateCodeString }, { "type", "omics.dms.date_code" } });
+				groupObject.Add(new Dictionary<string, string> { { "name", uploadMetadata.DatasetName }, { "type", "omics.dms.dataset" } });
+				groupObject.Add(new Dictionary<string, string> { { "name", uploadMetadata.DatasetID.ToString(CultureInfo.InvariantCulture) }, { "type", "omics.dms.dataset_id" } });
 			}
 			else if (uploadMetadata.DataPackageID > 0)
 			{
-				groupObject.Add(new Dictionary<string, string>
-				{   { "name", uploadMetadata.DataPackageID.ToString(CultureInfo.InvariantCulture) }, { "type", "omics.dms.datapackage_id" } });
+				groupObject.Add(new Dictionary<string, string> { { "name", uploadMetadata.DataPackageID.ToString(CultureInfo.InvariantCulture) }, { "type", "omics.dms.datapackage_id" } });
 			}
 			else
 			{
@@ -415,8 +439,10 @@ namespace Pacifica.Core
 				throw new ArgumentOutOfRangeException("Must define a DatasetID or a DataPackageID; cannot create the metadata object");
 			}
 
-			var eusInfo = new Dictionary<string, object>();
-			eusInfo.Add("groups", groupObject);
+			var eusInfo = new Dictionary<string, object>
+			{
+				{"groups", groupObject}
+			};
 
 			if (uploadMetadata.DatasetID > 0)
 			{
