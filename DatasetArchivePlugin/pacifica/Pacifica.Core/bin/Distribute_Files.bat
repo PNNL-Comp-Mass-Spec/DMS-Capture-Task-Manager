@@ -92,4 +92,6 @@ copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Programs\M
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Programs\Mage\Mage\lib" /y
 copy debug\Pacifica.Core.pdb "F:\My Documents\Projects\DataMining\DMS_Programs\Mage\Mage\lib" /y
 
+copy ..\..\Pacifica.DMS_Metadata\bin\Debug\Pacifica.DMS_Metadata.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\CaptureTaskManager\CaptureTaskManager\bin\Debug" /y
+
 pause

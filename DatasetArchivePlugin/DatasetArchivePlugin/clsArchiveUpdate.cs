@@ -101,7 +101,13 @@ namespace DatasetArchivePlugin
 					recurse = true;
 
 				// Set this to true to create the .tar file locally and thus not upload the data to MyEMSL
-				const bool debugMode = false;
+                var debugMode = Pacifica.Core.EasyHttp.eDebugMode.DebugDisabled;
+
+                if (m_TaskParams.GetParam("DebugTestTar", false))
+                    debugMode = Pacifica.Core.EasyHttp.eDebugMode.CreateTarLocal;
+                else
+                if (m_TaskParams.GetParam("MyEMSLOffline", false))
+                    debugMode = Pacifica.Core.EasyHttp.eDebugMode.MyEMSLOfflineMode;
 
 				bool copySuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts, recurse, debugMode);
 

@@ -79,7 +79,7 @@ namespace Pacifica.DMS_Metadata
 		public DMSMetadataObject()
 		{ }
 
-		public void SetupMetadata(Dictionary<string, string> taskParams, Dictionary<string, string> mgrParams)
+        public void SetupMetadata(Dictionary<string, string> taskParams, Dictionary<string, string> mgrParams, EasyHttp.eDebugMode debugMode)
 		{
 			Upload.udtUploadMetadata uploadMetadata;
 
@@ -93,7 +93,7 @@ namespace Pacifica.DMS_Metadata
 			uploadMetadata.DateCodeString = GetDatasetYearQuarter(taskParams);
 
 			// Find the files that are new or need to be updated
-			List<FileInfoObject> lstUnmatchedFiles = CompareDatasetContentsElasticSearch(lstDatasetFilesToArchive, uploadMetadata);
+            List<FileInfoObject> lstUnmatchedFiles = CompareDatasetContentsElasticSearch(lstDatasetFilesToArchive, uploadMetadata, debugMode);
 
 			Dictionary<string, object> metadataObject = Upload.CreateMetadataObject(uploadMetadata, lstUnmatchedFiles);
 
@@ -174,7 +174,8 @@ namespace Pacifica.DMS_Metadata
 		/// <returns></returns>
 		private List<FileInfoObject> CompareDatasetContentsElasticSearch(
 			List<FileInfoObject> fileList,
-			Upload.udtUploadMetadata uploadMetadata)
+			Upload.udtUploadMetadata uploadMetadata,
+            EasyHttp.eDebugMode debugMode)
 		{
 
 			TotalFileSizeToUpload = 0;
@@ -190,7 +191,12 @@ namespace Pacifica.DMS_Metadata
 			reader.MessageEvent += reader_MessageEvent;
 			reader.ProgressEvent += reader_ProgressEvent;
 
-			List<ArchivedFileInfo> lstFilesInMyEMSL = reader.FindFilesByDatasetID(uploadMetadata.DatasetID, uploadMetadata.SubFolder);
+			List<ArchivedFileInfo> lstFilesInMyEMSL;
+
+            if (debugMode == EasyHttp.eDebugMode.MyEMSLOfflineMode)
+                lstFilesInMyEMSL = new List<ArchivedFileInfo>();
+            else
+                lstFilesInMyEMSL = reader.FindFilesByDatasetID(uploadMetadata.DatasetID, uploadMetadata.SubFolder);
 
 			if (lstFilesInMyEMSL.Count == 0)
 			{

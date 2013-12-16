@@ -29,6 +29,17 @@ namespace Pacifica.Core
             Put = 2
         }
 
+
+        public enum eDebugMode
+        {
+            [Description("Debugging is disabled")]
+            DebugDisabled = 0,
+            [Description("Authenticate with MyEMSL, but create a local .tar file")]
+            CreateTarLocal = 1,
+            [Description("Do not contact MyEMSL; create a local .tar file")]
+            MyEMSLOfflineMode = 2
+        }
+
         protected const int TAR_BLOCK_SIZE_BYTES = 512;
         public const string MYEMSL_METADATA_FILE_NAME = "metadata.txt";
 
@@ -427,7 +438,7 @@ namespace Pacifica.Core
             string metadataFilePath,
             CookieContainer cookies,
             NetworkCredential loginCredentials = null,
-            bool debugMode = false)
+            eDebugMode debugMode = eDebugMode.DebugDisabled)
         {
 
             var baseUri = new Uri(serverBaseAddress);
@@ -483,7 +494,7 @@ namespace Pacifica.Core
             RaiseStatusUpdate(percentComplete, bytesWritten, contentLength, string.Empty);
 
             // Set this to True to debug things and create the .tar file locally instead of sending to the server
-            bool writeToDisk = debugMode; // aka Writefile or Savefile
+            bool writeToDisk = (debugMode != eDebugMode.DebugDisabled); // aka Writefile or Savefile
 
             if (writeToDisk && Environment.MachineName.IndexOf("proto", StringComparison.CurrentCultureIgnoreCase) >= 0)
             {
@@ -651,7 +662,7 @@ namespace Pacifica.Core
             else
             {
                 // File entry
-                longPath = (pathInArchive.Length >= 99);
+                longPath = (pathInArchive.Length >= 100);
             }
 
             if (longPath)
@@ -675,11 +686,13 @@ namespace Pacifica.Core
             return contentLength;
         }
 
-        private static long ComputeTarFileSize(SortedDictionary<string, FileInfoObject> fileListObject, FileInfo fiMetadataFile, bool debugMode)
+        private static long ComputeTarFileSize(SortedDictionary<string, FileInfoObject> fileListObject, FileInfo fiMetadataFile, eDebugMode debugMode)
         {
             long contentLength = 0;
 
-            if (debugMode)
+            bool debugging = (debugMode != eDebugMode.DebugDisabled);
+
+            if (debugging)
             {
                 Console.WriteLine();
                 Console.WriteLine("FileSize".PadRight(12) + "addonBytes".PadRight(12) + "StartOffset".PadRight(13) + "FilePath");
@@ -688,15 +701,15 @@ namespace Pacifica.Core
             // Add the metadata file
             long addonBytes = AddTarFileContentLength(MYEMSL_METADATA_FILE_NAME, fiMetadataFile.Length);
 
-            if (debugMode)
+            if (debugging)
                 Console.WriteLine(fiMetadataFile.Length.ToString().PadRight(12) + addonBytes.ToString().PadRight(12) + contentLength.ToString().PadRight(13) + "metadata.txt");
 
             contentLength += addonBytes;
 
             // Add the data/ directory
 
-            if (debugMode)
-                Console.WriteLine("0".PadRight(12) + TAR_BLOCK_SIZE_BYTES.ToString().PadRight(12) + contentLength.ToString().PadRight(13) + "data\\");
+            if (debugging)
+                Console.WriteLine("0".PadRight(12) + TAR_BLOCK_SIZE_BYTES.ToString().PadRight(12) + contentLength.ToString().PadRight(13) + "data/");
 
             contentLength += TAR_BLOCK_SIZE_BYTES;
 
@@ -717,7 +730,7 @@ namespace Pacifica.Core
                         string dirPathInArchive = "data/" + fileToArchive.Value.RelativeDestinationDirectory + "/";
                         addonBytes = AddTarFileContentLength(dirPathInArchive, 0);
 
-                        if (debugMode)
+                        if (debugging)
                             Console.WriteLine(
                                 "0".PadRight(12) +
                                 addonBytes.ToString().PadRight(12) +
@@ -730,22 +743,22 @@ namespace Pacifica.Core
                     }
                 }
 
-                string pathInArchive = "data/" + fileToArchive.Value.RelativeDestinationDirectory + fileToArchive.Value.FileName;
+                string pathInArchive = "data/" + fileToArchive.Value.RelativeDestinationDirectory + '/' + fileToArchive.Value.FileName;
                 addonBytes = AddTarFileContentLength(pathInArchive, fileToArchive.Value.FileSizeInBytes);
 
-                if (debugMode)
+                if (debugging)
                     Console.WriteLine(
                         fileToArchive.Value.FileSizeInBytes.ToString().PadRight(12) +
                         addonBytes.ToString().PadRight(12) +
                         contentLength.ToString().PadRight(13) +
-                        clsFileTools.CompactPathString(fileToArchive.Value.RelativeDestinationFullPath, 73));
+                        clsFileTools.CompactPathString("data/" + fileToArchive.Value.RelativeDestinationFullPath, 100));
 
                 contentLength += addonBytes;
 
             }
 
             // Append one empty block (appended by SharpZipLib at the end of the .tar file
-            if (debugMode)
+            if (debugging)
                 Console.WriteLine("0".PadRight(12) + TAR_BLOCK_SIZE_BYTES.ToString().PadRight(12) + contentLength.ToString().PadRight(13) + "512 block at end of .tar");
 
             contentLength += TAR_BLOCK_SIZE_BYTES;
@@ -755,12 +768,12 @@ namespace Pacifica.Core
             var recordCount = (long)Math.Ceiling(contentLength / (double)TarBuffer.DefaultRecordSize);
             long finalPadderLength = (recordCount * TarBuffer.DefaultRecordSize) - contentLength;
 
-            if (debugMode)
+            if (debugging)
                 Console.WriteLine("0".PadRight(12) + finalPadderLength.ToString().PadRight(12) + contentLength.ToString().PadRight(13) + "Padder block at end (to make multiple of " + TarBuffer.DefaultRecordSize + ")");
 
             contentLength = recordCount * TarBuffer.DefaultRecordSize;
 
-            if (debugMode)
+            if (debugging)
                 Console.WriteLine("0".PadRight(12) + "0".PadRight(12) + contentLength.ToString().PadRight(13) + "End of file");
 
             return contentLength;

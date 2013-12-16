@@ -81,7 +81,7 @@ namespace Pacifica.DMS_Metadata
 
 		#endregion
 
-		public void StartUpload(bool debugMode, out string statusURL)
+        public void StartUpload(EasyHttp.eDebugMode debugMode, out string statusURL)
 		{
 
 			// Instantiate the metadata object
@@ -89,7 +89,7 @@ namespace Pacifica.DMS_Metadata
 			_mdContainer.ProgressEvent += _mdContainer_ProgressEvent;
 
 			// Look for files to upload, compute a Sha-1 hash for each, and compare those hashes to existing files in MyEMSL
-			_mdContainer.SetupMetadata(m_TaskParams, m_MgrParams);
+            _mdContainer.SetupMetadata(m_TaskParams, m_MgrParams, debugMode);
 
 			Configuration.LocalTempDirectory = Utilities.GetDictionaryValue(m_MgrParams, "workdir", "");
 			FileCountUpdated = _mdContainer.TotalFileCountUpdated;

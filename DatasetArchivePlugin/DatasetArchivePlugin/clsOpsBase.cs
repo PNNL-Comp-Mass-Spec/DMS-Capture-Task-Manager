@@ -210,7 +210,7 @@ namespace DatasetArchivePlugin
             return text + append;
         }
 
-        protected bool UploadToMyEMSLWithRetry(int maxAttempts, bool recurse, bool debugMode)
+        protected bool UploadToMyEMSLWithRetry(int maxAttempts, bool recurse, EasyHttp.eDebugMode debugMode)
         {
             bool bSuccess = false;
             int iAttempts = 0;
@@ -234,7 +234,7 @@ namespace DatasetArchivePlugin
                 iAttempts += 1;
                 bSuccess = UploadToMyEMSL(recurse, debugMode);
 
-                if (debugMode)
+                if (debugMode != EasyHttp.eDebugMode.DebugDisabled)
                     break;
 
                 if (!bSuccess && iAttempts < maxAttempts)
@@ -246,7 +246,7 @@ namespace DatasetArchivePlugin
 
             if (!bSuccess)
             {
-                if (debugMode)
+                if (debugMode != EasyHttp.eDebugMode.DebugDisabled)
                     m_WarningMsg = "Debug mode was enabled; thus, .tar file was created locally and not uploaded to MyEMSL";
                 else
                     m_WarningMsg = AppendToString(m_WarningMsg, "UploadToMyEMSL reports False");
@@ -262,7 +262,7 @@ namespace DatasetArchivePlugin
         /// Use MyEMSLUploader to upload the data to MyEMSL
         /// </summary>
         /// <returns>True if success, false if an error</returns>
-        protected bool UploadToMyEMSL(bool recurse, bool debugMode)
+        protected bool UploadToMyEMSL(bool recurse, EasyHttp.eDebugMode debugMode)
         {
             bool success;
             DateTime dtStartTime = DateTime.UtcNow;
@@ -294,7 +294,7 @@ namespace DatasetArchivePlugin
                 m_Msg = "Upload of " + m_DatasetName + " completed in " + tsElapsedTime.TotalSeconds.ToString("0.0") + " seconds: " + myEMSLUL.FileCountNew + " new files, " + myEMSLUL.FileCountUpdated + " updated files, " + myEMSLUL.Bytes + " bytes";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
 
-                if (debugMode)
+                if (debugMode != EasyHttp.eDebugMode.DebugDisabled)
                     return false;
 
                 m_Msg = "myEMSL statusURI => " + myEMSLUL.StatusURI;
