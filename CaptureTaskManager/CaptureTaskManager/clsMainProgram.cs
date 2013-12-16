@@ -926,6 +926,15 @@ namespace CaptureTaskManager
 
 			try
 			{
+                
+#if MyEMSL_OFFLINE
+    m_Task.AddAdditionalParameter("MyEMSLOffline", "true");
+#endif
+
+#if MyEMSL_TEST_TAR
+    m_Task.AddAdditionalParameter("DebugTestTar", "true");
+#endif
+
 				// Setup the new tool runner
 				m_CapTool.Setup(m_MgrSettings, m_Task, m_StatusFile);
 			}
