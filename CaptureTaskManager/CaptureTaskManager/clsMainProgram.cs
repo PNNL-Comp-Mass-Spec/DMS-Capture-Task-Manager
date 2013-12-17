@@ -929,10 +929,12 @@ namespace CaptureTaskManager
                 
 #if MyEMSL_OFFLINE
     m_Task.AddAdditionalParameter("MyEMSLOffline", "true");
+	clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Adding job parameter MyEMSLOffline=true");
 #endif
 
 #if MyEMSL_TEST_TAR
     m_Task.AddAdditionalParameter("DebugTestTar", "true");
+	clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Adding job parameter DebugTestTar=true");
 #endif
 
 				// Setup the new tool runner

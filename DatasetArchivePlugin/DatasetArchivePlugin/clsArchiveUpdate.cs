@@ -109,6 +109,9 @@ namespace DatasetArchivePlugin
                 if (m_TaskParams.GetParam("MyEMSLOffline", false))
                     debugMode = Pacifica.Core.EasyHttp.eDebugMode.MyEMSLOfflineMode;
 
+				if (debugMode != Pacifica.Core.EasyHttp.eDebugMode.DebugDisabled)
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Calling UploadToMyEMSLWithRetry with debugMode=" + debugMode);
+
 				bool copySuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts, recurse, debugMode);
 
 				if (!copySuccess)
