@@ -138,9 +138,9 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\DatasetArchivePlugin\DatasetArchivePlugin\DatasetArchivePlugin.csproj">
-      <Project>{FC0E683A-38BE-494C-93F1-65747197DCD7}</Project>
-      <Name>DatasetArchivePlugin</Name>
+    <ProjectReference Include="..\..\DatasetIntegrityPlugin\DatasetIntegrityPlugin\DatasetIntegrityPlugin.csproj">
+      <Project>{F876BBF0-1E1C-4780-BE02-945E1FD80E8B}</Project>
+      <Name>DatasetIntegrityPlugin</Name>
     </ProjectReference>
     <ProjectReference Include="..\CTM_Shared\CTM_Shared.csproj">
       <Project>{7D07F054-0D29-45DD-9B22-71D0768BC3C3}</Project>
