@@ -129,7 +129,7 @@ namespace Pacifica.DMS_Metadata
 			else
 				eSearchOption = SearchOption.TopDirectoryOnly;
 
-			List<FileInfo> fileList = archiveDir.GetFiles("*.*", eSearchOption).ToList();
+			List<FileInfo> fileList = archiveDir.GetFiles("*", eSearchOption).ToList();
 
 			if (fileList.Count >= MAX_FILES_TO_ARCHIVE)
 			{
