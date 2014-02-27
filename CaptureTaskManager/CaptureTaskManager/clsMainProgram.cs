@@ -928,6 +928,9 @@ namespace CaptureTaskManager
 			{
                 
 #if MyEMSL_OFFLINE
+	// When this Conditional Compilation Constant is defined, then the DatasetArchive plugin will set debugMode 
+	// to Pacifica.Core.EasyHttp.eDebugMode.MyEMSLOfflineMode when calling UploadToMyEMSLWithRetry()
+	// This in turn results in writeToDisk becoming True in SendFileListToDavAsTar
     m_Task.AddAdditionalParameter("MyEMSLOffline", "true");
 	clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Adding job parameter MyEMSLOffline=true");
 #endif

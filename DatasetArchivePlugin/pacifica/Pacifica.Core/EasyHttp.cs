@@ -647,8 +647,13 @@ namespace Pacifica.Core
             return responseData;
         }
 
-
         protected static long AddTarFileContentLength(string pathInArchive, long fileSizeBytes)
+        {
+            int headerBlocks;
+            return AddTarFileContentLength(pathInArchive, fileSizeBytes, out headerBlocks);
+        }
+
+        protected static long AddTarFileContentLength(string pathInArchive, long fileSizeBytes, out int headerBlocks)
         {
 
             long contentLength = 0;
@@ -665,6 +670,10 @@ namespace Pacifica.Core
                 longPath = (pathInArchive.Length >= 100);
             }
 
+            // Header block for current file
+            headerBlocks = 1;
+            contentLength += TAR_BLOCK_SIZE_BYTES;
+            
             if (longPath)
             {
                 // SharpZipLib will add two extra 512 byte blocks since this file has an extra long file path 
@@ -673,11 +682,9 @@ namespace Pacifica.Core
                 // The first block will have filename "././@LongLink" and placeholder metadata (file date, file size, etc.)
                 // The next block will have the actual long filename
                 var extraBlocks = (int)(Math.Ceiling(pathInArchive.Length / 512.0));
+                headerBlocks += extraBlocks;
                 contentLength += TAR_BLOCK_SIZE_BYTES + TAR_BLOCK_SIZE_BYTES * extraBlocks;
             }
-
-            // Header block for current file
-            contentLength += TAR_BLOCK_SIZE_BYTES;
 
             // File contents
             long fileBlocks = (int)Math.Ceiling(fileSizeBytes / (double)TAR_BLOCK_SIZE_BYTES);
@@ -694,26 +701,28 @@ namespace Pacifica.Core
 
             if (debugging)
             {
+                // Note that "HB" stands for HeaderBlocks
                 Console.WriteLine();
-                Console.WriteLine("FileSize".PadRight(12) + "addonBytes".PadRight(12) + "StartOffset".PadRight(13) + "FilePath");
+                Console.WriteLine("FileSize".PadRight(12) + "addonBytes".PadRight(12) + "StartOffset".PadRight(12) + "HB".PadRight(3) + "FilePath");
             }
 
             // Add the metadata file
             long addonBytes = AddTarFileContentLength(MYEMSL_METADATA_FILE_NAME, fiMetadataFile.Length);
 
             if (debugging)
-                Console.WriteLine(fiMetadataFile.Length.ToString().PadRight(12) + addonBytes.ToString().PadRight(12) + contentLength.ToString().PadRight(13) + "metadata.txt");
+                Console.WriteLine(fiMetadataFile.Length.ToString().PadRight(12) + addonBytes.ToString().PadRight(12) + contentLength.ToString().PadRight(12) + "1".PadRight(3) + "metadata.txt");
 
             contentLength += addonBytes;
 
             // Add the data/ directory
 
             if (debugging)
-                Console.WriteLine("0".PadRight(12) + TAR_BLOCK_SIZE_BYTES.ToString().PadRight(12) + contentLength.ToString().PadRight(13) + "data/");
+                Console.WriteLine("0".PadRight(12) + TAR_BLOCK_SIZE_BYTES.ToString().PadRight(12) + contentLength.ToString().PadRight(12) + "1".PadRight(3) + "data/");
 
             contentLength += TAR_BLOCK_SIZE_BYTES;
 
             var dctDirectoryEntries = new SortedSet<string>();
+            int headerBlocks;
 
             // Add the files to be archived
             foreach (var fileToArchive in fileListObject)
@@ -727,14 +736,15 @@ namespace Pacifica.Core
 
                     if (!dctDirectoryEntries.Contains(fiSourceFile.Directory.FullName))
                     {
-                        string dirPathInArchive = "data/" + fileToArchive.Value.RelativeDestinationDirectory + "/";
-                        addonBytes = AddTarFileContentLength(dirPathInArchive, 0);
+                        string dirPathInArchive = "data/" + fileToArchive.Value.RelativeDestinationDirectory + "/";                       
+                        addonBytes = AddTarFileContentLength(dirPathInArchive, 0, out headerBlocks);
 
                         if (debugging)
                             Console.WriteLine(
                                 "0".PadRight(12) +
                                 addonBytes.ToString().PadRight(12) +
-                                contentLength.ToString().PadRight(13) +
+                                contentLength.ToString().PadRight(12) +
+                                headerBlocks.ToString().PadRight(3) +
                                 clsFileTools.CompactPathString(dirPathInArchive, 75));
 
                         contentLength += addonBytes;
@@ -743,14 +753,20 @@ namespace Pacifica.Core
                     }
                 }
 
-                string pathInArchive = "data/" + fileToArchive.Value.RelativeDestinationDirectory + '/' + fileToArchive.Value.FileName;
-                addonBytes = AddTarFileContentLength(pathInArchive, fileToArchive.Value.FileSizeInBytes);
+                string pathInArchive = "data/";
+                if (!string.IsNullOrWhiteSpace(fileToArchive.Value.RelativeDestinationDirectory))
+                    pathInArchive += fileToArchive.Value.RelativeDestinationDirectory + '/';
+
+                pathInArchive += fileToArchive.Value.FileName;
+
+                addonBytes = AddTarFileContentLength(pathInArchive, fileToArchive.Value.FileSizeInBytes, out headerBlocks);
 
                 if (debugging)
                     Console.WriteLine(
                         fileToArchive.Value.FileSizeInBytes.ToString().PadRight(12) +
                         addonBytes.ToString().PadRight(12) +
-                        contentLength.ToString().PadRight(13) +
+                        contentLength.ToString().PadRight(12) +
+                        headerBlocks.ToString().PadRight(3) +
                         clsFileTools.CompactPathString("data/" + fileToArchive.Value.RelativeDestinationFullPath, 100));
 
                 contentLength += addonBytes;
@@ -759,7 +775,7 @@ namespace Pacifica.Core
 
             // Append one empty block (appended by SharpZipLib at the end of the .tar file
             if (debugging)
-                Console.WriteLine("0".PadRight(12) + TAR_BLOCK_SIZE_BYTES.ToString().PadRight(12) + contentLength.ToString().PadRight(13) + "512 block at end of .tar");
+                Console.WriteLine("0".PadRight(12) + TAR_BLOCK_SIZE_BYTES.ToString().PadRight(12) + contentLength.ToString().PadRight(12) + "0".PadRight(3) + "512 block at end of .tar");
 
             contentLength += TAR_BLOCK_SIZE_BYTES;
 
@@ -769,12 +785,12 @@ namespace Pacifica.Core
             long finalPadderLength = (recordCount * TarBuffer.DefaultRecordSize) - contentLength;
 
             if (debugging)
-                Console.WriteLine("0".PadRight(12) + finalPadderLength.ToString().PadRight(12) + contentLength.ToString().PadRight(13) + "Padder block at end (to make multiple of " + TarBuffer.DefaultRecordSize + ")");
+                Console.WriteLine("0".PadRight(12) + finalPadderLength.ToString().PadRight(12) + contentLength.ToString().PadRight(12) + "0".PadRight(3) + "Padder block at end (to make multiple of " + TarBuffer.DefaultRecordSize + ")");
 
             contentLength = recordCount * TarBuffer.DefaultRecordSize;
 
             if (debugging)
-                Console.WriteLine("0".PadRight(12) + "0".PadRight(12) + contentLength.ToString().PadRight(13) + "End of file");
+                Console.WriteLine("0".PadRight(12) + "0".PadRight(12) + contentLength.ToString().PadRight(12) + "0".PadRight(3) + "End of file");
 
             return contentLength;
         }

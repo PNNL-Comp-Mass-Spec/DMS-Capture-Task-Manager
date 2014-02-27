@@ -148,13 +148,10 @@ namespace DatasetArchivePlugin
 			/// <remarks>Assumes password property has been set and password has been encrypted using pwd.exe routine</remarks>
 			public bool OpenFTPConnection()
 			{
-				string sPassword;
-				string msg;
-
-				msg = "Opening FTP connection";
+				const string msg = "Opening FTP connection";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,msg);
 
-				sPassword = DecodePassword(m_Pwd);	//Convert encrypted password to real password
+				DecodePassword(m_Pwd);	//Convert encrypted password to real password
 
 #if !DartFTPMissing
 				m_FtpDart = new Dart.PowerTCP.Ftp.Ftp();
@@ -227,9 +224,9 @@ namespace DatasetArchivePlugin
 			/// <summary>
 			/// Copy folder given by sourcePath to be a subfolder under storagePath
 			/// </summary>
-			/// <param name="SourcePath">Full path of folder to be copied</param>
-			/// <param name="StoragePath">Destination folder</param>
-			/// <param name="VerifyCopy">TRUE to perform testing to verify satisfactory copy (slows down return)</param>
+			/// <param name="sourcePath">Full path of folder to be copied</param>
+			/// <param name="storagePath">Destination folder</param>
+			/// <param name="verifyCopy">TRUE to perform testing to verify satisfactory copy (slows down return)</param>
 			/// <returns>TRUE for success; FALSE for failure</returns>
 			public bool CopyDirectory(string sourcePath, string storagePath, bool verifyCopy)
 			{
@@ -316,7 +313,7 @@ namespace DatasetArchivePlugin
 			/// <summary>
 			/// Converts the incoming string from the FTP control into a file size
 			/// </summary>
-			/// <param name="FTPStr">A string of file information returned from an FTP server</param>
+			/// <param name="ftpStr">A string of file information returned from an FTP server</param>
 			/// <returns>The size of the file (bytes)</returns>
 			private long InpStrToFileSize(string ftpStr)
 			{
@@ -326,9 +323,7 @@ namespace DatasetArchivePlugin
 				//Requires function GetDateStartPosition from the same example
 
 				int intDatePosition = 0;
-				int intFileNamePosition = 0;
-				int intFileSizePosition = 0;
-				string TempStr = null;
+				string TempStr;
 
 				if (ftpStr.Length == 0) return 0;
 
@@ -337,7 +332,6 @@ namespace DatasetArchivePlugin
 				if (intDatePosition == -1) return 0;
 
 				//Get the file name start position: intDatePosition + Len("Mar 21  1998") + 1
-				intFileNamePosition = intDatePosition + 13;
 				//
 				//Remove CR symbols from the line
 				ftpStr = ftpStr.Replace("\r", string.Empty);
@@ -348,30 +342,26 @@ namespace DatasetArchivePlugin
 					//Here is the "UNIX FTP listing format"
 					//
 					//Get the file size
-					intFileSizePosition = ftpStr.LastIndexOf(" ", intDatePosition - 1);
+					int intFileSizePosition = ftpStr.LastIndexOf(" ", intDatePosition - 1);
 					TempStr = ftpStr.Substring(intFileSizePosition, intDatePosition - intFileSizePosition - 1);
 					return long.Parse(TempStr);
 				}
-				else
+				
+				//
+				//
+				//Here is the "DOS FTP listing format"
+				//
+				if (ftpStr.Length > 0)
 				{
-					//
-					//
-					//Here is the "DOS FTP listing format"
-					//
-					if (ftpStr.Length > 0)
+					ftpStr = ftpStr.Substring(0, 38);
+					if (ftpStr.IndexOf("<DIR>") > 0)
 					{
-						ftpStr = ftpStr.Substring(0, 38);
-						if (ftpStr.IndexOf("<DIR>") > 0)
-						{
-							//					InpStrToFileSize = "0"
-							return 0;
-						}
-						else
-						{
-							TempStr = ftpStr.Substring(18).Trim();
-							return long.Parse(TempStr);
-						}
+						//					InpStrToFileSize = "0"
+						return 0;
 					}
+					
+					TempStr = ftpStr.Substring(18).Trim();
+					return long.Parse(TempStr);
 				}
 				return 0;	// Shouldn't ever get here; this is just to make the compiler happy.
 			}	// End sub
@@ -393,11 +383,9 @@ namespace DatasetArchivePlugin
 				//drwxr-xr-x   3 ftpuser  ftpusers       512 Jul 19 11:25 optimizeit
 				//                                          <------------>
 				//
-				int intStartPosition = 0;
 				string[] MonthsArray = { "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", 
 											    "nov", "dec" };
-				string strStringToSearch = null;
-				int i = 0;
+				int i;
 
 				strListingLine = strListingLine.ToLower();
 
@@ -405,8 +393,8 @@ namespace DatasetArchivePlugin
 				{
 					for (i = 0; i <= MonthsArray.GetUpperBound(0); i++)
 					{
-						strStringToSearch = " " + MonthsArray[i] + " ";
-						intStartPosition = strListingLine.IndexOf(strStringToSearch);
+						string strStringToSearch = " " + MonthsArray[i] + " ";
+						int intStartPosition = strListingLine.IndexOf(strStringToSearch);
 						if (intStartPosition > 0)
 						{
 							if (IsNumeric(strListingLine.Substring(intStartPosition - 1, 1)) 
@@ -429,12 +417,12 @@ namespace DatasetArchivePlugin
 			/// <summary>
 			/// Gets a listing of all files in the top level of the specified folder on the FTP server
 			/// </summary>
-			/// <param name="RemFolder">Folder to get a listing from</param>
-			/// <param name="WildCard">file spec</param>
+			/// <param name="remFolder">Folder to get a listing from</param>
+			/// <param name="wildCard">file spec</param>
 			/// <returns>String collection containing the names of all files found</returns>
 			public StringCollection GetRemFileList(string remFolder, string wildCard)
 			{
-				StringCollection tempCollection = new StringCollection();
+				var tempCollection = new StringCollection();
 
 				m_ErrMsg = string.Empty;
 
@@ -472,8 +460,8 @@ namespace DatasetArchivePlugin
 			/// <summary>
 			/// Retrieves the specified file from the FTP server
 			/// </summary>
-			/// <param name="SrcFile">Name and full path of file to retrieve</param>
-			/// <param name="DestFile">Name and full path of file to retrieve to</param>
+			/// <param name="srcFile">Name and full path of file to retrieve</param>
+			/// <param name="destFile">Name and full path of file to retrieve to</param>
 			/// <returns>TRUE for success; FALSE for failure</returns>
 			public bool GetFile(string srcFile, string destFile)
 			{
@@ -518,9 +506,9 @@ namespace DatasetArchivePlugin
 			/// <summary>
 			/// Stores a single file in the archive
 			/// </summary>
-			/// <param name="SrcFile">Name and full path of file to store</param>
-			/// <param name="DestFile">Name and full path of file in archive</param>
-			/// <param name="Verify">TRUE to verify file sizes match after copy</param>
+			/// <param name="srcFile">Name and full path of file to store</param>
+			/// <param name="destFile">Name and full path of file in archive</param>
+			/// <param name="verify">TRUE to verify file sizes match after copy</param>
 			/// <returns>TRUE for success; FALSE for failure</returns>
 			public bool PutFile(string srcFile, string destFile, bool verify)
 			{
@@ -596,7 +584,7 @@ namespace DatasetArchivePlugin
 			/// <summary>
 			/// Checks for existence of specified folder on FTP server
 			/// </summary>
-			/// <param name="RemFolder">Name and full path of folder to be found</param>
+			/// <param name="remFolder">Name and full path of folder to be found</param>
 			/// <returns>FileFolderFound enum value indicating if folder was found</returns>
 			public EnumFileFolderExists FolderExists(string remFolder)
 			{
@@ -654,7 +642,7 @@ namespace DatasetArchivePlugin
 			/// <summary>
 			/// Checks for existence of specified file on FTP server
 			/// </summary>
-			/// <param name="RemFile">Name and full path of file to be found</param>
+			/// <param name="remFile">Name and full path of file to be found</param>
 			/// <returns>FileFolderFound enum value indicating if file was found</returns>
 			public EnumFileFolderExists FileExists(string remFile)
 			{
@@ -736,9 +724,9 @@ namespace DatasetArchivePlugin
 			/// <summary>
 			/// Gets the total file count and size for a remote folder
 			/// </summary>
-			/// <param name="RemoteFolder">Name of remote folder</param>
-			/// <param name="TotSize">Return value for total size of files (bytes)</param>
-			/// <param name="TotCount">Return value for total number of files found</param>
+			/// <param name="remoteFolder">Name of remote folder</param>
+			/// <param name="totSize">Return value for total size of files (bytes)</param>
+			/// <param name="totCount">Return value for total number of files found</param>
 			/// <returns>TRUE for success; FALSE for failure</returns>
 			private bool GetRemFileSizeCount(string remoteFolder, ref long totSize, ref long totCount)
 			{
@@ -849,7 +837,7 @@ namespace DatasetArchivePlugin
 			/// <summary>
 			/// Decrypts password received from ini file
 			/// </summary>
-			/// <param name="EnPwd">Encoded password</param>
+			/// <param name="enPwd">Encoded password</param>
 			/// <returns>Clear text password</returns>
 			private string DecodePassword(string enPwd)
 			{
@@ -858,8 +846,8 @@ namespace DatasetArchivePlugin
 
 				// Convert the password string to a character array
 				char[] pwdChars = enPwd.ToCharArray();
-				byte[] pwdBytes = new byte[pwdChars.Length];
-				char[] pwdCharsAdj = new char[pwdChars.Length];
+				var pwdBytes = new byte[pwdChars.Length];
+				var pwdCharsAdj = new char[pwdChars.Length];
 
 				for (int i = 0; i < pwdChars.Length; i++)
 				{
@@ -887,7 +875,7 @@ namespace DatasetArchivePlugin
 			/// <summary>
 			/// Replaces the password returned by the Dart FTP control error message with "xxxxx" so the password doesn't appear in log files
 			/// </summary>
-			/// <param name="InpStr">Input string from error message</param>
+			/// <param name="inpStr">Input string from error message</param>
 			/// <returns>input string, only password is replaced with "xxxxxx"</returns>
 			private string StripPwd(string inpStr)
 			{
@@ -902,8 +890,8 @@ namespace DatasetArchivePlugin
 			/// <returns>TRUE if can be converted, otherwise FALSE</returns>
 			private bool IsNumeric(string inpStr)
 			{
-				long tmpLong = 0;
-				float tmpFloat = 0F;
+				long tmpLong;
+				float tmpFloat;
 
 				// First, see if it can be a long (or integer)
 				if (long.TryParse(inpStr,out tmpLong)) return true;	// It can be converted to long or integer

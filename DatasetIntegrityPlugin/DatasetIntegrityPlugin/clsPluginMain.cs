@@ -1026,7 +1026,8 @@ namespace DatasetIntegrityPlugin
 			{
 				// Multiple .M folders
 				// This is OK for the Buker Imaging instruments and for Maxis_01
-				if (!instrumentName.ToLower().Contains("imaging") && instrumentName != "Maxis_01")
+				string instrumentNameLCase = instrumentName.ToLower();
+				if (!instrumentNameLCase.Contains("imaging") && !instrumentNameLCase.Contains("maxis"))
 				{
 					// It's also OK if there are two folders, and one contains _neg and one contains _pos
 					if (!PositiveNegativeMethodFolders(subFolderList))
@@ -1212,10 +1213,13 @@ namespace DatasetIntegrityPlugin
 			{
 				// Multiple .M folders
 				// Allow this if there are two folders, and one contains _neg and one contains _pos
-				// Also allow this if on the 15T
-				if (!PositiveNegativeMethodFolders(subFolderList) && 
-					instrumentName != "15T_FTICR" && 					
-					!instrumentName.ToLower().Contains("imaging"))
+				// Also allow this if on the 12T or on the 15T
+				string instrumentNameLCase = instrumentName.ToLower();
+
+				if (!PositiveNegativeMethodFolders(subFolderList) &&
+					instrumentNameLCase.Contains("15t_fticr") &&
+					instrumentNameLCase.Contains("12t_fticr") &&
+					instrumentNameLCase.Contains("imaging"))
 				{
 					mRetData.EvalMsg = "Invalid dataset. Multiple .M folders found";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);

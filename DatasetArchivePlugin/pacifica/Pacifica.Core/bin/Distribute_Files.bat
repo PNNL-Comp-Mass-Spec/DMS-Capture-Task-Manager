@@ -82,6 +82,7 @@ copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\M
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\MyEMSL_Reader\bin\Debug" /y
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\MyEMSL_Reader\Lib" /y
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\MyEMSL_Reader\Tester\bin\Debug" /y
+copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\MyEMSL_Reader\MyEMSLDownloader\bin\Debug" /y
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Space_Manager\DMS_Space_Manager\bin\Debug" /y
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Space_Manager\DMS_Space_Manager\bin\Release" /y
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Space_Manager\DMS_Space_Manager\RefLib" /y

@@ -29,6 +29,8 @@ namespace ArchiveVerifyPlugin
 		protected double mPercentComplete;
 		protected DateTime mLastProgressUpdateTime = DateTime.UtcNow;
 
+		protected int mTotalMismatchCount = 0;
+
 		#endregion
 
 		#region "Constructors"
@@ -63,6 +65,8 @@ namespace ArchiveVerifyPlugin
 			// Set this to Success for now
 			mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
 
+			mTotalMismatchCount = 0;
+
 			// Examine the MyEMSL ingest status page
 			bool success = CheckUploadStatus();
 
@@ -85,7 +89,7 @@ namespace ArchiveVerifyPlugin
 				// Everything was good
 				if (m_DebugLevel >= 4)
 				{
-					msg = "MyEMSL verification successful for dataset " + m_Dataset;
+					msg = "MyEMSL verification successful for job " + m_Job + ", dataset " + m_Dataset;
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 				}
 				mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
@@ -96,7 +100,7 @@ namespace ArchiveVerifyPlugin
 			}
 			else
 			{
-				// There was a problem	
+				// There was a problem (or the data is not yet ready in MyEMSL)
 				if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
 					mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
 			}
@@ -111,10 +115,10 @@ namespace ArchiveVerifyPlugin
 		protected bool CheckUploadStatus()
 		{
 
-			// Monitor the upload status for 60 seconds
-			// If still not complete after 60 seconds, then this manager will return completionCode CLOSEOUT_NOT_READY=2 
-			// which will tell the DMS_Capture DB to reset the task to state 2 and bump up the Next_Try value by 5 minutes
-			const int MAX_WAIT_TIME_SECONDS = 60;
+			// Examine the upload status (only need to check once, previously monitored for 60 seconds)
+			// If not compplete, then this manager will return completionCode CLOSEOUT_NOT_READY=2 
+			// which will tell the DMS_Capture DB to reset the task to state 2 and bump up the Next_Try value by 30 minutes
+			const int MAX_WAIT_TIME_SECONDS = 20;
 
 			DateTime dtStartTime = DateTime.UtcNow;
 
@@ -168,6 +172,9 @@ namespace ArchiveVerifyPlugin
 						return false;
 					}
 
+                    // Not ready; exit the loop
+                    break;
+
 				}
 				catch (Exception ex)
 				{
@@ -183,9 +190,7 @@ namespace ArchiveVerifyPlugin
 					}
 				}
 
-				exceptionCount = 0;
-
-				// Sleep for 5 seconds
+				// Exception occurred; sleep for 5 seconds then try again
 				System.Threading.Thread.Sleep(5000);
 
 			}
@@ -243,8 +248,12 @@ namespace ArchiveVerifyPlugin
 
 					if (mismatchCount > 0)
 					{
+						if (mTotalMismatchCount == 0)
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
+						mTotalMismatchCount += mismatchCount;
+
 						string matchStats = "MatchCount=" + matchCount + ", MismatchCount=" + mismatchCount;
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Sha1 mismatch between local files in metadata.txt file and MyEMSL; " + matchStats);
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " ... sha1 mismatch between local files in metadata.txt file and MyEMSL; " + matchStats);
 						mRetData.CloseoutMsg = matchStats;
 						return false;
 					}
@@ -261,8 +270,12 @@ namespace ArchiveVerifyPlugin
 
 				if (lstDatasetFilesLocal.Count == 0)
 				{
+					if (mTotalMismatchCount == 0)
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
+					mTotalMismatchCount += 1;
+
 					mRetData.CloseoutMsg = "Local files were not found for this dataset; unable to compare Sha-1 hashes to MyEMSL values";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg);
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " ... " + mRetData.CloseoutMsg);
 					return false;
 				}
 
@@ -286,8 +299,13 @@ namespace ArchiveVerifyPlugin
 
 				if (mismatchCount > 0)
 				{
+					if (mTotalMismatchCount == 0)
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
+					mTotalMismatchCount += mismatchCount;
+
 					mRetData.CloseoutMsg = "Sha1 mismatch between local files on disk and MyEMSL; MatchCount=" + matchCount + ", MismatchCount=" + mismatchCount;
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg);
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " ... " + mRetData.CloseoutMsg);
+					
 					return false;
 				}
 
@@ -314,7 +332,11 @@ namespace ArchiveVerifyPlugin
 
 				if (lstMatchingArchivedFiles.Count == 0)
 				{
-					string msg = "File " + metadataFile.Key + " not found in MyEMSL (CompareArchiveFilesToList)";
+					if (mTotalMismatchCount == 0)
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
+					mTotalMismatchCount += 1;
+
+					string msg = " ... file " + metadataFile.Key + " not found in MyEMSL (CompareArchiveFilesToList)";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 				}
 				else
@@ -325,10 +347,15 @@ namespace ArchiveVerifyPlugin
 						matchCount++;
 					else
 					{
-						string msg = "File mismatch for " + archiveFile.RelativePathWindows + "; MyEMSL reports " + archiveFile.Sha1Hash + " but expecting " + metadataFile.Value;
+						if (mTotalMismatchCount == 0)
+							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
+						mTotalMismatchCount++;
+
+						string msg = " ... file mismatch for " + archiveFile.RelativePathWindows + "; MyEMSL reports " + archiveFile.Sha1Hash + " but expecting " + metadataFile.Value;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 
 						mismatchCount++;
+						
 					}
 				}
 			}
@@ -349,14 +376,22 @@ namespace ArchiveVerifyPlugin
 
 			if (string.IsNullOrEmpty(contents))
 			{
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Metadata file is empty: " + fiMetadataFile.FullName);
+				if (mTotalMismatchCount == 0)
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
+				mTotalMismatchCount += 1;
+
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " ... metadata file is empty: " + fiMetadataFile.FullName);
 				return;
 			}
 
 			var dctMetadataInfo = Utilities.JsonToObject(contents);
 			if (!dctMetadataInfo.ContainsKey("file"))
 			{
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Metadata file JSON does not contain 'file': " + fiMetadataFile.FullName);
+				if (mTotalMismatchCount == 0)
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
+				mTotalMismatchCount += 1;
+
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " ... metadata file JSON does not contain 'file': " + fiMetadataFile.FullName);
 				return;
 			}
 
@@ -710,12 +745,16 @@ namespace ArchiveVerifyPlugin
 
 				if (lstArchivedFiles.Count == 0)
 				{
+					if (mTotalMismatchCount == 0)
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
+					mTotalMismatchCount += 1;
+
 					string msg = "Elastic search did not find any files for Dataset_ID " + m_DatasetID;
 					if (!string.IsNullOrEmpty(subDir))
 						msg += " and subdirectory " + subDir;
 
 					mRetData.CloseoutMsg = msg;
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " ... " + msg);
 					return false;
 				}
 
