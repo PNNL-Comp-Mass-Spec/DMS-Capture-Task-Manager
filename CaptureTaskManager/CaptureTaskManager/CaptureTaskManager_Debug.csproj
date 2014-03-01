@@ -139,10 +139,6 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\ArchiveVerifyPlugin\ArchiveVerifyPlugin.csproj">
-      <Project>{2016D3F6-9AF1-45D8-A0B2-49202D5376D5}</Project>
-      <Name>ArchiveVerifyPlugin</Name>
-    </ProjectReference>
     <ProjectReference Include="..\CTM_Shared\CTM_Shared.csproj">
       <Project>{7D07F054-0D29-45DD-9B22-71D0768BC3C3}</Project>
       <Name>CTM_Shared</Name>

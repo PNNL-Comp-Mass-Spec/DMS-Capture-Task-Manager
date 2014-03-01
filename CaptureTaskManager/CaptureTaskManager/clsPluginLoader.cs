@@ -68,9 +68,9 @@ namespace CaptureTaskManager
 					//    myToolRunner = (IToolRunner)new ArchiveStatusCheckPlugin.clsPluginMain();
 					//    break;
 
-					case "ArchiveVerifyPlugin.clsPluginMain":
-						myToolRunner = (IToolRunner)new ArchiveVerifyPlugin.clsPluginMain();
-						break;
+					//case "ArchiveVerifyPlugin.clsPluginMain":
+					//    myToolRunner = (IToolRunner)new ArchiveVerifyPlugin.clsPluginMain();
+					//    break;
 
 					//case "DatasetIntegrityPlugin.clsPluginMain":
 					//    myToolRunner = (IToolRunner)new DatasetIntegrityPlugin.clsPluginMain();

@@ -545,6 +545,13 @@ namespace ImsDemuxPlugin
 
 			bool bPostProcessingError = false;
 
+			int framesToSum = taskParams.GetParam("DemuxFramesToSum", 1);
+			if (framesToSum > 0)
+				m_DeMuxTool.FramesToSum = framesToSum;
+
+			if (framesToSum > 1)
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Will sum " + framesToSum + " LC Frames when demultiplexing");
+
 			// Make sure the working directory is empty
 			clsToolRunnerBase.CleanWorkDir(m_WorkDir);
 
