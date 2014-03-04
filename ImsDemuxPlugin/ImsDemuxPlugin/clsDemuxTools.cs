@@ -545,7 +545,8 @@ namespace ImsDemuxPlugin
 
 			bool bPostProcessingError = false;
 
-			int framesToSum = taskParams.GetParam("DemuxFramesToSum", 1);
+			// Default to summing 5 LC frames if this parameter is not defined
+			int framesToSum = taskParams.GetParam("DemuxFramesToSum", 5);
 			if (framesToSum > 0)
 				m_DeMuxTool.FramesToSum = framesToSum;
 
