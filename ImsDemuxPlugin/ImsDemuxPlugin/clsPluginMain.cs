@@ -141,7 +141,7 @@ namespace ImsDemuxPlugin
 
                         retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                         retData.CloseoutMsg = "Error calibrating UIMF file; see " + clsDemuxTools.CALIBRATION_LOG_FILE;
-                        retData.EvalMsg = "De-multiplexed but Calibration failed";
+						retData.EvalMsg = "De-multiplexed but Calibration failed.  If you want to re-demultiplex the _encoded.uimf file, then you should rename the CalibrationLog.txt file";
 
                         msg = "Completed clsPluginMain.RunTool()";
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
