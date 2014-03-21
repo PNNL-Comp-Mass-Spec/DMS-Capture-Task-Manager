@@ -3,7 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Net.Security;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using Jayrock.Json;
 using Jayrock.Json.Conversion;
@@ -298,6 +300,42 @@ namespace Pacifica.Core
 			}
 			
 			return "UnknownUser";
+		}
+
+		/// <summary>
+		/// Callback used to validate the certificate in an SSL conversation 
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="cert"></param>
+		/// <param name="chain"></param>
+		/// <param name="policyErrors"></param>
+		/// <returns>True if the server is trusted</returns>
+		public static bool ValidateRemoteCertificate(object sender, X509Certificate cert, X509Chain chain, SslPolicyErrors policyErrors)
+		{
+			var lstTrustedDomains = new List<string>
+			{
+				"emsl.pnl.gov",
+				"pnl.gov"
+			};
+
+			var reExtractCN = new System.Text.RegularExpressions.Regex("CN=([^ ,]+),");
+			var reMatch = reExtractCN.Match(cert.Subject);
+			string domainToValidate;
+
+			if (reMatch.Success)
+				domainToValidate = reMatch.Groups[1].ToString();
+			else
+				domainToValidate = cert.Subject;
+
+			// Console.WriteLine("Checking " + domainToValidate + " against trusted domains");
+
+			foreach (var domainName in lstTrustedDomains)
+			{
+				if (domainToValidate.IndexOf(domainName, StringComparison.CurrentCultureIgnoreCase) >= 0)
+					return true;
+			}
+
+			return false;
 		}
 	}
 }

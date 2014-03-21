@@ -78,6 +78,11 @@ namespace Pacifica.Core
 			accessDenied = false;
 			statusMessage = string.Empty;
 
+			// The following Callback allows us to access the MyEMSL server even if the certificate is expired or untrusted
+			// For more info, see comments in Upload.StartUpload()
+			if (ServicePointManager.ServerCertificateValidationCallback == null)
+				ServicePointManager.ServerCertificateValidationCallback += Utilities.ValidateRemoteCertificate;
+
 			const int timeoutSeconds = 30;
 			HttpStatusCode responseStatusCode;
 
