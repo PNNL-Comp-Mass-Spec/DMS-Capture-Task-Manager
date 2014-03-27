@@ -327,14 +327,24 @@ namespace CaptureToolPlugin
 		/// <summary>
 		/// Performs action specified by DSFolderExistsAction mgr param if a dataset folder already exists
 		/// </summary>
-		/// <param name="DSFolder">Full path to dataset folder</param>
+		/// <param name="dsFolder">Full path to dataset folder</param>
+		/// <param name="bCopyWithResume">True when we will be using Copy with Resume to capture this instrument's data</param>
+		/// <param name="maxFileCountToAllowResume">Maximum number of files that can existing in the dataset folder if we are going to allow CopyWithResume to be used</param>
+		/// <param name="maxFolderCountToAllowResume">Maximum number of subfolders that can existing in the dataset folder if we are going to allow CopyWithResume to be used</param>		
+		/// <param name="retData">Return data</param>
 		/// <returns>TRUE for success, FALSE for failure</returns>
-		private bool PerformDSExistsActions(string dsFolder, bool bCopyWithResume, ref clsToolReturnData retData)
+		/// <remarks>If both maxFileCountToAllowResume and maxFolderCountToAllowResume are zero, then requires a minimum number of subfolders or files be present to allow for CopyToResume to be used</remarks>
+		private bool PerformDSExistsActions(
+			string dsFolder,
+			bool bCopyWithResume,
+			int maxFileCountToAllowResume,
+			int maxFolderCountToAllowResume,
+			ref clsToolReturnData retData)
 		{
 			bool switchResult = false;
 			int fileCount;
 			int folderCount;
-			string msg = string.Empty;
+			string msg;
 
 			switch (IsDSFolderEmpty(dsFolder, out fileCount, out folderCount))
 			{
@@ -354,8 +364,20 @@ namespace CaptureToolPlugin
 						case "overwrite_single_item":
 							// If the folder only contains one or two files or only one subfolder
 							// then we're likely retrying capture; rename the one file to start with x_
-							if (fileCount <= 2 && folderCount == 0 ||
-								fileCount == 0 && folderCount <= 1)
+
+							bool tooManyFilesOrFolders = false;
+							if (maxFileCountToAllowResume > 0 || maxFolderCountToAllowResume > 0)
+							{
+								if (fileCount > maxFileCountToAllowResume || folderCount > maxFolderCountToAllowResume)
+									tooManyFilesOrFolders = true;
+							}
+							else
+							{
+								if (folderCount == 0 && fileCount > 2 || fileCount == 0 && folderCount > 1)
+									tooManyFilesOrFolders = true;
+							}
+
+							if (!tooManyFilesOrFolders)
 							{
 								if (bCopyWithResume)
 									// Do not rename the folder or file; leave as-is and we'll resume the copy
@@ -513,7 +535,7 @@ namespace CaptureToolPlugin
 				// Sleep interval should be between 1 second and 15 minutes (900 seconds)
 				if (SleepIntervalSeconds > 900)
 					SleepIntervalSeconds = 900;
-			
+
 				if (SleepIntervalSeconds < 1)
 					SleepIntervalSeconds = 1;
 
@@ -555,7 +577,7 @@ namespace CaptureToolPlugin
 		{
 			try
 			{
-			
+
 				//Determines if the size of a file changes over specified time interval
 				FileInfo Fi = default(FileInfo);
 				long InitialFileSize = 0;
@@ -937,6 +959,9 @@ namespace CaptureToolPlugin
 
 			ConnectionType eConnectionType;
 
+			int maxFileCountToAllowResume = 0;
+			int maxFolderCountToAllowResume = 0;
+
 			if ((computerName.ToUpper() == "MONROE3") && dataset == "BW_20_2011_0909_1_01_2284")
 			{
 				// Override sourceVol, sourcePath, and m_UseBioNet when processing BW_20_2011_0909_1_01_2284 on Monroe3
@@ -960,9 +985,13 @@ namespace CaptureToolPlugin
 			switch (instrumentClass)
 			{
 				case clsInstrumentClassInfo.eInstrumentClass.BrukerFT_BAF:
+					bCopyWithResume = true;
+					break;
 				case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging:
 				case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging_V2:
 					bCopyWithResume = true;
+					maxFileCountToAllowResume = 10;
+					maxFolderCountToAllowResume = 1;
 					break;
 			}
 
@@ -1002,7 +1031,6 @@ namespace CaptureToolPlugin
 			}
 
 			// Set up paths
-			string sourceFolderPath;	// Instrument transfer directory
 			string storageFolderPath = Path.Combine(tempVol, storagePath);	// Directory on storage server where dataset folder goes
 			string datasetFolderPath;
 
@@ -1047,7 +1075,7 @@ namespace CaptureToolPlugin
 			if (ValidateFolderPath(datasetFolderPath))
 			{
 				// Dataset folder exists, so take action specified in configuration
-				if (!PerformDSExistsActions(datasetFolderPath, bCopyWithResume, ref retData))
+				if (!PerformDSExistsActions(datasetFolderPath, bCopyWithResume, maxFileCountToAllowResume, maxFolderCountToAllowResume,  ref retData))
 				{
 					PossiblyStoreErrorMessage(ref retData);
 					if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
@@ -1060,8 +1088,10 @@ namespace CaptureToolPlugin
 				}
 			}
 
+			// Construct the path to the dataset on the instrument
 			// Determine if source dataset exists, and if it is a file or a folder
-			sourceFolderPath = Path.Combine(sourceVol, sourcePath);
+			string sourceFolderPath = Path.Combine(sourceVol, sourcePath);
+
 			// Connect to Bionet if necessary
 			if (m_UseBioNet)
 			{
@@ -1235,7 +1265,7 @@ namespace CaptureToolPlugin
 
 				HandleCopyException(ref retData, ex);
 				return false;
-				
+
 			}
 			finally
 			{
@@ -1532,7 +1562,7 @@ namespace CaptureToolPlugin
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex1);
 							DisconnectShareIfRequired();
 
-							HandleCopyException(ref retData, ex);							
+							HandleCopyException(ref retData, ex);
 							return false;
 						}
 
@@ -1570,12 +1600,12 @@ namespace CaptureToolPlugin
 		}
 
 		private bool CaptureFolderNoExt(
-			string dataset, 
-			ref string msg, 
-			ref clsToolReturnData retData, 
-			clsDatasetInfo datasetInfo, 
-			string sourceFolderPath, 
-			string datasetFolderPath, 
+			string dataset,
+			ref string msg,
+			ref clsToolReturnData retData,
+			clsDatasetInfo datasetInfo,
+			string sourceFolderPath,
+			string datasetFolderPath,
 			bool bCopyWithResume,
 			clsInstrumentClassInfo.eInstrumentClass instrumentClass)
 		{
@@ -1715,7 +1745,7 @@ namespace CaptureToolPlugin
 				DisconnectShareIfRequired();
 
 				retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-				return false;				
+				return false;
 			}
 
 			// Make a dataset folder
@@ -1951,7 +1981,7 @@ namespace CaptureToolPlugin
 					}
 
 					HandleCopyException(ref retData, ex);
-					
+
 				}
 			}
 
@@ -2055,9 +2085,9 @@ namespace CaptureToolPlugin
 
 		protected void HandleCopyException(ref clsToolReturnData retData, Exception ex)
 		{
-			if (ex.Message.Contains("An unexpected network error occurred") || 
+			if (ex.Message.Contains("An unexpected network error occurred") ||
 				ex.Message.Contains("Multiple connections") ||
-				ex.Message.Contains("specified network name is no longer available") )
+				ex.Message.Contains("specified network name is no longer available"))
 			{
 				// Need to completely exit the capture task manager
 				m_NeedToAbortProcessing = true;
