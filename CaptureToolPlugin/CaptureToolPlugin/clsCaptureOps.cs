@@ -7,13 +7,14 @@
 //
 // Last modified 09/25/2009
 //*********************************************************************************************************
+
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using CaptureTaskManager;
 using PRISM.Files;
 using System.IO;
+using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace CaptureToolPlugin
 {
@@ -73,7 +74,7 @@ namespace CaptureToolPlugin
 
 		protected clsFileTools m_FileTools;
 
-		System.DateTime m_LastProgressUpdate = System.DateTime.Now;
+		DateTime m_LastProgressUpdate = DateTime.Now;
 
 		string m_LastProgressFileName = string.Empty;
 		float m_LastProgressPercent = -1;
@@ -96,8 +97,8 @@ namespace CaptureToolPlugin
 		/// <summary>
 		/// Constructor
 		/// </summary>
-		/// <param name="MgrParams">Parameters for manager operation</param>
-		/// <param name="UseBioNet">Flag to indicate if source instrument is on Bionet</param>
+		/// <param name="mgrParams">Parameters for manager operation</param>
+		/// <param name="useBioNet">Flag to indicate if source instrument is on Bionet</param>
 		public clsCaptureOps(IMgrParams mgrParams, bool useBioNet)
 		{
 			m_MgrParams = mgrParams;
@@ -167,8 +168,8 @@ namespace CaptureToolPlugin
 			//Create specified directory
 			try
 			{
-				System.IO.DirectoryInfo diFolder;
-				diFolder = new System.IO.DirectoryInfo(inpPath);
+				DirectoryInfo diFolder;
+				diFolder = new DirectoryInfo(inpPath);
 
 				if (!diFolder.Exists)
 					diFolder.Create();
@@ -195,26 +196,22 @@ namespace CaptureToolPlugin
 
 			try
 			{
-				System.IO.DirectoryInfo diFolder = new System.IO.DirectoryInfo(folderPath);
+				var diFolder = new DirectoryInfo(folderPath);
 
 				if (diFolder.Exists)
 				{
-					System.IO.FileInfo[] fiFiles;
-					System.IO.FileInfo[] fiFilesToSkip;
-					System.IO.DirectoryInfo[] diSubFolders;
-
 					string sLogMessage;
 					string sTargetPath;
 
-					fiFiles = diFolder.GetFiles();
-					fiFilesToSkip = diFolder.GetFiles("LCMethod*.xml");
+					FileInfo[] fiFiles = diFolder.GetFiles();
+					FileInfo[] fiFilesToSkip = diFolder.GetFiles("LCMethod*.xml");
 
 					// Rename superseded files (but skip LCMethod files)
-					foreach (System.IO.FileInfo fiFile in fiFiles)
+					foreach (FileInfo fiFile in fiFiles)
 					{
 						// Rename the file, but only if it is not in fiFilesToSkip
 						bool bSkipFile = false;
-						foreach (System.IO.FileInfo fiFileToSkip in fiFilesToSkip)
+						foreach (FileInfo fiFileToSkip in fiFilesToSkip)
 						{
 							if (fiFileToSkip.FullName == fiFile.FullName)
 							{
@@ -225,12 +222,12 @@ namespace CaptureToolPlugin
 
 						if (!bSkipFile)
 						{
-							sTargetPath = System.IO.Path.Combine(diFolder.FullName, "x_" + fiFile.Name);
+							sTargetPath = Path.Combine(diFolder.FullName, "x_" + fiFile.Name);
 
-							if (System.IO.File.Exists(sTargetPath))
+							if (File.Exists(sTargetPath))
 							{
 								// Target exists; delete it
-								System.IO.File.Delete(sTargetPath);
+								File.Delete(sTargetPath);
 							}
 
 							fiFile.MoveTo(sTargetPath);
@@ -245,16 +242,16 @@ namespace CaptureToolPlugin
 					}
 
 					// Renamed superseded folders
-					diSubFolders = diFolder.GetDirectories();
+					DirectoryInfo[] diSubFolders = diFolder.GetDirectories();
 
-					foreach (System.IO.DirectoryInfo diSubFolder in diSubFolders)
+					foreach (DirectoryInfo diSubFolder in diSubFolders)
 					{
-						sTargetPath = System.IO.Path.Combine(diFolder.FullName, "x_" + diSubFolder.Name);
+						sTargetPath = Path.Combine(diFolder.FullName, "x_" + diSubFolder.Name);
 
-						if (System.IO.Directory.Exists(sTargetPath))
+						if (Directory.Exists(sTargetPath))
 						{
 							// Target exists; delete it
-							System.IO.Directory.Delete(sTargetPath, true);
+							Directory.Delete(sTargetPath, true);
 						}
 
 						diSubFolder.MoveTo(sTargetPath);
@@ -543,7 +540,7 @@ namespace CaptureToolPlugin
 				InitialFolderSize = m_FileTools.GetDirectorySize(FolderPath);
 
 				//Wait for specified sleep interval
-				System.Threading.Thread.Sleep(SleepIntervalSeconds * 1000);
+				Thread.Sleep(SleepIntervalSeconds * 1000);
 				//Delay for specified interval
 
 				//Get the final size of the folder and compare
@@ -595,7 +592,7 @@ namespace CaptureToolPlugin
 				InitialFileSize = Fi.Length;
 
 				//Wait for specified sleep interval
-				System.Threading.Thread.Sleep(SleepIntervalSeconds * 1000);
+				Thread.Sleep(SleepIntervalSeconds * 1000);
 				//Delay for specified interval
 
 				//Get the final size of the file and compare
@@ -861,8 +858,7 @@ namespace CaptureToolPlugin
 				if (shareFolderPath.EndsWith(@"\"))
 					shareFolderPath = shareFolderPath.Substring(0, shareFolderPath.Length - 1);
 
-				System.Net.NetworkCredential accessCredentials;
-				accessCredentials = new System.Net.NetworkCredential(userName, pwd, "");
+				var accessCredentials = new System.Net.NetworkCredential(userName, pwd, "");
 
 				MyConn = new NetworkConnection(shareFolderPath, accessCredentials);
 
@@ -1052,7 +1048,7 @@ namespace CaptureToolPlugin
 
 				try
 				{
-					System.IO.Directory.CreateDirectory(storageFolderPath);
+					Directory.CreateDirectory(storageFolderPath);
 					msg = "Successfully created " + storageFolderPath;
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 				}
@@ -1236,7 +1232,7 @@ namespace CaptureToolPlugin
 
 				if (bCopyWithResume)
 				{
-					System.IO.FileInfo fiSourceFile = new System.IO.FileInfo(sourceFilePath);
+					FileInfo fiSourceFile = new FileInfo(sourceFilePath);
 					bool bResumed = false;
 
 					bSuccess = m_FileTools.CopyFileWithResume(fiSourceFile, targetFilePath, ref bResumed);
@@ -1300,7 +1296,6 @@ namespace CaptureToolPlugin
 
 			string msg;
 			bool bSuccess = true;
-			System.Text.RegularExpressions.Regex reLCMethodFile;
 
 			// Look for an LCMethod file associated with this raw spectra file
 			// Note that this file is often created 45 minutes to 60 minutes after the run completes
@@ -1312,9 +1307,9 @@ namespace CaptureToolPlugin
 			try
 			{
 				string strMethodFileFolder;
-				strMethodFileFolder = System.IO.Path.Combine(METHOD_FOLDER_BASE_PATH, datasetName);
+				strMethodFileFolder = Path.Combine(METHOD_FOLDER_BASE_PATH, datasetName);
 
-				System.IO.DirectoryInfo diSourceFolder = new System.IO.DirectoryInfo(METHOD_FOLDER_BASE_PATH);
+				DirectoryInfo diSourceFolder = new DirectoryInfo(METHOD_FOLDER_BASE_PATH);
 				if (!diSourceFolder.Exists)
 				{
 					msg = "LCMethods folder not found: " + METHOD_FOLDER_BASE_PATH;
@@ -1325,12 +1320,12 @@ namespace CaptureToolPlugin
 				}
 
 				// Construct a list of folders to search
-				System.Collections.Generic.List<string> lstFoldersToSearch = new System.Collections.Generic.List<string>();
+				List<string> lstFoldersToSearch = new List<string>();
 
 				lstFoldersToSearch.Add(datasetName);
 
-				int iYear = System.DateTime.Now.Year;
-				int iQuarter = GetQuarter(System.DateTime.Now);
+				int iYear = DateTime.Now.Year;
+				int iQuarter = GetQuarter(DateTime.Now);
 
 				while (iYear >= 2011)
 				{
@@ -1350,8 +1345,8 @@ namespace CaptureToolPlugin
 
 				// This regex is used to match files with names like:
 				// Cheetah_01.04.2012_08.46.17_Sarc_P28_D01_2629_192_3Jan12_Cheetah_11-09-32.lcmethod
-				reLCMethodFile = new System.Text.RegularExpressions.Regex(@".+\d+\.\d+\.\d+_\d+\.\d+\.\d+_.+\.lcmethod");
-				System.Collections.Generic.List<System.IO.FileInfo> lstMethodFiles = new System.Collections.Generic.List<System.IO.FileInfo>();
+				var reLCMethodFile = new Regex(@".+\d+\.\d+\.\d+_\d+\.\d+\.\d+_.+\.lcmethod");
+				var lstMethodFiles = new List<FileInfo>();
 
 				// Define the file match spec
 				string sLCMethodSearchSpec = "*_" + datasetName + ".lcmethod";
@@ -1361,12 +1356,12 @@ namespace CaptureToolPlugin
 
 					foreach (string sFolderName in lstFoldersToSearch)
 					{
-						System.IO.DirectoryInfo diSubFolder = new System.IO.DirectoryInfo(System.IO.Path.Combine(diSourceFolder.FullName, sFolderName));
+						var diSubFolder = new DirectoryInfo(Path.Combine(diSourceFolder.FullName, sFolderName));
 						if (diSubFolder.Exists)
 						{
 							// Look for files that match sLCMethodSearchSpec
 							// There might be multiple files if the dataset was analyzed more than once
-							foreach (System.IO.FileInfo fiFile in diSubFolder.GetFiles(sLCMethodSearchSpec))
+							foreach (FileInfo fiFile in diSubFolder.GetFiles(sLCMethodSearchSpec))
 							{
 								if (iIteration == 0)
 								{
@@ -1402,11 +1397,11 @@ namespace CaptureToolPlugin
 				// LCMethod file found
 				// Copy to the dataset folder
 
-				foreach (System.IO.FileInfo fiFile in lstMethodFiles)
+				foreach (FileInfo fiFile in lstMethodFiles)
 				{
 					try
 					{
-						string targetFilePath = System.IO.Path.Combine(datasetFolderPath, fiFile.Name);
+						string targetFilePath = Path.Combine(datasetFolderPath, fiFile.Name);
 						fiFile.CopyTo(targetFilePath, true);
 					}
 					catch (Exception ex)
@@ -1422,12 +1417,12 @@ namespace CaptureToolPlugin
 				{
 					try
 					{
-						string strRenamedSourceFolder = System.IO.Path.Combine(METHOD_FOLDER_BASE_PATH, "x_" + datasetName);
+						string strRenamedSourceFolder = Path.Combine(METHOD_FOLDER_BASE_PATH, "x_" + datasetName);
 
-						if (System.IO.Directory.Exists(strRenamedSourceFolder))
+						if (Directory.Exists(strRenamedSourceFolder))
 						{
 							// x_ folder already exists; move the files
-							foreach (System.IO.FileInfo fiFile in lstMethodFiles)
+							foreach (FileInfo fiFile in lstMethodFiles)
 							{
 								string targetFilePath = Path.Combine(strRenamedSourceFolder, fiFile.Name);
 
@@ -1458,7 +1453,7 @@ namespace CaptureToolPlugin
 				bSuccess = false;
 			}
 
-			System.DateTime dtCurrentTime = System.DateTime.Now;
+			DateTime dtCurrentTime = DateTime.Now;
 			if (dtCurrentTime.Hour == 18 || dtCurrentTime.Hour == 19 || (Environment.MachineName.ToUpper() == "MONROE3"))
 			{
 				// Time is between 6 pm and 7:59 pm
@@ -1864,14 +1859,13 @@ namespace CaptureToolPlugin
 				//  0_N4
 
 				const string MALDI_SPOT_FOLDER_REGEX = "^\\d_[A-Z]\\d+$";
-				System.Text.RegularExpressions.Regex reMaldiSpotFolder;
-				reMaldiSpotFolder = new System.Text.RegularExpressions.Regex(MALDI_SPOT_FOLDER_REGEX, System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+				var reMaldiSpotFolder = new Regex(MALDI_SPOT_FOLDER_REGEX, RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
 				for (int i = 0; i < dataFolders.Length; i++)
 				{
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Test folder " + dataFolders[i] + " against RegEx " + reMaldiSpotFolder.ToString());
 
-					string sDirName = System.IO.Path.GetFileName(dataFolders[i]);
+					string sDirName = Path.GetFileName(dataFolders[i]);
 					if (!reMaldiSpotFolder.IsMatch(sDirName, 0))
 					{
 						retData.CloseoutMsg = "Dataset folder contains multiple subfolders, but folder " + sDirName + " does not match the expected pattern";
@@ -1927,7 +1921,7 @@ namespace CaptureToolPlugin
 
 			while (bDoCopy)
 			{
-				System.DateTime dtCopyStart = System.DateTime.UtcNow;
+				DateTime dtCopyStart = DateTime.UtcNow;
 
 				try
 				{
@@ -1971,7 +1965,7 @@ namespace CaptureToolPlugin
 					{
 						// Exception occurred during the middle of a buffered copy
 						// If at least 10 seconds have elapsed, then auto-retry the copy again
-						double dElapsedTime = System.DateTime.UtcNow.Subtract(dtCopyStart).TotalSeconds;
+						double dElapsedTime = DateTime.UtcNow.Subtract(dtCopyStart).TotalSeconds;
 						if (dElapsedTime >= 10)
 						{
 							bDoCopy = true;
@@ -2007,20 +2001,20 @@ namespace CaptureToolPlugin
 
 			try
 			{
-				System.IO.DirectoryInfo diLCMethodsFolder = new System.IO.DirectoryInfo(sLCMethodsFolderPath);
+				DirectoryInfo diLCMethodsFolder = new DirectoryInfo(sLCMethodsFolderPath);
 				if (diLCMethodsFolder.Exists)
 				{
-					System.IO.DirectoryInfo[] diSubfolders;
+					DirectoryInfo[] diSubfolders;
 					diSubfolders = diLCMethodsFolder.GetDirectories("x_*");
 
-					foreach (System.IO.DirectoryInfo diFolder in diSubfolders)
+					foreach (DirectoryInfo diFolder in diSubfolders)
 					{
 						bool bSafeToDelete = true;
 
 						// Make sure all of the files in the folder are at least 14 days old
-						foreach (System.IO.FileSystemInfo oFileOrFolder in diFolder.GetFileSystemInfos())
+						foreach (FileSystemInfo oFileOrFolder in diFolder.GetFileSystemInfos())
 						{
-							if (System.DateTime.UtcNow.Subtract(oFileOrFolder.LastWriteTimeUtc).TotalDays <= 14)
+							if (DateTime.UtcNow.Subtract(oFileOrFolder.LastWriteTimeUtc).TotalDays <= 14)
 							{
 								// File was modified within the last 2 weeks; do not delete this folder
 								bSafeToDelete = false;
@@ -2062,7 +2056,7 @@ namespace CaptureToolPlugin
 		/// </summary>
 		/// <param name="dtDate"></param>
 		/// <returns></returns>
-		private int GetQuarter(System.DateTime dtDate)
+		private int GetQuarter(DateTime dtDate)
 		{
 			switch (dtDate.Month)
 			{
@@ -2160,16 +2154,16 @@ namespace CaptureToolPlugin
 		private void OnFileCopyProgress(string filename, float percentComplete)
 		{
 
-			if (System.DateTime.Now.Subtract(m_LastProgressUpdate).TotalSeconds >= 20 || percentComplete >= 100 && filename == m_LastProgressFileName)
+			if (DateTime.Now.Subtract(m_LastProgressUpdate).TotalSeconds >= 20 || percentComplete >= 100 && filename == m_LastProgressFileName)
 			{
 				if ((m_LastProgressFileName == filename) && (m_LastProgressPercent == percentComplete))
 					// Don't re-display this progress
 					return;
 
-				m_LastProgressUpdate = System.DateTime.Now;
+				m_LastProgressUpdate = DateTime.Now;
 				m_LastProgressFileName = filename;
 				m_LastProgressPercent = percentComplete;
-				string msg = "  copying " + System.IO.Path.GetFileName(filename) + ": " + percentComplete.ToString("0.0") + "% complete";
+				string msg = "  copying " + Path.GetFileName(filename) + ": " + percentComplete.ToString("0.0") + "% complete";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 			}
 
