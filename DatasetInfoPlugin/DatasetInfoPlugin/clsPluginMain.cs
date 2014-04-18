@@ -173,11 +173,10 @@ namespace DatasetInfoPlugin
 		/// <returns></returns>
 		private clsToolReturnData RunMsFileInfoScanner()
 		{
-			clsToolReturnData result = new clsToolReturnData();
-			string sourceFolder;
+			var result = new clsToolReturnData();
 
 			// Always use client perspective for the source folder (allows MSFileInfoScanner to run from any CTM)
-			sourceFolder = m_TaskParams.GetParam("Storage_Vol_External");
+			string sourceFolder = m_TaskParams.GetParam("Storage_Vol_External");
 
 			// Set up the rest of the paths
 			sourceFolder = Path.Combine(sourceFolder, m_TaskParams.GetParam("Storage_Path"));
@@ -198,9 +197,11 @@ namespace DatasetInfoPlugin
 			m_MsFileScanner.LCMS2DPlotMinIntensity = m_TaskParams.GetParam("LCMS2DPlotMinIntensity", (float)0);
 			m_MsFileScanner.LCMS2DOverviewPlotDivisor = m_TaskParams.GetParam("LCMS2DOverviewPlotDivisor", 10);
 
+			m_MsFileScanner.CheckCentroidingStatus = true;
+
 			// Get the input file name
-			clsInstrumentClassInfo.eRawDataType rawDataType = clsInstrumentClassInfo.eRawDataType.Unknown;
-			clsInstrumentClassInfo.eInstrumentClass instrumentClass = clsInstrumentClassInfo.eInstrumentClass.Unknown;
+			var rawDataType = clsInstrumentClassInfo.eRawDataType.Unknown;
+			var instrumentClass = clsInstrumentClassInfo.eInstrumentClass.Unknown;
 			bool bBrukerDotDBaf;
 			string sFileOrFolderName = GetDataFileOrFolderName(sourceFolder, out bSkipPlots, out rawDataType, out instrumentClass, out bBrukerDotDBaf);
 
@@ -408,7 +409,7 @@ namespace DatasetInfoPlugin
 				return UNKNOWN_FILE_TYPE;
 			}
 
-			System.IO.DirectoryInfo diDatasetFolder = new System.IO.DirectoryInfo(inputFolder);
+			var diDatasetFolder = new System.IO.DirectoryInfo(inputFolder);
 
 			// Get the expected file name based on the dataset type
 			switch (rawDataType)
