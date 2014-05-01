@@ -365,27 +365,31 @@ namespace DatasetIntegrityPlugin
 		/// <param name="folderList">List of folders; must contain exactly 2 entries</param>
 		/// <param name="bDeleteIfSuperseded"></param>
 		/// <returns>True if this is a superseded folder and it is safe to delete</returns>
-		private bool DetectSupersededFolder(string[] folderList, bool bDeleteIfSuperseded)
+		private bool DetectSupersededFolder(List<DirectoryInfo> folderList, bool bDeleteIfSuperseded)
 		{
 			string msg;
 
 			try
 			{
-				if (folderList.Length != 2)
+				if (folderList.Count != 2)
 				{
 					msg = "folderList passed into DetectSupersededFolder does not contain 2 folders; cannot check for a superseded folder";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 					return false;
 				}
 
-				var diNewFolder = new DirectoryInfo(folderList[0]);
-				var diOldFolder = new DirectoryInfo(folderList[1]);
+				DirectoryInfo diNewFolder;
+				DirectoryInfo diOldFolder;
 
-				if (diNewFolder.Name.ToLower().StartsWith("x_"))
+				if (folderList[0].Name.ToLower().StartsWith("x_"))
 				{
-					// Swap things around
-					diNewFolder = new DirectoryInfo(folderList[1]);
-					diOldFolder = new DirectoryInfo(folderList[0]);
+					diNewFolder = folderList[1];
+					diOldFolder = folderList[0];
+				}
+				else
+				{
+					diNewFolder = folderList[0];
+					diOldFolder = folderList[1];
 				}
 
 				if (diOldFolder.Name == "x_" + diNewFolder.Name)
@@ -548,14 +552,14 @@ namespace DatasetIntegrityPlugin
 		/// <param name="folderList"></param>
 		/// <param name="folderDescription"></param>
 		/// <returns>True if success; false if a problem</returns>
-		private bool PossiblyRenameSupersededFolder(string[] folderList, string folderDescription)
+		private bool PossiblyRenameSupersededFolder(List<DirectoryInfo> folderList, string folderDescription)
 		{
 			bool bInvalid = true;
 
-			if (folderList.Length == 1)
+			if (folderList.Count == 1)
 				return true;
 
-			if (folderList.Length == 2)
+			if (folderList.Count == 2)
 			{
 				// If two folders are present and one starts with x_ and all of the files inside the one that start with x_ are also in the folder without x_,
 				// then delete the x_ folder
@@ -578,21 +582,18 @@ namespace DatasetIntegrityPlugin
 		}
 
 
-		private bool PositiveNegativeMethodFolders(List<string> subFolderList)
+		private bool PositiveNegativeMethodFolders(List<DirectoryInfo> lstMethodFolders)
 		{
-			if (subFolderList == null)
-				return false;
-
-			if (subFolderList.Count == 2)
+			if (lstMethodFolders.Count == 2)
 			{
-				if (subFolderList[0].IndexOf("_neg", 0, StringComparison.CurrentCultureIgnoreCase) >= 0 &&
-					subFolderList[1].IndexOf("_pos", 0, StringComparison.CurrentCultureIgnoreCase) >= 0)
+				if (lstMethodFolders[0].Name.IndexOf("_neg", 0, StringComparison.CurrentCultureIgnoreCase) >= 0 &&
+					lstMethodFolders[1].Name.IndexOf("_pos", 0, StringComparison.CurrentCultureIgnoreCase) >= 0)
 				{
 					return true;
 				}
 
-				if (subFolderList[1].IndexOf("_neg", 0, StringComparison.CurrentCultureIgnoreCase) >= 0 &&
-	                subFolderList[0].IndexOf("_pos", 0, StringComparison.CurrentCultureIgnoreCase) >= 0)
+				if (lstMethodFolders[1].Name.IndexOf("_neg", 0, StringComparison.CurrentCultureIgnoreCase) >= 0 &&
+					lstMethodFolders[0].Name.IndexOf("_pos", 0, StringComparison.CurrentCultureIgnoreCase) >= 0)
 				{
 					return true;
 				}
@@ -643,23 +644,25 @@ namespace DatasetIntegrityPlugin
 		{
 
 			// Verify only one .D folder in dataset
-			string[] folderList = Directory.GetDirectories(datasetFolderPath, "*.D");
-			if (folderList.Length < 1)
+			var diDatasetFolder = new DirectoryInfo(datasetFolderPath);
+			var lstDotDFolders = diDatasetFolder.GetDirectories("*.D").ToList();
+
+			if (lstDotDFolders.Count < 1)
 			{
 				mRetData.EvalMsg = "Invalid dataset. No .D folders found";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
-			
-			if (folderList.Length > 1)
+
+			if (lstDotDFolders.Count > 1)
 			{
-				if (!PossiblyRenameSupersededFolder(folderList, clsInstrumentClassInfo.DOT_D_EXTENSION))
+				if (!PossiblyRenameSupersededFolder(lstDotDFolders, clsInstrumentClassInfo.DOT_D_EXTENSION))
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
 			// Look for Data.MS file in the .D folder
-			string tempFileNamePath = Path.Combine(folderList[0], "DATA.MS");
-			if (!File.Exists(tempFileNamePath))
+			var lstInstrumentData = lstDotDFolders[0].GetFiles("DATA.MS");
+			if (lstDotDFolders[0].GetFiles("DATA.MS").Length == 0)
 			{
 				mRetData.EvalMsg = "Invalid dataset. DATA.MS file not found in the .D folder";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
@@ -667,10 +670,10 @@ namespace DatasetIntegrityPlugin
 			}
 
 			// Verify size of the DATA.MS file
-			float dataFileSizeKB = GetFileSize(tempFileNamePath);
+			float dataFileSizeKB = GetFileSize(lstInstrumentData.First());
 			if (dataFileSizeKB <= AGILENT_DATA_MS_FILE_MIN_SIZE_KB)
 			{
-				ReportFileSizeTooSmall("DATA.MS", tempFileNamePath, dataFileSizeKB, AGILENT_DATA_MS_FILE_MIN_SIZE_KB);
+				ReportFileSizeTooSmall("DATA.MS", lstInstrumentData.First().FullName, dataFileSizeKB, AGILENT_DATA_MS_FILE_MIN_SIZE_KB);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -687,30 +690,32 @@ namespace DatasetIntegrityPlugin
 		private EnumCloseOutType TestAgilentTOFV2Folder(string datasetFolderPath)
 		{
 			// Verify only one .D folder in dataset
-			string[] folderList = Directory.GetDirectories(datasetFolderPath, "*.D");
-			if (folderList.Length < 1)
+			var diDatasetFolder = new DirectoryInfo(datasetFolderPath);
+			var lstDotDFolders = diDatasetFolder.GetDirectories("*.D").ToList();
+
+			if (lstDotDFolders.Count < 1)
 			{
 				mRetData.EvalMsg = "Invalid dataset. No .D folders found";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
-			
-			if (folderList.Length > 1)
-			{				
-				if (!PossiblyRenameSupersededFolder(folderList, clsInstrumentClassInfo.DOT_D_EXTENSION))
+
+			if (lstDotDFolders.Count > 1)
+			{
+				if (!PossiblyRenameSupersededFolder(lstDotDFolders, clsInstrumentClassInfo.DOT_D_EXTENSION))
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
 			// Look for AcqData folder below .D folder
-			string[] acqDataFolderList = Directory.GetDirectories(folderList[0], "AcqData");
-			if (folderList.Length < 1)
+			var acqDataFolderList = lstDotDFolders[0].GetDirectories("AcqData").ToList();
+			if (acqDataFolderList.Count < 1)
 			{
 				mRetData.EvalMsg = "Invalid dataset. .D folder does not contain an AcqData subfolder";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
-			
-			if (folderList.Length > 1)
+
+			if (acqDataFolderList.Count > 1)
 			{
 				mRetData.EvalMsg = "Invalid dataset. Multiple AcqData folders found in .D folder";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
@@ -719,8 +724,8 @@ namespace DatasetIntegrityPlugin
 
 			// The AcqData folder should contain one or more .Bin files, for example MSScan.bin, MSPeak.bin, and MSProfile.bin
 			// Verify that the MSScan.bin file exists
-			string tempFileNamePath = Path.Combine(acqDataFolderList[0], "MSScan.bin");
-			if (!File.Exists(tempFileNamePath))
+			var lstInstrumentData = acqDataFolderList[0].GetFiles("MSScan.bin").ToList();
+			if (lstInstrumentData.Count == 0)
 			{
 				mRetData.EvalMsg = "Invalid dataset. MSScan.bin file not found in the AcqData folder";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
@@ -728,16 +733,16 @@ namespace DatasetIntegrityPlugin
 			}
 
 			// Verify size of the MSScan.bin file
-			float dataFileSizeKB = GetFileSize(tempFileNamePath);
+			float dataFileSizeKB = GetFileSize(lstInstrumentData.First());
 			if (dataFileSizeKB <= AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB)
 			{
-				ReportFileSizeTooSmall("MSScan.bin", tempFileNamePath, dataFileSizeKB, AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB);
+				ReportFileSizeTooSmall("MSScan.bin", lstInstrumentData.First().FullName, dataFileSizeKB, AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
 			// The AcqData folder should contain file MSTS.xml
-			tempFileNamePath = Path.Combine(acqDataFolderList[0], "MSTS.xml");
-			if (!File.Exists(tempFileNamePath))
+			var lstMSTS = acqDataFolderList[0].GetFiles("MSTS.xml").ToList();
+			if (lstMSTS.Count == 0)
 			{
 				mRetData.EvalMsg = "Invalid dataset. MSTS.xml file not found in the AcqData folder";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
@@ -745,15 +750,15 @@ namespace DatasetIntegrityPlugin
 			}
 
 			// Check to see if a .M folder exists
-			string[] subFolderList = Directory.GetDirectories(acqDataFolderList[0], "*.m");
-			if (subFolderList.Length < 1)
+			var lstMethodFolders = acqDataFolderList[0].GetDirectories("*.m").ToList();
+			if (lstMethodFolders.Count < 1)
 			{
 				mRetData.EvalMsg = "Invalid dataset. No .m folders found found in the AcqData folder";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
-			
-			if (subFolderList.Length > 1)
+
+			if (lstMethodFolders.Count > 1)
 			{
 				mRetData.EvalMsg = "Invalid dataset. Multiple .m folders found in the AcqData folder";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
@@ -981,48 +986,49 @@ namespace DatasetIntegrityPlugin
 		private EnumCloseOutType TestBrukerTof_BafFolder(string datasetFolderPath, string instrumentName)
 		{
 			// Verify only one .D folder in dataset
-			string[] folderList = Directory.GetDirectories(datasetFolderPath, "*.D");
-			if (folderList.Length < 1)
+			var diDatasetFolder = new DirectoryInfo(datasetFolderPath);
+			var lstDotDFolders = diDatasetFolder.GetDirectories("*.D").ToList();
+
+			if (lstDotDFolders.Count < 1)
 			{
 				mRetData.EvalMsg = "Invalid dataset. No .D folders found";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
-			
-			if (folderList.Length > 1)
+
+			if (lstDotDFolders.Count > 1)
 			{
-				if (!PossiblyRenameSupersededFolder(folderList, clsInstrumentClassInfo.DOT_D_EXTENSION))
+				if (!PossiblyRenameSupersededFolder(lstDotDFolders, clsInstrumentClassInfo.DOT_D_EXTENSION))
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
 			// Verify analysis.baf file exists
-			if (!File.Exists(Path.Combine(folderList[0], "analysis.baf")))
+			var lstBafFile = lstDotDFolders[0].GetFiles("analysis.baf").ToList();
+			if (lstBafFile.Count == 0)
 			{
 				mRetData.EvalMsg = "Invalid dataset. analysis.baf file not found";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
-			// Verify size of the analysis.baf file
-			string dataFileNamePath = Path.Combine(folderList[0], "analysis.baf");
-			float dataFileSizeKB = GetFileSize(dataFileNamePath);
+			// Verify size of the analysis.baf file			
+			float dataFileSizeKB = GetFileSize(lstBafFile.First());
 			if (dataFileSizeKB <= BAF_FILE_MIN_SIZE_KB)
 			{
-				ReportFileSizeTooSmall("Analysis.baf", dataFileNamePath, dataFileSizeKB, BAF_FILE_MIN_SIZE_KB);
+				ReportFileSizeTooSmall("Analysis.baf", lstBafFile.First().FullName, dataFileSizeKB, BAF_FILE_MIN_SIZE_KB);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
 			// Check to see if at least one .M folder exists
-			List<string> subFolderList = Directory.GetDirectories(folderList[0], "*.M").ToList();
-
-			if (subFolderList.Count < 1)
+			var lstMethodFolders = lstDotDFolders[0].GetDirectories("*.m").ToList();
+			if (lstMethodFolders.Count < 1)
 			{
 				mRetData.EvalMsg = "Invalid dataset. No .M folders found";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
-			
-			if (subFolderList.Count > 1)
+
+			if (lstMethodFolders.Count > 1)
 			{
 				// Multiple .M folders
 				// This is OK for the Buker Imaging instruments and for Maxis_01
@@ -1030,7 +1036,7 @@ namespace DatasetIntegrityPlugin
 				if (!instrumentNameLCase.Contains("imaging") && !instrumentNameLCase.Contains("maxis"))
 				{
 					// It's also OK if there are two folders, and one contains _neg and one contains _pos
-					if (!PositiveNegativeMethodFolders(subFolderList))
+					if (!PositiveNegativeMethodFolders(lstMethodFolders))
 					{
 						mRetData.EvalMsg = "Invalid dataset. Multiple .M folders found";
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
@@ -1040,8 +1046,8 @@ namespace DatasetIntegrityPlugin
 			}
 
 			// Determine if at least one .method file exists
-			string[] methodFiles = Directory.GetFiles(subFolderList[0], "*.method");
-			if (methodFiles.Length == 0)
+			var lstMethodFiles = lstMethodFolders.First().GetFiles("*.method").ToList();
+			if (lstMethodFiles.Count == 0)
 			{
 				mRetData.EvalMsg = "Invalid dataset. No .method files found";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
@@ -1067,23 +1073,51 @@ namespace DatasetIntegrityPlugin
 			float dataFileSizeKB;
 
 			// Verify only one .D folder in dataset
-			string[] folderList = Directory.GetDirectories(datasetFolderPath, "*.D");
-			if (folderList.Length < 1)
+			var diDatasetFolder = new DirectoryInfo(datasetFolderPath);
+			var lstDotDFolders = diDatasetFolder.GetDirectories("*.D").ToList();
+
+			if (lstDotDFolders.Count < 1)
 			{
 				mRetData.EvalMsg = "Invalid dataset. No .D folders found";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
-			
-			if (folderList.Length > 1)
+
+			if (lstDotDFolders.Count > 1)
 			{
-				if (!PossiblyRenameSupersededFolder(folderList, clsInstrumentClassInfo.DOT_D_EXTENSION))
-					return EnumCloseOutType.CLOSEOUT_FAILED;				
+				bool allowMultipleFolders = false;
+
+				if (lstDotDFolders.Count == 2)
+				{
+					// If one folder contains a ser file and the other folder contains an analysis.baf, then we'll allow this
+					// This is somtimes the case for the 15T_FTICR_Imaging
+					int serCount = 0;
+					int bafCount = 0;
+					foreach (var diFolder in lstDotDFolders)
+					{
+						if (diFolder.GetFiles("ser", SearchOption.TopDirectoryOnly).Length == 1)
+							serCount += 1;
+
+						if (diFolder.GetFiles("analysis.baf", SearchOption.TopDirectoryOnly).Length == 1)
+							bafCount += 1;
+					}
+
+					if (bafCount == 1 && serCount == 1)
+						allowMultipleFolders = true;
+				}
+
+				if (!allowMultipleFolders)
+				{
+					if (!PossiblyRenameSupersededFolder(lstDotDFolders, clsInstrumentClassInfo.DOT_D_EXTENSION))
+						return EnumCloseOutType.CLOSEOUT_FAILED;				
+				}
+				
 			}
 
 			// Verify analysis.baf file exists
-			string tempFileNamePath = Path.Combine(folderList[0], "analysis.baf");
-			bool fileExists = File.Exists(tempFileNamePath);
+			var lstBafFile = lstDotDFolders[0].GetFiles("analysis.baf").ToList();
+			bool fileExists = lstBafFile.Count > 0;
+
 			if (!fileExists && requireBAFFile)
 			{
 				mRetData.EvalMsg = "Invalid dataset. analysis.baf file not found";
@@ -1094,28 +1128,29 @@ namespace DatasetIntegrityPlugin
 			if (fileExists)
 			{
 				// Verify size of the analysis.baf file
-				dataFileSizeKB = GetFileSize(tempFileNamePath);
+				dataFileSizeKB = GetFileSize(lstBafFile.First());
 				if (dataFileSizeKB <= BAF_FILE_MIN_SIZE_KB)
 				{
-					ReportFileSizeTooSmall("Analysis.baf", tempFileNamePath, dataFileSizeKB, BAF_FILE_MIN_SIZE_KB);
+					ReportFileSizeTooSmall("Analysis.baf", lstBafFile.First().FullName, dataFileSizeKB, BAF_FILE_MIN_SIZE_KB);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 			}
 
 			
 			// Check whether any .mcf files exist
-			// Note that "*.mcf" will match files with extension .mcf and files with extension .mcf_idx
-			var diDatasetFolder = new DirectoryInfo(folderList[0]);
-			tempFileNamePath = string.Empty;
+			// Note that "*.mcf" will match files with extension .mcf and files with extension .mcf_idx		
+			
+			string mctFileName = string.Empty;
 			dataFileSizeKB = 0;
 			fileExists = false;
 			long mcfFileSizeMax = 0;
-			foreach (FileInfo fiFile in diDatasetFolder.GetFiles("*.mcf"))
+
+			foreach (FileInfo fiFile in lstDotDFolders[0].GetFiles("*.mcf"))
 			{
 				if (fiFile.Length > dataFileSizeKB * 1024)
 				{
-					dataFileSizeKB = fiFile.Length / (1024F); 
-					tempFileNamePath = fiFile.Name;
+					dataFileSizeKB = fiFile.Length / (1024F);
+					mctFileName = fiFile.Name;
 					fileExists = true;
 				}
 
@@ -1134,30 +1169,30 @@ namespace DatasetIntegrityPlugin
 			{
 				// Verify size of the largest .mcf file
 				float minSizeKb;
-				if (tempFileNamePath.ToLower() == "Storage.mcf_idx".ToLower())
+				if (mctFileName.ToLower() == "Storage.mcf_idx".ToLower())
 					minSizeKb = 4;
 				else
 					minSizeKb = MCF_FILE_MIN_SIZE_KB;
 
 				if (dataFileSizeKB <= minSizeKb)
 				{
-					ReportFileSizeTooSmall(".MCF", tempFileNamePath, dataFileSizeKB, minSizeKb);
+					ReportFileSizeTooSmall(".MCF", mctFileName, dataFileSizeKB, minSizeKb);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 			}
 
 			// Verify ser file (if it exists)
-			tempFileNamePath = Path.Combine(folderList[0], "ser");
-			if (File.Exists(tempFileNamePath))
+			var lstSerFile = lstDotDFolders[0].GetFiles("ser").ToList();
+			if (lstSerFile.Count > 0)
 			{
 				// ser file found; verify its size				
-				dataFileSizeKB = GetFileSize(tempFileNamePath);
+				dataFileSizeKB = GetFileSize(lstSerFile.First());
 				if (dataFileSizeKB <= SER_FILE_MIN_SIZE_KB)
 				{
 					// If on the 15T and the ser file is small but the .mcf file is not empty, then this is OK
 					if (!(instrumentName == "15T_FTICR" && mcfFileSizeMax > 0))
 					{
-						ReportFileSizeTooSmall("ser", tempFileNamePath, dataFileSizeKB, SER_FILE_MIN_SIZE_KB);
+						ReportFileSizeTooSmall("ser", lstSerFile.First().FullName, dataFileSizeKB, SER_FILE_MIN_SIZE_KB);
 						return EnumCloseOutType.CLOSEOUT_FAILED;
 					}
 				}
@@ -1165,14 +1200,14 @@ namespace DatasetIntegrityPlugin
 			else
 			{
 				// Check to see if a fid file exists instead of a ser file
-				tempFileNamePath = Path.Combine(folderList[0], "fid");
-				if (File.Exists(tempFileNamePath))
+				var lstFidFile = lstDotDFolders[0].GetFiles("fid").ToList();
+				if (lstFidFile.Count > 0)
 				{
 					// fid file found; verify size					
-					dataFileSizeKB = GetFileSize(tempFileNamePath);
+					dataFileSizeKB = GetFileSize(lstFidFile.First());
 					if (dataFileSizeKB <= FID_FILE_MIN_SIZE_KB)
 					{
-						ReportFileSizeTooSmall("fid", tempFileNamePath, dataFileSizeKB, FID_FILE_MIN_SIZE_KB);
+						ReportFileSizeTooSmall("fid", lstFidFile.First().FullName, dataFileSizeKB, FID_FILE_MIN_SIZE_KB);
 						return EnumCloseOutType.CLOSEOUT_FAILED;
 					}
 				}
@@ -1200,23 +1235,22 @@ namespace DatasetIntegrityPlugin
 			
 
 			// Check to see if a .M folder exists
-			List<string> subFolderList = Directory.GetDirectories(folderList[0], "*.M").ToList();
-
-			if (subFolderList.Count < 1)
+			var lstMethodFolders = lstDotDFolders[0].GetDirectories("*.m").ToList();
+			if (lstMethodFolders.Count < 1)
 			{
 				mRetData.EvalMsg = "Invalid dataset. No .M folders found";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
-			
-			if (subFolderList.Count > 1)
+
+			if (lstMethodFolders.Count > 1)
 			{
 				// Multiple .M folders
 				// Allow this if there are two folders, and one contains _neg and one contains _pos
 				// Also allow this if on the 12T or on the 15T
 				string instrumentNameLCase = instrumentName.ToLower();
 
-				if (!PositiveNegativeMethodFolders(subFolderList) &&
+				if (!PositiveNegativeMethodFolders(lstMethodFolders) &&
 					instrumentNameLCase.Contains("15t_fticr") &&
 					instrumentNameLCase.Contains("12t_fticr") &&
 					instrumentNameLCase.Contains("imaging"))
@@ -1228,19 +1262,18 @@ namespace DatasetIntegrityPlugin
 			}
 
 			// Determine if apexAcquisition.method file exists and meets minimum size requirements
-			string methodFolderPath = subFolderList[0];
-			if (!File.Exists(Path.Combine(methodFolderPath, "apexAcquisition.method")))
+			var apexAcqMethod = lstMethodFolders.First().GetFiles("apexAcquisition.method").ToList();
+			if (apexAcqMethod.Count == 0)
 			{
 				mRetData.EvalMsg = "Invalid dataset. apexAcquisition.method file not found";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
-			tempFileNamePath = Path.Combine(methodFolderPath, "apexAcquisition.method");
-			dataFileSizeKB = GetFileSize(tempFileNamePath);
+			dataFileSizeKB = GetFileSize(apexAcqMethod.First());
 			if (dataFileSizeKB <= ACQ_METHOD_FILE_MIN_SIZE_KB)
 			{
-				ReportFileSizeTooSmall("apexAcquisition.method", tempFileNamePath, dataFileSizeKB, ACQ_METHOD_FILE_MIN_SIZE_KB);
+				ReportFileSizeTooSmall("apexAcquisition.method", apexAcqMethod.First().FullName, dataFileSizeKB, ACQ_METHOD_FILE_MIN_SIZE_KB);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -1437,8 +1470,18 @@ namespace DatasetIntegrityPlugin
 		/// <returns>File size in KB</returns>
 		private float GetFileSize(string fileNamePath)
 		{
-			var fi = new FileInfo(fileNamePath);
-			Single fileLengthKB = fi.Length / (1024F);
+			var fiFile = new FileInfo(fileNamePath);
+			return GetFileSize(fiFile);
+		}
+
+		/// <summary>
+		/// Gets the length of a single file in KB
+		/// </summary>
+		/// <param name="fiFile">File info object</param>
+		/// <returns>File size in KB</returns>
+		private float GetFileSize(FileInfo fiFile)
+		{
+			Single fileLengthKB = fiFile.Length / (1024F);
 			return fileLengthKB;
 		}
 

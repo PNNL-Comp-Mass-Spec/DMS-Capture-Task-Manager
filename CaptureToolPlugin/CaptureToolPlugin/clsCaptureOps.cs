@@ -10,6 +10,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using CaptureTaskManager;
 using PRISM.Files;
 using System.IO;
@@ -36,7 +37,7 @@ namespace CaptureToolPlugin
 			MultiFile
 		}
 
-		protected enum DatasetFolderState
+		private enum DatasetFolderState
 		{
 			Empty,
 			NotEmpty,
@@ -52,8 +53,9 @@ namespace CaptureToolPlugin
 		#endregion
 
 		#region "Class variables"
-		protected IMgrParams m_MgrParams;
-		protected int m_SleepInterval = 30;
+
+		private readonly IMgrParams m_MgrParams;
+		private int m_SleepInterval = 30;
 
 		// True means MgrParam "perspective" =  "client" which means we will use paths like \\proto-5\Exact04\2012_1
 		// False means MgrParam "perspective" = "server" which means we use paths like E:\Exact04\2012_1
@@ -62,23 +64,23 @@ namespace CaptureToolPlugin
 		// Capture tasks that occur on the Proto-x servers should be limited to certain instruments via table T_Processor_Instrument in the DMS_Capture DB
 		// If a capture task manager running on a Proto-x server has the DatasetCapture tool enabled, yet does not have an entry in T_Processor_Instrument, 
 		//  then no capture tasks are allowed to be assigned to avoid drive path problems
-		protected bool m_ClientServer;
+		private bool m_ClientServer;
 
-		protected bool m_UseBioNet = false;
-		protected string m_UserName = "";
-		protected string m_Pwd = "";
-		protected ShareConnector m_ShareConnectorPRISM;
-		protected NetworkConnection m_ShareConnectorDotNET;
+		private bool m_UseBioNet = false;
+		private readonly string m_UserName = "";
+		private readonly string m_Pwd = "";
+		private ShareConnector m_ShareConnectorPRISM;
+		private NetworkConnection m_ShareConnectorDotNET;
 		protected ConnectionType m_ConnectionType = ConnectionType.NotConnected;
-		protected bool m_NeedToAbortProcessing = false;
+		private bool m_NeedToAbortProcessing = false;
 
-		protected clsFileTools m_FileTools;
+		private readonly clsFileTools m_FileTools;
 
 		DateTime m_LastProgressUpdate = DateTime.Now;
 
 		string m_LastProgressFileName = string.Empty;
 		float m_LastProgressPercent = -1;
-		protected bool mFileCopyEventsWired = false;
+		private bool mFileCopyEventsWired = false;
 
 		string m_ErrorMessage = string.Empty;
 
@@ -161,15 +163,14 @@ namespace CaptureToolPlugin
 		/// <summary>
 		/// Creates specified folder; if the folder already exists, returns true
 		/// </summary>
-		/// <param name="InpPath">Fully qualified path for folder to be created</param>
+		/// <param name="inpPath">Fully qualified path for folder to be created</param>
 		/// <returns>TRUE for success, FALSE for failure</returns>
 		private bool MakeFolderPath(string inpPath)
 		{
 			//Create specified directory
 			try
 			{
-				DirectoryInfo diFolder;
-				diFolder = new DirectoryInfo(inpPath);
+				var diFolder = new DirectoryInfo(inpPath);
 
 				if (!diFolder.Exists)
 					diFolder.Create();
@@ -192,7 +193,6 @@ namespace CaptureToolPlugin
 		/// <remarks>Does not rename LCMethod*.xml files</remarks>
 		private bool MarkSupersededFiles(string folderPath)
 		{
-			bool success = false;
 
 			try
 			{
@@ -265,7 +265,7 @@ namespace CaptureToolPlugin
 
 				}
 
-				success = true;
+				return true;
 			}
 			catch (Exception ex)
 			{
@@ -275,13 +275,14 @@ namespace CaptureToolPlugin
 				return false;
 			}
 
-			return success;
 		}
 
 		/// <summary>
 		/// Checks to determine if specified folder is empty
 		/// </summary>
-		/// <param name="DSFolder">Full path specifying folder to be checked</param>
+		/// <param name="dsFolder">Full path specifying folder to be checked</param>
+		/// <param name="fileCount">Output parameter: number of files</param>
+		/// <param name="folderCount">Output parameter: number of folders</param>
 		/// <returns>Empty=0, NotEmpty=1, or Error=2</returns>
 		private DatasetFolderState IsDSFolderEmpty(string dsFolder, out int fileCount, out int folderCount)
 		{
@@ -289,19 +290,16 @@ namespace CaptureToolPlugin
 			//Returns 0 if folder is empty
 			//returns -1 on error
 
-			string[] Folderstuff = null;
 			fileCount = 0;
 			folderCount = 0;
 
 			try
 			{
 				//Check for files
-				Folderstuff = Directory.GetFiles(dsFolder);
-				fileCount = Folderstuff.Length;
+				fileCount = Directory.GetFiles(dsFolder).Length;
 
 				//Check for folders
-				Folderstuff = Directory.GetDirectories(dsFolder);
-				folderCount = Folderstuff.Length;
+				folderCount = Directory.GetDirectories(dsFolder).Length;
 
 				if (fileCount > 0) return DatasetFolderState.NotEmpty;
 				if (folderCount > 0) return DatasetFolderState.NotEmpty;
@@ -341,7 +339,6 @@ namespace CaptureToolPlugin
 			bool switchResult = false;
 			int fileCount;
 			int folderCount;
-			string msg;
 
 			switch (IsDSFolderEmpty(dsFolder, out fileCount, out folderCount))
 			{
@@ -356,6 +353,7 @@ namespace CaptureToolPlugin
 					break;
 				case DatasetFolderState.NotEmpty:
 					string DSAction = m_MgrParams.GetParam("DSFolderExistsAction");
+					string msg;
 					switch (DSAction.ToLower())
 					{
 						case "overwrite_single_item":
@@ -460,11 +458,16 @@ namespace CaptureToolPlugin
 			//Rename dataset folder on instrument
 			try
 			{
-				DirectoryInfo di = new DirectoryInfo(DSPath);
-				string n = Path.Combine(di.Parent.FullName, "x_" + di.Name);
-				di.MoveTo(n);
-				string msg = "Renamed directory " + DSPath;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+				var di = new DirectoryInfo(DSPath);
+				if (di.Parent != null)
+				{
+					string n = Path.Combine(di.Parent.FullName, "x_" + di.Name);
+					di.MoveTo(n);
+
+					string msg = "Renamed directory " + DSPath;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+				}
+				
 				return true;
 			}
 			catch (Exception ex)
@@ -478,7 +481,7 @@ namespace CaptureToolPlugin
 		/// <summary>
 		/// Decrypts password received from ini file
 		/// </summary>
-		/// <param name="EnPwd">Encoded password</param>
+		/// <param name="enPwd">Encoded password</param>
 		/// <returns>Clear text password</returns>
 		private string DecodePassword(string enPwd)
 		{
@@ -487,8 +490,8 @@ namespace CaptureToolPlugin
 
 			// Convert the password string to a character array
 			char[] pwdChars = enPwd.ToCharArray();
-			byte[] pwdBytes = new byte[pwdChars.Length];
-			char[] pwdCharsAdj = new char[pwdChars.Length];
+			var pwdBytes = new byte[pwdChars.Length];
+			var pwdCharsAdj = new char[pwdChars.Length];
 
 			for (int i = 0; i < pwdChars.Length; i++)
 			{
@@ -516,46 +519,45 @@ namespace CaptureToolPlugin
 		/// <summary>
 		/// Checks to see if folder size is changing -- possible sign acquisition hasn't finished
 		/// </summary>
-		/// <param name="FolderPath">Full path specifying folder to check</param>
-		/// <param name="SleepInt">Interval for checking (seconds)</param>
+		/// <param name="folderPath">Full path specifying folder to check</param>
+		/// <param name="sleepIntervalSeconds">Interval for checking (seconds)</param>
+		/// <param name="retData">Output: return data</param>
 		/// <returns>TRUE if folder size hasn't changed during SleepInt; FALSE otherwise</returns>
-		private bool VerifyConstantFolderSize(string FolderPath, int SleepIntervalSeconds, ref clsToolReturnData retData)
+		private bool VerifyConstantFolderSize(string folderPath, int sleepIntervalSeconds, ref clsToolReturnData retData)
 		{
 
 			try
 			{
 
 				//Determines if the size of a folder changes over specified time interval
-				long InitialFolderSize = 0;
-				long FinalFolderSize = 0;
 
 				// Sleep interval should be between 1 second and 15 minutes (900 seconds)
-				if (SleepIntervalSeconds > 900)
-					SleepIntervalSeconds = 900;
+				if (sleepIntervalSeconds > 900)
+					sleepIntervalSeconds = 900;
 
-				if (SleepIntervalSeconds < 1)
-					SleepIntervalSeconds = 1;
+				if (sleepIntervalSeconds < 1)
+					sleepIntervalSeconds = 1;
 
 				//Get the initial size of the folder
-				InitialFolderSize = m_FileTools.GetDirectorySize(FolderPath);
+				long InitialFolderSize = m_FileTools.GetDirectorySize(folderPath);
 
 				//Wait for specified sleep interval
-				Thread.Sleep(SleepIntervalSeconds * 1000);
+				Thread.Sleep(sleepIntervalSeconds * 1000);
 				//Delay for specified interval
 
 				//Get the final size of the folder and compare
-				FinalFolderSize = m_FileTools.GetDirectorySize(FolderPath);
+				long FinalFolderSize = m_FileTools.GetDirectorySize(folderPath);
 
 				if (FinalFolderSize == InitialFolderSize)
 					return true;
-				else
-					return false;
+				
+				return false;
 
 			}
 			catch (Exception ex)
 			{
 				retData.CloseoutMsg = "Exception validating constant folder size";
-				string msg = retData.CloseoutMsg + ": " + FolderPath;
+				string msg = retData.CloseoutMsg + ": " + folderPath;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
 
 				HandleCopyException(ref retData, ex);
@@ -567,48 +569,46 @@ namespace CaptureToolPlugin
 		/// <summary>
 		/// Checks to see if file size is changing -- possible sign acquisition hasn't finished
 		/// </summary>
-		/// <param name="FilePath">Full path specifying file to check</param>
-		/// <param name="SleepInt">Interval for checking (seconds)</param>
+		/// <param name="filePath">Full path specifying file to check</param>
+		/// <param name="sleepIntervalSeconds">Interval for checking (seconds)</param>
+		/// <param name="retData">Output: return data</param>
 		/// <returns>TRUE if file size hasn't changed during SleepInt; FALSE otherwise</returns>
-		private bool VerifyConstantFileSize(string FilePath, int SleepIntervalSeconds, ref clsToolReturnData retData)
+		private bool VerifyConstantFileSize(string filePath, int sleepIntervalSeconds, ref clsToolReturnData retData)
 		{
 			try
 			{
 
 				//Determines if the size of a file changes over specified time interval
-				FileInfo Fi = default(FileInfo);
-				long InitialFileSize = 0;
-				long FinalFileSize = 0;
 
 				// Sleep interval should be between 1 second and 15 minutes (900 seconds)
-				if (SleepIntervalSeconds > 900)
-					SleepIntervalSeconds = 900;
+				if (sleepIntervalSeconds > 900)
+					sleepIntervalSeconds = 900;
 
-				if (SleepIntervalSeconds < 1)
-					SleepIntervalSeconds = 1;
+				if (sleepIntervalSeconds < 1)
+					sleepIntervalSeconds = 1;
 
 				//Get the initial size of the file
-				Fi = new FileInfo(FilePath);
-				InitialFileSize = Fi.Length;
+				var Fi = new FileInfo(filePath);
+				long InitialFileSize = Fi.Length;
 
 				//Wait for specified sleep interval
-				Thread.Sleep(SleepIntervalSeconds * 1000);
+				Thread.Sleep(sleepIntervalSeconds * 1000);
 				//Delay for specified interval
 
 				//Get the final size of the file and compare
-				Fi = new FileInfo(FilePath);
-				FinalFileSize = Fi.Length;
+				Fi = new FileInfo(filePath);
+				long FinalFileSize = Fi.Length;
 
 				if (FinalFileSize == InitialFileSize)
 					return true;
-				else
-					return false;
+				
+				return false;
 
 			}
 			catch (Exception ex)
 			{
 				retData.CloseoutMsg = "Exception validating constant file size";
-				string msg = retData.CloseoutMsg + ": " + FilePath;
+				string msg = retData.CloseoutMsg + ": " + filePath;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
 
 				HandleCopyException(ref retData, ex);
@@ -621,7 +621,7 @@ namespace CaptureToolPlugin
 		/// Returns a string that describes the username and connection method currently active
 		/// </summary>
 		/// <returns></returns>
-		protected string GetConnectionDescription()
+		private string GetConnectionDescription()
 		{
 			string sConnectionMode;
 
@@ -648,18 +648,16 @@ namespace CaptureToolPlugin
 		/// </summary>
 		/// <param name="InstFolder">Full path to instrument transfer folder</param>
 		/// <param name="DSName">Dataset name</param>
-		/// <param name="MyName">Return value for full name of file or folder found, if any</param>
-		/// <param name="instClass">Instrument class for dataet to be located</param>
+		/// <param name="instrumentClass">Instrument class for dataet to be located</param>
 		/// <returns>clsDatasetInfo object containing info on found dataset</returns>
 		private clsDatasetInfo GetRawDSType(string InstFolder, string DSName, clsInstrumentClassInfo.eInstrumentClass instrumentClass)
 		{
 			//Determines if raw dataset exists as a single file, folder with same name as dataset, or 
 			//	folder with dataset name + extension. Returns object containing info on dataset found
 
-			bool bLookForDatasetFile = true;
+			bool bLookForDatasetFile;
 
-			string[] MyInfo = null;
-			clsDatasetInfo datasetInfo = new clsDatasetInfo();
+			var datasetInfo = new clsDatasetInfo();
 
 			//Verify instrument transfer folder exists
 			if (!Directory.Exists(InstFolder))
@@ -683,6 +681,7 @@ namespace CaptureToolPlugin
 			// If bLookForDatasetFile=False, then we do the reverse: first look for a folder, then look for a file
 			for (int iIteration = 0; iIteration < 2; ++iIteration)
 			{
+				string[] MyInfo;
 				if (bLookForDatasetFile)
 				{
 					//Get all files with a specified name
@@ -706,18 +705,19 @@ namespace CaptureToolPlugin
 				{
 					//Check for a folder with specified name
 					MyInfo = Directory.GetDirectories(InstFolder);
-					foreach (string TestFolder in MyInfo)
+					foreach (string testFolder in MyInfo)
 					{
 						//Using Path.GetFileNameWithoutExtension on folders is cheezy, but it works. I did this
 						//	because the Path class methods that deal with directories ignore the possibilty there
 						//	might be an extension. Apparently when sending in a string, Path can't tell a file from
 						//	a directory
-						if (Path.GetFileNameWithoutExtension(TestFolder).ToLower() == DSName.ToLower())
+						var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(testFolder);
+						if (fileNameWithoutExtension != null && fileNameWithoutExtension.ToLower() == DSName.ToLower())
 						{
-							if (string.IsNullOrEmpty(Path.GetExtension(TestFolder)))
+							if (string.IsNullOrEmpty(Path.GetExtension(testFolder)))
 							{
 								//Found a directory that has no extension
-								datasetInfo.FileOrFolderName = Path.GetFileName(TestFolder);
+								datasetInfo.FileOrFolderName = Path.GetFileName(testFolder);
 
 								//Check the instrument class to determine the appropriate return type
 								switch (instrumentClass)
@@ -734,13 +734,11 @@ namespace CaptureToolPlugin
 								}
 								return datasetInfo;
 							}
-							else
-							{
-								//Directory name has an extension
-								datasetInfo.FileOrFolderName = Path.GetFileName(TestFolder);
-								datasetInfo.DatasetType = RawDSTypes.FolderExt;
-								return datasetInfo;
-							}
+							
+							//Directory name has an extension
+							datasetInfo.FileOrFolderName = Path.GetFileName(testFolder);
+							datasetInfo.DatasetType = RawDSTypes.FolderExt;
+							return datasetInfo;
 						}
 					}
 				}
@@ -762,19 +760,20 @@ namespace CaptureToolPlugin
 		/// <param name="shareFolderPath">Share path</param>
 		/// <param name="eConnectionType">Connection type enum (ConnectionType.DotNET or ConnectionType.Prism)</param>
 		/// <param name="eCloseoutType">Closeout code (output)</param>
+		/// <param name="eEvalCode"></param>
 		/// <returns>True if success, false if an error</returns>
-		private bool ConnectToShare(string userName, string pwd, string shareFolderPath, ConnectionType eConnectionType, ref EnumCloseOutType eCloseoutType, ref EnumEvalCode eEvalCode)
+		private bool ConnectToShare(string userName, string pwd, string shareFolderPath, ConnectionType eConnectionType, out EnumCloseOutType eCloseoutType, out EnumEvalCode eEvalCode)
 		{
 			bool bSuccess;
 
 			if (eConnectionType == ConnectionType.DotNET)
 			{
-				bSuccess = ConnectToShare(userName, pwd, shareFolderPath, ref m_ShareConnectorDotNET, ref eCloseoutType, ref eEvalCode);
+				bSuccess = ConnectToShare(userName, pwd, shareFolderPath, out m_ShareConnectorDotNET, out eCloseoutType, out eEvalCode);
 			}
 			else
 			{
 				// Assume Prism Connector
-				bSuccess = ConnectToShare(userName, pwd, shareFolderPath, ref m_ShareConnectorPRISM, ref eCloseoutType, ref eEvalCode);
+				bSuccess = ConnectToShare(userName, pwd, shareFolderPath, out m_ShareConnectorPRISM, out eCloseoutType, out eEvalCode);
 			}
 
 			return bSuccess;
@@ -788,17 +787,21 @@ namespace CaptureToolPlugin
 		/// <param name="userName">Username</param>
 		/// <param name="pwd">Password</param>
 		/// <param name="shareFolderPath">Share path</param>
-		/// <param name="MyConn">Connection object (output)</param>
+		/// <param name="myConn">Connection object (output)</param>
 		/// <param name="eCloseoutType">Closeout code (output)</param>
+		/// <param name="eEvalCode"></param>
 		/// <returns>True if success, false if an error</returns>
-		private bool ConnectToShare(string userName, string pwd, string shareFolderPath, ref ShareConnector MyConn, ref EnumCloseOutType eCloseoutType, ref EnumEvalCode eEvalCode)
+		private bool ConnectToShare(string userName, string pwd, string shareFolderPath, out ShareConnector myConn, out EnumCloseOutType eCloseoutType, out EnumEvalCode eEvalCode)
 		{
 			eCloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
 			eEvalCode = EnumEvalCode.EVAL_CODE_SUCCESS;
 
-			MyConn = new ShareConnector(userName, pwd);
-			MyConn.Share = shareFolderPath;
-			if (MyConn.Connect())
+			myConn = new ShareConnector(userName, pwd)
+			{
+				Share = shareFolderPath
+			};
+
+			if (myConn.Connect())
 			{
 				string msg = "Connected to Bionet (" + shareFolderPath + ") as user " + userName + " using PRISM.Files.ShareConnector";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
@@ -807,18 +810,18 @@ namespace CaptureToolPlugin
 			}
 			else
 			{
-				m_ErrorMessage = "Error " + MyConn.ErrorMessage + " connecting to " + shareFolderPath + " as user " + userName + " using 'secfso'";
+				m_ErrorMessage = "Error " + myConn.ErrorMessage + " connecting to " + shareFolderPath + " as user " + userName + " using 'secfso'";
 
 				string msg = string.Copy(m_ErrorMessage);
 
-				if (MyConn.ErrorMessage == "1326")
+				if (myConn.ErrorMessage == "1326")
 					msg += "; you likely need to change the Capture_Method from secfso to fso";
-				if (MyConn.ErrorMessage == "53")
+				if (myConn.ErrorMessage == "53")
 					msg += "; the password may need to be reset";
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 
-				if (MyConn.ErrorMessage == "1219" || MyConn.ErrorMessage == "1203" || MyConn.ErrorMessage == "53" || MyConn.ErrorMessage == "64")
+				if (myConn.ErrorMessage == "1219" || myConn.ErrorMessage == "1203" || myConn.ErrorMessage == "53" || myConn.ErrorMessage == "64")
 				{
 					// Likely had error "An unexpected network error occurred" while copying a file for a previous dataset
 					// Need to completely exit the capture task manager
@@ -844,13 +847,14 @@ namespace CaptureToolPlugin
 		/// <param name="userName">Username</param>
 		/// <param name="pwd">Password</param>
 		/// <param name="shareFolderPath">Share path</param>
-		/// <param name="MyConn">Connection object (output)</param>
+		/// <param name="myConn">Connection object (output)</param>
 		/// <param name="eCloseoutType">Closeout code (output)</param>
+		/// <param name="eEvalCode"></param>
 		/// <returns>True if success, false if an error</returns>
-		private bool ConnectToShare(string userName, string pwd, string shareFolderPath, ref NetworkConnection MyConn, ref EnumCloseOutType eCloseoutType, ref EnumEvalCode eEvalCode)
+		private bool ConnectToShare(string userName, string pwd, string shareFolderPath, out NetworkConnection myConn, out EnumCloseOutType eCloseoutType, out EnumEvalCode eEvalCode)
 		{
-			eCloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
 			eEvalCode = EnumEvalCode.EVAL_CODE_SUCCESS;
+			myConn = null;
 
 			try
 			{
@@ -860,7 +864,7 @@ namespace CaptureToolPlugin
 
 				var accessCredentials = new System.Net.NetworkCredential(userName, pwd, "");
 
-				MyConn = new NetworkConnection(shareFolderPath, accessCredentials);
+				myConn = new NetworkConnection(shareFolderPath, accessCredentials);
 
 				string msg = "Connected to Bionet (" + shareFolderPath + ") as user " + userName + " using CaptureTaskManager.NetworkConnection";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
@@ -876,7 +880,7 @@ namespace CaptureToolPlugin
 				string msg = m_ErrorMessage + ": " + ex.Message;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 
-				clsToolReturnData retData = new clsToolReturnData();
+				var retData = new clsToolReturnData();
 				HandleCopyException(ref retData, ex);
 
 				eCloseoutType = retData.CloseoutType;
@@ -903,11 +907,10 @@ namespace CaptureToolPlugin
 		/// <summary>
 		/// Disconnects a Bionet shared drive
 		/// </summary>
-		/// <param name="MyConn">Connection object (class PRISM.Files.ShareConnector) for shared drive</param>
-		/// <param name="ConnState">Return value specifying connection has been closed</param>
-		private void DisconnectShare(ref ShareConnector MyConn)
+		/// <param name="myConn">Connection object (class PRISM.Files.ShareConnector) for shared drive</param>
+		private void DisconnectShare(ref ShareConnector myConn)
 		{
-			MyConn.Disconnect();
+			myConn.Disconnect();
 			PRISM.Processes.clsProgRunner.GarbageCollectNow();
 
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Bionet disconnected");
@@ -918,12 +921,11 @@ namespace CaptureToolPlugin
 		/// <summary>
 		/// Disconnects a Bionet shared drive
 		/// </summary>
-		/// <param name="MyConn">Connection object (class CaptureTaskManager.NetworkConnection) for shared drive</param>
-		/// <param name="ConnState">Return value specifying connection has been closed</param>
-		private void DisconnectShare(ref NetworkConnection MyConn)
+		/// <param name="myConn">Connection object (class CaptureTaskManager.NetworkConnection) for shared drive</param>
+		private void DisconnectShare(ref NetworkConnection myConn)
 		{
-			MyConn.Dispose();
-			MyConn = null;
+			myConn.Dispose();
+			myConn = null;
 			PRISM.Processes.clsProgRunner.GarbageCollectNow();
 
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Bionet disconnected");
@@ -993,7 +995,7 @@ namespace CaptureToolPlugin
 
 			RawDSTypes sourceType;
 			string pwd = DecodePassword(m_Pwd);
-			string msg = string.Empty;
+			string msg;
 			string tempVol;
 			clsDatasetInfo datasetInfo;
 
@@ -1094,10 +1096,10 @@ namespace CaptureToolPlugin
 				msg = "Bionet connection required";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
-				EnumCloseOutType eCloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
-				EnumEvalCode eEvalCode = EnumEvalCode.EVAL_CODE_SUCCESS;
+				EnumCloseOutType eCloseoutType;
+				EnumEvalCode eEvalCode;
 
-				if (!ConnectToShare(m_UserName, pwd, sourceFolderPath, eConnectionType, ref eCloseoutType, ref eEvalCode))
+				if (!ConnectToShare(m_UserName, pwd, sourceFolderPath, eConnectionType, out eCloseoutType, out eEvalCode))
 				{
 					retData.CloseoutType = eCloseoutType;
 					retData.EvalCode = eEvalCode;
@@ -1178,17 +1180,14 @@ namespace CaptureToolPlugin
 
 			if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
 				return true;
-			else
+			
+			if (string.IsNullOrEmpty(retData.CloseoutMsg))
 			{
+				retData.CloseoutMsg = string.Copy(msg);
 				if (string.IsNullOrEmpty(retData.CloseoutMsg))
-				{
-					retData.CloseoutMsg = string.Copy(msg);
-					if (string.IsNullOrEmpty(retData.CloseoutMsg))
-						retData.CloseoutMsg = "Unknown error performing capture";
-				}
-				return false;
+					retData.CloseoutMsg = "Unknown error performing capture";
 			}
-
+			return false;
 		}	// End sub
 
 		private bool CaptureFile(string dataset, ref string msg, ref clsToolReturnData retData, clsDatasetInfo datasetInfo, string sourceFolderPath, string datasetFolderPath, bool bCopyWithResume)
@@ -1196,8 +1195,7 @@ namespace CaptureToolPlugin
 			// Dataset found, and it's a single file
 			// First, verify the file size is constant (indicates acquisition is actually finished)
 			string sourceFilePath = Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName);
-			string targetFilePath = string.Empty;
-			bool bSuccess = false;
+			bool bSuccess;
 
 			if (!VerifyConstantFileSize(sourceFilePath, m_SleepInterval, ref retData))
 			{
@@ -1228,11 +1226,11 @@ namespace CaptureToolPlugin
 			try
 			{
 				// Copy the raw spectra file
-				targetFilePath = Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName);
+				string targetFilePath = Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName);
 
 				if (bCopyWithResume)
 				{
-					FileInfo fiSourceFile = new FileInfo(sourceFilePath);
+					var fiSourceFile = new FileInfo(sourceFilePath);
 					bool bResumed = false;
 
 					bSuccess = m_FileTools.CopyFileWithResume(fiSourceFile, targetFilePath, ref bResumed);
@@ -1306,10 +1304,7 @@ namespace CaptureToolPlugin
 
 			try
 			{
-				string strMethodFileFolder;
-				strMethodFileFolder = Path.Combine(METHOD_FOLDER_BASE_PATH, datasetName);
-
-				DirectoryInfo diSourceFolder = new DirectoryInfo(METHOD_FOLDER_BASE_PATH);
+				var diSourceFolder = new DirectoryInfo(METHOD_FOLDER_BASE_PATH);
 				if (!diSourceFolder.Exists)
 				{
 					msg = "LCMethods folder not found: " + METHOD_FOLDER_BASE_PATH;
@@ -1320,9 +1315,10 @@ namespace CaptureToolPlugin
 				}
 
 				// Construct a list of folders to search
-				List<string> lstFoldersToSearch = new List<string>();
-
-				lstFoldersToSearch.Add(datasetName);
+				var lstFoldersToSearch = new List<string>
+				{
+					datasetName
+				};
 
 				int iYear = DateTime.Now.Year;
 				int iQuarter = GetQuarter(DateTime.Now);
@@ -1514,7 +1510,7 @@ namespace CaptureToolPlugin
 
 					if (bCopyWithResume)
 					{
-						bool bRecurse = true;
+						const bool bRecurse = true;
 						bSuccess = CopyFolderWithResume(copySourceDir, copyTargetDir, bRecurse, ref retData, filesToSkip);
 					}
 					else
@@ -1621,13 +1617,38 @@ namespace CaptureToolPlugin
 			}
 
 			// Verify the folder doesn't contain a group of ".d" folders
-			if (diSourceDir.GetDirectories("*.d", SearchOption.TopDirectoryOnly).Length > 1)
+			var lstDotDFolders = diSourceDir.GetDirectories("*.d", SearchOption.TopDirectoryOnly);
+			if (lstDotDFolders.Length > 1)
 			{
-				retData.CloseoutMsg = "Multiple .D folders found in dataset folder";
-				msg = retData.CloseoutMsg + " " + diSourceDir.FullName;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-				retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-				return false;
+				bool allowMultipleFolders = false;
+
+				if (lstDotDFolders.Length == 2)
+				{
+					// If one folder contains a ser file and the other folder contains an analysis.baf, then we'll allow this
+					// This is somtimes the case for the 15T_FTICR_Imaging
+					int serCount = 0;
+					int bafCount = 0;
+					foreach (var diFolder in lstDotDFolders)
+					{
+						if (diFolder.GetFiles("ser", SearchOption.TopDirectoryOnly).Length == 1)
+							serCount += 1;
+
+						if (diFolder.GetFiles("analysis.baf", SearchOption.TopDirectoryOnly).Length == 1)
+							bafCount += 1;
+					}
+
+					if (bafCount == 1 && serCount == 1)
+						allowMultipleFolders = true;
+				}
+
+				if (!allowMultipleFolders)
+				{
+					retData.CloseoutMsg = "Multiple .D folders found in dataset folder";
+					msg = retData.CloseoutMsg + " " + diSourceDir.FullName;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+					retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+					return false;
+				}
 			}
 
 			// Verify the folder doesn't contain ".IMF" files
@@ -1670,7 +1691,7 @@ namespace CaptureToolPlugin
 
 				if (bCopyWithResume)
 				{
-					bool bRecurse = true;
+					const bool bRecurse = true;
 					bSuccess = CopyFolderWithResume(diSourceDir.FullName, datasetFolderPath, bRecurse, ref retData);
 				}
 				else
@@ -1764,7 +1785,7 @@ namespace CaptureToolPlugin
 			{
 				if (bCopyWithResume)
 				{
-					bool bRecurse = false;
+					const bool bRecurse = false;
 					bSuccess = CopyFolderWithResume(copySourceDir, datasetFolderPath, bRecurse, ref retData);
 				}
 				else
@@ -1774,7 +1795,7 @@ namespace CaptureToolPlugin
 
 					foreach (string fileToCopy in fileList)
 					{
-						FileInfo fi = new FileInfo(fileToCopy);
+						var fi = new FileInfo(fileToCopy);
 						fi.CopyTo(Path.Combine(datasetFolderPath, fi.Name));
 					}
 					bSuccess = true;
@@ -1839,9 +1860,9 @@ namespace CaptureToolPlugin
 
 
 			// Check whether the dataset folder contains just one data folder or multiple data folders
-			string[] dataFolders = Directory.GetDirectories(copySourceDir);
+			var dataFolders = Directory.GetDirectories(copySourceDir).ToList();
 
-			if (dataFolders.Length < 1)
+			if (dataFolders.Count < 1)
 			{
 				retData.CloseoutMsg = "No subfolders were found in the dataset folder ";
 				msg = retData.CloseoutMsg + " " + copySourceDir;
@@ -1850,7 +1871,7 @@ namespace CaptureToolPlugin
 				return false;
 			}
 
-			if (dataFolders.Length > 1)
+			if (dataFolders.Count > 1)
 			{
 				// Make sure the subfolders match the naming convention for MALDI spot folders
 				// Example folder names:
@@ -1861,15 +1882,15 @@ namespace CaptureToolPlugin
 				const string MALDI_SPOT_FOLDER_REGEX = "^\\d_[A-Z]\\d+$";
 				var reMaldiSpotFolder = new Regex(MALDI_SPOT_FOLDER_REGEX, RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-				for (int i = 0; i < dataFolders.Length; i++)
+				foreach (string sDir in dataFolders)
 				{
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Test folder " + dataFolders[i] + " against RegEx " + reMaldiSpotFolder.ToString());
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Test folder " + sDir + " against RegEx " + reMaldiSpotFolder);
 
-					string sDirName = Path.GetFileName(dataFolders[i]);
+					string sDirName = Path.GetFileName(sDir);
 					if (!reMaldiSpotFolder.IsMatch(sDirName, 0))
 					{
 						retData.CloseoutMsg = "Dataset folder contains multiple subfolders, but folder " + sDirName + " does not match the expected pattern";
-						msg = retData.CloseoutMsg + " (" + reMaldiSpotFolder.ToString() + "); see " + copySourceDir;
+						msg = retData.CloseoutMsg + " (" + reMaldiSpotFolder + "); see " + copySourceDir;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 						retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 						return false;
@@ -1904,18 +1925,16 @@ namespace CaptureToolPlugin
 
 		private bool CopyFolderWithResume(string sSourceFolderPath, string sTargetFolderPath, bool bRecurse, ref clsToolReturnData retData)
 		{
-			List<string> filesToSkip = null;
-			return CopyFolderWithResume(sSourceFolderPath, sTargetFolderPath, bRecurse, ref retData, filesToSkip);
+			return CopyFolderWithResume(sSourceFolderPath, sTargetFolderPath, bRecurse, ref retData, null);
 		}
 
 		private bool CopyFolderWithResume(string sSourceFolderPath, string sTargetFolderPath, bool bRecurse, ref clsToolReturnData retData, List<string> filesToSkip)
 		{
-			clsFileTools.FileOverwriteMode eFileOverwriteMode = clsFileTools.FileOverwriteMode.OverWriteIfDateOrLengthDiffer;
+			const clsFileTools.FileOverwriteMode eFileOverwriteMode = clsFileTools.FileOverwriteMode.OverWriteIfDateOrLengthDiffer;
 			int iFileCountSkipped = 0;
 			int iFileCountResumed = 0;
 			int iFileCountNewlyCopied = 0;
 
-			string msg;
 			bool bSuccess = false;
 			bool bDoCopy = true;
 
@@ -1923,6 +1942,7 @@ namespace CaptureToolPlugin
 			{
 				DateTime dtCopyStart = DateTime.UtcNow;
 
+				string msg;
 				try
 				{
 					// Clear any previous errors
@@ -1933,7 +1953,7 @@ namespace CaptureToolPlugin
 
 					if (bSuccess)
 					{
-						msg = "  directory copy complete; CountCopied = " + iFileCountNewlyCopied.ToString() + "; CountSkipped = " + iFileCountSkipped.ToString() + "; CountResumed = " + iFileCountResumed.ToString();
+						msg = "  directory copy complete; CountCopied = " + iFileCountNewlyCopied + "; CountSkipped = " + iFileCountSkipped + "; CountResumed = " + iFileCountResumed;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 					}
 					else
@@ -2001,11 +2021,10 @@ namespace CaptureToolPlugin
 
 			try
 			{
-				DirectoryInfo diLCMethodsFolder = new DirectoryInfo(sLCMethodsFolderPath);
+				var diLCMethodsFolder = new DirectoryInfo(sLCMethodsFolderPath);
 				if (diLCMethodsFolder.Exists)
 				{
-					DirectoryInfo[] diSubfolders;
-					diSubfolders = diLCMethodsFolder.GetDirectories("x_*");
+					DirectoryInfo[] diSubfolders = diLCMethodsFolder.GetDirectories("x_*");
 
 					foreach (DirectoryInfo diFolder in diSubfolders)
 					{
@@ -2042,7 +2061,6 @@ namespace CaptureToolPlugin
 						}
 					}
 				}
-
 			}
 			catch (Exception ex)
 			{
@@ -2156,7 +2174,7 @@ namespace CaptureToolPlugin
 
 			if (DateTime.Now.Subtract(m_LastProgressUpdate).TotalSeconds >= 20 || percentComplete >= 100 && filename == m_LastProgressFileName)
 			{
-				if ((m_LastProgressFileName == filename) && (m_LastProgressPercent == percentComplete))
+				if ((m_LastProgressFileName == filename) && (Math.Abs(m_LastProgressPercent - percentComplete) < Single.Epsilon))
 					// Don't re-display this progress
 					return;
 

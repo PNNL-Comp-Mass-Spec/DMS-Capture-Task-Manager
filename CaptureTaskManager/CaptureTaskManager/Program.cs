@@ -17,205 +17,198 @@ namespace CaptureTaskManager
 		// Application startup program
 		//**********************************************************************************************************
 
-		public const string PROGRAM_DATE = "January 9, 2013";
+		private const string PROGRAM_DATE = "April 30, 2014";
 
-		private static bool mCodeTestMode = false;
-		private static bool mCreateEventLog = false;
+		private static bool mCodeTestMode;
+		private static bool mCreateEventLog;
 
 		#region "Methods"
 
-			/// <summary>
-			/// The main entry point for the application.
-			/// </summary>
-			[STAThread]
-			static void Main()
+		/// <summary>
+		/// The main entry point for the application.
+		/// </summary>
+		[STAThread]
+		static void Main()
+		{
+			bool restart = false;
+
+			var objParseCommandLine = new FileProcessor.clsParseCommandLine();
+
+			// Look for /T or /Test on the command line
+			// If present, this means "code test mode" is enabled
+			if (objParseCommandLine.ParseCommandLine())
 			{
-				bool restart = false;
-				bool mgrInitSuccess = false;
+				SetOptionsUsingCommandLineParameters(objParseCommandLine);
+			}
 
-				FileProcessor.clsParseCommandLine objParseCommandLine = new FileProcessor.clsParseCommandLine();
+			if (objParseCommandLine.NeedToShowHelp)
+			{
+				ShowProgramHelp();
+				return;
+			}
 
-				// Look for /T or /Test on the command line
-				// If present, this means "code test mode" is enabled
-				if (objParseCommandLine.ParseCommandLine())
+
+			// Note: CodeTestMode is enabled using command line switch /T
+			if (mCodeTestMode)
+			{
+
+				try
 				{
-					SetOptionsUsingCommandLineParameters(objParseCommandLine);
-				}
+					var oCodeTest = new clsCodeTest();
 
-				if (objParseCommandLine.NeedToShowHelp)
-				{
-					ShowProgramHelp();
+					oCodeTest.TestConnection();
+
 					return;
-				}
-				else
-				{
-					// Note: CodeTestMode is enabled using command line switch /T
-					if (mCodeTestMode)
-					{
-
-						try
-						{
-							clsCodeTest oCodeTest = new clsCodeTest();
-
-							oCodeTest.TestConnection();
-
-							return;
-
-						}
-						catch (Exception ex)
-						{
-							Console.WriteLine("Exception calling clsCodeTest: " + ex.Message);
-						}
-
-					}
-					else
-					{
-						// Initiate automated analysis
-						clsMainProgram oMainProgram;
-
-						do
-						{
-							try
-							{
-								//Initialize the main execution class
-								oMainProgram = new clsMainProgram();
-								mgrInitSuccess = oMainProgram.InitMgr();
-								if (!mgrInitSuccess)
-								{
-									restart = false;
-								}
-
-								if (mCreateEventLog && (mgrInitSuccess || (!mgrInitSuccess && oMainProgram.ManagerDeactivatedLocally)))
-								{
-									oMainProgram.PostTestLogMessage();
-									restart = false;
-								}
-								else
-								{
-									if (mgrInitSuccess)
-										restart = oMainProgram.PerformMainLoop();
-								}
-
-								oMainProgram = null;
-							}
-							catch (System.Security.SecurityException ex)
-							{
-								const string errMsg = "Security exception";
-
-								Console.WriteLine();
-								Console.WriteLine(@"===============================================================");
-								Console.WriteLine(errMsg + @": " + ex.Message);
-								Console.WriteLine(@"===============================================================");
-								Console.WriteLine();
-								Console.WriteLine(@"You may need to start this application once from an elevated (administrative level) command prompt using the /EL switch so that it can create the " + clsMainProgram.CUSTOM_LOG_NAME + @" application log");
-								Console.WriteLine();
-							}
-							catch (Exception ex)
-							{
-								const string errMsg = "Critical exception starting application";
-
-								Console.WriteLine();
-								Console.WriteLine(@"===============================================================");
-								Console.WriteLine(errMsg + @": " + ex.Message);
-								Console.WriteLine(@"===============================================================");
-								Console.WriteLine();
-
-								clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.FATAL, errMsg, ex);
-								System.Threading.Thread.Sleep(500);
-
-								return;
-							}
-						} while (restart);
-
-					}
-
-				}
-
-			}
-
-			private static bool SetOptionsUsingCommandLineParameters(FileProcessor.clsParseCommandLine objParseCommandLine)
-			{
-				// Returns True if no problems; otherwise, returns false
-
-				string strValue = string.Empty;
-				string[] strValidParameters = new string[] {"T", "EL", "Test"};
-
-				try
-				{
-					// Make sure no invalid parameters are present
-					if (objParseCommandLine.InvalidParametersPresent(strValidParameters))
-					{
-						return false;
-					}
-					else
-					{
-						{
-							// Query objParseCommandLine to see if various parameters are present
-							if (objParseCommandLine.IsParameterPresent("T"))
-							{
-								mCodeTestMode = true;
-							}
-
-							if (objParseCommandLine.IsParameterPresent("Test"))
-							{
-								mCodeTestMode = true;
-							}
-
-							if (objParseCommandLine.IsParameterPresent("EL"))
-							{
-								mCreateEventLog = true;
-							}
-						}
-
-						return true;
-					}
 
 				}
 				catch (Exception ex)
 				{
-					Console.WriteLine("Error parsing the command line parameters: " + Environment.NewLine + ex.Message);
+					Console.WriteLine("Exception calling clsCodeTest: " + ex.Message);
 				}
 
-				return false;
 			}
-
-
-			private static void ShowProgramHelp()
+			else
 			{
+				// Initiate automated analysis
 
-				try
+				do
 				{
-					Console.WriteLine(@"This program processes DMS analysis jobs for PRISM. Normal operation is to run the program without any command line switches.");
-					Console.WriteLine();
-					Console.WriteLine(@"Program syntax:" + Environment.NewLine + System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location) + @" [/EL] [/T]");
-					Console.WriteLine();
+					try
+					{
+						//Initialize the main execution class
+						var oMainProgram = new clsMainProgram();
+						bool mgrInitSuccess = oMainProgram.InitMgr();
+						if (!mgrInitSuccess)
+						{
+							restart = false;
+						}
 
-					Console.WriteLine(@"Use /EL to post a test message to the Windows Event Log named 'DMSCapTaskMgr' then exit the program. When setting up the Capture Task Manager on a new computer, you should call this command once from a Windows Command Prompt that you started using 'Run as Administrator'");
-					Console.WriteLine();
-					Console.WriteLine(@"Use /T to start the program in code test mode.");
-					Console.WriteLine();
+						if (mCreateEventLog && (mgrInitSuccess || (!mgrInitSuccess && oMainProgram.ManagerDeactivatedLocally)))
+						{
+							oMainProgram.PostTestLogMessage();
+							restart = false;
+						}
+						else
+						{
+							if (mgrInitSuccess)
+								restart = oMainProgram.PerformMainLoop();
+						}
 
-					Console.WriteLine(@"Program written by Dave Clark and Matthew Monroe for the Department of Energy (PNNL, Richland, WA)");
-					Console.WriteLine();
+						oMainProgram = null;
+					}
+					catch (System.Security.SecurityException ex)
+					{
+						const string errMsg = "Security exception";
 
-					Console.WriteLine(@"This is version " + System.Windows.Forms.Application.ProductVersion + @" (" + PROGRAM_DATE + @")");
-					Console.WriteLine();
+						Console.WriteLine();
+						Console.WriteLine(@"===============================================================");
+						Console.WriteLine(errMsg + @": " + ex.Message);
+						Console.WriteLine(@"===============================================================");
+						Console.WriteLine();
+						Console.WriteLine(@"You may need to start this application once from an elevated (administrative level) command prompt using the /EL switch so that it can create the " + clsMainProgram.CUSTOM_LOG_NAME + @" application log");
+						Console.WriteLine();
+					}
+					catch (Exception ex)
+					{
+						const string errMsg = "Critical exception starting application";
 
-					Console.WriteLine(@"E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com");
-					Console.WriteLine(@"Website: http://ncrr.pnnl.gov/ or http://www.sysbio.org/resources/staff/");
-					Console.WriteLine();
+						Console.WriteLine();
+						Console.WriteLine(@"===============================================================");
+						Console.WriteLine(errMsg + @": " + ex.Message);
+						Console.WriteLine(@"===============================================================");
+						Console.WriteLine();
 
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.FATAL, errMsg, ex);
+						System.Threading.Thread.Sleep(500);
 
-					// Delay for 750 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
-					System.Threading.Thread.Sleep(750);
-
-				}
-				catch (Exception ex)
-				{
-					Console.WriteLine("Error displaying the program syntax: " + ex.Message);
-				}
+						return;
+					}
+				} while (restart);
 
 			}
+
+		}
+
+		private static bool SetOptionsUsingCommandLineParameters(FileProcessor.clsParseCommandLine objParseCommandLine)
+		{
+			// Returns True if no problems; otherwise, returns false
+
+			string strValue = string.Empty;
+			var strValidParameters = new string[] { "T", "EL", "Test" };
+
+			try
+			{
+				// Make sure no invalid parameters are present
+				if (objParseCommandLine.InvalidParametersPresent(strValidParameters))
+				{
+					return false;
+				}
+
+
+				// Query objParseCommandLine to see if various parameters are present
+				if (objParseCommandLine.IsParameterPresent("T"))
+				{
+					mCodeTestMode = true;
+				}
+
+				if (objParseCommandLine.IsParameterPresent("Test"))
+				{
+					mCodeTestMode = true;
+				}
+
+				if (objParseCommandLine.IsParameterPresent("EL"))
+				{
+					mCreateEventLog = true;
+				}
+
+
+				return true;
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine("Error parsing the command line parameters: " + Environment.NewLine + ex.Message);
+			}
+
+			return false;
+		}
+
+
+		private static void ShowProgramHelp()
+		{
+
+			try
+			{
+				Console.WriteLine(@"This program processes DMS analysis jobs for PRISM. Normal operation is to run the program without any command line switches.");
+				Console.WriteLine();
+				Console.WriteLine(@"Program syntax:" + Environment.NewLine + System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location) + @" [/EL] [/T]");
+				Console.WriteLine();
+
+				Console.WriteLine(@"Use /EL to post a test message to the Windows Event Log named 'DMSCapTaskMgr' then exit the program. When setting up the Capture Task Manager on a new computer, you should call this command once from a Windows Command Prompt that you started using 'Run as Administrator'");
+				Console.WriteLine();
+				Console.WriteLine(@"Use /T to start the program in code test mode.");
+				Console.WriteLine();
+
+				Console.WriteLine(@"Program written by Dave Clark and Matthew Monroe for the Department of Energy (PNNL, Richland, WA)");
+				Console.WriteLine();
+
+				Console.WriteLine(@"This is version " + System.Windows.Forms.Application.ProductVersion + @" (" + PROGRAM_DATE + @")");
+				Console.WriteLine();
+
+				Console.WriteLine(@"E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com");
+				Console.WriteLine(@"Website: http://panomics.pnnl.gov/ or http://www.sysbio.org/resources/staff/");
+				Console.WriteLine();
+
+
+				// Delay for 750 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
+				System.Threading.Thread.Sleep(750);
+
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine("Error displaying the program syntax: " + ex.Message);
+			}
+
+		}
 
 
 		#endregion
