@@ -287,18 +287,33 @@ namespace DatasetArchivePlugin
                 string statusURL;
 
                 // Start the upload
-                myEMSLUL.StartUpload(debugMode, out statusURL);
+                success = myEMSLUL.StartUpload(debugMode, out statusURL);
 
                 var tsElapsedTime = DateTime.UtcNow.Subtract(dtStartTime);
 
-                m_Msg = "Upload of " + m_DatasetName + " completed in " + tsElapsedTime.TotalSeconds.ToString("0.0") + " seconds: " + myEMSLUL.FileCountNew + " new files, " + myEMSLUL.FileCountUpdated + " updated files, " + myEMSLUL.Bytes + " bytes";
+                m_Msg = "Upload of " + m_DatasetName + " completed in " + tsElapsedTime.TotalSeconds.ToString("0.0") + " seconds";
+                if (!success)
+                    m_Msg += " (success=false)";
+
+                m_Msg += ": " + myEMSLUL.FileCountNew + " new files, " + myEMSLUL.FileCountUpdated + " updated files, " + myEMSLUL.Bytes + " bytes";
+                
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
 
                 if (debugMode != EasyHttp.eDebugMode.DebugDisabled)
                     return false;
 
                 m_Msg = "myEMSL statusURI => " + myEMSLUL.StatusURI;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
+
+                if (statusURL.EndsWith("/1323420608"))
+                {
+                    m_Msg += "; this indicates an upload error (transactionID=-1)";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
+                    return false;
+                }
+                else
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
+                }
 
                 // Raise an event with the stats
                 // This will cause clsPluginMain to call StoreMyEMSLUploadStats to store the results in the database (stored procedure StoreMyEMSLUploadStats)
@@ -306,8 +321,7 @@ namespace DatasetArchivePlugin
                 OnMyEMSLUploadComplete(e);
 
                 m_StatusTools.UpdateAndWrite(100);
-
-                success = true;
+               
             }
             catch (Exception ex)
             {

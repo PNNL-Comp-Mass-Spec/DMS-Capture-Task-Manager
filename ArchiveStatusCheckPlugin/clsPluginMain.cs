@@ -203,6 +203,8 @@ namespace ArchiveStatusCheckPlugin
 			else
 				msg = "MyEMSL archive status partially verified (success count = " + dctVerifiedURIs.Count + ", unverified count = " + lstUnverifiedURIs.Count() + "); first not verified: " + firstUnverified;
 
+			mRetData.CloseoutMsg = msg;
+
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 			return false;
 		}

@@ -15,6 +15,17 @@ namespace Pacifica.DMS_Metadata
 		protected Dictionary<string, string> m_MgrParams;
 		protected Dictionary<string, string> m_TaskParams;
 
+        public string ErrorMessage
+        {
+            get
+            {
+                if (myEMSLUpload == null)
+                    return string.Empty;
+
+                return myEMSLUpload.ErrorMessage;
+            }
+        }
+
 		public MyEMSLUploader(Dictionary<string, string> mgrParams, Dictionary<string, string> taskParams)
 		{
 			StatusURI = string.Empty;
@@ -81,7 +92,7 @@ namespace Pacifica.DMS_Metadata
 
 		#endregion
 
-        public void StartUpload(EasyHttp.eDebugMode debugMode, out string statusURL)
+        public bool StartUpload(EasyHttp.eDebugMode debugMode, out string statusURL)
 		{
 
 			// Instantiate the metadata object
@@ -96,10 +107,12 @@ namespace Pacifica.DMS_Metadata
 			FileCountNew = _mdContainer.TotalFileCountNew;
 			Bytes = _mdContainer.TotalFileSizeToUpload;
 
-			myEMSLUpload.StartUpload(_mdContainer.MetadataObject, debugMode, out statusURL);			
+			var success = myEMSLUpload.StartUpload(_mdContainer.MetadataObject, debugMode, out statusURL);			
 
 			if (!string.IsNullOrEmpty(statusURL))
 				StatusURI = statusURL + "/xml";
+
+            return success;
 		}
 
 		#region "Events and Event Handlers"

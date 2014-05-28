@@ -704,7 +704,7 @@ namespace CaptureTaskManager
 						if (!String.IsNullOrEmpty(toolResult.CloseoutMsg))
 							sCloseoutMessage += ": " + toolResult.CloseoutMsg;
 
-						m_Task.CloseTask(eTaskCloseout, sCloseoutMessage);
+						m_Task.CloseTask(eTaskCloseout, sCloseoutMessage, toolResult.EvalCode, toolResult.EvalMsg);
 						break;
 
 					case EnumCloseOutType.CLOSEOUT_SUCCESS:

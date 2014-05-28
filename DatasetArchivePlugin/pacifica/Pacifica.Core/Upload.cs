@@ -342,9 +342,9 @@ namespace Pacifica.Core
                 RaiseDebugEvent("ProcessMetadata", "Sending file to " + storageUrl);
             }
 
-            // The response data will likely be empty
-            EasyHttp.SendFileListToDavAsTar(location, serverUri, fileListObject, mdTextFile.FullName, mCookieJar, newCred,
-                                            debugMode);
+            // Note: The response data is usually empty
+            // The success/failure of the upload is determined via the call to Finish
+            var responseData = EasyHttp.SendFileListToDavAsTar(location, serverUri, fileListObject, mdTextFile.FullName, mCookieJar, newCred, debugMode);
 
             if (debugMode != EasyHttp.eDebugMode.DebugDisabled)
             {
@@ -378,6 +378,8 @@ namespace Pacifica.Core
                 // This RegEx looks for Accepted in the text, optionally preceded by a Status: line
                 var reStatusURL = new Regex(@"(^Status:(?<url>.*)\n)?(?<accepted>^Accepted)\n", RegexOptions.Multiline);
 
+                var reErrorMessage = new Regex(@"^\[Errno \d+.+\n", RegexOptions.Multiline);
+                var reErrorMatch = reErrorMessage.Match(finishResult);
 
                 reMatch = reStatusURL.Match(finishResult);
                 if (reMatch.Groups["accepted"].Success && !reMatch.Groups["url"].Success)
@@ -385,6 +387,7 @@ namespace Pacifica.Core
                     // File was accepted, but the Status URL is empty
                     // This likely indicates a problem
                     ErrorMessage = "File was accepted, but the Status URL is empty; " + finishResult;
+                    RaiseErrorEvent("StartUpload", ErrorMessage);
                     RaiseUploadCompleted(finishResult);
 
                     // ReSharper disable once RedundantAssignment
@@ -393,8 +396,30 @@ namespace Pacifica.Core
                 else if (reMatch.Groups["accepted"].Success && reMatch.Groups["url"].Success)
                 {
                     statusURL = reMatch.Groups["url"].Value.Trim();
+
+                    if (statusURL.EndsWith("/1323420608"))
+                    {
+                        // This URL is always returned when an error occurs
+                        ErrorMessage = "File was accepted, but the status URL is 1323420608 (indicates upload error): " + finishResult.Replace("\n", " \\n ");
+                        RaiseErrorEvent("StartUpload", ErrorMessage);
+                        success = false;
+                    }
+                    else
+                    {
+                        if (!reErrorMatch.Success)
+                        {
+                            ErrorMessage = "File was accepted, but an error message was reported: " + finishResult;
+                            RaiseErrorEvent("StartUpload", ErrorMessage);
+                            success = false;
+                        }
+                        else
+                        {
+                            success = true;
+                        }
+                    }
+
                     RaiseUploadCompleted(statusURL);
-                    success = true;
+                    
                 }
                 else
                 {

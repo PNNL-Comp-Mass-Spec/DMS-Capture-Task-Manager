@@ -39,7 +39,7 @@ namespace DatasetIntegrityPlugin
 		const float UIMF_FILE_MIN_SIZE_KB = 50;
 		const float AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB = 50;
 		const float AGILENT_DATA_MS_FILE_MIN_SIZE_KB = 75;
-		const float MCF_FILE_MIN_SIZE_KB = 5;		// Malding imaging file
+		const float MCF_FILE_MIN_SIZE_KB = 0.1F;		// Malding imaging file; Prior to May 2014, used a minimum of 4 KB; however, seeing 12T_FTICR_B datasets where this file is as small as 120 Bytes
 
 		const int MAX_AGILENT_TO_UIMF_RUNTIME_MINUTES = 30;
 
@@ -622,18 +622,18 @@ namespace DatasetIntegrityPlugin
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 		}
 
-		private void ReportFileSizeTooSmall(string sDataFileDescription, string sFilePath, float fActualSize, float fMinSize)
+		private void ReportFileSizeTooSmall(string sDataFileDescription, string sFilePath, float fActualSizeKB, float fMinSizeKB)
 		{
-			string sMinSize = fMinSize.ToString("#0") + " KB";
+			string sMinSize = fMinSizeKB.ToString("#0") + " KB";
 
 			string msg = sDataFileDescription + " file may be corrupt. Actual file size is " +
-			             fActualSize.ToString("####0.0") + " KB; " +
+						 fActualSizeKB.ToString("####0.0") + " KB; " +
 			             "min allowable size is " + sMinSize + "; see " + sFilePath;
 
 			mRetData.EvalMsg = sDataFileDescription + " file size is less than " + sMinSize;
 
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
-		}
+		}	
 
 		/// <summary>
 		/// Tests a Agilent_Ion_Trap folder for integrity
@@ -1168,15 +1168,15 @@ namespace DatasetIntegrityPlugin
 			if (fileExists)
 			{
 				// Verify size of the largest .mcf file
-				float minSizeKb;
+				float minSizeKB;
 				if (mctFileName.ToLower() == "Storage.mcf_idx".ToLower())
-					minSizeKb = 4;
+					minSizeKB = 4;
 				else
-					minSizeKb = MCF_FILE_MIN_SIZE_KB;
+					minSizeKB = MCF_FILE_MIN_SIZE_KB;
 
-				if (dataFileSizeKB <= minSizeKb)
+				if (dataFileSizeKB <= minSizeKB)
 				{
-					ReportFileSizeTooSmall(".MCF", mctFileName, dataFileSizeKB, minSizeKb);
+					ReportFileSizeTooSmall(".MCF", mctFileName, dataFileSizeKB, minSizeKB);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 			}
