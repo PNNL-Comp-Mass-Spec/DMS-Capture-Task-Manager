@@ -310,10 +310,8 @@ namespace DatasetArchivePlugin
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
                     return false;
                 }
-                else
-                {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
-                }
+                                
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);                
 
                 // Raise an event with the stats
                 // This will cause clsPluginMain to call StoreMyEMSLUploadStats to store the results in the database (stored procedure StoreMyEMSLUploadStats)

@@ -406,7 +406,7 @@ namespace Pacifica.Core
                     }
                     else
                     {
-                        if (!reErrorMatch.Success)
+                        if (reErrorMatch.Success)
                         {
                             ErrorMessage = "File was accepted, but an error message was reported: " + finishResult;
                             RaiseErrorEvent("StartUpload", ErrorMessage);
