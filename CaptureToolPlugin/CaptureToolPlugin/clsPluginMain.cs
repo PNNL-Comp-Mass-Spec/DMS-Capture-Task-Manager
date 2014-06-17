@@ -33,17 +33,14 @@ namespace CaptureToolPlugin
 			/// <returns>clsToolReturnData object containing tool operation results</returns>
 			public override clsToolReturnData RunTool()
 			{
-				string msg;
-
-				msg = "Starting CaptureToolPlugin.clsPluginMain.RunTool()";
+				string msg = "Starting CaptureToolPlugin.clsPluginMain.RunTool()";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 				// Note that retData.CloseoutMsg will be stored in the Completion_Message field of the database
 				// Similarly, retData.EvalMsg will be stored in the Evaluation_Message field of the database
-				clsToolReturnData retData;
-
+				
 				// Perform base class operations, if any
-				retData = base.RunTool();
+				clsToolReturnData retData = base.RunTool();
 				if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED) return retData;
 
 				// Store the version info in the database
@@ -71,14 +68,13 @@ namespace CaptureToolPlugin
 				}
 
 				// Create the object that will perform capture operation
-				clsCaptureOps capOpTool = new clsCaptureOps(m_MgrParams, useBionet);
+				var capOpTool = new clsCaptureOps(m_MgrParams, useBionet);
 				try
 				{
 					msg = "clsPluginMain.RunTool(): Starting capture operation";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
-					bool bSuccess;
-					bSuccess = capOpTool.DoOperation(m_TaskParams, ref retData);
+					capOpTool.DoOperation(m_TaskParams, ref retData);
 
 					if (capOpTool.NeedToAbortProcessing)
 					{
@@ -113,8 +109,7 @@ namespace CaptureToolPlugin
 				}
 
 				capOpTool.DetachEvents();
-				capOpTool = null;
-				
+
 				msg = "Completed clsPluginMain.RunTool()";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
@@ -147,14 +142,13 @@ namespace CaptureToolPlugin
 			{
 
 				string strToolVersionInfo = string.Empty;
-				System.IO.FileInfo ioAppFileInfo = new System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
-				bool bSuccess;
+				var ioAppFileInfo = new System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
 
 				// Lookup the version of the Capture tool plugin
 				string strPluginPath = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "CaptureToolPlugin.dll");
-				bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strPluginPath);
+				bool bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strPluginPath);
 				if (!bSuccess)
 					return false;
 
@@ -165,14 +159,16 @@ namespace CaptureToolPlugin
 					return false;
 
 				// Store path to CaptureToolPlugin.dll in ioToolFiles
-				System.Collections.Generic.List<System.IO.FileInfo> ioToolFiles = new System.Collections.Generic.List<System.IO.FileInfo>();
-				ioToolFiles.Add(new System.IO.FileInfo(strPluginPath));
+				var ioToolFiles = new System.Collections.Generic.List<System.IO.FileInfo>
+				{
+					new System.IO.FileInfo(strPluginPath)
+				};
 
 				try
 				{
-					return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, false);
+					return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, false);
 				}
-				catch (System.Exception ex)
+				catch (Exception ex)
 				{
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
 					return false;
