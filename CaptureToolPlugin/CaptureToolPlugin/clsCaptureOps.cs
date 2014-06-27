@@ -653,8 +653,8 @@ namespace CaptureToolPlugin
 		/// <returns>clsDatasetInfo object containing info on found dataset</returns>
 		private clsDatasetInfo GetRawDSType(string InstFolder, string DSName, clsInstrumentClassInfo.eInstrumentClass instrumentClass)
 		{
-			//Determines if raw dataset exists as a single file, folder with same name as dataset, or 
-			//	folder with dataset name + extension. Returns object containing info on dataset found
+			// Determines if raw dataset exists as a single file, folder with same name as dataset, or 
+			// folder with dataset name + extension. Returns object containing info on dataset found
 
 			bool bLookForDatasetFile;
 
@@ -1148,7 +1148,7 @@ namespace CaptureToolPlugin
 			}
 			else
 			{
-				sourceIsValid = ValidateWithInstrumentClass(dataset, sourceType, instrumentClass, ref retData);
+				sourceIsValid = ValidateWithInstrumentClass(dataset, sourceFolderPath, sourceType, instrumentClass, datasetInfo, ref retData);
 			}
 
 			if (sourceIsValid)
@@ -2186,11 +2186,19 @@ namespace CaptureToolPlugin
 		/// Make sure that we matched a file for instruments that save data as a file, or a folder for instruments that save data to a folder
 		/// </summary>
 		/// <param name="dataset"></param>
+		/// <param name="sourceFolderPath"></param>
 		/// <param name="sourceType"></param>
 		/// <param name="instrumentClass"></param>
+		/// <param name="datasetInfo"></param>
 		/// <param name="retData"></param>
 		/// <returns>True if the file or folder is appropriate for the instrument class</returns>
-		private bool ValidateWithInstrumentClass(string dataset, RawDSTypes sourceType, clsInstrumentClassInfo.eInstrumentClass instrumentClass, ref clsToolReturnData retData)
+		private bool ValidateWithInstrumentClass(
+			string dataset, 
+			string sourceFolderPath,
+			RawDSTypes sourceType, 
+			clsInstrumentClassInfo.eInstrumentClass instrumentClass, 
+			clsDatasetInfo datasetInfo,
+			ref clsToolReturnData retData)
 		{
 			string entityDescription;
 
@@ -2266,7 +2274,34 @@ namespace CaptureToolPlugin
 				case clsInstrumentClassInfo.eInstrumentClass.IMS_Agilent_TOF:
 					if (sourceType != RawDSTypes.File)
 					{
-						retData.CloseoutMsg = "Dataset name matched " + entityDescription + "; must be a .uimf file";						
+
+						if (sourceType == RawDSTypes.FolderExt)
+						{
+							// IMS08_AgQTOF05 collects data as .D folders, which the capture pipeline will then convert to a .uimf file
+							// Make sure the matched folder is a .d file
+							if (datasetInfo.FileOrFolderName.ToLower().EndsWith(".d"))								
+								break;
+						}
+						if (sourceType == RawDSTypes.FolderNoExt)
+						{
+							// IMS04_AgTOF05 and similar instruments collect data into a folder named after the dataset
+							// The folder contains a .UIMF file plus several related files
+							// Make sure the folder contains just one .UIMF file
+
+							var diSourceDir = new DirectoryInfo(Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName));
+							var fiFiles = diSourceDir.GetFiles("*.uimf").ToList();
+							if (fiFiles.Count == 1)
+								break;
+
+							if (fiFiles.Count > 1)
+								retData.CloseoutMsg = "Dataset name matched " + entityDescription + " with multiple .uimf files; there must be only one .uimf file";
+							else
+								retData.CloseoutMsg = "Dataset name matched " + entityDescription + " but it does not have any .uimf files";
+
+							break;
+						}
+
+						retData.CloseoutMsg = "Dataset name matched " + entityDescription + "; must be a .uimf file, .d folder, or folder with a single .uimf file";
 					}
 					break;
 			}
