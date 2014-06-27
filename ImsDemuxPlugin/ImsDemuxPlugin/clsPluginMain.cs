@@ -350,8 +350,9 @@ namespace ImsDemuxPlugin
 
             if (oReader.TableExists("Log_Entries"))
             {
+				// Note: providing true for parseViaFramework as a workaround for reading SqLite files located on a remote UNC share or in readonly folders
                 string connectionString = "Data Source = " + decodedUimfFilePath + "; Version=3; DateTimeFormat=Ticks;";
-                using (var cnUIMF = new SQLiteConnection(connectionString))
+                using (var cnUIMF = new SQLiteConnection(connectionString, true))
                 {
                     cnUIMF.Open();
                     SQLiteCommand cmdLogEntries = cnUIMF.CreateCommand();

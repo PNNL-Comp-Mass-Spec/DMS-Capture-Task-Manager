@@ -119,8 +119,9 @@ namespace ImsDemuxPlugin
 				// Add the bin-centric tables
 				using (var uimfReader = new UIMFLibrary.DataReader(uimfLocalFileNamePath))
 				{
+					// Note: providing true for parseViaFramework as a workaround for reading SqLite files located on a remote UNC share or in readonly folders
 					string connectionString = "Data Source = " + uimfLocalFileNamePath;
-					using (var dbConnection = new System.Data.SQLite.SQLiteConnection(connectionString))
+					using (var dbConnection = new System.Data.SQLite.SQLiteConnection(connectionString, true))
 					{
 						dbConnection.Open();
 
@@ -467,8 +468,9 @@ namespace ImsDemuxPlugin
 					return retData;
 				}
 
+				// Note: providing true for parseViaFramework as a workaround for reading SqLite files located on a remote UNC share or in readonly folders
 				string connectionString = "Data Source = " + sUimfPath;
-				using (var dbConnection = new System.Data.SQLite.SQLiteConnection(connectionString))
+				using (var dbConnection = new System.Data.SQLite.SQLiteConnection(connectionString, true))
 				{
 					dbConnection.Open();
 
