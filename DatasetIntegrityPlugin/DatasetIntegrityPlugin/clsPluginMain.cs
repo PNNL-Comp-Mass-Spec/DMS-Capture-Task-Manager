@@ -574,7 +574,7 @@ namespace DatasetIntegrityPlugin
 			if (bInvalid)
 			{
 				mRetData.EvalMsg = "Invalid dataset. Multiple " + folderDescription + " folders found";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return false;
 			}
 			
@@ -619,7 +619,7 @@ namespace DatasetIntegrityPlugin
 
 			mRetData.EvalMsg = sDataFileDescription + " file size is more than " + sMaxSize;
 
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 		}
 
 		private void ReportFileSizeTooSmall(string sDataFileDescription, string sFilePath, float fActualSizeKB, float fMinSizeKB)
@@ -632,7 +632,7 @@ namespace DatasetIntegrityPlugin
 
 			mRetData.EvalMsg = sDataFileDescription + " file size is less than " + sMinSize;
 
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 		}	
 
 		/// <summary>
@@ -650,7 +650,7 @@ namespace DatasetIntegrityPlugin
 			if (lstDotDFolders.Count < 1)
 			{
 				mRetData.EvalMsg = "Invalid dataset. No .D folders found";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -665,7 +665,7 @@ namespace DatasetIntegrityPlugin
 			if (lstDotDFolders[0].GetFiles("DATA.MS").Length == 0)
 			{
 				mRetData.EvalMsg = "Invalid dataset. DATA.MS file not found in the .D folder";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -696,7 +696,7 @@ namespace DatasetIntegrityPlugin
 			if (lstDotDFolders.Count < 1)
 			{
 				mRetData.EvalMsg = "Invalid dataset. No .D folders found";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -711,14 +711,14 @@ namespace DatasetIntegrityPlugin
 			if (acqDataFolderList.Count < 1)
 			{
 				mRetData.EvalMsg = "Invalid dataset. .D folder does not contain an AcqData subfolder";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
 			if (acqDataFolderList.Count > 1)
 			{
 				mRetData.EvalMsg = "Invalid dataset. Multiple AcqData folders found in .D folder";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -728,7 +728,7 @@ namespace DatasetIntegrityPlugin
 			if (lstInstrumentData.Count == 0)
 			{
 				mRetData.EvalMsg = "Invalid dataset. MSScan.bin file not found in the AcqData folder";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -745,7 +745,7 @@ namespace DatasetIntegrityPlugin
 			if (lstMSTS.Count == 0)
 			{
 				mRetData.EvalMsg = "Invalid dataset. MSTS.xml file not found in the AcqData folder";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -754,14 +754,14 @@ namespace DatasetIntegrityPlugin
 			if (lstMethodFolders.Count < 1)
 			{
 				mRetData.EvalMsg = "Invalid dataset. No .m folders found found in the AcqData folder";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
 			if (lstMethodFolders.Count > 1)
 			{
 				mRetData.EvalMsg = "Invalid dataset. Multiple .m folders found in the AcqData folder";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -782,7 +782,7 @@ namespace DatasetIntegrityPlugin
 			if (!File.Exists(tempFileNamePath))
 			{
 				mRetData.EvalMsg = "Data file " + tempFileNamePath + " not found";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -801,7 +801,7 @@ namespace DatasetIntegrityPlugin
 			if (!File.Exists(tempFileNamePath))
 			{
 				mRetData.EvalMsg = "Data file " + tempFileNamePath + " not found";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -897,7 +897,7 @@ namespace DatasetIntegrityPlugin
 				if (!bAlternateFound)
 				{
 					mRetData.EvalMsg = "Data file " + dataFileNamePath + " not found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 			}
@@ -934,7 +934,7 @@ namespace DatasetIntegrityPlugin
 			if (!Directory.Exists(Path.Combine(datasetFolderPath, "0.ser")))
 			{
 				mRetData.EvalMsg = "Invalid dataset. 0.ser folder not found";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -943,7 +943,7 @@ namespace DatasetIntegrityPlugin
 			if (!File.Exists(Path.Combine(dataFolder, "acqus")))
 			{
 				mRetData.EvalMsg = "Invalid dataset. acqus file not found";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -952,7 +952,7 @@ namespace DatasetIntegrityPlugin
 			if (dataFileSizeKB <= 0F)
 			{
 				mRetData.EvalMsg = "Invalid dataset. acqus file contains no data";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -960,7 +960,7 @@ namespace DatasetIntegrityPlugin
 			if (!File.Exists(Path.Combine(dataFolder, "ser")))
 			{
 				mRetData.EvalMsg = "Invalid dataset. ser file not found";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -969,7 +969,7 @@ namespace DatasetIntegrityPlugin
 			if (dataFileSizeKB <= 100)
 			{
 				mRetData.EvalMsg = "Invalid dataset. ser file too small";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -992,7 +992,7 @@ namespace DatasetIntegrityPlugin
 			if (lstDotDFolders.Count < 1)
 			{
 				mRetData.EvalMsg = "Invalid dataset. No .D folders found";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -1007,7 +1007,7 @@ namespace DatasetIntegrityPlugin
 			if (lstBafFile.Count == 0)
 			{
 				mRetData.EvalMsg = "Invalid dataset. analysis.baf file not found";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -1024,7 +1024,7 @@ namespace DatasetIntegrityPlugin
 			if (lstMethodFolders.Count < 1)
 			{
 				mRetData.EvalMsg = "Invalid dataset. No .M folders found";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -1039,7 +1039,7 @@ namespace DatasetIntegrityPlugin
 					if (!PositiveNegativeMethodFolders(lstMethodFolders))
 					{
 						mRetData.EvalMsg = "Invalid dataset. Multiple .M folders found";
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 						return EnumCloseOutType.CLOSEOUT_FAILED;
 					}
 				}
@@ -1050,7 +1050,7 @@ namespace DatasetIntegrityPlugin
 			if (lstMethodFiles.Count == 0)
 			{
 				mRetData.EvalMsg = "Invalid dataset. No .method files found";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -1079,7 +1079,7 @@ namespace DatasetIntegrityPlugin
 			if (lstDotDFolders.Count < 1)
 			{
 				mRetData.EvalMsg = "Invalid dataset. No .D folders found";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -1121,7 +1121,7 @@ namespace DatasetIntegrityPlugin
 			if (!fileExists && requireBAFFile)
 			{
 				mRetData.EvalMsg = "Invalid dataset. analysis.baf file not found";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -1161,7 +1161,7 @@ namespace DatasetIntegrityPlugin
 			if (!fileExists && requireMCFFile)
 			{
 				mRetData.EvalMsg = "Invalid dataset; .mcf file not found";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -1218,7 +1218,7 @@ namespace DatasetIntegrityPlugin
 					if (instrumentName != "15T_FTICR")
 					{
 						mRetData.EvalMsg = "Invalid dataset. No ser or fid file found";
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 						return EnumCloseOutType.CLOSEOUT_FAILED;
 					}
 				}
@@ -1239,7 +1239,7 @@ namespace DatasetIntegrityPlugin
 			if (lstMethodFolders.Count < 1)
 			{
 				mRetData.EvalMsg = "Invalid dataset. No .M folders found";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -1256,7 +1256,7 @@ namespace DatasetIntegrityPlugin
 					instrumentNameLCase.Contains("imaging"))
 				{
 					mRetData.EvalMsg = "Invalid dataset. Multiple .M folders found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 			}
@@ -1266,7 +1266,7 @@ namespace DatasetIntegrityPlugin
 			if (apexAcqMethod.Count == 0)
 			{
 				mRetData.EvalMsg = "Invalid dataset. apexAcquisition.method file not found";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -1293,7 +1293,7 @@ namespace DatasetIntegrityPlugin
 			if (fileList.Length < 1)
 			{
 				mRetData.EvalMsg = "Invalid dataset. No zip files found";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -1314,7 +1314,7 @@ namespace DatasetIntegrityPlugin
 			if (zipFiles.Length > 0)
 			{
 				mRetData.EvalMsg = "Zip files found in dataset folder " + datasetFolderPath;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -1324,7 +1324,7 @@ namespace DatasetIntegrityPlugin
 			if (dataFolders.Length < 1)
 			{
 				mRetData.EvalMsg = "No subfolders were found in the dataset folder " + datasetFolderPath;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
@@ -1347,7 +1347,7 @@ namespace DatasetIntegrityPlugin
 					if (sDirName != null && !reMaldiSpotFolder.IsMatch(sDirName, 0))
 					{
 						mRetData.EvalMsg = "Dataset folder contains multiple subfolders, but folder " + sDirName + " does not match the expected pattern (" + reMaldiSpotFolder + "); see " + datasetFolderPath;
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 						return EnumCloseOutType.CLOSEOUT_FAILED;
 					}
 				}
@@ -1363,7 +1363,7 @@ namespace DatasetIntegrityPlugin
 			if (!File.Exists(dataFileNamePath))
 			{
 				mRetData.EvalMsg = "Data file " + dataFileNamePath + " not found";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 

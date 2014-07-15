@@ -55,8 +55,8 @@ namespace Pacifica.Core
 				ReportError("CheckMyEMSLIngestStatus", msg);
 				return false;
 			}
-
-			bool success = IngestStepCompleted(statusURI, stepNum, cookieJar, out accessDenied, out statusMessage);
+			bool myEmslException;
+			bool success = IngestStepCompleted(statusURI, stepNum, cookieJar, out accessDenied, out statusMessage, out myEmslException);
 
 			Utilities.Logout(cookieJar);
 
@@ -72,10 +72,38 @@ namespace Pacifica.Core
 		/// <param name="statusMessage"></param>
 		/// <param name="cookieJar"></param>
 		/// <returns>True if step stepNum has completed</returns>
-		public bool IngestStepCompleted(string statusURI, StatusStep stepNum, CookieContainer cookieJar, out bool accessDenied, out string statusMessage)
+		public bool IngestStepCompleted(
+			string statusURI, 
+			StatusStep stepNum, 
+			CookieContainer cookieJar, 
+			out bool accessDenied,
+			out string statusMessage)
+		{
+			bool myEmslException;
+			return IngestStepCompleted(statusURI, stepNum, cookieJar, out accessDenied, out statusMessage, out myEmslException);
+		}
+
+		/// <summary>
+		/// This function examines the xml returned by a MyEMSL status page to determine whether or not the step succeeded
+		/// </summary>
+		/// <param name="statusURI"></param>
+		/// /// <param name="stepNum"></param>
+		/// <param name="accessDenied"></param>
+		/// <param name="statusMessage"></param>
+		/// <param name="cookieJar"></param>
+		/// <param name="myEmslException"></param>
+		/// <returns>True if step stepNum has completed</returns>
+		public bool IngestStepCompleted(
+			string statusURI,
+			StatusStep stepNum,
+			CookieContainer cookieJar,
+			out bool accessDenied,
+			out string statusMessage,
+			out bool myEmslException)
 		{
 			bool success = false;
 			accessDenied = false;
+			myEmslException = false;
 			statusMessage = string.Empty;
 
 			// The following Callback allows us to access the MyEMSL server even if the certificate is expired or untrusted
@@ -87,6 +115,26 @@ namespace Pacifica.Core
 			HttpStatusCode responseStatusCode;
 
 			string xmlServerResponse = EasyHttp.Send(statusURI, out responseStatusCode, timeoutSeconds);
+			const string EXCEPTION_TEXT = "message=\'exceptions.";
+
+			int exceptionIndex = xmlServerResponse.IndexOf(EXCEPTION_TEXT);
+			if (exceptionIndex > 0)
+			{
+				string message = xmlServerResponse.Substring(exceptionIndex + EXCEPTION_TEXT.Length);
+				int charIndex = message.IndexOf("traceback");
+				if (charIndex > 0)
+					message = message.Substring(0, charIndex - 1).Replace("\n", "; ").Replace("&lt", "");
+				else
+				{
+					charIndex = message.IndexOf('\'', 5);
+					if (charIndex > 0)
+						message = message.Substring(0, charIndex - 1).Replace("\n", "; ");
+				}
+
+				statusMessage = "Exception: " + message;
+				myEmslException = true;
+				return false;
+			}
 
 			var xmlDoc = new XmlDocument();
 			xmlDoc.LoadXml(xmlServerResponse);

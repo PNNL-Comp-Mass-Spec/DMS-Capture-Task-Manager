@@ -717,7 +717,7 @@ namespace CaptureTaskManager
 						msg = m_MgrName + ": Failure running tool " + m_StepTool
 									+ ", job " + m_Job + ", Dataset " + m_Dataset
 									+ "; CloseOut = NeedToAbortProcessing";
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 
 						sCloseoutMessage = "Error: NeedToAbortProcessing";
 						m_Task.CloseTask(eTaskCloseout, sCloseoutMessage, toolResult.EvalCode, toolResult.EvalMsg);

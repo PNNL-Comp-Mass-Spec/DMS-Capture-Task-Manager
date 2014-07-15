@@ -60,7 +60,9 @@ copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\D
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\MyEMSL_MTS_File_Cache_Manager\bin\Debug" /y
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\MyEMSL_MTS_File_Cache_Manager\Lib" /y
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\MyEMSL_Reader\bin\Debug" /y
+copy debug\Pacifica.Core.pdb "F:\My Documents\Projects\DataMining\DMS_Managers\MyEMSL_Reader\bin\Debug" /y
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\MyEMSL_Reader\Lib" /y
+copy debug\Pacifica.Core.pdb "F:\My Documents\Projects\DataMining\DMS_Managers\MyEMSL_Reader\Lib" /y
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\MyEMSL_Reader\MyEMSLDownloader\bin\Debug" /y
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\MyEMSL_Reader\Tester\bin\Debug" /y
 
@@ -98,6 +100,8 @@ copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Programs\M
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Programs\Mage\RangerLib\bin\Release" /y
 copy debug\Pacifica.Core.pdb "F:\My Documents\Projects\DataMining\DMS_Programs\Mage\Mage\lib" /y
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Programs\Mage_SVN\Mage\lib" /y
+
+copy debug\Pacifica.Core.dll "F:\My Documents\Projects\JohnSandoval\ApeVbNet\Lib" /y
 
 copy ..\..\Pacifica.DMS_Metadata\bin\Debug\Pacifica.DMS_Metadata.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\CaptureTaskManager\CaptureTaskManager\bin\Debug" /y
 
