@@ -68,7 +68,7 @@ namespace DatasetInfoPlugin
 			}
 
 			msg = "Running DatasetInfo on dataset '" + m_Dataset + "'";
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 
 			retData = RunMsFileInfoScanner();
 

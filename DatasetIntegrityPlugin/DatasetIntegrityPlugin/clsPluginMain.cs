@@ -85,7 +85,7 @@ namespace DatasetIntegrityPlugin
 			}
 
 			msg = "Performing integrity test, dataset '" + m_Dataset + "'";
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.INFO, msg);
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 
 			// Set up the file paths
 			string storageVolExt = m_TaskParams.GetParam("Storage_Vol_External");
@@ -1341,7 +1341,7 @@ namespace DatasetIntegrityPlugin
 
 				foreach (string folder in dataFolders)
 				{
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.DEBUG, "Test folder " + folder + " against RegEx " + reMaldiSpotFolder);
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Test folder " + folder + " against RegEx " + reMaldiSpotFolder);
 
 					string sDirName = Path.GetFileName(folder);
 					if (sDirName != null && !reMaldiSpotFolder.IsMatch(sDirName, 0))
