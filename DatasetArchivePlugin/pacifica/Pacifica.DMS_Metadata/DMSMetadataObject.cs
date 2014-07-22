@@ -217,7 +217,10 @@ namespace Pacifica.DMS_Metadata
 
 			foreach (var archiveFile in lstFilesInMyEMSL)
 			{
-				dctFilesInMyEMSLSha1Hash.Add(archiveFile.RelativePathUnix, archiveFile.Sha1Hash);
+                if (dctFilesInMyEMSLSha1Hash.ContainsKey(archiveFile.RelativePathUnix))
+                    Console.WriteLine("Warning: dctFilesInMyEMSLSha1Hash already contains " + archiveFile.RelativePathUnix);
+                else
+				    dctFilesInMyEMSLSha1Hash.Add(archiveFile.RelativePathUnix, archiveFile.Sha1Hash);
 			}
 
 			var lstUnmatchedFiles = new List<FileInfoObject>();
