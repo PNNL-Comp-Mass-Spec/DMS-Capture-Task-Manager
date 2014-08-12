@@ -222,11 +222,14 @@ namespace ArchiveVerifyPlugin
 				if (!ParameterDefined("TransferFolderPath", transferFolderPath))
 					return false;
 
-				string datasetName = m_TaskParams.GetParam("Dataset", "");
-				if (!ParameterDefined("Dataset", datasetName))
-					return false;
+                if (string.IsNullOrEmpty(m_Dataset))
+                {
+                    mRetData.CloseoutMsg = "m_Dataset is empty; unable to continue";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg);
+                    return false;
+                }
 
-				transferFolderPath = Path.Combine(transferFolderPath, datasetName);
+                transferFolderPath = Path.Combine(transferFolderPath, m_Dataset);
 
 				string jobNumber = m_TaskParams.GetParam("Job", "");
 				if (!ParameterDefined("Job", jobNumber))
@@ -238,7 +241,7 @@ namespace ArchiveVerifyPlugin
 				{
 					metadataFilePath = fiMetadataFile.FullName;
 
-					CompareToMetadataFile(lstArchivedFiles, fiMetadataFile, out matchCount, out mismatchCount);
+                    CompareToMetadataFile(lstArchivedFiles, fiMetadataFile, out matchCount, out mismatchCount);
 
 					if (matchCount > 0 && mismatchCount == 0)
 					{
@@ -289,7 +292,7 @@ namespace ArchiveVerifyPlugin
 					dctFilePathHashMap.Add(relativeFilePathWindows, datasetFile.Sha1HashHex);
 				}
 
-				CompareArchiveFilesToList(lstArchivedFiles, out matchCount, out mismatchCount, dctFilePathHashMap);
+                CompareArchiveFilesToList(lstArchivedFiles, out matchCount, out mismatchCount, dctFilePathHashMap);
 
 				if (matchCount > 0 && mismatchCount == 0)
 				{
@@ -758,11 +761,24 @@ namespace ArchiveVerifyPlugin
 					return false;
 				}
 
-				success = CompareArchiveFilesToExpectedFiles(lstArchivedFiles, out metadataFilePath);
+                // Make sure the entries in lstArchivedFiles only correspond to this dataset
+                // We performed the search using DatasetID, but if a dataset is renamed in DMS, then multiple datasets could have the same DatasetID
+                // Dataset renames are rare, but do happen (e.g. Dataset ID 382287 renamed from TB_UR_07_14Jul14_Methow_13-10-13 to TB_UR_08_14Jul14_Methow_13-10-14)
+                var lstFilteredFiles = new List<MyEMSLReader.ArchivedFileInfo>();
+
+                foreach (var archiveFile in lstArchivedFiles)
+                {
+                    if (string.Compare(archiveFile.Dataset, m_Dataset, true) == 0)
+                        lstFilteredFiles.Add(archiveFile);
+                    else
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Query for dataset ID " + m_DatasetID + " yielded match to " + archiveFile.PathWithDataset + " - skipping since wrong dataset");
+                }
+
+                success = CompareArchiveFilesToExpectedFiles(lstFilteredFiles, out metadataFilePath);
 
 				if (success)
 				{
-					success = CreateOrUpdateMD5ResultsFile(lstArchivedFiles);
+                    success = CreateOrUpdateMD5ResultsFile(lstFilteredFiles);
 				}
 
 			}
