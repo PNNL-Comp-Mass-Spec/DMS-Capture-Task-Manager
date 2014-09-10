@@ -37,6 +37,7 @@ namespace DatasetIntegrityPlugin
 		const float SCIEX_WIFF_FILE_MIN_SIZE_KB = 50;
 		const float SCIEX_WIFF_SCAN_FILE_MIN_SIZE_KB = 0.03F;
 		const float UIMF_FILE_MIN_SIZE_KB = 50;
+		const float TIMS_UIMF_FILE_MIN_SIZE_KB = 5;
 		const float AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB = 50;
 		const float AGILENT_DATA_MS_FILE_MIN_SIZE_KB = 75;
 		const float MCF_FILE_MIN_SIZE_KB = 0.1F;		// Malding imaging file; Prior to May 2014, used a minimum of 4 KB; however, seeing 12T_FTICR_B datasets where this file is as small as 120 Bytes
@@ -149,7 +150,7 @@ namespace DatasetIntegrityPlugin
 					}
 
 					dataFileNamePath = Path.Combine(datasetFolder, m_Dataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION);
-					mRetData.CloseoutType = TestIMSAgilentTOF(dataFileNamePath);
+					mRetData.CloseoutType = TestIMSAgilentTOF(dataFileNamePath, instrumentName);
 					break;
 				case clsInstrumentClassInfo.eInstrumentClass.BrukerFT_BAF:
 					mRetData.CloseoutType = TestBrukerFT_Folder(datasetFolder, requireBAFFile: true, requireMCFFile: false, instrumentClass: instrumentClass, instrumentName: instrumentName);
@@ -1357,7 +1358,7 @@ namespace DatasetIntegrityPlugin
 			return EnumCloseOutType.CLOSEOUT_SUCCESS;
 		}	// End sub
 
-		private EnumCloseOutType TestIMSAgilentTOF(string dataFileNamePath)
+		private EnumCloseOutType TestIMSAgilentTOF(string dataFileNamePath, string instrumentName)
 		{
 			// Verify file exists in storage folder
 			if (!File.Exists(dataFileNamePath))
@@ -1371,12 +1372,24 @@ namespace DatasetIntegrityPlugin
 			float dataFileSizeKB = GetFileSize(dataFileNamePath);
 
 			// Check min size
-			if (dataFileSizeKB < UIMF_FILE_MIN_SIZE_KB)
+			if (instrumentName.ToLower().StartsWith("TIMS_Maxis".ToLower()))
 			{
-				ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSizeKB, UIMF_FILE_MIN_SIZE_KB);
-				return EnumCloseOutType.CLOSEOUT_FAILED;
+				if (dataFileSizeKB < TIMS_UIMF_FILE_MIN_SIZE_KB)
+				{
+					ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSizeKB, TIMS_UIMF_FILE_MIN_SIZE_KB);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
+			}
+			else
+			{
+				if (dataFileSizeKB < UIMF_FILE_MIN_SIZE_KB)
+				{
+					ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSizeKB, UIMF_FILE_MIN_SIZE_KB);
+					return EnumCloseOutType.CLOSEOUT_FAILED;
+				}
 			}
 
+			
 			// Verify that the pressure columns are in the correct order
 			if (!ValidatePressureInfo(dataFileNamePath))
 			{
@@ -1421,8 +1434,14 @@ namespace DatasetIntegrityPlugin
 
 				if (bNPressureColumnsArePresent)
 				{
-					bool bPressuresAreInCorrectOrder = (oFrameParams.QuadrupolePressure < oFrameParams.RearIonFunnelPressure &&
-														oFrameParams.RearIonFunnelPressure < oFrameParams.HighPressureFunnelPressure);
+					// Example pressure values:
+					// HighPressureFunnelPressure = 4.077
+					// RearIonFunnelPressure = 4.048
+					// QuadrupolePressure = 0.262
+
+					// Multipling the comparison pressure by 1.1 to give a 10% buffer in case the two pressure values are similar
+					bool bPressuresAreInCorrectOrder = (oFrameParams.QuadrupolePressure < oFrameParams.RearIonFunnelPressure * 1.1 &&
+														oFrameParams.RearIonFunnelPressure < oFrameParams.HighPressureFunnelPressure * 1.1);
 
 					if (!bPressuresAreInCorrectOrder)
 					{

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -61,10 +61,10 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetPath)" "$(ProjectDir)..\DeployedFiles"
-copy "$(TargetDir)*.*" "$(ProjectDir)..\CaptureTaskManager\CaptureTaskManager\bin\Debug"
-copy "$(TargetDir)*.*" "$(ProjectDir)..\CaptureTaskManager\CaptureTaskManager\bin\Debug_NoDartFTP"
-copy "$(TargetDir)*.dll" "$(ProjectDir)..\DeployedFiles"
+    <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\DeployedFiles" /Y
+xcopy "$(TargetDir)*.*" "$(ProjectDir)..\CaptureTaskManager\CaptureTaskManager\bin\Debug" /D /Y
+xcopy "$(TargetDir)*.*" "$(ProjectDir)..\CaptureTaskManager\CaptureTaskManager\bin\Debug_NoDartFTP" /D /Y
+xcopy "$(TargetDir)*.dll" "$(ProjectDir)..\DeployedFiles" /D /Y
 </PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

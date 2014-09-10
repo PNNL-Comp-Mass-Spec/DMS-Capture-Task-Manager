@@ -69,7 +69,9 @@ namespace DatasetArchivePlugin
         protected string mMostRecentLogMessage = string.Empty;
         protected DateTime mMostRecentLogTime = DateTime.UtcNow;
 
+#if !DartFTPMissing
         protected clsMD5StageFileCreator mMD5StageFileCreator;
+#endif
         protected clsFileTools m_FileTools;
 
         #endregion
