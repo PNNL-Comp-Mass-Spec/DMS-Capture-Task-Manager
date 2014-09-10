@@ -40,7 +40,7 @@ namespace Pacifica.Core
 		/// <param name="absoluteLocalFullPath">Full path to the local file</param>
 		/// <param name="relativeDestinationDirectory">Folder in archive in which to store the file; empty string means to store in the dataset folder</param>
 		/// <param name="sha1Hash">Sha-1 hash for the file; if blank then the has will be auto-computed</param>
-		public FileInfoObject(string absoluteLocalFullPath, string relativeDestinationDirectory, string sha1Hash = "")
+		public FileInfoObject(string absoluteLocalFullPath, string relativeDestinationDirectory, string sha1Hash)
 		{
 			AbsoluteLocalPath = absoluteLocalFullPath;
 			File = new FileInfo(AbsoluteLocalPath);

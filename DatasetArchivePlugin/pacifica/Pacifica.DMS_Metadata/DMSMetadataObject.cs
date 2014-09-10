@@ -102,6 +102,50 @@ namespace Pacifica.DMS_Metadata
 
 		}
 
+		
+		private bool AddUsingCacheInfoFile(FileInfo fiCacheInfoFile, List<FileInfoObject> fileCollection, string baseDSPath)
+		{
+
+			string remoteFilePath = string.Empty;
+
+			using (var srCacheInfoFile = new StreamReader(new FileStream(fiCacheInfoFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+			{
+				if (srCacheInfoFile.Peek() > -1)
+				{
+					remoteFilePath = srCacheInfoFile.ReadLine();
+				}				
+			}
+
+			if (string.IsNullOrWhiteSpace(remoteFilePath))
+			{
+                OnError("AddUsingCacheInfoFile", "Warning: Cache info file did not contain a file path; see " + fiCacheInfoFile.FullName);				
+				return false;
+			}
+
+			var fiRemoteFile = new FileInfo(remoteFilePath);
+			if (!fiRemoteFile.Exists)
+			{
+                // This is not a fatal error; the file may have been purged
+				Console.WriteLine("Note: Remote file referred to by the cache info file was not found: " + fiRemoteFile.FullName);
+				return false;
+			}
+
+			if (fiCacheInfoFile.Directory == null)
+			{
+                OnError("AddUsingCacheInfoFile", "Unable to determine the parent directory of the cache info file (this should never happen)");
+				return false;
+			}
+
+			string relativeDestinationDirectory = FileInfoObject.GenerateRelativePath(fiCacheInfoFile.Directory.FullName, baseDSPath);
+
+			// This constructor will auto-compute the Sha-1 hash value for the file
+			var fio = new FileInfoObject(fiRemoteFile.FullName, relativeDestinationDirectory, sha1Hash: "");
+			fileCollection.Add(fio);
+
+			return true;
+
+		}
+
 		/// <summary>
 		/// Find all of the files in the path to be archived
 		/// </summary>
@@ -146,25 +190,32 @@ namespace Pacifica.DMS_Metadata
 				totalFileSize += fi.Length;
 			}
 
-			foreach (FileInfo fi in fileList)
+			foreach (FileInfo fiFile in fileList)
 			{
-				runningFileSize += fi.Length;
+				runningFileSize += fiFile.Length;
 
 				if (totalFileSize > 0)
 					fracCompleted = (runningFileSize / (double)totalFileSize);
 
-				ReportProgress(fracCompleted * 100.0, "Hashing files: " + fi.Name);
+				ReportProgress(fracCompleted * 100.0, "Hashing files: " + fiFile.Name);
 
 				// This constructor will auto-compute the Sha-1 hash value for the file
-				var fio = new FileInfoObject(fi.FullName, baseDSPath);
+				var fio = new FileInfoObject(fiFile.FullName, baseDSPath);
 				fileCollection.Add(fio);
+
+				if (fio.FileName.EndsWith("_CacheInfo.txt"))
+				{
+					// This is a cache info file that likely poinst to a .mzXML or .mzML file (possibly gzipped)
+					// Auto-include that file in the .tar to be uploaded
+
+					var success = AddUsingCacheInfoFile(fiFile, fileCollection, baseDSPath);
+				}
 			}
 
 			ReportProgress(100);
 
 			return fileCollection;
 		}
-
 
 		/// <summary>
 		/// Query server for files and hash codes
@@ -267,7 +318,7 @@ namespace Pacifica.DMS_Metadata
 			uploadMetadata = new Upload.udtUploadMetadata();
 			uploadMetadata.Clear();			
 			
-			//translate values from task/mgr params into usable variables
+			// Translate values from task/mgr params into usable variables
 			string perspective = Utilities.GetDictionaryValue(mgrParams, "perspective", "client");
 			string driveLocation;
 
@@ -315,7 +366,8 @@ namespace Pacifica.DMS_Metadata
 
 			// Grab file information from this dataset directory
 			// This process will also compute the Sha-1 hash value for each file
-			return CollectFileInformation(pathToArchive, baseDSPath, recurse);			
+			List<FileInfoObject> lstDatasetFilesToArchive = CollectFileInformation(pathToArchive, baseDSPath, recurse);
+            return lstDatasetFilesToArchive;
 		}
 
 		public static string GetDatasetYearQuarter(Dictionary<string, string> taskParams)
@@ -343,6 +395,7 @@ namespace Pacifica.DMS_Metadata
 		#region "Event Delegates and Classes"
 
 		public event ProgressEventHandler ProgressEvent;
+        public event Pacifica.Core.MessageEventHandler ErrorEvent;
 
 		public delegate void ProgressEventHandler(object sender, ProgressEventArgs e);
 
@@ -356,9 +409,17 @@ namespace Pacifica.DMS_Metadata
 				ProgressEvent(this, e);
 		}
 
+        public void OnError(string callingFunction, string errorMessage)
+        {
+            if (ErrorEvent != null)
+            {
+                ErrorEvent(this, new Pacifica.Core.MessageEventArgs(callingFunction, errorMessage));
+            }
+        }
+
 		void reader_ErrorEvent(object sender, MessageEventArgs e)
 		{
-			Console.WriteLine("Error in MyEMSLReader: " + e.Message);
+            OnError("MyEMSLReader", e.Message);
 		}
 
 		void reader_MessageEvent(object sender, MessageEventArgs e)

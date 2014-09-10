@@ -39,17 +39,17 @@ namespace Pacifica.DMS_Metadata
 
 			string transferFolderPath = Utilities.GetDictionaryValue(m_TaskParams, "TransferFolderPath", "");
 			if (string.IsNullOrEmpty(transferFolderPath))
-				throw new ArgumentNullException("Job parameters do not have TransferFolderPath defined; unable to continue");
+				throw new InvalidDataException("Job parameters do not have TransferFolderPath defined; unable to continue");
 
 			string datasetName = Utilities.GetDictionaryValue(m_TaskParams, "Dataset", "");
 			if (string.IsNullOrEmpty(transferFolderPath))
-				throw new ArgumentNullException("Job parameters do not have Dataset defined; unable to continue");
+				throw new InvalidDataException("Job parameters do not have Dataset defined; unable to continue");
 
 			transferFolderPath = Path.Combine(transferFolderPath, datasetName);
 
 			string jobNumber = Utilities.GetDictionaryValue(m_TaskParams, "Job", "");
 			if (string.IsNullOrEmpty(jobNumber))
-				throw new ArgumentNullException("Job parameters do not have Job defined; unable to continue");
+				throw new InvalidDataException("Job parameters do not have Job defined; unable to continue");
 
 			myEMSLUpload = new Upload(transferFolderPath, jobNumber);
 
@@ -98,6 +98,9 @@ namespace Pacifica.DMS_Metadata
 			// Instantiate the metadata object
 			_mdContainer = new DMSMetadataObject();
 			_mdContainer.ProgressEvent += _mdContainer_ProgressEvent;
+
+            // Attach the events			
+            _mdContainer.ErrorEvent += myEMSLUpload_ErrorEvent;
 
 			// Look for files to upload, compute a Sha-1 hash for each, and compare those hashes to existing files in MyEMSL
             _mdContainer.SetupMetadata(m_TaskParams, m_MgrParams, debugMode);
