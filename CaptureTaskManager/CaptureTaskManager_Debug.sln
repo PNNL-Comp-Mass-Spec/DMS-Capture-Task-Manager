@@ -5,6 +5,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CaptureTaskManager_Debug", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CTM_Shared", "CTM_Shared\CTM_Shared.csproj", "{7D07F054-0D29-45DD-9B22-71D0768BC3C3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DatasetIntegrityPlugin", "..\DatasetIntegrityPlugin\DatasetIntegrityPlugin\DatasetIntegrityPlugin.csproj", "{F876BBF0-1E1C-4780-BE02-945E1FD80E8B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -38,6 +40,18 @@ Global
 		{7D07F054-0D29-45DD-9B22-71D0768BC3C3}.Release|x64.ActiveCfg = Release|x86
 		{7D07F054-0D29-45DD-9B22-71D0768BC3C3}.Release|x86.ActiveCfg = Release|x86
 		{7D07F054-0D29-45DD-9B22-71D0768BC3C3}.Release|x86.Build.0 = Release|x86
+		{F876BBF0-1E1C-4780-BE02-945E1FD80E8B}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{F876BBF0-1E1C-4780-BE02-945E1FD80E8B}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
+		{F876BBF0-1E1C-4780-BE02-945E1FD80E8B}.Debug|Mixed Platforms.Build.0 = Debug|x86
+		{F876BBF0-1E1C-4780-BE02-945E1FD80E8B}.Debug|x64.ActiveCfg = Debug|x86
+		{F876BBF0-1E1C-4780-BE02-945E1FD80E8B}.Debug|x86.ActiveCfg = Debug|x86
+		{F876BBF0-1E1C-4780-BE02-945E1FD80E8B}.Debug|x86.Build.0 = Debug|x86
+		{F876BBF0-1E1C-4780-BE02-945E1FD80E8B}.Release|Any CPU.ActiveCfg = Release|x86
+		{F876BBF0-1E1C-4780-BE02-945E1FD80E8B}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{F876BBF0-1E1C-4780-BE02-945E1FD80E8B}.Release|Mixed Platforms.Build.0 = Release|x86
+		{F876BBF0-1E1C-4780-BE02-945E1FD80E8B}.Release|x64.ActiveCfg = Release|x86
+		{F876BBF0-1E1C-4780-BE02-945E1FD80E8B}.Release|x86.ActiveCfg = Release|x86
+		{F876BBF0-1E1C-4780-BE02-945E1FD80E8B}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

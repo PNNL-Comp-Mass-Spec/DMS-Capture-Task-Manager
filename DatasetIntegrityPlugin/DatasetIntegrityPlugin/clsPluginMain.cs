@@ -1439,16 +1439,15 @@ namespace DatasetIntegrityPlugin
 					// RearIonFunnelPressure = 4.048
 					// QuadrupolePressure = 0.262
 
-					// Multipling the comparison pressure by 1.1 to give a 10% buffer in case the two pressure values are similar
+					// Multiplying the comparison pressure by 1.1 to give a 10% buffer in case the two pressure values are similar
 					bool bPressuresAreInCorrectOrder = (oFrameParams.QuadrupolePressure < oFrameParams.RearIonFunnelPressure * 1.1 &&
 														oFrameParams.RearIonFunnelPressure < oFrameParams.HighPressureFunnelPressure * 1.1);
 
 					if (!bPressuresAreInCorrectOrder)
 					{
-						mRetData.EvalMsg = "Data file " + dataFileNamePath + " has invalid pressure info in the Frame_Parameters table for frame " + oFrameParams.FrameNum;
+						mRetData.EvalMsg = "Invalid pressure info in the Frame_Parameters table for frame " + oFrameParams.FrameNum + "; QuadrupolePressure should be less than the RearIonFunnelPressure and the RearIonFunnelPressure should be less than the HighPressureFunnelPressure";
 
-						string msg = mRetData.EvalMsg + "; QuadrupolePressure should be less than the RearIonFunnelPressure and the RearIonFunnelPressure should be less than the HighPressureFunnelPressure.";
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
 
 						objUimfReader.Dispose();
 						return false;
