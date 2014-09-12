@@ -1119,8 +1119,26 @@ namespace ImsDemuxPlugin
 			}
 			catch (Exception ex)
 			{
-				string msg = "Exception renaming file " + currFileNamePath + ": " + ex.Message;
+				string msg = "Exception renaming file " + currFileNamePath + " to " + Path.GetFileName(newFileNamePath) + ": " + ex.Message;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+
+                // Garbage collect, then try again to rename the file
+                System.Threading.Thread.Sleep(250);
+                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                System.Threading.Thread.Sleep(250);
+
+                try
+                {
+                    var fi = new FileInfo(currFileNamePath);
+                    fi.MoveTo(newFileNamePath);
+                    return true;
+                }
+                catch (Exception ex2)
+                {
+                    msg = "Rename failed despite garbage collection call: " + ex.Message;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                }
+                
 				return false;
 			}
 		}	// End sub

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -57,6 +57,7 @@
     <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=1b44e1d426115821, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\RefLib\log4net.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="MessageLogger, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -143,14 +144,14 @@
   </Target>
   -->
   <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetPath)" "$(ProjectDir)..\..\DeployedFiles"
-copy "$(TargetDir)*.config" "$(ProjectDir)..\..\DeployedFiles"
-copy "$(TargetDir)Apache.NMS.ActiveMQ.dll" "$(ProjectDir)..\..\DeployedFiles"
-copy "$(TargetDir)Apache.NMS.dll" "$(ProjectDir)..\..\DeployedFiles"
-copy "$(TargetDir)log4net.dll" "$(ProjectDir)..\..\DeployedFiles"
-copy "$(TargetDir)MessageLogger.dll" "$(ProjectDir)..\..\DeployedFiles"
-copy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\..\DeployedFiles"
-copy "$(TargetDir)plugin_info.xml" "$(ProjectDir)..\..\DeployedFiles"
+    <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\..\DeployedFiles" /Y
+xcopy "$(TargetDir)*.config" "$(ProjectDir)..\..\DeployedFiles" /D /Y
+xcopy "$(TargetDir)Apache.NMS.ActiveMQ.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y
+xcopy "$(TargetDir)Apache.NMS.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y
+xcopy "$(TargetDir)log4net.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y
+xcopy "$(TargetDir)MessageLogger.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y
+xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y
+xcopy "$(TargetDir)plugin_info.xml" "$(ProjectDir)..\..\DeployedFiles" /D /Y
 </PostBuildEvent>
   </PropertyGroup>
 </Project>

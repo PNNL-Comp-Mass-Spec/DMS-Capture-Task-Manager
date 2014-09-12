@@ -1391,7 +1391,7 @@ namespace DatasetIntegrityPlugin
 
 			
 			// Verify that the pressure columns are in the correct order
-			if (!ValidatePressureInfo(dataFileNamePath))
+			if (!ValidatePressureInfo(dataFileNamePath, instrumentName))
 			{
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
@@ -1406,7 +1406,7 @@ namespace DatasetIntegrityPlugin
 		/// </summary>
 		/// <param name="dataFileNamePath"></param>
 		/// <returns>True if the pressure values are correct; false if the columns have swapped data</returns>
-		protected bool ValidatePressureInfo(string dataFileNamePath)
+		protected bool ValidatePressureInfo(string dataFileNamePath, string instrumentName)
 		{
 
 			// Example of correct pressures:
@@ -1426,6 +1426,14 @@ namespace DatasetIntegrityPlugin
 			foreach (int iFrameNumber in dctMasterFrameList.Keys)
 			{
 				FrameParameters oFrameParams = objUimfReader.GetFrameParameters(iFrameNumber);
+
+				if (instrumentName.ToLower().StartsWith("ims05"))
+				{
+					// As of September 2014, IMS05 does not have a high pressure ion funnel
+					// In order for the logic checks to work, we will override the HighPressureFunnelPressure value listed using RearIonFunnelPressure 
+					if (oFrameParams.HighPressureFunnelPressure < oFrameParams.RearIonFunnelPressure)
+						oFrameParams.HighPressureFunnelPressure = oFrameParams.RearIonFunnelPressure;
+				}
 
 				bool bNPressureColumnsArePresent = (oFrameParams.QuadrupolePressure > 0 &&
 													oFrameParams.RearIonFunnelPressure > 0 &&
@@ -1606,5 +1614,6 @@ namespace DatasetIntegrityPlugin
 		}
 
 		#endregion
+
 	}	// End class
 }	// End namespace
