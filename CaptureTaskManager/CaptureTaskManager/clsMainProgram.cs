@@ -206,7 +206,7 @@ namespace CaptureTaskManager
 				case LoopExitCode.NoTaskFound:
 					// No capture task found
 					msg = "No capture tasks found";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 					m_StatusFile.UpdateStopped(false);
 					restartOK = false;
 					break;
