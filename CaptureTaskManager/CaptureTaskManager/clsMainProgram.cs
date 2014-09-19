@@ -532,7 +532,7 @@ namespace CaptureTaskManager
 
 					// Check whether the computer is likely to install the monthly Windows Updates within the next few hours
 					string pendingWindowsUpdateMessage;
-					if (WindowsUpdatesArePending(DateTime.Now, out pendingWindowsUpdateMessage))
+					if (clsWindowsUpdateStatus.UpdatesArePending(DateTime.Now, out pendingWindowsUpdateMessage))
 					{
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, pendingWindowsUpdateMessage);
 						m_LoopExitCode = LoopExitCode.NoTaskFound;
@@ -1197,67 +1197,6 @@ namespace CaptureTaskManager
 
 			// No problem found
 			return true;
-		}
-
-
-		private bool WindowsUpdatesArePending(DateTime currentTime, out string pendingWindowsUpdateMessage)
-		{
-
-			pendingWindowsUpdateMessage = "No pending update";
-
-			// Determine the second Tuesday in the current month
-			var firstTuesdayInMonth = new DateTime(currentTime.Year, currentTime.Month, 1);
-			while (firstTuesdayInMonth.DayOfWeek != DayOfWeek.Tuesday)
-			{
-				firstTuesdayInMonth = firstTuesdayInMonth.AddDays(1);
-			}
-
-			var secondTuesdayInMonth = firstTuesdayInMonth.AddDays(7);
-
-			// Windows 7 / Windows 8 Pubs install updates around 3 am on the Thursday after the second Tuesday of the month
-			// Do not request a job between 12 am and 6 am on Thursday in the week with the second Tuesday of the month
-			var dtExclusionStart = secondTuesdayInMonth.AddDays(2);
-			var dtExclusionEnd = secondTuesdayInMonth.AddDays(2).AddHours(6);
-
-			if (currentTime >= dtExclusionStart && currentTime < dtExclusionEnd)
-			{
-				var dtPendingUpdateTime = secondTuesdayInMonth.AddDays(2).AddHours(3);
-
-				if (currentTime < dtPendingUpdateTime)
-				{
-					pendingWindowsUpdateMessage = "Processing boxes expected to install Windows Updates around " + dtPendingUpdateTime.ToString("h:mm tt");
-				}
-				else
-				{
-					pendingWindowsUpdateMessage = "Processing boxes should have installed Windows Updates at " + dtPendingUpdateTime.ToString("h:mm tt");
-				}
-
-				return true;
-			}
-
-			// Windows servers install updates around 10 am on the Sunday after the second Tuesday of the month
-			// Do not request a job between 9 am and 11 am on Sunday in the week with the second Tuesday of the month
-			dtExclusionStart = secondTuesdayInMonth.AddDays(5).AddHours(9);
-			dtExclusionEnd = secondTuesdayInMonth.AddDays(5).AddHours(11);
-
-			if (currentTime >= dtExclusionStart && currentTime < dtExclusionEnd)
-			{
-				var dtPendingUpdateTime = secondTuesdayInMonth.AddDays(5).AddHours(10);
-
-				if (currentTime < dtPendingUpdateTime)
-				{
-					pendingWindowsUpdateMessage = "Servers expected to install Windows Updates around " + dtPendingUpdateTime.ToString("h:mm tt");
-				}
-				else
-				{
-					pendingWindowsUpdateMessage = "Servers should have installed Windows Updates at " + dtPendingUpdateTime.ToString("h:mm tt");
-				}
-
-				return true;
-			}
-
-			return false;
-
 		}
 		
 		#endregion
