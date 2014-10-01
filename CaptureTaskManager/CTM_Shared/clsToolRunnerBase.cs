@@ -141,7 +141,7 @@ namespace CaptureTaskManager
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Updating manager settings using Manager Control database");
 
-				bool logConnectionErrors = false;
+				const bool logConnectionErrors = false;
 				if (!m_MgrParams.LoadMgrSettingsFromDB(logConnectionErrors))
 				{
 					// Error retrieving settings from the manager control DB
