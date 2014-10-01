@@ -124,6 +124,12 @@ namespace CaptureToolPlugin
 			{
 				m_UserName = m_MgrParams.GetParam("bionetuser");
 				m_Pwd = m_MgrParams.GetParam("bionetpwd");
+
+                if (!m_UserName.Contains(@"\"))
+			    {
+                     // Prepend this computer's name to the username
+			        m_UserName = Environment.MachineName + @"\" + m_UserName;
+			    }
 			}
 
 			//Sleep interval for "is dataset complete" testing

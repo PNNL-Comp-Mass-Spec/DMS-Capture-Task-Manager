@@ -9,8 +9,6 @@
 //*********************************************************************************************************
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using CaptureTaskManager;
 using System.IO;
 using PRISM.Files;
@@ -47,8 +45,8 @@ namespace SrcFileRenamePlugin
 		/// <summary>
 		/// Constructor
 		/// </summary>
-		/// <param name="MgrParams">Parameters for manager operation</param>
-		/// <param name="UseBioNet">Flag to indicate if source instrument is on Bionet</param>
+        /// <param name="mgrParams">Parameters for manager operation</param>
+        /// <param name="useBioNet">Flag to indicate if source instrument is on Bionet</param>
 		public clsRenameOps(IMgrParams mgrParams, bool useBioNet)
 		{
 			m_MgrParams = mgrParams;
@@ -59,6 +57,12 @@ namespace SrcFileRenamePlugin
 			{
 				m_UserName = m_MgrParams.GetParam("bionetuser");
 				m_Pwd = m_MgrParams.GetParam("bionetpwd");
+
+                if (!m_UserName.Contains(@"\"))
+                {
+                    // Prepend this computer's name to the username
+                    m_UserName = Environment.MachineName + @"\" + m_UserName;
+                }
 			}
 		}
 		#endregion
@@ -75,25 +79,27 @@ namespace SrcFileRenamePlugin
 			string sourceVol = taskParams.GetParam("Source_Vol");
 			string sourcePath = taskParams.GetParam("Source_Path");
 			string pwd = DecodePassword(m_Pwd);
-			string msg;
 
-			msg = "Started clsRenameeOps.DoOperation()";
+		    string msg = "Started clsRenameeOps.DoOperation()";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 			// Set up paths
-			string sourceFolderPath;	// Instrument transfer directory
 
-			// Determine if source dataset exists, and if it is a file or a folder
-			sourceFolderPath = Path.Combine(sourceVol, sourcePath);
+		    // Determine if source dataset exists, and if it is a file or a folder
+			string sourceFolderPath = Path.Combine(sourceVol, sourcePath);
+
 			// Connect to Bionet if necessary
 			if (m_UseBioNet)
 			{
 				msg = "Bionet connection required";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
-				m_ShareConnector = new ShareConnector(m_UserName, pwd);
-				m_ShareConnector.Share = sourceFolderPath;
-				if (m_ShareConnector.Connect())
+				m_ShareConnector = new ShareConnector(m_UserName, pwd)
+				{
+				    Share = sourceFolderPath
+				};
+
+			    if (m_ShareConnector.Connect())
 				{
 					msg = "Connected to Bionet";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
@@ -118,27 +124,32 @@ namespace SrcFileRenamePlugin
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 			}
 
-			System.Collections.Generic.List<string> lstFileNamesToCheck = new List<string>();
+            // Construct list of dataset names to check for
+            // The first thing we check for is the official dataset name
+            // We next check for various things that operators rename the datasets to
+			var lstFileNamesToCheck = new List<string>
+			{
+			    dataset,
+			    dataset + "-bad",
+			    dataset + "-badQC",
+			    dataset + "-plug",
+			    dataset + "-plugsplit",
+			    dataset + "-mixer",
+			    dataset + "-rotor",
+			    dataset + "-slowsplit",
+			    dataset + "-corrupt",
+			    dataset + "-corrupted",
+			    "x_" + dataset,
+			    "x_" + dataset + "-bad"
+			};
 
 			// Construct list of dataset names to check for
 			// The first thing we check for is the official dataset name
 			// We next check for various things that operators rename the datasets to
-			lstFileNamesToCheck.Add(dataset);
-			lstFileNamesToCheck.Add(dataset + "-bad");
-			lstFileNamesToCheck.Add(dataset + "-badQC");
-			lstFileNamesToCheck.Add(dataset + "-plug");
-			lstFileNamesToCheck.Add(dataset + "-plugsplit");
-			lstFileNamesToCheck.Add(dataset + "-mixer");
-			lstFileNamesToCheck.Add(dataset + "-rotor");
-			lstFileNamesToCheck.Add(dataset + "-slowsplit");
-			lstFileNamesToCheck.Add(dataset + "-corrupt");
-			lstFileNamesToCheck.Add(dataset + "-corrupted");
 
-			// Append x_ versions of some of these entries
-			lstFileNamesToCheck.Add("x_" + dataset);
-			lstFileNamesToCheck.Add("x_" + dataset + "-bad");
+		    // Append x_ versions of some of these entries
 
-			// Could use the following to append x_ for all entries:
+		    // Could use the following to append x_ for all entries:
 			//System.Collections.Generic.List<string> lstFileNamesAlreadyRenamed = new List<string>();
 			//foreach (string sDatasetNameBase in lstFileNamesToCheck) 
 			//{
@@ -202,7 +213,9 @@ namespace SrcFileRenamePlugin
 									if (!RenameInstFile(filePath))
 									{
 										// Problem was logged by RenameInstFile
-										if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+										if (m_Connected) 
+                                            DisconnectShare(ref m_ShareConnector, out m_Connected);
+
 										return EnumCloseOutType.CLOSEOUT_FAILED;
 									}
 								}
@@ -216,7 +229,9 @@ namespace SrcFileRenamePlugin
 									if (!RenameInstFolder(folderPath))
 									{
 										// Problem was logged by RenameInstFolder
-										if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+										if (m_Connected) 
+                                            DisconnectShare(ref m_ShareConnector, out m_Connected);
+
 										return EnumCloseOutType.CLOSEOUT_FAILED;
 									}
 								}
@@ -230,7 +245,8 @@ namespace SrcFileRenamePlugin
 			}
 
 			// Close connection, if open
-			if (m_Connected) DisconnectShare(ref m_ShareConnector, ref m_Connected);
+			if (m_Connected) 
+                DisconnectShare(ref m_ShareConnector, out m_Connected);
 
 			if (!(fileFound || folderFound))
 			{
@@ -238,32 +254,30 @@ namespace SrcFileRenamePlugin
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
-			else
-				// Report success and exit
-				return EnumCloseOutType.CLOSEOUT_SUCCESS;
-
+		
+            return EnumCloseOutType.CLOSEOUT_SUCCESS;
 		}	// End sub
 
 		/// <summary>
 		/// Prefixes specified folder name with "x_"
 		/// </summary>
-		/// <param name="DSPath">Full path specifying folder to be renamed</param>
+        /// <param name="instFolderPath">Full path specifying folder to be renamed</param>
 		/// <returns>TRUE for success, FALSE for failure</returns>
-		private bool RenameInstFolder(string InstFolderPath)
+		private bool RenameInstFolder(string instFolderPath)
 		{
 			//Rename dataset folder on instrument
 			try
 			{
-				DirectoryInfo di = new DirectoryInfo(InstFolderPath);
+				var di = new DirectoryInfo(instFolderPath);
 				string n = Path.Combine(di.Parent.FullName, "x_" + di.Name);
 				di.MoveTo(n);
-				m_Msg = "Renamed directory " + InstFolderPath;
+				m_Msg = "Renamed directory " + instFolderPath;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
 				return true;
 			}
 			catch (Exception ex)
 			{
-				m_Msg = "Error renaming directory " + InstFolderPath;
+				m_Msg = "Error renaming directory " + instFolderPath;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg, ex);
 				return false;
 			}
@@ -272,23 +286,23 @@ namespace SrcFileRenamePlugin
 		/// <summary>
 		/// Prefixes specified file name with "x_"
 		/// </summary>
-		/// <param name="DSPath">Full path specifying file to be renamed</param>
+        /// <param name="instFilePath">Full path specifying file to be renamed</param>
 		/// <returns>TRUE for success, FALSE for failure</returns>
-		private bool RenameInstFile(string InstFilePath)
+		private bool RenameInstFile(string instFilePath)
 		{
 			//Rename dataset folder on instrument
 			try
 			{
-				FileInfo fi = new FileInfo(InstFilePath);
+				var fi = new FileInfo(instFilePath);
 				string n = Path.Combine(fi.DirectoryName, "x_" + fi.Name);
 				fi.MoveTo(n);
-				m_Msg = "Renamed file " + InstFilePath;
+				m_Msg = "Renamed file " + instFilePath;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
 				return true;
 			}
 			catch (Exception ex)
 			{
-				m_Msg = "Error renaming file " + InstFilePath;
+				m_Msg = "Error renaming file " + instFilePath;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg, ex);
 				return false;
 			}
@@ -297,7 +311,7 @@ namespace SrcFileRenamePlugin
 		/// <summary>
 		/// Decrypts password received from ini file
 		/// </summary>
-		/// <param name="EnPwd">Encoded password</param>
+        /// <param name="enPwd">Encoded password</param>
 		/// <returns>Clear text password</returns>
 		private string DecodePassword(string enPwd)
 		{
@@ -306,8 +320,8 @@ namespace SrcFileRenamePlugin
 
 			// Convert the password string to a character array
 			char[] pwdChars = enPwd.ToCharArray();
-			byte[] pwdBytes = new byte[pwdChars.Length];
-			char[] pwdCharsAdj = new char[pwdChars.Length];
+			var pwdBytes = new byte[pwdChars.Length];
+			var pwdCharsAdj = new char[pwdChars.Length];
 
 			for (int i = 0; i < pwdChars.Length; i++)
 			{
@@ -331,77 +345,14 @@ namespace SrcFileRenamePlugin
 			}
 			return retStr;
 		}
-
-		/// <summary>
-		/// Determines if raw dataset exists as a file or folder
-		/// </summary>
-		/// <param name="InstFolder">Full path to instrument transfer folder</param>
-		/// <param name="DSName">Dataset name</param>
-		/// <param name="MyName">Return value for full name of file or folder found, if any</param>
-		/// <returns>Enum specifying type of file/folder found, if any</returns>
-		private RawDSTypes GetRawDSType(string InstFolder, string DSName, ref string MyName)
-		{
-			//Determines if raw dataset exists as a single file, folder with same name as dataset, or 
-			//	folder with dataset name + extension. Returns enum specifying what was found and MyName
-			// containing full name of file or folder
-
-			string[] MyInfo = null;
-
-			//Verify instrument transfer folder exists
-			if (!Directory.Exists(InstFolder))
-			{
-				MyName = "";
-				return RawDSTypes.None;
-			}
-
-			//Check for a file with specified name
-			MyInfo = Directory.GetFiles(InstFolder);
-			foreach (string TestFile in MyInfo)
-			{
-				if (Path.GetFileNameWithoutExtension(TestFile).ToLower() == DSName.ToLower())
-				{
-					MyName = Path.GetFileName(TestFile);
-					return RawDSTypes.File;
-				}
-			}
-
-			//Check for a folder with specified name
-			MyInfo = Directory.GetDirectories(InstFolder);
-			foreach (string TestFolder in MyInfo)
-			{
-				//Using Path.GetFileNameWithoutExtension on folders is cheezy, but it works. I did this
-				//	because the Path class methods that deal with directories ignore the possibilty there
-				//	might be an extension. Apparently when sending in a string, Path can't tell a file from
-				//	a directory
-				if (Path.GetFileNameWithoutExtension(TestFolder).ToLower() == DSName.ToLower())
-				{
-					if (string.IsNullOrEmpty(Path.GetExtension(TestFolder)))
-					{
-						//Found a directory that has no extension
-						MyName = Path.GetFileName(TestFolder);
-						return RawDSTypes.FolderNoExt;
-					}
-					else
-					{
-						//Directory name has an extension
-						MyName = Path.GetFileName(TestFolder);
-						return RawDSTypes.FolderExt;
-					}
-				}
-			}
-
-			//If we got to here, then the raw dataset wasn't found, so there was a problem
-			MyName = "";
-
-			return RawDSTypes.None;
-		}
+		
 
 		/// <summary>
 		/// Disconnects a Bionet shared drive
 		/// </summary>
 		/// <param name="MyConn">Connection object for shared drive</param>
 		/// <param name="ConnState">Return value specifying connection has been closed</param>
-		private void DisconnectShare(ref ShareConnector MyConn, ref bool ConnState)
+		private void DisconnectShare(ref ShareConnector MyConn, out bool ConnState)
 		{
 			//Disconnects a shared drive
 			MyConn.Disconnect();
