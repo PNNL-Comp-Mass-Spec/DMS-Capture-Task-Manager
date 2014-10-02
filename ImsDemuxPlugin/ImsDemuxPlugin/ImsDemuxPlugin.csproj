@@ -51,15 +51,8 @@
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AutoCalibrateUIMF">
-      <HintPath>..\..\RefLib\AutoCalibrateUIMF.dll</HintPath>
-    </Reference>
     <Reference Include="CTM_Shared">
       <HintPath>..\..\DeployedFiles\CTM_Shared.dll</HintPath>
-    </Reference>
-    <Reference Include="IMSDemultiplexer, Version=1.0.4454.33279, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\RefLib\IMSDemultiplexer.dll</HintPath>
     </Reference>
     <Reference Include="PRISM, Version=2.2.4987.20444, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -81,7 +74,7 @@
     </Reference>
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="UIMFDemultiplexer, Version=1.1.4195.19667, Culture=neutral, processorArchitecture=x86">
+    <Reference Include="UIMFDemultiplexer, Version=2.0.5290.30638, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\RefLib\UIMFDemultiplexer.dll</HintPath>
     </Reference>

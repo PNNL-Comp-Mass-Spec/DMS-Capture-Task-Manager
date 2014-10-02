@@ -3,21 +3,22 @@
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2011, Battelle Memorial Institute
 // Created 03/07/2011
-//
-// Last modified 03/07/2011
+
 //*********************************************************************************************************
+
 using System;
 using CaptureTaskManager;
 using System.Data.SQLite;
 using System.Data;
+using System.Text.RegularExpressions;
 
 namespace ImsDemuxPlugin
 {
-	public class clsSQLiteTools
+    /// <summary>
+    /// Tools for querying SQLite database (UIMF file, in this case)
+    /// </summary>
+    public class clsSQLiteTools
 	{
-		//*********************************************************************************************************
-		// Tools for querying SQLite database (UIMF file, in this case)
-		//**********************************************************************************************************
 
 		#region "Enums"
 		public enum UimfQueryResults
@@ -33,21 +34,26 @@ namespace ImsDemuxPlugin
 		#endregion
 
 		#region "Methods"
+
 		/// <summary>
-		/// Evaluates UMIF file to determine if it is multiplexed or not
+		/// Evaluates the UMIF file to determine if it is multiplexed or not
 		/// </summary>
-		/// <param name="uimfFileNamePath">Full path to uimf file</param>
+        /// <param name="uimfFilePath">Full path to uimf file</param>
+		/// <param name="numBitsForEncoding">Number of bits used for encoding; 0 if not multiplexed</param>
 		/// <returns>Enum indicating test results</returns>
-		public UimfQueryResults GetUimfMuxStatus(string uimfFileNamePath)
+        public UimfQueryResults GetUimfMuxStatus(string uimfFilePath, out byte numBitsForEncoding)
 		{
-			string connStr = "data source=" + uimfFileNamePath + ";Version=3;Read Only=True;";
+            string connStr = "data source=" + uimfFilePath + ";Version=3;Read Only=True;";
 			const string sqlStr = DEF_QUERY_STRING;
+
+		    numBitsForEncoding = 0;
 
 			// Get a data table containing the multiplexing information for the UIMF file
 			DataTable queryResult = GetDataTable(sqlStr, connStr);
 
 			// If null returned, there was an error
-			if (queryResult == null) return UimfQueryResults.Error;
+			if (queryResult == null) 
+                return UimfQueryResults.Error;
 
 			// If empty table returned, there was an error
 			if (queryResult.Rows.Count < 1)
@@ -57,7 +63,11 @@ namespace ImsDemuxPlugin
 				return UimfQueryResults.Error;
 			}
 
+            var reBitValue = new Regex(@"^(\d)bit", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var imfProfileFieldAlwaysBlank = true;
+
 			// Evaluate results. If any row in table has a file name containing "bit" then de-multiplexing is required
+            // In addition, parse the "bit" value to determine numBitsForEncoding
 			bool deMuxRequired = false;
 			foreach (DataRow currRow in queryResult.Rows)
 			{
@@ -71,27 +81,56 @@ namespace ImsDemuxPlugin
 				var testStr = (string)tmpObj;
 
 				// Empty string means demux not required
-				if (String.IsNullOrEmpty(testStr)) continue;
+				if (String.IsNullOrEmpty(testStr)) 
+                    continue;
 
-				// Get the file name, and check to see if it contains "bit"
-				string fileName = System.IO.Path.GetFileName(testStr).ToLower();
-				if (fileName.Contains("bit"))
+                imfProfileFieldAlwaysBlank = false;
+
+				// Get the file name, and check to see if it starts with 3bit (or 4bit or 5bit etc.)
+                string multiplexFilename = System.IO.Path.GetFileName(testStr).ToLower();
+                var reMatch = reBitValue.Match(multiplexFilename);
+                if (reMatch.Success)
 				{
-					// Filename contains "bit", so de-multiplexing is required
+					// Multiplex Filename contains "bit", so de-multiplexing is required
 					deMuxRequired = true;
-					// No need to check additional rows, if any
+
+				    byte.TryParse(reMatch.Groups[1].Value, out numBitsForEncoding);
+
+					// No need to check additional rows; we assume the same multiplexing is used throughout the dataset
 					break;
 				}
 			}
 
-			// Return results
+		    if (imfProfileFieldAlwaysBlank)
+		    {
+                // Examine the filename to determine if it is a multiplexed dataset
+                // This RegEx will match filenames of this format:
+                //   BSA_65min_0pt5uL_1pt5ms_4bit_0001
+                //   BSA_65min_0pt5uL_1pt5ms_4bit
+
+                reBitValue = new Regex(@"(_(\d)bit_|_(\d)bit$)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+		        var fileName = System.IO.Path.GetFileNameWithoutExtension(uimfFilePath);
+		        if (fileName != null)
+		        {
+		            var reMatch = reBitValue.Match(fileName);
+		            if (reMatch.Success)
+		            {
+		                // Filename contains "bit", so de-multiplexing is required
+		                deMuxRequired = true;
+		                byte.TryParse(reMatch.Groups[2].Value, out numBitsForEncoding);
+		            }
+		        }
+		    }
+
+		    // Return results
 			if (deMuxRequired)
 			{
 				return UimfQueryResults.Multiplexed;
 			}
 
 			return UimfQueryResults.NonMultiplexed;
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Gets a table from a UIMF file
@@ -139,5 +178,5 @@ namespace ImsDemuxPlugin
 
 		}
 		#endregion
-	}	// End class
-}	// End namespace
+	}
+}
