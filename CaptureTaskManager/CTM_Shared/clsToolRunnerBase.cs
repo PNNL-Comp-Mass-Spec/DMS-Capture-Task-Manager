@@ -339,7 +339,7 @@ namespace CaptureTaskManager
             return resCode;
         }	// End sub
 
-        private static void LogError(string errorMessage)
+        protected static void LogError(string errorMessage)
         {
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
         }
