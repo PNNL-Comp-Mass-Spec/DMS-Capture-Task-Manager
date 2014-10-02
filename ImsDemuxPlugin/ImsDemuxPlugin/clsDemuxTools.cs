@@ -468,9 +468,11 @@ namespace ImsDemuxPlugin
 
             }
 
-            // Copy the CalibrationLog.txt file to the storage server (even if calibration failed)
-            CopyCalibrationLogToStorageServer(retData);
-
+            if (!sUimfPath.StartsWith(@"\\"))
+            {
+                // Copy the CalibrationLog.txt file to the storage server (even if calibration failed)
+                CopyCalibrationLogToStorageServer(retData);
+            }
 
             // Update the return data
             if (bCalibrationFailed)
@@ -701,8 +703,8 @@ namespace ImsDemuxPlugin
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
                 
                 // If this is a re-run, then encoded file has already been renamed
-                // This is determined by looking for "encoded" in uimf file name
-                if (!uimfFileName.Contains("encoded"))
+                // This is determined by looking for "_encoded" in uimf file name
+                if (!uimfFileName.Contains("_encoded"))
                 {
                     if (!RenameFile(uimfRemoteEncodedFileNamePath, Path.Combine(mDatasetFolderPathRemote, mDataset + "_encoded.uimf")))
                     {
@@ -962,7 +964,7 @@ namespace ImsDemuxPlugin
                     CalibrateOnly = true
                 };
 
-                bool success = RunUIMFDemultiplexer(inputFilePath, string.Empty, demuxOptions, MAX_CALIBRATION_RUNTIME_MINUTES, out errorMessage);
+                bool success = RunUIMFDemultiplexer(inputFilePath, inputFilePath, demuxOptions, MAX_CALIBRATION_RUNTIME_MINUTES, out errorMessage);
 
                 // Confirm that things have succeeded
                 if (success && mLoggedConsoleOutputErrors.Count == 0)
@@ -1311,9 +1313,6 @@ namespace ImsDemuxPlugin
                     cmdStr += " /O:" + clsConversion.PossiblyQuotePath(fiOutputFile.DirectoryName);
                 }
 
-                // Output file name
-                cmdStr += " /N:" + clsConversion.PossiblyQuotePath(fiOutputFile.Name);
-
                 if (demuxOptions.CalibrateOnly)
                 {
                     // Calibrating
@@ -1323,14 +1322,14 @@ namespace ImsDemuxPlugin
 
                     // Instruct tool to look for calibration table names in other similarly named .UIMF files if not found in the primary .UIMF file
                     cmdStr += " /CX";
-
-                    // We create a log file when calibrating (and no console output file)
-                    cmdStr += " /Log:" + clsConversion.PossiblyQuotePath(Path.Combine(mWorkDir, CALIBRATION_LOG_FILE));
                 }
                 else
                 {
                     // Demultiplexing
                     mCalibrating = false;
+
+                    // Output file name
+                    cmdStr += " /N:" + clsConversion.PossiblyQuotePath(fiOutputFile.Name);
 
                     if (demuxOptions.NumBitsForEncoding > 1)
                         cmdStr += " /Bits:" + demuxOptions.NumBitsForEncoding;
@@ -1381,7 +1380,7 @@ namespace ImsDemuxPlugin
 
                 if (demuxOptions.CalibrateOnly)
                 {
-                    // Creating a log file; no need for a console output file
+                    // Note that file CalibrationLog.txt will be auto-created by UIMFDemultiplexer_Console.exe during the calibration
                     cmdRunner.WriteConsoleOutputToFile = false;
                 }
                 else
