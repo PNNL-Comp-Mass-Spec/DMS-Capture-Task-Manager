@@ -10,10 +10,12 @@ namespace Pacifica.DMS_Metadata
 		public const string RECURSIVE_UPLOAD = "MyEMSL_Recurse";
 		
 		DMSMetadataObject _mdContainer;
-		Upload myEMSLUpload;
+	    readonly Upload myEMSLUpload;
 
 		protected Dictionary<string, string> m_MgrParams;
 		protected Dictionary<string, string> m_TaskParams;
+
+	    protected string mManagerName;
 
         public string ErrorMessage
         {
@@ -36,6 +38,9 @@ namespace Pacifica.DMS_Metadata
 
 			m_MgrParams = mgrParams;
 			m_TaskParams = taskParams;
+
+		    if (!m_MgrParams.TryGetValue("MgrName", out mManagerName))
+                mManagerName = "MyEMSLUploader_" + Environment.MachineName;
 
 			string transferFolderPath = Utilities.GetDictionaryValue(m_TaskParams, "TransferFolderPath", "");
 			if (string.IsNullOrEmpty(transferFolderPath))
@@ -96,7 +101,7 @@ namespace Pacifica.DMS_Metadata
 		{
 
 			// Instantiate the metadata object
-			_mdContainer = new DMSMetadataObject();
+			_mdContainer = new DMSMetadataObject(mManagerName);
 			_mdContainer.ProgressEvent += _mdContainer_ProgressEvent;
 
             // Attach the events			
@@ -110,9 +115,22 @@ namespace Pacifica.DMS_Metadata
 			FileCountNew = _mdContainer.TotalFileCountNew;
 			Bytes = _mdContainer.TotalFileSizeToUpload;
 
-			var success = myEMSLUpload.StartUpload(_mdContainer.MetadataObject, debugMode, out statusURL);			
+            _mdContainer.CreateLockFiles();
+            bool success;
 
-			if (!string.IsNullOrEmpty(statusURL))
+            try
+            {
+                success = myEMSLUpload.StartUpload(_mdContainer.MetadataObject, debugMode, out statusURL);
+            }
+            catch (Exception)
+            {
+                _mdContainer.DeleteLockFiles();
+                throw;
+            }
+
+            _mdContainer.DeleteLockFiles();            
+
+            if (!string.IsNullOrEmpty(statusURL))
 				StatusURI = statusURL + "/xml";
 
             return success;

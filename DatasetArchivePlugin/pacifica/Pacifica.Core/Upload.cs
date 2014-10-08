@@ -467,9 +467,17 @@ namespace Pacifica.Core
 
         #region Member Methods
 
+        /// <summary>
+        /// Create the metadata object with the upload details, including the files ot upload
+        /// </summary>
+        /// <param name="uploadMetadata">Upload metadata</param>
+        /// <param name="lstUnmatchedFiles">Files to upload</param>
+        /// <returns>
+        /// Dictionary where of the information to translate to JSON; 
+        /// Keys are key names; values are either strings or dictionary objects or even a list of dictionary objects 
+        /// </returns>
         public static Dictionary<string, object> CreateMetadataObject(udtUploadMetadata uploadMetadata, List<FileInfoObject> lstUnmatchedFiles)
         {
-            // Keys in this object are key names; values are either strings or dictionary objects or even a list of dictionary objects
             var metadataObject = new Dictionary<string, object>();
             var groupObject = new List<Dictionary<string, string>>();
 
