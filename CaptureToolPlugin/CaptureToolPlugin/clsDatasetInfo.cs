@@ -10,47 +10,54 @@
 
 namespace CaptureToolPlugin
 {
-	class clsDatasetInfo
-	{
-		//*********************************************************************************************************
-		// Class to hold info for a dataset to be captured
-		//**********************************************************************************************************
+    class clsDatasetInfo
+    {
+        //*********************************************************************************************************
+        // Class to hold info for a dataset to be captured
+        //**********************************************************************************************************
 
-		#region "Class variables"
-			string[] m_FileList = null;
-		#endregion
+        #region "Class variables"
+        string[] m_FileList = null;
+        #endregion
 
-		#region "Properties"
-			public clsCaptureOps.RawDSTypes DatasetType { get; set; }
+        #region "Properties"
 
-			public string FileOrFolderName { get; set; }
+        public string DatasetName { get; set; }
 
-			public string[] FileList
-			{
-				get { return m_FileList; }
-				set { m_FileList = value; }
-			}
+        public clsCaptureOps.RawDSTypes DatasetType { get; set; }
 
-			public int FileCount
-			{
-				get
-				{
-					if (m_FileList == null)
-					{
-						return 0;
-					}
-					else return m_FileList.Length;
-				}
-			}
-		#endregion
+        public string FileOrFolderName { get; set; }
 
-		#region "Constructor"
-			public clsDatasetInfo() { } // Default constructor; does nothing
+        public string[] FileList
+        {
+            get { return m_FileList; }
+            set { m_FileList = value; }
+        }
 
-			public clsDatasetInfo(clsCaptureOps.RawDSTypes dsType)
-			{
-				DatasetType = dsType;
-			}
-		#endregion
-	}	// End class
+        public int FileCount
+        {
+            get
+            {
+                if (m_FileList == null)
+                {
+                    return 0;
+                }
+                else return m_FileList.Length;
+            }
+        }
+        #endregion
+
+        #region "Constructor"
+
+        public clsDatasetInfo(string datasetName)
+        {
+            this.DatasetName = datasetName;
+        }
+
+        public clsDatasetInfo(clsCaptureOps.RawDSTypes dsType)
+        {
+            DatasetType = dsType;
+        }
+        #endregion
+    }	// End class
 }	// End namespace
