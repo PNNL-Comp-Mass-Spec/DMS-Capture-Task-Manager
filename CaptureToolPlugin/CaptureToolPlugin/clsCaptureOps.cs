@@ -1482,9 +1482,8 @@ namespace CaptureToolPlugin
 			// Dataset found in a folder with an extension on the folder name
 
 			List<string> filesToSkip = null;
-			int retryCount = 0;
-			bool bDoCapture = true;
-			bool bSuccess = false;
+			
+			bool bSuccess;
 			int iSleepInterval = m_SleepInterval;
 
 			string copySourceDir = Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName);
@@ -1530,61 +1529,37 @@ namespace CaptureToolPlugin
 			}
 
 			// Copy the source folder to the dataset folder
-			while (bDoCapture)
+			try
 			{
+				// Copy the dataset folder
+				// Resume copying files that are already present in the target
 
-				try
+				if (bCopyWithResume)
 				{
-					// Copy the dataset folder
-					// Resume copying files that are already present in the target
-
-					if (bCopyWithResume)
-					{
-						const bool bRecurse = true;
-						bSuccess = CopyFolderWithResume(copySourceDir, copyTargetDir, bRecurse, ref retData, filesToSkip);
-					}
-					else
-					{
-						m_FileTools.CopyDirectory(copySourceDir, copyTargetDir, filesToSkip);
-						bSuccess = true;
-					}
-
-					bDoCapture = false;
-
-					if (bSuccess)
-					{
-						msg = "Copied folder " + copySourceDir + " to " + copyTargetDir + GetConnectionDescription();
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-					}
+					const bool bRecurse = true;
+					bSuccess = CopyFolderWithResume(copySourceDir, copyTargetDir, bRecurse, ref retData, filesToSkip);
 				}
-				catch (Exception ex)
+				else
 				{
-					bDoCapture = false;
-
-                    msg = "Copy exception for dataset " + datasetInfo.DatasetName + GetConnectionDescription();
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
-
-					// If exception was caused by locked file, create skip list and try again
-					if (ex.Message.Contains("The process cannot access the file") && (retryCount < 1))
-					{
-                        if (!FindFilesToSkip(copySourceDir, datasetInfo, "*.mcf_idx-journal", "journal file", ref  retData, out filesToSkip))
-                            return;
-
-						// Try the capture again using a skip list
-						msg = "Retrying capture using skip list";
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-						retryCount++;
-						bDoCapture = true;
-					}
-					else
-					{
-						DisconnectShareIfRequired();
-
-						HandleCopyException(ref retData, ex);
-						return;
-					}
+					m_FileTools.CopyDirectory(copySourceDir, copyTargetDir, filesToSkip);
+					bSuccess = true;
 				}
 
+				if (bSuccess)
+				{
+					msg = "Copied folder " + copySourceDir + " to " + copyTargetDir + GetConnectionDescription();
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+				}
+			}
+			catch (Exception ex)
+			{
+                msg = "Copy exception for dataset " + datasetInfo.DatasetName + GetConnectionDescription();
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
+
+                DisconnectShareIfRequired();
+
+                HandleCopyException(ref retData, ex);
+                return;
 			}
 
 			DisconnectShareIfRequired();
@@ -1592,12 +1567,12 @@ namespace CaptureToolPlugin
 			if (bSuccess)
 			{
                 bSuccess = CaptureLCMethodFile(datasetInfo.DatasetName, datasetFolderPath);
-			}
-
-            if (brukerDotDFolder)
-            {
-                // Look for and delete certain zero-byte files
-                DeleteZeroByteBrukerFiles(copyTargetDir);
+                
+                if (brukerDotDFolder)
+                {
+                    // Look for and delete certain zero-byte files
+                    DeleteZeroByteBrukerFiles(copyTargetDir);
+                }
             }
 
             if (bSuccess)
