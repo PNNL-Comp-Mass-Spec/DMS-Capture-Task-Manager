@@ -157,20 +157,7 @@ namespace CaptureTaskManager
 					// Too many errors
 					msg = "Excessive errors requesting task; closing manager";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-
-					// Note: We previously called DisableManagerLocally() to update CaptureTaskManager.config.exe
-					// We now create a flag file instead
-					// This gives the manager a chance to auto-cleanup things if ManagerErrorCleanupMode is >= 1
-
-					/*
-						if (!m_MgrSettings.WriteConfigSetting("MgrActive_Local", "False"))
-						{
-							msg = "Error while disabling manager: " + m_MgrSettings.ErrMsg;
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-						}
-						m_StatusFile.UpdateDisabled(true);
-					*/
-
+					
 					// Do not create a flag file; intermittent network connectivity is likely resulting in failure to request a task
 					// This will likely clear up eventually
 

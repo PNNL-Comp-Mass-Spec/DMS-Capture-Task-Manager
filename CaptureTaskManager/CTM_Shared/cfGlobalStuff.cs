@@ -51,7 +51,8 @@ namespace CaptureTaskManager
         EVAL_CODE_SUBMITTED_TO_MYEMSL = 4,
         EVAL_CODE_VERIFIED_IN_MYEMSL = 5,
         EVAL_CODE_SKIPPED_MYEMSL_UPLOAD = 6,
-        EVAL_CODE_MYEMSL_IS_ALREADY_UP_TO_DATE = 7
+        EVAL_CODE_MYEMSL_IS_ALREADY_UP_TO_DATE = 7,
+        EVAL_CODE_FAILURE_DO_NOT_RETRY = 8
     }
 
     public enum EnumRequestTaskResult : short

@@ -136,6 +136,7 @@ namespace ArchiveStatusCheckPlugin
 			int exceptionCount = 0;
 			var statusChecker = new MyEMSLStatusCheck();
 
+            statusChecker.ErrorEvent += statusChecker_ErrorEvent;
 			foreach (var statusInfo in dctURIs)
 			{
 				string statusURI = statusInfo.Value;
@@ -143,23 +144,58 @@ namespace ArchiveStatusCheckPlugin
 				try
 				{
 
-					bool accessDenied;
-					string statusMessage;
+                    bool lookupError;
+                    string errorMessage;
 
-					if (statusChecker.IngestStepCompleted(statusURI, MyEMSLStatusCheck.StatusStep.Archived, cookieJar, out accessDenied, out statusMessage))
-					{
-						dctVerifiedURIs.Add(statusInfo.Key, statusInfo.Value);
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, statusMessage + ", job " + m_Job + ", " + dctVerifiedURIs.Values);
-						continue;
-					}
+				    string xmlServerResponse = statusChecker.GetIngestStatus(statusURI, cookieJar, out lookupError, out errorMessage);
 
-					if (accessDenied)
-					{
-						mRetData.CloseoutMsg = statusMessage;
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, statusMessage + ", job " + m_Job);
-						Utilities.Logout(cookieJar);
-						return false;
-					}
+				    if (lookupError)
+				    {
+                        mRetData.CloseoutMsg = errorMessage;
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage + ", job " + m_Job);
+                        Utilities.Logout(cookieJar);
+                        return false;
+				    }
+
+				    if (string.IsNullOrEmpty(xmlServerResponse))
+				    {
+                        mRetData.CloseoutMsg = "Empty XML server response";
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage + ", job " + m_Job);
+                        Utilities.Logout(cookieJar);
+                        return false;
+				    }
+
+                    // Look for any steps in error
+                    if (statusChecker.HasStepError(xmlServerResponse, out errorMessage))
+                    {
+                        mRetData.CloseoutMsg = errorMessage;
+                        mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage + ", job " + m_Job);
+                    }
+
+				    string statusMessage;
+                    bool success = statusChecker.IngestStepCompleted(
+                        xmlServerResponse,
+					    MyEMSLStatusCheck.StatusStep.Archived,
+					    out statusMessage, out errorMessage);
+
+				    if (success)
+				    {
+                        dctVerifiedURIs.Add(statusInfo.Key, statusInfo.Value);
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, statusMessage + ", job " + m_Job + ", " + dctVerifiedURIs.Values);
+                        continue;				
+				    }
+
+                    // Look for critical errors in statusMessage
+                    if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        if (statusChecker.IsCriticalError(errorMessage))
+                        {
+                            mRetData.CloseoutMsg = errorMessage;
+                            mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage + ", job " + m_Job);
+                        }
+                    }
 
 				}
 				catch (Exception ex)
@@ -287,6 +323,11 @@ namespace ArchiveStatusCheckPlugin
 
 			return dctURIs;
 		}
+
+        void statusChecker_ErrorEvent(object sender, MessageEventArgs e)
+        {
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, e.Message);
+        }
 
 		protected bool UpdateVerifiedURIs(Dictionary<int, string> dctVerifiedURIs)
 		{

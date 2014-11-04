@@ -383,7 +383,7 @@ namespace DatasetArchivePlugin
         protected void LogOperationFailed(string dsName)
         {
             string msg = m_ArchiveOrUpdate + "failed, dataset " + dsName;
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
         }	// End sub
 
 #if !DartFTPMissing
