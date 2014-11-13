@@ -302,6 +302,8 @@ namespace Pacifica.Core
 		            statusMessage = "Data is verified";
                     return true;
 		        }
+
+                return false;
 		    }
 
 		    if (status.ToLower() == "unknown")
