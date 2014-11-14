@@ -61,6 +61,12 @@
     <Compile Include="IToolRunner.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\DatasetArchivePlugin\pacifica\Pacifica.Core\Pacifica.Core.csproj">
+      <Project>{46d080da-392c-4f7c-b2f7-683695b1c029}</Project>
+      <Name>Pacifica.Core</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\..\DeployedFiles" /Y

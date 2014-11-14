@@ -10,11 +10,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
+using System.Net;
 using System.Reflection;
-using System.Text;
 using System.Threading;
-using CaptureTaskManager;
+using Pacifica.Core;
 
 namespace CaptureTaskManager
 {
@@ -38,7 +37,7 @@ namespace CaptureTaskManager
 
         protected PRISM.DataBase.clsExecuteDatabaseSP m_ExecuteSP;
 
-        protected System.DateTime m_LastConfigDBUpdate = System.DateTime.UtcNow;
+        protected DateTime m_LastConfigDBUpdate = DateTime.UtcNow;
         protected int m_MinutesBetweenConfigDBUpdates = 10;
         protected bool m_NeedToAbortProcessing = false;
 
@@ -87,8 +86,10 @@ namespace CaptureTaskManager
         public virtual clsToolReturnData RunTool()
         {
             // Does nothing at present, so return success
-            var retData = new clsToolReturnData();
-            retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+            var retData = new clsToolReturnData
+            {
+                CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS
+            };
             return retData;
         }	// End sub
 
@@ -137,9 +138,9 @@ namespace CaptureTaskManager
             if (m_MinutesBetweenConfigDBUpdates < 1)
                 m_MinutesBetweenConfigDBUpdates = 1;
 
-            if (System.DateTime.UtcNow.Subtract(m_LastConfigDBUpdate).TotalMinutes >= m_MinutesBetweenConfigDBUpdates)
+            if (DateTime.UtcNow.Subtract(m_LastConfigDBUpdate).TotalMinutes >= m_MinutesBetweenConfigDBUpdates)
             {
-                m_LastConfigDBUpdate = System.DateTime.UtcNow;
+                m_LastConfigDBUpdate = DateTime.UtcNow;
 
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Updating manager settings using Manager Control database");
 
@@ -147,8 +148,7 @@ namespace CaptureTaskManager
                 if (!m_MgrParams.LoadMgrSettingsFromDB(logConnectionErrors))
                 {
                     // Error retrieving settings from the manager control DB
-                    string msg;
-                    msg = "Error calling m_MgrSettings.LoadMgrSettingsFromDB to update manager settings";
+                    const string msg = "Error calling m_MgrSettings.LoadMgrSettingsFromDB to update manager settings";
 
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
 
@@ -175,22 +175,19 @@ namespace CaptureTaskManager
             {
                 return NewComment;
             }
-            else
+            
+            // Append a semicolon to InpComment, but only if it doesn't already end in a semicolon
+            if (!InpComment.TrimEnd(' ').EndsWith(";"))
             {
-                // Append a semicolon to InpComment, but only if it doesn't already end in a semicolon
-                if (!InpComment.TrimEnd(' ').EndsWith(";"))
-                {
-                    InpComment += "; ";
-                }
-
-                return InpComment + NewComment;
+                InpComment += "; ";
             }
 
+            return InpComment + NewComment;
         }
 
         public static bool CleanWorkDir(string WorkDir)
         {
-            float HoldoffSeconds = 0.1f;
+            const float HoldoffSeconds = 0.1f;
             string strFailureMessage;
 
             return CleanWorkDir(WorkDir, HoldoffSeconds, out strFailureMessage);
@@ -199,9 +196,8 @@ namespace CaptureTaskManager
         public static bool CleanWorkDir(string WorkDir, float HoldoffSeconds, out string strFailureMessage)
         {
 
-            int HoldoffMilliseconds = 0;
+            int HoldoffMilliseconds;
 
-            string strCurrentFile = string.Empty;
             string strCurrentSubfolder = string.Empty;
 
             strFailureMessage = string.Empty;
@@ -221,9 +217,9 @@ namespace CaptureTaskManager
 
             //Try to ensure there are no open objects with file handles
             PRISM.Processes.clsProgRunner.GarbageCollectNow();
-            System.Threading.Thread.Sleep(HoldoffMilliseconds);
+            Thread.Sleep(HoldoffMilliseconds);
 
-            var diWorkFolder = new System.IO.DirectoryInfo(WorkDir);
+            var diWorkFolder = new DirectoryInfo(WorkDir);
 
             // Delete the files
             try
@@ -234,7 +230,7 @@ namespace CaptureTaskManager
                     return false;
                 }
 
-                foreach (System.IO.FileInfo fiFile in diWorkFolder.GetFiles())
+                foreach (FileInfo fiFile in diWorkFolder.GetFiles())
                 {
                     try
                     {
@@ -244,7 +240,7 @@ namespace CaptureTaskManager
                     {
                         // Make sure the readonly bit is not set
                         // The manager will try to delete the file the next time is starts
-                        fiFile.Attributes = fiFile.Attributes & (~System.IO.FileAttributes.ReadOnly);
+                        fiFile.Attributes = fiFile.Attributes & (~FileAttributes.ReadOnly);
                     }
                 }
             }
@@ -258,7 +254,7 @@ namespace CaptureTaskManager
             // Delete the sub directories
             try
             {
-                foreach (System.IO.DirectoryInfo diSubDirectory in diWorkFolder.GetDirectories())
+                foreach (DirectoryInfo diSubDirectory in diWorkFolder.GetDirectories())
                 {
                     diSubDirectory.Delete(true);
                 }
@@ -280,6 +276,7 @@ namespace CaptureTaskManager
             {
                 File.Delete(sFilePath);
             }
+            // ReSharper disable once EmptyGeneralCatchClause
             catch
             {
                 // Ignore errors here
@@ -289,9 +286,9 @@ namespace CaptureTaskManager
         protected int ExecuteSP(System.Data.SqlClient.SqlCommand spCmd, string connStr, int MaxRetryCount)
         {
             int resCode = -9999;
-            string msg = null;
+            string msg;
             int retryCount = MaxRetryCount;
-            int intTimeoutSeconds = 0;
+            int intTimeoutSeconds;
 
             if (retryCount > 1)
                 retryCount = 1;
@@ -317,7 +314,7 @@ namespace CaptureTaskManager
                     }
                     break;
                 }
-                catch (System.Exception ex)
+                catch (Exception ex)
                 {
                     retryCount -= 1;
                     msg = "clsToolRunnerbase.ExecuteSP(), exception calling SP " + spCmd.CommandText + ", " + ex.Message;
@@ -325,7 +322,7 @@ namespace CaptureTaskManager
                     LogError(msg);
                 }
                 //Wait 10 seconds before retrying
-                System.Threading.Thread.Sleep(10000);
+                Thread.Sleep(10000);
             }
 
             if (retryCount < 1)
@@ -338,6 +335,64 @@ namespace CaptureTaskManager
 
             return resCode;
         }	// End sub
+
+        /// <summary>
+        /// Lookup the MyEMSL ingest status for the current job
+        /// </summary>
+        /// <param name="job"></param>
+        /// <param name="statusChecker"></param>
+        /// <param name="statusURI"></param>
+        /// <param name="cookieJar"></param>
+        /// <param name="retData"></param>
+        /// <param name="xmlServerResponse"></param>
+        /// <returns>True if success, false if an error</returns>
+        /// <remarks>This function is used by the ArchiveStatusCheck plugin and the ArchiveVerify plugin </remarks>
+        public bool GetMyEMSLIngestStatus(
+            int job,
+            MyEMSLStatusCheck statusChecker,
+            string statusURI,
+            CookieContainer cookieJar,
+            ref clsToolReturnData retData,
+            out string xmlServerResponse)
+        {
+            bool lookupError;
+            string errorMessage;
+
+            xmlServerResponse = statusChecker.GetIngestStatus(statusURI, cookieJar, out lookupError, out errorMessage);
+
+            if (lookupError)
+            {
+                retData.CloseoutMsg = errorMessage;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage + ", job " + job);
+
+                if (errorMessage.Contains("[Errno 5] Input/output error"))
+                {
+                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    retData.EvalCode = EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY;
+                }
+
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(xmlServerResponse))
+            {
+                retData.CloseoutMsg = "Empty XML server response";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage + ", job " + job);
+                return false;
+            }
+
+            // Look for any steps in error
+            if (statusChecker.HasStepError(xmlServerResponse, out errorMessage))
+            {
+                retData.CloseoutMsg = errorMessage;
+                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                retData.EvalCode = EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage + ", job " + job);
+                return false;
+            }
+
+            return true;
+        }
 
         protected static void LogError(string errorMessage)
         {
@@ -372,7 +427,7 @@ namespace CaptureTaskManager
                 using (var srInFile = new StreamReader(new FileStream(strVersionInfoFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
 
-                    while (srInFile.Peek() > -1)
+                    while (!srInFile.EndOfStream)
                     {
                         var strLineIn = srInFile.ReadLine();
 
@@ -447,16 +502,14 @@ namespace CaptureTaskManager
         /// <remarks></remarks>
         protected bool SaveToolVersionInfoFile(string strFolderPath, string strToolVersionInfo)
         {
-            string strToolVersionFilePath = null;
-
             try
             {
-                strToolVersionFilePath = Path.Combine(strFolderPath, "Tool_Version_Info_" + m_TaskParams.GetParam("StepTool") + ".txt");
+                string strToolVersionFilePath = Path.Combine(strFolderPath, "Tool_Version_Info_" + m_TaskParams.GetParam("StepTool") + ".txt");
 
                 using (var swToolVersionFile = new StreamWriter(new FileStream(strToolVersionFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
                 {
 
-                    swToolVersionFile.WriteLine("Date: " + System.DateTime.Now.ToString(DATE_TIME_FORMAT));
+                    swToolVersionFile.WriteLine("Date: " + DateTime.Now.ToString(DATE_TIME_FORMAT));
                     swToolVersionFile.WriteLine("Dataset: " + m_Dataset);
                     swToolVersionFile.WriteLine("Job: " + m_Job);
                     swToolVersionFile.WriteLine("Step: " + m_TaskParams.GetParam("Step"));
@@ -467,7 +520,6 @@ namespace CaptureTaskManager
                     swToolVersionFile.Close();
 
                 }
-
             }
             catch (Exception ex)
             {
@@ -514,10 +566,9 @@ namespace CaptureTaskManager
         {
 
             string strExeInfo = string.Empty;
-            string strToolVersionInfoCombined = null;
+            string strToolVersionInfoCombined;
 
-            bool Outcome = false;
-            int ResCode = 0;
+            bool Outcome;
 
             if (string.IsNullOrWhiteSpace(m_WorkDir))
             {
@@ -593,15 +644,15 @@ namespace CaptureTaskManager
             string strConnStr = m_MgrParams.GetParam("connectionstring");
 
             //Execute the SP (retry the call up to 4 times)
-            ResCode = this.ExecuteSP(MyCmd, strConnStr, 4);
+            int resCode = ExecuteSP(MyCmd, strConnStr, 4);
 
-            if (ResCode == 0)
+            if (resCode == 0)
             {
                 Outcome = true;
             }
             else
             {
-                string Msg = "Error " + ResCode.ToString() + " storing tool version for current processing step";
+                string Msg = "Error " + resCode + " storing tool version for current processing step";
                 LogError(Msg);
                 Outcome = false;
             }
@@ -632,15 +683,14 @@ namespace CaptureTaskManager
 
                 }
 
-                AssemblyName oAssemblyName = System.Reflection.Assembly.LoadFrom(fiFile.FullName).GetName();
+                AssemblyName oAssemblyName = Assembly.LoadFrom(fiFile.FullName).GetName();
 
-                string strNameAndVersion = null;
-                strNameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version.ToString();
+                string strNameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version;
                 strToolVersionInfo = AppendToComment(strToolVersionInfo, strNameAndVersion);
 
                 return true;
-            }
-            catch (BadImageFormatException ex)
+            }            
+            catch (BadImageFormatException)
             {
                 // Most likely trying to read a 64-bit DLL
                 // Instead try StoreToolVersionInfoOneFile64Bit
@@ -676,7 +726,6 @@ namespace CaptureTaskManager
                 var strAppPath = Path.Combine(clsUtilities.GetAppFolderPath(), "DLLVersionInspector.exe");
 
                 var fiDLLFile = new FileInfo(strDLLFilePath);
-                var strNameAndVersion = Path.GetFileNameWithoutExtension(fiDLLFile.Name) + ", Version=";
 
                 if (!fiDLLFile.Exists)
                 {
@@ -728,7 +777,8 @@ namespace CaptureTaskManager
                     Thread.Sleep(100);
                     File.Delete(strVersionInfoFilePath);
                 }
-                catch (Exception ex)
+                // ReSharper disable once EmptyGeneralCatchClause
+                catch (Exception)
                 {
                     // Ignore errors here
                 }
@@ -739,7 +789,7 @@ namespace CaptureTaskManager
                     return false;
                 }
                     
-                strNameAndVersion = string.Copy(strVersion);
+                string strNameAndVersion = string.Copy(strVersion);
 
                 strToolVersionInfo = AppendToComment(strToolVersionInfo, strNameAndVersion);
 
@@ -764,8 +814,9 @@ namespace CaptureTaskManager
         {
             try
             {
-                m_ExecuteSP.DBErrorEvent += new PRISM.DataBase.clsExecuteDatabaseSP.DBErrorEventEventHandler(m_ExecuteSP_DBErrorEvent);
+                m_ExecuteSP.DBErrorEvent += m_ExecuteSP_DBErrorEvent;
             }
+            // ReSharper disable once EmptyGeneralCatchClause
             catch
             {
                 // Ignore errors here
@@ -781,7 +832,8 @@ namespace CaptureTaskManager
                     m_ExecuteSP.DBErrorEvent -= m_ExecuteSP_DBErrorEvent;
                 }
             }
-            catch
+            // ReSharper disable once EmptyGeneralCatchClause
+            catch (Exception)
             {
                 // Ignore errors here
             }

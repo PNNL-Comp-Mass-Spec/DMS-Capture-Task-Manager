@@ -152,7 +152,7 @@ namespace Pacifica.DMS_Metadata
 
             using (var srCacheInfoFile = new StreamReader(new FileStream(fiCacheInfoFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
             {
-                if (srCacheInfoFile.Peek() > -1)
+                if (!srCacheInfoFile.EndOfStream)
                 {
                     remoteFilePath = srCacheInfoFile.ReadLine();
                 }

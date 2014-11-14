@@ -117,7 +117,7 @@ namespace Pacifica.Core
                         {
                             const int maxLines = 20;
                             int linesRead = 0;
-                            while (sr.Peek() > -1 && linesRead < maxLines)
+                            while (!sr.EndOfStream && linesRead < maxLines)
                             {
                                 responseData += sr.ReadLine() + Environment.NewLine;
                                 linesRead++;

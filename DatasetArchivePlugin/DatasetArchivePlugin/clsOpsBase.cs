@@ -747,7 +747,7 @@ namespace DatasetArchivePlugin
 							System.IO.StreamReader srExtraStageFile;
 							srExtraStageFile = new System.IO.StreamReader(new System.IO.FileStream(sExtraFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
 
-							while (srExtraStageFile.Peek() > -1)
+                            while (!srExtraStageFile.EndOfStream)
 							{
 								sLineIn = srExtraStageFile.ReadLine();
 								if (!string.IsNullOrWhiteSpace(sLineIn))

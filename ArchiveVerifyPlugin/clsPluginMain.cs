@@ -115,14 +115,11 @@ namespace ArchiveVerifyPlugin
 		protected bool CheckUploadStatus()
 		{
 
-			// Examine the upload status (only need to check once)
+			// Examine the upload status
 			// If not complete, then this manager will return completionCode CLOSEOUT_NOT_READY=2 
 			// which will tell the DMS_Capture DB to reset the task to state 2 and bump up the Next_Try value by 30 minutes
-			const int MAX_WAIT_TIME_SECONDS = 20;
 
-			DateTime dtStartTime = DateTime.UtcNow;
-
-			string statusURI = m_TaskParams.GetParam("MyEMSL_Status_URI", "");
+            string statusURI = m_TaskParams.GetParam("MyEMSL_Status_URI", "");
 
 			if (string.IsNullOrEmpty(statusURI))
 			{
@@ -146,81 +143,41 @@ namespace ArchiveVerifyPlugin
 				return false;
 			}
 
-			int exceptionCount = 0;
 			var statusChecker = new MyEMSLStatusCheck();
+            statusChecker.ErrorEvent += statusChecker_ErrorEvent;
 
-			while (DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds < MAX_WAIT_TIME_SECONDS)
+			try
 			{
 
-				try
-				{
+			    string xmlServerResponse;
+                bool ingestSuccess = base.GetMyEMSLIngestStatus(m_Job, statusChecker, statusURI, cookieJar, ref mRetData, out xmlServerResponse);
 
-                    bool lookupError;
-                    string errorMessage;
+			    if (!ingestSuccess)
+			    {
+                    Utilities.Logout(cookieJar);
+                    return false;
+			    }
 
-                    string xmlServerResponse = statusChecker.GetIngestStatus(statusURI, cookieJar, out lookupError, out errorMessage);
+                string statusMessage;
+			    string errorMessage;
+                bool success = statusChecker.IngestStepCompleted(
+                    xmlServerResponse,
+                    MyEMSLStatusCheck.StatusStep.Available,
+                    out statusMessage, 
+                    out errorMessage);
 
-                    if (lookupError)
-                    {
-                        mRetData.CloseoutMsg = errorMessage;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage + ", job " + m_Job);
-                        Utilities.Logout(cookieJar);
-                        return false;
-                    }
-
-                    if (string.IsNullOrEmpty(xmlServerResponse))
-                    {
-                        mRetData.CloseoutMsg = "Empty XML server response";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage + ", job " + m_Job);
-                        Utilities.Logout(cookieJar);
-                        return false;
-                    }
-
-                    // Look for any steps in error
-                    if (statusChecker.HasStepError(xmlServerResponse, out errorMessage))
-                    {
-                        mRetData.CloseoutMsg = errorMessage;
-                        mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                        mRetData.EvalCode = EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage + ", job " + m_Job);
-                        break;
-                    }
-
-                    string statusMessage;
-                    bool success = statusChecker.IngestStepCompleted(
-                        xmlServerResponse,
-                        MyEMSLStatusCheck.StatusStep.Available,
-                        out statusMessage, out errorMessage);
-
-                    if (success)
-                    {
-                        Utilities.Logout(cookieJar);
-                        return true;
-                    }
-
-				    // Not ready; exit the loop
-                    break;
-
-				}
-				catch (Exception ex)
-				{
-					exceptionCount++;
-					if (exceptionCount < 3)
-					{
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception checking upload status: " + ex.Message);
-					}
-					else
-					{
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception checking upload status: ", ex);
-						break;
-					}
-				}
-
-				// Exception occurred; sleep for 5 seconds then try again
-				System.Threading.Thread.Sleep(5000);
+                if (success)
+                {
+                    Utilities.Logout(cookieJar);
+                    return true;
+                }
 
 			}
-
+			catch (Exception ex)
+			{
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception checking upload status: " + ex.Message);
+			}
+		
 			Utilities.Logout(cookieJar);
 
 			return false;
@@ -700,7 +657,7 @@ namespace ArchiveVerifyPlugin
 			// Read the file and cache the results in memory
 			using (var srMD5ResultsFile = new StreamReader(new FileStream(md5ResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
 			{
-				while (srMD5ResultsFile.Peek() > -1)
+				while (!srMD5ResultsFile.EndOfStream)
 				{
 					string dataLine = srMD5ResultsFile.ReadLine();
 					ParseAndStoreHashInfo(dataLine, ref lstMD5Results);
@@ -875,6 +832,7 @@ namespace ArchiveVerifyPlugin
 		#endregion
 
 		#region "Event Handlers"
+
 		void reader_ErrorEvent(object sender, MyEMSLReader.MessageEventArgs e)
 		{
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEMSLReader: " + e.Message);
@@ -899,6 +857,11 @@ namespace ArchiveVerifyPlugin
 				}
 			}
 		}
+
+        void statusChecker_ErrorEvent(object sender, MessageEventArgs e)
+        {
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, e.Message);
+        }
 
 		#endregion
 

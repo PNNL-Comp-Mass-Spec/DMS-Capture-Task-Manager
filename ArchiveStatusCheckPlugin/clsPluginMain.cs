@@ -143,41 +143,26 @@ namespace ArchiveStatusCheckPlugin
 
 				try
 				{
+                    string xmlServerResponse;
+                    bool ingestSuccess = base.GetMyEMSLIngestStatus(m_Job, statusChecker, statusURI, cookieJar, ref mRetData, out xmlServerResponse);
 
-                    bool lookupError;
-                    string errorMessage;
-
-				    string xmlServerResponse = statusChecker.GetIngestStatus(statusURI, cookieJar, out lookupError, out errorMessage);
-
-				    if (lookupError)
-				    {
-                        mRetData.CloseoutMsg = errorMessage;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage + ", job " + m_Job);
-                        Utilities.Logout(cookieJar);
-                        return false;
-				    }
-
-				    if (string.IsNullOrEmpty(xmlServerResponse))
-				    {
-                        mRetData.CloseoutMsg = "Empty XML server response";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage + ", job " + m_Job);
-                        Utilities.Logout(cookieJar);
-                        return false;
-				    }
-
-                    // Look for any steps in error
-                    if (statusChecker.HasStepError(xmlServerResponse, out errorMessage))
+                    if (!ingestSuccess)
                     {
-                        mRetData.CloseoutMsg = errorMessage;
-                        mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage + ", job " + m_Job);
+                        lstUnverifiedURIs.Add(statusInfo.Value);
+
+                        if (mRetData.EvalCode == EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY)
+                            break;
+                        
+                        continue;
                     }
 
-				    string statusMessage;
+                    string statusMessage;
+                    string errorMessage;
                     bool success = statusChecker.IngestStepCompleted(
                         xmlServerResponse,
 					    MyEMSLStatusCheck.StatusStep.Archived,
-					    out statusMessage, out errorMessage);
+					    out statusMessage, 
+                        out errorMessage);
 
 				    if (success)
 				    {
@@ -208,7 +193,7 @@ namespace ArchiveStatusCheckPlugin
 					else
 					{
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception verifying archive status for job " + m_Job + ": ", ex);
-						break;
+                        break;
 					}
 				}
 
@@ -239,7 +224,8 @@ namespace ArchiveStatusCheckPlugin
 			else
 				msg = "MyEMSL archive status partially verified (success count = " + dctVerifiedURIs.Count + ", unverified count = " + lstUnverifiedURIs.Count() + "); first not verified: " + firstUnverified;
 
-			mRetData.CloseoutMsg = msg;
+            if (mRetData.EvalCode != EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY || string.IsNullOrEmpty(mRetData.CloseoutMsg))
+    			mRetData.CloseoutMsg = msg;
 
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 			return false;

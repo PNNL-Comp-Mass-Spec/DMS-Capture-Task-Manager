@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 
 namespace CaptureTaskManager
 {
+
     #region "Enums"
+
     //Status constants
     public enum EnumMgrStatus : short
     {
@@ -65,7 +68,9 @@ namespace CaptureTaskManager
     #endregion
 
     #region "Delegates"
+
     public delegate void StatusMonitorUpdateReceived(string msg);
+
     #endregion
 
     public class clsConversion
@@ -83,32 +88,26 @@ namespace CaptureTaskManager
 
         public static bool CBoolSafe(string Value, bool DefaultValue)
         {
-            bool blnValue = DefaultValue;
-
             if (string.IsNullOrEmpty(Value))
                 return DefaultValue;
-            else
-            {
-                if (bool.TryParse(Value, out blnValue))
-                    return blnValue;
-                else
-                    return DefaultValue;
-            }
+            
+            bool blnValue;
+            if (bool.TryParse(Value, out blnValue))
+                return blnValue;
+            
+            return DefaultValue;
         }
 
         public static int CIntSafe(string Value, int DefaultValue)
         {
-            int intValue = DefaultValue;
-
             if (string.IsNullOrEmpty(Value))
                 return DefaultValue;
-            else
-            {
-                if (int.TryParse(Value, out intValue))
-                    return intValue;
-                else
-                    return DefaultValue;
-            }
+            
+            int intValue;
+            if (int.TryParse(Value, out intValue))
+                return intValue;
+            
+            return DefaultValue;
         }
 
         public static float CSngSafe(string Value, float DefaultValue)
@@ -117,13 +116,11 @@ namespace CaptureTaskManager
 
             if (string.IsNullOrEmpty(Value))
                 return fValue;
-            else
-            {
-                if (float.TryParse(Value, out fValue))
-                    return fValue;
-                else
-                    return fValue;
-            }
+            
+            if (float.TryParse(Value, out fValue))
+                return fValue;
+            
+            return fValue;
         }
 
         public static string PossiblyQuotePath(string strPath)
@@ -133,24 +130,21 @@ namespace CaptureTaskManager
                 return string.Empty;
 
             }
-            else
+            
+            if (strPath.Contains(" "))
             {
-                if (strPath.Contains(" "))
+                if (!strPath.StartsWith("\""))
                 {
-                    if (!strPath.StartsWith("\""))
-                    {
-                        strPath = "\"" + strPath;
-                    }
-
-                    if (!strPath.EndsWith("\""))
-                    {
-                        strPath += "\"";
-                    }
+                    strPath = "\"" + strPath;
                 }
 
-                return strPath;
-
+                if (!strPath.EndsWith("\""))
+                {
+                    strPath += "\"";
+                }
             }
+
+            return strPath;
         }
 
     }
@@ -164,38 +158,33 @@ namespace CaptureTaskManager
         /// <param name="objException"></param>
         /// <returns>String similar to "Stack trace: clsCodeTest.Test-:-clsCodeTest.TestException-:-clsCodeTest.InnerTestException in clsCodeTest.vb:line 86"</returns>
         /// <remarks></remarks>
-        public static string GetExceptionStackTrace(System.Exception objException)
+        public static string GetExceptionStackTrace(Exception objException)
         {
             const string REGEX_FUNCTION_NAME = @"at ([^(]+)\(";
             const string REGEX_FILE_NAME = @"in .+\\(.+)";
 
-            int intIndex = 0;
+            int intIndex;
 
-            List<string> lstFunctions = new List<string>();
+            var lstFunctions = new List<string>();
 
-            string strCurrentFunction = string.Empty;
             string strFinalFile = string.Empty;
 
-            string strLine = string.Empty;
-            string strStackTrace = string.Empty;
-
-            System.Text.RegularExpressions.Regex reFunctionName = new System.Text.RegularExpressions.Regex(REGEX_FUNCTION_NAME, System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-            System.Text.RegularExpressions.Regex reFileName = new System.Text.RegularExpressions.Regex(REGEX_FILE_NAME, System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-            System.Text.RegularExpressions.Match objMatch;
+            var reFunctionName = new Regex(REGEX_FUNCTION_NAME, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var reFileName = new Regex(REGEX_FILE_NAME, RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             // Process each line in objException.StackTrace
             // Populate lstFunctions with the function name of each line
-            using (System.IO.StringReader trTextReader = new System.IO.StringReader(objException.StackTrace))
+            using (var trTextReader = new StringReader(objException.StackTrace))
             {
                 while (trTextReader.Peek() > -1)
                 {
-                    strLine = trTextReader.ReadLine();
+                    string strLine = trTextReader.ReadLine();
 
                     if (!string.IsNullOrEmpty(strLine))
                     {
-                        strCurrentFunction = string.Empty;
+                        string strCurrentFunction = string.Empty;
 
-                        objMatch = reFunctionName.Match(strLine);
+                        Match objMatch = reFunctionName.Match(strLine);
                         if (objMatch.Success && objMatch.Groups.Count > 1)
                         {
                             strCurrentFunction = objMatch.Groups[1].Value;
@@ -207,7 +196,7 @@ namespace CaptureTaskManager
                             if (intIndex == 0)
                             {
                                 // " in" not found; look for the first space after startIndex 4
-                                intIndex = strLine.IndexOf(" ", 4);
+                                intIndex = strLine.IndexOf(' ', 4);
                             }
                             if (intIndex == 0)
                             {
@@ -239,11 +228,10 @@ namespace CaptureTaskManager
 
                     }
                 }
-
             }
 
 
-            strStackTrace = string.Empty;
+            string strStackTrace = string.Empty;
             for (intIndex = lstFunctions.Count - 1; intIndex >= 0; intIndex -= 1)
             {
                 if (strStackTrace.Length == 0)
@@ -286,4 +274,4 @@ namespace CaptureTaskManager
         }
 
     }
-}	// End namespace
+}
