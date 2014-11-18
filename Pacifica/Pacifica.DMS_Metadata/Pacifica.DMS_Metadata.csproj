@@ -53,14 +53,14 @@
   <ItemGroup>
     <Reference Include="Jayrock.Json, Version=0.9.12915.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\RefLib\Jayrock.Json.dll</HintPath>
+      <HintPath>..\..\RefLib\Jayrock.Json.dll</HintPath>
     </Reference>
     <Reference Include="MyEMSLReader, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\RefLib\MyEMSLReader.dll</HintPath>
+      <HintPath>..\..\RefLib\MyEMSLReader.dll</HintPath>
     </Reference>
     <Reference Include="PRISM">
-      <HintPath>..\..\..\RefLib\PRISM.dll</HintPath>
+      <HintPath>..\..\RefLib\PRISM.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

@@ -26,7 +26,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\..\DeployedFiles\</OutputPath>
+    <OutputPath>..\DeployedFiles\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -56,14 +56,14 @@
   <ItemGroup>
     <Reference Include="ICSharpCode.SharpZipLib, Version=0.86.0.518, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\RefLib\ICSharpCode.SharpZipLib.dll</HintPath>
+      <HintPath>..\..\RefLib\ICSharpCode.SharpZipLib.dll</HintPath>
     </Reference>
     <Reference Include="Jayrock.Json, Version=0.9.12915.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\RefLib\Jayrock.Json.dll</HintPath>
+      <HintPath>..\..\RefLib\Jayrock.Json.dll</HintPath>
     </Reference>
     <Reference Include="PRISM">
-      <HintPath>..\..\..\DeployedFiles\PRISM.dll</HintPath>
+      <HintPath>..\..\DeployedFiles\PRISM.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.ServiceModel" />
