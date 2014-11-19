@@ -1,5 +1,9 @@
 Capture Task Manager History
 
+Version 1.2.5436; November 19, 2014
+	- Removed obsolete DartFTP code
+	- Moved Pacifica out of the DatasetArchivePlugin folder
+
 Version 1.2.4756; January 9, 2013
 	- New version of PRISM.dll; requires instantiating PRISM.Files.clsFileTools to use most of the functions
 

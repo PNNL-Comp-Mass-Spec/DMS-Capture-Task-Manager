@@ -39,17 +39,6 @@ namespace DatasetArchivePlugin
         protected string m_WarningMsg = string.Empty;
         protected string m_DSNamePath;
 
-#if !DartFTPMissing
-		[Obsolete("No longer needed since using MyEMSL")]
-		protected string m_ArchiveNamePath;
-#endif
-
-        protected string m_Msg;
-
-#if !DartFTPMissing
-		protected clsFtpOperations m_FtpTools;
-#endif
-
         protected bool m_MyEmslUploadSuccess;
 
         protected string m_User;
@@ -69,9 +58,6 @@ namespace DatasetArchivePlugin
         protected string mMostRecentLogMessage = string.Empty;
         protected DateTime mMostRecentLogTime = DateTime.UtcNow;
 
-#if !DartFTPMissing
-        protected clsMD5StageFileCreator mMD5StageFileCreator;
-#endif
         protected clsFileTools m_FileTools;
 
         #endregion
@@ -155,11 +141,6 @@ namespace DatasetArchivePlugin
         {
             m_DatasetName = m_TaskParams.GetParam("Dataset");
 
-#if !DartFTPMissing
-			string instrumentName = m_TaskParams.GetParam("Instrument_Name");
-			bool onlyUseMyEMSL = OnlyUseMyEMSL(instrumentName);
-#endif
-
             // Set client/server perspective & setup paths
             string baseStoragePath;
             if (m_MgrParams.GetParam("perspective").ToLower() == "client")
@@ -174,28 +155,15 @@ namespace DatasetArchivePlugin
             //Path to dataset on storage server
             m_DSNamePath = Path.Combine(Path.Combine(baseStoragePath, m_TaskParams.GetParam("Storage_Path")), m_TaskParams.GetParam("Folder"));
 
-#if !DartFTPMissing
-			//Path to dataset for FTP operations
-			m_ArchiveNamePath = clsFileTools.CheckTerminator(m_TaskParams.GetParam("Archive_Path"), true, "/") + m_TaskParams.GetParam("Folder");
-#endif
-
             //Verify dataset is in specified location
             if (!VerifyDSPresent(m_DSNamePath))
             {
-                m_Msg = "Dataset folder " + m_DSNamePath + " not found";
-                m_ErrMsg = string.Copy(m_Msg);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
+                var errorMessage = "Dataset folder " + m_DSNamePath + " not found";
+                m_ErrMsg = string.Copy(errorMessage);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
                 LogOperationFailed(m_DatasetName);
                 return false;
             }
-
-#if !DartFTPMissing
-			if (!onlyUseMyEMSL)
-			{
-				// Initialize the MD5 stage file creator
-				InitializeMD5StageFileCreator();
-			}
-#endif
 
             // Got to here, everything's OK, so let let the derived class take over
             return true;
@@ -272,8 +240,8 @@ namespace DatasetArchivePlugin
 
             try
             {
-                m_Msg = "Bundling changes to dataset " + m_DatasetName + " for transmission to MyEMSL";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
+                var statusMessage = "Bundling changes to dataset " + m_DatasetName + " for transmission to MyEMSL";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, statusMessage);
 
                 myEMSLUL = new MyEMSLUploader(m_MgrParams.TaskDictionary, m_TaskParams.TaskDictionary);
 
@@ -293,30 +261,30 @@ namespace DatasetArchivePlugin
 
                 var tsElapsedTime = DateTime.UtcNow.Subtract(dtStartTime);
 
-                m_Msg = "Upload of " + m_DatasetName + " completed in " + tsElapsedTime.TotalSeconds.ToString("0.0") + " seconds";
+                statusMessage = "Upload of " + m_DatasetName + " completed in " + tsElapsedTime.TotalSeconds.ToString("0.0") + " seconds";
                 if (!success)
-                    m_Msg += " (success=false)";
+                    statusMessage += " (success=false)";
 
-                m_Msg += ": " + myEMSLUL.FileCountNew + " new files, " + myEMSLUL.FileCountUpdated + " updated files, " + myEMSLUL.Bytes + " bytes";
-                
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
+                statusMessage += ": " + myEMSLUL.FileCountNew + " new files, " + myEMSLUL.FileCountUpdated + " updated files, " + myEMSLUL.Bytes + " bytes";
+                statusMessage += "; " + myEMSLUL.StatusURI;
+
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, statusMessage);
 
                 if (debugMode != EasyHttp.eDebugMode.DebugDisabled)
                     return false;
 
-                m_Msg = "myEMSL statusURI => " + myEMSLUL.StatusURI;
+                var errorMessage = "myEMSL statusURI => " + myEMSLUL.StatusURI;
 
                 if (statusURL.EndsWith("/1323420608"))
                 {
-                    m_Msg += "; this indicates an upload error (transactionID=-1)";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
+                    errorMessage += "; this indicates an upload error (transactionID=-1)";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
                     return false;
-                }
-                                
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);                
+                }                                            
 
                 // Raise an event with the stats
                 // This will cause clsPluginMain to call StoreMyEMSLUploadStats to store the results in the database (stored procedure StoreMyEMSLUploadStats)
+                // If an error occurs while storing to the database, the status URI will be listed in the manager's local log file
                 var e = new MyEMSLUploadEventArgs(myEMSLUL.FileCountNew, myEMSLUL.FileCountUpdated, myEMSLUL.Bytes, tsElapsedTime.TotalSeconds, statusURL, iErrorCode: 0);
                 OnMyEMSLUploadComplete(e);
 
@@ -325,9 +293,9 @@ namespace DatasetArchivePlugin
             }
             catch (Exception ex)
             {
-                m_Msg = "Exception uploading to MyEMSL";
-                m_ErrMsg = string.Copy(m_Msg);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg, ex);
+                const string errorMessage = "Exception uploading to MyEMSL";
+                m_ErrMsg = string.Copy(errorMessage);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage, ex);
                 LogOperationFailed(m_DatasetName);
 
                 // Raise an event with the stats
@@ -386,92 +354,6 @@ namespace DatasetArchivePlugin
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
         }	// End sub
 
-#if !DartFTPMissing
-		/// <summary>
-		/// Opens the archive server connection
-		/// </summary>
-		/// <param name="archiveOrUpdate">Indicates whether this is an archive or update operation for logging</param>
-		/// <returns>TRUE for success; otherwise FALSE</returns>
-		[Obsolete("No longer needed since using MyEMSL")]
-		protected bool OpenArchiveServer()
-		{
-			try
-			{
-				m_FtpTools = new clsFtpOperations(m_TaskParams.GetParam("Archive_Server"), m_User, m_Pwd,
-																m_UseTls, m_ServerPort);
-
-				// Set the tool parameters
-				m_FtpTools.FtpPassive = m_FtpPassive;
-				m_FtpTools.FtpRestart = m_FtpRestart;
-				m_FtpTools.FtpTimeOut = m_FtpTimeOut;
-				m_FtpTools.UseLogFile = bool.Parse(m_MgrParams.GetParam("ftplogging"));
-
-				// Open the connection (I hope!)
-				if (m_FtpTools.OpenFTPConnection())
-				{
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Archive connection opened");
-					m_ConnectionOpen = true;
-					return true;
-				}
-				else
-				{
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_FtpTools.ErrMsg);
-					m_FtpTools.CloseFTPConnection();
-					if (!string.IsNullOrWhiteSpace(m_FtpTools.ErrMsg))
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_FtpTools.ErrMsg);
-					m_Msg = "Closed FTP connection";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
-					LogOperationFailed(m_DatasetName);
-					m_ConnectionOpen = false;
-					m_ErrMsg = string.Copy("Unable to open the FTP connection");
-					return false;
-				}
-			}
-			catch (Exception ex)
-			{
-				m_Msg = "clsOpsBase.OpenArchiveServer: Exception opening server connection";
-				m_ErrMsg = string.Copy(m_Msg);
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg, ex);
-				LogOperationFailed(m_DatasetName);
-				return false;
-			}
-		}	// End sub
-
-		/// <summary>
-		/// Closes an archive connection
-		/// </summary>
-		/// <param name="archiveOrUpdate"></param>
-		/// <returns></returns>
-		[Obsolete("No longer needed since using MyEMSL")]
-		protected bool CloseArchiveServer()
-		{
-			try
-			{
-				m_FtpTools.CloseFTPConnection();
-				if (m_FtpTools.ErrMsg == string.Empty)
-				{
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Closed FTP connection");
-					m_ConnectionOpen = false;
-					return true;
-				}
-				else
-				{
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_FtpTools.ErrMsg);
-					m_ErrMsg = "Error closing the FTP connection: " + m_FtpTools.ErrMsg;
-					return false;
-				}
-			}
-			catch (Exception ex)
-			{
-				m_Msg = "clsOpsBase.OpenArchiveServer: Exception closing server connection";
-				m_ErrMsg = string.Copy(m_Msg);
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg, ex);
-				LogOperationFailed(m_DatasetName);
-				return false;
-			}
-		}	// End sub
-#endif
-
         /// <summary>
         /// Determine the total size of all files in the specified folder (including subdirectories)
         /// </summary>
@@ -504,293 +386,6 @@ namespace DatasetArchivePlugin
             return folderSizeGB;
 
         }
-
-#if !DartFTPMissing
-		/// <summary>
-		/// General method for copying a folder to the archive
-		/// </summary>
-		/// <param name="sourceFolder">Folder name/path to copy</param>
-		/// <param name="destFolder">Folder name/path on archive</param>
-		/// <returns></returns>
-		[Obsolete("No longer needed since using MyEMSL")]
-		protected bool CopyOneFolderToArchive(string sourceFolderPath, string destFolderPath)
-		{
-			// Verify source folder exists
-			if (!Directory.Exists(sourceFolderPath))
-			{
-				m_Msg = "Source folder " + sourceFolderPath + " not found";
-				m_ErrMsg = string.Copy(m_Msg);
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
-				LogOperationFailed(m_DatasetName);
-				return false;
-			}
-
-			m_Msg = "Copying " + sourceFolderPath + " to " + destFolderPath + " via FTP";
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.DEBUG, m_Msg);
-
-			// Open archive connection
-			if (!OpenArchiveServer()) return false;
-
-			// Copy specified folder to archive
-			try
-			{
-				if (!m_FtpTools.CopyDirectory(sourceFolderPath, destFolderPath, true))
-				{
-					m_Msg = "Error copying folder by ftp: " + m_FtpTools.ErrMsg;
-					m_ErrMsg = string.Copy(m_Msg);
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg + "; " + sourceFolderPath);
-					LogOperationFailed(m_DatasetName);
-					CloseArchiveServer();
-					return false;
-				}
-			}
-			catch (Exception ex)
-			{
-				m_Msg = "Error copying folder by ftp: " + ex.Message;
-				m_ErrMsg = string.Copy(m_Msg);
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg + "; " + sourceFolderPath, ex);
-				LogOperationFailed(m_DatasetName);
-				CloseArchiveServer();
-				return false;
-			}
-
-			m_Msg = "Copied folder " + sourceFolderPath + " to archive";
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
-
-			// Close the archive connection
-			if (!CloseArchiveServer()) return false;
-
-			// Finished successfully
-			return true;
-		}	// End sub
-
-		/// <summary>
-		/// Create a stagemd5 file for all files (and subfolders) in sResultsFolderPathServer
-		/// </summary>
-		/// <param name="sResultsFolderPathServer"></param>
-		/// <param name="sResultsFolderPathArchive"></param>
-		/// <returns></returns>
-		[Obsolete("No longer needed since using MyEMSL")]
-		protected bool CreateMD5StagingFile(string sResultsFolderPathServer, string sResultsFolderPathArchive)
-		{
-			string sLocalParentFolderPathForDataset;
-			string sArchiveStoragePathForDataset;
-
-			System.Collections.Generic.List<string> lstFilePathsToStage;
-			bool bSuccess;
-
-			try
-			{
-				lstFilePathsToStage = new System.Collections.Generic.List<string>();
-
-				// Determine the folder just above sResultsFolderPathServer and just above sResultsFolderPathArchive
-				System.IO.DirectoryInfo diResultsFolderServer = new System.IO.DirectoryInfo(sResultsFolderPathServer);
-				sLocalParentFolderPathForDataset = diResultsFolderServer.Parent.FullName;
-
-				System.IO.DirectoryInfo diResultsFolderArchive = new System.IO.DirectoryInfo(sResultsFolderPathArchive);
-				sArchiveStoragePathForDataset = diResultsFolderArchive.Parent.FullName;
-
-				// Populate lstFilePathsToStage with each file found at sResultsFolderPathServer (including files in subfolders)
-				foreach (System.IO.FileInfo fiFile in diResultsFolderServer.GetFiles("*", SearchOption.AllDirectories))
-				{
-					lstFilePathsToStage.Add(fiFile.FullName);
-				}
-
-				bSuccess = CreateMD5StagingFileWork(lstFilePathsToStage, m_DatasetName, sLocalParentFolderPathForDataset, sArchiveStoragePathForDataset);
-			}
-			catch (Exception ex)
-			{
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception creating MD5 staging file for newly archived files from folder " + sResultsFolderPathServer, ex);
-				return false;
-			}
-
-			return bSuccess;
-		}
-
-		/// <summary>
-		/// Create a stagemd5 file for all files in filesToUpdate
-		/// </summary>
-		/// <param name="sResultsFolderPathServer"></param>
-		/// <param name="sResultsFolderPathArchive"></param>
-		/// <param name="filesToUpdate"></param>
-		/// <returns></returns>
-		[Obsolete("No longer needed since using MyEMSL")]
-		protected bool CreateMD5StagingFile(string sResultsFolderPathServer, string sResultsFolderPathArchive, System.Collections.Generic.List<clsJobData> filesToUpdate)
-		{
-
-			string sLocalParentFolderPathForDataset;
-			string sArchiveStoragePathForDataset;
-
-			System.Collections.Generic.List<string> lstFilePathsToStage;
-			bool bSuccess;
-
-			try
-			{
-				lstFilePathsToStage = new System.Collections.Generic.List<string>();
-
-				// Determine the folder just above sResultsFolderPathServer and just above sResultsFolderPathArchive
-				System.IO.DirectoryInfo diResultsFolderServer = new System.IO.DirectoryInfo(sResultsFolderPathServer);
-				sLocalParentFolderPathForDataset = diResultsFolderServer.Parent.FullName;
-
-				System.IO.DirectoryInfo diResultsFolderArchive = new System.IO.DirectoryInfo(sResultsFolderPathArchive);
-				sArchiveStoragePathForDataset = diResultsFolderArchive.Parent.FullName;
-
-				// Populate lstFilePathsToStage with each file in filesToUpdate
-				foreach (clsJobData objFileInfo in filesToUpdate)
-				{
-					if (objFileInfo.CopySuccess)
-						lstFilePathsToStage.Add(objFileInfo.SvrFileToUpdate);
-				}
-
-				bSuccess = CreateMD5StagingFileWork(lstFilePathsToStage, m_DatasetName, sLocalParentFolderPathForDataset, sArchiveStoragePathForDataset);
-			}
-			catch (Exception ex)
-			{
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception creating MD5 staging file for newly archived files defined in List filesToUpdate", ex);
-				return false;
-			}
-
-			return bSuccess;
-		}
-
-		[Obsolete("No longer needed since using MyEMSL")]
-		private bool CreateMD5StagingFileWork(System.Collections.Generic.List<string> lstFilePathsToStage, string sDatasetName, string sLocalParentFolderPathForDataset, string sArchiveStoragePathForDataset)
-		{
-			const string EXTRA_FILES_REGEX = clsMD5StageFileCreator.EXTRA_FILES_SUFFIX + @"(\d+)$";
-
-			System.Text.RegularExpressions.Regex reExtraFiles;
-			System.Text.RegularExpressions.Match reMatch;
-
-			System.Collections.Generic.List<string> lstExtraStagingFiles = new System.Collections.Generic.List<string>();
-
-			string sDatasetAndSuffix;
-			int iExtraFileNumber = 1;
-			bool bSuccess;
-
-			// Convert sArchiveStoragePathForDataset from the form \\a2.emsl.pnl.gov\dmsarch\LTQ_ORB_2_2\
-			// to the form /archive/dmsarch/LTQ_ORB_2_2/
-
-			string sArchiveStoragePathForDatasetUnix = string.Empty;
-			bSuccess = clsMD5StageFileCreator.ConvertArchiveSharePathToArchiveStoragePath(sArchiveStoragePathForDataset, false, ref sArchiveStoragePathForDatasetUnix);
-
-			if (!bSuccess)
-			{
-				string msg = "Error converting the archive folder path (" + sArchiveStoragePathForDataset + ") to the archive storage path (something like /archive/dmsarch/LTQ_ORB_3_1/)";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-				return false;
-			}
-
-			// Look for existing stagemd5 or result files for dataset sDatasetName
-			System.Collections.Generic.List<string> lstSearchFileSpec = new System.Collections.Generic.List<string>();
-
-			sDatasetAndSuffix = sDatasetName + clsMD5StageFileCreator.EXTRA_FILES_SUFFIX;
-
-			lstSearchFileSpec.Add(clsMD5StageFileCreator.STAGE_FILE_PREFIX + sDatasetAndSuffix + "*");
-			lstSearchFileSpec.Add(clsMD5StageFileCreator.STAGE_FILE_INPROGRESS_PREFIX + sDatasetAndSuffix + "*");
-			lstSearchFileSpec.Add(clsMD5StageFileCreator.MD5_RESULTS_FILE_PREFIX + sDatasetAndSuffix + "*");
-			lstSearchFileSpec.Add(clsMD5StageFileCreator.MD5_RESULTS_INPROGRESS_FILE_PREFIX + sDatasetAndSuffix + "*");
-
-			System.IO.DirectoryInfo diStagingFolder;
-			diStagingFolder = new System.IO.DirectoryInfo(mMD5StageFileCreator.StagingFolderPath);
-
-			reExtraFiles = new System.Text.RegularExpressions.Regex(EXTRA_FILES_REGEX, System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-
-			// Check for each file in lstSearchFileSpec
-			foreach (string sFileSpec in lstSearchFileSpec)
-			{
-				foreach (System.IO.FileInfo fiFile in diStagingFolder.GetFiles(sFileSpec))
-				{
-					// Examine each file to parse out the number after EXTRA_FILES_SUFFIX
-					// For example, if the filename is results.DatasetName__ExtraFiles001 then we want to parse out "001" and convert that to an integer
-					reMatch = reExtraFiles.Match(fiFile.Name);
-					if (reMatch.Success)
-					{
-						int iStageFileNum;
-
-						if (int.TryParse(reMatch.Groups[1].Value, out iStageFileNum))
-						{
-							// Number parsed out
-							// Adjust iExtraFileNumberNew if necessary
-							if (iStageFileNum >= iExtraFileNumber)
-								iExtraFileNumber = iStageFileNum + 1;
-
-							lstExtraStagingFiles.Add(fiFile.FullName);
-
-						}
-					}
-				}
-			} // foreach (sFileSpec in lstSearchFileSpec)
-
-			// Create the new stagemd5 file
-			// Copy iExtraFileNumber to iExtraFileNumberNew in case the ExtraFile suffix value gets incremented by mMD5StageFileCreator.WriteStagingFile
-			// If the number does get auto-incremented, then we won't append the contents of lstExtraStagingFiles to the newly created staging file
-			int iExtraFileNumberNew = iExtraFileNumber;
-			bSuccess = mMD5StageFileCreator.WriteStagingFile(ref lstFilePathsToStage, sDatasetName, sLocalParentFolderPathForDataset, sArchiveStoragePathForDatasetUnix, ref iExtraFileNumberNew);
-
-			if (bSuccess && lstExtraStagingFiles.Count > 0 && iExtraFileNumberNew == iExtraFileNumber)
-			{
-				try
-				{
-					// Append the contents of each file in lstExtraStagingFiles to the newly created staging file
-
-					// Open the newly created staging file for Append
-					System.IO.StreamWriter swStageFile;
-					string sLineIn;
-					swStageFile = new System.IO.StreamWriter(new System.IO.FileStream(mMD5StageFileCreator.StagingFilePath, FileMode.Append, FileAccess.Write, FileShare.Read));
-
-					// Append the contents of each file in lstExtraStagingFiles
-					foreach (string sExtraFilePath in lstExtraStagingFiles)
-					{
-
-						try
-						{
-							System.IO.StreamReader srExtraStageFile;
-							srExtraStageFile = new System.IO.StreamReader(new System.IO.FileStream(sExtraFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
-
-                            while (!srExtraStageFile.EndOfStream)
-							{
-								sLineIn = srExtraStageFile.ReadLine();
-								if (!string.IsNullOrWhiteSpace(sLineIn))
-									swStageFile.WriteLine(sLineIn);
-							}
-
-							srExtraStageFile.Close();
-						}
-						catch (Exception ex)
-						{
-							// Log the error, but continue trying to merge files
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error appending extra staging file " + sExtraFilePath + "to " + mMD5StageFileCreator.StagingFilePath, ex);
-						}
-					}
-
-					swStageFile.Close();
-
-					// Delete each file in lstExtraStagingFiles
-					foreach (string sExtraFilePath in lstExtraStagingFiles)
-					{
-						try
-						{
-							System.IO.File.Delete(sExtraFilePath);
-						}
-						catch
-						{
-							// Ignore errors deleting the extra staging files
-						}
-
-					}
-				}
-				catch (Exception ex)
-				{
-					// Log the error, but leave bSuccess as True
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error appending extra staging files to " + mMD5StageFileCreator.StagingFilePath, ex);
-				}
-
-			}
-
-			return bSuccess;
-
-		}
-#endif
 
         #endregion
 
@@ -866,45 +461,6 @@ namespace DatasetArchivePlugin
             if (MyEMSLUploadComplete != null)
                 MyEMSLUploadComplete(this, e);
         }
-        #endregion
-
-        #region "MD5StageFileCreator initialization and event handlers"
-
-#if !DartFTPMissing
-		[Obsolete("No longer needed since using MyEMSL")]
-		private void InitializeMD5StageFileCreator()
-		{
-			string sArchiveStagingFolderPath;
-			sArchiveStagingFolderPath = m_MgrParams.GetParam("HashFileLocation");
-
-			if (string.IsNullOrWhiteSpace(sArchiveStagingFolderPath))
-			{
-				sArchiveStagingFolderPath = MD5StageFileCreator.clsMD5StageFileCreator.DEFAULT_STAGING_FOLDER_PATH;
-				string msg = "Manager parameter HashFileLocation is not defined; will use default path of '" + sArchiveStagingFolderPath + "'";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
-			}
-
-			mMD5StageFileCreator = new MD5StageFileCreator.clsMD5StageFileCreator(sArchiveStagingFolderPath);
-
-			// Attach the events
-			mMD5StageFileCreator.OnErrorEvent += new MD5StageFileCreator.clsMD5StageFileCreator.OnErrorEventEventHandler(MD5ErrorEventHandler);
-			mMD5StageFileCreator.OnMessageEvent += new MD5StageFileCreator.clsMD5StageFileCreator.OnMessageEventEventHandler(MD5MessageEventHandler);
-		}
-
-		[Obsolete("No longer needed since using MyEMSL")]
-		private void MD5ErrorEventHandler(string sErrorMessage)
-		{
-			string msg = "MD5StageFileCreator Error: " + sErrorMessage;
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-		}
-
-		[Obsolete("No longer needed since using MyEMSL")]
-		private void MD5MessageEventHandler(string sMessage)
-		{
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, sMessage);
-		}
-#endif
-
         #endregion
 
     }	// End class

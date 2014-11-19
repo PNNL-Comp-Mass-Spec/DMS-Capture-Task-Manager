@@ -69,13 +69,6 @@ namespace DatasetArchivePlugin
 				return retData;
 			}
 
-#if !DartFTPMissing
-			string instrumentName = m_TaskParams.GetParam("Instrument_Name");
-			onlyUseMyEMSL = clsOpsBase.OnlyUseMyEMSL(instrumentName);
-
-			if (onlyUseMyEMSL)
-			{
-#endif
 			// Always use clsArchiveUpdate for both archiving new datasets and updating existing datasets
 			archOpTool = new clsArchiveUpdate(m_MgrParams, m_TaskParams, m_StatusTools);
 
@@ -87,26 +80,6 @@ namespace DatasetArchivePlugin
 			{
 				archiveOpDescription = "archive update";
 			}
-
-#if !DartFTPMissing
-			}
-			else
-			{
-				// Select appropriate operation tool based on StepTool specification
-				if (m_TaskParams.GetParam("StepTool").ToLower() == "datasetarchive")
-				{
-					// This is an archive operation
-					archOpTool = new clsArchiveDataset(m_MgrParams, m_TaskParams, m_StatusTools);
-					archiveOpDescription = "archive";
-				}
-				else
-				{
-					// This is an archive update operation
-					archOpTool = new clsArchiveUpdate(m_MgrParams, m_TaskParams, m_StatusTools);
-					archiveOpDescription = "archive update";
-				}
-			}
-#endif
 
 			// Attach the MyEMSL Upload event handler
 			archOpTool.MyEMSLUploadComplete += MyEMSLUploadCompleteHandler;
