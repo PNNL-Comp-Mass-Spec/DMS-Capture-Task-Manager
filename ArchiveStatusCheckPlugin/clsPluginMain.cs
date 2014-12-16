@@ -61,9 +61,9 @@ namespace ArchiveStatusCheckPlugin
 			}
 			catch (Exception ex)
 			{
-				msg = "Exception checking archive status";
 				mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-				mRetData.CloseoutMsg = msg + ": " + ex.Message;
+				mRetData.CloseoutMsg = "Exception checking archive status: " + ex.Message;
+				msg = "Exception checking archive status for job " + m_Job;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
 			}
 			
@@ -127,8 +127,8 @@ namespace ArchiveStatusCheckPlugin
 			CookieContainer cookieJar;
 			if (!auth.GetAuthCookies(out cookieJar))
 			{
-				msg = "Auto-login to " + Configuration.TestAuthUri + " failed authentication";
 				mRetData.CloseoutMsg = "Failed to obtain MyEMSL session cookie";
+				msg = "Auto-login to " + Configuration.TestAuthUri + " failed authentication for job " + m_Job;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 				return false;
 			}
@@ -167,7 +167,7 @@ namespace ArchiveStatusCheckPlugin
 				    if (success)
 				    {
                         dctVerifiedURIs.Add(statusInfo.Key, statusInfo.Value);
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, statusMessage + ", job " + m_Job + ", " + dctVerifiedURIs.Values);
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Successful MyEMSL upload for job " + m_Job + ", status ID " + statusInfo + ": " + statusInfo.Value);
                         continue;				
 				    }
 
@@ -178,7 +178,7 @@ namespace ArchiveStatusCheckPlugin
                         {
                             mRetData.CloseoutMsg = errorMessage;
                             mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage + ", job " + m_Job);
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Critical MyEMSL upload error for job " + m_Job + ": " + errorMessage);
                         }
                     }
 
@@ -277,14 +277,26 @@ namespace ArchiveStatusCheckPlugin
 
 							while (reader.Read())
 							{
-								int statusNum = reader.GetInt32(0);						
+								int statusNum = reader.GetInt32(0);
 
-								if (!Convert.IsDBNull(reader.GetValue(1)))
-								{
-									var value = (string)reader.GetValue(1);
-									if (!string.IsNullOrEmpty(value))
-										dctURIs.Add(statusNum, value);
-								}								
+							    if (Convert.IsDBNull(reader.GetValue(1)))
+							    {
+							        continue;
+							    }
+
+							    var value = (string)reader.GetValue(1);
+							    if (string.IsNullOrEmpty(value))
+							    {
+							        continue;
+							    }
+
+							    if (dctURIs.ContainsKey(statusNum))
+							    {
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Job " + m_Job + " has more than one upload task with StatusID " + statusNum);
+							        continue;
+							    }
+
+                                dctURIs.Add(statusNum, value);
 							}
 						}
 						break;
@@ -292,7 +304,7 @@ namespace ArchiveStatusCheckPlugin
 					catch (Exception ex)
 					{
 						retryCount -= 1;
-						string msg = "ArchiveStatusCheckPlugin, GetStatusURIs; Exception querying database: " + ex.Message + "; ConnectionString: " + connectionString;
+						string msg = "ArchiveStatusCheckPlugin, GetStatusURIs; Exception querying database for job " + m_Job + ": " + ex.Message + "; ConnectionString: " + connectionString;
 						msg += ", RetryCount = " + retryCount;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 
@@ -303,7 +315,7 @@ namespace ArchiveStatusCheckPlugin
 			}
 			catch (Exception ex)
 			{
-				string msg = "Exception connecting to database: " + ex.Message + "; ConnectionString: " + connectionString;
+				string msg = "Exception connecting to database for job " + m_Job + ": " + ex.Message + "; ConnectionString: " + connectionString;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 			}
 
@@ -312,7 +324,7 @@ namespace ArchiveStatusCheckPlugin
 
         void statusChecker_ErrorEvent(object sender, MessageEventArgs e)
         {
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, e.Message);
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Status checker error for job " + m_Job + ": " + e.Message);
         }
 
 		protected bool UpdateVerifiedURIs(Dictionary<int, string> dctVerifiedURIs)
@@ -348,13 +360,13 @@ namespace ArchiveStatusCheckPlugin
 				if (resCode == 0)
 					return true;
 				
-				var msg = "Error " + resCode + " calling stored procedure " + SP_NAME;
+				var msg = "Error " + resCode + " calling stored procedure " + SP_NAME + ", job " + m_Job;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 				return false;
 			}
 			catch (Exception ex)
 			{
-				const string msg = "Exceptiong calling stored procedure " + SP_NAME;
+                var msg = "Exception calling stored procedure " + SP_NAME + ", job " + m_Job;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
 				return false;
 			}

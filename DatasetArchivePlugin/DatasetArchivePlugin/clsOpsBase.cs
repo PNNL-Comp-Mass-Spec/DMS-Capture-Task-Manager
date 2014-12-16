@@ -266,21 +266,24 @@ namespace DatasetArchivePlugin
                     statusMessage += " (success=false)";
 
                 statusMessage += ": " + myEMSLUL.FileCountNew + " new files, " + myEMSLUL.FileCountUpdated + " updated files, " + myEMSLUL.Bytes + " bytes";
-                statusMessage += "; " + myEMSLUL.StatusURI;
 
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, statusMessage);
 
                 if (debugMode != EasyHttp.eDebugMode.DebugDisabled)
                     return false;
 
-                var errorMessage = "myEMSL statusURI => " + myEMSLUL.StatusURI;
+                statusMessage = "myEMSL statusURI => " + myEMSLUL.StatusURI;
 
                 if (statusURL.EndsWith("/1323420608"))
                 {
-                    errorMessage += "; this indicates an upload error (transactionID=-1)";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
+                    statusMessage += "; this indicates an upload error (transactionID=-1)";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, statusMessage);
                     return false;
-                }                                            
+                }
+                else
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, statusMessage);
+                }
 
                 // Raise an event with the stats
                 // This will cause clsPluginMain to call StoreMyEMSLUploadStats to store the results in the database (stored procedure StoreMyEMSLUploadStats)
