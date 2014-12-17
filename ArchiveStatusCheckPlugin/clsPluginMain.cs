@@ -103,12 +103,24 @@ namespace ArchiveStatusCheckPlugin
 			// Examine the upload status for any uploads for this dataset, filtering on job number to ignore jobs created after this job
 			
 			// First obtain a list of status URIs to check
-			// Keys are StatusNum integers, values are StatusURI strings
-			const int retryCount = 2;
-			var dctURIs = GetStatusURIs(retryCount);
 
-			var dctVerifiedURIs = new Dictionary<int, string>();
-			var lstUnverifiedURIs = new List<string>();
+			const int retryCount = 2;
+
+            // Keys in dctStatusSubfolders are StatusNum integers, values are the subfolder that was uploaded (blank means the entire dataset)
+            Dictionary<int, string> dctStatusSubfolders;
+
+            // Keys in dctURIs are StatusNum integers, values are StatusURI strings
+            var dctURIs = GetStatusURIs(retryCount, out dctStatusSubfolders);
+
+            // Keys in this dictionary are StatusNum; values are StatusURI strings
+			Dictionary<int, string> dctVerifiedURIs;
+
+            // Keys in this dictionary are StatusNum; values are critical error messages
+            Dictionary<int, string> dctCriticalErrors;
+
+            // Keys in this dictionary are StatusNum; values are StatusURI strings
+            Dictionary<int, string> dctUnverifiedURIs;
+		    
 			string msg;
 
 			if (dctURIs.Count == 0)
@@ -133,74 +145,12 @@ namespace ArchiveStatusCheckPlugin
 				return false;
 			}
 
-			int exceptionCount = 0;
 			var statusChecker = new MyEMSLStatusCheck();
 
             statusChecker.ErrorEvent += statusChecker_ErrorEvent;
-			foreach (var statusInfo in dctURIs)
-			{
-				string statusURI = statusInfo.Value;
 
-				try
-				{
-                    string xmlServerResponse;
-                    bool ingestSuccess = base.GetMyEMSLIngestStatus(m_Job, statusChecker, statusURI, cookieJar, ref mRetData, out xmlServerResponse);
-
-                    if (!ingestSuccess)
-                    {
-                        lstUnverifiedURIs.Add(statusInfo.Value);
-
-                        if (mRetData.EvalCode == EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY)
-                            break;
-                        
-                        continue;
-                    }
-
-                    string statusMessage;
-                    string errorMessage;
-                    bool success = statusChecker.IngestStepCompleted(
-                        xmlServerResponse,
-					    MyEMSLStatusCheck.StatusStep.Archived,
-					    out statusMessage, 
-                        out errorMessage);
-
-				    if (success)
-				    {
-                        dctVerifiedURIs.Add(statusInfo.Key, statusInfo.Value);
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Successful MyEMSL upload for job " + m_Job + ", status ID " + statusInfo + ": " + statusInfo.Value);
-                        continue;				
-				    }
-
-                    // Look for critical errors in statusMessage
-                    if (!string.IsNullOrEmpty(errorMessage))
-                    {
-                        if (statusChecker.IsCriticalError(errorMessage))
-                        {
-                            mRetData.CloseoutMsg = errorMessage;
-                            mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Critical MyEMSL upload error for job " + m_Job + ": " + errorMessage);
-                        }
-                    }
-
-				}
-				catch (Exception ex)
-				{
-					exceptionCount++;
-					if (exceptionCount < 3)
-					{
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception verifying archive status for job " + m_Job + ": " + ex.Message);
-					}
-					else
-					{
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception verifying archive status for job " + m_Job + ": ", ex);
-                        break;
-					}
-				}
-
-				lstUnverifiedURIs.Add(statusInfo.Value);
-				exceptionCount = 0;
-
-			}
+            // Check the status of each of the URIs
+		    CheckStatusURIs(statusChecker, cookieJar, dctURIs, out dctUnverifiedURIs, out dctVerifiedURIs, out dctCriticalErrors);
 
 			Utilities.Logout(cookieJar);
 
@@ -210,19 +160,48 @@ namespace ArchiveStatusCheckPlugin
 				UpdateVerifiedURIs(dctVerifiedURIs);
 			}
 
-			if (dctVerifiedURIs.Count == dctURIs.Count)
-				return true;
-			
-			string firstUnverified = "??";
-			if (lstUnverifiedURIs.Count > 0)
-				firstUnverified = lstUnverifiedURIs.First();
+		    if (dctCriticalErrors.Count > 0)
+		    {
+                mRetData.CloseoutMsg = dctCriticalErrors.First().Value;
+                mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+
+		        foreach (var criticalError in dctCriticalErrors)
+		        {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Critical MyEMSL upload error for job " + m_Job + ", status num " + criticalError.Key + ": " + criticalError.Value);
+		        }		        
+            }
+
+            if (dctUnverifiedURIs.Count > 0 && dctVerifiedURIs.Count > 0)
+            {
+                CompareUnverifiedAndVerifiedURIs(
+                    dctUnverifiedURIs,
+                    dctVerifiedURIs,
+                    dctStatusSubfolders,
+                    dctURIs);
+            }
+
+
+		    if (dctVerifiedURIs.Count == dctURIs.Count)
+		    {
+		        if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
+		        {
+                    mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+                    mRetData.CloseoutMsg = string.Empty;
+		        }
+		        
+		        return true;
+		    }
+
+		    string firstUnverified = "??";
+			if (dctUnverifiedURIs.Count > 0)
+				firstUnverified = dctUnverifiedURIs.First().Value;
 
 			if (dctVerifiedURIs.Count == 0)
 			{
 				msg = "MyEMSL archive status not yet verified; see " + firstUnverified;
 			}
 			else
-				msg = "MyEMSL archive status partially verified (success count = " + dctVerifiedURIs.Count + ", unverified count = " + lstUnverifiedURIs.Count() + "); first not verified: " + firstUnverified;
+				msg = "MyEMSL archive status partially verified (success count = " + dctVerifiedURIs.Count + ", unverified count = " + dctUnverifiedURIs.Count() + "); first not verified: " + firstUnverified;
 
             if (mRetData.EvalCode != EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY || string.IsNullOrEmpty(mRetData.CloseoutMsg))
     			mRetData.CloseoutMsg = msg;
@@ -231,12 +210,157 @@ namespace ArchiveStatusCheckPlugin
 			return false;
 		}
 
-		protected Dictionary<int, string> GetStatusURIs(int retryCount)
+        protected void CheckStatusURIs(
+            MyEMSLStatusCheck statusChecker, 
+            CookieContainer cookieJar,
+            Dictionary<int, string> dctURIs, 
+            out Dictionary<int, string> dctUnverifiedURIs,
+            out Dictionary<int, string> dctVerifiedURIs,
+            out Dictionary<int, string> dctCriticalErrors)
+        {
+            int exceptionCount = 0;
+
+            dctUnverifiedURIs = new Dictionary<int, string>();
+            dctVerifiedURIs = new Dictionary<int, string>();
+            dctCriticalErrors = new Dictionary<int, string>();
+
+            foreach (var statusInfo in dctURIs)
+            {
+                int statusNum = statusInfo.Key;
+                string statusURI = statusInfo.Value;
+
+                try
+                {
+                    string xmlServerResponse;
+                    bool ingestSuccess = base.GetMyEMSLIngestStatus(m_Job, statusChecker, statusURI, cookieJar, ref mRetData, out xmlServerResponse);
+
+                    if (!ingestSuccess)
+                    {
+                        dctUnverifiedURIs.Add(statusNum, statusURI);
+                        continue;
+                    }
+
+                    string statusMessage;
+                    string errorMessage;
+                    bool success = statusChecker.IngestStepCompleted(
+                        xmlServerResponse,
+                        MyEMSLStatusCheck.StatusStep.Archived,
+                        out statusMessage,
+                        out errorMessage);
+
+                    if (success)
+                    {
+                        dctVerifiedURIs.Add(statusNum, statusURI);
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Successful MyEMSL upload for job " + m_Job + ", status num " + statusNum + ": " + statusURI);
+                        continue;
+                    }
+
+                    // Look for critical errors in statusMessage
+                    if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        if (statusChecker.IsCriticalError(errorMessage))
+                        {
+                            if (!dctCriticalErrors.ContainsKey(statusNum))
+                            {
+                                dctCriticalErrors.Add(statusNum, errorMessage);
+                            }
+                        }
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    exceptionCount++;
+                    if (exceptionCount < 3)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception verifying archive status for job " + m_Job + ": " + ex.Message);
+                    }
+                    else
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception verifying archive status for job " + m_Job + ": ", ex);
+                        break;
+                    }
+                }
+
+                if (!dctUnverifiedURIs.ContainsKey(statusNum))
+                {
+                    dctUnverifiedURIs.Add(statusNum, statusURI);
+                }
+
+                exceptionCount = 0;
+
+            }
+        }
+
+            /// <summary>
+        /// Step through the unverified URIs to see if the same subfolder was subsequently successfully uploaded 
+        /// (could be a blank subfolder, meaning the instrument data and all jobs) 
+        /// </summary>
+        /// <param name="dctUnverifiedURIs">Unverified URIs</param>
+        /// <param name="dctVerifiedURIs">Verified URIs</param>
+        /// <param name="dctStatusSubfolders">Subfolder name for each StatusNum</param>
+        /// <param name="dctURIs">Status URI for each StatusNum</param>
+        protected void CompareUnverifiedAndVerifiedURIs(
+            Dictionary<int, string> dctUnverifiedURIs, 
+            Dictionary<int, string> dctVerifiedURIs, 
+            Dictionary<int, string> dctStatusSubfolders,
+            Dictionary<int, string> dctURIs)
+	    {
+            var lstStatusNumsToIgnore = new List<int>();
+
+            foreach (var unverifiedEntry in dctUnverifiedURIs)
+            {
+                int unverifiedStatusNum = unverifiedEntry.Key;
+                string unverifiedSubfolder;
+
+                if (!dctStatusSubfolders.TryGetValue(unverifiedStatusNum, out unverifiedSubfolder))
+                    continue;
+
+                // Find StatusNums that had the same subfolder
+                // Note: cannot require that identical matches have a larger StatusNum because sometimes 
+                // extremely large status values (like 1168231360) are assigned to failed uploads
+                var lstIdenticalStatusNums = (from item in dctStatusSubfolders
+                                              where item.Key != unverifiedStatusNum &&
+                                                    item.Value == unverifiedSubfolder
+                                              select item.Key).ToList();
+
+                if (lstIdenticalStatusNums.Count == 0)
+                    continue;
+
+                // Check if any of the identical entries has been successfully verified
+                foreach (var identicalStatusNum in lstIdenticalStatusNums)
+                {
+                    if (dctVerifiedURIs.ContainsKey(identicalStatusNum))
+                    {
+                        lstStatusNumsToIgnore.Add(unverifiedStatusNum);
+                        break;
+                    }
+                }
+
+            }
+
+            if (lstStatusNumsToIgnore.Count > 0)
+            {
+                // Found some URIs that we can ignore
+                foreach (var statusNumToRemove in lstStatusNumsToIgnore)
+                {
+                    dctUnverifiedURIs.Remove(statusNumToRemove);
+                    dctURIs.Remove(statusNumToRemove);
+                }
+
+                // Set the ErrorCode to 101 in T_MyEMSL_Uploads
+                UpdateSupersededURIs(lstStatusNumsToIgnore);
+            }
+
+	    }
+
+	    protected Dictionary<int, string> GetStatusURIs(int retryCount, out Dictionary<int, string> dctStatusSubfolders)
 		{
+            // Keys in this dictionary are StatusNum integers; values are Status URIs (e.g. https://a4.my.emsl.pnl.gov/myemsl/cgi-bin/status/2623335/xml)
 			var dctURIs = new Dictionary<int, string>();
 
-			// This Connection String points to the DMS_Capture database
-			string connectionString = m_MgrParams.GetParam("connectionstring");
+            // Keys in this dictionary are StausNum integers; values are the Subfolder for the given archive task (a blank subfolder means all dataset files and subfolders)
+            dctStatusSubfolders = new Dictionary<int, string>();
 
 			// First look for a specific Status_URI for this job			
 			string statusURI = m_TaskParams.GetParam("MyEMSL_Status_URI", "");
@@ -256,78 +380,151 @@ namespace ArchiveStatusCheckPlugin
 					throw new Exception("Status ID is 0 in StatusURI: " + statusURI);
 
 				dctURIs.Add(statusNum, statusURI);
+
+                // Note that GetStatusURIsAndSubfolders requires that the column order be StatusNum, Status_URI, Subfolder
+                string sql = "SELECT StatusNum, Status_URI, Subfolder " +
+                             "FROM V_MyEMSL_Uploads " +
+                             "WHERE Dataset_ID = " + m_DatasetID + " AND " +
+                                   "StatusNum = " + statusNum;
+
+                GetStatusURIsAndSubfolders(sql, retryCount, dctURIs, dctStatusSubfolders);
+
 				return dctURIs;
 			}
 
 			try
 			{
+                // Note that GetStatusURIsAndSubfolders requires that the column order be StatusNum, Status_URI, Subfolder
+				string sql = "SELECT StatusNum, Status_URI, Subfolder " +
+				             "FROM V_MyEMSL_Uploads " +
+				             "WHERE Dataset_ID = " + m_DatasetID + " AND " +
+				                   "Job <= " + m_Job + " AND " +
+				                   "ISNULL(StatusNum, 0) > 0 AND " +
+				                   "ErrorCode NOT IN (-1, 101)";
 
-				string sql = "SELECT StatusNum, Status_URI FROM V_MyEMSL_Uploads WHERE Dataset_ID = " + m_DatasetID + " AND Job <= " + m_Job + " AND ISNULL(StatusNum, 0) > 0 AND ErrorCode NOT IN (-1, 101)";
+                GetStatusURIsAndSubfolders(sql, retryCount, dctURIs, dctStatusSubfolders);
 
-				while (retryCount > 0)
-				{
-					try
-					{
-						using (var cnDB = new SqlConnection(connectionString))
-						{
-							cnDB.Open();
-
-							var cmd = new SqlCommand(sql, cnDB);
-							var reader = cmd.ExecuteReader();
-
-							while (reader.Read())
-							{
-								int statusNum = reader.GetInt32(0);
-
-							    if (Convert.IsDBNull(reader.GetValue(1)))
-							    {
-							        continue;
-							    }
-
-							    var value = (string)reader.GetValue(1);
-							    if (string.IsNullOrEmpty(value))
-							    {
-							        continue;
-							    }
-
-							    if (dctURIs.ContainsKey(statusNum))
-							    {
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Job " + m_Job + " has more than one upload task with StatusID " + statusNum);
-							        continue;
-							    }
-
-                                dctURIs.Add(statusNum, value);
-							}
-						}
-						break;
-					}
-					catch (Exception ex)
-					{
-						retryCount -= 1;
-						string msg = "ArchiveStatusCheckPlugin, GetStatusURIs; Exception querying database for job " + m_Job + ": " + ex.Message + "; ConnectionString: " + connectionString;
-						msg += ", RetryCount = " + retryCount;
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-
-						//Delay for 5 second before trying again
-						System.Threading.Thread.Sleep(5000);
-					}
-				}
 			}
 			catch (Exception ex)
 			{
-				string msg = "Exception connecting to database for job " + m_Job + ": " + ex.Message + "; ConnectionString: " + connectionString;
+				string msg = "Exception connecting to database for job " + m_Job + ": " + ex.Message;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 			}
 
 			return dctURIs;
 		}
 
-        void statusChecker_ErrorEvent(object sender, MessageEventArgs e)
+        protected void GetStatusURIsAndSubfolders(string sql, int retryCount, Dictionary<int, string> dctURIs, Dictionary<int, string> dctStatusSubfolders)
+	    {
+            // This Connection String points to the DMS_Capture database
+            string connectionString = m_MgrParams.GetParam("connectionstring");
+
+            while (retryCount > 0)
+            {
+                try
+                {
+                    using (var cnDB = new SqlConnection(connectionString))
+                    {
+                        cnDB.Open();
+
+                        var cmd = new SqlCommand(sql, cnDB);
+                        var reader = cmd.ExecuteReader();
+
+                        while (reader.Read())
+                        {
+                            int statusNum = reader.GetInt32(0);
+
+                            if (Convert.IsDBNull(reader.GetValue(1)))
+                            {
+                                continue;
+                            }
+
+                            var uri = (string)reader.GetValue(1);
+                            if (string.IsNullOrEmpty(uri))
+                            {
+                                continue;
+                            }
+
+                            if (dctURIs.ContainsKey(statusNum))
+                            {
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Job " + m_Job + " has more than one upload task with StatusID " + statusNum);
+                                continue;
+                            }
+
+                            dctURIs.Add(statusNum, uri);
+
+                            var subFolder = (string)reader.GetValue(2);
+                            dctStatusSubfolders.Add(statusNum, subFolder);
+                        }
+                    }
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    retryCount -= 1;
+                    string msg = "ArchiveStatusCheckPlugin, GetStatusURIs; Exception querying database for job " + m_Job + ": " + ex.Message + "; ConnectionString: " + connectionString;
+                    msg += ", RetryCount = " + retryCount;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+
+                    //Delay for 5 second before trying again
+                    System.Threading.Thread.Sleep(5000);
+                }
+            }
+
+	    }
+
+	    void statusChecker_ErrorEvent(object sender, MessageEventArgs e)
         {
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Status checker error for job " + m_Job + ": " + e.Message);
         }
 
-		protected bool UpdateVerifiedURIs(Dictionary<int, string> dctVerifiedURIs)
+	    protected bool UpdateSupersededURIs(List<int> lstStatusNumsToIgnore)
+        {
+            const string SP_NAME = "SetMyEMSLUploadSupersededIfFailed";
+
+            try
+            {
+                string statusNums = string.Join(",", lstStatusNumsToIgnore);
+
+                var cmd = new SqlCommand(SP_NAME)
+                {
+                    CommandType = System.Data.CommandType.StoredProcedure
+                };
+
+                cmd.Parameters.Add("@Return", System.Data.SqlDbType.Int);
+                cmd.Parameters["@Return"].Direction = System.Data.ParameterDirection.ReturnValue;
+
+                cmd.Parameters.Add("@DatasetID", System.Data.SqlDbType.Int);
+                cmd.Parameters["@DatasetID"].Direction = System.Data.ParameterDirection.Input;
+                cmd.Parameters["@DatasetID"].Value = m_DatasetID;
+
+                cmd.Parameters.Add("@StatusNumList", System.Data.SqlDbType.VarChar, 1024);
+                cmd.Parameters["@StatusNumList"].Direction = System.Data.ParameterDirection.Input;
+                cmd.Parameters["@StatusNumList"].Value = statusNums;
+
+                cmd.Parameters.Add("@message", System.Data.SqlDbType.VarChar, 512);
+                cmd.Parameters["@message"].Direction = System.Data.ParameterDirection.Output;
+
+                m_ExecuteSP.TimeoutSeconds = 20;
+                var resCode = m_ExecuteSP.ExecuteSP(cmd, 2);
+
+                if (resCode == 0)
+                    return true;
+
+                var msg = "Error " + resCode + " calling stored procedure " + SP_NAME + ", job " + m_Job;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                var msg = "Exception calling stored procedure " + SP_NAME + ", job " + m_Job;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                return false;
+            }
+
+        }
+
+	    protected bool UpdateVerifiedURIs(Dictionary<int, string> dctVerifiedURIs)
 		{
 			const string SP_NAME = "SetMyEMSLUploadVerified";
 
