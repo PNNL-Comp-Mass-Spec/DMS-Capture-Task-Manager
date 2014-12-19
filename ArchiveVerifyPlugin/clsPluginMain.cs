@@ -150,7 +150,13 @@ namespace ArchiveVerifyPlugin
 			{
 
 			    string xmlServerResponse;
-                bool ingestSuccess = base.GetMyEMSLIngestStatus(m_Job, statusChecker, statusURI, cookieJar, ref mRetData, out xmlServerResponse);
+                bool ingestSuccess = base.GetMyEMSLIngestStatus(m_Job, statusChecker, statusURI, cookieJar, mRetData, out xmlServerResponse);
+
+                byte ingestStepsComplete = statusChecker.IngestStepCompletionCount(xmlServerResponse);
+
+			    int statusNum = MyEMSLStatusCheck.GetStatusNumFromURI(statusURI);
+
+                UpdateIngestStepsCompletedOneTask(statusNum, ingestStepsComplete);
 
 			    if (!ingestSuccess)
 			    {

@@ -9,6 +9,7 @@
 //*********************************************************************************************************
 using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.IO;
 using System.Net;
 using System.Reflection;
@@ -352,7 +353,7 @@ namespace CaptureTaskManager
             MyEMSLStatusCheck statusChecker,
             string statusURI,
             CookieContainer cookieJar,
-            ref clsToolReturnData retData,
+            clsToolReturnData retData,
             out string xmlServerResponse)
         {
             bool lookupError;
@@ -804,6 +805,56 @@ namespace CaptureTaskManager
 
             return false;
 
+        }
+
+        
+        /// <summary>
+        /// Updates the value for Ingest_Steps_Completed in table T_MyEMSL_Uploads for the given upload task
+        /// </summary>
+        /// <param name="statusNum">MyEMSL Status number</param>
+        /// <param name="ingestStepsCompleted">Number of completed ingest steps</param>
+        /// <returns>True if success, false if an error</returns>
+        /// <remarks>This function is used by the ArchiveStatusCheck plugin and the ArchiveVerify plugin </remarks>
+        protected bool UpdateIngestStepsCompletedOneTask(
+            int statusNum,
+            byte ingestStepsCompleted)
+        {
+            const string SP_NAME = "UpdateMyEMSLUploadIngestStats";
+
+            var cmd = new SqlCommand(SP_NAME)
+            {
+                CommandType = System.Data.CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add("@Return", System.Data.SqlDbType.Int);
+            cmd.Parameters["@Return"].Direction = System.Data.ParameterDirection.ReturnValue;
+
+            cmd.Parameters.Add("@DatasetID", System.Data.SqlDbType.Int);
+            cmd.Parameters["@DatasetID"].Direction = System.Data.ParameterDirection.Input;
+            cmd.Parameters["@DatasetID"].Value = m_DatasetID;
+
+            cmd.Parameters.Add("@StatusNum", System.Data.SqlDbType.Int);
+            cmd.Parameters["@StatusNum"].Direction = System.Data.ParameterDirection.Input;
+            cmd.Parameters["@StatusNum"].Value = statusNum;
+
+            cmd.Parameters.Add("@IngestStepsCompleted", System.Data.SqlDbType.TinyInt);
+            cmd.Parameters["@IngestStepsCompleted"].Direction = System.Data.ParameterDirection.Input;
+            cmd.Parameters["@IngestStepsCompleted"].Value = ingestStepsCompleted;
+
+            cmd.Parameters.Add("@message", System.Data.SqlDbType.VarChar, 512);
+            cmd.Parameters["@message"].Direction = System.Data.ParameterDirection.Output;
+
+            m_ExecuteSP.TimeoutSeconds = 20;
+            var resCode = m_ExecuteSP.ExecuteSP(cmd, 2);
+
+            if (resCode != 0)
+            {
+                var msg = "Error " + resCode + " calling stored procedure " + SP_NAME + ", job " + m_Job;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                return false;
+            }
+
+            return true;
         }
 
         #endregion

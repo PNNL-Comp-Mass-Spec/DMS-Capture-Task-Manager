@@ -13,11 +13,11 @@ namespace ArchiveStatusCheckPlugin
 	{
 		//*********************************************************************************************************
 		// Main class for plugin
-		//**********************************************************************************************************
+        //**********************************************************************************************************
 
-		#region "Class-wide variables"
+        #region "Class-wide variables"
 
-		clsToolReturnData mRetData = new clsToolReturnData();
+        clsToolReturnData mRetData = new clsToolReturnData();
 
 		#endregion
 
@@ -106,11 +106,8 @@ namespace ArchiveStatusCheckPlugin
 
 			const int retryCount = 2;
 
-            // Keys in dctStatusSubfolders are StatusNum integers, values are the subfolder that was uploaded (blank means the entire dataset)
-            Dictionary<int, string> dctStatusSubfolders;
-
-            // Keys in dctURIs are StatusNum integers, values are StatusURI strings
-            var dctURIs = GetStatusURIs(retryCount, out dctStatusSubfolders);
+            // Keys in dctStatusData are StatusNum integers, values are instances of class clsIngestStatusInfo
+            var dctStatusData = GetStatusURIs(retryCount);
 
             // Keys in this dictionary are StatusNum; values are StatusURI strings
 			Dictionary<int, string> dctVerifiedURIs;
@@ -120,10 +117,10 @@ namespace ArchiveStatusCheckPlugin
 
             // Keys in this dictionary are StatusNum; values are StatusURI strings
             Dictionary<int, string> dctUnverifiedURIs;
-		    
+
 			string msg;
 
-			if (dctURIs.Count == 0)
+			if (dctStatusData.Count == 0)
 			{
 				msg = "Could not find any MyEMSL_Status_URIs; cannot verify archive status";
 				mRetData.CloseoutMsg = msg;
@@ -150,14 +147,14 @@ namespace ArchiveStatusCheckPlugin
             statusChecker.ErrorEvent += statusChecker_ErrorEvent;
 
             // Check the status of each of the URIs
-		    CheckStatusURIs(statusChecker, cookieJar, dctURIs, out dctUnverifiedURIs, out dctVerifiedURIs, out dctCriticalErrors);
+		    CheckStatusURIs(statusChecker, cookieJar, dctStatusData, out dctUnverifiedURIs, out dctVerifiedURIs, out dctCriticalErrors);
 
 			Utilities.Logout(cookieJar);
 
 			if (dctVerifiedURIs.Count > 0)
 			{ 
 				// Update the Verified flag in T_MyEMSL_Uploads
-				UpdateVerifiedURIs(dctVerifiedURIs);
+                UpdateVerifiedURIs(dctVerifiedURIs, dctStatusData);
 			}
 
 		    if (dctCriticalErrors.Count > 0)
@@ -176,12 +173,11 @@ namespace ArchiveStatusCheckPlugin
                 CompareUnverifiedAndVerifiedURIs(
                     dctUnverifiedURIs,
                     dctVerifiedURIs,
-                    dctStatusSubfolders,
-                    dctURIs);
+                    dctStatusData);
             }
 
 
-		    if (dctVerifiedURIs.Count == dctURIs.Count)
+		    if (dctVerifiedURIs.Count == dctStatusData.Count)
 		    {
 		        if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
 		        {
@@ -193,10 +189,30 @@ namespace ArchiveStatusCheckPlugin
 		    }
 
 		    string firstUnverified = "??";
-			if (dctUnverifiedURIs.Count > 0)
-				firstUnverified = dctUnverifiedURIs.First().Value;
+		    if (dctUnverifiedURIs.Count > 0)
+		    {
+		        firstUnverified = dctUnverifiedURIs.First().Value;
 
-			if (dctVerifiedURIs.Count == 0)
+                // Update Ingest_Steps_Completed in the database for StatusNums that now have more steps completed than tracked by the database
+		        var statusNumsToUpdate = new List<int>();
+		        foreach (var statusNum in dctUnverifiedURIs.Keys)
+		        {
+		            clsIngestStatusInfo statusInfo;
+                    if (dctStatusData.TryGetValue(statusNum, out statusInfo))
+                    {
+                        if (statusInfo.IngestStepsCompletedNew > statusInfo.IngestStepsCompletedOld)
+                            statusNumsToUpdate.Add(statusNum);
+                    }
+		        }
+
+		        if (statusNumsToUpdate.Count > 0)
+		        {
+		            UpdateIngestStepsCompletedInDB(statusNumsToUpdate, dctStatusData);
+		        }
+
+		    }
+
+		    if (dctVerifiedURIs.Count == 0)
 			{
 				msg = "MyEMSL archive status not yet verified; see " + firstUnverified;
 			}
@@ -209,11 +225,11 @@ namespace ArchiveStatusCheckPlugin
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 			return false;
 		}
-
-        protected void CheckStatusURIs(
+	
+	    protected void CheckStatusURIs(
             MyEMSLStatusCheck statusChecker, 
             CookieContainer cookieJar,
-            Dictionary<int, string> dctURIs, 
+            Dictionary<int, clsIngestStatusInfo> dctStatusData, 
             out Dictionary<int, string> dctUnverifiedURIs,
             out Dictionary<int, string> dctVerifiedURIs,
             out Dictionary<int, string> dctCriticalErrors)
@@ -224,19 +240,23 @@ namespace ArchiveStatusCheckPlugin
             dctVerifiedURIs = new Dictionary<int, string>();
             dctCriticalErrors = new Dictionary<int, string>();
 
-            foreach (var statusInfo in dctURIs)
+            foreach (var statusDataItem in dctStatusData)
             {
-                int statusNum = statusInfo.Key;
-                string statusURI = statusInfo.Value;
+                int statusNum = statusDataItem.Key;
+                clsIngestStatusInfo statusInfo = statusDataItem.Value;
 
                 try
                 {
                     string xmlServerResponse;
-                    bool ingestSuccess = base.GetMyEMSLIngestStatus(m_Job, statusChecker, statusURI, cookieJar, ref mRetData, out xmlServerResponse);
+                    bool ingestSuccess = base.GetMyEMSLIngestStatus(m_Job, statusChecker, statusInfo.StatusURI, cookieJar, mRetData, out xmlServerResponse);
+
+                    byte ingestStepsCompleted = statusChecker.IngestStepCompletionCount(xmlServerResponse);
+
+                    statusInfo.IngestStepsCompletedNew = ingestStepsCompleted;
 
                     if (!ingestSuccess)
                     {
-                        dctUnverifiedURIs.Add(statusNum, statusURI);
+                        dctUnverifiedURIs.Add(statusNum, statusInfo.StatusURI);
                         continue;
                     }
 
@@ -248,10 +268,11 @@ namespace ArchiveStatusCheckPlugin
                         out statusMessage,
                         out errorMessage);
 
+
                     if (success)
                     {
-                        dctVerifiedURIs.Add(statusNum, statusURI);
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Successful MyEMSL upload for job " + m_Job + ", status num " + statusNum + ": " + statusURI);
+                        dctVerifiedURIs.Add(statusNum, statusInfo.StatusURI);
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Successful MyEMSL upload for job " + m_Job + ", status num " + statusNum + ": " + statusInfo.StatusURI);
                         continue;
                     }
 
@@ -284,7 +305,7 @@ namespace ArchiveStatusCheckPlugin
 
                 if (!dctUnverifiedURIs.ContainsKey(statusNum))
                 {
-                    dctUnverifiedURIs.Add(statusNum, statusURI);
+                    dctUnverifiedURIs.Add(statusNum, statusInfo.StatusURI);
                 }
 
                 exceptionCount = 0;
@@ -298,30 +319,31 @@ namespace ArchiveStatusCheckPlugin
         /// </summary>
         /// <param name="dctUnverifiedURIs">Unverified URIs</param>
         /// <param name="dctVerifiedURIs">Verified URIs</param>
-        /// <param name="dctStatusSubfolders">Subfolder name for each StatusNum</param>
-        /// <param name="dctURIs">Status URI for each StatusNum</param>
+        /// <param name="dctStatusData">Status Info for each StatusNum</param>
+        /// <remarks>Will remove superseded (yet unverified) entries from dctUnverifiedURIs and dctStatusData</remarks>
         protected void CompareUnverifiedAndVerifiedURIs(
             Dictionary<int, string> dctUnverifiedURIs, 
             Dictionary<int, string> dctVerifiedURIs, 
-            Dictionary<int, string> dctStatusSubfolders,
-            Dictionary<int, string> dctURIs)
+            Dictionary<int, clsIngestStatusInfo> dctStatusData)
 	    {
             var lstStatusNumsToIgnore = new List<int>();
 
             foreach (var unverifiedEntry in dctUnverifiedURIs)
             {
                 int unverifiedStatusNum = unverifiedEntry.Key;
-                string unverifiedSubfolder;
+                clsIngestStatusInfo unverifiedStatusInfo;
 
-                if (!dctStatusSubfolders.TryGetValue(unverifiedStatusNum, out unverifiedSubfolder))
+                if (!dctStatusData.TryGetValue(unverifiedStatusNum, out unverifiedStatusInfo))
                     continue;
+
+                string unverifiedSubfolder = unverifiedStatusInfo.Subfolder;
 
                 // Find StatusNums that had the same subfolder
                 // Note: cannot require that identical matches have a larger StatusNum because sometimes 
                 // extremely large status values (like 1168231360) are assigned to failed uploads
-                var lstIdenticalStatusNums = (from item in dctStatusSubfolders
+                var lstIdenticalStatusNums = (from item in dctStatusData
                                               where item.Key != unverifiedStatusNum &&
-                                                    item.Value == unverifiedSubfolder
+                                                    item.Value.Subfolder == unverifiedSubfolder
                                               select item.Key).ToList();
 
                 if (lstIdenticalStatusNums.Count == 0)
@@ -342,67 +364,76 @@ namespace ArchiveStatusCheckPlugin
             if (lstStatusNumsToIgnore.Count > 0)
             {
                 // Found some URIs that we can ignore
+
+                // Set the ErrorCode to 101 in T_MyEMSL_Uploads
+                UpdateSupersededURIs(lstStatusNumsToIgnore, dctStatusData);
+
+                // Update the dictionaries
                 foreach (var statusNumToRemove in lstStatusNumsToIgnore)
                 {
                     dctUnverifiedURIs.Remove(statusNumToRemove);
-                    dctURIs.Remove(statusNumToRemove);
+                    dctStatusData.Remove(statusNumToRemove);
                 }
 
-                // Set the ErrorCode to 101 in T_MyEMSL_Uploads
-                UpdateSupersededURIs(lstStatusNumsToIgnore);
             }
 
 	    }
 
-	    protected Dictionary<int, string> GetStatusURIs(int retryCount, out Dictionary<int, string> dctStatusSubfolders)
-		{
-            // Keys in this dictionary are StatusNum integers; values are Status URIs (e.g. https://a4.my.emsl.pnl.gov/myemsl/cgi-bin/status/2623335/xml)
-			var dctURIs = new Dictionary<int, string>();
+        /// <summary>
+        /// For the given list of status numbers, looks up the maximum value for IngestStepsCompleted in dctStatusData
+        /// </summary>
+        /// <param name="statusNums"></param>
+        /// <param name="dctStatusData"></param>
+        /// <returns></returns>
+        protected byte GetMaxIngestStepCompleted(IEnumerable<int> statusNums, Dictionary<int, clsIngestStatusInfo> dctStatusData)
+        {
+            byte ingestStepsCompleted = 0;
+            foreach (var statusNum in statusNums)
+            {
+                clsIngestStatusInfo statusInfo;
+                if (dctStatusData.TryGetValue(statusNum, out statusInfo))
+                {
+                    ingestStepsCompleted = Math.Max(ingestStepsCompleted, statusInfo.IngestStepsCompletedNew);
+                }
+            }
 
-            // Keys in this dictionary are StausNum integers; values are the Subfolder for the given archive task (a blank subfolder means all dataset files and subfolders)
-            dctStatusSubfolders = new Dictionary<int, string>();
+            return ingestStepsCompleted;
+        }
+
+	    protected Dictionary<int, clsIngestStatusInfo> GetStatusURIs(int retryCount)
+		{
+            // Keys in this dictionary are StatusNum integers
+            var dctStatusData = new Dictionary<int, clsIngestStatusInfo>();
 
 			// First look for a specific Status_URI for this job			
 			string statusURI = m_TaskParams.GetParam("MyEMSL_Status_URI", "");
 
+            // Note that GetStatusURIsAndSubfolders requires that the column order be StatusNum, Status_URI, Subfolder, Ingest_Steps_Completed
+	        string sql =
+	            " SELECT StatusNum, Status_URI, Subfolder, IsNull(Ingest_Steps_Completed, 0) AS Ingest_Steps_Completed" +
+	            " FROM V_MyEMSL_Uploads " +
+	            " WHERE Dataset_ID = " + m_DatasetID;
+
 			if (!string.IsNullOrEmpty(statusURI))
 			{
-				// Parse out the StatusID from the URI
-				var reGetStatusNum = new Regex(@"(\d+)/xml", RegexOptions.IgnoreCase);
-				var reMatch = reGetStatusNum.Match(statusURI);
-				if (!reMatch.Success)
-					throw new Exception("Could not find Status ID in StatusURI: " + statusURI);
+                int statusNum = MyEMSLStatusCheck.GetStatusNumFromURI(statusURI);
 
-				int statusNum;
-				int.TryParse(reMatch.Groups[1].Value, out statusNum);
-				
-				if (statusNum <= 0)
-					throw new Exception("Status ID is 0 in StatusURI: " + statusURI);
+                dctStatusData.Add(statusNum, new clsIngestStatusInfo(statusNum, statusURI));
 
-				dctURIs.Add(statusNum, statusURI);
+                sql += " AND StatusNum = " + statusNum;
 
-                // Note that GetStatusURIsAndSubfolders requires that the column order be StatusNum, Status_URI, Subfolder
-                string sql = "SELECT StatusNum, Status_URI, Subfolder " +
-                             "FROM V_MyEMSL_Uploads " +
-                             "WHERE Dataset_ID = " + m_DatasetID + " AND " +
-                                   "StatusNum = " + statusNum;
+                GetStatusURIsAndSubfolders(sql, retryCount, dctStatusData);
 
-                GetStatusURIsAndSubfolders(sql, retryCount, dctURIs, dctStatusSubfolders);
-
-				return dctURIs;
+				return dctStatusData;
 			}
 
 			try
 			{
-                // Note that GetStatusURIsAndSubfolders requires that the column order be StatusNum, Status_URI, Subfolder
-				string sql = "SELECT StatusNum, Status_URI, Subfolder " +
-				             "FROM V_MyEMSL_Uploads " +
-				             "WHERE Dataset_ID = " + m_DatasetID + " AND " +
-				                   "Job <= " + m_Job + " AND " +
-				                   "ISNULL(StatusNum, 0) > 0 AND " +
-				                   "ErrorCode NOT IN (-1, 101)";
+                sql += " AND Job <= " + m_Job + 
+                       " AND ISNULL(StatusNum, 0) > 0 " +
+                       " AND ErrorCode NOT IN (-1, 101)";
 
-                GetStatusURIsAndSubfolders(sql, retryCount, dctURIs, dctStatusSubfolders);
+                GetStatusURIsAndSubfolders(sql, retryCount, dctStatusData);
 
 			}
 			catch (Exception ex)
@@ -411,10 +442,10 @@ namespace ArchiveStatusCheckPlugin
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 			}
 
-			return dctURIs;
+			return dctStatusData;
 		}
 
-        protected void GetStatusURIsAndSubfolders(string sql, int retryCount, Dictionary<int, string> dctURIs, Dictionary<int, string> dctStatusSubfolders)
+	    protected void GetStatusURIsAndSubfolders(string sql, int retryCount, Dictionary<int, clsIngestStatusInfo> dctStatusData)
 	    {
             // This Connection String points to the DMS_Capture database
             string connectionString = m_MgrParams.GetParam("connectionstring");
@@ -445,16 +476,34 @@ namespace ArchiveStatusCheckPlugin
                                 continue;
                             }
 
-                            if (dctURIs.ContainsKey(statusNum))
+                            var subFolder = (string)reader.GetValue(2);
+                            var ingestStepsCompleted = (byte)reader.GetValue(3);
+
+                            clsIngestStatusInfo statusInfo;
+                            if (dctStatusData.TryGetValue(statusNum, out statusInfo))
                             {
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Job " + m_Job + " has more than one upload task with StatusID " + statusNum);
+                                if (!string.IsNullOrEmpty(statusInfo.Subfolder))
+                                {
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                                         "Job " + m_Job +
+                                                         " has more than one upload task with StatusID " + statusNum);
+                                }
+                                else
+                                {
+                                    statusInfo.Subfolder = subFolder;
+                                    statusInfo.IngestStepsCompletedOld = ingestStepsCompleted;
+                                }
                                 continue;
                             }
 
-                            dctURIs.Add(statusNum, uri);
+                            statusInfo = new clsIngestStatusInfo(statusNum, uri)
+                            {
+                                Subfolder = subFolder,
+                                IngestStepsCompletedOld = ingestStepsCompleted
+                            };
 
-                            var subFolder = (string)reader.GetValue(2);
-                            dctStatusSubfolders.Add(statusNum, subFolder);
+                            dctStatusData.Add(statusNum, statusInfo);
+
                         }
                     }
                     break;
@@ -478,13 +527,55 @@ namespace ArchiveStatusCheckPlugin
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Status checker error for job " + m_Job + ": " + e.Message);
         }
 
-	    protected bool UpdateSupersededURIs(List<int> lstStatusNumsToIgnore)
+        protected bool UpdateIngestStepsCompletedInDB(List<int> statusNumsToUpdate, Dictionary<int, clsIngestStatusInfo> dctStatusData)
+        {
+            try
+            {
+                bool spError = false;
+
+                foreach (var statusNum in statusNumsToUpdate)
+                {
+                    clsIngestStatusInfo statusInfo;
+
+                    if (!dctStatusData.TryGetValue(statusNum, out statusInfo))
+                    {
+                        continue;
+                    }
+
+                    bool success = UpdateIngestStepsCompletedOneTask(statusNum, statusInfo.IngestStepsCompletedNew);
+
+                    if (!success)
+                        spError=true;
+
+                }
+
+                if (spError)
+                {
+                    // One or more calls to the stored procedure failed
+                    return false;
+                }
+
+                return true;
+
+            }
+            catch (Exception ex)
+            {
+                var msg = "Exception calling stored procedure SetMyEMSLUploadSupersededIfFailed, job " + m_Job;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                return false;
+            }
+
+        }
+
+	    protected bool UpdateSupersededURIs(List<int> lstStatusNumsToIgnore, Dictionary<int, clsIngestStatusInfo> dctStatusData)
         {
             const string SP_NAME = "SetMyEMSLUploadSupersededIfFailed";
 
             try
             {
                 string statusNums = string.Join(",", lstStatusNumsToIgnore);
+
+                byte ingestStepsCompleted = GetMaxIngestStepCompleted(lstStatusNumsToIgnore, dctStatusData);
 
                 var cmd = new SqlCommand(SP_NAME)
                 {
@@ -501,6 +592,10 @@ namespace ArchiveStatusCheckPlugin
                 cmd.Parameters.Add("@StatusNumList", System.Data.SqlDbType.VarChar, 1024);
                 cmd.Parameters["@StatusNumList"].Direction = System.Data.ParameterDirection.Input;
                 cmd.Parameters["@StatusNumList"].Value = statusNums;
+
+                cmd.Parameters.Add("@IngestStepsCompleted", System.Data.SqlDbType.TinyInt);
+                cmd.Parameters["@IngestStepsCompleted"].Direction = System.Data.ParameterDirection.Input;
+			    cmd.Parameters["@IngestStepsCompleted"].Value = ingestStepsCompleted;
 
                 cmd.Parameters.Add("@message", System.Data.SqlDbType.VarChar, 512);
                 cmd.Parameters["@message"].Direction = System.Data.ParameterDirection.Output;
@@ -524,7 +619,7 @@ namespace ArchiveStatusCheckPlugin
 
         }
 
-	    protected bool UpdateVerifiedURIs(Dictionary<int, string> dctVerifiedURIs)
+        protected bool UpdateVerifiedURIs(Dictionary<int, string> dctVerifiedURIs, Dictionary<int, clsIngestStatusInfo> dctStatusData)
 		{
 			const string SP_NAME = "SetMyEMSLUploadVerified";
 
@@ -532,7 +627,9 @@ namespace ArchiveStatusCheckPlugin
 			{
 				string statusNums = string.Join(",", (from item in dctVerifiedURIs select item.Key));
 
-				var cmd = new SqlCommand(SP_NAME)
+			    byte ingestStepsCompleted = GetMaxIngestStepCompleted(dctVerifiedURIs.Keys, dctStatusData);
+			    
+			    var cmd = new SqlCommand(SP_NAME)
 				{
 					CommandType = System.Data.CommandType.StoredProcedure
 				};
@@ -548,6 +645,10 @@ namespace ArchiveStatusCheckPlugin
 				cmd.Parameters["@StatusNumList"].Direction = System.Data.ParameterDirection.Input;
 				cmd.Parameters["@StatusNumList"].Value = statusNums;
 
+                cmd.Parameters.Add("@IngestStepsCompleted", System.Data.SqlDbType.TinyInt);
+                cmd.Parameters["@IngestStepsCompleted"].Direction = System.Data.ParameterDirection.Input;
+			    cmd.Parameters["@IngestStepsCompleted"].Value = ingestStepsCompleted;
+                
 				cmd.Parameters.Add("@message", System.Data.SqlDbType.VarChar, 512);
 				cmd.Parameters["@message"].Direction = System.Data.ParameterDirection.Output;
 

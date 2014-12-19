@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Text.RegularExpressions;
 using System.Xml;
 
 namespace Pacifica.Core
@@ -122,6 +123,59 @@ namespace Pacifica.Core
             return string.Empty;
         }
 
+        protected bool HasExceptions(string xmlServerResponse, bool reportError, out string errorMessage)
+        {
+            const string EXCEPTION_TEXT = "message=\'exceptions.";
+            errorMessage = string.Empty;
+
+            int exceptionIndex = xmlServerResponse.IndexOf(EXCEPTION_TEXT);
+            if (exceptionIndex <= 0)
+            {
+                return false;
+            }
+
+            string exceptionMessage = xmlServerResponse.Substring(exceptionIndex + EXCEPTION_TEXT.Length);
+            int charIndex = exceptionMessage.IndexOf("traceback");
+            if (charIndex > 0)
+                exceptionMessage = exceptionMessage.Substring(0, charIndex - 1).Replace("\n", "; ").Replace("&lt", "");
+            else
+            {
+                charIndex = exceptionMessage.IndexOf('\'', 5);
+                if (charIndex > 0)
+                    exceptionMessage = exceptionMessage.Substring(0, charIndex - 1).Replace("\n", "; ");
+            }
+
+            if (reportError)
+            {
+                errorMessage = "Exception: " + exceptionMessage;
+                ReportError("HasExceptions", errorMessage);
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Extract the StatusNum (StatusID) from a status URI
+        /// </summary>
+        /// <param name="statusURI"></param>
+        /// <returns>The status number, or 0 if an error</returns>
+        public static int GetStatusNumFromURI(string statusURI)
+        {
+            var reGetStatusNum = new Regex(@"(\d+)/xml", RegexOptions.IgnoreCase);
+            var reMatch = reGetStatusNum.Match(statusURI);
+            if (!reMatch.Success)
+                throw new Exception("Could not find Status ID in StatusURI: " + statusURI);
+
+            int statusNum;
+            if (!int.TryParse(reMatch.Groups[1].Value, out statusNum))
+                throw new Exception("Status ID is not numeric in StatusURI: " + statusURI);
+
+            if (statusNum <= 0)
+                throw new Exception("Status ID is 0 in StatusURI: " + statusURI);
+
+            return statusNum;
+        }
+
         /// <summary>
         /// Examines the status of each step in xmlServerResponse to see if any of them contain status Error
         /// </summary>
@@ -138,8 +192,8 @@ namespace Pacifica.Core
             xmlDoc.LoadXml(xmlServerResponse);
 
             // Find all step elements that contain an id attribute
-            string query = string.Format(@"//step[@id]");
-            var stepNodes = xmlDoc.SelectNodes(query);
+            // See function IngestStepCompleted for Example XML
+            var stepNodes = xmlDoc.SelectNodes("//step[@id]");
 
             if (stepNodes != null)
             {
@@ -195,34 +249,19 @@ namespace Pacifica.Core
             out string statusMessage,
 			out string errorMessage)
 		{
-            const string EXCEPTION_TEXT = "message=\'exceptions.";
             const string UPLOAD_PERMISSION_ERROR = "do not have upload permissions";
 
             statusMessage = string.Empty;
             errorMessage = string.Empty;
 
 	        // First look for exceptions
-			int exceptionIndex = xmlServerResponse.IndexOf(EXCEPTION_TEXT);
-			if (exceptionIndex > 0)
-			{
-				string exceptionMessage = xmlServerResponse.Substring(exceptionIndex + EXCEPTION_TEXT.Length);
-                int charIndex = exceptionMessage.IndexOf("traceback");
-				if (charIndex > 0)
-                    exceptionMessage = exceptionMessage.Substring(0, charIndex - 1).Replace("\n", "; ").Replace("&lt", "");
-				else
-				{
-                    charIndex = exceptionMessage.IndexOf('\'', 5);
-					if (charIndex > 0)
-                        exceptionMessage = exceptionMessage.Substring(0, charIndex - 1).Replace("\n", "; ");
-				}
+		    if (HasExceptions(xmlServerResponse, true, out errorMessage))
+		    {
+                // Exceptions are present; step is not complete
+                return false;
+		    }
 
-                errorMessage = "Exception: " + exceptionMessage;
-			    ReportError("IngestStepCompleted", errorMessage);
-
-				return false;
-			}
-
-			var xmlDoc = new XmlDocument();
+		    var xmlDoc = new XmlDocument();
 			xmlDoc.LoadXml(xmlServerResponse);
 
 			// Example XML:
@@ -253,7 +292,7 @@ namespace Pacifica.Core
 			//                 for user svc-dms on May 3, 2012)
 			// 6: Archived    (status will be "UNKNOWN" if not yet verified)
 
-			string query = string.Format("//*[@id='{0}']", (int)stepNum);
+			string query = string.Format("//step[@id='{0}']", (int)stepNum);
 			XmlNode statusElement = xmlDoc.SelectSingleNode(query);
 
 		    if (statusElement == null || statusElement.Attributes == null)
@@ -321,6 +360,67 @@ namespace Pacifica.Core
 		    
 		}
 
+        public byte IngestStepCompletionCount(string xmlServerResponse)
+        {
+            string errorMessage;
+
+	        // First look for exceptions
+		    if (HasExceptions(xmlServerResponse, false, out errorMessage))
+		    {
+                // Exceptions are present; report 0 steps complete
+                return 0;
+		    }
+
+		    var xmlDoc = new XmlDocument();
+			xmlDoc.LoadXml(xmlServerResponse);
+
+            // Find all step elements that contain an id attribute
+            // See function IngestStepCompleted for Example XML
+            XmlNodeList stepNodes = xmlDoc.SelectNodes("//step[@id]");
+
+		    if (stepNodes == null || stepNodes.Count == 0)
+		    {
+		        // Did not find any step nodes in the Status XML
+		        return 0;
+		    }
+
+            byte ingestStepsCompleted = 0;
+
+            foreach (XmlNode stepNode in stepNodes)
+            {
+                if (stepNode.Attributes == null)
+                    continue;
+
+                string message = stepNode.Attributes["message"].Value;
+                string status = stepNode.Attributes["status"].Value;
+
+		        if (string.IsNullOrEmpty(message))
+		        {
+                    // Message attribute in the Status XML is empty
+                    continue;
+		        }
+
+                if (string.IsNullOrEmpty(status))
+                {
+                    // Status attribute in the Status XML is empty
+                    continue;
+                }
+
+		        if (status.ToLower() == "success")
+		        {
+		            message = message.ToLower();
+
+		            if (message == "completed" || message == "verified")
+		            {
+		                ingestStepsCompleted++;
+		            }		         
+		        }
+            }
+
+            return ingestStepsCompleted;
+
+        }
+
         public bool IsCriticalError(string errorMessage)
         {
             if (errorMessage.StartsWith("error submitting ingest job"))
@@ -349,6 +449,6 @@ namespace Pacifica.Core
 		}
 
 		#endregion
-
+       
     }
 }
