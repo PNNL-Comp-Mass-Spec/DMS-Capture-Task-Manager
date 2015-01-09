@@ -123,9 +123,9 @@
   </Target>
   -->
   <PropertyGroup>
-    <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\..\DeployedFiles" /Y
-rem xcopy "$(TargetDir)Dart.PowerTCP.Ftp.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y
-xcopy "$(TargetDir)Pacifica*.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y
-xcopy "$(TargetDir)*.*" "$(ProjectDir)..\..\CaptureTaskManager\CaptureTaskManager\bin\Debug" /D /Y</PostBuildEvent>
+    <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\..\DeployedFiles" /Y /I
+rem xcopy "$(TargetDir)Dart.PowerTCP.Ftp.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
+xcopy "$(TargetDir)Pacifica*.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
+xcopy "$(TargetDir)*.*" "$(ProjectDir)..\..\CaptureTaskManager\CaptureTaskManager\bin\Debug" /D /Y /I</PostBuildEvent>
   </PropertyGroup>
 </Project>
