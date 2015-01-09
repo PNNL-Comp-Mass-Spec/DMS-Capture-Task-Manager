@@ -72,10 +72,10 @@
   </Target>
   -->
   <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetPath)" "$(ProjectDir)..\..\DeployedFiles" /Y /I
-copy "$(TargetDir)*.*" "$(ProjectDir)..\..\CaptureTaskManager\CaptureTaskManager\bin\Debug" /D /Y /I
-copy "$(TargetDir)*.*" "$(ProjectDir)..\..\CaptureTaskManager\CaptureTaskManager\bin\Debug_NoDartFTP" /D /Y /I
-copy "$(TargetDir)*.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
+    <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\..\DeployedFiles" /Y /I
+xcopy "$(TargetDir)*.*" "$(ProjectDir)..\..\CaptureTaskManager\CaptureTaskManager\bin\Debug" /D /Y /I
+xcopy "$(TargetDir)*.*" "$(ProjectDir)..\..\CaptureTaskManager\CaptureTaskManager\bin\Debug_NoDartFTP" /D /Y /I
+xcopy "$(TargetDir)*.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
 </PostBuildEvent>
   </PropertyGroup>
 </Project>

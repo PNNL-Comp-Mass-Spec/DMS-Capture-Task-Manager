@@ -115,11 +115,11 @@
   </Target>
   -->
   <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetPath)" "$(ProjectDir)..\..\DeployedFiles" /Y
-copy "$(TargetDir)IMSDemultiplexer*.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
-copy "$(TargetDir)MathNet*.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
-copy "$(TargetDir)*UIMF*.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
-copy "$(TargetDir)*.*" "$(ProjectDir)..\..\CaptureTaskManager\CaptureTaskManager\bin\Debug" /D /Y /I
-copy "$(TargetDir)*.*" "$(ProjectDir)..\..\CaptureTaskManager\CaptureTaskManager\bin\Debug_NoDartFTP" /D /Y /I</PostBuildEvent>
+    <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\..\DeployedFiles" /Y
+xcopy "$(TargetDir)IMSDemultiplexer*.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
+xcopy "$(TargetDir)MathNet*.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
+xcopy "$(TargetDir)*UIMF*.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
+xcopy "$(TargetDir)*.*" "$(ProjectDir)..\..\CaptureTaskManager\CaptureTaskManager\bin\Debug" /D /Y /I
+xcopy "$(TargetDir)*.*" "$(ProjectDir)..\..\CaptureTaskManager\CaptureTaskManager\bin\Debug_NoDartFTP" /D /Y /I</PostBuildEvent>
   </PropertyGroup>
 </Project>

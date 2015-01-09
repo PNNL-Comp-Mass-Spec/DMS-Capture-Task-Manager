@@ -115,6 +115,6 @@
   </Target>
   -->
   <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetDir)*.*" "$(ProjectDir)..\..\CaptureTaskManager\CaptureTaskManager\bin\Debug_NoDartFTP" /D /Y /I</PostBuildEvent>
+    <PostBuildEvent>xcopy "$(TargetDir)*.*" "$(ProjectDir)..\..\CaptureTaskManager\CaptureTaskManager\bin\Debug_NoDartFTP" /D /Y /I</PostBuildEvent>
   </PropertyGroup>
 </Project>
