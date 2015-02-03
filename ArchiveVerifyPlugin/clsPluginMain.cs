@@ -62,13 +62,26 @@ namespace ArchiveVerifyPlugin
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 			}
 
-			// Set this to Success for now
-			mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+            // Set this to Success for now
+            mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+            bool success = false;
 
 			mTotalMismatchCount = 0;
 
-			// Examine the MyEMSL ingest status page
-			bool success = CheckUploadStatus();
+            try
+            {
+                // Examine the MyEMSL ingest status page
+                success = CheckUploadStatus();
+            }
+            catch (Exception ex)
+            {
+                mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;       // Possibly instead use CLOSEOUT_NOT_READY
+                mRetData.CloseoutMsg = "Exception checking archive status (ArchiveVerifyPlugin): " + ex.Message;
+                msg = "Exception checking archive status for job " + m_Job;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+            }
+
+			
 
 			if (success)
 			{

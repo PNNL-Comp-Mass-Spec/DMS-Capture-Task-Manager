@@ -61,8 +61,8 @@ namespace ArchiveStatusCheckPlugin
 			}
 			catch (Exception ex)
 			{
-				mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-				mRetData.CloseoutMsg = "Exception checking archive status: " + ex.Message;
+                mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;       // Possibly instead use CLOSEOUT_NOT_READY
+				mRetData.CloseoutMsg = "Exception checking archive status (ArchiveStatusCheckPlugin): " + ex.Message;
 				msg = "Exception checking archive status for job " + m_Job;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
 			}
