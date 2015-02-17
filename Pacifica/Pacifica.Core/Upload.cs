@@ -357,7 +357,7 @@ namespace Pacifica.Core
 
             // Upload succeeded; call the finish URL
             // This call is typically fast, but has been observed to take well over 10 seconds
-            // Thus, using a timeout of 5 minutes
+            // For safety, using a timeout of 5 minutes
             string finishUrl = serverUri + "/myemsl/cgi-bin/finish" + location;
             RaiseDebugEvent("ProcessMetadata", "Sending finish via " + finishUrl);
             timeoutSeconds = 300;
@@ -434,13 +434,8 @@ namespace Pacifica.Core
             {
                 Utilities.Logout(mCookieJar);
                 ErrorMessage = "Exception calling MyEMSL finish: " + ex.Message;
+                finishError = true;
                 finishErrorMsg = ErrorMessage + ", StackTrace: " + ex.StackTrace;
-            }
-
-            if (finishError)
-            {
-                RaiseErrorEvent("Upload.StartUpload", ErrorMessage);
-                throw new ApplicationException(finishErrorMsg);
             }
 
             try
@@ -452,6 +447,12 @@ namespace Pacifica.Core
             catch
             {
                 // Ignore errors here
+            }
+
+            if (finishError)
+            {
+                RaiseErrorEvent("Upload.StartUpload", ErrorMessage);
+                throw new ApplicationException(finishErrorMsg);
             }
 
             Utilities.Logout(mCookieJar);
