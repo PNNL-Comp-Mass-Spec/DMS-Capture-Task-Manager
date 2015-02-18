@@ -11,9 +11,6 @@
 //
 //*********************************************************************************************************
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using CaptureTaskManager;
 using System.Xml;
 using System.IO;
@@ -38,12 +35,11 @@ namespace DatasetQualityPlugin
 			/// <param name="TaskParams">Task parameters</param>
 			public static bool CreateMetadataFile(IMgrParams mgrParams, ITaskParams TaskParams)
 			{
-				string xmlText = "";
-				string tmpStr;
+				string xmlText;
 
-				// Create a memory stream to write the metadata document to
-				MemoryStream memStream = new MemoryStream();
-				using (XmlTextWriter xWriter = new XmlTextWriter(memStream,System.Text.Encoding.UTF8))
+			    // Create a memory stream to write the metadata document to
+				var memStream = new MemoryStream();
+				using (var xWriter = new XmlTextWriter(memStream,System.Text.Encoding.UTF8))
 				{
 					xWriter.Formatting = Formatting.Indented;
 					xWriter.Indentation = 2;
@@ -58,9 +54,9 @@ namespace DatasetQualityPlugin
 					{
 						if (testKey.StartsWith("Meta_"))
 						{
-							// This parameter is metadata, so write it out
-							tmpStr = testKey.Replace("Meta_", "");
-							xWriter.WriteElementString(tmpStr, TaskParams.GetParam(testKey));
+						    // This parameter is metadata, so write it out
+						    string tmpStr = testKey.Replace("Meta_", "");
+						    xWriter.WriteElementString(tmpStr, TaskParams.GetParam(testKey));
 						}
 					}
 
@@ -72,7 +68,7 @@ namespace DatasetQualityPlugin
 
 					// Use a streamreader to copy the XML text to a string variable
 					memStream.Seek(0, SeekOrigin.Begin);
-					StreamReader memStreamReader = new StreamReader(memStream);
+					var memStreamReader = new StreamReader(memStream);
 					xmlText = memStreamReader.ReadToEnd();
 
 					memStreamReader.Close();

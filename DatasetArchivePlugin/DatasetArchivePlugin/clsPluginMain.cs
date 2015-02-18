@@ -205,10 +205,8 @@ namespace DatasetArchivePlugin
 					MyCmd.Parameters["@ErrorCode"].Value = errorCode;
 				}
 
-				string strConnStr = m_MgrParams.GetParam("connectionstring");
-
 				//Execute the SP (retry the call up to 4 times)
-				int ResCode = ExecuteSP(MyCmd, strConnStr, 4);
+                int ResCode = CaptureDBProcedureExecutor.ExecuteSP(MyCmd, 4);
 
 				if (ResCode == 0)
 				{

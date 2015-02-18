@@ -26,7 +26,7 @@ namespace CaptureTaskManager
 		#endregion
 
 		#region "Class variables"
-		int m_JobID = 0;
+		
 		#endregion
 
 		#region "Constructors"
@@ -65,10 +65,8 @@ namespace CaptureTaskManager
 			{
 				return ItemValue ?? string.Empty;
 			}
-			else
-			{
-				return valueIfMissing ?? string.Empty;
-			}
+		    
+            return valueIfMissing ?? string.Empty;
 		}
 
 		/// <summary>
@@ -80,18 +78,16 @@ namespace CaptureTaskManager
 		public bool GetParam(string name, bool valueIfMissing)
 		{
 			string valueText;
-			bool value;
-			if (m_JobParams.TryGetValue(name, out valueText))
+		    if (m_JobParams.TryGetValue(name, out valueText))
 			{
-				if (bool.TryParse(valueText, out value))
+			    bool value;
+			    if (bool.TryParse(valueText, out value))
 					return value;
-				else
-					return valueIfMissing;
+			    
+                return valueIfMissing;
 			}
-			else
-			{
-				return valueIfMissing;
-			}
+		    
+            return valueIfMissing;
 		}
 
 		/// <summary>
@@ -103,18 +99,16 @@ namespace CaptureTaskManager
 		public float GetParam(string name, float valueIfMissing)
 		{
 			string valueText;
-			float value;
-			if (m_JobParams.TryGetValue(name, out valueText))
+		    if (m_JobParams.TryGetValue(name, out valueText))
 			{
-				if (float.TryParse(valueText, out value))
+			    float value;
+			    if (float.TryParse(valueText, out value))
 					return value;
-				else
-					return valueIfMissing;
+			    
+                return valueIfMissing;
 			}
-			else
-			{
-				return valueIfMissing;
-			}
+		    
+            return valueIfMissing;
 		}
 
 		/// <summary>
@@ -126,18 +120,16 @@ namespace CaptureTaskManager
 		public int GetParam(string name, int valueIfMissing)
 		{
 			string valueText;
-			int value;
-			if (m_JobParams.TryGetValue(name, out valueText))
+		    if (m_JobParams.TryGetValue(name, out valueText))
 			{
-				if (int.TryParse(valueText, out value))
+			    int value;
+			    if (int.TryParse(valueText, out value))
 					return value;
-				else
-					return valueIfMissing;
+			    
+                return valueIfMissing;
 			}
-			else
-			{
-				return valueIfMissing;
-			}
+		    
+            return valueIfMissing;
 		}
 
 		/// <summary>
@@ -185,9 +177,8 @@ namespace CaptureTaskManager
 		/// <returns>num indicating if task was found</returns>
 		public override EnumRequestTaskResult RequestTask()
 		{
-			EnumRequestTaskResult retVal;
+		    EnumRequestTaskResult retVal = RequestTaskDetailed();
 
-			retVal = RequestTaskDetailed();
 			switch (retVal)
 			{
 				case EnumRequestTaskResult.TaskFound:
@@ -210,13 +201,11 @@ namespace CaptureTaskManager
 		/// <returns>RequestTaskResult enum</returns>
 		private EnumRequestTaskResult RequestTaskDetailed()
 		{
-			string msg;
-			SqlCommand myCmd = new SqlCommand();
-			EnumRequestTaskResult outcome = EnumRequestTaskResult.NoTaskFound;
-			int retVal = 0;
-			DataTable dt = new DataTable();
-			string strProductVersion = Application.ProductVersion;
-			if (strProductVersion == null) strProductVersion = "??";
+		    var myCmd = new SqlCommand();
+			EnumRequestTaskResult outcome;
+		    string strProductVersion = Application.ProductVersion;
+			if (strProductVersion == null) 
+                strProductVersion = "??";
 
 			try
 			{
@@ -251,20 +240,21 @@ namespace CaptureTaskManager
 					myCmd.Parameters["@JobCountToPreview"].Value = 10;
 				}
 
-				msg = "clsCaptureTask.RequestTaskDetailed(), connection string: " + m_ConnStr;
+				string msg = "clsCaptureTask.RequestTaskDetailed(), connection string: " + m_ConnStr;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 				msg = "clsCaptureTask.RequestTaskDetailed(), printing param list";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 				PrintCommandParams(myCmd);
 
 				//Execute the SP
-				retVal = ExecuteSP(myCmd, ref dt, m_ConnStr);
+			    DataTable dt;
+			    int retVal = CaptureTaskDBProcedureExecutor.ExecuteSP(myCmd, out dt);
 
 				switch (retVal)
 				{
 					case RET_VAL_OK:
 						//No errors found in SP call, so see if any step tasks were found
-						m_JobID = (int)myCmd.Parameters["@jobNumber"].Value;
+						var jobID = (int)myCmd.Parameters["@jobNumber"].Value;
 
 						//Step task was found; get the data for it
 						bool paramSuccess = FillParamDict(dt);
@@ -284,14 +274,14 @@ namespace CaptureTaskManager
 						break;
 					default:
 						//There was an SP error
-						msg = "clsCaptureTask.RequestTaskDetailed(), SP execution error " + retVal.ToString();
+						msg = "clsCaptureTask.RequestTaskDetailed(), SP execution error " + retVal;
 						msg += "; Msg text = " + (string)myCmd.Parameters["@message"].Value;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 						outcome = EnumRequestTaskResult.ResultError;
 						break;
 				}
 			}
-			catch (System.Exception ex)
+			catch (Exception ex)
 			{
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception requesting analysis job: " + ex.Message);
 				outcome = EnumRequestTaskResult.ResultError;
@@ -339,7 +329,6 @@ namespace CaptureTaskManager
 		public override void CloseTask(EnumCloseOutType taskResult, string closeoutMsg, EnumEvalCode evalCode, string evalMsg)
 		{
 			string msg;
-			int compCode = (int)taskResult;
 
 			if (!SetCaptureTaskComplete(SP_NAME_SET_COMPLETE, m_ConnStr, (int)taskResult, closeoutMsg, (int)evalCode, evalMsg))
 			{
@@ -348,7 +337,7 @@ namespace CaptureTaskManager
 			}
 			else
 			{
-				msg = msg = "Successfully set task complete in database, job " + GetParam("Job", "??");
+				msg = "Successfully set task complete in database, job " + GetParam("Job", "??");
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 			}
 		}
@@ -357,23 +346,22 @@ namespace CaptureTaskManager
 		/// Database calls to set a capture task complete
 		/// </summary>
 		/// <param name="spName">Name of SetComplete stored procedure</param>
-		/// <param name="ConnStr">Db connection string</param>
-		/// <param name="compCode">Integer representation of completion code</param>
-		/// <param name="compCode">Completion message</param>
+        /// <param name="connStr">Db connection string</param>
+        /// <param name="compCode">Integer representation of completion code</param>
+        /// <param name="compMsg">Completion message</param>
 		/// <param name="evalCode">Integer representation of evaluation code</param>
 		/// <param name="evalMsg">Evaluation message</param>
 		/// <returns>TRUE for sucesss; FALSE for failure</returns>
 		public bool SetCaptureTaskComplete(string spName, string connStr, int compCode, string compMsg, int evalCode, string evalMsg)
 		{
 			string msg;
-			bool Outcome = false;
-			int ResCode = 0;
+			bool Outcome;
 
-			try
+		    try
 			{
 
 				//Setup for execution of the stored procedure
-				SqlCommand MyCmd = new SqlCommand();
+				var MyCmd = new SqlCommand();
 				{
 					MyCmd.CommandType = CommandType.StoredProcedure;
 					MyCmd.CommandText = spName;
@@ -415,7 +403,7 @@ namespace CaptureTaskManager
 
 
 				//Execute the SP
-				ResCode = ExecuteSP(MyCmd, connStr);
+                int ResCode = CaptureTaskDBProcedureExecutor.ExecuteSP(MyCmd);
 
 				if (ResCode == 0)
 				{
@@ -423,8 +411,9 @@ namespace CaptureTaskManager
 				}
 				else
 				{
-					msg = "Error " + ResCode.ToString() + " setting transfer task complete";
+					msg = "Error " + ResCode + " setting transfer task complete";
 					msg += "; Message = " + (string)MyCmd.Parameters["@message"].Value;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 					Outcome = false;
 				}
 			}

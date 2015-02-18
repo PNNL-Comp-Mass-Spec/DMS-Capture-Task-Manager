@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Data.SqlClient;
-using System.Text.RegularExpressions;
 
 namespace ArchiveStatusCheckPlugin
 {
@@ -600,8 +599,7 @@ namespace ArchiveStatusCheckPlugin
                 cmd.Parameters.Add("@message", System.Data.SqlDbType.VarChar, 512);
                 cmd.Parameters["@message"].Direction = System.Data.ParameterDirection.Output;
 
-                m_ExecuteSP.TimeoutSeconds = 20;
-                var resCode = m_ExecuteSP.ExecuteSP(cmd, 2);
+                var resCode = CaptureDBProcedureExecutor.ExecuteSP(cmd, 2);
 
                 if (resCode == 0)
                     return true;
@@ -652,8 +650,8 @@ namespace ArchiveStatusCheckPlugin
 				cmd.Parameters.Add("@message", System.Data.SqlDbType.VarChar, 512);
 				cmd.Parameters["@message"].Direction = System.Data.ParameterDirection.Output;
 
-				m_ExecuteSP.TimeoutSeconds = 20;
-				var resCode = m_ExecuteSP.ExecuteSP(cmd, 2);
+
+                var resCode = CaptureDBProcedureExecutor.ExecuteSP(cmd, 2);
 
 				if (resCode == 0)
 					return true;

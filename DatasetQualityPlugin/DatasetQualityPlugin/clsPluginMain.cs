@@ -10,7 +10,11 @@
 //*********************************************************************************************************
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
 using System.IO;
+using System.Text;
+using System.Xml;
 using CaptureTaskManager;
 
 namespace DatasetQualityPlugin
@@ -22,19 +26,21 @@ namespace DatasetQualityPlugin
 		//**********************************************************************************************************
 
 		#region "Constants and Enums"
-		int MAX_QUAMETER_RUNTIME_MINUTES = 150;
 
-		string STORE_QUAMETER_RESULTS_SP_NAME = "StoreQuameterResults";
-		string QUAMETER_IDFREE_METRICS_FILE = "Quameter_IDFree.tsv";
-		string QUAMETER_CONSOLE_OUTPUT_FILE = "Quameter_Console_Output.txt";
-		#endregion
+	    private const int MAX_QUAMETER_RUNTIME_MINUTES = 150;
+
+	    private const string STORE_QUAMETER_RESULTS_SP_NAME = "StoreQuameterResults";
+	    private const string QUAMETER_IDFREE_METRICS_FILE = "Quameter_IDFree.tsv";
+	    private const string QUAMETER_CONSOLE_OUTPUT_FILE = "Quameter_Console_Output.txt";
+
+	    #endregion
 
 		#region "Class-wide variables"
 		clsToolReturnData mRetData = new clsToolReturnData();
 	
 
-		System.DateTime mLastStatusUpdate = System.DateTime.UtcNow;
-		System.DateTime mQuameterStartTime = System.DateTime.UtcNow;
+		DateTime mLastStatusUpdate = DateTime.UtcNow;
+		DateTime mQuameterStartTime = DateTime.UtcNow;
 
 		#endregion
 
@@ -54,9 +60,7 @@ namespace DatasetQualityPlugin
 		/// <returns>Enum indicating success or failure</returns>
 		public override clsToolReturnData RunTool()
 		{
-			string msg;
-
-			msg = "Starting DatasetQualityPlugin.clsPluginMain.RunTool()";
+		    string msg = "Starting DatasetQualityPlugin.clsPluginMain.RunTool()";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 			// Perform base class operations, if any
@@ -116,7 +120,7 @@ namespace DatasetQualityPlugin
 			string storageVolExt = m_TaskParams.GetParam("Storage_Vol_External");
 			string storagePath = m_TaskParams.GetParam("Storage_Path");
 			string datasetFolder = Path.Combine(storageVolExt, Path.Combine(storagePath, m_Dataset));
-			string dataFilePathRemote = string.Empty;
+			string dataFilePathRemote;
 			bool bRunQuameter = false;
 
 			string instClassName = m_TaskParams.GetParam("Instrument_Class");
@@ -182,7 +186,7 @@ namespace DatasetQualityPlugin
 			}
 
 			string quameterExePath = GetQuameterPath();
-			System.IO.FileInfo fiQuameter = new System.IO.FileInfo(quameterExePath);
+			var fiQuameter = new FileInfo(quameterExePath);
 
 			if (!fiQuameter.Exists)
 			{
@@ -191,14 +195,14 @@ namespace DatasetQualityPlugin
 				return false;
 			}
 
-			System.IO.FileInfo fiDataFile = new System.IO.FileInfo(dataFilePathRemote);
+			var fiDataFile = new FileInfo(dataFilePathRemote);
 			if (!fiDataFile.Exists)
 			{
 				// File has likely been purged from the storage server
 				// Look in the Aurora archive (a2.emsl.pnl.gov) using samba
 				string dataFilePathArchive = Path.Combine(m_TaskParams.GetParam("Archive_Network_Share_Path"), m_TaskParams.GetParam("Folder"), fiDataFile.Name);
 
-				System.IO.FileInfo fiDataFileInArchive = new System.IO.FileInfo(dataFilePathArchive);
+				var fiDataFileInArchive = new FileInfo(dataFilePathArchive);
 				if (fiDataFileInArchive.Exists)
 				{
 					// Update dataFilePathRemote using the archive file path
@@ -221,10 +225,9 @@ namespace DatasetQualityPlugin
 				mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 				return false;
 			}
-				
 
-			bool bSuccess;
-			bSuccess = ProcessThermoRawFile(dataFilePathRemote, instrumentClass, fiQuameter);
+
+		    bool bSuccess = ProcessThermoRawFile(dataFilePathRemote, instrumentClass, fiQuameter);
 
 			if (bSuccess)
 			{
@@ -251,21 +254,22 @@ namespace DatasetQualityPlugin
 
 			try
 			{
-				System.IO.DirectoryInfo diWorkDir = new System.IO.DirectoryInfo(m_WorkDir);
+				var diWorkDir = new DirectoryInfo(m_WorkDir);
 
 				// Delete any files that start with the dataset name
-				foreach (System.IO.FileInfo fiFile in diWorkDir.GetFiles(m_Dataset + "*.*"))
+				foreach (FileInfo fiFile in diWorkDir.GetFiles(m_Dataset + "*.*"))
 				{
 					DeleteFileIgnoreErrors(fiFile.FullName);
 				}
 
 				// Delete any files that contain Quameter
-				foreach (System.IO.FileInfo fiFile in diWorkDir.GetFiles("*Quameter*.*"))
+				foreach (FileInfo fiFile in diWorkDir.GetFiles("*Quameter*.*"))
 				{
 					DeleteFileIgnoreErrors(fiFile.FullName);
 				}
 
 			}
+			// ReSharper disable once EmptyGeneralCatchClause
 			catch
 			{
 				// Ignore errors here
@@ -298,7 +302,7 @@ namespace DatasetQualityPlugin
 			//   </Measurements>
 			// </Quameter_Results>
 
-			System.Text.StringBuilder sbXML = new System.Text.StringBuilder();
+			var sbXML = new StringBuilder();
 			sXMLResults = string.Empty;
 
 			try
@@ -339,7 +343,7 @@ namespace DatasetQualityPlugin
 
 			try
 			{
-				System.IO.DirectoryInfo diDatasetQCFolder = new System.IO.DirectoryInfo(System.IO.Path.Combine(datasetFolder, "QC"));
+				var diDatasetQCFolder = new DirectoryInfo(Path.Combine(datasetFolder, "QC"));
 
 				if (!diDatasetQCFolder.Exists)
 				{
@@ -368,18 +372,15 @@ namespace DatasetQualityPlugin
 
 		protected bool CopyFileToServer(string sFileName, string sSourceFolder, string sTargetFolder)
 		{
-			string sSourceFilePath;
-			string sTargetFilePath;
-
-			try
+		    try
 			{
-				sSourceFilePath = System.IO.Path.Combine(sSourceFolder, sFileName);
+			    string sSourceFilePath = Path.Combine(sSourceFolder, sFileName);
 
-				if (System.IO.File.Exists(sSourceFilePath))
-				{
-					sTargetFilePath = System.IO.Path.Combine(sTargetFolder, sFileName);
-					m_FileTools.CopyFile(sSourceFilePath, sTargetFilePath, true);
-				}
+			    if (File.Exists(sSourceFilePath))
+			    {
+			        string sTargetFilePath = Path.Combine(sTargetFolder, sFileName);
+			        m_FileTools.CopyFile(sSourceFilePath, sTargetFilePath, true);
+			    }
 			}
 			catch (Exception ex)
 			{
@@ -407,13 +408,11 @@ namespace DatasetQualityPlugin
 
 			if (string.IsNullOrEmpty(sQuameterFolder))
 				return string.Empty;
-			else
-			{
-				if (bUse64Bit)
-					return Path.Combine(sQuameterFolder, "64bit\\Quameter.exe");
-				else
-					return Path.Combine(sQuameterFolder, "Quameter.exe");
-			}
+		    
+            if (bUse64Bit)
+		        return Path.Combine(sQuameterFolder, "64bit\\Quameter.exe");
+		    
+            return Path.Combine(sQuameterFolder, "Quameter.exe");
 		}
 
 
@@ -431,9 +430,9 @@ namespace DatasetQualityPlugin
 			// QC_Shew_12_02_Run-06_4Sep12_Roc_12-03-30.RAW   2012-09-04T20:33:29Z   0.35347   20.7009   22.3192   24.794   etc.
 
 			// The measurments are returned via this list
-			List<KeyValuePair<String, String>> lstResults = new List<KeyValuePair<String, String>>();
+			var lstResults = new List<KeyValuePair<String, String>>();
 
-			if (!System.IO.File.Exists(ResultsFilePath))
+			if (!File.Exists(ResultsFilePath))
 			{
 				mRetData.CloseoutMsg = "Quameter Results file not found";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mRetData.CloseoutMsg + ": " + ResultsFilePath);
@@ -445,13 +444,10 @@ namespace DatasetQualityPlugin
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing Quameter Results file " + ResultsFilePath);
 			}
 
-			string sLineIn = string.Empty;
-			string[] strHeaders = null;
-			string[] strData = null;
-
-			using (System.IO.StreamReader srInFile = new System.IO.StreamReader(new System.IO.FileStream(ResultsFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite)))
+		    using (var srInFile = new StreamReader(new FileStream(ResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
 			{
-				if (srInFile.Peek() > -1)
+			    string sLineIn;
+			    if (srInFile.Peek() > -1)
 				{
 					// Read the header line
 					sLineIn = srInFile.ReadLine();
@@ -469,7 +465,7 @@ namespace DatasetQualityPlugin
 				}
 
 				// Parse the headers
-				strHeaders = sLineIn.Split('\t');
+				string[] strHeaders = sLineIn.Split('\t');
 
 				if (srInFile.Peek() > -1)
 				{
@@ -490,7 +486,7 @@ namespace DatasetQualityPlugin
 				}
 
 				// Parse the data
-				strData = sLineIn.Split('\t');
+				string[] strData = sLineIn.Split('\t');
 
 				if (strHeaders.Length > strData.Length)
 				{
@@ -525,7 +521,7 @@ namespace DatasetQualityPlugin
 				{
 					if (string.IsNullOrWhiteSpace(strHeaders[index]))
 					{
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Column " + (index + 1).ToString() + " in the Quameter metrics file is empty; this is unexpected");
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Column " + (index + 1) + " in the Quameter metrics file is empty; this is unexpected");
 					}
 					else
 					{
@@ -551,22 +547,21 @@ namespace DatasetQualityPlugin
 
 		protected void ParseConsoleOutputFileForErrors(string sConsoleOutputFilePath)
 		{
-			string sLineIn = string.Empty;
-			bool blnUnhandledException = false;
+		    bool blnUnhandledException = false;
 			string sExceptionText = string.Empty;
 
 			try
 			{
-				if (System.IO.File.Exists(sConsoleOutputFilePath))
+				if (File.Exists(sConsoleOutputFilePath))
 				{
-					using (System.IO.StreamReader srInFile = new System.IO.StreamReader(new System.IO.FileStream(sConsoleOutputFilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite)))
+					using (var srInFile = new StreamReader(new FileStream(sConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
 					{
 
 						while (srInFile.Peek() > -1)
 						{
-							sLineIn = srInFile.ReadLine();
+						    string sLineIn = srInFile.ReadLine();
 
-							if (!string.IsNullOrEmpty(sLineIn))
+						    if (!string.IsNullOrEmpty(sLineIn))
 							{
 								if (blnUnhandledException)
 								{
@@ -618,12 +613,12 @@ namespace DatasetQualityPlugin
 
 			if (fiDatasetInfo.Exists)
 			{
-				using (var xmlReader = new System.Xml.XmlTextReader(new FileStream(fiDatasetInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.Write)))
+				using (var xmlReader = new XmlTextReader(new FileStream(fiDatasetInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.Write)))
 				{
 					while (xmlReader.Read())
 					{
 						
-						if (xmlReader.NodeType == System.Xml.XmlNodeType.Element)
+						if (xmlReader.NodeType == XmlNodeType.Element)
 						{
 							if (xmlReader.Name == "ScanCount")
 							{
@@ -646,22 +641,21 @@ namespace DatasetQualityPlugin
 
 		protected bool PostProcessMetricsFile(string metricsOutputFileName)
 		{
-			string sLineIn;
-			bool bReplaceOrginal = false;
+		    bool bReplaceOrginal = false;
 
 			try
 			{
 				string sCorrectedFilePath = metricsOutputFileName + ".new";
 
-				using (System.IO.StreamWriter swCorrectedFile = new System.IO.StreamWriter(new System.IO.FileStream(sCorrectedFilePath, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.Read)))
+				using (var swCorrectedFile = new StreamWriter(new FileStream(sCorrectedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
 				{
-					using (System.IO.StreamReader srMetricsFile = new System.IO.StreamReader(new System.IO.FileStream(metricsOutputFileName, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite)))
+					using (var srMetricsFile = new StreamReader(new FileStream(metricsOutputFileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
 					{
 						while (srMetricsFile.Peek() > -1)
 						{
-							sLineIn = srMetricsFile.ReadLine();
+						    string sLineIn = srMetricsFile.ReadLine();
 
-							if (!string.IsNullOrEmpty(sLineIn))
+						    if (!string.IsNullOrEmpty(sLineIn))
 							{
 								if (sLineIn.IndexOf("-1.#IND") > 0)
 								{
@@ -683,7 +677,7 @@ namespace DatasetQualityPlugin
 					System.Threading.Thread.Sleep(100);
 
 					// Corrections were made; replace the original file
-					System.IO.File.Copy(sCorrectedFilePath, metricsOutputFileName, true);
+					File.Copy(sCorrectedFilePath, metricsOutputFileName, true);
 				}
 			}
 			catch (Exception ex)
@@ -698,60 +692,34 @@ namespace DatasetQualityPlugin
 
 		protected bool PostQuameterResultsToDB(string sXMLResults)
 		{
-			// This Connection String points to the DMS_Capture database
-			string sConnectionString = null;
-			sConnectionString = m_MgrParams.GetParam("connectionstring");
 
 			// Note that m_DatasetID gets populated by runTool
+			return PostQuameterResultsToDB(m_DatasetID, sXMLResults);
 
-			return PostQuameterResultsToDB(m_DatasetID, sXMLResults, sConnectionString, STORE_QUAMETER_RESULTS_SP_NAME);
+		}		
 
-		}
-
-		protected bool PostQuameterResultsToDB(int intDatasetID, string sXMLResults)
-		{
-			// This Connection String points to the DMS_Capture database
-			string sConnectionString = m_MgrParams.GetParam("connectionstring");
-
-			return PostQuameterResultsToDB(intDatasetID, sXMLResults, sConnectionString, STORE_QUAMETER_RESULTS_SP_NAME);
-
-		}
-
-		protected bool PostQuameterResultsToDB(int intDatasetID, string sXMLResults, string sConnectionString)
-		{
-
-			return PostQuameterResultsToDB(intDatasetID, sXMLResults, sConnectionString, STORE_QUAMETER_RESULTS_SP_NAME);
-
-		}
-
-		public bool PostQuameterResultsToDB(int intDatasetID, string sXMLResults, string sConnectionString, string sStoredProcedure)
+		public bool PostQuameterResultsToDB(int intDatasetID, string sXMLResults)
 		{
 
 			const int MAX_RETRY_COUNT = 3;
 			const int SEC_BETWEEN_RETRIES = 20;
 
-			int intStartIndex = 0;
-			int intResult = 0;
-
-			string sXMLResultsClean = null;
-
-			System.Data.SqlClient.SqlCommand objCommand;
-
-			bool blnSuccess = false;
+		    bool blnSuccess;
 
 			try
 			{
 				if (m_DebugLevel >= 5)
 				{
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Posting Quameter Results to the database (using Dataset ID " + intDatasetID.ToString() + ")");
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Posting Quameter Results to the database (using Dataset ID " + intDatasetID + ")");
 				}
 
 				// We need to remove the encoding line from sXMLResults before posting to the DB
 				// This line will look like this:
 				//   <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 
-				intStartIndex = sXMLResults.IndexOf("?>");
-				if (intStartIndex > 0)
+				int intStartIndex = sXMLResults.IndexOf("?>");
+			    string sXMLResultsClean;
+			    if (intStartIndex > 0)
 				{
 					sXMLResultsClean = sXMLResults.Substring(intStartIndex + 2).Trim();
 				}
@@ -760,57 +728,43 @@ namespace DatasetQualityPlugin
 					sXMLResultsClean = sXMLResults;
 				}
 
-				// Call stored procedure sStoredProcedure using connection string sConnectionString
+				// Call stored procedure StoreQuameterResults in the DMS_Capture database
+			    int resultCode;
 
-
-				if (string.IsNullOrWhiteSpace(sConnectionString))
+				using (var objCommand = new SqlCommand())
 				{
-					mRetData.CloseoutMsg = "Connection string empty in PostQuameterResultsToDB";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Connection string not defined; unable to post the Quameter results to the database");
-					return false;
-				}
+					objCommand.CommandType = CommandType.StoredProcedure;
+					objCommand.CommandText = STORE_QUAMETER_RESULTS_SP_NAME;
 
-				if (string.IsNullOrWhiteSpace(sStoredProcedure))
-				{
-					sStoredProcedure = STORE_QUAMETER_RESULTS_SP_NAME;
-				}
+					objCommand.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int));
+					objCommand.Parameters["@Return"].Direction = ParameterDirection.ReturnValue;
 
-				objCommand = new System.Data.SqlClient.SqlCommand();
-
-				{
-					objCommand.CommandType = System.Data.CommandType.StoredProcedure;
-					objCommand.CommandText = sStoredProcedure;
-
-					objCommand.Parameters.Add(new System.Data.SqlClient.SqlParameter("@Return", System.Data.SqlDbType.Int));
-					objCommand.Parameters["@Return"].Direction = System.Data.ParameterDirection.ReturnValue;
-
-					objCommand.Parameters.Add(new System.Data.SqlClient.SqlParameter("@DatasetID", System.Data.SqlDbType.Int));
-					objCommand.Parameters["@DatasetID"].Direction = System.Data.ParameterDirection.Input;
+					objCommand.Parameters.Add(new SqlParameter("@DatasetID", SqlDbType.Int));
+					objCommand.Parameters["@DatasetID"].Direction = ParameterDirection.Input;
 					objCommand.Parameters["@DatasetID"].Value = intDatasetID;
 
-					objCommand.Parameters.Add(new System.Data.SqlClient.SqlParameter("@ResultsXML", System.Data.SqlDbType.Xml));
-					objCommand.Parameters["@ResultsXML"].Direction = System.Data.ParameterDirection.Input;
+					objCommand.Parameters.Add(new SqlParameter("@ResultsXML", SqlDbType.Xml));
+					objCommand.Parameters["@ResultsXML"].Direction = ParameterDirection.Input;
 					objCommand.Parameters["@ResultsXML"].Value = sXMLResultsClean;
+
+                    resultCode = CaptureDBProcedureExecutor.ExecuteSP(objCommand, MAX_RETRY_COUNT, SEC_BETWEEN_RETRIES);
 				}
 
-				m_ExecuteSP.DBConnectionString = sConnectionString;
 
-				intResult = m_ExecuteSP.ExecuteSP(objCommand, MAX_RETRY_COUNT, SEC_BETWEEN_RETRIES);
-
-				if (intResult == PRISM.DataBase.clsExecuteDatabaseSP.RET_VAL_OK)
+                if (resultCode == PRISM.DataBase.clsExecuteDatabaseSP.RET_VAL_OK)
 				{
 					// No errors
 					blnSuccess = true;
 				}
 				else
 				{
-					mRetData.CloseoutMsg = "Error storing Quameter Results in database, " + sStoredProcedure + " returned " + intResult.ToString();
+                    mRetData.CloseoutMsg = "Error storing Quameter Results in database, " + STORE_QUAMETER_RESULTS_SP_NAME + " returned " + resultCode;
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg);
 					blnSuccess = false;
 				}
 
 			}
-			catch (System.Exception ex)
+			catch (Exception ex)
 			{
 				mRetData.CloseoutMsg = "Exception storing Quameter Results in database";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg, ex);
@@ -821,7 +775,7 @@ namespace DatasetQualityPlugin
 		}
 
 
-		protected bool ProcessThermoRawFile(string dataFilePathRemote, clsInstrumentClassInfo.eInstrumentClass instrumentClass, System.IO.FileInfo fiQuameter)
+		protected bool ProcessThermoRawFile(string dataFilePathRemote, clsInstrumentClassInfo.eInstrumentClass instrumentClass, FileInfo fiQuameter)
 		{
 
 			try
@@ -830,10 +784,7 @@ namespace DatasetQualityPlugin
 				// Copy the appropriate config file to the working directory
 				string configFileNameSource;
 
-				string configFilePathSource;
-				string configFilePathTarget;
-
-				switch (instrumentClass)
+			    switch (instrumentClass)
 				{
 					case clsInstrumentClassInfo.eInstrumentClass.Finnigan_Ion_Trap:
 						// Assume low-res precursor spectra
@@ -852,24 +803,24 @@ namespace DatasetQualityPlugin
 						break;
 				}
 
-				configFilePathSource = Path.Combine(fiQuameter.Directory.FullName, configFileNameSource);
-				configFilePathTarget = Path.Combine(m_WorkDir, "quameter.cfg");
+				string configFilePathSource = Path.Combine(fiQuameter.Directory.FullName, configFileNameSource);
+				string configFilePathTarget = Path.Combine(m_WorkDir, "quameter.cfg");
 
-				if (!System.IO.File.Exists(configFilePathSource) && fiQuameter.Directory.FullName.ToLower().EndsWith("64bit"))
+				if (!File.Exists(configFilePathSource) && fiQuameter.Directory.FullName.ToLower().EndsWith("64bit"))
 				{
 					// Using the 64-bit version of quameter
 					// Look for the .cfg file up one directory
 					configFilePathSource = Path.Combine(fiQuameter.Directory.Parent.FullName, configFileNameSource);
 				}
 
-				if (!System.IO.File.Exists(configFilePathSource))
+				if (!File.Exists(configFilePathSource))
 				{
 					mRetData.CloseoutMsg = "Quameter parameter file not found " + configFilePathSource;
 					mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 					return false;
 				}
 
-				System.IO.File.Copy(configFilePathSource, configFilePathTarget, true);
+				File.Copy(configFilePathSource, configFilePathTarget, true);
 
 				// Copy the .Raw file to the working directory
 				if (m_DebugLevel >= 4)
@@ -893,7 +844,7 @@ namespace DatasetQualityPlugin
 
 				// Run Quameter
 				mRetData.CloseoutMsg = string.Empty;
-				bool bSuccess = RunQuameter(fiQuameter, System.IO.Path.GetFileName(dataFilePathLocal), QUAMETER_IDFREE_METRICS_FILE);
+				bool bSuccess = RunQuameter(fiQuameter, Path.GetFileName(dataFilePathLocal), QUAMETER_IDFREE_METRICS_FILE);
 
 				if (!bSuccess)
 				{
@@ -928,17 +879,16 @@ namespace DatasetQualityPlugin
 				" FROM S_DMS_V_Dataset_Scans " +
 				" WHERE (Dataset_ID = " + datasetID + ") ";
 
-			string sConnectionString = null;
-			sConnectionString = m_MgrParams.GetParam("connectionstring");
+		    string sConnectionString = m_MgrParams.GetParam("connectionstring");
 
 			int scanCount = 0;
 			int scanCountMS = 0;
 
-			using (var cnDB = new System.Data.SqlClient.SqlConnection(sConnectionString))
+			using (var cnDB = new SqlConnection(sConnectionString))
 			{
 				cnDB.Open();
 
-				using (var cmd = new System.Data.SqlClient.SqlCommand(sql, cnDB))
+				using (var cmd = new SqlCommand(sql, cnDB))
 				{
 					var reader = cmd.ExecuteReader();
 
@@ -991,13 +941,12 @@ namespace DatasetQualityPlugin
 		{
 
 			bool blnSuccess = false;
-			List<KeyValuePair<String, String>> lstResults = default(List<KeyValuePair<String, String>>);
 
-			try
+		    try
 			{
-				lstResults = LoadQuameterResults(ResultsFilePath);
+			    List<KeyValuePair<String, String>> lstResults = LoadQuameterResults(ResultsFilePath);
 
-				if (lstResults.Count == 0)
+			    if (lstResults.Count == 0)
 				{
 					if (string.IsNullOrEmpty(mRetData.CloseoutMsg))
 					{
@@ -1028,7 +977,6 @@ namespace DatasetQualityPlugin
 					}
 
 				}
-
 			}
 			catch (Exception ex)
 			{
@@ -1041,7 +989,7 @@ namespace DatasetQualityPlugin
 
 		}
 
-		protected bool RunQuameter(System.IO.FileInfo fiQuameter, string dataFileName, string metricsOutputFileName)
+		protected bool RunQuameter(FileInfo fiQuameter, string dataFileName, string metricsOutputFileName)
 		{
 			clsRunDosProgram CmdRunner = null;
 			try
@@ -1051,8 +999,8 @@ namespace DatasetQualityPlugin
 				string CmdStrQuameter = clsConversion.PossiblyQuotePath(dataFileName) + " -MetricsType idfree -OutputFilepath " + clsConversion.PossiblyQuotePath(metricsOutputFileName) + " -cpus 1";
 
 				CmdRunner = new clsRunDosProgram(m_WorkDir);
-				mQuameterStartTime = System.DateTime.UtcNow;
-				mLastStatusUpdate = System.DateTime.UtcNow;
+				mQuameterStartTime = DateTime.UtcNow;
+				mLastStatusUpdate = DateTime.UtcNow;
 
 				AttachCmdrunnerEvents(CmdRunner);
 
@@ -1060,15 +1008,15 @@ namespace DatasetQualityPlugin
 				// Capture the console output (including output to the error stream) via redirection symbols: 
 				//    strExePath CmdStr > ConsoleOutputFile.txt 2>&1
 
-				string sBatchFileName = "Run_Quameter.bat";
+				const string sBatchFileName = "Run_Quameter.bat";
 
 				// Update the Exe path to point to the RunProgram batch file; update CmdStr to be empty
-				string sExePath = System.IO.Path.Combine(m_WorkDir, sBatchFileName);
+				string sExePath = Path.Combine(m_WorkDir, sBatchFileName);
 				string CmdStr = string.Empty;
-				string sConsoleOutputFileName = QUAMETER_CONSOLE_OUTPUT_FILE;
+				const string sConsoleOutputFileName = QUAMETER_CONSOLE_OUTPUT_FILE;
 
 				// Create the batch file
-				using (System.IO.StreamWriter swBatchFile = new System.IO.StreamWriter(new System.IO.FileStream(sExePath, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.Read)))
+				using (var swBatchFile = new StreamWriter(new FileStream(sExePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
 				{
 					swBatchFile.WriteLine(fiQuameter.FullName + " " + CmdStrQuameter + " > " + sConsoleOutputFileName + " 2>&1");
 				}
@@ -1080,10 +1028,10 @@ namespace DatasetQualityPlugin
 				CmdRunner.CacheStandardOutput = false;
 				CmdRunner.WriteConsoleOutputToFile = false;
 
-				int iMaxRuntimeSeconds = MAX_QUAMETER_RUNTIME_MINUTES * 60;
+				const int iMaxRuntimeSeconds = MAX_QUAMETER_RUNTIME_MINUTES * 60;
 				bool bSuccess = CmdRunner.RunProgram(sExePath, CmdStr, "Quameter", true, iMaxRuntimeSeconds);
 
-				ParseConsoleOutputFileForErrors(System.IO.Path.Combine(m_WorkDir, sConsoleOutputFileName));
+				ParseConsoleOutputFileForErrors(Path.Combine(m_WorkDir, sConsoleOutputFileName));
 
 				if (!bSuccess)
 				{
@@ -1092,7 +1040,7 @@ namespace DatasetQualityPlugin
 
 					if (CmdRunner.ExitCode != 0)
 					{
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Quameter returned a non-zero exit code: " + CmdRunner.ExitCode.ToString());
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Quameter returned a non-zero exit code: " + CmdRunner.ExitCode);
 					}
 					else
 					{
@@ -1110,9 +1058,9 @@ namespace DatasetQualityPlugin
 
 				System.Threading.Thread.Sleep(100);
 
-				string metricsOutputFilePath = System.IO.Path.Combine(m_WorkDir, metricsOutputFileName);
+				string metricsOutputFilePath = Path.Combine(m_WorkDir, metricsOutputFileName);
 
-				if (!System.IO.File.Exists(metricsOutputFilePath))
+				if (!File.Exists(metricsOutputFilePath))
 				{
 					mRetData.CloseoutMsg = "Metrics file was not created";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg);
@@ -1175,32 +1123,33 @@ namespace DatasetQualityPlugin
 		{
 
 			string sToolVersionInfo = string.Empty;
-			System.IO.FileInfo ioAppFileInfo = new System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
-			bool bSuccess;
+			var ioAppFileInfo = new FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
 
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+		    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
 
 			// Lookup the version of the Capture tool plugin
 			string sPluginPath = Path.Combine(ioAppFileInfo.DirectoryName, "DatasetQualityPlugin.dll");
-			bSuccess = base.StoreToolVersionInfoOneFile(ref sToolVersionInfo, sPluginPath);
+			bool bSuccess = base.StoreToolVersionInfoOneFile(ref sToolVersionInfo, sPluginPath);
 			if (!bSuccess)
 				return false;
 
 			// Store path to CaptureToolPlugin.dll in ioToolFiles
-			List<System.IO.FileInfo> ioToolFiles = new List<System.IO.FileInfo>();
-			ioToolFiles.Add(new System.IO.FileInfo(sPluginPath));
+			var ioToolFiles = new List<FileInfo>
+			{
+			    new FileInfo(sPluginPath)
+			};
 
-			if (storeQuameterVersion)
+		    if (storeQuameterVersion)
 			{
 				// Quameter is a C++ program, so we can only store the date
-				ioToolFiles.Add(new System.IO.FileInfo(GetQuameterPath()));
+				ioToolFiles.Add(new FileInfo(GetQuameterPath()));
 			}
 
 			try
 			{
 				return base.SetStepTaskToolVersion(sToolVersionInfo, ioToolFiles, false);
 			}
-			catch (System.Exception ex)
+			catch (Exception ex)
 			{
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
 				return false;
@@ -1217,9 +1166,10 @@ namespace DatasetQualityPlugin
 		{
 			try
 			{
-				CmdRunner.LoopWaiting += new clsRunDosProgram.LoopWaitingEventHandler(CmdRunner_LoopWaiting);
-				CmdRunner.Timeout += new clsRunDosProgram.TimeoutEventHandler(CmdRunner_Timeout);
+				CmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
+				CmdRunner.Timeout += CmdRunner_Timeout;
 			}
+			// ReSharper disable once EmptyGeneralCatchClause
 			catch
 			{
 				// Ignore errors here
@@ -1236,6 +1186,7 @@ namespace DatasetQualityPlugin
 					CmdRunner.Timeout -= CmdRunner_Timeout;
 				}
 			}
+			// ReSharper disable once EmptyGeneralCatchClause
 			catch
 			{
 				// Ignore errors here
@@ -1250,15 +1201,15 @@ namespace DatasetQualityPlugin
 		void CmdRunner_LoopWaiting()
 		{
 
-			if (System.DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalSeconds >= 300)
+			if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalSeconds >= 300)
 			{
-				mLastStatusUpdate = System.DateTime.UtcNow;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Quameter running; " + System.DateTime.UtcNow.Subtract(mQuameterStartTime).TotalMinutes + " minutes elapsed");
+				mLastStatusUpdate = DateTime.UtcNow;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Quameter running; " + DateTime.UtcNow.Subtract(mQuameterStartTime).TotalMinutes + " minutes elapsed");
 			}
 		}
 
 		#endregion
 
-	}	// End class
+	}
 
-}	// End namespace
+}

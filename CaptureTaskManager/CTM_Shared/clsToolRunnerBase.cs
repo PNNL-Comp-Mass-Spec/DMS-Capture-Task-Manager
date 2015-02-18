@@ -36,7 +36,7 @@ namespace CaptureTaskManager
 
         protected PRISM.Files.clsFileTools m_FileTools;
 
-        protected PRISM.DataBase.clsExecuteDatabaseSP m_ExecuteSP;
+        public PRISM.DataBase.clsExecuteDatabaseSP CaptureDBProcedureExecutor;
 
         protected DateTime m_LastConfigDBUpdate = DateTime.UtcNow;
         protected int m_MinutesBetweenConfigDBUpdates = 10;
@@ -110,7 +110,7 @@ namespace CaptureTaskManager
 
             // This Connection String points to the DMS_Capture database
             string sConnectionString = m_MgrParams.GetParam("connectionstring");
-            m_ExecuteSP = new PRISM.DataBase.clsExecuteDatabaseSP(sConnectionString);
+            CaptureDBProcedureExecutor = new PRISM.DataBase.clsExecuteDatabaseSP(sConnectionString);
 
             AttachExecuteSpEvents();
 
@@ -284,59 +284,6 @@ namespace CaptureTaskManager
             }
         }
 
-        protected int ExecuteSP(System.Data.SqlClient.SqlCommand spCmd, string connStr, int MaxRetryCount)
-        {
-            int resCode = -9999;
-            string msg;
-            int retryCount = MaxRetryCount;
-            int intTimeoutSeconds;
-
-            if (retryCount > 1)
-                retryCount = 1;
-
-            int.TryParse(m_MgrParams.GetParam("cmdtimeout"), out intTimeoutSeconds);
-            if (intTimeoutSeconds <= 1)
-                intTimeoutSeconds = 30;
-
-            while (retryCount > 0)
-            {
-                //Multiple retry loop for handling SP execution failures
-                try
-                {
-                    using (var cn = new System.Data.SqlClient.SqlConnection(connStr))
-                    {
-                        cn.Open();
-                        spCmd.Connection = cn;
-                        //Change command timeout from 30 second default in attempt to reduce SP execution timeout errors
-                        spCmd.CommandTimeout = intTimeoutSeconds;
-                        spCmd.ExecuteNonQuery();
-
-                        resCode = (int)spCmd.Parameters["@Return"].Value;
-                    }
-                    break;
-                }
-                catch (Exception ex)
-                {
-                    retryCount -= 1;
-                    msg = "clsToolRunnerbase.ExecuteSP(), exception calling SP " + spCmd.CommandText + ", " + ex.Message;
-                    msg += ". ResCode = " + resCode + ". Retry count = " + retryCount;
-                    LogError(msg);
-                }
-                //Wait 10 seconds before retrying
-                Thread.Sleep(10000);
-            }
-
-            if (retryCount < 1)
-            {
-                //Too many retries, log and return error
-                msg = "Excessive retries executing SP " + spCmd.CommandText;
-                LogError(msg);
-                return -1;
-            }
-
-            return resCode;
-        }	// End sub
-
         /// <summary>
         /// Lookup the MyEMSL ingest status for the current job
         /// </summary>
@@ -395,9 +342,17 @@ namespace CaptureTaskManager
             return true;
         }
 
-        protected static void LogError(string errorMessage)
+        protected static void LogError(string errorMessage, bool logToDatabase = false)
         {
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
+            if (logToDatabase)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, errorMessage);
+            }
+            else
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
+            }
+
         }
 
         /// <summary>
@@ -621,31 +576,29 @@ namespace CaptureTaskManager
             }
 
             //Setup for execution of the stored procedure
-            var MyCmd = new System.Data.SqlClient.SqlCommand();
+            var MyCmd = new SqlCommand();
             {
                 MyCmd.CommandType = System.Data.CommandType.StoredProcedure;
                 MyCmd.CommandText = SP_NAME_SET_TASK_TOOL_VERSION;
 
-                MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@Return", System.Data.SqlDbType.Int));
+                MyCmd.Parameters.Add(new SqlParameter("@Return", System.Data.SqlDbType.Int));
                 MyCmd.Parameters["@Return"].Direction = System.Data.ParameterDirection.ReturnValue;
 
-                MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@job", System.Data.SqlDbType.Int));
+                MyCmd.Parameters.Add(new SqlParameter("@job", System.Data.SqlDbType.Int));
                 MyCmd.Parameters["@job"].Direction = System.Data.ParameterDirection.Input;
                 MyCmd.Parameters["@job"].Value = Convert.ToInt32(m_TaskParams.GetParam("Job"));
 
-                MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@step", System.Data.SqlDbType.Int));
+                MyCmd.Parameters.Add(new SqlParameter("@step", System.Data.SqlDbType.Int));
                 MyCmd.Parameters["@step"].Direction = System.Data.ParameterDirection.Input;
                 MyCmd.Parameters["@step"].Value = Convert.ToInt32(m_TaskParams.GetParam("Step"));
 
-                MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@ToolVersionInfo", System.Data.SqlDbType.VarChar, 900));
+                MyCmd.Parameters.Add(new SqlParameter("@ToolVersionInfo", System.Data.SqlDbType.VarChar, 900));
                 MyCmd.Parameters["@ToolVersionInfo"].Direction = System.Data.ParameterDirection.Input;
                 MyCmd.Parameters["@ToolVersionInfo"].Value = strToolVersionInfoCombined;
             }
 
-            string strConnStr = m_MgrParams.GetParam("connectionstring");
-
             //Execute the SP (retry the call up to 4 times)
-            int resCode = ExecuteSP(MyCmd, strConnStr, 4);
+            int resCode = CaptureDBProcedureExecutor.ExecuteSP(MyCmd, 4);
 
             if (resCode == 0)
             {
@@ -844,8 +797,8 @@ namespace CaptureTaskManager
             cmd.Parameters.Add("@message", System.Data.SqlDbType.VarChar, 512);
             cmd.Parameters["@message"].Direction = System.Data.ParameterDirection.Output;
 
-            m_ExecuteSP.TimeoutSeconds = 20;
-            var resCode = m_ExecuteSP.ExecuteSP(cmd, 2);
+            CaptureDBProcedureExecutor.TimeoutSeconds = 20;
+            var resCode = CaptureDBProcedureExecutor.ExecuteSP(cmd, 2);
 
             if (resCode != 0)
             {
@@ -865,7 +818,7 @@ namespace CaptureTaskManager
         {
             try
             {
-                m_ExecuteSP.DBErrorEvent += m_ExecuteSP_DBErrorEvent;
+                CaptureDBProcedureExecutor.DBErrorEvent += m_ExecuteSP_DBErrorEvent;
             }
             // ReSharper disable once EmptyGeneralCatchClause
             catch
@@ -878,9 +831,9 @@ namespace CaptureTaskManager
         {
             try
             {
-                if (m_ExecuteSP != null)
+                if (CaptureDBProcedureExecutor != null)
                 {
-                    m_ExecuteSP.DBErrorEvent -= m_ExecuteSP_DBErrorEvent;
+                    CaptureDBProcedureExecutor.DBErrorEvent -= m_ExecuteSP_DBErrorEvent;
                 }
             }
             // ReSharper disable once EmptyGeneralCatchClause
@@ -892,7 +845,8 @@ namespace CaptureTaskManager
 
         private void m_ExecuteSP_DBErrorEvent(string Message)
         {
-            LogError("Stored procedure execution error: " + Message);
+            var logToDatabase = Message.Contains("permission was denied");            
+            LogError("Stored procedure execution error: " + Message, logToDatabase);
         }
 
 
