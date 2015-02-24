@@ -178,8 +178,8 @@ namespace ImsDemuxPlugin
                         var binCentricTableCreator = new UIMFLibrary.BinCentricTableCreation();
 
                         // Attach the events
-                        binCentricTableCreator.ProgressEvent += binCentricTableCreator_ProgressEvent;
-                        binCentricTableCreator.MessageEvent += binCentricTableCreator_MessageEvent;
+                        binCentricTableCreator.OnProgress += binCentricTableCreator_ProgressEvent;
+                        binCentricTableCreator.Message += binCentricTableCreator_MessageEvent;
 
                         mLastProgressUpdateTime = DateTime.UtcNow;
                         mLastProgressMessageTime = DateTime.UtcNow;
