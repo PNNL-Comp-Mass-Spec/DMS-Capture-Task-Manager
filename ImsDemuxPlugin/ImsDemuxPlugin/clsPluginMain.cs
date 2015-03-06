@@ -257,8 +257,9 @@ namespace ImsDemuxPlugin
 				return retData;
 			}
 
-			// October 18, 2013: Disabling the addition of bin-centric tables since datasets currently being acquired on the IMS platform will not have IQ run on them
-			const bool addBinCentricTables = false;
+			// October 2013: Disabled the addition of bin-centric tables since datasets currently being acquired on the IMS platform will not have IQ run on them
+            // March 2015: Re-eanbled automatic addition of bin-centric tables
+			const bool addBinCentricTables = true;
 
 			if (addBinCentricTables)
 			{
