@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -50,18 +50,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\RefLib\Apache.NMS.ActiveMQ.dll</HintPath>
     </Reference>
-    <Reference Include="AutoCalibrateUIMF, Version=1.0.4993.27742, Culture=neutral, processorArchitecture=x86">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\RefLib\AutoCalibrateUIMF.dll</HintPath>
-    </Reference>
     <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=1b44e1d426115821, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\RefLib\log4net.dll</HintPath>
       <Private>True</Private>
-    </Reference>
-    <Reference Include="MessageLogger, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\RefLib\MessageLogger.dll</HintPath>
     </Reference>
     <Reference Include="PRISM, Version=1.0.1993.15422, Culture=neutral">
       <SpecificVersion>False</SpecificVersion>
@@ -150,7 +142,7 @@ xcopy "$(TargetDir)*.config" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
 xcopy "$(TargetDir)Apache.NMS.ActiveMQ.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
 xcopy "$(TargetDir)Apache.NMS.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
 xcopy "$(TargetDir)log4net.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
-xcopy "$(TargetDir)MessageLogger.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
+rem xcopy "$(TargetDir)MessageLogger.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
 xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
 xcopy "$(TargetDir)plugin_info.xml" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
 </PostBuildEvent>

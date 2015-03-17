@@ -20,9 +20,6 @@ namespace CaptureTaskManager
         // Base class for handling task-related data
         //**********************************************************************************************************
 
-        #region "Enums"
-        #endregion
-
         #region "Constants"
         protected const int RET_VAL_OK = 0;
         protected const int RET_VAL_TASK_NOT_AVAILABLE = 53000;

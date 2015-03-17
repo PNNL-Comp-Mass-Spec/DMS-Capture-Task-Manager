@@ -231,26 +231,21 @@ namespace DatasetIntegrityPlugin
                     return false;
                 }
 
-                string dotDFolderPathRemote = Path.Combine(datasetFolderPath, m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION);
-                string dotDFolderPathLocal = Path.Combine(m_WorkDir, m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION);
-
-                // Copy the dataset folder locally using Prism.DLL
-                // Note that lock files will be used when copying large files (over 20 MB)
-
                 string mgrName = m_MgrParams.GetParam("MgrName", "CTM");
                 var oFileTools = new PRISM.Files.clsFileTools(mgrName, m_DebugLevel);
+                string dotDFolderPathLocal = Path.Combine(m_WorkDir, m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION);
 
-                oFileTools.CopyDirectory(dotDFolderPathRemote, dotDFolderPathLocal, true);
+                var success = CopyDotDFolderToLocal(oFileTools, datasetFolderPath, dotDFolderPathLocal);
+                if (!success)
+                    return false;
 
                 // Construct the command line arguments to run the AgilentToUIMFConverter
-                string uimfOutputFilePath = Path.Combine(m_WorkDir, m_Dataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION);
 
                 // Syntax:
                 // AgilentToUIMFConverter.exe [Agilent .d Folder] [Directory to insert file (optional)]
                 //
-                string CmdStr = clsConversion.PossiblyQuotePath(dotDFolderPathLocal) + " " + clsConversion.PossiblyQuotePath(m_WorkDir);
-                string managerName = m_MgrParams.GetParam("MgrName", "UnknownManager");
-                string consoleOutputFilePath = Path.Combine(m_WorkDir, "AgilentToUIMF_ConsoleOutput_" + managerName + ".txt");
+                string cmdStr = clsConversion.PossiblyQuotePath(dotDFolderPathLocal) + " " + clsConversion.PossiblyQuotePath(m_WorkDir);
+                string consoleOutputFilePath = Path.Combine(m_WorkDir, "AgilentToUIMF_ConsoleOutput_" + mgrName + ".txt");
 
                 CmdRunner = new clsRunDosProgram(m_WorkDir);
                 mAgilentToUIMFStartTime = DateTime.UtcNow;
@@ -264,8 +259,11 @@ namespace DatasetIntegrityPlugin
                 CmdRunner.WriteConsoleOutputToFile = true;
                 CmdRunner.ConsoleOutputFilePath = consoleOutputFilePath;
 
+                var msg = "Converting .D folder to .UIMF: " + exePath + " " + cmdStr;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+
                 const int iMaxRuntimeSeconds = MAX_AGILENT_TO_UIMF_RUNTIME_MINUTES * 60;
-                bool bSuccess = CmdRunner.RunProgram(exePath, CmdStr, "AgilentToUIMFConverter", true, iMaxRuntimeSeconds);
+                success = CmdRunner.RunProgram(exePath, cmdStr, "AgilentToUIMFConverter", true, iMaxRuntimeSeconds);
 
                 ParseConsoleOutputFileForErrors(consoleOutputFilePath);
 
@@ -281,7 +279,7 @@ namespace DatasetIntegrityPlugin
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception deleting locally cached .D folder (" + dotDFolderPathLocal + "): " + ex.Message);
                 }
 
-                if (!bSuccess)
+                if (!success)
                 {
                     mRetData.CloseoutMsg = "Error running the AgilentToUIMFConverter";
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg);
@@ -301,48 +299,15 @@ namespace DatasetIntegrityPlugin
                 Thread.Sleep(100);
 
                 // Copy the .UIMF file to the dataset folder
-                var fiUIMF = new FileInfo(uimfOutputFilePath);
-                if (!fiUIMF.Exists)
+
+                success = CopyUIMFToDatasetFolder(oFileTools, mgrName, datasetFolderPath);
+                if (!success)
                 {
-                    mRetData.CloseoutMsg = "AgilentToUIMFConverter did not create a .UIMF file";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg + ": " + uimfOutputFilePath);
                     return false;
                 }
 
-                if (m_DebugLevel >= 4)
-                {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying .UIMF file to the dataset folder");
-                }
-
-                string targetFilePath = Path.Combine(datasetFolderPath, fiUIMF.Name);
-                oFileTools.CopyFileUsingLocks(fiUIMF.FullName, targetFilePath, mgrName, Overwrite: true);
-
-                if (m_DebugLevel >= 4)
-                {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copy complete");
-                }
-
-                try
-                {
-                    // Delete the local copy
-                    fiUIMF.Delete();
-                }
-                catch (Exception ex)
-                {
-                    // Do not treat this as a fatal error
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception deleting local copy of the new .UIMF file " + fiUIMF.FullName + ": " + ex.Message);
-                }
-
-                try
-                {
-                    // Delete the console output file
-                    File.Delete(consoleOutputFilePath);
-                }
-                // ReSharper disable once EmptyGeneralCatchClause
-                catch
-                {
-                    // Do not treat this as a fatal error
-                }
+                // Delete the console output file
+                base.DeleteFileIgnoreErrors(consoleOutputFilePath);
 
             }
             catch (Exception ex)
@@ -359,6 +324,92 @@ namespace DatasetIntegrityPlugin
             return true;
         }
 
+        private bool CopyDotDFolderToLocal(PRISM.Files.clsFileTools oFileTools,string datasetFolderPath, string dotDFolderPathLocal)
+        {
+            var dotDFolderPathRemote = new DirectoryInfo(Path.Combine(datasetFolderPath, m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION));
+
+            // Make sure the .D folder has the required files
+            // Older datasets may have had their larger files purged, which will cause the AgilentToUIMFConverter to fail
+
+            var binFiles = dotDFolderPathRemote.GetFiles("*.bin", SearchOption.AllDirectories).ToList();
+            var fileNames = new SortedSet<string>(StringComparer.CurrentCultureIgnoreCase);
+
+            foreach (var file in binFiles)
+                fileNames.Add(file.Name);
+
+            var requiredFiles = new List<string>
+            {
+                "IMSFrame.bin",
+                "MSPeak.bin",
+                "MSPeriodicActuals.bin",
+                "MSProfile.bin",
+                "MSScan.bin"
+            };
+
+            // Construct a list of the missing files
+            var missingFiles = requiredFiles.Where(requiredFile => !fileNames.Contains(requiredFile)).ToList();
+
+            var errorMessage = string.Empty;
+            if (missingFiles.Count == 1)
+                errorMessage = "Cannot convert .D to .UIMF; missing file " + missingFiles.First();
+
+            if (missingFiles.Count > 1)
+                errorMessage = "Cannot convert .D to .UIMF; missing files " + string.Join(", ", missingFiles);
+
+            if (errorMessage.Length > 0)
+            {
+                mRetData.CloseoutMsg = errorMessage;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg);
+                return false;
+            }
+
+            // Copy the dataset folder locally using Prism.DLL
+            // Note that lock files will be used when copying large files (over 20 MB)
+          
+            oFileTools.CopyDirectory(dotDFolderPathRemote.FullName, dotDFolderPathLocal, true);
+
+            return true;
+        }
+
+        private bool CopyUIMFToDatasetFolder(PRISM.Files.clsFileTools oFileTools, string mgrName, string datasetFolderPath)
+        {
+
+            var fiUIMF = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION));
+
+            if (!fiUIMF.Exists)
+            {
+                mRetData.CloseoutMsg = "AgilentToUIMFConverter did not create a .UIMF file";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg + ": " + fiUIMF.FullName);
+                return false;
+            }
+
+            if (m_DebugLevel >= 4)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying .UIMF file to the dataset folder");
+            }
+
+            string targetFilePath = Path.Combine(datasetFolderPath, fiUIMF.Name);
+            oFileTools.CopyFileUsingLocks(fiUIMF.FullName, targetFilePath, mgrName, Overwrite: true);
+
+            if (m_DebugLevel >= 4)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copy complete");
+            }
+
+            try
+            {
+                // Delete the local copy
+                fiUIMF.Delete();
+            }
+            catch (Exception ex)
+            {
+                // Do not treat this as a fatal error
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception deleting local copy of the new .UIMF file " + fiUIMF.FullName + ": " + ex.Message);
+            }
+         
+            return true;
+        }
+     
         /// <summary>
         /// Processes folders in folderList to compare the x_ folder to the non x_ folder
         /// If the x_ folder is empty or if every file in the x_ folder is also in the non x_ folder, then returns True and optionally deletes the x_ folder

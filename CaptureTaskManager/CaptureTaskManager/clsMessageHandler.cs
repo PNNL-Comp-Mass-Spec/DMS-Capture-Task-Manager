@@ -5,9 +5,9 @@
 // Copyright 2009, Battelle Memorial Institute
 // Created 06/26/2009
 //
-// Last modified 06/26/2009
 //*********************************************************************************************************
 using System;
+using System.Collections.Generic;
 using Apache.NMS;
 using Apache.NMS.ActiveMQ;
 using Apache.NMS.ActiveMQ.Commands;
@@ -81,35 +81,66 @@ namespace CaptureTaskManager
 		#endregion
 
 		#region "Methods"
+
 		/// <summary>
-		/// create set of NMS connection objects necessary to talk to the ActiveMQ broker
+		/// Create set of NMS connection objects necessary to talk to the ActiveMQ broker
 		/// </summary>
-		protected void CreateConnection()
+		/// <param name="retryCount">Number of times to try the connection</param>
+        /// <param name="timeoutSeconds">Number of seconds to wait for the broker to respond</param>
+        protected void CreateConnection(int retryCount = 2, int timeoutSeconds = 15)
 		{
 			if (m_HasConnection) return;
-			try
-			{
-				IConnectionFactory connectionFactory = new ConnectionFactory(this.m_BrokerUri);
-				this.m_Connection = connectionFactory.CreateConnection();
-				this.m_Connection.RequestTimeout = new System.TimeSpan(0, 0, 15);
-				this.m_Connection.Start();
+            
+		    if (retryCount < 0)
+		        retryCount = 0;
 
-				this.m_HasConnection = true;
-				// temp debug
-				// Console.WriteLine("--- New connection made ---" + Environment.NewLine); //+ e.ToString()
-				string msg = "Connected to broker";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-			}
-			catch (Exception Ex)
-			{
-				// we couldn't make a viable set of connection objects 
-				// - this has "long day" written all over it,
-				// but we don't have to do anything specific at this point (except eat the exception)
+            int retriesRemaining = retryCount;
 
-				// Console.WriteLine("=== Error creating connection ===" + Environment.NewLine); //+ e.ToString() // temp debug
-				string msg = "Exception creating broker connection";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, Ex);
-			}
+		    if (timeoutSeconds < 5)
+		        timeoutSeconds = 5;
+
+		    var errorList = new List<string>();
+
+            while (retriesRemaining >= 0)
+		    {
+		        try
+		        {
+		            IConnectionFactory connectionFactory = new ConnectionFactory(this.m_BrokerUri);
+		            this.m_Connection = connectionFactory.CreateConnection();
+		            this.m_Connection.RequestTimeout = new System.TimeSpan(0, 0, timeoutSeconds);
+		            this.m_Connection.Start();
+
+		            this.m_HasConnection = true;
+		            // temp debug
+		            // Console.WriteLine("--- New connection made ---" + Environment.NewLine); //+ e.ToString()
+
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Connected to broker");
+                    return;
+
+		        }
+		        catch (Exception ex)
+		        {
+		            // Connection failed
+		            if (!errorList.Contains(ex.Message))
+		                errorList.Add(ex.Message);
+
+                    // Sleep for 3 seconds
+		            System.Threading.Thread.Sleep(3000);
+		        }
+
+                retriesRemaining -= 1;
+		    }
+
+            // If we get here, we never could connect to the message broker
+
+		    var msg = "Exception creating broker connection";
+		    if (retryCount > 0)
+		        msg += " after " + (retryCount + 1) + " attempts";
+
+            msg += ": " + string.Join("; ", errorList);
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+
 		}
 
 		/// <summary>
