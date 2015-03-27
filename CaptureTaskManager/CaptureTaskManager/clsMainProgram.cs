@@ -25,12 +25,6 @@ namespace CaptureTaskManager
 		//**********************************************************************************************************
 
 		#region "Enums"
-		private enum BroadcastCmdType
-		{
-			Shutdown,
-			ReadConfig,
-			Invalid
-		}
 
 		private enum LoopExitCode
 		{
@@ -1143,11 +1137,11 @@ namespace CaptureTaskManager
 
 				}
 				else
-				{					
-					ErrorMessage = "Error validating dataset storage free drive space (GetDiskFreeSpaceEx returned false): " + datasetStoragePath;
+				{
+                    ErrorMessage = "Error validating dataset storage free drive space: " + datasetStoragePath + " (GetDiskFreeSpaceEx returned false)";
 					if (Environment.MachineName.ToUpper().StartsWith("MONROE"))
 					{
-						Console.WriteLine("Warning: " + ErrorMessage);
+						Console.WriteLine(@"Warning: " + ErrorMessage);
 						return true;
 					}
 

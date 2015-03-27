@@ -29,7 +29,8 @@ namespace DatasetIntegrityPlugin
 
         #region "Constants"
         const float RAW_FILE_MIN_SIZE_KB = 100;
-        const float RAW_FILE_MAX_SIZE_MB = 2048;
+        const float RAW_FILE_MAX_SIZE_MB_LTQ = 2048;
+        const float RAW_FILE_MAX_SIZE_MB_ORBITRAP = 100000;
         const float BAF_FILE_MIN_SIZE_KB = 16;
         const float SER_FILE_MIN_SIZE_KB = 16;
         const float FID_FILE_MIN_SIZE_KB = 16;
@@ -324,7 +325,7 @@ namespace DatasetIntegrityPlugin
             return true;
         }
 
-        private bool CopyDotDFolderToLocal(PRISM.Files.clsFileTools oFileTools,string datasetFolderPath, string dotDFolderPathLocal)
+        private bool CopyDotDFolderToLocal(PRISM.Files.clsFileTools oFileTools, string datasetFolderPath, string dotDFolderPathLocal)
         {
             var dotDFolderPathRemote = new DirectoryInfo(Path.Combine(datasetFolderPath, m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION));
 
@@ -365,7 +366,7 @@ namespace DatasetIntegrityPlugin
 
             // Copy the dataset folder locally using Prism.DLL
             // Note that lock files will be used when copying large files (over 20 MB)
-          
+
             oFileTools.CopyDirectory(dotDFolderPathRemote.FullName, dotDFolderPathLocal, true);
 
             return true;
@@ -406,10 +407,10 @@ namespace DatasetIntegrityPlugin
                 // Do not treat this as a fatal error
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception deleting local copy of the new .UIMF file " + fiUIMF.FullName + ": " + ex.Message);
             }
-         
+
             return true;
         }
-     
+
         /// <summary>
         /// Processes folders in folderList to compare the x_ folder to the non x_ folder
         /// If the x_ folder is empty or if every file in the x_ folder is also in the non x_ folder, then returns True and optionally deletes the x_ folder
@@ -676,6 +677,10 @@ namespace DatasetIntegrityPlugin
 
         private void ReportFileSizeTooSmall(string sDataFileDescription, string sFilePath, float fActualSizeKB, float fMinSizeKB)
         {
+            // Example messages:
+            // Data file size is less than 100 KB
+            // ser file size is less than 16 KB
+
             string sMinSize = fMinSizeKB.ToString("#0") + " KB";
 
             string msg = sDataFileDescription + " file may be corrupt. Actual file size is " +
@@ -878,7 +883,7 @@ namespace DatasetIntegrityPlugin
         /// <returns>Enum indicating success or failure</returns>
         private EnumCloseOutType TestFinniganIonTrapFile(string dataFileNamePath)
         {
-            return TestThermoRawFile(dataFileNamePath, RAW_FILE_MIN_SIZE_KB, RAW_FILE_MAX_SIZE_MB);
+            return TestThermoRawFile(dataFileNamePath, RAW_FILE_MIN_SIZE_KB, RAW_FILE_MAX_SIZE_MB_LTQ, true);
         }
 
         /// <summary>
@@ -888,7 +893,7 @@ namespace DatasetIntegrityPlugin
         /// <returns>Enum indicating success or failure</returns>
         private EnumCloseOutType TestLTQFTFile(string dataFileNamePath)
         {
-            return TestThermoRawFile(dataFileNamePath, RAW_FILE_MIN_SIZE_KB, 100000);
+            return TestThermoRawFile(dataFileNamePath, RAW_FILE_MIN_SIZE_KB, RAW_FILE_MAX_SIZE_MB_ORBITRAP, false);
         }
 
         /// <summary>
@@ -898,7 +903,7 @@ namespace DatasetIntegrityPlugin
         /// <returns>Enum indicating success or failure</returns>
         private EnumCloseOutType TestThermoExactiveFile(string dataFileNamePath)
         {
-            return TestThermoRawFile(dataFileNamePath, RAW_FILE_MIN_SIZE_KB, 100000);
+            return TestThermoRawFile(dataFileNamePath, RAW_FILE_MIN_SIZE_KB, RAW_FILE_MAX_SIZE_MB_ORBITRAP, false);
         }
 
         /// <summary>
@@ -908,7 +913,7 @@ namespace DatasetIntegrityPlugin
         /// <returns>Enum indicating success or failure</returns>
         private EnumCloseOutType TestTripleQuadFile(string dataFileNamePath)
         {
-            return TestThermoRawFile(dataFileNamePath, RAW_FILE_MIN_SIZE_KB, 100000);
+            return TestThermoRawFile(dataFileNamePath, RAW_FILE_MIN_SIZE_KB, RAW_FILE_MAX_SIZE_MB_ORBITRAP, true);
         }
 
         /// <summary>
@@ -918,8 +923,12 @@ namespace DatasetIntegrityPlugin
         /// <param name="dataFileNamePath">Fully qualified path to dataset file</param>
         /// <param name="minFileSizeKB">Minimum allowed file size</param>
         /// <param name="maxFileSizeMB">Maximum allowed file size</param>
+        /// <param name="openRawFileIfTooSmall">
+        /// When true, if the file is less than minFileSizeKB, we try to open it with the ThermoRawFileReaderDLL
+        /// If we can successfully open the file and get the first scan's data, then we declare the file to be valid
+        /// </param>
         /// <returns></returns>
-        private EnumCloseOutType TestThermoRawFile(string dataFileNamePath, float minFileSizeKB, float maxFileSizeMB)
+        private EnumCloseOutType TestThermoRawFile(string dataFileNamePath, float minFileSizeKB, float maxFileSizeMB, bool openRawFileIfTooSmall)
         {
             // Verify file exists in storage folder
             if (!File.Exists(dataFileNamePath))
@@ -939,9 +948,10 @@ namespace DatasetIntegrityPlugin
                         mRetData.EvalMsg = "Raw file not found, but ." + altExtension + " file exists";
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, mRetData.EvalMsg);
                         minFileSizeKB = 25;
-                        maxFileSizeMB = 100000;
+                        maxFileSizeMB = RAW_FILE_MAX_SIZE_MB_ORBITRAP;
                         dataFileNamePath = dataFileNamePathAlt;
                         bAlternateFound = true;
+                        openRawFileIfTooSmall = false;
                         break;
                     }
                 }
@@ -960,8 +970,45 @@ namespace DatasetIntegrityPlugin
             // Check min size
             if (dataFileSizeKB < minFileSizeKB)
             {
-                ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSizeKB, minFileSizeKB);
-                return EnumCloseOutType.CLOSEOUT_FAILED;
+                bool validFile = false;
+
+                if (openRawFileIfTooSmall)
+                {
+
+                    try
+                    {
+                        var reader = new ThermoRawFileReaderDLL.FinniganFileIO.XRawFileIO();
+                        reader.OpenRawFile(dataFileNamePath);
+
+                        var scanCount = reader.GetNumScans();
+
+                        if (scanCount > 0)
+                        {
+                            double[,] massIntensityPairs;
+
+                            var dataCount = reader.GetScanData2D(1, out massIntensityPairs);
+
+                            if (dataCount > 0)
+                            {
+                                validFile = true;
+                            }
+
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception opening .Raw file: " + ex.Message);
+                        validFile = false;
+                    }
+
+                }
+
+                if (!validFile)
+                {
+                    ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSizeKB, minFileSizeKB);
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+
             }
 
             // Check max size
@@ -1123,6 +1170,7 @@ namespace DatasetIntegrityPlugin
         private EnumCloseOutType TestBrukerFT_Folder(string datasetFolderPath, bool requireBAFFile, bool requireMCFFile, clsInstrumentClassInfo.eInstrumentClass instrumentClass, string instrumentName)
         {
             float dataFileSizeKB;
+            float bafFileSizeKB = 0;
 
             // Verify only one .D folder in dataset
             var diDatasetFolder = new DirectoryInfo(datasetFolderPath);
@@ -1186,6 +1234,7 @@ namespace DatasetIntegrityPlugin
                     ReportFileSizeTooSmall("Analysis.baf", lstBafFile.First().FullName, dataFileSizeKB, BAF_FILE_MIN_SIZE_KB);
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
+                bafFileSizeKB = dataFileSizeKB;
             }
 
 
@@ -1270,6 +1319,10 @@ namespace DatasetIntegrityPlugin
                     if (instrumentName != "15T_FTICR")
                     {
                         mRetData.EvalMsg = "Invalid dataset. No ser or fid file found";
+                        if (bafFileSizeKB > 0 && bafFileSizeKB < 100)
+                        {
+                            mRetData.EvalMsg += "; additionally, the analysis.baf file is quite small";
+                        }
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
                         return EnumCloseOutType.CLOSEOUT_FAILED;
                     }
