@@ -19,7 +19,7 @@ namespace ArchiveVerifyPlugin
 		#region "Constants and Enums"
 		protected const string MD5_RESULTS_FILE_PREFIX = "results.";
 		protected const string DEFAULT_MD5_RESULTS_FOLDER_PATH = @"\\proto-7\MD5Results";
-		protected const string DEFAULT_MD5_RESULTS_BACKUP_FOLDER_PATH = @"\\proto-3\MD5ResultsBackup";
+		protected const string DEFAULT_MD5_RESULTS_BACKUP_FOLDER_PATH = @"\\proto-5\MD5ResultsBackup";
 
 		#endregion
 

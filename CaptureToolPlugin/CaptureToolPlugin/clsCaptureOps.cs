@@ -1149,7 +1149,7 @@ namespace CaptureToolPlugin
 			if (sourceType == RawDSTypes.None)
 			{
 				// No dataset file or folder found
-				retData.CloseoutMsg = "Dataset data file not found";
+                retData.CloseoutMsg = "Dataset data file not found at " + sourceFolderPath;
                 msg = retData.CloseoutMsg + ": " + datasetName;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 				sourceIsValid = false;
