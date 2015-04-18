@@ -24,9 +24,10 @@ namespace CaptureTaskManager
 		#endregion
 
 		#region "Methods"
-		string GetParam(string ItemKey);
-		string GetParam(string ItemKey, string valueIfMissing);
-		void SetParam(string ItemKey, string ItemValue);
+        bool GetBooleanParam(string itemKey);
+		string GetParam(string itemKey);
+		string GetParam(string itemKey, string valueIfMissing);
+		void SetParam(string itemKey, string itemValue);
 
         bool LoadMgrSettingsFromDB();
 		bool LoadMgrSettingsFromDB(bool logConnectionErrors);

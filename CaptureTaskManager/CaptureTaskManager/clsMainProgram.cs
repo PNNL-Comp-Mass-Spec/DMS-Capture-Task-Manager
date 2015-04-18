@@ -74,7 +74,9 @@ namespace CaptureTaskManager
 		private System.Timers.Timer m_StatusTimer;
 		private DateTime m_DurationStart;
 		private bool m_ManagerDeactivatedLocally;
-		
+
+        private bool m_TraceMode;
+
 		#endregion
 
 		#region "Delegates"
@@ -96,9 +98,9 @@ namespace CaptureTaskManager
 		/// <summary>
 		/// Constructor
 		/// </summary>
-		public clsMainProgram()
+		public clsMainProgram(bool traceMode)
 		{
-			// Does nothing at present
+            m_TraceMode = traceMode;
 		}
 		#endregion
 
@@ -252,6 +254,8 @@ namespace CaptureTaskManager
 			//  that "UsingDefaults" is set to False in CaptureTaskManager.exe.config               
 			try
 			{
+                if (m_TraceMode) clsUtilities.VerifyFolder("clsMainProgram.InitMgr, A");
+
 				m_MgrSettings = new clsMgrSettings();
 			}
 			catch (Exception ex)
@@ -395,6 +399,9 @@ namespace CaptureTaskManager
 													"Exception readining status history file", ex);
 				}
 			}
+
+            if (m_TraceMode) clsUtilities.VerifyFolder("clsMainProgram.InitMgr, B");
+
 			// Everything worked!
 			return true;
 		}
@@ -541,6 +548,8 @@ namespace CaptureTaskManager
 						RemoveOldFTPLogFiles();
 					}
 
+                    if (m_TraceMode) clsUtilities.VerifyFolder("clsMainProgram.PerformMainLoop");
+
 					// Attempt to get a capture task
 					EnumRequestTaskResult taskReturn = m_Task.RequestTask();
 					switch (taskReturn)
@@ -674,6 +683,8 @@ namespace CaptureTaskManager
 					m_StatusFile.UpdateIdle();
 					return;
 				}
+
+                if (m_TraceMode) clsUtilities.VerifyFolder("clsMainProgram.PerformTask");
 
 				// Run the tool plugin
 				m_DurationStart = DateTime.UtcNow;
@@ -943,6 +954,10 @@ namespace CaptureTaskManager
     m_Task.AddAdditionalParameter("DebugTestTar", "true");
 	clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Adding job parameter DebugTestTar=true");
 #endif
+                if (m_TraceMode)
+                {
+                    m_MgrSettings.SetParam("TraceMode", "True");
+                }
 
 				// Setup the new tool runner
 				m_CapTool.Setup(m_MgrSettings, m_Task, m_StatusFile);

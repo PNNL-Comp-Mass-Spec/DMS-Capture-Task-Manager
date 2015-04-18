@@ -8,6 +8,7 @@
 // Last modified 09/10/2009
 //*********************************************************************************************************
 using System;
+using System.IO;
 
 namespace CaptureTaskManager
 {
@@ -17,10 +18,11 @@ namespace CaptureTaskManager
 		// Application startup program
 		//**********************************************************************************************************
 
-		private const string PROGRAM_DATE = "April 30, 2014";
+		private const string PROGRAM_DATE = "April 17, 2015";
 
 		private static bool mCodeTestMode;
 		private static bool mCreateEventLog;
+        private static bool mTraceMode;
 
 		#region "Methods"
 
@@ -65,67 +67,66 @@ namespace CaptureTaskManager
 				{
 					Console.WriteLine("Exception calling clsCodeTest: " + ex.Message);
 				}
+                return;
 
 			}
-			else
+			// Initiate automated analysis
+
+			do
 			{
-				// Initiate automated analysis
-
-				do
+				try
 				{
-					try
+                    if (mTraceMode) clsUtilities.VerifyFolder("Program.Main");
+                 
+					//Initialize the main execution class
+                    var oMainProgram = new clsMainProgram(mTraceMode);
+					bool mgrInitSuccess = oMainProgram.InitMgr();
+					if (!mgrInitSuccess)
 					{
-						//Initialize the main execution class
-						var oMainProgram = new clsMainProgram();
-						bool mgrInitSuccess = oMainProgram.InitMgr();
-						if (!mgrInitSuccess)
-						{
-							restart = false;
-						}
-
-						if (mCreateEventLog && (mgrInitSuccess || (!mgrInitSuccess && oMainProgram.ManagerDeactivatedLocally)))
-						{
-							oMainProgram.PostTestLogMessage();
-							restart = false;
-						}
-						else
-						{
-							if (mgrInitSuccess)
-								restart = oMainProgram.PerformMainLoop();
-						}
-
-						oMainProgram = null;
+						restart = false;
 					}
-					catch (System.Security.SecurityException ex)
+
+					if (mCreateEventLog && (mgrInitSuccess || (!mgrInitSuccess && oMainProgram.ManagerDeactivatedLocally)))
 					{
-						const string errMsg = "Security exception";
-
-						Console.WriteLine();
-						Console.WriteLine(@"===============================================================");
-						Console.WriteLine(errMsg + @": " + ex.Message);
-						Console.WriteLine(@"===============================================================");
-						Console.WriteLine();
-						Console.WriteLine(@"You may need to start this application once from an elevated (administrative level) command prompt using the /EL switch so that it can create the " + clsMainProgram.CUSTOM_LOG_NAME + @" application log");
-						Console.WriteLine();
+						oMainProgram.PostTestLogMessage();
+						restart = false;
 					}
-					catch (Exception ex)
+					else
 					{
-						const string errMsg = "Critical exception starting application";
-
-						Console.WriteLine();
-						Console.WriteLine(@"===============================================================");
-						Console.WriteLine(errMsg + @": " + ex.Message);
-						Console.WriteLine(@"===============================================================");
-						Console.WriteLine();
-
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.FATAL, errMsg, ex);
-						System.Threading.Thread.Sleep(500);
-
-						return;
+						if (mgrInitSuccess)
+							restart = oMainProgram.PerformMainLoop();
 					}
-				} while (restart);
 
-			}
+					oMainProgram = null;
+				}
+				catch (System.Security.SecurityException ex)
+				{
+					const string errMsg = "Security exception";
+
+					Console.WriteLine();
+					Console.WriteLine(@"===============================================================");
+					Console.WriteLine(errMsg + @": " + ex.Message);
+					Console.WriteLine(@"===============================================================");
+					Console.WriteLine();
+					Console.WriteLine(@"You may need to start this application once from an elevated (administrative level) command prompt using the /EL switch so that it can create the " + clsMainProgram.CUSTOM_LOG_NAME + @" application log");
+					Console.WriteLine();
+				}
+				catch (Exception ex)
+				{
+					const string errMsg = "Critical exception starting application";
+
+					Console.WriteLine();
+					Console.WriteLine(@"===============================================================");
+					Console.WriteLine(errMsg + @": " + ex.Message);
+					Console.WriteLine(@"===============================================================");
+					Console.WriteLine();
+
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.FATAL, errMsg, ex);
+					System.Threading.Thread.Sleep(500);
+
+					return;
+				}
+			} while (restart);
 
 		}
 
@@ -134,7 +135,7 @@ namespace CaptureTaskManager
 			// Returns True if no problems; otherwise, returns false
 
 			string strValue = string.Empty;
-			var strValidParameters = new string[] { "T", "EL", "Test" };
+			var strValidParameters = new string[] { "T", "EL", "Test", "Trace" };
 
 			try
 			{
@@ -161,6 +162,10 @@ namespace CaptureTaskManager
 					mCreateEventLog = true;
 				}
 
+                if (objParseCommandLine.IsParameterPresent("Trace"))
+                {
+                    mTraceMode = true;
+                }
 
 				return true;
 			}
@@ -187,6 +192,8 @@ namespace CaptureTaskManager
 				Console.WriteLine();
 				Console.WriteLine(@"Use /T to start the program in code test mode.");
 				Console.WriteLine();
+                Console.WriteLine(@"Use /Trace to enable trace mode");
+                Console.WriteLine();
 
 				Console.WriteLine(@"Program written by Dave Clark and Matthew Monroe for the Department of Energy (PNNL, Richland, WA)");
 				Console.WriteLine();
@@ -208,9 +215,8 @@ namespace CaptureTaskManager
 				Console.WriteLine("Error displaying the program syntax: " + ex.Message);
 			}
 
-		}
-
+		}        
 
 		#endregion
-	}	// End class
+	}
 }	// End namespace

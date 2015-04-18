@@ -407,37 +407,59 @@ namespace CaptureTaskManager
 
 			return success;
 		}
-		public string GetParam(string ItemKey)
+
+
+        /// <summary>
+        /// Lookup the value of a boolean parameter
+        /// </summary>
+        /// <param name="itemKey"></param>
+        /// <returns>True/false for the given parameter; false if the parameter is not present</returns>
+        public bool GetBooleanParam(string itemKey)
+        {
+            string itemValue = GetParam(itemKey, string.Empty);
+
+            if (string.IsNullOrWhiteSpace(itemValue))
+                return false;
+
+            bool itemBool;
+            if (bool.TryParse(itemValue, out itemBool))
+                return itemBool;
+
+            return false;
+
+        }
+
+		public string GetParam(string itemKey)
 		{
-			return GetParam(ItemKey, string.Empty);
+			return GetParam(itemKey, string.Empty);
 		}
 
 		/// <summary>
 		/// Gets a stored parameter
 		/// </summary>
-        /// <param name="ItemKey">Parameter name</param>
+        /// <param name="itemKey">Parameter name</param>
 		/// <param name="valueIfMissing">Value to return if the parameter does not exist</param>
 		/// <returns>Parameter value if found, otherwise empty string</returns>
-		public string GetParam(string ItemKey, string valueIfMissing)
+		public string GetParam(string itemKey, string valueIfMissing)
 		{
-			string ItemValue;
-			if (m_ParamDictionary.TryGetValue(ItemKey, out ItemValue))
+			string itemValue;
+			if (m_ParamDictionary.TryGetValue(itemKey, out itemValue))
 			{
-				return ItemValue ?? string.Empty;
+				return itemValue ?? string.Empty;
 			}
 		    
             return valueIfMissing ?? string.Empty;
 		}
 
-		public void SetParam(string ItemKey, string ItemValue)
+		public void SetParam(string itemKey, string itemValue)
 		{
-			if (m_ParamDictionary.ContainsKey(ItemKey))
+			if (m_ParamDictionary.ContainsKey(itemKey))
 			{
-				m_ParamDictionary[ItemKey] = ItemValue;
+				m_ParamDictionary[itemKey] = itemValue;
 			}
 			else
 			{
-				m_ParamDictionary.Add(ItemKey, ItemValue);
+				m_ParamDictionary.Add(itemKey, itemValue);
 			}
 		}
 

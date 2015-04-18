@@ -55,7 +55,7 @@ namespace CaptureToolPlugin
 		#region "Class variables"
 
 		private readonly IMgrParams m_MgrParams;
-		private int m_SleepInterval = 30;
+		private int m_SleepInterval;
 
 		// True means MgrParam "perspective" =  "client" which means we will use paths like \\proto-5\Exact04\2012_1
 		// False means MgrParam "perspective" = "server" which means we use paths like E:\Exact04\2012_1
@@ -105,6 +105,8 @@ namespace CaptureToolPlugin
 		{
 			m_MgrParams = mgrParams;
 
+            if (m_MgrParams.GetBooleanParam("TraceMode")) clsUtilities.VerifyFolder("CaptureToolPlugin.clsCaptureOps.Constructor, A");
+          
 			//Get client/server perspective
 			// True means MgrParam "perspective" =  "client" which means we will use paths like \\proto-5\Exact04\2012_1
 			// False means MgrParam "perspective" = "server" which means we use paths like E:\Exact04\2012_1
@@ -118,7 +120,7 @@ namespace CaptureToolPlugin
 				m_ClientServer = false;
 			}
 
-			//Setup for BioNet use, if applicable
+			// Setup for BioNet use, if applicable
 			m_UseBioNet = useBioNet;
 			if (m_UseBioNet)
 			{
@@ -133,7 +135,7 @@ namespace CaptureToolPlugin
 			}
 
 			//Sleep interval for "is dataset complete" testing
-			m_SleepInterval = int.Parse(m_MgrParams.GetParam("sleepinterval"));
+			m_SleepInterval = int.Parse(m_MgrParams.GetParam("sleepinterval", "30"));
 
 			// Instantiate m_FileTools
 			m_FileTools = new clsFileTools(m_MgrParams.GetParam("MgrName", "CaptureTaskManager"), 1);
@@ -147,7 +149,7 @@ namespace CaptureToolPlugin
 				m_FileTools.ResumingFileCopy += OnResumingFileCopy;
 			}
 
-
+            if (m_MgrParams.GetBooleanParam("TraceMode")) clsUtilities.VerifyFolder("CaptureToolPlugin.clsCaptureOps.Constructor, B");
 		}
 
 		#endregion
@@ -666,9 +668,14 @@ namespace CaptureToolPlugin
 
             var datasetInfo = new clsDatasetInfo(DSName);
 
+            var diSourceFolder = new DirectoryInfo(InstFolder);
+
 			// Verify that the instrument transfer folder exists
-			if (!Directory.Exists(InstFolder))
+            if (!diSourceFolder.Exists)
 			{
+                var msg = "Source folder not found: [" + diSourceFolder.FullName + "]";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+
 				datasetInfo.DatasetType = RawDSTypes.None;
 				return datasetInfo;
 			}
@@ -969,8 +976,8 @@ namespace CaptureToolPlugin
             if ((computerName.ToUpper() == "MONROE3") && datasetName == "2014_10_14_SRFAI-20ppm_Neg_15T_TOF0p65_IAT0p05_144scans_8M_000001")
 			{
                 // Override sourceVol, sourcePath, and m_UseBioNet when processing 2014_10_14_SRFAI-20ppm_Neg_15T_TOF0p65_IAT0p05_144scans_8M_000001 on Monroe3
-				sourceVol = "\\\\protoapps\\";
-				sourcePath = "userdata\\Matt\\";
+				sourceVol = @"\\protoapps\";
+				sourcePath = @"userdata\Matt\";
 				m_UseBioNet = false;
 				m_SleepInterval = 2;
 			}
@@ -1093,6 +1100,8 @@ namespace CaptureToolPlugin
 				}
 			}
 
+            if (m_MgrParams.GetBooleanParam("TraceMode")) clsUtilities.VerifyFolder("CaptureToolPlugin.clsCaptureOps.DoOperation, A");
+
 			// Construct the path to the dataset on the instrument
 			// Determine if source dataset exists, and if it is a file or a folder
 			string sourceFolderPath = Path.Combine(sourceVol, sourcePath);
@@ -1100,7 +1109,7 @@ namespace CaptureToolPlugin
 			// Connect to Bionet if necessary
 			if (m_UseBioNet)
 			{
-				msg = "Bionet connection required";
+                msg = "Bionet connection required for " + sourceVol;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 				EnumCloseOutType eCloseoutType;
@@ -1123,7 +1132,7 @@ namespace CaptureToolPlugin
 			}
 			else
 			{
-				msg = "Bionet connection not required";
+                msg = "Bionet connection not required for " + sourceVol;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 			}
 
@@ -1142,6 +1151,8 @@ namespace CaptureToolPlugin
 				sourceType = datasetInfo.DatasetType;
 			}
 
+            if (m_MgrParams.GetBooleanParam("TraceMode")) clsUtilities.VerifyFolder("CaptureToolPlugin.clsCaptureOps.DoOperation, B");
+
 			// Set the closeout type to Failed for now
 			retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 			bool sourceIsValid;
@@ -1149,7 +1160,12 @@ namespace CaptureToolPlugin
 			if (sourceType == RawDSTypes.None)
 			{
 				// No dataset file or folder found
-                retData.CloseoutMsg = "Dataset data file not found at " + sourceFolderPath;
+                
+                if (m_UseBioNet)
+                    retData.CloseoutMsg = "Dataset data file not found on Bionet at " + sourceFolderPath;
+                else
+                    retData.CloseoutMsg = "Dataset data file not found at " + sourceFolderPath;
+
                 msg = retData.CloseoutMsg + ": " + datasetName;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 				sourceIsValid = false;
@@ -1250,7 +1266,7 @@ namespace CaptureToolPlugin
 				if (bCopyWithResume)
 				{
 					var fiSourceFile = new FileInfo(sourceFilePath);
-					bool bResumed = false;
+					bool bResumed;
 
 					bSuccess = m_FileTools.CopyFileWithResume(fiSourceFile, targetFilePath, out bResumed);
 				}
@@ -1639,7 +1655,8 @@ namespace CaptureToolPlugin
             try
             {
                 var fileList = Directory.GetFiles(copySourceDir, searchSpec, SearchOption.AllDirectories).ToList();
-                foreach (string fileName in fileList)
+             
+                foreach (var fileName in fileList)
                 {
                     filesToSkip.Add(Path.GetFileName(fileName));
                 }
@@ -1955,7 +1972,7 @@ namespace CaptureToolPlugin
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Test folder " + sDir + " against RegEx " + reMaldiSpotFolder);
 
 					string sDirName = Path.GetFileName(sDir);
-					if (!reMaldiSpotFolder.IsMatch(sDirName, 0))
+					if (sDirName != null && !reMaldiSpotFolder.IsMatch(sDirName, 0))
 					{
 						retData.CloseoutMsg = "Dataset folder contains multiple subfolders, but folder " + sDirName + " does not match the expected pattern";
 						msg = retData.CloseoutMsg + " (" + reMaldiSpotFolder + "); see " + copySourceDir;

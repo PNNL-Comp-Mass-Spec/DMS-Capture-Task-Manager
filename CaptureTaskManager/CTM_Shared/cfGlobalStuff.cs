@@ -146,7 +146,7 @@ namespace CaptureTaskManager
 
             return strPath;
         }
-
+        
     }
 
     public class clsErrors
@@ -273,5 +273,32 @@ namespace CaptureTaskManager
 
         }
 
+        public static void VerifyFolder(string callingFunction)
+        {
+            VerifyFolder(callingFunction, @"\\Proto-2.emsl.pnl.gov\External_Orbitrap_Xfer\");
+        }
+
+        public static void VerifyFolder(string callingFunction, string pathToCheck)
+        {
+            try
+            {
+                var diSourceFolder = new DirectoryInfo(pathToCheck);
+                string msg = string.Empty;
+
+                if (diSourceFolder.Exists)
+                    msg = "Folder exists [" + pathToCheck + "]; called from " + callingFunction;
+                else
+                    msg = "Folder not found [" + pathToCheck + "]; called from " + callingFunction;
+
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+
+                Console.WriteLine(msg);
+
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Exception in VerifyFolder", ex);
+            }
+        }
     }
 }
