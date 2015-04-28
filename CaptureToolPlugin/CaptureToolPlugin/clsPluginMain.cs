@@ -88,7 +88,7 @@ namespace CaptureToolPlugin
 				}
 				catch (Exception ex)
 				{
-					msg = "clsPluginMain.RunTool(): Exception during capture operation";
+                    msg = "clsPluginMain.RunTool(): Exception during capture operation (useBionet=" + useBionet + ")";
 					if (ex.Message.Contains("unknown user name or bad password")) 
 					{
 						// This error randomly occurs; no need to log a full stack trace

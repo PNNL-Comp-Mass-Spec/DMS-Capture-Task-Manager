@@ -83,7 +83,7 @@ namespace SrcFileRenamePlugin
 			}
 			catch (Exception ex)
 			{
-				msg = "clsPluginMain.RunTool(): Exception during rename operation";
+                msg = "clsPluginMain.RunTool(): Exception during rename operation (useBionet=" + useBionet + ")";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
 				retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 			}

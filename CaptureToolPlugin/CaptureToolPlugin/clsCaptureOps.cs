@@ -1025,8 +1025,16 @@ namespace CaptureToolPlugin
 				// If m_ClientServer=false but storageVolExternal does not contain Storage_Server_Name then auto-switch m_ClientServer to true
 
 				if (!storageVolExternal.ToLower().Contains(computerName.ToLower()))
-				{
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Auto-changing m_ClientServer to True (perspective=client) because " + storageVolExternal + " does not contain " + computerName);
+				{                    
+				    var autoEnableFlag = "AutoEnableClientServer_for_" + computerName;
+                    var autoEnabledParamValue = m_MgrParams.GetParam(autoEnableFlag, string.Empty);
+				    if (string.IsNullOrEmpty(autoEnabledParamValue))
+				    {
+                        // Using a Manager Parameter to assure that the following log message is only logged once per session (in case this manager captures multiple datasets in a row)
+				        m_MgrParams.SetParam(autoEnableFlag, "True");
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Auto-changing m_ClientServer to True (perspective=client) because " + storageVolExternal.ToLower() + " does not contain " + computerName.ToLower());
+				    }
+				    
 					m_ClientServer = true;
 				}
 			}
@@ -1322,7 +1330,7 @@ namespace CaptureToolPlugin
 		/// <remarks>Returns true if the .lcmethod file is not found</remarks>
 		private bool CaptureLCMethodFile(string datasetName, string datasetFolderPath)
 		{
-			const string METHOD_FOLDER_BASE_PATH = "\\\\proto-5\\BionetXfer\\Run_Complete_Trigger\\MethodFiles";
+			const string METHOD_FOLDER_BASE_PATH = @"\\proto-5\BionetXfer\Run_Complete_Trigger\MethodFiles";
 
 			string msg;
 			bool bSuccess = true;
