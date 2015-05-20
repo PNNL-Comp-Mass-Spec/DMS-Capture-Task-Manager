@@ -22,7 +22,7 @@ namespace CaptureTaskManager
 		#endregion
 
 		#region "Properties"
-		string FileNamePath { get;set; }
+		    string FileNamePath { get;set; }
 			string MgrName { get; set; }
 			EnumMgrStatus MgrStatus { get; set; }
 			int CpuUtilization { get; set; }

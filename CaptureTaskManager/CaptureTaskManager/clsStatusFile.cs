@@ -37,9 +37,6 @@ namespace CaptureTaskManager
         //Manager start time
         private DateTime m_MgrStartTime;
 
-        //CPU utilization
-        private int m_CpuUtilization;
-
         //Analysis Tool
         private string m_Tool = "";
 
@@ -102,11 +99,7 @@ namespace CaptureTaskManager
             set { m_MgrStatus = value; }
         }
 
-        public int CpuUtilization
-        {
-            get { return m_CpuUtilization; }
-            set { m_CpuUtilization = value; }
-        }
+        public int CpuUtilization { get; set; }
 
         public string Tool
         {
@@ -315,6 +308,12 @@ namespace CaptureTaskManager
 
         }
 
+        public int GetProcessID()
+        {
+            var processID = System.Diagnostics.Process.GetCurrentProcess().Id;
+            return processID;
+        }
+
         /// <summary>
         /// Checks for presence of status flag file
         /// </summary>
@@ -354,7 +353,8 @@ namespace CaptureTaskManager
                     XWriter.WriteElementString("MgrStatus", ConvertMgrStatusToString(m_MgrStatus));
                     XWriter.WriteElementString("LastUpdate", DateTime.Now.ToString());
                     XWriter.WriteElementString("LastStartTime", m_MgrStartTime.ToString());
-                    XWriter.WriteElementString("CPUUtilization", m_CpuUtilization.ToString());
+                    XWriter.WriteElementString("CPUUtilization", CpuUtilization.ToString());
+                    XWriter.WriteElementString("ProcessID", GetProcessID().ToString());
                     XWriter.WriteElementString("FreeMemoryMB", "0");
                     XWriter.WriteStartElement("RecentErrorMessages");
                     foreach (string ErrMsg in clsStatusData.ErrorQueue)

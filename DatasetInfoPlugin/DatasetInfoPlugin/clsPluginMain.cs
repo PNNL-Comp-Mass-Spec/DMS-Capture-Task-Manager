@@ -13,6 +13,7 @@ using System;
 using System.Reflection;
 using CaptureTaskManager;
 using System.IO;
+using MSFileInfoScannerInterfaces;
 
 namespace DatasetInfoPlugin
 {
@@ -27,12 +28,14 @@ namespace DatasetInfoPlugin
 		const string MS_FILE_SCANNER_DS_INFO_SP = "CacheDatasetInfoXML";
 		const string UNKNOWN_FILE_TYPE = "Unknown File Type";
 		const string INVALID_FILE_TYPE = "Invalid File Type";
+
+	    private const bool IGNORE_BRUKER_BAF_ERRORS = false;
 		#endregion
 
 		#region "Class-wide variables"
-		MSFileInfoScannerInterfaces.iMSFileInfoScanner m_MsFileScanner;
+		iMSFileInfoScanner m_MsFileScanner;
 		string m_Msg;
-		bool m_ErrOccurred = false;
+		bool m_ErrOccurred;
 		#endregion
 
 		#region "Constructors"
@@ -78,11 +81,11 @@ namespace DatasetInfoPlugin
 		}	// End sub
 
 
-		private MSFileInfoScannerInterfaces.iMSFileInfoScanner LoadMSFileInfoScanner(string strMSFileInfoScannerDLLPath)
+		private iMSFileInfoScanner LoadMSFileInfoScanner(string strMSFileInfoScannerDLLPath)
 		{
 			const string MsDataFileReaderClass = "MSFileInfoScanner.clsMSFileInfoScanner";
 
-			MSFileInfoScannerInterfaces.iMSFileInfoScanner objMSFileInfoScanner = null;
+			iMSFileInfoScanner objMSFileInfoScanner = null;
 			string msg;
 
 			try
@@ -97,7 +100,7 @@ namespace DatasetInfoPlugin
 				    object obj = LoadObject(MsDataFileReaderClass, strMSFileInfoScannerDLLPath);
 				    if (obj != null)
 					{
-						objMSFileInfoScanner = (MSFileInfoScannerInterfaces.iMSFileInfoScanner)obj;
+						objMSFileInfoScanner = (iMSFileInfoScanner)obj;
 						msg = "Loaded MSFileInfoScanner from " + strMSFileInfoScannerDLLPath;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 					}
@@ -258,11 +261,15 @@ namespace DatasetInfoPlugin
 			m_Msg = string.Empty;
 
 			bool success = m_MsFileScanner.ProcessMSFileOrFolder(Path.Combine(sourceFolder, sFileOrFolderName), outputFolder);
+
+		    if (m_ErrOccurred)
+		        success = false;
+
 			if (!success)
 			{
 				// Either a bad result code was returned, or an error event was received
 
-				if (bBrukerDotDBaf)
+				if (bBrukerDotDBaf && IGNORE_BRUKER_BAF_ERRORS)
 				{
 					// 12T_FTICR_B datasets (with .D folders and analysis.baf and/or fid files) sometimes work with MSFileInfoscanner, and sometimes don't
 					// The problem is that ProteoWizard doesn't support certain forms of these datasets
@@ -281,64 +288,57 @@ namespace DatasetInfoPlugin
 
 			    result.CloseoutMsg = "Job " + m_Job + ", Step " + m_TaskParams.GetParam("Step") + ": " + m_Msg;
 			    result.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                return result;
 			}
-			else
-			{
-				int iPostCount = 0;
-			    string connectionString = m_MgrParams.GetParam("connectionstring");
 
-				int iDatasetID = m_TaskParams.GetParam("Dataset_ID", 0);
+		    int iPostCount = 0;
+		    string connectionString = m_MgrParams.GetParam("connectionstring");
 
-				while (iPostCount <= 2)
-				{
-					success = m_MsFileScanner.PostDatasetInfoUseDatasetID(iDatasetID, connectionString, MS_FILE_SCANNER_DS_INFO_SP);
+		    int iDatasetID = m_TaskParams.GetParam("Dataset_ID", 0);
 
-					if (success)
-						break;
+		    while (iPostCount <= 2)
+		    {
+		        success = m_MsFileScanner.PostDatasetInfoUseDatasetID(iDatasetID, connectionString, MS_FILE_SCANNER_DS_INFO_SP);
+
+		        if (success)
+		            break;
 				    
-                    // If the error message contains the text "timeout expired" then try again, up to 2 times
-				    if (!m_Msg.ToLower().Contains("timeout expired"))
-				        break;
+		        // If the error message contains the text "timeout expired" then try again, up to 2 times
+		        if (!m_Msg.ToLower().Contains("timeout expired"))
+		            break;
 
-				    iPostCount += 1;
-				}
+		        iPostCount += 1;
+		    }
 
-			    MSFileInfoScannerInterfaces.iMSFileInfoScanner.eMSFileScannerErrorCodes errorCode;
-			    if (success)
-				{
-					errorCode = MSFileInfoScannerInterfaces.iMSFileInfoScanner.eMSFileScannerErrorCodes.NoError;
-				}
-				else
-				{
-					errorCode = m_MsFileScanner.ErrorCode;
-					m_Msg = "clsPluginMain.RunMsFileInfoScanner: Error running info scanner. Message = " +
-									m_MsFileScanner.GetErrorMessage() + " Result code = " + ((int)m_MsFileScanner.ErrorCode);
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
-				}
+		    iMSFileInfoScanner.eMSFileScannerErrorCodes errorCode;
+		    if (success)
+		    {
+		        errorCode = iMSFileInfoScanner.eMSFileScannerErrorCodes.NoError;
+		    }
+		    else
+		    {
+		        errorCode = m_MsFileScanner.ErrorCode;
+		        m_Msg = "clsPluginMain.RunMsFileInfoScanner: Error running info scanner. Message = " +
+		                m_MsFileScanner.GetErrorMessage() + " Result code = " + ((int)m_MsFileScanner.ErrorCode);
+		        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
+		    }
 
-				bool bFailJob = false;
+		    if (errorCode == iMSFileInfoScanner.eMSFileScannerErrorCodes.NoError)
+		    {
+		        // Everything went wonderfully
+		        result.CloseoutMsg = string.Empty;
+		        result.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+		    }
+		    else
+		    {
+		        // Either a bad result code was returned, or an error event was received
+		        result.CloseoutMsg = "MSFileInfoScanner error";
+		        result.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+		    }
 
-				if ((errorCode != MSFileInfoScannerInterfaces.iMSFileInfoScanner.eMSFileScannerErrorCodes.NoError))
-				{
-				    bFailJob = true;
-				}
+		    return result;
 
-				if (bFailJob)
-				{
-					// Either a bad result code was returned, or an error event was received
-					result.CloseoutMsg = "MSFileInfoScanner error";
-					result.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-				}
-				else
-				{
-					// Everything went wonderfully
-					result.CloseoutMsg = string.Empty;
-					result.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
-				}
-			}
-
-			return result;
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Looks for a zip file matching "0_R*X*.zip"
@@ -368,8 +368,7 @@ namespace DatasetInfoPlugin
 			bool bIsFile;
 
 			bSkipPlots = false;
-			instrumentClass = clsInstrumentClassInfo.eInstrumentClass.Unknown;
-			rawDataType = clsInstrumentClassInfo.eRawDataType.Unknown;
+	        rawDataType = clsInstrumentClassInfo.eRawDataType.Unknown;
 			bBrukerDotDBaf = false;
 
 			// Determine the Instrument Class and RawDataType
@@ -583,7 +582,7 @@ namespace DatasetInfoPlugin
 		/// <returns></returns>
 		protected string GetMSFileInfoScannerDLLPath()
 		{
-			string strMSFileInfoScannerFolder = m_MgrParams.GetParam("MSFileInfoScannerDir", string.Empty);
+            string strMSFileInfoScannerFolder = m_MgrParams.GetParam("MSFileInfoScannerX86Dir", string.Empty);
 			if (string.IsNullOrEmpty(strMSFileInfoScannerFolder))
 				return string.Empty;
 		    
@@ -663,7 +662,6 @@ namespace DatasetInfoPlugin
         /// <param name="message">Error message</param>
 		void m_MsFileScanner_ErrorEvent(string message)
 		{
-			m_ErrOccurred = true;
             string errorMsg = "clsPluginMain.RunMsFileInfoScanner, Error running MSFileInfoScanner: " + message;
 
             if (message.StartsWith("Error using ProteoWizard reader"))
@@ -673,6 +671,7 @@ namespace DatasetInfoPlugin
             }
             else
             {
+                m_ErrOccurred = true;
                 m_Msg = errorMsg;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMsg);
             }

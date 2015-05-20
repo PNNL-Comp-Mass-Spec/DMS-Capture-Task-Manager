@@ -1,5 +1,8 @@
 Capture Task Manager History
 
+Version 1.2.5618; May 20, 2015
+	- Updated to AnyCPU
+
 Version 1.2.5436; November 19, 2014
 	- Removed obsolete DartFTP code
 	- Moved Pacifica out of the DatasetArchivePlugin folder
