@@ -38,14 +38,6 @@ namespace DatasetInfoPlugin
 		bool m_ErrOccurred;
 		#endregion
 
-		#region "Constructors"
-		public clsPluginMain()
-			: base()
-		{
-			// Does nothing at present
-		}	// End sub
-		#endregion
-
 		#region "Methods"
 		/// <summary>
 		/// Runs the dataset info step tool
@@ -188,12 +180,12 @@ namespace DatasetInfoPlugin
 			m_MsFileScanner.SaveLCMS2DPlots = m_TaskParams.GetParam("SaveLCMS2DPlots", false);
 			m_MsFileScanner.ComputeOverallQualityScores = m_TaskParams.GetParam("ComputeOverallQualityScores", false);
 			m_MsFileScanner.CreateDatasetInfoFile = m_TaskParams.GetParam("CreateDatasetInfoFile", false);
-
-			m_MsFileScanner.LCMS2DPlotMZResolution = m_TaskParams.GetParam("LCMS2DPlotMZResolution", (float)0.4);
-			m_MsFileScanner.LCMS2DPlotMaxPointsToPlot = m_TaskParams.GetParam("LCMS2DPlotMaxPointsToPlot", 500000);
-			m_MsFileScanner.LCMS2DPlotMinPointsPerSpectrum = m_TaskParams.GetParam("LCMS2DPlotMinPointsPerSpectrum", 2);
+		    
+			m_MsFileScanner.LCMS2DPlotMZResolution = m_TaskParams.GetParam("LCMS2DPlotMZResolution", clsLCMSDataPlotterOptions.DEFAULT_MZ_RESOLUTION);
+            m_MsFileScanner.LCMS2DPlotMaxPointsToPlot = m_TaskParams.GetParam("LCMS2DPlotMaxPointsToPlot", clsLCMSDataPlotterOptions.DEFAULT_MAX_POINTS_TO_PLOT);
+			m_MsFileScanner.LCMS2DPlotMinPointsPerSpectrum = m_TaskParams.GetParam("LCMS2DPlotMinPointsPerSpectrum", clsLCMSDataPlotterOptions.DEFAULT_MIN_POINTS_PER_SPECTRUM);
 			m_MsFileScanner.LCMS2DPlotMinIntensity = m_TaskParams.GetParam("LCMS2DPlotMinIntensity", (float)0);
-			m_MsFileScanner.LCMS2DOverviewPlotDivisor = m_TaskParams.GetParam("LCMS2DOverviewPlotDivisor", 10);
+            m_MsFileScanner.LCMS2DOverviewPlotDivisor = m_TaskParams.GetParam("LCMS2DOverviewPlotDivisor", clsLCMSDataPlotterOptions.DEFAULT_LCMS2D_OVERVIEW_PLOT_DIVISOR);
 
 			m_MsFileScanner.CheckCentroidingStatus = true;
 
@@ -526,8 +518,7 @@ namespace DatasetInfoPlugin
 					{
 						// Look for a .mcf file in the .D folder
 
-						string mcfFileName = string.Empty;
-						Int64 mcfFileSizeBytes = 0;
+					    Int64 mcfFileSizeBytes = 0;
 
 						foreach (FileInfo fiFile in diDotDFolder.GetFiles("*.mcf"))
 						{
@@ -535,8 +526,7 @@ namespace DatasetInfoPlugin
 							if (fiFile.Length > mcfFileSizeBytes)
 							{
 								mcfFileSizeBytes = fiFile.Length;
-								mcfFileName = fiFile.Name;
-								bAlternateFound = true;
+							    bAlternateFound = true;
 								sFileOrFolderName = diDotDFolder.Name;
 							}
 						}
@@ -582,7 +572,7 @@ namespace DatasetInfoPlugin
 		/// <returns></returns>
 		protected string GetMSFileInfoScannerDLLPath()
 		{
-            string strMSFileInfoScannerFolder = m_MgrParams.GetParam("MSFileInfoScannerX86Dir", string.Empty);
+            string strMSFileInfoScannerFolder = m_MgrParams.GetParam("MSFileInfoScannerDir", string.Empty);
 			if (string.IsNullOrEmpty(strMSFileInfoScannerFolder))
 				return string.Empty;
 		    
@@ -597,12 +587,17 @@ namespace DatasetInfoPlugin
 		{
 
 			string strToolVersionInfo = string.Empty;
-			var ioAppFileInfo = new FileInfo(Assembly.GetExecutingAssembly().Location);
+			var fiExecutingAssembly = new FileInfo(Assembly.GetExecutingAssembly().Location);
+		    if (fiExecutingAssembly.DirectoryName == null)
+		    {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "FileInfo object for the executing assembly has a null value for DirectoryName");				
+		        return false;
+		    }
 
 		    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
 
 			// Lookup the version of the Capture tool plugin
-			string strPluginPath = Path.Combine(ioAppFileInfo.DirectoryName, "DatasetInfoPlugin.dll");
+			string strPluginPath = Path.Combine(fiExecutingAssembly.DirectoryName, "DatasetInfoPlugin.dll");
 			bool bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strPluginPath);
 			if (!bSuccess)
 				return false;
@@ -617,7 +612,7 @@ namespace DatasetInfoPlugin
 			}
 
 			// Lookup the version of the UIMFLibrary DLL
-			string strUIMFLibraryPath = Path.Combine(ioAppFileInfo.DirectoryName, "UIMFLibrary.dll");
+			string strUIMFLibraryPath = Path.Combine(fiExecutingAssembly.DirectoryName, "UIMFLibrary.dll");
 			bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strUIMFLibraryPath);
 			if (!bSuccess)
 				return false;
