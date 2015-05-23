@@ -258,15 +258,20 @@ namespace ImsDemuxPlugin
 			}
 
 			// October 2013: Disabled the addition of bin-centric tables since datasets currently being acquired on the IMS platform will not have IQ run on them
-            // March 2015: Re-eanbled automatic addition of bin-centric tables
-			const bool addBinCentricTables = true;
+            // March 2015: Re-enabled automatic addition of bin-centric tables
+            // May 22, 2015: Now adding bin-centric tables only if the original .UIMF file is less than 2 GB in size
+			
+            var fileSizeGBStart = fiUIMF.Length / 1024.0 / 1024.0 / 1024.0;
+            var fileSizeText = " (" + Math.Round(fileSizeGBStart, 0).ToString("0") + " GB)";
 
-			if (addBinCentricTables)
-			{
-                var fileSizeGBStart = fiUIMF.Length / 1024.0 / 1024.0 / 1024.0;
-                
+            if (fileSizeGBStart > 2)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Not adding bin-centric tables to the .uimf file since over 2 GB in size" + fileSizeText);
+            }
+            else
+			{                
                 // Add the bin-centric tables if not yet present
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Adding bin-centric tables to the .uimf file");
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Adding bin-centric tables to the .uimf file" + fileSizeText);
 				retData = mDemuxTools.AddBinCentricTablesIfMissing(m_MgrParams, m_TaskParams, retData);
 
 				fiUIMF.Refresh();

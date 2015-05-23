@@ -83,6 +83,10 @@
       <HintPath>..\..\RefLib\log4net.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="MSFileInfoScannerInterfaces, Version=1.0.5618.27052, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\RefLib\MSFileInfoScannerInterfaces.dll</HintPath>
+    </Reference>
     <Reference Include="PRISM">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\RefLib\PRISM.dll</HintPath>

@@ -209,16 +209,17 @@ namespace CaptureToolPlugin
 				{
 					string sLogMessage;
 					string sTargetPath;
+                    var itemCountRenamed = 0;
 
 					FileInfo[] fiFiles = diFolder.GetFiles();
 					FileInfo[] fiFilesToSkip = diFolder.GetFiles("LCMethod*.xml");
 
 					// Rename superseded files (but skip LCMethod files)
-					foreach (FileInfo fiFile in fiFiles)
+					foreach (var fiFile in fiFiles)
 					{
 						// Rename the file, but only if it is not in fiFilesToSkip
 						bool bSkipFile = false;
-						foreach (FileInfo fiFileToSkip in fiFilesToSkip)
+						foreach (var fiFileToSkip in fiFilesToSkip)
 						{
 							if (fiFileToSkip.FullName == fiFile.FullName)
 							{
@@ -227,32 +228,46 @@ namespace CaptureToolPlugin
 							}
 						}
 
-						if (!bSkipFile)
-						{
-							sTargetPath = Path.Combine(diFolder.FullName, "x_" + fiFile.Name);
+                        if (fiFile.Name.StartsWith("x_") && fiFiles.Length == 1)
+                        {
+                            // File was previously renamed and it is the only file in this folder; don't rename it again
+                            continue;
+                        }
 
-							if (File.Exists(sTargetPath))
-							{
-								// Target exists; delete it
-								File.Delete(sTargetPath);
-							}
+					    if (bSkipFile)
+					    {
+					        continue;
+					    }
 
-							fiFile.MoveTo(sTargetPath);
-						}
+					    sTargetPath = Path.Combine(diFolder.FullName, "x_" + fiFile.Name);
 
+					    if (File.Exists(sTargetPath))
+					    {
+					        // Target exists; delete it
+					        File.Delete(sTargetPath);
+					    }
+
+					    fiFile.MoveTo(sTargetPath);
+					    itemCountRenamed++;
 					}
 
-					if (fiFiles.Length > 0)
+                    if (itemCountRenamed > 0)
 					{
 						sLogMessage = "Renamed superseded file(s) at " + diFolder.FullName + " to start with x_";
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, sLogMessage);
 					}
 
-					// Renamed superseded folders
+					// Rename superseded folders
 					DirectoryInfo[] diSubFolders = diFolder.GetDirectories();
+				    itemCountRenamed = 0;
+					foreach (var diSubFolder in diSubFolders)
+                    {
+                        if (diSubFolder.Name.StartsWith("x_") && diSubFolders.Length == 1)
+                        {
+                            // Subfolder was previously renamed and it is the only subfolder in this folder; don't rename it again
+                            continue;
+                        }
 
-					foreach (DirectoryInfo diSubFolder in diSubFolders)
-					{
 						sTargetPath = Path.Combine(diFolder.FullName, "x_" + diSubFolder.Name);
 
 						if (Directory.Exists(sTargetPath))
@@ -262,9 +277,10 @@ namespace CaptureToolPlugin
 						}
 
 						diSubFolder.MoveTo(sTargetPath);
-					}
+                        itemCountRenamed++;
+                    }
 
-					if (diSubFolders.Length > 0)
+                    if (itemCountRenamed > 0)
 					{
 						sLogMessage = "Renamed superseded folder(s) at " + diFolder.FullName + " to start with x_";
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, sLogMessage);

@@ -56,6 +56,9 @@
     <Reference Include="log4net">
       <HintPath>..\..\RefLib\log4net.dll</HintPath>
     </Reference>
+    <Reference Include="MSFileInfoScannerInterfaces">
+      <HintPath>..\..\RefLib\MSFileInfoScannerInterfaces.dll</HintPath>
+    </Reference>
     <Reference Include="PRISM">
       <HintPath>..\..\RefLib\PRISM.dll</HintPath>
     </Reference>
