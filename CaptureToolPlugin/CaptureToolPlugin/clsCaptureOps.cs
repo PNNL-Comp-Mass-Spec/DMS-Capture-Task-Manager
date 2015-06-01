@@ -971,23 +971,24 @@ namespace CaptureToolPlugin
 		/// <returns></returns>
 		public bool DoOperation(ITaskParams taskParams, ref clsToolReturnData retData)
 		{
-			string datasetName = taskParams.GetParam("Dataset");
-			string sourceVol = taskParams.GetParam("Source_Vol");						// Example: \\exact04.bionet\
-			string sourcePath = taskParams.GetParam("Source_Path");						// Example: ProteomicsData\
-			string storageVol = taskParams.GetParam("Storage_Vol");						// Example: E:\
-			string storagePath = taskParams.GetParam("Storage_Path");					// Example: Exact04\2012_1\
-			string storageVolExternal = taskParams.GetParam("Storage_Vol_External");	// Example: \\proto-5\
+			var datasetName = taskParams.GetParam("Dataset");
+			var sourceVol = taskParams.GetParam("Source_Vol");						// Example: \\exact04.bionet\
+			var sourcePath = taskParams.GetParam("Source_Path");						// Example: ProteomicsData\
+            var captureSubfolder = taskParams.GetParam("Capture_Subfolder");			// Typically an empty string, but could be a partial path like: "CapDev" or "Smith\2014"
+            var storageVol = taskParams.GetParam("Storage_Vol");						// Example: E:\
+            var storagePath = taskParams.GetParam("Storage_Path");					// Example: Exact04\2012_1\
+            var storageVolExternal = taskParams.GetParam("Storage_Vol_External");	// Example: \\proto-5\
 
-			string instClassName = taskParams.GetParam("Instrument_Class");
-			clsInstrumentClassInfo.eInstrumentClass instrumentClass = clsInstrumentClassInfo.GetInstrumentClass(instClassName);
+            var instClassName = taskParams.GetParam("Instrument_Class");
+			var instrumentClass = clsInstrumentClassInfo.GetInstrumentClass(instClassName);
 
-			string shareConnectorType = m_MgrParams.GetParam("ShareConnectorType");		// Should be PRISM or DotNET
-			string computerName = Environment.MachineName;
+            var shareConnectorType = m_MgrParams.GetParam("ShareConnectorType");		// Should be PRISM or DotNET
+            var computerName = Environment.MachineName;
 
 			ConnectionType eConnectionType;
 
-			int maxFileCountToAllowResume = 0;
-			int maxFolderCountToAllowResume = 0;
+			var maxFileCountToAllowResume = 0;
+			var maxFolderCountToAllowResume = 0;
 
             if ((computerName.ToUpper() == "MONROE3") && datasetName == "2014_10_14_SRFAI-20ppm_Neg_15T_TOF0p65_IAT0p05_144scans_8M_000001")
 			{
@@ -1009,7 +1010,7 @@ namespace CaptureToolPlugin
 			// Determine whether or not we will use Copy with Resume
 			// This determines whether or not we add x_ to an existing file or folder, 
 			// and determines whether we use CopyDirectory or CopyFolderWithResume/CopyFileWithResume
-			bool bCopyWithResume = false;
+			var bCopyWithResume = false;
 			switch (instrumentClass)
 			{
 				case clsInstrumentClassInfo.eInstrumentClass.BrukerFT_BAF:
@@ -1024,7 +1025,7 @@ namespace CaptureToolPlugin
 			}
 
 			RawDSTypes sourceType;
-			string pwd = DecodePassword(m_Pwd);
+            var pwd = DecodePassword(m_Pwd);
 			string msg;
 			string tempVol;
 			clsDatasetInfo datasetInfo;
@@ -1067,7 +1068,7 @@ namespace CaptureToolPlugin
 			}
 
 			// Set up paths
-			string storageFolderPath = Path.Combine(tempVol, storagePath);	// Directory on storage server where dataset folder goes
+            var storageFolderPath = Path.Combine(tempVol, storagePath);	// Directory on storage server where dataset folder goes
 			string datasetFolderPath;
 
 			// If Storage_Folder_Name <> "", then use it in target folder path. Otherwise use dataset name
@@ -1128,8 +1129,8 @@ namespace CaptureToolPlugin
 
 			// Construct the path to the dataset on the instrument
 			// Determine if source dataset exists, and if it is a file or a folder
-			string sourceFolderPath = Path.Combine(sourceVol, sourcePath);
-
+            var sourceFolderPath = Path.Combine(sourceVol, sourcePath);
+		            
 			// Connect to Bionet if necessary
 			if (m_UseBioNet)
 			{
@@ -1160,22 +1161,26 @@ namespace CaptureToolPlugin
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 			}
 
+            // Now that we've had a chance to the share, possibly append a subfolder to the source path
+            if (!string.IsNullOrWhiteSpace(captureSubfolder))
+                sourceFolderPath = Path.Combine(sourceFolderPath, captureSubfolder);
+
 			//If Source_Folder_Name is non-blank, use it. Otherwise use dataset name
-			string sSourceFolderName = taskParams.GetParam("Source_Folder_Name");
+			var sSourceFolderName = taskParams.GetParam("Source_Folder_Name");
 
-			if (!string.IsNullOrWhiteSpace(sSourceFolderName))
-			{
-				datasetInfo = GetRawDSType(sourceFolderPath, sSourceFolderName, instrumentClass);
-				sourceType = datasetInfo.DatasetType;
-                datasetInfo.DatasetName = datasetName;
-			}
-			else
-			{
-                datasetInfo = GetRawDSType(sourceFolderPath, datasetName, instrumentClass);
-				sourceType = datasetInfo.DatasetType;
-			}
+		    if (string.IsNullOrWhiteSpace(sSourceFolderName))
+		    {
+		        datasetInfo = GetRawDSType(sourceFolderPath, datasetName, instrumentClass);
+		        sourceType = datasetInfo.DatasetType;
+		    }
+		    else
+		    {
+		        datasetInfo = GetRawDSType(sourceFolderPath, sSourceFolderName, instrumentClass);
+		        sourceType = datasetInfo.DatasetType;
+		        datasetInfo.DatasetName = datasetName;
+		    }
 
-            if (m_MgrParams.GetBooleanParam("TraceMode")) clsUtilities.VerifyFolder("CaptureToolPlugin.clsCaptureOps.DoOperation, B");
+		    if (m_MgrParams.GetBooleanParam("TraceMode")) clsUtilities.VerifyFolder("CaptureToolPlugin.clsCaptureOps.DoOperation, B");
 
 			// Set the closeout type to Failed for now
 			retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -1246,6 +1251,7 @@ namespace CaptureToolPlugin
 				if (string.IsNullOrEmpty(retData.CloseoutMsg))
 					retData.CloseoutMsg = "Unknown error performing capture";
 			}
+
 			return false;
 		}
 
