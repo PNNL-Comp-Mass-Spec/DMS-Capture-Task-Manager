@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using CaptureTaskManager;
 using System.IO;
+using System.Linq;
 using PRISM.Files;
 
 namespace SrcFileRenamePlugin
@@ -34,11 +35,11 @@ namespace SrcFileRenamePlugin
 		#region "Class variables"
 		protected IMgrParams m_MgrParams;
 		protected string m_Msg = "";
-		protected bool m_UseBioNet = false;
+		protected bool m_UseBioNet;
 		protected string m_UserName = "";
 		protected string m_Pwd = "";
 		protected ShareConnector m_ShareConnector;
-		protected bool m_Connected = false;
+		protected bool m_Connected;
 		#endregion
 
 		#region "Constructors"
@@ -75,23 +76,24 @@ namespace SrcFileRenamePlugin
 		/// <returns></returns>
 		public EnumCloseOutType DoOperation(ITaskParams taskParams)
 		{
-			string dataset = taskParams.GetParam("Dataset");
-			string sourceVol = taskParams.GetParam("Source_Vol");
-			string sourcePath = taskParams.GetParam("Source_Path");
-			string pwd = DecodePassword(m_Pwd);
+            var datasetName = taskParams.GetParam("Dataset");
+            var sourceVol = taskParams.GetParam("Source_Vol");						// Example: \\exact04.bionet\
+            var sourcePath = taskParams.GetParam("Source_Path");					// Example: ProteomicsData\
+            var captureSubfolder = taskParams.GetParam("Capture_Subfolder");		// Typically an empty string, but could be a partial path like: "CapDev" or "Smith\2014"
+            var pwd = DecodePassword(m_Pwd);
 
-		    string msg = "Started clsRenameeOps.DoOperation()";
+		    var msg = "Started clsRenameeOps.DoOperation()";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 			// Set up paths
 
 		    // Determine if source dataset exists, and if it is a file or a folder
-			string sourceFolderPath = Path.Combine(sourceVol, sourcePath);
+			var sourceFolderPath = Path.Combine(sourceVol, sourcePath);
 
 			// Connect to Bionet if necessary
 			if (m_UseBioNet)
 			{
-				msg = "Bionet connection required";
+                msg = "Bionet connection required for " + sourceVol;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 				m_ShareConnector = new ShareConnector(m_UserName, pwd)
@@ -120,193 +122,200 @@ namespace SrcFileRenamePlugin
 			}
 			else
 			{
-				msg = "Bionet connection not required";
+                msg = "Bionet connection not required for " + sourceVol;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 			}
 
-            // Construct list of dataset names to check for
-            // The first thing we check for is the official dataset name
-            // We next check for various things that operators rename the datasets to
-			var lstFileNamesToCheck = new List<string>
-			{
-			    dataset,
-			    dataset + "-bad",
-			    dataset + "-badQC",
-			    dataset + "-plug",
-			    dataset + "-plugsplit",
-			    dataset + "-mixer",
-			    dataset + "-rotor",
-			    dataset + "-slowsplit",
-			    dataset + "-corrupt",
-			    dataset + "-corrupted",
-			    "x_" + dataset,
-			    "x_" + dataset + "-bad"
-			};
+            // Now that we've had a chance to connect to the share, possibly append a subfolder to the source path
+            if (!string.IsNullOrWhiteSpace(captureSubfolder))
+                sourceFolderPath = Path.Combine(sourceFolderPath, captureSubfolder);
 
-			// Construct list of dataset names to check for
-			// The first thing we check for is the official dataset name
-			// We next check for various things that operators rename the datasets to
+		    var diSourceFolder = new DirectoryInfo(sourceFolderPath);
+		    int countRenamed;
 
-		    // Append x_ versions of some of these entries
-
-		    // Could use the following to append x_ for all entries:
-			//System.Collections.Generic.List<string> lstFileNamesAlreadyRenamed = new List<string>();
-			//foreach (string sDatasetNameBase in lstFileNamesToCheck) 
-			//{
-			//    if (!sDatasetNameBase.StartsWith("x_"))
-			//        lstFileNamesAlreadyRenamed.Add("x_" + sDatasetNameBase);
-			//}
-
-			//// Append entries from lstFileNamesAlreadyRenamed to lstFileNamesToCheck
-			//lstFileNamesToCheck.AddRange(lstFileNamesAlreadyRenamed);
-
-			bool fileFound = false;
-			bool folderFound = false;
-			bool bLoggedDatasetNotFound = false;
-
-			foreach (string sDatasetNameBase in lstFileNamesToCheck)
-			{
-				if (!String.IsNullOrEmpty(sDatasetNameBase))
-				{
-					bool bAlreadyRenamed;
-					if (!dataset.StartsWith("x_") && sDatasetNameBase.StartsWith("x_"))
-						bAlreadyRenamed = true;
-					else
-						bAlreadyRenamed = false;
-
-					// Get a list of files containing the dataset name
-					string[] fileArray = GetMatchingFileNames(sourceFolderPath, sDatasetNameBase);
-					if (fileArray != null && fileArray.Length > 0)
-						fileFound = true;
-
-					// Get a list of folders containing the dataset name
-					string[] folderArray = GetMatchingFolderNames(sourceFolderPath, sDatasetNameBase);
-					if (folderArray != null && folderArray.Length > 0)
-						folderFound = true;
-
-					// If no files or folders found, return error
-					if (!(fileFound || folderFound))
-					{
-						// No file or folder found
-						// Log a message for the first item checked in lstFileNamesToCheck
-						if (!bLoggedDatasetNotFound)
-						{
-							msg = "Dataset " + dataset + ": data file and/or folder not found using " + sDatasetNameBase + ".*";
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
-							bLoggedDatasetNotFound = true;
-						}
-					}
-					else
-					{
-						if (bAlreadyRenamed)
-						{
-							msg = "Skipping dataset " + dataset + " since data file and/or folder already renamed to " + sDatasetNameBase;
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-						}
-						else
-						{
-							// Rename any files found
-							if (fileFound)
-							{
-								foreach (string filePath in fileArray)
-								{
-									if (!RenameInstFile(filePath))
-									{
-										// Problem was logged by RenameInstFile
-										if (m_Connected) 
-                                            DisconnectShare(ref m_ShareConnector, out m_Connected);
-
-										return EnumCloseOutType.CLOSEOUT_FAILED;
-									}
-								}
-							}
-
-							// Rename any folders found
-							if (folderFound)
-							{
-								foreach (string folderPath in folderArray)
-								{
-									if (!RenameInstFolder(folderPath))
-									{
-										// Problem was logged by RenameInstFolder
-										if (m_Connected) 
-                                            DisconnectShare(ref m_ShareConnector, out m_Connected);
-
-										return EnumCloseOutType.CLOSEOUT_FAILED;
-									}
-								}
-							}
-						}
-
-						// Success; break out of the for loop
-						break;
-					}
-				}
-			}
-
+		    if (diSourceFolder.Exists)
+		    {
+                countRenamed = FindFilesToRename(datasetName, diSourceFolder);
+		    }
+		    else
+		    {
+		        msg = "Instrument folder not found for dataset " + datasetName + ": " + sourceFolderPath;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                return EnumCloseOutType.CLOSEOUT_FAILED;
+		    }
+		    
 			// Close connection, if open
 			if (m_Connected) 
                 DisconnectShare(ref m_ShareConnector, out m_Connected);
 
-			if (!(fileFound || folderFound))
+            if (countRenamed == 0)
 			{
-				msg = "Dataset " + dataset + ": data file and/or folder not found";
+				msg = "Dataset " + datasetName + ": data file and/or folder not found to rename on the instrument";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 		
             return EnumCloseOutType.CLOSEOUT_SUCCESS;
-		}	// End sub
-
-		/// <summary>
-		/// Prefixes specified folder name with "x_"
-		/// </summary>
-        /// <param name="instFolderPath">Full path specifying folder to be renamed</param>
-		/// <returns>TRUE for success, FALSE for failure</returns>
-		private bool RenameInstFolder(string instFolderPath)
-		{
-			//Rename dataset folder on instrument
-			try
-			{
-				var di = new DirectoryInfo(instFolderPath);
-				string n = Path.Combine(di.Parent.FullName, "x_" + di.Name);
-				di.MoveTo(n);
-				m_Msg = "Renamed directory " + instFolderPath;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
-				return true;
-			}
-			catch (Exception ex)
-			{
-				m_Msg = "Error renaming directory " + instFolderPath;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg, ex);
-				return false;
-			}
 		}
+	
+        private int FindFilesToRename(string dataset, DirectoryInfo diSourceFolder)
+	    {
+            // Construct list of dataset names to check for
+            // The first thing we check for is the official dataset name
+            // We next check for various things that operators rename the datasets to
+            var lstFileNamesToCheck = new List<string>
+			{
+			    dataset,
+                dataset + "-bad",
+			    dataset + "_bad",
+                dataset + "-chromooff",
+                dataset + "-flatline",
+                dataset + "-LCFroze",
+                dataset + "-mixer",
+                dataset + "-NoN2",
+                dataset + "-plugged",
+                dataset + "-pluggedSPE",
+                dataset + "-pumpOFF",
+                dataset + "-slow",
+                dataset + "-wrongLCmethod",
+			    dataset + "-air",
+			    dataset + "-badQC",
+			    dataset + "-corrupt",
+			    dataset + "-corrupted",
+			    dataset + "-plug",
+			    dataset + "-plugsplit",
+			    dataset + "-rotor",
+			    dataset + "-slowsplit",
+			    "x_" + dataset,
+			    "x_" + dataset + "-bad"
+			};
+         
+            var bLoggedDatasetNotFound = false;
+            var countRenamed = 0;
 
-		/// <summary>
+            foreach (var sDatasetNameBase in lstFileNamesToCheck)
+            {
+                if (string.IsNullOrEmpty(sDatasetNameBase))
+                {
+                    continue;
+                }
+
+                bool bAlreadyRenamed;
+                if (!dataset.StartsWith("x_") && sDatasetNameBase.StartsWith("x_"))
+                    bAlreadyRenamed = true;
+                else
+                    bAlreadyRenamed = false;
+
+                // Get a list of files containing the dataset name
+                var matchedFiles = GetMatchingFileNames(diSourceFolder, sDatasetNameBase);
+               
+                // Get a list of folders containing the dataset name
+                var matchedFolders = GetMatchingFolderNames(diSourceFolder, sDatasetNameBase);
+
+                // If no files or folders found, return error
+                if (matchedFiles.Count + matchedFolders.Count == 0)
+                {
+                    // No file or folder found
+                    // Log a message for the first item checked in lstFileNamesToCheck
+                    if (!bLoggedDatasetNotFound)
+                    {
+                        var msg = "Dataset " + dataset + ": data file and/or folder not found using " + sDatasetNameBase + ".*";
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                        bLoggedDatasetNotFound = true;
+                    }
+                    continue;
+                }
+
+                if (bAlreadyRenamed)
+                {
+                    var msg = "Skipping dataset " + dataset + " since data file and/or folder already renamed to " + sDatasetNameBase;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                    break;
+                }
+
+                // Rename any files found
+                foreach (var fileToRename in matchedFiles)
+                {
+                    if (RenameInstFile(fileToRename))
+                    {
+                        countRenamed++;
+                        continue;
+                    }
+
+                    return 0;
+                }
+
+                // Rename any folders found
+                foreach (var folderToRename in matchedFolders)
+                {
+                    if (RenameInstFolder(folderToRename))
+                    {
+                        countRenamed++;
+                        continue;
+                    }
+                    return 0;
+                }
+
+                // Success; break out of the for loop
+                break;
+            }
+
+            return countRenamed;
+	    }
+
+	    /// <summary>
 		/// Prefixes specified file name with "x_"
 		/// </summary>
-        /// <param name="instFilePath">Full path specifying file to be renamed</param>
+        /// <param name="fiFile">File to be renamed</param>
 		/// <returns>TRUE for success, FALSE for failure</returns>
-		private bool RenameInstFile(string instFilePath)
+		private bool RenameInstFile(FileInfo fiFile)
 		{
 			//Rename dataset folder on instrument
 			try
 			{
-				var fi = new FileInfo(instFilePath);
-				string n = Path.Combine(fi.DirectoryName, "x_" + fi.Name);
-				fi.MoveTo(n);
-				m_Msg = "Renamed file " + instFilePath;
+			    if (!fiFile.Exists)
+			        return true;
+
+                var newPath = Path.Combine(fiFile.DirectoryName, "x_" + fiFile.Name);
+                fiFile.MoveTo(newPath);
+                m_Msg = "Renamed file " + fiFile.FullName;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
 				return true;
 			}
 			catch (Exception ex)
 			{
-				m_Msg = "Error renaming file " + instFilePath;
+                m_Msg = "Error renaming file " + fiFile.DirectoryName;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg, ex);
 				return false;
 			}
 		}
+
+        /// <summary>
+        /// Prefixes specified folder name with "x_"
+        /// </summary>
+        /// <param name="diFolder">Folder to be renamed</param>
+        /// <returns>TRUE for success, FALSE for failure</returns>
+        private bool RenameInstFolder(DirectoryInfo diFolder)
+        {
+            //Rename dataset folder on instrument
+            try
+            {
+                if (!diFolder.Exists)
+                    return true;
+
+                var newPath = Path.Combine(diFolder.Parent.FullName, "x_" + diFolder.Name);
+                diFolder.MoveTo(newPath);
+                m_Msg = "Renamed directory " + diFolder.FullName;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                m_Msg = "Error renaming directory " + diFolder.FullName;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg, ex);
+                return false;
+            }
+        }
 
 		/// <summary>
 		/// Decrypts password received from ini file
@@ -319,18 +328,18 @@ namespace SrcFileRenamePlugin
 			// Password was created by alternately subtracting or adding 1 to the ASCII value of each character
 
 			// Convert the password string to a character array
-			char[] pwdChars = enPwd.ToCharArray();
+			var pwdChars = enPwd.ToCharArray();
 			var pwdBytes = new byte[pwdChars.Length];
 			var pwdCharsAdj = new char[pwdChars.Length];
 
-			for (int i = 0; i < pwdChars.Length; i++)
+			for (var i = 0; i < pwdChars.Length; i++)
 			{
 				pwdBytes[i] = (byte)pwdChars[i];
 			}
 
 			// Modify the byte array by shifting alternating bytes up or down and convert back to char, and add to output string
-			string retStr = "";
-			for (int byteCntr = 0; byteCntr < pwdBytes.Length; byteCntr++)
+			var retStr = "";
+			for (var byteCntr = 0; byteCntr < pwdBytes.Length; byteCntr++)
 			{
 				if ((byteCntr % 2) == 0)
 				{
@@ -364,25 +373,25 @@ namespace SrcFileRenamePlugin
 		/// <summary>
 		/// Gets a list of files containing the dataset name
 		/// </summary>
-		/// <param name="instFolder">Folder to search</param>
+        /// <param name="diSourceFolder">Folder to search</param>
 		/// <param name="dsName">Dataset name to match</param>
 		/// <returns>Array of file paths</returns>
-		private string[] GetMatchingFileNames(string instFolder, string dsName)
+        private List<FileInfo> GetMatchingFileNames(DirectoryInfo diSourceFolder, string dsName)
 		{
-			return Directory.GetFiles(instFolder, dsName + ".*");
+            return diSourceFolder.GetFiles(dsName + ".*").ToList();
 		}
 
 		/// <summary>
 		/// Gets a list of folders containing the dataset name
 		/// </summary>
-		/// <param name="instFolder">Folder to search</param>
+        /// <param name="diSourceFolder">Folder to search</param>
 		/// <param name="dsName">Dataset name to match</param>
 		/// <returns>Array of folder paths</returns>
-		private string[] GetMatchingFolderNames(string instFolder, string dsName)
+        private List<DirectoryInfo> GetMatchingFolderNames(DirectoryInfo diSourceFolder, string dsName)
 		{
-			return Directory.GetDirectories(instFolder, dsName + ".*");
+            return diSourceFolder.GetDirectories(dsName + ".*").ToList();
 		}
 
 		#endregion
-	}	// End class
-}	// End namespace
+	}
+}

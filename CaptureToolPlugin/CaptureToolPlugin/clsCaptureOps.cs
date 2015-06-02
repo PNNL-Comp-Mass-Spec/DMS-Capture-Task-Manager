@@ -973,9 +973,9 @@ namespace CaptureToolPlugin
 		{
 			var datasetName = taskParams.GetParam("Dataset");
 			var sourceVol = taskParams.GetParam("Source_Vol");						// Example: \\exact04.bionet\
-			var sourcePath = taskParams.GetParam("Source_Path");						// Example: ProteomicsData\
-            var captureSubfolder = taskParams.GetParam("Capture_Subfolder");			// Typically an empty string, but could be a partial path like: "CapDev" or "Smith\2014"
-            var storageVol = taskParams.GetParam("Storage_Vol");						// Example: E:\
+			var sourcePath = taskParams.GetParam("Source_Path");					// Example: ProteomicsData\
+            var captureSubfolder = taskParams.GetParam("Capture_Subfolder");		// Typically an empty string, but could be a partial path like: "CapDev" or "Smith\2014"
+            var storageVol = taskParams.GetParam("Storage_Vol");					// Example: E:\
             var storagePath = taskParams.GetParam("Storage_Path");					// Example: Exact04\2012_1\
             var storageVolExternal = taskParams.GetParam("Storage_Vol_External");	// Example: \\proto-5\
 
@@ -1161,7 +1161,7 @@ namespace CaptureToolPlugin
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 			}
 
-            // Now that we've had a chance to the share, possibly append a subfolder to the source path
+            // Now that we've had a chance to connect to the share, possibly append a subfolder to the source path
             if (!string.IsNullOrWhiteSpace(captureSubfolder))
                 sourceFolderPath = Path.Combine(sourceFolderPath, captureSubfolder);
 
