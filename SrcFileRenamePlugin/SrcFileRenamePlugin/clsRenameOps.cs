@@ -278,7 +278,7 @@ namespace SrcFileRenamePlugin
 
                 var newPath = Path.Combine(fiFile.DirectoryName, "x_" + fiFile.Name);
                 fiFile.MoveTo(newPath);
-                m_Msg = "Renamed file " + fiFile.FullName;
+                m_Msg = "Renamed file to " + fiFile.FullName;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
 				return true;
 			}
@@ -305,7 +305,7 @@ namespace SrcFileRenamePlugin
 
                 var newPath = Path.Combine(diFolder.Parent.FullName, "x_" + diFolder.Name);
                 diFolder.MoveTo(newPath);
-                m_Msg = "Renamed directory " + diFolder.FullName;
+                m_Msg = "Renamed directory to " + diFolder.FullName;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
                 return true;
             }
