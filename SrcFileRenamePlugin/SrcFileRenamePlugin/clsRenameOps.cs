@@ -175,6 +175,7 @@ namespace SrcFileRenamePlugin
                 dataset + "-NoN2",
                 dataset + "-plugged",
                 dataset + "-pluggedSPE",
+                dataset + "-plunger",
                 dataset + "-pumpOFF",
                 dataset + "-slow",
                 dataset + "-wrongLCmethod",
@@ -270,13 +271,14 @@ namespace SrcFileRenamePlugin
 		/// <returns>TRUE for success, FALSE for failure</returns>
 		private bool RenameInstFile(FileInfo fiFile)
 		{
-			//Rename dataset folder on instrument
+			//Rename dataset file on instrument
+            var newPath = "??";
 			try
 			{
 			    if (!fiFile.Exists)
 			        return true;
 
-                var newPath = Path.Combine(fiFile.DirectoryName, "x_" + fiFile.Name);
+                newPath = Path.Combine(fiFile.DirectoryName, "x_" + fiFile.Name);
                 fiFile.MoveTo(newPath);
                 m_Msg = "Renamed file to " + fiFile.FullName;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
@@ -284,7 +286,7 @@ namespace SrcFileRenamePlugin
 			}
 			catch (Exception ex)
 			{
-                m_Msg = "Error renaming file " + fiFile.DirectoryName;
+                m_Msg = "Error renaming file '" + fiFile.FullName + "' to '" + newPath + "'";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg, ex);
 				return false;
 			}
@@ -298,12 +300,13 @@ namespace SrcFileRenamePlugin
         private bool RenameInstFolder(DirectoryInfo diFolder)
         {
             //Rename dataset folder on instrument
+            var newPath = "??";
             try
             {
                 if (!diFolder.Exists)
                     return true;
 
-                var newPath = Path.Combine(diFolder.Parent.FullName, "x_" + diFolder.Name);
+                newPath = Path.Combine(diFolder.Parent.FullName, "x_" + diFolder.Name);
                 diFolder.MoveTo(newPath);
                 m_Msg = "Renamed directory to " + diFolder.FullName;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
@@ -311,7 +314,7 @@ namespace SrcFileRenamePlugin
             }
             catch (Exception ex)
             {
-                m_Msg = "Error renaming directory " + diFolder.FullName;
+                m_Msg = "Error renaming directory '" + diFolder.FullName + "' to '" + newPath + "'";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg, ex);
                 return false;
             }
