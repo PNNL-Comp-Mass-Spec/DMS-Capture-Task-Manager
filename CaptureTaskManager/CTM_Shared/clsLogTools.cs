@@ -26,6 +26,12 @@ namespace CaptureTaskManager
         // Wraps Log4Net functions
         //**********************************************************************************************************
 
+        #region "Contants"
+
+        public const string DB_LOGGER_MGR_CONTROL = "MgrControlDbDefinedAppender";
+        public const string DB_LOGGER_NO_MGR_CONTROL_PARAMS = "DbAppenderBeforeMgrControlParams";
+        #endregion
+
         #region "Enums"
         public enum LogLevels
         {
@@ -83,7 +89,7 @@ namespace CaptureTaskManager
                 case LoggerTypes.LogFile:
                     MyLogger = m_FileLogger;
                     // Check to determine if a new file should be started
-                    string TestFileDate = DateTime.Now.ToString("MM-dd-yyyy");
+                    var TestFileDate = DateTime.Now.ToString("MM-dd-yyyy");
                     if (TestFileDate != m_FileDate)
                     {
                         m_FileDate = TestFileDate;
@@ -146,7 +152,7 @@ namespace CaptureTaskManager
                 case LoggerTypes.LogFile:
                     MyLogger = m_FileLogger;
                     // Check to determine if a new file should be started
-                    string TestFileDate = DateTime.Now.ToString("MM-dd-yyyy");
+                    var TestFileDate = DateTime.Now.ToString("MM-dd-yyyy");
                     if (TestFileDate != m_FileDate)
                     {
                         m_FileDate = TestFileDate;
@@ -213,7 +219,7 @@ namespace CaptureTaskManager
                 return;
             }
 
-            foreach (IAppender SelectedAppender in AppendList)
+            foreach (var SelectedAppender in AppendList)
             {
                 //Convert the IAppender object to a FileAppender
                 var AppenderToChange = SelectedAppender as FileAppender;
@@ -264,7 +270,7 @@ namespace CaptureTaskManager
         /// <param name="InpLevel">"InpLevel">Integer corresponding to level (1-5, 5 being most verbose)</param>
         public static void SetFileLogLevel(int InpLevel)
         {
-            Type LogLevelEnumType = typeof(LogLevels);
+            var LogLevelEnumType = typeof(LogLevels);
 
             //Verify input level is a valid log level
             if (!Enum.IsDefined(LogLevelEnumType, InpLevel))
@@ -405,23 +411,70 @@ namespace CaptureTaskManager
         /// <summary>
         /// Configures the Db logger
         /// </summary>
-        /// <param name="ConnStr">Database connection string</param>
-        /// <param name="ModuleName">Module name used by logger</param>
-        public static void CreateDbLogger(string ConnStr, string ModuleName)
+        /// <param name="connStr">Database connection string</param>
+        /// <param name="moduleName">Module name used by logger</param>
+        /// <param name="isBeforeMgrControlParams">Should be True when this function is called before parameters are retrieved from the Manager Control DB</param>
+        public static void CreateDbLogger(string connStr, string moduleName, bool isBeforeMgrControlParams)
         {
             var curLogger = (log4net.Repository.Hierarchy.Logger)m_DbLogger.Logger;
             curLogger.Level = log4net.Core.Level.Info;
-            curLogger.AddAppender(CreateDbAppender(ConnStr, ModuleName));
-            curLogger.AddAppender(m_FileAppender);
+
+            if (isBeforeMgrControlParams)
+            {
+                curLogger.AddAppender(CreateDbAppender(connStr, moduleName, DB_LOGGER_NO_MGR_CONTROL_PARAMS));
+            }
+            else
+            {
+                curLogger.AddAppender(CreateDbAppender(connStr, moduleName, DB_LOGGER_MGR_CONTROL));
+            }
+
+            if (m_FileAppender != null)
+            {
+                var addFileAppender = true;
+                foreach (var appender in curLogger.Appenders)
+                {
+                    if (appender == m_FileAppender)
+                    {
+                        addFileAppender = false;
+                        break;
+                    }
+                }
+
+                if (addFileAppender)
+                {
+                    curLogger.AddAppender(m_FileAppender);
+                }
+            }
+
         }
+
+        /// <summary>
+        /// Remove the default database logger that was created when the program first started
+        /// </summary>
+        public static void RemoveDefaultDbLogger()
+        {
+            var curLogger = (log4net.Repository.Hierarchy.Logger)m_DbLogger.Logger;
+
+            foreach (var appender in curLogger.Appenders)
+            {
+                if (appender.Name == DB_LOGGER_NO_MGR_CONTROL_PARAMS)
+                {
+                    curLogger.RemoveAppender(appender);
+                    appender.Close();
+                    break;
+                }
+            }
+        }
+
 
         /// <summary>
         /// Creates a database appender
         /// </summary>
         /// <param name="ConnStr">Database connection string</param>
         /// <param name="ModuleName">Module name used by logger</param>
+        /// <param name="appenderName">Appender name</param>
         /// <returns>ADONet database appender</returns>
-        public static AdoNetAppender CreateDbAppender(string ConnStr, string ModuleName)
+        public static AdoNetAppender CreateDbAppender(string ConnStr, string ModuleName, string appenderName)
         {
             var returnAppender = new AdoNetAppender
             {
@@ -430,7 +483,8 @@ namespace CaptureTaskManager
                     "System.Data.SqlClient.SqlConnection, System.Data, Version=1.0.3300.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
                 ConnectionString = ConnStr,
                 CommandType = CommandType.StoredProcedure,
-                CommandText = "PostLogEntry"
+                CommandText = "PostLogEntry",
+                Name = appenderName
             };
 
             //Type parameter

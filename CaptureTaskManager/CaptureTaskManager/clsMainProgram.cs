@@ -5,7 +5,6 @@
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/10/2009
 //
-// Last modified 09/10/2009
 //*********************************************************************************************************
 using System;
 using System.Collections.Generic;
@@ -75,7 +74,7 @@ namespace CaptureTaskManager
 		private DateTime m_DurationStart;
 		private bool m_ManagerDeactivatedLocally;
 
-        private bool m_TraceMode;
+        private readonly bool m_TraceMode;
 
 		#endregion
 
@@ -114,7 +113,7 @@ namespace CaptureTaskManager
 		private bool EvaluateLoopExitCode(LoopExitCode eLoopExitCode)
 		{
 			string msg;
-			bool restartOK = true;
+			var restartOK = true;
 
 			// Determine cause of loop exit and respond accordingly
 			switch (eLoopExitCode)
@@ -249,6 +248,12 @@ namespace CaptureTaskManager
 		/// <returns>TRUE for success; FALSE otherwise</returns>
 		public bool InitMgr()
 		{
+            // Create a database logger connected to DMS5
+            // Once the initial parameters have been successfully read, 
+            // we remove this logger than make a new one using the connectionstring read from the Manager Control DB
+		    const string DMS_CONNECTION_STRING = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;";
+            clsLogTools.CreateDbLogger(DMS_CONNECTION_STRING, "CaptureTaskMan: " + System.Net.Dns.GetHostName(), true);
+
 			// Get the manager settings
 			// If you get an exception here while debugging in Visual Studio, then be sure 
 			//  that "UsingDefaults" is set to False in CaptureTaskManager.exe.config               
@@ -302,17 +307,18 @@ namespace CaptureTaskManager
 			}
 
 			// Set up the loggers
-			string logFileName = m_MgrSettings.GetParam("logfilename");
+			var logFileName = m_MgrSettings.GetParam("logfilename");
 			m_DebugLevel = clsConversion.CIntSafe(m_MgrSettings.GetParam("debuglevel"), 4);
 			clsLogTools.CreateFileLogger(logFileName, m_DebugLevel);
 
 			if (clsConversion.CBoolSafe(m_MgrSettings.GetParam("ftplogging"))) clsLogTools.CreateFtpLogFileLogger("Dummy.txt");
-			string logCnStr = m_MgrSettings.GetParam("connectionstring");
-			
-			clsLogTools.CreateDbLogger(logCnStr, "CaptureTaskMan: " + m_MgrName);
+			var logCnStr = m_MgrSettings.GetParam("connectionstring");
+
+            clsLogTools.RemoveDefaultDbLogger();
+		    clsLogTools.CreateDbLogger(logCnStr, "CaptureTaskMan: " + m_MgrName, false);
 
 			// Make initial log entry
-			string msg = "=== Started Capture Task Manager V" + Application.ProductVersion + " ===== ";
+			var msg = "=== Started Capture Task Manager V" + Application.ProductVersion + " ===== ";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 
 			// Setup the message queue
@@ -337,40 +343,42 @@ namespace CaptureTaskManager
 
 			// Setup a file watcher for the config file
 			var fInfo = new FileInfo(Application.ExecutablePath);
-			m_FileWatcher = new FileSystemWatcher();
-			m_FileWatcher.BeginInit();
-			m_FileWatcher.Path = fInfo.DirectoryName;
-			m_FileWatcher.IncludeSubdirectories = false;
-			m_FileWatcher.Filter = m_MgrSettings.GetParam("configfilename");
-			m_FileWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size;
-			m_FileWatcher.EndInit();
-			m_FileWatcher.EnableRaisingEvents = true;
+		    m_FileWatcher = new FileSystemWatcher
+		    {
+		        Path = fInfo.DirectoryName,
+		        IncludeSubdirectories = false,
+		        Filter = m_MgrSettings.GetParam("configfilename"),
+		        NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size,
+		        EnableRaisingEvents = true
+		    };
 
-			// Subscribe to the file watcher Changed event
+		    // Subscribe to the file watcher Changed event
 			m_FileWatcher.Changed += FileWatcherChanged;
 
 			// Set up the tool for getting tasks
 			m_Task = new clsCaptureTask(m_MgrSettings);
 
 			// Set up the status file class
-			string statusFileNameLoc = Path.Combine(fInfo.DirectoryName, "Status.xml");
-			m_StatusFile = new clsStatusFile(statusFileNameLoc);
-			m_StatusFile.MonitorUpdateRequired += OnStatusMonitorUpdateReceived;
-			m_StatusFile.LogToMsgQueue = clsConversion.CBoolSafe(m_MgrSettings.GetParam("LogStatusToMessageQueue"));
-			m_StatusFile.MgrName = m_MgrName;
-			m_StatusFile.MgrStatus = EnumMgrStatus.Running;
-			m_StatusFile.WriteStatusFile();
+			var statusFileNameLoc = Path.Combine(fInfo.DirectoryName, "Status.xml");
+		    m_StatusFile = new clsStatusFile(statusFileNameLoc)
+		    {
+		        LogToMsgQueue = clsConversion.CBoolSafe(m_MgrSettings.GetParam("LogStatusToMessageQueue")),
+		        MgrName = m_MgrName,
+		        MgrStatus = EnumMgrStatus.Running
+		    };
+            m_StatusFile.MonitorUpdateRequired += OnStatusMonitorUpdateReceived;
+		    m_StatusFile.WriteStatusFile();
 
-			// Set up the status reporting time
-			m_StatusTimer = new System.Timers.Timer();
-			m_StatusTimer.BeginInit();
-			m_StatusTimer.Enabled = false;
-			m_StatusTimer.Interval = 60 * 1000;	// 1 minute
-			m_StatusTimer.EndInit();
-			m_StatusTimer.Elapsed += m_StatusTimer_Elapsed;
+			// Set up the status reporting time, with an interval of 1 minute
+		    m_StatusTimer = new System.Timers.Timer
+		    {
+		        Enabled = false,
+		        Interval = 60 * 1000
+		    };
+		    m_StatusTimer.Elapsed += m_StatusTimer_Elapsed;
 
 			// Get the most recent job history
-			string historyFile = Path.Combine(m_MgrSettings.GetParam("ApplicationPath"), "History.txt");
+			var historyFile = Path.Combine(m_MgrSettings.GetParam("ApplicationPath"), "History.txt");
 			if (File.Exists(historyFile))
 			{
 				try
@@ -386,7 +394,7 @@ namespace CaptureTaskManager
 						{
 							if (line.Contains("RecentJob: "))
 							{
-								string tmpStr = line.Replace("RecentJob: ", "");
+								var tmpStr = line.Replace("RecentJob: ", "");
 								m_StatusFile.MostRecentJobInfo = tmpStr;
 								break;
 							}
@@ -459,7 +467,7 @@ namespace CaptureTaskManager
 		/// <returns>TRUE if loop exits and manager restart is OK, FALSE otherwise</returns>
 		public bool PerformMainLoop()
 		{
-			int taskCount = 1;
+			var taskCount = 1;
 
 			var dtLastConfigDBUpdate = DateTime.UtcNow;
 
@@ -551,7 +559,7 @@ namespace CaptureTaskManager
                     if (m_TraceMode) clsUtilities.VerifyFolder("clsMainProgram.PerformMainLoop");
 
 					// Attempt to get a capture task
-					EnumRequestTaskResult taskReturn = m_Task.RequestTask();
+					var taskReturn = m_Task.RequestTask();
 					switch (taskReturn)
 					{
 						case EnumRequestTaskResult.NoTaskFound:
@@ -588,7 +596,7 @@ namespace CaptureTaskManager
 						default:
 							//Shouldn't ever get here!
 							break;
-					}	// End switch (taskReturn)
+					}
 
 				}
 				catch (Exception ex)
@@ -604,7 +612,7 @@ namespace CaptureTaskManager
 			// Write the recent job history file				
 			try
 			{
-				string historyFile = Path.Combine(m_MgrSettings.GetParam("ApplicationPath"), "History.txt");
+				var historyFile = Path.Combine(m_MgrSettings.GetParam("ApplicationPath"), "History.txt");
 
 				using (var sw = new StreamWriter(historyFile, false))
 				{
@@ -618,7 +626,7 @@ namespace CaptureTaskManager
 			}
 
 			// Evaluate the loop exit code
-			bool restartOK = EvaluateLoopExitCode(m_LoopExitCode);
+			var restartOK = EvaluateLoopExitCode(m_LoopExitCode);
 
 			if (!restartOK)
 			{
@@ -641,7 +649,7 @@ namespace CaptureTaskManager
 				m_StepTool = m_Task.GetParam("StepTool");
 				m_Job = m_Task.GetParam("Job");
 				m_Dataset = m_Task.GetParam("Dataset");
-				string stepNumber = m_Task.GetParam("Step");
+				var stepNumber = m_Task.GetParam("Step");
 
 				msg = "Job " + m_Job + ", step " + stepNumber + " assigned";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
@@ -689,7 +697,7 @@ namespace CaptureTaskManager
 				// Run the tool plugin
 				m_DurationStart = DateTime.UtcNow;
 				m_StatusTimer.Enabled = true;
-				clsToolReturnData toolResult = m_CapTool.RunTool();
+				var toolResult = m_CapTool.RunTool();
 				m_StatusTimer.Enabled = false;
 
 				eTaskCloseout = toolResult.CloseoutType;
@@ -741,7 +749,7 @@ namespace CaptureTaskManager
 					default:
 						// Should never get here
 						break;
-				}	// End switch (toolResult)
+				}
 
 			}
 			catch (Exception ex)
@@ -772,7 +780,7 @@ namespace CaptureTaskManager
 		{
 			try
 			{
-				string sMessage = "Test log message: " + DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss tt");
+				var sMessage = "Test log message: " + DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss tt");
 				Console.WriteLine(@"Posting test log message to the " + CUSTOM_LOG_NAME + @" Windows event log");
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.INFO, sMessage);
 				Console.WriteLine(@" ... Success!");
@@ -807,7 +815,7 @@ namespace CaptureTaskManager
 			{
 				var fiApplication = new FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
 
-				foreach (FileInfo fiFile in fiApplication.Directory.GetFiles("FTPlog_*"))
+				foreach (var fiFile in fiApplication.Directory.GetFiles("FTPlog_*"))
 				{
 					try
 					{
@@ -837,7 +845,7 @@ namespace CaptureTaskManager
 		{
 			// Remove .tmp and .zip files over 12 hours old in the Windows Temp folder
 			const int iAgedTempFilesHours = 12;
-			string sTempFolderPath = Path.GetTempPath();
+			var sTempFolderPath = Path.GetTempPath();
 			RemoveOldTempFiles(iAgedTempFilesHours, sTempFolderPath);
 
 		}
@@ -864,7 +872,7 @@ namespace CaptureTaskManager
 		{
 			try
 			{
-				int iTotalDeleted = 0;
+				var iTotalDeleted = 0;
 
 				if (iAgedTempFilesHours < 2)
 					iAgedTempFilesHours = 2;
@@ -879,10 +887,10 @@ namespace CaptureTaskManager
 				}
 
 				// Process each entry in lstSearchSpecs
-				foreach (string sSpec in lstSearchSpecs)
+				foreach (var sSpec in lstSearchSpecs)
 				{
-					int iDeleteCount = 0;
-					foreach (FileInfo fiFile in diFolder.GetFiles(sSpec))
+					var iDeleteCount = 0;
+					foreach (var fiFile in diFolder.GetFiles(sSpec))
 					{
 						try
 						{
@@ -988,7 +996,7 @@ namespace CaptureTaskManager
 																					  m_MgrSettings.GetParam("WorkDir"),
 																					  m_StatusFile);
 
-					int CleanupModeVal = clsConversion.CIntSafe(m_MgrSettings.GetParam("ManagerErrorCleanupMode"), 0);
+					var CleanupModeVal = clsConversion.CIntSafe(m_MgrSettings.GetParam("ManagerErrorCleanupMode"), 0);
 					blnMgrCleanupSuccess = objCleanupMgrErrors.AutoCleanupManagerErrors(CleanupModeVal);
 
 				}
@@ -1024,7 +1032,7 @@ namespace CaptureTaskManager
 		/// <returns></returns>
 		private bool UpdateMgrSettings(ref DateTime dtLastConfigDBUpdate, double MinutesBetweenUpdates)
 		{
-			bool bSuccess = true;
+			var bSuccess = true;
 
 			if (DateTime.UtcNow.Subtract(dtLastConfigDBUpdate).TotalMinutes >= MinutesBetweenUpdates)
 			{
@@ -1070,7 +1078,7 @@ namespace CaptureTaskManager
 			ulong totalDriveCapacity;
 			ulong totalFree;
 
-			int iResult = GetDiskFreeSpaceEx(directoryPath, out freeAvailableUser, out totalDriveCapacity, out totalFree);
+			var iResult = GetDiskFreeSpaceEx(directoryPath, out freeAvailableUser, out totalDriveCapacity, out totalFree);
 
 			if (iResult == 0)
 			{
@@ -1090,17 +1098,17 @@ namespace CaptureTaskManager
 
 		protected string GetStoragePathBase()
 		{
-			string storagePath = m_Task.GetParam("Storage_Path");
+			var storagePath = m_Task.GetParam("Storage_Path");
 
 			// Make sure storagePath only contains the root folder, not several folders
 			// In other words, if storagePath = "VOrbiETD03\2011_4" change it to just "VOrbiETD03"
-			int slashLoc = storagePath.IndexOf(Path.DirectorySeparatorChar);
+			var slashLoc = storagePath.IndexOf(Path.DirectorySeparatorChar);
 			if (slashLoc > 0)
 				storagePath = storagePath.Substring(0, slashLoc);
 
 			// Always use the UNC path defined by Storage_Vol_External when checking drive free space
 			// Example path is: \\Proto-7\
-			string datasetStoragePathBase = m_Task.GetParam("Storage_Vol_External");
+			var datasetStoragePathBase = m_Task.GetParam("Storage_Vol_External");
 
 			datasetStoragePathBase = Path.Combine(datasetStoragePathBase, storagePath);
 
@@ -1117,12 +1125,12 @@ namespace CaptureTaskManager
 		{
 			const int DEFAULT_DATASET_STORAGE_MIN_FREE_SPACE_GB = 30;
 
-			string datasetStoragePath = string.Empty;
+			var datasetStoragePath = string.Empty;
 			ErrorMessage = string.Empty;
 
 			try
 			{
-				string stepToolLCase = m_StepTool.ToLower();
+				var stepToolLCase = m_StepTool.ToLower();
 
 				if (stepToolLCase.Contains("archiveupdate") ||
 					stepToolLCase.Contains("datasetarchive") ||
@@ -1140,7 +1148,7 @@ namespace CaptureTaskManager
 				long totalNumberOfFreeBytes;
 				if (GetDiskFreeSpace(datasetStoragePath, out freeBytesAvailableToUser, out totalDriveCapacityBytes, out totalNumberOfFreeBytes))
 				{
-					double freeSpaceGB = totalNumberOfFreeBytes / 1024.0 / 1024.0 / 1024.0;
+					var freeSpaceGB = totalNumberOfFreeBytes / 1024.0 / 1024.0 / 1024.0;
 
 					if (freeSpaceGB < DEFAULT_DATASET_STORAGE_MIN_FREE_SPACE_GB)
 					{
@@ -1181,7 +1189,7 @@ namespace CaptureTaskManager
 		/// <returns>TRUE for success, FALSE otherwise</returns>
 		private bool ValidateWorkingDir()
 		{
-			string workingDir = m_MgrSettings.GetParam("WorkDir");
+			var workingDir = m_MgrSettings.GetParam("WorkDir");
 
 			if (!Directory.Exists(workingDir))
 			{
@@ -1192,13 +1200,13 @@ namespace CaptureTaskManager
 					// Auto-update the working directory
 					m_MgrSettings.SetParam("WorkDir", alternateWorkDir);
 
-					string msg = "Invalid working directory: " + workingDir + "; automatically switched to " + alternateWorkDir;
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+					var msg = "Invalid working directory: " + workingDir + "; automatically switched to " + alternateWorkDir;
+					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg);
 				}
 				else
 				{
-					string msg = "Invalid working directory: " + workingDir;
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+					var msg = "Invalid working directory: " + workingDir;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 
 					return false;
 				}
@@ -1222,7 +1230,7 @@ namespace CaptureTaskManager
 
 		private void OnBroadcastReceived(string cmdText)
 		{
-			string msg = "clsMainProgram.OnBroadcasetReceived event; message = " + cmdText;
+			var msg = "clsMainProgram.OnBroadcasetReceived event; message = " + cmdText;
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 			clsBroadcastCmd recvCmd;
@@ -1232,10 +1240,10 @@ namespace CaptureTaskManager
 			{
 				recvCmd = clsXMLTools.ParseBroadcastXML(cmdText);
 			}
-			catch (Exception Ex)
+			catch (Exception ex)
 			{
 				msg = "Exception while parsing broadcast data";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, Ex);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
 				return;
 			}
 
@@ -1287,7 +1295,7 @@ namespace CaptureTaskManager
 		/// <param name="e"></param>
 		void m_StatusTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
 		{
-			TimeSpan duration = DateTime.UtcNow - m_DurationStart;
+			var duration = DateTime.UtcNow - m_DurationStart;
 			m_StatusFile.Duration = (Single)duration.TotalHours;
 			m_StatusFile.WriteStatusFile();
 		}
