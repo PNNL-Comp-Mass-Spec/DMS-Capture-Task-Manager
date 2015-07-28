@@ -6,9 +6,9 @@
 // Created 10/01/2009
 //
 //*********************************************************************************************************
+
 using System;
 using System.Xml;
-using System.Collections.Specialized;
 
 namespace CaptureTaskManager
 {
@@ -46,9 +46,9 @@ namespace CaptureTaskManager
                 // Return the parsing results
                 return returnedData;
             }
-            catch (Exception Ex)
+            catch (Exception ex)
             {
-                throw new Exception("Exception while parsing broadcast string", Ex);
+                throw new Exception("Exception while parsing broadcast string", ex);
             }
         }
         #endregion

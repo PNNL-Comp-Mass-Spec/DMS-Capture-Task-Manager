@@ -5,9 +5,7 @@
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/15/2009
 //
-// Last modified 09/15/2009
 //*********************************************************************************************************
-using System;
 
 namespace CaptureTaskManager
 {
@@ -21,5 +19,5 @@ namespace CaptureTaskManager
             void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools);
 			clsToolReturnData RunTool();
 		#endregion
-	}	// End interface
-}	// End namespace
+	}
+}

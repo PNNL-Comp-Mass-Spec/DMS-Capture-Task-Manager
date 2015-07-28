@@ -5,7 +5,6 @@
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/22/2009
 //
-// Last modified 09/22/2009
 //*********************************************************************************************************
 using System;
 using System.Reflection;
@@ -95,9 +94,9 @@ namespace CaptureTaskManager
 			/// <returns>An object meeting the IToolRunner interface</returns>
 			public static IToolRunner GetToolRunner(string toolName)
 			{
-	            string xPath = "//ToolRunners/ToolRunner[@Tool='" + toolName.ToLower() + "']";
-				string className = "";
-				string assyName = "";
+	            var xPath = "//ToolRunners/ToolRunner[@Tool='" + toolName.ToLower() + "']";
+				var className = "";
+				var assyName = "";
 				IToolRunner myToolRunner = null;
 
 				if (GetPluginInfo(xPath, ref className, ref assyName))
@@ -110,7 +109,7 @@ namespace CaptureTaskManager
                     }
 #endif
 
-					object obj = LoadObject(className, assyName);
+					var obj = LoadObject(className, assyName);
 					string msg;
 					if (obj != null)
 					{
@@ -144,7 +143,7 @@ namespace CaptureTaskManager
 			private static bool GetPluginInfo(string xPath, ref string className, ref string assyName)
 			{
 				var doc = new XmlDocument();
-				string strPluginInfo = string.Empty;
+				var strPluginInfo = string.Empty;
 
 				try
 				{
@@ -156,7 +155,7 @@ namespace CaptureTaskManager
 
 					// Read the tool runner info file
 					doc.Load(GetPluginInfoFilePath(m_pluginConfigFile));
-					XmlElement root = doc.DocumentElement;
+					var root = doc.DocumentElement;
 
 					if (root == null)
 					{
@@ -165,7 +164,7 @@ namespace CaptureTaskManager
 					}
 
 					// Find the element that matches the tool name
-					XmlNodeList nodeList = root.SelectNodes(xPath);
+					var nodeList = root.SelectNodes(xPath);
 
 					// Make sure exactly 1 element found and retrieve its information
 					if (nodeList != null && nodeList.Count == 1)
@@ -215,8 +214,8 @@ namespace CaptureTaskManager
 				try
 				{
 					// Build instance of tool runner class from class and assembly names
-					Assembly assem = Assembly.LoadFrom(GetPluginInfoFilePath(assyName));
-					Type dllType = assem.GetType(className, false, true);
+					var assem = Assembly.LoadFrom(GetPluginInfoFilePath(assyName));
+					var dllType = assem.GetType(className, false, true);
 					obj = Activator.CreateInstance(dllType);
 				}
 				catch (Exception ex)

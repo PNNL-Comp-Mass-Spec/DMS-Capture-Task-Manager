@@ -112,7 +112,7 @@ namespace CaptureTaskManager
 
         public static float CSngSafe(string Value, float DefaultValue)
         {
-            float fValue = DefaultValue;
+            var fValue = DefaultValue;
 
             if (string.IsNullOrEmpty(Value))
                 return fValue;
@@ -167,7 +167,7 @@ namespace CaptureTaskManager
 
             var lstFunctions = new List<string>();
 
-            string strFinalFile = string.Empty;
+            var strFinalFile = string.Empty;
 
             var reFunctionName = new Regex(REGEX_FUNCTION_NAME, RegexOptions.Compiled | RegexOptions.IgnoreCase);
             var reFileName = new Regex(REGEX_FILE_NAME, RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -178,13 +178,13 @@ namespace CaptureTaskManager
             {
                 while (trTextReader.Peek() > -1)
                 {
-                    string strLine = trTextReader.ReadLine();
+                    var strLine = trTextReader.ReadLine();
 
                     if (!string.IsNullOrEmpty(strLine))
                     {
-                        string strCurrentFunction = string.Empty;
+                        var strCurrentFunction = string.Empty;
 
-                        Match objMatch = reFunctionName.Match(strLine);
+                        var objMatch = reFunctionName.Match(strLine);
                         if (objMatch.Success && objMatch.Groups.Count > 1)
                         {
                             strCurrentFunction = objMatch.Groups[1].Value;
@@ -230,8 +230,7 @@ namespace CaptureTaskManager
                 }
             }
 
-
-            string strStackTrace = string.Empty;
+            var strStackTrace = string.Empty;
             for (intIndex = lstFunctions.Count - 1; intIndex >= 0; intIndex -= 1)
             {
                 if (strStackTrace.Length == 0)
@@ -283,7 +282,7 @@ namespace CaptureTaskManager
             try
             {
                 var diSourceFolder = new DirectoryInfo(pathToCheck);
-                string msg = string.Empty;
+                string msg;
 
                 if (diSourceFolder.Exists)
                     msg = "Folder exists [" + pathToCheck + "]; called from " + callingFunction;

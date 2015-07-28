@@ -5,9 +5,7 @@
 // Copyright 2009, Battelle Memorial Institute
 // Created 06/16/2009
 //
-// Last modified 06/16/2009
 //*********************************************************************************************************
-using System.Collections.Generic;
 
 namespace CaptureTaskManager
 {
@@ -34,5 +32,5 @@ namespace CaptureTaskManager
 
 		#endregion
 
-	}	// End interface
-}	// End namespace
+	}
+}

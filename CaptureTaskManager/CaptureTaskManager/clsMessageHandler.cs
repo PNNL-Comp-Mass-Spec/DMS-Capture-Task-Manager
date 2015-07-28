@@ -25,11 +25,11 @@ namespace CaptureTaskManager
 		//**********************************************************************************************************
 
 		#region "Class variables"
-		private string m_BrokerUri = null;
-		private string m_CommandQueueName = null;	// Not presently used
-		private string m_BroadcastTopicName = null;	// Used for manager control functions (ie, start, read config)
-		private string m_StatusTopicName = null;	// Used for status output
-		private clsMgrSettings m_MgrSettings = null;
+		private string m_BrokerUri;
+		private string m_CommandQueueName;	// Not presently used
+		private string m_BroadcastTopicName;	// Used for manager control functions (ie, start, read config)
+		private string m_StatusTopicName;	// Used for status output
+		private clsMgrSettings m_MgrSettings;
 
 		private IConnection m_Connection;
 		private ISession m_StatusSession;
@@ -37,8 +37,8 @@ namespace CaptureTaskManager
 		private IMessageConsumer m_CommandConsumer;
 		private IMessageConsumer m_BroadcastConsumer;
 
-		private bool m_IsDisposed = false;
-		private bool m_HasConnection = false;
+		private bool m_IsDisposed;
+		private bool m_HasConnection;
 		#endregion
 
 		#region "Events"
@@ -94,7 +94,7 @@ namespace CaptureTaskManager
 		    if (retryCount < 0)
 		        retryCount = 0;
 
-            int retriesRemaining = retryCount;
+            var retriesRemaining = retryCount;
 
 		    if (timeoutSeconds < 5)
 		        timeoutSeconds = 5;
@@ -105,12 +105,12 @@ namespace CaptureTaskManager
 		    {
 		        try
 		        {
-		            IConnectionFactory connectionFactory = new ConnectionFactory(this.m_BrokerUri);
-		            this.m_Connection = connectionFactory.CreateConnection();
-		            this.m_Connection.RequestTimeout = new System.TimeSpan(0, 0, timeoutSeconds);
-		            this.m_Connection.Start();
+		            IConnectionFactory connectionFactory = new ConnectionFactory(m_BrokerUri);
+		            m_Connection = connectionFactory.CreateConnection();
+		            m_Connection.RequestTimeout = new TimeSpan(0, 0, timeoutSeconds);
+		            m_Connection.Start();
 
-		            this.m_HasConnection = true;
+		            m_HasConnection = true;
 		            // temp debug
 		            // Console.WriteLine("--- New connection made ---" + Environment.NewLine); //+ e.ToString()
 
@@ -155,26 +155,26 @@ namespace CaptureTaskManager
 				if (!m_HasConnection) return false;
 
 				// queue for telling manager to perform task (future?)
-				ISession commandSession = m_Connection.CreateSession();
-				m_CommandConsumer = commandSession.CreateConsumer(new ActiveMQQueue(this.m_CommandQueueName));
+				var commandSession = m_Connection.CreateSession();
+				m_CommandConsumer = commandSession.CreateConsumer(new ActiveMQQueue(m_CommandQueueName));
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Command listener established");
 
 				// topic for commands broadcast to all capture tool managers
-				ISession broadcastSession = m_Connection.CreateSession();
-				m_BroadcastConsumer = broadcastSession.CreateConsumer(new ActiveMQTopic(this.m_BroadcastTopicName));
+				var broadcastSession = m_Connection.CreateSession();
+				m_BroadcastConsumer = broadcastSession.CreateConsumer(new ActiveMQTopic(m_BroadcastTopicName));
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Broadcast listener established");
 
 				// topic for the capture tool manager to send status information over
-				this.m_StatusSession = m_Connection.CreateSession();
-				this.m_StatusSender = m_StatusSession.CreateProducer(new ActiveMQTopic(m_StatusTopicName));
+				m_StatusSession = m_Connection.CreateSession();
+				m_StatusSender = m_StatusSession.CreateProducer(new ActiveMQTopic(m_StatusTopicName));
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Status sender established");
 
 				return true;
 			}
-			catch (Exception Ex)
+			catch (Exception ex)
 			{
-				string msg = "Exception while initializing message sessions";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, Ex);
+				var msg = "Exception while initializing message sessions";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
 				DestroyConnection();
 				return false;
 			}
@@ -187,15 +187,18 @@ namespace CaptureTaskManager
 		/// <param name="message">Incoming message</param>
 		private void OnCommandReceived(IMessage message)
 		{
-			ITextMessage textMessage = message as ITextMessage;
-			string Msg = "clsMessageHandler(), Command message received";
+			var textMessage = message as ITextMessage;
+			var Msg = "clsMessageHandler(), Command message received";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg);
-			if (this.CommandReceived != null)
+			if (CommandReceived != null)
 			{
 				// call the delegate to process the commnd
 				Msg = "clsMessageHandler().OnCommandReceived: At lease one event handler assigned";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg);
-				this.CommandReceived(textMessage.Text);
+			    if (textMessage != null)
+			    {
+			        CommandReceived(textMessage.Text);
+			    }
 			}
 			else
 			{
@@ -211,20 +214,23 @@ namespace CaptureTaskManager
 		/// <param name="message">Incoming message</param>
 		private void OnBroadcastReceived(IMessage message)
 		{
-			ITextMessage textMessage = message as ITextMessage;
-			string Msg = "clsMessageHandler(), Broadcast message received";
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg);
-			if (this.BroadcastReceived != null)
+			var textMessage = message as ITextMessage;
+			var msg = "clsMessageHandler(), Broadcast message received";
+			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+			if (BroadcastReceived != null)
 			{
 				// call the delegate to process the commnd
-				Msg = "clsMessageHandler().OnBroadcastReceived: At lease one event handler assigned";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg);
-				this.BroadcastReceived(textMessage.Text);
+				msg = "clsMessageHandler().OnBroadcastReceived: At lease one event handler assigned";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+			    if (textMessage != null)
+			    {
+			        BroadcastReceived(textMessage.Text);
+			    }
 			}
 			else
 			{
-				Msg = "clsMessageHandler().OnBroadcastReceived: No event handlers assigned";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg);
+				msg = "clsMessageHandler().OnBroadcastReceived: No event handlers assigned";
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 			}
 		}
 
@@ -234,13 +240,13 @@ namespace CaptureTaskManager
 		/// <param name="message">Outgoing message string</param>
 		public void SendMessage(string message)
 		{
-			if (!this.m_IsDisposed)
+			if (!m_IsDisposed)
 			{
-				ITextMessage textMessage = this.m_StatusSession.CreateTextMessage(message);
+				var textMessage = m_StatusSession.CreateTextMessage(message);
 				textMessage.Properties.SetString("ProcessorName", m_MgrSettings.GetParam("MgrName"));
 				try
 				{
-					this.m_StatusSender.Send(textMessage);
+					m_StatusSender.Send(textMessage);
 				}
 				catch
 				{
@@ -249,7 +255,7 @@ namespace CaptureTaskManager
 			}
 			else
 			{
-				throw new ObjectDisposedException(this.GetType().FullName);
+				throw new ObjectDisposedException(GetType().FullName);
 			}
 		}
 		#endregion
@@ -262,9 +268,9 @@ namespace CaptureTaskManager
 		{
 			if (m_HasConnection)
 			{
-				this.m_Connection.Dispose();
-				this.m_HasConnection = false;
-				string msg = "Message connection closed";
+				m_Connection.Dispose();
+				m_HasConnection = false;
+				var msg = "Message connection closed";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 			}
 		}
@@ -274,10 +280,10 @@ namespace CaptureTaskManager
 		/// </summary>
 		public void Dispose()
 		{
-			if (!this.m_IsDisposed)
+			if (!m_IsDisposed)
 			{
-				this.DestroyConnection();
-				this.m_IsDisposed = true;
+				DestroyConnection();
+				m_IsDisposed = true;
 			}
 		}
 

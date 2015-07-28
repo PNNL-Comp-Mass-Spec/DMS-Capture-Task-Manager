@@ -3,11 +3,9 @@
 // Written by Dave Clark for the US Department of Energy 
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
-// Created 010/05/2009
+// Created 10/05/2009
 //
-// Last modified 010/05/2009
 //*********************************************************************************************************
-using System;
 
 namespace CaptureTaskManager
 {
@@ -50,5 +48,5 @@ namespace CaptureTaskManager
 			}
 		#endregion
 
-	}	// End class
-}	// End namespace
+	}
+}

@@ -5,9 +5,7 @@
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/15/2009
 //
-// Last modified 09/15/2009
 //*********************************************************************************************************
-using System;
 
 namespace CaptureTaskManager
 {
@@ -31,5 +29,5 @@ namespace CaptureTaskManager
 		bool AddAdditionalParameter(string paramName, string paramValue);
 		void SetParam(string keyName, string value);
 		#endregion
-	}	// End interface
-}	// End namespace
+	}
+}

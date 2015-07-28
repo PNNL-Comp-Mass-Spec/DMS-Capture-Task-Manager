@@ -5,7 +5,6 @@
 // Copyright 2009, Battelle Memorial Institute
 // Created 06/18/2009
 //
-// Last modified 09/10/2009
 //*********************************************************************************************************
 using System;
 
@@ -55,5 +54,5 @@ namespace CaptureTaskManager
 			void UpdateIdle();
 			void InitStatusFromFile();
 		#endregion
-	}	// End interface
-}	// End namespace
+	}
+}

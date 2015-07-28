@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Net;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
@@ -16,7 +13,7 @@ namespace CaptureTaskManager
 {
 	public class NetworkConnection : IDisposable
 	{
-		string _networkName;
+	    readonly string _networkName;
 
 		public NetworkConnection(string networkName,
 			NetworkCredential credentials)
@@ -81,7 +78,7 @@ namespace CaptureTaskManager
 		public string Provider;
 	}
 
-	public enum ResourceScope : int
+	public enum ResourceScope
 	{
 		Connected = 1,
 		GlobalNetwork,
@@ -90,7 +87,7 @@ namespace CaptureTaskManager
 		Context
 	};
 
-	public enum ResourceType : int
+	public enum ResourceType
 	{
 		Any = 0,
 		Disk = 1,
@@ -98,7 +95,7 @@ namespace CaptureTaskManager
 		Reserved = 8,
 	}
 
-	public enum ResourceDisplaytype : int
+	public enum ResourceDisplaytype
 	{
 		Generic = 0x0,
 		Domain = 0x01,

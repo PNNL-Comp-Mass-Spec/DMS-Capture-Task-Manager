@@ -5,10 +5,9 @@
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/10/2009
 //
-// Last modified 09/10/2009
 //*********************************************************************************************************
 using System;
-using System.IO;
+using FileProcessor;
 
 namespace CaptureTaskManager
 {
@@ -32,9 +31,9 @@ namespace CaptureTaskManager
 		[STAThread]
 		static void Main()
 		{
-			bool restart = false;
+			var restart = false;
 
-			var objParseCommandLine = new FileProcessor.clsParseCommandLine();
+			var objParseCommandLine = new clsParseCommandLine();
 
 			// Look for /T or /Test on the command line
 			// If present, this means "code test mode" is enabled
@@ -80,13 +79,13 @@ namespace CaptureTaskManager
                  
 					//Initialize the main execution class
                     var oMainProgram = new clsMainProgram(mTraceMode);
-					bool mgrInitSuccess = oMainProgram.InitMgr();
+					var mgrInitSuccess = oMainProgram.InitMgr();
 					if (!mgrInitSuccess)
 					{
 						restart = false;
 					}
 
-					if (mCreateEventLog && (mgrInitSuccess || (!mgrInitSuccess && oMainProgram.ManagerDeactivatedLocally)))
+					if (mCreateEventLog && (mgrInitSuccess || (oMainProgram.ManagerDeactivatedLocally)))
 					{
 						oMainProgram.PostTestLogMessage();
 						restart = false;
@@ -96,8 +95,6 @@ namespace CaptureTaskManager
 						if (mgrInitSuccess)
 							restart = oMainProgram.PerformMainLoop();
 					}
-
-					oMainProgram = null;
 				}
 				catch (System.Security.SecurityException ex)
 				{
@@ -130,19 +127,18 @@ namespace CaptureTaskManager
 
 		}
 
-		private static bool SetOptionsUsingCommandLineParameters(FileProcessor.clsParseCommandLine objParseCommandLine)
+		private static void SetOptionsUsingCommandLineParameters(clsParseCommandLine objParseCommandLine)
 		{
 			// Returns True if no problems; otherwise, returns false
 
-			string strValue = string.Empty;
-			var strValidParameters = new string[] { "T", "EL", "Test", "Trace" };
+		    var strValidParameters = new[] { "T", "EL", "Test", "Trace" };
 
 			try
 			{
 				// Make sure no invalid parameters are present
 				if (objParseCommandLine.InvalidParametersPresent(strValidParameters))
 				{
-					return false;
+				    return;
 				}
 
 
@@ -167,14 +163,11 @@ namespace CaptureTaskManager
                     mTraceMode = true;
                 }
 
-				return true;
 			}
 			catch (Exception ex)
 			{
 				Console.WriteLine("Error parsing the command line parameters: " + Environment.NewLine + ex.Message);
 			}
-
-			return false;
 		}
 
 

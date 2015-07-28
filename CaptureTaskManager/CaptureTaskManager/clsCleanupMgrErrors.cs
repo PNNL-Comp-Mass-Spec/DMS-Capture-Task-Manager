@@ -26,16 +26,16 @@ namespace CaptureTaskManager
 
 		#region "Class wide Variables"
 
-		protected bool mInitialized = false;
-		protected string mMgrConfigDBConnectionString = string.Empty;
+		protected bool mInitialized;
+		protected string mMgrConfigDBConnectionString;
 
-		protected string mManagerName = string.Empty;
+		protected string mManagerName;
 		protected string mMgrFolderPath = string.Empty;
 
-		protected string mWorkingDirPath = string.Empty;
+		protected string mWorkingDirPath;
 
 
-		private IStatusFile m_StatusFile;
+		private readonly IStatusFile m_StatusFile;
 		#endregion
 
 
@@ -68,16 +68,16 @@ namespace CaptureTaskManager
 			switch (ManagerErrorCleanupMode)
 			{
 				case 0:
-					eManagerErrorCleanupMode = clsCleanupMgrErrors.eCleanupModeConstants.Disabled;
+					eManagerErrorCleanupMode = eCleanupModeConstants.Disabled;
 					break;
 				case 1:
-					eManagerErrorCleanupMode = clsCleanupMgrErrors.eCleanupModeConstants.CleanupOnce;
+					eManagerErrorCleanupMode = eCleanupModeConstants.CleanupOnce;
 					break;
 				case 2:
-					eManagerErrorCleanupMode = clsCleanupMgrErrors.eCleanupModeConstants.CleanupAlways;
+					eManagerErrorCleanupMode = eCleanupModeConstants.CleanupAlways;
 					break;
 				default:
-					eManagerErrorCleanupMode = clsCleanupMgrErrors.eCleanupModeConstants.Disabled;
+					eManagerErrorCleanupMode = eCleanupModeConstants.Disabled;
 					break;
 			}
 
@@ -88,10 +88,9 @@ namespace CaptureTaskManager
 
 		public bool AutoCleanupManagerErrors(eCleanupModeConstants eManagerErrorCleanupMode)
 		{
-			bool blnSuccess = false;
-			string strFailureMessage = string.Empty;
+			var blnSuccess = false;
 
-			if (!mInitialized)
+		    if (!mInitialized)
 				return false;
 
 
@@ -103,7 +102,8 @@ namespace CaptureTaskManager
 				ReportManagerErrorCleanup(eCleanupActionCodeConstants.Start);
 
 				// Delete all folders and subfolders in work folder
-				blnSuccess = CaptureTaskManager.clsToolRunnerBase.CleanWorkDir(mWorkingDirPath, 1, out strFailureMessage);
+			    string strFailureMessage;
+			    blnSuccess = clsToolRunnerBase.CleanWorkDir(mWorkingDirPath, 1, out strFailureMessage);
 
 				if (!blnSuccess)
 				{
@@ -148,19 +148,17 @@ namespace CaptureTaskManager
 
 		protected void ReportManagerErrorCleanup(eCleanupActionCodeConstants eMgrCleanupActionCode, string strFailureMessage)
 		{
-			System.Data.SqlClient.SqlConnection MyConnection = default(System.Data.SqlClient.SqlConnection);
-			System.Data.SqlClient.SqlCommand MyCmd = new System.Data.SqlClient.SqlCommand();
-			int RetVal = 0;
 
-			try
+		    try
 			{
 				if (strFailureMessage == null)
 					strFailureMessage = string.Empty;
 
-				MyConnection = new System.Data.SqlClient.SqlConnection(mMgrConfigDBConnectionString);
+				var MyConnection = new System.Data.SqlClient.SqlConnection(mMgrConfigDBConnectionString);
 				MyConnection.Open();
 
 				//Set up the command object prior to SP execution
+                var MyCmd = new System.Data.SqlClient.SqlCommand();
 				{
 					MyCmd.CommandType = CommandType.StoredProcedure;
 					MyCmd.CommandText = SP_NAME_REPORTMGRCLEANUP;
@@ -187,14 +185,14 @@ namespace CaptureTaskManager
 				}
 
 				//Execute the SP
-				RetVal = MyCmd.ExecuteNonQuery();
+				MyCmd.ExecuteNonQuery();
 
 			}
-			catch (System.Exception ex)
+			catch (Exception ex)
 			{
 				if (mMgrConfigDBConnectionString == null)
 					mMgrConfigDBConnectionString = string.Empty;
-				string strErrorMessage = "Exception calling " + SP_NAME_REPORTMGRCLEANUP + " in ReportManagerErrorCleanup with connection string " + mMgrConfigDBConnectionString;
+				var strErrorMessage = "Exception calling " + SP_NAME_REPORTMGRCLEANUP + " in ReportManagerErrorCleanup with connection string " + mMgrConfigDBConnectionString;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strErrorMessage + ex.Message);
 			}
 

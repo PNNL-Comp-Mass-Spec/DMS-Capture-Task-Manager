@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace CaptureTaskManager
 {
@@ -32,13 +33,11 @@ namespace CaptureTaskManager
 
 		public void TestConnection()
 		{
-			int iIterations = 0;
+		    Console.WriteLine("Code test mode");
 
-			Console.WriteLine("Code test mode");
+			var lstCredentials = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
 
-			System.Collections.Generic.Dictionary<string, string> lstCredentials = new System.Collections.Generic.Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
-
-			string sShareFolderPath = @"\\15T_FTICR.bionet\ProteomicsData";
+			var sShareFolderPath = @"\\15T_FTICR.bionet\ProteomicsData";
 
 			// Make sure sShareFolderPath does not end in a back slash
 			if (sShareFolderPath.EndsWith(@"\"))
@@ -49,26 +48,24 @@ namespace CaptureTaskManager
 
 			try
 			{
-				Dictionary<string, string>.Enumerator enumCurrent = lstCredentials.GetEnumerator();
+				var enumCurrent = lstCredentials.GetEnumerator();
 
 				while (enumCurrent.MoveNext())
 				{
-
-					System.Net.NetworkCredential accessCredentials;
-					accessCredentials = new System.Net.NetworkCredential(enumCurrent.Current.Key, enumCurrent.Current.Value, "");
+				    var accessCredentials = new System.Net.NetworkCredential(enumCurrent.Current.Key, enumCurrent.Current.Value, "");
 
 					Console.WriteLine("Credentials created for " + enumCurrent.Current.Key);
 
-					NetworkConnection cnBionet = new NetworkConnection(sShareFolderPath, accessCredentials);
+					var cnBionet = new NetworkConnection(sShareFolderPath, accessCredentials);
 
 					Console.WriteLine("Connected to share");
 
-					System.IO.DirectoryInfo diDirectory = new System.IO.DirectoryInfo(sShareFolderPath);
+					var diDirectory = new System.IO.DirectoryInfo(sShareFolderPath);
 
 					Console.WriteLine("Instantiated DirectoryInfo object: " + diDirectory.FullName);
 
-					iIterations = 0;
-					foreach (System.IO.FileInfo fiFile in diDirectory.GetFiles())
+					var iIterations = 0;
+					foreach (var fiFile in diDirectory.GetFiles())
 					{
 						Console.WriteLine("File: " + fiFile.Name + " size " + fiFile.Length + " bytes");
 						++iIterations;
@@ -80,9 +77,9 @@ namespace CaptureTaskManager
 					Console.WriteLine("Files Done");
 
 					iIterations = 0;
-					foreach (System.IO.DirectoryInfo diFolder in diDirectory.GetDirectories())
+					foreach (var diFolder in diDirectory.GetDirectories())
 					{
-						Console.WriteLine("Folder: " + diFolder.Name + " modified " + diFolder.LastWriteTime.ToString());
+						Console.WriteLine("Folder: " + diFolder.Name + " modified " + diFolder.LastWriteTime.ToString(CultureInfo.InvariantCulture));
 						++iIterations;
 
 						if (iIterations > 20)
@@ -93,8 +90,6 @@ namespace CaptureTaskManager
 
 					// Disconnect network connection
 					cnBionet.Dispose();
-					cnBionet = null;				
-
 				}
 
 			}

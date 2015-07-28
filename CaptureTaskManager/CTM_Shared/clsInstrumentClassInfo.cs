@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace CaptureTaskManager
 {
@@ -128,7 +125,7 @@ namespace CaptureTaskManager
 				return eInstrumentClass.Unknown;
 			}
 
-			eInstrumentClass instrumentClass = eInstrumentClass.Unknown;
+			var instrumentClass = eInstrumentClass.Unknown;
 			try
 			{
 				// Convert the instrument class name text to the num name using case-insensitive conversion

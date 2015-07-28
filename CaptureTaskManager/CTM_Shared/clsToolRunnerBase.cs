@@ -5,7 +5,6 @@
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/25/2009
 //
-// Last modified 09/25/2009
 //*********************************************************************************************************
 using System;
 using System.Collections.Generic;
@@ -109,7 +108,7 @@ namespace CaptureTaskManager
             m_FileTools = new PRISM.Files.clsFileTools(m_MgrParams.GetParam("MgrName", "CaptureTaskManager"), 1);
 
             // This Connection String points to the DMS_Capture database
-            string sConnectionString = m_MgrParams.GetParam("connectionstring");
+            var sConnectionString = m_MgrParams.GetParam("connectionstring");
             CaptureDBProcedureExecutor = new PRISM.DataBase.clsExecuteDatabaseSP(sConnectionString);
 
             AttachExecuteSpEvents();
@@ -134,7 +133,7 @@ namespace CaptureTaskManager
 
         protected bool UpdateMgrSettings()
         {
-            bool bSuccess = true;
+            var bSuccess = true;
 
             if (m_MinutesBetweenConfigDBUpdates < 1)
                 m_MinutesBetweenConfigDBUpdates = 1;
@@ -199,7 +198,7 @@ namespace CaptureTaskManager
 
             int HoldoffMilliseconds;
 
-            string strCurrentSubfolder = string.Empty;
+            var strCurrentSubfolder = string.Empty;
 
             strFailureMessage = string.Empty;
 
@@ -231,7 +230,7 @@ namespace CaptureTaskManager
                     return false;
                 }
 
-                foreach (FileInfo fiFile in diWorkFolder.GetFiles())
+                foreach (var fiFile in diWorkFolder.GetFiles())
                 {
                     try
                     {
@@ -255,7 +254,7 @@ namespace CaptureTaskManager
             // Delete the sub directories
             try
             {
-                foreach (DirectoryInfo diSubDirectory in diWorkFolder.GetDirectories())
+                foreach (var diSubDirectory in diWorkFolder.GetDirectories())
                 {
                     diSubDirectory.Delete(true);
                 }
@@ -460,7 +459,7 @@ namespace CaptureTaskManager
         {
             try
             {
-                string strToolVersionFilePath = Path.Combine(strFolderPath, "Tool_Version_Info_" + m_TaskParams.GetParam("StepTool") + ".txt");
+                var strToolVersionFilePath = Path.Combine(strFolderPath, "Tool_Version_Info_" + m_TaskParams.GetParam("StepTool") + ".txt");
 
                 using (var swToolVersionFile = new StreamWriter(new FileStream(strToolVersionFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
                 {
@@ -521,7 +520,7 @@ namespace CaptureTaskManager
         protected bool SetStepTaskToolVersion(string strToolVersionInfo, List<FileInfo> ioToolFiles, bool blnSaveToolVersionTextFile)
         {
 
-            string strExeInfo = string.Empty;
+            var strExeInfo = string.Empty;
             string strToolVersionInfoCombined;
 
             bool Outcome;
@@ -533,7 +532,7 @@ namespace CaptureTaskManager
 
             if ((ioToolFiles != null))
             {
-                foreach (FileInfo fiFile in ioToolFiles)
+                foreach (var fiFile in ioToolFiles)
                 {
                     try
                     {
@@ -598,7 +597,7 @@ namespace CaptureTaskManager
             }
 
             //Execute the SP (retry the call up to 4 times)
-            int resCode = CaptureDBProcedureExecutor.ExecuteSP(MyCmd, 4);
+            var resCode = CaptureDBProcedureExecutor.ExecuteSP(MyCmd, 4);
 
             if (resCode == 0)
             {
@@ -606,7 +605,7 @@ namespace CaptureTaskManager
             }
             else
             {
-                string Msg = "Error " + resCode + " storing tool version for current processing step";
+                var Msg = "Error " + resCode + " storing tool version for current processing step";
                 LogError(Msg);
                 Outcome = false;
             }
@@ -637,9 +636,9 @@ namespace CaptureTaskManager
 
                 }
 
-                AssemblyName oAssemblyName = Assembly.LoadFrom(fiFile.FullName).GetName();
+                var oAssemblyName = Assembly.LoadFrom(fiFile.FullName).GetName();
 
-                string strNameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version;
+                var strNameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version;
                 strToolVersionInfo = AppendToComment(strToolVersionInfo, strNameAndVersion);
 
                 return true;
@@ -743,7 +742,7 @@ namespace CaptureTaskManager
                     return false;
                 }
                     
-                string strNameAndVersion = string.Copy(strVersion);
+                var strNameAndVersion = string.Copy(strVersion);
 
                 strToolVersionInfo = AppendToComment(strToolVersionInfo, strNameAndVersion);
 
@@ -852,5 +851,5 @@ namespace CaptureTaskManager
 
         #endregion
 
-    }	// End class
-}	// End namespace
+    }
+}

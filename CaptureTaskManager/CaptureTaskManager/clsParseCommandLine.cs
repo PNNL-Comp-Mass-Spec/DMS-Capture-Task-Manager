@@ -14,7 +14,7 @@ using ExtensionMethods;
 // Website: http://panomics.pnnl.gov/ or http://www.sysbio.org/resources/staff/
 // -------------------------------------------------------------------------------
 // 
-// Last modified October 17, 2013
+// Last modified July 27, 2015
 
 namespace FileProcessor
 {
@@ -30,9 +30,9 @@ namespace FileProcessor
 		protected Dictionary<string, string> mSwitches = new Dictionary<string, string>();
 
 		protected List<string> mNonSwitchParameters = new List<string>();
-		protected bool mShowHelp = false;
+		protected bool mShowHelp;
 
-		protected bool mDebugMode = false;
+		protected bool mDebugMode;
 		public bool NeedToShowHelp
 		{
 			get { return mShowHelp; }
@@ -123,7 +123,7 @@ namespace FileProcessor
 				// Find items in mSwitches whose keys are not in lstValidParameters)		
 
 				foreach (KeyValuePair<string, string> item in mSwitches) {
-					string itemKey = item.Key;
+					var itemKey = item.Key;
 					int intMatchCount;
 
 					if (blnCaseSensitive) {
@@ -137,8 +137,8 @@ namespace FileProcessor
 					}
 				}
 
-			} catch (System.Exception ex) {
-				throw new System.Exception("Error in InvalidParameters", ex);
+			} catch (Exception ex) {
+				throw new Exception("Error in InvalidParameters", ex);
 			}
 
 			return lstInvalidParameters;
@@ -200,7 +200,7 @@ namespace FileProcessor
 				try
 				{
 					// .CommandLine() returns the full command line
-					strCmdLine = System.Environment.CommandLine;
+					strCmdLine = Environment.CommandLine;
 
 					// .GetCommandLineArgs splits the command line at spaces, though it keeps text between double quotes together
 					// Note that .NET will strip out the starting and ending double quote if the user provides a parameter like this:
@@ -224,7 +224,7 @@ namespace FileProcessor
 					// strParameters = System.Environment.GetCommandLineArgs()
 
 				}
-				catch (System.Exception ex)
+				catch (Exception ex)
 				{
 					// In .NET 1.x, programs would fail if called from a network share
 					// This appears to be fixed in .NET 2.0 and above
@@ -262,7 +262,7 @@ namespace FileProcessor
 					return false;
 				}
 				
-				if (strCmdLine.IndexOf(chSwitchStartChar + "?") > 0 | strCmdLine.ToLower().IndexOf(chSwitchStartChar + "help") > 0)
+				if (strCmdLine.Contains("?") || strCmdLine.ToLower().Contains("help"))
 				{
 					mShowHelp = true;
 					return false;
@@ -276,8 +276,8 @@ namespace FileProcessor
 				{
 					if (strParameters[intIndex].Length > 0)
 					{
-						string strKey = strParameters[intIndex].TrimStart(' ');
-						string strValue = string.Empty;
+						var strKey = strParameters[intIndex].TrimStart(' ');
+						var strValue = string.Empty;
 
 						bool blnSwitchParam;
 						if (strKey.StartsWith(chSwitchStartChar))
@@ -297,7 +297,7 @@ namespace FileProcessor
 						if (blnSwitchParam)
 						{
 							// Look for strSwitchParameterChar in strParameters(intIndex)
-							int intCharLoc = strParameters[intIndex].IndexOf(chSwitchParameterChar);
+							var intCharLoc = strParameters[intIndex].IndexOf(chSwitchParameterChar);
 
 							if (intCharLoc >= 0)
 							{
@@ -344,9 +344,9 @@ namespace FileProcessor
 				}
 
 			}
-			catch (System.Exception ex)
+			catch (Exception ex)
 			{
-				throw new System.Exception("Error in ParseCommandLine", ex);
+				throw new Exception("Error in ParseCommandLine", ex);
 			}
 
 			if (mDebugMode)
@@ -389,7 +389,7 @@ namespace FileProcessor
 				intTotalIterations = 1;
 			}
 
-			int intIteration = 0;
+			var intIteration = 0;
 			do
 			{
 				Console.Write('.');
@@ -410,14 +410,14 @@ namespace FileProcessor
 		/// <returns>The value of the parameter at the given index; empty string if no value or invalid index</returns>
 		public string RetrieveNonSwitchParameter(int intParameterIndex)
 		{
-			string strValue = string.Empty;
+			var strValue = string.Empty;
 
 			if (intParameterIndex < mNonSwitchParameters.Count)
 			{
 				strValue = mNonSwitchParameters[intParameterIndex];
 			}
 
-			if (strValue == null)
+			if (string.IsNullOrEmpty(strValue))
 			{
 				strValue = string.Empty;
 			}
@@ -442,9 +442,9 @@ namespace FileProcessor
 
 				if (intParameterIndex < mSwitches.Count)
 				{
-					Dictionary<string, string>.Enumerator iEnum = mSwitches.GetEnumerator();
+					var iEnum = mSwitches.GetEnumerator();
 
-					int intIndex = 0;
+					var intIndex = 0;
 					while (iEnum.MoveNext())
 					{
 						if (intIndex == intParameterIndex)
@@ -461,9 +461,9 @@ namespace FileProcessor
 					return false;
 				}
 			}
-			catch (System.Exception ex)
+			catch (Exception ex)
 			{
-				throw new System.Exception("Error in RetrieveParameter", ex);
+				throw new Exception("Error in RetrieveParameter", ex);
 			}
 
 			return false;
@@ -509,7 +509,7 @@ namespace FileProcessor
 				}
 				else
 				{
-					Dictionary<string, string>.Enumerator iEnum = mSwitches.GetEnumerator();
+					var iEnum = mSwitches.GetEnumerator();
 
 					while (iEnum.MoveNext())
 					{
@@ -522,9 +522,9 @@ namespace FileProcessor
 					return false;
 				}
 			}
-			catch (System.Exception ex)
+			catch (Exception ex)
 			{
-				throw new System.Exception("Error in RetrieveValueForParameter", ex);
+				throw new Exception("Error in RetrieveValueForParameter", ex);
 			}
 
 		}
@@ -533,15 +533,15 @@ namespace FileProcessor
 		{
 			var strParameters = new List<string>();
 
-			int intIndexStart = 0;
-			int intIndexEnd = 0;
+			var intIndexStart = 0;
+			var intIndexEnd = 0;
 
 			try
 			{
 
 				if (!string.IsNullOrEmpty(strCmdLine))
 				{
-					bool blnInsideDoubleQuotes = false;
+					var blnInsideDoubleQuotes = false;
 
 					while (intIndexStart < strCmdLine.Length)
 					{
@@ -558,7 +558,7 @@ namespace FileProcessor
 							if (strCmdLine[intIndexEnd] == ' ' || intIndexEnd == strCmdLine.Length - 1)
 							{
 								// Found the end of a parameter
-								string strParameter = strCmdLine.Substring(intIndexStart, intIndexEnd - intIndexStart + 1).TrimEnd(' ');
+								var strParameter = strCmdLine.Substring(intIndexStart, intIndexEnd - intIndexStart + 1).TrimEnd(' ');
 
 								if (strParameter.StartsWith('"'))
 								{
@@ -587,9 +587,9 @@ namespace FileProcessor
 					}
 				}
 			}
-			catch (System.Exception ex)
+			catch (Exception ex)
 			{
-				throw new System.Exception("Error in SplitCommandLineParams", ex);
+				throw new Exception("Error in SplitCommandLineParams", ex);
 			}
 
 			return strParameters.ToArray();

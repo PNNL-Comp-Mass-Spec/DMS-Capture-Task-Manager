@@ -26,7 +26,7 @@ namespace CaptureTaskManager
 
         #region "Class variables"
         //Status file name and location
-        private string m_FileNamePath = "";
+        private string m_FileNamePath;
 
         //Manager name
         private string m_MgrName = "";
@@ -38,7 +38,7 @@ namespace CaptureTaskManager
         private DateTime m_MgrStartTime;
 
         //Analysis Tool
-        private string m_Tool = "";
+        private string m_Tool;
 
         //Task status
         private EnumTaskStatus m_TaskStatus = EnumTaskStatus.No_Task;
@@ -62,7 +62,7 @@ namespace CaptureTaskManager
         private int m_JobStep;
 
         //Dataset name
-        private string m_Dataset = "";
+        private string m_Dataset;
 
         //Most recent job info
         private string m_MostRecentJobInfo = "";
@@ -71,10 +71,8 @@ namespace CaptureTaskManager
         private int m_SpectrumCount;
 
         //Message broker connection string
-        private string m_MessageQueueURI;
 
         //Broker topic for status reporting
-        private string m_MessageQueueTopic;
 
         //Flag to indicate if status should be logged to broker in addition to a file
         private bool m_LogToMsgQueue;
@@ -167,17 +165,9 @@ namespace CaptureTaskManager
             set { m_SpectrumCount = value; }
         }
 
-        public string MessageQueueURI
-        {
-            get { return m_MessageQueueURI; }
-            set { m_MessageQueueURI = value; }
-        }
+        public string MessageQueueURI { get; set; }
 
-        public string MessageQueueTopic
-        {
-            get { return m_MessageQueueTopic; }
-            set { m_MessageQueueTopic = value; }
-        }
+        public string MessageQueueTopic { get; set; }
 
         public bool LogToMsgQueue
         {
@@ -190,16 +180,16 @@ namespace CaptureTaskManager
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="FileLocation">Full path to status file</param>
-        public clsStatusFile(string FileLocation)
+        /// <param name="fileLocation">Full path to status file</param>
+        public clsStatusFile(string fileLocation)
         {
-            m_FileNamePath = FileLocation;
+            m_FileNamePath = fileLocation;
             m_MgrStartTime = DateTime.Now;
             m_Progress = 0;
             m_SpectrumCount = 0;
-            m_Dataset = "";
+            m_Dataset = string.Empty;
             m_JobNumber = 0;
-            m_Tool = "";
+            m_Tool = string.Empty;
         }
         #endregion
 
@@ -274,7 +264,7 @@ namespace CaptureTaskManager
         /// </summary>
         public void CreateStatusFlagFile()
         {
-            var TestFileFi = new FileInfo(Path.Combine(this.AppFolderPath(), FLAG_FILE_NAME));
+            var TestFileFi = new FileInfo(Path.Combine(AppFolderPath(), FLAG_FILE_NAME));
             using (var sw = TestFileFi.AppendText())
             {
                 sw.WriteLine(DateTime.Now.ToString(CultureInfo.InvariantCulture));
@@ -289,7 +279,7 @@ namespace CaptureTaskManager
         {
 
             //Returns True if job request control flag file exists
-            string strFlagFilePath = Path.Combine(this.AppFolderPath(), FLAG_FILE_NAME);
+            var strFlagFilePath = Path.Combine(AppFolderPath(), FLAG_FILE_NAME);
 
             try
             {
@@ -322,7 +312,7 @@ namespace CaptureTaskManager
         {
 
             //Returns True if job request control flag file exists
-            string strFlagFilePath = Path.Combine(this.AppFolderPath(), FLAG_FILE_NAME);
+            var strFlagFilePath = Path.Combine(AppFolderPath(), FLAG_FILE_NAME);
 
             return File.Exists(strFlagFilePath);
         }
@@ -332,7 +322,7 @@ namespace CaptureTaskManager
         /// </summary>
         public void WriteStatusFile()
         {
-            string XMLText = string.Empty;
+            var XMLText = string.Empty;
 
             //Set up the XML writer
             try
@@ -351,13 +341,13 @@ namespace CaptureTaskManager
                     XWriter.WriteStartElement("Manager");
                     XWriter.WriteElementString("MgrName", m_MgrName);
                     XWriter.WriteElementString("MgrStatus", ConvertMgrStatusToString(m_MgrStatus));
-                    XWriter.WriteElementString("LastUpdate", DateTime.Now.ToString());
-                    XWriter.WriteElementString("LastStartTime", m_MgrStartTime.ToString());
+                    XWriter.WriteElementString("LastUpdate", DateTime.Now.ToString(CultureInfo.InvariantCulture));
+                    XWriter.WriteElementString("LastStartTime", m_MgrStartTime.ToString(CultureInfo.InvariantCulture));
                     XWriter.WriteElementString("CPUUtilization", CpuUtilization.ToString());
                     XWriter.WriteElementString("ProcessID", GetProcessID().ToString());
                     XWriter.WriteElementString("FreeMemoryMB", "0");
                     XWriter.WriteStartElement("RecentErrorMessages");
-                    foreach (string ErrMsg in clsStatusData.ErrorQueue)
+                    foreach (var ErrMsg in clsStatusData.ErrorQueue)
                     {
                         XWriter.WriteElementString("ErrMsg", ErrMsg);
                     }
@@ -503,7 +493,7 @@ namespace CaptureTaskManager
             m_TaskStatus = EnumTaskStatus.No_Task;
             m_TaskStatusDetail = EnumTaskStatusDetail.No_Task;
 
-            this.WriteStatusFile();
+            WriteStatusFile();
         }
 
         /// <summary>
@@ -533,7 +523,7 @@ namespace CaptureTaskManager
             try
             {
                 // Read the input file
-                string XmlStr = File.ReadAllText(m_FileNamePath);
+                var XmlStr = File.ReadAllText(m_FileNamePath);
 
                 // Convert to an XML document
                 var Doc = new XmlDocument();

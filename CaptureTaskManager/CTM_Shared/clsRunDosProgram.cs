@@ -370,9 +370,9 @@ namespace CaptureTaskManager
 
 			ProgramAborted = false;
 			mAbortProgramPostLogEntry = true;
-			bool blnRuntimeExceeded = false;
-			bool blnAbortLogged = false;
-			DateTime dtStartTime = DateTime.UtcNow;
+			var blnRuntimeExceeded = false;
+			var blnAbortLogged = false;
+			var dtStartTime = DateTime.UtcNow;
 
 			try
 			{

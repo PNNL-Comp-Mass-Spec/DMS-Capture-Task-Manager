@@ -5,7 +5,6 @@
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/10/2009
 //
-// Last modified 09/10/2009
 //*********************************************************************************************************
 using System;
 using System.Collections.Generic;
@@ -180,21 +179,21 @@ namespace CaptureTaskManager
 
 		private bool CheckInitialSettings(Dictionary<string, string> InpDict)
 		{
-			//Verify manager settings dictionary exists
+			// Verify manager settings dictionary exists
 			if (InpDict == null)
 			{
 				m_ErrMsg = "clsMgrSettings.CheckInitialSettings(); Manager parameter string dictionary not found";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.ERROR, m_ErrMsg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, m_ErrMsg);
 				return false;
 			}
 
-			//Verify intact config file was found
+			// Verify intact config file was found
 			string strValue;
 			if (!InpDict.TryGetValue("UsingDefaults", out strValue))
 			{
 				m_ErrMsg = "clsMgrSettings.CheckInitialSettings(); 'UsingDefaults' entry not found in Config file";
 				Console.WriteLine(m_ErrMsg);
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.ERROR, m_ErrMsg);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, m_ErrMsg);
 			}
 			else
 			{
@@ -206,7 +205,7 @@ namespace CaptureTaskManager
 					{
 						m_ErrMsg = "clsMgrSettings.CheckInitialSettings(); Config file problem, contains UsingDefaults=True";
 						Console.WriteLine(m_ErrMsg);
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.ERROR, m_ErrMsg);
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, m_ErrMsg);
 						return false;
 					}
 				}
@@ -564,7 +563,7 @@ namespace CaptureTaskManager
 			}
 			else
 			{
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.ERROR, errorMessage);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, errorMessage);
 			}
 		}
 		#endregion

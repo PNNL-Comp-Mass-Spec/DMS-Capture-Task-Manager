@@ -5,7 +5,6 @@
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/15/2009
 //
-// Last modified 09/15/2009
 //*********************************************************************************************************
 using System;
 using System.Data.SqlClient;
@@ -151,7 +150,7 @@ namespace CaptureTaskManager
 			}
 			catch (Exception ex)
 			{
-				string msg = "Exception adding parameter: " + paramName + ", Value: " + paramValue;
+				var msg = "Exception adding parameter: " + paramName + ", Value: " + paramValue;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
 				return false;
 			}
@@ -177,7 +176,7 @@ namespace CaptureTaskManager
 		/// <returns>num indicating if task was found</returns>
 		public override EnumRequestTaskResult RequestTask()
 		{
-		    EnumRequestTaskResult retVal = RequestTaskDetailed();
+		    var retVal = RequestTaskDetailed();
 
 			switch (retVal)
 			{
@@ -203,9 +202,7 @@ namespace CaptureTaskManager
 		{
 		    var myCmd = new SqlCommand();
 			EnumRequestTaskResult outcome;
-		    string strProductVersion = Application.ProductVersion;
-			if (strProductVersion == null) 
-                strProductVersion = "??";
+		    var strProductVersion = Application.ProductVersion;
 
 			try
 			{
@@ -240,7 +237,7 @@ namespace CaptureTaskManager
 					myCmd.Parameters["@JobCountToPreview"].Value = 10;
 				}
 
-				string msg = "clsCaptureTask.RequestTaskDetailed(), connection string: " + m_ConnStr;
+				var msg = "clsCaptureTask.RequestTaskDetailed(), connection string: " + m_ConnStr;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 				msg = "clsCaptureTask.RequestTaskDetailed(), printing param list";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
@@ -248,7 +245,7 @@ namespace CaptureTaskManager
 
 				//Execute the SP
 			    DataTable dt;
-			    int retVal = CaptureTaskDBProcedureExecutor.ExecuteSP(myCmd, out dt);
+			    var retVal = CaptureTaskDBProcedureExecutor.ExecuteSP(myCmd, out dt);
 
 				switch (retVal)
 				{
@@ -257,7 +254,7 @@ namespace CaptureTaskManager
 						var jobID = (int)myCmd.Parameters["@jobNumber"].Value;
 
 						//Step task was found; get the data for it
-						bool paramSuccess = FillParamDict(dt);
+						var paramSuccess = FillParamDict(dt);
 						if (paramSuccess)
 						{
 							outcome = EnumRequestTaskResult.TaskFound;
@@ -403,7 +400,7 @@ namespace CaptureTaskManager
 
 
 				//Execute the SP
-                int ResCode = CaptureTaskDBProcedureExecutor.ExecuteSP(MyCmd);
+                var ResCode = CaptureTaskDBProcedureExecutor.ExecuteSP(MyCmd);
 
 				if (ResCode == 0)
 				{
