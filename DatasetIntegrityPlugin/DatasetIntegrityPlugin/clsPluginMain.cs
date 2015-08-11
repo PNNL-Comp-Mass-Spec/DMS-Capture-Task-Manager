@@ -5,18 +5,22 @@
 // Copyright 2009, Battelle Memorial Institute
 // Created 10/02/2009
 //
-// Last modified 10/02/2009
-//						07/09/2010 (DAC) - Added new definition for BrukerFT_BAF instrument class
-//						11/17/2010 (DAC) - Added new tests for MALDI imaging and spot instrument classes
+// Last modified 08/11/2015 
+//
 //*********************************************************************************************************
+
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using CaptureTaskManager;
+using PRISM.Files;
+using PRISM.Processes;
+using ThermoRawFileReaderDLL.FinniganFileIO;
 using UIMFLibrary;
 
 namespace DatasetIntegrityPlugin
@@ -44,6 +48,7 @@ namespace DatasetIntegrityPlugin
         const float MCF_FILE_MIN_SIZE_KB = 0.1F;		// Malding imaging file; Prior to May 2014, used a minimum of 4 KB; however, seeing 12T_FTICR_B datasets where this file is as small as 120 Bytes
 
         const int MAX_AGILENT_TO_UIMF_RUNTIME_MINUTES = 30;
+        const int MAX_AGILENT_TO_CDF_RUNTIME_MINUTES = 10;
 
         #endregion
 
@@ -51,15 +56,9 @@ namespace DatasetIntegrityPlugin
 
         protected clsToolReturnData mRetData = new clsToolReturnData();
         protected DateTime mAgilentToUIMFStartTime;
+        protected DateTime mAgilentToCDFStartTime;
         protected DateTime mLastStatusUpdate;
 
-        #endregion
-
-        #region "Constructors"
-        public clsPluginMain()
-        {
-            // Does nothing at present
-        }	// End sub
         #endregion
 
         #region "Methods"
@@ -69,7 +68,7 @@ namespace DatasetIntegrityPlugin
         /// <returns>Enum indicating success or failure</returns>
         public override clsToolReturnData RunTool()
         {
-            string msg = "Starting DatasetIntegrityPlugin.clsPluginMain.RunTool()";
+            var msg = "Starting DatasetIntegrityPlugin.clsPluginMain.RunTool()";
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
             // Perform base class operations, if any
@@ -90,19 +89,19 @@ namespace DatasetIntegrityPlugin
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 
             // Set up the file paths
-            string storageVolExt = m_TaskParams.GetParam("Storage_Vol_External");
-            string storagePath = m_TaskParams.GetParam("Storage_Path");
-            string datasetFolder = Path.Combine(storageVolExt, Path.Combine(storagePath, m_Dataset));
+            var storageVolExt = m_TaskParams.GetParam("Storage_Vol_External");
+            var storagePath = m_TaskParams.GetParam("Storage_Path");
+            var datasetFolder = Path.Combine(storageVolExt, Path.Combine(storagePath, m_Dataset));
             string dataFileNamePath;
 
             // Select which tests will be performed based on instrument class
-            string instClassName = m_TaskParams.GetParam("Instrument_Class");
-            string instrumentName = m_TaskParams.GetParam("Instrument_Name");
+            var instClassName = m_TaskParams.GetParam("Instrument_Class");
+            var instrumentName = m_TaskParams.GetParam("Instrument_Name");
 
             msg = "Instrument class: " + instClassName;
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
-            clsInstrumentClassInfo.eInstrumentClass instrumentClass = clsInstrumentClassInfo.GetInstrumentClass(instClassName);
+            var instrumentClass = clsInstrumentClassInfo.GetInstrumentClass(instClassName);
             if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Unknown)
             {
                 msg = "Instrument class not recognized: " + instClassName;
@@ -195,7 +194,25 @@ namespace DatasetIntegrityPlugin
                     mRetData.CloseoutType = TestSciexQtrapFile(datasetFolder, m_Dataset);
                     break;
                 case clsInstrumentClassInfo.eInstrumentClass.Agilent_Ion_Trap:
+                    // .D folder with a DATA.MS file
                     mRetData.CloseoutType = TestAgilentIonTrapFolder(datasetFolder);
+
+                    if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
+                    {
+
+                        // Convert the .d folder to a .CDF file
+                        if (!ConvertAgilentDFolderToCDF(datasetFolder))
+                        {
+                            if (string.IsNullOrEmpty(mRetData.CloseoutMsg))
+                            {
+                                mRetData.CloseoutMsg = "Unknown error converting the Agilent .D to folder to a .CDF file";
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg);
+                            }
+
+                            mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                        }
+                    }
+                    
                     break;
                 case clsInstrumentClassInfo.eInstrumentClass.Agilent_TOF_V2:
                     mRetData.CloseoutType = TestAgilentTOFV2Folder(datasetFolder);
@@ -215,6 +232,130 @@ namespace DatasetIntegrityPlugin
             return mRetData;
         }	// End sub
 
+        private bool ConvertAgilentDFolderToCDF(string datasetFolderPath)
+        {
+            clsRunDosProgram CmdRunner = null;
+
+            try
+            {
+
+                var exePath = m_MgrParams.GetParam("OpenChromProgLoc");
+                exePath = Path.Combine(exePath, "openchrom.exe");
+
+                if (!File.Exists(exePath))
+                {
+                    mRetData.CloseoutMsg = "OpenChrome.exe not found at " + exePath;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg);
+                    return false;
+                }
+
+                var mgrName = m_MgrParams.GetParam("MgrName", "CTM");
+                var oFileTools = new clsFileTools(mgrName, m_DebugLevel);
+                var dotDFolderPathLocal = Path.Combine(m_WorkDir, m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION);
+
+                var success = CopyDotDFolderToLocal(oFileTools, datasetFolderPath, dotDFolderPathLocal, false);
+                if (!success)
+                    return false;
+
+                // Create the BatchJob.obj file
+                // This is an XML file with the information required by OpenChrom to create CDF file from the .D folder
+
+                var batchJobFilePath = CreateOpenChromCDFJobFile(dotDFolderPathLocal);
+                if (string.IsNullOrEmpty(batchJobFilePath))
+                {
+                    return false;
+                }
+
+                // Construct the command line arguments to run the OpenChrom
+
+                // Syntax:
+                // OpenChrom.exe -cli -batchfile E:\CTM_WorkDir\BatchJob.obj 
+                //
+                // Optional: -nosplash
+
+                var cmdStr = "-cli -batchfile " + batchJobFilePath;
+                var consoleOutputFilePath = Path.Combine(m_WorkDir, "OpenChrom_ConsoleOutput_" + mgrName + ".txt");
+
+                CmdRunner = new clsRunDosProgram(m_WorkDir);
+                mAgilentToCDFStartTime = DateTime.UtcNow;
+                mLastStatusUpdate = DateTime.UtcNow;
+
+                AttachCmdrunnerEvents(CmdRunner);
+
+                CmdRunner.CreateNoWindow = false;
+                CmdRunner.EchoOutputToConsole = false;
+                CmdRunner.CacheStandardOutput = false;
+
+                // OpenChrom does not produce any console output; so no point in creating it 
+                CmdRunner.WriteConsoleOutputToFile = false;
+                CmdRunner.ConsoleOutputFilePath = consoleOutputFilePath;
+
+                var msg = "Converting .D folder to .UIMF: " + exePath + " " + cmdStr;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+
+                const int iMaxRuntimeSeconds = MAX_AGILENT_TO_CDF_RUNTIME_MINUTES * 60;
+                success = CmdRunner.RunProgram(exePath, cmdStr, "OpenChrom", true, iMaxRuntimeSeconds);
+
+                // Delete the locally cached .D folder
+                try
+                {
+                    clsProgRunner.GarbageCollectNow();
+                    oFileTools.DeleteDirectory(dotDFolderPathLocal, ignoreErrors: true);
+                }
+                catch (Exception ex)
+                {
+                    // Do not treat this as a fatal error
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception deleting locally cached .D folder (" + dotDFolderPathLocal + "): " + ex.Message);
+                }
+
+                if (!success)
+                {
+                    mRetData.CloseoutMsg = "Error running OpenChrom";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg);
+
+                    if (CmdRunner.ExitCode != 0)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "OpenChrom returned a non-zero exit code: " + CmdRunner.ExitCode);
+                    }
+                    else
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to OpenChrom failed (but exit code is 0)");
+                    }
+
+                    return false;
+                }
+
+                Thread.Sleep(100);
+
+                // Copy the .CDF file to the dataset folder
+                success = CopyCDFToDatasetFolder(oFileTools, mgrName, datasetFolderPath);
+                if (!success)
+                {
+                    return false;
+                }
+
+                // Delete the batch job  file
+                DeleteFileIgnoreErrors(batchJobFilePath);
+
+                // Delete the console output file
+                if (File.Exists(consoleOutputFilePath))
+                    DeleteFileIgnoreErrors(consoleOutputFilePath);
+
+            }
+            catch (Exception ex)
+            {
+                mRetData.CloseoutMsg = "Exception converting .D folder to a UIMF file";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg + ": " + ex.Message);
+                return false;
+            }
+            finally
+            {
+                DetachCmdrunnerEvents(CmdRunner);
+            }
+
+            return true;
+        }
+
         private bool ConvertAgilentDFolderToUIMF(string datasetFolderPath)
         {
             clsRunDosProgram CmdRunner = null;
@@ -222,7 +363,7 @@ namespace DatasetIntegrityPlugin
             try
             {
 
-                string exePath = m_MgrParams.GetParam("AgilentToUIMFProgLoc");
+                var exePath = m_MgrParams.GetParam("AgilentToUIMFProgLoc");
                 exePath = Path.Combine(exePath, "AgilentToUimfConverter.exe");
 
                 if (!File.Exists(exePath))
@@ -232,11 +373,11 @@ namespace DatasetIntegrityPlugin
                     return false;
                 }
 
-                string mgrName = m_MgrParams.GetParam("MgrName", "CTM");
-                var oFileTools = new PRISM.Files.clsFileTools(mgrName, m_DebugLevel);
-                string dotDFolderPathLocal = Path.Combine(m_WorkDir, m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION);
+                var mgrName = m_MgrParams.GetParam("MgrName", "CTM");
+                var oFileTools = new clsFileTools(mgrName, m_DebugLevel);
+                var dotDFolderPathLocal = Path.Combine(m_WorkDir, m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION);
 
-                var success = CopyDotDFolderToLocal(oFileTools, datasetFolderPath, dotDFolderPathLocal);
+                var success = CopyDotDFolderToLocal(oFileTools, datasetFolderPath, dotDFolderPathLocal, true);
                 if (!success)
                     return false;
 
@@ -245,8 +386,8 @@ namespace DatasetIntegrityPlugin
                 // Syntax:
                 // AgilentToUIMFConverter.exe [Agilent .d Folder] [Directory to insert file (optional)]
                 //
-                string cmdStr = clsConversion.PossiblyQuotePath(dotDFolderPathLocal) + " " + clsConversion.PossiblyQuotePath(m_WorkDir);
-                string consoleOutputFilePath = Path.Combine(m_WorkDir, "AgilentToUIMF_ConsoleOutput_" + mgrName + ".txt");
+                var cmdStr = clsConversion.PossiblyQuotePath(dotDFolderPathLocal) + " " + clsConversion.PossiblyQuotePath(m_WorkDir);
+                var consoleOutputFilePath = Path.Combine(m_WorkDir, "AgilentToUIMF_ConsoleOutput_" + mgrName + ".txt");
 
                 CmdRunner = new clsRunDosProgram(m_WorkDir);
                 mAgilentToUIMFStartTime = DateTime.UtcNow;
@@ -260,7 +401,7 @@ namespace DatasetIntegrityPlugin
                 CmdRunner.WriteConsoleOutputToFile = true;
                 CmdRunner.ConsoleOutputFilePath = consoleOutputFilePath;
 
-                var msg = "Converting .D folder to .UIMF: " + exePath + " " + cmdStr;
+                var msg = "Converting .D folder to .CDF: " + exePath + " " + cmdStr;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 
                 const int iMaxRuntimeSeconds = MAX_AGILENT_TO_UIMF_RUNTIME_MINUTES * 60;
@@ -271,7 +412,7 @@ namespace DatasetIntegrityPlugin
                 // Delete the locally cached .D folder
                 try
                 {
-                    PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                    clsProgRunner.GarbageCollectNow();
                     oFileTools.DeleteDirectory(dotDFolderPathLocal, ignoreErrors: true);
                 }
                 catch (Exception ex)
@@ -300,7 +441,6 @@ namespace DatasetIntegrityPlugin
                 Thread.Sleep(100);
 
                 // Copy the .UIMF file to the dataset folder
-
                 success = CopyUIMFToDatasetFolder(oFileTools, mgrName, datasetFolderPath);
                 if (!success)
                 {
@@ -308,7 +448,7 @@ namespace DatasetIntegrityPlugin
                 }
 
                 // Delete the console output file
-                base.DeleteFileIgnoreErrors(consoleOutputFilePath);
+                DeleteFileIgnoreErrors(consoleOutputFilePath);
 
             }
             catch (Exception ex)
@@ -325,43 +465,51 @@ namespace DatasetIntegrityPlugin
             return true;
         }
 
-        private bool CopyDotDFolderToLocal(PRISM.Files.clsFileTools oFileTools, string datasetFolderPath, string dotDFolderPathLocal)
+        private bool CopyDotDFolderToLocal(
+            clsFileTools oFileTools, 
+            string datasetFolderPath, 
+            string dotDFolderPathLocal, 
+            bool requireIMSFiles)
         {
             var dotDFolderPathRemote = new DirectoryInfo(Path.Combine(datasetFolderPath, m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION));
 
-            // Make sure the .D folder has the required files
-            // Older datasets may have had their larger files purged, which will cause the AgilentToUIMFConverter to fail
-
-            var binFiles = dotDFolderPathRemote.GetFiles("*.bin", SearchOption.AllDirectories).ToList();
-            var fileNames = new SortedSet<string>(StringComparer.CurrentCultureIgnoreCase);
-
-            foreach (var file in binFiles)
-                fileNames.Add(file.Name);
-
-            var requiredFiles = new List<string>
+            if (requireIMSFiles)
             {
-                "IMSFrame.bin",
-                "MSPeak.bin",
-                "MSPeriodicActuals.bin",
-                "MSProfile.bin",
-                "MSScan.bin"
-            };
+                // Make sure the .D folder has the required files
+                // Older datasets may have had their larger files purged, which will cause the AgilentToUIMFConverter to fail
 
-            // Construct a list of the missing files
-            var missingFiles = requiredFiles.Where(requiredFile => !fileNames.Contains(requiredFile)).ToList();
+                var binFiles = dotDFolderPathRemote.GetFiles("*.bin", SearchOption.AllDirectories).ToList();
+                var fileNames = new SortedSet<string>(StringComparer.CurrentCultureIgnoreCase);
 
-            var errorMessage = string.Empty;
-            if (missingFiles.Count == 1)
-                errorMessage = "Cannot convert .D to .UIMF; missing file " + missingFiles.First();
+                foreach (var file in binFiles)
+                    fileNames.Add(file.Name);
 
-            if (missingFiles.Count > 1)
-                errorMessage = "Cannot convert .D to .UIMF; missing files " + string.Join(", ", missingFiles);
+                var requiredFiles = new List<string>
+                {
+                    "IMSFrame.bin",
+                    "MSPeak.bin",
+                    "MSPeriodicActuals.bin",
+                    "MSProfile.bin",
+                    "MSScan.bin"
+                };
 
-            if (errorMessage.Length > 0)
-            {
-                mRetData.CloseoutMsg = errorMessage;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg);
-                return false;
+                // Construct a list of the missing files
+                var missingFiles = requiredFiles.Where(requiredFile => !fileNames.Contains(requiredFile)).ToList();
+
+                var errorMessage = string.Empty;
+                if (missingFiles.Count == 1)
+                    errorMessage = "Cannot convert .D to .UIMF; missing file " + missingFiles.First();
+
+                if (missingFiles.Count > 1)
+                    errorMessage = "Cannot convert .D to .UIMF; missing files " + string.Join(", ", missingFiles);
+
+                if (errorMessage.Length > 0)
+                {
+                    mRetData.CloseoutMsg = errorMessage;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                         mRetData.CloseoutMsg);
+                    return false;
+                }
             }
 
             // Copy the dataset folder locally using Prism.DLL
@@ -372,7 +520,23 @@ namespace DatasetIntegrityPlugin
             return true;
         }
 
-        private bool CopyUIMFToDatasetFolder(PRISM.Files.clsFileTools oFileTools, string mgrName, string datasetFolderPath)
+        private bool CopyCDFToDatasetFolder(clsFileTools oFileTools, string mgrName, string datasetFolderPath)
+        {
+            var fiCDF = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + ".cdf"));
+
+            if (!fiCDF.Exists)
+            {
+                mRetData.CloseoutMsg = "OpenChrom did not create a .CDF file";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg + ": " + fiCDF.FullName);
+                return false;
+            }
+
+            var success = CopyFileToDatasetFolder(oFileTools, mgrName, fiCDF, datasetFolderPath);
+            return success;
+        }
+
+
+        private bool CopyUIMFToDatasetFolder(clsFileTools oFileTools, string mgrName, string datasetFolderPath)
         {
 
             var fiUIMF = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION));
@@ -384,13 +548,19 @@ namespace DatasetIntegrityPlugin
                 return false;
             }
 
+            var success = CopyFileToDatasetFolder(oFileTools, mgrName, fiUIMF, datasetFolderPath);
+            return success;
+        }
+
+        private bool CopyFileToDatasetFolder(clsFileTools oFileTools, string mgrName, FileInfo dataFile, string datasetFolderPath)
+        {
             if (m_DebugLevel >= 4)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying .UIMF file to the dataset folder");
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying " + dataFile.Extension + " file to the dataset folder");
             }
 
-            string targetFilePath = Path.Combine(datasetFolderPath, fiUIMF.Name);
-            oFileTools.CopyFileUsingLocks(fiUIMF.FullName, targetFilePath, mgrName, Overwrite: true);
+            var targetFilePath = Path.Combine(datasetFolderPath, dataFile.Name);
+            oFileTools.CopyFileUsingLocks(dataFile.FullName, targetFilePath, mgrName, Overwrite: true);
 
             if (m_DebugLevel >= 4)
             {
@@ -400,15 +570,62 @@ namespace DatasetIntegrityPlugin
             try
             {
                 // Delete the local copy
-                fiUIMF.Delete();
+                dataFile.Delete();
             }
             catch (Exception ex)
             {
                 // Do not treat this as a fatal error
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception deleting local copy of the new .UIMF file " + fiUIMF.FullName + ": " + ex.Message);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception deleting local copy of the new .UIMF file " + dataFile.FullName + ": " + ex.Message);
             }
 
             return true;
+        }
+
+        private string CreateOpenChromCDFJobFile(string dotDFolderPathLocal)
+        {
+            try
+            {
+                var sbXML = new StringBuilder();
+
+                sbXML.Append(@"<?xml version=""1.0"" encoding=""utf-8""?>");
+                sbXML.Append(@"<BatchProcessJob>");
+                sbXML.Append(@"<Header></Header>");
+
+                sbXML.Append(@"<!--Load the following chromatograms.-->");
+                sbXML.Append(@"<InputEntries><InputEntry>");
+                sbXML.Append(@"<![CDATA[" + dotDFolderPathLocal + "]]>");
+                sbXML.Append(@"</InputEntry></InputEntries>");
+
+                sbXML.Append(@"<!--Process each chromatogram with the listed methods.-->");
+                sbXML.Append(@"<ProcessEntries></ProcessEntries>");
+
+                sbXML.Append(@"<!--Write each processed chromatogram to the given output formats.-->");
+                sbXML.Append(@"<OutputEntries>");
+                sbXML.Append(@"<OutputEntry converterId=""net.openchrom.msd.converter.supplier.cdf"">");
+                sbXML.Append(@"<![CDATA[" + m_WorkDir + "]]>");
+                sbXML.Append(@"</OutputEntry>");
+                sbXML.Append(@"</OutputEntries>");
+
+                sbXML.Append(@"<!--Process each chromatogram with the listed report suppliers.-->");
+                sbXML.Append(@"<ReportEntries></ReportEntries>");
+                sbXML.Append(@"</BatchProcessJob>");
+
+                var jobFilePath = Path.Combine(m_WorkDir, "CDFBatchJob.obj");
+
+                using (var writer = new StreamWriter(new FileStream(jobFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    writer.WriteLine(sbXML);
+                }
+
+                return jobFilePath;
+
+            }
+            catch (Exception ex)
+            {
+                mRetData.CloseoutMsg = ".D to CDF conversion failed; error in CreateOpenChromCDFJobFile";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CreateOpenChromCDFJobFile: " + ex.Message);
+                return string.Empty;
+            }
         }
 
         /// <summary>
@@ -453,13 +670,13 @@ namespace DatasetIntegrityPlugin
                     msg = "Comparing files in superseded folder (" + diOldFolder.FullName + ") to newer folder (" + diNewFolder.FullName + ")";
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 
-                    bool bFolderIsSuperseded = true;
+                    var bFolderIsSuperseded = true;
 
-                    FileInfo[] fiSupersededFiles = diOldFolder.GetFiles("*", SearchOption.AllDirectories);
+                    var fiSupersededFiles = diOldFolder.GetFiles("*", SearchOption.AllDirectories);
 
-                    foreach (FileInfo fiFile in fiSupersededFiles)
+                    foreach (var fiFile in fiSupersededFiles)
                     {
-                        string sNewfilePath = fiFile.FullName.Replace(diOldFolder.FullName, diNewFolder.FullName);
+                        var sNewfilePath = fiFile.FullName.Replace(diOldFolder.FullName, diNewFolder.FullName);
                         var fiNewFile = new FileInfo(sNewfilePath);
 
                         if (!fiNewFile.Exists)
@@ -519,77 +736,87 @@ namespace DatasetIntegrityPlugin
         /// <param name="copyFile">True to copy the file, false to move it</param>
         private void MoveOrCopyUpOneLevel(DirectoryInfo diDatasetFolder, string fileSpec, bool matchDatasetName, bool copyFile)
         {
-            foreach (FileInfo fiFile in diDatasetFolder.GetFiles(fileSpec))
+            foreach (var fiFile in diDatasetFolder.GetFiles(fileSpec))
             {
-                if (!matchDatasetName || Path.GetFileNameWithoutExtension(fiFile.Name).ToLower().StartsWith(m_Dataset.ToLower()))
+                if (matchDatasetName &&
+                    !Path.GetFileNameWithoutExtension(fiFile.Name).ToLower().StartsWith(m_Dataset.ToLower()))
                 {
-                    if (fiFile.Directory != null && fiFile.Directory.Parent != null)
-                    {
-                        string newPath = Path.Combine(fiFile.Directory.Parent.FullName, fiFile.Name);
-                        if (!File.Exists(newPath))
-                        {
-                            if (copyFile)
-                                fiFile.CopyTo(newPath, true);
-                            else
-                                fiFile.MoveTo(newPath);
-                        }
-                    }
+                    continue;
                 }
+
+                if (fiFile.Directory == null || fiFile.Directory.Parent == null)
+                {
+                    continue;
+                }
+
+                var newPath = Path.Combine(fiFile.Directory.Parent.FullName, fiFile.Name);
+                if (File.Exists(newPath))
+                {
+                    continue;
+                }
+
+                if (copyFile)
+                    fiFile.CopyTo(newPath, true);
+                else
+                    fiFile.MoveTo(newPath);
             }
         }
 
         protected void ParseConsoleOutputFileForErrors(string sConsoleOutputFilePath)
         {
-            bool blnUnhandledException = false;
-            string sExceptionText = string.Empty;
+            var blnUnhandledException = false;
+            var sExceptionText = string.Empty;
 
             try
             {
-                if (File.Exists(sConsoleOutputFilePath))
+                if (!File.Exists(sConsoleOutputFilePath))
                 {
-                    using (var srInFile = new StreamReader(new FileStream(sConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                    return;
+                }
+
+                using (var srInFile = new StreamReader(new FileStream(sConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+
+                    while (srInFile.Peek() > -1)
                     {
+                        var sLineIn = srInFile.ReadLine();
 
-                        while (srInFile.Peek() > -1)
+                        if (string.IsNullOrEmpty(sLineIn))
                         {
-                            string sLineIn = srInFile.ReadLine();
+                            continue;
+                        }
 
-                            if (!string.IsNullOrEmpty(sLineIn))
+                        if (blnUnhandledException)
+                        {
+                            if (string.IsNullOrEmpty(sExceptionText))
                             {
-                                if (blnUnhandledException)
-                                {
-                                    if (string.IsNullOrEmpty(sExceptionText))
-                                    {
-                                        sExceptionText = string.Copy(sLineIn);
-                                    }
-                                    else
-                                    {
-                                        sExceptionText = ";" + sLineIn;
-                                    }
-                                }
-                                else if (sLineIn.StartsWith("Error:"))
-                                {
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "AgilentToUIMFConverter error: " + sLineIn);
-                                }
-                                else if (sLineIn.StartsWith("Exception in"))
-                                {
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "AgilentToUIMFConverter error: " + sLineIn);
-                                }
-                                else if (sLineIn.StartsWith("Unhandled Exception"))
-                                {
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "AgilentToUIMFConverter error: " + sLineIn);
-                                    blnUnhandledException = true;
-                                }
+                                sExceptionText = string.Copy(sLineIn);
+                            }
+                            else
+                            {
+                                sExceptionText = ";" + sLineIn;
                             }
                         }
-                    }
-
-                    if (!string.IsNullOrEmpty(sExceptionText))
-                    {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, sExceptionText);
+                        else if (sLineIn.StartsWith("Error:"))
+                        {
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "AgilentToUIMFConverter error: " + sLineIn);
+                        }
+                        else if (sLineIn.StartsWith("Exception in"))
+                        {
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "AgilentToUIMFConverter error: " + sLineIn);
+                        }
+                        else if (sLineIn.StartsWith("Unhandled Exception"))
+                        {
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "AgilentToUIMFConverter error: " + sLineIn);
+                            blnUnhandledException = true;
+                        }
                     }
                 }
 
+                if (!string.IsNullOrEmpty(sExceptionText))
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, sExceptionText);
+                }
             }
             catch (Exception ex)
             {
@@ -607,7 +834,7 @@ namespace DatasetIntegrityPlugin
         /// <returns>True if success; false if a problem</returns>
         private bool PossiblyRenameSupersededFolder(List<DirectoryInfo> folderList, string folderDescription)
         {
-            bool bInvalid = true;
+            var bInvalid = true;
 
             if (folderList.Count == 1)
                 return true;
@@ -637,20 +864,21 @@ namespace DatasetIntegrityPlugin
 
         private bool PositiveNegativeMethodFolders(List<DirectoryInfo> lstMethodFolders)
         {
-            if (lstMethodFolders.Count == 2)
+            if (lstMethodFolders.Count != 2)
             {
-                if (lstMethodFolders[0].Name.IndexOf("_neg", 0, StringComparison.CurrentCultureIgnoreCase) >= 0 &&
-                    lstMethodFolders[1].Name.IndexOf("_pos", 0, StringComparison.CurrentCultureIgnoreCase) >= 0)
-                {
-                    return true;
-                }
+                return false;
+            }
 
-                if (lstMethodFolders[1].Name.IndexOf("_neg", 0, StringComparison.CurrentCultureIgnoreCase) >= 0 &&
-                    lstMethodFolders[0].Name.IndexOf("_pos", 0, StringComparison.CurrentCultureIgnoreCase) >= 0)
-                {
-                    return true;
-                }
+            if (lstMethodFolders[0].Name.IndexOf("_neg", 0, StringComparison.CurrentCultureIgnoreCase) >= 0 &&
+                lstMethodFolders[1].Name.IndexOf("_pos", 0, StringComparison.CurrentCultureIgnoreCase) >= 0)
+            {
+                return true;
+            }
 
+            if (lstMethodFolders[1].Name.IndexOf("_neg", 0, StringComparison.CurrentCultureIgnoreCase) >= 0 &&
+                lstMethodFolders[0].Name.IndexOf("_pos", 0, StringComparison.CurrentCultureIgnoreCase) >= 0)
+            {
+                return true;
             }
 
             return false;
@@ -666,9 +894,9 @@ namespace DatasetIntegrityPlugin
             else
                 sMaxSize = fMaxSize.ToString("#0") + " KB";
 
-            string msg = sDataFileDescription + " file may be corrupt. Actual file size is " +
-                         fActualSize.ToString("####0.0") + " KB; " +
-                         "max allowable size is " + sMaxSize + "; see " + sFilePath;
+            var msg = sDataFileDescription + " file may be corrupt. Actual file size is " +
+                      fActualSize.ToString("####0.0") + " KB; " +
+                      "max allowable size is " + sMaxSize + "; see " + sFilePath;
 
             mRetData.EvalMsg = sDataFileDescription + " file size is more than " + sMaxSize;
 
@@ -681,11 +909,11 @@ namespace DatasetIntegrityPlugin
             // Data file size is less than 100 KB
             // ser file size is less than 16 KB
 
-            string sMinSize = fMinSizeKB.ToString("#0") + " KB";
+            var sMinSize = fMinSizeKB.ToString("#0") + " KB";
 
-            string msg = sDataFileDescription + " file may be corrupt. Actual file size is " +
-                         fActualSizeKB.ToString("####0.0") + " KB; " +
-                         "min allowable size is " + sMinSize + "; see " + sFilePath;
+            var msg = sDataFileDescription + " file may be corrupt. Actual file size is " +
+                      fActualSizeKB.ToString("####0.0") + " KB; " +
+                      "min allowable size is " + sMinSize + "; see " + sFilePath;
 
             mRetData.EvalMsg = sDataFileDescription + " file size is less than " + sMinSize;
 
@@ -727,7 +955,7 @@ namespace DatasetIntegrityPlugin
             }
 
             // Verify size of the DATA.MS file
-            float dataFileSizeKB = GetFileSize(lstInstrumentData.First());
+            var dataFileSizeKB = GetFileSize(lstInstrumentData.First());
             if (dataFileSizeKB <= AGILENT_DATA_MS_FILE_MIN_SIZE_KB)
             {
                 ReportFileSizeTooSmall("DATA.MS", lstInstrumentData.First().FullName, dataFileSizeKB, AGILENT_DATA_MS_FILE_MIN_SIZE_KB);
@@ -790,7 +1018,7 @@ namespace DatasetIntegrityPlugin
             }
 
             // Verify size of the MSScan.bin file
-            float dataFileSizeKB = GetFileSize(lstInstrumentData.First());
+            var dataFileSizeKB = GetFileSize(lstInstrumentData.First());
             if (dataFileSizeKB <= AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB)
             {
                 ReportFileSizeTooSmall("MSScan.bin", lstInstrumentData.First().FullName, dataFileSizeKB, AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB);
@@ -835,7 +1063,7 @@ namespace DatasetIntegrityPlugin
         private EnumCloseOutType TestSciexQtrapFile(string dataFileNamePath, string datasetName)
         {
             // Verify .wiff file exists in storage folder
-            string tempFileNamePath = Path.Combine(dataFileNamePath, datasetName + clsInstrumentClassInfo.DOT_WIFF_EXTENSION);
+            var tempFileNamePath = Path.Combine(dataFileNamePath, datasetName + clsInstrumentClassInfo.DOT_WIFF_EXTENSION);
             if (!File.Exists(tempFileNamePath))
             {
                 mRetData.EvalMsg = "Data file " + tempFileNamePath + " not found";
@@ -844,7 +1072,7 @@ namespace DatasetIntegrityPlugin
             }
 
             // Get size of .wiff file
-            float dataFileSizeKB = GetFileSize(tempFileNamePath);
+            var dataFileSizeKB = GetFileSize(tempFileNamePath);
 
             // Check .wiff file min size
             if (dataFileSizeKB < SCIEX_WIFF_FILE_MIN_SIZE_KB)
@@ -935,14 +1163,15 @@ namespace DatasetIntegrityPlugin
             {
                 // File not found; look for alternate extensions
                 var lstAlternateExtensions = new List<string>();
-                bool bAlternateFound = false;
+                var bAlternateFound = false;
+
                 lstAlternateExtensions.Add("mgf");
                 lstAlternateExtensions.Add("mzXML");
                 lstAlternateExtensions.Add("mzML");
 
-                foreach (string altExtension in lstAlternateExtensions)
+                foreach (var altExtension in lstAlternateExtensions)
                 {
-                    string dataFileNamePathAlt = Path.ChangeExtension(dataFileNamePath, altExtension);
+                    var dataFileNamePathAlt = Path.ChangeExtension(dataFileNamePath, altExtension);
                     if (File.Exists(dataFileNamePathAlt))
                     {
                         mRetData.EvalMsg = "Raw file not found, but ." + altExtension + " file exists";
@@ -965,19 +1194,19 @@ namespace DatasetIntegrityPlugin
             }
 
             // Get size of data file
-            float dataFileSizeKB = GetFileSize(dataFileNamePath);
+            var dataFileSizeKB = GetFileSize(dataFileNamePath);
 
             // Check min size
             if (dataFileSizeKB < minFileSizeKB)
             {
-                bool validFile = false;
+                var validFile = false;
 
                 if (openRawFileIfTooSmall)
                 {
 
                     try
                     {
-                        var reader = new ThermoRawFileReaderDLL.FinniganFileIO.XRawFileIO();
+                        var reader = new XRawFileIO();
                         reader.OpenRawFile(dataFileNamePath);
 
                         var scanCount = reader.GetNumScans();
@@ -1038,7 +1267,7 @@ namespace DatasetIntegrityPlugin
             }
 
             // Verify acqus file exists
-            string dataFolder = Path.Combine(datasetFolderPath, "0.ser");
+            var dataFolder = Path.Combine(datasetFolderPath, "0.ser");
             if (!File.Exists(Path.Combine(dataFolder, "acqus")))
             {
                 mRetData.EvalMsg = "Invalid dataset. acqus file not found";
@@ -1047,7 +1276,7 @@ namespace DatasetIntegrityPlugin
             }
 
             // Verify size of the acqus file
-            float dataFileSizeKB = GetFileSize(Path.Combine(dataFolder, "acqus"));
+            var dataFileSizeKB = GetFileSize(Path.Combine(dataFolder, "acqus"));
             if (dataFileSizeKB <= 0F)
             {
                 mRetData.EvalMsg = "Invalid dataset. acqus file contains no data";
@@ -1111,7 +1340,7 @@ namespace DatasetIntegrityPlugin
             }
 
             // Verify size of the analysis.baf file			
-            float dataFileSizeKB = GetFileSize(lstBafFile.First());
+            var dataFileSizeKB = GetFileSize(lstBafFile.First());
             if (dataFileSizeKB <= BAF_FILE_MIN_SIZE_KB)
             {
                 ReportFileSizeTooSmall("Analysis.baf", lstBafFile.First().FullName, dataFileSizeKB, BAF_FILE_MIN_SIZE_KB);
@@ -1131,7 +1360,7 @@ namespace DatasetIntegrityPlugin
             {
                 // Multiple .M folders
                 // This is OK for the Buker Imaging instruments and for Maxis_01
-                string instrumentNameLCase = instrumentName.ToLower();
+                var instrumentNameLCase = instrumentName.ToLower();
                 if (!instrumentNameLCase.Contains("imaging") && !instrumentNameLCase.Contains("maxis"))
                 {
                     // It's also OK if there are two folders, and one contains _neg and one contains _pos
@@ -1185,14 +1414,14 @@ namespace DatasetIntegrityPlugin
 
             if (lstDotDFolders.Count > 1)
             {
-                bool allowMultipleFolders = false;
+                var allowMultipleFolders = false;
 
                 if (lstDotDFolders.Count == 2)
                 {
                     // If one folder contains a ser file and the other folder contains an analysis.baf, then we'll allow this
                     // This is somtimes the case for the 15T_FTICR_Imaging
-                    int serCount = 0;
-                    int bafCount = 0;
+                    var serCount = 0;
+                    var bafCount = 0;
                     foreach (var diFolder in lstDotDFolders)
                     {
                         if (diFolder.GetFiles("ser", SearchOption.TopDirectoryOnly).Length == 1)
@@ -1216,7 +1445,7 @@ namespace DatasetIntegrityPlugin
 
             // Verify analysis.baf file exists
             var lstBafFile = lstDotDFolders[0].GetFiles("analysis.baf").ToList();
-            bool fileExists = lstBafFile.Count > 0;
+            var fileExists = lstBafFile.Count > 0;
 
             if (!fileExists && requireBAFFile)
             {
@@ -1241,12 +1470,12 @@ namespace DatasetIntegrityPlugin
             // Check whether any .mcf files exist
             // Note that "*.mcf" will match files with extension .mcf and files with extension .mcf_idx		
 
-            string mctFileName = string.Empty;
+            var mctFileName = string.Empty;
             dataFileSizeKB = 0;
             fileExists = false;
             long mcfFileSizeMax = 0;
 
-            foreach (FileInfo fiFile in lstDotDFolders[0].GetFiles("*.mcf"))
+            foreach (var fiFile in lstDotDFolders[0].GetFiles("*.mcf"))
             {
                 if (fiFile.Length > dataFileSizeKB * 1024)
                 {
@@ -1353,7 +1582,7 @@ namespace DatasetIntegrityPlugin
                 // Multiple .M folders
                 // Allow this if there are two folders, and one contains _neg and one contains _pos
                 // Also allow this if on the 12T or on the 15T
-                string instrumentNameLCase = instrumentName.ToLower();
+                var instrumentNameLCase = instrumentName.ToLower();
 
                 if (!PositiveNegativeMethodFolders(lstMethodFolders) &&
                     instrumentNameLCase.Contains("15t_fticr") &&
@@ -1394,7 +1623,7 @@ namespace DatasetIntegrityPlugin
         private EnumCloseOutType TestBrukerMaldiImagingFolder(string datasetFolderPath)
         {
             // Verify at least one zip file exists in dataset folder
-            string[] fileList = Directory.GetFiles(datasetFolderPath, "*.zip");
+            var fileList = Directory.GetFiles(datasetFolderPath, "*.zip");
             if (fileList.Length < 1)
             {
                 mRetData.EvalMsg = "Invalid dataset. No zip files found";
@@ -1415,7 +1644,7 @@ namespace DatasetIntegrityPlugin
         {
 
             // Verify the dataset folder doesn't contain any .zip files
-            string[] zipFiles = Directory.GetFiles(datasetFolderPath, "*.zip");
+            var zipFiles = Directory.GetFiles(datasetFolderPath, "*.zip");
             if (zipFiles.Length > 0)
             {
                 mRetData.EvalMsg = "Zip files found in dataset folder " + datasetFolderPath;
@@ -1424,7 +1653,7 @@ namespace DatasetIntegrityPlugin
             }
 
             // Check whether the dataset folder contains just one data folder or multiple data folders
-            string[] dataFolders = Directory.GetDirectories(datasetFolderPath);
+            var dataFolders = Directory.GetDirectories(datasetFolderPath);
 
             if (dataFolders.Length < 1)
             {
@@ -1444,11 +1673,11 @@ namespace DatasetIntegrityPlugin
                 const string MALDI_SPOT_FOLDER_REGEX = "^\\d_[A-Z]\\d+$";
                 var reMaldiSpotFolder = new Regex(MALDI_SPOT_FOLDER_REGEX, RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-                foreach (string folder in dataFolders)
+                foreach (var folder in dataFolders)
                 {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Test folder " + folder + " against RegEx " + reMaldiSpotFolder);
 
-                    string sDirName = Path.GetFileName(folder);
+                    var sDirName = Path.GetFileName(folder);
                     if (sDirName != null && !reMaldiSpotFolder.IsMatch(sDirName, 0))
                     {
                         mRetData.EvalMsg = "Dataset folder contains multiple subfolders, but folder " + sDirName + " does not match the expected pattern (" + reMaldiSpotFolder + "); see " + datasetFolderPath;
@@ -1473,7 +1702,7 @@ namespace DatasetIntegrityPlugin
             }
 
             // Get size of data file
-            float dataFileSizeKB = GetFileSize(dataFileNamePath);
+            var dataFileSizeKB = GetFileSize(dataFileNamePath);
 
             // Check min size
             if (instrumentName.ToLower().StartsWith("TIMS_Maxis".ToLower()))
@@ -1509,6 +1738,7 @@ namespace DatasetIntegrityPlugin
         /// Extracts the pressure data from the Frame_Parameters table
         /// </summary>
         /// <param name="dataFileNamePath"></param>
+        /// <param name="instrumentName"></param>
         /// <returns>True if the pressure values are correct; false if the columns have swapped data</returns>
         protected bool ValidatePressureInfo(string dataFileNamePath, string instrumentName)
         {
@@ -1526,9 +1756,9 @@ namespace DatasetIntegrityPlugin
             // Open the file with the UIMFRader
             using (var uimfReader = new DataReader(dataFileNamePath))
             {
-                Dictionary<int, DataReader.FrameType> dctMasterFrameList = uimfReader.GetMasterFrameList();
+                var dctMasterFrameList = uimfReader.GetMasterFrameList();
 
-                foreach (int frameNumber in dctMasterFrameList.Keys)
+                foreach (var frameNumber in dctMasterFrameList.Keys)
                 {
                     var frameParams = uimfReader.GetFrameParams(frameNumber);
 
@@ -1545,10 +1775,10 @@ namespace DatasetIntegrityPlugin
                             highPressureFunnel = rearIonFunnel;
                     }
 
-                    bool pressureColumnsArePresent = (quadPressure > 0 &&
-                                                        rearIonFunnel > 0 &&
-                                                        highPressureFunnel > 0 &&
-                                                        ionFunnelTrap > 0);
+                    var pressureColumnsArePresent = (quadPressure > 0 &&
+                                                     rearIonFunnel > 0 &&
+                                                     highPressureFunnel > 0 &&
+                                                     ionFunnelTrap > 0);
 
                     if (pressureColumnsArePresent)
                     {
@@ -1558,8 +1788,8 @@ namespace DatasetIntegrityPlugin
                         // QuadrupolePressure = 0.262
 
                         // Multiplying the comparison pressure by 1.1 to give a 10% buffer in case the two pressure values are similar
-                        bool pressuresAreInCorrectOrder = (quadPressure < rearIonFunnel * 1.1 &&
-                                                            rearIonFunnel < highPressureFunnel * 1.1);
+                        var pressuresAreInCorrectOrder = (quadPressure < rearIonFunnel * 1.1 &&
+                                                          rearIonFunnel < highPressureFunnel * 1.1);
 
                         if (!pressuresAreInCorrectOrder)
                         {
@@ -1590,7 +1820,7 @@ namespace DatasetIntegrityPlugin
         /// <param name="statusTools">Tools for status reporting</param>
         public override void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
         {
-            string msg = "Starting clsPluginMain.Setup()";
+            var msg = "Starting clsPluginMain.Setup()";
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
             base.Setup(mgrParams, taskParams, statusTools);
@@ -1618,7 +1848,7 @@ namespace DatasetIntegrityPlugin
         /// <returns>File size in KB</returns>
         private float GetFileSize(FileInfo fiFile)
         {
-            Single fileLengthKB = fiFile.Length / (1024F);
+            var fileLengthKB = fiFile.Length / (1024F);
             return fileLengthKB;
         }
 
@@ -1629,7 +1859,7 @@ namespace DatasetIntegrityPlugin
         protected bool StoreToolVersionInfo()
         {
 
-            string strToolVersionInfo = string.Empty;
+            var strToolVersionInfo = string.Empty;
             var ioAppFileInfo = new FileInfo(Assembly.GetExecutingAssembly().Location);
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
@@ -1638,20 +1868,20 @@ namespace DatasetIntegrityPlugin
                 return false;
 
             // Lookup the version of the Capture tool plugin
-            string strPluginPath = Path.Combine(ioAppFileInfo.DirectoryName, "DatasetIntegrityPlugin.dll");
-            bool bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strPluginPath);
+            var strPluginPath = Path.Combine(ioAppFileInfo.DirectoryName, "DatasetIntegrityPlugin.dll");
+            var bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strPluginPath);
             if (!bSuccess)
                 return false;
 
             // Lookup the version of the Capture tool plugin
-            string strSQLitePath = Path.Combine(ioAppFileInfo.DirectoryName, "System.Data.SQLite.dll");
-            bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strSQLitePath);
+            var strSQLitePath = Path.Combine(ioAppFileInfo.DirectoryName, "System.Data.SQLite.dll");
+            bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strSQLitePath);
             if (!bSuccess)
                 return false;
 
             // Lookup the version of the Capture tool plugin
-            string strUIMFLibraryPath = Path.Combine(ioAppFileInfo.DirectoryName, "UIMFLibrary.dll");
-            bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strUIMFLibraryPath);
+            var strUIMFLibraryPath = Path.Combine(ioAppFileInfo.DirectoryName, "UIMFLibrary.dll");
+            bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strUIMFLibraryPath);
             if (!bSuccess)
                 return false;
 
