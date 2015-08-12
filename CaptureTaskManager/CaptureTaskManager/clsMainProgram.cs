@@ -341,13 +341,23 @@ namespace CaptureTaskManager
 				m_MsgHandler.BroadcastReceived += OnBroadcastReceived;
 			}
 
-			// Setup a file watcher for the config file
+		    var configFileName = m_MgrSettings.GetParam("configfilename");
+		    if (string.IsNullOrEmpty(configFileName))
+		    {
+                // Manager parameter error; log an error and exit
+
+		        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+		                             "Manager parameter 'configfilename' is undefined; this likely indicates a problem retrieving manager parameters.  Shutting down the manager");
+		        return false;
+		    }
+
+		    // Setup a file watcher for the config file
 			var fInfo = new FileInfo(Application.ExecutablePath);
 		    m_FileWatcher = new FileSystemWatcher
 		    {
 		        Path = fInfo.DirectoryName,
 		        IncludeSubdirectories = false,
-		        Filter = m_MgrSettings.GetParam("configfilename"),
+		        Filter = configFileName, 
 		        NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size,
 		        EnableRaisingEvents = true
 		    };
