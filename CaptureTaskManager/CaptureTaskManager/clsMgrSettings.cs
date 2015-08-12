@@ -215,6 +215,31 @@ namespace CaptureTaskManager
 			return true;
 		}
 
+        private string GetGroupNameFromSettings(DataTable dtSettings)
+        {
+
+            foreach (DataRow oRow in dtSettings.Rows)
+            {
+                //Add the column heading and value to the dictionary
+                var paramKey = DbCStr(oRow[dtSettings.Columns["ParameterName"]]);
+
+                if (string.Compare(paramKey, "MgrSettingGroupName", true) == 0)
+                {
+                    var groupName = DbCStr(oRow[dtSettings.Columns["ParameterValue"]]);
+                    if (!string.IsNullOrWhiteSpace(groupName))
+                    {
+                        return groupName;
+                    }
+                    
+                    return string.Empty;
+                }
+
+            }
+
+            return string.Empty;
+
+        }
+
 		public bool LoadMgrSettingsFromDB()
 		{
 		    const bool logConnectionErrors = true;
@@ -247,33 +272,42 @@ namespace CaptureTaskManager
 				return false;	
 			}
 
-			bool returnErrorIfNoParameters = true;
-			bool success = LoadMgrSettingsFromDBWork(managerName, out dtSettings, logConnectionErrors, returnErrorIfNoParameters);
+			var returnErrorIfNoParameters = true;
+			var success = LoadMgrSettingsFromDBWork(managerName, out dtSettings, logConnectionErrors, returnErrorIfNoParameters);
 			if (!success)
 			{
 				return false;
 			}
 
-			bool skipExistingParameters = false;
+			var skipExistingParameters = false;
 			success = StoreParameters(dtSettings, skipExistingParameters, managerName);
 
-			string mgrSettingsGroup = this.GetParam("MgrSettingGroupName", "");
-			if (!string.IsNullOrEmpty(mgrSettingsGroup))
-			{
-				// This manager has group-based settings defined; load them now
+	        if (!success)
+	            return false;
 
-				returnErrorIfNoParameters = false;
-				success = LoadMgrSettingsFromDBWork(mgrSettingsGroup, out dtSettings, logConnectionErrors, returnErrorIfNoParameters);
+            while (success)
+            {
+                var strMgrSettingsGroup = GetGroupNameFromSettings(dtSettings);
+                if (string.IsNullOrEmpty(strMgrSettingsGroup))
+                {
+                    break; 
+                }
 
-				if (success)
-				{
-					skipExistingParameters = true;
-					success = StoreParameters(dtSettings, skipExistingParameters, managerName);
-				}
-			}
+                // This manager has group-based settings defined; load them now
+
+                returnErrorIfNoParameters = false;
+                dtSettings = null;
+                success = LoadMgrSettingsFromDBWork(strMgrSettingsGroup, out dtSettings, logConnectionErrors, returnErrorIfNoParameters);
+
+                if (success)
+                {
+                    skipExistingParameters = true;
+                    success = StoreParameters(dtSettings, skipExistingParameters, managerName);
+                }
+
+            }
 
 			return success;
-
 
 		}
 
