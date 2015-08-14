@@ -122,7 +122,7 @@ namespace FileProcessor
 			try {
 				// Find items in mSwitches whose keys are not in lstValidParameters)		
 
-				foreach (KeyValuePair<string, string> item in mSwitches) {
+				foreach (var item in mSwitches) {
 					var itemKey = item.Key;
 					int intMatchCount;
 
@@ -250,7 +250,7 @@ namespace FileProcessor
 					Console.WriteLine();
 				}
 
-				string[] strParameters = SplitCommandLineParams(strCmdLine);
+				var strParameters = SplitCommandLineParams(strCmdLine);
 
 				if (mDebugMode)
 				{

@@ -770,7 +770,7 @@ namespace ArchiveVerifyPlugin
 
                 foreach (var archiveFile in lstArchivedFiles)
                 {
-                    if (System.String.Compare(archiveFile.Dataset, m_Dataset, System.StringComparison.OrdinalIgnoreCase) == 0)
+                    if (string.Equals(archiveFile.Dataset, m_Dataset, StringComparison.CurrentCultureIgnoreCase))
                         lstFilteredFiles.Add(archiveFile);
                     else
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Query for dataset ID " + m_DatasetID + " yielded match to " + archiveFile.PathWithDataset + " - skipping since wrong dataset");

@@ -71,7 +71,7 @@ namespace CaptureTaskManager
 			m_ParamDictionary = LoadMgrSettingsFromFile();
 
 			// Get directory for main executable
-			string appPath = Application.ExecutablePath;
+			var appPath = Application.ExecutablePath;
 			var fi = new FileInfo(appPath);
 			m_ParamDictionary.Add("ApplicationPath", fi.DirectoryName);
 
@@ -111,7 +111,7 @@ namespace CaptureTaskManager
 
 		    //	 My.Settings.Reload()
 			//Manager config db connection string
-			string TempStr = Properties.Settings.Default.MgrCnfgDbConnectStr;
+			var TempStr = Properties.Settings.Default.MgrCnfgDbConnectStr;
 			RetDict.Add("MgrCnfgDbConnectStr", TempStr);
 
 			//Manager active flag
@@ -143,13 +143,13 @@ namespace CaptureTaskManager
 
 		    try
 			{
-				string ConnectionString = GetParam("MgrCnfgDbConnectStr");
+				var ConnectionString = GetParam("MgrCnfgDbConnectStr");
 
 				var MyConnection = new SqlConnection(ConnectionString);
 				MyConnection.Open();
 
 				//Set up the command object prior to SP execution
-				SqlCommand MyCmd = MyConnection.CreateCommand();
+				var MyCmd = MyConnection.CreateCommand();
 				{
 					MyCmd.CommandType = CommandType.StoredProcedure;
 					MyCmd.CommandText = SP_NAME_ACKMANAGERUPDATE;
@@ -223,7 +223,7 @@ namespace CaptureTaskManager
                 //Add the column heading and value to the dictionary
                 var paramKey = DbCStr(oRow[dtSettings.Columns["ParameterName"]]);
 
-                if (string.Compare(paramKey, "MgrSettingGroupName", true) == 0)
+                if (string.Equals(paramKey, "MgrSettingGroupName", StringComparison.CurrentCultureIgnoreCase))
                 {
                     var groupName = DbCStr(oRow[dtSettings.Columns["ParameterValue"]]);
                     if (!string.IsNullOrWhiteSpace(groupName))
@@ -263,7 +263,7 @@ namespace CaptureTaskManager
 
 	        DataTable dtSettings;
 
-	        string managerName = GetParam("MgrName", "");
+	        var managerName = GetParam("MgrName", "");
 
 			if (string.IsNullOrEmpty(managerName))
 			{
@@ -314,8 +314,8 @@ namespace CaptureTaskManager
 		private bool LoadMgrSettingsFromDBWork(string managerName, out DataTable dtSettings, bool logConnectionErrors, bool returnErrorIfNoParameters)
 		{
 
-			short RetryCount = 3;
-			string DBConnectionString = GetParam("MgrCnfgDbConnectStr", "");
+			short retryCount = 3;
+			var DBConnectionString = GetParam("MgrCnfgDbConnectStr", "");
 			dtSettings = null;
 
 			if (string.IsNullOrEmpty(DBConnectionString))
@@ -325,21 +325,21 @@ namespace CaptureTaskManager
 				return false;
 			}
 
-			string SqlStr = "SELECT ParameterName, ParameterValue FROM V_MgrParams WHERE ManagerName = '" + managerName + "'";
+			var sqlStr = "SELECT ParameterName, ParameterValue FROM V_MgrParams WHERE ManagerName = '" + managerName + "'";
 
 			//Get a datatable holding the parameters for this manager
-			while (RetryCount > 0)
+			while (retryCount > 0)
 			{
 				try
 				{
-					using (var Cn = new SqlConnection(DBConnectionString))
+					using (var cn = new SqlConnection(DBConnectionString))
 					{
-						using (var Da = new SqlDataAdapter(SqlStr, Cn))
+						using (var da = new SqlDataAdapter(sqlStr, cn))
 						{
-							using (var Ds = new DataSet())
+							using (var ds = new DataSet())
 							{
-								Da.Fill(Ds);
-								dtSettings = Ds.Tables[0];
+								da.Fill(ds);
+								dtSettings = ds.Tables[0];
 							}
 						}
 					}
@@ -347,22 +347,22 @@ namespace CaptureTaskManager
 				}
 				catch (Exception ex)
 				{
-					RetryCount -= 1;
-					string MyMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Exception getting manager settings from database: " + ex.Message;
-					MyMsg = MyMsg + ", RetryCount = " + RetryCount.ToString();
+					retryCount -= 1;
+					var myMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Exception getting manager settings from database: " + ex.Message;
+					myMsg = myMsg + ", RetryCount = " + retryCount.ToString();
 					if (logConnectionErrors)
-						WriteErrorMsg(MyMsg);
+						WriteErrorMsg(myMsg, allowLogToDB: false);
 					//Delay for 5 seconds before trying again
 					System.Threading.Thread.Sleep(5000);
 				}
 			}
 
 			// If loop exited due to errors, return false
-			if (RetryCount < 1)
+			if (retryCount < 1)
 			{
 				m_ErrMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Excessive failures attempting to retrieve manager settings from database";
 				if (logConnectionErrors)
-					WriteErrorMsg(m_ErrMsg);
+					WriteErrorMsg(m_ErrMsg, allowLogToDB: true);
 				return false;
 			}
 
@@ -400,28 +400,28 @@ namespace CaptureTaskManager
 				foreach (DataRow oRow in dtSettings.Rows)
 				{
 					//Add the column heading and value to the dictionary
-					string ParamKey = DbCStr(oRow[dtSettings.Columns["ParameterName"]]);
-					string ParamVal = DbCStr(oRow[dtSettings.Columns["ParameterValue"]]);
+					var paramKey = DbCStr(oRow[dtSettings.Columns["ParameterName"]]);
+					var paramVal = DbCStr(oRow[dtSettings.Columns["ParameterValue"]]);
 
-					if (ParamKey.ToLower() == "perspective" && Environment.MachineName.ToLower().StartsWith("monroe"))
+					if (paramKey.ToLower() == "perspective" && Environment.MachineName.ToLower().StartsWith("monroe"))
 					{
-						if (ParamVal.ToLower() == "server")
+						if (paramVal.ToLower() == "server")
 						{
-							ParamVal = "client";
-							Console.WriteLine("StoreParameters: Overriding manager perspective to be 'client'");
+							paramVal = "client";
+							Console.WriteLine(@"StoreParameters: Overriding manager perspective to be 'client'");
 						}
 					}
 
-					if (m_ParamDictionary.ContainsKey(ParamKey))
+					if (m_ParamDictionary.ContainsKey(paramKey))
 					{
 						if (!skipExistingParameters)
 						{
-							m_ParamDictionary[ParamKey] = ParamVal;
+							m_ParamDictionary[paramKey] = paramVal;
 						}
 					}
 					else
 					{
-						m_ParamDictionary.Add(ParamKey, ParamVal);
+						m_ParamDictionary.Add(paramKey, paramVal);
 					}
 				}
 				success = true;
@@ -449,7 +449,7 @@ namespace CaptureTaskManager
         /// <returns>True/false for the given parameter; false if the parameter is not present</returns>
         public bool GetBooleanParam(string itemKey)
         {
-            string itemValue = GetParam(itemKey, string.Empty);
+            var itemValue = GetParam(itemKey, string.Empty);
 
             if (string.IsNullOrWhiteSpace(itemValue))
                 return false;
@@ -509,7 +509,7 @@ namespace CaptureTaskManager
 			m_ErrMsg = "";
 
 			//Load the config document
-			XmlDocument MyDoc = LoadConfigDocument();
+			var MyDoc = LoadConfigDocument();
 			if (MyDoc == null)
 			{
 				//Error message has already been produced by LoadConfigDocument
@@ -517,7 +517,7 @@ namespace CaptureTaskManager
 			}
 
 			//Retrieve the settings node
-			XmlNode MyNode = MyDoc.SelectSingleNode("//applicationSettings");
+			var MyNode = MyDoc.SelectSingleNode("//applicationSettings");
 
 			if (MyNode == null)
 			{
@@ -589,7 +589,7 @@ namespace CaptureTaskManager
             return InpObj.ToString();
 		}
 
-	    private void WriteErrorMsg(string errorMessage)
+	    private void WriteErrorMsg(string errorMessage, bool allowLogToDB = true)
 		{
 			if (m_MCParamsLoaded)
 			{
