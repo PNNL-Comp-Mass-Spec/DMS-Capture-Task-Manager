@@ -33,14 +33,14 @@ namespace CaptureToolPlugin
 			/// <returns>clsToolReturnData object containing tool operation results</returns>
 			public override clsToolReturnData RunTool()
 			{
-				string msg = "Starting CaptureToolPlugin.clsPluginMain.RunTool()";
+				var msg = "Starting CaptureToolPlugin.clsPluginMain.RunTool()";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 				// Note that retData.CloseoutMsg will be stored in the Completion_Message field of the database
 				// Similarly, retData.EvalMsg will be stored in the Evaluation_Message field of the database
 				
 				// Perform base class operations, if any
-				clsToolReturnData retData = base.RunTool();
+				var retData = base.RunTool();
 				if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED) return retData;
 
 				// Store the version info in the database
@@ -56,7 +56,7 @@ namespace CaptureToolPlugin
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 
 				// Determine if instrument is on Bionet
-				string capMethod = m_TaskParams.GetParam("Method");
+				var capMethod = m_TaskParams.GetParam("Method");
 				bool useBionet;
 				if (capMethod.ToLower() == "secfso")
 				{
@@ -125,7 +125,7 @@ namespace CaptureToolPlugin
 			/// <param name="statusTools">Tools for status reporting</param>
 			public override void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
 			{
-				string msg = "Starting clsPluginMain.Setup()";
+				var msg = "Starting clsPluginMain.Setup()";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 				
 				base.Setup(mgrParams, taskParams, statusTools);
@@ -141,19 +141,19 @@ namespace CaptureToolPlugin
 			protected bool StoreToolVersionInfo()
 			{
 
-				string strToolVersionInfo = string.Empty;
+				var strToolVersionInfo = string.Empty;
 				var ioAppFileInfo = new System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
 
 				// Lookup the version of the Capture tool plugin
-				string strPluginPath = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "CaptureToolPlugin.dll");
-				bool bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strPluginPath);
+				var strPluginPath = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "CaptureToolPlugin.dll");
+				var bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strPluginPath);
 				if (!bSuccess)
 					return false;
 
 				// Lookup the version of the Capture task manager
-				string strCTMPath = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "CaptureTaskManager.exe");
+				var strCTMPath = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "CaptureTaskManager.exe");
 				bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strCTMPath);
 				if (!bSuccess)
 					return false;
@@ -177,5 +177,5 @@ namespace CaptureToolPlugin
 			}
 
 		#endregion
-	}	// End class
-}	// End namespace
+	}
+}
