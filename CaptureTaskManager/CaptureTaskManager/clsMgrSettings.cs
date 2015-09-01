@@ -296,7 +296,6 @@ namespace CaptureTaskManager
                 // This manager has group-based settings defined; load them now
 
                 returnErrorIfNoParameters = false;
-                dtSettings = null;
                 success = LoadMgrSettingsFromDBWork(strMgrSettingsGroup, out dtSettings, logConnectionErrors, returnErrorIfNoParameters);
 
                 if (success)
@@ -327,14 +326,22 @@ namespace CaptureTaskManager
 
 			var sqlStr = "SELECT ParameterName, ParameterValue FROM V_MgrParams WHERE ManagerName = '" + managerName + "'";
 
-			//Get a datatable holding the parameters for this manager
+			// Get a datatable holding the parameters for this manager
 			while (retryCount > 0)
 			{
 				try
 				{
 					using (var cn = new SqlConnection(DBConnectionString))
 					{
-						using (var da = new SqlDataAdapter(sqlStr, cn))
+					    var cmd = new SqlCommand
+					    {
+					        CommandType = CommandType.Text,
+					        CommandText = sqlStr,
+                            Connection = cn,
+					        CommandTimeout = 30
+					    };
+
+                        using (var da = new SqlDataAdapter(cmd))
 						{
 							using (var ds = new DataSet())
 							{
@@ -349,7 +356,7 @@ namespace CaptureTaskManager
 				{
 					retryCount -= 1;
 					var myMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Exception getting manager settings from database: " + ex.Message;
-					myMsg = myMsg + ", RetryCount = " + retryCount.ToString();
+					myMsg = myMsg + ", RetryCount = " + retryCount;
 					if (logConnectionErrors)
 						WriteErrorMsg(myMsg, allowLogToDB: false);
 					//Delay for 5 seconds before trying again
@@ -591,7 +598,7 @@ namespace CaptureTaskManager
 
 	    private void WriteErrorMsg(string errorMessage, bool allowLogToDB = true)
 		{
-			if (m_MCParamsLoaded)
+			if (m_MCParamsLoaded || !allowLogToDB)
 			{
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
 			}
