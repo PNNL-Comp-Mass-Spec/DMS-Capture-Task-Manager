@@ -1355,24 +1355,33 @@ namespace CaptureToolPlugin
 		/// <remarks>Returns true if the .lcmethod file is not found</remarks>
 		private bool CaptureLCMethodFile(string datasetName, string datasetFolderPath)
 		{
-			const string METHOD_FOLDER_BASE_PATH = @"\\proto-5\BionetXfer\Run_Complete_Trigger\MethodFiles";
+			const string DEFAULT_METHOD_FOLDER_BASE_PATH = @"\\proto-5\BionetXfer\Run_Complete_Trigger\MethodFiles";
 
 			string msg;
 			var bSuccess = true;
+		    var methodFolderBasePath = string.Empty;
 
 			// Look for an LCMethod file associated with this raw spectra file
 			// Note that this file is often created 45 minutes to 60 minutes after the run completes
 			// and thus when capturing a dataset with an auto-created trigger file, we most likely will not find the .lcmethod file
 
-			// Files are stored at \\proto-5\BionetXfer\Run_Complete_Trigger\MethodFiles\  (we could lookup this parameter from the manager control DB, but it rarely changes and thus isn't worth it)
 			// The file will either be located in a folder with the dataset name, or will be in a subfolder based on the year and quarter that the data was acquired
 
 			try
 			{
-				var diSourceFolder = new DirectoryInfo(METHOD_FOLDER_BASE_PATH);
+                methodFolderBasePath = m_MgrParams.GetParam("LCMethodFilesDir", DEFAULT_METHOD_FOLDER_BASE_PATH);
+
+			    if (string.IsNullOrEmpty(methodFolderBasePath) ||
+			        string.Equals(methodFolderBasePath, "na", StringComparison.CurrentCultureIgnoreCase))
+			    {
+                    // LCMethodFilesDir is not defined; exit the function
+                    return true;
+			    }
+
+			    var diSourceFolder = new DirectoryInfo(methodFolderBasePath);
 				if (!diSourceFolder.Exists)
 				{
-					msg = "LCMethods folder not found: " + METHOD_FOLDER_BASE_PATH;
+                    msg = "LCMethods folder not found: " + methodFolderBasePath;
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg);
 
 					// Return true despite not having found the folder since this is not a fatal error for capture
@@ -1473,12 +1482,14 @@ namespace CaptureToolPlugin
 
 				}
 
-				// If the file was found in a dataset folder, then rename the source folder to start with x_
-				if (string.Equals(lstMethodFiles[0].Directory.Name, datasetName, StringComparison.CurrentCultureIgnoreCase))
+				// If the file was found in a dataset folder, rename the source folder to start with x_
+			    var firstFileDirectory = lstMethodFiles[0].Directory;
+
+                if (firstFileDirectory != null && string.Equals(firstFileDirectory.Name, datasetName, StringComparison.CurrentCultureIgnoreCase))
 				{
 					try
 					{
-						var strRenamedSourceFolder = Path.Combine(METHOD_FOLDER_BASE_PATH, "x_" + datasetName);
+                        var strRenamedSourceFolder = Path.Combine(methodFolderBasePath, "x_" + datasetName);
 
 						if (Directory.Exists(strRenamedSourceFolder))
 						{
@@ -1514,13 +1525,16 @@ namespace CaptureToolPlugin
 				bSuccess = false;
 			}
 
+		    if (string.IsNullOrWhiteSpace(methodFolderBasePath))
+		        return bSuccess;
+
 			var dtCurrentTime = DateTime.Now;
 			if (dtCurrentTime.Hour == 18 || dtCurrentTime.Hour == 19 || (Environment.MachineName.ToUpper() == "MONROE3"))
 			{
 				// Time is between 6 pm and 7:59 pm
 				// Check for folders at METHOD_FOLDER_BASE_PATH that start with x_ and have .lcmethod files that are all at least 14 days old
 				// These folders are safe to delete
-				DeleteOldLCMethodFolders(METHOD_FOLDER_BASE_PATH);
+                DeleteOldLCMethodFolders(methodFolderBasePath);
 			}
 
 			return bSuccess;

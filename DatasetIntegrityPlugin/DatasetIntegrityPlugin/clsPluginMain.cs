@@ -212,7 +212,7 @@ namespace DatasetIntegrityPlugin
                             mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                         }
                     }
-                    
+
                     break;
                 case clsInstrumentClassInfo.eInstrumentClass.Agilent_TOF_V2:
                     mRetData.CloseoutType = TestAgilentTOFV2Folder(datasetFolder);
@@ -246,6 +246,12 @@ namespace DatasetIntegrityPlugin
                 {
                     mRetData.CloseoutMsg = "OpenChrome.exe not found at " + exePath;
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg);
+                    return false;
+                }
+
+                // Make sure the CDF plugin is installed and that the SerialKey is defined
+                if (!ValidateCDFPlugin())
+                {
                     return false;
                 }
 
@@ -466,9 +472,9 @@ namespace DatasetIntegrityPlugin
         }
 
         private bool CopyDotDFolderToLocal(
-            clsFileTools oFileTools, 
-            string datasetFolderPath, 
-            string dotDFolderPathLocal, 
+            clsFileTools oFileTools,
+            string datasetFolderPath,
+            string dotDFolderPathLocal,
             bool requireIMSFiles)
         {
             var dotDFolderPathRemote = new DirectoryInfo(Path.Combine(datasetFolderPath, m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION));
@@ -1898,6 +1904,109 @@ namespace DatasetIntegrityPlugin
             catch (Exception ex)
             {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                return false;
+            }
+
+        }
+
+        private bool ValidateCDFPlugin()
+        {
+            try
+            {
+                var diSettingsFolder = new DirectoryInfo(
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                                 @"OpenChromCE\1.0.x\.metadata\.plugins\org.eclipse.core.runtime\.settings"));
+
+                if (!diSettingsFolder.Exists)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Creating OpenChrom settings file folder at " + diSettingsFolder.FullName);
+
+                    diSettingsFolder.Create();
+                    return false;
+                }
+
+                var fiSettingsFile = new FileInfo(
+                    Path.Combine(diSettingsFolder.FullName,
+                                 "net.openchrom.msd.converter.supplier.agilent.hp.prefs"));
+
+                if (!fiSettingsFile.Exists)
+                {
+                    // Create the file
+
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Creating OpenChrom settings file at " + fiSettingsFile.FullName);
+
+                    using (var writer = fiSettingsFile.CreateText())
+                    {
+                        writer.WriteLine("eclipse.preferences.version=1");
+                        writer.WriteLine("productSerialKey=wlkXZsvC-miP6A2KH-DgAuTix2");
+                        writer.WriteLine("productTrialKey=false");
+                        writer.WriteLine("productTrialStartDateKey=1439335966145");
+                        writer.WriteLine("trace=1");
+                    }
+
+                    return true;
+                }
+
+                var settingsData = new List<string>();
+                var settingsFileUpdateRequired = false;
+                var traceFound = false;
+
+                using (var reader = new StreamReader(new FileStream(fiSettingsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+                    while (!reader.EndOfStream)
+                    {
+                        var dataLine = reader.ReadLine();
+
+                        if (string.IsNullOrEmpty(dataLine))
+                            continue;
+
+                        if (string.Equals(dataLine.Trim(), "productTrialKey=true", StringComparison.CurrentCultureIgnoreCase))
+                        {
+                            settingsData.Add("productSerialKey=wlkXZsvC-miP6A2KH-DgAuTix2");
+                            settingsData.Add("productTrialKey=false");
+                            settingsFileUpdateRequired = true;
+                        }
+                        else
+                        {
+                            if (dataLine.StartsWith("trace"))
+                                traceFound = true;
+
+                            settingsData.Add(dataLine);
+                        }
+
+                    }
+                }
+
+                if (!settingsFileUpdateRequired)
+                {
+                    if (m_DebugLevel >= 2)
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "OpenChrom settings file is up to date at " + fiSettingsFile.FullName);
+
+                    return true;
+                }
+
+                // Need to update the settings file with the SerialKey entry
+                Thread.Sleep(50);
+                    
+                // Possibly add the trace= line
+                if (!traceFound)
+                    settingsData.Add("trace=1");
+
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Adding productSerialKey entry to OpenChrom settings file at " + fiSettingsFile.FullName);
+
+                // Actually update the file
+                using (var writer = new StreamWriter(new FileStream(fiSettingsFile.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+                {
+                    foreach (var dataLine in settingsData)
+                        writer.WriteLine(dataLine);
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                mRetData.CloseoutMsg = "Exception validating the OpenChrome CDF plugin";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg + ": " + ex.Message);
                 return false;
             }
 
