@@ -33,7 +33,7 @@ namespace Pacifica.Core
 				fileHash = _hashProvider.ComputeHash(sourceFile);
 			}
 			
-			string hashString = ToHexString(fileHash);
+			var hashString = ToHexString(fileHash);
 
 			return hashString;
 		}
@@ -126,7 +126,7 @@ namespace Pacifica.Core
 					jso[key] = string.Empty;
 				}
 
-				object value = jso[key];
+				var value = jso[key];
 				if (value.GetType().Name == "JsonObject")
 				{
 					var tmpJso = value as JsonObject;
@@ -157,14 +157,14 @@ namespace Pacifica.Core
 								}
 								else
 								{
-									object nextValue = tmpJsa.GetValue(0);
+									var nextValue = tmpJsa.GetValue(0);
 									if (nextValue == null)
 									{
 										d.Add(key, new List<Dictionary<string, object>>());
 									}
 									else
 									{
-										string typeName = nextValue.GetType().Name;
+										var typeName = nextValue.GetType().Name;
 
 										if (typeName == "String" || typeName == "JsonNumber")
 											d.Add(key, JsonArrayToStringList(tmpJsa));
@@ -196,8 +196,8 @@ namespace Pacifica.Core
 
 			while (jsa.Length > 0)
 			{
-				object value = jsa.Pop();
-				string typeName = value.GetType().Name;
+				var value = jsa.Pop();
+				var typeName = value.GetType().Name;
 				if (typeName == "JsonNumber" || typeName == "String")
 				{
 					lstItems.Add(value.ToString());
@@ -213,10 +213,10 @@ namespace Pacifica.Core
 
 		public static List<int> JsonArrayToIntList(JsonArray jsa)
 		{
-			List<string> lstStrings = JsonArrayToStringList(jsa);
+			var lstStrings = JsonArrayToStringList(jsa);
 			var lstInts = new List<int>();
 
-			foreach (string item in lstStrings)
+			foreach (var item in lstStrings)
 			{
 				int value;
 				if (int.TryParse(item, out value))
@@ -233,7 +233,7 @@ namespace Pacifica.Core
 			var lstItems = new List<Dictionary<string, object>>();
 			while (jsa.Length > 0)
 			{
-				object value = jsa.Pop();
+				var value = jsa.Pop();
 				if (value.GetType().Name == "JsonNumber")
 				{
 					var dctValue = new Dictionary<string, object>();
@@ -289,7 +289,7 @@ namespace Pacifica.Core
 			var userIdent = WindowsIdentity.GetCurrent();
 			if (userIdent != null)
 			{
-				string userName = userIdent.Name;
+				var userName = userIdent.Name;
 
 				if (cleanDomain)
 				{

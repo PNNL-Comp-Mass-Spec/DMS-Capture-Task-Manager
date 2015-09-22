@@ -51,6 +51,11 @@ namespace Pacifica.Core
         public string JobNumber
         { get; set; }
 
+        /// <summary>
+        /// When true, upload to test3.my.emsl.pnl.gov instead of ingest.my.emsl.pnl.gov
+        /// </summary>
+        public bool UseTestInstance { get; set; }
+
         #endregion
 
         #region Private Members
@@ -170,11 +175,16 @@ namespace Pacifica.Core
         /// Set to eDebugMode.MyEMSLOfflineMode to create the .tar file locally without contacting MyEMSL</param>
         /// <param name="statusURL"></param>
         /// <returns>True if successfully uploaded, false if an error</returns>
-        public bool StartUpload(Dictionary<string, object> metadataObject, NetworkCredential loginCredentials, EasyHttp.eDebugMode debugMode,
-                                out string statusURL)
+        public bool StartUpload(
+            Dictionary<string, object> metadataObject, 
+            NetworkCredential loginCredentials, 
+            EasyHttp.eDebugMode debugMode,
+            out string statusURL)
         {
             statusURL = string.Empty;
             ErrorMessage = string.Empty;
+
+            Configuration.UseTestInstance = UseTestInstance;
 
             var fileList = (List<FileInfoObject>)metadataObject["file"];
 
@@ -198,12 +208,12 @@ namespace Pacifica.Core
 
             metadataObject["file"] = newFileObj;
 
-            string mdJson = Utilities.ObjectToJson(metadataObject);
+            var mdJson = Utilities.ObjectToJson(metadataObject);
 
             // Create the metadata.txt file
-            string metadataFilename = Path.GetTempFileName();
+            var metadataFilename = Path.GetTempFileName();
             var mdTextFile = new FileInfo(metadataFilename);
-            using (StreamWriter sw = mdTextFile.CreateText())
+            using (var sw = mdTextFile.CreateText())
             {
                 sw.Write(mdJson);
             }
@@ -258,14 +268,14 @@ namespace Pacifica.Core
 				ServicePointManager.ServerCertificateValidationCallback += Utilities.ValidateRemoteCertificate;
 
             // Call the testauth service to obtain a cookie for this session
-            string authURL = Configuration.TestAuthUri;
+            var authURL = Configuration.TestAuthUri;
             var auth = new Auth(new Uri(authURL));
 
             mCookieJar = null;
-            string location = "Undefined/Location";
-            string serverUri = "https://ServerIsOffline/dummy_page?test";
-            int timeoutSeconds = 30;
-            string postData = "";
+            var location = "Undefined/Location";
+            var serverUri = "https://ServerIsOffline/dummy_page?test";
+            var timeoutSeconds = 30;
+            var postData = "";
             Match reMatch;
             HttpStatusCode responseStatusCode;
 
@@ -282,12 +292,12 @@ namespace Pacifica.Core
                     throw new ApplicationException(ErrorMessage);
                 }
 
-                string redirectedServer = Configuration.IngestServerUri;
-                string preallocateUrl = redirectedServer + "/myemsl/cgi-bin/preallocate";
+                var redirectedServer = Configuration.IngestServerUri;
+                var preallocateUrl = redirectedServer + "/myemsl/cgi-bin/preallocate";
 
                 RaiseDebugEvent("ProcessMetadata", "Preallocating with " + preallocateUrl);                
 
-                string preallocateReturn = EasyHttp.Send(preallocateUrl, mCookieJar,
+                var preallocateReturn = EasyHttp.Send(preallocateUrl, mCookieJar,
                                                          out responseStatusCode, postData,
                                                          EasyHttp.HttpMethod.Get, timeoutSeconds, newCred);
 
@@ -337,7 +347,7 @@ namespace Pacifica.Core
 
                 serverUri = scheme + "://" + server;
 
-                string storageUrl = serverUri + location;
+                var storageUrl = serverUri + location;
 
                 RaiseDebugEvent("ProcessMetadata", "Sending file to " + storageUrl);
             }
@@ -358,18 +368,18 @@ namespace Pacifica.Core
             // Upload succeeded; call the finish URL
             // This call is typically fast, but has been observed to take well over 10 seconds
             // For safety, using a timeout of 5 minutes
-            string finishUrl = serverUri + "/myemsl/cgi-bin/finish" + location;
+            var finishUrl = serverUri + "/myemsl/cgi-bin/finish" + location;
             RaiseDebugEvent("ProcessMetadata", "Sending finish via " + finishUrl);
             timeoutSeconds = 300;
             postData = string.Empty;
 
-            bool success = false;
-            bool finishError = false;
-            string finishErrorMsg = string.Empty;
+            var success = false;
+            var finishError = false;
+            var finishErrorMsg = string.Empty;
 
             try
             {
-                string finishResult = EasyHttp.Send(finishUrl, mCookieJar,
+                var finishResult = EasyHttp.Send(finishUrl, mCookieJar,
                                                     out responseStatusCode, postData,
                                                     EasyHttp.HttpMethod.Get, timeoutSeconds, newCred);
 

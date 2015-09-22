@@ -180,10 +180,10 @@ namespace DatasetArchivePlugin
             return text + append;
         }
 
-        protected bool UploadToMyEMSLWithRetry(int maxAttempts, bool recurse, EasyHttp.eDebugMode debugMode)
+        protected bool UploadToMyEMSLWithRetry(int maxAttempts, bool recurse, EasyHttp.eDebugMode debugMode, bool useTestInstance)
         {
-            bool bSuccess = false;
-            int iAttempts = 0;
+            var bSuccess = false;
+            var iAttempts = 0;
             m_MyEmslUploadSuccess = false;
 
             if (maxAttempts < 1)
@@ -202,7 +202,7 @@ namespace DatasetArchivePlugin
             while (!bSuccess && iAttempts < maxAttempts)
             {
                 iAttempts += 1;
-                bSuccess = UploadToMyEMSL(recurse, debugMode);
+                bSuccess = UploadToMyEMSL(recurse, debugMode, useTestInstance);
 
                 if (debugMode != EasyHttp.eDebugMode.DebugDisabled)
                     break;
@@ -232,10 +232,10 @@ namespace DatasetArchivePlugin
         /// Use MyEMSLUploader to upload the data to MyEMSL
         /// </summary>
         /// <returns>True if success, false if an error</returns>
-        protected bool UploadToMyEMSL(bool recurse, EasyHttp.eDebugMode debugMode)
+        protected bool UploadToMyEMSL(bool recurse, EasyHttp.eDebugMode debugMode, bool useTestInstance)
         {
             bool success;
-            DateTime dtStartTime = DateTime.UtcNow;
+            var dtStartTime = DateTime.UtcNow;
             MyEMSLUploader myEMSLUL = null;
 
             try
@@ -255,6 +255,14 @@ namespace DatasetArchivePlugin
                 m_TaskParams.AddAdditionalParameter(MyEMSLUploader.RECURSIVE_UPLOAD, recurse.ToString());
 
                 string statusURL;
+
+                if (useTestInstance)
+                {
+                    myEMSLUL.UseTestInstance = true;
+
+                    statusMessage = "Sending dataset to MyEMSL test instance";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, statusMessage);
+                }
 
                 // Start the upload
                 success = myEMSLUL.StartUpload(debugMode, out statusURL);

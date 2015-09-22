@@ -87,16 +87,42 @@ namespace DatasetArchivePlugin
             if (debugMode != Pacifica.Core.EasyHttp.eDebugMode.DebugDisabled)
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Calling UploadToMyEMSLWithRetry with debugMode=" + debugMode);
 
-            bool copySuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts, recurse, debugMode);
+            var copySuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts, recurse, debugMode, useTestInstance:false);
 
             if (!copySuccess)
                 return false;
-
 
             // Finished with this update task
             statusMessage = "Completed push to MyEMSL, dataset " + m_DatasetName + ", Folder " +
                             m_TaskParams.GetParam("OutputFolderName") + ", job " + m_TaskParams.GetParam("Job");
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, statusMessage);
+
+            // Possibly also upload the dataset to the MyEMSL test instance
+            const int PERCENT_DATA_TO_SEND_TO_TEST = 15;
+
+            var rand = new Random();
+            var randomNumber = rand.Next(0, 100);
+
+            if (randomNumber > PERCENT_DATA_TO_SEND_TO_TEST)
+            {
+                // Do not send this dataset to the test server
+                return true;
+            }
+
+            // Also upload a copy of the data to the MyEMSL test server
+            var testCopySuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts, recurse, debugMode, useTestInstance:true);
+            if (!testCopySuccess)
+            {
+                statusMessage = "MyEMSL test server upload failed";
+                AppendToString(m_WarningMsg, statusMessage);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, statusMessage);
+            }
+            else
+            {
+                statusMessage = "Completed push to the MyEMSL test server, dataset " + m_DatasetName;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, statusMessage);
+            }
+
             return true;
 
         }

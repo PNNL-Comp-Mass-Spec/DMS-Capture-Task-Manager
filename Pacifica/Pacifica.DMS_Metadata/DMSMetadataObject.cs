@@ -84,6 +84,12 @@ namespace Pacifica.DMS_Metadata
             set;
         }
 
+        public bool UseTestInstance
+        {
+            get;
+            set;
+        }
+
         public string MetadataObjectJSON
         {
             get
@@ -128,14 +134,14 @@ namespace Pacifica.DMS_Metadata
 
             this.DatasetName = Utilities.GetDictionaryValue(taskParams, "Dataset", "UnknownDataset");
 
-            List<FileInfoObject> lstDatasetFilesToArchive = FindDatasetFilesToArchive(taskParams, mgrParams, out uploadMetadata);
+            var lstDatasetFilesToArchive = FindDatasetFilesToArchive(taskParams, mgrParams, out uploadMetadata);
 
             // Calculate the "year_quarter" code used for subfolders within an instrument folder
             // This value is based on the date the dataset was created in DMS
             uploadMetadata.DateCodeString = GetDatasetYearQuarter(taskParams);
 
             // Find the files that are new or need to be updated
-            List<FileInfoObject> lstUnmatchedFiles = CompareDatasetContentsElasticSearch(lstDatasetFilesToArchive, uploadMetadata, debugMode);
+            var lstUnmatchedFiles = CompareDatasetContentsElasticSearch(lstDatasetFilesToArchive, uploadMetadata, debugMode);
 
             mMetadataObject = Upload.CreateMetadataObject(uploadMetadata, lstUnmatchedFiles);
 
@@ -178,7 +184,7 @@ namespace Pacifica.DMS_Metadata
                 return false;
             }
 
-            string relativeDestinationDirectory = FileInfoObject.GenerateRelativePath(fiCacheInfoFile.Directory.FullName, baseDSPath);
+            var relativeDestinationDirectory = FileInfoObject.GenerateRelativePath(fiCacheInfoFile.Directory.FullName, baseDSPath);
 
             // This constructor will auto-compute the Sha-1 hash value for the file
             var fio = new FileInfoObject(fiRemoteFile.FullName, relativeDestinationDirectory, sha1Hash: "");
@@ -215,19 +221,19 @@ namespace Pacifica.DMS_Metadata
             else
                 eSearchOption = SearchOption.TopDirectoryOnly;
 
-            List<FileInfo> fileList = archiveDir.GetFiles("*", eSearchOption).ToList();
+            var fileList = archiveDir.GetFiles("*", eSearchOption).ToList();
 
             if (fileList.Count >= MAX_FILES_TO_ARCHIVE)
             {
                 throw new ArgumentOutOfRangeException("Source directory has over " + MAX_FILES_TO_ARCHIVE + " files; files must be zipped before upload to MyEMSL");
             }
 
-            double fracCompleted = 0.0;
+            var fracCompleted = 0.0;
 
             // Generate file size sum for status purposes
             long totalFileSize = 0;				// how much data is there to crunch?
             long runningFileSize = 0;			// how much data we've crunched so far
-            foreach (FileInfo fi in fileList)
+            foreach (var fi in fileList)
             {
                 totalFileSize += fi.Length;
             }
@@ -235,7 +241,7 @@ namespace Pacifica.DMS_Metadata
             mRemoteCacheInfoFilesToRetrieve.Clear();
             mRemoteCacheInfoLockFiles.Clear();
 
-            foreach (FileInfo fiFile in fileList)
+            foreach (var fiFile in fileList)
             {
                 runningFileSize += fiFile.Length;
 
@@ -295,6 +301,9 @@ namespace Pacifica.DMS_Metadata
             reader.MessageEvent += reader_MessageEvent;
             reader.ProgressEvent += reader_ProgressEvent;
 
+            if (UseTestInstance)
+                reader.UseTestInstance = true;
+
             List<ArchivedFileInfo> lstFilesInMyEMSL;
 
             if (debugMode == EasyHttp.eDebugMode.MyEMSLOfflineMode)
@@ -341,7 +350,7 @@ namespace Pacifica.DMS_Metadata
                     itemAddress = localFile.FileName;
                 }
 
-                string fileHashMyEMSL = Utilities.GetDictionaryValue(dctFilesInMyEMSLSha1Hash, itemAddress, string.Empty);
+                var fileHashMyEMSL = Utilities.GetDictionaryValue(dctFilesInMyEMSLSha1Hash, itemAddress, string.Empty);
 
                 if (localFile.Sha1HashHex != fileHashMyEMSL)
                 {
@@ -375,7 +384,7 @@ namespace Pacifica.DMS_Metadata
             {
                 // Construct a list of first file required from each distinct server
                 var fiSource = new FileInfo(remoteFilePath);
-                string strLockFolderPathSource = mFileTools.GetLockFolder(fiSource);
+                var strLockFolderPathSource = mFileTools.GetLockFolder(fiSource);
 
                 if (string.IsNullOrWhiteSpace(strLockFolderPathSource))
                     continue;
@@ -390,11 +399,11 @@ namespace Pacifica.DMS_Metadata
                     continue;
                 }
 
-                Int64 lockFileTimestamp = mFileTools.GetLockFileTimeStamp();
+                var lockFileTimestamp = mFileTools.GetLockFileTimeStamp();
 
                 var diLockFolderSource = new DirectoryInfo(strLockFolderPathSource);
 
-                string strTargetFilePath = Path.Combine(@"\\MyEMSL\", this.DatasetName, fiSource.Name);
+                var strTargetFilePath = Path.Combine(@"\\MyEMSL\", this.DatasetName, fiSource.Name);
 
                 var strLockFilePathSource = mFileTools.CreateLockFile(diLockFolderSource, lockFileTimestamp, fiSource, strTargetFilePath, this.ManagerName);
 
@@ -444,7 +453,7 @@ namespace Pacifica.DMS_Metadata
             uploadMetadata.Clear();
 
             // Translate values from task/mgr params into usable variables
-            string perspective = Utilities.GetDictionaryValue(mgrParams, "perspective", "client");
+            var perspective = Utilities.GetDictionaryValue(mgrParams, "perspective", "client");
             string driveLocation;
 
             // Determine the drive location based on perspective 
@@ -455,14 +464,14 @@ namespace Pacifica.DMS_Metadata
                 driveLocation = Utilities.GetDictionaryValue(taskParams, "Storage_Vol", "");
 
             // Construct the dataset folder path
-            string pathToArchive = Utilities.GetDictionaryValue(taskParams, "Folder", "");
+            var pathToArchive = Utilities.GetDictionaryValue(taskParams, "Folder", "");
             pathToArchive = Path.Combine(Utilities.GetDictionaryValue(taskParams, "Storage_Path", ""), pathToArchive);
             pathToArchive = Path.Combine(driveLocation, pathToArchive);
 
             uploadMetadata.DatasetName = Utilities.GetDictionaryValue(taskParams, "Dataset", "");
             uploadMetadata.DMSInstrumentName = Utilities.GetDictionaryValue(taskParams, "Instrument_Name", "");
             uploadMetadata.DatasetID = Utilities.ToIntSafe(Utilities.GetDictionaryValue(taskParams, "Dataset_ID", ""), 0);
-            string baseDSPath = pathToArchive;
+            var baseDSPath = pathToArchive;
             uploadMetadata.SubFolder = string.Empty;
 
             ArchiveModes archiveMode;
@@ -481,7 +490,7 @@ namespace Pacifica.DMS_Metadata
                     uploadMetadata.SubFolder = string.Empty;
             }
 
-            bool recurse = true;
+            var recurse = true;
             string sValue;
 
             if (taskParams.TryGetValue(MyEMSLUploader.RECURSIVE_UPLOAD, out sValue))
@@ -491,17 +500,17 @@ namespace Pacifica.DMS_Metadata
 
             // Grab file information from this dataset directory
             // This process will also compute the Sha-1 hash value for each file
-            List<FileInfoObject> lstDatasetFilesToArchive = CollectFileInformation(pathToArchive, baseDSPath, recurse);
+            var lstDatasetFilesToArchive = CollectFileInformation(pathToArchive, baseDSPath, recurse);
             return lstDatasetFilesToArchive;
         }
 
         public static string GetDatasetYearQuarter(Dictionary<string, string> taskParams)
         {
-            string datasetDate = Utilities.GetDictionaryValue(taskParams, "Created", "");
-            DateTime date_code = DateTime.Parse(datasetDate);
-            double yq = date_code.Month / 12.0 * 4.0;
+            var datasetDate = Utilities.GetDictionaryValue(taskParams, "Created", "");
+            var date_code = DateTime.Parse(datasetDate);
+            var yq = date_code.Month / 12.0 * 4.0;
             var yearQuarter = (int)Math.Ceiling(yq);
-            string datasetDateCodeString = date_code.Year + "_" + yearQuarter;
+            var datasetDateCodeString = date_code.Year + "_" + yearQuarter;
 
             return datasetDateCodeString;
         }

@@ -53,7 +53,7 @@ namespace Pacifica.Core
         {
 
             // Call the testauth service to obtain a cookie for this session
-            string authURL = Configuration.TestAuthUri;
+            var authURL = Configuration.TestAuthUri;
             var auth = new Auth(new Uri(authURL));
 
             CookieContainer cookieJar;
@@ -98,16 +98,16 @@ namespace Pacifica.Core
             const int timeoutSeconds = 30;
             HttpStatusCode responseStatusCode;
 
-            string xmlServerResponse = EasyHttp.Send(statusURI, out responseStatusCode, timeoutSeconds);
+            var xmlServerResponse = EasyHttp.Send(statusURI, out responseStatusCode, timeoutSeconds);
 
-            int exceptionIndex = xmlServerResponse.IndexOf(EXCEPTION_TEXT);
+            var exceptionIndex = xmlServerResponse.IndexOf(EXCEPTION_TEXT);
             if (exceptionIndex <= 0)
             {
                 return xmlServerResponse;
             }
 
-            string message = xmlServerResponse.Substring(exceptionIndex + EXCEPTION_TEXT.Length);
-            int charIndex = message.IndexOf("traceback");
+            var message = xmlServerResponse.Substring(exceptionIndex + EXCEPTION_TEXT.Length);
+            var charIndex = message.IndexOf("traceback");
             if (charIndex > 0)
                 message = message.Substring(0, charIndex - 1).Replace("\n", "; ").Replace("&lt", "");
             else
@@ -128,14 +128,14 @@ namespace Pacifica.Core
             const string EXCEPTION_TEXT = "message=\'exceptions.";
             errorMessage = string.Empty;
 
-            int exceptionIndex = xmlServerResponse.IndexOf(EXCEPTION_TEXT);
+            var exceptionIndex = xmlServerResponse.IndexOf(EXCEPTION_TEXT);
             if (exceptionIndex <= 0)
             {
                 return false;
             }
 
-            string exceptionMessage = xmlServerResponse.Substring(exceptionIndex + EXCEPTION_TEXT.Length);
-            int charIndex = exceptionMessage.IndexOf("traceback");
+            var exceptionMessage = xmlServerResponse.Substring(exceptionIndex + EXCEPTION_TEXT.Length);
+            var charIndex = exceptionMessage.IndexOf("traceback");
             if (charIndex > 0)
                 exceptionMessage = exceptionMessage.Substring(0, charIndex - 1).Replace("\n", "; ").Replace("&lt", "");
             else
@@ -205,7 +205,7 @@ namespace Pacifica.Core
                     }
 
                     var stepID = stepNode.Attributes.GetNamedItem("id");
-                    int stepNumber = -1;
+                    var stepNumber = -1;
                     if (!int.TryParse(stepID.Value, out stepNumber))
                     {
                         continue;
@@ -292,8 +292,8 @@ namespace Pacifica.Core
 			//                 for user svc-dms on May 3, 2012)
 			// 6: Archived    (status will be "UNKNOWN" if not yet verified)
 
-			string query = string.Format("//step[@id='{0}']", (int)stepNum);
-			XmlNode statusElement = xmlDoc.SelectSingleNode(query);
+			var query = string.Format("//step[@id='{0}']", (int)stepNum);
+			var statusElement = xmlDoc.SelectSingleNode(query);
 
 		    if (statusElement == null || statusElement.Attributes == null)
 		    {
@@ -302,8 +302,8 @@ namespace Pacifica.Core
 		        return false;
 		    }
 
-		    string message = statusElement.Attributes["message"].Value;
-		    string status = statusElement.Attributes["status"].Value;
+		    var message = statusElement.Attributes["message"].Value;
+		    var status = statusElement.Attributes["status"].Value;
 
 		    if (string.IsNullOrEmpty(message))
 		    {
@@ -376,7 +376,7 @@ namespace Pacifica.Core
 
             // Find all step elements that contain an id attribute
             // See function IngestStepCompleted for Example XML
-            XmlNodeList stepNodes = xmlDoc.SelectNodes("//step[@id]");
+            var stepNodes = xmlDoc.SelectNodes("//step[@id]");
 
 		    if (stepNodes == null || stepNodes.Count == 0)
 		    {
@@ -391,8 +391,8 @@ namespace Pacifica.Core
                 if (stepNode.Attributes == null)
                     continue;
 
-                string message = stepNode.Attributes["message"].Value;
-                string status = stepNode.Attributes["status"].Value;
+                var message = stepNode.Attributes["message"].Value;
+                var status = stepNode.Attributes["status"].Value;
 
 		        if (string.IsNullOrEmpty(message))
 		        {

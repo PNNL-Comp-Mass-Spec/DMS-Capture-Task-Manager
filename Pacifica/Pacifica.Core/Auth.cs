@@ -49,7 +49,7 @@ namespace Pacifica.Core
 
 			try
 			{
-				CookieContainer cc = GetCookies();
+				var cc = GetCookies();
 				if (cc == null)
 				{
 					return false;
@@ -97,7 +97,7 @@ namespace Pacifica.Core
 				try
 				{
 					ccStream = GetCookiesFile(FileMode.Open);
-					BinaryFormatter bf = new BinaryFormatter();
+					var bf = new BinaryFormatter();
 					cc = bf.Deserialize(ccStream) as CookieContainer;
 				}
 				catch
@@ -125,7 +125,7 @@ namespace Pacifica.Core
 					try
 					{
 						ccStream = GetCookiesFile(FileMode.Create);
-						BinaryFormatter bf = new BinaryFormatter();
+						var bf = new BinaryFormatter();
 						bf.Serialize(ccStream, cookieJar);
 					}
 					catch
@@ -195,9 +195,9 @@ namespace Pacifica.Core
 
 			try
 			{
-				Uri uri = _location;
-				bool redirected = false;
-				CookieContainer cookieJar = new CookieContainer();
+				var uri = _location;
+				var redirected = false;
+				var cookieJar = new CookieContainer();
 
 				do
 				{
@@ -205,7 +205,7 @@ namespace Pacifica.Core
 					{
 						throw new ArgumentException("Authentication URI must use HTTPS", "location");
 					}
-					HttpWebRequest request = WebRequest.Create(uri) as HttpWebRequest;
+					var request = WebRequest.Create(uri) as HttpWebRequest;
 
 					SetProxy(_proxy, request);
 
@@ -213,17 +213,17 @@ namespace Pacifica.Core
 					request.UseDefaultCredentials = false;
 					request.AllowAutoRedirect = false;
 
-					CredentialCache cc = new CredentialCache();
+					var cc = new CredentialCache();
 					cc.Add(uri, "Basic", cred);
 					request.Credentials = cc;
 
 					request.CookieContainer = cookieJar;
 
-					using (HttpWebResponse resp = request.GetResponse() as HttpWebResponse)
+					using (var resp = request.GetResponse() as HttpWebResponse)
 					{
 						if ((resp.StatusCode & HttpStatusCode.Redirect) == HttpStatusCode.Redirect)
 						{
-							string redirect = resp.GetResponseHeader("Location");
+							var redirect = resp.GetResponseHeader("Location");
 							if (redirect.StartsWith("https://"))
 							{
 								uri = new Uri(redirect);
@@ -287,7 +287,7 @@ namespace Pacifica.Core
 		{
 			get
 			{
-				CookieContainer cc = GetCookies();
+				var cc = GetCookies();
 				if (cc != null && cc.Count > 0)
 				{
 					return true;
@@ -305,10 +305,10 @@ namespace Pacifica.Core
 		/// <returns></returns>
 		private bool IsExplicitLoginRequired()
 		{
-			bool result = false;
+			var result = false;
 			try
 			{
-				CookieContainer cookieJar = new CookieContainer();
+				var cookieJar = new CookieContainer();
 
 				if (GetAuthCookies(out cookieJar))
 				{
@@ -327,12 +327,12 @@ namespace Pacifica.Core
 
 		public bool GetAuthCookies(out CookieContainer cookieJar)
 		{
-			Uri uri = _location;
+			var uri = _location;
 			bool redirected;
 			Uri finalUri;
 			cookieJar = null;
 
-			bool success = GetAuthCookies(uri, ref cookieJar, out redirected, out finalUri);
+			var success = GetAuthCookies(uri, ref cookieJar, out redirected, out finalUri);
 
 			return success;
 		}
@@ -347,24 +347,24 @@ namespace Pacifica.Core
 		{
 			
 			redirected = false;
-			bool success = false;
+			var success = false;
 			cookieJar = new CookieContainer();
 
 			do
 			{
-				HttpWebRequest request = WebRequest.Create(uri) as HttpWebRequest;
+				var request = WebRequest.Create(uri) as HttpWebRequest;
 				request.CookieContainer = cookieJar;
 				request.UseDefaultCredentials = true;
 				request.AllowAutoRedirect = false;
 
 				request.CookieContainer = cookieJar;
 
-				using (HttpWebResponse resp = request.GetResponse() as HttpWebResponse)
+				using (var resp = request.GetResponse() as HttpWebResponse)
 				{
 					success = true;
 					if ((resp.StatusCode & HttpStatusCode.Redirect) == HttpStatusCode.Redirect)
 					{
-						string redirect = resp.GetResponseHeader("Location");
+						var redirect = resp.GetResponseHeader("Location");
 						if (redirect.StartsWith("http"))
 						{
 							uri = new Uri(redirect);
@@ -406,7 +406,7 @@ namespace Pacifica.Core
 
 		private bool TestCookieLogin()
 		{
-			HttpWebRequest request = WebRequest.Create(_location) as HttpWebRequest;
+			var request = WebRequest.Create(_location) as HttpWebRequest;
 			if (!SetCookies(request))
 			{
 				return false;
@@ -414,7 +414,7 @@ namespace Pacifica.Core
 
 			try
 			{
-				using (HttpWebResponse resp = request.GetResponse() as HttpWebResponse) { }
+				using (var resp = request.GetResponse() as HttpWebResponse) { }
 				return true;
 			}
 			catch
@@ -425,8 +425,8 @@ namespace Pacifica.Core
 
 		private bool TestCookie()
 		{
-			HttpWebRequest request = WebRequest.Create(_location) as HttpWebRequest;
-			CookieContainer cc = GetCookies();
+			var request = WebRequest.Create(_location) as HttpWebRequest;
+			var cc = GetCookies();
 			if (cc == null)
 			{
 				return false;
@@ -437,7 +437,7 @@ namespace Pacifica.Core
 
 			try
 			{
-				HttpWebResponse resp = request.GetResponse() as HttpWebResponse;
+				var resp = request.GetResponse() as HttpWebResponse;
 				if ((resp.StatusCode & HttpStatusCode.OK) != HttpStatusCode.OK)
 				{
 					return true;
@@ -486,25 +486,25 @@ namespace Pacifica.Core
 
 				Console.WriteLine("Working with " + url);
 
-				Auth auth = new Auth(new Uri(url));
+				var auth = new Auth(new Uri(url));
 
 				if (auth.LoginRequired)
 				{
 					Console.Write("Enter user name: ");
-					string userName = Console.ReadLine();
+					var userName = Console.ReadLine();
 
 					Console.Write("Enter password: ");
-					string pass = ReadPassword();
+					var pass = ReadPassword();
 
 					var spass = new SecureString();
-					foreach (char ch in pass)
+					foreach (var ch in pass)
 					{
 						spass.AppendChar(ch);
 					}
 
 					try
 					{
-						NetworkCredential cred = auth.GetCredential(userName, spass);
+						var cred = auth.GetCredential(userName, spass);
 						if (cred != null)
 						{
 							Console.WriteLine("Authentication successful");
@@ -522,12 +522,12 @@ namespace Pacifica.Core
 
 				try
 				{
-					HttpWebRequest request = WebRequest.Create(url) as HttpWebRequest;
+					var request = WebRequest.Create(url) as HttpWebRequest;
 					if (SetCookies(request))
 					{
 						Console.WriteLine("Testing Cookie at " + url);
 
-						using (HttpWebResponse resp = request.GetResponse() as HttpWebResponse)
+						using (var resp = request.GetResponse() as HttpWebResponse)
 						{
 							Console.WriteLine("Cookie test successful");
 						}
@@ -557,18 +557,18 @@ namespace Pacifica.Core
 		/// like NUnit or MS Test at some point.</remarks>
 		private static string ReadPassword()
 		{
-			StringBuilder sb = new StringBuilder();
-			bool enter = false;
+			var sb = new StringBuilder();
+			var enter = false;
 			do
 			{
-				ConsoleKeyInfo key = Console.ReadKey(true);
+				var key = Console.ReadKey(true);
 				switch (key.Key)
 				{
 					case ConsoleKey.Enter:
 						enter = true;
 						break;
 					case ConsoleKey.Backspace:
-						int index = sb.Length - 1;
+						var index = sb.Length - 1;
 						if (index > 0)
 						{
 							sb.Remove(index, 1);

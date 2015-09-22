@@ -102,7 +102,7 @@ namespace Pacifica.Core
 				{
 					fileName = FileName;
 				}
-				string fullPath = Path.Combine(RelativeDestinationDirectory, fileName);
+				var fullPath = Path.Combine(RelativeDestinationDirectory, fileName);
 				return ConvertWindowsPathToUnix(fullPath);
 			}			
 		}

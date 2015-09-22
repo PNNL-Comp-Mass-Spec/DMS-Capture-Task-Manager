@@ -63,7 +63,7 @@ namespace Pacifica.Core
             int timeoutSeconds = 100,
             NetworkCredential loginCredentials = null)
         {
-            HttpWebRequest request = InitializeRequest(url, ref cookies, ref timeoutSeconds, loginCredentials, maxTimeoutHours: 24);
+            var request = InitializeRequest(url, ref cookies, ref timeoutSeconds, loginCredentials, maxTimeoutHours: 24);
             responseStatusCode = HttpStatusCode.NotFound;
 
             // Prepare the request object
@@ -84,7 +84,7 @@ namespace Pacifica.Core
                 {
                     // Download the file
 
-                    Stream responseStream = response.GetResponseStream();
+                    var responseStream = response.GetResponseStream();
 
                     if (responseStream == null)
                     {
@@ -107,16 +107,16 @@ namespace Pacifica.Core
             }
             catch (WebException ex)
             {
-                string responseData = string.Empty;
+                var responseData = string.Empty;
                 if (ex.Response != null)
                 {
-                    Stream responseStream = ex.Response.GetResponseStream();
+                    var responseStream = ex.Response.GetResponseStream();
                     if (responseStream != null)
                     {
                         using (var sr = new StreamReader(responseStream))
                         {
                             const int maxLines = 20;
-                            int linesRead = 0;
+                            var linesRead = 0;
                             while (!sr.EndOfStream && linesRead < maxLines)
                             {
                                 responseData += sr.ReadLine() + Environment.NewLine;
@@ -161,7 +161,7 @@ namespace Pacifica.Core
             NetworkCredential loginCredentials = null)
         {
             const double maxTimeoutHours = 0.1;
-            HttpWebRequest request = InitializeRequest(url, ref cookies, ref timeoutSeconds, loginCredentials, maxTimeoutHours);
+            var request = InitializeRequest(url, ref cookies, ref timeoutSeconds, loginCredentials, maxTimeoutHours);
             responseStatusCode = HttpStatusCode.NotFound;
 
             // Prepare the request object
@@ -181,10 +181,10 @@ namespace Pacifica.Core
             }
             catch (WebException ex)
             {
-                string responseData = string.Empty;
+                var responseData = string.Empty;
                 if (ex.Response != null)
                 {
-                    Stream responseStream = ex.Response.GetResponseStream();
+                    var responseStream = ex.Response.GetResponseStream();
                     if (responseStream != null)
                     {
                         using (var sr = new StreamReader(responseStream))
@@ -223,7 +223,7 @@ namespace Pacifica.Core
             double maxTimeoutHours = 24)
         {
             var uri = new Uri(url);
-            string cleanUserName = Utilities.GetUserName(true);
+            var cleanUserName = Utilities.GetUserName(true);
 
             var request = (HttpWebRequest)WebRequest.Create(uri);
             Configuration.SetProxy(request);
@@ -345,7 +345,7 @@ namespace Pacifica.Core
             NetworkCredential loginCredentials = null)
         {
 
-            HttpWebRequest request = InitializeRequest(url, ref cookies, ref timeoutSeconds, loginCredentials, maxTimeoutHours: 24);
+            var request = InitializeRequest(url, ref cookies, ref timeoutSeconds, loginCredentials, maxTimeoutHours: 24);
             responseStatusCode = HttpStatusCode.NotFound;
 
             // Prepare the request object
@@ -383,14 +383,14 @@ namespace Pacifica.Core
             }
 
             // Receive response
-            string responseData = string.Empty;
+            var responseData = string.Empty;
             HttpWebResponse response = null;
             try
             {
                 request.Timeout = timeoutSeconds * 1000;
                 response = (HttpWebResponse)request.GetResponse();
                 responseStatusCode = response.StatusCode;
-                Stream responseStream = response.GetResponseStream();
+                var responseStream = response.GetResponseStream();
 
                 if (responseStream != null)
                 {
@@ -444,7 +444,7 @@ namespace Pacifica.Core
             var baseUri = new Uri(serverBaseAddress);
             var uploadUri = new Uri(baseUri, url);
 
-            string credUriStr = url.Substring(0, url.LastIndexOf('/'));
+            var credUriStr = url.Substring(0, url.LastIndexOf('/'));
             var credCheckUri = new Uri(baseUri, credUriStr);
 
             ICredentials i1;
@@ -485,16 +485,16 @@ namespace Pacifica.Core
             var fiMetadataFile = new FileInfo(metadataFilePath);
 
             // Compute the total number of bytes that will be written to the tar file
-            long contentLength = ComputeTarFileSize(fileListObject, fiMetadataFile, debugMode);
+            var contentLength = ComputeTarFileSize(fileListObject, fiMetadataFile, debugMode);
 
             const double percentComplete = 0;		// Value between 0 and 100
             long bytesWritten = 0;
-            DateTime lastStatusUpdateTime = DateTime.UtcNow;
+            var lastStatusUpdateTime = DateTime.UtcNow;
 
             RaiseStatusUpdate(percentComplete, bytesWritten, contentLength, string.Empty);
 
             // Set this to True to debug things and create the .tar file locally instead of sending to the server
-            bool writeToDisk = (debugMode != eDebugMode.DebugDisabled); // aka Writefile or Savefile
+            var writeToDisk = (debugMode != eDebugMode.DebugDisabled); // aka Writefile or Savefile
 
             if (writeToDisk && Environment.MachineName.IndexOf("proto", StringComparison.CurrentCultureIgnoreCase) >= 0)
             {
@@ -600,7 +600,7 @@ namespace Pacifica.Core
             if (writeToDisk)
                 return string.Empty;
 
-            string responseData = string.Empty;
+            var responseData = string.Empty;
 
             WebResponse response = null;
             try
@@ -697,7 +697,7 @@ namespace Pacifica.Core
         {
             long contentLength = 0;
 
-            bool debugging = (debugMode != eDebugMode.DebugDisabled);
+            var debugging = (debugMode != eDebugMode.DebugDisabled);
 
             if (debugging)
             {
@@ -707,7 +707,7 @@ namespace Pacifica.Core
             }
 
             // Add the metadata file
-            long addonBytes = AddTarFileContentLength(MYEMSL_METADATA_FILE_NAME, fiMetadataFile.Length);
+            var addonBytes = AddTarFileContentLength(MYEMSL_METADATA_FILE_NAME, fiMetadataFile.Length);
 
             if (debugging)
                 Console.WriteLine(fiMetadataFile.Length.ToString().PadRight(12) + addonBytes.ToString().PadRight(12) + contentLength.ToString().PadRight(12) + "1".PadRight(3) + "metadata.txt");
@@ -736,7 +736,7 @@ namespace Pacifica.Core
 
                     if (!dctDirectoryEntries.Contains(fiSourceFile.Directory.FullName))
                     {
-                        string dirPathInArchive = "data/" + fileToArchive.Value.RelativeDestinationDirectory + "/";                       
+                        var dirPathInArchive = "data/" + fileToArchive.Value.RelativeDestinationDirectory + "/";                       
                         addonBytes = AddTarFileContentLength(dirPathInArchive, 0, out headerBlocks);
 
                         if (debugging)
@@ -753,7 +753,7 @@ namespace Pacifica.Core
                     }
                 }
 
-                string pathInArchive = "data/";
+                var pathInArchive = "data/";
                 if (!string.IsNullOrWhiteSpace(fileToArchive.Value.RelativeDestinationDirectory))
                     pathInArchive += fileToArchive.Value.RelativeDestinationDirectory + '/';
 
@@ -782,7 +782,7 @@ namespace Pacifica.Core
             // Round up contentLength to the nearest 10240 bytes
             // Note that recordCount is a long to prevent overflow errors when computing finalPadderLength
             var recordCount = (long)Math.Ceiling(contentLength / (double)TarBuffer.DefaultRecordSize);
-            long finalPadderLength = (recordCount * TarBuffer.DefaultRecordSize) - contentLength;
+            var finalPadderLength = (recordCount * TarBuffer.DefaultRecordSize) - contentLength;
 
             if (debugging)
                 Console.WriteLine("0".PadRight(12) + finalPadderLength.ToString().PadRight(12) + contentLength.ToString().PadRight(12) + "0".PadRight(3) + "Padder block at end (to make multiple of " + TarBuffer.DefaultRecordSize + ")");
@@ -797,7 +797,7 @@ namespace Pacifica.Core
 
         private static void AppendFolderToTar(TarOutputStream tarOutputStream, DirectoryInfo diFolder, string pathInArchive, ref long bytesWritten)
         {
-            TarEntry tarEntry = TarEntry.CreateEntryFromFile(diFolder.FullName);
+            var tarEntry = TarEntry.CreateEntryFromFile(diFolder.FullName);
 
             // Override the name
             if (!pathInArchive.EndsWith("/"))
@@ -813,12 +813,12 @@ namespace Pacifica.Core
         {
             using (Stream inputStream = new FileStream(fiSourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
-                long fileSize = fiSourceFile.Length;
+                var fileSize = fiSourceFile.Length;
 
                 // Create a tar entry named as appropriate. You can set the name to anything,
                 // but avoid names starting with drive or UNC.
 
-                TarEntry entry = TarEntry.CreateTarEntry(destFilenameInTar);
+                var entry = TarEntry.CreateTarEntry(destFilenameInTar);
 
                 // Must set size, otherwise TarOutputStream will fail when output exceeds.
                 entry.Size = fileSize;
@@ -830,7 +830,7 @@ namespace Pacifica.Core
                 var localBuffer = new byte[32 * 1024];
                 while (true)
                 {
-                    int numRead = inputStream.Read(localBuffer, 0, localBuffer.Length);
+                    var numRead = inputStream.Read(localBuffer, 0, localBuffer.Length);
                     if (numRead <= 0)
                     {
                         break;

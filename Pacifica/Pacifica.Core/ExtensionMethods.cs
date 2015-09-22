@@ -22,7 +22,7 @@ namespace Pacifica.Core
                 dt = dt.ToUniversalTime();
             }
 
-            TimeSpan t = dt - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            var t = dt - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             return (ulong)Math.Round(t.TotalSeconds);
         }
 
@@ -35,17 +35,17 @@ namespace Pacifica.Core
 		// ReSharper disable once UnusedTypeParameter
         public static string GetDescription<T>(this object enumerationValue) where T : struct
         {
-            Type type = enumerationValue.GetType();
+            var type = enumerationValue.GetType();
             if (!type.IsEnum)
             {
                 throw new ArgumentException("EnumerationValue must be of Enum type", "enumerationValue");
             }
 
             //Tries to find a DescriptionAttribute for a potential friendly name for the enum
-            MemberInfo[] memberInfo = type.GetMember(enumerationValue.ToString());
+            var memberInfo = type.GetMember(enumerationValue.ToString());
             if (memberInfo.Length > 0)
             {
-                object[] attrs = memberInfo[0].GetCustomAttributes(typeof(DescriptionAttribute), false);
+                var attrs = memberInfo[0].GetCustomAttributes(typeof(DescriptionAttribute), false);
 
                 if (attrs.Length > 0)
                 {
