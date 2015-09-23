@@ -144,8 +144,9 @@ namespace Pacifica.DMS_Metadata
             {
                 success = myEMSLUpload.StartUpload(_mdContainer.MetadataObject, debugMode, out statusURL);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine("MyEMSL Upload exception: " + ex.Message);
                 _mdContainer.DeleteLockFiles();
                 throw;
             }
