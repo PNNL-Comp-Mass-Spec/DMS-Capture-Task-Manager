@@ -244,7 +244,7 @@ namespace DatasetIntegrityPlugin
 
                 if (!File.Exists(exePath))
                 {
-                    mRetData.CloseoutMsg = "OpenChrome.exe not found at " + exePath;
+                    mRetData.CloseoutMsg = "OpenChrom.exe not found at " + exePath;
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg);
                     return false;
                 }
@@ -2005,7 +2005,7 @@ namespace DatasetIntegrityPlugin
             }
             catch (Exception ex)
             {
-                mRetData.CloseoutMsg = "Exception validating the OpenChrome CDF plugin";
+                mRetData.CloseoutMsg = "Exception validating the OpenChrom CDF plugin";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg + ": " + ex.Message);
                 return false;
             }
