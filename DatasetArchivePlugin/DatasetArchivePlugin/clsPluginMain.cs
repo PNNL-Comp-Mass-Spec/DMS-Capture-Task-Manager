@@ -48,16 +48,15 @@ namespace DatasetArchivePlugin
 		/// <returns>Enum indicating success or failure</returns>
 		public override clsToolReturnData RunTool()
 		{
-			IArchiveOps archOpTool;
-			string archiveOpDescription;
+		    string archiveOpDescription;
 			mSubmittedToMyEMSL = false;
 			mMyEMSLAlreadyUpToDate = false;
 
-			string msg = "Starting DatasetArchivePlugin.clsPluginMain.RunTool()";
+			var msg = "Starting DatasetArchivePlugin.clsPluginMain.RunTool()";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 			// Perform base class operations, if any
-			clsToolReturnData retData = base.RunTool();
+			var retData = base.RunTool();
 			if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED) return retData;
 
 			// Store the version info in the database
@@ -70,7 +69,7 @@ namespace DatasetArchivePlugin
 			}
 
 			// Always use clsArchiveUpdate for both archiving new datasets and updating existing datasets
-			archOpTool = new clsArchiveUpdate(m_MgrParams, m_TaskParams, m_StatusTools);
+			IArchiveOps archOpTool = new clsArchiveUpdate(m_MgrParams, m_TaskParams, m_StatusTools);
 
 			if (m_TaskParams.GetParam("StepTool").ToLower() == "datasetarchive")
 			{
@@ -133,7 +132,7 @@ namespace DatasetArchivePlugin
 		/// <param name="statusTools">Tools for status reporting</param>
 		public override void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
 		{
-			string msg = "Starting clsPluginMain.Setup()";
+			var msg = "Starting clsPluginMain.Setup()";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 			base.Setup(mgrParams, taskParams, statusTools);
@@ -147,7 +146,14 @@ namespace DatasetArchivePlugin
 		/// Communicates with database to store the MyEMSL upload stats
 		/// </summary>
 		/// <returns>True for success, False for failure</returns>
-		protected bool StoreMyEMSLUploadStats(int fileCountNew, int fileCountUpdated, Int64 bytes, double uploadTimeSeconds, string statusURI, int errorCode)
+		protected bool StoreMyEMSLUploadStats(
+            int fileCountNew, 
+            int fileCountUpdated, 
+            Int64 bytes, 
+            double uploadTimeSeconds, 
+            string statusURI, 
+            int errorCode,
+            bool usedTestInstance)
 		{
 
 			bool Outcome;
@@ -203,10 +209,19 @@ namespace DatasetArchivePlugin
 					MyCmd.Parameters.Add(new SqlParameter("@ErrorCode", SqlDbType.Int));
 					MyCmd.Parameters["@ErrorCode"].Direction = ParameterDirection.Input;
 					MyCmd.Parameters["@ErrorCode"].Value = errorCode;
+
+                    MyCmd.Parameters.Add(new SqlParameter("@UsedTestInstance", SqlDbType.TinyInt));
+                    MyCmd.Parameters["@UsedTestInstance"].Direction = ParameterDirection.Input;
+
+				    if (usedTestInstance)
+                        MyCmd.Parameters["@UsedTestInstance"].Value = 1;
+                    else
+                        MyCmd.Parameters["@UsedTestInstance"].Value = 0;
+
 				}
 
 				//Execute the SP (retry the call up to 4 times)
-                int ResCode = CaptureDBProcedureExecutor.ExecuteSP(MyCmd, 4);
+                var ResCode = CaptureDBProcedureExecutor.ExecuteSP(MyCmd, 4);
 
 				if (ResCode == 0)
 				{
@@ -214,7 +229,7 @@ namespace DatasetArchivePlugin
 				}
 				else
 				{
-					string Msg = "Error " + ResCode + " storing MyEMSL Upload Stats";
+					var Msg = "Error " + ResCode + " storing MyEMSL Upload Stats";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
 					Outcome = false;
 				}
@@ -237,7 +252,7 @@ namespace DatasetArchivePlugin
 		protected bool StoreToolVersionInfo()
 		{
 
-			string strToolVersionInfo = string.Empty;
+			var strToolVersionInfo = string.Empty;
 			var ioAppFileInfo = new FileInfo(Assembly.GetExecutingAssembly().Location);
 
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
@@ -249,13 +264,13 @@ namespace DatasetArchivePlugin
 			}
 
 			// Lookup the version of the Dataset Archive plugin
-			string strPluginPath = Path.Combine(ioAppFileInfo.DirectoryName, "DatasetArchivePlugin.dll");
-			bool bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strPluginPath);
+			var strPluginPath = Path.Combine(ioAppFileInfo.DirectoryName, "DatasetArchivePlugin.dll");
+			var bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strPluginPath);
 			if (!bSuccess)
 				return false;
 
 			// Lookup the version of the MyEMSLReader
-			string strMD5StageFileCreatorPath = Path.Combine(ioAppFileInfo.DirectoryName, "MyEMSLReader.dll");
+			var strMD5StageFileCreatorPath = Path.Combine(ioAppFileInfo.DirectoryName, "MyEMSLReader.dll");
 			bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strMD5StageFileCreatorPath);
 			if (!bSuccess)
 				return false;
@@ -279,7 +294,7 @@ namespace DatasetArchivePlugin
 
 		private void MyEMSLUploadCompleteHandler(object sender, MyEMSLUploadEventArgs e)
 		{
-			StoreMyEMSLUploadStats(e.fileCountNew, e.fileCountUpdated, e.bytes, e.uploadTimeSeconds, e.statusURI, e.errorCode);
+			StoreMyEMSLUploadStats(e.FileCountNew, e.FileCountUpdated, e.BytesUploaded, e.UploadTimeSeconds, e.StatusURI, e.ErrorCode, e.UsedTestInstance);
 		}
 
 

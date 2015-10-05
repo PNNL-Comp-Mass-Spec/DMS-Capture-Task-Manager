@@ -294,9 +294,13 @@ namespace DatasetArchivePlugin
                 }
 
                 // Raise an event with the stats
-                // This will cause clsPluginMain to call StoreMyEMSLUploadStats to store the results in the database (stored procedure StoreMyEMSLUploadStats)
+                // This will cause clsPluginMain to call StoreMyEMSLUploadStats to store the results in the database (Table T_MyEmsl_Uploads)
                 // If an error occurs while storing to the database, the status URI will be listed in the manager's local log file
-                var e = new MyEMSLUploadEventArgs(myEMSLUL.FileCountNew, myEMSLUL.FileCountUpdated, myEMSLUL.Bytes, tsElapsedTime.TotalSeconds, statusURL, iErrorCode: 0);
+                var e = new MyEMSLUploadEventArgs(
+                    myEMSLUL.FileCountNew, myEMSLUL.FileCountUpdated, myEMSLUL.Bytes, 
+                    tsElapsedTime.TotalSeconds, statusURL,
+                    iErrorCode: 0, usedTestInstance: useTestInstance);
+
                 OnMyEMSLUploadComplete(e);
 
                 m_StatusTools.UpdateAndWrite(100);
@@ -311,7 +315,7 @@ namespace DatasetArchivePlugin
 
                 // Raise an event with the stats
 
-                int errorCode = ex.Message.GetHashCode();
+                var errorCode = ex.Message.GetHashCode();
                 if (errorCode == 0)
                     errorCode = 1;
 
@@ -319,10 +323,19 @@ namespace DatasetArchivePlugin
 
                 MyEMSLUploadEventArgs e;
                 if (myEMSLUL == null)
-                    e = new MyEMSLUploadEventArgs(0, 0, 0, tsElapsedTime.TotalSeconds, string.Empty, errorCode);
+                {
+                    e = new MyEMSLUploadEventArgs(
+                        0, 0, 
+                        0, tsElapsedTime.TotalSeconds, 
+                        string.Empty, errorCode, useTestInstance);
+                }
                 else
-                    e = new MyEMSLUploadEventArgs(myEMSLUL.FileCountNew, myEMSLUL.FileCountUpdated, myEMSLUL.Bytes, tsElapsedTime.TotalSeconds, myEMSLUL.StatusURI, errorCode);
-
+                {
+                    e = new MyEMSLUploadEventArgs(
+                        myEMSLUL.FileCountNew, myEMSLUL.FileCountUpdated,
+                        myEMSLUL.Bytes, tsElapsedTime.TotalSeconds,
+                        myEMSLUL.StatusURI, errorCode, useTestInstance);
+                }
                 OnMyEMSLUploadComplete(e);
 
                 success = false;
@@ -361,7 +374,7 @@ namespace DatasetArchivePlugin
         /// <param name="dsName">Name of dataset</param>
         protected void LogOperationFailed(string dsName)
         {
-            string msg = m_ArchiveOrUpdate + "failed, dataset " + dsName;
+            var msg = m_ArchiveOrUpdate + "failed, dataset " + dsName;
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
         }	// End sub
 
@@ -374,7 +387,7 @@ namespace DatasetArchivePlugin
         {
             var diSourceFolder = new DirectoryInfo(sourceFolderPath);
 
-            string msg = "Determing the total size of " + sourceFolderPath;
+            var msg = "Determing the total size of " + sourceFolderPath;
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
             if (!diSourceFolder.Exists)
@@ -386,7 +399,7 @@ namespace DatasetArchivePlugin
             }
             float folderSizeGB = 0;
 
-            foreach (FileInfo fiFile in diSourceFolder.GetFiles("*", SearchOption.AllDirectories))
+            foreach (var fiFile in diSourceFolder.GetFiles("*", SearchOption.AllDirectories))
             {
                 folderSizeGB += (float)(fiFile.Length / 1024.0 / 1024.0 / 1024.0);
             }
@@ -420,13 +433,13 @@ namespace DatasetArchivePlugin
 
         void myEMSLUL_DebugEvent(object sender, MessageEventArgs e)
         {
-            string msg = "  ... " + e.CallingFunction + ": " + e.Message;
+            var msg = "  ... " + e.CallingFunction + ": " + e.Message;
             LogStatusMessageSkipDuplicate(msg);
         }
 
         void myEMSLUL_ErrorEvent(object sender, MessageEventArgs e)
         {
-            string msg = "MyEmslUpload error in function " + e.CallingFunction + ": " + e.Message;
+            var msg = "MyEmslUpload error in function " + e.CallingFunction + ": " + e.Message;
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
         }
 
@@ -436,7 +449,7 @@ namespace DatasetArchivePlugin
             if (DateTime.UtcNow.Subtract(mLastStatusUpdateTime).TotalSeconds >= 60 && e.PercentCompleted > 0)
             {
                 mLastStatusUpdateTime = DateTime.UtcNow;
-                string msg = "  ... uploading, " + e.PercentCompleted.ToString("0.0") + "% complete for " + (e.TotalBytesToSend / 1024.0).ToString("#,##0") + " KB";
+                var msg = "  ... uploading, " + e.PercentCompleted.ToString("0.0") + "% complete for " + (e.TotalBytesToSend / 1024.0).ToString("#,##0") + " KB";
                 if (!(string.IsNullOrEmpty(e.StatusMessage)))
                     msg += "; " + e.StatusMessage;
 
@@ -454,7 +467,7 @@ namespace DatasetArchivePlugin
 
         void myEMSLUL_UploadCompleted(object sender, UploadCompletedEventArgs e)
         {
-            string msg = "  ... MyEmsl upload task complete";
+            var msg = "  ... MyEmsl upload task complete";
 
             // Note that e.ServerResponse will simply have the StatusURL if the upload succeeded
             // If a problem occurred, then e.ServerResponse will either have the full server reponse, or may even be blank

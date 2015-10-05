@@ -4,21 +4,30 @@ namespace DatasetArchivePlugin
 {
 	public class MyEMSLUploadEventArgs : EventArgs
 	{
-		public readonly int fileCountNew;
-		public readonly int fileCountUpdated;
-		public readonly Int64 bytes;
-		public readonly double uploadTimeSeconds;
-		public readonly string statusURI;
-		public readonly int errorCode;
+		public readonly int FileCountNew;
+		public readonly int FileCountUpdated;
+		public readonly Int64 BytesUploaded;
+		public readonly double UploadTimeSeconds;
+		public readonly string StatusURI;
+		public readonly int ErrorCode;
+	    public readonly bool UsedTestInstance;
 
-		public MyEMSLUploadEventArgs(int iFileCountNew, int iFileCountUpdated, Int64 iBytes, double dUploadTimeSeconds, string sStatusURI, int iErrorCode)
+		public MyEMSLUploadEventArgs(
+            int iFileCountNew, 
+            int iFileCountUpdated, 
+            Int64 iBytes, 
+            double dUploadTimeSeconds, 
+            string sStatusURI, 
+            int iErrorCode,
+            bool usedTestInstance)
 		{
-			fileCountNew = iFileCountNew;
-			fileCountUpdated = iFileCountUpdated;
-			bytes = iBytes;
-			uploadTimeSeconds = dUploadTimeSeconds;
-			statusURI = sStatusURI;
-			errorCode = iErrorCode;
+			FileCountNew = iFileCountNew;
+			FileCountUpdated = iFileCountUpdated;
+			BytesUploaded = iBytes;
+			UploadTimeSeconds = dUploadTimeSeconds;
+			StatusURI = sStatusURI;
+			ErrorCode = iErrorCode;
+		    UsedTestInstance = usedTestInstance;
 		}
 	}
 

@@ -313,7 +313,8 @@ namespace CaptureTaskManager
                 retData.CloseoutMsg = errorMessage;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage + ", job " + job);
 
-                if (errorMessage.Contains("[Errno 5] Input/output error"))
+                if (errorMessage.Contains("[Errno 5] Input/output error") ||
+                    errorMessage.Contains("[Errno 28] No space left on device"))
                 {
                     retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     retData.EvalCode = EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY;

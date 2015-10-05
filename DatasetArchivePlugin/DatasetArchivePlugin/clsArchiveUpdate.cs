@@ -97,6 +97,8 @@ namespace DatasetArchivePlugin
                             m_TaskParams.GetParam("OutputFolderName") + ", job " + m_TaskParams.GetParam("Job");
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, statusMessage);
 
+            return true;
+
             // Possibly also upload the dataset to the MyEMSL test instance
             const int PERCENT_DATA_TO_SEND_TO_TEST = 15;
 
