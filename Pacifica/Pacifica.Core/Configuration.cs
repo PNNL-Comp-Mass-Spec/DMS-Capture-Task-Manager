@@ -6,11 +6,36 @@ namespace Pacifica.Core
 {
     public class Configuration
     {
-        public const string DEFAULT_SEARCH_HOST_NAME = "my.emsl.pnl.gov";
+        /// <summary>
+        /// Elastic search host name on the production server
+        /// </summary>
+        public const string DEFAULT_ELASTIC_SEARCH_HOST_NAME = "my.emsl.pnl.gov";
+
+        /// <summary>
+        /// Item search service host name on the production server
+        /// </summary>
+        public const string DEFAULT_ITEM_SEARCH_HOST_NAME = "undefined_does_not_exist.my.emsl.pnl.gov";
+
+        /// <summary>
+        /// Ingest host name on the production server
+        /// </summary>
         public const string DEFAULT_INGEST_HOST_NAME = "ingest.my.emsl.pnl.gov";
 
-        public const string TEST_SEARCH_HOST_NAME = "test0.my.emsl.pnl.gov";
+        /// <summary>
+        /// Elastic search host name on the test server
+        /// </summary>
+        public const string TEST_ELASTIC_SEARCH_HOST_NAME = "test0.my.emsl.pnl.gov";
+
+        /// <summary>
+        /// Item search service host name on the test server
+        /// </summary>
+        public const string TEST_ITEM_SEARCH_HOST_NAME = "dev1.my.emsl.pnl.gov";
+
+        /// <summary>
+        /// Ingest host name on the test server
+        /// </summary>
         public const string TEST_INGEST_HOST_NAME = "test3.my.emsl.pnl.gov";
+
 
         private static string mLocalTempDirectory = Path.GetTempPath();
         public static string LocalTempDirectory
@@ -117,6 +142,19 @@ namespace Pacifica.Core
             }
         }
 
+        private const string ITEM_SEARCH_RELATIVE_PATH = "/myemsl/status/index.php/api/item_search/";
+
+        /// <summary>
+        /// By default, returns https://dev1.my.emsl.pnl.gov/myemsl/status/index.php/api/item_search/
+        /// </summary>
+        public static string ItemSearchUri
+        {
+            get
+            {
+                return SearchServerUri + ITEM_SEARCH_RELATIVE_PATH;
+            }
+        }
+
         private static string mIngestServerHostName = DEFAULT_INGEST_HOST_NAME;
         public static string IngestServerHostName
         {
@@ -150,8 +188,7 @@ namespace Pacifica.Core
             }
         }
 
-
-        private static string mSearchServerHostName = DEFAULT_SEARCH_HOST_NAME;
+        private static string mSearchServerHostName = DEFAULT_ELASTIC_SEARCH_HOST_NAME;
         public static string SearchServerHostName
         {
             get
@@ -244,6 +281,23 @@ namespace Pacifica.Core
             }
         }
 
+        private static bool mUseItemSearch;
+
+        public static bool UseItemSearch
+        {
+            get
+            {
+                return mUseItemSearch;
+            }
+
+            set
+            {
+                mUseItemSearch = value;
+                UpdateHostNames();
+            }
+        }
+
+
         private static bool mUseTestInstance;
 
         /// <summary>
@@ -259,19 +313,33 @@ namespace Pacifica.Core
             set
             {
                 mUseTestInstance = value;
-                if (value)
-                {
-                    Configuration.IngestServerHostName = TEST_INGEST_HOST_NAME;
-                    Configuration.SearchServerHostName = TEST_SEARCH_HOST_NAME;
-                }
-                else
-                {
-                    Configuration.IngestServerHostName = DEFAULT_INGEST_HOST_NAME;
-                    Configuration.SearchServerHostName = DEFAULT_SEARCH_HOST_NAME;
-                }
+                UpdateHostNames();
             }
         }
 
+        private static void UpdateHostNames()
+        {
+            if (mUseTestInstance)
+            {
+                Configuration.IngestServerHostName = TEST_INGEST_HOST_NAME;
+
+                if (mUseItemSearch)
+                    Configuration.SearchServerHostName = TEST_ITEM_SEARCH_HOST_NAME;
+                else
+                    Configuration.SearchServerHostName = TEST_ELASTIC_SEARCH_HOST_NAME;
+
+            }
+            else
+            {
+                Configuration.IngestServerHostName = DEFAULT_INGEST_HOST_NAME;
+
+                if (mUseItemSearch)
+                    Configuration.SearchServerHostName = DEFAULT_ITEM_SEARCH_HOST_NAME;
+                else
+                    Configuration.SearchServerHostName = DEFAULT_ELASTIC_SEARCH_HOST_NAME;
+                
+            }
+        }
 
     }
 }
