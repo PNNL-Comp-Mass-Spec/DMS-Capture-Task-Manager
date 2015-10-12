@@ -1759,6 +1759,9 @@ namespace DatasetIntegrityPlugin
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Opening UIMF file to read pressure data");
 
+            var ignorePressureErrors = m_TaskParams.GetParam("IgnorePressureInfoErrors", false);
+            var loggedPressureErrorWarning = false;
+
             // Open the file with the UIMFRader
             using (var uimfReader = new DataReader(dataFileNamePath))
             {
@@ -1799,12 +1802,24 @@ namespace DatasetIntegrityPlugin
 
                         if (!pressuresAreInCorrectOrder)
                         {
-                            mRetData.EvalMsg = "Invalid pressure info in the Frame_Parameters table for frame " + frameNumber + "; QuadrupolePressure should be less than the RearIonFunnelPressure and the RearIonFunnelPressure should be less than the HighPressureFunnelPressure";
+                            mRetData.EvalMsg = "Invalid pressure info in the Frame_Parameters table for frame " + frameNumber + ", dataset " + m_Dataset + "; QuadrupolePressure should be less than the RearIonFunnelPressure and the RearIonFunnelPressure should be less than the HighPressureFunnelPressure";
 
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+                            if (ignorePressureErrors)
+                            {
+                                if (!loggedPressureErrorWarning)
+                                {                                
+                                    loggedPressureErrorWarning = true;
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, mRetData.EvalMsg);
+                                }
+                            }
+                            else
+                            {
 
-                            uimfReader.Dispose();
-                            return false;
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+
+                                uimfReader.Dispose();
+                                return false;
+                            }
                         }
                     }
 
@@ -2065,5 +2080,5 @@ namespace DatasetIntegrityPlugin
 
         #endregion
 
-    }	// End class
-}	// End namespace
+    }
+}
