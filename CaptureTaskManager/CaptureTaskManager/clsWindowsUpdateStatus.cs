@@ -5,12 +5,23 @@ namespace CaptureTaskManager
 	public static class clsWindowsUpdateStatus
 	{
 
+        /// <summary>
+        /// Checks whether Windows Updates are expected to occur close to the current time of day
+        /// </summary>
+        /// <returns>True if Windows updates are likely pending on this computer or the Windows servers</returns>
+        /// <remarks></remarks>
+        public static bool UpdatesArePending()
+        {
+            string pendingWindowsUpdateMessage;
+            return UpdatesArePending(DateTime.Now, out pendingWindowsUpdateMessage);
+        }
+
 		/// <summary>
 		/// Checks whether Windows Updates are expected to occur close to the current time of day
 		/// </summary>
 		/// <param name="pendingWindowsUpdateMessage">Output: description of the pending or recent Windows updates</param>
-		/// <returns></returns>
-		/// <remarks></remarks>
+        /// <returns>True if Windows updates are likely pending on this computer or the Windows servers</returns>
+        /// <remarks></remarks>
 		public static bool UpdatesArePending(out string pendingWindowsUpdateMessage)
 		{
 			return UpdatesArePending(DateTime.Now, out pendingWindowsUpdateMessage);
@@ -21,8 +32,8 @@ namespace CaptureTaskManager
 		/// </summary>
 		/// <param name="currentTime">Current time of day</param>
 		/// <param name="pendingWindowsUpdateMessage">Output: description of the pending or recent Windows updates</param>
-		/// <returns></returns>
-		/// <remarks></remarks>
+        /// <returns>True if Windows updates are likely pending on this computer or the Windows servers</returns>
+        /// <remarks></remarks>
 		public static bool UpdatesArePending(DateTime currentTime, out string pendingWindowsUpdateMessage)
 		{
 
@@ -67,7 +78,8 @@ namespace CaptureTaskManager
 			var dtExclusionEnd2 = secondTuesdayInMonth.AddDays(5).AddHours(11);
 
 
-			if ((currentTime >= dtExclusionStart && currentTime < dtExclusionEnd) || (currentTime >= dtExclusionStart2 && currentTime < dtExclusionEnd2))
+			if ((currentTime >= dtExclusionStart && currentTime < dtExclusionEnd) || 
+                (currentTime >= dtExclusionStart2 && currentTime < dtExclusionEnd2))
 			{
 				var dtPendingUpdateTime1 = secondTuesdayInMonth.AddDays(5).AddHours(3);
 				var dtPendingUpdateTime2 = secondTuesdayInMonth.AddDays(5).AddHours(10);
