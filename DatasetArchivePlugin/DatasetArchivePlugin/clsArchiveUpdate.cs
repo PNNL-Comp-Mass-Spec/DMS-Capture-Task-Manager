@@ -87,25 +87,36 @@ namespace DatasetArchivePlugin
             if (debugMode != Pacifica.Core.EasyHttp.eDebugMode.DebugDisabled)
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Calling UploadToMyEMSLWithRetry with debugMode=" + debugMode);
 
-            var copySuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts, recurse, debugMode, useTestInstance:false);
+            var debugTestInstanceOnly = false;
 
-            if (!copySuccess)
-                return false;
+            if (!debugTestInstanceOnly)
+            {
+                var copySuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts, recurse, debugMode,
+                                                          useTestInstance: false);
 
-            // Finished with this update task
-            statusMessage = "Completed push to MyEMSL, dataset " + m_DatasetName + ", Folder " +
-                            m_TaskParams.GetParam("OutputFolderName") + ", job " + m_TaskParams.GetParam("Job");
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, statusMessage);
+                if (!copySuccess)
+                    return false;
 
-            return true;
+                // Finished with this update task
+                statusMessage = "Completed push to MyEMSL, dataset " + m_DatasetName + ", Folder " +
+                                m_TaskParams.GetParam("OutputFolderName") + ", job " + m_TaskParams.GetParam("Job");
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, statusMessage);
+            }
 
             // Possibly also upload the dataset to the MyEMSL test instance
-            const int PERCENT_DATA_TO_SEND_TO_TEST = 15;
+            const int PERCENT_DATA_TO_SEND_TO_TEST = 20;
+            var testDateCuttoff = new DateTime(2015, 11, 1);
+
+            if (DateTime.Now > testDateCuttoff)
+            {
+                // Testing has finished
+                return true;
+            }
 
             var rand = new Random();
             var randomNumber = rand.Next(0, 100);
 
-            if (randomNumber > PERCENT_DATA_TO_SEND_TO_TEST)
+            if (randomNumber > PERCENT_DATA_TO_SEND_TO_TEST & !debugTestInstanceOnly)
             {
                 // Do not send this dataset to the test server
                 return true;

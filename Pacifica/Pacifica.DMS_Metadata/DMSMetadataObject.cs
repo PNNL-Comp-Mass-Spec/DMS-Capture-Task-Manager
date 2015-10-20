@@ -302,7 +302,15 @@ namespace Pacifica.DMS_Metadata
             reader.ProgressEvent += reader_ProgressEvent;
 
             if (UseTestInstance)
+            {
                 reader.UseTestInstance = true;
+                reader.UseItemSearch = true;
+            }
+            else
+            {
+                reader.UseTestInstance = false;
+                reader.UseItemSearch = false;
+            }
 
             List<ArchivedFileInfo> lstFilesInMyEMSL;
 

@@ -308,7 +308,7 @@ namespace Pacifica.Core
 			var result = false;
 			try
 			{
-				var cookieJar = new CookieContainer();
+				CookieContainer cookieJar;
 
 				if (GetAuthCookies(out cookieJar))
 				{
@@ -332,7 +332,7 @@ namespace Pacifica.Core
 			Uri finalUri;
 			cookieJar = null;
 
-			var success = GetAuthCookies(uri, ref cookieJar, out redirected, out finalUri);
+			var success = GetAuthCookies(uri, out cookieJar, out redirected, out finalUri);
 
 			return success;
 		}
@@ -340,57 +340,72 @@ namespace Pacifica.Core
 		/// <summary>
 		/// Contacts the MyEMSL auth service to obtain cookies for the currently logged in user
 		/// </summary>
-		/// <param name="cookieJar">Cookie jar</param>
-		/// <returns>True if success; false if an error</returns>
+        /// <param name="uri">URI</param>
+        /// <param name="cookieJar">Cookie jar</param>
+        /// <param name="redirected">True if redirected (output)</param>
+        /// <param name="finalUri">Final URI (output)</param>
+        /// <returns>True if success; false if an error</returns>
 		/// <remarks>Any exceptions that occur will need to be handled by the caller</remarks>
-		public bool GetAuthCookies(Uri uri, ref CookieContainer cookieJar, out bool redirected, out Uri finalUri)
+		public bool GetAuthCookies(Uri uri, out CookieContainer cookieJar, out bool redirected, out Uri finalUri)
 		{
 			
 			redirected = false;
-			var success = false;
 			cookieJar = new CookieContainer();
 
 			do
 			{
 				var request = WebRequest.Create(uri) as HttpWebRequest;
-				request.CookieContainer = cookieJar;
-				request.UseDefaultCredentials = true;
-				request.AllowAutoRedirect = false;
+			    if (request == null)
+			    {
+                    finalUri = uri;
+			        return false;
+			    }
+			    
+			    request.CookieContainer = cookieJar;
+			    request.UseDefaultCredentials = true;
+			    request.AllowAutoRedirect = false;
 
-				request.CookieContainer = cookieJar;
+			    request.CookieContainer = cookieJar;
 
-				using (var resp = request.GetResponse() as HttpWebResponse)
-				{
-					success = true;
-					if ((resp.StatusCode & HttpStatusCode.Redirect) == HttpStatusCode.Redirect)
-					{
-						var redirect = resp.GetResponseHeader("Location");
-						if (redirect.StartsWith("http"))
-						{
-							uri = new Uri(redirect);
-						}
-						else if (redirect.StartsWith("/"))
-						{
-							uri = new Uri(uri.Scheme + "://" + uri.Host + redirect);
-						}
-						else
-						{
-							throw new ApplicationException("https and http are the only supported schemes in this method.");
-						}
+			    using (var resp = request.GetResponse() as HttpWebResponse)
+			    {
+			        if (resp == null)
+			        {
+                        // No response
+                        finalUri = uri;
+			            return false;
+			        }
 
-						redirected = true;
-						if (resp.Cookies.Count > 0)
-						{
-							cookieJar.Add(resp.Cookies);
-						}
-					}
-					else
-					{
-						redirected = false;
-					}
-				}
+			        if (resp.StatusCode == HttpStatusCode.Redirect)
+			        {
+			            var redirect = resp.GetResponseHeader("Location");
+			            if (redirect.StartsWith("http"))
+			            {
+			                uri = new Uri(redirect);
+			            }
+			            else if (redirect.StartsWith("/"))
+			            {
+			                uri = new Uri(uri.Scheme + "://" + uri.Host + redirect);
+			            }
+			            else
+			            {
+			                throw new ApplicationException("https and http are the only supported schemes in this method.");
+			            }
 
-				if (uri.AbsoluteUri.EndsWith("error/nopersonid"))
+			            redirected = true;
+			            if (resp.Cookies.Count > 0)
+			            {
+			                cookieJar.Add(resp.Cookies);
+			            }
+			        }
+			        else
+			        {
+			            redirected = false;
+			        }
+			    }
+			  
+
+			    if (uri.AbsoluteUri.EndsWith("error/nopersonid"))
 				{
 					// Current user is not known to MyEMSL (could be a service account or a new user)
 					finalUri = uri;
@@ -401,7 +416,7 @@ namespace Pacifica.Core
 
 			finalUri = uri;
 
-			return success;
+			return true;
 		}
 
 		private bool TestCookieLogin()
