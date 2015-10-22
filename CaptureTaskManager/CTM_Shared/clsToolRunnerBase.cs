@@ -245,10 +245,10 @@ namespace CaptureTaskManager
                     }
                 }
             }
-            catch (Exception Ex)
+            catch (Exception ex)
             {
                 strFailureMessage = "Error deleting files in working directory";
-                LogError("clsGlobal.ClearWorkDir(), " + strFailureMessage + " " + WorkDir + ": " + Ex.Message);
+                LogError("clsGlobal.ClearWorkDir(), " + strFailureMessage + " " + WorkDir + ": " + ex.Message);
                 return false;
             }
 
@@ -260,10 +260,10 @@ namespace CaptureTaskManager
                     diSubDirectory.Delete(true);
                 }
             }
-            catch (Exception Ex)
+            catch (Exception ex)
             {
                 strFailureMessage = "Error deleting subfolder " + strCurrentSubfolder;
-                LogError(strFailureMessage + " in working directory: " + Ex.Message);
+                LogError(strFailureMessage + " in working directory: " + ex.Message);
                 return false;
             }
 
