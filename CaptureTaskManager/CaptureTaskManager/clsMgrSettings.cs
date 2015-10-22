@@ -13,6 +13,7 @@ using System.Data;
 using System.IO;
 using System.Xml;
 using System.Windows.Forms;
+using PRISM;
 
 namespace CaptureTaskManager
 {
@@ -368,7 +369,7 @@ namespace CaptureTaskManager
 			if (retryCount < 1)
 			{
                 // Log the message to the DB if the monthly Windows updates are not pending
-                bool allowLogToDB = !(clsWindowsUpdateStatus.UpdatesArePending());
+                var allowLogToDB = !(clsWindowsUpdateStatus.ServerUpdatesArePending());
 
 				m_ErrMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Excessive failures attempting to retrieve manager settings from database";
 				if (logConnectionErrors)

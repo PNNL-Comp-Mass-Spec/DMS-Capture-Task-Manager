@@ -11,7 +11,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Windows.Forms;
-using System.Runtime.InteropServices;		// Required for call to GetDiskFreeSpaceEx
+using System.Runtime.InteropServices;
+using PRISM;
+
+// Required for call to GetDiskFreeSpaceEx
 
 namespace CaptureTaskManager
 {
@@ -550,8 +553,10 @@ namespace CaptureTaskManager
 					}
 
 					// Check whether the computer is likely to install the monthly Windows Updates within the next few hours
+                    // Do not request a task between 12 am and 6 am on Thursday in the week with the second Tuesday of the month
+                    // Do not request a task between 2 am and 4 am or between 9 am and 11 am on Sunday in the week with the second Tuesday of the month
 					string pendingWindowsUpdateMessage;
-					if (clsWindowsUpdateStatus.UpdatesArePending(DateTime.Now, out pendingWindowsUpdateMessage))
+					if (clsWindowsUpdateStatus.UpdatesArePending(out pendingWindowsUpdateMessage))
 					{
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, pendingWindowsUpdateMessage);
 						m_LoopExitCode = LoopExitCode.NoTaskFound;

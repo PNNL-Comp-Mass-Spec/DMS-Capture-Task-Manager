@@ -118,7 +118,6 @@
     <Compile Include="clsParseCommandLine.cs" />
     <Compile Include="clsPluginLoader.cs" />
     <Compile Include="clsStatusFile.cs" />
-    <Compile Include="clsWindowsUpdateStatus.cs" />
     <Compile Include="clsXMLTools.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
