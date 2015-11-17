@@ -554,23 +554,26 @@ namespace Pacifica.Core
                     eusInfo.Add("proposalID", uploadMetadata.EUSProposalID);
                 }
 
-                string eusOperatorID;
-                if (uploadMetadata.EUSOperatorID == 0)
-                {
-                    // This should have already been flagged in upstream code
-                    // But if we reach this function and it is still 0, we will use the default operator ID
-                    eusOperatorID = Upload.DEFAULT_EUS_OPERATOR_ID.ToString();
-                }
-                else
-                {
-                    eusOperatorID = uploadMetadata.EUSOperatorID.ToString();
-                }
-
-                // Store the instrument operator EUS ID in the uploaderEusId field to indicate
-                // the person on whose behalf the capture task manager is uploading the dataset
-                eusInfo.Add("uploaderEusId", eusOperatorID);
-
             }
+
+            // For datasets, eusOperatorID is the instrument operator EUS ID
+            // For data packages, it is the EUS ID of the data package owner
+            string eusOperatorID;
+            if (uploadMetadata.EUSOperatorID == 0)
+            {
+                // This should have already been flagged in upstream code
+                // But if we reach this function and it is still 0, we will use the default operator ID
+                eusOperatorID = Upload.DEFAULT_EUS_OPERATOR_ID.ToString();
+            }
+            else
+            {
+                eusOperatorID = uploadMetadata.EUSOperatorID.ToString();
+            }
+
+            // Store the instrument operator EUS ID in the uploaderEusId field to indicate
+            // the person on whose behalf the capture task manager is uploading the dataset
+            eusInfo.Add("uploaderEusId", eusOperatorID);
+
 
             metadataObject.Add("bundleName", "omics_dms");
             metadataObject.Add("creationDate", DateTime.UtcNow.ToUnixTime().ToString(CultureInfo.InvariantCulture));
