@@ -358,7 +358,7 @@ namespace Pacifica.Core
             }
 
             // Set form/post content-type if necessary
-            if (method == HttpMethod.Post && !string.IsNullOrEmpty(postData) && contentType == "")
+            if (method == HttpMethod.Post && !string.IsNullOrEmpty(postData) && string.IsNullOrEmpty(contentType))
             {
                 contentType = "application/x-www-form-urlencoded";
             }

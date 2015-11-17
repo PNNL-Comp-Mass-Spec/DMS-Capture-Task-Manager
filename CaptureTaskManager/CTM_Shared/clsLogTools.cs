@@ -267,7 +267,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Sets the file logging level via an integer value (Overloaded)
         /// </summary>
-        /// <param name="logLevel">"InpLevel">Integer corresponding to level (1-5, 5 being most verbose)</param>
+        /// <param name="logLevel">Integer corresponding to level (1-5, 5 being most verbose)</param>
         public static void SetFileLogLevel(int logLevel)
         {
             var logLevelEnumType = typeof(LogLevels);

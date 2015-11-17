@@ -13,7 +13,6 @@ using CaptureTaskManager;
 using Pacifica.Core;
 using Pacifica.DMS_Metadata;
 using PRISM.Files;
-using MD5StageFileCreator;
 using System.IO;
 
 namespace DatasetArchivePlugin
@@ -40,6 +39,8 @@ namespace DatasetArchivePlugin
         protected string m_DSNamePath;
 
         protected bool m_MyEmslUploadSuccess;
+
+        protected int m_DebugLevel;
 
         protected string m_User;
         protected string m_Pwd;
@@ -84,6 +85,9 @@ namespace DatasetArchivePlugin
             m_MgrParams = MgrParams;
             m_TaskParams = TaskParams;
             m_StatusTools = StatusTools;
+
+            // DebugLevel of 4 means Info level (normal) logging; 5 for Debug level (verbose) logging
+            m_DebugLevel = clsConversion.CIntSafe(m_MgrParams.GetParam("debuglevel"), 4);
 
             m_User = m_MgrParams.GetParam("username");
             m_Pwd = m_MgrParams.GetParam("userpwd");
@@ -161,7 +165,7 @@ namespace DatasetArchivePlugin
                 var errorMessage = "Dataset folder " + m_DSNamePath + " not found";
                 m_ErrMsg = string.Copy(errorMessage);
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
-                LogOperationFailed(m_DatasetName);
+                LogOperationFailed(m_DatasetName, string.Empty, true);
                 return false;
             }
 
@@ -202,7 +206,12 @@ namespace DatasetArchivePlugin
             while (!bSuccess && iAttempts < maxAttempts)
             {
                 iAttempts += 1;
-                bSuccess = UploadToMyEMSL(recurse, debugMode, useTestInstance);
+
+                bool allowRetry;
+                bSuccess = UploadToMyEMSL(recurse, debugMode, useTestInstance, out allowRetry);
+
+                if (!allowRetry)
+                    break;
 
                 if (debugMode != EasyHttp.eDebugMode.DebugDisabled)
                     break;
@@ -232,11 +241,13 @@ namespace DatasetArchivePlugin
         /// Use MyEMSLUploader to upload the data to MyEMSL
         /// </summary>
         /// <returns>True if success, false if an error</returns>
-        protected bool UploadToMyEMSL(bool recurse, EasyHttp.eDebugMode debugMode, bool useTestInstance)
+        protected bool UploadToMyEMSL(bool recurse, EasyHttp.eDebugMode debugMode, bool useTestInstance, out bool allowRetry)
         {
             bool success;
             var dtStartTime = DateTime.UtcNow;
             MyEMSLUploader myEMSLUL = null;
+
+            allowRetry = true;
 
             try
             {
@@ -251,6 +262,8 @@ namespace DatasetArchivePlugin
                 myEMSLUL.ErrorEvent += myEMSLUL_ErrorEvent;
                 myEMSLUL.StatusUpdate += myEMSLUL_StatusUpdate;
                 myEMSLUL.UploadCompleted += myEMSLUL_UploadCompleted;
+
+                myEMSLUL.MetadataDefinedEvent += myEMSLUL_MetadataDefinedEvent;
 
                 m_TaskParams.AddAdditionalParameter(MyEMSLUploader.RECURSIVE_UPLOAD, recurse.ToString());
 
@@ -282,7 +295,7 @@ namespace DatasetArchivePlugin
 
                 statusMessage = "myEMSL statusURI => " + myEMSLUL.StatusURI;
 
-                if (statusURL.EndsWith("/1323420608"))
+                if (!string.IsNullOrEmpty(statusURL) && statusURL.EndsWith("/1323420608"))
                 {
                     statusMessage += "; this indicates an upload error (transactionID=-1)";
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, statusMessage);
@@ -297,21 +310,31 @@ namespace DatasetArchivePlugin
                 // This will cause clsPluginMain to call StoreMyEMSLUploadStats to store the results in the database (Table T_MyEmsl_Uploads)
                 // If an error occurs while storing to the database, the status URI will be listed in the manager's local log file
                 var e = new MyEMSLUploadEventArgs(
-                    myEMSLUL.FileCountNew, myEMSLUL.FileCountUpdated, myEMSLUL.Bytes, 
+                    myEMSLUL.FileCountNew, myEMSLUL.FileCountUpdated, myEMSLUL.Bytes,
                     tsElapsedTime.TotalSeconds, statusURL,
                     iErrorCode: 0, usedTestInstance: useTestInstance);
 
                 OnMyEMSLUploadComplete(e);
 
                 m_StatusTools.UpdateAndWrite(100);
-               
+
             }
             catch (Exception ex)
             {
                 const string errorMessage = "Exception uploading to MyEMSL";
                 m_ErrMsg = string.Copy(errorMessage);
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage, ex);
-                LogOperationFailed(m_DatasetName);
+
+                if (ex.Message.Contains(DMSMetadataObject.UNDEFINED_EUS_OPERATOR_ID))
+                {
+                    // Do not retry the upload; it will fail again due to the same error
+                    allowRetry = false;
+                    LogOperationFailed(m_DatasetName, ex.Message, true);
+                }
+                else
+                {
+                    LogOperationFailed(m_DatasetName);
+                }
 
                 // Raise an event with the stats
 
@@ -325,8 +348,8 @@ namespace DatasetArchivePlugin
                 if (myEMSLUL == null)
                 {
                     e = new MyEMSLUploadEventArgs(
-                        0, 0, 
-                        0, tsElapsedTime.TotalSeconds, 
+                        0, 0,
+                        0, tsElapsedTime.TotalSeconds,
                         string.Empty, errorCode, useTestInstance);
                 }
                 else
@@ -349,6 +372,8 @@ namespace DatasetArchivePlugin
                     myEMSLUL.ErrorEvent -= myEMSLUL_ErrorEvent;
                     myEMSLUL.StatusUpdate -= myEMSLUL_StatusUpdate;
                     myEMSLUL.UploadCompleted -= myEMSLUL_UploadCompleted;
+
+                    myEMSLUL.MetadataDefinedEvent -= myEMSLUL_MetadataDefinedEvent;
                 }
             }
 
@@ -369,14 +394,22 @@ namespace DatasetArchivePlugin
         }	// End sub
 
         /// <summary>
-        /// Writes a database log entry for a failed archive operation
+        /// Writes a log entry for a failed archive operation
         /// </summary>
         /// <param name="dsName">Name of dataset</param>
-        protected void LogOperationFailed(string dsName)
+        /// <param name="reason">Reason for failed operation</param>
+        /// <param name="logToDB">True to log to the database and a local file; false for local file only</param>
+        protected void LogOperationFailed(string dsName, string reason = "", bool logToDB = false)
         {
             var msg = m_ArchiveOrUpdate + "failed, dataset " + dsName;
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-        }	// End sub
+            if (!string.IsNullOrEmpty(reason))
+                msg += "; " + reason;
+
+            if (logToDB)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+            else
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+        }
 
         /// <summary>
         /// Determine the total size of all files in the specified folder (including subdirectories)
@@ -441,6 +474,14 @@ namespace DatasetArchivePlugin
         {
             var msg = "MyEmslUpload error in function " + e.CallingFunction + ": " + e.Message;
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+        }
+
+        void myEMSLUL_MetadataDefinedEvent(object sender, MessageEventArgs e)
+        {
+            if (m_DebugLevel >= 5)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, e.Message);
+            }
         }
 
         void myEMSLUL_StatusUpdate(object sender, StatusEventArgs e)

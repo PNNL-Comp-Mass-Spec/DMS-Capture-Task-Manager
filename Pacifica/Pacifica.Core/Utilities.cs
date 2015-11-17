@@ -38,7 +38,18 @@ namespace Pacifica.Core
 			return hashString;
 		}
 
-		public static string GetDictionaryValue(Dictionary<string, string> dictionary, string keyName, string valueIfMissing)
+	    public static int GetDictionaryValue(Dictionary<string, string> dictionary, string keyName, int valueIfMissing)
+	    {
+            var valueText = GetDictionaryValue(dictionary, keyName, valueIfMissing.ToString());
+
+	        int value;
+	        if (int.TryParse(valueText, out value))
+	            return value;
+
+	        return valueIfMissing;
+	    }
+
+	    public static string GetDictionaryValue(Dictionary<string, string> dictionary, string keyName, string valueIfMissing)
 		{
 			string value;
 
@@ -67,34 +78,6 @@ namespace Pacifica.Core
 		public static string ToHexString(byte[] buffer)
 		{
 			return BitConverter.ToString(buffer).Replace("-", string.Empty).ToLower();
-		}
-
-		public static int ToIntSafe(string valueText)
-		{
-			return ToIntSafe(valueText, 0);
-		}
-
-		public static int ToIntSafe(string valueText, int valueIfError)
-		{
-			int value;
-			if (int.TryParse(valueText, out value))
-				return value;
-
-			return valueIfError;
-		}
-
-		public static long ToLongSafe(string valueText)
-		{
-			return ToLongSafe(valueText, 0);
-		}
-
-		public static long ToLongSafe(string valueText, long valueIfError)
-		{
-			long value;
-			if (long.TryParse(valueText, out value))
-				return value;
-
-			return valueIfError;
 		}
 
 		public static Dictionary<string, object> JsonToObject(string jsonString)

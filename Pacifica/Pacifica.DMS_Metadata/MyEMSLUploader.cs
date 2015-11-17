@@ -57,17 +57,17 @@ namespace Pacifica.DMS_Metadata
             if (!m_MgrParams.TryGetValue("MgrName", out mManagerName))
                 mManagerName = "MyEMSLUploader_" + Environment.MachineName;
 
-            var transferFolderPath = Utilities.GetDictionaryValue(m_TaskParams, "TransferFolderPath", "");
+            var transferFolderPath = Utilities.GetDictionaryValue(m_TaskParams, "TransferFolderPath", string.Empty);
             if (string.IsNullOrEmpty(transferFolderPath))
                 throw new InvalidDataException("Job parameters do not have TransferFolderPath defined; unable to continue");
 
-            var datasetName = Utilities.GetDictionaryValue(m_TaskParams, "Dataset", "");
+            var datasetName = Utilities.GetDictionaryValue(m_TaskParams, "Dataset", string.Empty);
             if (string.IsNullOrEmpty(transferFolderPath))
                 throw new InvalidDataException("Job parameters do not have Dataset defined; unable to continue");
 
             transferFolderPath = Path.Combine(transferFolderPath, datasetName);
 
-            var jobNumber = Utilities.GetDictionaryValue(m_TaskParams, "Job", "");
+            var jobNumber = Utilities.GetDictionaryValue(m_TaskParams, "Job", string.Empty);
             if (string.IsNullOrEmpty(jobNumber))
                 throw new InvalidDataException("Job parameters do not have Job defined; unable to continue");
 
@@ -132,7 +132,10 @@ namespace Pacifica.DMS_Metadata
             // Look for files to upload, compute a Sha-1 hash for each, and compare those hashes to existing files in MyEMSL
             _mdContainer.SetupMetadata(m_TaskParams, m_MgrParams, debugMode);
 
-            Configuration.LocalTempDirectory = Utilities.GetDictionaryValue(m_MgrParams, "workdir", "");
+            // Send the metadata object to the calling procedure (in case it wants to log it)
+            ReportMetadataDefined("StartUpload", _mdContainer.MetadataObjectJSON);
+
+            Configuration.LocalTempDirectory = Utilities.GetDictionaryValue(m_MgrParams, "workdir", string.Empty);
             FileCountUpdated = _mdContainer.TotalFileCountUpdated;
             FileCountNew = _mdContainer.TotalFileCountNew;
             Bytes = _mdContainer.TotalFileSizeToUpload;
@@ -163,9 +166,18 @@ namespace Pacifica.DMS_Metadata
 
         public event DebugEventHandler DebugEvent;
         public event DebugEventHandler ErrorEvent;
+        public event MessageEventHandler MetadataDefinedEvent;
 
         public event StatusUpdateEventHandler StatusUpdate;
         public event UploadCompletedEventHandler UploadCompleted;
+
+        private void ReportMetadataDefined(string callingFunction, string metadataJSON)
+        {
+            var e = new MessageEventArgs(callingFunction, metadataJSON);
+
+            if (MetadataDefinedEvent != null)
+                MetadataDefinedEvent(this, e);
+        }
 
         void myEMSLUpload_DebugEvent(object sender, MessageEventArgs e)
         {
@@ -203,7 +215,7 @@ namespace Pacifica.DMS_Metadata
             {
                 // Multiplying by 0.25 because we're assuming 25% of the time is required for _mdContainer to compute the Sha-1 hashes of files to be uploaded while 75% of the time is required to create and upload the .tar file
                 var percentCompleteOverall = 0 + e.PercentComplete * 0.25;
-                StatusUpdate(this, new StatusEventArgs(percentCompleteOverall, 0, _mdContainer.TotalFileSizeToUpload, ""));
+                StatusUpdate(this, new StatusEventArgs(percentCompleteOverall, 0, _mdContainer.TotalFileSizeToUpload, string.Empty));
             }
 
         }

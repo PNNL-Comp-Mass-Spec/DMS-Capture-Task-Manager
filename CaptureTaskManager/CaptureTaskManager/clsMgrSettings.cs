@@ -419,7 +419,7 @@ namespace CaptureTaskManager
 						if (paramVal.ToLower() == "server")
 						{
 							paramVal = "client";
-							Console.WriteLine(@"StoreParameters: Overriding manager perspective to be 'client'");
+							Console.WriteLine(@"StoreParameters: Overriding manager perspective to be 'client' because impersonating a server-based manager from an office computer");
 						}
 					}
 

@@ -3,13 +3,17 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Net;
-using System.Net.Security;
 using System.Text.RegularExpressions;
 
 namespace Pacifica.Core
 {
     public class Upload : IUpload
     {
+        /// <summary>
+        /// Deafult EUS ID is "Monroe, Matthew"
+        /// </summary>
+        public const int DEFAULT_EUS_OPERATOR_ID = 43428;
+        
         public struct udtUploadMetadata
         {
             public int DatasetID;
@@ -21,6 +25,13 @@ namespace Pacifica.Core
             public string EUSInstrumentID;		// Only used for datasets; not Data Packages
             public string EUSProposalID;		// Only used for datasets; not Data Packages
 
+            /// <summary>
+            /// Instrument Operator EUS ID for datasets
+            /// Data Package Owner for data packages
+            /// </summary>
+            /// <remarks>DEFAULT_EUS_OPERATOR_ID if unknown</remarks>
+            public int EUSOperatorID;
+
             public void Clear()
             {
                 DatasetID = 0;
@@ -31,6 +42,7 @@ namespace Pacifica.Core
                 DMSInstrumentName = string.Empty;
                 EUSInstrumentID = string.Empty;
                 EUSProposalID = string.Empty;
+                EUSOperatorID = DEFAULT_EUS_OPERATOR_ID;
             }
         }
 
@@ -71,7 +83,7 @@ namespace Pacifica.Core
         /// </summary>
         /// <remarks>TransferFolderPath and JobNumber will be empty</remarks>
         public Upload()
-            : this("", "")
+            : this(string.Empty, string.Empty)
         {
         }
 
@@ -241,7 +253,7 @@ namespace Pacifica.Core
             if (fileList.Count == 0)
             {
                 RaiseDebugEvent("ProcessMetadata", "File list is empty; nothing to do");
-                RaiseUploadCompleted("");
+                RaiseUploadCompleted(string.Empty);
                 return true;
             }
 
@@ -275,7 +287,7 @@ namespace Pacifica.Core
             var location = "Undefined/Location";
             var serverUri = "https://ServerIsOffline/dummy_page?test";
             var timeoutSeconds = 30;
-            var postData = "";
+            var postData = string.Empty;
             Match reMatch;
             HttpStatusCode responseStatusCode;
 
@@ -541,6 +553,23 @@ namespace Pacifica.Core
                 {
                     eusInfo.Add("proposalID", uploadMetadata.EUSProposalID);
                 }
+
+                string eusOperatorID;
+                if (uploadMetadata.EUSOperatorID == 0)
+                {
+                    // This should have already been flagged in upstream code
+                    // But if we reach this function and it is still 0, we will use the default operator ID
+                    eusOperatorID = Upload.DEFAULT_EUS_OPERATOR_ID.ToString();
+                }
+                else
+                {
+                    eusOperatorID = uploadMetadata.EUSOperatorID.ToString();
+                }
+
+                // Store the instrument operator EUS ID in the uploaderEusId field to indicate
+                // the person on whose behalf the capture task manager is uploading the dataset
+                eusInfo.Add("uploaderEusId", eusOperatorID);
+
             }
 
             metadataObject.Add("bundleName", "omics_dms");

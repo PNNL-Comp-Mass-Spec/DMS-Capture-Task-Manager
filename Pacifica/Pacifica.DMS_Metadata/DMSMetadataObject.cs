@@ -7,6 +7,7 @@ using MyEMSLReader;
 using PRISM.Files;
 using MessageEventArgs = MyEMSLReader.MessageEventArgs;
 using ProgressEventArgs = Pacifica.Core.ProgressEventArgs;
+using Utilities = Pacifica.Core.Utilities;
 
 namespace Pacifica.DMS_Metadata
 {
@@ -23,6 +24,11 @@ namespace Pacifica.DMS_Metadata
         ///   then this value applies to all files in that subfolder
         /// </remarks>
         public const int MAX_FILES_TO_ARCHIVE = 500;
+
+        /// <summary>
+        /// Error message thrown when the dataset's instrument operator does not have an EUS person ID
+        /// </summary>
+        public const string UNDEFINED_EUS_OPERATOR_ID = "Operator does not have an EUS person ID in DMS";
 
         /// <summary>
         /// Object that tracks the upload details, including the files to upload
@@ -104,7 +110,7 @@ namespace Pacifica.DMS_Metadata
         /// Constructor
         /// </summary>
         public DMSMetadataObject()
-            : this("")
+            : this(string.Empty)
         {
         }
 
@@ -127,13 +133,9 @@ namespace Pacifica.DMS_Metadata
 
         public void SetupMetadata(Dictionary<string, string> taskParams, Dictionary<string, string> mgrParams, EasyHttp.eDebugMode debugMode)
         {
+            this.DatasetName = Utilities.GetDictionaryValue(taskParams, "Dataset", "Unknown_Dataset");
+
             Upload.udtUploadMetadata uploadMetadata;
-
-            uploadMetadata.EUSInstrumentID = Utilities.GetDictionaryValue(taskParams, "EUS_Instrument_ID", "");
-            uploadMetadata.EUSProposalID = Utilities.GetDictionaryValue(taskParams, "EUS_Proposal_ID", "");
-
-            this.DatasetName = Utilities.GetDictionaryValue(taskParams, "Dataset", "UnknownDataset");
-
             var lstDatasetFilesToArchive = FindDatasetFilesToArchive(taskParams, mgrParams, out uploadMetadata);
 
             // Calculate the "year_quarter" code used for subfolders within an instrument folder
@@ -187,7 +189,7 @@ namespace Pacifica.DMS_Metadata
             var relativeDestinationDirectory = FileInfoObject.GenerateRelativePath(fiCacheInfoFile.Directory.FullName, baseDSPath);
 
             // This constructor will auto-compute the Sha-1 hash value for the file
-            var fio = new FileInfoObject(fiRemoteFile.FullName, relativeDestinationDirectory, sha1Hash: "");
+            var fio = new FileInfoObject(fiRemoteFile.FullName, relativeDestinationDirectory, sha1Hash: string.Empty);
             fileCollection.Add(fio);
 
             return true;
@@ -467,30 +469,31 @@ namespace Pacifica.DMS_Metadata
             // Determine the drive location based on perspective 
             // (client perspective means running on a Proto storage server; server perspective means running on another computer)
             if (perspective == "client")
-                driveLocation = Utilities.GetDictionaryValue(taskParams, "Storage_Vol_External", "");
+                driveLocation = Utilities.GetDictionaryValue(taskParams, "Storage_Vol_External", string.Empty);
             else
-                driveLocation = Utilities.GetDictionaryValue(taskParams, "Storage_Vol", "");
+                driveLocation = Utilities.GetDictionaryValue(taskParams, "Storage_Vol", string.Empty);
 
             // Construct the dataset folder path
-            var pathToArchive = Utilities.GetDictionaryValue(taskParams, "Folder", "");
-            pathToArchive = Path.Combine(Utilities.GetDictionaryValue(taskParams, "Storage_Path", ""), pathToArchive);
+            var pathToArchive = Utilities.GetDictionaryValue(taskParams, "Folder", string.Empty);
+            pathToArchive = Path.Combine(Utilities.GetDictionaryValue(taskParams, "Storage_Path", string.Empty), pathToArchive);
             pathToArchive = Path.Combine(driveLocation, pathToArchive);
 
-            uploadMetadata.DatasetName = Utilities.GetDictionaryValue(taskParams, "Dataset", "");
-            uploadMetadata.DMSInstrumentName = Utilities.GetDictionaryValue(taskParams, "Instrument_Name", "");
-            uploadMetadata.DatasetID = Utilities.ToIntSafe(Utilities.GetDictionaryValue(taskParams, "Dataset_ID", ""), 0);
+            uploadMetadata.DatasetName = Utilities.GetDictionaryValue(taskParams, "Dataset", string.Empty);
+            uploadMetadata.DMSInstrumentName = Utilities.GetDictionaryValue(taskParams, "Instrument_Name", string.Empty);
+            uploadMetadata.DatasetID = Utilities.GetDictionaryValue(taskParams, "Dataset_ID", 0);
+
             var baseDSPath = pathToArchive;
             uploadMetadata.SubFolder = string.Empty;
 
             ArchiveModes archiveMode;
-            if (Utilities.GetDictionaryValue(taskParams, "StepTool", "").ToLower() == "datasetarchive")
+            if (Utilities.GetDictionaryValue(taskParams, "StepTool", string.Empty).ToLower() == "datasetarchive")
                 archiveMode = ArchiveModes.archive;
             else
                 archiveMode = ArchiveModes.update;
 
             if (archiveMode == ArchiveModes.update)
             {
-                uploadMetadata.SubFolder = Utilities.GetDictionaryValue(taskParams, "OutputFolderName", "");
+                uploadMetadata.SubFolder = Utilities.GetDictionaryValue(taskParams, "OutputFolderName", string.Empty);
 
                 if (!string.IsNullOrWhiteSpace(uploadMetadata.SubFolder))
                     pathToArchive = Path.Combine(pathToArchive, uploadMetadata.SubFolder);
@@ -498,6 +501,23 @@ namespace Pacifica.DMS_Metadata
                     uploadMetadata.SubFolder = string.Empty;
             }
 
+            uploadMetadata.EUSInstrumentID = Utilities.GetDictionaryValue(taskParams, "EUS_Instrument_ID", string.Empty);
+            uploadMetadata.EUSProposalID = Utilities.GetDictionaryValue(taskParams, "EUS_Proposal_ID", string.Empty);
+
+            var operatorUsername = Utilities.GetDictionaryValue(taskParams, "Operator_PRN", "Unknown_Operator");
+            uploadMetadata.EUSOperatorID = Utilities.GetDictionaryValue(taskParams, "EUS_Operator_ID", 0);
+
+            if (uploadMetadata.EUSOperatorID == 0)
+            {
+
+                var errorMessage =
+                    UNDEFINED_EUS_OPERATOR_ID + ". " +
+                    operatorUsername + " needs to login at https://eusi.emsl.pnl.gov/Portal/ to be assigned an ID, " +
+                    "afterwhich DMS needs to be updated";
+
+                throw new Exception(errorMessage);
+            }
+            
             var recurse = true;
             string sValue;
 
@@ -509,12 +529,13 @@ namespace Pacifica.DMS_Metadata
             // Grab file information from this dataset directory
             // This process will also compute the Sha-1 hash value for each file
             var lstDatasetFilesToArchive = CollectFileInformation(pathToArchive, baseDSPath, recurse);
+
             return lstDatasetFilesToArchive;
         }
 
         public static string GetDatasetYearQuarter(Dictionary<string, string> taskParams)
         {
-            var datasetDate = Utilities.GetDictionaryValue(taskParams, "Created", "");
+            var datasetDate = Utilities.GetDictionaryValue(taskParams, "Created", string.Empty);
             var date_code = DateTime.Parse(datasetDate);
             var yq = date_code.Month / 12.0 * 4.0;
             var yearQuarter = (int)Math.Ceiling(yq);

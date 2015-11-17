@@ -85,7 +85,7 @@ namespace Pacifica.Core
             out bool lookupError,
             out string errorMessage)
         {
-            const string EXCEPTION_TEXT = "message=\'exceptions.";
+            const string EXCEPTION_TEXT = @"message='exceptions.";
 
             lookupError = false;
             errorMessage = string.Empty;
@@ -100,16 +100,16 @@ namespace Pacifica.Core
 
             var xmlServerResponse = EasyHttp.Send(statusURI, out responseStatusCode, timeoutSeconds);
 
-            var exceptionIndex = xmlServerResponse.IndexOf(EXCEPTION_TEXT);
+            var exceptionIndex = xmlServerResponse.IndexOf(EXCEPTION_TEXT, StringComparison.Ordinal);
             if (exceptionIndex <= 0)
             {
                 return xmlServerResponse;
             }
 
             var message = xmlServerResponse.Substring(exceptionIndex + EXCEPTION_TEXT.Length);
-            var charIndex = message.IndexOf("traceback");
+            var charIndex = message.IndexOf("traceback", StringComparison.Ordinal);
             if (charIndex > 0)
-                message = message.Substring(0, charIndex - 1).Replace("\n", "; ").Replace("&lt", "");
+                message = message.Substring(0, charIndex - 1).Replace("\n", "; ").Replace("&lt", string.Empty);
             else
             {
                 charIndex = message.IndexOf('\'', 5);
@@ -125,19 +125,19 @@ namespace Pacifica.Core
 
         protected bool HasExceptions(string xmlServerResponse, bool reportError, out string errorMessage)
         {
-            const string EXCEPTION_TEXT = "message=\'exceptions.";
+            const string EXCEPTION_TEXT = @"message='exceptions.";
             errorMessage = string.Empty;
 
-            var exceptionIndex = xmlServerResponse.IndexOf(EXCEPTION_TEXT);
+            var exceptionIndex = xmlServerResponse.IndexOf(EXCEPTION_TEXT, StringComparison.Ordinal);
             if (exceptionIndex <= 0)
             {
                 return false;
             }
 
             var exceptionMessage = xmlServerResponse.Substring(exceptionIndex + EXCEPTION_TEXT.Length);
-            var charIndex = exceptionMessage.IndexOf("traceback");
+            var charIndex = exceptionMessage.IndexOf("traceback", StringComparison.Ordinal);
             if (charIndex > 0)
-                exceptionMessage = exceptionMessage.Substring(0, charIndex - 1).Replace("\n", "; ").Replace("&lt", "");
+                exceptionMessage = exceptionMessage.Substring(0, charIndex - 1).Replace("\n", "; ").Replace("&lt", string.Empty);
             else
             {
                 charIndex = exceptionMessage.IndexOf('\'', 5);
@@ -205,7 +205,7 @@ namespace Pacifica.Core
                     }
 
                     var stepID = stepNode.Attributes.GetNamedItem("id");
-                    var stepNumber = -1;
+                    int stepNumber;
                     if (!int.TryParse(stepID.Value, out stepNumber))
                     {
                         continue;
@@ -252,9 +252,8 @@ namespace Pacifica.Core
             const string UPLOAD_PERMISSION_ERROR = "do not have upload permissions";
 
             statusMessage = string.Empty;
-            errorMessage = string.Empty;
 
-	        // First look for exceptions
+		    // First look for exceptions
 		    if (HasExceptions(xmlServerResponse, true, out errorMessage))
 		    {
                 // Exceptions are present; step is not complete

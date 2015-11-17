@@ -70,6 +70,10 @@ namespace CaptureTaskManager
 		private string m_StepTool = "Unknown";
 		private string m_Job = "Unknown";
 		private string m_Dataset = "Unknown";
+
+        /// <summary>
+        /// DebugLevel of 4 means Info level (normal) logging; 5 for Debug level (verbose) logging
+        /// </summary>
 		private int m_DebugLevel = 4;
 
 		private bool m_Running;

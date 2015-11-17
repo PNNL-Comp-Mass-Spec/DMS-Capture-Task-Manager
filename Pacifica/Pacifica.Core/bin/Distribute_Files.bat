@@ -4,7 +4,6 @@ copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\A
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_Ape_PlugIn\bin\Debug" /y
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_AScore_PlugIn\bin\Debug" /y
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_Cyclops_PlugIn\bin\Debug" /y
-copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_Decon2ls_PlugIn\bin" /y
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_Decon2ls_PlugIn_Decon2LSV2\bin" /y
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_DTA_Import_PlugIn\bin" /y
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_DTA_Split_PlugIn\bin" /y
@@ -24,7 +23,6 @@ copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\A
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_MSAlign_Histone_Plugin\bin\Debug" /y
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_MSAlign_Plugin\bin" /y
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_MSAlign_Quant_Plugin\bin" /y
-copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_MSClusterDTAtoDAT_PlugIn\bin" /y
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_MSDeconv_Plugin\bin" /y
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_MSGF_PlugIn\Bin" /y
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_MSGFDB_IMS_Plugin\bin" /y
@@ -42,8 +40,15 @@ copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\A
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_Sequest_PlugIn\bin" /y
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_SMAQC_PlugIn\bin" /y
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_XTandem_PlugIn\bin" /y
-copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_XTandemHPC_PlugIn\bin" /y
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Test_Plugins\TestAScorePlugIn\bin\Debug" /y
+
+@echo off
+echo.
+echo.
+echo.
+echo.
+echo.
+@echo on
 
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\ArchiveStatusCheckPlugin\bin\Debug" /y
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\ArchiveVerifyPlugin\bin\Debug" /y
@@ -51,7 +56,7 @@ copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\C
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\CaptureTaskManager\CaptureTaskManager\bin\Debug_NoDartFTP" /y
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\DatasetArchivePlugin\DatasetArchivePlugin\bin\Debug" /y
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\DatasetArchivePlugin\DatasetArchivePlugin\bin\Debug_NoDartFTP" /y
-copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\DatasetArchivePlugin\pacifica\Pacifica.DMS_Metadata\bin\Debug" /y
+copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\Pacifica\Pacifica.DMS_Metadata\bin\Debug" /y
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\DeployedFiles" /y
 
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\dms_managers\DataPackage_Archive_Manager\bin\Debug" /y
@@ -64,11 +69,18 @@ copy debug\Pacifica.Core.pdb "F:\My Documents\Projects\DataMining\DMS_Managers\M
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\MyEMSL_Reader\Lib" /y
 copy debug\Pacifica.Core.pdb "F:\My Documents\Projects\DataMining\DMS_Managers\MyEMSL_Reader\Lib" /y
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\MyEMSL_Reader\MyEMSLDownloader\bin\Debug" /y
-copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\MyEMSL_Reader\Tester\bin\Debug" /y
 
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Space_Manager\DMS_Space_Manager\bin\Debug" /y
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Space_Manager\DMS_Space_Manager\bin\Release" /y
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Space_Manager\DMS_Space_Manager\RefLib" /y
+
+@echo off
+echo.
+echo.
+echo.
+echo.
+echo.
+@echo on
 
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Programs\Mage\DeployedFiles\MageExtractor" /y
 copy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Programs\Mage\DeployedFiles\MageFilePackager" /y
