@@ -35,7 +35,7 @@ namespace ArchiveStatusCheckPlugin
 		/// <returns>Class with completionCode, completionMessage, evaluationCode, and evaluationMessage</returns>
 		public override clsToolReturnData RunTool()
 		{
-			string msg = "Starting ArchiveStatusCheckPlugin.clsPluginMain.RunTool()";
+			var msg = "Starting ArchiveStatusCheckPlugin.clsPluginMain.RunTool()";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 			// Perform base class operations, if any
@@ -51,7 +51,7 @@ namespace ArchiveStatusCheckPlugin
 
 			// Set this to Success for now
 			mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
-			bool success = false;
+			var success = false;
 
 			try
 			{
@@ -129,7 +129,7 @@ namespace ArchiveStatusCheckPlugin
 			}
 
 			// Call the testauth service to obtain a cookie for this session
-			string authURL = Configuration.TestAuthUri;
+			var authURL = Configuration.TestAuthUri;
 			var auth = new Auth(new Uri(authURL));
 
 			CookieContainer cookieJar;
@@ -187,7 +187,7 @@ namespace ArchiveStatusCheckPlugin
 		        return true;
 		    }
 
-		    string firstUnverified = "??";
+		    var firstUnverified = "??";
 		    if (dctUnverifiedURIs.Count > 0)
 		    {
 		        firstUnverified = dctUnverifiedURIs.First().Value;
@@ -216,7 +216,7 @@ namespace ArchiveStatusCheckPlugin
 				msg = "MyEMSL archive status not yet verified; see " + firstUnverified;
 			}
 			else
-				msg = "MyEMSL archive status partially verified (success count = " + dctVerifiedURIs.Count + ", unverified count = " + dctUnverifiedURIs.Count() + "); first not verified: " + firstUnverified;
+				msg = "MyEMSL archive status partially verified (success count = " + dctVerifiedURIs.Count + ", unverified count = " + dctUnverifiedURIs.Count + "); first not verified: " + firstUnverified;
 
             if (mRetData.EvalCode != EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY || string.IsNullOrEmpty(mRetData.CloseoutMsg))
     			mRetData.CloseoutMsg = msg;
@@ -233,7 +233,7 @@ namespace ArchiveStatusCheckPlugin
             out Dictionary<int, string> dctVerifiedURIs,
             out Dictionary<int, string> dctCriticalErrors)
         {
-            int exceptionCount = 0;
+            var exceptionCount = 0;
 
             dctUnverifiedURIs = new Dictionary<int, string>();
             dctVerifiedURIs = new Dictionary<int, string>();
@@ -241,15 +241,15 @@ namespace ArchiveStatusCheckPlugin
 
             foreach (var statusDataItem in dctStatusData)
             {
-                int statusNum = statusDataItem.Key;
-                clsIngestStatusInfo statusInfo = statusDataItem.Value;
+                var statusNum = statusDataItem.Key;
+                var statusInfo = statusDataItem.Value;
 
                 try
                 {
                     string xmlServerResponse;
-                    bool ingestSuccess = base.GetMyEMSLIngestStatus(m_Job, statusChecker, statusInfo.StatusURI, cookieJar, mRetData, out xmlServerResponse);
+                    var ingestSuccess = base.GetMyEMSLIngestStatus(m_Job, statusChecker, statusInfo.StatusURI, cookieJar, mRetData, out xmlServerResponse);
 
-                    byte ingestStepsCompleted = statusChecker.IngestStepCompletionCount(xmlServerResponse);
+                    var ingestStepsCompleted = statusChecker.IngestStepCompletionCount(xmlServerResponse);
 
                     statusInfo.IngestStepsCompletedNew = ingestStepsCompleted;
 
@@ -261,7 +261,7 @@ namespace ArchiveStatusCheckPlugin
 
                     string statusMessage;
                     string errorMessage;
-                    bool success = statusChecker.IngestStepCompleted(
+                    var success = statusChecker.IngestStepCompleted(
                         xmlServerResponse,
                         MyEMSLStatusCheck.StatusStep.Archived,
                         out statusMessage,
@@ -329,13 +329,13 @@ namespace ArchiveStatusCheckPlugin
 
             foreach (var unverifiedEntry in dctUnverifiedURIs)
             {
-                int unverifiedStatusNum = unverifiedEntry.Key;
+                var unverifiedStatusNum = unverifiedEntry.Key;
                 clsIngestStatusInfo unverifiedStatusInfo;
 
                 if (!dctStatusData.TryGetValue(unverifiedStatusNum, out unverifiedStatusInfo))
                     continue;
 
-                string unverifiedSubfolder = unverifiedStatusInfo.Subfolder;
+                var unverifiedSubfolder = unverifiedStatusInfo.Subfolder;
 
                 // Find StatusNums that had the same subfolder
                 // Note: cannot require that identical matches have a larger StatusNum because sometimes 
@@ -405,17 +405,17 @@ namespace ArchiveStatusCheckPlugin
             var dctStatusData = new Dictionary<int, clsIngestStatusInfo>();
 
 			// First look for a specific Status_URI for this job			
-			string statusURI = m_TaskParams.GetParam("MyEMSL_Status_URI", "");
+			var statusURI = m_TaskParams.GetParam("MyEMSL_Status_URI", "");
 
             // Note that GetStatusURIsAndSubfolders requires that the column order be StatusNum, Status_URI, Subfolder, Ingest_Steps_Completed
-	        string sql =
+	        var sql =
 	            " SELECT StatusNum, Status_URI, Subfolder, IsNull(Ingest_Steps_Completed, 0) AS Ingest_Steps_Completed" +
 	            " FROM V_MyEMSL_Uploads " +
 	            " WHERE Dataset_ID = " + m_DatasetID;
 
 			if (!string.IsNullOrEmpty(statusURI))
 			{
-                int statusNum = MyEMSLStatusCheck.GetStatusNumFromURI(statusURI);
+                var statusNum = MyEMSLStatusCheck.GetStatusNumFromURI(statusURI);
 
                 dctStatusData.Add(statusNum, new clsIngestStatusInfo(statusNum, statusURI));
 
@@ -437,7 +437,7 @@ namespace ArchiveStatusCheckPlugin
 			}
 			catch (Exception ex)
 			{
-				string msg = "Exception connecting to database for job " + m_Job + ": " + ex.Message;
+				var msg = "Exception connecting to database for job " + m_Job + ": " + ex.Message;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 			}
 
@@ -447,7 +447,7 @@ namespace ArchiveStatusCheckPlugin
 	    protected void GetStatusURIsAndSubfolders(string sql, int retryCount, Dictionary<int, clsIngestStatusInfo> dctStatusData)
 	    {
             // This Connection String points to the DMS_Capture database
-            string connectionString = m_MgrParams.GetParam("connectionstring");
+            var connectionString = m_MgrParams.GetParam("connectionstring");
 
             while (retryCount > 0)
             {
@@ -462,7 +462,7 @@ namespace ArchiveStatusCheckPlugin
 
                         while (reader.Read())
                         {
-                            int statusNum = reader.GetInt32(0);
+                            var statusNum = reader.GetInt32(0);
 
                             if (Convert.IsDBNull(reader.GetValue(1)))
                             {
@@ -510,7 +510,7 @@ namespace ArchiveStatusCheckPlugin
                 catch (Exception ex)
                 {
                     retryCount -= 1;
-                    string msg = "ArchiveStatusCheckPlugin, GetStatusURIs; Exception querying database for job " + m_Job + ": " + ex.Message + "; ConnectionString: " + connectionString;
+                    var msg = "ArchiveStatusCheckPlugin, GetStatusURIs; Exception querying database for job " + m_Job + ": " + ex.Message + "; ConnectionString: " + connectionString;
                     msg += ", RetryCount = " + retryCount;
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 
@@ -530,7 +530,7 @@ namespace ArchiveStatusCheckPlugin
         {
             try
             {
-                bool spError = false;
+                var spError = false;
 
                 foreach (var statusNum in statusNumsToUpdate)
                 {
@@ -541,7 +541,7 @@ namespace ArchiveStatusCheckPlugin
                         continue;
                     }
 
-                    bool success = UpdateIngestStepsCompletedOneTask(statusNum, statusInfo.IngestStepsCompletedNew);
+                    var success = UpdateIngestStepsCompletedOneTask(statusNum, statusInfo.IngestStepsCompletedNew);
 
                     if (!success)
                         spError=true;
@@ -572,9 +572,9 @@ namespace ArchiveStatusCheckPlugin
 
             try
             {
-                string statusNums = string.Join(",", lstStatusNumsToIgnore);
+                var statusNums = string.Join(",", lstStatusNumsToIgnore);
 
-                byte ingestStepsCompleted = GetMaxIngestStepCompleted(lstStatusNumsToIgnore, dctStatusData);
+                var ingestStepsCompleted = GetMaxIngestStepCompleted(lstStatusNumsToIgnore, dctStatusData);
 
                 var cmd = new SqlCommand(SP_NAME)
                 {
@@ -623,9 +623,9 @@ namespace ArchiveStatusCheckPlugin
 
 			try
 			{
-				string statusNums = string.Join(",", (from item in dctVerifiedURIs select item.Key));
+				var statusNums = string.Join(",", (from item in dctVerifiedURIs select item.Key));
 
-			    byte ingestStepsCompleted = GetMaxIngestStepCompleted(dctVerifiedURIs.Keys, dctStatusData);
+			    var ingestStepsCompleted = GetMaxIngestStepCompleted(dctVerifiedURIs.Keys, dctStatusData);
 			    
 			    var cmd = new SqlCommand(SP_NAME)
 				{
