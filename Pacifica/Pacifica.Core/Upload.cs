@@ -13,10 +13,15 @@ namespace Pacifica.Core
         /// Deafult EUS ID is "Monroe, Matthew"
         /// </summary>
         public const int DEFAULT_EUS_OPERATOR_ID = 43428;
-        
+
+        private const string DATA_PACKAGE_EUS_INSTRUMENT_ID = "40000";
+
+        // VOrbiETD04 is 34127
+        private const string UNKNOWN_INSTRUMENT_EUS_INSTRUMENT_ID = "34127";
+
         public struct udtUploadMetadata
         {
-            public int DatasetID;
+            public int DatasetID;               // 0 for data packages
             public int DataPackageID;
             public string SubFolder;
             public string DatasetName;			// Only used for datasets; not Data Packages
@@ -491,7 +496,7 @@ namespace Pacifica.Core
         #region Member Methods
 
         /// <summary>
-        /// Create the metadata object with the upload details, including the files ot upload
+        /// Create the metadata object with the upload details, including the files to upload
         /// </summary>
         /// <param name="uploadMetadata">Upload metadata</param>
         /// <param name="lstUnmatchedFiles">Files to upload</param>
@@ -509,12 +514,20 @@ namespace Pacifica.Core
             if (uploadMetadata.DatasetID > 0)
             {
                 groupObject.Add(new Dictionary<string, string> { { "name", uploadMetadata.DMSInstrumentName }, { "type", "omics.dms.instrument" } });
+
+                var eusInstrumentID = GetEUSInstrumentID(uploadMetadata.EUSInstrumentID, UNKNOWN_INSTRUMENT_EUS_INSTRUMENT_ID);
+
+                groupObject.Add(new Dictionary<string, string> { { "name", eusInstrumentID }, { "type", "omics.dms.instrument_id" } });
                 groupObject.Add(new Dictionary<string, string> { { "name", uploadMetadata.DateCodeString }, { "type", "omics.dms.date_code" } });
                 groupObject.Add(new Dictionary<string, string> { { "name", uploadMetadata.DatasetName }, { "type", "omics.dms.dataset" } });
                 groupObject.Add(new Dictionary<string, string> { { "name", uploadMetadata.DatasetID.ToString(CultureInfo.InvariantCulture) }, { "type", "omics.dms.dataset_id" } });
             }
             else if (uploadMetadata.DataPackageID > 0)
             {
+                // ToDo: Update DATA_PACKAGE_EUS_INSTRUMENT_ID and uncomment this
+                // string eusInstrumentID = GetEUSInstrumentID(uploadMetadata.EUSInstrumentID, DATA_PACKAGE_EUS_INSTRUMENT_ID);                
+                // groupObject.Add(new Dictionary<string, string> { { "name", eusInstrumentID }, { "type", "omics.dms.instrument_id" } });
+
                 groupObject.Add(new Dictionary<string, string> { { "name", uploadMetadata.DataPackageID.ToString(CultureInfo.InvariantCulture) }, { "type", "omics.dms.datapackage_id" } });
             }
             else
@@ -530,17 +543,11 @@ namespace Pacifica.Core
 
             if (uploadMetadata.DatasetID > 0)
             {
-                if (string.IsNullOrWhiteSpace(uploadMetadata.EUSInstrumentID))
-                {
-                    // This instrument does not have an EUS_Instrument_ID
-                    // Use 34127, which is VOrbiETD04
-                    eusInfo.Add("instrumentId", "34127");
-                }
-                else
-                {
-                    eusInfo.Add("instrumentId", uploadMetadata.EUSInstrumentID);
-                }
-
+                // Lookup the EUS_Instrument_ID
+                // If empty, use 34127, which is VOrbiETD04
+                var eusInstrumentID = GetEUSInstrumentID(uploadMetadata.EUSInstrumentID, UNKNOWN_INSTRUMENT_EUS_INSTRUMENT_ID);
+                
+                eusInfo.Add("instrumentId", eusInstrumentID);
                 eusInfo.Add("instrumentName", uploadMetadata.DMSInstrumentName);
 
                 if (string.IsNullOrWhiteSpace(uploadMetadata.EUSProposalID))
@@ -584,6 +591,17 @@ namespace Pacifica.Core
             metadataObject.Add("version", "1.2.0");
 
             return metadataObject;
+        }
+        
+        /// <summary>
+        /// Return the EUS instrument ID, falling back to instrumentIdIfUnknown if eusInstrumentId is empty
+        /// </summary>
+        /// <param name="eusInstrumentId"></param>
+        /// <param name="instrumentIdIfUnknown"></param>
+        /// <returns></returns>
+        private static string GetEUSInstrumentID(string eusInstrumentId, string instrumentIdIfUnknown)
+        {
+            return string.IsNullOrWhiteSpace(eusInstrumentId) ? instrumentIdIfUnknown : eusInstrumentId;
         }
 
         #endregion
