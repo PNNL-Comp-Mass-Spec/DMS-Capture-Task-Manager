@@ -114,8 +114,8 @@ namespace CaptureTaskManager
                     if (myLogger.IsDebugEnabled) myLogger.Debug(message);
                     break;
                 case LogLevels.ERROR:
-					clsStatusData.AddErrorMessage(DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss") + "; " + message
-							+ "; " + logLevel.ToString());
+					clsStatusData.AddErrorMessage(
+                        DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss") + "; " + message + "; " + logLevel.ToString());
                     if (myLogger.IsErrorEnabled) myLogger.Error(message);
                     break;
                 case LogLevels.FATAL:

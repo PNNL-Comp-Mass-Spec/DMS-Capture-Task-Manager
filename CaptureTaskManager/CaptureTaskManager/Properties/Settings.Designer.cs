@@ -58,5 +58,14 @@ namespace CaptureTaskManager.Properties {
                 return ((bool)(this["UsingDefaults"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI")]
+        public string DefaultDMSConnString {
+            get {
+                return ((string)(this["DefaultDMSConnString"]));
+            }
+        }
     }
 }

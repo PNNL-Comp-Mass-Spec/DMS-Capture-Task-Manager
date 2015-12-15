@@ -24,13 +24,26 @@ namespace CaptureTaskManager
 		//	Loads initial settings from local config file, then checks to see if remainder of settings should be
 		//		loaded or manager set to inactive. If manager active, retrieves remainder of settings from manager
 		//		parameters database.
-		//**********************************************************************************************************
+        //**********************************************************************************************************
 
-		#region "Class variables"
-		public const string DEACTIVATED_LOCALLY = "Manager deactivated locally";
-		Dictionary<string, string> m_ParamDictionary;
-		bool m_MCParamsLoaded;
-		string m_ErrMsg = "";
+        #region "Constants"
+
+        public const string DEACTIVATED_LOCALLY = "Manager deactivated locally";
+
+        public const string MGR_PARAM_MGR_CFG_DB_CONN_STRING = "MgrCnfgDbConnectStr";
+        public const string MGR_PARAM_MGR_ACTIVE_LOCAL = "MgrActive_Local";
+        public const string MGR_PARAM_MGR_NAME = "MgrName";
+        public const string MGR_PARAM_USING_DEFAULTS = "UsingDefaults";
+        public const string MGR_PARAM_DEFAULT_DMS_CONN_STRING = "DefaultDMSConnString";
+
+        #endregion
+
+        #region "Class variables"
+
+        private Dictionary<string, string> m_ParamDictionary;
+		private bool m_MCParamsLoaded;
+		private string m_ErrMsg = "";
+
 		#endregion
 
 		#region "Properties"
@@ -84,7 +97,7 @@ namespace CaptureTaskManager
 			}
 
 			//Determine if manager is deactivated locally
-			if (!bool.Parse(GetParam("MgrActive_Local", "false")))
+            if (!GetBooleanParam(MGR_PARAM_MGR_ACTIVE_LOCAL))
 			{
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.WARN, DEACTIVATED_LOCALLY);
 				m_ErrMsg = DEACTIVATED_LOCALLY;
@@ -108,31 +121,37 @@ namespace CaptureTaskManager
 		private Dictionary<string, string> LoadMgrSettingsFromFile()
 		{
 			// Load initial settings into string dictionary for return
-			var RetDict = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+			var mgrSettingsFromFile = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+		    
+			// Manager config DB connection string
+			var mgrCfgDBConnString = Properties.Settings.Default.MgrCnfgDbConnectStr;
+            mgrSettingsFromFile.Add(MGR_PARAM_MGR_CFG_DB_CONN_STRING, mgrCfgDBConnString);
 
-		    //	 My.Settings.Reload()
-			//Manager config db connection string
-			var TempStr = Properties.Settings.Default.MgrCnfgDbConnectStr;
-			RetDict.Add("MgrCnfgDbConnectStr", TempStr);
+			// Manager active flag
+			var mgrActiveLocal = Properties.Settings.Default.MgrActive_Local.ToString();
+            mgrSettingsFromFile.Add(MGR_PARAM_MGR_ACTIVE_LOCAL, mgrActiveLocal);
 
-			//Manager active flag
-			TempStr = Properties.Settings.Default.MgrActive_Local.ToString();
-			RetDict.Add("MgrActive_Local", TempStr);
-
-			//Manager name
+			// Manager name
 			// If the MgrName setting in the CaptureTaskManager.exe.config file contains the text $ComputerName$
-			// then that text is replaced with this computer's domain name
+			// that text is replaced with this computer's domain name
 			// This is a case-sensitive comparison
 			//
-			TempStr = Properties.Settings.Default.MgrName;
-			TempStr = TempStr.Replace("$ComputerName$", Environment.MachineName);
-			RetDict.Add("MgrName", TempStr);
+			var mgrName = Properties.Settings.Default.MgrName;
+            if (mgrName.Contains("$ComputerName$"))
+                mgrSettingsFromFile.Add(MGR_PARAM_MGR_NAME, mgrName.Replace("$ComputerName$", Environment.MachineName));
+            else
+                mgrSettingsFromFile.Add(MGR_PARAM_MGR_NAME, mgrName);
 
-			//Default settings in use flag
-			TempStr = Properties.Settings.Default.UsingDefaults.ToString();
-			RetDict.Add("UsingDefaults", TempStr);
+			// Default settings in use flag
+			var usingDefaults = Properties.Settings.Default.UsingDefaults.ToString();
+            mgrSettingsFromFile.Add(MGR_PARAM_USING_DEFAULTS, usingDefaults);
 
-			return RetDict;
+            // Default connection string for logging errors to the databsae
+            // Will get updated later when manager settings are loaded from the manager control database
+		    var defaultDMSConnectionString = Properties.Settings.Default.DefaultDMSConnString;
+            mgrSettingsFromFile.Add(MGR_PARAM_DEFAULT_DMS_CONN_STRING, defaultDMSConnectionString);
+
+            return mgrSettingsFromFile;
 		}
 
 		/// <summary>
@@ -144,7 +163,7 @@ namespace CaptureTaskManager
 
 		    try
 			{
-				var ConnectionString = GetParam("MgrCnfgDbConnectStr");
+                var ConnectionString = GetParam(MGR_PARAM_MGR_CFG_DB_CONN_STRING);
 
 				var MyConnection = new SqlConnection(ConnectionString);
 				MyConnection.Open();
@@ -160,7 +179,7 @@ namespace CaptureTaskManager
 
 					MyCmd.Parameters.Add(new SqlParameter("@managerName", SqlDbType.VarChar, 128));
 					MyCmd.Parameters["@managerName"].Direction = ParameterDirection.Input;
-					MyCmd.Parameters["@managerName"].Value = GetParam("MgrName");
+                    MyCmd.Parameters["@managerName"].Value = GetParam(MGR_PARAM_MGR_NAME);
 
 					MyCmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512));
 					MyCmd.Parameters["@message"].Direction = ParameterDirection.Output;
@@ -190,7 +209,7 @@ namespace CaptureTaskManager
 
 			// Verify intact config file was found
 			string strValue;
-			if (!InpDict.TryGetValue("UsingDefaults", out strValue))
+            if (!InpDict.TryGetValue(MGR_PARAM_USING_DEFAULTS, out strValue))
 			{
 				m_ErrMsg = "clsMgrSettings.CheckInitialSettings(); 'UsingDefaults' entry not found in Config file";
 				Console.WriteLine(m_ErrMsg);
@@ -264,7 +283,7 @@ namespace CaptureTaskManager
 
 	        DataTable dtSettings;
 
-	        var managerName = GetParam("MgrName", "");
+            var managerName = GetParam(MGR_PARAM_MGR_NAME, string.Empty);
 
 			if (string.IsNullOrEmpty(managerName))
 			{
@@ -315,12 +334,12 @@ namespace CaptureTaskManager
 		{
 
 			short retryCount = 3;
-			var DBConnectionString = GetParam("MgrCnfgDbConnectStr", "");
+            var DBConnectionString = GetParam(MGR_PARAM_MGR_CFG_DB_CONN_STRING, "");
 			dtSettings = null;
 
 			if (string.IsNullOrEmpty(DBConnectionString))
 			{
-				m_ErrMsg = "MgrCnfgDbConnectStr parameter not found in m_ParamDictionary; it should be defined in the CaptureTaskManager.exe.config file";
+				m_ErrMsg = MGR_PARAM_MGR_CFG_DB_CONN_STRING + " parameter not found in m_ParamDictionary; it should be defined in the CaptureTaskManager.exe.config file";
 				WriteErrorMsg(m_ErrMsg);
 				return false;
 			}

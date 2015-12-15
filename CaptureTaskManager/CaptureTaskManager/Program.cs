@@ -17,7 +17,7 @@ namespace CaptureTaskManager
 		// Application startup program
 		//**********************************************************************************************************
 
-		private const string PROGRAM_DATE = "July 27, 2015";
+		private const string PROGRAM_DATE = "December 14, 2015";
 
 		private static bool mCodeTestMode;
 		private static bool mCreateEventLog;
@@ -64,7 +64,7 @@ namespace CaptureTaskManager
 				}
 				catch (Exception ex)
 				{
-					Console.WriteLine("Exception calling clsCodeTest: " + ex.Message);
+					Console.WriteLine(@"Exception calling clsCodeTest: " + ex.Message);
 				}
                 return;
 
@@ -166,7 +166,7 @@ namespace CaptureTaskManager
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine("Error parsing the command line parameters: " + Environment.NewLine + ex.Message);
+				Console.WriteLine(@"Error parsing the command line parameters: " + Environment.NewLine + ex.Message);
 			}
 		}
 
@@ -205,7 +205,7 @@ namespace CaptureTaskManager
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine("Error displaying the program syntax: " + ex.Message);
+				Console.WriteLine(@"Error displaying the program syntax: " + ex.Message);
 			}
 
 		}        
