@@ -215,7 +215,7 @@ namespace CaptureTaskManager
 
 					myCmd.Parameters.Add(new SqlParameter("@processorName", SqlDbType.VarChar, 128));
 					myCmd.Parameters["@processorName"].Direction = ParameterDirection.Input;
-					myCmd.Parameters["@processorName"].Value = m_MgrParams.GetParam("MgrName");
+                    myCmd.Parameters["@processorName"].Value = m_MgrParams.GetParam(clsMgrSettings.MGR_PARAM_MGR_NAME);
 
 					myCmd.Parameters.Add(new SqlParameter("@jobNumber", SqlDbType.Int));
 					myCmd.Parameters["@jobNumber"].Direction = ParameterDirection.Output;

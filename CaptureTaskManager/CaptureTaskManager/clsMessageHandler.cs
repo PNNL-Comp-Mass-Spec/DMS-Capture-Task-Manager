@@ -243,7 +243,7 @@ namespace CaptureTaskManager
 			if (!m_IsDisposed)
 			{
 				var textMessage = m_StatusSession.CreateTextMessage(message);
-				textMessage.Properties.SetString("ProcessorName", m_MgrSettings.GetParam("MgrName"));
+                textMessage.Properties.SetString("ProcessorName", m_MgrSettings.GetParam(clsMgrSettings.MGR_PARAM_MGR_NAME));
 				try
 				{
 					m_StatusSender.Send(textMessage);

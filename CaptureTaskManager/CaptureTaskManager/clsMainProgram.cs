@@ -261,8 +261,7 @@ namespace CaptureTaskManager
         /// </summary>
         /// <returns>TRUE for success; FALSE otherwise</returns>
         public bool InitMgr()
-		{
-
+        {
             // Create a database logger connected to DMS5
             // Once the initial parameters have been successfully read, 
             // we remove this logger than make a new one using the connection string read from the Manager Control DB
@@ -270,124 +269,128 @@ namespace CaptureTaskManager
 
             clsLogTools.CreateDbLogger(defaultDmsConnectionString, "CaptureTaskMan: " + System.Net.Dns.GetHostName(), true);
 
-			// Get the manager settings
-			// If you get an exception here while debugging in Visual Studio, be sure 
-			//  that "UsingDefaults" is set to False in CaptureTaskManager.exe.config               
-			try
-			{
+            // Get the manager settings
+            // If you get an exception here while debugging in Visual Studio, be sure 
+            //  that "UsingDefaults" is set to False in CaptureTaskManager.exe.config               
+            try
+            {
                 if (m_TraceMode) clsUtilities.VerifyFolder("clsMainProgram.InitMgr, A");
 
-				m_MgrSettings = new clsMgrSettings();
-			}
-			catch (Exception ex)
-			{
-				if (string.Equals(ex.Message, clsMgrSettings.DEACTIVATED_LOCALLY))
-				{
-					m_ManagerDeactivatedLocally = true;
-				}
-				else
-				{
-					// Failures are logged by clsMgrSettings to application event logs;
-					//  this includes MgrActive_Local = False
-					// 
-					// If the DMSCapTaskMgr application log does not exist yet, the Log4Net SysLogger will create it (see file Logging.config)
-					// However, in order to do that, the program needs to be running from an elevated (administrative level) command prompt
-					// Thus, it is advisable to run this program once from an elevated command prompt while MgrActive_Local is set to false
+                m_MgrSettings = new clsMgrSettings();
+            }
+            catch (Exception ex)
+            {
+                if (string.Equals(ex.Message, clsMgrSettings.DEACTIVATED_LOCALLY))
+                {
+                    m_ManagerDeactivatedLocally = true;
+                }
+                else
+                {
+                    // Failures are logged by clsMgrSettings to application event logs;
+                    //  this includes MgrActive_Local = False
+                    // 
+                    // If the DMSCapTaskMgr application log does not exist yet, the Log4Net SysLogger will create it (see file Logging.config)
+                    // However, in order to do that, the program needs to be running from an elevated (administrative level) command prompt
+                    // Thus, it is advisable to run this program once from an elevated command prompt while MgrActive_Local is set to false
 
-					Console.WriteLine();
-					Console.WriteLine(@"===============================================================");
-					Console.WriteLine(@"Exception instantiating clsMgrSettings: " + ex.Message);
-					Console.WriteLine(@"===============================================================");
-					Console.WriteLine();
-					Console.WriteLine(@"You may need to start this application once from an elevated (administrative level) command prompt using the /EL switch so that it can create the " + CUSTOM_LOG_NAME + @" application log");
-					Console.WriteLine();
-					System.Threading.Thread.Sleep(500);
-				}
+                    Console.WriteLine();
+                    Console.WriteLine(@"===============================================================");
+                    Console.WriteLine(@"Exception instantiating clsMgrSettings: " + ex.Message);
+                    Console.WriteLine(@"===============================================================");
+                    Console.WriteLine();
+                    Console.WriteLine(
+                        @"You may need to start this application once from an elevated (administrative level) command prompt using the /EL switch so that it can create the " +
+                        CUSTOM_LOG_NAME + @" application log");
+                    Console.WriteLine();
+                    System.Threading.Thread.Sleep(500);
+                }
 
-				return false;
-			}
+                return false;
+            }
 
-			// Update the cached values for this manager and job
+            // Update the cached values for this manager and job
             m_MgrName = m_MgrSettings.GetParam(clsMgrSettings.MGR_PARAM_MGR_NAME);
-			m_StepTool = "Unknown";
-			m_Job = "Unknown";
-			m_Dataset = "Unknown";
-		
-			// Confirm that the application event log exists
-			{
-				if (!EventLog.SourceExists(CUSTOM_LOG_SOURCE_NAME))
-				{
-					var SourceData = new EventSourceCreationData(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME);
-					EventLog.CreateEventSource(SourceData);
-				}
-			}
+            if (m_TraceMode) ShowTraceMessage("Manager name is " + m_MgrName);
 
-			// Set up the loggers
-			var logFileName = m_MgrSettings.GetParam("logfilename");
-			m_DebugLevel = clsConversion.CIntSafe(m_MgrSettings.GetParam("debuglevel"), 4);
-			clsLogTools.CreateFileLogger(logFileName, m_DebugLevel);
+            m_StepTool = "Unknown";
+            m_Job = "Unknown";
+            m_Dataset = "Unknown";
 
-			if (m_MgrSettings.GetBooleanParam("ftplogging")) 
+            // Confirm that the application event log exists
+            if (!EventLog.SourceExists(CUSTOM_LOG_SOURCE_NAME))
+            {
+                var sourceData = new EventSourceCreationData(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME);
+                EventLog.CreateEventSource(sourceData);
+            }
+
+            // Setup the loggers
+            var logFileName = m_MgrSettings.GetParam("logfilename");
+            m_DebugLevel = clsConversion.CIntSafe(m_MgrSettings.GetParam("debuglevel"), 4);
+            clsLogTools.CreateFileLogger(logFileName, m_DebugLevel);
+
+            if (m_MgrSettings.GetBooleanParam("ftplogging"))
                 clsLogTools.CreateFtpLogFileLogger("Dummy.txt");
 
-			var logCnStr = m_MgrSettings.GetParam("connectionstring");
+            var logCnStr = m_MgrSettings.GetParam("connectionstring");
 
             clsLogTools.RemoveDefaultDbLogger();
-		    clsLogTools.CreateDbLogger(logCnStr, "CaptureTaskMan: " + m_MgrName, false);
+            clsLogTools.CreateDbLogger(logCnStr, "CaptureTaskMan: " + m_MgrName, false);
 
-			// Make initial log entry
-			var msg = "=== Started Capture Task Manager V" + Application.ProductVersion + " ===== ";
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+            // Make initial log entry
+            if (m_TraceMode) ShowTraceMessage("Initializing log file " + logFileName);
 
-			// Setup the message queue
-			m_MsgQueueInitSuccess = false;
-			m_MsgHandler = new clsMessageHandler();
-			m_MsgHandler.BrokerUri = m_MsgHandler.BrokerUri = m_MgrSettings.GetParam("MessageQueueURI");
-			m_MsgHandler.CommandQueueName = m_MgrSettings.GetParam("ControlQueueName");
-			m_MsgHandler.BroadcastTopicName = m_MgrSettings.GetParam("BroadcastQueueTopic");
-			m_MsgHandler.StatusTopicName = m_MgrSettings.GetParam("MessageQueueTopicMgrStatus");
-			m_MsgHandler.MgrSettings = m_MgrSettings;
+            var msg = "=== Started Capture Task Manager V" + Application.ProductVersion + " ===== ";
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 
-			// Initialize the message queue
-			// Start this in a separate thread so that we can abort the initialization if necessary
-			InitializeMessageQueue();
+            // Setup the message queue
+            m_MsgQueueInitSuccess = false;
+            m_MsgHandler = new clsMessageHandler();
+            m_MsgHandler.BrokerUri = m_MsgHandler.BrokerUri = m_MgrSettings.GetParam("MessageQueueURI");
+            m_MsgHandler.CommandQueueName = m_MgrSettings.GetParam("ControlQueueName");
+            m_MsgHandler.BroadcastTopicName = m_MgrSettings.GetParam("BroadcastQueueTopic");
+            m_MsgHandler.StatusTopicName = m_MgrSettings.GetParam("MessageQueueTopicMgrStatus");
+            m_MsgHandler.MgrSettings = m_MgrSettings;
 
-			if (m_MsgQueueInitSuccess)
-			{
-				//Connect message handler events
-				m_MsgHandler.CommandReceived += OnCommandReceived;
-				m_MsgHandler.BroadcastReceived += OnBroadcastReceived;
-			}
+            // Initialize the message queue
+            // Start this in a separate thread so that we can abort the initialization if necessary
+            InitializeMessageQueue();
 
-		    var configFileName = m_MgrSettings.GetParam("configfilename");
-		    if (string.IsNullOrEmpty(configFileName))
-		    {
+            if (m_MsgQueueInitSuccess)
+            {
+                //Connect message handler events
+                m_MsgHandler.CommandReceived += OnCommandReceived;
+                m_MsgHandler.BroadcastReceived += OnBroadcastReceived;
+            }
+
+            var configFileName = m_MgrSettings.GetParam("configfilename");
+            if (string.IsNullOrEmpty(configFileName))
+            {
                 // Manager parameter error; log an error and exit
-		        var errMsg = "Manager parameter 'configfilename' is undefined; this likely indicates a problem retrieving manager parameters.  Shutting down the manager";
-		        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg);
+                var errMsg = "Manager parameter 'configfilename' is undefined; this likely indicates a problem retrieving manager parameters.  Shutting down the manager";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg);
 
-		        if (m_TraceMode) ShowTraceMessage(errMsg);
-		        return false;
-		    }
+                if (m_TraceMode) ShowTraceMessage(errMsg);
+                return false;
+            }
 
-		    // Setup a file watcher for the config file
-			var fInfo = new FileInfo(Application.ExecutablePath);
-		    m_FileWatcher = new FileSystemWatcher
-		    {
-		        Path = fInfo.DirectoryName,
-		        IncludeSubdirectories = false,
-		        Filter = configFileName, 
-		        NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size,
-		        EnableRaisingEvents = true
-		    };
+            // Setup a file watcher for the config file
+            var fInfo = new FileInfo(Application.ExecutablePath);
+            m_FileWatcher = new FileSystemWatcher
+            {
+                Path = fInfo.DirectoryName,
+                IncludeSubdirectories = false,
+                Filter = configFileName,
+                NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size,
+                EnableRaisingEvents = true
+            };
 
-		    // Subscribe to the file watcher Changed event
-			m_FileWatcher.Changed += FileWatcherChanged;
+            // Subscribe to the file watcher Changed event
+            m_FileWatcher.Changed += FileWatcherChanged;
 
-			// Set up the tool for getting tasks
-			m_Task = new clsCaptureTask(m_MgrSettings);
+            // Set up the tool for getting tasks
+            m_Task = new clsCaptureTask(m_MgrSettings);
 
-			// Set up the status file class
+            // Set up the status file class
             if (fInfo.DirectoryName == null)
             {
                 var errMsg = "Error determining the parent path for the executable, " + Application.ExecutablePath;
@@ -396,7 +399,7 @@ namespace CaptureTaskManager
                 if (m_TraceMode) ShowTraceMessage(errMsg);
                 return false;
             }
-            
+
             var statusFileNameLoc = Path.Combine(fInfo.DirectoryName, "Status.xml");
             m_StatusFile = new clsStatusFile(statusFileNameLoc)
             {
@@ -405,54 +408,54 @@ namespace CaptureTaskManager
                 MgrStatus = EnumMgrStatus.Running
             };
             m_StatusFile.MonitorUpdateRequired += OnStatusMonitorUpdateReceived;
-		    m_StatusFile.WriteStatusFile();
+            m_StatusFile.WriteStatusFile();
 
-			// Set up the status reporting time, with an interval of 1 minute
-		    m_StatusTimer = new System.Timers.Timer
-		    {
-		        Enabled = false,
-		        Interval = 60 * 1000
-		    };
-		    m_StatusTimer.Elapsed += m_StatusTimer_Elapsed;
+            // Set up the status reporting time, with an interval of 1 minute
+            m_StatusTimer = new System.Timers.Timer
+            {
+                Enabled = false,
+                Interval = 60 * 1000
+            };
+            m_StatusTimer.Elapsed += m_StatusTimer_Elapsed;
 
-			// Get the most recent job history
-			var historyFile = Path.Combine(m_MgrSettings.GetParam("ApplicationPath"), "History.txt");
-			if (File.Exists(historyFile))
-			{
-				try
-				{
-					// Create an instance of StreamReader to read from a file.
-					// The using statement also closes the StreamReader.
-					using (var sr = new StreamReader(historyFile))
-					{
-						String line;
-						// Read and display lines from the file until the end of 
-						// the file is reached.
-						while ((line = sr.ReadLine()) != null)
-						{
-							if (line.Contains("RecentJob: "))
-							{
-								var tmpStr = line.Replace("RecentJob: ", "");
-								m_StatusFile.MostRecentJobInfo = tmpStr;
-								break;
-							}
-						}
-					}
-				}
-				catch (Exception ex)
-				{
-				    var errMsg = "Exception readining status history file";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg, ex);
+            // Get the most recent job history
+            var historyFile = Path.Combine(m_MgrSettings.GetParam("ApplicationPath"), "History.txt");
+            if (File.Exists(historyFile))
+            {
+                try
+                {
+                    // Create an instance of StreamReader to read from a file.
+                    // The using statement also closes the StreamReader.
+                    using (var sr = new StreamReader(historyFile))
+                    {
+                        String line;
+                        // Read and display lines from the file until the end of 
+                        // the file is reached.
+                        while ((line = sr.ReadLine()) != null)
+                        {
+                            if (line.Contains("RecentJob: "))
+                            {
+                                var tmpStr = line.Replace("RecentJob: ", "");
+                                m_StatusFile.MostRecentJobInfo = tmpStr;
+                                break;
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    var errMsg = "Exception readining status history file";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg, ex);
 
                     if (m_TraceMode) ShowTraceMessage(errMsg + ": " + ex.Message);
-				}
-			}
+                }
+            }
 
             if (m_TraceMode) clsUtilities.VerifyFolder("clsMainProgram.InitMgr, B");
 
-			// Everything worked!
-			return true;
-		}
+            // Everything worked!
+            return true;
+        }
 
         private bool InitializeMessageQueue()
         {
