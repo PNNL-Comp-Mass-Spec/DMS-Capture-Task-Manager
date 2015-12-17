@@ -13,9 +13,9 @@ using System.Globalization;
 using log4net;
 using System.Data;
 
-// Configure log4net using the .log4net file
 using log4net.Appender;
 
+// This assembly attribute tells Log4Net where to find the config file
 [assembly: log4net.Config.XmlConfigurator(ConfigFile = "Logging.config", Watch = true)]
 
 namespace CaptureTaskManager
@@ -63,6 +63,11 @@ namespace CaptureTaskManager
         #endregion
 
         #region "Properties"
+        /// <summary>
+        /// Tells calling program file debug status
+        /// </summary>
+        /// <returns>TRUE if debug level enabled for file logger; FALSE otherwise</returns>
+        /// <remarks></remarks>
         public static bool FileLogDebugEnabled
         {
             get { return m_FileLogger.IsDebugEnabled; }
@@ -70,6 +75,7 @@ namespace CaptureTaskManager
         #endregion
 
         #region "Methods"
+
         /// <summary>
         /// Writes a message to the logging system
         /// </summary>
@@ -78,58 +84,7 @@ namespace CaptureTaskManager
         /// <param name="message">Message to be logged</param>
         public static void WriteLog(LoggerTypes loggerType, LogLevels logLevel, string message)
         {
-            ILog myLogger;
-
-            //Establish which logger will be used
-            switch (loggerType)
-            {
-                case LoggerTypes.LogDb:
-                    myLogger = m_DbLogger;
-                    break;
-                case LoggerTypes.LogFile:
-                    myLogger = m_FileLogger;
-                    // Check to determine if a new file should be started
-                    var TestFileDate = DateTime.Now.ToString("MM-dd-yyyy");
-                    if (TestFileDate != m_FileDate)
-                    {
-                        m_FileDate = TestFileDate;
-                        ChangeLogFileName();
-                    }
-                    break;
-                case LoggerTypes.LogSystem:
-                    myLogger = m_SysLogger;
-                    break;
-                default:
-                    throw new Exception("Invalid logger type specified");
-            }
-
-			//Update the status file data
-			clsStatusData.MostRecentLogMessage = DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss") + "; "
-					+ message + "; " + logLevel.ToString();
-				
-            //Send the log message
-            switch (logLevel)
-            {
-                case LogLevels.DEBUG:
-                    if (myLogger.IsDebugEnabled) myLogger.Debug(message);
-                    break;
-                case LogLevels.ERROR:
-					clsStatusData.AddErrorMessage(
-                        DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss") + "; " + message + "; " + logLevel.ToString());
-                    if (myLogger.IsErrorEnabled) myLogger.Error(message);
-                    break;
-                case LogLevels.FATAL:
-                    if (myLogger.IsFatalEnabled) myLogger.Fatal(message);
-                    break;
-                case LogLevels.INFO:
-                    if (myLogger.IsInfoEnabled) myLogger.Info(message);
-                    break;
-                case LogLevels.WARN:
-                    if (myLogger.IsWarnEnabled) myLogger.Warn(message);
-                    break;
-                default:
-                    throw new Exception("Invalid log level specified");
-            }
+            WriteLogWork(loggerType, logLevel, message, null);
         }
 
         /// <summary>
@@ -141,9 +96,21 @@ namespace CaptureTaskManager
         /// <param name="ex">Exception to be logged</param>
         public static void WriteLog(LoggerTypes loggerType, LogLevels logLevel, string message, Exception ex)
         {
+            WriteLogWork(loggerType, logLevel, message, ex);
+        }
+
+        /// <summary>
+        /// Write a message and possibly an exception to the logging system
+        /// </summary>
+        /// <param name="loggerType">Type of logger to use</param>
+        /// <param name="logLevel">Level of log reporting</param>
+        /// <param name="message">Message to be logged</param>
+        /// <param name="ex">Exception to be logged; null if no exception</param>
+        private static void WriteLogWork(LoggerTypes loggerType, LogLevels logLevel, string message, Exception ex)
+        {
             ILog myLogger;
 
-            //Establish which logger will be used
+            // Establish which logger will be used
             switch (loggerType)
             {
                 case LoggerTypes.LogDb:
@@ -152,10 +119,10 @@ namespace CaptureTaskManager
                 case LoggerTypes.LogFile:
                     myLogger = m_FileLogger;
                     // Check to determine if a new file should be started
-                    var TestFileDate = DateTime.Now.ToString("MM-dd-yyyy");
-                    if (TestFileDate != m_FileDate)
+                    var testFileDate = DateTime.Now.ToString("MM-dd-yyyy");
+                    if (!string.Equals(testFileDate, m_FileDate))
                     {
-                        m_FileDate = TestFileDate;
+                        m_FileDate = testFileDate;
                         ChangeLogFileName();
                     }
                     break;
@@ -167,28 +134,55 @@ namespace CaptureTaskManager
             }
 
 			//Update the status file data
-			clsStatusData.MostRecentLogMessage = DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss") + "; "
-					+ message + "; " + logLevel.ToString();
+			clsStatusData.MostRecentLogMessage = DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss") + "; "+ message + "; " + logLevel;
 				
             //Send the log message
             switch (logLevel)
             {
                 case LogLevels.DEBUG:
-                    if (myLogger.IsDebugEnabled) myLogger.Debug(message, ex);
+                    if (myLogger.IsDebugEnabled) {
+                        if (ex == null) 
+                            myLogger.Debug(message);
+                        else 
+                            myLogger.Debug(message, ex);
+                    }                    
                     break;
                 case LogLevels.ERROR:
-					clsStatusData.AddErrorMessage(DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss") + "; " + message
-							+ "; " + logLevel.ToString());
-                    if (myLogger.IsErrorEnabled) myLogger.Error(message, ex);
+					clsStatusData.AddErrorMessage(DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss") + "; " + message + "; " + logLevel);
+                    if (myLogger.IsErrorEnabled)
+                    {
+                        if (ex == null)
+                            myLogger.Error(message);
+                        else
+                            myLogger.Error(message, ex);
+                    }                    
                     break;
                 case LogLevels.FATAL:
-                    if (myLogger.IsFatalEnabled) myLogger.Fatal(message, ex);
+                    if (myLogger.IsFatalEnabled)
+                    {
+                        if (ex == null)
+                            myLogger.Fatal(message);
+                        else
+                            myLogger.Fatal(message, ex);
+                    }                    
                     break;
                 case LogLevels.INFO:
-                    if (myLogger.IsInfoEnabled) myLogger.Info(message, ex);
+                    if (myLogger.IsInfoEnabled)
+                    {
+                        if (ex == null)
+                            myLogger.Info(message);
+                        else
+                            myLogger.Info(message, ex);
+                    }                    
                     break;
                 case LogLevels.WARN:
-                    if (myLogger.IsWarnEnabled) myLogger.Warn(message, ex);
+                    if (myLogger.IsWarnEnabled)
+                    {
+                        if (ex == null)
+                            myLogger.Warn(message);
+                        else
+                            myLogger.Warn(message, ex);
+                    }                    
                     break;
                 default:
                     throw new Exception("Invalid log level specified");
@@ -480,8 +474,7 @@ namespace CaptureTaskManager
             var returnAppender = new AdoNetAppender
             {
                 BufferSize = 1,
-                ConnectionType =
-                    "System.Data.SqlClient.SqlConnection, System.Data, Version=1.0.3300.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
+                ConnectionType = "System.Data.SqlClient.SqlConnection, System.Data, Version=1.0.3300.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
                 ConnectionString = connectionString,
                 CommandType = CommandType.StoredProcedure,
                 CommandText = "PostLogEntry",
