@@ -125,6 +125,7 @@ namespace Pacifica.DMS_Metadata
 
             // Attach the events			
             _mdContainer.ProgressEvent += _mdContainer_ProgressEvent;
+            _mdContainer.DebugEvent += myEMSLUpload_DebugEvent;
             _mdContainer.ErrorEvent += myEMSLUpload_ErrorEvent;
 
             _mdContainer.UseTestInstance = this.UseTestInstance;
@@ -179,12 +180,22 @@ namespace Pacifica.DMS_Metadata
                 MetadataDefinedEvent(this, e);
         }
 
+        /// <summary>
+        /// Handler for both _mdContainer and myEMSLUpload debug events
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         void myEMSLUpload_DebugEvent(object sender, MessageEventArgs e)
         {
             if (DebugEvent != null)
                 DebugEvent(this, e);
         }
 
+        /// <summary>
+        /// Handler for both _mdContainer and myEMSLUpload error events
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         void myEMSLUpload_ErrorEvent(object sender, MessageEventArgs e)
         {
             if (ErrorEvent != null)

@@ -441,7 +441,7 @@ namespace Pacifica.Core
 
 		public event MessageEventHandler ErrorEvent;
 
-		public void OnErrorMessage(MessageEventArgs e)
+        protected void OnErrorMessage(MessageEventArgs e)
 		{
 			if (ErrorEvent != null)
 				ErrorEvent(this, e);

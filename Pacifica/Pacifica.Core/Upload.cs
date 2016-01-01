@@ -119,8 +119,7 @@ namespace Pacifica.Core
         public event UploadCompletedEventHandler UploadCompleted;
         public event StatusUpdateEventHandler StatusUpdate;
 
-
-        public void RaiseDebugEvent(string callingFunction, string currentTask)
+        private void RaiseDebugEvent(string callingFunction, string currentTask)
         {
             if (DebugEvent != null)
             {
@@ -128,7 +127,7 @@ namespace Pacifica.Core
             }
         }
 
-        public void RaiseErrorEvent(string callingFunction, string errorMessage)
+        private void RaiseErrorEvent(string callingFunction, string errorMessage)
         {
             if (ErrorEvent != null)
             {

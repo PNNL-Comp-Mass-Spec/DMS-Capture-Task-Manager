@@ -292,6 +292,13 @@ namespace Pacifica.DMS_Metadata
 
             TotalFileSizeToUpload = 0;
 
+            string currentTask = "Looking for existing files in MyEMSL for DatasetID " + uploadMetadata.DatasetID;
+
+            if (!string.IsNullOrWhiteSpace(uploadMetadata.SubFolder))
+                currentTask += ", subfolder " + uploadMetadata.SubFolder;
+
+            RaiseDebugEvent("CompareDatasetContentsElasticSearch", currentTask);
+
             // Find all files in MyEMSL for this dataset
             var reader = new Reader
             {
@@ -558,6 +565,7 @@ namespace Pacifica.DMS_Metadata
         #region "Event Delegates and Classes"
 
         public event ProgressEventHandler ProgressEvent;
+        public event Pacifica.Core.MessageEventHandler DebugEvent;
         public event Pacifica.Core.MessageEventHandler ErrorEvent;
 
         public delegate void ProgressEventHandler(object sender, ProgressEventArgs e);
@@ -566,17 +574,25 @@ namespace Pacifica.DMS_Metadata
 
         #region "Event Functions"
 
-        public void OnProgressUpdate(ProgressEventArgs e)
+        private void OnProgressUpdate(ProgressEventArgs e)
         {
             if (ProgressEvent != null)
                 ProgressEvent(this, e);
         }
 
-        public void OnError(string callingFunction, string errorMessage)
+        private void OnError(string callingFunction, string errorMessage)
         {
             if (ErrorEvent != null)
             {
                 ErrorEvent(this, new Pacifica.Core.MessageEventArgs(callingFunction, errorMessage));
+            }
+        }
+
+        private void RaiseDebugEvent(string callingFunction, string currentTask)
+        {
+            if (DebugEvent != null)
+            {
+                DebugEvent(this, new Pacifica.Core.MessageEventArgs(callingFunction, currentTask));
             }
         }
 
