@@ -207,6 +207,8 @@ namespace DatasetArchivePlugin
             {
                 iAttempts += 1;
 
+                Console.WriteLine("Uploading files for " + m_DatasetName + " to MyEMSL; attempt=" + iAttempts);
+
                 bool allowRetry;
                 bSuccess = UploadToMyEMSL(recurse, debugMode, useTestInstance, out allowRetry);
 
@@ -220,6 +222,8 @@ namespace DatasetArchivePlugin
                 {
                     // Wait 5 seconds, then retry
                     Thread.Sleep(5000);
+
+                    mLastStatusUpdateTime = DateTime.UtcNow;
                 }
             }
 
@@ -456,7 +460,7 @@ namespace DatasetArchivePlugin
 
         void LogStatusMessageSkipDuplicate(string message)
         {
-            if (String.Equals(message, mMostRecentLogMessage) || DateTime.UtcNow.Subtract(mMostRecentLogTime).TotalSeconds >= 60)
+            if (!String.Equals(message, mMostRecentLogMessage) || DateTime.UtcNow.Subtract(mMostRecentLogTime).TotalSeconds >= 60)
             {
                 mMostRecentLogMessage = string.Copy(message);
                 mMostRecentLogTime = DateTime.UtcNow;
@@ -521,7 +525,7 @@ namespace DatasetArchivePlugin
             m_MyEmslUploadSuccess = true;
         }
 
-        public void OnMyEMSLUploadComplete(MyEMSLUploadEventArgs e)
+        protected void OnMyEMSLUploadComplete(MyEMSLUploadEventArgs e)
         {
             if (MyEMSLUploadComplete != null)
                 MyEMSLUploadComplete(this, e);
