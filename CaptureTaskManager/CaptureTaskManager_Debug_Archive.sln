@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+VisualStudioVersion = 12.0.40629.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CaptureTaskManager_Debug_Archive", "CaptureTaskManager\CaptureTaskManager_Debug_Archive.csproj", "{5188F87C-12F1-4629-BD78-8E1004FF0B6E}"
 EndProject
@@ -14,6 +14,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pacifica.DMS_Metadata", "..\Pacifica\Pacifica.DMS_Metadata\Pacifica.DMS_Metadata.csproj", "{EDACD83A-AA92-4481-BB69-A28C67A6C7F9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArchiveVerifyPlugin", "..\ArchiveVerifyPlugin\ArchiveVerifyPlugin.csproj", "{2016D3F6-9AF1-45D8-A0B2-49202D5376D5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArchiveStatusCheckPlugin", "..\ArchiveStatusCheckPlugin\ArchiveStatusCheckPlugin.csproj", "{D63AD810-5835-49D6-B14F-334E6EA2CB40}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -82,6 +84,16 @@ Global
 		{2016D3F6-9AF1-45D8-A0B2-49202D5376D5}.Release|x64.ActiveCfg = Release|x86
 		{2016D3F6-9AF1-45D8-A0B2-49202D5376D5}.Release|x86.ActiveCfg = Release|x86
 		{2016D3F6-9AF1-45D8-A0B2-49202D5376D5}.Release|x86.Build.0 = Release|x86
+		{D63AD810-5835-49D6-B14F-334E6EA2CB40}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D63AD810-5835-49D6-B14F-334E6EA2CB40}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D63AD810-5835-49D6-B14F-334E6EA2CB40}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D63AD810-5835-49D6-B14F-334E6EA2CB40}.Debug|x86.ActiveCfg = Debug|x86
+		{D63AD810-5835-49D6-B14F-334E6EA2CB40}.Debug|x86.Build.0 = Debug|x86
+		{D63AD810-5835-49D6-B14F-334E6EA2CB40}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D63AD810-5835-49D6-B14F-334E6EA2CB40}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D63AD810-5835-49D6-B14F-334E6EA2CB40}.Release|x64.ActiveCfg = Release|Any CPU
+		{D63AD810-5835-49D6-B14F-334E6EA2CB40}.Release|x86.ActiveCfg = Release|x86
+		{D63AD810-5835-49D6-B14F-334E6EA2CB40}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

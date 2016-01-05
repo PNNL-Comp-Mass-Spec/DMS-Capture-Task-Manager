@@ -29,14 +29,14 @@ namespace ArchiveVerifyPlugin
 		protected double mPercentComplete;
 		protected DateTime mLastProgressUpdateTime = DateTime.UtcNow;
 
-		protected int mTotalMismatchCount = 0;
+		protected int mTotalMismatchCount;
 
 		#endregion
 
 		#region "Constructors"
 		public clsPluginMain()
 		{
-
+            // Does nothing at present
 		}
 
 		#endregion
@@ -48,7 +48,7 @@ namespace ArchiveVerifyPlugin
 		/// <returns>Class with completionCode, completionMessage, evaluationCode, and evaluationMessage</returns>
 		public override clsToolReturnData RunTool()
 		{
-			string msg = "Starting ArchiveVerifyPlugin.clsPluginMain.RunTool()";
+			var msg = "Starting ArchiveVerifyPlugin.clsPluginMain.RunTool()";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 			// Perform base class operations, if any
@@ -64,7 +64,7 @@ namespace ArchiveVerifyPlugin
 
             // Set this to Success for now
             mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
-            bool success = false;
+            var success = false;
 
 			mTotalMismatchCount = 0;
 
@@ -129,10 +129,14 @@ namespace ArchiveVerifyPlugin
 		{
 
 			// Examine the upload status
-			// If not complete, then this manager will return completionCode CLOSEOUT_NOT_READY=2 
+			// If not complete, this manager will return completionCode CLOSEOUT_NOT_READY=2 
 			// which will tell the DMS_Capture DB to reset the task to state 2 and bump up the Next_Try value by 30 minutes
 
-            string statusURI = m_TaskParams.GetParam("MyEMSL_Status_URI", "");
+            var statusURI = m_TaskParams.GetParam("MyEMSL_Status_URI", string.Empty);
+
+            var eusInstrumentID = m_TaskParams.GetParam("EUS_InstrumentID", 0);
+            var eusProposalID = m_TaskParams.GetParam("EUS_ProposalID", string.Empty);
+            var eusUploaderID = m_TaskParams.GetParam("EUS_UploaderID", 0);
 
 			if (string.IsNullOrEmpty(statusURI))
 			{
@@ -144,13 +148,13 @@ namespace ArchiveVerifyPlugin
 			}
 
 			// Call the testauth service to obtain a cookie for this session
-			string authURL = Configuration.TestAuthUri;
+			var authURL = Configuration.TestAuthUri;
 			var auth = new Auth(new Uri(authURL));
 
 			CookieContainer cookieJar;
 			if (!auth.GetAuthCookies(out cookieJar))
 			{
-				string msg = "Auto-login to " + Configuration.TestAuthUri + " failed authentication";
+				var msg = "Auto-login to " + Configuration.TestAuthUri + " failed authentication";
 				mRetData.CloseoutMsg = "Failed to obtain MyEMSL session cookie";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 				return false;
@@ -163,11 +167,14 @@ namespace ArchiveVerifyPlugin
 			{
 
 			    string xmlServerResponse;
-                bool ingestSuccess = base.GetMyEMSLIngestStatus(m_Job, statusChecker, statusURI, cookieJar, mRetData, out xmlServerResponse);
+                var ingestSuccess = base.GetMyEMSLIngestStatus(
+                    m_Job, statusChecker, statusURI, 
+                    eusInstrumentID, eusProposalID, eusUploaderID,
+                    cookieJar, mRetData, out xmlServerResponse);
 
-                byte ingestStepsComplete = statusChecker.IngestStepCompletionCount(xmlServerResponse);
+                var ingestStepsComplete = statusChecker.IngestStepCompletionCount(xmlServerResponse);
 
-			    int statusNum = MyEMSLStatusCheck.GetStatusNumFromURI(statusURI);
+			    var statusNum = MyEMSLStatusCheck.GetStatusNumFromURI(statusURI);
 
                 UpdateIngestStepsCompletedOneTask(statusNum, ingestStepsComplete);
 
@@ -179,7 +186,7 @@ namespace ArchiveVerifyPlugin
 
                 string statusMessage;
 			    string errorMessage;
-                bool success = statusChecker.IngestStepCompleted(
+                var success = statusChecker.IngestStepCompleted(
                     xmlServerResponse,
                     MyEMSLStatusCheck.StatusStep.Available,
                     out statusMessage, 
@@ -217,11 +224,8 @@ namespace ArchiveVerifyPlugin
 			try
 			{
 
-				int matchCount;
-				int mismatchCount;
-
-				string transferFolderPath = m_TaskParams.GetParam("TransferFolderPath", "");
-				if (!ParameterDefined("TransferFolderPath", transferFolderPath))
+				var transferFolderPathBase = m_TaskParams.GetParam("TransferFolderPath", string.Empty);
+				if (!ParameterDefined("TransferFolderPath", transferFolderPathBase))
 					return false;
 
                 if (string.IsNullOrEmpty(m_Dataset))
@@ -231,9 +235,9 @@ namespace ArchiveVerifyPlugin
                     return false;
                 }
 
-                transferFolderPath = Path.Combine(transferFolderPath, m_Dataset);
+                var transferFolderPath = Path.Combine(transferFolderPathBase, m_Dataset);
 
-				string jobNumber = m_TaskParams.GetParam("Job", "");
+                var jobNumber = m_TaskParams.GetParam("Job", string.Empty);
 				if (!ParameterDefined("Job", jobNumber))
 					return false;
 
@@ -243,21 +247,24 @@ namespace ArchiveVerifyPlugin
 				{
 					metadataFilePath = fiMetadataFile.FullName;
 
-                    CompareToMetadataFile(lstArchivedFiles, fiMetadataFile, out matchCount, out mismatchCount);
+                    int matchCountToMetadata;
+                    int mismatchCountToMetadata;
 
-					if (matchCount > 0 && mismatchCount == 0)
+                    CompareToMetadataFile(lstArchivedFiles, fiMetadataFile, out matchCountToMetadata, out mismatchCountToMetadata);
+
+                    if (matchCountToMetadata > 0 && mismatchCountToMetadata == 0)
 					{
 						// Everything matches up
 						return true;
 					}
 
-					if (mismatchCount > 0)
+                    if (mismatchCountToMetadata > 0)
 					{
 						if (mTotalMismatchCount == 0)
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
-						mTotalMismatchCount += mismatchCount;
+                        mTotalMismatchCount += mismatchCountToMetadata;
 
-						string matchStats = "MatchCount=" + matchCount + ", MismatchCount=" + mismatchCount;
+                        var matchStats = "MatchCount=" + matchCountToMetadata + ", MismatchCount=" + mismatchCountToMetadata;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " ... sha1 mismatch between local files in metadata.txt file and MyEMSL; " + matchStats);
 						mRetData.CloseoutMsg = matchStats;
 						return false;
@@ -271,7 +278,7 @@ namespace ArchiveVerifyPlugin
 				Upload.udtUploadMetadata uploadMetadata;
 
 				var oDatasetFileMetadata = new DMSMetadataObject();
-				List<FileInfoObject> lstDatasetFilesLocal = oDatasetFileMetadata.FindDatasetFilesToArchive(m_TaskParams.TaskDictionary, m_MgrParams.TaskDictionary, out uploadMetadata);
+				var lstDatasetFilesLocal = oDatasetFileMetadata.FindDatasetFilesToArchive(m_TaskParams.TaskDictionary, m_MgrParams.TaskDictionary, out uploadMetadata);
 
 				if (lstDatasetFilesLocal.Count == 0)
 				{
@@ -290,25 +297,28 @@ namespace ArchiveVerifyPlugin
 
 				foreach (var datasetFile in lstDatasetFilesLocal)
 				{
-					string relativeFilePathWindows = datasetFile.RelativeDestinationFullPath.Replace("/", @"\");
+					var relativeFilePathWindows = datasetFile.RelativeDestinationFullPath.Replace("/", @"\");
 					dctFilePathHashMap.Add(relativeFilePathWindows, datasetFile.Sha1HashHex);
 				}
 
-                CompareArchiveFilesToList(lstArchivedFiles, out matchCount, out mismatchCount, dctFilePathHashMap);
+                int matchCountToDisk;
+                int mismatchCountToDisk;
 
-				if (matchCount > 0 && mismatchCount == 0)
+                CompareArchiveFilesToList(lstArchivedFiles, out matchCountToDisk, out mismatchCountToDisk, dctFilePathHashMap);
+
+                if (matchCountToDisk > 0 && mismatchCountToDisk == 0)
 				{
 					// Everything matches up
 					return true;
 				}
 
-				if (mismatchCount > 0)
+                if (mismatchCountToDisk > 0)
 				{
 					if (mTotalMismatchCount == 0)
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
-					mTotalMismatchCount += mismatchCount;
+                    mTotalMismatchCount += mismatchCountToDisk;
 
-					mRetData.CloseoutMsg = "Sha1 mismatch between local files on disk and MyEMSL; MatchCount=" + matchCount + ", MismatchCount=" + mismatchCount;
+                    mRetData.CloseoutMsg = "Sha1 mismatch between local files on disk and MyEMSL; MatchCount=" + matchCountToDisk + ", MismatchCount=" + mismatchCountToDisk;
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " ... " + mRetData.CloseoutMsg);
 					
 					return false;
@@ -341,7 +351,7 @@ namespace ArchiveVerifyPlugin
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
 					mTotalMismatchCount += 1;
 
-					string msg = " ... file " + metadataFile.Key + " not found in MyEMSL (CompareArchiveFilesToList)";
+					var msg = " ... file " + metadataFile.Key + " not found in MyEMSL (CompareArchiveFilesToList)";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 				}
 				else
@@ -356,7 +366,7 @@ namespace ArchiveVerifyPlugin
 							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
 						mTotalMismatchCount++;
 
-						string msg = " ... file mismatch for " + archiveFile.RelativePathWindows + "; MyEMSL reports " + archiveFile.Sha1Hash + " but expecting " + metadataFile.Value;
+						var msg = " ... file mismatch for " + archiveFile.RelativePathWindows + "; MyEMSL reports " + archiveFile.Sha1Hash + " but expecting " + metadataFile.Value;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 
 						mismatchCount++;
@@ -408,11 +418,11 @@ namespace ArchiveVerifyPlugin
 
 			foreach (var metadataFile in dctMetadataFiles)
 			{
-				string sha1Hash = metadataFile["sha1Hash"].ToString();
-				string destinationDirectory = metadataFile["destinationDirectory"].ToString();
-				string fileName = metadataFile["fileName"].ToString();
+				var sha1Hash = metadataFile["sha1Hash"].ToString();
+				var destinationDirectory = metadataFile["destinationDirectory"].ToString();
+				var fileName = metadataFile["fileName"].ToString();
 
-				string relativeFilePathWindows = Path.Combine(destinationDirectory.Replace('/', Path.DirectorySeparatorChar), fileName);
+				var relativeFilePathWindows = Path.Combine(destinationDirectory.Replace('/', Path.DirectorySeparatorChar), fileName);
 
 				dctFilePathHashMap.Add(relativeFilePathWindows, sha1Hash);
 			}
@@ -426,7 +436,7 @@ namespace ArchiveVerifyPlugin
 			// Copy the updated file to md5ResultsFolderPathBackup
 			try
 			{
-				string strMD5ResultsFileBackup = GetMD5ResultsFilePath(DEFAULT_MD5_RESULTS_BACKUP_FOLDER_PATH, m_Dataset, datasetInstrument, datasetYearQuarter);
+				var strMD5ResultsFileBackup = GetMD5ResultsFilePath(DEFAULT_MD5_RESULTS_BACKUP_FOLDER_PATH, m_Dataset, datasetInstrument, datasetYearQuarter);
 
 				var fiBackupMD5ResultsFile = new FileInfo(strMD5ResultsFileBackup);
 
@@ -459,7 +469,7 @@ namespace ArchiveVerifyPlugin
 
 				foreach (var archivedFile in lstArchivedFiles)
 				{
-					string archivedFilePath = "/myemsl/svc-dms/" + archivedFile.PathWithInstrumentAndDatasetUnix;
+					var archivedFilePath = "/myemsl/svc-dms/" + archivedFile.PathWithInstrumentAndDatasetUnix;
 
 					var hashInfo = new clsHashInfo
 					{
@@ -507,15 +517,15 @@ namespace ArchiveVerifyPlugin
 			try
 			{
 
-				string datasetInstrument = m_TaskParams.GetParam("Instrument_Name", "");
+                var datasetInstrument = m_TaskParams.GetParam("Instrument_Name", string.Empty);
 				if (!ParameterDefined("Instrument_Name", datasetInstrument))
 					return false;
 
 				// Calculate the "year_quarter" code used for subfolders within an instrument folder
 				// This value is based on the date the dataset was created in DMS
-				string datasetYearQuarter = DMSMetadataObject.GetDatasetYearQuarter(m_TaskParams.TaskDictionary);
+				var datasetYearQuarter = DMSMetadataObject.GetDatasetYearQuarter(m_TaskParams.TaskDictionary);
 
-				string md5ResultsFilePath = GetMD5ResultsFilePath(DEFAULT_MD5_RESULTS_FOLDER_PATH, m_Dataset, datasetInstrument, datasetYearQuarter);
+				var md5ResultsFilePath = GetMD5ResultsFilePath(DEFAULT_MD5_RESULTS_FOLDER_PATH, m_Dataset, datasetInstrument, datasetYearQuarter);
 
 				var fiMD5ResultsFile = new FileInfo(md5ResultsFilePath);
 
@@ -634,9 +644,9 @@ namespace ArchiveVerifyPlugin
 
 			hashInfo.HashCode = lstValues[0];
 
-			var lstPathInfo = lstValues[1].Split(new[] { '\t' }).ToList();
+			var lstPathInfo = lstValues[1].Split('\t').ToList();
 
-			string archiveFilePath = lstPathInfo[0];
+			var archiveFilePath = lstPathInfo[0];
 
 			if (lstPathInfo.Count > 1)
 				hashInfo.MyEMSLFileID = lstPathInfo[1];
@@ -678,17 +688,17 @@ namespace ArchiveVerifyPlugin
 			{
 				while (!srMD5ResultsFile.EndOfStream)
 				{
-					string dataLine = srMD5ResultsFile.ReadLine();
+					var dataLine = srMD5ResultsFile.ReadLine();
 					ParseAndStoreHashInfo(dataLine, ref lstMD5Results);
 				}
 			}
 
-			bool saveMergedFile = false;
+			var saveMergedFile = false;
 
 			// Merge the results in lstArchivedFiles with lstMD5Results
 			foreach (var archivedFile in lstArchivedFiles)
 			{
-				string archivedFilePath = "/myemsl/svc-dms/" + archivedFile.PathWithInstrumentAndDatasetUnix;
+				var archivedFilePath = "/myemsl/svc-dms/" + archivedFile.PathWithInstrumentAndDatasetUnix;
 
 				var hashInfo = new clsHashInfo
 				{
@@ -744,7 +754,7 @@ namespace ArchiveVerifyPlugin
 				reader.MessageEvent += reader_MessageEvent;
 				reader.ProgressEvent += reader_ProgressEvent;
 
-				string subDir = m_TaskParams.GetParam("OutputFolderName", "");
+                var subDir = m_TaskParams.GetParam("OutputFolderName", string.Empty);
 
 				var lstArchivedFiles = reader.FindFilesByDatasetID(m_DatasetID, subDir);
 
@@ -754,7 +764,7 @@ namespace ArchiveVerifyPlugin
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
 					mTotalMismatchCount += 1;
 
-					string msg = "Elastic search did not find any files for Dataset_ID " + m_DatasetID;
+					var msg = "Elastic search did not find any files for Dataset_ID " + m_DatasetID;
 					if (!string.IsNullOrEmpty(subDir))
 						msg += " and subdirectory " + subDir;
 
@@ -796,7 +806,7 @@ namespace ArchiveVerifyPlugin
 
 		protected bool WriteMD5ResultsFile(Dictionary<string, clsHashInfo> lstMD5Results, string md5ResultsFilePath, bool useTempFile)
 		{
-			string currentStep = "initializing";
+			var currentStep = "initializing";
 
 			try
 			{
@@ -817,7 +827,7 @@ namespace ArchiveVerifyPlugin
 				{
 					foreach (var item in lstMD5Results)
 					{
-						string dataLine = item.Value.HashCode + " " + item.Key;
+						var dataLine = item.Value.HashCode + " " + item.Key;
 						if (!string.IsNullOrEmpty(item.Value.MyEMSLFileID))
 							dataLine += "\t" + item.Value.MyEMSLFileID;
 
@@ -864,7 +874,7 @@ namespace ArchiveVerifyPlugin
 
 		void reader_ProgressEvent(object sender, MyEMSLReader.ProgressEventArgs e)
 		{
-			string msg = "Percent complete: " + e.PercentComplete.ToString("0.0") + "%";
+			var msg = "Percent complete: " + e.PercentComplete.ToString("0.0") + "%";
 
 			if (e.PercentComplete > mPercentComplete || DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds >= 30)
 			{

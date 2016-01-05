@@ -23,7 +23,7 @@ namespace ArchiveStatusCheckPlugin
 		#region "Constructors"
 		public clsPluginMain()			
 		{
-
+            // Does nothing at present
 		}
 
 		#endregion
@@ -247,7 +247,10 @@ namespace ArchiveStatusCheckPlugin
                 try
                 {
                     string xmlServerResponse;
-                    var ingestSuccess = base.GetMyEMSLIngestStatus(m_Job, statusChecker, statusInfo.StatusURI, cookieJar, mRetData, out xmlServerResponse);
+                    var ingestSuccess = base.GetMyEMSLIngestStatus(
+                        m_Job, statusChecker, statusInfo.StatusURI,
+                        statusInfo.EUS_InstrumentID, statusInfo.EUS_ProposalID, statusInfo.EUS_UploaderID, 
+                        cookieJar, mRetData, out xmlServerResponse);
 
                     var ingestStepsCompleted = statusChecker.IngestStepCompletionCount(xmlServerResponse);
 
@@ -404,12 +407,16 @@ namespace ArchiveStatusCheckPlugin
             // Keys in this dictionary are StatusNum integers
             var dctStatusData = new Dictionary<int, clsIngestStatusInfo>();
 
-			// First look for a specific Status_URI for this job			
-			var statusURI = m_TaskParams.GetParam("MyEMSL_Status_URI", "");
+			// First look for a specific Status_URI for this joB
+            // Only DatasetArchive or ArchiveUpdate jobs will have this job parameter
+            // MyEMSLVerify will not have this parameter
+			var statusURI = m_TaskParams.GetParam("MyEMSL_Status_URI", string.Empty);
 
-            // Note that GetStatusURIsAndSubfolders requires that the column order be StatusNum, Status_URI, Subfolder, Ingest_Steps_Completed
+            // Note that GetStatusURIsAndSubfolders requires that the column order be StatusNum, Status_URI, Subfolder, Ingest_Steps_Completed, EUS_InstrumentID, EUS_ProposalID, EUS_UploaderID
 	        var sql =
-	            " SELECT StatusNum, Status_URI, Subfolder, IsNull(Ingest_Steps_Completed, 0) AS Ingest_Steps_Completed" +
+                " SELECT StatusNum, Status_URI, Subfolder, " +
+                       " IsNull(Ingest_Steps_Completed, 0) AS Ingest_Steps_Completed, " +
+                       " EUS_InstrumentID, EUS_ProposalID, EUS_UploaderID" +
 	            " FROM V_MyEMSL_Uploads " +
 	            " WHERE Dataset_ID = " + m_DatasetID;
 
@@ -419,7 +426,8 @@ namespace ArchiveStatusCheckPlugin
 
                 dctStatusData.Add(statusNum, new clsIngestStatusInfo(statusNum, statusURI));
 
-                sql += " AND StatusNum = " + statusNum;
+                sql += " AND StatusNum = " + statusNum + 
+                       " ORDER BY Entry_ID";
 
                 GetStatusURIsAndSubfolders(sql, retryCount, dctStatusData);
 
@@ -430,7 +438,8 @@ namespace ArchiveStatusCheckPlugin
 			{
                 sql += " AND Job <= " + m_Job + 
                        " AND ISNULL(StatusNum, 0) > 0 " +
-                       " AND ErrorCode NOT IN (-1, 101)";
+                       " AND ErrorCode NOT IN (-1, 101)" +
+                       " ORDER BY Entry_ID";
 
                 GetStatusURIsAndSubfolders(sql, retryCount, dctStatusData);
 
@@ -444,6 +453,12 @@ namespace ArchiveStatusCheckPlugin
 			return dctStatusData;
 		}
 
+        /// <summary>
+        /// Run a query against V_MyEMSL_Uploads
+        /// </summary>
+        /// <param name="sql"></param>
+        /// <param name="retryCount"></param>
+        /// <param name="dctStatusData"></param>
 	    protected void GetStatusURIsAndSubfolders(string sql, int retryCount, Dictionary<int, clsIngestStatusInfo> dctStatusData)
 	    {
             // This Connection String points to the DMS_Capture database
@@ -460,6 +475,8 @@ namespace ArchiveStatusCheckPlugin
                         var cmd = new SqlCommand(sql, cnDB);
                         var reader = cmd.ExecuteReader();
 
+                        // Expected fields:
+                        // StatusNum, Status_URI, Subfolder, Ingest_Steps_Completed, EUS_InstrumentID, EUS_ProposalID, EUS_UploaderID
                         while (reader.Read())
                         {
                             var statusNum = reader.GetInt32(0);
@@ -478,19 +495,26 @@ namespace ArchiveStatusCheckPlugin
                             var subFolder = (string)reader.GetValue(2);
                             var ingestStepsCompleted = (byte)reader.GetValue(3);
 
+                            var eusInstrumentID = clsConversion.GetDbValue(reader, 4, 0);
+                            var eusProposalID = clsConversion.GetDbValue(reader, 5, string.Empty);
+                            var eusUploaderID = clsConversion.GetDbValue(reader, 6, 0);
+
                             clsIngestStatusInfo statusInfo;
                             if (dctStatusData.TryGetValue(statusNum, out statusInfo))
                             {
-                                if (!string.IsNullOrEmpty(statusInfo.Subfolder))
+                                if (string.IsNullOrEmpty(statusInfo.Subfolder))
+                                {
+                                    statusInfo.Subfolder = string.Empty;
+                                    statusInfo.IngestStepsCompletedOld = ingestStepsCompleted;
+                                    statusInfo.EUS_InstrumentID = eusInstrumentID;
+                                    statusInfo.EUS_ProposalID = eusProposalID;
+                                    statusInfo.EUS_UploaderID = eusUploaderID;
+                                }
+                                else
                                 {
                                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
                                                          "Job " + m_Job +
                                                          " has more than one upload task with StatusID " + statusNum);
-                                }
-                                else
-                                {
-                                    statusInfo.Subfolder = subFolder;
-                                    statusInfo.IngestStepsCompletedOld = ingestStepsCompleted;
                                 }
                                 continue;
                             }
@@ -498,7 +522,10 @@ namespace ArchiveStatusCheckPlugin
                             statusInfo = new clsIngestStatusInfo(statusNum, uri)
                             {
                                 Subfolder = subFolder,
-                                IngestStepsCompletedOld = ingestStepsCompleted
+                                IngestStepsCompletedOld = ingestStepsCompleted,
+                                EUS_InstrumentID = eusInstrumentID,
+                                EUS_ProposalID = eusProposalID,
+                                EUS_UploaderID = eusUploaderID
                             };
 
                             dctStatusData.Add(statusNum, statusInfo);
@@ -514,7 +541,7 @@ namespace ArchiveStatusCheckPlugin
                     msg += ", RetryCount = " + retryCount;
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 
-                    //Delay for 5 second before trying again
+                    // Delay for 5 second before trying again
                     System.Threading.Thread.Sleep(5000);
                 }
             }
@@ -672,6 +699,6 @@ namespace ArchiveStatusCheckPlugin
 		#endregion
 
 
-	}	// End class
+	}
 
 }	// End namespace

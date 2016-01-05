@@ -284,12 +284,98 @@ namespace CaptureTaskManager
             }
         }
 
+        //
+        // ToDo: Delete this commented out code
+        //
+
+        ///// <summary>
+        ///// Lookup the MyEMSL ingest status for the current job
+        ///// </summary>
+        ///// <param name="job"></param>
+        ///// <param name="statusChecker"></param>
+        ///// <param name="statusURI"></param>
+        ///// <param name="cookieJar"></param>
+        ///// <param name="retData"></param>
+        ///// <param name="xmlServerResponse"></param>
+        ///// <returns>True if success, false if an error</returns>
+        ///// <remarks>This function is used by the ArchiveStatusCheck plugin and the ArchiveVerify plugin </remarks>
+        //public bool GetMyEMSLIngestStatus(
+        //    int job,
+        //    MyEMSLStatusCheck statusChecker,
+        //    string statusURI,            
+        //    CookieContainer cookieJar,
+        //    clsToolReturnData retData,
+        //    out string xmlServerResponse)
+        //{
+
+        //    var eusInstrumentID = 0;
+        //    var eusProposalID = string.Empty;
+        //    var eusUploaderID = 0;
+
+        //    // Lookup the EUS info using view V_MyEMSL_Uploads
+
+        //    var statusNum = MyEMSLStatusCheck.GetStatusNumFromURI(statusURI);
+
+        //    var sql = "SELECT EUS_InstrumentID, EUS_ProposalID, EUS_UploaderID " +
+        //              "FROM V_MyEMSL_Uploads " +
+        //              "WHERE Job = " + job + " AND " +
+        //                    "StatusNum = " + statusNum;
+
+
+        //    // This Connection String points to the DMS_Capture database
+        //    var connectionString = m_MgrParams.GetParam("connectionstring");
+
+        //    var retryCount = 2;
+        //    while (retryCount > 0)
+        //    {
+        //        try
+        //        {
+        //            using (var cnDB = new SqlConnection(connectionString))
+        //            {
+        //                cnDB.Open();
+
+        //                var cmd = new SqlCommand(sql, cnDB);
+        //                var reader = cmd.ExecuteReader();
+
+        //                // Expected fields:
+        //                // EUS_InstrumentID, EUS_ProposalID, EUS_UploaderID
+        //                while (reader.Read())
+        //                {
+
+        //                    eusInstrumentID = clsConversion.GetDbValue(reader, 0, 0);
+        //                    eusProposalID = clsConversion.GetDbValue(reader, 1, string.Empty);
+        //                    eusUploaderID = clsConversion.GetDbValue(reader, 2, 0);
+        //                }
+        //            }
+        //            break;
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            retryCount -= 1;
+        //            var msg = "clsToolRunnerBase, GetMyEMSLIngestStatus; Exception querying database for job " + job + ": " + ex.Message + "; ConnectionString: " + connectionString;
+        //            msg += ", RetryCount = " + retryCount;
+        //            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+
+        //            // Delay for 5 second before trying again
+        //            Thread.Sleep(5000);
+        //        }
+        //    }
+
+        //    return GetMyEMSLIngestStatus(
+        //        job, statusChecker, statusURI, 
+        //        eusInstrumentID, eusProposalID, eusUploaderID,
+        //        cookieJar, retData, out xmlServerResponse);
+        //}
+
         /// <summary>
         /// Lookup the MyEMSL ingest status for the current job
         /// </summary>
         /// <param name="job"></param>
         /// <param name="statusChecker"></param>
         /// <param name="statusURI"></param>
+        /// <param name="eusInstrumentID"></param>
+        /// <param name="eusProposalID"></param>
+        /// <param name="eusUploaderID"></param>
         /// <param name="cookieJar"></param>
         /// <param name="retData"></param>
         /// <param name="xmlServerResponse"></param>
@@ -299,6 +385,9 @@ namespace CaptureTaskManager
             int job,
             MyEMSLStatusCheck statusChecker,
             string statusURI,
+            int eusInstrumentID, 
+            string eusProposalID, 
+            int eusUploaderID, 
             CookieContainer cookieJar,
             clsToolReturnData retData,
             out string xmlServerResponse)
@@ -331,16 +420,28 @@ namespace CaptureTaskManager
             }
 
             // Look for any steps in error
-            if (statusChecker.HasStepError(xmlServerResponse, out errorMessage))
+            if (!statusChecker.HasStepError(xmlServerResponse, out errorMessage))
             {
-                retData.CloseoutMsg = errorMessage;
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                retData.EvalCode = EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage + ", job " + job);
-                return false;
+                return true;
             }
 
-            return true;
+            if (errorMessage.ToLower().StartsWith("invalid permissions"))
+            {
+                // Append the EUS proposal ID and EUS instrument ID that was used
+                retData.CloseoutMsg = errorMessage + 
+                                      "; EUSInstID=" + eusInstrumentID +
+                                      ", EUSProposal=" + eusProposalID +
+                                      ", EUSUploader=" + eusUploaderID;
+            }
+            else
+            {
+                retData.CloseoutMsg = errorMessage;
+            }
+                
+            retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+            retData.EvalCode = EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY;
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage + ", job " + job);
+            return false;
         }
 
         protected static void LogError(string errorMessage, bool logToDatabase = false)

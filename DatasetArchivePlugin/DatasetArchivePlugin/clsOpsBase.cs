@@ -307,15 +307,17 @@ namespace DatasetArchivePlugin
                 }
                 else
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, statusMessage);
+                    if (myEMSLUL.FileCountNew + myEMSLUL.FileCountUpdated > 0 || !string.IsNullOrEmpty(statusURL))
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, statusMessage);
                 }
 
                 // Raise an event with the stats
                 // This will cause clsPluginMain to call StoreMyEMSLUploadStats to store the results in the database (Table T_MyEmsl_Uploads)
                 // If an error occurs while storing to the database, the status URI will be listed in the manager's local log file
                 var e = new MyEMSLUploadEventArgs(
-                    myEMSLUL.FileCountNew, myEMSLUL.FileCountUpdated, myEMSLUL.Bytes,
-                    tsElapsedTime.TotalSeconds, statusURL,
+                    myEMSLUL.FileCountNew, myEMSLUL.FileCountUpdated, 
+                    myEMSLUL.Bytes, tsElapsedTime.TotalSeconds, 
+                    statusURL, myEMSLUL.EUSInfo,
                     iErrorCode: 0, usedTestInstance: useTestInstance);
 
                 OnMyEMSLUploadComplete(e);
@@ -351,17 +353,22 @@ namespace DatasetArchivePlugin
                 MyEMSLUploadEventArgs e;
                 if (myEMSLUL == null)
                 {
+                    var eusInfo = new Upload.udtEUSInfo();
+                    eusInfo.Clear();
+
                     e = new MyEMSLUploadEventArgs(
                         0, 0,
                         0, tsElapsedTime.TotalSeconds,
-                        string.Empty, errorCode, useTestInstance);
+                        string.Empty, eusInfo, 
+                        errorCode, useTestInstance);
                 }
                 else
                 {
                     e = new MyEMSLUploadEventArgs(
                         myEMSLUL.FileCountNew, myEMSLUL.FileCountUpdated,
                         myEMSLUL.Bytes, tsElapsedTime.TotalSeconds,
-                        myEMSLUL.StatusURI, errorCode, useTestInstance);
+                        myEMSLUL.StatusURI, myEMSLUL.EUSInfo,
+                        errorCode, useTestInstance);
                 }
                 OnMyEMSLUploadComplete(e);
 

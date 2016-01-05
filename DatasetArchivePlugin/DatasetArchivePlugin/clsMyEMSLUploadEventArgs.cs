@@ -1,4 +1,5 @@
 ﻿using System;
+using Pacifica.Core;
 
 namespace DatasetArchivePlugin
 {
@@ -9,6 +10,7 @@ namespace DatasetArchivePlugin
 		public readonly Int64 BytesUploaded;
 		public readonly double UploadTimeSeconds;
 		public readonly string StatusURI;
+        public readonly Upload.udtEUSInfo EUSInfo;
 		public readonly int ErrorCode;
 	    public readonly bool UsedTestInstance;
 
@@ -17,7 +19,8 @@ namespace DatasetArchivePlugin
             int iFileCountUpdated, 
             Int64 iBytes, 
             double dUploadTimeSeconds, 
-            string sStatusURI, 
+            string sStatusURI,
+            Upload.udtEUSInfo eusInfo,            
             int iErrorCode,
             bool usedTestInstance)
 		{
@@ -26,6 +29,7 @@ namespace DatasetArchivePlugin
 			BytesUploaded = iBytes;
 			UploadTimeSeconds = dUploadTimeSeconds;
 			StatusURI = sStatusURI;
+            EUSInfo = eusInfo;
 			ErrorCode = iErrorCode;
 		    UsedTestInstance = usedTestInstance;
 		}

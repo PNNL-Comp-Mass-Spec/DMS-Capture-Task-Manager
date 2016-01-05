@@ -38,7 +38,7 @@ namespace DatasetArchivePlugin
 		public clsPluginMain()
 		{
 			// Does nothing at present
-		}	// End sub
+		}
 		#endregion
 
 		#region "Methods"
@@ -122,7 +122,7 @@ namespace DatasetArchivePlugin
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 			return retData;
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Initializes the dataset archive tool
@@ -139,19 +139,31 @@ namespace DatasetArchivePlugin
 
 			msg = "Completed clsPluginMain.Setup()";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-		}	// End sub
+		}
 
-
-		/// <summary>
-		/// Communicates with database to store the MyEMSL upload stats
-		/// </summary>
-		/// <returns>True for success, False for failure</returns>
-		protected bool StoreMyEMSLUploadStats(
+        /// <summary>
+        /// Communicates with database to store the MyEMSL upload stats
+        /// </summary>
+        /// <param name="fileCountNew"></param>
+        /// <param name="fileCountUpdated"></param>
+        /// <param name="bytes"></param>
+        /// <param name="uploadTimeSeconds"></param>
+        /// <param name="statusURI"></param>
+        /// <param name="eusInstrumentID">EUS Instrument ID</param>
+        /// <param name="eusProposalID">EUS Proposal number (usually an integer but sometimes includes letters, for example 8491a)</param>
+        /// <param name="eusUploaderID">EUS user ID of the instrument operator</param>
+        /// <param name="errorCode"></param>
+        /// <param name="usedTestInstance"></param>
+        /// <returns>True for success, False for failure</returns>
+        protected bool StoreMyEMSLUploadStats(
             int fileCountNew, 
             int fileCountUpdated, 
             Int64 bytes, 
             double uploadTimeSeconds, 
-            string statusURI, 
+            string statusURI,
+            int eusInstrumentID,
+            string eusProposalID,
+            int eusUploaderID,
             int errorCode,
             bool usedTestInstance)
 		{
@@ -218,9 +230,21 @@ namespace DatasetArchivePlugin
                     else
                         MyCmd.Parameters["@UsedTestInstance"].Value = 0;
 
+                    MyCmd.Parameters.Add(new SqlParameter("@EUSInstrumentID", SqlDbType.Int));
+					MyCmd.Parameters["@EUSInstrumentID"].Direction = ParameterDirection.Input;
+					MyCmd.Parameters["@EUSInstrumentID"].Value = eusInstrumentID;
+
+                    MyCmd.Parameters.Add(new SqlParameter("@EUSProposalID", SqlDbType.VarChar, 10));
+					MyCmd.Parameters["@EUSProposalID"].Direction = ParameterDirection.Input;
+					MyCmd.Parameters["@EUSProposalID"].Value = eusProposalID;
+
+                    MyCmd.Parameters.Add(new SqlParameter("@EUSUploaderID", SqlDbType.Int));
+					MyCmd.Parameters["@EUSUploaderID"].Direction = ParameterDirection.Input;
+					MyCmd.Parameters["@EUSUploaderID"].Value = eusUploaderID;
+
 				}
 
-				//Execute the SP (retry the call up to 4 times)
+				// Execute the SP (retry the call up to 4 times)
                 var ResCode = CaptureDBProcedureExecutor.ExecuteSP(MyCmd, 4);
 
 				if (ResCode == 0)
@@ -294,7 +318,11 @@ namespace DatasetArchivePlugin
 
 		private void MyEMSLUploadCompleteHandler(object sender, MyEMSLUploadEventArgs e)
 		{
-			StoreMyEMSLUploadStats(e.FileCountNew, e.FileCountUpdated, e.BytesUploaded, e.UploadTimeSeconds, e.StatusURI, e.ErrorCode, e.UsedTestInstance);
+			StoreMyEMSLUploadStats(
+                e.FileCountNew, e.FileCountUpdated, 
+                e.BytesUploaded, e.UploadTimeSeconds, e.StatusURI,
+                e.EUSInfo.EUSInstrumentID, e.EUSInfo.EUSProposalID, e.EUSInfo.EUSUploaderID,
+                e.ErrorCode, e.UsedTestInstance);
 		}
 
 

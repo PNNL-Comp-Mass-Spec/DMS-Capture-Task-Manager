@@ -32,9 +32,10 @@ namespace DatasetArchivePlugin
 
         #region "Class variables"
 
-        string m_ArchiveSharePath = string.Empty;				// The dataset folder path in the archive, for example: \\a2.emsl.pnl.gov\dmsarch\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25
-        string m_ResultsFolderPathArchive = string.Empty;		// The target path to copy the data to, for example:    \\a2.emsl.pnl.gov\dmsarch\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25\SIC201304300029_Auto938684
-        string m_ResultsFolderPathServer = string.Empty;		// The source path of the dataset folder (or dataset job results folder) to archive, for example: \\proto-7\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25\SIC201304300029_Auto938684
+        // Obsolete: "No longer used"
+        // string m_ArchiveSharePath = string.Empty;				// The dataset folder path in the archive, for example: \\a2.emsl.pnl.gov\dmsarch\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25
+        // string m_ResultsFolderPathArchive = string.Empty;		// The target path to copy the data to, for example:    \\a2.emsl.pnl.gov\dmsarch\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25\SIC201304300029_Auto938684
+        // string m_ResultsFolderPathServer = string.Empty;		// The source path of the dataset folder (or dataset job results folder) to archive, for example: \\proto-7\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25\SIC201304300029_Auto938684
 
         #endregion
 
@@ -148,13 +149,13 @@ namespace DatasetArchivePlugin
         private string ConvertSambaPathToLinuxPath(string sambaPath)
         {
             // Find index of string "dmsarch" in Samba path
-            int startIndx = sambaPath.IndexOf("dmsarch");
+            var startIndx = sambaPath.IndexOf("dmsarch");
             if (startIndx < 0)
             {
                 //TODO: Substring wasn't found - this is an error that has to be handled.
                 return string.Empty;
             }
-            string tmpStr = sambaPath.Substring(startIndx);
+            var tmpStr = sambaPath.Substring(startIndx);
 
             // Add on the prefix for the archive
             tmpStr = "/archive/" + tmpStr;
@@ -214,7 +215,7 @@ namespace DatasetArchivePlugin
             foreach (string svrFileName in serverFiles)
             {
                 // Convert the file name on the server to its equivalent in the archive
-                string archFileName = ConvertServerPathToArchivePath(svrFolderPath, sambaFolderPath, svrFileName);
+                var archFileName = ConvertServerPathToArchivePath(svrFolderPath, sambaFolderPath, svrFileName);
                 if (archFileName.Length == 0)
                 {
                     msg = "File name not returned when converting from server path to archive path for file" + svrFileName;
@@ -234,7 +235,7 @@ namespace DatasetArchivePlugin
                 if (File.Exists(archFileName))
                 {
                     // File exists in archive, so compare the server and archive versions
-                    int compareResult = CompareTwoFiles(svrFileName, archFileName, compareWithHash);
+                    var compareResult = CompareTwoFiles(svrFileName, archFileName, compareWithHash);
 
                     if (compareWithHash &&
                         compareResult == FILE_COMPARE_ERROR &&
@@ -308,7 +309,7 @@ namespace DatasetArchivePlugin
             // Convert by replacing storage server path with archive path (Samba version)
             try
             {
-                string tmpPath = inpFileName.Replace(svrPath, archPath);
+                var tmpPath = inpFileName.Replace(svrPath, archPath);
                 return tmpPath;
             }
             catch (Exception ex)
@@ -356,14 +357,14 @@ namespace DatasetArchivePlugin
                 // Compares two files via SHA hash
 
                 // Compute the has for each file
-                string sSourceFileHash = GenerateHashFromFile(fiSourceFile);
+                var sSourceFileHash = GenerateHashFromFile(fiSourceFile);
                 if (string.IsNullOrEmpty(sSourceFileHash))
                 {
                     //There was a problem. Description is already in m_ErrMsg
                     return FILE_COMPARE_ERROR;
                 }
 
-                string sArchiveFileHash = GenerateHashFromFile(fiArchiveFile);
+                var sArchiveFileHash = GenerateHashFromFile(fiArchiveFile);
                 if (string.IsNullOrEmpty(sArchiveFileHash))
                 {
                     // There was a problem. Description is already in m_ErrMsg
@@ -406,7 +407,7 @@ namespace DatasetArchivePlugin
                 //Open the file as a stream for input to the hash class
                 FStream = fiFile.OpenRead();
                 //Get the file's hash
-                byte[] ByteHash = HashGen.ComputeHash(FStream);
+                var ByteHash = HashGen.ComputeHash(FStream);
                 return BitConverter.ToString(ByteHash).Replace("-", string.Empty).ToLower();
             }
             catch (Exception ex)
