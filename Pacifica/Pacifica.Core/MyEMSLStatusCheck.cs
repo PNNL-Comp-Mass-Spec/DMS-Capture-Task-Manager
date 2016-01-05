@@ -80,7 +80,8 @@ namespace Pacifica.Core
         /// <param name="lookupError">Output: true if an error occurs</param>
         /// <param name="errorMessage">Output: error message if lookupError is true</param>
         /// <returns>Status message, in XML format; empty string if an error</returns>
-        public string GetIngestStatus(string statusURI,
+        public string GetIngestStatus(
+            string statusURI,
             CookieContainer cookieJar,
             out bool lookupError,
             out string errorMessage)
@@ -289,6 +290,8 @@ namespace Pacifica.Core
 			//                 for example https://a4.my.emsl.pnl.gov/myemsl/cgi-bin/status/1042281/xml shows message 
 			//                 "You(47943) do not have upload permissions to proposal 17797"
 			//                 for user svc-dms on May 3, 2012)
+            //                 And https://ingest.my.emsl.pnl.gov/myemsl/cgi-bin/status/2919668/xml shows message
+            //                 "Invalid Permissions" on January 4, 2016
 			// 6: Archived    (status will be "UNKNOWN" if not yet verified)
 
 			var query = string.Format("//step[@id='{0}']", (int)stepNum);

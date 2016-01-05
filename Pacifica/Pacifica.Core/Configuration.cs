@@ -321,22 +321,22 @@ namespace Pacifica.Core
         {
             if (mUseTestInstance)
             {
-                Configuration.IngestServerHostName = TEST_INGEST_HOST_NAME;
+                IngestServerHostName = TEST_INGEST_HOST_NAME;
 
                 if (mUseItemSearch)
-                    Configuration.SearchServerHostName = TEST_ITEM_SEARCH_HOST_NAME;
+                    SearchServerHostName = TEST_ITEM_SEARCH_HOST_NAME;
                 else
-                    Configuration.SearchServerHostName = TEST_ELASTIC_SEARCH_HOST_NAME;
+                    SearchServerHostName = TEST_ELASTIC_SEARCH_HOST_NAME;
 
             }
             else
             {
-                Configuration.IngestServerHostName = DEFAULT_INGEST_HOST_NAME;
+                IngestServerHostName = DEFAULT_INGEST_HOST_NAME;
 
                 if (mUseItemSearch)
-                    Configuration.SearchServerHostName = DEFAULT_ITEM_SEARCH_HOST_NAME;
+                    SearchServerHostName = DEFAULT_ITEM_SEARCH_HOST_NAME;
                 else
-                    Configuration.SearchServerHostName = DEFAULT_ELASTIC_SEARCH_HOST_NAME;
+                    SearchServerHostName = DEFAULT_ELASTIC_SEARCH_HOST_NAME;
                 
             }
         }

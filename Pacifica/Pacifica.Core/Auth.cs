@@ -115,7 +115,7 @@ namespace Pacifica.Core
 			return cc;
 		}
 
-		private bool SaveCookies(CookieContainer cookieJar)
+		private void SaveCookies(CookieContainer cookieJar)
 		{
 			if (cookieJar != null && cookieJar.Count > 0)
 			{
@@ -130,7 +130,7 @@ namespace Pacifica.Core
 					}
 					catch
 					{
-						return false;
+					    return;
 					}
 					finally
 					{
@@ -142,7 +142,6 @@ namespace Pacifica.Core
 				}
 			}
 			RaiseLoggedIn();
-			return true;
 		}
 
 		private static IsolatedStorageFile GetAuthStorage()
@@ -183,7 +182,6 @@ namespace Pacifica.Core
 		/// <summary>
 		/// Get a NetworkCredentials instance associated with location.
 		/// </summary>
-		/// <param name="location">A URI to test user credentials against.</param>
 		/// <param name="userName">Username</param>
 		/// <param name="password">Password</param>
 		/// <param name="throwExceptions">Throws / Re-throws exceptions on error if true.</param>
@@ -191,21 +189,24 @@ namespace Pacifica.Core
 		/// true all exceptions will propogate up the stack, otherwise null is returned.</returns>
 		public NetworkCredential GetCredential(string userName, SecureString password, bool throwExceptions = true)
 		{
-			NetworkCredential cred = null;
+			NetworkCredential cred;
 
 			try
 			{
 				var uri = _location;
-				var redirected = false;
+				bool redirected;
 				var cookieJar = new CookieContainer();
 
 				do
 				{
 					if (uri.Scheme != "https")
 					{
-						throw new ArgumentException("Authentication URI must use HTTPS", "location");
+                        throw new Exception("Authentication URI must use HTTPS; see _location");
 					}
 					var request = WebRequest.Create(uri) as HttpWebRequest;
+				    
+                    if (request == null)
+				        throw new InvalidCastException("Could not cast the WebRequest to an HttpWebRequest for " + uri);
 
 					SetProxy(_proxy, request);
 
@@ -221,7 +222,10 @@ namespace Pacifica.Core
 
 					using (var resp = request.GetResponse() as HttpWebResponse)
 					{
-						if ((resp.StatusCode & HttpStatusCode.Redirect) == HttpStatusCode.Redirect)
+						if (resp != null && (
+                            resp.StatusCode == HttpStatusCode.Redirect ||
+                            resp.StatusCode == HttpStatusCode.RedirectMethod || 
+                            resp.StatusCode == HttpStatusCode.RedirectKeepVerb))
 						{
 							var redirect = resp.GetResponseHeader("Location");
 							if (redirect.StartsWith("https://"))
@@ -234,7 +238,7 @@ namespace Pacifica.Core
 							}
 							else
 							{
-								throw new ApplicationException("https is the only supported scheme in this method.");
+                                throw new ApplicationException("https is the only supported redirect scheme in method GetCredential");
 							}
 							redirected = true;
 							if (resp.Cookies.Count > 0)

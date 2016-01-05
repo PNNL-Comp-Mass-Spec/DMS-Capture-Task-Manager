@@ -9,8 +9,8 @@ namespace Pacifica.DMS_Metadata
     {
         public const string RECURSIVE_UPLOAD = "MyEMSL_Recurse";
 
-        DMSMetadataObject _mdContainer;
-        readonly Upload myEMSLUpload;
+        private DMSMetadataObject _mdContainer;
+        private readonly Upload myEMSLUpload;
 
         protected Dictionary<string, string> m_MgrParams;
         protected Dictionary<string, string> m_TaskParams;
@@ -50,6 +50,9 @@ namespace Pacifica.DMS_Metadata
             FileCountUpdated = 0;
             Bytes = 0;
             ErrorCode = string.Empty;
+
+            EUSInfo = new Upload.udtEUSInfo();
+            EUSInfo.Clear();
 
             m_MgrParams = mgrParams;
             m_TaskParams = taskParams;
@@ -115,6 +118,15 @@ namespace Pacifica.DMS_Metadata
             private set;
         }
 
+        /// <summary>
+        /// EUS Info
+        /// </summary>
+        public Upload.udtEUSInfo EUSInfo
+        {
+            get;
+            private set;
+        }
+      
         #endregion
 
         public bool StartUpload(EasyHttp.eDebugMode debugMode, out string statusURL)
@@ -128,7 +140,7 @@ namespace Pacifica.DMS_Metadata
             _mdContainer.DebugEvent += myEMSLUpload_DebugEvent;
             _mdContainer.ErrorEvent += myEMSLUpload_ErrorEvent;
 
-            _mdContainer.UseTestInstance = this.UseTestInstance;
+            _mdContainer.UseTestInstance = UseTestInstance;
 
             // Look for files to upload, compute a Sha-1 hash for each, and compare those hashes to existing files in MyEMSL
             _mdContainer.SetupMetadata(m_TaskParams, m_MgrParams, debugMode);
@@ -140,6 +152,8 @@ namespace Pacifica.DMS_Metadata
             FileCountUpdated = _mdContainer.TotalFileCountUpdated;
             FileCountNew = _mdContainer.TotalFileCountNew;
             Bytes = _mdContainer.TotalFileSizeToUpload;
+
+            EUSInfo = _mdContainer.EUSInfo;
 
             _mdContainer.CreateLockFiles();
             bool success;

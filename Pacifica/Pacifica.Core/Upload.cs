@@ -19,6 +19,31 @@ namespace Pacifica.Core
         // VOrbiETD04 is 34127
         private const string UNKNOWN_INSTRUMENT_EUS_INSTRUMENT_ID = "34127";
 
+        public struct udtEUSInfo
+        {
+            /// <summary>
+            /// EUS instrument ID
+            /// </summary>
+            public int EUSInstrumentID;
+
+            /// <summary>
+            /// EUS proposal number
+            /// </summary>
+            public string EUSProposalID;
+
+            /// <summary>
+            /// EUS ID of the instrument operator
+            /// </summary>
+            public int EUSUploaderID;
+
+            public void Clear()
+            {
+                EUSInstrumentID = 0;
+                EUSProposalID = string.Empty;
+                EUSUploaderID = 0;
+            }
+        }
+
         public struct udtUploadMetadata
         {
             public int DatasetID;               // 0 for data packages
@@ -499,14 +524,21 @@ namespace Pacifica.Core
         /// </summary>
         /// <param name="uploadMetadata">Upload metadata</param>
         /// <param name="lstUnmatchedFiles">Files to upload</param>
+        /// <param name="eusInfo">Output parameter: EUS instrument ID, proposal ID, and uploader ID</param>
         /// <returns>
         /// Dictionary where of the information to translate to JSON; 
         /// Keys are key names; values are either strings or dictionary objects or even a list of dictionary objects 
         /// </returns>
-        public static Dictionary<string, object> CreateMetadataObject(udtUploadMetadata uploadMetadata, List<FileInfoObject> lstUnmatchedFiles)
+        public static Dictionary<string, object> CreateMetadataObject(
+            udtUploadMetadata uploadMetadata, 
+            List<FileInfoObject> lstUnmatchedFiles, 
+            out udtEUSInfo eusInfo)
         {
             var metadataObject = new Dictionary<string, object>();
             var groupObject = new List<Dictionary<string, string>>();
+
+            eusInfo = new udtEUSInfo();
+            eusInfo.Clear();
 
             // Set up the MyEMSL tagging information
 
@@ -535,7 +567,7 @@ namespace Pacifica.Core
                 throw new ArgumentOutOfRangeException("Must define a DatasetID or a DataPackageID; cannot create the metadata object");
             }
 
-            var eusInfo = new Dictionary<string, object>
+            var eusInfoMap = new Dictionary<string, object>
 			{
 				{"groups", groupObject}
 			};
@@ -545,45 +577,46 @@ namespace Pacifica.Core
                 // Lookup the EUS_Instrument_ID
                 // If empty, use 34127, which is VOrbiETD04
                 var eusInstrumentID = GetEUSInstrumentID(uploadMetadata.EUSInstrumentID, UNKNOWN_INSTRUMENT_EUS_INSTRUMENT_ID);
-                
-                eusInfo.Add("instrumentId", eusInstrumentID);
-                eusInfo.Add("instrumentName", uploadMetadata.DMSInstrumentName);
+
+                eusInfoMap.Add("instrumentId", eusInstrumentID);
+                eusInfo.EUSInstrumentID = StringToInt(eusInstrumentID, 0);
+
+                eusInfoMap.Add("instrumentName", uploadMetadata.DMSInstrumentName);
 
                 if (string.IsNullOrWhiteSpace(uploadMetadata.EUSProposalID))
                 {
                     // This dataset does not have an EUS_Proposal_ID
                     // Use 17797, which is "Development of High Throughput Proteomic Production Operations"
-                    eusInfo.Add("proposalID", "17797");
+                    eusInfo.EUSProposalID = "17797";
                 }
                 else
                 {
-                    eusInfo.Add("proposalID", uploadMetadata.EUSProposalID);
+                    eusInfo.EUSProposalID = uploadMetadata.EUSProposalID;
                 }
 
+                eusInfoMap.Add("proposalID", eusInfo.EUSProposalID);
             }
 
             // For datasets, eusOperatorID is the instrument operator EUS ID
             // For data packages, it is the EUS ID of the data package owner
-            string eusOperatorID;
             if (uploadMetadata.EUSOperatorID == 0)
             {
                 // This should have already been flagged in upstream code
                 // But if we reach this function and it is still 0, we will use the default operator ID
-                eusOperatorID = Upload.DEFAULT_EUS_OPERATOR_ID.ToString();
+                eusInfo.EUSInstrumentID = Upload.DEFAULT_EUS_OPERATOR_ID;
             }
             else
             {
-                eusOperatorID = uploadMetadata.EUSOperatorID.ToString();
+                eusInfo.EUSUploaderID = uploadMetadata.EUSOperatorID;
             }
 
             // Store the instrument operator EUS ID in the uploaderEusId field to indicate
             // the person on whose behalf the capture task manager is uploading the dataset
-            eusInfo.Add("uploaderEusId", eusOperatorID);
-
+            eusInfoMap.Add("uploaderEusId", eusInfo.EUSUploaderID.ToString());
 
             metadataObject.Add("bundleName", "omics_dms");
             metadataObject.Add("creationDate", DateTime.UtcNow.ToUnixTime().ToString(CultureInfo.InvariantCulture));
-            metadataObject.Add("eusInfo", eusInfo);
+            metadataObject.Add("eusInfo", eusInfoMap);
 
             metadataObject.Add("file", lstUnmatchedFiles);
 
@@ -605,6 +638,14 @@ namespace Pacifica.Core
 
         #endregion
 
+        private static int StringToInt(string valueText, int defaultValue)
+        {
+            int value;
+            if (int.TryParse(valueText, out value))
+                return value;
+
+            return defaultValue;
+        }
     }
 
 }

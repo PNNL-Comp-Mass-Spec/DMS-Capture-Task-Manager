@@ -61,6 +61,15 @@ namespace Pacifica.DMS_Metadata
             private set;
         }
 
+        /// <summary>
+        /// EUS Info
+        /// </summary>
+        public Upload.udtEUSInfo EUSInfo
+        {
+            get;
+            private set;
+        }
+      
         public string ManagerName
         {
             get;
@@ -145,7 +154,10 @@ namespace Pacifica.DMS_Metadata
             // Find the files that are new or need to be updated
             var lstUnmatchedFiles = CompareDatasetContentsElasticSearch(lstDatasetFilesToArchive, uploadMetadata, debugMode);
 
-            mMetadataObject = Upload.CreateMetadataObject(uploadMetadata, lstUnmatchedFiles);
+            Upload.udtEUSInfo eusInfo;
+            mMetadataObject = Upload.CreateMetadataObject(uploadMetadata, lstUnmatchedFiles, out eusInfo);
+
+            EUSInfo = eusInfo;
 
         }
 
@@ -292,7 +304,7 @@ namespace Pacifica.DMS_Metadata
 
             TotalFileSizeToUpload = 0;
 
-            string currentTask = "Looking for existing files in MyEMSL for DatasetID " + uploadMetadata.DatasetID;
+            var currentTask = "Looking for existing files in MyEMSL for DatasetID " + uploadMetadata.DatasetID;
 
             if (!string.IsNullOrWhiteSpace(uploadMetadata.SubFolder))
                 currentTask += ", subfolder " + uploadMetadata.SubFolder;

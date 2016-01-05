@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics.Eventing.Reader;
 using System.IO;
-using System.Linq;
 using System.Net;
 using ICSharpCode.SharpZipLib.Tar;
 using PRISM.Files;
