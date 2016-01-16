@@ -404,19 +404,12 @@ namespace DatasetQualityPlugin
 		/// <returns></returns>
 		protected string GetQuameterPath()
 		{
-			// Look for parameter 64bitQuameter
-			// To add this to a job, use the following command in SSMS:
-			// exec AddUpdateJobParameter 976722, 'JobParameters', '64bitQuameter', 'True'
-			var bUse64Bit = m_TaskParams.GetParam("64bitQuameter", false);
 
+            // Typically C:\DMS_Programs\Quameter\x64\
 			var sQuameterFolder = m_MgrParams.GetParam("QuameterProgLoc", string.Empty);
 
 			if (string.IsNullOrEmpty(sQuameterFolder))
 				return string.Empty;
-		    
-            if (bUse64Bit)
-		        return Path.Combine(sQuameterFolder, "64bit\\Quameter.exe");
-		    
             return Path.Combine(sQuameterFolder, "Quameter.exe");
 		}
 
@@ -1186,7 +1179,6 @@ namespace DatasetQualityPlugin
 		}
 
 		#endregion
-
 
 		#region "Event handlers"
 
