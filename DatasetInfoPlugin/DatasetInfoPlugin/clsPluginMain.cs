@@ -234,13 +234,13 @@ namespace DatasetInfoPlugin
 				try
 				{
 					Directory.CreateDirectory(outputFolder);
-					m_Msg = "clsPluginMain.RunMsFileInfoScanner: Created output folder " + outputFolder;
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
+					string msg = "clsPluginMain.RunMsFileInfoScanner: Created output folder " + outputFolder;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 				}
 				catch (Exception ex)
 				{
-					m_Msg = "clsPluginMain.RunMsFileInfoScanner: Exception creating output folder " + outputFolder;
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg, ex);
+                    string msg = "clsPluginMain.RunMsFileInfoScanner: Exception creating output folder " + outputFolder;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
 					result.CloseoutMsg = "Exception creating output folder " + outputFolder;
 					result.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 					return result;
@@ -278,7 +278,7 @@ namespace DatasetInfoPlugin
                 if (string.IsNullOrEmpty(m_Msg))
 			        m_Msg = "ProcessMSFileOrFolder returned false";
 
-			    result.CloseoutMsg = "Job " + m_Job + ", Step " + m_TaskParams.GetParam("Step") + ": " + m_Msg;
+			    result.CloseoutMsg = m_Msg;
 			    result.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return result;
 			}
@@ -310,7 +310,7 @@ namespace DatasetInfoPlugin
 		    else
 		    {
 		        errorCode = m_MsFileScanner.ErrorCode;
-		        m_Msg = "clsPluginMain.RunMsFileInfoScanner: Error running info scanner. Message = " +
+		        m_Msg = "Error running info scanner. Message = " +
 		                m_MsFileScanner.GetErrorMessage() + " Result code = " + ((int)m_MsFileScanner.ErrorCode);
 		        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
 		    }
@@ -647,9 +647,9 @@ namespace DatasetInfoPlugin
 		/// <param name="Message">Event message</param>
 		void m_MsFileScanner_MessageEvent(string Message)
 		{
-			m_Msg = "clsPluginMain.RunMsFileInfoScanner: Message from MSFileInfoScanner = " + Message;
+			m_Msg = "Message from MSFileInfoScanner = " + Message;
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
-		}	// End sub
+		}
 
 		/// <summary>
 		/// Handles error event from MS file scanner
@@ -667,7 +667,7 @@ namespace DatasetInfoPlugin
             else
             {
                 m_ErrOccurred = true;
-                m_Msg = errorMsg;
+                m_Msg = "Error running MSFileInfoScanner: " + message;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMsg);
             }
 			

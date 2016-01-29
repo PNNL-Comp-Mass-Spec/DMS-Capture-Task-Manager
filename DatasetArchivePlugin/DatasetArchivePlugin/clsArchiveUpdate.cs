@@ -314,8 +314,7 @@ namespace DatasetArchivePlugin
             }
             catch (Exception ex)
             {
-                m_ErrMsg = "clsArchiveUpdate.ConvertServerPathToArchivePath: Exception converting path name " + svrPath +
-                                    ". Exception message: " + ex.Message;
+                m_ErrMsg = "Exception converting path name " + svrPath + ": " + ex.Message;
                 return "Error";
             }
         }	// End sub
@@ -337,7 +336,7 @@ namespace DatasetArchivePlugin
 
             if (!fiSourceFile.Exists)
             {
-                m_ErrMsg = "clsArchiveUpdate.CompareTwoFiles: File " + fiSourceFile.FullName + " not found ";
+                m_ErrMsg = "File " + fiSourceFile.FullName + " not found (CompareTwoFiles)";
                 return FILE_COMPARE_ERROR;
             }
 
@@ -412,7 +411,7 @@ namespace DatasetArchivePlugin
             }
             catch (Exception ex)
             {
-                m_ErrMsg = "clsArchiveUpdate.GenerateHashFromFile; Exception generating hash for file " + fiFile.FullName + ": " + ex.Message;
+                m_ErrMsg = "Exception generating hash for file " + fiFile.FullName + ": " + ex.Message;
                 return string.Empty;
             }
             finally
