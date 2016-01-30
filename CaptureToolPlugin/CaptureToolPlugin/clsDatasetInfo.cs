@@ -17,7 +17,7 @@ namespace CaptureToolPlugin
         //**********************************************************************************************************
 
         #region "Class variables"
-        string[] m_FileList = null;
+        string[] m_FileList;
         #endregion
 
         #region "Properties"
@@ -52,12 +52,15 @@ namespace CaptureToolPlugin
         public clsDatasetInfo(string datasetName)
         {
             this.DatasetName = datasetName;
+            m_FileList = null;
         }
 
         public clsDatasetInfo(clsCaptureOps.RawDSTypes dsType)
         {
             DatasetType = dsType;
+            m_FileList = null;
         }
+
         #endregion
     }	// End class
 }	// End namespace
