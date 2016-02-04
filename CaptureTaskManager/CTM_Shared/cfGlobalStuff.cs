@@ -170,103 +170,18 @@ namespace CaptureTaskManager
     {
 
         /// <summary>
-        /// Parses the .StackTrace text of the given expression to return a compact description of the current stack
+        /// Parses the .StackTrace text of the given exception to return a compact description of the current stack
         /// </summary>
-        /// <param name="objException"></param>
+        /// <param name="ex"></param>
+        /// <param name="useMultiLine">True to show the stack track on multiple lines</param>
         /// <returns>String similar to "Stack trace: clsCodeTest.Test-:-clsCodeTest.TestException-:-clsCodeTest.InnerTestException in clsCodeTest.vb:line 86"</returns>
         /// <remarks></remarks>
-        public static string GetExceptionStackTrace(Exception objException)
+        public static string GetExceptionStackTrace(Exception ex, bool useMultiLine = false)
         {
-            const string REGEX_FUNCTION_NAME = @"at ([^(]+)\(";
-            const string REGEX_FILE_NAME = @"in .+\\(.+)";
-
-            int intIndex;
-
-            var lstFunctions = new List<string>();
-
-            var strFinalFile = string.Empty;
-
-            var reFunctionName = new Regex(REGEX_FUNCTION_NAME, RegexOptions.Compiled | RegexOptions.IgnoreCase);
-            var reFileName = new Regex(REGEX_FILE_NAME, RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
-            // Process each line in objException.StackTrace
-            // Populate lstFunctions with the function name of each line
-            using (var trTextReader = new StringReader(objException.StackTrace))
-            {
-                while (trTextReader.Peek() > -1)
-                {
-                    var strLine = trTextReader.ReadLine();
-
-                    if (!string.IsNullOrEmpty(strLine))
-                    {
-                        var strCurrentFunction = string.Empty;
-
-                        var objMatch = reFunctionName.Match(strLine);
-                        if (objMatch.Success && objMatch.Groups.Count > 1)
-                        {
-                            strCurrentFunction = objMatch.Groups[1].Value;
-                        }
-                        else
-                        {
-                            // Look for the word " in "
-                            intIndex = strLine.ToLower().IndexOf(" in ");
-                            if (intIndex == 0)
-                            {
-                                // " in" not found; look for the first space after startIndex 4
-                                intIndex = strLine.IndexOf(' ', 4);
-                            }
-                            if (intIndex == 0)
-                            {
-                                // Space not found; use the entire string
-                                intIndex = strLine.Length - 1;
-                            }
-
-                            if (intIndex > 0)
-                            {
-                                strCurrentFunction = strLine.Substring(0, intIndex);
-                            }
-
-                        }
-
-                        if (!String.IsNullOrEmpty(strCurrentFunction))
-                        {
-                            lstFunctions.Add(strCurrentFunction);
-                        }
-
-                        if (strFinalFile.Length == 0)
-                        {
-                            // Also extract the file name where the Exception occurred
-                            objMatch = reFileName.Match(strLine);
-                            if (objMatch.Success && objMatch.Groups.Count > 1)
-                            {
-                                strFinalFile = objMatch.Groups[1].Value;
-                            }
-                        }
-
-                    }
-                }
-            }
-
-            var strStackTrace = string.Empty;
-            for (intIndex = lstFunctions.Count - 1; intIndex >= 0; intIndex -= 1)
-            {
-                if (strStackTrace.Length == 0)
-                {
-                    strStackTrace = "Stack trace: " + lstFunctions[intIndex];
-                }
-                else
-                {
-                    strStackTrace += "-:-" + lstFunctions[intIndex];
-                }
-            }
-
-            if ((!String.IsNullOrEmpty(strStackTrace)) && !string.IsNullOrWhiteSpace(strFinalFile))
-            {
-                strStackTrace += " in " + strFinalFile;
-            }
-
-            return strStackTrace;
-
+            if (useMultiLine)
+                return PRISM.clsStackTraceFormatter.GetExceptionStackTraceMultiLine(ex);
+            
+            return PRISM.clsStackTraceFormatter.GetExceptionStackTrace(ex);
         }
     }
 

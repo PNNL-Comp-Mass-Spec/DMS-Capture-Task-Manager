@@ -32,7 +32,7 @@ namespace DatasetIntegrityPlugin
         //**********************************************************************************************************
 
         #region "Constants"
-        const float RAW_FILE_MIN_SIZE_KB = 100;
+        const float RAW_FILE_MIN_SIZE_KB = 50;
         const float RAW_FILE_MAX_SIZE_MB_LTQ = 2048;
         const float RAW_FILE_MAX_SIZE_MB_ORBITRAP = 100000;
         const float BAF_FILE_MIN_SIZE_KB = 16;

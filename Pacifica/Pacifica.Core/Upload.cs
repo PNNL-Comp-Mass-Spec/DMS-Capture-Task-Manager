@@ -486,7 +486,7 @@ namespace Pacifica.Core
                 Utilities.Logout(mCookieJar);
                 ErrorMessage = "Exception calling MyEMSL finish: " + ex.Message;
                 finishError = true;
-                finishErrorMsg = ErrorMessage + ", StackTrace: " + ex.StackTrace;
+                finishErrorMsg = ErrorMessage + ", StackTrace: " + PRISM.clsStackTraceFormatter.GetExceptionStackTrace(ex);
             }
 
             try
