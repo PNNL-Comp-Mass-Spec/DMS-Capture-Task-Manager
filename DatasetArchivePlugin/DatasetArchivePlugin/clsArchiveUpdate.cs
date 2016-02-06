@@ -88,7 +88,9 @@ namespace DatasetArchivePlugin
             if (debugMode != Pacifica.Core.EasyHttp.eDebugMode.DebugDisabled)
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Calling UploadToMyEMSLWithRetry with debugMode=" + debugMode);
 
-            var debugTestInstanceOnly = false;
+            const bool PUSH_TO_TEST_SERVER = false;
+
+            var debugTestInstanceOnly = PUSH_TO_TEST_SERVER;
 
             if (!debugTestInstanceOnly)
             {
@@ -103,7 +105,11 @@ namespace DatasetArchivePlugin
                                 m_TaskParams.GetParam("OutputFolderName") + ", job " + m_TaskParams.GetParam("Job");
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, statusMessage);
             }
+             
+            if (!PUSH_TO_TEST_SERVER)
+                return true;
 
+            /*
             // Possibly also upload the dataset to the MyEMSL test instance
             const int PERCENT_DATA_TO_SEND_TO_TEST = 20;
             var testDateCuttoff = new DateTime(2015, 11, 1);
@@ -122,6 +128,7 @@ namespace DatasetArchivePlugin
                 // Do not send this dataset to the test server
                 return true;
             }
+            */
 
             // Also upload a copy of the data to the MyEMSL test server
             var testCopySuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts, recurse, debugMode, useTestInstance:true);
