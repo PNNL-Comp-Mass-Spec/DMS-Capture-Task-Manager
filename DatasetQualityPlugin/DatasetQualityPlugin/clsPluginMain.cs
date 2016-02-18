@@ -60,6 +60,7 @@ namespace DatasetQualityPlugin
 		/// <returns>Enum indicating success or failure</returns>
 		public override clsToolReturnData RunTool()
 		{
+
 		    var msg = "Starting DatasetQualityPlugin.clsPluginMain.RunTool()";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
@@ -68,20 +69,15 @@ namespace DatasetQualityPlugin
 			if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
 				return mRetData;
 
-			if (m_DebugLevel >= 5)
-			{
-				msg = "Creating dataset info for dataset '" + m_Dataset + "'";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-			}
+            msg = "Creating dataset info for dataset '" + m_Dataset + "'";
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 			if (clsMetaDataFile.CreateMetadataFile(m_MgrParams, m_TaskParams))
 			{
 				// Everything was good
-				if (m_DebugLevel >= 4)
-				{
-					msg = "Metadata file created for dataset " + m_Dataset;
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-				}
+                msg = "Metadata file created for dataset " + m_Dataset;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+
 				mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
 			}
 			else
@@ -807,7 +803,7 @@ namespace DatasetQualityPlugin
 				}
 
 				var configFilePathSource = Path.Combine(fiQuameter.Directory.FullName, configFileNameSource);
-				var configFilePathTarget = Path.Combine(m_WorkDir, "quameter.cfg");
+                var configFilePathTarget = Path.Combine(m_WorkDir, configFileNameSource);
 
                 if (!File.Exists(configFilePathSource) && fiQuameter.Directory.FullName.ToLower().EndsWith("x64"))
 				{
@@ -819,6 +815,7 @@ namespace DatasetQualityPlugin
 				if (!File.Exists(configFilePathSource))
 				{
 					mRetData.CloseoutMsg = "Quameter parameter file not found " + configFilePathSource;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, mRetData.CloseoutMsg);
 					mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 					return false;
 				}
@@ -826,10 +823,8 @@ namespace DatasetQualityPlugin
 				File.Copy(configFilePathSource, configFilePathTarget, true);
 
 				// Copy the .Raw file to the working directory
-				if (m_DebugLevel >= 4)
-				{
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying the .Raw file from " + dataFilePathRemote);
-				}
+				// This message is logged if m_DebugLevel == 5
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying the .Raw file from " + dataFilePathRemote);
 
 				var dataFilePathLocal = Path.Combine(m_WorkDir, Path.GetFileName(dataFilePathRemote));
 
@@ -847,7 +842,7 @@ namespace DatasetQualityPlugin
 
 				// Run Quameter
 				mRetData.CloseoutMsg = string.Empty;
-                var bSuccess = RunQuameter(fiQuameter, Path.GetFileName(dataFilePathLocal), QUAMETER_IDFREE_METRICS_FILE, ignoreQuameterFailure, instrumentName);
+                var bSuccess = RunQuameter(fiQuameter, Path.GetFileName(dataFilePathLocal), QUAMETER_IDFREE_METRICS_FILE, ignoreQuameterFailure, instrumentName, configFilePathTarget);
 
 				if (!bSuccess)
 				{                   
@@ -998,14 +993,22 @@ namespace DatasetQualityPlugin
             string dataFileName, 
             string metricsOutputFileName,
             bool ignoreQuameterFailure, 
-            string instrumentName)
+            string instrumentName,
+            string configFilePath)
 		{
 			clsRunDosProgram cmdRunner = null;
 			try
 			{
 				// Construct the command line arguments
 				// Always use "cpus 1" since it guarantees that the metrics will always be written out in the same order
-				var CmdStrQuameter = clsConversion.PossiblyQuotePath(dataFileName) + " -MetricsType idfree -OutputFilepath " + clsConversion.PossiblyQuotePath(metricsOutputFileName) + " -cpus 1";
+			    var cmdStrQuameter = new StringBuilder();
+
+			    cmdStrQuameter.Append(clsConversion.PossiblyQuotePath(dataFileName));
+                cmdStrQuameter.Append(" -MetricsType idfree");
+                cmdStrQuameter.Append(" -cfg " + clsConversion.PossiblyQuotePath(configFilePath));
+                cmdStrQuameter.Append(" -OutputFilepath " + clsConversion.PossiblyQuotePath(metricsOutputFileName));
+                cmdStrQuameter.Append(" -cpus 1");
+			    cmdStrQuameter.Append(" -dump");
 
 				cmdRunner = new clsRunDosProgram(m_WorkDir);
 				mQuameterStartTime = DateTime.UtcNow;
@@ -1022,14 +1025,15 @@ namespace DatasetQualityPlugin
 				// Update the Exe path to point to the RunProgram batch file; update CmdStr to be empty
 				var sExePath = Path.Combine(m_WorkDir, sBatchFileName);
 				var cmdStr = string.Empty;
-			    string batchCommand;
 
-				const string sConsoleOutputFileName = QUAMETER_CONSOLE_OUTPUT_FILE;
+			    const string sConsoleOutputFileName = QUAMETER_CONSOLE_OUTPUT_FILE;
 
 				// Create the batch file
 				using (var swBatchFile = new StreamWriter(new FileStream(sExePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
 				{
-				    batchCommand = fiQuameter.FullName + " " + CmdStrQuameter + " > " + sConsoleOutputFileName + " 2>&1";
+                    var batchCommand = fiQuameter.FullName + " " + cmdStrQuameter + " > " + sConsoleOutputFileName + " 2>&1";
+
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Creating " + sBatchFileName + " with: " + batchCommand);
 					swBatchFile.WriteLine(batchCommand);
 				}
 
@@ -1066,16 +1070,12 @@ namespace DatasetQualityPlugin
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to Quameter failed (but exit code is 0)");
 					}
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, batchCommand);
-                    
 					mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 					return false;
 				}
-				
-				if (m_DebugLevel >= 4)
-				{
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Quameter Complete");
-				}				
+
+                // This message is logged if m_DebugLevel == 5
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Quameter Complete");
 
 				System.Threading.Thread.Sleep(100);
 
@@ -1126,8 +1126,10 @@ namespace DatasetQualityPlugin
 		/// <param name="taskParams">Parameters for the assigned task</param>
 		/// <param name="statusTools">Tools for status reporting</param>
 		public override void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
-		{
+		{            
 			var msg = "Starting clsPluginMain.Setup()";
+            
+            // This message is logged if m_DebugLevel == 5
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 			base.Setup(mgrParams, taskParams, statusTools);
@@ -1146,6 +1148,7 @@ namespace DatasetQualityPlugin
 			var sToolVersionInfo = string.Empty;
 			var ioAppFileInfo = new FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
 
+            // This message is logged if m_DebugLevel == 5
 		    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
 
 			// Lookup the version of the Capture tool plugin
@@ -1224,6 +1227,7 @@ namespace DatasetQualityPlugin
 			if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalSeconds >= 300)
 			{
 				mLastStatusUpdate = DateTime.UtcNow;
+                // This message is logged if m_DebugLevel == 5
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Quameter running; " + DateTime.UtcNow.Subtract(mQuameterStartTime).TotalMinutes + " minutes elapsed");
 			}
 		}
