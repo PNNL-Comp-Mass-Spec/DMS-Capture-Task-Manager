@@ -30,6 +30,9 @@ namespace CaptureTaskManager
 
         public const string DB_LOGGER_MGR_CONTROL = "MgrControlDbDefinedAppender";
         public const string DB_LOGGER_NO_MGR_CONTROL_PARAMS = "DbAppenderBeforeMgrControlParams";
+
+        private const string LOG_FILE_APPENDER = "FileAppender";
+
         #endregion
 
         #region "Enums"
@@ -55,14 +58,31 @@ namespace CaptureTaskManager
         private static readonly ILog m_DbLogger = LogManager.GetLogger("DbLogger");
         private static readonly ILog m_SysLogger = LogManager.GetLogger("SysLogger");
         private static readonly ILog m_FtpFileLogger = LogManager.GetLogger("FtpFileLogger");
+
         private static string m_FileDate;
         private static string m_BaseFileName;
         private static FileAppender m_FileAppender;
+		
         private static RollingFileAppender m_FtpLogFileAppender;
         private static bool m_FtpLogEnabled;
         #endregion
 
         #region "Properties"
+
+        /// <summary>
+        /// File path for the current log file used by the FileAppender
+        /// </summary>
+        public static string CurrentFileAppenderPath 
+        {
+            get
+            {
+                if (m_FileAppender == null || string.IsNullOrEmpty(m_FileAppender.File))
+                    return string.Empty;
+
+                return m_FileAppender.File;
+            }
+        }
+
         /// <summary>
         /// Tells calling program file debug status
         /// </summary>
@@ -206,7 +226,7 @@ namespace CaptureTaskManager
         public static void ChangeLogFileName()
         {
             //Get a list of appenders
-            var appendList = FindAppenders("FileAppender");
+            var appendList = FindAppenders(LOG_FILE_APPENDER);
             if (appendList == null)
             {
                 WriteLog(LoggerTypes.LogSystem, LogLevels.WARN, "Unable to change file name. No appender found");
@@ -325,7 +345,7 @@ namespace CaptureTaskManager
 
             var returnAppender = new FileAppender
             {
-                Name = "FileAppender",
+                Name = LOG_FILE_APPENDER,
                 File = m_BaseFileName + "_" + m_FileDate + ".txt",
                 AppendToFile = true,
                 Layout = layout
