@@ -29,6 +29,11 @@ namespace Pacifica.DMS_Metadata
         /// Error message thrown when the dataset's instrument operator does not have an EUS person ID
         /// </summary>
         public const string UNDEFINED_EUS_OPERATOR_ID = "Operator does not have an EUS person ID in DMS";
+        
+        /// <summary>
+        /// URL of the EUS website
+        /// </summary>
+        public const string EUS_PORTAL_URL = "https://eusi.emsl.pnl.gov/Portal/";
 
         /// <summary>
         /// Object that tracks the upload details, including the files to upload
@@ -528,11 +533,12 @@ namespace Pacifica.DMS_Metadata
 
             if (uploadMetadata.EUSOperatorID == 0)
             {
+                var jobNumber = Utilities.GetDictionaryValue(taskParams, "Job", string.Empty);
 
                 var errorMessage =
                     UNDEFINED_EUS_OPERATOR_ID + ". " +
-                    operatorUsername + " needs to login at https://eusi.emsl.pnl.gov/Portal/ to be assigned an ID, " +
-                    "afterwhich DMS needs to be updated";
+                    operatorUsername + " needs to login at " + EUS_PORTAL_URL + " to be assigned an ID, " +
+                    "then DMS needs to update T_EUS_Users (occurs daily via UpdateEUSUsersFromEUSImports), then the job parameters must be updated with: EXEC UpdateParametersForJob " + jobNumber;
 
                 throw new Exception(errorMessage);
             }

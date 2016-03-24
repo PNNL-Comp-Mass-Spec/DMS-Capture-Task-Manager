@@ -249,7 +249,9 @@ namespace DatasetArchivePlugin
         {
             bool success;
             var dtStartTime = DateTime.UtcNow;
+            
             MyEMSLUploader myEMSLUL = null;
+            var operatorUsername = "??";
 
             allowRetry = true;
 
@@ -270,6 +272,9 @@ namespace DatasetArchivePlugin
                 myEMSLUL.MetadataDefinedEvent += myEMSLUL_MetadataDefinedEvent;
 
                 m_TaskParams.AddAdditionalParameter(MyEMSLUploader.RECURSIVE_UPLOAD, recurse.ToString());
+
+                // Cache the operator name; used in the exception handler below
+                operatorUsername = m_TaskParams.GetParam("Operator_PRN", "Unknown_Operator");
 
                 string statusURL;
 
@@ -333,6 +338,13 @@ namespace DatasetArchivePlugin
 
                 if (ex.Message.Contains(DMSMetadataObject.UNDEFINED_EUS_OPERATOR_ID))
                 {
+                    if (ex.Message.Contains(DMSMetadataObject.UNDEFINED_EUS_OPERATOR_ID))
+
+                        m_ErrMsg += "; operator not defined in EUS. " +
+                            "Have " + operatorUsername + " login to " + DMSMetadataObject.EUS_PORTAL_URL + " " +
+                            "then wait for T_EUS_Users to update, " + 
+                            "then update job parameters using SP UpdateParametersForJob";
+
                     // Do not retry the upload; it will fail again due to the same error
                     allowRetry = false;
                     LogOperationFailed(m_DatasetName, ex.Message, true);
