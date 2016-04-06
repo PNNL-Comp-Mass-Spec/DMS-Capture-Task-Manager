@@ -155,6 +155,56 @@ namespace CaptureToolPlugin
 		#endregion
 
 		#region "Methods"
+        
+        /// <summary>
+        /// Look for files in the dataset folder with spaces in the name
+        /// If the filename otherwise matches the dataset, rename it
+        /// </summary>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="datasetFolderPath">Dataset folder to search</param>
+        private void AutoFixFilesWithSpaces(string datasetName, string datasetFolderPath)
+        {
+            var datasetFolder = new DirectoryInfo(datasetFolderPath);
+            var candidateFiles = datasetFolder.GetFileSystemInfos("* *", SearchOption.AllDirectories);
+
+            foreach (var datasetFile in candidateFiles)
+            {
+                var updatedFileName = AutoFixSpaces(datasetName, datasetFile.Name);
+
+                if (string.Equals(datasetFile.Name, updatedFileName, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    continue;
+                }
+
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, 
+                    "Renaming '" + datasetFile.Name + "' to '" + updatedFileName + "' to remove spaces");
+
+                File.Move(datasetFile.FullName, Path.Combine(datasetFolderPath, updatedFileName));
+            }
+        }
+
+
+        /// <summary>
+        /// If the filename contains spaces, replace them with underscores and compare to datasetName
+        /// If a match, return the updated filename, otherwise return the original filename
+        /// </summary>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="fileName">File name</param>
+        /// <returns>Optimal filename to use</returns>
+        private string AutoFixSpaces(string datasetName, string fileName)
+        {
+            if (fileName.IndexOf(' ') < 0)
+                return fileName;
+
+            var updatedFileName = fileName.Replace(' ', '_');
+
+            if (string.Equals(Path.GetFileNameWithoutExtension(updatedFileName), datasetName, StringComparison.InvariantCultureIgnoreCase))
+            {
+                return updatedFileName;
+            }
+
+            return fileName;
+        }
 
 		public void DetachEvents()
 		{
@@ -974,7 +1024,7 @@ namespace CaptureToolPlugin
 		/// </summary>
 		/// <param name="taskParams">Enum indicating status of task</param>
 		/// <param name="retData">Return data class; update CloseoutMsg or EvalMsg with text to store in T_Job_Step_Params</param>
-		/// <returns></returns>
+		/// <returns>True if success or false if an error.  retData includes addition details on errors</returns>
 		public bool DoOperation(ITaskParams taskParams, ref clsToolReturnData retData)
 		{
 			var datasetName = taskParams.GetParam("Dataset");
@@ -997,15 +1047,29 @@ namespace CaptureToolPlugin
 			var maxFolderCountToAllowResume = 0;
 
             if ((computerName.ToUpper() == "MONROE3") && datasetName == "2014_10_14_SRFAI-20ppm_Neg_15T_TOF0p65_IAT0p05_144scans_8M_000001")
-			{
+            {
                 // Override sourceVol, sourcePath, and m_UseBioNet when processing 2014_10_14_SRFAI-20ppm_Neg_15T_TOF0p65_IAT0p05_144scans_8M_000001 on Monroe3
-				sourceVol = @"\\protoapps\";
-				sourcePath = @"userdata\Matt\";
-				m_UseBioNet = false;
-				m_SleepInterval = 2;
-			}
+                sourceVol = @"\\protoapps\";
+                sourcePath = @"userdata\Matt\";
+                m_UseBioNet = false;
+                m_SleepInterval = 2;
+            }
 
-			// Determine when connector class will be used to connect to Bionet
+
+            // Confirm that the dataset name has no spaces
+		    if (datasetName.IndexOf(' ') >= 0)
+		    {
+                retData.CloseoutMsg = "Dataset name contains a space";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, retData.CloseoutMsg);
+                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                return false;
+		    }
+            
+            // Confirm that the dataset name has no invalid characters
+		    if (NameHasInvalidCharacter(datasetName, "Dataset name", true, ref retData))
+		        return false;
+
+			// Determine whether the connector class should be used to connect to Bionet
 			// This is defined by manager parameter ShareConnectorType
             // Default in October 2014 is PRISM
 			if (shareConnectorType.ToLower() == "dotnet")
@@ -1077,17 +1141,27 @@ namespace CaptureToolPlugin
             var storageFolderPath = Path.Combine(tempVol, storagePath);	// Directory on storage server where dataset folder goes
 			string datasetFolderPath;
 
+            // Confirm that the storage folder has no invalid characters
+            if (NameHasInvalidCharacter(storageFolderPath, "Storage folder path", false, ref retData))
+                return false;
+
 			// If Storage_Folder_Name <> "", use it in target folder path. Otherwise use dataset name
-			if (taskParams.GetParam("Storage_Folder_Name") != "")
+			if (!string.IsNullOrWhiteSpace(taskParams.GetParam("Storage_Folder_Name")))
 			{
-				datasetFolderPath = Path.Combine(storageFolderPath, taskParams.GetParam("Storage_Folder_Name")); // HPLC run folder storage path
+                // HPLC run folder storage path
+				datasetFolderPath = Path.Combine(storageFolderPath, taskParams.GetParam("Storage_Folder_Name"));
 			}
 			else
 			{
-                datasetFolderPath = Path.Combine(storageFolderPath, datasetName);	// Dataset folder complete path
+                // Dataset folder complete path
+                datasetFolderPath = Path.Combine(storageFolderPath, datasetName);
 			}
 
-			// Verify that the storage folder on storage server does exist; e.g. \\proto-9\VOrbiETD02\2011_2
+            // Confirm that the target dataset folder path has no invalid characters
+            if (NameHasInvalidCharacter(datasetFolderPath, "Dataset folder path", false, ref retData))
+                return false;
+
+			// Verify that the storage folder on the storage server exists; e.g. \\proto-9\VOrbiETD02\2011_2
 			if (!ValidateFolderPath(storageFolderPath))
 			{
 				msg = "Storage folder '" + storageFolderPath + "' does not exist; will auto-create";
@@ -1105,7 +1179,6 @@ namespace CaptureToolPlugin
 					msg = retData.CloseoutMsg + ": " + storageFolderPath;
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 
-					PossiblyStoreErrorMessage(ref retData);
 					if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
 						retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 
@@ -1113,7 +1186,7 @@ namespace CaptureToolPlugin
 				}
 			}
 
-			// Verify dataset folder path doesn't already exist or is empty
+			// Verify that dataset folder path doesn't already exist or is empty
 			// Example: \\proto-9\VOrbiETD02\2011_2\PTO_Na_iTRAQ_2_17May11_Owl_11-05-09
 			if (ValidateFolderPath(datasetFolderPath))
 			{
@@ -1136,7 +1209,11 @@ namespace CaptureToolPlugin
 			// Construct the path to the dataset on the instrument
 			// Determine if source dataset exists, and if it is a file or a folder
             var sourceFolderPath = Path.Combine(sourceVol, sourcePath);
-		            
+
+            // Confirm that the source folder has no invalid characters
+            if (NameHasInvalidCharacter(sourceFolderPath, "Source folder path", false, ref retData))
+                return false;
+        
 			// Connect to Bionet if necessary
 			if (m_UseBioNet)
 			{
@@ -1171,8 +1248,13 @@ namespace CaptureToolPlugin
             if (!string.IsNullOrWhiteSpace(captureSubfolder))
                 sourceFolderPath = Path.Combine(sourceFolderPath, captureSubfolder);
 
+            // Confirm that the source folder has no invalid characters
+            if (NameHasInvalidCharacter(sourceFolderPath, "Source folder path with captureSubfolder", false, ref retData))
+                return false;
+
 			// If Source_Folder_Name is non-blank, use it. Otherwise use dataset name
 			var sSourceFolderName = taskParams.GetParam("Source_Folder_Name");
+
 
 		    if (string.IsNullOrWhiteSpace(sSourceFolderName))
 		    {
@@ -1181,7 +1263,11 @@ namespace CaptureToolPlugin
 		    }
 		    else
 		    {
-		        datasetInfo = GetRawDSType(sourceFolderPath, sSourceFolderName, instrumentClass);
+                // Confirm that the source folder name no invalid characters
+                if (NameHasInvalidCharacter(sSourceFolderName, "Job param Source_Folder_Name", true, ref retData))
+                    return false;
+
+                datasetInfo = GetRawDSType(sourceFolderPath, sSourceFolderName, instrumentClass);
 		        sourceType = datasetInfo.DatasetType;
 		        datasetInfo.DatasetName = datasetName;
 		    }
@@ -1311,7 +1397,7 @@ namespace CaptureToolPlugin
             out string msg,
             ref clsToolReturnData retData,
             string datasetName,
-            List<string> fileNames,
+            ICollection<string> fileNames,
             string sourceFolderPath,
             string datasetFolderPath,
             bool bCopyWithResume)
@@ -1371,6 +1457,7 @@ namespace CaptureToolPlugin
             var bSuccess = false;
 
             // Copy the data file (or files) to the dataset folder
+            // If any of the source files have a space in the name, auto-replace it with an underscore if doing so will match the dataset name
             try
             {
 
@@ -1378,7 +1465,15 @@ namespace CaptureToolPlugin
                 {
                     var sourceFilePath = Path.Combine(sourceFolderPath, fileName);
 
-                    var targetFilePath = Path.Combine(datasetFolderPath, fileName);
+                    var targetFilePath = Path.Combine(datasetFolderPath, AutoFixSpaces(datasetName, fileName));
+
+                    var sourceFileName = Path.GetFileName(sourceFilePath);
+                    var targetFileName = Path.GetFileName(targetFilePath);
+                    if (!string.Equals(sourceFileName, targetFileName, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                                             "Renaming '" + sourceFileName + "' to '" + targetFileName + "' to remove spaces");
+                    }
 
                     if (bCopyWithResume)
                     {
@@ -1700,6 +1795,8 @@ namespace CaptureToolPlugin
 				{
 					msg = "Copied folder " + copySourceDir + " to " + copyTargetDir + GetConnectionDescription();
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+
+                    AutoFixFilesWithSpaces(datasetInfo.DatasetName, datasetFolderPath);
 				}
 				else
 				{
@@ -1932,6 +2029,8 @@ namespace CaptureToolPlugin
 					msg = "Copied folder " + diSourceDir.FullName + " to " +
 						Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName) + GetConnectionDescription();
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+
+                    AutoFixFilesWithSpaces(datasetInfo.DatasetName, datasetFolderPath);
 				}
                 else
 				{
@@ -1963,7 +2062,7 @@ namespace CaptureToolPlugin
 			
 		}
 
-        private void CaptureBrukerImaging(out string msg, ref clsToolReturnData retData, clsDatasetInfo datasetInfo, string sourceFolderPath, string datasetFolderPath, bool bCopyWithResume)
+	    private void CaptureBrukerImaging(out string msg, ref clsToolReturnData retData, clsDatasetInfo datasetInfo, string sourceFolderPath, string datasetFolderPath, bool bCopyWithResume)
 		{
 			// Dataset found; it's a Bruker imaging folder
 
@@ -2036,6 +2135,8 @@ namespace CaptureToolPlugin
 					msg = "Copied files in folder " + copySourceDir + " to " +
 						Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName) + GetConnectionDescription();
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+
+                    AutoFixFilesWithSpaces(datasetInfo.DatasetName, datasetFolderPath);
 				}
 				else
 				{
@@ -2352,6 +2453,31 @@ namespace CaptureToolPlugin
 				retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 		}
+
+        /// <summary>
+        /// Return true if the file or path has any invalid characters
+        /// </summary>
+        /// <param name="fileOrPath">Filename or full file/folder path</param>
+        /// <param name="itemDescription">Description of fileOrPath; included in CloseoutMsg if there is a problem</param>
+        /// <param name="isFile">True for a file; false for a path</param>
+        /// <param name="retData">Return data object</param>
+        /// <returns>True if an error; false if no problems</returns>
+        private static bool NameHasInvalidCharacter(string fileOrPath, string itemDescription, bool isFile, ref clsToolReturnData retData)
+        {
+            var invalidCharIndex = fileOrPath.IndexOfAny(isFile ? Path.GetInvalidFileNameChars() : Path.GetInvalidPathChars());
+
+            if (invalidCharIndex < 0)
+            {
+                return false;
+            }
+
+            retData.CloseoutMsg = string.IsNullOrWhiteSpace(itemDescription) ? fileOrPath : itemDescription;
+            retData.CloseoutMsg += " contains an invalid character at index " + invalidCharIndex + ": " + fileOrPath[invalidCharIndex];
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, retData.CloseoutMsg);
+            retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+            return true;
+        }
 
 		/// <summary>
 		/// Store m_ErrorMessage in retData.CloseoutMsg if an error exists yet retData.CloseoutMsg is empty
