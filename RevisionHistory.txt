@@ -1,5 +1,8 @@
 Capture Task Manager History
 
+Version 1.2.5959; April 25, 2016
+	- Update to .NET 4.5.1
+
 Version 1.2.5618; May 20, 2015
 	- Updated to AnyCPU
 
