@@ -69,12 +69,14 @@ namespace SrcFileRenamePlugin
 		#endregion
 
 		#region "Methods"
-		/// <summary>
-		/// Perform a single rename operation
-		/// </summary>
-		/// <param name="taskParams">Enum indicating status of task</param>
-		/// <returns></returns>
-		public EnumCloseOutType DoOperation(ITaskParams taskParams)
+
+	    /// <summary>
+	    /// Perform a single rename operation
+	    /// </summary>
+	    /// <param name="taskParams">Enum indicating status of task</param>
+	    /// <param name="errorMessage">Output: error message</param>
+	    /// <returns></returns>
+	    public EnumCloseOutType DoOperation(ITaskParams taskParams, out string errorMessage)
 		{
             var datasetName = taskParams.GetParam("Dataset");
             var sourceVol = taskParams.GetParam("Source_Vol");						// Example: \\exact04.bionet\
@@ -82,8 +84,10 @@ namespace SrcFileRenamePlugin
             var captureSubfolder = taskParams.GetParam("Capture_Subfolder");		// Typically an empty string, but could be a partial path like: "CapDev" or "Smith\2014"
             var pwd = DecodePassword(m_Pwd);
 
-		    var msg = "Started clsRenameeOps.DoOperation()";
+		    var msg = "Started clsRenameOps.DoOperation()";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+
+	        errorMessage = string.Empty;
 
 			// Set up paths
 
@@ -117,6 +121,8 @@ namespace SrcFileRenamePlugin
 						msg += "; the password may need to be reset";
 
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+
+				    errorMessage = "Error connecting to " + sourceFolderPath + " as user " + m_UserName + " using 'secfso'";
 					return EnumCloseOutType.CLOSEOUT_FAILED;
 				}
 			}
@@ -135,12 +141,14 @@ namespace SrcFileRenamePlugin
 
 		    if (diSourceFolder.Exists)
 		    {
-                countRenamed = FindFilesToRename(datasetName, diSourceFolder);
+                countRenamed = FindFilesToRename(datasetName, diSourceFolder, out errorMessage);
 		    }
 		    else
 		    {
 		        msg = "Instrument folder not found for dataset " + datasetName + ": " + sourceFolderPath;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+
+                errorMessage = "Remote folder not found: " + sourceFolderPath;
                 return EnumCloseOutType.CLOSEOUT_FAILED;
 		    }
 		    
@@ -149,18 +157,24 @@ namespace SrcFileRenamePlugin
                 DisconnectShare(ref m_ShareConnector, out m_Connected);
 
             if (countRenamed == 0)
-			{
-				msg = "Dataset " + datasetName + ": data file and/or folder not found to rename on the instrument";
+            {
+                if (string.IsNullOrEmpty(errorMessage))
+                    errorMessage = "data file and/or folder not found on the instrument; cannot rename";
+
+                msg = "Dataset " + datasetName + ":" + errorMessage;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+			    
 				return EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 		
             return EnumCloseOutType.CLOSEOUT_SUCCESS;
 		}
-	
-        private int FindFilesToRename(string dataset, DirectoryInfo diSourceFolder)
-	    {
-            // Construct list of dataset names to check for
+
+        private int FindFilesToRename(string dataset, DirectoryInfo diSourceFolder, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+
+            // Construct a list of dataset names to check for
             // The first thing we check for is the official dataset name
             // We next check for various things that operators rename the datasets to
             var lstFileNamesToCheck = new List<string>
@@ -168,6 +182,10 @@ namespace SrcFileRenamePlugin
 			    dataset,
                 dataset + "-bad",
 			    dataset + "_bad",
+                dataset + "-corrupt",
+                dataset + "_corrupt",
+                dataset + "-corrupted",
+                dataset + "_corrupted",
                 dataset + "-chromooff",
                 dataset + "-flatline",
                 dataset + "-LCFroze",
@@ -231,13 +249,14 @@ namespace SrcFileRenamePlugin
                 {
                     var msg = "Skipping dataset " + dataset + " since data file and/or folder already renamed to " + sDatasetNameBase;
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                    countRenamed++;
                     break;
                 }
 
                 // Rename any files found
                 foreach (var fileToRename in matchedFiles)
                 {
-                    if (RenameInstFile(fileToRename))
+                    if (RenameInstFile(fileToRename, out errorMessage))
                     {
                         countRenamed++;
                         continue;
@@ -249,7 +268,7 @@ namespace SrcFileRenamePlugin
                 // Rename any folders found
                 foreach (var folderToRename in matchedFolders)
                 {
-                    if (RenameInstFolder(folderToRename))
+                    if (RenameInstFolder(folderToRename, out errorMessage))
                     {
                         countRenamed++;
                         continue;
@@ -265,29 +284,38 @@ namespace SrcFileRenamePlugin
 	    }
 
 	    /// <summary>
-		/// Prefixes specified file name with "x_"
-		/// </summary>
-        /// <param name="fiFile">File to be renamed</param>
-		/// <returns>TRUE for success, FALSE for failure</returns>
-		private bool RenameInstFile(FileInfo fiFile)
+	    /// Prefixes specified file name with "x_"
+	    /// </summary>
+	    /// <param name="fiFile">File to be renamed</param>
+	    /// <param name="errorMessage">Output: error message</param>
+	    /// <returns>TRUE for success, FALSE for failure</returns>
+	    private bool RenameInstFile(FileInfo fiFile, out string errorMessage)
 		{
-			//Rename dataset file on instrument
+			// Rename dataset file on instrument
             var newPath = "??";
+            errorMessage = string.Empty;
+
 			try
 			{
-			    if (!fiFile.Exists)
+			    if (!fiFile.Exists || fiFile.DirectoryName == null)
 			        return true;
 
-                newPath = Path.Combine(fiFile.DirectoryName, "x_" + fiFile.Name);
-                fiFile.MoveTo(newPath);
-                m_Msg = "Renamed file to " + fiFile.FullName;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
-				return true;
+			    newPath = Path.Combine(fiFile.DirectoryName, "x_" + fiFile.Name);
+			    fiFile.MoveTo(newPath);
+			    m_Msg = "Renamed file to " + fiFile.FullName;
+			    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
+			    return true;
 			}
 			catch (Exception ex)
 			{
                 m_Msg = "Error renaming file '" + fiFile.FullName + "' to '" + newPath + "'";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg, ex);
+
+                if (ex.Message.Contains("Access to the path") && ex.Message.Contains("is denied"))
+                    errorMessage = "Error renaming file: access is denied";
+                else
+                    errorMessage = "Error renaming file: " + ex.GetType();
+
 				return false;
 			}
 		}
@@ -296,14 +324,17 @@ namespace SrcFileRenamePlugin
         /// Prefixes specified folder name with "x_"
         /// </summary>
         /// <param name="diFolder">Folder to be renamed</param>
+        /// <param name="errorMessage">Output: error message</param>
         /// <returns>TRUE for success, FALSE for failure</returns>
-        private bool RenameInstFolder(DirectoryInfo diFolder)
+        private bool RenameInstFolder(DirectoryInfo diFolder, out string errorMessage)
         {
-            //Rename dataset folder on instrument
+            // Rename dataset folder on instrument
             var newPath = "??";
+            errorMessage = string.Empty;
+
             try
             {
-                if (!diFolder.Exists)
+                if (!diFolder.Exists || diFolder.Parent == null)
                     return true;
 
                 newPath = Path.Combine(diFolder.Parent.FullName, "x_" + diFolder.Name);
@@ -316,6 +347,12 @@ namespace SrcFileRenamePlugin
             {
                 m_Msg = "Error renaming directory '" + diFolder.FullName + "' to '" + newPath + "'";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg, ex);
+
+                if (ex.Message.Contains("Access to the path") && ex.Message.Contains("is denied"))
+                    errorMessage = "Error renaming directory: access is denied";
+                else
+                    errorMessage = "Error renaming directory: " + ex.GetType();
+
                 return false;
             }
         }

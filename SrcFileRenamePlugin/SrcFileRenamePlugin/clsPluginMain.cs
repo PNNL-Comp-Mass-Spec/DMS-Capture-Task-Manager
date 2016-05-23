@@ -8,9 +8,6 @@
 // Last modified 11/17/2009
 //*********************************************************************************************************
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using CaptureTaskManager;
 
 namespace SrcFileRenamePlugin
@@ -21,13 +18,12 @@ namespace SrcFileRenamePlugin
 		// Main class for plugin
 		//**********************************************************************************************************
 
-		#region "Constructors"
-		public clsPluginMain()
-			: base()
-		{
-			// Does nothing at present
-		}
-		#endregion
+		// <summary>
+		// Constructor (does nothing at present)
+		// </summary>
+		// public clsPluginMain()
+		// {		
+		// }
 
 		#region "Methods"
 		/// <summary>
@@ -36,19 +32,17 @@ namespace SrcFileRenamePlugin
 		/// <returns>clsToolReturnData object containing tool operation results</returns>
 		public override clsToolReturnData RunTool()
 		{
-			string msg;
-
-			msg = "Starting SrcFileRenamePlugin.clsPluginMain.RunTool()";
+		    var msg = "Starting SrcFileRenamePlugin.clsPluginMain.RunTool()";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 			// Perform base class operations, if any
-			clsToolReturnData retData = base.RunTool();
+			var retData = base.RunTool();
 			if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED) return retData;
 
 			// Store the version info in the database
 			if (!StoreToolVersionInfo())
 			{
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
+                LogError("Aborting since StoreToolVersionInfo returned false");
 				retData.CloseoutMsg = "Error determining tool version info";
 				retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 				return retData;
@@ -58,7 +52,7 @@ namespace SrcFileRenamePlugin
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 
 			// Determine if instrument is on Bionet
-			string capMethod = m_TaskParams.GetParam("Method");
+			var capMethod = m_TaskParams.GetParam("Method");
 			bool useBionet;
 			if (capMethod.ToLower() == "secfso")
 			{
@@ -70,13 +64,18 @@ namespace SrcFileRenamePlugin
 			}
 
 			// Create the object that will perform capture operation
-			clsRenameOps renameOpTool = new clsRenameOps(m_MgrParams, useBionet);
-			try
+			var renameOpTool = new clsRenameOps(m_MgrParams, useBionet);
+
+		    try
 			{
 				msg = "clsPluginMain.RunTool(): Starting rename operation";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
-				retData.CloseoutType = renameOpTool.DoOperation(m_TaskParams);
+			    string errorMessage;
+			    retData.CloseoutType = renameOpTool.DoOperation(m_TaskParams, out errorMessage);
+
+			    if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
+			        retData.CloseoutMsg = errorMessage;
 
 				msg = "clsPluginMain.RunTool(): Completed rename operation";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
@@ -102,7 +101,7 @@ namespace SrcFileRenamePlugin
 		/// <param name="statusTools">Tools for status reporting</param>
 		public override void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
 		{
-			string msg = "Starting clsPluginMain.Setup()";
+			var msg = "Starting clsPluginMain.Setup()";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 			base.Setup(mgrParams, taskParams, statusTools);
@@ -117,41 +116,46 @@ namespace SrcFileRenamePlugin
 		/// <remarks></remarks>
 		protected bool StoreToolVersionInfo()
 		{
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
 
-			string strToolVersionInfo = string.Empty;
-			System.IO.FileInfo ioAppFileInfo = new System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
-			bool bSuccess;
-
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+			var strToolVersionInfo = string.Empty;
+			var ioAppFileInfo = new System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
+		    if (ioAppFileInfo.DirectoryName == null)
+		    {
+		        LogError("Unable to determine the directory name from path " +
+		                 System.Reflection.Assembly.GetExecutingAssembly().Location);                
+                return false;
+		    }
 
 			// Lookup the version of the Source File Rename plugin
-			string strPluginPath = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "SrcFileRenamePlugin.dll");
-			bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strPluginPath);
+			var strPluginPath = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "SrcFileRenamePlugin.dll");
+			var bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strPluginPath);
 			if (!bSuccess)
 				return false;
 
 			// Lookup the version of the Capture task manager
-			string strCTMPath = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "CaptureTaskManager.exe");
-			bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strCTMPath);
+			var strCTMPath = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "CaptureTaskManager.exe");
+			bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strCTMPath);
 			if (!bSuccess)
 				return false;
 
 			// Store path to SrcFileRenamePlugin.dll in ioToolFiles
-			System.Collections.Generic.List<System.IO.FileInfo> ioToolFiles = new System.Collections.Generic.List<System.IO.FileInfo>();
-			ioToolFiles.Add(new System.IO.FileInfo(strPluginPath));
+		    var ioToolFiles = new System.Collections.Generic.List<System.IO.FileInfo> {
+                new System.IO.FileInfo(strPluginPath)
+            };
 
-			try
+		    try
 			{
-				return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, false);
+				return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, false);
 			}
-			catch (System.Exception ex)
+			catch (Exception ex)
 			{
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
 				return false;
 			}
 
 		}
 
 		#endregion
-	}	// End class
-}	// End namespace
+	}
+}
