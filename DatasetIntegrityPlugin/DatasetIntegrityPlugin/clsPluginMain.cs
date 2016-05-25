@@ -76,8 +76,45 @@ namespace DatasetIntegrityPlugin
             if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
                 return mRetData;
 
+            var instrumentName = m_TaskParams.GetParam("Instrument_Name");
+            var instClassName = m_TaskParams.GetParam("Instrument_Class");
+            var instrumentClass = clsInstrumentClassInfo.GetInstrumentClass(instClassName);
+
+            var agilentToUimfConverterPath = string.Empty;
+            var openChromProgPath = string.Empty;
+
+            // Check whether we need to convert from a .D folder to a .UIMF file
+            var agilentDFolderToUimfConversionRequired = (instrumentName.StartsWith("IMS08") || instrumentName.StartsWith("IMS09"));
+
+            if (agilentDFolderToUimfConversionRequired)
+            {
+                agilentToUimfConverterPath = GetAgilentToUIMFProgPath();
+
+                if (!File.Exists(agilentToUimfConverterPath))
+                {
+                    mRetData.CloseoutMsg = "AgilentToUIMFConverter not found at " + agilentToUimfConverterPath;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg);
+                    mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    return mRetData;
+                }
+            }
+
+            // Check whether we need to convert from a .D folder to a .CDF file
+            if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Agilent_Ion_Trap)
+            {
+                openChromProgPath = GetOpenChromProgPath();
+
+                if (!File.Exists(openChromProgPath))
+                {
+                    mRetData.CloseoutMsg = "OpenChrom not found at " + openChromProgPath;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg);
+                    mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    return mRetData;
+                }
+            }
+
             // Store the version info in the database
-            if (!StoreToolVersionInfo())
+            if (!StoreToolVersionInfo(agilentToUimfConverterPath, openChromProgPath))
             {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
                 mRetData.CloseoutMsg = "Error determining tool version info";
@@ -95,13 +132,10 @@ namespace DatasetIntegrityPlugin
             string dataFileNamePath;
 
             // Select which tests will be performed based on instrument class
-            var instClassName = m_TaskParams.GetParam("Instrument_Class");
-            var instrumentName = m_TaskParams.GetParam("Instrument_Name");
 
             msg = "Instrument class: " + instClassName;
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-
-            var instrumentClass = clsInstrumentClassInfo.GetInstrumentClass(instClassName);
+            
             if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Unknown)
             {
                 msg = "Instrument class not recognized: " + instClassName;
@@ -133,10 +167,10 @@ namespace DatasetIntegrityPlugin
                     mRetData.CloseoutType = TestTripleQuadFile(dataFileNamePath);
                     break;
                 case clsInstrumentClassInfo.eInstrumentClass.IMS_Agilent_TOF:
-                    if (instrumentName.StartsWith("IMS08"))
+                    if (agilentDFolderToUimfConversionRequired)
                     {
                         // Need to first convert the .d folder to a .UIMF file
-                        if (!ConvertAgilentDFolderToUIMF(datasetFolder))
+                        if (!ConvertAgilentDFolderToUIMF(datasetFolder, agilentToUimfConverterPath))
                         {
                             if (string.IsNullOrEmpty(mRetData.CloseoutMsg))
                             {
@@ -201,7 +235,7 @@ namespace DatasetIntegrityPlugin
                     {
 
                         // Convert the .d folder to a .CDF file
-                        if (!ConvertAgilentDFolderToCDF(datasetFolder))
+                        if (!ConvertAgilentDFolderToCDF(datasetFolder, openChromProgPath))
                         {
                             if (string.IsNullOrEmpty(mRetData.CloseoutMsg))
                             {
@@ -232,22 +266,10 @@ namespace DatasetIntegrityPlugin
             return mRetData;
         }	// End sub
 
-        private bool ConvertAgilentDFolderToCDF(string datasetFolderPath)
+        private bool ConvertAgilentDFolderToCDF(string datasetFolderPath, string exePath)
         {
-            clsRunDosProgram CmdRunner = null;
-
             try
             {
-
-                var exePath = m_MgrParams.GetParam("OpenChromProgLoc");
-                exePath = Path.Combine(exePath, "openchrom.exe");
-
-                if (!File.Exists(exePath))
-                {
-                    mRetData.CloseoutMsg = "OpenChrom.exe not found at " + exePath;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg);
-                    return false;
-                }
 
                 // Make sure the CDF plugin is installed and that the SerialKey is defined
                 if (!ValidateCDFPlugin())
@@ -282,25 +304,25 @@ namespace DatasetIntegrityPlugin
                 var cmdStr = "-cli -batchfile " + batchJobFilePath;
                 var consoleOutputFilePath = Path.Combine(m_WorkDir, "OpenChrom_ConsoleOutput_" + mgrName + ".txt");
 
-                CmdRunner = new clsRunDosProgram(m_WorkDir);
+                var cmdRunner = new clsRunDosProgram(m_WorkDir);
                 mAgilentToCDFStartTime = DateTime.UtcNow;
                 mLastStatusUpdate = DateTime.UtcNow;
 
-                AttachCmdrunnerEvents(CmdRunner);
+                AttachCmdrunnerEvents(cmdRunner);
 
-                CmdRunner.CreateNoWindow = false;
-                CmdRunner.EchoOutputToConsole = false;
-                CmdRunner.CacheStandardOutput = false;
+                cmdRunner.CreateNoWindow = false;
+                cmdRunner.EchoOutputToConsole = false;
+                cmdRunner.CacheStandardOutput = false;
 
                 // OpenChrom does not produce any console output; so no point in creating it 
-                CmdRunner.WriteConsoleOutputToFile = false;
-                CmdRunner.ConsoleOutputFilePath = consoleOutputFilePath;
+                cmdRunner.WriteConsoleOutputToFile = false;
+                cmdRunner.ConsoleOutputFilePath = consoleOutputFilePath;
 
-                var msg = "Converting .D folder to .UIMF: " + exePath + " " + cmdStr;
+                var msg = "Converting .D folder to .CDF: " + exePath + " " + cmdStr;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 
                 const int iMaxRuntimeSeconds = MAX_AGILENT_TO_CDF_RUNTIME_MINUTES * 60;
-                success = CmdRunner.RunProgram(exePath, cmdStr, "OpenChrom", true, iMaxRuntimeSeconds);
+                success = cmdRunner.RunProgram(exePath, cmdStr, "OpenChrom", true, iMaxRuntimeSeconds);
 
                 // Delete the locally cached .D folder
                 try
@@ -319,9 +341,9 @@ namespace DatasetIntegrityPlugin
                     mRetData.CloseoutMsg = "Error running OpenChrom";
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg);
 
-                    if (CmdRunner.ExitCode != 0)
+                    if (cmdRunner.ExitCode != 0)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "OpenChrom returned a non-zero exit code: " + CmdRunner.ExitCode);
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "OpenChrom returned a non-zero exit code: " + cmdRunner.ExitCode);
                     }
                     else
                     {
@@ -350,34 +372,18 @@ namespace DatasetIntegrityPlugin
             }
             catch (Exception ex)
             {
-                mRetData.CloseoutMsg = "Exception converting .D folder to a UIMF file";
+                mRetData.CloseoutMsg = "Exception converting .D folder to a CDF file";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg + ": " + ex.Message);
                 return false;
-            }
-            finally
-            {
-                DetachCmdrunnerEvents(CmdRunner);
-            }
+            }          
 
             return true;
         }
 
-        private bool ConvertAgilentDFolderToUIMF(string datasetFolderPath)
+        private bool ConvertAgilentDFolderToUIMF(string datasetFolderPath, string exePath)
         {
-            clsRunDosProgram CmdRunner = null;
-
             try
             {
-
-                var exePath = m_MgrParams.GetParam("AgilentToUIMFProgLoc");
-                exePath = Path.Combine(exePath, "AgilentToUimfConverter.exe");
-
-                if (!File.Exists(exePath))
-                {
-                    mRetData.CloseoutMsg = "AgilentToUIMFConverter not found at " + exePath;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg);
-                    return false;
-                }
 
                 var mgrName = m_MgrParams.GetParam("MgrName", "CTM");
                 var oFileTools = new clsFileTools(mgrName, m_DebugLevel);
@@ -395,23 +401,23 @@ namespace DatasetIntegrityPlugin
                 var cmdStr = clsConversion.PossiblyQuotePath(dotDFolderPathLocal) + " " + clsConversion.PossiblyQuotePath(m_WorkDir);
                 var consoleOutputFilePath = Path.Combine(m_WorkDir, "AgilentToUIMF_ConsoleOutput_" + mgrName + ".txt");
 
-                CmdRunner = new clsRunDosProgram(m_WorkDir);
+                var cmdRunner = new clsRunDosProgram(m_WorkDir);
                 mAgilentToUIMFStartTime = DateTime.UtcNow;
                 mLastStatusUpdate = DateTime.UtcNow;
 
-                AttachCmdrunnerEvents(CmdRunner);
+                AttachCmdrunnerEvents(cmdRunner);
 
-                CmdRunner.CreateNoWindow = false;
-                CmdRunner.EchoOutputToConsole = false;
-                CmdRunner.CacheStandardOutput = false;
-                CmdRunner.WriteConsoleOutputToFile = true;
-                CmdRunner.ConsoleOutputFilePath = consoleOutputFilePath;
+                cmdRunner.CreateNoWindow = false;
+                cmdRunner.EchoOutputToConsole = false;
+                cmdRunner.CacheStandardOutput = false;
+                cmdRunner.WriteConsoleOutputToFile = true;
+                cmdRunner.ConsoleOutputFilePath = consoleOutputFilePath;
 
-                var msg = "Converting .D folder to .CDF: " + exePath + " " + cmdStr;
+                var msg = "Converting .D folder to .UIMF: " + exePath + " " + cmdStr;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 
                 const int iMaxRuntimeSeconds = MAX_AGILENT_TO_UIMF_RUNTIME_MINUTES * 60;
-                success = CmdRunner.RunProgram(exePath, cmdStr, "AgilentToUIMFConverter", true, iMaxRuntimeSeconds);
+                success = cmdRunner.RunProgram(exePath, cmdStr, "AgilentToUIMFConverter", true, iMaxRuntimeSeconds);
 
                 ParseConsoleOutputFileForErrors(consoleOutputFilePath);
 
@@ -432,9 +438,9 @@ namespace DatasetIntegrityPlugin
                     mRetData.CloseoutMsg = "Error running the AgilentToUIMFConverter";
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg);
 
-                    if (CmdRunner.ExitCode != 0)
+                    if (cmdRunner.ExitCode != 0)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "AgilentToUIMFConverter returned a non-zero exit code: " + CmdRunner.ExitCode);
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "AgilentToUIMFConverter returned a non-zero exit code: " + cmdRunner.ExitCode);
                     }
                     else
                     {
@@ -463,11 +469,7 @@ namespace DatasetIntegrityPlugin
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg + ": " + ex.Message);
                 return false;
             }
-            finally
-            {
-                DetachCmdrunnerEvents(CmdRunner);
-            }
-
+         
             return true;
         }
 
@@ -729,6 +731,20 @@ namespace DatasetIntegrityPlugin
             }
 
 
+        }
+
+        private string GetAgilentToUIMFProgPath()
+        {
+            var exeName = m_MgrParams.GetParam("AgilentToUIMFProgLoc");
+            var exePath = Path.Combine(exeName, "AgilentToUimfConverter.exe");
+            return exePath;
+        }
+
+        private string GetOpenChromProgPath()
+        {
+            var exeName = m_MgrParams.GetParam("OpenChromProgLoc");
+            var exePath = Path.Combine(exeName, "openchrom.exe");
+            return exePath;
         }
 
         /// <summary>
@@ -1877,7 +1893,7 @@ namespace DatasetIntegrityPlugin
         /// Stores the tool version info in the database
         /// </summary>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfo()
+        protected bool StoreToolVersionInfo(string agilentToUimfConverterPath, string openChromProgPath)
         {
 
             var strToolVersionInfo = string.Empty;
@@ -1894,23 +1910,35 @@ namespace DatasetIntegrityPlugin
             if (!bSuccess)
                 return false;
 
-            // Lookup the version of the Capture tool plugin
+            // Lookup the version of SQLite
             var strSQLitePath = Path.Combine(ioAppFileInfo.DirectoryName, "System.Data.SQLite.dll");
             bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strSQLitePath);
             if (!bSuccess)
                 return false;
 
-            // Lookup the version of the Capture tool plugin
+            // Lookup the version of the UIMFLibrary
             var strUIMFLibraryPath = Path.Combine(ioAppFileInfo.DirectoryName, "UIMFLibrary.dll");
             bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strUIMFLibraryPath);
             if (!bSuccess)
                 return false;
+
+            if (!string.IsNullOrWhiteSpace(agilentToUimfConverterPath))
+            {
+                bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, agilentToUimfConverterPath);
+                if (!bSuccess)
+                    return false;
+            }
 
             // Store path to CaptureToolPlugin.dll in ioToolFiles
             var ioToolFiles = new List<FileInfo>
 			{
 				new FileInfo(strPluginPath)
 			};
+
+            if (!string.IsNullOrWhiteSpace(openChromProgPath))
+            {
+                ioToolFiles.Add(new FileInfo(openChromProgPath));
+            }
 
             try
             {
@@ -2032,29 +2060,12 @@ namespace DatasetIntegrityPlugin
 
         #region "Event handlers"
 
-        private void AttachCmdrunnerEvents(clsRunDosProgram CmdRunner)
+        private void AttachCmdrunnerEvents(clsRunDosProgram cmdRunner)
         {
             try
             {
-                CmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
-                CmdRunner.Timeout += CmdRunner_Timeout;
-            }
-            // ReSharper disable once EmptyGeneralCatchClause
-            catch
-            {
-                // Ignore errors here
-            }
-        }
-
-        private void DetachCmdrunnerEvents(clsRunDosProgram CmdRunner)
-        {
-            try
-            {
-                if (CmdRunner != null)
-                {
-                    CmdRunner.LoopWaiting -= CmdRunner_LoopWaiting;
-                    CmdRunner.Timeout -= CmdRunner_Timeout;
-                }
+                cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
+                cmdRunner.Timeout += CmdRunner_Timeout;
             }
             // ReSharper disable once EmptyGeneralCatchClause
             catch
@@ -2065,7 +2076,7 @@ namespace DatasetIntegrityPlugin
 
         void CmdRunner_Timeout()
         {
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CmdRunner timeout reported");
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "cmdRunner timeout reported");
         }
 
         void CmdRunner_LoopWaiting()
