@@ -1,11 +1,8 @@
-﻿
-//*********************************************************************************************************
+﻿//*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy 
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2010, Battelle Memorial Institute
 // Created 12/03/2010
-//
-// Last modified 12/03/2010
 //*********************************************************************************************************
 
 namespace CaptureToolPlugin
@@ -42,7 +39,7 @@ namespace CaptureToolPlugin
                 {
                     return 0;
                 }
-                else return m_FileList.Length;
+                return m_FileList.Length;
             }
         }
         #endregion
@@ -51,7 +48,7 @@ namespace CaptureToolPlugin
 
         public clsDatasetInfo(string datasetName)
         {
-            this.DatasetName = datasetName;
+            DatasetName = datasetName;
             m_FileList = null;
         }
 

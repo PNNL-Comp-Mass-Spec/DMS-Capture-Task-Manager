@@ -1,13 +1,12 @@
-﻿
-//*********************************************************************************************************
+﻿//*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy 
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/25/2009
-//
-// Last modified 09/25/2009
 //*********************************************************************************************************
+
 using System;
+using System.IO;
 using CaptureTaskManager;
 
 namespace CaptureToolPlugin
@@ -19,11 +18,7 @@ namespace CaptureToolPlugin
 		//**********************************************************************************************************
 
 		#region "Constructors"
-			public clsPluginMain()
-				: base()
-			{
-				// Does nothing at present
-			}	// End sub
+        // The base-class constructor is automatically called
 		#endregion
 
 		#region "Methods"
@@ -142,38 +137,48 @@ namespace CaptureToolPlugin
 			{
 
 				var strToolVersionInfo = string.Empty;
-				var ioAppFileInfo = new System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
+				var ioAppFileInfo = new FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
 
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
 
 				// Lookup the version of the Capture tool plugin
-				var strPluginPath = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "CaptureToolPlugin.dll");
-				var bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strPluginPath);
-				if (!bSuccess)
-					return false;
+			    if (ioAppFileInfo.DirectoryName == null)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to determine the directory path for the Exe using Reflection");
+			        return false;
+			    }
 
-				// Lookup the version of the Capture task manager
-				var strCTMPath = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "CaptureTaskManager.exe");
-				bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strCTMPath);
-				if (!bSuccess)
-					return false;
+			    var strPluginPath = Path.Combine(ioAppFileInfo.DirectoryName, "CaptureToolPlugin.dll");
+			    var bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strPluginPath);
+			    if (!bSuccess)
+			    {
+			        return false;
+			    }
 
-				// Store path to CaptureToolPlugin.dll in ioToolFiles
-				var ioToolFiles = new System.Collections.Generic.List<System.IO.FileInfo>
-				{
-					new System.IO.FileInfo(strPluginPath)
-				};
+			    // Lookup the version of the Capture task manager
+			    var strCTMPath = Path.Combine(ioAppFileInfo.DirectoryName, "CaptureTaskManager.exe");
+			    bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strCTMPath);
+			    if (!bSuccess)
+			    {
+			        return false;
+			    }
 
-				try
-				{
-					return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, false);
-				}
-				catch (Exception ex)
-				{
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
-					return false;
-				}
+			    // Store path to CaptureToolPlugin.dll in ioToolFiles
+			    var ioToolFiles = new System.Collections.Generic.List<FileInfo>
+			    {
+			        new FileInfo(strPluginPath)
+			    };
 
+			    try
+			    {
+			        return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, false);
+			    }
+			    catch (Exception ex)
+			    {
+			        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+			                             "Exception calling SetStepTaskToolVersion: " + ex.Message);
+			        return false;
+			    }
 			}
 
 		#endregion

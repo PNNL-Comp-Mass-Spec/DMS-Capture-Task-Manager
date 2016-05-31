@@ -1,10 +1,8 @@
-﻿
-//*********************************************************************************************************
+﻿//*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy 
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/25/2009
-//
 //*********************************************************************************************************
 
 using System;
@@ -268,17 +266,9 @@ namespace CaptureToolPlugin
 					foreach (var fiFile in fiFiles)
 					{
 						// Rename the file, but only if it is not in fiFilesToSkip
-						var bSkipFile = false;
-						foreach (var fiFileToSkip in fiFilesToSkip)
-						{
-							if (fiFileToSkip.FullName == fiFile.FullName)
-							{
-								bSkipFile = true;
-								break;
-							}
-						}
+						var bSkipFile = fiFilesToSkip.Any(fiFileToSkip => fiFileToSkip.FullName == fiFile.FullName);
 
-                        if (fiFile.Name.StartsWith("x_") && fiFiles.Length == 1)
+					    if (fiFile.Name.StartsWith("x_") && fiFiles.Length == 1)
                         {
                             // File was previously renamed and it is the only file in this folder; don't rename it again
                             continue;
@@ -1408,7 +1398,7 @@ namespace CaptureToolPlugin
             var validFiles = new List<string>();
             var errorMsgs = new List<string>();
 
-            Parallel.ForEach(fileNames, (fileName) =>
+            Parallel.ForEach(fileNames, fileName =>
             {
                 // First, verify constant file size (indicates acquisition is actually finished)
                 var sourceFilePath = Path.Combine(sourceFolderPath, fileName);
@@ -1720,9 +1710,23 @@ namespace CaptureToolPlugin
 			return bSuccess;
 		}
 
-        private void CaptureFolderExt(out string msg, ref clsToolReturnData retData, clsDatasetInfo datasetInfo, string sourceFolderPath, string datasetFolderPath, bool bCopyWithResume)
+        /// <summary>
+        /// Capture a dataset folder that has an extension like .D or .Raw
+        /// </summary>
+        /// <param name="msg">Output message</param>
+        /// <param name="retData"></param>
+        /// <param name="datasetInfo"></param>
+        /// <param name="sourceFolderPath"></param>
+        /// <param name="datasetFolderPath"></param>
+        /// <param name="bCopyWithResume"></param>
+        private void CaptureFolderExt(
+            out string msg, 
+            ref clsToolReturnData retData, 
+            clsDatasetInfo datasetInfo, 
+            string sourceFolderPath, 
+            string datasetFolderPath, 
+            bool bCopyWithResume)
 		{
-			// Dataset found in a folder with an extension on the folder name
 
 			List<string> filesToSkip = null;
 			
@@ -1756,9 +1760,50 @@ namespace CaptureToolPlugin
                     return;
                 }
             }
-		  
 
-			// Make a dataset folder
+            // Look for a zero-byte .UIMF file or a .UIMF journal file
+            // Abort the capture if either is present
+            try
+            {
+                var diSourceFolder = new DirectoryInfo(copySourceDir);
+
+                var uimfJournalFiles = diSourceFolder.GetFiles("*.uimf-journal");
+                string sourceFolderErrorMessage = null;
+
+                if (uimfJournalFiles.Length > 0)
+                {
+                    sourceFolderErrorMessage = "Source folder has SQLite journal files, indicating data acquisition is in progress";
+                }
+                else
+                {
+                    var uimfFiles = diSourceFolder.GetFiles("*.uimf");
+                    if (uimfFiles.Any(uimfFile => uimfFile.Length == 0))
+                    {
+                        sourceFolderErrorMessage = "Source folder has a zero-byte UIMF file";
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(sourceFolderErrorMessage))
+                {
+                    retData.CloseoutMsg = sourceFolderErrorMessage;
+                    msg = retData.CloseoutMsg + " at " + datasetFolderPath;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    DisconnectShareIfRequired();
+                    return;
+                }
+            }
+            catch (Exception ex)
+			{
+				retData.CloseoutMsg = "Exception checking for zero-byte dataset files";
+				msg = retData.CloseoutMsg + " at " + datasetFolderPath;
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
+				DisconnectShareIfRequired();
+
+				HandleCopyException(ref retData, ex);
+				return;
+			}
+
+            // Make a dataset folder
 			try
 			{
 				MakeFolderPath(datasetFolderPath);
