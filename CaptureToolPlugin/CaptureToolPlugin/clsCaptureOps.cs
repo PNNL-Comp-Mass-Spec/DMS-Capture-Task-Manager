@@ -159,10 +159,9 @@ namespace CaptureToolPlugin
         /// If the filename otherwise matches the dataset, rename it
         /// </summary>
         /// <param name="datasetName">Dataset name</param>
-        /// <param name="datasetFolderPath">Dataset folder to search</param>
-        private void AutoFixFilesWithSpaces(string datasetName, string datasetFolderPath)
+        /// <param name="datasetFolder">Dataset folder to search</param>
+        private void AutoFixFilesWithSpaces(string datasetName, DirectoryInfo datasetFolder)
         {
-            var datasetFolder = new DirectoryInfo(datasetFolderPath);
             var candidateFiles = datasetFolder.GetFileSystemInfos("* *", SearchOption.AllDirectories);
 
             foreach (var datasetFile in candidateFiles)
@@ -177,7 +176,7 @@ namespace CaptureToolPlugin
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, 
                     "Renaming '" + datasetFile.Name + "' to '" + updatedFileName + "' to remove spaces");
 
-                File.Move(datasetFile.FullName, Path.Combine(datasetFolderPath, updatedFileName));
+                File.Move(datasetFile.FullName, Path.Combine(datasetFolder.FullName, updatedFileName));
             }
         }
 
@@ -1128,12 +1127,15 @@ namespace CaptureToolPlugin
 			}
 
 			// Set up paths
-            var storageFolderPath = Path.Combine(tempVol, storagePath);	// Directory on storage server where dataset folder goes
-			string datasetFolderPath;
+
+            // Directory on storage server where dataset folder goes
+            var storageFolderPath = Path.Combine(tempVol, storagePath);
 
             // Confirm that the storage folder has no invalid characters
             if (NameHasInvalidCharacter(storageFolderPath, "Storage folder path", false, ref retData))
                 return false;
+
+            string datasetFolderPath;
 
 			// If Storage_Folder_Name <> "", use it in target folder path. Otherwise use dataset name
 			if (!string.IsNullOrWhiteSpace(taskParams.GetParam("Storage_Folder_Name")))
@@ -1342,6 +1344,15 @@ namespace CaptureToolPlugin
 			return false;
 		}
 
+        /// <summary>
+        /// Capture a single file
+        /// </summary>
+        /// <param name="msg">Output: error message</param>
+        /// <param name="retData">Input/output: Return data</param>
+        /// <param name="datasetInfo">Dataset info</param>
+        /// <param name="sourceFolderPath">Source folder (on instrument)</param>
+        /// <param name="datasetFolderPath">Destination folder</param>
+        /// <param name="bCopyWithResume">True if using copy with resume</param>
 	    private void CaptureFile(
 	        out string msg,
 	        ref clsToolReturnData retData,
@@ -1362,6 +1373,15 @@ namespace CaptureToolPlugin
 
 	    }
 
+        /// <summary>
+        /// Capture multiple files, each with the same name but a different extension
+        /// </summary>
+        /// <param name="msg">Output: error message</param>
+        /// <param name="retData">Input/output: Return data</param>
+        /// <param name="datasetInfo">Dataset info</param>
+        /// <param name="sourceFolderPath">Source folder (on instrument)</param>
+        /// <param name="datasetFolderPath">Destination folder</param>
+        /// <param name="bCopyWithResume">True if using copy with resume</param>
 	    private void CaptureMultiFile(
 	        out string msg,
 	        ref clsToolReturnData retData,
@@ -1383,6 +1403,16 @@ namespace CaptureToolPlugin
 
 	    }
 
+        /// <summary>
+        /// Capture the file (or files) specified by fileNames
+        /// </summary>
+        /// <param name="msg">Output: error message</param>
+        /// <param name="retData">Input/output: Return data</param>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="fileNames">List of filenames</param>
+        /// <param name="sourceFolderPath">Source folder (on instrument)</param>
+        /// <param name="datasetFolderPath">Destination folder</param>
+        /// <param name="bCopyWithResume">True if using copy with resume</param>
         private void CaptureOneOrMoreFiles(
             out string msg,
             ref clsToolReturnData retData,
@@ -1713,12 +1743,12 @@ namespace CaptureToolPlugin
         /// <summary>
         /// Capture a dataset folder that has an extension like .D or .Raw
         /// </summary>
-        /// <param name="msg">Output message</param>
-        /// <param name="retData"></param>
-        /// <param name="datasetInfo"></param>
-        /// <param name="sourceFolderPath"></param>
-        /// <param name="datasetFolderPath"></param>
-        /// <param name="bCopyWithResume"></param>
+        /// <param name="msg">Output: error message</param>
+        /// <param name="retData">Input/output: Return data</param>
+        /// <param name="datasetInfo">Dataset info</param>
+        /// <param name="sourceFolderPath">Source folder (on instrument); datasetInfo.FileOrFolderName will be appended to this</param>
+        /// <param name="datasetFolderPath">Destination folder (on storage server); datasetInfo.FileOrFolderName will be appended to this</param>
+        /// <param name="bCopyWithResume">True if using copy with resume</param>
         private void CaptureFolderExt(
             out string msg, 
             ref clsToolReturnData retData, 
@@ -1733,17 +1763,13 @@ namespace CaptureToolPlugin
 			bool bSuccess;
 			var iSleepInterval = m_SleepInterval;
 
-			var copySourceDir = Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName);
-			var copyTargetDir = Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName);
+            var diSourceDir = new DirectoryInfo(Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName));
+            var diTargetDir = new DirectoryInfo(Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName));
 
-			if (!VerifyConstantFolderSize(copySourceDir, iSleepInterval, ref retData))
-			{
-                msg = "Dataset '" + datasetInfo.DatasetName + "' not ready";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
-				DisconnectShareIfRequired();
-				retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
-				return;
-			}
+            // Look for a zero-byte .UIMF file or a .UIMF journal file
+            // Abort the capture if either is present
+            if (IsIncompleteUimfFound(diSourceDir.FullName, out msg, ref retData))
+                return;
 
 		    var brukerDotDFolder = false;
 
@@ -1753,55 +1779,23 @@ namespace CaptureToolPlugin
                 // Look for journal files, which we can never copy because they are always locked
 
                 brukerDotDFolder = true;
-                bSuccess = FindFilesToSkip(copySourceDir, datasetInfo, "*.mcf_idx-journal", "journal file", ref retData, out filesToSkip);
+                bSuccess = FindFilesToSkip(diSourceDir, datasetInfo, "*.mcf_idx-journal", "journal file", ref retData, out filesToSkip);
                 if (!bSuccess)
                 {
                     msg = "Error looking for journal files to skip";
+                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     return;
                 }
             }
 
-            // Look for a zero-byte .UIMF file or a .UIMF journal file
-            // Abort the capture if either is present
-            try
+            if (!VerifyConstantFolderSize(diSourceDir.FullName, iSleepInterval, ref retData))
             {
-                var diSourceFolder = new DirectoryInfo(copySourceDir);
-
-                var uimfJournalFiles = diSourceFolder.GetFiles("*.uimf-journal");
-                string sourceFolderErrorMessage = null;
-
-                if (uimfJournalFiles.Length > 0)
-                {
-                    sourceFolderErrorMessage = "Source folder has SQLite journal files, indicating data acquisition is in progress";
-                }
-                else
-                {
-                    var uimfFiles = diSourceFolder.GetFiles("*.uimf");
-                    if (uimfFiles.Any(uimfFile => uimfFile.Length == 0))
-                    {
-                        sourceFolderErrorMessage = "Source folder has a zero-byte UIMF file";
-                    }
-                }
-
-                if (!string.IsNullOrEmpty(sourceFolderErrorMessage))
-                {
-                    retData.CloseoutMsg = sourceFolderErrorMessage;
-                    msg = retData.CloseoutMsg + " at " + datasetFolderPath;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-                    DisconnectShareIfRequired();
-                    return;
-                }
+                msg = "Dataset '" + datasetInfo.DatasetName + "' not ready";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                DisconnectShareIfRequired();
+                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
+                return;
             }
-            catch (Exception ex)
-			{
-				retData.CloseoutMsg = "Exception checking for zero-byte dataset files";
-				msg = retData.CloseoutMsg + " at " + datasetFolderPath;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
-				DisconnectShareIfRequired();
-
-				HandleCopyException(ref retData, ex);
-				return;
-			}
 
             // Make a dataset folder
 			try
@@ -1828,20 +1822,20 @@ namespace CaptureToolPlugin
 				if (bCopyWithResume)
 				{
 					const bool bRecurse = true;
-					bSuccess = CopyFolderWithResume(copySourceDir, copyTargetDir, bRecurse, ref retData, filesToSkip);
+                    bSuccess = CopyFolderWithResume(diSourceDir.FullName, diTargetDir.FullName, bRecurse, ref retData, filesToSkip);
 				}
 				else
 				{
-					m_FileTools.CopyDirectory(copySourceDir, copyTargetDir, filesToSkip);
+                    m_FileTools.CopyDirectory(diSourceDir.FullName, diTargetDir.FullName, filesToSkip);
 					bSuccess = true;
 				}
 
 				if (bSuccess)
 				{
-					msg = "Copied folder " + copySourceDir + " to " + copyTargetDir + GetConnectionDescription();
+                    msg = "Copied folder " + diSourceDir.FullName + " to " + diTargetDir.FullName + GetConnectionDescription();
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 
-                    AutoFixFilesWithSpaces(datasetInfo.DatasetName, datasetFolderPath);
+                    AutoFixFilesWithSpaces(datasetInfo.DatasetName, diTargetDir);
 				}
 				else
 				{
@@ -1868,7 +1862,7 @@ namespace CaptureToolPlugin
                 if (brukerDotDFolder)
                 {
                     // Look for and delete certain zero-byte files
-                    DeleteZeroByteBrukerFiles(copyTargetDir);
+                    DeleteZeroByteBrukerFiles(diTargetDir);
                 }
             }
 
@@ -1879,7 +1873,66 @@ namespace CaptureToolPlugin
 
 		}
 
-	    private void DeleteZeroByteBrukerFiles(string copyTargetDir)
+        /// <summary>
+        /// Look for an incomplete .UIMF file, which is either 0 bytes in size or has a corresponding .uimf-journal file
+        /// </summary>
+        /// <param name="sourceFolderPath"></param>
+        /// <param name="msg">Output: error message</param>
+        /// <param name="retData">Input/output: Return data</param>
+        /// <returns>True if an incomplete .uimf file is found</returns>
+	    private bool IsIncompleteUimfFound(
+            string sourceFolderPath, 
+            out string msg, 
+            ref clsToolReturnData retData)
+        {
+            msg = string.Empty;
+
+	        try
+	        {
+                var diSourceFolder = new DirectoryInfo(sourceFolderPath);
+
+	            var uimfJournalFiles = diSourceFolder.GetFiles("*.uimf-journal");
+	            string sourceFolderErrorMessage = null;
+
+	            if (uimfJournalFiles.Length > 0)
+	            {
+	                sourceFolderErrorMessage =
+	                    "Source folder has SQLite journal files, indicating data acquisition is in progress";
+	            }
+	            else
+	            {
+	                var uimfFiles = diSourceFolder.GetFiles("*.uimf");
+	                if (uimfFiles.Any(uimfFile => uimfFile.Length == 0))
+	                {
+	                    sourceFolderErrorMessage = "Source folder has a zero-byte UIMF file";
+	                }
+	            }
+
+	            if (!string.IsNullOrEmpty(sourceFolderErrorMessage))
+	            {
+	                retData.CloseoutMsg = sourceFolderErrorMessage;
+                    msg = retData.CloseoutMsg + " at " + sourceFolderPath;
+	                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+	                DisconnectShareIfRequired();
+	                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+	                return true;
+	            }
+	        }
+	        catch (Exception ex)
+	        {
+	            retData.CloseoutMsg = "Exception checking for zero-byte dataset files";
+                msg = retData.CloseoutMsg + " at " + sourceFolderPath;
+	            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
+	            DisconnectShareIfRequired();
+
+	            HandleCopyException(ref retData, ex);
+	            return true;
+	        }
+
+	        return false;
+	    }
+
+        private void DeleteZeroByteBrukerFiles(DirectoryInfo diTargetDir)
 	    {
 	        try
 	        {
@@ -1893,11 +1946,10 @@ namespace CaptureToolPlugin
 	            var fileCountDeleted = 0;
                 var deletedFileList = string.Empty;
 
-	            var diTarget = new DirectoryInfo(copyTargetDir);
-                if (!diTarget.Exists)
+                if (!diTargetDir.Exists)
                     return;
 
-	            var lstFiles = diTarget.GetFiles("*", SearchOption.AllDirectories).ToList();
+                var lstFiles = diTargetDir.GetFiles("*", SearchOption.AllDirectories).ToList();
 
                 foreach (var fiFile in lstFiles)
 	            {
@@ -1928,19 +1980,16 @@ namespace CaptureToolPlugin
 
 	    }
 
-	    private bool FindFilesToSkip(string copySourceDir, clsDatasetInfo datasetInfo, string searchSpec, string searchSpecDescription, ref clsToolReturnData retData, out List<string> filesToSkip)
+	    private bool FindFilesToSkip(DirectoryInfo diSourceFolder, clsDatasetInfo datasetInfo, string searchSpec, string searchSpecDescription, ref clsToolReturnData retData, out List<string> filesToSkip)
 	    {
            
             filesToSkip = new List<string>();
 
             try
             {
-                var fileList = Directory.GetFiles(copySourceDir, searchSpec, SearchOption.AllDirectories).ToList();
-             
-                foreach (var fileName in fileList)
-                {
-                    filesToSkip.Add(Path.GetFileName(fileName));
-                }
+                var fileList = diSourceFolder.GetFiles(searchSpec, SearchOption.AllDirectories).ToList();
+
+                filesToSkip.AddRange(fileList.Select(file => file.Name));
 
                 if (filesToSkip.Count == 1)
                 {
@@ -1967,23 +2016,36 @@ namespace CaptureToolPlugin
 
 	    }
 
-        private void CaptureFolderNoExt(out string msg, ref clsToolReturnData retData, clsDatasetInfo datasetInfo, string sourceFolderPath, string datasetFolderPath, bool bCopyWithResume, clsInstrumentClassInfo.eInstrumentClass instrumentClass)
+        /// <summary>
+        /// Capture a folder with no extension on the name (the folder name is nearly always the dataset name)
+        /// </summary>
+        /// <param name="msg">Output: error message</param>
+        /// <param name="retData">Input/output: Return data</param>
+        /// <param name="datasetInfo">Dataset info</param>
+        /// <param name="sourceFolderPath">Source folder (on instrument); datasetInfo.FileOrFolderName will be appended to this</param>
+        /// <param name="datasetFolderPath">Destination folder; datasetInfo.FileOrFolderName will not be appended to this (constrast with CaptureFolderExt)</param>
+        /// <param name="bCopyWithResume">True if using copy with resume</param>
+        /// <param name="instrumentClass">Instrument class</param>
+        private void CaptureFolderNoExt(
+            out string msg, 
+            ref clsToolReturnData retData, 
+            clsDatasetInfo datasetInfo, 
+            string sourceFolderPath, 
+            string datasetFolderPath, 
+            bool bCopyWithResume, 
+            clsInstrumentClassInfo.eInstrumentClass instrumentClass)
 		{
 			// Dataset found; it's a folder with no extension on the name
 
 			bool bSuccess;
 
 			var diSourceDir = new DirectoryInfo(Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName));
+            var diTargetDir = new DirectoryInfo(datasetFolderPath);
 
-			// First, verify the folder size is constant (indicates acquisition is actually finished)
-			if (!VerifyConstantFolderSize(diSourceDir.FullName, m_SleepInterval, ref retData))
-			{
-                msg = "Dataset '" + datasetInfo.DatasetName + "' not ready";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
-				DisconnectShareIfRequired();
-				retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
-				return;
-			}
+            // Look for a zero-byte .UIMF file or a .UIMF journal file
+            // Abort the capture if either is present
+            if (IsIncompleteUimfFound(diSourceDir.FullName, out msg, ref retData))
+                return;
 
 			// Verify the folder doesn't contain a group of ".d" folders
 			var lstDotDFolders = diSourceDir.GetDirectories("*.d", SearchOption.TopDirectoryOnly);
@@ -2030,7 +2092,6 @@ namespace CaptureToolPlugin
 				return;
 			}
 
-
 			if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Sciex_QTrap)
 			{
 				// Make sure that it doesn't have more than 2 subfolders (it typically won't have any, but we'll allow 2)				
@@ -2054,6 +2115,16 @@ namespace CaptureToolPlugin
 				}
 			}
 
+            // Verify the folder size is constant (indicates acquisition is actually finished)
+            if (!VerifyConstantFolderSize(diSourceDir.FullName, m_SleepInterval, ref retData))
+            {
+                msg = "Dataset '" + datasetInfo.DatasetName + "' not ready";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                DisconnectShareIfRequired();
+                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
+                return;
+            }
+
 			// Copy the dataset folder to the storage server
 			try
 			{
@@ -2061,21 +2132,20 @@ namespace CaptureToolPlugin
 				if (bCopyWithResume)
 				{
 					const bool bRecurse = true;
-					bSuccess = CopyFolderWithResume(diSourceDir.FullName, datasetFolderPath, bRecurse, ref retData);
+                    bSuccess = CopyFolderWithResume(diSourceDir.FullName, diTargetDir.FullName, bRecurse, ref retData);
 				}
 				else
 				{
-					m_FileTools.CopyDirectory(diSourceDir.FullName, datasetFolderPath);
+                    m_FileTools.CopyDirectory(diSourceDir.FullName, diTargetDir.FullName);
 					bSuccess = true;
 				}
 
 				if (bSuccess)
 				{
-					msg = "Copied folder " + diSourceDir.FullName + " to " +
-						Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName) + GetConnectionDescription();
+					msg = "Copied folder " + diSourceDir.FullName + " to " + diTargetDir.FullName + GetConnectionDescription();
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 
-                    AutoFixFilesWithSpaces(datasetInfo.DatasetName, datasetFolderPath);
+                    AutoFixFilesWithSpaces(datasetInfo.DatasetName, diTargetDir);
 				}
                 else
 				{
@@ -2097,7 +2167,7 @@ namespace CaptureToolPlugin
 
 			if (bSuccess)
 			{
-                bSuccess = CaptureLCMethodFile(datasetInfo.DatasetName, datasetFolderPath);
+                bSuccess = CaptureLCMethodFile(datasetInfo.DatasetName, diTargetDir.FullName);
 			}
 
 			if (bSuccess)
@@ -2107,30 +2177,38 @@ namespace CaptureToolPlugin
 			
 		}
 
-	    private void CaptureBrukerImaging(out string msg, ref clsToolReturnData retData, clsDatasetInfo datasetInfo, string sourceFolderPath, string datasetFolderPath, bool bCopyWithResume)
+        /// <summary>
+        /// Capture a Bruker imaging folder
+        /// </summary>
+        /// <param name="msg">Output: error message</param>
+        /// <param name="retData">Input/output: Return data</param>
+        /// <param name="datasetInfo">Dataset info</param>
+        /// <param name="sourceFolderPath">Source folder (on instrument); datasetInfo.FileOrFolderName will be appended to this</param>
+        /// <param name="datasetFolderPath">Destination folder; datasetInfo.FileOrFolderName will not be appended to this (constrast with CaptureFolderExt)</param>
+        /// <param name="bCopyWithResume">True if using copy with resume</param>
+	    private void CaptureBrukerImaging(
+            out string msg, 
+            ref clsToolReturnData retData, 
+            clsDatasetInfo datasetInfo, 
+            string sourceFolderPath, 
+            string datasetFolderPath, 
+            bool bCopyWithResume)
 		{
 			// Dataset found; it's a Bruker imaging folder
 
 			bool bSuccess;
 
 			// First, verify the folder size is constant (indicates acquisition is actually finished)
-			var copySourceDir = Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName);
-			if (!VerifyConstantFolderSize(copySourceDir, m_SleepInterval, ref retData))
-			{
-                msg = "Dataset '" + datasetInfo.DatasetName + "' not ready";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
-				DisconnectShareIfRequired();
-				retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
-				return;
-			}
+			var diSourceDir = new DirectoryInfo(Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName));
+            var diTargetDir = new DirectoryInfo(datasetFolderPath);
 
 			// Check to see if the folders have been zipped
-			var zipFileList = Directory.GetFiles(copySourceDir, "*.zip");
+            var zipFileList = Directory.GetFiles(diSourceDir.FullName, "*.zip");
 			if (zipFileList.Length < 1)
 			{
 				// Data files haven't been zipped, so throw error
 				retData.CloseoutMsg = "No zip files found in dataset folder";
-				msg = retData.CloseoutMsg + " at " + datasetFolderPath;
+                msg = retData.CloseoutMsg + " at " + diSourceDir.FullName;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 				DisconnectShareIfRequired();
 
@@ -2138,15 +2216,24 @@ namespace CaptureToolPlugin
 				return;
 			}
 
+            if (!VerifyConstantFolderSize(diSourceDir.FullName, m_SleepInterval, ref retData))
+            {
+                msg = "Dataset '" + datasetInfo.DatasetName + "' not ready";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                DisconnectShareIfRequired();
+                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
+                return;
+            }
+
 			// Make a dataset folder
 			try
 			{
-				MakeFolderPath(datasetFolderPath);
+                MakeFolderPath(diTargetDir.FullName);
 			}
 			catch (Exception ex)
 			{
 				retData.CloseoutMsg = "Exception creating dataset folder";
-				msg = retData.CloseoutMsg + " at " + datasetFolderPath;
+                msg = retData.CloseoutMsg + " at " + diTargetDir.FullName;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
 				DisconnectShareIfRequired();
 
@@ -2160,28 +2247,27 @@ namespace CaptureToolPlugin
 				if (bCopyWithResume)
 				{
 					const bool bRecurse = false;
-					bSuccess = CopyFolderWithResume(copySourceDir, datasetFolderPath, bRecurse, ref retData);
+                    bSuccess = CopyFolderWithResume(diSourceDir.FullName, diTargetDir.FullName, bRecurse, ref retData);
 				}
 				else
 				{
 
-					var fileList = Directory.GetFiles(copySourceDir);
+                    var fileList = Directory.GetFiles(diSourceDir.FullName);
 
 					foreach (var fileToCopy in fileList)
 					{
 						var fi = new FileInfo(fileToCopy);
-						fi.CopyTo(Path.Combine(datasetFolderPath, fi.Name));
+                        fi.CopyTo(Path.Combine(diTargetDir.FullName, fi.Name));
 					}
 					bSuccess = true;
 				}
 
 				if (bSuccess)
 				{
-					msg = "Copied files in folder " + copySourceDir + " to " +
-						Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName) + GetConnectionDescription();
+                    msg = "Copied files in folder " + diSourceDir.FullName + " to " + diTargetDir.FullName + GetConnectionDescription();
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 
-                    AutoFixFilesWithSpaces(datasetInfo.DatasetName, datasetFolderPath);
+                    AutoFixFilesWithSpaces(datasetInfo.DatasetName, diTargetDir);
 				}
 				else
 				{
@@ -2191,7 +2277,7 @@ namespace CaptureToolPlugin
 			catch (Exception ex)
 			{
 				retData.CloseoutMsg = "Exception copying files from dataset folder";
-				msg = retData.CloseoutMsg + " " + copySourceDir + GetConnectionDescription();
+                msg = retData.CloseoutMsg + " " + diSourceDir.FullName + GetConnectionDescription();
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
 				DisconnectShareIfRequired();
 
@@ -2210,40 +2296,45 @@ namespace CaptureToolPlugin
 
 		}
 
-        private void CaptureBrukerSpot(out string msg, ref clsToolReturnData retData, clsDatasetInfo datasetInfo, string sourceFolderPath, string datasetFolderPath)
+        /// <summary>
+        /// Capture a folder from a Bruker_Spot instrument
+        /// </summary>
+        /// <param name="msg">Output: error message</param>
+        /// <param name="retData">Input/output: Return data</param>
+        /// <param name="datasetInfo">Dataset info</param>
+        /// <param name="sourceFolderPath">Source folder (on instrument); datasetInfo.FileOrFolderName will be appended to this</param>
+        /// <param name="datasetFolderPath">Destination folder; datasetInfo.FileOrFolderName will not be appended to this (constrast with CaptureFolderExt)</param>
+        private void CaptureBrukerSpot(
+            out string msg, 
+            ref clsToolReturnData retData, 
+            clsDatasetInfo datasetInfo, 
+            string sourceFolderPath, 
+            string datasetFolderPath)
 		{
 			// Dataset found; it's a Bruker_Spot instrument type
 			// First, verify the folder size is constant (indicates acquisition is actually finished)
-			var copySourceDir = Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName);
-			if (!VerifyConstantFolderSize(copySourceDir, m_SleepInterval, ref retData))
-			{
-                msg = "Dataset '" + datasetInfo.DatasetName + "' not ready";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
-				DisconnectShareIfRequired();
-				retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
-				return;
-			}
+            var diSourceDir = new DirectoryInfo(Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName));
+            var diTargetDir = new DirectoryInfo(datasetFolderPath);
 
 			// Verify the dataset folder doesn't contain any .zip files
-			var zipFiles = Directory.GetFiles(copySourceDir, "*.zip");
+            var zipFiles = diSourceDir.GetFiles("*.zip");
 
 			if (zipFiles.Length > 0)
 			{
 				retData.CloseoutMsg = "Zip files found in dataset folder";
-				msg = retData.CloseoutMsg + " " + copySourceDir;
+                msg = retData.CloseoutMsg + " " + diSourceDir.FullName;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 				retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 				return;
 			}
 
-
 			// Check whether the dataset folder contains just one data folder or multiple data folders
-			var dataFolders = Directory.GetDirectories(copySourceDir).ToList();
+            var dataFolders = diSourceDir.GetDirectories().ToList();
 
 			if (dataFolders.Count < 1)
 			{
 				retData.CloseoutMsg = "No subfolders were found in the dataset folder ";
-				msg = retData.CloseoutMsg + " " + copySourceDir;
+                msg = retData.CloseoutMsg + " " + diSourceDir.FullName;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 				retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 				return;
@@ -2257,18 +2348,17 @@ namespace CaptureToolPlugin
 				//  0_E10
 				//  0_N4
 
-				const string MALDI_SPOT_FOLDER_REGEX = "^\\d_[A-Z]\\d+$";
+				const string MALDI_SPOT_FOLDER_REGEX = @"^\d_[A-Z]\d+$";
 				var reMaldiSpotFolder = new Regex(MALDI_SPOT_FOLDER_REGEX, RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
 				foreach (var sDir in dataFolders)
 				{
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Test folder " + sDir + " against RegEx " + reMaldiSpotFolder);
 
-					var sDirName = Path.GetFileName(sDir);
-					if (sDirName != null && !reMaldiSpotFolder.IsMatch(sDirName, 0))
+                    if (!reMaldiSpotFolder.IsMatch(sDir.Name, 0))
 					{
-						retData.CloseoutMsg = "Dataset folder contains multiple subfolders, but folder " + sDirName + " does not match the expected pattern";
-						msg = retData.CloseoutMsg + " (" + reMaldiSpotFolder + "); see " + copySourceDir;
+                        retData.CloseoutMsg = "Dataset folder contains multiple subfolders, but folder " + sDir.Name + " does not match the expected pattern";
+                        msg = retData.CloseoutMsg + " (" + reMaldiSpotFolder + "); see " + diSourceDir.FullName;
 						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 						retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 						return;
@@ -2277,18 +2367,26 @@ namespace CaptureToolPlugin
 				}
 			}
 
+            if (!VerifyConstantFolderSize(diSourceDir.FullName, m_SleepInterval, ref retData))
+            {
+                msg = "Dataset '" + datasetInfo.DatasetName + "' not ready";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                DisconnectShareIfRequired();
+                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
+                return;
+            }
+
 			// Copy the dataset folder (and all subfolders) to the storage server
 			try
 			{
-				m_FileTools.CopyDirectory(copySourceDir, datasetFolderPath);
-				msg = "Copied folder " + copySourceDir + " to " +
-					Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName) + GetConnectionDescription();
+                m_FileTools.CopyDirectory(diSourceDir.FullName, diTargetDir.FullName);
+                msg = "Copied folder " + diSourceDir.FullName + " to " + diTargetDir.FullName + GetConnectionDescription();
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 				retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;				
 			}
 			catch (Exception ex)
 			{
-				msg = "Exception copying dataset folder " + copySourceDir + GetConnectionDescription();
+                msg = "Exception copying dataset folder " + diSourceDir.FullName + GetConnectionDescription();
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
 
 				HandleCopyException(ref retData, ex);
