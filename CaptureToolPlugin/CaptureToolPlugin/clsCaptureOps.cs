@@ -385,7 +385,7 @@ namespace CaptureToolPlugin
 		/// Performs action specified by DSFolderExistsAction mgr param if a dataset folder already exists
 		/// </summary>
 		/// <param name="dsFolder">Full path to dataset folder</param>
-		/// <param name="bCopyWithResume">True when we will be using Copy with Resume to capture this instrument's data</param>
+		/// <param name="copyWithResume">True when we will be using Copy with Resume to capture this instrument's data</param>
 		/// <param name="maxFileCountToAllowResume">Maximum number of files that can existing in the dataset folder if we are going to allow CopyWithResume to be used</param>
 		/// <param name="maxFolderCountToAllowResume">Maximum number of subfolders that can existing in the dataset folder if we are going to allow CopyWithResume to be used</param>		
 		/// <param name="retData">Return data</param>
@@ -393,7 +393,7 @@ namespace CaptureToolPlugin
 		/// <remarks>If both maxFileCountToAllowResume and maxFolderCountToAllowResume are zero, then requires a minimum number of subfolders or files be present to allow for CopyToResume to be used</remarks>
 		private bool PerformDSExistsActions(
 			string dsFolder,
-			bool bCopyWithResume,
+			bool copyWithResume,
 			int maxFileCountToAllowResume,
 			int maxFolderCountToAllowResume,
 			ref clsToolReturnData retData)
@@ -436,7 +436,7 @@ namespace CaptureToolPlugin
 
 							if (!tooManyFilesOrFolders)
 							{
-								if (bCopyWithResume)
+								if (copyWithResume)
 									// Do not rename the folder or file; leave as-is and we'll resume the copy
 									switchResult = true;
 								else
@@ -444,7 +444,7 @@ namespace CaptureToolPlugin
 							}
 							else
 							{
-								if (folderCount == 0 && bCopyWithResume)
+								if (folderCount == 0 && copyWithResume)
 									// Do not rename the files; leave as-is and we'll resume the copy
 									switchResult = true;
 								else
@@ -1024,8 +1024,8 @@ namespace CaptureToolPlugin
             var storagePath = taskParams.GetParam("Storage_Path");					// Example: Exact04\2012_1\
             var storageVolExternal = taskParams.GetParam("Storage_Vol_External");	// Example: \\proto-5\
 
-            var instClassName = taskParams.GetParam("Instrument_Class");
-			var instrumentClass = clsInstrumentClassInfo.GetInstrumentClass(instClassName);
+            var instClassName = taskParams.GetParam("Instrument_Class");            // Examples: Finnigan_Ion_Trap, LTQ_FT, Triple_Quad, IMS_Agilent_TOF, Agilent_Ion_Trap
+			var instrumentClass = clsInstrumentClassInfo.GetInstrumentClass(instClassName);     // Enum of instrument class type
 
             var shareConnectorType = m_MgrParams.GetParam("ShareConnectorType");		// Should be PRISM or DotNET
             var computerName = Environment.MachineName;
@@ -1069,15 +1069,15 @@ namespace CaptureToolPlugin
 			// Determine whether or not we will use Copy with Resume
 			// This determines whether or not we add x_ to an existing file or folder, 
 			// and determines whether we use CopyDirectory or CopyFolderWithResume/CopyFileWithResume
-			var bCopyWithResume = false;
+			var copyWithResume = false;
 			switch (instrumentClass)
 			{
 				case clsInstrumentClassInfo.eInstrumentClass.BrukerFT_BAF:
-					bCopyWithResume = true;
+					copyWithResume = true;
 					break;
 				case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging:
 				case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging_V2:
-					bCopyWithResume = true;
+					copyWithResume = true;
 					maxFileCountToAllowResume = 10;
 					maxFolderCountToAllowResume = 1;
 					break;
@@ -1183,7 +1183,7 @@ namespace CaptureToolPlugin
 			if (ValidateFolderPath(datasetFolderPath))
 			{
 				// Dataset folder exists, so take action specified in configuration
-				if (!PerformDSExistsActions(datasetFolderPath, bCopyWithResume, maxFileCountToAllowResume, maxFolderCountToAllowResume, ref retData))
+				if (!PerformDSExistsActions(datasetFolderPath, copyWithResume, maxFileCountToAllowResume, maxFolderCountToAllowResume, ref retData))
 				{
 					PossiblyStoreErrorMessage(ref retData);
 					if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
@@ -1294,25 +1294,25 @@ namespace CaptureToolPlugin
 				switch (sourceType)
 				{
 					case RawDSTypes.File:
-						CaptureFile(out msg, ref retData, datasetInfo, sourceFolderPath, datasetFolderPath, bCopyWithResume);
+						CaptureFile(out msg, ref retData, datasetInfo, sourceFolderPath, datasetFolderPath, copyWithResume);
 						break;
 
                     case RawDSTypes.MultiFile:
-                        CaptureMultiFile(out msg, ref retData, datasetInfo, sourceFolderPath, datasetFolderPath, bCopyWithResume);
+                        CaptureMultiFile(out msg, ref retData, datasetInfo, sourceFolderPath, datasetFolderPath, copyWithResume);
                         break;
                         
 					case RawDSTypes.FolderExt:
-                        CaptureFolderExt(out msg, ref retData, datasetInfo, sourceFolderPath, datasetFolderPath, bCopyWithResume);
+                        CaptureFolderExt(out msg, ref retData, datasetInfo, sourceFolderPath, datasetFolderPath, copyWithResume, instrumentClass);
 						break;
 
 					case RawDSTypes.FolderNoExt:
                         CaptureFolderNoExt(out msg, ref retData, datasetInfo, sourceFolderPath, datasetFolderPath,
-										   bCopyWithResume, instrumentClass);
+										   copyWithResume, instrumentClass);
 						break;
 
 					case RawDSTypes.BrukerImaging:
                         CaptureBrukerImaging(out msg, ref retData, datasetInfo, sourceFolderPath, datasetFolderPath,
-											 bCopyWithResume);
+											 copyWithResume);
 						break;
 
 					case RawDSTypes.BrukerSpot:
@@ -1352,14 +1352,14 @@ namespace CaptureToolPlugin
         /// <param name="datasetInfo">Dataset info</param>
         /// <param name="sourceFolderPath">Source folder (on instrument)</param>
         /// <param name="datasetFolderPath">Destination folder</param>
-        /// <param name="bCopyWithResume">True if using copy with resume</param>
+        /// <param name="copyWithResume">True if using copy with resume</param>
 	    private void CaptureFile(
 	        out string msg,
 	        ref clsToolReturnData retData,
 	        clsDatasetInfo datasetInfo,
 	        string sourceFolderPath,
 	        string datasetFolderPath,
-	        bool bCopyWithResume)
+	        bool copyWithResume)
 	    {
             // Dataset found, and it's a single file
 
@@ -1369,7 +1369,7 @@ namespace CaptureToolPlugin
 	        };
 
             CaptureOneOrMoreFiles(out msg, ref retData, datasetInfo.DatasetName,
-                fileNames, sourceFolderPath, datasetFolderPath, bCopyWithResume);
+                fileNames, sourceFolderPath, datasetFolderPath, copyWithResume);
 
 	    }
 
@@ -1381,14 +1381,14 @@ namespace CaptureToolPlugin
         /// <param name="datasetInfo">Dataset info</param>
         /// <param name="sourceFolderPath">Source folder (on instrument)</param>
         /// <param name="datasetFolderPath">Destination folder</param>
-        /// <param name="bCopyWithResume">True if using copy with resume</param>
+        /// <param name="copyWithResume">True if using copy with resume</param>
 	    private void CaptureMultiFile(
 	        out string msg,
 	        ref clsToolReturnData retData,
 	        clsDatasetInfo datasetInfo,
 	        string sourceFolderPath,
 	        string datasetFolderPath,
-	        bool bCopyWithResume)
+	        bool copyWithResume)
 	    {
             // Dataset found, and it's multiple files
             // Each has the same name but a different extension
@@ -1399,7 +1399,7 @@ namespace CaptureToolPlugin
 	        var fileNames = fiFiles.Select(file => file.Name).ToList();
 
 	        CaptureOneOrMoreFiles(out msg, ref retData, datasetInfo.DatasetName,
-                fileNames, sourceFolderPath, datasetFolderPath, bCopyWithResume);
+                fileNames, sourceFolderPath, datasetFolderPath, copyWithResume);
 
 	    }
 
@@ -1412,7 +1412,7 @@ namespace CaptureToolPlugin
         /// <param name="fileNames">List of filenames</param>
         /// <param name="sourceFolderPath">Source folder (on instrument)</param>
         /// <param name="datasetFolderPath">Destination folder</param>
-        /// <param name="bCopyWithResume">True if using copy with resume</param>
+        /// <param name="copyWithResume">True if using copy with resume</param>
         private void CaptureOneOrMoreFiles(
             out string msg,
             ref clsToolReturnData retData,
@@ -1420,7 +1420,7 @@ namespace CaptureToolPlugin
             ICollection<string> fileNames,
             string sourceFolderPath,
             string datasetFolderPath,
-            bool bCopyWithResume)
+            bool copyWithResume)
         {
             // Dataset found, and it's either a single file or multiple files with the same name but different extensions
 
@@ -1495,7 +1495,7 @@ namespace CaptureToolPlugin
                                              "Renaming '" + sourceFileName + "' to '" + targetFileName + "' to remove spaces");
                     }
 
-                    if (bCopyWithResume)
+                    if (copyWithResume)
                     {
                         var fiSourceFile = new FileInfo(sourceFilePath);
                         bool bResumed;
@@ -1740,22 +1740,24 @@ namespace CaptureToolPlugin
 			return bSuccess;
 		}
 
-        /// <summary>
-        /// Capture a dataset folder that has an extension like .D or .Raw
-        /// </summary>
-        /// <param name="msg">Output: error message</param>
-        /// <param name="retData">Input/output: Return data</param>
-        /// <param name="datasetInfo">Dataset info</param>
-        /// <param name="sourceFolderPath">Source folder (on instrument); datasetInfo.FileOrFolderName will be appended to this</param>
-        /// <param name="datasetFolderPath">Destination folder (on storage server); datasetInfo.FileOrFolderName will be appended to this</param>
-        /// <param name="bCopyWithResume">True if using copy with resume</param>
-        private void CaptureFolderExt(
+	    /// <summary>
+	    /// Capture a dataset folder that has an extension like .D or .Raw
+	    /// </summary>
+	    /// <param name="msg">Output: error message</param>
+	    /// <param name="retData">Input/output: Return data</param>
+	    /// <param name="datasetInfo">Dataset info</param>
+	    /// <param name="sourceFolderPath">Source folder (on instrument); datasetInfo.FileOrFolderName will be appended to this</param>
+	    /// <param name="datasetFolderPath">Destination folder (on storage server); datasetInfo.FileOrFolderName will be appended to this</param>
+	    /// <param name="copyWithResume">True if using copy with resume</param>
+	    /// <param name="instrumentClass"></param>
+	    private void CaptureFolderExt(
             out string msg, 
             ref clsToolReturnData retData, 
             clsDatasetInfo datasetInfo, 
             string sourceFolderPath, 
             string datasetFolderPath, 
-            bool bCopyWithResume)
+            bool copyWithResume,
+            clsInstrumentClassInfo.eInstrumentClass instrumentClass)
 		{
 
 			List<string> filesToSkip = null;
@@ -1771,6 +1773,14 @@ namespace CaptureToolPlugin
             if (IsIncompleteUimfFound(diSourceDir.FullName, out msg, ref retData))
                 return;
 
+	        if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Agilent_Ion_Trap)
+	        {
+                // Confirm that a DATA.MS file exists
+                if (IsIncompleteAgilentIonTrap(diSourceDir.FullName, out msg, ref retData))
+                    return;
+	        }
+	        
+
 		    var brukerDotDFolder = false;
 
 		    if (datasetInfo.FileOrFolderName.ToLower().EndsWith(".d"))
@@ -1784,6 +1794,7 @@ namespace CaptureToolPlugin
                 {
                     msg = "Error looking for journal files to skip";
                     retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    // Note: error has already been logged and DisconnectShareIfRequired() has already been called
                     return;
                 }
             }
@@ -1819,7 +1830,7 @@ namespace CaptureToolPlugin
 				// Copy the dataset folder
 				// Resume copying files that are already present in the target
 
-				if (bCopyWithResume)
+				if (copyWithResume)
 				{
 					const bool bRecurse = true;
                     bSuccess = CopyFolderWithResume(diSourceDir.FullName, diTargetDir.FullName, bRecurse, ref retData, filesToSkip);
@@ -1872,6 +1883,60 @@ namespace CaptureToolPlugin
 				retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 
 		}
+
+        /// <summary>
+        /// Look for an incomplete Agilent Ion Trap .D folder
+        /// </summary>
+        /// <returns>True if incomplete</returns>
+        private bool IsIncompleteAgilentIonTrap(
+            string sourceFolderPath,
+            out string msg,
+            ref clsToolReturnData retData) 
+        {
+            msg = string.Empty;
+
+            try
+            {
+                var diSourceFolder = new DirectoryInfo(sourceFolderPath);
+
+                var dataMSFile = diSourceFolder.GetFiles("DATA.MS");
+                string sourceFolderErrorMessage = null;
+
+                if (dataMSFile.Length == 0)
+                {
+                    sourceFolderErrorMessage = "DATA.MS file not found; incomplete dataset";
+                }
+                else
+                {
+                    if (dataMSFile[0].Length == 0)
+                    {
+                        sourceFolderErrorMessage = "Source folder has a zero-byte DATA.MS file";
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(sourceFolderErrorMessage))
+                {
+                    retData.CloseoutMsg = sourceFolderErrorMessage;
+                    msg = retData.CloseoutMsg + " at " + sourceFolderPath;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    DisconnectShareIfRequired();
+                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                retData.CloseoutMsg = "Exception checking for a DATA.MS file";
+                msg = retData.CloseoutMsg + " at " + sourceFolderPath;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
+                DisconnectShareIfRequired();
+
+                HandleCopyException(ref retData, ex);
+                return true;
+            }
+
+            return false;
+        }
 
         /// <summary>
         /// Look for an incomplete .UIMF file, which is either 0 bytes in size or has a corresponding .uimf-journal file
@@ -2024,7 +2089,7 @@ namespace CaptureToolPlugin
         /// <param name="datasetInfo">Dataset info</param>
         /// <param name="sourceFolderPath">Source folder (on instrument); datasetInfo.FileOrFolderName will be appended to this</param>
         /// <param name="datasetFolderPath">Destination folder; datasetInfo.FileOrFolderName will not be appended to this (constrast with CaptureFolderExt)</param>
-        /// <param name="bCopyWithResume">True if using copy with resume</param>
+        /// <param name="copyWithResume">True if using copy with resume</param>
         /// <param name="instrumentClass">Instrument class</param>
         private void CaptureFolderNoExt(
             out string msg, 
@@ -2032,7 +2097,7 @@ namespace CaptureToolPlugin
             clsDatasetInfo datasetInfo, 
             string sourceFolderPath, 
             string datasetFolderPath, 
-            bool bCopyWithResume, 
+            bool copyWithResume, 
             clsInstrumentClassInfo.eInstrumentClass instrumentClass)
 		{
 			// Dataset found; it's a folder with no extension on the name
@@ -2129,7 +2194,7 @@ namespace CaptureToolPlugin
 			try
 			{
 
-				if (bCopyWithResume)
+				if (copyWithResume)
 				{
 					const bool bRecurse = true;
                     bSuccess = CopyFolderWithResume(diSourceDir.FullName, diTargetDir.FullName, bRecurse, ref retData);
@@ -2185,14 +2250,14 @@ namespace CaptureToolPlugin
         /// <param name="datasetInfo">Dataset info</param>
         /// <param name="sourceFolderPath">Source folder (on instrument); datasetInfo.FileOrFolderName will be appended to this</param>
         /// <param name="datasetFolderPath">Destination folder; datasetInfo.FileOrFolderName will not be appended to this (constrast with CaptureFolderExt)</param>
-        /// <param name="bCopyWithResume">True if using copy with resume</param>
+        /// <param name="copyWithResume">True if using copy with resume</param>
 	    private void CaptureBrukerImaging(
             out string msg, 
             ref clsToolReturnData retData, 
             clsDatasetInfo datasetInfo, 
             string sourceFolderPath, 
             string datasetFolderPath, 
-            bool bCopyWithResume)
+            bool copyWithResume)
 		{
 			// Dataset found; it's a Bruker imaging folder
 
@@ -2244,7 +2309,7 @@ namespace CaptureToolPlugin
 			// Copy only the files in the dataset folder to the storage server. Do not copy folders
 			try
 			{
-				if (bCopyWithResume)
+				if (copyWithResume)
 				{
 					const bool bRecurse = false;
                     bSuccess = CopyFolderWithResume(diSourceDir.FullName, diTargetDir.FullName, bRecurse, ref retData);
