@@ -20,7 +20,7 @@ using System.Threading;
 using CaptureTaskManager;
 using PRISM.Files;
 using PRISM.Processes;
-using ThermoRawFileReaderDLL.FinniganFileIO;
+using ThermoRawFileReader;
 using UIMFLibrary;
 
 namespace DatasetIntegrityPlugin
