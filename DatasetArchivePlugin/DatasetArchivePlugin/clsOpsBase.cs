@@ -42,14 +42,16 @@ namespace DatasetArchivePlugin
 
         protected int m_DebugLevel;
 
-        protected string m_User;
-        protected string m_Pwd;
-        protected bool m_UseTls;
-        protected int m_ServerPort;
-        protected int m_FtpTimeOut;
-        protected bool m_FtpPassive;
-        protected bool m_FtpRestart;
-        protected bool m_ConnectionOpen = false;
+        // Deprecated: protected string m_User;
+        // Deprecated: protected string m_Pwd;
+        
+        // Deprecated: protected bool m_UseTls;
+        // Deprecated: protected int m_ServerPort;
+        // Deprecated: protected int m_FtpTimeOut;
+        // Deprecated: protected bool m_FtpPassive;
+        // Deprecated: protected bool m_FtpRestart;
+        // Deprecated: protected bool m_ConnectionOpen = false;
+
         protected string m_ArchiveOrUpdate;
         protected string m_DatasetName = string.Empty;
 
@@ -87,15 +89,15 @@ namespace DatasetArchivePlugin
             m_StatusTools = StatusTools;
 
             // DebugLevel of 4 means Info level (normal) logging; 5 for Debug level (verbose) logging
-            m_DebugLevel = clsConversion.CIntSafe(m_MgrParams.GetParam("debuglevel"), 4);
-
-            m_User = m_MgrParams.GetParam("username");
-            m_Pwd = m_MgrParams.GetParam("userpwd");
-            m_UseTls = bool.Parse(m_MgrParams.GetParam("usetls"));
-            m_ServerPort = int.Parse(m_MgrParams.GetParam("serverport"));
-            m_FtpTimeOut = int.Parse(m_MgrParams.GetParam("timeout"));
-            m_FtpPassive = bool.Parse(m_MgrParams.GetParam("passive"));
-            m_FtpRestart = bool.Parse(m_MgrParams.GetParam("restart"));
+            m_DebugLevel = m_MgrParams.GetParam("debuglevel", 4);
+            
+            // Deprecated: m_User = m_MgrParams.GetParam("username");
+            // Deprecated: m_Pwd = m_MgrParams.GetParam("userpwd");
+            // Deprecated: m_UseTls = bool.Parse(m_MgrParams.GetParam("usetls"));
+            // Deprecated: m_ServerPort = int.Parse(m_MgrParams.GetParam("serverport"));
+            // Deprecated: m_FtpTimeOut = int.Parse(m_MgrParams.GetParam("timeout"));
+            // Deprecated: m_FtpPassive = bool.Parse(m_MgrParams.GetParam("passive"));
+            // Deprecated: m_FtpRestart = bool.Parse(m_MgrParams.GetParam("restart"));
 
             if (m_TaskParams.GetParam("StepTool") == "DatasetArchive")
             {
