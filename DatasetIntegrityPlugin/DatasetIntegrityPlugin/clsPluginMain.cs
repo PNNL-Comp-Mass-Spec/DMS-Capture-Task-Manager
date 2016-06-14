@@ -1174,7 +1174,7 @@ namespace DatasetIntegrityPlugin
         /// <param name="minFileSizeKB">Minimum allowed file size</param>
         /// <param name="maxFileSizeMB">Maximum allowed file size</param>
         /// <param name="openRawFileIfTooSmall">
-        /// When true, if the file is less than minFileSizeKB, we try to open it with the ThermoRawFileReaderDLL
+        /// When true, if the file is less than minFileSizeKB, we try to open it with the ThermoRawFileReader
         /// If we can successfully open the file and get the first scan's data, then we declare the file to be valid
         /// </param>
         /// <returns></returns>
