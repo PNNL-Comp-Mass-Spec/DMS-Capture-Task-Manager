@@ -53,6 +53,7 @@ namespace CaptureToolPlugin
 		#region "Class variables"
 
 		private readonly IMgrParams m_MgrParams;
+
 		private int m_SleepInterval;
 
 		// True means MgrParam "perspective" =  "client" which means we will use paths like \\proto-5\Exact04\2012_1
@@ -133,7 +134,7 @@ namespace CaptureToolPlugin
 			}
 
 			// Sleep interval for "is dataset complete" testing
-			m_SleepInterval = int.Parse(m_MgrParams.GetParam("sleepinterval", "30"));
+			m_SleepInterval = m_MgrParams.GetParam("sleepinterval", 30);
 
 			// Instantiate m_FileTools
 			m_FileTools = new clsFileTools(m_MgrParams.GetParam("MgrName", "CaptureTaskManager"), 1);
@@ -1017,6 +1018,7 @@ namespace CaptureToolPlugin
 		public bool DoOperation(ITaskParams taskParams, ref clsToolReturnData retData)
 		{
 			var datasetName = taskParams.GetParam("Dataset");
+            var jobNum = taskParams.GetParam("Job", 0);
 			var sourceVol = taskParams.GetParam("Source_Vol");						// Example: \\exact04.bionet\
 			var sourcePath = taskParams.GetParam("Source_Path");					// Example: ProteomicsData\
             var captureSubfolder = taskParams.GetParam("Capture_Subfolder");		// Typically an empty string, but could be a partial path like: "CapDev" or "Smith\2014"
@@ -1279,7 +1281,7 @@ namespace CaptureToolPlugin
                 else
                     retData.CloseoutMsg = "Dataset data file not found at " + sourceFolderPath;
 
-                msg = retData.CloseoutMsg + ": " + datasetName;
+                msg = retData.CloseoutMsg + " (" + datasetName + ", job " + jobNum + ")";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 				sourceIsValid = false;
 			}

@@ -118,17 +118,11 @@ namespace CaptureTaskManager
 
             m_Dataset = m_TaskParams.GetParam("Dataset");
 
-            if (!int.TryParse(m_TaskParams.GetParam("Dataset_ID"), out m_DatasetID))
-            {
-                m_DatasetID = 0;
-            }
+            m_DatasetID = m_TaskParams.GetParam("Dataset_ID", 0);
 
-            if (!int.TryParse(m_TaskParams.GetParam("Job"), out m_Job))
-            {
-                m_Job = 0;
-            }
+            m_Job = m_TaskParams.GetParam("Job", 0);
 
-            m_DebugLevel = clsConversion.CIntSafe(m_MgrParams.GetParam("debuglevel"), 4);
+            m_DebugLevel = m_MgrParams.GetParam("debuglevel", 4);
 
         }
 
@@ -158,7 +152,7 @@ namespace CaptureTaskManager
                 else
                 {
                     // Update the log level
-                    m_DebugLevel = clsConversion.CIntSafe(m_MgrParams.GetParam("debuglevel"), 4);
+                    m_DebugLevel = m_MgrParams.GetParam("debuglevel", 4);
                     clsLogTools.SetFileLogLevel(m_DebugLevel);
                 }
             }
@@ -605,11 +599,11 @@ namespace CaptureTaskManager
 
                 MyCmd.Parameters.Add(new SqlParameter("@job", System.Data.SqlDbType.Int));
                 MyCmd.Parameters["@job"].Direction = System.Data.ParameterDirection.Input;
-                MyCmd.Parameters["@job"].Value = Convert.ToInt32(m_TaskParams.GetParam("Job"));
+                MyCmd.Parameters["@job"].Value = m_TaskParams.GetParam("Job", 0);
 
                 MyCmd.Parameters.Add(new SqlParameter("@step", System.Data.SqlDbType.Int));
                 MyCmd.Parameters["@step"].Direction = System.Data.ParameterDirection.Input;
-                MyCmd.Parameters["@step"].Value = Convert.ToInt32(m_TaskParams.GetParam("Step"));
+                MyCmd.Parameters["@step"].Value = m_TaskParams.GetParam("Step", 0);
 
                 MyCmd.Parameters.Add(new SqlParameter("@ToolVersionInfo", System.Data.SqlDbType.VarChar, 900));
                 MyCmd.Parameters["@ToolVersionInfo"].Direction = System.Data.ParameterDirection.Input;

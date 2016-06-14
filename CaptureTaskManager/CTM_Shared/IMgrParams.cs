@@ -25,6 +25,8 @@ namespace CaptureTaskManager
         bool GetBooleanParam(string itemKey);
 		string GetParam(string itemKey);
 		string GetParam(string itemKey, string valueIfMissing);
+        int GetParam(string itemKey, int valueIfMissing);
+
 		void SetParam(string itemKey, string itemValue);
 
         bool LoadMgrSettingsFromDB();

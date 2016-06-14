@@ -80,45 +80,45 @@ namespace CaptureTaskManager
         /// <summary>
         /// Convert string to bool; default false if an error
         /// </summary>
-        /// <param name="Value"></param>
+        /// <param name="value"></param>
         /// <returns></returns>
-        public static bool CBoolSafe(string Value)
+        public static bool CBoolSafe(string value)
         {
-            return CBoolSafe(Value, false);
+            return CBoolSafe(value, false);
         }
 
-        public static bool CBoolSafe(string Value, bool DefaultValue)
+        public static bool CBoolSafe(string value, bool defaultValue)
         {
-            if (string.IsNullOrEmpty(Value))
-                return DefaultValue;
+            if (string.IsNullOrEmpty(value))
+                return defaultValue;
             
             bool blnValue;
-            if (bool.TryParse(Value, out blnValue))
+            if (bool.TryParse(value, out blnValue))
                 return blnValue;
             
-            return DefaultValue;
+            return defaultValue;
         }
 
-        public static int CIntSafe(string Value, int DefaultValue)
+        public static int CIntSafe(string value, int defaultValue)
         {
-            if (string.IsNullOrEmpty(Value))
-                return DefaultValue;
+            if (string.IsNullOrEmpty(value))
+                return defaultValue;
             
             int intValue;
-            if (int.TryParse(Value, out intValue))
+            if (int.TryParse(value, out intValue))
                 return intValue;
             
-            return DefaultValue;
+            return defaultValue;
         }
 
-        public static float CSngSafe(string Value, float DefaultValue)
+        public static float CSngSafe(string value, float defaultValue)
         {
-            var fValue = DefaultValue;
+            var fValue = defaultValue;
 
-            if (string.IsNullOrEmpty(Value))
+            if (string.IsNullOrEmpty(value))
                 return fValue;
             
-            if (float.TryParse(Value, out fValue))
+            if (float.TryParse(value, out fValue))
                 return fValue;
             
             return fValue;

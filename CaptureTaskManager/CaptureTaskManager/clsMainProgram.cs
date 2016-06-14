@@ -325,7 +325,7 @@ namespace CaptureTaskManager
 
             // Setup the loggers
             var logFileName = m_MgrSettings.GetParam("logfilename");
-            m_DebugLevel = clsConversion.CIntSafe(m_MgrSettings.GetParam("debuglevel"), 4);
+            m_DebugLevel = m_MgrSettings.GetParam("debuglevel", 4);
             clsLogTools.CreateFileLogger(logFileName, m_DebugLevel);
 
             if (m_MgrSettings.GetBooleanParam("ftplogging"))
@@ -630,7 +630,7 @@ namespace CaptureTaskManager
 
                             // Increment and test the task counter
                             taskCount++;
-                            if (taskCount > clsConversion.CIntSafe(m_MgrSettings.GetParam("maxrepetitions", "1"), 1))
+                            if (taskCount > m_MgrSettings.GetParam("maxrepetitions", 1))
                             {
                                 m_Running = false;
                                 m_LoopExitCode = LoopExitCode.ExceededMaxTaskCount;
@@ -1084,7 +1084,7 @@ namespace CaptureTaskManager
                     m_MgrSettings.GetParam("WorkDir"),
                     m_StatusFile);
 
-                var cleanupModeVal = clsConversion.CIntSafe(m_MgrSettings.GetParam("ManagerErrorCleanupMode"), 0);
+                var cleanupModeVal = m_MgrSettings.GetParam("ManagerErrorCleanupMode", 0);
                 blnMgrCleanupSuccess = objCleanupMgrErrors.AutoCleanupManagerErrors(cleanupModeVal);
 
             }
@@ -1149,7 +1149,7 @@ namespace CaptureTaskManager
             else
             {
                 // Update the log level
-                m_DebugLevel = clsConversion.CIntSafe(m_MgrSettings.GetParam("debuglevel"), 4);
+                m_DebugLevel = m_MgrSettings.GetParam("debuglevel", 4);
                 clsLogTools.SetFileLogLevel(m_DebugLevel);
             }
 

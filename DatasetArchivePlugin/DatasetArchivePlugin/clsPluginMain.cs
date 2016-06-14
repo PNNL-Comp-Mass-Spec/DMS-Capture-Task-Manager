@@ -188,11 +188,11 @@ namespace DatasetArchivePlugin
 
 					MyCmd.Parameters.Add(new SqlParameter("@Job", SqlDbType.Int));
 					MyCmd.Parameters["@Job"].Direction = ParameterDirection.Input;
-					MyCmd.Parameters["@Job"].Value = Convert.ToInt32(m_TaskParams.GetParam("Job"));
+                    MyCmd.Parameters["@Job"].Value = m_TaskParams.GetParam("Job", 0);
 
 					MyCmd.Parameters.Add(new SqlParameter("@DatasetID", SqlDbType.Int));
 					MyCmd.Parameters["@DatasetID"].Direction = ParameterDirection.Input;
-					MyCmd.Parameters["@DatasetID"].Value = Convert.ToInt32(m_TaskParams.GetParam("Dataset_ID"));
+					MyCmd.Parameters["@DatasetID"].Value = m_TaskParams.GetParam("Dataset_ID", 0);
 
 					MyCmd.Parameters.Add(new SqlParameter("@Subfolder", SqlDbType.VarChar, 128));
 					MyCmd.Parameters["@Subfolder"].Direction = ParameterDirection.Input;
