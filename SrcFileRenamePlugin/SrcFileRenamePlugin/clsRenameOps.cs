@@ -159,7 +159,7 @@ namespace SrcFileRenamePlugin
             if (countRenamed == 0)
             {
                 if (string.IsNullOrEmpty(errorMessage))
-                    errorMessage = "data file and/or folder not found on the instrument; cannot rename";
+                    errorMessage = "Data file and/or folder not found on the instrument; cannot rename";
 
                 msg = "Dataset " + datasetName + ":" + errorMessage;
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
