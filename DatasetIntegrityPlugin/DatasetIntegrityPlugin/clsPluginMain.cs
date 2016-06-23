@@ -930,6 +930,7 @@ namespace DatasetIntegrityPlugin
             // Example messages:
             // Data file size is less than 100 KB
             // ser file size is less than 16 KB
+            // ser file is 0 bytes
 
             var sMinSize = fMinSizeKB.ToString("#0") + " KB";
 
@@ -937,7 +938,10 @@ namespace DatasetIntegrityPlugin
                       fActualSizeKB.ToString("####0.0") + " KB; " +
                       "min allowable size is " + sMinSize + "; see " + sFilePath;
 
-            mRetData.EvalMsg = sDataFileDescription + " file size is less than " + sMinSize;
+            if (Math.Abs(fActualSizeKB) < 0.0001)
+                mRetData.EvalMsg = sDataFileDescription + " file is 0 bytes";
+            else
+                mRetData.EvalMsg = sDataFileDescription + " file size is less than " + sMinSize;
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
         }
