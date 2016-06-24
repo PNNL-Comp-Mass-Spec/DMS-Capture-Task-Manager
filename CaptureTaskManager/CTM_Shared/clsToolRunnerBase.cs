@@ -49,6 +49,8 @@ namespace CaptureTaskManager
         protected int m_DatasetID;
         protected int m_DebugLevel;
 
+        protected bool m_TraceMode;
+
         #endregion
 
         #region "Delegates"
@@ -58,16 +60,18 @@ namespace CaptureTaskManager
         #endregion
 
         #region "Properties"
+
         #endregion
 
-        #region "Constructors"
+        #region "Constructor"
+
         /// <summary>
         /// Constructor
         /// </summary>
         protected clsToolRunnerBase()
         {
             // Does nothing; see the Setup method for constructor-like behavior
-        }	// End sub
+        }
 
         /// <summary>
         /// Destructor
@@ -123,6 +127,8 @@ namespace CaptureTaskManager
             m_Job = m_TaskParams.GetParam("Job", 0);
 
             m_DebugLevel = m_MgrParams.GetParam("debuglevel", 4);
+
+            m_TraceMode = m_MgrParams.GetParam("TraceMode", false);
 
         }
 
@@ -629,6 +635,15 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
+        /// Display a timestamp and message at the console
+        /// </summary>
+        /// <param name="message"></param>
+        public static void ShowTraceMessage(string message)
+        {
+            Console.WriteLine(DateTime.Now.ToString("hh:mm:ss.fff tt") + @": " + message);
+        }
+
+        /// <summary>
         /// Determines the version info for a DLL using reflection
         /// </summary>
         /// <param name="toolVersionInfo">Version info string to append the veresion info to</param>
@@ -883,11 +898,13 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="statusNum">MyEMSL Status number</param>
         /// <param name="ingestStepsCompleted">Number of completed ingest steps</param>
+        /// <param name="fatalError">True if ingest failed with a fatal error and thus the ErrorCode should be updated in T_MyEMSL_Uploads</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>This function is used by the ArchiveStatusCheck plugin and the ArchiveVerify plugin </remarks>
         protected bool UpdateIngestStepsCompletedOneTask(
             int statusNum,
-            byte ingestStepsCompleted)
+            byte ingestStepsCompleted,
+            bool fatalError = false)
         {
             const string SP_NAME = "UpdateMyEMSLUploadIngestStats";
 
@@ -910,6 +927,10 @@ namespace CaptureTaskManager
             cmd.Parameters.Add("@IngestStepsCompleted", System.Data.SqlDbType.TinyInt);
             cmd.Parameters["@IngestStepsCompleted"].Direction = System.Data.ParameterDirection.Input;
             cmd.Parameters["@IngestStepsCompleted"].Value = ingestStepsCompleted;
+
+            cmd.Parameters.Add("@FatalError", System.Data.SqlDbType.TinyInt);
+            cmd.Parameters["@FatalError"].Direction = System.Data.ParameterDirection.Input;
+            cmd.Parameters["@FatalError"].Value = fatalError ? 1 : 0;
 
             cmd.Parameters.Add("@message", System.Data.SqlDbType.VarChar, 512);
             cmd.Parameters["@message"].Direction = System.Data.ParameterDirection.Output;

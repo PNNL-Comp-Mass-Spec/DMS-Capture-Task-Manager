@@ -33,14 +33,6 @@ namespace ArchiveVerifyPlugin
 
 		#endregion
 
-		#region "Constructors"
-		public clsPluginMain()
-		{
-            // Does nothing at present
-		}
-
-		#endregion
-
 		#region "Methods"
 		/// <summary>
 		/// Runs the Archive Verify step tool
@@ -173,10 +165,14 @@ namespace ArchiveVerifyPlugin
                     cookieJar, mRetData, out xmlServerResponse);
 
                 var ingestStepsComplete = statusChecker.IngestStepCompletionCount(xmlServerResponse);
+                
+                var fatalError = (
+                    mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED &&
+                    mRetData.EvalCode == EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY);
 
-			    var statusNum = MyEMSLStatusCheck.GetStatusNumFromURI(statusURI);
+                var statusNum = MyEMSLStatusCheck.GetStatusNumFromURI(statusURI);
 
-                UpdateIngestStepsCompletedOneTask(statusNum, ingestStepsComplete);
+                UpdateIngestStepsCompletedOneTask(statusNum, ingestStepsComplete, fatalError);
 
 			    if (!ingestSuccess)
 			    {
