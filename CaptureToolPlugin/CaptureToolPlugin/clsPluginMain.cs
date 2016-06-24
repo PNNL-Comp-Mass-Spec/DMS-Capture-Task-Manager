@@ -17,10 +17,6 @@ namespace CaptureToolPlugin
 		// Main class for plugin
 		//**********************************************************************************************************
 
-		#region "Constructors"
-        // The base-class constructor is automatically called
-		#endregion
-
 		#region "Methods"
 			/// <summary>
 			/// Runs the capture step tool
@@ -63,13 +59,16 @@ namespace CaptureToolPlugin
 				}
 
 				// Create the object that will perform capture operation
-				var capOpTool = new clsCaptureOps(m_MgrParams, useBionet);
+				var capOpTool = new clsCaptureOps(m_MgrParams, useBionet, m_TraceMode);
 				try
 				{
 					msg = "clsPluginMain.RunTool(): Starting capture operation";
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
-					capOpTool.DoOperation(m_TaskParams, ref retData);
+					var success = capOpTool.DoOperation(m_TaskParams, ref retData);
+
+                    if (!success && !string.IsNullOrWhiteSpace(retData.CloseoutMsg))
+                        if (m_TraceMode) ShowTraceMessage(retData.CloseoutMsg);
 
 					if (capOpTool.NeedToAbortProcessing)
 					{
@@ -118,12 +117,12 @@ namespace CaptureToolPlugin
 			/// <param name="mgrParams">Parameters for manager operation</param>
 			/// <param name="taskParams">Parameters for the assigned task</param>
 			/// <param name="statusTools">Tools for status reporting</param>
-			public override void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
+            public override void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
 			{
 				var msg = "Starting clsPluginMain.Setup()";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-				
-				base.Setup(mgrParams, taskParams, statusTools);
+
+                base.Setup(mgrParams, taskParams, statusTools);
 
 				msg = "Completed clsPluginMain.Setup()";
 				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
