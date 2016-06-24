@@ -520,6 +520,23 @@ namespace CaptureTaskManager
         /// <param name="itemKey">Parameter name</param>
         /// <param name="valueIfMissing">Value to return if the parameter does not exist</param>
         /// <returns>Parameter value if found, otherwise empty string</returns>
+        public bool GetParam(string itemKey, bool valueIfMissing)
+        {
+            string valueText;
+            if (m_ParamDictionary.TryGetValue(itemKey, out valueText))
+            {
+                var value = clsConversion.CBoolSafe(valueText, valueIfMissing);
+                return value;
+            }
+
+            return valueIfMissing;
+        }
+        /// <summary>
+        /// Gets a stored parameter
+        /// </summary>
+        /// <param name="itemKey">Parameter name</param>
+        /// <param name="valueIfMissing">Value to return if the parameter does not exist</param>
+        /// <returns>Parameter value if found, otherwise empty string</returns>
         public int GetParam(string itemKey, int valueIfMissing)
         {
             string valueText;

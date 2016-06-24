@@ -25,6 +25,7 @@ namespace CaptureTaskManager
         bool GetBooleanParam(string itemKey);
 		string GetParam(string itemKey);
 		string GetParam(string itemKey, string valueIfMissing);
+        bool GetParam(string itemKey, bool valueIfMissing);
         int GetParam(string itemKey, int valueIfMissing);
 
 		void SetParam(string itemKey, string itemValue);
