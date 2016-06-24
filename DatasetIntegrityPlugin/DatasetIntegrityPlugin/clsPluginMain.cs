@@ -1588,9 +1588,9 @@ namespace DatasetIntegrityPlugin
             {
                 // Look for any files that match Dataset.mis or Dataset.jpg, and, if found, copy them up one folder
 
-                MoveOrCopyUpOneLevel(diDatasetFolder, "*.mis", matchDatasetName: true, copyFile: true);
-                MoveOrCopyUpOneLevel(diDatasetFolder, "*.bak", matchDatasetName: true, copyFile: true);
-                MoveOrCopyUpOneLevel(diDatasetFolder, "*.jpg", matchDatasetName: false, copyFile: true);
+                MoveOrCopyUpOneLevel(lstDotDFolders[0], "*.mis", matchDatasetName: true, copyFile: true);
+                MoveOrCopyUpOneLevel(lstDotDFolders[0], "*.bak", matchDatasetName: true, copyFile: true);
+                MoveOrCopyUpOneLevel(lstDotDFolders[0], "*.jpg", matchDatasetName: false, copyFile: true);
             }
 
 
