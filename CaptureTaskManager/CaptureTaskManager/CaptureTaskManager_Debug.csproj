@@ -193,4 +193,8 @@ xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
 xcopy "$(TargetDir)plugin_info.xml" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
 xcopy "$(ProjectDir)..\..\RefLib\PNNLOmics.dll" "$(TargetDir)" /D /Y</PostBuildEvent>
   </PropertyGroup>
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
+  </PropertyGroup>
 </Project>

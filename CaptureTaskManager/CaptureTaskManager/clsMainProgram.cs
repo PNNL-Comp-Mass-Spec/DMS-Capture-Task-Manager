@@ -274,8 +274,6 @@ namespace CaptureTaskManager
             //  that "UsingDefaults" is set to False in CaptureTaskManager.exe.config               
             try
             {
-                if (m_TraceMode) clsUtilities.VerifyFolder("clsMainProgram.InitMgr, A");
-
                 m_MgrSettings = new clsMgrSettings();
             }
             catch (Exception ex)
@@ -451,8 +449,6 @@ namespace CaptureTaskManager
                 }
             }
 
-            if (m_TraceMode) clsUtilities.VerifyFolder("clsMainProgram.InitMgr, B");
-
             // Everything worked!
             return true;
         }
@@ -607,8 +603,6 @@ namespace CaptureTaskManager
                         RemoveOldFTPLogFiles();
                     }
 
-                    if (m_TraceMode) clsUtilities.VerifyFolder("clsMainProgram.PerformMainLoop");
-
                     // Attempt to get a capture task
                     var taskReturn = m_Task.RequestTask();
                     switch (taskReturn)
@@ -749,8 +743,6 @@ namespace CaptureTaskManager
                     m_StatusFile.UpdateIdle();
                     return;
                 }
-
-                if (m_TraceMode) clsUtilities.VerifyFolder("clsMainProgram.PerformTask");
 
                 // Run the tool plugin
                 m_DurationStart = DateTime.UtcNow;
@@ -1061,7 +1053,7 @@ namespace CaptureTaskManager
         /// <param name="message"></param>
         public static void ShowTraceMessage(string message)
         {
-            Console.WriteLine(DateTime.Now.ToString("hh:mm:ss.fff tt") + @": " + message);
+            clsToolRunnerBase.ShowTraceMessage(message);
         }
 
         /// <summary>
