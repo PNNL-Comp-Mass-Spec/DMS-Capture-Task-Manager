@@ -17,14 +17,7 @@ namespace SrcFileRenamePlugin
 		//*********************************************************************************************************
 		// Main class for plugin
 		//**********************************************************************************************************
-
-		// <summary>
-		// Constructor (does nothing at present)
-		// </summary>
-		// public clsPluginMain()
-		// {		
-		// }
-
+        
 		#region "Methods"
 		/// <summary>
 		/// Runs the source file rename tool

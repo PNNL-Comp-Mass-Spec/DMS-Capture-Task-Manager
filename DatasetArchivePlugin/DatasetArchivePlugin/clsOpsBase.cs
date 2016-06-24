@@ -81,7 +81,8 @@ namespace DatasetArchivePlugin
 
         #endregion
 
-        #region "Constructors"
+        #region "Constructor"
+
         public clsOpsBase(IMgrParams MgrParams, ITaskParams TaskParams, IStatusFile StatusTools)
         {
             m_MgrParams = MgrParams;

@@ -131,7 +131,7 @@ namespace DatasetInfoPlugin
 		/// <param name="mgrParams">Parameters for manager operation</param>
 		/// <param name="taskParams">Parameters for the assigned task</param>
 		/// <param name="statusTools">Tools for status reporting</param>
-		public override void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
+        public override void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
 		{
 			var msg = "Starting clsPluginMain.Setup()";
 			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);

@@ -49,12 +49,6 @@ namespace ImsDemuxPlugin
 		protected bool mDemultiplexingPerformed;
 		#endregion
 
-		#region "Constructors"
-		public clsPluginMain()
-		{          
-		}
-		#endregion
-
 		#region "Methods"
 		/// <summary>
 		/// Runs the IMS demux step tool

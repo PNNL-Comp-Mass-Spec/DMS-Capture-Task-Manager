@@ -34,13 +34,6 @@ namespace DatasetArchivePlugin
 
 		#endregion
 
-		#region "Constructors"
-		public clsPluginMain()
-		{
-			// Does nothing at present
-		}
-		#endregion
-
 		#region "Methods"
 		/// <summary>
 		/// Runs the archive and archive update step tools

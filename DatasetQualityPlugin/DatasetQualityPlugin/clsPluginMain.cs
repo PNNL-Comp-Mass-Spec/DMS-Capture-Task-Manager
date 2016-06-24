@@ -44,15 +44,6 @@ namespace DatasetQualityPlugin
 
 		#endregion
 
-		#region "Constructors"
-		public clsPluginMain()
-			: base()
-		{
-
-		}
-
-		#endregion
-
 		#region "Methods"
 		/// <summary>
 		/// Runs the dataset info step tool

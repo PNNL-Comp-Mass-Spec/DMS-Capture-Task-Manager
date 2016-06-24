@@ -28,7 +28,7 @@ namespace CaptureTaskManager
 		
 		#endregion
 
-		#region "Constructors"
+		#region "Constructor"
 		/// <summary>
 		/// Class constructor
 		/// </summary>

@@ -215,11 +215,22 @@ namespace CaptureTaskManager
 
         }
 
+        /// <summary>
+        /// This function was added to debug remote share access issues
+        /// The folder was accessible from some classes but not accessible from others
+        /// </summary>
+        /// <param name="callingFunction"></param>
         public static void VerifyFolder(string callingFunction)
         {
             VerifyFolder(callingFunction, @"\\Proto-2.emsl.pnl.gov\External_Orbitrap_Xfer\");
         }
 
+        /// <summary>
+        /// This function was added to debug remote share access issues
+        /// The folder was accessible from some classes but not accessible from others
+        /// </summary>
+        /// <param name="callingFunction"></param>
+        /// <param name="pathToCheck"></param>
         public static void VerifyFolder(string callingFunction, string pathToCheck)
         {
             try

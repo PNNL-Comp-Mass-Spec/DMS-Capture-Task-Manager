@@ -20,14 +20,6 @@ namespace ArchiveStatusCheckPlugin
 
 		#endregion
 
-		#region "Constructors"
-		public clsPluginMain()			
-		{
-            // Does nothing at present
-		}
-
-		#endregion
-
 		#region "Methods"
 		/// <summary>
 		/// Runs the Archive Status Check step tool
