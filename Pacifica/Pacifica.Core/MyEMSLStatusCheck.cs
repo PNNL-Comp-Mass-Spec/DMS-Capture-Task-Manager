@@ -86,7 +86,17 @@ namespace Pacifica.Core
             out bool lookupError,
             out string errorMessage)
         {
-            const string EXCEPTION_TEXT = @"message='exceptions.";
+            var errorMessageKeywords = new List<string> 
+            {   "exceptions.",
+                "exception"
+            };
+
+            var errorMessageTerminators = new List<string> 
+            {   "traceback", 
+                "status=",
+                "/>",
+                @"\"
+            };
 
             lookupError = false;
             errorMessage = string.Empty;
@@ -101,23 +111,54 @@ namespace Pacifica.Core
 
             var xmlServerResponse = EasyHttp.Send(statusURI, out responseStatusCode, timeoutSeconds);
 
-            var exceptionIndex = xmlServerResponse.IndexOf(EXCEPTION_TEXT, StringComparison.Ordinal);
-            if (exceptionIndex <= 0)
+            // Look for an exception in the response
+            // Example response with an error:
+            //
+            //	<transaction id='1025302' />
+            //	<step id='0' message='&lt;type 'exceptions.IOError'&gt;
+            //   [Errno 5] Input/output error
+            //   &lt;traceback object at 0x7fcb9e646170&gt;
+            //   Traceback%20%28most%20recent%20call%20last%29%3A%0A%20%20File%20%22%2Fusr%2Flib%2Fpython2.6%2Fsite-packages%2Fmyemsl%2Fcatchall.py ...
+            //   ' status='ERROR' />
+
+            var exceptionIndex = -1;
+            var keywordLength = 0;
+
+            foreach (var exceptionKeyword in errorMessageKeywords)
+            {
+                exceptionIndex = xmlServerResponse.IndexOf(exceptionKeyword, StringComparison.InvariantCultureIgnoreCase);
+                if (exceptionIndex > 0)
+                {
+                    keywordLength = exceptionKeyword.Length;
+                    break;
+                }
+            }
+           
+            if (exceptionIndex < 0)
             {
                 return xmlServerResponse;
             }
 
-            var message = xmlServerResponse.Substring(exceptionIndex + EXCEPTION_TEXT.Length);
-            var charIndex = message.IndexOf("traceback", StringComparison.Ordinal);
-            if (charIndex > 0)
-                message = message.Substring(0, charIndex - 1).Replace("\n", "; ").Replace("&lt", string.Empty);
-            else
-            {
-                charIndex = message.IndexOf('\'', 5);
-                if (charIndex > 0)
-                    message = message.Substring(0, charIndex - 1).Replace("\n", "; ");
-            }
+            var message = xmlServerResponse.Substring(exceptionIndex + keywordLength);
 
+            foreach (var terminator in errorMessageTerminators)
+            {
+                var charIndex = message.IndexOf(terminator, StringComparison.InvariantCultureIgnoreCase);
+                if (charIndex > 0)
+                {
+                    message = message.Substring(0, charIndex - 1)
+                                .Replace("\n", "; ")
+                                .Replace("&lt;", string.Empty)
+                                .Replace("&lt", string.Empty)
+                                .Replace("&gt;", "; ")                                
+                                .Replace("&gt", "; ")
+                                .Replace("; ;", ";")
+                                .Replace("';", ";")
+                                .TrimEnd(' ', ';');
+                    break;
+                }
+            }
+           
             errorMessage = "Exception: " + message;
             lookupError = true;
 
@@ -367,7 +408,7 @@ namespace Pacifica.Core
             string errorMessage;
 
 	        // First look for exceptions
-		    if (HasExceptions(xmlServerResponse, false, out errorMessage))
+		    if (string.IsNullOrWhiteSpace(xmlServerResponse) || HasExceptions(xmlServerResponse, false, out errorMessage))
 		    {
                 // Exceptions are present; report 0 steps complete
                 return 0;
