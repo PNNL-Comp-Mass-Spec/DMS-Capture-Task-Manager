@@ -33,6 +33,7 @@ namespace DatasetIntegrityPlugin
 
         #region "Constants"
         const float RAW_FILE_MIN_SIZE_KB = 50;
+        const float RAW_FILE_MIN_SIZE_KB_21T = 30;
         const float RAW_FILE_MAX_SIZE_MB_LTQ = 2048;
         const float RAW_FILE_MAX_SIZE_MB_ORBITRAP = 100000;
         const float BAF_FILE_MIN_SIZE_KB = 16;
@@ -151,21 +152,29 @@ namespace DatasetIntegrityPlugin
                     dataFileNamePath = Path.Combine(datasetFolder, m_Dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
                     mRetData.CloseoutType = TestFinniganIonTrapFile(dataFileNamePath);
                     break;
+
                 case clsInstrumentClassInfo.eInstrumentClass.LTQ_FT:
                     dataFileNamePath = Path.Combine(datasetFolder, m_Dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
-                    mRetData.CloseoutType = TestLTQFTFile(dataFileNamePath);
+                    if (instrumentName.StartsWith("21T", StringComparison.InvariantCultureIgnoreCase))
+                        mRetData.CloseoutType = Test21TRawFile(dataFileNamePath);                        
+                    else
+                        mRetData.CloseoutType = TestLTQFTFile(dataFileNamePath);
                     break;
+
                 case clsInstrumentClassInfo.eInstrumentClass.BRUKERFTMS:
                     mRetData.CloseoutType = TestBrukerFolder(datasetFolder);
                     break;
+
                 case clsInstrumentClassInfo.eInstrumentClass.Thermo_Exactive:
                     dataFileNamePath = Path.Combine(datasetFolder, m_Dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
                     mRetData.CloseoutType = TestThermoExactiveFile(dataFileNamePath);
                     break;
+
                 case clsInstrumentClassInfo.eInstrumentClass.Triple_Quad:
                     dataFileNamePath = Path.Combine(datasetFolder, m_Dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
                     mRetData.CloseoutType = TestTripleQuadFile(dataFileNamePath);
                     break;
+
                 case clsInstrumentClassInfo.eInstrumentClass.IMS_Agilent_TOF:
                     if (agilentDFolderToUimfConversionRequired)
                     {
@@ -189,9 +198,11 @@ namespace DatasetIntegrityPlugin
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerFT_BAF:
                     mRetData.CloseoutType = TestBrukerFT_Folder(datasetFolder, requireBAFFile: true, requireMCFFile: false, instrumentClass: instrumentClass, instrumentName: instrumentName);
                     break;
+
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging:
                     mRetData.CloseoutType = TestBrukerMaldiImagingFolder(datasetFolder);
                     break;
+
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging_V2:
                     mRetData.CloseoutType = TestBrukerFT_Folder(datasetFolder, requireBAFFile: false, requireMCFFile: false, instrumentClass: instrumentClass, instrumentName: instrumentName);
 
@@ -218,15 +229,19 @@ namespace DatasetIntegrityPlugin
                         }
                     }
                     break;
+
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Spot:
                     mRetData.CloseoutType = TestBrukerMaldiSpotFolder(datasetFolder);
                     break;
+
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerTOF_BAF:
                     mRetData.CloseoutType = TestBrukerTof_BafFolder(datasetFolder, instrumentName);
                     break;
+
                 case clsInstrumentClassInfo.eInstrumentClass.Sciex_QTrap:
                     mRetData.CloseoutType = TestSciexQtrapFile(datasetFolder, m_Dataset);
                     break;
+
                 case clsInstrumentClassInfo.eInstrumentClass.Agilent_Ion_Trap:
                     // .D folder with a DATA.MS file
                     mRetData.CloseoutType = TestAgilentIonTrapFolder(datasetFolder);
@@ -251,6 +266,7 @@ namespace DatasetIntegrityPlugin
                 case clsInstrumentClassInfo.eInstrumentClass.Agilent_TOF_V2:
                     mRetData.CloseoutType = TestAgilentTOFV2Folder(datasetFolder);
                     break;
+
                 default:
                     msg = "No integrity test available for instrument class " + instClassName;
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
@@ -1140,6 +1156,16 @@ namespace DatasetIntegrityPlugin
             return TestThermoRawFile(dataFileNamePath, RAW_FILE_MIN_SIZE_KB, RAW_FILE_MAX_SIZE_MB_LTQ, true);
         }
 
+        /// <summary>
+        /// Tests a 21T dataset's .raw file integrity
+        /// </summary>
+        /// <param name="dataFileNamePath">Fully qualified path to dataset file</param>
+        /// <returns>Enum indicating success or failure</returns>
+        private EnumCloseOutType Test21TRawFile(string dataFileNamePath)
+        {
+            return TestThermoRawFile(dataFileNamePath, RAW_FILE_MIN_SIZE_KB_21T, RAW_FILE_MAX_SIZE_MB_LTQ, true);
+        }
+        
         /// <summary>
         /// Tests an Orbitrap (LTQ_FT) dataset's integrity
         /// </summary>
