@@ -2182,7 +2182,7 @@ namespace CaptureToolPlugin
 				if (lstDotDFolders.Length == 2)
 				{
 					// If one folder contains a ser file and the other folder contains an analysis.baf, we'll allow this
-					// This is somtimes the case for the 15T_FTICR_Imaging
+					// This is sometimes the case for the 15T_FTICR_Imaging
 					var serCount = 0;
 					var bafCount = 0;
 					foreach (var diFolder in lstDotDFolders)
