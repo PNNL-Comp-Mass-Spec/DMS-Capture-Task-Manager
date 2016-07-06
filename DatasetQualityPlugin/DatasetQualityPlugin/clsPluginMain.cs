@@ -175,7 +175,9 @@ namespace DatasetQualityPlugin
             var instrumentName = m_TaskParams.GetParam("Instrument_Name");
 
             // Lumos datasets will fail with Quameter if they have unsupported scan types
-            var ignoreQuameterFailure = instrumentName.StartsWith("Lumos", StringComparison.InvariantCultureIgnoreCase);
+            // 21T datasets will fail with Quameter if they only have one scan
+		    var ignoreQuameterFailure = instrumentName.StartsWith("Lumos", StringComparison.InvariantCultureIgnoreCase) ||
+		                                instrumentName.StartsWith("21T", StringComparison.InvariantCultureIgnoreCase);
 
 			var quameterExePath = GetQuameterPath();
 			var fiQuameter = new FileInfo(quameterExePath);
@@ -191,7 +193,7 @@ namespace DatasetQualityPlugin
 			if (!fiDataFile.Exists)
 			{
 				// File has likely been purged from the storage server
-				// Look in the Aurora archive (a2.emsl.pnl.gov) using samba
+				// Look in the Aurora archive (aurora.emsl.pnl.gov) using samba; was prevously a2.emsl.pnl.gov
 				var dataFilePathArchive = Path.Combine(m_TaskParams.GetParam("Archive_Network_Share_Path"), m_TaskParams.GetParam("Folder"), fiDataFile.Name);
 
 				var fiDataFileInArchive = new FileInfo(dataFilePathArchive);

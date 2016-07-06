@@ -33,8 +33,8 @@ namespace DatasetArchivePlugin
         #region "Class variables"
 
         // Obsolete: "No longer used"
-        // string m_ArchiveSharePath = string.Empty;				// The dataset folder path in the archive, for example: \\a2.emsl.pnl.gov\dmsarch\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25
-        // string m_ResultsFolderPathArchive = string.Empty;		// The target path to copy the data to, for example:    \\a2.emsl.pnl.gov\dmsarch\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25\SIC201304300029_Auto938684
+        // string m_ArchiveSharePath = string.Empty;				// The dataset folder path in the archive, for example: \\aurora.emsl.pnl.gov\dmsarch\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25
+        // string m_ResultsFolderPathArchive = string.Empty;		// The target path to copy the data to, for example:    \\aurora.emsl.pnl.gov\dmsarch\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25\SIC201304300029_Auto938684
         // string m_ResultsFolderPathServer = string.Empty;		// The source path of the dataset folder (or dataset job results folder) to archive, for example: \\proto-7\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25\SIC201304300029_Auto938684
 
         #endregion
