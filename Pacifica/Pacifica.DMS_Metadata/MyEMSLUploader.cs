@@ -126,7 +126,7 @@ namespace Pacifica.DMS_Metadata
             get;
             private set;
         }
-      
+
         #endregion
 
         public bool StartUpload(EasyHttp.eDebugMode debugMode, out string statusURL)

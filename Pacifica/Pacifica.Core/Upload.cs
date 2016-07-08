@@ -217,8 +217,8 @@ namespace Pacifica.Core
         /// <param name="statusURL"></param>
         /// <returns>True if successfully uploaded, false if an error</returns>
         public bool StartUpload(
-            Dictionary<string, object> metadataObject, 
-            NetworkCredential loginCredentials, 
+            Dictionary<string, object> metadataObject,
+            NetworkCredential loginCredentials,
             EasyHttp.eDebugMode debugMode,
             out string statusURL)
         {
@@ -293,20 +293,20 @@ namespace Pacifica.Core
                                                 loginCredentials.Password, loginCredentials.Domain);
             }
 
-			// The following Callback allows us to access the MyEMSL server even if the certificate is expired or untrusted
-			// This hack was added in March 2014 because Proto-10 reported error 
-			//   "Could not establish trust relationship for the SSL/TLS secure channel"
-			//   when accessing https://my.emsl.pnl.gov/
-			// This workaround requires these two using statements:
-			//   using System.Net.Security;
-			//   using System.Security.Cryptography.X509Certificates;
+            // The following Callback allows us to access the MyEMSL server even if the certificate is expired or untrusted
+            // This hack was added in March 2014 because Proto-10 reported error 
+            //   "Could not establish trust relationship for the SSL/TLS secure channel"
+            //   when accessing https://my.emsl.pnl.gov/
+            // This workaround requires these two using statements:
+            //   using System.Net.Security;
+            //   using System.Security.Cryptography.X509Certificates;
 
-			// Could use this to ignore all certificates (not wise)
-			// System.Net.ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;
+            // Could use this to ignore all certificates (not wise)
+            // System.Net.ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;
 
-			// Instead, only allow certain domains, as defined by ValidateRemoteCertificate
-			if (ServicePointManager.ServerCertificateValidationCallback == null)
-				ServicePointManager.ServerCertificateValidationCallback += Utilities.ValidateRemoteCertificate;
+            // Instead, only allow certain domains, as defined by ValidateRemoteCertificate
+            if (ServicePointManager.ServerCertificateValidationCallback == null)
+                ServicePointManager.ServerCertificateValidationCallback += Utilities.ValidateRemoteCertificate;
 
             // Call the testauth service to obtain a cookie for this session
             var authURL = Configuration.TestAuthUri;
@@ -336,7 +336,7 @@ namespace Pacifica.Core
                 var redirectedServer = Configuration.IngestServerUri;
                 var preallocateUrl = redirectedServer + "/myemsl/cgi-bin/preallocate";
 
-                RaiseDebugEvent("ProcessMetadata", "Preallocating with " + preallocateUrl);                
+                RaiseDebugEvent("ProcessMetadata", "Preallocating with " + preallocateUrl);
 
                 var preallocateReturn = EasyHttp.Send(preallocateUrl, mCookieJar,
                                                          out responseStatusCode, postData,
@@ -470,7 +470,7 @@ namespace Pacifica.Core
                     }
 
                     RaiseUploadCompleted(statusURL);
-                    
+
                 }
                 else
                 {
@@ -530,8 +530,8 @@ namespace Pacifica.Core
         /// Keys are key names; values are either strings or dictionary objects or even a list of dictionary objects 
         /// </returns>
         public static Dictionary<string, object> CreateMetadataObject(
-            udtUploadMetadata uploadMetadata, 
-            List<FileInfoObject> lstUnmatchedFiles, 
+            udtUploadMetadata uploadMetadata,
+            List<FileInfoObject> lstUnmatchedFiles,
             out udtEUSInfo eusInfo)
         {
             var metadataObject = new Dictionary<string, object>();
@@ -568,9 +568,9 @@ namespace Pacifica.Core
             }
 
             var eusInfoMap = new Dictionary<string, object>
-			{
-				{"groups", groupObject}
-			};
+            {
+                {"groups", groupObject}
+            };
 
             if (uploadMetadata.DatasetID > 0)
             {
@@ -624,7 +624,7 @@ namespace Pacifica.Core
 
             return metadataObject;
         }
-        
+
         /// <summary>
         /// Return the EUS instrument ID, falling back to instrumentIdIfUnknown if eusInstrumentId is empty
         /// </summary>

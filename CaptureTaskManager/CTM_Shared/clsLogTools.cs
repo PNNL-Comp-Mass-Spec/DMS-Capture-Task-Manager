@@ -1,5 +1,4 @@
-﻿
-//*********************************************************************************************************
+﻿//*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy 
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
@@ -12,10 +11,10 @@ using System.Collections.Generic;
 using System.Globalization;
 using log4net;
 using System.Data;
-
 using log4net.Appender;
 
 // This assembly attribute tells Log4Net where to find the config file
+
 [assembly: log4net.Config.XmlConfigurator(ConfigFile = "Logging.config", Watch = true)]
 
 namespace CaptureTaskManager
@@ -36,6 +35,7 @@ namespace CaptureTaskManager
         #endregion
 
         #region "Enums"
+
         public enum LogLevels
         {
             DEBUG = 5,
@@ -51,9 +51,11 @@ namespace CaptureTaskManager
             LogDb,
             LogSystem
         }
+
         #endregion
 
         #region "Class variables"
+
         private static readonly ILog m_FileLogger = LogManager.GetLogger("FileLogger");
         private static readonly ILog m_DbLogger = LogManager.GetLogger("DbLogger");
         private static readonly ILog m_SysLogger = LogManager.GetLogger("SysLogger");
@@ -62,9 +64,10 @@ namespace CaptureTaskManager
         private static string m_FileDate;
         private static string m_BaseFileName;
         private static FileAppender m_FileAppender;
-		
+
         private static RollingFileAppender m_FtpLogFileAppender;
         private static bool m_FtpLogEnabled;
+
         #endregion
 
         #region "Properties"
@@ -72,7 +75,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// File path for the current log file used by the FileAppender
         /// </summary>
-        public static string CurrentFileAppenderPath 
+        public static string CurrentFileAppenderPath
         {
             get
             {
@@ -92,6 +95,7 @@ namespace CaptureTaskManager
         {
             get { return m_FileLogger.IsDebugEnabled; }
         }
+
         #endregion
 
         #region "Methods"
@@ -153,19 +157,20 @@ namespace CaptureTaskManager
                     throw new Exception("Invalid logger type specified");
             }
 
-			//Update the status file data
+            //Update the status file data
 			clsStatusData.MostRecentLogMessage = DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss") + "; "+ message + "; " + logLevel;
-				
+
             //Send the log message
             switch (logLevel)
             {
                 case LogLevels.DEBUG:
-                    if (myLogger.IsDebugEnabled) {
-                        if (ex == null) 
+                    if (myLogger.IsDebugEnabled)
+                    {
+                        if (ex == null)
                             myLogger.Debug(message);
-                        else 
+                        else
                             myLogger.Debug(message, ex);
-                    }                    
+                    }
                     break;
                 case LogLevels.ERROR:
 					clsStatusData.AddErrorMessage(DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss") + "; " + message + "; " + logLevel);
@@ -175,7 +180,7 @@ namespace CaptureTaskManager
                             myLogger.Error(message);
                         else
                             myLogger.Error(message, ex);
-                    }                    
+                    }
                     break;
                 case LogLevels.FATAL:
                     if (myLogger.IsFatalEnabled)
@@ -184,7 +189,7 @@ namespace CaptureTaskManager
                             myLogger.Fatal(message);
                         else
                             myLogger.Fatal(message, ex);
-                    }                    
+                    }
                     break;
                 case LogLevels.INFO:
                     if (myLogger.IsInfoEnabled)
@@ -193,7 +198,7 @@ namespace CaptureTaskManager
                             myLogger.Info(message);
                         else
                             myLogger.Info(message, ex);
-                    }                    
+                    }
                     break;
                 case LogLevels.WARN:
                     if (myLogger.IsWarnEnabled)
@@ -202,7 +207,7 @@ namespace CaptureTaskManager
                             myLogger.Warn(message);
                         else
                             myLogger.Warn(message, ex);
-                    }                    
+                    }
                     break;
                 default:
                     throw new Exception("Invalid log level specified");
@@ -362,7 +367,6 @@ namespace CaptureTaskManager
         /// <returns>A configured file appender</returns>
         private static RollingFileAppender CreateFtpLogfileAppender()
         {
-
             var layout = new log4net.Layout.PatternLayout
             {
                 ConversionPattern = "%message%newline"
@@ -418,7 +422,7 @@ namespace CaptureTaskManager
 
             curLogger.AddAppender(m_FtpLogFileAppender);
             curLogger.Level = log4net.Core.Level.Debug;
-            
+
             m_FtpLogEnabled = true;
         }
 
@@ -549,10 +553,11 @@ namespace CaptureTaskManager
                 ConversionPattern = layoutStr
             };
             returnLayout.ActivateOptions();
-            
+
             var retItem = (log4net.Layout.IRawLayout)layoutConvert.ConvertFrom(returnLayout);
             return retItem;
         }
+
         #endregion
     }
 }

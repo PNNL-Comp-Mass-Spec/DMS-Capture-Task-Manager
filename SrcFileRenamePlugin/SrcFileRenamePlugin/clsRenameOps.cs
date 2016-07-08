@@ -16,144 +16,144 @@ using PRISM.Files;
 
 namespace SrcFileRenamePlugin
 {
-	class clsRenameOps
-	{
-		//*********************************************************************************************************
-		// Class for performing rename operations
-		//**********************************************************************************************************
+    class clsRenameOps
+    {
+        //*********************************************************************************************************
+        // Class for performing rename operations
+        //**********************************************************************************************************
 
-		#region "Enums"
-		protected enum RawDSTypes
-		{
-			None,
-			File,
-			FolderNoExt,
-			FolderExt
-		}
-		#endregion
+        #region "Enums"
+        protected enum RawDSTypes
+        {
+            None,
+            File,
+            FolderNoExt,
+            FolderExt
+        }
+        #endregion
 
-		#region "Class variables"
-		protected IMgrParams m_MgrParams;
-		protected string m_Msg = "";
-		protected bool m_UseBioNet;
-		protected string m_UserName = "";
-		protected string m_Pwd = "";
-		protected ShareConnector m_ShareConnector;
-		protected bool m_Connected;
-		#endregion
+        #region "Class variables"
+        protected IMgrParams m_MgrParams;
+        protected string m_Msg = "";
+        protected bool m_UseBioNet;
+        protected string m_UserName = "";
+        protected string m_Pwd = "";
+        protected ShareConnector m_ShareConnector;
+        protected bool m_Connected;
+        #endregion
 
-		#region "Constructors"
-		/// <summary>
-		/// Constructor
-		/// </summary>
+        #region "Constructors"
+        /// <summary>
+        /// Constructor
+        /// </summary>
         /// <param name="mgrParams">Parameters for manager operation</param>
         /// <param name="useBioNet">Flag to indicate if source instrument is on Bionet</param>
-		public clsRenameOps(IMgrParams mgrParams, bool useBioNet)
-		{
-			m_MgrParams = mgrParams;
+        public clsRenameOps(IMgrParams mgrParams, bool useBioNet)
+        {
+            m_MgrParams = mgrParams;
 
-			//Setup for BioNet use, if applicable
-			m_UseBioNet = useBioNet;
-			if (m_UseBioNet)
-			{
-				m_UserName = m_MgrParams.GetParam("bionetuser");
-				m_Pwd = m_MgrParams.GetParam("bionetpwd");
+            //Setup for BioNet use, if applicable
+            m_UseBioNet = useBioNet;
+            if (m_UseBioNet)
+            {
+                m_UserName = m_MgrParams.GetParam("bionetuser");
+                m_Pwd = m_MgrParams.GetParam("bionetpwd");
 
                 if (!m_UserName.Contains(@"\"))
                 {
                     // Prepend this computer's name to the username
                     m_UserName = Environment.MachineName + @"\" + m_UserName;
                 }
-			}
-		}
-		#endregion
+            }
+        }
+        #endregion
 
-		#region "Methods"
+        #region "Methods"
 
-	    /// <summary>
-	    /// Perform a single rename operation
-	    /// </summary>
-	    /// <param name="taskParams">Enum indicating status of task</param>
-	    /// <param name="errorMessage">Output: error message</param>
-	    /// <returns></returns>
-	    public EnumCloseOutType DoOperation(ITaskParams taskParams, out string errorMessage)
-		{
+        /// <summary>
+        /// Perform a single rename operation
+        /// </summary>
+        /// <param name="taskParams">Enum indicating status of task</param>
+        /// <param name="errorMessage">Output: error message</param>
+        /// <returns></returns>
+        public EnumCloseOutType DoOperation(ITaskParams taskParams, out string errorMessage)
+        {
             var datasetName = taskParams.GetParam("Dataset");
             var sourceVol = taskParams.GetParam("Source_Vol");						// Example: \\exact04.bionet\
             var sourcePath = taskParams.GetParam("Source_Path");					// Example: ProteomicsData\
             var captureSubfolder = taskParams.GetParam("Capture_Subfolder");		// Typically an empty string, but could be a partial path like: "CapDev" or "Smith\2014"
             var pwd = DecodePassword(m_Pwd);
 
-		    var msg = "Started clsRenameOps.DoOperation()";
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            var msg = "Started clsRenameOps.DoOperation()";
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
-	        errorMessage = string.Empty;
+            errorMessage = string.Empty;
 
-			// Set up paths
+            // Set up paths
 
-		    // Determine if source dataset exists, and if it is a file or a folder
-			var sourceFolderPath = Path.Combine(sourceVol, sourcePath);
+            // Determine if source dataset exists, and if it is a file or a folder
+            var sourceFolderPath = Path.Combine(sourceVol, sourcePath);
 
-			// Connect to Bionet if necessary
-			if (m_UseBioNet)
-			{
+            // Connect to Bionet if necessary
+            if (m_UseBioNet)
+            {
                 msg = "Bionet connection required for " + sourceVol;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
-				m_ShareConnector = new ShareConnector(m_UserName, pwd)
-				{
-				    Share = sourceFolderPath
-				};
+                m_ShareConnector = new ShareConnector(m_UserName, pwd)
+                {
+                    Share = sourceFolderPath
+                };
 
-			    if (m_ShareConnector.Connect())
-				{
-					msg = "Connected to Bionet";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-					m_Connected = true;
-				}
-				else
-				{
-					msg = "Error " + m_ShareConnector.ErrorMessage + " connecting to " + sourceFolderPath + " as user " + m_UserName + " using 'secfso'";
+                if (m_ShareConnector.Connect())
+                {
+                    msg = "Connected to Bionet";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                    m_Connected = true;
+                }
+                else
+                {
+                    msg = "Error " + m_ShareConnector.ErrorMessage + " connecting to " + sourceFolderPath + " as user " + m_UserName + " using 'secfso'";
 
-					if (m_ShareConnector.ErrorMessage == "1326")
-						msg += "; you likely need to change the Capture_Method from secfso to fso";
-					if (m_ShareConnector.ErrorMessage == "53")
-						msg += "; the password may need to be reset";
+                    if (m_ShareConnector.ErrorMessage == "1326")
+                        msg += "; you likely need to change the Capture_Method from secfso to fso";
+                    if (m_ShareConnector.ErrorMessage == "53")
+                        msg += "; the password may need to be reset";
 
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 
-				    errorMessage = "Error connecting to " + sourceFolderPath + " as user " + m_UserName + " using 'secfso'";
-					return EnumCloseOutType.CLOSEOUT_FAILED;
-				}
-			}
-			else
-			{
+                    errorMessage = "Error connecting to " + sourceFolderPath + " as user " + m_UserName + " using 'secfso'";
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+            }
+            else
+            {
                 msg = "Bionet connection not required for " + sourceVol;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-			}
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            }
 
             // Now that we've had a chance to connect to the share, possibly append a subfolder to the source path
             if (!string.IsNullOrWhiteSpace(captureSubfolder))
                 sourceFolderPath = Path.Combine(sourceFolderPath, captureSubfolder);
 
-		    var diSourceFolder = new DirectoryInfo(sourceFolderPath);
-		    int countRenamed;
+            var diSourceFolder = new DirectoryInfo(sourceFolderPath);
+            int countRenamed;
 
-		    if (diSourceFolder.Exists)
-		    {
+            if (diSourceFolder.Exists)
+            {
                 countRenamed = FindFilesToRename(datasetName, diSourceFolder, out errorMessage);
-		    }
-		    else
-		    {
-		        msg = "Instrument folder not found for dataset " + datasetName + ": " + sourceFolderPath;
+            }
+            else
+            {
+                msg = "Instrument folder not found for dataset " + datasetName + ": " + sourceFolderPath;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 
                 errorMessage = "Remote folder not found: " + sourceFolderPath;
                 return EnumCloseOutType.CLOSEOUT_FAILED;
-		    }
-		    
-			// Close connection, if open
-			if (m_Connected) 
+            }
+
+            // Close connection, if open
+            if (m_Connected)
                 DisconnectShare(ref m_ShareConnector, out m_Connected);
 
             if (countRenamed == 0)
@@ -162,13 +162,13 @@ namespace SrcFileRenamePlugin
                     errorMessage = "Data file and/or folder not found on the instrument; cannot rename";
 
                 msg = "Dataset " + datasetName + ":" + errorMessage;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-			    
-				return EnumCloseOutType.CLOSEOUT_FAILED;
-			}
-		
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+
+                return EnumCloseOutType.CLOSEOUT_FAILED;
+            }
+
             return EnumCloseOutType.CLOSEOUT_SUCCESS;
-		}
+        }
 
         private int FindFilesToRename(string dataset, DirectoryInfo diSourceFolder, out string errorMessage)
         {
@@ -178,10 +178,10 @@ namespace SrcFileRenamePlugin
             // The first thing we check for is the official dataset name
             // We next check for various things that operators rename the datasets to
             var lstFileNamesToCheck = new List<string>
-			{
-			    dataset,
+            {
+                dataset,
                 dataset + "-bad",
-			    dataset + "_bad",
+                dataset + "_bad",
                 dataset + "-corrupt",
                 dataset + "_corrupt",
                 dataset + "-corrupted",
@@ -197,18 +197,18 @@ namespace SrcFileRenamePlugin
                 dataset + "-pumpOFF",
                 dataset + "-slow",
                 dataset + "-wrongLCmethod",
-			    dataset + "-air",
-			    dataset + "-badQC",
-			    dataset + "-corrupt",
-			    dataset + "-corrupted",
-			    dataset + "-plug",
-			    dataset + "-plugsplit",
-			    dataset + "-rotor",
-			    dataset + "-slowsplit",
-			    "x_" + dataset,
-			    "x_" + dataset + "-bad"
-			};
-         
+                dataset + "-air",
+                dataset + "-badQC",
+                dataset + "-corrupt",
+                dataset + "-corrupted",
+                dataset + "-plug",
+                dataset + "-plugsplit",
+                dataset + "-rotor",
+                dataset + "-slowsplit",
+                "x_" + dataset,
+                "x_" + dataset + "-bad"
+            };
+
             var bLoggedDatasetNotFound = false;
             var countRenamed = 0;
 
@@ -227,7 +227,7 @@ namespace SrcFileRenamePlugin
 
                 // Get a list of files containing the dataset name
                 var matchedFiles = GetMatchingFileNames(diSourceFolder, sDatasetNameBase);
-               
+
                 // Get a list of folders containing the dataset name
                 var matchedFolders = GetMatchingFolderNames(diSourceFolder, sDatasetNameBase);
 
@@ -281,44 +281,44 @@ namespace SrcFileRenamePlugin
             }
 
             return countRenamed;
-	    }
+        }
 
-	    /// <summary>
-	    /// Prefixes specified file name with "x_"
-	    /// </summary>
-	    /// <param name="fiFile">File to be renamed</param>
-	    /// <param name="errorMessage">Output: error message</param>
-	    /// <returns>TRUE for success, FALSE for failure</returns>
-	    private bool RenameInstFile(FileInfo fiFile, out string errorMessage)
-		{
-			// Rename dataset file on instrument
+        /// <summary>
+        /// Prefixes specified file name with "x_"
+        /// </summary>
+        /// <param name="fiFile">File to be renamed</param>
+        /// <param name="errorMessage">Output: error message</param>
+        /// <returns>TRUE for success, FALSE for failure</returns>
+        private bool RenameInstFile(FileInfo fiFile, out string errorMessage)
+        {
+            // Rename dataset file on instrument
             var newPath = "??";
             errorMessage = string.Empty;
 
-			try
-			{
-			    if (!fiFile.Exists || fiFile.DirectoryName == null)
-			        return true;
+            try
+            {
+                if (!fiFile.Exists || fiFile.DirectoryName == null)
+                    return true;
 
-			    newPath = Path.Combine(fiFile.DirectoryName, "x_" + fiFile.Name);
-			    fiFile.MoveTo(newPath);
-			    m_Msg = "Renamed file to " + fiFile.FullName;
-			    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
-			    return true;
-			}
-			catch (Exception ex)
-			{
+                newPath = Path.Combine(fiFile.DirectoryName, "x_" + fiFile.Name);
+                fiFile.MoveTo(newPath);
+                m_Msg = "Renamed file to " + fiFile.FullName;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
+                return true;
+            }
+            catch (Exception ex)
+            {
                 m_Msg = "Error renaming file '" + fiFile.FullName + "' to '" + newPath + "'";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg, ex);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg, ex);
 
                 if (ex.Message.Contains("Access to the path") && ex.Message.Contains("is denied"))
                     errorMessage = "Error renaming file: access is denied";
                 else
                     errorMessage = "Error renaming file: " + ex.GetType();
 
-				return false;
-			}
-		}
+                return false;
+            }
+        }
 
         /// <summary>
         /// Prefixes specified folder name with "x_"
@@ -357,81 +357,81 @@ namespace SrcFileRenamePlugin
             }
         }
 
-		/// <summary>
-		/// Decrypts password received from ini file
-		/// </summary>
+        /// <summary>
+        /// Decrypts password received from ini file
+        /// </summary>
         /// <param name="enPwd">Encoded password</param>
-		/// <returns>Clear text password</returns>
-		private string DecodePassword(string enPwd)
-		{
-			// Decrypts password received from ini file
-			// Password was created by alternately subtracting or adding 1 to the ASCII value of each character
+        /// <returns>Clear text password</returns>
+        private string DecodePassword(string enPwd)
+        {
+            // Decrypts password received from ini file
+            // Password was created by alternately subtracting or adding 1 to the ASCII value of each character
 
-			// Convert the password string to a character array
-			var pwdChars = enPwd.ToCharArray();
-			var pwdBytes = new byte[pwdChars.Length];
-			var pwdCharsAdj = new char[pwdChars.Length];
+            // Convert the password string to a character array
+            var pwdChars = enPwd.ToCharArray();
+            var pwdBytes = new byte[pwdChars.Length];
+            var pwdCharsAdj = new char[pwdChars.Length];
 
-			for (var i = 0; i < pwdChars.Length; i++)
-			{
-				pwdBytes[i] = (byte)pwdChars[i];
-			}
+            for (var i = 0; i < pwdChars.Length; i++)
+            {
+                pwdBytes[i] = (byte)pwdChars[i];
+            }
 
-			// Modify the byte array by shifting alternating bytes up or down and convert back to char, and add to output string
-			var retStr = "";
-			for (var byteCntr = 0; byteCntr < pwdBytes.Length; byteCntr++)
-			{
-				if ((byteCntr % 2) == 0)
-				{
-					pwdBytes[byteCntr] += 1;
-				}
-				else
-				{
-					pwdBytes[byteCntr] -= 1;
-				}
-				pwdCharsAdj[byteCntr] = (char)pwdBytes[byteCntr];
-				retStr += pwdCharsAdj[byteCntr].ToString();
-			}
-			return retStr;
-		}
-		
+            // Modify the byte array by shifting alternating bytes up or down and convert back to char, and add to output string
+            var retStr = "";
+            for (var byteCntr = 0; byteCntr < pwdBytes.Length; byteCntr++)
+            {
+                if ((byteCntr % 2) == 0)
+                {
+                    pwdBytes[byteCntr] += 1;
+                }
+                else
+                {
+                    pwdBytes[byteCntr] -= 1;
+                }
+                pwdCharsAdj[byteCntr] = (char)pwdBytes[byteCntr];
+                retStr += pwdCharsAdj[byteCntr].ToString();
+            }
+            return retStr;
+        }
 
-		/// <summary>
-		/// Disconnects a Bionet shared drive
-		/// </summary>
-		/// <param name="MyConn">Connection object for shared drive</param>
-		/// <param name="ConnState">Return value specifying connection has been closed</param>
-		private void DisconnectShare(ref ShareConnector MyConn, out bool ConnState)
-		{
-			//Disconnects a shared drive
-			MyConn.Disconnect();
-			m_Msg = "Bionet disconnected";
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
-			ConnState = false;
-		}
 
-		/// <summary>
-		/// Gets a list of files containing the dataset name
-		/// </summary>
+        /// <summary>
+        /// Disconnects a Bionet shared drive
+        /// </summary>
+        /// <param name="MyConn">Connection object for shared drive</param>
+        /// <param name="ConnState">Return value specifying connection has been closed</param>
+        private void DisconnectShare(ref ShareConnector MyConn, out bool ConnState)
+        {
+            //Disconnects a shared drive
+            MyConn.Disconnect();
+            m_Msg = "Bionet disconnected";
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
+            ConnState = false;
+        }
+
+        /// <summary>
+        /// Gets a list of files containing the dataset name
+        /// </summary>
         /// <param name="diSourceFolder">Folder to search</param>
-		/// <param name="dsName">Dataset name to match</param>
-		/// <returns>Array of file paths</returns>
+        /// <param name="dsName">Dataset name to match</param>
+        /// <returns>Array of file paths</returns>
         private List<FileInfo> GetMatchingFileNames(DirectoryInfo diSourceFolder, string dsName)
-		{
+        {
             return diSourceFolder.GetFiles(dsName + ".*").ToList();
-		}
+        }
 
-		/// <summary>
-		/// Gets a list of folders containing the dataset name
-		/// </summary>
+        /// <summary>
+        /// Gets a list of folders containing the dataset name
+        /// </summary>
         /// <param name="diSourceFolder">Folder to search</param>
-		/// <param name="dsName">Dataset name to match</param>
-		/// <returns>Array of folder paths</returns>
+        /// <param name="dsName">Dataset name to match</param>
+        /// <returns>Array of folder paths</returns>
         private List<DirectoryInfo> GetMatchingFolderNames(DirectoryInfo diSourceFolder, string dsName)
-		{
+        {
             return diSourceFolder.GetDirectories(dsName + ".*").ToList();
-		}
+        }
 
-		#endregion
-	}
+        #endregion
+    }
 }

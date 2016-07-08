@@ -26,13 +26,13 @@ namespace Pacifica.Core
             return (ulong)Math.Round(t.TotalSeconds);
         }
 
-		/// <summary>
-		/// Determine the Description attribute of a given enum value
-		/// </summary>
-		/// <typeparam name="T"></typeparam>
-		/// <param name="enumerationValue"></param>
-		/// <returns>Description attribute, or simply enum.ToString</returns>
-		// ReSharper disable once UnusedTypeParameter
+        /// <summary>
+        /// Determine the Description attribute of a given enum value
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="enumerationValue"></param>
+        /// <returns>Description attribute, or simply enum.ToString</returns>
+        // ReSharper disable once UnusedTypeParameter
         public static string GetDescription<T>(this object enumerationValue) where T : struct
         {
             var type = enumerationValue.GetType();
@@ -68,6 +68,6 @@ namespace Pacifica.Core
             }
         }
 
-      
+
     }
 }

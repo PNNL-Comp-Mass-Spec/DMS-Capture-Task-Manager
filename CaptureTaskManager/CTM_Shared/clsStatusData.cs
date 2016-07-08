@@ -1,11 +1,11 @@
-﻿
-//*********************************************************************************************************
+﻿//*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy 
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/10/2009
 //
 //*********************************************************************************************************
+
 using System.Collections.Generic;
 
 namespace CaptureTaskManager
@@ -18,17 +18,17 @@ namespace CaptureTaskManager
         //**********************************************************************************************************
 
         #region "Class variables"
+
         private static string m_MostRecentLogMessage;
         private static readonly Queue<string> m_ErrorQueue = new Queue<string>();
+
         #endregion
 
         #region "Properties"
+
         public static string MostRecentLogMessage
         {
-            get
-            {
-                return m_MostRecentLogMessage;
-            }
+            get { return m_MostRecentLogMessage; }
             set
             {
                 //Filter out routine startup and shutdown messages
@@ -45,15 +45,13 @@ namespace CaptureTaskManager
 
         public static Queue<string> ErrorQueue
         {
-            get
-            {
-                return m_ErrorQueue;
-            }
+            get { return m_ErrorQueue; }
         }
+
         #endregion
 
         #region "Methods"
-        
+
         public static void AddErrorMessage(string ErrMsg)
         {
             //Add the most recent error message

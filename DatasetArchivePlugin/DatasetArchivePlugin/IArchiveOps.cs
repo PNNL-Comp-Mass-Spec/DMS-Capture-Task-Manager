@@ -10,34 +10,34 @@
 
 namespace DatasetArchivePlugin
 {
-	public interface IArchiveOps
-	{
-		//*********************************************************************************************************
-		// Interface for archive or archive update classes
-		//**********************************************************************************************************
+    public interface IArchiveOps
+    {
+        //*********************************************************************************************************
+        // Interface for archive or archive update classes
+        //**********************************************************************************************************
 
-		#region "Properties"
-			/// <summary>
-			/// Error message from archive ops result
-			/// </summary>
-			string ErrMsg { get; }
-			string WarningMsg { get; }
-		#endregion
+        #region "Properties"
+        /// <summary>
+        /// Error message from archive ops result
+        /// </summary>
+        string ErrMsg { get; }
+        string WarningMsg { get; }
+        #endregion
 
-		#region "Methods"
-			/// <summary>
-			/// Performs an archive or update operation
-			/// </summary>
-			/// <returns>TRUE for success, FALSE for failure</returns>
-			bool PerformTask();
-		#endregion
+        #region "Methods"
+        /// <summary>
+        /// Performs an archive or update operation
+        /// </summary>
+        /// <returns>TRUE for success, FALSE for failure</returns>
+        bool PerformTask();
+        #endregion
 
-			#region "Event Delegates and Classes"
+        #region "Event Delegates and Classes"
 
-			event MyEMSLUploadEventHandler MyEMSLUploadComplete;
+        event MyEMSLUploadEventHandler MyEMSLUploadComplete;
 
-			#endregion
+        #endregion
 
-	}	// End interface
+    }	// End interface
 
 }	// End namespace

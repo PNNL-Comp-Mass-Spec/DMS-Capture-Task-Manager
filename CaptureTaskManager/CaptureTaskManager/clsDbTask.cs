@@ -1,11 +1,11 @@
-﻿
-//*********************************************************************************************************
+﻿//*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy 
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/10/2009
 //
 //*********************************************************************************************************
+
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -20,8 +20,10 @@ namespace CaptureTaskManager
         //**********************************************************************************************************
 
         #region "Constants"
+
         protected const int RET_VAL_OK = 0;
         protected const int RET_VAL_TASK_NOT_AVAILABLE = 53000;
+
         #endregion
 
         #region "Class variables"
@@ -29,31 +31,30 @@ namespace CaptureTaskManager
         protected IMgrParams m_MgrParams;
         protected string m_ConnStr;
         protected bool m_TaskWasAssigned = false;
-        protected Dictionary<string, string> m_JobParams = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+
+        protected Dictionary<string, string> m_JobParams =
+            new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
 
         protected PRISM.DataBase.clsExecuteDatabaseSP CaptureTaskDBProcedureExecutor;
 
         #endregion
 
         #region "Properties"
+
         public bool TaskWasAssigned
         {
-            get
-            {
-                return m_TaskWasAssigned;
-            }
+            get { return m_TaskWasAssigned; }
         }
 
         public Dictionary<string, string> TaskDictionary
         {
-            get
-            {
-                return m_JobParams;
-            }
+            get { return m_JobParams; }
         }
+
         #endregion
 
         #region "Constructors"
+
         protected clsDbTask(IMgrParams MgrParams)
         {
             m_MgrParams = MgrParams;
@@ -67,6 +68,7 @@ namespace CaptureTaskManager
         #endregion
 
         #region "Methods"
+
         /// <summary>
         /// Requests a capture pipeline task
         /// </summary>
@@ -101,7 +103,8 @@ namespace CaptureTaskManager
         /// <param name="closeoutMsg">Message related to task closeout</param>
         /// <param name="evalCode">Enum representing evaluation results</param>
         /// <param name="evalMsg">Message related to evaluation results</param>
-        public abstract void CloseTask(EnumCloseOutType taskResult, string closeoutMsg, EnumEvalCode evalCode, string evalMsg);
+        public abstract void CloseTask(EnumCloseOutType taskResult, string closeoutMsg, EnumEvalCode evalCode,
+                                       string evalMsg);
 
         /// <summary>
         /// Debugging routine for printing SP calling params
@@ -175,7 +178,7 @@ namespace CaptureTaskManager
             {
                 return "";
             }
-            
+
             return InpObj.ToString();
         }
 
@@ -186,7 +189,7 @@ namespace CaptureTaskManager
             {
                 return 0.0F;
             }
-            
+
             return (float)InpObj;
         }
 
@@ -197,7 +200,7 @@ namespace CaptureTaskManager
             {
                 return 0.0;
             }
-            
+
             return (double)InpObj;
         }
 
@@ -208,7 +211,7 @@ namespace CaptureTaskManager
             {
                 return 0;
             }
-            
+
             return (int)InpObj;
         }
 
@@ -219,7 +222,7 @@ namespace CaptureTaskManager
             {
                 return 0;
             }
-            
+
             return (long)InpObj;
         }
 
@@ -230,7 +233,7 @@ namespace CaptureTaskManager
             {
                 return 0;
             }
-            
+
             return (decimal)InpObj;
         }
 
@@ -241,7 +244,7 @@ namespace CaptureTaskManager
             {
                 return 0;
             }
-            
+
             return (short)InpObj;
         }
 
@@ -258,5 +261,5 @@ namespace CaptureTaskManager
         }
 
         #endregion
-    }	// End class
-}	// End namespace
+    } // End class
+} // End namespace

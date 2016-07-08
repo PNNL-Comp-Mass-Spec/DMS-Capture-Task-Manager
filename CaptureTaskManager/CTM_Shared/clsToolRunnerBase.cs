@@ -1,11 +1,11 @@
-﻿
-//*********************************************************************************************************
+﻿//*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy 
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/25/2009
 //
 //*********************************************************************************************************
+
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -25,11 +25,14 @@ namespace CaptureTaskManager
         //**********************************************************************************************************
 
         #region "Constants"
+
         private const string SP_NAME_SET_TASK_TOOL_VERSION = "SetStepTaskToolVersion";
         private const string DATE_TIME_FORMAT = "yyyy-MM-dd hh:mm:ss tt";
+
         #endregion
 
         #region "Class variables"
+
         protected IMgrParams m_MgrParams;
         protected ITaskParams m_TaskParams;
         protected IStatusFile m_StatusTools;
@@ -54,9 +57,11 @@ namespace CaptureTaskManager
         #endregion
 
         #region "Delegates"
+
         #endregion
 
         #region "Events"
+
         #endregion
 
         #region "Properties"
@@ -84,6 +89,7 @@ namespace CaptureTaskManager
         #endregion
 
         #region "Methods"
+
         /// <summary>
         /// Runs the plugin tool. Implements IToolRunner.RunTool method
         /// </summary>
@@ -96,7 +102,7 @@ namespace CaptureTaskManager
                 CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS
             };
             return retData;
-        }	// End sub
+        } // End sub
 
         /// <summary>
         /// Initializes plugin. Implements IToolRunner.Setup method
@@ -129,7 +135,6 @@ namespace CaptureTaskManager
             m_DebugLevel = m_MgrParams.GetParam("debuglevel", 4);
 
             m_TraceMode = m_MgrParams.GetParam("TraceMode", false);
-
         }
 
         protected bool UpdateMgrSettings()
@@ -143,7 +148,8 @@ namespace CaptureTaskManager
             {
                 m_LastConfigDBUpdate = DateTime.UtcNow;
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Updating manager settings using Manager Control database");
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                     "Updating manager settings using Manager Control database");
 
                 const bool logConnectionErrors = false;
                 if (!m_MgrParams.LoadMgrSettingsFromDB(logConnectionErrors))
@@ -169,14 +175,13 @@ namespace CaptureTaskManager
 
         protected string AppendToComment(string InpComment, string NewComment)
         {
-
             //Appends a comment string to an existing comment string
 
             if (string.IsNullOrWhiteSpace(InpComment))
             {
                 return NewComment;
             }
-            
+
             // Append a semicolon to InpComment, but only if it doesn't already end in a semicolon
             if (!InpComment.TrimEnd(' ').EndsWith(";"))
             {
@@ -196,7 +201,6 @@ namespace CaptureTaskManager
 
         public static bool CleanWorkDir(string WorkDir, float HoldoffSeconds, out string strFailureMessage)
         {
-
             int HoldoffMilliseconds;
 
             var strCurrentSubfolder = string.Empty;
@@ -268,7 +272,6 @@ namespace CaptureTaskManager
             }
 
             return true;
-
         }
 
         protected void DeleteFileIgnoreErrors(string sFilePath)
@@ -277,7 +280,7 @@ namespace CaptureTaskManager
             {
                 File.Delete(sFilePath);
             }
-            // ReSharper disable once EmptyGeneralCatchClause
+                // ReSharper disable once EmptyGeneralCatchClause
             catch
             {
                 // Ignore errors here
@@ -302,9 +305,9 @@ namespace CaptureTaskManager
             int job,
             MyEMSLStatusCheck statusChecker,
             string statusURI,
-            int eusInstrumentID, 
-            string eusProposalID, 
-            int eusUploaderID, 
+            int eusInstrumentID,
+            string eusProposalID,
+            int eusUploaderID,
             CookieContainer cookieJar,
             clsToolReturnData retData,
             out string xmlServerResponse)
@@ -317,7 +320,8 @@ namespace CaptureTaskManager
             if (lookupError)
             {
                 retData.CloseoutMsg = errorMessage;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage + ", job " + job);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                     errorMessage + ", job " + job);
 
                 if (errorMessage.Contains("[Errno 5] Input/output error") ||
                     errorMessage.Contains("[Errno 28] No space left on device"))
@@ -332,7 +336,8 @@ namespace CaptureTaskManager
             if (string.IsNullOrEmpty(xmlServerResponse))
             {
                 retData.CloseoutMsg = "Empty XML server response";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage + ", job " + job);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                     errorMessage + ", job " + job);
                 return false;
             }
 
@@ -345,7 +350,7 @@ namespace CaptureTaskManager
             if (errorMessage.ToLower().StartsWith("invalid permissions"))
             {
                 // Append the EUS proposal ID and EUS instrument ID that was used
-                retData.CloseoutMsg = errorMessage + 
+                retData.CloseoutMsg = errorMessage +
                                       "; EUSInstID=" + eusInstrumentID +
                                       ", EUSProposal=" + eusProposalID +
                                       ", EUSUploader=" + eusUploaderID;
@@ -354,10 +359,11 @@ namespace CaptureTaskManager
             {
                 retData.CloseoutMsg = errorMessage;
             }
-                
+
             retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
             retData.EvalCode = EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY;
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage + ", job " + job);
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                 errorMessage + ", job " + job);
             return false;
         }
 
@@ -371,7 +377,6 @@ namespace CaptureTaskManager
             {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
             }
-
         }
 
         /// <summary>
@@ -384,7 +389,6 @@ namespace CaptureTaskManager
         /// <remarks></remarks>
         protected bool ReadVersionInfoFile(string dllFilePath, string strVersionInfoFilePath, out string strVersion)
         {
-
             // Open strVersionInfoFilePath and read the Version= line
 
             strVersion = string.Empty;
@@ -401,7 +405,6 @@ namespace CaptureTaskManager
 
                 using (var srInFile = new StreamReader(new FileStream(strVersionInfoFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-
                     while (!srInFile.EndOfStream)
                     {
                         var strLineIn = srInFile.ReadLine();
@@ -451,20 +454,16 @@ namespace CaptureTaskManager
                                 break;
                         }
                     }
-
                 }
 
                 return success;
-
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reading Version Info File for " + Path.GetFileName(dllFilePath), ex);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                     "Error reading Version Info File for " + Path.GetFileName(dllFilePath), ex);
                 return false;
             }
-
-            
-
         }
 
 
@@ -483,7 +482,6 @@ namespace CaptureTaskManager
 
                 using (var swToolVersionFile = new StreamWriter(new FileStream(strToolVersionFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
                 {
-
                     swToolVersionFile.WriteLine("Date: " + DateTime.Now.ToString(DATE_TIME_FORMAT));
                     swToolVersionFile.WriteLine("Dataset: " + m_Dataset);
                     swToolVersionFile.WriteLine("Job: " + m_Job);
@@ -493,7 +491,6 @@ namespace CaptureTaskManager
 
                     swToolVersionFile.WriteLine(toolVersionInfo.Replace("; ", Environment.NewLine));
                     swToolVersionFile.Close();
-
                 }
             }
             catch (Exception ex)
@@ -525,7 +522,6 @@ namespace CaptureTaskManager
         /// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
         protected bool SetStepTaskToolVersion(string toolVersionInfo, List<FileInfo> ioToolFiles)
         {
-
             return SetStepTaskToolVersion(toolVersionInfo, ioToolFiles, false);
         }
 
@@ -537,9 +533,9 @@ namespace CaptureTaskManager
         /// <param name="blnSaveToolVersionTextFile">If true, then creates a text file with the tool version information</param>
         /// <returns>True for success, False for failure</returns>
         /// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
-        protected bool SetStepTaskToolVersion(string toolVersionInfo, List<FileInfo> ioToolFiles, bool blnSaveToolVersionTextFile)
+        protected bool SetStepTaskToolVersion(string toolVersionInfo, List<FileInfo> ioToolFiles,
+                                              bool blnSaveToolVersionTextFile)
         {
-
             var strExeInfo = string.Empty;
             string toolVersionInfoCombined;
 
@@ -558,19 +554,21 @@ namespace CaptureTaskManager
                     {
                         if (fiFile.Exists)
                         {
-                            strExeInfo = AppendToComment(strExeInfo, fiFile.Name + ": " + fiFile.LastWriteTime.ToString(DATE_TIME_FORMAT));
+                            strExeInfo = AppendToComment(strExeInfo,
+                                                         fiFile.Name + ": " +
+                                                         fiFile.LastWriteTime.ToString(DATE_TIME_FORMAT));
 
                             if (m_DebugLevel >= 5)
                             {
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "EXE Info: " + strExeInfo);
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                                     "EXE Info: " + strExeInfo);
                             }
-
                         }
                         else
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Tool file not found: " + fiFile.FullName);
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                                 "Tool file not found: " + fiFile.FullName);
                         }
-
                     }
                     catch (Exception ex)
                     {
@@ -631,7 +629,6 @@ namespace CaptureTaskManager
             }
 
             return Outcome;
-
         }
 
         /// <summary>
@@ -652,7 +649,6 @@ namespace CaptureTaskManager
         /// <remarks></remarks>
         protected virtual bool StoreToolVersionInfoOneFile(ref string toolVersionInfo, string dllFilePath)
         {
-
             bool success;
 
             try
@@ -664,7 +660,6 @@ namespace CaptureTaskManager
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
                                          "File not found by StoreToolVersionInfoOneFile: " + dllFilePath);
                     return false;
-
                 }
 
                 var oAssemblyName = Assembly.LoadFrom(fiFile.FullName).GetName();
@@ -673,7 +668,7 @@ namespace CaptureTaskManager
                 toolVersionInfo = AppendToComment(toolVersionInfo, strNameAndVersion);
 
                 return true;
-            }            
+            }
             catch (BadImageFormatException)
             {
                 // Most likely trying to read a 64-bit DLL (if this program is running as 32-bit)
@@ -686,7 +681,6 @@ namespace CaptureTaskManager
 
                 // Use this when compiled as 32-bit
                 //success = StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, dllFilePath)
-             
             }
             catch (Exception ex)
             {
@@ -704,7 +698,6 @@ namespace CaptureTaskManager
             }
 
             return success;
-
         }
 
 
@@ -717,7 +710,6 @@ namespace CaptureTaskManager
         /// <remarks></remarks>
         protected bool StoreToolVersionInfoViaSystemDiagnostics(ref string toolVersionInfo, string dllFilePath)
         {
-          
             try
             {
                 var ioFileInfo = new FileInfo(dllFilePath);
@@ -725,9 +717,9 @@ namespace CaptureTaskManager
                 if (!ioFileInfo.Exists)
                 {
                     var errMsg = "File not found by StoreToolVersionInfoViaSystemDiagnostics";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, errMsg + ": " + dllFilePath);
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                         errMsg + ": " + dllFilePath);
                     return false;
-
                 }
 
                 var oFileVersionInfo = FileVersionInfo.GetVersionInfo(dllFilePath);
@@ -767,12 +759,12 @@ namespace CaptureTaskManager
             catch (Exception ex)
             {
                 var errMsg = "Exception determining File Version for " + Path.GetFileName(dllFilePath);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg + ": " + ex.Message);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                     errMsg + ": " + ex.Message);
                 return false;
             }
-
         }
-    
+
         /// <summary>
         /// Uses the DLLVersionInspector to determine the version of a 32-bit .NET DLL or .Exe
         /// </summary>
@@ -805,9 +797,9 @@ namespace CaptureTaskManager
         /// <param name="versionInspectorExeName">DLLVersionInspector_x86.exe or DLLVersionInspector_x64.exe</param>
         /// <returns>True if success; false if an error</returns>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfoOneFileUseExe(ref string toolVersionInfo, string dllFilePath, string versionInspectorExeName)
+        protected bool StoreToolVersionInfoOneFileUseExe(ref string toolVersionInfo, string dllFilePath,
+                                                         string versionInspectorExeName)
         {
-
             try
             {
                 var strAppPath = Path.Combine(clsUtilities.GetAppFolderPath(), versionInspectorExeName);
@@ -819,7 +811,7 @@ namespace CaptureTaskManager
                     LogError("File not found by StoreToolVersionInfoOneFileUseExe: " + dllFilePath);
                     return false;
                 }
-                
+
                 if (!File.Exists(strAppPath))
                 {
                     LogError("DLLVersionInspector not found by StoreToolVersionInfoOneFileUseExe: " + strAppPath);
@@ -828,13 +820,17 @@ namespace CaptureTaskManager
 
                 // Call DLLVersionInspector.exe to determine the tool version
 
-                var versionInfoFilePath = Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(fiDLLFile.Name) + "_VersionInfo.txt");
+                var versionInfoFilePath = Path.Combine(m_WorkDir,
+                                                       Path.GetFileNameWithoutExtension(fiDLLFile.Name) +
+                                                       "_VersionInfo.txt");
 
-                var strArgs = clsConversion.PossiblyQuotePath(fiDLLFile.FullName) + " /O:" + clsConversion.PossiblyQuotePath(versionInfoFilePath);
+                var strArgs = clsConversion.PossiblyQuotePath(fiDLLFile.FullName) + " /O:" +
+                              clsConversion.PossiblyQuotePath(versionInfoFilePath);
 
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strAppPath + " " + strArgs);
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                         strAppPath + " " + strArgs);
                 }
 
                 var objProgRunner = new clsRunDosProgram(clsUtilities.GetAppFolderPath())
@@ -881,7 +877,6 @@ namespace CaptureTaskManager
                 toolVersionInfo = AppendToComment(toolVersionInfo, strVersion);
 
                 return true;
-
             }
             catch (Exception ex)
             {
@@ -890,9 +885,8 @@ namespace CaptureTaskManager
             }
 
             return false;
+        }
 
-        }      
-        
         /// <summary>
         /// Updates the value for Ingest_Steps_Completed in table T_MyEMSL_Uploads for the given upload task
         /// </summary>
@@ -958,7 +952,7 @@ namespace CaptureTaskManager
             {
                 CaptureDBProcedureExecutor.DBErrorEvent += m_ExecuteSP_DBErrorEvent;
             }
-            // ReSharper disable once EmptyGeneralCatchClause
+                // ReSharper disable once EmptyGeneralCatchClause
             catch
             {
                 // Ignore errors here
@@ -974,7 +968,7 @@ namespace CaptureTaskManager
                     CaptureDBProcedureExecutor.DBErrorEvent -= m_ExecuteSP_DBErrorEvent;
                 }
             }
-            // ReSharper disable once EmptyGeneralCatchClause
+                // ReSharper disable once EmptyGeneralCatchClause
             catch (Exception)
             {
                 // Ignore errors here
@@ -983,12 +977,10 @@ namespace CaptureTaskManager
 
         private void m_ExecuteSP_DBErrorEvent(string Message)
         {
-            var logToDatabase = Message.Contains("permission was denied");            
+            var logToDatabase = Message.Contains("permission was denied");
             LogError("Stored procedure execution error: " + Message, logToDatabase);
         }
 
-
         #endregion
-
     }
 }

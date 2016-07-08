@@ -1,11 +1,11 @@
-﻿
-//*********************************************************************************************************
+﻿//*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy 
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/10/2009
 //
 //*********************************************************************************************************
+
 using System;
 using System.Globalization;
 using System.Xml;
@@ -19,12 +19,14 @@ namespace CaptureTaskManager
         // Class to handle status file updates
         //**********************************************************************************************************
 
-
         #region "Constants"
+
         public const string FLAG_FILE_NAME = "flagFile.txt";
+
         #endregion
 
         #region "Class variables"
+
         //Status file name and location
         private string m_FileNamePath;
 
@@ -76,9 +78,11 @@ namespace CaptureTaskManager
 
         //Flag to indicate if status should be logged to broker in addition to a file
         private bool m_LogToMsgQueue;
+
         #endregion
 
         #region "Properties"
+
         public string FileNamePath
         {
             get { return m_FileNamePath; }
@@ -174,9 +178,11 @@ namespace CaptureTaskManager
             get { return m_LogToMsgQueue; }
             set { m_LogToMsgQueue = value; }
         }
+
         #endregion
 
         #region "Constructors"
+
         /// <summary>
         /// Constructor
         /// </summary>
@@ -191,10 +197,13 @@ namespace CaptureTaskManager
             m_JobNumber = 0;
             m_Tool = string.Empty;
         }
+
         #endregion
 
         #region "Events"
+
         public event StatusMonitorUpdateReceived MonitorUpdateRequired;
+
         #endregion
 
         #region "Methods"
@@ -226,7 +235,6 @@ namespace CaptureTaskManager
             {
                 m_MostRecentJobInfo = string.Empty;
             }
-
         }
 
         /// <summary>
@@ -277,7 +285,6 @@ namespace CaptureTaskManager
         /// <returns></returns>
         public bool DeleteStatusFlagFile()
         {
-
             //Returns True if job request control flag file exists
             var strFlagFilePath = Path.Combine(AppFolderPath(), FLAG_FILE_NAME);
 
@@ -292,10 +299,10 @@ namespace CaptureTaskManager
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "DeleteStatusFlagFile, " + ex.Message);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                     "DeleteStatusFlagFile, " + ex.Message);
                 return false;
             }
-
         }
 
         public int GetProcessID()
@@ -310,7 +317,6 @@ namespace CaptureTaskManager
         /// <returns></returns>
         public bool DetectStatusFlagFile()
         {
-
             //Returns True if job request control flag file exists
             var strFlagFilePath = Path.Combine(AppFolderPath(), FLAG_FILE_NAME);
 
@@ -371,9 +377,9 @@ namespace CaptureTaskManager
                     XWriter.WriteElementString("MostRecentLogMessage", clsStatusData.MostRecentLogMessage);
                     XWriter.WriteElementString("MostRecentJobInfo", m_MostRecentJobInfo);
                     XWriter.WriteElementString("SpectrumCount", m_SpectrumCount.ToString());
-                    XWriter.WriteEndElement();	//Task details section
-                    XWriter.WriteEndElement();	//Task section
-                    XWriter.WriteEndElement();	//Root section
+                    XWriter.WriteEndElement(); //Task details section
+                    XWriter.WriteEndElement(); //Task section
+                    XWriter.WriteEndElement(); //Root section
 
                     //Close the document, but don't close the writer yet
                     XWriter.WriteEndDocument();
@@ -421,7 +427,6 @@ namespace CaptureTaskManager
         protected void LogStatusToMessageQueue(string strStatusXML)
         {
             if (MonitorUpdateRequired != null) MonitorUpdateRequired(strStatusXML);
-
         }
 
         /// <summary>
@@ -543,11 +548,11 @@ namespace CaptureTaskManager
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception reading status file", ex);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                     "Exception reading status file", ex);
             }
-
         }
-        #endregion
 
-    }	// End class
-}	// End namespace
+        #endregion
+    } // End class
+} // End namespace

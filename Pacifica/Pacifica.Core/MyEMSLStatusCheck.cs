@@ -17,30 +17,30 @@ namespace Pacifica.Core
     {
         public const string PERMISSIONS_ERROR = "Permissions error:";
 
-		public enum StatusStep
-		{
-			Submitted = 0,		// .tar file submitted
-			Received = 1,		// .tar file received
-			Processing = 2,		// .tar file being processed
-			Verified = 3,		// .tar file contents validated
-			Stored = 4,			// .tar file contents copied to Aurora
-			Available = 5,		// Available in Elastic Search
-			Archived = 6		// Sha-1 hash values of files in Aurora validated against expected hash values
-		}
+        public enum StatusStep
+        {
+            Submitted = 0,      // .tar file submitted
+            Received = 1,       // .tar file received
+            Processing = 2,     // .tar file being processed
+            Verified = 3,       // .tar file contents validated
+            Stored = 4,         // .tar file contents copied to Aurora
+            Available = 5,      // Available in Elastic Search
+            Archived = 6        // Sha-1 hash values of files in Aurora validated against expected hash values
+        }
 
-		public string ErrorMessage
-		{
-			get;
-			set;
-		}
+        public string ErrorMessage
+        {
+            get;
+            set;
+        }
 
-		/// <summary>
-		/// Constructor
-		/// </summary>
-		public MyEMSLStatusCheck()
-		{
-			ErrorMessage = string.Empty;
-		}
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        public MyEMSLStatusCheck()
+        {
+            ErrorMessage = string.Empty;
+        }
 
         /// <summary>
         /// Obtain the XML returned by the given MyEMSL status page
@@ -86,13 +86,13 @@ namespace Pacifica.Core
             out bool lookupError,
             out string errorMessage)
         {
-            var errorMessageKeywords = new List<string> 
+            var errorMessageKeywords = new List<string>
             {   "exceptions.",
                 "exception"
             };
 
-            var errorMessageTerminators = new List<string> 
-            {   "traceback", 
+            var errorMessageTerminators = new List<string>
+            {   "traceback",
                 "status=",
                 "/>",
                 @"\"
@@ -133,7 +133,7 @@ namespace Pacifica.Core
                     break;
                 }
             }
-           
+
             if (exceptionIndex < 0)
             {
                 return xmlServerResponse;
@@ -150,7 +150,7 @@ namespace Pacifica.Core
                                 .Replace("\n", "; ")
                                 .Replace("&lt;", string.Empty)
                                 .Replace("&lt", string.Empty)
-                                .Replace("&gt;", "; ")                                
+                                .Replace("&gt;", "; ")
                                 .Replace("&gt", "; ")
                                 .Replace("; ;", ";")
                                 .Replace("';", ";")
@@ -158,7 +158,7 @@ namespace Pacifica.Core
                     break;
                 }
             }
-           
+
             errorMessage = "Exception: " + message;
             lookupError = true;
 
@@ -229,7 +229,7 @@ namespace Pacifica.Core
             errorMessage = string.Empty;
 
             var stepNumbers = new List<StatusStep>();
- 
+
             var xmlDoc = new XmlDocument();
             xmlDoc.LoadXml(xmlServerResponse);
 
@@ -277,82 +277,82 @@ namespace Pacifica.Core
 
         }
 
-		/// <summary>
-		/// This function examines the xml returned by a MyEMSL status page to determine whether or not the step succeeded
-		/// </summary>
+        /// <summary>
+        /// This function examines the xml returned by a MyEMSL status page to determine whether or not the step succeeded
+        /// </summary>
         /// <param name="xmlServerResponse"></param>
-		/// <param name="stepNum">Step number whose status should be examined</param>
+        /// <param name="stepNum">Step number whose status should be examined</param>
         /// <param name="statusMessage">Output parameter: status message for step stepNum</param>
         /// <param name="errorMessage">Output parameter: status message for step stepNum</param>
-		/// <returns>True if step stepNum has successfully completed</returns>
-		public bool IngestStepCompleted(
+        /// <returns>True if step stepNum has successfully completed</returns>
+        public bool IngestStepCompleted(
             string xmlServerResponse,
-			StatusStep stepNum,
+            StatusStep stepNum,
             out string statusMessage,
-			out string errorMessage)
-		{
+            out string errorMessage)
+        {
             const string UPLOAD_PERMISSION_ERROR = "do not have upload permissions";
 
             statusMessage = string.Empty;
 
-		    // First look for exceptions
-		    if (HasExceptions(xmlServerResponse, true, out errorMessage))
-		    {
+            // First look for exceptions
+            if (HasExceptions(xmlServerResponse, true, out errorMessage))
+            {
                 // Exceptions are present; step is not complete
                 return false;
-		    }
+            }
 
-		    var xmlDoc = new XmlDocument();
-			xmlDoc.LoadXml(xmlServerResponse);
+            var xmlDoc = new XmlDocument();
+            xmlDoc.LoadXml(xmlServerResponse);
 
-			// Example XML:
-			//
-			// <?xml version="1.0"?>
-			// <myemsl>
-			// 	<status username='70000'>
-			// 		<transaction id='111177' />
-			// 		<step id='0' message='completed' status='SUCCESS' />
-			// 		<step id='1' message='completed' status='SUCCESS' />
-			// 		<step id='2' message='completed' status='SUCCESS' />
-			// 		<step id='3' message='completed' status='SUCCESS' />
-			// 		<step id='4' message='completed' status='SUCCESS' />
-			// 		<step id='5' message='completed' status='SUCCESS' />
-			// 		<step id='6' message='verified' status='SUCCESS' />
-			// 	</status>
-			// </myemsl>
-			// 
-			// Step IDs correspond to:
-			// 0: Submitted
-			// 1: Received
-			// 2: Processing
-			// 3: Verified
-			// 4: Stored
-			// 5: Available   (status will be "ERROR" if user doesn't have upload permissions for a proposal; 
-			//                 for example https://a4.my.emsl.pnl.gov/myemsl/cgi-bin/status/1042281/xml shows message 
-			//                 "You(47943) do not have upload permissions to proposal 17797"
-			//                 for user svc-dms on May 3, 2012)
+            // Example XML:
+            //
+            // <?xml version="1.0"?>
+            // <myemsl>
+            // 	<status username='70000'>
+            // 		<transaction id='111177' />
+            // 		<step id='0' message='completed' status='SUCCESS' />
+            // 		<step id='1' message='completed' status='SUCCESS' />
+            // 		<step id='2' message='completed' status='SUCCESS' />
+            // 		<step id='3' message='completed' status='SUCCESS' />
+            // 		<step id='4' message='completed' status='SUCCESS' />
+            // 		<step id='5' message='completed' status='SUCCESS' />
+            // 		<step id='6' message='verified' status='SUCCESS' />
+            // 	</status>
+            // </myemsl>
+            // 
+            // Step IDs correspond to:
+            // 0: Submitted
+            // 1: Received
+            // 2: Processing
+            // 3: Verified
+            // 4: Stored
+            // 5: Available   (status will be "ERROR" if user doesn't have upload permissions for a proposal; 
+            //                 for example https://a4.my.emsl.pnl.gov/myemsl/cgi-bin/status/1042281/xml shows message 
+            //                 "You(47943) do not have upload permissions to proposal 17797"
+            //                 for user svc-dms on May 3, 2012)
             //                 And https://ingest.my.emsl.pnl.gov/myemsl/cgi-bin/status/2919668/xml shows message
             //                 "Invalid Permissions" on January 4, 2016
-			// 6: Archived    (status will be "UNKNOWN" if not yet verified)
+            // 6: Archived    (status will be "UNKNOWN" if not yet verified)
 
-			var query = string.Format("//step[@id='{0}']", (int)stepNum);
-			var statusElement = xmlDoc.SelectSingleNode(query);
+            var query = string.Format("//step[@id='{0}']", (int)stepNum);
+            var statusElement = xmlDoc.SelectSingleNode(query);
 
-		    if (statusElement == null || statusElement.Attributes == null)
-		    {
-		        errorMessage = "Match not found for step " + stepNum + " in the Status XML";
-		        ReportError("IngestStepCompleted", errorMessage);
-		        return false;
-		    }
+            if (statusElement == null || statusElement.Attributes == null)
+            {
+                errorMessage = "Match not found for step " + stepNum + " in the Status XML";
+                ReportError("IngestStepCompleted", errorMessage);
+                return false;
+            }
 
-		    var message = statusElement.Attributes["message"].Value;
-		    var status = statusElement.Attributes["status"].Value;
+            var message = statusElement.Attributes["message"].Value;
+            var status = statusElement.Attributes["status"].Value;
 
-		    if (string.IsNullOrEmpty(message))
-		    {
+            if (string.IsNullOrEmpty(message))
+            {
                 errorMessage = "message attribute in the Status XML is empty for step " + stepNum;
                 return false;
-		    }
+            }
 
             if (string.IsNullOrEmpty(status))
             {
@@ -360,72 +360,72 @@ namespace Pacifica.Core
                 return false;
             }
 
-		    if (status.ToLower() == "error")
-		    {
+            if (status.ToLower() == "error")
+            {
 
                 if (message.Contains(UPLOAD_PERMISSION_ERROR))
                     errorMessage = PERMISSIONS_ERROR + " " + message;
                 else
-		            errorMessage = message;
+                    errorMessage = message;
 
                 return false;
-		    }
+            }
 
-		    if (status.ToLower() == "success")
-		    {
-		        if (message.ToLower() == "completed")
-		        {
-		            statusMessage = "Step is complete";
+            if (status.ToLower() == "success")
+            {
+                if (message.ToLower() == "completed")
+                {
+                    statusMessage = "Step is complete";
                     return true;
-		        }
+                }
 
-		        if (message.ToLower() == "verified")
-		        {
-		            statusMessage = "Data is verified";
+                if (message.ToLower() == "verified")
+                {
+                    statusMessage = "Data is verified";
                     return true;
-		        }
+                }
 
                 return false;
-		    }
+            }
 
-		    if (status.ToLower() == "unknown")
-		    {
+            if (status.ToLower() == "unknown")
+            {
                 // Step is not yet complete
-		        statusMessage = "Waiting";
+                statusMessage = "Waiting";
                 return false;
-		    }
+            }
 
-		    // Status is not empty, error, success, or unknown
+            // Status is not empty, error, success, or unknown
             // Unrecognized state
 
             errorMessage = "Unrecognized status state: " + status;
             return false;
-		    
-		}
+
+        }
 
         public byte IngestStepCompletionCount(string xmlServerResponse)
         {
             string errorMessage;
 
-	        // First look for exceptions
-		    if (string.IsNullOrWhiteSpace(xmlServerResponse) || HasExceptions(xmlServerResponse, false, out errorMessage))
-		    {
+            // First look for exceptions
+            if (string.IsNullOrWhiteSpace(xmlServerResponse) || HasExceptions(xmlServerResponse, false, out errorMessage))
+            {
                 // Exceptions are present; report 0 steps complete
                 return 0;
-		    }
+            }
 
-		    var xmlDoc = new XmlDocument();
-			xmlDoc.LoadXml(xmlServerResponse);
+            var xmlDoc = new XmlDocument();
+            xmlDoc.LoadXml(xmlServerResponse);
 
             // Find all step elements that contain an id attribute
             // See function IngestStepCompleted for Example XML
             var stepNodes = xmlDoc.SelectNodes("//step[@id]");
 
-		    if (stepNodes == null || stepNodes.Count == 0)
-		    {
-		        // Did not find any step nodes in the Status XML
-		        return 0;
-		    }
+            if (stepNodes == null || stepNodes.Count == 0)
+            {
+                // Did not find any step nodes in the Status XML
+                return 0;
+            }
 
             byte ingestStepsCompleted = 0;
 
@@ -437,11 +437,11 @@ namespace Pacifica.Core
                 var message = stepNode.Attributes["message"].Value;
                 var status = stepNode.Attributes["status"].Value;
 
-		        if (string.IsNullOrEmpty(message))
-		        {
+                if (string.IsNullOrEmpty(message))
+                {
                     // Message attribute in the Status XML is empty
                     continue;
-		        }
+                }
 
                 if (string.IsNullOrEmpty(status))
                 {
@@ -449,15 +449,15 @@ namespace Pacifica.Core
                     continue;
                 }
 
-		        if (status.ToLower() == "success")
-		        {
-		            message = message.ToLower();
+                if (status.ToLower() == "success")
+                {
+                    message = message.ToLower();
 
-		            if (message == "completed" || message == "verified")
-		            {
-		                ingestStepsCompleted++;
-		            }		         
-		        }
+                    if (message == "completed" || message == "verified")
+                    {
+                        ingestStepsCompleted++;
+                    }
+                }
             }
 
             return ingestStepsCompleted;
@@ -474,24 +474,24 @@ namespace Pacifica.Core
             return false;
         }
 
-		protected void ReportError(string callingFunction, string message)
-		{
-			OnErrorMessage(new MessageEventArgs(callingFunction, message));
+        protected void ReportError(string callingFunction, string message)
+        {
+            OnErrorMessage(new MessageEventArgs(callingFunction, message));
 
-			ErrorMessage = string.Copy(message);
-		}
+            ErrorMessage = string.Copy(message);
+        }
 
-		#region "Events"
+        #region "Events"
 
-		public event MessageEventHandler ErrorEvent;
+        public event MessageEventHandler ErrorEvent;
 
         protected void OnErrorMessage(MessageEventArgs e)
-		{
-			if (ErrorEvent != null)
-				ErrorEvent(this, e);
-		}
+        {
+            if (ErrorEvent != null)
+                ErrorEvent(this, e);
+        }
 
-		#endregion
-       
+        #endregion
+
     }
 }

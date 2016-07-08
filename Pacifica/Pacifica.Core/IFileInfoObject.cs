@@ -16,6 +16,6 @@ namespace Pacifica.Core
         string CreationTimeStamp { get; }
         string SubmittedTimeStamp { get; }
 
-		Dictionary<string, string> SerializeToDictionaryObject();
+        Dictionary<string, string> SerializeToDictionaryObject();
     }
 }

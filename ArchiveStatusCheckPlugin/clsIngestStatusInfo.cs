@@ -6,7 +6,7 @@ namespace ArchiveStatusCheckPlugin
         public int StatusNum { get; private set; }
         public string StatusURI { get; set; }
         public string Subfolder { get; set; }
-        
+
         public byte IngestStepsCompletedOld { get; set; }
         public byte IngestStepsCompletedNew { get; set; }
 

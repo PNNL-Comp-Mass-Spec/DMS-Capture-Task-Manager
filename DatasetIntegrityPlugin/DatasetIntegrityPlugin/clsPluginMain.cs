@@ -136,7 +136,7 @@ namespace DatasetIntegrityPlugin
 
             msg = "Instrument class: " + instClassName;
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-            
+
             if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Unknown)
             {
                 msg = "Instrument class not recognized: " + instClassName;
@@ -156,7 +156,7 @@ namespace DatasetIntegrityPlugin
                 case clsInstrumentClassInfo.eInstrumentClass.LTQ_FT:
                     dataFileNamePath = Path.Combine(datasetFolder, m_Dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
                     if (instrumentName.StartsWith("21T", StringComparison.InvariantCultureIgnoreCase))
-                        mRetData.CloseoutType = Test21TRawFile(dataFileNamePath);                        
+                        mRetData.CloseoutType = Test21TRawFile(dataFileNamePath);
                     else
                         mRetData.CloseoutType = TestLTQFTFile(dataFileNamePath);
                     break;
@@ -391,7 +391,7 @@ namespace DatasetIntegrityPlugin
                 mRetData.CloseoutMsg = "Exception converting .D folder to a CDF file";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg + ": " + ex.Message);
                 return false;
-            }          
+            }
 
             return true;
         }
@@ -485,7 +485,7 @@ namespace DatasetIntegrityPlugin
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg + ": " + ex.Message);
                 return false;
             }
-         
+
             return true;
         }
 
@@ -1165,7 +1165,7 @@ namespace DatasetIntegrityPlugin
         {
             return TestThermoRawFile(dataFileNamePath, RAW_FILE_MIN_SIZE_KB_21T, RAW_FILE_MAX_SIZE_MB_LTQ, true);
         }
-        
+
         /// <summary>
         /// Tests an Orbitrap (LTQ_FT) dataset's integrity
         /// </summary>
@@ -1853,7 +1853,7 @@ namespace DatasetIntegrityPlugin
                             if (ignorePressureErrors)
                             {
                                 if (!loggedPressureErrorWarning)
-                                {                                
+                                {
                                     loggedPressureErrorWarning = true;
                                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, mRetData.EvalMsg);
                                 }
@@ -1961,9 +1961,9 @@ namespace DatasetIntegrityPlugin
 
             // Store path to CaptureToolPlugin.dll in ioToolFiles
             var ioToolFiles = new List<FileInfo>
-			{
-				new FileInfo(strPluginPath)
-			};
+            {
+                new FileInfo(strPluginPath)
+            };
 
             if (!string.IsNullOrWhiteSpace(openChromProgPath))
             {
@@ -2060,7 +2060,7 @@ namespace DatasetIntegrityPlugin
 
                 // Need to update the settings file with the SerialKey entry
                 Thread.Sleep(50);
-                    
+
                 // Possibly add the trace= line
                 if (!traceFound)
                     settingsData.Add("trace=1");

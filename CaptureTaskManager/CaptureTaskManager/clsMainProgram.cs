@@ -1,11 +1,11 @@
-﻿
-//*********************************************************************************************************
+﻿//*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy 
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/10/2009
 //
 //*********************************************************************************************************
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -18,10 +18,8 @@ using PRISM;
 
 namespace CaptureTaskManager
 {
-
     public class clsMainProgram
     {
-
         //*********************************************************************************************************
         // Main program execution loop for application
         //**********************************************************************************************************
@@ -42,9 +40,11 @@ namespace CaptureTaskManager
             FlagFile,
             NeedToAbortProcessing
         }
+
         #endregion
 
         #region "Constants"
+
         private const int MAX_ERROR_COUNT = 4;
 
         private const string CUSTOM_LOG_SOURCE_NAME = "Capture Task Manager";
@@ -53,6 +53,7 @@ namespace CaptureTaskManager
         #endregion
 
         #region "Class variables"
+
         private clsMgrSettings m_MgrSettings;
         private clsCaptureTask m_Task;
         private FileSystemWatcher m_FileWatcher;
@@ -86,9 +87,11 @@ namespace CaptureTaskManager
         #endregion
 
         #region "Delegates"
+
         #endregion
 
         #region "Events"
+
         #endregion
 
         #region "Properties"
@@ -101,6 +104,7 @@ namespace CaptureTaskManager
         #endregion
 
         #region "Constructors"
+
         /// <summary>
         /// Constructor
         /// </summary>
@@ -108,6 +112,7 @@ namespace CaptureTaskManager
         {
             m_TraceMode = traceMode;
         }
+
         #endregion
 
         #region "Methods"
@@ -146,7 +151,7 @@ namespace CaptureTaskManager
                     msg = "Manager disabled in manager control DB";
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
                     if (m_TraceMode) ShowTraceMessage(msg);
-                    
+
                     m_StatusFile.UpdateDisabled(false);
                     restartOK = false;
                     break;
@@ -251,7 +256,7 @@ namespace CaptureTaskManager
                 default:
                     // Should never get here
                     break;
-            }	// End switch
+            } // End switch
 
             return restartOK;
         }
@@ -267,7 +272,8 @@ namespace CaptureTaskManager
             // we remove this logger than make a new one using the connection string read from the Manager Control DB
             var defaultDmsConnectionString = Properties.Settings.Default.DefaultDMSConnString;
 
-            clsLogTools.CreateDbLogger(defaultDmsConnectionString, "CaptureTaskMan: " + System.Net.Dns.GetHostName(), true);
+            clsLogTools.CreateDbLogger(defaultDmsConnectionString, "CaptureTaskMan: " + System.Net.Dns.GetHostName(),
+                                       true);
 
             // Get the manager settings
             // If you get an exception here while debugging in Visual Studio, be sure 
@@ -364,7 +370,8 @@ namespace CaptureTaskManager
             if (string.IsNullOrEmpty(configFileName))
             {
                 // Manager parameter error; log an error and exit
-                var errMsg = "Manager parameter 'configfilename' is undefined; this likely indicates a problem retrieving manager parameters.  Shutting down the manager";
+                var errMsg =
+                    "Manager parameter 'configfilename' is undefined; this likely indicates a problem retrieving manager parameters.  Shutting down the manager";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg);
 
                 if (m_TraceMode) ShowTraceMessage(errMsg);
@@ -467,7 +474,8 @@ namespace CaptureTaskManager
             {
                 worker.Abort();
                 m_MsgQueueInitSuccess = false;
-                var warnMsg = "Unable to initialize the message queue (timeout after " + MAX_WAIT_TIME_SECONDS + " seconds)";
+                var warnMsg = "Unable to initialize the message queue (timeout after " + MAX_WAIT_TIME_SECONDS +
+                              " seconds)";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warnMsg);
 
                 if (m_TraceMode) ShowTraceMessage(warnMsg);
@@ -488,21 +496,21 @@ namespace CaptureTaskManager
 
         private void InitializeMessageQueueWork()
         {
-
             if (!m_MsgHandler.Init())
             {
                 // Most error messages provided by .Init method, but debug message is here for program tracking
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Message handler init error");
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                     "Message handler init error");
                 m_MsgQueueInitSuccess = false;
                 if (m_TraceMode) ShowTraceMessage("m_MsgQueueInitSuccess = false: Message handler init error");
             }
             else
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Message handler initialized");
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                     "Message handler initialized");
                 m_MsgQueueInitSuccess = true;
                 if (m_TraceMode) ShowTraceMessage("m_MsgQueueInitSuccess = true");
             }
-
         }
 
         /// <summary>
@@ -520,10 +528,8 @@ namespace CaptureTaskManager
             // Begin main execution loop
             while (m_Running)
             {
-
                 try
                 {
-
                     //Verify that an error hasn't left the the system in an odd state
                     if (StatusFlagFileError())
                     {
@@ -589,7 +595,8 @@ namespace CaptureTaskManager
                     string pendingWindowsUpdateMessage;
                     if (clsWindowsUpdateStatus.UpdatesArePending(out pendingWindowsUpdateMessage))
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, pendingWindowsUpdateMessage);
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                                             pendingWindowsUpdateMessage);
                         m_LoopExitCode = LoopExitCode.NoTaskFound;
                         if (m_TraceMode) ShowTraceMessage(pendingWindowsUpdateMessage);
                         break;
@@ -642,7 +649,6 @@ namespace CaptureTaskManager
                             //Shouldn't ever get here!
                             break;
                     }
-
                 }
                 catch (Exception ex)
                 {
@@ -650,9 +656,7 @@ namespace CaptureTaskManager
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
                     if (m_TraceMode) ShowTraceMessage(msg + ": " + ex.Message);
                 }
-
-
-            }	// End while
+            } // End while
 
             m_Running = false;
 
@@ -711,8 +715,8 @@ namespace CaptureTaskManager
                 m_StatusFile.TaskStatus = EnumTaskStatus.Running;
                 m_StatusFile.TaskStatusDetail = EnumTaskStatusDetail.Running_Tool;
                 m_StatusFile.MostRecentJobInfo = DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss tt") +
-                                                            ", Job " + m_Job + ", Step " + stepNumber +
-                                                            ", Tool " + m_StepTool;
+                                                 ", Job " + m_Job + ", Step " + stepNumber +
+                                                 ", Tool " + m_StepTool;
 
                 m_StatusFile.WriteStatusFile();
 
@@ -720,7 +724,7 @@ namespace CaptureTaskManager
                 if (!SetToolRunnerObject(m_StepTool))
                 {
                     msg = m_MgrName + ": Unable to SetToolRunnerObject, job " + m_Job
-                                + ", Dataset " + m_Dataset;
+                          + ", Dataset " + m_Dataset;
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 
                     msg = "Unable to SetToolRunnerObject";
@@ -757,7 +761,7 @@ namespace CaptureTaskManager
                 {
                     case EnumCloseOutType.CLOSEOUT_FAILED:
                         msg = m_MgrName + ": Failure running tool " + m_StepTool
-                                    + ", job " + m_Job + ", Dataset " + m_Dataset;
+                              + ", job " + m_Job + ", Dataset " + m_Dataset;
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 
                         if (!String.IsNullOrEmpty(toolResult.CloseoutMsg))
@@ -770,7 +774,8 @@ namespace CaptureTaskManager
                         break;
 
                     case EnumCloseOutType.CLOSEOUT_NOT_READY:
-                        msg = m_MgrName + ": Dataset not ready, tool " + m_StepTool + ", job " + m_Job + ", Dataset " + m_Dataset;
+                        msg = m_MgrName + ": Dataset not ready, tool " + m_StepTool + ", job " + m_Job + ", Dataset " +
+                              m_Dataset;
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
 
                         sCloseoutMessage = "Dataset not ready";
@@ -783,7 +788,8 @@ namespace CaptureTaskManager
                         break;
 
                     case EnumCloseOutType.CLOSEOUT_SUCCESS:
-                        msg = m_MgrName + ": Step complete, tool " + m_StepTool + ", job " + m_Job + ", Dataset " + m_Dataset;
+                        msg = m_MgrName + ": Step complete, tool " + m_StepTool + ", job " + m_Job + ", Dataset " +
+                              m_Dataset;
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
                         if (m_TraceMode) ShowTraceMessage(msg);
 
@@ -792,8 +798,8 @@ namespace CaptureTaskManager
 
                     case EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING:
                         msg = m_MgrName + ": Failure running tool " + m_StepTool
-                                    + ", job " + m_Job + ", Dataset " + m_Dataset
-                                    + "; CloseOut = NeedToAbortProcessing";
+                              + ", job " + m_Job + ", Dataset " + m_Dataset
+                              + "; CloseOut = NeedToAbortProcessing";
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 
                         sCloseoutMessage = "Error: NeedToAbortProcessing";
@@ -806,20 +812,21 @@ namespace CaptureTaskManager
                         // Should never get here
                         break;
                 }
-
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running task", ex);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running task",
+                                     ex);
 
                 msg = m_MgrName + ": Failure running tool " + m_StepTool
-                                   + ", job " + m_Job + ", Dataset " + m_Dataset
-                                   + "; CloseOut = Exception";
+                      + ", job " + m_Job + ", Dataset " + m_Dataset
+                      + "; CloseOut = Exception";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 
                 msg = "Exception: " + ex.Message;
                 if (m_TraceMode) ShowTraceMessage(msg);
-                m_Task.CloseTask(EnumCloseOutType.CLOSEOUT_FAILED, msg, EnumEvalCode.EVAL_CODE_FAILED, "Exception running tool");
+                m_Task.CloseTask(EnumCloseOutType.CLOSEOUT_FAILED, msg, EnumEvalCode.EVAL_CODE_FAILED,
+                                 "Exception running tool");
             }
 
 
@@ -830,7 +837,6 @@ namespace CaptureTaskManager
             m_StatusFile.TaskStatus = EnumTaskStatus.No_Task;
             m_StatusFile.TaskStatusDetail = EnumTaskStatusDetail.No_Task;
             m_StatusFile.WriteStatusFile();
-
         }
 
         public void PostTestLogMessage()
@@ -846,7 +852,6 @@ namespace CaptureTaskManager
             {
                 Console.WriteLine(@"Error writing to event log: " + ex.Message);
             }
-
         }
 
         /// <summary>
@@ -864,7 +869,6 @@ namespace CaptureTaskManager
         /// <remarks>Also removes zero-byte FTPLog_ files</remarks>
         protected void RemoveOldFTPLogFiles(int iAgedLogFileDays)
         {
-
             if (iAgedLogFileDays < 7)
                 iAgedLogFileDays = 7;
 
@@ -876,24 +880,25 @@ namespace CaptureTaskManager
                 {
                     try
                     {
-                        if (DateTime.UtcNow.Subtract(fiFile.LastWriteTimeUtc).TotalDays > iAgedLogFileDays || fiFile.Length == 0)
+                        if (DateTime.UtcNow.Subtract(fiFile.LastWriteTimeUtc).TotalDays > iAgedLogFileDays ||
+                            fiFile.Length == 0)
                         {
                             fiFile.Delete();
                         }
                     }
-                    // ReSharper disable once EmptyGeneralCatchClause
+                        // ReSharper disable once EmptyGeneralCatchClause
                     catch
                     {
                         // Ignore exceptions
                     }
                 }
-
             }
             catch (Exception ex)
             {
                 var msg = "Exception removing old FTP log files";
                 if (m_TraceMode) ShowTraceMessage(msg);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg + ": " + ex.Message);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                     msg + ": " + ex.Message);
             }
         }
 
@@ -906,17 +911,16 @@ namespace CaptureTaskManager
             const int iAgedTempFilesHours = 12;
             var sTempFolderPath = Path.GetTempPath();
             RemoveOldTempFiles(iAgedTempFilesHours, sTempFolderPath);
-
         }
 
         protected void RemoveOldTempFiles(int iAgedTempFilesHours, string sTempFolderPath)
         {
             // This list tracks the file specs to search for in folder sTempFolderPath
             var lstSearchSpecs = new List<string>
-			{
-				"*.tmp",
-				"*.zip"
-			};
+            {
+                "*.tmp",
+                "*.zip"
+            };
 
             RemoveOldTempFiles(iAgedTempFilesHours, sTempFolderPath, lstSearchSpecs);
         }
@@ -960,7 +964,7 @@ namespace CaptureTaskManager
                                 iDeleteCount += 1;
                             }
                         }
-                        // ReSharper disable once EmptyGeneralCatchClause
+                            // ReSharper disable once EmptyGeneralCatchClause
                         catch
                         {
                             // Ignore exceptions
@@ -980,12 +984,12 @@ namespace CaptureTaskManager
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
                     if (m_TraceMode) ShowTraceMessage(msg);
                 }
-
             }
             catch (Exception ex)
             {
                 var msg = "Exception removing old temp files";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg + ": " + ex.Message);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                     msg + ": " + ex.Message);
                 if (m_TraceMode) ShowTraceMessage(msg);
             }
         }
@@ -1008,18 +1012,17 @@ namespace CaptureTaskManager
                 if (m_TraceMode) ShowTraceMessage(msg);
                 return false;
             }
-            
+
             msg = "Loaded tool runner for Step Tool " + stepToolName;
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
             if (m_TraceMode) ShowTraceMessage(msg);
 
             try
             {
-
 #if MyEMSL_OFFLINE
-	// When this Conditional Compilation Constant is defined, then the DatasetArchive plugin will set debugMode 
-	// to Pacifica.Core.EasyHttp.eDebugMode.MyEMSLOfflineMode when calling UploadToMyEMSLWithRetry()
-	// This in turn results in writeToDisk becoming True in SendFileListToDavAsTar
+    // When this Conditional Compilation Constant is defined, then the DatasetArchive plugin will set debugMode 
+    // to Pacifica.Core.EasyHttp.eDebugMode.MyEMSLOfflineMode when calling UploadToMyEMSLWithRetry()
+    // This in turn results in writeToDisk becoming True in SendFileListToDavAsTar
     m_Task.AddAdditionalParameter("MyEMSLOffline", "true");
 	clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Adding job parameter MyEMSLOffline=true");
 #endif
@@ -1078,12 +1081,12 @@ namespace CaptureTaskManager
 
                 var cleanupModeVal = m_MgrSettings.GetParam("ManagerErrorCleanupMode", 0);
                 blnMgrCleanupSuccess = objCleanupMgrErrors.AutoCleanupManagerErrors(cleanupModeVal);
-
             }
             catch (Exception ex)
             {
                 var msg = "Error calling AutoCleanupManagerErrors from StatusFlagFileError";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg + ": " + ex.Message);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                     msg + ": " + ex.Message);
                 if (m_TraceMode) ShowTraceMessage(msg);
                 blnMgrCleanupSuccess = false;
             }
@@ -1101,7 +1104,6 @@ namespace CaptureTaskManager
 
             // Error removing flag file; return true
             return true;
-            
         }
 
         /// <summary>
@@ -1122,7 +1124,8 @@ namespace CaptureTaskManager
 
             dtLastConfigDBUpdate = DateTime.UtcNow;
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Updating manager settings using Manager Control database");
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                 "Updating manager settings using Manager Control database");
 
             if (!m_MgrSettings.LoadMgrSettingsFromDB())
             {
@@ -1150,14 +1153,14 @@ namespace CaptureTaskManager
 
         [DllImport("kernel32", CharSet = CharSet.Auto)]
         static extern int GetDiskFreeSpaceEx(
-         string lpDirectoryName,
-         out ulong lpFreeBytesAvailable,
-         out ulong lpTotalNumberOfBytes,
-         out ulong lpTotalNumberOfFreeBytes);
+            string lpDirectoryName,
+            out ulong lpFreeBytesAvailable,
+            out ulong lpTotalNumberOfBytes,
+            out ulong lpTotalNumberOfFreeBytes);
 
-        protected bool GetDiskFreeSpace(string directoryPath, out long freeBytesAvailableToUser, out long totalDriveCapacityBytes, out long totalNumberOfFreeBytes)
+        protected bool GetDiskFreeSpace(string directoryPath, out long freeBytesAvailableToUser,
+                                        out long totalDriveCapacityBytes, out long totalNumberOfFreeBytes)
         {
-
             ulong freeAvailableUser;
             ulong totalDriveCapacity;
             ulong totalFree;
@@ -1197,7 +1200,6 @@ namespace CaptureTaskManager
             datasetStoragePathBase = Path.Combine(datasetStoragePathBase, storagePath);
 
             return datasetStoragePathBase;
-
         }
 
         /// <summary>
@@ -1220,7 +1222,6 @@ namespace CaptureTaskManager
                     stepToolLCase.Contains("datasetarchive") ||
                     stepToolLCase.Contains("sourcefilerename"))
                 {
-
                     // We don't need to validate free space with these step tools
                     return true;
                 }
@@ -1230,24 +1231,28 @@ namespace CaptureTaskManager
                 long freeBytesAvailableToUser;
                 long totalDriveCapacityBytes;
                 long totalNumberOfFreeBytes;
-                if (GetDiskFreeSpace(datasetStoragePath, out freeBytesAvailableToUser, out totalDriveCapacityBytes, out totalNumberOfFreeBytes))
+                if (GetDiskFreeSpace(datasetStoragePath, out freeBytesAvailableToUser, out totalDriveCapacityBytes,
+                                     out totalNumberOfFreeBytes))
                 {
                     var freeSpaceGB = totalNumberOfFreeBytes / 1024.0 / 1024.0 / 1024.0;
 
                     if (freeSpaceGB < DEFAULT_DATASET_STORAGE_MIN_FREE_SPACE_GB)
                     {
-                        errMsg = "Dataset directory drive has less than " + DEFAULT_DATASET_STORAGE_MIN_FREE_SPACE_GB.ToString("0") + "GB free: " + freeSpaceGB.ToString("0.00") + " GB available";
+                        errMsg = "Dataset directory drive has less than " +
+                                 DEFAULT_DATASET_STORAGE_MIN_FREE_SPACE_GB.ToString("0") + "GB free: " +
+                                 freeSpaceGB.ToString("0.00") + " GB available";
 
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg + ": " + datasetStoragePath);
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                             errMsg + ": " + datasetStoragePath);
                         if (m_TraceMode) ShowTraceMessage(errMsg);
 
                         return false;
                     }
-
                 }
                 else
                 {
-                    errMsg = "Error validating dataset storage free drive space: " + datasetStoragePath + " (GetDiskFreeSpaceEx returned false)";
+                    errMsg = "Error validating dataset storage free drive space: " + datasetStoragePath +
+                             " (GetDiskFreeSpaceEx returned false)";
                     if (Environment.MachineName.ToUpper().StartsWith("MONROE"))
                     {
                         Console.WriteLine(@"Warning: " + errMsg);
@@ -1259,12 +1264,12 @@ namespace CaptureTaskManager
 
                     return false;
                 }
-
             }
             catch (Exception ex)
             {
                 errMsg = "Exception validating dataset storage free drive space: " + datasetStoragePath;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg + "; " + ex.Message);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                     errMsg + "; " + ex.Message);
                 if (m_TraceMode) ShowTraceMessage(errMsg);
 
                 return false;
@@ -1313,6 +1318,7 @@ namespace CaptureTaskManager
         #endregion
 
         #region "Event handlers"
+
         private void FileWatcherChanged(object sender, FileSystemEventArgs e)
         {
             const string msg = "clsMainProgram.FileWatcherChanged event received";
@@ -1396,6 +1402,7 @@ namespace CaptureTaskManager
             m_StatusFile.Duration = (Single)duration.TotalHours;
             m_StatusFile.WriteStatusFile();
         }
+
         #endregion
-    }	// End class
-}	// End namespace
+    } // End class
+} // End namespace

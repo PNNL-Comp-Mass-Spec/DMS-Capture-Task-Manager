@@ -10,55 +10,55 @@ using System.IO;
 
 namespace ArchiveVerifyPlugin
 {
-	public class clsPluginMain : clsToolRunnerBase
-	{
-		//*********************************************************************************************************
-		// Main class for plugin
-		//**********************************************************************************************************
+    public class clsPluginMain : clsToolRunnerBase
+    {
+        //*********************************************************************************************************
+        // Main class for plugin
+        //**********************************************************************************************************
 
-		#region "Constants and Enums"
-		protected const string MD5_RESULTS_FILE_PREFIX = "results.";
-		protected const string DEFAULT_MD5_RESULTS_FOLDER_PATH = @"\\proto-7\MD5Results";
-		protected const string DEFAULT_MD5_RESULTS_BACKUP_FOLDER_PATH = @"\\proto-5\MD5ResultsBackup";
+        #region "Constants and Enums"
+        protected const string MD5_RESULTS_FILE_PREFIX = "results.";
+        protected const string DEFAULT_MD5_RESULTS_FOLDER_PATH = @"\\proto-7\MD5Results";
+        protected const string DEFAULT_MD5_RESULTS_BACKUP_FOLDER_PATH = @"\\proto-5\MD5ResultsBackup";
 
-		#endregion
+        #endregion
 
-		#region "Class-wide variables"
-		clsToolReturnData mRetData = new clsToolReturnData();
+        #region "Class-wide variables"
+        clsToolReturnData mRetData = new clsToolReturnData();
 
-		protected double mPercentComplete;
-		protected DateTime mLastProgressUpdateTime = DateTime.UtcNow;
+        protected double mPercentComplete;
+        protected DateTime mLastProgressUpdateTime = DateTime.UtcNow;
 
-		protected int mTotalMismatchCount;
+        protected int mTotalMismatchCount;
 
-		#endregion
+        #endregion
 
-		#region "Methods"
-		/// <summary>
-		/// Runs the Archive Verify step tool
-		/// </summary>
-		/// <returns>Class with completionCode, completionMessage, evaluationCode, and evaluationMessage</returns>
-		public override clsToolReturnData RunTool()
-		{
-			var msg = "Starting ArchiveVerifyPlugin.clsPluginMain.RunTool()";
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+        #region "Methods"
+        /// <summary>
+        /// Runs the Archive Verify step tool
+        /// </summary>
+        /// <returns>Class with completionCode, completionMessage, evaluationCode, and evaluationMessage</returns>
+        public override clsToolReturnData RunTool()
+        {
+            var msg = "Starting ArchiveVerifyPlugin.clsPluginMain.RunTool()";
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
-			// Perform base class operations, if any
-			mRetData = base.RunTool();
-			if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
-				return mRetData;
+            // Perform base class operations, if any
+            mRetData = base.RunTool();
+            if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
+                return mRetData;
 
-			if (m_DebugLevel >= 5)
-			{
-				msg = "Verifying files in MyEMSL for dataset '" + m_Dataset + "'";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-			}
+            if (m_DebugLevel >= 5)
+            {
+                msg = "Verifying files in MyEMSL for dataset '" + m_Dataset + "'";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+            }
 
             // Set this to Success for now
             mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
             var success = false;
 
-			mTotalMismatchCount = 0;
+            mTotalMismatchCount = 0;
 
             try
             {
@@ -73,56 +73,56 @@ namespace ArchiveVerifyPlugin
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
             }
 
-			
 
-			if (success)
-			{
-				string metadataFilePath;
 
-				// Confirm that the files are visible in elastic search
-				// If data is found, then CreateOrUpdateMD5ResultsFile will also be called
-				success = VisibleInElasticSearch(out metadataFilePath);
+            if (success)
+            {
+                string metadataFilePath;
 
-				if (success && !string.IsNullOrEmpty(metadataFilePath))
-				{
-					DeleteMetadataFile(metadataFilePath);
-				}
-			}
+                // Confirm that the files are visible in elastic search
+                // If data is found, then CreateOrUpdateMD5ResultsFile will also be called
+                success = VisibleInElasticSearch(out metadataFilePath);
 
-			if (success)
-			{
-				// Everything was good
-				if (m_DebugLevel >= 4)
-				{
-					msg = "MyEMSL verification successful for job " + m_Job + ", dataset " + m_Dataset;
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-				}
-				mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+                if (success && !string.IsNullOrEmpty(metadataFilePath))
+                {
+                    DeleteMetadataFile(metadataFilePath);
+                }
+            }
 
-				// Note that stored procedure SetStepTaskComplete will update MyEMSL State values if mRetData.EvalCode = 5
-				mRetData.EvalCode = EnumEvalCode.EVAL_CODE_VERIFIED_IN_MYEMSL;
+            if (success)
+            {
+                // Everything was good
+                if (m_DebugLevel >= 4)
+                {
+                    msg = "MyEMSL verification successful for job " + m_Job + ", dataset " + m_Dataset;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                }
+                mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
 
-			}
-			else
-			{
-				// There was a problem (or the data is not yet ready in MyEMSL)
-				if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
-					mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
-			}
+                // Note that stored procedure SetStepTaskComplete will update MyEMSL State values if mRetData.EvalCode = 5
+                mRetData.EvalCode = EnumEvalCode.EVAL_CODE_VERIFIED_IN_MYEMSL;
 
-			msg = "Completed clsPluginMain.RunTool()";
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            }
+            else
+            {
+                // There was a problem (or the data is not yet ready in MyEMSL)
+                if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
+                    mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
+            }
 
-			return mRetData;
+            msg = "Completed clsPluginMain.RunTool()";
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
-		}	// End sub
+            return mRetData;
 
-		protected bool CheckUploadStatus()
-		{
+        }   // End sub
 
-			// Examine the upload status
-			// If not complete, this manager will return completionCode CLOSEOUT_NOT_READY=2 
-			// which will tell the DMS_Capture DB to reset the task to state 2 and bump up the Next_Try value by 30 minutes
+        protected bool CheckUploadStatus()
+        {
+
+            // Examine the upload status
+            // If not complete, this manager will return completionCode CLOSEOUT_NOT_READY=2 
+            // which will tell the DMS_Capture DB to reset the task to state 2 and bump up the Next_Try value by 30 minutes
 
             var statusURI = m_TaskParams.GetParam("MyEMSL_Status_URI", string.Empty);
 
@@ -130,42 +130,42 @@ namespace ArchiveVerifyPlugin
             var eusProposalID = m_TaskParams.GetParam("EUS_ProposalID", string.Empty);
             var eusUploaderID = m_TaskParams.GetParam("EUS_UploaderID", 0);
 
-			if (string.IsNullOrEmpty(statusURI))
-			{
-				const string msg = "MyEMSL_Status_URI is empty; cannot verify upload status";
-				mRetData.CloseoutMsg = msg;
-				mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-				return false;
-			}
+            if (string.IsNullOrEmpty(statusURI))
+            {
+                const string msg = "MyEMSL_Status_URI is empty; cannot verify upload status";
+                mRetData.CloseoutMsg = msg;
+                mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                return false;
+            }
 
-			// Call the testauth service to obtain a cookie for this session
-			var authURL = Configuration.TestAuthUri;
-			var auth = new Auth(new Uri(authURL));
+            // Call the testauth service to obtain a cookie for this session
+            var authURL = Configuration.TestAuthUri;
+            var auth = new Auth(new Uri(authURL));
 
-			CookieContainer cookieJar;
-			if (!auth.GetAuthCookies(out cookieJar))
-			{
-				var msg = "Auto-login to " + Configuration.TestAuthUri + " failed authentication";
-				mRetData.CloseoutMsg = "Failed to obtain MyEMSL session cookie";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-				return false;
-			}
+            CookieContainer cookieJar;
+            if (!auth.GetAuthCookies(out cookieJar))
+            {
+                var msg = "Auto-login to " + Configuration.TestAuthUri + " failed authentication";
+                mRetData.CloseoutMsg = "Failed to obtain MyEMSL session cookie";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                return false;
+            }
 
-			var statusChecker = new MyEMSLStatusCheck();
+            var statusChecker = new MyEMSLStatusCheck();
             statusChecker.ErrorEvent += statusChecker_ErrorEvent;
 
-			try
-			{
+            try
+            {
 
-			    string xmlServerResponse;
+                string xmlServerResponse;
                 var ingestSuccess = base.GetMyEMSLIngestStatus(
-                    m_Job, statusChecker, statusURI, 
+                    m_Job, statusChecker, statusURI,
                     eusInstrumentID, eusProposalID, eusUploaderID,
                     cookieJar, mRetData, out xmlServerResponse);
 
                 var ingestStepsComplete = statusChecker.IngestStepCompletionCount(xmlServerResponse);
-                
+
                 var fatalError = (
                     mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED &&
                     mRetData.EvalCode == EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY);
@@ -174,18 +174,18 @@ namespace ArchiveVerifyPlugin
 
                 UpdateIngestStepsCompletedOneTask(statusNum, ingestStepsComplete, fatalError);
 
-			    if (!ingestSuccess)
-			    {
+                if (!ingestSuccess)
+                {
                     Utilities.Logout(cookieJar);
                     return false;
-			    }
+                }
 
                 string statusMessage;
-			    string errorMessage;
+                string errorMessage;
                 var success = statusChecker.IngestStepCompleted(
                     xmlServerResponse,
                     MyEMSLStatusCheck.StatusStep.Available,
-                    out statusMessage, 
+                    out statusMessage,
                     out errorMessage);
 
                 if (success)
@@ -194,35 +194,35 @@ namespace ArchiveVerifyPlugin
                     return true;
                 }
 
-			}
-			catch (Exception ex)
-			{
+            }
+            catch (Exception ex)
+            {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception checking upload status: " + ex.Message);
-			}
-		
-			Utilities.Logout(cookieJar);
+            }
 
-			return false;
-		}
+            Utilities.Logout(cookieJar);
+
+            return false;
+        }
 
 
-		/// <summary>
-		/// Compare the files in lstArchivedFiles to the files in the metadata.txt file
-		/// If metadata.txt file is missing, then compare to files actually on disk
-		/// </summary>
-		/// <param name="lstArchivedFiles"></param>
-		/// <param name="metadataFilePath"></param>
-		/// <returns></returns>
-		protected bool CompareArchiveFilesToExpectedFiles(List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles, out string metadataFilePath)
-		{
-			metadataFilePath = string.Empty;
+        /// <summary>
+        /// Compare the files in lstArchivedFiles to the files in the metadata.txt file
+        /// If metadata.txt file is missing, then compare to files actually on disk
+        /// </summary>
+        /// <param name="lstArchivedFiles"></param>
+        /// <param name="metadataFilePath"></param>
+        /// <returns></returns>
+        protected bool CompareArchiveFilesToExpectedFiles(List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles, out string metadataFilePath)
+        {
+            metadataFilePath = string.Empty;
 
-			try
-			{
+            try
+            {
 
-				var transferFolderPathBase = m_TaskParams.GetParam("TransferFolderPath", string.Empty);
-				if (!ParameterDefined("TransferFolderPath", transferFolderPathBase))
-					return false;
+                var transferFolderPathBase = m_TaskParams.GetParam("TransferFolderPath", string.Empty);
+                if (!ParameterDefined("TransferFolderPath", transferFolderPathBase))
+                    return false;
 
                 if (string.IsNullOrEmpty(m_Dataset))
                 {
@@ -234,14 +234,14 @@ namespace ArchiveVerifyPlugin
                 var transferFolderPath = Path.Combine(transferFolderPathBase, m_Dataset);
 
                 var jobNumber = m_TaskParams.GetParam("Job", string.Empty);
-				if (!ParameterDefined("Job", jobNumber))
-					return false;
+                if (!ParameterDefined("Job", jobNumber))
+                    return false;
 
-				var fiMetadataFile = new FileInfo(Path.Combine(transferFolderPath, Utilities.GetMetadataFilenameForJob(jobNumber)));
+                var fiMetadataFile = new FileInfo(Path.Combine(transferFolderPath, Utilities.GetMetadataFilenameForJob(jobNumber)));
 
-				if (fiMetadataFile.Exists)
-				{
-					metadataFilePath = fiMetadataFile.FullName;
+                if (fiMetadataFile.Exists)
+                {
+                    metadataFilePath = fiMetadataFile.FullName;
 
                     int matchCountToMetadata;
                     int mismatchCountToMetadata;
@@ -249,53 +249,53 @@ namespace ArchiveVerifyPlugin
                     CompareToMetadataFile(lstArchivedFiles, fiMetadataFile, out matchCountToMetadata, out mismatchCountToMetadata);
 
                     if (matchCountToMetadata > 0 && mismatchCountToMetadata == 0)
-					{
-						// Everything matches up
-						return true;
-					}
+                    {
+                        // Everything matches up
+                        return true;
+                    }
 
                     if (mismatchCountToMetadata > 0)
-					{
-						if (mTotalMismatchCount == 0)
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
+                    {
+                        if (mTotalMismatchCount == 0)
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
                         mTotalMismatchCount += mismatchCountToMetadata;
 
                         var matchStats = "MatchCount=" + matchCountToMetadata + ", MismatchCount=" + mismatchCountToMetadata;
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " ... sha1 mismatch between local files in metadata.txt file and MyEMSL; " + matchStats);
-						mRetData.CloseoutMsg = matchStats;
-						return false;
-					}
-				}
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " ... sha1 mismatch between local files in metadata.txt file and MyEMSL; " + matchStats);
+                        mRetData.CloseoutMsg = matchStats;
+                        return false;
+                    }
+                }
 
-				// Metadata file was missing or empty; compare to local files on disk
+                // Metadata file was missing or empty; compare to local files on disk
 
-				// Look for files that should have been uploaded, compute a Sha-1 hash for each, and compare those hashes to existing files in MyEMSL
+                // Look for files that should have been uploaded, compute a Sha-1 hash for each, and compare those hashes to existing files in MyEMSL
 
-				Upload.udtUploadMetadata uploadMetadata;
+                Upload.udtUploadMetadata uploadMetadata;
 
-				var oDatasetFileMetadata = new DMSMetadataObject();
-				var lstDatasetFilesLocal = oDatasetFileMetadata.FindDatasetFilesToArchive(m_TaskParams.TaskDictionary, m_MgrParams.TaskDictionary, out uploadMetadata);
+                var oDatasetFileMetadata = new DMSMetadataObject();
+                var lstDatasetFilesLocal = oDatasetFileMetadata.FindDatasetFilesToArchive(m_TaskParams.TaskDictionary, m_MgrParams.TaskDictionary, out uploadMetadata);
 
-				if (lstDatasetFilesLocal.Count == 0)
-				{
-					if (mTotalMismatchCount == 0)
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
-					mTotalMismatchCount += 1;
+                if (lstDatasetFilesLocal.Count == 0)
+                {
+                    if (mTotalMismatchCount == 0)
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
+                    mTotalMismatchCount += 1;
 
-					mRetData.CloseoutMsg = "Local files were not found for this dataset; unable to compare Sha-1 hashes to MyEMSL values";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " ... " + mRetData.CloseoutMsg);
-					return false;
-				}
+                    mRetData.CloseoutMsg = "Local files were not found for this dataset; unable to compare Sha-1 hashes to MyEMSL values";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " ... " + mRetData.CloseoutMsg);
+                    return false;
+                }
 
-				// Keys are relative file paths (Windows slashes)
-				// Values are the sha-1 hash values
-				var dctFilePathHashMap = new Dictionary<string, string>();
+                // Keys are relative file paths (Windows slashes)
+                // Values are the sha-1 hash values
+                var dctFilePathHashMap = new Dictionary<string, string>();
 
-				foreach (var datasetFile in lstDatasetFilesLocal)
-				{
-					var relativeFilePathWindows = datasetFile.RelativeDestinationFullPath.Replace("/", @"\");
-					dctFilePathHashMap.Add(relativeFilePathWindows, datasetFile.Sha1HashHex);
-				}
+                foreach (var datasetFile in lstDatasetFilesLocal)
+                {
+                    var relativeFilePathWindows = datasetFile.RelativeDestinationFullPath.Replace("/", @"\");
+                    dctFilePathHashMap.Add(relativeFilePathWindows, datasetFile.Sha1HashHex);
+                }
 
                 int matchCountToDisk;
                 int mismatchCountToDisk;
@@ -303,471 +303,471 @@ namespace ArchiveVerifyPlugin
                 CompareArchiveFilesToList(lstArchivedFiles, out matchCountToDisk, out mismatchCountToDisk, dctFilePathHashMap);
 
                 if (matchCountToDisk > 0 && mismatchCountToDisk == 0)
-				{
-					// Everything matches up
-					return true;
-				}
+                {
+                    // Everything matches up
+                    return true;
+                }
 
                 if (mismatchCountToDisk > 0)
-				{
-					if (mTotalMismatchCount == 0)
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
+                {
+                    if (mTotalMismatchCount == 0)
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
                     mTotalMismatchCount += mismatchCountToDisk;
 
                     mRetData.CloseoutMsg = "SHA-1 mismatch between local files on disk and MyEMSL; MatchCount=" + matchCountToDisk + ", MismatchCount=" + mismatchCountToDisk;
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " ... " + mRetData.CloseoutMsg);
-					
-					return false;
-				}
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " ... " + mRetData.CloseoutMsg);
 
-				return false;
+                    return false;
+                }
 
-			}
-			catch (Exception ex)
-			{
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in CompareArchiveFilesToExpectedFiles", ex);
-				return false;
-			}
+                return false;
 
-		}
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in CompareArchiveFilesToExpectedFiles", ex);
+                return false;
+            }
 
-		protected void CompareArchiveFilesToList(List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles, out int matchCount, out int mismatchCount, Dictionary<string, string> dctFilePathHashMap)
-		{
-			matchCount = 0;
-			mismatchCount = 0;
+        }
 
-			// Make sure each of the files in dctFilePathHashMap is present in lstArchivedFiles
-			foreach (var metadataFile in dctFilePathHashMap)
-			{
-				var lstMatchingArchivedFiles = (from item in lstArchivedFiles where item.RelativePathWindows == metadataFile.Key select item).ToList();
+        protected void CompareArchiveFilesToList(List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles, out int matchCount, out int mismatchCount, Dictionary<string, string> dctFilePathHashMap)
+        {
+            matchCount = 0;
+            mismatchCount = 0;
 
-				if (lstMatchingArchivedFiles.Count == 0)
-				{
-					if (mTotalMismatchCount == 0)
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
-					mTotalMismatchCount += 1;
+            // Make sure each of the files in dctFilePathHashMap is present in lstArchivedFiles
+            foreach (var metadataFile in dctFilePathHashMap)
+            {
+                var lstMatchingArchivedFiles = (from item in lstArchivedFiles where item.RelativePathWindows == metadataFile.Key select item).ToList();
 
-					var msg = " ... file " + metadataFile.Key + " not found in MyEMSL (CompareArchiveFilesToList)";
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-				}
-				else
-				{
-					var archiveFile = lstMatchingArchivedFiles.First();
+                if (lstMatchingArchivedFiles.Count == 0)
+                {
+                    if (mTotalMismatchCount == 0)
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
+                    mTotalMismatchCount += 1;
 
-					if (archiveFile.Sha1Hash == metadataFile.Value)
-						matchCount++;
-					else
-					{
-						if (mTotalMismatchCount == 0)
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
-						mTotalMismatchCount++;
+                    var msg = " ... file " + metadataFile.Key + " not found in MyEMSL (CompareArchiveFilesToList)";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                }
+                else
+                {
+                    var archiveFile = lstMatchingArchivedFiles.First();
 
-						var msg = " ... file mismatch for " + archiveFile.RelativePathWindows + "; MyEMSL reports " + archiveFile.Sha1Hash + " but expecting " + metadataFile.Value;
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    if (archiveFile.Sha1Hash == metadataFile.Value)
+                        matchCount++;
+                    else
+                    {
+                        if (mTotalMismatchCount == 0)
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
+                        mTotalMismatchCount++;
 
-						mismatchCount++;
-						
-					}
-				}
-			}
-		}
+                        var msg = " ... file mismatch for " + archiveFile.RelativePathWindows + "; MyEMSL reports " + archiveFile.Sha1Hash + " but expecting " + metadataFile.Value;
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 
-		protected void CompareToMetadataFile(List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles, FileInfo fiMetadataFile, out int matchCount, out int mismatchCount)
-		{
-			matchCount = 0;
-			mismatchCount = 0;
+                        mismatchCount++;
 
-			// Parse the contents of the file
-			string contents;
+                    }
+                }
+            }
+        }
 
-			using (var srMetadataFile = new StreamReader(new FileStream(fiMetadataFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
-			{
-				contents = srMetadataFile.ReadToEnd();
-			}
+        protected void CompareToMetadataFile(List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles, FileInfo fiMetadataFile, out int matchCount, out int mismatchCount)
+        {
+            matchCount = 0;
+            mismatchCount = 0;
 
-			if (string.IsNullOrEmpty(contents))
-			{
-				if (mTotalMismatchCount == 0)
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
-				mTotalMismatchCount += 1;
+            // Parse the contents of the file
+            string contents;
 
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " ... metadata file is empty: " + fiMetadataFile.FullName);
-				return;
-			}
+            using (var srMetadataFile = new StreamReader(new FileStream(fiMetadataFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+            {
+                contents = srMetadataFile.ReadToEnd();
+            }
 
-			var dctMetadataInfo = Utilities.JsonToObject(contents);
-			if (!dctMetadataInfo.ContainsKey("file"))
-			{
-				if (mTotalMismatchCount == 0)
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
-				mTotalMismatchCount += 1;
+            if (string.IsNullOrEmpty(contents))
+            {
+                if (mTotalMismatchCount == 0)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
+                mTotalMismatchCount += 1;
 
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " ... metadata file JSON does not contain 'file': " + fiMetadataFile.FullName);
-				return;
-			}
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " ... metadata file is empty: " + fiMetadataFile.FullName);
+                return;
+            }
 
-			var dctMetadataFiles = (List<Dictionary<string, object>>)dctMetadataInfo["file"];
+            var dctMetadataInfo = Utilities.JsonToObject(contents);
+            if (!dctMetadataInfo.ContainsKey("file"))
+            {
+                if (mTotalMismatchCount == 0)
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
+                mTotalMismatchCount += 1;
 
-			// Keys are relative file paths (Windows slashes)
-			// Values are the sha-1 hash values
-			var dctFilePathHashMap = new Dictionary<string, string>();
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " ... metadata file JSON does not contain 'file': " + fiMetadataFile.FullName);
+                return;
+            }
 
-			foreach (var metadataFile in dctMetadataFiles)
-			{
-				var sha1Hash = metadataFile["sha1Hash"].ToString();
-				var destinationDirectory = metadataFile["destinationDirectory"].ToString();
-				var fileName = metadataFile["fileName"].ToString();
+            var dctMetadataFiles = (List<Dictionary<string, object>>)dctMetadataInfo["file"];
 
-				var relativeFilePathWindows = Path.Combine(destinationDirectory.Replace('/', Path.DirectorySeparatorChar), fileName);
+            // Keys are relative file paths (Windows slashes)
+            // Values are the sha-1 hash values
+            var dctFilePathHashMap = new Dictionary<string, string>();
 
-				dctFilePathHashMap.Add(relativeFilePathWindows, sha1Hash);
-			}
+            foreach (var metadataFile in dctMetadataFiles)
+            {
+                var sha1Hash = metadataFile["sha1Hash"].ToString();
+                var destinationDirectory = metadataFile["destinationDirectory"].ToString();
+                var fileName = metadataFile["fileName"].ToString();
 
-			CompareArchiveFilesToList(lstArchivedFiles, out matchCount, out mismatchCount, dctFilePathHashMap);
+                var relativeFilePathWindows = Path.Combine(destinationDirectory.Replace('/', Path.DirectorySeparatorChar), fileName);
 
-		}
+                dctFilePathHashMap.Add(relativeFilePathWindows, sha1Hash);
+            }
 
-		protected void CopyMD5ResultsFileToBackupFolder(string datasetInstrument, string datasetYearQuarter, FileInfo fiMD5ResultsFile)
-		{
-			// Copy the updated file to md5ResultsFolderPathBackup
-			try
-			{
-				var strMD5ResultsFileBackup = GetMD5ResultsFilePath(DEFAULT_MD5_RESULTS_BACKUP_FOLDER_PATH, m_Dataset, datasetInstrument, datasetYearQuarter);
+            CompareArchiveFilesToList(lstArchivedFiles, out matchCount, out mismatchCount, dctFilePathHashMap);
 
-				var fiBackupMD5ResultsFile = new FileInfo(strMD5ResultsFileBackup);
+        }
 
-				// Create the target folders if necessary
-				if (fiBackupMD5ResultsFile.Directory != null)
-				{
-					if (!fiBackupMD5ResultsFile.Directory.Exists)
-						fiBackupMD5ResultsFile.Directory.Create();
+        protected void CopyMD5ResultsFileToBackupFolder(string datasetInstrument, string datasetYearQuarter, FileInfo fiMD5ResultsFile)
+        {
+            // Copy the updated file to md5ResultsFolderPathBackup
+            try
+            {
+                var strMD5ResultsFileBackup = GetMD5ResultsFilePath(DEFAULT_MD5_RESULTS_BACKUP_FOLDER_PATH, m_Dataset, datasetInstrument, datasetYearQuarter);
 
-					// Copy the file
-					fiMD5ResultsFile.CopyTo(fiBackupMD5ResultsFile.FullName, true);
-				}
-			}
-			catch (Exception ex)
-			{
-				// Don't treat this as a fatal error
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error copying MD5 results file from MD5 results folder to backup folder", ex);
-			}
-		}
+                var fiBackupMD5ResultsFile = new FileInfo(strMD5ResultsFileBackup);
 
-		protected bool CreateMD5ResultsFile(FileInfo fiMD5ResultsFile, List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles)
-		{
-			// Create a new MD5 results file
-			bool success;
+                // Create the target folders if necessary
+                if (fiBackupMD5ResultsFile.Directory != null)
+                {
+                    if (!fiBackupMD5ResultsFile.Directory.Exists)
+                        fiBackupMD5ResultsFile.Directory.Create();
 
-			try
-			{
-				// Create a new MD5 results file
-				var lstMD5Results = new Dictionary<string, clsHashInfo>(StringComparer.CurrentCultureIgnoreCase);
+                    // Copy the file
+                    fiMD5ResultsFile.CopyTo(fiBackupMD5ResultsFile.FullName, true);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Don't treat this as a fatal error
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error copying MD5 results file from MD5 results folder to backup folder", ex);
+            }
+        }
 
-				foreach (var archivedFile in lstArchivedFiles)
-				{
-					var archivedFilePath = "/myemsl/svc-dms/" + archivedFile.PathWithInstrumentAndDatasetUnix;
+        protected bool CreateMD5ResultsFile(FileInfo fiMD5ResultsFile, List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles)
+        {
+            // Create a new MD5 results file
+            bool success;
 
-					var hashInfo = new clsHashInfo
-					{
-						HashCode = archivedFile.Sha1Hash,
-						MyEMSLFileID = archivedFile.FileID.ToString(CultureInfo.InvariantCulture)
-					};
+            try
+            {
+                // Create a new MD5 results file
+                var lstMD5Results = new Dictionary<string, clsHashInfo>(StringComparer.CurrentCultureIgnoreCase);
 
-					lstMD5Results.Add(archivedFilePath, hashInfo);
-				}
+                foreach (var archivedFile in lstArchivedFiles)
+                {
+                    var archivedFilePath = "/myemsl/svc-dms/" + archivedFile.PathWithInstrumentAndDatasetUnix;
 
-				if (fiMD5ResultsFile.Directory != null)
-				{
-					// Create the target folders if necessary
-					if (!fiMD5ResultsFile.Directory.Exists)
-						fiMD5ResultsFile.Directory.Create();
+                    var hashInfo = new clsHashInfo
+                    {
+                        HashCode = archivedFile.Sha1Hash,
+                        MyEMSLFileID = archivedFile.FileID.ToString(CultureInfo.InvariantCulture)
+                    };
 
-					success = WriteMD5ResultsFile(lstMD5Results, fiMD5ResultsFile.FullName, useTempFile: false);
-				}
-				else
-				{
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Parent directory is null for " + fiMD5ResultsFile.FullName);
-					success = false;
-				}
-			}
-			catch (Exception ex)
-			{
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception creating new MD5 results file in CreateMD5ResultsFile", ex);
-				return false;
-			}
+                    lstMD5Results.Add(archivedFilePath, hashInfo);
+                }
 
-			return success;
+                if (fiMD5ResultsFile.Directory != null)
+                {
+                    // Create the target folders if necessary
+                    if (!fiMD5ResultsFile.Directory.Exists)
+                        fiMD5ResultsFile.Directory.Create();
 
-		}
+                    success = WriteMD5ResultsFile(lstMD5Results, fiMD5ResultsFile.FullName, useTempFile: false);
+                }
+                else
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Parent directory is null for " + fiMD5ResultsFile.FullName);
+                    success = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception creating new MD5 results file in CreateMD5ResultsFile", ex);
+                return false;
+            }
 
-		/// <summary>
-		/// Create or update the MD5 results file
-		/// </summary>
-		/// <param name="lstArchivedFiles"></param>
-		/// <returns></returns>
-		protected bool CreateOrUpdateMD5ResultsFile(List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles)
-		{
+            return success;
 
-			bool success;
+        }
 
-			try
-			{
+        /// <summary>
+        /// Create or update the MD5 results file
+        /// </summary>
+        /// <param name="lstArchivedFiles"></param>
+        /// <returns></returns>
+        protected bool CreateOrUpdateMD5ResultsFile(List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles)
+        {
+
+            bool success;
+
+            try
+            {
 
                 var datasetInstrument = m_TaskParams.GetParam("Instrument_Name", string.Empty);
-				if (!ParameterDefined("Instrument_Name", datasetInstrument))
-					return false;
+                if (!ParameterDefined("Instrument_Name", datasetInstrument))
+                    return false;
 
-				// Calculate the "year_quarter" code used for subfolders within an instrument folder
-				// This value is based on the date the dataset was created in DMS
-				var datasetYearQuarter = DMSMetadataObject.GetDatasetYearQuarter(m_TaskParams.TaskDictionary);
+                // Calculate the "year_quarter" code used for subfolders within an instrument folder
+                // This value is based on the date the dataset was created in DMS
+                var datasetYearQuarter = DMSMetadataObject.GetDatasetYearQuarter(m_TaskParams.TaskDictionary);
 
-				var md5ResultsFilePath = GetMD5ResultsFilePath(DEFAULT_MD5_RESULTS_FOLDER_PATH, m_Dataset, datasetInstrument, datasetYearQuarter);
+                var md5ResultsFilePath = GetMD5ResultsFilePath(DEFAULT_MD5_RESULTS_FOLDER_PATH, m_Dataset, datasetInstrument, datasetYearQuarter);
 
-				var fiMD5ResultsFile = new FileInfo(md5ResultsFilePath);
+                var fiMD5ResultsFile = new FileInfo(md5ResultsFilePath);
 
-				if (!fiMD5ResultsFile.Exists)
-				{
-					// Target file doesn't exist; nothing to merge
-					success = CreateMD5ResultsFile(fiMD5ResultsFile, lstArchivedFiles);
-				}
-				else
-				{
-					// File exists; merge the new values with the existing data
-					success = UpdateMD5ResultsFile(md5ResultsFilePath, lstArchivedFiles);
-				}
+                if (!fiMD5ResultsFile.Exists)
+                {
+                    // Target file doesn't exist; nothing to merge
+                    success = CreateMD5ResultsFile(fiMD5ResultsFile, lstArchivedFiles);
+                }
+                else
+                {
+                    // File exists; merge the new values with the existing data
+                    success = UpdateMD5ResultsFile(md5ResultsFilePath, lstArchivedFiles);
+                }
 
-				if (success)
-				{
-					CopyMD5ResultsFileToBackupFolder(datasetInstrument, datasetYearQuarter, fiMD5ResultsFile);
-				}
+                if (success)
+                {
+                    CopyMD5ResultsFileToBackupFolder(datasetInstrument, datasetYearQuarter, fiMD5ResultsFile);
+                }
 
-			}
-			catch (Exception ex)
-			{
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in CreateMD5ResultsFile", ex);
-				return false;
-			}
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in CreateMD5ResultsFile", ex);
+                return false;
+            }
 
-			return success;
+            return success;
 
-		}
+        }
 
-		protected void DeleteMetadataFile(string metadataFilePath)
-		{
-			try
-			{
-				var fiMetadataFile = new FileInfo(metadataFilePath);
-				var diParentFolder = fiMetadataFile.Directory;
+        protected void DeleteMetadataFile(string metadataFilePath)
+        {
+            try
+            {
+                var fiMetadataFile = new FileInfo(metadataFilePath);
+                var diParentFolder = fiMetadataFile.Directory;
 
-				// Delete the metadata file in the transfer folder
-				if (fiMetadataFile.Exists)
-					fiMetadataFile.Delete();
+                // Delete the metadata file in the transfer folder
+                if (fiMetadataFile.Exists)
+                    fiMetadataFile.Delete();
 
-				// Delete the transfer folder if it is empty
-				if (diParentFolder != null && diParentFolder.GetFileSystemInfos("*", SearchOption.AllDirectories).Length == 0)
-					diParentFolder.Delete();
+                // Delete the transfer folder if it is empty
+                if (diParentFolder != null && diParentFolder.GetFileSystemInfos("*", SearchOption.AllDirectories).Length == 0)
+                    diParentFolder.Delete();
 
-			}
-			catch (Exception ex)
-			{
-				// Don't treat this as a fatal error
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error deleting metadata file in transfer folder: " + ex.Message);
-			}
-		}
+            }
+            catch (Exception ex)
+            {
+                // Don't treat this as a fatal error
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error deleting metadata file in transfer folder: " + ex.Message);
+            }
+        }
 
-		protected string GetMD5ResultsFilePath(string strMD5ResultsFolderPath, string strDatasetName, string strInstrumentName, string strDatasetYearQuarter)
-		{
-			return GetMD5ResultsFilePath(Path.Combine(strMD5ResultsFolderPath, strInstrumentName, strDatasetYearQuarter), strDatasetName);
-		}
+        protected string GetMD5ResultsFilePath(string strMD5ResultsFolderPath, string strDatasetName, string strInstrumentName, string strDatasetYearQuarter)
+        {
+            return GetMD5ResultsFilePath(Path.Combine(strMD5ResultsFolderPath, strInstrumentName, strDatasetYearQuarter), strDatasetName);
+        }
 
-		protected string GetMD5ResultsFilePath(string strParentFolderPath, string strDatasetName)
-		{
-			return Path.Combine(strParentFolderPath, MD5_RESULTS_FILE_PREFIX + strDatasetName);
-		}
+        protected string GetMD5ResultsFilePath(string strParentFolderPath, string strDatasetName)
+        {
+            return Path.Combine(strParentFolderPath, MD5_RESULTS_FILE_PREFIX + strDatasetName);
+        }
 
-		protected bool ParameterDefined(string parameterName, string parameterValue)
-		{
-			if (string.IsNullOrEmpty(parameterValue))
-			{
-				mRetData.CloseoutMsg = "Job parameters do not have " + parameterName + " defined; unable to continue";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg);
-				return false;
-			}
+        protected bool ParameterDefined(string parameterName, string parameterValue)
+        {
+            if (string.IsNullOrEmpty(parameterValue))
+            {
+                mRetData.CloseoutMsg = "Job parameters do not have " + parameterName + " defined; unable to continue";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg);
+                return false;
+            }
 
-			return true;
-		}
+            return true;
+        }
 
-		/// <summary>
-		/// Parse out the hash and file path from dataLine
-		/// Updates lstMD5Results (or adds a new entry)
-		/// </summary>
-		/// <param name="dataLine"></param>
-		/// <param name="lstMD5Results">Dictionary where keys are unix file paths and values are clsHashInfo, tracking the Hash value and MyEMSL File ID</param>
-		/// <returns>True if lstMD5Results is updated, false if unchanged</returns>
-		/// <remarks></remarks>
-		protected bool ParseAndStoreHashInfo(string dataLine, ref Dictionary<string, clsHashInfo> lstMD5Results)
-		{
-			// Data Line Format
-			//
-			// Old data not in MyEMSL:
-			//    MD5Hash<SPACE>ArchiveFilePath
-			//
-			// New data in MyEMSL:
-			//    Sha1Hash<SPACE>MyEMSLFilePath<TAB>MyEMSLID
-			//
-			// The Hash and ArchiveFilePath are separated by a space because that's how Ryan Wright's script reported the results
-			// The FilePath and MyEMSLID are separated by a tab in case the file path contains a space
+        /// <summary>
+        /// Parse out the hash and file path from dataLine
+        /// Updates lstMD5Results (or adds a new entry)
+        /// </summary>
+        /// <param name="dataLine"></param>
+        /// <param name="lstMD5Results">Dictionary where keys are unix file paths and values are clsHashInfo, tracking the Hash value and MyEMSL File ID</param>
+        /// <returns>True if lstMD5Results is updated, false if unchanged</returns>
+        /// <remarks></remarks>
+        protected bool ParseAndStoreHashInfo(string dataLine, ref Dictionary<string, clsHashInfo> lstMD5Results)
+        {
+            // Data Line Format
+            //
+            // Old data not in MyEMSL:
+            //    MD5Hash<SPACE>ArchiveFilePath
+            //
+            // New data in MyEMSL:
+            //    Sha1Hash<SPACE>MyEMSLFilePath<TAB>MyEMSLID
+            //
+            // The Hash and ArchiveFilePath are separated by a space because that's how Ryan Wright's script reported the results
+            // The FilePath and MyEMSLID are separated by a tab in case the file path contains a space
 
-			// Examples:
-			//
-			// Old data not in MyEMSL:
-			//    0dcf9d677ac76519ae54c11cc5e10723 /archive/dmsarch/VOrbiETD04/2013_3/QC_Shew_13_04-100ng-3_HCD_19Aug13_Frodo_13-04-15/QC_Shew_13_04-100ng-3_HCD_19Aug13_Frodo_13-04-15.raw
-			//    d47aca4d13d0a771900eef1fc7ee53ce /archive/dmsarch/VOrbiETD04/2013_3/QC_Shew_13_04-100ng-3_HCD_19Aug13_Frodo_13-04-15/QC/index.html
-			//
-			// New data in MyEMSL:
-			//    796d99bcc6f1824dfe1c36cc9a61636dd1b07625 /myemsl/svc-dms/SW_TEST_LCQ/2006_1/SWT_LCQData_300/SIC201309041722_Auto976603/Default_2008-08-22.xml	915636
-			//    70976fbd7088b27a711de4ce6309fbb3739d05f9 /myemsl/svc-dms/SW_TEST_LCQ/2006_1/SWT_LCQData_300/SIC201309041722_Auto976603/SWT_LCQData_300_TIC_Scan.tic	915648
+            // Examples:
+            //
+            // Old data not in MyEMSL:
+            //    0dcf9d677ac76519ae54c11cc5e10723 /archive/dmsarch/VOrbiETD04/2013_3/QC_Shew_13_04-100ng-3_HCD_19Aug13_Frodo_13-04-15/QC_Shew_13_04-100ng-3_HCD_19Aug13_Frodo_13-04-15.raw
+            //    d47aca4d13d0a771900eef1fc7ee53ce /archive/dmsarch/VOrbiETD04/2013_3/QC_Shew_13_04-100ng-3_HCD_19Aug13_Frodo_13-04-15/QC/index.html
+            //
+            // New data in MyEMSL:
+            //    796d99bcc6f1824dfe1c36cc9a61636dd1b07625 /myemsl/svc-dms/SW_TEST_LCQ/2006_1/SWT_LCQData_300/SIC201309041722_Auto976603/Default_2008-08-22.xml	915636
+            //    70976fbd7088b27a711de4ce6309fbb3739d05f9 /myemsl/svc-dms/SW_TEST_LCQ/2006_1/SWT_LCQData_300/SIC201309041722_Auto976603/SWT_LCQData_300_TIC_Scan.tic	915648
 
-			var hashInfo = new clsHashInfo();
+            var hashInfo = new clsHashInfo();
 
-			var lstValues = dataLine.Split(new[] { ' ' }, 2).ToList();
+            var lstValues = dataLine.Split(new[] { ' ' }, 2).ToList();
 
-			if (lstValues.Count < 2)
-			{
-				// Line doesn't contain two strings separated by a space
-				return false;
-			}
+            if (lstValues.Count < 2)
+            {
+                // Line doesn't contain two strings separated by a space
+                return false;
+            }
 
-			hashInfo.HashCode = lstValues[0];
+            hashInfo.HashCode = lstValues[0];
 
-			var lstPathInfo = lstValues[1].Split('\t').ToList();
+            var lstPathInfo = lstValues[1].Split('\t').ToList();
 
-			var archiveFilePath = lstPathInfo[0];
+            var archiveFilePath = lstPathInfo[0];
 
-			if (lstPathInfo.Count > 1)
-				hashInfo.MyEMSLFileID = lstPathInfo[1];
+            if (lstPathInfo.Count > 1)
+                hashInfo.MyEMSLFileID = lstPathInfo[1];
 
-			// Files should only be listed once in the MD5 results file
-			// But, just in case there is a duplicate, we'll check for that
-			// Results files could have duplicate entries if a file was copied to the archive via FTP and was stored via MyEMSL
-			clsHashInfo hashInfoCached;
-			if (lstMD5Results.TryGetValue(archiveFilePath, out hashInfoCached))
-			{
-				if (hashInfo.IsMatch(hashInfoCached))
-				{
-					// Values match; nothing to update
-					return false;
-				}
-				
-				// Preferentially use the newer value, unless the older value has a MyEMSL file ID but the newer one does not
-				if (string.IsNullOrEmpty(hashInfo.MyEMSLFileID) && !string.IsNullOrEmpty(hashInfoCached.MyEMSLFileID))
-					// Do not update the dictionary
-					return false;
+            // Files should only be listed once in the MD5 results file
+            // But, just in case there is a duplicate, we'll check for that
+            // Results files could have duplicate entries if a file was copied to the archive via FTP and was stored via MyEMSL
+            clsHashInfo hashInfoCached;
+            if (lstMD5Results.TryGetValue(archiveFilePath, out hashInfoCached))
+            {
+                if (hashInfo.IsMatch(hashInfoCached))
+                {
+                    // Values match; nothing to update
+                    return false;
+                }
 
-				lstMD5Results[archiveFilePath] = hashInfo;
-				return true;
-			}
-			
-			// Append a new entry to the cached info
-			lstMD5Results.Add(archiveFilePath, hashInfo);
-			return true;
-		}
+                // Preferentially use the newer value, unless the older value has a MyEMSL file ID but the newer one does not
+                if (string.IsNullOrEmpty(hashInfo.MyEMSLFileID) && !string.IsNullOrEmpty(hashInfoCached.MyEMSLFileID))
+                    // Do not update the dictionary
+                    return false;
 
-		protected bool UpdateMD5ResultsFile(string md5ResultsFilePath, List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles)
-		{
-			bool success;
+                lstMD5Results[archiveFilePath] = hashInfo;
+                return true;
+            }
 
-			var lstMD5Results = new Dictionary<string, clsHashInfo>(StringComparer.CurrentCultureIgnoreCase);
+            // Append a new entry to the cached info
+            lstMD5Results.Add(archiveFilePath, hashInfo);
+            return true;
+        }
 
-			// Read the file and cache the results in memory
-			using (var srMD5ResultsFile = new StreamReader(new FileStream(md5ResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-			{
-				while (!srMD5ResultsFile.EndOfStream)
-				{
-					var dataLine = srMD5ResultsFile.ReadLine();
-					ParseAndStoreHashInfo(dataLine, ref lstMD5Results);
-				}
-			}
+        protected bool UpdateMD5ResultsFile(string md5ResultsFilePath, List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles)
+        {
+            bool success;
 
-			var saveMergedFile = false;
+            var lstMD5Results = new Dictionary<string, clsHashInfo>(StringComparer.CurrentCultureIgnoreCase);
 
-			// Merge the results in lstArchivedFiles with lstMD5Results
-			foreach (var archivedFile in lstArchivedFiles)
-			{
-				var archivedFilePath = "/myemsl/svc-dms/" + archivedFile.PathWithInstrumentAndDatasetUnix;
+            // Read the file and cache the results in memory
+            using (var srMD5ResultsFile = new StreamReader(new FileStream(md5ResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+            {
+                while (!srMD5ResultsFile.EndOfStream)
+                {
+                    var dataLine = srMD5ResultsFile.ReadLine();
+                    ParseAndStoreHashInfo(dataLine, ref lstMD5Results);
+                }
+            }
 
-				var hashInfo = new clsHashInfo
-				{
-					HashCode = archivedFile.Sha1Hash,
-					MyEMSLFileID = archivedFile.FileID.ToString(CultureInfo.InvariantCulture)
-				};
+            var saveMergedFile = false;
 
-				clsHashInfo hashInfoCached;
-				if (lstMD5Results.TryGetValue(archivedFilePath, out hashInfoCached))
-				{
-					if (!hashInfo.IsMatch(hashInfoCached))
-					{
-						lstMD5Results[archivedFilePath] = hashInfo;
-						saveMergedFile = true;
-					}
-				}
-				else
-				{
-					lstMD5Results.Add(archivedFilePath, hashInfo);
-					saveMergedFile = true;
-				}
+            // Merge the results in lstArchivedFiles with lstMD5Results
+            foreach (var archivedFile in lstArchivedFiles)
+            {
+                var archivedFilePath = "/myemsl/svc-dms/" + archivedFile.PathWithInstrumentAndDatasetUnix;
 
-			}
+                var hashInfo = new clsHashInfo
+                {
+                    HashCode = archivedFile.Sha1Hash,
+                    MyEMSLFileID = archivedFile.FileID.ToString(CultureInfo.InvariantCulture)
+                };
 
-			if (saveMergedFile)
-			{
-				success = WriteMD5ResultsFile(lstMD5Results, md5ResultsFilePath, useTempFile: true);
-			}
-			else
-			{
-				success = true;
-			}
+                clsHashInfo hashInfoCached;
+                if (lstMD5Results.TryGetValue(archivedFilePath, out hashInfoCached))
+                {
+                    if (!hashInfo.IsMatch(hashInfoCached))
+                    {
+                        lstMD5Results[archivedFilePath] = hashInfo;
+                        saveMergedFile = true;
+                    }
+                }
+                else
+                {
+                    lstMD5Results.Add(archivedFilePath, hashInfo);
+                    saveMergedFile = true;
+                }
 
-			return success;
-		}
+            }
 
-		protected bool VisibleInElasticSearch(out string metadataFilePath)
-		{
-			bool success;
+            if (saveMergedFile)
+            {
+                success = WriteMD5ResultsFile(lstMD5Results, md5ResultsFilePath, useTempFile: true);
+            }
+            else
+            {
+                success = true;
+            }
 
-			metadataFilePath = string.Empty;
+            return success;
+        }
 
-			try
-			{
+        protected bool VisibleInElasticSearch(out string metadataFilePath)
+        {
+            bool success;
 
-				var reader = new MyEMSLReader.Reader
-				{
-					IncludeAllRevisions = false
-				};
+            metadataFilePath = string.Empty;
 
-				// Attach events
-				reader.ErrorEvent += reader_ErrorEvent;
-				reader.MessageEvent += reader_MessageEvent;
-				reader.ProgressEvent += reader_ProgressEvent;
+            try
+            {
+
+                var reader = new MyEMSLReader.Reader
+                {
+                    IncludeAllRevisions = false
+                };
+
+                // Attach events
+                reader.ErrorEvent += reader_ErrorEvent;
+                reader.MessageEvent += reader_MessageEvent;
+                reader.ProgressEvent += reader_ProgressEvent;
 
                 var subDir = m_TaskParams.GetParam("OutputFolderName", string.Empty);
 
-				var lstArchivedFiles = reader.FindFilesByDatasetID(m_DatasetID, subDir);
+                var lstArchivedFiles = reader.FindFilesByDatasetID(m_DatasetID, subDir);
 
-				if (lstArchivedFiles.Count == 0)
-				{
-					if (mTotalMismatchCount == 0)
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
-					mTotalMismatchCount += 1;
+                if (lstArchivedFiles.Count == 0)
+                {
+                    if (mTotalMismatchCount == 0)
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
+                    mTotalMismatchCount += 1;
 
-					var msg = "Elastic search did not find any files for Dataset_ID " + m_DatasetID;
-					if (!string.IsNullOrEmpty(subDir))
-						msg += " and subdirectory " + subDir;
+                    var msg = "Elastic search did not find any files for Dataset_ID " + m_DatasetID;
+                    if (!string.IsNullOrEmpty(subDir))
+                        msg += " and subdirectory " + subDir;
 
-					mRetData.CloseoutMsg = msg;
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " ... " + msg);
-					return false;
-				}
+                    mRetData.CloseoutMsg = msg;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " ... " + msg);
+                    return false;
+                }
 
                 // Make sure the entries in lstArchivedFiles only correspond to this dataset
                 // We performed the search using DatasetID, but if a dataset is renamed in DMS, then multiple datasets could have the same DatasetID
@@ -784,112 +784,112 @@ namespace ArchiveVerifyPlugin
 
                 success = CompareArchiveFilesToExpectedFiles(lstFilteredFiles, out metadataFilePath);
 
-				if (success)
-				{
+                if (success)
+                {
                     success = CreateOrUpdateMD5ResultsFile(lstFilteredFiles);
-				}
+                }
 
-			}
-			catch (Exception ex)
-			{
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in VisibleInElasticSearch", ex);
-				return false;
-			}
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in VisibleInElasticSearch", ex);
+                return false;
+            }
 
-			return success;
+            return success;
 
-		}
+        }
 
-		protected bool WriteMD5ResultsFile(Dictionary<string, clsHashInfo> lstMD5Results, string md5ResultsFilePath, bool useTempFile)
-		{
-			var currentStep = "initializing";
+        protected bool WriteMD5ResultsFile(Dictionary<string, clsHashInfo> lstMD5Results, string md5ResultsFilePath, bool useTempFile)
+        {
+            var currentStep = "initializing";
 
-			try
-			{
-				string targetFilePath;
-				if (useTempFile)
-				{
-					// Create a new MD5 results file that we'll use to replace strMD5ResultsFileMaster
-					targetFilePath = md5ResultsFilePath + ".new";
-				}
-				else
-				{
-					targetFilePath = md5ResultsFilePath;
-				}
+            try
+            {
+                string targetFilePath;
+                if (useTempFile)
+                {
+                    // Create a new MD5 results file that we'll use to replace strMD5ResultsFileMaster
+                    targetFilePath = md5ResultsFilePath + ".new";
+                }
+                else
+                {
+                    targetFilePath = md5ResultsFilePath;
+                }
 
-				currentStep = "creating " + targetFilePath;
+                currentStep = "creating " + targetFilePath;
 
-				using (var swMD5ResultsFile = new StreamWriter(new FileStream(targetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-				{
-					foreach (var item in lstMD5Results)
-					{
-						var dataLine = item.Value.HashCode + " " + item.Key;
-						if (!string.IsNullOrEmpty(item.Value.MyEMSLFileID))
-							dataLine += "\t" + item.Value.MyEMSLFileID;
+                using (var swMD5ResultsFile = new StreamWriter(new FileStream(targetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    foreach (var item in lstMD5Results)
+                    {
+                        var dataLine = item.Value.HashCode + " " + item.Key;
+                        if (!string.IsNullOrEmpty(item.Value.MyEMSLFileID))
+                            dataLine += "\t" + item.Value.MyEMSLFileID;
 
-						swMD5ResultsFile.WriteLine(dataLine);
-					}
-				}
+                        swMD5ResultsFile.WriteLine(dataLine);
+                    }
+                }
 
-				System.Threading.Thread.Sleep(50);
+                System.Threading.Thread.Sleep(50);
 
-				if (useTempFile)
-				{
-					currentStep = "overwriting master MD5 results file with " + targetFilePath;
-					File.Copy(targetFilePath, md5ResultsFilePath, true);
-					System.Threading.Thread.Sleep(100);
+                if (useTempFile)
+                {
+                    currentStep = "overwriting master MD5 results file with " + targetFilePath;
+                    File.Copy(targetFilePath, md5ResultsFilePath, true);
+                    System.Threading.Thread.Sleep(100);
 
-					currentStep = "deleting " + targetFilePath;
-					File.Delete(targetFilePath);
-				}
+                    currentStep = "deleting " + targetFilePath;
+                    File.Delete(targetFilePath);
+                }
 
-				return true;
+                return true;
 
-			}
-			catch (Exception ex)
-			{
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in WriteMD5ResultsFile while " + currentStep, ex);
-				return false;
-			}
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in WriteMD5ResultsFile while " + currentStep, ex);
+                return false;
+            }
 
-		}
+        }
 
-		#endregion
+        #endregion
 
-		#region "Event Handlers"
+        #region "Event Handlers"
 
-		void reader_ErrorEvent(object sender, MyEMSLReader.MessageEventArgs e)
-		{
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEMSLReader: " + e.Message);
-		}
+        void reader_ErrorEvent(object sender, MyEMSLReader.MessageEventArgs e)
+        {
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MyEMSLReader: " + e.Message);
+        }
 
-		void reader_MessageEvent(object sender, MyEMSLReader.MessageEventArgs e)
-		{
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, e.Message);
-		}
+        void reader_MessageEvent(object sender, MyEMSLReader.MessageEventArgs e)
+        {
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, e.Message);
+        }
 
-		void reader_ProgressEvent(object sender, MyEMSLReader.ProgressEventArgs e)
-		{
-			var msg = "Percent complete: " + e.PercentComplete.ToString("0.0") + "%";
+        void reader_ProgressEvent(object sender, MyEMSLReader.ProgressEventArgs e)
+        {
+            var msg = "Percent complete: " + e.PercentComplete.ToString("0.0") + "%";
 
-			if (e.PercentComplete > mPercentComplete || DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds >= 30)
-			{
-				if (DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds >= 1)
-				{
-					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-					mPercentComplete = e.PercentComplete;
-					mLastProgressUpdateTime = DateTime.UtcNow;
-				}
-			}
-		}
+            if (e.PercentComplete > mPercentComplete || DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds >= 30)
+            {
+                if (DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds >= 1)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                    mPercentComplete = e.PercentComplete;
+                    mLastProgressUpdateTime = DateTime.UtcNow;
+                }
+            }
+        }
 
         void statusChecker_ErrorEvent(object sender, MessageEventArgs e)
         {
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, e.Message);
         }
 
-		#endregion
+        #endregion
 
-	}	// End class
+    }	// End class
 
 }	// End namespace

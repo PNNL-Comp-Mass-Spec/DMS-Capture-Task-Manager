@@ -76,7 +76,6 @@ namespace CaptureTaskManager
 
     public class clsConversion
     {
-
         /// <summary>
         /// Convert string to bool; default false if an error
         /// </summary>
@@ -91,11 +90,11 @@ namespace CaptureTaskManager
         {
             if (string.IsNullOrEmpty(value))
                 return defaultValue;
-            
+
             bool blnValue;
             if (bool.TryParse(value, out blnValue))
                 return blnValue;
-            
+
             return defaultValue;
         }
 
@@ -103,11 +102,11 @@ namespace CaptureTaskManager
         {
             if (string.IsNullOrEmpty(value))
                 return defaultValue;
-            
+
             int intValue;
             if (int.TryParse(value, out intValue))
                 return intValue;
-            
+
             return defaultValue;
         }
 
@@ -117,13 +116,13 @@ namespace CaptureTaskManager
 
             if (string.IsNullOrEmpty(value))
                 return fValue;
-            
+
             if (float.TryParse(value, out fValue))
                 return fValue;
-            
+
             return fValue;
         }
-        
+
         public static int GetDbValue(SqlDataReader reader, int fieldIndex, int valueIfNull)
         {
             if (Convert.IsDBNull(reader.GetValue(fieldIndex)))
@@ -145,9 +144,8 @@ namespace CaptureTaskManager
             if (string.IsNullOrEmpty(strPath))
             {
                 return string.Empty;
-
             }
-            
+
             if (strPath.Contains(" "))
             {
                 if (!strPath.StartsWith("\""))
@@ -163,12 +161,10 @@ namespace CaptureTaskManager
 
             return strPath;
         }
-        
     }
 
     public class clsErrors
     {
-
         /// <summary>
         /// Parses the .StackTrace text of the given exception to return a compact description of the current stack
         /// </summary>
@@ -191,7 +187,7 @@ namespace CaptureTaskManager
         {
             if (useMultiLine)
                 return PRISM.clsStackTraceFormatter.GetExceptionStackTraceMultiLine(ex);
-            
+
             return PRISM.clsStackTraceFormatter.GetExceptionStackTrace(ex);
         }
     }
@@ -212,7 +208,6 @@ namespace CaptureTaskManager
                 return string.Empty;
 
             return fiAssemblyFile.DirectoryName;
-
         }
 
         /// <summary>
@@ -246,11 +241,11 @@ namespace CaptureTaskManager
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 
                 Console.WriteLine(msg);
-
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Exception in VerifyFolder", ex);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                                     "Exception in VerifyFolder", ex);
             }
         }
     }

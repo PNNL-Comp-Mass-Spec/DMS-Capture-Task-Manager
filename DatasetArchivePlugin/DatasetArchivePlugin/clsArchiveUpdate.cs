@@ -62,7 +62,8 @@ namespace DatasetArchivePlugin
         {
 
             // Perform base class operations
-            if (!base.PerformTask()) return false;
+            if (!base.PerformTask())
+                return false;
 
             var statusMessage = "Updating dataset " + m_DatasetName + ", job " + m_TaskParams.GetParam("Job");
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, statusMessage);
@@ -73,7 +74,7 @@ namespace DatasetArchivePlugin
             mMostRecentLogTime = DateTime.UtcNow;
             mLastStatusUpdateTime = DateTime.UtcNow;
 
-            const int iMaxMyEMSLUploadAttempts = 2;            
+            const int iMaxMyEMSLUploadAttempts = 2;
             const bool recurse = true;
 
             // Set this to true to create the .tar file locally and thus not upload the data to MyEMSL
@@ -83,7 +84,7 @@ namespace DatasetArchivePlugin
                 debugMode = Pacifica.Core.EasyHttp.eDebugMode.CreateTarLocal;
             else
                 if (m_TaskParams.GetParam("MyEMSLOffline", false))
-                    debugMode = Pacifica.Core.EasyHttp.eDebugMode.MyEMSLOfflineMode;
+                debugMode = Pacifica.Core.EasyHttp.eDebugMode.MyEMSLOfflineMode;
 
             if (debugMode != Pacifica.Core.EasyHttp.eDebugMode.DebugDisabled)
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Calling UploadToMyEMSLWithRetry with debugMode=" + debugMode);
@@ -105,7 +106,7 @@ namespace DatasetArchivePlugin
                                 m_TaskParams.GetParam("OutputFolderName") + ", job " + m_TaskParams.GetParam("Job");
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, statusMessage);
             }
-             
+
             if (!PUSH_TO_TEST_SERVER)
                 return true;
 
@@ -131,7 +132,7 @@ namespace DatasetArchivePlugin
             */
 
             // Also upload a copy of the data to the MyEMSL test server
-            var testCopySuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts, recurse, debugMode, useTestInstance:true);
+            var testCopySuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts, recurse, debugMode, useTestInstance: true);
             if (!testCopySuccess)
             {
                 statusMessage = "MyEMSL test server upload failed";

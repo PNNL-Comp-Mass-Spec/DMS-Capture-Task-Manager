@@ -586,8 +586,8 @@ namespace ImsDemuxPlugin
         /// <param name="numBitsForEncoding">Number of bits used to encode the file (traditionally 4 bit)</param>
         /// <returns>Enum indicating task success or failure</returns>
         public clsToolReturnData PerformDemux(
-            IMgrParams mgrParams, 
-            ITaskParams taskParams, 
+            IMgrParams mgrParams,
+            ITaskParams taskParams,
             string uimfFileName,
             byte numBitsForEncoding)
         {
@@ -701,7 +701,7 @@ namespace ImsDemuxPlugin
                 // Rename uimf file on storage server
                 msg = "Renaming uimf file on storage server";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-                
+
                 // If this is a re-run, then encoded file has already been renamed
                 // This is determined by looking for "_encoded" in uimf file name
                 if (!uimfFileName.Contains("_encoded"))
@@ -1084,7 +1084,7 @@ namespace ImsDemuxPlugin
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
                     return true;
                 }
-                
+
                 if (string.IsNullOrEmpty(errorMessage))
                     errorMessage = "Unknown error";
 
@@ -1105,7 +1105,7 @@ namespace ImsDemuxPlugin
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
                 return false;
             }
-            
+
         }
 
 
@@ -1333,7 +1333,7 @@ namespace ImsDemuxPlugin
 
                     if (demuxOptions.NumBitsForEncoding > 1)
                         cmdStr += " /Bits:" + demuxOptions.NumBitsForEncoding;
-                    
+
                     if (demuxOptions.StartFrame > 0)
                         cmdStr += " /First:" + demuxOptions.StartFrame;
 
@@ -1397,7 +1397,7 @@ namespace ImsDemuxPlugin
 
                 if (bSuccess)
                     return true;
-                
+
                 errorMessage = "Error running UIMF Demultiplexer";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
 

@@ -29,7 +29,7 @@ namespace Pacifica.DMS_Metadata
         /// Error message thrown when the dataset's instrument operator does not have an EUS person ID
         /// </summary>
         public const string UNDEFINED_EUS_OPERATOR_ID = "Operator does not have an EUS person ID in DMS";
-        
+
         /// <summary>
         /// URL of the EUS website
         /// </summary>
@@ -74,7 +74,7 @@ namespace Pacifica.DMS_Metadata
             get;
             private set;
         }
-      
+
         public string ManagerName
         {
             get;
@@ -542,7 +542,7 @@ namespace Pacifica.DMS_Metadata
 
                 throw new Exception(errorMessage);
             }
-            
+
             var recurse = true;
             string sValue;
 

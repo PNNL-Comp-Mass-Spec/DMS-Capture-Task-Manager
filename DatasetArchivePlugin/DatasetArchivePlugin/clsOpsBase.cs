@@ -44,7 +44,7 @@ namespace DatasetArchivePlugin
 
         // Deprecated: protected string m_User;
         // Deprecated: protected string m_Pwd;
-        
+
         // Deprecated: protected bool m_UseTls;
         // Deprecated: protected int m_ServerPort;
         // Deprecated: protected int m_FtpTimeOut;
@@ -91,7 +91,7 @@ namespace DatasetArchivePlugin
 
             // DebugLevel of 4 means Info level (normal) logging; 5 for Debug level (verbose) logging
             m_DebugLevel = m_MgrParams.GetParam("debuglevel", 4);
-            
+
             // Deprecated: m_User = m_MgrParams.GetParam("username");
             // Deprecated: m_Pwd = m_MgrParams.GetParam("userpwd");
             // Deprecated: m_UseTls = bool.Parse(m_MgrParams.GetParam("usetls"));
@@ -252,7 +252,7 @@ namespace DatasetArchivePlugin
         {
             bool success;
             var dtStartTime = DateTime.UtcNow;
-            
+
             MyEMSLUploader myEMSLUL = null;
             var operatorUsername = "??";
 
@@ -323,8 +323,8 @@ namespace DatasetArchivePlugin
                 // This will cause clsPluginMain to call StoreMyEMSLUploadStats to store the results in the database (Table T_MyEmsl_Uploads)
                 // If an error occurs while storing to the database, the status URI will be listed in the manager's local log file
                 var e = new MyEMSLUploadEventArgs(
-                    myEMSLUL.FileCountNew, myEMSLUL.FileCountUpdated, 
-                    myEMSLUL.Bytes, tsElapsedTime.TotalSeconds, 
+                    myEMSLUL.FileCountNew, myEMSLUL.FileCountUpdated,
+                    myEMSLUL.Bytes, tsElapsedTime.TotalSeconds,
                     statusURL, myEMSLUL.EUSInfo,
                     iErrorCode: 0, usedTestInstance: useTestInstance);
 
@@ -345,7 +345,7 @@ namespace DatasetArchivePlugin
 
                         m_ErrMsg += "; operator not defined in EUS. " +
                             "Have " + operatorUsername + " login to " + DMSMetadataObject.EUS_PORTAL_URL + " " +
-                            "then wait for T_EUS_Users to update, " + 
+                            "then wait for T_EUS_Users to update, " +
                             "then update job parameters using SP UpdateParametersForJob";
 
                     // Do not retry the upload; it will fail again due to the same error
@@ -374,7 +374,7 @@ namespace DatasetArchivePlugin
                     e = new MyEMSLUploadEventArgs(
                         0, 0,
                         0, tsElapsedTime.TotalSeconds,
-                        string.Empty, eusInfo, 
+                        string.Empty, eusInfo,
                         errorCode, useTestInstance);
                 }
                 else

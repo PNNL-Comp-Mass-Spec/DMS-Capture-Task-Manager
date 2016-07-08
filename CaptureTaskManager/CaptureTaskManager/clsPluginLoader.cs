@@ -1,11 +1,11 @@
-﻿
-//*********************************************************************************************************
+﻿//*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy 
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/22/2009
 //
 //*********************************************************************************************************
+
 using System;
 using System.Reflection;
 using System.Xml;
@@ -13,217 +13,213 @@ using System.IO;
 
 namespace CaptureTaskManager
 {
-	public class clsPluginLoader
-	{
-		//*********************************************************************************************************
-		// Handles creation of plugin objects
-		//**********************************************************************************************************
+    public class clsPluginLoader
+    {
+        //*********************************************************************************************************
+        // Handles creation of plugin objects
+        //**********************************************************************************************************
 
-		#region "Class variables"
-			private static string m_pluginConfigFile = "plugin_info.xml";
-		#endregion
+        #region "Class variables"
 
-		#region "Properties"
-			public static string FileName
-			{
-				get
-				{
-					return m_pluginConfigFile;
-				}
-				set
-				{
-					m_pluginConfigFile = value;
-				}
-			}
+        private static string m_pluginConfigFile = "plugin_info.xml";
 
-			public static string ErrMsg { get; set; }
-		#endregion
+        #endregion
 
-		#region "Methods"
+        #region "Properties"
 
-            /// <summary>
-            /// Set the following to True if debugging
-            /// </summary>
-            /// <remarks>Also uncomment the appropriate case statements in the following two functions</remarks>
+        public static string FileName
+        {
+            get { return m_pluginConfigFile; }
+            set { m_pluginConfigFile = value; }
+        }
 
+        public static string ErrMsg { get; set; }
+
+        #endregion
+
+        #region "Methods"
+
+        /// <summary>
+        /// Set the following to True if debugging
+        /// </summary>
+        /// <remarks>Also uncomment the appropriate case statements in the following two functions</remarks>
 #if PLUGIN_DEBUG_MODE_ENABLED
+        private static IToolRunner DebugModeGetToolRunner(string className)
+        {
+            IToolRunner myToolRunner = null;
 
-            private static IToolRunner DebugModeGetToolRunner(string className)
+            switch (className)
             {
+                //case "ImsDemuxPlugin.clsPluginMain":
+                //    myToolRunner = (IToolRunner)new ImsDemuxPlugin.clsPluginMain();
+                //    break;
 
-                IToolRunner myToolRunner = null;
+                //case "DatasetArchivePlugin.clsPluginMain":
+                //    myToolRunner = (IToolRunner)new DatasetArchivePlugin.clsPluginMain();
+                //    break;
 
-                switch (className)
+                //case "ArchiveStatusCheckPlugin.clsPluginMain":
+                //    myToolRunner = (IToolRunner)new ArchiveStatusCheckPlugin.clsPluginMain();
+                //    break;
+
+                //case "ArchiveVerifyPlugin.clsPluginMain":
+                //    myToolRunner = (IToolRunner)new ArchiveVerifyPlugin.clsPluginMain();
+                //    break;
+
+                //case "DatasetIntegrityPlugin.clsPluginMain":
+                //    myToolRunner = (IToolRunner)new DatasetIntegrityPlugin.clsPluginMain();
+                //    break;
+
+                //case "DatasetInfoPlugin.clsPluginMain":
+                //    myToolRunner = (IToolRunner)new DatasetInfoPlugin.clsPluginMain();
+                //    break;
+
+                default:
+                    break;
+            }
+
+            return myToolRunner;
+        }
+#endif
+
+        /// <summary>
+        /// Loads a tool runner object
+        /// </summary>
+        /// <param name="toolName">Name of tool</param>
+        /// <returns>An object meeting the IToolRunner interface</returns>
+        public static IToolRunner GetToolRunner(string toolName)
+        {
+            var xPath = "//ToolRunners/ToolRunner[@Tool='" + toolName.ToLower() + "']";
+            var className = "";
+            var assyName = "";
+            IToolRunner myToolRunner = null;
+
+            if (GetPluginInfo(xPath, ref className, ref assyName))
+            {
+#if PLUGIN_DEBUG_MODE_ENABLED
+                myToolRunner = DebugModeGetToolRunner(className);
+                if ((myToolRunner != null))
                 {
-					//case "ImsDemuxPlugin.clsPluginMain":
-					//    myToolRunner = (IToolRunner)new ImsDemuxPlugin.clsPluginMain();
-					//    break;
+                    return myToolRunner;
+                }
+#endif
 
-					//case "DatasetArchivePlugin.clsPluginMain":
-					//    myToolRunner = (IToolRunner)new DatasetArchivePlugin.clsPluginMain();
-					//    break;
+                var obj = LoadObject(className, assyName);
+                string msg;
+                if (obj != null)
+                {
+                    try
+                    {
+                        myToolRunner = (IToolRunner)obj;
+                        msg = "Loaded tool runner: " + className + " from " + assyName;
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                    }
+                    catch (Exception ex)
+                    {
+                        ErrMsg = ex.Message;
+                    }
+                }
+                else
+                {
+                    msg = "Unable to load tool runner: " + className + " from " + assyName;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                }
+            }
+            return myToolRunner;
+        }
 
-					//case "ArchiveStatusCheckPlugin.clsPluginMain":
-					//    myToolRunner = (IToolRunner)new ArchiveStatusCheckPlugin.clsPluginMain();
-					//    break;
+        /// <summary>
+        /// Retrieves data for specified plugin from plugin info config file
+        /// </summary>
+        /// <param name="xPath">XPath spec for specified plugin</param>
+        /// <param name="className">Name of class for plugin (return value)</param>
+        /// <param name="assyName">Name of assembly for plugin (return value)</param>
+        /// <returns>TRUE for success, FALSE for failure</returns>
+        private static bool GetPluginInfo(string xPath, ref string className, ref string assyName)
+        {
+            var doc = new XmlDocument();
+            var strPluginInfo = string.Empty;
 
-					//case "ArchiveVerifyPlugin.clsPluginMain":
-					//    myToolRunner = (IToolRunner)new ArchiveVerifyPlugin.clsPluginMain();
-					//    break;
+            try
+            {
+                if (xPath == null) xPath = string.Empty;
+                if (className == null) className = string.Empty;
+                if (assyName == null) assyName = string.Empty;
 
-					//case "DatasetIntegrityPlugin.clsPluginMain":
-					//    myToolRunner = (IToolRunner)new DatasetIntegrityPlugin.clsPluginMain();
-					//    break;
+                strPluginInfo = "XPath=\"" + xPath + "\"; className=\"" + className + "\"; assyName=" + assyName + "\"";
 
-					//case "DatasetInfoPlugin.clsPluginMain":
-					//    myToolRunner = (IToolRunner)new DatasetInfoPlugin.clsPluginMain();
-					//    break;
+                // Read the tool runner info file
+                doc.Load(GetPluginInfoFilePath(m_pluginConfigFile));
+                var root = doc.DocumentElement;
 
-                    default:
-                        break;
+                if (root == null)
+                {
+                    ErrMsg = "Error in GetPluginInfo: root element not found in " + m_pluginConfigFile;
+                    return false;
                 }
 
-                return myToolRunner;
-            }
-#endif
+                // Find the element that matches the tool name
+                var nodeList = root.SelectNodes(xPath);
 
-			/// <summary>
-			/// Loads a tool runner object
-			/// </summary>
-			/// <param name="toolName">Name of tool</param>
-			/// <returns>An object meeting the IToolRunner interface</returns>
-			public static IToolRunner GetToolRunner(string toolName)
-			{
-	            var xPath = "//ToolRunners/ToolRunner[@Tool='" + toolName.ToLower() + "']";
-				var className = "";
-				var assyName = "";
-				IToolRunner myToolRunner = null;
-
-				if (GetPluginInfo(xPath, ref className, ref assyName))
-				{
-#if PLUGIN_DEBUG_MODE_ENABLED
-                    myToolRunner = DebugModeGetToolRunner(className);
-                    if ((myToolRunner != null))
+                // Make sure exactly 1 element found and retrieve its information
+                if (nodeList != null && nodeList.Count == 1)
+                {
+                    foreach (XmlElement el in nodeList)
                     {
-                        return myToolRunner;
+                        className = el.GetAttribute("Class");
+                        assyName = el.GetAttribute("AssemblyFile");
                     }
-#endif
+                }
+                else
+                {
+                    throw new Exception("Could not resolve tool name; " + strPluginInfo);
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ErrMsg = "Error in GetPluginInfo: " + ex.Message + "; " + strPluginInfo;
+                return false;
+            }
+        }
 
-					var obj = LoadObject(className, assyName);
-					string msg;
-					if (obj != null)
-					{
-						try
-						{
-							myToolRunner = (IToolRunner)obj;
-							msg = "Loaded tool runner: " + className + " from " + assyName;
-							clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-						}
-						catch (Exception ex)
-						{
-							ErrMsg = ex.Message;
-						}
-					}
-					else
-					{
-						msg = "Unable to load tool runner: " + className + " from " + assyName;
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-					}
-				}
-				return myToolRunner;
-			}
+        /// <summary>
+        /// Gets the path to the plugin info config file
+        /// </summary>
+        /// <param name="PluginInfoFileName">Name of plugin info file</param>
+        /// <returns>Path to plugin info file</returns>
+        private static string GetPluginInfoFilePath(string PluginInfoFileName)
+        {
+            var fi = new FileInfo(System.Windows.Forms.Application.ExecutablePath);
+            if (fi.DirectoryName == null)
+                throw new DirectoryNotFoundException("Could not determine parent folder path for the exe");
 
-			/// <summary>
-			/// Retrieves data for specified plugin from plugin info config file
-			/// </summary>
-			/// <param name="xPath">XPath spec for specified plugin</param>
-			/// <param name="className">Name of class for plugin (return value)</param>
-			/// <param name="assyName">Name of assembly for plugin (return value)</param>
-			/// <returns>TRUE for success, FALSE for failure</returns>
-			private static bool GetPluginInfo(string xPath, ref string className, ref string assyName)
-			{
-				var doc = new XmlDocument();
-				var strPluginInfo = string.Empty;
+            return Path.Combine(fi.DirectoryName, PluginInfoFileName);
+        }
 
-				try
-				{
-					if (xPath == null) xPath = string.Empty;
-					if (className == null) className = string.Empty;
-					if (assyName == null) assyName = string.Empty;
+        /// <summary>
+        /// Loads the specifed dll
+        /// </summary>
+        /// <param name="className">Name of class to load (from GetPluginInfo)</param>
+        /// <param name="assyName">Name of assembly to load (from GetPluginInfo)</param>
+        /// <returns>An object referencing the specified dll</returns>
+        private static object LoadObject(string className, string assyName)
+        {
+            object obj = null;
+            try
+            {
+                // Build instance of tool runner class from class and assembly names
+                var assem = Assembly.LoadFrom(GetPluginInfoFilePath(assyName));
+                var dllType = assem.GetType(className, false, true);
+                obj = Activator.CreateInstance(dllType);
+            }
+            catch (Exception ex)
+            {
+                ErrMsg = "clsPluginLoader.LoadObject(), exception: " + ex.Message;
+            }
+            return obj;
+        }
 
-					strPluginInfo = "XPath=\"" + xPath + "\"; className=\"" + className + "\"; assyName=" + assyName + "\"";
-
-					// Read the tool runner info file
-					doc.Load(GetPluginInfoFilePath(m_pluginConfigFile));
-					var root = doc.DocumentElement;
-
-					if (root == null)
-					{
-						ErrMsg = "Error in GetPluginInfo: root element not found in " + m_pluginConfigFile;
-						return false;
-					}
-
-					// Find the element that matches the tool name
-					var nodeList = root.SelectNodes(xPath);
-
-					// Make sure exactly 1 element found and retrieve its information
-					if (nodeList != null && nodeList.Count == 1)
-					{
-						foreach (XmlElement el in nodeList)
-						{
-							className = el.GetAttribute("Class");
-							assyName = el.GetAttribute("AssemblyFile");
-						}
-					}
-					else
-					{
-						throw new Exception("Could not resolve tool name; " + strPluginInfo);
-					}
-					return true;
-				}
-				catch (Exception ex)
-				{
-					ErrMsg = "Error in GetPluginInfo: " + ex.Message + "; " + strPluginInfo;
-					return false;
-				}
-			}
-
-			/// <summary>
-			/// Gets the path to the plugin info config file
-			/// </summary>
-			/// <param name="PluginInfoFileName">Name of plugin info file</param>
-			/// <returns>Path to plugin info file</returns>
-			private static string GetPluginInfoFilePath(string PluginInfoFileName)
-			{
-				var fi = new FileInfo(System.Windows.Forms.Application.ExecutablePath);
-				if (fi.DirectoryName == null)
-					throw new DirectoryNotFoundException("Could not determine parent folder path for the exe");
-				
-				return Path.Combine(fi.DirectoryName, PluginInfoFileName);
-			}
-
-			/// <summary>
-			/// Loads the specifed dll
-			/// </summary>
-			/// <param name="className">Name of class to load (from GetPluginInfo)</param>
-			/// <param name="assyName">Name of assembly to load (from GetPluginInfo)</param>
-			/// <returns>An object referencing the specified dll</returns>
-			private static object LoadObject(string className, string assyName)
-			{
-				object obj = null;
-				try
-				{
-					// Build instance of tool runner class from class and assembly names
-					var assem = Assembly.LoadFrom(GetPluginInfoFilePath(assyName));
-					var dllType = assem.GetType(className, false, true);
-					obj = Activator.CreateInstance(dllType);
-				}
-				catch (Exception ex)
-				{
-					ErrMsg = "clsPluginLoader.LoadObject(), exception: " + ex.Message;
-				}
-				return obj;
-			}
-		#endregion
-	}
+        #endregion
+    }
 }

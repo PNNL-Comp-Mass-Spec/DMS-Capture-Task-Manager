@@ -1,5 +1,4 @@
-﻿
-//*********************************************************************************************************
+﻿//*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy 
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
@@ -9,31 +8,31 @@
 
 namespace CaptureTaskManager
 {
-	public interface IMgrParams
-	{
-		//*********************************************************************************************************
-		// Defines interface for manager parameter handling
-		//**********************************************************************************************************
+    public interface IMgrParams
+    {
+        //*********************************************************************************************************
+        // Defines interface for manager parameter handling
+        //**********************************************************************************************************
 
-		#region "Properties"
+        #region "Properties"
 
-		System.Collections.Generic.Dictionary<string, string> TaskDictionary { get; }
-		
-		#endregion
+        System.Collections.Generic.Dictionary<string, string> TaskDictionary { get; }
 
-		#region "Methods"
+        #endregion
+
+        #region "Methods"
+
         bool GetBooleanParam(string itemKey);
-		string GetParam(string itemKey);
-		string GetParam(string itemKey, string valueIfMissing);
+        string GetParam(string itemKey);
+        string GetParam(string itemKey, string valueIfMissing);
         bool GetParam(string itemKey, bool valueIfMissing);
         int GetParam(string itemKey, int valueIfMissing);
 
-		void SetParam(string itemKey, string itemValue);
+        void SetParam(string itemKey, string itemValue);
 
         bool LoadMgrSettingsFromDB();
-		bool LoadMgrSettingsFromDB(bool logConnectionErrors);
+        bool LoadMgrSettingsFromDB(bool logConnectionErrors);
 
-		#endregion
-
-	}
+        #endregion
+    }
 }
