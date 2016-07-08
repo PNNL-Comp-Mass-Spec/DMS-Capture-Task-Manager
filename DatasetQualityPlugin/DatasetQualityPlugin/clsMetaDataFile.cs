@@ -50,12 +50,12 @@ namespace DatasetQualityPlugin
 					xWriter.WriteStartElement("Root");
 
 					// Loop through the task parameters, selecting only the ones beginning with "Meta_"
-					foreach (string testKey in TaskParams.TaskDictionary.Keys)
+					foreach (var testKey in TaskParams.TaskDictionary.Keys)
 					{
 						if (testKey.StartsWith("Meta_"))
 						{
 						    // This parameter is metadata, so write it out
-						    string tmpStr = testKey.Replace("Meta_", "");
+						    var tmpStr = testKey.Replace("Meta_", "");
 						    xWriter.WriteElementString(tmpStr, TaskParams.GetParam(testKey));
 						}
 					}
@@ -79,23 +79,23 @@ namespace DatasetQualityPlugin
 				}	// End using
 
 				// Write the string to the output file
-				string svrPath = Path.Combine(TaskParams.GetParam("Storage_Vol_External"), TaskParams.GetParam("Storage_Path"));
-				string dsPath = Path.Combine(svrPath,TaskParams.GetParam("Folder"));
-				string metaFileNamePath = Path.Combine(dsPath, META_FILE_NAME);
+				var svrPath = Path.Combine(TaskParams.GetParam("Storage_Vol_External"), TaskParams.GetParam("Storage_Path"));
+				var dsPath = Path.Combine(svrPath,TaskParams.GetParam("Folder"));
+				var metaFileNamePath = Path.Combine(dsPath, META_FILE_NAME);
 				try
 				{
 					File.WriteAllText(metaFileNamePath, xmlText);
-					string msg = "Metadata file created for dataset " + TaskParams.GetParam("Dataset");
+					var msg = "Metadata file created for dataset " + TaskParams.GetParam("Dataset");
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 					return true;
 				}
 				catch (Exception ex)
 				{
-					string msg = "Exception creating metadata file for dataset " + TaskParams.GetParam("Dataset");
+					var msg = "Exception creating metadata file for dataset " + TaskParams.GetParam("Dataset");
 					clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
 					return false;
 				}
-			}	// End sub
+			}
 		#endregion
-	}	// End class
-}	// End namespace
+	}
+}

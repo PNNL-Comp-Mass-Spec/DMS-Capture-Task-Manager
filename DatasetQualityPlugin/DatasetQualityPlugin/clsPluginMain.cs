@@ -75,10 +75,10 @@ namespace DatasetQualityPlugin
 			{
 				// There was a problem
 				msg = "Problem creating metadata file for dataset " + m_Dataset + ". See local log for details";
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg);
+				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 				mRetData.EvalCode = EnumEvalCode.EVAL_CODE_FAILED;
 				mRetData.EvalMsg = msg;
-				mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+				mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 			}
 
 			var success = ConditionallyRunQuameter();
@@ -1164,7 +1164,7 @@ namespace DatasetQualityPlugin
 
 			try
 			{
-				return base.SetStepTaskToolVersion(sToolVersionInfo, ioToolFiles, false);
+				return SetStepTaskToolVersion(sToolVersionInfo, ioToolFiles, false);
 			}
 			catch (Exception ex)
 			{
