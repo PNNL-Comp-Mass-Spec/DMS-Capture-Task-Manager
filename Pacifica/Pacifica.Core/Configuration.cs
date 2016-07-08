@@ -36,19 +36,10 @@ namespace Pacifica.Core
         /// </summary>
         public const string TEST_INGEST_HOST_NAME = "test3.my.emsl.pnl.gov";
 
-
-        private static string mLocalTempDirectory = Path.GetTempPath();
-        public static string LocalTempDirectory
-        {
-            get
-            {
-                return mLocalTempDirectory;
-            }
-            set
-            {
-                mLocalTempDirectory = value;
-            }
-        }
+        /// <summary>
+        /// Local temp directory
+        /// </summary>
+        public static string LocalTempDirectory { get; set; } = Path.GetTempPath();
 
         public static bool mUseSecureDataTransfer = true;
         public static bool UseSecureDataTransfer
@@ -83,22 +74,10 @@ namespace Pacifica.Core
         }
 
         private const string UNSECURED_SCHEME = "http";
-        public static string UnsecuredScheme
-        {
-            get
-            {
-                return UNSECURED_SCHEME;
-            }
-        }
+        public static string UnsecuredScheme => UNSECURED_SCHEME;
 
         private const string SECURED_SCHEME = "https";
-        public static string SecuredScheme
-        {
-            get
-            {
-                return SECURED_SCHEME;
-            }
-        }
+        public static string SecuredScheme => SECURED_SCHEME;
 
         public static string BundlePath
         {
@@ -117,13 +96,7 @@ namespace Pacifica.Core
         /// <summary>
         /// By default, returns https://my.emsl.pnl.gov/myemsl/api/
         /// </summary>
-        public static string ApiUri
-        {
-            get
-            {
-                return SearchServerUri + API_RELATIVE_PATH;
-            }
-        }
+        public static string ApiUri => SearchServerUri + API_RELATIVE_PATH;
 
         private const string ELASTIC_SEARCH_RELATIVE_PATH = "/myemsl/elasticsearch/";       // MyEMSLReader.Reader will append: simple_items
         private const string TEST_SERVER_SEARCH_RELATIVE_PATH = "/myemsl/search/simple/";   // MyEMSLReader.Reader will append: index.shtml
@@ -147,26 +120,9 @@ namespace Pacifica.Core
         /// <summary>
         /// By default, returns https://dev1.my.emsl.pnl.gov/myemsl/status/index.php/api/item_search/
         /// </summary>
-        public static string ItemSearchUri
-        {
-            get
-            {
-                return SearchServerUri + ITEM_SEARCH_RELATIVE_PATH;
-            }
-        }
+        public static string ItemSearchUri => SearchServerUri + ITEM_SEARCH_RELATIVE_PATH;
 
-        private static string mIngestServerHostName = DEFAULT_INGEST_HOST_NAME;
-        public static string IngestServerHostName
-        {
-            get
-            {
-                return mIngestServerHostName;
-            }
-            set
-            {
-                mIngestServerHostName = value;
-            }
-        }
+        public static string IngestServerHostName { get; set; } = DEFAULT_INGEST_HOST_NAME;
 
         /// <summary>
         /// By default, returns https://ingest.my.emsl.pnl.gov
@@ -188,18 +144,7 @@ namespace Pacifica.Core
             }
         }
 
-        private static string mSearchServerHostName = DEFAULT_ELASTIC_SEARCH_HOST_NAME;
-        public static string SearchServerHostName
-        {
-            get
-            {
-                return mSearchServerHostName;
-            }
-            set
-            {
-                mSearchServerHostName = value;
-            }
-        }
+        public static string SearchServerHostName { get; set; } = DEFAULT_ELASTIC_SEARCH_HOST_NAME;
 
         /// <summary>
         /// By default, returns https://my.emsl.pnl.gov
@@ -226,27 +171,9 @@ namespace Pacifica.Core
         /// <summary>
         /// By default, returns https://ingest.my.emsl.pnl.gov/myemsl/testauth/
         /// </summary>
-        public static string TestAuthUri
-        {
-            get
-            {
-                return IngestServerUri + TEST_AUTH_RELATIVE_PATH;
-            }
-        }
+        public static string TestAuthUri => IngestServerUri + TEST_AUTH_RELATIVE_PATH;
 
-        private static string mHttpProxyUrl = string.Empty;
-        public static string HttpProxyUrl
-        {
-            get
-            {
-                return mHttpProxyUrl;
-            }
-            set
-            {
-                mHttpProxyUrl = value;
-
-            }
-        }
+        public static string HttpProxyUrl { get; set; } = string.Empty;
 
         public static void SetProxy(HttpWebRequest oWebRequest)
         {
@@ -337,7 +264,7 @@ namespace Pacifica.Core
                     SearchServerHostName = DEFAULT_ITEM_SEARCH_HOST_NAME;
                 else
                     SearchServerHostName = DEFAULT_ELASTIC_SEARCH_HOST_NAME;
-                
+
             }
         }
 

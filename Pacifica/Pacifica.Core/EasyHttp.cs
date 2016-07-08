@@ -47,10 +47,7 @@ namespace Pacifica.Core
             double percentCompleted, long totalBytesSent,
             long totalBytesToSend, string statusMessage)
         {
-            if (StatusUpdate != null)
-            {
-                StatusUpdate(null, new StatusEventArgs(percentCompleted, totalBytesSent, totalBytesToSend, statusMessage));
-            }
+            StatusUpdate?.Invoke(null, new StatusEventArgs(percentCompleted, totalBytesSent, totalBytesToSend, statusMessage));
         }
 
         public static bool GetFile(
@@ -134,10 +131,7 @@ namespace Pacifica.Core
             }
             finally
             {
-                if (response != null)
-                {
-                    ((IDisposable)response).Dispose();
-                }
+                ((IDisposable)response)?.Dispose();
             }
 
             return true;
@@ -205,12 +199,8 @@ namespace Pacifica.Core
             }
             finally
             {
-                if (response != null)
-                {
-                    ((IDisposable)response).Dispose();
-                }
+                ((IDisposable)response)?.Dispose();
             }
-
         }
 
         public static HttpWebRequest InitializeRequest(
@@ -402,9 +392,13 @@ namespace Pacifica.Core
             {
                 if (ex.Response != null)
                 {
-                    using (var sr = new StreamReader(ex.Response.GetResponseStream()))
+                    var responseStream = ex.Response.GetResponseStream();
+                    if (responseStream != null)
                     {
-                        responseData = sr.ReadToEnd();
+                        using (var sr = new StreamReader(responseStream))
+                        {
+                            responseData = sr.ReadToEnd();
+                        }
                     }
                     responseStatusCode = ((HttpWebResponse)ex.Response).StatusCode;
                 }
@@ -422,10 +416,7 @@ namespace Pacifica.Core
             }
             finally
             {
-                if (response != null)
-                {
-                    ((IDisposable)response).Dispose();
-                }
+                ((IDisposable)response)?.Dispose();
             }
 
             return responseData;
@@ -636,10 +627,7 @@ namespace Pacifica.Core
             }
             finally
             {
-                if (response != null)
-                {
-                    ((IDisposable)response).Dispose();
-                }
+                ((IDisposable)response)?.Dispose();
             }
 
             return responseData;
@@ -671,7 +659,7 @@ namespace Pacifica.Core
             // Header block for current file
             headerBlocks = 1;
             contentLength += TAR_BLOCK_SIZE_BYTES;
-            
+
             if (longPath)
             {
                 // SharpZipLib will add two extra 512 byte blocks since this file has an extra long file path 
@@ -720,13 +708,13 @@ namespace Pacifica.Core
             contentLength += TAR_BLOCK_SIZE_BYTES;
 
             var dctDirectoryEntries = new SortedSet<string>();
-            int headerBlocks;
 
             // Add the files to be archived
             foreach (var fileToArchive in fileListObject)
             {
                 var fiSourceFile = new FileInfo(fileToArchive.Key);
 
+                int headerBlocks;
                 if (!string.IsNullOrEmpty(fileToArchive.Value.RelativeDestinationDirectory))
                 {
                     if (fiSourceFile.Directory == null)
@@ -734,7 +722,7 @@ namespace Pacifica.Core
 
                     if (!dctDirectoryEntries.Contains(fiSourceFile.Directory.FullName))
                     {
-                        var dirPathInArchive = "data/" + fileToArchive.Value.RelativeDestinationDirectory + "/";                       
+                        var dirPathInArchive = "data/" + fileToArchive.Value.RelativeDestinationDirectory + "/";
                         addonBytes = AddTarFileContentLength(dirPathInArchive, 0, out headerBlocks);
 
                         if (debugging)
