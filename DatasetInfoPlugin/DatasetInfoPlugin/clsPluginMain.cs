@@ -13,6 +13,7 @@ using System;
 using System.Reflection;
 using CaptureTaskManager;
 using System.IO;
+using System.Text.RegularExpressions;
 using MSFileInfoScannerInterfaces;
 
 namespace DatasetInfoPlugin
@@ -668,7 +669,24 @@ namespace DatasetInfoPlugin
             else
             {
                 m_ErrOccurred = true;
-                m_Msg = "Error running MSFileInfoScanner: " + message;
+
+                // Message often contains long folder paths; check for this and shorten them.
+                // For example, switch
+                // from: \\proto-6\LTQ_Orb_1\2015_4\QC_Shew_pep_Online_Dig_v12_c0pt5_05_10-08-13\QC_Shew_pep_Online_Dig_v12_c0pt5_05_10-08-13.raw
+                // to:   QC_Shew_pep_Online_Dig_v12_c0pt5_05_10-08-13.raw
+
+                // Match text of the form         \\server\share\folder<anything>DatasetName.Extension
+                var reDatasetFile = new Regex(@"\\\\[^\\]+\\[^\\]+\\[^\\]+.+(" + m_Dataset + @"\.[a-z0-9]+)");
+
+                if (reDatasetFile.IsMatch(message))
+                {
+                    m_Msg = "Error running MSFileInfoScanner: " + reDatasetFile.Replace(message, "$1");
+                }
+                else
+                {
+                    m_Msg = "Error running MSFileInfoScanner: " + message;
+                }
+
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMsg);
             }
 
