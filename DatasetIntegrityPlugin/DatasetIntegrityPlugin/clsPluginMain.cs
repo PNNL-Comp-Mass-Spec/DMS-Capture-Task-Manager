@@ -42,7 +42,7 @@ namespace DatasetIntegrityPlugin
         const float ACQ_METHOD_FILE_MIN_SIZE_KB = 5;
         const float SCIEX_WIFF_FILE_MIN_SIZE_KB = 50;
         const float SCIEX_WIFF_SCAN_FILE_MIN_SIZE_KB = 0.03F;
-        const float UIMF_FILE_MIN_SIZE_KB = 50;
+        const float UIMF_FILE_MIN_SIZE_KB = 20;
         const float TIMS_UIMF_FILE_MIN_SIZE_KB = 5;
         const float AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB = 50;
         const float AGILENT_DATA_MS_FILE_MIN_SIZE_KB = 75;
