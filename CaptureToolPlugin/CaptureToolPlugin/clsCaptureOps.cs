@@ -50,7 +50,7 @@ namespace CaptureToolPlugin
         }
         #endregion
 
-        #region "Class variables"
+        #region "Classwide variables"
 
         private readonly IMgrParams m_MgrParams;
 
@@ -85,6 +85,11 @@ namespace CaptureToolPlugin
 
         string m_ErrorMessage = string.Empty;
 
+        /// <summary>
+        /// List of characters that should be automatically replaced if doing so makes the filename match the dataset name
+        /// </summary>
+        private readonly Dictionary<char, string> m_FilenameAutoFixes;
+        
         #endregion
 
         #region "Properties"
@@ -151,6 +156,10 @@ namespace CaptureToolPlugin
                 m_FileTools.ResumingFileCopy += OnResumingFileCopy;
             }
 
+            m_FilenameAutoFixes = new Dictionary<char, string> {
+                { ' ', "_"},
+                { '%', "pct"},
+                { '.', "pt"}};
         }
 
         #endregion
@@ -163,13 +172,38 @@ namespace CaptureToolPlugin
         /// </summary>
         /// <param name="datasetName">Dataset name</param>
         /// <param name="datasetFolder">Dataset folder to search</param>
-        private void AutoFixFilesWithSpaces(string datasetName, DirectoryInfo datasetFolder)
+        private void AutoFixFilesWithInvalidChars(string datasetName, DirectoryInfo datasetFolder)
         {
-            var candidateFiles = datasetFolder.GetFileSystemInfos("* *", SearchOption.AllDirectories);
+            var candidateFiles = new List<FileSystemInfo>();
+
+            // Find items matching "* *" and "*%*" and "*.*"
+            foreach (var item in m_FilenameAutoFixes)
+            {
+                if (item.Key == '.')
+                {
+                    foreach (var candidateFile in datasetFolder.GetFileSystemInfos("*.*", SearchOption.AllDirectories))
+                    {
+                        if (Path.GetFileNameWithoutExtension(candidateFile.Name).IndexOf('.') >= 0) {
+                            candidateFiles.Add(candidateFile);
+                        }
+                    }                    
+                }
+                else
+                {
+                    candidateFiles.AddRange(datasetFolder.GetFileSystemInfos("*" + item.Key + "*", SearchOption.AllDirectories));
+                }
+            }
+
+            var processedFiles = new SortedSet<string>();
 
             foreach (var datasetFile in candidateFiles)
             {
-                var updatedFileName = AutoFixSpaces(datasetName, datasetFile.Name);
+                if (processedFiles.Contains(datasetFile.FullName))
+                    continue;
+
+                processedFiles.Add(datasetFile.FullName);
+
+                var updatedFileName = AutoFixFilename(datasetName, datasetFile.Name, m_FilenameAutoFixes);
 
                 if (string.Equals(datasetFile.Name, updatedFileName, StringComparison.InvariantCultureIgnoreCase))
                 {
@@ -177,26 +211,40 @@ namespace CaptureToolPlugin
                 }
 
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
-                    "Renaming '" + datasetFile.Name + "' to '" + updatedFileName + "' to remove spaces");
+                    "Renaming '" + datasetFile.Name + "' to '" + updatedFileName + "' to remove invalid characters");
 
                 File.Move(datasetFile.FullName, Path.Combine(datasetFolder.FullName, updatedFileName));
             }
         }
 
-
         /// <summary>
-        /// If the filename contains spaces, replace them with underscores and compare to datasetName
-        /// If a match, return the updated filename, otherwise return the original filename
+        /// If the filename contains any of the characters in charsToFind, replace the character with the given replacement string
+        /// Next compare to datasetName.  If a match, return the updated filename, otherwise return the original filename
         /// </summary>
         /// <param name="datasetName">Dataset name</param>
         /// <param name="fileName">File name</param>
+        /// <param name="charsToFind">Keys are characters to find; values are the replacement text</param>
         /// <returns>Optimal filename to use</returns>
-        private string AutoFixSpaces(string datasetName, string fileName)
+        /// <remarks>When searching for a period, only the base filename is examined</remarks>
+        private string AutoFixFilename(string datasetName, string fileName, Dictionary<char, string> charsToFind )
         {
-            if (fileName.IndexOf(' ') < 0)
+            var matchFound = charsToFind.Keys.Any(item => fileName.IndexOf(item) >= 0);
+            if (!matchFound)
                 return fileName;
 
-            var updatedFileName = fileName.Replace(' ', '_');
+            var fileExtension = Path.GetExtension(fileName);
+            var updatedFileName = string.Copy(fileName);
+
+            foreach (var item in charsToFind)
+            {
+                var baseName = Path.GetFileNameWithoutExtension(updatedFileName);
+
+                if (baseName.IndexOf(item.Key) < 0)
+                    continue;
+
+                updatedFileName = baseName.Replace(item.Key.ToString(), item.Value) + fileExtension;
+
+            }
 
             if (string.Equals(Path.GetFileNameWithoutExtension(updatedFileName), datasetName, StringComparison.InvariantCultureIgnoreCase))
             {
@@ -1526,18 +1574,19 @@ namespace CaptureToolPlugin
             var bSuccess = false;
 
             // Copy the data file (or files) to the dataset folder
-            // If any of the source files have a space in the name, auto-replace it with an underscore if doing so will match the dataset name
+            // If any of the source files have an invalid character (space, % or period), 
+            // replace with the default replacement string if doing so will match the dataset name
             try
             {
 
                 foreach (var fileName in fileNames)
                 {
                     var sourceFilePath = Path.Combine(sourceFolderPath, fileName);
-
-                    var targetFilePath = Path.Combine(datasetFolderPath, AutoFixSpaces(datasetName, fileName));
-
                     var sourceFileName = Path.GetFileName(sourceFilePath);
-                    var targetFileName = Path.GetFileName(targetFilePath);
+
+                    var targetFileName = AutoFixFilename(datasetName, fileName, m_FilenameAutoFixes);
+                    var targetFilePath = Path.Combine(datasetFolderPath, targetFileName);
+
                     if (!string.Equals(sourceFileName, targetFileName, StringComparison.InvariantCultureIgnoreCase))
                     {
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
@@ -1897,7 +1946,7 @@ namespace CaptureToolPlugin
                     msg = "Copied folder " + diSourceDir.FullName + " to " + diTargetDir.FullName + GetConnectionDescription();
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 
-                    AutoFixFilesWithSpaces(datasetInfo.DatasetName, diTargetDir);
+                    AutoFixFilesWithInvalidChars(datasetInfo.DatasetName, diTargetDir);
                 }
                 else
                 {
@@ -2279,7 +2328,7 @@ namespace CaptureToolPlugin
                     msg = "Copied folder " + diSourceDir.FullName + " to " + diTargetDir.FullName + GetConnectionDescription();
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 
-                    AutoFixFilesWithSpaces(datasetInfo.DatasetName, diTargetDir);
+                    AutoFixFilesWithInvalidChars(datasetInfo.DatasetName, diTargetDir);
                 }
                 else
                 {
@@ -2405,7 +2454,7 @@ namespace CaptureToolPlugin
                     msg = "Copied files in folder " + diSourceDir.FullName + " to " + diTargetDir.FullName + GetConnectionDescription();
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
 
-                    AutoFixFilesWithSpaces(datasetInfo.DatasetName, diTargetDir);
+                    AutoFixFilesWithInvalidChars(datasetInfo.DatasetName, diTargetDir);
                 }
                 else
                 {
