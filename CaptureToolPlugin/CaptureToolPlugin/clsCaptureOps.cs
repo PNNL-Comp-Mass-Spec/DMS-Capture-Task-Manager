@@ -2247,6 +2247,13 @@ namespace CaptureToolPlugin
                         allowMultipleFolders = true;
                 }
 
+                if (!allowMultipleFolders && instrumentClass == clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging_V2)
+                {
+                    // Effective July 2016, we allow Bruker Imaging datasets to have multiple .D subfolders
+                    // They typically each have their own ser file
+                    allowMultipleFolders = true;
+                }
+
                 if (!allowMultipleFolders)
                 {
                     retData.CloseoutMsg = "Multiple .D folders found in dataset folder";

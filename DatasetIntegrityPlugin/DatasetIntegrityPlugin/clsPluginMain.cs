@@ -196,7 +196,7 @@ namespace DatasetIntegrityPlugin
                     mRetData.CloseoutType = TestIMSAgilentTOF(dataFileNamePath, instrumentName);
                     break;
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerFT_BAF:
-                    mRetData.CloseoutType = TestBrukerFT_Folder(datasetFolder, requireBAFFile: true, requireMCFFile: false, instrumentClass: instrumentClass, instrumentName: instrumentName);
+                    mRetData.CloseoutType = TestBrukerFT_Folder(datasetFolder, requireBAFFile: true, requireMCFFile: false, requireSerFile: false, instrumentClass: instrumentClass, instrumentName: instrumentName);
                     break;
 
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging:
@@ -204,7 +204,7 @@ namespace DatasetIntegrityPlugin
                     break;
 
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging_V2:
-                    mRetData.CloseoutType = TestBrukerFT_Folder(datasetFolder, requireBAFFile: false, requireMCFFile: false, instrumentClass: instrumentClass, instrumentName: instrumentName);
+                    mRetData.CloseoutType = TestBrukerFT_Folder(datasetFolder, requireBAFFile: false, requireMCFFile: false, requireSerFile: true, instrumentClass: instrumentClass, instrumentName: instrumentName);
 
                     // Check for message "Multiple .d folders"
                     if (mRetData.EvalMsg.Contains("Multiple " + clsInstrumentClassInfo.DOT_D_EXTENSION + " folders"))
@@ -864,7 +864,7 @@ namespace DatasetIntegrityPlugin
         }
 
         /// <summary>
-        /// If folderList contains exactly two folders then calls DetectSupersededFolder Detect and delete the extra x_ folder (if appropriate)
+        /// If folderList contains exactly two folders then calls DetectSupersededFolder and deletes the extra x_ folder (if appropriate)
         /// Returns True if folderList contains just one folder, or if able to successfully delete the extra x_ folder
         /// </summary>
         /// <param name="folderList"></param>
@@ -1444,16 +1444,24 @@ namespace DatasetIntegrityPlugin
         /// </summary>
         /// <param name="datasetFolderPath">Fully qualified path to the dataset folder</param>
         /// <param name="requireBAFFile">Set to True to require that the analysis.baf file be present</param>
-        /// <param name="requireMCFFile">Set to True to require that the analysis.baf file be present</param>
+        /// <param name="requireMCFFile">Set to True to require that the .mcf file be present</param>
+        /// <param name="requireSerFile">Set to True to require that the ser file be present</param>
         /// <param name="instrumentClass"></param>
         /// <param name="instrumentName"></param>
         /// <returns>Enum indicating test result</returns>
-        private EnumCloseOutType TestBrukerFT_Folder(string datasetFolderPath, bool requireBAFFile, bool requireMCFFile, clsInstrumentClassInfo.eInstrumentClass instrumentClass, string instrumentName)
+        private EnumCloseOutType TestBrukerFT_Folder(
+            string datasetFolderPath, 
+            bool requireBAFFile, 
+            bool requireMCFFile,
+            bool requireSerFile,
+            clsInstrumentClassInfo.eInstrumentClass instrumentClass, 
+            string instrumentName)
         {
             float dataFileSizeKB;
             float bafFileSizeKB = 0;
 
-            // Verify only one .D folder in dataset
+            // If there is only one .D folder in the dataset, the folder name should match the dataset name
+            // Otherwise, if multiple folders, make sure each has a ser file
             var diDatasetFolder = new DirectoryInfo(datasetFolderPath);
             var lstDotDFolders = diDatasetFolder.GetDirectories("*.D").ToList();
 
@@ -1468,10 +1476,26 @@ namespace DatasetIntegrityPlugin
             {
                 var allowMultipleFolders = false;
 
-                if (lstDotDFolders.Count == 2)
+                if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging_V2)
                 {
-                    // If one folder contains a ser file and the other folder contains an analysis.baf, then we'll allow this
-                    // This is somtimes the case for the 15T_FTICR_Imaging
+                    // Each .D folder should have a ser file
+                    foreach (var diFolder in lstDotDFolders)
+                    {
+                        if (diFolder.GetFiles("ser", SearchOption.TopDirectoryOnly).Length == 0)
+                        {
+                            mRetData.EvalMsg = "Invalid dataset. ser file not found in " + diFolder.Name;
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                                 mRetData.EvalMsg);
+                            return EnumCloseOutType.CLOSEOUT_FAILED;
+                        }
+                    }
+
+                    allowMultipleFolders = true;
+                }
+                else if (lstDotDFolders.Count == 2)
+                {
+                    // If one folder contains a ser file and the other folder contains an analysis.baf, we'll allow this
+                    // This is sometimes the case for 15T_FTICR_Imaging
                     var serCount = 0;
                     var bafCount = 0;
                     foreach (var diFolder in lstDotDFolders)
@@ -1495,7 +1519,7 @@ namespace DatasetIntegrityPlugin
 
             }
 
-            // Verify analysis.baf file exists
+            // Possibly verify that the analysis.baf file exists
             var lstBafFile = lstDotDFolders[0].GetFiles("analysis.baf").ToList();
             var fileExists = lstBafFile.Count > 0;
 
@@ -1551,7 +1575,7 @@ namespace DatasetIntegrityPlugin
             {
                 // Verify size of the largest .mcf file
                 float minSizeKB;
-                if (mctFileName.ToLower() == "Storage.mcf_idx".ToLower())
+                if (String.Equals(mctFileName, "Storage.mcf_idx", StringComparison.InvariantCultureIgnoreCase))
                     minSizeKB = 4;
                 else
                     minSizeKB = MCF_FILE_MIN_SIZE_KB;
@@ -1564,6 +1588,7 @@ namespace DatasetIntegrityPlugin
             }
 
             // Verify ser file (if it exists)
+            // For 15T imaging folders, only checking the ser file in the first .D folder
             var lstSerFile = lstDotDFolders[0].GetFiles("ser").ToList();
             if (lstSerFile.Count > 0)
             {
@@ -1580,7 +1605,14 @@ namespace DatasetIntegrityPlugin
                 }
             }
             else
-            {
+            {   // ser file not found in the first .D folder
+                if (requireSerFile)
+                {
+                    mRetData.EvalMsg = "Invalid dataset. ser file not found in " + lstDotDFolders[0].Name;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+
                 // Check to see if a fid file exists instead of a ser file
                 var lstFidFile = lstDotDFolders[0].GetFiles("fid").ToList();
                 if (lstFidFile.Count > 0)
@@ -1612,13 +1644,13 @@ namespace DatasetIntegrityPlugin
 
             if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging_V2)
             {
-                // Look for any files that match Dataset.mis or Dataset.jpg, and, if found, copy them up one folder
+                // Look for any files in the first .D folder that match Dataset.mis or Dataset.jpg
+                // If found, copy them up one folder
 
                 MoveOrCopyUpOneLevel(lstDotDFolders[0], "*.mis", matchDatasetName: true, copyFile: true);
                 MoveOrCopyUpOneLevel(lstDotDFolders[0], "*.bak", matchDatasetName: true, copyFile: true);
                 MoveOrCopyUpOneLevel(lstDotDFolders[0], "*.jpg", matchDatasetName: false, copyFile: true);
             }
-
 
             // Check to see if a .M folder exists
             var lstMethodFolders = lstDotDFolders[0].GetDirectories("*.m").ToList();
@@ -1665,10 +1697,12 @@ namespace DatasetIntegrityPlugin
 
             // If we got to here, everything is OK
             return EnumCloseOutType.CLOSEOUT_SUCCESS;
+
         }	// End sub
 
         /// <summary>
         /// Tests a BrukerMALDI_Imaging folder for integrity
+        /// This function does not apply to instrument class BrukerMALDI_Imaging_V2
         /// </summary>
         /// <param name="datasetFolderPath">Fully qualified path to the dataset folder</param>
         /// <returns>Enum indicating success or failure</returns>

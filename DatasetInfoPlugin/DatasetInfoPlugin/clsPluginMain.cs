@@ -13,6 +13,7 @@ using System;
 using System.Reflection;
 using CaptureTaskManager;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using MSFileInfoScannerInterfaces;
 
@@ -409,7 +410,8 @@ namespace DatasetInfoPlugin
                 case clsInstrumentClassInfo.eRawDataType.BrukerFTFolder:
                     // 12T_FTICR_B, 15T_FTICR, 9T_FTICR_B
                     // Also, Bruker_FT_IonTrap01, which is Bruker_Amazon_Ion_Trap
-                    // 12T_FTICR_Imaging and 15T_FTICR_Imaging datasets with instrument class BrukerMALDI_Imaging_V2 will also have bruker_ft format; however, instead of an analysis.baf file, they might have a .mcf file
+                    // 12T_FTICR_Imaging and 15T_FTICR_Imaging datasets with instrument class BrukerMALDI_Imaging_V2 will also have bruker_ft format; 
+                    // however, instead of an analysis.baf file, they might have a .mcf file
 
                     bIsFile = true;
                     if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Bruker_Amazon_Ion_Trap)
@@ -519,30 +521,29 @@ namespace DatasetInfoPlugin
                     if (diDotDFolder.Exists)
                     {
                         // Look for a .mcf file in the .D folder
-
-                        Int64 mcfFileSizeBytes = 0;
-
-                        foreach (var fiFile in diDotDFolder.GetFiles("*.mcf"))
-                        {
-                            // Determine the largest .mcf file
-                            if (fiFile.Length > mcfFileSizeBytes)
-                            {
-                                mcfFileSizeBytes = fiFile.Length;
-                                bAlternateFound = true;
-                                sFileOrFolderName = diDotDFolder.Name;
-                            }
-                        }
-
+                        bAlternateFound = LookForMcfFileInDotDFolder(diDotDFolder, out sFileOrFolderName);
                     }
-                    else
+                    
+                    if (!bAlternateFound)
                     {
-                        // Look for any .D folder; operator may have placed the wrong .D folder in this dataset folder
+                        // With instrument class BrukerMALDI_Imaging_V2 (e.g. 15T_FTICR_Imaging) we allow multiple .D folders to be captured
                         var diDotDFolders = diDatasetFolder.GetDirectories("*.d");
                         if (diDotDFolders.Length > 0)
                         {
-                            m_Msg = "Dataset folder has a misnamed .D folder inside it.  Found " + diDotDFolders[0].Name + " but expecting " + m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
-                            return string.Empty;
+                            // Look for a .mcf file in the first .D folder
+                            bAlternateFound = LookForMcfFileInDotDFolder(diDotDFolders[0], out sFileOrFolderName);
+                        }
+
+                        if (!bAlternateFound)
+                        {
+                            // Operator appears to hvae placed the wrong .D folder in this dataset folder                            
+                            if (diDotDFolders.Length > 0)
+                            {
+                                m_Msg = "Dataset folder has a misnamed .D folder inside it.  Found " +
+                                        diDotDFolders[0].Name + " but expecting " + m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
+                                return string.Empty;
+                            }
                         }
                     }
                 }
@@ -566,7 +567,7 @@ namespace DatasetInfoPlugin
 
             return sFileOrFolderName;
 
-        }   // End sub
+        }
 
         /// <summary>
         /// Construct the full path to the MSFileInfoScanner.DLL
@@ -579,6 +580,34 @@ namespace DatasetInfoPlugin
                 return string.Empty;
 
             return Path.Combine(strMSFileInfoScannerFolder, "MSFileInfoScanner.dll");
+        }
+
+
+        /// <summary>
+        /// Look for any .mcf file in a Bruker .D folder
+        /// </summary>
+        /// <param name="diDotDFolder"></param>
+        /// <param name="sFileOrFolderName">Output: name of the .D folder</param>
+        /// <returns>True if a .mcf file is found</returns>
+        private bool LookForMcfFileInDotDFolder(DirectoryInfo diDotDFolder, out string sFileOrFolderName)
+        {
+
+            long mcfFileSizeBytes = 0;
+
+            foreach (var fiFile in diDotDFolder.GetFiles("*.mcf"))
+            {
+                // Determine the largest .mcf file
+                if (fiFile.Length > mcfFileSizeBytes)
+                {
+                    mcfFileSizeBytes = fiFile.Length;
+                    sFileOrFolderName = diDotDFolder.Name;
+                    return true;
+                }
+            }
+
+            sFileOrFolderName = string.Empty;
+            return false;
+
         }
 
         /// <summary>
