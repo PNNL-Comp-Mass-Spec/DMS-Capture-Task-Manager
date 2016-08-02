@@ -67,6 +67,9 @@
     <Reference Include="MSFileInfoScannerInterfaces">
       <HintPath>..\..\RefLib\MSFileInfoScannerInterfaces.dll</HintPath>
     </Reference>
+    <Reference Include="PNNLOmics">
+      <HintPath>..\..\RefLib\PNNLOmics.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -81,6 +84,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="clsDatasetInfoXmlMerger.cs" />
     <Compile Include="clsPluginMain.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

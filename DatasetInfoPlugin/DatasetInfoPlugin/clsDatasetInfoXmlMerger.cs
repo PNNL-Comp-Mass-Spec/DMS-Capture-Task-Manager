@@ -1,0 +1,425 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Xml;
+using PNNLOmics.Utilities;
+
+namespace DatasetInfoPlugin
+{
+    static class clsDatasetInfoXmlMerger
+    {
+
+        private struct udtAcquisitionInfo
+        {
+            public int ScanCount;
+            public int ScanCountMS;
+            public int ScanCountMSn;
+            public double Elution_Time_Max;
+            public double AcqTimeMinutes;
+            public DateTime StartTime;
+            public DateTime EndTime;
+            public long FileSizeBytes;
+            public int ProfileScanCountMS1;
+            public int ProfileScanCountMS2;
+            public int CentroidScanCountMS1;
+            public int CentroidScanCountMS2;
+            public int CentroidMS1ScansClassifiedAsProfile;
+            public int CentroidMS2ScansClassifiedAsProfile;
+
+            public void Clear()
+            {
+                ScanCount = 0;
+                ScanCountMS = 0;
+                ScanCountMSn = 0;
+                Elution_Time_Max = 0;
+                AcqTimeMinutes = 0;
+                StartTime = DateTime.MinValue;
+                EndTime = DateTime.MinValue;
+                FileSizeBytes = 0;
+                ProfileScanCountMS1 = 0;
+                ProfileScanCountMS2 = 0;
+                CentroidScanCountMS1 = 0;
+                CentroidScanCountMS2 = 0;
+                CentroidMS1ScansClassifiedAsProfile = 0;
+                CentroidMS2ScansClassifiedAsProfile = 0;
+
+            }
+        }
+
+        private struct udtTicInfo
+        {
+            public double TIC_Max_MS;
+            public double TIC_Max_MSn;
+            public double BPI_Max_MS;
+            public double BPI_Max_MSn;
+            public double TIC_Median_MS;
+            public double TIC_Median_MSn;
+            public double BPI_Median_MS;
+            public double BPI_Median_MSn;
+
+            public void Clear()
+            {
+                TIC_Max_MS = 0;
+                TIC_Max_MSn = 0;
+                BPI_Max_MS = 0;
+                BPI_Max_MSn = 0;
+                TIC_Median_MS = 0;
+                TIC_Median_MSn = 0;
+                BPI_Median_MS = 0;
+                BPI_Median_MSn = 0;
+            }
+        }
+
+        /// <summary>
+        /// Merge the dataset info defined in cachedDatasetInfoXml 
+        /// </summary>
+        /// <param name="datasetName">Dataset Name overrride</param>
+        /// <param name="cachedDatasetInfoXml">List of cached DatasetInfo XML</param>
+        /// <returns>Merged DatasetInfo XML</returns>
+        public static string CombineDatasetInfoXML(string datasetName, List<string> cachedDatasetInfoXml)
+        {
+
+            if (cachedDatasetInfoXml.Count == 1)
+            {
+                return cachedDatasetInfoXml.First();
+            }
+
+            // The keys in this dictionary are <ScanType,ScanFilterText> while the values are ScanCount
+            var scanTypes = new Dictionary<KeyValuePair<string, string>, int>();
+
+            var acqInfo = new udtAcquisitionInfo();
+            acqInfo.Clear();
+
+            var ticInfo = new udtTicInfo();
+            ticInfo.Clear();
+
+            // Parse each block of cached XML
+            foreach (var cachedInfoXml in cachedDatasetInfoXml)
+            {
+                var currentDatasetName = ParseDatasetInfoXml(cachedInfoXml, scanTypes, ref acqInfo, ref ticInfo);
+
+                if (string.IsNullOrWhiteSpace(datasetName) && !string.IsNullOrWhiteSpace(currentDatasetName))
+                    datasetName = currentDatasetName;
+            }
+
+            // Create the combined XML
+            var combinedXml = CreateDatasetInfoXML(datasetName, scanTypes, acqInfo, ticInfo);
+
+            // Return the XML as text
+            return combinedXml;
+        }
+
+        /// <summary>
+        /// Parase the xml to populate scanTypes, acqInfo, and ticInfo
+        /// </summary>
+        /// <param name="cachedInfoXml"></param>
+        /// <param name="scanTypes"></param>
+        /// <param name="acqInfo"></param>
+        /// <param name="ticInfo"></param>
+        /// <returns>Dataset name</returns>
+        private static string ParseDatasetInfoXml(
+            string cachedInfoXml,
+            IDictionary<KeyValuePair<string, string>, int> scanTypes,
+            ref udtAcquisitionInfo acqInfo,
+            ref udtTicInfo ticInfo)
+        {
+            var xmlDoc = new XmlDocument();
+
+            using (var reader = new StringReader(cachedInfoXml))
+            {
+                xmlDoc.Load(reader);
+            }
+
+            var datasetName = GetXmlValue(xmlDoc, "DatasetInfo/Dataset", "");
+
+            var scanTypeNodes = xmlDoc.SelectNodes("DatasetInfo/ScanTypes/ScanType");
+            if (scanTypeNodes != null)
+            {
+                foreach (XmlNode node in scanTypeNodes)
+                {
+                    KeyValuePair<string, string> scanTypeKey;
+                    int scanTypeScanCount;
+                    if (node.Attributes != null)
+                    {
+                        var scanFilterText = node.Attributes["ScanFilterText"].Value;
+                        scanTypeKey = new KeyValuePair<string, string>(node.InnerText, scanFilterText);
+
+                        var scanCountText = node.Attributes["ScanCount"].InnerText;
+                        int.TryParse(scanCountText, out scanTypeScanCount);
+                    }
+                    else
+                    {
+                        scanTypeKey = new KeyValuePair<string, string>(node.InnerText, string.Empty);
+                        scanTypeScanCount = 0;
+                    }
+
+                    int scanCountTotal;
+                    if (!scanTypes.TryGetValue(scanTypeKey, out scanCountTotal))
+                    {
+                        scanTypes.Add(scanTypeKey, scanTypeScanCount);
+                    }
+                    else
+                    {
+                        scanTypes[scanTypeKey] = scanCountTotal + scanTypeScanCount;
+                    }
+                }
+            }
+
+            acqInfo.ScanCount += GetXmlValue(xmlDoc, "DatasetInfo/AcquisitionInfo/ScanCount", 0);
+
+            var oldScanCountMSOverall = acqInfo.ScanCountMS;
+            var oldScanCountMSnOverall = acqInfo.ScanCountMSn;
+
+            var currentEntryScanCountMS = GetXmlValue(xmlDoc, "DatasetInfo/AcquisitionInfo/ScanCountMS", 0);
+            var currentEntryScanCountMSn = GetXmlValue(xmlDoc, "DatasetInfo/AcquisitionInfo/ScanCountMSn", 0);
+            acqInfo.ScanCountMS += currentEntryScanCountMS;
+            acqInfo.ScanCountMSn += currentEntryScanCountMSn;
+
+            var elutionTimeMax = GetXmlValue(xmlDoc, "DatasetInfo/AcquisitionInfo/Elution_Time_Max", 0.0);
+            if (elutionTimeMax > acqInfo.Elution_Time_Max)
+                acqInfo.Elution_Time_Max = elutionTimeMax;
+
+            acqInfo.AcqTimeMinutes += GetXmlValue(xmlDoc, "DatasetInfo/AcquisitionInfo/AcqTimeMinutes", 0.0);
+
+            var startTimeText = GetXmlValue(xmlDoc, "DatasetInfo/AcquisitionInfo/StartTime", "");
+            var endTimeText = GetXmlValue(xmlDoc, "DatasetInfo/AcquisitionInfo/EndTime", "");
+
+            DateTime startTime;
+            DateTime endTime;
+
+            if (DateTime.TryParse(startTimeText, out startTime))
+            {
+                if (acqInfo.StartTime == DateTime.MinValue)
+                    acqInfo.StartTime = startTime;
+                else if (startTime < acqInfo.StartTime)
+                    acqInfo.StartTime = startTime;
+            }
+
+            if (DateTime.TryParse(endTimeText, out endTime))
+            {
+                if (acqInfo.EndTime == DateTime.MinValue)
+                    acqInfo.EndTime = endTime;
+                else if (endTime > acqInfo.EndTime)
+                    acqInfo.EndTime = endTime;
+            }
+
+            acqInfo.FileSizeBytes += GetXmlValueLong(xmlDoc, "DatasetInfo/AcquisitionInfo/FileSizeBytes", 0);
+
+            acqInfo.ProfileScanCountMS1 += GetXmlValue(xmlDoc, "DatasetInfo/AcquisitionInfo/ProfileScanCountMS1", 0);
+            acqInfo.ProfileScanCountMS2 += GetXmlValue(xmlDoc, "DatasetInfo/AcquisitionInfo/ProfileScanCountMS2", 0);
+
+            acqInfo.CentroidScanCountMS1 += GetXmlValue(xmlDoc, "DatasetInfo/AcquisitionInfo/CentroidScanCountMS1", 0);
+            acqInfo.CentroidScanCountMS2 += GetXmlValue(xmlDoc, "DatasetInfo/AcquisitionInfo/CentroidScanCountMS2", 0);
+
+            acqInfo.CentroidMS1ScansClassifiedAsProfile += GetXmlValue(xmlDoc,
+                                                                       "DatasetInfo/AcquisitionInfo/CentroidMS1ScansClassifiedAsProfile", 0);
+            acqInfo.CentroidMS2ScansClassifiedAsProfile += GetXmlValue(xmlDoc,
+                                                                       "DatasetInfo/AcquisitionInfo/CentroidMS2ScansClassifiedAsProfile", 0);
+
+            ticInfo.TIC_Max_MS = Math.Max(ticInfo.TIC_Max_MS, GetXmlValue(xmlDoc, "DatasetInfo/TICInfo/TIC_Max_MS", 0.0));
+            ticInfo.TIC_Max_MSn = Math.Max(ticInfo.TIC_Max_MSn, GetXmlValue(xmlDoc, "DatasetInfo/TICInfo/TIC_Max_MSn", 0.0));
+            ticInfo.BPI_Max_MS = Math.Max(ticInfo.BPI_Max_MS, GetXmlValue(xmlDoc, "DatasetInfo/TICInfo/BPI_Max_MS", 0.0));
+            ticInfo.BPI_Max_MSn = Math.Max(ticInfo.BPI_Max_MSn, GetXmlValue(xmlDoc, "DatasetInfo/TICInfo/BPI_Max_MSn", 0.0));
+
+            ticInfo.TIC_Median_MS = UpdateAverage(
+                oldScanCountMSOverall, ticInfo.TIC_Median_MS,
+                currentEntryScanCountMS, GetXmlValue(xmlDoc, "DatasetInfo/TICInfo/TIC_Median_MS", 0.0));
+
+            ticInfo.TIC_Median_MSn = UpdateAverage(
+                oldScanCountMSnOverall, ticInfo.TIC_Median_MSn,
+                currentEntryScanCountMSn, GetXmlValue(xmlDoc, "DatasetInfo/TICInfo/TIC_Median_MSn", 0.0));
+
+            ticInfo.BPI_Median_MS = UpdateAverage(
+                oldScanCountMSOverall, ticInfo.BPI_Median_MS,
+                currentEntryScanCountMS, GetXmlValue(xmlDoc, "DatasetInfo/TICInfo/BPI_Median_MS", 0.0));
+
+            ticInfo.BPI_Median_MSn = UpdateAverage(
+                oldScanCountMSnOverall, ticInfo.BPI_Median_MSn,
+                currentEntryScanCountMSn, GetXmlValue(xmlDoc, "DatasetInfo/TICInfo/BPI_Median_MSn", 0.0));
+
+            return datasetName;
+        }
+
+        private static string CreateDatasetInfoXML(
+            string datasetName,
+            Dictionary<KeyValuePair<string, string>, int> scanTypes,
+            udtAcquisitionInfo acqInfo,
+            udtTicInfo ticInfo)
+        {
+            var objXMLSettings = new XmlWriterSettings
+            {
+                CheckCharacters = true,
+                Indent = true,
+                IndentChars = "  ",
+                Encoding = Encoding.UTF8,
+                CloseOutput = false
+                // Do not close output automatically so that MemoryStream can be read after the XmlWriter has been closed
+            };
+
+            var objMemStream = new MemoryStream();
+            var objDSInfo = XmlWriter.Create(objMemStream, objXMLSettings);
+
+            objDSInfo.WriteStartDocument(true);
+
+            //Write the beginning of the "Root" element.
+            objDSInfo.WriteStartElement("DatasetInfo");
+
+            objDSInfo.WriteElementString("Dataset", datasetName);
+
+            objDSInfo.WriteStartElement("ScanTypes");
+
+            foreach (var scanType in scanTypes)
+            {
+                var scanTypeName = scanType.Key.Key;
+                var scanFilterText = scanType.Key.Value;
+                var scanTypeCount = scanType.Value;
+
+                objDSInfo.WriteStartElement("ScanType");
+                objDSInfo.WriteAttributeString("ScanCount", scanTypeCount.ToString());
+                objDSInfo.WriteAttributeString("ScanFilterText", scanFilterText);
+                objDSInfo.WriteString(scanTypeName);
+                objDSInfo.WriteEndElement();
+                // ScanType EndElement
+            }
+
+            objDSInfo.WriteEndElement();
+            // ScanTypes
+
+            objDSInfo.WriteStartElement("AcquisitionInfo");
+
+            objDSInfo.WriteElementString("ScanCount", acqInfo.ScanCount.ToString());
+
+            objDSInfo.WriteElementString("ScanCountMS", acqInfo.ScanCountMS.ToString());
+            objDSInfo.WriteElementString("ScanCountMSn", acqInfo.ScanCountMSn.ToString());
+            objDSInfo.WriteElementString("Elution_Time_Max", acqInfo.Elution_Time_Max.ToString("0.00"));
+
+            objDSInfo.WriteElementString("AcqTimeMinutes", acqInfo.AcqTimeMinutes.ToString("0.00"));
+            objDSInfo.WriteElementString("StartTime", acqInfo.StartTime.ToString("yyyy-MM-dd hh:mm:ss tt"));
+            objDSInfo.WriteElementString("EndTime", acqInfo.EndTime.ToString("yyyy-MM-dd hh:mm:ss tt"));
+
+            objDSInfo.WriteElementString("FileSizeBytes", acqInfo.FileSizeBytes.ToString());
+
+            if (acqInfo.ProfileScanCountMS1 > 0 || acqInfo.ProfileScanCountMS2 > 0 ||
+                acqInfo.CentroidScanCountMS1 > 0 || acqInfo.CentroidScanCountMS2 > 0 ||
+                acqInfo.CentroidMS1ScansClassifiedAsProfile > 0 || acqInfo.CentroidMS2ScansClassifiedAsProfile > 0)
+            {
+                objDSInfo.WriteElementString("ProfileScanCountMS1", acqInfo.ProfileScanCountMS1.ToString());
+                objDSInfo.WriteElementString("ProfileScanCountMS2", acqInfo.ProfileScanCountMS2.ToString());
+
+                objDSInfo.WriteElementString("CentroidScanCountMS1", acqInfo.CentroidScanCountMS1.ToString());
+                objDSInfo.WriteElementString("CentroidScanCountMS2", acqInfo.CentroidScanCountMS2.ToString());
+
+                if (acqInfo.CentroidMS1ScansClassifiedAsProfile > 0 || acqInfo.CentroidMS2ScansClassifiedAsProfile > 0)
+                {
+                    objDSInfo.WriteElementString("CentroidMS1ScansClassifiedAsProfile",
+                                                 acqInfo.CentroidMS1ScansClassifiedAsProfile.ToString());
+                    objDSInfo.WriteElementString("CentroidMS2ScansClassifiedAsProfile",
+                                                 acqInfo.CentroidMS2ScansClassifiedAsProfile.ToString());
+                }
+            }
+
+
+            objDSInfo.WriteEndElement();
+            // AcquisitionInfo EndElement
+
+            objDSInfo.WriteStartElement("TICInfo");
+            objDSInfo.WriteElementString("TIC_Max_MS", StringUtilities.ValueToString(ticInfo.TIC_Max_MS, 5));
+            objDSInfo.WriteElementString("TIC_Max_MSn", StringUtilities.ValueToString(ticInfo.TIC_Max_MSn, 5));
+            objDSInfo.WriteElementString("BPI_Max_MS", StringUtilities.ValueToString(ticInfo.BPI_Max_MS, 5));
+            objDSInfo.WriteElementString("BPI_Max_MSn", StringUtilities.ValueToString(ticInfo.BPI_Max_MSn, 5));
+            objDSInfo.WriteElementString("TIC_Median_MS", StringUtilities.ValueToString(ticInfo.TIC_Median_MS, 5));
+            objDSInfo.WriteElementString("TIC_Median_MSn", StringUtilities.ValueToString(ticInfo.TIC_Median_MSn, 5));
+            objDSInfo.WriteElementString("BPI_Median_MS", StringUtilities.ValueToString(ticInfo.BPI_Median_MS, 5));
+            objDSInfo.WriteElementString("BPI_Median_MSn", StringUtilities.ValueToString(ticInfo.BPI_Median_MSn, 5));
+            objDSInfo.WriteEndElement();
+            // TICInfo EndElement
+
+            objDSInfo.WriteEndElement();
+            //End the "Root" element (DatasetInfo)
+            objDSInfo.WriteEndDocument();
+            //End the document
+
+            objDSInfo.Close();
+
+            // Now Rewind the memory stream and output as a string
+            objMemStream.Position = 0;
+            var srStreamReader = new StreamReader(objMemStream);
+
+            var combinedXml = srStreamReader.ReadToEnd();
+            return combinedXml;
+        }
+
+        /// <summary>
+        /// Given an existing average value and existing count that contributed to that average,
+        /// update the average based on a new count value and new average for that new count
+        /// </summary>
+        /// <param name="oldOverallCount"></param>
+        /// <param name="oldOverallAverage"></param>
+        /// <param name="newCount"></param>
+        /// <param name="newAverage"></param>
+        /// <returns></returns>
+        private static double UpdateAverage(int oldOverallCount, double oldOverallAverage, int newCount, double newAverage)
+        {
+            if (oldOverallCount == 0)
+                return newAverage;
+
+            if (newCount == 0)
+                return oldOverallAverage;
+
+            var oldCountTimesAverage = oldOverallCount * oldOverallAverage;
+            var newCountTimesAverage = newCount * newAverage;
+
+            var newOverallAverage = (oldCountTimesAverage + newCountTimesAverage) / (oldOverallCount + newCount);
+
+            return newOverallAverage;
+
+        }
+
+        private static string GetXmlValue(XmlDocument xmlDoc, string xPath, string defaultValue)
+        {
+            var match = xmlDoc.SelectSingleNode(xPath);
+
+            if (match == null)
+                return defaultValue;
+
+            return match.InnerText;
+        }
+
+        private static int GetXmlValue(XmlDocument xmlDoc, string xPath, int defaultValue)
+        {
+            var match = GetXmlValue(xmlDoc, xPath, defaultValue.ToString());
+
+            int value;
+            if (int.TryParse(match, out value))
+                return value;
+
+            return defaultValue;
+        }
+
+        private static long GetXmlValueLong(XmlDocument xmlDoc, string xPath, long defaultValue)
+        {
+            var match = GetXmlValue(xmlDoc, xPath, defaultValue.ToString(CultureInfo.InvariantCulture));
+
+            long value;
+            if (long.TryParse(match, out value))
+                return value;
+
+            return defaultValue;
+        }
+
+        private static double GetXmlValue(XmlDocument xmlDoc, string xPath, double defaultValue)
+        {
+            var match = GetXmlValue(xmlDoc, xPath, defaultValue.ToString(CultureInfo.InvariantCulture));
+
+            double value;
+            if (double.TryParse(match, out value))
+                return value;
+
+            return defaultValue;
+        }
+
+    }
+}
