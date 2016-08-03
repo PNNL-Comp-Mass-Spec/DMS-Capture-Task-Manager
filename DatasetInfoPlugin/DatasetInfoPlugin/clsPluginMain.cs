@@ -332,8 +332,28 @@ namespace DatasetInfoPlugin
                     return result;
                 }
 
-            }
+            } // foreach file in sFileOrFolderNames
 
+            var dsInfoXML = CombineDatasetInfoXML(cachedDatasetInfoXML);
+
+            if (cachedDatasetInfoXML.Count > 1)
+            {
+                try
+                {
+                    // Write the combined XML to disk
+                    var combinedXmlFilePath = Path.Combine(outputFolder, m_Dataset + "_Combined_DatasetInfo.xml");
+                    using (var xmlWriter = new StreamWriter(new FileStream(combinedXmlFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    {
+                        xmlWriter.WriteLine(dsInfoXML);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    var msg = "Exception creating the combined _DatasetInfo.xml file for " + m_Dataset + ": " + ex.Message;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                }
+                
+            }
 
             var iPostCount = 0;
             var connectionString = m_MgrParams.GetParam("connectionstring");
@@ -341,7 +361,6 @@ namespace DatasetInfoPlugin
             var iDatasetID = m_TaskParams.GetParam("Dataset_ID", 0);
 
             var successPosting = false;
-            var dsInfoXML = CombineDatasetInfoXML(cachedDatasetInfoXML);
 
             while (iPostCount <= 2)
             {
@@ -354,7 +373,7 @@ namespace DatasetInfoPlugin
                 if (!m_Msg.ToLower().Contains("timeout expired"))
                     break;
 
-                System.Threading.Thread.Sleep(500);
+                System.Threading.Thread.Sleep(1500);
                 iPostCount += 1;
             }
 
