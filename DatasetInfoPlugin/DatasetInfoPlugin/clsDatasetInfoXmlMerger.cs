@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -9,9 +10,9 @@ using PNNLOmics.Utilities;
 
 namespace DatasetInfoPlugin
 {
-    static class clsDatasetInfoXmlMerger
+    class clsDatasetInfoXmlMerger
     {
-
+        #region "Structures"
         private struct udtAcquisitionInfo
         {
             public int ScanCount;
@@ -72,6 +73,27 @@ namespace DatasetInfoPlugin
                 BPI_Median_MSn = 0;
             }
         }
+        #endregion
+
+        #region "Properties"
+        /// <summary>
+        /// The keys in this dictionary are KeyValuePairs of [ScanType,ScanFilterText] while the values are the scan count
+        /// </summary>
+        public Dictionary<KeyValuePair<string, string>, int> ScanTypes { get; }
+
+        #endregion
+
+        #region "Member Variables"
+
+        #endregion
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        public clsDatasetInfoXmlMerger()
+        {
+            ScanTypes = new Dictionary<KeyValuePair<string, string>, int>();
+        }
 
         /// <summary>
         /// Merge the dataset info defined in cachedDatasetInfoXml 
@@ -79,7 +101,7 @@ namespace DatasetInfoPlugin
         /// <param name="datasetName">Dataset Name overrride</param>
         /// <param name="cachedDatasetInfoXml">List of cached DatasetInfo XML</param>
         /// <returns>Merged DatasetInfo XML</returns>
-        public static string CombineDatasetInfoXML(string datasetName, List<string> cachedDatasetInfoXml)
+        public string CombineDatasetInfoXML(string datasetName, List<string> cachedDatasetInfoXml)
         {
 
             if (cachedDatasetInfoXml.Count == 1)
@@ -87,8 +109,8 @@ namespace DatasetInfoPlugin
                 return cachedDatasetInfoXml.First();
             }
 
-            // The keys in this dictionary are <ScanType,ScanFilterText> while the values are ScanCount
-            var scanTypes = new Dictionary<KeyValuePair<string, string>, int>();
+            // The keys in this dictionary are KeyValuePairs of [ScanType,ScanFilterText] while the values are the scan count
+            ScanTypes.Clear();
 
             var acqInfo = new udtAcquisitionInfo();
             acqInfo.Clear();
@@ -99,14 +121,14 @@ namespace DatasetInfoPlugin
             // Parse each block of cached XML
             foreach (var cachedInfoXml in cachedDatasetInfoXml)
             {
-                var currentDatasetName = ParseDatasetInfoXml(cachedInfoXml, scanTypes, ref acqInfo, ref ticInfo);
+                var currentDatasetName = ParseDatasetInfoXml(cachedInfoXml, ScanTypes, ref acqInfo, ref ticInfo);
 
                 if (string.IsNullOrWhiteSpace(datasetName) && !string.IsNullOrWhiteSpace(currentDatasetName))
                     datasetName = currentDatasetName;
             }
 
             // Create the combined XML
-            var combinedXml = CreateDatasetInfoXML(datasetName, scanTypes, acqInfo, ticInfo);
+            var combinedXml = CreateDatasetInfoXML(datasetName, ScanTypes, acqInfo, ticInfo);
 
             // Return the XML as text
             return combinedXml;
@@ -120,7 +142,7 @@ namespace DatasetInfoPlugin
         /// <param name="acqInfo"></param>
         /// <param name="ticInfo"></param>
         /// <returns>Dataset name</returns>
-        private static string ParseDatasetInfoXml(
+        private string ParseDatasetInfoXml(
             string cachedInfoXml,
             IDictionary<KeyValuePair<string, string>, int> scanTypes,
             ref udtAcquisitionInfo acqInfo,
@@ -243,7 +265,7 @@ namespace DatasetInfoPlugin
             return datasetName;
         }
 
-        private static string CreateDatasetInfoXML(
+        private string CreateDatasetInfoXML(
             string datasetName,
             Dictionary<KeyValuePair<string, string>, int> scanTypes,
             udtAcquisitionInfo acqInfo,
@@ -361,7 +383,7 @@ namespace DatasetInfoPlugin
         /// <param name="newCount"></param>
         /// <param name="newAverage"></param>
         /// <returns></returns>
-        private static double UpdateAverage(int oldOverallCount, double oldOverallAverage, int newCount, double newAverage)
+        private double UpdateAverage(int oldOverallCount, double oldOverallAverage, int newCount, double newAverage)
         {
             if (oldOverallCount == 0)
                 return newAverage;
@@ -378,7 +400,7 @@ namespace DatasetInfoPlugin
 
         }
 
-        private static string GetXmlValue(XmlDocument xmlDoc, string xPath, string defaultValue)
+        private string GetXmlValue(XmlDocument xmlDoc, string xPath, string defaultValue)
         {
             var match = xmlDoc.SelectSingleNode(xPath);
 
@@ -388,7 +410,7 @@ namespace DatasetInfoPlugin
             return match.InnerText;
         }
 
-        private static int GetXmlValue(XmlDocument xmlDoc, string xPath, int defaultValue)
+        private int GetXmlValue(XmlDocument xmlDoc, string xPath, int defaultValue)
         {
             var match = GetXmlValue(xmlDoc, xPath, defaultValue.ToString());
 
@@ -399,7 +421,7 @@ namespace DatasetInfoPlugin
             return defaultValue;
         }
 
-        private static long GetXmlValueLong(XmlDocument xmlDoc, string xPath, long defaultValue)
+        private long GetXmlValueLong(XmlDocument xmlDoc, string xPath, long defaultValue)
         {
             var match = GetXmlValue(xmlDoc, xPath, defaultValue.ToString(CultureInfo.InvariantCulture));
 
@@ -410,7 +432,7 @@ namespace DatasetInfoPlugin
             return defaultValue;
         }
 
-        private static double GetXmlValue(XmlDocument xmlDoc, string xPath, double defaultValue)
+        private double GetXmlValue(XmlDocument xmlDoc, string xPath, double defaultValue)
         {
             var match = GetXmlValue(xmlDoc, xPath, defaultValue.ToString(CultureInfo.InvariantCulture));
 

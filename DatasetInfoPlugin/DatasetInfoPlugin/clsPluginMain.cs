@@ -175,7 +175,7 @@ namespace DatasetInfoPlugin
             // Set up the rest of the paths
             sourceFolder = Path.Combine(sourceFolder, m_TaskParams.GetParam("Storage_Path"));
             sourceFolder = Path.Combine(sourceFolder, m_TaskParams.GetParam("Folder"));
-            var outputFolder = Path.Combine(sourceFolder, "QC");
+            var outputPathBase = Path.Combine(sourceFolder, "QC");
             bool bSkipPlots;
 
             // Set up the params for the MS file scanner
@@ -233,61 +233,50 @@ namespace DatasetInfoPlugin
             }
 
             // Make the output folder
-            if (!Directory.Exists(outputFolder))
+            if (!Directory.Exists(outputPathBase))
             {
                 try
                 {
-                    Directory.CreateDirectory(outputFolder);
-                    var msg = "clsPluginMain.RunMsFileInfoScanner: Created output folder " + outputFolder;
+                    Directory.CreateDirectory(outputPathBase);
+                    var msg = "clsPluginMain.RunMsFileInfoScanner: Created output folder " + outputPathBase;
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
                 }
                 catch (Exception ex)
                 {
-                    var msg = "clsPluginMain.RunMsFileInfoScanner: Exception creating output folder " + outputFolder;
+                    var msg = "clsPluginMain.RunMsFileInfoScanner: Exception creating output folder " + outputPathBase;
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
-                    result.CloseoutMsg = "Exception creating output folder " + outputFolder;
+                    result.CloseoutMsg = "Exception creating output folder " + outputPathBase;
                     result.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     return result;
                 }
             }
 
             // Call the file scanner DLL
+            // Typically only call it once, but for Bruker datasets with multiple .D folders, we'll call it once for each .D folder
 
             m_ErrOccurred = false;
             m_Msg = string.Empty;
 
             var cachedDatasetInfoXML = new List<string>();
+            var outputFolderNames = new List<string>();
             var primaryFileOrFolderProcessed = false;
+            var nextSubFolderSuffix = 1;
 
-            foreach (var fileOrFolderName in sFileOrFolderNames)
+            foreach (var datasetFileOrFolder in sFileOrFolderNames)
             {
-                string currentOutputFolder;
-                if (primaryFileOrFolderProcessed)
-                {
-                    var subFolder = Path.GetFileNameWithoutExtension(fileOrFolderName);
-                    if (subFolder == null)
-                        currentOutputFolder = outputFolder;
-                    else
-                        currentOutputFolder = Path.Combine(outputFolder, subFolder);
-                }
-                else
-                {
-                    currentOutputFolder = outputFolder;
-                }
+                var currentOutputFolder = ConstructOutputFolderPath(
+                    outputPathBase, datasetFileOrFolder, sFileOrFolderNames.Count,
+                    outputFolderNames, ref nextSubFolderSuffix);
 
-                var successProcessing = m_MsFileScanner.ProcessMSFileOrFolder(Path.Combine(sourceFolder, fileOrFolderName), currentOutputFolder);
+                var successProcessing = m_MsFileScanner.ProcessMSFileOrFolder(Path.Combine(sourceFolder, datasetFileOrFolder), currentOutputFolder);
 
                 if (m_ErrOccurred)
                     successProcessing = false;
 
                 if (successProcessing)
                 {
-                    if (!primaryFileOrFolderProcessed)
-                    {
-                        primaryFileOrFolderProcessed = true;
-                    }
-
                     cachedDatasetInfoXML.Add(m_MsFileScanner.DatasetInfoXML);
+                    primaryFileOrFolderProcessed = true;
                     continue;
                 }
 
@@ -314,14 +303,14 @@ namespace DatasetInfoPlugin
                     // MSFileInfoScanner already processed the primary file or folder
                     // Mention this failure in the EvalMsg but still return success
                     result.EvalMsg = AppendToComment(result.EvalMsg,
-                                                     "ProcessMSFileOrFolder returned false for " + fileOrFolderName);
+                                                     "ProcessMSFileOrFolder returned false for " + datasetFileOrFolder);
                 }
                 else
                 {
                     if (string.IsNullOrEmpty(m_Msg))
                     {
-                        m_Msg = "ProcessMSFileOrFolder returned false. Message = " + 
-                                m_MsFileScanner.GetErrorMessage() + 
+                        m_Msg = "ProcessMSFileOrFolder returned false. Message = " +
+                                m_MsFileScanner.GetErrorMessage() +
                                 " Result code = " + (int)m_MsFileScanner.ErrorCode;
                     }
 
@@ -334,25 +323,14 @@ namespace DatasetInfoPlugin
 
             } // foreach file in sFileOrFolderNames
 
-            var dsInfoXML = CombineDatasetInfoXML(cachedDatasetInfoXML);
+            // Merge the dataset info defined in cachedDatasetInfoXML 
+            // If cachedDatasetInfoXml contains just one item, simply return it
+            var datasetXmlMerger = new clsDatasetInfoXmlMerger();
+            var dsInfoXML = CombineDatasetInfoXML(datasetXmlMerger, cachedDatasetInfoXML);
 
             if (cachedDatasetInfoXML.Count > 1)
             {
-                try
-                {
-                    // Write the combined XML to disk
-                    var combinedXmlFilePath = Path.Combine(outputFolder, m_Dataset + "_Combined_DatasetInfo.xml");
-                    using (var xmlWriter = new StreamWriter(new FileStream(combinedXmlFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                    {
-                        xmlWriter.WriteLine(dsInfoXML);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    var msg = "Exception creating the combined _DatasetInfo.xml file for " + m_Dataset + ": " + ex.Message;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
-                }
-                
+                ProcessMultiDatasetInfoScannerResults(outputPathBase, datasetXmlMerger, dsInfoXML, outputFolderNames);
             }
 
             var iPostCount = 0;
@@ -407,12 +385,198 @@ namespace DatasetInfoPlugin
 
         }
 
+        private void ProcessMultiDatasetInfoScannerResults(
+            string outputPathBase,
+            clsDatasetInfoXmlMerger datasetXmlMerger,
+            string dsInfoXML, 
+            IEnumerable<string> outputFolderNames)
+        {
+
+            var combinedDatasetInfoFilename = m_Dataset + "_Combined_DatasetInfo.xml";
+
+            try
+            {
+                // Write the combined XML to disk
+                var combinedXmlFilePath = Path.Combine(outputPathBase, combinedDatasetInfoFilename);
+                using (var xmlWriter = new StreamWriter(new FileStream(combinedXmlFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    xmlWriter.WriteLine(dsInfoXML);
+                }
+            }
+            catch (Exception ex)
+            {
+                var msg = "Exception creating the combined _DatasetInfo.xml file for " + m_Dataset + ": " + ex.Message;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+            }
+
+            try
+            {
+                var pngMatcher = new Regex(@"""(?<Filename>[^""]+\.png)""");
+
+                // Create an index.html file that shows all of the plots in the subfolders
+                var indexHtmlFilePath = Path.Combine(outputPathBase, "index.html");
+                using (var htmlWriter = new StreamWriter(new FileStream(indexHtmlFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    htmlWriter.WriteLine("<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 3.2//EN\">");
+                    htmlWriter.WriteLine("<html>");
+                    htmlWriter.WriteLine("<head>");
+                    htmlWriter.WriteLine("  <title>" + m_Dataset + "</title>");
+                    htmlWriter.WriteLine("</head>");
+                    htmlWriter.WriteLine();
+                    htmlWriter.WriteLine("<body>");
+                    htmlWriter.WriteLine("  <h2>" + m_Dataset + "</h2>");
+                    htmlWriter.WriteLine();
+                    htmlWriter.WriteLine("  <table>");
+
+                    foreach (var subfolderName in outputFolderNames)
+                    {
+                        var diSubFolder = new DirectoryInfo(Path.Combine(outputPathBase, subfolderName));
+                        var htmlFiles = diSubFolder.GetFiles("index.html");
+                        if (htmlFiles.Length == 0)
+                            continue;
+
+                        using (var htmlReader = new StreamReader(new FileStream(htmlFiles[0].FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                        {
+                            var processingTable = false;
+                            var htmlToAppend = new List<string>();
+                            var htmlHasImageInfo = false;
+                            var rowDepth = 0;
+
+                            while (!htmlReader.EndOfStream)
+                            {
+                                var dataLine = htmlReader.ReadLine();
+                                if (string.IsNullOrWhiteSpace(dataLine))
+                                    continue;
+
+                                var lineTrimmed = dataLine.Trim();
+
+                                if (processingTable)
+                                {
+                                    var rowAdded = false;
+
+                                    // Look for png files
+                                    if (pngMatcher.IsMatch(dataLine))
+                                    {
+                                        // Match found; prepend the subfolder name
+                                        dataLine = pngMatcher.Replace(dataLine, '"' + subfolderName + "/${Filename}" + '"');
+                                        htmlHasImageInfo = true;
+                                    }
+
+                                    if (lineTrimmed.StartsWith("<tr>"))
+                                    {
+                                        // Start of a table row
+                                        rowDepth++;
+
+                                        htmlToAppend.Add(dataLine);
+                                        rowAdded = true;
+                                    }
+
+                                    if (lineTrimmed.EndsWith("</tr>"))
+                                    {
+                                        // End of a table row
+                                        if (!rowAdded)
+                                        {
+                                            htmlToAppend.Add(dataLine);
+                                            rowAdded = true;
+                                        }
+                                        rowDepth--;
+
+                                        if (rowDepth == 0 && htmlToAppend.Count > 0)
+                                        {
+                                            if (htmlHasImageInfo)
+                                            {
+                                                // Write this set of rows out to the new index.html file
+                                                foreach (var outRow in htmlToAppend)
+                                                {
+                                                    htmlWriter.WriteLine(outRow);
+                                                }
+                                            }
+                                            htmlToAppend.Clear();
+                                            htmlHasImageInfo = false;
+                                        }
+                                    }
+
+                                    if (rowDepth == 0 && lineTrimmed.StartsWith("</table>"))
+                                    {
+                                        // Done processing the main table
+                                        // Stop parsing this file
+                                        break;
+                                    }
+
+                                    if (!rowAdded)
+                                    {
+                                        htmlToAppend.Add(dataLine);
+                                    }
+
+
+                                }
+                                else if (dataLine.Trim().StartsWith("<table>"))
+                                {
+                                    processingTable = true;
+                                }
+
+                            }
+                        }
+
+                    }
+
+                    // Add the combined stats
+                    htmlWriter.WriteLine("    <tr>");
+                    htmlWriter.WriteLine("        <td colspan=\"3\"><hr/></td>");
+                    htmlWriter.WriteLine("    </tr>");
+                    htmlWriter.WriteLine("    <tr>");
+                    htmlWriter.WriteLine("      <td>&nbsp;</td>");
+                    htmlWriter.WriteLine("      <td align=\"right\">Combined Stats:</td>");
+                    htmlWriter.WriteLine("      <td valign=\"middle\">");
+                    htmlWriter.WriteLine("        <table border=\"1\">");
+                    htmlWriter.WriteLine("          <tr><th>Scan Type</th><th>Scan Count</th><th>Scan Filter Text</th></tr>");
+
+                    foreach (var item in datasetXmlMerger.ScanTypes)
+                    {
+                        var scanTypeName = item.Key.Key;
+                        var scanCount = item.Value;
+
+                        htmlWriter.WriteLine("          <tr><td>" + scanTypeName  + "</td><td align=\"center\">" + scanCount  + "</td><td></td></tr>");
+                    }
+                    
+                    htmlWriter.WriteLine("        </table>");
+                    htmlWriter.WriteLine("      </td>");
+                    htmlWriter.WriteLine("    </tr>");
+                    htmlWriter.WriteLine("    <tr>");
+                    htmlWriter.WriteLine("        <td colspan=\"3\"><hr/></td>");
+                    htmlWriter.WriteLine("    </tr>");
+
+                    // Add a link to the Dataset detail report
+                    htmlWriter.WriteLine("    <tr>");
+                    htmlWriter.WriteLine("      <td>&nbsp;</td>");
+                    htmlWriter.WriteLine("      <td align=\"center\">DMS <a href=\"http://dms2.pnl.gov/dataset/show/" + m_Dataset + "\">Dataset Detail Report</a></td>");
+                    htmlWriter.WriteLine("      <td align=\"center\"><a href=\"" + combinedDatasetInfoFilename + "\">Dataset Info XML file</a></td>");
+                    htmlWriter.WriteLine("    </tr>");
+                    htmlWriter.WriteLine("");
+                    htmlWriter.WriteLine("  </table>");
+                    htmlWriter.WriteLine("");
+                    htmlWriter.WriteLine("</body>");
+                    htmlWriter.WriteLine("</html>");
+                    htmlWriter.WriteLine();
+                }
+            }
+            catch (Exception ex)
+            {
+                var msg = "Exception creating the combined _DatasetInfo.xml file for " + m_Dataset + ": " + ex.Message;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+            }
+
+
+        }
+
         /// <summary>
         /// Merge the dataset info defined in cachedDatasetInfoXml 
+        /// If cachedDatasetInfoXml contains just one item, simply return it
         /// </summary>
+        /// <param name="datasetXmlMerger">DatasetInfo XML Merger</param>
         /// <param name="cachedDatasetInfoXml">List of cached DatasetInfo XML</param>
         /// <returns>Merged DatasetInfo XML</returns>
-        private string CombineDatasetInfoXML(List<string> cachedDatasetInfoXml)
+        private string CombineDatasetInfoXML(clsDatasetInfoXmlMerger datasetXmlMerger, List<string> cachedDatasetInfoXml)
         {
 
             if (cachedDatasetInfoXml.Count == 1)
@@ -420,7 +584,7 @@ namespace DatasetInfoPlugin
                 return cachedDatasetInfoXml.First();
             }
 
-            var combinedXML = clsDatasetInfoXmlMerger.CombineDatasetInfoXML(m_Dataset, cachedDatasetInfoXml);
+            var combinedXML = datasetXmlMerger.CombineDatasetInfoXML(m_Dataset, cachedDatasetInfoXml);
 
             return combinedXML;
 
@@ -441,6 +605,63 @@ namespace DatasetInfoPlugin
             }
 
             return string.Empty;
+        }
+
+        /// <summary>
+        /// Determine the appropriate output folder path
+        /// If we are only processing one dataset file or folder, the output folder path is simply outputPathBase
+        /// Otherwise, it is based on the current file or folder being processed (datasetFileOrFolder)
+        /// nextSubFolderSuffix is used to avoid folder name conflicts
+        /// </summary>
+        /// <param name="outputPathBase"></param>
+        /// <param name="datasetFileOrFolder"></param>
+        /// <param name="totalDatasetFilesOrFolders"></param>
+        /// <param name="outputFolderNames"></param>
+        /// <param name="nextSubFolderSuffix">Input/output parameter</param>
+        /// <returns>Full path to the output folder to use for the current file or folder being processed</returns>
+        private string ConstructOutputFolderPath(
+            string outputPathBase,
+            string datasetFileOrFolder,
+            int totalDatasetFilesOrFolders,
+            ICollection<string> outputFolderNames,
+            ref int nextSubFolderSuffix)
+        {
+
+            string currentOutputFolder;
+
+            if (totalDatasetFilesOrFolders > 1)
+            {
+                var subFolder = Path.GetFileNameWithoutExtension(datasetFileOrFolder);
+                if (string.IsNullOrWhiteSpace(subFolder))
+                {
+                    var subFolderToUse = m_Dataset + "_" + nextSubFolderSuffix;
+                    while (outputFolderNames.Contains(subFolderToUse))
+                    {
+                        nextSubFolderSuffix++;
+                        subFolderToUse = m_Dataset + "_" + nextSubFolderSuffix;
+                    }
+
+                    currentOutputFolder = Path.Combine(outputPathBase, subFolderToUse);
+                    outputFolderNames.Add(subFolderToUse);
+                }
+                else
+                {
+                    var subFolderToUse = string.Copy(subFolder);
+                    while (outputFolderNames.Contains(subFolderToUse))
+                    {
+                        subFolderToUse = subFolder + "_" + nextSubFolderSuffix;
+                        nextSubFolderSuffix++;
+                    }
+
+                    currentOutputFolder = Path.Combine(outputPathBase, subFolderToUse);
+                    outputFolderNames.Add(subFolderToUse);
+                }
+            }
+            else
+            {
+                currentOutputFolder = outputPathBase;
+            }
+            return currentOutputFolder;
         }
 
         /// <summary>
@@ -476,10 +697,10 @@ namespace DatasetInfoPlugin
         /// <returns>List of data file file or folder names; empty list if not found</returns>
         /// <remarks>Will return UNKNOWN_FILE_TYPE or INVALID_FILE_TYPE in special circumstances</remarks>
         private List<string> GetDataFileOrFolderName(
-            string inputFolder, 
-            out bool bSkipPlots, 
-            out clsInstrumentClassInfo.eRawDataType rawDataType, 
-            out clsInstrumentClassInfo.eInstrumentClass instrumentClass, 
+            string inputFolder,
+            out bool bSkipPlots,
+            out clsInstrumentClassInfo.eRawDataType rawDataType,
+            out clsInstrumentClassInfo.eInstrumentClass instrumentClass,
             out bool bBrukerDotDBaf)
         {
             var bIsFile = false;
@@ -641,7 +862,7 @@ namespace DatasetInfoPlugin
                 if (Path.GetExtension(sFileOrFolderName).ToUpper() != ".D")
                 {
                     // Folder exists, and it does not end in .D
-                    return new List<string>() {sFileOrFolderName};
+                    return new List<string>() { sFileOrFolderName };
                 }
 
                 // Look for other .D folders
@@ -692,7 +913,7 @@ namespace DatasetInfoPlugin
                 {
                     m_Msg = "Data file not found, but ." + altExtension + " file exists";
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
-                    return new List<string>() { INVALID_FILE_TYPE};
+                    return new List<string>() { INVALID_FILE_TYPE };
                 }
             }
 
