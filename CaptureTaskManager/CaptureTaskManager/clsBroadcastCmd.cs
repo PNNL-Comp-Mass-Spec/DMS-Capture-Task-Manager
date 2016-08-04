@@ -18,8 +18,6 @@ namespace CaptureTaskManager
 
         #region "Class variables"
 
-        private List<string> m_MachineList = new List<string>();
-
         #endregion
 
         #region "Properties"
@@ -27,14 +25,18 @@ namespace CaptureTaskManager
         /// <summary>
         /// List of machines the received message applies to
         /// </summary>
-        public List<string> MachineList
-        {
-            get { return m_MachineList; }
-            set { m_MachineList = value; }
-        }
+        public List<string> MachineList { get; }
 
         // The command that was broadcast
         public string MachCmd { get; set; }
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        public clsBroadcastCmd()
+        {
+            MachineList = new List<string>();
+        }
 
         #endregion
     }

@@ -876,6 +876,8 @@ namespace CaptureTaskManager
             {
                 var fiApplication = new FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
 
+                if (fiApplication.Directory == null) return;
+
                 foreach (var fiFile in fiApplication.Directory.GetFiles("FTPlog_*"))
                 {
                     try

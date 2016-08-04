@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.IO;
-using System.Text.RegularExpressions;
 
 namespace CaptureTaskManager
 {
@@ -74,7 +72,7 @@ namespace CaptureTaskManager
 
     #endregion
 
-    public class clsConversion
+    public static class clsConversion
     {
         /// <summary>
         /// Convert string to bool; default false if an error
@@ -163,7 +161,7 @@ namespace CaptureTaskManager
         }
     }
 
-    public class clsErrors
+    public static class clsErrors
     {
         /// <summary>
         /// Parses the .StackTrace text of the given exception to return a compact description of the current stack
@@ -192,7 +190,7 @@ namespace CaptureTaskManager
         }
     }
 
-    public class clsUtilities
+    public static class clsUtilities
     {
         /// <summary>
         /// Returns the directory in which the entry assembly (typically the Program .exe file) resides 

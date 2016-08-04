@@ -388,10 +388,7 @@ namespace CaptureTaskManager
                 // And (ProgRunner.State <> 10)
                 while ((mProgRunner.State != PRISM.Processes.clsProgRunner.States.NotMonitoring))
                 {
-                    if (LoopWaiting != null)
-                    {
-                        LoopWaiting();
-                    }
+                    LoopWaiting?.Invoke();
                     System.Threading.Thread.Sleep(mMonitorInterval);
 
                     if (MaxRuntimeSeconds > 0)
@@ -400,10 +397,7 @@ namespace CaptureTaskManager
                         {
                             ProgramAborted = true;
                             blnRuntimeExceeded = true;
-                            if (Timeout != null)
-                            {
-                                Timeout();
-                            }
+                            Timeout?.Invoke();
                         }
                     }
 
@@ -467,19 +461,13 @@ namespace CaptureTaskManager
 
         private void ProgRunner_ConsoleErrorEvent(string NewText)
         {
-            if (ConsoleErrorEvent != null)
-            {
-                ConsoleErrorEvent(NewText);
-            }
+            ConsoleErrorEvent?.Invoke(NewText);
             Console.WriteLine("Console error: " + Environment.NewLine + NewText);
         }
 
         private void ProgRunner_ConsoleOutputEvent(string NewText)
         {
-            if (ConsoleOutputEvent != null)
-            {
-                ConsoleOutputEvent(NewText);
-            }
+            ConsoleOutputEvent?.Invoke(NewText);
         }
 
         private void ProgRunner_ProgChanged(PRISM.Processes.clsProgRunner obj)

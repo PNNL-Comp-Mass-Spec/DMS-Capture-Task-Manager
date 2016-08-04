@@ -8,8 +8,8 @@ namespace CaptureTaskManager
         protected const string FAILED_RESULTS_FOLDER_INFO_TEXT = "FailedResultsFolderInfo_";
         protected const int FAILED_RESULTS_FOLDER_RETAIN_DAYS = 31;
 
-        protected IMgrParams m_mgrParams;
-        protected ITaskParams m_taskParams;
+        protected readonly IMgrParams m_mgrParams;
+        protected readonly ITaskParams m_taskParams;
 
         // Constructor
         public clsFailedResultsCopier(IMgrParams mgrParams, ITaskParams taskParams)
@@ -152,7 +152,14 @@ namespace CaptureTaskManager
                 try
                 {
 			        var strOldResultsFolderName = Path.GetFileNameWithoutExtension(fiFileInfo.Name).Substring(FAILED_RESULTS_FOLDER_INFO_TEXT.Length);
-			        var diOldResultsFolder = new DirectoryInfo(Path.Combine(fiFileInfo.DirectoryName, strOldResultsFolderName));
+
+                    if (fiFileInfo.DirectoryName == null)
+                    {
+                        // Parent directory not defined; skip this folder
+                        continue;
+                    }
+
+                    var diOldResultsFolder = new DirectoryInfo(Path.Combine(fiFileInfo.DirectoryName, strOldResultsFolderName));
 
                     if (diOldResultsFolder.Exists)
                     {

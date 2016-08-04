@@ -250,7 +250,7 @@ namespace CaptureTaskManager
 
                 //Execute the SP
                 DataTable dt;
-                var retVal = CaptureTaskDBProcedureExecutor.ExecuteSP(myCmd, out dt);
+                var retVal = m_CaptureTaskDBProcedureExecutor.ExecuteSP(myCmd, out dt);
 
                 switch (retVal)
                 {
@@ -329,13 +329,12 @@ namespace CaptureTaskManager
         /// <param name="closeoutMsg">Message related to task closeout</param>
         /// <param name="evalCode">Enum representing evaluation results</param>
         /// <param name="evalMsg">Message related to evaluation results</param>
-        public override void CloseTask(EnumCloseOutType taskResult, string closeoutMsg, EnumEvalCode evalCode,
-                                       string evalMsg)
+        public override void CloseTask(EnumCloseOutType taskResult, string closeoutMsg, EnumEvalCode evalCode, string evalMsg)
         {
             string msg;
 
             if (
-                !SetCaptureTaskComplete(SP_NAME_SET_COMPLETE, m_ConnStr, (int)taskResult, closeoutMsg, (int)evalCode,
+                !SetCaptureTaskComplete(SP_NAME_SET_COMPLETE, (int)taskResult, closeoutMsg, (int)evalCode,
                                         evalMsg))
             {
                 msg = "Error setting task complete in database, job " + GetParam("Job", "??");
@@ -352,85 +351,83 @@ namespace CaptureTaskManager
         /// Database calls to set a capture task complete
         /// </summary>
         /// <param name="spName">Name of SetComplete stored procedure</param>
-        /// <param name="connStr">Db connection string</param>
         /// <param name="compCode">Integer representation of completion code</param>
         /// <param name="compMsg">Completion message</param>
         /// <param name="evalCode">Integer representation of evaluation code</param>
         /// <param name="evalMsg">Evaluation message</param>
         /// <returns>TRUE for sucesss; FALSE for failure</returns>
-        public bool SetCaptureTaskComplete(string spName, string connStr, int compCode, string compMsg, int evalCode,
-                                           string evalMsg)
+        public bool SetCaptureTaskComplete(string spName, int compCode, string compMsg, int evalCode, string evalMsg)
         {
             string msg;
-            bool Outcome;
+            bool outcome;
 
             try
             {
                 //Setup for execution of the stored procedure
-                var MyCmd = new SqlCommand();
+                var cmd = new SqlCommand();
                 {
-                    MyCmd.CommandType = CommandType.StoredProcedure;
-                    MyCmd.CommandText = spName;
-                    MyCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int));
-                    MyCmd.Parameters["@Return"].Direction = ParameterDirection.ReturnValue;
-                    MyCmd.Parameters.Add(new SqlParameter("@job", SqlDbType.Int));
-                    MyCmd.Parameters["@job"].Direction = ParameterDirection.Input;
-                    MyCmd.Parameters["@job"].Value = int.Parse(m_JobParams["Job"]);
-                    MyCmd.Parameters.Add(new SqlParameter("@step", SqlDbType.Int));
-                    MyCmd.Parameters["@step"].Direction = ParameterDirection.Input;
-                    MyCmd.Parameters["@step"].Value = int.Parse(m_JobParams["Step"]);
-                    MyCmd.Parameters.Add(new SqlParameter("@completionCode", SqlDbType.Int));
-                    MyCmd.Parameters["@completionCode"].Direction = ParameterDirection.Input;
-                    MyCmd.Parameters["@completionCode"].Value = compCode;
-                    MyCmd.Parameters.Add(new SqlParameter("@completionMessage", SqlDbType.VarChar, 256));
-                    MyCmd.Parameters["@completionMessage"].Direction = ParameterDirection.Input;
-                    MyCmd.Parameters["@completionMessage"].Value = compMsg;
-                    MyCmd.Parameters.Add(new SqlParameter("@evaluationCode", SqlDbType.Int));
-                    MyCmd.Parameters["@evaluationCode"].Direction = ParameterDirection.Input;
-                    MyCmd.Parameters["@evaluationCode"].Value = evalCode;
-                    MyCmd.Parameters.Add(new SqlParameter("@evaluationMessage", SqlDbType.VarChar, 256));
-                    MyCmd.Parameters["@evaluationMessage"].Direction = ParameterDirection.Input;
-                    MyCmd.Parameters["@evaluationMessage"].Value = evalMsg;
-                    MyCmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512));
-                    MyCmd.Parameters["@message"].Direction = ParameterDirection.Output;
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.CommandText = spName;
+                    cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int));
+                    cmd.Parameters["@Return"].Direction = ParameterDirection.ReturnValue;
+                    cmd.Parameters.Add(new SqlParameter("@job", SqlDbType.Int));
+                    cmd.Parameters["@job"].Direction = ParameterDirection.Input;
+                    cmd.Parameters["@job"].Value = int.Parse(m_JobParams["Job"]);
+                    cmd.Parameters.Add(new SqlParameter("@step", SqlDbType.Int));
+                    cmd.Parameters["@step"].Direction = ParameterDirection.Input;
+                    cmd.Parameters["@step"].Value = int.Parse(m_JobParams["Step"]);
+                    cmd.Parameters.Add(new SqlParameter("@completionCode", SqlDbType.Int));
+                    cmd.Parameters["@completionCode"].Direction = ParameterDirection.Input;
+                    cmd.Parameters["@completionCode"].Value = compCode;
+                    cmd.Parameters.Add(new SqlParameter("@completionMessage", SqlDbType.VarChar, 256));
+                    cmd.Parameters["@completionMessage"].Direction = ParameterDirection.Input;
+                    cmd.Parameters["@completionMessage"].Value = compMsg;
+                    cmd.Parameters.Add(new SqlParameter("@evaluationCode", SqlDbType.Int));
+                    cmd.Parameters["@evaluationCode"].Direction = ParameterDirection.Input;
+                    cmd.Parameters["@evaluationCode"].Value = evalCode;
+                    cmd.Parameters.Add(new SqlParameter("@evaluationMessage", SqlDbType.VarChar, 256));
+                    cmd.Parameters["@evaluationMessage"].Direction = ParameterDirection.Input;
+                    cmd.Parameters["@evaluationMessage"].Value = evalMsg;
+                    cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512));
+                    cmd.Parameters["@message"].Direction = ParameterDirection.Output;
                 }
 
                 msg = "Calling stored procedure " + spName;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
-                msg = "Parameters: Job=" + MyCmd.Parameters["@job"].Value +
-                      ", Step=" + MyCmd.Parameters["@step"].Value +
-                      ", completionCode=" + MyCmd.Parameters["@completionCode"].Value +
-                      ", completionMessage=" + MyCmd.Parameters["@completionMessage"].Value +
-                      ", evaluationCode=" + MyCmd.Parameters["@evaluationCode"].Value +
-                      ", evaluationMessage=" + MyCmd.Parameters["@evaluationMessage"].Value;
+                msg = "Parameters: Job=" + cmd.Parameters["@job"].Value +
+                      ", Step=" + cmd.Parameters["@step"].Value +
+                      ", completionCode=" + cmd.Parameters["@completionCode"].Value +
+                      ", completionMessage=" + cmd.Parameters["@completionMessage"].Value +
+                      ", evaluationCode=" + cmd.Parameters["@evaluationCode"].Value +
+                      ", evaluationMessage=" + cmd.Parameters["@evaluationMessage"].Value;
 
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
 
                 //Execute the SP
-                var ResCode = CaptureTaskDBProcedureExecutor.ExecuteSP(MyCmd);
+                var ResCode = m_CaptureTaskDBProcedureExecutor.ExecuteSP(cmd);
 
                 if (ResCode == 0)
                 {
-                    Outcome = true;
+                    outcome = true;
                 }
                 else
                 {
                     msg = "Error " + ResCode + " setting transfer task complete";
-                    msg += "; Message = " + (string)MyCmd.Parameters["@message"].Value;
+                    msg += "; Message = " + (string)cmd.Parameters["@message"].Value;
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-                    Outcome = false;
+                    outcome = false;
                 }
             }
             catch (Exception ex)
             {
                 msg = "Exception calling stored procedure " + spName;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
-                Outcome = false;
+                outcome = false;
             }
 
-            return Outcome;
+            return outcome;
         }
 
         #endregion

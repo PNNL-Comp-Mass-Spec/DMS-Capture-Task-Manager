@@ -16,7 +16,7 @@ namespace CaptureTaskManager
             CleanupAlways = 2
         }
 
-        public enum eCleanupActionCodeConstants
+        protected enum eCleanupActionCodeConstants
         {
             Start = 1,
             Success = 2,
@@ -27,14 +27,11 @@ namespace CaptureTaskManager
 
         #region "Class wide Variables"
 
-        protected bool mInitialized;
+        protected readonly bool mInitialized;
         protected string mMgrConfigDBConnectionString;
 
-        protected string mManagerName;
-        protected string mMgrFolderPath = string.Empty;
-
-        protected string mWorkingDirPath;
-
+        protected readonly string mManagerName;
+        protected readonly string mWorkingDirPath;
 
         private readonly IStatusFile m_StatusFile;
 

@@ -169,29 +169,29 @@ namespace CaptureTaskManager
             {
                 var ConnectionString = GetParam(MGR_PARAM_MGR_CFG_DB_CONN_STRING);
 
-                var MyConnection = new SqlConnection(ConnectionString);
-                MyConnection.Open();
+                var conn = new SqlConnection(ConnectionString);
+                conn.Open();
 
                 //Set up the command object prior to SP execution
-                var MyCmd = MyConnection.CreateCommand();
+                var cmd = conn.CreateCommand();
                 {
-                    MyCmd.CommandType = CommandType.StoredProcedure;
-                    MyCmd.CommandText = SP_NAME_ACKMANAGERUPDATE;
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.CommandText = SP_NAME_ACKMANAGERUPDATE;
 
-                    MyCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int));
-                    MyCmd.Parameters["@Return"].Direction = ParameterDirection.ReturnValue;
+                    cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int));
+                    cmd.Parameters["@Return"].Direction = ParameterDirection.ReturnValue;
 
-                    MyCmd.Parameters.Add(new SqlParameter("@managerName", SqlDbType.VarChar, 128));
-                    MyCmd.Parameters["@managerName"].Direction = ParameterDirection.Input;
-                    MyCmd.Parameters["@managerName"].Value = GetParam(MGR_PARAM_MGR_NAME);
+                    cmd.Parameters.Add(new SqlParameter("@managerName", SqlDbType.VarChar, 128));
+                    cmd.Parameters["@managerName"].Direction = ParameterDirection.Input;
+                    cmd.Parameters["@managerName"].Value = GetParam(MGR_PARAM_MGR_NAME);
 
-                    MyCmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512));
-                    MyCmd.Parameters["@message"].Direction = ParameterDirection.Output;
-                    MyCmd.Parameters["@message"].Value = "";
+                    cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512));
+                    cmd.Parameters["@message"].Direction = ParameterDirection.Output;
+                    cmd.Parameters["@message"].Value = "";
                 }
 
                 //Execute the SP
-                MyCmd.ExecuteNonQuery();
+                cmd.ExecuteNonQuery();
             }
             catch (Exception ex)
             {
@@ -380,12 +380,12 @@ namespace CaptureTaskManager
                 catch (Exception ex)
                 {
                     retryCount -= 1;
-                    var myMsg =
-                        "clsMgrSettings.LoadMgrSettingsFromDB; Exception getting manager settings from database: " +
-                        ex.Message;
-                    myMsg = myMsg + ", RetryCount = " + retryCount;
+                    var errMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Exception getting manager settings from database: " + 
+                        ex.Message + ", RetryCount = " + retryCount;
+
                     if (logConnectionErrors)
-                        WriteErrorMsg(myMsg, allowLogToDB: false);
+                        WriteErrorMsg(errMsg, allowLogToDB: false);
+
                     //Delay for 5 seconds before trying again
                     System.Threading.Thread.Sleep(5000);
                 }
@@ -476,8 +476,7 @@ namespace CaptureTaskManager
             }
             finally
             {
-                if (dtSettings != null)
-                    dtSettings.Dispose();
+                dtSettings?.Dispose();
             }
 
             return success;
@@ -576,26 +575,26 @@ namespace CaptureTaskManager
         /// <summary>
         /// Writes specfied value to an application config file.
         /// </summary>
-        /// <param name="Key">Name for parameter (case sensitive)</param>
-        /// <param name="Value">New value for parameter</param>
+        /// <param name="key">Name for parameter (case sensitive)</param>
+        /// <param name="value">New value for parameter</param>
         /// <returns>TRUE for success; FALSE for error (ErrMsg property contains reason)</returns>
         /// <remarks>This bit of lunacy is needed because MS doesn't supply a means to write to an app config file</remarks>
-        public bool WriteConfigSetting(string Key, string Value)
+        public bool WriteConfigSetting(string key, string value)
         {
             m_ErrMsg = "";
 
             //Load the config document
-            var MyDoc = LoadConfigDocument();
-            if (MyDoc == null)
+            var doc = LoadConfigDocument();
+            if (doc == null)
             {
                 //Error message has already been produced by LoadConfigDocument
                 return false;
             }
 
             //Retrieve the settings node
-            var MyNode = MyDoc.SelectSingleNode("//applicationSettings");
+            var appSettingsNode = doc.SelectSingleNode("//applicationSettings");
 
-            if (MyNode == null)
+            if (appSettingsNode == null)
             {
                 m_ErrMsg = "clsMgrSettings.WriteConfigSettings; appSettings node not found";
                 return false;
@@ -603,20 +602,20 @@ namespace CaptureTaskManager
 
             try
             {
-                //Select the eleement containing the value for the specified key containing the key
-                var MyElement = (XmlElement)MyNode.SelectSingleNode(string.Format("//setting[@name='{0}']/value", Key));
-                if (MyElement != null)
+                //Select the element containing the value for the specified key containing the key
+                var matchingElement = (XmlElement)appSettingsNode.SelectSingleNode(string.Format("//setting[@name='{0}']/value", key));
+                if (matchingElement != null)
                 {
                     //Set key to specified value
-                    MyElement.InnerText = Value;
+                    matchingElement.InnerText = value;
                 }
                 else
                 {
                     //Key was not found
-                    m_ErrMsg = "clsMgrSettings.WriteConfigSettings; specified key not found: " + Key;
+                    m_ErrMsg = "clsMgrSettings.WriteConfigSettings; specified key not found: " + key;
                     return false;
                 }
-                MyDoc.Save(GetConfigFilePath());
+                doc.Save(GetConfigFilePath());
                 return true;
             }
             catch (Exception ex)
@@ -634,9 +633,9 @@ namespace CaptureTaskManager
         {
             try
             {
-                var MyDoc = new XmlDocument();
-                MyDoc.Load(GetConfigFilePath());
-                return MyDoc;
+                var doc = new XmlDocument();
+                doc.Load(GetConfigFilePath());
+                return doc;
             }
             catch (Exception ex)
             {

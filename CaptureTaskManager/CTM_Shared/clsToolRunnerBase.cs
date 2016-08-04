@@ -39,7 +39,7 @@ namespace CaptureTaskManager
 
         protected PRISM.Files.clsFileTools m_FileTools;
 
-        public PRISM.DataBase.clsExecuteDatabaseSP CaptureDBProcedureExecutor;
+        protected PRISM.DataBase.clsExecuteDatabaseSP CaptureDBProcedureExecutor;
 
         protected DateTime m_LastConfigDBUpdate = DateTime.UtcNow;
         protected int m_MinutesBetweenConfigDBUpdates = 10;
@@ -301,7 +301,7 @@ namespace CaptureTaskManager
         /// <param name="xmlServerResponse"></param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>This function is used by the ArchiveStatusCheck plugin and the ArchiveVerify plugin </remarks>
-        public bool GetMyEMSLIngestStatus(
+        protected bool GetMyEMSLIngestStatus(
             int job,
             MyEMSLStatusCheck statusChecker,
             string statusURI,

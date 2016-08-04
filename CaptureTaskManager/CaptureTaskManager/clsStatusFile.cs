@@ -408,7 +408,7 @@ namespace CaptureTaskManager
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("Error writing status file: " + ex.Message);
+                    Console.WriteLine(@"Error writing status file: " + ex.Message);
                 }
             }
             catch (Exception)
@@ -426,7 +426,7 @@ namespace CaptureTaskManager
         /// <param name="strStatusXML">A string contiaining the XML to write</param>
         protected void LogStatusToMessageQueue(string strStatusXML)
         {
-            if (MonitorUpdateRequired != null) MonitorUpdateRequired(strStatusXML);
+            MonitorUpdateRequired?.Invoke(strStatusXML);
         }
 
         /// <summary>
@@ -531,20 +531,26 @@ namespace CaptureTaskManager
                 var XmlStr = File.ReadAllText(m_FileNamePath);
 
                 // Convert to an XML document
-                var Doc = new XmlDocument();
-                Doc.LoadXml(XmlStr);
+                var doc = new XmlDocument();
+                doc.LoadXml(XmlStr);
 
                 // Get the most recent log message
-                clsStatusData.MostRecentLogMessage = Doc.SelectSingleNode(@"//Task/TaskDetails/MostRecentLogMessage").InnerText;
+                var mostRecentMessageNode = doc.SelectSingleNode(@"//Task/TaskDetails/MostRecentLogMessage");
+                if (mostRecentMessageNode != null)
+                    clsStatusData.MostRecentLogMessage = mostRecentMessageNode.InnerText;
 
                 //Get the most recent job info
-                m_MostRecentJobInfo = Doc.SelectSingleNode(@"//Task/TaskDetails/MostRecentJobInfo").InnerText;
+                var mostRecentJobNode = doc.SelectSingleNode(@"//Task/TaskDetails/MostRecentJobInfo");
+                if (mostRecentJobNode != null)
+                    m_MostRecentJobInfo = mostRecentJobNode.InnerText;
 
                 //Get the error messsages
-                foreach (XmlNode Xn in Doc.SelectNodes(@"//Manager/RecentErrorMessages/ErrMsg"))
-                {
-                    clsStatusData.AddErrorMessage(Xn.InnerText);
-                }
+                var recentErrMsgNode = doc.SelectNodes(@"//Manager/RecentErrorMessages/ErrMsg");
+                if (recentErrMsgNode != null)
+                    foreach (XmlNode Xn in recentErrMsgNode)
+                    {
+                        clsStatusData.AddErrorMessage(Xn.InnerText);
+                    }
             }
             catch (Exception ex)
             {

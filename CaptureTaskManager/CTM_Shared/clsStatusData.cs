@@ -10,7 +10,7 @@ using System.Collections.Generic;
 
 namespace CaptureTaskManager
 {
-    public class clsStatusData
+    public static class clsStatusData
     {
         //*********************************************************************************************************
         //Class to hold long-term data for status reporting. This is a hack to avoid adding an instance of the

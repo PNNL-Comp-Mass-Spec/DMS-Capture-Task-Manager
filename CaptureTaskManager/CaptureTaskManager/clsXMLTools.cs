@@ -34,13 +34,17 @@ namespace CaptureTaskManager
                 doc.LoadXml(InputXML);
 
                 // Get list of managers this command applies to
-                foreach (XmlNode xn in doc.SelectNodes("//Managers/*"))
-                {
-                    returnedData.MachineList.Add(xn.InnerText);
-                }
+                var managerNodes = doc.SelectNodes("//Managers/*");
+                if (managerNodes != null)
+                    foreach (XmlNode xn in managerNodes)
+                    {
+                        returnedData.MachineList.Add(xn.InnerText);
+                    }
 
                 // Get command contained in message
-                returnedData.MachCmd = doc.SelectSingleNode("//Message").InnerText;
+                var messageNode = doc.SelectSingleNode("//Message");
+                if (messageNode != null)
+                    returnedData.MachCmd = messageNode.InnerText;
 
                 // Return the parsing results
                 return returnedData;

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
 
 namespace CaptureTaskManager
 {
@@ -34,7 +33,7 @@ namespace CaptureTaskManager
 
         public void TestConnection()
         {
-            Console.WriteLine("Code test mode");
+            Console.WriteLine(@"Code test mode");
 
             var lstCredentials = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
 
@@ -56,32 +55,32 @@ namespace CaptureTaskManager
                     var accessCredentials = new System.Net.NetworkCredential(enumCurrent.Current.Key,
                                                                              enumCurrent.Current.Value, "");
 
-                    Console.WriteLine("Credentials created for " + enumCurrent.Current.Key);
+                    Console.WriteLine(@"Credentials created for " + enumCurrent.Current.Key);
 
                     var cnBionet = new NetworkConnection(sShareFolderPath, accessCredentials);
 
-                    Console.WriteLine("Connected to share");
+                    Console.WriteLine(@"Connected to share");
 
                     var diDirectory = new System.IO.DirectoryInfo(sShareFolderPath);
 
-                    Console.WriteLine("Instantiated DirectoryInfo object: " + diDirectory.FullName);
+                    Console.WriteLine(@"Instantiated DirectoryInfo object: " + diDirectory.FullName);
 
                     var iIterations = 0;
                     foreach (var fiFile in diDirectory.GetFiles())
                     {
-                        Console.WriteLine("File: " + fiFile.Name + " size " + fiFile.Length + " bytes");
+                        Console.WriteLine(@"File: " + fiFile.Name + @" size " + fiFile.Length + @" bytes");
                         ++iIterations;
 
                         if (iIterations > 20)
                             break;
                     }
 
-                    Console.WriteLine("Files Done");
+                    Console.WriteLine(@"Files Done");
 
                     iIterations = 0;
                     foreach (var diFolder in diDirectory.GetDirectories())
                     {
-                        Console.WriteLine("Folder: " + diFolder.Name + " modified " +
+                        Console.WriteLine(@"Folder: " + diFolder.Name + @" modified " +
                                           diFolder.LastWriteTime.ToString(CultureInfo.InvariantCulture));
                         ++iIterations;
 
@@ -89,7 +88,7 @@ namespace CaptureTaskManager
                             break;
                     }
 
-                    Console.WriteLine("Folders Done");
+                    Console.WriteLine(@"Folders Done");
 
                     // Disconnect network connection
                     cnBionet.Dispose();
@@ -97,7 +96,7 @@ namespace CaptureTaskManager
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Exception: " + ex.Message);
+                Console.WriteLine(@"Exception: " + ex.Message);
             }
         }
     }

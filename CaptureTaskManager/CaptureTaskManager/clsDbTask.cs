@@ -28,14 +28,14 @@ namespace CaptureTaskManager
 
         #region "Class variables"
 
-        protected IMgrParams m_MgrParams;
-        protected string m_ConnStr;
+        protected readonly IMgrParams m_MgrParams;
+        protected readonly string m_ConnStr;
         protected bool m_TaskWasAssigned = false;
 
         protected Dictionary<string, string> m_JobParams =
             new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
 
-        protected PRISM.DataBase.clsExecuteDatabaseSP CaptureTaskDBProcedureExecutor;
+        protected readonly PRISM.DataBase.clsExecuteDatabaseSP m_CaptureTaskDBProcedureExecutor;
 
         #endregion
 
@@ -60,9 +60,9 @@ namespace CaptureTaskManager
             m_MgrParams = MgrParams;
             m_ConnStr = m_MgrParams.GetParam("ConnectionString");
 
-            CaptureTaskDBProcedureExecutor = new PRISM.DataBase.clsExecuteDatabaseSP(m_ConnStr);
+            m_CaptureTaskDBProcedureExecutor = new PRISM.DataBase.clsExecuteDatabaseSP(m_ConnStr);
 
-            CaptureTaskDBProcedureExecutor.DBErrorEvent += CaptureTaskDBProcedureExecutor_DBErrorEvent;
+            m_CaptureTaskDBProcedureExecutor.DBErrorEvent += CaptureTaskDBProcedureExecutor_DBErrorEvent;
         }
 
         #endregion

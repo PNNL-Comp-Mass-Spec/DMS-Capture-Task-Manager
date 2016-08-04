@@ -19,7 +19,7 @@ using log4net.Appender;
 
 namespace CaptureTaskManager
 {
-    public class clsLogTools
+    public static class clsLogTools
     {
         //*********************************************************************************************************
         // Wraps Log4Net functions
@@ -79,7 +79,7 @@ namespace CaptureTaskManager
         {
             get
             {
-                if (m_FileAppender == null || string.IsNullOrEmpty(m_FileAppender.File))
+                if (string.IsNullOrEmpty(m_FileAppender?.File))
                     return string.Empty;
 
                 return m_FileAppender.File;

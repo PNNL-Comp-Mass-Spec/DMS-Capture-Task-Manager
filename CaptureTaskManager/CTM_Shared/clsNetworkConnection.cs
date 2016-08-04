@@ -11,7 +11,7 @@ using System.Runtime.InteropServices;
 
 namespace CaptureTaskManager
 {
-    public class NetworkConnection : IDisposable
+    public sealed class NetworkConnection : IDisposable
     {
         readonly string _networkName;
 
@@ -42,16 +42,16 @@ namespace CaptureTaskManager
 
         ~NetworkConnection()
         {
-            Dispose(false);
+            DisposeNetConnection();
         }
 
         public void Dispose()
         {
-            Dispose(true);
+            DisposeNetConnection();
             GC.SuppressFinalize(this);
         }
 
-        protected virtual void Dispose(bool disposing)
+        private void DisposeNetConnection()
         {
             WNetCancelConnection2(_networkName, 0, true);
         }
