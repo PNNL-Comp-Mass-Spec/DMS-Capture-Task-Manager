@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
@@ -12,6 +13,8 @@ namespace DatasetInfoPlugin
 {
     class clsDatasetInfoXmlMerger
     {
+        private const int DATASET_GAP_THRESHOLD_HOURS = 24;
+
         #region "Structures"
         private struct udtAcquisitionInfo
         {
@@ -73,9 +76,23 @@ namespace DatasetInfoPlugin
                 BPI_Median_MSn = 0;
             }
         }
+
+        private struct udtDatasetAcqTimeInfo
+        {
+            public string Dataset;
+            public DateTime StartTime;
+            public DateTime EndTime;
+        }
+
         #endregion
 
         #region "Properties"
+
+        /// <summary>
+        /// List of warnings about datasets that start more than 120 minutes after the previous dataset
+        /// </summary>
+        public List<string> AcqTimeWarnings { get; }
+
         /// <summary>
         /// The keys in this dictionary are KeyValuePairs of [ScanType,ScanFilterText] while the values are the scan count
         /// </summary>
@@ -92,6 +109,7 @@ namespace DatasetInfoPlugin
         /// </summary>
         public clsDatasetInfoXmlMerger()
         {
+            AcqTimeWarnings = new List<string>();
             ScanTypes = new Dictionary<KeyValuePair<string, string>, int>();
         }
 
@@ -103,13 +121,14 @@ namespace DatasetInfoPlugin
         /// <returns>Merged DatasetInfo XML</returns>
         public string CombineDatasetInfoXML(string datasetName, List<string> cachedDatasetInfoXml)
         {
+            AcqTimeWarnings.Clear();
 
             if (cachedDatasetInfoXml.Count == 1)
             {
                 return cachedDatasetInfoXml.First();
             }
 
-            // The keys in this dictionary are KeyValuePairs of [ScanType,ScanFilterText] while the values are the scan count
+            // Keys in this dictionary are KeyValuePairs of [ScanType,ScanFilterText] while the values are the scan count
             ScanTypes.Clear();
 
             var acqInfo = new udtAcquisitionInfo();
@@ -118,13 +137,31 @@ namespace DatasetInfoPlugin
             var ticInfo = new udtTicInfo();
             ticInfo.Clear();
 
+            // Keys in this dictionary are dataset names; values track the StartTime and EndTime for the dataset
+            var datasetAcqTimes = new Dictionary<string, udtDatasetAcqTimeInfo>();
+
             // Parse each block of cached XML
             foreach (var cachedInfoXml in cachedDatasetInfoXml)
             {
-                var currentDatasetName = ParseDatasetInfoXml(cachedInfoXml, ScanTypes, ref acqInfo, ref ticInfo);
+                var currentDatasetName = ParseDatasetInfoXml(cachedInfoXml, ScanTypes, ref acqInfo, ref ticInfo, datasetAcqTimes);
 
                 if (string.IsNullOrWhiteSpace(datasetName) && !string.IsNullOrWhiteSpace(currentDatasetName))
                     datasetName = currentDatasetName;
+            }
+
+            // Make sure none of the datasets has a start time more than 120 minutes after the previous datasets end time
+            // If it does, the operator likely lumped together unrelated datasets, and therefore the overal dataset stats will be wrong
+            var sortedDsAcqTimes = (from item in datasetAcqTimes orderby item.Value.StartTime select item.Value).ToList();
+
+            for (var i = 1; i < sortedDsAcqTimes.Count; i++)
+            {
+                var spanHours = sortedDsAcqTimes[i].StartTime.Subtract(sortedDsAcqTimes[i - 1].EndTime).TotalHours;
+                if (spanHours > DATASET_GAP_THRESHOLD_HOURS)
+                {
+                    var warningMsg = string.Format("Dataset {0} starts {1:F1} hours after {2}; the datasets appear unrelated",
+                                                   sortedDsAcqTimes[i].Dataset, spanHours, sortedDsAcqTimes[i - 1].Dataset);
+                    AcqTimeWarnings.Add(warningMsg);
+                }
             }
 
             // Create the combined XML
@@ -137,16 +174,19 @@ namespace DatasetInfoPlugin
         /// <summary>
         /// Parase the xml to populate scanTypes, acqInfo, and ticInfo
         /// </summary>
-        /// <param name="cachedInfoXml"></param>
-        /// <param name="scanTypes"></param>
-        /// <param name="acqInfo"></param>
-        /// <param name="ticInfo"></param>
+        /// <param name="cachedInfoXml">XML to parse</param>
+        /// <param name="scanTypes">Scan type stats. Keys in this dictionary are KeyValuePairs of [ScanType,ScanFilterText] while the values are the scan count</param>
+        /// <param name="acqInfo">Merged acquisition info</param>
+        /// <param name="ticInfo">Merged TIC info</param>
+        /// <param name="datasetAcqTimes">Tracks the start and end time for each dataset</param>
         /// <returns>Dataset name</returns>
         private string ParseDatasetInfoXml(
             string cachedInfoXml,
             IDictionary<KeyValuePair<string, string>, int> scanTypes,
             ref udtAcquisitionInfo acqInfo,
-            ref udtTicInfo ticInfo)
+            ref udtTicInfo ticInfo,
+            IDictionary<string, udtDatasetAcqTimeInfo> datasetAcqTimes)
+
         {
             var xmlDoc = new XmlDocument();
 
@@ -209,11 +249,13 @@ namespace DatasetInfoPlugin
             var startTimeText = GetXmlValue(xmlDoc, "DatasetInfo/AcquisitionInfo/StartTime", "");
             var endTimeText = GetXmlValue(xmlDoc, "DatasetInfo/AcquisitionInfo/EndTime", "");
 
+            var startTimeValid = false;
             DateTime startTime;
             DateTime endTime;
 
             if (DateTime.TryParse(startTimeText, out startTime))
             {
+                startTimeValid = true;
                 if (acqInfo.StartTime == DateTime.MinValue)
                     acqInfo.StartTime = startTime;
                 else if (startTime < acqInfo.StartTime)
@@ -226,6 +268,18 @@ namespace DatasetInfoPlugin
                     acqInfo.EndTime = endTime;
                 else if (endTime > acqInfo.EndTime)
                     acqInfo.EndTime = endTime;
+
+                if (startTimeValid && !datasetAcqTimes.ContainsKey(datasetName))
+                {
+                    var acqTimeInfo = new udtDatasetAcqTimeInfo
+                    {
+                        Dataset = datasetName,
+                        StartTime = startTime,
+                        EndTime = endTime
+                    };
+
+                    datasetAcqTimes.Add(datasetName, acqTimeInfo);
+                }
             }
 
             acqInfo.FileSizeBytes += GetXmlValueLong(xmlDoc, "DatasetInfo/AcquisitionInfo/FileSizeBytes", 0);

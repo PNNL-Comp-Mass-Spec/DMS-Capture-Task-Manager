@@ -333,6 +333,50 @@ namespace DatasetInfoPlugin
                 ProcessMultiDatasetInfoScannerResults(outputPathBase, datasetXmlMerger, dsInfoXML, outputFolderNames);
             }
 
+            // Check for dataset acq time gap warnings            
+            if (AcqTimeWarningsReported(datasetXmlMerger, result))
+                return result;
+
+            // Call SP CacheDatasetInfoXML to store dsInfoXML in table T_Dataset_Info_XML
+            PostDatasetInfoXml(dsInfoXML, result);
+
+            return result;
+
+        }
+
+        /// <summary>
+        /// Examine datasetXmlMerger.AcqTimeWarnings
+        /// If non-empty, summarize the errors and update result
+        /// </summary>
+        /// <param name="datasetXmlMerger"></param>
+        /// <param name="result"></param>
+        /// <returns>True if warnings exist, otherwise false</returns>
+        private bool AcqTimeWarningsReported(clsDatasetInfoXmlMerger datasetXmlMerger, clsToolReturnData result)
+        {
+            if (datasetXmlMerger.AcqTimeWarnings.Count == 0)
+            {
+                return false;
+            }
+
+            // Large gap found
+            // Log the error and do not post the XML file to the database
+            // You could manually add the file later by reading from disk and adding to table T_Dataset_Info_XML
+
+            foreach (var warning in datasetXmlMerger.AcqTimeWarnings)
+            {
+                m_Msg = AppendToComment(m_Msg, warning);
+            }
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
+
+            result.CloseoutMsg = "Large gap between acq times: " + datasetXmlMerger.AcqTimeWarnings.FirstOrDefault();
+            result.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+
+            return true;
+        }
+
+        private void PostDatasetInfoXml(string dsInfoXML, clsToolReturnData result)
+        {
             var iPostCount = 0;
             var connectionString = m_MgrParams.GetParam("connectionstring");
 
@@ -342,7 +386,8 @@ namespace DatasetInfoPlugin
 
             while (iPostCount <= 2)
             {
-                successPosting = m_MsFileScanner.PostDatasetInfoUseDatasetID(iDatasetID, dsInfoXML, connectionString, MS_FILE_SCANNER_DS_INFO_SP);
+                successPosting = m_MsFileScanner.PostDatasetInfoUseDatasetID(iDatasetID, dsInfoXML, connectionString,
+                                                                             MS_FILE_SCANNER_DS_INFO_SP);
 
                 if (successPosting)
                     break;
@@ -380,9 +425,6 @@ namespace DatasetInfoPlugin
                 result.CloseoutMsg = "MSFileInfoScanner error";
                 result.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
             }
-
-            return result;
-
         }
 
         private void ProcessMultiDatasetInfoScannerResults(
@@ -1024,7 +1066,7 @@ namespace DatasetInfoPlugin
                 return false;
             }
 
-        }
+        }        
 
         #endregion
 
