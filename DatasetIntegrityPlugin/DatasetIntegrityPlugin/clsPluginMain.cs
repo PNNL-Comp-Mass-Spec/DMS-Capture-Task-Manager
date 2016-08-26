@@ -200,34 +200,12 @@ namespace DatasetIntegrityPlugin
                     break;
 
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging:
+                    // Note: Datasets from this instrument were last used in 2012
                     mRetData.CloseoutType = TestBrukerMaldiImagingFolder(datasetFolder);
                     break;
 
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging_V2:
                     mRetData.CloseoutType = TestBrukerFT_Folder(datasetFolder, requireBAFFile: false, requireMCFFile: false, requireSerFile: true, instrumentClass: instrumentClass, instrumentName: instrumentName);
-
-                    // Check for message "Multiple .d folders"
-                    if (mRetData.EvalMsg.Contains("Multiple " + clsInstrumentClassInfo.DOT_D_EXTENSION + " folders"))
-                        break;
-
-                    if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
-                    {
-                        // Try BrukerMALDI_Imaging
-                        var oRetDataAlt = new clsToolReturnData
-                        {
-                            CloseoutType = TestBrukerMaldiImagingFolder(datasetFolder)
-                        };
-
-                        if (oRetDataAlt.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
-                        {
-                            // The dataset actually consists of a series of .Zip files, not a .D folder
-                            // Count this as a success
-                            msg = "Dataset marked eInstrumentClass.BrukerMALDI_Imaging_V2 is actually eInstrumentClass.BrukerMALDI_Imaging (series of .Zip files); assuming integrity is correct";
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                            mRetData = oRetDataAlt;
-                            mRetData.EvalMsg = "Dataset is BrukerMALDI_Imaging (series of .Zip files) not BrukerMALDI_Imaging_V2 (.D folder)";
-                        }
-                    }
                     break;
 
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Spot:
@@ -1478,12 +1456,13 @@ namespace DatasetIntegrityPlugin
 
                 if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging_V2)
                 {
-                    // Each .D folder should have a ser file
+                    // Each .D folder should have a ser file or a fid file
                     foreach (var diFolder in lstDotDFolders)
                     {
-                        if (diFolder.GetFiles("ser", SearchOption.TopDirectoryOnly).Length == 0)
+                        if (diFolder.GetFiles("ser", SearchOption.TopDirectoryOnly).Length == 0 &&
+                            diFolder.GetFiles("fid", SearchOption.TopDirectoryOnly).Length == 0)
                         {
-                            mRetData.EvalMsg = "Invalid dataset. ser file not found in " + diFolder.Name;
+                            mRetData.EvalMsg = "Invalid dataset. ser or fid file not found in " + diFolder.Name;
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
                                                  mRetData.EvalMsg);
                             return EnumCloseOutType.CLOSEOUT_FAILED;
