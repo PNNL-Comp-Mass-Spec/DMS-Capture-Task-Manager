@@ -1173,7 +1173,7 @@ namespace CaptureToolPlugin
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging:
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging_V2:
                     copyWithResume = true;
-                    maxFileCountToAllowResume = 10;
+                    maxFileCountToAllowResume = 20;
                     maxFolderCountToAllowResume = 1;
                     break;
             }
