@@ -44,7 +44,9 @@ namespace DatasetIntegrityPlugin
         const float SCIEX_WIFF_SCAN_FILE_MIN_SIZE_KB = 0.03F;
         const float UIMF_FILE_MIN_SIZE_KB = 20;
         const float TIMS_UIMF_FILE_MIN_SIZE_KB = 5;
-        const float AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB = 50;
+        const float AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB = 5;
+        const float AGILENT_MSSCAN_BIN_FILE_SMALL_SIZE_KB = 50;
+        const float AGILENT_MSPEAK_BIN_FILE_MIN_SIZE_KB = 500;
         const float AGILENT_DATA_MS_FILE_MIN_SIZE_KB = 75;
         const float MCF_FILE_MIN_SIZE_KB = 0.1F;		// Malding imaging file; Prior to May 2014, used a minimum of 4 KB; however, seeing 12T_FTICR_B datasets where this file is as small as 120 Bytes
 
@@ -1029,8 +1031,8 @@ namespace DatasetIntegrityPlugin
 
             // The AcqData folder should contain one or more .Bin files, for example MSScan.bin, MSPeak.bin, and MSProfile.bin
             // Verify that the MSScan.bin file exists
-            var lstInstrumentData = acqDataFolderList[0].GetFiles("MSScan.bin").ToList();
-            if (lstInstrumentData.Count == 0)
+            var lstMSScan = acqDataFolderList[0].GetFiles("MSScan.bin").ToList();
+            if (lstMSScan.Count == 0)
             {
                 mRetData.EvalMsg = "Invalid dataset. MSScan.bin file not found in the AcqData folder";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
@@ -1038,11 +1040,31 @@ namespace DatasetIntegrityPlugin
             }
 
             // Verify size of the MSScan.bin file
-            var dataFileSizeKB = GetFileSize(lstInstrumentData.First());
-            if (dataFileSizeKB <= AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB)
+            var msScanBinFileSizeKB = GetFileSize(lstMSScan.First());
+            if (msScanBinFileSizeKB <= AGILENT_MSSCAN_BIN_FILE_SMALL_SIZE_KB)
             {
-                ReportFileSizeTooSmall("MSScan.bin", lstInstrumentData.First().FullName, dataFileSizeKB, AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB);
-                return EnumCloseOutType.CLOSEOUT_FAILED;
+                // Allow a small MSScan.bin file if the MSPeak.bin file is also small
+
+                var lstMSPeak = acqDataFolderList[0].GetFiles("MSPeak.bin").ToList();
+                if (lstMSPeak.Count == 0)
+                {
+                    mRetData.EvalMsg = "Invalid dataset. MSPeak.bin file not found in the AcqData folder";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+
+                var msPeakBinFileSizeKB = GetFileSize(lstMSPeak.First());
+                if (msPeakBinFileSizeKB <= AGILENT_MSPEAK_BIN_FILE_MIN_SIZE_KB)
+                {
+                    ReportFileSizeTooSmall("MSPeak.bin", lstMSPeak.First().FullName, msPeakBinFileSizeKB, AGILENT_MSPEAK_BIN_FILE_MIN_SIZE_KB);
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+
+                if (msScanBinFileSizeKB <= AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB)
+                {
+                    ReportFileSizeTooSmall("MSScan.bin", lstMSScan.First().FullName, msScanBinFileSizeKB, AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB);
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
             }
 
             // The AcqData folder should contain file MSTS.xml
