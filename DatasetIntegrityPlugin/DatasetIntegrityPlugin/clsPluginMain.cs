@@ -46,7 +46,8 @@ namespace DatasetIntegrityPlugin
         const float TIMS_UIMF_FILE_MIN_SIZE_KB = 5;
         const float AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB = 5;
         const float AGILENT_MSSCAN_BIN_FILE_SMALL_SIZE_KB = 50;
-        const float AGILENT_MSPEAK_BIN_FILE_MIN_SIZE_KB = 500;
+        const float AGILENT_MSPEAK_BIN_FILE_MIN_SIZE_KB = 50;
+        const float AGILENT_MSPEAK_BIN_FILE_SMALL_SIZE_KB = 500;
         const float AGILENT_DATA_MS_FILE_MIN_SIZE_KB = 75;
         const float MCF_FILE_MIN_SIZE_KB = 0.1F;		// Malding imaging file; Prior to May 2014, used a minimum of 4 KB; however, seeing 12T_FTICR_B datasets where this file is as small as 120 Bytes
 
@@ -1039,30 +1040,43 @@ namespace DatasetIntegrityPlugin
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
+            // Make sure the MSPeak.bin file exists
+            var lstMSPeak = acqDataFolderList[0].GetFiles("MSPeak.bin").ToList();
+            if (lstMSPeak.Count == 0)
+            {
+                mRetData.EvalMsg = "Invalid dataset. MSPeak.bin file not found in the AcqData folder";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+                return EnumCloseOutType.CLOSEOUT_FAILED;
+            }
+
             // Verify size of the MSScan.bin file
             var msScanBinFileSizeKB = GetFileSize(lstMSScan.First());
             if (msScanBinFileSizeKB <= AGILENT_MSSCAN_BIN_FILE_SMALL_SIZE_KB)
             {
                 // Allow a small MSScan.bin file if the MSPeak.bin file is also small
-
-                var lstMSPeak = acqDataFolderList[0].GetFiles("MSPeak.bin").ToList();
-                if (lstMSPeak.Count == 0)
-                {
-                    mRetData.EvalMsg = "Invalid dataset. MSPeak.bin file not found in the AcqData folder";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
-                    return EnumCloseOutType.CLOSEOUT_FAILED;
-                }
-
                 var msPeakBinFileSizeKB = GetFileSize(lstMSPeak.First());
                 if (msPeakBinFileSizeKB <= AGILENT_MSPEAK_BIN_FILE_MIN_SIZE_KB)
                 {
-                    ReportFileSizeTooSmall("MSPeak.bin", lstMSPeak.First().FullName, msPeakBinFileSizeKB, AGILENT_MSPEAK_BIN_FILE_MIN_SIZE_KB);
+                    ReportFileSizeTooSmall("MSPeak.bin", lstMSPeak.First().FullName, msPeakBinFileSizeKB,
+                                           AGILENT_MSPEAK_BIN_FILE_MIN_SIZE_KB);
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
 
                 if (msScanBinFileSizeKB <= AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB)
                 {
-                    ReportFileSizeTooSmall("MSScan.bin", lstMSScan.First().FullName, msScanBinFileSizeKB, AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB);
+                    ReportFileSizeTooSmall("MSScan.bin", lstMSScan.First().FullName, msScanBinFileSizeKB,
+                                           AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB);
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+            }
+            else
+            {
+                // The MSScan.bin file is over 50 KB
+                // Require that MSPeak.bin be over 500 KB
+                var msPeakBinFileSizeKB = GetFileSize(lstMSPeak.First());
+                if (msPeakBinFileSizeKB <= AGILENT_MSPEAK_BIN_FILE_SMALL_SIZE_KB)
+                {
+                    ReportFileSizeTooSmall("MSPeak.bin", lstMSPeak.First().FullName, msPeakBinFileSizeKB, AGILENT_MSPEAK_BIN_FILE_SMALL_SIZE_KB);
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
             }
