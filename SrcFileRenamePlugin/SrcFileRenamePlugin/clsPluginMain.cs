@@ -85,7 +85,7 @@ namespace SrcFileRenamePlugin
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
             return retData;
-        }   // End sub
+        }
 
         /// <summary>
         /// Initializes the rename tool

@@ -93,7 +93,7 @@ namespace DatasetQualityPlugin
 
             return mRetData;
 
-        }   // End sub
+        }
 
         /// <summary>
         /// Determine whether or not we will run Quameter
@@ -1129,7 +1129,7 @@ namespace DatasetQualityPlugin
 
             msg = "Completed clsPluginMain.Setup()";
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-        }   // End sub
+        }
 
         /// <summary>
         /// Stores the tool version info in the database

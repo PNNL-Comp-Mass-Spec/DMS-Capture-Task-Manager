@@ -102,7 +102,7 @@ namespace CaptureTaskManager
                 CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS
             };
             return retData;
-        } // End sub
+        }
 
         /// <summary>
         /// Initializes plugin. Implements IToolRunner.Setup method

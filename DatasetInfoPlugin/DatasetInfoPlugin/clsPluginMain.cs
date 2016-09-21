@@ -74,7 +74,7 @@ namespace DatasetInfoPlugin
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
             return retData;
-        }   // End sub
+        }
 
 
         private iMSFileInfoScanner LoadMSFileInfoScanner(string strMSFileInfoScannerDLLPath)

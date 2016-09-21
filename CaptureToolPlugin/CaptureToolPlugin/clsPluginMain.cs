@@ -109,7 +109,7 @@ namespace CaptureToolPlugin
 
             return retData;
 
-        }   // End sub
+        }
 
         /// <summary>
         /// Initializes the capture tool
@@ -126,7 +126,7 @@ namespace CaptureToolPlugin
 
             msg = "Completed clsPluginMain.Setup()";
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-        }   // End sub
+        }
 
         /// <summary>
         /// Stores the tool version info in the database

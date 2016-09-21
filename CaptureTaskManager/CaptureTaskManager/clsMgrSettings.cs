@@ -623,7 +623,7 @@ namespace CaptureTaskManager
                 m_ErrMsg = "clsMgrSettings.WriteConfigSettings; Exception updating settings file: " + ex.Message;
                 return false;
             }
-        } // End sub
+        }
 
         /// <summary>
         /// Loads an app config file for changing parameters

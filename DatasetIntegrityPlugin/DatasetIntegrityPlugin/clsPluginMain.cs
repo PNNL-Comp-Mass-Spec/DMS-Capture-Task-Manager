@@ -261,7 +261,7 @@ namespace DatasetIntegrityPlugin
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
             return mRetData;
-        }	// End sub
+        }
 
         private bool ConvertAgilentDFolderToCDF(string datasetFolderPath, string exePath)
         {
@@ -988,7 +988,7 @@ namespace DatasetIntegrityPlugin
             // If we got to here, everything is OK
             return EnumCloseOutType.CLOSEOUT_SUCCESS;
 
-        }	// End sub
+        }
 
         /// <summary>
         /// Tests a Agilent_TOF_V2 folder for integrity
@@ -1108,7 +1108,7 @@ namespace DatasetIntegrityPlugin
 
             // If we got to here, everything is OK
             return EnumCloseOutType.CLOSEOUT_SUCCESS;
-        }	// End sub
+        }
 
         /// <summary>
         /// Tests a Sciex QTrap dataset's integrity
@@ -1158,7 +1158,7 @@ namespace DatasetIntegrityPlugin
 
             // If we got to here, everything was OK
             return EnumCloseOutType.CLOSEOUT_SUCCESS;
-        }	// End sub
+        }
 
         /// <summary>
         /// Tests a Finnigan Ion Trap dataset's integrity
@@ -1369,7 +1369,7 @@ namespace DatasetIntegrityPlugin
 
             // If we got to here, everything is OK
             return EnumCloseOutType.CLOSEOUT_SUCCESS;
-        }	// End sub
+        }
 
         /// <summary>
         /// Tests a BrukerTOF_BAF folder for integrity
@@ -1450,8 +1450,7 @@ namespace DatasetIntegrityPlugin
 
             // If we got to here, everything is OK
             return EnumCloseOutType.CLOSEOUT_SUCCESS;
-        }	// End sub
-
+        }
 
         /// <summary>
         /// Tests a BrukerFT folder for integrity
@@ -1713,7 +1712,7 @@ namespace DatasetIntegrityPlugin
             // If we got to here, everything is OK
             return EnumCloseOutType.CLOSEOUT_SUCCESS;
 
-        }	// End sub
+        }
 
         /// <summary>
         /// Tests a BrukerMALDI_Imaging folder for integrity
@@ -1734,7 +1733,7 @@ namespace DatasetIntegrityPlugin
 
             // If we got to here, everything is OK
             return EnumCloseOutType.CLOSEOUT_SUCCESS;
-        }	// End sub
+        }
 
         /// <summary>
         /// Tests a BrukerMALDI_Spot folder for integrity
@@ -1790,7 +1789,7 @@ namespace DatasetIntegrityPlugin
 
             // If we got to here, everything is OK
             return EnumCloseOutType.CLOSEOUT_SUCCESS;
-        }	// End sub
+        }
 
         private EnumCloseOutType TestIMSAgilentTOF(string dataFileNamePath, string instrumentName)
         {
@@ -1830,10 +1829,9 @@ namespace DatasetIntegrityPlugin
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
-
             // If we got to here, everything was OK
             return EnumCloseOutType.CLOSEOUT_SUCCESS;
-        }	// End sub
+        }
 
         /// <summary>
         /// Extracts the pressure data from the Frame_Parameters table
@@ -1943,7 +1941,7 @@ namespace DatasetIntegrityPlugin
 
             msg = "Completed clsPluginMain.Setup()";
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-        }	// End sub
+        }
 
 
         /// <summary>

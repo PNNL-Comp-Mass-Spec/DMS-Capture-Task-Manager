@@ -112,7 +112,7 @@ namespace DatasetArchivePlugin
             // Instantiate m_FileTools
             m_FileTools = new clsFileTools(m_MgrParams.GetParam("MgrName", "CaptureTaskManager"), 1);
 
-        }	// End sub
+        }
         #endregion
 
         #region "Methods"
@@ -175,7 +175,7 @@ namespace DatasetArchivePlugin
             // Got to here, everything's OK, so let let the derived class take over
             return true;
 
-        }	// End sub
+        }
 
         protected string AppendToString(string text, string append)
         {
@@ -417,7 +417,7 @@ namespace DatasetArchivePlugin
             //Verifies specified dataset is present
             return Directory.Exists(dsNamePath);
 
-        }	// End sub
+        }
 
         /// <summary>
         /// Writes a log entry for a failed archive operation

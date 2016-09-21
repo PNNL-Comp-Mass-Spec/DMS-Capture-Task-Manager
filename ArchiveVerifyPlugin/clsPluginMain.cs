@@ -115,7 +115,7 @@ namespace ArchiveVerifyPlugin
 
             return mRetData;
 
-        }   // End sub
+        }
 
         protected bool CheckUploadStatus()
         {

@@ -86,7 +86,7 @@ namespace ArchiveStatusCheckPlugin
 
             return mRetData;
 
-        }   // End sub
+        }
 
         protected bool CheckArchiveStatus()
         {

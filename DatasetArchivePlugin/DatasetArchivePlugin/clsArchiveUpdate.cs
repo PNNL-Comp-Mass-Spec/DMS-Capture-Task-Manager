@@ -172,7 +172,7 @@ namespace DatasetArchivePlugin
             tmpStr = tmpStr.Replace(@"\", "/");
 
             return tmpStr;
-        }	// End sub
+        }
 
         /// <summary>
         /// Compares folders on storage server and archive
@@ -303,7 +303,7 @@ namespace DatasetArchivePlugin
 
             // All finished, so return
             return returnObject;
-        }	// End sub
+        }
 
         /// <summary>
         /// Converts a file path on the storage server to its Samba equivalent
@@ -325,7 +325,7 @@ namespace DatasetArchivePlugin
                 m_ErrMsg = "Exception converting path name " + svrPath + ": " + ex.Message;
                 return "Error";
             }
-        }	// End sub
+        }
 
         /// <summary>
         /// Compares two files, optionally using a SHA hash
@@ -391,7 +391,7 @@ namespace DatasetArchivePlugin
             else
                 return FILE_COMPARE_EQUAL;
 
-        }	// End sub
+        }
 
         /// <summary>
         /// Generates SHA1 hash for specified file
@@ -429,7 +429,7 @@ namespace DatasetArchivePlugin
                     FStream.Close();
                 }
             }
-        }	// End sub
+        }
 
         /// <summary>
         /// Write an error message to the log
