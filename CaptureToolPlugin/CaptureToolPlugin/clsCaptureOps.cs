@@ -642,14 +642,15 @@ namespace CaptureToolPlugin
         /// Checks to see if folder size is changing -- possible sign acquisition hasn't finished
         /// </summary>
         /// <param name="folderPath">Full path specifying folder to check</param>
-        /// <param name="sleepIntervalSeconds">Interval for checking (seconds)</param>
         /// <param name="retData">Output: return data</param>
         /// <returns>TRUE if folder size hasn't changed during SleepInt; FALSE otherwise</returns>
-        private bool VerifyConstantFolderSize(string folderPath, int sleepIntervalSeconds, ref clsToolReturnData retData)
+        private bool VerifyConstantFolderSize(string folderPath,  ref clsToolReturnData retData)
         {
 
             try
             {
+
+                var sleepIntervalSeconds = GetSleepIntervalForFolder(folderPath);
 
                 // Sleep interval should be between 1 second and 15 minutes (900 seconds)
                 if (sleepIntervalSeconds > 900)
@@ -1528,7 +1529,9 @@ namespace CaptureToolPlugin
 
                 var retDataValidateConstant = new clsToolReturnData();
 
-                if (VerifyConstantFileSize(sourceFilePath, m_SleepInterval, ref retDataValidateConstant))
+                var sleepIntervalSeconds = GetSleepIntervalForFile(sourceFilePath);
+
+                if (VerifyConstantFileSize(sourceFilePath, sleepIntervalSeconds, ref retDataValidateConstant))
                 {
                     validFiles.Add(fileName);
                 }
@@ -1861,7 +1864,6 @@ namespace CaptureToolPlugin
             List<string> filesToSkip = null;
 
             bool bSuccess;
-            var iSleepInterval = m_SleepInterval;
 
             var diSourceDir = new DirectoryInfo(Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName));
             var diTargetDir = new DirectoryInfo(Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName));
@@ -1897,7 +1899,7 @@ namespace CaptureToolPlugin
                 }
             }
 
-            if (!VerifyConstantFolderSize(diSourceDir.FullName, iSleepInterval, ref retData))
+            if (!VerifyConstantFolderSize(diSourceDir.FullName, ref retData))
             {
                 msg = "Dataset '" + datasetInfo.DatasetName + "' not ready";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
@@ -2306,7 +2308,7 @@ namespace CaptureToolPlugin
             }
 
             // Verify the folder size is constant (indicates acquisition is actually finished)
-            if (!VerifyConstantFolderSize(diSourceDir.FullName, m_SleepInterval, ref retData))
+            if (!VerifyConstantFolderSize(diSourceDir.FullName, ref retData))
             {
                 msg = "Dataset '" + datasetInfo.DatasetName + "' not ready";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
@@ -2408,7 +2410,7 @@ namespace CaptureToolPlugin
                 return;
             }
 
-            if (!VerifyConstantFolderSize(diSourceDir.FullName, m_SleepInterval, ref retData))
+            if (!VerifyConstantFolderSize(diSourceDir.FullName, ref retData))
             {
                 msg = "Dataset '" + datasetInfo.DatasetName + "' not ready";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
@@ -2569,7 +2571,7 @@ namespace CaptureToolPlugin
                 }
             }
 
-            if (!VerifyConstantFolderSize(diSourceDir.FullName, m_SleepInterval, ref retData))
+            if (!VerifyConstantFolderSize(diSourceDir.FullName, ref retData))
             {
                 msg = "Dataset '" + datasetInfo.DatasetName + "' not ready";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
@@ -2772,6 +2774,101 @@ namespace CaptureToolPlugin
             }
         }
 
+        /// <summary>
+        /// Return the sleep interval for a file or folder that is the given days old
+        /// </summary>
+        /// <param name="itemAgeDays">Days before now that the file or folder was modified</param>
+        /// <param name="minimumTimeSeconds">Minimum sleep time</param>
+        /// <returns>
+        /// m_SleepInterval if less than 10 days old
+        /// minimumTimeSeconds if more than 30 days old
+        /// Otherwise, a value between minimumTimeSeconds and m_SleepInterval
+        /// </returns>
+        private int GetSleepInterval(double itemAgeDays, int minimumTimeSeconds)
+        {
+            const int AGED_FILE_DAYS_MINIMUM = 10;
+            const int AGED_FILE_DAYS_MAXIMUM = 30;
+
+            if (itemAgeDays < AGED_FILE_DAYS_MINIMUM)
+                return m_SleepInterval;
+
+            if (itemAgeDays > AGED_FILE_DAYS_MAXIMUM)
+                return minimumTimeSeconds;
+
+            var scalingMultiplier = (AGED_FILE_DAYS_MAXIMUM - itemAgeDays) /
+                                    (AGED_FILE_DAYS_MAXIMUM - AGED_FILE_DAYS_MINIMUM);
+
+            var maximumTimeSeconds = Math.Max(m_SleepInterval, minimumTimeSeconds);
+
+            var sleepTimeSeconds = scalingMultiplier * (maximumTimeSeconds - minimumTimeSeconds) + minimumTimeSeconds;
+
+            return (int)Math.Round(sleepTimeSeconds);
+
+        }
+
+        /// <summary>
+        /// Return the appropriate interval to wait while examining that a file's size does not change
+        /// </summary>
+        /// <param name="sourceFilePath"></param>
+        /// <returns>Sleep time, in seconds</returns>
+        private int GetSleepIntervalForFile(string sourceFilePath)
+        {
+            const int MINIMUM_TIME_SECONDS = 3;
+
+            try
+            {
+                var fiSourceFile = new FileInfo(sourceFilePath);
+
+                if (!fiSourceFile.Exists)
+                    return MINIMUM_TIME_SECONDS;
+
+                var fileAgeDays = DateTime.UtcNow.Subtract(fiSourceFile.LastWriteTimeUtc).TotalDays;
+
+                return GetSleepInterval(fileAgeDays, MINIMUM_TIME_SECONDS);
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in GetSleepIntervalForFile", ex);
+                return m_SleepInterval;
+            }
+        }
+
+        /// <summary>
+        /// Return the appropriate interval to wait while examining that a directory's size does not change
+        /// </summary>
+        /// <param name="sourceFolderPath"></param>
+        /// <returns>Sleep time, in seconds</returns>
+        private int GetSleepIntervalForFolder(string sourceFolderPath)
+        {
+            const int MINIMUM_TIME_SECONDS = 3;
+
+            try
+            {
+                var diSourceDir = new DirectoryInfo(sourceFolderPath);
+                
+                if (!diSourceDir.Exists)
+                    return MINIMUM_TIME_SECONDS;
+
+                // Find the newest file in the folder
+                var files = diSourceDir.GetFileSystemInfos("*", SearchOption.AllDirectories);
+
+                if (files.Length == 0)
+                    return MINIMUM_TIME_SECONDS;                
+
+                var mostRecentWriteTime = (from item in files orderby item.LastWriteTimeUtc select item.LastWriteTimeUtc).Max();
+
+                var fileAgeDays = DateTime.UtcNow.Subtract(mostRecentWriteTime).TotalDays;
+
+                return GetSleepInterval(fileAgeDays, MINIMUM_TIME_SECONDS);
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in GetSleepIntervalForFolder", ex);
+                return m_SleepInterval;
+            }
+        }
+
+
         protected void HandleCopyException(ref clsToolReturnData retData, Exception ex)
         {
             if (ex.Message.Contains("An unexpected network error occurred") ||
@@ -2892,6 +2989,44 @@ namespace CaptureToolPlugin
 
 
         }
+
+        /// <summary>
+        /// Report some stats on the given folder, including the number of files and the largest file
+        /// </summary>
+        /// <param name="sourceFolderPath"></param>
+        /// <returns>String describing the folder; if a problem, reports Error: ErrorMsg </returns>
+        private string ReportFolderStats(string sourceFolderPath)
+        {
+            try
+            {
+                var sourceFolder = new DirectoryInfo(sourceFolderPath);
+                if (!sourceFolder.Exists)
+                    return "Error: folder not found, " + sourceFolderPath;
+
+                var filesInFolder = sourceFolder.GetFiles();
+                float totalSizeKB = 0;
+                var largestFileInfo = new KeyValuePair<long, string>(0, "");
+
+                foreach (var file in filesInFolder)
+                {
+                    totalSizeKB += file.Length / 1024.0f;
+                    if (file.Length > largestFileInfo.Key)
+                    {
+                        largestFileInfo = new KeyValuePair<long, string>(file.Length, file.Name);
+                    }
+                }
+
+                return string.Format("{0} files, {1:F1} KB total, largest file is {2}", 
+                    filesInFolder.Length, totalSizeKB, largestFileInfo.Value);
+
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in ReportFirstVisibleFile", ex);
+                return "Error: " + ex.Message;
+            }
+        }
+
 
         /// <summary>
         /// Make sure that we matched a file for instruments that save data as a file, or a folder for instruments that save data to a folder
@@ -3054,6 +3189,7 @@ namespace CaptureToolPlugin
                             if (datasetInfo.FileOrFolderName.ToLower().EndsWith(".d"))
                                 break;
                         }
+
                         if (sourceType == RawDSTypes.FolderNoExt)
                         {
                             // IMS04_AgTOF05 and similar instruments collect data into a folder named after the dataset
