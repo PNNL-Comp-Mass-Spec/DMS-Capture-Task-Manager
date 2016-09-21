@@ -134,7 +134,32 @@ namespace SrcFileRenamePlugin
 
             // Now that we've had a chance to connect to the share, possibly append a subfolder to the source path
             if (!string.IsNullOrWhiteSpace(captureSubfolder))
-                sourceFolderPath = Path.Combine(sourceFolderPath, captureSubfolder);
+            {
+
+                // However, if the subfolder name matches the dataset name, this was probably an error on the operator's part and we likely do not want to use the subfolder name
+                if (captureSubfolder.EndsWith(Path.DirectorySeparatorChar + datasetName, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    var candidateFolderPath = Path.Combine(sourceFolderPath, captureSubfolder);
+
+                    if (Directory.Exists(candidateFolderPath))
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                           "Dataset captureSubfolder ends with the dataset name. Gracefully ignoring because this appears to be a data entry error: " +
+                           datasetName);
+                        sourceFolderPath = candidateFolderPath.Substring(0, candidateFolderPath.Length - datasetName.Length - 1);
+                    }
+                    else
+                    {
+                        sourceFolderPath = candidateFolderPath;
+                    }
+
+                }
+                else
+                {
+                    sourceFolderPath = Path.Combine(sourceFolderPath, captureSubfolder);
+                }
+                                
+            }
 
             var diSourceFolder = new DirectoryInfo(sourceFolderPath);
             int countRenamed;

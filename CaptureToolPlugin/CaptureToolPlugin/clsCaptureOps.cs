@@ -1140,7 +1140,6 @@ namespace CaptureToolPlugin
                 m_SleepInterval = 2;
             }
 
-
             // Confirm that the dataset name has no spaces
             if (datasetName.IndexOf(' ') >= 0)
             {
@@ -1332,34 +1331,55 @@ namespace CaptureToolPlugin
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
             }
 
-            // Now that we've had a chance to connect to the share, possibly append a subfolder to the source path
-            if (!string.IsNullOrWhiteSpace(captureSubfolder))
-                sourceFolderPath = Path.Combine(sourceFolderPath, captureSubfolder);
-
-            // Confirm that the source folder has no invalid characters
-            if (NameHasInvalidCharacter(sourceFolderPath, "Source folder path with captureSubfolder", false, ref retData))
-                return false;
-
             // If Source_Folder_Name is non-blank, use it. Otherwise use dataset name
             var sSourceFolderName = taskParams.GetParam("Source_Folder_Name");
 
-
-            if (string.IsNullOrWhiteSpace(sSourceFolderName))
+            if (string.IsNullOrWhiteSpace(sSourceFolderName))               
             {
-                datasetInfo = GetRawDSType(sourceFolderPath, datasetName, instrumentClass);
-                sourceType = datasetInfo.DatasetType;
-            }
-            else
+                sSourceFolderName = datasetName;
+            } else
             {
-                // Confirm that the source folder name no invalid characters
+                // Confirm that the source folder name has no invalid characters
                 if (NameHasInvalidCharacter(sSourceFolderName, "Job param Source_Folder_Name", true, ref retData))
                     return false;
-
-                datasetInfo = GetRawDSType(sourceFolderPath, sSourceFolderName, instrumentClass);
-                sourceType = datasetInfo.DatasetType;
-                datasetInfo.DatasetName = datasetName;
             }
 
+            // Now that we've had a chance to connect to the share, possibly append a subfolder to the source path
+            if (!string.IsNullOrWhiteSpace(captureSubfolder))
+            {
+                // However, if the subfolder name matches the dataset name, this was probably an error on the operator's part and we likely do not want to use the subfolder name
+                if (captureSubfolder.EndsWith(Path.DirectorySeparatorChar + sSourceFolderName, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    var candidateFolderPath = Path.Combine(sourceFolderPath, captureSubfolder);
+
+                    if (Directory.Exists(candidateFolderPath))
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR,
+                            "Dataset captureSubfolder ends with the dataset name. Gracefully ignoring because this appears to be a data entry error: " +
+                            datasetName);
+                        sourceFolderPath = candidateFolderPath.Substring(0, candidateFolderPath.Length - sSourceFolderName.Length - 1);
+                    }
+                    else
+                    {
+                        sourceFolderPath = candidateFolderPath;
+                    }                    
+
+                }
+                else
+                {
+                    sourceFolderPath = Path.Combine(sourceFolderPath, captureSubfolder);
+                }
+
+                // Confirm that the source folder has no invalid characters
+                if (NameHasInvalidCharacter(sourceFolderPath, "Source folder path with captureSubfolder", false, ref retData))
+                    return false;
+
+            }
+
+            datasetInfo = GetRawDSType(sourceFolderPath, sSourceFolderName, instrumentClass);
+            sourceType = datasetInfo.DatasetType;
+            datasetInfo.DatasetName = datasetName;
+           
             // Set the closeout type to Failed for now
             retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
             bool sourceIsValid;
@@ -1369,11 +1389,28 @@ namespace CaptureToolPlugin
                 // No dataset file or folder found
 
                 if (m_UseBioNet)
+                {
                     retData.CloseoutMsg = "Dataset data file not found on Bionet at " + sourceFolderPath;
+                }
                 else
+                {
                     retData.CloseoutMsg = "Dataset data file not found at " + sourceFolderPath;
+                }
 
-                msg = retData.CloseoutMsg + " (" + datasetName + ", job " + jobNum + ")";
+                string folderStatsMsg;
+
+                if (string.IsNullOrWhiteSpace(sSourceFolderName))
+                {
+                    folderStatsMsg = ReportFolderStats(sourceFolderPath);
+                    retData.CloseoutMsg += "; empty SourceFolderName";
+                }
+                else
+                {
+                    folderStatsMsg = ReportFolderStats(Path.Combine(sourceFolderPath, sSourceFolderName));
+                    retData.CloseoutMsg += "; SourceFolderName: " + sSourceFolderName;
+                }
+
+                msg = retData.CloseoutMsg + " (" + datasetName + ", job " + jobNum + "); " + folderStatsMsg;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
                 sourceIsValid = false;
             }
