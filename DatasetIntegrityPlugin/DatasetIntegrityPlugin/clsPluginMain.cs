@@ -5,8 +5,6 @@
 // Copyright 2009, Battelle Memorial Institute
 // Created 10/02/2009
 //
-// Last modified 08/11/2015 
-//
 //*********************************************************************************************************
 
 using System;
@@ -42,7 +40,8 @@ namespace DatasetIntegrityPlugin
         const float ACQ_METHOD_FILE_MIN_SIZE_KB = 5;
         const float SCIEX_WIFF_FILE_MIN_SIZE_KB = 50;
         const float SCIEX_WIFF_SCAN_FILE_MIN_SIZE_KB = 0.03F;
-        const float UIMF_FILE_MIN_SIZE_KB = 20;
+        const float UIMF_FILE_MIN_SIZE_KB = 5;
+        const float UIMF_FILE_SMALL_SIZE_KB = 50;
         const float TIMS_UIMF_FILE_MIN_SIZE_KB = 5;
         const float AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB = 5;
         const float AGILENT_MSSCAN_BIN_FILE_SMALL_SIZE_KB = 50;
@@ -1463,11 +1462,11 @@ namespace DatasetIntegrityPlugin
         /// <param name="instrumentName"></param>
         /// <returns>Enum indicating test result</returns>
         private EnumCloseOutType TestBrukerFT_Folder(
-            string datasetFolderPath, 
-            bool requireBAFFile, 
+            string datasetFolderPath,
+            bool requireBAFFile,
             bool requireMCFFile,
             bool requireSerFile,
-            clsInstrumentClassInfo.eInstrumentClass instrumentClass, 
+            clsInstrumentClassInfo.eInstrumentClass instrumentClass,
             string instrumentName)
         {
             float dataFileSizeKB;
@@ -1820,8 +1819,23 @@ namespace DatasetIntegrityPlugin
                     ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSizeKB, UIMF_FILE_MIN_SIZE_KB);
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
-            }
 
+                if (dataFileSizeKB < UIMF_FILE_SMALL_SIZE_KB)
+                {
+                    // File is between 5 and 50 KB
+                    // Make sure that one of the frame scans has data
+
+                    string uimfStatusMessage;
+                    var validFile = UimfFileHasData(dataFileNamePath, out uimfStatusMessage);
+
+                    if (!validFile)
+                    {
+                        mRetData.EvalMsg = string.Format("Data file size is less than {0:F0} KB; {1}", UIMF_FILE_SMALL_SIZE_KB, uimfStatusMessage);
+                        return EnumCloseOutType.CLOSEOUT_FAILED;
+                    }
+
+                }
+            }
 
             // Verify that the pressure columns are in the correct order
             if (!ValidatePressureInfo(dataFileNamePath, instrumentName))
@@ -1831,6 +1845,67 @@ namespace DatasetIntegrityPlugin
 
             // If we got to here, everything was OK
             return EnumCloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        /// <summary>
+        /// Opens the .UIMF file to obtain the list of frames
+        /// Retrieves the scan data for each frame until a scan is encountered that has at least one data point
+        /// </summary>
+        /// <param name="uimfFilePath">UIMF File to open</param>
+        /// <param name="uimfStatusMessage">Output: status message</param>
+        /// <returns>True if the file can be opened and has valid spectra, otherwise false</returns>
+        private bool UimfFileHasData(string uimfFilePath, out string uimfStatusMessage)
+        {
+            try
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Opening UIMF file to look for valid data");
+
+                // Open the .UIMF file and read the first scan of the first frame
+                using (var reader = new DataReader(uimfFilePath))
+                {
+
+                    var frameList = reader.GetMasterFrameList();
+
+                    if (frameList.Count <= 0)
+                    {
+                        uimfStatusMessage = "appears corrupt (no frame info)";
+                        return false;
+                    }
+
+                    foreach (var frameEntry in frameList)
+                    {
+                        var frameNumber = frameEntry.Key;
+                        var frameType = frameEntry.Value;
+                        var frameScans = reader.GetFrameScans(frameEntry.Key);
+
+                        foreach (var scanNum in frameScans)
+                        {
+                            double[] mzArray;
+                            int[] intensityArray;
+
+                            var dataCount = reader.GetSpectrum(
+                                frameNumber, frameType, scanNum.Scan,
+                                out mzArray, out intensityArray);
+
+                            if (dataCount > 0)
+                            {
+                                // Valid data has been found
+                                uimfStatusMessage = string.Empty;
+                                return true;
+                            }
+                        }
+                    }
+                }
+
+                uimfStatusMessage = "has frame info but no scan data";
+                return false;
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in UimfFileHasData: " + ex.Message);
+                uimfStatusMessage = "appears corrupt (exception reading data)";
+                return false;
+            }
         }
 
         /// <summary>
