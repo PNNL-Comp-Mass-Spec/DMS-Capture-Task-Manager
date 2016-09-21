@@ -1130,9 +1130,9 @@ namespace CaptureToolPlugin
             var maxFileCountToAllowResume = 0;
             var maxFolderCountToAllowResume = 0;
 
-            if ((computerName.ToUpper().StartsWith("MONROE")) && datasetName == "2014_10_14_SRFAI-20ppm_Neg_15T_TOF0p65_IAT0p05_144scans_8M_000001")
+            if (computerName.ToLower().StartsWith("monroe") && datasetName == "2014_10_14_SRFAI-20ppm_Neg_15T_TOF0p65_IAT0p05_144scans_8M_000001")
             {
-                // Override sourceVol, sourcePath, and m_UseBioNet when processing 2014_10_14_SRFAI-20ppm_Neg_15T_TOF0p65_IAT0p05_144scans_8M_000001 on Monroe3
+                // Override sourceVol, sourcePath, and m_UseBioNet when processing 2014_10_14_SRFAI-20ppm_Neg_15T_TOF0p65_IAT0p05_144scans_8M_000001 on Monroe
                 sourceVol = @"\\protoapps\";
                 sourcePath = @"userdata\Matt\";
                 m_UseBioNet = false;
@@ -1827,7 +1827,7 @@ namespace CaptureToolPlugin
                 return bSuccess;
 
             var dtCurrentTime = DateTime.Now;
-            if (dtCurrentTime.Hour == 18 || dtCurrentTime.Hour == 19 || (Environment.MachineName.ToUpper() == "MONROE3"))
+            if (dtCurrentTime.Hour == 18 || dtCurrentTime.Hour == 19 || Environment.MachineName.ToLower().StartsWith("monroe"))
             {
                 // Time is between 6 pm and 7:59 pm
                 // Check for folders at METHOD_FOLDER_BASE_PATH that start with x_ and have .lcmethod files that are all at least 14 days old
