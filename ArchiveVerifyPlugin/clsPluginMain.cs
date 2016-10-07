@@ -64,6 +64,7 @@ namespace ArchiveVerifyPlugin
             {
                 // Examine the MyEMSL ingest status page
                 success = CheckUploadStatus();
+
             }
             catch (Exception ex)
             {
@@ -74,7 +75,6 @@ namespace ArchiveVerifyPlugin
             }
 
 
-
             if (success)
             {
                 string metadataFilePath;
@@ -83,7 +83,11 @@ namespace ArchiveVerifyPlugin
                 // If data is found, then CreateOrUpdateMD5ResultsFile will also be called
                 success = VisibleInElasticSearch(out metadataFilePath);
 
-                if (success && !string.IsNullOrEmpty(metadataFilePath))
+                if (!success)
+                {
+                    mRetData.CloseoutMsg = "Not visible in elastic search";
+                }
+                else if (!string.IsNullOrEmpty(metadataFilePath))
                 {
                     DeleteMetadataFile(metadataFilePath);
                 }
@@ -107,7 +111,13 @@ namespace ArchiveVerifyPlugin
             {
                 // There was a problem (or the data is not yet ready in MyEMSL)
                 if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
+                {
                     mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
+                    if (string.IsNullOrWhiteSpace(mRetData.CloseoutMsg))
+                    {
+                        mRetData.CloseoutMsg = "Unknown reason";
+                    }
+                }
             }
 
             msg = "Completed clsPluginMain.RunTool()";
@@ -193,11 +203,13 @@ namespace ArchiveVerifyPlugin
                     Utilities.Logout(cookieJar);
                     return true;
                 }
+                mRetData.CloseoutMsg = statusMessage;
 
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception checking upload status: " + ex.Message);
+                mRetData.CloseoutMsg = "Exception checking upload status";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg + ": " + ex.Message);
             }
 
             Utilities.Logout(cookieJar);

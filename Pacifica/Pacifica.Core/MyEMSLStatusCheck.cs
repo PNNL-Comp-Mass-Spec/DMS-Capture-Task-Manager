@@ -13,7 +13,7 @@ namespace Pacifica.Core
     /// First call GetIngestStatus then call IngestStepCompleted.
     /// This allows for just one web request, but the ability to examine the status of multiple steps
     /// </remarks>
-	public class MyEMSLStatusCheck
+    public class MyEMSLStatusCheck
     {
         public const string PERMISSIONS_ERROR = "Permissions error:";
 
@@ -165,6 +165,11 @@ namespace Pacifica.Core
             return string.Empty;
         }
 
+        private string GetStepDescription(StatusStep step)
+        {
+            return string.Format("{0} ({1})", (int)step, step);
+        }
+
         protected bool HasExceptions(string xmlServerResponse, bool reportError, out string errorMessage)
         {
             const string EXCEPTION_TEXT = @"message='exceptions.";
@@ -299,6 +304,7 @@ namespace Pacifica.Core
             if (HasExceptions(xmlServerResponse, true, out errorMessage))
             {
                 // Exceptions are present; step is not complete
+                statusMessage = "Ingest status reports exceptions";
                 return false;
             }
 
@@ -338,10 +344,11 @@ namespace Pacifica.Core
             var query = string.Format("//step[@id='{0}']", (int)stepNum);
             var statusElement = xmlDoc.SelectSingleNode(query);
 
-            if (statusElement == null || statusElement.Attributes == null)
+            if (statusElement?.Attributes == null)
             {
-                errorMessage = "Match not found for step " + stepNum + " in the Status XML";
+                errorMessage = string.Format("Match not found for step {0} in the Status XML", GetStepDescription(stepNum));
                 ReportError("IngestStepCompleted", errorMessage);
+                statusMessage = string.Format("Match not found for step {0}", GetStepDescription(stepNum));
                 return false;
             }
 
@@ -350,13 +357,15 @@ namespace Pacifica.Core
 
             if (string.IsNullOrEmpty(message))
             {
-                errorMessage = "message attribute in the Status XML is empty for step " + stepNum;
+                errorMessage = "message attribute in the Status XML is empty for step " + GetStepDescription(stepNum);
+                statusMessage = "Status XML error";
                 return false;
             }
 
             if (string.IsNullOrEmpty(status))
             {
-                errorMessage = "status attribute in the Status XML is empty for step " + stepNum;
+                errorMessage = "status attribute in the Status XML is empty for step " + GetStepDescription(stepNum);
+                statusMessage = "Status XML error";
                 return false;
             }
 
@@ -364,24 +373,31 @@ namespace Pacifica.Core
             {
 
                 if (message.Contains(UPLOAD_PERMISSION_ERROR))
+                {
                     errorMessage = PERMISSIONS_ERROR + " " + message;
+                    statusMessage = PERMISSIONS_ERROR;
+                }
                 else
+                {
                     errorMessage = message;
+                    statusMessage = "Injest error";
+                }
 
                 return false;
+
             }
 
             if (status.ToLower() == "success")
             {
                 if (message.ToLower() == "completed")
                 {
-                    statusMessage = "Step is complete";
+                    statusMessage = string.Format("Step {0} is complete", GetStepDescription(stepNum));
                     return true;
                 }
 
                 if (message.ToLower() == "verified")
                 {
-                    statusMessage = "Data is verified";
+                    statusMessage = string.Format("Data is verified, step {0}", GetStepDescription(stepNum));
                     return true;
                 }
 
@@ -391,14 +407,15 @@ namespace Pacifica.Core
             if (status.ToLower() == "unknown")
             {
                 // Step is not yet complete
-                statusMessage = "Waiting";
+                statusMessage = string.Format("Waiting on step {0}", GetStepDescription(stepNum));
                 return false;
             }
 
             // Status is not empty, error, success, or unknown
             // Unrecognized state
 
-            errorMessage = "Unrecognized status state: " + status;
+            errorMessage = string.Format("Unrecognized status state for step {0}: {1}", GetStepDescription(stepNum), status);
+            statusMessage = "Unrecognized status";
             return false;
 
         }
