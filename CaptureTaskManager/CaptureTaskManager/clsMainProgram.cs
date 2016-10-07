@@ -134,7 +134,8 @@ namespace CaptureTaskManager
                     // Reload the manager config
                     msg = "Reloading configuration and restarting manager";
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                    if (m_TraceMode) ShowTraceMessage(msg);
+                    if (m_TraceMode)
+                        ShowTraceMessage(msg);
 
                     // Unsubscribe message handler events and close msssage handler
                     if (m_MsgQueueInitSuccess)
@@ -150,7 +151,8 @@ namespace CaptureTaskManager
                     // Manager is disabled via manager control db
                     msg = "Manager disabled in manager control DB";
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                    if (m_TraceMode) ShowTraceMessage(msg);
+                    if (m_TraceMode)
+                        ShowTraceMessage(msg);
 
                     m_StatusFile.UpdateDisabled(false);
                     restartOK = false;
@@ -160,7 +162,8 @@ namespace CaptureTaskManager
                     // Manager disabled locally
                     msg = "Manager disabled locally";
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                    if (m_TraceMode) ShowTraceMessage(msg);
+                    if (m_TraceMode)
+                        ShowTraceMessage(msg);
 
                     m_StatusFile.UpdateDisabled(true);
                     restartOK = false;
@@ -170,7 +173,8 @@ namespace CaptureTaskManager
                     // Too many errors
                     msg = "Excessive errors requesting task; closing manager";
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-                    if (m_TraceMode) ShowTraceMessage(msg);
+                    if (m_TraceMode)
+                        ShowTraceMessage(msg);
 
                     // Do not create a flag file; intermittent network connectivity is likely resulting in failure to request a task
                     // This will likely clear up eventually
@@ -184,7 +188,8 @@ namespace CaptureTaskManager
                     // Working directory not valid
                     msg = "Working directory problem, disabling manager";
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-                    if (m_TraceMode) ShowTraceMessage(msg);
+                    if (m_TraceMode)
+                        ShowTraceMessage(msg);
 
                     m_StatusFile.CreateStatusFlagFile();
                     m_StatusFile.UpdateStopped(true);
@@ -196,7 +201,8 @@ namespace CaptureTaskManager
                     // No capture task found
                     msg = "No capture tasks found";
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-                    if (m_TraceMode) ShowTraceMessage(msg);
+                    if (m_TraceMode)
+                        ShowTraceMessage(msg);
 
                     m_StatusFile.UpdateStopped(false);
                     restartOK = false;
@@ -206,7 +212,8 @@ namespace CaptureTaskManager
                     // Shutdown command received
                     msg = "Shutdown command received, closing manager";
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                    if (m_TraceMode) ShowTraceMessage(msg);
+                    if (m_TraceMode)
+                        ShowTraceMessage(msg);
 
                     m_StatusFile.UpdateStopped(false);
                     restartOK = false;
@@ -216,7 +223,8 @@ namespace CaptureTaskManager
                     // Max number of consecutive jobs reached
                     msg = "Exceeded maximum job count, closing manager";
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                    if (m_TraceMode) ShowTraceMessage(msg);
+                    if (m_TraceMode)
+                        ShowTraceMessage(msg);
 
                     m_StatusFile.UpdateStopped(false);
                     restartOK = false;
@@ -226,7 +234,8 @@ namespace CaptureTaskManager
                     // Manager update required
                     msg = "Manager update is required, closing manager";
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                    if (m_TraceMode) ShowTraceMessage(msg);
+                    if (m_TraceMode)
+                        ShowTraceMessage(msg);
 
                     m_MgrSettings.AckManagerUpdateRequired();
                     m_StatusFile.UpdateStopped(false);
@@ -237,7 +246,8 @@ namespace CaptureTaskManager
                     // Flag file is present
                     msg = "Flag file exists - unable to continue analysis";
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-                    if (m_TraceMode) ShowTraceMessage(msg);
+                    if (m_TraceMode)
+                        ShowTraceMessage(msg);
 
                     m_StatusFile.UpdateStopped(true);
                     restartOK = false;
@@ -247,7 +257,8 @@ namespace CaptureTaskManager
                     // Step tool set flag NeedToAbortProcessing to true
                     msg = "NeedToAbortProcessing = true, closing manager";
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                    if (m_TraceMode) ShowTraceMessage(msg);
+                    if (m_TraceMode)
+                        ShowTraceMessage(msg);
 
                     m_StatusFile.UpdateStopped(false);
                     restartOK = false;
@@ -314,7 +325,8 @@ namespace CaptureTaskManager
 
             // Update the cached values for this manager and job
             m_MgrName = m_MgrSettings.GetParam(clsMgrSettings.MGR_PARAM_MGR_NAME);
-            if (m_TraceMode) ShowTraceMessage("Manager name is " + m_MgrName);
+            if (m_TraceMode)
+                ShowTraceMessage("Manager name is " + m_MgrName);
 
             m_StepTool = "Unknown";
             m_Job = "Unknown";
@@ -341,7 +353,8 @@ namespace CaptureTaskManager
             clsLogTools.CreateDbLogger(logCnStr, "CaptureTaskMan: " + m_MgrName, false);
 
             // Make initial log entry
-            if (m_TraceMode) ShowTraceMessage("Initializing log file " + logFileName);
+            if (m_TraceMode)
+                ShowTraceMessage("Initializing log file " + logFileName);
 
             var msg = "=== Started Capture Task Manager V" + Application.ProductVersion + " ===== ";
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
@@ -374,7 +387,8 @@ namespace CaptureTaskManager
                     "Manager parameter 'configfilename' is undefined; this likely indicates a problem retrieving manager parameters.  Shutting down the manager";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg);
 
-                if (m_TraceMode) ShowTraceMessage(errMsg);
+                if (m_TraceMode)
+                    ShowTraceMessage(errMsg);
                 return false;
             }
 
@@ -401,7 +415,8 @@ namespace CaptureTaskManager
                 var errMsg = "Error determining the parent path for the executable, " + Application.ExecutablePath;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg);
 
-                if (m_TraceMode) ShowTraceMessage(errMsg);
+                if (m_TraceMode)
+                    ShowTraceMessage(errMsg);
                 return false;
             }
 
@@ -452,7 +467,8 @@ namespace CaptureTaskManager
                     var errMsg = "Exception readining status history file";
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg, ex);
 
-                    if (m_TraceMode) ShowTraceMessage(errMsg + ": " + ex.Message);
+                    if (m_TraceMode)
+                        ShowTraceMessage(errMsg + ": " + ex.Message);
                 }
             }
 
@@ -478,7 +494,8 @@ namespace CaptureTaskManager
                               " seconds)";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warnMsg);
 
-                if (m_TraceMode) ShowTraceMessage(warnMsg);
+                if (m_TraceMode)
+                    ShowTraceMessage(warnMsg);
                 return m_MsgQueueInitSuccess;
             }
 
@@ -488,7 +505,8 @@ namespace CaptureTaskManager
             {
                 var warnMsg = "Connection to the message queue was slow, taking " + (int)elaspedTime + " seconds";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, warnMsg);
-                if (m_TraceMode) ShowTraceMessage(warnMsg);
+                if (m_TraceMode)
+                    ShowTraceMessage(warnMsg);
             }
 
             return m_MsgQueueInitSuccess;
@@ -502,14 +520,16 @@ namespace CaptureTaskManager
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
                                      "Message handler init error");
                 m_MsgQueueInitSuccess = false;
-                if (m_TraceMode) ShowTraceMessage("m_MsgQueueInitSuccess = false: Message handler init error");
+                if (m_TraceMode)
+                    ShowTraceMessage("m_MsgQueueInitSuccess = false: Message handler init error");
             }
             else
             {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
                                      "Message handler initialized");
                 m_MsgQueueInitSuccess = true;
-                if (m_TraceMode) ShowTraceMessage("m_MsgQueueInitSuccess = true");
+                if (m_TraceMode)
+                    ShowTraceMessage("m_MsgQueueInitSuccess = true");
             }
         }
 
@@ -598,7 +618,8 @@ namespace CaptureTaskManager
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
                                              pendingWindowsUpdateMessage);
                         m_LoopExitCode = LoopExitCode.NoTaskFound;
-                        if (m_TraceMode) ShowTraceMessage(pendingWindowsUpdateMessage);
+                        if (m_TraceMode)
+                            ShowTraceMessage(pendingWindowsUpdateMessage);
                         break;
                     }
 
@@ -654,7 +675,8 @@ namespace CaptureTaskManager
                 {
                     var msg = "Error in PerformMainLoop";
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
-                    if (m_TraceMode) ShowTraceMessage(msg + ": " + ex.Message);
+                    if (m_TraceMode)
+                        ShowTraceMessage(msg + ": " + ex.Message);
                 }
             } // End while
 
@@ -674,7 +696,8 @@ namespace CaptureTaskManager
             {
                 var msg = "Exception writing job history file";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
-                if (m_TraceMode) ShowTraceMessage(msg + ": " + ex.Message);
+                if (m_TraceMode)
+                    ShowTraceMessage(msg + ": " + ex.Message);
             }
 
             // Evaluate the loop exit code
@@ -705,7 +728,8 @@ namespace CaptureTaskManager
 
                 msg = "Job " + m_Job + ", step " + stepNumber + " assigned";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-                if (m_TraceMode) ShowTraceMessage(msg);
+                if (m_TraceMode)
+                    ShowTraceMessage(msg);
 
                 // Update the status
                 m_StatusFile.JobNumber = int.Parse(m_Job);
@@ -728,7 +752,8 @@ namespace CaptureTaskManager
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 
                     msg = "Unable to SetToolRunnerObject";
-                    if (m_TraceMode) ShowTraceMessage(msg);
+                    if (m_TraceMode)
+                        ShowTraceMessage(msg);
 
                     m_Task.CloseTask(EnumCloseOutType.CLOSEOUT_FAILED, msg);
 
@@ -769,7 +794,8 @@ namespace CaptureTaskManager
                         else
                             sCloseoutMessage = "Failure running tool " + m_StepTool;
 
-                        if (m_TraceMode) ShowTraceMessage(msg);
+                        if (m_TraceMode)
+                            ShowTraceMessage(msg);
                         m_Task.CloseTask(eTaskCloseout, sCloseoutMessage, toolResult.EvalCode, toolResult.EvalMsg);
                         break;
 
@@ -783,7 +809,8 @@ namespace CaptureTaskManager
                         if (!String.IsNullOrEmpty(toolResult.CloseoutMsg))
                             sCloseoutMessage += ": " + toolResult.CloseoutMsg;
 
-                        if (m_TraceMode) ShowTraceMessage(msg);
+                        if (m_TraceMode)
+                            ShowTraceMessage(msg);
                         m_Task.CloseTask(eTaskCloseout, sCloseoutMessage, toolResult.EvalCode, toolResult.EvalMsg);
                         break;
 
@@ -791,7 +818,8 @@ namespace CaptureTaskManager
                         msg = m_MgrName + ": Step complete, tool " + m_StepTool + ", job " + m_Job + ", Dataset " +
                               m_Dataset;
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-                        if (m_TraceMode) ShowTraceMessage(msg);
+                        if (m_TraceMode)
+                            ShowTraceMessage(msg);
 
                         m_Task.CloseTask(eTaskCloseout, toolResult.CloseoutMsg, toolResult.EvalCode, toolResult.EvalMsg);
                         break;
@@ -803,7 +831,8 @@ namespace CaptureTaskManager
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 
                         sCloseoutMessage = "Error: NeedToAbortProcessing";
-                        if (m_TraceMode) ShowTraceMessage(msg);
+                        if (m_TraceMode)
+                            ShowTraceMessage(msg);
 
                         m_Task.CloseTask(eTaskCloseout, sCloseoutMessage, toolResult.EvalCode, toolResult.EvalMsg);
                         break;
@@ -824,7 +853,8 @@ namespace CaptureTaskManager
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
 
                 msg = "Exception: " + ex.Message;
-                if (m_TraceMode) ShowTraceMessage(msg);
+                if (m_TraceMode)
+                    ShowTraceMessage(msg);
                 m_Task.CloseTask(EnumCloseOutType.CLOSEOUT_FAILED, msg, EnumEvalCode.EVAL_CODE_FAILED,
                                  "Exception running tool");
             }
@@ -876,7 +906,8 @@ namespace CaptureTaskManager
             {
                 var fiApplication = new FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
 
-                if (fiApplication.Directory == null) return;
+                if (fiApplication.Directory == null)
+                    return;
 
                 foreach (var fiFile in fiApplication.Directory.GetFiles("FTPlog_*"))
                 {
@@ -888,7 +919,7 @@ namespace CaptureTaskManager
                             fiFile.Delete();
                         }
                     }
-                        // ReSharper disable once EmptyGeneralCatchClause
+                    // ReSharper disable once EmptyGeneralCatchClause
                     catch
                     {
                         // Ignore exceptions
@@ -898,7 +929,8 @@ namespace CaptureTaskManager
             catch (Exception ex)
             {
                 var msg = "Exception removing old FTP log files";
-                if (m_TraceMode) ShowTraceMessage(msg);
+                if (m_TraceMode)
+                    ShowTraceMessage(msg);
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
                                      msg + ": " + ex.Message);
             }
@@ -948,7 +980,8 @@ namespace CaptureTaskManager
                 {
                     msg = "Folder not found: " + sTempFolderPath;
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
-                    if (m_TraceMode) ShowTraceMessage(msg);
+                    if (m_TraceMode)
+                        ShowTraceMessage(msg);
                     return;
                 }
 
@@ -966,7 +999,7 @@ namespace CaptureTaskManager
                                 iDeleteCount += 1;
                             }
                         }
-                            // ReSharper disable once EmptyGeneralCatchClause
+                        // ReSharper disable once EmptyGeneralCatchClause
                         catch
                         {
                             // Ignore exceptions
@@ -984,7 +1017,8 @@ namespace CaptureTaskManager
 
                     msg += " over " + iAgedTempFilesHours + " hours old in folder " + sTempFolderPath;
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-                    if (m_TraceMode) ShowTraceMessage(msg);
+                    if (m_TraceMode)
+                        ShowTraceMessage(msg);
                 }
             }
             catch (Exception ex)
@@ -992,7 +1026,8 @@ namespace CaptureTaskManager
                 var msg = "Exception removing old temp files";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
                                      msg + ": " + ex.Message);
-                if (m_TraceMode) ShowTraceMessage(msg);
+                if (m_TraceMode)
+                    ShowTraceMessage(msg);
             }
         }
 
@@ -1011,13 +1046,15 @@ namespace CaptureTaskManager
             {
                 msg = "Unable to load tool runner for StepTool " + stepToolName + ": " + clsPluginLoader.ErrMsg;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-                if (m_TraceMode) ShowTraceMessage(msg);
+                if (m_TraceMode)
+                    ShowTraceMessage(msg);
                 return false;
             }
 
             msg = "Loaded tool runner for Step Tool " + stepToolName;
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-            if (m_TraceMode) ShowTraceMessage(msg);
+            if (m_TraceMode)
+                ShowTraceMessage(msg);
 
             try
             {
@@ -1026,12 +1063,12 @@ namespace CaptureTaskManager
     // to Pacifica.Core.EasyHttp.eDebugMode.MyEMSLOfflineMode when calling UploadToMyEMSLWithRetry()
     // This in turn results in writeToDisk becoming True in SendFileListToDavAsTar
     m_Task.AddAdditionalParameter("MyEMSLOffline", "true");
-	clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Adding job parameter MyEMSLOffline=true");
+    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Adding job parameter MyEMSLOffline=true");
 #endif
 
 #if MyEMSL_TEST_TAR
     m_Task.AddAdditionalParameter("DebugTestTar", "true");
-	clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Adding job parameter DebugTestTar=true");
+    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Adding job parameter DebugTestTar=true");
 #endif
                 if (m_TraceMode)
                 {
@@ -1045,7 +1082,8 @@ namespace CaptureTaskManager
             {
                 msg = "Exception calling CapTool.Setup(): " + ex.Message;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-                if (m_TraceMode) ShowTraceMessage(msg);
+                if (m_TraceMode)
+                    ShowTraceMessage(msg);
                 return false;
             }
 
@@ -1089,7 +1127,8 @@ namespace CaptureTaskManager
                 var msg = "Error calling AutoCleanupManagerErrors from StatusFlagFileError";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
                                      msg + ": " + ex.Message);
-                if (m_TraceMode) ShowTraceMessage(msg);
+                if (m_TraceMode)
+                    ShowTraceMessage(msg);
                 blnMgrCleanupSuccess = false;
             }
 
@@ -1098,7 +1137,8 @@ namespace CaptureTaskManager
                 var msg = "Flag file found; automatically cleaned the work directory and deleted the flag file(s)";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
 
-                if (m_TraceMode) ShowTraceMessage(msg);
+                if (m_TraceMode)
+                    ShowTraceMessage(msg);
 
                 // No error; return false
                 return false;
@@ -1139,7 +1179,8 @@ namespace CaptureTaskManager
                 else
                     msg = m_MgrSettings.ErrMsg;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-                if (m_TraceMode) ShowTraceMessage(msg);
+                if (m_TraceMode)
+                    ShowTraceMessage(msg);
 
                 bSuccess = false;
             }
@@ -1246,7 +1287,8 @@ namespace CaptureTaskManager
 
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
                                              errMsg + ": " + datasetStoragePath);
-                        if (m_TraceMode) ShowTraceMessage(errMsg);
+                        if (m_TraceMode)
+                            ShowTraceMessage(errMsg);
 
                         return false;
                     }
@@ -1262,7 +1304,8 @@ namespace CaptureTaskManager
                     }
 
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg);
-                    if (m_TraceMode) ShowTraceMessage(errMsg);
+                    if (m_TraceMode)
+                        ShowTraceMessage(errMsg);
 
                     return false;
                 }
@@ -1272,7 +1315,8 @@ namespace CaptureTaskManager
                 errMsg = "Exception validating dataset storage free drive space: " + datasetStoragePath;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
                                      errMsg + "; " + ex.Message);
-                if (m_TraceMode) ShowTraceMessage(errMsg);
+                if (m_TraceMode)
+                    ShowTraceMessage(errMsg);
 
                 return false;
             }
@@ -1302,13 +1346,15 @@ namespace CaptureTaskManager
 
                 var msg = "Invalid working directory: " + workingDir + "; automatically switched to " + alternateWorkDir;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg);
-                if (m_TraceMode) ShowTraceMessage(msg);
+                if (m_TraceMode)
+                    ShowTraceMessage(msg);
             }
             else
             {
                 var msg = "Invalid working directory: " + workingDir;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
-                if (m_TraceMode) ShowTraceMessage(msg);
+                if (m_TraceMode)
+                    ShowTraceMessage(msg);
 
                 return false;
             }
@@ -1346,7 +1392,8 @@ namespace CaptureTaskManager
             {
                 msg = "Exception while parsing broadcast data";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
-                if (m_TraceMode) ShowTraceMessage(msg);
+                if (m_TraceMode)
+                    ShowTraceMessage(msg);
 
                 return;
             }
