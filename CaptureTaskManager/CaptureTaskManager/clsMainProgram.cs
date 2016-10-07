@@ -789,7 +789,7 @@ namespace CaptureTaskManager
                               + ", job " + m_Job + ", Dataset " + m_Dataset;
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
 
-                        if (!String.IsNullOrEmpty(toolResult.CloseoutMsg))
+                        if (!string.IsNullOrEmpty(toolResult.CloseoutMsg))
                             sCloseoutMessage = toolResult.CloseoutMsg;
                         else
                             sCloseoutMessage = "Failure running tool " + m_StepTool;
@@ -800,13 +800,20 @@ namespace CaptureTaskManager
                         break;
 
                     case EnumCloseOutType.CLOSEOUT_NOT_READY:
-                        msg = m_MgrName + ": Dataset not ready, tool " + m_StepTool + ", job " + m_Job + ", Dataset " +
-                              m_Dataset;
+                        if (m_StepTool == "ArchiveVerify" || m_StepTool == "ArchiveStatusCheck")
+                        {
+                            msg = "Dataset not ready, tool " + m_StepTool + ", job " + m_Job + ": " + toolResult.CloseoutMsg;
+                        }
+                        else
+                        {
+                            msg = "Dataset not ready, tool " + m_StepTool + ", job " + m_Job + ", Dataset " + m_Dataset;
+                        }
+                        
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
 
                         sCloseoutMessage = "Dataset not ready";
 
-                        if (!String.IsNullOrEmpty(toolResult.CloseoutMsg))
+                        if (!string.IsNullOrEmpty(toolResult.CloseoutMsg))
                             sCloseoutMessage += ": " + toolResult.CloseoutMsg;
 
                         if (m_TraceMode)
