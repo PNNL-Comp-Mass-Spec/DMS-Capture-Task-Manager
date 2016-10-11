@@ -6,6 +6,7 @@
 //*********************************************************************************************************
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using CaptureTaskManager;
 
@@ -136,14 +137,23 @@ namespace CaptureToolPlugin
         {
 
             var strToolVersionInfo = string.Empty;
-            var ioAppFileInfo = new FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+
+            // Lookup the version of the Capture tool plugin
+            if (assembly.Location == null)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to determine the directory path for the Exe using Reflection; assembly.Location is null");
+                return false;
+            }
+
+            var ioAppFileInfo = new FileInfo(assembly.Location);
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
 
             // Lookup the version of the Capture tool plugin
             if (ioAppFileInfo.DirectoryName == null)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to determine the directory path for the Exe using Reflection");
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to parse the parent directory for the Exe using path " + assembly.Location);
                 return false;
             }
 
@@ -163,7 +173,7 @@ namespace CaptureToolPlugin
             }
 
             // Store path to CaptureToolPlugin.dll in ioToolFiles
-            var ioToolFiles = new System.Collections.Generic.List<FileInfo>
+            var ioToolFiles = new List<FileInfo>
                 {
                     new FileInfo(strPluginPath)
                 };

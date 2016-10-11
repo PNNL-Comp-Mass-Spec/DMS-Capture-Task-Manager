@@ -94,10 +94,7 @@ namespace CaptureToolPlugin
 
         #region "Properties"
 
-        public bool NeedToAbortProcessing
-        {
-            get { return m_NeedToAbortProcessing; }
-        }
+        public bool NeedToAbortProcessing => m_NeedToAbortProcessing;
 
         #endregion
 
