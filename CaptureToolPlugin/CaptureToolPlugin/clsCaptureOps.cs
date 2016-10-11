@@ -396,28 +396,37 @@ namespace CaptureToolPlugin
         /// </summary>
         /// <param name="dsFolder">Full path specifying folder to be checked</param>
         /// <param name="fileCount">Output parameter: number of files</param>
-        /// <param name="folderCount">Output parameter: number of folders</param>
+        /// <param name="instrumentDataFolderCount">Output parameter: number of instrument folders (typically .D folders)</param>
+        /// <param name="nonInstrumentDataFolderCount">Output parameter: number of folders (excluding folders included in instrumentDataFolderCount)</param>
         /// <returns>Empty=0, NotEmpty=1, or Error=2</returns>
-        private DatasetFolderState IsDSFolderEmpty(string dsFolder, out int fileCount, out int folderCount)
+        private DatasetFolderState IsDSFolderEmpty(string dsFolder, out int fileCount, out int instrumentDataFolderCount, out int nonInstrumentDataFolderCount)
         {
             // Returns count of files or folders if folder is not empty
             // Returns 0 if folder is empty
             // returns -1 on error
 
             fileCount = 0;
-            folderCount = 0;
+            instrumentDataFolderCount = 0;
+            nonInstrumentDataFolderCount = 0;
 
             try
             {
-                // Check for files
-                fileCount = Directory.GetFiles(dsFolder).Length;
+                var datasetFolder = new DirectoryInfo(dsFolder);
 
-                // Check for folders
-                folderCount = Directory.GetDirectories(dsFolder).Length;
+                // Check for files
+                fileCount = datasetFolder.GetFiles().Length;
+
+                // Check for .D folders
+                // (Future: check for other folder extensions)
+                instrumentDataFolderCount = datasetFolder.GetDirectories("*.d").Length;
+
+                // Check for non-instrument folders
+                nonInstrumentDataFolderCount = datasetFolder.GetDirectories().Length - instrumentDataFolderCount;
 
                 if (fileCount > 0)
                     return DatasetFolderState.NotEmpty;
-                if (folderCount > 0)
+
+                if (nonInstrumentDataFolderCount + instrumentDataFolderCount > 0)
                     return DatasetFolderState.NotEmpty;
             }
             catch (Exception ex)
@@ -441,7 +450,8 @@ namespace CaptureToolPlugin
         /// <param name="dsFolder">Full path to dataset folder</param>
         /// <param name="copyWithResume">True when we will be using Copy with Resume to capture this instrument's data</param>
         /// <param name="maxFileCountToAllowResume">Maximum number of files that can existing in the dataset folder if we are going to allow CopyWithResume to be used</param>
-        /// <param name="maxFolderCountToAllowResume">Maximum number of subfolders that can existing in the dataset folder if we are going to allow CopyWithResume to be used</param>		
+        /// <param name="maxInstrumentFolderCountToAllowResume">Maximum number of instrument subfolders (at present, .D folders) that can existing in the dataset folder if we are going to allow CopyWithResume to be used</param>
+        /// <param name="maxNonInstrumentFolderCountToAllowResume">Maximum number of non-instrument subfolders that can existing in the dataset folder if we are going to allow CopyWithResume to be used</param>
         /// <param name="retData">Return data</param>
         /// <returns>TRUE for success, FALSE for failure</returns>
         /// <remarks>If both maxFileCountToAllowResume and maxFolderCountToAllowResume are zero, then requires a minimum number of subfolders or files be present to allow for CopyToResume to be used</remarks>
@@ -449,14 +459,16 @@ namespace CaptureToolPlugin
             string dsFolder,
             bool copyWithResume,
             int maxFileCountToAllowResume,
-            int maxFolderCountToAllowResume,
+            int maxInstrumentFolderCountToAllowResume,
+            int maxNonInstrumentFolderCountToAllowResume,
             ref clsToolReturnData retData)
         {
             var switchResult = false;
             int fileCount;
-            int folderCount;
+            int instrumentDataFolderCount;
+            int nonInstrumentDataFolderCount;
 
-            switch (IsDSFolderEmpty(dsFolder, out fileCount, out folderCount))
+            switch (IsDSFolderEmpty(dsFolder, out fileCount, out instrumentDataFolderCount, out nonInstrumentDataFolderCount))
             {
                 case DatasetFolderState.Empty:
                     // Directory is empty; all is good
@@ -477,9 +489,13 @@ namespace CaptureToolPlugin
                             // then we're likely retrying capture; rename the one file to start with x_
 
                             var tooManyFilesOrFolders = false;
-                            if (maxFileCountToAllowResume > 0 || maxFolderCountToAllowResume > 0)
+                            var folderCount = maxInstrumentFolderCountToAllowResume + maxNonInstrumentFolderCountToAllowResume;
+
+                            if (maxFileCountToAllowResume > 0 || maxInstrumentFolderCountToAllowResume + maxNonInstrumentFolderCountToAllowResume > 0)
                             {
-                                if (fileCount > maxFileCountToAllowResume || folderCount > maxFolderCountToAllowResume)
+                                if (fileCount > maxFileCountToAllowResume ||
+                                    instrumentDataFolderCount > maxInstrumentFolderCountToAllowResume ||
+                                    nonInstrumentDataFolderCount > maxNonInstrumentFolderCountToAllowResume)
                                     tooManyFilesOrFolders = true;
                             }
                             else
@@ -1143,7 +1159,8 @@ namespace CaptureToolPlugin
             ConnectionType eConnectionType;
 
             var maxFileCountToAllowResume = 0;
-            var maxFolderCountToAllowResume = 0;
+            var maxInstrumentFolderCountToAllowResume = 0;
+            var maxNonInstrumentFolderCountToAllowResume = 0;
 
             if (computerName.ToLower().StartsWith("monroe") && datasetName == "2014_10_14_SRFAI-20ppm_Neg_15T_TOF0p65_IAT0p05_144scans_8M_000001")
             {
@@ -1188,15 +1205,14 @@ namespace CaptureToolPlugin
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging_V2:
                     copyWithResume = true;
                     maxFileCountToAllowResume = 20;
-                    maxFolderCountToAllowResume = 1;
+                    maxInstrumentFolderCountToAllowResume = 20;
+                    maxNonInstrumentFolderCountToAllowResume = 1;
                     break;
             }
 
-            RawDSTypes sourceType;
             var pwd = DecodePassword(m_Pwd);
             string msg;
             string tempVol;
-            clsDatasetInfo datasetInfo;
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Started clsCaptureOps.DoOperation()");
 
@@ -1292,7 +1308,7 @@ namespace CaptureToolPlugin
             if (ValidateFolderPath(datasetFolderPath))
             {
                 // Dataset folder exists, so take action specified in configuration
-                if (!PerformDSExistsActions(datasetFolderPath, copyWithResume, maxFileCountToAllowResume, maxFolderCountToAllowResume, ref retData))
+                if (!PerformDSExistsActions(datasetFolderPath, copyWithResume, maxFileCountToAllowResume, maxInstrumentFolderCountToAllowResume, maxNonInstrumentFolderCountToAllowResume, ref retData))
                 {
                     PossiblyStoreErrorMessage(ref retData);
                     if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
@@ -1391,8 +1407,8 @@ namespace CaptureToolPlugin
 
             }
 
-            datasetInfo = GetRawDSType(sourceFolderPath, sSourceFolderName, instrumentClass);
-            sourceType = datasetInfo.DatasetType;
+            var datasetInfo = GetRawDSType(sourceFolderPath, sSourceFolderName, instrumentClass);
+            var sourceType = datasetInfo.DatasetType;
             datasetInfo.DatasetName = datasetName;
 
             // Set the closeout type to Failed for now
