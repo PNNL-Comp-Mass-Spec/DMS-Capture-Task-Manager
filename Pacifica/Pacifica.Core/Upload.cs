@@ -10,11 +10,13 @@ namespace Pacifica.Core
     public class Upload : IUpload
     {
         /// <summary>
-        /// Deafult EUS ID is "Monroe, Matthew"
+        /// Default EUS ID is "Monroe, Matthew"
         /// </summary>
         public const int DEFAULT_EUS_OPERATOR_ID = 43428;
 
-        private const string DATA_PACKAGE_EUS_INSTRUMENT_ID = "40000";
+        // Proposal ID 17797 is "Development of High Throughput Proteomic Production Operations"
+        // It is a string because it may contain suffix letters
+        public const string DEFAULT_EUS_PROPOSAL_ID = "17797";
 
         // VOrbiETD04 is 34127
         private const string UNKNOWN_INSTRUMENT_EUS_INSTRUMENT_ID = "34127";
@@ -32,7 +34,7 @@ namespace Pacifica.Core
             public string EUSProposalID;
 
             /// <summary>
-            /// EUS ID of the instrument operator
+            /// EUS ID of the instrument operator (for datasets) or the data package owner (for Data Packages)
             /// </summary>
             public int EUSUploaderID;
 
@@ -53,7 +55,7 @@ namespace Pacifica.Core
             public string DateCodeString;		// Only used for datasets; not Data Packages
             public string DMSInstrumentName;	// Only used for datasets; not Data Packages
             public string EUSInstrumentID;		// Only used for datasets; not Data Packages
-            public string EUSProposalID;		// Only used for datasets; not Data Packages
+            public string EUSProposalID;		// Originally only used by datasets. Used by Data Packages starting in October 2016 since required by policy
 
             /// <summary>
             /// Instrument Operator EUS ID for datasets
@@ -514,7 +516,7 @@ namespace Pacifica.Core
         /// <param name="lstUnmatchedFiles">Files to upload</param>
         /// <param name="eusInfo">Output parameter: EUS instrument ID, proposal ID, and uploader ID</param>
         /// <returns>
-        /// Dictionary where of the information to translate to JSON; 
+        /// Dictionary of the information to translate to JSON; 
         /// Keys are key names; values are either strings or dictionary objects or even a list of dictionary objects 
         /// </returns>
         public static Dictionary<string, object> CreateMetadataObject(
@@ -525,6 +527,10 @@ namespace Pacifica.Core
             var metadataObject = new Dictionary<string, object>();
             var groupObject = new List<Dictionary<string, string>>();
 
+            // Lookup the EUS_Instrument_ID
+            // If empty, use 34127, which is VOrbiETD04
+            var eusInstrumentID = GetEUSInstrumentID(uploadMetadata.EUSInstrumentID, UNKNOWN_INSTRUMENT_EUS_INSTRUMENT_ID);
+
             eusInfo = new udtEUSInfo();
             eusInfo.Clear();
 
@@ -532,22 +538,36 @@ namespace Pacifica.Core
 
             if (uploadMetadata.DatasetID > 0)
             {
-                groupObject.Add(new Dictionary<string, string> { { "name", uploadMetadata.DMSInstrumentName }, { "type", "omics.dms.instrument" } });
+                groupObject.Add(new Dictionary<string, string> {
+                    { "name", uploadMetadata.DMSInstrumentName },
+                    { "type", "omics.dms.instrument" } });
 
-                var eusInstrumentID = GetEUSInstrumentID(uploadMetadata.EUSInstrumentID, UNKNOWN_INSTRUMENT_EUS_INSTRUMENT_ID);
+                groupObject.Add(new Dictionary<string, string> {
+                    { "name", eusInstrumentID },
+                    { "type", "omics.dms.instrument_id" } });
 
-                groupObject.Add(new Dictionary<string, string> { { "name", eusInstrumentID }, { "type", "omics.dms.instrument_id" } });
-                groupObject.Add(new Dictionary<string, string> { { "name", uploadMetadata.DateCodeString }, { "type", "omics.dms.date_code" } });
-                groupObject.Add(new Dictionary<string, string> { { "name", uploadMetadata.DatasetName }, { "type", "omics.dms.dataset" } });
-                groupObject.Add(new Dictionary<string, string> { { "name", uploadMetadata.DatasetID.ToString(CultureInfo.InvariantCulture) }, { "type", "omics.dms.dataset_id" } });
+                groupObject.Add(new Dictionary<string, string> {
+                    { "name", uploadMetadata.DateCodeString },
+                    { "type", "omics.dms.date_code" } });
+
+                groupObject.Add(new Dictionary<string, string> {
+                    { "name", uploadMetadata.DatasetName },
+                    { "type", "omics.dms.dataset" } });
+
+                groupObject.Add(new Dictionary<string, string> {
+                    { "name", uploadMetadata.DatasetID.ToString(CultureInfo.InvariantCulture) },
+                    { "type", "omics.dms.dataset_id" } });
             }
             else if (uploadMetadata.DataPackageID > 0)
             {
-                // ToDo: Update DATA_PACKAGE_EUS_INSTRUMENT_ID and uncomment this
+                // Could associate an EUS Instrument ID here
+                // private const string DATA_PACKAGE_EUS_INSTRUMENT_ID = "40000";
                 // string eusInstrumentID = GetEUSInstrumentID(uploadMetadata.EUSInstrumentID, DATA_PACKAGE_EUS_INSTRUMENT_ID);                
                 // groupObject.Add(new Dictionary<string, string> { { "name", eusInstrumentID }, { "type", "omics.dms.instrument_id" } });
 
-                groupObject.Add(new Dictionary<string, string> { { "name", uploadMetadata.DataPackageID.ToString(CultureInfo.InvariantCulture) }, { "type", "omics.dms.datapackage_id" } });
+                groupObject.Add(new Dictionary<string, string> {
+                    { "name", uploadMetadata.DataPackageID.ToString(CultureInfo.InvariantCulture) },
+                    { "type", "omics.dms.datapackage_id" } });
             }
             else
             {
@@ -562,28 +582,24 @@ namespace Pacifica.Core
 
             if (uploadMetadata.DatasetID > 0)
             {
-                // Lookup the EUS_Instrument_ID
-                // If empty, use 34127, which is VOrbiETD04
-                var eusInstrumentID = GetEUSInstrumentID(uploadMetadata.EUSInstrumentID, UNKNOWN_INSTRUMENT_EUS_INSTRUMENT_ID);
-
                 eusInfoMap.Add("instrumentId", eusInstrumentID);
                 eusInfo.EUSInstrumentID = StringToInt(eusInstrumentID, 0);
 
                 eusInfoMap.Add("instrumentName", uploadMetadata.DMSInstrumentName);
-
-                if (string.IsNullOrWhiteSpace(uploadMetadata.EUSProposalID))
-                {
-                    // This dataset does not have an EUS_Proposal_ID
-                    // Use 17797, which is "Development of High Throughput Proteomic Production Operations"
-                    eusInfo.EUSProposalID = "17797";
-                }
-                else
-                {
-                    eusInfo.EUSProposalID = uploadMetadata.EUSProposalID;
-                }
-
-                eusInfoMap.Add("proposalID", eusInfo.EUSProposalID);
             }
+
+            // All bundles pushed into MyEMSL must have an associated Proposal ID
+            if (string.IsNullOrWhiteSpace(uploadMetadata.EUSProposalID))
+            {
+                // This dataset or data package does not have an EUS_Proposal_ID
+                eusInfo.EUSProposalID = DEFAULT_EUS_PROPOSAL_ID;
+            }
+            else
+            {
+                eusInfo.EUSProposalID = uploadMetadata.EUSProposalID;
+            }
+
+            eusInfoMap.Add("proposalID", eusInfo.EUSProposalID);
 
             // For datasets, eusOperatorID is the instrument operator EUS ID
             // For data packages, it is the EUS ID of the data package owner
@@ -591,7 +607,7 @@ namespace Pacifica.Core
             {
                 // This should have already been flagged in upstream code
                 // But if we reach this function and it is still 0, we will use the default operator ID
-                eusInfo.EUSInstrumentID = Upload.DEFAULT_EUS_OPERATOR_ID;
+                eusInfo.EUSInstrumentID = DEFAULT_EUS_OPERATOR_ID;
             }
             else
             {
