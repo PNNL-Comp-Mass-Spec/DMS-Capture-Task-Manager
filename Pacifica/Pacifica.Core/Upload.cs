@@ -630,6 +630,125 @@ namespace Pacifica.Core
         }
 
         /// <summary>
+        /// Return a string description of the EUS info encoded by metadataObject
+        /// </summary>
+        /// <param name="metadataObject"></param>
+        /// <returns></returns>
+        public static string GetMetadataObjectDescription(Dictionary<string, object> metadataObject)
+        {
+            object eusInfoMapObject;
+            object groupObject;
+            object fileListObject;
+
+            if (!metadataObject.TryGetValue("eusInfo", out eusInfoMapObject))
+            {
+                return "Error: [eusInfo] dictionary key not found";
+            }
+
+            var eusInfoMapDict = eusInfoMapObject as Dictionary<string, object>;
+            if (eusInfoMapDict == null)
+            {
+                return "Error: [eusInfo] dictionary was not in the correct format";
+            }
+
+            if (!eusInfoMapDict.TryGetValue("groups", out groupObject)) {
+                return "Error: [eusInfo.groups] dictionary key not found";
+            }
+
+            var groupObjects = groupObject as List<Dictionary<string, string>>;
+            if (groupObjects == null)
+            {
+                return "Error: [eusInfo.groups] was not in the correct format";
+            }
+
+            var description = new List<string>();
+            var instrumentIdIncluded = false;
+
+            string value;
+
+            if (GetMetadataGroupValue(groupObjects, "omics.dms.dataset_id", out value))
+                description.Add("Dataset_ID=" + value);
+
+            if (GetMetadataGroupValue(groupObjects, "omics.dms.datapackage_id", out value))
+                description.Add("DataPackage_ID=" + value);
+
+            if (GetMetadataGroupValue(groupObjects, "omics.dms.instrument", out value))
+                description.Add("DMS_Instrument=" + value);
+
+            if (GetMetadataGroupValue(groupObjects, "omics.dms.instrument_id", out value))
+            {
+                description.Add("EUS_Instrument_ID=" + value);
+                instrumentIdIncluded = true;
+            }
+
+            if (!instrumentIdIncluded && GetDictionaryValue(eusInfoMapDict, "instrumentId", out value))
+            {
+                // EUS Instrument Id is stored both in eusInfoMapDict and in groupObjects
+                description.Add("EUS_Instrument_ID=" + value);
+            }
+
+            if (GetDictionaryValue(eusInfoMapDict, "proposalID", out value))
+                description.Add("EUS_Proposal_ID=" + value);
+
+            if (GetDictionaryValue(eusInfoMapDict, "uploaderEusId", out value))
+                description.Add("EUS_User_ID=" + value);
+
+            if (!metadataObject.TryGetValue("file", out fileListObject))
+            {
+                return "Error: [file] dictionary key not found";
+            }
+
+            var fileList = fileListObject as List<Pacifica.Core.FileInfoObject>;
+            if (fileList == null)
+            {
+                return "Error: [file] list was not in the correct format";
+            }
+
+            description.Add("FileCount=" + fileList.Count);
+
+            return string.Join("; ", description);
+        }
+
+        private static bool GetDictionaryValue(IReadOnlyDictionary<string, object> eusInfoMapObject, string keyName, out string matchedValue)
+        {
+            object value;
+            if (eusInfoMapObject.TryGetValue(keyName, out value))
+            {
+                matchedValue = value as string;
+                if (matchedValue != null)
+                    return true;
+            }
+
+            matchedValue = string.Empty;
+            return false;
+        }
+
+        private static bool GetMetadataGroupValue(IEnumerable<Dictionary<string, string>> groupObjects, string groupKeyName, out string matchedValue)
+        {
+            foreach (var groupDefinition in groupObjects)
+            {
+                string candidateKeyName;
+
+                if (!groupDefinition.TryGetValue("type", out candidateKeyName))
+                    continue;
+
+                if (!string.Equals(candidateKeyName, groupKeyName))
+                    continue;
+                
+                // Found the desired dictionary entry
+                string value;
+                if (!groupDefinition.TryGetValue("name", out value))
+                    continue;
+
+                matchedValue = value;
+                return true;
+            }
+
+            matchedValue = string.Empty;
+            return false;
+        }
+
+        /// <summary>
         /// Return the EUS instrument ID, falling back to instrumentIdIfUnknown if eusInstrumentId is empty
         /// </summary>
         /// <param name="eusInstrumentId"></param>
