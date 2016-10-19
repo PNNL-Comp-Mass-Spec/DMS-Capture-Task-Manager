@@ -12,10 +12,10 @@ namespace Pacifica.DMS_Metadata
         private DMSMetadataObject _mdContainer;
         private readonly Upload myEMSLUpload;
 
-        protected Dictionary<string, string> m_MgrParams;
-        protected Dictionary<string, string> m_TaskParams;
+        protected readonly Dictionary<string, string> m_MgrParams;
+        protected readonly Dictionary<string, string> m_TaskParams;
 
-        protected string mManagerName;
+        protected readonly string mManagerName;
 
         public string ErrorMessage
         {
@@ -190,8 +190,7 @@ namespace Pacifica.DMS_Metadata
         {
             var e = new MessageEventArgs(callingFunction, metadataJSON);
 
-            if (MetadataDefinedEvent != null)
-                MetadataDefinedEvent(this, e);
+            MetadataDefinedEvent?.Invoke(this, e);
         }
 
         /// <summary>
@@ -201,8 +200,7 @@ namespace Pacifica.DMS_Metadata
         /// <param name="e"></param>
         void myEMSLUpload_DebugEvent(object sender, MessageEventArgs e)
         {
-            if (DebugEvent != null)
-                DebugEvent(this, e);
+            DebugEvent?.Invoke(this, e);
         }
 
         /// <summary>
@@ -212,8 +210,7 @@ namespace Pacifica.DMS_Metadata
         /// <param name="e"></param>
         void myEMSLUpload_ErrorEvent(object sender, MessageEventArgs e)
         {
-            if (ErrorEvent != null)
-                ErrorEvent(this, e);
+            ErrorEvent?.Invoke(this, e);
         }
 
         void myEMSLUpload_StatusUpdate(object sender, StatusEventArgs e)
@@ -228,10 +225,7 @@ namespace Pacifica.DMS_Metadata
 
         void myEMSLUpload_UploadCompleted(object sender, UploadCompletedEventArgs e)
         {
-            if (UploadCompleted != null)
-            {
-                UploadCompleted(this, e);
-            }
+            UploadCompleted?.Invoke(this, e);
         }
 
         void _mdContainer_ProgressEvent(object sender, ProgressEventArgs e)

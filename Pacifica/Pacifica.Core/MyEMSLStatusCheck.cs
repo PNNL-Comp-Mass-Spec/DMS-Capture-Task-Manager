@@ -504,8 +504,7 @@ namespace Pacifica.Core
 
         protected void OnErrorMessage(MessageEventArgs e)
         {
-            if (ErrorEvent != null)
-                ErrorEvent(this, e);
+            ErrorEvent?.Invoke(this, e);
         }
 
         #endregion

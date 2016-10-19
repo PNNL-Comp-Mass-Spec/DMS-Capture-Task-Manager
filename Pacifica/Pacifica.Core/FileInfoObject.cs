@@ -81,13 +81,7 @@ namespace Pacifica.Core
         /// <summary>
         /// Relative destination directory, with Unix-style slashes
         /// </summary>
-        public string RelativeDestinationDirectory
-        {
-            get
-            {
-                return ConvertWindowsPathToUnix(mRelativeDestinationDirectory);
-            }
-        }
+        public string RelativeDestinationDirectory => ConvertWindowsPathToUnix(mRelativeDestinationDirectory);
 
         public string RelativeDestinationFullPath
         {
@@ -120,13 +114,7 @@ namespace Pacifica.Core
             }
         }
 
-        public string FileName
-        {
-            get
-            {
-                return File.Name;
-            }
-        }
+        public string FileName => File.Name;
 
         /// <summary>
         /// Sha-1 hash of the file
@@ -137,54 +125,25 @@ namespace Pacifica.Core
             private set;
         }
 
-        public long FileSizeInBytes
-        {
-            get
-            {
-                return File.Length;
-            }
-        }
+        public long FileSizeInBytes => File.Length;
 
-        public DateTime CreationTime
-        {
-            get
-            {
-                return File.CreationTime;
-            }
-        }
+        public DateTime CreationTime => File.CreationTime;
 
-        private readonly DateTime mSubmittedTime = DateTime.Now;
-        public DateTime SubmittedTime
-        {
-            get
-            {
-                return mSubmittedTime;
-            }
-        }
+        public DateTime SubmittedTime { get; } = DateTime.Now;
 
-        public string CreationTimeStamp
-        {
-            get
-            {
-                return File.CreationTime.ToUnixTime().ToString(CultureInfo.InvariantCulture);
-            }
-        }
+        public string CreationTimeStamp => File.CreationTime.ToUnixTime().ToString(CultureInfo.InvariantCulture);
 
-        public string SubmittedTimeStamp
-        {
-            get
-            {
-                return SubmittedTime.ToUnixTime().ToString(CultureInfo.InvariantCulture);
-            }
-        }
+        public string SubmittedTimeStamp => SubmittedTime.ToUnixTime().ToString(CultureInfo.InvariantCulture);
 
         public Dictionary<string, string> SerializeToDictionaryObject()
         {
-            var d = new Dictionary<string, string>();
+            var d = new Dictionary<string, string>
+            {
+                {"sha1Hash", Sha1HashHex},
+                {"destinationDirectory", RelativeDestinationDirectory},     // Reported as "subDir" by the MyEMSL Elastic Search
+                {"fileName", FileName}
+            };
 
-            d.Add("sha1Hash", Sha1HashHex);
-            d.Add("destinationDirectory", RelativeDestinationDirectory);            // Reported as "subDir" by the MyEMSL Elastic Search
-            d.Add("fileName", FileName);
 
             return d;
         }
@@ -202,7 +161,7 @@ namespace Pacifica.Core
         /// <remarks>Removes any leading slashes</remarks>
         protected string ConvertWindowsPathToUnix(string path)
         {
-            return path.Replace(@"\", "/").TrimStart(new[] { '/' });
+            return path.Replace(@"\", "/").TrimStart('/');
         }
         #endregion
 
@@ -211,7 +170,7 @@ namespace Pacifica.Core
         public static string GenerateRelativePath(string absoluteLocalPath, string basePath)
         {
             if (absoluteLocalPath.ToLower().StartsWith(basePath.ToLower()))
-                return absoluteLocalPath.Substring(basePath.Length).TrimStart(new[] { '/', '\\' });
+                return absoluteLocalPath.Substring(basePath.Length).TrimStart('/', '\\');
 
             throw new InvalidDataException("Cannot generate relative path in GenerateRelativePath since local path (" + absoluteLocalPath + ") does not contain base path (" + basePath + ")");
         }

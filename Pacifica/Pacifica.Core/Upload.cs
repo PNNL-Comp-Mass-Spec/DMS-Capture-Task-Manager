@@ -146,35 +146,23 @@ namespace Pacifica.Core
 
         private void RaiseDebugEvent(string callingFunction, string currentTask)
         {
-            if (DebugEvent != null)
-            {
-                DebugEvent(this, new MessageEventArgs(callingFunction, currentTask));
-            }
+            DebugEvent?.Invoke(this, new MessageEventArgs(callingFunction, currentTask));
         }
 
         private void RaiseErrorEvent(string callingFunction, string errorMessage)
         {
-            if (ErrorEvent != null)
-            {
-                ErrorEvent(this, new MessageEventArgs(callingFunction, errorMessage));
-            }
+            ErrorEvent?.Invoke(this, new MessageEventArgs(callingFunction, errorMessage));
         }
 
 
         void EasyHttp_StatusUpdate(object sender, StatusEventArgs e)
         {
-            if (StatusUpdate != null)
-            {
-                StatusUpdate(this, e);
-            }
+            StatusUpdate?.Invoke(this, e);
         }
 
         private void RaiseUploadCompleted(string serverResponse)
         {
-            if (UploadCompleted != null)
-            {
-                UploadCompleted(this, new UploadCompletedEventArgs(serverResponse));
-            }
+            UploadCompleted?.Invoke(this, new UploadCompletedEventArgs(serverResponse));
         }
 
         #endregion

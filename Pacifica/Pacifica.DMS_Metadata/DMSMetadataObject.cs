@@ -81,10 +81,7 @@ namespace Pacifica.DMS_Metadata
             private set;
         }
 
-        public Dictionary<string, object> MetadataObject
-        {
-            get { return mMetadataObject; }
-        }
+        public Dictionary<string, object> MetadataObject => mMetadataObject;
 
         public long TotalFileSizeToUpload
         {
@@ -110,13 +107,7 @@ namespace Pacifica.DMS_Metadata
             set;
         }
 
-        public string MetadataObjectJSON
-        {
-            get
-            {
-                return Utilities.ObjectToJson(mMetadataObject);
-            }
-        }
+        public string MetadataObjectJSON => Utilities.ObjectToJson(mMetadataObject);
 
         #endregion
 
@@ -161,6 +152,9 @@ namespace Pacifica.DMS_Metadata
 
             Upload.udtEUSInfo eusInfo;
             mMetadataObject = Upload.CreateMetadataObject(uploadMetadata, lstUnmatchedFiles, out eusInfo);
+
+            var metadataDescription = Upload.GetMetadataObjectDescription(mMetadataObject);
+            RaiseDebugEvent("SetupMetadata", metadataDescription);
 
             EUSInfo = eusInfo;
 
@@ -594,24 +588,17 @@ namespace Pacifica.DMS_Metadata
 
         private void OnProgressUpdate(ProgressEventArgs e)
         {
-            if (ProgressEvent != null)
-                ProgressEvent(this, e);
+            ProgressEvent?.Invoke(this, e);
         }
 
         private void OnError(string callingFunction, string errorMessage)
         {
-            if (ErrorEvent != null)
-            {
-                ErrorEvent(this, new Pacifica.Core.MessageEventArgs(callingFunction, errorMessage));
-            }
+            ErrorEvent?.Invoke(this, new Pacifica.Core.MessageEventArgs(callingFunction, errorMessage));
         }
 
         private void RaiseDebugEvent(string callingFunction, string currentTask)
         {
-            if (DebugEvent != null)
-            {
-                DebugEvent(this, new Pacifica.Core.MessageEventArgs(callingFunction, currentTask));
-            }
+            DebugEvent?.Invoke(this, new Pacifica.Core.MessageEventArgs(callingFunction, currentTask));
         }
 
         void reader_ErrorEvent(object sender, MessageEventArgs e)

@@ -270,19 +270,14 @@ namespace Pacifica.Core
         public static string GetUserName(bool cleanDomain = false)
         {
             var userIdent = WindowsIdentity.GetCurrent();
-            if (userIdent != null)
+            var userName = userIdent.Name;
+
+            if (cleanDomain)
             {
-                var userName = userIdent.Name;
-
-                if (cleanDomain)
-                {
-                    userName = userName.Substring(userName.IndexOf('\\') + 1);
-                }
-
-                return userName;
+                userName = userName.Substring(userName.IndexOf('\\') + 1);
             }
 
-            return "UnknownUser";
+            return userName;
         }
 
         /// <summary>
