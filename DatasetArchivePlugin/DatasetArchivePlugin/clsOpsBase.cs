@@ -506,6 +506,7 @@ namespace DatasetArchivePlugin
         {
             if (m_DebugLevel >= 5)
             {
+                // e.Message contains the metadata JSON
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, e.Message);
             }
         }

@@ -21,8 +21,17 @@ namespace Pacifica.Core
             LoggedIn?.Invoke(new object(), new EventArgs());
         }
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="location"></param>
         public Auth(Uri location) : this(location, null) { }
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="location"></param>
+        /// <param name="proxy"></param>
         public Auth(Uri location, Uri proxy)
         {
             _location = location;

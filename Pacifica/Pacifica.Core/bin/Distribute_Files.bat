@@ -28,7 +28,7 @@ xcopy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\
 xcopy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_MSAlign_Quant_Plugin\bin" /D /Y
 xcopy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_MSDeconv_Plugin\bin" /D /Y
 xcopy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_MSGF_PlugIn\Bin" /D /Y
-xcopy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_MSGF_PlugIn\MSGF_Results_Summarizer\bin" /D /Y
+xcopy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_MSGF_PlugIn\MSGFResultsSummarizerExe\bin" /D /Y
 xcopy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_MSGFDB_IMS_Plugin\bin" /D /Y
 xcopy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_MSGFDB_PlugIn\bin" /D /Y
 xcopy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_MSGFDB_PlugIn\MSGFPlusIndexFileCopier\bin\Debug" /D /Y
