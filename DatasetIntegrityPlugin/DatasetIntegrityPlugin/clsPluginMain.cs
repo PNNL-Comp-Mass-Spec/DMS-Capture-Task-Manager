@@ -1190,7 +1190,7 @@ namespace DatasetIntegrityPlugin
         /// <returns>Enum indicating success or failure</returns>
         private EnumCloseOutType Test21TRawFile(string dataFileNamePath)
         {
-            return TestThermoRawFile(dataFileNamePath, RAW_FILE_MIN_SIZE_KB_21T, RAW_FILE_MAX_SIZE_MB_LTQ, true);
+            return TestThermoRawFile(dataFileNamePath, RAW_FILE_MIN_SIZE_KB_21T, RAW_FILE_MAX_SIZE_MB_ORBITRAP, true);
         }
 
         /// <summary>
@@ -1322,7 +1322,7 @@ namespace DatasetIntegrityPlugin
             // Check max size
             if (dataFileSizeKB > maxFileSizeMB * 1024)
             {
-                ReportFileSizeTooLarge("Data", dataFileNamePath, dataFileSizeKB, maxFileSizeMB);
+                ReportFileSizeTooLarge("Data", dataFileNamePath, dataFileSizeKB, maxFileSizeMB * 1024);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
