@@ -1,4 +1,4 @@
-﻿//*********************************************************************************************************
+//*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy 
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
@@ -158,7 +158,7 @@ namespace CaptureTaskManager
             }
 
             //Update the status file data
-			clsStatusData.MostRecentLogMessage = DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss") + "; "+ message + "; " + logLevel;
+            clsStatusData.MostRecentLogMessage = DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss") + "; "+ message + "; " + logLevel;
 
             //Send the log message
             switch (logLevel)
@@ -173,7 +173,7 @@ namespace CaptureTaskManager
                     }
                     break;
                 case LogLevels.ERROR:
-					clsStatusData.AddErrorMessage(DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss") + "; " + message + "; " + logLevel);
+                    clsStatusData.AddErrorMessage(DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss") + "; " + message + "; " + logLevel);
                     if (myLogger.IsErrorEnabled)
                     {
                         if (ex == null)

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using CaptureTaskManager;
 using Pacifica.Core;
 using System.Collections.Generic;
@@ -451,7 +451,7 @@ namespace ArchiveStatusCheckPlugin
         /// <param name="sql"></param>
         /// <param name="retryCount"></param>
         /// <param name="dctStatusData"></param>
-	    protected void GetStatusURIsAndSubfolders(string sql, int retryCount, Dictionary<int, clsIngestStatusInfo> dctStatusData)
+        protected void GetStatusURIsAndSubfolders(string sql, int retryCount, Dictionary<int, clsIngestStatusInfo> dctStatusData)
         {
             // This Connection String points to the DMS_Capture database
             var connectionString = m_MgrParams.GetParam("connectionstring");

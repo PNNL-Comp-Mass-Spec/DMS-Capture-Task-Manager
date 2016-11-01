@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace CaptureTaskManager
 {
@@ -334,7 +334,7 @@ namespace CaptureTaskManager
         /// <param name="maxRuntimeSeconds">If a positive number, then program execution will be aborted if the runtime exceeds MaxRuntimeSeconds</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>maxRuntimeSeconds will be increased to 15 seconds if it is between 1 and 14 seconds</remarks>
-		public bool RunProgram(string progNameLoc, string cmdLine, string progName, bool UseResCode, int maxRuntimeSeconds)
+        public bool RunProgram(string progNameLoc, string cmdLine, string progName, bool UseResCode, int maxRuntimeSeconds)
         {
             // Require a minimum monitoring interval of 250 mseconds
             if (mMonitorInterval < 250)
@@ -369,8 +369,8 @@ namespace CaptureTaskManager
 
             if (mDebugLevel >= 4)
             {
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ProgRunner.Arguments = " + mProgRunner.Arguments);
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ProgRunner.Program = " + mProgRunner.Program);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ProgRunner.Arguments = " + mProgRunner.Arguments);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ProgRunner.Program = " + mProgRunner.Program);
             }
 
             ProgramAborted = false;

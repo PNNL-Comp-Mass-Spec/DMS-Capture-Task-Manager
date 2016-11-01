@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 
 namespace CaptureTaskManager
@@ -114,7 +114,7 @@ namespace CaptureTaskManager
 
         private void CreateInfoFile(string strFolderInfoFilePath, string strResultsFolderName)
         {
-		    var swArchivedFolderInfoFile = new StreamWriter(new FileStream(strFolderInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+            var swArchivedFolderInfoFile = new StreamWriter(new FileStream(strFolderInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
 
             {
                 swArchivedFolderInfoFile.WriteLine("Date\t" + DateTime.Now);
@@ -139,10 +139,10 @@ namespace CaptureTaskManager
             var strTargetFilePath = "";
 
             // Determine the folder archive time by reading the modification times on the ResultsFolderInfo_ files
-			foreach (var fileSystemInfo in diFailedResultsFolder.GetFileSystemInfos(FAILED_RESULTS_FOLDER_INFO_TEXT + "*"))
+            foreach (var fileSystemInfo in diFailedResultsFolder.GetFileSystemInfos(FAILED_RESULTS_FOLDER_INFO_TEXT + "*"))
             {
                 var fiFileInfo = (FileInfo)fileSystemInfo;
-			    if (!(DateTime.UtcNow.Subtract(fiFileInfo.LastWriteTimeUtc).TotalDays > FAILED_RESULTS_FOLDER_RETAIN_DAYS))
+                if (!(DateTime.UtcNow.Subtract(fiFileInfo.LastWriteTimeUtc).TotalDays > FAILED_RESULTS_FOLDER_RETAIN_DAYS))
                 {
                     continue;
                 }
@@ -151,7 +151,7 @@ namespace CaptureTaskManager
 
                 try
                 {
-			        var strOldResultsFolderName = Path.GetFileNameWithoutExtension(fiFileInfo.Name).Substring(FAILED_RESULTS_FOLDER_INFO_TEXT.Length);
+                    var strOldResultsFolderName = Path.GetFileNameWithoutExtension(fiFileInfo.Name).Substring(FAILED_RESULTS_FOLDER_INFO_TEXT.Length);
 
                     if (fiFileInfo.DirectoryName == null)
                     {
