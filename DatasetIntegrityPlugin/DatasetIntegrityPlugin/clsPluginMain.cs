@@ -729,6 +729,25 @@ namespace DatasetIntegrityPlugin
 
         }
 
+        /// <summary>
+        /// Convert a file size in kilobytes to a string form with units KB, MB or GB
+        /// </summary>
+        /// <param name="fileSizeKB"></param>
+        /// <returns></returns>
+        private string FileSizeToString(float fileSizeKB)
+        {
+            var fileSizeGB = fileSizeKB / 1024.0 / 1024.0;
+            var fileSizeMB = fileSizeKB / 1024.0;
+
+            if (fileSizeGB > 1)
+                return fileSizeGB.ToString("#0.0") + " GB";
+
+            if (fileSizeMB > 1)
+                return fileSizeMB.ToString("#0.0") + " MB";
+
+            return fileSizeKB.ToString("#0") + " KB";
+        }
+
         private string GetAgilentToUIMFProgPath()
         {
             var exeName = m_MgrParams.GetParam("AgilentToUIMFProgLoc");
@@ -902,20 +921,16 @@ namespace DatasetIntegrityPlugin
             return false;
         }
 
-
-        private void ReportFileSizeTooLarge(string sDataFileDescription, string sFilePath, float fActualSize, float fMaxSize)
+        private void ReportFileSizeTooLarge(string sDataFileDescription, string sFilePath, float fActualSizeKB, float fMaxSizeKB)
         {
-            string sMaxSize;
+            var sMaxSize = FileSizeToString(fMaxSizeKB);            
 
-            if (fMaxSize / 1024.0 > 1)
-                sMaxSize = (fMaxSize / 1024.0).ToString("#0.0") + " MB";
-            else
-                sMaxSize = fMaxSize.ToString("#0") + " KB";
-
+            // Data file may be corrupt
             var msg = sDataFileDescription + " file may be corrupt. Actual file size is " +
-                      fActualSize.ToString("####0.0") + " KB; " +
+                      FileSizeToString(fActualSizeKB) + "; " +
                       "max allowable size is " + sMaxSize + "; see " + sFilePath;
 
+            // Data file size is more than
             mRetData.EvalMsg = sDataFileDescription + " file size is more than " + sMaxSize;
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
@@ -928,10 +943,11 @@ namespace DatasetIntegrityPlugin
             // ser file size is less than 16 KB
             // ser file is 0 bytes
 
-            var sMinSize = fMinSizeKB.ToString("#0") + " KB";
+            var sMinSize = FileSizeToString(fMinSizeKB);
 
+            // Data file may be corrupt
             var msg = sDataFileDescription + " file may be corrupt. Actual file size is " +
-                      fActualSizeKB.ToString("####0.0") + " KB; " +
+                      FileSizeToString(fActualSizeKB) + "; " +
                       "min allowable size is " + sMinSize + "; see " + sFilePath;
 
             if (Math.Abs(fActualSizeKB) < 0.0001)
@@ -1056,15 +1072,13 @@ namespace DatasetIntegrityPlugin
                 var msPeakBinFileSizeKB = GetFileSize(lstMSPeak.First());
                 if (msPeakBinFileSizeKB <= AGILENT_MSPEAK_BIN_FILE_MIN_SIZE_KB)
                 {
-                    ReportFileSizeTooSmall("MSPeak.bin", lstMSPeak.First().FullName, msPeakBinFileSizeKB,
-                                           AGILENT_MSPEAK_BIN_FILE_MIN_SIZE_KB);
+                    ReportFileSizeTooSmall("MSPeak.bin", lstMSPeak.First().FullName, msPeakBinFileSizeKB, AGILENT_MSPEAK_BIN_FILE_MIN_SIZE_KB);
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
 
                 if (msScanBinFileSizeKB <= AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB)
                 {
-                    ReportFileSizeTooSmall("MSScan.bin", lstMSScan.First().FullName, msScanBinFileSizeKB,
-                                           AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB);
+                    ReportFileSizeTooSmall("MSScan.bin", lstMSScan.First().FullName, msScanBinFileSizeKB, AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB);
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
             }
