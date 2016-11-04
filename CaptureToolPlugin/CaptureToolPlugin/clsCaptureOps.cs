@@ -1618,6 +1618,7 @@ namespace CaptureToolPlugin
                     if (m_TraceMode)
                         clsToolRunnerBase.ShowTraceMessage(retData.CloseoutMsg);
                 }
+                retData.CloseoutMsg = "File size changed";
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
                 return;
             }
@@ -1971,6 +1972,7 @@ namespace CaptureToolPlugin
                 msg = "Dataset '" + datasetInfo.DatasetName + "' not ready";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
                 DisconnectShareIfRequired();
+                retData.CloseoutMsg = "Folder size changed";
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
                 return;
             }
@@ -2390,6 +2392,7 @@ namespace CaptureToolPlugin
                 msg = "Dataset '" + datasetInfo.DatasetName + "' not ready";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
                 DisconnectShareIfRequired();
+                retData.CloseoutMsg = "Folder size changed";
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
                 return;
             }
@@ -2493,6 +2496,7 @@ namespace CaptureToolPlugin
                 msg = "Dataset '" + datasetInfo.DatasetName + "' not ready";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
                 DisconnectShareIfRequired();
+                retData.CloseoutMsg = "Folder size changed";
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
                 return;
             }
@@ -2659,6 +2663,7 @@ namespace CaptureToolPlugin
                 msg = "Dataset '" + datasetInfo.DatasetName + "' not ready";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
                 DisconnectShareIfRequired();
+                retData.CloseoutMsg = "Folder size changed";
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
                 return;
             }
