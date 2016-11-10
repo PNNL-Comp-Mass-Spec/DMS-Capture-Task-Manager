@@ -476,6 +476,103 @@ namespace CaptureTaskManager
             }
         }
 
+        private Dictionary<string, DateTime> LoadCachedLogMessages(FileInfo messageCacheFile)
+        {
+            var cachedMessages = new Dictionary<string, DateTime>();
+
+            using (var reader = new StreamReader(new FileStream(messageCacheFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+            {
+                var lineCount = 0;
+                while (!reader.EndOfStream)
+                {
+                    var dataLine = reader.ReadLine();
+                    lineCount += 1;
+
+                    // Assume that the first line is the header line, which we'll skip
+                    if (lineCount == 1 || string.IsNullOrWhiteSpace(dataLine))
+                        continue;
+
+                    var lineParts = dataLine.Split(new[] { '\t' }, 2);
+
+                    var timeStampText = lineParts[0];
+                    var message = lineParts[1];                    
+
+                    DateTime timeStamp;
+                    if (DateTime.TryParse(timeStampText, out timeStamp))
+                    {
+                        // Valid message; store it
+
+                        DateTime cachedTimeStamp;
+                        if (cachedMessages.TryGetValue(message, out cachedTimeStamp))
+                        {
+                            if (timeStamp > cachedTimeStamp)
+                                cachedMessages[message] = timeStamp;
+                        }
+                        else
+                        {
+                            cachedMessages.Add(message, timeStamp);
+                        }
+                    }
+
+                }
+            }
+
+            return cachedMessages;
+        }
+
+        private void LogErrorToDatabasePeriodically(string errorMessage, int logIntervalHours)
+        {
+            const string PERIODIC_LOG_FILE = "Periodic_ErrorMessages.txt";
+
+            try
+            {
+                Dictionary<string, DateTime> cachedMessages;
+
+                var messageCacheFile = new FileInfo(Path.Combine(clsUtilities.GetAppFolderPath(), PERIODIC_LOG_FILE));
+
+                if (messageCacheFile.Exists)
+                {
+                    cachedMessages = LoadCachedLogMessages(messageCacheFile);
+                    System.Threading.Thread.Sleep(150);
+                }
+                else
+                {
+                    cachedMessages = new Dictionary<string, DateTime>();
+                }
+
+                DateTime timeStamp;
+                if (cachedMessages.TryGetValue(errorMessage, out timeStamp))
+                {
+                    if (DateTime.UtcNow.Subtract(timeStamp).TotalHours < logIntervalHours)
+                    {
+                        // Do not log to the database
+                        return;
+                    }
+                    cachedMessages[errorMessage] = DateTime.UtcNow;
+                }
+                else
+                {
+                    cachedMessages.Add(errorMessage, DateTime.UtcNow);
+                }
+
+                LogError(errorMessage, true);
+
+                // Update the message cache file
+                using (var writer = new StreamWriter(new FileStream(messageCacheFile.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+                {
+                    writer.WriteLine("{0}\t{1}", "TimeStamp", "Message");
+                    foreach (var message in cachedMessages)
+                    {
+                        writer.WriteLine("{0}\t{1}", message.Value.ToString(DATE_TIME_FORMAT), message.Key);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception in LogErrorToDatabasePeriodically", ex);
+            }
+        }
+
         /// <summary>
         /// Main loop for task performance
         /// </summary>
@@ -988,7 +1085,7 @@ namespace CaptureTaskManager
         /// Display a timestamp and message at the console
         /// </summary>
         /// <param name="message"></param>
-        public static void ShowTraceMessage(string message)
+        private static void ShowTraceMessage(string message)
         {
             clsToolRunnerBase.ShowTraceMessage(message);
         }
@@ -1001,10 +1098,11 @@ namespace CaptureTaskManager
         {
             if (!m_StatusFile.DetectStatusFlagFile())
             {
+                // No flag file
                 return false;
             }
 
-            bool blnMgrCleanupSuccess;
+            string errorMessage;
             try
             {
                 var objCleanupMgrErrors = new clsCleanupMgrErrors(
@@ -1014,7 +1112,21 @@ namespace CaptureTaskManager
                     m_StatusFile);
 
                 var cleanupModeVal = m_MgrSettings.GetParam("ManagerErrorCleanupMode", 0);
-                blnMgrCleanupSuccess = objCleanupMgrErrors.AutoCleanupManagerErrors(cleanupModeVal);
+                var cleanupSuccess = objCleanupMgrErrors.AutoCleanupManagerErrors(cleanupModeVal);
+
+                if (cleanupSuccess)
+                {
+                    LogWarning("Flag file found; automatically cleaned the work directory and deleted the flag file(s)");
+
+                    // No error; return false
+                    return false;
+                }
+
+                var flagFile = new FileInfo(m_StatusFile.FlagFilePath);
+                if (flagFile.Directory == null)
+                    errorMessage = "Flag file exists in the manager folder";
+                else
+                    errorMessage = "Flag file exists in folder " + flagFile.Directory.Name;
             }
             catch (Exception ex)
             {

@@ -38,6 +38,7 @@ namespace CaptureTaskManager
         string MostRecentJobInfo { get; set; }
         int SpectrumCount { get; set; }
         bool LogToMsgQueue { get; set; }
+        string FlagFilePath { get; }
         string MessageQueueURI { get; set; }
         string MessageQueueTopic { get; set; }
 

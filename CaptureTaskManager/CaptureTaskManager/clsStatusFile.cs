@@ -169,6 +169,11 @@ namespace CaptureTaskManager
             set { m_SpectrumCount = value; }
         }
 
+        /// <summary>
+        /// Path to the flag file (it may or may not exist)
+        /// </summary>
+        public string FlagFilePath => Path.Combine(AppFolderPath(), FLAG_FILE_NAME);
+
         public string MessageQueueURI { get; set; }
 
         public string MessageQueueTopic { get; set; }
@@ -272,7 +277,7 @@ namespace CaptureTaskManager
         /// </summary>
         public void CreateStatusFlagFile()
         {
-            var TestFileFi = new FileInfo(Path.Combine(AppFolderPath(), FLAG_FILE_NAME));
+            var TestFileFi = new FileInfo(FlagFilePath);
             using (var sw = TestFileFi.AppendText())
             {
                 sw.WriteLine(DateTime.Now.ToString(CultureInfo.InvariantCulture));
@@ -286,7 +291,7 @@ namespace CaptureTaskManager
         public bool DeleteStatusFlagFile()
         {
             //Returns True if job request control flag file exists
-            var strFlagFilePath = Path.Combine(AppFolderPath(), FLAG_FILE_NAME);
+            var strFlagFilePath = FlagFilePath;
 
             try
             {
@@ -313,11 +318,10 @@ namespace CaptureTaskManager
         /// <summary>
         /// Checks for presence of status flag file
         /// </summary>
-        /// <returns></returns>
+        /// <returns>True if job request control flag file exists</returns>
         public bool DetectStatusFlagFile()
         {
-            //Returns True if job request control flag file exists
-            var strFlagFilePath = Path.Combine(AppFolderPath(), FLAG_FILE_NAME);
+            var strFlagFilePath = FlagFilePath;
 
             return File.Exists(strFlagFilePath);
         }
