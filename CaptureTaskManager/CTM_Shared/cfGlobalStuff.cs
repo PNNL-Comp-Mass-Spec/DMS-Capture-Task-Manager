@@ -209,6 +209,82 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
+        /// Log an error message
+        /// </summary>
+        /// <param name="errorMessage">Error message</param>
+        /// <param name="logToDb">When true, log the message to the database and the local log file</param>
+        public static void LogError(string errorMessage, bool logToDb = false)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(errorMessage);
+            Console.ResetColor();
+
+            var loggerType = logToDb ? clsLogTools.LoggerTypes.LogDb : clsLogTools.LoggerTypes.LogFile;
+            clsLogTools.WriteLog(loggerType, clsLogTools.LogLevels.ERROR, errorMessage);
+        }
+
+        /// <summary>
+        /// Log an error message and exception
+        /// </summary>
+        /// <param name="errorMessage">Error message</param>
+        /// <param name="ex">Exception to log</param>
+        public static void LogError(string errorMessage, Exception ex)
+        {
+            ReportStatus(errorMessage, ex);
+        }
+
+        /// <summary>
+        /// Log a warning message
+        /// </summary>
+        /// <param name="warningMessage">Warning message</param>
+        /// <param name="logToDb">When true, log the message to the database and the local log file</param>
+        public static void LogWarning(string warningMessage, bool logToDb = false)
+        {
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine(warningMessage);
+            Console.ResetColor();
+
+            var loggerType = logToDb ? clsLogTools.LoggerTypes.LogDb : clsLogTools.LoggerTypes.LogFile;
+            clsLogTools.WriteLog(loggerType, clsLogTools.LogLevels.WARN, warningMessage);
+        }
+
+        /// <summary>
+        /// Shows information about an exception at the console and in the log file
+        /// </summary>
+        /// <param name="errorMessage">Error message (do not include ex.message)</param>
+        /// <param name="ex">Exception</param>
+        public static void ReportStatus(string errorMessage, Exception ex)
+        {
+            string formattedError;
+            if (errorMessage.EndsWith(ex.Message))
+            {
+                formattedError = errorMessage;
+            }
+            else
+            {
+                formattedError = errorMessage + ": " + ex.Message;
+            }
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(formattedError);
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine(PRISM.Logging.Utilities.GetExceptionStackTraceMultiLine(ex));
+            Console.ResetColor();
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, formattedError, ex);
+        }
+
+        /// <summary>
+        /// Show a status message at the console and optionally include in the log file
+        /// </summary>
+        /// <param name="statusMessage">Status message</param>
+        /// <param name="isDebug">True if a debug level message</param>
+        public static void ReportStatus(string statusMessage, bool isDebug = false)
+        {
+            Console.WriteLine(statusMessage);
+            var logLevel = isDebug ? clsLogTools.LogLevels.DEBUG : clsLogTools.LogLevels.INFO;
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, logLevel, statusMessage);
+        }
+
+        /// <summary>
         /// This function was added to debug remote share access issues
         /// The folder was accessible from some classes but not accessible from others
         /// </summary>
@@ -236,14 +312,11 @@ namespace CaptureTaskManager
                 else
                     msg = "Folder not found [" + pathToCheck + "]; called from " + callingFunction;
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
-
-                Console.WriteLine(msg);
+                ReportStatus(msg);                
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
-                                     "Exception in VerifyFolder", ex);
+                LogError("Exception in VerifyFolder", ex);
             }
         }
     }

@@ -17,7 +17,7 @@ using System.Threading.Tasks;
 
 namespace CaptureToolPlugin
 {
-    public class clsCaptureOps
+    public class clsCaptureOps : clsLoggerBase
     {
         //*********************************************************************************************************
         // Base class for performing capture operations
@@ -208,8 +208,7 @@ namespace CaptureToolPlugin
                     continue;
                 }
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
-                    "Renaming '" + datasetFile.Name + "' to '" + updatedFileName + "' to remove invalid characters");
+                ReportStatus("Renaming '" + datasetFile.Name + "' to '" + updatedFileName + "' to remove invalid characters");
 
                 File.Move(datasetFile.FullName, Path.Combine(datasetFolder.FullName, updatedFileName));
             }
@@ -283,7 +282,7 @@ namespace CaptureToolPlugin
             catch (Exception ex)
             {
                 m_ErrorMessage = "Exception creating directory " + inpPath;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, m_ErrorMessage, ex);
+                LogError(m_ErrorMessage, ex);
             }
 
         }
@@ -303,7 +302,6 @@ namespace CaptureToolPlugin
 
                 if (diFolder.Exists)
                 {
-                    string sLogMessage;
                     string sTargetPath;
                     var itemCountRenamed = 0;
 
@@ -341,8 +339,7 @@ namespace CaptureToolPlugin
 
                     if (itemCountRenamed > 0)
                     {
-                        sLogMessage = "Renamed superseded file(s) at " + diFolder.FullName + " to start with x_";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, sLogMessage);
+                        ReportStatus("Renamed superseded file(s) at " + diFolder.FullName + " to start with x_");
                     }
 
                     // Rename superseded folders
@@ -370,8 +367,7 @@ namespace CaptureToolPlugin
 
                     if (itemCountRenamed > 0)
                     {
-                        sLogMessage = "Renamed superseded folder(s) at " + diFolder.FullName + " to start with x_";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, sLogMessage);
+                        ReportStatus("Renamed superseded folder(s) at " + diFolder.FullName + " to start with x_");
                     }
 
                 }
@@ -382,7 +378,8 @@ namespace CaptureToolPlugin
             {
                 m_ErrorMessage = "Exception renaming files/folders to start with x_";
                 var msg = m_ErrorMessage + " at " + folderPath;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
+                LogError(msg, true);
+                LogError("Stack trace", ex);
                 return false;
             }
 
@@ -432,7 +429,8 @@ namespace CaptureToolPlugin
                 m_ErrorMessage = "Error checking for empty dataset folder";
 
                 var msg = m_ErrorMessage + ": " + dsFolder;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
+                LogError(msg, true);
+                LogError("Stack trace", ex);
                 return DatasetFolderState.Error;
             }
 
@@ -519,9 +517,7 @@ namespace CaptureToolPlugin
                                     // Fail the capture task
                                     retData.CloseoutMsg = "Dataset folder already exists and has multiple files or subfolders";
                                     msg = retData.CloseoutMsg + ": " + dsFolder;
-                                    if (m_TraceMode)
-                                        clsToolRunnerBase.ShowTraceMessage(msg);
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                                    LogError(msg, true);
                                     switchResult = false;
                                 }
                             }
@@ -539,10 +535,9 @@ namespace CaptureToolPlugin
                             {
                                 retData.CloseoutMsg = "Dataset folder already exists and cannot be deleted";
                                 msg = retData.CloseoutMsg + ": " + dsFolder;
-                                if (m_TraceMode)
-                                    clsToolRunnerBase.ShowTraceMessage(msg);
+                                LogError(msg, true);
+                                LogError("Stack trace", ex);
 
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
                                 switchResult = false;
                             }
                             break;
@@ -562,10 +557,8 @@ namespace CaptureToolPlugin
                             // Fail the capture task
                             retData.CloseoutMsg = "Dataset folder already exists";
                             msg = retData.CloseoutMsg + ": " + dsFolder;
-                            if (m_TraceMode)
-                                clsToolRunnerBase.ShowTraceMessage(msg);
 
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                            LogError(msg, true);
                             switchResult = false;
                             break;
                         default:
@@ -573,10 +566,8 @@ namespace CaptureToolPlugin
 
                             retData.CloseoutMsg = "Dataset folder already exists; Invalid action " + DSAction + " specified";
                             msg = retData.CloseoutMsg + " (" + dsFolder + ")";
-                            if (m_TraceMode)
-                                clsToolRunnerBase.ShowTraceMessage(msg);
 
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                            LogError(msg, true);
                             switchResult = false;
                             break;
                     }   // DSAction selection
@@ -607,7 +598,7 @@ namespace CaptureToolPlugin
                     di.MoveTo(n);
 
                     var msg = "Renamed directory " + DSPath;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                    ReportStatus(msg);
                 }
 
                 return true;
@@ -615,7 +606,7 @@ namespace CaptureToolPlugin
             catch (Exception ex)
             {
                 m_ErrorMessage = "Error renaming directory " + DSPath;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_ErrorMessage, ex);
+                LogError(m_ErrorMessage, ex);
                 return false;
             }
         }
@@ -693,10 +684,7 @@ namespace CaptureToolPlugin
                 if (finalFolderSize == initialFolderSize)
                     return true;
 
-                var msg = "Folder size changed from " + initialFolderSize + " bytes to " + finalFolderSize + " bytes: " + targetFolder.FullName;
-                if (m_TraceMode)
-                    clsToolRunnerBase.ShowTraceMessage(msg);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                ReportStatus("Folder size changed from " + initialFolderSize + " bytes to " + finalFolderSize + " bytes: " + targetFolder.FullName);
 
                 return false;
 
@@ -705,10 +693,8 @@ namespace CaptureToolPlugin
             {
                 retData.CloseoutMsg = "Exception validating constant folder size";
                 var msg = retData.CloseoutMsg + ": " + folderPath;
-                if (m_TraceMode)
-                    clsToolRunnerBase.ShowTraceMessage(msg);
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                LogError(msg, ex);
 
                 HandleCopyException(ref retData, ex);
                 return false;
@@ -752,10 +738,7 @@ namespace CaptureToolPlugin
                     return true;
                 }
 
-                var msg = "File size changed from " + initialFileSize + " bytes to " + finalFileSize + " bytes: " + filePath;
-                if (m_TraceMode)
-                    clsToolRunnerBase.ShowTraceMessage(msg);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                ReportStatus("File size changed from " + initialFileSize + " bytes to " + finalFileSize + " bytes: " + filePath);
 
                 return false;
 
@@ -764,10 +747,7 @@ namespace CaptureToolPlugin
             {
                 retData.CloseoutMsg = "Exception validating constant file size";
                 var msg = retData.CloseoutMsg + ": " + filePath;
-                if (m_TraceMode)
-                    clsToolRunnerBase.ShowTraceMessage(msg);
-
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                LogError(msg, ex);
 
                 HandleCopyException(ref retData, ex);
                 return false;
@@ -785,8 +765,10 @@ namespace CaptureToolPlugin
             const int STATUS_MESSAGE_INTERVAL = 5;
 
             if (m_TraceMode)
+            {
                 clsToolRunnerBase.ShowTraceMessage(
-   string.Format("Monitoring {0} for {1} seconds", fileOrFolderName, sleepIntervalSeconds));
+                    string.Format("Monitoring {0} for {1} seconds", fileOrFolderName, sleepIntervalSeconds));
+            }
 
             // Wait for specified sleep interval
             var verificationEndTime = DateTime.UtcNow.AddSeconds(sleepIntervalSeconds);
@@ -800,8 +782,10 @@ namespace CaptureToolPlugin
                 {
                     nextStatusTime = nextStatusTime.AddSeconds(STATUS_MESSAGE_INTERVAL);
                     if (m_TraceMode)
+                    {
                         clsToolRunnerBase.ShowTraceMessage(
-           string.Format("{0} seconds remaining", verificationEndTime.Subtract(DateTime.UtcNow).TotalSeconds.ToString("0")));
+                            string.Format("{0} seconds remaining", verificationEndTime.Subtract(DateTime.UtcNow).TotalSeconds.ToString("0")));
+                    }
                 }
             }
 
@@ -854,8 +838,7 @@ namespace CaptureToolPlugin
             // Verify that the instrument transfer folder exists
             if (!diSourceFolder.Exists)
             {
-                var msg = "Source folder not found: [" + diSourceFolder.FullName + "]";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError("Source folder not found: [" + diSourceFolder.FullName + "]");
 
                 datasetInfo.DatasetType = RawDSTypes.None;
                 return datasetInfo;
@@ -1000,8 +983,7 @@ namespace CaptureToolPlugin
 
             if (myConn.Connect())
             {
-                var msg = "Connected to Bionet (" + shareFolderPath + ") as user " + userName + " using PRISM.Files.ShareConnector";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                ReportStatus("Connected to Bionet (" + shareFolderPath + ") as user " + userName + " using PRISM.Files.ShareConnector", true);
                 m_ConnectionType = ConnectionType.Prism;
                 return true;
             }
@@ -1016,7 +998,7 @@ namespace CaptureToolPlugin
                 if (myConn.ErrorMessage == "53")
                     msg += "; the password may need to be reset";
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError(msg);
 
                 if (myConn.ErrorMessage == "1219" || myConn.ErrorMessage == "1203" || myConn.ErrorMessage == "53" || myConn.ErrorMessage == "64")
                 {
@@ -1063,8 +1045,7 @@ namespace CaptureToolPlugin
 
                 myConn = new NetworkConnection(shareFolderPath, accessCredentials);
 
-                var msg = "Connected to Bionet (" + shareFolderPath + ") as user " + userName + " using CaptureTaskManager.NetworkConnection";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                ReportStatus("Connected to Bionet (" + shareFolderPath + ") as user " + userName + " using CaptureTaskManager.NetworkConnection", true);
                 m_ConnectionType = ConnectionType.DotNET;
 
                 eCloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
@@ -1074,8 +1055,7 @@ namespace CaptureToolPlugin
             catch (Exception ex)
             {
                 m_ErrorMessage = "Error connecting to " + shareFolderPath + " as user " + userName + " (using NetworkConnection class)";
-                var msg = m_ErrorMessage + ": " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError(m_ErrorMessage, ex);
 
                 var retData = new clsToolReturnData();
                 HandleCopyException(ref retData, ex);
@@ -1110,7 +1090,7 @@ namespace CaptureToolPlugin
             myConn.Disconnect();
             PRISM.Processes.clsProgRunner.GarbageCollectNow();
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Bionet disconnected");
+            ReportStatus("Bionet disconnected", true);
             m_ConnectionType = ConnectionType.NotConnected;
 
         }
@@ -1125,7 +1105,7 @@ namespace CaptureToolPlugin
             myConn = null;
             PRISM.Processes.clsProgRunner.GarbageCollectNow();
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Bionet disconnected");
+            ReportStatus("Bionet disconnected", true);
             m_ConnectionType = ConnectionType.NotConnected;
 
         }
@@ -1172,7 +1152,7 @@ namespace CaptureToolPlugin
             if (datasetName.IndexOf(' ') >= 0)
             {
                 retData.CloseoutMsg = "Dataset name contains a space";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, retData.CloseoutMsg);
+                LogError(retData.CloseoutMsg);
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return false;
             }
@@ -1208,10 +1188,9 @@ namespace CaptureToolPlugin
             }
 
             var pwd = DecodePassword(m_Pwd);
-            string msg;
             string tempVol;
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Started clsCaptureOps.DoOperation()");
+            ReportStatus("Started clsCaptureOps.DoOperation()", true);
 
             // Setup destination folder based on client/server switch, m_ClientServer
             // True means MgrParam "perspective" =  "client" which means we will use paths like \\proto-5\Exact04\2012_1
@@ -1228,9 +1207,11 @@ namespace CaptureToolPlugin
                     var autoEnabledParamValue = m_MgrParams.GetParam(autoEnableFlag, string.Empty);
                     if (string.IsNullOrEmpty(autoEnabledParamValue))
                     {
-                        // Using a Manager Parameter to assure that the following log message is only logged once per session (in case this manager captures multiple datasets in a row)
+                        // Using a Manager Parameter to assure that the following log message is only logged once per session 
+                        // (in case this manager captures multiple datasets in a row)
                         m_MgrParams.SetParam(autoEnableFlag, "True");
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Auto-changing m_ClientServer to True (perspective=client) because " + storageVolExternal.ToLower() + " does not contain " + computerName.ToLower());
+                        ReportStatus("Auto-changing m_ClientServer to True (perspective=client) " +
+                                     "because " + storageVolExternal.ToLower() + " does not contain " + computerName.ToLower());
                     }
 
                     m_ClientServer = true;
@@ -1278,20 +1259,17 @@ namespace CaptureToolPlugin
             // Verify that the storage folder on the storage server exists; e.g. \\proto-9\VOrbiETD02\2011_2
             if (!ValidateFolderPath(storageFolderPath))
             {
-                msg = "Storage folder '" + storageFolderPath + "' does not exist; will auto-create";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                ReportStatus("Storage folder '" + storageFolderPath + "' does not exist; will auto-create");
 
                 try
                 {
                     Directory.CreateDirectory(storageFolderPath);
-                    msg = "Successfully created " + storageFolderPath;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                    ReportStatus("Successfully created " + storageFolderPath, true);
                 }
                 catch
                 {
                     retData.CloseoutMsg = "Error creating missing storage folder";
-                    msg = retData.CloseoutMsg + ": " + storageFolderPath;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                    LogError(retData.CloseoutMsg + ": " + storageFolderPath, true);
 
                     if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
                         retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -1330,8 +1308,7 @@ namespace CaptureToolPlugin
             // Connect to Bionet if necessary
             if (m_UseBioNet)
             {
-                msg = "Bionet connection required for " + sourceVol;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                ReportStatus("Bionet connection required for " + sourceVol, true);
 
                 EnumCloseOutType eCloseoutType;
                 EnumEvalCode eEvalCode;
@@ -1354,8 +1331,7 @@ namespace CaptureToolPlugin
             }
             else
             {
-                msg = "Bionet connection not required for " + sourceVol;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                ReportStatus("Bionet connection not required for " + sourceVol, true);
             }
 
             // If Source_Folder_Name is non-blank, use it. Otherwise use dataset name
@@ -1382,9 +1358,8 @@ namespace CaptureToolPlugin
 
                     if (Directory.Exists(candidateFolderPath))
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR,
-                            "Dataset captureSubfolder ends with the dataset name. Gracefully ignoring because this appears to be a data entry error: " +
-                            datasetName);
+                        LogError("Dataset captureSubfolder ends with the dataset name. Gracefully ignoring " +
+                                 "because this appears to be a data entry error: " + datasetName, true);
                         sourceFolderPath = candidateFolderPath.Substring(0, candidateFolderPath.Length - sSourceFolderName.Length - 1);
                     }
                     else
@@ -1438,8 +1413,7 @@ namespace CaptureToolPlugin
                     retData.CloseoutMsg += "; SourceFolderName: " + sSourceFolderName;
                 }
 
-                msg = retData.CloseoutMsg + " (" + datasetName + ", job " + jobNum + "); " + folderStatsMsg;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                LogError(retData.CloseoutMsg + " (" + datasetName + ", job " + jobNum + "); " + folderStatsMsg);
                 sourceIsValid = false;
             }
             else
@@ -1447,7 +1421,13 @@ namespace CaptureToolPlugin
                 sourceIsValid = ValidateWithInstrumentClass(datasetName, sourceFolderPath, sourceType, instrumentClass, datasetInfo, ref retData);
             }
 
-            if (sourceIsValid)
+            string msg;
+
+            if (!sourceIsValid)
+            {
+                msg = "Dataset type (" + sourceType + ") is not valid for the instrument class (" + instrumentClass + ")";
+            }
+            else
             {
                 // Perform copy based on source type
                 switch (sourceType)
@@ -1479,8 +1459,9 @@ namespace CaptureToolPlugin
                         break;
 
                     default:
-                        retData.CloseoutMsg = "Invalid dataset type found: " + sourceType;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, retData.CloseoutMsg);
+                        msg = "Invalid dataset type found: " + sourceType;
+                        retData.CloseoutMsg = msg;
+                        LogError(retData.CloseoutMsg, true);
                         DisconnectShareIfRequired();
                         retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                         break;
@@ -1609,14 +1590,12 @@ namespace CaptureToolPlugin
 
             if (validFiles.Count < fileNames.Count)
             {
-                var errorMsg = "Dataset '" + datasetName + "' not ready; source file's size changed";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, errorMsg);
+                LogWarning("Dataset '" + datasetName + "' not ready; source file's size changed");
                 DisconnectShareIfRequired();
                 if (errorMsgs.Count > 0)
                 {
                     retData.CloseoutMsg = errorMsgs[0];
-                    if (m_TraceMode)
-                        clsToolRunnerBase.ShowTraceMessage(retData.CloseoutMsg);
+                    ReportStatus(retData.CloseoutMsg);
                 }
                 retData.CloseoutMsg = "File size changed";
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
@@ -1632,10 +1611,10 @@ namespace CaptureToolPlugin
             {
                 retData.CloseoutMsg = "Exception creating dataset folder";
                 msg = retData.CloseoutMsg + " at " + datasetFolderPath;
-                if (m_TraceMode)
-                    clsToolRunnerBase.ShowTraceMessage(msg);
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
+                LogError(msg, true);
+                LogError("Stack trace", ex);
+
                 DisconnectShareIfRequired();
 
                 HandleCopyException(ref retData, ex);
@@ -1660,8 +1639,7 @@ namespace CaptureToolPlugin
 
                     if (!string.Equals(sourceFileName, targetFileName, StringComparison.InvariantCultureIgnoreCase))
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
-                                             "Renaming '" + sourceFileName + "' to '" + targetFileName + "' to remove spaces");
+                        ReportStatus("Renaming '" + sourceFileName + "' to '" + targetFileName + "' to remove spaces");
                     }
 
                     if (copyWithResume)
@@ -1679,20 +1657,17 @@ namespace CaptureToolPlugin
 
                     if (bSuccess)
                     {
-                        msg = "  copied file " + sourceFilePath + " to " + targetFilePath + GetConnectionDescription();
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                        ReportStatus("  copied file " + sourceFilePath + " to " + targetFilePath + GetConnectionDescription());
                     }
                     else
                     {
-                        msg = "  file copy failed for " + sourceFilePath + " to " + targetFilePath + GetConnectionDescription();
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                        LogError("  file copy failed for " + sourceFilePath + " to " + targetFilePath + GetConnectionDescription());
                     }
                 }
             }
             catch (Exception ex)
             {
-                msg = "Copy exception for dataset " + datasetName + GetConnectionDescription();
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
+                LogError("Copy exception for dataset " + datasetName + GetConnectionDescription(), ex);
 
                 HandleCopyException(ref retData, ex);
                 return;
@@ -1726,7 +1701,6 @@ namespace CaptureToolPlugin
         {
             const string DEFAULT_METHOD_FOLDER_BASE_PATH = @"\\proto-5\BionetXfer\Run_Complete_Trigger\MethodFiles";
 
-            string msg;
             var bSuccess = true;
             var methodFolderBasePath = string.Empty;
 
@@ -1750,8 +1724,7 @@ namespace CaptureToolPlugin
                 var diSourceFolder = new DirectoryInfo(methodFolderBasePath);
                 if (!diSourceFolder.Exists)
                 {
-                    msg = "LCMethods folder not found: " + methodFolderBasePath;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg);
+                    LogWarning("LCMethods folder not found: " + methodFolderBasePath, true);
 
                     // Return true despite not having found the folder since this is not a fatal error for capture
                     return true;
@@ -1845,8 +1818,7 @@ namespace CaptureToolPlugin
                     }
                     catch (Exception ex)
                     {
-                        msg = "Exception copying LCMethod file " + fiFile.FullName;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg, ex);
+                        LogWarning("Exception copying LCMethod file " + fiFile.FullName + ": " + ex.Message);
                     }
 
                 }
@@ -1881,16 +1853,14 @@ namespace CaptureToolPlugin
                     catch (Exception ex)
                     {
                         // Exception renaming the folder; only log this as a debug message
-                        msg = "Exception renaming source LCMethods folder for " + datasetName;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg, ex);
+                        ReportStatus("Exception renaming source LCMethods folder for " + datasetName + ": " + ex.Message, true);
                     }
                 }
 
             }
             catch (Exception ex)
             {
-                msg = "Exception copying LCMethod file for " + datasetName;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                LogError("Exception copying LCMethod file for " + datasetName, ex);
                 bSuccess = false;
             }
 
@@ -1970,7 +1940,7 @@ namespace CaptureToolPlugin
             if (!VerifyConstantFolderSize(diSourceDir.FullName, ref retData))
             {
                 msg = "Dataset '" + datasetInfo.DatasetName + "' not ready";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                LogWarning(msg);
                 DisconnectShareIfRequired();
                 retData.CloseoutMsg = "Folder size changed";
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
@@ -1986,10 +1956,9 @@ namespace CaptureToolPlugin
             {
                 retData.CloseoutMsg = "Exception creating dataset folder";
                 msg = retData.CloseoutMsg + " at " + datasetFolderPath;
-                if (m_TraceMode)
-                    clsToolRunnerBase.ShowTraceMessage(msg);
+                LogError(msg, true);
+                LogError("Stack trace", ex);
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
                 DisconnectShareIfRequired();
 
                 HandleCopyException(ref retData, ex);
@@ -2016,7 +1985,7 @@ namespace CaptureToolPlugin
                 if (bSuccess)
                 {
                     msg = "Copied folder " + diSourceDir.FullName + " to " + diTargetDir.FullName + GetConnectionDescription();
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                    ReportStatus(msg);
 
                     AutoFixFilesWithInvalidChars(datasetInfo.DatasetName, diTargetDir);
                 }
@@ -2028,7 +1997,7 @@ namespace CaptureToolPlugin
             catch (Exception ex)
             {
                 msg = "Copy exception for dataset " + datasetInfo.DatasetName + GetConnectionDescription();
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
+                LogError(msg, ex);
 
                 DisconnectShareIfRequired();
 
@@ -2090,10 +2059,7 @@ namespace CaptureToolPlugin
                 {
                     retData.CloseoutMsg = sourceFolderErrorMessage;
                     msg = retData.CloseoutMsg + " at " + sourceFolderPath;
-                    if (m_TraceMode)
-                        clsToolRunnerBase.ShowTraceMessage(msg);
-
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    LogError(msg);
                     DisconnectShareIfRequired();
                     retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     return true;
@@ -2103,10 +2069,9 @@ namespace CaptureToolPlugin
             {
                 retData.CloseoutMsg = "Exception checking for a DATA.MS file";
                 msg = retData.CloseoutMsg + " at " + sourceFolderPath;
-                if (m_TraceMode)
-                    clsToolRunnerBase.ShowTraceMessage(msg);
+                LogError(msg, true);
+                LogError("Stack trace", ex);
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
                 DisconnectShareIfRequired();
 
                 HandleCopyException(ref retData, ex);
@@ -2155,10 +2120,8 @@ namespace CaptureToolPlugin
                 {
                     retData.CloseoutMsg = sourceFolderErrorMessage;
                     msg = retData.CloseoutMsg + " at " + sourceFolderPath;
-                    if (m_TraceMode)
-                        clsToolRunnerBase.ShowTraceMessage(msg);
+                    LogError(msg);
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
                     DisconnectShareIfRequired();
                     retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     return true;
@@ -2168,10 +2131,9 @@ namespace CaptureToolPlugin
             {
                 retData.CloseoutMsg = "Exception checking for zero-byte dataset files";
                 msg = retData.CloseoutMsg + " at " + sourceFolderPath;
-                if (m_TraceMode)
-                    clsToolRunnerBase.ShowTraceMessage(msg);
+                LogError(msg, true);
+                LogError("Stack trace", ex);
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
                 DisconnectShareIfRequired();
 
                 HandleCopyException(ref retData, ex);
@@ -2219,17 +2181,23 @@ namespace CaptureToolPlugin
 
                 if (fileCountDeleted > 0)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Deleted " + fileCountDeleted + " zero byte files in the dataset folder: " + deletedFileList);
+                    LogError("Deleted " + fileCountDeleted + " zero byte files in the dataset folder: " + deletedFileList);
                 }
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in DeleteZeroByteBrukerFiles", ex);
+                LogError("Error in DeleteZeroByteBrukerFiles", ex);
             }
 
         }
 
-        private bool FindFilesToSkip(DirectoryInfo diSourceFolder, clsDatasetInfo datasetInfo, string searchSpec, string searchSpecDescription, ref clsToolReturnData retData, out List<string> filesToSkip)
+        private bool FindFilesToSkip(
+            DirectoryInfo diSourceFolder,
+            clsDatasetInfo datasetInfo,
+            string searchSpec,
+            string searchSpecDescription,
+            ref clsToolReturnData retData,
+            out List<string> filesToSkip)
         {
 
             filesToSkip = new List<string>();
@@ -2242,11 +2210,12 @@ namespace CaptureToolPlugin
 
                 if (filesToSkip.Count == 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Skipping " + searchSpecDescription + " " + filesToSkip.FirstOrDefault());
+                    ReportStatus("Skipping " + searchSpecDescription + " " + filesToSkip.FirstOrDefault());
                 }
                 else if (filesToSkip.Count > 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Skipping " + filesToSkip.Count + " " + searchSpecDescription + "s (" + filesToSkip.FirstOrDefault() + " through " + filesToSkip.LastOrDefault() + ")");
+                    ReportStatus("Skipping " + filesToSkip.Count + " " + searchSpecDescription + "s " +
+                                  "(" + filesToSkip.FirstOrDefault() + " through " + filesToSkip.LastOrDefault() + ")");
                 }
 
                 return true;
@@ -2256,10 +2225,9 @@ namespace CaptureToolPlugin
             {
                 retData.CloseoutMsg = "Exception getting list of files to skip";
                 var msg = retData.CloseoutMsg + " for dataset " + datasetInfo.DatasetName;
-                if (m_TraceMode)
-                    clsToolRunnerBase.ShowTraceMessage(msg);
+                LogError(msg, true);
+                LogError("Stack trace", ex);
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
                 DisconnectShareIfRequired();
 
                 HandleCopyException(ref retData, ex);
@@ -2335,10 +2303,7 @@ namespace CaptureToolPlugin
                 {
                     retData.CloseoutMsg = "Multiple .D folders found in dataset folder";
                     msg = retData.CloseoutMsg + " " + diSourceDir.FullName;
-                    if (m_TraceMode)
-                        clsToolRunnerBase.ShowTraceMessage(msg);
-
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    LogError(msg);
                     retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     return;
                 }
@@ -2349,10 +2314,7 @@ namespace CaptureToolPlugin
             {
                 retData.CloseoutMsg = "Dataset folder contains a series of .IMF files -- upload a .UIMF file instead";
                 msg = retData.CloseoutMsg + " " + diSourceDir.FullName;
-                if (m_TraceMode)
-                    clsToolRunnerBase.ShowTraceMessage(msg);
-
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError(msg);
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return;
             }
@@ -2364,10 +2326,7 @@ namespace CaptureToolPlugin
                 {
                     retData.CloseoutMsg = "Dataset folder has more than 2 subfolders";
                     msg = retData.CloseoutMsg + " " + diSourceDir.FullName;
-                    if (m_TraceMode)
-                        clsToolRunnerBase.ShowTraceMessage(msg);
-
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    LogError(msg);
                     retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     return;
                 }
@@ -2377,10 +2336,7 @@ namespace CaptureToolPlugin
                 {
                     retData.CloseoutMsg = "Dataset folder does not contain any .wiff files";
                     msg = retData.CloseoutMsg + " " + diSourceDir.FullName;
-                    if (m_TraceMode)
-                        clsToolRunnerBase.ShowTraceMessage(msg);
-
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    LogError(msg);
                     retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     return;
                 }
@@ -2390,7 +2346,7 @@ namespace CaptureToolPlugin
             if (!VerifyConstantFolderSize(diSourceDir.FullName, ref retData))
             {
                 msg = "Dataset '" + datasetInfo.DatasetName + "' not ready";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                LogWarning(msg);
                 DisconnectShareIfRequired();
                 retData.CloseoutMsg = "Folder size changed";
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
@@ -2415,7 +2371,7 @@ namespace CaptureToolPlugin
                 if (bSuccess)
                 {
                     msg = "Copied folder " + diSourceDir.FullName + " to " + diTargetDir.FullName + GetConnectionDescription();
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                    ReportStatus(msg);
 
                     AutoFixFilesWithInvalidChars(datasetInfo.DatasetName, diTargetDir);
                 }
@@ -2427,7 +2383,8 @@ namespace CaptureToolPlugin
             catch (Exception ex)
             {
                 msg = "Exception copying dataset folder " + diSourceDir.FullName + GetConnectionDescription();
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
+                LogError(msg, true);
+                LogError("Stack trace", ex);
 
                 HandleCopyException(ref retData, ex);
                 return;
@@ -2481,10 +2438,7 @@ namespace CaptureToolPlugin
                 // Data files haven't been zipped, so throw error
                 retData.CloseoutMsg = "No zip files found in dataset folder";
                 msg = retData.CloseoutMsg + " at " + diSourceDir.FullName;
-                if (m_TraceMode)
-                    clsToolRunnerBase.ShowTraceMessage(msg);
-
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError(msg);
                 DisconnectShareIfRequired();
 
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -2494,7 +2448,7 @@ namespace CaptureToolPlugin
             if (!VerifyConstantFolderSize(diSourceDir.FullName, ref retData))
             {
                 msg = "Dataset '" + datasetInfo.DatasetName + "' not ready";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                LogWarning(msg);
                 DisconnectShareIfRequired();
                 retData.CloseoutMsg = "Folder size changed";
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
@@ -2510,10 +2464,9 @@ namespace CaptureToolPlugin
             {
                 retData.CloseoutMsg = "Exception creating dataset folder";
                 msg = retData.CloseoutMsg + " at " + diTargetDir.FullName;
-                if (m_TraceMode)
-                    clsToolRunnerBase.ShowTraceMessage(msg);
+                LogError(msg, true);
+                LogError("Stack trace", ex);
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
                 DisconnectShareIfRequired();
 
                 HandleCopyException(ref retData, ex);
@@ -2544,7 +2497,7 @@ namespace CaptureToolPlugin
                 if (bSuccess)
                 {
                     msg = "Copied files in folder " + diSourceDir.FullName + " to " + diTargetDir.FullName + GetConnectionDescription();
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                    ReportStatus(msg);
 
                     AutoFixFilesWithInvalidChars(datasetInfo.DatasetName, diTargetDir);
                 }
@@ -2557,10 +2510,9 @@ namespace CaptureToolPlugin
             {
                 retData.CloseoutMsg = "Exception copying files from dataset folder";
                 msg = retData.CloseoutMsg + " " + diSourceDir.FullName + GetConnectionDescription();
-                if (m_TraceMode)
-                    clsToolRunnerBase.ShowTraceMessage(msg);
+                LogError(msg, true);
+                LogError("Stack trace", ex);
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
                 DisconnectShareIfRequired();
 
                 HandleCopyException(ref retData, ex);
@@ -2605,10 +2557,7 @@ namespace CaptureToolPlugin
             {
                 retData.CloseoutMsg = "Zip files found in dataset folder";
                 msg = retData.CloseoutMsg + " " + diSourceDir.FullName;
-                if (m_TraceMode)
-                    clsToolRunnerBase.ShowTraceMessage(msg);
-
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError(msg);
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return;
             }
@@ -2620,10 +2569,7 @@ namespace CaptureToolPlugin
             {
                 retData.CloseoutMsg = "No subfolders were found in the dataset folder ";
                 msg = retData.CloseoutMsg + " " + diSourceDir.FullName;
-                if (m_TraceMode)
-                    clsToolRunnerBase.ShowTraceMessage(msg);
-
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError(msg);
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return;
             }
@@ -2641,16 +2587,13 @@ namespace CaptureToolPlugin
 
                 foreach (var sDir in dataFolders)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Test folder " + sDir + " against RegEx " + reMaldiSpotFolder);
+                    ReportStatus("Test folder " + sDir + " against RegEx " + reMaldiSpotFolder, true);
 
                     if (!reMaldiSpotFolder.IsMatch(sDir.Name, 0))
                     {
                         retData.CloseoutMsg = "Dataset folder contains multiple subfolders, but folder " + sDir.Name + " does not match the expected pattern";
                         msg = retData.CloseoutMsg + " (" + reMaldiSpotFolder + "); see " + diSourceDir.FullName;
-                        if (m_TraceMode)
-                            clsToolRunnerBase.ShowTraceMessage(msg);
-
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                        LogError(msg);
                         retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                         return;
                     }
@@ -2661,7 +2604,7 @@ namespace CaptureToolPlugin
             if (!VerifyConstantFolderSize(diSourceDir.FullName, ref retData))
             {
                 msg = "Dataset '" + datasetInfo.DatasetName + "' not ready";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                LogWarning(msg);
                 DisconnectShareIfRequired();
                 retData.CloseoutMsg = "Folder size changed";
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
@@ -2673,13 +2616,14 @@ namespace CaptureToolPlugin
             {
                 m_FileTools.CopyDirectory(diSourceDir.FullName, diTargetDir.FullName);
                 msg = "Copied folder " + diSourceDir.FullName + " to " + diTargetDir.FullName + GetConnectionDescription();
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                ReportStatus(msg);
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
             }
             catch (Exception ex)
             {
                 msg = "Exception copying dataset folder " + diSourceDir.FullName + GetConnectionDescription();
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg, ex);
+                LogError(msg, true);
+                LogError("Stack trace", ex);
 
                 HandleCopyException(ref retData, ex);
             }
@@ -2720,13 +2664,15 @@ namespace CaptureToolPlugin
 
                     if (bSuccess)
                     {
-                        msg = "  directory copy complete; CountCopied = " + iFileCountNewlyCopied + "; CountSkipped = " + iFileCountSkipped + "; CountResumed = " + iFileCountResumed;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                        msg = "  directory copy complete; CountCopied = " + iFileCountNewlyCopied + "; " +
+                              "CountSkipped = " + iFileCountSkipped + "; " +
+                              "CountResumed = " + iFileCountResumed;
+                        ReportStatus(msg, true);
                     }
                     else
                     {
                         msg = "  directory copy failed for " + sSourceFolderPath + " to " + sTargetFolderPath + GetConnectionDescription();
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                        LogError(msg);
                     }
 
                 }
@@ -2744,7 +2690,7 @@ namespace CaptureToolPlugin
                     else
                         msg += ex.Message.Substring(0, 350);
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    LogError(msg);
 
                     bDoCopy = false;
                     if (m_FileTools.CurrentCopyStatus == clsFileTools.CopyStatus.BufferedCopy ||
@@ -2757,7 +2703,7 @@ namespace CaptureToolPlugin
                         {
                             bDoCopy = true;
                             msg = "  " + dElapsedTime.ToString("0") + " seconds have elapsed; will attempt to resume copy";
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                            ReportStatus(msg);
                         }
                     }
 
@@ -2817,12 +2763,12 @@ namespace CaptureToolPlugin
                                 diFolder.Delete(true);
 
                                 msg = "Deleted old " + msg;
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                                ReportStatus(msg);
                             }
                             catch (Exception ex)
                             {
                                 msg = "Exception deleting old " + msg;
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                                LogError(msg, ex);
                             }
 
                         }
@@ -2832,7 +2778,8 @@ namespace CaptureToolPlugin
             catch (Exception ex)
             {
                 msg = "Exception looking for old LC Method folders";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, msg, ex);
+                LogError(msg, true);
+                LogError("Stack trace", ex);
             }
         }
 
@@ -2916,7 +2863,7 @@ namespace CaptureToolPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in GetSleepIntervalForFile", ex);
+                LogError("Error in GetSleepIntervalForFile", ex);
                 return m_SleepInterval;
             }
         }
@@ -2951,7 +2898,7 @@ namespace CaptureToolPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in GetSleepIntervalForFolder", ex);
+                LogError("Error in GetSleepIntervalForFolder", ex);
                 return m_SleepInterval;
             }
         }
@@ -2972,10 +2919,7 @@ namespace CaptureToolPlugin
             {
                 // This error randomly occurs; no need to log a full stack trace
                 retData.CloseoutMsg = "Logon failure: unknown user name or bad password";
-                if (m_TraceMode)
-                    clsToolRunnerBase.ShowTraceMessage(retData.CloseoutMsg);
-
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, retData.CloseoutMsg);
+                LogError(retData.CloseoutMsg);
 
                 // Set the EvalCode to 3 so that capture can be retried
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -3006,7 +2950,7 @@ namespace CaptureToolPlugin
 
             retData.CloseoutMsg = string.IsNullOrWhiteSpace(itemDescription) ? fileOrPath : itemDescription;
             retData.CloseoutMsg += " contains an invalid character at index " + invalidCharIndex + ": " + fileOrPath[invalidCharIndex];
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, retData.CloseoutMsg);
+            LogError(retData.CloseoutMsg, true);
             retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
             return true;
         }
@@ -3053,12 +2997,12 @@ namespace CaptureToolPlugin
 
         private void OnCopyingFile(string filename)
         {
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying file " + filename);
+            ReportStatus("Copying file " + filename, true);
         }
 
         private void OnResumingFileCopy(string filename)
         {
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Resuming copy of file " + filename);
+            ReportStatus("Resuming copy of file " + filename);
         }
 
         private void OnFileCopyProgress(string filename, float percentComplete)
@@ -3073,8 +3017,7 @@ namespace CaptureToolPlugin
                 m_LastProgressUpdate = DateTime.Now;
                 m_LastProgressFileName = filename;
                 m_LastProgressPercent = percentComplete;
-                var msg = "  copying " + Path.GetFileName(filename) + ": " + percentComplete.ToString("0.0") + "% complete";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                ReportStatus("  copying " + Path.GetFileName(filename) + ": " + percentComplete.ToString("0.0") + "% complete");
             }
 
 
@@ -3112,7 +3055,7 @@ namespace CaptureToolPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in ReportFirstVisibleFile", ex);
+                LogError("Error in ReportFirstVisibleFile", ex);
                 return "Error: " + ex.Message;
             }
         }
@@ -3216,7 +3159,7 @@ namespace CaptureToolPlugin
 
                                 if (rawFound && tsvFound)
                                 {
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Capturing a .raw file with a corresponding .tsv file");
+                                    ReportStatus("Capturing a .raw file with a corresponding .tsv file");
                                     break;
                                 }
                             }
@@ -3313,11 +3256,7 @@ namespace CaptureToolPlugin
                 return true;
             }
 
-            if (m_TraceMode)
-                clsToolRunnerBase.ShowTraceMessage(retData.CloseoutMsg);
-
-            var msg = retData.CloseoutMsg + ": " + dataset;
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+            LogError(retData.CloseoutMsg + ": " + dataset, true);
 
             return false;
         }

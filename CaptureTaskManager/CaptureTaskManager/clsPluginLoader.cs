@@ -13,7 +13,8 @@ using System.IO;
 
 namespace CaptureTaskManager
 {
-    public class clsPluginLoader
+    // ReSharper disable once ClassNeverInstantiated.Global
+    public class clsPluginLoader : clsLoggerBase
     {
         //*********************************************************************************************************
         // Handles creation of plugin objects
@@ -105,14 +106,13 @@ namespace CaptureTaskManager
 #endif
 
                 var obj = LoadObject(className, assyName);
-                string msg;
+                
                 if (obj != null)
                 {
                     try
                     {
                         myToolRunner = (IToolRunner)obj;
-                        msg = "Loaded tool runner: " + className + " from " + assyName;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                        ReportStatus("Loaded tool runner: " + className + " from " + assyName, true);
                     }
                     catch (Exception ex)
                     {
@@ -121,8 +121,7 @@ namespace CaptureTaskManager
                 }
                 else
                 {
-                    msg = "Unable to load tool runner: " + className + " from " + assyName;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    LogError("Unable to load tool runner: " + className + " from " + assyName);
                 }
             }
             return myToolRunner;

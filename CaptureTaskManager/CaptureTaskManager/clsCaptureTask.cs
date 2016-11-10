@@ -155,8 +155,7 @@ namespace CaptureTaskManager
             }
             catch (Exception ex)
             {
-                var msg = "Exception adding parameter: " + paramName + ", Value: " + paramValue;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                LogError("Exception adding parameter: " + paramName + ", Value: " + paramValue, ex);
                 return false;
             }
         }
@@ -242,11 +241,12 @@ namespace CaptureTaskManager
                     myCmd.Parameters["@JobCountToPreview"].Value = 10;
                 }
 
-                var msg = "clsCaptureTask.RequestTaskDetailed(), connection string: " + m_ConnStr;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-                msg = "clsCaptureTask.RequestTaskDetailed(), printing param list";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-                PrintCommandParams(myCmd);
+                ReportStatus("clsCaptureTask.RequestTaskDetailed(), connection string: " + m_ConnStr, true);
+
+                if (m_DebugLevel >= 5)
+                {
+                    PrintCommandParams(myCmd);
+                }
 
                 //Execute the SP
                 DataTable dt;
@@ -276,17 +276,15 @@ namespace CaptureTaskManager
                         break;
                     default:
                         //There was an SP error
-                        msg = "clsCaptureTask.RequestTaskDetailed(), SP execution error " + retVal;
-                        msg += "; Msg text = " + (string)myCmd.Parameters["@message"].Value;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                        LogError("clsCaptureTask.RequestTaskDetailed(), SP execution error " + retVal + 
+                            "; Msg text = " + (string)myCmd.Parameters["@message"].Value);
                         outcome = EnumRequestTaskResult.ResultError;
                         break;
                 }
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                     "Exception requesting analysis job: " + ex.Message);
+                LogError("Exception requesting analysis job", ex);
                 outcome = EnumRequestTaskResult.ResultError;
             }
             return outcome;
@@ -331,19 +329,14 @@ namespace CaptureTaskManager
         /// <param name="evalMsg">Message related to evaluation results</param>
         public override void CloseTask(EnumCloseOutType taskResult, string closeoutMsg, EnumEvalCode evalCode, string evalMsg)
         {
-            string msg;
-
-            if (
-                !SetCaptureTaskComplete(SP_NAME_SET_COMPLETE, (int)taskResult, closeoutMsg, (int)evalCode,
-                                        evalMsg))
+            var success = SetCaptureTaskComplete(SP_NAME_SET_COMPLETE, (int)taskResult, closeoutMsg, (int)evalCode, evalMsg);
+            if (!success)
             {
-                msg = "Error setting task complete in database, job " + GetParam("Job", "??");
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError("Error setting task complete in database, job " + GetParam("Job", "??"));
             }
             else
             {
-                msg = "Successfully set task complete in database, job " + GetParam("Job", "??");
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                ReportStatus("Successfully set task complete in database, job " + GetParam("Job", "??"), true);
             }
         }
 
@@ -404,6 +397,12 @@ namespace CaptureTaskManager
 
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
+                ReportStatus("Calling stored procedure " + spName, true);
+
+                if (m_DebugLevel >= 5)
+                {
+                    PrintCommandParams(cmd);
+                }
 
                 //Execute the SP
                 var ResCode = m_CaptureTaskDBProcedureExecutor.ExecuteSP(cmd);
@@ -414,16 +413,14 @@ namespace CaptureTaskManager
                 }
                 else
                 {
-                    msg = "Error " + ResCode + " setting transfer task complete";
-                    msg += "; Message = " + (string)cmd.Parameters["@message"].Value;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    LogError("Error " + ResCode + " setting transfer task complete; " +
+                             "Message = " + (string)cmd.Parameters["@message"].Value);
                     outcome = false;
                 }
             }
             catch (Exception ex)
             {
-                msg = "Exception calling stored procedure " + spName;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                LogError("Exception calling stored procedure " + spName, ex);
                 outcome = false;
             }
 

@@ -18,6 +18,8 @@ namespace CaptureToolPlugin
         // Main class for plugin
         //**********************************************************************************************************
 
+        private bool m_TraceMode;
+
         #region "Methods"
         /// <summary>
         /// Runs the capture step tool
@@ -25,8 +27,7 @@ namespace CaptureToolPlugin
         /// <returns>clsToolReturnData object containing tool operation results</returns>
         public override clsToolReturnData RunTool()
         {
-            var msg = "Starting CaptureToolPlugin.clsPluginMain.RunTool()";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            ReportStatus("Starting CaptureToolPlugin.clsPluginMain.RunTool()", true);
 
             // Note that retData.CloseoutMsg will be stored in the Completion_Message field of the database
             // Similarly, retData.EvalMsg will be stored in the Evaluation_Message field of the database
@@ -38,14 +39,13 @@ namespace CaptureToolPlugin
             // Store the version info in the database
             if (!StoreToolVersionInfo())
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
+                LogError("Aborting since StoreToolVersionInfo returned false");
                 retData.CloseoutMsg = "Error determining tool version info";
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return retData;
             }
 
-            msg = "Capturing dataset '" + m_Dataset + "'";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+            ReportStatus( "Capturing dataset '" + m_Dataset + "'");
 
             // Determine if instrument is on Bionet
             var capMethod = m_TaskParams.GetParam("Method");
@@ -63,13 +63,12 @@ namespace CaptureToolPlugin
             var capOpTool = new clsCaptureOps(m_MgrParams, useBionet, m_TraceMode);
             try
             {
-                msg = "clsPluginMain.RunTool(): Starting capture operation";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                ReportStatus("clsPluginMain.RunTool(): Starting capture operation", true);
 
                 var success = capOpTool.DoOperation(m_TaskParams, ref retData);
 
-                if (!success && !string.IsNullOrWhiteSpace(retData.CloseoutMsg))
-                    if (m_TraceMode) ShowTraceMessage(retData.CloseoutMsg);
+                if (!success && !string.IsNullOrWhiteSpace(retData.CloseoutMsg) && m_TraceMode)
+                    ShowTraceMessage(retData.CloseoutMsg);
 
                 if (capOpTool.NeedToAbortProcessing)
                 {
@@ -78,17 +77,16 @@ namespace CaptureToolPlugin
                         retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING;
                 }
 
-                msg = "clsPluginMain.RunTool(): Completed capture operation";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                ReportStatus("clsPluginMain.RunTool(): Completed capture operation", true);
             }
             catch (Exception ex)
             {
-                msg = "clsPluginMain.RunTool(): Exception during capture operation (useBionet=" + useBionet + ")";
+                var msg = "clsPluginMain.RunTool(): Exception during capture operation (useBionet=" + useBionet + ")";
                 if (ex.Message.Contains("unknown user name or bad password"))
                 {
                     // This error randomly occurs; no need to log a full stack trace
                     msg += ", Logon failure: unknown user name or bad password";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    LogError(msg);
                     // Set the EvalCode to 3 so that capture can be retried
                     retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     retData.EvalCode = EnumEvalCode.EVAL_CODE_NETWORK_ERROR_RETRY_CAPTURE;
@@ -96,7 +94,7 @@ namespace CaptureToolPlugin
                 }
                 else
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                    LogError(msg, ex);
                     retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     retData.CloseoutMsg = msg;
                 }
@@ -105,8 +103,7 @@ namespace CaptureToolPlugin
 
             capOpTool.DetachEvents();
 
-            msg = "Completed clsPluginMain.RunTool()";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            ReportStatus("Completed clsPluginMain.RunTool()", true);
 
             return retData;
 
@@ -120,13 +117,13 @@ namespace CaptureToolPlugin
         /// <param name="statusTools">Tools for status reporting</param>
         public override void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
         {
-            var msg = "Starting clsPluginMain.Setup()";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            ReportStatus("Starting clsPluginMain.Setup()", true);
 
             base.Setup(mgrParams, taskParams, statusTools);
 
-            msg = "Completed clsPluginMain.Setup()";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            m_TraceMode = mgrParams.GetParam("TraceMode", false);
+
+            ReportStatus("Completed clsPluginMain.Setup()", true);
         }
 
         /// <summary>
@@ -142,18 +139,18 @@ namespace CaptureToolPlugin
             // Lookup the version of the Capture tool plugin
             if (assembly.Location == null)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to determine the directory path for the Exe using Reflection; assembly.Location is null");
+                LogError("Unable to determine the directory path for the Exe using Reflection; assembly.Location is null");
                 return false;
             }
 
             var ioAppFileInfo = new FileInfo(assembly.Location);
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+            ReportStatus("Determining tool version info", true);
 
             // Lookup the version of the Capture tool plugin
             if (ioAppFileInfo.DirectoryName == null)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to parse the parent directory for the Exe using path " + assembly.Location);
+                LogError("Unable to parse the parent directory for the Exe using path " + assembly.Location);
                 return false;
             }
 
@@ -184,8 +181,7 @@ namespace CaptureToolPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                     "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion", ex);
                 return false;
             }
         }

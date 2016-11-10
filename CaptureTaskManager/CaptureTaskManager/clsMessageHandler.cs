@@ -17,7 +17,7 @@ namespace CaptureTaskManager
     // received commands are sent to a delegate function with this signature
     public delegate void MessageProcessorDelegate(string cmdText);
 
-    class clsMessageHandler : IDisposable
+    class clsMessageHandler : clsLoggerBase, IDisposable
     {
         //*********************************************************************************************************
         // Handles sending and receiving of control and status messages
@@ -114,11 +114,8 @@ namespace CaptureTaskManager
                     m_Connection.Start();
 
                     m_HasConnection = true;
-                    // temp debug
-                    // Console.WriteLine("--- New connection made ---" + Environment.NewLine); //+ e.ToString()
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                         "Connected to broker");
+                    ReportStatus("Connected to broker", true);
                     return;
                 }
                 catch (Exception ex)
@@ -142,7 +139,7 @@ namespace CaptureTaskManager
 
             msg += ": " + string.Join("; ", errorList);
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+            LogError(msg);
         }
 
         /// <summary>
@@ -159,27 +156,23 @@ namespace CaptureTaskManager
                 // queue for telling manager to perform task (future?)
                 var commandSession = m_Connection.CreateSession();
                 m_CommandConsumer = commandSession.CreateConsumer(new ActiveMQQueue(m_CommandQueueName));
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                     "Command listener established");
+                ReportStatus("Command listener established", true);
 
                 // topic for commands broadcast to all capture tool managers
                 var broadcastSession = m_Connection.CreateSession();
                 m_BroadcastConsumer = broadcastSession.CreateConsumer(new ActiveMQTopic(m_BroadcastTopicName));
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                     "Broadcast listener established");
+                ReportStatus("Broadcast listener established", true);
 
                 // topic for the capture tool manager to send status information over
                 m_StatusSession = m_Connection.CreateSession();
                 m_StatusSender = m_StatusSession.CreateProducer(new ActiveMQTopic(m_StatusTopicName));
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                     "Status sender established");
+                ReportStatus("Status sender established", true);
 
                 return true;
             }
             catch (Exception ex)
             {
-                var msg = "Exception while initializing message sessions";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                LogError("Exception while initializing message sessions", ex);
                 DestroyConnection();
                 return false;
             }
@@ -193,13 +186,11 @@ namespace CaptureTaskManager
         private void OnCommandReceived(IMessage message)
         {
             var textMessage = message as ITextMessage;
-            var Msg = "clsMessageHandler(), Command message received";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg);
+            ReportStatus("clsMessageHandler(), Command message received", true);
             if (CommandReceived != null)
             {
                 // call the delegate to process the commnd
-                Msg = "clsMessageHandler().OnCommandReceived: At lease one event handler assigned";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg);
+                ReportStatus("clsMessageHandler().OnCommandReceived: At lease one event handler assigned", true);
                 if (textMessage != null)
                 {
                     CommandReceived(textMessage.Text);
@@ -207,8 +198,7 @@ namespace CaptureTaskManager
             }
             else
             {
-                Msg = "clsMessageHandler().OnCommandReceived: No event handlers assigned";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, Msg);
+                ReportStatus("clsMessageHandler().OnCommandReceived: No event handlers assigned", true);
             }
         }
 
@@ -220,13 +210,12 @@ namespace CaptureTaskManager
         private void OnBroadcastReceived(IMessage message)
         {
             var textMessage = message as ITextMessage;
-            var msg = "clsMessageHandler(), Broadcast message received";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            ReportStatus("clsMessageHandler(), Broadcast message received", true);
+            
             if (BroadcastReceived != null)
             {
                 // call the delegate to process the commnd
-                msg = "clsMessageHandler().OnBroadcastReceived: At lease one event handler assigned";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                ReportStatus("clsMessageHandler().OnBroadcastReceived: At lease one event handler assigned", true);
                 if (textMessage != null)
                 {
                     BroadcastReceived(textMessage.Text);
@@ -234,8 +223,7 @@ namespace CaptureTaskManager
             }
             else
             {
-                msg = "clsMessageHandler().OnBroadcastReceived: No event handlers assigned";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                ReportStatus("clsMessageHandler().OnBroadcastReceived: No event handlers assigned", true);
             }
         }
 
@@ -278,8 +266,7 @@ namespace CaptureTaskManager
             {
                 m_Connection.Dispose();
                 m_HasConnection = false;
-                var msg = "Message connection closed";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                ReportStatus("Message connection closed", true);
             }
         }
 

@@ -18,7 +18,9 @@ using Pacifica.Core;
 
 namespace CaptureTaskManager
 {
-    public class clsToolRunnerBase : IToolRunner
+    // ReSharper disable once ClassNeverInstantiated.Global
+    // Used in CaptureTaskManager.clsMainProgram
+    public class clsToolRunnerBase : clsLoggerBase, IToolRunner
     {
         //*********************************************************************************************************
         // Base class for capture step tool plugins
@@ -50,10 +52,12 @@ namespace CaptureTaskManager
         protected int m_Job;
 
         protected int m_DatasetID;
+
+        /// <summary>
+        /// LogLevel is 1 to 5: 1 for Fatal errors only, 4 for Fatal, Error, Warning, and Info, and 5 for everything including Debug messages
+        /// </summary>
         protected int m_DebugLevel;
-
-        protected bool m_TraceMode;
-
+        
         #endregion
 
         #region "Delegates"
@@ -133,8 +137,6 @@ namespace CaptureTaskManager
             m_Job = m_TaskParams.GetParam("Job", 0);
 
             m_DebugLevel = m_MgrParams.GetParam("debuglevel", 4);
-
-            m_TraceMode = m_MgrParams.GetParam("TraceMode", false);
         }
 
         protected bool UpdateMgrSettings()
@@ -148,16 +150,13 @@ namespace CaptureTaskManager
             {
                 m_LastConfigDBUpdate = DateTime.UtcNow;
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                     "Updating manager settings using Manager Control database");
+                ReportStatus("Updating manager settings using Manager Control database", true);
 
                 const bool logConnectionErrors = false;
                 if (!m_MgrParams.LoadMgrSettingsFromDB(logConnectionErrors))
                 {
                     // Error retrieving settings from the manager control DB
-                    const string msg = "Error calling m_MgrSettings.LoadMgrSettingsFromDB to update manager settings";
-
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                    LogWarning("Error calling m_MgrSettings.LoadMgrSettingsFromDB to update manager settings");
 
                     bSuccess = false;
                 }
@@ -320,8 +319,7 @@ namespace CaptureTaskManager
             if (lookupError)
             {
                 retData.CloseoutMsg = errorMessage;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                     errorMessage + ", job " + job);
+                LogError(errorMessage + ", job " + job);
 
                 if (errorMessage.Contains("[Errno 5] Input/output error") ||
                     errorMessage.Contains("[Errno 28] No space left on device"))
@@ -336,8 +334,7 @@ namespace CaptureTaskManager
             if (string.IsNullOrEmpty(xmlServerResponse))
             {
                 retData.CloseoutMsg = "Empty XML server response";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                     errorMessage + ", job " + job);
+                LogError(retData.CloseoutMsg + ", job " + job);
                 return false;
             }
 
@@ -362,23 +359,10 @@ namespace CaptureTaskManager
 
             retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
             retData.EvalCode = EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY;
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                 errorMessage + ", job " + job);
+            LogError(errorMessage + ", job " + job);
             return false;
         }
-
-        protected static void LogError(string errorMessage, bool logToDatabase = false)
-        {
-            if (logToDatabase)
-            {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, errorMessage);
-            }
-            else
-            {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
-            }
-        }
-
+      
         /// <summary>
         /// Extracts the contents of the Version= line in a Tool Version Info file
         /// </summary>
@@ -460,8 +444,7 @@ namespace CaptureTaskManager
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                     "Error reading Version Info File for " + Path.GetFileName(dllFilePath), ex);
+                LogError("Error reading Version Info File for " + Path.GetFileName(dllFilePath), ex);
                 return false;
             }
         }
@@ -560,14 +543,12 @@ namespace CaptureTaskManager
 
                             if (m_DebugLevel >= 5)
                             {
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                                     "EXE Info: " + strExeInfo);
+                                ReportStatus("EXE Info: " + strExeInfo, true);
                             }
                         }
                         else
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                                                 "Tool file not found: " + fiFile.FullName);
+                            LogWarning("Tool file not found: " + fiFile.FullName);
                         }
                     }
                     catch (Exception ex)
@@ -623,8 +604,7 @@ namespace CaptureTaskManager
             }
             else
             {
-                var Msg = "Error " + resCode + " storing tool version for current processing step";
-                LogError(Msg);
+                LogError("Error " + resCode + " storing tool version for current processing step");
                 Outcome = false;
             }
 
@@ -657,8 +637,7 @@ namespace CaptureTaskManager
 
                 if (!fiFile.Exists)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                                         "File not found by StoreToolVersionInfoOneFile: " + dllFilePath);
+                    LogWarning("File not found by StoreToolVersionInfoOneFile: " + dllFilePath);
                     return false;
                 }
 
@@ -716,9 +695,7 @@ namespace CaptureTaskManager
 
                 if (!ioFileInfo.Exists)
                 {
-                    var errMsg = "File not found by StoreToolVersionInfoViaSystemDiagnostics";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                                         errMsg + ": " + dllFilePath);
+                    LogWarning("File not found by StoreToolVersionInfoViaSystemDiagnostics: " + dllFilePath);
                     return false;
                 }
 
@@ -758,9 +735,7 @@ namespace CaptureTaskManager
             }
             catch (Exception ex)
             {
-                var errMsg = "Exception determining File Version for " + Path.GetFileName(dllFilePath);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                     errMsg + ": " + ex.Message);
+                LogError("Exception determining File Version for " + Path.GetFileName(dllFilePath), ex);
                 return false;
             }
         }
@@ -829,8 +804,7 @@ namespace CaptureTaskManager
 
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                         strAppPath + " " + strArgs);
+                    ReportStatus(strAppPath + " " + strArgs, true);
                 }
 
                 var objProgRunner = new clsRunDosProgram(clsUtilities.GetAppFolderPath())
@@ -934,8 +908,7 @@ namespace CaptureTaskManager
 
             if (resCode != 0)
             {
-                var msg = "Error " + resCode + " calling stored procedure " + SP_NAME + ", job " + m_Job;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError("Error " + resCode + " calling stored procedure " + SP_NAME + ", job " + m_Job);
                 return false;
             }
 

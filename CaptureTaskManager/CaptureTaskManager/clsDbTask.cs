@@ -13,7 +13,7 @@ using System.Data;
 
 namespace CaptureTaskManager
 {
-    abstract class clsDbTask
+    abstract class clsDbTask : clsLoggerBase
     {
         //*********************************************************************************************************
         // Base class for handling task-related data
@@ -31,6 +31,8 @@ namespace CaptureTaskManager
         protected readonly IMgrParams m_MgrParams;
         protected readonly string m_ConnStr;
         protected bool m_TaskWasAssigned = false;
+
+        protected readonly int m_DebugLevel;
 
         protected Dictionary<string, string> m_JobParams =
             new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
@@ -63,6 +65,10 @@ namespace CaptureTaskManager
             m_CaptureTaskDBProcedureExecutor = new PRISM.DataBase.clsExecuteDatabaseSP(m_ConnStr);
 
             m_CaptureTaskDBProcedureExecutor.DBErrorEvent += CaptureTaskDBProcedureExecutor_DBErrorEvent;
+
+            // Cache the log level
+            // 4 means Info level (normal) logging; 5 for Debug level (verbose) logging
+            m_DebugLevel = MgrParams.GetParam("debuglevel", 4);
         }
 
         #endregion
@@ -124,26 +130,22 @@ namespace CaptureTaskManager
                 myMsg += Environment.NewLine + "Name= " + myParam.ParameterName + "\t, Value= " + DbCStr(myParam.Value);
             }
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parameter list:" + myMsg);
+            ReportStatus("Parameter list:" + myMsg, true);
         }
 
         protected virtual bool FillParamDict(DataTable dt)
         {
-            string msg;
-
             // Verify valid datatable
             if (dt == null)
             {
-                msg = "clsDbTask.FillParamDict(): No parameter table";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError("clsDbTask.FillParamDict(): No parameter table");
                 return false;
             }
 
             // Verify at least one row present
             if (dt.Rows.Count < 1)
             {
-                msg = "clsDbTask.FillParamDict(): No parameters returned by request SP";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError("clsDbTask.FillParamDict(): No parameters returned by request SP");
                 return false;
             }
 
@@ -165,8 +167,7 @@ namespace CaptureTaskManager
             }
             catch (Exception ex)
             {
-                msg = "clsDbTask.FillParamDict(): Exception reading task parameters";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                LogError("clsDbTask.FillParamDict(): Exception reading task parameters", ex);
                 return false;
             }
         }
@@ -252,14 +253,12 @@ namespace CaptureTaskManager
 
         #region "Event handlers"
 
-        void CaptureTaskDBProcedureExecutor_DBErrorEvent(string Message)
+        void CaptureTaskDBProcedureExecutor_DBErrorEvent(string message)
         {
-            if (Message.Contains("permission was denied"))
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, Message);
-            else
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Message);
+            var logToDb = message.Contains("permission was denied");
+            LogError(message, logToDb);
         }
 
         #endregion
-    } // End class
-} // End namespace
+    }
+}

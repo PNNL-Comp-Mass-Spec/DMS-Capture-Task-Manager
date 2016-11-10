@@ -414,8 +414,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Configures the FTP logger
         /// </summary>
-        /// <param name="logFileName">Name of FTP log file</param>
-        public static void CreateFtpLogFileLogger(string logFileName)
+        public static void CreateFtpLogFileLogger()
         {
             var curLogger = (log4net.Repository.Hierarchy.Logger)m_FtpFileLogger.Logger;
             m_FtpLogFileAppender = CreateFtpLogfileAppender();

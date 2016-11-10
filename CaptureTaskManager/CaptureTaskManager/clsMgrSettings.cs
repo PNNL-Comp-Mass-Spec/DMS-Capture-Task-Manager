@@ -17,7 +17,7 @@ using PRISM;
 
 namespace CaptureTaskManager
 {
-    public class clsMgrSettings : IMgrParams
+    public class clsMgrSettings : clsLoggerBase, IMgrParams
     {
         //*********************************************************************************************************
         //	Class for loading, storing and accessing manager parameters.
@@ -103,7 +103,7 @@ namespace CaptureTaskManager
             //Determine if manager is deactivated locally
             if (!GetBooleanParam(MGR_PARAM_MGR_ACTIVE_LOCAL))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.WARN, DEACTIVATED_LOCALLY);
+                LogWarning(DEACTIVATED_LOCALLY);
                 m_ErrMsg = DEACTIVATED_LOCALLY;
                 return false;
             }
@@ -195,9 +195,7 @@ namespace CaptureTaskManager
             }
             catch (Exception ex)
             {
-                const string strErrorMessage = "Exception calling " + SP_NAME_ACKMANAGERUPDATE;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                     strErrorMessage + ex.Message);
+                LogError("Exception calling " + SP_NAME_ACKMANAGERUPDATE, ex);
             }
         }
 
@@ -207,7 +205,7 @@ namespace CaptureTaskManager
             if (InpDict == null)
             {
                 m_ErrMsg = "clsMgrSettings.CheckInitialSettings(); Manager parameter string dictionary not found";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, m_ErrMsg);
+                LogError(m_ErrMsg, true);
                 return false;
             }
 
@@ -217,7 +215,7 @@ namespace CaptureTaskManager
             {
                 m_ErrMsg = "clsMgrSettings.CheckInitialSettings(); 'UsingDefaults' entry not found in Config file";
                 Console.WriteLine(m_ErrMsg);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, m_ErrMsg);
+                LogError(m_ErrMsg, true);
             }
             else
             {
@@ -227,10 +225,8 @@ namespace CaptureTaskManager
                 {
                     if (blnValue)
                     {
-                        m_ErrMsg =
-                            "clsMgrSettings.CheckInitialSettings(); Config file problem, contains UsingDefaults=True";
-                        Console.WriteLine(m_ErrMsg);
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, m_ErrMsg);
+                        m_ErrMsg = "clsMgrSettings.CheckInitialSettings(); Config file problem, contains UsingDefaults=True";
+                        LogError(m_ErrMsg, true);
                         return false;
                     }
                 }
@@ -665,16 +661,10 @@ namespace CaptureTaskManager
 
         private void WriteErrorMsg(string errorMessage, bool allowLogToDB = true)
         {
-            if (m_MCParamsLoaded || !allowLogToDB)
-            {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
-            }
-            else
-            {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, errorMessage);
-            }
+            var logToDb = !m_MCParamsLoaded && allowLogToDB;
+            LogError(errorMessage, logToDb);
         }
 
         #endregion
-    } // End class
-} // End namespace
+    }
+}

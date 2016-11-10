@@ -3,7 +3,7 @@ using System.Data;
 
 namespace CaptureTaskManager
 {
-    public class clsCleanupMgrErrors
+    public class clsCleanupMgrErrors : clsLoggerBase
     {
         #region "Constants"
 
@@ -91,8 +91,7 @@ namespace CaptureTaskManager
 
             if (eManagerErrorCleanupMode != eCleanupModeConstants.Disabled)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
-                                     "Attempting to automatically clean the work directory");
+                ReportStatus("Attempting to automatically clean the work directory");
 
                 // Call SP ReportManagerErrorCleanup @ActionCode=1
                 ReportManagerErrorCleanup(eCleanupActionCodeConstants.Start);
@@ -185,11 +184,8 @@ namespace CaptureTaskManager
             {
                 if (mMgrConfigDBConnectionString == null)
                     mMgrConfigDBConnectionString = string.Empty;
-                var strErrorMessage = "Exception calling " + SP_NAME_REPORTMGRCLEANUP +
-                                      " in ReportManagerErrorCleanup with connection string " +
-                                      mMgrConfigDBConnectionString;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                     strErrorMessage + ex.Message);
+                LogError("Exception calling " + SP_NAME_REPORTMGRCLEANUP +
+                    " in ReportManagerErrorCleanup with connection string " + mMgrConfigDBConnectionString, ex);
             }
         }
     }

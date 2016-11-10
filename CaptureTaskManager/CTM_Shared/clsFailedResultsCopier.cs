@@ -3,7 +3,9 @@ using System.IO;
 
 namespace CaptureTaskManager
 {
-    public class clsFailedResultsCopier
+    // ReSharper disable once UnusedMember.Global
+    // Used by ImsDemuxPlugin.clsDemuxTools
+    public class clsFailedResultsCopier : clsLoggerBase
     {
         protected const string FAILED_RESULTS_FOLDER_INFO_TEXT = "FailedResultsFolderInfo_";
         protected const int FAILED_RESULTS_FOLDER_RETAIN_DAYS = 31;
@@ -30,8 +32,7 @@ namespace CaptureTaskManager
                 if (string.IsNullOrEmpty(strFailedResultsFolderPath))
                 {
                     // Failed results folder path is not defined; don't try to copy the results anywhere
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                                         "FailedResultsFolderPath is not defined for this manager; cannot copy results");
+                    LogWarning("FailedResultsFolderPath is not defined for this manager; cannot copy results");
                     return;
                 }
 
@@ -62,16 +63,13 @@ namespace CaptureTaskManager
                 }
                 catch (Exception ex)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                         "Error creating the results folder info file '" + strFolderInfoFilePath + "': " +
-                                         ex.Message);
+                    LogError("Error creating the results folder info file '" + strFolderInfoFilePath + "'", ex);
                 }
 
                 // Make sure the source folder exists
                 if (!diSourceFolder.Exists)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                         "Source folder not found; cannot copy results: " + ResultsFolderPath);
+                    LogError("Source folder not found; cannot copy results: " + ResultsFolderPath);
                 }
                 else
                 {
@@ -83,9 +81,9 @@ namespace CaptureTaskManager
                         diTargetFolder.Create();
 
                     // Actually copy files from the source folder to the target folder
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
-                                         "Copying data files to failed results archive: " + ResultsFolderPath);
+                    ReportStatus("Copying data files to failed results archive: " + ResultsFolderPath);
 
+                    var errorCount = 0;
                     foreach (var fiFileInfo in diSourceFolder.GetFiles())
                     {
                         try
@@ -94,23 +92,22 @@ namespace CaptureTaskManager
                         }
                         catch (Exception ex2)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                                 "Error copying file from " + ResultsFolderPath + " to " +
-                                                 strFailedResultsFolderPath + ": " + ex2.Message);
+                            LogError("Error copying file from " + ResultsFolderPath + " to " + strFailedResultsFolderPath, ex2);
+                            errorCount++;
                         }
                     }
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copy complete");
+                    if (errorCount == 0)
+                        ReportStatus("Copy complete");
+                    else
+                        LogWarning("Copy complete; ErrorCount = " + errorCount);
                 }
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                     "Error copying results from " + ResultsFolderPath + " to " +
-                                     strFailedResultsFolderPath + ": " + ex.Message);
+                LogError("Error copying results from " + ResultsFolderPath + " to " + strFailedResultsFolderPath, ex);
             }
         }
-
 
         private void CreateInfoFile(string strFolderInfoFilePath, string strResultsFolderName)
         {
@@ -163,8 +160,7 @@ namespace CaptureTaskManager
 
                     if (diOldResultsFolder.Exists)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
-                                             "Deleting old failed results folder: " + diOldResultsFolder.FullName);
+                        ReportStatus("Deleting old failed results folder: " + diOldResultsFolder.FullName);
 
                         diOldResultsFolder.Delete(true);
                     }
@@ -177,15 +173,12 @@ namespace CaptureTaskManager
                     }
                     catch (Exception ex)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                             "Error renaming failed results info file to " + strTargetFilePath + ": " +
-                                             ex.Message);
+                        LogError("Error renaming failed results info file to " + strTargetFilePath, ex);
                     }
                 }
                 catch (Exception ex)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                         "Error deleting old failed results folder: " + ex.Message);
+                    LogError("Error deleting old failed results folder", ex);
                 }
             }
         }

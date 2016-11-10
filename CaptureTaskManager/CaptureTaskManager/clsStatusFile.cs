@@ -13,7 +13,7 @@ using System.IO;
 
 namespace CaptureTaskManager
 {
-    public class clsStatusFile : IStatusFile
+    public class clsStatusFile : clsLoggerBase, IStatusFile
     {
         //*********************************************************************************************************
         // Class to handle status file updates
@@ -299,8 +299,7 @@ namespace CaptureTaskManager
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                     "DeleteStatusFlagFile, " + ex.Message);
+                LogError("DeleteStatusFlagFile, " + ex.Message);
                 return false;
             }
         }
@@ -554,11 +553,10 @@ namespace CaptureTaskManager
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                     "Exception reading status file", ex);
+                LogError("Exception reading status file", ex);
             }
         }
 
         #endregion
-    } // End class
-} // End namespace
+    }
+}
