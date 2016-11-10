@@ -178,16 +178,11 @@ namespace CaptureTaskManager
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.CommandText = SP_NAME_ACKMANAGERUPDATE;
 
-                    cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int));
-                    cmd.Parameters["@Return"].Direction = ParameterDirection.ReturnValue;
+                    cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
 
-                    cmd.Parameters.Add(new SqlParameter("@managerName", SqlDbType.VarChar, 128));
-                    cmd.Parameters["@managerName"].Direction = ParameterDirection.Input;
-                    cmd.Parameters["@managerName"].Value = GetParam(MGR_PARAM_MGR_NAME);
+                    cmd.Parameters.Add(new SqlParameter("@managerName", SqlDbType.VarChar, 128)).Value = GetParam(MGR_PARAM_MGR_NAME);
 
-                    cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512));
-                    cmd.Parameters["@message"].Direction = ParameterDirection.Output;
-                    cmd.Parameters["@message"].Value = "";
+                    cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
                 }
 
                 //Execute the SP

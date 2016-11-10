@@ -37,14 +37,22 @@ namespace CaptureTaskManager
 
         protected IMgrParams m_MgrParams;
         protected ITaskParams m_TaskParams;
+        
+        // ReSharper disable once NotAccessedField.Global
+        // Used by CTM plugins
         protected IStatusFile m_StatusTools;
 
+        // ReSharper disable once NotAccessedField.Global
+        // Used by CTM plugins
         protected PRISM.Files.clsFileTools m_FileTools;
 
         protected PRISM.DataBase.clsExecuteDatabaseSP CaptureDBProcedureExecutor;
 
         protected DateTime m_LastConfigDBUpdate = DateTime.UtcNow;
         protected int m_MinutesBetweenConfigDBUpdates = 10;
+
+        // ReSharper disable once UnusedMember.Global
+        // Used by CTM plugins
         protected bool m_NeedToAbortProcessing = false;
 
         protected string m_WorkDir;
@@ -139,6 +147,8 @@ namespace CaptureTaskManager
             m_DebugLevel = m_MgrParams.GetParam("debuglevel", 4);
         }
 
+        // ReSharper disable once UnusedMember.Global
+        // Used by CTM plugins
         protected bool UpdateMgrSettings()
         {
             var bSuccess = true;
@@ -190,6 +200,8 @@ namespace CaptureTaskManager
             return InpComment + NewComment;
         }
 
+        // ReSharper disable once UnusedMember.Global
+        // Used by CTM plugins
         public static bool CleanWorkDir(string WorkDir)
         {
             const float HoldoffSeconds = 0.1f;
@@ -273,6 +285,8 @@ namespace CaptureTaskManager
             return true;
         }
 
+        // ReSharper disable once UnusedMember.Global
+        // Used by CTM plugins
         protected void DeleteFileIgnoreErrors(string sFilePath)
         {
             try
@@ -300,6 +314,7 @@ namespace CaptureTaskManager
         /// <param name="xmlServerResponse"></param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>This function is used by the ArchiveStatusCheck plugin and the ArchiveVerify plugin </remarks>
+        // ReSharper disable once UnusedMember.Global
         protected bool GetMyEMSLIngestStatus(
             int job,
             MyEMSLStatusCheck statusChecker,
@@ -449,7 +464,6 @@ namespace CaptureTaskManager
             }
         }
 
-
         /// <summary>
         /// Creates a Tool Version Info file
         /// </summary>
@@ -491,6 +505,7 @@ namespace CaptureTaskManager
         /// <param name="toolVersionInfo">Version info (maximum length is 900 characters)</param>
         /// <returns>True for success, False for failure</returns>
         /// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
+        // ReSharper disable once UnusedMember.Global
         protected bool SetStepTaskToolVersion(string toolVersionInfo)
         {
             return SetStepTaskToolVersion(toolVersionInfo, new List<FileInfo>());
@@ -574,29 +589,22 @@ namespace CaptureTaskManager
             }
 
             //Setup for execution of the stored procedure
-            var MyCmd = new SqlCommand();
+            var myCmd = new SqlCommand();
             {
-                MyCmd.CommandType = System.Data.CommandType.StoredProcedure;
-                MyCmd.CommandText = SP_NAME_SET_TASK_TOOL_VERSION;
+                myCmd.CommandType = System.Data.CommandType.StoredProcedure;
+                myCmd.CommandText = SP_NAME_SET_TASK_TOOL_VERSION;
 
-                MyCmd.Parameters.Add(new SqlParameter("@Return", System.Data.SqlDbType.Int));
-                MyCmd.Parameters["@Return"].Direction = System.Data.ParameterDirection.ReturnValue;
+                myCmd.Parameters.Add(new SqlParameter("@Return", System.Data.SqlDbType.Int)).Direction = System.Data.ParameterDirection.ReturnValue;
 
-                MyCmd.Parameters.Add(new SqlParameter("@job", System.Data.SqlDbType.Int));
-                MyCmd.Parameters["@job"].Direction = System.Data.ParameterDirection.Input;
-                MyCmd.Parameters["@job"].Value = m_TaskParams.GetParam("Job", 0);
+                myCmd.Parameters.Add(new SqlParameter("@job", System.Data.SqlDbType.Int)).Value = m_TaskParams.GetParam("Job", 0);
 
-                MyCmd.Parameters.Add(new SqlParameter("@step", System.Data.SqlDbType.Int));
-                MyCmd.Parameters["@step"].Direction = System.Data.ParameterDirection.Input;
-                MyCmd.Parameters["@step"].Value = m_TaskParams.GetParam("Step", 0);
+                myCmd.Parameters.Add(new SqlParameter("@step", System.Data.SqlDbType.Int)).Value = m_TaskParams.GetParam("Step", 0);
 
-                MyCmd.Parameters.Add(new SqlParameter("@ToolVersionInfo", System.Data.SqlDbType.VarChar, 900));
-                MyCmd.Parameters["@ToolVersionInfo"].Direction = System.Data.ParameterDirection.Input;
-                MyCmd.Parameters["@ToolVersionInfo"].Value = toolVersionInfoCombined;
+                myCmd.Parameters.Add(new SqlParameter("@ToolVersionInfo", System.Data.SqlDbType.VarChar, 900)).Value = toolVersionInfoCombined;
             }
 
             //Execute the SP (retry the call up to 4 times)
-            var resCode = CaptureDBProcedureExecutor.ExecuteSP(MyCmd, 4);
+            var resCode = CaptureDBProcedureExecutor.ExecuteSP(myCmd, 4);
 
             if (resCode == 0)
             {
@@ -625,8 +633,9 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="toolVersionInfo">Version info string to append the veresion info to</param>
         /// <param name="dllFilePath">Path to the DLL</param>
-        /// 	  ''' <returns>True if success; false if an error</returns>
-        /// <remarks></remarks>
+        /// <returns>True if success; false if an error</returns>
+        /// <remarks>Used by CTM plugins</remarks>
+        // ReSharper disable once UnusedMember.Global
         protected virtual bool StoreToolVersionInfoOneFile(ref string toolVersionInfo, string dllFilePath)
         {
             bool success;
@@ -758,7 +767,8 @@ namespace CaptureTaskManager
         /// <param name="toolVersionInfo"></param>
         /// <param name="dllFilePath"></param>
         /// <returns>True if success; false if an error</returns>
-        /// <remarks></remarks>
+        /// <remarks>Used by CTM plugins</remarks>
+        // ReSharper disable once UnusedMember.Global
         protected bool StoreToolVersionInfoOneFile64Bit(ref string toolVersionInfo, string dllFilePath)
         {
             return StoreToolVersionInfoOneFileUseExe(ref toolVersionInfo, dllFilePath, "DLLVersionInspector_x64.exe");
@@ -869,6 +879,7 @@ namespace CaptureTaskManager
         /// <param name="fatalError">True if ingest failed with a fatal error and thus the ErrorCode should be updated in T_MyEMSL_Uploads</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>This function is used by the ArchiveStatusCheck plugin and the ArchiveVerify plugin </remarks>
+        // ReSharper disable once UnusedMember.Global
         protected bool UpdateIngestStepsCompletedOneTask(
             int statusNum,
             byte ingestStepsCompleted,
@@ -881,27 +892,17 @@ namespace CaptureTaskManager
                 CommandType = System.Data.CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add("@Return", System.Data.SqlDbType.Int);
-            cmd.Parameters["@Return"].Direction = System.Data.ParameterDirection.ReturnValue;
+            cmd.Parameters.Add("@Return", System.Data.SqlDbType.Int).Direction = System.Data.ParameterDirection.ReturnValue;
 
-            cmd.Parameters.Add("@DatasetID", System.Data.SqlDbType.Int);
-            cmd.Parameters["@DatasetID"].Direction = System.Data.ParameterDirection.Input;
-            cmd.Parameters["@DatasetID"].Value = m_DatasetID;
+            cmd.Parameters.Add("@DatasetID", System.Data.SqlDbType.Int).Value = m_DatasetID;
 
-            cmd.Parameters.Add("@StatusNum", System.Data.SqlDbType.Int);
-            cmd.Parameters["@StatusNum"].Direction = System.Data.ParameterDirection.Input;
-            cmd.Parameters["@StatusNum"].Value = statusNum;
+            cmd.Parameters.Add("@StatusNum", System.Data.SqlDbType.Int).Value = statusNum;
 
-            cmd.Parameters.Add("@IngestStepsCompleted", System.Data.SqlDbType.TinyInt);
-            cmd.Parameters["@IngestStepsCompleted"].Direction = System.Data.ParameterDirection.Input;
-            cmd.Parameters["@IngestStepsCompleted"].Value = ingestStepsCompleted;
+            cmd.Parameters.Add("@IngestStepsCompleted", System.Data.SqlDbType.TinyInt).Value = ingestStepsCompleted;
 
-            cmd.Parameters.Add("@FatalError", System.Data.SqlDbType.TinyInt);
-            cmd.Parameters["@FatalError"].Direction = System.Data.ParameterDirection.Input;
-            cmd.Parameters["@FatalError"].Value = fatalError ? 1 : 0;
+            cmd.Parameters.Add("@FatalError", System.Data.SqlDbType.TinyInt).Value = fatalError ? 1 : 0;
 
-            cmd.Parameters.Add("@message", System.Data.SqlDbType.VarChar, 512);
-            cmd.Parameters["@message"].Direction = System.Data.ParameterDirection.Output;
+            cmd.Parameters.Add("@message", System.Data.SqlDbType.VarChar, 512).Direction = System.Data.ParameterDirection.Output;
 
             CaptureDBProcedureExecutor.TimeoutSeconds = 20;
             var resCode = CaptureDBProcedureExecutor.ExecuteSP(cmd, 2);

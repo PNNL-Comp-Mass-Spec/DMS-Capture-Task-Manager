@@ -107,8 +107,7 @@ namespace CaptureTaskManager
                 }
                 else
                 {
-                    // If successful, then delete flagfile.txt 
-
+                    // If successful, delete flagfile.txt 
                     blnSuccess = m_StatusFile.DeleteStatusFlagFile();
                     if (!blnSuccess)
                     {
@@ -138,7 +137,6 @@ namespace CaptureTaskManager
             ReportManagerErrorCleanup(eMgrCleanupActionCode, string.Empty);
         }
 
-
         protected void ReportManagerErrorCleanup(eCleanupActionCodeConstants eMgrCleanupActionCode,
                                                  string strFailureMessage)
         {
@@ -147,38 +145,25 @@ namespace CaptureTaskManager
                 if (strFailureMessage == null)
                     strFailureMessage = string.Empty;
 
-                var MyConnection = new System.Data.SqlClient.SqlConnection(mMgrConfigDBConnectionString);
-                MyConnection.Open();
+                var myConnection = new System.Data.SqlClient.SqlConnection(mMgrConfigDBConnectionString);
+                myConnection.Open();
 
                 //Set up the command object prior to SP execution
-                var MyCmd = new System.Data.SqlClient.SqlCommand();
+                var myCmd = new System.Data.SqlClient.SqlCommand
                 {
-                    MyCmd.CommandType = CommandType.StoredProcedure;
-                    MyCmd.CommandText = SP_NAME_REPORTMGRCLEANUP;
-                    MyCmd.Connection = MyConnection;
+                    CommandType = CommandType.StoredProcedure,
+                    CommandText = SP_NAME_REPORTMGRCLEANUP,
+                    Connection = myConnection
+                };
 
-                    MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@Return", SqlDbType.Int));
-                    MyCmd.Parameters["@Return"].Direction = ParameterDirection.ReturnValue;
-
-                    MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@ManagerName", SqlDbType.VarChar, 128));
-                    MyCmd.Parameters["@ManagerName"].Direction = ParameterDirection.Input;
-                    MyCmd.Parameters["@ManagerName"].Value = mManagerName;
-
-                    MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@State", SqlDbType.Int));
-                    MyCmd.Parameters["@State"].Direction = ParameterDirection.Input;
-                    MyCmd.Parameters["@State"].Value = eMgrCleanupActionCode;
-
-                    MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@FailureMsg", SqlDbType.VarChar, 512));
-                    MyCmd.Parameters["@FailureMsg"].Direction = ParameterDirection.Input;
-                    MyCmd.Parameters["@FailureMsg"].Value = strFailureMessage;
-
-                    MyCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@message", SqlDbType.VarChar, 512));
-                    MyCmd.Parameters["@message"].Direction = ParameterDirection.Output;
-                    MyCmd.Parameters["@message"].Value = string.Empty;
-                }
+                myCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
+                myCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@ManagerName", SqlDbType.VarChar, 128)).Value = mManagerName;
+                myCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@State", SqlDbType.Int)).Value = eMgrCleanupActionCode;
+                myCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@FailureMsg", SqlDbType.VarChar, 512)).Value = strFailureMessage;
+                myCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
 
                 //Execute the SP
-                MyCmd.ExecuteNonQuery();
+                myCmd.ExecuteNonQuery();
             }
             catch (Exception ex)
             {

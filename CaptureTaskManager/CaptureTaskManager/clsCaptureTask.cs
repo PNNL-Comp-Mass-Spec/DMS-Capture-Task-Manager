@@ -214,31 +214,19 @@ namespace CaptureTaskManager
                 {
                     myCmd.CommandType = CommandType.StoredProcedure;
                     myCmd.CommandText = SP_NAME_REQUEST_TASK;
-                    myCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int));
-                    myCmd.Parameters["@Return"].Direction = ParameterDirection.ReturnValue;
+                    myCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
 
-                    myCmd.Parameters.Add(new SqlParameter("@processorName", SqlDbType.VarChar, 128));
-                    myCmd.Parameters["@processorName"].Direction = ParameterDirection.Input;
-                    myCmd.Parameters["@processorName"].Value = m_MgrParams.GetParam(clsMgrSettings.MGR_PARAM_MGR_NAME);
+                    myCmd.Parameters.Add(new SqlParameter("@processorName", SqlDbType.VarChar, 128)).Value = m_MgrParams.GetParam(clsMgrSettings.MGR_PARAM_MGR_NAME);
 
-                    myCmd.Parameters.Add(new SqlParameter("@jobNumber", SqlDbType.Int));
-                    myCmd.Parameters["@jobNumber"].Direction = ParameterDirection.Output;
+                    myCmd.Parameters.Add(new SqlParameter("@jobNumber", SqlDbType.Int)).Direction = ParameterDirection.Output;
 
-                    myCmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512));
-                    myCmd.Parameters["@message"].Direction = ParameterDirection.Output;
-                    myCmd.Parameters["@message"].Value = "";
+                    myCmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
 
-                    myCmd.Parameters.Add(new SqlParameter("@infoOnly", SqlDbType.TinyInt));
-                    myCmd.Parameters["@infoOnly"].Direction = ParameterDirection.Input;
-                    myCmd.Parameters["@infoOnly"].Value = 0;
+                    myCmd.Parameters.Add(new SqlParameter("@infoOnly", SqlDbType.TinyInt)).Value = 0;
 
-                    myCmd.Parameters.Add(new SqlParameter("@ManagerVersion", SqlDbType.VarChar, 128));
-                    myCmd.Parameters["@ManagerVersion"].Direction = ParameterDirection.Input;
-                    myCmd.Parameters["@ManagerVersion"].Value = strProductVersion;
+                    myCmd.Parameters.Add(new SqlParameter("@ManagerVersion", SqlDbType.VarChar, 128)).Value = strProductVersion;
 
-                    myCmd.Parameters.Add(new SqlParameter("@JobCountToPreview", SqlDbType.Int));
-                    myCmd.Parameters["@JobCountToPreview"].Direction = ParameterDirection.Input;
-                    myCmd.Parameters["@JobCountToPreview"].Value = 10;
+                    myCmd.Parameters.Add(new SqlParameter("@JobCountToPreview", SqlDbType.Int)).Value = 10;
                 }
 
                 ReportStatus("clsCaptureTask.RequestTaskDetailed(), connection string: " + m_ConnStr, true);
@@ -351,7 +339,6 @@ namespace CaptureTaskManager
         /// <returns>TRUE for sucesss; FALSE for failure</returns>
         public bool SetCaptureTaskComplete(string spName, int compCode, string compMsg, int evalCode, string evalMsg)
         {
-            string msg;
             bool outcome;
 
             try
@@ -361,41 +348,22 @@ namespace CaptureTaskManager
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.CommandText = spName;
-                    cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int));
-                    cmd.Parameters["@Return"].Direction = ParameterDirection.ReturnValue;
-                    cmd.Parameters.Add(new SqlParameter("@job", SqlDbType.Int));
-                    cmd.Parameters["@job"].Direction = ParameterDirection.Input;
-                    cmd.Parameters["@job"].Value = int.Parse(m_JobParams["Job"]);
-                    cmd.Parameters.Add(new SqlParameter("@step", SqlDbType.Int));
-                    cmd.Parameters["@step"].Direction = ParameterDirection.Input;
-                    cmd.Parameters["@step"].Value = int.Parse(m_JobParams["Step"]);
-                    cmd.Parameters.Add(new SqlParameter("@completionCode", SqlDbType.Int));
-                    cmd.Parameters["@completionCode"].Direction = ParameterDirection.Input;
-                    cmd.Parameters["@completionCode"].Value = compCode;
-                    cmd.Parameters.Add(new SqlParameter("@completionMessage", SqlDbType.VarChar, 256));
-                    cmd.Parameters["@completionMessage"].Direction = ParameterDirection.Input;
-                    cmd.Parameters["@completionMessage"].Value = compMsg;
-                    cmd.Parameters.Add(new SqlParameter("@evaluationCode", SqlDbType.Int));
-                    cmd.Parameters["@evaluationCode"].Direction = ParameterDirection.Input;
-                    cmd.Parameters["@evaluationCode"].Value = evalCode;
-                    cmd.Parameters.Add(new SqlParameter("@evaluationMessage", SqlDbType.VarChar, 256));
-                    cmd.Parameters["@evaluationMessage"].Direction = ParameterDirection.Input;
-                    cmd.Parameters["@evaluationMessage"].Value = evalMsg;
-                    cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512));
-                    cmd.Parameters["@message"].Direction = ParameterDirection.Output;
+                    cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
+
+                    cmd.Parameters.Add(new SqlParameter("@job", SqlDbType.Int)).Value = int.Parse(m_JobParams["Job"]);
+
+                    cmd.Parameters.Add(new SqlParameter("@step", SqlDbType.Int)).Value = int.Parse(m_JobParams["Step"]);
+
+                    cmd.Parameters.Add(new SqlParameter("@completionCode", SqlDbType.Int)).Value = compCode;
+
+                    cmd.Parameters.Add(new SqlParameter("@completionMessage", SqlDbType.VarChar, 256)).Value = compMsg;
+
+                    cmd.Parameters.Add(new SqlParameter("@evaluationCode", SqlDbType.Int)).Value = evalCode;
+
+                    cmd.Parameters.Add(new SqlParameter("@evaluationMessage", SqlDbType.VarChar, 256)).Value = evalMsg;
+
+                    cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
                 }
-
-                msg = "Calling stored procedure " + spName;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
-
-                msg = "Parameters: Job=" + cmd.Parameters["@job"].Value +
-                      ", Step=" + cmd.Parameters["@step"].Value +
-                      ", completionCode=" + cmd.Parameters["@completionCode"].Value +
-                      ", completionMessage=" + cmd.Parameters["@completionMessage"].Value +
-                      ", evaluationCode=" + cmd.Parameters["@evaluationCode"].Value +
-                      ", evaluationMessage=" + cmd.Parameters["@evaluationMessage"].Value;
-
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
 
                 ReportStatus("Calling stored procedure " + spName, true);
 
