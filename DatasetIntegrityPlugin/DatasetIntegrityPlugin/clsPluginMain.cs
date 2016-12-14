@@ -10,6 +10,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -48,7 +49,12 @@ namespace DatasetIntegrityPlugin
         const float AGILENT_MSPEAK_BIN_FILE_MIN_SIZE_KB = 50;
         const float AGILENT_MSPEAK_BIN_FILE_SMALL_SIZE_KB = 500;
         const float AGILENT_DATA_MS_FILE_MIN_SIZE_KB = 75;
-        const float MCF_FILE_MIN_SIZE_KB = 0.1F;		// Malding imaging file; Prior to May 2014, used a minimum of 4 KB; however, seeing 12T_FTICR_B datasets where this file is as small as 120 Bytes
+
+        // Malding imaging file; Prior to May 2014, used a minimum of 4 KB; however, seeing 12T_FTICR_B datasets where this file is as small as 120 Bytes
+        const float MCF_FILE_MIN_SIZE_KB = 0.1F;
+
+        const float ILLUMINA_TXT_GZ_FILE_MIN_SIZE_KB = 500;
+        const float ILLUMINA_TXT_GZ_FILE_SMALL_SIZE_KB = 1000;
 
         const int MAX_AGILENT_TO_UIMF_RUNTIME_MINUTES = 30;
         const int MAX_AGILENT_TO_CDF_RUNTIME_MINUTES = 10;
@@ -245,6 +251,9 @@ namespace DatasetIntegrityPlugin
                     break;
                 case clsInstrumentClassInfo.eInstrumentClass.Agilent_TOF_V2:
                     mRetData.CloseoutType = TestAgilentTOFV2Folder(datasetFolder);
+                    break;
+                case clsInstrumentClassInfo.eInstrumentClass.Illumina_Sequencer:
+                    mRetData.CloseoutType = TestIlluminaSequencerFolder(datasetFolder);
                     break;
 
                 default:
@@ -1803,6 +1812,122 @@ namespace DatasetIntegrityPlugin
             // If we got to here, everything is OK
             return EnumCloseOutType.CLOSEOUT_SUCCESS;
         }
+
+        /// <summary>
+        /// Verifies the integrity of a .gz file
+        /// </summary>
+        /// <param name="gzipFilePath">File to verify</param>
+        /// <param name="errorMessage">Error message (output)</param>
+        /// <returns>True if valid, false if an error</returns>
+        private bool TestGzipFile(string gzipFilePath, out string errorMessage)
+        {
+            const int BYTES_PER_READ = 81920;
+            long bytesRead = 0;
+
+            errorMessage = string.Empty;
+
+            try
+            {
+                
+                var sourceFile = new FileInfo(gzipFilePath);
+                if (!sourceFile.Exists)
+                {
+                    errorMessage = "File not found: " + gzipFilePath;
+                    return false;
+                }
+
+                using (var inFile = new FileStream(sourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                {
+                    using (var reader = new System.IO.Compression.GZipStream(inFile, CompressionMode.Decompress))
+                    {
+                        if (!reader.CanRead)
+                        {
+                            errorMessage = "File is not readable";
+                            return false;
+                        }
+
+                        var buffer = new byte[BYTES_PER_READ];
+
+                        // Copy the decompression stream into the output file.
+                        while (reader.CanRead)
+                        {
+                            var newBytes = reader.Read(buffer, 0, BYTES_PER_READ);
+                            if (newBytes <= 0)
+                                break;
+
+                            bytesRead += newBytes;
+                        }
+
+                    }
+
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                                         string.Format("Read {0:N1} KB from {1}", bytesRead / 1024.0, sourceFile.Name));
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error testing .gz file " + gzipFilePath, ex);
+                errorMessage = ex.Message;
+                return false;
+            }
+
+        }
+
+        private EnumCloseOutType TestIlluminaSequencerFolder(string datasetFolderPath)
+        {
+            var dataFileNamePath = Path.Combine(datasetFolderPath, m_Dataset + clsInstrumentClassInfo.DOT_TXT_GZ_EXTENSION);
+
+            // Verify file exists in storage folder
+            if (!File.Exists(dataFileNamePath))
+            {
+                mRetData.EvalMsg = "Data file " + dataFileNamePath + " not found";
+                LogError(mRetData.EvalMsg);
+                return EnumCloseOutType.CLOSEOUT_FAILED;
+            }
+
+            // Get size of data file
+            var dataFileSizeKB = GetFileSize(dataFileNamePath);
+
+            // Check min size
+            if (dataFileSizeKB < ILLUMINA_TXT_GZ_FILE_MIN_SIZE_KB)
+            {
+                ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSizeKB, ILLUMINA_TXT_GZ_FILE_MIN_SIZE_KB);
+                return EnumCloseOutType.CLOSEOUT_FAILED;
+            }
+
+            if (dataFileSizeKB < ILLUMINA_TXT_GZ_FILE_SMALL_SIZE_KB)
+            {
+                // File is between 5 and 50 KB
+                // Make sure that one of the frame scans has data
+
+                string uimfStatusMessage;
+                var validFile = UimfFileHasData(dataFileNamePath, out uimfStatusMessage);
+
+                if (!validFile)
+                {
+                    mRetData.EvalMsg = string.Format("Data file size is less than {0:F0} KB; {1}", ILLUMINA_TXT_GZ_FILE_SMALL_SIZE_KB, uimfStatusMessage);
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+
+            }
+
+            // Verify the integrity of the .gz file
+            string errorMessage;
+            var validGzFile = TestGzipFile(dataFileNamePath, out errorMessage);
+
+            if (!validGzFile)
+            {
+                mRetData.EvalMsg = string.Format(errorMessage);
+                return EnumCloseOutType.CLOSEOUT_FAILED;
+
+            }
+
+            // If we got to here, everything was OK
+            return EnumCloseOutType.CLOSEOUT_SUCCESS;
+        }
+
 
         private EnumCloseOutType TestIMSAgilentTOF(string dataFileNamePath, string instrumentName)
         {

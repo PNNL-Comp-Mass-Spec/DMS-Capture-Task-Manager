@@ -737,7 +737,10 @@ namespace DatasetInfoPlugin
         /// can have multiple .D folders below a parent folder
         /// </summary>
         /// <returns>List of data file file or folder names; empty list if not found</returns>
-        /// <remarks>Will return UNKNOWN_FILE_TYPE or INVALID_FILE_TYPE in special circumstances</remarks>
+        /// <remarks>
+        /// Returns UNKNOWN_FILE_TYPE for instrument types that are not recognized.
+        /// Returns INVALID_FILE_TYPE for instruments for which we do not run MSFileInfoScanner
+        /// </remarks>
         private List<string> GetDataFileOrFolderName(
             string inputFolder,
             out bool bSkipPlots,
@@ -861,9 +864,17 @@ namespace DatasetInfoPlugin
                     sFileOrFolderName = m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
                     bIsFile = false;
                     break;
+                case clsInstrumentClassInfo.eRawDataType.IlluminaFolder:
+                    sFileOrFolderName = m_Dataset + clsInstrumentClassInfo.DOT_TXT_GZ_EXTENSION;
+                    bIsFile = true;
+
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Skipping MSFileInfoScanner since Illumina RNASeq dataset");
+                    return new List<string>() { INVALID_FILE_TYPE };
 
                 default:
-                    // Other instruments; do not process
+                    // Other instruments; do not process them with MSFileInfoScanner
+
+                    // Excluded instruments include:
                     // dot_wiff_files (AgilentQStarWiffFile): AgTOF02
                     // bruker_maldi_spot (BrukerMALDISpot): BrukerTOF_01
                     m_Msg = "Data type " + rawDataType + " not recognized";

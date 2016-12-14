@@ -7,32 +7,32 @@ namespace CaptureTaskManager
         #region "Raw Data Type Constants"
 
         // Note: All of the RAW_DATA_TYPE constants need to be all lowercase
-        //
-        //Agilent ion trap data, Agilent TOF data
+        
+        // Agilent ion trap data, Agilent TOF data
         public const string RAW_DATA_TYPE_DOT_D_FOLDERS = "dot_d_folders";
 
-        //FTICR data, including instrument 3T_FTICR, 7T_FTICR, 9T_FTICR, 11T_FTICR, 11T_FTICR_B, and 12T_FTICR 
+        // FTICR data, including instrument 3T_FTICR, 7T_FTICR, 9T_FTICR, 11T_FTICR, 11T_FTICR_B, and 12T_FTICR 
         public const string RAW_DATA_TYPE_ZIPPED_S_FOLDERS = "zipped_s_folders";
 
-        //Micromass QTOF data
+        // Micromass QTOF data
         public const string RAW_DATA_TYPE_DOT_RAW_FOLDER = "dot_raw_folder";
 
-        //Finnigan ion trap/LTQ-FT data
+        // Finnigan ion trap/LTQ-FT data
         public const string RAW_DATA_TYPE_DOT_RAW_FILES = "dot_raw_files";
 
-        //Agilent/QSTAR TOF data
+        // Agilent/QSTAR TOF data
         public const string RAW_DATA_TYPE_DOT_WIFF_FILES = "dot_wiff_files";
 
-        //Sciex QTrap data
+        // Sciex QTrap data
         public const string RAW_DATA_TYPE_SCIEX_WIFF_FILES = "sciex_wiff_files";
 
-        //IMS_UIMF (IMS_Agilent_TOF in DMS)
+        // IMS_UIMF (IMS_Agilent_TOF in DMS)
         public const string RAW_DATA_TYPE_DOT_UIMF_FILES = "dot_uimf_files";
 
-        //mzXML
+        // mzXML
         public const string RAW_DATA_TYPE_DOT_MZXML_FILES = "dot_mzxml_files";
 
-        //mzML
+        // mzML
         public const string RAW_DATA_TYPE_DOT_MZML_FILES = "dot_mzml_files";
 
         // 12T datasets acquired prior to 7/16/2010 use a Bruker data station and have an analysis.baf file, 0.ser folder, and a XMASS_Method.m subfolder with file apexAcquisition.method
@@ -42,21 +42,23 @@ namespace CaptureTaskManager
         // Datasets will have an instrument name of 12T_FTICR_B and raw_data_type of "bruker_ft"
         // 15T datasets also have raw_data_type "bruker_ft"
         // Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a apexAcquisition.method file
-
         public const string RAW_DATA_TYPE_BRUKER_FT_FOLDER = "bruker_ft";
+
         // The following is used by BrukerTOF_01 (e.g. Bruker TOF_TOF)
         // Folder has a .EMF file and a single sub-folder that has an acqu file and fid file
-
         public const string RAW_DATA_TYPE_BRUKER_MALDI_SPOT = "bruker_maldi_spot";
+
         // The following is used by instruments 9T_FTICR_Imaging and BrukerTOF_Imaging_01
         // Series of zipped subfolders, with names like 0_R00X329.zip; subfolders inside the .Zip files have fid files
-
         public const string RAW_DATA_TYPE_BRUKER_MALDI_IMAGING = "bruker_maldi_imaging";
+
         // The following is used by instrument Maxis_01
         // Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
-
         public const string RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER = "bruker_tof_baf";
 
+        // The following is used by instrument External_Illumina
+        public const string RAW_DATA_TYPE_ILLUMINA_FOLDER = "illumina_folder";
+        
         #endregion
 
         #region "File Extension Constants"
@@ -69,6 +71,7 @@ namespace CaptureTaskManager
         public const string DOT_MZML_EXTENSION = ".mzml";
         public const string DOT_MGF_EXTENSION = ".mgf";
         public const string DOT_CDF_EXTENSION = ".cdf";
+        public const string DOT_TXT_GZ_EXTENSION = ".txt.gz";
 
         #endregion
 
@@ -93,34 +96,36 @@ namespace CaptureTaskManager
             // Series of zipped subfolders, with names like 0_R00X329.zip; subfolders inside the .Zip files have fid files
             BrukerTOFBaf = 12,
             // Used by Maxis01; Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
-            SciexWiffFile = 13
+            SciexWiffFile = 13,
+            IlluminaFolder = 14
         }
 
         public enum eInstrumentClass
         {
             Unknown = 0,
-            Finnigan_Ion_Trap = 1, // LCQ_C1, LTQ_1, LTQ_ETD_1
-            LTQ_FT = 2, // LTQ_FT1, LTQ_Orb_1, VOrbiETD01, VOrbi05, QExact01, QExactHF03
-            Triple_Quad = 3, // TSQ_1, Thermo_GC_MS_01
-            Thermo_Exactive = 4, // Exact01, Exact02, ...
-            Agilent_Ion_Trap = 5, // Agilent_XCT1, Agilent_GC_01, Agilent_GC_MS_01, BSF_GCMS01
-            Agilent_TOF = 6, // AgTOF01, AgTOF02                     (last used in 2012)
-            Agilent_TOF_V2 = 7, // AgQTOF03, AgQTOF04, AgTOF05, Agilent_QQQ_04
-            Bruker_Amazon_Ion_Trap = 8, // Bruker_FT_IonTrap01                  (last used in 2012)
-            BrukerFT_BAF = 9, // 9T_FTICR_B, 12T_FTICR_B, 15T_FTICR, 
-            BRUKERFTMS = 10, // 9T_FTICR, 11T_FTICR_B, 12T_FTICR		(last used in 2010)
-            BrukerMALDI_Imaging = 11, // 9T_FTICR_Imaging                     (last used in 2012)
-            BrukerMALDI_Spot = 12, // BrukerTOF_01
-            BrukerTOF_BAF = 13, // Maxis_01
-            Data_Folders = 14, // Folders of data
-            Finnigan_FTICR = 15, // 3T_FTICR, 7T_FTICR, 11T_FTICR		(last used in 2007)
-            IMS_Agilent_TOF = 16, // IMS02_AgTOF06, IMS04_AgTOF05, IMS05_AgQTOF04, IMS07_AgTOF04
-            Micromass_QTOF = 17, // QTOF_MM1, External_Waters_TOF
-            QStar_QTOF = 18, // QTOF_1322							(last used in 2003)
-            Sciex_QTrap = 19, // QTrap01
-            Sciex_TripleTOF = 20, // WashU_TripleTOF5600                  (last used in 2012)
-            PrepHPLC = 21, // PrepHPLC1, PrepHPLC2
-            BrukerMALDI_Imaging_V2 = 22 // 12T_FTICR_Imaging, 15T_FTICR_Imaging
+            Finnigan_Ion_Trap = 1,          // LCQ_C1, LTQ_1, LTQ_ETD_1
+            LTQ_FT = 2,                     // LTQ_FT1, LTQ_Orb_1, VOrbiETD01, VOrbi05, QExact01, QExactHF03
+            Triple_Quad = 3,                // TSQ_1, Thermo_GC_MS_01
+            Thermo_Exactive = 4,            // Exact01, Exact02, ...
+            Agilent_Ion_Trap = 5,           // Agilent_XCT1, Agilent_GC_01, Agilent_GC_MS_01, BSF_GCMS01
+            Agilent_TOF = 6,                // AgTOF01, AgTOF02                     (last used in 2012)
+            Agilent_TOF_V2 = 7,             // AgQTOF03, AgQTOF04, AgTOF05, Agilent_QQQ_04
+            Bruker_Amazon_Ion_Trap = 8,     // Bruker_FT_IonTrap01                  (last used in 2012)
+            BrukerFT_BAF = 9,               // 9T_FTICR_B, 12T_FTICR_B, 15T_FTICR, 
+            BRUKERFTMS = 10,                // 9T_FTICR, 11T_FTICR_B, 12T_FTICR		(last used in 2010)
+            BrukerMALDI_Imaging = 11,       // 9T_FTICR_Imaging                     (last used in 2012)
+            BrukerMALDI_Spot = 12,          // BrukerTOF_01
+            BrukerTOF_BAF = 13,             // Maxis_01
+            Data_Folders = 14,              // Folders of data
+            Finnigan_FTICR = 15,            // 3T_FTICR, 7T_FTICR, 11T_FTICR		(last used in 2007)
+            IMS_Agilent_TOF = 16,           // IMS02_AgTOF06, IMS04_AgTOF05, IMS05_AgQTOF04, IMS07_AgTOF04
+            Micromass_QTOF = 17,            // QTOF_MM1, External_Waters_TOF
+            QStar_QTOF = 18,                // QTOF_1322							(last used in 2003)
+            Sciex_QTrap = 19,               // QTrap01
+            Sciex_TripleTOF = 20,           // WashU_TripleTOF5600                  (last used in 2012)
+            PrepHPLC = 21,                  // PrepHPLC1, PrepHPLC2
+            BrukerMALDI_Imaging_V2 = 22,    // 12T_FTICR_Imaging, 15T_FTICR_Imaging
+            Illumina_Sequencer = 23         // External_Illumina
         }
 
         #endregion
@@ -186,6 +191,8 @@ namespace CaptureTaskManager
                     return eRawDataType.BrukerMALDIImaging;
                 case RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER:
                     return eRawDataType.BrukerTOFBaf;
+                case RAW_DATA_TYPE_ILLUMINA_FOLDER:
+                    return eRawDataType.IlluminaFolder;
                 default:
                     return eRawDataType.Unknown;
             }
@@ -221,6 +228,8 @@ namespace CaptureTaskManager
                     return RAW_DATA_TYPE_BRUKER_MALDI_IMAGING;
                 case eRawDataType.BrukerTOFBaf:
                     return RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER;
+                case eRawDataType.IlluminaFolder:
+                    return RAW_DATA_TYPE_ILLUMINA_FOLDER;
                 default:
                     return "Unknown";
             }
