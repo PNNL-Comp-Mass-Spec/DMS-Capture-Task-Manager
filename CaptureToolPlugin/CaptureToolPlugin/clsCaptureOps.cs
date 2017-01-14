@@ -1129,6 +1129,7 @@ namespace CaptureToolPlugin
 
             var instClassName = taskParams.GetParam("Instrument_Class");            // Examples: Finnigan_Ion_Trap, LTQ_FT, Triple_Quad, IMS_Agilent_TOF, Agilent_Ion_Trap
             var instrumentClass = clsInstrumentClassInfo.GetInstrumentClass(instClassName);     // Enum of instrument class type
+            var instName = taskParams.GetParam("Instrument_Name");                  // Instrument name
 
             var shareConnectorType = m_MgrParams.GetParam("ShareConnectorType");		// Can be PRISM or DotNET (but has been PRISM since 2012)
             var computerName = Environment.MachineName;
@@ -1441,7 +1442,7 @@ namespace CaptureToolPlugin
                         break;
 
                     case RawDSTypes.FolderExt:
-                        CaptureFolderExt(out msg, ref retData, datasetInfo, sourceFolderPath, datasetFolderPath, copyWithResume, instrumentClass);
+                        CaptureFolderExt(out msg, ref retData, datasetInfo, sourceFolderPath, datasetFolderPath, copyWithResume, instrumentClass, instName);
                         break;
 
                     case RawDSTypes.FolderNoExt:
@@ -1888,7 +1889,8 @@ namespace CaptureToolPlugin
         /// <param name="sourceFolderPath">Source folder (on instrument); datasetInfo.FileOrFolderName will be appended to this</param>
         /// <param name="datasetFolderPath">Destination folder (on storage server); datasetInfo.FileOrFolderName will be appended to this</param>
         /// <param name="copyWithResume">True if using copy with resume</param>
-        /// <param name="instrumentClass"></param>
+        /// <param name="instrumentClass">Instrument class</param>
+        /// <param name="instName">Instrument name</param>
         private void CaptureFolderExt(
             out string msg,
             ref clsToolReturnData retData,
@@ -1896,10 +1898,11 @@ namespace CaptureToolPlugin
             string sourceFolderPath,
             string datasetFolderPath,
             bool copyWithResume,
-            clsInstrumentClassInfo.eInstrumentClass instrumentClass)
+            clsInstrumentClassInfo.eInstrumentClass instrumentClass,
+            string instName)
         {
 
-            List<string> filesToSkip = null;
+            SortedSet<string> filesToSkip = null;
 
             bool bSuccess;
 
@@ -1927,7 +1930,28 @@ namespace CaptureToolPlugin
                 // Look for journal files, which we can never copy because they are always locked
 
                 brukerDotDFolder = true;
-                bSuccess = FindFilesToSkip(diSourceDir, datasetInfo, "*.mcf_idx-journal", "journal file", ref retData, out filesToSkip);
+
+                var searchSpecList = new Dictionary<string, string>()
+                {
+                    {"*.mcf_idx-journal", "journal file"}
+                };
+
+                if (string.Equals(instName, "12T_FTICR_B", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    // Add various mcf and mcf_idx files
+                    // Specifically list those that have _1 or _2 etc. because we _do_ want to copy Storage.mcf_idx files
+                    searchSpecList.Add("*_1.mcf", "mcf files");
+                    searchSpecList.Add("*_2.mcf", "mcf files");
+                    searchSpecList.Add("*_3.mcf", "mcf files");
+                    searchSpecList.Add("*_4.mcf", "mcf files");
+                    searchSpecList.Add("*_1.mcf_idx", "mcf_idx files");
+                    searchSpecList.Add("*_2.mcf_idx", "mcf_idx files");
+                    searchSpecList.Add("*_3.mcf_idx", "mcf_idx files");
+                    searchSpecList.Add("*_4.mcf_idx", "mcf_idx files");
+                    searchSpecList.Add("LockInfo", "lock files");
+                }
+
+                bSuccess = FindFilesToSkip(diSourceDir, datasetInfo, searchSpecList, ref retData, out filesToSkip);
                 if (!bSuccess)
                 {
                     msg = "Error looking for journal files to skip";
@@ -1935,6 +1959,7 @@ namespace CaptureToolPlugin
                     // Note: error has already been logged and DisconnectShareIfRequired() has already been called
                     return;
                 }
+
             }
 
             if (!VerifyConstantFolderSize(diSourceDir.FullName, ref retData))
@@ -1978,7 +2003,10 @@ namespace CaptureToolPlugin
                 }
                 else
                 {
-                    m_FileTools.CopyDirectory(diSourceDir.FullName, diTargetDir.FullName, filesToSkip);
+                    if (filesToSkip == null)
+                        m_FileTools.CopyDirectory(diSourceDir.FullName, diTargetDir.FullName);
+                    else
+                        m_FileTools.CopyDirectory(diSourceDir.FullName, diTargetDir.FullName, filesToSkip.ToList());
                     bSuccess = true;
                 }
 
@@ -2191,31 +2219,54 @@ namespace CaptureToolPlugin
 
         }
 
+        /// <summary>
+        /// Find files to skip based on filename match specs in searchSpec
+        /// </summary>
+        /// <param name="diSourceFolder"></param>
+        /// <param name="datasetInfo"></param>
+        /// <param name="searchSpecList">Dictionary where keys are filespecs to pass to .GetFiles() and values are the description of each key</param>
+        /// <param name="retData"></param>
+        /// <param name="filesToSkip">Output: List of file names to skip</param>
+        /// <returns></returns>
         private bool FindFilesToSkip(
             DirectoryInfo diSourceFolder,
             clsDatasetInfo datasetInfo,
-            string searchSpec,
-            string searchSpecDescription,
+            Dictionary<string, string> searchSpecList,
             ref clsToolReturnData retData,
-            out List<string> filesToSkip)
+            out SortedSet<string> filesToSkip)
         {
 
-            filesToSkip = new List<string>();
+            filesToSkip = new SortedSet<string>();
 
             try
             {
-                var fileList = diSourceFolder.GetFiles(searchSpec, SearchOption.AllDirectories).ToList();
-
-                filesToSkip.AddRange(fileList.Select(file => file.Name));
-
-                if (filesToSkip.Count == 1)
+                foreach (var searchItem in searchSpecList)
                 {
-                    ReportStatus("Skipping " + searchSpecDescription + " " + filesToSkip.FirstOrDefault());
-                }
-                else if (filesToSkip.Count > 1)
-                {
-                    ReportStatus("Skipping " + filesToSkip.Count + " " + searchSpecDescription + "s " +
-                                  "(" + filesToSkip.FirstOrDefault() + " through " + filesToSkip.LastOrDefault() + ")");
+                    var searchSpec = searchItem.Key;
+
+                    var fileList = diSourceFolder.GetFiles(searchSpec, SearchOption.AllDirectories).ToList();
+
+                    foreach (var file in fileList)
+                    {
+                        if (!filesToSkip.Contains(file.Name))
+                            filesToSkip.Add(file.Name);
+                    }
+
+                    if (fileList.Count == 1)
+                    {
+                        var firstSkippedFile = fileList.FirstOrDefault();
+                        if (firstSkippedFile != null)
+                            ReportStatus("Skipping " + searchItem.Value + ": " + firstSkippedFile.Name);
+                    }
+                    else if (fileList.Count > 1)
+                    {
+                        var firstSkippedFile = fileList.FirstOrDefault();
+                        var lastSkippedFile = fileList.LastOrDefault();
+
+                        if (firstSkippedFile != null && lastSkippedFile != null)
+                            ReportStatus("Skipping " + fileList.Count + " " + searchItem.Value + "s: " +
+                                      "(" + firstSkippedFile.Name + " through " + lastSkippedFile.Name + ")");
+                    }
                 }
 
                 return true;
@@ -2633,12 +2684,20 @@ namespace CaptureToolPlugin
             }
         }
 
-        private bool CopyFolderWithResume(string sSourceFolderPath, string sTargetFolderPath, bool bRecurse, ref clsToolReturnData retData)
+        private bool CopyFolderWithResume(
+            string sSourceFolderPath, 
+            string sTargetFolderPath, 
+            bool bRecurse, 
+            ref clsToolReturnData retData)
         {
-            return CopyFolderWithResume(sSourceFolderPath, sTargetFolderPath, bRecurse, ref retData, null);
+            return CopyFolderWithResume(sSourceFolderPath, sTargetFolderPath, bRecurse, ref retData, new SortedSet<string>());
         }
 
-        private bool CopyFolderWithResume(string sSourceFolderPath, string sTargetFolderPath, bool bRecurse, ref clsToolReturnData retData, List<string> filesToSkip)
+        private bool CopyFolderWithResume(
+            string sSourceFolderPath, string sTargetFolderPath, 
+            bool bRecurse, 
+            ref clsToolReturnData retData, 
+            SortedSet<string> filesToSkip)
         {
             const clsFileTools.FileOverwriteMode eFileOverwriteMode = clsFileTools.FileOverwriteMode.OverWriteIfDateOrLengthDiffer;
 
@@ -2659,7 +2718,10 @@ namespace CaptureToolPlugin
                     int iFileCountResumed;
                     int iFileCountNewlyCopied;
 
-                    bSuccess = m_FileTools.CopyDirectoryWithResume(sSourceFolderPath, sTargetFolderPath, bRecurse, eFileOverwriteMode, filesToSkip, out iFileCountSkipped, out iFileCountResumed, out iFileCountNewlyCopied);
+                    bSuccess = m_FileTools.CopyDirectoryWithResume(
+                        sSourceFolderPath, sTargetFolderPath, 
+                        bRecurse, eFileOverwriteMode, filesToSkip.ToList(), 
+                        out iFileCountSkipped, out iFileCountResumed, out iFileCountNewlyCopied);
                     bDoCopy = false;
 
                     if (bSuccess)
@@ -3067,7 +3129,7 @@ namespace CaptureToolPlugin
         /// <param name="dataset"></param>
         /// <param name="sourceFolderPath"></param>
         /// <param name="sourceType"></param>
-        /// <param name="instrumentClass"></param>
+        /// <param name="instrumentClass">Instrument class</param>
         /// <param name="datasetInfo"></param>
         /// <param name="retData"></param>
         /// <returns>True if the file or folder is appropriate for the instrument class</returns>
