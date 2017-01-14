@@ -1949,6 +1949,8 @@ namespace CaptureToolPlugin
                     searchSpecList.Add("*_3.mcf_idx", "mcf_idx files");
                     searchSpecList.Add("*_4.mcf_idx", "mcf_idx files");
                     searchSpecList.Add("LockInfo", "lock files");
+                    searchSpecList.Add("SyncHelper", "sync helper");
+                    searchSpecList.Add("ProjectCreationHelper", "project creation helper");
                 }
 
                 bSuccess = FindFilesToSkip(diSourceDir, datasetInfo, searchSpecList, ref retData, out filesToSkip);
