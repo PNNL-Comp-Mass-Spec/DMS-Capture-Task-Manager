@@ -109,7 +109,7 @@ namespace CaptureTaskManager
             }
 
             //Get remaining settings from database
-            if (!LoadMgrSettingsFromDB(ref m_ParamDictionary))
+            if (!LoadMgrSettingsFromDB())
             {
                 //Error logging handled by LoadMgrSettingsFromDB
                 return false;
@@ -150,7 +150,7 @@ namespace CaptureTaskManager
             var usingDefaults = Properties.Settings.Default.UsingDefaults.ToString();
             mgrSettingsFromFile.Add(MGR_PARAM_USING_DEFAULTS, usingDefaults);
 
-            // Default connection string for logging errors to the databsae
+            // Default connection string for logging errors to the database
             // Will get updated later when manager settings are loaded from the manager control database
             var defaultDMSConnectionString = Properties.Settings.Default.DefaultDMSConnString;
             mgrSettingsFromFile.Add(MGR_PARAM_DEFAULT_DMS_CONN_STRING, defaultDMSConnectionString);
@@ -256,21 +256,10 @@ namespace CaptureTaskManager
         public bool LoadMgrSettingsFromDB()
         {
             const bool logConnectionErrors = true;
-            return LoadMgrSettingsFromDB(ref m_ParamDictionary, logConnectionErrors);
+            return LoadMgrSettingsFromDB(logConnectionErrors);
         }
 
         public bool LoadMgrSettingsFromDB(bool logConnectionErrors)
-        {
-            return LoadMgrSettingsFromDB(ref m_ParamDictionary, logConnectionErrors);
-        }
-
-        public bool LoadMgrSettingsFromDB(ref Dictionary<string, string> MgrSettingsDict)
-        {
-            const bool logConnectionErrors = true;
-            return LoadMgrSettingsFromDB(ref m_ParamDictionary, logConnectionErrors);
-        }
-
-        public bool LoadMgrSettingsFromDB(ref Dictionary<string, string> MgrSettingsDict, bool logConnectionErrors)
         {
             //Requests manager parameters from database. Input string specifies view to use. Performs retries if necessary.
 
