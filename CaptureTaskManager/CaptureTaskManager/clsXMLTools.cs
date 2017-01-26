@@ -11,6 +11,7 @@ using System.Xml;
 
 namespace CaptureTaskManager
 {
+    [Obsolete("Unused")]
     class clsXMLTools
     {
         //*********************************************************************************************************

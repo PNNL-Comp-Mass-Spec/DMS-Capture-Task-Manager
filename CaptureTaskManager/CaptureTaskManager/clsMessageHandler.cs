@@ -27,16 +27,25 @@ namespace CaptureTaskManager
         #region "Class variables"
 
         private string m_BrokerUri;
-        private string m_CommandQueueName; // Not presently used
-        private string m_BroadcastTopicName; // Used for manager control functions (ie, start, read config)
-        private string m_StatusTopicName; // Used for status output
+
+        //[Obsolete("Unused")]
+        //private string m_CommandQueueName;      // Deprecated; never used
+
+        //[Obsolete("Unused")]
+        //private string m_BroadcastTopicName;    // Deprecated (was intended to be used for manager control functions, e.g. start, read config)
+
+        private string m_StatusTopicName;       // Used for status output
         private clsMgrSettings m_MgrSettings;
 
         private IConnection m_Connection;
         private ISession m_StatusSession;
         private IMessageProducer m_StatusSender;
-        private IMessageConsumer m_CommandConsumer;
-        private IMessageConsumer m_BroadcastConsumer;
+
+        // [Obsolete("Unused")]
+        // private IMessageConsumer m_CommandConsumer;
+
+        // [Obsolete("Unused")]
+        // private IMessageConsumer m_BroadcastConsumer;
 
         private bool m_IsDisposed;
         private bool m_HasConnection;
@@ -45,8 +54,9 @@ namespace CaptureTaskManager
 
         #region "Events"
 
-        public event MessageProcessorDelegate CommandReceived;
-        public event MessageProcessorDelegate BroadcastReceived;
+        // Deprecated in January 2017
+        //public event MessageProcessorDelegate CommandReceived;
+        //public event MessageProcessorDelegate BroadcastReceived;
 
         #endregion
 
@@ -63,17 +73,19 @@ namespace CaptureTaskManager
             set { m_BrokerUri = value; }
         }
 
-        public string CommandQueueName
-        {
-            get { return m_CommandQueueName; }
-            set { m_CommandQueueName = value; }
-        }
+        //[Obsolete("Unused")]
+        //public string CommandQueueName
+        //{
+        //    get { return m_CommandQueueName; }
+        //    set { m_CommandQueueName = value; }
+        //}
 
-        public string BroadcastTopicName
-        {
-            get { return m_BroadcastTopicName; }
-            set { m_BroadcastTopicName = value; }
-        }
+        //[Obsolete("Unused")]
+        //public string BroadcastTopicName
+        //{
+        //    get { return m_BroadcastTopicName; }
+        //    set { m_BroadcastTopicName = value; }
+        //}
 
         public string StatusTopicName
         {
@@ -92,7 +104,8 @@ namespace CaptureTaskManager
         /// <param name="timeoutSeconds">Number of seconds to wait for the broker to respond</param>
         protected void CreateConnection(int retryCount = 2, int timeoutSeconds = 15)
         {
-            if (m_HasConnection) return;
+            if (m_HasConnection)
+                return;
 
             if (retryCount < 0)
                 retryCount = 0;
@@ -150,23 +163,35 @@ namespace CaptureTaskManager
         {
             try
             {
-                if (!m_HasConnection) CreateConnection();
-                if (!m_HasConnection) return false;
+                if (!m_HasConnection)
+                    CreateConnection();
 
-                // queue for telling manager to perform task (future?)
-                var commandSession = m_Connection.CreateSession();
-                m_CommandConsumer = commandSession.CreateConsumer(new ActiveMQQueue(m_CommandQueueName));
-                ReportStatus("Command listener established", true);
+                if (!m_HasConnection)
+                    return false;
 
-                // topic for commands broadcast to all capture tool managers
-                var broadcastSession = m_Connection.CreateSession();
-                m_BroadcastConsumer = broadcastSession.CreateConsumer(new ActiveMQTopic(m_BroadcastTopicName));
-                ReportStatus("Broadcast listener established", true);
+                // Deprecated in January 2017
 
-                // topic for the capture tool manager to send status information over
-                m_StatusSession = m_Connection.CreateSession();
-                m_StatusSender = m_StatusSession.CreateProducer(new ActiveMQTopic(m_StatusTopicName));
-                ReportStatus("Status sender established", true);
+                // // Queue for telling manager to perform task (future?)
+                // var commandSession = m_Connection.CreateSession();
+                // m_CommandConsumer = commandSession.CreateConsumer(new ActiveMQQueue(m_CommandQueueName));
+                // ReportStatus("Command listener established", true);
+
+                // // Topic for commands broadcast to all capture tool managers
+                // var broadcastSession = m_Connection.CreateSession();
+                // m_BroadcastConsumer = broadcastSession.CreateConsumer(new ActiveMQTopic(m_BroadcastTopicName));
+                // ReportStatus("Broadcast listener established", true);
+
+                if (string.IsNullOrWhiteSpace(m_StatusTopicName))
+                {
+                    LogWarning("Status topic queue name is undefined");
+                }
+                else
+                {
+                    // topic for the capture tool manager to send status information over
+                    m_StatusSession = m_Connection.CreateSession();
+                    m_StatusSender = m_StatusSession.CreateProducer(new ActiveMQTopic(m_StatusTopicName));
+                    ReportStatus("Status sender established", true);
+                }
 
                 return true;
             }
@@ -178,54 +203,56 @@ namespace CaptureTaskManager
             }
         }
 
-        /// <summary>
-        /// Command listener function. Received commands will cause this to be called
-        ///	and it will trigger an event to pass on the command to all registered listeners
-        /// </summary>
-        /// <param name="message">Incoming message</param>
-        private void OnCommandReceived(IMessage message)
-        {
-            var textMessage = message as ITextMessage;
-            ReportStatus("clsMessageHandler(), Command message received", true);
-            if (CommandReceived != null)
-            {
-                // call the delegate to process the commnd
-                ReportStatus("clsMessageHandler().OnCommandReceived: At lease one event handler assigned", true);
-                if (textMessage != null)
-                {
-                    CommandReceived(textMessage.Text);
-                }
-            }
-            else
-            {
-                ReportStatus("clsMessageHandler().OnCommandReceived: No event handlers assigned", true);
-            }
-        }
+        // <summary>
+        // Command listener function. Received commands will cause this to be called
+        //	and it will trigger an event to pass on the command to all registered listeners
+        // </summary>
+        // <param name="message">Incoming message</param>
+        // Deprecated January 2017
+        //private void OnCommandReceived(IMessage message)
+        //{
+        //    var textMessage = message as ITextMessage;
+        //    ReportStatus("clsMessageHandler(), Command message received", true);
+        //    if (CommandReceived != null)
+        //    {
+        //        // call the delegate to process the commnd
+        //        ReportStatus("clsMessageHandler().OnCommandReceived: At least one event handler assigned", true);
+        //        if (textMessage != null)
+        //        {
+        //            CommandReceived(textMessage.Text);
+        //        }
+        //    }
+        //    else
+        //    {
+        //        ReportStatus("clsMessageHandler().OnCommandReceived: No event handlers assigned", true);
+        //    }
+        //}
 
-        /// <summary>
-        /// Broadcast listener function. Received Broadcasts will cause this to be called
-        ///	and it will trigger an event to pass on the command to all registered listeners
-        /// </summary>
-        /// <param name="message">Incoming message</param>
-        private void OnBroadcastReceived(IMessage message)
-        {
-            var textMessage = message as ITextMessage;
-            ReportStatus("clsMessageHandler(), Broadcast message received", true);
-            
-            if (BroadcastReceived != null)
-            {
-                // call the delegate to process the commnd
-                ReportStatus("clsMessageHandler().OnBroadcastReceived: At lease one event handler assigned", true);
-                if (textMessage != null)
-                {
-                    BroadcastReceived(textMessage.Text);
-                }
-            }
-            else
-            {
-                ReportStatus("clsMessageHandler().OnBroadcastReceived: No event handlers assigned", true);
-            }
-        }
+        // <summary>
+        // Broadcast listener function. Received Broadcasts will cause this to be called
+        //	and it will trigger an event to pass on the command to all registered listeners
+        // </summary>
+        // <param name="message">Incoming message</param>
+        // // Deprecated January 2017
+        //private void OnBroadcastReceived(IMessage message)
+        //{
+        //    var textMessage = message as ITextMessage;
+        //    ReportStatus("clsMessageHandler(), Broadcast message received", true);
+
+        //    if (BroadcastReceived != null)
+        //    {
+        //        // call the delegate to process the commnd
+        //        ReportStatus("clsMessageHandler().OnBroadcastReceived: At least one event handler assigned", true);
+        //        if (textMessage != null)
+        //        {
+        //            BroadcastReceived(textMessage.Text);
+        //        }
+        //    }
+        //    else
+        //    {
+        //        ReportStatus("clsMessageHandler().OnBroadcastReceived: No event handlers assigned", true);
+        //    }
+        //}
 
         /// <summary>
         /// Sends a status message
@@ -275,23 +302,24 @@ namespace CaptureTaskManager
         /// </summary>
         public void Dispose()
         {
-            if (!m_IsDisposed)
-            {
-                DestroyConnection();
-                m_IsDisposed = true;
-            }
+            if (m_IsDisposed)
+                return;
+
+            DestroyConnection();
+            m_IsDisposed = true;
         }
 
-        /// <summary>
-        /// Registers the command and broadcast listeners under control of main program.
-        /// This is done to prevent loss of queued messages if listeners are registered too early.
-        /// </summary>
-        public void RegisterListeners()
-        {
-            m_CommandConsumer.Listener += OnCommandReceived;
-            m_BroadcastConsumer.Listener += OnBroadcastReceived;
-        }
+        // <summary>
+        // Registers the command and broadcast listeners under control of main program.
+        // This is done to prevent loss of queued messages if listeners are registered too early.
+        // </summary>
+        // [Obsolete("Unused")]
+        // public void RegisterListeners()
+        // {
+        //    m_CommandConsumer.Listener += OnCommandReceived;
+        //    m_BroadcastConsumer.Listener += OnBroadcastReceived;
+        // }
 
         #endregion
-    } // End class
-} // End namespace
+    }
+}
