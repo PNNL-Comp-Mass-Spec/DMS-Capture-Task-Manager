@@ -396,5 +396,5 @@ namespace CaptureTaskManager
         }
 
         #endregion
-    } // End class
-} // End namespace
+    }
+}

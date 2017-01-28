@@ -54,7 +54,7 @@ namespace CaptureToolPlugin
 
         private readonly IMgrParams m_MgrParams;
 
-        private int m_SleepInterval;
+        private readonly int m_SleepInterval;
 
         // True means MgrParam "perspective" =  "client" which means we will use paths like \\proto-5\Exact04\2012_1
         // False means MgrParam "perspective" = "server" which means we use paths like E:\Exact04\2012_1
@@ -65,7 +65,7 @@ namespace CaptureToolPlugin
         //  then no capture tasks are allowed to be assigned to avoid drive path problems
         private bool m_ClientServer;
 
-        private bool m_UseBioNet;
+        private readonly bool m_UseBioNet;
         private readonly bool m_TraceMode;
 
         private readonly string m_UserName = "";
@@ -472,7 +472,6 @@ namespace CaptureToolPlugin
                 case DatasetFolderState.Error:
                     // There was an error attempting to determine the dataset directory contents
                     // (Error reporting was handled by call to IsDSFolderEmpty above)
-                    switchResult = false;
                     break;
                 case DatasetFolderState.NotEmpty:
                     var DSAction = m_MgrParams.GetParam("DSFolderExistsAction");
@@ -518,7 +517,6 @@ namespace CaptureToolPlugin
                                     retData.CloseoutMsg = "Dataset folder already exists and has multiple files or subfolders";
                                     msg = retData.CloseoutMsg + ": " + dsFolder;
                                     LogError(msg, true);
-                                    switchResult = false;
                                 }
                             }
 
@@ -550,7 +548,6 @@ namespace CaptureToolPlugin
                             else
                             {
                                 // (Error reporting was handled by previous call to RenameDatasetFolder)
-                                switchResult = false;
                             }
                             break;
                         case "fail":
@@ -559,7 +556,6 @@ namespace CaptureToolPlugin
                             msg = retData.CloseoutMsg + ": " + dsFolder;
 
                             LogError(msg, true);
-                            switchResult = false;
                             break;
                         default:
                             // An invalid value for DSFolderExistsAction was specified
@@ -568,14 +564,13 @@ namespace CaptureToolPlugin
                             msg = retData.CloseoutMsg + " (" + dsFolder + ")";
 
                             LogError(msg, true);
-                            switchResult = false;
                             break;
                     }   // DSAction selection
                     break;
                 default:
                     // Shouldn't ever get to here
                     break;
-            }   // End switch
+            }
 
             return switchResult;
 
@@ -784,7 +779,7 @@ namespace CaptureToolPlugin
                     if (m_TraceMode)
                     {
                         clsToolRunnerBase.ShowTraceMessage(
-                            string.Format("{0} seconds remaining", verificationEndTime.Subtract(DateTime.UtcNow).TotalSeconds.ToString("0")));
+                            string.Format("{0:0} seconds remaining", verificationEndTime.Subtract(DateTime.UtcNow).TotalSeconds));
                     }
                 }
             }
@@ -987,36 +982,33 @@ namespace CaptureToolPlugin
                 m_ConnectionType = ConnectionType.Prism;
                 return true;
             }
+
+            m_ErrorMessage = "Error " + myConn.ErrorMessage + " connecting to " + shareFolderPath + " as user " + userName + " using 'secfso'";
+
+            var msg = string.Copy(m_ErrorMessage);
+
+            if (myConn.ErrorMessage == "1326")
+                msg += "; you likely need to change the Capture_Method from secfso to fso";
+            if (myConn.ErrorMessage == "53")
+                msg += "; the password may need to be reset";
+
+            LogError(msg);
+
+            if (myConn.ErrorMessage == "1219" || myConn.ErrorMessage == "1203" || myConn.ErrorMessage == "53" || myConn.ErrorMessage == "64")
+            {
+                // Likely had error "An unexpected network error occurred" while copying a file for a previous dataset
+                // Need to completely exit the capture task manager
+                m_NeedToAbortProcessing = true;
+                eCloseoutType = EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING;
+                eEvalCode = EnumEvalCode.EVAL_CODE_NETWORK_ERROR_RETRY_CAPTURE;
+            }
             else
             {
-                m_ErrorMessage = "Error " + myConn.ErrorMessage + " connecting to " + shareFolderPath + " as user " + userName + " using 'secfso'";
-
-                var msg = string.Copy(m_ErrorMessage);
-
-                if (myConn.ErrorMessage == "1326")
-                    msg += "; you likely need to change the Capture_Method from secfso to fso";
-                if (myConn.ErrorMessage == "53")
-                    msg += "; the password may need to be reset";
-
-                LogError(msg);
-
-                if (myConn.ErrorMessage == "1219" || myConn.ErrorMessage == "1203" || myConn.ErrorMessage == "53" || myConn.ErrorMessage == "64")
-                {
-                    // Likely had error "An unexpected network error occurred" while copying a file for a previous dataset
-                    // Need to completely exit the capture task manager
-                    m_NeedToAbortProcessing = true;
-                    eCloseoutType = EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING;
-                    eEvalCode = EnumEvalCode.EVAL_CODE_NETWORK_ERROR_RETRY_CAPTURE;
-                }
-                else
-                {
-                    eCloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                }
-
-                m_ConnectionType = ConnectionType.NotConnected;
-                return false;
+                eCloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
+            m_ConnectionType = ConnectionType.NotConnected;
+            return false;
         }
 
         /// <summary>
@@ -1139,15 +1131,6 @@ namespace CaptureToolPlugin
             var maxFileCountToAllowResume = 0;
             var maxInstrumentFolderCountToAllowResume = 0;
             var maxNonInstrumentFolderCountToAllowResume = 0;
-
-            if (computerName.ToLower().StartsWith("monroe") && datasetName == "2014_10_14_SRFAI-20ppm_Neg_15T_TOF0p65_IAT0p05_144scans_8M_000001")
-            {
-                // Override sourceVol, sourcePath, and m_UseBioNet when processing 2014_10_14_SRFAI-20ppm_Neg_15T_TOF0p65_IAT0p05_144scans_8M_000001 on Monroe
-                sourceVol = @"\\protoapps\";
-                sourcePath = @"userdata\Matt\";
-                m_UseBioNet = false;
-                m_SleepInterval = 2;
-            }
 
             // Confirm that the dataset name has no spaces
             if (datasetName.IndexOf(' ') >= 0)
