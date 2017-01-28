@@ -234,7 +234,7 @@ namespace CaptureTaskManager
                 default:
                     // Should never get here
                     break;
-            } // End switch
+            }
 
             return restartOK;
         }
@@ -1333,23 +1333,26 @@ namespace CaptureTaskManager
                 return true;
             }
 
-            const string alternateWorkDir = @"E:\CapMan_WorkDir";
+            var alternateWorkDirs = new List<string> {
+                @"C:\CapMan_WorkDir",
+                @"E:\CapMan_WorkDir",
+                @"D:\CapMan_WorkDir" };
 
-            if (Directory.Exists(alternateWorkDir))
+
+            foreach (var alternateWorkDir in alternateWorkDirs)
             {
+                if (!Directory.Exists(alternateWorkDir))
+                    continue;
+
                 // Auto-update the working directory
                 m_MgrSettings.SetParam("WorkDir", alternateWorkDir);
 
                 LogWarning("Invalid working directory: " + workingDir + "; automatically switched to " + alternateWorkDir);
-            }
-            else
-            {
-                LogError("Invalid working directory: " + workingDir, true);
-                return false;
+                return true;
             }
 
-            // No problem found
-            return true;
+            LogError("Invalid working directory: " + workingDir, true);
+            return false;
         }
 
         #endregion
@@ -1435,5 +1438,5 @@ namespace CaptureTaskManager
         }
 
         #endregion
-    } // End class
-} // End namespace
+    }
+}
