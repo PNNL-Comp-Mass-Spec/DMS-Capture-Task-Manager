@@ -113,7 +113,9 @@ namespace ArchiveStatusCheckPlugin
 
             if (dctStatusData.Count == 0)
             {
-                msg = "Could not find any MyEMSL_Status_URIs; cannot verify archive status";
+                msg = "Could not find any MyEMSL_Status_URIs; cannot verify archive status. " +
+                      "If all entries for Dataset " + m_DatasetID + " have ErrorCode -1 or 101 this job step should be manually skipped";
+
                 mRetData.CloseoutMsg = msg;
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg + " for job " + m_Job);
@@ -404,11 +406,11 @@ namespace ArchiveStatusCheckPlugin
             // MyEMSLVerify will not have this parameter
             var statusURI = m_TaskParams.GetParam("MyEMSL_Status_URI", string.Empty);
 
-            // Note that GetStatusURIsAndSubfolders requires that the column order be StatusNum, Status_URI, Subfolder, Ingest_Steps_Completed, EUS_InstrumentID, EUS_ProposalID, EUS_UploaderID
+            // Note that GetStatusURIsAndSubfolders requires that the column order be StatusNum, Status_URI, Subfolder, Ingest_Steps_Completed, EUS_InstrumentID, EUS_ProposalID, EUS_UploaderID, ErrorCode
             var sql =
                 " SELECT StatusNum, Status_URI, Subfolder, " +
                        " IsNull(Ingest_Steps_Completed, 0) AS Ingest_Steps_Completed, " +
-                       " EUS_InstrumentID, EUS_ProposalID, EUS_UploaderID" +
+                       " EUS_InstrumentID, EUS_ProposalID, EUS_UploaderID, ErrorCode" +
                 " FROM V_MyEMSL_Uploads " +
                 " WHERE Dataset_ID = " + m_DatasetID;
 
@@ -422,6 +424,14 @@ namespace ArchiveStatusCheckPlugin
                        " ORDER BY Entry_ID";
 
                 GetStatusURIsAndSubfolders(sql, retryCount, dctStatusData);
+
+                if (dctStatusData.First().Value.ExistingErrorCode == -1 ||
+                    dctStatusData.First().Value.ExistingErrorCode == 101)
+                {
+                    // The verification of this step has already been manually skipped (an admin set the ErrorCode to -1 or 101)
+                    // Return an empty dictioary
+                    return new Dictionary<int, clsIngestStatusInfo>();
+                }
 
                 return dctStatusData;
             }
@@ -468,7 +478,7 @@ namespace ArchiveStatusCheckPlugin
                         var reader = cmd.ExecuteReader();
 
                         // Expected fields:
-                        // StatusNum, Status_URI, Subfolder, Ingest_Steps_Completed, EUS_InstrumentID, EUS_ProposalID, EUS_UploaderID
+                        // StatusNum, Status_URI, Subfolder, Ingest_Steps_Completed, EUS_InstrumentID, EUS_ProposalID, EUS_UploaderID, ErrorCode
                         while (reader.Read())
                         {
                             var statusNum = reader.GetInt32(0);
@@ -490,37 +500,21 @@ namespace ArchiveStatusCheckPlugin
                             var eusInstrumentID = clsConversion.GetDbValue(reader, 4, 0);
                             var eusProposalID = clsConversion.GetDbValue(reader, 5, string.Empty);
                             var eusUploaderID = clsConversion.GetDbValue(reader, 6, 0);
+                            var errorCode = clsConversion.GetDbValue(reader, 7, 0);
 
                             clsIngestStatusInfo statusInfo;
-                            if (dctStatusData.TryGetValue(statusNum, out statusInfo))
+                            if (!dctStatusData.TryGetValue(statusNum, out statusInfo))
                             {
-                                if (string.IsNullOrEmpty(statusInfo.Subfolder))
-                                {
-                                    statusInfo.Subfolder = string.Empty;
-                                    statusInfo.IngestStepsCompletedOld = ingestStepsCompleted;
-                                    statusInfo.EUS_InstrumentID = eusInstrumentID;
-                                    statusInfo.EUS_ProposalID = eusProposalID;
-                                    statusInfo.EUS_UploaderID = eusUploaderID;
-                                }
-                                else
-                                {
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                                                         "Job " + m_Job +
-                                                         " has more than one upload task with StatusID " + statusNum);
-                                }
-                                continue;
+                                statusInfo = new clsIngestStatusInfo(statusNum, uri);
+                                dctStatusData.Add(statusNum, statusInfo);
                             }
 
-                            statusInfo = new clsIngestStatusInfo(statusNum, uri)
-                            {
-                                Subfolder = subFolder,
-                                IngestStepsCompletedOld = ingestStepsCompleted,
-                                EUS_InstrumentID = eusInstrumentID,
-                                EUS_ProposalID = eusProposalID,
-                                EUS_UploaderID = eusUploaderID
-                            };
-
-                            dctStatusData.Add(statusNum, statusInfo);
+                            statusInfo.Subfolder = subFolder;
+                            statusInfo.IngestStepsCompletedOld = ingestStepsCompleted;
+                            statusInfo.EUS_InstrumentID = eusInstrumentID;
+                            statusInfo.EUS_ProposalID = eusProposalID;
+                            statusInfo.EUS_UploaderID = eusUploaderID;
+                            statusInfo.ExistingErrorCode = errorCode;
 
                         }
                     }
