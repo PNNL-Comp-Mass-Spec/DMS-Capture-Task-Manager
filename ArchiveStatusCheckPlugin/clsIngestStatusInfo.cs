@@ -10,9 +10,10 @@ namespace ArchiveStatusCheckPlugin
         public byte IngestStepsCompletedOld { get; set; }
         public byte IngestStepsCompletedNew { get; set; }
 
-        public int EUS_InstrumentID;
-        public string EUS_ProposalID;
-        public int EUS_UploaderID;
+        public int EUS_InstrumentID { get; set; }
+        public string EUS_ProposalID { get; set; }
+        public int EUS_UploaderID { get; set; }
+        public int ExistingErrorCode { get; set; }
 
         /// <summary>
         /// Constructor
