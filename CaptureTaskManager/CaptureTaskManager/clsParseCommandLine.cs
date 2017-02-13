@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using ExtensionMethods;
 
 // This class can be used to parse the text following the program name when a 
 //  program is started from the command line
@@ -14,11 +13,14 @@ using ExtensionMethods;
 // Website: http://panomics.pnnl.gov/ or http://www.sysbio.org/resources/staff/
 // -------------------------------------------------------------------------------
 // 
-// Last modified October 5, 2016
+// Last modified February 9, 2017
 
 namespace FileProcessor
 {
 
+    /// <summary>
+    /// Parse command line switches
+    /// </summary>
     public class clsParseCommandLine
     {
 
@@ -33,21 +35,24 @@ namespace FileProcessor
         private bool mShowHelp;
 
         private bool mDebugMode;
-        public bool NeedToShowHelp
-        {
-            get { return mShowHelp; }
-        }
+        /// <summary>
+        /// If true, we need to show the syntax to the user due to a switch error, invalid switch, or the presence of /? or /help
+        /// </summary>
+        public bool NeedToShowHelp => mShowHelp;
 
-        public int ParameterCount
-        {
-            get { return mSwitches.Count; }
-        }
+        /// <summary>
+        /// Number of switches
+        /// </summary>
+        public int ParameterCount => mSwitches.Count;
 
-        public int NonSwitchParameterCount
-        {
-            get { return mNonSwitchParameters.Count; }
-        }
+        /// <summary>
+        /// Number of parameters that are not preceded by a switch
+        /// </summary>
+        public int NonSwitchParameterCount => mNonSwitchParameters.Count;
 
+        /// <summary>
+        /// Set to true to see extra debug information
+        /// </summary>
         public bool DebugMode
         {
             get { return mDebugMode; }
@@ -88,26 +93,29 @@ namespace FileProcessor
             {
                 return true;
             }
-            else
-            {
-                return false;
-            }
+            return false;
         }
 
+        /// <summary>
+        /// Validate that the user-provided parameters are in the validParameters list
+        /// </summary>
+        /// <param name="validParameters"></param>
+        /// <param name="caseSensitive"></param>
+        /// <returns></returns>
         public bool InvalidParametersPresent(List<string> validParameters, bool caseSensitive)
         {
-
             if (InvalidParameters(validParameters, caseSensitive).Count > 0)
             {
                 return true;
             }
-            else
-            {
-                return false;
-            }
-
+            return false;
         }
 
+        /// <summary>
+        /// Retrieve a list of the user-provided parameters that are not in validParameters
+        /// </summary>
+        /// <param name="validParameters"></param>
+        /// <returns></returns>
         public List<string> InvalidParameters(List<string> validParameters)
         {
             const bool caseSensitive = false;
@@ -295,11 +303,11 @@ namespace FileProcessor
                     var paramValue = string.Empty;
 
                     bool isSwitchParam;
-                    if (paramName.StartsWith(switchStartChar))
+                    if (paramName.StartsWith(switchStartChar.ToString()))
                     {
                         isSwitchParam = true;
                     }
-                    else if (paramName.StartsWith(ALTERNATE_SWITCH_CHAR) || paramName.StartsWith(DEFAULT_SWITCH_CHAR))
+                    else if (paramName.StartsWith(ALTERNATE_SWITCH_CHAR.ToString()) || paramName.StartsWith(DEFAULT_SWITCH_CHAR.ToString()))
                     {
                         isSwitchParam = true;
                     }
@@ -378,8 +386,12 @@ namespace FileProcessor
             return false;
         }
 
-
-        public static void PauseAtConsole(int millisecondsToPause, int millisecondsBetweenDots)
+        /// <summary>
+        /// Pause the program for the specified number of milliseconds, displaying a period at a set interval while paused
+        /// </summary>
+        /// <param name="millisecondsToPause">Milliseconds to pause; default 5 seconds</param>
+        /// <param name="millisecondsBetweenDots">Seconds between each period; default 1 second</param>
+        public static void PauseAtConsole(int millisecondsToPause = 5000, int millisecondsBetweenDots = 1000)
         {
             int totalIterations;
 
@@ -452,18 +464,19 @@ namespace FileProcessor
 
                 if (parameterIndex < mSwitches.Count)
                 {
-                    var iEnum = mSwitches.GetEnumerator();
-
-                    var switchIndex = 0;
-                    while (iEnum.MoveNext())
+                    using (var iEnum = mSwitches.GetEnumerator())
                     {
-                        if (switchIndex == parameterIndex)
+                        var switchIndex = 0;
+                        while (iEnum.MoveNext())
                         {
-                            paramName = iEnum.Current.Key;
-                            paramValue = iEnum.Current.Value;
-                            return true;
+                            if (switchIndex == parameterIndex)
+                            {
+                                paramName = iEnum.Current.Key;
+                                paramValue = iEnum.Current.Value;
+                                return true;
+                            }
+                            switchIndex += 1;
                         }
-                        switchIndex += 1;
                     }
                 }
                 else
@@ -570,12 +583,12 @@ namespace FileProcessor
                                 // Found the end of a parameter
                                 var paramName = commandLine.Substring(indexStart, indexEnd - indexStart + 1).TrimEnd(' ');
 
-                                if (paramName.StartsWith('"'))
+                                if (paramName.StartsWith('"'.ToString()))
                                 {
                                     paramName = paramName.Substring(1);
                                 }
 
-                                if (paramName.EndsWith('"'))
+                                if (paramName.EndsWith('"'.ToString()))
                                 {
                                     paramName = paramName.Substring(0, paramName.Length - 1);
                                 }
@@ -604,45 +617,6 @@ namespace FileProcessor
 
             return paramList.ToArray();
 
-        }
-    }
-
-}
-
-namespace ExtensionMethods
-{
-    public static class StringExtensions
-    {
-        /// <summary>
-        /// Determine whether a string starts with a character
-        /// </summary>
-        /// <param name="str"></param>
-        /// <param name="ch"></param>
-        /// <returns>True if str starts with ch</returns>
-        public static bool StartsWith(this string str, char ch)
-        {
-            if (!string.IsNullOrEmpty(str))
-            {
-                if (str[0] == ch)
-                    return true;
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Determine whether a string ends with a character
-        /// </summary>
-        /// <param name="str"></param>
-        /// <param name="ch"></param>
-        /// <returns>True if str ends with ch</returns>
-        public static bool EndsWith(this string str, char ch)
-        {
-            if (!string.IsNullOrEmpty(str))
-            {
-                if (str[str.Length - 1] == ch)
-                    return true;
-            }
-            return false;
         }
     }
 }
