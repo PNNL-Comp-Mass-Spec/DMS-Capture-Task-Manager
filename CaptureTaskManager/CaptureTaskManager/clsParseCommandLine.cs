@@ -403,7 +403,7 @@ namespace FileProcessor
                 if (millisecondsBetweenDots == 0)
                     millisecondsBetweenDots = millisecondsToPause;
 
-                totalIterations = Convert.ToInt32(Math.Round(millisecondsToPause / (double)millisecondsBetweenDots, 0));
+                totalIterations = (int)Math.Round(millisecondsToPause / (double)millisecondsBetweenDots, 0);
             }
             catch
             {

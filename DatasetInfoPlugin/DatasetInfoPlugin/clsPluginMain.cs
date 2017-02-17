@@ -98,7 +98,7 @@ namespace DatasetInfoPlugin
                     {
                         objMSFileInfoScanner = (iMSFileInfoScanner)obj;
                         msg = "Loaded MSFileInfoScanner from " + strMSFileInfoScannerDLLPath;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
                     }
                 }
             }
@@ -155,7 +155,7 @@ namespace DatasetInfoPlugin
             m_MsFileScanner = LoadMSFileInfoScanner(strMSFileInfoScannerPath);
 
             m_MsFileScanner.ErrorEvent += m_MsFileScanner_ErrorEvent;
-            m_MsFileScanner.MessageEvent += m_MsFileScanner_MessageEvent;
+            m_MsFileScanner.StatusEvent += m_MsFileScanner_StatusEvent;
 
             msg = "Completed clsPluginMain.Setup()";
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
@@ -1077,7 +1077,7 @@ namespace DatasetInfoPlugin
                 return false;
             }
 
-        }        
+        }
 
         #endregion
 
@@ -1085,20 +1085,20 @@ namespace DatasetInfoPlugin
         /// <summary>
         /// Handles message event from MS file scanner
         /// </summary>
-        /// <param name="Message">Event message</param>
-        void m_MsFileScanner_MessageEvent(string Message)
+        /// <param name="message">Event message</param>
+        void m_MsFileScanner_StatusEvent(string message)
         {
-            m_Msg = "Message from MSFileInfoScanner = " + Message;
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
+            m_Msg = "Message from MSFileInfoScanner = " + message;
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
         }
 
         /// <summary>
         /// Handles error event from MS file scanner
         /// </summary>
         /// <param name="message">Error message</param>
-        void m_MsFileScanner_ErrorEvent(string message)
+        void m_MsFileScanner_ErrorEvent(string message, Exception ex)
         {
-            var errorMsg = "clsPluginMain.RunMsFileInfoScanner, Error running MSFileInfoScanner: " + message;
+            var errorMsg = "clsPluginMain.RunMsFileInfoScanner, Error running MSFileInfoScanner: " + message + "; " + ex.Message;
 
             if (message.StartsWith("Error using ProteoWizard reader"))
             {
@@ -1130,7 +1130,7 @@ namespace DatasetInfoPlugin
             }
 
         }
-
+        
         #endregion
     }
 
