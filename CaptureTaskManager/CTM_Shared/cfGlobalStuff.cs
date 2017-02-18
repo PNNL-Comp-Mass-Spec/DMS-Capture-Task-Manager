@@ -267,7 +267,7 @@ namespace CaptureTaskManager
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine(formattedError);
             Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine(PRISM.Logging.Utilities.GetExceptionStackTraceMultiLine(ex));
+            Console.WriteLine(PRISM.Utilities.GetExceptionStackTraceMultiLine(ex));
             Console.ResetColor();
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, formattedError, ex);
         }

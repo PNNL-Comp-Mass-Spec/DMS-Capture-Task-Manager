@@ -9,7 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using CaptureTaskManager;
-using PRISM.Files;
+using PRISM;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -803,7 +803,7 @@ namespace CaptureToolPlugin
                     sConnectionMode = " as user " + m_UserName + " using CaptureTaskManager.NetworkConnection";
                     break;
                 case ConnectionType.Prism:
-                    sConnectionMode = " as user " + m_UserName + " using PRISM.Files.ShareConnector";
+                    sConnectionMode = " as user " + m_UserName + " using PRISM.ShareConnector";
                     break;
                 default:
                     sConnectionMode = " via unknown connection mode";
@@ -957,7 +957,7 @@ namespace CaptureToolPlugin
 
         /// <summary>
         /// Connect to a remote share using a specific username and password
-        /// Uses class PRISM.Files.ShareConnector
+        /// Uses class PRISM.ShareConnector
         /// </summary>
         /// <param name="userName">Username</param>
         /// <param name="pwd">Password</param>
@@ -978,7 +978,7 @@ namespace CaptureToolPlugin
 
             if (myConn.Connect())
             {
-                ReportStatus("Connected to Bionet (" + shareFolderPath + ") as user " + userName + " using PRISM.Files.ShareConnector", true);
+                ReportStatus("Connected to Bionet (" + shareFolderPath + ") as user " + userName + " using PRISM.ShareConnector", true);
                 m_ConnectionType = ConnectionType.Prism;
                 return true;
             }
@@ -1076,11 +1076,11 @@ namespace CaptureToolPlugin
         /// <summary>
         /// Disconnects a Bionet shared drive
         /// </summary>
-        /// <param name="myConn">Connection object (class PRISM.Files.ShareConnector) for shared drive</param>
+        /// <param name="myConn">Connection object (class PRISM.ShareConnector) for shared drive</param>
         private void DisconnectShare(ref ShareConnector myConn)
         {
             myConn.Disconnect();
-            PRISM.Processes.clsProgRunner.GarbageCollectNow();
+            PRISM.clsProgRunner.GarbageCollectNow();
 
             ReportStatus("Bionet disconnected", true);
             m_ConnectionType = ConnectionType.NotConnected;
@@ -1095,7 +1095,7 @@ namespace CaptureToolPlugin
         {
             myConn.Dispose();
             myConn = null;
-            PRISM.Processes.clsProgRunner.GarbageCollectNow();
+            PRISM.clsProgRunner.GarbageCollectNow();
 
             ReportStatus("Bionet disconnected", true);
             m_ConnectionType = ConnectionType.NotConnected;

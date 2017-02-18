@@ -4,7 +4,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Net;
 using ICSharpCode.SharpZipLib.Tar;
-using PRISM.Files;
+using PRISM;
 
 namespace Pacifica.Core
 {

@@ -44,9 +44,9 @@ namespace CaptureTaskManager
 
         // ReSharper disable once NotAccessedField.Global
         // Used by CTM plugins
-        protected PRISM.Files.clsFileTools m_FileTools;
+        protected PRISM.clsFileTools m_FileTools;
 
-        protected PRISM.DataBase.clsExecuteDatabaseSP CaptureDBProcedureExecutor;
+        protected PRISM.clsExecuteDatabaseSP CaptureDBProcedureExecutor;
 
         protected DateTime m_LastConfigDBUpdate = DateTime.UtcNow;
         protected int m_MinutesBetweenConfigDBUpdates = 10;
@@ -128,11 +128,11 @@ namespace CaptureTaskManager
             m_TaskParams = taskParams;
             m_StatusTools = statusTools;
 
-            m_FileTools = new PRISM.Files.clsFileTools(m_MgrParams.GetParam("MgrName", "CaptureTaskManager"), 1);
+            m_FileTools = new PRISM.clsFileTools(m_MgrParams.GetParam("MgrName", "CaptureTaskManager"), 1);
 
             // This Connection String points to the DMS_Capture database
             var sConnectionString = m_MgrParams.GetParam("connectionstring");
-            CaptureDBProcedureExecutor = new PRISM.DataBase.clsExecuteDatabaseSP(sConnectionString);
+            CaptureDBProcedureExecutor = new PRISM.clsExecuteDatabaseSP(sConnectionString);
 
             AttachExecuteSpEvents();
 
@@ -232,7 +232,7 @@ namespace CaptureTaskManager
             }
 
             //Try to ensure there are no open objects with file handles
-            PRISM.Processes.clsProgRunner.GarbageCollectNow();
+            PRISM.clsProgRunner.GarbageCollectNow();
             Thread.Sleep(HoldoffMilliseconds);
 
             var diWorkFolder = new DirectoryInfo(WorkDir);

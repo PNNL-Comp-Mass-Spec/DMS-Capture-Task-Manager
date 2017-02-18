@@ -12,7 +12,7 @@ using System.Collections.Generic;
 using CaptureTaskManager;
 using System.IO;
 using System.Linq;
-using PRISM.Files;
+using PRISM;
 
 namespace SrcFileRenamePlugin
 {

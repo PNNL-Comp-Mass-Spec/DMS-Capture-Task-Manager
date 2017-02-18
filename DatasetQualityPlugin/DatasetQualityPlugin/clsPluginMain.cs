@@ -738,7 +738,7 @@ namespace DatasetQualityPlugin
                 }
 
 
-                if (resultCode == PRISM.DataBase.clsExecuteDatabaseSP.RET_VAL_OK)
+                if (resultCode == PRISM.clsExecuteDatabaseSP.RET_VAL_OK)
                 {
                     // No errors
                     blnSuccess = true;

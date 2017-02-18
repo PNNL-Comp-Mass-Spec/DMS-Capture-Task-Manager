@@ -12,7 +12,7 @@ using System.Threading;
 using CaptureTaskManager;
 using Pacifica.Core;
 using Pacifica.DMS_Metadata;
-using PRISM.Files;
+using PRISM;
 using System.IO;
 
 namespace DatasetArchivePlugin

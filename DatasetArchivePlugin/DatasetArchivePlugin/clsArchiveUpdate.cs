@@ -12,7 +12,7 @@ using System;
 using System.Collections.Generic;
 using CaptureTaskManager;
 using System.IO;
-using PRISM.Files;
+using PRISM;
 using System.Security.Cryptography;
 
 namespace DatasetArchivePlugin

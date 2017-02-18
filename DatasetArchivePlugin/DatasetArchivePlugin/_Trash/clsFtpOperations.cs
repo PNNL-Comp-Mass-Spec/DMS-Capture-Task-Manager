@@ -602,6 +602,7 @@ namespace DatasetArchivePlugin
                     return EnumFileFolderExists.FindError;
                 }
 
+                const bool TERMINATOR_REMOVE = false;
                 remFolder = clsFileTools.CheckTerminator(remFolder, clsFileTools.TERMINATOR_REMOVE, "/");
                 //Save the current working directory
                 try

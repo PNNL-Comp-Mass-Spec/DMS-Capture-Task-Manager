@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using Pacifica.Core;
 using MyEMSLReader;
-using PRISM.Files;
+using PRISM;
 using MessageEventArgs = MyEMSLReader.MessageEventArgs;
 using ProgressEventArgs = Pacifica.Core.ProgressEventArgs;
 using Utilities = Pacifica.Core.Utilities;

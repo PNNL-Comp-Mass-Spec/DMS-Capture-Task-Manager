@@ -17,8 +17,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using CaptureTaskManager;
-using PRISM.Files;
-using PRISM.Processes;
+using PRISM;
+using PRISM;
 using ThermoRawFileReader;
 using UIMFLibrary;
 
@@ -573,7 +573,7 @@ namespace DatasetIntegrityPlugin
             }
 
             var targetFilePath = Path.Combine(datasetFolderPath, dataFile.Name);
-            oFileTools.CopyFileUsingLocks(dataFile.FullName, targetFilePath, mgrName, Overwrite: true);
+            oFileTools.CopyFileUsingLocks(dataFile.FullName, targetFilePath, mgrName, overWrite: true);
 
             if (m_DebugLevel >= 4)
             {

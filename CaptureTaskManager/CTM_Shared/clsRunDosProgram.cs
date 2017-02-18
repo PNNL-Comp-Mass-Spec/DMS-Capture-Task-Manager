@@ -26,7 +26,7 @@ namespace CaptureTaskManager
         private bool mAbortProgramPostLogEntry;
 
         //Runs specified program
-        private PRISM.Processes.clsProgRunner mProgRunner;
+        private PRISM.clsProgRunner mProgRunner;
 
         #endregion
 
@@ -193,13 +193,13 @@ namespace CaptureTaskManager
         /// <summary>
         /// Current monitoring state
         /// </summary>
-        public PRISM.Processes.clsProgRunner.States State
+        public PRISM.clsProgRunner.States State
         {
             get
             {
                 if (mProgRunner == null)
                 {
-                    return PRISM.Processes.clsProgRunner.States.NotMonitoring;
+                    return PRISM.clsProgRunner.States.NotMonitoring;
                 }
 
                 return mProgRunner.State;
@@ -348,7 +348,7 @@ namespace CaptureTaskManager
 
             // Re-instantiate mProgRunner each time RunProgram is called since it is disposed of later in this function
             // Also necessary to avoid problems caching the console output
-            mProgRunner = new PRISM.Processes.clsProgRunner();
+            mProgRunner = new PRISM.clsProgRunner();
             {
                 mProgRunner.Arguments = cmdLine;
                 mProgRunner.CreateNoWindow = mCreateNoWindow;
@@ -386,7 +386,7 @@ namespace CaptureTaskManager
 
                 // Loop until program is complete, or until mMaxRuntimeSeconds seconds elapses
                 // And (ProgRunner.State <> 10)
-                while ((mProgRunner.State != PRISM.Processes.clsProgRunner.States.NotMonitoring))
+                while ((mProgRunner.State != PRISM.clsProgRunner.States.NotMonitoring))
                 {
                     LoopWaiting?.Invoke();
                     System.Threading.Thread.Sleep(mMonitorInterval);
@@ -421,7 +421,7 @@ namespace CaptureTaskManager
                                                  "  Aborting ProgRunner since AbortProgramNow() was called");
                         }
                     }
-                    mProgRunner.StopMonitoringProgram(Kill: true);
+                    mProgRunner.StopMonitoringProgram(kill: true);
                 }
             }
             catch (Exception ex)
@@ -470,7 +470,7 @@ namespace CaptureTaskManager
             ConsoleOutputEvent?.Invoke(NewText);
         }
 
-        private void ProgRunner_ProgChanged(PRISM.Processes.clsProgRunner obj)
+        private void ProgRunner_ProgChanged(PRISM.clsProgRunner obj)
         {
             // This event is ignored by this class
         }

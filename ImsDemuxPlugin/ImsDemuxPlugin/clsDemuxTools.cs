@@ -825,7 +825,7 @@ namespace ImsDemuxPlugin
             if (retryCount < 0)
                 retryCount = 0;
 
-            var oFileTools = new PRISM.Files.clsFileTools();
+            var oFileTools = new PRISM.clsFileTools();
 
             while (retryCount >= 0)
             {
@@ -1260,7 +1260,7 @@ namespace ImsDemuxPlugin
 
                 // Garbage collect, then try again to rename the file
                 System.Threading.Thread.Sleep(250);
-                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                PRISM.clsProgRunner.GarbageCollectNow();
                 System.Threading.Thread.Sleep(250);
 
                 try
