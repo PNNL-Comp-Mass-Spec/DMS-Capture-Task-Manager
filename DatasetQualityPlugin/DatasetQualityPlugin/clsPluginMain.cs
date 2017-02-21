@@ -792,14 +792,24 @@ namespace DatasetQualityPlugin
                         break;
                 }
 
-                var configFilePathSource = Path.Combine(fiQuameter.Directory.FullName, configFileNameSource);
+                if (fiQuameter.DirectoryName == null)
+                {
+                    LogError("Unable to determine the parent directory path for " + fiQuameter.FullName);
+                    return false;
+                }
+
+                var configFilePathSource = Path.Combine(fiQuameter.DirectoryName, configFileNameSource);
                 var configFilePathTarget = Path.Combine(m_WorkDir, configFileNameSource);
 
-                if (!File.Exists(configFilePathSource) && fiQuameter.Directory.FullName.ToLower().EndsWith("x64"))
+                if (!File.Exists(configFilePathSource) && fiQuameter.DirectoryName.ToLower().EndsWith("x64"))
                 {
                     // Using the 64-bit version of quameter
                     // Look for the .cfg file up one directory
-                    configFilePathSource = Path.Combine(fiQuameter.Directory.Parent.FullName, configFileNameSource);
+                    var parentFolder = fiQuameter.Directory?.Parent;
+                    if (parentFolder != null)
+                    {
+                        configFilePathSource = Path.Combine(parentFolder.FullName, configFileNameSource);
+                    }
                 }
 
                 if (!File.Exists(configFilePathSource))
@@ -811,6 +821,14 @@ namespace DatasetQualityPlugin
                 }
 
                 File.Copy(configFilePathSource, configFilePathTarget, true);
+
+                if (string.IsNullOrWhiteSpace(dataFilePathRemote))
+                {
+                    mRetData.CloseoutMsg = "Empty file path sent to ProcessThermoRawFile";
+                    LogError(mRetData.CloseoutMsg);
+                    mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    return false;
+                }
 
                 // Copy the .Raw file to the working directory
                 // This message is logged if m_DebugLevel == 5
@@ -1149,7 +1167,7 @@ namespace DatasetQualityPlugin
 
             // Lookup the version of the dataset quality plugin
             var sPluginPath = Path.Combine(appFolder, "DatasetQualityPlugin.dll");
-            var bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, sPluginPath);
+            var bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, sPluginPath);
             if (!bSuccess)
                 return false;
 
@@ -1223,7 +1241,7 @@ namespace DatasetQualityPlugin
             if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalSeconds >= 300)
             {
                 mLastStatusUpdate = DateTime.UtcNow;
-                // This message is logged if m_DebugLevel == 5
+                // This message is logged to disk m_DebugLevel == 5
                 LogDebug("Quameter running; " + DateTime.UtcNow.Subtract(mQuameterStartTime).TotalMinutes + " minutes elapsed");
             }
         }
