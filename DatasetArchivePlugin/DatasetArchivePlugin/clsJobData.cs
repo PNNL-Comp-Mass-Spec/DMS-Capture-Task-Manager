@@ -5,8 +5,8 @@
 // Copyright 2009, Battelle Memorial Institute
 // Created 10/20/2009
 //
-// Last modified 10/20/2009
 //*********************************************************************************************************
+
 using System.IO;
 
 namespace DatasetArchivePlugin
@@ -19,7 +19,6 @@ namespace DatasetArchivePlugin
 
         #region "Class variables"
         string m_SvrFileToUpdate = string.Empty;    // File, including path on storage server, needing copied
-        string m_SambaFileToUpdate = string.Empty;  // File, including path, in archive (for rename operation)
         string m_SvrDSNamePath;                 // Full path to dataset on storage server
 
         public clsJobData()
@@ -48,11 +47,7 @@ namespace DatasetArchivePlugin
         /// <summary>
         /// Full name and path of file on Samba share
         /// </summary>
-        public string SambaFileToUpdate
-        {
-            get { return m_SambaFileToUpdate; }
-            set { m_SambaFileToUpdate = value; }
-        }
+        public string SambaFileToUpdate { get; set; } = string.Empty;
 
         /// <summary>
         /// Flag specifying if there's already a file in the archive that needs renamed
@@ -71,18 +66,13 @@ namespace DatasetArchivePlugin
         /// <summary>
         /// Relative file path (remove parent folder)
         /// </summary>
-        public string RelativeFilePath
-        {
-            get { return GetRelativeFilePath(m_SvrFileToUpdate, m_SvrDSNamePath); }
-        }
+        public string RelativeFilePath => GetRelativeFilePath(m_SvrFileToUpdate, m_SvrDSNamePath);
 
         /// <summary>
         /// Name of the file (no path info)
         /// </summary>
-        public string FileName
-        {
-            get { return Path.GetFileName(m_SvrFileToUpdate); }
-        }
+        public string FileName => Path.GetFileName(m_SvrFileToUpdate);
+
         #endregion
 
         #region "Methods"
@@ -98,5 +88,5 @@ namespace DatasetArchivePlugin
         }
         #endregion
 
-    }	// End class
-}	// End namespace
+    }
+}

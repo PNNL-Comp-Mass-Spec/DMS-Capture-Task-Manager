@@ -96,10 +96,7 @@ namespace CaptureTaskManager
 
         #region "Properties"
 
-        public bool ManagerDeactivatedLocally
-        {
-            get { return m_ManagerDeactivatedLocally; }
-        }
+        public bool ManagerDeactivatedLocally => m_ManagerDeactivatedLocally;
 
         #endregion
 

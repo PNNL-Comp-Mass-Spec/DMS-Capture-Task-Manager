@@ -91,10 +91,7 @@ namespace CaptureTaskManager
         /// </summary>
         /// <returns>TRUE if debug level enabled for file logger; FALSE otherwise</returns>
         /// <remarks></remarks>
-        public static bool FileLogDebugEnabled
-        {
-            get { return m_FileLogger.IsDebugEnabled; }
-        }
+        public static bool FileLogDebugEnabled => m_FileLogger.IsDebugEnabled;
 
         #endregion
 

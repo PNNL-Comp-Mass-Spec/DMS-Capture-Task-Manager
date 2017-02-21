@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Data.SqlClient;
 using System.IO;
+using PRISM;
 
 namespace CaptureTaskManager
 {
@@ -184,9 +185,9 @@ namespace CaptureTaskManager
         public static string GetExceptionStackTrace(Exception ex, bool useMultiLine)
         {
             if (useMultiLine)
-                return PRISM.clsStackTraceFormatter.GetExceptionStackTraceMultiLine(ex);
+                return clsStackTraceFormatter.GetExceptionStackTraceMultiLine(ex);
 
-            return PRISM.clsStackTraceFormatter.GetExceptionStackTrace(ex);
+            return clsStackTraceFormatter.GetExceptionStackTrace(ex);
         }
     }
 

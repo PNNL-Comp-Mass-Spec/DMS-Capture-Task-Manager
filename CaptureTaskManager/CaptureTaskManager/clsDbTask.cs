@@ -32,6 +32,10 @@ namespace CaptureTaskManager
         protected readonly string m_ConnStr;
         protected bool m_TaskWasAssigned = false;
 
+        /// <summary>
+        /// Debug level
+        /// </summary>
+        /// <remarks>4 means Info level (normal) logging; 5 for Debug level (verbose) logging</remarks>
         protected readonly int m_DebugLevel;
 
         protected Dictionary<string, string> m_JobParams =
@@ -43,15 +47,9 @@ namespace CaptureTaskManager
 
         #region "Properties"
 
-        public bool TaskWasAssigned
-        {
-            get { return m_TaskWasAssigned; }
-        }
+        public bool TaskWasAssigned => m_TaskWasAssigned;
 
-        public Dictionary<string, string> TaskDictionary
-        {
-            get { return m_JobParams; }
-        }
+        public Dictionary<string, string> TaskDictionary => m_JobParams;
 
         #endregion
 
