@@ -382,13 +382,15 @@ namespace ImsDemuxPlugin
                     // If neither exists, then we cannot perform calibration
                     var bCalibrationDataExists = false;
 
-                    var objFrameEnumerator = oFrameList.GetEnumerator();
-                    while (objFrameEnumerator.MoveNext())
+                    using (var objFrameEnumerator = oFrameList.GetEnumerator())
                     {
-                        if (objFrameEnumerator.Current.Value == UIMFLibrary.DataReader.FrameType.Calibration)
+                        while (objFrameEnumerator.MoveNext())
                         {
-                            bCalibrationDataExists = true;
-                            break;
+                            if (objFrameEnumerator.Current.Value == UIMFLibrary.DataReader.FrameType.Calibration)
+                            {
+                                bCalibrationDataExists = true;
+                                break;
+                            }
                         }
                     }
 
