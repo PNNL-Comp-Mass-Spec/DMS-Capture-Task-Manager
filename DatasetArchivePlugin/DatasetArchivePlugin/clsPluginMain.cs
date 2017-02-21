@@ -5,15 +5,13 @@
 // Copyright 2009, Battelle Memorial Institute
 // Created 10/08/2009
 //
-// Last modified 10/08/2009
-//						02/03/2010 (DAC) - Modified logging to include job number
 //*********************************************************************************************************
+
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.IO;
-using System.Reflection;
 using CaptureTaskManager;
 
 namespace DatasetArchivePlugin
@@ -46,7 +44,7 @@ namespace DatasetArchivePlugin
             mMyEMSLAlreadyUpToDate = false;
 
             var msg = "Starting DatasetArchivePlugin.clsPluginMain.RunTool()";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            LogDebug(msg);
 
             // Perform base class operations, if any
             var retData = base.RunTool();
@@ -56,14 +54,15 @@ namespace DatasetArchivePlugin
             // Store the version info in the database
             if (!StoreToolVersionInfo())
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
+                LogError("Aborting since StoreToolVersionInfo returned false");
                 retData.CloseoutMsg = "Error determining tool version info";
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return retData;
             }
 
             // Always use clsArchiveUpdate for both archiving new datasets and updating existing datasets
-            IArchiveOps archOpTool = new clsArchiveUpdate(m_MgrParams, m_TaskParams, m_StatusTools);
+            clsOpsBase archOpTool = new clsArchiveUpdate(m_MgrParams, m_TaskParams, m_StatusTools);
+            RegisterEvents(archOpTool);
 
             if (m_TaskParams.GetParam("StepTool").ToLower() == "datasetarchive")
             {
@@ -79,7 +78,7 @@ namespace DatasetArchivePlugin
 
             msg = "Starting " + archiveOpDescription + ", job " + m_Job + ", dataset " + m_Dataset;
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+            LogMessage(msg);
             if (archOpTool.PerformTask())
             {
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
@@ -110,10 +109,10 @@ namespace DatasetArchivePlugin
             }
 
             msg = "Completed " + archiveOpDescription + ", job " + m_Job;
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+            LogMessage(msg);
 
             msg = "Completed clsPluginMain.RunTool()";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            LogDebug(msg);
 
             return retData;
         }
@@ -127,12 +126,12 @@ namespace DatasetArchivePlugin
         public override void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
         {
             var msg = "Starting clsPluginMain.Setup()";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            LogDebug(msg);
 
             base.Setup(mgrParams, taskParams, statusTools);
 
             msg = "Completed clsPluginMain.Setup()";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            LogDebug(msg);
         }
 
         /// <summary>
@@ -248,14 +247,14 @@ namespace DatasetArchivePlugin
                 else
                 {
                     var Msg = "Error " + ResCode + " storing MyEMSL Upload Stats";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+                    LogError(Msg);
                     Outcome = false;
                 }
 
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception storing the MyEMSL upload stats: " + ex.Message);
+                LogError("Exception storing the MyEMSL upload stats: " + ex.Message);
                 Outcome = false;
             }
 
@@ -305,7 +304,7 @@ namespace DatasetArchivePlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
         }

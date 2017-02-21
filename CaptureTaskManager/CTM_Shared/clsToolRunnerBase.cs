@@ -15,6 +15,7 @@ using System.Net;
 using System.Reflection;
 using System.Threading;
 using Pacifica.Core;
+using PRISM;
 
 namespace CaptureTaskManager
 {
@@ -44,9 +45,9 @@ namespace CaptureTaskManager
 
         // ReSharper disable once NotAccessedField.Global
         // Used by CTM plugins
-        protected PRISM.clsFileTools m_FileTools;
+        protected clsFileTools m_FileTools;
 
-        protected PRISM.clsExecuteDatabaseSP CaptureDBProcedureExecutor;
+        protected clsExecuteDatabaseSP CaptureDBProcedureExecutor;
 
         protected DateTime m_LastConfigDBUpdate = DateTime.UtcNow;
         protected int m_MinutesBetweenConfigDBUpdates = 10;
@@ -128,11 +129,11 @@ namespace CaptureTaskManager
             m_TaskParams = taskParams;
             m_StatusTools = statusTools;
 
-            m_FileTools = new PRISM.clsFileTools(m_MgrParams.GetParam("MgrName", "CaptureTaskManager"), 1);
+            m_FileTools = new clsFileTools(m_MgrParams.GetParam("MgrName", "CaptureTaskManager"), 1);
 
             // This Connection String points to the DMS_Capture database
             var sConnectionString = m_MgrParams.GetParam("connectionstring");
-            CaptureDBProcedureExecutor = new PRISM.clsExecuteDatabaseSP(sConnectionString);
+            CaptureDBProcedureExecutor = new clsExecuteDatabaseSP(sConnectionString);
 
             AttachExecuteSpEvents();
 
@@ -232,7 +233,7 @@ namespace CaptureTaskManager
             }
 
             //Try to ensure there are no open objects with file handles
-            PRISM.clsProgRunner.GarbageCollectNow();
+            clsProgRunner.GarbageCollectNow();
             Thread.Sleep(HoldoffMilliseconds);
 
             var diWorkFolder = new DirectoryInfo(WorkDir);
@@ -826,6 +827,8 @@ namespace CaptureTaskManager
                     MonitorInterval = 250
                 };
 
+                RegisterEvents(objProgRunner);
+
                 var success = objProgRunner.RunProgram(strAppPath, strArgs, "DLLVersionInspector", false);
 
                 if (!success)
@@ -952,6 +955,75 @@ namespace CaptureTaskManager
         {
             var logToDatabase = Message.Contains("permission was denied");
             LogError("Stored procedure execution error: " + Message, logToDatabase);
+        }
+
+        #endregion
+
+        #region "clsEventNotifier events"
+
+        protected void RegisterEvents(clsEventNotifier processingClass, bool writeDebugEventsToLog = true)
+        {
+            if (writeDebugEventsToLog)
+            {
+                processingClass.DebugEvent += DebugEventHandler;
+            }
+            else
+            {
+                processingClass.DebugEvent += DebugEventHandlerConsoleOnly;
+            }
+
+            processingClass.StatusEvent += StatusEventHandler;
+            processingClass.ErrorEvent += ErrorEventHandler;
+            processingClass.WarningEvent += WarningEventHandler;
+            // Ignore: processingClass.ProgressUpdate += ProgressUpdateHandler;
+        }
+
+        protected void UnregisterEventHandler(clsEventNotifier processingClass, clsLogTools.LogLevels messageType)
+        {
+            switch (messageType)
+            {
+                case clsLogTools.LogLevels.DEBUG:
+                    processingClass.DebugEvent -= DebugEventHandler;
+                    processingClass.DebugEvent -= DebugEventHandlerConsoleOnly;
+                    break;
+                case clsLogTools.LogLevels.ERROR:
+                    processingClass.ErrorEvent -= ErrorEventHandler;
+                    break;
+                case clsLogTools.LogLevels.WARN:
+                    processingClass.WarningEvent -= WarningEventHandler;
+                    break;
+                case clsLogTools.LogLevels.INFO:
+                    processingClass.StatusEvent -= StatusEventHandler;
+                    break;
+                default:
+                    throw new Exception("Log level not supported for unregistering");
+            }
+        }
+
+
+        private void DebugEventHandlerConsoleOnly(string statusMessage)
+        {
+            LogDebug(statusMessage, writeToLog: false);
+        }
+
+        private void DebugEventHandler(string statusMessage)
+        {
+            LogDebug(statusMessage);
+        }
+
+        private void StatusEventHandler(string statusMessage)
+        {
+            LogMessage(statusMessage);
+        }
+
+        private void ErrorEventHandler(string errorMessage, Exception ex)
+        {
+            LogError(errorMessage, ex);
+        }
+
+        private void WarningEventHandler(string warningMessage)
+        {
+            LogWarning(warningMessage);
         }
 
         #endregion

@@ -49,7 +49,7 @@ namespace DatasetInfoPlugin
         public override clsToolReturnData RunTool()
         {
             var msg = "Starting DatasetInfoPlugin.clsPluginMain.RunTool()";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            LogDebug(msg);
 
             // Perform base class operations, if any
             var retData = base.RunTool();
@@ -59,19 +59,19 @@ namespace DatasetInfoPlugin
             // Store the version info in the database
             if (!StoreToolVersionInfo())
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
+                LogError("Aborting since StoreToolVersionInfo returned false");
                 retData.CloseoutMsg = "Error determining tool version info";
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return retData;
             }
 
             msg = "Running DatasetInfo on dataset '" + m_Dataset + "'";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+            LogMessage(msg);
 
             retData = RunMsFileInfoScanner();
 
             msg = "Completed clsPluginMain.RunTool()";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            LogDebug(msg);
 
             return retData;
         }
@@ -89,7 +89,7 @@ namespace DatasetInfoPlugin
                 if (!File.Exists(strMSFileInfoScannerDLLPath))
                 {
                     msg = "DLL not found: " + strMSFileInfoScannerDLLPath;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    LogError(msg);
                 }
                 else
                 {
@@ -98,14 +98,14 @@ namespace DatasetInfoPlugin
                     {
                         objMSFileInfoScanner = (iMSFileInfoScanner)obj;
                         msg = "Loaded MSFileInfoScanner from " + strMSFileInfoScannerDLLPath;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                        LogMessage(msg);
                     }
                 }
             }
             catch (Exception ex)
             {
                 msg = "Exception loading class " + MsDataFileReaderClass + ": " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError(msg, ex);
             }
 
             return objMSFileInfoScanner;
@@ -124,7 +124,7 @@ namespace DatasetInfoPlugin
             catch (Exception ex)
             {
                 var msg = "Exception loading DLL " + strDLLFilePath + ": " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError(msg, ex);
             }
             return obj;
         }
@@ -138,7 +138,7 @@ namespace DatasetInfoPlugin
         public override void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
         {
             var msg = "Starting clsPluginMain.Setup()";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            LogDebug(msg);
 
             base.Setup(mgrParams, taskParams, statusTools);
 
@@ -153,12 +153,16 @@ namespace DatasetInfoPlugin
 
             // Initialize the MSFileScanner class
             m_MsFileScanner = LoadMSFileInfoScanner(strMSFileInfoScannerPath);
+            RegisterEvents(m_MsFileScanner);
+
+            UnregisterEventHandler(m_MsFileScanner, clsLogTools.LogLevels.ERROR);
+            UnregisterEventHandler(m_MsFileScanner, clsLogTools.LogLevels.WARN);
 
             m_MsFileScanner.ErrorEvent += m_MsFileScanner_ErrorEvent;
-            m_MsFileScanner.StatusEvent += m_MsFileScanner_StatusEvent;
+            m_MsFileScanner.WarningEvent += m_MsFileScanner_WarningEvent;
 
             msg = "Completed clsPluginMain.Setup()";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            LogDebug(msg);
         }
 
         /// <summary>
@@ -239,12 +243,13 @@ namespace DatasetInfoPlugin
                 {
                     Directory.CreateDirectory(outputPathBase);
                     var msg = "clsPluginMain.RunMsFileInfoScanner: Created output folder " + outputPathBase;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                    LogDebug(msg);
                 }
                 catch (Exception ex)
                 {
                     var msg = "clsPluginMain.RunMsFileInfoScanner: Exception creating output folder " + outputPathBase;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                    LogError(msg, ex);
+
                     result.CloseoutMsg = "Exception creating output folder " + outputPathBase;
                     result.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     return result;
@@ -271,7 +276,9 @@ namespace DatasetInfoPlugin
                 var successProcessing = m_MsFileScanner.ProcessMSFileOrFolder(Path.Combine(sourceFolder, datasetFileOrFolder), currentOutputFolder);
 
                 if (m_ErrOccurred)
+                {
                     successProcessing = false;
+                }
 
                 if (successProcessing)
                 {
@@ -314,7 +321,7 @@ namespace DatasetInfoPlugin
                                 " Result code = " + (int)m_MsFileScanner.ErrorCode;
                     }
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
+                    LogError(m_Msg);
 
                     result.CloseoutMsg = m_Msg;
                     result.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -367,7 +374,7 @@ namespace DatasetInfoPlugin
                 m_Msg = AppendToComment(m_Msg, warning);
             }
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
+            LogError(m_Msg);
 
             result.CloseoutMsg = "Large gap between acq times: " + datasetXmlMerger.AcqTimeWarnings.FirstOrDefault();
             result.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -410,7 +417,7 @@ namespace DatasetInfoPlugin
                 errorCode = m_MsFileScanner.ErrorCode;
                 m_Msg = "Error running info scanner. Message = " +
                         m_MsFileScanner.GetErrorMessage() + " Result code = " + (int)m_MsFileScanner.ErrorCode;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
+                LogError(m_Msg);
             }
 
             if (errorCode == iMSFileInfoScanner.eMSFileScannerErrorCodes.NoError)
@@ -448,7 +455,7 @@ namespace DatasetInfoPlugin
             catch (Exception ex)
             {
                 var msg = "Exception creating the combined _DatasetInfo.xml file for " + m_Dataset + ": " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                LogError(msg, ex);
             }
 
             try
@@ -605,7 +612,7 @@ namespace DatasetInfoPlugin
             catch (Exception ex)
             {
                 var msg = "Exception creating the combined _DatasetInfo.xml file for " + m_Dataset + ": " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                LogError(msg, ex);
             }
 
 
@@ -748,7 +755,7 @@ namespace DatasetInfoPlugin
             out clsInstrumentClassInfo.eInstrumentClass instrumentClass,
             out bool bBrukerDotDBaf)
         {
-            var bIsFile = false;
+            bool bIsFile;
 
             bSkipPlots = false;
             rawDataType = clsInstrumentClassInfo.eRawDataType.Unknown;
@@ -762,7 +769,7 @@ namespace DatasetInfoPlugin
             if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Unknown)
             {
                 m_Msg = "Instrument class not recognized: " + instClassName;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
+                LogError(m_Msg);
                 return new List<string>() { UNKNOWN_FILE_TYPE };
             }
 
@@ -770,7 +777,7 @@ namespace DatasetInfoPlugin
             if (rawDataType == clsInstrumentClassInfo.eRawDataType.Unknown)
             {
                 m_Msg = "RawDataType not recognized: " + rawDataTypeName;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
+                LogError(m_Msg);
                 return new List<string>() { UNKNOWN_FILE_TYPE };
             }
 
@@ -837,7 +844,7 @@ namespace DatasetInfoPlugin
 
                     if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.PrepHPLC)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Skipping MSFileInfoScanner since PrepHPLC dataset");
+                        LogMessage("Skipping MSFileInfoScanner since PrepHPLC dataset");
                         return new List<string>() { INVALID_FILE_TYPE };
                     }
 
@@ -854,7 +861,7 @@ namespace DatasetInfoPlugin
                     if (string.IsNullOrEmpty(sFileOrFolderName))
                     {
                         m_Msg = "Did not find any 0_R*.zip files in the dataset folder";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "clsPluginMain.GetDataFileOrFolderName: " + m_Msg);
+                        LogWarning("clsPluginMain.GetDataFileOrFolderName: " + m_Msg);
                         return new List<string>() { INVALID_FILE_TYPE };
                     }
 
@@ -868,7 +875,7 @@ namespace DatasetInfoPlugin
                     sFileOrFolderName = m_Dataset + clsInstrumentClassInfo.DOT_TXT_GZ_EXTENSION;
                     bIsFile = true;
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Skipping MSFileInfoScanner since Illumina RNASeq dataset");
+                    LogMessage("Skipping MSFileInfoScanner since Illumina RNASeq dataset");
                     return new List<string>() { INVALID_FILE_TYPE };
 
                 default:
@@ -878,7 +885,7 @@ namespace DatasetInfoPlugin
                     // dot_wiff_files (AgilentQStarWiffFile): AgTOF02
                     // bruker_maldi_spot (BrukerMALDISpot): BrukerTOF_01
                     m_Msg = "Data type " + rawDataType + " not recognized";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "clsPluginMain.GetDataFileOrFolderName: " + m_Msg);
+                    LogWarning("clsPluginMain.GetDataFileOrFolderName: " + m_Msg);
                     return new List<string>() { INVALID_FILE_TYPE };
             }
 
@@ -903,7 +910,7 @@ namespace DatasetInfoPlugin
                     return fileOrFolderNames;
 
                 m_Msg = "clsPluginMain.GetDataFileOrFolderName: File " + sFileOrFolderPath + " not found";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
+                LogError(m_Msg);
                 m_Msg = "File " + sFileOrFolderPath + " not found";
 
                 return new List<string>();
@@ -926,7 +933,7 @@ namespace DatasetInfoPlugin
             }
 
             m_Msg = "clsPluginMain.GetDataFileOrFolderName: Folder " + sFileOrFolderPath + " not found";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg);
+            LogError(m_Msg);
             m_Msg = "Folder " + sFileOrFolderPath + " not found";
 
             return new List<string>();
@@ -965,7 +972,7 @@ namespace DatasetInfoPlugin
                 if (File.Exists(dataFileNamePathAlt))
                 {
                     m_Msg = "Data file not found, but ." + altExtension + " file exists";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
+                    LogMessage(m_Msg);
                     return new List<string>() { INVALID_FILE_TYPE };
                 }
             }
@@ -1073,7 +1080,7 @@ namespace DatasetInfoPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message, ex);
                 return false;
             }
 
@@ -1081,29 +1088,21 @@ namespace DatasetInfoPlugin
 
         #endregion
 
-        #region "Event handlers"
-        /// <summary>
-        /// Handles message event from MS file scanner
-        /// </summary>
-        /// <param name="message">Event message</param>
-        void m_MsFileScanner_StatusEvent(string message)
-        {
-            m_Msg = "Message from MSFileInfoScanner = " + message;
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
-        }
+        #region "Event handlers"       
 
         /// <summary>
-        /// Handles error event from MS file scanner
+        /// Handles an error event from MS file scanner
         /// </summary>
         /// <param name="message">Error message</param>
+        /// <param name="ex"></param>
         void m_MsFileScanner_ErrorEvent(string message, Exception ex)
         {
-            var errorMsg = "clsPluginMain.RunMsFileInfoScanner, Error running MSFileInfoScanner: " + message + "; " + ex.Message;
+            var errorMsg = "Error running MSFileInfoScanner: " + message + "; " + ex.Message;
 
             if (message.StartsWith("Error using ProteoWizard reader"))
             {
                 // This is not always a critical error; log it as a warning
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, errorMsg);
+                LogWarning(errorMsg);
             }
             else
             {
@@ -1126,7 +1125,9 @@ namespace DatasetInfoPlugin
                     m_Msg = "Error running MSFileInfoScanner: " + message;
                 }
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMsg);
+                LogError(errorMsg);
+            }
+
             }
 
         }

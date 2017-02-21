@@ -26,7 +26,7 @@ namespace SrcFileRenamePlugin
         public override clsToolReturnData RunTool()
         {
             var msg = "Starting SrcFileRenamePlugin.clsPluginMain.RunTool()";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            LogDebug(msg);
 
             // Perform base class operations, if any
             var retData = base.RunTool();
@@ -43,7 +43,7 @@ namespace SrcFileRenamePlugin
             }
 
             msg = "Renaming dataset '" + m_Dataset + "'";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+            LogMessage(msg);
 
             // Determine if instrument is on Bionet
             var capMethod = m_TaskParams.GetParam("Method");
@@ -59,11 +59,12 @@ namespace SrcFileRenamePlugin
 
             // Create the object that will perform capture operation
             var renameOpTool = new clsRenameOps(m_MgrParams, useBionet);
+            RegisterEvents(renameOpTool);
 
             try
             {
                 msg = "clsPluginMain.RunTool(): Starting rename operation";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                LogDebug(msg);
 
                 string errorMessage;
                 retData.CloseoutType = renameOpTool.DoOperation(m_TaskParams, out errorMessage);
@@ -72,17 +73,17 @@ namespace SrcFileRenamePlugin
                     retData.CloseoutMsg = errorMessage;
 
                 msg = "clsPluginMain.RunTool(): Completed rename operation";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                LogDebug(msg);
             }
             catch (Exception ex)
             {
                 msg = "clsPluginMain.RunTool(): Exception during rename operation (useBionet=" + useBionet + ")";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                LogError(msg, ex);
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
             msg = "Completed clsPluginMain.RunTool()";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            LogDebug(msg);
 
             return retData;
         }
@@ -96,12 +97,12 @@ namespace SrcFileRenamePlugin
         public override void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
         {
             var msg = "Starting clsPluginMain.Setup()";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            LogDebug(msg);
 
             base.Setup(mgrParams, taskParams, statusTools);
 
             msg = "Completed clsPluginMain.Setup()";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            LogDebug(msg);
         }
 
         /// <summary>

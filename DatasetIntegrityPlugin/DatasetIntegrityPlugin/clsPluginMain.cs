@@ -78,7 +78,7 @@ namespace DatasetIntegrityPlugin
         public override clsToolReturnData RunTool()
         {
             var msg = "Starting DatasetIntegrityPlugin.clsPluginMain.RunTool()";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            LogDebug(msg);
 
             // Perform base class operations, if any
             mRetData = base.RunTool();
@@ -132,7 +132,7 @@ namespace DatasetIntegrityPlugin
             }
 
             msg = "Performing integrity test, dataset '" + m_Dataset + "'";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+            LogMessage(msg);
 
             // Set up the file paths
             var storageVolExt = m_TaskParams.GetParam("Storage_Vol_External");
@@ -143,7 +143,7 @@ namespace DatasetIntegrityPlugin
             // Select which tests will be performed based on instrument class
 
             msg = "Instrument class: " + instClassName;
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            LogDebug(msg);
 
             if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Unknown)
             {
@@ -258,7 +258,7 @@ namespace DatasetIntegrityPlugin
 
                 default:
                     msg = "No integrity test available for instrument class " + instClassName;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                    LogWarning(msg);
                     mRetData.EvalMsg = msg;
                     mRetData.EvalCode = EnumEvalCode.EVAL_CODE_NOT_EVALUATED;
                     mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
@@ -266,7 +266,7 @@ namespace DatasetIntegrityPlugin
             }	// End switch
 
             msg = "Completed clsPluginMain.RunTool()";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            LogDebug(msg);
 
             return mRetData;
         }
@@ -313,6 +313,7 @@ namespace DatasetIntegrityPlugin
                 mAgilentToCDFStartTime = DateTime.UtcNow;
                 mLastStatusUpdate = DateTime.UtcNow;
 
+                // This will also call RegisterEvents
                 AttachCmdrunnerEvents(cmdRunner);
 
                 cmdRunner.CreateNoWindow = false;
@@ -324,7 +325,7 @@ namespace DatasetIntegrityPlugin
                 cmdRunner.ConsoleOutputFilePath = consoleOutputFilePath;
 
                 var msg = "Converting .D folder to .CDF: " + exePath + " " + cmdStr;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                LogMessage(msg);
 
                 const int iMaxRuntimeSeconds = MAX_AGILENT_TO_CDF_RUNTIME_MINUTES * 60;
                 success = cmdRunner.RunProgram(exePath, cmdStr, "OpenChrom", true, iMaxRuntimeSeconds);
@@ -338,7 +339,7 @@ namespace DatasetIntegrityPlugin
                 catch (Exception ex)
                 {
                     // Do not treat this as a fatal error
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception deleting locally cached .D folder (" + dotDFolderPathLocal + "): " + ex.Message);
+                    LogWarning("Exception deleting locally cached .D folder (" + dotDFolderPathLocal + "): " + ex.Message);
                 }
 
                 if (!success)
@@ -348,11 +349,11 @@ namespace DatasetIntegrityPlugin
 
                     if (cmdRunner.ExitCode != 0)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "OpenChrom returned a non-zero exit code: " + cmdRunner.ExitCode);
+                        LogWarning("OpenChrom returned a non-zero exit code: " + cmdRunner.ExitCode);
                     }
                     else
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to OpenChrom failed (but exit code is 0)");
+                        LogWarning("Call to OpenChrom failed (but exit code is 0)");
                     }
 
                     return false;
@@ -410,6 +411,7 @@ namespace DatasetIntegrityPlugin
                 mAgilentToUIMFStartTime = DateTime.UtcNow;
                 mLastStatusUpdate = DateTime.UtcNow;
 
+                // This will also call RegisterEvents
                 AttachCmdrunnerEvents(cmdRunner);
 
                 cmdRunner.CreateNoWindow = false;
@@ -419,7 +421,7 @@ namespace DatasetIntegrityPlugin
                 cmdRunner.ConsoleOutputFilePath = consoleOutputFilePath;
 
                 var msg = "Converting .D folder to .UIMF: " + exePath + " " + cmdStr;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                LogMessage(msg);
 
                 const int iMaxRuntimeSeconds = MAX_AGILENT_TO_UIMF_RUNTIME_MINUTES * 60;
                 success = cmdRunner.RunProgram(exePath, cmdStr, "AgilentToUIMFConverter", true, iMaxRuntimeSeconds);
@@ -435,7 +437,7 @@ namespace DatasetIntegrityPlugin
                 catch (Exception ex)
                 {
                     // Do not treat this as a fatal error
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception deleting locally cached .D folder (" + dotDFolderPathLocal + "): " + ex.Message);
+                    LogWarning("Exception deleting locally cached .D folder (" + dotDFolderPathLocal + "): " + ex.Message);
                 }
 
                 if (!success)
@@ -445,11 +447,11 @@ namespace DatasetIntegrityPlugin
 
                     if (cmdRunner.ExitCode != 0)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "AgilentToUIMFConverter returned a non-zero exit code: " + cmdRunner.ExitCode);
+                        LogWarning("AgilentToUIMFConverter returned a non-zero exit code: " + cmdRunner.ExitCode);
                     }
                     else
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to AgilentToUIMFConverter failed (but exit code is 0)");
+                        LogWarning("Call to AgilentToUIMFConverter failed (but exit code is 0)");
                     }
 
                     return false;
@@ -519,8 +521,7 @@ namespace DatasetIntegrityPlugin
                 if (errorMessage.Length > 0)
                 {
                     mRetData.CloseoutMsg = errorMessage;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                         mRetData.CloseoutMsg);
+                    LogError(mRetData.CloseoutMsg);
                     return false;
                 }
             }
@@ -569,7 +570,7 @@ namespace DatasetIntegrityPlugin
         {
             if (m_DebugLevel >= 4)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying " + dataFile.Extension + " file to the dataset folder");
+                LogDebug("Copying " + dataFile.Extension + " file to the dataset folder");
             }
 
             var targetFilePath = Path.Combine(datasetFolderPath, dataFile.Name);
@@ -577,7 +578,7 @@ namespace DatasetIntegrityPlugin
 
             if (m_DebugLevel >= 4)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copy complete");
+                LogDebug("Copy complete");
             }
 
             try
@@ -588,7 +589,7 @@ namespace DatasetIntegrityPlugin
             catch (Exception ex)
             {
                 // Do not treat this as a fatal error
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception deleting local copy of the new .UIMF file " + dataFile.FullName + ": " + ex.Message);
+                LogWarning("Exception deleting local copy of the new .UIMF file " + dataFile.FullName + ": " + ex.Message);
             }
 
             return true;
@@ -657,7 +658,7 @@ namespace DatasetIntegrityPlugin
                 if (folderList.Count != 2)
                 {
                     msg = "folderList passed into DetectSupersededFolder does not contain 2 folders; cannot check for a superseded folder";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                    LogDebug(msg);
                     return false;
                 }
 
@@ -681,7 +682,7 @@ namespace DatasetIntegrityPlugin
                     // Examine diOldFolder
 
                     msg = "Comparing files in superseded folder (" + diOldFolder.FullName + ") to newer folder (" + diNewFolder.FullName + ")";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                    LogMessage(msg);
 
                     var bFolderIsSuperseded = true;
 
@@ -695,7 +696,7 @@ namespace DatasetIntegrityPlugin
                         if (!fiNewFile.Exists)
                         {
                             msg = "File not found in newer folder: " + fiNewFile.FullName;
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                            LogMessage(msg);
 
                             bFolderIsSuperseded = false;
                             break;
@@ -704,7 +705,7 @@ namespace DatasetIntegrityPlugin
                         if (fiNewFile.Length < fiFile.Length)
                         {
                             msg = "Newer file is smaller than version in superseded folder: " + fiNewFile.FullName;
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                            LogMessage(msg);
 
                             bFolderIsSuperseded = false;
                             break;
@@ -715,7 +716,7 @@ namespace DatasetIntegrityPlugin
                     {
                         // Delete diOldFolder
                         msg = "Deleting superseded folder: " + diOldFolder.FullName;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                        LogMessage(msg);
 
                         diOldFolder.Delete(true);
                     }
@@ -725,7 +726,7 @@ namespace DatasetIntegrityPlugin
                 }
 
                 msg = "Folder " + diOldFolder.FullName + " is not a superseded folder for " + diNewFolder.FullName;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                LogMessage(msg);
                 return false;
             }
             catch (Exception ex)
@@ -1263,7 +1264,7 @@ namespace DatasetIntegrityPlugin
                     if (File.Exists(dataFileNamePathAlt))
                     {
                         mRetData.EvalMsg = "Raw file not found, but ." + altExtension + " file exists";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, mRetData.EvalMsg);
+                        LogMessage(mRetData.EvalMsg);
                         minFileSizeKB = 25;
                         maxFileSizeMB = RAW_FILE_MAX_SIZE_MB_ORBITRAP;
                         dataFileNamePath = dataFileNamePathAlt;
@@ -1520,8 +1521,7 @@ namespace DatasetIntegrityPlugin
                             diFolder.GetFiles("fid", SearchOption.TopDirectoryOnly).Length == 0)
                         {
                             mRetData.EvalMsg = "Invalid dataset. ser or fid file not found in " + diFolder.Name;
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                                 mRetData.EvalMsg);
+                            LogError(mRetData.EvalMsg);
                             return EnumCloseOutType.CLOSEOUT_FAILED;
                         }
                     }
@@ -1797,7 +1797,7 @@ namespace DatasetIntegrityPlugin
 
                 foreach (var folder in dataFolders)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Test folder " + folder + " against RegEx " + reMaldiSpotFolder);
+                    LogDebug("Test folder " + folder + " against RegEx " + reMaldiSpotFolder);
 
                     var sDirName = Path.GetFileName(folder);
                     if (sDirName != null && !reMaldiSpotFolder.IsMatch(sDirName, 0))
@@ -1860,8 +1860,7 @@ namespace DatasetIntegrityPlugin
 
                     }
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
-                                         string.Format("Read {0:N1} KB from {1}", bytesRead / 1024.0, sourceFile.Name));
+                    LogMessage(string.Format("Read {0:N1} KB from {1}", bytesRead / 1024.0, sourceFile.Name));
                 }
 
                 return true;
@@ -1997,7 +1996,7 @@ namespace DatasetIntegrityPlugin
         {
             try
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Opening UIMF file to look for valid data");
+                LogDebug("Opening UIMF file to look for valid data");
 
                 // Open the .UIMF file and read the first scan of the first frame
                 using (var reader = new DataReader(uimfFilePath))
@@ -2064,7 +2063,7 @@ namespace DatasetIntegrityPlugin
             //   HighPressureFunnelPressure  IonFunnelTrapPressure  RearIonFunnelPressure  QuadrupolePressure
             //   4.06285                     9.02253                0.41679                4.13393
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Opening UIMF file to read pressure data");
+            LogDebug("Opening UIMF file to read pressure data");
 
             var ignorePressureErrors = m_TaskParams.GetParam("IgnorePressureInfoErrors", false);
             var loggedPressureErrorWarning = false;
@@ -2116,13 +2115,13 @@ namespace DatasetIntegrityPlugin
                                 if (!loggedPressureErrorWarning)
                                 {
                                     loggedPressureErrorWarning = true;
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, mRetData.EvalMsg);
+                                    LogError(mRetData.EvalMsg, true);
                                 }
                             }
                             else
                             {
 
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, mRetData.EvalMsg);
+                                LogError(mRetData.EvalMsg, true);
 
                                 uimfReader.Dispose();
                                 return false;
@@ -2131,7 +2130,7 @@ namespace DatasetIntegrityPlugin
                     }
 
                     if (frameNumber % 100 == 0)
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Validated frame " + frameNumber);
+                        LogDebug("Validated frame " + frameNumber);
 
                 }
 
@@ -2149,12 +2148,12 @@ namespace DatasetIntegrityPlugin
         public override void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
         {
             var msg = "Starting clsPluginMain.Setup()";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            LogDebug(msg);
 
             base.Setup(mgrParams, taskParams, statusTools);
 
             msg = "Completed clsPluginMain.Setup()";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            LogDebug(msg);
         }
 
 
@@ -2253,7 +2252,7 @@ namespace DatasetIntegrityPlugin
 
                 if (!diSettingsFolder.Exists)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Creating OpenChrom settings file folder at " + diSettingsFolder.FullName);
+                    LogMessage("Creating OpenChrom settings file folder at " + diSettingsFolder.FullName);
 
                     diSettingsFolder.Create();
                     return false;
@@ -2267,7 +2266,7 @@ namespace DatasetIntegrityPlugin
                 {
                     // Create the file
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Creating OpenChrom settings file at " + fiSettingsFile.FullName);
+                    LogMessage("Creating OpenChrom settings file at " + fiSettingsFile.FullName);
 
                     using (var writer = fiSettingsFile.CreateText())
                     {
@@ -2314,7 +2313,7 @@ namespace DatasetIntegrityPlugin
                 if (!settingsFileUpdateRequired)
                 {
                     if (m_DebugLevel >= 2)
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "OpenChrom settings file is up to date at " + fiSettingsFile.FullName);
+                        LogDebug("OpenChrom settings file is up to date at " + fiSettingsFile.FullName);
 
                     return true;
                 }
@@ -2326,7 +2325,7 @@ namespace DatasetIntegrityPlugin
                 if (!traceFound)
                     settingsData.Add("trace=1");
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Adding productSerialKey entry to OpenChrom settings file at " + fiSettingsFile.FullName);
+                LogMessage("Adding productSerialKey entry to OpenChrom settings file at " + fiSettingsFile.FullName);
 
                 // Actually update the file
                 using (var writer = new StreamWriter(new FileStream(fiSettingsFile.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
@@ -2355,10 +2354,10 @@ namespace DatasetIntegrityPlugin
         {
             try
             {
+                RegisterEvents(cmdRunner);
                 cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
                 cmdRunner.Timeout += CmdRunner_Timeout;
             }
-            // ReSharper disable once EmptyGeneralCatchClause
             catch
             {
                 // Ignore errors here
@@ -2376,7 +2375,7 @@ namespace DatasetIntegrityPlugin
             if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalSeconds >= 300)
             {
                 mLastStatusUpdate = DateTime.UtcNow;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "AgilentToUIMFConverter running; " + DateTime.UtcNow.Subtract(mAgilentToUIMFStartTime).TotalMinutes + " minutes elapsed");
+                LogDebug("AgilentToUIMFConverter running; " + DateTime.UtcNow.Subtract(mAgilentToUIMFStartTime).TotalMinutes + " minutes elapsed");
             }
         }
 

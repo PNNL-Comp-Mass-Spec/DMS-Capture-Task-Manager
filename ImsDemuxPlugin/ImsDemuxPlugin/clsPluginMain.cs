@@ -57,7 +57,7 @@ namespace ImsDemuxPlugin
         public override clsToolReturnData RunTool()
         {
             string msg = "Starting ImsDemuxPlugin.clsPluginMain.RunTool()";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            LogDebug(msg);
 
             // Perform base class operations, if any
             clsToolReturnData retData = base.RunTool();
@@ -139,7 +139,7 @@ namespace ImsDemuxPlugin
                         retData.EvalMsg = "De-multiplexed but Calibration failed.  If you want to re-demultiplex the _encoded.uimf file, then you should rename the CalibrationLog.txt file";
 
                         msg = "Completed clsPluginMain.RunTool()";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                        LogDebug(msg);
                         return retData;
                     }
                 }
@@ -156,13 +156,13 @@ namespace ImsDemuxPlugin
                     catch (Exception ex)
                     {
                         msg = "Exception deleting 0-byte uimf_encoded file";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                        LogError(msg, ex);
 
                         retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                         retData.CloseoutMsg = msg;
 
                         msg = "Completed clsPluginMain.RunTool()";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                        LogDebug(msg);
                         return retData;
                     }
                 }
@@ -178,7 +178,7 @@ namespace ImsDemuxPlugin
                     retData.CloseoutMsg = msg;
 
                     msg = "Completed clsPluginMain.RunTool()";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                    LogDebug(msg);
                     return retData;
                 }
             }
@@ -188,6 +188,8 @@ namespace ImsDemuxPlugin
             bool needToDemultiplex = true;
 
             var oSQLiteTools = new clsSQLiteTools();
+            RegisterEvents(oSQLiteTools);
+
             byte numBitsForEncoding;
 
             clsSQLiteTools.UimfQueryResults queryResult = oSQLiteTools.GetUimfMuxStatus(uimfFilePath, out numBitsForEncoding);
@@ -195,7 +197,7 @@ namespace ImsDemuxPlugin
             {
                 // De-multiplexing not required, but we should still attempt calibration (if enabled)
                 msg = "No de-multiplexing required for dataset " + m_Dataset;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                LogMessage(msg);
                 retData.EvalMsg = "Non-Multiplexed";
                 needToDemultiplex = false;
             }
@@ -208,7 +210,7 @@ namespace ImsDemuxPlugin
                 retData.CloseoutMsg = msg;
 
                 msg = "Completed clsPluginMain.RunTool()";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                LogDebug(msg);
                 return retData;
             }
 
@@ -261,12 +263,12 @@ namespace ImsDemuxPlugin
 
             if (fileSizeGBStart > 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Not adding bin-centric tables to the .uimf file since over 2 GB in size" + fileSizeText);
+                LogMessage("Not adding bin-centric tables to the .uimf file since over 2 GB in size" + fileSizeText);
             }
             else
             {
                 // Add the bin-centric tables if not yet present
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Adding bin-centric tables to the .uimf file" + fileSizeText);
+                LogMessage("Adding bin-centric tables to the .uimf file" + fileSizeText);
                 retData = mDemuxTools.AddBinCentricTablesIfMissing(m_MgrParams, m_TaskParams, retData);
 
                 fiUIMF.Refresh();
@@ -275,7 +277,7 @@ namespace ImsDemuxPlugin
                 if (fileSizeGBStart > 0)
                     foldIncrease = fileSizeGBEnd / fileSizeGBStart;
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "UIMF file size increased from " + fileSizeGBStart.ToString("0.00") + " GB to " + fileSizeGBEnd.ToString("0.00") + " GB, a " + foldIncrease.ToString("0.0" + " fold increase"));
+                LogMessage("UIMF file size increased from " + fileSizeGBStart.ToString("0.00") + " GB to " + fileSizeGBEnd.ToString("0.00") + " GB, a " + foldIncrease.ToString("0.0" + " fold increase"));
             }
 
             if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
@@ -290,7 +292,7 @@ namespace ImsDemuxPlugin
             }
 
             msg = "Completed clsPluginMain.RunTool()";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            LogDebug(msg);
 
             return retData;
         }
@@ -304,17 +306,18 @@ namespace ImsDemuxPlugin
         public override void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
         {
             string msg = "Starting clsPluginMain.Setup()";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            LogDebug(msg);
 
             base.Setup(mgrParams, taskParams, statusTools);
 
             msg = "Completed clsPluginMain.Setup()";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            LogDebug(msg);
 
             // Determine the path to UIMFDemultiplexer_Console.exe
             var uimfDemultiplexerProgLoc = GetUimfDemultiplexerPath();
 
             mDemuxTools = new clsDemuxTools(uimfDemultiplexerProgLoc);
+            RegisterEvents(mDemuxTools);
 
             // Add a handler to catch progress events
             mDemuxTools.DemuxProgress += clsDemuxTools_DemuxProgress;
@@ -357,7 +360,7 @@ namespace ImsDemuxPlugin
 
             if (!File.Exists(decodedUimfFilePath))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Decoded UIMF file does not exist (" + decodedUimfFilePath + "); cannot determine manual calibration coefficients");
+                LogMessage("Decoded UIMF file does not exist (" + decodedUimfFilePath + "); cannot determine manual calibration coefficients");
                 return false;
             }
 
@@ -474,7 +477,7 @@ namespace ImsDemuxPlugin
 
             var fiUimfDemultiplexer = new FileInfo(uimfDemultiplexerProgLoc);
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+            LogDebug("Determining tool version info");
 
             if (fiUimfDemultiplexer.DirectoryName == null)
                 return false;

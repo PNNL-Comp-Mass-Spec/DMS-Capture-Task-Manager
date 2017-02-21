@@ -5,9 +5,8 @@
 // Copyright 2009, Battelle Memorial Institute
 // Created 10/20/2009
 //
-// Last modified 10/20/2009
-//						02/03/2010 (DAC) - Modified logging to include job number
 //*********************************************************************************************************
+
 using System;
 using System.Collections.Generic;
 using CaptureTaskManager;
@@ -66,10 +65,10 @@ namespace DatasetArchivePlugin
                 return false;
 
             var statusMessage = "Updating dataset " + m_DatasetName + ", job " + m_TaskParams.GetParam("Job");
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, statusMessage);
+            OnDebugEvent(statusMessage);
 
             statusMessage = "Pushing dataset folder to MyEMSL";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, statusMessage);
+            OnDebugEvent(statusMessage);
 
             mMostRecentLogTime = DateTime.UtcNow;
             mLastStatusUpdateTime = DateTime.UtcNow;
@@ -87,7 +86,7 @@ namespace DatasetArchivePlugin
                 debugMode = Pacifica.Core.EasyHttp.eDebugMode.MyEMSLOfflineMode;
 
             if (debugMode != Pacifica.Core.EasyHttp.eDebugMode.DebugDisabled)
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Calling UploadToMyEMSLWithRetry with debugMode=" + debugMode);
+                OnStatusEvent("Calling UploadToMyEMSLWithRetry with debugMode=" + debugMode);
 
             const bool PUSH_TO_TEST_SERVER = false;
 
@@ -104,7 +103,7 @@ namespace DatasetArchivePlugin
                 // Finished with this update task
                 statusMessage = "Completed push to MyEMSL, dataset " + m_DatasetName + ", Folder " +
                                 m_TaskParams.GetParam("OutputFolderName") + ", job " + m_TaskParams.GetParam("Job");
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, statusMessage);
+                OnDebugEvent(statusMessage);
             }
 
             if (!PUSH_TO_TEST_SERVER)
@@ -137,12 +136,12 @@ namespace DatasetArchivePlugin
             {
                 statusMessage = "MyEMSL test server upload failed";
                 AppendToString(m_WarningMsg, statusMessage);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, statusMessage);
+                OnErrorEvent(statusMessage);
             }
             else
             {
                 statusMessage = "Completed push to the MyEMSL test server, dataset " + m_DatasetName;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, statusMessage);
+                OnDebugEvent(statusMessage);
             }
 
             return true;
@@ -256,11 +255,11 @@ namespace DatasetArchivePlugin
                         msg = "clsArchiveUpdate.CompareFolders: Error comparing files. Error msg = " + m_ErrMsg;
                         LogErrorMessage(msg, "Current Task");
 
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Disabling hash-based comparisons for this job");
+                        OnWarningEvent("Disabling hash-based comparisons for this job");
 
                         // Retry the comparison, but this time don't generate a hash
                         compareWithHash = false;
-                        compareResult = CompareTwoFiles(svrFileName, archFileName, compareWithHash);
+                        compareResult = CompareTwoFiles(svrFileName, archFileName, generateHash: false);
                     }
 
                     switch (compareResult)
@@ -439,25 +438,11 @@ namespace DatasetArchivePlugin
         /// <param name="currentTask">Current task</param>
         protected void LogErrorMessage(string msg, string currentTask)
         {
-            LogErrorMessage(msg, currentTask, false);
-        }
-
-        /// <summary>
-        /// Write an error message to the log
-        /// If msg is blank, then logs the current task description followed by "empty error message"
-        /// </summary>
-        /// <param name="msg">Error message</param>
-        /// <param name="currentTask">Current task</param>
-        /// <param name="logDB">True to log to the database in addition to logging to the local log file</param>
-        protected void LogErrorMessage(string msg, string currentTask, bool logDB)
-        {
             if (string.IsNullOrWhiteSpace(msg))
                 msg = currentTask + ": empty error message";
 
-            if (logDB)
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
-            else
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+            OnErrorEvent(msg);
+
         }
 
         #endregion

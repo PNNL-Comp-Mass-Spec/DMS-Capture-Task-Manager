@@ -5,9 +5,8 @@
 // Copyright 2009, Battelle Memorial Institute
 // Created 10/02/2009
 //
-// Last modified 10/02/2009
-//               09/17/2012 mem - Moved from the DatasetInfo plugin to the DatasetQuality plugin
 //*********************************************************************************************************
+
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -53,7 +52,7 @@ namespace DatasetQualityPlugin
         {
 
             var msg = "Starting DatasetQualityPlugin.clsPluginMain.RunTool()";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            LogDebug(msg);
 
             // Perform base class operations, if any
             mRetData = base.RunTool();
@@ -61,13 +60,13 @@ namespace DatasetQualityPlugin
                 return mRetData;
 
             msg = "Creating dataset info for dataset '" + m_Dataset + "'";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            LogDebug(msg);
 
             if (clsMetaDataFile.CreateMetadataFile(m_MgrParams, m_TaskParams))
             {
                 // Everything was good
                 msg = "Metadata file created for dataset " + m_Dataset;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                LogMessage(msg);
 
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
             }
@@ -75,7 +74,7 @@ namespace DatasetQualityPlugin
             {
                 // There was a problem
                 msg = "Problem creating metadata file for dataset " + m_Dataset + ". See local log for details";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                LogError(msg, true);
                 mRetData.EvalCode = EnumEvalCode.EVAL_CODE_FAILED;
                 mRetData.EvalMsg = msg;
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -89,7 +88,7 @@ namespace DatasetQualityPlugin
                 return mRetData;
 
             msg = "Completed clsPluginMain.RunTool()";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            LogDebug(msg);
 
             return mRetData;
 
@@ -113,13 +112,13 @@ namespace DatasetQualityPlugin
             var instClassName = m_TaskParams.GetParam("Instrument_Class");
 
             var msg = "Instrument class: " + instClassName;
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            LogDebug(msg);
 
             var instrumentClass = clsInstrumentClassInfo.GetInstrumentClass(instClassName);
             if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Unknown)
             {
                 msg = "Instrument class not recognized: " + instClassName;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError(msg);
                 mRetData.CloseoutMsg = msg;
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return false;
@@ -158,7 +157,7 @@ namespace DatasetQualityPlugin
             // Store the Quameter version if dataFileNamePath is not empty
             if (!StoreToolVersionInfo(bRunQuameter))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
+                LogError("Aborting since StoreToolVersionInfo returned false");
                 mRetData.CloseoutMsg = "Error determining tool version info";
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return false;
@@ -168,7 +167,7 @@ namespace DatasetQualityPlugin
             {
                 msg = "Skipped Quameter since " + skipReason;
                 mRetData.EvalMsg = string.Copy(msg);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                LogMessage(msg);
                 return true;
             }
 
@@ -201,14 +200,14 @@ namespace DatasetQualityPlugin
                 {
                     // Update dataFilePathRemote using the archive file path
                     msg = "Dataset file not found on storage server (" + dataFilePathRemote + "), but was found in the archive at " + dataFilePathArchive;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                    LogMessage(msg);
                     dataFilePathRemote = dataFilePathArchive;
                 }
                 else
                 {
                     dataFilePathRemote = string.Empty;
                     msg = "Dataset file not found on storage server (" + dataFilePathRemote + ") or in the archive (" + dataFilePathRemote + ")";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    LogError(msg);
                     mRetData.CloseoutMsg = "Dataset file not found on storage server or in the archive";
                 }
 
@@ -323,7 +322,7 @@ namespace DatasetQualityPlugin
             catch (Exception ex)
             {
                 mRetData.CloseoutMsg = "Error converting Quameter results to XML";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg + ": " + ex.Message);
+                LogError(mRetData.CloseoutMsg + ": " + ex.Message);
                 return false;
             }
 
@@ -357,7 +356,7 @@ namespace DatasetQualityPlugin
             {
                 mRetData.CloseoutMsg = "Error creating the Dataest QC folder";
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg + ": " + ex.Message);
+                LogError(mRetData.CloseoutMsg + ": " + ex.Message);
                 return false;
             }
 
@@ -380,7 +379,7 @@ namespace DatasetQualityPlugin
             {
                 mRetData.CloseoutMsg = "Error copying file " + sFileName + " to Dataset folder";
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg + ": " + ex.Message);
+                LogError(mRetData.CloseoutMsg + ": " + ex.Message);
                 return false;
             }
 
@@ -422,13 +421,13 @@ namespace DatasetQualityPlugin
             if (!File.Exists(ResultsFilePath))
             {
                 mRetData.CloseoutMsg = "Quameter Results file not found";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mRetData.CloseoutMsg + ": " + ResultsFilePath);
+                LogDebug(mRetData.CloseoutMsg + ": " + ResultsFilePath);
                 return lstResults;
             }
 
             if (m_DebugLevel >= 5)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing Quameter Results file " + ResultsFilePath);
+                LogDebug("Parsing Quameter Results file " + ResultsFilePath);
             }
 
             using (var srInFile = new StreamReader(new FileStream(ResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
@@ -447,7 +446,7 @@ namespace DatasetQualityPlugin
                 if (string.IsNullOrWhiteSpace(sLineIn))
                 {
                     mRetData.CloseoutMsg = "Quameter Results file is empty (no header line)";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mRetData.CloseoutMsg);
+                    LogDebug(mRetData.CloseoutMsg);
                     return lstResults;
                 }
 
@@ -468,7 +467,7 @@ namespace DatasetQualityPlugin
                 if (string.IsNullOrWhiteSpace(sLineIn))
                 {
                     mRetData.CloseoutMsg = "Quameter Results file is empty (headers, but no data)";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mRetData.CloseoutMsg);
+                    LogDebug(mRetData.CloseoutMsg);
                     return lstResults;
                 }
 
@@ -479,7 +478,7 @@ namespace DatasetQualityPlugin
                 {
                     // More headers than data values
                     mRetData.CloseoutMsg = "Quameter Results file data line (" + strData.Length + " items) does not match the header line (" + strHeaders.Length + " items)";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mRetData.CloseoutMsg);
+                    LogDebug(mRetData.CloseoutMsg);
                     return lstResults;
                 }
 
@@ -496,19 +495,19 @@ namespace DatasetQualityPlugin
                     }
                     else
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "The second column in the Quameter metrics file is not StartTimeStamp; this is unexpected");
+                        LogWarning("The second column in the Quameter metrics file is not StartTimeStamp; this is unexpected");
                     }
                 }
                 else
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "The first column in the Quameter metrics file is not Filename; this is unexpected");
+                    LogWarning("The first column in the Quameter metrics file is not Filename; this is unexpected");
                 }
 
                 for (var index = indexStart; index < strHeaders.Length; index++)
                 {
                     if (string.IsNullOrWhiteSpace(strHeaders[index]))
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Column " + (index + 1) + " in the Quameter metrics file is empty; this is unexpected");
+                        LogWarning("Column " + (index + 1) + " in the Quameter metrics file is empty; this is unexpected");
                     }
                     else
                     {
@@ -564,12 +563,12 @@ namespace DatasetQualityPlugin
                                 }
                                 else if (sLineIn.StartsWith("Error:"))
                                 {
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Quameter error: " + sLineIn);
+                                    LogError("Quameter error: " + sLineIn);
 
                                 }
                                 else if (sLineIn.StartsWith("Unhandled Exception"))
                                 {
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Quameter error: " + sLineIn);
+                                    LogError("Quameter error: " + sLineIn);
                                     blnUnhandledException = true;
                                 }
                             }
@@ -578,14 +577,14 @@ namespace DatasetQualityPlugin
 
                     if (!string.IsNullOrEmpty(sExceptionText))
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, sExceptionText);
+                        LogError(sExceptionText);
                     }
                 }
 
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in ParseConsoleOutputFileForErrors: " + ex.Message);
+                LogError("Exception in ParseConsoleOutputFileForErrors: " + ex.Message);
             }
 
         }
@@ -695,10 +694,8 @@ namespace DatasetQualityPlugin
 
             try
             {
-                if (m_DebugLevel >= 5)
-                {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Posting Quameter Results to the database (using Dataset ID " + intDatasetID + ")");
-                }
+                var writeLog = m_DebugLevel >= 5;
+                LogDebug("Posting Quameter Results to the database (using Dataset ID " + intDatasetID + ")", writeLog);
 
                 // We need to remove the encoding line from sXMLResults before posting to the DB
                 // This line will look like this:
@@ -746,7 +743,7 @@ namespace DatasetQualityPlugin
                 else
                 {
                     mRetData.CloseoutMsg = "Error storing Quameter Results in database, " + STORE_QUAMETER_RESULTS_SP_NAME + " returned " + resultCode;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg);
+                    LogError(mRetData.CloseoutMsg);
                     blnSuccess = false;
                 }
 
@@ -754,7 +751,7 @@ namespace DatasetQualityPlugin
             catch (Exception ex)
             {
                 mRetData.CloseoutMsg = "Exception storing Quameter Results in database";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg, ex);
+                LogError(mRetData.CloseoutMsg, ex);
                 blnSuccess = false;
             }
 
@@ -791,7 +788,7 @@ namespace DatasetQualityPlugin
                     default:
                         // Assume high-res precursor spectra
                         configFileNameSource = "quameter_orbitrap.cfg";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unexpected Thermo instrumentClass; will assume high-res precursor spectra");
+                        LogWarning("Unexpected Thermo instrumentClass; will assume high-res precursor spectra");
                         break;
                 }
 
@@ -808,7 +805,7 @@ namespace DatasetQualityPlugin
                 if (!File.Exists(configFilePathSource))
                 {
                     mRetData.CloseoutMsg = "Quameter parameter file not found " + configFilePathSource;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, mRetData.CloseoutMsg);
+                    LogWarning(mRetData.CloseoutMsg);
                     mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     return false;
                 }
@@ -817,7 +814,7 @@ namespace DatasetQualityPlugin
 
                 // Copy the .Raw file to the working directory
                 // This message is logged if m_DebugLevel == 5
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying the .Raw file from " + dataFilePathRemote);
+                LogDebug("Copying the .Raw file from " + dataFilePathRemote);
 
                 var dataFilePathLocal = Path.Combine(m_WorkDir, Path.GetFileName(dataFilePathRemote));
 
@@ -828,7 +825,7 @@ namespace DatasetQualityPlugin
                 catch (Exception ex)
                 {
                     mRetData.CloseoutMsg = "Exception copying the .Raw file locally";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg + ": " + ex.Message);
+                    LogError(mRetData.CloseoutMsg + ": " + ex.Message);
                     mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     return false;
                 }
@@ -843,7 +840,7 @@ namespace DatasetQualityPlugin
                     if (string.IsNullOrEmpty(mRetData.CloseoutMsg))
                     {
                         mRetData.CloseoutMsg = "Unknown error running Quameter";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg);
+                        LogError(mRetData.CloseoutMsg);
                     }
 
                     mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -854,7 +851,7 @@ namespace DatasetQualityPlugin
             catch (Exception ex)
             {
                 mRetData.CloseoutMsg = "Exception in ProcessThermoRawFile";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg + ": " + ex.Message);
+                LogError(mRetData.CloseoutMsg + ": " + ex.Message);
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return false;
             }
@@ -943,7 +940,7 @@ namespace DatasetQualityPlugin
                     if (string.IsNullOrEmpty(mRetData.CloseoutMsg))
                     {
                         mRetData.CloseoutMsg = "No Quameter results were found";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg + ": lstResults.Count == 0");
+                        LogError(mRetData.CloseoutMsg + ": lstResults.Count == 0");
                     }
 
                 }
@@ -973,7 +970,7 @@ namespace DatasetQualityPlugin
             catch (Exception ex)
             {
                 mRetData.CloseoutMsg = "Exception parsing Quameter results";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception parsing Quameter results and posting to the database", ex);
+                LogError("Exception parsing Quameter results and posting to the database", ex);
                 blnSuccess = false;
             }
 
@@ -1007,6 +1004,7 @@ namespace DatasetQualityPlugin
                 mQuameterStartTime = DateTime.UtcNow;
                 mLastStatusUpdate = DateTime.UtcNow;
 
+                // This will also call RegisterEvents
                 AttachCmdrunnerEvents(cmdRunner);
 
                 // Create a batch file to run the command
@@ -1026,7 +1024,7 @@ namespace DatasetQualityPlugin
                 {
                     var batchCommand = fiQuameter.FullName + " " + cmdStrQuameter + " > " + sConsoleOutputFileName + " 2>&1";
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Creating " + sBatchFileName + " with: " + batchCommand);
+                    LogMessage("Creating " + sBatchFileName + " with: " + batchCommand);
                     swBatchFile.WriteLine(batchCommand);
                 }
 
@@ -1047,20 +1045,20 @@ namespace DatasetQualityPlugin
                     if (ignoreQuameterFailure)
                     {
                         mRetData.CloseoutMsg = "Quameter failed; ignoring because instrument " + instrumentName;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, mRetData.CloseoutMsg);
+                        LogWarning(mRetData.CloseoutMsg);
                         return true;
                     }
 
                     mRetData.CloseoutMsg = "Error running Quameter";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg);
+                    LogError(mRetData.CloseoutMsg);
 
                     if (cmdRunner.ExitCode != 0)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Quameter returned a non-zero exit code: " + cmdRunner.ExitCode);
+                        LogWarning("Quameter returned a non-zero exit code: " + cmdRunner.ExitCode);
                     }
                     else
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to Quameter failed (but exit code is 0)");
+                        LogWarning("Call to Quameter failed (but exit code is 0)");
                     }
 
                     mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -1068,7 +1066,7 @@ namespace DatasetQualityPlugin
                 }
 
                 // This message is logged if m_DebugLevel == 5
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Quameter Complete");
+                LogDebug("Quameter Complete");
 
                 System.Threading.Thread.Sleep(100);
 
@@ -1077,7 +1075,7 @@ namespace DatasetQualityPlugin
                 if (!File.Exists(metricsOutputFilePath))
                 {
                     mRetData.CloseoutMsg = "Metrics file was not created";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg);
+                    LogError(mRetData.CloseoutMsg);
                     mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     return false;
                 }
@@ -1099,7 +1097,7 @@ namespace DatasetQualityPlugin
             catch (Exception ex)
             {
                 mRetData.CloseoutMsg = "Exception in RunQuameter";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mRetData.CloseoutMsg + ": " + ex.Message);
+                LogError(mRetData.CloseoutMsg + ": " + ex.Message);
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return false;
             }
@@ -1123,12 +1121,12 @@ namespace DatasetQualityPlugin
             var msg = "Starting clsPluginMain.Setup()";
 
             // This message is logged if m_DebugLevel == 5
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            LogDebug(msg);
 
             base.Setup(mgrParams, taskParams, statusTools);
 
             msg = "Completed clsPluginMain.Setup()";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            LogDebug(msg);
         }
 
         /// <summary>
@@ -1168,7 +1166,7 @@ namespace DatasetQualityPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
 
@@ -1178,14 +1176,14 @@ namespace DatasetQualityPlugin
 
         #region "Event handlers"
 
-        private void AttachCmdrunnerEvents(clsRunDosProgram CmdRunner)
+        private void AttachCmdrunnerEvents(clsRunDosProgram cmdRunner)
         {
             try
             {
-                CmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
-                CmdRunner.Timeout += CmdRunner_Timeout;
+                RegisterEvents(cmdRunner);
+                cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
+                cmdRunner.Timeout += CmdRunner_Timeout;
             }
-            // ReSharper disable once EmptyGeneralCatchClause
             catch
             {
                 // Ignore errors here
@@ -1211,7 +1209,7 @@ namespace DatasetQualityPlugin
 
         void CmdRunner_Timeout()
         {
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CmdRunner timeout reported");
+            LogError("CmdRunner timeout reported");
         }
 
         void CmdRunner_LoopWaiting()
@@ -1221,7 +1219,7 @@ namespace DatasetQualityPlugin
             {
                 mLastStatusUpdate = DateTime.UtcNow;
                 // This message is logged if m_DebugLevel == 5
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Quameter running; " + DateTime.UtcNow.Subtract(mQuameterStartTime).TotalMinutes + " minutes elapsed");
+                LogDebug("Quameter running; " + DateTime.UtcNow.Subtract(mQuameterStartTime).TotalMinutes + " minutes elapsed");
             }
         }
 

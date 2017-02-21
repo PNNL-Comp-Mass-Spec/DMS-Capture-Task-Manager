@@ -28,7 +28,7 @@ namespace ArchiveStatusCheckPlugin
         public override clsToolReturnData RunTool()
         {
             var msg = "Starting ArchiveStatusCheckPlugin.clsPluginMain.RunTool()";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            LogDebug(msg);
 
             // Perform base class operations, if any
             mRetData = base.RunTool();
@@ -38,7 +38,7 @@ namespace ArchiveStatusCheckPlugin
             if (m_DebugLevel >= 5)
             {
                 msg = "Verifying status of files in MyEMSL for dataset '" + m_Dataset + "'";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                LogMessage(msg);
             }
 
             // Set this to Success for now
@@ -55,7 +55,7 @@ namespace ArchiveStatusCheckPlugin
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;       // Possibly instead use CLOSEOUT_NOT_READY
                 mRetData.CloseoutMsg = "Exception checking archive status (ArchiveStatusCheckPlugin): " + ex.Message;
                 msg = "Exception checking archive status for job " + m_Job;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                LogError(msg, ex);
             }
 
 
@@ -65,7 +65,7 @@ namespace ArchiveStatusCheckPlugin
                 if (m_DebugLevel >= 4)
                 {
                     msg = "MyEMSL status verification successful for dataset " + m_Dataset;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                    LogMessage(msg);
                 }
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
 
@@ -82,7 +82,7 @@ namespace ArchiveStatusCheckPlugin
             }
 
             msg = "Completed clsPluginMain.RunTool()";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            LogDebug(msg);
 
             return mRetData;
 
@@ -118,7 +118,7 @@ namespace ArchiveStatusCheckPlugin
 
                 mRetData.CloseoutMsg = msg;
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg + " for job " + m_Job);
+                LogError(msg + " for job " + m_Job);
                 return false;
             }
 
@@ -131,7 +131,7 @@ namespace ArchiveStatusCheckPlugin
             {
                 mRetData.CloseoutMsg = "Failed to obtain MyEMSL session cookie";
                 msg = "Auto-login to " + Configuration.TestAuthUri + " failed authentication for job " + m_Job;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError(msg);
                 return false;
             }
 
@@ -157,7 +157,7 @@ namespace ArchiveStatusCheckPlugin
 
                 foreach (var criticalError in dctCriticalErrors)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Critical MyEMSL upload error for job " + m_Job + ", status num " + criticalError.Key + ": " + criticalError.Value);
+                    LogError("Critical MyEMSL upload error for job " + m_Job + ", status num " + criticalError.Key + ": " + criticalError.Value);
                 }
             }
 
@@ -215,7 +215,7 @@ namespace ArchiveStatusCheckPlugin
             if (mRetData.EvalCode != EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY || string.IsNullOrEmpty(mRetData.CloseoutMsg))
                 mRetData.CloseoutMsg = msg;
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            LogDebug(msg);
             return false;
         }
 
@@ -268,7 +268,7 @@ namespace ArchiveStatusCheckPlugin
                     if (success)
                     {
                         dctVerifiedURIs.Add(statusNum, statusInfo.StatusURI);
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Successful MyEMSL upload for job " + m_Job + ", status num " + statusNum + ": " + statusInfo.StatusURI);
+                        LogDebug("Successful MyEMSL upload for job " + m_Job + ", status num " + statusNum + ": " + statusInfo.StatusURI);
                         continue;
                     }
 
@@ -290,11 +290,11 @@ namespace ArchiveStatusCheckPlugin
                     exceptionCount++;
                     if (exceptionCount < 3)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception verifying archive status for job " + m_Job + ": " + ex.Message);
+                        LogWarning("Exception verifying archive status for job " + m_Job + ": " + ex.Message);
                     }
                     else
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception verifying archive status for job " + m_Job + ": ", ex);
+                        LogError("Exception verifying archive status for job " + m_Job + ": ", ex);
                         break;
                     }
                 }
@@ -449,7 +449,7 @@ namespace ArchiveStatusCheckPlugin
             catch (Exception ex)
             {
                 var msg = "Exception connecting to database for job " + m_Job + ": " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError(msg);
             }
 
             return dctStatusData;
@@ -525,7 +525,7 @@ namespace ArchiveStatusCheckPlugin
                     retryCount -= 1;
                     var msg = "ArchiveStatusCheckPlugin, GetStatusURIs; Exception querying database for job " + m_Job + ": " + ex.Message + "; ConnectionString: " + connectionString;
                     msg += ", RetryCount = " + retryCount;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    LogError(msg);
 
                     // Delay for 5 second before trying again
                     System.Threading.Thread.Sleep(5000);
@@ -536,7 +536,7 @@ namespace ArchiveStatusCheckPlugin
 
         void statusChecker_ErrorEvent(object sender, MessageEventArgs e)
         {
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Status checker error for job " + m_Job + ": " + e.Message);
+            LogError("Status checker error for job " + m_Job + ": " + e.Message);
         }
 
         protected bool UpdateIngestStepsCompletedInDB(List<int> statusNumsToUpdate, Dictionary<int, clsIngestStatusInfo> dctStatusData)
@@ -573,7 +573,7 @@ namespace ArchiveStatusCheckPlugin
             catch (Exception ex)
             {
                 var msg = "Exception calling stored procedure SetMyEMSLUploadSupersededIfFailed, job " + m_Job;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                LogError(msg, ex);
                 return false;
             }
 
@@ -618,13 +618,13 @@ namespace ArchiveStatusCheckPlugin
                     return true;
 
                 var msg = "Error " + resCode + " calling stored procedure " + SP_NAME + ", job " + m_Job;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError(msg);
                 return false;
             }
             catch (Exception ex)
             {
                 var msg = "Exception calling stored procedure " + SP_NAME + ", job " + m_Job;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                LogError(msg, ex);
                 return false;
             }
 
@@ -670,13 +670,13 @@ namespace ArchiveStatusCheckPlugin
                     return true;
 
                 var msg = "Error " + resCode + " calling stored procedure " + SP_NAME + ", job " + m_Job;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError(msg);
                 return false;
             }
             catch (Exception ex)
             {
                 var msg = "Exception calling stored procedure " + SP_NAME + ", job " + m_Job;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                LogError(msg, ex);
                 return false;
             }
 

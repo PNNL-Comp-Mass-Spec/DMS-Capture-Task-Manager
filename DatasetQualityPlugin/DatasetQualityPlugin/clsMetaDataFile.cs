@@ -86,13 +86,13 @@ namespace DatasetQualityPlugin
             {
                 File.WriteAllText(metaFileNamePath, xmlText);
                 var msg = "Metadata file created for dataset " + TaskParams.GetParam("Dataset");
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                clsUtilities.LogDebug(msg);
                 return true;
             }
             catch (Exception ex)
             {
                 var msg = "Exception creating metadata file for dataset " + TaskParams.GetParam("Dataset");
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                clsUtilities.LogError(msg, ex);
                 return false;
             }
         }
