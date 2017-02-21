@@ -39,6 +39,8 @@ namespace DatasetInfoPlugin
         iMSFileInfoScanner m_MsFileScanner;
         string m_Msg;
         bool m_ErrOccurred;
+        private int m_FailedScanCount;
+
         #endregion
 
         #region "Methods"
@@ -269,6 +271,8 @@ namespace DatasetInfoPlugin
 
             foreach (var datasetFileOrFolder in sFileOrFolderNames)
             {
+                m_FailedScanCount = 0;
+
                 var currentOutputFolder = ConstructOutputFolderPath(
                     outputPathBase, datasetFileOrFolder, sFileOrFolderNames.Count,
                     outputFolderNames, ref nextSubFolderSuffix);
@@ -326,6 +330,11 @@ namespace DatasetInfoPlugin
                     result.CloseoutMsg = m_Msg;
                     result.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     return result;
+                }
+
+                if (m_FailedScanCount > 10)
+                {
+                    LogWarning(string.Format("Unable to load data for {0} spectra", m_FailedScanCount));
                 }
 
             } // foreach file in sFileOrFolderNames
@@ -437,7 +446,7 @@ namespace DatasetInfoPlugin
         private void ProcessMultiDatasetInfoScannerResults(
             string outputPathBase,
             clsDatasetInfoXmlMerger datasetXmlMerger,
-            string dsInfoXML, 
+            string dsInfoXML,
             IEnumerable<string> outputFolderNames)
         {
 
@@ -585,9 +594,9 @@ namespace DatasetInfoPlugin
                         var scanTypeName = item.Key.Key;
                         var scanCount = item.Value;
 
-                        htmlWriter.WriteLine("          <tr><td>" + scanTypeName  + "</td><td align=\"center\">" + scanCount  + "</td><td></td></tr>");
+                        htmlWriter.WriteLine("          <tr><td>" + scanTypeName + "</td><td align=\"center\">" + scanCount + "</td><td></td></tr>");
                     }
-                    
+
                     htmlWriter.WriteLine("        </table>");
                     htmlWriter.WriteLine("      </td>");
                     htmlWriter.WriteLine("    </tr>");
@@ -1129,12 +1138,39 @@ namespace DatasetInfoPlugin
                 LogError(errorMsg);
             }
 
+        }
+
+        /// <summary>
+        /// Handles a warning event from MS file scanner
+        /// </summary>
+        /// <param name="message"></param>
+        void m_MsFileScanner_WarningEvent(string message)
+        {
+            if (message.StartsWith("Unable to load data for scan"))
+            {
+                m_FailedScanCount++;
+
+                if (m_FailedScanCount < 10)
+                {
+                    LogWarning(message);
+                }
+                else if (
+                    m_FailedScanCount < 100 && m_FailedScanCount % 25 == 0 ||
+                    m_FailedScanCount < 1000 && m_FailedScanCount % 250 == 0 ||
+                    m_FailedScanCount % 500 == 0)
+                {
+                    LogWarning(string.Format("Unable to load data for {0} spectra", m_FailedScanCount));
+                }
+            }
+            else
+            {
+                LogWarning(message);
             }
 
         }
-        
+
         #endregion
     }
 
-}	// End namespace
+}
 
