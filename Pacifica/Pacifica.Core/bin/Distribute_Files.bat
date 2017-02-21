@@ -97,7 +97,6 @@ xcopy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Programs\
 xcopy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Programs\Mage\DeployedFiles\MageFileProcessor" /D /Y
 xcopy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Programs\Mage\DeployedFiles\MageMetaDataProcessor" /D /Y
 xcopy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Programs\Mage\DeployedFiles\Ranger" /D /Y
-xcopy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Programs\Mage\Mage\bin\Debug" /D /Y
 xcopy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Programs\Mage\Mage\bin\Release" /D /Y
 xcopy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Programs\Mage\Mage\lib" /D /Y
 xcopy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Programs\Mage\MageConcatenator\bin\Release" /D /Y
