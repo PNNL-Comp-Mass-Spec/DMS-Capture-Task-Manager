@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using PRISM;
 
 namespace CaptureTaskManager
@@ -11,23 +12,13 @@ namespace CaptureTaskManager
     {
         #region "Module variables"
 
-        private bool mCreateNoWindow = true;
-        private int mMonitorInterval = 2000; // Msec
+        // msec
+        private int m_MonitorInterval = 2000;
 
-        private string mWorkDir;
-        private int mDebugLevel;
+        private bool m_AbortProgramPostLogEntry;
 
-        private bool mCacheStandardOutput;
-
-        private bool mEchoOutputToConsole = true;
-        private bool mWriteConsoleOutputToFile;
-
-        private string mConsoleOutputFilePath = string.Empty;
-
-        private bool mAbortProgramPostLogEntry;
-
-        //Runs specified program
-        private PRISM.clsProgRunner mProgRunner;
+        // Runs specified program
+        private clsProgRunner m_ProgRunner;
 
         #endregion
 
@@ -47,15 +38,7 @@ namespace CaptureTaskManager
         /// <remarks></remarks>
         public event ConsoleOutputEventEventHandler ConsoleOutputEvent;
 
-        public delegate void ConsoleOutputEventEventHandler(string NewText);
-
-        /// <summary>
-        /// Error message that was written to the console
-        /// </summary>
-        /// <remarks></remarks>
-        public event ConsoleErrorEventEventHandler ConsoleErrorEvent;
-
-        public delegate void ConsoleErrorEventEventHandler(string NewText);
+        public delegate void ConsoleOutputEventEventHandler(string newText);
 
         /// <summary>
         /// Program execution exceeded MaxRuntimeSeconds
@@ -76,12 +59,12 @@ namespace CaptureTaskManager
         {
             get
             {
-                if (mProgRunner == null)
+                if (m_ProgRunner == null)
                 {
                     return string.Empty;
                 }
 
-                return mProgRunner.CachedConsoleOutput;
+                return m_ProgRunner.CachedConsoleOutput;
             }
         }
 
@@ -92,12 +75,12 @@ namespace CaptureTaskManager
         {
             get
             {
-                if (mProgRunner == null)
+                if (m_ProgRunner == null)
                 {
                     return string.Empty;
                 }
 
-                return mProgRunner.CachedConsoleError;
+                return m_ProgRunner.CachedConsoleError;
             }
         }
 
@@ -107,11 +90,13 @@ namespace CaptureTaskManager
         /// Will also fire event ConsoleOutputEvent as new text is written to the console
         /// </summary>
         /// <remarks>If this is true, then no window will be shown, even if CreateNoWindow=False</remarks>
-        public bool CacheStandardOutput
-        {
-            get { return mCacheStandardOutput; }
-            set { mCacheStandardOutput = value; }
-        }
+        public bool CacheStandardOutput { get; set; } = false;
+
+        /// <summary>
+        /// When true, the program name and command line arguments will be added to the top of the console output file
+        /// </summary>
+        /// <remarks>Defaults to true</remarks>
+        public bool ConsoleOutputFileIncludesCommandLine { get; set; } = true;
 
         /// <summary>
         /// File path to which the console output will be written if WriteConsoleOutputToFile is true
@@ -120,45 +105,19 @@ namespace CaptureTaskManager
         /// <value></value>
         /// <returns></returns>
         /// <remarks></remarks>
-        public string ConsoleOutputFilePath
-        {
-            get { return mConsoleOutputFilePath; }
-            set
-            {
-                if (value == null)
-                    value = string.Empty;
-                mConsoleOutputFilePath = value;
-            }
-        }
+        public string ConsoleOutputFilePath { get; set; } = string.Empty;
 
         /// <summary>
         /// Determine if window should be displayed.
         /// Will be forced to True if CacheStandardOutput = True
         /// </summary>
-        public bool CreateNoWindow
-        {
-            get { return mCreateNoWindow; }
-            set { mCreateNoWindow = value; }
-        }
-
-        /// <summary>
-        /// Debug level for logging
-        /// </summary>
-        public int DebugLevel
-        {
-            get { return mDebugLevel; }
-            set { mDebugLevel = value; }
-        }
+        public bool CreateNoWindow { get; set; } = true;
 
         /// <summary>
         /// When true, then echoes, in real time, text written to the Console by the external program 
         /// Ignored if CreateNoWindow = False
         /// </summary>
-        public bool EchoOutputToConsole
-        {
-            get { return mEchoOutputToConsole; }
-            set { mEchoOutputToConsole = value; }
-        }
+        public bool EchoOutputToConsole { get; set; } = true;
 
         /// <summary>
         /// Exit code when process completes.
@@ -177,12 +136,29 @@ namespace CaptureTaskManager
         /// </summary>
         public int MonitorInterval
         {
-            get { return mMonitorInterval; }
+            get { return m_MonitorInterval; }
             set
             {
                 if (value < 250)
                     value = 250;
-                mMonitorInterval = value;
+                m_MonitorInterval = value;
+            }
+        }
+
+        /// <summary>
+        /// ProcessID of an externally spawned process
+        /// </summary>
+        /// <remarks>0 if no external process running</remarks>
+        public int ProcessID
+        {
+            get
+            {
+                if (m_ProgRunner == null)
+                {
+                    return 0;
+                }
+
+                return m_ProgRunner.PID;
             }
         }
 
@@ -194,27 +170,23 @@ namespace CaptureTaskManager
         /// <summary>
         /// Current monitoring state
         /// </summary>
-        public PRISM.clsProgRunner.States State
+        public clsProgRunner.States State
         {
             get
             {
-                if (mProgRunner == null)
+                if (m_ProgRunner == null)
                 {
-                    return PRISM.clsProgRunner.States.NotMonitoring;
+                    return clsProgRunner.States.NotMonitoring;
                 }
 
-                return mProgRunner.State;
+                return m_ProgRunner.State;
             }
         }
 
         /// <summary>
         /// Working directory for process execution.
         /// </summary>
-        public string WorkDir
-        {
-            get { return mWorkDir; }
-            set { mWorkDir = value; }
-        }
+        public string WorkDir { get; set; }
 
         /// <summary>
         /// When true then will write the standard output to a file in real-time
@@ -222,12 +194,11 @@ namespace CaptureTaskManager
         /// Define the path to the file using property ConsoleOutputFilePath; if not defined, the file
         /// will be created in the WorkDir (though, if WorkDir is blank, then will be created in the folder with the Program we're running)
         /// </summary>
-        /// <remarks>If this is true, then no window will be shown, even if CreateNoWindow=False</remarks>
-        public bool WriteConsoleOutputToFile
-        {
-            get { return mWriteConsoleOutputToFile; }
-            set { mWriteConsoleOutputToFile = value; }
-        }
+        /// <remarks>
+        /// Defaults to false
+        /// If this is true, no window will be shown, even if CreateNoWindow=False
+        /// </remarks>
+        public bool WriteConsoleOutputToFile { get; set; } = false;
 
         #endregion
 
@@ -236,11 +207,11 @@ namespace CaptureTaskManager
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="WorkDir">Workdirectory for input/output files, if any</param>
+        /// <param name="workDir">Workdirectory for input/output files, if any</param>
         /// <remarks></remarks>
-        public clsRunDosProgram(string WorkDir)
+        public clsRunDosProgram(string workDir)
         {
-            mWorkDir = WorkDir;
+            WorkDir = workDir;
         }
 
         /// <summary>
@@ -259,55 +230,32 @@ namespace CaptureTaskManager
         /// <remarks></remarks>
         public void AbortProgramNow(bool blnPostLogEntry)
         {
+            m_AbortProgramPostLogEntry = blnPostLogEntry;
             ProgramAborted = true;
-            mAbortProgramPostLogEntry = blnPostLogEntry;
         }
 
-        protected void AttachProgRunnerEvents()
+        private void OnLoopWaiting()
         {
-            try
-            {
-                mProgRunner.ConsoleErrorEvent += ProgRunner_ConsoleErrorEvent;
-                mProgRunner.ConsoleOutputEvent += ProgRunner_ConsoleOutputEvent;
-                mProgRunner.ProgChanged += ProgRunner_ProgChanged;
-            }
-                // ReSharper disable once EmptyGeneralCatchClause
-            catch
-            {
-                // Ignore errors here
-            }
+            LoopWaiting?.Invoke();
         }
 
-        protected void DetachProgRunnerEvents()
+        private void OnTimeout()
         {
-            try
-            {
-                if (mProgRunner != null)
-                {
-                    mProgRunner.ConsoleErrorEvent -= ProgRunner_ConsoleErrorEvent;
-                    mProgRunner.ConsoleOutputEvent -= ProgRunner_ConsoleOutputEvent;
-                    mProgRunner.ProgChanged -= ProgRunner_ProgChanged;
-                }
-            }
-                // ReSharper disable once EmptyGeneralCatchClause
-            catch
-            {
-                // Ignore errors here
-            }
+            Timeout?.Invoke();
         }
 
         /// <summary>
         /// Runs a program and waits for it to exit
         /// </summary>
         /// <param name="progNameLoc">The path to the program to run</param>
-        /// <param name="cmdLine">The arguments to pass to the program, for example: /N=35</param>
+        /// <param name="cmdLine">The arguments to pass to the program, for example /N=35</param>
         /// <param name="progName">The name of the program to use for the Window title</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>Ignores the result code reported by the program</remarks>
         public bool RunProgram(string progNameLoc, string cmdLine, string progName)
         {
-            const bool UseResCode = false;
-            return RunProgram(progNameLoc, cmdLine, progName, UseResCode);
+            const bool useResCode = false;
+            return RunProgram(progNameLoc, cmdLine, progName, useResCode);
         }
 
         /// <summary>
@@ -331,15 +279,15 @@ namespace CaptureTaskManager
         /// <param name="progNameLoc">The path to the program to run</param>
         /// <param name="cmdLine">The arguments to pass to the program, for example /N=35</param>
         /// <param name="progName">The name of the program to use for the Window title</param>
-        /// <param name="UseResCode">If true, then returns False if the ProgRunner ExitCode is non-zero</param>
-        /// <param name="maxRuntimeSeconds">If a positive number, then program execution will be aborted if the runtime exceeds MaxRuntimeSeconds</param>
+        /// <param name="useResCode">If true, then returns False if the ProgRunner ExitCode is non-zero</param>
+        /// <param name="maxRuntimeSeconds">If a positive number, then program execution will be aborted if the runtime exceeds maxRuntimeSeconds</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>maxRuntimeSeconds will be increased to 15 seconds if it is between 1 and 14 seconds</remarks>
-        public bool RunProgram(string progNameLoc, string cmdLine, string progName, bool UseResCode, int maxRuntimeSeconds)
+        public bool RunProgram(string progNameLoc, string cmdLine, string progName, bool useResCode, int maxRuntimeSeconds)
         {
             // Require a minimum monitoring interval of 250 mseconds
-            if (mMonitorInterval < 250)
-                mMonitorInterval = 250;
+            if (m_MonitorInterval < 250)
+                m_MonitorInterval = 250;
 
             if (maxRuntimeSeconds > 0 && maxRuntimeSeconds < 15)
             {
@@ -347,31 +295,34 @@ namespace CaptureTaskManager
             }
             MaxRuntimeSeconds = maxRuntimeSeconds;
 
-            // Re-instantiate mProgRunner each time RunProgram is called since it is disposed of later in this function
+            // Re-instantiate m_ProgRunner each time RunProgram is called since it is disposed of later in this function
             // Also necessary to avoid problems caching the console output
-            mProgRunner = new PRISM.clsProgRunner();
+            m_ProgRunner = new clsProgRunner
             {
-                mProgRunner.Arguments = cmdLine;
-                mProgRunner.CreateNoWindow = mCreateNoWindow;
-                mProgRunner.MonitoringInterval = mMonitorInterval;
-                mProgRunner.Name = progName;
-                mProgRunner.Program = progNameLoc;
-                mProgRunner.Repeat = false;
-                mProgRunner.RepeatHoldOffTime = 0;
-                mProgRunner.WorkDir = mWorkDir;
-                mProgRunner.CacheStandardOutput = mCacheStandardOutput;
-                mProgRunner.EchoOutputToConsole = mEchoOutputToConsole;
+                Arguments = cmdLine,
+                CreateNoWindow = CreateNoWindow,
+                MonitoringInterval = m_MonitorInterval,
+                Name = progName,
+                Program = progNameLoc,
+                Repeat = false,
+                RepeatHoldOffTime = 0,
+                WorkDir = WorkDir,
+                CacheStandardOutput = CacheStandardOutput,
+                EchoOutputToConsole = EchoOutputToConsole,
+                WriteConsoleOutputToFile = WriteConsoleOutputToFile,
+                ConsoleOutputFilePath = ConsoleOutputFilePath,
+                ConsoleOutputFileIncludesCommandLine = ConsoleOutputFileIncludesCommandLine
+            };
 
-                mProgRunner.WriteConsoleOutputToFile = mWriteConsoleOutputToFile;
-                mProgRunner.ConsoleOutputFilePath = mConsoleOutputFilePath;
-            }
+            m_ProgRunner.ConsoleErrorEvent += ProgRunner_ConsoleErrorEvent;
+            m_ProgRunner.ConsoleOutputEvent += ProgRunner_ConsoleOutputEvent;
+            m_ProgRunner.ProgChanged += ProgRunner_ProgChanged;
 
-            AttachProgRunnerEvents();
+            OnStatusEvent("RunProgram " + m_ProgRunner.Program + " " + m_ProgRunner.Arguments);
 
-            OnStatusEvent("RunProgram " + mProgRunner.Program + " " + mProgRunner.Arguments);
-
+            m_AbortProgramPostLogEntry = true;
             ProgramAborted = false;
-            mAbortProgramPostLogEntry = true;
+
             var blnRuntimeExceeded = false;
             var blnAbortLogged = false;
             var dtStartTime = DateTime.UtcNow;
@@ -379,23 +330,31 @@ namespace CaptureTaskManager
             try
             {
                 // Start the program executing
-                mProgRunner.StartAndMonitorProgram();
+                m_ProgRunner.StartAndMonitorProgram();
 
-                // Loop until program is complete, or until mMaxRuntimeSeconds seconds elapses
-                // And (ProgRunner.State <> 10)
-                while ((mProgRunner.State != PRISM.clsProgRunner.States.NotMonitoring))
+                // Loop until program is complete, or until MaxRuntimeSeconds seconds elapses
+                while (m_ProgRunner.State != clsProgRunner.States.NotMonitoring)
                 {
-                    LoopWaiting?.Invoke();
-                    System.Threading.Thread.Sleep(mMonitorInterval);
+                    OnLoopWaiting();
+                    Thread.Sleep(m_MonitorInterval);
 
                     if (MaxRuntimeSeconds > 0)
                     {
                         if (DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds > MaxRuntimeSeconds && !ProgramAborted)
                         {
-                            ProgramAborted = true;
+                            AbortProgramNow(false);
                             blnRuntimeExceeded = true;
-                            Timeout?.Invoke();
+                            OnTimeout();
                         }
+                    }
+
+                    if (m_ProgRunner.State == clsProgRunner.States.StartingProcess &&
+                        DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds > 30 &&
+                        DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds < 90)
+                    {
+                        // It has taken over 30 seconds for the thread to start
+                        // Try re-joining
+                        m_ProgRunner.JoinThreadNow();
                     }
 
                     if (!ProgramAborted)
@@ -403,39 +362,43 @@ namespace CaptureTaskManager
                         continue;
                     }
 
-                    if (mAbortProgramPostLogEntry && !blnAbortLogged)
+                    if (m_AbortProgramPostLogEntry && !blnAbortLogged)
                     {
                         blnAbortLogged = true;
+                        string msg;
                         if (blnRuntimeExceeded)
                         {
-                            OnErrorEvent("  Aborting ProgRunner since " + MaxRuntimeSeconds + " seconds has elapsed");
+                            msg = "  Aborting ProgRunner for " + progName + " since " + MaxRuntimeSeconds + " seconds has elapsed";
                         }
                         else
                         {
-                            OnErrorEvent("  Aborting ProgRunner since AbortProgramNow() was called");
+                            msg = "  Aborting ProgRunner for " + progName + " since AbortProgramNow() was called";
                         }
+
+                        OnErrorEvent(msg);
                     }
-                    mProgRunner.StopMonitoringProgram(kill: true);
+                    m_ProgRunner.StopMonitoringProgram(kill: true);
+
                 }
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception running DOS program " + progNameLoc, ex);
-                DetachProgRunnerEvents();
-                mProgRunner = null;
+                var msg = "Exception running DOS program " + progNameLoc;
+                OnErrorEvent(msg, ex);
+                m_ProgRunner = null;
                 return false;
             }
 
-            // Cache the exit code in mExitCode
-            ExitCode = mProgRunner.ExitCode;
-            DetachProgRunnerEvents();
-            mProgRunner = null;
+            // Cache the exit code in ExitCode
+            ExitCode = m_ProgRunner.ExitCode;
+            m_ProgRunner = null;
 
-            if (UseResCode & ExitCode != 0)
+            if (useResCode & ExitCode != 0)
             {
-                if ((ProgramAborted && mAbortProgramPostLogEntry) || !ProgramAborted)
+                if (ProgramAborted && m_AbortProgramPostLogEntry || !ProgramAborted)
                 {
-                    OnErrorEvent("  ProgRunner.ExitCode = " + ExitCode + " for Program = " + progNameLoc);
+                    var msg = "  ProgRunner.ExitCode = " + ExitCode + " for Program = " + progNameLoc;
+                    OnErrorEvent(msg);
                 }
                 return false;
             }
@@ -450,20 +413,20 @@ namespace CaptureTaskManager
 
         #endregion
 
-        private void ProgRunner_ConsoleErrorEvent(string NewText)
+        private void ProgRunner_ConsoleErrorEvent(string newText)
         {
-            ConsoleErrorEvent?.Invoke(NewText);
-            Console.WriteLine("Console error: " + Environment.NewLine + NewText);
+            OnErrorEvent("Console error: " + newText);
         }
 
-        private void ProgRunner_ConsoleOutputEvent(string NewText)
+        private void ProgRunner_ConsoleOutputEvent(string newText)
         {
-            ConsoleOutputEvent?.Invoke(NewText);
+            ConsoleOutputEvent?.Invoke(newText);
         }
 
-        private void ProgRunner_ProgChanged(PRISM.clsProgRunner obj)
+        private void ProgRunner_ProgChanged(clsProgRunner obj)
         {
             // This event is ignored by this class
         }
     }
+
 }
