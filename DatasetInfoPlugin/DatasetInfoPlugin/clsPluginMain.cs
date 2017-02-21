@@ -1034,18 +1034,19 @@ namespace DatasetInfoPlugin
         protected bool StoreToolVersionInfo()
         {
 
+            LogDebug("Determining tool version info");
+
             var strToolVersionInfo = string.Empty;
-            var fiExecutingAssembly = new FileInfo(Assembly.GetExecutingAssembly().Location);
-            if (fiExecutingAssembly.DirectoryName == null)
+            var appFolder = clsUtilities.GetAppFolderPath();
+
+            if (string.IsNullOrWhiteSpace(appFolder))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "FileInfo object for the executing assembly has a null value for DirectoryName");
+                LogError("GetAppFolderPath returned an empty directory path to StoreToolVersionInfo for the Dataset Info plugin");
                 return false;
             }
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
-
-            // Lookup the version of the Capture tool plugin
-            var strPluginPath = Path.Combine(fiExecutingAssembly.DirectoryName, "DatasetInfoPlugin.dll");
+            // Lookup the version of the dataset info plugin
+            var strPluginPath = Path.Combine(appFolder, "DatasetInfoPlugin.dll");
             var bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strPluginPath);
             if (!bSuccess)
                 return false;
@@ -1060,7 +1061,7 @@ namespace DatasetInfoPlugin
             }
 
             // Lookup the version of the UIMFLibrary DLL
-            var strUIMFLibraryPath = Path.Combine(fiExecutingAssembly.DirectoryName, "UIMFLibrary.dll");
+            var strUIMFLibraryPath = Path.Combine(appFolder, "UIMFLibrary.dll");
             bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strUIMFLibraryPath);
             if (!bSuccess)
                 return false;
