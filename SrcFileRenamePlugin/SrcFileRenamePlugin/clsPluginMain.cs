@@ -5,8 +5,8 @@
 // Copyright 2009, Battelle Memorial Institute
 // Created 11/17/2009
 //
-// Last modified 11/17/2009
 //*********************************************************************************************************
+
 using System;
 using CaptureTaskManager;
 
@@ -111,25 +111,25 @@ namespace SrcFileRenamePlugin
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+            LogDebug("Determining tool version info");
 
             var strToolVersionInfo = string.Empty;
-            var ioAppFileInfo = new System.IO.FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            if (ioAppFileInfo.DirectoryName == null)
+            var appFolder = clsUtilities.GetAppFolderPath();
+
+            if (string.IsNullOrWhiteSpace(appFolder))
             {
-                LogError("Unable to determine the directory name from path " +
-                         System.Reflection.Assembly.GetExecutingAssembly().Location);
+                LogError("GetAppFolderPath returned an empty directory path to StoreToolVersionInfo for the Source File Rename plugin");
                 return false;
             }
 
             // Lookup the version of the Source File Rename plugin
-            var strPluginPath = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "SrcFileRenamePlugin.dll");
+            var strPluginPath = System.IO.Path.Combine(appFolder, "SrcFileRenamePlugin.dll");
             var bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strPluginPath);
             if (!bSuccess)
                 return false;
 
             // Lookup the version of the Capture task manager
-            var strCTMPath = System.IO.Path.Combine(ioAppFileInfo.DirectoryName, "CaptureTaskManager.exe");
+            var strCTMPath = System.IO.Path.Combine(appFolder, "CaptureTaskManager.exe");
             bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strCTMPath);
             if (!bSuccess)
                 return false;

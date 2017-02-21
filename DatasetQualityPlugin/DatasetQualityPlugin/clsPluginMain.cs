@@ -1136,15 +1136,20 @@ namespace DatasetQualityPlugin
         protected bool StoreToolVersionInfo(bool storeQuameterVersion)
         {
 
-            var sToolVersionInfo = string.Empty;
-            var ioAppFileInfo = new FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            LogDebug("Determining tool version info");
 
-            // This message is logged if m_DebugLevel == 5
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+            var strToolVersionInfo = string.Empty;
+            var appFolder = clsUtilities.GetAppFolderPath();
 
-            // Lookup the version of the Capture tool plugin
-            var sPluginPath = Path.Combine(ioAppFileInfo.DirectoryName, "DatasetQualityPlugin.dll");
-            var bSuccess = base.StoreToolVersionInfoOneFile(ref sToolVersionInfo, sPluginPath);
+            if (string.IsNullOrWhiteSpace(appFolder))
+            {
+                LogError("GetAppFolderPath returned an empty directory path to StoreToolVersionInfo for the Dataset Info plugin");
+                return false;
+            }
+
+            // Lookup the version of the dataset quality plugin
+            var sPluginPath = Path.Combine(appFolder, "DatasetQualityPlugin.dll");
+            var bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, sPluginPath);
             if (!bSuccess)
                 return false;
 
@@ -1162,7 +1167,7 @@ namespace DatasetQualityPlugin
 
             try
             {
-                return SetStepTaskToolVersion(sToolVersionInfo, ioToolFiles, false);
+                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, false);
             }
             catch (Exception ex)
             {

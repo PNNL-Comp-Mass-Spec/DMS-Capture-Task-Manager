@@ -269,25 +269,25 @@ namespace DatasetArchivePlugin
         protected bool StoreToolVersionInfo()
         {
 
+            LogDebug("Determining tool version info");
+
             var strToolVersionInfo = string.Empty;
-            var ioAppFileInfo = new FileInfo(Assembly.GetExecutingAssembly().Location);
+            var appFolder = clsUtilities.GetAppFolderPath();
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
-
-            if (string.IsNullOrEmpty(ioAppFileInfo.DirectoryName))
+            if (string.IsNullOrWhiteSpace(appFolder))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot determine the parent folder name of DLL " + Assembly.GetExecutingAssembly().FullName);
+                LogError("GetAppFolderPath returned an empty directory path to StoreToolVersionInfo for the Dataset Archive plugin");
                 return false;
             }
 
             // Lookup the version of the Dataset Archive plugin
-            var strPluginPath = Path.Combine(ioAppFileInfo.DirectoryName, "DatasetArchivePlugin.dll");
+            var strPluginPath = Path.Combine(appFolder, "DatasetArchivePlugin.dll");
             var bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strPluginPath);
             if (!bSuccess)
                 return false;
 
             // Lookup the version of the MyEMSLReader
-            var strMD5StageFileCreatorPath = Path.Combine(ioAppFileInfo.DirectoryName, "MyEMSLReader.dll");
+            var strMD5StageFileCreatorPath = Path.Combine(appFolder, "MyEMSLReader.dll");
             bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strMD5StageFileCreatorPath);
             if (!bSuccess)
                 return false;

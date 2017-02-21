@@ -133,28 +133,19 @@ namespace CaptureToolPlugin
         protected bool StoreToolVersionInfo()
         {
 
+            LogDebug("Determining tool version info");
+
             var strToolVersionInfo = string.Empty;
-            var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-
-            // Lookup the version of the Capture tool plugin
-            if (assembly.Location == null)
+            var appFolder = clsUtilities.GetAppFolderPath();
+            
+            if (string.IsNullOrWhiteSpace(appFolder))
             {
-                LogError("Unable to determine the directory path for the Exe using Reflection; assembly.Location is null");
+                LogError("GetAppFolderPath returned an empty directory path to StoreToolVersionInfo for the Capture plugin");
                 return false;
             }
 
-            var ioAppFileInfo = new FileInfo(assembly.Location);
-
-            ReportStatus("Determining tool version info", true);
-
             // Lookup the version of the Capture tool plugin
-            if (ioAppFileInfo.DirectoryName == null)
-            {
-                LogError("Unable to parse the parent directory for the Exe using path " + assembly.Location);
-                return false;
-            }
-
-            var strPluginPath = Path.Combine(ioAppFileInfo.DirectoryName, "CaptureToolPlugin.dll");
+            var strPluginPath = Path.Combine(appFolder, "CaptureToolPlugin.dll");
             var bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strPluginPath);
             if (!bSuccess)
             {
@@ -162,7 +153,7 @@ namespace CaptureToolPlugin
             }
 
             // Lookup the version of the Capture task manager
-            var strCTMPath = Path.Combine(ioAppFileInfo.DirectoryName, "CaptureTaskManager.exe");
+            var strCTMPath = Path.Combine(appFolder, "CaptureTaskManager.exe");
             bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strCTMPath);
             if (!bSuccess)
             {

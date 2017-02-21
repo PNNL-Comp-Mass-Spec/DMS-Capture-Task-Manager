@@ -2186,28 +2186,31 @@ namespace DatasetIntegrityPlugin
         protected bool StoreToolVersionInfo(string agilentToUimfConverterPath, string openChromProgPath)
         {
 
+            LogDebug("Determining tool version info");
+
             var strToolVersionInfo = string.Empty;
-            var ioAppFileInfo = new FileInfo(Assembly.GetExecutingAssembly().Location);
+            var appFolder = clsUtilities.GetAppFolderPath();
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
-
-            if (ioAppFileInfo.DirectoryName == null)
+            if (string.IsNullOrEmpty(appFolder))
+            {
+                LogError("GetAppFolderPath returned an empty directory path to StoreToolVersionInfo for the Dataset Integrity plugin");
                 return false;
+            }
 
             // Lookup the version of the Capture tool plugin
-            var strPluginPath = Path.Combine(ioAppFileInfo.DirectoryName, "DatasetIntegrityPlugin.dll");
+            var strPluginPath = Path.Combine(appFolder, "DatasetIntegrityPlugin.dll");
             var bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strPluginPath);
             if (!bSuccess)
                 return false;
 
             // Lookup the version of SQLite
-            var strSQLitePath = Path.Combine(ioAppFileInfo.DirectoryName, "System.Data.SQLite.dll");
+            var strSQLitePath = Path.Combine(appFolder, "System.Data.SQLite.dll");
             bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strSQLitePath);
             if (!bSuccess)
                 return false;
 
             // Lookup the version of the UIMFLibrary
-            var strUIMFLibraryPath = Path.Combine(ioAppFileInfo.DirectoryName, "UIMFLibrary.dll");
+            var strUIMFLibraryPath = Path.Combine(appFolder, "UIMFLibrary.dll");
             bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strUIMFLibraryPath);
             if (!bSuccess)
                 return false;

@@ -199,11 +199,20 @@ namespace CaptureTaskManager
         public static string GetAppFolderPath()
         {
             var entryAssembly = System.Reflection.Assembly.GetEntryAssembly();
+            var exePath = entryAssembly.Location;
+            if (exePath == null)
+            {
+                LogWarning("Unable to determine the exe path in GetAppFolderPath");
+                return string.Empty;
+            }
 
-            var fiAssemblyFile = new FileInfo(entryAssembly.Location);
+            var fiAssemblyFile = new FileInfo(exePath);
 
             if (string.IsNullOrEmpty(fiAssemblyFile.DirectoryName))
+            {
+                LogWarning("Unable to determine the parent directory in GetAppFolderPath for " + exePath);
                 return string.Empty;
+            }
 
             return fiAssemblyFile.DirectoryName;
         }
