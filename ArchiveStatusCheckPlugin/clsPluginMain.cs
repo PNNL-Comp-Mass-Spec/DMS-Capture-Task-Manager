@@ -241,7 +241,7 @@ namespace ArchiveStatusCheckPlugin
                 try
                 {
                     string xmlServerResponse;
-                    var ingestSuccess = base.GetMyEMSLIngestStatus(
+                    var ingestSuccess = GetMyEMSLIngestStatus(
                         m_Job, statusChecker, statusInfo.StatusURI,
                         statusInfo.EUS_InstrumentID, statusInfo.EUS_ProposalID, statusInfo.EUS_UploaderID,
                         cookieJar, mRetData, out xmlServerResponse);
@@ -687,4 +687,4 @@ namespace ArchiveStatusCheckPlugin
 
     }
 
-}	// End namespace
+}

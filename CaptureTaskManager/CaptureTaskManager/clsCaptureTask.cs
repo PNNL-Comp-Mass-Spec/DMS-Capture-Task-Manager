@@ -210,7 +210,7 @@ namespace CaptureTaskManager
 
             try
             {
-                //Set up the command object prior to SP execution
+                // Set up the command object prior to SP execution
                 {
                     myCmd.CommandType = CommandType.StoredProcedure;
                     myCmd.CommandText = SP_NAME_REQUEST_TASK;
@@ -236,17 +236,17 @@ namespace CaptureTaskManager
                     PrintCommandParams(myCmd);
                 }
 
-                //Execute the SP
+                // Execute the SP
                 DataTable dt;
                 var retVal = m_CaptureTaskDBProcedureExecutor.ExecuteSP(myCmd, out dt);
 
                 switch (retVal)
                 {
                     case RET_VAL_OK:
-                        //No errors found in SP call, so see if any step tasks were found
+                        // No errors found in SP call, so see if any step tasks were found
                         var jobID = (int)myCmd.Parameters["@jobNumber"].Value;
 
-                        //Step task was found; get the data for it
+                        // Step task was found; get the data for it
                         var paramSuccess = FillParamDict(dt);
                         if (paramSuccess)
                         {
@@ -254,16 +254,16 @@ namespace CaptureTaskManager
                         }
                         else
                         {
-                            //There was an error
+                            // There was an error
                             outcome = EnumRequestTaskResult.ResultError;
                         }
                         break;
                     case RET_VAL_TASK_NOT_AVAILABLE:
-                        //No jobs found
+                        // No jobs found
                         outcome = EnumRequestTaskResult.NoTaskFound;
                         break;
                     default:
-                        //There was an SP error
+                        // There was an SP error
                         LogError("clsCaptureTask.RequestTaskDetailed(), SP execution error " + retVal + 
                             "; Msg text = " + (string)myCmd.Parameters["@message"].Value);
                         outcome = EnumRequestTaskResult.ResultError;
@@ -343,7 +343,7 @@ namespace CaptureTaskManager
 
             try
             {
-                //Setup for execution of the stored procedure
+                // Setup for execution of the stored procedure
                 var cmd = new SqlCommand();
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
@@ -372,7 +372,7 @@ namespace CaptureTaskManager
                     PrintCommandParams(cmd);
                 }
 
-                //Execute the SP
+                // Execute the SP
                 var ResCode = m_CaptureTaskDBProcedureExecutor.ExecuteSP(cmd);
 
                 if (ResCode == 0)

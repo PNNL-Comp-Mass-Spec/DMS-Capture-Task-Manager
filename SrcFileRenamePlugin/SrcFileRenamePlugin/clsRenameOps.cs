@@ -52,7 +52,7 @@ namespace SrcFileRenamePlugin
         {
             m_MgrParams = mgrParams;
 
-            //Setup for BioNet use, if applicable
+            // Setup for BioNet use, if applicable
             m_UseBioNet = useBioNet;
             if (m_UseBioNet)
             {
@@ -433,7 +433,7 @@ namespace SrcFileRenamePlugin
         /// <param name="ConnState">Return value specifying connection has been closed</param>
         private void DisconnectShare(ref ShareConnector MyConn, out bool ConnState)
         {
-            //Disconnects a shared drive
+            // Disconnects a shared drive
             MyConn.Disconnect();
             m_Msg = "Bionet disconnected";
             OnDebugEvent(m_Msg);

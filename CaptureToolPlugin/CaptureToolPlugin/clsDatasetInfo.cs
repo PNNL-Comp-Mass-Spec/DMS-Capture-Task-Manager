@@ -14,7 +14,9 @@ namespace CaptureToolPlugin
         //**********************************************************************************************************
 
         #region "Class variables"
+
         string[] m_FileList;
+
         #endregion
 
         #region "Properties"
@@ -42,6 +44,7 @@ namespace CaptureToolPlugin
                 return m_FileList.Length;
             }
         }
+
         #endregion
 
         #region "Constructor"
@@ -59,5 +62,5 @@ namespace CaptureToolPlugin
         }
 
         #endregion
-    }	// End class
-}	// End namespace
+    }
+}

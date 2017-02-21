@@ -14,7 +14,7 @@ namespace DatasetArchivePlugin
     class clsJobData
     {
         //*********************************************************************************************************
-        //Class to hold data for each archive update task
+        // Class to hold data for each archive update task
         //**********************************************************************************************************
 
         #region "Class variables"

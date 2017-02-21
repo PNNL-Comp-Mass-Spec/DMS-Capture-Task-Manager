@@ -43,13 +43,13 @@ namespace ImsDemuxPlugin
         /// <returns>Enum indicating test results</returns>
         public UimfQueryResults GetUimfMuxStatus(string uimfFilePath, out byte numBitsForEncoding)
         {
-            string connStr = "data source=" + uimfFilePath + ";Version=3;Read Only=True;";
+            var connStr = "data source=" + uimfFilePath + ";Version=3;Read Only=True;";
             const string sqlStr = DEF_QUERY_STRING;
 
             numBitsForEncoding = 0;
 
             // Get a data table containing the multiplexing information for the UIMF file
-            DataTable queryResult = GetDataTable(sqlStr, connStr);
+            var queryResult = GetDataTable(sqlStr, connStr);
 
             // If null returned, there was an error
             if (queryResult == null)
@@ -68,10 +68,10 @@ namespace ImsDemuxPlugin
 
             // Evaluate results. If any row in table has a file name containing "bit" then de-multiplexing is required
             // In addition, parse the "bit" value to determine numBitsForEncoding
-            bool deMuxRequired = false;
+            var deMuxRequired = false;
             foreach (DataRow currRow in queryResult.Rows)
             {
-                object tmpObj = currRow[queryResult.Columns[0]];
+                var tmpObj = currRow[queryResult.Columns[0]];
                 if (tmpObj == DBNull.Value)
                 {
                     // Null field means demux not required
@@ -81,13 +81,13 @@ namespace ImsDemuxPlugin
                 var testStr = (string)tmpObj;
 
                 // Empty string means demux not required
-                if (String.IsNullOrEmpty(testStr))
+                if (string.IsNullOrEmpty(testStr))
                     continue;
 
                 imfProfileFieldAlwaysBlank = false;
 
                 // Get the file name, and check to see if it starts with 3bit (or 4bit or 5bit etc.)
-                string multiplexFilename = System.IO.Path.GetFileName(testStr).ToLower();
+                var multiplexFilename = System.IO.Path.GetFileName(testStr).ToLower();
                 var reMatch = reBitValue.Match(multiplexFilename);
                 if (reMatch.Success)
                 {
@@ -157,7 +157,7 @@ namespace ImsDemuxPlugin
                         }
                         catch (Exception ex)
                         {
-                            string msg = "Exception reading UIMF file: " + ex.Message;
+                            var msg = "Exception reading UIMF file: " + ex.Message;
                             OnErrorEvent(msg, ex);
                             return null;
                         }

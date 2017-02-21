@@ -10,8 +10,8 @@ namespace Pacifica.Core.Schema
     {
         public Group()
         {
-            //TODO - a group may need to ensure actions and items
-            //that get added are actually connected.
+            // TODO - a group may need to ensure actions and items
+            // that get added are actually connected.
             Actions = new List<Action>();
             Items = new List<Item>();
         }

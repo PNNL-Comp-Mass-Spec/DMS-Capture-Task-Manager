@@ -268,8 +268,8 @@ namespace Pacifica.Core
             {
                 if (!IsExplicitLoginRequired())
                 {
-                    //DefaultCredentials worked, so we can move on.
-                    //The authentication cookie was saved.
+                    // DefaultCredentials worked, so we can move on.
+                    // The authentication cookie was saved.
                     return false;
                 }
 

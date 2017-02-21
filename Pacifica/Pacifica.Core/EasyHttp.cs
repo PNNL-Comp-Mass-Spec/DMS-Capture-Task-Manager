@@ -449,7 +449,7 @@ namespace Pacifica.Core
             }
             else
             {
-                //Basic authentication cannot be used with DefaultNetworkCredentials.
+                // Basic authentication cannot be used with DefaultNetworkCredentials.
                 c1.Add(credCheckUri, "Basic", new NetworkCredential(loginCredentials.UserName,
                     loginCredentials.SecurePassword));
                 i1 = c1;

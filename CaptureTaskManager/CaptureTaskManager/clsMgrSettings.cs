@@ -48,15 +48,9 @@ namespace CaptureTaskManager
 
         #region "Properties"
 
-        public string ErrMsg
-        {
-            get { return m_ErrMsg; }
-        }
+        public string ErrMsg => m_ErrMsg;
 
-        public Dictionary<string, string> TaskDictionary
-        {
-            get { return m_ParamDictionary; }
-        }
+        public Dictionary<string, string> TaskDictionary => m_ParamDictionary;
 
         #endregion
 
@@ -93,14 +87,14 @@ namespace CaptureTaskManager
             var fi = new FileInfo(appPath);
             m_ParamDictionary.Add("ApplicationPath", fi.DirectoryName);
 
-            //Test the settings retrieved from the config file
+            // Test the settings retrieved from the config file
             if (!CheckInitialSettings(m_ParamDictionary))
             {
-                //Error logging handled by CheckInitialSettings
+                // Error logging handled by CheckInitialSettings
                 return false;
             }
 
-            //Determine if manager is deactivated locally
+            // Determine if manager is deactivated locally
             if (!GetBooleanParam(MGR_PARAM_MGR_ACTIVE_LOCAL))
             {
                 LogWarning(DEACTIVATED_LOCALLY);
@@ -108,17 +102,17 @@ namespace CaptureTaskManager
                 return false;
             }
 
-            //Get remaining settings from database
+            // Get remaining settings from database
             if (!LoadMgrSettingsFromDB())
             {
-                //Error logging handled by LoadMgrSettingsFromDB
+                // Error logging handled by LoadMgrSettingsFromDB
                 return false;
             }
 
             // Set flag indicating params have been loaded from manger config db
             m_MCParamsLoaded = true;
 
-            //No problems found
+            // No problems found
             return true;
         }
 
@@ -172,7 +166,7 @@ namespace CaptureTaskManager
                 var conn = new SqlConnection(ConnectionString);
                 conn.Open();
 
-                //Set up the command object prior to SP execution
+                // Set up the command object prior to SP execution
                 var cmd = conn.CreateCommand();
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
@@ -185,7 +179,7 @@ namespace CaptureTaskManager
                     cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
                 }
 
-                //Execute the SP
+                // Execute the SP
                 cmd.ExecuteNonQuery();
             }
             catch (Exception ex)
@@ -227,7 +221,7 @@ namespace CaptureTaskManager
                 }
             }
 
-            //No problems found
+            // No problems found
             return true;
         }
 
@@ -235,7 +229,7 @@ namespace CaptureTaskManager
         {
             foreach (DataRow oRow in dtSettings.Rows)
             {
-                //Add the column heading and value to the dictionary
+                // Add the column heading and value to the dictionary
                 var paramKey = DbCStr(oRow[dtSettings.Columns["ParameterName"]]);
 
                 if (string.Equals(paramKey, "MgrSettingGroupName", StringComparison.CurrentCultureIgnoreCase))
@@ -261,7 +255,7 @@ namespace CaptureTaskManager
 
         public bool LoadMgrSettingsFromDB(bool logConnectionErrors)
         {
-            //Requests manager parameters from database. Input string specifies view to use. Performs retries if necessary.
+            // Requests manager parameters from database. Input string specifies view to use. Performs retries if necessary.
 
             DataTable dtSettings;
 
@@ -366,7 +360,7 @@ namespace CaptureTaskManager
                     if (logConnectionErrors)
                         WriteErrorMsg(errMsg, allowLogToDB: false);
 
-                    //Delay for 5 seconds before trying again
+                    // Delay for 5 seconds before trying again
                     System.Threading.Thread.Sleep(5000);
                 }
             }
@@ -398,7 +392,7 @@ namespace CaptureTaskManager
             // Verify at least one row returned
             if (dtSettings.Rows.Count < 1 && returnErrorIfNoParameters)
             {
-                //Wrong number of rows returned
+                // Wrong number of rows returned
                 m_ErrMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Manager " + managerName +
                            " not defined in the manager control database; using " + DBConnectionString;
                 WriteErrorMsg(m_ErrMsg);
@@ -418,7 +412,7 @@ namespace CaptureTaskManager
             {
                 foreach (DataRow oRow in dtSettings.Rows)
                 {
-                    //Add the column heading and value to the dictionary
+                    // Add the column heading and value to the dictionary
                     var paramKey = DbCStr(oRow[dtSettings.Columns["ParameterName"]]);
                     var paramVal = DbCStr(oRow[dtSettings.Columns["ParameterValue"]]);
 
@@ -563,15 +557,15 @@ namespace CaptureTaskManager
         {
             m_ErrMsg = "";
 
-            //Load the config document
+            // Load the config document
             var doc = LoadConfigDocument();
             if (doc == null)
             {
-                //Error message has already been produced by LoadConfigDocument
+                // Error message has already been produced by LoadConfigDocument
                 return false;
             }
 
-            //Retrieve the settings node
+            // Retrieve the settings node
             var appSettingsNode = doc.SelectSingleNode("//applicationSettings");
 
             if (appSettingsNode == null)
@@ -582,16 +576,16 @@ namespace CaptureTaskManager
 
             try
             {
-                //Select the element containing the value for the specified key containing the key
+                // Select the element containing the value for the specified key containing the key
                 var matchingElement = (XmlElement)appSettingsNode.SelectSingleNode(string.Format("//setting[@name='{0}']/value", key));
                 if (matchingElement != null)
                 {
-                    //Set key to specified value
+                    // Set key to specified value
                     matchingElement.InnerText = value;
                 }
                 else
                 {
-                    //Key was not found
+                    // Key was not found
                     m_ErrMsg = "clsMgrSettings.WriteConfigSettings; specified key not found: " + key;
                     return false;
                 }

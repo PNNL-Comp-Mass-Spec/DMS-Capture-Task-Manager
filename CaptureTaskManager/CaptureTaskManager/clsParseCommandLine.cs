@@ -9,11 +9,11 @@ using System.Linq;
 // Written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA)
 // Program started November 8, 2003
 
-// E-mail: matthew.monroe@pnl.gov or matt@alchemistmatt.com
+// E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com
 // Website: http://panomics.pnnl.gov/ or http://www.sysbio.org/resources/staff/
 // -------------------------------------------------------------------------------
 // 
-// Last modified February 9, 2017
+// Last modified February 13, 2017
 
 namespace FileProcessor
 {
@@ -24,11 +24,21 @@ namespace FileProcessor
     public class clsParseCommandLine
     {
 
+        /// <summary>
+        /// Default switch char
+        /// </summary>
         public const char DEFAULT_SWITCH_CHAR = '/';
 
+        /// <summary>
+        /// Alternate switch char
+        /// </summary>
         public const char ALTERNATE_SWITCH_CHAR = '-';
 
+        /// <summary>
+        /// Default character between the switch name and a value to associate with the parameter
+        /// </summary>
         public const char DEFAULT_SWITCH_PARAM_CHAR = ':';
+
         private readonly Dictionary<string, string> mSwitches = new Dictionary<string, string>();
 
         private readonly List<string> mNonSwitchParameters = new List<string>();
@@ -122,6 +132,12 @@ namespace FileProcessor
             return InvalidParameters(validParameters, caseSensitive);
         }
 
+        /// <summary>
+        /// Retrieve a list of the user-provided parameters that are not in validParameters
+        /// </summary>
+        /// <param name="validParameters"></param>
+        /// <param name="caseSensitive"></param>
+        /// <returns></returns>
         public List<string> InvalidParameters(List<string> validParameters, bool caseSensitive)
         {
             var lstInvalidParameters = new List<string>();
@@ -129,7 +145,7 @@ namespace FileProcessor
 
             try
             {
-                // Find items in mSwitches whose keys are not in validParameters)		
+                // Find items in mSwitches whose keys are not in validParameters)
 
                 foreach (var item in mSwitches)
                 {

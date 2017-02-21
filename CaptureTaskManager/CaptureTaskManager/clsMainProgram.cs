@@ -134,8 +134,8 @@ namespace CaptureTaskManager
                     if (m_MsgQueueInitSuccess)
                     {
                         // Deprecated in January 2017
-                        //m_MsgHandler.BroadcastReceived -= OnBroadcastReceived;
-                        //m_MsgHandler.CommandReceived -= OnCommandReceived;
+                        // m_MsgHandler.BroadcastReceived -= OnBroadcastReceived;
+                        // m_MsgHandler.CommandReceived -= OnCommandReceived;
                         m_MsgHandler.Dispose();
                     }
                     restartOK = true;
@@ -349,8 +349,8 @@ namespace CaptureTaskManager
             if (m_MsgQueueInitSuccess)
             {
                 // Deprecated in January 2017
-                //m_MsgHandler.CommandReceived += OnCommandReceived;
-                //m_MsgHandler.BroadcastReceived += OnBroadcastReceived;
+                // m_MsgHandler.CommandReceived += OnCommandReceived;
+                // m_MsgHandler.BroadcastReceived += OnBroadcastReceived;
             }
 
             var configFileName = m_MgrSettings.GetParam("configfilename");
@@ -438,7 +438,7 @@ namespace CaptureTaskManager
             return true;
         }
 
-        private bool InitializeMessageQueue()
+        private void InitializeMessageQueue()
         {
             const int MAX_WAIT_TIME_SECONDS = 60;
 
@@ -453,7 +453,7 @@ namespace CaptureTaskManager
                 worker.Abort();
                 m_MsgQueueInitSuccess = false;
                 LogWarning("Unable to initialize the message queue (timeout after " + MAX_WAIT_TIME_SECONDS + " seconds)");
-                return m_MsgQueueInitSuccess;
+                return;
             }
 
             var elaspedTime = DateTime.UtcNow.Subtract(dtWaitStart).TotalSeconds;
@@ -462,8 +462,6 @@ namespace CaptureTaskManager
             {
                 LogWarning("Connection to the message queue was slow, taking " + (int)elaspedTime + " seconds");
             }
-
-            return m_MsgQueueInitSuccess;
         }
 
         private void InitializeMessageQueueWork()
@@ -599,7 +597,7 @@ namespace CaptureTaskManager
             {
                 try
                 {
-                    //Verify that an error hasn't left the the system in an odd state
+                    // Verify that an error hasn't left the the system in an odd state
                     if (StatusFlagFileError())
                     {
                         m_LoopExitCode = LoopExitCode.FlagFile;
@@ -713,7 +711,7 @@ namespace CaptureTaskManager
                             break;
 
                         default:
-                            //Shouldn't ever get here!
+                            // Should never get here
                             break;
                     }
                 }

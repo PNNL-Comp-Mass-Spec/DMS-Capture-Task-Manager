@@ -154,10 +154,10 @@ namespace CaptureTaskManager
                     throw new Exception("Invalid logger type specified");
             }
 
-            //Update the status file data
+            // Update the status file data
             clsStatusData.MostRecentLogMessage = DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss") + "; "+ message + "; " + logLevel;
 
-            //Send the log message
+            // Send the log message
             switch (logLevel)
             {
                 case LogLevels.DEBUG:
@@ -227,7 +227,7 @@ namespace CaptureTaskManager
         /// </summary>
         public static void ChangeLogFileName()
         {
-            //Get a list of appenders
+            // Get a list of appenders
             var appendList = FindAppenders(LOG_FILE_APPENDER);
             if (appendList == null)
             {
@@ -237,14 +237,14 @@ namespace CaptureTaskManager
 
             foreach (var selectedAppender in appendList)
             {
-                //Convert the IAppender object to a FileAppender
+                // Convert the IAppender object to a FileAppender
                 var AppenderToChange = selectedAppender as FileAppender;
                 if (AppenderToChange == null)
                 {
                     WriteLog(LoggerTypes.LogSystem, LogLevels.ERROR, "Unable to convert appender");
                     return;
                 }
-                //Change the file name and activate change
+                // Change the file name and activate change
                 AppenderToChange.File = m_BaseFileName + "_" + m_FileDate + ".txt";
                 AppenderToChange.ActivateOptions();
             }
@@ -257,11 +257,11 @@ namespace CaptureTaskManager
         /// <returns>List(IAppender) objects if found; NULL otherwise</returns>
         private static IEnumerable<IAppender> FindAppenders(string appenderName)
         {
-            //Get a list of the current loggers
+            // Get a list of the current loggers
             var loggerList = LogManager.GetCurrentLoggers();
             if (loggerList.GetLength(0) < 1) return null;
 
-            //Create a List of appenders matching the criteria for each logger
+            // Create a List of appenders matching the criteria for each logger
             var retList = new List<IAppender>();
             foreach (var testLogger in loggerList)
             {
@@ -271,7 +271,7 @@ namespace CaptureTaskManager
                 }
             }
 
-            //Return the list of appenders, if any found
+            // Return the list of appenders, if any found
             if (retList.Count > 0)
             {
                 return retList;
@@ -288,14 +288,14 @@ namespace CaptureTaskManager
         {
             var logLevelEnumType = typeof(LogLevels);
 
-            //Verify input level is a valid log level
+            // Verify input level is a valid log level
             if (!Enum.IsDefined(logLevelEnumType, logLevel))
             {
                 WriteLog(LoggerTypes.LogFile, LogLevels.ERROR, "Invalid value specified for level: " + logLevel);
                 return;
             }
 
-            //Convert input integer into the associated enum
+            // Convert input integer into the associated enum
             var logLevelEnum = (LogLevels)Enum.Parse(logLevelEnumType, logLevel.ToString(CultureInfo.InvariantCulture));
 
             SetFileLogLevel(logLevelEnum);
@@ -501,7 +501,7 @@ namespace CaptureTaskManager
                 Name = appenderName
             };
 
-            //Type parameter
+            // Type parameter
             var typeParam = new AdoNetAppenderParameter
             {
                 ParameterName = "@type",
@@ -511,7 +511,7 @@ namespace CaptureTaskManager
             };
             returnAppender.AddParameter(typeParam);
 
-            //Message parameter
+            // Message parameter
             var msgParam = new AdoNetAppenderParameter
             {
                 ParameterName = "@message",
@@ -521,7 +521,7 @@ namespace CaptureTaskManager
             };
             returnAppender.AddParameter(msgParam);
 
-            //PostedBy parameter
+            // PostedBy parameter
             var postByParam = new AdoNetAppenderParameter
             {
                 ParameterName = "@postedBy",

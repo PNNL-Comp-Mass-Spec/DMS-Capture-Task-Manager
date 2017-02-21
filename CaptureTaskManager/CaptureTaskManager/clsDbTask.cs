@@ -116,7 +116,7 @@ namespace CaptureTaskManager
         /// <param name="inpCmd">SQL command object containing params</param>
         protected virtual void PrintCommandParams(SqlCommand inpCmd)
         {
-            //Verify there really are command paramters
+            // Verify there really are command paramters
             if (inpCmd == null) return;
 
             if (inpCmd.Parameters.Count < 1) return;
@@ -173,7 +173,7 @@ namespace CaptureTaskManager
 
         protected string DbCStr(object InpObj)
         {
-            //If input object is DbNull, returns "", otherwise returns String representation of object
+            // If input object is DbNull, returns "", otherwise returns String representation of object
             if ((InpObj == null) || (ReferenceEquals(InpObj, DBNull.Value)))
             {
                 return "";
@@ -184,7 +184,7 @@ namespace CaptureTaskManager
 
         protected float DbCSng(object InpObj)
         {
-            //If input object is DbNull, returns 0.0, otherwise returns Single representation of object
+            // If input object is DbNull, returns 0.0, otherwise returns Single representation of object
             if (ReferenceEquals(InpObj, DBNull.Value))
             {
                 return 0.0F;
@@ -195,7 +195,7 @@ namespace CaptureTaskManager
 
         protected double DbCDbl(object InpObj)
         {
-            //If input object is DbNull, returns 0.0, otherwise returns Double representation of object
+            // If input object is DbNull, returns 0.0, otherwise returns Double representation of object
             if (ReferenceEquals(InpObj, DBNull.Value))
             {
                 return 0.0;
@@ -206,7 +206,7 @@ namespace CaptureTaskManager
 
         protected int DbCInt(object InpObj)
         {
-            //If input object is DbNull, returns 0, otherwise returns Integer representation of object
+            // If input object is DbNull, returns 0, otherwise returns Integer representation of object
             if (ReferenceEquals(InpObj, DBNull.Value))
             {
                 return 0;
@@ -217,7 +217,7 @@ namespace CaptureTaskManager
 
         protected long DbCLng(object InpObj)
         {
-            //If input object is DbNull, returns 0, otherwise returns Integer representation of object
+            // If input object is DbNull, returns 0, otherwise returns Integer representation of object
             if (ReferenceEquals(InpObj, DBNull.Value))
             {
                 return 0;
@@ -228,7 +228,7 @@ namespace CaptureTaskManager
 
         protected decimal DbCDec(object InpObj)
         {
-            //If input object is DbNull, returns 0, otherwise returns Decimal representation of object
+            // If input object is DbNull, returns 0, otherwise returns Decimal representation of object
             if (ReferenceEquals(InpObj, DBNull.Value))
             {
                 return 0;
@@ -239,7 +239,7 @@ namespace CaptureTaskManager
 
         protected short DbCShort(object InpObj)
         {
-            //If input object is DbNull, returns 0, otherwise returns Short representation of object
+            // If input object is DbNull, returns 0, otherwise returns Short representation of object
             if (ReferenceEquals(InpObj, DBNull.Value))
             {
                 return 0;

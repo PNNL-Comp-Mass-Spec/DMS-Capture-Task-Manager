@@ -37,6 +37,6 @@ namespace DatasetArchivePlugin
 
         #endregion
 
-    }	// End interface
+    }
 
-}	// End namespace
+}

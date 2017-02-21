@@ -69,15 +69,9 @@ namespace DatasetArchivePlugin
         /// <summary>
         /// Implements IArchiveOps.ErrMsg
         /// </summary>
-        public string ErrMsg
-        {
-            get { return m_ErrMsg; }
-        }
+        public string ErrMsg => m_ErrMsg;
 
-        public string WarningMsg
-        {
-            get { return m_WarningMsg; }
-        }
+        public string WarningMsg => m_WarningMsg;
 
         #endregion
 
@@ -159,10 +153,10 @@ namespace DatasetArchivePlugin
                 baseStoragePath = m_TaskParams.GetParam("Storage_Vol");
             }
 
-            //Path to dataset on storage server
+            // Path to dataset on storage server
             m_DSNamePath = Path.Combine(Path.Combine(baseStoragePath, m_TaskParams.GetParam("Storage_Path")), m_TaskParams.GetParam("Folder"));
 
-            //Verify dataset is in specified location
+            // Verify dataset is in specified location
             if (!VerifyDSPresent(m_DSNamePath))
             {
                 var errorMessage = "Dataset folder " + m_DSNamePath + " not found";
@@ -414,7 +408,7 @@ namespace DatasetArchivePlugin
         /// <returns>TRUE if dataset folder is present; otherwise FALSE</returns>
         protected bool VerifyDSPresent(string dsNamePath)
         {
-            //Verifies specified dataset is present
+            // Verifies specified dataset is present
             return Directory.Exists(dsNamePath);
 
         }
@@ -550,12 +544,11 @@ namespace DatasetArchivePlugin
 
         protected void OnMyEMSLUploadComplete(MyEMSLUploadEventArgs e)
         {
-            if (MyEMSLUploadComplete != null)
-                MyEMSLUploadComplete(this, e);
+            MyEMSLUploadComplete?.Invoke(this, e);
         }
         #endregion
 
-    }	// End class
+    }
 
 
-}	// End namespace
+}

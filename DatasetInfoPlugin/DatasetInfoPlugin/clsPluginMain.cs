@@ -881,8 +881,8 @@ namespace DatasetInfoPlugin
                     bIsFile = false;
                     break;
                 case clsInstrumentClassInfo.eRawDataType.IlluminaFolder:
-                    sFileOrFolderName = m_Dataset + clsInstrumentClassInfo.DOT_TXT_GZ_EXTENSION;
-                    bIsFile = true;
+                    // sFileOrFolderName = m_Dataset + clsInstrumentClassInfo.DOT_TXT_GZ_EXTENSION;
+                    // bIsFile = true;
 
                     LogMessage("Skipping MSFileInfoScanner since Illumina RNASeq dataset");
                     return new List<string>() { INVALID_FILE_TYPE };

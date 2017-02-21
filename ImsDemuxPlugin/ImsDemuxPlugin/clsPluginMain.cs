@@ -36,31 +36,36 @@ namespace ImsDemuxPlugin
         #endregion
 
         #region "Enums"
+
         protected enum CalibrationMode
         {
             NoCalibration,
             ManualCalibration,
             AutoCalibration
         }
+
         #endregion
 
         #region "Module variables"
+
         protected clsDemuxTools mDemuxTools;
         protected bool mDemultiplexingPerformed;
+
         #endregion
 
         #region "Methods"
+
         /// <summary>
         /// Runs the IMS demux step tool
         /// </summary>
         /// <returns>Enum indicating success or failure</returns>
         public override clsToolReturnData RunTool()
         {
-            string msg = "Starting ImsDemuxPlugin.clsPluginMain.RunTool()";
+            var msg = "Starting ImsDemuxPlugin.clsPluginMain.RunTool()";
             LogDebug(msg);
 
             // Perform base class operations, if any
-            clsToolReturnData retData = base.RunTool();
+            var retData = base.RunTool();
             if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
                 return retData;
 
@@ -98,11 +103,11 @@ namespace ImsDemuxPlugin
                 calibrationMode = CalibrationMode.NoCalibration;
 
             // Locate data file on storage server
-            string svrPath = Path.Combine(m_TaskParams.GetParam("Storage_Vol_External"), m_TaskParams.GetParam("Storage_Path"));
-            string dsPath = Path.Combine(svrPath, m_TaskParams.GetParam("Folder"));
+            var svrPath = Path.Combine(m_TaskParams.GetParam("Storage_Vol_External"), m_TaskParams.GetParam("Storage_Path"));
+            var dsPath = Path.Combine(svrPath, m_TaskParams.GetParam("Folder"));
 
             // Use this name first to test if demux has already been performed once
-            string uimfFileName = m_Dataset + "_encoded.uimf";
+            var uimfFileName = m_Dataset + "_encoded.uimf";
             var fiUIMFFile = new FileInfo(Path.Combine(dsPath, uimfFileName));
             if (fiUIMFFile.Exists && (fiUIMFFile.Length != 0))
             {
@@ -131,12 +136,14 @@ namespace ImsDemuxPlugin
                     }
                     else
                     {
-                        msg = "CalibrationLog.txt file ends with '" + COULD_NOT_OBTAIN_GOOD_CALIBRATION + "'; will not attempt to re-demultiplex the _encoded.uimf file.  If you want to re-demultiplex the _encoded.uimf file, then you should rename the CalibrationLog.txt file";
+                        msg = "CalibrationLog.txt file ends with '" + COULD_NOT_OBTAIN_GOOD_CALIBRATION +
+                              "'; will not attempt to re-demultiplex the _encoded.uimf file.  If you want to re-demultiplex the _encoded.uimf file, then you should rename the CalibrationLog.txt file";
                         LogError(msg);
 
                         retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                         retData.CloseoutMsg = "Error calibrating UIMF file; see " + clsDemuxTools.CALIBRATION_LOG_FILE;
-                        retData.EvalMsg = "De-multiplexed but Calibration failed.  If you want to re-demultiplex the _encoded.uimf file, then you should rename the CalibrationLog.txt file";
+                        retData.EvalMsg =
+                            "De-multiplexed but Calibration failed.  If you want to re-demultiplex the _encoded.uimf file, then you should rename the CalibrationLog.txt file";
 
                         msg = "Completed clsPluginMain.RunTool()";
                         LogDebug(msg);
@@ -184,15 +191,15 @@ namespace ImsDemuxPlugin
             }
 
             // Query to determine if demux is needed. 
-            string uimfFilePath = Path.Combine(dsPath, uimfFileName);
-            bool needToDemultiplex = true;
+            var uimfFilePath = Path.Combine(dsPath, uimfFileName);
+            var needToDemultiplex = true;
 
             var oSQLiteTools = new clsSQLiteTools();
             RegisterEvents(oSQLiteTools);
 
             byte numBitsForEncoding;
 
-            clsSQLiteTools.UimfQueryResults queryResult = oSQLiteTools.GetUimfMuxStatus(uimfFilePath, out numBitsForEncoding);
+            var queryResult = oSQLiteTools.GetUimfMuxStatus(uimfFilePath, out numBitsForEncoding);
             if (queryResult == clsSQLiteTools.UimfQueryResults.NonMultiplexed)
             {
                 // De-multiplexing not required, but we should still attempt calibration (if enabled)
@@ -277,7 +284,8 @@ namespace ImsDemuxPlugin
                 if (fileSizeGBStart > 0)
                     foldIncrease = fileSizeGBEnd / fileSizeGBStart;
 
-                LogMessage("UIMF file size increased from " + fileSizeGBStart.ToString("0.00") + " GB to " + fileSizeGBEnd.ToString("0.00") + " GB, a " + foldIncrease.ToString("0.0" + " fold increase"));
+                LogMessage("UIMF file size increased from " + fileSizeGBStart.ToString("0.00") + " GB to " + fileSizeGBEnd.ToString("0.00") +
+                           " GB, a " + foldIncrease.ToString("0.0" + " fold increase"));
             }
 
             if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
@@ -305,7 +313,7 @@ namespace ImsDemuxPlugin
         /// <param name="statusTools">Tools for status reporting</param>
         public override void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
         {
-            string msg = "Starting clsPluginMain.Setup()";
+            var msg = "Starting clsPluginMain.Setup()";
             LogDebug(msg);
 
             base.Setup(mgrParams, taskParams, statusTools);
@@ -326,8 +334,8 @@ namespace ImsDemuxPlugin
 
         protected bool CheckForCalibrationError(string dsPath)
         {
-            string sCalibrationLogPath = Path.Combine(dsPath, clsDemuxTools.CALIBRATION_LOG_FILE);
-            bool bCalibrationError = false;
+            var sCalibrationLogPath = Path.Combine(dsPath, clsDemuxTools.CALIBRATION_LOG_FILE);
+            var bCalibrationError = false;
 
             if (File.Exists(sCalibrationLogPath))
             {
@@ -335,7 +343,7 @@ namespace ImsDemuxPlugin
 
                 while (srInFile.Peek() >= 0)
                 {
-                    string sLine = srInFile.ReadLine();
+                    var sLine = srInFile.ReadLine();
 
                     if (!string.IsNullOrEmpty(sLine) && sLine.Trim().Length > 0)
                     {
@@ -365,24 +373,25 @@ namespace ImsDemuxPlugin
             }
 
             var oReader = new UIMFLibrary.DataReader(decodedUimfFilePath);
-            bool manuallyCalibrated = false;
+            var manuallyCalibrated = false;
 
 
             if (oReader.TableExists("Log_Entries"))
             {
                 // Note: providing true for parseViaFramework as a workaround for reading SqLite files located on a remote UNC share or in readonly folders
-                string connectionString = "Data Source = " + decodedUimfFilePath + "; Version=3; DateTimeFormat=Ticks;";
+                var connectionString = "Data Source = " + decodedUimfFilePath + "; Version=3; DateTimeFormat=Ticks;";
                 using (var cnUIMF = new SQLiteConnection(connectionString, true))
                 {
                     cnUIMF.Open();
-                    SQLiteCommand cmdLogEntries = cnUIMF.CreateCommand();
+                    var cmdLogEntries = cnUIMF.CreateCommand();
 
-                    cmdLogEntries.CommandText = "SELECT Message FROM Log_Entries where Posted_By = '" + clsDemuxTools.UIMF_CALIBRATION_UPDATER_NAME + "' order by Entry_ID desc";
+                    cmdLogEntries.CommandText = "SELECT Message FROM Log_Entries where Posted_By = '" + clsDemuxTools.UIMF_CALIBRATION_UPDATER_NAME +
+                                                "' order by Entry_ID desc";
                     using (var logEntriesReader = cmdLogEntries.ExecuteReader())
                     {
                         while (logEntriesReader.Read())
                         {
-                            string message = logEntriesReader.GetString(0);
+                            var message = logEntriesReader.GetString(0);
                             if (message.StartsWith("New calibration coefficients"))
                             {
                                 // Extract out the coefficients
@@ -416,14 +425,14 @@ namespace ImsDemuxPlugin
         {
 
             string msg;
-            bool bSuccess = true;
+            var bSuccess = true;
 
-            string svrPath = Path.Combine(m_TaskParams.GetParam("Storage_Vol_External"), m_TaskParams.GetParam("Storage_Path"));
-            string sDatasetFolderPathRemote = Path.Combine(svrPath, m_TaskParams.GetParam("Folder"));
+            var svrPath = Path.Combine(m_TaskParams.GetParam("Storage_Vol_External"), m_TaskParams.GetParam("Storage_Path"));
+            var sDatasetFolderPathRemote = Path.Combine(svrPath, m_TaskParams.GetParam("Folder"));
 
             // Copy file fileName from sourceDirPath to the dataset folder
-            string sSourceFilePath = Path.Combine(sourceDirPath, fileName);
-            string sTargetFilePath = Path.Combine(sDatasetFolderPathRemote, fileName);
+            var sSourceFilePath = Path.Combine(sourceDirPath, fileName);
+            var sTargetFilePath = Path.Combine(sDatasetFolderPathRemote, fileName);
 
             if (!File.Exists(sSourceFilePath))
             {
@@ -451,7 +460,7 @@ namespace ImsDemuxPlugin
         /// <returns></returns>
         protected string GetUimfDemultiplexerPath()
         {
-            string uimfDemuxFolder = m_MgrParams.GetParam("UimfDemultiplexerProgLoc", string.Empty);
+            var uimfDemuxFolder = m_MgrParams.GetParam("UimfDemultiplexerProgLoc", string.Empty);
 
             if (string.IsNullOrEmpty(uimfDemuxFolder))
             {
@@ -469,7 +478,7 @@ namespace ImsDemuxPlugin
         protected bool StoreToolVersionInfo()
         {
 
-            string strToolVersionInfo = string.Empty;
+            var strToolVersionInfo = string.Empty;
 
             var uimfDemultiplexerProgLoc = GetUimfDemultiplexerPath();
             if (string.IsNullOrEmpty(uimfDemultiplexerProgLoc))
@@ -483,23 +492,23 @@ namespace ImsDemuxPlugin
                 return false;
 
             // Lookup the version of UIMFDemultiplexer_Console
-            bool bSuccess = base.StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, fiUimfDemultiplexer.FullName);
+            var bSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, fiUimfDemultiplexer.FullName);
             if (!bSuccess)
                 return false;
 
             // Lookup the version of the IMSDemultiplexer (in the UIMFDemultiplexer folder)
-            string strDemultiplexerPath = Path.Combine(fiUimfDemultiplexer.DirectoryName, "IMSDemultiplexer.dll");
-            bSuccess = base.StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, strDemultiplexerPath);
+            var strDemultiplexerPath = Path.Combine(fiUimfDemultiplexer.DirectoryName, "IMSDemultiplexer.dll");
+            bSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, strDemultiplexerPath);
             if (!bSuccess)
                 return false;
 
-            string strAutoCalibrateUIMFPath = Path.Combine(fiUimfDemultiplexer.DirectoryName, "AutoCalibrateUIMF.dll");
-            bSuccess = base.StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, strAutoCalibrateUIMFPath);
+            var strAutoCalibrateUIMFPath = Path.Combine(fiUimfDemultiplexer.DirectoryName, "AutoCalibrateUIMF.dll");
+            bSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, strAutoCalibrateUIMFPath);
             if (!bSuccess)
                 return false;
 
-            string strUIMFLibrary = Path.Combine(fiUimfDemultiplexer.DirectoryName, "UIMFLibrary.dll");
-            bSuccess = base.StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, strUIMFLibrary);
+            var strUIMFLibrary = Path.Combine(fiUimfDemultiplexer.DirectoryName, "UIMFLibrary.dll");
+            bSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, strUIMFLibrary);
             if (!bSuccess)
                 return false;
 
@@ -564,5 +573,5 @@ namespace ImsDemuxPlugin
 
 
         #endregion
-    }	// End class
-}	// End namespace
+    }
+}

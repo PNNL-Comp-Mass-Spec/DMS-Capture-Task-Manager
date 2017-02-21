@@ -170,7 +170,7 @@ namespace DatasetArchivePlugin
             try
             {
 
-                //Setup for execution of the stored procedure
+                // Setup for execution of the stored procedure
                 var MyCmd = new SqlCommand();
                 {
                     MyCmd.CommandType = CommandType.StoredProcedure;
@@ -282,13 +282,13 @@ namespace DatasetArchivePlugin
 
             // Lookup the version of the Dataset Archive plugin
             var strPluginPath = Path.Combine(appFolder, "DatasetArchivePlugin.dll");
-            var bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strPluginPath);
+            var bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strPluginPath);
             if (!bSuccess)
                 return false;
 
             // Lookup the version of the MyEMSLReader
             var strMD5StageFileCreatorPath = Path.Combine(appFolder, "MyEMSLReader.dll");
-            bSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strMD5StageFileCreatorPath);
+            bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strMD5StageFileCreatorPath);
             if (!bSuccess)
                 return false;
 
@@ -320,5 +320,5 @@ namespace DatasetArchivePlugin
 
 
         #endregion
-    }	// End class
-}	// End namespace
+    }
+}

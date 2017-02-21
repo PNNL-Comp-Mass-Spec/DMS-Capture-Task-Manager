@@ -148,7 +148,7 @@ namespace CaptureTaskManager
                 var myConnection = new System.Data.SqlClient.SqlConnection(mMgrConfigDBConnectionString);
                 myConnection.Open();
 
-                //Set up the command object prior to SP execution
+                // Set up the command object prior to SP execution
                 var myCmd = new System.Data.SqlClient.SqlCommand
                 {
                     CommandType = CommandType.StoredProcedure,
@@ -162,7 +162,7 @@ namespace CaptureTaskManager
                 myCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@FailureMsg", SqlDbType.VarChar, 512)).Value = strFailureMessage;
                 myCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
 
-                //Execute the SP
+                // Execute the SP
                 myCmd.ExecuteNonQuery();
             }
             catch (Exception ex)

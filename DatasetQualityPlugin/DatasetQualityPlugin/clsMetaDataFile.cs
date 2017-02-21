@@ -76,7 +76,7 @@ namespace DatasetQualityPlugin
 
                 // Since the document is now a string, we can get rid of the XMLWriter
                 xWriter.Close();
-            }   // End using
+            }
 
             // Write the string to the output file
             var svrPath = Path.Combine(TaskParams.GetParam("Storage_Vol_External"), TaskParams.GetParam("Storage_Path"));

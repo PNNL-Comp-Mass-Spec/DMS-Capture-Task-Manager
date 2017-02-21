@@ -27,56 +27,56 @@ namespace CaptureTaskManager
 
         #region "Class variables"
 
-        //Status file name and location
+        // Status file name and location
         private string m_FileNamePath;
 
-        //Manager name
+        // Manager name
         private string m_MgrName = "";
 
-        //Status value
+        // Status value
         private EnumMgrStatus m_MgrStatus = EnumMgrStatus.Stopped;
 
-        //Manager start time
+        // Manager start time
         private DateTime m_MgrStartTime;
 
-        //Analysis Tool
+        // Analysis Tool
         private string m_Tool;
 
-        //Task status
+        // Task status
         private EnumTaskStatus m_TaskStatus = EnumTaskStatus.No_Task;
 
-        //Task duration
+        // Task duration
         private float m_Duration;
 
-        //Progess (value between 0 and 100)
+        // Progess (value between 0 and 100)
         private float m_Progress;
 
-        //Current operation (freeform string)
+        // Current operation (freeform string)
         private string m_CurrentOperation = "";
 
-        //Task status detail
+        // Task status detail
         private EnumTaskStatusDetail m_TaskStatusDetail = EnumTaskStatusDetail.No_Task;
 
-        //Job number
+        // Job number
         private int m_JobNumber;
 
-        //Job step
+        // Job step
         private int m_JobStep;
 
-        //Dataset name
+        // Dataset name
         private string m_Dataset;
 
-        //Most recent job info
+        // Most recent job info
         private string m_MostRecentJobInfo = "";
 
-        //Number of spectrum files created
+        // Number of spectrum files created
         private int m_SpectrumCount;
 
-        //Message broker connection string
+        // Message broker connection string
 
-        //Broker topic for status reporting
+        // Broker topic for status reporting
 
-        //Flag to indicate if status should be logged to broker in addition to a file
+        // Flag to indicate if status should be logged to broker in addition to a file
         private bool m_LogToMsgQueue;
 
         #endregion
@@ -290,7 +290,7 @@ namespace CaptureTaskManager
         /// <returns></returns>
         public bool DeleteStatusFlagFile()
         {
-            //Returns True if job request control flag file exists
+            // Returns True if job request control flag file exists
             var strFlagFilePath = FlagFilePath;
 
             try
@@ -333,19 +333,20 @@ namespace CaptureTaskManager
         {
             var XMLText = string.Empty;
 
-            //Set up the XML writer
+            // Set up the XML writer
             try
             {
-                //Create a memory stream to write the document in
+                // Create a memory stream to write the document in
                 var MemStream = new MemoryStream();
                 using (var XWriter = new XmlTextWriter(MemStream, System.Text.Encoding.UTF8))
                 {
                     XWriter.Formatting = Formatting.Indented;
                     XWriter.Indentation = 2;
 
-                    //Write the file
+                    // Write the file
                     XWriter.WriteStartDocument(true);
-                    //Root level element
+                    
+                    // Root level element
                     XWriter.WriteStartElement("Root");
                     XWriter.WriteStartElement("Manager");
                     XWriter.WriteElementString("MgrName", m_MgrName);
@@ -360,10 +361,8 @@ namespace CaptureTaskManager
                     {
                         XWriter.WriteElementString("ErrMsg", ErrMsg);
                     }
-                    XWriter.WriteEndElement();
-                    //Error messages
-                    XWriter.WriteEndElement();
-                    //Manager section
+                    XWriter.WriteEndElement();        // Error messages
+                    XWriter.WriteEndElement();        // Manager section
 
                     XWriter.WriteStartElement("Task");
                     XWriter.WriteElementString("Tool", m_Tool);
@@ -380,15 +379,15 @@ namespace CaptureTaskManager
                     XWriter.WriteElementString("MostRecentLogMessage", clsStatusData.MostRecentLogMessage);
                     XWriter.WriteElementString("MostRecentJobInfo", m_MostRecentJobInfo);
                     XWriter.WriteElementString("SpectrumCount", m_SpectrumCount.ToString());
-                    XWriter.WriteEndElement(); //Task details section
-                    XWriter.WriteEndElement(); //Task section
-                    XWriter.WriteEndElement(); //Root section
+                    XWriter.WriteEndElement();    // Task details section
+                    XWriter.WriteEndElement();    // Task section
+                    XWriter.WriteEndElement();    // Root section
 
-                    //Close the document, but don't close the writer yet
+                    // Close the document, but don't close the writer yet
                     XWriter.WriteEndDocument();
                     XWriter.Flush();
 
-                    //Use a streamreader to copy the XML text to a string variable
+                    // Use a streamreader to copy the XML text to a string variable
                     MemStream.Seek(0, SeekOrigin.Begin);
                     var MemStreamReader = new StreamReader(MemStream);
                     XMLText = MemStreamReader.ReadToEnd();
@@ -401,7 +400,7 @@ namespace CaptureTaskManager
 
                 PRISM.clsProgRunner.GarbageCollectNow();
 
-                //Write the output file
+                // Write the output file
                 try
                 {
                     using (var OutFile = new StreamWriter(new FileStream(m_FileNamePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
@@ -419,7 +418,7 @@ namespace CaptureTaskManager
                 // Ignore errors here
             }
 
-            //Log to a message queue
+            // Log to a message queue
             if (m_LogToMsgQueue) LogStatusToMessageQueue(XMLText);
         }
 
@@ -524,10 +523,10 @@ namespace CaptureTaskManager
         /// 
         public void InitStatusFromFile()
         {
-            //Verify status file exists
+            // Verify status file exists
             if (!File.Exists(m_FileNamePath)) return;
 
-            //Get data from status file
+            // Get data from status file
             try
             {
                 // Read the input file
@@ -542,12 +541,12 @@ namespace CaptureTaskManager
                 if (mostRecentMessageNode != null)
                     clsStatusData.MostRecentLogMessage = mostRecentMessageNode.InnerText;
 
-                //Get the most recent job info
+                // Get the most recent job info
                 var mostRecentJobNode = doc.SelectSingleNode(@"//Task/TaskDetails/MostRecentJobInfo");
                 if (mostRecentJobNode != null)
                     m_MostRecentJobInfo = mostRecentJobNode.InnerText;
 
-                //Get the error messsages
+                // Get the error messsages
                 var recentErrMsgNode = doc.SelectNodes(@"//Manager/RecentErrorMessages/ErrMsg");
                 if (recentErrMsgNode != null)
                     foreach (XmlNode Xn in recentErrMsgNode)

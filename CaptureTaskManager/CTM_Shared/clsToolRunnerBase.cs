@@ -145,6 +145,8 @@ namespace CaptureTaskManager
 
             m_Job = m_TaskParams.GetParam("Job", 0);
 
+            // Debug level 4 means Info level (normal) logging; 5 for Debug level (verbose) logging
+            // Log level 4 will also log error messages
             m_DebugLevel = m_MgrParams.GetParam("debuglevel", 4);
         }
 
@@ -185,7 +187,7 @@ namespace CaptureTaskManager
 
         protected string AppendToComment(string InpComment, string NewComment)
         {
-            //Appends a comment string to an existing comment string
+            // Appends a comment string to an existing comment string
 
             if (string.IsNullOrWhiteSpace(InpComment))
             {
@@ -232,7 +234,7 @@ namespace CaptureTaskManager
                 HoldoffMilliseconds = 3000;
             }
 
-            //Try to ensure there are no open objects with file handles
+            // Try to ensure there are no open objects with file handles
             clsProgRunner.GarbageCollectNow();
             Thread.Sleep(HoldoffMilliseconds);
 
@@ -589,7 +591,7 @@ namespace CaptureTaskManager
                 SaveToolVersionInfoFile(m_WorkDir, toolVersionInfoCombined);
             }
 
-            //Setup for execution of the stored procedure
+            // Setup for execution of the stored procedure
             var myCmd = new SqlCommand();
             {
                 myCmd.CommandType = System.Data.CommandType.StoredProcedure;
@@ -604,7 +606,7 @@ namespace CaptureTaskManager
                 myCmd.Parameters.Add(new SqlParameter("@ToolVersionInfo", System.Data.SqlDbType.VarChar, 900)).Value = toolVersionInfoCombined;
             }
 
-            //Execute the SP (retry the call up to 4 times)
+            // Execute the SP (retry the call up to 4 times)
             var resCode = CaptureDBProcedureExecutor.ExecuteSP(myCmd, 4);
 
             if (resCode == 0)
@@ -669,7 +671,7 @@ namespace CaptureTaskManager
                 success = StoreToolVersionInfoOneFile32Bit(ref toolVersionInfo, dllFilePath);
 
                 // Use this when compiled as 32-bit
-                //success = StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, dllFilePath)
+                // success = StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, dllFilePath)
             }
             catch (Exception ex)
             {
@@ -823,7 +825,6 @@ namespace CaptureTaskManager
                     CreateNoWindow = true,
                     EchoOutputToConsole = true,
                     WriteConsoleOutputToFile = false,
-                    DebugLevel = 1,
                     MonitorInterval = 250
                 };
 

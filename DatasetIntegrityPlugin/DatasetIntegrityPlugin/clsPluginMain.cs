@@ -12,12 +12,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using CaptureTaskManager;
-using PRISM;
 using PRISM;
 using ThermoRawFileReader;
 using UIMFLibrary;
@@ -263,7 +261,7 @@ namespace DatasetIntegrityPlugin
                     mRetData.EvalCode = EnumEvalCode.EVAL_CODE_NOT_EVALUATED;
                     mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
                     break;
-            }	// End switch
+            }
 
             msg = "Completed clsPluginMain.RunTool()";
             LogDebug(msg);
@@ -791,7 +789,7 @@ namespace DatasetIntegrityPlugin
                     continue;
                 }
 
-                if (fiFile.Directory == null || fiFile.Directory.Parent == null)
+                if (fiFile.Directory?.Parent == null)
                 {
                     continue;
                 }
@@ -1838,7 +1836,7 @@ namespace DatasetIntegrityPlugin
 
                 using (var inFile = new FileStream(sourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 {
-                    using (var reader = new System.IO.Compression.GZipStream(inFile, CompressionMode.Decompress))
+                    using (var reader = new GZipStream(inFile, CompressionMode.Decompress))
                     {
                         if (!reader.CanRead)
                         {

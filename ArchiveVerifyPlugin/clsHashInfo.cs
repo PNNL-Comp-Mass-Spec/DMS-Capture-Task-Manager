@@ -53,11 +53,8 @@ namespace ArchiveVerifyPlugin
 
         public bool IsMatch(clsHashInfo comparisonValue)
         {
-            if (string.Equals(HashCode, comparisonValue.HashCode) &&
-                string.Equals(MyEMSLFileID, comparisonValue.MyEMSLFileID))
-                return true;
-            else
-                return false;
+            return string.Equals(HashCode, comparisonValue.HashCode) &&
+                   string.Equals(MyEMSLFileID, comparisonValue.MyEMSLFileID);
         }
 
         public override string ToString()

@@ -8,7 +8,9 @@ namespace CaptureTaskManager
 
     #region "Enums"
 
-    //Status constants
+    /// <summary>
+    /// Manager status
+    /// </summary>
     public enum EnumMgrStatus : short
     {
         Stopped,

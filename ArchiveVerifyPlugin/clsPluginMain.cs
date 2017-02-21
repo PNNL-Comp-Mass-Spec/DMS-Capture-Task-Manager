@@ -162,7 +162,7 @@ namespace ArchiveVerifyPlugin
             {
 
                 string xmlServerResponse;
-                var ingestSuccess = base.GetMyEMSLIngestStatus(
+                var ingestSuccess = GetMyEMSLIngestStatus(
                     m_Job, statusChecker, statusURI,
                     eusInstrumentID, eusProposalID, eusUploaderID,
                     cookieJar, mRetData, out xmlServerResponse);
@@ -897,6 +897,6 @@ namespace ArchiveVerifyPlugin
 
         #endregion
 
-    }	// End class
+    }
 
-}	// End namespace
+}

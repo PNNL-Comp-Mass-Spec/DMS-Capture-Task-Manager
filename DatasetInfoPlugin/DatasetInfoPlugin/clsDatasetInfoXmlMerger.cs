@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Data;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -340,7 +338,7 @@ namespace DatasetInfoPlugin
 
             objDSInfo.WriteStartDocument(true);
 
-            //Write the beginning of the "Root" element.
+            // Write the beginning of the "Root" element.
             objDSInfo.WriteStartElement("DatasetInfo");
 
             objDSInfo.WriteElementString("Dataset", datasetName);
@@ -357,12 +355,10 @@ namespace DatasetInfoPlugin
                 objDSInfo.WriteAttributeString("ScanCount", scanTypeCount.ToString());
                 objDSInfo.WriteAttributeString("ScanFilterText", scanFilterText);
                 objDSInfo.WriteString(scanTypeName);
-                objDSInfo.WriteEndElement();
-                // ScanType EndElement
+                objDSInfo.WriteEndElement();                // ScanType EndElement
             }
 
-            objDSInfo.WriteEndElement();
-            // ScanTypes
+            objDSInfo.WriteEndElement();                    // ScanTypes EndElement
 
             objDSInfo.WriteStartElement("AcquisitionInfo");
 
@@ -398,8 +394,7 @@ namespace DatasetInfoPlugin
             }
 
 
-            objDSInfo.WriteEndElement();
-            // AcquisitionInfo EndElement
+            objDSInfo.WriteEndElement();            // AcquisitionInfo EndElement
 
             objDSInfo.WriteStartElement("TICInfo");
             objDSInfo.WriteElementString("TIC_Max_MS", StringUtilities.ValueToString(ticInfo.TIC_Max_MS, 5));
@@ -410,13 +405,11 @@ namespace DatasetInfoPlugin
             objDSInfo.WriteElementString("TIC_Median_MSn", StringUtilities.ValueToString(ticInfo.TIC_Median_MSn, 5));
             objDSInfo.WriteElementString("BPI_Median_MS", StringUtilities.ValueToString(ticInfo.BPI_Median_MS, 5));
             objDSInfo.WriteElementString("BPI_Median_MSn", StringUtilities.ValueToString(ticInfo.BPI_Median_MSn, 5));
-            objDSInfo.WriteEndElement();
-            // TICInfo EndElement
 
-            objDSInfo.WriteEndElement();
-            //End the "Root" element (DatasetInfo)
-            objDSInfo.WriteEndDocument();
-            //End the document
+            objDSInfo.WriteEndElement();        // TICInfo EndElement
+
+            objDSInfo.WriteEndElement();        // End the "Root" element (DatasetInfo)
+            objDSInfo.WriteEndDocument();       // End the document
 
             objDSInfo.Close();
 

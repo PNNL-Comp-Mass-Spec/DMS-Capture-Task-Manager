@@ -13,7 +13,7 @@ namespace CaptureTaskManager
     public static class clsStatusData
     {
         //*********************************************************************************************************
-        //Class to hold long-term data for status reporting. This is a hack to avoid adding an instance of the
+        // Class to hold long-term data for status reporting. This is a hack to avoid adding an instance of the
         //	status file class to the log tools class
         //**********************************************************************************************************
 
@@ -31,10 +31,10 @@ namespace CaptureTaskManager
             get { return m_MostRecentLogMessage; }
             set
             {
-                //Filter out routine startup and shutdown messages
+                // Filter out routine startup and shutdown messages
                 if (value.Contains("=== Started") || (value.Contains("===== Closing")))
                 {
-                    //Do nothing
+                    // Do nothing
                 }
                 else
                 {
@@ -54,10 +54,10 @@ namespace CaptureTaskManager
 
         public static void AddErrorMessage(string ErrMsg)
         {
-            //Add the most recent error message
+            // Add the most recent error message
             m_ErrorQueue.Enqueue(ErrMsg);
 
-            //If there are > 4 entries in the queue, then delete the oldest ones
+            // If there are > 4 entries in the queue, then delete the oldest ones
             while (m_ErrorQueue.Count > 4)
             {
                 m_ErrorQueue.Dequeue();
