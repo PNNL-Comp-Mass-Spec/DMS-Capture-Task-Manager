@@ -17,13 +17,14 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using CaptureTaskManager;
+using PRISM;
 
 namespace ImsDemuxPlugin
 {
     /// <summary>
     /// This class demultiplexes a .UIMF file using the UIMFDemultiplexer
     /// </summary>
-    public class clsDemuxTools
+    public class clsDemuxTools : clsEventNotifier
     {
 
         #region "Constants"
@@ -225,7 +226,7 @@ namespace ImsDemuxPlugin
             catch (Exception ex)
             {
                 const string msg = "Exception adding the bin-centric tables to the UIMF file";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                OnErrorEvent(msg, ex);
                 if (retData == null)
                     retData = new clsToolReturnData();
                 retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, msg);
@@ -247,7 +248,7 @@ namespace ImsDemuxPlugin
             uimfLocalFileNamePath = Path.Combine(mWorkDir, mDataset + ".uimf");
 
             // Copy uimf file to working directory
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copying file from storage server");
+            OnDebugEvent("Copying file from storage server");
             const int retryCount = 0;
             if (!CopyFileWithRetry(uimfRemoteFileNamePath, uimfLocalFileNamePath, false, retryCount))
             {
@@ -273,7 +274,7 @@ namespace ImsDemuxPlugin
                     return sUimfPath;
 
                 string msg = "UIMF file not found on storage server, unable to calibrate: " + sUimfPath;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                OnErrorEvent(msg);
                 retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, "UIMF file not found on storage server, unable to calibrate");
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return string.Empty;
@@ -281,7 +282,7 @@ namespace ImsDemuxPlugin
             catch (Exception ex)
             {
                 const string msg = "Exception finding UIMF file to calibrate";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                OnErrorEvent(msg, ex);
                 retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, "Exception while calibrating UIMF file");
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return string.Empty;
@@ -302,7 +303,7 @@ namespace ImsDemuxPlugin
             UpdateDatasetInfo(mgrParams, taskParams);
 
             string msg = "Calibrating dataset " + mDataset;
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            OnDebugEvent(msg);
 
             bool bAutoCalibrate;
 
@@ -331,7 +332,7 @@ namespace ImsDemuxPlugin
                     case "ims_tof_2":
                     case "ims_tof_3":
                         msg = "Skipping calibration since instrument is " + instrumentName;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                        OnStatusEvent(msg);
                         bAutoCalibrate = false;
                         break;
                     default:
@@ -343,7 +344,7 @@ namespace ImsDemuxPlugin
             catch (Exception ex)
             {
                 msg = "Exception determining whether instrument should be calibrated";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                OnErrorEvent(msg, ex);
                 retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, "Exception while calibrating UIMF file");
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return retData;
@@ -372,7 +373,7 @@ namespace ImsDemuxPlugin
                             msg += "s";
                     }
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                    OnStatusEvent(msg);
                     bAutoCalibrate = false;
                 }
                 else
@@ -402,7 +403,7 @@ namespace ImsDemuxPlugin
                         else
                         {
                             msg = "Skipping calibration since .UIMF file does not contain any calibration frames or calibration tables";
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                            OnWarningEvent(msg);
                             bAutoCalibrate = false;
                         }
 
@@ -412,7 +413,7 @@ namespace ImsDemuxPlugin
             catch (Exception ex)
             {
                 msg = "Exception checking for calibration frames";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                OnErrorEvent(msg, ex);
                 retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, "Exception while calibrating UIMF file");
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return retData;
@@ -423,7 +424,7 @@ namespace ImsDemuxPlugin
 
 
             // Perform calibration operation
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Calling UIMFDemultiplexer to calibrate");
+            OnDebugEvent("Calling UIMFDemultiplexer to calibrate");
 
             bool bCalibrationFailed = false;
 
@@ -442,7 +443,7 @@ namespace ImsDemuxPlugin
             catch (Exception ex)
             {
                 msg = "Exception calling CalibrateFile for dataset " + mDataset;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                OnErrorEvent(msg, ex);
                 retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, "Exception while calibrating UIMF file");
                 bCalibrationFailed = true;
             }
@@ -460,7 +461,7 @@ namespace ImsDemuxPlugin
                 catch (Exception ex)
                 {
                     msg = "Exception validating calibrated .UIMF ifle";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                    OnErrorEvent(msg, ex);
                     retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, "Exception while calibrating UIMF file");
                     retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     return retData;
@@ -539,10 +540,10 @@ namespace ImsDemuxPlugin
                         }
                     }
 
-                    if (Math.Abs(currentSlope) < Double.Epsilon)
+                    if (Math.Abs(currentSlope) < double.Epsilon)
                     {
                         const string msg = "Existing CalibrationSlope is 0 in PerformManualCalibration; this is unexpected";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                        OnWarningEvent(msg);
                     }
 
                     using (var dbCommand = dbConnection.CreateCommand())
@@ -566,7 +567,7 @@ namespace ImsDemuxPlugin
             catch (Exception ex)
             {
                 string msg = "Exception in PerformManualCalibration for dataset " + mDataset;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                OnErrorEvent(msg, ex);
                 if (retData == null)
                     retData = new clsToolReturnData();
                 retData.CloseoutMsg = "Error manually calibrating UIMF file";
@@ -596,7 +597,7 @@ namespace ImsDemuxPlugin
 
             string jobNum = taskParams.GetParam("Job");
             string msg = "Performing demultiplexing, job " + jobNum + ", dataset " + mDataset;
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+            OnStatusEvent(msg);
 
             var retData = new clsToolReturnData();
 
@@ -606,7 +607,7 @@ namespace ImsDemuxPlugin
             int framesToSum = taskParams.GetParam("DemuxFramesToSum", 5);
 
             if (framesToSum > 1)
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Will sum " + framesToSum + " LC Frames when demultiplexing");
+                OnStatusEvent("Will sum " + framesToSum + " LC Frames when demultiplexing");
 
             // Make sure the working directory is empty
             clsToolRunnerBase.CleanWorkDir(mWorkDir);
@@ -641,18 +642,18 @@ namespace ImsDemuxPlugin
                 const int retryCount = 0;
                 if (CopyFileWithRetry(sTmpUIMFRemoteFileNamePath, sTmpUIMFLocalFileNamePath, false, retryCount))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, ".tmp decoded file found at " + sTmpUIMFRemoteFileNamePath + "; will resume demultiplexing");
+                    OnStatusEvent(".tmp decoded file found at " + sTmpUIMFRemoteFileNamePath + "; will resume demultiplexing");
                     demuxOptions.ResumeDemultiplexing = true;
                 }
                 else
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Error copying .tmp decoded file from " + sTmpUIMFRemoteFileNamePath + " to work folder; unable to resume demultiplexing");
+                    OnStatusEvent("Error copying .tmp decoded file from " + sTmpUIMFRemoteFileNamePath + " to work folder; unable to resume demultiplexing");
                 }
             }
 
 
             // Perform demux operation
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Calling UIMFDemultiplexer_Console.exe");
+            OnDebugEvent("Calling UIMFDemultiplexer_Console.exe");
 
             try
             {
@@ -670,7 +671,7 @@ namespace ImsDemuxPlugin
             catch (Exception ex)
             {
                 msg = "Exception calling DemultiplexFile for dataset " + mDataset;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                OnErrorEvent(msg, ex);
                 retData.CloseoutMsg = "Error demultiplexing UIMF file";
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return retData;
@@ -683,7 +684,7 @@ namespace ImsDemuxPlugin
             if (!File.Exists(localUimfDecodedFilePath))
             {
                 retData.CloseoutMsg = "Decoded UIMF file not found";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, retData.CloseoutMsg + ": " + localUimfDecodedFilePath);
+                OnErrorEvent(retData.CloseoutMsg + ": " + localUimfDecodedFilePath);
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return retData;
             }
@@ -700,7 +701,7 @@ namespace ImsDemuxPlugin
             {
                 // Rename uimf file on storage server
                 msg = "Renaming uimf file on storage server";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                OnDebugEvent(msg);
 
                 // If this is a re-run, then encoded file has already been renamed
                 // This is determined by looking for "_encoded" in uimf file name
@@ -721,7 +722,7 @@ namespace ImsDemuxPlugin
                 if (!string.IsNullOrEmpty(mDatasetFolderPathRemote))
                 {
                     msg = "Deleting .uimf.tmp CheckPoint file from storage server";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                    OnDebugEvent(msg);
 
                     try
                     {
@@ -733,7 +734,7 @@ namespace ImsDemuxPlugin
                     catch (Exception ex)
                     {
                         msg = "Error deleting .uimf.tmp CheckPoint file: " + ex.Message;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                        OnErrorEvent(msg);
                     }
 
                 }
@@ -771,7 +772,7 @@ namespace ImsDemuxPlugin
 
             // Delete local uimf file(s)
             msg = "Cleaning up working directory";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            OnDebugEvent(msg);
             try
             {
                 File.Delete(localUimfDecodedFilePath);
@@ -781,7 +782,7 @@ namespace ImsDemuxPlugin
             {
                 // Error deleting files; don't treat this as a fatal error
                 msg = "Exception deleting working directory file(s): " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                OnErrorEvent(msg);
             }
 
             // Update the return data
@@ -835,7 +836,7 @@ namespace ImsDemuxPlugin
                     if (bRetryingCopy)
                     {
                         msg = "Retrying copy; retryCount = " + retryCount;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                        clsUtilities.LogMessage(msg);
                     }
 
                     oFileTools.CopyFile(sourceFilePath, targetFilePath, overWrite, backupDestFileBeforeCopy);
@@ -844,7 +845,7 @@ namespace ImsDemuxPlugin
                 catch (Exception ex)
                 {
                     msg = "Exception copying file " + sourceFilePath + " to " + targetFilePath + ": " + ex.Message;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    clsUtilities.LogError(msg, ex);
 
                     System.Threading.Thread.Sleep(2000);
                     retryCount -= 1;
@@ -871,7 +872,7 @@ namespace ImsDemuxPlugin
 
             // Copy demuxed file to storage server, renaming as datasetname.uimf in the process
             string msg = "Copying " + fileDescription + " file to storage server";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            OnDebugEvent(msg);
             const int retryCount = 3;
             if (!CopyFileWithRetry(localUimfDecodedFilePath, Path.Combine(mDatasetFolderPathRemote, mDataset + ".uimf"), true, retryCount))
             {
@@ -902,19 +903,19 @@ namespace ImsDemuxPlugin
                 if (File.Exists(sTargetFilePath))
                 {
                     msg += "; this is OK since " + CALIBRATION_LOG_FILE + " exists at " + mDatasetFolderPathRemote;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                    OnDebugEvent(msg);
                 }
                 else
                 {
                     msg += "; in addition, could not find " + CALIBRATION_LOG_FILE + " at " + mDatasetFolderPathRemote;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    OnErrorEvent(msg);
                 }
 
             }
             else
             {
                 msg = "Copying CalibrationLog.txt file to storage server";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                OnDebugEvent(msg);
                 const int retryCount = 3;
                 const bool backupDestFileBeforeCopy = true;
                 if (!CopyFileWithRetry(sCalibrationLogFilePath, sTargetFilePath, true, retryCount, backupDestFileBeforeCopy))
@@ -954,7 +955,7 @@ namespace ImsDemuxPlugin
                 errorMessage = string.Empty;
 
                 string msg = "Starting calibration, dataset " + datasetName;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                OnStatusEvent(msg);
 
                 // Set the options
                 var demuxOptions = new udtDemuxOptionsType
@@ -970,7 +971,7 @@ namespace ImsDemuxPlugin
                 if (success && mLoggedConsoleOutputErrors.Count == 0)
                 {
                     msg = "Calibration complete, dataset " + datasetName;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                    OnStatusEvent(msg);
                     return true;
                 }
 
@@ -982,14 +983,14 @@ namespace ImsDemuxPlugin
                     errorMessage = mLoggedConsoleOutputErrors.First();
                 }
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
+                OnErrorEvent(errorMessage);
                 return false;
 
             }
             catch (Exception ex)
             {
                 errorMessage = "Exception calibrating dataset";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage + " " + datasetName, ex);
+                OnErrorEvent(errorMessage + " " + datasetName, ex);
                 return false;
             }
 
@@ -1023,7 +1024,7 @@ namespace ImsDemuxPlugin
             if (string.IsNullOrEmpty(folderName))
             {
                 errorMessage = "Could not determine the parent folder for " + inputFilePath;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
+                OnErrorEvent(errorMessage);
                 return false;
             }
             string outputFilePath = Path.Combine(folderName, datasetName + DECODED_UIMF_SUFFIX);
@@ -1038,7 +1039,7 @@ namespace ImsDemuxPlugin
                     if (!File.Exists(sTempUIMFFilePath))
                     {
                         errorMessage = "Resuming demultiplexing, but .tmp UIMF file not found at " + sTempUIMFFilePath;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
+                        OnErrorEvent(errorMessage);
                         demuxOptions.ResumeDemultiplexing = false;
                     }
                     else
@@ -1050,7 +1051,7 @@ namespace ImsDemuxPlugin
                             resumeStartFrame = iMaxDemultiplexedFrameNum + 1;
                             demuxOptions.ResumeDemultiplexing = true;
                             msg = "Resuming demultiplexing, dataset " + datasetName + " frame " + resumeStartFrame;
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                            OnStatusEvent(msg);
                         }
                         else
                         {
@@ -1059,7 +1060,7 @@ namespace ImsDemuxPlugin
                             if (!String.IsNullOrEmpty(sLogEntryAccessorMsg))
                                 msg += "; " + sLogEntryAccessorMsg;
 
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                            OnErrorEvent(msg);
 
                             demuxOptions.ResumeDemultiplexing = false;
                         }
@@ -1068,7 +1069,7 @@ namespace ImsDemuxPlugin
                 else
                 {
                     msg = "Starting demultiplexing, dataset " + datasetName;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                    OnStatusEvent(msg);
                     demuxOptions.ResumeDemultiplexing = false;
                 }
 
@@ -1081,7 +1082,7 @@ namespace ImsDemuxPlugin
                 if (success && mLoggedConsoleOutputErrors.Count == 0 && !OutOfMemoryException)
                 {
                     msg = "Demultiplexing complete, dataset " + datasetName;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                    OnStatusEvent(msg);
                     return true;
                 }
 
@@ -1096,13 +1097,13 @@ namespace ImsDemuxPlugin
                     errorMessage = mLoggedConsoleOutputErrors.First();
                 }
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
+                OnErrorEvent(errorMessage);
                 return false;
             }
             catch (Exception ex)
             {
                 msg = "Exception demultiplexing dataset " + datasetName;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg, ex);
+                OnErrorEvent(msg, ex);
                 return false;
             }
 
@@ -1165,7 +1166,7 @@ namespace ImsDemuxPlugin
                         {
                             if (!mLoggedConsoleOutputErrors.Contains(strLineIn))
                             {
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strLineIn);
+                                OnErrorEvent(strLineIn);
                                 mLoggedConsoleOutputErrors.Add(strLineIn);
                             }
 
@@ -1177,7 +1178,7 @@ namespace ImsDemuxPlugin
                         {
                             if (!mLoggedConsoleOutputErrors.Contains(strLineIn))
                             {
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strLineIn);
+                                OnWarningEvent(strLineIn);
                                 mLoggedConsoleOutputErrors.Add(strLineIn);
                             }
                         }
@@ -1231,7 +1232,7 @@ namespace ImsDemuxPlugin
             {
                 if (!mLoggedConsoleOutputErrors.Contains(ex.Message))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in ParseConsoleOutputFileDemux", ex);
+                    OnErrorEvent("Exception in ParseConsoleOutputFileDemux", ex);
                     mLoggedConsoleOutputErrors.Add(ex.Message);
                 }
 
@@ -1256,7 +1257,7 @@ namespace ImsDemuxPlugin
             catch (Exception ex)
             {
                 string msg = "Exception renaming file " + currFileNamePath + " to " + Path.GetFileName(newFileNamePath) + ": " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                OnErrorEvent(msg);
 
                 // Garbage collect, then try again to rename the file
                 System.Threading.Thread.Sleep(250);
@@ -1272,7 +1273,7 @@ namespace ImsDemuxPlugin
                 catch (Exception ex2)
                 {
                     msg = "Rename failed despite garbage collection call: " + ex2.Message;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    OnErrorEvent(msg);
                 }
 
                 return false;
@@ -1366,7 +1367,7 @@ namespace ImsDemuxPlugin
 
                 mUimfDemultiplexerConsoleOutputFilePath = Path.Combine(mWorkDir, "UIMFDemultiplexer_ConsoleOutput.txt");
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, mUimfDemultiplexerPath + " " + cmdStr);
+                OnStatusEvent(mUimfDemultiplexerPath + " " + cmdStr);
                 var cmdRunner = new clsRunDosProgram(mWorkDir);
                 mDemuxStartTime = DateTime.UtcNow;
                 mLastProgressUpdateTime = DateTime.UtcNow;
@@ -1399,15 +1400,15 @@ namespace ImsDemuxPlugin
                     return true;
 
                 errorMessage = "Error running UIMF Demultiplexer";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
+                OnErrorEvent(errorMessage);
 
                 if (cmdRunner.ExitCode != 0)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "UIMFDemultiplexer returned a non-zero exit code: " + cmdRunner.ExitCode.ToString());
+                    OnWarningEvent("UIMFDemultiplexer returned a non-zero exit code: " + cmdRunner.ExitCode.ToString());
                 }
                 else
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to UIMFDemultiplexer failed (but exit code is 0)");
+                    OnWarningEvent("Call to UIMFDemultiplexer failed (but exit code is 0)");
                 }
 
                 return false;
@@ -1416,7 +1417,7 @@ namespace ImsDemuxPlugin
             catch (Exception ex)
             {
                 errorMessage = "Exception in RunUIMFDemultiplexer";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage, ex);
+                OnErrorEvent(errorMessage, ex);
                 return false;
             }
 
@@ -1457,7 +1458,7 @@ namespace ImsDemuxPlugin
                 if (!String.IsNullOrEmpty(sLogEntryAccessorMsg))
                     msg += "; " + sLogEntryAccessorMsg;
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                OnErrorEvent(msg);
                 bUIMFDemultiplexed = false;
             }
             else
@@ -1465,7 +1466,7 @@ namespace ImsDemuxPlugin
                 if (DateTime.Now.Subtract(dtDemultiplexingFinished).TotalMinutes < 5)
                 {
                     msg = "Demultiplexing finished message in Log_Entries table has date " + dtDemultiplexingFinished;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                    OnDebugEvent(msg);
                     bUIMFDemultiplexed = true;
                 }
                 else
@@ -1475,7 +1476,7 @@ namespace ImsDemuxPlugin
                     if (!String.IsNullOrEmpty(sLogEntryAccessorMsg))
                         msg += "; " + sLogEntryAccessorMsg;
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    OnErrorEvent(msg);
                     bUIMFDemultiplexed = false;
                 }
             }
@@ -1507,7 +1508,7 @@ namespace ImsDemuxPlugin
                 if (!String.IsNullOrEmpty(sLogEntryAccessorMsg))
                     msg += "; " + sLogEntryAccessorMsg;
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                OnErrorEvent(msg);
                 retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, sLogMessage);
                 bUIMFCalibrated = false;
             }
@@ -1516,7 +1517,7 @@ namespace ImsDemuxPlugin
                 if (DateTime.Now.Subtract(dtCalibrationApplied).TotalMinutes < 5)
                 {
                     msg = "Applied calibration message in Log_Entries table has date " + dtCalibrationApplied;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                    OnDebugEvent(msg);
                     bUIMFCalibrated = true;
                 }
                 else
@@ -1526,7 +1527,7 @@ namespace ImsDemuxPlugin
                     if (!String.IsNullOrEmpty(sLogEntryAccessorMsg))
                         msg += "; " + sLogEntryAccessorMsg;
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    OnErrorEvent(msg);
                     retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, sLogMessage);
                     bUIMFCalibrated = false;
                 }
@@ -1540,12 +1541,13 @@ namespace ImsDemuxPlugin
 
         #region "Event handlers"
 
-        private void AttachCmdrunnerEvents(clsRunDosProgram CmdRunner)
+        private void AttachCmdrunnerEvents(clsRunDosProgram cmdRunner)
         {
             try
             {
-                CmdRunner.LoopWaiting += new clsRunDosProgram.LoopWaitingEventHandler(CmdRunner_LoopWaiting);
-                CmdRunner.Timeout += new clsRunDosProgram.TimeoutEventHandler(CmdRunner_Timeout);
+                RegisterEvents(cmdRunner);
+                cmdRunner.LoopWaiting += new clsRunDosProgram.LoopWaitingEventHandler(CmdRunner_LoopWaiting);
+                cmdRunner.Timeout += new clsRunDosProgram.TimeoutEventHandler(CmdRunner_Timeout);
             }
             catch
             {
@@ -1555,7 +1557,7 @@ namespace ImsDemuxPlugin
 
         void CmdRunner_Timeout()
         {
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "CmdRunner timeout reported");
+            OnErrorEvent("CmdRunner timeout reported");
         }
 
         void CmdRunner_LoopWaiting()
@@ -1583,7 +1585,7 @@ namespace ImsDemuxPlugin
                 if (DateTime.UtcNow.Subtract(mLastProgressMessageTime).TotalSeconds >= 300)
                 {
                     mLastProgressMessageTime = DateTime.UtcNow;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, toolName + " running; " + DateTime.UtcNow.Subtract(mDemuxStartTime).TotalMinutes.ToString("0.0") + " minutes elapsed, " + mDemuxProgressPercentComplete.ToString("0.0") + "% complete");
+                    OnDebugEvent(toolName + " running; " + DateTime.UtcNow.Subtract(mDemuxStartTime).TotalMinutes.ToString("0.0") + " minutes elapsed, " + mDemuxProgressPercentComplete.ToString("0.0") + "% complete");
                 }
             }
         }
@@ -1603,7 +1605,7 @@ namespace ImsDemuxPlugin
         {
             if (DateTime.UtcNow.Subtract(mLastProgressMessageTime).TotalSeconds >= 30)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, e.Message);
+                OnStatusEvent(e.Message);
 
                 mLastProgressMessageTime = DateTime.UtcNow;
             }

@@ -7,17 +7,17 @@
 //*********************************************************************************************************
 
 using System;
-using CaptureTaskManager;
 using System.Data.SQLite;
 using System.Data;
 using System.Text.RegularExpressions;
+using PRISM;
 
 namespace ImsDemuxPlugin
 {
     /// <summary>
     /// Tools for querying SQLite database (UIMF file, in this case)
     /// </summary>
-    public class clsSQLiteTools
+    public class clsSQLiteTools : clsEventNotifier
     {
 
         #region "Enums"
@@ -59,7 +59,7 @@ namespace ImsDemuxPlugin
             if (queryResult.Rows.Count < 1)
             {
                 const string msg = "No rows retrieved when querying UIMF file with " + sqlStr;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                OnErrorEvent(msg);
                 return UimfQueryResults.Error;
             }
 
@@ -158,7 +158,7 @@ namespace ImsDemuxPlugin
                         catch (Exception ex)
                         {
                             string msg = "Exception reading UIMF file: " + ex.Message;
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                            OnErrorEvent(msg, ex);
                             return null;
                         }
                     }

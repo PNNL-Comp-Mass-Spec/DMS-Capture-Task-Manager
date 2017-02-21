@@ -17,7 +17,7 @@ using System.IO;
 
 namespace DatasetArchivePlugin
 {
-    class clsOpsBase : IArchiveOps
+    class clsOpsBase : clsEventNotifier, IArchiveOps
     {
         //*********************************************************************************************************
         // Base class for archive and archive update operations classes. This class should always be overridden.
@@ -167,7 +167,7 @@ namespace DatasetArchivePlugin
             {
                 var errorMessage = "Dataset folder " + m_DSNamePath + " not found";
                 m_ErrMsg = string.Copy(errorMessage);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
+                OnErrorEvent(errorMessage);
                 LogOperationFailed(m_DatasetName, string.Empty, true);
                 return false;
             }
@@ -202,7 +202,7 @@ namespace DatasetArchivePlugin
                 // Uploaded files would be associated with the wrong username and thus would not be visible to all DMS Users
                 m_ErrMsg = "Files must be uploaded to MyEMSL using the svc-dms account; aborting";
                 Console.WriteLine(m_ErrMsg);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_ErrMsg);
+                OnErrorEvent(m_ErrMsg);
                 return false;
             }
 
@@ -261,7 +261,7 @@ namespace DatasetArchivePlugin
             try
             {
                 var statusMessage = "Bundling changes to dataset " + m_DatasetName + " for transmission to MyEMSL";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, statusMessage);
+                OnStatusEvent(statusMessage);
 
                 myEMSLUL = new MyEMSLUploader(m_MgrParams.TaskDictionary, m_TaskParams.TaskDictionary);
 
@@ -286,7 +286,7 @@ namespace DatasetArchivePlugin
                     myEMSLUL.UseTestInstance = true;
 
                     statusMessage = "Sending dataset to MyEMSL test instance";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, statusMessage);
+                    OnStatusEvent(statusMessage);
                 }
 
                 // Start the upload
@@ -300,7 +300,7 @@ namespace DatasetArchivePlugin
 
                 statusMessage += ": " + myEMSLUL.FileCountNew + " new files, " + myEMSLUL.FileCountUpdated + " updated files, " + myEMSLUL.Bytes + " bytes";
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, statusMessage);
+                OnStatusEvent(statusMessage);
 
                 if (debugMode != EasyHttp.eDebugMode.DebugDisabled)
                     return false;
@@ -310,13 +310,13 @@ namespace DatasetArchivePlugin
                 if (!string.IsNullOrEmpty(statusURL) && statusURL.EndsWith("/1323420608"))
                 {
                     statusMessage += "; this indicates an upload error (transactionID=-1)";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, statusMessage);
+                    OnErrorEvent(statusMessage);
                     return false;
                 }
                 else
                 {
                     if (myEMSLUL.FileCountNew + myEMSLUL.FileCountUpdated > 0 || !string.IsNullOrEmpty(statusURL))
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, statusMessage);
+                        OnStatusEvent(statusMessage);
                 }
 
                 // Raise an event with the stats
@@ -337,7 +337,7 @@ namespace DatasetArchivePlugin
             {
                 const string errorMessage = "Exception uploading to MyEMSL";
                 m_ErrMsg = string.Copy(errorMessage);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage, ex);
+                OnErrorEvent(errorMessage, ex);
 
                 if (ex.Message.Contains(DMSMetadataObject.UNDEFINED_EUS_OPERATOR_ID))
                 {
@@ -432,9 +432,9 @@ namespace DatasetArchivePlugin
                 msg += "; " + reason;
 
             if (logToDB)
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                clsUtilities.LogError(msg, true);
             else
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                OnErrorEvent(msg);
         }
 
         /// <summary>
@@ -447,12 +447,12 @@ namespace DatasetArchivePlugin
             var diSourceFolder = new DirectoryInfo(sourceFolderPath);
 
             var msg = "Determing the total size of " + sourceFolderPath;
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            OnDebugEvent(msg);
 
             if (!diSourceFolder.Exists)
             {
                 msg = "Source folder not found by ComputeFolderSizeGB: " + sourceFolderPath;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                OnErrorEvent(msg);
 
                 return 0;
             }
@@ -464,7 +464,7 @@ namespace DatasetArchivePlugin
             }
 
             msg = "  Total size: " + folderSizeGB.ToString("0.0") + " GB";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            OnDebugEvent(msg);
 
             return folderSizeGB;
 
@@ -486,7 +486,7 @@ namespace DatasetArchivePlugin
             {
                 mMostRecentLogMessage = string.Copy(message);
                 mMostRecentLogTime = DateTime.UtcNow;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, message);
+                OnStatusEvent(message);
             }
         }
 
@@ -499,7 +499,7 @@ namespace DatasetArchivePlugin
         void myEMSLUL_ErrorEvent(object sender, MessageEventArgs e)
         {
             var msg = "MyEmslUpload error in function " + e.CallingFunction + ": " + e.Message;
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+            OnErrorEvent(msg);
         }
 
         void myEMSLUL_MetadataDefinedEvent(object sender, MessageEventArgs e)
@@ -507,7 +507,7 @@ namespace DatasetArchivePlugin
             if (m_DebugLevel >= 5)
             {
                 // e.Message contains the metadata JSON
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, e.Message);
+                OnDebugEvent(e.Message);
             }
         }
 
@@ -544,7 +544,7 @@ namespace DatasetArchivePlugin
             else
                 msg += ": " + e.ServerResponse;
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            OnDebugEvent(msg);
             m_MyEmslUploadSuccess = true;
         }
 

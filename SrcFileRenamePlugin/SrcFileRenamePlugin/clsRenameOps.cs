@@ -5,8 +5,8 @@
 // Copyright 2009, Battelle Memorial Institute
 // Created 11/17/2009
 //
-// Last modified 11/17/2009
 //*********************************************************************************************************
+
 using System;
 using System.Collections.Generic;
 using CaptureTaskManager;
@@ -16,7 +16,7 @@ using PRISM;
 
 namespace SrcFileRenamePlugin
 {
-    class clsRenameOps
+    class clsRenameOps : clsEventNotifier
     {
         //*********************************************************************************************************
         // Class for performing rename operations
@@ -79,13 +79,19 @@ namespace SrcFileRenamePlugin
         public EnumCloseOutType DoOperation(ITaskParams taskParams, out string errorMessage)
         {
             var datasetName = taskParams.GetParam("Dataset");
-            var sourceVol = taskParams.GetParam("Source_Vol");						// Example: \\exact04.bionet\
-            var sourcePath = taskParams.GetParam("Source_Path");					// Example: ProteomicsData\
-            var captureSubfolder = taskParams.GetParam("Capture_Subfolder");		// Typically an empty string, but could be a partial path like: "CapDev" or "Smith\2014"
+            // Example: \\exact04.bionet\
+            var sourceVol = taskParams.GetParam("Source_Vol");
+
+            // Example: ProteomicsData\
+            var sourcePath = taskParams.GetParam("Source_Path");
+
+            // Typically an empty string, but could be a partial path like: "CapDev" or "Smith\2014"
+            var captureSubfolder = taskParams.GetParam("Capture_Subfolder");		
+
             var pwd = DecodePassword(m_Pwd);
 
             var msg = "Started clsRenameOps.DoOperation()";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+            OnDebugEvent(msg);
 
             errorMessage = string.Empty;
 
@@ -98,7 +104,7 @@ namespace SrcFileRenamePlugin
             if (m_UseBioNet)
             {
                 msg = "Bionet connection required for " + sourceVol;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                OnDebugEvent(msg);
 
                 m_ShareConnector = new ShareConnector(m_UserName, pwd)
                 {
@@ -108,7 +114,7 @@ namespace SrcFileRenamePlugin
                 if (m_ShareConnector.Connect())
                 {
                     msg = "Connected to Bionet";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                    OnDebugEvent(msg);
                     m_Connected = true;
                 }
                 else
@@ -120,7 +126,7 @@ namespace SrcFileRenamePlugin
                     if (m_ShareConnector.ErrorMessage == "53")
                         msg += "; the password may need to be reset";
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    OnErrorEvent(msg);
 
                     errorMessage = "Error connecting to " + sourceFolderPath + " as user " + m_UserName + " using 'secfso'";
                     return EnumCloseOutType.CLOSEOUT_FAILED;
@@ -129,7 +135,7 @@ namespace SrcFileRenamePlugin
             else
             {
                 msg = "Bionet connection not required for " + sourceVol;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                OnDebugEvent(msg);
             }
 
             // Now that we've had a chance to connect to the share, possibly append a subfolder to the source path
@@ -143,8 +149,7 @@ namespace SrcFileRenamePlugin
 
                     if (Directory.Exists(candidateFolderPath))
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                           "Dataset captureSubfolder ends with the dataset name. Gracefully ignoring because this appears to be a data entry error: " +
+                        OnWarningEvent("Dataset captureSubfolder ends with the dataset name. Gracefully ignoring because this appears to be a data entry error: " +
                            datasetName);
                         sourceFolderPath = candidateFolderPath.Substring(0, candidateFolderPath.Length - datasetName.Length - 1);
                     }
@@ -171,7 +176,7 @@ namespace SrcFileRenamePlugin
             else
             {
                 msg = "Instrument folder not found for dataset " + datasetName + ": " + sourceFolderPath;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                OnErrorEvent(msg);
 
                 errorMessage = "Remote folder not found: " + sourceFolderPath;
                 return EnumCloseOutType.CLOSEOUT_FAILED;
@@ -187,7 +192,7 @@ namespace SrcFileRenamePlugin
                     errorMessage = "Data file and/or folder not found on the instrument; cannot rename";
 
                 msg = "Dataset " + datasetName + ":" + errorMessage;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                OnErrorEvent(msg);
 
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
@@ -264,7 +269,7 @@ namespace SrcFileRenamePlugin
                     if (!bLoggedDatasetNotFound)
                     {
                         var msg = "Dataset " + dataset + ": data file and/or folder not found using " + sDatasetNameBase + ".*";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                        OnWarningEvent(msg);
                         bLoggedDatasetNotFound = true;
                     }
                     continue;
@@ -273,7 +278,7 @@ namespace SrcFileRenamePlugin
                 if (bAlreadyRenamed)
                 {
                     var msg = "Skipping dataset " + dataset + " since data file and/or folder already renamed to " + sDatasetNameBase;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+                    OnStatusEvent(msg);
                     countRenamed++;
                     break;
                 }
@@ -328,13 +333,13 @@ namespace SrcFileRenamePlugin
                 newPath = Path.Combine(fiFile.DirectoryName, "x_" + fiFile.Name);
                 fiFile.MoveTo(newPath);
                 m_Msg = "Renamed file to " + fiFile.FullName;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
+                OnStatusEvent(m_Msg);
                 return true;
             }
             catch (Exception ex)
             {
                 m_Msg = "Error renaming file '" + fiFile.FullName + "' to '" + newPath + "'";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg, ex);
+                OnErrorEvent(m_Msg, ex);
 
                 if (ex.Message.Contains("Access to the path") && ex.Message.Contains("is denied"))
                     errorMessage = "Error renaming file: access is denied";
@@ -365,13 +370,13 @@ namespace SrcFileRenamePlugin
                 newPath = Path.Combine(diFolder.Parent.FullName, "x_" + diFolder.Name);
                 diFolder.MoveTo(newPath);
                 m_Msg = "Renamed directory to " + diFolder.FullName;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_Msg);
+                OnStatusEvent(m_Msg);
                 return true;
             }
             catch (Exception ex)
             {
                 m_Msg = "Error renaming directory '" + diFolder.FullName + "' to '" + newPath + "'";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_Msg, ex);
+                OnErrorEvent(m_Msg, ex);
 
                 if (ex.Message.Contains("Access to the path") && ex.Message.Contains("is denied"))
                     errorMessage = "Error renaming directory: access is denied";
@@ -431,7 +436,7 @@ namespace SrcFileRenamePlugin
             //Disconnects a shared drive
             MyConn.Disconnect();
             m_Msg = "Bionet disconnected";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_Msg);
+            OnDebugEvent(m_Msg);
             ConnState = false;
         }
 

@@ -1,4 +1,5 @@
 using System;
+using PRISM;
 
 namespace CaptureTaskManager
 {
@@ -6,7 +7,7 @@ namespace CaptureTaskManager
     /// Provides a looping wrapper around a ProgRunner object for running command-line programs
     /// Ported from the Analysis Tool Manager
     /// </summary>
-    public class clsRunDosProgram
+    public class clsRunDosProgram : clsEventNotifier
     {
         #region "Module variables"
 
@@ -367,11 +368,7 @@ namespace CaptureTaskManager
 
             AttachProgRunnerEvents();
 
-            if (mDebugLevel >= 4)
-            {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ProgRunner.Arguments = " + mProgRunner.Arguments);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ProgRunner.Program = " + mProgRunner.Program);
-            }
+            OnStatusEvent("RunProgram " + mProgRunner.Program + " " + mProgRunner.Arguments);
 
             ProgramAborted = false;
             mAbortProgramPostLogEntry = true;
@@ -411,14 +408,11 @@ namespace CaptureTaskManager
                         blnAbortLogged = true;
                         if (blnRuntimeExceeded)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                                 "  Aborting ProgRunner since " + MaxRuntimeSeconds +
-                                                 " seconds has elapsed");
+                            OnErrorEvent("  Aborting ProgRunner since " + MaxRuntimeSeconds + " seconds has elapsed");
                         }
                         else
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                                 "  Aborting ProgRunner since AbortProgramNow() was called");
+                            OnErrorEvent("  Aborting ProgRunner since AbortProgramNow() was called");
                         }
                     }
                     mProgRunner.StopMonitoringProgram(kill: true);
@@ -426,9 +420,7 @@ namespace CaptureTaskManager
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                     "Exception running DOS program " + progNameLoc + "; " +
-                                     clsErrors.GetExceptionStackTrace(ex));
+                OnErrorEvent("Exception running DOS program " + progNameLoc, ex);
                 DetachProgRunnerEvents();
                 mProgRunner = null;
                 return false;
@@ -439,12 +431,11 @@ namespace CaptureTaskManager
             DetachProgRunnerEvents();
             mProgRunner = null;
 
-            if ((UseResCode & ExitCode != 0))
+            if (UseResCode & ExitCode != 0)
             {
                 if ((ProgramAborted && mAbortProgramPostLogEntry) || !ProgramAborted)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                         "  ProgRunner.ExitCode = " + ExitCode + " for Program = " + progNameLoc);
+                    OnErrorEvent("  ProgRunner.ExitCode = " + ExitCode + " for Program = " + progNameLoc);
                 }
                 return false;
             }
