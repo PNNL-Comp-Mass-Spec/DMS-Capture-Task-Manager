@@ -112,7 +112,7 @@ namespace CaptureTaskManager
                     try
                     {
                         myToolRunner = (IToolRunner)obj;
-                        ReportStatus("Loaded tool runner: " + className + " from " + assyName, true);
+                        LogDebug("Loaded tool runner: " + className + " from " + assyName);
                     }
                     catch (Exception ex)
                     {

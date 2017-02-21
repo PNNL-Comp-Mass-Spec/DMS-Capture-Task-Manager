@@ -131,7 +131,7 @@ namespace CaptureTaskManager
             {
                 case LoopExitCode.ConfigChanged:
                     // Reload the manager config
-                    ReportStatus("Reloading configuration and restarting manager");
+                    LogMessage("Reloading configuration and restarting manager");
 
                     // Unsubscribe message handler events and close msssage handler
                     if (m_MsgQueueInitSuccess)
@@ -146,7 +146,7 @@ namespace CaptureTaskManager
 
                 case LoopExitCode.DisabledMC:
                     // Manager is disabled via manager control db
-                    ReportStatus("Manager disabled in manager control DB");
+                    LogMessage("Manager disabled in manager control DB");
 
                     m_StatusFile.UpdateDisabled(false);
                     restartOK = false;
@@ -154,7 +154,7 @@ namespace CaptureTaskManager
 
                 case LoopExitCode.DisabledLocally:
                     // Manager disabled locally
-                    ReportStatus("Manager disabled locally");
+                    LogMessage("Manager disabled locally");
 
                     m_StatusFile.UpdateDisabled(true);
                     restartOK = false;
@@ -184,7 +184,7 @@ namespace CaptureTaskManager
 
                 case LoopExitCode.NoTaskFound:
                     // No capture task found
-                    ReportStatus("No capture tasks found", true);
+                    LogDebug("No capture tasks found");
 
                     m_StatusFile.UpdateStopped(false);
                     restartOK = false;
@@ -192,7 +192,7 @@ namespace CaptureTaskManager
 
                 case LoopExitCode.ShutdownCmdReceived:
                     // Shutdown command received
-                    ReportStatus("Shutdown command received, closing manager");
+                    LogMessage("Shutdown command received, closing manager");
 
                     m_StatusFile.UpdateStopped(false);
                     restartOK = false;
@@ -200,7 +200,7 @@ namespace CaptureTaskManager
 
                 case LoopExitCode.ExceededMaxTaskCount:
                     // Max number of consecutive jobs reached
-                    ReportStatus("Exceeded maximum job count, closing manager");
+                    LogMessage("Exceeded maximum job count, closing manager");
 
                     m_StatusFile.UpdateStopped(false);
                     restartOK = false;
@@ -208,7 +208,7 @@ namespace CaptureTaskManager
 
                 case LoopExitCode.UpdateRequired:
                     // Manager update required
-                    ReportStatus("Manager update is required, closing manager");
+                    LogMessage("Manager update is required, closing manager");
 
                     m_MgrSettings.AckManagerUpdateRequired();
                     m_StatusFile.UpdateStopped(false);
@@ -225,7 +225,7 @@ namespace CaptureTaskManager
 
                 case LoopExitCode.NeedToAbortProcessing:
                     // Step tool set flag NeedToAbortProcessing to true
-                    ReportStatus("NeedToAbortProcessing = true, closing manager");
+                    LogMessage("NeedToAbortProcessing = true, closing manager");
 
                     m_StatusFile.UpdateStopped(false);
                     restartOK = false;
@@ -325,7 +325,7 @@ namespace CaptureTaskManager
             if (m_TraceMode)
                 ShowTraceMessage("Initializing log file " + logFileName);
 
-            ReportStatus("=== Started Capture Task Manager V" + Application.ProductVersion + " ===== ");
+            LogMessage("=== Started Capture Task Manager V" + Application.ProductVersion + " ===== ");
 
             // Setup the message queue
             m_MsgQueueInitSuccess = false;
@@ -463,7 +463,7 @@ namespace CaptureTaskManager
 
             if (elaspedTime > 25)
             {
-                ReportStatus("Connection to the message queue was slow, taking " + (int)elaspedTime + " seconds");
+                LogWarning("Connection to the message queue was slow, taking " + (int)elaspedTime + " seconds");
             }
 
             return m_MsgQueueInitSuccess;
@@ -474,14 +474,14 @@ namespace CaptureTaskManager
             if (!m_MsgHandler.Init())
             {
                 // Most error messages provided by .Init method, but debug message is here for program tracking
-                ReportStatus("Message handler init error", true);
+                LogDebug("Message handler init error");
                 m_MsgQueueInitSuccess = false;
                 if (m_TraceMode)
                     ShowTraceMessage("m_MsgQueueInitSuccess = false: Message handler init error");
             }
             else
             {
-                ReportStatus("Message handler initialized", true);
+                LogDebug("Message handler initialized");
                 m_MsgQueueInitSuccess = true;
                 if (m_TraceMode)
                     ShowTraceMessage("m_MsgQueueInitSuccess = true");
@@ -667,7 +667,7 @@ namespace CaptureTaskManager
                     string pendingWindowsUpdateMessage;
                     if (clsWindowsUpdateStatus.UpdatesArePending(out pendingWindowsUpdateMessage))
                     {
-                        ReportStatus(pendingWindowsUpdateMessage);
+                        LogMessage(pendingWindowsUpdateMessage);
                         m_LoopExitCode = LoopExitCode.NoTaskFound;
                         break;
                     }
@@ -748,7 +748,7 @@ namespace CaptureTaskManager
 
             if (!restartOK)
             {
-                ReportStatus("===== Closing Capture Task Manager =====", true);
+                LogDebug("===== Closing Capture Task Manager =====", writeToLog: false);
             }
 
             return restartOK;
@@ -767,7 +767,7 @@ namespace CaptureTaskManager
                 m_Dataset = m_Task.GetParam("Dataset");
                 var stepNumber = m_Task.GetParam("Step");
 
-                ReportStatus("Job " + m_Job + ", step " + stepNumber + " assigned", true);
+                LogDebug("Job " + m_Job + ", step " + stepNumber + " assigned");
 
                 // Update the status
                 m_StatusFile.JobNumber = int.Parse(m_Job);
@@ -853,7 +853,7 @@ namespace CaptureTaskManager
                         break;
 
                     case EnumCloseOutType.CLOSEOUT_SUCCESS:
-                        ReportStatus(m_MgrName + ": Step complete, tool " + m_StepTool + ", job " + m_Job + ", Dataset " + m_Dataset, true);
+                        LogDebug(m_MgrName + ": Step complete, tool " + m_StepTool + ", job " + m_Job + ", Dataset " + m_Dataset);
 
                         m_Task.CloseTask(eTaskCloseout, toolResult.CloseoutMsg, toolResult.EvalCode, toolResult.EvalMsg);
                         break;
@@ -931,12 +931,17 @@ namespace CaptureTaskManager
 
             try
             {
-                var fiApplication = new FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location);
-
-                if (fiApplication.Directory == null)
+                var appFolder = clsUtilities.GetAppFolderPath();
+                
+                if (string.IsNullOrWhiteSpace(appFolder))
+                {
+                    LogWarning("GetAppFolderPath returned an empty directory path to RemoveOldFTPLogFiles");
                     return;
+                }
 
-                foreach (var fiFile in fiApplication.Directory.GetFiles("FTPlog_*"))
+                var appFolderInfo = new DirectoryInfo(appFolder);
+
+                foreach (var fiFile in appFolderInfo.GetFiles("FTPlog_*"))
                 {
                     try
                     {
@@ -1035,7 +1040,7 @@ namespace CaptureTaskManager
                         msg += "s";
 
                     msg += " over " + iAgedTempFilesHours + " hours old in folder " + sTempFolderPath;
-                    ReportStatus(msg);
+                    LogMessage(msg);
                 }
             }
             catch (Exception ex)
@@ -1060,7 +1065,7 @@ namespace CaptureTaskManager
                 return false;
             }
 
-            ReportStatus("Loaded tool runner for Step Tool " + stepToolName, true);
+            LogDebug("Loaded tool runner for Step Tool " + stepToolName);
 
             try
             {
@@ -1069,12 +1074,12 @@ namespace CaptureTaskManager
     // to Pacifica.Core.EasyHttp.eDebugMode.MyEMSLOfflineMode when calling UploadToMyEMSLWithRetry()
     // This in turn results in writeToDisk becoming True in SendFileListToDavAsTar
     m_Task.AddAdditionalParameter("MyEMSLOffline", "true");
-    ReportStatus("Adding job parameter MyEMSLOffline=true");
+    LogMessage("Adding job parameter MyEMSLOffline=true");
 #endif
 
 #if MyEMSL_TEST_TAR
     m_Task.AddAdditionalParameter("DebugTestTar", "true");
-    ReportStatus("Adding job parameter DebugTestTar=true");
+    LogMessage("Adding job parameter DebugTestTar=true");
 #endif
                 if (m_TraceMode)
                 {
@@ -1173,7 +1178,7 @@ namespace CaptureTaskManager
 
             dtLastConfigDBUpdate = DateTime.UtcNow;
 
-            ReportStatus("Updating manager settings using Manager Control database", true);
+            LogDebug("Updating manager settings using Manager Control database");
 
             if (!m_MgrSettings.LoadMgrSettingsFromDB())
             {
@@ -1361,7 +1366,7 @@ namespace CaptureTaskManager
 
         private void FileWatcherChanged(object sender, FileSystemEventArgs e)
         {
-            ReportStatus("clsMainProgram.FileWatcherChanged event received", true);
+            LogDebug("clsMainProgram.FileWatcherChanged event received");
 
             m_ConfigChanged = true;
             m_FileWatcher.EnableRaisingEvents = false;
@@ -1370,7 +1375,7 @@ namespace CaptureTaskManager
         // Deprecated in January 2017
         //private void OnBroadcastReceived(string cmdText)
         //{
-        //    ReportStatus("clsMainProgram.OnBroadcasetReceived event; message = " + cmdText, true);
+        //    LogDebug("clsMainProgram.OnBroadcasetReceived event; message = " + cmdText);
 
         //    clsBroadcastCmd recvCmd;
 
@@ -1390,7 +1395,7 @@ namespace CaptureTaskManager
         //    if (!recvCmd.MachineList.Contains(m_MgrName))
         //    {
         //        // Received command doesn't apply to this manager
-        //        ReportStatus("Received command not applicable to this manager instance", true);
+        //        LogDebug("Received command not applicable to this manager instance");
 
         //        return;
         //    }
@@ -1403,7 +1408,7 @@ namespace CaptureTaskManager
         //            m_Running = false;
         //            break;
         //        case "readconfig":
-        //            ReportStatus("Reload config message received");
+        //            LogMessage("Reload config message received");
         //            m_ConfigChanged = true;
         //            m_Running = false;
         //            break;

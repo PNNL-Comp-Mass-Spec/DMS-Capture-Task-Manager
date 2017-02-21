@@ -41,18 +41,15 @@ namespace ArchiveVerifyPlugin
         public override clsToolReturnData RunTool()
         {
             var msg = "Starting ArchiveVerifyPlugin.clsPluginMain.RunTool()";
-            ReportStatus(msg, true);
+            LogDebug(msg);
 
             // Perform base class operations, if any
             mRetData = base.RunTool();
             if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
                 return mRetData;
 
-            if (m_DebugLevel >= 5)
-            {
-                msg = "Verifying files in MyEMSL for dataset '" + m_Dataset + "'";
-                ReportStatus(msg);
-            }
+            var writeToLog = m_DebugLevel >= 5;
+            LogDebug("Verifying files in MyEMSL for dataset '" + m_Dataset + "'", writeToLog);
 
             // Set this to Success for now
             mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
@@ -96,11 +93,7 @@ namespace ArchiveVerifyPlugin
             if (success)
             {
                 // Everything was good
-                if (m_DebugLevel >= 4)
-                {
-                    msg = "MyEMSL verification successful for job " + m_Job + ", dataset " + m_Dataset;
-                    ReportStatus(msg);
-                }
+                LogMessage("MyEMSL verification successful for job " + m_Job + ", dataset " + m_Dataset);
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
 
                 // Note that stored procedure SetStepTaskComplete will update MyEMSL State values if mRetData.EvalCode = 5
@@ -121,7 +114,7 @@ namespace ArchiveVerifyPlugin
             }
 
             msg = "Completed clsPluginMain.RunTool()";
-            ReportStatus(msg, true);
+            LogDebug(msg);
 
             return mRetData;
 
@@ -791,7 +784,7 @@ namespace ArchiveVerifyPlugin
                     if (string.Equals(archiveFile.Dataset, m_Dataset, StringComparison.CurrentCultureIgnoreCase))
                         lstFilteredFiles.Add(archiveFile);
                     else
-                        ReportStatus(
+                        LogMessage(
                             "Query for dataset ID " + m_DatasetID + " yielded match to " + archiveFile.PathWithDataset +
                             " - skipping since wrong dataset", true);
                 }
@@ -879,7 +872,7 @@ namespace ArchiveVerifyPlugin
 
         void reader_MessageEvent(object sender, MyEMSLReader.MessageEventArgs e)
         {
-            ReportStatus(e.Message);
+            LogMessage(e.Message);
         }
 
         void reader_ProgressEvent(object sender, MyEMSLReader.ProgressEventArgs e)
@@ -890,7 +883,7 @@ namespace ArchiveVerifyPlugin
             {
                 if (DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds >= 1)
                 {
-                    ReportStatus(msg, true);
+                    LogDebug(msg);
                     mPercentComplete = e.PercentComplete;
                     mLastProgressUpdateTime = DateTime.UtcNow;
                 }

@@ -128,7 +128,7 @@ namespace CaptureTaskManager
 
                     m_HasConnection = true;
 
-                    ReportStatus("Connected to broker", true);
+                    LogDebug("Connected to broker");
                     return;
                 }
                 catch (Exception ex)
@@ -174,12 +174,12 @@ namespace CaptureTaskManager
                 // // Queue for telling manager to perform task (future?)
                 // var commandSession = m_Connection.CreateSession();
                 // m_CommandConsumer = commandSession.CreateConsumer(new ActiveMQQueue(m_CommandQueueName));
-                // ReportStatus("Command listener established", true);
+                // LogDebug("Command listener established");
 
                 // // Topic for commands broadcast to all capture tool managers
                 // var broadcastSession = m_Connection.CreateSession();
                 // m_BroadcastConsumer = broadcastSession.CreateConsumer(new ActiveMQTopic(m_BroadcastTopicName));
-                // ReportStatus("Broadcast listener established", true);
+                // LogDebug("Broadcast listener established");
 
                 if (string.IsNullOrWhiteSpace(m_StatusTopicName))
                 {
@@ -190,7 +190,7 @@ namespace CaptureTaskManager
                     // topic for the capture tool manager to send status information over
                     m_StatusSession = m_Connection.CreateSession();
                     m_StatusSender = m_StatusSession.CreateProducer(new ActiveMQTopic(m_StatusTopicName));
-                    ReportStatus("Status sender established", true);
+                    LogDebug("Status sender established");
                 }
 
                 return true;
@@ -212,11 +212,11 @@ namespace CaptureTaskManager
         //private void OnCommandReceived(IMessage message)
         //{
         //    var textMessage = message as ITextMessage;
-        //    ReportStatus("clsMessageHandler(), Command message received", true);
+        //    LogDebug("clsMessageHandler(), Command message received");
         //    if (CommandReceived != null)
         //    {
         //        // call the delegate to process the commnd
-        //        ReportStatus("clsMessageHandler().OnCommandReceived: At least one event handler assigned", true);
+        //        LogDebug("clsMessageHandler().OnCommandReceived: At least one event handler assigned");
         //        if (textMessage != null)
         //        {
         //            CommandReceived(textMessage.Text);
@@ -224,7 +224,7 @@ namespace CaptureTaskManager
         //    }
         //    else
         //    {
-        //        ReportStatus("clsMessageHandler().OnCommandReceived: No event handlers assigned", true);
+        //        LogDebug("clsMessageHandler().OnCommandReceived: No event handlers assigned");
         //    }
         //}
 
@@ -237,12 +237,12 @@ namespace CaptureTaskManager
         //private void OnBroadcastReceived(IMessage message)
         //{
         //    var textMessage = message as ITextMessage;
-        //    ReportStatus("clsMessageHandler(), Broadcast message received", true);
+        //    LogDebug("clsMessageHandler(), Broadcast message received");
 
         //    if (BroadcastReceived != null)
         //    {
         //        // call the delegate to process the commnd
-        //        ReportStatus("clsMessageHandler().OnBroadcastReceived: At least one event handler assigned", true);
+        //        LogDebug("clsMessageHandler().OnBroadcastReceived: At least one event handler assigned");
         //        if (textMessage != null)
         //        {
         //            BroadcastReceived(textMessage.Text);
@@ -250,7 +250,7 @@ namespace CaptureTaskManager
         //    }
         //    else
         //    {
-        //        ReportStatus("clsMessageHandler().OnBroadcastReceived: No event handlers assigned", true);
+        //        LogDebug("clsMessageHandler().OnBroadcastReceived: No event handlers assigned");
         //    }
         //}
 
@@ -293,7 +293,7 @@ namespace CaptureTaskManager
             {
                 m_Connection.Dispose();
                 m_HasConnection = false;
-                ReportStatus("Message connection closed", true);
+                LogDebug("Message connection closed");
             }
         }
 

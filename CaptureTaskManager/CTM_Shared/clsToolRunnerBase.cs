@@ -160,7 +160,7 @@ namespace CaptureTaskManager
             {
                 m_LastConfigDBUpdate = DateTime.UtcNow;
 
-                ReportStatus("Updating manager settings using Manager Control database", true);
+                LogDebug("Updating manager settings using Manager Control database");
 
                 const bool logConnectionErrors = false;
                 if (!m_MgrParams.LoadMgrSettingsFromDB(logConnectionErrors))
@@ -558,10 +558,8 @@ namespace CaptureTaskManager
                                                          fiFile.Name + ": " +
                                                          fiFile.LastWriteTime.ToString(DATE_TIME_FORMAT));
 
-                            if (m_DebugLevel >= 5)
-                            {
-                                ReportStatus("EXE Info: " + strExeInfo, true);
-                            }
+                            var writeToLog = m_DebugLevel >= 5;
+                            LogDebug("EXE Info: " + strExeInfo, writeToLog);                            
                         }
                         else
                         {
@@ -814,10 +812,9 @@ namespace CaptureTaskManager
                 var strArgs = clsConversion.PossiblyQuotePath(fiDLLFile.FullName) + " /O:" +
                               clsConversion.PossiblyQuotePath(versionInfoFilePath);
 
-                if (m_DebugLevel >= 3)
-                {
-                    ReportStatus(strAppPath + " " + strArgs, true);
-                }
+                var writeToLog = m_DebugLevel >= 3;
+
+                LogMessage(strAppPath + " " + strArgs, isError: false, writeToLog: writeToLog);
 
                 var objProgRunner = new clsRunDosProgram(clsUtilities.GetAppFolderPath())
                 {

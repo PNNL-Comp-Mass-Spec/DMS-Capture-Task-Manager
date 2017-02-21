@@ -8,6 +8,17 @@ namespace CaptureTaskManager
     {
 
         /// <summary>
+        /// Show a status message at the console and optionally include in the log file, tagging it as a debug message
+        /// </summary>
+        /// <param name="statusMessage">Status message</param>
+        /// <param name="writeToLog">True to write to the log file; false to only display at console</param>
+        /// <remarks>The message is shown in dark grey in the console.</remarks>
+        protected static void LogDebug(string statusMessage, bool writeToLog = true)
+        {
+            clsUtilities.LogDebug(statusMessage, writeToLog);
+        }
+
+        /// <summary>
         /// Log an error message
         /// </summary>
         /// <param name="errorMessage">Error message</param>
@@ -28,6 +39,17 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
+        /// Show a status message at the console and optionally include in the log file
+        /// </summary>
+        /// <param name="statusMessage">Status message</param>
+        /// <param name="isError">True if this is an error</param>
+        /// <param name="writeToLog">True to write to the log file; false to only display at console</param>
+        public static void LogMessage(string statusMessage, bool isError = false, bool writeToLog = true)
+        {
+            clsUtilities.LogMessage(statusMessage, isError, writeToLog);
+        }
+
+        /// <summary>
         /// Log a warning message
         /// </summary>
         /// <param name="warningMessage">Warning message</param>
@@ -42,6 +64,7 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="statusMessage">Status message</param>
         /// <param name="isDebug">True if a debug level message</param>
+        [Obsolete("Use LogDebug or LogMessage")]
         protected static void ReportStatus(string statusMessage, bool isDebug = false)
         {
             clsUtilities.ReportStatus(statusMessage, isDebug);

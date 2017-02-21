@@ -209,6 +209,23 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
+        /// Show a status message at the console and optionally include in the log file, tagging it as a debug message
+        /// </summary>
+        /// <param name="statusMessage">Status message</param>
+        /// <param name="writeToLog">True to write to the log file; false to only display at console</param>
+        /// <remarks>The message is shown in dark grey in the console.</remarks>
+        public static void LogDebug(string statusMessage, bool writeToLog = true)
+        {
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.WriteLine("  " + statusMessage);
+            Console.ResetColor();
+
+            if (writeToLog)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, statusMessage);
+            }
+        }
+        /// <summary>
         /// Log an error message
         /// </summary>
         /// <param name="errorMessage">Error message</param>
@@ -230,7 +247,58 @@ namespace CaptureTaskManager
         /// <param name="ex">Exception to log</param>
         public static void LogError(string errorMessage, Exception ex)
         {
-            ReportStatus(errorMessage, ex);
+            string formattedError;
+            if (ex == null || errorMessage.EndsWith(ex.Message))
+            {
+                formattedError = errorMessage;
+            }
+            else
+            {
+                formattedError = errorMessage + ": " + ex.Message;
+            }
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(formattedError);
+
+            if (ex != null)
+            {
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine(Utilities.GetExceptionStackTraceMultiLine(ex));
+            }
+
+            Console.ResetColor();
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, formattedError, ex);
+        }
+
+        /// <summary>
+        /// Show a status message at the console and optionally include in the log file
+        /// </summary>
+        /// <param name="statusMessage">Status message</param>
+        /// <param name="isError">True if this is an error</param>
+        /// <param name="writeToLog">True to write to the log file; false to only display at console</param>
+        public static void LogMessage(string statusMessage, bool isError = false, bool writeToLog = true)
+        {
+            if (isError)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(statusMessage);
+                Console.ResetColor();
+            }
+            else
+            {
+                Console.WriteLine(statusMessage);
+            }
+
+            if (!writeToLog)
+                return;
+
+            if (isError)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, statusMessage);
+            }
+            else
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, statusMessage);
+            }
         }
 
         /// <summary>
@@ -253,35 +321,30 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="errorMessage">Error message (do not include ex.message)</param>
         /// <param name="ex">Exception</param>
+        [Obsolete("Use LogError instead")]
         public static void ReportStatus(string errorMessage, Exception ex)
         {
-            string formattedError;
-            if (errorMessage.EndsWith(ex.Message))
-            {
-                formattedError = errorMessage;
-            }
-            else
-            {
-                formattedError = errorMessage + ": " + ex.Message;
-            }
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine(formattedError);
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine(PRISM.Utilities.GetExceptionStackTraceMultiLine(ex));
-            Console.ResetColor();
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, formattedError, ex);
+            LogError(errorMessage, ex);
         }
+
 
         /// <summary>
         /// Show a status message at the console and optionally include in the log file
         /// </summary>
         /// <param name="statusMessage">Status message</param>
         /// <param name="isDebug">True if a debug level message</param>
-        public static void ReportStatus(string statusMessage, bool isDebug = false)
+        [Obsolete("Use LogDebug or LogMessage")]
+        public static void ReportStatus(string statusMessage, bool isDebug)
         {
-            Console.WriteLine(statusMessage);
-            var logLevel = isDebug ? clsLogTools.LogLevels.DEBUG : clsLogTools.LogLevels.INFO;
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, logLevel, statusMessage);
+            if (isDebug)
+            {
+                LogDebug(statusMessage, writeToLog: true);
+            }
+            else
+            {
+                LogMessage(statusMessage);
+            }
+
         }
 
         /// <summary>
@@ -312,7 +375,7 @@ namespace CaptureTaskManager
                 else
                     msg = "Folder not found [" + pathToCheck + "]; called from " + callingFunction;
 
-                ReportStatus(msg);                
+                LogMessage(msg);                
             }
             catch (Exception ex)
             {

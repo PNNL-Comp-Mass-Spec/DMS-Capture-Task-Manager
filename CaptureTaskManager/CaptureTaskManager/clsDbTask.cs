@@ -130,7 +130,8 @@ namespace CaptureTaskManager
                 myMsg += Environment.NewLine + "Name= " + myParam.ParameterName + "\t, Value= " + DbCStr(myParam.Value);
             }
 
-            ReportStatus("Parameter list:" + myMsg, true);
+            var writeToLog = m_DebugLevel >= 5;
+            LogDebug("Parameter list:" + myMsg, writeToLog);
         }
 
         protected virtual bool FillParamDict(DataTable dt)

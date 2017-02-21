@@ -27,7 +27,7 @@ namespace CaptureToolPlugin
         /// <returns>clsToolReturnData object containing tool operation results</returns>
         public override clsToolReturnData RunTool()
         {
-            ReportStatus("Starting CaptureToolPlugin.clsPluginMain.RunTool()", true);
+            LogDebug("Starting CaptureToolPlugin.clsPluginMain.RunTool()");
 
             // Note that retData.CloseoutMsg will be stored in the Completion_Message field of the database
             // Similarly, retData.EvalMsg will be stored in the Evaluation_Message field of the database
@@ -45,7 +45,7 @@ namespace CaptureToolPlugin
                 return retData;
             }
 
-            ReportStatus( "Capturing dataset '" + m_Dataset + "'");
+            LogMessage( "Capturing dataset '" + m_Dataset + "'");
 
             // Determine if instrument is on Bionet
             var capMethod = m_TaskParams.GetParam("Method");
@@ -63,7 +63,7 @@ namespace CaptureToolPlugin
             var capOpTool = new clsCaptureOps(m_MgrParams, useBionet, m_TraceMode);
             try
             {
-                ReportStatus("clsPluginMain.RunTool(): Starting capture operation", true);
+                LogDebug("clsPluginMain.RunTool(): Starting capture operation");
 
                 var success = capOpTool.DoOperation(m_TaskParams, ref retData);
 
@@ -77,7 +77,7 @@ namespace CaptureToolPlugin
                         retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING;
                 }
 
-                ReportStatus("clsPluginMain.RunTool(): Completed capture operation", true);
+                LogDebug("clsPluginMain.RunTool(): Completed capture operation");
             }
             catch (Exception ex)
             {
@@ -103,7 +103,7 @@ namespace CaptureToolPlugin
 
             capOpTool.DetachEvents();
 
-            ReportStatus("Completed clsPluginMain.RunTool()", true);
+            LogDebug("Completed clsPluginMain.RunTool()");
 
             return retData;
 
@@ -117,13 +117,13 @@ namespace CaptureToolPlugin
         /// <param name="statusTools">Tools for status reporting</param>
         public override void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
         {
-            ReportStatus("Starting clsPluginMain.Setup()", true);
+            LogDebug("Starting clsPluginMain.Setup()");
 
             base.Setup(mgrParams, taskParams, statusTools);
 
             m_TraceMode = mgrParams.GetParam("TraceMode", false);
 
-            ReportStatus("Completed clsPluginMain.Setup()", true);
+            LogDebug("Completed clsPluginMain.Setup()");
         }
 
         /// <summary>

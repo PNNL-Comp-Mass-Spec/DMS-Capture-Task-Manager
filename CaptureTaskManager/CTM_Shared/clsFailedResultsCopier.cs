@@ -81,7 +81,7 @@ namespace CaptureTaskManager
                         diTargetFolder.Create();
 
                     // Actually copy files from the source folder to the target folder
-                    ReportStatus("Copying data files to failed results archive: " + ResultsFolderPath);
+                    LogMessage("Copying data files to failed results archive: " + ResultsFolderPath);
 
                     var errorCount = 0;
                     foreach (var fiFileInfo in diSourceFolder.GetFiles())
@@ -98,7 +98,7 @@ namespace CaptureTaskManager
                     }
 
                     if (errorCount == 0)
-                        ReportStatus("Copy complete");
+                        LogMessage("Copy complete");
                     else
                         LogWarning("Copy complete; ErrorCount = " + errorCount);
                 }
@@ -160,7 +160,7 @@ namespace CaptureTaskManager
 
                     if (diOldResultsFolder.Exists)
                     {
-                        ReportStatus("Deleting old failed results folder: " + diOldResultsFolder.FullName);
+                        LogMessage("Deleting old failed results folder: " + diOldResultsFolder.FullName);
 
                         diOldResultsFolder.Delete(true);
                     }

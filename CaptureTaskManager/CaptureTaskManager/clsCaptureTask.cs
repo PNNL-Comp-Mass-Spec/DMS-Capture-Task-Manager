@@ -229,7 +229,7 @@ namespace CaptureTaskManager
                     myCmd.Parameters.Add(new SqlParameter("@JobCountToPreview", SqlDbType.Int)).Value = 10;
                 }
 
-                ReportStatus("clsCaptureTask.RequestTaskDetailed(), connection string: " + m_ConnStr, true);
+                LogDebug("clsCaptureTask.RequestTaskDetailed(), connection string: " + m_ConnStr);
 
                 if (m_DebugLevel >= 5)
                 {
@@ -324,7 +324,7 @@ namespace CaptureTaskManager
             }
             else
             {
-                ReportStatus("Successfully set task complete in database, job " + GetParam("Job", "??"), true);
+                LogDebug("Successfully set task complete in database, job " + GetParam("Job", "??"));
             }
         }
 
@@ -365,7 +365,7 @@ namespace CaptureTaskManager
                     cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
                 }
 
-                ReportStatus("Calling stored procedure " + spName, true);
+                LogDebug("Calling stored procedure " + spName);
 
                 if (m_DebugLevel >= 5)
                 {

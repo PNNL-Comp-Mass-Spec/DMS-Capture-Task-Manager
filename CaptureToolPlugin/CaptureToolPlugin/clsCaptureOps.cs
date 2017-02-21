@@ -208,7 +208,7 @@ namespace CaptureToolPlugin
                     continue;
                 }
 
-                ReportStatus("Renaming '" + datasetFile.Name + "' to '" + updatedFileName + "' to remove invalid characters");
+                LogMessage("Renaming '" + datasetFile.Name + "' to '" + updatedFileName + "' to remove invalid characters");
 
                 File.Move(datasetFile.FullName, Path.Combine(datasetFolder.FullName, updatedFileName));
             }
@@ -339,7 +339,7 @@ namespace CaptureToolPlugin
 
                     if (itemCountRenamed > 0)
                     {
-                        ReportStatus("Renamed superseded file(s) at " + diFolder.FullName + " to start with x_");
+                        LogMessage("Renamed superseded file(s) at " + diFolder.FullName + " to start with x_");
                     }
 
                     // Rename superseded folders
@@ -367,7 +367,7 @@ namespace CaptureToolPlugin
 
                     if (itemCountRenamed > 0)
                     {
-                        ReportStatus("Renamed superseded folder(s) at " + diFolder.FullName + " to start with x_");
+                        LogMessage("Renamed superseded folder(s) at " + diFolder.FullName + " to start with x_");
                     }
 
                 }
@@ -593,7 +593,7 @@ namespace CaptureToolPlugin
                     di.MoveTo(n);
 
                     var msg = "Renamed directory " + DSPath;
-                    ReportStatus(msg);
+                    LogMessage(msg);
                 }
 
                 return true;
@@ -679,7 +679,7 @@ namespace CaptureToolPlugin
                 if (finalFolderSize == initialFolderSize)
                     return true;
 
-                ReportStatus("Folder size changed from " + initialFolderSize + " bytes to " + finalFolderSize + " bytes: " + targetFolder.FullName);
+                LogMessage("Folder size changed from " + initialFolderSize + " bytes to " + finalFolderSize + " bytes: " + targetFolder.FullName);
 
                 return false;
 
@@ -733,7 +733,7 @@ namespace CaptureToolPlugin
                     return true;
                 }
 
-                ReportStatus("File size changed from " + initialFileSize + " bytes to " + finalFileSize + " bytes: " + filePath);
+                LogMessage("File size changed from " + initialFileSize + " bytes to " + finalFileSize + " bytes: " + filePath);
 
                 return false;
 
@@ -978,7 +978,7 @@ namespace CaptureToolPlugin
 
             if (myConn.Connect())
             {
-                ReportStatus("Connected to Bionet (" + shareFolderPath + ") as user " + userName + " using PRISM.ShareConnector", true);
+                LogDebug("Connected to Bionet (" + shareFolderPath + ") as user " + userName + " using PRISM.ShareConnector");
                 m_ConnectionType = ConnectionType.Prism;
                 return true;
             }
@@ -1037,7 +1037,7 @@ namespace CaptureToolPlugin
 
                 myConn = new NetworkConnection(shareFolderPath, accessCredentials);
 
-                ReportStatus("Connected to Bionet (" + shareFolderPath + ") as user " + userName + " using CaptureTaskManager.NetworkConnection", true);
+                LogDebug("Connected to Bionet (" + shareFolderPath + ") as user " + userName + " using CaptureTaskManager.NetworkConnection");
                 m_ConnectionType = ConnectionType.DotNET;
 
                 eCloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
@@ -1082,7 +1082,7 @@ namespace CaptureToolPlugin
             myConn.Disconnect();
             PRISM.clsProgRunner.GarbageCollectNow();
 
-            ReportStatus("Bionet disconnected", true);
+            LogDebug("Bionet disconnected");
             m_ConnectionType = ConnectionType.NotConnected;
 
         }
@@ -1097,7 +1097,7 @@ namespace CaptureToolPlugin
             myConn = null;
             PRISM.clsProgRunner.GarbageCollectNow();
 
-            ReportStatus("Bionet disconnected", true);
+            LogDebug("Bionet disconnected");
             m_ConnectionType = ConnectionType.NotConnected;
 
         }
@@ -1174,7 +1174,7 @@ namespace CaptureToolPlugin
             var pwd = DecodePassword(m_Pwd);
             string tempVol;
 
-            ReportStatus("Started clsCaptureOps.DoOperation()", true);
+            LogDebug("Started clsCaptureOps.DoOperation()");
 
             // Setup destination folder based on client/server switch, m_ClientServer
             // True means MgrParam "perspective" =  "client" which means we will use paths like \\proto-5\Exact04\2012_1
@@ -1194,8 +1194,8 @@ namespace CaptureToolPlugin
                         // Using a Manager Parameter to assure that the following log message is only logged once per session 
                         // (in case this manager captures multiple datasets in a row)
                         m_MgrParams.SetParam(autoEnableFlag, "True");
-                        ReportStatus("Auto-changing m_ClientServer to True (perspective=client) " +
-                                     "because " + storageVolExternal.ToLower() + " does not contain " + computerName.ToLower());
+                        LogMessage("Auto-changing m_ClientServer to True (perspective=client) " +
+                                   "because " + storageVolExternal.ToLower() + " does not contain " + computerName.ToLower());
                     }
 
                     m_ClientServer = true;
@@ -1243,12 +1243,12 @@ namespace CaptureToolPlugin
             // Verify that the storage folder on the storage server exists; e.g. \\proto-9\VOrbiETD02\2011_2
             if (!ValidateFolderPath(storageFolderPath))
             {
-                ReportStatus("Storage folder '" + storageFolderPath + "' does not exist; will auto-create");
+                LogMessage("Storage folder '" + storageFolderPath + "' does not exist; will auto-create");
 
                 try
                 {
                     Directory.CreateDirectory(storageFolderPath);
-                    ReportStatus("Successfully created " + storageFolderPath, true);
+                    LogDebug("Successfully created " + storageFolderPath);
                 }
                 catch
                 {
@@ -1292,7 +1292,7 @@ namespace CaptureToolPlugin
             // Connect to Bionet if necessary
             if (m_UseBioNet)
             {
-                ReportStatus("Bionet connection required for " + sourceVol, true);
+                LogDebug("Bionet connection required for " + sourceVol);
 
                 EnumCloseOutType eCloseoutType;
                 EnumEvalCode eEvalCode;
@@ -1315,7 +1315,7 @@ namespace CaptureToolPlugin
             }
             else
             {
-                ReportStatus("Bionet connection not required for " + sourceVol, true);
+                LogDebug("Bionet connection not required for " + sourceVol);
             }
 
             // If Source_Folder_Name is non-blank, use it. Otherwise use dataset name
@@ -1579,7 +1579,7 @@ namespace CaptureToolPlugin
                 if (errorMsgs.Count > 0)
                 {
                     retData.CloseoutMsg = errorMsgs[0];
-                    ReportStatus(retData.CloseoutMsg);
+                    LogMessage(retData.CloseoutMsg);
                 }
                 retData.CloseoutMsg = "File size changed";
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
@@ -1623,7 +1623,7 @@ namespace CaptureToolPlugin
 
                     if (!string.Equals(sourceFileName, targetFileName, StringComparison.InvariantCultureIgnoreCase))
                     {
-                        ReportStatus("Renaming '" + sourceFileName + "' to '" + targetFileName + "' to remove spaces");
+                        LogMessage("Renaming '" + sourceFileName + "' to '" + targetFileName + "' to remove spaces");
                     }
 
                     if (copyWithResume)
@@ -1641,7 +1641,7 @@ namespace CaptureToolPlugin
 
                     if (bSuccess)
                     {
-                        ReportStatus("  copied file " + sourceFilePath + " to " + targetFilePath + GetConnectionDescription());
+                        LogMessage("  copied file " + sourceFilePath + " to " + targetFilePath + GetConnectionDescription());
                     }
                     else
                     {
@@ -1836,8 +1836,8 @@ namespace CaptureToolPlugin
                     }
                     catch (Exception ex)
                     {
-                        // Exception renaming the folder; only log this as a debug message
-                        ReportStatus("Exception renaming source LCMethods folder for " + datasetName + ": " + ex.Message, true);
+                        // Exception renaming the folder; log this as a warning
+                        LogWarning("Exception renaming source LCMethods folder for " + datasetName + ": " + ex.Message);
                     }
                 }
 
@@ -1998,7 +1998,7 @@ namespace CaptureToolPlugin
                 if (bSuccess)
                 {
                     msg = "Copied folder " + diSourceDir.FullName + " to " + diTargetDir.FullName + GetConnectionDescription();
-                    ReportStatus(msg);
+                    LogMessage(msg);
 
                     AutoFixFilesWithInvalidChars(datasetInfo.DatasetName, diTargetDir);
                 }
@@ -2241,7 +2241,7 @@ namespace CaptureToolPlugin
                     {
                         var firstSkippedFile = fileList.FirstOrDefault();
                         if (firstSkippedFile != null)
-                            ReportStatus("Skipping " + searchItem.Value + ": " + firstSkippedFile.Name);
+                            LogMessage("Skipping " + searchItem.Value + ": " + firstSkippedFile.Name);
                     }
                     else if (fileList.Count > 1)
                     {
@@ -2249,8 +2249,8 @@ namespace CaptureToolPlugin
                         var lastSkippedFile = fileList.LastOrDefault();
 
                         if (firstSkippedFile != null && lastSkippedFile != null)
-                            ReportStatus("Skipping " + fileList.Count + " " + searchItem.Value + "s: " +
-                                      "(" + firstSkippedFile.Name + " through " + lastSkippedFile.Name + ")");
+                            LogMessage("Skipping " + fileList.Count + " " + searchItem.Value + "s: " +
+                                       "(" + firstSkippedFile.Name + " through " + lastSkippedFile.Name + ")");
                     }
                 }
 
@@ -2407,7 +2407,7 @@ namespace CaptureToolPlugin
                 if (bSuccess)
                 {
                     msg = "Copied folder " + diSourceDir.FullName + " to " + diTargetDir.FullName + GetConnectionDescription();
-                    ReportStatus(msg);
+                    LogMessage(msg);
 
                     AutoFixFilesWithInvalidChars(datasetInfo.DatasetName, diTargetDir);
                 }
@@ -2533,7 +2533,7 @@ namespace CaptureToolPlugin
                 if (bSuccess)
                 {
                     msg = "Copied files in folder " + diSourceDir.FullName + " to " + diTargetDir.FullName + GetConnectionDescription();
-                    ReportStatus(msg);
+                    LogMessage(msg);
 
                     AutoFixFilesWithInvalidChars(datasetInfo.DatasetName, diTargetDir);
                 }
@@ -2623,7 +2623,7 @@ namespace CaptureToolPlugin
 
                 foreach (var sDir in dataFolders)
                 {
-                    ReportStatus("Test folder " + sDir + " against RegEx " + reMaldiSpotFolder, true);
+                    LogDebug("Test folder " + sDir + " against RegEx " + reMaldiSpotFolder);
 
                     if (!reMaldiSpotFolder.IsMatch(sDir.Name, 0))
                     {
@@ -2652,7 +2652,7 @@ namespace CaptureToolPlugin
             {
                 m_FileTools.CopyDirectory(diSourceDir.FullName, diTargetDir.FullName);
                 msg = "Copied folder " + diSourceDir.FullName + " to " + diTargetDir.FullName + GetConnectionDescription();
-                ReportStatus(msg);
+                LogMessage(msg);
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
             }
             catch (Exception ex)
@@ -2714,7 +2714,7 @@ namespace CaptureToolPlugin
                         msg = "  directory copy complete; CountCopied = " + iFileCountNewlyCopied + "; " +
                               "CountSkipped = " + iFileCountSkipped + "; " +
                               "CountResumed = " + iFileCountResumed;
-                        ReportStatus(msg, true);
+                        LogDebug(msg);
                     }
                     else
                     {
@@ -2750,7 +2750,7 @@ namespace CaptureToolPlugin
                         {
                             bDoCopy = true;
                             msg = "  " + dElapsedTime.ToString("0") + " seconds have elapsed; will attempt to resume copy";
-                            ReportStatus(msg);
+                            LogMessage(msg);
                         }
                     }
 
@@ -2810,7 +2810,7 @@ namespace CaptureToolPlugin
                                 diFolder.Delete(true);
 
                                 msg = "Deleted old " + msg;
-                                ReportStatus(msg);
+                                LogMessage(msg);
                             }
                             catch (Exception ex)
                             {
@@ -3044,12 +3044,12 @@ namespace CaptureToolPlugin
 
         private void OnCopyingFile(string filename)
         {
-            ReportStatus("Copying file " + filename, true);
+            LogDebug("Copying file " + filename);
         }
 
         private void OnResumingFileCopy(string filename)
         {
-            ReportStatus("Resuming copy of file " + filename);
+            LogMessage("Resuming copy of file " + filename);
         }
 
         private void OnFileCopyProgress(string filename, float percentComplete)
@@ -3064,7 +3064,7 @@ namespace CaptureToolPlugin
                 m_LastProgressUpdate = DateTime.Now;
                 m_LastProgressFileName = filename;
                 m_LastProgressPercent = percentComplete;
-                ReportStatus("  copying " + Path.GetFileName(filename) + ": " + percentComplete.ToString("0.0") + "% complete");
+                LogMessage("  copying " + Path.GetFileName(filename) + ": " + percentComplete.ToString("0.0") + "% complete");
             }
 
 
@@ -3206,7 +3206,7 @@ namespace CaptureToolPlugin
 
                                 if (rawFound && tsvFound)
                                 {
-                                    ReportStatus("Capturing a .raw file with a corresponding .tsv file");
+                                    LogMessage("Capturing a .raw file with a corresponding .tsv file");
                                     break;
                                 }
                             }

@@ -91,7 +91,7 @@ namespace CaptureTaskManager
 
             if (eManagerErrorCleanupMode != eCleanupModeConstants.Disabled)
             {
-                ReportStatus("Attempting to automatically clean the work directory");
+                LogMessage("Attempting to automatically clean the work directory");
 
                 // Call SP ReportManagerErrorCleanup @ActionCode=1
                 ReportManagerErrorCleanup(eCleanupActionCodeConstants.Start);
