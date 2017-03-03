@@ -7,6 +7,16 @@ namespace Pacifica.Core
     public class Configuration
     {
         /// <summary>
+        /// Policy Server host name on the production server
+        /// </summary>
+        public const string DEFAULT_POLICY_SERVER_HOST_NAME = "policy.my.emsl.pnl.gov";
+
+        /// <summary>
+        /// Metadata Server host name on the production server
+        /// </summary>
+        public const string DEFAULT_POLICY_SERVER_HOST_NAME = "metadata.my.emsl.pnl.gov";
+
+        /// <summary>
         /// Elastic search host name on the production server
         /// </summary>
         public const string DEFAULT_ELASTIC_SEARCH_HOST_NAME = "my.emsl.pnl.gov";
@@ -185,7 +195,7 @@ namespace Pacifica.Core
 
         private static Auth mAuthInstance;
         /// <summary>
-        /// Gets the most up to date Auth object that should be used for testing authentication, 
+        /// Gets the most up to date Auth object that should be used for testing authentication,
         /// and setting (explicit) and saving (implicit) cookies.
         /// </summary>
         /// <value>Returns a null if the Configuration.TestAuthUri does not parse correctly.</value>

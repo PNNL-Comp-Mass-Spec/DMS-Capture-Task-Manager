@@ -42,6 +42,35 @@ namespace Pacifica.Core
             ErrorMessage = string.Empty;
         }
 
+        public boolean CheckMetadataValidity(string metadataObjectJSON)
+        {
+            string policyURL = Configuration.PolicyServerUri + "/ingest/";
+
+            string success = EasyHttp.send(policyURL, out responseStatusCode, metadataObjectJSON, "POST");
+            if ( responseStatusCode == 200 && success.ToLower() == "true"){
+                return TRUE;
+            }else{
+                return FALSE;
+            }
+        }
+
+        public boolean DoesFileExistInMyEMSL(string fileSHA1HashSum)
+        {
+            string metadataURL = Configuration.MetadataServerUri + "/files?hashsum=" + fileSHA1HashSum;
+
+            string fileListJSON = EasyHttp.send(metadataURL, out responseStatusCode);
+
+            if (fileListJSON != "[]")
+            {
+                if fileListJSON.Contains(fileSHA1HashSum){
+                    return TRUE;
+                }
+            }else{
+                return FALSE;
+            }
+
+        }
+
         /// <summary>
         /// Obtain the XML returned by the given MyEMSL status page
         /// </summary>
@@ -326,15 +355,15 @@ namespace Pacifica.Core
             // 		<step id='6' message='verified' status='SUCCESS' />
             // 	</status>
             // </myemsl>
-            // 
+            //
             // Step IDs correspond to:
             // 0: Submitted
             // 1: Received
             // 2: Processing
             // 3: Verified
             // 4: Stored
-            // 5: Available   (status will be "ERROR" if user doesn't have upload permissions for a proposal; 
-            //                 for example https://a4.my.emsl.pnl.gov/myemsl/cgi-bin/status/1042281/xml shows message 
+            // 5: Available   (status will be "ERROR" if user doesn't have upload permissions for a proposal;
+            //                 for example https://a4.my.emsl.pnl.gov/myemsl/cgi-bin/status/1042281/xml shows message
             //                 "You(47943) do not have upload permissions to proposal 17797"
             //                 for user svc-dms on May 3, 2012)
             //                 And https://ingest.my.emsl.pnl.gov/myemsl/cgi-bin/status/2919668/xml shows message
