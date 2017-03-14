@@ -5,7 +5,6 @@ using System.Linq;
 using Pacifica.Core;
 using MyEMSLReader;
 using PRISM;
-using MessageEventArgs = MyEMSLReader.MessageEventArgs;
 using ProgressEventArgs = Pacifica.Core.ProgressEventArgs;
 using Utilities = Pacifica.Core.Utilities;
 
@@ -318,8 +317,8 @@ namespace Pacifica.DMS_Metadata
 
             // Attach events
             reader.ErrorEvent += reader_ErrorEvent;
-            reader.MessageEvent += reader_MessageEvent;
-            reader.ProgressEvent += reader_ProgressEvent;
+            reader.StatusEvent += reader_MessageEvent;
+            reader.ProgressUpdate += reader_ProgressEvent;
 
             if (UseTestInstance)
             {
@@ -601,17 +600,17 @@ namespace Pacifica.DMS_Metadata
             DebugEvent?.Invoke(this, new Pacifica.Core.MessageEventArgs(callingFunction, currentTask));
         }
 
-        void reader_ErrorEvent(object sender, MessageEventArgs e)
+        void reader_ErrorEvent(string message, Exception ex)
         {
-            OnError("MyEMSLReader", e.Message);
+            OnError("MyEMSLReader", message);
         }
 
-        void reader_MessageEvent(object sender, MessageEventArgs e)
+        void reader_MessageEvent(string message)
         {
-            Console.WriteLine("MyEMSLReader: " + e.Message);
+            Console.WriteLine("MyEMSLReader: " + message);
         }
 
-        void reader_ProgressEvent(object sender, MyEMSLReader.ProgressEventArgs e)
+        void reader_ProgressEvent(string progressMessage, float percentComplete)
         {
             // Console.WriteLine("MyEMSLReader Percent complete: " + e.PercentComplete.ToString("0.0") + "%");
         }

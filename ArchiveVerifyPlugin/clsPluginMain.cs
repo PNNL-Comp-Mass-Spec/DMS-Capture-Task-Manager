@@ -752,8 +752,8 @@ namespace ArchiveVerifyPlugin
 
                 // Attach events
                 reader.ErrorEvent += reader_ErrorEvent;
-                reader.MessageEvent += reader_MessageEvent;
-                reader.ProgressEvent += reader_ProgressEvent;
+                reader.StatusEvent += reader_MessageEvent;
+                reader.ProgressUpdate += reader_ProgressEvent;
 
                 var subDir = m_TaskParams.GetParam("OutputFolderName", string.Empty);
 
@@ -865,26 +865,26 @@ namespace ArchiveVerifyPlugin
 
         #region "Event Handlers"
 
-        void reader_ErrorEvent(object sender, MyEMSLReader.MessageEventArgs e)
+        void reader_ErrorEvent(string message, Exception ex)
         {
-            LogError("MyEMSLReader: " + e.Message);
+            LogError("MyEMSLReader: " + message, ex);
         }
 
-        void reader_MessageEvent(object sender, MyEMSLReader.MessageEventArgs e)
+        void reader_MessageEvent(string message)
         {
-            LogMessage(e.Message);
+            LogMessage(message);
         }
 
-        void reader_ProgressEvent(object sender, MyEMSLReader.ProgressEventArgs e)
+        void reader_ProgressEvent(string progressMessage, float percentComplete)
         {
-            var msg = "Percent complete: " + e.PercentComplete.ToString("0.0") + "%";
+            var msg = "Percent complete: " + percentComplete.ToString("0.0") + "%";
 
-            if (e.PercentComplete > mPercentComplete || DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds >= 30)
+            if (percentComplete > mPercentComplete || DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds >= 30)
             {
                 if (DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds >= 1)
                 {
                     LogDebug(msg);
-                    mPercentComplete = e.PercentComplete;
+                    mPercentComplete = percentComplete;
                     mLastProgressUpdateTime = DateTime.UtcNow;
                 }
             }
