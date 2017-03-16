@@ -175,7 +175,7 @@ namespace Pacifica.DMS_Metadata
             _mdContainer.DeleteLockFiles();
 
             if (!string.IsNullOrEmpty(statusURL))
-                StatusURI = statusURL + "/xml";
+                StatusURI = statusURL;
 
             return success;
         }

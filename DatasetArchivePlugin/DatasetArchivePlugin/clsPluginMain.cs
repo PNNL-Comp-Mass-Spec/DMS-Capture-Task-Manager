@@ -23,7 +23,7 @@ namespace DatasetArchivePlugin
         //**********************************************************************************************************
 
         #region "Constants"
-        protected const string SP_NAME_STORE_MYEMSL_STATS = "StoreMyEMSLUploadStats";
+        protected const string SP_NAME_STORE_MYEMSL_STATS = "StoreMyEMSLUploadStats_Copy";
         #endregion
 
         #region "Class-wide Variables"
@@ -160,7 +160,6 @@ namespace DatasetArchivePlugin
             int errorCode,
             bool usedTestInstance)
         {
-
             bool Outcome;
 
             mSubmittedToMyEMSL = true;

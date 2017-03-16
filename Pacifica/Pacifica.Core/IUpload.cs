@@ -11,7 +11,7 @@ namespace Pacifica.Core
         /// <param name="metadataObject"></param>
         /// <param name="statusURL"></param>
         /// <remarks>Raises event with URL of status monitor page from server backend</remarks>
-        bool StartUpload(Dictionary<string, object> metadataObject, out string statusURL);
+        bool StartUpload(List<Dictionary<string, object>> metadataObject, out string statusURL);
 
         /// <summary>
         /// Receives an dictionary object with appropriate name-value pairs of metadata information
@@ -20,7 +20,7 @@ namespace Pacifica.Core
         /// <param name="loginCredentials"></param>
         /// <param name="statusURL"></param>
         /// <remarks>Raises event with URL of status monitor page from server backend</remarks>
-        bool StartUpload(Dictionary<string, object> metadataObject, NetworkCredential loginCredentials, out string statusURL);
+        bool StartUpload(List<Dictionary<string, object>> metadataObject, NetworkCredential loginCredentials, out string statusURL);
 
         /// <summary>
         /// Generates a SHA-1 style hash of a given file

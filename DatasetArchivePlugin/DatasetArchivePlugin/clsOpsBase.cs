@@ -190,15 +190,15 @@ namespace DatasetArchivePlugin
             if (maxAttempts < 1)
                 maxAttempts = 1;
 
-            if (Environment.UserName.ToLower() != "svc-dms")
-            {
-                // The current user is not svc-dms
-                // Uploaded files would be associated with the wrong username and thus would not be visible to all DMS Users
-                m_ErrMsg = "Files must be uploaded to MyEMSL using the svc-dms account; aborting";
-                Console.WriteLine(m_ErrMsg);
-                OnErrorEvent(m_ErrMsg);
-                return false;
-            }
+            //if (Environment.UserName.ToLower() != "svc-dms")
+            //{
+            //    // The current user is not svc-dms
+            //    // Uploaded files would be associated with the wrong username and thus would not be visible to all DMS Users
+            //    m_ErrMsg = "Files must be uploaded to MyEMSL using the svc-dms account; aborting";
+            //    Console.WriteLine(m_ErrMsg);
+            //    OnErrorEvent(m_ErrMsg);
+            //    return false;
+            //}
 
             while (!bSuccess && iAttempts < maxAttempts)
             {

@@ -171,7 +171,7 @@ namespace Pacifica.Core
 
         #region IUpload Members
 
-        public bool StartUpload(Dictionary<string, object> metadataObject, out string statusURL)
+        public bool StartUpload(List<Dictionary<string, object>> metadataObject, out string statusURL)
         {
             NetworkCredential loginCredentials = null;
             const EasyHttp.eDebugMode debugMode = EasyHttp.eDebugMode.DebugDisabled;
@@ -181,7 +181,7 @@ namespace Pacifica.Core
         }
 
 
-        public bool StartUpload(Dictionary<string, object> metadataObject, EasyHttp.eDebugMode debugMode, out string statusURL)
+		public bool StartUpload(List<Dictionary<string, object>> metadataObject, EasyHttp.eDebugMode debugMode, out string statusURL)
         {
             NetworkCredential loginCredentials = null;
 
@@ -189,7 +189,7 @@ namespace Pacifica.Core
             return StartUpload(metadataObject, loginCredentials, debugMode, out statusURL);
         }
 
-        public bool StartUpload(Dictionary<string, object> metadataObject, NetworkCredential loginCredentials, out string statusURL)
+		public bool StartUpload(List<Dictionary<string, object>> metadataObject, NetworkCredential loginCredentials, out string statusURL)
         {
             const EasyHttp.eDebugMode debugMode = EasyHttp.eDebugMode.DebugDisabled;
             return StartUpload(metadataObject, loginCredentials, debugMode, out statusURL);
@@ -207,13 +207,32 @@ namespace Pacifica.Core
         /// <param name="statusURL"></param>
         /// <returns>True if successfully uploaded, false if an error</returns>
         public bool StartUpload(
-            Dictionary<string, object> metadataObject,
+            List<Dictionary<string, object>> metadataObject,
             NetworkCredential loginCredentials,
             EasyHttp.eDebugMode debugMode,
             out string statusURL)
         {
             statusURL = string.Empty;
             ErrorMessage = string.Empty;
+			var fileList = Utilities.GetFileListFromMetadataObject(metadataObject);
+			// Grab the list of files from the top-level "file" object
+			// Keys in this dictionary are the source file path; values are metadata about the file
+			var fileListObject = new SortedDictionary<string, FileInfoObject>();
+
+			// This is a list of dictionary objects
+			// Dictionary keys will be sha1Hash, destinationDirectory, and fileName
+			var newFileObj = new List<Dictionary<string, string>>();
+
+			foreach (var file in fileList)
+			{
+
+				var fiObj = new FileInfoObject(file.AbsoluteLocalPath, file.RelativeDestinationDirectory, file.Sha1HashHex);
+
+				fileListObject.Add(file.AbsoluteLocalPath, fiObj);
+				newFileObj.Add(fiObj.SerializeToDictionaryObject());
+
+			}
+
 
             Configuration.UseTestInstance = UseTestInstance;
 
@@ -254,12 +273,12 @@ namespace Pacifica.Core
                 return true;
             }
 
-            NetworkCredential newCred = null;
-            if (loginCredentials != null)
-            {
-                newCred = new NetworkCredential(loginCredentials.UserName,
-                                                loginCredentials.Password, loginCredentials.Domain);
-            }
+            //NetworkCredential newCred = null;
+            //if (loginCredentials != null)
+            //{
+            //    newCred = new NetworkCredential(loginCredentials.UserName,
+            //                                    loginCredentials.Password, loginCredentials.Domain);
+            //}
 
             // The following Callback allows us to access the MyEMSL server even if the certificate is expired or untrusted
             // This hack was added in March 2014 because Proto-10 reported error
@@ -276,9 +295,9 @@ namespace Pacifica.Core
             if (ServicePointManager.ServerCertificateValidationCallback == null)
                 ServicePointManager.ServerCertificateValidationCallback += Utilities.ValidateRemoteCertificate;
 
-            var location = "Undefined/Location";
+            var location = "upload";
             var serverUri = "https://ServerIsOffline/dummy_page?test";
-            var timeoutSeconds = 30;
+            //var timeoutSeconds = 30;
             var postData = string.Empty;
             HttpStatusCode responseStatusCode;
 
@@ -288,120 +307,121 @@ namespace Pacifica.Core
             }
             else
             {
-                var server = Configuration.IngestServerUri;
-                string scheme;
+                serverUri = Configuration.IngestServerUri;
 
-                // This is just a local configuration that states which is preferred.
-                // It doesn't inform what is supported on the server.
-                if (Configuration.UseSecureDataTransfer)
-                {
-                    scheme = Configuration.SecuredScheme; // https
-                }
-                else
-                {
-                    scheme = Configuration.UnsecuredScheme; // http
-                }
-
-                serverUri = scheme + "://" + server;
-
-                var storageUrl = serverUri + location;
+                var storageUrl = serverUri + "/" + location;
 
                 RaiseDebugEvent("ProcessMetadata", "Sending file to " + storageUrl);
             }
 
-            // Note: The response data is usually empty
-            // The success/failure of the upload is determined via the call to Finish
-            var responseData = EasyHttp.SendFileListToIngester(location, serverUri, fileListObject, mdTextFile.FullName, mCookieJar, newCred, debugMode);
+            var responseData = EasyHttp.SendFileListToIngester(
+				location, serverUri, fileListObject, mdTextFile.FullName, debugMode);
 
             if (debugMode != EasyHttp.eDebugMode.DebugDisabled)
             {
                 // A .tar file was created locally; it was not sent to the server
-                // Thus, do not call "finish"
-                // Instead, simply logout
-                Utilities.Logout(mCookieJar);
                 return false;
             }
+            Dictionary<string, object> responseJSON = Utilities.JsonToObject(responseData);
+            //var jsa = (Jayrock.Json.JsonArray)Jayrock.Json.Conversion.JsonConvert.Import(responseData);
+            //var responseJSON = Utilities.JsonArrayToDictionaryList(jsa);
 
-            // Upload succeeded; call the finish URL
-            // This call is typically fast, but has been observed to take well over 10 seconds
-            // For safety, using a timeout of 5 minutes
-            var finishUrl = serverUri + "/myemsl/cgi-bin/finish" + location;
-            RaiseDebugEvent("ProcessMetadata", "Sending finish via " + finishUrl);
-            timeoutSeconds = 300;
-            postData = string.Empty;
+            //Dictionary<string, object> responseJSON = (Dictionary<string, object>)Jayrock.Json.Conversion.JsonConvert.Import(responseData);
+
+            int transactionID = Convert.ToInt32(responseJSON["job_id"].ToString());
+
+            statusURL = Configuration.IngestServerUri+ "/get_state?job_id=" + transactionID;
 
             var success = false;
-            var finishError = false;
+           // var finishError = false;
             var finishErrorMsg = string.Empty;
 
             try
             {
-                var finishResult = EasyHttp.Send(finishUrl, mCookieJar,
-                                                    out responseStatusCode, postData,
-                                                    EasyHttp.HttpMethod.Get, timeoutSeconds, newCred);
+                var statusResult = EasyHttp.Send(statusURL, out responseStatusCode);
 
+                //var jsaResult = (Jayrock.Json.JsonArray)Jayrock.Json.Conversion.JsonConvert.Import(statusResult);
+                //var statusJSON = Utilities.JsonArrayToDictionaryList(jsaResult);
+
+                Dictionary<string, object> statusJSON = Utilities.JsonToObject(statusResult);
+
+                if ( statusJSON["state"].ToString().ToLower() == "ok")
+                {
+                    success = true;
+                    RaiseUploadCompleted(statusURL);
+                }else if(statusJSON["state"].ToString().ToLower() == "failed")
+                {
+                    RaiseErrorEvent("StartUpload", "Upload failed during ingest process");
+                    RaiseUploadCompleted(statusResult);
+                    success = false;
+                }
+                else if (statusJSON["state"].ToString().ToLower().Contains("error"))
+                {
+                    RaiseErrorEvent("StartUpload", "Ingester Backend is offline or having issues");
+                    RaiseUploadCompleted(statusResult);
+                    success = false;
+                }
 
                 // The finish CGI script returns "Status:[URL]\nAccepted\n" on success...
                 // This RegEx looks for Accepted in the text, optionally preceded by a Status: line
-                var reStatusURL = new Regex(@"(^Status:(?<url>.*)\n)?(?<accepted>^Accepted)\n", RegexOptions.Multiline);
+                //var reStatusURL = new Regex(@"(^Status:(?<url>.*)\n)?(?<accepted>^Accepted)\n", RegexOptions.Multiline);
 
-                var reErrorMessage = new Regex(@"^\[Errno \d+.+\n", RegexOptions.Multiline);
-                var reErrorMatch = reErrorMessage.Match(finishResult);
+                //    var reErrorMessage = new Regex(@"^\[Errno \d+.+\n", RegexOptions.Multiline);
+                //    var reErrorMatch = reErrorMessage.Match(finishResult);
 
-                reMatch = reStatusURL.Match(finishResult);
-                if (reMatch.Groups["accepted"].Success && !reMatch.Groups["url"].Success)
-                {
-                    // File was accepted, but the Status URL is empty
-                    // This likely indicates a problem
-                    ErrorMessage = "File was accepted, but the Status URL is empty; " + finishResult;
-                    RaiseErrorEvent("StartUpload", ErrorMessage);
-                    RaiseUploadCompleted(finishResult);
+                //    reMatch = reStatusURL.Match(finishResult);
+                //    if (reMatch.Groups["accepted"].Success && !reMatch.Groups["url"].Success)
+                //    {
+                //        // File was accepted, but the Status URL is empty
+                //        // This likely indicates a problem
+                //        ErrorMessage = "File was accepted, but the Status URL is empty; " + finishResult;
+                //        RaiseErrorEvent("StartUpload", ErrorMessage);
+                //        RaiseUploadCompleted(finishResult);
 
-                    // ReSharper disable once RedundantAssignment
-                    success = false;
+                //        // ReSharper disable once RedundantAssignment
+                //        success = false;
+                //    }
+                //    else if (reMatch.Groups["accepted"].Success && reMatch.Groups["url"].Success)
+                //    {
+                //        statusURL = reMatch.Groups["url"].Value.Trim();
+
+                //        if (statusURL.EndsWith("/1323420608"))
+                //        {
+                //            // This URL is always returned when an error occurs
+                //            ErrorMessage = "File was accepted, but the status URL is 1323420608 (indicates upload error): " + finishResult.Replace("\n", " \\n ");
+                //            RaiseErrorEvent("StartUpload", ErrorMessage);
+                //            success = false;
+                //        }
+                //        else
+                //        {
+                //            if (reErrorMatch.Success)
+                //            {
+                //                ErrorMessage = "File was accepted, but an error message was reported: " + finishResult;
+                //                RaiseErrorEvent("StartUpload", ErrorMessage);
+                //                success = false;
+                //            }
+                //            else
+                //            {
+                //                success = true;
+                //            }
+                //        }
+
+                //        RaiseUploadCompleted(statusURL);
+
+                //    }
+                //    else
+                //    {
+                //        Utilities.Logout(mCookieJar);
+                //        ErrorMessage = "Upload failed with message: " + finishResult;
+                //        finishError = true;
+                //        finishErrorMsg = finishUrl + " failed with message: " + finishResult;
+                //    }
+
                 }
-                else if (reMatch.Groups["accepted"].Success && reMatch.Groups["url"].Success)
+                catch (Exception ex)
                 {
-                    statusURL = reMatch.Groups["url"].Value.Trim();
-
-                    if (statusURL.EndsWith("/1323420608"))
-                    {
-                        // This URL is always returned when an error occurs
-                        ErrorMessage = "File was accepted, but the status URL is 1323420608 (indicates upload error): " + finishResult.Replace("\n", " \\n ");
-                        RaiseErrorEvent("StartUpload", ErrorMessage);
-                        success = false;
-                    }
-                    else
-                    {
-                        if (reErrorMatch.Success)
-                        {
-                            ErrorMessage = "File was accepted, but an error message was reported: " + finishResult;
-                            RaiseErrorEvent("StartUpload", ErrorMessage);
-                            success = false;
-                        }
-                        else
-                        {
-                            success = true;
-                        }
-                    }
-
-                    RaiseUploadCompleted(statusURL);
-
-                }
-                else
-                {
-                    Utilities.Logout(mCookieJar);
-                    ErrorMessage = "Upload failed with message: " + finishResult;
-                    finishError = true;
-                    finishErrorMsg = finishUrl + " failed with message: " + finishResult;
-                }
-
-            }
-            catch (Exception ex)
-            {
-                Utilities.Logout(mCookieJar);
                 ErrorMessage = "Exception calling MyEMSL finish: " + ex.Message;
-                finishError = true;
+                //finishError = true;
                 finishErrorMsg = ErrorMessage + ", StackTrace: " + PRISM.clsStackTraceFormatter.GetExceptionStackTrace(ex);
             }
 
@@ -416,13 +436,13 @@ namespace Pacifica.Core
                 // Ignore errors here
             }
 
-            if (finishError)
-            {
-                RaiseErrorEvent("Upload.StartUpload", ErrorMessage);
-                throw new ApplicationException(finishErrorMsg);
-            }
+            //if (finishError)
+            //{
+            //    RaiseErrorEvent("Upload.StartUpload", ErrorMessage);
+            //    throw new ApplicationException(finishErrorMsg);
+            //}
 
-            Utilities.Logout(mCookieJar);
+            //Utilities.Logout(mCookieJar);
             return success;
         }
 
@@ -438,19 +458,19 @@ namespace Pacifica.Core
         /// Set to eDebugMode.MyEMSLOfflineMode to create the .tar file locally without contacting MyEMSL</param>
         /// <param name="statusURL"></param>
         /// <returns>True if successfully uploaded, false if an error</returns>
-        public bool StartUploadOld(
-            Dictionary<string, object> metadataObject,
-            NetworkCredential loginCredentials,
-            EasyHttp.eDebugMode debugMode,
-            out string statusURL)
-        {
-            statusURL = string.Empty;
-            ErrorMessage = string.Empty;
+        //public bool StartUploadOld(
+        //    List<Dictionary<string, object>> metadataObject,
+        //    NetworkCredential loginCredentials,
+        //    EasyHttp.eDebugMode debugMode,
+        //    out string statusURL)
+        //{
+        //    statusURL = string.Empty;
+        //    ErrorMessage = string.Empty;
 
-            Configuration.UseTestInstance = UseTestInstance;
+        //    Configuration.UseTestInstance = UseTestInstance;
 
-            // var fileList = (List<FileInfoObject>)metadataObject["file"];
-
+            //var fileList = (List<FileInfoObject>)metadataObject["file"];ƒget
+            //var fileList = 
             // Grab the list of files from the top-level "file" object
             // Keys in this dictionary are the source file path; values are metadata about the file
             // var fileListObject = new SortedDictionary<string, FileInfoObject>();
@@ -471,268 +491,268 @@ namespace Pacifica.Core
             //
             // metadataObject["file"] = newFileObj;
 
-            var mdJson = Utilities.ObjectToJson(metadataObject);
+            //var mdJson = Utilities.ObjectToJson(metadataObject);
 
             // Create the metadata.txt file
-            var metadataFilename = Path.GetTempFileName();
-            var mdTextFile = new FileInfo(metadataFilename);
-            using (var sw = mdTextFile.CreateText())
-            {
-                sw.Write(mdJson);
-            }
+        //    var metadataFilename = Path.GetTempFileName();
+        //    var mdTextFile = new FileInfo(metadataFilename);
+        //    using (var sw = mdTextFile.CreateText())
+        //    {
+        //        sw.Write(mdJson);
+        //    }
 
-            try
-            {
-                // Copy the Metadata.txt file to the transfer folder, then delete the local copy
-                if (!string.IsNullOrWhiteSpace(TransferFolderPath))
-                {
-                    var fiTargetFile = new FileInfo(Path.Combine(TransferFolderPath, Utilities.GetMetadataFilenameForJob(JobNumber)));
-                    if (fiTargetFile.Directory != null && !fiTargetFile.Directory.Exists)
-                        fiTargetFile.Directory.Create();
+        //    try
+        //    {
+        //        // Copy the Metadata.txt file to the transfer folder, then delete the local copy
+        //        if (!string.IsNullOrWhiteSpace(TransferFolderPath))
+        //        {
+        //            var fiTargetFile = new FileInfo(Path.Combine(TransferFolderPath, Utilities.GetMetadataFilenameForJob(JobNumber)));
+        //            if (fiTargetFile.Directory != null && !fiTargetFile.Directory.Exists)
+        //                fiTargetFile.Directory.Create();
 
-                    mdTextFile.CopyTo(fiTargetFile.FullName, true);
-                }
+        //            mdTextFile.CopyTo(fiTargetFile.FullName, true);
+        //        }
 
-            }
-            // ReSharper disable once EmptyGeneralCatchClause
-            catch
-            {
-                // Ignore errors here
-            }
-
-
-            if (fileList.Count == 0)
-            {
-                RaiseDebugEvent("ProcessMetadata", "File list is empty; nothing to do");
-                RaiseUploadCompleted(string.Empty);
-                return true;
-            }
-
-            NetworkCredential newCred = null;
-            if (loginCredentials != null)
-            {
-                newCred = new NetworkCredential(loginCredentials.UserName,
-                                                loginCredentials.Password, loginCredentials.Domain);
-            }
-
-            // The following Callback allows us to access the MyEMSL server even if the certificate is expired or untrusted
-            // This hack was added in March 2014 because Proto-10 reported error
-            //   "Could not establish trust relationship for the SSL/TLS secure channel"
-            //   when accessing https://my.emsl.pnl.gov/
-            // This workaround requires these two using statements:
-            //   using System.Net.Security;
-            //   using System.Security.Cryptography.X509Certificates;
-
-            // Could use this to ignore all certificates (not wise)
-            // System.Net.ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;
-
-            // Instead, only allow certain domains, as defined by ValidateRemoteCertificate
-            if (ServicePointManager.ServerCertificateValidationCallback == null)
-                ServicePointManager.ServerCertificateValidationCallback += Utilities.ValidateRemoteCertificate;
-
-            // Call the testauth service to obtain a cookie for this session
-            // var authURL = Configuration.TestAuthUri;
-            // var auth = new Auth(new Uri(authURL));
-
-            // mCookieJar = null;
-            var location = "Undefined/Location";
-            var serverUri = "https://ServerIsOffline/dummy_page?test";
-            var timeoutSeconds = 30;
-            var postData = string.Empty;
-            Match reMatch;
-            HttpStatusCode responseStatusCode;
-
-            if (debugMode == EasyHttp.eDebugMode.MyEMSLOfflineMode)
-            {
-                RaiseDebugEvent("ProcessMetadata", "Creating .tar file locally");
-            }
-            else
-            {
-                // if (!auth.GetAuthCookies(out mCookieJar))
-                // {
-                //     ErrorMessage = "Auto-login to " + Configuration.TestAuthUri + " failed authentication";
-                //     RaiseErrorEvent("Upload.StartUpload", ErrorMessage);
-                //     throw new ApplicationException(ErrorMessage);
-                // }
-
-                var redirectedServer = Configuration.IngestServerUri;
-                // var preallocateUrl = redirectedServer + "/myemsl/cgi-bin/preallocate";
-                //
-                // RaiseDebugEvent("ProcessMetadata", "Preallocating with " + preallocateUrl);
-                //
-                // var preallocateReturn = EasyHttp.Send(preallocateUrl, mCookieJar,
-                //                                          out responseStatusCode, postData,
-                //                                          EasyHttp.HttpMethod.Get, timeoutSeconds, newCred);
-
-                string scheme;
-
-                // This is just a local configuration that states which is preferred.
-                // It doesn't inform what is supported on the server.
-                if (Configuration.UseSecureDataTransfer)
-                {
-                    scheme = Configuration.SecuredScheme; // https
-                }
-                else
-                {
-                    scheme = Configuration.UnsecuredScheme; // http
-                }
-                //
-                // string server;
-                // var reServerName = new Regex(@"^Server:[\t ]*(?<server>.*)$", RegexOptions.Multiline);
-                // reMatch = reServerName.Match(preallocateReturn);
-                //
-                // if (reMatch.Success)
-                // {
-                //     server = reMatch.Groups["server"].Value.Trim();
-                // }
-                // else
-                // {
-                //     Utilities.Logout(mCookieJar);
-                //     ErrorMessage = "Preallocate did not return a server: " + preallocateReturn;
-                //     RaiseErrorEvent("Upload.StartUpload", ErrorMessage);
-                //     throw new ApplicationException(string.Format("Preallocate {0} did not return a server.", preallocateUrl));
-                // }
-
-                string server = redirectedServer;
-
-                // var reLocation = new Regex(@"^Location:[\t ]*(?<loc>.*)$", RegexOptions.Multiline);
-
-                // reMatch = reLocation.Match(preallocateReturn);
-                // if (reMatch.Success)
-                // {
-                //     location = reMatch.Groups["loc"].Value.Trim();
-                // }
-                // else
-                // {
-                //     Utilities.Logout(mCookieJar);
-                //     ErrorMessage = "Preallocate did not return a location: " + preallocateReturn;
-                //     RaiseErrorEvent("Upload.StartUpload", ErrorMessage);
-                //     throw new ApplicationException(string.Format("Preallocate {0} did not return a location.", preallocateUrl));
-                // }
-
-                serverUri = scheme + "://" + server;
-
-                var storageUrl = serverUri + location;
-
-                RaiseDebugEvent("ProcessMetadata", "Sending file to " + storageUrl);
-            }
-
-            // Note: The response data is usually empty
-            // The success/failure of the upload is determined via the call to Finish
-            var responseData = EasyHttp.SendFileListToDavAsTar(location, serverUri, fileListObject, mdTextFile.FullName, mCookieJar, newCred, debugMode);
-
-            if (debugMode != EasyHttp.eDebugMode.DebugDisabled)
-            {
-                // A .tar file was created locally; it was not sent to the server
-                // Thus, do not call "finish"
-                // Instead, simply logout
-                Utilities.Logout(mCookieJar);
-                return false;
-            }
-
-            // Upload succeeded; call the finish URL
-            // This call is typically fast, but has been observed to take well over 10 seconds
-            // For safety, using a timeout of 5 minutes
-            var finishUrl = serverUri + "/myemsl/cgi-bin/finish" + location;
-            RaiseDebugEvent("ProcessMetadata", "Sending finish via " + finishUrl);
-            timeoutSeconds = 300;
-            postData = string.Empty;
-
-            var success = false;
-            var finishError = false;
-            var finishErrorMsg = string.Empty;
-
-            try
-            {
-                var finishResult = EasyHttp.Send(finishUrl, mCookieJar,
-                                                    out responseStatusCode, postData,
-                                                    EasyHttp.HttpMethod.Get, timeoutSeconds, newCred);
+        //    }
+        //    // ReSharper disable once EmptyGeneralCatchClause
+        //    catch
+        //    {
+        //        // Ignore errors here
+        //    }
 
 
-                // The finish CGI script returns "Status:[URL]\nAccepted\n" on success...
-                // This RegEx looks for Accepted in the text, optionally preceded by a Status: line
-                var reStatusURL = new Regex(@"(^Status:(?<url>.*)\n)?(?<accepted>^Accepted)\n", RegexOptions.Multiline);
+        //    if (fileList.Count == 0)
+        //    {
+        //        RaiseDebugEvent("ProcessMetadata", "File list is empty; nothing to do");
+        //        RaiseUploadCompleted(string.Empty);
+        //        return true;
+        //    }
 
-                var reErrorMessage = new Regex(@"^\[Errno \d+.+\n", RegexOptions.Multiline);
-                var reErrorMatch = reErrorMessage.Match(finishResult);
+        //    NetworkCredential newCred = null;
+        //    if (loginCredentials != null)
+        //    {
+        //        newCred = new NetworkCredential(loginCredentials.UserName,
+        //                                        loginCredentials.Password, loginCredentials.Domain);
+        //    }
 
-                reMatch = reStatusURL.Match(finishResult);
-                if (reMatch.Groups["accepted"].Success && !reMatch.Groups["url"].Success)
-                {
-                    // File was accepted, but the Status URL is empty
-                    // This likely indicates a problem
-                    ErrorMessage = "File was accepted, but the Status URL is empty; " + finishResult;
-                    RaiseErrorEvent("StartUpload", ErrorMessage);
-                    RaiseUploadCompleted(finishResult);
+        //    // The following Callback allows us to access the MyEMSL server even if the certificate is expired or untrusted
+        //    // This hack was added in March 2014 because Proto-10 reported error
+        //    //   "Could not establish trust relationship for the SSL/TLS secure channel"
+        //    //   when accessing https://my.emsl.pnl.gov/
+        //    // This workaround requires these two using statements:
+        //    //   using System.Net.Security;
+        //    //   using System.Security.Cryptography.X509Certificates;
 
-                    // ReSharper disable once RedundantAssignment
-                    success = false;
-                }
-                else if (reMatch.Groups["accepted"].Success && reMatch.Groups["url"].Success)
-                {
-                    statusURL = reMatch.Groups["url"].Value.Trim();
+        //    // Could use this to ignore all certificates (not wise)
+        //    // System.Net.ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;
 
-                    if (statusURL.EndsWith("/1323420608"))
-                    {
-                        // This URL is always returned when an error occurs
-                        ErrorMessage = "File was accepted, but the status URL is 1323420608 (indicates upload error): " + finishResult.Replace("\n", " \\n ");
-                        RaiseErrorEvent("StartUpload", ErrorMessage);
-                        success = false;
-                    }
-                    else
-                    {
-                        if (reErrorMatch.Success)
-                        {
-                            ErrorMessage = "File was accepted, but an error message was reported: " + finishResult;
-                            RaiseErrorEvent("StartUpload", ErrorMessage);
-                            success = false;
-                        }
-                        else
-                        {
-                            success = true;
-                        }
-                    }
+        //    // Instead, only allow certain domains, as defined by ValidateRemoteCertificate
+        //    if (ServicePointManager.ServerCertificateValidationCallback == null)
+        //        ServicePointManager.ServerCertificateValidationCallback += Utilities.ValidateRemoteCertificate;
 
-                    RaiseUploadCompleted(statusURL);
+        //    // Call the testauth service to obtain a cookie for this session
+        //    // var authURL = Configuration.TestAuthUri;
+        //    // var auth = new Auth(new Uri(authURL));
 
-                }
-                else
-                {
-                    Utilities.Logout(mCookieJar);
-                    ErrorMessage = "Upload failed with message: " + finishResult;
-                    finishError = true;
-                    finishErrorMsg = finishUrl + " failed with message: " + finishResult;
-                }
+        //    // mCookieJar = null;
+        //    var location = "Undefined/Location";
+        //    var serverUri = "https://ServerIsOffline/dummy_page?test";
+        //    var timeoutSeconds = 30;
+        //    var postData = string.Empty;
+        //    Match reMatch;
+        //    HttpStatusCode responseStatusCode;
 
-            }
-            catch (Exception ex)
-            {
-                Utilities.Logout(mCookieJar);
-                ErrorMessage = "Exception calling MyEMSL finish: " + ex.Message;
-                finishError = true;
-                finishErrorMsg = ErrorMessage + ", StackTrace: " + PRISM.clsStackTraceFormatter.GetExceptionStackTrace(ex);
-            }
+        //    if (debugMode == EasyHttp.eDebugMode.MyEMSLOfflineMode)
+        //    {
+        //        RaiseDebugEvent("ProcessMetadata", "Creating .tar file locally");
+        //    }
+        //    else
+        //    {
+        //        // if (!auth.GetAuthCookies(out mCookieJar))
+        //        // {
+        //        //     ErrorMessage = "Auto-login to " + Configuration.TestAuthUri + " failed authentication";
+        //        //     RaiseErrorEvent("Upload.StartUpload", ErrorMessage);
+        //        //     throw new ApplicationException(ErrorMessage);
+        //        // }
 
-            try
-            {
-                // Delete the local temporary file
-                mdTextFile.Delete();
-            }
-            // ReSharper disable once EmptyGeneralCatchClause
-            catch
-            {
-                // Ignore errors here
-            }
+        //        var redirectedServer = Configuration.IngestServerUri;
+        //        // var preallocateUrl = redirectedServer + "/myemsl/cgi-bin/preallocate";
+        //        //
+        //        // RaiseDebugEvent("ProcessMetadata", "Preallocating with " + preallocateUrl);
+        //        //
+        //        // var preallocateReturn = EasyHttp.Send(preallocateUrl, mCookieJar,
+        //        //                                          out responseStatusCode, postData,
+        //        //                                          EasyHttp.HttpMethod.Get, timeoutSeconds, newCred);
 
-            if (finishError)
-            {
-                RaiseErrorEvent("Upload.StartUpload", ErrorMessage);
-                throw new ApplicationException(finishErrorMsg);
-            }
+        //        string scheme;
 
-            Utilities.Logout(mCookieJar);
-            return success;
-        }
+        //        // This is just a local configuration that states which is preferred.
+        //        // It doesn't inform what is supported on the server.
+        //        if (Configuration.UseSecureDataTransfer)
+        //        {
+        //            scheme = Configuration.SecuredScheme; // https
+        //        }
+        //        else
+        //        {
+        //            scheme = Configuration.UnsecuredScheme; // http
+        //        }
+        //        //
+        //        // string server;
+        //        // var reServerName = new Regex(@"^Server:[\t ]*(?<server>.*)$", RegexOptions.Multiline);
+        //        // reMatch = reServerName.Match(preallocateReturn);
+        //        //
+        //        // if (reMatch.Success)
+        //        // {
+        //        //     server = reMatch.Groups["server"].Value.Trim();
+        //        // }
+        //        // else
+        //        // {
+        //        //     Utilities.Logout(mCookieJar);
+        //        //     ErrorMessage = "Preallocate did not return a server: " + preallocateReturn;
+        //        //     RaiseErrorEvent("Upload.StartUpload", ErrorMessage);
+        //        //     throw new ApplicationException(string.Format("Preallocate {0} did not return a server.", preallocateUrl));
+        //        // }
+
+        //        string server = redirectedServer;
+
+        //        // var reLocation = new Regex(@"^Location:[\t ]*(?<loc>.*)$", RegexOptions.Multiline);
+
+        //        // reMatch = reLocation.Match(preallocateReturn);
+        //        // if (reMatch.Success)
+        //        // {
+        //        //     location = reMatch.Groups["loc"].Value.Trim();
+        //        // }
+        //        // else
+        //        // {
+        //        //     Utilities.Logout(mCookieJar);
+        //        //     ErrorMessage = "Preallocate did not return a location: " + preallocateReturn;
+        //        //     RaiseErrorEvent("Upload.StartUpload", ErrorMessage);
+        //        //     throw new ApplicationException(string.Format("Preallocate {0} did not return a location.", preallocateUrl));
+        //        // }
+
+        //        serverUri = scheme + "://" + server;
+
+        //        var storageUrl = serverUri + location;
+
+        //        RaiseDebugEvent("ProcessMetadata", "Sending file to " + storageUrl);
+        //    }
+
+        //    // Note: The response data is usually empty
+        //    // The success/failure of the upload is determined via the call to Finish
+        //    var responseData = EasyHttp.SendFileListToDavAsTar(location, serverUri, fileListObject, mdTextFile.FullName, mCookieJar, newCred, debugMode);
+
+        //    if (debugMode != EasyHttp.eDebugMode.DebugDisabled)
+        //    {
+        //        // A .tar file was created locally; it was not sent to the server
+        //        // Thus, do not call "finish"
+        //        // Instead, simply logout
+        //        Utilities.Logout(mCookieJar);
+        //        return false;
+        //    }
+
+        //    // Upload succeeded; call the finish URL
+        //    // This call is typically fast, but has been observed to take well over 10 seconds
+        //    // For safety, using a timeout of 5 minutes
+        //    var finishUrl = serverUri + "/myemsl/cgi-bin/finish" + location;
+        //    RaiseDebugEvent("ProcessMetadata", "Sending finish via " + finishUrl);
+        //    timeoutSeconds = 300;
+        //    postData = string.Empty;
+
+        //    var success = false;
+        //    var finishError = false;
+        //    var finishErrorMsg = string.Empty;
+
+        //    try
+        //    {
+        //        var finishResult = EasyHttp.Send(finishUrl, mCookieJar,
+        //                                            out responseStatusCode, postData,
+        //                                            EasyHttp.HttpMethod.Get, timeoutSeconds, newCred);
+
+
+        //        // The finish CGI script returns "Status:[URL]\nAccepted\n" on success...
+        //        // This RegEx looks for Accepted in the text, optionally preceded by a Status: line
+        //        var reStatusURL = new Regex(@"(^Status:(?<url>.*)\n)?(?<accepted>^Accepted)\n", RegexOptions.Multiline);
+
+        //        var reErrorMessage = new Regex(@"^\[Errno \d+.+\n", RegexOptions.Multiline);
+        //        var reErrorMatch = reErrorMessage.Match(finishResult);
+
+        //        reMatch = reStatusURL.Match(finishResult);
+        //        if (reMatch.Groups["accepted"].Success && !reMatch.Groups["url"].Success)
+        //        {
+        //            // File was accepted, but the Status URL is empty
+        //            // This likely indicates a problem
+        //            ErrorMessage = "File was accepted, but the Status URL is empty; " + finishResult;
+        //            RaiseErrorEvent("StartUpload", ErrorMessage);
+        //            RaiseUploadCompleted(finishResult);
+
+        //            // ReSharper disable once RedundantAssignment
+        //            success = false;
+        //        }
+        //        else if (reMatch.Groups["accepted"].Success && reMatch.Groups["url"].Success)
+        //        {
+        //            statusURL = reMatch.Groups["url"].Value.Trim();
+
+        //            if (statusURL.EndsWith("/1323420608"))
+        //            {
+        //                // This URL is always returned when an error occurs
+        //                ErrorMessage = "File was accepted, but the status URL is 1323420608 (indicates upload error): " + finishResult.Replace("\n", " \\n ");
+        //                RaiseErrorEvent("StartUpload", ErrorMessage);
+        //                success = false;
+        //            }
+        //            else
+        //            {
+        //                if (reErrorMatch.Success)
+        //                {
+        //                    ErrorMessage = "File was accepted, but an error message was reported: " + finishResult;
+        //                    RaiseErrorEvent("StartUpload", ErrorMessage);
+        //                    success = false;
+        //                }
+        //                else
+        //                {
+        //                    success = true;
+        //                }
+        //            }
+
+        //            RaiseUploadCompleted(statusURL);
+
+        //        }
+        //        else
+        //        {
+        //            Utilities.Logout(mCookieJar);
+        //            ErrorMessage = "Upload failed with message: " + finishResult;
+        //            finishError = true;
+        //            finishErrorMsg = finishUrl + " failed with message: " + finishResult;
+        //        }
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Utilities.Logout(mCookieJar);
+        //        ErrorMessage = "Exception calling MyEMSL finish: " + ex.Message;
+        //        finishError = true;
+        //        finishErrorMsg = ErrorMessage + ", StackTrace: " + PRISM.clsStackTraceFormatter.GetExceptionStackTrace(ex);
+        //    }
+
+        //    try
+        //    {
+        //        // Delete the local temporary file
+        //        mdTextFile.Delete();
+        //    }
+        //    // ReSharper disable once EmptyGeneralCatchClause
+        //    catch
+        //    {
+        //        // Ignore errors here
+        //    }
+
+        //    if (finishError)
+        //    {
+        //        RaiseErrorEvent("Upload.StartUpload", ErrorMessage);
+        //        throw new ApplicationException(finishErrorMsg);
+        //    }
+
+        //    Utilities.Logout(mCookieJar);
+        //    return success;
+        //}
 
         public string GenerateSha1Hash(string fullFilePath)
         {
@@ -753,7 +773,7 @@ namespace Pacifica.Core
         /// Dictionary of the information to translate to JSON;
         /// Keys are key names; values are either strings or dictionary objects or even a list of dictionary objects
         /// </returns>
-        public static Dictionary<string, object> CreatePacificaMetadataObject(
+        public static List<Dictionary<string, object>> CreatePacificaMetadataObject(
             udtUploadMetadata uploadMetadata,
             List<FileInfoObject> lstUnmatchedFiles,
             out udtEUSInfo eusInfo)
@@ -762,34 +782,34 @@ namespace Pacifica.Core
             eusInfo.Clear();
 
             // new metadata object is just a list of dictionary entries
-            var metadataObject = new List<Dictionary<string,string>>();
+            var metadataObject = new List<Dictionary<string, object>>();
 
             var eusInstrumentID = GetEUSInstrumentID(uploadMetadata.EUSInstrumentID, UNKNOWN_INSTRUMENT_EUS_INSTRUMENT_ID);
 
             // fill out Transaction Key/Value pairs
             if (uploadMetadata.DatasetID > 0)
             {
-                metadataObject.add(new Dictionary<string, string> {
+				metadataObject.Add(new Dictionary<string, object> {
                     { "destinationTable", "TransactionKeyValue" },
                     { "key", "omics.dms.instrument" },
                     { "value", uploadMetadata.DMSInstrumentName }
                 });
-                metadataObject.add(new Dictionary<string, string> {
+				metadataObject.Add(new Dictionary<string, object> {
                     { "destinationTable", "TransactionKeyValue" },
                     { "key", "omics.dms.instrument_id" },
                     { "value", eusInstrumentID }
                 });
-                metadataObject.add(new Dictionary<string, string> {
+				metadataObject.Add(new Dictionary<string, object> {
                     { "destinationTable", "TransactionKeyValue" },
                     { "key", "omics.dms.date_code" },
                     { "value", uploadMetadata.DateCodeString }
                 });
-                metadataObject.add(new Dictionary<string, string> {
+				metadataObject.Add(new Dictionary<string, object> {
                     { "destinationTable", "TransactionKeyValue" },
                     { "key", "omics.dms.dataset" },
                     { "value", uploadMetadata.DatasetName }
                 });
-                metadataObject.add(new Dictionary<string, string> {
+				metadataObject.Add(new Dictionary<string, object> {
                     { "destinationTable", "TransactionKeyValue" },
                     { "key", "omics.dms.dataset_id" },
                     { "value", uploadMetadata.DatasetID.ToString(CultureInfo.InvariantCulture) }
@@ -803,7 +823,7 @@ namespace Pacifica.Core
                 // string eusInstrumentID = GetEUSInstrumentID(uploadMetadata.EUSInstrumentID, DATA_PACKAGE_EUS_INSTRUMENT_ID);
                 // groupObject.Add(new Dictionary<string, string> { { "name", eusInstrumentID }, { "type", "omics.dms.instrument_id" } });
 
-                metadataObject.add(new Dictionary<string, string> {
+				metadataObject.Add(new Dictionary<string, object> {
                     { "destinationTable", "TransactionKeyValue" },
                     { "key", "omics.dms.datapackage_id" },
                     { "value", uploadMetadata.DataPackageID.ToString(CultureInfo.InvariantCulture) }
@@ -818,11 +838,11 @@ namespace Pacifica.Core
             // now fill in the required metadata
             if (uploadMetadata.DatasetID > 0)
             {
-                metadataObject.add(new Dictionary<string, string> {
+                metadataObject.Add(new Dictionary<string, object> {
                     { "destinationTable", "Transactions.instrument" },
                     { "value", eusInstrumentID }
                 });
-                eusInfo.EUSInstrumentID = StringToint(eusInstrumentID, 0);
+                eusInfo.EUSInstrumentID = StringToInt(eusInstrumentID, 0);
             }
 
             string EUSProposalID;
@@ -837,12 +857,12 @@ namespace Pacifica.Core
             }
             eusInfo.EUSProposalID = EUSProposalID;
 
-            metadataObject.add(new Dictionary<string, string> {
+			metadataObject.Add(new Dictionary<string, object> {
                 { "destinationTable", "Transactions.proposal" },
                 { "value", EUSProposalID }
             });
 
-            string EUSUploaderID;
+            int EUSUploaderID;
             // For datasets, eusOperatorID is the instrument operator EUS ID
             // For data packages, it is the EUS ID of the data package owner
             if (uploadMetadata.EUSOperatorID == 0)
@@ -855,21 +875,23 @@ namespace Pacifica.Core
             {
                 EUSUploaderID = uploadMetadata.EUSOperatorID;
             }
-            eusInfo.EUSOperatorID = EUSUploaderID
+            eusInfo.EUSUploaderID = EUSUploaderID;
 
-            metadataObject.add(new Dictionary<string, string> {
+			metadataObject.Add(new Dictionary<string, object> {
                 { "destinationTable", "Transactions.submitter" },
-                { "value", EUSUploaderID }
+                { "value", EUSUploaderID.ToString() }
             });
 
             // now mix in the list of file objects
             foreach ( FileInfoObject f in lstUnmatchedFiles ){
-                metadataObject.add(new Dictionary<string, string> {
+                metadataObject.Add(new Dictionary<string, object> {
                     { "destinationTable", "Files" },
                     { "name", f.FileName },
+					{ "absolutelocalpath", f.AbsoluteLocalPath},
                     { "subdir", f.RelativeDestinationDirectory },
-                    { "size", f.FileSizeInBytes },
+                    { "size", f.FileSizeInBytes.ToString() },
                     { "hashsum", f.Sha1HashHex },
+                    { "mimetype", "application/octet-stream" },
                     { "hashtype", "sha1" },
                     { "ctime", f.CreationTime.ToUniversalTime().ToString("s") },
                     { "mtime", f.CreationTime.ToUniversalTime().ToString("s") }
@@ -891,7 +913,7 @@ namespace Pacifica.Core
         /// Dictionary of the information to translate to JSON;
         /// Keys are key names; values are either strings or dictionary objects or even a list of dictionary objects
         /// </returns>
-        public static Dictionary<string, object> CreateMetadataObjectOld(
+        public static Dictionary<string, object> CreateMetadataObject(
             udtUploadMetadata uploadMetadata,
             List<FileInfoObject> lstUnmatchedFiles,
             out udtEUSInfo eusInfo)
@@ -1006,18 +1028,18 @@ namespace Pacifica.Core
         /// </summary>
         /// <param name="metadataObject"></param>
         /// <returns></returns>
-        public static string GetMetadataObjectDescription(List<Dictionary<string, string>> metadataObject)
+        public static string GetMetadataObjectDescription(List<Dictionary<string, object>> metadataObject)
         {
-            object fileListObject;
-            var descripton = new List<string>();
-            var instrumentIdIncluded = false;
+            //object fileListObject;
+            var description = new List<string>();
+            //var instrumentIdIncluded = false;
             string value;
             string keyname;
             string keyvalue;
-            string tableName = '';
-            var kvLookup = new Dictionary<string, string>();
+            string tableName;
+            var kvLookup = new Dictionary<string, object>();
             int fileCount = 0;
-            int fileSize = 0;
+            object fileSize = 0;
 
             kvLookup.Add("omics.dms.dataset_id", "Dataset_ID");
             kvLookup.Add("omics.dms.datapackage_id", "DataPackage_ID");
@@ -1028,7 +1050,7 @@ namespace Pacifica.Core
             kvLookup.Add("Transactions.instrument", "EUS_Instrument_ID");
 
 
-            foreach (Dictionary<string, string> item in metadataObject)
+            foreach (Dictionary<string, object> item in metadataObject)
             {
                 if (GetDictionaryValue(item, "destinationTable", out value))
                 {
@@ -1043,7 +1065,7 @@ namespace Pacifica.Core
                                 keyvalue = value;
                                 if(GetDictionaryValue(kvLookup, keyname, out value))
                                 {
-                                    description.Add(value + "=" + keyvalue)
+									description.Add(value + "=" + keyvalue);
                                 }
 
                             }
