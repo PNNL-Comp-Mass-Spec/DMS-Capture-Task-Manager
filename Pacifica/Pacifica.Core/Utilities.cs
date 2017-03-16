@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -265,22 +265,6 @@ namespace Pacifica.Core
             return lstItems;
         }
 
-        //public static void Logout(CookieContainer cookieJar)
-        //{
-        //    // Logout using https://my.emsl.pnl.gov/myemsl/logout
-        //    try
-        //    {
-        //        const int timeoutSeconds = 10;
-        //        HttpStatusCode responseStatusCode;
-
-        //        EasyHttp.Send(Configuration.SearchServerUri + "/myemsl/logout", cookieJar, out responseStatusCode, timeoutSeconds);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        // Report errors to the console, but do not throw an exception
-        //        Console.WriteLine("Error calling the logout service: " + ex.Message);
-        //    }
-        //}
 
         public static string GetMetadataFilenameForJob(string jobNumber)
         {

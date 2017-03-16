@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
@@ -489,12 +489,12 @@ namespace Pacifica.Core
 
             // Add the "data" directory, which will hold all of the files
             // Need a dummy "data" directory to do this
-            //var diTempFolder = Utilities.GetTempDirectory();
-            //var diDummyDataFolder = new DirectoryInfo(Path.Combine(diTempFolder.FullName, "data"));
-            //if (!diDummyDataFolder.Exists)
-            //    diDummyDataFolder.Create();
+            var diTempFolder = Utilities.GetTempDirectory();
+            var diDummyDataFolder = new DirectoryInfo(Path.Combine(diTempFolder.FullName, "data"));
+            if (!diDummyDataFolder.Exists)
+                diDummyDataFolder.Create();
 
-            //AppendFolderToTar(tarOutputStream, diDummyDataFolder, "data", ref bytesWritten);
+            AppendFolderToTar(tarOutputStream, diDummyDataFolder, "data", ref bytesWritten);
 
             foreach (var fileToArchive in fileListObject)
             {
@@ -508,13 +508,13 @@ namespace Pacifica.Core
                     if (!dctDirectoryEntries.Contains(fiSourceFile.Directory.FullName))
                     {
                         // Make a directory entry
-                        AppendFolderToTar(tarOutputStream, fiSourceFile.Directory, fileToArchive.Value.RelativeDestinationDirectory, ref bytesWritten);
+                        AppendFolderToTar(tarOutputStream, fiSourceFile.Directory, "data/" + fileToArchive.Value.RelativeDestinationDirectory, ref bytesWritten);
 
                         dctDirectoryEntries.Add(fiSourceFile.Directory.FullName);
                     }
                 }
 
-                AppendFileToTar(tarOutputStream, fiSourceFile, fileToArchive.Value.RelativeDestinationFullPath, ref bytesWritten);
+                AppendFileToTar(tarOutputStream, fiSourceFile, "data/" + fileToArchive.Value.RelativeDestinationFullPath, ref bytesWritten);
 
                 if (DateTime.UtcNow.Subtract(lastStatusUpdateTime).TotalSeconds >= 2)
                 {
@@ -885,7 +885,7 @@ namespace Pacifica.Core
 
                     if (!dctDirectoryEntries.Contains(fiSourceFile.Directory.FullName))
                     {
-                        var dirPathInArchive = fileToArchive.Value.RelativeDestinationDirectory + "/";
+                        var dirPathInArchive = "data/" + fileToArchive.Value.RelativeDestinationDirectory + "/";
                         addonBytes = AddTarFileContentLength(dirPathInArchive, 0, out headerBlocks);
 
                         if (debugging)
@@ -902,7 +902,7 @@ namespace Pacifica.Core
                     }
                 }
 
-                var pathInArchive = "";
+                var pathInArchive = "data/";
                 if (!string.IsNullOrWhiteSpace(fileToArchive.Value.RelativeDestinationDirectory))
                     pathInArchive += fileToArchive.Value.RelativeDestinationDirectory + '/';
 
@@ -916,7 +916,7 @@ namespace Pacifica.Core
                         addonBytes.ToString().PadRight(12) +
                         contentLength.ToString().PadRight(12) +
                         headerBlocks.ToString().PadRight(3) +
-                        clsFileTools.CompactPathString(fileToArchive.Value.RelativeDestinationFullPath, 100));
+                        clsFileTools.CompactPathString("data/" + fileToArchive.Value.RelativeDestinationFullPath, 100));
 
                 contentLength += addonBytes;
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -214,6 +214,7 @@ namespace Pacifica.Core
         {
             statusURL = string.Empty;
             ErrorMessage = string.Empty;
+
 			var fileList = Utilities.GetFileListFromMetadataObject(metadataObject);
 			// Grab the list of files from the top-level "file" object
 			// Keys in this dictionary are the source file path; values are metadata about the file
@@ -323,10 +324,6 @@ namespace Pacifica.Core
                 return false;
             }
             Dictionary<string, object> responseJSON = Utilities.JsonToObject(responseData);
-            //var jsa = (Jayrock.Json.JsonArray)Jayrock.Json.Conversion.JsonConvert.Import(responseData);
-            //var responseJSON = Utilities.JsonArrayToDictionaryList(jsa);
-
-            //Dictionary<string, object> responseJSON = (Dictionary<string, object>)Jayrock.Json.Conversion.JsonConvert.Import(responseData);
 
             int transactionID = Convert.ToInt32(responseJSON["job_id"].ToString());
 
@@ -1085,85 +1082,6 @@ namespace Pacifica.Core
         }
 
 
-        /// <summary>
-        /// Return a string description of the EUS info encoded by metadataObject
-        /// </summary>
-        /// <param name="metadataObject"></param>
-        /// <returns></returns>
-        public static string GetMetadataObjectDescriptionOld(Dictionary<string, object> metadataObject)
-        {
-            object eusInfoMapObject;
-            object groupObject;
-            object fileListObject;
-
-            if (!metadataObject.TryGetValue("eusInfo", out eusInfoMapObject))
-            {
-                return "Error: [eusInfo] dictionary key not found";
-            }
-
-            var eusInfoMapDict = eusInfoMapObject as Dictionary<string, object>;
-            if (eusInfoMapDict == null)
-            {
-                return "Error: [eusInfo] dictionary was not in the correct format";
-            }
-
-            if (!eusInfoMapDict.TryGetValue("groups", out groupObject)) {
-                return "Error: [eusInfo.groups] dictionary key not found";
-            }
-
-            var groupObjects = groupObject as List<Dictionary<string, string>>;
-            if (groupObjects == null)
-            {
-                return "Error: [eusInfo.groups] was not in the correct format";
-            }
-
-            var description = new List<string>();
-            var instrumentIdIncluded = false;
-
-            string value;
-
-            if (GetMetadataGroupValue(groupObjects, "omics.dms.dataset_id", out value))
-                description.Add("Dataset_ID=" + value);
-
-            if (GetMetadataGroupValue(groupObjects, "omics.dms.datapackage_id", out value))
-                description.Add("DataPackage_ID=" + value);
-
-            if (GetMetadataGroupValue(groupObjects, "omics.dms.instrument", out value))
-                description.Add("DMS_Instrument=" + value);
-
-            if (GetMetadataGroupValue(groupObjects, "omics.dms.instrument_id", out value))
-            {
-                description.Add("EUS_Instrument_ID=" + value);
-                instrumentIdIncluded = true;
-            }
-
-            if (!instrumentIdIncluded && GetDictionaryValue(eusInfoMapDict, "instrumentId", out value))
-            {
-                // EUS Instrument Id is stored both in eusInfoMapDict and in groupObjects
-                description.Add("EUS_Instrument_ID=" + value);
-            }
-
-            if (GetDictionaryValue(eusInfoMapDict, "proposalID", out value))
-                description.Add("EUS_Proposal_ID=" + value);
-
-            if (GetDictionaryValue(eusInfoMapDict, "uploaderEusId", out value))
-                description.Add("EUS_User_ID=" + value);
-
-            if (!metadataObject.TryGetValue("file", out fileListObject))
-            {
-                return "Error: [file] dictionary key not found";
-            }
-
-            var fileList = fileListObject as List<Pacifica.Core.FileInfoObject>;
-            if (fileList == null)
-            {
-                return "Error: [file] list was not in the correct format";
-            }
-
-            description.Add("FileCount=" + fileList.Count);
-
-            return string.Join("; ", description);
-        }
 
         private static bool GetDictionaryValue(IReadOnlyDictionary<string, object> eusInfoMapObject, string keyName, out string matchedValue)
         {
