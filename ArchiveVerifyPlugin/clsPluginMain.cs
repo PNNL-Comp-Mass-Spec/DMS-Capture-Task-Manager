@@ -142,19 +142,6 @@ namespace ArchiveVerifyPlugin
                 return false;
             }
 
-            // Call the testauth service to obtain a cookie for this session
-            var authURL = Configuration.TestAuthUri;
-            var auth = new Auth(new Uri(authURL));
-
-            CookieContainer cookieJar;
-            if (!auth.GetAuthCookies(out cookieJar))
-            {
-                var msg = "Auto-login to " + Configuration.TestAuthUri + " failed authentication";
-                mRetData.CloseoutMsg = "Failed to obtain MyEMSL session cookie";
-                LogError(msg);
-                return false;
-            }
-
             var statusChecker = new MyEMSLStatusCheck();
             statusChecker.ErrorEvent += statusChecker_ErrorEvent;
 
@@ -165,7 +152,7 @@ namespace ArchiveVerifyPlugin
                 var ingestSuccess = GetMyEMSLIngestStatus(
                     m_Job, statusChecker, statusURI,
                     eusInstrumentID, eusProposalID, eusUploaderID,
-                    cookieJar, mRetData, out xmlServerResponse);
+                    null, mRetData, out xmlServerResponse);
 
                 var ingestStepsComplete = statusChecker.IngestStepCompletionCount(xmlServerResponse);
 
@@ -177,12 +164,6 @@ namespace ArchiveVerifyPlugin
 
                 UpdateIngestStepsCompletedOneTask(statusNum, ingestStepsComplete, fatalError);
 
-                if (!ingestSuccess)
-                {
-                    Utilities.Logout(cookieJar);
-                    return false;
-                }
-
                 string statusMessage;
                 string errorMessage;
                 var success = statusChecker.IngestStepCompleted(
@@ -191,11 +172,6 @@ namespace ArchiveVerifyPlugin
                     out statusMessage,
                     out errorMessage);
 
-                if (success)
-                {
-                    Utilities.Logout(cookieJar);
-                    return true;
-                }
                 mRetData.CloseoutMsg = statusMessage;
 
             }
@@ -204,8 +180,6 @@ namespace ArchiveVerifyPlugin
                 mRetData.CloseoutMsg = "Exception checking upload status";
                 LogError(mRetData.CloseoutMsg + ": " + ex.Message, ex);
             }
-
-            Utilities.Logout(cookieJar);
 
             return false;
         }

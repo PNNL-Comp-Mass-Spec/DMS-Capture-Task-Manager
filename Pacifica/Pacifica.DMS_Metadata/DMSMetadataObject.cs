@@ -141,6 +141,20 @@ namespace Pacifica.DMS_Metadata
 
         public void SetupMetadata(Dictionary<string, string> taskParams, Dictionary<string, string> mgrParams, EasyHttp.eDebugMode debugMode)
         {
+            // The following Callback allows us to access the MyEMSL server even if the certificate is expired or untrusted
+            // This hack was added in March 2014 because Proto-10 reported error
+            //   "Could not establish trust relationship for the SSL/TLS secure channel"
+            //   when accessing https://my.emsl.pnl.gov/
+            // This workaround requires these two using statements:
+            //   using System.Net.Security;
+            //   using System.Security.Cryptography.X509Certificates;
+
+            // Could use this to ignore all certificates (not wise)
+            // System.Net.ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;
+
+            // Instead, only allow certain domains, as defined by ValidateRemoteCertificate
+            if (ServicePointManager.ServerCertificateValidationCallback == null)
+                ServicePointManager.ServerCertificateValidationCallback += Utilities.ValidateRemoteCertificate;
             this.DatasetName = Utilities.GetDictionaryValue(taskParams, "Dataset", "Unknown_Dataset");
 
             Upload.udtUploadMetadata uploadMetadata;
@@ -181,7 +195,7 @@ namespace Pacifica.DMS_Metadata
                     mdIsValid = true;
                 }
             }
-            catch (Exception ex)
+            catch
             {
                 mdIsValid = false;
             }
@@ -354,20 +368,20 @@ namespace Pacifica.DMS_Metadata
             }
 
             TotalFileCountNew = 0;
-                TotalFileCountUpdated = 0;
+            TotalFileCountUpdated = 0;
 
             foreach (FileInfoObject fileObj in fileList)
             {
                 if (!hashList.Keys.Contains(fileObj.Sha1HashHex) || fileObj.RelativeDestinationDirectory != hashList[fileObj.Sha1HashHex])
                 {
                     returnList.Add(fileObj);
-                        TotalFileCountNew++;
+                    TotalFileCountNew++;
                     TotalFileSizeToUpload += fileObj.FileSizeInBytes;
-                    }
-                    else
-                    {
-                        TotalFileCountUpdated++;
-                    }
+                }
+                else
+                {
+                    TotalFileCountUpdated++;
+                }
                 
             }
 

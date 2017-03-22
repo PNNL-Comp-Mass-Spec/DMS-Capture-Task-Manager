@@ -299,6 +299,7 @@ namespace Pacifica.Core
         {
             var lstTrustedDomains = new List<string>
             {
+                "my.emsl.pnl.gov",
                 "emsl.pnl.gov",
                 "pnl.gov"
             };

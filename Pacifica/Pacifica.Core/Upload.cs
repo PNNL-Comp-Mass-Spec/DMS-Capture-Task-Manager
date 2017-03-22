@@ -104,8 +104,6 @@ namespace Pacifica.Core
 
         #region Private Members
 
-        private CookieContainer mCookieJar;
-
         #endregion
 
         #region Constructor
@@ -215,7 +213,14 @@ namespace Pacifica.Core
             statusURL = string.Empty;
             ErrorMessage = string.Empty;
 
-			var fileList = Utilities.GetFileListFromMetadataObject(metadataObject);
+            //NetworkCredential newCred = null;
+            //if (loginCredentials != null)
+            //{
+            //    newCred = new NetworkCredential(loginCredentials.UserName,
+            //                                    loginCredentials.Password, loginCredentials.Domain);
+            //}
+
+            var fileList = Utilities.GetFileListFromMetadataObject(metadataObject);
 			// Grab the list of files from the top-level "file" object
 			// Keys in this dictionary are the source file path; values are metadata about the file
 			var fileListObject = new SortedDictionary<string, FileInfoObject>();
@@ -274,27 +279,7 @@ namespace Pacifica.Core
                 return true;
             }
 
-            //NetworkCredential newCred = null;
-            //if (loginCredentials != null)
-            //{
-            //    newCred = new NetworkCredential(loginCredentials.UserName,
-            //                                    loginCredentials.Password, loginCredentials.Domain);
-            //}
 
-            // The following Callback allows us to access the MyEMSL server even if the certificate is expired or untrusted
-            // This hack was added in March 2014 because Proto-10 reported error
-            //   "Could not establish trust relationship for the SSL/TLS secure channel"
-            //   when accessing https://my.emsl.pnl.gov/
-            // This workaround requires these two using statements:
-            //   using System.Net.Security;
-            //   using System.Security.Cryptography.X509Certificates;
-
-            // Could use this to ignore all certificates (not wise)
-            // System.Net.ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;
-
-            // Instead, only allow certain domains, as defined by ValidateRemoteCertificate
-            if (ServicePointManager.ServerCertificateValidationCallback == null)
-                ServicePointManager.ServerCertificateValidationCallback += Utilities.ValidateRemoteCertificate;
 
             var location = "upload";
             var serverUri = "https://ServerIsOffline/dummy_page?test";
@@ -885,7 +870,7 @@ namespace Pacifica.Core
                     { "destinationTable", "Files" },
                     { "name", f.FileName },
 					{ "absolutelocalpath", f.AbsoluteLocalPath},
-                    { "subdir", f.RelativeDestinationDirectory },
+                    { "subdir", Path.Combine("data/", f.RelativeDestinationDirectory) },
                     { "size", f.FileSizeInBytes.ToString() },
                     { "hashsum", f.Sha1HashHex },
                     { "mimetype", "application/octet-stream" },
