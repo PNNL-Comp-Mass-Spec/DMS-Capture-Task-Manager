@@ -114,7 +114,7 @@ namespace CaptureTaskManager
         public bool CreateNoWindow { get; set; } = true;
 
         /// <summary>
-        /// When true, then echoes, in real time, text written to the Console by the external program 
+        /// When true, then echoes, in real time, text written to the Console by the external program
         /// Ignored if CreateNoWindow = False
         /// </summary>
         public bool EchoOutputToConsole { get; set; } = true;
@@ -347,7 +347,7 @@ namespace CaptureTaskManager
                             OnTimeout();
                         }
                     }
-                    
+
                     if (!ProgramAborted)
                     {
                         continue;
