@@ -7,7 +7,7 @@
 //*********************************************************************************************************
 
 using System;
-using FileProcessor;
+using PRISM;
 
 namespace CaptureTaskManager
 {
@@ -17,7 +17,7 @@ namespace CaptureTaskManager
         // Application startup program
         //**********************************************************************************************************
 
-        private const string PROGRAM_DATE = "February 20, 2017";
+        private const string PROGRAM_DATE = "April 4, 2017";
 
         private static bool mCodeTestMode;
         private static bool mCreateEventLog;

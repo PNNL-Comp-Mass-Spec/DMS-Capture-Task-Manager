@@ -118,7 +118,6 @@
     <Compile Include="clsMainProgram.cs" />
     <Compile Include="clsMessageHandler.cs" />
     <Compile Include="clsMgrSettings.cs" />
-    <Compile Include="clsParseCommandLine.cs" />
     <Compile Include="clsPluginLoader.cs" />
     <Compile Include="clsStatusFile.cs" />
     <Compile Include="clsXMLTools.cs" />
