@@ -7,6 +7,7 @@
 //*********************************************************************************************************
 
 using System;
+using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Data;
 using System.Windows.Forms;
@@ -237,8 +238,8 @@ namespace CaptureTaskManager
                 }
 
                 // Execute the SP
-                DataTable dt;
-                var retVal = m_CaptureTaskDBProcedureExecutor.ExecuteSP(myCmd, out dt);
+                List<List<string>> results;
+                var retVal = m_CaptureTaskDBProcedureExecutor.ExecuteSP(myCmd, out results);
 
                 switch (retVal)
                 {
@@ -247,7 +248,7 @@ namespace CaptureTaskManager
                         var jobID = (int)myCmd.Parameters["@jobNumber"].Value;
 
                         // Step task was found; get the data for it
-                        var paramSuccess = FillParamDict(dt);
+                        var paramSuccess = FillParamDict(results);
                         if (paramSuccess)
                         {
                             outcome = EnumRequestTaskResult.TaskFound;
