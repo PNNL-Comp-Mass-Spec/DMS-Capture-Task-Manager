@@ -1,5 +1,5 @@
 ﻿//*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/25/2009
@@ -38,7 +38,7 @@ namespace CaptureTaskManager
 
         protected IMgrParams m_MgrParams;
         protected ITaskParams m_TaskParams;
-        
+
         // ReSharper disable once NotAccessedField.Global
         // Used by CTM plugins
         protected IStatusFile m_StatusTools;
@@ -66,7 +66,7 @@ namespace CaptureTaskManager
         /// LogLevel is 1 to 5: 1 for Fatal errors only, 4 for Fatal, Error, Warning, and Info, and 5 for everything including Debug messages
         /// </summary>
         protected int m_DebugLevel;
-        
+
         #endregion
 
         #region "Delegates"
@@ -89,14 +89,6 @@ namespace CaptureTaskManager
         protected clsToolRunnerBase()
         {
             // Does nothing; see the Setup method for constructor-like behavior
-        }
-
-        /// <summary>
-        /// Destructor
-        /// </summary>
-        ~clsToolRunnerBase()
-        {
-            DetachExecuteSpEvents();
         }
 
         #endregion
@@ -135,7 +127,7 @@ namespace CaptureTaskManager
             var sConnectionString = m_MgrParams.GetParam("connectionstring");
             CaptureDBProcedureExecutor = new clsExecuteDatabaseSP(sConnectionString);
 
-            AttachExecuteSpEvents();
+            RegisterEvents(CaptureDBProcedureExecutor);
 
             m_WorkDir = m_MgrParams.GetParam("workdir");
 
@@ -382,7 +374,7 @@ namespace CaptureTaskManager
             LogError(errorMessage + ", job " + job);
             return false;
         }
-      
+
         /// <summary>
         /// Extracts the contents of the Version= line in a Tool Version Info file
         /// </summary>
@@ -562,7 +554,7 @@ namespace CaptureTaskManager
                                                          fiFile.LastWriteTime.ToString(DATE_TIME_FORMAT));
 
                             var writeToLog = m_DebugLevel >= 5;
-                            LogDebug("EXE Info: " + strExeInfo, writeToLog);                            
+                            LogDebug("EXE Info: " + strExeInfo, writeToLog);
                         }
                         else
                         {
@@ -917,45 +909,6 @@ namespace CaptureTaskManager
             }
 
             return true;
-        }
-
-        #endregion
-
-        #region "Events"
-
-        private void AttachExecuteSpEvents()
-        {
-            try
-            {
-                CaptureDBProcedureExecutor.DBErrorEvent += m_ExecuteSP_DBErrorEvent;
-            }
-                // ReSharper disable once EmptyGeneralCatchClause
-            catch
-            {
-                // Ignore errors here
-            }
-        }
-
-        private void DetachExecuteSpEvents()
-        {
-            try
-            {
-                if (CaptureDBProcedureExecutor != null)
-                {
-                    CaptureDBProcedureExecutor.DBErrorEvent -= m_ExecuteSP_DBErrorEvent;
-                }
-            }
-                // ReSharper disable once EmptyGeneralCatchClause
-            catch (Exception)
-            {
-                // Ignore errors here
-            }
-        }
-
-        private void m_ExecuteSP_DBErrorEvent(string Message)
-        {
-            var logToDatabase = Message.Contains("permission was denied");
-            LogError("Stored procedure execution error: " + Message, logToDatabase);
         }
 
         #endregion

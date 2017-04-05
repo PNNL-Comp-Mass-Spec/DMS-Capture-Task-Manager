@@ -62,7 +62,7 @@ namespace CaptureTaskManager
 
             m_CaptureTaskDBProcedureExecutor = new PRISM.clsExecuteDatabaseSP(m_ConnStr);
 
-            m_CaptureTaskDBProcedureExecutor.DBErrorEvent += CaptureTaskDBProcedureExecutor_DBErrorEvent;
+            m_CaptureTaskDBProcedureExecutor.ErrorEvent += CaptureTaskDBProcedureExecutor_DBErrorEvent;
 
             // Cache the log level
             // 4 means Info level (normal) logging; 5 for Debug level (verbose) logging
@@ -252,10 +252,14 @@ namespace CaptureTaskManager
 
         #region "Event handlers"
 
-        void CaptureTaskDBProcedureExecutor_DBErrorEvent(string message)
+        void CaptureTaskDBProcedureExecutor_DBErrorEvent(string message, Exception ex)
         {
             var logToDb = message.Contains("permission was denied");
-            LogError(message, logToDb);
+
+            if (logToDb)
+                LogError(message, logToDb:true);
+            else
+                LogError(message, ex);
         }
 
         #endregion
