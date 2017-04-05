@@ -347,16 +347,7 @@ namespace CaptureTaskManager
                             OnTimeout();
                         }
                     }
-
-                    if (m_ProgRunner.State == clsProgRunner.States.StartingProcess &&
-                        DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds > 30 &&
-                        DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds < 90)
-                    {
-                        // It has taken over 30 seconds for the thread to start
-                        // Try re-joining
-                        m_ProgRunner.JoinThreadNow();
-                    }
-
+                    
                     if (!ProgramAborted)
                     {
                         continue;
