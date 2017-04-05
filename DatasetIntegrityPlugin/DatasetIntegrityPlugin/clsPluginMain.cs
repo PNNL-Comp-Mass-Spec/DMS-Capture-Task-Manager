@@ -1,6 +1,6 @@
 ﻿
 //*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 10/02/2009
@@ -157,6 +157,11 @@ namespace DatasetIntegrityPlugin
                 case clsInstrumentClassInfo.eInstrumentClass.Finnigan_Ion_Trap:
                     dataFileNamePath = Path.Combine(datasetFolder, m_Dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
                     mRetData.CloseoutType = TestFinniganIonTrapFile(dataFileNamePath);
+                    break;
+
+                case clsInstrumentClassInfo.eInstrumentClass.GC_QExactive:
+                    dataFileNamePath = Path.Combine(datasetFolder, m_Dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
+                    mRetData.CloseoutType = TestGQExactiveFile(dataFileNamePath);
                     break;
 
                 case clsInstrumentClassInfo.eInstrumentClass.LTQ_FT:
@@ -1199,6 +1204,16 @@ namespace DatasetIntegrityPlugin
         private EnumCloseOutType Test21TRawFile(string dataFileNamePath)
         {
             return TestThermoRawFile(dataFileNamePath, RAW_FILE_MIN_SIZE_KB_21T, RAW_FILE_MAX_SIZE_MB_ORBITRAP, true);
+        }
+
+        /// <summary>
+        /// Tests a GC_QExactive dataset's integrity
+        /// </summary>
+        /// <param name="dataFileNamePath">Fully qualified path to dataset file</param>
+        /// <returns>Enum indicating success or failure</returns>
+        private EnumCloseOutType TestGQExactiveFile(string dataFileNamePath)
+        {
+            return TestThermoRawFile(dataFileNamePath, RAW_FILE_MIN_SIZE_KB, RAW_FILE_MAX_SIZE_MB_ORBITRAP, false);
         }
 
         /// <summary>

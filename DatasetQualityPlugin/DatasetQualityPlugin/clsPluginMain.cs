@@ -130,6 +130,7 @@ namespace DatasetQualityPlugin
             switch (instrumentClass)
             {
                 case clsInstrumentClassInfo.eInstrumentClass.Finnigan_Ion_Trap:
+                case clsInstrumentClassInfo.eInstrumentClass.GC_QExactive:
                 case clsInstrumentClassInfo.eInstrumentClass.LTQ_FT:
                 case clsInstrumentClassInfo.eInstrumentClass.Thermo_Exactive:
                     dataFilePathRemote = Path.Combine(datasetFolder, m_Dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
@@ -779,6 +780,8 @@ namespace DatasetQualityPlugin
                         // Assume low-res precursor spectra
                         configFileNameSource = "quameter_ltq.cfg";
                         break;
+
+                    case clsInstrumentClassInfo.eInstrumentClass.GC_QExactive:
                     case clsInstrumentClassInfo.eInstrumentClass.LTQ_FT:
                     case clsInstrumentClassInfo.eInstrumentClass.Thermo_Exactive:
                     case clsInstrumentClassInfo.eInstrumentClass.Triple_Quad:

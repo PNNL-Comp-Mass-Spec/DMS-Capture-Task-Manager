@@ -3158,6 +3158,7 @@ namespace CaptureToolPlugin
             switch (instrumentClass)
             {
                 case clsInstrumentClassInfo.eInstrumentClass.Finnigan_Ion_Trap:
+                case clsInstrumentClassInfo.eInstrumentClass.GC_QExactive:
                 case clsInstrumentClassInfo.eInstrumentClass.LTQ_FT:
                 case clsInstrumentClassInfo.eInstrumentClass.Thermo_Exactive:
                 case clsInstrumentClassInfo.eInstrumentClass.Triple_Quad:
