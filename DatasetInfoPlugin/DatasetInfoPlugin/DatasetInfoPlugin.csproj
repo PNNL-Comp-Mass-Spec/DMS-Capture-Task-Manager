@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>DatasetInfoPlugin</RootNamespace>
     <AssemblyName>DatasetInfoPlugin</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
@@ -70,9 +70,9 @@
     <Reference Include="PNNLOmics">
       <HintPath>..\..\RefLib\PNNLOmics.dll</HintPath>
     </Reference>
-    <Reference Include="PRISM, Version=2.3.6257.28473, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="PRISM">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\RefLib\PRISM.dll</HintPath>
+      <HintPath>..\..\DeployedFiles\PRISM.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
