@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>CaptureTaskManager</RootNamespace>
     <AssemblyName>CTM_Shared</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -24,6 +24,7 @@
     <CodeAnalysisIgnoreBuiltInRuleSets>true</CodeAnalysisIgnoreBuiltInRuleSets>
     <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
     <Prefer32Bit>false</Prefer32Bit>
+    <CodeAnalysisRuleSet>C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Team Tools\Static Analysis Tools\Rule Sets\MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
     <OutputPath>bin\x86\Release\</OutputPath>
@@ -67,8 +68,8 @@
     <Reference Include="MyEMSLReader">
       <HintPath>..\..\RefLib\MyEMSLReader.dll</HintPath>
     </Reference>
-    <Reference Include="PRISM">
-      <HintPath>..\..\RefLib\PRISM.dll</HintPath>
+    <Reference Include="Pacifica.Core">
+      <HintPath>..\..\DeployedFiles\Pacifica.Core.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -93,14 +94,27 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Pacifica\Pacifica.Core\Pacifica.Core.csproj">
-      <Project>{46d080da-392c-4f7c-b2f7-683695b1c029}</Project>
-      <Name>Pacifica.Core</Name>
-    </ProjectReference>
+    <PackageReference Include="PRISM-Library">
+      <Version>1.0.2</Version>
+    </PackageReference>
+    <PackageReference Include="PRISMWin-Library">
+      <Version>1.0.1</Version>
+    </PackageReference>
+    <PackageReference Include="System.Data.SQLite.Core">
+      <Version>1.0.97</Version>
+    </PackageReference>
+    <PackageReference Include="UIMFLibrary">
+      <Version>1.0.3</Version>
+    </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\..\DeployedFiles" /Y /I
+xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\..\DeployedFiles" /Y /d
+xcopy "$(TargetDir)PRISMWin.dll" "$(ProjectDir)..\..\DeployedFiles" /Y /d
+xcopy "$(TargetDir)UIMFLibrary.dll" "$(ProjectDir)..\..\DeployedFiles" /Y /d
+xcopy "$(TargetDir)System.Data.SQLite.dll" "$(ProjectDir)..\..\DeployedFiles" /Y /d
+
 </PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

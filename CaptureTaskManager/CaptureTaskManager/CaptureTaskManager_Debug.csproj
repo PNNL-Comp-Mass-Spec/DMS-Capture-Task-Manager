@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>CaptureTaskManager</RootNamespace>
     <AssemblyName>CaptureTaskManager</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <StartupObject>
     </StartupObject>
@@ -93,17 +93,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\RefLib\MyEMSLReader.dll</HintPath>
     </Reference>
-    <Reference Include="PRISM">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\RefLib\PRISM.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
-    <Reference Include="System.Data.SQLite">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\RefLib\System.Data.SQLite.dll</HintPath>
     </Reference>
     <Reference Include="System.Xml.Linq">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -116,10 +108,6 @@
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
-    <Reference Include="UIMFLibrary">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\RefLib\UIMFLibrary.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="clsBroadcastCmd.cs" />
@@ -172,6 +160,20 @@
       <Name>CTM_Shared</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="PRISM-Library">
+      <Version>1.0.2</Version>
+    </PackageReference>
+    <PackageReference Include="PRISMWin-Library">
+      <Version>1.0.1</Version>
+    </PackageReference>
+    <PackageReference Include="System.Data.SQLite.Core">
+      <Version>1.0.97</Version>
+    </PackageReference>
+    <PackageReference Include="UIMFLibrary">
+      <Version>1.0.3</Version>
+    </PackageReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
@@ -182,10 +184,10 @@
   -->
   <PropertyGroup>
     <PostBuildEvent>if exist "$(TargetDir)SQLite.Interop.dll" (del "$(TargetDir)SQLite.Interop.dll")
-if not exist "$(TargetDir)x86" mkdir "$(TargetDir)x86"
-if not exist "$(TargetDir)x64" mkdir "$(TargetDir)x64"
-xcopy "$(ProjectDir)..\..\RefLib\x86\SQLite.Interop.dll" "$(TargetDir)x86" /D /Y
-xcopy "$(ProjectDir)..\..\RefLib\x64\SQLite.Interop.dll" "$(TargetDir)x64" /D /Y
+rem if not exist "$(TargetDir)x86" mkdir "$(TargetDir)x86"
+rem if not exist "$(TargetDir)x64" mkdir "$(TargetDir)x64"
+rem xcopy "$(ProjectDir)..\..\RefLib\x86\SQLite.Interop.dll" "$(TargetDir)x86" /D /Y
+rem xcopy "$(ProjectDir)..\..\RefLib\x64\SQLite.Interop.dll" "$(TargetDir)x64" /D /Y
 
 xcopy "$(TargetPath)" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
 xcopy "$(TargetDir)*.config" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
