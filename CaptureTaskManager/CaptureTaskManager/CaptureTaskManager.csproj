@@ -77,10 +77,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\RefLib\Apache.NMS.ActiveMQ.dll</HintPath>
     </Reference>
-    <Reference Include="CTM_Shared, Version=1.2.6283.24359, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\DeployedFiles\CTM_Shared.dll</HintPath>
-    </Reference>
     <Reference Include="log4net">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\RefLib\log4net.dll</HintPath>
@@ -89,10 +85,6 @@
     <Reference Include="MyEMSLReader, Version=1.2.6281.34371, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\DeployedFiles\MyEMSLReader.dll</HintPath>
-    </Reference>
-    <Reference Include="Pacifica.Core, Version=2.0.6303.32302, Culture=neutral, processorArchitecture=x86">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\DeployedFiles\Pacifica.Core.dll</HintPath>
     </Reference>
     <Reference Include="Pacifica.DMS_Metadata, Version=1.0.6303.32068, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -169,6 +161,16 @@
     <PackageReference Include="UIMFLibrary">
       <Version>1.0.3</Version>
     </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Pacifica\Pacifica.Core\Pacifica.Core.csproj">
+      <Project>{46d080da-392c-4f7c-b2f7-683695b1c029}</Project>
+      <Name>Pacifica.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\CTM_Shared\CTM_Shared.csproj">
+      <Project>{7d07f054-0d29-45dd-9b22-71d0768bc3c3}</Project>
+      <Name>CTM_Shared</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
