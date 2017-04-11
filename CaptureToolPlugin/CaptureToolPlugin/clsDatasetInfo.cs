@@ -5,6 +5,8 @@
 // Created 12/03/2010
 //*********************************************************************************************************
 
+using System.IO;
+
 namespace CaptureToolPlugin
 {
     class clsDatasetInfo
@@ -27,23 +29,9 @@ namespace CaptureToolPlugin
 
         public string FileOrFolderName { get; set; }
 
-        public string[] FileList
-        {
-            get { return m_FileList; }
-            set { m_FileList = value; }
-        }
+        public FileInfo[] FileList { get; set; }
 
-        public int FileCount
-        {
-            get
-            {
-                if (m_FileList == null)
-                {
-                    return 0;
-                }
-                return m_FileList.Length;
-            }
-        }
+        public int FileCount => m_FileList?.Length ?? 0;
 
         #endregion
 
