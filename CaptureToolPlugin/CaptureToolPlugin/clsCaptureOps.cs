@@ -467,7 +467,7 @@ namespace CaptureToolPlugin
                     break;
                 case DatasetFolderState.NotEmpty:
                     var DSAction = m_MgrParams.GetParam("DSFolderExistsAction");
-                    string msg;
+
                     switch (DSAction.ToLower())
                     {
                         case "overwrite_single_item":
@@ -507,7 +507,7 @@ namespace CaptureToolPlugin
                                 {
                                     // Fail the capture task
                                     retData.CloseoutMsg = "Dataset folder already exists and has multiple files or subfolders";
-                                    msg = retData.CloseoutMsg + ": " + dsFolder;
+                                    var msg = retData.CloseoutMsg + ": " + dsFolder;
                                     LogError(msg, true);
                                 }
                             }
@@ -524,7 +524,7 @@ namespace CaptureToolPlugin
                             catch (Exception ex)
                             {
                                 retData.CloseoutMsg = "Dataset folder already exists and cannot be deleted";
-                                msg = retData.CloseoutMsg + ": " + dsFolder;
+                                var msg = retData.CloseoutMsg + ": " + dsFolder;
                                 LogError(msg, true);
                                 LogError("Stack trace", ex);
 
@@ -545,17 +545,17 @@ namespace CaptureToolPlugin
                         case "fail":
                             // Fail the capture task
                             retData.CloseoutMsg = "Dataset folder already exists";
-                            msg = retData.CloseoutMsg + ": " + dsFolder;
+                            var folderExists = retData.CloseoutMsg + ": " + dsFolder;
 
-                            LogError(msg, true);
+                            LogError(folderExists, true);
                             break;
                         default:
                             // An invalid value for DSFolderExistsAction was specified
 
                             retData.CloseoutMsg = "Dataset folder already exists; Invalid action " + DSAction + " specified";
-                            msg = retData.CloseoutMsg + " (" + dsFolder + ")";
+                            var invalidAction = retData.CloseoutMsg + " (" + dsFolder + ")";
 
-                            LogError(msg, true);
+                            LogError(invalidAction, true);
                             break;
                     }   // DSAction selection
                     break;
