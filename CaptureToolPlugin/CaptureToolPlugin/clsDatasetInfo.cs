@@ -15,12 +15,6 @@ namespace CaptureToolPlugin
         // Class to hold info for a dataset to be captured
         //**********************************************************************************************************
 
-        #region "Class variables"
-
-        string[] m_FileList;
-
-        #endregion
-
         #region "Properties"
 
         public string DatasetName { get; set; }
@@ -31,7 +25,7 @@ namespace CaptureToolPlugin
 
         public FileInfo[] FileList { get; set; }
 
-        public int FileCount => m_FileList?.Length ?? 0;
+        public int FileCount => FileList?.Length ?? 0;
 
         #endregion
 
@@ -40,13 +34,11 @@ namespace CaptureToolPlugin
         public clsDatasetInfo(string datasetName)
         {
             DatasetName = datasetName;
-            m_FileList = null;
         }
 
         public clsDatasetInfo(clsCaptureOps.RawDSTypes dsType)
         {
             DatasetType = dsType;
-            m_FileList = null;
         }
 
         #endregion
