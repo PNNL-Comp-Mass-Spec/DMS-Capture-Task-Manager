@@ -855,6 +855,7 @@ namespace CaptureToolPlugin
                     {
                         datasetInfo.FileOrFolderName = DSName;
                         datasetInfo.FileList = foundFiles;
+
                         if (datasetInfo.FileCount == 1)
                         {
                             datasetInfo.FileOrFolderName = datasetInfo.FileList[0].Name;
@@ -864,7 +865,8 @@ namespace CaptureToolPlugin
                         {
                             datasetInfo.DatasetType = RawDSTypes.MultiFile;
                             var fileNames = foundFiles.Select(file => file.Name).ToList();
-                            LogWarning("Dataset name matched multiple files in folder " + diSourceDir.FullName + ": " + string.Join(", ", fileNames.Take(5)));
+                            LogWarning("Dataset name matched multiple files in folder " + diSourceDir.FullName + ": " +
+                                       string.Join(", ", fileNames.Take(5)));
                         }
 
                         return datasetInfo;
