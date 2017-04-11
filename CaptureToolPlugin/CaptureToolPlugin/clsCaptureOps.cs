@@ -115,14 +115,7 @@ namespace CaptureToolPlugin
             //   True means MgrParam "perspective" =  "client" which means we will use paths like \\proto-5\Exact04\2012_1
             //   False means MgrParam "perspective" = "server" which means we use paths like E:\Exact04\2012_1
             var tmpParam = m_MgrParams.GetParam("perspective");
-            if (tmpParam.ToLower() == "client")
-            {
-                m_ClientServer = true;
-            }
-            else
-            {
-                m_ClientServer = false;
-            }
+            m_ClientServer = tmpParam.ToLower() == "client";
 
             // Setup for BioNet use, if applicable
             m_UseBioNet = useBioNet;
@@ -300,76 +293,75 @@ namespace CaptureToolPlugin
             {
                 var diFolder = new DirectoryInfo(folderPath);
 
-                if (diFolder.Exists)
+                if (!diFolder.Exists)
+                    return true;
+
+                string sTargetPath;
+                var itemCountRenamed = 0;
+
+                var foundFiles = diFolder.GetFiles();
+                var filesToSkip = diFolder.GetFiles("LCMethod*.xml");
+
+                // Rename superseded files (but skip LCMethod files)
+                foreach (var fiFile in foundFiles)
                 {
-                    string sTargetPath;
-                    var itemCountRenamed = 0;
+                    // Rename the file, but only if it is not in filesToSkip
+                    var bSkipFile = filesToSkip.Any(fiFileToSkip => fiFileToSkip.FullName == fiFile.FullName);
 
-                    var foundFiles = diFolder.GetFiles();
-                    var filesToSkip = diFolder.GetFiles("LCMethod*.xml");
-
-                    // Rename superseded files (but skip LCMethod files)
-                    foreach (var fiFile in foundFiles)
+                    if (fiFile.Name.StartsWith("x_") && foundFiles.Length == 1)
                     {
-                        // Rename the file, but only if it is not in filesToSkip
-                        var bSkipFile = filesToSkip.Any(fiFileToSkip => fiFileToSkip.FullName == fiFile.FullName);
-
-                        if (fiFile.Name.StartsWith("x_") && foundFiles.Length == 1)
-                        {
-                            // File was previously renamed and it is the only file in this folder; don't rename it again
-                            continue;
-                        }
-
-                        if (bSkipFile)
-                        {
-                            continue;
-                        }
-
-                        sTargetPath = Path.Combine(diFolder.FullName, "x_" + fiFile.Name);
-
-                        if (File.Exists(sTargetPath))
-                        {
-                            // Target exists; delete it
-                            File.Delete(sTargetPath);
-                        }
-
-                        fiFile.MoveTo(sTargetPath);
-                        itemCountRenamed++;
+                        // File was previously renamed and it is the only file in this folder; don't rename it again
+                        continue;
                     }
 
-                    if (itemCountRenamed > 0)
+                    if (bSkipFile)
                     {
-                        LogMessage("Renamed superseded file(s) at " + diFolder.FullName + " to start with x_");
+                        continue;
                     }
 
-                    // Rename superseded folders
-                    var diSubFolders = diFolder.GetDirectories();
-                    itemCountRenamed = 0;
-                    foreach (var diSubFolder in diSubFolders)
+                    sTargetPath = Path.Combine(diFolder.FullName, "x_" + fiFile.Name);
+
+                    if (File.Exists(sTargetPath))
                     {
-                        if (diSubFolder.Name.StartsWith("x_") && diSubFolders.Length == 1)
-                        {
-                            // Subfolder was previously renamed and it is the only subfolder in this folder; don't rename it again
-                            continue;
-                        }
-
-                        sTargetPath = Path.Combine(diFolder.FullName, "x_" + diSubFolder.Name);
-
-                        if (Directory.Exists(sTargetPath))
-                        {
-                            // Target exists; delete it
-                            Directory.Delete(sTargetPath, true);
-                        }
-
-                        diSubFolder.MoveTo(sTargetPath);
-                        itemCountRenamed++;
+                        // Target exists; delete it
+                        File.Delete(sTargetPath);
                     }
 
-                    if (itemCountRenamed > 0)
+                    fiFile.MoveTo(sTargetPath);
+                    itemCountRenamed++;
+                }
+
+                if (itemCountRenamed > 0)
+                {
+                    LogMessage("Renamed superseded file(s) at " + diFolder.FullName + " to start with x_");
+                }
+
+                // Rename superseded folders
+                var diSubFolders = diFolder.GetDirectories();
+                itemCountRenamed = 0;
+                foreach (var diSubFolder in diSubFolders)
+                {
+                    if (diSubFolder.Name.StartsWith("x_") && diSubFolders.Length == 1)
                     {
-                        LogMessage("Renamed superseded folder(s) at " + diFolder.FullName + " to start with x_");
+                        // Subfolder was previously renamed and it is the only subfolder in this folder; don't rename it again
+                        continue;
                     }
 
+                    sTargetPath = Path.Combine(diFolder.FullName, "x_" + diSubFolder.Name);
+
+                    if (Directory.Exists(sTargetPath))
+                    {
+                        // Target exists; delete it
+                        Directory.Delete(sTargetPath, true);
+                    }
+
+                    diSubFolder.MoveTo(sTargetPath);
+                    itemCountRenamed++;
+                }
+
+                if (itemCountRenamed > 0)
+                {
+                    LogMessage("Renamed superseded folder(s) at " + diFolder.FullName + " to start with x_");
                 }
 
                 return true;
@@ -587,14 +579,14 @@ namespace CaptureToolPlugin
             try
             {
                 var di = new DirectoryInfo(DSPath);
-                if (di.Parent != null)
-                {
-                    var n = Path.Combine(di.Parent.FullName, "x_" + di.Name);
-                    di.MoveTo(n);
+                if (di.Parent == null)
+                    return true;
 
-                    var msg = "Renamed directory " + DSPath;
-                    LogMessage(msg);
-                }
+                var n = Path.Combine(di.Parent.FullName, "x_" + di.Name);
+                di.MoveTo(n);
+
+                var msg = "Renamed directory " + DSPath;
+                LogMessage(msg);
 
                 return true;
             }
@@ -630,7 +622,7 @@ namespace CaptureToolPlugin
             var retStr = "";
             for (var byteCntr = 0; byteCntr < pwdBytes.Length; byteCntr++)
             {
-                if ((byteCntr % 2) == 0)
+                if (byteCntr % 2 == 0)
                 {
                     pwdBytes[byteCntr] += 1;
                 }
@@ -773,14 +765,14 @@ namespace CaptureToolPlugin
             {
                 Thread.Sleep(500);
 
-                if (DateTime.UtcNow > nextStatusTime)
+                if (DateTime.UtcNow <= nextStatusTime)
+                    continue;
+
+                nextStatusTime = nextStatusTime.AddSeconds(STATUS_MESSAGE_INTERVAL);
+                if (m_TraceMode)
                 {
-                    nextStatusTime = nextStatusTime.AddSeconds(STATUS_MESSAGE_INTERVAL);
-                    if (m_TraceMode)
-                    {
-                        clsToolRunnerBase.ShowTraceMessage(
-                            string.Format("{0:0} seconds remaining", verificationEndTime.Subtract(DateTime.UtcNow).TotalSeconds));
-                    }
+                    clsToolRunnerBase.ShowTraceMessage(
+                        string.Format("{0:0} seconds remaining", verificationEndTime.Subtract(DateTime.UtcNow).TotalSeconds));
                 }
             }
 
@@ -2789,43 +2781,42 @@ namespace CaptureToolPlugin
             try
             {
                 var diLCMethodsFolder = new DirectoryInfo(sLCMethodsFolderPath);
-                if (diLCMethodsFolder.Exists)
+                if (!diLCMethodsFolder.Exists)
+                    return;
+
+                var diSubfolders = diLCMethodsFolder.GetDirectories("x_*");
+
+                foreach (var diFolder in diSubfolders)
                 {
-                    var diSubfolders = diLCMethodsFolder.GetDirectories("x_*");
+                    var bSafeToDelete = true;
 
-                    foreach (var diFolder in diSubfolders)
+                    // Make sure all of the files in the folder are at least 14 days old
+                    foreach (var oFileOrFolder in diFolder.GetFileSystemInfos())
                     {
-                        var bSafeToDelete = true;
-
-                        // Make sure all of the files in the folder are at least 14 days old
-                        foreach (var oFileOrFolder in diFolder.GetFileSystemInfos())
+                        if (DateTime.UtcNow.Subtract(oFileOrFolder.LastWriteTimeUtc).TotalDays <= 14)
                         {
-                            if (DateTime.UtcNow.Subtract(oFileOrFolder.LastWriteTimeUtc).TotalDays <= 14)
-                            {
-                                // File was modified within the last 2 weeks; do not delete this folder
-                                bSafeToDelete = false;
-                                break;
-                            }
-
+                            // File was modified within the last 2 weeks; do not delete this folder
+                            bSafeToDelete = false;
+                            break;
                         }
 
-                        if (bSafeToDelete)
-                        {
-                            try
-                            {
-                                msg = "LCMethods folder: " + diFolder.FullName;
-                                diFolder.Delete(true);
+                    }
 
-                                msg = "Deleted old " + msg;
-                                LogMessage(msg);
-                            }
-                            catch (Exception ex)
-                            {
-                                msg = "Exception deleting old " + msg;
-                                LogError(msg, ex);
-                            }
+                    if (!bSafeToDelete)
+                        continue;
 
-                        }
+                    try
+                    {
+                        msg = "LCMethods folder: " + diFolder.FullName;
+                        diFolder.Delete(true);
+
+                        msg = "Deleted old " + msg;
+                        LogMessage(msg);
+                    }
+                    catch (Exception ex)
+                    {
+                        msg = "Exception deleting old " + msg;
+                        LogError(msg, ex);
                     }
                 }
             }
