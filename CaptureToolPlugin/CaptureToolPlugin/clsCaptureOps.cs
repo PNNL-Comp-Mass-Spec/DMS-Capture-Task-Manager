@@ -1337,18 +1337,20 @@ namespace CaptureToolPlugin
             if (!string.IsNullOrWhiteSpace(captureSubfolder))
             {
                 // However, if the subfolder name matches the dataset name, this was probably an error on the operator's part and we likely do not want to use the subfolder name
-                if (captureSubfolder.EndsWith(Path.DirectorySeparatorChar + sSourceFolderName, StringComparison.InvariantCultureIgnoreCase))
+                if (captureSubfolder.EndsWith(Path.DirectorySeparatorChar + sSourceFolderName, StringComparison.InvariantCultureIgnoreCase) ||
+                    captureSubfolder.Equals(sSourceFolderName, StringComparison.InvariantCultureIgnoreCase))
                 {
                     var candidateFolderPath = Path.Combine(sourceFolderPath, captureSubfolder);
 
                     if (Directory.Exists(candidateFolderPath))
                     {
-                        LogError("Dataset captureSubfolder ends with the dataset name. Gracefully ignoring " +
-                                 "because this appears to be a data entry error: " + datasetName, true);
-                        sourceFolderPath = candidateFolderPath.Substring(0, candidateFolderPath.Length - sSourceFolderName.Length - 1);
+                        LogWarning("Dataset captureSubfolder ends with the dataset name. Gracefully ignoring " +
+                                   "because this appears to be a data entry error: " + datasetName, true);
+                        // Leave sourceFolderPath unchanged
                     }
                     else
                     {
+                        LogMessage("Appending captureSubFolder to sourceFolderPath: " + sourceFolderPath + Path.DirectorySeparatorChar + captureSubfolder);
                         sourceFolderPath = candidateFolderPath;
                     }
 
