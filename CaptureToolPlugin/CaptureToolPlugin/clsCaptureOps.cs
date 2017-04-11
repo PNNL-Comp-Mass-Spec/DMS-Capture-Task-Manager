@@ -869,7 +869,11 @@ namespace CaptureToolPlugin
                             datasetInfo.DatasetType = RawDSTypes.File;
                         }
                         else
+                        {
                             datasetInfo.DatasetType = RawDSTypes.MultiFile;
+                            var fileNames = foundFiles.Select(file => file.Name).ToList();
+                            LogWarning("Dataset name matched multiple files in folder " + diSourceDir.FullName + ": " + string.Join(", ", fileNames.Take(5)));
+                        }
 
                         return datasetInfo;
                     }
@@ -3180,7 +3184,13 @@ namespace CaptureToolPlugin
                             if (foundFiles.Count > 1)
                             {
                                 // Dataset name matched a folder with multiple .raw files; there must be only one .raw file
-                                retData.CloseoutMsg = "Dataset name matched " + entityDescription + " with multiple .raw files; there must be only one .raw file";
+                                retData.CloseoutMsg = "Dataset name matched " + entityDescription +
+                                                      " with multiple .raw files; there must be only one .raw file";
+
+                                var fileNames = foundFiles.Select(file => file.Name).ToList();
+                                LogWarning("Multiple .raw files found in folder " + diSourceDir.FullName + ": " + string.Join(", ", fileNames.Take(5)));
+
+                            }
                             else
                                 // Dataset name matched a folder but it does not have a .raw file
                                 retData.CloseoutMsg = "Dataset name matched " + entityDescription + " but it does not have a .raw file";
@@ -3215,10 +3225,15 @@ namespace CaptureToolPlugin
                                     break;
                                 }
                             }
+
+                            var fileNames = foundFiles.Select(file => file.Name).ToList();
+                            LogWarning("Dataset name matched multiple files in folder " + diSourceDir.FullName + ": " + string.Join(", ", fileNames.Take(5)));
+
                         }
 
                         // Dataset name matched multiple files; must be a .raw file
                         retData.CloseoutMsg = "Dataset name matched " + entityDescription + "; must be a .raw file";
+
                     }
                     break;
 
@@ -3289,12 +3304,27 @@ namespace CaptureToolPlugin
                             if (foundFiles.Count > 1)
                             {
                                 // Dataset name matched a folder with multiple .uimf files; there must be only one .uimf file
-                                retData.CloseoutMsg = "Dataset name matched " + entityDescription + " with multiple .uimf files; there must be only one .uimf file";
+                                retData.CloseoutMsg = "Dataset name matched " + entityDescription +
+                                                      " with multiple .uimf files; there must be only one .uimf file";
+
+                                var fileNames = foundFiles.Select(file => file.Name).ToList();
+                                LogWarning("Multiple .uimf files found in folder " + diSourceDir.FullName + ": " + string.Join(", ", fileNames).Take(5));
+                            }
                             else
+                            {
                                 // Dataset name matched a folder but it does not have a .uimf file
                                 retData.CloseoutMsg = "Dataset name matched " + entityDescription + " but it does not have a .uimf file";
+                                LogWarning("Folder  " + diSourceDir.FullName + " does not have any .uimf files");
+                            }
 
                             break;
+                        }
+
+                        if (sourceType != RawDSTypes.FolderExt &&
+                            sourceType != RawDSTypes.FolderNoExt &&
+                            sourceType != RawDSTypes.MultiFile)
+                        {
+                            LogWarning("sourceType was not FolderExt, FolderNoExt, or MultiFile; this is unexpected: " + sourceType);
                         }
 
                         // Dataset name matched multiple files; must be a .uimf file, .d folder, or folder with a single .uimf file
