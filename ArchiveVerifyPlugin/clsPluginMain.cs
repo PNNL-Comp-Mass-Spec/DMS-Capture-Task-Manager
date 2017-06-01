@@ -74,11 +74,10 @@ namespace ArchiveVerifyPlugin
 
             if (success)
             {
-                string metadataFilePath;
 
                 // Confirm that the files are visible in elastic search
                 // If data is found, then CreateOrUpdateMD5ResultsFile will also be called
-                success = VisibleInElasticSearch(out metadataFilePath);
+                success = VisibleInElasticSearch(out var metadataFilePath);
 
                 if (!success)
                 {
@@ -124,7 +123,7 @@ namespace ArchiveVerifyPlugin
         {
 
             // Examine the upload status
-            // If not complete, this manager will return completionCode CLOSEOUT_NOT_READY=2 
+            // If not complete, this manager will return completionCode CLOSEOUT_NOT_READY=2
             // which will tell the DMS_Capture DB to reset the task to state 2 and bump up the Next_Try value by 30 minutes
 
             var statusURI = m_TaskParams.GetParam("MyEMSL_Status_URI", string.Empty);
@@ -146,8 +145,7 @@ namespace ArchiveVerifyPlugin
             var authURL = Configuration.TestAuthUri;
             var auth = new Auth(new Uri(authURL));
 
-            CookieContainer cookieJar;
-            if (!auth.GetAuthCookies(out cookieJar))
+            if (!auth.GetAuthCookies(out var cookieJar))
             {
                 var msg = "Auto-login to " + Configuration.TestAuthUri + " failed authentication";
                 mRetData.CloseoutMsg = "Failed to obtain MyEMSL session cookie";
@@ -161,11 +159,10 @@ namespace ArchiveVerifyPlugin
             try
             {
 
-                string xmlServerResponse;
                 var ingestSuccess = GetMyEMSLIngestStatus(
                     m_Job, statusChecker, statusURI,
                     eusInstrumentID, eusProposalID, eusUploaderID,
-                    cookieJar, mRetData, out xmlServerResponse);
+                    cookieJar, mRetData, out var xmlServerResponse);
 
                 var ingestStepsComplete = statusChecker.IngestStepCompletionCount(xmlServerResponse);
 
@@ -189,21 +186,21 @@ namespace ArchiveVerifyPlugin
                     return false;
                 }
 
-                string statusMessage;
-                string errorMessage;
                 var success = statusChecker.IngestStepCompleted(
                     xmlServerResponse,
                     MyEMSLStatusCheck.StatusStep.Available,
-                    out statusMessage,
-                    out errorMessage);
+                    out var statusMessage,
+                    out var errorMessage);
 
                 if (success)
                 {
                     Utilities.Logout(cookieJar);
                     return true;
                 }
+
                 mRetData.CloseoutMsg = statusMessage;
 
+                // Logout below, then return false
             }
             catch (Exception ex)
             {
@@ -254,10 +251,7 @@ namespace ArchiveVerifyPlugin
                 {
                     metadataFilePath = fiMetadataFile.FullName;
 
-                    int matchCountToMetadata;
-                    int mismatchCountToMetadata;
-
-                    CompareToMetadataFile(lstArchivedFiles, fiMetadataFile, out matchCountToMetadata, out mismatchCountToMetadata);
+                    CompareToMetadataFile(lstArchivedFiles, fiMetadataFile, out var matchCountToMetadata, out var mismatchCountToMetadata);
 
                     if (matchCountToMetadata > 0 && mismatchCountToMetadata == 0)
                     {
@@ -282,10 +276,12 @@ namespace ArchiveVerifyPlugin
 
                 // Look for files that should have been uploaded, compute a Sha-1 hash for each, and compare those hashes to existing files in MyEMSL
 
-                Upload.udtUploadMetadata uploadMetadata;
 
                 var oDatasetFileMetadata = new DMSMetadataObject();
-                var lstDatasetFilesLocal = oDatasetFileMetadata.FindDatasetFilesToArchive(m_TaskParams.TaskDictionary, m_MgrParams.TaskDictionary, out uploadMetadata);
+                var lstDatasetFilesLocal = oDatasetFileMetadata.FindDatasetFilesToArchive(
+                    m_TaskParams.TaskDictionary,
+                    m_MgrParams.TaskDictionary,
+                    out var uploadMetadata);
 
                 if (lstDatasetFilesLocal.Count == 0)
                 {
@@ -308,10 +304,8 @@ namespace ArchiveVerifyPlugin
                     dctFilePathHashMap.Add(relativeFilePathWindows, datasetFile.Sha1HashHex);
                 }
 
-                int matchCountToDisk;
-                int mismatchCountToDisk;
 
-                CompareArchiveFilesToList(lstArchivedFiles, out matchCountToDisk, out mismatchCountToDisk, dctFilePathHashMap);
+                CompareArchiveFilesToList(lstArchivedFiles, out var matchCountToDisk, out var mismatchCountToDisk, dctFilePathHashMap);
 
                 if (matchCountToDisk > 0 && mismatchCountToDisk == 0)
                 {
@@ -661,8 +655,7 @@ namespace ArchiveVerifyPlugin
             // Files should only be listed once in the MD5 results file
             // But, just in case there is a duplicate, we'll check for that
             // Results files could have duplicate entries if a file was copied to the archive via FTP and was stored via MyEMSL
-            clsHashInfo hashInfoCached;
-            if (lstMD5Results.TryGetValue(archiveFilePath, out hashInfoCached))
+            if (lstMD5Results.TryGetValue(archiveFilePath, out var hashInfoCached))
             {
                 if (hashInfo.IsMatch(hashInfoCached))
                 {
@@ -713,8 +706,7 @@ namespace ArchiveVerifyPlugin
                     MyEMSLFileID = archivedFile.FileID.ToString(CultureInfo.InvariantCulture)
                 };
 
-                clsHashInfo hashInfoCached;
-                if (lstMD5Results.TryGetValue(archivedFilePath, out hashInfoCached))
+                if (lstMD5Results.TryGetValue(archivedFilePath, out var hashInfoCached))
                 {
                     if (!hashInfo.IsMatch(hashInfoCached))
                     {

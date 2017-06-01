@@ -1,5 +1,5 @@
 ﻿//*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/15/2009
@@ -7,7 +7,6 @@
 //*********************************************************************************************************
 
 using System;
-using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Data;
 using System.Windows.Forms;
@@ -65,8 +64,7 @@ namespace CaptureTaskManager
         /// <returns>Parameter value if found, otherwise empty string</returns>
         public string GetParam(string name, string valueIfMissing)
         {
-            string ItemValue;
-            if (m_JobParams.TryGetValue(name, out ItemValue))
+            if (m_JobParams.TryGetValue(name, out var ItemValue))
             {
                 return ItemValue ?? string.Empty;
             }
@@ -82,11 +80,9 @@ namespace CaptureTaskManager
         /// <returns>Parameter value if found, otherwise empty string</returns>
         public bool GetParam(string name, bool valueIfMissing)
         {
-            string valueText;
-            if (m_JobParams.TryGetValue(name, out valueText))
+            if (m_JobParams.TryGetValue(name, out var valueText))
             {
-                bool value;
-                if (bool.TryParse(valueText, out value))
+                if (bool.TryParse(valueText, out var value))
                     return value;
 
                 return valueIfMissing;
@@ -103,11 +99,9 @@ namespace CaptureTaskManager
         /// <returns>Parameter value if found, otherwise empty string</returns>
         public float GetParam(string name, float valueIfMissing)
         {
-            string valueText;
-            if (m_JobParams.TryGetValue(name, out valueText))
+            if (m_JobParams.TryGetValue(name, out var valueText))
             {
-                float value;
-                if (float.TryParse(valueText, out value))
+                if (float.TryParse(valueText, out var value))
                     return value;
 
                 return valueIfMissing;
@@ -124,11 +118,9 @@ namespace CaptureTaskManager
         /// <returns>Parameter value if found, otherwise empty string</returns>
         public int GetParam(string name, int valueIfMissing)
         {
-            string valueText;
-            if (m_JobParams.TryGetValue(name, out valueText))
+            if (m_JobParams.TryGetValue(name, out var valueText))
             {
-                int value;
-                if (int.TryParse(valueText, out value))
+                if (int.TryParse(valueText, out var value))
                     return value;
 
                 return valueIfMissing;

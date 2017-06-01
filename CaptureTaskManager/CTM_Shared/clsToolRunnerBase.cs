@@ -176,7 +176,6 @@ namespace CaptureTaskManager
             return bSuccess;
         }
 
-
         protected string AppendToComment(string InpComment, string NewComment)
         {
             // Appends a comment string to an existing comment string
@@ -515,7 +514,7 @@ namespace CaptureTaskManager
         /// <param name="ioToolFiles">FileSystemInfo list of program files related to the step tool</param>
         /// <returns>True for success, False for failure</returns>
         /// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
-        protected bool SetStepTaskToolVersion(string toolVersionInfo, List<FileInfo> ioToolFiles)
+        protected bool SetStepTaskToolVersion(string toolVersionInfo, IReadOnlyList<FileInfo> ioToolFiles)
         {
             return SetStepTaskToolVersion(toolVersionInfo, ioToolFiles, false);
         }
@@ -528,7 +527,7 @@ namespace CaptureTaskManager
         /// <param name="blnSaveToolVersionTextFile">If true, then creates a text file with the tool version information</param>
         /// <returns>True for success, False for failure</returns>
         /// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
-        protected bool SetStepTaskToolVersion(string toolVersionInfo, List<FileInfo> ioToolFiles,
+        protected bool SetStepTaskToolVersion(string toolVersionInfo, IReadOnlyList<FileInfo> ioToolFiles,
                                               bool blnSaveToolVersionTextFile)
         {
             var strExeInfo = string.Empty;
@@ -541,7 +540,7 @@ namespace CaptureTaskManager
                 return false;
             }
 
-            if ((ioToolFiles != null))
+            if (ioToolFiles != null)
             {
                 foreach (var fiFile in ioToolFiles)
                 {

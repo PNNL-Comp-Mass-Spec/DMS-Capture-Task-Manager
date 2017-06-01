@@ -2,6 +2,7 @@ using System;
 using CaptureTaskManager;
 using Pacifica.Core;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Net;
 using System.Data.SqlClient;
@@ -256,14 +257,11 @@ namespace ArchiveStatusCheckPlugin
                         continue;
                     }
 
-                    string statusMessage;
-                    string errorMessage;
                     var success = statusChecker.IngestStepCompleted(
                         xmlServerResponse,
                         MyEMSLStatusCheck.StatusStep.Archived,
-                        out statusMessage,
-                        out errorMessage);
-
+                        out var statusMessage,
+                        out var errorMessage);
 
                     if (success)
                     {
@@ -637,9 +635,11 @@ namespace ArchiveStatusCheckPlugin
 
             try
             {
-                var statusNums = string.Join(",", (from item in dctVerifiedURIs select item.Key));
+                var verifiedStatusNums = dctVerifiedURIs.Keys;
 
-                var ingestStepsCompleted = GetMaxIngestStepCompleted(dctVerifiedURIs.Keys, dctStatusData);
+                var statusNums = string.Join(",", verifiedStatusNums);
+
+                var ingestStepsCompleted = GetMaxIngestStepCompleted(verifiedStatusNums, dctStatusData);
 
                 var spCmd = new SqlCommand(SP_NAME)
                 {

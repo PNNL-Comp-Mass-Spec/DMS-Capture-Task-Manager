@@ -1,5 +1,5 @@
 ﻿//*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2011, Battelle Memorial Institute
 // Created 03/07/2011
@@ -118,7 +118,7 @@ namespace ImsDemuxPlugin
                 //   then we need to examine table T_Log_Entries for messages regarding manual calibration
                 // If manual calibration values are found, then we should cache the calibration slope and intercept values
                 //   and apply them to the new demultiplexed file and skip auto-calibration
-                // If manual calibration values are not found, then we want to fail out the job immediately, 
+                // If manual calibration values are not found, then we want to fail out the job immediately,
                 //   since demultiplexing succeeded, but calibration failed, and manual calibration was not performed
 
                 var calibrationError = CheckForCalibrationError(dsPath);
@@ -190,7 +190,7 @@ namespace ImsDemuxPlugin
                 }
             }
 
-            // Query to determine if demux is needed. 
+            // Query to determine if demux is needed.
             var uimfFilePath = Path.Combine(dsPath, uimfFileName);
             var needToDemultiplex = true;
 
@@ -541,6 +541,7 @@ namespace ImsDemuxPlugin
         /// <param name="newProgress">Current progress (value between 0 and 100)</param>
         void clsDemuxTools_DemuxProgress(float newProgress)
         {
+
             // Multiplying by 0.9 since we're assuming that demultiplexing will take 90% of the time while addition of bin-centric tables will take 10% of the time
             m_StatusTools.UpdateAndWrite(0 + newProgress * 0.90f);
 

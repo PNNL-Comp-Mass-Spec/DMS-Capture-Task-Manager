@@ -97,8 +97,7 @@ namespace CaptureTaskManager
                 ReportManagerErrorCleanup(eCleanupActionCodeConstants.Start);
 
                 // Delete all folders and subfolders in work folder
-                string strFailureMessage;
-                blnSuccess = clsToolRunnerBase.CleanWorkDir(mWorkingDirPath, 1, out strFailureMessage);
+                blnSuccess = clsToolRunnerBase.CleanWorkDir(mWorkingDirPath, 1, out var strFailureMessage);
 
                 if (!blnSuccess)
                 {
