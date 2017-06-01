@@ -24,44 +24,42 @@ namespace DatasetArchivePlugin
         //**********************************************************************************************************
 
         #region "Constants"
-        protected const string ARCHIVE = "Archive ";
-        protected const string UPDATE = "Archive update ";
+        private const string ARCHIVE = "Archive ";
+        private const string UPDATE = "Archive update ";
 
         #endregion
 
         #region "Class variables"
-        protected IMgrParams m_MgrParams;
+        private readonly IMgrParams m_MgrParams;
         protected ITaskParams m_TaskParams;
-        protected IStatusFile m_StatusTools;
+        private readonly IStatusFile m_StatusTools;
 
-        protected string m_ErrMsg = string.Empty;
-        protected string m_WarningMsg = string.Empty;
-        protected string m_DSNamePath;
+        private string m_ErrMsg = string.Empty;
+        private string m_WarningMsg = string.Empty;
+        private string m_DSNamePath;
 
-        protected bool m_MyEmslUploadSuccess;
+        private bool m_MyEmslUploadSuccess;
 
-        protected int m_DebugLevel;
+        private readonly int m_DebugLevel;
 
-        // Deprecated: protected string m_User;
-        // Deprecated: protected string m_Pwd;
+        // Deprecated: private string m_User;
+        // Deprecated: private string m_Pwd;
 
-        // Deprecated: protected bool m_UseTls;
-        // Deprecated: protected int m_ServerPort;
-        // Deprecated: protected int m_FtpTimeOut;
-        // Deprecated: protected bool m_FtpPassive;
-        // Deprecated: protected bool m_FtpRestart;
-        // Deprecated: protected bool m_ConnectionOpen = false;
+        // Deprecated: private bool m_UseTls;
+        // Deprecated: private int m_ServerPort;
+        // Deprecated: private int m_FtpTimeOut;
+        // Deprecated: private bool m_FtpPassive;
+        // Deprecated: private bool m_FtpRestart;
+        // Deprecated: private bool m_ConnectionOpen = false;
 
-        protected string m_ArchiveOrUpdate;
+        private readonly string m_ArchiveOrUpdate;
         protected string m_DatasetName = string.Empty;
 
         protected DateTime mLastStatusUpdateTime = DateTime.UtcNow;
-        protected DateTime mLastProgressUpdateTime = DateTime.UtcNow;
+        private DateTime mLastProgressUpdateTime = DateTime.UtcNow;
 
-        protected string mMostRecentLogMessage = string.Empty;
+        private string mMostRecentLogMessage = string.Empty;
         protected DateTime mMostRecentLogTime = DateTime.UtcNow;
-
-        protected clsFileTools m_FileTools;
 
         #endregion
 
@@ -102,9 +100,6 @@ namespace DatasetArchivePlugin
             {
                 m_ArchiveOrUpdate = UPDATE;
             }
-
-            // Instantiate m_FileTools
-            m_FileTools = new clsFileTools(m_MgrParams.GetParam("MgrName", "CaptureTaskManager"), 1);
 
         }
         #endregion
@@ -171,7 +166,7 @@ namespace DatasetArchivePlugin
 
         }
 
-        protected string AppendToString(string text, string append)
+        private string AppendToString(string text, string append)
         {
             if (string.IsNullOrEmpty(text))
                 text = string.Empty;
@@ -242,7 +237,7 @@ namespace DatasetArchivePlugin
         /// Use MyEMSLUploader to upload the data to MyEMSL
         /// </summary>
         /// <returns>True if success, false if an error</returns>
-        protected bool UploadToMyEMSL(bool recurse, EasyHttp.eDebugMode debugMode, bool useTestInstance, out bool allowRetry)
+        private bool UploadToMyEMSL(bool recurse, EasyHttp.eDebugMode debugMode, bool useTestInstance, out bool allowRetry)
         {
             bool success;
             var dtStartTime = DateTime.UtcNow;
@@ -406,7 +401,7 @@ namespace DatasetArchivePlugin
         /// </summary>
         /// <param name="dsNamePath">Fully qualified path to dataset folder</param>
         /// <returns>TRUE if dataset folder is present; otherwise FALSE</returns>
-        protected bool VerifyDSPresent(string dsNamePath)
+        private bool VerifyDSPresent(string dsNamePath)
         {
             // Verifies specified dataset is present
             return Directory.Exists(dsNamePath);
@@ -419,7 +414,7 @@ namespace DatasetArchivePlugin
         /// <param name="dsName">Name of dataset</param>
         /// <param name="reason">Reason for failed operation</param>
         /// <param name="logToDB">True to log to the database and a local file; false for local file only</param>
-        protected void LogOperationFailed(string dsName, string reason = "", bool logToDB = false)
+        private void LogOperationFailed(string dsName, string reason = "", bool logToDB = false)
         {
             var msg = m_ArchiveOrUpdate + "failed, dataset " + dsName;
             if (!string.IsNullOrEmpty(reason))
@@ -436,7 +431,7 @@ namespace DatasetArchivePlugin
         /// </summary>
         /// <param name="sourceFolderPath"></param>
         /// <returns>Total size, in GB</returns>
-        protected float ComputeFolderSizeGB(string sourceFolderPath)
+        private float ComputeFolderSizeGB(string sourceFolderPath)
         {
             var diSourceFolder = new DirectoryInfo(sourceFolderPath);
 
@@ -542,7 +537,7 @@ namespace DatasetArchivePlugin
             m_MyEmslUploadSuccess = true;
         }
 
-        protected void OnMyEMSLUploadComplete(MyEMSLUploadEventArgs e)
+        private void OnMyEMSLUploadComplete(MyEMSLUploadEventArgs e)
         {
             MyEMSLUploadComplete?.Invoke(this, e);
         }

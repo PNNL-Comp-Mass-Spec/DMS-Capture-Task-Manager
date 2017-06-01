@@ -383,7 +383,7 @@ namespace CaptureTaskManager
         /// <param name="strVersion"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        protected bool ReadVersionInfoFile(string dllFilePath, string strVersionInfoFilePath, out string strVersion)
+        private bool ReadVersionInfoFile(string dllFilePath, string strVersionInfoFilePath, out string strVersion)
         {
             // Open strVersionInfoFilePath and read the Version= line
 
@@ -468,7 +468,7 @@ namespace CaptureTaskManager
         /// <param name="toolVersionInfo"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        protected bool SaveToolVersionInfoFile(string strFolderPath, string toolVersionInfo)
+        private bool SaveToolVersionInfoFile(string strFolderPath, string toolVersionInfo)
         {
             try
             {
@@ -691,7 +691,7 @@ namespace CaptureTaskManager
         /// <param name="dllFilePath">Path to the DLL</param>
         /// <returns>True if success; false if an error</returns>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfoViaSystemDiagnostics(ref string toolVersionInfo, string dllFilePath)
+        private bool StoreToolVersionInfoViaSystemDiagnostics(ref string toolVersionInfo, string dllFilePath)
         {
             try
             {

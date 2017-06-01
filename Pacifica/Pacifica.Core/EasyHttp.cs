@@ -38,7 +38,7 @@ namespace Pacifica.Core
             MyEMSLOfflineMode = 2
         }
 
-        protected const int TAR_BLOCK_SIZE_BYTES = 512;
+        private const int TAR_BLOCK_SIZE_BYTES = 512;
         public const string MYEMSL_METADATA_FILE_NAME = "metadata.txt";
 
         public static event StatusUpdateEventHandler StatusUpdate;
@@ -633,13 +633,13 @@ namespace Pacifica.Core
             return responseData;
         }
 
-        protected static long AddTarFileContentLength(string pathInArchive, long fileSizeBytes)
+        private static long AddTarFileContentLength(string pathInArchive, long fileSizeBytes)
         {
             int headerBlocks;
             return AddTarFileContentLength(pathInArchive, fileSizeBytes, out headerBlocks);
         }
 
-        protected static long AddTarFileContentLength(string pathInArchive, long fileSizeBytes, out int headerBlocks)
+        private static long AddTarFileContentLength(string pathInArchive, long fileSizeBytes, out int headerBlocks)
         {
 
             long contentLength = 0;

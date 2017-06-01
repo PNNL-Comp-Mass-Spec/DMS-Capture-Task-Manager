@@ -562,12 +562,12 @@ namespace Pacifica.DMS_Metadata
             return datasetDateCodeString;
         }
 
-        protected void ReportProgress(double percentComplete)
+        private void ReportProgress(double percentComplete)
         {
             ReportProgress(percentComplete, string.Empty);
         }
 
-        protected void ReportProgress(double percentComplete, string currentTask)
+        private void ReportProgress(double percentComplete, string currentTask)
         {
             OnProgressUpdate(new ProgressEventArgs(percentComplete, currentTask));
         }

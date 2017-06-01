@@ -75,7 +75,7 @@ namespace ArchiveStatusCheckPlugin
             else
             {
                 // Files are not yet verified
-                // Return completionCode CLOSEOUT_NOT_READY=2 
+                // Return completionCode CLOSEOUT_NOT_READY=2
                 // which will tell the DMS_Capture DB to reset the task to state 2 and bump up the Next_Try value by 60 minutes
                 if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
                     mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
@@ -88,7 +88,7 @@ namespace ArchiveStatusCheckPlugin
 
         }
 
-        protected bool CheckArchiveStatus()
+        private bool CheckArchiveStatus()
         {
 
             // Examine the upload status for any uploads for this dataset, filtering on job number to ignore jobs created after this job
@@ -219,7 +219,7 @@ namespace ArchiveStatusCheckPlugin
             return false;
         }
 
-        protected void CheckStatusURIs(
+        private void CheckStatusURIs(
             MyEMSLStatusCheck statusChecker,
             CookieContainer cookieJar,
             Dictionary<int, clsIngestStatusInfo> dctStatusData,
@@ -312,16 +312,16 @@ namespace ArchiveStatusCheckPlugin
         }
 
         /// <summary>
-        /// Step through the unverified URIs to see if the same subfolder was subsequently successfully uploaded 
-        /// (could be a blank subfolder, meaning the instrument data and all jobs) 
+        /// Step through the unverified URIs to see if the same subfolder was subsequently successfully uploaded
+        /// (could be a blank subfolder, meaning the instrument data and all jobs)
         /// </summary>
         /// <param name="dctUnverifiedURIs">Unverified URIs</param>
         /// <param name="dctVerifiedURIs">Verified URIs</param>
         /// <param name="dctStatusData">Status Info for each StatusNum</param>
         /// <remarks>Will remove superseded (yet unverified) entries from dctUnverifiedURIs and dctStatusData</remarks>
-        protected void CompareUnverifiedAndVerifiedURIs(
-            Dictionary<int, string> dctUnverifiedURIs,
-            Dictionary<int, string> dctVerifiedURIs,
+        private void CompareUnverifiedAndVerifiedURIs(
+            IDictionary<int, string> dctUnverifiedURIs,
+            IReadOnlyDictionary<int, string> dctVerifiedURIs,
             Dictionary<int, clsIngestStatusInfo> dctStatusData)
         {
             var lstStatusNumsToIgnore = new List<int>();
@@ -337,7 +337,7 @@ namespace ArchiveStatusCheckPlugin
                 var unverifiedSubfolder = unverifiedStatusInfo.Subfolder;
 
                 // Find StatusNums that had the same subfolder
-                // Note: cannot require that identical matches have a larger StatusNum because sometimes 
+                // Note: cannot require that identical matches have a larger StatusNum because sometimes
                 // extremely large status values (like 1168231360) are assigned to failed uploads
                 var lstIdenticalStatusNums = (from item in dctStatusData
                                               where item.Key != unverifiedStatusNum &&
@@ -383,7 +383,7 @@ namespace ArchiveStatusCheckPlugin
         /// <param name="statusNums"></param>
         /// <param name="dctStatusData"></param>
         /// <returns></returns>
-        protected byte GetMaxIngestStepCompleted(IEnumerable<int> statusNums, Dictionary<int, clsIngestStatusInfo> dctStatusData)
+        private byte GetMaxIngestStepCompleted(IEnumerable<int> statusNums, IReadOnlyDictionary<int, clsIngestStatusInfo> dctStatusData)
         {
             byte ingestStepsCompleted = 0;
             foreach (var statusNum in statusNums)
@@ -398,7 +398,7 @@ namespace ArchiveStatusCheckPlugin
             return ingestStepsCompleted;
         }
 
-        protected Dictionary<int, clsIngestStatusInfo> GetStatusURIs(int retryCount)
+        private Dictionary<int, clsIngestStatusInfo> GetStatusURIs(int retryCount)
         {
             // Keys in this dictionary are StatusNum integers
             var dctStatusData = new Dictionary<int, clsIngestStatusInfo>();
@@ -463,7 +463,7 @@ namespace ArchiveStatusCheckPlugin
         /// <param name="sql"></param>
         /// <param name="retryCount"></param>
         /// <param name="dctStatusData"></param>
-        protected void GetStatusURIsAndSubfolders(string sql, int retryCount, Dictionary<int, clsIngestStatusInfo> dctStatusData)
+        private void GetStatusURIsAndSubfolders(string sql, int retryCount, IDictionary<int, clsIngestStatusInfo> dctStatusData)
         {
             // This Connection String points to the DMS_Capture database
             var connectionString = m_MgrParams.GetParam("connectionstring");
@@ -541,7 +541,9 @@ namespace ArchiveStatusCheckPlugin
             LogError("Status checker error for job " + m_Job + ": " + e.Message);
         }
 
-        protected bool UpdateIngestStepsCompletedInDB(List<int> statusNumsToUpdate, Dictionary<int, clsIngestStatusInfo> dctStatusData)
+        private bool UpdateIngestStepsCompletedInDB(
+            IEnumerable<int> statusNumsToUpdate,
+            IReadOnlyDictionary<int, clsIngestStatusInfo> dctStatusData)
         {
             try
             {
@@ -581,7 +583,9 @@ namespace ArchiveStatusCheckPlugin
 
         }
 
-        protected bool UpdateSupersededURIs(List<int> lstStatusNumsToIgnore, Dictionary<int, clsIngestStatusInfo> dctStatusData)
+        private bool UpdateSupersededURIs(
+            IReadOnlyCollection<int> lstStatusNumsToIgnore,
+            IReadOnlyDictionary<int, clsIngestStatusInfo> dctStatusData)
         {
             const string SP_NAME = "SetMyEMSLUploadSupersededIfFailed";
 
@@ -632,7 +636,9 @@ namespace ArchiveStatusCheckPlugin
 
         }
 
-        protected bool UpdateVerifiedURIs(Dictionary<int, string> dctVerifiedURIs, Dictionary<int, clsIngestStatusInfo> dctStatusData)
+        private bool UpdateVerifiedURIs(
+            Dictionary<int, string> dctVerifiedURIs,
+            IReadOnlyDictionary<int, clsIngestStatusInfo> dctStatusData)
         {
             const string SP_NAME = "SetMyEMSLUploadVerified";
 

@@ -61,10 +61,10 @@ namespace DatasetIntegrityPlugin
 
         #region "Class-wide variables"
 
-        protected clsToolReturnData mRetData = new clsToolReturnData();
-        protected DateTime mAgilentToUIMFStartTime;
-        protected DateTime mAgilentToCDFStartTime;
-        protected DateTime mLastStatusUpdate;
+        private clsToolReturnData mRetData = new clsToolReturnData();
+        private DateTime mAgilentToUIMFStartTime;
+        private DateTime mAgilentToCDFStartTime;
+        private DateTime mLastStatusUpdate;
 
         #endregion
 
@@ -812,7 +812,7 @@ namespace DatasetIntegrityPlugin
             }
         }
 
-        protected void ParseConsoleOutputFileForErrors(string sConsoleOutputFilePath)
+        private void ParseConsoleOutputFileForErrors(string sConsoleOutputFilePath)
         {
             var blnUnhandledException = false;
             var sExceptionText = string.Empty;
@@ -2065,7 +2065,7 @@ namespace DatasetIntegrityPlugin
         /// <param name="dataFileNamePath"></param>
         /// <param name="instrumentName"></param>
         /// <returns>True if the pressure values are correct; false if the columns have swapped data</returns>
-        protected bool ValidatePressureInfo(string dataFileNamePath, string instrumentName)
+        private bool ValidatePressureInfo(string dataFileNamePath, string instrumentName)
         {
 
             // Example of correct pressures:
@@ -2196,7 +2196,7 @@ namespace DatasetIntegrityPlugin
         /// Stores the tool version info in the database
         /// </summary>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfo(string agilentToUimfConverterPath, string openChromProgPath)
+        private bool StoreToolVersionInfo(string agilentToUimfConverterPath, string openChromProgPath)
         {
 
             LogDebug("Determining tool version info");

@@ -42,7 +42,7 @@ namespace CaptureToolPlugin
             Error
         }
 
-        protected enum ConnectionType
+        private enum ConnectionType
         {
             NotConnected,
             Prism,
@@ -72,7 +72,7 @@ namespace CaptureToolPlugin
         private readonly string m_Pwd = "";
         private ShareConnector m_ShareConnectorPRISM;
         private NetworkConnection m_ShareConnectorDotNET;
-        protected ConnectionType m_ConnectionType = ConnectionType.NotConnected;
+        private ConnectionType m_ConnectionType = ConnectionType.NotConnected;
         private bool m_NeedToAbortProcessing;
 
         private readonly clsFileTools m_FileTools;
@@ -2950,8 +2950,7 @@ namespace CaptureToolPlugin
             }
         }
 
-
-        protected void HandleCopyException(ref clsToolReturnData retData, Exception ex)
+        private void HandleCopyException(ref clsToolReturnData retData, Exception ex)
         {
             if (ex.Message.Contains("An unexpected network error occurred") ||
                 ex.Message.Contains("Multiple connections") ||
@@ -3006,7 +3005,7 @@ namespace CaptureToolPlugin
         /// Store m_ErrorMessage in retData.CloseoutMsg if an error exists yet retData.CloseoutMsg is empty
         /// </summary>
         /// <param name="retData"></param>
-        protected void PossiblyStoreErrorMessage(ref clsToolReturnData retData)
+        private void PossiblyStoreErrorMessage(ref clsToolReturnData retData)
         {
 
             if (!string.IsNullOrWhiteSpace(m_ErrorMessage) && string.IsNullOrWhiteSpace(retData.CloseoutMsg))

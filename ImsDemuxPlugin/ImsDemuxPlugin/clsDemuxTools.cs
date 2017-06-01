@@ -30,13 +30,13 @@ namespace ImsDemuxPlugin
         #region "Constants"
         public const string CALIBRATION_LOG_FILE = "CalibrationLog.txt";
 
-        protected const string DECODED_UIMF_SUFFIX = "_decoded.uimf";
+        private const string DECODED_UIMF_SUFFIX = "_decoded.uimf";
 
         // Set the max runtime at 5 days
-        protected const int MAX_DEMUX_RUNTIME_MINUTES = 1440 * 5;
+        private const int MAX_DEMUX_RUNTIME_MINUTES = 1440 * 5;
 
         // Calibration should be fast (typically just a second a two)
-        protected const int MAX_CALIBRATION_RUNTIME_MINUTES = 5;
+        private const int MAX_CALIBRATION_RUNTIME_MINUTES = 5;
 
         public const string UIMF_CALIBRATION_UPDATER_NAME = "UIMF Calibration Updater";
 
@@ -46,29 +46,33 @@ namespace ImsDemuxPlugin
 
         // Deprecated: UIMFDemultiplexer.UIMFDemultiplexer m_DeMuxTool;
 
-        protected string mDataset;
-        protected string mDatasetFolderPathRemote = string.Empty;
-        protected string mWorkDir;
+        private string mDataset;
+        private string mDatasetFolderPathRemote = string.Empty;
+        private string mWorkDir;
 
-        protected readonly string mUimfDemultiplexerPath;
-        protected string mUimfDemultiplexerConsoleOutputFilePath;
+        private readonly string mUimfDemultiplexerPath;
+        private string mUimfDemultiplexerConsoleOutputFilePath;
 
-        protected DateTime mLastProgressUpdateTime;
-        protected DateTime mLastProgressMessageTime;
+        private DateTime mLastProgressUpdateTime;
+        private DateTime mLastProgressMessageTime;
 
-        protected DateTime mDemuxStartTime;
-        protected float mDemuxProgressPercentComplete;
+        private DateTime mBinCentricStartTime;
+        private int mProgressUpdateIntervalSeconds;
 
-        protected bool mCalibrating;
+        private DateTime mDemuxStartTime;
+        private float mDemuxProgressPercentComplete;
 
-        protected List<string> mLoggedConsoleOutputErrors;
+        private bool mCalibrating;
 
-        protected struct udtDemuxOptionsType
+        private readonly List<string> mLoggedConsoleOutputErrors;
+
+        private struct udtDemuxOptionsType
         {
             public int FramesToSum;
             public bool CalibrateOnly;
-            public int StartFrame;
-            public int EndFrame;
+            
+            // public int StartFrame;
+            // public int EndFrame;
 
             /// <summary>
             /// Number of bits used to encode the data when multiplexing (historically 4-bit)
@@ -80,7 +84,7 @@ namespace ImsDemuxPlugin
             /// </summary>
             public bool ResumeDemultiplexing;
 
-            public int NumCores;
+            // public int NumCores;
             public bool AutoCalibrate;
             public string CheckpointTargetFolder;
         }
@@ -236,7 +240,7 @@ namespace ImsDemuxPlugin
 
         }
 
-        protected clsToolReturnData CopyUIMFToWorkDir(
+        private clsToolReturnData CopyUIMFToWorkDir(
             ITaskParams taskParams,
             string uimfFileName,
             clsToolReturnData retData,
@@ -261,7 +265,7 @@ namespace ImsDemuxPlugin
 
         }
 
-        protected string GetRemoteUIMFFilePath(ITaskParams taskParams, ref clsToolReturnData retData)
+        private string GetRemoteUIMFFilePath(ITaskParams taskParams, ref clsToolReturnData retData)
         {
 
             try
@@ -1113,17 +1117,17 @@ namespace ImsDemuxPlugin
         private void ParseConsoleOutputFileDemux()
         {
             // Example Console output:
-            //      
+            //
             // Demultiplexing PlasmaND_2pt5ng_0pt005fmol_Frac05_9Sep14_Methow_14-06-13_encoded.uimf
             //  in folder F:\My Documents\Projects\DataMining\UIMFDemultiplexer\UIMFDemultiplexer_Console\bin
             // Auto-switching instrument from IMS4 to QTOF
-            // 
+            //
             // Cloning .UIMF file
             // Initializing data arrays
-            // 
+            //
             // Total number of frames to demultiplex: 39
             //  (processing frames 1 to 40)
-            // 
+            //
             // Demultiplexing frame 1
             // Demultiplexing frame 2
             // Demultiplexing frame 3
@@ -1133,7 +1137,7 @@ namespace ImsDemuxPlugin
             // Demultiplexing frame 19
             // ...
             // Processing: 100%
-            // 
+            //
             // PlasmaND_2pt5ng_0pt005fmol_Frac05_9Sep14_Methow_14-06-13_encoded_inverse.uimf already exists; renaming existing file
             // Finished demultiplexing all frames. Now performing calibration
             // Calibration frame 26 matched 7 / 7 calibrants within 10 ppm; Slope = 0.347632, Intercept = 0.034093;
@@ -1289,7 +1293,7 @@ namespace ImsDemuxPlugin
         /// <param name="maxRuntimeMinutes"></param>
         /// <param name="errorMessage">Output: Error message</param>
         /// <returns></returns>
-        protected bool RunUIMFDemultiplexer(
+        private bool RunUIMFDemultiplexer(
             string inputFilePath,
             string outputFilePath,
             udtDemuxOptionsType demuxOptions,

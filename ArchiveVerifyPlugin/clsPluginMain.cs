@@ -17,19 +17,19 @@ namespace ArchiveVerifyPlugin
         //**********************************************************************************************************
 
         #region "Constants and Enums"
-        protected const string MD5_RESULTS_FILE_PREFIX = "results.";
-        protected const string DEFAULT_MD5_RESULTS_FOLDER_PATH = @"\\proto-7\MD5Results";
-        protected const string DEFAULT_MD5_RESULTS_BACKUP_FOLDER_PATH = @"\\proto-5\MD5ResultsBackup";
+        private const string MD5_RESULTS_FILE_PREFIX = "results.";
+        private const string DEFAULT_MD5_RESULTS_FOLDER_PATH = @"\\proto-7\MD5Results";
+        private const string DEFAULT_MD5_RESULTS_BACKUP_FOLDER_PATH = @"\\proto-5\MD5ResultsBackup";
 
         #endregion
 
         #region "Class-wide variables"
         clsToolReturnData mRetData = new clsToolReturnData();
 
-        protected double mPercentComplete;
-        protected DateTime mLastProgressUpdateTime = DateTime.UtcNow;
+        private double mPercentComplete;
+        private DateTime mLastProgressUpdateTime = DateTime.UtcNow;
 
-        protected int mTotalMismatchCount;
+        private int mTotalMismatchCount;
 
         #endregion
 
@@ -120,7 +120,7 @@ namespace ArchiveVerifyPlugin
 
         }
 
-        protected bool CheckUploadStatus()
+        private bool CheckUploadStatus()
         {
 
             // Examine the upload status
@@ -224,7 +224,7 @@ namespace ArchiveVerifyPlugin
         /// <param name="lstArchivedFiles"></param>
         /// <param name="metadataFilePath"></param>
         /// <returns></returns>
-        protected bool CompareArchiveFilesToExpectedFiles(List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles, out string metadataFilePath)
+        private bool CompareArchiveFilesToExpectedFiles(List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles, out string metadataFilePath)
         {
             metadataFilePath = string.Empty;
 
@@ -342,7 +342,7 @@ namespace ArchiveVerifyPlugin
 
         }
 
-        protected void CompareArchiveFilesToList(List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles, out int matchCount, out int mismatchCount, Dictionary<string, string> dctFilePathHashMap)
+        private void CompareArchiveFilesToList(List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles, out int matchCount, out int mismatchCount, Dictionary<string, string> dctFilePathHashMap)
         {
             matchCount = 0;
             mismatchCount = 0;
@@ -383,7 +383,7 @@ namespace ArchiveVerifyPlugin
             }
         }
 
-        protected void CompareToMetadataFile(List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles, FileInfo fiMetadataFile, out int matchCount, out int mismatchCount)
+        private void CompareToMetadataFile(List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles, FileInfo fiMetadataFile, out int matchCount, out int mismatchCount)
         {
             matchCount = 0;
             mismatchCount = 0;
@@ -438,7 +438,7 @@ namespace ArchiveVerifyPlugin
 
         }
 
-        protected void CopyMD5ResultsFileToBackupFolder(string datasetInstrument, string datasetYearQuarter, FileInfo fiMD5ResultsFile)
+        private void CopyMD5ResultsFileToBackupFolder(string datasetInstrument, string datasetYearQuarter, FileInfo fiMD5ResultsFile)
         {
             // Copy the updated file to md5ResultsFolderPathBackup
             try
@@ -464,7 +464,7 @@ namespace ArchiveVerifyPlugin
             }
         }
 
-        protected bool CreateMD5ResultsFile(FileInfo fiMD5ResultsFile, List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles)
+        private bool CreateMD5ResultsFile(FileInfo fiMD5ResultsFile, List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles)
         {
             // Create a new MD5 results file
             bool success;
@@ -516,7 +516,7 @@ namespace ArchiveVerifyPlugin
         /// </summary>
         /// <param name="lstArchivedFiles"></param>
         /// <returns></returns>
-        protected bool CreateOrUpdateMD5ResultsFile(List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles)
+        private bool CreateOrUpdateMD5ResultsFile(List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles)
         {
 
             bool success;
@@ -563,7 +563,7 @@ namespace ArchiveVerifyPlugin
 
         }
 
-        protected void DeleteMetadataFile(string metadataFilePath)
+        private void DeleteMetadataFile(string metadataFilePath)
         {
             try
             {
@@ -586,17 +586,17 @@ namespace ArchiveVerifyPlugin
             }
         }
 
-        protected string GetMD5ResultsFilePath(string strMD5ResultsFolderPath, string strDatasetName, string strInstrumentName, string strDatasetYearQuarter)
+        private string GetMD5ResultsFilePath(string strMD5ResultsFolderPath, string strDatasetName, string strInstrumentName, string strDatasetYearQuarter)
         {
             return GetMD5ResultsFilePath(Path.Combine(strMD5ResultsFolderPath, strInstrumentName, strDatasetYearQuarter), strDatasetName);
         }
 
-        protected string GetMD5ResultsFilePath(string strParentFolderPath, string strDatasetName)
+        private string GetMD5ResultsFilePath(string strParentFolderPath, string strDatasetName)
         {
             return Path.Combine(strParentFolderPath, MD5_RESULTS_FILE_PREFIX + strDatasetName);
         }
 
-        protected bool ParameterDefined(string parameterName, string parameterValue)
+        private bool ParameterDefined(string parameterName, string parameterValue)
         {
             if (string.IsNullOrEmpty(parameterValue))
             {
@@ -616,7 +616,7 @@ namespace ArchiveVerifyPlugin
         /// <param name="lstMD5Results">Dictionary where keys are unix file paths and values are clsHashInfo, tracking the Hash value and MyEMSL File ID</param>
         /// <returns>True if lstMD5Results is updated, false if unchanged</returns>
         /// <remarks></remarks>
-        protected bool ParseAndStoreHashInfo(string dataLine, ref Dictionary<string, clsHashInfo> lstMD5Results)
+        private bool ParseAndStoreHashInfo(string dataLine, ref Dictionary<string, clsHashInfo> lstMD5Results)
         {
             // Data Line Format
             //
@@ -684,7 +684,7 @@ namespace ArchiveVerifyPlugin
             return true;
         }
 
-        protected bool UpdateMD5ResultsFile(string md5ResultsFilePath, List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles)
+        private bool UpdateMD5ResultsFile(string md5ResultsFilePath, List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles)
         {
             bool success;
 
@@ -742,7 +742,7 @@ namespace ArchiveVerifyPlugin
             return success;
         }
 
-        protected bool VisibleInElasticSearch(out string metadataFilePath)
+        private bool VisibleInElasticSearch(out string metadataFilePath)
         {
             bool success;
 
@@ -813,7 +813,7 @@ namespace ArchiveVerifyPlugin
 
         }
 
-        protected bool WriteMD5ResultsFile(Dictionary<string, clsHashInfo> lstMD5Results, string md5ResultsFilePath, bool useTempFile)
+        private bool WriteMD5ResultsFile(Dictionary<string, clsHashInfo> lstMD5Results, string md5ResultsFilePath, bool useTempFile)
         {
             var currentStep = "initializing";
 
