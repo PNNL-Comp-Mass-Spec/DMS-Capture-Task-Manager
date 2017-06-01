@@ -1,5 +1,5 @@
 ﻿//*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/10/2009
@@ -17,7 +17,7 @@ namespace CaptureTaskManager
         // Application startup program
         //**********************************************************************************************************
 
-        private const string PROGRAM_DATE = "April 4, 2017";
+        private const string PROGRAM_DATE = "May 31, 2017";
 
         private static bool mCodeTestMode;
         private static bool mCreateEventLog;

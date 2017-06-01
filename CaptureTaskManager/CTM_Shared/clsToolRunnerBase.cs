@@ -805,9 +805,6 @@ namespace CaptureTaskManager
                 var strArgs = clsConversion.PossiblyQuotePath(fiDLLFile.FullName) + " /O:" +
                               clsConversion.PossiblyQuotePath(versionInfoFilePath);
 
-                var writeToLog = m_DebugLevel >= 3;
-
-                LogMessage(strAppPath + " " + strArgs, isError: false, writeToLog: writeToLog);
 
                 var objProgRunner = new clsRunDosProgram(clsUtilities.GetAppFolderPath())
                 {
@@ -968,7 +965,10 @@ namespace CaptureTaskManager
 
         private void StatusEventHandler(string statusMessage)
         {
-            LogMessage(statusMessage);
+            if (statusMessage.StartsWith("RunProgram") && statusMessage.Contains("DLLVersionInspector"))
+                LogDebug(statusMessage, writeToLog: false);
+            else
+                LogMessage(statusMessage);
         }
 
         private void ErrorEventHandler(string errorMessage, Exception ex)

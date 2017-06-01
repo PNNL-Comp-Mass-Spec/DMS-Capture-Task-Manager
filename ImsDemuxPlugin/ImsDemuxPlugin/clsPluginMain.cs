@@ -270,12 +270,12 @@ namespace ImsDemuxPlugin
 
             if (fileSizeGBStart > 2)
             {
-                LogMessage("Not adding bin-centric tables to the .uimf file since over 2 GB in size" + fileSizeText);
+                LogMessage("Not adding bin-centric tables to " + fiUIMF.Name + " since over 2 GB in size" + fileSizeText);
             }
             else
             {
                 // Add the bin-centric tables if not yet present
-                LogMessage("Adding bin-centric tables to the .uimf file" + fileSizeText);
+                LogMessage("Adding bin-centric tables to " + fiUIMF.Name + fileSizeText);
                 retData = mDemuxTools.AddBinCentricTablesIfMissing(m_MgrParams, m_TaskParams, retData);
 
                 fiUIMF.Refresh();
