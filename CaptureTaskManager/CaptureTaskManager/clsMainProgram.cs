@@ -96,6 +96,9 @@ namespace CaptureTaskManager
 
         #region "Properties"
 
+        /// <summary>
+        /// When true, the manager is deactivated locally
+        /// </summary>
         public bool ManagerDeactivatedLocally => m_ManagerDeactivatedLocally;
 
         #endregion
@@ -885,6 +888,9 @@ namespace CaptureTaskManager
             m_StatusFile.WriteStatusFile();
         }
 
+        /// <summary>
+        /// Post a test log message
+        /// </summary>
         public void PostTestLogMessage()
         {
             try

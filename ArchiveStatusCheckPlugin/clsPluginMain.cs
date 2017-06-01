@@ -22,6 +22,7 @@ namespace ArchiveStatusCheckPlugin
         #endregion
 
         #region "Methods"
+
         /// <summary>
         /// Runs the Archive Status Check step tool
         /// </summary>

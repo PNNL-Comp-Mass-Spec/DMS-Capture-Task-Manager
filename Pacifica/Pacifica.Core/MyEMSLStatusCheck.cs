@@ -17,6 +17,9 @@ namespace Pacifica.Core
     {
         public const string PERMISSIONS_ERROR = "Permissions error:";
 
+        /// <summary>
+        /// Upload status
+        /// </summary>
         public enum StatusStep
         {
             Submitted = 0,      // .tar file submitted
@@ -28,6 +31,9 @@ namespace Pacifica.Core
             Archived = 6        // Sha-1 hash values of files in Aurora validated against expected hash values
         }
 
+        /// <summary>
+        /// Error message
+        /// </summary>
         public string ErrorMessage
         {
             get;

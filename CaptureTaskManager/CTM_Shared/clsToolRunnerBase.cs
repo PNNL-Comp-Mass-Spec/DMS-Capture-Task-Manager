@@ -194,27 +194,38 @@ namespace CaptureTaskManager
             return InpComment + NewComment;
         }
 
+        /// <summary>
+        /// Delete files in the working directory
+        /// </summary>
+        /// <param name="workDir">Working directory path</param>
+        /// <returns></returns>
         // ReSharper disable once UnusedMember.Global
-        // Used by CTM plugins
-        public static bool CleanWorkDir(string WorkDir)
+        public static bool CleanWorkDir(string workDir)
         {
             const float HoldoffSeconds = 0.1f;
             string strFailureMessage;
 
-            return CleanWorkDir(WorkDir, HoldoffSeconds, out strFailureMessage);
+            return CleanWorkDir(workDir, HoldoffSeconds, out strFailureMessage);
         }
 
-        public static bool CleanWorkDir(string WorkDir, float HoldoffSeconds, out string strFailureMessage)
+        /// <summary>
+        /// Delete files in the working directory
+        /// </summary>
+        /// <param name="workDir">Working directory path</param>
+        /// <param name="holdoffSeconds"></param>
+        /// <param name="failureMessage">Output: failure message</param>
+        /// <returns></returns>
+        public static bool CleanWorkDir(string workDir, float holdoffSeconds, out string failureMessage)
         {
             int HoldoffMilliseconds;
 
             var strCurrentSubfolder = string.Empty;
 
-            strFailureMessage = string.Empty;
+            failureMessage = string.Empty;
 
             try
             {
-                HoldoffMilliseconds = Convert.ToInt32(HoldoffSeconds * 1000);
+                HoldoffMilliseconds = Convert.ToInt32(holdoffSeconds * 1000);
                 if (HoldoffMilliseconds < 100)
                     HoldoffMilliseconds = 100;
                 if (HoldoffMilliseconds > 300000)
@@ -229,14 +240,14 @@ namespace CaptureTaskManager
             clsProgRunner.GarbageCollectNow();
             Thread.Sleep(HoldoffMilliseconds);
 
-            var diWorkFolder = new DirectoryInfo(WorkDir);
+            var diWorkFolder = new DirectoryInfo(workDir);
 
             // Delete the files
             try
             {
                 if (!diWorkFolder.Exists)
                 {
-                    strFailureMessage = "Working directory does not exist";
+                    failureMessage = "Working directory does not exist";
                     return false;
                 }
 
@@ -256,8 +267,8 @@ namespace CaptureTaskManager
             }
             catch (Exception ex)
             {
-                strFailureMessage = "Error deleting files in working directory";
-                LogError("clsGlobal.ClearWorkDir(), " + strFailureMessage + " " + WorkDir + ": " + ex.Message);
+                failureMessage = "Error deleting files in working directory";
+                LogError("clsGlobal.ClearWorkDir(), " + failureMessage + " " + workDir, ex);
                 return false;
             }
 
@@ -271,8 +282,8 @@ namespace CaptureTaskManager
             }
             catch (Exception ex)
             {
-                strFailureMessage = "Error deleting subfolder " + strCurrentSubfolder;
-                LogError(strFailureMessage + " in working directory: " + ex.Message);
+                failureMessage = "Error deleting subfolder " + strCurrentSubfolder;
+                LogError(failureMessage + " in working directory", ex);
                 return false;
             }
 
