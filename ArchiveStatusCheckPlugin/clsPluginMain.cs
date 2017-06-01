@@ -595,30 +595,23 @@ namespace ArchiveStatusCheckPlugin
 
                 var ingestStepsCompleted = GetMaxIngestStepCompleted(lstStatusNumsToIgnore, dctStatusData);
 
-                var cmd = new SqlCommand(SP_NAME)
+                var spCmd = new SqlCommand(SP_NAME)
                 {
-                    CommandType = System.Data.CommandType.StoredProcedure
+                    CommandType = CommandType.StoredProcedure
                 };
 
-                cmd.Parameters.Add("@Return", System.Data.SqlDbType.Int);
-                cmd.Parameters["@Return"].Direction = System.Data.ParameterDirection.ReturnValue;
+                spCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
 
-                cmd.Parameters.Add("@DatasetID", System.Data.SqlDbType.Int);
-                cmd.Parameters["@DatasetID"].Direction = System.Data.ParameterDirection.Input;
-                cmd.Parameters["@DatasetID"].Value = m_DatasetID;
+                spCmd.Parameters.Add("@DatasetID", SqlDbType.Int).Value = m_DatasetID;
 
-                cmd.Parameters.Add("@StatusNumList", System.Data.SqlDbType.VarChar, 1024);
-                cmd.Parameters["@StatusNumList"].Direction = System.Data.ParameterDirection.Input;
-                cmd.Parameters["@StatusNumList"].Value = statusNums;
 
-                cmd.Parameters.Add("@IngestStepsCompleted", System.Data.SqlDbType.TinyInt);
-                cmd.Parameters["@IngestStepsCompleted"].Direction = System.Data.ParameterDirection.Input;
-                cmd.Parameters["@IngestStepsCompleted"].Value = ingestStepsCompleted;
+                spCmd.Parameters.Add("@statusNumList", SqlDbType.VarChar, 1024).Value = statusNums;
 
-                cmd.Parameters.Add("@message", System.Data.SqlDbType.VarChar, 512);
-                cmd.Parameters["@message"].Direction = System.Data.ParameterDirection.Output;
+                spCmd.Parameters.Add("@ingestStepsCompleted", SqlDbType.TinyInt).Value = ingestStepsCompleted;
 
-                var resCode = CaptureDBProcedureExecutor.ExecuteSP(cmd, 2);
+                spCmd.Parameters.Add("@message", SqlDbType.VarChar, 512).Direction = ParameterDirection.Output;
+
+                var resCode = CaptureDBProcedureExecutor.ExecuteSP(spCmd, 2);
 
                 if (resCode == 0)
                     return true;
@@ -648,31 +641,22 @@ namespace ArchiveStatusCheckPlugin
 
                 var ingestStepsCompleted = GetMaxIngestStepCompleted(dctVerifiedURIs.Keys, dctStatusData);
 
-                var cmd = new SqlCommand(SP_NAME)
+                var spCmd = new SqlCommand(SP_NAME)
                 {
-                    CommandType = System.Data.CommandType.StoredProcedure
+                    CommandType = CommandType.StoredProcedure
                 };
 
-                cmd.Parameters.Add("@Return", System.Data.SqlDbType.Int);
-                cmd.Parameters["@Return"].Direction = System.Data.ParameterDirection.ReturnValue;
+                spCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
 
-                cmd.Parameters.Add("@DatasetID", System.Data.SqlDbType.Int);
-                cmd.Parameters["@DatasetID"].Direction = System.Data.ParameterDirection.Input;
-                cmd.Parameters["@DatasetID"].Value = m_DatasetID;
+                spCmd.Parameters.Add("@datasetID", SqlDbType.Int).Value = m_DatasetID;
 
-                cmd.Parameters.Add("@StatusNumList", System.Data.SqlDbType.VarChar, 1024);
-                cmd.Parameters["@StatusNumList"].Direction = System.Data.ParameterDirection.Input;
-                cmd.Parameters["@StatusNumList"].Value = statusNums;
+                spCmd.Parameters.Add("@statusNumList", SqlDbType.VarChar, 1024).Value = statusNums;
 
-                cmd.Parameters.Add("@IngestStepsCompleted", System.Data.SqlDbType.TinyInt);
-                cmd.Parameters["@IngestStepsCompleted"].Direction = System.Data.ParameterDirection.Input;
-                cmd.Parameters["@IngestStepsCompleted"].Value = ingestStepsCompleted;
+                spCmd.Parameters.Add("@ingestStepsCompleted", SqlDbType.TinyInt).Value = ingestStepsCompleted;
 
-                cmd.Parameters.Add("@message", System.Data.SqlDbType.VarChar, 512);
-                cmd.Parameters["@message"].Direction = System.Data.ParameterDirection.Output;
+                spCmd.Parameters.Add("@message", SqlDbType.VarChar, 512).Direction = ParameterDirection.Output;
 
-
-                var resCode = CaptureDBProcedureExecutor.ExecuteSP(cmd, 2);
+                var resCode = CaptureDBProcedureExecutor.ExecuteSP(spCmd, 2);
 
                 if (resCode == 0)
                     return true;

@@ -171,82 +171,57 @@ namespace DatasetArchivePlugin
             {
 
                 // Setup for execution of the stored procedure
-                var MyCmd = new SqlCommand();
+                var spCmd = new SqlCommand(SP_NAME_STORE_MYEMSL_STATS)
                 {
-                    MyCmd.CommandType = CommandType.StoredProcedure;
-                    MyCmd.CommandText = SP_NAME_STORE_MYEMSL_STATS;
+                    CommandType = CommandType.StoredProcedure
+                };
 
-                    MyCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int));
-                    MyCmd.Parameters["@Return"].Direction = ParameterDirection.ReturnValue;
+                spCmd.Parameters.Add("@Return", SqlDbType.Int).Direction = ParameterDirection.ReturnValue;
 
-                    MyCmd.Parameters.Add(new SqlParameter("@Job", SqlDbType.Int));
-                    MyCmd.Parameters["@Job"].Direction = ParameterDirection.Input;
-                    MyCmd.Parameters["@Job"].Value = m_TaskParams.GetParam("Job", 0);
+                spCmd.Parameters.Add("@DatasetID", SqlDbType.Int).Value = m_DatasetID;
 
-                    MyCmd.Parameters.Add(new SqlParameter("@DatasetID", SqlDbType.Int));
-                    MyCmd.Parameters["@DatasetID"].Direction = ParameterDirection.Input;
-                    MyCmd.Parameters["@DatasetID"].Value = m_TaskParams.GetParam("Dataset_ID", 0);
+                spCmd.Parameters.Add("@Job", SqlDbType.Int).Value = m_TaskParams.GetParam("Job", 0);
 
-                    MyCmd.Parameters.Add(new SqlParameter("@Subfolder", SqlDbType.VarChar, 128));
-                    MyCmd.Parameters["@Subfolder"].Direction = ParameterDirection.Input;
-                    MyCmd.Parameters["@Subfolder"].Value = m_TaskParams.GetParam("OutputFolderName", string.Empty);
+                spCmd.Parameters.Add("@DatasetID", SqlDbType.Int).Value = m_TaskParams.GetParam("Dataset_ID", 0);
 
-                    MyCmd.Parameters.Add(new SqlParameter("@FileCountNew", SqlDbType.Int));
-                    MyCmd.Parameters["@FileCountNew"].Direction = ParameterDirection.Input;
-                    MyCmd.Parameters["@FileCountNew"].Value = fileCountNew;
+                spCmd.Parameters.Add("@Subfolder", SqlDbType.VarChar, 128).Value = m_TaskParams.GetParam("OutputFolderName", string.Empty);
 
-                    MyCmd.Parameters.Add(new SqlParameter("@FileCountUpdated", SqlDbType.Int));
-                    MyCmd.Parameters["@FileCountUpdated"].Direction = ParameterDirection.Input;
-                    MyCmd.Parameters["@FileCountUpdated"].Value = fileCountUpdated;
+                spCmd.Parameters.Add("@FileCountNew", SqlDbType.Int).Value = fileCountNew;
 
-                    MyCmd.Parameters.Add(new SqlParameter("@Bytes", SqlDbType.BigInt));
-                    MyCmd.Parameters["@Bytes"].Direction = ParameterDirection.Input;
-                    MyCmd.Parameters["@Bytes"].Value = bytes;
+                spCmd.Parameters.Add("@FileCountUpdated", SqlDbType.Int).Value = fileCountUpdated;
 
-                    MyCmd.Parameters.Add(new SqlParameter("@UploadTimeSeconds", SqlDbType.Real));
-                    MyCmd.Parameters["@UploadTimeSeconds"].Direction = ParameterDirection.Input;
-                    MyCmd.Parameters["@UploadTimeSeconds"].Value = (float)uploadTimeSeconds;
+                spCmd.Parameters.Add("@Bytes", SqlDbType.BigInt).Value = bytes;
 
-                    MyCmd.Parameters.Add(new SqlParameter("@StatusURI", SqlDbType.VarChar, 255));
-                    MyCmd.Parameters["@StatusURI"].Direction = ParameterDirection.Input;
-                    MyCmd.Parameters["@StatusURI"].Value = statusURI;
+                spCmd.Parameters.Add("@UploadTimeSeconds", SqlDbType.Real).Value = (float)uploadTimeSeconds;
 
-                    MyCmd.Parameters.Add(new SqlParameter("@ErrorCode", SqlDbType.Int));
-                    MyCmd.Parameters["@ErrorCode"].Direction = ParameterDirection.Input;
-                    MyCmd.Parameters["@ErrorCode"].Value = errorCode;
+                spCmd.Parameters.Add("@StatusURI", SqlDbType.VarChar, 255).Value = statusURI;
 
-                    MyCmd.Parameters.Add(new SqlParameter("@UsedTestInstance", SqlDbType.TinyInt));
-                    MyCmd.Parameters["@UsedTestInstance"].Direction = ParameterDirection.Input;
+                spCmd.Parameters.Add("@ErrorCode", SqlDbType.Int).Value = errorCode;
 
-                    if (usedTestInstance)
-                        MyCmd.Parameters["@UsedTestInstance"].Value = 1;
-                    else
-                        MyCmd.Parameters["@UsedTestInstance"].Value = 0;
+                byte testInstanceFlag;
+                if (usedTestInstance)
+                    testInstanceFlag = 1;
+                else
+                    testInstanceFlag = 0;
 
-                    MyCmd.Parameters.Add(new SqlParameter("@EUSInstrumentID", SqlDbType.Int));
-                    MyCmd.Parameters["@EUSInstrumentID"].Direction = ParameterDirection.Input;
-                    MyCmd.Parameters["@EUSInstrumentID"].Value = eusInstrumentID;
+                spCmd.Parameters.Add("@UsedTestInstance", SqlDbType.TinyInt).Value = testInstanceFlag;
 
-                    MyCmd.Parameters.Add(new SqlParameter("@EUSProposalID", SqlDbType.VarChar, 10));
-                    MyCmd.Parameters["@EUSProposalID"].Direction = ParameterDirection.Input;
-                    MyCmd.Parameters["@EUSProposalID"].Value = eusProposalID;
+                spCmd.Parameters.Add("@EUSInstrumentID", SqlDbType.Int).Value = eusInstrumentID;
 
-                    MyCmd.Parameters.Add(new SqlParameter("@EUSUploaderID", SqlDbType.Int));
-                    MyCmd.Parameters["@EUSUploaderID"].Direction = ParameterDirection.Input;
-                    MyCmd.Parameters["@EUSUploaderID"].Value = eusUploaderID;
+                spCmd.Parameters.Add("@EUSProposalID", SqlDbType.VarChar, 10).Value = eusProposalID;
 
-                }
+                spCmd.Parameters.Add("@EUSUploaderID", SqlDbType.Int).Value = eusUploaderID;
 
                 // Execute the SP (retry the call up to 4 times)
-                var ResCode = CaptureDBProcedureExecutor.ExecuteSP(MyCmd, 4);
+                var resCode = CaptureDBProcedureExecutor.ExecuteSP(spCmd, 4);
 
-                if (ResCode == 0)
+                if (resCode == 0)
                 {
                     Outcome = true;
                 }
                 else
                 {
-                    var Msg = "Error " + ResCode + " storing MyEMSL Upload Stats";
+                    var Msg = "Error " + resCode + " storing MyEMSL Upload Stats";
                     LogError(Msg);
                     Outcome = false;
                 }

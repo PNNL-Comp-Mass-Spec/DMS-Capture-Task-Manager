@@ -584,22 +584,21 @@ namespace CaptureTaskManager
             }
 
             // Setup for execution of the stored procedure
-            var myCmd = new SqlCommand();
+            var spCmd = new SqlCommand(SP_NAME_SET_TASK_TOOL_VERSION)
             {
-                myCmd.CommandType = System.Data.CommandType.StoredProcedure;
-                myCmd.CommandText = SP_NAME_SET_TASK_TOOL_VERSION;
+                CommandType = System.Data.CommandType.StoredProcedure
+            };
 
-                myCmd.Parameters.Add(new SqlParameter("@Return", System.Data.SqlDbType.Int)).Direction = System.Data.ParameterDirection.ReturnValue;
+            spCmd.Parameters.Add(new SqlParameter("@Return", System.Data.SqlDbType.Int)).Direction = System.Data.ParameterDirection.ReturnValue;
 
-                myCmd.Parameters.Add(new SqlParameter("@job", System.Data.SqlDbType.Int)).Value = m_TaskParams.GetParam("Job", 0);
+            spCmd.Parameters.Add(new SqlParameter("@job", System.Data.SqlDbType.Int)).Value = m_TaskParams.GetParam("Job", 0);
 
-                myCmd.Parameters.Add(new SqlParameter("@step", System.Data.SqlDbType.Int)).Value = m_TaskParams.GetParam("Step", 0);
+            spCmd.Parameters.Add(new SqlParameter("@step", System.Data.SqlDbType.Int)).Value = m_TaskParams.GetParam("Step", 0);
 
-                myCmd.Parameters.Add(new SqlParameter("@ToolVersionInfo", System.Data.SqlDbType.VarChar, 900)).Value = toolVersionInfoCombined;
-            }
+            spCmd.Parameters.Add(new SqlParameter("@ToolVersionInfo", System.Data.SqlDbType.VarChar, 900)).Value = toolVersionInfoCombined;
 
             // Execute the SP (retry the call up to 4 times)
-            var resCode = CaptureDBProcedureExecutor.ExecuteSP(myCmd, 4);
+            var resCode = CaptureDBProcedureExecutor.ExecuteSP(spCmd, 4);
 
             if (resCode == 0)
             {
@@ -882,25 +881,26 @@ namespace CaptureTaskManager
         {
             const string SP_NAME = "UpdateMyEMSLUploadIngestStats";
 
-            var cmd = new SqlCommand(SP_NAME)
+            var spCmd = new SqlCommand(SP_NAME)
             {
                 CommandType = System.Data.CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add("@Return", System.Data.SqlDbType.Int).Direction = System.Data.ParameterDirection.ReturnValue;
+            spCmd.Parameters.Add("@Return", System.Data.SqlDbType.Int).Direction = System.Data.ParameterDirection.ReturnValue;
 
-            cmd.Parameters.Add("@DatasetID", System.Data.SqlDbType.Int).Value = m_DatasetID;
+            spCmd.Parameters.Add("@datasetID", System.Data.SqlDbType.Int).Value = m_DatasetID;
 
-            cmd.Parameters.Add("@StatusNum", System.Data.SqlDbType.Int).Value = statusNum;
+            spCmd.Parameters.Add("@statusNum", System.Data.SqlDbType.Int).Value = statusNum;
 
-            cmd.Parameters.Add("@IngestStepsCompleted", System.Data.SqlDbType.TinyInt).Value = ingestStepsCompleted;
+            spCmd.Parameters.Add("@ingestStepsCompleted", System.Data.SqlDbType.TinyInt).Value = ingestStepsCompleted;
 
-            cmd.Parameters.Add("@FatalError", System.Data.SqlDbType.TinyInt).Value = fatalError ? 1 : 0;
+            spCmd.Parameters.Add("@fatalError", System.Data.SqlDbType.TinyInt).Value = fatalError ? 1 : 0;
 
-            cmd.Parameters.Add("@message", System.Data.SqlDbType.VarChar, 512).Direction = System.Data.ParameterDirection.Output;
+
+            spCmd.Parameters.Add("@message", System.Data.SqlDbType.VarChar, 512).Direction = System.Data.ParameterDirection.Output;
 
             CaptureDBProcedureExecutor.TimeoutSeconds = 20;
-            var resCode = CaptureDBProcedureExecutor.ExecuteSP(cmd, 2);
+            var resCode = CaptureDBProcedureExecutor.ExecuteSP(spCmd, 2);
 
             if (resCode != 0)
             {
@@ -953,7 +953,6 @@ namespace CaptureTaskManager
                     throw new Exception("Log level not supported for unregistering");
             }
         }
-
 
         private void DebugEventHandlerConsoleOnly(string statusMessage)
         {
