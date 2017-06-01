@@ -1,5 +1,5 @@
 ﻿//*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2011, Battelle Memorial Institute
 // Created 03/07/2011
@@ -110,11 +110,7 @@ namespace ImsDemuxPlugin
         #region "Constructor"
         public clsDemuxTools(string uimDemultiplexerPath)
         {
-            // Deprecated: 
-            // m_DeMuxTool = new UIMFDemultiplexer.UIMFDemultiplexer();
-            // m_DeMuxTool.ErrorEvent += deMuxTool_ErrorEventHandler;
-            // m_DeMuxTool.WarningEvent += deMuxTool_WarningEventHandler;
-            // m_DeMuxTool.MessageEvent += deMuxTool_MessageEventHandler;
+            mProgressUpdateIntervalSeconds = 5;
 
             mUimfDemultiplexerPath = uimDemultiplexerPath;
 
@@ -173,12 +169,12 @@ namespace ImsDemuxPlugin
                     {
                         dbConnection.Open();
 
+                        // Start a transaction
                         using (var dbCommand = dbConnection.CreateCommand())
                         {
-                            dbCommand.CommandText = "PRAGMA synchronous=0";
+                            dbCommand.CommandText = "PRAGMA synchronous=0;BEGIN TRANSACTION;";
                             dbCommand.ExecuteNonQuery();
                         }
-
 
                         var binCentricTableCreator = new UIMFLibrary.BinCentricTableCreation();
 
@@ -186,10 +182,20 @@ namespace ImsDemuxPlugin
                         binCentricTableCreator.OnProgress += binCentricTableCreator_ProgressEvent;
                         binCentricTableCreator.Message += binCentricTableCreator_MessageEvent;
 
+                        mBinCentricStartTime = DateTime.UtcNow;
+                        mProgressUpdateIntervalSeconds = 5;
+
                         mLastProgressUpdateTime = DateTime.UtcNow;
                         mLastProgressMessageTime = DateTime.UtcNow;
 
                         binCentricTableCreator.CreateBinCentricTable(dbConnection, uimfReader, mWorkDir);
+
+                        // Finalize the transaction
+                        using (var dbCommand = dbConnection.CreateCommand())
+                        {
+                            dbCommand.CommandText = "END TRANSACTION;PRAGMA synchronous=1;";
+                            dbCommand.ExecuteNonQuery();
+                        }
 
                         dbConnection.Close();
                     }
@@ -1339,11 +1345,13 @@ namespace ImsDemuxPlugin
                     if (demuxOptions.NumBitsForEncoding > 1)
                         cmdStr += " /Bits:" + demuxOptions.NumBitsForEncoding;
 
+                    /*
                     if (demuxOptions.StartFrame > 0)
                         cmdStr += " /First:" + demuxOptions.StartFrame;
 
                     if (demuxOptions.EndFrame > 0)
                         cmdStr += " /Last:" + demuxOptions.EndFrame;
+                    */
 
                     cmdStr += " /FramesToSum:" + demuxOptions.FramesToSum;
 
@@ -1352,10 +1360,12 @@ namespace ImsDemuxPlugin
                         cmdStr += " /Resume";
                     }
 
+                    /*
                     if (demuxOptions.NumCores > 0)
                     {
                         cmdStr += " /Cores:" + demuxOptions.NumCores;
                     }
+                    */
 
                     if (!demuxOptions.AutoCalibrate)
                     {
@@ -1595,23 +1605,37 @@ namespace ImsDemuxPlugin
 
         void binCentricTableCreator_ProgressEvent(object sender, UIMFLibrary.ProgressEventArgs e)
         {
-            if (DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds >= 5)
-            {
-                BinCentricTableProgress?.Invoke((float)e.PercentComplete);
+            if (DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds < mProgressUpdateIntervalSeconds)
+                return;
 
-                mLastProgressUpdateTime = DateTime.UtcNow;
+            if (DateTime.UtcNow.Subtract(mBinCentricStartTime).TotalMinutes > 5 && mProgressUpdateIntervalSeconds < 15)
+            {
+                mProgressUpdateIntervalSeconds = 15;
             }
+            else
+            if (DateTime.UtcNow.Subtract(mBinCentricStartTime).TotalMinutes > 10 && mProgressUpdateIntervalSeconds < 30)
+            {
+                mProgressUpdateIntervalSeconds = 30;
+            }
+            else
+            if (DateTime.UtcNow.Subtract(mBinCentricStartTime).TotalMinutes > 30 && mProgressUpdateIntervalSeconds < 60)
+            {
+                mProgressUpdateIntervalSeconds = 60;
+            }
+
+            BinCentricTableProgress?.Invoke((float)e.PercentComplete);
+
+            mLastProgressUpdateTime = DateTime.UtcNow;
         }
 
         void binCentricTableCreator_MessageEvent(object sender, UIMFLibrary.MessageEventArgs e)
         {
-            if (DateTime.UtcNow.Subtract(mLastProgressMessageTime).TotalSeconds >= 30)
-            {
-                OnStatusEvent(e.Message);
+            if (DateTime.UtcNow.Subtract(mLastProgressMessageTime).TotalSeconds < 30)
+                return;
 
-                mLastProgressMessageTime = DateTime.UtcNow;
-            }
+            OnStatusEvent(e.Message);
 
+            mLastProgressMessageTime = DateTime.UtcNow;
         }
 
         #endregion
