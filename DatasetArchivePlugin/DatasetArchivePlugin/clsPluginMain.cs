@@ -178,8 +178,6 @@ namespace DatasetArchivePlugin
 
                 spCmd.Parameters.Add("@Return", SqlDbType.Int).Direction = ParameterDirection.ReturnValue;
 
-                spCmd.Parameters.Add("@DatasetID", SqlDbType.Int).Value = m_DatasetID;
-
                 spCmd.Parameters.Add("@Job", SqlDbType.Int).Value = m_TaskParams.GetParam("Job", 0);
 
                 spCmd.Parameters.Add("@DatasetID", SqlDbType.Int).Value = m_TaskParams.GetParam("Dataset_ID", 0);
