@@ -267,6 +267,8 @@ namespace ArchiveStatusCheckPlugin
 
                     if (success)
                     {
+                        statusInfo.TransactionId = statusChecker.IngestStepTransactionId(xmlServerResponse);
+
                         dctVerifiedURIs.Add(statusNum, statusInfo.StatusURI);
                         LogDebug("Successful MyEMSL upload for job " + m_Job + ", status num " + statusNum + ": " + statusInfo.StatusURI);
                         continue;
@@ -554,7 +556,7 @@ namespace ArchiveStatusCheckPlugin
                         continue;
                     }
 
-                    var success = UpdateIngestStepsCompletedOneTask(statusNum, statusInfo.IngestStepsCompletedNew);
+                    var success = UpdateIngestStepsCompletedOneTask(statusNum, statusInfo.IngestStepsCompletedNew, statusInfo.TransactionId);
 
                     if (!success)
                         spError = true;

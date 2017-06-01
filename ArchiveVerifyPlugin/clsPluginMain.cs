@@ -175,7 +175,13 @@ namespace ArchiveVerifyPlugin
 
                 var statusNum = MyEMSLStatusCheck.GetStatusNumFromURI(statusURI);
 
-                UpdateIngestStepsCompletedOneTask(statusNum, ingestStepsComplete, fatalError);
+                var transactionId = 0;
+                if (!fatalError)
+                {
+                    transactionId = statusChecker.IngestStepTransactionId(xmlServerResponse);
+                }
+
+                UpdateIngestStepsCompletedOneTask(statusNum, ingestStepsComplete, transactionId, fatalError);
 
                 if (!ingestSuccess)
                 {

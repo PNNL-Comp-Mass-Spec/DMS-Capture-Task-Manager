@@ -326,20 +326,29 @@ namespace Pacifica.Core
             // 		<step id='6' message='verified' status='SUCCESS' />
             // 	</status>
             // </myemsl>
-            // 
+            //
             // Step IDs correspond to:
             // 0: Submitted
             // 1: Received
             // 2: Processing
             // 3: Verified
             // 4: Stored
-            // 5: Available   (status will be "ERROR" if user doesn't have upload permissions for a proposal; 
-            //                 for example https://a4.my.emsl.pnl.gov/myemsl/cgi-bin/status/1042281/xml shows message 
+            // 5: Available   (status will be "ERROR" if user doesn't have upload permissions for a proposal;
+            //                 for example https://a4.my.emsl.pnl.gov/myemsl/cgi-bin/status/1042281/xml shows message
             //                 "You(47943) do not have upload permissions to proposal 17797"
             //                 for user svc-dms on May 3, 2012)
             //                 And https://ingest.my.emsl.pnl.gov/myemsl/cgi-bin/status/2919668/xml shows message
             //                 "Invalid Permissions" on January 4, 2016
             // 6: Archived    (status will be "UNKNOWN" if not yet verified)
+
+            var transactionElement = xmlDoc.SelectSingleNode("//transaction");
+            if (transactionElement?.Attributes == null)
+            {
+                errorMessage = "transaction element not found in the Status XML";
+                ReportError("IngestStepCompleted", errorMessage);
+                statusMessage = errorMessage;
+                return false;
+            }
 
             var query = string.Format("//step[@id='{0}']", (int)stepNum);
             var statusElement = xmlDoc.SelectSingleNode(query);
@@ -481,6 +490,32 @@ namespace Pacifica.Core
 
         }
 
+        /// <summary>
+        /// Determine the transaction ID in the XML
+        /// </summary>
+        /// <param name="xmlServerResponse"></param>
+        /// <returns>Transaction ID if found, otherwise 0</returns>
+        public int IngestStepTransactionId(string xmlServerResponse)
+        {
+            var xmlDoc = new XmlDocument();
+            xmlDoc.LoadXml(xmlServerResponse);
+
+            var transactionElement = xmlDoc.SelectSingleNode("//transaction");
+            if (transactionElement?.Attributes == null)
+            {
+                ReportError("IngestStepTransactionId", "transaction element not found in the Status XML");
+                return 0;
+            }
+
+            var transactionId = int.Parse(transactionElement.Attributes["id"].Value);
+            return transactionId;
+        }
+
+        /// <summary>
+        /// Report true if the error message contains a critical error
+        /// </summary>
+        /// <param name="errorMessage"></param>
+        /// <returns></returns>
         public bool IsCriticalError(string errorMessage)
         {
             if (errorMessage.StartsWith("error submitting ingest job"))

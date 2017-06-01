@@ -7,6 +7,8 @@ namespace ArchiveStatusCheckPlugin
         public string StatusURI { get; set; }
         public string Subfolder { get; set; }
 
+        public int TransactionId { get; set; }
+
         public byte IngestStepsCompletedOld { get; set; }
         public byte IngestStepsCompletedNew { get; set; }
 
@@ -16,17 +18,22 @@ namespace ArchiveStatusCheckPlugin
         public int ExistingErrorCode { get; set; }
 
         /// <summary>
-        /// Constructor
+        /// Constructor that takes statusNum
         /// </summary>
         public clsIngestStatusInfo(int statusNum) : this(statusNum, string.Empty)
         {
         }
 
+        /// <summary>
+        /// Constructor that takes statusNum and statusURI
+        /// </summary>
         public clsIngestStatusInfo(int statusNum, string statusURI)
         {
             StatusNum = statusNum;
             StatusURI = statusURI;
             Subfolder = string.Empty;
+            TransactionId = 0;
+
             IngestStepsCompletedOld = 0;
             IngestStepsCompletedNew = 0;
 
