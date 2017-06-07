@@ -124,8 +124,6 @@ xcopy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Programs\
 xcopy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Programs\Mage\RangerLib\bin\Release" /D /Y
 xcopy debug\Pacifica.Core.pdb "F:\My Documents\Projects\DataMining\DMS_Programs\Mage\Mage\lib" /D /Y
 
-xcopy debug\Pacifica.Core.dll "F:\My Documents\Projects\DataMining\DMS_Programs\Mage_SVN\Mage\lib" /D /Y
-
 xcopy debug\Pacifica.Core.dll "F:\My Documents\Projects\JohnSandoval\APE_DLL\lib" /D /Y
 xcopy debug\Pacifica.Core.dll "F:\My Documents\Projects\JohnSandoval\APE_GUI\lib" /D /Y
 

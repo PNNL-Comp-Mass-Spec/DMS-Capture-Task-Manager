@@ -2,6 +2,7 @@ using System;
 using CaptureTaskManager;
 using Pacifica.Core;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Net;
 using System.Data.SqlClient;
@@ -21,6 +22,7 @@ namespace ArchiveStatusCheckPlugin
         #endregion
 
         #region "Methods"
+
         /// <summary>
         /// Runs the Archive Status Check step tool
         /// </summary>
@@ -75,7 +77,7 @@ namespace ArchiveStatusCheckPlugin
             else
             {
                 // Files are not yet verified
-                // Return completionCode CLOSEOUT_NOT_READY=2 
+                // Return completionCode CLOSEOUT_NOT_READY=2
                 // which will tell the DMS_Capture DB to reset the task to state 2 and bump up the Next_Try value by 60 minutes
                 if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
                     mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
@@ -88,7 +90,7 @@ namespace ArchiveStatusCheckPlugin
 
         }
 
-        protected bool CheckArchiveStatus()
+        private bool CheckArchiveStatus()
         {
 
             // Examine the upload status for any uploads for this dataset, filtering on job number to ignore jobs created after this job
@@ -219,7 +221,7 @@ namespace ArchiveStatusCheckPlugin
             return false;
         }
 
-        protected void CheckStatusURIs(
+        private void CheckStatusURIs(
             MyEMSLStatusCheck statusChecker,
             CookieContainer cookieJar,
             Dictionary<int, clsIngestStatusInfo> dctStatusData,
@@ -256,17 +258,16 @@ namespace ArchiveStatusCheckPlugin
                         continue;
                     }
 
-                    string statusMessage;
-                    string errorMessage;
                     var success = statusChecker.IngestStepCompleted(
                         xmlServerResponse,
                         MyEMSLStatusCheck.StatusStep.Archived,
-                        out statusMessage,
-                        out errorMessage);
-
+                        out var statusMessage,
+                        out var errorMessage);
 
                     if (success)
                     {
+                        statusInfo.TransactionId = statusChecker.IngestStepTransactionId(xmlServerResponse);
+
                         dctVerifiedURIs.Add(statusNum, statusInfo.StatusURI);
                         LogDebug("Successful MyEMSL upload for job " + m_Job + ", status num " + statusNum + ": " + statusInfo.StatusURI);
                         continue;
@@ -310,16 +311,16 @@ namespace ArchiveStatusCheckPlugin
         }
 
         /// <summary>
-        /// Step through the unverified URIs to see if the same subfolder was subsequently successfully uploaded 
-        /// (could be a blank subfolder, meaning the instrument data and all jobs) 
+        /// Step through the unverified URIs to see if the same subfolder was subsequently successfully uploaded
+        /// (could be a blank subfolder, meaning the instrument data and all jobs)
         /// </summary>
         /// <param name="dctUnverifiedURIs">Unverified URIs</param>
         /// <param name="dctVerifiedURIs">Verified URIs</param>
         /// <param name="dctStatusData">Status Info for each StatusNum</param>
         /// <remarks>Will remove superseded (yet unverified) entries from dctUnverifiedURIs and dctStatusData</remarks>
-        protected void CompareUnverifiedAndVerifiedURIs(
-            Dictionary<int, string> dctUnverifiedURIs,
-            Dictionary<int, string> dctVerifiedURIs,
+        private void CompareUnverifiedAndVerifiedURIs(
+            IDictionary<int, string> dctUnverifiedURIs,
+            IReadOnlyDictionary<int, string> dctVerifiedURIs,
             Dictionary<int, clsIngestStatusInfo> dctStatusData)
         {
             var lstStatusNumsToIgnore = new List<int>();
@@ -335,7 +336,7 @@ namespace ArchiveStatusCheckPlugin
                 var unverifiedSubfolder = unverifiedStatusInfo.Subfolder;
 
                 // Find StatusNums that had the same subfolder
-                // Note: cannot require that identical matches have a larger StatusNum because sometimes 
+                // Note: cannot require that identical matches have a larger StatusNum because sometimes
                 // extremely large status values (like 1168231360) are assigned to failed uploads
                 var lstIdenticalStatusNums = (from item in dctStatusData
                                               where item.Key != unverifiedStatusNum &&
@@ -381,7 +382,7 @@ namespace ArchiveStatusCheckPlugin
         /// <param name="statusNums"></param>
         /// <param name="dctStatusData"></param>
         /// <returns></returns>
-        protected byte GetMaxIngestStepCompleted(IEnumerable<int> statusNums, Dictionary<int, clsIngestStatusInfo> dctStatusData)
+        private byte GetMaxIngestStepCompleted(IEnumerable<int> statusNums, IReadOnlyDictionary<int, clsIngestStatusInfo> dctStatusData)
         {
             byte ingestStepsCompleted = 0;
             foreach (var statusNum in statusNums)
@@ -396,7 +397,7 @@ namespace ArchiveStatusCheckPlugin
             return ingestStepsCompleted;
         }
 
-        protected Dictionary<int, clsIngestStatusInfo> GetStatusURIs(int retryCount)
+        private Dictionary<int, clsIngestStatusInfo> GetStatusURIs(int retryCount)
         {
             // Keys in this dictionary are StatusNum integers
             var dctStatusData = new Dictionary<int, clsIngestStatusInfo>();
@@ -461,7 +462,7 @@ namespace ArchiveStatusCheckPlugin
         /// <param name="sql"></param>
         /// <param name="retryCount"></param>
         /// <param name="dctStatusData"></param>
-        protected void GetStatusURIsAndSubfolders(string sql, int retryCount, Dictionary<int, clsIngestStatusInfo> dctStatusData)
+        private void GetStatusURIsAndSubfolders(string sql, int retryCount, IDictionary<int, clsIngestStatusInfo> dctStatusData)
         {
             // This Connection String points to the DMS_Capture database
             var connectionString = m_MgrParams.GetParam("connectionstring");
@@ -539,7 +540,9 @@ namespace ArchiveStatusCheckPlugin
             LogError("Status checker error for job " + m_Job + ": " + e.Message);
         }
 
-        protected bool UpdateIngestStepsCompletedInDB(List<int> statusNumsToUpdate, Dictionary<int, clsIngestStatusInfo> dctStatusData)
+        private bool UpdateIngestStepsCompletedInDB(
+            IEnumerable<int> statusNumsToUpdate,
+            IReadOnlyDictionary<int, clsIngestStatusInfo> dctStatusData)
         {
             try
             {
@@ -554,7 +557,7 @@ namespace ArchiveStatusCheckPlugin
                         continue;
                     }
 
-                    var success = UpdateIngestStepsCompletedOneTask(statusNum, statusInfo.IngestStepsCompletedNew);
+                    var success = UpdateIngestStepsCompletedOneTask(statusNum, statusInfo.IngestStepsCompletedNew, statusInfo.TransactionId);
 
                     if (!success)
                         spError = true;
@@ -579,7 +582,9 @@ namespace ArchiveStatusCheckPlugin
 
         }
 
-        protected bool UpdateSupersededURIs(List<int> lstStatusNumsToIgnore, Dictionary<int, clsIngestStatusInfo> dctStatusData)
+        private bool UpdateSupersededURIs(
+            IReadOnlyCollection<int> lstStatusNumsToIgnore,
+            IReadOnlyDictionary<int, clsIngestStatusInfo> dctStatusData)
         {
             const string SP_NAME = "SetMyEMSLUploadSupersededIfFailed";
 
@@ -589,30 +594,23 @@ namespace ArchiveStatusCheckPlugin
 
                 var ingestStepsCompleted = GetMaxIngestStepCompleted(lstStatusNumsToIgnore, dctStatusData);
 
-                var cmd = new SqlCommand(SP_NAME)
+                var spCmd = new SqlCommand(SP_NAME)
                 {
-                    CommandType = System.Data.CommandType.StoredProcedure
+                    CommandType = CommandType.StoredProcedure
                 };
 
-                cmd.Parameters.Add("@Return", System.Data.SqlDbType.Int);
-                cmd.Parameters["@Return"].Direction = System.Data.ParameterDirection.ReturnValue;
+                spCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
 
-                cmd.Parameters.Add("@DatasetID", System.Data.SqlDbType.Int);
-                cmd.Parameters["@DatasetID"].Direction = System.Data.ParameterDirection.Input;
-                cmd.Parameters["@DatasetID"].Value = m_DatasetID;
+                spCmd.Parameters.Add("@DatasetID", SqlDbType.Int).Value = m_DatasetID;
 
-                cmd.Parameters.Add("@StatusNumList", System.Data.SqlDbType.VarChar, 1024);
-                cmd.Parameters["@StatusNumList"].Direction = System.Data.ParameterDirection.Input;
-                cmd.Parameters["@StatusNumList"].Value = statusNums;
 
-                cmd.Parameters.Add("@IngestStepsCompleted", System.Data.SqlDbType.TinyInt);
-                cmd.Parameters["@IngestStepsCompleted"].Direction = System.Data.ParameterDirection.Input;
-                cmd.Parameters["@IngestStepsCompleted"].Value = ingestStepsCompleted;
+                spCmd.Parameters.Add("@statusNumList", SqlDbType.VarChar, 1024).Value = statusNums;
 
-                cmd.Parameters.Add("@message", System.Data.SqlDbType.VarChar, 512);
-                cmd.Parameters["@message"].Direction = System.Data.ParameterDirection.Output;
+                spCmd.Parameters.Add("@ingestStepsCompleted", SqlDbType.TinyInt).Value = ingestStepsCompleted;
 
-                var resCode = CaptureDBProcedureExecutor.ExecuteSP(cmd, 2);
+                spCmd.Parameters.Add("@message", SqlDbType.VarChar, 512).Direction = ParameterDirection.Output;
+
+                var resCode = CaptureDBProcedureExecutor.ExecuteSP(spCmd, 2);
 
                 if (resCode == 0)
                     return true;
@@ -630,41 +628,36 @@ namespace ArchiveStatusCheckPlugin
 
         }
 
-        protected bool UpdateVerifiedURIs(Dictionary<int, string> dctVerifiedURIs, Dictionary<int, clsIngestStatusInfo> dctStatusData)
+        private bool UpdateVerifiedURIs(
+            Dictionary<int, string> dctVerifiedURIs,
+            IReadOnlyDictionary<int, clsIngestStatusInfo> dctStatusData)
         {
             const string SP_NAME = "SetMyEMSLUploadVerified";
 
             try
             {
-                var statusNums = string.Join(",", (from item in dctVerifiedURIs select item.Key));
+                var verifiedStatusNums = dctVerifiedURIs.Keys;
 
-                var ingestStepsCompleted = GetMaxIngestStepCompleted(dctVerifiedURIs.Keys, dctStatusData);
+                var statusNums = string.Join(",", verifiedStatusNums);
 
-                var cmd = new SqlCommand(SP_NAME)
+                var ingestStepsCompleted = GetMaxIngestStepCompleted(verifiedStatusNums, dctStatusData);
+
+                var spCmd = new SqlCommand(SP_NAME)
                 {
-                    CommandType = System.Data.CommandType.StoredProcedure
+                    CommandType = CommandType.StoredProcedure
                 };
 
-                cmd.Parameters.Add("@Return", System.Data.SqlDbType.Int);
-                cmd.Parameters["@Return"].Direction = System.Data.ParameterDirection.ReturnValue;
+                spCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
 
-                cmd.Parameters.Add("@DatasetID", System.Data.SqlDbType.Int);
-                cmd.Parameters["@DatasetID"].Direction = System.Data.ParameterDirection.Input;
-                cmd.Parameters["@DatasetID"].Value = m_DatasetID;
+                spCmd.Parameters.Add("@datasetID", SqlDbType.Int).Value = m_DatasetID;
 
-                cmd.Parameters.Add("@StatusNumList", System.Data.SqlDbType.VarChar, 1024);
-                cmd.Parameters["@StatusNumList"].Direction = System.Data.ParameterDirection.Input;
-                cmd.Parameters["@StatusNumList"].Value = statusNums;
+                spCmd.Parameters.Add("@statusNumList", SqlDbType.VarChar, 1024).Value = statusNums;
 
-                cmd.Parameters.Add("@IngestStepsCompleted", System.Data.SqlDbType.TinyInt);
-                cmd.Parameters["@IngestStepsCompleted"].Direction = System.Data.ParameterDirection.Input;
-                cmd.Parameters["@IngestStepsCompleted"].Value = ingestStepsCompleted;
+                spCmd.Parameters.Add("@ingestStepsCompleted", SqlDbType.TinyInt).Value = ingestStepsCompleted;
 
-                cmd.Parameters.Add("@message", System.Data.SqlDbType.VarChar, 512);
-                cmd.Parameters["@message"].Direction = System.Data.ParameterDirection.Output;
+                spCmd.Parameters.Add("@message", SqlDbType.VarChar, 512).Direction = ParameterDirection.Output;
 
-
-                var resCode = CaptureDBProcedureExecutor.ExecuteSP(cmd, 2);
+                var resCode = CaptureDBProcedureExecutor.ExecuteSP(spCmd, 2);
 
                 if (resCode == 0)
                     return true;

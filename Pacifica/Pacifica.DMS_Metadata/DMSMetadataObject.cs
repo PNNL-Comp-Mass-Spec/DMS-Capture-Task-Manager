@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Net;
 using System.Collections.Generic;
 using System.IO;
@@ -8,7 +8,6 @@ using MyEMSLReader;
 using PRISM;
 using Jayrock;
 using Jayrock.Json.Conversion;
-using MessageEventArgs = MyEMSLReader.MessageEventArgs;
 using ProgressEventArgs = Pacifica.Core.ProgressEventArgs;
 using Utilities = Pacifica.Core.Utilities;
 
@@ -554,12 +553,12 @@ namespace Pacifica.DMS_Metadata
             return datasetDateCodeString;
         }
 
-        protected void ReportProgress(double percentComplete)
+        private void ReportProgress(double percentComplete)
         {
             ReportProgress(percentComplete, string.Empty);
         }
 
-        protected void ReportProgress(double percentComplete, string currentTask)
+        private void ReportProgress(double percentComplete, string currentTask)
         {
             OnProgressUpdate(new ProgressEventArgs(percentComplete, currentTask));
         }
@@ -592,17 +591,17 @@ namespace Pacifica.DMS_Metadata
             DebugEvent?.Invoke(this, new Pacifica.Core.MessageEventArgs(callingFunction, currentTask));
         }
 
-        void reader_ErrorEvent(object sender, MessageEventArgs e)
+        void reader_ErrorEvent(string message, Exception ex)
         {
-            OnError("MyEMSLReader", e.Message);
+            OnError("MyEMSLReader", message);
         }
 
-        void reader_MessageEvent(object sender, MessageEventArgs e)
+        void reader_MessageEvent(string message)
         {
-            Console.WriteLine("MyEMSLReader: " + e.Message);
+            Console.WriteLine("MyEMSLReader: " + message);
         }
 
-        void reader_ProgressEvent(object sender, MyEMSLReader.ProgressEventArgs e)
+        void reader_ProgressEvent(string progressMessage, float percentComplete)
         {
             // Console.WriteLine("MyEMSLReader Percent complete: " + e.PercentComplete.ToString("0.0") + "%");
         }

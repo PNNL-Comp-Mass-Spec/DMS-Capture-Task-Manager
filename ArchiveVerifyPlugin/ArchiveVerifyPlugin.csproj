@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>ArchiveVerifyPlugin</RootNamespace>
     <AssemblyName>ArchiveVerifyPlugin</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -74,7 +74,7 @@
       <HintPath>..\DeployedFiles\Pacifica.DMS_Metadata.dll</HintPath>
     </Reference>
     <Reference Include="PRISM">
-      <HintPath>..\RefLib\PRISM.dll</HintPath>
+      <HintPath>..\DeployedFiles\PRISM.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

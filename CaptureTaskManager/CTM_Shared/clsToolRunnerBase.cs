@@ -1,5 +1,5 @@
 ﻿//*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/25/2009
@@ -38,7 +38,7 @@ namespace CaptureTaskManager
 
         protected IMgrParams m_MgrParams;
         protected ITaskParams m_TaskParams;
-        
+
         // ReSharper disable once NotAccessedField.Global
         // Used by CTM plugins
         protected IStatusFile m_StatusTools;
@@ -66,7 +66,7 @@ namespace CaptureTaskManager
         /// LogLevel is 1 to 5: 1 for Fatal errors only, 4 for Fatal, Error, Warning, and Info, and 5 for everything including Debug messages
         /// </summary>
         protected int m_DebugLevel;
-        
+
         #endregion
 
         #region "Delegates"
@@ -89,14 +89,6 @@ namespace CaptureTaskManager
         protected clsToolRunnerBase()
         {
             // Does nothing; see the Setup method for constructor-like behavior
-        }
-
-        /// <summary>
-        /// Destructor
-        /// </summary>
-        ~clsToolRunnerBase()
-        {
-            DetachExecuteSpEvents();
         }
 
         #endregion
@@ -135,7 +127,7 @@ namespace CaptureTaskManager
             var sConnectionString = m_MgrParams.GetParam("connectionstring");
             CaptureDBProcedureExecutor = new clsExecuteDatabaseSP(sConnectionString);
 
-            AttachExecuteSpEvents();
+            RegisterEvents(CaptureDBProcedureExecutor);
 
             m_WorkDir = m_MgrParams.GetParam("workdir");
 
@@ -184,7 +176,6 @@ namespace CaptureTaskManager
             return bSuccess;
         }
 
-
         protected string AppendToComment(string InpComment, string NewComment)
         {
             // Appends a comment string to an existing comment string
@@ -203,27 +194,38 @@ namespace CaptureTaskManager
             return InpComment + NewComment;
         }
 
+        /// <summary>
+        /// Delete files in the working directory
+        /// </summary>
+        /// <param name="workDir">Working directory path</param>
+        /// <returns></returns>
         // ReSharper disable once UnusedMember.Global
-        // Used by CTM plugins
-        public static bool CleanWorkDir(string WorkDir)
+        public static bool CleanWorkDir(string workDir)
         {
             const float HoldoffSeconds = 0.1f;
             string strFailureMessage;
 
-            return CleanWorkDir(WorkDir, HoldoffSeconds, out strFailureMessage);
+            return CleanWorkDir(workDir, HoldoffSeconds, out strFailureMessage);
         }
 
-        public static bool CleanWorkDir(string WorkDir, float HoldoffSeconds, out string strFailureMessage)
+        /// <summary>
+        /// Delete files in the working directory
+        /// </summary>
+        /// <param name="workDir">Working directory path</param>
+        /// <param name="holdoffSeconds"></param>
+        /// <param name="failureMessage">Output: failure message</param>
+        /// <returns></returns>
+        public static bool CleanWorkDir(string workDir, float holdoffSeconds, out string failureMessage)
         {
             int HoldoffMilliseconds;
 
             var strCurrentSubfolder = string.Empty;
 
-            strFailureMessage = string.Empty;
+            failureMessage = string.Empty;
 
             try
             {
-                HoldoffMilliseconds = Convert.ToInt32(HoldoffSeconds * 1000);
+                HoldoffMilliseconds = Convert.ToInt32(holdoffSeconds * 1000);
                 if (HoldoffMilliseconds < 100)
                     HoldoffMilliseconds = 100;
                 if (HoldoffMilliseconds > 300000)
@@ -238,14 +240,14 @@ namespace CaptureTaskManager
             clsProgRunner.GarbageCollectNow();
             Thread.Sleep(HoldoffMilliseconds);
 
-            var diWorkFolder = new DirectoryInfo(WorkDir);
+            var diWorkFolder = new DirectoryInfo(workDir);
 
             // Delete the files
             try
             {
                 if (!diWorkFolder.Exists)
                 {
-                    strFailureMessage = "Working directory does not exist";
+                    failureMessage = "Working directory does not exist";
                     return false;
                 }
 
@@ -265,8 +267,8 @@ namespace CaptureTaskManager
             }
             catch (Exception ex)
             {
-                strFailureMessage = "Error deleting files in working directory";
-                LogError("clsGlobal.ClearWorkDir(), " + strFailureMessage + " " + WorkDir + ": " + ex.Message);
+                failureMessage = "Error deleting files in working directory";
+                LogError("clsGlobal.ClearWorkDir(), " + failureMessage + " " + workDir, ex);
                 return false;
             }
 
@@ -280,8 +282,8 @@ namespace CaptureTaskManager
             }
             catch (Exception ex)
             {
-                strFailureMessage = "Error deleting subfolder " + strCurrentSubfolder;
-                LogError(strFailureMessage + " in working directory: " + ex.Message);
+                failureMessage = "Error deleting subfolder " + strCurrentSubfolder;
+                LogError(failureMessage + " in working directory", ex);
                 return false;
             }
 
@@ -382,7 +384,7 @@ namespace CaptureTaskManager
             LogError(errorMessage + ", job " + job);
             return false;
         }
-      
+
         /// <summary>
         /// Extracts the contents of the Version= line in a Tool Version Info file
         /// </summary>
@@ -391,7 +393,7 @@ namespace CaptureTaskManager
         /// <param name="strVersion"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        protected bool ReadVersionInfoFile(string dllFilePath, string strVersionInfoFilePath, out string strVersion)
+        private bool ReadVersionInfoFile(string dllFilePath, string strVersionInfoFilePath, out string strVersion)
         {
             // Open strVersionInfoFilePath and read the Version= line
 
@@ -476,7 +478,7 @@ namespace CaptureTaskManager
         /// <param name="toolVersionInfo"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        protected bool SaveToolVersionInfoFile(string strFolderPath, string toolVersionInfo)
+        private bool SaveToolVersionInfoFile(string strFolderPath, string toolVersionInfo)
         {
             try
             {
@@ -523,7 +525,7 @@ namespace CaptureTaskManager
         /// <param name="ioToolFiles">FileSystemInfo list of program files related to the step tool</param>
         /// <returns>True for success, False for failure</returns>
         /// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
-        protected bool SetStepTaskToolVersion(string toolVersionInfo, List<FileInfo> ioToolFiles)
+        protected bool SetStepTaskToolVersion(string toolVersionInfo, IReadOnlyList<FileInfo> ioToolFiles)
         {
             return SetStepTaskToolVersion(toolVersionInfo, ioToolFiles, false);
         }
@@ -536,7 +538,7 @@ namespace CaptureTaskManager
         /// <param name="blnSaveToolVersionTextFile">If true, then creates a text file with the tool version information</param>
         /// <returns>True for success, False for failure</returns>
         /// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
-        protected bool SetStepTaskToolVersion(string toolVersionInfo, List<FileInfo> ioToolFiles,
+        protected bool SetStepTaskToolVersion(string toolVersionInfo, IReadOnlyList<FileInfo> ioToolFiles,
                                               bool blnSaveToolVersionTextFile)
         {
             var strExeInfo = string.Empty;
@@ -549,7 +551,7 @@ namespace CaptureTaskManager
                 return false;
             }
 
-            if ((ioToolFiles != null))
+            if (ioToolFiles != null)
             {
                 foreach (var fiFile in ioToolFiles)
                 {
@@ -562,7 +564,7 @@ namespace CaptureTaskManager
                                                          fiFile.LastWriteTime.ToString(DATE_TIME_FORMAT));
 
                             var writeToLog = m_DebugLevel >= 5;
-                            LogDebug("EXE Info: " + strExeInfo, writeToLog);                            
+                            LogDebug("EXE Info: " + strExeInfo, writeToLog);
                         }
                         else
                         {
@@ -592,22 +594,21 @@ namespace CaptureTaskManager
             }
 
             // Setup for execution of the stored procedure
-            var myCmd = new SqlCommand();
+            var spCmd = new SqlCommand(SP_NAME_SET_TASK_TOOL_VERSION)
             {
-                myCmd.CommandType = System.Data.CommandType.StoredProcedure;
-                myCmd.CommandText = SP_NAME_SET_TASK_TOOL_VERSION;
+                CommandType = System.Data.CommandType.StoredProcedure
+            };
 
-                myCmd.Parameters.Add(new SqlParameter("@Return", System.Data.SqlDbType.Int)).Direction = System.Data.ParameterDirection.ReturnValue;
+            spCmd.Parameters.Add(new SqlParameter("@Return", System.Data.SqlDbType.Int)).Direction = System.Data.ParameterDirection.ReturnValue;
 
-                myCmd.Parameters.Add(new SqlParameter("@job", System.Data.SqlDbType.Int)).Value = m_TaskParams.GetParam("Job", 0);
+            spCmd.Parameters.Add(new SqlParameter("@job", System.Data.SqlDbType.Int)).Value = m_TaskParams.GetParam("Job", 0);
 
-                myCmd.Parameters.Add(new SqlParameter("@step", System.Data.SqlDbType.Int)).Value = m_TaskParams.GetParam("Step", 0);
+            spCmd.Parameters.Add(new SqlParameter("@step", System.Data.SqlDbType.Int)).Value = m_TaskParams.GetParam("Step", 0);
 
-                myCmd.Parameters.Add(new SqlParameter("@ToolVersionInfo", System.Data.SqlDbType.VarChar, 900)).Value = toolVersionInfoCombined;
-            }
+            spCmd.Parameters.Add(new SqlParameter("@ToolVersionInfo", System.Data.SqlDbType.VarChar, 900)).Value = toolVersionInfoCombined;
 
             // Execute the SP (retry the call up to 4 times)
-            var resCode = CaptureDBProcedureExecutor.ExecuteSP(myCmd, 4);
+            var resCode = CaptureDBProcedureExecutor.ExecuteSP(spCmd, 4);
 
             if (resCode == 0)
             {
@@ -699,7 +700,7 @@ namespace CaptureTaskManager
         /// <param name="dllFilePath">Path to the DLL</param>
         /// <returns>True if success; false if an error</returns>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfoViaSystemDiagnostics(ref string toolVersionInfo, string dllFilePath)
+        private bool StoreToolVersionInfoViaSystemDiagnostics(ref string toolVersionInfo, string dllFilePath)
         {
             try
             {
@@ -815,9 +816,6 @@ namespace CaptureTaskManager
                 var strArgs = clsConversion.PossiblyQuotePath(fiDLLFile.FullName) + " /O:" +
                               clsConversion.PossiblyQuotePath(versionInfoFilePath);
 
-                var writeToLog = m_DebugLevel >= 3;
-
-                LogMessage(strAppPath + " " + strArgs, isError: false, writeToLog: writeToLog);
 
                 var objProgRunner = new clsRunDosProgram(clsUtilities.GetAppFolderPath())
                 {
@@ -879,6 +877,7 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="statusNum">MyEMSL Status number</param>
         /// <param name="ingestStepsCompleted">Number of completed ingest steps</param>
+        /// <param name="transactionId">TransactionID for the given status item</param>
         /// <param name="fatalError">True if ingest failed with a fatal error and thus the ErrorCode should be updated in T_MyEMSL_Uploads</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>This function is used by the ArchiveStatusCheck plugin and the ArchiveVerify plugin </remarks>
@@ -886,29 +885,32 @@ namespace CaptureTaskManager
         protected bool UpdateIngestStepsCompletedOneTask(
             int statusNum,
             byte ingestStepsCompleted,
+            int transactionId,
             bool fatalError = false)
         {
             const string SP_NAME = "UpdateMyEMSLUploadIngestStats";
 
-            var cmd = new SqlCommand(SP_NAME)
+            var spCmd = new SqlCommand(SP_NAME)
             {
                 CommandType = System.Data.CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add("@Return", System.Data.SqlDbType.Int).Direction = System.Data.ParameterDirection.ReturnValue;
+            spCmd.Parameters.Add("@Return", System.Data.SqlDbType.Int).Direction = System.Data.ParameterDirection.ReturnValue;
 
-            cmd.Parameters.Add("@DatasetID", System.Data.SqlDbType.Int).Value = m_DatasetID;
+            spCmd.Parameters.Add("@datasetID", System.Data.SqlDbType.Int).Value = m_DatasetID;
 
-            cmd.Parameters.Add("@StatusNum", System.Data.SqlDbType.Int).Value = statusNum;
+            spCmd.Parameters.Add("@statusNum", System.Data.SqlDbType.Int).Value = statusNum;
 
-            cmd.Parameters.Add("@IngestStepsCompleted", System.Data.SqlDbType.TinyInt).Value = ingestStepsCompleted;
+            spCmd.Parameters.Add("@ingestStepsCompleted", System.Data.SqlDbType.TinyInt).Value = ingestStepsCompleted;
 
-            cmd.Parameters.Add("@FatalError", System.Data.SqlDbType.TinyInt).Value = fatalError ? 1 : 0;
+            spCmd.Parameters.Add("@fatalError", System.Data.SqlDbType.TinyInt).Value = fatalError ? 1 : 0;
 
-            cmd.Parameters.Add("@message", System.Data.SqlDbType.VarChar, 512).Direction = System.Data.ParameterDirection.Output;
+            spCmd.Parameters.Add("@transactionId", System.Data.SqlDbType.Int).Value = transactionId;
+
+            spCmd.Parameters.Add("@message", System.Data.SqlDbType.VarChar, 512).Direction = System.Data.ParameterDirection.Output;
 
             CaptureDBProcedureExecutor.TimeoutSeconds = 20;
-            var resCode = CaptureDBProcedureExecutor.ExecuteSP(cmd, 2);
+            var resCode = CaptureDBProcedureExecutor.ExecuteSP(spCmd, 2);
 
             if (resCode != 0)
             {
@@ -917,45 +919,6 @@ namespace CaptureTaskManager
             }
 
             return true;
-        }
-
-        #endregion
-
-        #region "Events"
-
-        private void AttachExecuteSpEvents()
-        {
-            try
-            {
-                CaptureDBProcedureExecutor.DBErrorEvent += m_ExecuteSP_DBErrorEvent;
-            }
-                // ReSharper disable once EmptyGeneralCatchClause
-            catch
-            {
-                // Ignore errors here
-            }
-        }
-
-        private void DetachExecuteSpEvents()
-        {
-            try
-            {
-                if (CaptureDBProcedureExecutor != null)
-                {
-                    CaptureDBProcedureExecutor.DBErrorEvent -= m_ExecuteSP_DBErrorEvent;
-                }
-            }
-                // ReSharper disable once EmptyGeneralCatchClause
-            catch (Exception)
-            {
-                // Ignore errors here
-            }
-        }
-
-        private void m_ExecuteSP_DBErrorEvent(string Message)
-        {
-            var logToDatabase = Message.Contains("permission was denied");
-            LogError("Stored procedure execution error: " + Message, logToDatabase);
         }
 
         #endregion
@@ -1001,7 +964,6 @@ namespace CaptureTaskManager
             }
         }
 
-
         private void DebugEventHandlerConsoleOnly(string statusMessage)
         {
             LogDebug(statusMessage, writeToLog: false);
@@ -1014,7 +976,10 @@ namespace CaptureTaskManager
 
         private void StatusEventHandler(string statusMessage)
         {
-            LogMessage(statusMessage);
+            if (statusMessage.StartsWith("RunProgram") && statusMessage.Contains("DLLVersionInspector"))
+                LogDebug(statusMessage, writeToLog: false);
+            else
+                LogMessage(statusMessage);
         }
 
         private void ErrorEventHandler(string errorMessage, Exception ex)

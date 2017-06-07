@@ -62,7 +62,7 @@ namespace CaptureTaskManager
 
             m_CaptureTaskDBProcedureExecutor = new PRISM.clsExecuteDatabaseSP(m_ConnStr);
 
-            m_CaptureTaskDBProcedureExecutor.DBErrorEvent += CaptureTaskDBProcedureExecutor_DBErrorEvent;
+            m_CaptureTaskDBProcedureExecutor.ErrorEvent += CaptureTaskDBProcedureExecutor_DBErrorEvent;
 
             // Cache the log level
             // 4 means Info level (normal) logging; 5 for Debug level (verbose) logging
@@ -132,34 +132,42 @@ namespace CaptureTaskManager
             LogDebug("Parameter list:" + myMsg, writeToLog);
         }
 
-        protected virtual bool FillParamDict(DataTable dt)
+        /// <summary>
+        /// Fill string dictionary with parameter values
+        /// </summary>
+        /// <param name="parameters">Result table from call to RequestStepTask</param>
+        /// <returns></returns>
+        protected virtual bool FillParamDict(List<List<string>> parameters)
         {
-            // Verify valid datatable
-            if (dt == null)
+            // Verify valid parameters
+            if (parameters == null)
             {
-                LogError("clsDbTask.FillParamDict(): No parameter table");
+                LogError("clsDbTask.FillParamDict(): parameters is null");
                 return false;
             }
 
             // Verify at least one row present
-            if (dt.Rows.Count < 1)
+            if (parameters.Count < 1)
             {
                 LogError("clsDbTask.FillParamDict(): No parameters returned by request SP");
                 return false;
             }
 
-            // Fill string dictionary with parameter values
             m_JobParams.Clear();
             m_JobParams = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
             try
             {
-                foreach (DataRow currRow in dt.Rows)
+                foreach (var dataRow in parameters)
                 {
-                    var myKey = currRow[dt.Columns["Parameter"]] as string;
-                    var myVal = currRow[dt.Columns["Value"]] as string;
-                    if (myKey != null)
+                    if (dataRow.Count < 2)
+                        continue;
+
+                    var paramName = dataRow[0];
+                    var paramValue = dataRow[1];
+
+                    if (!string.IsNullOrWhiteSpace(paramName))
                     {
-                        m_JobParams.Add(myKey, myVal);
+                        m_JobParams.Add(paramName, paramValue);
                     }
                 }
                 return true;
@@ -252,10 +260,14 @@ namespace CaptureTaskManager
 
         #region "Event handlers"
 
-        void CaptureTaskDBProcedureExecutor_DBErrorEvent(string message)
+        void CaptureTaskDBProcedureExecutor_DBErrorEvent(string message, Exception ex)
         {
             var logToDb = message.Contains("permission was denied");
-            LogError(message, logToDb);
+
+            if (logToDb)
+                LogError(message, logToDb:true);
+            else
+                LogError(message, ex);
         }
 
         #endregion

@@ -113,7 +113,7 @@ namespace CaptureTaskManager
             Agilent_TOF = 6,                // AgTOF01, AgTOF02                     (last used in 2012)
             Agilent_TOF_V2 = 7,             // AgQTOF03, AgQTOF04, AgTOF05, Agilent_QQQ_04
             Bruker_Amazon_Ion_Trap = 8,     // Bruker_FT_IonTrap01                  (last used in 2012)
-            BrukerFT_BAF = 9,               // 9T_FTICR_B, 12T_FTICR_B, 15T_FTICR, 
+            BrukerFT_BAF = 9,               // 9T_FTICR_B, 12T_FTICR_B, 15T_FTICR,
             BRUKERFTMS = 10,                // 9T_FTICR, 11T_FTICR_B, 12T_FTICR		(last used in 2010)
             BrukerMALDI_Imaging = 11,       // 9T_FTICR_Imaging                     (last used in 2012)
             BrukerMALDI_Spot = 12,          // BrukerTOF_01
@@ -127,7 +127,8 @@ namespace CaptureTaskManager
             Sciex_TripleTOF = 20,           // WashU_TripleTOF5600                  (last used in 2012)
             PrepHPLC = 21,                  // PrepHPLC1, PrepHPLC2
             BrukerMALDI_Imaging_V2 = 22,    // 12T_FTICR_Imaging, 15T_FTICR_Imaging
-            Illumina_Sequencer = 23         // External_Illumina
+            Illumina_Sequencer = 23,        // External_Illumina
+            GC_QExactive = 24               // GCQE01
         }
 
         #endregion
