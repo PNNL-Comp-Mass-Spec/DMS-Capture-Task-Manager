@@ -1,4 +1,4 @@
-﻿
+
 //*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy 
 // Pacific Northwest National Laboratory, Richland, WA

@@ -9,13 +9,13 @@ namespace Pacifica.Core
         /// <summary>
         /// Policy Server host name on the production server
         /// </summary>
-        public const string DEFAULT_POLICY_SERVER_HOST_NAME = "policy.my.emsl.pnl.gov";
+        public const string DEFAULT_POLICY_SERVER_HOST_NAME = "policydev.my.emsl.pnl.gov";
 
         
         /// <summary>
         /// Metadata Server host name on the production server
         /// </summary>
-        public const string DEFAULT_METADATA_SERVER_HOST_NAME = "metadata.my.emsl.pnl.gov";
+        public const string DEFAULT_METADATA_SERVER_HOST_NAME = "metadatadev.my.emsl.pnl.gov";
 
 
         /// <summary>
@@ -28,12 +28,12 @@ namespace Pacifica.Core
         /// Item search service host name on the production server
         /// </summary>
         //public const string DEFAULT_ITEM_SEARCH_HOST_NAME = "undefined_does_not_exist.my.emsl.pnl.gov";
-        public const string DEFAULT_ITEM_SEARCH_HOST_NAME = "192.168.1.173:8121";
+        public const string DEFAULT_ITEM_SEARCH_HOST_NAME = "metadatadev.my.emsl.pnl.gov";
 
         /// <summary>
         /// Ingest host name on the production server
         /// </summary>
-        public const string DEFAULT_INGEST_HOST_NAME = "ingest.my.emsl.pnl.gov";
+        public const string DEFAULT_INGEST_HOST_NAME = "ingestdmsdev.my.emsl.pnl.gov";
 
 
         /// <summary>
@@ -46,16 +46,17 @@ namespace Pacifica.Core
         /// Item search service host name on the test server
         /// </summary>
         //public const string TEST_ITEM_SEARCH_HOST_NAME = "dev1.my.emsl.pnl.gov";
-        public const string TEST_ITEM_SEARCH_HOST_NAME = "192.168.1.173:8121";
+        public const string TEST_ITEM_SEARCH_HOST_NAME = "metdatadev.my.emsl.pnl.gov";
 
 
         /// <summary>
         /// Ingest host name on the test server
         /// </summary>
         //public const string TEST_INGEST_HOST_NAME = "test3.my.emsl.pnl.gov";
-        public const string TEST_INGEST_HOST_NAME = "192.168.1.173:8066";
+        public const string TEST_INGEST_HOST_NAME = "ingestdmsdev.my.emsl.pnl.gov";
 
         public const string CLIENT_CERT_FILEPATH = "C:\\client_certs\\svc-dms.pfx";
+        public const string CLIENT_CERT_PASSWORD = "dms4fun";
 
         /// <summary>
         /// Local temp directory

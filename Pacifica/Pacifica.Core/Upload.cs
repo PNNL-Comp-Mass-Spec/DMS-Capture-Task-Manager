@@ -213,13 +213,6 @@ namespace Pacifica.Core
             statusURL = string.Empty;
             ErrorMessage = string.Empty;
 
-            //NetworkCredential newCred = null;
-            //if (loginCredentials != null)
-            //{
-            //    newCred = new NetworkCredential(loginCredentials.UserName,
-            //                                    loginCredentials.Password, loginCredentials.Domain);
-            //}
-
             var fileList = Utilities.GetFileListFromMetadataObject(metadataObject);
 			// Grab the list of files from the top-level "file" object
 			// Keys in this dictionary are the source file path; values are metadata about the file

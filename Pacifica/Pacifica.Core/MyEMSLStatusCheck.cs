@@ -56,11 +56,6 @@ namespace Pacifica.Core
             return false;
         }
 
-        //public List<FileInfoObject> FindFilesByDatasetID(int DatasetID, string subDir)
-        //{
-        //    string metadataURL = Configuration.MetadataServerUri + "/"
-        //}
-
         public bool DoesFileExistInMyEMSL(FileInfoObject fio)
         {
             string fileSHA1HashSum = fio.Sha1HashHex;
@@ -90,18 +85,6 @@ namespace Pacifica.Core
         public string GetIngestStatus(string statusURI, out bool lookupError, out string errorMessage)
         {
 
-            // Call the testauth service to obtain a cookie for this session
-            //var authURL = Configuration.TestAuthUri;
-            //var auth = new Auth(new Uri(authURL));
-
-            //CookieContainer cookieJar;
-            //if (!auth.GetAuthCookies(out cookieJar))
-            //{
-            //    lookupError = true;
-            //    errorMessage = "Auto-login to " + Configuration.TestAuthUri + " failed authentication";
-            //    ReportError("GetIngestStatus", errorMessage);
-            //    return string.Empty;
-            //}
             var xmlServerResponse = GetIngestStatus(statusURI, out lookupError, out errorMessage);
 
             //Utilities.Logout(cookieJar);
