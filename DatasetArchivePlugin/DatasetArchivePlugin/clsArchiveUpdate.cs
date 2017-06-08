@@ -1,6 +1,6 @@
 ﻿
 //*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 10/20/2009
@@ -137,7 +137,7 @@ namespace DatasetArchivePlugin
 
             return true;
             */
-        }        
+        }
 
         /// <summary>
         /// Write an error message to the log
@@ -145,7 +145,7 @@ namespace DatasetArchivePlugin
         /// </summary>
         /// <param name="msg">Error message</param>
         /// <param name="currentTask">Current task</param>
-        protected void LogErrorMessage(string msg, string currentTask)
+        private void LogErrorMessage(string msg, string currentTask)
         {
             if (string.IsNullOrWhiteSpace(msg))
                 msg = currentTask + ": empty error message";

@@ -114,7 +114,7 @@ namespace CaptureTaskManager
         public bool CreateNoWindow { get; set; } = true;
 
         /// <summary>
-        /// When true, then echoes, in real time, text written to the Console by the external program 
+        /// When true, then echoes, in real time, text written to the Console by the external program
         /// Ignored if CreateNoWindow = False
         /// </summary>
         public bool EchoOutputToConsole { get; set; } = true;
@@ -346,15 +346,6 @@ namespace CaptureTaskManager
                             blnRuntimeExceeded = true;
                             OnTimeout();
                         }
-                    }
-
-                    if (m_ProgRunner.State == clsProgRunner.States.StartingProcess &&
-                        DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds > 30 &&
-                        DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds < 90)
-                    {
-                        // It has taken over 30 seconds for the thread to start
-                        // Try re-joining
-                        m_ProgRunner.JoinThreadNow();
                     }
 
                     if (!ProgramAborted)

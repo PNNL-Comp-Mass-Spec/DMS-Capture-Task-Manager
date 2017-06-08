@@ -19,6 +19,9 @@ namespace Pacifica.Core
     {
         public const string PERMISSIONS_ERROR = "Permissions error:";
 
+        /// <summary>
+        /// Upload status
+        /// </summary>
         public enum StatusStep
         {
             Submitted = 0,      // .tar file submitted
@@ -30,6 +33,9 @@ namespace Pacifica.Core
             Archived = 6        // Sha-1 hash values of files in Aurora validated against expected hash values
         }
 
+        /// <summary>
+        /// Error message
+        /// </summary>
         public string ErrorMessage
         {
             get;
@@ -361,6 +367,15 @@ namespace Pacifica.Core
             //                 "Invalid Permissions" on January 4, 2016
             // 6: Archived    (status will be "UNKNOWN" if not yet verified)
 
+            var transactionElement = xmlDoc.SelectSingleNode("//transaction");
+            if (transactionElement?.Attributes == null)
+            {
+                errorMessage = "transaction element not found in the Status XML";
+                ReportError("IngestStepCompleted", errorMessage);
+                statusMessage = errorMessage;
+                return false;
+            }
+
             var query = string.Format("//step[@id='{0}']", (int)stepNum);
             var statusElement = xmlDoc.SelectSingleNode(query);
 
@@ -501,6 +516,32 @@ namespace Pacifica.Core
 
         }
 
+        /// <summary>
+        /// Determine the transaction ID in the XML
+        /// </summary>
+        /// <param name="xmlServerResponse"></param>
+        /// <returns>Transaction ID if found, otherwise 0</returns>
+        public int IngestStepTransactionId(string xmlServerResponse)
+        {
+            var xmlDoc = new XmlDocument();
+            xmlDoc.LoadXml(xmlServerResponse);
+
+            var transactionElement = xmlDoc.SelectSingleNode("//transaction");
+            if (transactionElement?.Attributes == null)
+            {
+                ReportError("IngestStepTransactionId", "transaction element not found in the Status XML");
+                return 0;
+            }
+
+            var transactionId = int.Parse(transactionElement.Attributes["id"].Value);
+            return transactionId;
+        }
+
+        /// <summary>
+        /// Report true if the error message contains a critical error
+        /// </summary>
+        /// <param name="errorMessage"></param>
+        /// <returns></returns>
         public bool IsCriticalError(string errorMessage)
         {
             if (errorMessage.StartsWith("error submitting ingest job"))

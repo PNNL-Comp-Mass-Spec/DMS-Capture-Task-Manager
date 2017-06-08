@@ -1,5 +1,5 @@
 ﻿//*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2011, Battelle Memorial Institute
 // Created 03/07/2011
@@ -30,13 +30,13 @@ namespace ImsDemuxPlugin
         #region "Constants"
         public const string CALIBRATION_LOG_FILE = "CalibrationLog.txt";
 
-        protected const string DECODED_UIMF_SUFFIX = "_decoded.uimf";
+        private const string DECODED_UIMF_SUFFIX = "_decoded.uimf";
 
         // Set the max runtime at 5 days
-        protected const int MAX_DEMUX_RUNTIME_MINUTES = 1440 * 5;
+        private const int MAX_DEMUX_RUNTIME_MINUTES = 1440 * 5;
 
         // Calibration should be fast (typically just a second a two)
-        protected const int MAX_CALIBRATION_RUNTIME_MINUTES = 5;
+        private const int MAX_CALIBRATION_RUNTIME_MINUTES = 5;
 
         public const string UIMF_CALIBRATION_UPDATER_NAME = "UIMF Calibration Updater";
 
@@ -46,29 +46,33 @@ namespace ImsDemuxPlugin
 
         // Deprecated: UIMFDemultiplexer.UIMFDemultiplexer m_DeMuxTool;
 
-        protected string mDataset;
-        protected string mDatasetFolderPathRemote = string.Empty;
-        protected string mWorkDir;
+        private string mDataset;
+        private string mDatasetFolderPathRemote = string.Empty;
+        private string mWorkDir;
 
-        protected readonly string mUimfDemultiplexerPath;
-        protected string mUimfDemultiplexerConsoleOutputFilePath;
+        private readonly string mUimfDemultiplexerPath;
+        private string mUimfDemultiplexerConsoleOutputFilePath;
 
-        protected DateTime mLastProgressUpdateTime;
-        protected DateTime mLastProgressMessageTime;
+        private DateTime mLastProgressUpdateTime;
+        private DateTime mLastProgressMessageTime;
 
-        protected DateTime mDemuxStartTime;
-        protected float mDemuxProgressPercentComplete;
+        private DateTime mBinCentricStartTime;
+        private int mProgressUpdateIntervalSeconds;
 
-        protected bool mCalibrating;
+        private DateTime mDemuxStartTime;
+        private float mDemuxProgressPercentComplete;
 
-        protected List<string> mLoggedConsoleOutputErrors;
+        private bool mCalibrating;
 
-        protected struct udtDemuxOptionsType
+        private readonly List<string> mLoggedConsoleOutputErrors;
+
+        private struct udtDemuxOptionsType
         {
             public int FramesToSum;
             public bool CalibrateOnly;
-            public int StartFrame;
-            public int EndFrame;
+            
+            // public int StartFrame;
+            // public int EndFrame;
 
             /// <summary>
             /// Number of bits used to encode the data when multiplexing (historically 4-bit)
@@ -80,7 +84,7 @@ namespace ImsDemuxPlugin
             /// </summary>
             public bool ResumeDemultiplexing;
 
-            public int NumCores;
+            // public int NumCores;
             public bool AutoCalibrate;
             public string CheckpointTargetFolder;
         }
@@ -106,11 +110,7 @@ namespace ImsDemuxPlugin
         #region "Constructor"
         public clsDemuxTools(string uimDemultiplexerPath)
         {
-            // Deprecated: 
-            // m_DeMuxTool = new UIMFDemultiplexer.UIMFDemultiplexer();
-            // m_DeMuxTool.ErrorEvent += deMuxTool_ErrorEventHandler;
-            // m_DeMuxTool.WarningEvent += deMuxTool_WarningEventHandler;
-            // m_DeMuxTool.MessageEvent += deMuxTool_MessageEventHandler;
+            mProgressUpdateIntervalSeconds = 5;
 
             mUimfDemultiplexerPath = uimDemultiplexerPath;
 
@@ -169,12 +169,12 @@ namespace ImsDemuxPlugin
                     {
                         dbConnection.Open();
 
+                        // Start a transaction
                         using (var dbCommand = dbConnection.CreateCommand())
                         {
-                            dbCommand.CommandText = "PRAGMA synchronous=0";
+                            dbCommand.CommandText = "PRAGMA synchronous=0;BEGIN TRANSACTION;";
                             dbCommand.ExecuteNonQuery();
                         }
-
 
                         var binCentricTableCreator = new UIMFLibrary.BinCentricTableCreation();
 
@@ -182,10 +182,20 @@ namespace ImsDemuxPlugin
                         binCentricTableCreator.OnProgress += binCentricTableCreator_ProgressEvent;
                         binCentricTableCreator.Message += binCentricTableCreator_MessageEvent;
 
+                        mBinCentricStartTime = DateTime.UtcNow;
+                        mProgressUpdateIntervalSeconds = 5;
+
                         mLastProgressUpdateTime = DateTime.UtcNow;
                         mLastProgressMessageTime = DateTime.UtcNow;
 
                         binCentricTableCreator.CreateBinCentricTable(dbConnection, uimfReader, mWorkDir);
+
+                        // Finalize the transaction
+                        using (var dbCommand = dbConnection.CreateCommand())
+                        {
+                            dbCommand.CommandText = "END TRANSACTION;PRAGMA synchronous=1;";
+                            dbCommand.ExecuteNonQuery();
+                        }
 
                         dbConnection.Close();
                     }
@@ -236,7 +246,7 @@ namespace ImsDemuxPlugin
 
         }
 
-        protected clsToolReturnData CopyUIMFToWorkDir(
+        private clsToolReturnData CopyUIMFToWorkDir(
             ITaskParams taskParams,
             string uimfFileName,
             clsToolReturnData retData,
@@ -261,7 +271,7 @@ namespace ImsDemuxPlugin
 
         }
 
-        protected string GetRemoteUIMFFilePath(ITaskParams taskParams, ref clsToolReturnData retData)
+        private string GetRemoteUIMFFilePath(ITaskParams taskParams, ref clsToolReturnData retData)
         {
 
             try
@@ -1113,17 +1123,17 @@ namespace ImsDemuxPlugin
         private void ParseConsoleOutputFileDemux()
         {
             // Example Console output:
-            //      
+            //
             // Demultiplexing PlasmaND_2pt5ng_0pt005fmol_Frac05_9Sep14_Methow_14-06-13_encoded.uimf
             //  in folder F:\My Documents\Projects\DataMining\UIMFDemultiplexer\UIMFDemultiplexer_Console\bin
             // Auto-switching instrument from IMS4 to QTOF
-            // 
+            //
             // Cloning .UIMF file
             // Initializing data arrays
-            // 
+            //
             // Total number of frames to demultiplex: 39
             //  (processing frames 1 to 40)
-            // 
+            //
             // Demultiplexing frame 1
             // Demultiplexing frame 2
             // Demultiplexing frame 3
@@ -1133,7 +1143,7 @@ namespace ImsDemuxPlugin
             // Demultiplexing frame 19
             // ...
             // Processing: 100%
-            // 
+            //
             // PlasmaND_2pt5ng_0pt005fmol_Frac05_9Sep14_Methow_14-06-13_encoded_inverse.uimf already exists; renaming existing file
             // Finished demultiplexing all frames. Now performing calibration
             // Calibration frame 26 matched 7 / 7 calibrants within 10 ppm; Slope = 0.347632, Intercept = 0.034093;
@@ -1289,7 +1299,7 @@ namespace ImsDemuxPlugin
         /// <param name="maxRuntimeMinutes"></param>
         /// <param name="errorMessage">Output: Error message</param>
         /// <returns></returns>
-        protected bool RunUIMFDemultiplexer(
+        private bool RunUIMFDemultiplexer(
             string inputFilePath,
             string outputFilePath,
             udtDemuxOptionsType demuxOptions,
@@ -1335,11 +1345,13 @@ namespace ImsDemuxPlugin
                     if (demuxOptions.NumBitsForEncoding > 1)
                         cmdStr += " /Bits:" + demuxOptions.NumBitsForEncoding;
 
+                    /*
                     if (demuxOptions.StartFrame > 0)
                         cmdStr += " /First:" + demuxOptions.StartFrame;
 
                     if (demuxOptions.EndFrame > 0)
                         cmdStr += " /Last:" + demuxOptions.EndFrame;
+                    */
 
                     cmdStr += " /FramesToSum:" + demuxOptions.FramesToSum;
 
@@ -1348,10 +1360,12 @@ namespace ImsDemuxPlugin
                         cmdStr += " /Resume";
                     }
 
+                    /*
                     if (demuxOptions.NumCores > 0)
                     {
                         cmdStr += " /Cores:" + demuxOptions.NumCores;
                     }
+                    */
 
                     if (!demuxOptions.AutoCalibrate)
                     {
@@ -1591,23 +1605,37 @@ namespace ImsDemuxPlugin
 
         void binCentricTableCreator_ProgressEvent(object sender, UIMFLibrary.ProgressEventArgs e)
         {
-            if (DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds >= 5)
-            {
-                BinCentricTableProgress?.Invoke((float)e.PercentComplete);
+            if (DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds < mProgressUpdateIntervalSeconds)
+                return;
 
-                mLastProgressUpdateTime = DateTime.UtcNow;
+            if (DateTime.UtcNow.Subtract(mBinCentricStartTime).TotalMinutes > 5 && mProgressUpdateIntervalSeconds < 15)
+            {
+                mProgressUpdateIntervalSeconds = 15;
             }
+            else
+            if (DateTime.UtcNow.Subtract(mBinCentricStartTime).TotalMinutes > 10 && mProgressUpdateIntervalSeconds < 30)
+            {
+                mProgressUpdateIntervalSeconds = 30;
+            }
+            else
+            if (DateTime.UtcNow.Subtract(mBinCentricStartTime).TotalMinutes > 30 && mProgressUpdateIntervalSeconds < 60)
+            {
+                mProgressUpdateIntervalSeconds = 60;
+            }
+
+            BinCentricTableProgress?.Invoke((float)e.PercentComplete);
+
+            mLastProgressUpdateTime = DateTime.UtcNow;
         }
 
         void binCentricTableCreator_MessageEvent(object sender, UIMFLibrary.MessageEventArgs e)
         {
-            if (DateTime.UtcNow.Subtract(mLastProgressMessageTime).TotalSeconds >= 30)
-            {
-                OnStatusEvent(e.Message);
+            if (DateTime.UtcNow.Subtract(mLastProgressMessageTime).TotalSeconds < 30)
+                return;
 
-                mLastProgressMessageTime = DateTime.UtcNow;
-            }
+            OnStatusEvent(e.Message);
 
+            mLastProgressMessageTime = DateTime.UtcNow;
         }
 
         #endregion

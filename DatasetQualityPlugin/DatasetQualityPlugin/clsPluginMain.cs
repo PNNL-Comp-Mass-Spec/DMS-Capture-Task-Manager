@@ -99,7 +99,7 @@ namespace DatasetQualityPlugin
         /// </summary>
         /// <returns>True if success (including if Quameter was skipped); false if an error</returns>
         /// <remarks>At present we only process Thermo .Raw files. Furthermore, if the file only contains MS/MS spectra, then it cannot be processed with Quameter</remarks>
-        protected bool ConditionallyRunQuameter()
+        private bool ConditionallyRunQuameter()
         {
 
             // Set up the file paths
@@ -130,6 +130,7 @@ namespace DatasetQualityPlugin
             switch (instrumentClass)
             {
                 case clsInstrumentClassInfo.eInstrumentClass.Finnigan_Ion_Trap:
+                case clsInstrumentClassInfo.eInstrumentClass.GC_QExactive:
                 case clsInstrumentClassInfo.eInstrumentClass.LTQ_FT:
                 case clsInstrumentClassInfo.eInstrumentClass.Thermo_Exactive:
                     dataFilePathRemote = Path.Combine(datasetFolder, m_Dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
@@ -242,7 +243,7 @@ namespace DatasetQualityPlugin
 
         }
 
-        protected void ClearWorkDir()
+        private void ClearWorkDir()
         {
 
             try
@@ -276,7 +277,7 @@ namespace DatasetQualityPlugin
         /// <param name="lstResults"></param>
         /// <param name="sXMLResults"></param>
         /// <returns></returns>
-        protected bool ConvertResultsToXML(List<KeyValuePair<String, String>> lstResults, out string sXMLResults)
+        private bool ConvertResultsToXML(List<KeyValuePair<String, String>> lstResults, out string sXMLResults)
         {
 
             // XML will look like:
@@ -330,7 +331,7 @@ namespace DatasetQualityPlugin
 
         }
 
-        protected bool CopyFilesToDatasetFolder(string datasetFolder)
+        private bool CopyFilesToDatasetFolder(string datasetFolder)
         {
 
 
@@ -363,7 +364,7 @@ namespace DatasetQualityPlugin
             return true;
         }
 
-        protected bool CopyFileToServer(string sFileName, string sSourceFolder, string sTargetFolder)
+        private bool CopyFileToServer(string sFileName, string sSourceFolder, string sTargetFolder)
         {
             try
             {
@@ -390,7 +391,7 @@ namespace DatasetQualityPlugin
         /// Construct the full path to Quameter.exe
         /// </summary>
         /// <returns></returns>
-        protected string GetQuameterPath()
+        private string GetQuameterPath()
         {
 
             // Typically C:\DMS_Programs\Quameter\x64\
@@ -408,7 +409,7 @@ namespace DatasetQualityPlugin
         /// <param name="ResultsFilePath"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        protected List<KeyValuePair<String, String>> LoadQuameterResults(string ResultsFilePath)
+        private List<KeyValuePair<string, string>> LoadQuameterResults(string ResultsFilePath)
         {
 
             // The Quameter results file has two rows, a header row and a data row
@@ -531,7 +532,7 @@ namespace DatasetQualityPlugin
 
         }
 
-        protected void ParseConsoleOutputFileForErrors(string sConsoleOutputFilePath)
+        private void ParseConsoleOutputFileForErrors(string sConsoleOutputFilePath)
         {
             var blnUnhandledException = false;
             var sExceptionText = string.Empty;
@@ -589,7 +590,7 @@ namespace DatasetQualityPlugin
 
         }
 
-        protected bool ParseDatasetInfoFile(string datasetFolderPath, string datasetName, out int scanCount, out int scanCountMS)
+        private bool ParseDatasetInfoFile(string datasetFolderPath, string datasetName, out int scanCount, out int scanCountMS)
         {
             var fiDatasetInfo = new FileInfo(Path.Combine(datasetFolderPath, "QC", datasetName + "_DatasetInfo.xml"));
             var success = false;
@@ -625,7 +626,7 @@ namespace DatasetQualityPlugin
             return success;
         }
 
-        protected bool PostProcessMetricsFile(string metricsOutputFileName)
+        private bool PostProcessMetricsFile(string metricsOutputFileName)
         {
             var bReplaceOrginal = false;
 
@@ -676,7 +677,7 @@ namespace DatasetQualityPlugin
 
         }
 
-        protected bool PostQuameterResultsToDB(string sXMLResults)
+        private bool PostQuameterResultsToDB(string sXMLResults)
         {
 
             // Note that m_DatasetID gets populated by runTool
@@ -759,7 +760,7 @@ namespace DatasetQualityPlugin
         }
 
 
-        protected bool ProcessThermoRawFile(
+        private bool ProcessThermoRawFile(
             string dataFilePathRemote,
             clsInstrumentClassInfo.eInstrumentClass instrumentClass,
             FileInfo fiQuameter,
@@ -779,6 +780,8 @@ namespace DatasetQualityPlugin
                         // Assume low-res precursor spectra
                         configFileNameSource = "quameter_ltq.cfg";
                         break;
+
+                    case clsInstrumentClassInfo.eInstrumentClass.GC_QExactive:
                     case clsInstrumentClassInfo.eInstrumentClass.LTQ_FT:
                     case clsInstrumentClassInfo.eInstrumentClass.Thermo_Exactive:
                     case clsInstrumentClassInfo.eInstrumentClass.Triple_Quad:
@@ -877,7 +880,7 @@ namespace DatasetQualityPlugin
             return true;
         }
 
-        protected bool QuameterCanProcessDataset(int datasetID, string datasetName, string datasetFolderPath, ref string skipReason)
+        private bool QuameterCanProcessDataset(int datasetID, string datasetName, string datasetFolderPath, ref string skipReason)
         {
 
             var sql =
@@ -944,7 +947,7 @@ namespace DatasetQualityPlugin
         /// <param name="ResultsFilePath">Path to the Quameter results file</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        protected bool ReadAndStoreQuameterResults(string ResultsFilePath)
+        private bool ReadAndStoreQuameterResults(string ResultsFilePath)
         {
 
             var blnSuccess = false;
@@ -996,7 +999,7 @@ namespace DatasetQualityPlugin
 
         }
 
-        protected bool RunQuameter(
+        private bool RunQuameter(
             FileInfo fiQuameter,
             string dataFileName,
             string metricsOutputFileName,
@@ -1151,7 +1154,7 @@ namespace DatasetQualityPlugin
         /// Stores the tool version info in the database
         /// </summary>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfo(bool storeQuameterVersion)
+        private bool StoreToolVersionInfo(bool storeQuameterVersion)
         {
 
             LogDebug("Determining tool version info");

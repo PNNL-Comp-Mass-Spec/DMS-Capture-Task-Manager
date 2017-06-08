@@ -17,19 +17,19 @@ namespace ArchiveVerifyPlugin
         //**********************************************************************************************************
 
         #region "Constants and Enums"
-        protected const string MD5_RESULTS_FILE_PREFIX = "results.";
-        protected const string DEFAULT_MD5_RESULTS_FOLDER_PATH = @"\\proto-7\MD5Results";
-        protected const string DEFAULT_MD5_RESULTS_BACKUP_FOLDER_PATH = @"\\proto-5\MD5ResultsBackup";
+        private const string MD5_RESULTS_FILE_PREFIX = "results.";
+        private const string DEFAULT_MD5_RESULTS_FOLDER_PATH = @"\\proto-7\MD5Results";
+        private const string DEFAULT_MD5_RESULTS_BACKUP_FOLDER_PATH = @"\\proto-5\MD5ResultsBackup";
 
         #endregion
 
         #region "Class-wide variables"
         clsToolReturnData mRetData = new clsToolReturnData();
 
-        protected double mPercentComplete;
-        protected DateTime mLastProgressUpdateTime = DateTime.UtcNow;
+        private double mPercentComplete;
+        private DateTime mLastProgressUpdateTime = DateTime.UtcNow;
 
-        protected int mTotalMismatchCount;
+        private int mTotalMismatchCount;
 
         #endregion
 
@@ -74,11 +74,10 @@ namespace ArchiveVerifyPlugin
 
             if (success)
             {
-                string metadataFilePath;
 
                 // Confirm that the files are visible in elastic search
                 // If data is found, then CreateOrUpdateMD5ResultsFile will also be called
-                success = VisibleInElasticSearch(out metadataFilePath);
+                success = VisibleInElasticSearch(out var metadataFilePath);
 
                 if (!success)
                 {
@@ -120,11 +119,11 @@ namespace ArchiveVerifyPlugin
 
         }
 
-        protected bool CheckUploadStatus()
+        private bool CheckUploadStatus()
         {
 
             // Examine the upload status
-            // If not complete, this manager will return completionCode CLOSEOUT_NOT_READY=2 
+            // If not complete, this manager will return completionCode CLOSEOUT_NOT_READY=2
             // which will tell the DMS_Capture DB to reset the task to state 2 and bump up the Next_Try value by 30 minutes
 
             var statusURI = m_TaskParams.GetParam("MyEMSL_Status_URI", string.Empty);
@@ -148,11 +147,10 @@ namespace ArchiveVerifyPlugin
             try
             {
 
-                string xmlServerResponse;
                 var ingestSuccess = GetMyEMSLIngestStatus(
                     m_Job, statusChecker, statusURI,
                     eusInstrumentID, eusProposalID, eusUploaderID,
-                    null, mRetData, out xmlServerResponse);
+                    null, mRetData, out var xmlServerResponse);
 
                 var ingestStepsComplete = statusChecker.IngestStepCompletionCount(xmlServerResponse);
 
@@ -162,18 +160,24 @@ namespace ArchiveVerifyPlugin
 
                 var statusNum = MyEMSLStatusCheck.GetStatusNumFromURI(statusURI);
 
-                UpdateIngestStepsCompletedOneTask(statusNum, ingestStepsComplete, fatalError);
+                var transactionId = 0;
+                if (!fatalError)
+                {
+                    transactionId = statusChecker.IngestStepTransactionId(xmlServerResponse);
+                }
 
-                string statusMessage;
-                string errorMessage;
+                UpdateIngestStepsCompletedOneTask(statusNum, ingestStepsComplete, transactionId, fatalError);
+
                 var success = statusChecker.IngestStepCompleted(
                     xmlServerResponse,
                     MyEMSLStatusCheck.StatusStep.Available,
-                    out statusMessage,
-                    out errorMessage);
+                    out var statusMessage,
+                    out var errorMessage);
+
 
                 mRetData.CloseoutMsg = statusMessage;
 
+                // Logout below, then return false
             }
             catch (Exception ex)
             {
@@ -192,7 +196,7 @@ namespace ArchiveVerifyPlugin
         /// <param name="lstArchivedFiles"></param>
         /// <param name="metadataFilePath"></param>
         /// <returns></returns>
-        protected bool CompareArchiveFilesToExpectedFiles(List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles, out string metadataFilePath)
+        private bool CompareArchiveFilesToExpectedFiles(List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles, out string metadataFilePath)
         {
             metadataFilePath = string.Empty;
 
@@ -222,10 +226,7 @@ namespace ArchiveVerifyPlugin
                 {
                     metadataFilePath = fiMetadataFile.FullName;
 
-                    int matchCountToMetadata;
-                    int mismatchCountToMetadata;
-
-                    CompareToMetadataFile(lstArchivedFiles, fiMetadataFile, out matchCountToMetadata, out mismatchCountToMetadata);
+                    CompareToMetadataFile(lstArchivedFiles, fiMetadataFile, out var matchCountToMetadata, out var mismatchCountToMetadata);
 
                     if (matchCountToMetadata > 0 && mismatchCountToMetadata == 0)
                     {
@@ -250,10 +251,12 @@ namespace ArchiveVerifyPlugin
 
                 // Look for files that should have been uploaded, compute a Sha-1 hash for each, and compare those hashes to existing files in MyEMSL
 
-                Upload.udtUploadMetadata uploadMetadata;
 
                 var oDatasetFileMetadata = new DMSMetadataObject();
-                var lstDatasetFilesLocal = oDatasetFileMetadata.FindDatasetFilesToArchive(m_TaskParams.TaskDictionary, m_MgrParams.TaskDictionary, out uploadMetadata);
+                var lstDatasetFilesLocal = oDatasetFileMetadata.FindDatasetFilesToArchive(
+                    m_TaskParams.TaskDictionary,
+                    m_MgrParams.TaskDictionary,
+                    out var uploadMetadata);
 
                 if (lstDatasetFilesLocal.Count == 0)
                 {
@@ -276,10 +279,8 @@ namespace ArchiveVerifyPlugin
                     dctFilePathHashMap.Add(relativeFilePathWindows, datasetFile.Sha1HashHex);
                 }
 
-                int matchCountToDisk;
-                int mismatchCountToDisk;
 
-                CompareArchiveFilesToList(lstArchivedFiles, out matchCountToDisk, out mismatchCountToDisk, dctFilePathHashMap);
+                CompareArchiveFilesToList(lstArchivedFiles, out var matchCountToDisk, out var mismatchCountToDisk, dctFilePathHashMap);
 
                 if (matchCountToDisk > 0 && mismatchCountToDisk == 0)
                 {
@@ -310,7 +311,7 @@ namespace ArchiveVerifyPlugin
 
         }
 
-        protected void CompareArchiveFilesToList(List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles, out int matchCount, out int mismatchCount, Dictionary<string, string> dctFilePathHashMap)
+        private void CompareArchiveFilesToList(List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles, out int matchCount, out int mismatchCount, Dictionary<string, string> dctFilePathHashMap)
         {
             matchCount = 0;
             mismatchCount = 0;
@@ -351,7 +352,7 @@ namespace ArchiveVerifyPlugin
             }
         }
 
-        protected void CompareToMetadataFile(List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles, FileInfo fiMetadataFile, out int matchCount, out int mismatchCount)
+        private void CompareToMetadataFile(List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles, FileInfo fiMetadataFile, out int matchCount, out int mismatchCount)
         {
             matchCount = 0;
             mismatchCount = 0;
@@ -406,7 +407,7 @@ namespace ArchiveVerifyPlugin
 
         }
 
-        protected void CopyMD5ResultsFileToBackupFolder(string datasetInstrument, string datasetYearQuarter, FileInfo fiMD5ResultsFile)
+        private void CopyMD5ResultsFileToBackupFolder(string datasetInstrument, string datasetYearQuarter, FileInfo fiMD5ResultsFile)
         {
             // Copy the updated file to md5ResultsFolderPathBackup
             try
@@ -432,7 +433,7 @@ namespace ArchiveVerifyPlugin
             }
         }
 
-        protected bool CreateMD5ResultsFile(FileInfo fiMD5ResultsFile, List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles)
+        private bool CreateMD5ResultsFile(FileInfo fiMD5ResultsFile, List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles)
         {
             // Create a new MD5 results file
             bool success;
@@ -484,7 +485,7 @@ namespace ArchiveVerifyPlugin
         /// </summary>
         /// <param name="lstArchivedFiles"></param>
         /// <returns></returns>
-        protected bool CreateOrUpdateMD5ResultsFile(List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles)
+        private bool CreateOrUpdateMD5ResultsFile(List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles)
         {
 
             bool success;
@@ -531,7 +532,7 @@ namespace ArchiveVerifyPlugin
 
         }
 
-        protected void DeleteMetadataFile(string metadataFilePath)
+        private void DeleteMetadataFile(string metadataFilePath)
         {
             try
             {
@@ -554,17 +555,17 @@ namespace ArchiveVerifyPlugin
             }
         }
 
-        protected string GetMD5ResultsFilePath(string strMD5ResultsFolderPath, string strDatasetName, string strInstrumentName, string strDatasetYearQuarter)
+        private string GetMD5ResultsFilePath(string strMD5ResultsFolderPath, string strDatasetName, string strInstrumentName, string strDatasetYearQuarter)
         {
             return GetMD5ResultsFilePath(Path.Combine(strMD5ResultsFolderPath, strInstrumentName, strDatasetYearQuarter), strDatasetName);
         }
 
-        protected string GetMD5ResultsFilePath(string strParentFolderPath, string strDatasetName)
+        private string GetMD5ResultsFilePath(string strParentFolderPath, string strDatasetName)
         {
             return Path.Combine(strParentFolderPath, MD5_RESULTS_FILE_PREFIX + strDatasetName);
         }
 
-        protected bool ParameterDefined(string parameterName, string parameterValue)
+        private bool ParameterDefined(string parameterName, string parameterValue)
         {
             if (string.IsNullOrEmpty(parameterValue))
             {
@@ -584,7 +585,7 @@ namespace ArchiveVerifyPlugin
         /// <param name="lstMD5Results">Dictionary where keys are unix file paths and values are clsHashInfo, tracking the Hash value and MyEMSL File ID</param>
         /// <returns>True if lstMD5Results is updated, false if unchanged</returns>
         /// <remarks></remarks>
-        protected bool ParseAndStoreHashInfo(string dataLine, ref Dictionary<string, clsHashInfo> lstMD5Results)
+        private bool ParseAndStoreHashInfo(string dataLine, ref Dictionary<string, clsHashInfo> lstMD5Results)
         {
             // Data Line Format
             //
@@ -629,8 +630,7 @@ namespace ArchiveVerifyPlugin
             // Files should only be listed once in the MD5 results file
             // But, just in case there is a duplicate, we'll check for that
             // Results files could have duplicate entries if a file was copied to the archive via FTP and was stored via MyEMSL
-            clsHashInfo hashInfoCached;
-            if (lstMD5Results.TryGetValue(archiveFilePath, out hashInfoCached))
+            if (lstMD5Results.TryGetValue(archiveFilePath, out var hashInfoCached))
             {
                 if (hashInfo.IsMatch(hashInfoCached))
                 {
@@ -652,7 +652,7 @@ namespace ArchiveVerifyPlugin
             return true;
         }
 
-        protected bool UpdateMD5ResultsFile(string md5ResultsFilePath, List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles)
+        private bool UpdateMD5ResultsFile(string md5ResultsFilePath, List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles)
         {
             bool success;
 
@@ -681,8 +681,7 @@ namespace ArchiveVerifyPlugin
                     MyEMSLFileID = archivedFile.FileID.ToString(CultureInfo.InvariantCulture)
                 };
 
-                clsHashInfo hashInfoCached;
-                if (lstMD5Results.TryGetValue(archivedFilePath, out hashInfoCached))
+                if (lstMD5Results.TryGetValue(archivedFilePath, out var hashInfoCached))
                 {
                     if (!hashInfo.IsMatch(hashInfoCached))
                     {
@@ -710,7 +709,7 @@ namespace ArchiveVerifyPlugin
             return success;
         }
 
-        protected bool VisibleInElasticSearch(out string metadataFilePath)
+        private bool VisibleInElasticSearch(out string metadataFilePath)
         {
             bool success;
 
@@ -726,8 +725,8 @@ namespace ArchiveVerifyPlugin
 
                 // Attach events
                 reader.ErrorEvent += reader_ErrorEvent;
-                reader.MessageEvent += reader_MessageEvent;
-                reader.ProgressEvent += reader_ProgressEvent;
+                reader.StatusEvent += reader_MessageEvent;
+                reader.ProgressUpdate += reader_ProgressEvent;
 
                 var subDir = m_TaskParams.GetParam("OutputFolderName", string.Empty);
 
@@ -781,7 +780,7 @@ namespace ArchiveVerifyPlugin
 
         }
 
-        protected bool WriteMD5ResultsFile(Dictionary<string, clsHashInfo> lstMD5Results, string md5ResultsFilePath, bool useTempFile)
+        private bool WriteMD5ResultsFile(Dictionary<string, clsHashInfo> lstMD5Results, string md5ResultsFilePath, bool useTempFile)
         {
             var currentStep = "initializing";
 
@@ -839,26 +838,26 @@ namespace ArchiveVerifyPlugin
 
         #region "Event Handlers"
 
-        void reader_ErrorEvent(object sender, MyEMSLReader.MessageEventArgs e)
+        void reader_ErrorEvent(string message, Exception ex)
         {
-            LogError("MyEMSLReader: " + e.Message);
+            LogError("MyEMSLReader: " + message, ex);
         }
 
-        void reader_MessageEvent(object sender, MyEMSLReader.MessageEventArgs e)
+        void reader_MessageEvent(string message)
         {
-            LogMessage(e.Message);
+            LogMessage(message);
         }
 
-        void reader_ProgressEvent(object sender, MyEMSLReader.ProgressEventArgs e)
+        void reader_ProgressEvent(string progressMessage, float percentComplete)
         {
-            var msg = "Percent complete: " + e.PercentComplete.ToString("0.0") + "%";
+            var msg = "Percent complete: " + percentComplete.ToString("0.0") + "%";
 
-            if (e.PercentComplete > mPercentComplete || DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds >= 30)
+            if (percentComplete > mPercentComplete || DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds >= 30)
             {
                 if (DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds >= 1)
                 {
                     LogDebug(msg);
-                    mPercentComplete = e.PercentComplete;
+                    mPercentComplete = percentComplete;
                     mLastProgressUpdateTime = DateTime.UtcNow;
                 }
             }

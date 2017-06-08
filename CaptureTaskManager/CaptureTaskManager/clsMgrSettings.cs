@@ -1,5 +1,5 @@
 ﻿//*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/10/2009
@@ -188,7 +188,7 @@ namespace CaptureTaskManager
             }
         }
 
-        private bool CheckInitialSettings(Dictionary<string, string> InpDict)
+        private bool CheckInitialSettings(IReadOnlyDictionary<string, string> InpDict)
         {
             // Verify manager settings dictionary exists
             if (InpDict == null)
@@ -199,8 +199,7 @@ namespace CaptureTaskManager
             }
 
             // Verify intact config file was found
-            string strValue;
-            if (!InpDict.TryGetValue(MGR_PARAM_USING_DEFAULTS, out strValue))
+            if (!InpDict.TryGetValue(MGR_PARAM_USING_DEFAULTS, out var strValue))
             {
                 m_ErrMsg = "clsMgrSettings.CheckInitialSettings(); 'UsingDefaults' entry not found in Config file";
                 Console.WriteLine(m_ErrMsg);
@@ -208,9 +207,8 @@ namespace CaptureTaskManager
             }
             else
             {
-                bool blnValue;
 
-                if (bool.TryParse(strValue, out blnValue))
+                if (bool.TryParse(strValue, out var blnValue))
                 {
                     if (blnValue)
                     {
@@ -257,7 +255,6 @@ namespace CaptureTaskManager
         {
             // Requests manager parameters from database. Input string specifies view to use. Performs retries if necessary.
 
-            DataTable dtSettings;
 
             var managerName = GetParam(MGR_PARAM_MGR_NAME, string.Empty);
 
@@ -270,7 +267,7 @@ namespace CaptureTaskManager
             }
 
             var returnErrorIfNoParameters = true;
-            var success = LoadMgrSettingsFromDBWork(managerName, out dtSettings, logConnectionErrors,
+            var success = LoadMgrSettingsFromDBWork(managerName, out var dtSettings, logConnectionErrors,
                                                     returnErrorIfNoParameters);
             if (!success)
             {
@@ -354,7 +351,7 @@ namespace CaptureTaskManager
                 catch (Exception ex)
                 {
                     retryCount -= 1;
-                    var errMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Exception getting manager settings from database: " + 
+                    var errMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Exception getting manager settings from database: " +
                         ex.Message + ", RetryCount = " + retryCount;
 
                     if (logConnectionErrors)
@@ -469,8 +466,7 @@ namespace CaptureTaskManager
             if (string.IsNullOrWhiteSpace(itemValue))
                 return false;
 
-            bool itemBool;
-            if (bool.TryParse(itemValue, out itemBool))
+            if (bool.TryParse(itemValue, out var itemBool))
                 return itemBool;
 
             return false;
@@ -489,8 +485,7 @@ namespace CaptureTaskManager
         /// <returns>Parameter value if found, otherwise empty string</returns>
         public string GetParam(string itemKey, string valueIfMissing)
         {
-            string itemValue;
-            if (m_ParamDictionary.TryGetValue(itemKey, out itemValue))
+            if (m_ParamDictionary.TryGetValue(itemKey, out var itemValue))
             {
                 return itemValue ?? string.Empty;
             }
@@ -506,8 +501,7 @@ namespace CaptureTaskManager
         /// <returns>Parameter value if found, otherwise empty string</returns>
         public bool GetParam(string itemKey, bool valueIfMissing)
         {
-            string valueText;
-            if (m_ParamDictionary.TryGetValue(itemKey, out valueText))
+            if (m_ParamDictionary.TryGetValue(itemKey, out var valueText))
             {
                 var value = clsConversion.CBoolSafe(valueText, valueIfMissing);
                 return value;
@@ -524,8 +518,7 @@ namespace CaptureTaskManager
         /// <returns>Parameter value if found, otherwise empty string</returns>
         public int GetParam(string itemKey, int valueIfMissing)
         {
-            string valueText;
-            if (m_ParamDictionary.TryGetValue(itemKey, out valueText))
+            if (m_ParamDictionary.TryGetValue(itemKey, out var valueText))
             {
                 var value = clsConversion.CIntSafe(valueText, valueIfMissing);
                 return value;

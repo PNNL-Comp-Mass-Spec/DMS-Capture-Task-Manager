@@ -97,8 +97,7 @@ namespace CaptureTaskManager
                 ReportManagerErrorCleanup(eCleanupActionCodeConstants.Start);
 
                 // Delete all folders and subfolders in work folder
-                string strFailureMessage;
-                blnSuccess = clsToolRunnerBase.CleanWorkDir(mWorkingDirPath, 1, out strFailureMessage);
+                blnSuccess = clsToolRunnerBase.CleanWorkDir(mWorkingDirPath, 1, out var strFailureMessage);
 
                 if (!blnSuccess)
                 {
@@ -149,21 +148,21 @@ namespace CaptureTaskManager
                 myConnection.Open();
 
                 // Set up the command object prior to SP execution
-                var myCmd = new System.Data.SqlClient.SqlCommand
+                var spCmd = new System.Data.SqlClient.SqlCommand
                 {
                     CommandType = CommandType.StoredProcedure,
                     CommandText = SP_NAME_REPORTMGRCLEANUP,
                     Connection = myConnection
                 };
 
-                myCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-                myCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@ManagerName", SqlDbType.VarChar, 128)).Value = mManagerName;
-                myCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@State", SqlDbType.Int)).Value = eMgrCleanupActionCode;
-                myCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@FailureMsg", SqlDbType.VarChar, 512)).Value = strFailureMessage;
-                myCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
+                spCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
+                spCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@ManagerName", SqlDbType.VarChar, 128)).Value = mManagerName;
+                spCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@State", SqlDbType.Int)).Value = eMgrCleanupActionCode;
+                spCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@FailureMsg", SqlDbType.VarChar, 512)).Value = strFailureMessage;
+                spCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
 
                 // Execute the SP
-                myCmd.ExecuteNonQuery();
+                spCmd.ExecuteNonQuery();
             }
             catch (Exception ex)
             {

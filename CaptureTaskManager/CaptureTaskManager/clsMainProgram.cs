@@ -1,5 +1,5 @@
 ﻿//*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/10/2009
@@ -96,6 +96,9 @@ namespace CaptureTaskManager
 
         #region "Properties"
 
+        /// <summary>
+        /// When true, the manager is deactivated locally
+        /// </summary>
         public bool ManagerDeactivatedLocally => m_ManagerDeactivatedLocally;
 
         #endregion
@@ -243,7 +246,7 @@ namespace CaptureTaskManager
         public bool InitMgr()
         {
             // Create a database logger connected to DMS5
-            // Once the initial parameters have been successfully read, 
+            // Once the initial parameters have been successfully read,
             // we remove this logger than make a new one using the connection string read from the Manager Control DB
             var defaultDmsConnectionString = Properties.Settings.Default.DefaultDMSConnString;
 
@@ -251,8 +254,8 @@ namespace CaptureTaskManager
                                        true);
 
             // Get the manager settings
-            // If you get an exception here while debugging in Visual Studio, be sure 
-            //  that "UsingDefaults" is set to False in CaptureTaskManager.exe.config               
+            // If you get an exception here while debugging in Visual Studio, be sure
+            //  that "UsingDefaults" is set to False in CaptureTaskManager.exe.config
             try
             {
                 m_MgrSettings = new clsMgrSettings();
@@ -267,7 +270,7 @@ namespace CaptureTaskManager
                 {
                     // Failures are logged by clsMgrSettings to application event logs;
                     //  this includes MgrActive_Local = False
-                    // 
+                    //
                     // If the DMSCapTaskMgr application log does not exist yet, the Log4Net SysLogger will create it (see file Logging.config)
                     // However, in order to do that, the program needs to be running from an elevated (administrative level) command prompt
                     // Thus, it is advisable to run this program once from an elevated command prompt while MgrActive_Local is set to false
@@ -415,7 +418,7 @@ namespace CaptureTaskManager
                     using (var sr = new StreamReader(historyFile))
                     {
                         String line;
-                        // Read and display lines from the file until the end of 
+                        // Read and display lines from the file until the end of
                         // the file is reached.
                         while ((line = sr.ReadLine()) != null)
                         {
@@ -504,13 +507,11 @@ namespace CaptureTaskManager
                     var timeStampText = lineParts[0];
                     var message = lineParts[1];
 
-                    DateTime timeStamp;
-                    if (DateTime.TryParse(timeStampText, out timeStamp))
+                    if (DateTime.TryParse(timeStampText, out var timeStamp))
                     {
                         // Valid message; store it
 
-                        DateTime cachedTimeStamp;
-                        if (cachedMessages.TryGetValue(message, out cachedTimeStamp))
+                        if (cachedMessages.TryGetValue(message, out var cachedTimeStamp))
                         {
                             if (timeStamp > cachedTimeStamp)
                                 cachedMessages[message] = timeStamp;
@@ -547,8 +548,7 @@ namespace CaptureTaskManager
                     cachedMessages = new Dictionary<string, DateTime>();
                 }
 
-                DateTime timeStamp;
-                if (cachedMessages.TryGetValue(errorMessage, out timeStamp))
+                if (cachedMessages.TryGetValue(errorMessage, out var timeStamp))
                 {
                     if (DateTime.UtcNow.Subtract(timeStamp).TotalHours < logIntervalHours)
                     {
@@ -659,8 +659,7 @@ namespace CaptureTaskManager
                     // Check whether the computer is likely to install the monthly Windows Updates within the next few hours
                     // Do not request a task between 12 am and 6 am on Thursday in the week with the second Tuesday of the month
                     // Do not request a task between 2 am and 4 am or between 9 am and 11 am on Sunday in the week with the second Tuesday of the month
-                    string pendingWindowsUpdateMessage;
-                    if (clsWindowsUpdateStatus.UpdatesArePending(out pendingWindowsUpdateMessage))
+                    if (clsWindowsUpdateStatus.UpdatesArePending(out var pendingWindowsUpdateMessage))
                     {
                         LogMessage(pendingWindowsUpdateMessage);
                         m_LoopExitCode = LoopExitCode.NoTaskFound;
@@ -691,8 +690,7 @@ namespace CaptureTaskManager
 
                         case EnumRequestTaskResult.TaskFound:
 
-                            EnumCloseOutType eTaskCloseout;
-                            PerformTask(out eTaskCloseout);
+                            PerformTask(out var eTaskCloseout);
 
                             // Increment and test the task counter
                             taskCount++;
@@ -723,7 +721,7 @@ namespace CaptureTaskManager
 
             m_Running = false;
 
-            // Write the recent job history file				
+            // Write the recent job history file
             try
             {
                 var historyFile = Path.Combine(m_MgrSettings.GetParam("ApplicationPath"), "History.txt");
@@ -791,8 +789,7 @@ namespace CaptureTaskManager
 
 
                 // Make sure we have enough free space on the drive with the dataset folder
-                string diskSpaceMsg;
-                if (!ValidateFreeDiskSpace(out diskSpaceMsg))
+                if (!ValidateFreeDiskSpace(out var diskSpaceMsg))
                 {
                     if (string.IsNullOrEmpty(diskSpaceMsg))
                     {
@@ -891,6 +888,9 @@ namespace CaptureTaskManager
             m_StatusFile.WriteStatusFile();
         }
 
+        /// <summary>
+        /// Post a test log message
+        /// </summary>
         public void PostTestLogMessage()
         {
             try
@@ -927,7 +927,7 @@ namespace CaptureTaskManager
             try
             {
                 var appFolder = clsUtilities.GetAppFolderPath();
-                
+
                 if (string.IsNullOrWhiteSpace(appFolder))
                 {
                     LogWarning("GetAppFolderPath returned an empty directory path to RemoveOldFTPLogFiles");
@@ -1065,7 +1065,7 @@ namespace CaptureTaskManager
             try
             {
 #if MyEMSL_OFFLINE
-    // When this Conditional Compilation Constant is defined, then the DatasetArchive plugin will set debugMode 
+    // When this Conditional Compilation Constant is defined, then the DatasetArchive plugin will set debugMode
     // to Pacifica.Core.EasyHttp.eDebugMode.MyEMSLOfflineMode when calling UploadToMyEMSLWithRetry()
     // This in turn results in writeToDisk becoming True in SendFileListToDavAsTar
     m_Task.AddAdditionalParameter("MyEMSLOffline", "true");
@@ -1156,7 +1156,7 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Reloads the manager settings from the manager control database 
+        /// Reloads the manager settings from the manager control database
         /// if at least MinutesBetweenUpdates minutes have elapsed since the last update
         /// </summary>
         /// <param name="dtLastConfigDBUpdate"></param>
@@ -1210,11 +1210,8 @@ namespace CaptureTaskManager
         protected bool GetDiskFreeSpace(string directoryPath, out long freeBytesAvailableToUser,
                                         out long totalDriveCapacityBytes, out long totalNumberOfFreeBytes)
         {
-            ulong freeAvailableUser;
-            ulong totalDriveCapacity;
-            ulong totalFree;
 
-            var iResult = GetDiskFreeSpaceEx(directoryPath, out freeAvailableUser, out totalDriveCapacity, out totalFree);
+            var iResult = GetDiskFreeSpaceEx(directoryPath, out var freeAvailableUser, out var totalDriveCapacity, out var totalFree);
 
             if (iResult == 0)
             {
@@ -1277,11 +1274,13 @@ namespace CaptureTaskManager
 
                 datasetStoragePath = GetStoragePathBase();
 
-                long freeBytesAvailableToUser;
-                long totalDriveCapacityBytes;
-                long totalNumberOfFreeBytes;
-                if (GetDiskFreeSpace(datasetStoragePath, out freeBytesAvailableToUser, out totalDriveCapacityBytes,
-                                     out totalNumberOfFreeBytes))
+                var success = GetDiskFreeSpace(
+                    datasetStoragePath,
+                    out var freeBytesAvailableToUser,
+                    out var totalDriveCapacityBytes,
+                    out var totalNumberOfFreeBytes);
+
+                if (success)
                 {
                     var freeSpaceGB = totalNumberOfFreeBytes / 1024.0 / 1024.0 / 1024.0;
 

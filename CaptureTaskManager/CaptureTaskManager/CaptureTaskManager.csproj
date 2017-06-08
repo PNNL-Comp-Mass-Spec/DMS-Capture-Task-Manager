@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>CaptureTaskManager</RootNamespace>
     <AssemblyName>CaptureTaskManager</AssemblyName>
-    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <StartupObject>
     </StartupObject>
@@ -82,17 +82,17 @@
       <HintPath>..\..\RefLib\log4net.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="PRISM">
+    <Reference Include="MyEMSLReader, Version=1.2.6281.34371, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\RefLib\PRISM.dll</HintPath>
+      <HintPath>..\..\DeployedFiles\MyEMSLReader.dll</HintPath>
+    </Reference>
+    <Reference Include="Pacifica.DMS_Metadata, Version=1.0.6303.32068, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\DeployedFiles\Pacifica.DMS_Metadata.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
-    <Reference Include="System.Data.SQLite">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\RefLib\System.Data.SQLite.dll</HintPath>
     </Reference>
     <Reference Include="System.Xml.Linq">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -105,10 +105,6 @@
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
-    <Reference Include="UIMFLibrary">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\RefLib\UIMFLibrary.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="clsBroadcastCmd.cs" />
@@ -119,7 +115,6 @@
     <Compile Include="clsMainProgram.cs" />
     <Compile Include="clsMessageHandler.cs" />
     <Compile Include="clsMgrSettings.cs" />
-    <Compile Include="clsParseCommandLine.cs" />
     <Compile Include="clsPluginLoader.cs" />
     <Compile Include="clsStatusFile.cs" />
     <Compile Include="clsXMLTools.cs" />
@@ -157,8 +152,23 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="PRISM-Library">
+      <Version>1.0.6</Version>
+    </PackageReference>
+    <PackageReference Include="System.Data.SQLite.Core">
+      <Version>1.0.97</Version>
+    </PackageReference>
+    <PackageReference Include="UIMFLibrary">
+      <Version>1.0.5</Version>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Pacifica\Pacifica.Core\Pacifica.Core.csproj">
+      <Project>{46d080da-392c-4f7c-b2f7-683695b1c029}</Project>
+      <Name>Pacifica.Core</Name>
+    </ProjectReference>
     <ProjectReference Include="..\CTM_Shared\CTM_Shared.csproj">
-      <Project>{7D07F054-0D29-45DD-9B22-71D0768BC3C3}</Project>
+      <Project>{7d07f054-0d29-45dd-9b22-71d0768bc3c3}</Project>
       <Name>CTM_Shared</Name>
     </ProjectReference>
   </ItemGroup>
