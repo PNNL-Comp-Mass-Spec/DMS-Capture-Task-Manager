@@ -10,6 +10,8 @@ using Jayrock;
 using Jayrock.Json.Conversion;
 using ProgressEventArgs = Pacifica.Core.ProgressEventArgs;
 using Utilities = Pacifica.Core.Utilities;
+using System.Data.SqlClient;
+using System.Data;
 
 namespace Pacifica.DMS_Metadata
 {
@@ -156,20 +158,20 @@ namespace Pacifica.DMS_Metadata
                 ServicePointManager.ServerCertificateValidationCallback += Utilities.ValidateRemoteCertificate;
             this.DatasetName = Utilities.GetDictionaryValue(taskParams, "Dataset", "Unknown_Dataset");
 
-            Upload.udtUploadMetadata uploadMetadata;
-            var lstDatasetFilesToArchive = FindDatasetFilesToArchive(taskParams, mgrParams, out uploadMetadata);
+            var lstDatasetFilesToArchive = FindDatasetFilesToArchive(taskParams, mgrParams, out Upload.udtUploadMetadata uploadMetadata);
 
             // Calculate the "year_quarter" code used for subfolders within an instrument folder
             // This value is based on the date the dataset was created in DMS
             uploadMetadata.DateCodeString = GetDatasetYearQuarter(taskParams);
 
+            //var mdSuccess = GetSupplementalDMSMetadata(mgrParams.TryGetValue())
+
             // Find the files that are new or need to be updated
             var lstUnmatchedFiles = CompareDatasetContentsWithMyEMSLMetadata(lstDatasetFilesToArchive, uploadMetadata, debugMode);
 
-            Upload.udtEUSInfo eusInfo;
-            mMetadataObject = Upload.CreatePacificaMetadataObject(uploadMetadata, lstUnmatchedFiles, out eusInfo);
+            mMetadataObject = Upload.CreatePacificaMetadataObject(uploadMetadata, lstUnmatchedFiles, out Upload.udtEUSInfo eusInfo);
             string mdJSON = Utilities.ObjectToJson(mMetadataObject);
-            if (!CheckMetadataValidity(mdJSON)){
+            if (!CheckMetadataValidity(mdJSON)) {
 
             }
 
@@ -180,15 +182,61 @@ namespace Pacifica.DMS_Metadata
 
         }
 
+        private static bool GetSupplementalDMSMetadata(string dmsConnectionString, int dataset_id, out Upload.udtUploadMetadata uploadMetadata)
+        {
+            {
+                short retryCount = 3;
+
+                uploadMetadata = new Upload.udtUploadMetadata();
+
+                var sqlStr = "SELECT * FROM V_MyEMSL_Supplemental_Metadata WHERE dataset_id = " + dataset_id;
+
+                // Get a datatable holding the parameters for this manager
+                while (retryCount > 0)
+                {
+                    try
+                    {
+                        using (var cn = new SqlConnection(dmsConnectionString))
+                        {
+                            var cmd = new SqlCommand
+                            {
+                                CommandType = CommandType.Text,
+                                CommandText = sqlStr,
+                                Connection = cn,
+                                CommandTimeout = 30
+                            };
+
+                            using (var da = new SqlDataAdapter(cmd))
+                            {
+                                using (var ds = new DataSet())
+                                {
+                                    da.Fill(ds);
+                                }
+                            }
+                        }
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        retryCount -= 1;
+                        var errMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Exception getting manager settings from database: " +
+                            ex.Message + ", RetryCount = " + retryCount;
+                    }
+                }
+            }
+            return true;
+        }
+
+
+
         private bool CheckMetadataValidity(string mdJSON)
         {
             bool mdIsValid = false;
             string policyURL = Configuration.PolicyServerUri + "/ingest";
-            HttpStatusCode responseStatusCode;
             try
             {
-                
-                string response = EasyHttp.Send(policyURL, null, out responseStatusCode, mdJSON, EasyHttp.HttpMethod.Post, 100, "application/json");
+
+                string response = EasyHttp.Send(policyURL, null, out HttpStatusCode responseStatusCode, mdJSON, EasyHttp.HttpMethod.Post, 100, "application/json");
                 if (response.Contains("success"))
                 {
                     mdIsValid = true;
@@ -313,9 +361,8 @@ namespace Pacifica.DMS_Metadata
                     // This is a cache info file that likely points to a .mzXML or .mzML file (possibly gzipped)
                     // Auto-include that file in the .tar to be uploaded
 
-                    string remoteFilePath;
 
-                    var success = AddUsingCacheInfoFile(fiFile, fileCollection, baseDSPath, out remoteFilePath);
+                    var success = AddUsingCacheInfoFile(fiFile, fileCollection, baseDSPath, out string remoteFilePath);
                     if (!success)
                         throw new Exception("Error reported by AddUsingCacheInfoFile for " + fiFile.FullName);
 
@@ -354,9 +401,8 @@ namespace Pacifica.DMS_Metadata
             string metadataURL = Configuration.MetadataServerUri + "/fileinfo/files_for_keyvalue/";
             metadataURL += "omics.dms.dataset_id/" + datasetID;
 
-            HttpStatusCode responseStatusCode;
 
-            string fileInfoListJSON = EasyHttp.Send(metadataURL, out responseStatusCode);
+            string fileInfoListJSON = EasyHttp.Send(metadataURL, out HttpStatusCode responseStatusCode);
             var jsa = (Jayrock.Json.JsonArray)JsonConvert.Import(fileInfoListJSON);
             var fileInfoList = Utilities.JsonArrayToDictionaryList(jsa);
             List<FileInfoObject> returnList = new List<FileInfoObject>();
@@ -528,9 +574,8 @@ namespace Pacifica.DMS_Metadata
             }
 
             var recurse = true;
-            string sValue;
 
-            if (taskParams.TryGetValue(MyEMSLUploader.RECURSIVE_UPLOAD, out sValue))
+            if (taskParams.TryGetValue(MyEMSLUploader.RECURSIVE_UPLOAD, out string sValue))
             {
                 bool.TryParse(sValue, out recurse);
             }
