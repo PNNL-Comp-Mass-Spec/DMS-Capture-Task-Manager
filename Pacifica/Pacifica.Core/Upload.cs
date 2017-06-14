@@ -54,9 +54,22 @@ namespace Pacifica.Core
             public string DatasetName;			// Only used for datasets; not Data Packages
             public string DateCodeString;		// Only used for datasets; not Data Packages
             public string DMSInstrumentName;	// Only used for datasets; not Data Packages
+            public string CampaignName;         //
+            public int CampaignID;           //
             public string EUSInstrumentID;		// Only used for datasets; not Data Packages
             public string EUSProposalID;		// Originally only used by datasets. Used by Data Packages starting in October 2016 since required by policy
-
+            public string ExperimentName;
+            public int ExperimentID;
+            public string OrganismName;         // 
+            public int OrganismID;
+            public int NCBITaxonomyID;       //
+            public string AcquisitionTime;
+            public int AcquisitionLengthMin;
+            public int NumberOfScans;
+            public string SeparationType;
+            public string DatasetType;
+            public int RequestedRunID;
+            public List<int> UserOfRecordList;
             /// <summary>
             /// Instrument Operator EUS ID for datasets
             /// Data Package Owner for data packages
@@ -72,9 +85,24 @@ namespace Pacifica.Core
                 DatasetName = string.Empty;
                 DateCodeString = string.Empty;
                 DMSInstrumentName = string.Empty;
+                CampaignName = string.Empty;
+                CampaignID = 0;
                 EUSInstrumentID = string.Empty;
                 EUSProposalID = string.Empty;
+                ExperimentName = string.Empty;
+                ExperimentID = 0;
+                OrganismName = string.Empty;
+                OrganismID = 0;
+                NCBITaxonomyID = 0;
+                AcquisitionTime = string.Empty;
+                AcquisitionLengthMin = 0;
+                NumberOfScans = 0;
+                SeparationType = string.Empty;
+                DatasetType = string.Empty;
+                RequestedRunID = 0;
+                UserOfRecordList = new List<int>();
                 EUSOperatorID = DEFAULT_EUS_OPERATOR_ID;
+
             }
         }
 
@@ -278,7 +306,6 @@ namespace Pacifica.Core
             var serverUri = "https://ServerIsOffline/dummy_page?test";
             //var timeoutSeconds = 30;
             var postData = string.Empty;
-            HttpStatusCode responseStatusCode;
 
             if (debugMode == EasyHttp.eDebugMode.MyEMSLOfflineMode)
             {
@@ -313,7 +340,7 @@ namespace Pacifica.Core
 
             try
             {
-                var statusResult = EasyHttp.Send(statusURL, out responseStatusCode);
+                var statusResult = EasyHttp.Send(statusURL, out HttpStatusCode responseStatusCode);
 
                 //var jsaResult = (Jayrock.Json.JsonArray)Jayrock.Json.Conversion.JsonConvert.Import(statusResult);
                 //var statusJSON = Utilities.JsonArrayToDictionaryList(jsaResult);
@@ -759,7 +786,7 @@ namespace Pacifica.Core
             // new metadata object is just a list of dictionary entries
             var metadataObject = new List<Dictionary<string, object>>();
 
-            var eusInstrumentID = GetEUSInstrumentID(uploadMetadata.EUSInstrumentID, UNKNOWN_INSTRUMENT_EUS_INSTRUMENT_ID);
+            var eusInstrumentID = GetEUSInstrumentID(uploadMetadata.EUSInstrumentID.ToString(), UNKNOWN_INSTRUMENT_EUS_INSTRUMENT_ID);
 
             // fill out Transaction Key/Value pairs
             if (uploadMetadata.DatasetID > 0)
@@ -779,17 +806,102 @@ namespace Pacifica.Core
                     { "key", "omics.dms.date_code" },
                     { "value", uploadMetadata.DateCodeString }
                 });
-				metadataObject.Add(new Dictionary<string, object> {
+                metadataObject.Add(new Dictionary<string, object> {
                     { "destinationTable", "TransactionKeyValue" },
                     { "key", "omics.dms.dataset" },
                     { "value", uploadMetadata.DatasetName }
                 });
-				metadataObject.Add(new Dictionary<string, object> {
+                metadataObject.Add(new Dictionary<string, object> {
+                    { "destinationTable", "TransactionKeyValue" },
+                    { "key", "omics.dms.campaign_name" },
+                    { "value", uploadMetadata.CampaignName }
+                });
+                metadataObject.Add(new Dictionary<string, object> {
+                    { "destinationTable", "TransactionKeyValue" },
+                    { "key", "omics.dms.experiment_name" },
+                    { "value", uploadMetadata.DatasetName }
+                });
+                metadataObject.Add(new Dictionary<string, object> {
+                    { "destinationTable", "TransactionKeyValue" },
+                    { "key", "omics.dms.dataset_name" },
+                    { "value", uploadMetadata.DatasetName }
+                });
+                metadataObject.Add(new Dictionary<string, object> {
+                    { "destinationTable", "TransactionKeyValue" },
+                    { "key", "omics.dms.campaign_id" },
+                    { "value", uploadMetadata.CampaignID.ToString(CultureInfo.InvariantCulture) }
+                });
+                metadataObject.Add(new Dictionary<string, object> {
+                    { "destinationTable", "TransactionKeyValue" },
+                    { "key", "omics.dms.experiment_id" },
+                    { "value", uploadMetadata.ExperimentID.ToString(CultureInfo.InvariantCulture) }
+                });
+                metadataObject.Add(new Dictionary<string, object> {
                     { "destinationTable", "TransactionKeyValue" },
                     { "key", "omics.dms.dataset_id" },
                     { "value", uploadMetadata.DatasetID.ToString(CultureInfo.InvariantCulture) }
                 });
-
+                if (!String.IsNullOrEmpty(uploadMetadata.OrganismName))
+                {
+                    metadataObject.Add(new Dictionary<string, object> {
+                        { "destinationTable", "TransactionKeyValue" },
+                        { "key", "organism_name" },
+                        { "value", uploadMetadata.OrganismName }
+                    });
+                }
+                if(uploadMetadata.OrganismID != 0)
+                {
+                    metadataObject.Add(new Dictionary<string, object> {
+                        { "destinationTable", "TransactionKeyValue" },
+                        { "key", "omics.dms.organism_id" },
+                        { "value", uploadMetadata.OrganismID.ToString(CultureInfo.InvariantCulture) }
+                    });
+                }
+                if(uploadMetadata.NCBITaxonomyID != 0)
+                {
+                    metadataObject.Add(new Dictionary<string, object> {
+                        { "destinationTable", "TransactionKeyValue" },
+                        { "key", "ncbi_taxonomy_id" },
+                        { "value", uploadMetadata.NCBITaxonomyID.ToString(CultureInfo.InvariantCulture) }
+                    });
+                }
+                if (!String.IsNullOrEmpty(uploadMetadata.SeparationType))
+                {
+                    metadataObject.Add(new Dictionary<string, object> {
+                        { "destinationTable", "TransactionKeyValue" },
+                        { "key", "omics.dms.separation_type" },
+                        { "value", uploadMetadata.SeparationType }
+                    });
+                }
+                if (!String.IsNullOrEmpty(uploadMetadata.DatasetType))
+                {
+                    metadataObject.Add(new Dictionary<string, object> {
+                        { "destinationTable", "TransactionKeyValue" },
+                        { "key", "omics.dms.dataset_type" },
+                        { "value", uploadMetadata.DatasetType }
+                    });
+                }
+                metadataObject.Add(new Dictionary<string, object> {
+                    { "destinationTable", "TransactionKeyValue" },
+                    { "key", "omics.dms.run_acquisition_length_min" },
+                    { "value", uploadMetadata.AcquisitionLengthMin }
+                });
+                if(uploadMetadata.UserOfRecordList.Count > 0)
+                {
+                    foreach(int userId in uploadMetadata.UserOfRecordList)
+                    {
+                        metadataObject.Add(new Dictionary<string, object> {
+                            { "destinationTable", "TransactionKeyValue" },
+                            { "key", "User of Record" },
+                            { "value", userId.ToString(CultureInfo.InvariantCulture) }
+                        });
+                        metadataObject.Add(new Dictionary<string, object> {
+                            { "destinationTable", "TransactionKeyValue" },
+                            { "key", "user_of_record" },
+                            { "value", userId.ToString(CultureInfo.InvariantCulture) }
+                        });
+                    }
+                }
             }
             else if (uploadMetadata.DataPackageID > 0)
             {
@@ -858,12 +970,14 @@ namespace Pacifica.Core
             });
 
             // now mix in the list of file objects
+            string subdirString = string.Empty;
             foreach ( FileInfoObject f in lstUnmatchedFiles ){
+                subdirString = "data".Trim('/') + "/" + f.RelativeDestinationDirectory.Trim('/');
                 metadataObject.Add(new Dictionary<string, object> {
                     { "destinationTable", "Files" },
                     { "name", f.FileName },
 					{ "absolutelocalpath", f.AbsoluteLocalPath},
-                    { "subdir", Path.Combine("data/", f.RelativeDestinationDirectory) },
+                    { "subdir", subdirString.Trim('/') },
                     { "size", f.FileSizeInBytes.ToString() },
                     { "hashsum", f.Sha1HashHex },
                     { "mimetype", "application/octet-stream" },
@@ -898,7 +1012,7 @@ namespace Pacifica.Core
 
             // Lookup the EUS_Instrument_ID
             // If empty, use 34127, which is VOrbiETD04
-            var eusInstrumentID = GetEUSInstrumentID(uploadMetadata.EUSInstrumentID, UNKNOWN_INSTRUMENT_EUS_INSTRUMENT_ID);
+            var eusInstrumentID = GetEUSInstrumentID(uploadMetadata.EUSInstrumentID.ToString(), UNKNOWN_INSTRUMENT_EUS_INSTRUMENT_ID);
 
             eusInfo = new udtEUSInfo();
             eusInfo.Clear();
@@ -1008,7 +1122,6 @@ namespace Pacifica.Core
             //object fileListObject;
             var description = new List<string>();
             //var instrumentIdIncluded = false;
-            string value;
             string keyname;
             string keyvalue;
             string tableName;
@@ -1027,7 +1140,7 @@ namespace Pacifica.Core
 
             foreach (Dictionary<string, object> item in metadataObject)
             {
-                if (GetDictionaryValue(item, "destinationTable", out value))
+                if (GetDictionaryValue(item, "destinationTable", out string value))
                 {
                     tableName = value;
                     if (tableName == "TransactionKeyValue")
@@ -1063,8 +1176,7 @@ namespace Pacifica.Core
 
         private static bool GetDictionaryValue(IReadOnlyDictionary<string, object> eusInfoMapObject, string keyName, out string matchedValue)
         {
-            object value;
-            if (eusInfoMapObject.TryGetValue(keyName, out value))
+            if (eusInfoMapObject.TryGetValue(keyName, out object value))
             {
                 matchedValue = value as string;
                 if (matchedValue != null)
@@ -1079,17 +1191,15 @@ namespace Pacifica.Core
         {
             foreach (var groupDefinition in groupObjects)
             {
-                string candidateKeyName;
 
-                if (!groupDefinition.TryGetValue("type", out candidateKeyName))
+                if (!groupDefinition.TryGetValue("type", out string candidateKeyName))
                     continue;
 
                 if (!string.Equals(candidateKeyName, groupKeyName))
                     continue;
 
                 // Found the desired dictionary entry
-                string value;
-                if (!groupDefinition.TryGetValue("name", out value))
+                if (!groupDefinition.TryGetValue("name", out string value))
                     continue;
 
                 matchedValue = value;
@@ -1115,8 +1225,7 @@ namespace Pacifica.Core
 
         private static int StringToInt(string valueText, int defaultValue)
         {
-            int value;
-            if (int.TryParse(valueText, out value))
+            if (int.TryParse(valueText, out int value))
                 return value;
 
             return defaultValue;

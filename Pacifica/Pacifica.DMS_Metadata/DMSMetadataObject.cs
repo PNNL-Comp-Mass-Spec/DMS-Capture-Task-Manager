@@ -140,7 +140,7 @@ namespace Pacifica.DMS_Metadata
             mFileTools.WaitingForLockQueue += mFileTools_WaitingForLockQueue;
         }
 
-        public void SetupMetadata(Dictionary<string, string> taskParams, Dictionary<string, string> mgrParams, EasyHttp.eDebugMode debugMode)
+        public bool SetupMetadata(Dictionary<string, string> taskParams, Dictionary<string, string> mgrParams, EasyHttp.eDebugMode debugMode)
         {
             // The following Callback allows us to access the MyEMSL server even if the certificate is expired or untrusted
             // This hack was added in March 2014 because Proto-10 reported error
@@ -159,6 +159,9 @@ namespace Pacifica.DMS_Metadata
             this.DatasetName = Utilities.GetDictionaryValue(taskParams, "Dataset", "Unknown_Dataset");
 
             var lstDatasetFilesToArchive = FindDatasetFilesToArchive(taskParams, mgrParams, out Upload.udtUploadMetadata uploadMetadata);
+            mgrParams.TryGetValue("DefaultDMSConnString", out string connectionString);
+            taskParams.TryGetValue("Dataset_ID", out string datasetID);
+            var supplementalDataSuccess = GetSupplementalDMSMetadata(connectionString, datasetID, ref uploadMetadata);
 
             // Calculate the "year_quarter" code used for subfolders within an instrument folder
             // This value is based on the date the dataset was created in DMS
@@ -171,79 +174,111 @@ namespace Pacifica.DMS_Metadata
 
             mMetadataObject = Upload.CreatePacificaMetadataObject(uploadMetadata, lstUnmatchedFiles, out Upload.udtEUSInfo eusInfo);
             string mdJSON = Utilities.ObjectToJson(mMetadataObject);
-            if (!CheckMetadataValidity(mdJSON)) {
-
+            if (!CheckMetadataValidity(mdJSON, out string validityMessage)) {
+                OnError("CheckMetadataValidity", validityMessage);
+                return false;
             }
 
             var metadataDescription = Upload.GetMetadataObjectDescription(mMetadataObject);
             RaiseDebugEvent("SetupMetadata", metadataDescription);
 
             EUSInfo = eusInfo;
+            return true;
 
         }
 
-        private static bool GetSupplementalDMSMetadata(string dmsConnectionString, int dataset_id, out Upload.udtUploadMetadata uploadMetadata)
+        private static bool GetSupplementalDMSMetadata(string dmsConnectionString, string dataset_id, ref Upload.udtUploadMetadata uploadMetadata)
         {
+            string queryString =
+                "SELECT TOP 1 * FROM V_MyEMSL_Supplemental_Metadata WHERE dataset_id = " + dataset_id.ToString();
+            using (SqlConnection connection = new SqlConnection(dmsConnectionString))
             {
-                short retryCount = 3;
-
-                uploadMetadata = new Upload.udtUploadMetadata();
-
-                var sqlStr = "SELECT * FROM V_MyEMSL_Supplemental_Metadata WHERE dataset_id = " + dataset_id;
-
-                // Get a datatable holding the parameters for this manager
-                while (retryCount > 0)
+                SqlCommand command = new SqlCommand(
+                    queryString, connection);
+                connection.Open();
+                SqlDataReader reader = command.ExecuteReader();
+                try
                 {
-                    try
+                    if (reader.HasRows)
                     {
-                        using (var cn = new SqlConnection(dmsConnectionString))
+                        while (reader.Read())
                         {
-                            var cmd = new SqlCommand
-                            {
-                                CommandType = CommandType.Text,
-                                CommandText = sqlStr,
-                                Connection = cn,
-                                CommandTimeout = 30
-                            };
-
-                            using (var da = new SqlDataAdapter(cmd))
-                            {
-                                using (var ds = new DataSet())
-                                {
-                                    da.Fill(ds);
-                                }
-                            }
+                            uploadMetadata.CampaignID = (int)reader["campaign_id"];
+                            uploadMetadata.CampaignName = reader["campaign_name"].ToString();
+                            uploadMetadata.ExperimentID = (int)reader["experiment_id"];
+                            uploadMetadata.ExperimentName = reader["experiment_name"].ToString();
+                            uploadMetadata.OrganismName = reader["organism_name"].ToString();
+                            uploadMetadata.NCBITaxonomyID = (int)reader["ncbi_taxonomy_id"];
+                            uploadMetadata.OrganismID = (int)reader["organism_id"];
+                            uploadMetadata.AcquisitionTime = reader["acquisition_time"].ToString();
+                            uploadMetadata.AcquisitionLengthMin = (int)reader["acquisition_length"];
+                            uploadMetadata.NumberOfScans = (int)reader["number_of_scans"];
+                            uploadMetadata.SeparationType = reader["separation_type"].ToString();
+                            uploadMetadata.DatasetType = reader["dataset_type"].ToString();
+                            uploadMetadata.RequestedRunID = (int)reader["requested_run_id"];
+                            uploadMetadata.UserOfRecordList = GetRequestedRunUsers(uploadMetadata.RequestedRunID, dmsConnectionString);
                         }
-                        break;
-                    }
-                    catch (Exception ex)
-                    {
-                        retryCount -= 1;
-                        var errMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Exception getting manager settings from database: " +
-                            ex.Message + ", RetryCount = " + retryCount;
                     }
                 }
+                finally
+                {
+                    // Always call Close when done reading.
+                    reader.Close();
+                }
             }
+            //uploadMetadata = new Upload.udtUploadMetadata();
+
             return true;
         }
 
+        private static List<int> GetRequestedRunUsers(int RequestedRunID, string dmsConnectionString)
+        {
+            List<int> personList = new List<int>();
+            string queryString = "SELECT EUS_Person_ID FROM T_Requested_Run_EUS_Users where Request_ID = " + RequestedRunID.ToString();
+            using (SqlConnection connection = new SqlConnection(dmsConnectionString))
+            {
+                SqlCommand command = new SqlCommand(
+                    queryString, connection);
+                connection.Open();
+                SqlDataReader reader = command.ExecuteReader();
+                try
+                {
+                    if (reader.HasRows)
+                    {
+                        while(reader.Read())
+                        {
+                            personList.Add((int)reader["EUS_Person_ID"]);
+                        }
+                    }
+                }
+                finally
+                {
+                    reader.Close();
+                }
+            }
+            return personList;
+        }
 
 
-        private bool CheckMetadataValidity(string mdJSON)
+
+        private bool CheckMetadataValidity(string mdJSON, out string validityMessage)
         {
             bool mdIsValid = false;
             string policyURL = Configuration.PolicyServerUri + "/ingest";
+            validityMessage = string.Empty;
             try
             {
 
                 string response = EasyHttp.Send(policyURL, null, out HttpStatusCode responseStatusCode, mdJSON, EasyHttp.HttpMethod.Post, 100, "application/json");
                 if (response.Contains("success"))
                 {
+                    validityMessage = response;
                     mdIsValid = true;
                 }
             }
-            catch
+            catch(Exception ex)
             {
+                validityMessage = ex.Message;
                 mdIsValid = false;
             }
             return mdIsValid;
@@ -554,7 +589,6 @@ namespace Pacifica.DMS_Metadata
                 else
                     uploadMetadata.SubFolder = string.Empty;
             }
-
             uploadMetadata.EUSInstrumentID = Utilities.GetDictionaryValue(taskParams, "EUS_Instrument_ID", string.Empty);
             uploadMetadata.EUSProposalID = Utilities.GetDictionaryValue(taskParams, "EUS_Proposal_ID", string.Empty);
 

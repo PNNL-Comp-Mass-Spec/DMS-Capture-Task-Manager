@@ -203,9 +203,8 @@ namespace CaptureTaskManager
         public static bool CleanWorkDir(string workDir)
         {
             const float HoldoffSeconds = 0.1f;
-            string strFailureMessage;
 
-            return CleanWorkDir(workDir, HoldoffSeconds, out strFailureMessage);
+            return CleanWorkDir(workDir, HoldoffSeconds, out string strFailureMessage);
         }
 
         /// <summary>
@@ -331,10 +330,7 @@ namespace CaptureTaskManager
             clsToolReturnData retData,
             out string xmlServerResponse)
         {
-            bool lookupError;
-            string errorMessage;
-
-            xmlServerResponse = statusChecker.GetIngestStatus(statusURI, cookieJar, out lookupError, out errorMessage);
+            xmlServerResponse = statusChecker.GetIngestStatus(statusURI, cookieJar, out bool lookupError, out string errorMessage);
 
             if (lookupError)
             {
@@ -837,8 +833,7 @@ namespace CaptureTaskManager
 
                 Thread.Sleep(100);
 
-                string strVersion;
-                success = ReadVersionInfoFile(dllFilePath, versionInfoFilePath, out strVersion);
+                success = ReadVersionInfoFile(dllFilePath, versionInfoFilePath, out string strVersion);
 
                 // Delete the version info file
                 try

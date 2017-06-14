@@ -42,8 +42,7 @@ namespace Pacifica.Core
         {
             var valueText = GetDictionaryValue(dictionary, keyName, valueIfMissing.ToString());
 
-            int value;
-            if (int.TryParse(valueText, out value))
+            if (int.TryParse(valueText, out int value))
                 return value;
 
             return valueIfMissing;
@@ -51,9 +50,8 @@ namespace Pacifica.Core
 
         public static string GetDictionaryValue(Dictionary<string, string> dictionary, string keyName, string valueIfMissing)
         {
-            string value;
 
-            if (dictionary.TryGetValue(keyName, out value))
+            if (dictionary.TryGetValue(keyName, out string value))
             {
                 return value ?? valueIfMissing;
             }
@@ -64,24 +62,23 @@ namespace Pacifica.Core
         public static List<FileInfoObject> GetFileListFromMetadataObject(List<Dictionary<string, object>> metadataObject)
         {
 			var fileList = new List<FileInfoObject>();
-			object destTable;
-			foreach (Dictionary<string, object> item in metadataObject)
-			{
-				if (item.TryGetValue("destinationTable", out destTable))
-				{
-					string t = (string)destTable;
-					if (t.ToLower() == "files")
-					{
-						fileList.Add(new FileInfoObject(
-							(string)item["absolutelocalpath"],
-							(string)item["subdir"],
-							(string)item["hashsum"]
-						));
-					}
-				}
-			}
+            foreach (Dictionary<string, object> item in metadataObject)
+            {
+                if (item.TryGetValue("destinationTable", out object destTable))
+                {
+                    string t = (string)destTable;
+                    if (t.ToLower() == "files")
+                    {
+                        fileList.Add(new FileInfoObject(
+                            (string)item["absolutelocalpath"],
+                            (string)item["subdir"],
+                            (string)item["hashsum"]
+                        ));
+                    }
+                }
+            }
 
-			return fileList;
+            return fileList;
         }
 
         public static DirectoryInfo GetTempDirectory()
@@ -224,8 +221,7 @@ namespace Pacifica.Core
 
             foreach (var item in lstStrings)
             {
-                int value;
-                if (int.TryParse(item, out value))
+                if (int.TryParse(item, out int value))
                     lstInts.Add(value);
                 else
                     throw new InvalidCastException("JsonArrayToIntList cannot convert item '" + value + "' to an integer");

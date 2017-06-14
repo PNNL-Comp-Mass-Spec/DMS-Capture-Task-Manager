@@ -9,7 +9,7 @@ namespace Pacifica.Core
         /// <summary>
         /// Policy Server host name on the production server
         /// </summary>
-        public const string DEFAULT_POLICY_SERVER_HOST_NAME = "policydev.my.emsl.pnl.gov";
+        public const string DEFAULT_POLICY_SERVER_HOST_NAME = "policydmsdev.my.emsl.pnl.gov";
 
         
         /// <summary>

@@ -280,11 +280,10 @@ namespace ArchiveStatusCheckPlugin
 
                 try
                 {
-                    string xmlServerResponse;
                     var ingestSuccess = GetMyEMSLIngestStatus(
-                        m_Job, statusChecker, statusInfo.StatusURI,
-                        statusInfo.EUS_InstrumentID, statusInfo.EUS_ProposalID, statusInfo.EUS_UploaderID,
-                        cookieJar, mRetData, out xmlServerResponse);
+    m_Job, statusChecker, statusInfo.StatusURI,
+    statusInfo.EUS_InstrumentID, statusInfo.EUS_ProposalID, statusInfo.EUS_UploaderID,
+    cookieJar, mRetData, out string xmlServerResponse);
 
                     var ingestStepsCompleted = statusChecker.IngestStepCompletionCount(xmlServerResponse);
 
@@ -366,9 +365,8 @@ namespace ArchiveStatusCheckPlugin
             foreach (var unverifiedEntry in dctUnverifiedURIs)
             {
                 var unverifiedStatusNum = unverifiedEntry.Key;
-                clsIngestStatusInfo unverifiedStatusInfo;
 
-                if (!dctStatusData.TryGetValue(unverifiedStatusNum, out unverifiedStatusInfo))
+                if (!dctStatusData.TryGetValue(unverifiedStatusNum, out clsIngestStatusInfo unverifiedStatusInfo))
                     continue;
 
                 var unverifiedSubfolder = unverifiedStatusInfo.Subfolder;
@@ -425,8 +423,7 @@ namespace ArchiveStatusCheckPlugin
             byte ingestStepsCompleted = 0;
             foreach (var statusNum in statusNums)
             {
-                clsIngestStatusInfo statusInfo;
-                if (dctStatusData.TryGetValue(statusNum, out statusInfo))
+                if (dctStatusData.TryGetValue(statusNum, out clsIngestStatusInfo statusInfo))
                 {
                     ingestStepsCompleted = Math.Max(ingestStepsCompleted, statusInfo.IngestStepsCompletedNew);
                 }
@@ -541,8 +538,7 @@ namespace ArchiveStatusCheckPlugin
                             var eusUploaderID = clsConversion.GetDbValue(reader, 6, 0);
                             var errorCode = clsConversion.GetDbValue(reader, 7, 0);
 
-                            clsIngestStatusInfo statusInfo;
-                            if (!dctStatusData.TryGetValue(statusNum, out statusInfo))
+                            if (!dctStatusData.TryGetValue(statusNum, out clsIngestStatusInfo statusInfo))
                             {
                                 statusInfo = new clsIngestStatusInfo(statusNum, uri);
                                 dctStatusData.Add(statusNum, statusInfo);
@@ -588,9 +584,8 @@ namespace ArchiveStatusCheckPlugin
 
                 foreach (var statusNum in statusNumsToUpdate)
                 {
-                    clsIngestStatusInfo statusInfo;
 
-                    if (!dctStatusData.TryGetValue(statusNum, out statusInfo))
+                    if (!dctStatusData.TryGetValue(statusNum, out clsIngestStatusInfo statusInfo))
                     {
                         continue;
                     }

@@ -234,8 +234,10 @@ namespace Pacifica.Core
             }
             else
             {
-                var c = new CredentialCache();
-                c.Add(new Uri(url), "Basic", new NetworkCredential(loginCredentials.UserName, loginCredentials.SecurePassword));
+                var c = new CredentialCache
+                {
+                    { new Uri(url), "Basic", new NetworkCredential(loginCredentials.UserName, loginCredentials.SecurePassword) }
+                };
                 request.Credentials = c;
             }
 
@@ -921,8 +923,7 @@ namespace Pacifica.Core
 
         private static long AddTarFileContentLength(string pathInArchive, long fileSizeBytes)
         {
-            int headerBlocks;
-            return AddTarFileContentLength(pathInArchive, fileSizeBytes, out headerBlocks);
+            return AddTarFileContentLength(pathInArchive, fileSizeBytes, out int headerBlocks);
         }
 
         private static long AddTarFileContentLength(string pathInArchive, long fileSizeBytes, out int headerBlocks)
