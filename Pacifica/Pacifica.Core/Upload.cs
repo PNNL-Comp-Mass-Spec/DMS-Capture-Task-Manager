@@ -244,9 +244,16 @@ namespace Pacifica.Core
             EasyHttp.eDebugMode debugMode,
             out string statusURL)
         {
+
             statusURL = string.Empty;
             ErrorMessage = string.Empty;
 
+            if (!File.Exists(Configuration.CLIENT_CERT_FILEPATH))
+            {
+                ErrorMessage = "Authentication failure; cert file not found at " + Configuration.CLIENT_CERT_FILEPATH;
+                RaiseErrorEvent("StartUpload", ErrorMessage);
+                return false;
+            }
 
             var fileList = Utilities.GetFileListFromMetadataObject(metadataObject);
             // Grab the list of files from the top-level "file" object

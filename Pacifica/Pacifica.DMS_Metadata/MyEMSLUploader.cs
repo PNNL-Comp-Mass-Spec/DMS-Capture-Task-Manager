@@ -142,6 +142,11 @@ namespace Pacifica.DMS_Metadata
 
             _mdContainer.UseTestInstance = UseTestInstance;
 
+            if (!File.Exists(Configuration.CLIENT_CERT_FILEPATH))
+            {
+                throw new Exception("Authentication failure; MyEMSL certificate file not found at " + Configuration.CLIENT_CERT_FILEPATH);
+            }
+
             // Look for files to upload, compute a Sha-1 hash for each, and compare those hashes to existing files in MyEMSL
             _mdContainer.SetupMetadata(m_TaskParams, m_MgrParams, debugMode);
 

@@ -55,7 +55,7 @@ namespace Pacifica.Core
         //public const string TEST_INGEST_HOST_NAME = "test3.my.emsl.pnl.gov";
         public const string TEST_INGEST_HOST_NAME = "ingestdmsdev.my.emsl.pnl.gov";
 
-        public const string CLIENT_CERT_FILEPATH = "C:\\client_certs\\svc-dms.pfx";
+        public const string CLIENT_CERT_FILEPATH = @"C:\client_certs\svc-dms.pfx";
         public const string CLIENT_CERT_PASSWORD = "dms4fun";
 
         /// <summary>
