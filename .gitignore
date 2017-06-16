@@ -23,3 +23,9 @@ Pacifica/Pacifica.Core/bin/
 Pacifica/Pacifica.Core/obj/
 Pacifica/Pacifica.DMS_Metadata/bin/
 Pacifica/Pacifica.DMS_Metadata/obj/
+
+DeployedFiles/*.dll
+DeployedFiles/*/*.dll
+DeployedFiles/*.pdb
+DeployedFiles/*.exe
+DeployedFiles/*.lnk
