@@ -185,19 +185,17 @@ namespace Pacifica.DMS_Metadata
         {
           
             string queryString =
-                "SELECT TOP 1 * FROM V_MyEMSL_Supplemental_Metadata WHERE dataset_id = " + dataset_id.ToString();
+                "SELECT TOP 1 * FROM V_MyEMSL_Supplemental_Metadata WHERE dataset_id = " + dataset_id;
+
             using (SqlConnection connection = new SqlConnection(dmsConnectionString))
             {
-                SqlCommand command = new SqlCommand(
-                    queryString, connection);
+                SqlCommand command = new SqlCommand(queryString, connection);
                 connection.Open();
-                SqlDataReader reader = command.ExecuteReader();
-                try
+                using (SqlDataReader reader = command.ExecuteReader())
                 {
-                    if (reader.HasRows)
+
+                    if (reader.HasRows && reader.Read())
                     {
-                        while (reader.Read())
-                        {
                             uploadMetadata.CampaignID = (int)reader["campaign_id"];
                             uploadMetadata.CampaignName = reader["campaign_name"].ToString();
                             uploadMetadata.ExperimentID = (int)reader["experiment_id"];
@@ -214,42 +212,34 @@ namespace Pacifica.DMS_Metadata
                             uploadMetadata.UserOfRecordList = GetRequestedRunUsers(uploadMetadata.RequestedRunID, dmsConnectionString);
                         }
                     }
-                }
-                finally
-                {
-                    // Always call Close when done reading.
-                    reader.Close();
-                }
+
+                } // Close reader
+
+                uploadMetadata.UserOfRecordList = GetRequestedRunUsers(connection, uploadMetadata.RequestedRunID, dmsConnectionString);
+
             }
 
-            return true;
+           return true;
         }
 
-        private static List<int> GetRequestedRunUsers(int RequestedRunID, string dmsConnectionString)
+        private static List<int> GetRequestedRunUsers(SqlConnection connection, int RequestedRunID, string dmsConnectionString)
         {
             List<int> personList = new List<int>();
-            string queryString = "SELECT EUS_Person_ID FROM T_Requested_Run_EUS_Users where Request_ID = " + RequestedRunID.ToString();
-            using (SqlConnection connection = new SqlConnection(dmsConnectionString))
+            string queryString = "SELECT EUS_Person_ID FROM T_Requested_Run_EUS_Users where Request_ID = " + RequestedRunID;
+
+            SqlCommand command = new SqlCommand(queryString, connection);
+            using (SqlDataReader reader = command.ExecuteReader())
             {
-                SqlCommand command = new SqlCommand(
-                    queryString, connection);
-                connection.Open();
-                SqlDataReader reader = command.ExecuteReader();
-                try
+                if (reader.HasRows)
                 {
-                    if (reader.HasRows)
+                    while (reader.Read())
                     {
-                        while(reader.Read())
-                        {
                             personList.Add((int)reader["EUS_Person_ID"]);
                         }
                     }
                 }
-                finally
-                {
-                    reader.Close();
-                }
             }
+
             return personList;
         }
 
@@ -549,7 +539,7 @@ namespace Pacifica.DMS_Metadata
             var perspective = Utilities.GetDictionaryValue(mgrParams, "perspective", "client");
             string driveLocation;
 
-            // Determine the drive location based on perspective 
+            // Determine the drive location based on perspective
             // (client perspective means running on a Proto storage server; server perspective means running on another computer)
             if (perspective == "client")
                 driveLocation = Utilities.GetDictionaryValue(taskParams, "Storage_Vol_External", string.Empty);
