@@ -434,8 +434,11 @@ namespace Pacifica.DMS_Metadata
             var remoteFileInfoList = Utilities.JsonArrayToDictionaryList(jsa);
 
             // Keys in this dictionary are relative file paths; values are hash values
-            // Note that two files in the same directory could have the same hash value, so we cannot simply compare file hashes
-            var remoteFiles = new Dictionary<string, string>();
+            // A given remote file could have multiple hash values if multiple versions of the file have been uploaded
+            var remoteFiles = new Dictionary<string, SortedSet<string>>();
+
+            // Note that two files in the same directory could have the same hash value (but different names),
+            // so we cannot simply compare file hashes
 
             foreach (var fileObj in remoteFileInfoList)
             {
@@ -444,14 +447,25 @@ namespace Pacifica.DMS_Metadata
                 var subFolder = (string)fileObj["subdir"];
 
                 var relativeFilePath = Path.Combine(subFolder, fileName);
-                if (remoteFiles.ContainsKey(relativeFilePath))
+
+                if (remoteFiles.TryGetValue(relativeFilePath, out var hashValues))
                 {
-                    OnError("CompareDatasetContentsWithMyEMSLMetadata",
-                            "Skipping duplicate remote file: " + relativeFilePath + "; hash " + fileHash);
-                    continue;
+                    if (hashValues.Contains(fileHash))
+                    {
+                        OnError("CompareDatasetContentsWithMyEMSLMetadata",
+                                "Remote file listing reports the same file with the same hash more than once; ignoring: " + relativeFilePath +
+                                " with hash " + fileHash);
+                    }
+                    else
+                    {
+                        hashValues.Add(fileHash);
+                    }
+                }
+                else
+                {
+                    remoteFiles.Add(relativeFilePath, new SortedSet<string> { fileHash });
                 }
 
-                remoteFiles.Add(relativeFilePath, fileHash);
             }
 
             // Compare the files in remoteFileInfoList to those in candidateFilesToUpload
@@ -465,9 +479,9 @@ namespace Pacifica.DMS_Metadata
             {
                 var relativeFilePath = Path.Combine(fileObj.RelativeDestinationDirectory, fileObj.FileName);
 
-                if (remoteFiles.TryGetValue(relativeFilePath, out var remoteFileHash))
+                if (remoteFiles.TryGetValue(relativeFilePath, out var hashValues))
                 {
-                    if (fileObj.Sha1HashHex == remoteFileHash)
+                    if (hashValues.Contains(fileObj.Sha1HashHex))
                     {
                         continue;
                     }
