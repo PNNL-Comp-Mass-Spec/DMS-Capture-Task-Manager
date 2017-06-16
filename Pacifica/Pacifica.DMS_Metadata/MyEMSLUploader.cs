@@ -158,9 +158,6 @@ namespace Pacifica.DMS_Metadata
             _mdContainer.CreateLockFiles();
             bool success;
 
-            // make a call out to the policy server to check validity of metadata object
-            
-
             try
             {
                 success = myEMSLUpload.StartUpload(_mdContainer.MetadataObject, debugMode, out statusURL);

@@ -1365,59 +1365,7 @@ namespace CaptureTaskManager
             m_ConfigChanged = true;
             m_FileWatcher.EnableRaisingEvents = false;
         }
-
-        // Deprecated in January 2017
-        //private void OnBroadcastReceived(string cmdText)
-        //{
-        //    LogDebug("clsMainProgram.OnBroadcasetReceived event; message = " + cmdText);
-
-        //    clsBroadcastCmd recvCmd;
-
-        //    // Parse the received message
-        //    try
-        //    {
-        //        recvCmd = clsXMLTools.ParseBroadcastXML(cmdText);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        LogError("Exception while parsing broadcast data", ex);
-
-        //        return;
-        //    }
-
-        //    // Determine if the message applies to this machine
-        //    if (!recvCmd.MachineList.Contains(m_MgrName))
-        //    {
-        //        // Received command doesn't apply to this manager
-        //        LogDebug("Received command not applicable to this manager instance");
-
-        //        return;
-        //    }
-
-        //    // Get the command and take appropriate action
-        //    switch (recvCmd.MachCmd.ToLower())
-        //    {
-        //        case "shutdown":
-        //            m_LoopExitCode = LoopExitCode.ShutdownCmdReceived;
-        //            m_Running = false;
-        //            break;
-        //        case "readconfig":
-        //            LogMessage("Reload config message received");
-        //            m_ConfigChanged = true;
-        //            m_Running = false;
-        //            break;
-        //        default:
-        //            // Invalid command received; do nothing except log it
-        //            LogWarning("Invalid broadcast command received: " + cmdText);
-        //            break;
-        //    }
-        //}
-
-        //private void OnCommandReceived(string cmdText)
-        //{
-        //    //TODO: (Future)
-        //}
-
+        
         void OnStatusMonitorUpdateReceived(string msg)
         {
             if (m_MsgQueueInitSuccess)
