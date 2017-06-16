@@ -172,11 +172,15 @@ namespace Pacifica.DMS_Metadata
             var lstUnmatchedFiles = CompareDatasetContentsWithMyEMSLMetadata(lstDatasetFilesToArchive, uploadMetadata);
 
             mMetadataObject = Upload.CreatePacificaMetadataObject(uploadMetadata, lstUnmatchedFiles, out Upload.EUSInfo eusInfo);
-            string mdJSON = Utilities.ObjectToJson(mMetadataObject);
-            if (!CheckMetadataValidity(mdJSON, out string validityMessage))
+
+            if (lstUnmatchedFiles.Count > 0)
             {
-                OnError("CheckMetadataValidity", validityMessage);
-                return false;
+                var mdJSON = Utilities.ObjectToJson(mMetadataObject);
+                if (!CheckMetadataValidity(mdJSON, out string validityMessage))
+                {
+                    OnError("CheckMetadataValidity", validityMessage);
+                    return false;
+                }
             }
 
             var metadataDescription = Upload.GetMetadataObjectDescription(mMetadataObject);

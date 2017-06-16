@@ -162,6 +162,16 @@ namespace Pacifica.DMS_Metadata
 
             EUSInfo = _mdContainer.EUSInfo;
 
+            var fileList = Utilities.GetFileListFromMetadataObject(_mdContainer.MetadataObject);
+            if (fileList.Count == 0)
+            {
+                OnDebugEvent("StartUpload", "File list is empty; nothing to do");
+                statusURL = string.Empty;
+                var e = new UploadCompletedEventArgs(string.Empty);
+                UploadCompleted?.Invoke(this, e);
+                return true;
+            }
+
             _mdContainer.CreateLockFiles();
             bool success;
 
@@ -192,6 +202,12 @@ namespace Pacifica.DMS_Metadata
 
         public event StatusUpdateEventHandler StatusUpdate;
         public event UploadCompletedEventHandler UploadCompleted;
+
+        private void OnDebugEvent(string callingFunction, string debugMessage)
+        {
+            var e = new MessageEventArgs(callingFunction, debugMessage);
+            DebugEvent?.Invoke(this, e);
+        }
 
         private void ReportMetadataDefined(string callingFunction, string metadataJSON)
         {
