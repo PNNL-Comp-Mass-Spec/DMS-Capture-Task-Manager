@@ -288,8 +288,8 @@ namespace Pacifica.Core
             var mdJson = Utilities.ObjectToJson(metadataObject);
 
             // Create the metadata.txt file
-            var metadataFilename = Path.GetTempFileName();
-            var mdTextFile = new FileInfo(metadataFilename);
+            var metadataFilePath = Path.GetTempFileName();
+            var mdTextFile = new FileInfo(metadataFilePath);
             using (var sw = mdTextFile.CreateText())
             {
                 sw.Write(mdJson);
@@ -778,56 +778,76 @@ namespace Pacifica.Core
         /// <returns></returns>
         public static string GetMetadataObjectDescription(List<Dictionary<string, object>> metadataObject)
         {
-            //object fileListObject;
-            var description = new List<string>();
-            //var instrumentIdIncluded = false;
-            string keyname;
-            string keyvalue;
-            string tableName;
-            var kvLookup = new Dictionary<string, object>();
-            int fileCount = 0;
-            object fileSize = 0;
 
-            kvLookup.Add("omics.dms.dataset_id", "Dataset_ID");
-            kvLookup.Add("omics.dms.datapackage_id", "DataPackage_ID");
-            kvLookup.Add("omics.dms.instrument", "DMS_Instrument");
-            kvLookup.Add("omics.dms.instrument_id", "EUS_Instrument_ID");
-            kvLookup.Add("Transactions.proposal", "EUS_Proposal_ID");
-            kvLookup.Add("Transactions.submitter", "EUS_User_ID");
-            kvLookup.Add("Transactions.instrument", "EUS_Instrument_ID");
+            var metadataList = new List<string>();
+            var fileCount = 0;
 
+            var kvLookup = new Dictionary<string, object>
+            {
+                {"omics.dms.dataset_id", "Dataset_ID"},
+                {"omics.dms.datapackage_id", "DataPackage_ID"},
+                {"omics.dms.instrument", "DMS_Instrument"},
+                {"omics.dms.instrument_id", "EUS_Instrument_ID"}
+            };
+
+            var transactionValueLookup = new Dictionary<string, string>
+            {
+                {"Transactions.proposal", "EUS_Proposal_ID"},
+                {"Transactions.submitter", "EUS_User_ID"},
+                {"Transactions.instrument", "EUS_Instrument_ID"}
+            };
+
+            var matchedKeys = new SortedSet<string>();
 
             foreach (Dictionary<string, object> item in metadataObject)
             {
-                if (GetDictionaryValue(item, "destinationTable", out string value))
+                if (!GetDictionaryValue(item, "destinationTable", out string tableName))
+                    continue;
+
+                if (tableName == "TransactionKeyValue")
                 {
-                    tableName = value;
-                    if (tableName == "TransactionKeyValue")
+                    if (GetDictionaryValue(item, "key", out string keyName))
                     {
-                        if (GetDictionaryValue(item, "key", out value))
+                        if (GetDictionaryValue(item, "value", out string keyValue))
                         {
-                            keyname = value;
-                            if (GetDictionaryValue(item, "value", out value))
+                            if (GetDictionaryValue(kvLookup, keyName, out string valueDescription))
                             {
-                                keyvalue = value;
-                                if(GetDictionaryValue(kvLookup, keyname, out value))
-                                {
-									description.Add(value + "=" + keyvalue);
-                                }
-
+                                metadataList.Add(valueDescription + "=" + keyValue);
+                                matchedKeys.Add(valueDescription);
                             }
-                        }
 
-                    }else if (tableName == "Files")
+                        }
+                    }
+
+                }
+                else if (tableName == "Files")
+                {
+                    if (item.TryGetValue("size", out _))
                     {
-                        if (item.TryGetValue("size", out fileSize)) {
-                            fileCount += 1;
+                        fileCount += 1;
+                    }
+
+                }
+                else
+                {
+                    if (transactionValueLookup.TryGetValue(tableName, out var valueDescription))
+                    {
+                        if (matchedKeys.Contains(valueDescription))
+                        {
+                            // This item has already been added (typically EUS_Instrument_ID)
+                            continue;
                         }
 
+                        // Include the value for this item in the description
+                        if (GetDictionaryValue(item, "value", out string keyValue))
+                        {
+                            metadataList.Add(valueDescription + "=" + keyValue);
+                            matchedKeys.Add(valueDescription);
+                        }
                     }
                 }
             }
-            return string.Join("; ", description);
+            return string.Join("; ", metadataList) + "; FileCount=" + fileCount;
 
         }
 
