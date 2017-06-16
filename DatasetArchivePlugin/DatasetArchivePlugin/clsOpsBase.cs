@@ -357,7 +357,7 @@ namespace DatasetArchivePlugin
                 MyEMSLUploadEventArgs e;
                 if (myEMSLUL == null)
                 {
-                    var eusInfo = new Upload.udtEUSInfo();
+                    var eusInfo = new Upload.EUSInfo();
                     eusInfo.Clear();
 
                     e = new MyEMSLUploadEventArgs(

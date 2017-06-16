@@ -51,7 +51,7 @@ namespace Pacifica.DMS_Metadata
             Bytes = 0;
             ErrorCode = string.Empty;
 
-            EUSInfo = new Upload.udtEUSInfo();
+            EUSInfo = new Upload.EUSInfo();
             EUSInfo.Clear();
 
             m_MgrParams = mgrParams;
@@ -121,7 +121,7 @@ namespace Pacifica.DMS_Metadata
         /// <summary>
         /// EUS Info
         /// </summary>
-        public Upload.udtEUSInfo EUSInfo
+        public Upload.EUSInfo EUSInfo
         {
             get;
             private set;

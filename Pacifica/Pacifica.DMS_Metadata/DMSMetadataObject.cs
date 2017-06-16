@@ -73,7 +73,7 @@ namespace Pacifica.DMS_Metadata
         /// <summary>
         /// EUS Info
         /// </summary>
-        public Upload.udtEUSInfo EUSInfo
+        public Upload.EUSInfo EUSInfo
         {
             get;
             private set;
@@ -165,9 +165,10 @@ namespace Pacifica.DMS_Metadata
             // Find the files that are new or need to be updated
             var lstUnmatchedFiles = CompareDatasetContentsWithMyEMSLMetadata(lstDatasetFilesToArchive, uploadMetadata, debugMode);
 
-            mMetadataObject = Upload.CreatePacificaMetadataObject(uploadMetadata, lstUnmatchedFiles, out Upload.udtEUSInfo eusInfo);
+            mMetadataObject = Upload.CreatePacificaMetadataObject(uploadMetadata, lstUnmatchedFiles, out Upload.EUSInfo eusInfo);
             string mdJSON = Utilities.ObjectToJson(mMetadataObject);
-            if (!CheckMetadataValidity(mdJSON, out string validityMessage)) {
+            if (!CheckMetadataValidity(mdJSON, out string validityMessage))
+            {
                 OnError("CheckMetadataValidity", validityMessage);
                 return false;
             }

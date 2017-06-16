@@ -10,7 +10,7 @@ namespace DatasetArchivePlugin
         public readonly long BytesUploaded;
         public readonly double UploadTimeSeconds;
         public readonly string StatusURI;
-        public readonly Upload.udtEUSInfo EUSInfo;
+        public readonly Upload.EUSInfo EUSInfo;
         public readonly int ErrorCode;
         public readonly bool UsedTestInstance;
 
@@ -20,7 +20,7 @@ namespace DatasetArchivePlugin
             long iBytes,
             double dUploadTimeSeconds,
             string sStatusURI,
-            Upload.udtEUSInfo eusInfo,
+            Upload.EUSInfo eusInfo,
             int iErrorCode,
             bool usedTestInstance)
         {

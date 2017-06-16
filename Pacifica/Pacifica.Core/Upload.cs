@@ -21,7 +21,7 @@ namespace Pacifica.Core
         // VOrbiETD04 is 34127
         private const string UNKNOWN_INSTRUMENT_EUS_INSTRUMENT_ID = "34127";
 
-        public struct udtEUSInfo
+        public class EUSInfo
         {
             /// <summary>
             /// EUS instrument ID
@@ -43,6 +43,11 @@ namespace Pacifica.Core
                 EUSInstrumentID = 0;
                 EUSProposalID = string.Empty;
                 EUSUploaderID = 0;
+            }
+
+            public override string ToString()
+            {
+                return "EUSInstrumentID " + EUSInstrumentID + ", Uploader " + EUSUploaderID + ", Proposal " + EUSProposalID;
             }
         }
 
@@ -415,9 +420,9 @@ namespace Pacifica.Core
         public static List<Dictionary<string, object>> CreatePacificaMetadataObject(
             udtUploadMetadata uploadMetadata,
             List<FileInfoObject> lstUnmatchedFiles,
-            out udtEUSInfo eusInfo)
+            out EUSInfo eusInfo)
         {
-            eusInfo = new udtEUSInfo();
+            eusInfo = new EUSInfo();
             eusInfo.Clear();
 
             // new metadata object is just a list of dictionary entries
@@ -643,7 +648,7 @@ namespace Pacifica.Core
         public static Dictionary<string, object> CreateMetadataObject(
             udtUploadMetadata uploadMetadata,
             List<FileInfoObject> lstUnmatchedFiles,
-            out udtEUSInfo eusInfo)
+            out EUSInfo eusInfo)
         {
             var metadataObject = new Dictionary<string, object>();
             var groupObject = new List<Dictionary<string, string>>();
@@ -652,7 +657,7 @@ namespace Pacifica.Core
             // If empty, use 34127, which is VOrbiETD04
             var eusInstrumentID = GetEUSInstrumentID(uploadMetadata.EUSInstrumentID.ToString(), UNKNOWN_INSTRUMENT_EUS_INSTRUMENT_ID);
 
-            eusInfo = new udtEUSInfo();
+            eusInfo = new EUSInfo();
             eusInfo.Clear();
 
             // Set up the MyEMSL tagging information
