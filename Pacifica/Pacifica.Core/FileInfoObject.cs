@@ -158,7 +158,10 @@ namespace Pacifica.Core
 
         public override string ToString()
         {
-            return AbsoluteLocalPath;
+            if (string.IsNullOrWhiteSpace(Sha1HashHex))
+                return AbsoluteLocalPath;
+
+            return Sha1HashHex.Substring(0, 8) + ": " + AbsoluteLocalPath;
         }
 
         #endregion
