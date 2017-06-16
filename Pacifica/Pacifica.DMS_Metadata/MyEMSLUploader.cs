@@ -43,6 +43,11 @@ namespace Pacifica.DMS_Metadata
             }
         }
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="mgrParams"></param>
+        /// <param name="taskParams"></param>
         public MyEMSLUploader(Dictionary<string, string> mgrParams, Dictionary<string, string> taskParams)
         {
             StatusURI = string.Empty;

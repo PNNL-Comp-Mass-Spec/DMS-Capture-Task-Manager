@@ -1,5 +1,5 @@
 ﻿//*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/10/2009
@@ -345,7 +345,7 @@ namespace CaptureTaskManager
 
                     // Write the file
                     XWriter.WriteStartDocument(true);
-                    
+
                     // Root level element
                     XWriter.WriteStartElement("Root");
                     XWriter.WriteStartElement("Manager");
@@ -520,7 +520,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Initializes the status from a file, if file exists
         /// </summary>
-        /// 
+        ///
         public void InitStatusFromFile()
         {
             // Verify status file exists

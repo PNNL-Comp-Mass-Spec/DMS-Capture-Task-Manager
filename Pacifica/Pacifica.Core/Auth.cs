@@ -8,6 +8,7 @@ using System.Text;
 
 namespace Pacifica.Core
 {
+    [Obsolete("This class is deprecated")]
     public class Auth
     {
         private static readonly object cookieLock = new object();
@@ -180,7 +181,7 @@ namespace Pacifica.Core
         /// <param name="userName">Username</param>
         /// <param name="password">Password</param>
         /// <param name="throwExceptions">Throws / Re-throws exceptions on error if true.</param>
-        /// <returns>On success a NetworkCredential instance is returned.  If throwExceptions equals 
+        /// <returns>On success a NetworkCredential instance is returned.  If throwExceptions equals
         /// true all exceptions will propogate up the stack, otherwise null is returned.</returns>
         public NetworkCredential GetCredential(string userName, SecureString password, bool throwExceptions = true)
         {
@@ -318,7 +319,7 @@ namespace Pacifica.Core
             }
             catch
             {
-                // Error occurred; integrated authentication did not work (Negotiate protocol) 
+                // Error occurred; integrated authentication did not work (Negotiate protocol)
                 // Explicit credentials will be required
                 result = true;
             }

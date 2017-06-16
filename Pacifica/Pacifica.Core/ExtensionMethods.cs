@@ -12,7 +12,7 @@ namespace Pacifica.Core
         /// </summary>
         /// <param name="dt">A DateTime to be converted.</param>
         /// <returns>Seconds since January 1st, 1970 00:00:00 UTC.</returns>
-        /// <remarks>Inputing a DateTime with Kind set to anything other than DateTimeKind.Utc 
+        /// <remarks>Inputing a DateTime with Kind set to anything other than DateTimeKind.Utc
         /// will convert the structure to UTC before adjusting to the UNIX epoch.</remarks>
         public static ulong ToUnixTime(this DateTime dt)
         {

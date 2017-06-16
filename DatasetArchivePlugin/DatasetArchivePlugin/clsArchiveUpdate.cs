@@ -15,7 +15,7 @@ namespace DatasetArchivePlugin
     class clsArchiveUpdate : clsOpsBase
     {
         //*********************************************************************************************************
-        // Tools to perform archive update operations
+        // Tools to perform both dataset archive and archive update operations
         //**********************************************************************************************************
 
         #region "Class variables"
@@ -43,7 +43,7 @@ namespace DatasetArchivePlugin
 
         #region "Methods"
         /// <summary>
-        /// Performs an archive update task (overrides base)
+        /// Performs a dataset archive or archive update task
         /// </summary>
         /// <returns>TRUE for success, FALSE for failure</returns>
         public override bool PerformTask()
