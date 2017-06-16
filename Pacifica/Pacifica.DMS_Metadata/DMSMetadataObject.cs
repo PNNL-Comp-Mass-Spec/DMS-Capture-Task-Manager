@@ -426,36 +426,65 @@ namespace Pacifica.DMS_Metadata
             var metadataURL = Configuration.MetadataServerUri + "/fileinfo/files_for_keyvalue/";
             metadataURL += "omics.dms.dataset_id/" + datasetID;
 
+            // Retrieve a list of files already in MyEMSL for this dataset
+            var fileInfoListJSON = EasyHttp.Send(metadataURL, out HttpStatusCode responseStatusCode);
 
-            string fileInfoListJSON = EasyHttp.Send(metadataURL, out HttpStatusCode responseStatusCode);
+            // Convert the response to a dictionary
             var jsa = (Jayrock.Json.JsonArray)JsonConvert.Import(fileInfoListJSON);
-            var fileInfoList = Utilities.JsonArrayToDictionaryList(jsa);
-            List<FileInfoObject> returnList = new List<FileInfoObject>();
-            Dictionary<string, string> hashList = new Dictionary<string, string>();
-            foreach (Dictionary<string, object> fileObj in fileInfoList)
+            var remoteFileInfoList = Utilities.JsonArrayToDictionaryList(jsa);
+
+            // Keys in this dictionary are relative file paths; values are hash values
+            // Note that two files in the same directory could have the same hash value, so we cannot simply compare file hashes
+            var remoteFiles = new Dictionary<string, string>();
+
+            foreach (var fileObj in remoteFileInfoList)
             {
-                hashList.Add((string)fileObj["hashsum"], (string)fileObj["subdir"]);
+                var fileName = (string)fileObj["name"];
+                var fileHash = (string)fileObj["hashsum"];
+                var subFolder = (string)fileObj["subdir"];
+
+                var relativeFilePath = Path.Combine(subFolder, fileName);
+                if (remoteFiles.ContainsKey(relativeFilePath))
+                {
+                    OnError("CompareDatasetContentsWithMyEMSLMetadata",
+                            "Skipping duplicate remote file: " + relativeFilePath + "; hash " + fileHash);
+                    continue;
+                }
+
+                remoteFiles.Add(relativeFilePath, fileHash);
             }
 
+            // Compare the files in remoteFileInfoList to those in candidateFilesToUpload
+            // Note that two files in the same directory could have the same hash value, so we cannot simply compare file hashes
+
+            var missingFiles = new List<FileInfoObject>();
             TotalFileCountNew = 0;
             TotalFileCountUpdated = 0;
 
-            foreach (FileInfoObject fileObj in fileList)
+            foreach (var fileObj in candidateFilesToUpload)
             {
-                if (!hashList.Keys.Contains(fileObj.Sha1HashHex) || fileObj.RelativeDestinationDirectory != hashList[fileObj.Sha1HashHex])
+                var relativeFilePath = Path.Combine(fileObj.RelativeDestinationDirectory, fileObj.FileName);
+
+                if (remoteFiles.TryGetValue(relativeFilePath, out var remoteFileHash))
                 {
-                    returnList.Add(fileObj);
-                    TotalFileCountNew++;
-                    TotalFileSizeToUpload += fileObj.FileSizeInBytes;
+                    if (fileObj.Sha1HashHex == remoteFileHash)
+                    {
+                        continue;
+                    }
+
+                    TotalFileCountUpdated++;
                 }
                 else
                 {
-                    TotalFileCountUpdated++;
+                    TotalFileCountNew++;
                 }
 
+                missingFiles.Add(fileObj);
+
+                TotalFileSizeToUpload += fileObj.FileSizeInBytes;
             }
 
-            return returnList;
+            return missingFiles;
 
         }
 
