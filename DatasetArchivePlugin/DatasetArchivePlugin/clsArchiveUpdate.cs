@@ -77,7 +77,7 @@ namespace DatasetArchivePlugin
             if (debugMode != Pacifica.Core.EasyHttp.eDebugMode.DebugDisabled)
                 OnStatusEvent("Calling UploadToMyEMSLWithRetry with debugMode=" + debugMode);
 
-            const bool PUSH_TO_TEST_SERVER = false;
+            const bool PUSH_TO_TEST_SERVER = true;
 
             var debugTestInstanceOnly = PUSH_TO_TEST_SERVER;
 
@@ -121,13 +121,11 @@ namespace DatasetArchivePlugin
 
             // Also upload a copy of the data to the MyEMSL test server
 
-            /*
+
             var testCopySuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts, recurse, debugMode, useTestInstance: true);
             if (!testCopySuccess)
             {
-                statusMessage = "MyEMSL test server upload failed";
-                AppendToString(m_WarningMsg, statusMessage);
-                OnErrorEvent(statusMessage);
+                OnErrorEvent("MyEMSL test server upload failed");
             }
             else
             {
@@ -136,7 +134,7 @@ namespace DatasetArchivePlugin
             }
 
             return true;
-            */
+
         }
 
         /// <summary>

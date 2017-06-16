@@ -23,7 +23,7 @@ namespace DatasetArchivePlugin
         //**********************************************************************************************************
 
         #region "Constants"
-        protected const string SP_NAME_STORE_MYEMSL_STATS = "StoreMyEMSLUploadStats_Copy";
+        protected const string SP_NAME_STORE_MYEMSL_STATS = "StoreMyEMSLUploadStats";
         #endregion
 
         #region "Class-wide Variables"
