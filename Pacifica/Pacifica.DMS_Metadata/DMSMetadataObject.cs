@@ -196,21 +196,19 @@ namespace Pacifica.DMS_Metadata
 
                     if (reader.HasRows && reader.Read())
                     {
-                            uploadMetadata.CampaignID = (int)reader["campaign_id"];
-                            uploadMetadata.CampaignName = reader["campaign_name"].ToString();
-                            uploadMetadata.ExperimentID = (int)reader["experiment_id"];
-                            uploadMetadata.ExperimentName = reader["experiment_name"].ToString();
-                            uploadMetadata.OrganismName = reader["organism_name"].ToString();
-                            uploadMetadata.NCBITaxonomyID = (int)reader["ncbi_taxonomy_id"];
-                            uploadMetadata.OrganismID = (int)reader["organism_id"];
-                            uploadMetadata.AcquisitionTime = reader["acquisition_time"].ToString();
-                            uploadMetadata.AcquisitionLengthMin = (int)reader["acquisition_length"];
-                            uploadMetadata.NumberOfScans = (int)reader["number_of_scans"];
-                            uploadMetadata.SeparationType = reader["separation_type"].ToString();
-                            uploadMetadata.DatasetType = reader["dataset_type"].ToString();
-                            uploadMetadata.RequestedRunID = (int)reader["requested_run_id"];
-                            uploadMetadata.UserOfRecordList = GetRequestedRunUsers(uploadMetadata.RequestedRunID, dmsConnectionString);
-                        }
+                        uploadMetadata.CampaignID = GetDbValue(reader, "campaign_id", 0);
+                        uploadMetadata.CampaignName = GetDbValue(reader, "campaign_name", "");
+                        uploadMetadata.ExperimentID = GetDbValue(reader, "experiment_id", 0);
+                        uploadMetadata.ExperimentName = GetDbValue(reader, "experiment_name", "");
+                        uploadMetadata.OrganismName = GetDbValue(reader, "organism_name", "");
+                        uploadMetadata.NCBITaxonomyID = GetDbValue(reader, "ncbi_taxonomy_id", 0);
+                        uploadMetadata.OrganismID = GetDbValue(reader, "organism_id", 0);
+                        uploadMetadata.AcquisitionTime = GetDbValue(reader, "acquisition_time", "");
+                        uploadMetadata.AcquisitionLengthMin = GetDbValue(reader, "acquisition_length", 0);
+                        uploadMetadata.NumberOfScans = GetDbValue(reader, "number_of_scans", 0);
+                        uploadMetadata.SeparationType = GetDbValue(reader, "separation_type", "");
+                        uploadMetadata.DatasetType = GetDbValue(reader, "dataset_type", "");
+                        uploadMetadata.RequestedRunID = GetDbValue(reader, "requested_run_id", 0);
                     }
 
                 } // Close reader
@@ -234,8 +232,9 @@ namespace Pacifica.DMS_Metadata
                 {
                     while (reader.Read())
                     {
-                            personList.Add((int)reader["EUS_Person_ID"]);
-                        }
+                        var personId = GetDbValue(reader, "EUS_Person_ID", 0, out bool isNull);
+                        if (!isNull)
+                            personList.Add(personId);
                     }
                 }
             }
@@ -624,6 +623,72 @@ namespace Pacifica.DMS_Metadata
         private void ReportProgress(double percentComplete, string currentTask)
         {
             OnProgressUpdate(new ProgressEventArgs(percentComplete, currentTask));
+        }
+
+        /// <summary>
+        /// Get the value for a field, using valueIfNull if the field is null
+        /// </summary>
+        /// <param name="reader">Reader</param>
+        /// <param name="fieldName">Field name</param>
+        /// <param name="valueIfNull">Integer to return if null</param>
+        /// <returns>Integer</returns>
+        private static int GetDbValue(SqlDataReader reader, string fieldName, int valueIfNull)
+        {
+            return GetDbValue(reader, fieldName, valueIfNull, out _);
+        }
+
+        /// <summary>
+        /// Get the value for a field, using valueIfNull if the field is null
+        /// </summary>
+        /// <param name="reader">Reader</param>
+        /// <param name="fieldName">Field name</param>
+        /// <param name="valueIfNull">Integer to return if null</param>
+        /// <param name="isNull">True if the value is null</param>
+        /// <returns>Integer</returns>
+        private static int GetDbValue(SqlDataReader reader, string fieldName, int valueIfNull, out bool isNull)
+        {
+            if (Convert.IsDBNull(reader[fieldName]))
+            {
+                isNull = true;
+                return valueIfNull;
+            }
+
+            isNull = false;
+            return (int)reader[fieldName];
+        }
+
+        /// <summary>
+        /// Get the value for a field, using valueIfNull if the field is null
+        /// </summary>
+        /// <param name="reader">Reader</param>
+        /// <param name="fieldName">Field name</param>
+        /// <param name="valueIfNull">String to return if null</param>
+        /// <returns>String</returns>
+        private static string GetDbValue(SqlDataReader reader, string fieldName, string valueIfNull)
+        {
+            return GetDbValue(reader, fieldName, valueIfNull, out _);
+        }
+
+        /// <summary>
+        /// Get the value for a field, using valueIfNull if the field is null
+        /// </summary>
+        /// <param name="reader">Reader</param>
+        /// <param name="fieldName">Field name</param>
+        /// <param name="valueIfNull">String to return if null</param>
+        /// <param name="isNull">True if the value is null</param>
+        /// <returns>String</returns>
+        private static string GetDbValue(SqlDataReader reader, string fieldName, string valueIfNull, out bool isNull)
+        {
+            if (Convert.IsDBNull(reader[fieldName]))
+            {
+                isNull = true;
+                return valueIfNull;
+            }
+
+            isNull = false;
+
+            // Use .ToString() and not a string cast to allow for DateTime fields to convert to strings
+            return reader[fieldName].ToString();
         }
 
 
