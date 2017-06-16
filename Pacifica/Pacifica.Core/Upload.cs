@@ -257,12 +257,12 @@ namespace Pacifica.Core
 
             if (!File.Exists(Configuration.CLIENT_CERT_FILEPATH))
             {
-                ErrorMessage = "Authentication failure; cert file not found at " + Configuration.CLIENT_CERT_FILEPATH;
-                RaiseErrorEvent("StartUpload", ErrorMessage);
+                OnError("StartUpload", "Authentication failure; cert file not found at " + Configuration.CLIENT_CERT_FILEPATH);
                 return false;
             }
 
             var fileList = Utilities.GetFileListFromMetadataObject(metadataObject);
+
             // Grab the list of files from the top-level "file" object
             // Keys in this dictionary are the source file path; values are metadata about the file
             var fileListObject = new SortedDictionary<string, FileInfoObject>();
@@ -370,23 +370,26 @@ namespace Pacifica.Core
 
                 var statusJSON = Utilities.JsonToObject(statusResult);
 
+                var state = statusJSON["state"].ToString().ToLower();
 
-                if (statusJSON["state"].ToString().ToLower() == "ok")
+                if (state == "ok")
                 {
                     success = true;
                     RaiseUploadCompleted(statusURL);
                 }
-                else if (statusJSON["state"].ToString().ToLower() == "failed")
+                else if (state == "failed")
                 {
-                    RaiseErrorEvent("StartUpload", "Upload failed during ingest process");
+                    OnError("StartUpload", "Upload failed during ingest process");
                     RaiseUploadCompleted(statusResult);
-                    success = false;
                 }
-                else if (statusJSON["state"].ToString().ToLower().Contains("error"))
+                else if (state.Contains("error"))
                 {
-                    RaiseErrorEvent("StartUpload", "Ingester Backend is offline or having issues");
+                    OnError("StartUpload", "Ingester Backend is offline or having issues");
                     RaiseUploadCompleted(statusResult);
-                    success = false;
+                }
+                else
+                {
+                    OnError("StartUpload", "Unrecognized state: " + statusJSON["state"]);
                 }
 
             }
@@ -892,7 +895,12 @@ namespace Pacifica.Core
             return string.IsNullOrWhiteSpace(eusInstrumentId) ? instrumentIdIfUnknown : eusInstrumentId;
         }
 
-        #endregion
+        private void OnError(string methodName, string errorMessage)
+        {
+            ErrorMessage = errorMessage;
+            RaiseErrorEvent(methodName, ErrorMessage);
+
+        }
 
         private static int StringToInt(string valueText, int defaultValue)
         {
@@ -901,6 +909,8 @@ namespace Pacifica.Core
 
             return defaultValue;
         }
+
+        #endregion
     }
 
 }
