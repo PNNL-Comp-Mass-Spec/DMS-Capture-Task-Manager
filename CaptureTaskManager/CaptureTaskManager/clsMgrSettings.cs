@@ -20,10 +20,10 @@ namespace CaptureTaskManager
     public class clsMgrSettings : clsLoggerBase, IMgrParams
     {
         //*********************************************************************************************************
-        //	Class for loading, storing and accessing manager parameters.
-        //	Loads initial settings from local config file, then checks to see if remainder of settings should be
-        //		loaded or manager set to inactive. If manager active, retrieves remainder of settings from manager
-        //		parameters database.
+        //  Class for loading, storing and accessing manager parameters.
+        //  Loads initial settings from local config file, then checks to see if remainder of settings should be
+        //      loaded or manager set to inactive. If manager active, retrieves remainder of settings from manager
+        //      parameters database.
         //**********************************************************************************************************
 
         #region "Constants"

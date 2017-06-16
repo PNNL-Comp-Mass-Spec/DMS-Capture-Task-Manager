@@ -205,7 +205,7 @@ namespace CaptureTaskManager
 
         // <summary>
         // Command listener function. Received commands will cause this to be called
-        //	and it will trigger an event to pass on the command to all registered listeners
+        //  and it will trigger an event to pass on the command to all registered listeners
         // </summary>
         // <param name="message">Incoming message</param>
         // Deprecated January 2017
@@ -230,7 +230,7 @@ namespace CaptureTaskManager
 
         // <summary>
         // Broadcast listener function. Received Broadcasts will cause this to be called
-        //	and it will trigger an event to pass on the command to all registered listeners
+        //  and it will trigger an event to pass on the command to all registered listeners
         // </summary>
         // <param name="message">Incoming message</param>
         // // Deprecated January 2017

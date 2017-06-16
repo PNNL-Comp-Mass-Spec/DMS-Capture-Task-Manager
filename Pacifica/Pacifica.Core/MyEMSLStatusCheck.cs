@@ -140,8 +140,8 @@ namespace Pacifica.Core
             // Look for an exception in the response
             // Example response with an error:
             //
-            //	<transaction id='1025302' />
-            //	<step id='0' message='&lt;type 'exceptions.IOError'&gt;
+            //  <transaction id='1025302' />
+            //  <step id='0' message='&lt;type 'exceptions.IOError'&gt;
             //   [Errno 5] Input/output error
             //   &lt;traceback object at 0x7fcb9e646170&gt;
             //   Traceback%20%28most%20recent%20call%20last%29%3A%0A%20%20File%20%22%2Fusr%2Flib%2Fpython2.6%2Fsite-packages%2Fmyemsl%2Fcatchall.py ...
@@ -341,16 +341,16 @@ namespace Pacifica.Core
             //
             // <?xml version="1.0"?>
             // <myemsl>
-            // 	<status username='70000'>
-            // 		<transaction id='111177' />
-            // 		<step id='0' message='completed' status='SUCCESS' />
-            // 		<step id='1' message='completed' status='SUCCESS' />
-            // 		<step id='2' message='completed' status='SUCCESS' />
-            // 		<step id='3' message='completed' status='SUCCESS' />
-            // 		<step id='4' message='completed' status='SUCCESS' />
-            // 		<step id='5' message='completed' status='SUCCESS' />
-            // 		<step id='6' message='verified' status='SUCCESS' />
-            // 	</status>
+            //  <status username='70000'>
+            //      <transaction id='111177' />
+            //      <step id='0' message='completed' status='SUCCESS' />
+            //      <step id='1' message='completed' status='SUCCESS' />
+            //      <step id='2' message='completed' status='SUCCESS' />
+            //      <step id='3' message='completed' status='SUCCESS' />
+            //      <step id='4' message='completed' status='SUCCESS' />
+            //      <step id='5' message='completed' status='SUCCESS' />
+            //      <step id='6' message='verified' status='SUCCESS' />
+            //  </status>
             // </myemsl>
             //
             // Step IDs correspond to:

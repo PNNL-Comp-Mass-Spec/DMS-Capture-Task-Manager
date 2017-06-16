@@ -543,20 +543,20 @@ namespace Pacifica.Core
         }
 
         public static string SendFileListToIngester(
-			string url, string serverBaseAddress,
+            string url, string serverBaseAddress,
             SortedDictionary<string, FileInfoObject> fileListObject,
             string metadataFilePath,
             eDebugMode debugMode = eDebugMode.DebugDisabled)
         {
             var baseUri = new Uri(serverBaseAddress);
             var uploadUri = new Uri(baseUri, url);
-			HttpWebRequest oWebRequest = null;
+            HttpWebRequest oWebRequest = null;
             var fiMetadataFile = new FileInfo(metadataFilePath);
 
             // Compute the total number of bytes that will be written to the tar file
             var contentLength = ComputeTarFileSize(fileListObject, fiMetadataFile, debugMode);
 
-            const double percentComplete = 0;		// Value between 0 and 100
+            const double percentComplete = 0;       // Value between 0 and 100
             long bytesWritten = 0;
             var lastStatusUpdateTime = DateTime.UtcNow;
 

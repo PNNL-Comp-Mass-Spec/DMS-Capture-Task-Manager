@@ -3,7 +3,7 @@
 namespace Pacifica.Core.Schema
 {
     /// <summary>
-    /// An arbitrary group of action and items.  Presumably the actions and items are 
+    /// An arbitrary group of action and items.  Presumably the actions and items are
     /// connected to each other in a tree or graph like structure.
     /// </summary>
     public class Group

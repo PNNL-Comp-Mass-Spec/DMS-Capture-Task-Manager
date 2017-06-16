@@ -51,18 +51,18 @@ namespace Pacifica.Core
             public int DatasetID;               // 0 for data packages
             public int DataPackageID;
             public string SubFolder;
-            public string DatasetName;			// Only used for datasets; not Data Packages
-            public string DateCodeString;		// Only used for datasets; not Data Packages
-            public string DMSInstrumentName;	// Only used for datasets; not Data Packages
-            public string CampaignName;         //
-            public int CampaignID;           //
-            public string EUSInstrumentID;		// Only used for datasets; not Data Packages
-            public string EUSProposalID;		// Originally only used by datasets. Used by Data Packages starting in October 2016 since required by policy
+            public string DatasetName;          // Only used for datasets; not Data Packages
+            public string DateCodeString;       // Only used for datasets; not Data Packages
+            public string DMSInstrumentName;    // Only used for datasets; not Data Packages
+            public string CampaignName;
+            public int CampaignID;
+            public string EUSInstrumentID;      // Only used for datasets; not Data Packages
+            public string EUSProposalID;        // Originally only used by datasets. Used by Data Packages starting in October 2016 since required by policy
             public string ExperimentName;
             public int ExperimentID;
-            public string OrganismName;         // 
+            public string OrganismName;
             public int OrganismID;
-            public int NCBITaxonomyID;       //
+            public int NCBITaxonomyID;
             public string AcquisitionTime;
             public int AcquisitionLengthMin;
             public int NumberOfScans;
@@ -207,7 +207,7 @@ namespace Pacifica.Core
         }
 
 
-		public bool StartUpload(List<Dictionary<string, object>> metadataObject, EasyHttp.eDebugMode debugMode, out string statusURL)
+        public bool StartUpload(List<Dictionary<string, object>> metadataObject, EasyHttp.eDebugMode debugMode, out string statusURL)
         {
             NetworkCredential loginCredentials = null;
 
@@ -215,7 +215,7 @@ namespace Pacifica.Core
             return StartUpload(metadataObject, loginCredentials, debugMode, out statusURL);
         }
 
-		public bool StartUpload(List<Dictionary<string, object>> metadataObject, NetworkCredential loginCredentials, out string statusURL)
+        public bool StartUpload(List<Dictionary<string, object>> metadataObject, NetworkCredential loginCredentials, out string statusURL)
         {
             const EasyHttp.eDebugMode debugMode = EasyHttp.eDebugMode.DebugDisabled;
             return StartUpload(metadataObject, loginCredentials, debugMode, out statusURL);
@@ -241,24 +241,25 @@ namespace Pacifica.Core
             statusURL = string.Empty;
             ErrorMessage = string.Empty;
 
+
             var fileList = Utilities.GetFileListFromMetadataObject(metadataObject);
-			// Grab the list of files from the top-level "file" object
-			// Keys in this dictionary are the source file path; values are metadata about the file
-			var fileListObject = new SortedDictionary<string, FileInfoObject>();
+            // Grab the list of files from the top-level "file" object
+            // Keys in this dictionary are the source file path; values are metadata about the file
+            var fileListObject = new SortedDictionary<string, FileInfoObject>();
 
-			// This is a list of dictionary objects
-			// Dictionary keys will be sha1Hash, destinationDirectory, and fileName
-			var newFileObj = new List<Dictionary<string, string>>();
+            // This is a list of dictionary objects
+            // Dictionary keys will be sha1Hash, destinationDirectory, and fileName
+            var newFileObj = new List<Dictionary<string, string>>();
 
-			foreach (var file in fileList)
-			{
+            foreach (var file in fileList)
+            {
 
-				var fiObj = new FileInfoObject(file.AbsoluteLocalPath, file.RelativeDestinationDirectory, file.Sha1HashHex);
+                var fiObj = new FileInfoObject(file.AbsoluteLocalPath, file.RelativeDestinationDirectory, file.Sha1HashHex);
 
-				fileListObject.Add(file.AbsoluteLocalPath, fiObj);
-				newFileObj.Add(fiObj.SerializeToDictionaryObject());
+                fileListObject.Add(file.AbsoluteLocalPath, fiObj);
+                newFileObj.Add(fiObj.SerializeToDictionaryObject());
 
-			}
+            }
 
 
             Configuration.UseTestInstance = UseTestInstance;
@@ -275,7 +276,7 @@ namespace Pacifica.Core
 
             try
             {
-                // Copy the Metadata.txt file to the transfer folder, then delete the local copy
+                // Copy the Metadata.txt file to the transfer folder
                 if (!string.IsNullOrWhiteSpace(TransferFolderPath))
                 {
                     var fiTargetFile = new FileInfo(Path.Combine(TransferFolderPath, Utilities.GetMetadataFilenameForJob(JobNumber)));
@@ -300,8 +301,6 @@ namespace Pacifica.Core
                 return true;
             }
 
-
-
             var location = "upload";
             var serverUri = "https://ServerIsOffline/dummy_page?test";
             //var timeoutSeconds = 30;
@@ -321,7 +320,7 @@ namespace Pacifica.Core
             }
 
             var responseData = EasyHttp.SendFileListToIngester(
-				location, serverUri, fileListObject, mdTextFile.FullName, debugMode);
+                location, serverUri, fileListObject, mdTextFile.FullName, debugMode);
 
             if (debugMode != EasyHttp.eDebugMode.DebugDisabled)
             {
@@ -332,10 +331,10 @@ namespace Pacifica.Core
 
             int transactionID = Convert.ToInt32(responseJSON["job_id"].ToString());
 
-            statusURL = Configuration.IngestServerUri+ "/get_state?job_id=" + transactionID;
+            statusURL = Configuration.IngestServerUri + "/get_state?job_id=" + transactionID;
 
             var success = false;
-           // var finishError = false;
+            // var finishError = false;
             var finishErrorMsg = string.Empty;
 
             try
@@ -347,11 +346,12 @@ namespace Pacifica.Core
 
                 Dictionary<string, object> statusJSON = Utilities.JsonToObject(statusResult);
 
-                if ( statusJSON["state"].ToString().ToLower() == "ok")
+                if (statusJSON["state"].ToString().ToLower() == "ok")
                 {
                     success = true;
                     RaiseUploadCompleted(statusURL);
-                }else if(statusJSON["state"].ToString().ToLower() == "failed")
+                }
+                else if (statusJSON["state"].ToString().ToLower() == "failed")
                 {
                     RaiseErrorEvent("StartUpload", "Upload failed during ingest process");
                     RaiseUploadCompleted(statusResult);
@@ -791,17 +791,17 @@ namespace Pacifica.Core
             // fill out Transaction Key/Value pairs
             if (uploadMetadata.DatasetID > 0)
             {
-				metadataObject.Add(new Dictionary<string, object> {
+                metadataObject.Add(new Dictionary<string, object> {
                     { "destinationTable", "TransactionKeyValue" },
                     { "key", "omics.dms.instrument" },
                     { "value", uploadMetadata.DMSInstrumentName }
                 });
-				metadataObject.Add(new Dictionary<string, object> {
+                metadataObject.Add(new Dictionary<string, object> {
                     { "destinationTable", "TransactionKeyValue" },
                     { "key", "omics.dms.instrument_id" },
                     { "value", eusInstrumentID }
                 });
-				metadataObject.Add(new Dictionary<string, object> {
+                metadataObject.Add(new Dictionary<string, object> {
                     { "destinationTable", "TransactionKeyValue" },
                     { "key", "omics.dms.date_code" },
                     { "value", uploadMetadata.DateCodeString }
@@ -841,7 +841,7 @@ namespace Pacifica.Core
                     { "key", "omics.dms.dataset_id" },
                     { "value", uploadMetadata.DatasetID.ToString(CultureInfo.InvariantCulture) }
                 });
-                if (!String.IsNullOrEmpty(uploadMetadata.OrganismName))
+                if (!string.IsNullOrEmpty(uploadMetadata.OrganismName))
                 {
                     metadataObject.Add(new Dictionary<string, object> {
                         { "destinationTable", "TransactionKeyValue" },
@@ -849,7 +849,7 @@ namespace Pacifica.Core
                         { "value", uploadMetadata.OrganismName }
                     });
                 }
-                if(uploadMetadata.OrganismID != 0)
+                if (uploadMetadata.OrganismID != 0)
                 {
                     metadataObject.Add(new Dictionary<string, object> {
                         { "destinationTable", "TransactionKeyValue" },
@@ -857,7 +857,7 @@ namespace Pacifica.Core
                         { "value", uploadMetadata.OrganismID.ToString(CultureInfo.InvariantCulture) }
                     });
                 }
-                if(uploadMetadata.NCBITaxonomyID != 0)
+                if (uploadMetadata.NCBITaxonomyID != 0)
                 {
                     metadataObject.Add(new Dictionary<string, object> {
                         { "destinationTable", "TransactionKeyValue" },
@@ -865,7 +865,7 @@ namespace Pacifica.Core
                         { "value", uploadMetadata.NCBITaxonomyID.ToString(CultureInfo.InvariantCulture) }
                     });
                 }
-                if (!String.IsNullOrEmpty(uploadMetadata.SeparationType))
+                if (!string.IsNullOrEmpty(uploadMetadata.SeparationType))
                 {
                     metadataObject.Add(new Dictionary<string, object> {
                         { "destinationTable", "TransactionKeyValue" },
@@ -873,7 +873,7 @@ namespace Pacifica.Core
                         { "value", uploadMetadata.SeparationType }
                     });
                 }
-                if (!String.IsNullOrEmpty(uploadMetadata.DatasetType))
+                if (!string.IsNullOrEmpty(uploadMetadata.DatasetType))
                 {
                     metadataObject.Add(new Dictionary<string, object> {
                         { "destinationTable", "TransactionKeyValue" },
@@ -886,9 +886,9 @@ namespace Pacifica.Core
                     { "key", "omics.dms.run_acquisition_length_min" },
                     { "value", uploadMetadata.AcquisitionLengthMin }
                 });
-                if(uploadMetadata.UserOfRecordList.Count > 0)
+                if (uploadMetadata.UserOfRecordList.Count > 0)
                 {
-                    foreach(int userId in uploadMetadata.UserOfRecordList)
+                    foreach (int userId in uploadMetadata.UserOfRecordList)
                     {
                         metadataObject.Add(new Dictionary<string, object> {
                             { "destinationTable", "TransactionKeyValue" },
@@ -910,7 +910,7 @@ namespace Pacifica.Core
                 // string eusInstrumentID = GetEUSInstrumentID(uploadMetadata.EUSInstrumentID, DATA_PACKAGE_EUS_INSTRUMENT_ID);
                 // groupObject.Add(new Dictionary<string, string> { { "name", eusInstrumentID }, { "type", "omics.dms.instrument_id" } });
 
-				metadataObject.Add(new Dictionary<string, object> {
+                metadataObject.Add(new Dictionary<string, object> {
                     { "destinationTable", "TransactionKeyValue" },
                     { "key", "omics.dms.datapackage_id" },
                     { "value", uploadMetadata.DataPackageID.ToString(CultureInfo.InvariantCulture) }
@@ -944,7 +944,7 @@ namespace Pacifica.Core
             }
             eusInfo.EUSProposalID = EUSProposalID;
 
-			metadataObject.Add(new Dictionary<string, object> {
+            metadataObject.Add(new Dictionary<string, object> {
                 { "destinationTable", "Transactions.proposal" },
                 { "value", EUSProposalID }
             });
@@ -964,19 +964,20 @@ namespace Pacifica.Core
             }
             eusInfo.EUSUploaderID = EUSUploaderID;
 
-			metadataObject.Add(new Dictionary<string, object> {
+            metadataObject.Add(new Dictionary<string, object> {
                 { "destinationTable", "Transactions.submitter" },
                 { "value", EUSUploaderID.ToString() }
             });
 
             // now mix in the list of file objects
             string subdirString = string.Empty;
-            foreach ( FileInfoObject f in lstUnmatchedFiles ){
+            foreach (FileInfoObject f in lstUnmatchedFiles)
+            {
                 subdirString = "data".Trim('/') + "/" + f.RelativeDestinationDirectory.Trim('/');
                 metadataObject.Add(new Dictionary<string, object> {
                     { "destinationTable", "Files" },
                     { "name", f.FileName },
-					{ "absolutelocalpath", f.AbsoluteLocalPath},
+                    { "absolutelocalpath", f.AbsoluteLocalPath},
                     { "subdir", subdirString.Trim('/') },
                     { "size", f.FileSizeInBytes.ToString() },
                     { "hashsum", f.Sha1HashHex },

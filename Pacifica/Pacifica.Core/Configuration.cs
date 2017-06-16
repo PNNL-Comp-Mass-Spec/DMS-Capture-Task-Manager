@@ -11,7 +11,7 @@ namespace Pacifica.Core
         /// </summary>
         public const string DEFAULT_POLICY_SERVER_HOST_NAME = "policydmsdev.my.emsl.pnl.gov";
 
-        
+
         /// <summary>
         /// Metadata Server host name on the production server
         /// </summary>
@@ -96,19 +96,19 @@ namespace Pacifica.Core
         /// </summary>
         public static string IngestServerUri { get; } = Scheme + IngestServerHostName;
 
-		public static string PolicyServerHostName { get; set; } = DEFAULT_POLICY_SERVER_HOST_NAME;
+        public static string PolicyServerHostName { get; set; } = DEFAULT_POLICY_SERVER_HOST_NAME;
 
-		/// <summary>
-		/// By default, returns https://policy.my.emsl.pnl.gov
-		/// </summary>
-		public static string PolicyServerUri { get; } = Scheme + PolicyServerHostName;
+        /// <summary>
+        /// By default, returns https://policy.my.emsl.pnl.gov
+        /// </summary>
+        public static string PolicyServerUri { get; } = Scheme + PolicyServerHostName;
 
-		public static string MetadataServerHostName { get; set; } = DEFAULT_METADATA_SERVER_HOST_NAME;
+        public static string MetadataServerHostName { get; set; } = DEFAULT_METADATA_SERVER_HOST_NAME;
 
-		/// <summary>
-		/// By default, returns https://metadata.my.emsl.pnl.gov
-		/// </summary>
-		public static string MetadataServerUri { get; } = Scheme + MetadataServerHostName;
+        /// <summary>
+        /// By default, returns https://metadata.my.emsl.pnl.gov
+        /// </summary>
+        public static string MetadataServerUri { get; } = Scheme + MetadataServerHostName;
 
         public static string SearchServerHostName { get; set; } = DEFAULT_ELASTIC_SEARCH_HOST_NAME;
 

@@ -22,9 +22,9 @@ namespace Pacifica.DMS_Metadata
         /// Maximum number of files to archive
         /// </summary>
         /// <remarks>
-        /// If uploading an entire dataset folder and all of its subfolders via a DatasetArchive operation, 
+        /// If uploading an entire dataset folder and all of its subfolders via a DatasetArchive operation,
         ///   then this value applies to all files in the dataset folder (and subfolders)
-        /// If uploading just one dataset subfolder via an ArchiveUpdate operation, 
+        /// If uploading just one dataset subfolder via an ArchiveUpdate operation,
         ///   then this value applies to all files in that subfolder
         /// </remarks>
         public const int MAX_FILES_TO_ARCHIVE = 500;
@@ -43,8 +43,8 @@ namespace Pacifica.DMS_Metadata
         /// Object that tracks the upload details, including the files to upload
         /// </summary>
         /// <remarks>
-        /// The information in this dictionary is translated to JSON; 
-        /// Keys are key names; values are either strings or dictionary objects or even a list of dictionary objects 
+        /// The information in this dictionary is translated to JSON;
+        /// Keys are key names; values are either strings or dictionary objects or even a list of dictionary objects
         /// </remarks>
         private List<Dictionary<string, object>> mMetadataObject;
 
@@ -276,7 +276,7 @@ namespace Pacifica.DMS_Metadata
                     mdIsValid = true;
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 validityMessage = ex.Message;
                 mdIsValid = false;
@@ -368,8 +368,8 @@ namespace Pacifica.DMS_Metadata
             var fracCompleted = 0.0;
 
             // Generate file size sum for status purposes
-            long totalFileSize = 0;				// how much data is there to crunch?
-            long runningFileSize = 0;			// how much data we've crunched so far
+            long totalFileSize = 0;             // how much data is there to crunch?
+            long runningFileSize = 0;           // how much data we've crunched so far
             foreach (var fi in fileList)
             {
                 totalFileSize += fi.Length;
@@ -462,7 +462,7 @@ namespace Pacifica.DMS_Metadata
                 {
                     TotalFileCountUpdated++;
                 }
-                
+
             }
 
             return returnList;

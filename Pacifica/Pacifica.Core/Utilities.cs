@@ -61,7 +61,7 @@ namespace Pacifica.Core
 
         public static List<FileInfoObject> GetFileListFromMetadataObject(List<Dictionary<string, object>> metadataObject)
         {
-			var fileList = new List<FileInfoObject>();
+            var fileList = new List<FileInfoObject>();
             foreach (Dictionary<string, object> item in metadataObject)
             {
                 if (item.TryGetValue("destinationTable", out object destTable))
