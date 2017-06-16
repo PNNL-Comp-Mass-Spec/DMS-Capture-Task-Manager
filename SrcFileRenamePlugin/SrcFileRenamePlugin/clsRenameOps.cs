@@ -86,7 +86,7 @@ namespace SrcFileRenamePlugin
             var sourcePath = taskParams.GetParam("Source_Path");
 
             // Typically an empty string, but could be a partial path like: "CapDev" or "Smith\2014"
-            var captureSubfolder = taskParams.GetParam("Capture_Subfolder");		
+            var captureSubfolder = taskParams.GetParam("Capture_Subfolder");
 
             var pwd = DecodePassword(m_Pwd);
 
