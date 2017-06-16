@@ -75,27 +75,9 @@ namespace Pacifica.Core
 
             if (responseStatusCode.ToString() == "200" && fileListJSON != "[]" && fileListJSON.Contains(fileSHA1HashSum))
             {
-
                 return true;
             }
             return false;
-        }
-
-        /// <summary>
-        /// Obtain the XML returned by the given MyEMSL status page
-        /// </summary>
-        /// <param name="statusURI">URI to examine</param>
-        /// <param name="lookupError">Output: true if an error occurs</param>
-        /// <param name="errorMessage">Output: error message if lookupError is true</param>
-        /// <returns>Status message, in XML format; empty string if an error</returns>
-        public string GetIngestStatus(string statusURI, out bool lookupError, out string errorMessage)
-        {
-
-            var xmlServerResponse = GetIngestStatus(statusURI, out lookupError, out errorMessage);
-
-            //Utilities.Logout(cookieJar);
-
-            return xmlServerResponse;
         }
 
         /// <summary>

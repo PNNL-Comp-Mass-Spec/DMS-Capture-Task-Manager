@@ -324,8 +324,6 @@ namespace Pacifica.Core
 
             var location = "upload";
             var serverUri = "https://ServerIsOffline/dummy_page?test";
-            //var timeoutSeconds = 30;
-            var postData = string.Empty;
 
             if (debugMode == EasyHttp.eDebugMode.MyEMSLOfflineMode)
             {
@@ -355,8 +353,6 @@ namespace Pacifica.Core
             statusURL = Configuration.IngestServerUri + "/get_state?job_id=" + transactionID;
 
             var success = false;
-            // var finishError = false;
-            var finishErrorMsg = string.Empty;
 
             try
             {
@@ -388,9 +384,7 @@ namespace Pacifica.Core
             }
             catch (Exception ex)
             {
-                ErrorMessage = "Exception calling MyEMSL finish: " + ex.Message;
-                //finishError = true;
-                finishErrorMsg = ErrorMessage + ", StackTrace: " + PRISM.clsStackTraceFormatter.GetExceptionStackTrace(ex);
+                OnError("StartUpload", "Exception examining the MyEMSL response string: " + ex.Message);
             }
 
             try
@@ -404,13 +398,6 @@ namespace Pacifica.Core
                 // Ignore errors here
             }
 
-            //if (finishError)
-            //{
-            //    RaiseErrorEvent("Upload.StartUpload", ErrorMessage);
-            //    throw new ApplicationException(finishErrorMsg);
-            //}
-
-            //Utilities.Logout(mCookieJar);
             return success;
         }
 

@@ -426,39 +426,6 @@ namespace DatasetArchivePlugin
                 OnErrorEvent(msg);
         }
 
-        /// <summary>
-        /// Determine the total size of all files in the specified folder (including subdirectories)
-        /// </summary>
-        /// <param name="sourceFolderPath"></param>
-        /// <returns>Total size, in GB</returns>
-        private float ComputeFolderSizeGB(string sourceFolderPath)
-        {
-            var diSourceFolder = new DirectoryInfo(sourceFolderPath);
-
-            var msg = "Determing the total size of " + sourceFolderPath;
-            OnDebugEvent(msg);
-
-            if (!diSourceFolder.Exists)
-            {
-                msg = "Source folder not found by ComputeFolderSizeGB: " + sourceFolderPath;
-                OnErrorEvent(msg);
-
-                return 0;
-            }
-            float folderSizeGB = 0;
-
-            foreach (var fiFile in diSourceFolder.GetFiles("*", SearchOption.AllDirectories))
-            {
-                folderSizeGB += (float)(fiFile.Length / 1024.0 / 1024.0 / 1024.0);
-            }
-
-            msg = "  Total size: " + folderSizeGB.ToString("0.0") + " GB";
-            OnDebugEvent(msg);
-
-            return folderSizeGB;
-
-        }
-
         #endregion
 
         #region "Event Delegates and Classes"
