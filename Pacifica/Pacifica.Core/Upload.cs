@@ -110,6 +110,14 @@ namespace Pacifica.Core
                 EUSOperatorID = DEFAULT_EUS_OPERATOR_ID;
 
             }
+
+            public override string ToString()
+            {
+                if (DatasetID == 0 && DataPackageID > 0)
+                    return "Data package " + DataPackageID;
+
+                return "Dataset " + DatasetID + ", on instrument " + DMSInstrumentName + ": " + DatasetName;
+            }
         }
 
         #region Auto-Properties

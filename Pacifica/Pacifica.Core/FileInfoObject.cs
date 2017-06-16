@@ -163,6 +163,12 @@ namespace Pacifica.Core
         {
             return path.Replace(@"\", "/").TrimStart('/');
         }
+
+        public override string ToString()
+        {
+            return AbsoluteLocalPath;
+        }
+
         #endregion
 
         #region Static Methods
