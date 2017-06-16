@@ -471,7 +471,7 @@ namespace DatasetArchivePlugin
 
         void LogStatusMessageSkipDuplicate(string message)
         {
-            if (!String.Equals(message, mMostRecentLogMessage) || DateTime.UtcNow.Subtract(mMostRecentLogTime).TotalSeconds >= 60)
+            if (!string.Equals(message, mMostRecentLogMessage) || DateTime.UtcNow.Subtract(mMostRecentLogTime).TotalSeconds >= 60)
             {
                 mMostRecentLogMessage = string.Copy(message);
                 mMostRecentLogTime = DateTime.UtcNow;

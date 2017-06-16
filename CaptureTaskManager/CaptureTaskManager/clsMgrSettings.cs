@@ -60,7 +60,7 @@ namespace CaptureTaskManager
         {
             if (!LoadSettings())
             {
-                if (String.Equals(m_ErrMsg, DEACTIVATED_LOCALLY))
+                if (string.Equals(m_ErrMsg, DEACTIVATED_LOCALLY))
                     throw new ApplicationException(DEACTIVATED_LOCALLY);
 
                 throw new ApplicationException("Unable to initialize manager settings class: " + m_ErrMsg);
