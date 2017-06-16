@@ -13,6 +13,42 @@ namespace Pacifica.Core
 {
     public class Utilities
     {
+        /// <summary>
+        /// Decrypts an encoded password
+        /// </summary>
+        /// <param name="enPwd">Encoded password</param>
+        /// <returns>Clear text password</returns>
+        public static string DecodePassword(string enPwd)
+        {
+            // Convert the password string to a character array
+            var pwdChars = enPwd.ToCharArray();
+            var pwdBytes = new List<byte>();
+            var pwdCharsAdj = new List<char>();
+
+            for (var i = 0; i <= pwdChars.Length - 1; i++)
+            {
+                pwdBytes.Add((byte)pwdChars[i]);
+            }
+
+            // Modify the byte array by shifting alternating bytes up or down and convert back to char, and add to output string
+
+            for (var byteCntr = 0; byteCntr <= pwdBytes.Count - 1; byteCntr++)
+            {
+                if (byteCntr % 2 == 0)
+                {
+                    pwdBytes[byteCntr] += 1;
+                }
+                else
+                {
+                    pwdBytes[byteCntr] -= 1;
+                }
+                pwdCharsAdj.Add((char)pwdBytes[byteCntr]);
+            }
+
+            return string.Join("", pwdCharsAdj);
+
+        }
+
         private static SHA1Managed _hashProvider;
         public static string GenerateSha1Hash(string filePath)
         {

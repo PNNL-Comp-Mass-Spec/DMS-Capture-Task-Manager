@@ -228,7 +228,8 @@ namespace Pacifica.Core
             {
                 //request.UseDefaultCredentials = true;
                 var certificate = new X509Certificate2();
-                certificate.Import(Configuration.CLIENT_CERT_FILEPATH, Configuration.CLIENT_CERT_PASSWORD, X509KeyStorageFlags.PersistKeySet);
+                var password = Utilities.DecodePassword(Configuration.CLIENT_CERT_PASSWORD);
+                certificate.Import(Configuration.CLIENT_CERT_FILEPATH, password, X509KeyStorageFlags.PersistKeySet);
                 request.ClientCertificates.Add(certificate);
             }
             else
@@ -575,7 +576,8 @@ namespace Pacifica.Core
                 oWebRequest = (HttpWebRequest)WebRequest.Create(uploadUri);
 
                 var certificate = new X509Certificate2();
-                certificate.Import(Configuration.CLIENT_CERT_FILEPATH, Configuration.CLIENT_CERT_PASSWORD, X509KeyStorageFlags.PersistKeySet);
+                var password = Utilities.DecodePassword(Configuration.CLIENT_CERT_PASSWORD);
+                certificate.Import(Configuration.CLIENT_CERT_FILEPATH, password, X509KeyStorageFlags.PersistKeySet);
                 oWebRequest.ClientCertificates.Add(certificate);
 
 
