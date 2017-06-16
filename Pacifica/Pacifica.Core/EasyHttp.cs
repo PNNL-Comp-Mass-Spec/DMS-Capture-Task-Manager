@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Net;
-using System.Net.Http;
 using ICSharpCode.SharpZipLib.Tar;
 using PRISM;
 using System.Security.Cryptography.X509Certificates;
@@ -228,7 +227,7 @@ namespace Pacifica.Core
             if (loginCredentials == null)
             {
                 //request.UseDefaultCredentials = true;
-                X509Certificate2 certificate = new X509Certificate2();
+                var certificate = new X509Certificate2();
                 certificate.Import(Configuration.CLIENT_CERT_FILEPATH, Configuration.CLIENT_CERT_PASSWORD, X509KeyStorageFlags.PersistKeySet);
                 request.ClientCertificates.Add(certificate);
             }
@@ -575,7 +574,7 @@ namespace Pacifica.Core
                 // Make the request
                 oWebRequest = (HttpWebRequest)WebRequest.Create(uploadUri);
 
-                X509Certificate2 certificate = new X509Certificate2();
+                var certificate = new X509Certificate2();
                 certificate.Import(Configuration.CLIENT_CERT_FILEPATH, Configuration.CLIENT_CERT_PASSWORD, X509KeyStorageFlags.PersistKeySet);
                 oWebRequest.ClientCertificates.Add(certificate);
 

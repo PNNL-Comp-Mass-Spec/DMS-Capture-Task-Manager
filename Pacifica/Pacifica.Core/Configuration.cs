@@ -70,8 +70,7 @@ namespace Pacifica.Core
         {
             get
             {
-                string scheme;
-                scheme = UseSecureDataTransfer ? SecuredScheme : UnsecuredScheme;
+                var scheme = UseSecureDataTransfer ? SecuredScheme : UnsecuredScheme;
                 return scheme + "://";
             }
         }
@@ -131,10 +130,7 @@ namespace Pacifica.Core
 
         public static bool UseItemSearch
         {
-            get
-            {
-                return mUseItemSearch;
-            }
+            get => mUseItemSearch;
 
             set
             {
@@ -143,7 +139,6 @@ namespace Pacifica.Core
             }
         }
 
-
         private static bool mUseTestInstance;
 
         /// <summary>
@@ -151,10 +146,7 @@ namespace Pacifica.Core
         /// </summary>
         public static bool UseTestInstance
         {
-            get
-            {
-                return mUseTestInstance;
-            }
+            get => mUseTestInstance;
 
             set
             {

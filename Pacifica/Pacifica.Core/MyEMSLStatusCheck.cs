@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Xml;
-using Jayrock;
 using Jayrock.Json.Conversion;
 
 namespace Pacifica.Core
@@ -52,9 +51,9 @@ namespace Pacifica.Core
 
         public bool CheckMetadataValidity(string metadataObjectJSON)
         {
-            string policyURL = Configuration.PolicyServerUri + "/ingest/";
+            var policyURL = Configuration.PolicyServerUri + "/ingest/";
             HttpStatusCode responseStatusCode;
-            string success = EasyHttp.Send(policyURL, out responseStatusCode, metadataObjectJSON, EasyHttp.HttpMethod.Post);
+            var success = EasyHttp.Send(policyURL, out responseStatusCode, metadataObjectJSON, EasyHttp.HttpMethod.Post);
             if (responseStatusCode.ToString() == "200" && success.ToLower() == "true")
             {
                 return true;
@@ -64,12 +63,12 @@ namespace Pacifica.Core
 
         public bool DoesFileExistInMyEMSL(FileInfoObject fio)
         {
-            string fileSHA1HashSum = fio.Sha1HashHex;
-            string metadataURL = Configuration.MetadataServerUri + "/files?hashsum=" + fileSHA1HashSum;
+            var fileSHA1HashSum = fio.Sha1HashHex;
+            var metadataURL = Configuration.MetadataServerUri + "/files?hashsum=" + fileSHA1HashSum;
 
             HttpStatusCode responseStatusCode;
 
-            string fileListJSON = EasyHttp.Send(metadataURL, out responseStatusCode);
+            var fileListJSON = EasyHttp.Send(metadataURL, out responseStatusCode);
             var jsa = (Jayrock.Json.JsonArray)JsonConvert.Import(fileListJSON);
             var fileList = Utilities.JsonArrayToDictionaryList(jsa);
 

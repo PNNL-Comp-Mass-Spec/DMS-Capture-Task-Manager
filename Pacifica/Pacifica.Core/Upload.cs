@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Net;
-using System.Text.RegularExpressions;
 
 namespace Pacifica.Core
 {
@@ -270,7 +269,7 @@ namespace Pacifica.Core
 
             // This is a list of dictionary objects
             // Dictionary keys will be sha1Hash, destinationDirectory, and fileName
-            var newFileObj = new List<Dictionary<string, string>>();
+            // var newFileObj = new List<Dictionary<string, string>>();
 
             foreach (var file in fileList)
             {
@@ -278,7 +277,8 @@ namespace Pacifica.Core
                 var fiObj = new FileInfoObject(file.AbsoluteLocalPath, file.RelativeDestinationDirectory, file.Sha1HashHex);
 
                 fileListObject.Add(file.AbsoluteLocalPath, fiObj);
-                newFileObj.Add(fiObj.SerializeToDictionaryObject());
+
+                // newFileObj.Add(fiObj.SerializeToDictionaryObject());
 
             }
 
@@ -346,9 +346,10 @@ namespace Pacifica.Core
                 // A .tar file was created locally; it was not sent to the server
                 return false;
             }
-            Dictionary<string, object> responseJSON = Utilities.JsonToObject(responseData);
 
-            int transactionID = Convert.ToInt32(responseJSON["job_id"].ToString());
+            var responseJSON = Utilities.JsonToObject(responseData);
+
+            var transactionID = Convert.ToInt32(responseJSON["job_id"].ToString());
 
             statusURL = Configuration.IngestServerUri + "/get_state?job_id=" + transactionID;
 
@@ -356,12 +357,19 @@ namespace Pacifica.Core
 
             try
             {
-                var statusResult = EasyHttp.Send(statusURL, out HttpStatusCode responseStatusCode);
+                string statusResult;
+                if (responseData.Contains("state"))
+                {
+                    // We already have a valid server response
+                    statusResult = responseData;
+                }
+                else
+                {
+                    statusResult = EasyHttp.Send(statusURL, out HttpStatusCode responseStatusCode);
+                }
 
-                //var jsaResult = (Jayrock.Json.JsonArray)Jayrock.Json.Conversion.JsonConvert.Import(statusResult);
-                //var statusJSON = Utilities.JsonArrayToDictionaryList(jsaResult);
+                var statusJSON = Utilities.JsonToObject(statusResult);
 
-                Dictionary<string, object> statusJSON = Utilities.JsonToObject(statusResult);
 
                 if (statusJSON["state"].ToString().ToLower() == "ok")
                 {
@@ -431,7 +439,7 @@ namespace Pacifica.Core
             // new metadata object is just a list of dictionary entries
             var metadataObject = new List<Dictionary<string, object>>();
 
-            var eusInstrumentID = GetEUSInstrumentID(uploadMetadata.EUSInstrumentID.ToString(), UNKNOWN_INSTRUMENT_EUS_INSTRUMENT_ID);
+            var eusInstrumentID = GetEUSInstrumentID(uploadMetadata.EUSInstrumentID, UNKNOWN_INSTRUMENT_EUS_INSTRUMENT_ID);
 
             // fill out Transaction Key/Value pairs
             if (uploadMetadata.DatasetID > 0)
@@ -533,7 +541,7 @@ namespace Pacifica.Core
                 });
                 if (uploadMetadata.UserOfRecordList.Count > 0)
                 {
-                    foreach (int userId in uploadMetadata.UserOfRecordList)
+                    foreach (var userId in uploadMetadata.UserOfRecordList)
                     {
                         metadataObject.Add(new Dictionary<string, object> {
                             { "destinationTable", "TransactionKeyValue" },
@@ -615,10 +623,9 @@ namespace Pacifica.Core
             });
 
             // now mix in the list of file objects
-            string subdirString = string.Empty;
-            foreach (FileInfoObject f in lstUnmatchedFiles)
+            foreach (var f in lstUnmatchedFiles)
             {
-                subdirString = "data".Trim('/') + "/" + f.RelativeDestinationDirectory.Trim('/');
+                var subdirString = "data".Trim('/') + "/" + f.RelativeDestinationDirectory.Trim('/');
                 metadataObject.Add(new Dictionary<string, object> {
                     { "destinationTable", "Files" },
                     { "name", f.FileName },
@@ -658,7 +665,7 @@ namespace Pacifica.Core
 
             // Lookup the EUS_Instrument_ID
             // If empty, use 34127, which is VOrbiETD04
-            var eusInstrumentID = GetEUSInstrumentID(uploadMetadata.EUSInstrumentID.ToString(), UNKNOWN_INSTRUMENT_EUS_INSTRUMENT_ID);
+            var eusInstrumentID = GetEUSInstrumentID(uploadMetadata.EUSInstrumentID, UNKNOWN_INSTRUMENT_EUS_INSTRUMENT_ID);
 
             eusInfo = new EUSInfo();
             eusInfo.Clear();
@@ -786,7 +793,7 @@ namespace Pacifica.Core
 
             var matchedKeys = new SortedSet<string>();
 
-            foreach (Dictionary<string, object> item in metadataObject)
+            foreach (var item in metadataObject)
             {
                 if (!GetDictionaryValue(item, "destinationTable", out string tableName))
                     continue;
@@ -837,8 +844,6 @@ namespace Pacifica.Core
             return string.Join("; ", metadataList) + "; FileCount=" + fileCount;
 
         }
-
-
 
         private static bool GetDictionaryValue(IReadOnlyDictionary<string, object> eusInfoMapObject, string keyName, out string matchedValue)
         {

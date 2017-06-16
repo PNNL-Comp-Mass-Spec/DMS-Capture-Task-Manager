@@ -290,14 +290,7 @@ namespace Pacifica.Core
             get
             {
                 var cc = GetCookies();
-                if (cc != null && cc.Count > 0)
-                {
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
+                return cc != null && cc.Count > 0;
             }
         }
 
@@ -331,7 +324,6 @@ namespace Pacifica.Core
             var uri = _location;
             bool redirected;
             Uri finalUri;
-            cookieJar = null;
 
             var success = GetAuthCookies(uri, out cookieJar, out redirected, out finalUri);
 

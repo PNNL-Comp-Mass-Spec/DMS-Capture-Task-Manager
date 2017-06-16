@@ -1,17 +1,15 @@
 ﻿using System;
 using System.Net;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Linq;
 using Pacifica.Core;
-using MyEMSLReader;
 using PRISM;
-using Jayrock;
 using Jayrock.Json.Conversion;
 using ProgressEventArgs = Pacifica.Core.ProgressEventArgs;
 using Utilities = Pacifica.Core.Utilities;
 using System.Data.SqlClient;
-using System.Data;
 
 namespace Pacifica.DMS_Metadata
 {
@@ -82,23 +80,31 @@ namespace Pacifica.DMS_Metadata
         public string ManagerName
         {
             get;
-            private set;
         }
 
         public List<Dictionary<string, object>> MetadataObject => mMetadataObject;
 
+        /// <summary>
+        /// Number of bytes to upload
+        /// </summary>
         public long TotalFileSizeToUpload
         {
             get;
             set;
         }
 
+        /// <summary>
+        /// Number of new files pushed to MyEMSL
+        /// </summary>
         public int TotalFileCountNew
         {
             get;
             set;
         }
 
+        /// <summary>
+        /// Number of files updated in MyEMSL
+        /// </summary>
         public int TotalFileCountUpdated
         {
             get;
@@ -134,7 +140,7 @@ namespace Pacifica.DMS_Metadata
             if (string.IsNullOrWhiteSpace(managerName))
                 managerName = "DMSMetadataObject";
 
-            this.ManagerName = managerName;
+            ManagerName = managerName;
             mFileTools = new clsFileTools(managerName, 1);
 
             mFileTools.WaitingForLockQueue += mFileTools_WaitingForLockQueue;
@@ -149,7 +155,7 @@ namespace Pacifica.DMS_Metadata
             // Instead, only allow certain domains, as defined by ValidateRemoteCertificate
             if (ServicePointManager.ServerCertificateValidationCallback == null)
                 ServicePointManager.ServerCertificateValidationCallback += Utilities.ValidateRemoteCertificate;
-            this.DatasetName = Utilities.GetDictionaryValue(taskParams, "Dataset", "Unknown_Dataset");
+            DatasetName = Utilities.GetDictionaryValue(taskParams, "Dataset", "Unknown_Dataset");
 
             var lstDatasetFilesToArchive = FindDatasetFilesToArchive(taskParams, mgrParams, out Upload.UploadMetadata uploadMetadata);
             mgrParams.TryGetValue("DefaultDMSConnString", out string connectionString);
@@ -163,7 +169,7 @@ namespace Pacifica.DMS_Metadata
             //var mdSuccess = GetSupplementalDMSMetadata(mgrParams.TryGetValue())
 
             // Find the files that are new or need to be updated
-            var lstUnmatchedFiles = CompareDatasetContentsWithMyEMSLMetadata(lstDatasetFilesToArchive, uploadMetadata, debugMode);
+            var lstUnmatchedFiles = CompareDatasetContentsWithMyEMSLMetadata(lstDatasetFilesToArchive, uploadMetadata);
 
             mMetadataObject = Upload.CreatePacificaMetadataObject(uploadMetadata, lstUnmatchedFiles, out Upload.EUSInfo eusInfo);
             string mdJSON = Utilities.ObjectToJson(mMetadataObject);
@@ -181,17 +187,16 @@ namespace Pacifica.DMS_Metadata
 
         }
 
-        private static bool GetSupplementalDMSMetadata(string dmsConnectionString, string dataset_id, Upload.UploadMetadata uploadMetadata)
+        private static bool GetSupplementalDMSMetadata(string dmsConnectionString, string datasetID, Upload.UploadMetadata uploadMetadata)
         {
-          
-            string queryString =
-                "SELECT TOP 1 * FROM V_MyEMSL_Supplemental_Metadata WHERE dataset_id = " + dataset_id;
 
-            using (SqlConnection connection = new SqlConnection(dmsConnectionString))
+            var queryString = "SELECT * FROM V_MyEMSL_Supplemental_Metadata WHERE dataset_id = " + datasetID;
+
+            using (var connection = new SqlConnection(dmsConnectionString))
             {
-                SqlCommand command = new SqlCommand(queryString, connection);
+                var command = new SqlCommand(queryString, connection);
                 connection.Open();
-                using (SqlDataReader reader = command.ExecuteReader())
+                using (var reader = command.ExecuteReader())
                 {
 
                     if (reader.HasRows && reader.Read())
@@ -213,20 +218,20 @@ namespace Pacifica.DMS_Metadata
 
                 } // Close reader
 
-                uploadMetadata.UserOfRecordList = GetRequestedRunUsers(connection, uploadMetadata.RequestedRunID, dmsConnectionString);
+                uploadMetadata.UserOfRecordList = GetRequestedRunUsers(connection, uploadMetadata.RequestedRunID);
 
             }
 
-           return true;
+            return true;
         }
 
-        private static List<int> GetRequestedRunUsers(SqlConnection connection, int RequestedRunID, string dmsConnectionString)
+        private static List<int> GetRequestedRunUsers(SqlConnection connection, int requestedRunID)
         {
-            List<int> personList = new List<int>();
-            string queryString = "SELECT EUS_Person_ID FROM T_Requested_Run_EUS_Users where Request_ID = " + RequestedRunID;
+            var personList = new List<int>();
+            var queryString = "SELECT EUS_Person_ID FROM T_Requested_Run_EUS_Users where Request_ID = " + requestedRunID;
 
-            SqlCommand command = new SqlCommand(queryString, connection);
-            using (SqlDataReader reader = command.ExecuteReader())
+            var command = new SqlCommand(queryString, connection);
+            using (var reader = command.ExecuteReader())
             {
                 if (reader.HasRows)
                 {
@@ -246,13 +251,13 @@ namespace Pacifica.DMS_Metadata
 
         private bool CheckMetadataValidity(string mdJSON, out string validityMessage)
         {
-            bool mdIsValid = false;
-            string policyURL = Configuration.PolicyServerUri + "/ingest";
+            var mdIsValid = false;
+            var policyURL = Configuration.PolicyServerUri + "/ingest";
             validityMessage = string.Empty;
             try
             {
 
-                string response = EasyHttp.Send(policyURL, null, out HttpStatusCode responseStatusCode, mdJSON, EasyHttp.HttpMethod.Post, 100, "application/json");
+                var response = EasyHttp.Send(policyURL, null, out HttpStatusCode responseStatusCode, mdJSON, EasyHttp.HttpMethod.Post, 100, "application/json");
                 if (response.Contains("success"))
                 {
                     validityMessage = response;
@@ -269,7 +274,7 @@ namespace Pacifica.DMS_Metadata
 
         private bool AddUsingCacheInfoFile(
             FileInfo fiCacheInfoFile,
-            List<FileInfoObject> fileCollection,
+            ICollection<FileInfoObject> fileCollection,
             string baseDSPath,
             out string remoteFilePath)
         {
@@ -397,14 +402,12 @@ namespace Pacifica.DMS_Metadata
         /// <summary>
         /// Query server for files and hash codes
         /// </summary>
-        /// <param name="fileList">List of local files</param>
+        /// <param name="candidateFilesToUpload">List of local files</param>
         /// <param name="uploadMetadata">Upload metadata</param>
-        /// <param name="debugMode">Debugging options</param>
         /// <returns></returns>
         private List<FileInfoObject> CompareDatasetContentsWithMyEMSLMetadata(
-            List<FileInfoObject> fileList,
-            Upload.UploadMetadata uploadMetadata,
-            EasyHttp.eDebugMode debugMode)
+            IEnumerable<FileInfoObject> candidateFilesToUpload,
+            Upload.UploadMetadata uploadMetadata)
         {
             TotalFileSizeToUpload = 0;
 
@@ -415,8 +418,8 @@ namespace Pacifica.DMS_Metadata
 
             RaiseDebugEvent("CompareDatasetContentsWithMyEMSLMetadata", currentTask);
 
-            int datasetID = uploadMetadata.DatasetID;
-            string metadataURL = Configuration.MetadataServerUri + "/fileinfo/files_for_keyvalue/";
+            var datasetID = uploadMetadata.DatasetID;
+            var metadataURL = Configuration.MetadataServerUri + "/fileinfo/files_for_keyvalue/";
             metadataURL += "omics.dms.dataset_id/" + datasetID;
 
 
@@ -485,9 +488,9 @@ namespace Pacifica.DMS_Metadata
 
                 var diLockFolderSource = new DirectoryInfo(strLockFolderPathSource);
 
-                var strTargetFilePath = Path.Combine(@"\\MyEMSL\", this.DatasetName, fiSource.Name);
+                var strTargetFilePath = Path.Combine(@"\\MyEMSL\", DatasetName, fiSource.Name);
 
-                var strLockFilePathSource = mFileTools.CreateLockFile(diLockFolderSource, lockFileTimestamp, fiSource, strTargetFilePath, this.ManagerName);
+                var strLockFilePathSource = mFileTools.CreateLockFile(diLockFolderSource, lockFileTimestamp, fiSource, strTargetFilePath, ManagerName);
 
                 if (string.IsNullOrEmpty(strLockFilePathSource))
                 {
@@ -632,7 +635,7 @@ namespace Pacifica.DMS_Metadata
         /// <param name="fieldName">Field name</param>
         /// <param name="valueIfNull">Integer to return if null</param>
         /// <returns>Integer</returns>
-        private static int GetDbValue(SqlDataReader reader, string fieldName, int valueIfNull)
+        private static int GetDbValue(IDataRecord reader, string fieldName, int valueIfNull)
         {
             return GetDbValue(reader, fieldName, valueIfNull, out _);
         }
@@ -645,7 +648,7 @@ namespace Pacifica.DMS_Metadata
         /// <param name="valueIfNull">Integer to return if null</param>
         /// <param name="isNull">True if the value is null</param>
         /// <returns>Integer</returns>
-        private static int GetDbValue(SqlDataReader reader, string fieldName, int valueIfNull, out bool isNull)
+        private static int GetDbValue(IDataRecord reader, string fieldName, int valueIfNull, out bool isNull)
         {
             if (Convert.IsDBNull(reader[fieldName]))
             {
@@ -664,7 +667,7 @@ namespace Pacifica.DMS_Metadata
         /// <param name="fieldName">Field name</param>
         /// <param name="valueIfNull">String to return if null</param>
         /// <returns>String</returns>
-        private static string GetDbValue(SqlDataReader reader, string fieldName, string valueIfNull)
+        private static string GetDbValue(IDataRecord reader, string fieldName, string valueIfNull)
         {
             return GetDbValue(reader, fieldName, valueIfNull, out _);
         }
@@ -677,7 +680,7 @@ namespace Pacifica.DMS_Metadata
         /// <param name="valueIfNull">String to return if null</param>
         /// <param name="isNull">True if the value is null</param>
         /// <returns>String</returns>
-        private static string GetDbValue(SqlDataReader reader, string fieldName, string valueIfNull, out bool isNull)
+        private static string GetDbValue(IDataRecord reader, string fieldName, string valueIfNull, out bool isNull)
         {
             if (Convert.IsDBNull(reader[fieldName]))
             {
@@ -695,8 +698,8 @@ namespace Pacifica.DMS_Metadata
         #region "Event Delegates and Classes"
 
         public event ProgressEventHandler ProgressEvent;
-        public event Pacifica.Core.MessageEventHandler DebugEvent;
-        public event Pacifica.Core.MessageEventHandler ErrorEvent;
+        public event MessageEventHandler DebugEvent;
+        public event MessageEventHandler ErrorEvent;
 
         public delegate void ProgressEventHandler(object sender, ProgressEventArgs e);
 
@@ -711,15 +714,15 @@ namespace Pacifica.DMS_Metadata
 
         private void OnError(string callingFunction, string errorMessage)
         {
-            ErrorEvent?.Invoke(this, new Pacifica.Core.MessageEventArgs(callingFunction, errorMessage));
+            ErrorEvent?.Invoke(this, new MessageEventArgs(callingFunction, errorMessage));
         }
 
         private void RaiseDebugEvent(string callingFunction, string currentTask)
         {
-            DebugEvent?.Invoke(this, new Pacifica.Core.MessageEventArgs(callingFunction, currentTask));
+            DebugEvent?.Invoke(this, new MessageEventArgs(callingFunction, currentTask));
         }
 
-        void reader_ErrorEvent(string message, Exception ex)
+        void reader_ErrorEvent(string message)
         {
             OnError("MyEMSLReader", message);
         }
@@ -734,9 +737,9 @@ namespace Pacifica.DMS_Metadata
             // Console.WriteLine("MyEMSLReader Percent complete: " + e.PercentComplete.ToString("0.0") + "%");
         }
 
-        void mFileTools_WaitingForLockQueue(string SourceFilePath, string TargetFilePath, int MBBacklogSource, int MBBacklogTarget)
+        void mFileTools_WaitingForLockQueue(string sourceFilePath, string targetFilePath, int MBBacklogSource, int MBBacklogTarget)
         {
-            Console.WriteLine("mFileTools_WaitingForLockQueue for " + SourceFilePath);
+            Console.WriteLine("mFileTools_WaitingForLockQueue for " + sourceFilePath);
         }
 
 

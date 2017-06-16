@@ -64,7 +64,7 @@ namespace Pacifica.Core
 
         #region Private Members
 
-        private FileInfo File { get; set; }
+        private FileInfo File { get; }
 
         #endregion
 
@@ -73,7 +73,6 @@ namespace Pacifica.Core
         public string AbsoluteLocalPath
         {
             get;
-            private set;
         }
 
         private readonly string mRelativeDestinationDirectory;
@@ -104,14 +103,8 @@ namespace Pacifica.Core
         public string _destinationFileName;
         public string DestinationFileName
         {
-            get
-            {
-                return _destinationFileName;
-            }
-            set
-            {
-                _destinationFileName = value;
-            }
+            get => _destinationFileName;
+            set => _destinationFileName = value;
         }
 
         public string FileName => File.Name;
@@ -122,7 +115,6 @@ namespace Pacifica.Core
         public string Sha1HashHex
         {
             get;
-            private set;
         }
 
         public long FileSizeInBytes => File.Length;

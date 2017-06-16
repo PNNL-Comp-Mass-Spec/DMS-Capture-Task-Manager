@@ -31,10 +31,7 @@ namespace Pacifica.DMS_Metadata
         private bool mUseTestInstance;
         public bool UseTestInstance
         {
-            get
-            {
-                return mUseTestInstance;
-            }
+            get => mUseTestInstance;
             set
             {
                 mUseTestInstance = value;

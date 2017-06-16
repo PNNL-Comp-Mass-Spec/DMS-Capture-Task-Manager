@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Net;
 using System.Net.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -62,11 +61,11 @@ namespace Pacifica.Core
         public static List<FileInfoObject> GetFileListFromMetadataObject(List<Dictionary<string, object>> metadataObject)
         {
             var fileList = new List<FileInfoObject>();
-            foreach (Dictionary<string, object> item in metadataObject)
+            foreach (var item in metadataObject)
             {
                 if (item.TryGetValue("destinationTable", out object destTable))
                 {
-                    string t = (string)destTable;
+                    var t = (string)destTable;
                     if (t.ToLower() == "files")
                     {
                         fileList.Add(new FileInfoObject(
@@ -238,14 +237,16 @@ namespace Pacifica.Core
                 var value = jsa.Pop();
                 if (value.GetType().Name == "JsonNumber")
                 {
-                    var dctValue = new Dictionary<string, object>();
-                    dctValue.Add(value.ToString(), string.Empty);
+                    var dctValue = new Dictionary<string, object> {
+                        { value.ToString(), string.Empty}
+                    };
                     lstItems.Add(dctValue);
                 }
                 else if (value.GetType().Name == "String")
                 {
-                    var dctValue = new Dictionary<string, object>();
-                    dctValue.Add(value.ToString(), string.Empty);
+                    var dctValue = new Dictionary<string, object> {
+                        { value.ToString(), string.Empty}
+                    };
                     lstItems.Add(dctValue);
                 }
                 else if (value.GetType().Name == "JsonObject")
@@ -266,8 +267,8 @@ namespace Pacifica.Core
         {
             if (string.IsNullOrWhiteSpace(jobNumber))
                 return "MyEMSL_metadata_CaptureJob_000000.txt";
-            else
-                return "MyEMSL_metadata_CaptureJob_" + jobNumber + ".txt";
+
+            return "MyEMSL_metadata_CaptureJob_" + jobNumber + ".txt";
         }
 
         public static string GetUserName(bool cleanDomain = false)
@@ -284,7 +285,7 @@ namespace Pacifica.Core
         }
 
         /// <summary>
-        /// Callback used to validate the certificate in an SSL conversation 
+        /// Callback used to validate the certificate in an SSL conversation
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="cert"></param>
