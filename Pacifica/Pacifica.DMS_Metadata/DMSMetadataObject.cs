@@ -151,10 +151,10 @@ namespace Pacifica.DMS_Metadata
                 ServicePointManager.ServerCertificateValidationCallback += Utilities.ValidateRemoteCertificate;
             this.DatasetName = Utilities.GetDictionaryValue(taskParams, "Dataset", "Unknown_Dataset");
 
-            var lstDatasetFilesToArchive = FindDatasetFilesToArchive(taskParams, mgrParams, out Upload.udtUploadMetadata uploadMetadata);
+            var lstDatasetFilesToArchive = FindDatasetFilesToArchive(taskParams, mgrParams, out Upload.UploadMetadata uploadMetadata);
             mgrParams.TryGetValue("DefaultDMSConnString", out string connectionString);
             taskParams.TryGetValue("Dataset_ID", out string datasetID);
-            var supplementalDataSuccess = GetSupplementalDMSMetadata(connectionString, datasetID, ref uploadMetadata);
+            var supplementalDataSuccess = GetSupplementalDMSMetadata(connectionString, datasetID, uploadMetadata);
 
             // Calculate the "year_quarter" code used for subfolders within an instrument folder
             // This value is based on the date the dataset was created in DMS
@@ -181,8 +181,9 @@ namespace Pacifica.DMS_Metadata
 
         }
 
-        private static bool GetSupplementalDMSMetadata(string dmsConnectionString, string dataset_id, ref Upload.udtUploadMetadata uploadMetadata)
+        private static bool GetSupplementalDMSMetadata(string dmsConnectionString, string dataset_id, Upload.UploadMetadata uploadMetadata)
         {
+          
             string queryString =
                 "SELECT TOP 1 * FROM V_MyEMSL_Supplemental_Metadata WHERE dataset_id = " + dataset_id.ToString();
             using (SqlConnection connection = new SqlConnection(dmsConnectionString))
@@ -220,7 +221,6 @@ namespace Pacifica.DMS_Metadata
                     reader.Close();
                 }
             }
-            //uploadMetadata = new Upload.udtUploadMetadata();
 
             return true;
         }
@@ -414,7 +414,7 @@ namespace Pacifica.DMS_Metadata
         /// <returns></returns>
         private List<FileInfoObject> CompareDatasetContentsWithMyEMSLMetadata(
             List<FileInfoObject> fileList,
-            Upload.udtUploadMetadata uploadMetadata,
+            Upload.UploadMetadata uploadMetadata,
             EasyHttp.eDebugMode debugMode)
         {
             TotalFileSizeToUpload = 0;
@@ -539,10 +539,10 @@ namespace Pacifica.DMS_Metadata
         public List<FileInfoObject> FindDatasetFilesToArchive(
             Dictionary<string, string> taskParams,
             Dictionary<string, string> mgrParams,
-            out Upload.udtUploadMetadata uploadMetadata)
+            out Upload.UploadMetadata uploadMetadata)
         {
 
-            uploadMetadata = new Upload.udtUploadMetadata();
+            uploadMetadata = new Upload.UploadMetadata();
             uploadMetadata.Clear();
 
             // Translate values from task/mgr params into usable variables

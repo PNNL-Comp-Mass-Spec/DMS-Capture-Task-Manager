@@ -51,7 +51,7 @@ namespace Pacifica.Core
             }
         }
 
-        public struct udtUploadMetadata
+        public class UploadMetadata
         {
             public int DatasetID;               // 0 for data packages
             public int DataPackageID;
@@ -75,6 +75,7 @@ namespace Pacifica.Core
             public string DatasetType;
             public int RequestedRunID;
             public List<int> UserOfRecordList;
+
             /// <summary>
             /// Instrument Operator EUS ID for datasets
             /// Data Package Owner for data packages
@@ -418,7 +419,7 @@ namespace Pacifica.Core
         /// Keys are key names; values are either strings or dictionary objects or even a list of dictionary objects
         /// </returns>
         public static List<Dictionary<string, object>> CreatePacificaMetadataObject(
-            udtUploadMetadata uploadMetadata,
+            UploadMetadata uploadMetadata,
             List<FileInfoObject> lstUnmatchedFiles,
             out EUSInfo eusInfo)
         {
@@ -646,7 +647,7 @@ namespace Pacifica.Core
         /// Keys are key names; values are either strings or dictionary objects or even a list of dictionary objects
         /// </returns>
         public static Dictionary<string, object> CreateMetadataObject(
-            udtUploadMetadata uploadMetadata,
+            UploadMetadata uploadMetadata,
             List<FileInfoObject> lstUnmatchedFiles,
             out EUSInfo eusInfo)
         {
