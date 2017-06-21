@@ -62,6 +62,8 @@ namespace CaptureTaskManager
 
         protected int m_DatasetID;
 
+        protected string m_MgrName;
+
         /// <summary>
         /// LogLevel is 1 to 5: 1 for Fatal errors only, 4 for Fatal, Error, Warning, and Info, and 5 for everything including Debug messages
         /// </summary>
@@ -121,7 +123,8 @@ namespace CaptureTaskManager
             m_TaskParams = taskParams;
             m_StatusTools = statusTools;
 
-            m_FileTools = new clsFileTools(m_MgrParams.GetParam("MgrName", "CaptureTaskManager"), 1);
+            m_MgrName = m_MgrParams.GetParam("MgrName", "CaptureTaskManager");
+            m_FileTools = new clsFileTools(m_MgrName, 1);
 
             // This Connection String points to the DMS_Capture database
             var sConnectionString = m_MgrParams.GetParam("connectionstring");
