@@ -238,27 +238,27 @@ namespace Pacifica.DMS_Metadata
 
         private static List<int> GetRequestedRunUsers(SqlConnection connection, int requestedRunID)
         {
-            var personList = new List<int>();
-            var queryString = "SELECT EUS_Person_ID FROM T_Requested_Run_EUS_Users where Request_ID = " + requestedRunID;
+            var queryString = "SELECT EUS_Person_ID FROM V_Requested_Run_EUS_Users_Export WHERE Request_ID = " + requestedRunID;
 
             var command = new SqlCommand(queryString, connection);
             using (var reader = command.ExecuteReader())
             {
-                if (reader.HasRows)
+                if (!reader.HasRows)
+                    return new List<int>();
+
+                var personList = new List<int>();
+
+                while (reader.Read())
                 {
-                    while (reader.Read())
-                    {
-                        var personId = GetDbValue(reader, "EUS_Person_ID", 0, out bool isNull);
-                        if (!isNull)
-                            personList.Add(personId);
-                    }
+                    var personId = GetDbValue(reader, "EUS_Person_ID", 0, out bool isNull);
+                    if (!isNull)
+                        personList.Add(personId);
                 }
+
+                return personList;
             }
 
-            return personList;
         }
-
-
 
         private bool CheckMetadataValidity(string mdJSON, out string validityMessage)
         {
