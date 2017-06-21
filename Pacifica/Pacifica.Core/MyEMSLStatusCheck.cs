@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Xml;
@@ -61,9 +62,15 @@ namespace Pacifica.Core
             return false;
         }
 
-        public bool DoesFileExistInMyEMSL(FileInfoObject fio)
+        /// <summary>
+        /// Check whether a file exists in MyEMSL
+        /// </summary>
+        /// <param name="fileInfo">File info object</param>
+        /// <returns>True if found, otherwise false</returns>
+        /// <remarks>Searches using Sha1HashHex, so could match a file in a different location than the specific path tracked by fileInfo</remarks>
+        public bool DoesFileExistInMyEMSL(FileInfoObject fileInfo)
         {
-            var fileSHA1HashSum = fio.Sha1HashHex;
+            var fileSHA1HashSum = fileInfo.Sha1HashHex;
             var metadataURL = Configuration.MetadataServerUri + "/files?hashsum=" + fileSHA1HashSum;
 
             HttpStatusCode responseStatusCode;
@@ -399,7 +406,7 @@ namespace Pacifica.Core
                 else
                 {
                     errorMessage = message;
-                    statusMessage = "Injest error";
+                    statusMessage = "Ingest error";
                 }
 
                 return false;

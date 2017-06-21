@@ -121,8 +121,16 @@ namespace Pacifica.Core
         [Obsolete("Deprecated in summary 2017")]
         public static string SearchServerUri { get; } = Scheme + SearchServerHostName;
 
+        /// <summary>
+        /// Proxy server URL
+        /// </summary>
+        /// <remarks>Ignored if an empty string (which is default)</remarks>
         public static string HttpProxyUrl { get; set; } = string.Empty;
 
+        /// <summary>
+        /// Associate the proxy server (if defined) with the WebRequest
+        /// </summary>
+        /// <param name="oWebRequest"></param>
         public static void SetProxy(HttpWebRequest oWebRequest)
         {
             if (!string.IsNullOrWhiteSpace(HttpProxyUrl))

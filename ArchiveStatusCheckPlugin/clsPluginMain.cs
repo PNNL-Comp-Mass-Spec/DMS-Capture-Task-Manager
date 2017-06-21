@@ -77,7 +77,7 @@ namespace ArchiveStatusCheckPlugin
             else
             {
                 // Files are not yet verified
-                // Return completionCode CLOSEOUT_NOT_READY=2 
+                // Return completionCode CLOSEOUT_NOT_READY=2
                 // which will tell the DMS_Capture DB to reset the task to state 2 and bump up the Next_Try value by 60 minutes
                 if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
                     mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;

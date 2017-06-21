@@ -146,6 +146,13 @@ namespace Pacifica.DMS_Metadata
             mFileTools.WaitingForLockQueue += mFileTools_WaitingForLockQueue;
         }
 
+        /// <summary>
+        /// Construct the metadata that will be included with the ingested data
+        /// </summary>
+        /// <param name="taskParams"></param>
+        /// <param name="mgrParams"></param>
+        /// <param name="debugMode"></param>
+        /// <returns></returns>
         public bool SetupMetadata(Dictionary<string, string> taskParams, Dictionary<string, string> mgrParams, EasyHttp.eDebugMode debugMode)
         {
 
