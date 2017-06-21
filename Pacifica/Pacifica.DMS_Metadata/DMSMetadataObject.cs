@@ -395,7 +395,6 @@ namespace Pacifica.DMS_Metadata
                     // This is a cache info file that likely points to a .mzXML or .mzML file (possibly gzipped)
                     // Auto-include that file in the .tar to be uploaded
 
-
                     var success = AddUsingCacheInfoFile(fiFile, fileCollection, baseDSPath, out string remoteFilePath);
                     if (!success)
                         throw new Exception("Error reported by AddUsingCacheInfoFile for " + fiFile.FullName);
@@ -430,50 +429,8 @@ namespace Pacifica.DMS_Metadata
             RaiseDebugEvent("CompareDatasetContentsWithMyEMSLMetadata", currentTask);
 
             var datasetID = uploadMetadata.DatasetID;
-            var metadataURL = Configuration.MetadataServerUri + "/fileinfo/files_for_keyvalue/";
-            metadataURL += "omics.dms.dataset_id/" + datasetID;
 
-            // Retrieve a list of files already in MyEMSL for this dataset
-            var fileInfoListJSON = EasyHttp.Send(metadataURL, out HttpStatusCode responseStatusCode);
-
-            // Convert the response to a dictionary
-            var jsa = (Jayrock.Json.JsonArray)JsonConvert.Import(fileInfoListJSON);
-            var remoteFileInfoList = Utilities.JsonArrayToDictionaryList(jsa);
-
-            // Keys in this dictionary are relative file paths; values are hash values
-            // A given remote file could have multiple hash values if multiple versions of the file have been uploaded
-            var remoteFiles = new Dictionary<string, SortedSet<string>>();
-
-            // Note that two files in the same directory could have the same hash value (but different names),
-            // so we cannot simply compare file hashes
-
-            foreach (var fileObj in remoteFileInfoList)
-            {
-                var fileName = (string)fileObj["name"];
-                var fileHash = (string)fileObj["hashsum"];
-                var subFolder = (string)fileObj["subdir"];
-
-                var relativeFilePath = Path.Combine(subFolder, fileName);
-
-                if (remoteFiles.TryGetValue(relativeFilePath, out var hashValues))
-                {
-                    if (hashValues.Contains(fileHash))
-                    {
-                        OnError("CompareDatasetContentsWithMyEMSLMetadata",
-                                "Remote file listing reports the same file with the same hash more than once; ignoring: " + relativeFilePath +
-                                " with hash " + fileHash);
-                    }
-                    else
-                    {
-                        hashValues.Add(fileHash);
-                    }
-                }
-                else
-                {
-                    remoteFiles.Add(relativeFilePath, new SortedSet<string> { fileHash });
-                }
-
-            }
+            var remoteFiles = GetDatasetFilesInMyEMSL(datasetID);
 
             // Compare the files in remoteFileInfoList to those in candidateFilesToUpload
             // Note that two files in the same directory could have the same hash value, so we cannot simply compare file hashes
@@ -659,6 +616,90 @@ namespace Pacifica.DMS_Metadata
             var lstDatasetFilesToArchive = CollectFileInformation(pathToArchive, baseDSPath, recurse);
 
             return lstDatasetFilesToArchive;
+        }
+
+        /// <summary>
+        /// Find files in MyEMSL associated with the given dataset ID
+        /// </summary>
+        /// <param name="datasetID">Dataset ID</param>
+        /// <param name="subDir">Optional subdiretory (subfolder) to filter on</param>
+        /// <returns>List of files</returns>
+        public Dictionary<string, List<MyEMSLFileInfo>> GetDatasetFilesInMyEMSL(int datasetID, string subDir = "")
+        {
+            var metadataURL = Configuration.MetadataServerUri + "/fileinfo/files_for_keyvalue/";
+            metadataURL += "omics.dms.dataset_id/" + datasetID;
+
+            // Retrieve a list of files already in MyEMSL for this dataset
+            var fileInfoListJSON = EasyHttp.Send(metadataURL, out HttpStatusCode responseStatusCode);
+
+            // Convert the response to a dictionary
+            var jsa = (Jayrock.Json.JsonArray)JsonConvert.Import(fileInfoListJSON);
+            var remoteFileInfoList = Utilities.JsonArrayToDictionaryList(jsa);
+
+            // Keys in this dictionary are relative file paths; values are hash values
+            // A given remote file could have multiple hash values if multiple versions of the file have been uploaded
+            var remoteFiles = new Dictionary<string, List<MyEMSLFileInfo>>();
+
+            // Note that two files in the same directory could have the same hash value (but different names),
+            // so we cannot simply compare file hashes
+
+            foreach (var fileObj in remoteFileInfoList)
+            {
+                var fileName = Utilities.GetDictionaryValue(fileObj, "name");
+                var fileId = Utilities.GetDictionaryValue(fileObj, "_id", 0);
+                var fileHash = Utilities.GetDictionaryValue(fileObj, "hashsum");
+                var subFolder = Utilities.GetDictionaryValue(fileObj, "subdir");
+
+                if (!string.IsNullOrWhiteSpace(subDir))
+                {
+                    if (!string.Equals(subDir, subFolder, StringComparison.OrdinalIgnoreCase))
+                        continue;
+                }
+
+                var relativeFilePath = Path.Combine(subFolder, fileName);
+
+                if (remoteFiles.TryGetValue(relativeFilePath, out var fileVersions))
+                {
+                    if (FileHashExists(fileVersions, fileHash))
+                    {
+                        OnError("CompareDatasetContentsWithMyEMSLMetadata",
+                                "Remote file listing reports the same file with the same hash more than once; ignoring: " + relativeFilePath +
+                                " with hash " + fileHash);
+                        continue;
+                    }
+
+                    // Add the file to fileVersions
+                }
+                else
+                {
+                    fileVersions = new List<MyEMSLFileInfo>();
+                    remoteFiles.Add(relativeFilePath, fileVersions);
+                }
+
+                var remoteFileInfo = new MyEMSLFileInfo(fileName, fileId, fileHash)
+                {
+                    HashType = Utilities.GetDictionaryValue(fileObj, "hashtype"),
+                    SubDir = Utilities.GetDictionaryValue(fileObj, "subdir"),
+                    Size = Utilities.GetDictionaryValue(fileObj, "size", 0),
+                    TransactionId = Utilities.GetDictionaryValue(fileObj, "transaction_id", 0)
+                };
+
+                var createdInMyEMSL = Utilities.GetDictionaryValue(fileObj, "created");
+                var updatedInMyEMSL = Utilities.GetDictionaryValue(fileObj, "updated");
+                var deletedInMyEMSL = Utilities.GetDictionaryValue(fileObj, "deleted");
+
+                remoteFileInfo.UpdateRemoteFileTimes(createdInMyEMSL, updatedInMyEMSL, deletedInMyEMSL);
+
+                var creationTime = Utilities.GetDictionaryValue(fileObj, "ctime");
+                var lastWriteTime = Utilities.GetDictionaryValue(fileObj, "mtime");
+
+                remoteFileInfo.UpdateSourceFileTimes(creationTime, lastWriteTime);
+
+                fileVersions.Add(remoteFileInfo);
+
+            }
+
+            return remoteFiles;
         }
 
         public static string GetDatasetYearQuarter(Dictionary<string, string> taskParams)
