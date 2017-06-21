@@ -11,6 +11,8 @@ namespace Pacifica.Core
 {
     public class EasyHttp
     {
+        private static X509Certificate2 mLoginCertificate;
+
         /// <summary>
         /// An enumeration of standard HTTP methods.
         /// </summary>
@@ -226,11 +228,13 @@ namespace Pacifica.Core
 
             if (loginCredentials == null)
             {
-                //request.UseDefaultCredentials = true;
-                var certificate = new X509Certificate2();
-                var password = Utilities.DecodePassword(Configuration.CLIENT_CERT_PASSWORD);
-                certificate.Import(Configuration.CLIENT_CERT_FILEPATH, password, X509KeyStorageFlags.PersistKeySet);
-                request.ClientCertificates.Add(certificate);
+                if (mLoginCertificate == null)
+                {
+                    mLoginCertificate = new X509Certificate2();
+                    var password = Utilities.DecodePassword(Configuration.CLIENT_CERT_PASSWORD);
+                    mLoginCertificate.Import(Configuration.CLIENT_CERT_FILEPATH, password, X509KeyStorageFlags.PersistKeySet);
+                }
+                request.ClientCertificates.Add(mLoginCertificate);
             }
             else
             {
@@ -579,7 +583,6 @@ namespace Pacifica.Core
                 var password = Utilities.DecodePassword(Configuration.CLIENT_CERT_PASSWORD);
                 certificate.Import(Configuration.CLIENT_CERT_FILEPATH, password, X509KeyStorageFlags.PersistKeySet);
                 oWebRequest.ClientCertificates.Add(certificate);
-
 
                 Configuration.SetProxy(oWebRequest);
 
