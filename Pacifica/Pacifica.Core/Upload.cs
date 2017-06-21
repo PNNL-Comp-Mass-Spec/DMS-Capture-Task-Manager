@@ -639,7 +639,7 @@ namespace Pacifica.Core
                     { "mimetype", "application/octet-stream" },
                     { "hashtype", "sha1" },
                     { "ctime", f.CreationTime.ToUniversalTime().ToString("s") },
-                    { "mtime", f.CreationTime.ToUniversalTime().ToString("s") }
+                    { "mtime", f.LastWriteTime.ToUniversalTime().ToString("s") }
                 });
             }
 

@@ -121,6 +121,8 @@ namespace Pacifica.Core
 
         public DateTime CreationTime => File.CreationTime;
 
+        public DateTime LastWriteTime => File.LastWriteTime;
+
         public DateTime SubmittedTime { get; } = DateTime.Now;
 
         [Obsolete("Unused")]
