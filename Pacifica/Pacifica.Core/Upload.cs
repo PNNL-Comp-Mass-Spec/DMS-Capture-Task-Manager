@@ -210,36 +210,23 @@ namespace Pacifica.Core
 
         #region IUpload Members
 
-        public bool StartUpload(List<Dictionary<string, object>> metadataObject, out string statusURL)
-        {
-            NetworkCredential loginCredentials = null;
-            const EasyHttp.eDebugMode debugMode = EasyHttp.eDebugMode.DebugDisabled;
-
-            // ReSharper disable once ExpressionIsAlwaysNull
-            return StartUpload(metadataObject, loginCredentials, debugMode, out statusURL);
-        }
-
-
-        public bool StartUpload(List<Dictionary<string, object>> metadataObject, EasyHttp.eDebugMode debugMode, out string statusURL)
-        {
-            NetworkCredential loginCredentials = null;
-
-            // ReSharper disable once ExpressionIsAlwaysNull
-            return StartUpload(metadataObject, loginCredentials, debugMode, out statusURL);
-        }
-
-        public bool StartUpload(List<Dictionary<string, object>> metadataObject, NetworkCredential loginCredentials, out string statusURL)
+        /// <summary>
+        /// Update the files and data tracked by metadataObject to MyEMSL
+        /// </summary>
+        /// <param name="metadataObject"></param>
+        /// <param name="statusURI">Status URL</param>
+        /// <returns>True if successfully uploaded, false if an error</returns>
+        public bool StartUpload(List<Dictionary<string, object>> metadataObject, out string statusURI)
         {
             const EasyHttp.eDebugMode debugMode = EasyHttp.eDebugMode.DebugDisabled;
-            return StartUpload(metadataObject, loginCredentials, debugMode, out statusURL);
-        }
 
+            return StartUpload(metadataObject, debugMode, out statusURI);
+        }
 
         /// <summary>
         ///
         /// </summary>
         /// <param name="metadataObject"></param>
-        /// <param name="loginCredentials"></param>
         /// <param name="debugMode">
         /// Set to eDebugMode.CreateTarLocal to authenticate with MyEMSL, then create a .tar file locally instead of actually uploading it
         /// Set to eDebugMode.MyEMSLOfflineMode to create the .tar file locally without contacting MyEMSL</param>
@@ -247,7 +234,6 @@ namespace Pacifica.Core
         /// <returns>True if successfully uploaded, false if an error</returns>
         public bool StartUpload(
             List<Dictionary<string, object>> metadataObject,
-            NetworkCredential loginCredentials,
             EasyHttp.eDebugMode debugMode,
             out string statusURL)
         {
