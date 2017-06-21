@@ -180,6 +180,61 @@ namespace Pacifica.Core
             return string.Empty;
         }
 
+        /// <summary>
+        /// Obtain the status returned by the given MyEMSL status page
+        /// </summary>
+        /// <param name="statusURI">URI to examine</param>
+        /// <param name="lookupError">Output: true if an error occurs</param>
+        /// <param name="errorMessage">Output: error message if lookupError is true</param>
+        /// <returns>Status dictionary; empty dictionary</returns>
+        public Dictionary<string, object> GetIngestStatus(
+            string statusURI,
+            out bool lookupError,
+            out string errorMessage)
+        {
+
+            lookupError = false;
+            errorMessage = string.Empty;
+
+            if (!File.Exists(Configuration.CLIENT_CERT_FILEPATH))
+            {
+                errorMessage = "Authentication failure; cert file not found at " + Configuration.CLIENT_CERT_FILEPATH;
+                ReportError("GetIngestStatus", errorMessage);
+                lookupError = true;
+                return new Dictionary<string, object>();
+            }
+
+            // The following Callback allows us to access the MyEMSL server even if the certificate is expired or untrusted
+            // For more info, see comments in Upload.StartUpload()
+            if (ServicePointManager.ServerCertificateValidationCallback == null)
+                ServicePointManager.ServerCertificateValidationCallback += Utilities.ValidateRemoteCertificate;
+
+            var statusResult = EasyHttp.Send(statusURI, out HttpStatusCode responseStatusCode);
+
+            var statusJSON = Utilities.JsonToObject(statusResult);
+
+            var state = Utilities.GetDictionaryValue(statusJSON, "state").ToLower();
+
+            if (state == "ok")
+            {
+
+            }
+            else if (state == "failed")
+            {
+                ReportError("GetIngestStatus", "Upload failed ");
+            }
+            else if (state.Contains("error"))
+            {
+                ReportError("GetIngestStatus", "Status server is offline or having issues");
+            }
+            else
+            {
+                ReportError("GetIngestStatus", "Unrecognized state: " + state);
+            }
+
+            return statusJSON;
+        }
+
         private string GetStepDescription(StatusStep step)
         {
             return string.Format("{0} ({1})", (int)step, step);
