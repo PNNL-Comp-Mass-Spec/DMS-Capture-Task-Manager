@@ -162,6 +162,7 @@ namespace Pacifica.DMS_Metadata
             // Instead, only allow certain domains, as defined by ValidateRemoteCertificate
             if (ServicePointManager.ServerCertificateValidationCallback == null)
                 ServicePointManager.ServerCertificateValidationCallback += Utilities.ValidateRemoteCertificate;
+
             DatasetName = Utilities.GetDictionaryValue(taskParams, "Dataset", "Unknown_Dataset");
 
             var lstDatasetFilesToArchive = FindDatasetFilesToArchive(taskParams, mgrParams, out Upload.UploadMetadata uploadMetadata);
@@ -201,7 +202,7 @@ namespace Pacifica.DMS_Metadata
         private static bool GetSupplementalDMSMetadata(string dmsConnectionString, string datasetID, Upload.UploadMetadata uploadMetadata)
         {
 
-            var queryString = "SELECT * FROM V_MyEMSL_Supplemental_Metadata WHERE dataset_id = " + datasetID;
+            var queryString = "SELECT * FROM V_MyEMSL_Supplemental_Metadata WHERE [omics.dms.dataset_id] = " + datasetID;
 
             using (var connection = new SqlConnection(dmsConnectionString))
             {
@@ -212,19 +213,19 @@ namespace Pacifica.DMS_Metadata
 
                     if (reader.HasRows && reader.Read())
                     {
-                        uploadMetadata.CampaignID = GetDbValue(reader, "campaign_id", 0);
-                        uploadMetadata.CampaignName = GetDbValue(reader, "campaign_name", "");
-                        uploadMetadata.ExperimentID = GetDbValue(reader, "experiment_id", 0);
-                        uploadMetadata.ExperimentName = GetDbValue(reader, "experiment_name", "");
-                        uploadMetadata.OrganismName = GetDbValue(reader, "organism_name", "");
+                        uploadMetadata.CampaignID = GetDbValue(reader, "omics.dms.campaign_id", 0);
+                        uploadMetadata.CampaignName = GetDbValue(reader, "omics.dms.campaign_name", string.Empty);
+                        uploadMetadata.ExperimentID = GetDbValue(reader, "omics.dms.experiment_id", 0);
+                        uploadMetadata.ExperimentName = GetDbValue(reader, "omics.dms.experiment_name", string.Empty);
+                        uploadMetadata.OrganismName = GetDbValue(reader, "organism_name", string.Empty);
                         uploadMetadata.NCBITaxonomyID = GetDbValue(reader, "ncbi_taxonomy_id", 0);
-                        uploadMetadata.OrganismID = GetDbValue(reader, "organism_id", 0);
-                        uploadMetadata.AcquisitionTime = GetDbValue(reader, "acquisition_time", "");
-                        uploadMetadata.AcquisitionLengthMin = GetDbValue(reader, "acquisition_length", 0);
-                        uploadMetadata.NumberOfScans = GetDbValue(reader, "number_of_scans", 0);
-                        uploadMetadata.SeparationType = GetDbValue(reader, "separation_type", "");
-                        uploadMetadata.DatasetType = GetDbValue(reader, "dataset_type", "");
-                        uploadMetadata.RequestedRunID = GetDbValue(reader, "requested_run_id", 0);
+                        uploadMetadata.OrganismID = GetDbValue(reader, "omics.dms.organism_id", 0);
+                        uploadMetadata.AcquisitionTime = GetDbValue(reader, "omics.dms.acquisition_time", string.Empty);
+                        uploadMetadata.AcquisitionLengthMin = GetDbValue(reader, "omics.dms.acquisition_length_min", 0);
+                        uploadMetadata.NumberOfScans = GetDbValue(reader, "omics.dms.number_of_scans", 0);
+                        uploadMetadata.SeparationType = GetDbValue(reader, "omics.dms.separation_type", string.Empty);
+                        uploadMetadata.DatasetType = GetDbValue(reader, "omics.dms.dataset_type", string.Empty);
+                        uploadMetadata.RequestedRunID = GetDbValue(reader, "omics.dms.requested_run_id", 0);
                     }
 
                 } // Close reader
