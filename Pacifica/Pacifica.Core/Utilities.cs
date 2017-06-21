@@ -89,9 +89,45 @@ namespace Pacifica.Core
             if (dictionary.TryGetValue(keyName, out string value))
             {
                 return value ?? valueIfMissing;
+
+        /// <summary>
+        /// Lookup the integer value associated with the given key in the dictionary
+        /// </summary>
+        /// <param name="dictionary">Dictionary</param>
+        /// <param name="keyName">Key name</param>
+        /// <param name="valueIfMissingOrNull">Int-64 value to return if the dictionary value is missing or null</param>
+        /// <returns>Value for the given key, or valueIfMissingOrNull if the value is missing or null</returns>
+        public static long GetDictionaryValue(IReadOnlyDictionary<string, object> dictionary, string keyName, long valueIfMissingOrNull)
+        {
+            if (!dictionary.TryGetValue(keyName, out var itemValue))
+                return valueIfMissingOrNull;
+
+            if (itemValue != null)
+            {
+                var itemValueString = itemValue.ToString();
+                if (long.TryParse(itemValueString, out var itemValueNumber))
+                    return itemValueNumber;
             }
 
-            return valueIfMissing;
+            return valueIfMissingOrNull;
+        }
+
+        /// <summary>
+        /// Lookup the value associated with the given key in the dictionary
+        /// </summary>
+        /// <param name="dictionary">Dictionary</param>
+        /// <param name="keyName">Key name</param>
+        /// <param name="valueIfMissingOrNull">Value to return if the dictionary value is missing or null</param>
+        /// <returns>Value for the given key, or valueIfMissingOrNull if the value is missing or null</returns>
+        public static string GetDictionaryValue(IReadOnlyDictionary<string, object> dictionary, string keyName, string valueIfMissingOrNull = "")
+        {
+            if (!dictionary.TryGetValue(keyName, out var itemValue))
+                return valueIfMissingOrNull;
+
+            if (itemValue is string itemValueString)
+                return itemValueString;
+
+            return valueIfMissingOrNull;
         }
 
         public static List<FileInfoObject> GetFileListFromMetadataObject(List<Dictionary<string, object>> metadataObject)
