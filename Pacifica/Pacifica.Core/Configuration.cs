@@ -21,6 +21,7 @@ namespace Pacifica.Core
         /// <summary>
         /// Elastic search host name on the production server
         /// </summary>
+        [Obsolete("Deprecated in summary 2017")]
         public const string DEFAULT_ELASTIC_SEARCH_HOST_NAME = "192.168.1.173:9200";
 
 
@@ -40,12 +41,14 @@ namespace Pacifica.Core
         /// Elastic search host name on the test server
         /// </summary>
         //public const string TEST_ELASTIC_SEARCH_HOST_NAME = "test0.my.emsl.pnl.gov";
+        [Obsolete("Deprecated in summary 2017")]
         public const string TEST_ELASTIC_SEARCH_HOST_NAME = "192.168.1.173:9200";
 
         /// <summary>
         /// Item search service host name on the test server
         /// </summary>
         //public const string TEST_ITEM_SEARCH_HOST_NAME = "dev1.my.emsl.pnl.gov";
+        [Obsolete("Deprecated in summary 2017")]
         public const string TEST_ITEM_SEARCH_HOST_NAME = "metdatadev.my.emsl.pnl.gov";
 
 
@@ -109,11 +112,13 @@ namespace Pacifica.Core
         /// </summary>
         public static string MetadataServerUri { get; } = Scheme + MetadataServerHostName;
 
+        [Obsolete("Deprecated in summary 2017")]
         public static string SearchServerHostName { get; set; } = DEFAULT_ELASTIC_SEARCH_HOST_NAME;
 
         /// <summary>
         /// By default, returns https://my.emsl.pnl.gov
         /// </summary>
+        [Obsolete("Deprecated in summary 2017")]
         public static string SearchServerUri { get; } = Scheme + SearchServerHostName;
 
         public static string HttpProxyUrl { get; set; } = string.Empty;
@@ -126,8 +131,13 @@ namespace Pacifica.Core
             }
         }
 
+        [Obsolete("Deprecated in summary 2017")]
         private static bool mUseItemSearch;
 
+        /// <summary>
+        /// When true, use the Item Search service (released in summer 2017)
+        /// </summary>
+        [Obsolete("Deprecated in summary 2017")]
         public static bool UseItemSearch
         {
             get => mUseItemSearch;
@@ -161,20 +171,22 @@ namespace Pacifica.Core
             {
                 IngestServerHostName = TEST_INGEST_HOST_NAME;
 
-                if (mUseItemSearch)
-                    SearchServerHostName = TEST_ITEM_SEARCH_HOST_NAME;
-                else
-                    SearchServerHostName = TEST_ELASTIC_SEARCH_HOST_NAME;
+                // Deprecated in Summer 2017:
+                //if (mUseItemSearch)
+                //    SearchServerHostName = TEST_ITEM_SEARCH_HOST_NAME;
+                //else
+                //    SearchServerHostName = TEST_ELASTIC_SEARCH_HOST_NAME;
 
             }
             else
             {
                 IngestServerHostName = DEFAULT_INGEST_HOST_NAME;
 
-                if (mUseItemSearch)
-                    SearchServerHostName = DEFAULT_ITEM_SEARCH_HOST_NAME;
-                else
-                    SearchServerHostName = DEFAULT_ELASTIC_SEARCH_HOST_NAME;
+                // Deprecated in Summer 2017:
+                //if (mUseItemSearch)
+                //    SearchServerHostName = DEFAULT_ITEM_SEARCH_HOST_NAME;
+                //else
+                //    SearchServerHostName = DEFAULT_ELASTIC_SEARCH_HOST_NAME;
 
             }
         }

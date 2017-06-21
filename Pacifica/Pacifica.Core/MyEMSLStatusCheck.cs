@@ -87,6 +87,7 @@ namespace Pacifica.Core
         /// <param name="lookupError">Output: true if an error occurs</param>
         /// <param name="errorMessage">Output: error message if lookupError is true</param>
         /// <returns>Status message, in XML format; empty string if an error</returns>
+        [Obsolete("Use the version that uses svc-dms.pfx instead of cookies")]
         public string GetIngestStatus(
             string statusURI,
             CookieContainer cookieJar,
@@ -236,6 +237,7 @@ namespace Pacifica.Core
         /// <param name="xmlServerResponse"></param>
         /// <param name="errorMessage">Output: error messge</param>
         /// <returns>True if an error, false if no errors</returns>
+        [Obsolete("Use the version that parses the JSON-based dictionary server response")]
         public bool HasStepError(string xmlServerResponse, out string errorMessage)
         {
             errorMessage = string.Empty;
@@ -297,6 +299,7 @@ namespace Pacifica.Core
         /// <param name="statusMessage">Output parameter: status message for step stepNum</param>
         /// <param name="errorMessage">Output parameter: status message for step stepNum</param>
         /// <returns>True if step stepNum has successfully completed</returns>
+        [Obsolete("This method is for the legacy XML-based ingest status")]
         public bool IngestStepCompleted(
             string xmlServerResponse,
             StatusStep stepNum,
@@ -436,6 +439,7 @@ namespace Pacifica.Core
 
         }
 
+        [Obsolete("This method is for the legacy XML-based ingest status")]
         public byte IngestStepCompletionCount(string xmlServerResponse)
         {
             string errorMessage;
@@ -502,6 +506,7 @@ namespace Pacifica.Core
         /// </summary>
         /// <param name="xmlServerResponse"></param>
         /// <returns>Transaction ID if found, otherwise 0</returns>
+        [Obsolete("This method is for the legacy XML-based ingest status")]
         public int IngestStepTransactionId(string xmlServerResponse)
         {
             var xmlDoc = new XmlDocument();

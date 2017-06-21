@@ -13,8 +13,6 @@ namespace Pacifica.Core
         long FileSizeInBytes { get; }
         DateTime CreationTime { get; }
         DateTime SubmittedTime { get; }
-        string CreationTimeStamp { get; }
-        string SubmittedTimeStamp { get; }
 
         Dictionary<string, string> SerializeToDictionaryObject();
     }
