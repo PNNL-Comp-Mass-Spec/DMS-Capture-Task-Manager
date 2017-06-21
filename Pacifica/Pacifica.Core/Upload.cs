@@ -224,21 +224,21 @@ namespace Pacifica.Core
         }
 
         /// <summary>
-        ///
+        /// Update the files and data tracked by metadataObject to MyEMSL
         /// </summary>
         /// <param name="metadataObject"></param>
         /// <param name="debugMode">
         /// Set to eDebugMode.CreateTarLocal to authenticate with MyEMSL, then create a .tar file locally instead of actually uploading it
         /// Set to eDebugMode.MyEMSLOfflineMode to create the .tar file locally without contacting MyEMSL</param>
-        /// <param name="statusURL"></param>
+        /// <param name="statusURI">Status URL</param>
         /// <returns>True if successfully uploaded, false if an error</returns>
         public bool StartUpload(
             List<Dictionary<string, object>> metadataObject,
             EasyHttp.eDebugMode debugMode,
-            out string statusURL)
+            out string statusURI)
         {
 
-            statusURL = string.Empty;
+            statusURI = string.Empty;
             ErrorMessage = string.Empty;
 
             if (!File.Exists(Configuration.CLIENT_CERT_FILEPATH))
@@ -268,7 +268,7 @@ namespace Pacifica.Core
 
             }
 
-
+            // Optionally use the test instance
             Configuration.UseTestInstance = UseTestInstance;
 
             var mdJson = Utilities.ObjectToJson(metadataObject);
@@ -337,7 +337,7 @@ namespace Pacifica.Core
 
             var transactionID = Convert.ToInt32(responseJSON["job_id"].ToString());
 
-            statusURL = Configuration.IngestServerUri + "/get_state?job_id=" + transactionID;
+            statusURI = Configuration.IngestServerUri + "/get_state?job_id=" + transactionID;
 
             var success = false;
 
@@ -351,7 +351,7 @@ namespace Pacifica.Core
                 }
                 else
                 {
-                    statusResult = EasyHttp.Send(statusURL, out HttpStatusCode responseStatusCode);
+                    statusResult = EasyHttp.Send(statusURI, out HttpStatusCode responseStatusCode);
                 }
 
                 var statusJSON = Utilities.JsonToObject(statusResult);
@@ -361,7 +361,7 @@ namespace Pacifica.Core
                 if (state == "ok")
                 {
                     success = true;
-                    RaiseUploadCompleted(statusURL);
+                    RaiseUploadCompleted(statusURI);
                 }
                 else if (state == "failed")
                 {
