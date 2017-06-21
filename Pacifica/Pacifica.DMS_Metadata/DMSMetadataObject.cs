@@ -443,10 +443,11 @@ namespace Pacifica.DMS_Metadata
             {
                 var relativeFilePath = Path.Combine(fileObj.RelativeDestinationDirectory, fileObj.FileName);
 
-                if (remoteFiles.TryGetValue(relativeFilePath, out var hashValues))
+                if (remoteFiles.TryGetValue(relativeFilePath, out var fileVersions))
                 {
-                    if (hashValues.Contains(fileObj.Sha1HashHex))
+                    if (FileHashExists(fileVersions, fileObj.Sha1HashHex))
                     {
+                        // File found
                         continue;
                     }
 
@@ -465,7 +466,6 @@ namespace Pacifica.DMS_Metadata
             return missingFiles;
 
         }
-
 
         public void CreateLockFiles()
         {
@@ -537,6 +537,17 @@ namespace Pacifica.DMS_Metadata
 
             }
 
+        }
+
+        /// <summary>
+        /// Return true if fileVersions has a file with the given hash
+        /// </summary>
+        /// <param name="fileVersions">List of files in MyEMSL</param>
+        /// <param name="fileHash">Sha-1 hash to find</param>
+        /// <returns>True if a match is found, otherwise false</returns>
+        private bool FileHashExists(IEnumerable<MyEMSLFileInfo> fileVersions, string fileHash)
+        {
+            return (from item in fileVersions where string.Equals(item.HashSum, fileHash) select item).Any();
         }
 
         public List<FileInfoObject> FindDatasetFilesToArchive(
