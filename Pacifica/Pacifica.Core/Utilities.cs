@@ -73,22 +73,40 @@ namespace Pacifica.Core
             return hashString;
         }
 
-        public static int GetDictionaryValue(Dictionary<string, string> dictionary, string keyName, int valueIfMissing)
+        /// <summary>
+        /// Lookup the integer value associated with the given key in the dictionary
+        /// </summary>
+        /// <param name="dictionary">Dictionary</param>
+        /// <param name="keyName">Key name</param>
+        /// <param name="valueIfMissingOrNull">Integer to return if the dictionary value is missing or null</param>
+        /// <returns>Value for the given key, or valueIfMissingOrNull if the value is missing or null</returns>
+        public static int GetDictionaryValue(IReadOnlyDictionary<string, string> dictionary, string keyName, int valueIfMissingOrNull)
         {
-            var valueText = GetDictionaryValue(dictionary, keyName, valueIfMissing.ToString());
+            var valueText = GetDictionaryValue(dictionary, keyName, valueIfMissingOrNull.ToString());
 
             if (int.TryParse(valueText, out int value))
                 return value;
 
-            return valueIfMissing;
+            return valueIfMissingOrNull;
         }
 
-        public static string GetDictionaryValue(Dictionary<string, string> dictionary, string keyName, string valueIfMissing)
+        /// <summary>
+        /// Lookup the value associated with the given key in the dictionary
+        /// </summary>
+        /// <param name="dictionary">Dictionary</param>
+        /// <param name="keyName">Key name</param>
+        /// <param name="valueIfMissingOrNull">Value to return if the dictionary value is missing or null</param>
+        /// <returns>Value for the given key, or valueIfMissingOrNull if the value is missing or null</returns>
+        public static string GetDictionaryValue(IReadOnlyDictionary<string, string> dictionary, string keyName, string valueIfMissingOrNull)
         {
 
             if (dictionary.TryGetValue(keyName, out string value))
             {
-                return value ?? valueIfMissing;
+                return value ?? valueIfMissingOrNull;
+            }
+
+            return valueIfMissingOrNull;
+        }
 
         /// <summary>
         /// Lookup the integer value associated with the given key in the dictionary
