@@ -192,12 +192,11 @@ namespace ArchiveVerifyPlugin
             return false;
         }
 
-
         /// <summary>
-        /// Compare the files in lstArchivedFiles to the files in the metadata.txt file
+        /// Compare the files in archivedFiles to the files in the metadata.txt file
         /// If metadata.txt file is missing, then compare to files actually on disk
         /// </summary>
-        /// <param name="lstArchivedFiles"></param>
+        /// <param name="archivedFiles"></param>
         /// <param name="metadataFilePath"></param>
         /// <returns></returns>
         private bool CompareArchiveFilesToExpectedFiles(List<MyEMSLReader.ArchivedFileInfo> lstArchivedFiles, out string metadataFilePath)

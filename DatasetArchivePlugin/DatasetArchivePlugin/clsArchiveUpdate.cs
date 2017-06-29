@@ -98,10 +98,9 @@ namespace DatasetArchivePlugin
             if (!PUSH_TO_TEST_SERVER)
                 return true;
 
-            /*
             // Possibly also upload the dataset to the MyEMSL test instance
-            const int PERCENT_DATA_TO_SEND_TO_TEST = 20;
-            var testDateCuttoff = new DateTime(2015, 11, 1);
+            const int PERCENT_DATA_TO_SEND_TO_TEST = 100;
+            var testDateCuttoff = new DateTime(2017, 7, 1);
 
             if (DateTime.Now > testDateCuttoff)
             {
@@ -117,10 +116,8 @@ namespace DatasetArchivePlugin
                 // Do not send this dataset to the test server
                 return true;
             }
-            */
 
             // Also upload a copy of the data to the MyEMSL test server
-
 
             var testCopySuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts, recurse, debugMode, useTestInstance: true);
             if (!testCopySuccess)

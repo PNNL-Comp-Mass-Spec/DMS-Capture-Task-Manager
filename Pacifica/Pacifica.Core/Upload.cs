@@ -121,20 +121,21 @@ namespace Pacifica.Core
 
         #region Auto-Properties
 
-        public string ErrorMessage
-        { get; private set; }
+        /// <summary>
+        /// Error message
+        /// </summary>
+        public string ErrorMessage { get; private set; }
 
         /// <summary>
         /// The metadata.txt file will be copied to the Transfer Folder if the folder path is not empty
+        /// Example: \\proto-4\DMS3_Xfer\QC_Shew_16_01_125ng_CID-STD_newCol-1_5Apr17_Frodo_16-11-08
         /// </summary>
-        public string TransferFolderPath
-        { get; set; }
+        public string TransferFolderPath { get; set; }
 
         /// <summary>
         /// The metadata.txt file name will include the JobNumber text in the name, for example MyEMSL_metadata_CaptureJob_12345.txt
         /// </summary>
-        public string JobNumber
-        { get; set; }
+        public string JobNumber { get; set; }
 
         /// <summary>
         /// When true, upload to test3.my.emsl.pnl.gov instead of ingest.my.emsl.pnl.gov
@@ -153,15 +154,17 @@ namespace Pacifica.Core
         /// Constructor
         /// </summary>
         /// <remarks>TransferFolderPath and JobNumber will be empty</remarks>
-        public Upload()
-            : this(string.Empty, string.Empty)
+        public Upload() : this(string.Empty, string.Empty)
         {
         }
 
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="transferFolderPath">Transfer folder path for this dataset, for example \\proto-4\DMS3_Xfer\SysVirol_IFT001_Pool_17_B_10x_27Aug13_Tiger_13-07-36</param>
+        /// <param name="transferFolderPath">
+        /// Transfer folder path for this dataset,
+        /// for example \\proto-4\DMS3_Xfer\SysVirol_IFT001_Pool_17_B_10x_27Aug13_Tiger_13-07-36
+        /// </param>
         /// <param name="jobNumber">DMS Data Capture job number</param>
         /// <remarks>The metadata.txt file will be copied to the transfer folder</remarks>
         public Upload(string transferFolderPath, string jobNumber)
@@ -283,7 +286,8 @@ namespace Pacifica.Core
 
             try
             {
-                // Copy the Metadata.txt file to the transfer folder
+                // Copy the Metadata.txt file to the transfer folder, renaming it when we copy it.
+                // Example path: \\proto-4\DMS3_Xfer\QC_Shew_16_01_125ng_CID-STD_newCol-1_5Apr17_Frodo_16-11-08\MyEMSL_metadata_CaptureJob_2836788.txt
                 if (!string.IsNullOrWhiteSpace(TransferFolderPath))
                 {
                     var fiTargetFile = new FileInfo(Path.Combine(TransferFolderPath, Utilities.GetMetadataFilenameForJob(JobNumber)));
@@ -884,7 +888,7 @@ namespace Pacifica.Core
         private void OnError(string methodName, string errorMessage)
         {
             ErrorMessage = errorMessage;
-            RaiseErrorEvent(methodName, ErrorMessage);
+            RaiseErrorEvent(methodName, errorMessage);
 
         }
 

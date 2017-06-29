@@ -208,6 +208,7 @@ namespace Pacifica.DMS_Metadata
             {
                 var command = new SqlCommand(queryString, connection);
                 connection.Open();
+
                 using (var reader = command.ExecuteReader())
                 {
 
@@ -228,7 +229,7 @@ namespace Pacifica.DMS_Metadata
                         uploadMetadata.RequestedRunID = GetDbValue(reader, "omics.dms.requested_run_id", 0);
                     }
 
-                } // Close reader
+                }
 
                 uploadMetadata.UserOfRecordList = GetRequestedRunUsers(connection, uploadMetadata.RequestedRunID);
 

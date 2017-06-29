@@ -222,44 +222,6 @@ namespace ArchiveStatusCheckPlugin
             return true;
         }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         private void CheckStatusURIs(
             MyEMSLStatusCheck statusChecker,
             CookieContainer cookieJar,
@@ -355,8 +317,8 @@ namespace ArchiveStatusCheckPlugin
         }
 
         /// <summary>
-        /// Step through the unverified URIs to see if the same subfolder was subsequently successfully uploaded 
-        /// (could be a blank subfolder, meaning the instrument data and all jobs) 
+        /// Step through the unverified URIs to see if the same subfolder was subsequently successfully uploaded
+        /// (could be a blank subfolder, meaning the instrument data and all jobs)
         /// </summary>
         /// <param name="dctUnverifiedURIs">Unverified URIs</param>
         /// <param name="dctVerifiedURIs">Verified URIs</param>
@@ -379,7 +341,7 @@ namespace ArchiveStatusCheckPlugin
                 var unverifiedSubfolder = unverifiedStatusInfo.Subfolder;
 
                 // Find StatusNums that had the same subfolder
-                // Note: cannot require that identical matches have a larger StatusNum because sometimes 
+                // Note: cannot require that identical matches have a larger StatusNum because sometimes
                 // extremely large status values (like 1168231360) are assigned to failed uploads
                 var lstIdenticalStatusNums = (from item in dctStatusData
                                               where item.Key != unverifiedStatusNum &&
