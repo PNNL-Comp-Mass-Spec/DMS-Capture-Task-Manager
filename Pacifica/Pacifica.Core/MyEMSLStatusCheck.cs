@@ -354,6 +354,37 @@ namespace Pacifica.Core
         }
 
         /// <summary>
+        /// Examines the status of each step in xmlServerResponse to see if any of them contain status Error
+        /// </summary>
+        /// <param name="serverResponse"></param>
+        /// <param name="errorMessage">Output: error messge</param>
+        /// <returns>True if an error, false if no errors</returns>
+        public bool HasStepError(Dictionary<string, object> serverResponse, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+
+            // ToDo: write this code
+
+            //var stepNumbers = new List<StatusStep>();
+
+            //foreach (var stepNum in stepNumbers)
+            //{
+            //    string statusMessage;
+
+            //    if (IngestStepCompleted(xmlServerResponse, stepNum, out statusMessage, out errorMessage))
+            //    {
+            //        continue;
+            //    }
+
+            //    if (!string.IsNullOrEmpty(errorMessage))
+            //        return true;
+            //}
+
+            return false;
+
+        }
+
+        /// <summary>
         /// This function examines the xml returned by a MyEMSL status page to determine whether or not the step succeeded
         /// </summary>
         /// <param name="xmlServerResponse"></param>

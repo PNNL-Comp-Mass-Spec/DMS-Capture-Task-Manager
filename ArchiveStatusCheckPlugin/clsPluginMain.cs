@@ -92,6 +92,7 @@ namespace ArchiveStatusCheckPlugin
 
         private bool CheckArchiveStatus()
         {
+            // ToDo: Implement this code
 
             //// Examine the upload status for any uploads for this dataset, filtering on job number to ignore jobs created after this job
 
@@ -281,11 +282,13 @@ namespace ArchiveStatusCheckPlugin
                 try
                 {
                     var ingestSuccess = GetMyEMSLIngestStatus(
-    m_Job, statusChecker, statusInfo.StatusURI,
-    statusInfo.EUS_InstrumentID, statusInfo.EUS_ProposalID, statusInfo.EUS_UploaderID,
-    cookieJar, mRetData, out string xmlServerResponse);
+                        m_Job, statusChecker, statusInfo.StatusURI,
+                        statusInfo.EUS_InstrumentID, statusInfo.EUS_ProposalID, statusInfo.EUS_UploaderID,
+                        mRetData, out var serverResponse);
 
-                    var ingestStepsCompleted = statusChecker.IngestStepCompletionCount(xmlServerResponse);
+                    // ToDo: var ingestStepsCompleted = statusChecker.IngestStepCompletionCount(serverResponse);
+                    byte ingestStepsCompleted = 0;
+
 
                     statusInfo.IngestStepsCompletedNew = ingestStepsCompleted;
 
@@ -295,15 +298,19 @@ namespace ArchiveStatusCheckPlugin
                         continue;
                     }
 
-                    var success = statusChecker.IngestStepCompleted(
-                        xmlServerResponse,
-                        MyEMSLStatusCheck.StatusStep.Archived,
-                        out var statusMessage,
-                        out var errorMessage);
+                    // ToDo:
+                    //var success = statusChecker.IngestStepCompleted(
+                    //    serverResponse,
+                    //    MyEMSLStatusCheck.StatusStep.Archived,
+                    //    out var statusMessage,
+                    //    out var errorMessage);
+
+                    var success = false;
+                    var errorMessage = "Not implemented";
 
                     if (success)
                     {
-                        statusInfo.TransactionId = statusChecker.IngestStepTransactionId(xmlServerResponse);
+                        // ToDo: statusInfo.TransactionId = statusChecker.IngestStepTransactionId(xmlServerResponse);
 
                         dctVerifiedURIs.Add(statusNum, statusInfo.StatusURI);
                         LogDebug("Successful MyEMSL upload for job " + m_Job + ", status num " + statusNum + ": " + statusInfo.StatusURI);

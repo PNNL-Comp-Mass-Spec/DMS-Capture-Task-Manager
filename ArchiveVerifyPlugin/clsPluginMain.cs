@@ -150,9 +150,11 @@ namespace ArchiveVerifyPlugin
                 var ingestSuccess = GetMyEMSLIngestStatus(
                     m_Job, statusChecker, statusURI,
                     eusInstrumentID, eusProposalID, eusUploaderID,
-                    null, mRetData, out var xmlServerResponse);
+                    mRetData, out var serverResponse);
 
-                var ingestStepsComplete = statusChecker.IngestStepCompletionCount(xmlServerResponse);
+                // ToDo: var ingestStepsCompleted = statusChecker.IngestStepCompletionCount(serverResponse);
+                byte ingestStepsCompleted = 0;
+
 
                 var fatalError = (
                     mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED &&
@@ -163,17 +165,19 @@ namespace ArchiveVerifyPlugin
                 var transactionId = 0;
                 if (!fatalError)
                 {
-                    transactionId = statusChecker.IngestStepTransactionId(xmlServerResponse);
+                    // ToDo: transactionId = statusChecker.IngestStepTransactionId(serverResponse);
                 }
 
-                UpdateIngestStepsCompletedOneTask(statusNum, ingestStepsComplete, transactionId, fatalError);
+                UpdateIngestStepsCompletedOneTask(statusNum, ingestStepsCompleted, transactionId, fatalError);
 
-                var success = statusChecker.IngestStepCompleted(
-                    xmlServerResponse,
-                    MyEMSLStatusCheck.StatusStep.Available,
-                    out var statusMessage,
-                    out var errorMessage);
+                // ToDo:
+                //var success = statusChecker.IngestStepCompleted(
+                //    serverResponse,
+                //    MyEMSLStatusCheck.StatusStep.Available,
+                //    out var statusMessage,
+                //    out var errorMessage);
 
+                var statusMessage = "Not implemented";
 
                 mRetData.CloseoutMsg = statusMessage;
 
