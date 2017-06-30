@@ -14,7 +14,7 @@ namespace CaptureTaskManager
     {
         //*********************************************************************************************************
         // Class to hold long-term data for status reporting. This is a hack to avoid adding an instance of the
-        //	status file class to the log tools class
+        //  status file class to the log tools class
         //**********************************************************************************************************
 
         #region "Class variables"

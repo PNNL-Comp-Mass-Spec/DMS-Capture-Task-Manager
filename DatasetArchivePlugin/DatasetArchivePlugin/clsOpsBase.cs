@@ -1,6 +1,6 @@
 
 //*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 10/20/2009
@@ -42,16 +42,6 @@ namespace DatasetArchivePlugin
 
         private readonly int m_DebugLevel;
 
-        // Deprecated: private string m_User;
-        // Deprecated: private string m_Pwd;
-
-        // Deprecated: private bool m_UseTls;
-        // Deprecated: private int m_ServerPort;
-        // Deprecated: private int m_FtpTimeOut;
-        // Deprecated: private bool m_FtpPassive;
-        // Deprecated: private bool m_FtpRestart;
-        // Deprecated: private bool m_ConnectionOpen = false;
-
         private readonly string m_ArchiveOrUpdate;
         protected string m_DatasetName = string.Empty;
 
@@ -83,14 +73,6 @@ namespace DatasetArchivePlugin
 
             // DebugLevel of 4 means Info level (normal) logging; 5 for Debug level (verbose) logging
             m_DebugLevel = m_MgrParams.GetParam("debuglevel", 4);
-
-            // Deprecated: m_User = m_MgrParams.GetParam("username");
-            // Deprecated: m_Pwd = m_MgrParams.GetParam("userpwd");
-            // Deprecated: m_UseTls = bool.Parse(m_MgrParams.GetParam("usetls"));
-            // Deprecated: m_ServerPort = int.Parse(m_MgrParams.GetParam("serverport"));
-            // Deprecated: m_FtpTimeOut = int.Parse(m_MgrParams.GetParam("timeout"));
-            // Deprecated: m_FtpPassive = bool.Parse(m_MgrParams.GetParam("passive"));
-            // Deprecated: m_FtpRestart = bool.Parse(m_MgrParams.GetParam("restart"));
 
             if (m_TaskParams.GetParam("StepTool") == "DatasetArchive")
             {
@@ -281,6 +263,9 @@ namespace DatasetArchivePlugin
                 // Start the upload
                 success = myEMSLUL.StartUpload(debugMode, out statusURL);
 
+                if (string.Equals(statusURL, MyEMSLUploader.CRITICAL_UPLOAD_ERROR))
+                    allowRetry = false;
+
                 var tsElapsedTime = DateTime.UtcNow.Subtract(dtStartTime);
 
                 statusMessage = "Upload of " + m_DatasetName + " completed in " + tsElapsedTime.TotalSeconds.ToString("0.0") + " seconds";
@@ -357,7 +342,7 @@ namespace DatasetArchivePlugin
                 MyEMSLUploadEventArgs e;
                 if (myEMSLUL == null)
                 {
-                    var eusInfo = new Upload.udtEUSInfo();
+                    var eusInfo = new Upload.EUSInfo();
                     eusInfo.Clear();
 
                     e = new MyEMSLUploadEventArgs(
@@ -426,39 +411,6 @@ namespace DatasetArchivePlugin
                 OnErrorEvent(msg);
         }
 
-        /// <summary>
-        /// Determine the total size of all files in the specified folder (including subdirectories)
-        /// </summary>
-        /// <param name="sourceFolderPath"></param>
-        /// <returns>Total size, in GB</returns>
-        private float ComputeFolderSizeGB(string sourceFolderPath)
-        {
-            var diSourceFolder = new DirectoryInfo(sourceFolderPath);
-
-            var msg = "Determing the total size of " + sourceFolderPath;
-            OnDebugEvent(msg);
-
-            if (!diSourceFolder.Exists)
-            {
-                msg = "Source folder not found by ComputeFolderSizeGB: " + sourceFolderPath;
-                OnErrorEvent(msg);
-
-                return 0;
-            }
-            float folderSizeGB = 0;
-
-            foreach (var fiFile in diSourceFolder.GetFiles("*", SearchOption.AllDirectories))
-            {
-                folderSizeGB += (float)(fiFile.Length / 1024.0 / 1024.0 / 1024.0);
-            }
-
-            msg = "  Total size: " + folderSizeGB.ToString("0.0") + " GB";
-            OnDebugEvent(msg);
-
-            return folderSizeGB;
-
-        }
-
         #endregion
 
         #region "Event Delegates and Classes"
@@ -471,7 +423,7 @@ namespace DatasetArchivePlugin
 
         void LogStatusMessageSkipDuplicate(string message)
         {
-            if (!String.Equals(message, mMostRecentLogMessage) || DateTime.UtcNow.Subtract(mMostRecentLogTime).TotalSeconds >= 60)
+            if (!string.Equals(message, mMostRecentLogMessage) || DateTime.UtcNow.Subtract(mMostRecentLogTime).TotalSeconds >= 60)
             {
                 mMostRecentLogMessage = string.Copy(message);
                 mMostRecentLogTime = DateTime.UtcNow;

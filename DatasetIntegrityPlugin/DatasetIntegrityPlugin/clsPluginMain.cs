@@ -1441,7 +1441,7 @@ namespace DatasetIntegrityPlugin
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
-            // Verify size of the analysis.baf file			
+            // Verify size of the analysis.baf file         
             var dataFileSizeKB = GetFileSize(lstBafFile.First());
             if (dataFileSizeKB <= BAF_FILE_MIN_SIZE_KB)
             {
@@ -1593,7 +1593,7 @@ namespace DatasetIntegrityPlugin
 
 
             // Check whether any .mcf files exist
-            // Note that "*.mcf" will match files with extension .mcf and files with extension .mcf_idx		
+            // Note that "*.mcf" will match files with extension .mcf and files with extension .mcf_idx     
 
             var mctFileName = string.Empty;
             dataFileSizeKB = 0;
@@ -1641,7 +1641,7 @@ namespace DatasetIntegrityPlugin
             var lstSerFile = lstDotDFolders[0].GetFiles("ser").ToList();
             if (lstSerFile.Count > 0)
             {
-                // ser file found; verify its size				
+                // ser file found; verify its size              
                 dataFileSizeKB = GetFileSize(lstSerFile.First());
                 if (dataFileSizeKB <= SER_FILE_MIN_SIZE_KB)
                 {
@@ -1666,7 +1666,7 @@ namespace DatasetIntegrityPlugin
                 var lstFidFile = lstDotDFolders[0].GetFiles("fid").ToList();
                 if (lstFidFile.Count > 0)
                 {
-                    // fid file found; verify size					
+                    // fid file found; verify size                  
                     dataFileSizeKB = GetFileSize(lstFidFile.First());
                     if (dataFileSizeKB <= FID_FILE_MIN_SIZE_KB)
                     {

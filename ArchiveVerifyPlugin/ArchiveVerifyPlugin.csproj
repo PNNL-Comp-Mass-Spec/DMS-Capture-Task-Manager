@@ -64,9 +64,6 @@
     <Reference Include="CTM_Shared">
       <HintPath>..\DeployedFiles\CTM_Shared.dll</HintPath>
     </Reference>
-    <Reference Include="MyEMSLReader">
-      <HintPath>..\RefLib\MyEMSLReader.dll</HintPath>
-    </Reference>
     <Reference Include="Pacifica.Core">
       <HintPath>..\DeployedFiles\Pacifica.Core.dll</HintPath>
     </Reference>

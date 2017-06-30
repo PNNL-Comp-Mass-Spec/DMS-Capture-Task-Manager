@@ -1,4 +1,4 @@
-﻿
+
 //*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
@@ -23,7 +23,7 @@ namespace DatasetArchivePlugin
         //**********************************************************************************************************
 
         #region "Constants"
-        protected const string SP_NAME_STORE_MYEMSL_STATS = "StoreMyEMSLUploadStats_Copy";
+        protected const string SP_NAME_STORE_MYEMSL_STATS = "StoreMyEMSLUploadStats";
         #endregion
 
         #region "Class-wide Variables"

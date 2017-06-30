@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Net;
 using System.Net.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -14,6 +13,42 @@ namespace Pacifica.Core
 {
     public class Utilities
     {
+        /// <summary>
+        /// Decrypts an encoded password
+        /// </summary>
+        /// <param name="enPwd">Encoded password</param>
+        /// <returns>Clear text password</returns>
+        public static string DecodePassword(string enPwd)
+        {
+            // Convert the password string to a character array
+            var pwdChars = enPwd.ToCharArray();
+            var pwdBytes = new List<byte>();
+            var pwdCharsAdj = new List<char>();
+
+            for (var i = 0; i <= pwdChars.Length - 1; i++)
+            {
+                pwdBytes.Add((byte)pwdChars[i]);
+            }
+
+            // Modify the byte array by shifting alternating bytes up or down and convert back to char, and add to output string
+
+            for (var byteCntr = 0; byteCntr <= pwdBytes.Count - 1; byteCntr++)
+            {
+                if (byteCntr % 2 == 0)
+                {
+                    pwdBytes[byteCntr] += 1;
+                }
+                else
+                {
+                    pwdBytes[byteCntr] -= 1;
+                }
+                pwdCharsAdj.Add((char)pwdBytes[byteCntr]);
+            }
+
+            return string.Join("", pwdCharsAdj);
+
+        }
+
         private static SHA1Managed _hashProvider;
         public static string GenerateSha1Hash(string filePath)
         {
@@ -38,50 +73,101 @@ namespace Pacifica.Core
             return hashString;
         }
 
-        public static int GetDictionaryValue(Dictionary<string, string> dictionary, string keyName, int valueIfMissing)
+        /// <summary>
+        /// Lookup the integer value associated with the given key in the dictionary
+        /// </summary>
+        /// <param name="dictionary">Dictionary</param>
+        /// <param name="keyName">Key name</param>
+        /// <param name="valueIfMissingOrNull">Integer to return if the dictionary value is missing or null</param>
+        /// <returns>Value for the given key, or valueIfMissingOrNull if the value is missing or null</returns>
+        public static int GetDictionaryValue(IReadOnlyDictionary<string, string> dictionary, string keyName, int valueIfMissingOrNull)
         {
-            var valueText = GetDictionaryValue(dictionary, keyName, valueIfMissing.ToString());
+            var valueText = GetDictionaryValue(dictionary, keyName, valueIfMissingOrNull.ToString());
 
-            int value;
-            if (int.TryParse(valueText, out value))
+            if (int.TryParse(valueText, out int value))
                 return value;
 
-            return valueIfMissing;
+            return valueIfMissingOrNull;
         }
 
-        public static string GetDictionaryValue(Dictionary<string, string> dictionary, string keyName, string valueIfMissing)
+        /// <summary>
+        /// Lookup the value associated with the given key in the dictionary
+        /// </summary>
+        /// <param name="dictionary">Dictionary</param>
+        /// <param name="keyName">Key name</param>
+        /// <param name="valueIfMissingOrNull">Value to return if the dictionary value is missing or null</param>
+        /// <returns>Value for the given key, or valueIfMissingOrNull if the value is missing or null</returns>
+        public static string GetDictionaryValue(IReadOnlyDictionary<string, string> dictionary, string keyName, string valueIfMissingOrNull)
         {
-            string value;
 
-            if (dictionary.TryGetValue(keyName, out value))
+            if (dictionary.TryGetValue(keyName, out string value))
             {
-                return value ?? valueIfMissing;
+                return value ?? valueIfMissingOrNull;
             }
 
-            return valueIfMissing;
+            return valueIfMissingOrNull;
+        }
+
+        /// <summary>
+        /// Lookup the integer value associated with the given key in the dictionary
+        /// </summary>
+        /// <param name="dictionary">Dictionary</param>
+        /// <param name="keyName">Key name</param>
+        /// <param name="valueIfMissingOrNull">Int-64 value to return if the dictionary value is missing or null</param>
+        /// <returns>Value for the given key, or valueIfMissingOrNull if the value is missing or null</returns>
+        public static long GetDictionaryValue(IReadOnlyDictionary<string, object> dictionary, string keyName, long valueIfMissingOrNull)
+        {
+            if (!dictionary.TryGetValue(keyName, out var itemValue))
+                return valueIfMissingOrNull;
+
+            if (itemValue != null)
+            {
+                var itemValueString = itemValue.ToString();
+                if (long.TryParse(itemValueString, out var itemValueNumber))
+                    return itemValueNumber;
+            }
+
+            return valueIfMissingOrNull;
+        }
+
+        /// <summary>
+        /// Lookup the value associated with the given key in the dictionary
+        /// </summary>
+        /// <param name="dictionary">Dictionary</param>
+        /// <param name="keyName">Key name</param>
+        /// <param name="valueIfMissingOrNull">Value to return if the dictionary value is missing or null</param>
+        /// <returns>Value for the given key, or valueIfMissingOrNull if the value is missing or null</returns>
+        public static string GetDictionaryValue(IReadOnlyDictionary<string, object> dictionary, string keyName, string valueIfMissingOrNull = "")
+        {
+            if (!dictionary.TryGetValue(keyName, out var itemValue))
+                return valueIfMissingOrNull;
+
+            if (itemValue is string itemValueString)
+                return itemValueString;
+
+            return valueIfMissingOrNull;
         }
 
         public static List<FileInfoObject> GetFileListFromMetadataObject(List<Dictionary<string, object>> metadataObject)
         {
-			var fileList = new List<FileInfoObject>();
-			object destTable;
-			foreach (Dictionary<string, object> item in metadataObject)
-			{
-				if (item.TryGetValue("destinationTable", out destTable))
-				{
-					string t = (string)destTable;
-					if (t.ToLower() == "files")
-					{
-						fileList.Add(new FileInfoObject(
-							(string)item["absolutelocalpath"],
-							(string)item["subdir"],
-							(string)item["hashsum"]
-						));
-					}
-				}
-			}
+            var fileList = new List<FileInfoObject>();
+            foreach (var item in metadataObject)
+            {
+                if (item.TryGetValue("destinationTable", out object destTable))
+                {
+                    var t = (string)destTable;
+                    if (t.ToLower() == "files")
+                    {
+                        fileList.Add(new FileInfoObject(
+                            (string)item["absolutelocalpath"],
+                            (string)item["subdir"],
+                            (string)item["hashsum"]
+                        ));
+                    }
+                }
+            }
 
-			return fileList;
+            return fileList;
         }
 
         public static DirectoryInfo GetTempDirectory()
@@ -224,8 +310,7 @@ namespace Pacifica.Core
 
             foreach (var item in lstStrings)
             {
-                int value;
-                if (int.TryParse(item, out value))
+                if (int.TryParse(item, out int value))
                     lstInts.Add(value);
                 else
                     throw new InvalidCastException("JsonArrayToIntList cannot convert item '" + value + "' to an integer");
@@ -242,14 +327,16 @@ namespace Pacifica.Core
                 var value = jsa.Pop();
                 if (value.GetType().Name == "JsonNumber")
                 {
-                    var dctValue = new Dictionary<string, object>();
-                    dctValue.Add(value.ToString(), string.Empty);
+                    var dctValue = new Dictionary<string, object> {
+                        { value.ToString(), string.Empty}
+                    };
                     lstItems.Add(dctValue);
                 }
                 else if (value.GetType().Name == "String")
                 {
-                    var dctValue = new Dictionary<string, object>();
-                    dctValue.Add(value.ToString(), string.Empty);
+                    var dctValue = new Dictionary<string, object> {
+                        { value.ToString(), string.Empty}
+                    };
                     lstItems.Add(dctValue);
                 }
                 else if (value.GetType().Name == "JsonObject")
@@ -270,8 +357,8 @@ namespace Pacifica.Core
         {
             if (string.IsNullOrWhiteSpace(jobNumber))
                 return "MyEMSL_metadata_CaptureJob_000000.txt";
-            else
-                return "MyEMSL_metadata_CaptureJob_" + jobNumber + ".txt";
+
+            return "MyEMSL_metadata_CaptureJob_" + jobNumber + ".txt";
         }
 
         public static string GetUserName(bool cleanDomain = false)
@@ -288,7 +375,7 @@ namespace Pacifica.Core
         }
 
         /// <summary>
-        /// Callback used to validate the certificate in an SSL conversation 
+        /// Callback used to validate the certificate in an SSL conversation
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="cert"></param>

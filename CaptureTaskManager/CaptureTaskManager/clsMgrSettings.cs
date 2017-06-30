@@ -20,10 +20,10 @@ namespace CaptureTaskManager
     public class clsMgrSettings : clsLoggerBase, IMgrParams
     {
         //*********************************************************************************************************
-        //	Class for loading, storing and accessing manager parameters.
-        //	Loads initial settings from local config file, then checks to see if remainder of settings should be
-        //		loaded or manager set to inactive. If manager active, retrieves remainder of settings from manager
-        //		parameters database.
+        //  Class for loading, storing and accessing manager parameters.
+        //  Loads initial settings from local config file, then checks to see if remainder of settings should be
+        //      loaded or manager set to inactive. If manager active, retrieves remainder of settings from manager
+        //      parameters database.
         //**********************************************************************************************************
 
         #region "Constants"
@@ -34,6 +34,10 @@ namespace CaptureTaskManager
         public const string MGR_PARAM_MGR_ACTIVE_LOCAL = "MgrActive_Local";
         public const string MGR_PARAM_MGR_NAME = "MgrName";
         public const string MGR_PARAM_USING_DEFAULTS = "UsingDefaults";
+
+        /// <summary>
+        /// Connection string to DMS5
+        /// </summary>
         public const string MGR_PARAM_DEFAULT_DMS_CONN_STRING = "DefaultDMSConnString";
 
         #endregion
@@ -60,7 +64,7 @@ namespace CaptureTaskManager
         {
             if (!LoadSettings())
             {
-                if (String.Equals(m_ErrMsg, DEACTIVATED_LOCALLY))
+                if (string.Equals(m_ErrMsg, DEACTIVATED_LOCALLY))
                     throw new ApplicationException(DEACTIVATED_LOCALLY);
 
                 throw new ApplicationException("Unable to initialize manager settings class: " + m_ErrMsg);
@@ -305,9 +309,8 @@ namespace CaptureTaskManager
         }
 
         private bool LoadMgrSettingsFromDBWork(string managerName, out DataTable dtSettings, bool logConnectionErrors,
-                                               bool returnErrorIfNoParameters)
+                                               bool returnErrorIfNoParameters, int retryCount = 3)
         {
-            short retryCount = 3;
             var DBConnectionString = GetParam(MGR_PARAM_MGR_CFG_DB_CONN_STRING, "");
             dtSettings = null;
 
@@ -319,11 +322,11 @@ namespace CaptureTaskManager
                 return false;
             }
 
-            var sqlStr = "SELECT ParameterName, ParameterValue FROM V_MgrParams WHERE ManagerName = '" + managerName +
-                         "'";
+            var sqlStr = string.Format("SELECT ParameterName, ParameterValue FROM V_MgrParams WHERE ManagerName = '{0}'",
+                managerName);
 
             // Get a datatable holding the parameters for this manager
-            while (retryCount > 0)
+            while (retryCount >= 0)
             {
                 try
                 {
@@ -351,19 +354,22 @@ namespace CaptureTaskManager
                 catch (Exception ex)
                 {
                     retryCount -= 1;
-                    var errMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Exception getting manager settings from database: " +
-                        ex.Message + ", RetryCount = " + retryCount;
+                    var msg = string.Format("LoadMgrSettingsFromDB; Exception getting manager settings from database: {0}; " +
+                                            "ConnectionString: {1}, RetryCount = {2}",
+                                            ex.Message, DBConnectionString, retryCount);
 
                     if (logConnectionErrors)
-                        WriteErrorMsg(errMsg, allowLogToDB: false);
+                        WriteErrorMsg(msg, allowLogToDB: false);
 
                     // Delay for 5 seconds before trying again
-                    System.Threading.Thread.Sleep(5000);
+                    if (retryCount >= 0)
+                        System.Threading.Thread.Sleep(5000);
                 }
-            }
+
+            } // while
 
             // If loop exited due to errors, return false
-            if (retryCount < 1)
+            if (retryCount < 0)
             {
                 // Log the message to the DB if the monthly Windows updates are not pending
                 var allowLogToDB = !(clsWindowsUpdateStatus.ServerUpdatesArePending());

@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Xml;
-using Jayrock;
 using Jayrock.Json.Conversion;
 
 namespace Pacifica.Core
@@ -52,9 +52,9 @@ namespace Pacifica.Core
 
         public bool CheckMetadataValidity(string metadataObjectJSON)
         {
-            string policyURL = Configuration.PolicyServerUri + "/ingest/";
+            var policyURL = Configuration.PolicyServerUri + "/ingest/";
             HttpStatusCode responseStatusCode;
-            string success = EasyHttp.Send(policyURL, out responseStatusCode, metadataObjectJSON, EasyHttp.HttpMethod.Post);
+            var success = EasyHttp.Send(policyURL, out responseStatusCode, metadataObjectJSON, EasyHttp.HttpMethod.Post);
             if (responseStatusCode.ToString() == "200" && success.ToLower() == "true")
             {
                 return true;
@@ -62,57 +62,28 @@ namespace Pacifica.Core
             return false;
         }
 
-        //public List<FileInfoObject> FindFilesByDatasetID(int DatasetID, string subDir)
-        //{
-        //    string metadataURL = Configuration.MetadataServerUri + "/"
-        //}
-
-        public bool DoesFileExistInMyEMSL(FileInfoObject fio)
+        /// <summary>
+        /// Check whether a file exists in MyEMSL
+        /// </summary>
+        /// <param name="fileInfo">File info object</param>
+        /// <returns>True if found, otherwise false</returns>
+        /// <remarks>Searches using Sha1HashHex, so could match a file in a different location than the specific path tracked by fileInfo</remarks>
+        public bool DoesFileExistInMyEMSL(FileInfoObject fileInfo)
         {
-            string fileSHA1HashSum = fio.Sha1HashHex;
-            string metadataURL = Configuration.MetadataServerUri + "/files?hashsum=" + fileSHA1HashSum;
+            var fileSHA1HashSum = fileInfo.Sha1HashHex;
+            var metadataURL = Configuration.MetadataServerUri + "/files?hashsum=" + fileSHA1HashSum;
 
             HttpStatusCode responseStatusCode;
 
-            string fileListJSON = EasyHttp.Send(metadataURL, out responseStatusCode);
+            var fileListJSON = EasyHttp.Send(metadataURL, out responseStatusCode);
             var jsa = (Jayrock.Json.JsonArray)JsonConvert.Import(fileListJSON);
             var fileList = Utilities.JsonArrayToDictionaryList(jsa);
 
             if (responseStatusCode.ToString() == "200" && fileListJSON != "[]" && fileListJSON.Contains(fileSHA1HashSum))
             {
-
                 return true;
             }
             return false;
-        }
-
-        /// <summary>
-        /// Obtain the XML returned by the given MyEMSL status page
-        /// </summary>
-        /// <param name="statusURI">URI to examine</param>
-        /// <param name="lookupError">Output: true if an error occurs</param>
-        /// <param name="errorMessage">Output: error message if lookupError is true</param>
-        /// <returns>Status message, in XML format; empty string if an error</returns>
-        public string GetIngestStatus(string statusURI, out bool lookupError, out string errorMessage)
-        {
-
-            // Call the testauth service to obtain a cookie for this session
-            //var authURL = Configuration.TestAuthUri;
-            //var auth = new Auth(new Uri(authURL));
-
-            //CookieContainer cookieJar;
-            //if (!auth.GetAuthCookies(out cookieJar))
-            //{
-            //    lookupError = true;
-            //    errorMessage = "Auto-login to " + Configuration.TestAuthUri + " failed authentication";
-            //    ReportError("GetIngestStatus", errorMessage);
-            //    return string.Empty;
-            //}
-            var xmlServerResponse = GetIngestStatus(statusURI, out lookupError, out errorMessage);
-
-            //Utilities.Logout(cookieJar);
-
-            return xmlServerResponse;
         }
 
         /// <summary>
@@ -123,6 +94,7 @@ namespace Pacifica.Core
         /// <param name="lookupError">Output: true if an error occurs</param>
         /// <param name="errorMessage">Output: error message if lookupError is true</param>
         /// <returns>Status message, in XML format; empty string if an error</returns>
+        [Obsolete("Use the version that uses svc-dms.pfx instead of cookies")]
         public string GetIngestStatus(
             string statusURI,
             CookieContainer cookieJar,
@@ -157,8 +129,8 @@ namespace Pacifica.Core
             // Look for an exception in the response
             // Example response with an error:
             //
-            //	<transaction id='1025302' />
-            //	<step id='0' message='&lt;type 'exceptions.IOError'&gt;
+            //  <transaction id='1025302' />
+            //  <step id='0' message='&lt;type 'exceptions.IOError'&gt;
             //   [Errno 5] Input/output error
             //   &lt;traceback object at 0x7fcb9e646170&gt;
             //   Traceback%20%28most%20recent%20call%20last%29%3A%0A%20%20File%20%22%2Fusr%2Flib%2Fpython2.6%2Fsite-packages%2Fmyemsl%2Fcatchall.py ...
@@ -206,6 +178,61 @@ namespace Pacifica.Core
             lookupError = true;
 
             return string.Empty;
+        }
+
+        /// <summary>
+        /// Obtain the status returned by the given MyEMSL status page
+        /// </summary>
+        /// <param name="statusURI">URI to examine</param>
+        /// <param name="lookupError">Output: true if an error occurs</param>
+        /// <param name="errorMessage">Output: error message if lookupError is true</param>
+        /// <returns>Status dictionary; empty dictionary</returns>
+        public Dictionary<string, object> GetIngestStatus(
+            string statusURI,
+            out bool lookupError,
+            out string errorMessage)
+        {
+
+            lookupError = false;
+            errorMessage = string.Empty;
+
+            if (!File.Exists(Configuration.CLIENT_CERT_FILEPATH))
+            {
+                errorMessage = "Authentication failure; cert file not found at " + Configuration.CLIENT_CERT_FILEPATH;
+                ReportError("GetIngestStatus", errorMessage);
+                lookupError = true;
+                return new Dictionary<string, object>();
+            }
+
+            // The following Callback allows us to access the MyEMSL server even if the certificate is expired or untrusted
+            // For more info, see comments in Upload.StartUpload()
+            if (ServicePointManager.ServerCertificateValidationCallback == null)
+                ServicePointManager.ServerCertificateValidationCallback += Utilities.ValidateRemoteCertificate;
+
+            var statusResult = EasyHttp.Send(statusURI, out HttpStatusCode responseStatusCode);
+
+            var statusJSON = Utilities.JsonToObject(statusResult);
+
+            var state = Utilities.GetDictionaryValue(statusJSON, "state").ToLower();
+
+            if (state == "ok")
+            {
+
+            }
+            else if (state == "failed")
+            {
+                ReportError("GetIngestStatus", "Upload failed ");
+            }
+            else if (state.Contains("error"))
+            {
+                ReportError("GetIngestStatus", "Status server is offline or having issues");
+            }
+            else
+            {
+                ReportError("GetIngestStatus", "Unrecognized state: " + state);
+            }
+
+            return statusJSON;
         }
 
         private string GetStepDescription(StatusStep step)
@@ -272,6 +299,7 @@ namespace Pacifica.Core
         /// <param name="xmlServerResponse"></param>
         /// <param name="errorMessage">Output: error messge</param>
         /// <returns>True if an error, false if no errors</returns>
+        [Obsolete("Use the version that parses the JSON-based dictionary server response")]
         public bool HasStepError(string xmlServerResponse, out string errorMessage)
         {
             errorMessage = string.Empty;
@@ -326,6 +354,37 @@ namespace Pacifica.Core
         }
 
         /// <summary>
+        /// Examines the status of each step in xmlServerResponse to see if any of them contain status Error
+        /// </summary>
+        /// <param name="serverResponse"></param>
+        /// <param name="errorMessage">Output: error messge</param>
+        /// <returns>True if an error, false if no errors</returns>
+        public bool HasStepError(Dictionary<string, object> serverResponse, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+
+            // ToDo: write this code
+
+            //var stepNumbers = new List<StatusStep>();
+
+            //foreach (var stepNum in stepNumbers)
+            //{
+            //    string statusMessage;
+
+            //    if (IngestStepCompleted(xmlServerResponse, stepNum, out statusMessage, out errorMessage))
+            //    {
+            //        continue;
+            //    }
+
+            //    if (!string.IsNullOrEmpty(errorMessage))
+            //        return true;
+            //}
+
+            return false;
+
+        }
+
+        /// <summary>
         /// This function examines the xml returned by a MyEMSL status page to determine whether or not the step succeeded
         /// </summary>
         /// <param name="xmlServerResponse"></param>
@@ -333,6 +392,7 @@ namespace Pacifica.Core
         /// <param name="statusMessage">Output parameter: status message for step stepNum</param>
         /// <param name="errorMessage">Output parameter: status message for step stepNum</param>
         /// <returns>True if step stepNum has successfully completed</returns>
+        [Obsolete("This method is for the legacy XML-based ingest status")]
         public bool IngestStepCompleted(
             string xmlServerResponse,
             StatusStep stepNum,
@@ -358,16 +418,16 @@ namespace Pacifica.Core
             //
             // <?xml version="1.0"?>
             // <myemsl>
-            // 	<status username='70000'>
-            // 		<transaction id='111177' />
-            // 		<step id='0' message='completed' status='SUCCESS' />
-            // 		<step id='1' message='completed' status='SUCCESS' />
-            // 		<step id='2' message='completed' status='SUCCESS' />
-            // 		<step id='3' message='completed' status='SUCCESS' />
-            // 		<step id='4' message='completed' status='SUCCESS' />
-            // 		<step id='5' message='completed' status='SUCCESS' />
-            // 		<step id='6' message='verified' status='SUCCESS' />
-            // 	</status>
+            //  <status username='70000'>
+            //      <transaction id='111177' />
+            //      <step id='0' message='completed' status='SUCCESS' />
+            //      <step id='1' message='completed' status='SUCCESS' />
+            //      <step id='2' message='completed' status='SUCCESS' />
+            //      <step id='3' message='completed' status='SUCCESS' />
+            //      <step id='4' message='completed' status='SUCCESS' />
+            //      <step id='5' message='completed' status='SUCCESS' />
+            //      <step id='6' message='verified' status='SUCCESS' />
+            //  </status>
             // </myemsl>
             //
             // Step IDs correspond to:
@@ -432,7 +492,7 @@ namespace Pacifica.Core
                 else
                 {
                     errorMessage = message;
-                    statusMessage = "Injest error";
+                    statusMessage = "Ingest error";
                 }
 
                 return false;
@@ -472,6 +532,7 @@ namespace Pacifica.Core
 
         }
 
+        [Obsolete("This method is for the legacy XML-based ingest status")]
         public byte IngestStepCompletionCount(string xmlServerResponse)
         {
             string errorMessage;
@@ -538,6 +599,7 @@ namespace Pacifica.Core
         /// </summary>
         /// <param name="xmlServerResponse"></param>
         /// <returns>Transaction ID if found, otherwise 0</returns>
+        [Obsolete("This method is for the legacy XML-based ingest status")]
         public int IngestStepTransactionId(string xmlServerResponse)
         {
             var xmlDoc = new XmlDocument();

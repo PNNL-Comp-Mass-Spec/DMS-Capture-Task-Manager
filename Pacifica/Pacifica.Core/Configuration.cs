@@ -9,53 +9,30 @@ namespace Pacifica.Core
         /// <summary>
         /// Policy Server host name on the production server
         /// </summary>
-        public const string DEFAULT_POLICY_SERVER_HOST_NAME = "policy.my.emsl.pnl.gov";
+        public const string DEFAULT_POLICY_SERVER_HOST_NAME = "policydms.my.emsl.pnl.gov";
 
-        
         /// <summary>
         /// Metadata Server host name on the production server
         /// </summary>
         public const string DEFAULT_METADATA_SERVER_HOST_NAME = "metadata.my.emsl.pnl.gov";
 
-
-        /// <summary>
-        /// Elastic search host name on the production server
-        /// </summary>
-        public const string DEFAULT_ELASTIC_SEARCH_HOST_NAME = "192.168.1.173:9200";
-
-
         /// <summary>
         /// Item search service host name on the production server
         /// </summary>
-        //public const string DEFAULT_ITEM_SEARCH_HOST_NAME = "undefined_does_not_exist.my.emsl.pnl.gov";
-        public const string DEFAULT_ITEM_SEARCH_HOST_NAME = "192.168.1.173:8121";
+        public const string DEFAULT_ITEM_SEARCH_HOST_NAME = "metadata.my.emsl.pnl.gov";
 
         /// <summary>
         /// Ingest host name on the production server
         /// </summary>
-        public const string DEFAULT_INGEST_HOST_NAME = "ingest.my.emsl.pnl.gov";
-
-
-        /// <summary>
-        /// Elastic search host name on the test server
-        /// </summary>
-        //public const string TEST_ELASTIC_SEARCH_HOST_NAME = "test0.my.emsl.pnl.gov";
-        public const string TEST_ELASTIC_SEARCH_HOST_NAME = "192.168.1.173:9200";
-
-        /// <summary>
-        /// Item search service host name on the test server
-        /// </summary>
-        //public const string TEST_ITEM_SEARCH_HOST_NAME = "dev1.my.emsl.pnl.gov";
-        public const string TEST_ITEM_SEARCH_HOST_NAME = "192.168.1.173:8121";
-
+        public const string DEFAULT_INGEST_HOST_NAME = "ingestdms.my.emsl.pnl.gov";
 
         /// <summary>
         /// Ingest host name on the test server
         /// </summary>
-        //public const string TEST_INGEST_HOST_NAME = "test3.my.emsl.pnl.gov";
-        public const string TEST_INGEST_HOST_NAME = "192.168.1.173:8066";
+        public const string TEST_INGEST_HOST_NAME = "ingestdmsdev.my.emsl.pnl.gov";
 
-        public const string CLIENT_CERT_FILEPATH = "C:\\client_certs\\svc-dms.pfx";
+        public const string CLIENT_CERT_FILEPATH = @"C:\client_certs\svc-dms.pfx";
+        public const string CLIENT_CERT_PASSWORD = "cnr5evm";
 
         /// <summary>
         /// Local temp directory
@@ -69,8 +46,7 @@ namespace Pacifica.Core
         {
             get
             {
-                string scheme;
-                scheme = UseSecureDataTransfer ? SecuredScheme : UnsecuredScheme;
+                var scheme = UseSecureDataTransfer ? SecuredScheme : UnsecuredScheme;
                 return scheme + "://";
             }
         }
@@ -95,29 +71,30 @@ namespace Pacifica.Core
         /// </summary>
         public static string IngestServerUri { get; } = Scheme + IngestServerHostName;
 
-		public static string PolicyServerHostName { get; set; } = DEFAULT_POLICY_SERVER_HOST_NAME;
-
-		/// <summary>
-		/// By default, returns https://policy.my.emsl.pnl.gov
-		/// </summary>
-		public static string PolicyServerUri { get; } = Scheme + PolicyServerHostName;
-
-		public static string MetadataServerHostName { get; set; } = DEFAULT_METADATA_SERVER_HOST_NAME;
-
-		/// <summary>
-		/// By default, returns https://metadata.my.emsl.pnl.gov
-		/// </summary>
-		public static string MetadataServerUri { get; } = Scheme + MetadataServerHostName;
-
-        public static string SearchServerHostName { get; set; } = DEFAULT_ELASTIC_SEARCH_HOST_NAME;
+        public static string PolicyServerHostName { get; set; } = DEFAULT_POLICY_SERVER_HOST_NAME;
 
         /// <summary>
-        /// By default, returns https://my.emsl.pnl.gov
+        /// By default, returns https://policy.my.emsl.pnl.gov
         /// </summary>
-        public static string SearchServerUri { get; } = Scheme + SearchServerHostName;
+        public static string PolicyServerUri { get; } = Scheme + PolicyServerHostName;
 
+        public static string MetadataServerHostName { get; set; } = DEFAULT_METADATA_SERVER_HOST_NAME;
+
+        /// <summary>
+        /// By default, returns https://metadata.my.emsl.pnl.gov
+        /// </summary>
+        public static string MetadataServerUri { get; } = Scheme + MetadataServerHostName;
+
+        /// <summary>
+        /// Proxy server URL
+        /// </summary>
+        /// <remarks>Ignored if an empty string (which is default)</remarks>
         public static string HttpProxyUrl { get; set; } = string.Empty;
 
+        /// <summary>
+        /// Associate the proxy server (if defined) with the WebRequest
+        /// </summary>
+        /// <param name="oWebRequest"></param>
         public static void SetProxy(HttpWebRequest oWebRequest)
         {
             if (!string.IsNullOrWhiteSpace(HttpProxyUrl))
@@ -125,24 +102,7 @@ namespace Pacifica.Core
                 oWebRequest.Proxy = new WebProxy(new Uri(HttpProxyUrl));
             }
         }
-
-        private static bool mUseItemSearch;
-
-        public static bool UseItemSearch
-        {
-            get
-            {
-                return mUseItemSearch;
-            }
-
-            set
-            {
-                mUseItemSearch = value;
-                UpdateHostNames();
-            }
-        }
-
-
+      
         private static bool mUseTestInstance;
 
         /// <summary>
@@ -150,10 +110,7 @@ namespace Pacifica.Core
         /// </summary>
         public static bool UseTestInstance
         {
-            get
-            {
-                return mUseTestInstance;
-            }
+            get => mUseTestInstance;
 
             set
             {
@@ -167,22 +124,10 @@ namespace Pacifica.Core
             if (mUseTestInstance)
             {
                 IngestServerHostName = TEST_INGEST_HOST_NAME;
-
-                if (mUseItemSearch)
-                    SearchServerHostName = TEST_ITEM_SEARCH_HOST_NAME;
-                else
-                    SearchServerHostName = TEST_ELASTIC_SEARCH_HOST_NAME;
-
             }
             else
             {
                 IngestServerHostName = DEFAULT_INGEST_HOST_NAME;
-
-                if (mUseItemSearch)
-                    SearchServerHostName = DEFAULT_ITEM_SEARCH_HOST_NAME;
-                else
-                    SearchServerHostName = DEFAULT_ELASTIC_SEARCH_HOST_NAME;
-
             }
         }
 

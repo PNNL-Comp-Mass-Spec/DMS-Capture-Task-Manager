@@ -9,6 +9,8 @@ namespace Pacifica.DMS_Metadata
     {
         public const string RECURSIVE_UPLOAD = "MyEMSL_Recurse";
 
+        public const string CRITICAL_UPLOAD_ERROR = "Critical Error";
+
         private DMSMetadataObject _mdContainer;
         private readonly Upload myEMSLUpload;
 
@@ -31,10 +33,7 @@ namespace Pacifica.DMS_Metadata
         private bool mUseTestInstance;
         public bool UseTestInstance
         {
-            get
-            {
-                return mUseTestInstance;
-            }
+            get => mUseTestInstance;
             set
             {
                 mUseTestInstance = value;
@@ -43,6 +42,11 @@ namespace Pacifica.DMS_Metadata
             }
         }
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="mgrParams"></param>
+        /// <param name="taskParams"></param>
         public MyEMSLUploader(Dictionary<string, string> mgrParams, Dictionary<string, string> taskParams)
         {
             StatusURI = string.Empty;
@@ -51,7 +55,7 @@ namespace Pacifica.DMS_Metadata
             Bytes = 0;
             ErrorCode = string.Empty;
 
-            EUSInfo = new Upload.udtEUSInfo();
+            EUSInfo = new Upload.EUSInfo();
             EUSInfo.Clear();
 
             m_MgrParams = mgrParams;
@@ -121,7 +125,7 @@ namespace Pacifica.DMS_Metadata
         /// <summary>
         /// EUS Info
         /// </summary>
-        public Upload.udtEUSInfo EUSInfo
+        public Upload.EUSInfo EUSInfo
         {
             get;
             private set;
@@ -142,8 +146,20 @@ namespace Pacifica.DMS_Metadata
 
             _mdContainer.UseTestInstance = UseTestInstance;
 
+            if (!File.Exists(Configuration.CLIENT_CERT_FILEPATH))
+            {
+                throw new Exception("Authentication failure; MyEMSL certificate file not found at " + Configuration.CLIENT_CERT_FILEPATH);
+            }
+
             // Look for files to upload, compute a Sha-1 hash for each, and compare those hashes to existing files in MyEMSL
-            _mdContainer.SetupMetadata(m_TaskParams, m_MgrParams, debugMode);
+            var success = _mdContainer.SetupMetadata(m_TaskParams, m_MgrParams, debugMode, out var criticalError);
+
+            if (!success)
+            {
+                statusURL = criticalError ? CRITICAL_UPLOAD_ERROR : string.Empty;
+
+                return false;
+            }
 
             // Send the metadata object to the calling procedure (in case it wants to log it)
             ReportMetadataDefined("StartUpload", _mdContainer.MetadataObjectJSON);
@@ -155,15 +171,23 @@ namespace Pacifica.DMS_Metadata
 
             EUSInfo = _mdContainer.EUSInfo;
 
-            _mdContainer.CreateLockFiles();
-            bool success;
+            var fileList = Utilities.GetFileListFromMetadataObject(_mdContainer.MetadataObject);
+            if (fileList.Count == 0)
+            {
+                OnDebugEvent("StartUpload", "File list is empty; nothing to do");
+                statusURL = string.Empty;
+                var e = new UploadCompletedEventArgs(string.Empty);
+                UploadCompleted?.Invoke(this, e);
+                return true;
+            }
 
-            // make a call out to the policy server to check validity of metadata object
-            
+            _mdContainer.CreateLockFiles();
+
+            bool uploadSuccess;
 
             try
             {
-                success = myEMSLUpload.StartUpload(_mdContainer.MetadataObject, debugMode, out statusURL);
+                uploadSuccess = myEMSLUpload.StartUpload(_mdContainer.MetadataObject, debugMode, out statusURL);
             }
             catch (Exception ex)
             {
@@ -177,7 +201,7 @@ namespace Pacifica.DMS_Metadata
             if (!string.IsNullOrEmpty(statusURL))
                 StatusURI = statusURL;
 
-            return success;
+            return uploadSuccess;
         }
 
         #region "Events and Event Handlers"
@@ -188,6 +212,12 @@ namespace Pacifica.DMS_Metadata
 
         public event StatusUpdateEventHandler StatusUpdate;
         public event UploadCompletedEventHandler UploadCompleted;
+
+        private void OnDebugEvent(string callingFunction, string debugMessage)
+        {
+            var e = new MessageEventArgs(callingFunction, debugMessage);
+            DebugEvent?.Invoke(this, e);
+        }
 
         private void ReportMetadataDefined(string callingFunction, string metadataJSON)
         {

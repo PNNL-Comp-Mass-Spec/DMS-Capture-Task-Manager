@@ -87,6 +87,12 @@ namespace CaptureTaskManager
             return CBoolSafe(value, false);
         }
 
+        /// <summary>
+        /// Convert a string value to a boolean
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="defaultValue"></param>
+        /// <returns></returns>
         public static bool CBoolSafe(string value, bool defaultValue)
         {
             if (string.IsNullOrEmpty(value))
@@ -99,6 +105,12 @@ namespace CaptureTaskManager
             return defaultValue;
         }
 
+        /// <summary>
+        /// Convert a string value to an integer
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="defaultValue"></param>
+        /// <returns></returns>
         public static int CIntSafe(string value, int defaultValue)
         {
             if (string.IsNullOrEmpty(value))
@@ -111,6 +123,12 @@ namespace CaptureTaskManager
             return defaultValue;
         }
 
+        /// <summary>
+        /// Convert a string value to a float
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="defaultValue"></param>
+        /// <returns></returns>
         public static float CSngSafe(string value, float defaultValue)
         {
             var fValue = defaultValue;
@@ -124,6 +142,13 @@ namespace CaptureTaskManager
             return fValue;
         }
 
+        /// <summary>
+        /// Get the value for a field, using valueIfNull if the field is null
+        /// </summary>
+        /// <param name="reader">Reader</param>
+        /// <param name="fieldIndex">Field index (0-based)</param>
+        /// <param name="valueIfNull">Integer to return if null</param>
+        /// <returns>Integer</returns>
         public static int GetDbValue(SqlDataReader reader, int fieldIndex, int valueIfNull)
         {
             if (Convert.IsDBNull(reader.GetValue(fieldIndex)))
@@ -132,14 +157,58 @@ namespace CaptureTaskManager
             return (int)reader.GetValue(fieldIndex);
         }
 
+        /// <summary>
+        /// Get the value for a field, using valueIfNull if the field is null
+        /// </summary>
+        /// <param name="reader">Reader</param>
+        /// <param name="fieldIndex">Field index (0-based)</param>
+        /// <param name="valueIfNull">String to return if null</param>
+        /// <returns>String</returns>
         public static string GetDbValue(SqlDataReader reader, int fieldIndex, string valueIfNull)
         {
             if (Convert.IsDBNull(reader.GetValue(fieldIndex)))
                 return valueIfNull;
 
-            return (string)reader.GetValue(fieldIndex);
+            // Use .ToString() and not a string cast to allow for DateTime fields to convert to strings
+            return reader.GetValue(fieldIndex).ToString();
         }
 
+        /// <summary>
+        /// Get the value for a field, using valueIfNull if the field is null
+        /// </summary>
+        /// <param name="reader">Reader</param>
+        /// <param name="fieldName">Field name</param>
+        /// <param name="valueIfNull">Integer to return if null</param>
+        /// <returns>Integer</returns>
+        public static int GetDbValue(SqlDataReader reader, string fieldName, int valueIfNull)
+        {
+            if (Convert.IsDBNull(reader[fieldName]))
+                return valueIfNull;
+
+            return (int)reader[fieldName];
+        }
+
+        /// <summary>
+        /// Get the value for a field, using valueIfNull if the field is null
+        /// </summary>
+        /// <param name="reader">Reader</param>
+        /// <param name="fieldName">Field name</param>
+        /// <param name="valueIfNull">String to return if null</param>
+        /// <returns>String</returns>
+        public static string GetDbValue(SqlDataReader reader, string fieldName, string valueIfNull)
+        {
+            if (Convert.IsDBNull(reader[fieldName]))
+                return valueIfNull;
+
+            // Use .ToString() and not a string cast to allow for DateTime fields to convert to strings
+            return reader[fieldName].ToString();
+        }
+
+        /// <summary>
+        /// Surround a path with double quotes if it contains spaces
+        /// </summary>
+        /// <param name="strPath"></param>
+        /// <returns></returns>
         public static string PossiblyQuotePath(string strPath)
         {
             if (string.IsNullOrEmpty(strPath))
@@ -196,7 +265,7 @@ namespace CaptureTaskManager
     public static class clsUtilities
     {
         /// <summary>
-        /// Returns the directory in which the entry assembly (typically the Program .exe file) resides 
+        /// Returns the directory in which the entry assembly (typically the Program .exe file) resides
         /// </summary>
         /// <returns>Full directory path</returns>
         public static string GetAppFolderPath()
@@ -387,7 +456,7 @@ namespace CaptureTaskManager
                 else
                     msg = "Folder not found [" + pathToCheck + "]; called from " + callingFunction;
 
-                LogMessage(msg);                
+                LogMessage(msg);
             }
             catch (Exception ex)
             {

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Net;
-using System.Net.Http;
 using ICSharpCode.SharpZipLib.Tar;
 using PRISM;
 using System.Security.Cryptography.X509Certificates;
@@ -12,6 +11,8 @@ namespace Pacifica.Core
 {
     public class EasyHttp
     {
+        private static X509Certificate2 mLoginCertificate;
+
         /// <summary>
         /// An enumeration of standard HTTP methods.
         /// </summary>
@@ -227,15 +228,20 @@ namespace Pacifica.Core
 
             if (loginCredentials == null)
             {
-                //request.UseDefaultCredentials = true;
-                X509Certificate2 certificate = new X509Certificate2();
-                certificate.Import(Configuration.CLIENT_CERT_FILEPATH, "pacifica", X509KeyStorageFlags.PersistKeySet);
-                request.ClientCertificates.Add(certificate);
+                if (mLoginCertificate == null)
+                {
+                    mLoginCertificate = new X509Certificate2();
+                    var password = Utilities.DecodePassword(Configuration.CLIENT_CERT_PASSWORD);
+                    mLoginCertificate.Import(Configuration.CLIENT_CERT_FILEPATH, password, X509KeyStorageFlags.PersistKeySet);
+                }
+                request.ClientCertificates.Add(mLoginCertificate);
             }
             else
             {
-                var c = new CredentialCache();
-                c.Add(new Uri(url), "Basic", new NetworkCredential(loginCredentials.UserName, loginCredentials.SecurePassword));
+                var c = new CredentialCache
+                {
+                    { new Uri(url), "Basic", new NetworkCredential(loginCredentials.UserName, loginCredentials.SecurePassword) }
+                };
                 request.Credentials = c;
             }
 
@@ -248,6 +254,7 @@ namespace Pacifica.Core
             {
                 Domain = "pnl.gov"
             };
+
             cookies.Add(cookie);
             request.CookieContainer = cookies;
             return request;
@@ -426,135 +433,21 @@ namespace Pacifica.Core
             return responseData;
         }
 
-        /// <summary>
-        ///
-        /// </summary>
-        /// <param name="url"></param>
-        /// <param name="cookies"></param>
-        /// <param name="responseStatusCode"></param>
-        /// <param name="postData"></param>
-        /// <param name="method"></param>
-        /// <param name="timeoutSeconds"></param>
-        /// <param name="contentType"></param>
-        /// <param name="sendStringInHeader"></param>
-        /// <param name="loginCredentials"></param>
-        /// <returns>Response data</returns>
-        public static string Send_orig(
-            string url,
-            CookieContainer cookies,
-            out HttpStatusCode responseStatusCode,
-            string postData = "",
-            HttpMethod method = HttpMethod.Get,
-            int timeoutSeconds = 100,
-            string contentType = "",
-            bool sendStringInHeader = false,
-            NetworkCredential loginCredentials = null)
-        {
-
-            var request = InitializeRequest(url, ref cookies, ref timeoutSeconds, loginCredentials, maxTimeoutHours: 24);
-            responseStatusCode = HttpStatusCode.NotFound;
-
-            // Prepare the request object
-            request.Method = method.GetDescription<HttpMethod>();
-            request.PreAuthenticate = false;
-
-            if (sendStringInHeader && method == HttpMethod.Get)
-            {
-                request.Headers.Add("X-Json-Data", postData);
-            }
-
-            // Set form/post content-type if necessary
-            if (method == HttpMethod.Post && !string.IsNullOrEmpty(postData) && string.IsNullOrEmpty(contentType))
-            {
-                contentType = "application/x-www-form-urlencoded";
-            }
-
-            // Set Content-Type
-            if (method == HttpMethod.Post && !string.IsNullOrEmpty(contentType))
-            {
-                request.ContentType = contentType;
-                if (postData != null)
-                {
-                    request.ContentLength = postData.Length;
-                }
-            }
-
-            // Write POST data, if POST
-            if (method == HttpMethod.Post)
-            {
-                using (var sw = new StreamWriter(request.GetRequestStream()))
-                {
-                    sw.Write(postData);
-                }
-            }
-
-            // Receive response
-            var responseData = string.Empty;
-            HttpWebResponse response = null;
-            try
-            {
-                request.Timeout = timeoutSeconds * 1000;
-                response = (HttpWebResponse)request.GetResponse();
-                responseStatusCode = response.StatusCode;
-                var responseStream = response.GetResponseStream();
-
-                if (responseStream != null)
-                {
-                    using (var sr = new StreamReader(responseStream))
-                    {
-                        responseData = sr.ReadToEnd();
-                    }
-                }
-            }
-            catch (WebException ex)
-            {
-                if (ex.Response != null)
-                {
-                    var responseStream = ex.Response.GetResponseStream();
-                    if (responseStream != null)
-                    {
-                        using (var sr = new StreamReader(responseStream))
-                        {
-                            responseData = sr.ReadToEnd();
-                        }
-                    }
-                    responseStatusCode = ((HttpWebResponse)ex.Response).StatusCode;
-                }
-                else
-                {
-                    if (ex.Message.Contains("timed out"))
-                        responseStatusCode = HttpStatusCode.RequestTimeout;
-                }
-
-                if (string.IsNullOrWhiteSpace(responseData))
-                    throw new Exception(ex.Message, ex);
-                else
-                    throw new Exception(responseData, ex);
-
-            }
-            finally
-            {
-                ((IDisposable)response)?.Dispose();
-            }
-
-            return responseData;
-        }
-
         public static string SendFileListToIngester(
-			string url, string serverBaseAddress,
+            string url, string serverBaseAddress,
             SortedDictionary<string, FileInfoObject> fileListObject,
             string metadataFilePath,
             eDebugMode debugMode = eDebugMode.DebugDisabled)
         {
             var baseUri = new Uri(serverBaseAddress);
             var uploadUri = new Uri(baseUri, url);
-			HttpWebRequest oWebRequest = null;
+            HttpWebRequest oWebRequest = null;
             var fiMetadataFile = new FileInfo(metadataFilePath);
 
             // Compute the total number of bytes that will be written to the tar file
             var contentLength = ComputeTarFileSize(fileListObject, fiMetadataFile, debugMode);
 
-            const double percentComplete = 0;		// Value between 0 and 100
+            const double percentComplete = 0;       // Value between 0 and 100
             long bytesWritten = 0;
             var lastStatusUpdateTime = DateTime.UtcNow;
 
@@ -573,10 +466,10 @@ namespace Pacifica.Core
                 // Make the request
                 oWebRequest = (HttpWebRequest)WebRequest.Create(uploadUri);
 
-                X509Certificate2 certificate = new X509Certificate2();
-                certificate.Import(Configuration.CLIENT_CERT_FILEPATH, "pacifica", X509KeyStorageFlags.PersistKeySet);
+                var certificate = new X509Certificate2();
+                var password = Utilities.DecodePassword(Configuration.CLIENT_CERT_PASSWORD);
+                certificate.Import(Configuration.CLIENT_CERT_FILEPATH, password, X509KeyStorageFlags.PersistKeySet);
                 oWebRequest.ClientCertificates.Add(certificate);
-
 
                 Configuration.SetProxy(oWebRequest);
 
@@ -708,221 +601,9 @@ namespace Pacifica.Core
 
         }
 
-        //public static string SendFileListToDavAsTar(string url, string serverBaseAddress,
-        //    SortedDictionary<string, FileInfoObject> fileListObject,
-        //    string metadataFilePath,
-        //    CookieContainer cookies,
-        //    NetworkCredential loginCredentials = null,
-        //    eDebugMode debugMode = eDebugMode.DebugDisabled)
-        //{
-
-        //    var baseUri = new Uri(serverBaseAddress);
-        //    var uploadUri = new Uri(baseUri, url);
-
-        //    var credUriStr = url.Substring(0, url.LastIndexOf('/'));
-        //    var credCheckUri = new Uri(baseUri, credUriStr);
-
-        //    ICredentials i1;
-        //    ICredentials i2;
-        //    var c1 = new CredentialCache();
-        //    var c2 = new CredentialCache();
-
-        //    if (loginCredentials == null)
-        //    {
-        //        loginCredentials = CredentialCache.DefaultNetworkCredentials;
-        //        i1 = loginCredentials;
-        //        i2 = loginCredentials;
-        //    }
-        //    else
-        //    {
-        //        // Basic authentication cannot be used with DefaultNetworkCredentials.
-        //        c1.Add(credCheckUri, "Basic", new NetworkCredential(loginCredentials.UserName,
-        //            loginCredentials.SecurePassword));
-        //        i1 = c1;
-        //        c2.Add(uploadUri, "Basic", new NetworkCredential(loginCredentials.UserName,
-        //            loginCredentials.SecurePassword));
-        //        i2 = c2;
-        //    }
-
-        //    // Make a HEAD request to register the proper authentication stuff
-        //    var oWebRequest = (HttpWebRequest)WebRequest.Create(credCheckUri);
-
-        //    oWebRequest.CookieContainer = cookies;
-
-        //    Configuration.SetProxy(oWebRequest);
-
-        //    oWebRequest.Method = WebRequestMethods.Http.Head;
-        //    oWebRequest.Credentials = i1;
-        //    oWebRequest.PreAuthenticate = true;
-        //    oWebRequest.KeepAlive = true;
-        //    oWebRequest.UnsafeAuthenticatedConnectionSharing = true;
-
-        //    var fiMetadataFile = new FileInfo(metadataFilePath);
-
-        //    // Compute the total number of bytes that will be written to the tar file
-        //    var contentLength = ComputeTarFileSize(fileListObject, fiMetadataFile, debugMode);
-
-        //    const double percentComplete = 0;		// Value between 0 and 100
-        //    long bytesWritten = 0;
-        //    var lastStatusUpdateTime = DateTime.UtcNow;
-
-        //    RaiseStatusUpdate(percentComplete, bytesWritten, contentLength, string.Empty);
-
-        //    // Set this to True to debug things and create the .tar file locally instead of sending to the server
-        //    var writeToDisk = (debugMode != eDebugMode.DebugDisabled); // aka Writefile or Savefile
-
-        //    if (writeToDisk && Environment.MachineName.IndexOf("proto", StringComparison.CurrentCultureIgnoreCase) >= 0)
-        //    {
-        //        throw new Exception("Should not have writeToDisk set to True when running on a Proto-x server");
-        //    }
-
-        //    // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-        //    if (!writeToDisk)
-        //    {
-        //        // Make the request
-        //        oWebRequest = (HttpWebRequest)WebRequest.Create(uploadUri);
-
-        //        if (cookies == null)
-        //        {
-        //            cookies = new CookieContainer();
-        //        }
-        //        oWebRequest.CookieContainer = cookies;
-
-        //        Configuration.SetProxy(oWebRequest);
-
-        //        oWebRequest.Credentials = i2;
-        //        oWebRequest.PreAuthenticate = true;
-        //        oWebRequest.KeepAlive = true;
-        //        oWebRequest.Method = WebRequestMethods.Http.Put;
-        //        oWebRequest.AllowWriteStreamBuffering = false;
-        //        oWebRequest.Accept = "*/*";
-        //        oWebRequest.Expect = null;
-        //        oWebRequest.Timeout = -1;
-        //        oWebRequest.ReadWriteTimeout = -1;
-        //        oWebRequest.ContentLength = contentLength;
-
-        //    }
-
-        //    Stream oRequestStream;
-
-        //    // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-        //    if (writeToDisk)
-        //        oRequestStream = new FileStream(@"E:\CapMan_WorkDir\TestFile3.tar", FileMode.Create, FileAccess.Write, FileShare.Read);
-        //    else
-        //        oRequestStream = oWebRequest.GetRequestStream();
-
-        //    // Use SharpZipLib to create the tar file on-the-fly and directly push into the request stream
-        //    // This way, the .tar file is never actually created on a local hard drive
-        //    // Code modeled after https://github.com/icsharpcode/SharpZipLib/wiki/GZip-and-Tar-Samples
-
-        //    var tarOutputStream = new TarOutputStream(oRequestStream);
-
-        //    var dctDirectoryEntries = new SortedSet<string>();
-
-        //    // Add the metadata.txt file
-        //    AppendFileToTar(tarOutputStream, fiMetadataFile, MYEMSL_METADATA_FILE_NAME, ref bytesWritten);
-
-        //    // Add the "data" directory, which will hold all of the files
-        //    // Need a dummy "data" directory to do this
-        //    //var diTempFolder = Utilities.GetTempDirectory();
-        //    //var diDummyDataFolder = new DirectoryInfo(Path.Combine(diTempFolder.FullName, "data"));
-        //    //if (!diDummyDataFolder.Exists)
-        //    //    diDummyDataFolder.Create();
-
-        //    //AppendFolderToTar(tarOutputStream, diDummyDataFolder, "data", ref bytesWritten);
-
-        //    foreach (var fileToArchive in fileListObject)
-        //    {
-        //        var fiSourceFile = new FileInfo(fileToArchive.Key);
-
-        //        if (!string.IsNullOrEmpty(fileToArchive.Value.RelativeDestinationDirectory))
-        //        {
-        //            if (fiSourceFile.Directory == null)
-        //                throw new DirectoryNotFoundException("Cannot access the parent folder for the source file: " + fileToArchive.Value.RelativeDestinationFullPath);
-
-        //            if (!dctDirectoryEntries.Contains(fiSourceFile.Directory.FullName))
-        //            {
-        //                // Make a directory entry
-        //                AppendFolderToTar(tarOutputStream, fiSourceFile.Directory, fileToArchive.Value.RelativeDestinationDirectory, ref bytesWritten);
-
-        //                dctDirectoryEntries.Add(fiSourceFile.Directory.FullName);
-        //            }
-        //        }
-
-        //        AppendFileToTar(tarOutputStream, fiSourceFile, fileToArchive.Value.RelativeDestinationFullPath, ref bytesWritten);
-
-        //        if (DateTime.UtcNow.Subtract(lastStatusUpdateTime).TotalSeconds >= 2)
-        //        {
-        //            // Limit status updates to every 2 seconds
-        //            RaiseStatusUpdate(percentComplete, bytesWritten, contentLength, string.Empty);
-        //            lastStatusUpdateTime = DateTime.UtcNow;
-        //        }
-        //    }
-
-        //    // Close the tar file memory stream (to flush the buffers)
-        //    tarOutputStream.IsStreamOwner = false;
-        //    tarOutputStream.Close();
-        //    bytesWritten += TAR_BLOCK_SIZE_BYTES;
-
-        //    RaiseStatusUpdate(100, bytesWritten, contentLength, string.Empty);
-
-        //    // Close the request
-        //    oRequestStream.Close();
-
-        //    RaiseStatusUpdate(100, contentLength, contentLength, string.Empty);
-
-        //    // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-        //    if (writeToDisk)
-        //        return string.Empty;
-
-        //    var responseData = string.Empty;
-
-        //    WebResponse response = null;
-        //    try
-        //    {
-        //        // The response should be empty if everything worked
-        //        response = oWebRequest.GetResponse();
-        //        var responseStream = response.GetResponseStream();
-        //        if (responseStream != null)
-        //        {
-        //            using (var sr = new StreamReader(responseStream))
-        //            {
-        //                responseData = sr.ReadToEnd();
-        //            }
-        //        }
-        //    }
-        //    catch (WebException ex)
-        //    {
-        //        if (ex.Response != null)
-        //        {
-        //            var responseStream = ex.Response.GetResponseStream();
-        //            if (responseStream != null)
-        //            {
-        //                using (var sr = new StreamReader(responseStream))
-        //                {
-        //                    responseData = sr.ReadToEnd();
-        //                }
-        //            }
-
-        //        }
-        //        else
-        //        {
-        //            responseData = string.Empty;
-        //        }
-        //        throw new Exception(responseData, ex);
-        //    }
-        //    finally
-        //    {
-        //        ((IDisposable)response)?.Dispose();
-        //    }
-
-        //    return responseData;
-        //}
-
         private static long AddTarFileContentLength(string pathInArchive, long fileSizeBytes)
         {
-            int headerBlocks;
-            return AddTarFileContentLength(pathInArchive, fileSizeBytes, out headerBlocks);
+            return AddTarFileContentLength(pathInArchive, fileSizeBytes, out int headerBlocks);
         }
 
         private static long AddTarFileContentLength(string pathInArchive, long fileSizeBytes, out int headerBlocks)

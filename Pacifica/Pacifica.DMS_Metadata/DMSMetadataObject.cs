@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Net;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Linq;
 using Pacifica.Core;
-using MyEMSLReader;
 using PRISM;
-using Jayrock;
 using Jayrock.Json.Conversion;
 using ProgressEventArgs = Pacifica.Core.ProgressEventArgs;
 using Utilities = Pacifica.Core.Utilities;
+using System.Data.SqlClient;
 
 namespace Pacifica.DMS_Metadata
 {
@@ -20,9 +20,9 @@ namespace Pacifica.DMS_Metadata
         /// Maximum number of files to archive
         /// </summary>
         /// <remarks>
-        /// If uploading an entire dataset folder and all of its subfolders via a DatasetArchive operation, 
+        /// If uploading an entire dataset folder and all of its subfolders via a DatasetArchive operation,
         ///   then this value applies to all files in the dataset folder (and subfolders)
-        /// If uploading just one dataset subfolder via an ArchiveUpdate operation, 
+        /// If uploading just one dataset subfolder via an ArchiveUpdate operation,
         ///   then this value applies to all files in that subfolder
         /// </remarks>
         public const int MAX_FILES_TO_ARCHIVE = 500;
@@ -41,8 +41,8 @@ namespace Pacifica.DMS_Metadata
         /// Object that tracks the upload details, including the files to upload
         /// </summary>
         /// <remarks>
-        /// The information in this dictionary is translated to JSON; 
-        /// Keys are key names; values are either strings or dictionary objects or even a list of dictionary objects 
+        /// The information in this dictionary is translated to JSON;
+        /// Keys are key names; values are either strings or dictionary objects or even a list of dictionary objects
         /// </remarks>
         private List<Dictionary<string, object>> mMetadataObject;
 
@@ -71,7 +71,7 @@ namespace Pacifica.DMS_Metadata
         /// <summary>
         /// EUS Info
         /// </summary>
-        public Upload.udtEUSInfo EUSInfo
+        public Upload.EUSInfo EUSInfo
         {
             get;
             private set;
@@ -80,23 +80,31 @@ namespace Pacifica.DMS_Metadata
         public string ManagerName
         {
             get;
-            private set;
         }
 
         public List<Dictionary<string, object>> MetadataObject => mMetadataObject;
 
+        /// <summary>
+        /// Number of bytes to upload
+        /// </summary>
         public long TotalFileSizeToUpload
         {
             get;
             set;
         }
 
+        /// <summary>
+        /// Number of new files pushed to MyEMSL
+        /// </summary>
         public int TotalFileCountNew
         {
             get;
             set;
         }
 
+        /// <summary>
+        /// Number of files updated in MyEMSL
+        /// </summary>
         public int TotalFileCountUpdated
         {
             get;
@@ -132,21 +140,26 @@ namespace Pacifica.DMS_Metadata
             if (string.IsNullOrWhiteSpace(managerName))
                 managerName = "DMSMetadataObject";
 
-            this.ManagerName = managerName;
+            ManagerName = managerName;
             mFileTools = new clsFileTools(managerName, 1);
 
             mFileTools.WaitingForLockQueue += mFileTools_WaitingForLockQueue;
         }
 
-        public void SetupMetadata(Dictionary<string, string> taskParams, Dictionary<string, string> mgrParams, EasyHttp.eDebugMode debugMode)
+        /// <summary>
+        /// Construct the metadata that will be included with the ingested data
+        /// </summary>
+        /// <param name="taskParams"></param>
+        /// <param name="mgrParams"></param>
+        /// <param name="debugMode"></param>
+        /// <param name="criticalError"></param>
+        /// <returns>True if success, otherwise false</returns>
+        public bool SetupMetadata(
+            Dictionary<string, string> taskParams,
+            Dictionary<string, string> mgrParams,
+            EasyHttp.eDebugMode debugMode,
+            out bool criticalError)
         {
-            // The following Callback allows us to access the MyEMSL server even if the certificate is expired or untrusted
-            // This hack was added in March 2014 because Proto-10 reported error
-            //   "Could not establish trust relationship for the SSL/TLS secure channel"
-            //   when accessing https://my.emsl.pnl.gov/
-            // This workaround requires these two using statements:
-            //   using System.Net.Security;
-            //   using System.Security.Cryptography.X509Certificates;
 
             // Could use this to ignore all certificates (not wise)
             // System.Net.ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;
@@ -154,56 +167,195 @@ namespace Pacifica.DMS_Metadata
             // Instead, only allow certain domains, as defined by ValidateRemoteCertificate
             if (ServicePointManager.ServerCertificateValidationCallback == null)
                 ServicePointManager.ServerCertificateValidationCallback += Utilities.ValidateRemoteCertificate;
-            this.DatasetName = Utilities.GetDictionaryValue(taskParams, "Dataset", "Unknown_Dataset");
 
-            Upload.udtUploadMetadata uploadMetadata;
-            var lstDatasetFilesToArchive = FindDatasetFilesToArchive(taskParams, mgrParams, out uploadMetadata);
+            DatasetName = Utilities.GetDictionaryValue(taskParams, "Dataset", "Unknown_Dataset");
+
+            var lstDatasetFilesToArchive = FindDatasetFilesToArchive(taskParams, mgrParams, out Upload.UploadMetadata uploadMetadata);
+
+            // DMS5 database
+            mgrParams.TryGetValue("DefaultDMSConnString", out string connectionString);
+
+            // DMS_Capture database
+            mgrParams.TryGetValue("ConnectionString", out string captureDbConnectionString);
+
+            taskParams.TryGetValue("Dataset_ID", out string datasetID);
+
+            var supplementalDataSuccess = GetSupplementalDMSMetadata(connectionString, datasetID, uploadMetadata);
 
             // Calculate the "year_quarter" code used for subfolders within an instrument folder
             // This value is based on the date the dataset was created in DMS
             uploadMetadata.DateCodeString = GetDatasetYearQuarter(taskParams);
 
             // Find the files that are new or need to be updated
-            var lstUnmatchedFiles = CompareDatasetContentsWithMyEMSLMetadata(lstDatasetFilesToArchive, uploadMetadata, debugMode);
+            var lstUnmatchedFiles = CompareDatasetContentsWithMyEMSLMetadata(
+                captureDbConnectionString,
+                lstDatasetFilesToArchive,
+                uploadMetadata,
+                out criticalError);
 
-            Upload.udtEUSInfo eusInfo;
-            mMetadataObject = Upload.CreatePacificaMetadataObject(uploadMetadata, lstUnmatchedFiles, out eusInfo);
-            string mdJSON = Utilities.ObjectToJson(mMetadataObject);
-            if (!CheckMetadataValidity(mdJSON)){
+            if (criticalError)
+                return false;
 
+            mMetadataObject = Upload.CreatePacificaMetadataObject(uploadMetadata, lstUnmatchedFiles, out Upload.EUSInfo eusInfo);
+
+            if (lstUnmatchedFiles.Count > 0)
+            {
+                var mdJSON = Utilities.ObjectToJson(mMetadataObject);
+                if (!CheckMetadataValidity(mdJSON, out string validityMessage))
+                {
+                    OnError("CheckMetadataValidity", validityMessage);
+                    return false;
+                }
             }
 
             var metadataDescription = Upload.GetMetadataObjectDescription(mMetadataObject);
             RaiseDebugEvent("SetupMetadata", metadataDescription);
 
             EUSInfo = eusInfo;
+            return true;
 
         }
 
-        private bool CheckMetadataValidity(string mdJSON)
+        private bool GetSupplementalDMSMetadata(
+            string dmsConnectionString,
+            string datasetID,
+            Upload.UploadMetadata uploadMetadata,
+            int retryCount = 3)
         {
-            bool mdIsValid = false;
-            string policyURL = Configuration.PolicyServerUri + "/ingest";
-            HttpStatusCode responseStatusCode;
+
+            var queryString = "SELECT * FROM V_MyEMSL_Supplemental_Metadata WHERE [omics.dms.dataset_id] = " + datasetID;
+
+            while (retryCount >= 0)
+            {
+                try
+                {
+
+                    using (var connection = new SqlConnection(dmsConnectionString))
+                    {
+                        var command = new SqlCommand(queryString, connection);
+                        connection.Open();
+
+                        using (var reader = command.ExecuteReader())
+                        {
+
+                            if (reader.HasRows && reader.Read())
+                            {
+                                uploadMetadata.CampaignID = GetDbValue(reader, "omics.dms.campaign_id", 0);
+                                uploadMetadata.CampaignName = GetDbValue(reader, "omics.dms.campaign_name", string.Empty);
+                                uploadMetadata.ExperimentID = GetDbValue(reader, "omics.dms.experiment_id", 0);
+                                uploadMetadata.ExperimentName = GetDbValue(reader, "omics.dms.experiment_name", string.Empty);
+                                uploadMetadata.OrganismName = GetDbValue(reader, "organism_name", string.Empty);
+                                uploadMetadata.NCBITaxonomyID = GetDbValue(reader, "ncbi_taxonomy_id", 0);
+                                uploadMetadata.OrganismID = GetDbValue(reader, "omics.dms.organism_id", 0);
+                                uploadMetadata.AcquisitionTime = GetDbValue(reader, "omics.dms.acquisition_time", string.Empty);
+                                uploadMetadata.AcquisitionLengthMin = GetDbValue(reader, "omics.dms.acquisition_length_min", 0);
+                                uploadMetadata.NumberOfScans = GetDbValue(reader, "omics.dms.number_of_scans", 0);
+                                uploadMetadata.SeparationType = GetDbValue(reader, "omics.dms.separation_type", string.Empty);
+                                uploadMetadata.DatasetType = GetDbValue(reader, "omics.dms.dataset_type", string.Empty);
+                                uploadMetadata.RequestedRunID = GetDbValue(reader, "omics.dms.requested_run_id", 0);
+                            }
+
+                        }
+
+                        uploadMetadata.UserOfRecordList = GetRequestedRunUsers(connection, uploadMetadata.RequestedRunID);
+
+                    }
+
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    retryCount -= 1;
+                    var msg = string.Format("Exception retrieving supplemental DMS metadata for Dataset ID {0}: {1}; " +
+                                            "ConnectionString: {2}, RetryCount = {3}",
+                                            datasetID, ex.Message, dmsConnectionString, retryCount);
+
+                    OnError("GetSupplementalDMSMetadata", msg);
+
+                    // Delay for 5 seconds before trying again
+                    if (retryCount >= 0)
+                        System.Threading.Thread.Sleep(5000);
+                }
+
+            } // while
+
+            return false;
+        }
+
+        private List<int> GetRequestedRunUsers(SqlConnection connection, int requestedRunID, int retryCount = 3)
+        {
+            var queryString = "SELECT EUS_Person_ID FROM V_Requested_Run_EUS_Users_Export WHERE Request_ID = " + requestedRunID;
+
+            while (retryCount >= 0)
+            {
+                try
+                {
+
+                    var command = new SqlCommand(queryString, connection);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (!reader.HasRows)
+                            return new List<int>();
+
+                        var personList = new List<int>();
+
+                        while (reader.Read())
+                        {
+                            var personId = GetDbValue(reader, "EUS_Person_ID", 0, out bool isNull);
+                            if (!isNull)
+                                personList.Add(personId);
+                        }
+
+                        return personList;
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    retryCount -= 1;
+                    var msg = string.Format("Exception retrieving requested run users for Requested Run ID {0}: {1}; " +
+                                            "ConnectionString: {2}, RetryCount = {3}",
+                                            requestedRunID, ex.Message, connection.ConnectionString, retryCount);
+
+                    OnError("GetRequestedRunUsers", msg);
+
+                    // Delay for 5 seconds before trying again
+                    if (retryCount >= 0)
+                        System.Threading.Thread.Sleep(5000);
+                }
+
+            } // while
+
+            return new List<int>();
+        }
+
+        private bool CheckMetadataValidity(string mdJSON, out string validityMessage)
+        {
+            var mdIsValid = false;
+            var policyURL = Configuration.PolicyServerUri + "/ingest";
+            validityMessage = string.Empty;
+
             try
             {
-                
-                string response = EasyHttp.Send(policyURL, null, out responseStatusCode, mdJSON, EasyHttp.HttpMethod.Post, 100, "application/json");
+                var response = EasyHttp.Send(policyURL, null, out HttpStatusCode responseStatusCode, mdJSON, EasyHttp.HttpMethod.Post, 100, "application/json");
                 if (response.Contains("success"))
                 {
+                    validityMessage = response;
                     mdIsValid = true;
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                validityMessage = ex.Message;
                 mdIsValid = false;
             }
+
             return mdIsValid;
         }
 
         private bool AddUsingCacheInfoFile(
             FileInfo fiCacheInfoFile,
-            List<FileInfoObject> fileCollection,
+            ICollection<FileInfoObject> fileCollection,
             string baseDSPath,
             out string remoteFilePath)
         {
@@ -285,8 +437,8 @@ namespace Pacifica.DMS_Metadata
             var fracCompleted = 0.0;
 
             // Generate file size sum for status purposes
-            long totalFileSize = 0;				// how much data is there to crunch?
-            long runningFileSize = 0;			// how much data we've crunched so far
+            long totalFileSize = 0;             // how much data is there to crunch?
+            long runningFileSize = 0;           // how much data we've crunched so far
             foreach (var fi in fileList)
             {
                 totalFileSize += fi.Length;
@@ -313,9 +465,7 @@ namespace Pacifica.DMS_Metadata
                     // This is a cache info file that likely points to a .mzXML or .mzML file (possibly gzipped)
                     // Auto-include that file in the .tar to be uploaded
 
-                    string remoteFilePath;
-
-                    var success = AddUsingCacheInfoFile(fiFile, fileCollection, baseDSPath, out remoteFilePath);
+                    var success = AddUsingCacheInfoFile(fiFile, fileCollection, baseDSPath, out string remoteFilePath);
                     if (!success)
                         throw new Exception("Error reported by AddUsingCacheInfoFile for " + fiFile.FullName);
 
@@ -332,15 +482,19 @@ namespace Pacifica.DMS_Metadata
         /// <summary>
         /// Query server for files and hash codes
         /// </summary>
-        /// <param name="fileList">List of local files</param>
+        /// <param name="captureDbConnectionString">DMS_Capture connection string</param>
+        /// <param name="candidateFilesToUpload">List of local files</param>
         /// <param name="uploadMetadata">Upload metadata</param>
-        /// <param name="debugMode">Debugging options</param>
-        /// <returns></returns>
+        /// <param name="criticalError">Output: set to true if the job should be failed</param>
+        /// <returns>List of files that need to be uploaded</returns>
         private List<FileInfoObject> CompareDatasetContentsWithMyEMSLMetadata(
-            List<FileInfoObject> fileList,
-            Upload.udtUploadMetadata uploadMetadata,
-            EasyHttp.eDebugMode debugMode)
+            string captureDbConnectionString,
+            IEnumerable<FileInfoObject> candidateFilesToUpload,
+            Upload.UploadMetadata uploadMetadata,
+            out bool criticalError)
         {
+            TotalFileCountNew = 0;
+            TotalFileCountUpdated = 0;
             TotalFileSizeToUpload = 0;
 
             var currentTask = "Looking for existing files in MyEMSL for DatasetID " + uploadMetadata.DatasetID;
@@ -350,44 +504,63 @@ namespace Pacifica.DMS_Metadata
 
             RaiseDebugEvent("CompareDatasetContentsWithMyEMSLMetadata", currentTask);
 
-            int datasetID = uploadMetadata.DatasetID;
-            string metadataURL = Configuration.MetadataServerUri + "/fileinfo/files_for_keyvalue/";
-            metadataURL += "omics.dms.dataset_id/" + datasetID;
+            var datasetID = uploadMetadata.DatasetID;
 
-            HttpStatusCode responseStatusCode;
+            var remoteFiles = GetDatasetFilesInMyEMSL(datasetID);
 
-            string fileInfoListJSON = EasyHttp.Send(metadataURL, out responseStatusCode);
-            var jsa = (Jayrock.Json.JsonArray)JsonConvert.Import(fileInfoListJSON);
-            var fileInfoList = Utilities.JsonArrayToDictionaryList(jsa);
-            List<FileInfoObject> returnList = new List<FileInfoObject>();
-            Dictionary<string, string> hashList = new Dictionary<string, string>();
-            foreach (Dictionary<string, object> fileObj in fileInfoList)
+            // Make sure that the number of files reported by MyEMSL for this dataset agrees with what we expect
+            var expectedRemoteFileCount = GetDatasetFileCountExpectedInMyEMSL(captureDbConnectionString, datasetID);
+
+            if (expectedRemoteFileCount < 0)
             {
-                hashList.Add((string)fileObj["hashsum"], (string)fileObj["subdir"]);
+                OnError("CompareDatasetContentsWithMyEMSLMetadata", "Aborting upload since GetDatasetFileCountExpectedInMyEMSL returned -1");
+                criticalError = true;
+                return new List<FileInfoObject>();
             }
 
-            TotalFileCountNew = 0;
-            TotalFileCountUpdated = 0;
-
-            foreach (FileInfoObject fileObj in fileList)
+            if (expectedRemoteFileCount > 0 && remoteFiles.Count < expectedRemoteFileCount * 0.95)
             {
-                if (!hashList.Keys.Contains(fileObj.Sha1HashHex) || fileObj.RelativeDestinationDirectory != hashList[fileObj.Sha1HashHex])
+                OnError("CompareDatasetContentsWithMyEMSLMetadata",
+                    string.Format("MyEMSL reported {0} files for Dataset ID {1}; it should be tracking at least {2} files",
+                    remoteFiles.Count, datasetID, expectedRemoteFileCount));
+
+                criticalError = true;
+                return new List<FileInfoObject>();
+            }
+
+            // Compare the files in remoteFileInfoList to those in candidateFilesToUpload
+            // Note that two files in the same directory could have the same hash value, so we cannot simply compare file hashes
+
+            var missingFiles = new List<FileInfoObject>();
+
+            foreach (var fileObj in candidateFilesToUpload)
+            {
+                var relativeFilePath = Path.Combine(fileObj.RelativeDestinationDirectory, fileObj.FileName);
+
+                if (remoteFiles.TryGetValue(relativeFilePath, out var fileVersions))
                 {
-                    returnList.Add(fileObj);
-                    TotalFileCountNew++;
-                    TotalFileSizeToUpload += fileObj.FileSizeInBytes;
+                    if (FileHashExists(fileVersions, fileObj.Sha1HashHex))
+                    {
+                        // File found
+                        continue;
+                    }
+
+                    TotalFileCountUpdated++;
                 }
                 else
                 {
-                    TotalFileCountUpdated++;
+                    TotalFileCountNew++;
                 }
-                
+
+                missingFiles.Add(fileObj);
+
+                TotalFileSizeToUpload += fileObj.FileSizeInBytes;
             }
 
-            return returnList;
+            criticalError = false;
+            return missingFiles;
 
         }
-
 
         public void CreateLockFiles()
         {
@@ -421,9 +594,9 @@ namespace Pacifica.DMS_Metadata
 
                 var diLockFolderSource = new DirectoryInfo(strLockFolderPathSource);
 
-                var strTargetFilePath = Path.Combine(@"\\MyEMSL\", this.DatasetName, fiSource.Name);
+                var strTargetFilePath = Path.Combine(@"\\MyEMSL\", DatasetName, fiSource.Name);
 
-                var strLockFilePathSource = mFileTools.CreateLockFile(diLockFolderSource, lockFileTimestamp, fiSource, strTargetFilePath, this.ManagerName);
+                var strLockFilePathSource = mFileTools.CreateLockFile(diLockFolderSource, lockFileTimestamp, fiSource, strTargetFilePath, ManagerName);
 
                 if (string.IsNullOrEmpty(strLockFilePathSource))
                 {
@@ -461,20 +634,31 @@ namespace Pacifica.DMS_Metadata
 
         }
 
+        /// <summary>
+        /// Return true if fileVersions has a file with the given hash
+        /// </summary>
+        /// <param name="fileVersions">List of files in MyEMSL</param>
+        /// <param name="fileHash">Sha-1 hash to find</param>
+        /// <returns>True if a match is found, otherwise false</returns>
+        private bool FileHashExists(IEnumerable<MyEMSLFileInfo> fileVersions, string fileHash)
+        {
+            return (from item in fileVersions where string.Equals(item.HashSum, fileHash) select item).Any();
+        }
+
         public List<FileInfoObject> FindDatasetFilesToArchive(
             Dictionary<string, string> taskParams,
             Dictionary<string, string> mgrParams,
-            out Upload.udtUploadMetadata uploadMetadata)
+            out Upload.UploadMetadata uploadMetadata)
         {
 
-            uploadMetadata = new Upload.udtUploadMetadata();
+            uploadMetadata = new Upload.UploadMetadata();
             uploadMetadata.Clear();
 
             // Translate values from task/mgr params into usable variables
             var perspective = Utilities.GetDictionaryValue(mgrParams, "perspective", "client");
             string driveLocation;
 
-            // Determine the drive location based on perspective 
+            // Determine the drive location based on perspective
             // (client perspective means running on a Proto storage server; server perspective means running on another computer)
             if (perspective == "client")
                 driveLocation = Utilities.GetDictionaryValue(taskParams, "Storage_Vol_External", string.Empty);
@@ -508,7 +692,6 @@ namespace Pacifica.DMS_Metadata
                 else
                     uploadMetadata.SubFolder = string.Empty;
             }
-
             uploadMetadata.EUSInstrumentID = Utilities.GetDictionaryValue(taskParams, "EUS_Instrument_ID", string.Empty);
             uploadMetadata.EUSProposalID = Utilities.GetDictionaryValue(taskParams, "EUS_Proposal_ID", string.Empty);
 
@@ -528,9 +711,8 @@ namespace Pacifica.DMS_Metadata
             }
 
             var recurse = true;
-            string sValue;
 
-            if (taskParams.TryGetValue(MyEMSLUploader.RECURSIVE_UPLOAD, out sValue))
+            if (taskParams.TryGetValue(MyEMSLUploader.RECURSIVE_UPLOAD, out string sValue))
             {
                 bool.TryParse(sValue, out recurse);
             }
@@ -540,6 +722,148 @@ namespace Pacifica.DMS_Metadata
             var lstDatasetFilesToArchive = CollectFileInformation(pathToArchive, baseDSPath, recurse);
 
             return lstDatasetFilesToArchive;
+        }
+
+        /// <summary>
+        /// Query the DMS_Capture database to determine the number of files that MyEMSL should be tracking for this dataset
+        /// </summary>
+        /// <param name="connectionString"></param>
+        /// <param name="datasetID"></param>
+        /// <param name="retryCount">Number of times to try again if the data cannot be retrieved</param>
+        /// <returns>Number of files that should be in MyEMSL for this dataset; -1 if an error</returns>
+        private int GetDatasetFileCountExpectedInMyEMSL(string connectionString, int datasetID, int retryCount = 3)
+        {
+            var queryString = string.Format(
+                "SELECT SUM(FileCountNew) AS Files " +
+                "FROM V_MyEMSL_Uploads " +
+                "WHERE Dataset_ID = {0} AND (Verified > 0 OR Ingest_Steps_Completed >= 7)",
+                datasetID);
+
+            while (retryCount >= 0)
+            {
+                try
+                {
+
+                    using (var connection = new SqlConnection(connectionString))
+                    {
+                        var command = new SqlCommand(queryString, connection);
+                        connection.Open();
+
+                        using (var reader = command.ExecuteReader())
+                        {
+                            if (reader.HasRows && reader.Read())
+                            {
+                                var filesForDatasetInMyEMSL = GetDbValue(reader, "Files", 0);
+                                return filesForDatasetInMyEMSL;
+                            }
+
+                        }
+                    }
+
+                    return 0;
+                }
+                catch (Exception ex)
+                {
+                    retryCount -= 1;
+                    var msg = string.Format("Exception looking up expected file count in MyEMSL for Dataset ID {0}: {1}; " +
+                                            "ConnectionString: {2}, RetryCount = {3}",
+                                            datasetID, ex.Message, connectionString, retryCount);
+
+                    OnError("GetDatasetFileCountExpectedInMyEMSL", msg);
+
+                    // Delay for 5 seconds before trying again
+                    if (retryCount >= 0)
+                        System.Threading.Thread.Sleep(5000);
+                }
+
+            } // while
+
+            return -1;
+        }
+
+        /// <summary>
+        /// Find files in MyEMSL associated with the given dataset ID
+        /// </summary>
+        /// <param name="datasetID">Dataset ID</param>
+        /// <param name="subDir">Optional subdiretory (subfolder) to filter on</param>
+        /// <returns>List of files</returns>
+        public Dictionary<string, List<MyEMSLFileInfo>> GetDatasetFilesInMyEMSL(int datasetID, string subDir = "")
+        {
+            // Example URL:
+            // https://metadata.my.emsl.pnl.gov/fileinfo/files_for_keyvalue/omics.dms.dataset_id/265031
+            var metadataURL = Configuration.MetadataServerUri + "/fileinfo/files_for_keyvalue/omics.dms.dataset_id/" + datasetID;
+
+            // Retrieve a list of files already in MyEMSL for this dataset
+            var fileInfoListJSON = EasyHttp.Send(metadataURL, out HttpStatusCode responseStatusCode);
+
+            // Convert the response to a dictionary
+            var jsa = (Jayrock.Json.JsonArray)JsonConvert.Import(fileInfoListJSON);
+            var remoteFileInfoList = Utilities.JsonArrayToDictionaryList(jsa);
+
+            // Keys in this dictionary are relative file paths; values are file info details
+            // A given remote file could have multiple hash values if multiple versions of the file have been uploaded
+            var remoteFiles = new Dictionary<string, List<MyEMSLFileInfo>>();
+
+            // Note that two files in the same directory could have the same hash value (but different names),
+            // so we cannot simply compare file hashes
+
+            foreach (var fileObj in remoteFileInfoList)
+            {
+                var fileName = Utilities.GetDictionaryValue(fileObj, "name");
+                var fileId = Utilities.GetDictionaryValue(fileObj, "_id", 0);
+                var fileHash = Utilities.GetDictionaryValue(fileObj, "hashsum");
+                var subFolder = Utilities.GetDictionaryValue(fileObj, "subdir");
+
+                if (!string.IsNullOrWhiteSpace(subDir))
+                {
+                    if (!string.Equals(subDir, subFolder, StringComparison.OrdinalIgnoreCase))
+                        continue;
+                }
+
+                var relativeFilePath = Path.Combine(subFolder, fileName);
+
+                if (remoteFiles.TryGetValue(relativeFilePath, out var fileVersions))
+                {
+                    if (FileHashExists(fileVersions, fileHash))
+                    {
+                        OnError("CompareDatasetContentsWithMyEMSLMetadata",
+                                "Remote file listing reports the same file with the same hash more than once; ignoring: " + relativeFilePath +
+                                " with hash " + fileHash);
+                        continue;
+                    }
+
+                    // Add the file to fileVersions
+                }
+                else
+                {
+                    fileVersions = new List<MyEMSLFileInfo>();
+                    remoteFiles.Add(relativeFilePath, fileVersions);
+                }
+
+                var remoteFileInfo = new MyEMSLFileInfo(fileName, fileId, fileHash)
+                {
+                    HashType = Utilities.GetDictionaryValue(fileObj, "hashtype"),
+                    SubDir = subFolder,
+                    Size = Utilities.GetDictionaryValue(fileObj, "size", 0),
+                    TransactionId = Utilities.GetDictionaryValue(fileObj, "transaction_id", 0)
+                };
+
+                var createdInMyEMSL = Utilities.GetDictionaryValue(fileObj, "created");
+                var updatedInMyEMSL = Utilities.GetDictionaryValue(fileObj, "updated");
+                var deletedInMyEMSL = Utilities.GetDictionaryValue(fileObj, "deleted");
+
+                remoteFileInfo.UpdateRemoteFileTimes(createdInMyEMSL, updatedInMyEMSL, deletedInMyEMSL);
+
+                var creationTime = Utilities.GetDictionaryValue(fileObj, "ctime");
+                var lastWriteTime = Utilities.GetDictionaryValue(fileObj, "mtime");
+
+                remoteFileInfo.UpdateSourceFileTimes(creationTime, lastWriteTime);
+
+                fileVersions.Add(remoteFileInfo);
+
+            }
+
+            return remoteFiles;
         }
 
         public static string GetDatasetYearQuarter(Dictionary<string, string> taskParams)
@@ -563,12 +887,78 @@ namespace Pacifica.DMS_Metadata
             OnProgressUpdate(new ProgressEventArgs(percentComplete, currentTask));
         }
 
+        /// <summary>
+        /// Get the value for a field, using valueIfNull if the field is null
+        /// </summary>
+        /// <param name="reader">Reader</param>
+        /// <param name="fieldName">Field name</param>
+        /// <param name="valueIfNull">Integer to return if null</param>
+        /// <returns>Integer</returns>
+        private static int GetDbValue(IDataRecord reader, string fieldName, int valueIfNull)
+        {
+            return GetDbValue(reader, fieldName, valueIfNull, out _);
+        }
+
+        /// <summary>
+        /// Get the value for a field, using valueIfNull if the field is null
+        /// </summary>
+        /// <param name="reader">Reader</param>
+        /// <param name="fieldName">Field name</param>
+        /// <param name="valueIfNull">Integer to return if null</param>
+        /// <param name="isNull">True if the value is null</param>
+        /// <returns>Integer</returns>
+        private static int GetDbValue(IDataRecord reader, string fieldName, int valueIfNull, out bool isNull)
+        {
+            if (Convert.IsDBNull(reader[fieldName]))
+            {
+                isNull = true;
+                return valueIfNull;
+            }
+
+            isNull = false;
+            return (int)reader[fieldName];
+        }
+
+        /// <summary>
+        /// Get the value for a field, using valueIfNull if the field is null
+        /// </summary>
+        /// <param name="reader">Reader</param>
+        /// <param name="fieldName">Field name</param>
+        /// <param name="valueIfNull">String to return if null</param>
+        /// <returns>String</returns>
+        private static string GetDbValue(IDataRecord reader, string fieldName, string valueIfNull)
+        {
+            return GetDbValue(reader, fieldName, valueIfNull, out _);
+        }
+
+        /// <summary>
+        /// Get the value for a field, using valueIfNull if the field is null
+        /// </summary>
+        /// <param name="reader">Reader</param>
+        /// <param name="fieldName">Field name</param>
+        /// <param name="valueIfNull">String to return if null</param>
+        /// <param name="isNull">True if the value is null</param>
+        /// <returns>String</returns>
+        private static string GetDbValue(IDataRecord reader, string fieldName, string valueIfNull, out bool isNull)
+        {
+            if (Convert.IsDBNull(reader[fieldName]))
+            {
+                isNull = true;
+                return valueIfNull;
+            }
+
+            isNull = false;
+
+            // Use .ToString() and not a string cast to allow for DateTime fields to convert to strings
+            return reader[fieldName].ToString();
+        }
+
 
         #region "Event Delegates and Classes"
 
         public event ProgressEventHandler ProgressEvent;
-        public event Pacifica.Core.MessageEventHandler DebugEvent;
-        public event Pacifica.Core.MessageEventHandler ErrorEvent;
+        public event MessageEventHandler DebugEvent;
+        public event MessageEventHandler ErrorEvent;
 
         public delegate void ProgressEventHandler(object sender, ProgressEventArgs e);
 
@@ -583,32 +973,17 @@ namespace Pacifica.DMS_Metadata
 
         private void OnError(string callingFunction, string errorMessage)
         {
-            ErrorEvent?.Invoke(this, new Pacifica.Core.MessageEventArgs(callingFunction, errorMessage));
+            ErrorEvent?.Invoke(this, new MessageEventArgs(callingFunction, errorMessage));
         }
 
         private void RaiseDebugEvent(string callingFunction, string currentTask)
         {
-            DebugEvent?.Invoke(this, new Pacifica.Core.MessageEventArgs(callingFunction, currentTask));
+            DebugEvent?.Invoke(this, new MessageEventArgs(callingFunction, currentTask));
         }
 
-        void reader_ErrorEvent(string message, Exception ex)
+        void mFileTools_WaitingForLockQueue(string sourceFilePath, string targetFilePath, int MBBacklogSource, int MBBacklogTarget)
         {
-            OnError("MyEMSLReader", message);
-        }
-
-        void reader_MessageEvent(string message)
-        {
-            Console.WriteLine("MyEMSLReader: " + message);
-        }
-
-        void reader_ProgressEvent(string progressMessage, float percentComplete)
-        {
-            // Console.WriteLine("MyEMSLReader Percent complete: " + e.PercentComplete.ToString("0.0") + "%");
-        }
-
-        void mFileTools_WaitingForLockQueue(string SourceFilePath, string TargetFilePath, int MBBacklogSource, int MBBacklogTarget)
-        {
-            Console.WriteLine("mFileTools_WaitingForLockQueue for " + SourceFilePath);
+            Console.WriteLine("mFileTools_WaitingForLockQueue for " + sourceFilePath);
         }
 
 

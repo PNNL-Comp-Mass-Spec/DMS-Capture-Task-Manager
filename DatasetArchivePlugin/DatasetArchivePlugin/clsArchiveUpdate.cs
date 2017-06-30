@@ -15,15 +15,15 @@ namespace DatasetArchivePlugin
     class clsArchiveUpdate : clsOpsBase
     {
         //*********************************************************************************************************
-        // Tools to perform archive update operations
+        // Tools to perform both dataset archive and archive update operations
         //**********************************************************************************************************
 
         #region "Class variables"
 
         // Obsolete: "No longer used"
-        // string m_ArchiveSharePath = string.Empty;				// The dataset folder path in the archive, for example: \\aurora.emsl.pnl.gov\dmsarch\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25
-        // string m_ResultsFolderPathArchive = string.Empty;		// The target path to copy the data to, for example:    \\aurora.emsl.pnl.gov\dmsarch\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25\SIC201304300029_Auto938684
-        // string m_ResultsFolderPathServer = string.Empty;		// The source path of the dataset folder (or dataset job results folder) to archive, for example: \\proto-7\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25\SIC201304300029_Auto938684
+        // string m_ArchiveSharePath = string.Empty;                // The dataset folder path in the archive, for example: \\aurora.emsl.pnl.gov\dmsarch\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25
+        // string m_ResultsFolderPathArchive = string.Empty;        // The target path to copy the data to, for example:    \\aurora.emsl.pnl.gov\dmsarch\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25\SIC201304300029_Auto938684
+        // string m_ResultsFolderPathServer = string.Empty;     // The source path of the dataset folder (or dataset job results folder) to archive, for example: \\proto-7\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25\SIC201304300029_Auto938684
 
         #endregion
 
@@ -43,7 +43,7 @@ namespace DatasetArchivePlugin
 
         #region "Methods"
         /// <summary>
-        /// Performs an archive update task (overrides base)
+        /// Performs a dataset archive or archive update task
         /// </summary>
         /// <returns>TRUE for success, FALSE for failure</returns>
         public override bool PerformTask()
@@ -98,10 +98,9 @@ namespace DatasetArchivePlugin
             if (!PUSH_TO_TEST_SERVER)
                 return true;
 
-            /*
             // Possibly also upload the dataset to the MyEMSL test instance
             const int PERCENT_DATA_TO_SEND_TO_TEST = 20;
-            var testDateCuttoff = new DateTime(2015, 11, 1);
+            var testDateCuttoff = new DateTime(2017, 7, 1);
 
             if (DateTime.Now > testDateCuttoff)
             {
@@ -117,17 +116,13 @@ namespace DatasetArchivePlugin
                 // Do not send this dataset to the test server
                 return true;
             }
-            */
 
             // Also upload a copy of the data to the MyEMSL test server
 
-            /*
             var testCopySuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts, recurse, debugMode, useTestInstance: true);
             if (!testCopySuccess)
             {
-                statusMessage = "MyEMSL test server upload failed";
-                AppendToString(m_WarningMsg, statusMessage);
-                OnErrorEvent(statusMessage);
+                OnErrorEvent("MyEMSL test server upload failed");
             }
             else
             {
@@ -136,7 +131,7 @@ namespace DatasetArchivePlugin
             }
 
             return true;
-            */
+
         }
 
         /// <summary>

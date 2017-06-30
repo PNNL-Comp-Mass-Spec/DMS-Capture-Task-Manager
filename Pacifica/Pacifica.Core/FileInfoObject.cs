@@ -64,7 +64,7 @@ namespace Pacifica.Core
 
         #region Private Members
 
-        private FileInfo File { get; set; }
+        private FileInfo File { get; }
 
         #endregion
 
@@ -73,7 +73,6 @@ namespace Pacifica.Core
         public string AbsoluteLocalPath
         {
             get;
-            private set;
         }
 
         private readonly string mRelativeDestinationDirectory;
@@ -104,14 +103,8 @@ namespace Pacifica.Core
         public string _destinationFileName;
         public string DestinationFileName
         {
-            get
-            {
-                return _destinationFileName;
-            }
-            set
-            {
-                _destinationFileName = value;
-            }
+            get => _destinationFileName;
+            set => _destinationFileName = value;
         }
 
         public string FileName => File.Name;
@@ -122,17 +115,20 @@ namespace Pacifica.Core
         public string Sha1HashHex
         {
             get;
-            private set;
         }
 
         public long FileSizeInBytes => File.Length;
 
         public DateTime CreationTime => File.CreationTime;
 
+        public DateTime LastWriteTime => File.LastWriteTime;
+
         public DateTime SubmittedTime { get; } = DateTime.Now;
 
+        [Obsolete("Unused")]
         public string CreationTimeStamp => File.CreationTime.ToUnixTime().ToString(CultureInfo.InvariantCulture);
 
+        [Obsolete("Unused")]
         public string SubmittedTimeStamp => SubmittedTime.ToUnixTime().ToString(CultureInfo.InvariantCulture);
 
         public Dictionary<string, string> SerializeToDictionaryObject()
@@ -163,6 +159,15 @@ namespace Pacifica.Core
         {
             return path.Replace(@"\", "/").TrimStart('/');
         }
+
+        public override string ToString()
+        {
+            if (string.IsNullOrWhiteSpace(Sha1HashHex))
+                return AbsoluteLocalPath;
+
+            return Sha1HashHex.Substring(0, 8) + ": " + AbsoluteLocalPath;
+        }
+
         #endregion
 
         #region Static Methods

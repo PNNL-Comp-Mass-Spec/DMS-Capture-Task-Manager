@@ -62,6 +62,8 @@ namespace CaptureTaskManager
 
         protected int m_DatasetID;
 
+        protected string m_MgrName;
+
         /// <summary>
         /// LogLevel is 1 to 5: 1 for Fatal errors only, 4 for Fatal, Error, Warning, and Info, and 5 for everything including Debug messages
         /// </summary>
@@ -121,7 +123,8 @@ namespace CaptureTaskManager
             m_TaskParams = taskParams;
             m_StatusTools = statusTools;
 
-            m_FileTools = new clsFileTools(m_MgrParams.GetParam("MgrName", "CaptureTaskManager"), 1);
+            m_MgrName = m_MgrParams.GetParam("MgrName", "CaptureTaskManager");
+            m_FileTools = new clsFileTools(m_MgrName, 1);
 
             // This Connection String points to the DMS_Capture database
             var sConnectionString = m_MgrParams.GetParam("connectionstring");
@@ -203,9 +206,8 @@ namespace CaptureTaskManager
         public static bool CleanWorkDir(string workDir)
         {
             const float HoldoffSeconds = 0.1f;
-            string strFailureMessage;
 
-            return CleanWorkDir(workDir, HoldoffSeconds, out strFailureMessage);
+            return CleanWorkDir(workDir, HoldoffSeconds, out string strFailureMessage);
         }
 
         /// <summary>
@@ -314,9 +316,8 @@ namespace CaptureTaskManager
         /// <param name="eusInstrumentID"></param>
         /// <param name="eusProposalID"></param>
         /// <param name="eusUploaderID"></param>
-        /// <param name="cookieJar"></param>
         /// <param name="retData"></param>
-        /// <param name="xmlServerResponse"></param>
+        /// <param name="serverResponse">Server response (dictionary representation of JSON)</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>This function is used by the ArchiveStatusCheck plugin and the ArchiveVerify plugin </remarks>
         // ReSharper disable once UnusedMember.Global
@@ -327,14 +328,10 @@ namespace CaptureTaskManager
             int eusInstrumentID,
             string eusProposalID,
             int eusUploaderID,
-            CookieContainer cookieJar,
             clsToolReturnData retData,
-            out string xmlServerResponse)
+            out Dictionary<string, object> serverResponse)
         {
-            bool lookupError;
-            string errorMessage;
-
-            xmlServerResponse = statusChecker.GetIngestStatus(statusURI, cookieJar, out lookupError, out errorMessage);
+            serverResponse = statusChecker.GetIngestStatus(statusURI, out bool lookupError, out string errorMessage);
 
             if (lookupError)
             {
@@ -353,15 +350,15 @@ namespace CaptureTaskManager
                 return false;
             }
 
-            if (string.IsNullOrEmpty(xmlServerResponse))
+            if (serverResponse.Keys.Count == 0)
             {
-                retData.CloseoutMsg = "Empty XML server response";
+                retData.CloseoutMsg = "Empty JSON server response";
                 LogError(retData.CloseoutMsg + ", job " + job);
                 return false;
             }
 
             // Look for any steps in error
-            if (!statusChecker.HasStepError(xmlServerResponse, out errorMessage))
+            if (!statusChecker.HasStepError(serverResponse, out errorMessage))
             {
                 return true;
             }
@@ -837,8 +834,7 @@ namespace CaptureTaskManager
 
                 Thread.Sleep(100);
 
-                string strVersion;
-                success = ReadVersionInfoFile(dllFilePath, versionInfoFilePath, out strVersion);
+                success = ReadVersionInfoFile(dllFilePath, versionInfoFilePath, out string strVersion);
 
                 // Delete the version info file
                 try
