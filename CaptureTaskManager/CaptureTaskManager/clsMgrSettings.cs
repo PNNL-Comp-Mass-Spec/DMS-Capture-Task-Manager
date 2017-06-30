@@ -34,6 +34,10 @@ namespace CaptureTaskManager
         public const string MGR_PARAM_MGR_ACTIVE_LOCAL = "MgrActive_Local";
         public const string MGR_PARAM_MGR_NAME = "MgrName";
         public const string MGR_PARAM_USING_DEFAULTS = "UsingDefaults";
+
+        /// <summary>
+        /// Connection string to DMS5
+        /// </summary>
         public const string MGR_PARAM_DEFAULT_DMS_CONN_STRING = "DefaultDMSConnString";
 
         #endregion

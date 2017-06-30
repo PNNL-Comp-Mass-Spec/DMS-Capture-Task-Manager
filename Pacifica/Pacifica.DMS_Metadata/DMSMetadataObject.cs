@@ -789,8 +789,9 @@ namespace Pacifica.DMS_Metadata
         /// <returns>List of files</returns>
         public Dictionary<string, List<MyEMSLFileInfo>> GetDatasetFilesInMyEMSL(int datasetID, string subDir = "")
         {
-            var metadataURL = Configuration.MetadataServerUri + "/fileinfo/files_for_keyvalue/";
-            metadataURL += "omics.dms.dataset_id/" + datasetID;
+            // Example URL:
+            // https://metadata.my.emsl.pnl.gov/fileinfo/files_for_keyvalue/omics.dms.dataset_id/265031
+            var metadataURL = Configuration.MetadataServerUri + "/fileinfo/files_for_keyvalue/omics.dms.dataset_id/" + datasetID;
 
             // Retrieve a list of files already in MyEMSL for this dataset
             var fileInfoListJSON = EasyHttp.Send(metadataURL, out HttpStatusCode responseStatusCode);
@@ -799,7 +800,7 @@ namespace Pacifica.DMS_Metadata
             var jsa = (Jayrock.Json.JsonArray)JsonConvert.Import(fileInfoListJSON);
             var remoteFileInfoList = Utilities.JsonArrayToDictionaryList(jsa);
 
-            // Keys in this dictionary are relative file paths; values are hash values
+            // Keys in this dictionary are relative file paths; values are file info details
             // A given remote file could have multiple hash values if multiple versions of the file have been uploaded
             var remoteFiles = new Dictionary<string, List<MyEMSLFileInfo>>();
 
