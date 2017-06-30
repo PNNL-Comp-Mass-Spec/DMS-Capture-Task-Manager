@@ -152,8 +152,13 @@ namespace Pacifica.DMS_Metadata
         /// <param name="taskParams"></param>
         /// <param name="mgrParams"></param>
         /// <param name="debugMode"></param>
-        /// <returns></returns>
-        public bool SetupMetadata(Dictionary<string, string> taskParams, Dictionary<string, string> mgrParams, EasyHttp.eDebugMode debugMode)
+        /// <param name="criticalError"></param>
+        /// <returns>True if success, otherwise false</returns>
+        public bool SetupMetadata(
+            Dictionary<string, string> taskParams,
+            Dictionary<string, string> mgrParams,
+            EasyHttp.eDebugMode debugMode,
+            out bool criticalError)
         {
 
             // Could use this to ignore all certificates (not wise)
@@ -166,18 +171,30 @@ namespace Pacifica.DMS_Metadata
             DatasetName = Utilities.GetDictionaryValue(taskParams, "Dataset", "Unknown_Dataset");
 
             var lstDatasetFilesToArchive = FindDatasetFilesToArchive(taskParams, mgrParams, out Upload.UploadMetadata uploadMetadata);
+
+            // DMS5 database
             mgrParams.TryGetValue("DefaultDMSConnString", out string connectionString);
+
+            // DMS_Capture database
+            mgrParams.TryGetValue("ConnectionString", out string captureDbConnectionString);
+
             taskParams.TryGetValue("Dataset_ID", out string datasetID);
+
             var supplementalDataSuccess = GetSupplementalDMSMetadata(connectionString, datasetID, uploadMetadata);
 
             // Calculate the "year_quarter" code used for subfolders within an instrument folder
             // This value is based on the date the dataset was created in DMS
             uploadMetadata.DateCodeString = GetDatasetYearQuarter(taskParams);
 
-            //var mdSuccess = GetSupplementalDMSMetadata(mgrParams.TryGetValue())
-
             // Find the files that are new or need to be updated
-            var lstUnmatchedFiles = CompareDatasetContentsWithMyEMSLMetadata(lstDatasetFilesToArchive, uploadMetadata);
+            var lstUnmatchedFiles = CompareDatasetContentsWithMyEMSLMetadata(
+                captureDbConnectionString,
+                lstDatasetFilesToArchive,
+                uploadMetadata,
+                out criticalError);
+
+            if (criticalError)
+                return false;
 
             mMetadataObject = Upload.CreatePacificaMetadataObject(uploadMetadata, lstUnmatchedFiles, out Upload.EUSInfo eusInfo);
 
@@ -317,9 +334,9 @@ namespace Pacifica.DMS_Metadata
             var mdIsValid = false;
             var policyURL = Configuration.PolicyServerUri + "/ingest";
             validityMessage = string.Empty;
+
             try
             {
-
                 var response = EasyHttp.Send(policyURL, null, out HttpStatusCode responseStatusCode, mdJSON, EasyHttp.HttpMethod.Post, 100, "application/json");
                 if (response.Contains("success"))
                 {
@@ -332,6 +349,7 @@ namespace Pacifica.DMS_Metadata
                 validityMessage = ex.Message;
                 mdIsValid = false;
             }
+
             return mdIsValid;
         }
 
@@ -464,13 +482,19 @@ namespace Pacifica.DMS_Metadata
         /// <summary>
         /// Query server for files and hash codes
         /// </summary>
+        /// <param name="captureDbConnectionString">DMS_Capture connection string</param>
         /// <param name="candidateFilesToUpload">List of local files</param>
         /// <param name="uploadMetadata">Upload metadata</param>
-        /// <returns></returns>
+        /// <param name="criticalError">Output: set to true if the job should be failed</param>
+        /// <returns>List of files that need to be uploaded</returns>
         private List<FileInfoObject> CompareDatasetContentsWithMyEMSLMetadata(
+            string captureDbConnectionString,
             IEnumerable<FileInfoObject> candidateFilesToUpload,
-            Upload.UploadMetadata uploadMetadata)
+            Upload.UploadMetadata uploadMetadata,
+            out bool criticalError)
         {
+            TotalFileCountNew = 0;
+            TotalFileCountUpdated = 0;
             TotalFileSizeToUpload = 0;
 
             var currentTask = "Looking for existing files in MyEMSL for DatasetID " + uploadMetadata.DatasetID;
@@ -484,12 +508,30 @@ namespace Pacifica.DMS_Metadata
 
             var remoteFiles = GetDatasetFilesInMyEMSL(datasetID);
 
+            // Make sure that the number of files reported by MyEMSL for this dataset agrees with what we expect
+            var expectedRemoteFileCount = GetDatasetFileCountExpectedInMyEMSL(captureDbConnectionString, datasetID);
+
+            if (expectedRemoteFileCount < 0)
+            {
+                OnError("CompareDatasetContentsWithMyEMSLMetadata", "Aborting upload since GetDatasetFileCountExpectedInMyEMSL returned -1");
+                criticalError = true;
+                return new List<FileInfoObject>();
+            }
+
+            if (expectedRemoteFileCount > 0 && remoteFiles.Count < expectedRemoteFileCount * 0.95)
+            {
+                OnError("CompareDatasetContentsWithMyEMSLMetadata",
+                    string.Format("MyEMSL reported {0} files for Dataset ID {1}; it should be tracking at least {2} files",
+                    remoteFiles.Count, datasetID, expectedRemoteFileCount));
+
+                criticalError = true;
+                return new List<FileInfoObject>();
+            }
+
             // Compare the files in remoteFileInfoList to those in candidateFilesToUpload
             // Note that two files in the same directory could have the same hash value, so we cannot simply compare file hashes
 
             var missingFiles = new List<FileInfoObject>();
-            TotalFileCountNew = 0;
-            TotalFileCountUpdated = 0;
 
             foreach (var fileObj in candidateFilesToUpload)
             {
@@ -515,6 +557,7 @@ namespace Pacifica.DMS_Metadata
                 TotalFileSizeToUpload += fileObj.FileSizeInBytes;
             }
 
+            criticalError = false;
             return missingFiles;
 
         }
@@ -679,6 +722,63 @@ namespace Pacifica.DMS_Metadata
             var lstDatasetFilesToArchive = CollectFileInformation(pathToArchive, baseDSPath, recurse);
 
             return lstDatasetFilesToArchive;
+        }
+
+        /// <summary>
+        /// Query the DMS_Capture database to determine the number of files that MyEMSL should be tracking for this dataset
+        /// </summary>
+        /// <param name="connectionString"></param>
+        /// <param name="datasetID"></param>
+        /// <param name="retryCount">Number of times to try again if the data cannot be retrieved</param>
+        /// <returns>Number of files that should be in MyEMSL for this dataset; -1 if an error</returns>
+        private int GetDatasetFileCountExpectedInMyEMSL(string connectionString, int datasetID, int retryCount = 3)
+        {
+            var queryString = string.Format(
+                "SELECT SUM(FileCountNew) AS Files " +
+                "FROM V_MyEMSL_Uploads " +
+                "WHERE Dataset_ID = {0} AND (Verified > 0 OR Ingest_Steps_Completed >= 7)",
+                datasetID);
+
+            while (retryCount >= 0)
+            {
+                try
+                {
+
+                    using (var connection = new SqlConnection(connectionString))
+                    {
+                        var command = new SqlCommand(queryString, connection);
+                        connection.Open();
+
+                        using (var reader = command.ExecuteReader())
+                        {
+                            if (reader.HasRows && reader.Read())
+                            {
+                                var filesForDatasetInMyEMSL = GetDbValue(reader, "Files", 0);
+                                return filesForDatasetInMyEMSL;
+                            }
+
+                        }
+                    }
+
+                    return 0;
+                }
+                catch (Exception ex)
+                {
+                    retryCount -= 1;
+                    var msg = string.Format("Exception looking up expected file count in MyEMSL for Dataset ID {0}: {1}; " +
+                                            "ConnectionString: {2}, RetryCount = {3}",
+                                            datasetID, ex.Message, connectionString, retryCount);
+
+                    OnError("GetDatasetFileCountExpectedInMyEMSL", msg);
+
+                    // Delay for 5 seconds before trying again
+                    if (retryCount >= 0)
+                        System.Threading.Thread.Sleep(5000);
+                }
+
+            } // while
+
+            return -1;
         }
 
         /// <summary>

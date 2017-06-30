@@ -9,6 +9,8 @@ namespace Pacifica.DMS_Metadata
     {
         public const string RECURSIVE_UPLOAD = "MyEMSL_Recurse";
 
+        public const string CRITICAL_UPLOAD_ERROR = "Critical Error";
+
         private DMSMetadataObject _mdContainer;
         private readonly Upload myEMSLUpload;
 
@@ -150,7 +152,14 @@ namespace Pacifica.DMS_Metadata
             }
 
             // Look for files to upload, compute a Sha-1 hash for each, and compare those hashes to existing files in MyEMSL
-            _mdContainer.SetupMetadata(m_TaskParams, m_MgrParams, debugMode);
+            var success = _mdContainer.SetupMetadata(m_TaskParams, m_MgrParams, debugMode, out var criticalError);
+
+            if (!success)
+            {
+                statusURL = criticalError ? CRITICAL_UPLOAD_ERROR : string.Empty;
+
+                return false;
+            }
 
             // Send the metadata object to the calling procedure (in case it wants to log it)
             ReportMetadataDefined("StartUpload", _mdContainer.MetadataObjectJSON);
@@ -173,11 +182,12 @@ namespace Pacifica.DMS_Metadata
             }
 
             _mdContainer.CreateLockFiles();
-            bool success;
+
+            bool uploadSuccess;
 
             try
             {
-                success = myEMSLUpload.StartUpload(_mdContainer.MetadataObject, debugMode, out statusURL);
+                uploadSuccess = myEMSLUpload.StartUpload(_mdContainer.MetadataObject, debugMode, out statusURL);
             }
             catch (Exception ex)
             {
@@ -191,7 +201,7 @@ namespace Pacifica.DMS_Metadata
             if (!string.IsNullOrEmpty(statusURL))
                 StatusURI = statusURL;
 
-            return success;
+            return uploadSuccess;
         }
 
         #region "Events and Event Handlers"

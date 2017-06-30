@@ -281,6 +281,9 @@ namespace DatasetArchivePlugin
                 // Start the upload
                 success = myEMSLUL.StartUpload(debugMode, out statusURL);
 
+                if (string.Equals(statusURL, MyEMSLUploader.CRITICAL_UPLOAD_ERROR))
+                    allowRetry = false;
+
                 var tsElapsedTime = DateTime.UtcNow.Subtract(dtStartTime);
 
                 statusMessage = "Upload of " + m_DatasetName + " completed in " + tsElapsedTime.TotalSeconds.ToString("0.0") + " seconds";
