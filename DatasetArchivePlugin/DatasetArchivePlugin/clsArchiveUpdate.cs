@@ -77,7 +77,7 @@ namespace DatasetArchivePlugin
             if (debugMode != Pacifica.Core.EasyHttp.eDebugMode.DebugDisabled)
                 OnStatusEvent("Calling UploadToMyEMSLWithRetry with debugMode=" + debugMode);
 
-            const bool PUSH_TO_TEST_SERVER = true;
+            const bool PUSH_TO_TEST_SERVER = false;
 
             var debugTestInstanceOnly = PUSH_TO_TEST_SERVER;
 
@@ -99,7 +99,7 @@ namespace DatasetArchivePlugin
                 return true;
 
             // Possibly also upload the dataset to the MyEMSL test instance
-            const int PERCENT_DATA_TO_SEND_TO_TEST = 100;
+            const int PERCENT_DATA_TO_SEND_TO_TEST = 20;
             var testDateCuttoff = new DateTime(2017, 7, 1);
 
             if (DateTime.Now > testDateCuttoff)
