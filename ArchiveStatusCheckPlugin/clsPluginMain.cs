@@ -98,10 +98,8 @@ namespace ArchiveStatusCheckPlugin
 
             //// First obtain a list of status URIs to check
 
-            //const int retryCount = 2;
-
             //// Keys in dctStatusData are StatusNum integers, values are instances of class clsIngestStatusInfo
-            //var dctStatusData = GetStatusURIs(retryCount);
+            //var dctStatusData = GetStatusURIs();
 
             //// Keys in this dictionary are StatusNum; values are StatusURI strings
             //Dictionary<int, string> dctVerifiedURIs;
@@ -401,7 +399,7 @@ namespace ArchiveStatusCheckPlugin
             return ingestStepsCompleted;
         }
 
-        private Dictionary<int, clsIngestStatusInfo> GetStatusURIs(int retryCount)
+        private Dictionary<int, clsIngestStatusInfo> GetStatusURIs(int retryCount = 2)
         {
             // Keys in this dictionary are StatusNum integers
             var dctStatusData = new Dictionary<int, clsIngestStatusInfo>();
@@ -428,7 +426,7 @@ namespace ArchiveStatusCheckPlugin
                 sql += " AND StatusNum = " + statusNum +
                        " ORDER BY Entry_ID";
 
-                GetStatusURIsAndSubfolders(sql, retryCount, dctStatusData);
+                GetStatusURIsAndSubfolders(sql, dctStatusData, retryCount);
 
                 if (dctStatusData.First().Value.ExistingErrorCode == -1 ||
                     dctStatusData.First().Value.ExistingErrorCode == 101)
@@ -448,7 +446,7 @@ namespace ArchiveStatusCheckPlugin
                        " AND ErrorCode NOT IN (-1, 101)" +
                        " ORDER BY Entry_ID";
 
-                GetStatusURIsAndSubfolders(sql, retryCount, dctStatusData);
+                GetStatusURIsAndSubfolders(sql, dctStatusData, retryCount);
 
             }
             catch (Exception ex)
@@ -464,14 +462,14 @@ namespace ArchiveStatusCheckPlugin
         /// Run a query against V_MyEMSL_Uploads
         /// </summary>
         /// <param name="sql"></param>
-        /// <param name="retryCount"></param>
         /// <param name="dctStatusData"></param>
-        private void GetStatusURIsAndSubfolders(string sql, int retryCount, IDictionary<int, clsIngestStatusInfo> dctStatusData)
+        /// <param name="retryCount"></param>
+        private void GetStatusURIsAndSubfolders(string sql, IDictionary<int, clsIngestStatusInfo> dctStatusData, int retryCount = 2)
         {
             // This Connection String points to the DMS_Capture database
             var connectionString = m_MgrParams.GetParam("connectionstring");
 
-            while (retryCount > 0)
+            while (retryCount >= 0)
             {
                 try
                 {
@@ -522,19 +520,24 @@ namespace ArchiveStatusCheckPlugin
 
                         }
                     }
-                    break;
+                    return;
+
                 }
                 catch (Exception ex)
                 {
                     retryCount -= 1;
-                    var msg = "ArchiveStatusCheckPlugin, GetStatusURIs; Exception querying database for job " + m_Job + ": " + ex.Message + "; ConnectionString: " + connectionString;
-                    msg += ", RetryCount = " + retryCount;
+
+                    var msg = string.Format("GetStatusURIs; Exception querying database for job {0}: {1}; " +
+                                            "ConnectionString: {2}, RetryCount = {3}",
+                                            m_Job, ex.Message, connectionString, retryCount);
                     LogError(msg);
 
-                    // Delay for 5 second before trying again
-                    System.Threading.Thread.Sleep(5000);
+                    // Delay for 5 seconds before trying again
+                    if (retryCount >= 0)
+                        System.Threading.Thread.Sleep(5000);
                 }
-            }
+
+            } // while
 
         }
 
