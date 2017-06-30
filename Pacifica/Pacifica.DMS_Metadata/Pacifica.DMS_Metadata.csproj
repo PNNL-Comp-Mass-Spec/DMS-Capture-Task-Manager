@@ -40,10 +40,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\RefLib\Jayrock.Json.dll</HintPath>
     </Reference>
-    <Reference Include="MyEMSLReader, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\RefLib\MyEMSLReader.dll</HintPath>
-    </Reference>
     <Reference Include="Pacifica.Core, Version=2.0.6303.33627, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\DeployedFiles\Pacifica.Core.dll</HintPath>
