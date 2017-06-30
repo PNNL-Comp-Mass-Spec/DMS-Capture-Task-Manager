@@ -980,21 +980,6 @@ namespace Pacifica.DMS_Metadata
             DebugEvent?.Invoke(this, new MessageEventArgs(callingFunction, currentTask));
         }
 
-        void reader_ErrorEvent(string message)
-        {
-            OnError("MyEMSLReader", message);
-        }
-
-        void reader_MessageEvent(string message)
-        {
-            Console.WriteLine("MyEMSLReader: " + message);
-        }
-
-        void reader_ProgressEvent(string progressMessage, float percentComplete)
-        {
-            // Console.WriteLine("MyEMSLReader Percent complete: " + e.PercentComplete.ToString("0.0") + "%");
-        }
-
         void mFileTools_WaitingForLockQueue(string sourceFilePath, string targetFilePath, int MBBacklogSource, int MBBacklogTarget)
         {
             Console.WriteLine("mFileTools_WaitingForLockQueue for " + sourceFilePath);

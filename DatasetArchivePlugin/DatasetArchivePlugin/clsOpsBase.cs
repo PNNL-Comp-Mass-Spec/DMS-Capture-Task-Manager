@@ -42,16 +42,6 @@ namespace DatasetArchivePlugin
 
         private readonly int m_DebugLevel;
 
-        // Deprecated: private string m_User;
-        // Deprecated: private string m_Pwd;
-
-        // Deprecated: private bool m_UseTls;
-        // Deprecated: private int m_ServerPort;
-        // Deprecated: private int m_FtpTimeOut;
-        // Deprecated: private bool m_FtpPassive;
-        // Deprecated: private bool m_FtpRestart;
-        // Deprecated: private bool m_ConnectionOpen = false;
-
         private readonly string m_ArchiveOrUpdate;
         protected string m_DatasetName = string.Empty;
 
@@ -83,14 +73,6 @@ namespace DatasetArchivePlugin
 
             // DebugLevel of 4 means Info level (normal) logging; 5 for Debug level (verbose) logging
             m_DebugLevel = m_MgrParams.GetParam("debuglevel", 4);
-
-            // Deprecated: m_User = m_MgrParams.GetParam("username");
-            // Deprecated: m_Pwd = m_MgrParams.GetParam("userpwd");
-            // Deprecated: m_UseTls = bool.Parse(m_MgrParams.GetParam("usetls"));
-            // Deprecated: m_ServerPort = int.Parse(m_MgrParams.GetParam("serverport"));
-            // Deprecated: m_FtpTimeOut = int.Parse(m_MgrParams.GetParam("timeout"));
-            // Deprecated: m_FtpPassive = bool.Parse(m_MgrParams.GetParam("passive"));
-            // Deprecated: m_FtpRestart = bool.Parse(m_MgrParams.GetParam("restart"));
 
             if (m_TaskParams.GetParam("StepTool") == "DatasetArchive")
             {

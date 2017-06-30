@@ -24,26 +24,11 @@ namespace Pacifica.Core
         /// <summary>
         /// Ingest host name on the production server
         /// </summary>
-
-        /// <summary>
-        /// Elastic search host name on the test server
-        /// </summary>
-        //public const string TEST_ELASTIC_SEARCH_HOST_NAME = "test0.my.emsl.pnl.gov";
-        [Obsolete("Deprecated in summary 2017")]
-        public const string TEST_ELASTIC_SEARCH_HOST_NAME = "192.168.1.173:9200";
-
-        /// <summary>
-        /// Item search service host name on the test server
-        /// </summary>
-        //public const string TEST_ITEM_SEARCH_HOST_NAME = "dev1.my.emsl.pnl.gov";
-        [Obsolete("Deprecated in summary 2017")]
-        public const string TEST_ITEM_SEARCH_HOST_NAME = "metdatadev.my.emsl.pnl.gov";
         public const string DEFAULT_INGEST_HOST_NAME = "ingestdms.my.emsl.pnl.gov";
 
         /// <summary>
         /// Ingest host name on the test server
         /// </summary>
-        //public const string TEST_INGEST_HOST_NAME = "test3.my.emsl.pnl.gov";
         public const string TEST_INGEST_HOST_NAME = "ingestdmsdev.my.emsl.pnl.gov";
 
         public const string CLIENT_CERT_FILEPATH = @"C:\client_certs\svc-dms.pfx";
@@ -100,15 +85,6 @@ namespace Pacifica.Core
         /// </summary>
         public static string MetadataServerUri { get; } = Scheme + MetadataServerHostName;
 
-        [Obsolete("Deprecated in summary 2017")]
-        public static string SearchServerHostName { get; set; } = DEFAULT_ELASTIC_SEARCH_HOST_NAME;
-
-        /// <summary>
-        /// By default, returns https://my.emsl.pnl.gov
-        /// </summary>
-        [Obsolete("Deprecated in summary 2017")]
-        public static string SearchServerUri { get; } = Scheme + SearchServerHostName;
-
         /// <summary>
         /// Proxy server URL
         /// </summary>
@@ -126,25 +102,7 @@ namespace Pacifica.Core
                 oWebRequest.Proxy = new WebProxy(new Uri(HttpProxyUrl));
             }
         }
-
-        [Obsolete("Deprecated in summary 2017")]
-        private static bool mUseItemSearch;
-
-        /// <summary>
-        /// When true, use the Item Search service (released in summer 2017)
-        /// </summary>
-        [Obsolete("Deprecated in summary 2017")]
-        public static bool UseItemSearch
-        {
-            get => mUseItemSearch;
-
-            set
-            {
-                mUseItemSearch = value;
-                UpdateHostNames();
-            }
-        }
-
+      
         private static bool mUseTestInstance;
 
         /// <summary>
@@ -166,24 +124,10 @@ namespace Pacifica.Core
             if (mUseTestInstance)
             {
                 IngestServerHostName = TEST_INGEST_HOST_NAME;
-
-                // Deprecated in Summer 2017:
-                //if (mUseItemSearch)
-                //    SearchServerHostName = TEST_ITEM_SEARCH_HOST_NAME;
-                //else
-                //    SearchServerHostName = TEST_ELASTIC_SEARCH_HOST_NAME;
-
             }
             else
             {
                 IngestServerHostName = DEFAULT_INGEST_HOST_NAME;
-
-                // Deprecated in Summer 2017:
-                //if (mUseItemSearch)
-                //    SearchServerHostName = DEFAULT_ITEM_SEARCH_HOST_NAME;
-                //else
-                //    SearchServerHostName = DEFAULT_ELASTIC_SEARCH_HOST_NAME;
-
             }
         }
 

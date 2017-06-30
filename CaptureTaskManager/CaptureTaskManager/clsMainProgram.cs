@@ -136,9 +136,6 @@ namespace CaptureTaskManager
                     // Unsubscribe message handler events and close msssage handler
                     if (m_MsgQueueInitSuccess)
                     {
-                        // Deprecated in January 2017
-                        // m_MsgHandler.BroadcastReceived -= OnBroadcastReceived;
-                        // m_MsgHandler.CommandReceived -= OnCommandReceived;
                         m_MsgHandler.Dispose();
                     }
                     restartOK = true;
@@ -332,14 +329,6 @@ namespace CaptureTaskManager
             m_MsgHandler = new clsMessageHandler();
             m_MsgHandler.BrokerUri = m_MsgHandler.BrokerUri = m_MgrSettings.GetParam("MessageQueueURI");
 
-            // Deprecated in January 2017
-            //
-            // ControlQueueName           was CapTaskManControlCmd
-            // BroadcastQueueTopic        was Control.CapTaskMan
-            //
-            // m_MsgHandler.CommandQueueName = m_MgrSettings.GetParam("ControlQueueName");
-            // m_MsgHandler.BroadcastTopicName = m_MgrSettings.GetParam("BroadcastQueueTopic");
-
             // Typically "Manager.Status"
             m_MsgHandler.StatusTopicName = m_MgrSettings.GetParam("MessageQueueTopicMgrStatus");
 
@@ -348,13 +337,6 @@ namespace CaptureTaskManager
             // Initialize the message queue
             // Start this in a separate thread so that we can abort the initialization if necessary
             InitializeMessageQueue();
-
-            if (m_MsgQueueInitSuccess)
-            {
-                // Deprecated in January 2017
-                // m_MsgHandler.CommandReceived += OnCommandReceived;
-                // m_MsgHandler.BroadcastReceived += OnBroadcastReceived;
-            }
 
             var configFileName = m_MgrSettings.GetParam("configfilename");
             if (string.IsNullOrEmpty(configFileName))
@@ -1365,7 +1347,7 @@ namespace CaptureTaskManager
             m_ConfigChanged = true;
             m_FileWatcher.EnableRaisingEvents = false;
         }
-        
+
         void OnStatusMonitorUpdateReceived(string msg)
         {
             if (m_MsgQueueInitSuccess)
