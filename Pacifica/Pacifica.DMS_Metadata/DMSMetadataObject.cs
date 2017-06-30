@@ -843,7 +843,7 @@ namespace Pacifica.DMS_Metadata
                 var remoteFileInfo = new MyEMSLFileInfo(fileName, fileId, fileHash)
                 {
                     HashType = Utilities.GetDictionaryValue(fileObj, "hashtype"),
-                    SubDir = Utilities.GetDictionaryValue(fileObj, "subdir"),
+                    SubDir = subFolder,
                     Size = Utilities.GetDictionaryValue(fileObj, "size", 0),
                     TransactionId = Utilities.GetDictionaryValue(fileObj, "transaction_id", 0)
                 };
