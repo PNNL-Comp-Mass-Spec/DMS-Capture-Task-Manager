@@ -9,33 +9,21 @@ namespace Pacifica.Core
         /// <summary>
         /// Policy Server host name on the production server
         /// </summary>
-        public const string DEFAULT_POLICY_SERVER_HOST_NAME = "policydmsdev.my.emsl.pnl.gov";
-
+        public const string DEFAULT_POLICY_SERVER_HOST_NAME = "policydms.my.emsl.pnl.gov";
 
         /// <summary>
         /// Metadata Server host name on the production server
         /// </summary>
-        public const string DEFAULT_METADATA_SERVER_HOST_NAME = "metadatadev.my.emsl.pnl.gov";
-
-
-        /// <summary>
-        /// Elastic search host name on the production server
-        /// </summary>
-        [Obsolete("Deprecated in summary 2017")]
-        public const string DEFAULT_ELASTIC_SEARCH_HOST_NAME = "192.168.1.173:9200";
-
+        public const string DEFAULT_METADATA_SERVER_HOST_NAME = "metadata.my.emsl.pnl.gov";
 
         /// <summary>
         /// Item search service host name on the production server
         /// </summary>
-        //public const string DEFAULT_ITEM_SEARCH_HOST_NAME = "undefined_does_not_exist.my.emsl.pnl.gov";
-        public const string DEFAULT_ITEM_SEARCH_HOST_NAME = "metadatadev.my.emsl.pnl.gov";
+        public const string DEFAULT_ITEM_SEARCH_HOST_NAME = "metadata.my.emsl.pnl.gov";
 
         /// <summary>
         /// Ingest host name on the production server
         /// </summary>
-        public const string DEFAULT_INGEST_HOST_NAME = "ingestdmsdev.my.emsl.pnl.gov";
-
 
         /// <summary>
         /// Elastic search host name on the test server
@@ -50,7 +38,7 @@ namespace Pacifica.Core
         //public const string TEST_ITEM_SEARCH_HOST_NAME = "dev1.my.emsl.pnl.gov";
         [Obsolete("Deprecated in summary 2017")]
         public const string TEST_ITEM_SEARCH_HOST_NAME = "metdatadev.my.emsl.pnl.gov";
-
+        public const string DEFAULT_INGEST_HOST_NAME = "ingestdms.my.emsl.pnl.gov";
 
         /// <summary>
         /// Ingest host name on the test server
