@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Net;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Pacifica.Core;
 using MyEMSLReader;
 using PRISM;
+using Jayrock;
+using Jayrock.Json.Conversion;
 using ProgressEventArgs = Pacifica.Core.ProgressEventArgs;
 using Utilities = Pacifica.Core.Utilities;
 
@@ -41,7 +44,7 @@ namespace Pacifica.DMS_Metadata
         /// The information in this dictionary is translated to JSON; 
         /// Keys are key names; values are either strings or dictionary objects or even a list of dictionary objects 
         /// </remarks>
-        private Dictionary<string, object> mMetadataObject;
+        private List<Dictionary<string, object>> mMetadataObject;
 
         // List of remote files that were found using CacheInfo files
         private readonly List<string> mRemoteCacheInfoFilesToRetrieve;
@@ -80,7 +83,7 @@ namespace Pacifica.DMS_Metadata
             private set;
         }
 
-        public Dictionary<string, object> MetadataObject => mMetadataObject;
+        public List<Dictionary<string, object>> MetadataObject => mMetadataObject;
 
         public long TotalFileSizeToUpload
         {
@@ -137,6 +140,20 @@ namespace Pacifica.DMS_Metadata
 
         public void SetupMetadata(Dictionary<string, string> taskParams, Dictionary<string, string> mgrParams, EasyHttp.eDebugMode debugMode)
         {
+            // The following Callback allows us to access the MyEMSL server even if the certificate is expired or untrusted
+            // This hack was added in March 2014 because Proto-10 reported error
+            //   "Could not establish trust relationship for the SSL/TLS secure channel"
+            //   when accessing https://my.emsl.pnl.gov/
+            // This workaround requires these two using statements:
+            //   using System.Net.Security;
+            //   using System.Security.Cryptography.X509Certificates;
+
+            // Could use this to ignore all certificates (not wise)
+            // System.Net.ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;
+
+            // Instead, only allow certain domains, as defined by ValidateRemoteCertificate
+            if (ServicePointManager.ServerCertificateValidationCallback == null)
+                ServicePointManager.ServerCertificateValidationCallback += Utilities.ValidateRemoteCertificate;
             this.DatasetName = Utilities.GetDictionaryValue(taskParams, "Dataset", "Unknown_Dataset");
 
             Upload.udtUploadMetadata uploadMetadata;
@@ -147,16 +164,41 @@ namespace Pacifica.DMS_Metadata
             uploadMetadata.DateCodeString = GetDatasetYearQuarter(taskParams);
 
             // Find the files that are new or need to be updated
-            var lstUnmatchedFiles = CompareDatasetContentsElasticSearch(lstDatasetFilesToArchive, uploadMetadata, debugMode);
+            var lstUnmatchedFiles = CompareDatasetContentsWithMyEMSLMetadata(lstDatasetFilesToArchive, uploadMetadata, debugMode);
 
             Upload.udtEUSInfo eusInfo;
-            mMetadataObject = Upload.CreateMetadataObject(uploadMetadata, lstUnmatchedFiles, out eusInfo);
+            mMetadataObject = Upload.CreatePacificaMetadataObject(uploadMetadata, lstUnmatchedFiles, out eusInfo);
+            string mdJSON = Utilities.ObjectToJson(mMetadataObject);
+            if (!CheckMetadataValidity(mdJSON)){
+
+            }
 
             var metadataDescription = Upload.GetMetadataObjectDescription(mMetadataObject);
             RaiseDebugEvent("SetupMetadata", metadataDescription);
 
             EUSInfo = eusInfo;
 
+        }
+
+        private bool CheckMetadataValidity(string mdJSON)
+        {
+            bool mdIsValid = false;
+            string policyURL = Configuration.PolicyServerUri + "/ingest";
+            HttpStatusCode responseStatusCode;
+            try
+            {
+                
+                string response = EasyHttp.Send(policyURL, null, out responseStatusCode, mdJSON, EasyHttp.HttpMethod.Post, 100, "application/json");
+                if (response.Contains("success"))
+                {
+                    mdIsValid = true;
+                }
+            }
+            catch
+            {
+                mdIsValid = false;
+            }
+            return mdIsValid;
         }
 
         private bool AddUsingCacheInfoFile(
@@ -294,12 +336,11 @@ namespace Pacifica.DMS_Metadata
         /// <param name="uploadMetadata">Upload metadata</param>
         /// <param name="debugMode">Debugging options</param>
         /// <returns></returns>
-        private List<FileInfoObject> CompareDatasetContentsElasticSearch(
+        private List<FileInfoObject> CompareDatasetContentsWithMyEMSLMetadata(
             List<FileInfoObject> fileList,
             Upload.udtUploadMetadata uploadMetadata,
             EasyHttp.eDebugMode debugMode)
         {
-
             TotalFileSizeToUpload = 0;
 
             var currentTask = "Looking for existing files in MyEMSL for DatasetID " + uploadMetadata.DatasetID;
@@ -307,94 +348,44 @@ namespace Pacifica.DMS_Metadata
             if (!string.IsNullOrWhiteSpace(uploadMetadata.SubFolder))
                 currentTask += ", subfolder " + uploadMetadata.SubFolder;
 
-            RaiseDebugEvent("CompareDatasetContentsElasticSearch", currentTask);
+            RaiseDebugEvent("CompareDatasetContentsWithMyEMSLMetadata", currentTask);
 
-            // Find all files in MyEMSL for this dataset
-            var reader = new Reader
-            {
-                IncludeAllRevisions = false
-            };
+            int datasetID = uploadMetadata.DatasetID;
+            string metadataURL = Configuration.MetadataServerUri + "/fileinfo/files_for_keyvalue/";
+            metadataURL += "omics.dms.dataset_id/" + datasetID;
 
-            // Attach events
-            reader.ErrorEvent += reader_ErrorEvent;
-            reader.StatusEvent += reader_MessageEvent;
-            reader.ProgressUpdate += reader_ProgressEvent;
+            HttpStatusCode responseStatusCode;
 
-            if (UseTestInstance)
+            string fileInfoListJSON = EasyHttp.Send(metadataURL, out responseStatusCode);
+            var jsa = (Jayrock.Json.JsonArray)JsonConvert.Import(fileInfoListJSON);
+            var fileInfoList = Utilities.JsonArrayToDictionaryList(jsa);
+            List<FileInfoObject> returnList = new List<FileInfoObject>();
+            Dictionary<string, string> hashList = new Dictionary<string, string>();
+            foreach (Dictionary<string, object> fileObj in fileInfoList)
             {
-                reader.UseTestInstance = true;
-                reader.UseItemSearch = true;
-            }
-            else
-            {
-                reader.UseTestInstance = false;
-                reader.UseItemSearch = false;
+                hashList.Add((string)fileObj["hashsum"], (string)fileObj["subdir"]);
             }
 
-            List<ArchivedFileInfo> lstFilesInMyEMSL;
+            TotalFileCountNew = 0;
+            TotalFileCountUpdated = 0;
 
-            if (debugMode == EasyHttp.eDebugMode.MyEMSLOfflineMode)
-                lstFilesInMyEMSL = new List<ArchivedFileInfo>();
-            else
-                lstFilesInMyEMSL = reader.FindFilesByDatasetID(uploadMetadata.DatasetID, uploadMetadata.SubFolder);
-
-            if (lstFilesInMyEMSL.Count == 0)
+            foreach (FileInfoObject fileObj in fileList)
             {
-                // This dataset doesn't have any files in MyEMSL; upload everything in fileList
-                foreach (var localFile in fileList)
+                if (!hashList.Keys.Contains(fileObj.Sha1HashHex) || fileObj.RelativeDestinationDirectory != hashList[fileObj.Sha1HashHex])
                 {
-                    TotalFileSizeToUpload += localFile.FileSizeInBytes;
-                }
-                TotalFileCountNew = fileList.Count;
-                TotalFileCountUpdated = 0;
-
-                return fileList;
-            }
-
-            // Keys in this dictionary are relative file paths
-            // Values are the sha-1 hash values for the file
-            var dctFilesInMyEMSLSha1Hash = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
-
-            foreach (var archiveFile in lstFilesInMyEMSL)
-            {
-                if (dctFilesInMyEMSLSha1Hash.ContainsKey(archiveFile.RelativePathUnix))
-                    Console.WriteLine("Warning: dctFilesInMyEMSLSha1Hash already contains " + archiveFile.RelativePathUnix);
-                else
-                    dctFilesInMyEMSLSha1Hash.Add(archiveFile.RelativePathUnix, archiveFile.Sha1Hash);
-            }
-
-            var lstUnmatchedFiles = new List<FileInfoObject>();
-
-            foreach (var localFile in fileList)
-            {
-                string itemAddress;
-                if (localFile.RelativeDestinationDirectory != string.Empty)
-                {
-                    itemAddress = localFile.RelativeDestinationDirectory + "/" + localFile.FileName;
+                    returnList.Add(fileObj);
+                    TotalFileCountNew++;
+                    TotalFileSizeToUpload += fileObj.FileSizeInBytes;
                 }
                 else
                 {
-                    itemAddress = localFile.FileName;
+                    TotalFileCountUpdated++;
                 }
-
-                var fileHashMyEMSL = Utilities.GetDictionaryValue(dctFilesInMyEMSLSha1Hash, itemAddress, string.Empty);
-
-                if (localFile.Sha1HashHex != fileHashMyEMSL)
-                {
-                    lstUnmatchedFiles.Add(localFile);
-                    TotalFileSizeToUpload += localFile.FileSizeInBytes;
-                    if (string.IsNullOrEmpty(fileHashMyEMSL))
-                    {
-                        TotalFileCountNew++;
-                    }
-                    else
-                    {
-                        TotalFileCountUpdated++;
-                    }
-                }
+                
             }
 
-            return lstUnmatchedFiles;
+            return returnList;
+
         }
 
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -61,6 +61,29 @@ namespace Pacifica.Core
             return valueIfMissing;
         }
 
+        public static List<FileInfoObject> GetFileListFromMetadataObject(List<Dictionary<string, object>> metadataObject)
+        {
+			var fileList = new List<FileInfoObject>();
+			object destTable;
+			foreach (Dictionary<string, object> item in metadataObject)
+			{
+				if (item.TryGetValue("destinationTable", out destTable))
+				{
+					string t = (string)destTable;
+					if (t.ToLower() == "files")
+					{
+						fileList.Add(new FileInfoObject(
+							(string)item["absolutelocalpath"],
+							(string)item["subdir"],
+							(string)item["hashsum"]
+						));
+					}
+				}
+			}
+
+			return fileList;
+        }
+
         public static DirectoryInfo GetTempDirectory()
         {
             DirectoryInfo di;
@@ -86,9 +109,9 @@ namespace Pacifica.Core
             return JsonObjectToDictionary(jso);
         }
 
-        public static string ObjectToJson(IDictionary mdObject)
+        public static string ObjectToJson(IList mdObject)
         {
-            var jso = new JsonObject(mdObject);
+            var jso = new JsonArray(mdObject);
             return jso.ToString();
         }
 
@@ -242,22 +265,6 @@ namespace Pacifica.Core
             return lstItems;
         }
 
-        public static void Logout(CookieContainer cookieJar)
-        {
-            // Logout using https://my.emsl.pnl.gov/myemsl/logout
-            try
-            {
-                const int timeoutSeconds = 10;
-                HttpStatusCode responseStatusCode;
-
-                EasyHttp.Send(Configuration.SearchServerUri + "/myemsl/logout", cookieJar, out responseStatusCode, timeoutSeconds);
-            }
-            catch (Exception ex)
-            {
-                // Report errors to the console, but do not throw an exception
-                Console.WriteLine("Error calling the logout service: " + ex.Message);
-            }
-        }
 
         public static string GetMetadataFilenameForJob(string jobNumber)
         {
@@ -292,6 +299,7 @@ namespace Pacifica.Core
         {
             var lstTrustedDomains = new List<string>
             {
+                "my.emsl.pnl.gov",
                 "emsl.pnl.gov",
                 "pnl.gov"
             };

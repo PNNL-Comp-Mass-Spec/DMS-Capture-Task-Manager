@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Pacifica.Core;
@@ -76,7 +76,7 @@ namespace Pacifica.DMS_Metadata
 
             myEMSLUpload = new Upload(transferFolderPath, jobNumber);
 
-            // Attach the events			
+            // Attach the events
             myEMSLUpload.DebugEvent += myEMSLUpload_DebugEvent;
             myEMSLUpload.ErrorEvent += myEMSLUpload_ErrorEvent;
             myEMSLUpload.StatusUpdate += myEMSLUpload_StatusUpdate;
@@ -135,7 +135,7 @@ namespace Pacifica.DMS_Metadata
             // Instantiate the metadata object
             _mdContainer = new DMSMetadataObject(mManagerName);
 
-            // Attach the events			
+            // Attach the events
             _mdContainer.ProgressEvent += _mdContainer_ProgressEvent;
             _mdContainer.DebugEvent += myEMSLUpload_DebugEvent;
             _mdContainer.ErrorEvent += myEMSLUpload_ErrorEvent;
@@ -158,6 +158,9 @@ namespace Pacifica.DMS_Metadata
             _mdContainer.CreateLockFiles();
             bool success;
 
+            // make a call out to the policy server to check validity of metadata object
+            
+
             try
             {
                 success = myEMSLUpload.StartUpload(_mdContainer.MetadataObject, debugMode, out statusURL);
@@ -172,7 +175,7 @@ namespace Pacifica.DMS_Metadata
             _mdContainer.DeleteLockFiles();
 
             if (!string.IsNullOrEmpty(statusURL))
-                StatusURI = statusURL + "/xml";
+                StatusURI = statusURL;
 
             return success;
         }
@@ -217,7 +220,7 @@ namespace Pacifica.DMS_Metadata
         {
             if (StatusUpdate != null)
             {
-                // Multiplying by 0.25 because we're assuming 25% of the time is required for _mdContainer to compute the Sha-1 hashes of files to be uploaded while 75% of the time is required to create and upload the .tar file				
+                // Multiplying by 0.25 because we're assuming 25% of the time is required for _mdContainer to compute the Sha-1 hashes of files to be uploaded while 75% of the time is required to create and upload the .tar file
                 var percentCompleteOverall = 25 + e.PercentCompleted * 0.75;
                 StatusUpdate(this, new StatusEventArgs(percentCompleteOverall, e.TotalBytesSent, e.TotalBytesToSend, e.StatusMessage));
             }

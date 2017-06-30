@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Xml;
+using Jayrock;
+using Jayrock.Json.Conversion;
 
 namespace Pacifica.Core
 {
@@ -48,6 +50,42 @@ namespace Pacifica.Core
             ErrorMessage = string.Empty;
         }
 
+        public bool CheckMetadataValidity(string metadataObjectJSON)
+        {
+            string policyURL = Configuration.PolicyServerUri + "/ingest/";
+            HttpStatusCode responseStatusCode;
+            string success = EasyHttp.Send(policyURL, out responseStatusCode, metadataObjectJSON, EasyHttp.HttpMethod.Post);
+            if (responseStatusCode.ToString() == "200" && success.ToLower() == "true")
+            {
+                return true;
+            }
+            return false;
+        }
+
+        //public List<FileInfoObject> FindFilesByDatasetID(int DatasetID, string subDir)
+        //{
+        //    string metadataURL = Configuration.MetadataServerUri + "/"
+        //}
+
+        public bool DoesFileExistInMyEMSL(FileInfoObject fio)
+        {
+            string fileSHA1HashSum = fio.Sha1HashHex;
+            string metadataURL = Configuration.MetadataServerUri + "/files?hashsum=" + fileSHA1HashSum;
+
+            HttpStatusCode responseStatusCode;
+
+            string fileListJSON = EasyHttp.Send(metadataURL, out responseStatusCode);
+            var jsa = (Jayrock.Json.JsonArray)JsonConvert.Import(fileListJSON);
+            var fileList = Utilities.JsonArrayToDictionaryList(jsa);
+
+            if (responseStatusCode.ToString() == "200" && fileListJSON != "[]" && fileListJSON.Contains(fileSHA1HashSum))
+            {
+
+                return true;
+            }
+            return false;
+        }
+
         /// <summary>
         /// Obtain the XML returned by the given MyEMSL status page
         /// </summary>
@@ -59,23 +97,22 @@ namespace Pacifica.Core
         {
 
             // Call the testauth service to obtain a cookie for this session
-            var authURL = Configuration.TestAuthUri;
-            var auth = new Auth(new Uri(authURL));
+            //var authURL = Configuration.TestAuthUri;
+            //var auth = new Auth(new Uri(authURL));
 
-            CookieContainer cookieJar;
-            if (!auth.GetAuthCookies(out cookieJar))
-            {
-                lookupError = true;
-                errorMessage = "Auto-login to " + Configuration.TestAuthUri + " failed authentication";
-                ReportError("GetIngestStatus", errorMessage);
-                return string.Empty;
-            }
+            //CookieContainer cookieJar;
+            //if (!auth.GetAuthCookies(out cookieJar))
+            //{
+            //    lookupError = true;
+            //    errorMessage = "Auto-login to " + Configuration.TestAuthUri + " failed authentication";
+            //    ReportError("GetIngestStatus", errorMessage);
+            //    return string.Empty;
+            //}
+            var xmlServerResponse = GetIngestStatus(statusURI, out lookupError, out errorMessage);
 
-            var xmlServerReponse = GetIngestStatus(statusURI, cookieJar, out lookupError, out errorMessage);
+            //Utilities.Logout(cookieJar);
 
-            Utilities.Logout(cookieJar);
-
-            return xmlServerReponse;
+            return xmlServerResponse;
         }
 
         /// <summary>
