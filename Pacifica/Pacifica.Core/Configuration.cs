@@ -37,12 +37,17 @@ namespace Pacifica.Core
         /// <summary>
         /// Local temp directory
         /// </summary>
-        public static string LocalTempDirectory { get; set; } = Path.GetTempPath();
+        public string LocalTempDirectory { get; set; }
 
-        public static bool mUseSecureDataTransfer = true;
-        public static bool UseSecureDataTransfer { get; set; } = mUseSecureDataTransfer;
+        /// <summary>
+        /// If true, use https; otherwise use http
+        /// </summary>
+        public bool UseSecureDataTransfer { get; set; }
 
-        public static string Scheme
+        /// <summary>
+        /// Returns either https:// or http://
+        /// </summary>
+        public string Scheme
         {
             get
             {
@@ -52,63 +57,78 @@ namespace Pacifica.Core
         }
 
         private const string UNSECURED_SCHEME = "http";
-        public static string UnsecuredScheme => UNSECURED_SCHEME;
+        public string UnsecuredScheme => UNSECURED_SCHEME;
 
         private const string SECURED_SCHEME = "https";
-        public static string SecuredScheme => SECURED_SCHEME;
-
-        public static string BundlePath { get; set; } = LocalTempDirectory;
+        public string SecuredScheme => SECURED_SCHEME;
 
         /// <summary>
         /// By default, returns https://dev1.my.emsl.pnl.gov/myemsl/status/index.php/api/item_search/
         /// </summary>
-        //public static string ItemSearchUri => SearchServerUri + ITEM_SEARCH_RELATIVE_PATH;
+        //public string ItemSearchUri => SearchServerUri + ITEM_SEARCH_RELATIVE_PATH;
 
-        public static string IngestServerHostName { get; set; } = DEFAULT_INGEST_HOST_NAME;
+        public string IngestServerHostName { get; set; }
 
         /// <summary>
         /// By default, returns https://ingest.my.emsl.pnl.gov
         /// </summary>
-        public static string IngestServerUri { get; } = Scheme + IngestServerHostName;
+        public string IngestServerUri => Scheme + IngestServerHostName;
 
-        public static string PolicyServerHostName { get; set; } = DEFAULT_POLICY_SERVER_HOST_NAME;
+        public string PolicyServerHostName { get; set; }
 
         /// <summary>
         /// By default, returns https://policy.my.emsl.pnl.gov
         /// </summary>
-        public static string PolicyServerUri { get; } = Scheme + PolicyServerHostName;
+        public string PolicyServerUri => Scheme + PolicyServerHostName;
 
-        public static string MetadataServerHostName { get; set; } = DEFAULT_METADATA_SERVER_HOST_NAME;
+        public string MetadataServerHostName { get; set; }
 
         /// <summary>
         /// By default, returns https://metadata.my.emsl.pnl.gov
         /// </summary>
-        public static string MetadataServerUri { get; } = Scheme + MetadataServerHostName;
+        public string MetadataServerUri => Scheme + MetadataServerHostName;
 
         /// <summary>
         /// Proxy server URL
         /// </summary>
         /// <remarks>Ignored if an empty string (which is default)</remarks>
-        public static string HttpProxyUrl { get; set; } = string.Empty;
+        public string HttpProxyUrl { get; set; }
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        public Configuration()
+        {
+            LocalTempDirectory = Path.GetTempPath();
+
+            UseSecureDataTransfer = true;
+
+            IngestServerHostName = DEFAULT_INGEST_HOST_NAME;
+            PolicyServerHostName = DEFAULT_POLICY_SERVER_HOST_NAME;
+            MetadataServerHostName = DEFAULT_METADATA_SERVER_HOST_NAME;
+
+            HttpProxyUrl = string.Empty;
+
+        }
 
         /// <summary>
         /// Associate the proxy server (if defined) with the WebRequest
         /// </summary>
         /// <param name="oWebRequest"></param>
-        public static void SetProxy(HttpWebRequest oWebRequest)
+        public void SetProxy(HttpWebRequest oWebRequest)
         {
             if (!string.IsNullOrWhiteSpace(HttpProxyUrl))
             {
                 oWebRequest.Proxy = new WebProxy(new Uri(HttpProxyUrl));
             }
         }
-      
-        private static bool mUseTestInstance;
+
+        private bool mUseTestInstance;
 
         /// <summary>
         /// When true, upload to test3.my.emsl.pnl.gov instead of ingest.my.emsl.pnl.gov
         /// </summary>
-        public static bool UseTestInstance
+        public bool UseTestInstance
         {
             get => mUseTestInstance;
 
@@ -119,7 +139,7 @@ namespace Pacifica.Core
             }
         }
 
-        private static void UpdateHostNames()
+        private void UpdateHostNames()
         {
             if (mUseTestInstance)
             {

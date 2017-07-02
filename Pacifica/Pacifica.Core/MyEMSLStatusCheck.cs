@@ -19,6 +19,8 @@ namespace Pacifica.Core
     {
         public const string PERMISSIONS_ERROR = "Permissions error:";
 
+        private readonly Configuration mPacificaConfig;
+
         /// <summary>
         /// Upload status
         /// </summary>
@@ -48,13 +50,14 @@ namespace Pacifica.Core
         public MyEMSLStatusCheck()
         {
             ErrorMessage = string.Empty;
+            mPacificaConfig = new Configuration();
         }
 
         public bool CheckMetadataValidity(string metadataObjectJSON)
         {
-            var policyURL = Configuration.PolicyServerUri + "/ingest/";
+            var policyURL = mPacificaConfig.PolicyServerUri + "/ingest/";
             HttpStatusCode responseStatusCode;
-            var success = EasyHttp.Send(policyURL, out responseStatusCode, metadataObjectJSON, EasyHttp.HttpMethod.Post);
+            var success = EasyHttp.Send(mPacificaConfig, policyURL, out responseStatusCode, metadataObjectJSON, EasyHttp.HttpMethod.Post);
             if (responseStatusCode.ToString() == "200" && success.ToLower() == "true")
             {
                 return true;
@@ -71,11 +74,11 @@ namespace Pacifica.Core
         public bool DoesFileExistInMyEMSL(FileInfoObject fileInfo)
         {
             var fileSHA1HashSum = fileInfo.Sha1HashHex;
-            var metadataURL = Configuration.MetadataServerUri + "/files?hashsum=" + fileSHA1HashSum;
+            var metadataURL = mPacificaConfig.MetadataServerUri + "/files?hashsum=" + fileSHA1HashSum;
 
             HttpStatusCode responseStatusCode;
 
-            var fileListJSON = EasyHttp.Send(metadataURL, out responseStatusCode);
+            var fileListJSON = EasyHttp.Send(mPacificaConfig, metadataURL, out responseStatusCode);
             var jsa = (Jayrock.Json.JsonArray)JsonConvert.Import(fileListJSON);
             var fileList = Utilities.JsonArrayToDictionaryList(jsa);
 
@@ -124,7 +127,7 @@ namespace Pacifica.Core
             const int timeoutSeconds = 30;
             HttpStatusCode responseStatusCode;
 
-            var xmlServerResponse = EasyHttp.Send(statusURI, out responseStatusCode, timeoutSeconds);
+            var xmlServerResponse = EasyHttp.Send(mPacificaConfig, statusURI, out responseStatusCode, timeoutSeconds);
 
             // Look for an exception in the response
             // Example response with an error:
@@ -209,15 +212,18 @@ namespace Pacifica.Core
             if (ServicePointManager.ServerCertificateValidationCallback == null)
                 ServicePointManager.ServerCertificateValidationCallback += Utilities.ValidateRemoteCertificate;
 
-            var statusResult = EasyHttp.Send(statusURI, out HttpStatusCode responseStatusCode);
+            var statusResult = EasyHttp.Send(mPacificaConfig, statusURI, out HttpStatusCode responseStatusCode);
 
             var statusJSON = Utilities.JsonToObject(statusResult);
 
             var state = Utilities.GetDictionaryValue(statusJSON, "state").ToLower();
 
+            // ToDo: confirm that task_percent reports 100%, e.g.
+            // {"task_percent": "100.00000", "state": "OK", "task": "ingest metadata", "job_id": 1300004}     (complete since 100%)
+
             if (state == "ok")
             {
-
+                OnDebugMessage(new MessageEventArgs("GetIngestStatus", "Archive state is OK for " + statusURI));
             }
             else if (state == "failed")
             {
@@ -639,6 +645,13 @@ namespace Pacifica.Core
         }
 
         #region "Events"
+
+        public event MessageEventHandler DebugEvent;
+
+        protected void OnDebugMessage(MessageEventArgs e)
+        {
+            DebugEvent?.Invoke(this, e);
+        }
 
         public event MessageEventHandler ErrorEvent;
 

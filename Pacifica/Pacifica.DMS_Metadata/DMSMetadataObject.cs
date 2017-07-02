@@ -55,6 +55,8 @@ namespace Pacifica.DMS_Metadata
 
         private readonly clsFileTools mFileTools;
 
+        private readonly Configuration mPacificaConfig;
+
         public enum ArchiveModes
         {
             archive, update
@@ -124,16 +126,18 @@ namespace Pacifica.DMS_Metadata
         /// <summary>
         /// Constructor
         /// </summary>
-        public DMSMetadataObject()
-            : this(string.Empty)
+        public DMSMetadataObject(Configuration config)
+            : this(config, string.Empty)
         {
         }
 
         /// <summary>
         /// Constructor
         /// </summary>
-        public DMSMetadataObject(string managerName)
+        public DMSMetadataObject(Configuration config, string managerName)
         {
+            mPacificaConfig = config;
+
             mRemoteCacheInfoFilesToRetrieve = new List<string>();
             mRemoteCacheInfoLockFiles = new Dictionary<string, FileInfo>(StringComparer.CurrentCultureIgnoreCase);
 
@@ -332,12 +336,12 @@ namespace Pacifica.DMS_Metadata
         private bool CheckMetadataValidity(string mdJSON, out string validityMessage)
         {
             var mdIsValid = false;
-            var policyURL = Configuration.PolicyServerUri + "/ingest";
+            var policyURL = mPacificaConfig.PolicyServerUri + "/ingest";
             validityMessage = string.Empty;
 
             try
             {
-                var response = EasyHttp.Send(policyURL, null, out HttpStatusCode responseStatusCode, mdJSON, EasyHttp.HttpMethod.Post, 100, "application/json");
+                var response = EasyHttp.Send(mPacificaConfig, policyURL, null, out HttpStatusCode responseStatusCode, mdJSON, EasyHttp.HttpMethod.Post, 100, "application/json");
                 if (response.Contains("success"))
                 {
                     validityMessage = response;
@@ -791,10 +795,10 @@ namespace Pacifica.DMS_Metadata
         {
             // Example URL:
             // https://metadata.my.emsl.pnl.gov/fileinfo/files_for_keyvalue/omics.dms.dataset_id/265031
-            var metadataURL = Configuration.MetadataServerUri + "/fileinfo/files_for_keyvalue/omics.dms.dataset_id/" + datasetID;
+            var metadataURL = mPacificaConfig.MetadataServerUri + "/fileinfo/files_for_keyvalue/omics.dms.dataset_id/" + datasetID;
 
             // Retrieve a list of files already in MyEMSL for this dataset
-            var fileInfoListJSON = EasyHttp.Send(metadataURL, out HttpStatusCode responseStatusCode);
+            var fileInfoListJSON = EasyHttp.Send(mPacificaConfig, metadataURL, out HttpStatusCode responseStatusCode);
 
             // Convert the response to a dictionary
             var jsa = (Jayrock.Json.JsonArray)JsonConvert.Import(fileInfoListJSON);

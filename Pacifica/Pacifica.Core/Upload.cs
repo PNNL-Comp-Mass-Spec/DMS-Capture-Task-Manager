@@ -20,6 +20,8 @@ namespace Pacifica.Core
         // VOrbiETD04 is 34127
         private const string UNKNOWN_INSTRUMENT_EUS_INSTRUMENT_ID = "34127";
 
+        private readonly Configuration mPacificaConfig;
+
         public class EUSInfo
         {
             /// <summary>
@@ -154,7 +156,7 @@ namespace Pacifica.Core
         /// Constructor
         /// </summary>
         /// <remarks>TransferFolderPath and JobNumber will be empty</remarks>
-        public Upload() : this(string.Empty, string.Empty)
+        public Upload(Configuration config) : this(config, string.Empty, string.Empty)
         {
         }
 
@@ -167,8 +169,10 @@ namespace Pacifica.Core
         /// </param>
         /// <param name="jobNumber">DMS Data Capture job number</param>
         /// <remarks>The metadata.txt file will be copied to the transfer folder</remarks>
-        public Upload(string transferFolderPath, string jobNumber)
+        public Upload(Configuration config, string transferFolderPath, string jobNumber)
         {
+
+            mPacificaConfig = config;
 
             // Note that EasyHttp is a static class with a static event
             // Be careful about instantiating this class (Upload) multiple times
@@ -272,7 +276,7 @@ namespace Pacifica.Core
             }
 
             // Optionally use the test instance
-            Configuration.UseTestInstance = UseTestInstance;
+            mPacificaConfig.UseTestInstance = UseTestInstance;
 
             var mdJson = Utilities.ObjectToJson(metadataObject);
 
@@ -321,7 +325,7 @@ namespace Pacifica.Core
             }
             else
             {
-                serverUri = Configuration.IngestServerUri;
+                serverUri = mPacificaConfig.IngestServerUri;
 
                 var storageUrl = serverUri + "/" + location;
 
@@ -329,7 +333,7 @@ namespace Pacifica.Core
             }
 
             var responseData = EasyHttp.SendFileListToIngester(
-                location, serverUri, fileListObject, mdTextFile.FullName, debugMode);
+                mPacificaConfig, location, serverUri, fileListObject, mdTextFile.FullName, debugMode);
 
             if (debugMode != EasyHttp.eDebugMode.DebugDisabled)
             {
@@ -341,7 +345,7 @@ namespace Pacifica.Core
 
             var transactionID = Convert.ToInt32(responseJSON["job_id"].ToString());
 
-            statusURI = Configuration.IngestServerUri + "/get_state?job_id=" + transactionID;
+            statusURI = mPacificaConfig.IngestServerUri + "/get_state?job_id=" + transactionID;
 
             var success = false;
 
@@ -355,7 +359,7 @@ namespace Pacifica.Core
                 }
                 else
                 {
-                    statusResult = EasyHttp.Send(statusURI, out HttpStatusCode responseStatusCode);
+                    statusResult = EasyHttp.Send(mPacificaConfig, statusURI, out HttpStatusCode responseStatusCode);
                 }
 
                 var statusJSON = Utilities.JsonToObject(statusResult);

@@ -54,6 +54,7 @@ namespace Pacifica.Core
         }
 
         public static bool GetFile(
+            Configuration config,
             string url,
             CookieContainer cookies,
             out HttpStatusCode responseStatusCode,
@@ -61,7 +62,7 @@ namespace Pacifica.Core
             int timeoutSeconds = 100,
             NetworkCredential loginCredentials = null)
         {
-            var request = InitializeRequest(url, ref cookies, ref timeoutSeconds, loginCredentials, maxTimeoutHours: 24);
+            var request = InitializeRequest(config, url, ref cookies, ref timeoutSeconds, loginCredentials, maxTimeoutHours: 24);
             responseStatusCode = HttpStatusCode.NotFound;
 
             // Prepare the request object
@@ -141,14 +142,16 @@ namespace Pacifica.Core
         }
 
         public static WebHeaderCollection GetHeaders(
+            Configuration config,
             string url,
             out HttpStatusCode responseStatusCode,
             int timeoutSeconds = 100)
         {
-            return GetHeaders(url, new CookieContainer(), out responseStatusCode, timeoutSeconds);
+            return GetHeaders(config, url, new CookieContainer(), out responseStatusCode, timeoutSeconds);
         }
 
         public static WebHeaderCollection GetHeaders(
+            Configuration config,
             string url,
             CookieContainer cookies,
             out HttpStatusCode responseStatusCode,
@@ -156,7 +159,7 @@ namespace Pacifica.Core
             NetworkCredential loginCredentials = null)
         {
             const double maxTimeoutHours = 0.1;
-            var request = InitializeRequest(url, ref cookies, ref timeoutSeconds, loginCredentials, maxTimeoutHours);
+            var request = InitializeRequest(config, url, ref cookies, ref timeoutSeconds, loginCredentials, maxTimeoutHours);
             responseStatusCode = HttpStatusCode.NotFound;
 
             // Prepare the request object
@@ -207,6 +210,7 @@ namespace Pacifica.Core
         }
 
         public static HttpWebRequest InitializeRequest(
+            Configuration config,
             string url,
             ref CookieContainer cookies,
             ref int timeoutSeconds,
@@ -217,7 +221,7 @@ namespace Pacifica.Core
             var cleanUserName = Utilities.GetUserName(true);
 
             var request = (HttpWebRequest)WebRequest.Create(uri);
-            Configuration.SetProxy(request);
+            config.SetProxy(request);
 
             if (timeoutSeconds < 3)
                 timeoutSeconds = 3;
@@ -261,25 +265,28 @@ namespace Pacifica.Core
         }
 
         public static string Send(
+            Configuration config,
             string url,
             out HttpStatusCode responseStatusCode,
             int timeoutSeconds = 100)
         {
             const string postData = "";
-            return Send(url, out responseStatusCode, postData, HttpMethod.Get, timeoutSeconds);
+            return Send(config, url, out responseStatusCode, postData, HttpMethod.Get, timeoutSeconds);
         }
 
         public static string Send(
+            Configuration config,
             string url,
             CookieContainer cookies,
             out HttpStatusCode responseStatusCode,
             int timeoutSeconds = 100)
         {
             const string postData = "";
-            return Send(url, cookies, out responseStatusCode, postData, HttpMethod.Get, timeoutSeconds);
+            return Send(config, url, cookies, out responseStatusCode, postData, HttpMethod.Get, timeoutSeconds);
         }
 
         public static string Send(
+            Configuration config,
             string url,
             out HttpStatusCode responseStatusCode,
             string postData,
@@ -290,10 +297,11 @@ namespace Pacifica.Core
             const bool sendStringInHeader = false;
             NetworkCredential loginCredentials = null;
 
-            return Send(url, new CookieContainer(), out responseStatusCode, postData, method, timeoutSeconds, contentType, sendStringInHeader, loginCredentials);
+            return Send(config, url, new CookieContainer(), out responseStatusCode, postData, method, timeoutSeconds, contentType, sendStringInHeader, loginCredentials);
         }
 
         public static string Send(
+            Configuration config,
             string url,
             out HttpStatusCode responseStatusCode,
             string postData,
@@ -303,10 +311,11 @@ namespace Pacifica.Core
             bool sendStringInHeader,
             NetworkCredential loginCredentials)
         {
-            return Send(url, new CookieContainer(), out responseStatusCode, postData, method, timeoutSeconds, contentType, sendStringInHeader, loginCredentials);
+            return Send(config, url, new CookieContainer(), out responseStatusCode, postData, method, timeoutSeconds, contentType, sendStringInHeader, loginCredentials);
         }
 
         public static string Send(
+            Configuration config,
             string url,
             CookieContainer cookies,
             out HttpStatusCode responseStatusCode,
@@ -317,12 +326,13 @@ namespace Pacifica.Core
         {
             const string contentType = "";
             const bool sendStringInHeader = false;
-            return Send(url, cookies, out responseStatusCode, postData, method, timeoutSeconds, contentType, sendStringInHeader, loginCredentials);
+            return Send(config, url, cookies, out responseStatusCode, postData, method, timeoutSeconds, contentType, sendStringInHeader, loginCredentials);
         }
 
         /// <summary>
         ///
         /// </summary>
+        /// <param name="config"></param>
         /// <param name="url"></param>
         /// <param name="cookies"></param>
         /// <param name="responseStatusCode"></param>
@@ -334,6 +344,7 @@ namespace Pacifica.Core
         /// <param name="loginCredentials"></param>
         /// <returns>Response data</returns>
         public static string Send(
+            Configuration config,
             string url,
             CookieContainer cookies,
             out HttpStatusCode responseStatusCode,
@@ -344,7 +355,7 @@ namespace Pacifica.Core
             bool sendStringInHeader = false,
             NetworkCredential loginCredentials = null)
         {
-            var request = InitializeRequest(url, ref cookies, ref timeoutSeconds, loginCredentials, maxTimeoutHours: 24);
+            var request = InitializeRequest(config, url, ref cookies, ref timeoutSeconds, loginCredentials, maxTimeoutHours: 24);
             responseStatusCode = HttpStatusCode.NotFound;
 
             // Prepare the request object
@@ -434,6 +445,7 @@ namespace Pacifica.Core
         }
 
         public static string SendFileListToIngester(
+            Configuration config,
             string url, string serverBaseAddress,
             SortedDictionary<string, FileInfoObject> fileListObject,
             string metadataFilePath,
@@ -471,7 +483,7 @@ namespace Pacifica.Core
                 certificate.Import(Configuration.CLIENT_CERT_FILEPATH, password, X509KeyStorageFlags.PersistKeySet);
                 oWebRequest.ClientCertificates.Add(certificate);
 
-                Configuration.SetProxy(oWebRequest);
+                config.SetProxy(oWebRequest);
 
                 oWebRequest.KeepAlive = true;
                 oWebRequest.Method = WebRequestMethods.Http.Post;
@@ -505,7 +517,7 @@ namespace Pacifica.Core
 
             // Add the "data" directory, which will hold all of the files
             // Need a dummy "data" directory to do this
-            var diTempFolder = Utilities.GetTempDirectory();
+            var diTempFolder = Utilities.GetTempDirectory(config);
             var diDummyDataFolder = new DirectoryInfo(Path.Combine(diTempFolder.FullName, "data"));
             if (!diDummyDataFolder.Exists)
                 diDummyDataFolder.Create();

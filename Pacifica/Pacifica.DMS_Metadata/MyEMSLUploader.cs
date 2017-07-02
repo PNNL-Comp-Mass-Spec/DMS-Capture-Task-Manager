@@ -14,10 +14,12 @@ namespace Pacifica.DMS_Metadata
         private DMSMetadataObject _mdContainer;
         private readonly Upload myEMSLUpload;
 
-        protected readonly Dictionary<string, string> m_MgrParams;
-        protected readonly Dictionary<string, string> m_TaskParams;
+        private readonly Dictionary<string, string> m_MgrParams;
+        private readonly Dictionary<string, string> m_TaskParams;
 
-        protected readonly string mManagerName;
+        private readonly string mManagerName;
+
+        private readonly Configuration mPacificaConfig;
 
         public string ErrorMessage
         {
@@ -38,17 +40,20 @@ namespace Pacifica.DMS_Metadata
             {
                 mUseTestInstance = value;
                 myEMSLUpload.UseTestInstance = value;
-                Configuration.UseTestInstance = value;
+                mPacificaConfig.UseTestInstance = value;
             }
         }
 
         /// <summary>
         /// Constructor
         /// </summary>
+        /// <param name="config">Pacifica configuration</param>
         /// <param name="mgrParams"></param>
         /// <param name="taskParams"></param>
-        public MyEMSLUploader(Dictionary<string, string> mgrParams, Dictionary<string, string> taskParams)
+        public MyEMSLUploader(Configuration config, Dictionary<string, string> mgrParams, Dictionary<string, string> taskParams)
         {
+            mPacificaConfig = config;
+
             StatusURI = string.Empty;
             FileCountNew = 0;
             FileCountUpdated = 0;
@@ -78,7 +83,7 @@ namespace Pacifica.DMS_Metadata
             if (string.IsNullOrEmpty(jobNumber))
                 throw new InvalidDataException("Job parameters do not have Job defined; unable to continue");
 
-            myEMSLUpload = new Upload(transferFolderPath, jobNumber);
+            myEMSLUpload = new Upload(config, transferFolderPath, jobNumber);
 
             // Attach the events
             myEMSLUpload.DebugEvent += myEMSLUpload_DebugEvent;
@@ -133,11 +138,11 @@ namespace Pacifica.DMS_Metadata
 
         #endregion
 
-        public bool StartUpload(EasyHttp.eDebugMode debugMode, out string statusURL)
+        public bool StartUpload(Configuration config, EasyHttp.eDebugMode debugMode, out string statusURL)
         {
 
             // Instantiate the metadata object
-            _mdContainer = new DMSMetadataObject(mManagerName);
+            _mdContainer = new DMSMetadataObject(config, mManagerName);
 
             // Attach the events
             _mdContainer.ProgressEvent += _mdContainer_ProgressEvent;
@@ -164,7 +169,7 @@ namespace Pacifica.DMS_Metadata
             // Send the metadata object to the calling procedure (in case it wants to log it)
             ReportMetadataDefined("StartUpload", _mdContainer.MetadataObjectJSON);
 
-            Configuration.LocalTempDirectory = Utilities.GetDictionaryValue(m_MgrParams, "workdir", string.Empty);
+            mPacificaConfig.LocalTempDirectory = Utilities.GetDictionaryValue(m_MgrParams, "workdir", string.Empty);
             FileCountUpdated = _mdContainer.TotalFileCountUpdated;
             FileCountNew = _mdContainer.TotalFileCountNew;
             Bytes = _mdContainer.TotalFileSizeToUpload;

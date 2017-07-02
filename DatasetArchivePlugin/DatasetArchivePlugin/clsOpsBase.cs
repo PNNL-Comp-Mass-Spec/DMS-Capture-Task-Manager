@@ -224,7 +224,10 @@ namespace DatasetArchivePlugin
                 var statusMessage = "Bundling changes to dataset " + m_DatasetName + " for transmission to MyEMSL";
                 OnStatusEvent(statusMessage);
 
-                myEMSLUL = new MyEMSLUploader(m_MgrParams.TaskDictionary, m_TaskParams.TaskDictionary);
+
+                var config = new Configuration();
+
+                myEMSLUL = new MyEMSLUploader(config, m_MgrParams.TaskDictionary, m_TaskParams.TaskDictionary);
 
                 // Attach the events
 
@@ -242,6 +245,8 @@ namespace DatasetArchivePlugin
 
                 string statusURL;
 
+                config.UseTestInstance = useTestInstance;
+
                 if (useTestInstance)
                 {
                     myEMSLUL.UseTestInstance = true;
@@ -251,7 +256,7 @@ namespace DatasetArchivePlugin
                 }
 
                 // Start the upload
-                success = myEMSLUL.StartUpload(debugMode, out statusURL);
+                success = myEMSLUL.StartUpload(config, debugMode, out statusURL);
 
                 if (string.Equals(statusURL, MyEMSLUploader.CRITICAL_UPLOAD_ERROR))
                     allowRetry = false;

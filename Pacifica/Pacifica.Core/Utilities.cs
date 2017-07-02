@@ -170,12 +170,12 @@ namespace Pacifica.Core
             return fileList;
         }
 
-        public static DirectoryInfo GetTempDirectory()
+        public static DirectoryInfo GetTempDirectory(Configuration config)
         {
             DirectoryInfo di;
-            if (!string.IsNullOrEmpty(Configuration.LocalTempDirectory))
+            if (!string.IsNullOrEmpty(config.LocalTempDirectory))
             {
-                di = new DirectoryInfo(Configuration.LocalTempDirectory);
+                di = new DirectoryInfo(config.LocalTempDirectory);
             }
             else
             {
