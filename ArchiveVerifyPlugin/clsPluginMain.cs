@@ -901,34 +901,6 @@ namespace ArchiveVerifyPlugin
             LogError("MyEMSLReader: " + e.Message);
         }
 
-        // ToDo: Deprecate
-        void reader_ErrorEvent(string message, Exception ex)
-        {
-            LogError("MyEMSLReader: " + message, ex);
-        }
-
-        // ToDo: Deprecate
-        void reader_MessageEvent(string message)
-        {
-            LogMessage(message);
-        }
-
-        // ToDo: Deprecate
-        void reader_ProgressEvent(string progressMessage, float percentComplete)
-        {
-            var msg = "Percent complete: " + percentComplete.ToString("0.0") + "%";
-
-            if (percentComplete > mPercentComplete || DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds >= 30)
-            {
-                if (DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds >= 1)
-                {
-                    LogDebug(msg);
-                    mPercentComplete = percentComplete;
-                    mLastProgressUpdateTime = DateTime.UtcNow;
-                }
-            }
-        }
-
         void statusChecker_ErrorEvent(object sender, MessageEventArgs e)
         {
             LogError(e.Message);

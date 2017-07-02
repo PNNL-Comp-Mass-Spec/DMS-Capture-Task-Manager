@@ -258,12 +258,6 @@ namespace DatasetArchivePlugin
             if (!bSuccess)
                 return false;
 
-            // Lookup the version of the MyEMSLReader
-            var strMD5StageFileCreatorPath = Path.Combine(appFolder, "MyEMSLReader.dll");
-            bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strMD5StageFileCreatorPath);
-            if (!bSuccess)
-                return false;
-
             // Store path to DatasetArchivePlugin.dll in ioToolFiles
             var ioToolFiles = new List<FileInfo>
             {
