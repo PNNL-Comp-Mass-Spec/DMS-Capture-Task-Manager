@@ -100,12 +100,13 @@ namespace DatasetArchivePlugin
 
             // Possibly also upload the dataset to the MyEMSL test instance
             const int PERCENT_DATA_TO_SEND_TO_TEST = 20;
-            var testDateCuttoff = new DateTime(2017, 7, 1);
+            var testDateCuttoff = new DateTime(2017, 7, 4);
 
             if (DateTime.Now > testDateCuttoff)
             {
                 // Testing has finished
-                return true;
+                // Return true if debutTestInstanceOnly is false
+                return !debugTestInstanceOnly;
             }
 
             var rand = new Random();
