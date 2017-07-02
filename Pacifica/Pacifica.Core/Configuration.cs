@@ -12,14 +12,19 @@ namespace Pacifica.Core
         public const string DEFAULT_POLICY_SERVER_HOST_NAME = "policydms.my.emsl.pnl.gov";
 
         /// <summary>
+        /// Policy Server host name for testing
+        /// </summary>
+        public const string TEST_POLICY_SERVER_HOST_NAME = "policydmsdev.my.emsl.pnl.gov";
+
+        /// <summary>
         /// Metadata Server host name on the production server
         /// </summary>
         public const string DEFAULT_METADATA_SERVER_HOST_NAME = "metadata.my.emsl.pnl.gov";
 
         /// <summary>
-        /// Item search service host name on the production server
+        /// Metadata Server host name for testing
         /// </summary>
-        public const string DEFAULT_ITEM_SEARCH_HOST_NAME = "metadata.my.emsl.pnl.gov";
+        public const string TEST_METADATA_SERVER_HOST_NAME = "metadatadev.my.emsl.pnl.gov";
 
         /// <summary>
         /// Ingest host name on the production server
@@ -144,10 +149,14 @@ namespace Pacifica.Core
             if (mUseTestInstance)
             {
                 IngestServerHostName = TEST_INGEST_HOST_NAME;
+                PolicyServerHostName = TEST_POLICY_SERVER_HOST_NAME;
+                MetadataServerHostName = TEST_METADATA_SERVER_HOST_NAME;
             }
             else
             {
                 IngestServerHostName = DEFAULT_INGEST_HOST_NAME;
+                PolicyServerHostName = DEFAULT_POLICY_SERVER_HOST_NAME;
+                MetadataServerHostName = DEFAULT_METADATA_SERVER_HOST_NAME;
             }
         }
 
