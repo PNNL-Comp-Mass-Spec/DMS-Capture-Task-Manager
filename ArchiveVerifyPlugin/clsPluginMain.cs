@@ -906,34 +906,23 @@ namespace ArchiveVerifyPlugin
                 // Thus, this validation cannot be performed.
 
                 var filteredFiles = new List<MyEMSLFileInfo>();
-                var missingDatasetNameCount = 0;
 
                 foreach (var archiveFile in archivedFiles)
                 {
                     foreach (var fileVersion in archiveFile.Value)
                     {
-                        if (string.IsNullOrWhiteSpace(fileVersion.Dataset))
-                        {
-                            missingDatasetNameCount++;
-                            if (missingDatasetNameCount == 1)
-                            {
-                                // The new JSON-based MyEMSL no longer reports the dataset name for each file
-                                // Thus, this is not a critical error
-                                ShowTraceMessage("Dataset name not defined for MyEMSL file " + fileVersion);
-                            }
+                        filteredFiles.Add(fileVersion);
 
-                            filteredFiles.Add(fileVersion);
-                        }
-                        else if (string.Equals(fileVersion.Dataset, m_Dataset, StringComparison.OrdinalIgnoreCase))
-                        {
-                            filteredFiles.Add(fileVersion);
-                        }
-                        else
-                        {
-                            LogMessage(
-                                "Query for dataset ID " + m_DatasetID + " yielded match to " + fileVersion.PathWithDataset +
-                                " - skipping since wrong dataset", true);
-                        }
+                        //if (string.Equals(fileVersion.Dataset, m_Dataset, StringComparison.OrdinalIgnoreCase))
+                        //{
+                        //    filteredFiles.Add(fileVersion);
+                        //}
+                        //else
+                        //{
+                        //    LogMessage(
+                        //        "Query for dataset ID " + m_DatasetID + " yielded match to " + fileVersion.PathWithDataset +
+                        //        " - skipping since wrong dataset", true);
+                        //}
                     }
                 }
 
