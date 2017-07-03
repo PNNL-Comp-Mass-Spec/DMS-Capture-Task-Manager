@@ -285,19 +285,35 @@ namespace Pacifica.Core
         /// <returns>The status number, or 0 if an error</returns>
         public static int GetStatusNumFromURI(string statusURI)
         {
-            var reGetStatusNum = new Regex(@"(\d+)/xml", RegexOptions.IgnoreCase);
-            var reMatch = reGetStatusNum.Match(statusURI);
-            if (!reMatch.Success)
+            // Check for a match to a URI of the form
+            // https://ingestdms.my.emsl.pnl.gov/get_state?job_id=1302995 
+
+            var reGetstatusNum = new Regex(@"job_id=(\d+)");
+
+            var match = reGetstatusNum.Match(statusURI);
+            if (match.Success)
+            {
+                var statusNum = int.Parse(match.Groups[1].Value);
+
+                if (statusNum <= 0)
+                    throw new Exception("Status ID is 0 in StatusURI: " + statusURI);
+
+                return statusNum;
+            }
+
+            // Check for a match to a URI of the form
+            // https://a4.my.emsl.pnl.gov/myemsl/cgi-bin/status/2381528/xml
+            var reLegacyStatusNum = new Regex(@"(\d+)/xml", RegexOptions.IgnoreCase);
+            var legacyMatch = reLegacyStatusNum.Match(statusURI);
+            if (!legacyMatch.Success)
                 throw new Exception("Could not find Status ID in StatusURI: " + statusURI);
 
-            int statusNum;
-            if (!int.TryParse(reMatch.Groups[1].Value, out statusNum))
-                throw new Exception("Status ID is not numeric in StatusURI: " + statusURI);
+            var legacyStatusNum = int.Parse(legacyMatch.Groups[1].Value);
 
-            if (statusNum <= 0)
+            if (legacyStatusNum <= 0)
                 throw new Exception("Status ID is 0 in StatusURI: " + statusURI);
 
-            return statusNum;
+            return legacyStatusNum;
         }
 
         /// <summary>
