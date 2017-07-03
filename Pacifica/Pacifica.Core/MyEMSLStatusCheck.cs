@@ -53,7 +53,8 @@ namespace Pacifica.Core
             mPacificaConfig = new Configuration();
         }
 
-        public bool CheckMetadataValidity(string metadataObjectJSON)
+        [Obsolete("Unused")]
+        private bool CheckMetadataValidity(string metadataObjectJSON)
         {
             var policyURL = mPacificaConfig.PolicyServerUri + "/ingest/";
             HttpStatusCode responseStatusCode;
