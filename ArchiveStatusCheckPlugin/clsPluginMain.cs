@@ -258,36 +258,9 @@ namespace ArchiveStatusCheckPlugin
                         continue;
                     }
 
-                    // ToDo:
-                    //var success = statusChecker.IngestStepCompleted(
-                    //    serverResponse,
-                    //    MyEMSLStatusCheck.StatusStep.Archived,
-                    //    out var statusMessage,
-                    //    out var errorMessage);
+                    // We no longer track transaction ID                    
+                    // statusInfo.TransactionId = statusChecker.IngestStepTransactionId(xmlServerResponse);
 
-                    var success = false;
-                    var errorMessage = "Not implemented";
-
-                    if (success)
-                    {
-                        // ToDo: statusInfo.TransactionId = statusChecker.IngestStepTransactionId(xmlServerResponse);
-
-                        dctVerifiedURIs.Add(statusNum, statusInfo.StatusURI);
-                        LogDebug("Successful MyEMSL upload for job " + m_Job + ", status num " + statusNum + ": " + statusInfo.StatusURI);
-                        continue;
-                    }
-
-                    // Look for critical errors in statusMessage
-                    if (!string.IsNullOrEmpty(errorMessage))
-                    {
-                        if (statusChecker.IsCriticalError(errorMessage))
-                        {
-                            if (!dctCriticalErrors.ContainsKey(statusNum))
-                            {
-                                dctCriticalErrors.Add(statusNum, errorMessage);
-                            }
-                        }
-                    }
 
                 }
                 catch (Exception ex)

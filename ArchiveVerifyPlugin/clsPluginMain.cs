@@ -162,22 +162,13 @@ namespace ArchiveVerifyPlugin
 
                 var statusNum = MyEMSLStatusCheck.GetStatusNumFromURI(statusURI);
 
+                // We no longer track transaction ID
                 var transactionId = 0;
-                if (!fatalError)
-                {
-                    // ToDo: transactionId = statusChecker.IngestStepTransactionId(serverResponse);
-                }
+
+                // transactionId = statusChecker.IngestStepTransactionId(serverResponse);
 
                 UpdateIngestStepsCompletedOneTask(statusNum, ingestStepsCompleted, transactionId, fatalError);
-
-                // ToDo:
-                //var success = statusChecker.IngestStepCompleted(
-                //    serverResponse,
-                //    MyEMSLStatusCheck.StatusStep.Available,
-                //    out var statusMessage,
-                //    out var errorMessage);
-
-                var statusMessage = "Not implemented";
+              
 
                 mRetData.CloseoutMsg = statusMessage;
 
