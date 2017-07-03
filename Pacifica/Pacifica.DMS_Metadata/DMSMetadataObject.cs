@@ -108,7 +108,7 @@ namespace Pacifica.DMS_Metadata
         /// Number of files updated in MyEMSL
         /// </summary>
         public int TotalFileCountUpdated { get; set; }
-      
+
         /// <summary>
         /// True to enable trace mode
         /// </summary>
@@ -117,7 +117,7 @@ namespace Pacifica.DMS_Metadata
         /// <summary>
         /// True to use the Test instance
         /// </summary>
-        public bool UseTestInstance { get; set; }       
+        public bool UseTestInstance { get; set; }
 
         /// <summary>
         /// Retrieve the metadata JSON as a string
@@ -216,7 +216,7 @@ namespace Pacifica.DMS_Metadata
             }
 
             var metadataDescription = Upload.GetMetadataObjectDescription(mMetadataObject);
-            RaiseDebugEvent("SetupMetadata", metadataDescription);
+            OnDebugEvent("SetupMetadata", metadataDescription);
 
             EUSInfo = eusInfo;
             return true;
@@ -356,9 +356,9 @@ namespace Pacifica.DMS_Metadata
                     OnError("CheckMetadataValidity", "Policy server reports that metadata is not valid: " + policyURL);
 
                     if (mdJSON.Length < 1255)
-                        RaiseDebugEvent("CheckMetadataValidity", mdJSON);
+                        OnDebugEvent("CheckMetadataValidity", mdJSON);
                     else
-                        RaiseDebugEvent("CheckMetadataValidity", mdJSON.Substring(0, 1250) + " ...");
+                        OnDebugEvent("CheckMetadataValidity", mdJSON.Substring(0, 1250) + " ...");
                 }
 
             }
@@ -493,7 +493,7 @@ namespace Pacifica.DMS_Metadata
 
                 if (TraceMode)
                 {
-                    RaiseDebugEvent("CollectFileInformation",
+                    OnDebugEvent("CollectFileInformation",
                                     string.Format("Hashing files, {0:F1}% complete: {1}",
                                     fracCompleted * 100, fiFile.Name));
                 }
@@ -528,7 +528,7 @@ namespace Pacifica.DMS_Metadata
             if (!string.IsNullOrWhiteSpace(uploadMetadata.SubFolder))
                 currentTask += ", subfolder " + uploadMetadata.SubFolder;
 
-            RaiseDebugEvent("CompareDatasetContentsWithMyEMSLMetadata", currentTask);
+            OnDebugEvent("CompareDatasetContentsWithMyEMSLMetadata", currentTask);
 
             var datasetID = uploadMetadata.DatasetID;
 
@@ -819,6 +819,12 @@ namespace Pacifica.DMS_Metadata
             // https://metadata.my.emsl.pnl.gov/fileinfo/files_for_keyvalue/omics.dms.dataset_id/265031
             var metadataURL = mPacificaConfig.MetadataServerUri + "/fileinfo/files_for_keyvalue/omics.dms.dataset_id/" + datasetID;
 
+            // Note that querying by dataset name only works for datasets ingested after July 1, 2017, i.e.
+            // https://metadata.my.emsl.pnl.gov/fileinfo/files_for_keyvalue/omics.dms.dataset_name/QC_pp_MCF-7_17_01_B_25JUN17_Frodo_REP-17-06-02
+
+            if (TraceMode)
+                OnDebugEvent("GetDatasetFilesInMyEMSL", "Contacting " + metadataURL);
+
             // Retrieve a list of files already in MyEMSL for this dataset
             var fileInfoListJSON = EasyHttp.Send(mPacificaConfig, metadataURL, out HttpStatusCode responseStatusCode);
 
@@ -1002,7 +1008,7 @@ namespace Pacifica.DMS_Metadata
             ErrorEvent?.Invoke(this, new MessageEventArgs(callingFunction, errorMessage));
         }
 
-        private void RaiseDebugEvent(string callingFunction, string currentTask)
+        private void OnDebugEvent(string callingFunction, string currentTask)
         {
             DebugEvent?.Invoke(this, new MessageEventArgs(callingFunction, currentTask));
         }
