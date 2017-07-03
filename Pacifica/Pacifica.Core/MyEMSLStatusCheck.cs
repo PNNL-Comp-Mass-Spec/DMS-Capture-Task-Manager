@@ -24,6 +24,7 @@ namespace Pacifica.Core
         /// <summary>
         /// Upload status
         /// </summary>
+        [Obsolete("This enum is for the legacy XML-based ingest status")]
         public enum StatusStep
         {
             Submitted = 0,      // .tar file submitted
@@ -242,11 +243,13 @@ namespace Pacifica.Core
             return statusJSON;
         }
 
+        [Obsolete("This enum is for the legacy XML-based ingest status")]
         private string GetStepDescription(StatusStep step)
         {
             return string.Format("{0} ({1})", (int)step, step);
         }
 
+        [Obsolete("Not compatible with the JSON-based dictionary server response")]
         protected bool HasExceptions(string xmlServerResponse, bool reportError, out string errorMessage)
         {
             const string EXCEPTION_TEXT = @"message='exceptions.";
@@ -322,7 +325,7 @@ namespace Pacifica.Core
         /// <param name="xmlServerResponse"></param>
         /// <param name="errorMessage">Output: error messge</param>
         /// <returns>True if an error, false if no errors</returns>
-        [Obsolete("Use the version that parses the JSON-based dictionary server response")]
+        [Obsolete("This method is for the legacy XML-based ingest status")]
         public bool HasStepError(string xmlServerResponse, out string errorMessage)
         {
             errorMessage = string.Empty;
@@ -374,38 +377,7 @@ namespace Pacifica.Core
 
             return false;
 
-        }
-
-        /// <summary>
-        /// Examines the status of each step in xmlServerResponse to see if any of them contain status Error
-        /// </summary>
-        /// <param name="serverResponse"></param>
-        /// <param name="errorMessage">Output: error messge</param>
-        /// <returns>True if an error, false if no errors</returns>
-        public bool HasStepError(Dictionary<string, object> serverResponse, out string errorMessage)
-        {
-            errorMessage = string.Empty;
-
-            // ToDo: write this code
-
-            //var stepNumbers = new List<StatusStep>();
-
-            //foreach (var stepNum in stepNumbers)
-            //{
-            //    string statusMessage;
-
-            //    if (IngestStepCompleted(xmlServerResponse, stepNum, out statusMessage, out errorMessage))
-            //    {
-            //        continue;
-            //    }
-
-            //    if (!string.IsNullOrEmpty(errorMessage))
-            //        return true;
-            //}
-
-            return false;
-
-        }
+        }        
 
         /// <summary>
         /// This function examines the xml returned by a MyEMSL status page to determine whether or not the step succeeded
