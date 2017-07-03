@@ -343,12 +343,21 @@ namespace Pacifica.DMS_Metadata
             {
                 var response = EasyHttp.Send(mPacificaConfig, policyURL, null, out HttpStatusCode responseStatusCode, mdJSON, EasyHttp.HttpMethod.Post, 100, "application/json");
 
-                if (responseStatusCode.ToString() == "200" && response.ToLower().Contains("success"))
+                if ((int)responseStatusCode == 200 && response.ToLower().Contains("success"))
                 {
                     validityMessage = response;
                     mdIsValid = true;
                 }
-                
+                else
+                {
+                    OnError("CheckMetadataValidity", "Policy server reports that metadata is not valid: " + policyURL);
+
+                    if (mdJSON.Length < 355)
+                        RaiseDebugEvent("CheckMetadataValidity", mdJSON);
+                    else
+                        RaiseDebugEvent("CheckMetadataValidity", mdJSON.Substring(0, 350) + " ...");
+                }
+
             }
             catch (Exception ex)
             {
