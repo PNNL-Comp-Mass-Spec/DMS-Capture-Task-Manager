@@ -64,6 +64,12 @@
     <Reference Include="CTM_Shared">
       <HintPath>..\DeployedFiles\CTM_Shared.dll</HintPath>
     </Reference>
+    <Reference Include="Jayrock">
+      <HintPath>..\RefLib\Jayrock.dll</HintPath>
+    </Reference>
+    <Reference Include="Jayrock.Json">
+      <HintPath>..\RefLib\Jayrock.Json.dll</HintPath>
+    </Reference>
     <Reference Include="Pacifica.Core">
       <HintPath>..\DeployedFiles\Pacifica.Core.dll</HintPath>
     </Reference>

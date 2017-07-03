@@ -372,7 +372,7 @@ namespace ArchiveVerifyPlugin
 
         private void CompareToMetadataFile(
             IReadOnlyCollection<MyEMSLFileInfo> archivedFiles,
-            FileInfo fiMetadataFile,
+            FileSystemInfo fiMetadataFile,
             out int matchCount,
             out int mismatchCount)
         {
@@ -380,14 +380,14 @@ namespace ArchiveVerifyPlugin
             mismatchCount = 0;
 
             // Parse the contents of the file
-            string contents;
+            string metadataJson;
 
             using (var srMetadataFile = new StreamReader(new FileStream(fiMetadataFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
             {
-                contents = srMetadataFile.ReadToEnd();
+                metadataJson = srMetadataFile.ReadToEnd();
             }
 
-            if (string.IsNullOrEmpty(contents))
+            if (string.IsNullOrEmpty(metadataJson))
             {
                 if (mTotalMismatchCount == 0)
                     LogError("MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
@@ -397,18 +397,34 @@ namespace ArchiveVerifyPlugin
                 return;
             }
 
-            var dctMetadataInfo = Utilities.JsonToObject(contents);
-            if (!dctMetadataInfo.ContainsKey("file"))
+            var jsa = (Jayrock.Json.JsonArray)JsonConvert.Import(metadataJson);
+
+            // metadataInfo is a list of Dictionaries
+            var metadataInfo = Utilities.JsonArrayToDictionaryList(jsa);
+
+            var dctMetadataFiles = new List<Dictionary<string, object>>();
+
+            foreach (var item in metadataInfo)
+            {
+                if (item.TryGetValue("destinationTable", out var destinationTable))
+                {
+                    var destinationTableName = destinationTable as string;
+                    if (string.Equals(destinationTableName, "Files", StringComparison.OrdinalIgnoreCase))
+                    {
+                        dctMetadataFiles.Add(item);
+                    }
+                }
+            }
+
+            if (dctMetadataFiles.Count == 0)
             {
                 if (mTotalMismatchCount == 0)
                     LogError("MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
                 mTotalMismatchCount += 1;
 
-                LogError(" ... metadata file JSON does not contain 'file': " + fiMetadataFile.FullName);
+                LogError(" ... metadata file JSON does not contain any entries where the DestinationTable is Files: " + fiMetadataFile.FullName);
                 return;
             }
-
-            var dctMetadataFiles = (List<Dictionary<string, object>>)dctMetadataInfo["file"];
 
             // Keys are relative file paths (Windows slashes)
             // Values are the sha-1 hash values
@@ -416,11 +432,20 @@ namespace ArchiveVerifyPlugin
 
             foreach (var metadataFile in dctMetadataFiles)
             {
-                var sha1Hash = Utilities.GetDictionaryValue(metadataFile, "sha1Hash");
-                var destinationDirectory = Utilities.GetDictionaryValue(metadataFile, "destinationDirectory");
-                var fileName = Utilities.GetDictionaryValue(metadataFile, "fileName");
+                var sha1Hash = Utilities.GetDictionaryValue(metadataFile, "hashsum");
+                var destinationDirectory = Utilities.GetDictionaryValue(metadataFile, "subdir");
+                var fileName = Utilities.GetDictionaryValue(metadataFile, "name");
 
-                var relativeFilePathWindows = Path.Combine(destinationDirectory.Replace('/', Path.DirectorySeparatorChar), fileName);
+                // destinationDirectory should start with "data/"
+                // If that's the case, remove that portion
+                string destDirectoryWindows;
+
+                if (destinationDirectory.StartsWith("data/"))
+                    destDirectoryWindows = destinationDirectory.Substring(5).Replace('/', Path.DirectorySeparatorChar);
+                else
+                    destDirectoryWindows = destinationDirectory.Replace('/', Path.DirectorySeparatorChar);
+
+                var relativeFilePathWindows = Path.Combine(destDirectoryWindows, fileName);
 
                 dctFilePathHashMap.Add(relativeFilePathWindows, sha1Hash);
             }
@@ -781,6 +806,7 @@ namespace ArchiveVerifyPlugin
                 // We performed the search using DatasetID, but if a dataset is renamed in DMS, then multiple datasets could have the same DatasetID
                 // Dataset renames are rare, but do happen (e.g. Dataset ID 382287 renamed from TB_UR_07_14Jul14_Methow_13-10-13 to TB_UR_08_14Jul14_Methow_13-10-14)
                 var filteredFiles = new List<MyEMSLFileInfo>();
+                var missingDatasetNameCount = 0;
 
                 foreach (var archiveFile in archivedFiles)
                 {
@@ -788,7 +814,14 @@ namespace ArchiveVerifyPlugin
                     {
                         if (string.IsNullOrWhiteSpace(fileVersion.Dataset))
                         {
-                            LogWarning("Dataset name not defined for MyEMSL file " + fileVersion);
+                            missingDatasetNameCount++;
+                            if (missingDatasetNameCount == 1)
+                            {
+                                // The new JSON-based MyEMSL no longer reports the dataset name for each file
+                                // Thus, this is not a critical error
+                                ShowTraceMessage("Dataset name not defined for MyEMSL file " + fileVersion);
+                            }
+
                             filteredFiles.Add(fileVersion);
                         }
                         else if (string.Equals(fileVersion.Dataset, m_Dataset, StringComparison.OrdinalIgnoreCase))
@@ -887,7 +920,7 @@ namespace ArchiveVerifyPlugin
 
         private void DMSMetadataObject_ErrorEvent(object sender, MessageEventArgs e)
         {
-            LogError("MyEMSLReader: " + e.Message);
+            LogError("DMSMetadataObject: " + e.Message);
         }
 
         void statusChecker_ErrorEvent(object sender, MessageEventArgs e)
