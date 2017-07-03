@@ -246,12 +246,12 @@ namespace ArchiveStatusCheckPlugin
                         continue;
                     }
 
-                    // We no longer track transaction ID                    
+                    // We no longer track transaction ID
                     // statusInfo.TransactionId = statusChecker.IngestStepTransactionId(xmlServerResponse);
 
                     dctVerifiedURIs.Add(statusNum, statusInfo.StatusURI);
                     LogDebug("Successful MyEMSL upload for job " + m_Job + ", status num " + statusNum + ": " + statusInfo.StatusURI);
-                    continue;                    
+                    continue;
 
                 }
                 catch (Exception ex)
@@ -510,6 +510,12 @@ namespace ArchiveStatusCheckPlugin
             LogError("Status checker error for job " + m_Job + ": " + e.Message);
         }
 
+        /// <summary>
+        /// Update Ingest_Steps_Completed and Error_Code in T_MyEMSL_Uploads for all tasks in dctStatusData
+        /// </summary>
+        /// <param name="statusNumsToUpdate"></param>
+        /// <param name="dctStatusData"></param>
+        /// <returns></returns>
         private bool UpdateIngestStepsCompletedInDB(
             IEnumerable<int> statusNumsToUpdate,
             IReadOnlyDictionary<int, clsIngestStatusInfo> dctStatusData)

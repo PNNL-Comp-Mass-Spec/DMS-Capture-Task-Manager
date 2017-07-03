@@ -27,7 +27,7 @@ namespace ArchiveStatusCheckPlugin
         /// </summary>
         /// <remarks>
         /// This is a legacy field that is no longer used
-        /// Previously, To see files uploaded by TransactionID, use https://status.my.emsl.pnl.gov/status/view/t/transactionID
+        /// Previously, to see files uploaded by TransactionID, use https://status.my.emsl.pnl.gov/status/view/t/transactionID
         /// For example: https://status.my.emsl.pnl.gov/status/view/t/1257122
         /// </remarks>
         [Obsolete("Unused starting in June 2017")]

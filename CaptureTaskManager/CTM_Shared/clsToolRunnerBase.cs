@@ -861,7 +861,7 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="statusNum">MyEMSL Status number</param>
         /// <param name="ingestStepsCompleted">Number of completed ingest steps</param>
-        /// <param name="transactionId">TransactionID for the given status item</param>
+        /// <param name="transactionId">TransactionID for the given status item; if 0, the Transaction ID is not updated</param>
         /// <param name="fatalError">True if ingest failed with a fatal error and thus the ErrorCode should be updated in T_MyEMSL_Uploads</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>This function is used by the ArchiveStatusCheck plugin and the ArchiveVerify plugin </remarks>
@@ -889,6 +889,7 @@ namespace CaptureTaskManager
 
             spCmd.Parameters.Add("@fatalError", System.Data.SqlDbType.TinyInt).Value = fatalError ? 1 : 0;
 
+            // Note that if transactionId is 0, the stored procedure will leave TransactionID unchanged in table T_MyEMSL_Uploads
             spCmd.Parameters.Add("@transactionId", System.Data.SqlDbType.Int).Value = transactionId;
 
             spCmd.Parameters.Add("@message", System.Data.SqlDbType.VarChar, 512).Direction = System.Data.ParameterDirection.Output;

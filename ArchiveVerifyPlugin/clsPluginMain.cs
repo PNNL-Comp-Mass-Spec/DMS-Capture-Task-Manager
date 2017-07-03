@@ -72,7 +72,7 @@ namespace ArchiveVerifyPlugin
             if (success)
             {
 
-                // Confirm that the files are visible in elastic search
+                // Confirm that the files are visible in the metadata serach results
                 // If data is found, then CreateOrUpdateMD5ResultsFile will also be called
                 success = VisibleInMetadata(out var metadataFilePath);
 
@@ -368,6 +368,13 @@ namespace ArchiveVerifyPlugin
             }
         }
 
+        /// <summary>
+        /// Compare the files that MyEMSL is tracking for this dataset to the files in the metadata file
+        /// </summary>
+        /// <param name="archivedFiles"></param>
+        /// <param name="fiMetadataFile"></param>
+        /// <param name="matchCount"></param>
+        /// <param name="mismatchCount"></param>
         private void CompareToMetadataFile(
             IReadOnlyCollection<MyEMSLFileInfo> archivedFiles,
             FileSystemInfo fiMetadataFile,
@@ -434,8 +441,9 @@ namespace ArchiveVerifyPlugin
                 var destinationDirectory = Utilities.GetDictionaryValue(metadataFile, "subdir");
                 var fileName = Utilities.GetDictionaryValue(metadataFile, "name");
 
-                // destinationDirectory should start with "data/"
-                // If that's the case, remove that portion
+                // DestinationDirectory will likely be "data" or start with "data/"
+                // For the reason why, see method CreatePacificaMetadataObject in Pacifica.Core.Upload
+
                 string destDirectoryWindows;
 
                 if (destinationDirectory.StartsWith("data/"))
@@ -803,6 +811,11 @@ namespace ArchiveVerifyPlugin
                 // Make sure the entries in archivedFiles only correspond to this dataset
                 // We performed the search using DatasetID, but if a dataset is renamed in DMS, then multiple datasets could have the same DatasetID
                 // Dataset renames are rare, but do happen (e.g. Dataset ID 382287 renamed from TB_UR_07_14Jul14_Methow_13-10-13 to TB_UR_08_14Jul14_Methow_13-10-14)
+
+                // Unfortunately, starting in June 2017, the results reported by
+                // files_for_keyvalue/omics.dms.dataset_id do not include dataset name
+                // Thus, this validation cannot be performed.
+
                 var filteredFiles = new List<MyEMSLFileInfo>();
                 var missingDatasetNameCount = 0;
 
