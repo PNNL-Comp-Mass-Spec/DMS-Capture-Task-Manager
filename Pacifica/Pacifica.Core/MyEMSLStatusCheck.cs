@@ -76,11 +76,21 @@ namespace Pacifica.Core
         public bool DoesFileExistInMyEMSL(FileInfoObject fileInfo)
         {
             var fileSHA1HashSum = fileInfo.Sha1HashHex;
+
+            // Example URL
+            // https://metadata.my.emsl.pnl.gov/files?hashsum=7b05677da8a6a5c8d033e56dd36ab5445ae44860
             var metadataURL = mPacificaConfig.MetadataServerUri + "/files?hashsum=" + fileSHA1HashSum;
 
             HttpStatusCode responseStatusCode;
 
             var fileListJSON = EasyHttp.Send(mPacificaConfig, metadataURL, out responseStatusCode);
+
+            // Example response for just one file (hashsum=0a7bcbcf4085abc41bdbd98724f3e5c567726c56)
+            // [{"mimetype": "application/octet-stream", "updated": "2017-07-02T23:54:53", "name": "QC_Mam_16_01_125ng_HCD-3_30Jun17_Frodo_REP-17-06-01_msgfplus_syn_ProteinMods.txt", "created": "2017-07-02T23:54:53", "deleted": null, "size": 899907, "hashsum": "0a7bcbcf4085abc41bdbd98724f3e5c567726c56", "hashtype": "sha1", "subdir": "MSG201707021504_Auto1467864", "mtime": "2017-07-02T23:49:14", "_id": 15578789, "encoding": "UTF8", "transaction_id": 1302996, "ctime": "2017-07-02T23:53:28"}]
+
+            // Example response for multiple files (hashsum=627ad3a8a1eaad358e0c89f8e5b7db1473f33278):
+            // [{"mimetype": "None", "updated": "2017-06-30T03:08:36", "name": "MSGFDB_PartArgC_MetOx_StatCysAlk_20ppmParTol_ModDefs.txt", "created": "2017-06-30T03:08:36", "deleted": null, "size": 52, "hashsum": "627ad3a8a1eaad358e0c89f8e5b7db1473f33278", "hashtype": "sha1", "subdir": "MSG201405141726_Auto1058369", "mtime": "2014-05-14T18:00:53", "_id": 3694295, "encoding": "UTF-8", "transaction_id": 443104, "ctime": "2014-05-14T18:01:08"}, {"mimetype": "None", "updated": "2017-06-30T03:23:14", "name": "MSGFDB_PartAspN_MetOx_StatCysAlk_20ppmParTol_ModDefs.txt", "created": "2017-06-30T03:23:14", "deleted": null, "size": 52, "hashsum": "627ad3a8a1eaad358e0c89f8e5b7db1473f33278", "hashtype": "sha1", "subdir": "MSG201405141729_Auto1058370", "mtime": "2014-06-03T13:43:05", "_id": 3841932, "encoding": "UTF-8", "transaction_id": 457902, "ctime": "2014-06-03T13:43:09"}]
+
             var jsa = (Jayrock.Json.JsonArray)JsonConvert.Import(fileListJSON);
             var fileList = Utilities.JsonArrayToDictionaryList(jsa);
 

@@ -58,11 +58,20 @@ namespace CaptureTaskManager
             mInitialized = true;
         }
 
-        public bool AutoCleanupManagerErrors(int ManagerErrorCleanupMode)
+        /// <summary>
+        /// Possibly auto-cleanup manager errors
+        /// </summary>
+        /// <param name="managerErrorCleanupMode">
+        /// 0 = Disabled
+        /// 1 = Cleanup once
+        /// 2 = Cleanup always
+        /// </param>
+        /// <returns></returns>
+        public bool AutoCleanupManagerErrors(int managerErrorCleanupMode)
         {
             eCleanupModeConstants eManagerErrorCleanupMode;
 
-            switch (ManagerErrorCleanupMode)
+            switch (managerErrorCleanupMode)
             {
                 case 0:
                     eManagerErrorCleanupMode = eCleanupModeConstants.Disabled;

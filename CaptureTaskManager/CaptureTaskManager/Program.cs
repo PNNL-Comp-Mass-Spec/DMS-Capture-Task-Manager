@@ -123,6 +123,9 @@ namespace CaptureTaskManager
                     return;
                 }
             } while (restart);
+
+            if (mTraceMode)
+                Console.WriteLine("Exiting");
         }
 
         private static void SetOptionsUsingCommandLineParameters(clsParseCommandLine objParseCommandLine)

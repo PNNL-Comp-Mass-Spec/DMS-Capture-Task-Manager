@@ -1,4 +1,6 @@
 ﻿
+using System;
+
 namespace ArchiveStatusCheckPlugin
 {
     public class clsIngestStatusInfo
@@ -9,7 +11,8 @@ namespace ArchiveStatusCheckPlugin
         public int StatusNum { get; }
 
         /// <summary>
-        /// Status URI, e.g. https://ingest.my.emsl.pnl.gov/myemsl/cgi-bin/status/3257122/xml
+        /// Example status URI for 2017: https://ingestdms.my.emsl.pnl.gov/get_state?job_id=1302995
+        /// Example legacy Status URI:   https://ingest.my.emsl.pnl.gov/myemsl/cgi-bin/status/3257122/xml
         /// </summary>
         public string StatusURI { get; set; }
 
@@ -84,6 +87,11 @@ namespace ArchiveStatusCheckPlugin
             EUS_ProposalID = string.Empty;
             EUS_UploaderID = 0;
 
+        }
+
+        public override string ToString()
+        {
+            return StatusURI;
         }
     }
 }
