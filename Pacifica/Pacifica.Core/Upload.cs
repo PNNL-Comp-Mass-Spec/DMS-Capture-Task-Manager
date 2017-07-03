@@ -155,6 +155,7 @@ namespace Pacifica.Core
         /// <summary>
         /// Constructor
         /// </summary>
+        /// <param name="config">Pacifica configuration</param>
         /// <remarks>TransferFolderPath and JobNumber will be empty</remarks>
         public Upload(Configuration config) : this(config, string.Empty, string.Empty)
         {
@@ -163,6 +164,7 @@ namespace Pacifica.Core
         /// <summary>
         /// Constructor
         /// </summary>
+        /// <param name="config">Pacifica config</param>
         /// <param name="transferFolderPath">
         /// Transfer folder path for this dataset,
         /// for example \\proto-4\DMS3_Xfer\SysVirol_IFT001_Pool_17_B_10x_27Aug13_Tiger_13-07-36
@@ -600,6 +602,7 @@ namespace Pacifica.Core
             });
 
             int EUSUploaderID;
+
             // For datasets, eusOperatorID is the instrument operator EUS ID
             // For data packages, it is the EUS ID of the data package owner
             if (uploadMetadata.EUSOperatorID == 0)
@@ -622,12 +625,28 @@ namespace Pacifica.Core
             // now mix in the list of file objects
             foreach (var f in lstUnmatchedFiles)
             {
-                var subdirString = "data".Trim('/') + "/" + f.RelativeDestinationDirectory.Trim('/');
+                // The subdir path must be "data/" or of the form "data/SubDirectory"
+                // "data/" is required for files at the root dataset level because the root of the tar file
+                // has a metadata.txt file and we would have a conflict if the dataset folder root
+                // also had a file named metadata.txt
+
+                // The ingest system will trim out the leading "data/" when storing the SubDir in the system
+
+                // Note the inconsistent requirements; files in the root dataset level must have "data/"
+                // while files in subdirectories should have a SubDir that does _not_ end in a forward slash
+
+                string subdirString;
+
+                if (string.IsNullOrWhiteSpace(f.RelativeDestinationDirectory))
+                    subdirString = "data/";
+                else
+                    subdirString = "data/" + f.RelativeDestinationDirectory.Trim('/');
+
                 metadataObject.Add(new Dictionary<string, object> {
                     { "destinationTable", "Files" },
                     { "name", f.FileName },
                     { "absolutelocalpath", f.AbsoluteLocalPath},
-                    { "subdir", subdirString.Trim('/') },
+                    { "subdir", subdirString },
                     { "size", f.FileSizeInBytes.ToString() },
                     { "hashsum", f.Sha1HashHex },
                     { "mimetype", "application/octet-stream" },
