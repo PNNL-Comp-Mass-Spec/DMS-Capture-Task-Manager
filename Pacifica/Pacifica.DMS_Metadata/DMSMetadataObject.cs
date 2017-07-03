@@ -207,7 +207,7 @@ namespace Pacifica.DMS_Metadata
                 var mdJSON = Utilities.ObjectToJson(mMetadataObject);
                 if (!CheckMetadataValidity(mdJSON, out string validityMessage))
                 {
-                    OnError("CheckMetadataValidity", validityMessage);
+                    OnError("SetupMetadata", validityMessage);
                     return false;
                 }
             }
@@ -342,11 +342,13 @@ namespace Pacifica.DMS_Metadata
             try
             {
                 var response = EasyHttp.Send(mPacificaConfig, policyURL, null, out HttpStatusCode responseStatusCode, mdJSON, EasyHttp.HttpMethod.Post, 100, "application/json");
-                if (response.Contains("success"))
+
+                if (responseStatusCode.ToString() == "200" && response.ToLower().Contains("success"))
                 {
                     validityMessage = response;
                     mdIsValid = true;
                 }
+                
             }
             catch (Exception ex)
             {
