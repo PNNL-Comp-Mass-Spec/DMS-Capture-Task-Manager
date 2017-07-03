@@ -318,6 +318,7 @@ namespace CaptureTaskManager
         /// <param name="eusUploaderID"></param>
         /// <param name="retData"></param>
         /// <param name="serverResponse">Server response (dictionary representation of JSON)</param>
+        /// <param name="percentComplete">Output: ingest process percent complete (value between 0 and 100)</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>This function is used by the ArchiveStatusCheck plugin and the ArchiveVerify plugin </remarks>
         // ReSharper disable once UnusedMember.Global
@@ -329,15 +330,21 @@ namespace CaptureTaskManager
             string eusProposalID,
             int eusUploaderID,
             clsToolReturnData retData,
-            out Dictionary<string, object> serverResponse)
+            out Dictionary<string, object> serverResponse,
+            out int percentComplete)
         {
-            serverResponse = statusChecker.GetIngestStatus(statusURI, out bool lookupError, out string errorMessage);
+            serverResponse = statusChecker.GetIngestStatus(
+                statusURI, 
+                out percentComplete, 
+                out bool lookupError, 
+                out string errorMessage);
 
             if (lookupError)
             {
                 retData.CloseoutMsg = errorMessage;
                 LogError(errorMessage + ", job " + job);
 
+                // These are obsolete messages from the old status service
                 if (errorMessage.Contains("[Errno 5] Input/output error") ||
                     errorMessage.Contains("[Errno 28] No space left on device") ||
                     errorMessage.Contains("object has no attribute") ||
@@ -357,29 +364,10 @@ namespace CaptureTaskManager
                 return false;
             }
 
-            // Look for any steps in error
-            if (!statusChecker.HasStepError(serverResponse, out errorMessage))
-            {
-                return true;
-            }
+            // Future: check for ingest or permission errors and log them
 
-            if (errorMessage.ToLower().StartsWith("invalid permissions"))
-            {
-                // Append the EUS proposal ID and EUS instrument ID that was used
-                retData.CloseoutMsg = errorMessage +
-                                      "; EUSInstID=" + eusInstrumentID +
-                                      ", EUSProposal=" + eusProposalID +
-                                      ", EUSUploader=" + eusUploaderID;
-            }
-            else
-            {
-                retData.CloseoutMsg = errorMessage;
-            }
+            return true;
 
-            retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-            retData.EvalCode = EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY;
-            LogError(errorMessage + ", job " + job);
-            return false;
         }
 
         /// <summary>

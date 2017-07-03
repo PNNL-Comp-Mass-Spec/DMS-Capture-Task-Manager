@@ -189,11 +189,13 @@ namespace Pacifica.Core
         /// Obtain the status returned by the given MyEMSL status page
         /// </summary>
         /// <param name="statusURI">URI to examine</param>
+        /// <param name="percentComplete">Output: ingest process percent complete (value between 0 and 100)</param>
         /// <param name="lookupError">Output: true if an error occurs</param>
         /// <param name="errorMessage">Output: error message if lookupError is true</param>
-        /// <returns>Status dictionary; empty dictionary</returns>
+        /// <returns>Status dictionary (empty dictionary if an error)</returns>
         public Dictionary<string, object> GetIngestStatus(
             string statusURI,
+            out int percentComplete,
             out bool lookupError,
             out string errorMessage)
         {
@@ -205,6 +207,7 @@ namespace Pacifica.Core
             {
                 errorMessage = "Authentication failure; cert file not found at " + Configuration.CLIENT_CERT_FILEPATH;
                 ReportError("GetIngestStatus", errorMessage);
+                percentComplete = 0;
                 lookupError = true;
                 return new Dictionary<string, object>();
             }
@@ -216,12 +219,25 @@ namespace Pacifica.Core
 
             var statusResult = EasyHttp.Send(mPacificaConfig, statusURI, out HttpStatusCode responseStatusCode);
 
+            // Example contents of statusResult
+            // {"task_percent": "0.00000", "state": "OK",     "task": "UPLOADING",         "job_id": 104}   (starting)
+            // {"task_percent": "0.00000", "state": "FAILED", "task": "Policy Validation", "job_id": 104}   (error)
+            // {"task_percent": "100.00000", "state": "OK", "task": "ingest metadata", "job_id": 1300004}   (complete)
+
             var statusJSON = Utilities.JsonToObject(statusResult);
 
             var state = Utilities.GetDictionaryValue(statusJSON, "state").ToLower();
 
-            // ToDo: confirm that task_percent reports 100%, e.g.
-            // {"task_percent": "100.00000", "state": "OK", "task": "ingest metadata", "job_id": 1300004}     (complete since 100%)
+            var percentCompleteText = Utilities.GetDictionaryValue(statusJSON, "task_percent");
+
+            if (float.TryParse(percentCompleteText, out var percentCompleteFloat))
+            {
+                percentComplete = (int)percentCompleteFloat;
+            }
+            else
+            {
+                percentComplete = 0;
+            }
 
             if (state == "ok")
             {

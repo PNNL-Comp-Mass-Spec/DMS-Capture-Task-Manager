@@ -225,11 +225,11 @@ namespace ArchiveStatusCheckPlugin
                     var ingestSuccess = GetMyEMSLIngestStatus(
                         m_Job, statusChecker, statusInfo.StatusURI,
                         statusInfo.EUS_InstrumentID, statusInfo.EUS_ProposalID, statusInfo.EUS_UploaderID,
-                        mRetData, out var serverResponse);
+                        mRetData, out var serverResponse, out int percentComplete);
 
-                    // ToDo: var ingestStepsCompleted = statusChecker.IngestStepCompletionCount(serverResponse);
-                    byte ingestStepsCompleted = 0;
-
+                    // Convert the percent complete value (between 0 and 100) to a number between 0 and 7
+                    // since historically there were 7 steps to the ingest process
+                    var ingestStepsCompleted = statusChecker.IngestStepCompletionCount(percentComplete);
 
                     statusInfo.IngestStepsCompletedNew = ingestStepsCompleted;
 
@@ -242,6 +242,9 @@ namespace ArchiveStatusCheckPlugin
                     // We no longer track transaction ID                    
                     // statusInfo.TransactionId = statusChecker.IngestStepTransactionId(xmlServerResponse);
 
+                    dctVerifiedURIs.Add(statusNum, statusInfo.StatusURI);
+                    LogDebug("Successful MyEMSL upload for job " + m_Job + ", status num " + statusNum + ": " + statusInfo.StatusURI);
+                    continue;                    
 
                 }
                 catch (Exception ex)

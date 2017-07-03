@@ -150,11 +150,9 @@ namespace ArchiveVerifyPlugin
                 var ingestSuccess = GetMyEMSLIngestStatus(
                     m_Job, statusChecker, statusURI,
                     eusInstrumentID, eusProposalID, eusUploaderID,
-                    mRetData, out var serverResponse);
+                    mRetData, out var serverResponse, out var percentComplete);
 
-                // ToDo: var ingestStepsCompleted = statusChecker.IngestStepCompletionCount(serverResponse);
-                byte ingestStepsCompleted = 0;
-
+                var ingestStepsCompleted = statusChecker.IngestStepCompletionCount(percentComplete);
 
                 var fatalError = (
                     mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED &&
