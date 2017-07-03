@@ -555,6 +555,22 @@ namespace Pacifica.Core
 
         }
 
+        /// <summary>
+        /// Percent complete (value between 0 and 100)
+        /// </summary>
+        /// <param name="percentComplete"></param>
+        /// <returns>Number of steps completed</returns>
+        /// <remarks>Reports 7 when percentComplete is 100</remarks>
+        public byte IngestStepCompletionCount(int percentComplete)
+        {
+            // Convert the percent complete value to a number between 0 and 7
+            // since historically there were 7 steps to the ingest process
+
+            var stepsCompleted = (byte)(Math.Round(7 * (percentComplete / 100.0)));
+
+            return stepsCompleted;
+        }
+
         [Obsolete("This method is for the legacy XML-based ingest status")]
         public byte IngestStepCompletionCount(string xmlServerResponse)
         {
