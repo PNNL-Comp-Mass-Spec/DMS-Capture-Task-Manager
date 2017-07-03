@@ -5,8 +5,8 @@ using Pacifica.Core;
 using Pacifica.DMS_Metadata;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.IO;
+using Jayrock.Json.Conversion;
 
 namespace ArchiveVerifyPlugin
 {
@@ -25,9 +25,6 @@ namespace ArchiveVerifyPlugin
 
         #region "Class-wide variables"
         clsToolReturnData mRetData = new clsToolReturnData();
-
-        private double mPercentComplete;
-        private DateTime mLastProgressUpdateTime = DateTime.UtcNow;
 
         private int mTotalMismatchCount;
 
@@ -77,11 +74,11 @@ namespace ArchiveVerifyPlugin
 
                 // Confirm that the files are visible in elastic search
                 // If data is found, then CreateOrUpdateMD5ResultsFile will also be called
-                success = VisibleInElasticSearch(out var metadataFilePath);
+                success = VisibleInMetadata(out var metadataFilePath);
 
                 if (!success)
                 {
-                    mRetData.CloseoutMsg = "Not visible in elastic search";
+                    mRetData.CloseoutMsg = "Not visible in metadata";
                 }
                 else if (!string.IsNullOrEmpty(metadataFilePath))
                 {
@@ -167,10 +164,10 @@ namespace ArchiveVerifyPlugin
 
                 UpdateIngestStepsCompletedOneTask(statusNum, ingestStepsCompleted, transactionId, fatalError);
               
+                mRetData.CloseoutMsg = "";
 
-                mRetData.CloseoutMsg = statusMessage;
+                return ingestSuccess;
 
-                // Logout below, then return false
             }
             catch (Exception ex)
             {
@@ -304,12 +301,11 @@ namespace ArchiveVerifyPlugin
                 {
                     if (mTotalMismatchCount == 0)
                         LogError("MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
+
                     mTotalMismatchCount += mismatchCountToDisk;
 
                     mRetData.CloseoutMsg = "SHA-1 mismatch between local files on disk and MyEMSL; MatchCount=" + matchCountToDisk + ", MismatchCount=" + mismatchCountToDisk;
                     LogError(" ... " + mRetData.CloseoutMsg);
-
-                    return false;
                 }
 
                 return false;
@@ -341,6 +337,7 @@ namespace ArchiveVerifyPlugin
                 {
                     if (mTotalMismatchCount == 0)
                         LogError("MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
+
                     mTotalMismatchCount += 1;
 
                     var msg = " ... file " + metadataFile.Key + " not found in MyEMSL (CompareArchiveFilesToList)";
@@ -356,6 +353,7 @@ namespace ArchiveVerifyPlugin
                     {
                         if (mTotalMismatchCount == 0)
                             LogError("MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
+
                         mTotalMismatchCount++;
 
                         var msg = " ... file mismatch for " + archiveFile.RelativePathWindows +
@@ -767,7 +765,7 @@ namespace ArchiveVerifyPlugin
             return success;
         }
 
-        private bool VisibleInElasticSearch(out string metadataFilePath)
+        private bool VisibleInMetadata(out string metadataFilePath)
         {
             bool success;
 
