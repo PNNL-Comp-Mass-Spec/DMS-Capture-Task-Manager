@@ -95,13 +95,11 @@ namespace Pacifica.DMS_Metadata
 
         #region "Properties"
 
-
         public string StatusURI
         {
             get;
             private set;
         }
-
 
         public int FileCountNew
         {
@@ -136,13 +134,20 @@ namespace Pacifica.DMS_Metadata
             private set;
         }
 
+        /// <summary>
+        /// True to enable trace mode
+        /// </summary>
+        public bool TraceMode { get; set; }
+
         #endregion
 
         public bool StartUpload(Configuration config, EasyHttp.eDebugMode debugMode, out string statusURL)
         {
 
             // Instantiate the metadata object
-            _mdContainer = new DMSMetadataObject(config, mManagerName);
+            _mdContainer = new DMSMetadataObject(config, mManagerName) {
+                TraceMode = TraceMode
+            };
 
             // Attach the events
             _mdContainer.ProgressEvent += _mdContainer_ProgressEvent;

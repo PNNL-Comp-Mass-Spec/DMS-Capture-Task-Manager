@@ -107,18 +107,21 @@ namespace Pacifica.DMS_Metadata
         /// <summary>
         /// Number of files updated in MyEMSL
         /// </summary>
-        public int TotalFileCountUpdated
-        {
-            get;
-            set;
-        }
+        public int TotalFileCountUpdated { get; set; }
+      
+        /// <summary>
+        /// True to enable trace mode
+        /// </summary>
+        public bool TraceMode { get; set; }
 
-        public bool UseTestInstance
-        {
-            get;
-            set;
-        }
+        /// <summary>
+        /// True to use the Test instance
+        /// </summary>
+        public bool UseTestInstance { get; set; }       
 
+        /// <summary>
+        /// Retrieve the metadata JSON as a string
+        /// </summary>
         public string MetadataObjectJSON => Utilities.ObjectToJson(mMetadataObject);
 
         #endregion
@@ -352,10 +355,10 @@ namespace Pacifica.DMS_Metadata
                 {
                     OnError("CheckMetadataValidity", "Policy server reports that metadata is not valid: " + policyURL);
 
-                    if (mdJSON.Length < 355)
+                    if (mdJSON.Length < 1255)
                         RaiseDebugEvent("CheckMetadataValidity", mdJSON);
                     else
-                        RaiseDebugEvent("CheckMetadataValidity", mdJSON.Substring(0, 350) + " ...");
+                        RaiseDebugEvent("CheckMetadataValidity", mdJSON.Substring(0, 1250) + " ...");
                 }
 
             }
@@ -487,6 +490,14 @@ namespace Pacifica.DMS_Metadata
                     mRemoteCacheInfoFilesToRetrieve.Add(remoteFilePath);
 
                 }
+
+                if (TraceMode)
+                {
+                    RaiseDebugEvent("CollectFileInformation",
+                                    string.Format("Hashing files, {0:F1}% complete: {1}",
+                                    fracCompleted * 100, fiFile.Name));
+                }
+
             }
 
             ReportProgress(100);

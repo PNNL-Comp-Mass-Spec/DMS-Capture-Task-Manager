@@ -30,6 +30,7 @@ namespace DatasetArchivePlugin
         #endregion
 
         #region "Class variables"
+
         private readonly IMgrParams m_MgrParams;
         protected ITaskParams m_TaskParams;
         private readonly IStatusFile m_StatusTools;
@@ -59,17 +60,19 @@ namespace DatasetArchivePlugin
         /// </summary>
         public string ErrMsg => m_ErrMsg;
 
+        public bool TraceMode { get; private set; }
+
         public string WarningMsg => m_WarningMsg;
 
         #endregion
 
         #region "Constructor"
 
-        public clsOpsBase(IMgrParams MgrParams, ITaskParams TaskParams, IStatusFile StatusTools)
+        public clsOpsBase(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
         {
-            m_MgrParams = MgrParams;
-            m_TaskParams = TaskParams;
-            m_StatusTools = StatusTools;
+            m_MgrParams = mgrParams;
+            m_TaskParams = taskParams;
+            m_StatusTools = statusTools;
 
             // DebugLevel of 4 means Info level (normal) logging; 5 for Debug level (verbose) logging
             m_DebugLevel = m_MgrParams.GetParam("debuglevel", 4);
@@ -83,7 +86,9 @@ namespace DatasetArchivePlugin
                 m_ArchiveOrUpdate = UPDATE;
             }
 
+            TraceMode = m_MgrParams.GetParam("TraceMode", false);
         }
+
         #endregion
 
         #region "Methods"
@@ -224,10 +229,11 @@ namespace DatasetArchivePlugin
                 var statusMessage = "Bundling changes to dataset " + m_DatasetName + " for transmission to MyEMSL";
                 OnStatusEvent(statusMessage);
 
-
                 var config = new Configuration();
 
-                myEMSLUL = new MyEMSLUploader(config, m_MgrParams.TaskDictionary, m_TaskParams.TaskDictionary);
+                myEMSLUL = new MyEMSLUploader(config, m_MgrParams.TaskDictionary, m_TaskParams.TaskDictionary) {
+                    TraceMode = TraceMode
+                };
 
                 // Attach the events
 
