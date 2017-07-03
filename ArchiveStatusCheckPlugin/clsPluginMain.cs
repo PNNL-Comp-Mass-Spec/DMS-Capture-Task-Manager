@@ -201,9 +201,16 @@ namespace ArchiveStatusCheckPlugin
             return true;
         }
 
+        /// <summary>
+        /// Validates that MyEMSL knows about each of the items in dctStatusData
+        /// </summary>
+        /// <param name="statusChecker"></param>
+        /// <param name="dctStatusData"></param>
+        /// <param name="dctUnverifiedURIs">Number of URIs that were unknown</param>
+        /// <param name="dctVerifiedURIs">Number of URIs that properly resolved (not all steps are necessarily complete yet)</param>
+        /// <param name="dctCriticalErrors"></param>
         private void CheckStatusURIs(
             MyEMSLStatusCheck statusChecker,
-            CookieContainer cookieJar,
             Dictionary<int, clsIngestStatusInfo> dctStatusData,
             out Dictionary<int, string> dctUnverifiedURIs,
             out Dictionary<int, string> dctVerifiedURIs,
