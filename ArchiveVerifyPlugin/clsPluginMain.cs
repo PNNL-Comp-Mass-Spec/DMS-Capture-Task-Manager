@@ -54,10 +54,14 @@ namespace ArchiveVerifyPlugin
 
             mTotalMismatchCount = 0;
 
+            int statusNum;
+            byte ingestStepsCompleted;
+            bool fatalError;
+
             try
             {
                 // Examine the MyEMSL ingest status page
-                success = CheckUploadStatus();
+                success = CheckUploadStatus(out statusNum, out ingestStepsCompleted, out fatalError);
 
             }
             catch (Exception ex)
@@ -66,6 +70,10 @@ namespace ArchiveVerifyPlugin
                 mRetData.CloseoutMsg = "Exception checking archive status (ArchiveVerifyPlugin): " + ex.Message;
                 msg = "Exception checking archive status for job " + m_Job;
                 LogError(msg, ex);
+
+                statusNum = 0;
+                ingestStepsCompleted = 0;
+                fatalError = true;
             }
 
 
@@ -74,7 +82,9 @@ namespace ArchiveVerifyPlugin
 
                 // Confirm that the files are visible in the metadata serach results
                 // If data is found, then CreateOrUpdateMD5ResultsFile will also be called
-                success = VisibleInMetadata(out var metadataFilePath);
+                success = VisibleInMetadata(out var metadataFilePath, out var transactionID);
+
+                UpdateIngestStepsCompletedOneTask(statusNum, ingestStepsCompleted, transactionID, fatalError);
 
                 if (!success)
                 {
@@ -84,6 +94,10 @@ namespace ArchiveVerifyPlugin
                 {
                     DeleteMetadataFile(metadataFilePath);
                 }
+            }
+            else if (statusNum > 0)
+            {
+                UpdateIngestStepsCompletedOneTask(statusNum, ingestStepsCompleted, 0, fatalError);
             }
 
             if (success)
@@ -116,7 +130,7 @@ namespace ArchiveVerifyPlugin
 
         }
 
-        private bool CheckUploadStatus()
+        private bool CheckUploadStatus(out int statusNum, out byte ingestStepsCompleted, out bool fatalError)
         {
 
             // Examine the upload status
@@ -135,6 +149,11 @@ namespace ArchiveVerifyPlugin
                 mRetData.CloseoutMsg = msg;
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 LogError(msg);
+
+                statusNum = 0;
+                ingestStepsCompleted = 0;
+                fatalError = true;
+
                 return false;
             }
 
@@ -149,21 +168,14 @@ namespace ArchiveVerifyPlugin
                     eusInstrumentID, eusProposalID, eusUploaderID,
                     mRetData, out var serverResponse, out var percentComplete);
 
-                var ingestStepsCompleted = statusChecker.IngestStepCompletionCount(percentComplete);
+                ingestStepsCompleted = statusChecker.IngestStepCompletionCount(percentComplete);
 
-                var fatalError = (
+                fatalError = (
                     mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED &&
                     mRetData.EvalCode == EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY);
 
-                var statusNum = MyEMSLStatusCheck.GetStatusNumFromURI(statusURI);
+                statusNum = MyEMSLStatusCheck.GetStatusNumFromURI(statusURI);
 
-                // We no longer track transaction ID
-                var transactionId = 0;
-
-                // transactionId = statusChecker.IngestStepTransactionId(serverResponse);
-
-                UpdateIngestStepsCompletedOneTask(statusNum, ingestStepsCompleted, transactionId, fatalError);
-              
                 mRetData.CloseoutMsg = "";
 
                 return ingestSuccess;
@@ -188,6 +200,10 @@ namespace ArchiveVerifyPlugin
                 }
             }
 
+            statusNum = 0;
+            ingestStepsCompleted = 0;
+            fatalError = true;
+
             return false;
         }
 
@@ -198,13 +214,16 @@ namespace ArchiveVerifyPlugin
         /// <param name="config">Pacifica configuration</param>
         /// <param name="archivedFiles"></param>
         /// <param name="metadataFilePath"></param>
-        /// <returns></returns>
+        /// <param name="transactionId">The TransactionID used by the majority of the matching files</param>
+        /// <returns>True if all of the files match, false if a mismatch or an error</returns>
         private bool CompareArchiveFilesToExpectedFiles(
             Configuration config,
             IReadOnlyCollection<MyEMSLFileInfo> archivedFiles,
-            out string metadataFilePath)
+            out string metadataFilePath,
+            out long transactionId)
         {
             metadataFilePath = string.Empty;
+            transactionId = 0;
 
             try
             {
@@ -232,7 +251,12 @@ namespace ArchiveVerifyPlugin
                 {
                     metadataFilePath = fiMetadataFile.FullName;
 
-                    CompareToMetadataFile(archivedFiles, fiMetadataFile, out var matchCountToMetadata, out var mismatchCountToMetadata);
+                    CompareToMetadataFile(
+                        archivedFiles,
+                        fiMetadataFile,
+                        out var matchCountToMetadata,
+                        out var mismatchCountToMetadata,
+                        out transactionId);
 
                     if (matchCountToMetadata > 0 && mismatchCountToMetadata == 0)
                     {
@@ -291,7 +315,16 @@ namespace ArchiveVerifyPlugin
                     dctFilePathHashMap.Add(relativeFilePathWindows, datasetFile.Sha1HashHex);
                 }
 
-                CompareArchiveFilesToList(archivedFiles, out var matchCountToDisk, out var mismatchCountToDisk, dctFilePathHashMap);
+                var transactionIdStats = new Dictionary<long, int>();
+
+                CompareArchiveFilesToList(
+                    archivedFiles,
+                    out var matchCountToDisk,
+                    out var mismatchCountToDisk,
+                    dctFilePathHashMap,
+                    transactionIdStats);
+
+                transactionId = GetBestTransactionId(transactionIdStats);
 
                 if (matchCountToDisk > 0 && mismatchCountToDisk == 0)
                 {
@@ -325,7 +358,8 @@ namespace ArchiveVerifyPlugin
             IReadOnlyCollection<MyEMSLFileInfo> archivedFiles,
             out int matchCount,
             out int mismatchCount,
-            Dictionary<string, string> dctFilePathHashMap)
+            IReadOnlyDictionary<string, string> dctFilePathHashMap,
+            IDictionary<long, int> transactionIdStats)
         {
             matchCount = 0;
             mismatchCount = 0;
@@ -350,7 +384,22 @@ namespace ArchiveVerifyPlugin
                     var archiveFile = lstMatchingArchivedFiles.First();
 
                     if (archiveFile.HashSum == metadataFile.Value)
+                    {
                         matchCount++;
+
+                        foreach (var archiveFileVersion in lstMatchingArchivedFiles)
+                        {
+                            if (transactionIdStats.TryGetValue(archiveFileVersion.TransactionId, out var fileCount))
+                            {
+                                transactionIdStats[archiveFileVersion.TransactionId] = fileCount + 1;
+
+                            }
+                            else
+                            {
+                                transactionIdStats.Add(archiveFileVersion.TransactionId, 1);
+                            }
+                        }
+                    }
                     else
                     {
                         if (mTotalMismatchCount == 0)
@@ -359,7 +408,7 @@ namespace ArchiveVerifyPlugin
                         mTotalMismatchCount++;
 
                         var msg = " ... file mismatch for " + archiveFile.RelativePathWindows +
-                            "; MyEMSL reports " + archiveFile.HashSum + " but expecting " + metadataFile.Value;
+                                  "; MyEMSL reports " + archiveFile.HashSum + " but expecting " + metadataFile.Value;
 
                         LogError(msg);
 
@@ -377,14 +426,19 @@ namespace ArchiveVerifyPlugin
         /// <param name="fiMetadataFile"></param>
         /// <param name="matchCount"></param>
         /// <param name="mismatchCount"></param>
+        /// <param name="transactionId">The TransactionID used by the majority of the matching files</param>
         private void CompareToMetadataFile(
             IReadOnlyCollection<MyEMSLFileInfo> archivedFiles,
             FileSystemInfo fiMetadataFile,
             out int matchCount,
-            out int mismatchCount)
+            out int mismatchCount,
+            out long transactionId)
         {
             matchCount = 0;
             mismatchCount = 0;
+            transactionId = 0;
+
+            var transactionIdStats = new Dictionary<long, int>();
 
             // Parse the contents of the file
             string metadataJson;
@@ -427,6 +481,7 @@ namespace ArchiveVerifyPlugin
             {
                 if (mTotalMismatchCount == 0)
                     LogError("MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
+
                 mTotalMismatchCount += 1;
 
                 LogError(" ... metadata file JSON does not contain any entries where the DestinationTable is Files: " + fiMetadataFile.FullName);
@@ -450,6 +505,8 @@ namespace ArchiveVerifyPlugin
 
                 if (destinationDirectory.StartsWith("data/"))
                     destDirectoryWindows = destinationDirectory.Substring(5).Replace('/', Path.DirectorySeparatorChar);
+                else if (destinationDirectory.Equals("data", StringComparison.OrdinalIgnoreCase))
+                    destDirectoryWindows = string.Empty;
                 else
                     destDirectoryWindows = destinationDirectory.Replace('/', Path.DirectorySeparatorChar);
 
@@ -458,8 +515,14 @@ namespace ArchiveVerifyPlugin
                 dctFilePathHashMap.Add(relativeFilePathWindows, sha1Hash);
             }
 
-            CompareArchiveFilesToList(archivedFiles, out matchCount, out mismatchCount, dctFilePathHashMap);
+            CompareArchiveFilesToList(
+                archivedFiles,
+                out matchCount,
+                out mismatchCount,
+                dctFilePathHashMap,
+                transactionIdStats);
 
+            transactionId = GetBestTransactionId(transactionIdStats);
         }
 
         private void CopyMD5ResultsFileToBackupFolder(string datasetInstrument, string datasetYearQuarter, FileInfo fiMD5ResultsFile)
@@ -621,6 +684,27 @@ namespace ArchiveVerifyPlugin
             }
         }
 
+        /// <summary>
+        /// Find the transactionId in that has the highest value (i.e. the one used by the majority of the files)
+        /// </summary>
+        /// <param name="transactionIdStats">Dictionary where keys as transactionIds and values are the number of files that had the given transactionId</param>
+        /// <returns></returns>
+        private long GetBestTransactionId(Dictionary<long, int> transactionIdStats)
+        {
+            if (transactionIdStats.Count == 0)
+            {
+                return 0;
+            }
+
+            // Determine the best transactionId to associate with these files
+            var bestTransactionId = (
+                from item in transactionIdStats
+                orderby item.Value descending
+                select item.Key).First();
+
+            return bestTransactionId;
+        }
+
         private string GetMD5ResultsFilePath(string strMD5ResultsFolderPath, string strDatasetName, string strInstrumentName, string strDatasetYearQuarter)
         {
             return GetMD5ResultsFilePath(Path.Combine(strMD5ResultsFolderPath, strInstrumentName, strDatasetYearQuarter), strDatasetName);
@@ -775,7 +859,7 @@ namespace ArchiveVerifyPlugin
             return success;
         }
 
-        private bool VisibleInMetadata(out string metadataFilePath)
+        private bool VisibleInMetadata(out string metadataFilePath, out long transactionId)
         {
             bool success;
 
@@ -809,6 +893,7 @@ namespace ArchiveVerifyPlugin
 
                     mRetData.CloseoutMsg = msg;
                     LogError(" ... " + msg);
+                    transactionId = 0;
                     return false;
                 }
 
@@ -852,7 +937,8 @@ namespace ArchiveVerifyPlugin
                     }
                 }
 
-                success = CompareArchiveFilesToExpectedFiles(config, filteredFiles, out metadataFilePath);
+                success = CompareArchiveFilesToExpectedFiles(
+                    config, filteredFiles, out metadataFilePath, out transactionId);
 
                 if (success)
                 {
@@ -862,7 +948,8 @@ namespace ArchiveVerifyPlugin
             }
             catch (Exception ex)
             {
-                LogError("Exception in VisibleInElasticSearch", ex);
+                LogError("Exception in VisibleInMetadata", ex);
+                transactionId = 0;
                 return false;
             }
 

@@ -123,7 +123,7 @@ namespace ArchiveStatusCheckPlugin
             // Check the status of each of the URIs
             // Keys in dctUnverifiedURIs and dctVerifiedURIs are StatusNum; values are StatusURI strings
 
-            CheckStatusURIs(statusChecker, dctStatusData, 
+            CheckStatusURIs(statusChecker, dctStatusData,
                 out var dctUnverifiedURIs, out var dctVerifiedURIs, out dctCriticalErrors);
 
             if (dctVerifiedURIs.Count > 0)
@@ -532,7 +532,10 @@ namespace ArchiveStatusCheckPlugin
                         continue;
                     }
 
-                    var success = UpdateIngestStepsCompletedOneTask(statusNum, statusInfo.IngestStepsCompletedNew, statusInfo.TransactionId);
+                    var success = UpdateIngestStepsCompletedOneTask(
+                        statusNum,
+                        statusInfo.IngestStepsCompletedNew,
+                        statusInfo.TransactionId);
 
                     if (!success)
                         spError = true;
