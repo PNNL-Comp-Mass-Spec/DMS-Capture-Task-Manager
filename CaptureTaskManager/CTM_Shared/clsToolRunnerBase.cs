@@ -69,6 +69,8 @@ namespace CaptureTaskManager
         /// </summary>
         protected int m_DebugLevel;
 
+        protected bool m_TraceMode;
+
         #endregion
 
         #region "Delegates"
@@ -143,6 +145,8 @@ namespace CaptureTaskManager
             // Debug level 4 means Info level (normal) logging; 5 for Debug level (verbose) logging
             // Log level 4 will also log error messages
             m_DebugLevel = m_MgrParams.GetParam("debuglevel", 4);
+
+            m_TraceMode = m_MgrParams.GetParam("TraceMode", false);
         }
 
         // ReSharper disable once UnusedMember.Global
@@ -334,9 +338,9 @@ namespace CaptureTaskManager
             out int percentComplete)
         {
             serverResponse = statusChecker.GetIngestStatus(
-                statusURI, 
-                out percentComplete, 
-                out bool lookupError, 
+                statusURI,
+                out percentComplete,
+                out bool lookupError,
                 out string errorMessage);
 
             if (lookupError)
@@ -869,7 +873,7 @@ namespace CaptureTaskManager
         protected bool UpdateIngestStepsCompletedOneTask(
             int statusNum,
             byte ingestStepsCompleted,
-            int transactionId,
+            long transactionId,
             bool fatalError = false)
         {
             const string SP_NAME = "UpdateMyEMSLUploadIngestStats";

@@ -257,7 +257,9 @@ namespace ArchiveVerifyPlugin
 
                 // Look for files that should have been uploaded, compute a Sha-1 hash for each, and compare those hashes to existing files in MyEMSL
 
-                var metadataObject = new DMSMetadataObject(config, m_MgrName);
+                var metadataObject = new DMSMetadataObject(config, m_MgrName) {
+                    TraceMode = m_TraceMode
+                };
 
                 // Attach the events
                 metadataObject.DebugEvent += DMSMetadataObject_DebugEvent;
@@ -783,7 +785,9 @@ namespace ArchiveVerifyPlugin
             {
                 var config = new Configuration();
 
-                var metadataObject = new DMSMetadataObject(config, m_MgrName);
+                var metadataObject = new DMSMetadataObject(config, m_MgrName) {
+                    TraceMode = m_TraceMode
+                };
 
                 // Attach the events
                 metadataObject.DebugEvent += DMSMetadataObject_DebugEvent;
