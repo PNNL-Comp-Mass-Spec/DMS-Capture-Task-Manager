@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -81,10 +81,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\RefLib\log4net.dll</HintPath>
       <Private>True</Private>
-    </Reference>
-    <Reference Include="MyEMSLReader, Version=1.2.6281.34371, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\DeployedFiles\MyEMSLReader.dll</HintPath>
     </Reference>
     <Reference Include="Pacifica.DMS_Metadata, Version=1.0.6303.32068, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>

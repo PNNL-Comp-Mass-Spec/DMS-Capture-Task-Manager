@@ -65,9 +65,6 @@
     <Reference Include="MSFileInfoScannerInterfaces">
       <HintPath>..\..\RefLib\MSFileInfoScannerInterfaces.dll</HintPath>
     </Reference>
-    <Reference Include="MyEMSLReader">
-      <HintPath>..\..\RefLib\MyEMSLReader.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
