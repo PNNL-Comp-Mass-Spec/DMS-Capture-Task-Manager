@@ -17,7 +17,7 @@ namespace CaptureTaskManager
         // Application startup program
         //**********************************************************************************************************
 
-        private const string PROGRAM_DATE = "May 31, 2017";
+        private const string PROGRAM_DATE = "July 4, 2017";
 
         private static bool mCodeTestMode;
         private static bool mCreateEventLog;
@@ -180,13 +180,13 @@ namespace CaptureTaskManager
                 Console.WriteLine();
                 Console.WriteLine(@"Program syntax:" + Environment.NewLine +
                                   System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location) +
-                                  @" [/EL] [/T]");
+                                  @" [/EL] [/T] [/Test] [/Trace]");
                 Console.WriteLine();
 
-                Console.WriteLine(
-                    @"Use /EL to post a test message to the Windows Event Log named 'DMSCapTaskMgr' then exit the program. When setting up the Capture Task Manager on a new computer, you should call this command once from a Windows Command Prompt that you started using 'Run as Administrator'");
+                Console.WriteLine(@"Use /EL to post a test message to the Windows Event Log named 'DMSCapTaskMgr' then exit the program. " + 
+                                  "When setting up the Capture Task Manager on a new computer, you should call this command once from a Windows Command Prompt that you started using 'Run as Administrator'");
                 Console.WriteLine();
-                Console.WriteLine(@"Use /T to start the program in code test mode.");
+                Console.WriteLine(@"Use /T or /Test to start the program in code test mode.");
                 Console.WriteLine();
                 Console.WriteLine(@"Use /Trace to enable trace mode");
                 Console.WriteLine();

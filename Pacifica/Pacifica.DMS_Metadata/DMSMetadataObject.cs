@@ -344,6 +344,9 @@ namespace Pacifica.DMS_Metadata
 
             try
             {
+                if (TraceMode)
+                    OnDebugEvent("CheckMetadataValidity", "Contacting " + policyURL);
+
                 var response = EasyHttp.Send(mPacificaConfig, policyURL, null, out HttpStatusCode responseStatusCode, mdJSON, EasyHttp.HttpMethod.Post, 100, "application/json");
 
                 if ((int)responseStatusCode == 200 && response.ToLower().Contains("success"))
