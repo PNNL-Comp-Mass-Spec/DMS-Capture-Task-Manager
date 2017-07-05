@@ -38,7 +38,7 @@ namespace CaptureTaskManager
         /// <remarks>4 means Info level (normal) logging; 5 for Debug level (verbose) logging</remarks>
         protected readonly int m_DebugLevel;
 
-        protected Dictionary<string, string> m_JobParams =
+        protected readonly Dictionary<string, string> m_JobParams =
             new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
 
         protected readonly PRISM.clsExecuteDatabaseSP m_CaptureTaskDBProcedureExecutor;
@@ -154,7 +154,7 @@ namespace CaptureTaskManager
             }
 
             m_JobParams.Clear();
-            m_JobParams = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+
             try
             {
                 foreach (var dataRow in parameters)
@@ -182,7 +182,7 @@ namespace CaptureTaskManager
         protected string DbCStr(object InpObj)
         {
             // If input object is DbNull, returns "", otherwise returns String representation of object
-            if ((InpObj == null) || (ReferenceEquals(InpObj, DBNull.Value)))
+            if (InpObj == null || ReferenceEquals(InpObj, DBNull.Value))
             {
                 return "";
             }
