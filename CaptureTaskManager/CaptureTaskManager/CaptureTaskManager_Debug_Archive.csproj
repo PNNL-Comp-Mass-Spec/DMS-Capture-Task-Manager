@@ -199,6 +199,8 @@ xcopy "$(TargetDir)Apache.NMS.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
 xcopy "$(TargetDir)log4net.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
 xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
 xcopy "$(TargetDir)plugin_info.xml" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
+xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
+xcopy "$(TargetDir)PRISMWin.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
 </PostBuildEvent>
   </PropertyGroup>
 </Project>
