@@ -67,11 +67,6 @@ namespace Pacifica.Core
         private const string SECURED_SCHEME = "https";
         public string SecuredScheme => SECURED_SCHEME;
 
-        /// <summary>
-        /// By default, returns https://dev1.my.emsl.pnl.gov/myemsl/status/index.php/api/item_search/
-        /// </summary>
-        //public string ItemSearchUri => SearchServerUri + ITEM_SEARCH_RELATIVE_PATH;
-
         public string IngestServerHostName { get; set; }
 
         /// <summary>
@@ -131,11 +126,14 @@ namespace Pacifica.Core
         private bool mUseTestInstance;
 
         /// <summary>
-        /// When true, upload to test3.my.emsl.pnl.gov instead of ingest.my.emsl.pnl.gov
+        /// When true, upload to ingestdmsdev.my.emsl.pnl.gov instead of ingestdms.my.emsl.pnl.gov
         /// </summary>
         public bool UseTestInstance
         {
-            get => mUseTestInstance;
+            get
+            {
+                return mUseTestInstance;
+            }
 
             set
             {

@@ -140,7 +140,7 @@ namespace Pacifica.Core
         public string JobNumber { get; set; }
 
         /// <summary>
-        /// When true, upload to test3.my.emsl.pnl.gov instead of ingest.my.emsl.pnl.gov
+        /// When true, upload to ingestdmsdev.my.emsl.pnl.gov instead of ingestdms.my.emsl.pnl.gov
         /// </summary>
         public bool UseTestInstance { get; set; }
 
@@ -203,7 +203,6 @@ namespace Pacifica.Core
         {
             ErrorEvent?.Invoke(this, new MessageEventArgs(callingFunction, errorMessage));
         }
-
 
         void EasyHttp_StatusUpdate(object sender, StatusEventArgs e)
         {
@@ -272,9 +271,6 @@ namespace Pacifica.Core
                 var fiObj = new FileInfoObject(file.AbsoluteLocalPath, file.RelativeDestinationDirectory, file.Sha1HashHex);
 
                 fileListObject.Add(file.AbsoluteLocalPath, fiObj);
-
-                // newFileObj.Add(fiObj.SerializeToDictionaryObject());
-
             }
 
             // Optionally use the test instance
@@ -329,6 +325,8 @@ namespace Pacifica.Core
             {
                 serverUri = mPacificaConfig.IngestServerUri;
 
+                // URL for posting the virtual .tar file to
+                // Typically: https://ingestdms.my.emsl.pnl.gov/upload
                 var storageUrl = serverUri + "/" + location;
 
                 RaiseDebugEvent("ProcessMetadata", "Sending file to " + storageUrl);
