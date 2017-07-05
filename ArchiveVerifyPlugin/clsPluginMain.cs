@@ -268,11 +268,13 @@ namespace ArchiveVerifyPlugin
                     {
                         if (mTotalMismatchCount == 0)
                             LogError("MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
+
                         mTotalMismatchCount += mismatchCountToMetadata;
 
                         var matchStats = "MatchCount=" + matchCountToMetadata + ", MismatchCount=" + mismatchCountToMetadata;
                         LogError(" ... sha1 mismatch between local files in metadata.txt file and MyEMSL; " + matchStats);
                         mRetData.CloseoutMsg = matchStats;
+
                         return false;
                     }
                 }
@@ -298,6 +300,7 @@ namespace ArchiveVerifyPlugin
                 {
                     if (mTotalMismatchCount == 0)
                         LogError("MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
+
                     mTotalMismatchCount += 1;
 
                     mRetData.CloseoutMsg = "Local files were not found for this dataset; unable to compare Sha-1 hashes to MyEMSL values";
@@ -376,6 +379,8 @@ namespace ArchiveVerifyPlugin
 
                     mTotalMismatchCount += 1;
 
+                    mismatchCount += 1;
+
                     var msg = " ... file " + metadataFile.Key + " not found in MyEMSL (CompareArchiveFilesToList)";
                     LogError(msg);
                 }
@@ -452,6 +457,7 @@ namespace ArchiveVerifyPlugin
             {
                 if (mTotalMismatchCount == 0)
                     LogError("MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
+
                 mTotalMismatchCount += 1;
 
                 LogError(" ... metadata file is empty: " + fiMetadataFile.FullName);
