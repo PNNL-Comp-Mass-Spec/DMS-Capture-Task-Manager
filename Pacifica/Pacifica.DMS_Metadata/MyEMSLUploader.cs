@@ -153,6 +153,7 @@ namespace Pacifica.DMS_Metadata
             _mdContainer.ProgressEvent += _mdContainer_ProgressEvent;
             _mdContainer.DebugEvent += myEMSLUpload_DebugEvent;
             _mdContainer.ErrorEvent += myEMSLUpload_ErrorEvent;
+            _mdContainer.WarningEvent += myEMSLUpload_WarningEvent;
 
             _mdContainer.UseTestInstance = UseTestInstance;
 
@@ -218,6 +219,8 @@ namespace Pacifica.DMS_Metadata
 
         public event DebugEventHandler DebugEvent;
         public event DebugEventHandler ErrorEvent;
+        public event DebugEventHandler WarningEvent;
+
         public event MessageEventHandler MetadataDefinedEvent;
 
         public event StatusUpdateEventHandler StatusUpdate;
@@ -254,6 +257,11 @@ namespace Pacifica.DMS_Metadata
         void myEMSLUpload_ErrorEvent(object sender, MessageEventArgs e)
         {
             ErrorEvent?.Invoke(this, e);
+        }
+
+        void myEMSLUpload_WarningEvent(object sender, MessageEventArgs e)
+        {
+            WarningEvent?.Invoke(this, e);
         }
 
         void myEMSLUpload_StatusUpdate(object sender, StatusEventArgs e)

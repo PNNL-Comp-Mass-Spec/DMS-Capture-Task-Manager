@@ -818,6 +818,8 @@ namespace Pacifica.DMS_Metadata
         /// <returns>List of files</returns>
         public Dictionary<string, List<MyEMSLFileInfo>> GetDatasetFilesInMyEMSL(int datasetID, string subDir = "")
         {
+            const int WARNINGS_TO_LOG = 5;
+
             // Example URL:
             // https://metadata.my.emsl.pnl.gov/fileinfo/files_for_keyvalue/omics.dms.dataset_id/265031
             var metadataURL = mPacificaConfig.MetadataServerUri + "/fileinfo/files_for_keyvalue/omics.dms.dataset_id/" + datasetID;
@@ -838,6 +840,8 @@ namespace Pacifica.DMS_Metadata
             // Keys in this dictionary are relative file paths; values are file info details
             // A given remote file could have multiple hash values if multiple versions of the file have been uploaded
             var remoteFiles = new Dictionary<string, List<MyEMSLFileInfo>>();
+
+            var warningCount = 0;
 
             // Note that two files in the same directory could have the same hash value (but different names),
             // so we cannot simply compare file hashes
@@ -861,9 +865,13 @@ namespace Pacifica.DMS_Metadata
                 {
                     if (FileHashExists(fileVersions, fileHash))
                     {
-                        OnError("CompareDatasetContentsWithMyEMSLMetadata",
-                                "Remote file listing reports the same file with the same hash more than once; ignoring: " + relativeFilePath +
-                                " with hash " + fileHash);
+                        warningCount++;
+                        if (warningCount <= WARNINGS_TO_LOG)
+                        {
+                            OnWarning("CompareDatasetContentsWithMyEMSLMetadata",
+                                      "Remote file listing reports the same file with the same hash more than once; " +
+                                      "ignoring: " + relativeFilePath + " with hash " + fileHash);
+                        }
                         continue;
                     }
 
@@ -896,6 +904,12 @@ namespace Pacifica.DMS_Metadata
 
                 fileVersions.Add(remoteFileInfo);
 
+            }
+
+            if (warningCount > WARNINGS_TO_LOG)
+            {
+                OnWarning("CompareDatasetContentsWithMyEMSLMetadata",
+                          string.Format("Duplicate hash value found for {0} files in MyEMSL", warningCount));
             }
 
             return remoteFiles;
@@ -994,6 +1008,7 @@ namespace Pacifica.DMS_Metadata
         public event ProgressEventHandler ProgressEvent;
         public event MessageEventHandler DebugEvent;
         public event MessageEventHandler ErrorEvent;
+        public event MessageEventHandler WarningEvent;
 
         public delegate void ProgressEventHandler(object sender, ProgressEventArgs e);
 
@@ -1014,6 +1029,11 @@ namespace Pacifica.DMS_Metadata
         private void OnDebugEvent(string callingFunction, string currentTask)
         {
             DebugEvent?.Invoke(this, new MessageEventArgs(callingFunction, currentTask));
+        }
+
+        private void OnWarning(string callingFunction, string warningMessage)
+        {
+            WarningEvent?.Invoke(this, new MessageEventArgs(callingFunction, warningMessage));
         }
 
         void mFileTools_WaitingForLockQueue(string sourceFilePath, string targetFilePath, int MBBacklogSource, int MBBacklogTarget)
