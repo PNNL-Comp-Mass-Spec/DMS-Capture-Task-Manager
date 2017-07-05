@@ -547,7 +547,19 @@ namespace Pacifica.DMS_Metadata
                 return new List<FileInfoObject>();
             }
 
-            if (expectedRemoteFileCount > 0 && remoteFiles.Count < expectedRemoteFileCount * 0.95)
+            double matchTolerance;
+            if (expectedRemoteFileCount < 10)
+                matchTolerance = 0.7;
+            else if (expectedRemoteFileCount < 20)
+                matchTolerance = 0.6;
+            else if (expectedRemoteFileCount < 40)
+                matchTolerance = 0.5;
+            else if (expectedRemoteFileCount < 80)
+                matchTolerance = 0.4;
+            else
+                matchTolerance = 0.25;
+
+            if (expectedRemoteFileCount > 0 && remoteFiles.Count < expectedRemoteFileCount * matchTolerance)
             {
                 OnError("CompareDatasetContentsWithMyEMSLMetadata",
                     string.Format("MyEMSL reported {0} files for Dataset ID {1}; it should be tracking at least {2} files",
