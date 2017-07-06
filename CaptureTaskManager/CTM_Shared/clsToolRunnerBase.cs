@@ -368,7 +368,16 @@ namespace CaptureTaskManager
                 return false;
             }
 
-            // Future: check for ingest or permission errors and log them
+            if (serverResponse.TryGetValue("state", out var ingestState))
+            {
+                if (string.Equals((string)ingestState, "failed", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    // Error should have already been logged
+                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    retData.EvalCode = EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY;
+                    return false;
+                }
+            }
 
             return true;
 

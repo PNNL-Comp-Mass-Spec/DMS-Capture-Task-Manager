@@ -230,13 +230,17 @@ namespace Pacifica.Core
             var statusResult = EasyHttp.Send(mPacificaConfig, statusURI, out HttpStatusCode responseStatusCode);
 
             // Example contents of statusResult
-            // {"task_percent": "0.00000", "state": "OK",     "task": "UPLOADING",         "job_id": 104}   (starting)
-            // {"task_percent": "0.00000", "state": "FAILED", "task": "Policy Validation", "job_id": 104}   (error)
-            // {"task_percent": "100.00000", "state": "OK", "task": "ingest metadata", "job_id": 1300004}   (complete)
+            // {"task_percent": "0.00000", "state": "OK",     "task": "UPLOADING",         "job_id": 104}      (starting)
+            // {"task_percent": "0.00000", "state": "FAILED", "task": "Policy Validation", "job_id": 104}      (error)
+            // {"task_percent": "0.00000", "state": "FAILED", "task": "ingest metadata",   "job_id": 1300782}  (error)
+            // {"task_percent": "0.00000", "state": "FAILED", "task": "ingest files",      "job_id": 1301499}  (error)
+            // {"task_percent": "100.00000", "state": "OK", "task": "ingest metadata",     "job_id": 1300004}  (complete)
 
             var statusJSON = Utilities.JsonToObject(statusResult);
 
             var state = Utilities.GetDictionaryValue(statusJSON, "state").ToLower();
+
+            var task = Utilities.GetDictionaryValue(statusJSON, "task");
 
             var percentCompleteText = Utilities.GetDictionaryValue(statusJSON, "task_percent");
 
@@ -255,7 +259,7 @@ namespace Pacifica.Core
             }
             else if (state == "failed")
             {
-                ReportError("GetIngestStatus", "Upload failed ");
+                ReportError("GetIngestStatus", "Upload failed: " + task);
             }
             else if (state.Contains("error"))
             {
