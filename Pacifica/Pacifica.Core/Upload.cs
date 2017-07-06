@@ -436,6 +436,24 @@ namespace Pacifica.Core
             // new metadata object is just a list of dictionary entries
             var metadataObject = new List<Dictionary<string, object>>();
 
+            if (uploadMetadata.DMSInstrumentName.IndexOf("LCQ", StringComparison.OrdinalIgnoreCase) >= 0 &&
+                string.IsNullOrWhiteSpace(uploadMetadata.EUSInstrumentID))
+            {
+                uploadMetadata.EUSInstrumentID = "1163";
+            }
+
+            if (uploadMetadata.DMSInstrumentName == "Exact02" &&
+                string.IsNullOrWhiteSpace(uploadMetadata.EUSInstrumentID))
+            {
+                uploadMetadata.EUSInstrumentID = "34111";
+            }
+
+            if (uploadMetadata.DMSInstrumentName == "IMS07_AgTOF04" &&
+                string.IsNullOrWhiteSpace(uploadMetadata.EUSInstrumentID))
+            {
+                uploadMetadata.EUSInstrumentID = "34155";
+            }
+
             var eusInstrumentID = GetEUSInstrumentID(uploadMetadata.EUSInstrumentID, UNKNOWN_INSTRUMENT_EUS_INSTRUMENT_ID);
 
             // fill out Transaction Key/Value pairs
