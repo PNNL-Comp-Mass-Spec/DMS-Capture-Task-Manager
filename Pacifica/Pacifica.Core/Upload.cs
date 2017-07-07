@@ -586,10 +586,18 @@ namespace Pacifica.Core
             }
             else if (uploadMetadata.DataPackageID > 0)
             {
-                // Could associate an EUS Instrument ID here
-                // private const string DATA_PACKAGE_EUS_INSTRUMENT_ID = "40000";
-                // string eusInstrumentID = GetEUSInstrumentID(uploadMetadata.EUSInstrumentID, DATA_PACKAGE_EUS_INSTRUMENT_ID);
-                // groupObject.Add(new Dictionary<string, string> { { "name", eusInstrumentID }, { "type", "omics.dms.instrument_id" } });
+
+                metadataObject.Add(new Dictionary<string, object> {
+                    { "destinationTable", "TransactionKeyValue" },
+                    { "key", "omics.dms.instrument" },
+                    { "value", uploadMetadata.DMSInstrumentName }
+                });
+
+                metadataObject.Add(new Dictionary<string, object> {
+                    { "destinationTable", "TransactionKeyValue" },
+                    { "key", "omics.dms.instrument_id" },
+                    { "value", eusInstrumentID }
+                });
 
                 metadataObject.Add(new Dictionary<string, object> {
                     { "destinationTable", "TransactionKeyValue" },
