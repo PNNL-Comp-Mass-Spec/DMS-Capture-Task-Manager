@@ -896,8 +896,10 @@ namespace ArchiveVerifyPlugin
 
                 var subDir = m_TaskParams.GetParam("OutputFolderName", string.Empty);
 
-                var archivedFiles = metadataObject.GetDatasetFilesInMyEMSL(m_DatasetID, subDir);
-                if (archivedFiles.Count == 0)
+                // Keys in dictionary remoteFiles are relative file paths (unix style) and values are file details
+                // A given remote file could have multiple hash values if multiple versions of the file have been uploaded
+                var remoteFiles = metadataObject.GetDatasetFilesInMyEMSL(m_DatasetID, subDir);
+                if (remoteFiles.Count == 0)
                 {
                     if (mTotalMismatchCount == 0)
                         LogError("MyEmsl verification error for dataset " + m_Dataset + ", job " + m_Job);
@@ -924,7 +926,7 @@ namespace ArchiveVerifyPlugin
 
                 var filteredFiles = new List<MyEMSLFileInfo>();
 
-                foreach (var archiveFile in archivedFiles)
+                foreach (var archiveFile in remoteFiles)
                 {
                     foreach (var fileVersion in archiveFile.Value)
                     {

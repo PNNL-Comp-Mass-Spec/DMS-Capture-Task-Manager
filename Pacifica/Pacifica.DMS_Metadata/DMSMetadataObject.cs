@@ -535,6 +535,8 @@ namespace Pacifica.DMS_Metadata
 
             var datasetID = uploadMetadata.DatasetID;
 
+            // Keys in dictionary remoteFiles are relative file paths (unix style) and values are file details
+            // A given remote file could have multiple hash values if multiple versions of the file have been uploaded
             var remoteFiles = GetDatasetFilesInMyEMSL(datasetID);
 
             // Make sure that the number of files reported by MyEMSL for this dataset agrees with what we expect
@@ -559,7 +561,8 @@ namespace Pacifica.DMS_Metadata
             else
                 matchTolerance = 0.25;
 
-            if (expectedRemoteFileCount > 0 && remoteFiles.Count < expectedRemoteFileCount * matchTolerance)
+            if (expectedRemoteFileCount > 0 &&
+                remoteFiles.Count < expectedRemoteFileCount * matchTolerance)
             {
                 OnError("CompareDatasetContentsWithMyEMSLMetadata",
                     string.Format("MyEMSL reported {0} files for Dataset ID {1}; it should be tracking at least {2} files",
@@ -576,7 +579,7 @@ namespace Pacifica.DMS_Metadata
 
             foreach (var fileObj in candidateFilesToUpload)
             {
-                var relativeFilePath = Path.Combine(fileObj.RelativeDestinationDirectory, fileObj.FileName);
+                var relativeFilePath = clsPathUtils.CombineLinuxPaths(fileObj.RelativeDestinationDirectory, fileObj.FileName);
 
                 if (remoteFiles.TryGetValue(relativeFilePath, out var fileVersions))
                 {
@@ -827,7 +830,7 @@ namespace Pacifica.DMS_Metadata
         /// </summary>
         /// <param name="datasetID">Dataset ID</param>
         /// <param name="subDir">Optional subdiretory (subfolder) to filter on</param>
-        /// <returns>List of files</returns>
+        /// <returns>Dictionary of files in MyEMSL; keys are relative file paths (unix style) and values are file details</returns>
         public Dictionary<string, List<MyEMSLFileInfo>> GetDatasetFilesInMyEMSL(int datasetID, string subDir = "")
         {
             const int WARNINGS_TO_LOG = 5;
@@ -849,7 +852,7 @@ namespace Pacifica.DMS_Metadata
             var jsa = (Jayrock.Json.JsonArray)JsonConvert.Import(fileInfoListJSON);
             var remoteFileInfoList = Utilities.JsonArrayToDictionaryList(jsa);
 
-            // Keys in this dictionary are relative file paths; values are file info details
+            // Keys in this dictionary are relative file paths (Unix style paths); values are file info details
             // A given remote file could have multiple hash values if multiple versions of the file have been uploaded
             var remoteFiles = new Dictionary<string, List<MyEMSLFileInfo>>();
 
@@ -871,7 +874,8 @@ namespace Pacifica.DMS_Metadata
                         continue;
                 }
 
-                var relativeFilePath = Path.Combine(subFolder, fileName);
+                // Unix style path
+                var relativeFilePath = clsPathUtils.CombineLinuxPaths(subFolder, fileName);
 
                 if (remoteFiles.TryGetValue(relativeFilePath, out var fileVersions))
                 {
