@@ -340,8 +340,8 @@ namespace CaptureTaskManager
             serverResponse = statusChecker.GetIngestStatus(
                 statusURI,
                 out percentComplete,
-                out bool lookupError,
-                out string errorMessage);
+                out var lookupError,
+                out var errorMessage);
 
             if (lookupError)
             {
@@ -363,7 +363,7 @@ namespace CaptureTaskManager
                 if (string.Equals((string)ingestState, "failed", StringComparison.InvariantCultureIgnoreCase) ||
                     !string.IsNullOrWhiteSpace(errorMessage))
                 {
-                    // Error should have already been logged
+                    // Error should have already been logged during the call to GetIngestStatus
                     retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     if (string.IsNullOrWhiteSpace(errorMessage))
                         retData.CloseoutMsg = "Ingest failed; unknown reason";

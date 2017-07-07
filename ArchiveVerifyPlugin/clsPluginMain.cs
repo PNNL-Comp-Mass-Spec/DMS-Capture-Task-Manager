@@ -76,7 +76,6 @@ namespace ArchiveVerifyPlugin
                 fatalError = true;
             }
 
-
             if (success)
             {
 

@@ -72,7 +72,7 @@ namespace Pacifica.Core
             public string SubFolder;
             public string DatasetName;          // Only used for datasets; not Data Packages
             public string DateCodeString;       // Only used for datasets; not Data Packages
-            public string DMSInstrumentName;    // Only used for datasets; not Data Packages
+            public string DMSInstrumentName;    // Originally only used by datasets. Used by Data Packages starting in July 2017 since required by policy
             public string CampaignName;
             public int CampaignID;
             public int EUSInstrumentID;         // Originally only used by datasets. Used by Data Packages starting in July 2017 since required by policy
@@ -148,8 +148,11 @@ namespace Pacifica.Core
         public string TransferFolderPath { get; set; }
 
         /// <summary>
-        /// The metadata.txt file name will include the JobNumber text in the name, for example MyEMSL_metadata_CaptureJob_12345.txt
+        /// Capture Task DB job number for the DatasetArchive or ArchiveUpdate Job
         /// </summary>
+        /// <remarks>
+        /// The metadata.txt file name will include the JobNumber text in the name, for example MyEMSL_metadata_CaptureJob_12345.txt
+        /// For DataPackages we store DataPackageId in JobNumber</remarks>
         public string JobNumber { get; set; }
 
         /// <summary>
