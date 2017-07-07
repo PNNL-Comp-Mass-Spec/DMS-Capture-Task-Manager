@@ -9,16 +9,29 @@ namespace Pacifica.Core
     public class Upload : IUpload
     {
         /// <summary>
-        /// Default EUS ID is "Monroe, Matthew"
+        /// EUS Operator ID to use when operator ID is unknown
         /// </summary>
+        /// <remarks>43428 is "Monroe, Matthew"</remarks>
         public const int DEFAULT_EUS_OPERATOR_ID = 43428;
 
-        // Proposal ID 17797 is "Development of High Throughput Proteomic Production Operations"
-        // It is a string because it may contain suffix letters
+        /// <summary>
+        /// EUS Proposal ID to use when the proposal ID is unknown
+        /// </summary>
+        /// <remarks>
+        /// Proposal ID 17797 is "Development of High Throughput Proteomic Production Operations"
+        /// It is a string because it may contain suffix letters
+        /// </remarks>
         public const string DEFAULT_EUS_PROPOSAL_ID = "17797";
 
-        // VOrbiETD04 is 34127
-        private const string UNKNOWN_INSTRUMENT_EUS_INSTRUMENT_ID = "34127";
+        /// <summary>
+        /// EUS Instrument ID to use when the EUS Instrument ID is unknown
+        /// </summary>
+        public const int UNKNOWN_INSTRUMENT_EUS_INSTRUMENT_ID = 34127;
+
+        /// <summary>
+        /// DMS Instrument Name corresponding to EUS Instrument ID 34127
+        /// </summary>
+        public const string UNKNOWN_INSTRUMENT_NAME = "VOrbiETD04";
 
         private readonly Configuration mPacificaConfig;
 
