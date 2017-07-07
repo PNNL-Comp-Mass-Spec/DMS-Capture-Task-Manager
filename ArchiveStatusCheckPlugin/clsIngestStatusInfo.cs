@@ -23,17 +23,6 @@ namespace ArchiveStatusCheckPlugin
         public string Subfolder { get; set; }
 
         /// <summary>
-        /// TransactionID for the upload bundle
-        /// </summary>
-        /// <remarks>
-        /// This is a legacy field that is no longer used
-        /// Previously, to see files uploaded by TransactionID, use https://status.my.emsl.pnl.gov/status/view/t/transactionID
-        /// For example: https://status.my.emsl.pnl.gov/status/view/t/1257122
-        /// </remarks>
-        [Obsolete("Unused starting in June 2017")]
-        public int TransactionId { get; set; }
-
-        /// <summary>
         /// Number of ingest steps completed, before the most recent check
         /// </summary>
         public byte IngestStepsCompletedOld { get; set; }

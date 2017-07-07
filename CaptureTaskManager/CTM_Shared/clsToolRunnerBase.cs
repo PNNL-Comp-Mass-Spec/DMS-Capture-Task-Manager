@@ -348,16 +348,6 @@ namespace CaptureTaskManager
                 retData.CloseoutMsg = errorMessage;
                 LogError(errorMessage + ", job " + job);
 
-                // These are obsolete messages from the old status service
-                if (errorMessage.Contains("[Errno 5] Input/output error") ||
-                    errorMessage.Contains("[Errno 28] No space left on device") ||
-                    errorMessage.Contains("object has no attribute") ||
-                    errorMessage.Contains("invalid literal for int"))
-                {
-                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                    retData.EvalCode = EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY;
-                }
-
                 return false;
             }
 
