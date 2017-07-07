@@ -331,6 +331,11 @@ namespace CaptureTaskManager
         /// </summary>
         public void WriteStatusFile()
         {
+            // Note that we use this instead of using .ToString("o")
+            // because .NET includes 7 digits of precision for the milliseconds,
+            // and SQL Server only allows 3 digits of precision
+            const string ISO_8601_DATE = "yyyy-MM-ddTHH:mm:ss.fffK";
+
             var XMLText = string.Empty;
 
             // Set up the XML writer
@@ -351,8 +356,11 @@ namespace CaptureTaskManager
                     XWriter.WriteStartElement("Manager");
                     XWriter.WriteElementString("MgrName", m_MgrName);
                     XWriter.WriteElementString("MgrStatus", ConvertMgrStatusToString(m_MgrStatus));
-                    XWriter.WriteElementString("LastUpdate", DateTime.Now.ToString(CultureInfo.InvariantCulture));
-                    XWriter.WriteElementString("LastStartTime", m_MgrStartTime.ToString(CultureInfo.InvariantCulture));
+
+                    // Write out times in the format 2017-07-06T23:23:14.337Z
+                    XWriter.WriteElementString("LastUpdate", DateTime.UtcNow.ToString(ISO_8601_DATE));
+                    XWriter.WriteElementString("LastStartTime", m_MgrStartTime.ToUniversalTime().ToString(ISO_8601_DATE));
+
                     XWriter.WriteElementString("CPUUtilization", CpuUtilization.ToString());
                     XWriter.WriteElementString("ProcessID", GetProcessID().ToString());
                     XWriter.WriteElementString("FreeMemoryMB", "0");
