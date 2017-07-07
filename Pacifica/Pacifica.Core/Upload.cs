@@ -500,7 +500,7 @@ namespace Pacifica.Core
                 metadataObject.Add(new Dictionary<string, object> {
                     { "destinationTable", "TransactionKeyValue" },
                     { "key", "omics.dms.experiment_name" },
-                    { "value", uploadMetadata.DatasetName }
+                    { "value", uploadMetadata.ExperimentName }
                 });
                 metadataObject.Add(new Dictionary<string, object> {
                     { "destinationTable", "TransactionKeyValue" },
