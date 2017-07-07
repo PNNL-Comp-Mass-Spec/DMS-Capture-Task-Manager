@@ -658,6 +658,11 @@ namespace Pacifica.Core
                 else
                     subdirString = "data/" + f.RelativeDestinationDirectory.Trim('/');
 
+                if (subdirString.Contains("//"))
+                {
+                    throw new Exception("File path should not have two forward slashes: " + subdirString);
+                }
+
                 metadataObject.Add(new Dictionary<string, object> {
                     { "destinationTable", "Files" },
                     { "name", f.FileName },
