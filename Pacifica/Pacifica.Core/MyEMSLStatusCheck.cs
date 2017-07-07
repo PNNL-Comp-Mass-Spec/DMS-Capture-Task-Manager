@@ -198,7 +198,9 @@ namespace Pacifica.Core
         /// <summary>
         /// Obtain the status returned by the given MyEMSL status page
         /// </summary>
-        /// <param name="statusURI">URI to examine</param>
+        /// <param name="statusURI">
+        /// URI to examine, e.g. https://ingestdms.my.emsl.pnl.gov/get_state?job_id=1300782
+        /// </param>
         /// <param name="percentComplete">Output: ingest process percent complete (value between 0 and 100)</param>
         /// <param name="lookupError">Output: true if an error occurs</param>
         /// <param name="errorMessage">Output: error message if lookupError is true</param>
@@ -230,17 +232,21 @@ namespace Pacifica.Core
             var statusResult = EasyHttp.Send(mPacificaConfig, statusURI, out HttpStatusCode responseStatusCode);
 
             // Example contents of statusResult
+            // (as returned by https://ingestdms.my.emsl.pnl.gov/get_state?job_id=123456)
             // {"task_percent": "0.00000", "state": "OK",     "task": "UPLOADING",         "job_id": 104}      (starting)
             // {"task_percent": "0.00000", "state": "FAILED", "task": "Policy Validation", "job_id": 104}      (error)
             // {"task_percent": "0.00000", "state": "FAILED", "task": "ingest metadata",   "job_id": 1300782}  (error)
             // {"task_percent": "0.00000", "state": "FAILED", "task": "ingest files",      "job_id": 1301499}  (error)
             // {"task_percent": "100.00000", "state": "OK", "task": "ingest metadata",     "job_id": 1300004}  (complete)
+            // {"task_percent": "0.00000", "updated": "2017-07-06 22:00:49", "task": "ingest files", "job_id": 1303430, "created": "2017-07-06 22:00:51", "exception": "", "state": "OK"}
 
             var statusJSON = Utilities.JsonToObject(statusResult);
 
             var state = Utilities.GetDictionaryValue(statusJSON, "state").ToLower();
 
             var task = Utilities.GetDictionaryValue(statusJSON, "task");
+
+            var exception = Utilities.GetDictionaryValue(statusJSON, "exception");
 
             var percentCompleteText = Utilities.GetDictionaryValue(statusJSON, "task_percent");
 
@@ -253,21 +259,42 @@ namespace Pacifica.Core
                 percentComplete = 0;
             }
 
-            if (state == "ok")
+            switch (state)
             {
-                OnDebugMessage(new MessageEventArgs("GetIngestStatus", "Archive state is OK for " + statusURI));
-            }
-            else if (state == "failed")
-            {
-                ReportError("GetIngestStatus", "Upload failed: " + task);
-            }
-            else if (state.Contains("error"))
-            {
-                ReportError("GetIngestStatus", "Status server is offline or having issues");
-            }
-            else
-            {
-                ReportError("GetIngestStatus", "Unrecognized state: " + state);
+                case "ok":
+                    if (string.IsNullOrWhiteSpace(exception))
+                    {
+                        OnDebugMessage(new MessageEventArgs("GetIngestStatus", "Archive state is OK for " + statusURI));
+                    }
+                    else
+                    {
+                        errorMessage = "Upload state is OK, but an exception was reported for task \"" + task + "\"" +
+                                       "; exception \"" + exception + "\"";
+
+                        ReportError("GetIngestStatus", errorMessage + "; see " + statusURI);
+                    }
+                    break;
+
+                case "failed":
+                    errorMessage = "Upload failed, task \"" + task + "\"";
+                    if (!string.IsNullOrWhiteSpace(exception))
+                    {
+                        errorMessage += "; exception \"" + exception + "\"";
+                    }
+
+                    ReportError("GetIngestStatus", errorMessage + "; see " + statusURI);
+                    break;
+
+                default:
+                    if (state.Contains("error"))
+                    {
+                        ReportError("GetIngestStatus", "Status server is offline or having issues; cannot check " + statusURI);
+                    }
+                    else
+                    {
+                        ReportError("GetIngestStatus", "Unrecognized state " + state + " for " + statusURI);
+                    }
+                    break;
             }
 
             return statusJSON;
@@ -319,7 +346,7 @@ namespace Pacifica.Core
         public static int GetStatusNumFromURI(string statusURI)
         {
             // Check for a match to a URI of the form
-            // https://ingestdms.my.emsl.pnl.gov/get_state?job_id=1302995 
+            // https://ingestdms.my.emsl.pnl.gov/get_state?job_id=1302995
 
             var reGetstatusNum = new Regex(@"job_id=(\d+)");
 
@@ -407,7 +434,7 @@ namespace Pacifica.Core
 
             return false;
 
-        }        
+        }
 
         /// <summary>
         /// This function examines the xml returned by a MyEMSL status page to determine whether or not the step succeeded
