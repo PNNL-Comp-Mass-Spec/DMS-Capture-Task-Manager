@@ -263,7 +263,7 @@ namespace DatasetArchivePlugin
                 }
 
                 // Start the upload
-                success = myEMSLUL.StartUpload(config, debugMode, out statusURL);
+                success = myEMSLUL.SetupMetadataAndUpload(config, debugMode, out statusURL);
 
                 if (string.Equals(statusURL, MyEMSLUploader.CRITICAL_UPLOAD_ERROR))
                     allowRetry = false;

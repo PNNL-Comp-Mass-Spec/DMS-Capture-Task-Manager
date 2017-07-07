@@ -141,7 +141,7 @@ namespace Pacifica.DMS_Metadata
 
         #endregion
 
-        public bool StartUpload(Configuration config, EasyHttp.eDebugMode debugMode, out string statusURL)
+        public bool SetupMetadataAndUpload(Configuration config, EasyHttp.eDebugMode debugMode, out string statusURL)
         {
 
             // Instantiate the metadata object
