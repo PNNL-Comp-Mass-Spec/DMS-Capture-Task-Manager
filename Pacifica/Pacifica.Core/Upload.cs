@@ -62,7 +62,7 @@ namespace Pacifica.Core
             public string DMSInstrumentName;    // Only used for datasets; not Data Packages
             public string CampaignName;
             public int CampaignID;
-            public string EUSInstrumentID;      // Only used for datasets; not Data Packages
+            public int EUSInstrumentID;         // Originally only used by datasets. Used by Data Packages starting in July 2017 since required by policy
             public string EUSProposalID;        // Originally only used by datasets. Used by Data Packages starting in October 2016 since required by policy
             public string ExperimentName;
             public int ExperimentID;
@@ -94,7 +94,7 @@ namespace Pacifica.Core
                 DMSInstrumentName = string.Empty;
                 CampaignName = string.Empty;
                 CampaignID = 0;
-                EUSInstrumentID = string.Empty;
+                EUSInstrumentID = 0;
                 EUSProposalID = string.Empty;
                 ExperimentName = string.Empty;
                 ExperimentID = 0;
@@ -437,21 +437,21 @@ namespace Pacifica.Core
             var metadataObject = new List<Dictionary<string, object>>();
 
             if (uploadMetadata.DMSInstrumentName.IndexOf("LCQ", StringComparison.OrdinalIgnoreCase) >= 0 &&
-                string.IsNullOrWhiteSpace(uploadMetadata.EUSInstrumentID))
+                uploadMetadata.EUSInstrumentID <= 0)
             {
-                uploadMetadata.EUSInstrumentID = "1163";
+                uploadMetadata.EUSInstrumentID = 1163;
             }
 
             if (uploadMetadata.DMSInstrumentName == "Exact02" &&
-                string.IsNullOrWhiteSpace(uploadMetadata.EUSInstrumentID))
+                uploadMetadata.EUSInstrumentID <= 0)
             {
-                uploadMetadata.EUSInstrumentID = "34111";
+                uploadMetadata.EUSInstrumentID = 34111;
             }
 
             if (uploadMetadata.DMSInstrumentName == "IMS07_AgTOF04" &&
-                string.IsNullOrWhiteSpace(uploadMetadata.EUSInstrumentID))
+                uploadMetadata.EUSInstrumentID <= 0)
             {
-                uploadMetadata.EUSInstrumentID = "34155";
+                uploadMetadata.EUSInstrumentID = 34155;
             }
 
             var eusInstrumentID = GetEUSInstrumentID(uploadMetadata.EUSInstrumentID, UNKNOWN_INSTRUMENT_EUS_INSTRUMENT_ID);
@@ -597,7 +597,7 @@ namespace Pacifica.Core
                     { "destinationTable", "Transactions.instrument" },
                     { "value", eusInstrumentID }
                 });
-                eusInfo.EUSInstrumentID = StringToInt(eusInstrumentID, 0);
+                eusInfo.EUSInstrumentID = eusInstrumentID;
             }
 
             string EUSProposalID;
@@ -757,6 +757,7 @@ namespace Pacifica.Core
                     }
                 }
             }
+
             return string.Join("; ", metadataList) + "; FileCount=" + fileCount;
 
         }
@@ -803,9 +804,9 @@ namespace Pacifica.Core
         /// <param name="eusInstrumentId"></param>
         /// <param name="instrumentIdIfUnknown"></param>
         /// <returns></returns>
-        private static string GetEUSInstrumentID(string eusInstrumentId, string instrumentIdIfUnknown)
+        private static int GetEUSInstrumentID(int eusInstrumentId, int instrumentIdIfUnknown)
         {
-            return string.IsNullOrWhiteSpace(eusInstrumentId) ? instrumentIdIfUnknown : eusInstrumentId;
+            return eusInstrumentId <= 0 ? instrumentIdIfUnknown : eusInstrumentId;
         }
 
         private void OnError(string methodName, string errorMessage)

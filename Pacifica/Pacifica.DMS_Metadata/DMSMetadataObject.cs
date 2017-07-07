@@ -736,7 +736,7 @@ namespace Pacifica.DMS_Metadata
                 else
                     uploadMetadata.SubFolder = string.Empty;
             }
-            uploadMetadata.EUSInstrumentID = Utilities.GetDictionaryValue(taskParams, "EUS_Instrument_ID", string.Empty);
+            uploadMetadata.EUSInstrumentID = Utilities.GetDictionaryValue(taskParams, "EUS_Instrument_ID", 0);
             uploadMetadata.EUSProposalID = Utilities.GetDictionaryValue(taskParams, "EUS_Proposal_ID", string.Empty);
 
             var operatorUsername = Utilities.GetDictionaryValue(taskParams, "Operator_PRN", "Unknown_Operator");
