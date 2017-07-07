@@ -870,7 +870,7 @@ namespace CaptureTaskManager
 
             return false;
         }
-
+     
         /// <summary>
         /// Updates the value for Ingest_Steps_Completed in table T_MyEMSL_Uploads for the given upload task
         /// </summary>
@@ -884,7 +884,7 @@ namespace CaptureTaskManager
         protected bool UpdateIngestStepsCompletedOneTask(
             int statusNum,
             byte ingestStepsCompleted,
-            long transactionId,
+            long transactionId = 0,
             bool fatalError = false)
         {
             const string SP_NAME = "UpdateMyEMSLUploadIngestStats";

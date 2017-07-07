@@ -117,7 +117,6 @@ namespace ArchiveStatusCheckPlugin
             }
 
             var statusChecker = new MyEMSLStatusCheck();
-
             statusChecker.ErrorEvent += statusChecker_ErrorEvent;
 
             // Check the status of each of the URIs
@@ -534,8 +533,7 @@ namespace ArchiveStatusCheckPlugin
 
                     var success = UpdateIngestStepsCompletedOneTask(
                         statusNum,
-                        statusInfo.IngestStepsCompletedNew,
-                        statusInfo.TransactionId);
+                        statusInfo.IngestStepsCompletedNew);
 
                     if (!success)
                         spError = true;
