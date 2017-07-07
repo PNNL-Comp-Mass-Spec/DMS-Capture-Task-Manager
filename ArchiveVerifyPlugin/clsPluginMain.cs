@@ -88,7 +88,18 @@ namespace ArchiveVerifyPlugin
 
                 if (!success)
                 {
-                    mRetData.CloseoutMsg = "Not visible in metadata";
+                    if (string.IsNullOrWhiteSpace(mRetData.CloseoutMsg))
+                    {
+                        if (mTotalMismatchCount > 0)
+                        {
+                            mRetData.CloseoutMsg = string.Format(
+                                "{0} files did not match the metadata reported by MyEMSL", mTotalMismatchCount);
+                        }
+                        else
+                        {
+                            mRetData.CloseoutMsg = "Not visible in metadata";
+                        }
+                    }
                 }
                 else if (!string.IsNullOrEmpty(metadataFilePath))
                 {

@@ -370,17 +370,29 @@ namespace CaptureTaskManager
 
             if (serverResponse.TryGetValue("state", out var ingestState))
             {
-                if (string.Equals((string)ingestState, "failed", StringComparison.InvariantCultureIgnoreCase))
+                if (string.Equals((string)ingestState, "failed", StringComparison.InvariantCultureIgnoreCase) ||
+                    !string.IsNullOrWhiteSpace(errorMessage))
                 {
                     // Error should have already been logged
                     retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    if (string.IsNullOrWhiteSpace(errorMessage))
+                        retData.CloseoutMsg = "Ingest failed; unknown reason";
+                    else
+                        retData.CloseoutMsg = errorMessage;
+
                     retData.EvalCode = EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY;
                     return false;
                 }
+
+                return true;
             }
 
-            return true;
+            // State parameter was not present
 
+            retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+            retData.CloseoutMsg = "State parameter not found in ingest status; see " + statusURI;
+
+            return false;
         }
 
         /// <summary>
