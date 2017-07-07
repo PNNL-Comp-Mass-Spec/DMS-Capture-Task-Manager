@@ -465,7 +465,8 @@ namespace Pacifica.Core
 
             RaiseStatusUpdate(percentComplete, bytesWritten, contentLength, string.Empty);
 
-            // Set this to True to debug things and create the .tar file locally instead of sending to the server
+            // Set this to .CreateTarLocal to debug things and create the .tar file locally instead of sending to the server
+            // See method PerformTask in clsArchiveUpdate
             var writeToDisk = (debugMode != eDebugMode.DebugDisabled); // aka Writefile or Savefile
 
             if (writeToDisk && Environment.MachineName.IndexOf("proto", StringComparison.CurrentCultureIgnoreCase) >= 0)
