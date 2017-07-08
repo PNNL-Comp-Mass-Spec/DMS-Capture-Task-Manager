@@ -92,6 +92,7 @@ namespace ArchiveVerifyPlugin
                         {
                             mRetData.CloseoutMsg = string.Format(
                                 "{0} files did not match the metadata reported by MyEMSL", mTotalMismatchCount);
+                            mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                         }
                         else
                         {
@@ -354,6 +355,9 @@ namespace ArchiveVerifyPlugin
                     mTotalMismatchCount += mismatchCountToDisk;
 
                     mRetData.CloseoutMsg = "SHA-1 mismatch between local files on disk and MyEMSL; MatchCount=" + matchCountToDisk + ", MismatchCount=" + mismatchCountToDisk;
+                    mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    mRetData.EvalCode = EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY;
+
                     LogError(" ... " + mRetData.CloseoutMsg);
                 }
 
