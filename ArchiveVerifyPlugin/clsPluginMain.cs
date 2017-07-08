@@ -173,6 +173,8 @@ namespace ArchiveVerifyPlugin
             try
             {
 
+                mRetData.CloseoutMsg = "";
+
                 var ingestSuccess = GetMyEMSLIngestStatus(
                     m_Job, statusChecker, statusURI,
                     eusInstrumentID, eusProposalID, eusUploaderID,
@@ -185,8 +187,6 @@ namespace ArchiveVerifyPlugin
                     mRetData.EvalCode == EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY);
 
                 statusNum = MyEMSLStatusCheck.GetStatusNumFromURI(statusURI);
-
-                mRetData.CloseoutMsg = "";
 
                 return ingestSuccess;
 
