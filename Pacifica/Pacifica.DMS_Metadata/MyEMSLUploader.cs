@@ -21,10 +21,25 @@ namespace Pacifica.DMS_Metadata
 
         private readonly Configuration mPacificaConfig;
 
+        #region "Properties"
+
+        /// <summary>
+        /// Number of bytes uploaded
+        /// </summary>
+        public long Bytes
+        {
+            get;
+            private set;
+        }
+
         /// <summary>
         /// Critical error message, as reported by SetupMetadata in DMSMetadataObject
         /// </summary>
         public string CriticalErrorMessage { get; private set; }
+
+        /// <summary>
+        /// Error message from the MyEMSLUploader
+        /// </summary>
         public string ErrorMessage
         {
             get
@@ -36,7 +51,52 @@ namespace Pacifica.DMS_Metadata
             }
         }
 
+        /// <summary>
+        /// EUS Info
+        /// </summary>
+        public Upload.EUSInfo EUSInfo
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// New files that were added
+        /// </summary>
+        public int FileCountNew
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// Existing files that were updated
+        /// </summary>
+        public int FileCountUpdated
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// Status URI
+        /// </summary>
+        public string StatusURI
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// True to enable trace mode
+        /// </summary>
+        public bool TraceMode { get; set; }
+
         private bool mUseTestInstance;
+
+        /// <summary>
+        /// True to use the test instance
+        /// </summary>
         public bool UseTestInstance
         {
             get => mUseTestInstance;
@@ -47,6 +107,8 @@ namespace Pacifica.DMS_Metadata
                 mPacificaConfig.UseTestInstance = value;
             }
         }
+
+        #endregion
 
         /// <summary>
         /// Constructor
@@ -99,54 +161,12 @@ namespace Pacifica.DMS_Metadata
 
         }
 
-        #region "Properties"
-
-        public string StatusURI
-        {
-            get;
-            private set;
-        }
-
-        public int FileCountNew
-        {
-            get;
-            private set;
-        }
-
-        public int FileCountUpdated
-        {
-            get;
-            private set;
-        }
-
-        public long Bytes
-        {
-            get;
-            private set;
-        }
 
         public string ErrorCode
         {
             get;
             private set;
         }
-
-        /// <summary>
-        /// EUS Info
-        /// </summary>
-        public Upload.EUSInfo EUSInfo
-        {
-            get;
-            private set;
-        }
-
-        /// <summary>
-        /// True to enable trace mode
-        /// </summary>
-        public bool TraceMode { get; set; }
-
-        #endregion
-
         public bool SetupMetadataAndUpload(Configuration config, EasyHttp.eDebugMode debugMode, out string statusURL)
         {
 
