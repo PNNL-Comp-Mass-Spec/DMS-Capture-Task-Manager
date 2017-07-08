@@ -124,7 +124,6 @@ namespace Pacifica.DMS_Metadata
             FileCountNew = 0;
             FileCountUpdated = 0;
             Bytes = 0;
-            ErrorCode = string.Empty;
 
             CriticalErrorMessage = string.Empty;
 
@@ -161,12 +160,6 @@ namespace Pacifica.DMS_Metadata
 
         }
 
-
-        public string ErrorCode
-        {
-            get;
-            private set;
-        }
         public bool SetupMetadataAndUpload(Configuration config, EasyHttp.eDebugMode debugMode, out string statusURL)
         {
 
