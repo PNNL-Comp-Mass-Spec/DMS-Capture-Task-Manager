@@ -277,12 +277,30 @@ namespace Pacifica.Core
 
                 case "failed":
                     errorMessage = "Upload failed, task \"" + task + "\"";
-                    if (!string.IsNullOrWhiteSpace(exception))
+                    if (string.IsNullOrWhiteSpace(exception))
                     {
-                        errorMessage += "; exception \"" + exception + "\"";
+                        ReportError("GetIngestStatus",
+                            string.Format("{0}; see {1}", errorMessage, statusURI));
+                    }
+                    else
+                    {
+                        ReportError("GetIngestStatus",
+                            string.Format("{0}; exception \"{1}\"; see {2}", errorMessage, exception, statusURI));
+
+                        if (exception.IndexOf("ConnectionTimeout", StringComparison.InvariantCultureIgnoreCase) >= 0)
+                        {
+                            errorMessage += "; ConnectionTimeout exception";
+                        }
+                        else
+                        {
+                            // Unrecognized exception; include the first 75 characters
+                            if (exception.Length < 80)
+                                errorMessage += "; exception " + exception;
+                            else
+                                errorMessage += "; exception " + exception.Substring(0, 75) + " ...";
+                        }
                     }
 
-                    ReportError("GetIngestStatus", errorMessage + "; see " + statusURI);
                     break;
 
                 default:
