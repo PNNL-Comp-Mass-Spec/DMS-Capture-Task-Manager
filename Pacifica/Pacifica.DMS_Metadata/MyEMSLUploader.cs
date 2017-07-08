@@ -146,8 +146,12 @@ namespace Pacifica.DMS_Metadata
 
             var jobNumber = GetParam("Job", 0);
 
+            var ignoreMyEMSLFileTrackingError = GetParam("IgnoreMyEMSLFileTrackingError", false);
+
             // Instantiate the metadata object
             _mdContainer = new DMSMetadataObject(config, mManagerName, jobNumber) {
+                TraceMode = TraceMode,
+                IgnoreMyEMSLFileTrackingError = ignoreMyEMSLFileTrackingError
             };
 
             // Attach the events
@@ -216,6 +220,24 @@ namespace Pacifica.DMS_Metadata
             return uploadSuccess;
         }
 
+        /// <summary>
+        /// Gets a job parameter
+        /// </summary>
+        /// <param name="name">Parameter name</param>
+        /// <param name="valueIfMissing">Value to return if the parameter does not exist</param>
+        /// <returns>Parameter value if found, otherwise empty string</returns>
+        private bool GetParam(string name, bool valueIfMissing)
+        {
+            if (m_TaskParams.TryGetValue(name, out var valueText))
+            {
+                if (bool.TryParse(valueText, out var value))
+                    return value;
+
+                return valueIfMissing;
+            }
+
+            return valueIfMissing;
+        }
 
         /// <summary>
         /// Gets a job parameter

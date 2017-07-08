@@ -293,8 +293,11 @@ namespace ArchiveVerifyPlugin
 
                 // Look for files that should have been uploaded, compute a Sha-1 hash for each, and compare those hashes to existing files in MyEMSL
 
+                var ignoreMyEMSLFileTrackingError = m_TaskParams.GetParam("IgnoreMyEMSLFileTrackingError", false);
+
                 var metadataObject = new DMSMetadataObject(config, m_MgrName, m_Job) {
                     TraceMode = m_TraceMode,
+                    IgnoreMyEMSLFileTrackingError = ignoreMyEMSLFileTrackingError
                 };
 
                 // Attach the events

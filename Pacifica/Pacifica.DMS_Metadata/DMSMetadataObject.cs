@@ -80,6 +80,19 @@ namespace Pacifica.DMS_Metadata
         /// <remarks>0 if no job number</remarks>
         public int JobNumber { get; }
 
+        /// <summary>
+        /// when True, allow the ingest step to proceed, even if MyEMSL is tracking fewer files than expected for a given dataset
+        /// </summary>
+        public bool IgnoreMyEMSLFileTrackingError { get; set; }
+
+        /// <summary>
+        /// Manager name
+        /// </summary>
+        public string ManagerName { get; }
+
+        /// <summary>
+        /// Object that tracks the upload details, including the files to upload
+        /// </summary>
         public List<Dictionary<string, object>> MetadataObject => mMetadataObject;
 
         /// <summary>
@@ -555,12 +568,31 @@ namespace Pacifica.DMS_Metadata
             if (expectedRemoteFileCount > 0 &&
                 remoteFiles.Count < expectedRemoteFileCount * matchTolerance)
             {
-                OnError("CompareDatasetContentsWithMyEMSLMetadata",
-                    string.Format("MyEMSL reported {0} files for Dataset ID {1}; it should be tracking at least {2} files",
-                    remoteFiles.Count, datasetID, expectedRemoteFileCount));
+                if (IgnoreMyEMSLFileTrackingError)
+                {
+                    OnWarning("CompareDatasetContentsWithMyEMSLMetadata",
+                        string.Format("MyEMSL reported {0} files for Dataset ID {1}; it should be tracking at least {2} files; " +
+                                      "ignoring because job paramater IgnoreMyEMSLFileTrackingError is True",
+                                      remoteFiles.Count, datasetID, expectedRemoteFileCount));
+                }
+                else
+                {
+                    var addUpdateJobParam =
+                        string.Format(
+                            "exec AddUpdateJobParameter @Job = {0}, " +
+                            "@Section = 'JobParameters', " +
+                            "@ParamName = 'IgnoreMyEMSLFileTrackingError', " +
+                            "@Value = 'True'",
+                            JobNumber);
 
-                criticalError = true;
-                return new List<FileInfoObject>();
+                    OnError("CompareDatasetContentsWithMyEMSLMetadata",
+                            string.Format("MyEMSL reported {0} files for Dataset ID {1}; it should be tracking at least {2} files; " +
+                                          "to ignore this message, define True for job parameter IgnoreMyEMSLFileTrackingError (use {3})",
+                                          remoteFiles.Count, datasetID, expectedRemoteFileCount, addUpdateJobParam));
+
+                    criticalError = true;
+                    return new List<FileInfoObject>();
+                }
             }
 
             // Compare the files in remoteFileInfoList to those in candidateFilesToUpload
