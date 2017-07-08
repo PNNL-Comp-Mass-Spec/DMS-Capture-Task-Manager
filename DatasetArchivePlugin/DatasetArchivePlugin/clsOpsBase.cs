@@ -61,8 +61,19 @@ namespace DatasetArchivePlugin
         /// </summary>
         public string ErrMsg => m_ErrMsg;
 
-        public bool TraceMode { get; private set; }
+        /// <summary>
+        /// True if the status indicates a critical error and there is no point in retrying
+        /// </summary>
+        public bool FailureDoNotRetry { get; set; }
 
+        /// <summary>
+        /// True to include additional log messages
+        /// </summary>
+        public bool TraceMode { get; }
+
+        /// <summary>
+        /// Warning message
+        /// </summary>
         public string WarningMsg => m_WarningMsg;
 
         #endregion

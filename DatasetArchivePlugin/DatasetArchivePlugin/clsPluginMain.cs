@@ -87,6 +87,10 @@ namespace DatasetArchivePlugin
             {
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 retData.CloseoutMsg = archOpTool.ErrMsg;
+
+                if (archOpTool.FailureDoNotRetry)
+                    retData.EvalCode = EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY;
+
             }
 
             if (!string.IsNullOrEmpty(archOpTool.WarningMsg))
