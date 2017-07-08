@@ -93,6 +93,7 @@ namespace ArchiveVerifyPlugin
                             mRetData.CloseoutMsg = string.Format(
                                 "{0} files did not match the metadata reported by MyEMSL", mTotalMismatchCount);
                             mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                            mRetData.EvalCode = EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY;
                         }
                         else
                         {
@@ -125,6 +126,11 @@ namespace ArchiveVerifyPlugin
                 // There was a problem (or the data is not yet ready in MyEMSL)
                 if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
                 {
+                    LogWarning(
+                        "Success is false yet CloseoutType is EnumCloseOutType.CLOSEOUT_SUCCESS; " +
+                        "track down where to properly change CloseoutType " +
+                        "(Job "+ m_Job + " on " + m_MgrName + ")", true);
+
                     mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
                     if (string.IsNullOrWhiteSpace(mRetData.CloseoutMsg))
                     {
@@ -218,7 +224,7 @@ namespace ArchiveVerifyPlugin
 
         /// <summary>
         /// Compare the files in archivedFiles to the files in the metadata.txt file
-        /// If metadata.txt file is missing, then compare to files actually on disk
+        /// If metadata.txt file is missing, compare to files actually on disk
         /// </summary>
         /// <param name="config">Pacifica configuration</param>
         /// <param name="archivedFiles"></param>
@@ -280,9 +286,14 @@ namespace ArchiveVerifyPlugin
 
                         mTotalMismatchCount += mismatchCountToMetadata;
 
-                        var matchStats = "MatchCount=" + matchCountToMetadata + ", MismatchCount=" + mismatchCountToMetadata;
-                        LogError(" ... sha1 mismatch between local files in metadata.txt file and MyEMSL; " + matchStats);
+                        var matchStats = "Sha-1 mismatch between local files in metadata.txt file and MyEMSL; " +
+                                         "MatchCount=" + matchCountToMetadata + ", " +
+                                         "MismatchCount=" + mismatchCountToMetadata;
+
+                        LogError(" ... " + matchStats);
                         mRetData.CloseoutMsg = matchStats;
+                        mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                        mRetData.EvalCode = EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY;
 
                         return false;
                     }
