@@ -171,12 +171,21 @@ namespace DatasetArchivePlugin
         /// <param name="recurse">True to find files in all subdirectories</param>
         /// <param name="debugMode">Debug mode options</param>
         /// <param name="useTestInstance">True to use the test instance</param>
+        /// <param name="allowRetry">True if the calling procedure should retry a failed upload</param>
         /// <param name="criticalErrorMessage">Output: critical error message</param>
         /// <returns>True if success, false if an error</returns>
-        protected bool UploadToMyEMSLWithRetry(int maxAttempts, bool recurse, EasyHttp.eDebugMode debugMode, bool useTestInstance, out string criticalErrorMessage)
+        protected bool UploadToMyEMSLWithRetry(
+            int maxAttempts,
+            bool recurse,
+            EasyHttp.eDebugMode debugMode,
+            bool useTestInstance,
+            out bool allowRetry,
+            out string criticalErrorMessage)
         {
             var bSuccess = false;
             var iAttempts = 0;
+
+            allowRetry = true;
             m_MyEmslUploadSuccess = false;
             criticalErrorMessage = string.Empty;
 
@@ -189,7 +198,6 @@ namespace DatasetArchivePlugin
 
                 Console.WriteLine("Uploading files for " + m_DatasetName + " to MyEMSL; attempt=" + iAttempts);
 
-                bool allowRetry;
                 bSuccess = UploadToMyEMSL(recurse, debugMode, useTestInstance, out allowRetry, out criticalErrorMessage);
 
                 if (!allowRetry)

@@ -80,15 +80,23 @@ namespace DatasetArchivePlugin
             const bool PUSH_TO_TEST_SERVER = false;
 
             var debugTestInstanceOnly = PUSH_TO_TEST_SERVER;
+
+            bool allowRetry;
             string criticalErrorMessage;
 
             if (!debugTestInstanceOnly)
             {
+                const bool USE_TEST_INSTANCE_FALSE = false;
+
                 var copySuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts, recurse, debugMode,
-                                                          false, out criticalErrorMessage);
+                                                          USE_TEST_INSTANCE_FALSE,
+                                                          out allowRetry, out criticalErrorMessage);
 
                 if (!string.IsNullOrWhiteSpace(criticalErrorMessage))
                     m_ErrMsg = criticalErrorMessage;
+
+                if (!allowRetry)
+                    FailureDoNotRetry = true;
 
                 if (!copySuccess)
                     return false;
@@ -124,7 +132,11 @@ namespace DatasetArchivePlugin
 
             // Also upload a copy of the data to the MyEMSL test server
 
-            var testCopySuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts, recurse, debugMode, true, out criticalErrorMessage);
+            const bool USE_TEST_INSTANCE_TRUE = true;
+
+            var testCopySuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts, recurse, debugMode,
+                                                          USE_TEST_INSTANCE_TRUE,
+                                                          out allowRetry, out criticalErrorMessage);
 
             if (!string.IsNullOrWhiteSpace(criticalErrorMessage))
                 m_ErrMsg = criticalErrorMessage;
