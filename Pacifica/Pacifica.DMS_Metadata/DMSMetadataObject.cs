@@ -64,45 +64,33 @@ namespace Pacifica.DMS_Metadata
 
         #region "Properties"
 
-        public string DatasetName
-        {
-            get;
-            private set;
-        }
+        /// <summary>
+        /// Dataset name
+        /// </summary>
+        public string DatasetName { get; private set; }
 
         /// <summary>
         /// EUS Info
         /// </summary>
-        public Upload.EUSInfo EUSInfo
-        {
-            get;
-            private set;
-        }
+        public Upload.EUSInfo EUSInfo { get; private set; }
 
-        public string ManagerName
-        {
-            get;
-        }
+        /// <summary>
+        /// Job number (in the DMS_Capture database)
+        /// </summary>
+        /// <remarks>0 if no job number</remarks>
+        public int JobNumber { get; }
 
         public List<Dictionary<string, object>> MetadataObject => mMetadataObject;
 
         /// <summary>
         /// Number of bytes to upload
         /// </summary>
-        public long TotalFileSizeToUpload
-        {
-            get;
-            set;
-        }
+        public long TotalFileSizeToUpload { get; set; }
 
         /// <summary>
         /// Number of new files pushed to MyEMSL
         /// </summary>
-        public int TotalFileCountNew
-        {
-            get;
-            set;
-        }
+        public int TotalFileCountNew { get; set; }
 
         /// <summary>
         /// Number of files updated in MyEMSL
@@ -130,14 +118,14 @@ namespace Pacifica.DMS_Metadata
         /// Constructor
         /// </summary>
         public DMSMetadataObject(Configuration config)
-            : this(config, string.Empty)
+            : this(config, string.Empty, 0)
         {
         }
 
         /// <summary>
         /// Constructor
         /// </summary>
-        public DMSMetadataObject(Configuration config, string managerName)
+        public DMSMetadataObject(Configuration config, string managerName, int jobNumber)
         {
             mPacificaConfig = config;
 
@@ -148,6 +136,9 @@ namespace Pacifica.DMS_Metadata
                 managerName = "DMSMetadataObject";
 
             ManagerName = managerName;
+
+            JobNumber = jobNumber;
+
             mFileTools = new clsFileTools(managerName, 1);
 
             mFileTools.WaitingForLockQueue += mFileTools_WaitingForLockQueue;

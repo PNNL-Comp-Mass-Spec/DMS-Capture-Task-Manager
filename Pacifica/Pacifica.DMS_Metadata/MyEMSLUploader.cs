@@ -144,9 +144,10 @@ namespace Pacifica.DMS_Metadata
         public bool SetupMetadataAndUpload(Configuration config, EasyHttp.eDebugMode debugMode, out string statusURL)
         {
 
+            var jobNumber = GetParam("Job", 0);
+
             // Instantiate the metadata object
-            _mdContainer = new DMSMetadataObject(config, mManagerName) {
-                TraceMode = TraceMode
+            _mdContainer = new DMSMetadataObject(config, mManagerName, jobNumber) {
             };
 
             // Attach the events
@@ -213,6 +214,26 @@ namespace Pacifica.DMS_Metadata
                 StatusURI = statusURL;
 
             return uploadSuccess;
+        }
+
+
+        /// <summary>
+        /// Gets a job parameter
+        /// </summary>
+        /// <param name="name">Parameter name</param>
+        /// <param name="valueIfMissing">Value to return if the parameter does not exist</param>
+        /// <returns>Parameter value if found, otherwise empty string</returns>
+        private int GetParam(string name, int valueIfMissing)
+        {
+            if (m_TaskParams.TryGetValue(name, out var valueText))
+            {
+                if (int.TryParse(valueText, out var value))
+                    return value;
+
+                return valueIfMissing;
+            }
+
+            return valueIfMissing;
         }
 
         #region "Events and Event Handlers"
