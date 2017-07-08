@@ -57,7 +57,9 @@ namespace CaptureTaskManager
         protected bool m_NeedToAbortProcessing = false;
 
         protected string m_WorkDir;
+
         protected string m_Dataset;
+
         protected int m_Job;
 
         protected int m_DatasetID;

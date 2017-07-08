@@ -37,8 +37,7 @@ namespace ArchiveVerifyPlugin
         /// <returns>Class with completionCode, completionMessage, evaluationCode, and evaluationMessage</returns>
         public override clsToolReturnData RunTool()
         {
-            var msg = "Starting ArchiveVerifyPlugin.clsPluginMain.RunTool()";
-            LogDebug(msg);
+            LogDebug("Starting ArchiveVerifyPlugin.clsPluginMain.RunTool");
 
             // Perform base class operations, if any
             mRetData = base.RunTool();
@@ -68,8 +67,8 @@ namespace ArchiveVerifyPlugin
             {
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;       // Possibly instead use CLOSEOUT_NOT_READY
                 mRetData.CloseoutMsg = "Exception checking archive status (ArchiveVerifyPlugin): " + ex.Message;
-                msg = "Exception checking archive status for job " + m_Job;
-                LogError(msg, ex);
+
+                LogError("Exception checking archive status for job " + m_Job, ex);
 
                 statusNum = 0;
                 ingestStepsCompleted = 0;
@@ -133,8 +132,7 @@ namespace ArchiveVerifyPlugin
                 }
             }
 
-            msg = "Completed clsPluginMain.RunTool()";
-            LogDebug(msg);
+            LogDebug("Completed clsPluginMain.RunTool");
 
             return mRetData;
 

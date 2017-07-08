@@ -47,7 +47,7 @@ namespace CaptureTaskManager
         #region "Methods"
 
         /// <summary>
-        /// Gets a stored parameter
+        /// Gets a job task parameter
         /// </summary>
         /// <param name="name">Parameter name</param>
         /// <returns>Parameter value if found, otherwise empty string</returns>
@@ -57,7 +57,7 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Gets a stored parameter
+        /// Gets a job task parameter
         /// </summary>
         /// <param name="name">Parameter name</param>
         /// <param name="valueIfMissing">Value to return if the parameter does not exist</param>
@@ -73,7 +73,7 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Gets a stored parameter
+        /// Gets a job task parameter
         /// </summary>
         /// <param name="name">Parameter name</param>
         /// <param name="valueIfMissing">Value to return if the parameter does not exist</param>
@@ -92,7 +92,7 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Gets a stored parameter
+        /// Gets a job task parameter
         /// </summary>
         /// <param name="name">Parameter name</param>
         /// <param name="valueIfMissing">Value to return if the parameter does not exist</param>
@@ -111,7 +111,7 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Gets a stored parameter
+        /// Gets a job task parameter
         /// </summary>
         /// <param name="name">Parameter name</param>
         /// <param name="valueIfMissing">Value to return if the parameter does not exist</param>

@@ -484,7 +484,7 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Gets a stored parameter
+        /// Gets a manager parameter
         /// </summary>
         /// <param name="itemKey">Parameter name</param>
         /// <param name="valueIfMissing">Value to return if the parameter does not exist</param>
@@ -500,7 +500,7 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Gets a stored parameter
+        /// Gets a manager parameter
         /// </summary>
         /// <param name="itemKey">Parameter name</param>
         /// <param name="valueIfMissing">Value to return if the parameter does not exist</param>
@@ -517,7 +517,7 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Gets a stored parameter
+        /// Gets a manager parameter
         /// </summary>
         /// <param name="itemKey">Parameter name</param>
         /// <param name="valueIfMissing">Value to return if the parameter does not exist</param>
