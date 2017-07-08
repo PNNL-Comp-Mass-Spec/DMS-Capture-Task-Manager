@@ -35,7 +35,7 @@ namespace DatasetArchivePlugin
         protected ITaskParams m_TaskParams;
         private readonly IStatusFile m_StatusTools;
 
-        private string m_ErrMsg = string.Empty;
+        protected string m_ErrMsg = string.Empty;
         private string m_WarningMsg = string.Empty;
         private string m_DSNamePath;
 
@@ -55,6 +55,7 @@ namespace DatasetArchivePlugin
         #endregion
 
         #region "Properties"
+
         /// <summary>
         /// Implements IArchiveOps.ErrMsg
         /// </summary>
@@ -163,11 +164,21 @@ namespace DatasetArchivePlugin
             return text + append;
         }
 
-        protected bool UploadToMyEMSLWithRetry(int maxAttempts, bool recurse, EasyHttp.eDebugMode debugMode, bool useTestInstance)
+        /// <summary>
+        /// Use MyEMSLUploader to upload the data to MyEMSL, trying up to maxAttempts times
+        /// </summary>
+        /// <param name="maxAttempts">Maximum upload attempts</param>
+        /// <param name="recurse">True to find files in all subdirectories</param>
+        /// <param name="debugMode">Debug mode options</param>
+        /// <param name="useTestInstance">True to use the test instance</param>
+        /// <param name="criticalErrorMessage">Output: critical error message</param>
+        /// <returns>True if success, false if an error</returns>
+        protected bool UploadToMyEMSLWithRetry(int maxAttempts, bool recurse, EasyHttp.eDebugMode debugMode, bool useTestInstance, out string criticalErrorMessage)
         {
             var bSuccess = false;
             var iAttempts = 0;
             m_MyEmslUploadSuccess = false;
+            criticalErrorMessage = string.Empty;
 
             if (maxAttempts < 1)
                 maxAttempts = 1;
@@ -179,7 +190,7 @@ namespace DatasetArchivePlugin
                 Console.WriteLine("Uploading files for " + m_DatasetName + " to MyEMSL; attempt=" + iAttempts);
 
                 bool allowRetry;
-                bSuccess = UploadToMyEMSL(recurse, debugMode, useTestInstance, out allowRetry);
+                bSuccess = UploadToMyEMSL(recurse, debugMode, useTestInstance, out allowRetry, out criticalErrorMessage);
 
                 if (!allowRetry)
                     break;
@@ -211,10 +222,15 @@ namespace DatasetArchivePlugin
         }
 
         /// <summary>
-        /// Use MyEMSLUploader to upload the data to MyEMSL
+        /// Use MyEMSLUploader to upload the data to MyEMSL, trying up to maxAttempts times
         /// </summary>
+        /// <param name="recurse">True to find files in all subdirectories</param>
+        /// <param name="debugMode">Debug mode options</param>
+        /// <param name="useTestInstance">True to use the test instance</param>
+        /// <param name="allowRetry">Output: whether the upload should be retried if it failed</param>
+        /// <param name="criticalErrorMessage">Output: critical error message</param>
         /// <returns>True if success, false if an error</returns>
-        private bool UploadToMyEMSL(bool recurse, EasyHttp.eDebugMode debugMode, bool useTestInstance, out bool allowRetry)
+        private bool UploadToMyEMSL(bool recurse, EasyHttp.eDebugMode debugMode, bool useTestInstance, out bool allowRetry, out string criticalErrorMessage)
         {
             bool success;
             var dtStartTime = DateTime.UtcNow;
@@ -223,6 +239,7 @@ namespace DatasetArchivePlugin
             var operatorUsername = "??";
 
             allowRetry = true;
+            criticalErrorMessage = string.Empty;
 
             try
             {
@@ -265,8 +282,12 @@ namespace DatasetArchivePlugin
                 // Start the upload
                 success = myEMSLUL.SetupMetadataAndUpload(config, debugMode, out statusURL);
 
-                if (string.Equals(statusURL, MyEMSLUploader.CRITICAL_UPLOAD_ERROR))
+                criticalErrorMessage = myEMSLUL.CriticalErrorMessage;
+
+                if (!string.IsNullOrWhiteSpace(criticalErrorMessage) || string.Equals(statusURL, MyEMSLUploader.CRITICAL_UPLOAD_ERROR))
+                {
                     allowRetry = false;
+                }
 
                 var tsElapsedTime = DateTime.UtcNow.Subtract(dtStartTime);
 

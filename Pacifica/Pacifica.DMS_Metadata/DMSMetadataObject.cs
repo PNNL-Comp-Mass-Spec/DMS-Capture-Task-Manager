@@ -164,12 +164,14 @@ namespace Pacifica.DMS_Metadata
         /// <param name="mgrParams"></param>
         /// <param name="debugMode"></param>
         /// <param name="criticalError"></param>
+        /// <param name="criticalErrorMessage"></param>
         /// <returns>True if success, otherwise false</returns>
         public bool SetupMetadata(
             Dictionary<string, string> taskParams,
             Dictionary<string, string> mgrParams,
             EasyHttp.eDebugMode debugMode,
-            out bool criticalError)
+            out bool criticalError,
+            out string criticalErrorMessage)
         {
 
             // Could use this to ignore all certificates (not wise)
@@ -202,7 +204,8 @@ namespace Pacifica.DMS_Metadata
                 captureDbConnectionString,
                 lstDatasetFilesToArchive,
                 uploadMetadata,
-                out criticalError);
+                out criticalError,
+                out criticalErrorMessage);
 
             if (criticalError)
                 return false;
@@ -430,7 +433,7 @@ namespace Pacifica.DMS_Metadata
         /// </summary>
         /// <param name="pathToBeArchived">Folder path to be archived</param>
         /// <param name="baseDSPath">Base dataset folder path</param>
-        /// <param name="recurse">True to recurse</param>
+        /// <param name="recurse">True to find files in all subdirectories</param>
         /// <returns></returns>
         private List<FileInfoObject> CollectFileInformation(
             string pathToBeArchived,
@@ -519,12 +522,14 @@ namespace Pacifica.DMS_Metadata
         /// <param name="candidateFilesToUpload">List of local files</param>
         /// <param name="uploadMetadata">Upload metadata</param>
         /// <param name="criticalError">Output: set to true if the job should be failed</param>
+        /// <param name="criticalErrorMessage">Output: explanation of the critical error</param>
         /// <returns>List of files that need to be uploaded</returns>
         private List<FileInfoObject> CompareDatasetContentsWithMyEMSLMetadata(
             string captureDbConnectionString,
             IEnumerable<FileInfoObject> candidateFilesToUpload,
             Upload.UploadMetadata uploadMetadata,
-            out bool criticalError)
+            out bool criticalError,
+            out string criticalErrorMessage)
         {
             TotalFileCountNew = 0;
             TotalFileCountUpdated = 0;
@@ -548,7 +553,8 @@ namespace Pacifica.DMS_Metadata
 
             if (expectedRemoteFileCount < 0)
             {
-                OnError("CompareDatasetContentsWithMyEMSLMetadata", "Aborting upload since GetDatasetFileCountExpectedInMyEMSL returned -1");
+                criticalErrorMessage = "Aborting upload since GetDatasetFileCountExpectedInMyEMSL returned -1";
+                OnError("CompareDatasetContentsWithMyEMSLMetadata", criticalErrorMessage);
                 criticalError = true;
                 return new List<FileInfoObject>();
             }
@@ -585,10 +591,11 @@ namespace Pacifica.DMS_Metadata
                             "@Value = 'True'",
                             JobNumber);
 
-                    OnError("CompareDatasetContentsWithMyEMSLMetadata",
-                            string.Format("MyEMSL reported {0} files for Dataset ID {1}; it should be tracking at least {2} files; " +
-                                          "to ignore this message, define True for job parameter IgnoreMyEMSLFileTrackingError (use {3})",
-                                          remoteFiles.Count, datasetID, expectedRemoteFileCount, addUpdateJobParam));
+                    criticalErrorMessage = string.Format("MyEMSL reported {0} files for Dataset ID {1}; it should be tracking at least {2} files; " +
+                                                         "to ignore this message, define True for job parameter IgnoreMyEMSLFileTrackingError (use {3})",
+                                                         remoteFiles.Count, datasetID, expectedRemoteFileCount, addUpdateJobParam);
+
+                    OnError("CompareDatasetContentsWithMyEMSLMetadata", criticalErrorMessage);
 
                     criticalError = true;
                     return new List<FileInfoObject>();
@@ -624,6 +631,7 @@ namespace Pacifica.DMS_Metadata
                 TotalFileSizeToUpload += fileObj.FileSizeInBytes;
             }
 
+            criticalErrorMessage = string.Empty;
             criticalError = false;
             return missingFiles;
 

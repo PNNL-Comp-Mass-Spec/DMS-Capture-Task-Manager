@@ -21,6 +21,10 @@ namespace Pacifica.DMS_Metadata
 
         private readonly Configuration mPacificaConfig;
 
+        /// <summary>
+        /// Critical error message, as reported by SetupMetadata in DMSMetadataObject
+        /// </summary>
+        public string CriticalErrorMessage { get; private set; }
         public string ErrorMessage
         {
             get
@@ -59,6 +63,8 @@ namespace Pacifica.DMS_Metadata
             FileCountUpdated = 0;
             Bytes = 0;
             ErrorCode = string.Empty;
+
+            CriticalErrorMessage = string.Empty;
 
             EUSInfo = new Upload.EUSInfo();
             EUSInfo.Clear();
@@ -168,10 +174,13 @@ namespace Pacifica.DMS_Metadata
             }
 
             // Look for files to upload, compute a Sha-1 hash for each, and compare those hashes to existing files in MyEMSL
-            var success = _mdContainer.SetupMetadata(m_TaskParams, m_MgrParams, debugMode, out var criticalError);
+            var success = _mdContainer.SetupMetadata(m_TaskParams, m_MgrParams, debugMode, out var criticalError, out var criticalErrorMessage);
 
             if (!success)
             {
+                if (criticalError)
+                    CriticalErrorMessage = criticalErrorMessage;
+
                 statusURL = criticalError ? CRITICAL_UPLOAD_ERROR : string.Empty;
 
                 return false;
