@@ -65,7 +65,7 @@ namespace ArchiveVerifyPlugin
             }
             catch (Exception ex)
             {
-                mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;       // Possibly instead use CLOSEOUT_NOT_READY
+                mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 mRetData.CloseoutMsg = "Exception checking archive status (ArchiveVerifyPlugin): " + ex.Message;
 
                 LogError("Exception checking archive status for job " + m_Job, ex);
@@ -926,6 +926,7 @@ namespace ArchiveVerifyPlugin
                         msg += " and subdirectory " + subDir;
 
                     mRetData.CloseoutMsg = msg;
+
                     LogError(" ... " + msg);
                     transactionId = 0;
                     return false;
