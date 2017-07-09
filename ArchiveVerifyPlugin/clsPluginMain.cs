@@ -44,6 +44,11 @@ namespace ArchiveVerifyPlugin
             if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
                 return mRetData;
 
+            // Do not call StoreToolVersionInfo to store the version info in the database
+            // Not required since the ArchiveVerify plugin uses components whose version was
+            // already logged by the DatasetArchive plugin, and we don't need to make the
+            // additional database call to SetStepTaskToolVersion
+
             var writeToLog = m_DebugLevel >= 5;
             LogDebug("Verifying files in MyEMSL for dataset '" + m_Dataset + "'", writeToLog);
 
