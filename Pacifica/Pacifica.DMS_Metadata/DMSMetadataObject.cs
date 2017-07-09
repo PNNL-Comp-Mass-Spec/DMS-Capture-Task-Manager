@@ -811,7 +811,9 @@ namespace Pacifica.DMS_Metadata
             var queryString = string.Format(
                 "SELECT SUM(FileCountNew) AS Files " +
                 "FROM V_MyEMSL_Uploads " +
-                "WHERE Dataset_ID = {0} AND (Verified > 0 OR Ingest_Steps_Completed >= 7)",
+                "WHERE Dataset_ID = {0} AND " +
+                      "(Verified > 0 AND Ingest_Steps_Completed >= 5 OR " +
+                      " Ingest_Steps_Completed >= 7)",
                 datasetID);
 
             while (retryCount >= 0)
