@@ -17,6 +17,16 @@ namespace Pacifica.Core
         public const string TEST_POLICY_SERVER_HOST_NAME = "policydmsdev.my.emsl.pnl.gov";
 
         /// <summary>
+        /// Cart Server host name on the production server
+        /// </summary>
+        public const string DEFAULT_CART_SERVER_HOST_NAME = "cart.my.emsl.pnl.gov";
+
+        /// <summary>
+        /// File Server host name on the production server
+        /// </summary>
+        public const string DEFAULT_FILE_SERVER_HOST_NAME = "files.my.emsl.pnl.gov";
+
+        /// <summary>
         /// Metadata Server host name on the production server
         /// </summary>
         public const string DEFAULT_METADATA_SERVER_HOST_NAME = "metadata.my.emsl.pnl.gov";
@@ -67,6 +77,29 @@ namespace Pacifica.Core
         private const string SECURED_SCHEME = "https";
         public string SecuredScheme => SECURED_SCHEME;
 
+        /// <summary>
+        /// Server for downloading files via a cart
+        /// </summary>
+        public string CartServerHostName { get; set; }
+
+        /// <summary>
+        /// Cart download server, default https://cart.my.emsl.pnl.gov
+        /// </summary>
+        public string CartServerUri => Scheme + CartServerHostName;
+
+        /// <summary>
+        /// Server for retrieving files one file at a time
+        /// </summary>
+        public string FileServerHostName { get; set; }
+
+        /// <summary>
+        /// File download server, default https://files.my.emsl.pnl.gov
+        /// </summary>
+        public string FileServerUri => Scheme + FileServerHostName;
+
+        /// <summary>
+        /// Ingest server name
+        /// </summary>
         public string IngestServerHostName { get; set; }
 
         /// <summary>
@@ -103,6 +136,8 @@ namespace Pacifica.Core
 
             UseSecureDataTransfer = true;
 
+            CartServerHostName = DEFAULT_CART_SERVER_HOST_NAME;
+            FileServerHostName = DEFAULT_FILE_SERVER_HOST_NAME;
             IngestServerHostName = DEFAULT_INGEST_HOST_NAME;
             PolicyServerHostName = DEFAULT_POLICY_SERVER_HOST_NAME;
             MetadataServerHostName = DEFAULT_METADATA_SERVER_HOST_NAME;
