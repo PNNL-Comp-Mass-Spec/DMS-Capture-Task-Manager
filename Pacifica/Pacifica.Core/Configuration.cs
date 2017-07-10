@@ -103,28 +103,34 @@ namespace Pacifica.Core
         public string IngestServerHostName { get; set; }
 
         /// <summary>
-        /// By default, returns https://ingest.my.emsl.pnl.gov
+        /// Ingest server, default https://ingest.my.emsl.pnl.gov
         /// </summary>
         public string IngestServerUri => Scheme + IngestServerHostName;
 
+        /// <summary>
+        /// Policy server name
+        /// </summary>
         public string PolicyServerHostName { get; set; }
 
         /// <summary>
-        /// By default, returns https://policy.my.emsl.pnl.gov
+        /// Policy server, default https://policy.my.emsl.pnl.gov
         /// </summary>
         public string PolicyServerUri => Scheme + PolicyServerHostName;
 
+        /// <summary>
+        /// Metadata server name
+        /// </summary>
         public string MetadataServerHostName { get; set; }
 
         /// <summary>
-        /// By default, returns https://metadata.my.emsl.pnl.gov
+        /// Metadata server, default https://metadata.my.emsl.pnl.gov
         /// </summary>
         public string MetadataServerUri => Scheme + MetadataServerHostName;
 
         /// <summary>
-        /// Proxy server URL
+        /// Proxy server, default empty string
         /// </summary>
-        /// <remarks>Ignored if an empty string (which is default)</remarks>
+        /// <remarks>Ignored if an empty string</remarks>
         public string HttpProxyUrl { get; set; }
 
         /// <summary>
