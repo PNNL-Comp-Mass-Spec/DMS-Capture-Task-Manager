@@ -214,9 +214,8 @@ namespace Pacifica.DMS_Metadata
             if (lstUnmatchedFiles.Count > 0)
             {
                 var mdJSON = Utilities.ObjectToJson(mMetadataObject);
-                if (!CheckMetadataValidity(mdJSON, out string validityMessage))
+                if (!CheckMetadataValidity(mdJSON, out _))
                 {
-                    OnError("SetupMetadata", validityMessage);
                     return false;
                 }
             }
@@ -878,7 +877,7 @@ namespace Pacifica.DMS_Metadata
                 OnDebugEvent("Contacting " + metadataURL);
 
             // Retrieve a list of files already in MyEMSL for this dataset
-            var fileInfoListJSON = EasyHttp.Send(mPacificaConfig, metadataURL, out HttpStatusCode responseStatusCode);
+            var fileInfoListJSON = EasyHttp.Send(mPacificaConfig, metadataURL, out _);
 
             if (string.IsNullOrEmpty(fileInfoListJSON))
             {

@@ -363,7 +363,7 @@ namespace Pacifica.Core
                 }
                 else
                 {
-                    statusResult = EasyHttp.Send(mPacificaConfig, statusURI, out HttpStatusCode responseStatusCode);
+                    statusResult = EasyHttp.Send(mPacificaConfig, statusURI, out _);
                 }
 
                 var statusJSON = Utilities.JsonToObject(statusResult);
@@ -723,16 +723,16 @@ namespace Pacifica.Core
 
             foreach (var item in metadataObject)
             {
-                if (!GetDictionaryValue(item, "destinationTable", out string tableName))
+                if (!GetDictionaryValue(item, "destinationTable", out var tableName))
                     continue;
 
                 if (tableName == "TransactionKeyValue")
                 {
-                    if (GetDictionaryValue(item, "key", out string keyName))
+                    if (GetDictionaryValue(item, "key", out var keyName))
                     {
-                        if (GetDictionaryValue(item, "value", out string keyValue))
+                        if (GetDictionaryValue(item, "value", out var keyValue))
                         {
-                            if (GetDictionaryValue(kvLookup, keyName, out string valueDescription))
+                            if (GetDictionaryValue(kvLookup, keyName, out var valueDescription))
                             {
                                 metadataList.Add(valueDescription + "=" + keyValue);
                                 matchedKeys.Add(valueDescription);
@@ -761,7 +761,7 @@ namespace Pacifica.Core
                         }
 
                         // Include the value for this item in the description
-                        if (GetDictionaryValue(item, "value", out string keyValue))
+                        if (GetDictionaryValue(item, "value", out var keyValue))
                         {
                             metadataList.Add(valueDescription + "=" + keyValue);
                             matchedKeys.Add(valueDescription);
@@ -776,7 +776,7 @@ namespace Pacifica.Core
 
         private static bool GetDictionaryValue(IReadOnlyDictionary<string, object> eusInfoMapObject, string keyName, out string matchedValue)
         {
-            if (eusInfoMapObject.TryGetValue(keyName, out object value))
+            if (eusInfoMapObject.TryGetValue(keyName, out var value))
             {
                 matchedValue = value as string;
                 if (matchedValue != null)

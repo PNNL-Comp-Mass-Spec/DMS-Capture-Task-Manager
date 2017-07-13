@@ -81,9 +81,7 @@ namespace Pacifica.Core
             // https://metadata.my.emsl.pnl.gov/files?hashsum=7b05677da8a6a5c8d033e56dd36ab5445ae44860
             var metadataURL = mPacificaConfig.MetadataServerUri + "/files?hashsum=" + fileSHA1HashSum;
 
-            HttpStatusCode responseStatusCode;
-
-            var fileListJSON = EasyHttp.Send(mPacificaConfig, metadataURL, out responseStatusCode);
+            var fileListJSON = EasyHttp.Send(mPacificaConfig, metadataURL, out var responseStatusCode);
 
             // Example response for just one file (hashsum=0a7bcbcf4085abc41bdbd98724f3e5c567726c56)
             // [{"mimetype": "application/octet-stream", "updated": "2017-07-02T23:54:53", "name": "QC_Mam_16_01_125ng_HCD-3_30Jun17_Frodo_REP-17-06-01_msgfplus_syn_ProteinMods.txt", "created": "2017-07-02T23:54:53", "deleted": null, "size": 899907, "hashsum": "0a7bcbcf4085abc41bdbd98724f3e5c567726c56", "hashtype": "sha1", "subdir": "MSG201707021504_Auto1467864", "mtime": "2017-07-02T23:49:14", "_id": 15578789, "encoding": "UTF8", "transaction_id": 1302996, "ctime": "2017-07-02T23:53:28"}]

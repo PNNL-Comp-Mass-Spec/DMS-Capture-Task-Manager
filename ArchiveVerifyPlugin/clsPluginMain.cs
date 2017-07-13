@@ -308,6 +308,8 @@ namespace ArchiveVerifyPlugin
 
                 var ignoreMyEMSLFileTrackingError = m_TaskParams.GetParam("IgnoreMyEMSLFileTrackingError", false);
 
+                var config = new Configuration();
+
                 var metadataObject = new DMSMetadataObject(config, m_MgrName, m_Job) {
                     TraceMode = m_TraceMode,
                     IgnoreMyEMSLFileTrackingError = ignoreMyEMSLFileTrackingError
@@ -319,7 +321,7 @@ namespace ArchiveVerifyPlugin
                 var lstDatasetFilesLocal = metadataObject.FindDatasetFilesToArchive(
                     m_TaskParams.TaskDictionary,
                     m_MgrParams.TaskDictionary,
-                    out var uploadMetadata);
+                    out _);
 
                 if (lstDatasetFilesLocal.Count == 0)
                 {

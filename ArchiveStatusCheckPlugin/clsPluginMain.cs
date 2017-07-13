@@ -100,9 +100,6 @@ namespace ArchiveStatusCheckPlugin
             // Keys in dctStatusData are StatusNum integers, values are instances of class clsIngestStatusInfo
             var dctStatusData = GetStatusURIs();
 
-            // Keys in this dictionary are StatusNum; values are critical error messages
-            Dictionary<int, string> dctCriticalErrors;
-
             string msg;
 
             if (dctStatusData.Count == 0)
@@ -121,9 +118,10 @@ namespace ArchiveStatusCheckPlugin
 
             // Check the status of each of the URIs
             // Keys in dctUnverifiedURIs and dctVerifiedURIs are StatusNum; values are StatusURI strings
+            // Keys in dctCriticalErrors are StatusNum; values are critical error messages
 
             CheckStatusURIs(statusChecker, dctStatusData,
-                out var dctUnverifiedURIs, out var dctVerifiedURIs, out dctCriticalErrors);
+                out var dctUnverifiedURIs, out var dctVerifiedURIs, out var dctCriticalErrors);
 
             if (dctVerifiedURIs.Count > 0)
             {
@@ -367,7 +365,7 @@ namespace ArchiveStatusCheckPlugin
             // Keys in this dictionary are StatusNum integers
             var dctStatusData = new Dictionary<int, clsIngestStatusInfo>();
 
-            // First look for a specific Status_URI for this joB
+            // First look for a specific Status_URI for this job
             // Only DatasetArchive or ArchiveUpdate jobs will have this job parameter
             // MyEMSLVerify will not have this parameter
             var statusURI = m_TaskParams.GetParam("MyEMSL_Status_URI", string.Empty);
@@ -468,7 +466,7 @@ namespace ArchiveStatusCheckPlugin
                             var eusUploaderID = clsConversion.GetDbValue(reader, 6, 0);
                             var errorCode = clsConversion.GetDbValue(reader, 7, 0);
 
-                            if (!dctStatusData.TryGetValue(statusNum, out clsIngestStatusInfo statusInfo))
+                            if (!dctStatusData.TryGetValue(statusNum, out var statusInfo))
                             {
                                 statusInfo = new clsIngestStatusInfo(statusNum, uri);
                                 dctStatusData.Add(statusNum, statusInfo);
