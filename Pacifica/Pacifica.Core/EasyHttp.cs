@@ -6,6 +6,7 @@ using System.Net;
 using ICSharpCode.SharpZipLib.Tar;
 using PRISM;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 
 namespace Pacifica.Core
 {
@@ -338,7 +339,7 @@ namespace Pacifica.Core
         }
 
         /// <summary>
-        ///
+        /// Get or post data to a URL
         /// </summary>
         /// <param name="config"></param>
         /// <param name="url"></param>
@@ -511,6 +512,8 @@ namespace Pacifica.Core
 
             AppendFolderToTar(tarOutputStream, diDummyDataFolder, "data", ref bytesWritten);
 
+            var startTime = DateTime.UtcNow;
+
             foreach (var fileToArchive in fileListObject)
             {
                 var fiSourceFile = new FileInfo(fileToArchive.Key);
@@ -531,9 +534,12 @@ namespace Pacifica.Core
 
                 AppendFileToTar(tarOutputStream, fiSourceFile, fileToArchive.Value.RelativeDestinationFullPath, ref bytesWritten);
 
-                if (DateTime.UtcNow.Subtract(lastStatusUpdateTime).TotalSeconds >= 2)
+                // Initially limit status updates to every 3 seconds
+                // Increase the time between updates as upload time progresses, with a maximum interval of 90 seconds
+                var statusIntervalSeconds = Math.Max(90, 3 + DateTime.UtcNow.Subtract(startTime).TotalSeconds / 10);
+
+                if (DateTime.UtcNow.Subtract(lastStatusUpdateTime).TotalSeconds >= statusIntervalSeconds)
                 {
-                    // Limit status updates to every 2 seconds
                     RaiseStatusUpdate(percentComplete, bytesWritten, contentLength, string.Empty);
                     lastStatusUpdateTime = DateTime.UtcNow;
                 }
