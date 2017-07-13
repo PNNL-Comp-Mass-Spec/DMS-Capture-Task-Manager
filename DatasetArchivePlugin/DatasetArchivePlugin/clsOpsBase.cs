@@ -251,7 +251,6 @@ namespace DatasetArchivePlugin
         /// <returns>True if success, false if an error</returns>
         private bool UploadToMyEMSL(bool recurse, EasyHttp.eDebugMode debugMode, bool useTestInstance, out bool allowRetry, out string criticalErrorMessage)
         {
-            bool success;
             var dtStartTime = DateTime.UtcNow;
 
             MyEMSLUploader myEMSLUL = null;
@@ -297,7 +296,7 @@ namespace DatasetArchivePlugin
                 }
 
                 // Start the upload
-                success = myEMSLUL.SetupMetadataAndUpload(config, debugMode, out statusURL);
+                var success = myEMSLUL.SetupMetadataAndUpload(config, debugMode, out statusURL);
 
                 criticalErrorMessage = myEMSLUL.CriticalErrorMessage;
 
@@ -327,11 +326,9 @@ namespace DatasetArchivePlugin
                     OnErrorEvent(statusMessage);
                     return false;
                 }
-                else
-                {
-                    if (myEMSLUL.FileCountNew + myEMSLUL.FileCountUpdated > 0 || !string.IsNullOrEmpty(statusURL))
-                        OnStatusEvent(statusMessage);
-                }
+
+                if (myEMSLUL.FileCountNew + myEMSLUL.FileCountUpdated > 0 || !string.IsNullOrEmpty(statusURL))
+                    OnStatusEvent(statusMessage);
 
                 // Raise an event with the stats
                 // This will cause clsPluginMain to call StoreMyEMSLUploadStats to store the results in the database (Table T_MyEmsl_Uploads)
@@ -345,6 +342,8 @@ namespace DatasetArchivePlugin
                 OnMyEMSLUploadComplete(e);
 
                 m_StatusTools.UpdateAndWrite(100);
+
+                return success;
 
             }
             catch (Exception ex)

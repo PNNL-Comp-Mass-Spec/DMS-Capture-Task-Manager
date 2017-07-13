@@ -28,9 +28,8 @@ namespace DatasetArchivePlugin
 
         #region "Classwide Variables"
 
-        bool mSubmittedToMyEMSL;
-
-        bool mMyEMSLAlreadyUpToDate;
+        private bool mSubmittedToMyEMSL;
+        private bool mMyEMSLAlreadyUpToDate;
 
         #endregion
 
@@ -153,7 +152,7 @@ namespace DatasetArchivePlugin
         protected bool StoreMyEMSLUploadStats(
             int fileCountNew,
             int fileCountUpdated,
-            Int64 bytes,
+            long bytes,
             double uploadTimeSeconds,
             string statusURI,
             int eusInstrumentID,
@@ -162,7 +161,6 @@ namespace DatasetArchivePlugin
             int errorCode,
             bool usedTestInstance)
         {
-            bool Outcome;
 
             mSubmittedToMyEMSL = true;
 
@@ -216,23 +214,17 @@ namespace DatasetArchivePlugin
 
                 if (resCode == 0)
                 {
-                    Outcome = true;
-                }
-                else
-                {
-                    var Msg = "Error " + resCode + " storing MyEMSL Upload Stats";
-                    LogError(Msg);
-                    Outcome = false;
+                    return true;
                 }
 
+                LogError("Error " + resCode + " storing MyEMSL Upload Stats");
+                return false;
             }
             catch (Exception ex)
             {
                 LogError("Exception storing the MyEMSL upload stats: " + ex.Message);
-                Outcome = false;
+                return false;
             }
-
-            return Outcome;
 
         }
 
