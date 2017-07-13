@@ -6,6 +6,7 @@ using System.Data;
 using System.Linq;
 using System.Net;
 using System.Data.SqlClient;
+using System.Runtime.InteropServices;
 
 namespace ArchiveStatusCheckPlugin
 {
@@ -94,7 +95,6 @@ namespace ArchiveStatusCheckPlugin
         {
 
             // Examine the upload status for any uploads for this dataset, filtering on job number to ignore jobs created after this job
-
             // First obtain a list of status URIs to check
 
             // Keys in dctStatusData are StatusNum integers, values are instances of class clsIngestStatusInfo
@@ -147,7 +147,6 @@ namespace ArchiveStatusCheckPlugin
                     dctVerifiedURIs,
                     dctStatusData);
             }
-
 
             if (dctVerifiedURIs.Count == dctStatusData.Count)
             {

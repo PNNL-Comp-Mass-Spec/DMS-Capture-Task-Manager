@@ -349,7 +349,6 @@ namespace Pacifica.DMS_Metadata
 
         private bool CheckMetadataValidity(string mdJSON, out string validityMessage)
         {
-            var mdIsValid = false;
             var policyURL = mPacificaConfig.PolicyServerUri + "/ingest";
             validityMessage = string.Empty;
 
@@ -467,7 +466,7 @@ namespace Pacifica.DMS_Metadata
                 throw new ArgumentOutOfRangeException("Source directory has over " + MAX_FILES_TO_ARCHIVE + " files; files must be zipped before upload to MyEMSL");
             }
 
-            var fracCompleted = 0.0;
+            var fracCompleted = 0f;
 
             // Generate file size sum for status purposes
             long totalFileSize = 0;             // how much data is there to crunch?
@@ -547,7 +546,7 @@ namespace Pacifica.DMS_Metadata
 
             var datasetID = uploadMetadata.DatasetID;
 
-            // Keys in dictionary remoteFiles are relative file paths (unix style) and values are file details
+            // Keys in dictionary remoteFiles are relative file paths (Unix style paths) and values are file details
             // A given remote file could have multiple hash values if multiple versions of the file have been uploaded
             var remoteFiles = GetDatasetFilesInMyEMSL(datasetID);
 
@@ -865,18 +864,19 @@ namespace Pacifica.DMS_Metadata
         /// Find files in MyEMSL associated with the given dataset ID
         /// </summary>
         /// <param name="datasetID">Dataset ID</param>
-        /// <param name="subDir">Optional subdiretory (subfolder) to filter on</param>
-        /// <returns>Dictionary of files in MyEMSL; keys are relative file paths (unix style) and values are file details</returns>
+        /// <param name="subDir">Optional subdirectory (subfolder) to filter on</param>
+        /// <returns>Dictionary of files in MyEMSL; keys are relative file paths (Unix style paths) and values are file details</returns>
         public Dictionary<string, List<MyEMSLFileInfo>> GetDatasetFilesInMyEMSL(int datasetID, string subDir = "")
         {
             const int DUPLICATE_HASH_MESSAGES_TO_LOG = 5;
 
-            // Example URL:
+            // Example metadata URL:
             // https://metadata.my.emsl.pnl.gov/fileinfo/files_for_keyvalue/omics.dms.dataset_id/265031
             var metadataURL = mPacificaConfig.MetadataServerUri + "/fileinfo/files_for_keyvalue/omics.dms.dataset_id/" + datasetID;
 
             // Note that querying by dataset name only works for datasets ingested after July 1, 2017, i.e.
             // https://metadata.my.emsl.pnl.gov/fileinfo/files_for_keyvalue/omics.dms.dataset_name/QC_pp_MCF-7_17_01_B_25JUN17_Frodo_REP-17-06-02
+            // vs. https://metadata.my.emsl.pnl.gov/fileinfo/files_for_keyvalue/omics.dms.dataset_name/CPTAC_CompRef_P32_TMT11_17_18Jun17_Samwise_REP-17-05-01
             // vs. https://metadata.my.emsl.pnl.gov/fileinfo/files_for_keyvalue/omics.dms.dataset_id/595858
 
             if (TraceMode)
@@ -952,16 +952,17 @@ namespace Pacifica.DMS_Metadata
                         }
                         continue;
                     }
-                    // Add the file to fileVersions
                 }
                 else
                 {
+                    // Add the file to fileVersions
                     fileVersions = new List<MyEMSLFileInfo>();
                     remoteFiles.Add(relativeFilePath, fileVersions);
                 }
 
                 var remoteFileInfo = new MyEMSLFileInfo(fileName, fileId, fileHash)
                 {
+                    DatasetYearQuarter = string.Empty,
                     HashType = Utilities.GetDictionaryValue(fileObj, "hashtype"),
                     SubDir = subFolder,
                     Size = Utilities.GetDictionaryValue(fileObj, "size", 0),

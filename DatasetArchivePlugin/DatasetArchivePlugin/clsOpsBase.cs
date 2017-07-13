@@ -479,12 +479,11 @@ namespace DatasetArchivePlugin
             {
                 mLastStatusUpdateTime = DateTime.UtcNow;
                 var msg = "  ... uploading, " + e.PercentCompleted.ToString("0.0") + "% complete for " + (e.TotalBytesToSend / 1024.0).ToString("#,##0") + " KB";
-                if (!(string.IsNullOrEmpty(e.StatusMessage)))
+                if (!string.IsNullOrEmpty(e.StatusMessage))
                     msg += "; " + e.StatusMessage;
 
                 LogStatusMessageSkipDuplicate(msg);
             }
-
 
             if (DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds >= 3 && e.PercentCompleted > 0)
             {

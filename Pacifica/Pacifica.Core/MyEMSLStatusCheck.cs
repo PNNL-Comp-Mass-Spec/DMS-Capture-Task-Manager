@@ -243,7 +243,14 @@ namespace Pacifica.Core
         public byte IngestStepCompletionCount(int percentComplete)
         {
             // Convert the percent complete value to a number between 0 and 7
-            // since historically there were 7 steps to the ingest process
+            // since historically there were 7 steps to the ingest process:
+            // 1. Submitted        .tar file submitted
+            // 2. Received         .tar file received
+            // 3. Processing       .tar file being processed
+            // 4. Verified         .tar file contents validated
+            // 5. Stored           .tar file contents copied to Aurora
+            // 6. Available        Available in Elastic Search
+            // 7. Archived         Data copied to tape
 
             var stepsCompleted = (byte)(Math.Round(7 * (percentComplete / 100.0)));
 
