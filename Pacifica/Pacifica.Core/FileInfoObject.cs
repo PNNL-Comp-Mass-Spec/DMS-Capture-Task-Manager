@@ -125,12 +125,6 @@ namespace Pacifica.Core
 
         public DateTime SubmittedTime { get; } = DateTime.Now;
 
-        [Obsolete("Unused")]
-        public string CreationTimeStamp => File.CreationTime.ToUnixTime().ToString(CultureInfo.InvariantCulture);
-
-        [Obsolete("Unused")]
-        public string SubmittedTimeStamp => SubmittedTime.ToUnixTime().ToString(CultureInfo.InvariantCulture);
-
         public Dictionary<string, string> SerializeToDictionaryObject()
         {
             var d = new Dictionary<string, string>

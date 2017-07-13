@@ -787,29 +787,6 @@ namespace Pacifica.Core
             return false;
         }
 
-        private static bool GetMetadataGroupValue(IEnumerable<Dictionary<string, string>> groupObjects, string groupKeyName, out string matchedValue)
-        {
-            foreach (var groupDefinition in groupObjects)
-            {
-
-                if (!groupDefinition.TryGetValue("type", out string candidateKeyName))
-                    continue;
-
-                if (!string.Equals(candidateKeyName, groupKeyName))
-                    continue;
-
-                // Found the desired dictionary entry
-                if (!groupDefinition.TryGetValue("name", out string value))
-                    continue;
-
-                matchedValue = value;
-                return true;
-            }
-
-            matchedValue = string.Empty;
-            return false;
-        }
-
         /// <summary>
         /// Return the EUS instrument ID, falling back to instrumentIdIfUnknown if eusInstrumentId is empty
         /// </summary>

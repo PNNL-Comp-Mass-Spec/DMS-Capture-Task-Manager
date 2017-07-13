@@ -69,9 +69,6 @@ namespace CaptureTaskManager
         // Most recent job info
         private string m_MostRecentJobInfo = "";
 
-        // Number of spectrum files created
-        private int m_SpectrumCount;
-
         // Message broker connection string
 
         // Broker topic for status reporting
@@ -163,11 +160,6 @@ namespace CaptureTaskManager
             set { m_MostRecentJobInfo = value; }
         }
 
-        public int SpectrumCount
-        {
-            get { return m_SpectrumCount; }
-            set { m_SpectrumCount = value; }
-        }
 
         /// <summary>
         /// Path to the flag file (it may or may not exist)
@@ -197,7 +189,6 @@ namespace CaptureTaskManager
             m_FileNamePath = fileLocation;
             m_MgrStartTime = DateTime.Now;
             m_Progress = 0;
-            m_SpectrumCount = 0;
             m_Dataset = string.Empty;
             m_JobNumber = 0;
             m_Tool = string.Empty;
@@ -228,7 +219,6 @@ namespace CaptureTaskManager
         public void ClearCachedInfo()
         {
             m_Progress = 0;
-            m_SpectrumCount = 0;
             m_Dataset = "";
             m_JobNumber = 0;
             m_JobStep = 0;
@@ -386,7 +376,6 @@ namespace CaptureTaskManager
                     XWriter.WriteElementString("Dataset", m_Dataset);
                     XWriter.WriteElementString("MostRecentLogMessage", clsStatusData.MostRecentLogMessage);
                     XWriter.WriteElementString("MostRecentJobInfo", m_MostRecentJobInfo);
-                    XWriter.WriteElementString("SpectrumCount", m_SpectrumCount.ToString());
                     XWriter.WriteEndElement();    // Task details section
                     XWriter.WriteEndElement();    // Task section
                     XWriter.WriteEndElement();    // Root section
