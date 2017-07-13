@@ -863,7 +863,7 @@ namespace Pacifica.DMS_Metadata
         /// <returns>Dictionary of files in MyEMSL; keys are relative file paths (unix style) and values are file details</returns>
         public Dictionary<string, List<MyEMSLFileInfo>> GetDatasetFilesInMyEMSL(int datasetID, string subDir = "")
         {
-            const int WARNINGS_TO_LOG = 5;
+            const int DUPLICATE_HASH_MESSAGES_TO_LOG = 5;
 
             // Example URL:
             // https://metadata.my.emsl.pnl.gov/fileinfo/files_for_keyvalue/omics.dms.dataset_id/265031
@@ -899,7 +899,7 @@ namespace Pacifica.DMS_Metadata
             // A given remote file could have multiple hash values if multiple versions of the file have been uploaded
             var remoteFiles = new Dictionary<string, List<MyEMSLFileInfo>>();
 
-            var warningCount = 0;
+            var duplicateHashCount = 0;
 
             // Note that two files in the same directory could have the same hash value (but different names),
             // so we cannot simply compare file hashes
@@ -922,18 +922,30 @@ namespace Pacifica.DMS_Metadata
 
                 if (remoteFiles.TryGetValue(relativeFilePath, out var fileVersions))
                 {
+                    // Make sure that fileVersions doesn't already have a version of this file with this specific Sha-1 hash
+                    // This can happen if the same subdirectory is pushed into MyEMSL twice, and the file modification times have changed
+                    // but the file contents have not changed
+
                     if (FileHashExists(fileVersions, fileHash))
                     {
-                        warningCount++;
-                        if (warningCount <= WARNINGS_TO_LOG)
+                        if (string.Equals(fileHash, "none", StringComparison.InvariantCultureIgnoreCase))
                         {
-                            OnWarning("CompareDatasetContentsWithMyEMSLMetadata",
-                                      "Remote file listing reports the same file with the same hash more than once; " +
-                                      "ignoring: " + relativeFilePath + " with hash " + fileHash);
+                            // Do not log a warning; just silently ignore it
+                            // Example of a dataset with hash values of "None" is test dataset SWT_LCQData_300
+                            // https://metadata.my.emsl.pnl.gov/fileinfo/files_for_keyvalue/omics.dms.dataset_id/54007
+                            continue;
+                        }
+
+                        duplicateHashCount++;
+                        if (duplicateHashCount <= DUPLICATE_HASH_MESSAGES_TO_LOG)
+                        {
+                            // This warning is logged as a debug event since it's not a critical error
+                            OnDebugEvent(string.Format(
+                                "Remote file listing reports the same file with the same hash more than once;\n" +
+                                "  ignoring duplicate hash {0} for {1}", fileHash, relativeFilePath));
                         }
                         continue;
                     }
-
                     // Add the file to fileVersions
                 }
                 else
@@ -965,10 +977,9 @@ namespace Pacifica.DMS_Metadata
 
             }
 
-            if (warningCount > WARNINGS_TO_LOG)
+            if (duplicateHashCount > DUPLICATE_HASH_MESSAGES_TO_LOG)
             {
-                OnWarning("CompareDatasetContentsWithMyEMSLMetadata",
-                          string.Format("Duplicate hash value found for {0} files in MyEMSL", warningCount));
+                OnDebugEvent(string.Format("Duplicate hash value found for {0} files in MyEMSL", duplicateHashCount));
             }
 
             return remoteFiles;
