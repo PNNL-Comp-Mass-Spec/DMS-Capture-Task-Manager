@@ -165,8 +165,8 @@ namespace DatasetArchivePlugin
             bool Outcome;
 
             mSubmittedToMyEMSL = true;
-            if (fileCountNew == 0 && fileCountUpdated == 0)
-                mMyEMSLAlreadyUpToDate = true;
+
+            mMyEMSLAlreadyUpToDate = (errorCode == 0 && fileCountNew == 0 && fileCountUpdated == 0);
 
             try
             {
