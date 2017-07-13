@@ -27,154 +27,102 @@ namespace CaptureTaskManager
 
         #region "Class variables"
 
-        // Status file name and location
-        private string m_FileNamePath;
-
-        // Manager name
-        private string m_MgrName = "";
-
-        // Status value
-        private EnumMgrStatus m_MgrStatus = EnumMgrStatus.Stopped;
-
         // Manager start time
         private DateTime m_MgrStartTime;
-
-        // Analysis Tool
-        private string m_Tool;
-
-        // Task status
-        private EnumTaskStatus m_TaskStatus = EnumTaskStatus.No_Task;
-
-        // Task duration
-        private float m_Duration;
-
-        // Progess (value between 0 and 100)
-        private float m_Progress;
-
-        // Current operation (freeform string)
-        private string m_CurrentOperation = "";
-
-        // Task status detail
-        private EnumTaskStatusDetail m_TaskStatusDetail = EnumTaskStatusDetail.No_Task;
-
-        // Job number
-        private int m_JobNumber;
-
-        // Job step
-        private int m_JobStep;
-
-        // Dataset name
-        private string m_Dataset;
-
-        // Most recent job info
-        private string m_MostRecentJobInfo = "";
-
-        // Message broker connection string
-
-        // Broker topic for status reporting
-
-        // Flag to indicate if status should be logged to broker in addition to a file
-        private bool m_LogToMsgQueue;
 
         #endregion
 
         #region "Properties"
 
-        public string FileNamePath
-        {
-            get { return m_FileNamePath; }
-            set { m_FileNamePath = value; }
-        }
+        /// <summary>
+        /// Status file name and location
+        /// </summary>
+        public string FileNamePath { get; set; }
 
-        public string MgrName
-        {
-            get { return m_MgrName; }
-            set { m_MgrName = value; }
-        }
+        /// <summary>
+        /// Manager name
+        /// </summary>
+        public string MgrName { get; set; }
 
-        public EnumMgrStatus MgrStatus
-        {
-            get { return m_MgrStatus; }
-            set { m_MgrStatus = value; }
-        }
+        /// <summary>
+        /// status value
+        /// </summary>
+        public EnumMgrStatus MgrStatus { get; set; } = EnumMgrStatus.Stopped;
 
+        /// <summary>
+        /// CPU Utilization
+        /// </summary>
         public int CpuUtilization { get; set; }
 
-        public string Tool
-        {
-            get { return m_Tool; }
-            set { m_Tool = value; }
-        }
+        /// <summary>
+        /// Step tool
+        /// </summary>
+        public string Tool { get; set; }
 
-        public EnumTaskStatus TaskStatus
-        {
-            get { return m_TaskStatus; }
-            set { m_TaskStatus = value; }
-        }
+        /// <summary>
+        /// Task status
+        /// </summary>
+        public EnumTaskStatus TaskStatus { get; set; } = EnumTaskStatus.No_Task;
 
-        public float Duration
-        {
-            get { return m_Duration; }
-            set { m_Duration = value; }
-        }
+        /// <summary>
+        /// Task duration
+        /// </summary>
+        public float Duration { get; set; }
 
-        public float Progress
-        {
-            get { return m_Progress; }
-            set { m_Progress = value; }
-        }
+        /// <summary>
+        /// Progess (value between 0 and 100)
+        /// </summary>
+        public float Progress { get; set; }
 
-        public string CurrentOperation
-        {
-            get { return m_CurrentOperation; }
-            set { m_CurrentOperation = value; }
-        }
+        /// <summary>
+        /// Current operation description
+        /// </summary>
+        public string CurrentOperation { get; set; }
 
-        public EnumTaskStatusDetail TaskStatusDetail
-        {
-            get { return m_TaskStatusDetail; }
-            set { m_TaskStatusDetail = value; }
-        }
+        /// <summary>
+        /// Task status detail
+        /// </summary>
+        public EnumTaskStatusDetail TaskStatusDetail { get; set; } = EnumTaskStatusDetail.No_Task;
 
-        public int JobNumber
-        {
-            get { return m_JobNumber; }
-            set { m_JobNumber = value; }
-        }
+        /// <summary>
+        /// Job number
+        /// </summary>
+        public int JobNumber { get; set; }
 
-        public int JobStep
-        {
-            get { return m_JobStep; }
-            set { m_JobStep = value; }
-        }
+        /// <summary>
+        /// Job step
+        /// </summary>
+        public int JobStep { get; set; }
 
-        public string Dataset
-        {
-            get { return m_Dataset; }
-            set { m_Dataset = value; }
-        }
+        /// <summary>
+        /// Dataset name
+        /// </summary>
+        public string Dataset { get; set; }
 
-        public string MostRecentJobInfo
-        {
-            get { return m_MostRecentJobInfo; }
-            set { m_MostRecentJobInfo = value; }
-        }
-
+        /// <summary>
+        /// Most recent job info
+        /// </summary>
+        public string MostRecentJobInfo { get; set; }
 
         /// <summary>
         /// Path to the flag file (it may or may not exist)
         /// </summary>
         public string FlagFilePath => Path.Combine(AppFolderPath(), FLAG_FILE_NAME);
 
+        /// <summary>
+        /// Message broker connection URI
+        /// </summary>
         public string MessageQueueURI { get; set; }
 
+        /// <summary>
+        /// Broker topic for status reporting
+        /// </summary>
         public string MessageQueueTopic { get; set; }
 
-        public bool LogToMsgQueue
-        {
-            get { return m_LogToMsgQueue; }
-            set { m_LogToMsgQueue = value; }
-        }
+        /// <summary>
+        /// If true, log to the message broker in addition to a file
+        /// </summary>
+        public bool LogToMsgQueue { get; set; }
 
         #endregion
 
@@ -186,12 +134,12 @@ namespace CaptureTaskManager
         /// <param name="fileLocation">Full path to status file</param>
         public clsStatusFile(string fileLocation)
         {
-            m_FileNamePath = fileLocation;
+            FileNamePath = fileLocation;
             m_MgrStartTime = DateTime.Now;
-            m_Progress = 0;
-            m_Dataset = string.Empty;
-            m_JobNumber = 0;
-            m_Tool = string.Empty;
+            Progress = 0;
+            Dataset = string.Empty;
+            JobNumber = 0;
+            Tool = string.Empty;
         }
 
         #endregion
@@ -218,48 +166,48 @@ namespace CaptureTaskManager
         /// </summary>
         public void ClearCachedInfo()
         {
-            m_Progress = 0;
-            m_Dataset = "";
-            m_JobNumber = 0;
-            m_JobStep = 0;
-            m_Tool = "";
-            m_Duration = 0;
+            Progress = 0;
+            Dataset = "";
+            JobNumber = 0;
+            JobStep = 0;
+            Tool = "";
+            Duration = 0;
 
-            // Only clear the recent job info if the variable is Nothing
-            if (m_MostRecentJobInfo == null)
+            // Only clear the recent job info if the variable is null
+            if (MostRecentJobInfo == null)
             {
-                m_MostRecentJobInfo = string.Empty;
+                MostRecentJobInfo = string.Empty;
             }
         }
 
         /// <summary>
         /// Converts the manager status enum to a string value
         /// </summary>
-        /// <param name="StatusEnum">An IStatusFile.EnumMgrStatus object</param>
+        /// <param name="statusEnum">An IStatusFile.EnumMgrStatus object</param>
         /// <returns>String representation of input object</returns>
-        private string ConvertMgrStatusToString(EnumMgrStatus StatusEnum)
+        private string ConvertMgrStatusToString(EnumMgrStatus statusEnum)
         {
-            return StatusEnum.ToString("G");
+            return statusEnum.ToString("G");
         }
 
         /// <summary>
         /// Converts the task status enum to a string value
         /// </summary>
-        /// <param name="StatusEnum">An IStatusFile.EnumTaskStatus object</param>
+        /// <param name="statusEnum">An IStatusFile.EnumTaskStatus object</param>
         /// <returns>String representation of input object</returns>
-        private string ConvertTaskStatusToString(EnumTaskStatus StatusEnum)
+        private string ConvertTaskStatusToString(EnumTaskStatus statusEnum)
         {
-            return StatusEnum.ToString("G");
+            return statusEnum.ToString("G");
         }
 
         /// <summary>
         /// Converts the manager status enum to a string value
         /// </summary>
-        /// <param name="StatusEnum">An IStatusFile.EnumTaskStatusDetail object</param>
+        /// <param name="statusEnum">An IStatusFile.EnumTaskStatusDetail object</param>
         /// <returns>String representation of input object</returns>
-        private string ConvertTaskDetailStatusToString(EnumTaskStatusDetail StatusEnum)
+        private string ConvertTaskDetailStatusToString(EnumTaskStatusDetail statusEnum)
         {
-            return StatusEnum.ToString("G");
+            return statusEnum.ToString("G");
         }
 
         /// <summary>
@@ -326,73 +274,73 @@ namespace CaptureTaskManager
             // and SQL Server only allows 3 digits of precision
             const string ISO_8601_DATE = "yyyy-MM-ddTHH:mm:ss.fffK";
 
-            var XMLText = string.Empty;
+            var xmlText = string.Empty;
 
             // Set up the XML writer
             try
             {
                 // Create a memory stream to write the document in
-                var MemStream = new MemoryStream();
-                using (var XWriter = new XmlTextWriter(MemStream, System.Text.Encoding.UTF8))
+                var memStream = new MemoryStream();
+                using (var xWriter = new XmlTextWriter(memStream, System.Text.Encoding.UTF8))
                 {
-                    XWriter.Formatting = Formatting.Indented;
-                    XWriter.Indentation = 2;
+                    xWriter.Formatting = Formatting.Indented;
+                    xWriter.Indentation = 2;
 
                     // Write the file
-                    XWriter.WriteStartDocument(true);
+                    xWriter.WriteStartDocument(true);
 
                     // Root level element
-                    XWriter.WriteStartElement("Root");
-                    XWriter.WriteStartElement("Manager");
-                    XWriter.WriteElementString("MgrName", m_MgrName);
-                    XWriter.WriteElementString("MgrStatus", ConvertMgrStatusToString(m_MgrStatus));
+                    xWriter.WriteStartElement("Root");
+                    xWriter.WriteStartElement("Manager");
+                    xWriter.WriteElementString("MgrName", MgrName);
+                    xWriter.WriteElementString("MgrStatus", ConvertMgrStatusToString(MgrStatus));
 
                     // Write out times in the format 2017-07-06T23:23:14.337Z
-                    XWriter.WriteElementString("LastUpdate", DateTime.UtcNow.ToString(ISO_8601_DATE));
-                    XWriter.WriteElementString("LastStartTime", m_MgrStartTime.ToUniversalTime().ToString(ISO_8601_DATE));
+                    xWriter.WriteElementString("LastUpdate", DateTime.UtcNow.ToString(ISO_8601_DATE));
+                    xWriter.WriteElementString("LastStartTime", m_MgrStartTime.ToUniversalTime().ToString(ISO_8601_DATE));
 
-                    XWriter.WriteElementString("CPUUtilization", CpuUtilization.ToString());
-                    XWriter.WriteElementString("ProcessID", GetProcessID().ToString());
-                    XWriter.WriteElementString("FreeMemoryMB", "0");
-                    XWriter.WriteStartElement("RecentErrorMessages");
+                    xWriter.WriteElementString("CPUUtilization", CpuUtilization.ToString());
+                    xWriter.WriteElementString("ProcessID", GetProcessID().ToString());
+                    xWriter.WriteElementString("FreeMemoryMB", "0");
+                    xWriter.WriteStartElement("RecentErrorMessages");
                     foreach (var ErrMsg in clsStatusData.ErrorQueue)
                     {
-                        XWriter.WriteElementString("ErrMsg", ErrMsg);
+                        xWriter.WriteElementString("ErrMsg", ErrMsg);
                     }
-                    XWriter.WriteEndElement();        // Error messages
-                    XWriter.WriteEndElement();        // Manager section
+                    xWriter.WriteEndElement();        // Error messages
+                    xWriter.WriteEndElement();        // Manager section
 
-                    XWriter.WriteStartElement("Task");
-                    XWriter.WriteElementString("Tool", m_Tool);
-                    XWriter.WriteElementString("Status", ConvertTaskStatusToString(m_TaskStatus));
-                    XWriter.WriteElementString("Duration", m_Duration.ToString("##0.0"));
-                    XWriter.WriteElementString("DurationMinutes", (60f * m_Duration).ToString("##0.0"));
-                    XWriter.WriteElementString("Progress", m_Progress.ToString("##0.00"));
-                    XWriter.WriteElementString("CurrentOperation", m_CurrentOperation);
-                    XWriter.WriteStartElement("TaskDetails");
-                    XWriter.WriteElementString("Status", ConvertTaskDetailStatusToString(m_TaskStatusDetail));
-                    XWriter.WriteElementString("Job", m_JobNumber.ToString());
-                    XWriter.WriteElementString("Step", m_JobStep.ToString());
-                    XWriter.WriteElementString("Dataset", m_Dataset);
-                    XWriter.WriteElementString("MostRecentLogMessage", clsStatusData.MostRecentLogMessage);
-                    XWriter.WriteElementString("MostRecentJobInfo", m_MostRecentJobInfo);
-                    XWriter.WriteEndElement();    // Task details section
-                    XWriter.WriteEndElement();    // Task section
-                    XWriter.WriteEndElement();    // Root section
+                    xWriter.WriteStartElement("Task");
+                    xWriter.WriteElementString("Tool", Tool);
+                    xWriter.WriteElementString("Status", ConvertTaskStatusToString(TaskStatus));
+                    xWriter.WriteElementString("Duration", Duration.ToString("##0.0"));
+                    xWriter.WriteElementString("DurationMinutes", (60f * Duration).ToString("##0.0"));
+                    xWriter.WriteElementString("Progress", Progress.ToString("##0.00"));
+                    xWriter.WriteElementString("CurrentOperation", CurrentOperation);
+                    xWriter.WriteStartElement("TaskDetails");
+                    xWriter.WriteElementString("Status", ConvertTaskDetailStatusToString(TaskStatusDetail));
+                    xWriter.WriteElementString("Job", JobNumber.ToString());
+                    xWriter.WriteElementString("Step", JobStep.ToString());
+                    xWriter.WriteElementString("Dataset", Dataset);
+                    xWriter.WriteElementString("MostRecentLogMessage", clsStatusData.MostRecentLogMessage);
+                    xWriter.WriteElementString("MostRecentJobInfo", MostRecentJobInfo);
+                    xWriter.WriteEndElement();    // Task details section
+                    xWriter.WriteEndElement();    // Task section
+                    xWriter.WriteEndElement();    // Root section
 
                     // Close the document, but don't close the writer yet
-                    XWriter.WriteEndDocument();
-                    XWriter.Flush();
+                    xWriter.WriteEndDocument();
+                    xWriter.Flush();
 
                     // Use a streamreader to copy the XML text to a string variable
-                    MemStream.Seek(0, SeekOrigin.Begin);
-                    var MemStreamReader = new StreamReader(MemStream);
-                    XMLText = MemStreamReader.ReadToEnd();
+                    memStream.Seek(0, SeekOrigin.Begin);
+                    var MemStreamReader = new StreamReader(memStream);
+                    xmlText = MemStreamReader.ReadToEnd();
 
                     MemStreamReader.Close();
-                    MemStream.Close();
+                    memStream.Close();
 
-                    //  Since strXMLText now contains the XML, we can now safely close XWriter
+                    //  Since xmlText now contains the XML, we can now safely close xWriter
                 }
 
                 PRISM.clsProgRunner.GarbageCollectNow();
@@ -400,9 +348,9 @@ namespace CaptureTaskManager
                 // Write the output file
                 try
                 {
-                    using (var OutFile = new StreamWriter(new FileStream(m_FileNamePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    using (var outFile = new StreamWriter(new FileStream(FileNamePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
-                        OutFile.WriteLine(XMLText);
+                        outFile.WriteLine(xmlText);
                     }
                 }
                 catch (Exception ex)
@@ -416,26 +364,27 @@ namespace CaptureTaskManager
             }
 
             // Log to a message queue
-            if (m_LogToMsgQueue) LogStatusToMessageQueue(XMLText);
+            if (LogToMsgQueue)
+                LogStatusToMessageQueue(xmlText);
         }
 
         /// <summary>
         /// Writes the status to the message queue
         /// </summary>
-        /// <param name="strStatusXML">A string contiaining the XML to write</param>
-        protected void LogStatusToMessageQueue(string strStatusXML)
+        /// <param name="statusXML">A string contiaining the XML to write</param>
+        protected void LogStatusToMessageQueue(string statusXML)
         {
-            MonitorUpdateRequired?.Invoke(strStatusXML);
+            MonitorUpdateRequired?.Invoke(statusXML);
         }
 
         /// <summary>
         /// Updates status file
         /// (Overload to update when completion percentage is only change)
         /// </summary>
-        /// <param name="PercentComplete">Job completion percentage (between 0 and 100)</param>
-        public void UpdateAndWrite(float PercentComplete)
+        /// <param name="percentComplete">Job completion percentage (between 0 and 100)</param>
+        public void UpdateAndWrite(float percentComplete)
         {
-            m_Progress = PercentComplete;
+            Progress = percentComplete;
 
             WriteStatusFile();
         }
@@ -444,12 +393,12 @@ namespace CaptureTaskManager
         /// Updates status file
         /// (Overload to update file when status and completion percentage change)
         /// </summary>
-        /// <param name="Status">Job status enum</param>
-        /// <param name="PercentComplete">Job completion percentage (value between 0 and 100)</param>
-        public void UpdateAndWrite(EnumTaskStatusDetail Status, float PercentComplete)
+        /// <param name="status">Job status enum</param>
+        /// <param name="percentComplete">Job completion percentage (value between 0 and 100)</param>
+        public void UpdateAndWrite(EnumTaskStatusDetail status, float percentComplete)
         {
-            m_TaskStatusDetail = Status;
-            m_Progress = PercentComplete;
+            TaskStatusDetail = status;
+            Progress = percentComplete;
 
             WriteStatusFile();
         }
@@ -457,22 +406,22 @@ namespace CaptureTaskManager
         /// <summary>
         /// Sets status file to show mahager not running
         /// </summary>
-        /// <param name="MgrError">TRUE if manager not running due to error; FALSE otherwise</param>
-        public void UpdateStopped(bool MgrError)
+        /// <param name="mgrError">TRUE if manager not running due to error; FALSE otherwise</param>
+        public void UpdateStopped(bool mgrError)
         {
             ClearCachedInfo();
 
-            if (MgrError)
+            if (mgrError)
             {
-                m_MgrStatus = EnumMgrStatus.Stopped_Error;
+                MgrStatus = EnumMgrStatus.Stopped_Error;
             }
             else
             {
-                m_MgrStatus = EnumMgrStatus.Stopped;
+                MgrStatus = EnumMgrStatus.Stopped;
             }
 
-            m_TaskStatus = EnumTaskStatus.No_Task;
-            m_TaskStatusDetail = EnumTaskStatusDetail.No_Task;
+            TaskStatus = EnumTaskStatus.No_Task;
+            TaskStatusDetail = EnumTaskStatusDetail.No_Task;
 
             WriteStatusFile();
         }
@@ -480,22 +429,22 @@ namespace CaptureTaskManager
         /// <summary>
         /// Updates status file to show manager disabled
         /// </summary>
-        /// <param name="Local">TRUE if manager disabled locally, otherwise FALSE</param>
-        public void UpdateDisabled(bool Local)
+        /// <param name="disabledLocally">TRUE if manager disabled locally, otherwise FALSE</param>
+        public void UpdateDisabled(bool disabledLocally)
         {
             ClearCachedInfo();
 
-            if (Local)
+            if (disabledLocally)
             {
-                m_MgrStatus = EnumMgrStatus.Disabled_Local;
+                MgrStatus = EnumMgrStatus.Disabled_Local;
             }
             else
             {
-                m_MgrStatus = EnumMgrStatus.Disabled_MC;
+                MgrStatus = EnumMgrStatus.Disabled_MC;
             }
 
-            m_TaskStatus = EnumTaskStatus.No_Task;
-            m_TaskStatusDetail = EnumTaskStatusDetail.No_Task;
+            TaskStatus = EnumTaskStatus.No_Task;
+            TaskStatusDetail = EnumTaskStatusDetail.No_Task;
 
             WriteStatusFile();
         }
@@ -507,9 +456,9 @@ namespace CaptureTaskManager
         {
             ClearCachedInfo();
 
-            m_MgrStatus = EnumMgrStatus.Running;
-            m_TaskStatus = EnumTaskStatus.No_Task;
-            m_TaskStatusDetail = EnumTaskStatusDetail.No_Task;
+            MgrStatus = EnumMgrStatus.Running;
+            TaskStatus = EnumTaskStatus.No_Task;
+            TaskStatusDetail = EnumTaskStatusDetail.No_Task;
 
             WriteStatusFile();
         }
@@ -521,13 +470,13 @@ namespace CaptureTaskManager
         public void InitStatusFromFile()
         {
             // Verify status file exists
-            if (!File.Exists(m_FileNamePath)) return;
+            if (!File.Exists(FileNamePath)) return;
 
             // Get data from status file
             try
             {
                 // Read the input file
-                var XmlStr = File.ReadAllText(m_FileNamePath);
+                var XmlStr = File.ReadAllText(FileNamePath);
 
                 // Convert to an XML document
                 var doc = new XmlDocument();
@@ -541,7 +490,7 @@ namespace CaptureTaskManager
                 // Get the most recent job info
                 var mostRecentJobNode = doc.SelectSingleNode(@"//Task/TaskDetails/MostRecentJobInfo");
                 if (mostRecentJobNode != null)
-                    m_MostRecentJobInfo = mostRecentJobNode.InnerText;
+                    MostRecentJobInfo = mostRecentJobNode.InnerText;
 
                 // Get the error messsages
                 var recentErrMsgNode = doc.SelectNodes(@"//Manager/RecentErrorMessages/ErrMsg");
