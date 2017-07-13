@@ -193,6 +193,12 @@ namespace Pacifica.DMS_Metadata
             taskParams.TryGetValue("Dataset_ID", out string datasetID);
 
             var supplementalDataSuccess = GetSupplementalDMSMetadata(connectionString, datasetID, uploadMetadata);
+            if (!supplementalDataSuccess)
+            {
+                criticalError = false;
+                criticalErrorMessage = string.Empty;
+                return false;
+            }
 
             // Calculate the "year_quarter" code used for subfolders within an instrument folder
             // This value is based on the date the dataset was created in DMS
