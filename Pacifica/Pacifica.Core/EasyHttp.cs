@@ -87,7 +87,7 @@ namespace Pacifica.Core
 
                     if (responseStream == null)
                     {
-                        throw new WebException("Response stream is null");
+                        throw new WebException("Response stream is null in GetFile");
                     }
 
                     var buffer = new byte[32767];
@@ -101,37 +101,14 @@ namespace Pacifica.Core
                 }
                 else
                 {
-                    throw new WebException("HTTP response code not OK: " + response.StatusCode + ", " + response.StatusDescription);
+                    throw new WebException(string.Format(
+                        "HTTP response code not OK in GetFile: {0}, {1}",
+                        response.StatusCode, response.StatusDescription));
                 }
             }
             catch (WebException ex)
             {
-                var responseData = string.Empty;
-                if (ex.Response != null)
-                {
-                    var responseStream = ex.Response.GetResponseStream();
-                    if (responseStream != null)
-                    {
-                        using (var sr = new StreamReader(responseStream))
-                        {
-                            const int maxLines = 20;
-                            var linesRead = 0;
-                            while (!sr.EndOfStream && linesRead < maxLines)
-                            {
-                                responseData += sr.ReadLine() + Environment.NewLine;
-                                linesRead++;
-                            }
-                        }
-                    }
-
-                    responseStatusCode = ((HttpWebResponse)ex.Response).StatusCode;
-                }
-                else
-                {
-                    if (ex.Message.Contains("timed out"))
-                        responseStatusCode = HttpStatusCode.RequestTimeout;
-                }
-                throw new Exception(responseData, ex);
+                HandleWebException(ex, url, out responseStatusCode);
             }
             finally
             {
@@ -179,34 +156,65 @@ namespace Pacifica.Core
             }
             catch (WebException ex)
             {
-                var responseData = string.Empty;
-                if (ex.Response != null)
-                {
-                    var responseStream = ex.Response.GetResponseStream();
-                    if (responseStream != null)
-                    {
-                        using (var sr = new StreamReader(responseStream))
-                        {
-                            responseData = sr.ReadToEnd();
-                        }
-                    }
-                    responseStatusCode = ((HttpWebResponse)ex.Response).StatusCode;
-                }
-                else
-                {
-                    if (ex.Message.Contains("timed out"))
-                        responseStatusCode = HttpStatusCode.RequestTimeout;
-                }
+                HandleWebException(ex, url, out responseStatusCode);
 
-                if (string.IsNullOrWhiteSpace(responseData))
-                    responseData = ex.Message;
-
-                throw new Exception(responseData, ex);
+                return null;
             }
             finally
             {
                 ((IDisposable)response)?.Dispose();
             }
+        }
+
+        private static string GetTrimmedResponseData(Stream responseStream, int maxLines = 20)
+        {
+            if (responseStream == null)
+                return string.Empty;
+
+            var responseData = new StringBuilder();
+            if (maxLines < 1)
+                maxLines = 1;
+
+            using (var sr = new StreamReader(responseStream))
+            {
+                var linesRead = 0;
+                while (!sr.EndOfStream && linesRead < maxLines)
+                {
+                    responseData.AppendLine(sr.ReadLine());
+                    linesRead++;
+                }
+            }
+
+            return responseData.ToString();
+        }
+
+        private static void HandleWebException(WebException ex, string url, out HttpStatusCode responseStatusCode)
+        {
+            string responseData;
+            if (ex.Response != null)
+            {
+                var responseStream = ex.Response.GetResponseStream();
+                responseData = GetTrimmedResponseData(responseStream);
+
+                responseStatusCode = ((HttpWebResponse)ex.Response).StatusCode;
+            }
+            else
+            {
+                if (ex.Message.Contains("timed out"))
+                {
+                    responseData = "(no response, request timed out)";
+                    responseStatusCode = HttpStatusCode.RequestTimeout;
+                }
+                else
+                {
+                    responseData = string.Empty;
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(responseData))
+                throw new Exception("Empty response for " + url + ": " + ex.Message, ex);
+
+            throw new Exception("Response from " + url + ": " + responseData, ex);
         }
 
         public static HttpWebRequest InitializeRequest(
@@ -412,29 +420,7 @@ namespace Pacifica.Core
             }
             catch (WebException ex)
             {
-                if (ex.Response != null)
-                {
-                    var responseStream = ex.Response.GetResponseStream();
-                    if (responseStream != null)
-                    {
-                        using (var sr = new StreamReader(responseStream))
-                        {
-                            responseData = sr.ReadToEnd();
-                        }
-                    }
-                    responseStatusCode = ((HttpWebResponse)ex.Response).StatusCode;
-                }
-                else
-                {
-                    if (ex.Message.Contains("timed out"))
-                        responseStatusCode = HttpStatusCode.RequestTimeout;
-                }
-
-                if (string.IsNullOrWhiteSpace(responseData))
-                    throw new Exception(ex.Message, ex);
-                else
-                    throw new Exception(responseData, ex);
-
+                HandleWebException(ex, url, out responseStatusCode);
             }
             finally
             {
@@ -446,13 +432,13 @@ namespace Pacifica.Core
 
         public static string SendFileListToIngester(
             Configuration config,
-            string url, string serverBaseAddress,
+            string location, string serverBaseAddress,
             SortedDictionary<string, FileInfoObject> fileListObject,
             string metadataFilePath,
             eDebugMode debugMode = eDebugMode.DebugDisabled)
         {
             var baseUri = new Uri(serverBaseAddress);
-            var uploadUri = new Uri(baseUri, url);
+            var uploadUri = new Uri(baseUri, location);
             HttpWebRequest oWebRequest = null;
             var fiMetadataFile = new FileInfo(metadataFilePath);
 
@@ -587,23 +573,7 @@ namespace Pacifica.Core
             }
             catch (WebException ex)
             {
-                if (ex.Response != null)
-                {
-                    var responseStream = ex.Response.GetResponseStream();
-                    if (responseStream != null)
-                    {
-                        using (var sr = new StreamReader(responseStream))
-                        {
-                            responseData = sr.ReadToEnd();
-                        }
-                    }
-
-                }
-                else
-                {
-                    responseData = string.Empty;
-                }
-                throw new Exception(responseData, ex);
+                HandleWebException(ex, uploadUri.ToString(), out _);
             }
             finally
             {
