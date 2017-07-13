@@ -70,6 +70,10 @@
     <Reference Include="Jayrock.Json">
       <HintPath>..\RefLib\Jayrock.Json.dll</HintPath>
     </Reference>
+    <Reference Include="MyEMSLReader, Version=1.3.6402.25009, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\RefLib\MyEMSLReader.dll</HintPath>
+    </Reference>
     <Reference Include="Pacifica.Core">
       <HintPath>..\DeployedFiles\Pacifica.Core.dll</HintPath>
     </Reference>

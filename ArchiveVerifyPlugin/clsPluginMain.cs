@@ -231,14 +231,12 @@ namespace ArchiveVerifyPlugin
         /// Compare the files in archivedFiles to the files in the metadata.txt file
         /// If metadata.txt file is missing, compare to files actually on disk
         /// </summary>
-        /// <param name="config">Pacifica configuration</param>
         /// <param name="archivedFiles"></param>
         /// <param name="metadataFilePath"></param>
         /// <param name="transactionId">The TransactionID used by the majority of the matching files</param>
         /// <returns>True if all of the files match, false if a mismatch or an error</returns>
         private bool CompareArchiveFilesToExpectedFiles(
-            Configuration config,
-            IReadOnlyCollection<MyEMSLFileInfo> archivedFiles,
+            IReadOnlyCollection<MyEMSLReader.ArchivedFileInfo> archivedFiles,
             out string metadataFilePath,
             out long transactionId)
         {
@@ -336,8 +334,7 @@ namespace ArchiveVerifyPlugin
                     return false;
                 }
 
-                // Keys are relative file paths (Windows slashes)
-                // Values are the sha-1 hash values
+                // Keys are relative file paths (Windows slashes); values are the Sha-1 hash values
                 var dctFilePathHashMap = new Dictionary<string, string>();
 
                 foreach (var datasetFile in lstDatasetFilesLocal)
@@ -388,8 +385,16 @@ namespace ArchiveVerifyPlugin
 
         }
 
+        /// <summary>
+        /// Compare local files (tracked by dctFilePathHashMap) to files in MyEMSL (tracked by archivedFiles)
+        /// </summary>
+        /// <param name="archivedFiles"></param>
+        /// <param name="matchCount"></param>
+        /// <param name="mismatchCount"></param>
+        /// <param name="dctFilePathHashMap">Keys are relative file paths (Windows slashes); values are the Sha-1 hash values</param>
+        /// <param name="transactionIdStats">Keys are transaction IDs, values are the number of files for each transaction ID</param>
         private void CompareArchiveFilesToList(
-            IReadOnlyCollection<MyEMSLFileInfo> archivedFiles,
+            IReadOnlyCollection<MyEMSLReader.ArchivedFileInfo> archivedFiles,
             out int matchCount,
             out int mismatchCount,
             IReadOnlyDictionary<string, string> dctFilePathHashMap,
@@ -419,20 +424,20 @@ namespace ArchiveVerifyPlugin
                 {
                     var archiveFile = lstMatchingArchivedFiles.First();
 
-                    if (archiveFile.HashSum == metadataFile.Value)
+                    if (archiveFile.Hash == metadataFile.Value)
                     {
                         matchCount++;
 
                         foreach (var archiveFileVersion in lstMatchingArchivedFiles)
                         {
-                            if (transactionIdStats.TryGetValue(archiveFileVersion.TransactionId, out var fileCount))
+                            if (transactionIdStats.TryGetValue(archiveFileVersion.TransactionID, out var fileCount))
                             {
-                                transactionIdStats[archiveFileVersion.TransactionId] = fileCount + 1;
+                                transactionIdStats[archiveFileVersion.TransactionID] = fileCount + 1;
 
                             }
                             else
                             {
-                                transactionIdStats.Add(archiveFileVersion.TransactionId, 1);
+                                transactionIdStats.Add(archiveFileVersion.TransactionID, 1);
                             }
                         }
                     }
@@ -444,7 +449,7 @@ namespace ArchiveVerifyPlugin
                         mTotalMismatchCount++;
 
                         var msg = " ... file mismatch for " + archiveFile.RelativePathWindows +
-                                  "; MyEMSL reports " + archiveFile.HashSum + " but expecting " + metadataFile.Value;
+                                  "; MyEMSL reports " + archiveFile.Hash + " but expecting " + metadataFile.Value;
 
                         LogError(msg);
 
@@ -464,7 +469,7 @@ namespace ArchiveVerifyPlugin
         /// <param name="mismatchCount"></param>
         /// <param name="transactionId">The TransactionID used by the majority of the matching files</param>
         private void CompareToMetadataFile(
-            IReadOnlyCollection<MyEMSLFileInfo> archivedFiles,
+            IReadOnlyCollection<MyEMSLReader.ArchivedFileInfo> archivedFiles,
             FileSystemInfo fiMetadataFile,
             out int matchCount,
             out int mismatchCount,
@@ -525,8 +530,7 @@ namespace ArchiveVerifyPlugin
                 return;
             }
 
-            // Keys are relative file paths (Windows slashes)
-            // Values are the sha-1 hash values
+            // Keys are relative file paths (Windows slashes); values are the Sha-1 hash values
             var dctFilePathHashMap = new Dictionary<string, string>();
 
             foreach (var metadataFile in dctMetadataFiles)
@@ -898,27 +902,23 @@ namespace ArchiveVerifyPlugin
 
         private bool VisibleInMetadata(out string metadataFilePath, out long transactionId)
         {
-            bool success;
-
             metadataFilePath = string.Empty;
 
             try
             {
-                var config = new Configuration();
-
-                var metadataObject = new DMSMetadataObject(config, m_MgrName, m_Job) {
-                    TraceMode = m_TraceMode
+                var reader = new MyEMSLReader.Reader
+                {
+                    IncludeAllRevisions = false,
+                    TraceMode = m_TraceMode,
+                    UseTestInstance = false,
                 };
 
-                // Attach the events
-                metadataObject.DebugEvent += DMSMetadataObject_DebugEvent;
-                metadataObject.ErrorEvent += DMSMetadataObject_ErrorEvent;
+                RegisterEvents(reader);
 
                 var subDir = m_TaskParams.GetParam("OutputFolderName", string.Empty);
 
-                // Keys in dictionary remoteFiles are relative file paths (unix style) and values are file details
-                // A given remote file could have multiple hash values if multiple versions of the file have been uploaded
-                var remoteFiles = metadataObject.GetDatasetFilesInMyEMSL(m_DatasetID, subDir);
+                // Find files tracked by MyEMSL for this dataset
+                var remoteFiles = reader.FindFilesByDatasetID(m_DatasetID, subDir);
                 if (remoteFiles.Count == 0)
                 {
                     if (mTotalMismatchCount == 0)
@@ -931,6 +931,7 @@ namespace ArchiveVerifyPlugin
                         msg += " and subdirectory " + subDir;
 
                     mRetData.CloseoutMsg = msg;
+                    mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
 
                     LogError(" ... " + msg);
                     transactionId = 0;
@@ -945,29 +946,25 @@ namespace ArchiveVerifyPlugin
                 // files_for_keyvalue/omics.dms.dataset_id do not include dataset name
                 // Thus, this validation cannot be performed.
 
-                var filteredFiles = new List<MyEMSLFileInfo>();
+                var filteredFiles = new List<MyEMSLReader.ArchivedFileInfo>();
 
                 foreach (var archiveFile in remoteFiles)
                 {
-                    foreach (var fileVersion in archiveFile.Value)
-                    {
-                        filteredFiles.Add(fileVersion);
+                    filteredFiles.Add(archiveFile);
 
-                        //if (string.Equals(fileVersion.Dataset, m_Dataset, StringComparison.OrdinalIgnoreCase))
-                        //{
-                        //    filteredFiles.Add(fileVersion);
-                        //}
-                        //else
-                        //{
-                        //    LogMessage(
-                        //        "Query for dataset ID " + m_DatasetID + " yielded match to " + fileVersion.PathWithDataset +
-                        //        " - skipping since wrong dataset", true);
-                        //}
-                    }
+                    //if (string.Equals(fileVersion.Dataset, m_Dataset, StringComparison.OrdinalIgnoreCase))
+                    //{
+                    //    filteredFiles.Add(fileVersion);
+                    //}
+                    //else
+                    //{
+                    //    LogMessage(
+                    //        "Query for dataset ID " + m_DatasetID + " yielded match to " + fileVersion.PathWithDataset +
+                    //        " - skipping since wrong dataset", true);
+                    //}
                 }
 
-                success = CompareArchiveFilesToExpectedFiles(
-                    config, filteredFiles, out metadataFilePath, out transactionId);
+                var compareSuccess = CompareArchiveFilesToExpectedFiles(filteredFiles, out metadataFilePath, out transactionId);
 
                 if (success)
                 {
@@ -1038,25 +1035,6 @@ namespace ArchiveVerifyPlugin
                 return false;
             }
 
-        }
-
-        #endregion
-
-        #region "Event Handlers"
-
-        private void DMSMetadataObject_DebugEvent(object sender, MessageEventArgs e)
-        {
-            LogMessage(e.Message);
-        }
-
-        private void DMSMetadataObject_ErrorEvent(object sender, MessageEventArgs e)
-        {
-            LogError("DMSMetadataObject: " + e.Message);
-        }
-
-        void statusChecker_ErrorEvent(object sender, MessageEventArgs e)
-        {
-            LogError(e.Message);
         }
 
         #endregion
