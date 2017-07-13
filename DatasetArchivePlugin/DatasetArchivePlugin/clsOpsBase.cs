@@ -370,7 +370,7 @@ namespace DatasetArchivePlugin
                     LogOperationFailed(m_DatasetName);
                 }
 
-                // Raise an event with the stats
+                // Raise an event with the stats, though only if errorCode is non-zero or FileCountNew or FileCountUpdated are positive
 
                 var errorCode = ex.Message.GetHashCode();
                 if (errorCode == 0)
@@ -378,45 +378,38 @@ namespace DatasetArchivePlugin
 
                 var tsElapsedTime = DateTime.UtcNow.Subtract(dtStartTime);
 
-                MyEMSLUploadEventArgs e;
                 if (myEMSLUL == null)
                 {
+                    if (errorCode == 0)
+                        return false;
+
                     var eusInfo = new Upload.EUSInfo();
                     eusInfo.Clear();
 
-                    e = new MyEMSLUploadEventArgs(
+                    var emptyArgs = new MyEMSLUploadEventArgs(
                         0, 0,
                         0, tsElapsedTime.TotalSeconds,
                         string.Empty, eusInfo,
                         errorCode, useTestInstance);
-                }
-                else
-                {
-                    e = new MyEMSLUploadEventArgs(
-                        myEMSLUL.FileCountNew, myEMSLUL.FileCountUpdated,
-                        myEMSLUL.Bytes, tsElapsedTime.TotalSeconds,
-                        myEMSLUL.StatusURI, myEMSLUL.EUSInfo,
-                        errorCode, useTestInstance);
-                }
-                OnMyEMSLUploadComplete(e);
 
-                success = false;
+                    OnMyEMSLUploadComplete(emptyArgs);
+                    return false;
+                }
+
+                // Exit this method (skipping the call to MyEMSLUploadEventArgs) if the error code is 0 and no files were added or updated
+                if (errorCode == 0 && myEMSLUL.FileCountNew == 0 && myEMSLUL.FileCountUpdated == 0)
+                    return false;
+
+                var uploadArgs = new MyEMSLUploadEventArgs(
+                    myEMSLUL.FileCountNew, myEMSLUL.FileCountUpdated,
+                    myEMSLUL.Bytes, tsElapsedTime.TotalSeconds,
+                    myEMSLUL.StatusURI, myEMSLUL.EUSInfo,
+                    errorCode, useTestInstance);
+
+                OnMyEMSLUploadComplete(uploadArgs);
+
+                return false;
             }
-            finally
-            {
-                // Detach the event handlers
-                if (myEMSLUL != null)
-                {
-                    myEMSLUL.DebugEvent -= myEMSLUL_DebugEvent;
-                    myEMSLUL.ErrorEvent -= myEMSLUL_ErrorEvent;
-                    myEMSLUL.StatusUpdate -= myEMSLUL_StatusUpdate;
-                    myEMSLUL.UploadCompleted -= myEMSLUL_UploadCompleted;
-
-                    myEMSLUL.MetadataDefinedEvent -= myEMSLUL_MetadataDefinedEvent;
-                }
-            }
-
-            return success;
 
         }
 
