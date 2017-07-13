@@ -178,7 +178,7 @@ namespace ArchiveVerifyPlugin
             }
 
             var statusChecker = new MyEMSLStatusCheck();
-            statusChecker.ErrorEvent += statusChecker_ErrorEvent;
+            RegisterEvents(statusChecker);
 
             try
             {
@@ -314,8 +314,7 @@ namespace ArchiveVerifyPlugin
                 };
 
                 // Attach the events
-                metadataObject.DebugEvent += DMSMetadataObject_DebugEvent;
-                metadataObject.ErrorEvent += DMSMetadataObject_ErrorEvent;
+                RegisterEvents(metadataObject);
 
                 var lstDatasetFilesLocal = metadataObject.FindDatasetFilesToArchive(
                     m_TaskParams.TaskDictionary,

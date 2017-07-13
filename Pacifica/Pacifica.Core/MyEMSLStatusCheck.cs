@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Text.RegularExpressions;
-using System.Xml;
 using Jayrock.Json.Conversion;
+using PRISM;
 
 namespace Pacifica.Core
 {
@@ -15,7 +15,7 @@ namespace Pacifica.Core
     /// First call GetIngestStatus then call IngestStepCompleted.
     /// This allows for just one web request, but the ability to examine the status of multiple steps
     /// </remarks>
-    public class MyEMSLStatusCheck
+    public class MyEMSLStatusCheck : clsEventNotifier
     {
         public const string PERMISSIONS_ERROR = "Permissions error:";
 
@@ -217,8 +217,8 @@ namespace Pacifica.Core
 
             if (!File.Exists(Configuration.CLIENT_CERT_FILEPATH))
             {
-                errorMessage = "Authentication failure; cert file not found at " + Configuration.CLIENT_CERT_FILEPATH;
-                ReportError("GetIngestStatus", errorMessage);
+                errorMessage = "Authentication failure in GetIngestStatus; cert file not found at " + Configuration.CLIENT_CERT_FILEPATH;
+                OnErrorEvent(errorMessage);
                 percentComplete = 0;
                 lookupError = true;
                 return new Dictionary<string, object>();
@@ -229,7 +229,11 @@ namespace Pacifica.Core
             if (ServicePointManager.ServerCertificateValidationCallback == null)
                 ServicePointManager.ServerCertificateValidationCallback += Utilities.ValidateRemoteCertificate;
 
-            var statusResult = EasyHttp.Send(mPacificaConfig, statusURI, out HttpStatusCode responseStatusCode);
+            OnDebugEvent("Contacting " + statusURI);
+
+            var statusResult = EasyHttp.Send(mPacificaConfig, statusURI, out _);
+
+            OnDebugEvent("Result received: " + statusResult);
 
             // Example contents of statusResult
             // (as returned by https://ingestdms.my.emsl.pnl.gov/get_state?job_id=123456)
@@ -264,14 +268,14 @@ namespace Pacifica.Core
                 case "ok":
                     if (string.IsNullOrWhiteSpace(exception))
                     {
-                        OnDebugMessage(new MessageEventArgs("GetIngestStatus", "Archive state is OK for " + statusURI));
+                        OnDebugEvent("Archive state is OK for " + statusURI);
                     }
                     else
                     {
                         errorMessage = "Upload state is OK, but an exception was reported for task \"" + task + "\"" +
                                        "; exception \"" + exception + "\"";
 
-                        ReportError("GetIngestStatus", errorMessage + "; see " + statusURI);
+                        OnErrorEvent(errorMessage + "; see " + statusURI);
                     }
                     break;
 
@@ -279,13 +283,11 @@ namespace Pacifica.Core
                     errorMessage = "Upload failed, task \"" + task + "\"";
                     if (string.IsNullOrWhiteSpace(exception))
                     {
-                        ReportError("GetIngestStatus",
-                            string.Format("{0}; see {1}", errorMessage, statusURI));
+                        OnErrorEvent(string.Format("{0}; see {1}", errorMessage, statusURI));
                     }
                     else
                     {
-                        ReportError("GetIngestStatus",
-                            string.Format("{0}; exception \"{1}\"; see {2}", errorMessage, exception, statusURI));
+                        OnErrorEvent(string.Format("{0}; exception \"{1}\"; see {2}", errorMessage, exception, statusURI));
 
                         if (exception.IndexOf("ConnectionTimeout", StringComparison.InvariantCultureIgnoreCase) >= 0)
                         {
@@ -306,11 +308,11 @@ namespace Pacifica.Core
                 default:
                     if (state.Contains("error"))
                     {
-                        ReportError("GetIngestStatus", "Status server is offline or having issues; cannot check " + statusURI);
+                        OnErrorEvent("Status server is offline or having issues; cannot check " + statusURI);
                     }
                     else
                     {
-                        ReportError("GetIngestStatus", "Unrecognized state " + state + " for " + statusURI);
+                        OnErrorEvent("Unrecognized state " + state + " for " + statusURI);
                     }
                     break;
             }
@@ -716,31 +718,6 @@ namespace Pacifica.Core
 
             return false;
         }
-
-        protected void ReportError(string callingFunction, string message)
-        {
-            OnErrorMessage(new MessageEventArgs(callingFunction, message));
-
-            ErrorMessage = string.Copy(message);
-        }
-
-        #region "Events"
-
-        public event MessageEventHandler DebugEvent;
-
-        protected void OnDebugMessage(MessageEventArgs e)
-        {
-            DebugEvent?.Invoke(this, e);
-        }
-
-        public event MessageEventHandler ErrorEvent;
-
-        protected void OnErrorMessage(MessageEventArgs e)
-        {
-            ErrorEvent?.Invoke(this, e);
-        }
-
-        #endregion
 
     }
 }

@@ -272,10 +272,8 @@ namespace DatasetArchivePlugin
                 };
 
                 // Attach the events
+                RegisterEvents(myEMSLUL);
 
-                myEMSLUL.DebugEvent += myEMSLUL_DebugEvent;
-                myEMSLUL.ErrorEvent += myEMSLUL_ErrorEvent;
-                myEMSLUL.WarningEvent += myEMSLUL_WarningEvent;
                 myEMSLUL.StatusUpdate += myEMSLUL_StatusUpdate;
                 myEMSLUL.UploadCompleted += myEMSLUL_UploadCompleted;
 
@@ -471,24 +469,6 @@ namespace DatasetArchivePlugin
                 mMostRecentLogTime = DateTime.UtcNow;
                 OnStatusEvent(message);
             }
-        }
-
-        void myEMSLUL_DebugEvent(object sender, MessageEventArgs e)
-        {
-            var msg = "  ... " + e.CallingFunction + ": " + e.Message;
-            LogStatusMessageSkipDuplicate(msg);
-        }
-
-        void myEMSLUL_ErrorEvent(object sender, MessageEventArgs e)
-        {
-            var msg = "MyEmslUpload." + e.CallingFunction + " error: " + e.Message;
-            OnErrorEvent(msg);
-        }
-
-        void myEMSLUL_WarningEvent(object sender, MessageEventArgs e)
-        {
-            var msg = "MyEmslUpload." + e.CallingFunction + " warning: " + e.Message;
-            OnWarningEvent(msg);
         }
 
         void myEMSLUL_MetadataDefinedEvent(object sender, MessageEventArgs e)

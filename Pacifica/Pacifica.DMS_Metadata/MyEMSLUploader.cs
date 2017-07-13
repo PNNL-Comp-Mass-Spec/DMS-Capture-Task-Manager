@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Pacifica.Core;
+using PRISM;
+using Utilities = Pacifica.Core.Utilities;
 
 namespace Pacifica.DMS_Metadata
 {
-    public class MyEMSLUploader
+    public class MyEMSLUploader : clsEventNotifier
     {
         public const string RECURSIVE_UPLOAD = "MyEMSL_Recurse";
 
@@ -151,10 +153,9 @@ namespace Pacifica.DMS_Metadata
                 throw new InvalidDataException("Job parameters do not have Job defined; unable to continue");
 
             myEMSLUpload = new Upload(config, transferFolderPath, jobNumber);
+            RegisterEvents(myEMSLUpload);
 
             // Attach the events
-            myEMSLUpload.DebugEvent += myEMSLUpload_DebugEvent;
-            myEMSLUpload.ErrorEvent += myEMSLUpload_ErrorEvent;
             myEMSLUpload.StatusUpdate += myEMSLUpload_StatusUpdate;
             myEMSLUpload.UploadCompleted += myEMSLUpload_UploadCompleted;
 
@@ -174,10 +175,10 @@ namespace Pacifica.DMS_Metadata
             };
 
             // Attach the events
-            _mdContainer.ProgressEvent += _mdContainer_ProgressEvent;
-            _mdContainer.DebugEvent += myEMSLUpload_DebugEvent;
-            _mdContainer.ErrorEvent += myEMSLUpload_ErrorEvent;
-            _mdContainer.WarningEvent += myEMSLUpload_WarningEvent;
+            RegisterEvents(_mdContainer);
+
+            // Also process Progress Updates using _mdContainer_ProgressEvent, which triggers event StatusUpdate
+            _mdContainer.ProgressUpdate += _mdContainer_ProgressEvent;
 
             _mdContainer.UseTestInstance = UseTestInstance;
 
@@ -212,7 +213,7 @@ namespace Pacifica.DMS_Metadata
             var fileList = Utilities.GetFileListFromMetadataObject(_mdContainer.MetadataObject);
             if (fileList.Count == 0)
             {
-                OnDebugEvent("StartUpload", "File list is empty; nothing to do");
+                OnDebugEvent("File list is empty in StartUpload; nothing to do");
                 statusURL = string.Empty;
                 var e = new UploadCompletedEventArgs(string.Empty);
                 UploadCompleted?.Invoke(this, e);
@@ -282,51 +283,17 @@ namespace Pacifica.DMS_Metadata
 
         #region "Events and Event Handlers"
 
-        public event DebugEventHandler DebugEvent;
-        public event DebugEventHandler ErrorEvent;
-        public event DebugEventHandler WarningEvent;
-
         public event MessageEventHandler MetadataDefinedEvent;
 
         public event StatusUpdateEventHandler StatusUpdate;
-        public event UploadCompletedEventHandler UploadCompleted;
 
-        private void OnDebugEvent(string callingFunction, string debugMessage)
-        {
-            var e = new MessageEventArgs(callingFunction, debugMessage);
-            DebugEvent?.Invoke(this, e);
-        }
+        public event UploadCompletedEventHandler UploadCompleted;
 
         private void ReportMetadataDefined(string callingFunction, string metadataJSON)
         {
             var e = new MessageEventArgs(callingFunction, metadataJSON);
 
             MetadataDefinedEvent?.Invoke(this, e);
-        }
-
-        /// <summary>
-        /// Handler for both _mdContainer and myEMSLUpload debug events
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        void myEMSLUpload_DebugEvent(object sender, MessageEventArgs e)
-        {
-            DebugEvent?.Invoke(this, e);
-        }
-
-        /// <summary>
-        /// Handler for both _mdContainer and myEMSLUpload error events
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        void myEMSLUpload_ErrorEvent(object sender, MessageEventArgs e)
-        {
-            ErrorEvent?.Invoke(this, e);
-        }
-
-        void myEMSLUpload_WarningEvent(object sender, MessageEventArgs e)
-        {
-            WarningEvent?.Invoke(this, e);
         }
 
         void myEMSLUpload_StatusUpdate(object sender, StatusEventArgs e)
@@ -344,12 +311,12 @@ namespace Pacifica.DMS_Metadata
             UploadCompleted?.Invoke(this, e);
         }
 
-        void _mdContainer_ProgressEvent(object sender, ProgressEventArgs e)
+        void _mdContainer_ProgressEvent(string progressMessage, float percentComplete)
         {
             if (StatusUpdate != null)
             {
                 // Multiplying by 0.25 because we're assuming 25% of the time is required for _mdContainer to compute the Sha-1 hashes of files to be uploaded while 75% of the time is required to create and upload the .tar file
-                var percentCompleteOverall = 0 + e.PercentComplete * 0.25;
+                var percentCompleteOverall = 0 + percentComplete * 0.25;
                 StatusUpdate(this, new StatusEventArgs(percentCompleteOverall, 0, _mdContainer.TotalFileSizeToUpload, string.Empty));
             }
 

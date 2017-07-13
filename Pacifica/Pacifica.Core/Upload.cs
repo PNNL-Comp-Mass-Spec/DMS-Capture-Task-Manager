@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Net;
+using PRISM;
 
 namespace Pacifica.Core
 {
-    public class Upload : IUpload
+    public class Upload : clsEventNotifier, IUpload
     {
         /// <summary>
         /// EUS Operator ID to use when operator ID is unknown
@@ -205,20 +205,8 @@ namespace Pacifica.Core
 
         #region Events and Handlers
 
-        public event MessageEventHandler DebugEvent;
-        public event MessageEventHandler ErrorEvent;
         public event UploadCompletedEventHandler UploadCompleted;
         public event StatusUpdateEventHandler StatusUpdate;
-
-        private void RaiseDebugEvent(string callingFunction, string currentTask)
-        {
-            DebugEvent?.Invoke(this, new MessageEventArgs(callingFunction, currentTask));
-        }
-
-        private void RaiseErrorEvent(string callingFunction, string errorMessage)
-        {
-            ErrorEvent?.Invoke(this, new MessageEventArgs(callingFunction, errorMessage));
-        }
 
         void EasyHttp_StatusUpdate(object sender, StatusEventArgs e)
         {
@@ -267,7 +255,7 @@ namespace Pacifica.Core
 
             if (!File.Exists(Configuration.CLIENT_CERT_FILEPATH))
             {
-                OnError("StartUpload", "Authentication failure; cert file not found at " + Configuration.CLIENT_CERT_FILEPATH);
+                OnError("Authentication failure in StartUpload; cert file not found at " + Configuration.CLIENT_CERT_FILEPATH);
                 return false;
             }
 
@@ -325,7 +313,7 @@ namespace Pacifica.Core
 
             if (fileList.Count == 0)
             {
-                RaiseDebugEvent("ProcessMetadata", "File list is empty; nothing to do");
+                OnDebugEvent("File list is empty in StartUpload; nothing to do");
                 RaiseUploadCompleted(string.Empty);
                 return true;
             }
@@ -335,7 +323,7 @@ namespace Pacifica.Core
 
             if (debugMode == EasyHttp.eDebugMode.MyEMSLOfflineMode)
             {
-                RaiseDebugEvent("ProcessMetadata", "Creating .tar file locally");
+                OnDebugEvent("StartUpload is creating the .tar file locally");
             }
             else
             {
@@ -345,7 +333,7 @@ namespace Pacifica.Core
                 // Typically: https://ingestdms.my.emsl.pnl.gov/upload
                 var storageUrl = serverUri + "/" + location;
 
-                RaiseDebugEvent("ProcessMetadata", "Sending file to " + storageUrl);
+                OnDebugEvent("StartUpload is sending file to " + storageUrl);
             }
 
             var responseData = EasyHttp.SendFileListToIngester(
@@ -389,23 +377,23 @@ namespace Pacifica.Core
                 }
                 else if (state == "failed")
                 {
-                    OnError("StartUpload", "Upload failed during ingest process");
+                    OnError("Upload failed during ingest process");
                     RaiseUploadCompleted(statusResult);
                 }
                 else if (state.Contains("error"))
                 {
-                    OnError("StartUpload", "Ingester Backend is offline or having issues");
+                    OnError("Ingester Backend is offline or having issues");
                     RaiseUploadCompleted(statusResult);
                 }
                 else
                 {
-                    OnError("StartUpload", "Unrecognized state: " + statusJSON["state"]);
+                    OnError("Unrecognized ingest state: " + statusJSON["state"]);
                 }
 
             }
             catch (Exception ex)
             {
-                OnError("StartUpload", "Exception examining the MyEMSL response string: " + ex.Message);
+                OnError("Exception examining the MyEMSL response string: " + ex.Message, ex);
             }
 
             try
@@ -833,19 +821,11 @@ namespace Pacifica.Core
             return eusInstrumentId <= 0 ? instrumentIdIfUnknown : eusInstrumentId;
         }
 
-        private void OnError(string methodName, string errorMessage)
+        private void OnError(string errorMessage, Exception ex = null)
         {
             ErrorMessage = errorMessage;
-            RaiseErrorEvent(methodName, errorMessage);
+            OnErrorEvent(errorMessage, ex);
 
-        }
-
-        private static int StringToInt(string valueText, int defaultValue)
-        {
-            if (int.TryParse(valueText, out int value))
-                return value;
-
-            return defaultValue;
         }
 
         #endregion

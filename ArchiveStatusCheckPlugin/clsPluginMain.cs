@@ -117,7 +117,7 @@ namespace ArchiveStatusCheckPlugin
             }
 
             var statusChecker = new MyEMSLStatusCheck();
-            statusChecker.ErrorEvent += statusChecker_ErrorEvent;
+            RegisterEvents(statusChecker);
 
             // Check the status of each of the URIs
             // Keys in dctUnverifiedURIs and dctVerifiedURIs are StatusNum; values are StatusURI strings
@@ -502,11 +502,6 @@ namespace ArchiveStatusCheckPlugin
 
             } // while
 
-        }
-
-        void statusChecker_ErrorEvent(object sender, MessageEventArgs e)
-        {
-            LogError("Status checker error for job " + m_Job + ": " + e.Message);
         }
 
         /// <summary>

@@ -20,13 +20,6 @@ namespace Pacifica.Core
         /// <returns>Returns Hex-encoded hash string</returns>
         string GenerateSha1Hash(string fileName);
 
-        /// <summary>
-        /// Returns status for the file in question from the server
-        /// </summary>
-        /// <remarks>Works off of an independent background process that talks
-        /// to an URL from the backend server</remarks>
-        event MessageEventHandler DebugEvent;
-        event MessageEventHandler ErrorEvent;
         event StatusUpdateEventHandler StatusUpdate;
         event UploadCompletedEventHandler UploadCompleted;
 

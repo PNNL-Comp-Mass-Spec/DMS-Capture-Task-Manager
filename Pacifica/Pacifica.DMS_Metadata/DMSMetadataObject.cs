@@ -7,13 +7,12 @@ using System.Linq;
 using Pacifica.Core;
 using PRISM;
 using Jayrock.Json.Conversion;
-using ProgressEventArgs = Pacifica.Core.ProgressEventArgs;
 using Utilities = Pacifica.Core.Utilities;
 using System.Data.SqlClient;
 
 namespace Pacifica.DMS_Metadata
 {
-    public class DMSMetadataObject
+    public class DMSMetadataObject : clsEventNotifier
     {
 
         /// <summary>
@@ -223,7 +222,7 @@ namespace Pacifica.DMS_Metadata
             }
 
             var metadataDescription = Upload.GetMetadataObjectDescription(mMetadataObject);
-            OnDebugEvent("SetupMetadata", metadataDescription);
+            OnDebugEvent(metadataDescription);
 
             EUSInfo = eusInfo;
             return true;
@@ -284,7 +283,7 @@ namespace Pacifica.DMS_Metadata
                                             "ConnectionString: {2}, RetryCount = {3}",
                                             datasetID, ex.Message, dmsConnectionString, retryCount);
 
-                    OnError("GetSupplementalDMSMetadata", msg);
+                    OnErrorEvent(msg, ex);
 
                     // Delay for 5 seconds before trying again
                     if (retryCount >= 0)
@@ -331,7 +330,7 @@ namespace Pacifica.DMS_Metadata
                                             "ConnectionString: {2}, RetryCount = {3}",
                                             requestedRunID, ex.Message, connection.ConnectionString, retryCount);
 
-                    OnError("GetRequestedRunUsers", msg);
+                    OnErrorEvent(msg);
 
                     // Delay for 5 seconds before trying again
                     if (retryCount >= 0)
@@ -352,33 +351,34 @@ namespace Pacifica.DMS_Metadata
             try
             {
                 if (TraceMode)
-                    OnDebugEvent("CheckMetadataValidity", "Contacting " + policyURL);
+                    OnDebugEvent("Contacting " + policyURL);
 
                 var response = EasyHttp.Send(mPacificaConfig, policyURL, null, out HttpStatusCode responseStatusCode, mdJSON, EasyHttp.HttpMethod.Post, 100, "application/json");
 
                 if ((int)responseStatusCode == 200 && response.ToLower().Contains("success"))
                 {
+                    if (TraceMode)
+                        OnDebugEvent("Response received " + response);
+
                     validityMessage = response;
-                    mdIsValid = true;
+                    return true;
                 }
+
+                OnErrorEvent("Policy server reports that metadata is not valid: " + policyURL);
+
+                if (mdJSON.Length < 1255)
+                    OnDebugEvent(mdJSON);
                 else
-                {
-                    OnError("CheckMetadataValidity", "Policy server reports that metadata is not valid: " + policyURL);
+                    OnDebugEvent(mdJSON.Substring(0, 1250) + " ...");
 
-                    if (mdJSON.Length < 1255)
-                        OnDebugEvent("CheckMetadataValidity", mdJSON);
-                    else
-                        OnDebugEvent("CheckMetadataValidity", mdJSON.Substring(0, 1250) + " ...");
-                }
-
+                return false;
             }
             catch (Exception ex)
             {
-                validityMessage = ex.Message;
-                mdIsValid = false;
+                OnErrorEvent("Error in CheckMetadataValidity: " + ex.Message, ex);
+                return false;
             }
 
-            return mdIsValid;
         }
 
         private bool AddUsingCacheInfoFile(
@@ -400,7 +400,7 @@ namespace Pacifica.DMS_Metadata
 
             if (string.IsNullOrWhiteSpace(remoteFilePath))
             {
-                OnError("AddUsingCacheInfoFile", "Warning: Cache info file did not contain a file path; see " + fiCacheInfoFile.FullName);
+                OnErrorEvent("Warning: Cache info file did not contain a file path; see " + fiCacheInfoFile.FullName);
                 return false;
             }
 
@@ -408,13 +408,13 @@ namespace Pacifica.DMS_Metadata
             if (!fiRemoteFile.Exists)
             {
                 // This is not a fatal error; the file may have been purged
-                Console.WriteLine("Note: Remote file referred to by the cache info file was not found: " + fiRemoteFile.FullName);
+                OnDebugEvent("Note: Remote file referred to by the cache info file was not found: " + fiRemoteFile.FullName);
                 return false;
             }
 
             if (fiCacheInfoFile.Directory == null)
             {
-                OnError("AddUsingCacheInfoFile", "Unable to determine the parent directory of the cache info file (this should never happen)");
+                OnErrorEvent("Unable to determine the parent directory of the cache info file (this should never happen)");
                 return false;
             }
 
@@ -480,9 +480,9 @@ namespace Pacifica.DMS_Metadata
                 runningFileSize += fiFile.Length;
 
                 if (totalFileSize > 0)
-                    fracCompleted = (runningFileSize / (double)totalFileSize);
+                    fracCompleted = runningFileSize / (float)totalFileSize;
 
-                ReportProgress(fracCompleted * 100.0, "Hashing files: " + fiFile.Name);
+                ReportProgress("Hashing files: " + fiFile.Name, fracCompleted * 100);
 
                 // This constructor will auto-compute the Sha-1 hash value for the file
                 var fio = new FileInfoObject(fiFile.FullName, baseDSPath);
@@ -503,9 +503,7 @@ namespace Pacifica.DMS_Metadata
 
                 if (TraceMode)
                 {
-                    OnDebugEvent("CollectFileInformation",
-                                    string.Format("Hashing files, {0:F1}% complete: {1}",
-                                    fracCompleted * 100, fiFile.Name));
+                    OnDebugEvent(string.Format("Hashing files, {0:F1}% complete: {1}", fracCompleted * 100, fiFile.Name));
                 }
 
             }
@@ -540,7 +538,7 @@ namespace Pacifica.DMS_Metadata
             if (!string.IsNullOrWhiteSpace(uploadMetadata.SubFolder))
                 currentTask += ", subfolder " + uploadMetadata.SubFolder;
 
-            OnDebugEvent("CompareDatasetContentsWithMyEMSLMetadata", currentTask);
+            OnDebugEvent(currentTask);
 
             var datasetID = uploadMetadata.DatasetID;
 
@@ -554,7 +552,7 @@ namespace Pacifica.DMS_Metadata
             if (expectedRemoteFileCount < 0)
             {
                 criticalErrorMessage = "Aborting upload since GetDatasetFileCountExpectedInMyEMSL returned -1";
-                OnError("CompareDatasetContentsWithMyEMSLMetadata", criticalErrorMessage);
+                OnErrorEvent(criticalErrorMessage);
                 criticalError = true;
                 return new List<FileInfoObject>();
             }
@@ -576,7 +574,7 @@ namespace Pacifica.DMS_Metadata
             {
                 if (IgnoreMyEMSLFileTrackingError)
                 {
-                    OnWarning("CompareDatasetContentsWithMyEMSLMetadata",
+                    OnWarningEvent(
                         string.Format("MyEMSL reported {0} files for Dataset ID {1}; it should be tracking at least {2} files; " +
                                       "ignoring because job paramater IgnoreMyEMSLFileTrackingError is True",
                                       remoteFiles.Count, datasetID, expectedRemoteFileCount));
@@ -595,7 +593,7 @@ namespace Pacifica.DMS_Metadata
                                                          "to ignore this message, define True for job parameter IgnoreMyEMSLFileTrackingError (use {3})",
                                                          remoteFiles.Count, datasetID, expectedRemoteFileCount, addUpdateJobParam);
 
-                    OnError("CompareDatasetContentsWithMyEMSLMetadata", criticalErrorMessage);
+                    OnErrorEvent(criticalErrorMessage);
 
                     criticalError = true;
                     return new List<FileInfoObject>();
@@ -846,7 +844,7 @@ namespace Pacifica.DMS_Metadata
                                             "ConnectionString: {2}, RetryCount = {3}",
                                             datasetID, ex.Message, connectionString, retryCount);
 
-                    OnError("GetDatasetFileCountExpectedInMyEMSL", msg);
+                    OnErrorEvent(msg, ex);
 
                     // Delay for 5 seconds before trying again
                     if (retryCount >= 0)
@@ -874,12 +872,25 @@ namespace Pacifica.DMS_Metadata
 
             // Note that querying by dataset name only works for datasets ingested after July 1, 2017, i.e.
             // https://metadata.my.emsl.pnl.gov/fileinfo/files_for_keyvalue/omics.dms.dataset_name/QC_pp_MCF-7_17_01_B_25JUN17_Frodo_REP-17-06-02
+            // vs. https://metadata.my.emsl.pnl.gov/fileinfo/files_for_keyvalue/omics.dms.dataset_id/595858
 
             if (TraceMode)
-                OnDebugEvent("GetDatasetFilesInMyEMSL", "Contacting " + metadataURL);
+                OnDebugEvent("Contacting " + metadataURL);
 
             // Retrieve a list of files already in MyEMSL for this dataset
             var fileInfoListJSON = EasyHttp.Send(mPacificaConfig, metadataURL, out HttpStatusCode responseStatusCode);
+
+            if (string.IsNullOrEmpty(fileInfoListJSON))
+            {
+                OnErrorEvent("Empty MyEMSL response in GetDatasetFilesInMyEMSL");
+                return new Dictionary<string, List<MyEMSLFileInfo>>();
+            }
+
+            if (TraceMode)
+            {
+                var previewLength = Math.Min(fileInfoListJSON.Length, 75);
+                OnDebugEvent("Response received, convert to a dictionary: " + fileInfoListJSON.Substring(0, previewLength));
+            }
 
             // Convert the response to a dictionary
             var jsa = (Jayrock.Json.JsonArray)JsonConvert.Import(fileInfoListJSON);
@@ -975,14 +986,14 @@ namespace Pacifica.DMS_Metadata
             return datasetDateCodeString;
         }
 
-        private void ReportProgress(double percentComplete)
+        private void ReportProgress(float percentComplete)
         {
-            ReportProgress(percentComplete, string.Empty);
+            ReportProgress("", percentComplete);
         }
 
-        private void ReportProgress(double percentComplete, string currentTask)
+        private void ReportProgress(string currentTask, float percentComplete)
         {
-            OnProgressUpdate(new ProgressEventArgs(percentComplete, currentTask));
+            OnProgressUpdate(currentTask, percentComplete);
         }
 
         /// <summary>
@@ -1051,45 +1062,12 @@ namespace Pacifica.DMS_Metadata
             return reader[fieldName].ToString();
         }
 
-
-        #region "Event Delegates and Classes"
-
-        public event ProgressEventHandler ProgressEvent;
-        public event MessageEventHandler DebugEvent;
-        public event MessageEventHandler ErrorEvent;
-        public event MessageEventHandler WarningEvent;
-
-        public delegate void ProgressEventHandler(object sender, ProgressEventArgs e);
-
-        #endregion
-
         #region "Event Functions"
-
-        private void OnProgressUpdate(ProgressEventArgs e)
-        {
-            ProgressEvent?.Invoke(this, e);
-        }
-
-        private void OnError(string callingFunction, string errorMessage)
-        {
-            ErrorEvent?.Invoke(this, new MessageEventArgs(callingFunction, errorMessage));
-        }
-
-        private void OnDebugEvent(string callingFunction, string currentTask)
-        {
-            DebugEvent?.Invoke(this, new MessageEventArgs(callingFunction, currentTask));
-        }
-
-        private void OnWarning(string callingFunction, string warningMessage)
-        {
-            WarningEvent?.Invoke(this, new MessageEventArgs(callingFunction, warningMessage));
-        }
 
         void mFileTools_WaitingForLockQueue(string sourceFilePath, string targetFilePath, int MBBacklogSource, int MBBacklogTarget)
         {
             Console.WriteLine("mFileTools_WaitingForLockQueue for " + sourceFilePath);
         }
-
 
         #endregion
 
