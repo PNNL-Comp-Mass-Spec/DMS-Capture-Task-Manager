@@ -17,9 +17,9 @@ namespace ArchiveVerifyPlugin
         //**********************************************************************************************************
 
         #region "Constants and Enums"
-        private const string MD5_RESULTS_FILE_PREFIX = "results.";
-        private const string DEFAULT_MD5_RESULTS_FOLDER_PATH = @"\\proto-7\MD5Results";
-        private const string DEFAULT_MD5_RESULTS_BACKUP_FOLDER_PATH = @"\\proto-5\MD5ResultsBackup";
+        private const string HASH_RESULTS_FILE_PREFIX = "results.";
+        private const string DEFAULT_HASH_RESULTS_FOLDER_PATH = @"\\proto-7\MD5Results";
+        private const string DEFAULT_HASH_RESULTS_BACKUP_FOLDER_PATH = @"\\proto-5\MD5ResultsBackup";
 
         #endregion
 
@@ -70,8 +70,8 @@ namespace ArchiveVerifyPlugin
             }
             catch (Exception ex)
             {
-                mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 mRetData.CloseoutMsg = "Exception checking archive status (ArchiveVerifyPlugin): " + ex.Message;
+                mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 
                 LogError("Exception checking archive status for job " + m_Job, ex);
 
@@ -83,8 +83,8 @@ namespace ArchiveVerifyPlugin
             if (success)
             {
 
-                // Confirm that the files are visible in the metadata serach results
-                // If data is found, then CreateOrUpdateMD5ResultsFile will also be called
+                // Confirm that the files are visible in the metadata serach results (using metadataObject.GetDatasetFilesInMyEMSL)
+                // If data is found, CreateOrUpdateHashResultsFile will also be called
                 success = VisibleInMetadata(out var metadataFilePath, out var transactionID);
 
                 UpdateIngestStepsCompletedOneTask(statusNum, ingestStepsCompleted, transactionID, fatalError);
@@ -566,49 +566,52 @@ namespace ArchiveVerifyPlugin
             transactionId = GetBestTransactionId(transactionIdStats);
         }
 
-        private void CopyMD5ResultsFileToBackupFolder(string datasetInstrument, string datasetYearQuarter, FileInfo fiMD5ResultsFile)
+        private void CopyHashResultsFileToBackupFolder(string datasetInstrument, string datasetYearQuarter, FileInfo hashResultsFile)
         {
-            // Copy the updated file to md5ResultsFolderPathBackup
+            // Copy the updated file to hashResultsFolderPathBackup
             try
             {
-                var strMD5ResultsFileBackup = GetMD5ResultsFilePath(DEFAULT_MD5_RESULTS_BACKUP_FOLDER_PATH, m_Dataset, datasetInstrument, datasetYearQuarter);
+                var hashResultsFolderPathBackup = GetHashResultsFilePath(DEFAULT_HASH_RESULTS_BACKUP_FOLDER_PATH, m_Dataset, datasetInstrument, datasetYearQuarter);
 
-                var fiBackupMD5ResultsFile = new FileInfo(strMD5ResultsFileBackup);
+                var fiBackupHashResultsFile = new FileInfo(hashResultsFolderPathBackup);
 
                 // Create the target folders if necessary
-                if (fiBackupMD5ResultsFile.Directory != null)
+                if (fiBackupHashResultsFile.Directory != null)
                 {
-                    if (!fiBackupMD5ResultsFile.Directory.Exists)
-                        fiBackupMD5ResultsFile.Directory.Create();
+                    if (!fiBackupHashResultsFile.Directory.Exists)
+                        fiBackupHashResultsFile.Directory.Create();
 
                     // Copy the file
-                    fiMD5ResultsFile.CopyTo(fiBackupMD5ResultsFile.FullName, true);
+                    hashResultsFile.CopyTo(fiBackupHashResultsFile.FullName, true);
                 }
             }
             catch (Exception ex)
             {
                 // Don't treat this as a fatal error
-                LogError("Error copying MD5 results file from MD5 results folder to backup folder", ex);
+                LogError("Error copying Sha-1 hash results file from hash results folder to backup folder", ex);
             }
         }
 
-        private bool CreateMD5ResultsFile(FileInfo fiMD5ResultsFile, IEnumerable<MyEMSLFileInfo> archivedFiles)
+        /// <summary>
+        /// Create a new Sha-1 hash results file
+        /// </summary>
+        /// <param name="hashResultsFile"></param>
+        /// <param name="archivedFiles"></param>
+        /// <param name="datasetInstrument"></param>
+        /// <param name="datasetYearQuarter"></param>
+        /// <returns></returns>
+        private bool CreateHashResultsFile(
+            FileInfo hashResultsFile,
+            IEnumerable<MyEMSLReader.ArchivedFileInfo> archivedFiles,
+            string datasetInstrument,
+            string datasetYearQuarter)
         {
-            // Create a new MD5 results file
             bool success;
-
-            var datasetInstrument = m_TaskParams.GetParam("Instrument_Name");
-            if (!ParameterDefined("Instrument_Name", datasetInstrument))
-                return false;
-
-            // Calculate the "year_quarter" code used for subfolders within an instrument folder
-            // This value is based on the date the dataset was created in DMS
-            var datasetYearQuarter = DMSMetadataObject.GetDatasetYearQuarter(m_TaskParams.TaskDictionary);
 
             try
             {
-                // Create a new MD5 results file
-                var lstMD5Results = new Dictionary<string, clsHashInfo>(StringComparer.CurrentCultureIgnoreCase);
+
+                var lstHashResults = new Dictionary<string, clsHashInfo>(StringComparer.CurrentCultureIgnoreCase);
 
                 foreach (var archivedFile in archivedFiles)
                 {
@@ -619,30 +622,30 @@ namespace ArchiveVerifyPlugin
 
                     var hashInfo = new clsHashInfo
                     {
-                        HashCode = archivedFile.HashSum,
+                        HashCode = archivedFile.Hash,
                         MyEMSLFileID = archivedFile.FileID.ToString(CultureInfo.InvariantCulture)
                     };
 
-                    lstMD5Results.Add(archivedFilePath, hashInfo);
+                    lstHashResults.Add(archivedFilePath, hashInfo);
                 }
 
-                if (fiMD5ResultsFile.Directory != null)
+                if (hashResultsFile.Directory != null)
                 {
                     // Create the target folders if necessary
-                    if (!fiMD5ResultsFile.Directory.Exists)
-                        fiMD5ResultsFile.Directory.Create();
+                    if (!hashResultsFile.Directory.Exists)
+                        hashResultsFile.Directory.Create();
 
-                    success = WriteMD5ResultsFile(lstMD5Results, fiMD5ResultsFile.FullName, useTempFile: false);
+                    success = WriteHashResultsFile(lstHashResults, hashResultsFile.FullName, useTempFile: false);
                 }
                 else
                 {
-                    LogError("Parent directory is null for " + fiMD5ResultsFile.FullName);
+                    LogError("Parent directory is null for " + hashResultsFile.FullName);
                     success = false;
                 }
             }
             catch (Exception ex)
             {
-                LogError("Exception creating new MD5 results file in CreateMD5ResultsFile", ex);
+                LogError("Exception creating new Sha-1 hash results file in CreateHashResultsFile", ex);
                 return false;
             }
 
@@ -651,11 +654,11 @@ namespace ArchiveVerifyPlugin
         }
 
         /// <summary>
-        /// Create or update the MD5 results file
+        /// Create or update the Sha-1 hash results file
         /// </summary>
         /// <param name="archivedFiles"></param>
         /// <returns></returns>
-        private bool CreateOrUpdateMD5ResultsFile(IEnumerable<MyEMSLFileInfo> archivedFiles)
+        private bool CreateOrUpdateHashResultsFile(IEnumerable<MyEMSLReader.ArchivedFileInfo> archivedFiles)
         {
 
             bool success;
@@ -663,7 +666,7 @@ namespace ArchiveVerifyPlugin
             try
             {
 
-                var datasetInstrument = m_TaskParams.GetParam("Instrument_Name", string.Empty);
+                var datasetInstrument = m_TaskParams.GetParam("Instrument_Name");
                 if (!ParameterDefined("Instrument_Name", datasetInstrument))
                     return false;
 
@@ -671,30 +674,30 @@ namespace ArchiveVerifyPlugin
                 // This value is based on the date the dataset was created in DMS
                 var datasetYearQuarter = DMSMetadataObject.GetDatasetYearQuarter(m_TaskParams.TaskDictionary);
 
-                var md5ResultsFilePath = GetMD5ResultsFilePath(DEFAULT_MD5_RESULTS_FOLDER_PATH, m_Dataset, datasetInstrument, datasetYearQuarter);
+                var hashResultsFilePath = GetHashResultsFilePath(DEFAULT_HASH_RESULTS_FOLDER_PATH, m_Dataset, datasetInstrument, datasetYearQuarter);
 
-                var fiMD5ResultsFile = new FileInfo(md5ResultsFilePath);
+                var hashResultsFile = new FileInfo(hashResultsFilePath);
 
-                if (!fiMD5ResultsFile.Exists)
+                if (!hashResultsFile.Exists)
                 {
                     // Target file doesn't exist; nothing to merge
-                    success = CreateMD5ResultsFile(fiMD5ResultsFile, archivedFiles);
+                    success = CreateHashResultsFile(hashResultsFile, archivedFiles, datasetInstrument, datasetYearQuarter);
                 }
                 else
                 {
                     // File exists; merge the new values with the existing data
-                    success = UpdateMD5ResultsFile(md5ResultsFilePath, archivedFiles);
+                    success = UpdateHashResultsFile(hashResultsFilePath, archivedFiles, datasetInstrument, datasetYearQuarter);
                 }
 
                 if (success)
                 {
-                    CopyMD5ResultsFileToBackupFolder(datasetInstrument, datasetYearQuarter, fiMD5ResultsFile);
+                    CopyHashResultsFileToBackupFolder(datasetInstrument, datasetYearQuarter, hashResultsFile);
                 }
 
             }
             catch (Exception ex)
             {
-                LogError("Exception in CreateMD5ResultsFile", ex);
+                LogError("Exception in CreateHashResultsFile", ex);
                 return false;
             }
 
@@ -746,14 +749,14 @@ namespace ArchiveVerifyPlugin
             return bestTransactionId;
         }
 
-        private string GetMD5ResultsFilePath(string strMD5ResultsFolderPath, string strDatasetName, string strInstrumentName, string strDatasetYearQuarter)
+        private string GetHashResultsFilePath(string hashResultsFolderPath, string datasetName, string instrumentName, string datasetYearQuarter)
         {
-            return GetMD5ResultsFilePath(Path.Combine(strMD5ResultsFolderPath, strInstrumentName, strDatasetYearQuarter), strDatasetName);
+            return GetHashResultsFilePath(Path.Combine(hashResultsFolderPath, instrumentName, datasetYearQuarter), datasetName);
         }
 
-        private string GetMD5ResultsFilePath(string strParentFolderPath, string strDatasetName)
+        private string GetHashResultsFilePath(string parentFolderPath, string datasetName)
         {
-            return Path.Combine(strParentFolderPath, MD5_RESULTS_FILE_PREFIX + strDatasetName);
+            return Path.Combine(parentFolderPath, HASH_RESULTS_FILE_PREFIX + datasetName);
         }
 
         private bool ParameterDefined(string parameterName, string parameterValue)
@@ -770,13 +773,13 @@ namespace ArchiveVerifyPlugin
 
         /// <summary>
         /// Parse out the hash and file path from dataLine
-        /// Updates lstMD5Results (or adds a new entry)
+        /// Updates lstHashResults (or adds a new entry)
         /// </summary>
         /// <param name="dataLine"></param>
-        /// <param name="lstMD5Results">Dictionary where keys are unix file paths and values are clsHashInfo, tracking the Hash value and MyEMSL File ID</param>
-        /// <returns>True if lstMD5Results is updated, false if unchanged</returns>
+        /// <param name="lstHashResults">Dictionary where keys are unix file paths and values are clsHashInfo, tracking the Hash value and MyEMSL File ID</param>
+        /// <returns>True if lstHashResults is updated, false if unchanged</returns>
         /// <remarks></remarks>
-        private bool ParseAndStoreHashInfo(string dataLine, ref Dictionary<string, clsHashInfo> lstMD5Results)
+        private bool ParseAndStoreHashInfo(string dataLine, ref Dictionary<string, clsHashInfo> lstHashResults)
         {
             // Data Line Format
             //
@@ -818,10 +821,10 @@ namespace ArchiveVerifyPlugin
             if (lstPathInfo.Count > 1)
                 hashInfo.MyEMSLFileID = lstPathInfo[1];
 
-            // Files should only be listed once in the MD5 results file
+            // Files should only be listed once in the Sha-1 hash results file
             // But, just in case there is a duplicate, we'll check for that
             // Results files could have duplicate entries if a file was copied to the archive via FTP and was stored via MyEMSL
-            if (lstMD5Results.TryGetValue(archiveFilePath, out var hashInfoCached))
+            if (lstHashResults.TryGetValue(archiveFilePath, out var hashInfoCached))
             {
                 if (hashInfo.IsMatch(hashInfoCached))
                 {
@@ -834,55 +837,65 @@ namespace ArchiveVerifyPlugin
                     // Do not update the dictionary
                     return false;
 
-                lstMD5Results[archiveFilePath] = hashInfo;
+                lstHashResults[archiveFilePath] = hashInfo;
                 return true;
             }
 
             // Append a new entry to the cached info
-            lstMD5Results.Add(archiveFilePath, hashInfo);
+            lstHashResults.Add(archiveFilePath, hashInfo);
             return true;
         }
 
-        private bool UpdateMD5ResultsFile(string md5ResultsFilePath, IEnumerable<MyEMSLFileInfo> archivedFiles)
+        private bool UpdateHashResultsFile(
+            string hashResultsFilePath,
+            IEnumerable<MyEMSLReader.ArchivedFileInfo> archivedFiles,
+            string datasetInstrument,
+            string datasetYearQuarter)
         {
             bool success;
 
-            var lstMD5Results = new Dictionary<string, clsHashInfo>(StringComparer.CurrentCultureIgnoreCase);
+            var lstHashResults = new Dictionary<string, clsHashInfo>(StringComparer.CurrentCultureIgnoreCase);
 
             // Read the file and cache the results in memory
-            using (var srMD5ResultsFile = new StreamReader(new FileStream(md5ResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+            using (var srHashResultsFile = new StreamReader(new FileStream(hashResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
             {
-                while (!srMD5ResultsFile.EndOfStream)
+                while (!srHashResultsFile.EndOfStream)
                 {
-                    var dataLine = srMD5ResultsFile.ReadLine();
-                    ParseAndStoreHashInfo(dataLine, ref lstMD5Results);
+                    var dataLine = srHashResultsFile.ReadLine();
+                    ParseAndStoreHashInfo(dataLine, ref lstHashResults);
                 }
             }
 
             var saveMergedFile = false;
 
-            // Merge the results in archivedFiles with lstMD5Results
+            // Merge the results in archivedFiles with lstHashResults
             foreach (var archivedFile in archivedFiles)
             {
+                if (string.IsNullOrEmpty(archivedFile.Instrument))
+                    archivedFile.Instrument = datasetInstrument;
+
+                if (string.IsNullOrEmpty(archivedFile.DatasetYearQuarter))
+                    archivedFile.DatasetYearQuarter = datasetYearQuarter;
+
                 var archivedFilePath = "/myemsl/svc-dms/" + archivedFile.PathWithInstrumentAndDatasetUnix;
 
                 var hashInfo = new clsHashInfo
                 {
-                    HashCode = archivedFile.HashSum,
+                    HashCode = archivedFile.Hash,
                     MyEMSLFileID = archivedFile.FileID.ToString(CultureInfo.InvariantCulture)
                 };
 
-                if (lstMD5Results.TryGetValue(archivedFilePath, out var hashInfoCached))
+                if (lstHashResults.TryGetValue(archivedFilePath, out var hashInfoCached))
                 {
                     if (!hashInfo.IsMatch(hashInfoCached))
                     {
-                        lstMD5Results[archivedFilePath] = hashInfo;
+                        lstHashResults[archivedFilePath] = hashInfo;
                         saveMergedFile = true;
                     }
                 }
                 else
                 {
-                    lstMD5Results.Add(archivedFilePath, hashInfo);
+                    lstHashResults.Add(archivedFilePath, hashInfo);
                     saveMergedFile = true;
                 }
 
@@ -890,7 +903,7 @@ namespace ArchiveVerifyPlugin
 
             if (saveMergedFile)
             {
-                success = WriteMD5ResultsFile(lstMD5Results, md5ResultsFilePath, useTempFile: true);
+                success = WriteHashResultsFile(lstHashResults, hashResultsFilePath, useTempFile: true);
             }
             else
             {
@@ -966,10 +979,11 @@ namespace ArchiveVerifyPlugin
 
                 var compareSuccess = CompareArchiveFilesToExpectedFiles(filteredFiles, out metadataFilePath, out transactionId);
 
-                if (success)
-                {
-                    success = CreateOrUpdateMD5ResultsFile(filteredFiles);
-                }
+                if (!compareSuccess)
+                    return false;
+
+                var hashFileUpdateSuccess = CreateOrUpdateHashResultsFile(filteredFiles);
+                return hashFileUpdateSuccess;
 
             }
             catch (Exception ex)
@@ -979,11 +993,9 @@ namespace ArchiveVerifyPlugin
                 return false;
             }
 
-            return success;
-
         }
 
-        private bool WriteMD5ResultsFile(Dictionary<string, clsHashInfo> lstMD5Results, string md5ResultsFilePath, bool useTempFile)
+        private bool WriteHashResultsFile(Dictionary<string, clsHashInfo> lstHashResults, string hashResultsFilePath, bool useTempFile)
         {
             var currentStep = "initializing";
 
@@ -992,25 +1004,25 @@ namespace ArchiveVerifyPlugin
                 string targetFilePath;
                 if (useTempFile)
                 {
-                    // Create a new MD5 results file that we'll use to replace strMD5ResultsFileMaster
-                    targetFilePath = md5ResultsFilePath + ".new";
+                    // Create a new Hash results file that we'll use to replace strHashResultsFileMaster
+                    targetFilePath = hashResultsFilePath + ".new";
                 }
                 else
                 {
-                    targetFilePath = md5ResultsFilePath;
+                    targetFilePath = hashResultsFilePath;
                 }
 
                 currentStep = "creating " + targetFilePath;
 
-                using (var swMD5ResultsFile = new StreamWriter(new FileStream(targetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var swHashResultsFile = new StreamWriter(new FileStream(targetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    foreach (var item in lstMD5Results)
+                    foreach (var item in lstHashResults)
                     {
                         var dataLine = item.Value.HashCode + " " + item.Key;
                         if (!string.IsNullOrEmpty(item.Value.MyEMSLFileID))
                             dataLine += "\t" + item.Value.MyEMSLFileID;
 
-                        swMD5ResultsFile.WriteLine(dataLine);
+                        swHashResultsFile.WriteLine(dataLine);
                     }
                 }
 
@@ -1018,8 +1030,8 @@ namespace ArchiveVerifyPlugin
 
                 if (useTempFile)
                 {
-                    currentStep = "overwriting master MD5 results file with " + targetFilePath;
-                    File.Copy(targetFilePath, md5ResultsFilePath, true);
+                    currentStep = "overwriting master Hash results file with " + targetFilePath;
+                    File.Copy(targetFilePath, hashResultsFilePath, true);
                     System.Threading.Thread.Sleep(100);
 
                     currentStep = "deleting " + targetFilePath;
@@ -1031,7 +1043,7 @@ namespace ArchiveVerifyPlugin
             }
             catch (Exception ex)
             {
-                LogError("Exception in WriteMD5ResultsFile while " + currentStep, ex);
+                LogError("Exception in WriteHashResultsFile while " + currentStep, ex);
                 return false;
             }
 
