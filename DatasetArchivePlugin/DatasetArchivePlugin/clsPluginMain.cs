@@ -108,10 +108,6 @@ namespace DatasetArchivePlugin
                     else
                         retData.EvalCode = EnumEvalCode.EVAL_CODE_SUBMITTED_TO_MYEMSL;
                 }
-                else
-                {
-                    retData.EvalCode = EnumEvalCode.EVAL_CODE_SKIPPED_MYEMSL_UPLOAD;
-                }
             }
 
             msg = "Completed " + archiveOpDescription + ", job " + m_Job;

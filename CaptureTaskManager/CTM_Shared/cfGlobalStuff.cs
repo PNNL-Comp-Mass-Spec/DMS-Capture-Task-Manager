@@ -55,7 +55,8 @@ namespace CaptureTaskManager
         EVAL_CODE_NETWORK_ERROR_RETRY_CAPTURE = 3,
         EVAL_CODE_SUBMITTED_TO_MYEMSL = 4,
         EVAL_CODE_VERIFIED_IN_MYEMSL = 5,
-        EVAL_CODE_SKIPPED_MYEMSL_UPLOAD = 6,
+        // This enum is obsolete; it was used previously to indicate that we copied data to Aurora via FTP but did not upload to MyEMSL
+        // EVAL_CODE_SKIPPED_MYEMSL_UPLOAD = 6,
         EVAL_CODE_MYEMSL_IS_ALREADY_UP_TO_DATE = 7,
         EVAL_CODE_FAILURE_DO_NOT_RETRY = 8
     }
@@ -343,7 +344,7 @@ namespace CaptureTaskManager
             if (ex != null)
             {
                 Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.WriteLine(Utilities.GetExceptionStackTraceMultiLine(ex));
+                Console.WriteLine(clsStackTraceFormatter.GetExceptionStackTraceMultiLine(ex));
             }
 
             Console.ResetColor();
