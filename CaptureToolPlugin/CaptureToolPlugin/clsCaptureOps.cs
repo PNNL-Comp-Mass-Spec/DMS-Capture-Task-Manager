@@ -1905,7 +1905,6 @@ namespace CaptureToolPlugin
                     return;
             }
 
-
             var brukerDotDFolder = false;
 
             if (datasetInfo.FileOrFolderName.ToLower().EndsWith(".d"))
@@ -2292,7 +2291,7 @@ namespace CaptureToolPlugin
             bool copyWithResume,
             clsInstrumentClassInfo.eInstrumentClass instrumentClass)
         {
-            // Dataset found; it's a folder with no extension on the name
+            var filesToSkip = new SortedSet<string>();
 
             bool bSuccess;
 
@@ -2356,6 +2355,18 @@ namespace CaptureToolPlugin
                 return;
             }
 
+            if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.IMS_Agilent_TOF)
+            {
+                // Possibly skip the Fragmentation_Profile.txt file
+                var fragProfileFile = new FileInfo(Path.Combine(diSourceDir.FullName, "Fragmentation_Profile.txt"));
+
+                if (fragProfileFile.Exists && FragmentationProfileFileIsDefault(fragProfileFile))
+                {
+                    filesToSkip.Add(fragProfileFile.Name);
+                }
+
+            }
+
             if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Sciex_QTrap)
             {
                 // Make sure that it doesn't have more than 2 subfolders (it typically won't have any, but we'll allow 2)
@@ -2397,11 +2408,11 @@ namespace CaptureToolPlugin
                 if (copyWithResume)
                 {
                     const bool bRecurse = true;
-                    bSuccess = CopyFolderWithResume(diSourceDir.FullName, diTargetDir.FullName, bRecurse, ref retData);
+                    bSuccess = CopyFolderWithResume(diSourceDir.FullName, diTargetDir.FullName, bRecurse, ref retData, filesToSkip);
                 }
                 else
                 {
-                    m_FileTools.CopyDirectory(diSourceDir.FullName, diTargetDir.FullName);
+                    m_FileTools.CopyDirectory(diSourceDir.FullName, diTargetDir.FullName, filesToSkip.ToList());
                     bSuccess = true;
                 }
 
@@ -2828,6 +2839,48 @@ namespace CaptureToolPlugin
                 LogError(msg, true);
                 LogError("Stack trace", ex);
             }
+        }
+
+        private bool FragmentationProfileFileIsDefault(FileSystemInfo fragProfileFile)
+        {
+            try
+            {
+                // Regex to match lines of the form:
+                // 0, 0, 0, 0, 0
+                var zeroLineMatcher = new Regex("^[0, ]+$", RegexOptions.Compiled);
+
+                using (var reader = new StreamReader(new FileStream(fragProfileFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+                    var dataLineCount = 0;
+                    var lineAllZeroes = false;
+
+                    while (!reader.EndOfStream)
+                    {
+                        var dataLine = reader.ReadLine();
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                            continue;
+
+                        dataLineCount++;
+
+                        lineAllZeroes = zeroLineMatcher.IsMatch(dataLine);
+                    }
+
+                    if (dataLineCount == 1 && lineAllZeroes)
+                    {
+                        LogMessage("Skipping capture of default fragmentation profile file, " + fragProfileFile.FullName);
+                        return true;
+                    }
+
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception examining the Fragmentation_Profile.txt file", ex);
+            }
+            return false;
+
         }
 
         /// <summary>
