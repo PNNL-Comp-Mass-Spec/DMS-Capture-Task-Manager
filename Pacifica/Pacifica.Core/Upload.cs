@@ -50,6 +50,7 @@ namespace Pacifica.Core
             /// <summary>
             /// EUS ID of the instrument operator (for datasets) or the data package owner (for Data Packages)
             /// </summary>
+            /// <remarks>Aka EUSSubmitterId</remarks>
             public int EUSUploaderID;
 
             public void Clear()
@@ -419,6 +420,45 @@ namespace Pacifica.Core
 
         #region Member Methods
 
+        private static void AppendKVMetadata(ICollection<Dictionary<string, object>> metadataObject, string keyName, int value)
+        {
+            metadataObject.Add(new Dictionary<string, object> {
+                { "destinationTable", "TransactionKeyValue" },
+                { "key", keyName },
+                { "value", value }
+            });
+        }
+
+        private static void AppendKVMetadata(ICollection<Dictionary<string, object>> metadataObject, string keyName, string value)
+        {
+            metadataObject.Add(new Dictionary<string, object> {
+                { "destinationTable", "TransactionKeyValue" },
+                { "key", keyName },
+                { "value", value }
+            });
+        }
+
+        private static void AppendTransactionMetadata(ICollection<Dictionary<string, object>> metadataObject, string columnName, int value)
+        {
+            // Example destination table name:
+            //  Transactions.instrument
+            metadataObject.Add(new Dictionary<string, object> {
+                { "destinationTable", "Transactions." + columnName },
+                { "value", value }
+            });
+        }
+
+        private static void AppendTransactionMetadata(ICollection<Dictionary<string, object>> metadataObject, string columnName, string value)
+        {
+            // Example destination table names:
+            //  Transactions.proposal
+            //  Transactions.submitter
+            metadataObject.Add(new Dictionary<string, object> {
+                { "destinationTable", "Transactions." + columnName },
+                { "value", value }
+            });
+        }
+
         /// <summary>
         /// Create the metadata object with the upload details, including the files to upload
         /// </summary>
@@ -458,197 +498,79 @@ namespace Pacifica.Core
                 uploadMetadata.EUSInstrumentID = 34155;
             }
 
-            var eusInstrumentID = GetEUSInstrumentID(uploadMetadata.EUSInstrumentID, UNKNOWN_INSTRUMENT_EUS_INSTRUMENT_ID);
+            // Now that EUS instrument ID is defined, store it and lookup other EUS info
+            eusInfo.EUSInstrumentID = GetEUSInstrumentID(uploadMetadata.EUSInstrumentID, UNKNOWN_INSTRUMENT_EUS_INSTRUMENT_ID);
+            eusInfo.EUSProposalID = GetEUSProposalID(uploadMetadata.EUSProposalID, DEFAULT_EUS_PROPOSAL_ID);
+            eusInfo.EUSUploaderID = GetEUSSubmitterID(uploadMetadata.EUSOperatorID, DEFAULT_EUS_OPERATOR_ID);
 
-            // fill out Transaction Key/Value pairs
+            // Fill out Transaction Key/Value pairs
             if (uploadMetadata.DatasetID > 0)
             {
-                metadataObject.Add(new Dictionary<string, object> {
-                    { "destinationTable", "TransactionKeyValue" },
-                    { "key", "omics.dms.instrument" },
-                    { "value", uploadMetadata.DMSInstrumentName }
-                });
-                metadataObject.Add(new Dictionary<string, object> {
-                    { "destinationTable", "TransactionKeyValue" },
-                    { "key", "omics.dms.instrument_id" },
-                    { "value", eusInstrumentID }
-                });
-                metadataObject.Add(new Dictionary<string, object> {
-                    { "destinationTable", "TransactionKeyValue" },
-                    { "key", "omics.dms.date_code" },
-                    { "value", uploadMetadata.DateCodeString }
-                });
-                metadataObject.Add(new Dictionary<string, object> {
-                    { "destinationTable", "TransactionKeyValue" },
-                    { "key", "omics.dms.dataset" },
-                    { "value", uploadMetadata.DatasetName }
-                });
-                metadataObject.Add(new Dictionary<string, object> {
-                    { "destinationTable", "TransactionKeyValue" },
-                    { "key", "omics.dms.campaign_name" },
-                    { "value", uploadMetadata.CampaignName }
-                });
-                metadataObject.Add(new Dictionary<string, object> {
-                    { "destinationTable", "TransactionKeyValue" },
-                    { "key", "omics.dms.experiment_name" },
-                    { "value", uploadMetadata.ExperimentName }
-                });
-                metadataObject.Add(new Dictionary<string, object> {
-                    { "destinationTable", "TransactionKeyValue" },
-                    { "key", "omics.dms.dataset_name" },
-                    { "value", uploadMetadata.DatasetName }
-                });
-                metadataObject.Add(new Dictionary<string, object> {
-                    { "destinationTable", "TransactionKeyValue" },
-                    { "key", "omics.dms.campaign_id" },
-                    { "value", uploadMetadata.CampaignID.ToString(CultureInfo.InvariantCulture) }
-                });
-                metadataObject.Add(new Dictionary<string, object> {
-                    { "destinationTable", "TransactionKeyValue" },
-                    { "key", "omics.dms.experiment_id" },
-                    { "value", uploadMetadata.ExperimentID.ToString(CultureInfo.InvariantCulture) }
-                });
-                metadataObject.Add(new Dictionary<string, object> {
-                    { "destinationTable", "TransactionKeyValue" },
-                    { "key", "omics.dms.dataset_id" },
-                    { "value", uploadMetadata.DatasetID.ToString(CultureInfo.InvariantCulture) }
-                });
+                AppendKVMetadata(metadataObject, "omics.dms.instrument", uploadMetadata.DMSInstrumentName);
+                AppendKVMetadata(metadataObject, "omics.dms.instrument_id", eusInfo.EUSInstrumentID);
+                AppendKVMetadata(metadataObject, "omics.dms.date_code", uploadMetadata.DateCodeString);
+                AppendKVMetadata(metadataObject, "omics.dms.dataset", uploadMetadata.DatasetName);
+                AppendKVMetadata(metadataObject, "omics.dms.campaign_name", uploadMetadata.CampaignName);
+                AppendKVMetadata(metadataObject, "omics.dms.experiment_name", uploadMetadata.ExperimentName);
+                AppendKVMetadata(metadataObject, "omics.dms.dataset_name", uploadMetadata.DatasetName);
+                AppendKVMetadata(metadataObject, "omics.dms.campaign_id", uploadMetadata.CampaignID.ToString());
+                AppendKVMetadata(metadataObject, "omics.dms.experiment_id", uploadMetadata.ExperimentID.ToString());
+                AppendKVMetadata(metadataObject, "omics.dms.dataset_id", uploadMetadata.DatasetID.ToString());
+
                 if (!string.IsNullOrEmpty(uploadMetadata.OrganismName))
                 {
-                    metadataObject.Add(new Dictionary<string, object> {
-                        { "destinationTable", "TransactionKeyValue" },
-                        { "key", "organism_name" },
-                        { "value", uploadMetadata.OrganismName }
-                    });
+                    AppendKVMetadata(metadataObject, "organism_name", uploadMetadata.OrganismName);
                 }
+
                 if (uploadMetadata.OrganismID != 0)
                 {
-                    metadataObject.Add(new Dictionary<string, object> {
-                        { "destinationTable", "TransactionKeyValue" },
-                        { "key", "omics.dms.organism_id" },
-                        { "value", uploadMetadata.OrganismID.ToString(CultureInfo.InvariantCulture) }
-                    });
+                    AppendKVMetadata(metadataObject, "omics.dms.organism_id", uploadMetadata.OrganismID.ToString());
                 }
+
                 if (uploadMetadata.NCBITaxonomyID != 0)
                 {
-                    metadataObject.Add(new Dictionary<string, object> {
-                        { "destinationTable", "TransactionKeyValue" },
-                        { "key", "ncbi_taxonomy_id" },
-                        { "value", uploadMetadata.NCBITaxonomyID.ToString(CultureInfo.InvariantCulture) }
-                    });
+                    AppendKVMetadata(metadataObject, "ncbi_taxonomy_id", uploadMetadata.NCBITaxonomyID.ToString());
                 }
+
                 if (!string.IsNullOrEmpty(uploadMetadata.SeparationType))
                 {
-                    metadataObject.Add(new Dictionary<string, object> {
-                        { "destinationTable", "TransactionKeyValue" },
-                        { "key", "omics.dms.separation_type" },
-                        { "value", uploadMetadata.SeparationType }
-                    });
+                    AppendKVMetadata(metadataObject, "omics.dms.separation_type", uploadMetadata.SeparationType);
                 }
+
                 if (!string.IsNullOrEmpty(uploadMetadata.DatasetType))
                 {
-                    metadataObject.Add(new Dictionary<string, object> {
-                        { "destinationTable", "TransactionKeyValue" },
-                        { "key", "omics.dms.dataset_type" },
-                        { "value", uploadMetadata.DatasetType }
-                    });
+                    AppendKVMetadata(metadataObject, "omics.dms.dataset_type", uploadMetadata.DatasetType);
                 }
-                metadataObject.Add(new Dictionary<string, object> {
-                    { "destinationTable", "TransactionKeyValue" },
-                    { "key", "omics.dms.run_acquisition_length_min" },
-                    { "value", uploadMetadata.AcquisitionLengthMin }
-                });
+
+                AppendKVMetadata(metadataObject, "omics.dms.run_acquisition_length_min", uploadMetadata.AcquisitionLengthMin);
+
                 if (uploadMetadata.UserOfRecordList.Count > 0)
                 {
                     foreach (var userId in uploadMetadata.UserOfRecordList)
                     {
-                        metadataObject.Add(new Dictionary<string, object> {
-                            { "destinationTable", "TransactionKeyValue" },
-                            { "key", "User of Record" },
-                            { "value", userId.ToString(CultureInfo.InvariantCulture) }
-                        });
-                        metadataObject.Add(new Dictionary<string, object> {
-                            { "destinationTable", "TransactionKeyValue" },
-                            { "key", "user_of_record" },
-                            { "value", userId.ToString(CultureInfo.InvariantCulture) }
-                        });
+                        AppendKVMetadata(metadataObject, "User of Record", userId.ToString());
+                        AppendKVMetadata(metadataObject, "user_of_record", userId.ToString());
                     }
                 }
             }
             else if (uploadMetadata.DataPackageID > 0)
             {
 
-                metadataObject.Add(new Dictionary<string, object> {
-                    { "destinationTable", "TransactionKeyValue" },
-                    { "key", "omics.dms.instrument" },
-                    { "value", uploadMetadata.DMSInstrumentName }
-                });
+                AppendKVMetadata(metadataObject, "omics.dms.instrument", uploadMetadata.DMSInstrumentName);
 
-                metadataObject.Add(new Dictionary<string, object> {
-                    { "destinationTable", "TransactionKeyValue" },
-                    { "key", "omics.dms.instrument_id" },
-                    { "value", eusInstrumentID }
-                });
+                AppendKVMetadata(metadataObject, "omics.dms.instrument_id", eusInfo.EUSInstrumentID);
 
-                metadataObject.Add(new Dictionary<string, object> {
-                    { "destinationTable", "TransactionKeyValue" },
-                    { "key", "omics.dms.datapackage_id" },
-                    { "value", uploadMetadata.DataPackageID.ToString(CultureInfo.InvariantCulture) }
-                });
+                AppendKVMetadata(metadataObject, "omics.dms.datapackage_id", uploadMetadata.DataPackageID.ToString());
             }
             else
             {
-                // ReSharper disable once NotResolvedInText
-                throw new ArgumentOutOfRangeException("Must define a DatasetID or a DataPackageID; cannot create the metadata object");
+                throw new Exception("Must define a non-zero DatasetID or a DataPackageID; cannot create the metadata object");
             }
 
-            // now fill in the required metadata
-            if (uploadMetadata.DatasetID > 0)
-            {
-                metadataObject.Add(new Dictionary<string, object> {
-                    { "destinationTable", "Transactions.instrument" },
-                    { "value", eusInstrumentID }
-                });
-                eusInfo.EUSInstrumentID = eusInstrumentID;
-            }
-
-            string EUSProposalID;
-            if (string.IsNullOrWhiteSpace(uploadMetadata.EUSProposalID))
-            {
-                // This dataset or data package does not have an EUS_Proposal_ID
-                EUSProposalID = DEFAULT_EUS_PROPOSAL_ID;
-            }
-            else
-            {
-                EUSProposalID = uploadMetadata.EUSProposalID;
-            }
-            eusInfo.EUSProposalID = EUSProposalID;
-
-            metadataObject.Add(new Dictionary<string, object> {
-                { "destinationTable", "Transactions.proposal" },
-                { "value", EUSProposalID }
-            });
-
-            int EUSUploaderID;
-
-            // For datasets, eusOperatorID is the instrument operator EUS ID
-            // For data packages, it is the EUS ID of the data package owner
-            if (uploadMetadata.EUSOperatorID == 0)
-            {
-                // This should have already been flagged in upstream code
-                // But if we reach this function and it is still 0, we will use the default operator ID
-                EUSUploaderID = DEFAULT_EUS_OPERATOR_ID;
-            }
-            else
-            {
-                EUSUploaderID = uploadMetadata.EUSOperatorID;
-            }
-            eusInfo.EUSUploaderID = EUSUploaderID;
-
-            metadataObject.Add(new Dictionary<string, object> {
-                { "destinationTable", "Transactions.submitter" },
-                { "value", EUSUploaderID.ToString() }
-            });
+            // Append the required metadata
+            AppendTransactionMetadata(metadataObject, "instrument", eusInfo.EUSInstrumentID);
+            AppendTransactionMetadata(metadataObject, "proposal", eusInfo.EUSProposalID);
+            AppendTransactionMetadata(metadataObject, "submitter", eusInfo.EUSUploaderID);
 
             // Append the files
             foreach (var file in filesToUpload)
@@ -796,6 +718,18 @@ namespace Pacifica.Core
         private static int GetEUSInstrumentID(int eusInstrumentId, int instrumentIdIfUnknown)
         {
             return eusInstrumentId <= 0 ? instrumentIdIfUnknown : eusInstrumentId;
+        }
+
+        private static string GetEUSProposalID(string eusProposalId, string eusProposalIdIfUnknown)
+        {
+            return string.IsNullOrWhiteSpace(eusProposalId) ? eusProposalIdIfUnknown : eusProposalId;
+        }
+
+        private static int GetEUSSubmitterID(int eusOperatorId, int eusOperatorIdIfUnknown)
+        {
+            // For datasets, eusOperatorID is the instrument operator EUS ID
+            // For data packages, it is the EUS ID of the data package owner
+            return eusOperatorId == 0 ? eusOperatorIdIfUnknown : eusOperatorId;
         }
 
         private void OnError(string errorMessage, Exception ex = null)
