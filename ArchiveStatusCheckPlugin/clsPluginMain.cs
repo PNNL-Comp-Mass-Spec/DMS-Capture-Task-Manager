@@ -605,8 +605,11 @@ namespace ArchiveStatusCheckPlugin
             try
             {
                 var verifiedStatusNums = dctVerifiedURIs.Keys;
+                var verifiedStatusURIs = dctVerifiedURIs.Values;
 
-                var statusNums = string.Join(",", verifiedStatusNums);
+                var statusNums = string.Join(", ", verifiedStatusNums);
+
+                var statusURIs = string.Join(", ", verifiedStatusURIs);
 
                 var ingestStepsCompleted = GetMaxIngestStepCompleted(verifiedStatusNums, dctStatusData);
 
@@ -619,7 +622,9 @@ namespace ArchiveStatusCheckPlugin
 
                 spCmd.Parameters.Add("@datasetID", SqlDbType.Int).Value = m_DatasetID;
 
-                spCmd.Parameters.Add("@statusNumList", SqlDbType.VarChar, 1024).Value = statusNums;
+                spCmd.Parameters.Add("@StatusNumList", SqlDbType.VarChar, 1024).Value = statusNums;
+
+                spCmd.Parameters.Add("@statusURIList", SqlDbType.VarChar, 4000).Value = statusURIs;
 
                 spCmd.Parameters.Add("@ingestStepsCompleted", SqlDbType.TinyInt).Value = ingestStepsCompleted;
 
