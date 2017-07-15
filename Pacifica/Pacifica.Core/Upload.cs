@@ -423,7 +423,7 @@ namespace Pacifica.Core
         /// Create the metadata object with the upload details, including the files to upload
         /// </summary>
         /// <param name="uploadMetadata">Upload metadata</param>
-        /// <param name="lstUnmatchedFiles">Files to upload</param>
+        /// <param name="filesToUpload">Files to upload</param>
         /// <param name="eusInfo">Output parameter: EUS instrument ID, proposal ID, and uploader ID</param>
         /// <returns>
         /// Dictionary of the information to translate to JSON;
@@ -431,7 +431,7 @@ namespace Pacifica.Core
         /// </returns>
         public static List<Dictionary<string, object>> CreatePacificaMetadataObject(
             UploadMetadata uploadMetadata,
-            List<FileInfoObject> lstUnmatchedFiles,
+            List<FileInfoObject> filesToUpload,
             out EUSInfo eusInfo)
         {
             eusInfo = new EUSInfo();
@@ -650,8 +650,8 @@ namespace Pacifica.Core
                 { "value", EUSUploaderID.ToString() }
             });
 
-            // now mix in the list of file objects
-            foreach (var f in lstUnmatchedFiles)
+            // Append the files
+            foreach (var file in filesToUpload)
             {
                 // The subdir path must be "data/" or of the form "data/SubDirectory"
                 // "data/" is required for files at the root dataset level because the root of the tar file
@@ -665,10 +665,10 @@ namespace Pacifica.Core
 
                 string subdirString;
 
-                if (string.IsNullOrWhiteSpace(f.RelativeDestinationDirectory))
+                if (string.IsNullOrWhiteSpace(file.RelativeDestinationDirectory))
                     subdirString = "data/";
                 else
-                    subdirString = "data/" + f.RelativeDestinationDirectory.Trim('/');
+                    subdirString = "data/" + file.RelativeDestinationDirectory.Trim('/');
 
                 if (subdirString.Contains("//"))
                 {
@@ -677,15 +677,15 @@ namespace Pacifica.Core
 
                 metadataObject.Add(new Dictionary<string, object> {
                     { "destinationTable", "Files" },
-                    { "name", f.FileName },
-                    { "absolutelocalpath", f.AbsoluteLocalPath},
+                    { "name", file.FileName },
+                    { "absolutelocalpath", file.AbsoluteLocalPath},
                     { "subdir", subdirString },
-                    { "size", f.FileSizeInBytes.ToString() },
-                    { "hashsum", f.Sha1HashHex },
+                    { "size", file.FileSizeInBytes.ToString() },
+                    { "hashsum", file.Sha1HashHex },
                     { "mimetype", "application/octet-stream" },
                     { "hashtype", "sha1" },
-                    { "ctime", f.CreationTime.ToUniversalTime().ToString("s") },
-                    { "mtime", f.LastWriteTime.ToUniversalTime().ToString("s") }
+                    { "ctime", file.CreationTime.ToUniversalTime().ToString("s") },
+                    { "mtime", file.LastWriteTime.ToUniversalTime().ToString("s") }
                 });
             }
 
