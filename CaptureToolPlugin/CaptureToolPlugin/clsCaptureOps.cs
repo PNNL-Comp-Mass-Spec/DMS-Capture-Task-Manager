@@ -2789,8 +2789,6 @@ namespace CaptureToolPlugin
         /// <param name="sLCMethodsFolderPath"></param>
         private void DeleteOldLCMethodFolders(string sLCMethodsFolderPath)
         {
-            var msg = string.Empty;
-
             try
             {
                 var diLCMethodsFolder = new DirectoryInfo(sLCMethodsFolderPath);
@@ -2820,23 +2818,19 @@ namespace CaptureToolPlugin
 
                     try
                     {
-                        msg = "LCMethods folder: " + diFolder.FullName;
                         diFolder.Delete(true);
 
-                        msg = "Deleted old " + msg;
-                        LogMessage(msg);
+                        LogMessage("Deleted old LCMethods folder: " + diFolder.FullName);
                     }
                     catch (Exception ex)
                     {
-                        msg = "Exception deleting old " + msg;
-                        LogError(msg, ex);
+                        LogError("Exception deleting old LCMethods folder", ex);
                     }
                 }
             }
             catch (Exception ex)
             {
-                msg = "Exception looking for old LC Method folders";
-                LogError(msg, true);
+                LogError("Exception looking for old LC Method folders", true);
                 LogError("Stack trace", ex);
             }
         }

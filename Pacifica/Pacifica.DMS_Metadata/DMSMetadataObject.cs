@@ -594,7 +594,7 @@ namespace Pacifica.DMS_Metadata
                             JobNumber);
 
                     criticalErrorMessage = string.Format("MyEMSL reported {0} files for Dataset ID {1}; it should be tracking at least {2} files; " +
-                                                         "to ignore this message, define True for job parameter IgnoreMyEMSLFileTrackingError (use {3})",
+                                                         "to ignore this message, use {3}",
                                                          remoteFiles.Count, datasetID, expectedRemoteFileCount, addUpdateJobParam);
 
                     OnErrorEvent(criticalErrorMessage);
