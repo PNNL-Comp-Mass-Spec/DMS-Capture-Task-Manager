@@ -929,6 +929,17 @@ namespace ArchiveVerifyPlugin
 
                 RegisterEvents(reader);
 
+                if (!reader.CertificateFileExists(out var errorMessage))
+                {
+                    // MyEMSL certificate file not found in the current directory or at C:\client_certs\
+                    mRetData.CloseoutMsg = errorMessage;
+                    mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
+
+                    LogError(mRetData.CloseoutMsg);
+                    transactionId = 0;
+                    return false;
+                }
+
                 var subDir = m_TaskParams.GetParam("OutputFolderName", string.Empty);
 
                 // Find files tracked by MyEMSL for this dataset
