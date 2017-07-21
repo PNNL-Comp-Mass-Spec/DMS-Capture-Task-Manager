@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Net;
+using System.Reflection;
 
 namespace Pacifica.Core
 {
@@ -46,8 +47,9 @@ namespace Pacifica.Core
         /// </summary>
         public const string TEST_INGEST_HOST_NAME = "ingestdmsdev.my.emsl.pnl.gov";
 
-        public const string CLIENT_CERT_FILEPATH = @"C:\client_certs\svc-dms.pfx";
-        public const string CLIENT_CERT_PASSWORD = "cnr5evm";
+        internal const string CLIENT_CERT_FILENAME = "svc-dms.pfx";
+        public const string CLIENT_CERT_FILEPATH = @"C:\client_certs\" + CLIENT_CERT_FILENAME;
+        internal const string CLIENT_CERT_PASSWORD = "cnr5evm";
 
         /// <summary>
         /// Local temp directory
@@ -150,6 +152,44 @@ namespace Pacifica.Core
 
             HttpProxyUrl = string.Empty;
 
+        }
+
+        /// <summary>
+        /// Look for the client certificate file (svc-dms.pfx)
+        /// </summary>
+        /// <returns>Path to the file if found, otherwise an empty string</returns>
+        /// <remarks>First checks the directory with the executing assembly, then checks C:\client_certs\</remarks>
+        public string ResolveClientCertFile()
+        {
+            try
+            {
+                // Full path to Pacifica.core.dll
+                var assemblyPath = Assembly.GetExecutingAssembly().Location;
+
+                if (assemblyPath != null)
+                {
+                    // Look for svc-dms.pfx in the folder with Pacifica.core.dll
+                    var assemblyFile = new FileInfo(assemblyPath);
+                    if (assemblyFile.DirectoryName != null)
+                    {
+                        var localCertFile = new FileInfo(Path.Combine(assemblyFile.DirectoryName, CLIENT_CERT_FILENAME));
+                        if (localCertFile.Exists)
+                            return localCertFile.FullName;
+                    }
+                }
+
+                // Look for svc-dms.pfx at C:\client_certs\
+                var sharedCertFile = new FileInfo(CLIENT_CERT_FILEPATH);
+                if (sharedCertFile.Exists)
+                    return sharedCertFile.FullName;
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Exception looking for " + CLIENT_CERT_FILENAME + ": " + ex.Message);
+            }
+
+            return string.Empty;
         }
 
         /// <summary>

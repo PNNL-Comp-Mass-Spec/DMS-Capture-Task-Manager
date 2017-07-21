@@ -252,9 +252,16 @@ namespace Pacifica.Core
             {
                 if (mLoginCertificate == null)
                 {
+                    var certificateFilePath = ResolveCertFile(config, "InitializeRequest", out var errorMessage);
+
+                    if (string.IsNullOrWhiteSpace(certificateFilePath))
+                    {
+                        throw new Exception(errorMessage);
+                    }
+
                     mLoginCertificate = new X509Certificate2();
                     var password = Utilities.DecodePassword(Configuration.CLIENT_CERT_PASSWORD);
-                    mLoginCertificate.Import(Configuration.CLIENT_CERT_FILEPATH, password, X509KeyStorageFlags.PersistKeySet);
+                    mLoginCertificate.Import(certificateFilePath, password, X509KeyStorageFlags.PersistKeySet);
                 }
                 request.ClientCertificates.Add(mLoginCertificate);
             }
@@ -447,6 +454,14 @@ namespace Pacifica.Core
             string metadataFilePath,
             eDebugMode debugMode = eDebugMode.DebugDisabled)
         {
+
+            var certificateFilePath = ResolveCertFile(config, "SendFileListToIngester", out var errorMessage);
+
+            if (string.IsNullOrWhiteSpace(certificateFilePath))
+            {
+                throw new Exception(errorMessage);
+            }
+
             var baseUri = new Uri(serverBaseAddress);
             var uploadUri = new Uri(baseUri, location);
             HttpWebRequest oWebRequest = null;
@@ -476,7 +491,7 @@ namespace Pacifica.Core
 
                 var certificate = new X509Certificate2();
                 var password = Utilities.DecodePassword(Configuration.CLIENT_CERT_PASSWORD);
-                certificate.Import(Configuration.CLIENT_CERT_FILEPATH, password, X509KeyStorageFlags.PersistKeySet);
+                certificate.Import(certificateFilePath, password, X509KeyStorageFlags.PersistKeySet);
                 oWebRequest.ClientCertificates.Add(certificate);
 
                 config.SetProxy(oWebRequest);
@@ -794,6 +809,31 @@ namespace Pacifica.Core
 
             }
             tarOutputStream.CloseEntry();
+        }
+
+        /// <summary>
+        /// Determine the path to the MyEMSL Certificate file
+        /// </summary>
+        /// <param name="config">Pacifica Config</param>
+        /// <param name="callingMethod">Calling method</param>
+        /// <param name="errorMessage">Output: error message</param>
+        /// <returns>Path to the file if found, otherwise an empty string</returns>
+        public static string ResolveCertFile(Configuration config, string callingMethod, out string errorMessage)
+        {
+            var certificateFilePath = config.ResolveClientCertFile();
+
+            if (!string.IsNullOrWhiteSpace(certificateFilePath))
+            {
+                errorMessage = string.Empty;
+                return certificateFilePath;
+            }
+
+            // Example message:
+            // Authentication failure in InitializeRequest; MyEMSL certificate file not found in the current directory or at C:\client_certs\svc-dms.pfx
+            errorMessage = "Authentication failure in " + callingMethod + "; " +
+                           "MyEMSL certificate file not found in the current directory or at " + Configuration.CLIENT_CERT_FILEPATH;
+
+            return string.Empty;
         }
     }
 }
