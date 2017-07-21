@@ -448,11 +448,10 @@ namespace Pacifica.Core
             // Compute the total number of bytes that will be written to the tar file
             var contentLength = ComputeTarFileSize(fileListObject, fiMetadataFile, debugMode);
 
-            const double percentComplete = 0;       // Value between 0 and 100
             long bytesWritten = 0;
             var lastStatusUpdateTime = DateTime.UtcNow;
 
-            RaiseStatusUpdate(percentComplete, bytesWritten, contentLength, string.Empty);
+            RaiseStatusUpdate(0, bytesWritten, contentLength, string.Empty);
 
             // Set this to .CreateTarLocal to debug things and create the .tar file locally instead of sending to the server
             // See method PerformTask in clsArchiveUpdate
@@ -536,9 +535,11 @@ namespace Pacifica.Core
 
                 AppendFileToTar(tarOutputStream, fiSourceFile, fileToArchive.Value.RelativeDestinationFullPath, ref bytesWritten);
 
+                var percentComplete = bytesWritten / (double)contentLength * 100;
+
                 // Initially limit status updates to every 3 seconds
                 // Increase the time between updates as upload time progresses, with a maximum interval of 90 seconds
-                var statusIntervalSeconds = Math.Max(90, 3 + DateTime.UtcNow.Subtract(startTime).TotalSeconds / 10);
+                var statusIntervalSeconds = Math.Min(90, 3 + DateTime.UtcNow.Subtract(startTime).TotalSeconds / 10);
 
                 if (DateTime.UtcNow.Subtract(lastStatusUpdateTime).TotalSeconds >= statusIntervalSeconds)
                 {
