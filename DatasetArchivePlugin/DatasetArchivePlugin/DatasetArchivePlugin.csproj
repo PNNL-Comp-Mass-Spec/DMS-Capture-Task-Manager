@@ -76,14 +76,16 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="PRISM-Library">
+      <Version>1.0.9</Version>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
     <Reference Include="CTM_Shared">
       <HintPath>..\..\DeployedFiles\CTM_Shared.dll</HintPath>
     </Reference>
     <Reference Include="MD5StageFileCreator">
       <HintPath>..\..\RefLib\MD5StageFileCreator.dll</HintPath>
-    </Reference>
-    <Reference Include="PRISM">
-      <HintPath>..\..\DeployedFiles\PRISM.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">

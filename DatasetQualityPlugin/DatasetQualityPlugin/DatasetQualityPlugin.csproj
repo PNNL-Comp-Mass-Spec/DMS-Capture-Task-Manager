@@ -61,13 +61,14 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="PRISM-Library">
+      <Version>1.0.9</Version>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
     <Reference Include="CTM_Shared, Version=1.2.4643.27917, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\DeployedFiles\CTM_Shared.dll</HintPath>
-    </Reference>
-    <Reference Include="PRISM">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\DeployedFiles\PRISM.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
