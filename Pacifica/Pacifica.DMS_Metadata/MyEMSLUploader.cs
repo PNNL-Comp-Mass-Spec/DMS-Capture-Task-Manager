@@ -317,7 +317,7 @@ namespace Pacifica.DMS_Metadata
             {
                 // Multiplying by 0.25 because we're assuming 25% of the time is required for _mdContainer to compute the Sha-1 hashes of files to be uploaded while 75% of the time is required to create and upload the .tar file
                 var percentCompleteOverall = 0 + percentComplete * 0.25;
-                StatusUpdate(this, new StatusEventArgs(percentCompleteOverall, 0, _mdContainer.TotalFileSizeToUpload, string.Empty));
+                StatusUpdate(this, new StatusEventArgs(percentCompleteOverall, 0, _mdContainer.TotalFileSizeToUpload, progressMessage));
             }
 
         }

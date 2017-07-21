@@ -266,7 +266,8 @@ namespace DatasetArchivePlugin
 
                 var config = new Configuration();
 
-                myEMSLUL = new MyEMSLUploader(config, m_MgrParams.TaskDictionary, m_TaskParams.TaskDictionary) {
+                myEMSLUL = new MyEMSLUploader(config, m_MgrParams.TaskDictionary, m_TaskParams.TaskDictionary)
+                {
                     TraceMode = TraceMode
                 };
 
@@ -311,7 +312,8 @@ namespace DatasetArchivePlugin
                 if (!success)
                     statusMessage += " (success=false)";
 
-                statusMessage += ": " + myEMSLUL.FileCountNew + " new files, " + myEMSLUL.FileCountUpdated + " updated files, " + myEMSLUL.Bytes + " bytes";
+                statusMessage += ": " + myEMSLUL.FileCountNew + " new files, " + myEMSLUL.FileCountUpdated + " updated files, " + myEMSLUL.Bytes +
+                                 " bytes";
 
                 OnStatusEvent(statusMessage);
 
@@ -357,9 +359,9 @@ namespace DatasetArchivePlugin
                     if (ex.Message.Contains(DMSMetadataObject.UNDEFINED_EUS_OPERATOR_ID))
 
                         m_ErrMsg += "; operator not defined in EUS. " +
-                            "Have " + operatorUsername + " login to " + DMSMetadataObject.EUS_PORTAL_URL + " " +
-                            "then wait for T_EUS_Users to update, " +
-                            "then update job parameters using SP UpdateParametersForJob";
+                                    "Have " + operatorUsername + " login to " + DMSMetadataObject.EUS_PORTAL_URL + " " +
+                                    "then wait for T_EUS_Users to update, " +
+                                    "then update job parameters using SP UpdateParametersForJob";
 
                     // Do not retry the upload; it will fail again due to the same error
                     allowRetry = false;
@@ -435,15 +437,17 @@ namespace DatasetArchivePlugin
         }
 
         /// <summary>
-        /// Verifies specified dataset is present
+        /// Return the text after the colon in statusMessage
         /// </summary>
-        /// <param name="dsNamePath">Fully qualified path to dataset folder</param>
-        /// <returns>TRUE if dataset folder is present; otherwise FALSE</returns>
-        private bool VerifyDSPresent(string dsNamePath)
+        /// <param name="statusMessage"></param>
+        /// <returns>Text if the colon was found, otherwise an empty string</returns>
+        private string GetFilenameFromStatus(string statusMessage)
         {
-            // Verifies specified dataset is present
-            return Directory.Exists(dsNamePath);
+            var colonIndex = statusMessage.IndexOf(':');
+            if (colonIndex >= 0)
+                return statusMessage.Substring(colonIndex + 1).Trim();
 
+            return string.Empty;
         }
 
         /// <summary>
@@ -462,6 +466,16 @@ namespace DatasetArchivePlugin
                 clsUtilities.LogError(msg, true);
             else
                 OnErrorEvent(msg);
+        }
+
+        /// <summary>
+        /// Verifies that the specified dataset folder exists
+        /// </summary>
+        /// <param name="dsNamePath">Fully qualified path to dataset folder</param>
+        /// <returns>TRUE if dataset folder is present; otherwise FALSE</returns>
+        private bool VerifyDSPresent(string dsNamePath)
+        {
+            return Directory.Exists(dsNamePath);
         }
 
         #endregion
@@ -499,11 +513,34 @@ namespace DatasetArchivePlugin
             if (DateTime.UtcNow.Subtract(mLastStatusUpdateTime).TotalSeconds >= 60 && e.PercentCompleted > 0)
             {
                 mLastStatusUpdateTime = DateTime.UtcNow;
-                var msg = "  ... uploading, " + e.PercentCompleted.ToString("0.0") + "% complete for " + (e.TotalBytesToSend / 1024.0).ToString("#,##0") + " KB";
-                if (!string.IsNullOrEmpty(e.StatusMessage))
-                    msg += "; " + e.StatusMessage;
+                string verb;
+                string filename;
 
-                LogStatusMessageSkipDuplicate(msg);
+                if (e.StatusMessage.StartsWith(DMSMetadataObject.HASHING_FILES))
+                {
+                    verb = "hashing files";
+                    filename = GetFilenameFromStatus(e.StatusMessage);
+                }
+                else if (e.StatusMessage.StartsWith(EasyHttp.UPLOADING_FILES))
+                {
+                    verb = "uploading files";
+                    filename = GetFilenameFromStatus(e.StatusMessage);
+                }
+                else
+                {
+                    verb = "processing";
+                    filename = "";
+                }
+
+                // Example log message:
+                // ... uploading files, 97.3% complete for 35,540 KB; QC_Shew_16-01_1_20Jul17_Merry_17-05-03_dta.zip
+                var msg = "  ... " + verb + ", " + e.PercentCompleted.ToString("0.0") + "% complete for " + (e.TotalBytesToSend / 1024.0).ToString("#,##0") + " KB";
+
+                if (string.IsNullOrEmpty(filename))
+                    LogStatusMessageSkipDuplicate(msg);
+                else
+                    LogStatusMessageSkipDuplicate(msg + "; " + filename);
+
             }
 
             if (DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds >= 3 && e.PercentCompleted > 0)

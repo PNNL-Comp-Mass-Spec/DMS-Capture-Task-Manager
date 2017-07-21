@@ -36,6 +36,8 @@ namespace Pacifica.DMS_Metadata
         /// </summary>
         public const string EUS_PORTAL_URL = "https://eusi.emsl.pnl.gov/Portal/";
 
+        public const string HASHING_FILES = "Hashing files";
+
         /// <summary>
         /// Object that tracks the upload details, including the files to upload
         /// </summary>
@@ -486,7 +488,7 @@ namespace Pacifica.DMS_Metadata
                 if (totalFileSize > 0)
                     fracCompleted = runningFileSize / (float)totalFileSize;
 
-                ReportProgress("Hashing files: " + fiFile.Name, fracCompleted * 100);
+                ReportProgress(HASHING_FILES + ": " + fiFile.Name, fracCompleted * 100);
 
                 // This constructor will auto-compute the Sha-1 hash value for the file
                 var fio = new FileInfoObject(fiFile.FullName, baseDSPath);
@@ -507,7 +509,7 @@ namespace Pacifica.DMS_Metadata
 
                 if (TraceMode)
                 {
-                    OnDebugEvent(string.Format("Hashing files, {0:F1}% complete: {1}", fracCompleted * 100, fiFile.Name));
+                    OnDebugEvent(string.Format("{0}, {1:F1}% complete: {2}", HASHING_FILES, fracCompleted * 100, fiFile.Name));
                 }
 
             }

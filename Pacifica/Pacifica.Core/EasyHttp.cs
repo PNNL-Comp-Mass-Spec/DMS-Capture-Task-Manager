@@ -12,6 +12,8 @@ namespace Pacifica.Core
 {
     public class EasyHttp
     {
+        public const string UPLOADING_FILES = "Uploading files";
+
         private static X509Certificate2 mLoginCertificate;
 
         /// <summary>
@@ -540,8 +542,8 @@ namespace Pacifica.Core
 
                 if (DateTime.UtcNow.Subtract(lastStatusUpdateTime).TotalSeconds >= statusIntervalSeconds)
                 {
-                    RaiseStatusUpdate(percentComplete, bytesWritten, contentLength, string.Empty);
                     lastStatusUpdateTime = DateTime.UtcNow;
+                    RaiseStatusUpdate(percentComplete, bytesWritten, contentLength, UPLOADING_FILES + ": " + fiSourceFile.Name);
                 }
             }
 
