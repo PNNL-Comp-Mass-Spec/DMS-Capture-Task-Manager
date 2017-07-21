@@ -49,6 +49,13 @@ namespace Pacifica.Core
 
         public static event StatusUpdateEventHandler StatusUpdate;
 
+        /// <summary>
+        /// Report a status update
+        /// </summary>
+        /// <param name="percentCompleted">Value between 0 and 100</param>
+        /// <param name="totalBytesSent">Total bytes to send</param>
+        /// <param name="totalBytesToSend">Total bytes sent</param>
+        /// <param name="statusMessage">Status message</param>
         private static void RaiseStatusUpdate(
             double percentCompleted, long totalBytesSent,
             long totalBytesToSend, string statusMessage)

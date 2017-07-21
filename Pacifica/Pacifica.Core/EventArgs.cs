@@ -38,9 +38,18 @@ namespace Pacifica.Core
         public readonly double PercentCompleted;
 
         public readonly long TotalBytesSent;
+
         public readonly long TotalBytesToSend;
+
         public readonly string StatusMessage;
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="percentCompleted">Percent complete, value between 0 and 100</param>
+        /// <param name="totalBytesSent">Total bytes sent</param>
+        /// <param name="totalBytesToSend">Total bytes to send</param>
+        /// <param name="statusMessage">Status message</param>
         public StatusEventArgs(double percentCompleted, long totalBytesSent, long totalBytesToSend, string statusMessage)
         {
             PercentCompleted = percentCompleted;
