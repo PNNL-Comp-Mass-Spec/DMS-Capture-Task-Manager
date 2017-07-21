@@ -356,6 +356,12 @@ namespace Pacifica.DMS_Metadata
 
             try
             {
+
+                if (!ValidateCertFile("CheckMetadataValidity"))
+                {
+                    return false;
+                }
+
                 if (TraceMode)
                     OnDebugEvent("Contacting " + policyURL);
 
@@ -872,6 +878,11 @@ namespace Pacifica.DMS_Metadata
         {
             const int DUPLICATE_HASH_MESSAGES_TO_LOG = 5;
 
+            if (!ValidateCertFile("GetDatasetFilesInMyEMSL"))
+            {
+                return new Dictionary<string, List<MyEMSLFileInfo>>();
+            }
+
             // Example metadata URL:
             // https://metadata.my.emsl.pnl.gov/fileinfo/files_for_keyvalue/omics.dms.dataset_id/265031
             var metadataURL = mPacificaConfig.MetadataServerUri + "/fileinfo/files_for_keyvalue/omics.dms.dataset_id/" + datasetID;
@@ -1013,6 +1024,22 @@ namespace Pacifica.DMS_Metadata
         private void ReportProgress(string currentTask, float percentComplete)
         {
             OnProgressUpdate(currentTask, percentComplete);
+        }
+
+        /// <summary>
+        /// Validate that the MyEMSL certificate file exists
+        /// </summary>
+        /// <param name="callingMethod">Calling method</param>
+        /// <returns>True if the cert file is found, otherwise false</returns>
+        private bool ValidateCertFile(string callingMethod)
+        {
+            var certificateFilePath = EasyHttp.ResolveCertFile(mPacificaConfig, callingMethod, out var errorMessage);
+
+            if (!string.IsNullOrWhiteSpace(certificateFilePath))
+                return true;
+
+            OnErrorEvent(errorMessage);
+            return false;
         }
 
         /// <summary>

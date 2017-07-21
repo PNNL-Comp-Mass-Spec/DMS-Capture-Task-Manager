@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Net;
 using System.Text.RegularExpressions;
 using Jayrock.Json.Conversion;
@@ -53,6 +52,11 @@ namespace Pacifica.Core
             // https://metadata.my.emsl.pnl.gov/files?hashsum=7b05677da8a6a5c8d033e56dd36ab5445ae44860
             var metadataURL = mPacificaConfig.MetadataServerUri + "/files?hashsum=" + fileSHA1HashSum;
 
+            if (!ValidateCertFile("DoesFileExistInMyEMSL", out _))
+            {
+                return false;
+            }
+
             var fileListJSON = EasyHttp.Send(mPacificaConfig, metadataURL, out var responseStatusCode);
 
             // Example response for just one file (hashsum=0a7bcbcf4085abc41bdbd98724f3e5c567726c56)
@@ -89,12 +93,9 @@ namespace Pacifica.Core
         {
 
             lookupError = false;
-            errorMessage = string.Empty;
 
-            if (!File.Exists(Configuration.CLIENT_CERT_FILEPATH))
+            if (!ValidateCertFile("GetIngestStatus", out errorMessage))
             {
-                errorMessage = "Authentication failure in GetIngestStatus; cert file not found at " + Configuration.CLIENT_CERT_FILEPATH;
-                OnErrorEvent(errorMessage);
                 percentComplete = 0;
                 lookupError = true;
                 return new Dictionary<string, object>();
@@ -269,6 +270,23 @@ namespace Pacifica.Core
                 return true;
             }
 
+            return false;
+        }
+
+        /// <summary>
+        /// Validate that the MyEMSL certificate file exists
+        /// </summary>
+        /// <param name="callingMethod">Calling method</param>
+        /// <param name="errorMessage">Output: error message</param>
+        /// <returns>True if the cert file is found, otherwise false</returns>
+        private bool ValidateCertFile(string callingMethod, out string errorMessage)
+        {
+            var certificateFilePath = EasyHttp.ResolveCertFile(mPacificaConfig, callingMethod, out errorMessage);
+
+            if (!string.IsNullOrWhiteSpace(certificateFilePath))
+                return true;
+
+            OnErrorEvent(errorMessage);
             return false;
         }
 

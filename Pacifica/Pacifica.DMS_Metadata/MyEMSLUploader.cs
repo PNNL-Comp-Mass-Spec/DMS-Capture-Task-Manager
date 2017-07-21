@@ -182,9 +182,11 @@ namespace Pacifica.DMS_Metadata
 
             _mdContainer.UseTestInstance = UseTestInstance;
 
-            if (!File.Exists(Configuration.CLIENT_CERT_FILEPATH))
+            var certificateFilePath = EasyHttp.ResolveCertFile(mPacificaConfig, "SetupMetadataAndUpload", out var errorMessage);
+
+            if (string.IsNullOrWhiteSpace(certificateFilePath))
             {
-                throw new Exception("Authentication failure; MyEMSL certificate file not found at " + Configuration.CLIENT_CERT_FILEPATH);
+                throw new Exception(errorMessage);
             }
 
             // Look for files to upload, compute a Sha-1 hash for each, and compare those hashes to existing files in MyEMSL

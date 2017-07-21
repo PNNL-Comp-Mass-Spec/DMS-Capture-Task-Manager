@@ -253,9 +253,11 @@ namespace Pacifica.Core
             statusURI = string.Empty;
             ErrorMessage = string.Empty;
 
-            if (!File.Exists(Configuration.CLIENT_CERT_FILEPATH))
+            var certificateFilePath = EasyHttp.ResolveCertFile(mPacificaConfig, "StartUpload", out var errorMessage);
+
+            if (string.IsNullOrWhiteSpace(certificateFilePath))
             {
-                OnError("Authentication failure in StartUpload; cert file not found at " + Configuration.CLIENT_CERT_FILEPATH);
+                OnError(errorMessage);
                 return false;
             }
 
