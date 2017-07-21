@@ -61,20 +61,26 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="PRISM-Library">
+      <Version>1.0.9</Version>
+    </PackageReference>
+    <PackageReference Include="PRISMWin-Library">
+      <Version>1.0.2</Version>
+    </PackageReference>
+    <PackageReference Include="System.Data.SQLite.Core">
+      <Version>1.0.97</Version>
+    </PackageReference>
+    <PackageReference Include="UIMFLibrary">
+      <Version>1.0.5</Version>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
     <Reference Include="CTM_Shared">
       <HintPath>..\..\DeployedFiles\CTM_Shared.dll</HintPath>
-    </Reference>
-    <Reference Include="PRISMWin">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\DeployedFiles\PRISM.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
-    <Reference Include="System.Data.SQLite, Version=1.0.97.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\DeployedFiles\System.Data.SQLite.dll</HintPath>
     </Reference>
     <Reference Include="System.Xml.Linq">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -86,10 +92,6 @@
     <Reference Include="System.Xml" />
     <Reference Include="ThermoRawFileReader">
       <HintPath>..\..\RefLib\ThermoRawFileReader.dll</HintPath>
-    </Reference>
-    <Reference Include="UIMFLibrary, Version=3.0.6270.26262, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\DeployedFiles\UIMFLibrary.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
