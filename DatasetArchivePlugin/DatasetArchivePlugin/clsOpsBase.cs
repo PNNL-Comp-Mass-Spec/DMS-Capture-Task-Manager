@@ -410,6 +410,27 @@ namespace DatasetArchivePlugin
 
                 return false;
             }
+            finally
+            {
+                if (myEMSLUL != null)
+                {
+                    // Unsubscribe from the events
+                    // This should be automatic, but we're seeing duplicate messages of the form
+                    // "... uploading, 25.0% complete for 48,390 KB",
+                    // implying these are not being removed
+
+                    myEMSLUL.DebugEvent -= OnDebugEvent;
+                    myEMSLUL.StatusEvent -= OnStatusEvent;
+                    myEMSLUL.ErrorEvent -= OnErrorEvent;
+                    myEMSLUL.WarningEvent -= OnWarningEvent;
+                    myEMSLUL.ProgressUpdate -= OnProgressUpdate;
+
+                    myEMSLUL.StatusUpdate -= myEMSLUL_StatusUpdate;
+                    myEMSLUL.UploadCompleted -= myEMSLUL_UploadCompleted;
+
+                    myEMSLUL.MetadataDefinedEvent -= myEMSLUL_MetadataDefinedEvent;
+                }
+            }
 
         }
 
