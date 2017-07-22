@@ -79,7 +79,6 @@ namespace CaptureTaskManager
 
         private bool m_Running;
         private System.Timers.Timer m_StatusTimer;
-        private DateTime m_DurationStart;
         private bool m_ManagerDeactivatedLocally;
 
         private readonly bool m_TraceMode;
@@ -374,11 +373,20 @@ namespace CaptureTaskManager
             var statusFileNameLoc = Path.Combine(fInfo.DirectoryName, "Status.xml");
             m_StatusFile = new clsStatusFile(statusFileNameLoc)
             {
-                LogToMsgQueue = m_MgrSettings.GetBooleanParam("LogStatusToMessageQueue"),
                 MgrName = m_MgrName,
                 MgrStatus = EnumMgrStatus.Running
             };
+
+            RegisterEvents((clsEventNotifier)m_StatusFile);
+
             m_StatusFile.MonitorUpdateRequired += OnStatusMonitorUpdateReceived;
+
+            var logStatusToMessageQueue = m_MgrSettings.GetBooleanParam("LogStatusToMessageQueue");
+            var messageQueueUri = m_MgrSettings.GetParam("MessageQueueURI");
+            var messageQueueTopicMgrStatus = m_MgrSettings.GetParam("MessageQueueTopicMgrStatus");
+
+            m_StatusFile.ConfigureMessageQueueLogging(logStatusToMessageQueue, messageQueueUri, messageQueueTopicMgrStatus);
+
             m_StatusFile.WriteStatusFile();
 
             // Set up the status reporting time, with an interval of 1 minute
@@ -468,7 +476,7 @@ namespace CaptureTaskManager
             }
         }
 
-        private Dictionary<string, DateTime> LoadCachedLogMessages(FileInfo messageCacheFile)
+        private Dictionary<string, DateTime> LoadCachedLogMessages(FileSystemInfo messageCacheFile)
         {
             var cachedMessages = new Dictionary<string, DateTime>();
 
@@ -749,6 +757,7 @@ namespace CaptureTaskManager
                 m_StatusFile.Dataset = m_Dataset;
                 m_StatusFile.MgrStatus = EnumMgrStatus.Running;
                 m_StatusFile.Tool = m_StepTool;
+                m_StatusFile.TaskStartTime = DateTime.UtcNow;
                 m_StatusFile.TaskStatus = EnumTaskStatus.Running;
                 m_StatusFile.TaskStatusDetail = EnumTaskStatusDetail.Running_Tool;
                 m_StatusFile.MostRecentJobInfo = DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss tt") +
@@ -784,7 +793,6 @@ namespace CaptureTaskManager
                 }
 
                 // Run the tool plugin
-                m_DurationStart = DateTime.UtcNow;
                 m_StatusTimer.Enabled = true;
                 var toolResult = m_CapTool.RunTool();
                 m_StatusTimer.Enabled = false;
@@ -1338,6 +1346,57 @@ namespace CaptureTaskManager
 
         #endregion
 
+        #region "clsEventNotifier events"
+
+        private void RegisterEvents(clsEventNotifier oProcessingClass, bool writeDebugEventsToLog = true)
+        {
+            if (writeDebugEventsToLog)
+            {
+                oProcessingClass.DebugEvent += DebugEventHandler;
+            }
+            else
+            {
+                oProcessingClass.DebugEvent += DebugEventHandlerConsoleOnly;
+            }
+
+            oProcessingClass.StatusEvent += StatusEventHandler;
+            oProcessingClass.ErrorEvent += ErrorEventHandler;
+            oProcessingClass.WarningEvent += WarningEventHandler;
+            oProcessingClass.ProgressUpdate += ProgressUpdateHandler;
+        }
+
+        private void DebugEventHandlerConsoleOnly(string statusMessage)
+        {
+            LogDebug(statusMessage, writeToLog: false);
+        }
+
+        private void DebugEventHandler(string statusMessage)
+        {
+            LogDebug(statusMessage);
+        }
+
+        private void StatusEventHandler(string statusMessage)
+        {
+            LogMessage(statusMessage);
+        }
+
+        private void ErrorEventHandler(string errorMessage, Exception ex)
+        {
+            LogError(errorMessage, ex);
+        }
+
+        private void WarningEventHandler(string warningMessage)
+        {
+            LogWarning(warningMessage);
+        }
+
+        private void ProgressUpdateHandler(string progressMessage, float percentComplete)
+        {
+            m_StatusFile.CurrentOperation = progressMessage;
+            m_StatusFile.UpdateAndWrite(percentComplete);
+        }
+        #endregion
+
         #region "Event handlers"
 
         private void FileWatcherChanged(object sender, FileSystemEventArgs e)
@@ -1361,8 +1420,6 @@ namespace CaptureTaskManager
         /// <param name="e"></param>
         void m_StatusTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            var duration = DateTime.UtcNow - m_DurationStart;
-            m_StatusFile.Duration = (Single)duration.TotalHours;
             m_StatusFile.WriteStatusFile();
         }
 

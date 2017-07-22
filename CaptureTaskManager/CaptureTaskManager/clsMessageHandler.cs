@@ -1,5 +1,5 @@
 ﻿//*********************************************************************************************************
-// Written by Gary Kiebel and Dave Clark for the US Department of Energy 
+// Written by Gary Kiebel and Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 06/26/2009
@@ -173,7 +173,7 @@ namespace CaptureTaskManager
                 DestroyConnection();
                 return false;
             }
-        }        
+        }
 
         /// <summary>
         /// Sends a status message

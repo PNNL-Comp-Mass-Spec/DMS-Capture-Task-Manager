@@ -68,7 +68,7 @@ namespace CaptureTaskManager
         protected static void ReportStatus(string statusMessage, bool isDebug = false)
         {
             clsUtilities.ReportStatus(statusMessage, isDebug);
-        }        
+        }
 
     }
 
