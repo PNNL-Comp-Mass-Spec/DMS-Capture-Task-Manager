@@ -10,6 +10,7 @@ using System;
 using System.Data.SqlClient;
 using System.Data;
 using System.Windows.Forms;
+using PRISM;
 
 namespace CaptureTaskManager
 {
@@ -21,8 +22,9 @@ namespace CaptureTaskManager
 
         #region "Constants"
 
-        protected const string SP_NAME_SET_COMPLETE = "SetStepTaskComplete";
-        protected const string SP_NAME_REQUEST_TASK = "RequestStepTask";
+        private const string SP_NAME_SET_COMPLETE = "SetStepTaskComplete";
+        private const string SP_NAME_REPORT_IDLE = "ReportManagerIdle";
+        private const string SP_NAME_REQUEST_TASK = "RequestStepTask";
 
         #endregion
 
@@ -183,6 +185,12 @@ namespace CaptureTaskManager
                 case EnumRequestTaskResult.NoTaskFound:
                     m_TaskWasAssigned = false;
                     break;
+                case EnumRequestTaskResult.TooManyRetries:
+                case EnumRequestTaskResult.Deadlock:
+                    // Make sure the database didn't actually assign a job to this manager
+                    ReportManagerIdle();
+                    m_TaskWasAssigned = false;
+                    break;
                 default:
                     m_TaskWasAssigned = false;
                     break;
@@ -253,6 +261,14 @@ namespace CaptureTaskManager
                         // No jobs found
                         outcome = EnumRequestTaskResult.NoTaskFound;
                         break;
+                    case clsExecuteDatabaseSP.RET_VAL_EXCESSIVE_RETRIES:
+                        // Too many retries
+                        outcome = EnumRequestTaskResult.TooManyRetries;
+                        break;
+                    case clsExecuteDatabaseSP.RET_VAL_DEADLOCK:
+                        // Transaction was deadlocked on lock resources with another process and has been chosen as the deadlock victim
+                        outcome = EnumRequestTaskResult.Deadlock;
+                        break;
                     default:
                         // There was an SP error
                         LogError("clsCaptureTask.RequestTaskDetailed(), SP execution error " + resCode +
@@ -264,6 +280,7 @@ namespace CaptureTaskManager
             catch (Exception ex)
             {
                 LogError("Exception requesting analysis job", ex);
+                LogError("Stack trace: " + PRISM.clsStackTraceFormatter.GetExceptionStackTrace(ex));
                 outcome = EnumRequestTaskResult.ResultError;
             }
             return outcome;
@@ -317,6 +334,34 @@ namespace CaptureTaskManager
             {
                 LogDebug("Successfully set task complete in database, job " + GetParam("Job", "??"));
             }
+        }
+
+        /// <summary>
+        /// Call stored procedure ReportManagerIdle to make sure that
+        /// the database didn't actually assign a job to this manager
+        /// </summary>
+        private void ReportManagerIdle()
+        {
+            // Setup for execution of the stored procedure
+            var cmd = new SqlCommand(SP_NAME_REPORT_IDLE)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
+            cmd.Parameters.Add(new SqlParameter("@managerName", SqlDbType.VarChar, 128)).Value = ManagerName;
+            cmd.Parameters.Add(new SqlParameter("@infoOnly", SqlDbType.TinyInt)).Value = 0;
+            cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
+
+            // Execute the Stored Procedure (retry the call up to 3 times)
+            var returnCode = m_CaptureTaskDBProcedureExecutor.ExecuteSP(cmd, 3);
+
+            if (returnCode == 0)
+            {
+                return;
+            }
+
+            LogError("Error " + returnCode + " calling " + cmd.CommandText);
         }
 
         /// <summary>

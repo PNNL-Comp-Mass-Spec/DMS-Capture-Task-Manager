@@ -65,7 +65,9 @@ namespace CaptureTaskManager
     {
         TaskFound = 0,
         NoTaskFound = 1,
-        ResultError = 2
+        ResultError = 2,
+        TooManyRetries = 3,
+        Deadlock = 4
     }
 
     #endregion
