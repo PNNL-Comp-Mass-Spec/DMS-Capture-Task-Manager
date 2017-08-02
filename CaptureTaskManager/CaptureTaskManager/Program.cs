@@ -17,7 +17,7 @@ namespace CaptureTaskManager
         // Application startup program
         //**********************************************************************************************************
 
-        private const string PROGRAM_DATE = "July 21, 2017";
+        private const string PROGRAM_DATE = "August 1, 2017";
 
         private static bool mCodeTestMode;
         private static bool mCreateEventLog;

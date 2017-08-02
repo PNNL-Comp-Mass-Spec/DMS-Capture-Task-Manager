@@ -286,10 +286,10 @@ namespace DatasetIntegrityPlugin
                 }
 
                 var mgrName = m_MgrParams.GetParam("MgrName", "CTM");
-                var oFileTools = new clsFileTools(mgrName, m_DebugLevel);
+                var fileTools = new clsFileTools(mgrName, m_DebugLevel);
                 var dotDFolderPathLocal = Path.Combine(m_WorkDir, m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION);
 
-                var success = CopyDotDFolderToLocal(oFileTools, datasetFolderPath, dotDFolderPathLocal, false);
+                var success = CopyDotDFolderToLocal(fileTools, datasetFolderPath, dotDFolderPathLocal, false);
                 if (!success)
                     return false;
 
@@ -305,7 +305,7 @@ namespace DatasetIntegrityPlugin
                 // Construct the command line arguments to run the OpenChrom
 
                 // Syntax:
-                // OpenChrom.exe -cli -batchfile E:\CTM_WorkDir\BatchJob.obj 
+                // OpenChrom.exe -cli -batchfile E:\CTM_WorkDir\BatchJob.obj
                 //
                 // Optional: -nosplash
 
@@ -323,7 +323,7 @@ namespace DatasetIntegrityPlugin
                 cmdRunner.EchoOutputToConsole = false;
                 cmdRunner.CacheStandardOutput = false;
 
-                // OpenChrom does not produce any console output; so no point in creating it 
+                // OpenChrom does not produce any console output; so no point in creating it
                 cmdRunner.WriteConsoleOutputToFile = false;
                 cmdRunner.ConsoleOutputFilePath = consoleOutputFilePath;
 
@@ -337,7 +337,7 @@ namespace DatasetIntegrityPlugin
                 try
                 {
                     clsProgRunner.GarbageCollectNow();
-                    oFileTools.DeleteDirectory(dotDFolderPathLocal, ignoreErrors: true);
+                    fileTools.DeleteDirectory(dotDFolderPathLocal, ignoreErrors: true);
                 }
                 catch (Exception ex)
                 {
@@ -365,7 +365,7 @@ namespace DatasetIntegrityPlugin
                 Thread.Sleep(100);
 
                 // Copy the .CDF file to the dataset folder
-                success = CopyCDFToDatasetFolder(oFileTools, mgrName, datasetFolderPath);
+                success = CopyCDFToDatasetFolder(fileTools, mgrName, datasetFolderPath);
                 if (!success)
                 {
                     return false;
@@ -395,10 +395,10 @@ namespace DatasetIntegrityPlugin
             {
 
                 var mgrName = m_MgrParams.GetParam("MgrName", "CTM");
-                var oFileTools = new clsFileTools(mgrName, m_DebugLevel);
+                var fileTools = new clsFileTools(mgrName, m_DebugLevel);
                 var dotDFolderPathLocal = Path.Combine(m_WorkDir, m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION);
 
-                var success = CopyDotDFolderToLocal(oFileTools, datasetFolderPath, dotDFolderPathLocal, true);
+                var success = CopyDotDFolderToLocal(fileTools, datasetFolderPath, dotDFolderPathLocal, true);
                 if (!success)
                     return false;
 
@@ -435,7 +435,7 @@ namespace DatasetIntegrityPlugin
                 try
                 {
                     clsProgRunner.GarbageCollectNow();
-                    oFileTools.DeleteDirectory(dotDFolderPathLocal, ignoreErrors: true);
+                    fileTools.DeleteDirectory(dotDFolderPathLocal, ignoreErrors: true);
                 }
                 catch (Exception ex)
                 {
@@ -463,7 +463,7 @@ namespace DatasetIntegrityPlugin
                 Thread.Sleep(100);
 
                 // Copy the .UIMF file to the dataset folder
-                success = CopyUIMFToDatasetFolder(oFileTools, mgrName, datasetFolderPath);
+                success = CopyUIMFToDatasetFolder(fileTools, mgrName, datasetFolderPath);
                 if (!success)
                 {
                     return false;
@@ -484,7 +484,7 @@ namespace DatasetIntegrityPlugin
         }
 
         private bool CopyDotDFolderToLocal(
-            clsFileTools oFileTools,
+            clsFileTools fileTools,
             string datasetFolderPath,
             string dotDFolderPathLocal,
             bool requireIMSFiles)
@@ -532,12 +532,12 @@ namespace DatasetIntegrityPlugin
             // Copy the dataset folder locally using Prism.DLL
             // Note that lock files will be used when copying large files (over 20 MB)
 
-            oFileTools.CopyDirectory(dotDFolderPathRemote.FullName, dotDFolderPathLocal, true);
+            fileTools.CopyDirectory(dotDFolderPathRemote.FullName, dotDFolderPathLocal, true);
 
             return true;
         }
 
-        private bool CopyCDFToDatasetFolder(clsFileTools oFileTools, string mgrName, string datasetFolderPath)
+        private bool CopyCDFToDatasetFolder(clsFileTools fileTools, string mgrName, string datasetFolderPath)
         {
             var fiCDF = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + ".cdf"));
 
@@ -548,12 +548,12 @@ namespace DatasetIntegrityPlugin
                 return false;
             }
 
-            var success = CopyFileToDatasetFolder(oFileTools, mgrName, fiCDF, datasetFolderPath);
+            var success = CopyFileToDatasetFolder(fileTools, mgrName, fiCDF, datasetFolderPath);
             return success;
         }
 
 
-        private bool CopyUIMFToDatasetFolder(clsFileTools oFileTools, string mgrName, string datasetFolderPath)
+        private bool CopyUIMFToDatasetFolder(clsFileTools fileTools, string mgrName, string datasetFolderPath)
         {
 
             var fiUIMF = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION));
@@ -565,11 +565,11 @@ namespace DatasetIntegrityPlugin
                 return false;
             }
 
-            var success = CopyFileToDatasetFolder(oFileTools, mgrName, fiUIMF, datasetFolderPath);
+            var success = CopyFileToDatasetFolder(fileTools, mgrName, fiUIMF, datasetFolderPath);
             return success;
         }
 
-        private bool CopyFileToDatasetFolder(clsFileTools oFileTools, string mgrName, FileInfo dataFile, string datasetFolderPath)
+        private bool CopyFileToDatasetFolder(clsFileTools fileTools, string mgrName, FileSystemInfo dataFile, string datasetFolderPath)
         {
             if (m_DebugLevel >= 4)
             {
@@ -577,7 +577,7 @@ namespace DatasetIntegrityPlugin
             }
 
             var targetFilePath = Path.Combine(datasetFolderPath, dataFile.Name);
-            oFileTools.CopyFileUsingLocks(dataFile.FullName, targetFilePath, mgrName, overWrite: true);
+            fileTools.CopyFileUsingLocks(dataFile.FullName, targetFilePath, overWrite: true);
 
             if (m_DebugLevel >= 4)
             {
@@ -936,7 +936,7 @@ namespace DatasetIntegrityPlugin
 
         private void ReportFileSizeTooLarge(string sDataFileDescription, string sFilePath, float fActualSizeKB, float fMaxSizeKB)
         {
-            var sMaxSize = FileSizeToString(fMaxSizeKB);            
+            var sMaxSize = FileSizeToString(fMaxSizeKB);
 
             // Data file may be corrupt
             var msg = sDataFileDescription + " file may be corrupt. Actual file size is " +
@@ -1441,7 +1441,7 @@ namespace DatasetIntegrityPlugin
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
-            // Verify size of the analysis.baf file         
+            // Verify size of the analysis.baf file
             var dataFileSizeKB = GetFileSize(lstBafFile.First());
             if (dataFileSizeKB <= BAF_FILE_MIN_SIZE_KB)
             {
@@ -1593,7 +1593,7 @@ namespace DatasetIntegrityPlugin
 
 
             // Check whether any .mcf files exist
-            // Note that "*.mcf" will match files with extension .mcf and files with extension .mcf_idx     
+            // Note that "*.mcf" will match files with extension .mcf and files with extension .mcf_idx
 
             var mctFileName = string.Empty;
             dataFileSizeKB = 0;
@@ -1641,7 +1641,7 @@ namespace DatasetIntegrityPlugin
             var lstSerFile = lstDotDFolders[0].GetFiles("ser").ToList();
             if (lstSerFile.Count > 0)
             {
-                // ser file found; verify its size              
+                // ser file found; verify its size
                 dataFileSizeKB = GetFileSize(lstSerFile.First());
                 if (dataFileSizeKB <= SER_FILE_MIN_SIZE_KB)
                 {
@@ -1666,7 +1666,7 @@ namespace DatasetIntegrityPlugin
                 var lstFidFile = lstDotDFolders[0].GetFiles("fid").ToList();
                 if (lstFidFile.Count > 0)
                 {
-                    // fid file found; verify size                  
+                    // fid file found; verify size
                     dataFileSizeKB = GetFileSize(lstFidFile.First());
                     if (dataFileSizeKB <= FID_FILE_MIN_SIZE_KB)
                     {
@@ -1841,7 +1841,7 @@ namespace DatasetIntegrityPlugin
 
             try
             {
-                
+
                 var sourceFile = new FileInfo(gzipFilePath);
                 if (!sourceFile.Exists)
                 {
@@ -2098,7 +2098,7 @@ namespace DatasetIntegrityPlugin
                     if (instrumentName.ToLower().StartsWith("ims05"))
                     {
                         // As of September 2014, IMS05 does not have a high pressure ion funnel
-                        // In order for the logic checks to work, we will override the HighPressureFunnelPressure value listed using RearIonFunnelPressure 
+                        // In order for the logic checks to work, we will override the HighPressureFunnelPressure value listed using RearIonFunnelPressure
                         if (highPressureFunnel < rearIonFunnel)
                             highPressureFunnel = rearIonFunnel;
                     }
