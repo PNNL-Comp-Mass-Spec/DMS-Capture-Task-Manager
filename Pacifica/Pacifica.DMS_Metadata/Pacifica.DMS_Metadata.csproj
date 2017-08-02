@@ -37,7 +37,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="PRISM-Library">
-      <Version>1.0.9</Version>
+      <Version>1.0.12</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
