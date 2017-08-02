@@ -1521,7 +1521,20 @@ namespace DatasetIntegrityPlugin
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (lstDotDFolders.Count > 1)
+            if (lstDotDFolders.Count == 1)
+            {
+                var baseName = Path.GetFileNameWithoutExtension(lstDotDFolders[0].Name);
+                if (!string.Equals(m_Dataset, baseName, StringComparison.OrdinalIgnoreCase))
+                {
+                    mRetData.EvalMsg = string.Format(
+                        "Invalid dataset: folder {0} name does not match the dataset name",
+                        lstDotDFolders[0].Name);
+
+                    LogError(mRetData.EvalMsg);
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+            }
+            else
             {
                 var allowMultipleFolders = false;
 
@@ -2362,7 +2375,6 @@ namespace DatasetIntegrityPlugin
         }
 
         #endregion
-
 
         #region "Event handlers"
 
