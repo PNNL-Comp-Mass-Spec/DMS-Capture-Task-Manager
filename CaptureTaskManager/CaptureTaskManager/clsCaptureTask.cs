@@ -217,7 +217,7 @@ namespace CaptureTaskManager
 
                 spCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
 
-                spCmd.Parameters.Add(new SqlParameter("@processorName", SqlDbType.VarChar, 128)).Value = m_MgrParams.GetParam(clsMgrSettings.MGR_PARAM_MGR_NAME);
+                spCmd.Parameters.Add(new SqlParameter("@processorName", SqlDbType.VarChar, 128)).Value = ManagerName;
 
                 spCmd.Parameters.Add(new SqlParameter("@jobNumber", SqlDbType.Int)).Direction = ParameterDirection.Output;
 

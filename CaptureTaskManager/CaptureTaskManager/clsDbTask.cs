@@ -1,5 +1,5 @@
 ﻿//*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/10/2009
@@ -47,8 +47,19 @@ namespace CaptureTaskManager
 
         #region "Properties"
 
+        /// <summary>
+        /// Manager name
+        /// </summary>
+        public string ManagerName { get; }
+
+        /// <summary>
+        /// True if a task was assigned
+        /// </summary>
         public bool TaskWasAssigned => m_TaskWasAssigned;
 
+        /// <summary>
+        /// Job parameters
+        /// </summary>
         public Dictionary<string, string> TaskDictionary => m_JobParams;
 
         #endregion
@@ -58,6 +69,10 @@ namespace CaptureTaskManager
         protected clsDbTask(IMgrParams MgrParams)
         {
             m_MgrParams = MgrParams;
+
+            ManagerName = m_MgrParams.GetParam("MgrName", Environment.MachineName + "_Undefined-Manager");
+
+            // Gigasax.DMS_Capture
             m_ConnStr = m_MgrParams.GetParam("ConnectionString");
 
             m_CaptureTaskDBProcedureExecutor = new PRISM.clsExecuteDatabaseSP(m_ConnStr);
