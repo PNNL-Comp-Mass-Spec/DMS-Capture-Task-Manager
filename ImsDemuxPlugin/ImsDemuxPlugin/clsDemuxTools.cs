@@ -4,11 +4,6 @@
 // Copyright 2011, Battelle Memorial Institute
 // Created 03/07/2011
 //
-// Last modified 03/07/2011
-//               04/22/2011 dac - Modified to use "real" demultiplexing dll's
-//               03/12/2012 mem - Replaced BelovTransform.dll with IMSDemultiplexer.dll
-//               08/28/2012 mem - Removed option to use BelovTransform
-//               09/30/2014 mem - Switched to using 64-bit UIMFDemultiplexer_Console.exe
 //*********************************************************************************************************
 
 using System;
@@ -70,7 +65,7 @@ namespace ImsDemuxPlugin
         {
             public int FramesToSum;
             public bool CalibrateOnly;
-            
+
             // public int StartFrame;
             // public int EndFrame;
 
@@ -985,12 +980,13 @@ namespace ImsDemuxPlugin
                     return true;
                 }
 
-                if (string.IsNullOrEmpty(errorMessage))
-                    errorMessage = "Unknown error";
-
                 if (string.IsNullOrEmpty(errorMessage) && mLoggedConsoleOutputErrors.Count > 0)
                 {
                     errorMessage = mLoggedConsoleOutputErrors.First();
+                }
+                else if (string.IsNullOrEmpty(errorMessage))
+                {
+                    errorMessage = "Unknown error";
                 }
 
                 OnErrorEvent(errorMessage);
@@ -1172,7 +1168,9 @@ namespace ImsDemuxPlugin
                         if (string.IsNullOrWhiteSpace(strLineIn))
                             continue;
 
-                        if (strLineIn.StartsWith("Error in") | strLineIn.StartsWith("Error:"))
+                        if (strLineIn.StartsWith("Error in") ||
+                            strLineIn.StartsWith("Error:") ||
+                            strLineIn.StartsWith("Exception"))
                         {
                             if (!mLoggedConsoleOutputErrors.Contains(strLineIn))
                             {
