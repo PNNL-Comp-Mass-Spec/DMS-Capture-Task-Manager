@@ -478,22 +478,23 @@ namespace Pacifica.Core
             // new metadata object is just a list of dictionary entries
             var metadataObject = new List<Dictionary<string, object>>();
 
-            if (uploadMetadata.DMSInstrumentName.IndexOf("LCQ", StringComparison.OrdinalIgnoreCase) >= 0 &&
-                uploadMetadata.EUSInstrumentID <= 0)
+            if (uploadMetadata.EUSInstrumentID <= 0)
             {
-                uploadMetadata.EUSInstrumentID = 1163;
-            }
+                // Possibly override EUSInstrument ID
+                if (uploadMetadata.DMSInstrumentName.IndexOf("LCQ", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    uploadMetadata.EUSInstrumentID = 1163;
+                }
 
-            if (uploadMetadata.DMSInstrumentName == "Exact02" &&
-                uploadMetadata.EUSInstrumentID <= 0)
-            {
-                uploadMetadata.EUSInstrumentID = 34111;
-            }
+                if (string.Equals(uploadMetadata.DMSInstrumentName, "Exact02", StringComparison.OrdinalIgnoreCase))
+                {
+                    uploadMetadata.EUSInstrumentID = 34111;
+                }
 
-            if (uploadMetadata.DMSInstrumentName == "IMS07_AgTOF04" &&
-                uploadMetadata.EUSInstrumentID <= 0)
-            {
-                uploadMetadata.EUSInstrumentID = 34155;
+                if (string.Equals(uploadMetadata.DMSInstrumentName, "IMS07_AgTOF04", StringComparison.OrdinalIgnoreCase))
+                {
+                    uploadMetadata.EUSInstrumentID = 34155;
+                }
             }
 
             // Now that EUS instrument ID is defined, store it and lookup other EUS info
