@@ -25,6 +25,7 @@ namespace Pacifica.Core
         /// <summary>
         /// EUS Instrument ID to use when the EUS Instrument ID is unknown
         /// </summary>
+        /// <remarks>34127 is VOrbiETD04</remarks>
         public const int UNKNOWN_INSTRUMENT_EUS_INSTRUMENT_ID = 34127;
 
         /// <summary>
@@ -264,12 +265,8 @@ namespace Pacifica.Core
             var fileList = Utilities.GetFileListFromMetadataObject(metadataObject);
 
             // Grab the list of files from the top-level "file" object
-            // Keys in this dictionary are the source file path; values are metadata about the file
+            // Keys in this dictionary are the source file path (Windows paths); values are metadata about the file
             var fileListObject = new SortedDictionary<string, FileInfoObject>();
-
-            // This is a list of dictionary objects
-            // Dictionary keys will be sha1Hash, destinationDirectory, and fileName
-            // var newFileObj = new List<Dictionary<string, string>>();
 
             foreach (var file in fileList)
             {
@@ -585,6 +582,7 @@ namespace Pacifica.Core
 
                 // Note the inconsistent requirements; files in the root dataset level must have "data/"
                 // while files in subdirectories should have a SubDir that does _not_ end in a forward slash
+                // It is likely that this discrepancy has been fixed in the backend python code on the ingest server
 
                 string subdirString;
 
