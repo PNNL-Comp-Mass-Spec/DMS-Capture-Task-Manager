@@ -1598,7 +1598,6 @@ namespace DatasetIntegrityPlugin
                 bafFileSizeKB = dataFileSizeKB;
             }
 
-
             // Check whether any .mcf files exist
             // Note that "*.mcf" will match files with extension .mcf and files with extension .mcf_idx
 
@@ -1918,18 +1917,9 @@ namespace DatasetIntegrityPlugin
 
             if (dataFileSizeKB < ILLUMINA_TXT_GZ_FILE_SMALL_SIZE_KB)
             {
-                // File is between 5 and 50 KB
-                // Make sure that one of the frame scans has data
-
-                string uimfStatusMessage;
-                var validFile = UimfFileHasData(dataFileNamePath, out uimfStatusMessage);
-
-                if (!validFile)
-                {
-                    mRetData.EvalMsg = string.Format("Data file size is less than {0:F0} KB; {1}", ILLUMINA_TXT_GZ_FILE_SMALL_SIZE_KB, uimfStatusMessage);
-                    return EnumCloseOutType.CLOSEOUT_FAILED;
-                }
-
+                // File is less than 1 MB in size
+                mRetData.EvalMsg = string.Format("Data file size is less than {0:F0} KB", ILLUMINA_TXT_GZ_FILE_SMALL_SIZE_KB);
+                return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
             // Verify the integrity of the .gz file
@@ -1945,7 +1935,6 @@ namespace DatasetIntegrityPlugin
             // If we got to here, everything was OK
             return EnumCloseOutType.CLOSEOUT_SUCCESS;
         }
-
 
         private EnumCloseOutType TestIMSAgilentTOF(string dataFileNamePath, string instrumentName)
         {
@@ -2179,7 +2168,6 @@ namespace DatasetIntegrityPlugin
             msg = "Completed clsPluginMain.Setup()";
             LogDebug(msg);
         }
-
 
         /// <summary>
         /// Gets the length of a single file in KB
