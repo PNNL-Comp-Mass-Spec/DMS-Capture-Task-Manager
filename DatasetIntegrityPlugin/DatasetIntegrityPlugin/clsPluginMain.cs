@@ -1979,20 +1979,27 @@ namespace DatasetIntegrityPlugin
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
 
+                var validFile = UimfFileHasData(dataFileNamePath, out var uimfStatusMessage);
+
                 if (dataFileSizeKB < UIMF_FILE_SMALL_SIZE_KB)
                 {
                     // File is between 5 and 50 KB
                     // Make sure that one of the frame scans has data
 
-                    string uimfStatusMessage;
-                    var validFile = UimfFileHasData(dataFileNamePath, out uimfStatusMessage);
-
                     if (!validFile)
                     {
-                        mRetData.EvalMsg = string.Format("Data file size is less than {0:F0} KB; {1}", UIMF_FILE_SMALL_SIZE_KB, uimfStatusMessage);
+                        mRetData.EvalMsg = string.Format("Data file size is less than {0:F0} KB; it {1}", UIMF_FILE_SMALL_SIZE_KB, uimfStatusMessage);
                         return EnumCloseOutType.CLOSEOUT_FAILED;
                     }
 
+                }
+                else
+                {
+                    if (!validFile)
+                    {
+                        mRetData.EvalMsg = string.Format("Data file is {0}; it {1}", FileSizeToString(dataFileSizeKB), uimfStatusMessage);
+                        return EnumCloseOutType.CLOSEOUT_FAILED;
+                    }
                 }
             }
 
