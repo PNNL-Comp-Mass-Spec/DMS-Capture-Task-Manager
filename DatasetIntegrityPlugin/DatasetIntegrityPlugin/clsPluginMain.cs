@@ -1315,9 +1315,8 @@ namespace DatasetIntegrityPlugin
 
                         if (scanCount > 0)
                         {
-                            double[,] massIntensityPairs;
 
-                            var dataCount = reader.GetScanData2D(1, out massIntensityPairs);
+                            var dataCount = reader.GetScanData2D(1, out _);
 
                             if (dataCount > 0)
                             {
@@ -2043,12 +2042,10 @@ namespace DatasetIntegrityPlugin
 
                         foreach (var scanNum in frameScans)
                         {
-                            double[] mzArray;
-                            int[] intensityArray;
 
                             var dataCount = reader.GetSpectrum(
                                 frameNumber, frameType, scanNum.Scan,
-                                out mzArray, out intensityArray);
+                                out _, out _);
 
                             if (dataCount > 0)
                             {

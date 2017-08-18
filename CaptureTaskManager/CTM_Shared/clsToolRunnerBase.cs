@@ -213,7 +213,7 @@ namespace CaptureTaskManager
         {
             const float HoldoffSeconds = 0.1f;
 
-            return CleanWorkDir(workDir, HoldoffSeconds, out string strFailureMessage);
+            return CleanWorkDir(workDir, HoldoffSeconds, out _);
         }
 
         /// <summary>
@@ -694,7 +694,6 @@ namespace CaptureTaskManager
             return success;
         }
 
-
         /// <summary>
         /// Determines the version info for a .NET DLL using System.Diagnostics.FileVersionInfo
         /// </summary>
@@ -817,7 +816,6 @@ namespace CaptureTaskManager
 
                 var strArgs = clsConversion.PossiblyQuotePath(fiDLLFile.FullName) + " /O:" +
                               clsConversion.PossiblyQuotePath(versionInfoFilePath);
-
 
                 var objProgRunner = new clsRunDosProgram(clsUtilities.GetAppFolderPath())
                 {

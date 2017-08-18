@@ -188,7 +188,7 @@ namespace ArchiveVerifyPlugin
                 var ingestSuccess = GetMyEMSLIngestStatus(
                     m_Job, statusChecker, statusURI,
                     eusInstrumentID, eusProposalID, eusUploaderID,
-                    mRetData, out var serverResponse, out var percentComplete);
+                    mRetData, out _, out var percentComplete);
 
                 ingestStepsCompleted = statusChecker.IngestStepCompletionCount(percentComplete);
 
