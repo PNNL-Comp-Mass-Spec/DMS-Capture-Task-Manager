@@ -649,7 +649,7 @@ namespace DatasetIntegrityPlugin
         /// <param name="folderList">List of folders; must contain exactly 2 entries</param>
         /// <param name="bDeleteIfSuperseded"></param>
         /// <returns>True if this is a superseded folder and it is safe to delete</returns>
-        private bool DetectSupersededFolder(List<DirectoryInfo> folderList, bool bDeleteIfSuperseded)
+        private bool DetectSupersededFolder(IReadOnlyList<DirectoryInfo> folderList, bool bDeleteIfSuperseded)
         {
             string msg;
 
@@ -735,7 +735,6 @@ namespace DatasetIntegrityPlugin
                 LogError(msg);
                 return false;
             }
-
 
         }
 
@@ -879,7 +878,7 @@ namespace DatasetIntegrityPlugin
         /// <param name="folderList"></param>
         /// <param name="folderDescription"></param>
         /// <returns>True if success; false if a problem</returns>
-        private bool PossiblyRenameSupersededFolder(List<DirectoryInfo> folderList, string folderDescription)
+        private bool PossiblyRenameSupersededFolder(IReadOnlyList<DirectoryInfo> folderList, string folderDescription)
         {
             var bInvalid = true;
 
@@ -908,8 +907,7 @@ namespace DatasetIntegrityPlugin
             return true;
         }
 
-
-        private bool PositiveNegativeMethodFolders(List<DirectoryInfo> lstMethodFolders)
+        private bool PositiveNegativeMethodFolders(IReadOnlyList<DirectoryInfo> lstMethodFolders)
         {
             if (lstMethodFolders.Count != 2)
             {
