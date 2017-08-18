@@ -1,6 +1,6 @@
 ﻿
 //*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 11/17/2009
@@ -147,10 +147,11 @@ namespace SrcFileRenamePlugin
                 {
                     var candidateFolderPath = Path.Combine(sourceFolderPath, captureSubfolder);
 
-                    if (Directory.Exists(candidateFolderPath))
+                    if (!Directory.Exists(candidateFolderPath))
                     {
-                        OnWarningEvent("Dataset captureSubfolder ends with the dataset name. Gracefully ignoring because this appears to be a data entry error: " +
-                           datasetName);
+                        // Dataset Capture_Subfolder ends with the dataset name. Gracefully ignoring because this appears to be a data entry error; folder not found:
+                        OnWarningEvent("Dataset Capture_Subfolder ends with the dataset name. Gracefully ignoring " +
+                                       "because this appears to be a data entry error; folder not found: " + candidateFolderPath);
                         sourceFolderPath = candidateFolderPath.Substring(0, candidateFolderPath.Length - datasetName.Length - 1);
                     }
                     else
@@ -163,7 +164,7 @@ namespace SrcFileRenamePlugin
                 {
                     sourceFolderPath = Path.Combine(sourceFolderPath, captureSubfolder);
                 }
-                                
+
             }
 
             var diSourceFolder = new DirectoryInfo(sourceFolderPath);

@@ -1340,11 +1340,12 @@ namespace CaptureToolPlugin
                 {
                     var candidateFolderPath = Path.Combine(sourceFolderPath, captureSubfolder);
 
-                    if (Directory.Exists(candidateFolderPath))
+                    if (!Directory.Exists(candidateFolderPath))
                     {
-                        LogWarning("Dataset captureSubfolder ends with the dataset name. Gracefully ignoring " +
-                                   "because this appears to be a data entry error: " + datasetName, true);
                         // Leave sourceFolderPath unchanged
+                        // Dataset Capture_Subfolder ends with the dataset name. Gracefully ignoring because this appears to be a data entry error; folder not found:
+                        LogWarning("Dataset Capture_Subfolder ends with the dataset name. Gracefully ignoring " +
+                                   "because this appears to be a data entry error; folder not found: " + candidateFolderPath, true);
                     }
                     else
                     {
