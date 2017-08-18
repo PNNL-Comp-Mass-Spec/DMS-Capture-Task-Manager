@@ -63,7 +63,6 @@ namespace DatasetIntegrityPlugin
 
         private clsToolReturnData mRetData = new clsToolReturnData();
         private DateTime mAgilentToUIMFStartTime;
-        private DateTime mAgilentToCDFStartTime;
         private DateTime mLastStatusUpdate;
 
         #endregion
@@ -313,7 +312,6 @@ namespace DatasetIntegrityPlugin
                 var consoleOutputFilePath = Path.Combine(m_WorkDir, "OpenChrom_ConsoleOutput_" + mgrName + ".txt");
 
                 var cmdRunner = new clsRunDosProgram(m_WorkDir);
-                mAgilentToCDFStartTime = DateTime.UtcNow;
                 mLastStatusUpdate = DateTime.UtcNow;
 
                 // This will also call RegisterEvents
@@ -365,7 +363,7 @@ namespace DatasetIntegrityPlugin
                 Thread.Sleep(100);
 
                 // Copy the .CDF file to the dataset folder
-                success = CopyCDFToDatasetFolder(fileTools, mgrName, datasetFolderPath);
+                success = CopyCDFToDatasetFolder(fileTools, datasetFolderPath);
                 if (!success)
                 {
                     return false;
@@ -463,7 +461,7 @@ namespace DatasetIntegrityPlugin
                 Thread.Sleep(100);
 
                 // Copy the .UIMF file to the dataset folder
-                success = CopyUIMFToDatasetFolder(fileTools, mgrName, datasetFolderPath);
+                success = CopyUIMFToDatasetFolder(fileTools, datasetFolderPath);
                 if (!success)
                 {
                     return false;
@@ -537,7 +535,7 @@ namespace DatasetIntegrityPlugin
             return true;
         }
 
-        private bool CopyCDFToDatasetFolder(clsFileTools fileTools, string mgrName, string datasetFolderPath)
+        private bool CopyCDFToDatasetFolder(clsFileTools fileTools, string datasetFolderPath)
         {
             var fiCDF = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + ".cdf"));
 
@@ -548,12 +546,11 @@ namespace DatasetIntegrityPlugin
                 return false;
             }
 
-            var success = CopyFileToDatasetFolder(fileTools, mgrName, fiCDF, datasetFolderPath);
+            var success = CopyFileToDatasetFolder(fileTools, fiCDF, datasetFolderPath);
             return success;
         }
 
-
-        private bool CopyUIMFToDatasetFolder(clsFileTools fileTools, string mgrName, string datasetFolderPath)
+        private bool CopyUIMFToDatasetFolder(clsFileTools fileTools, string datasetFolderPath)
         {
 
             var fiUIMF = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION));
@@ -565,11 +562,11 @@ namespace DatasetIntegrityPlugin
                 return false;
             }
 
-            var success = CopyFileToDatasetFolder(fileTools, mgrName, fiUIMF, datasetFolderPath);
+            var success = CopyFileToDatasetFolder(fileTools, fiUIMF, datasetFolderPath);
             return success;
         }
 
-        private bool CopyFileToDatasetFolder(clsFileTools fileTools, string mgrName, FileSystemInfo dataFile, string datasetFolderPath)
+        private bool CopyFileToDatasetFolder(clsFileTools fileTools, FileSystemInfo dataFile, string datasetFolderPath)
         {
             if (m_DebugLevel >= 4)
             {

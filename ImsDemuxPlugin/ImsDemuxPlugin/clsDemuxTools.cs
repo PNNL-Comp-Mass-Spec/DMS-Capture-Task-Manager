@@ -240,7 +240,6 @@ namespace ImsDemuxPlugin
         }
 
         private clsToolReturnData CopyUIMFToWorkDir(
-            ITaskParams taskParams,
             string uimfFileName,
             clsToolReturnData retData,
             out string uimfRemoteFileNamePath,

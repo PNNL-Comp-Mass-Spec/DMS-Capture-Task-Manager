@@ -155,23 +155,7 @@ namespace DatasetArchivePlugin
 
         }
 
-        /// <summary>
-        /// Write an error message to the log
-        /// If msg is blank, then logs the current task description followed by "empty error message"
-        /// </summary>
-        /// <param name="msg">Error message</param>
-        /// <param name="currentTask">Current task</param>
-        private void LogErrorMessage(string msg, string currentTask)
-        {
-            if (string.IsNullOrWhiteSpace(msg))
-                msg = currentTask + ": empty error message";
-
-            OnErrorEvent(msg);
-
-        }
-
         #endregion
-
 
     }
 }
