@@ -451,11 +451,8 @@ namespace CaptureToolPlugin
             ref clsToolReturnData retData)
         {
             var switchResult = false;
-            int fileCount;
-            int instrumentDataFolderCount;
-            int nonInstrumentDataFolderCount;
 
-            switch (IsDSFolderEmpty(dsFolder, out fileCount, out instrumentDataFolderCount, out nonInstrumentDataFolderCount))
+            switch (IsDSFolderEmpty(dsFolder, out var fileCount, out var instrumentDataFolderCount, out var nonInstrumentDataFolderCount))
             {
                 case DatasetFolderState.Empty:
                     // Directory is empty; all is good
@@ -1293,10 +1290,7 @@ namespace CaptureToolPlugin
             {
                 LogDebug("Bionet connection required for " + sourceVol);
 
-                EnumCloseOutType eCloseoutType;
-                EnumEvalCode eEvalCode;
-
-                if (!ConnectToShare(m_UserName, pwd, sourceFolderPath, eConnectionType, out eCloseoutType, out eEvalCode))
+                if (!ConnectToShare(m_UserName, pwd, sourceFolderPath, eConnectionType, out var eCloseoutType, out var eEvalCode))
                 {
                     retData.CloseoutType = eCloseoutType;
                     retData.EvalCode = eEvalCode;
@@ -1631,9 +1625,8 @@ namespace CaptureToolPlugin
                     if (copyWithResume)
                     {
                         var fiSourceFile = new FileInfo(sourceFilePath);
-                        bool bResumed;
 
-                        bSuccess = m_FileTools.CopyFileWithResume(fiSourceFile, targetFilePath, out bResumed);
+                        bSuccess = m_FileTools.CopyFileWithResume(fiSourceFile, targetFilePath, out var bResumed);
                     }
                     else
                     {
@@ -2712,14 +2705,10 @@ namespace CaptureToolPlugin
                     // Clear any previous errors
                     m_ErrorMessage = string.Empty;
 
-                    int iFileCountSkipped;
-                    int iFileCountResumed;
-                    int iFileCountNewlyCopied;
-
                     bSuccess = m_FileTools.CopyDirectoryWithResume(
                         sSourceFolderPath, sTargetFolderPath,
                         bRecurse, eFileOverwriteMode, filesToSkip.ToList(),
-                        out iFileCountSkipped, out iFileCountResumed, out iFileCountNewlyCopied);
+                        out var iFileCountSkipped, out var iFileCountResumed, out var iFileCountNewlyCopied);
                     bDoCopy = false;
 
                     if (bSuccess)

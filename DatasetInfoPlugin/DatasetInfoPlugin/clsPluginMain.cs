@@ -182,7 +182,6 @@ namespace DatasetInfoPlugin
             sourceFolder = Path.Combine(sourceFolder, m_TaskParams.GetParam("Storage_Path"));
             sourceFolder = Path.Combine(sourceFolder, m_TaskParams.GetParam("Folder"));
             var outputPathBase = Path.Combine(sourceFolder, "QC");
-            bool bSkipPlots;
 
             // Set up the params for the MS file scanner
             m_MsFileScanner.DSInfoDBPostingEnabled = false;
@@ -200,10 +199,7 @@ namespace DatasetInfoPlugin
             m_MsFileScanner.CheckCentroidingStatus = true;
 
             // Get the input file name
-            clsInstrumentClassInfo.eRawDataType rawDataType;
-            clsInstrumentClassInfo.eInstrumentClass instrumentClass;
-            bool bBrukerDotDBaf;
-            var sFileOrFolderNames = GetDataFileOrFolderName(sourceFolder, out bSkipPlots, out rawDataType, out instrumentClass, out bBrukerDotDBaf);
+            var sFileOrFolderNames = GetDataFileOrFolderName(sourceFolder, out var bSkipPlots, out var rawDataType, out var instrumentClass, out var bBrukerDotDBaf);
 
             if (sFileOrFolderNames.Count > 0 && sFileOrFolderNames.First() == UNKNOWN_FILE_TYPE)
             {
@@ -737,8 +733,7 @@ namespace DatasetInfoPlugin
             // Look for a .mcf file in each of the .D folders
             foreach (var dotDFolder in diDotDFolders)
             {
-                string dotDFolderName;
-                var mcfFileExists = LookForMcfFileInDotDFolder(dotDFolder, out dotDFolderName);
+                var mcfFileExists = LookForMcfFileInDotDFolder(dotDFolder, out var dotDFolderName);
                 if (mcfFileExists && !fileOrFolderNames.Contains(dotDFolderName))
                 {
                     fileOrFolderNames.Add(dotDFolderName);
@@ -995,8 +990,7 @@ namespace DatasetInfoPlugin
             if (primaryDotDFolder.Exists)
             {
                 // Look for a .mcf file in the .D folder
-                string dotDFolderName;
-                var mcfFileExists = LookForMcfFileInDotDFolder(primaryDotDFolder, out dotDFolderName);
+                var mcfFileExists = LookForMcfFileInDotDFolder(primaryDotDFolder, out var dotDFolderName);
                 if (mcfFileExists)
                 {
                     fileOrFolderNames.Add(dotDFolderName);

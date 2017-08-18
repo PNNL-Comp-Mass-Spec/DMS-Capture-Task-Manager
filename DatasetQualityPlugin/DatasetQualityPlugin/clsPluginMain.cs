@@ -968,9 +968,8 @@ namespace DatasetQualityPlugin
                 else
                 {
                     // Convert the results to XML format
-                    string sXMLResults;
 
-                    blnSuccess = ConvertResultsToXML(lstResults, out sXMLResults);
+                    blnSuccess = ConvertResultsToXML(lstResults, out var sXMLResults);
 
                     if (blnSuccess)
                     {

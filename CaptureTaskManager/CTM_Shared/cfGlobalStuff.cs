@@ -101,8 +101,7 @@ namespace CaptureTaskManager
             if (string.IsNullOrEmpty(value))
                 return defaultValue;
 
-            bool blnValue;
-            if (bool.TryParse(value, out blnValue))
+            if (bool.TryParse(value, out var blnValue))
                 return blnValue;
 
             return defaultValue;
@@ -119,8 +118,7 @@ namespace CaptureTaskManager
             if (string.IsNullOrEmpty(value))
                 return defaultValue;
 
-            int intValue;
-            if (int.TryParse(value, out intValue))
+            if (int.TryParse(value, out var intValue))
                 return intValue;
 
             return defaultValue;
@@ -410,7 +408,6 @@ namespace CaptureTaskManager
         {
             LogError(errorMessage, ex);
         }
-
 
         /// <summary>
         /// Show a status message at the console and optionally include in the log file

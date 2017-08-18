@@ -66,8 +66,7 @@ namespace SrcFileRenamePlugin
                 msg = "clsPluginMain.RunTool(): Starting rename operation";
                 LogDebug(msg);
 
-                string errorMessage;
-                retData.CloseoutType = renameOpTool.DoOperation(m_TaskParams, out errorMessage);
+                retData.CloseoutType = renameOpTool.DoOperation(m_TaskParams, out var errorMessage);
 
                 if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
                     retData.CloseoutMsg = errorMessage;

@@ -147,11 +147,9 @@ namespace ImsDemuxPlugin
                 clsToolRunnerBase.CleanWorkDir(mWorkDir);
 
                 // Copy the UIMF file from the storage server to the working directory
-                string uimfRemoteFileNamePath;
-                string uimfLocalFileNamePath;
                 var uimfFileName = mDataset + ".uimf";
 
-                retData = CopyUIMFToWorkDir(taskParams, uimfFileName, retData, out uimfRemoteFileNamePath, out uimfLocalFileNamePath);
+                retData = CopyUIMFToWorkDir(uimfFileName, retData, out var uimfRemoteFileNamePath, out var uimfLocalFileNamePath);
                 if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
                     return retData;
 
@@ -437,8 +435,7 @@ namespace ImsDemuxPlugin
 
             try
             {
-                string errorMessage;
-                if (!CalibrateFile(sUimfPath, mDataset, out errorMessage))
+                if (!CalibrateFile(sUimfPath, mDataset, out var errorMessage))
                 {
                     if (string.IsNullOrEmpty(errorMessage))
                         errorMessage = "Error calibrating UIMF file";
@@ -620,10 +617,8 @@ namespace ImsDemuxPlugin
             clsToolRunnerBase.CleanWorkDir(mWorkDir);
 
             // Copy the UIMF file from the storage server to the working directory
-            string uimfRemoteEncodedFileNamePath;
-            string uimfLocalEncodedFileNamePath;
 
-            retData = CopyUIMFToWorkDir(taskParams, uimfFileName, retData, out uimfRemoteEncodedFileNamePath, out uimfLocalEncodedFileNamePath);
+            retData = CopyUIMFToWorkDir(uimfFileName, retData, out var uimfRemoteEncodedFileNamePath, out var uimfLocalEncodedFileNamePath);
             if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
                 return retData;
 
@@ -664,8 +659,7 @@ namespace ImsDemuxPlugin
 
             try
             {
-                string errorMessage;
-                if (!DemultiplexFile(uimfLocalEncodedFileNamePath, mDataset, demuxOptions, out resumeStartFrame, out errorMessage))
+                if (!DemultiplexFile(uimfLocalEncodedFileNamePath, mDataset, demuxOptions, out resumeStartFrame, out var errorMessage))
                 {
                     if (string.IsNullOrEmpty(errorMessage))
                         errorMessage = "Error demultiplexing UIMF file";
@@ -1050,8 +1044,7 @@ namespace ImsDemuxPlugin
                     }
                     else
                     {
-                        string sLogEntryAccessorMsg;
-                        var iMaxDemultiplexedFrameNum = oUIMFLogEntryAccessor.GetMaxDemultiplexedFrame(sTempUIMFFilePath, out sLogEntryAccessorMsg);
+                        var iMaxDemultiplexedFrameNum = oUIMFLogEntryAccessor.GetMaxDemultiplexedFrame(sTempUIMFFilePath, out var sLogEntryAccessorMsg);
                         if (iMaxDemultiplexedFrameNum > 0)
                         {
                             resumeStartFrame = iMaxDemultiplexedFrameNum + 1;
@@ -1199,8 +1192,7 @@ namespace ImsDemuxPlugin
 
                             if (oMatch.Success)
                             {
-                                short percentComplete;
-                                if (short.TryParse(oMatch.Groups[1].Value, out percentComplete))
+                                if (short.TryParse(oMatch.Groups[1].Value, out var percentComplete))
                                 {
                                     mDemuxProgressPercentComplete = percentComplete;
                                 }
@@ -1459,9 +1451,8 @@ namespace ImsDemuxPlugin
 
             // Make sure the Log_Entries table contains entry "Finished demultiplexing" (with today's date)
             var oUIMFLogEntryAccessor = new UIMFDemultiplexer.clsUIMFLogEntryAccessor();
-            string sLogEntryAccessorMsg;
 
-            var dtDemultiplexingFinished = oUIMFLogEntryAccessor.GetDemultiplexingFinishDate(localUimfDecodedFilePath, out sLogEntryAccessorMsg);
+            var dtDemultiplexingFinished = oUIMFLogEntryAccessor.GetDemultiplexingFinishDate(localUimfDecodedFilePath, out var sLogEntryAccessorMsg);
 
             if (dtDemultiplexingFinished == DateTime.MinValue)
             {
@@ -1509,9 +1500,8 @@ namespace ImsDemuxPlugin
 
             // Make sure the Log_Entries table contains entry "Applied calibration coefficients to all frames" (with today's date)
             var oUIMFLogEntryAccessor = new UIMFDemultiplexer.clsUIMFLogEntryAccessor();
-            string sLogEntryAccessorMsg;
 
-            var dtCalibrationApplied = oUIMFLogEntryAccessor.GetCalibrationFinishDate(localUimfDecodedFilePath, out sLogEntryAccessorMsg);
+            var dtCalibrationApplied = oUIMFLogEntryAccessor.GetCalibrationFinishDate(localUimfDecodedFilePath, out var sLogEntryAccessorMsg);
 
             if (dtCalibrationApplied == DateTime.MinValue)
             {

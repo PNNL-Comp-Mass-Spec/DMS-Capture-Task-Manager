@@ -112,7 +112,7 @@ namespace DatasetInfoPlugin
         }
 
         /// <summary>
-        /// Merge the dataset info defined in cachedDatasetInfoXml 
+        /// Merge the dataset info defined in cachedDatasetInfoXml
         /// </summary>
         /// <param name="datasetName">Dataset Name overrride</param>
         /// <param name="cachedDatasetInfoXml">List of cached DatasetInfo XML</param>
@@ -216,8 +216,7 @@ namespace DatasetInfoPlugin
                         scanTypeScanCount = 0;
                     }
 
-                    int scanCountTotal;
-                    if (!scanTypes.TryGetValue(scanTypeKey, out scanCountTotal))
+                    if (!scanTypes.TryGetValue(scanTypeKey, out var scanCountTotal))
                     {
                         scanTypes.Add(scanTypeKey, scanTypeScanCount);
                     }
@@ -248,10 +247,8 @@ namespace DatasetInfoPlugin
             var endTimeText = GetXmlValue(xmlDoc, "DatasetInfo/AcquisitionInfo/EndTime", "");
 
             var startTimeValid = false;
-            DateTime startTime;
-            DateTime endTime;
 
-            if (DateTime.TryParse(startTimeText, out startTime))
+            if (DateTime.TryParse(startTimeText, out var startTime))
             {
                 startTimeValid = true;
                 if (acqInfo.StartTime == DateTime.MinValue)
@@ -260,7 +257,7 @@ namespace DatasetInfoPlugin
                     acqInfo.StartTime = startTime;
             }
 
-            if (DateTime.TryParse(endTimeText, out endTime))
+            if (DateTime.TryParse(endTimeText, out var endTime))
             {
                 if (acqInfo.EndTime == DateTime.MinValue)
                     acqInfo.EndTime = endTime;
@@ -393,7 +390,6 @@ namespace DatasetInfoPlugin
                 }
             }
 
-
             objDSInfo.WriteEndElement();            // AcquisitionInfo EndElement
 
             objDSInfo.WriteStartElement("TICInfo");
@@ -461,8 +457,7 @@ namespace DatasetInfoPlugin
         {
             var match = GetXmlValue(xmlDoc, xPath, defaultValue.ToString());
 
-            int value;
-            if (int.TryParse(match, out value))
+            if (int.TryParse(match, out var value))
                 return value;
 
             return defaultValue;
@@ -472,8 +467,7 @@ namespace DatasetInfoPlugin
         {
             var match = GetXmlValue(xmlDoc, xPath, defaultValue.ToString(CultureInfo.InvariantCulture));
 
-            long value;
-            if (long.TryParse(match, out value))
+            if (long.TryParse(match, out var value))
                 return value;
 
             return defaultValue;
@@ -483,8 +477,7 @@ namespace DatasetInfoPlugin
         {
             var match = GetXmlValue(xmlDoc, xPath, defaultValue.ToString(CultureInfo.InvariantCulture));
 
-            double value;
-            if (double.TryParse(match, out value))
+            if (double.TryParse(match, out var value))
                 return value;
 
             return defaultValue;

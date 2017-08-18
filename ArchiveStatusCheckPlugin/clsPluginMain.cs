@@ -61,7 +61,6 @@ namespace ArchiveStatusCheckPlugin
                 LogError(msg, ex);
             }
 
-
             if (success)
             {
                 // Everything was good
@@ -168,8 +167,7 @@ namespace ArchiveStatusCheckPlugin
                 var statusNumsToUpdate = new List<int>();
                 foreach (var statusNum in dctUnverifiedURIs.Keys)
                 {
-                    clsIngestStatusInfo statusInfo;
-                    if (dctStatusData.TryGetValue(statusNum, out statusInfo))
+                    if (dctStatusData.TryGetValue(statusNum, out var statusInfo))
                     {
                         if (statusInfo.IngestStepsCompletedNew > statusInfo.IngestStepsCompletedOld)
                             statusNumsToUpdate.Add(statusNum);
@@ -571,7 +569,6 @@ namespace ArchiveStatusCheckPlugin
 
                 spCmd.Parameters.Add("@DatasetID", SqlDbType.Int).Value = m_DatasetID;
 
-
                 spCmd.Parameters.Add("@statusNumList", SqlDbType.VarChar, 1024).Value = statusNums;
 
                 spCmd.Parameters.Add("@ingestStepsCompleted", SqlDbType.TinyInt).Value = ingestStepsCompleted;
@@ -649,7 +646,6 @@ namespace ArchiveStatusCheckPlugin
         }
 
         #endregion
-
 
     }
 

@@ -284,8 +284,6 @@ namespace DatasetArchivePlugin
                 // Cache the operator name; used in the exception handler below
                 operatorUsername = m_TaskParams.GetParam("Operator_PRN", "Unknown_Operator");
 
-                string statusURL;
-
                 config.UseTestInstance = useTestInstance;
 
                 if (useTestInstance)
@@ -297,7 +295,7 @@ namespace DatasetArchivePlugin
                 }
 
                 // Start the upload
-                var success = myEMSLUL.SetupMetadataAndUpload(config, debugMode, out statusURL);
+                var success = myEMSLUL.SetupMetadataAndUpload(config, debugMode, out var statusURL);
 
                 criticalErrorMessage = myEMSLUL.CriticalErrorMessage;
 
@@ -573,6 +571,5 @@ namespace DatasetArchivePlugin
         #endregion
 
     }
-
 
 }

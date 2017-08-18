@@ -1939,8 +1939,7 @@ namespace DatasetIntegrityPlugin
             }
 
             // Verify the integrity of the .gz file
-            string errorMessage;
-            var validGzFile = TestGzipFile(dataFileNamePath, out errorMessage);
+            var validGzFile = TestGzipFile(dataFileNamePath, out var errorMessage);
 
             if (!validGzFile)
             {

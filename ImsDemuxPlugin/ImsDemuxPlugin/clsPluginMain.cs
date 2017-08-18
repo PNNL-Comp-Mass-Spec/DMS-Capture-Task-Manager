@@ -92,7 +92,6 @@ namespace ImsDemuxPlugin
             //   exec dbo.UpdateParametersForJob 356778
             //   exec dbo.GetJobStepParamsAsTable 356778, 3
 
-
             CalibrationMode calibrationMode;
             double calibrationSlope = 0;
             double calibrationIntercept = 0;
@@ -197,9 +196,7 @@ namespace ImsDemuxPlugin
             var oSQLiteTools = new clsSQLiteTools();
             RegisterEvents(oSQLiteTools);
 
-            byte numBitsForEncoding;
-
-            var queryResult = oSQLiteTools.GetUimfMuxStatus(uimfFilePath, out numBitsForEncoding);
+            var queryResult = oSQLiteTools.GetUimfMuxStatus(uimfFilePath, out var numBitsForEncoding);
             if (queryResult == clsSQLiteTools.UimfQueryResults.NonMultiplexed)
             {
                 // De-multiplexing not required, but we should still attempt calibration (if enabled)
@@ -375,7 +372,6 @@ namespace ImsDemuxPlugin
             var oReader = new UIMFLibrary.DataReader(decodedUimfFilePath);
             var manuallyCalibrated = false;
 
-
             if (oReader.TableExists("Log_Entries"))
             {
                 // Note: providing true for parseViaFramework as a workaround for reading SqLite files located on a remote UNC share or in readonly folders
@@ -549,7 +545,6 @@ namespace ImsDemuxPlugin
             UpdateMgrSettings();
         }
 
-
         /// <summary>
         /// Reports progress for the addition of bin-centric tables
         /// </summary>
@@ -571,7 +566,6 @@ namespace ImsDemuxPlugin
             // Update the manager settings every MANAGER_UPDATE_INTERVAL_MINUTESS
             UpdateMgrSettings();
         }
-
 
         #endregion
     }
