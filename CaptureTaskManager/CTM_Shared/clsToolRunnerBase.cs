@@ -872,7 +872,7 @@ namespace CaptureTaskManager
 
             return false;
         }
-     
+
         /// <summary>
         /// Updates the value for Ingest_Steps_Completed in table T_MyEMSL_Uploads for the given upload task
         /// </summary>

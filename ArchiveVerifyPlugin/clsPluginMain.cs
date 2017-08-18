@@ -83,7 +83,7 @@ namespace ArchiveVerifyPlugin
             if (success)
             {
 
-                // Confirm that the files are visible in the metadata serach results (using metadataObject.GetDatasetFilesInMyEMSL)
+                // Confirm that the files are visible in the metadata search results (using metadataObject.GetDatasetFilesInMyEMSL)
                 // If data is found, CreateOrUpdateHashResultsFile will also be called
                 success = VisibleInMetadata(out var metadataFilePath, out var transactionID);
 
