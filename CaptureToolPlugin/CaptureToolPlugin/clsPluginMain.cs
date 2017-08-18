@@ -1,5 +1,5 @@
 ﻿//*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/25/2009
@@ -17,8 +17,6 @@ namespace CaptureToolPlugin
         //*********************************************************************************************************
         // Main class for plugin
         //**********************************************************************************************************
-
-        private bool m_TraceMode;
 
         #region "Methods"
         /// <summary>
@@ -121,8 +119,6 @@ namespace CaptureToolPlugin
 
             base.Setup(mgrParams, taskParams, statusTools);
 
-            m_TraceMode = mgrParams.GetParam("TraceMode", false);
-
             LogDebug("Completed clsPluginMain.Setup()");
         }
 
@@ -137,7 +133,7 @@ namespace CaptureToolPlugin
 
             var strToolVersionInfo = string.Empty;
             var appFolder = clsUtilities.GetAppFolderPath();
-            
+
             if (string.IsNullOrWhiteSpace(appFolder))
             {
                 LogError("GetAppFolderPath returned an empty directory path to StoreToolVersionInfo for the Capture plugin");
