@@ -196,7 +196,7 @@ namespace CaptureToolPlugin
 
                 var updatedFileName = AutoFixFilename(datasetName, datasetFile.Name, m_FilenameAutoFixes);
 
-                if (string.Equals(datasetFile.Name, updatedFileName, StringComparison.InvariantCultureIgnoreCase))
+                if (string.Equals(datasetFile.Name, updatedFileName, StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
@@ -236,7 +236,7 @@ namespace CaptureToolPlugin
 
             }
 
-            if (string.Equals(Path.GetFileNameWithoutExtension(updatedFileName), datasetName, StringComparison.InvariantCultureIgnoreCase))
+            if (string.Equals(Path.GetFileNameWithoutExtension(updatedFileName), datasetName, StringComparison.OrdinalIgnoreCase))
             {
                 return updatedFileName;
             }
@@ -1329,8 +1329,8 @@ namespace CaptureToolPlugin
             if (!string.IsNullOrWhiteSpace(captureSubfolder))
             {
                 // However, if the subfolder name matches the dataset name, this was probably an error on the operator's part and we likely do not want to use the subfolder name
-                if (captureSubfolder.EndsWith(Path.DirectorySeparatorChar + sSourceFolderName, StringComparison.InvariantCultureIgnoreCase) ||
-                    captureSubfolder.Equals(sSourceFolderName, StringComparison.InvariantCultureIgnoreCase))
+                if (captureSubfolder.EndsWith(Path.DirectorySeparatorChar + sSourceFolderName, StringComparison.OrdinalIgnoreCase) ||
+                    captureSubfolder.Equals(sSourceFolderName, StringComparison.OrdinalIgnoreCase))
                 {
                     var candidateFolderPath = Path.Combine(sourceFolderPath, captureSubfolder);
 
@@ -1617,7 +1617,7 @@ namespace CaptureToolPlugin
                     var targetFileName = AutoFixFilename(datasetName, fileName, m_FilenameAutoFixes);
                     var targetFilePath = Path.Combine(datasetFolderPath, targetFileName);
 
-                    if (!string.Equals(sourceFileName, targetFileName, StringComparison.InvariantCultureIgnoreCase))
+                    if (!string.Equals(sourceFileName, targetFileName, StringComparison.OrdinalIgnoreCase))
                     {
                         LogMessage("Renaming '" + sourceFileName + "' to '" + targetFileName + "' to remove spaces");
                     }
@@ -1913,7 +1913,7 @@ namespace CaptureToolPlugin
                     {"*.mcf_idx-journal", "journal file"}
                 };
 
-                if (string.Equals(instName, "12T_FTICR_B", StringComparison.InvariantCultureIgnoreCase))
+                if (string.Equals(instName, "12T_FTICR_B", StringComparison.OrdinalIgnoreCase))
                 {
                     // Add various mcf and mcf_idx files
                     // Specifically list those that have _1 or _2 etc. because we _do_ want to copy Storage.mcf_idx files
@@ -3241,10 +3241,10 @@ namespace CaptureToolPlugin
 
                                 foreach (var file in foundFiles)
                                 {
-                                    if (string.Equals(Path.GetExtension(file.Name), ".raw", StringComparison.InvariantCultureIgnoreCase))
+                                    if (string.Equals(Path.GetExtension(file.Name), ".raw", StringComparison.OrdinalIgnoreCase))
                                         rawFound = true;
 
-                                    if (string.Equals(Path.GetExtension(file.Name), ".tsv", StringComparison.InvariantCultureIgnoreCase))
+                                    if (string.Equals(Path.GetExtension(file.Name), ".tsv", StringComparison.OrdinalIgnoreCase))
                                         tsvFound = true;
                                 }
 

@@ -143,7 +143,7 @@ namespace SrcFileRenamePlugin
             {
 
                 // However, if the subfolder name matches the dataset name, this was probably an error on the operator's part and we likely do not want to use the subfolder name
-                if (captureSubfolder.EndsWith(Path.DirectorySeparatorChar + datasetName, StringComparison.InvariantCultureIgnoreCase))
+                if (captureSubfolder.EndsWith(Path.DirectorySeparatorChar + datasetName, StringComparison.OrdinalIgnoreCase))
                 {
                     var candidateFolderPath = Path.Combine(sourceFolderPath, captureSubfolder);
 
@@ -425,7 +425,6 @@ namespace SrcFileRenamePlugin
             }
             return retStr;
         }
-
 
         /// <summary>
         /// Disconnects a Bionet shared drive

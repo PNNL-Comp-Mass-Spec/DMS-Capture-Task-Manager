@@ -176,8 +176,8 @@ namespace DatasetQualityPlugin
 
             // Lumos datasets will fail with Quameter if they have unsupported scan types
             // 21T datasets will fail with Quameter if they only have one scan
-            var ignoreQuameterFailure = instrumentName.StartsWith("Lumos", StringComparison.InvariantCultureIgnoreCase) ||
-                                        instrumentName.StartsWith("21T", StringComparison.InvariantCultureIgnoreCase);
+            var ignoreQuameterFailure = instrumentName.StartsWith("Lumos", StringComparison.OrdinalIgnoreCase) ||
+                                        instrumentName.StartsWith("21T", StringComparison.OrdinalIgnoreCase);
 
             var quameterExePath = GetQuameterPath();
             var fiQuameter = new FileInfo(quameterExePath);

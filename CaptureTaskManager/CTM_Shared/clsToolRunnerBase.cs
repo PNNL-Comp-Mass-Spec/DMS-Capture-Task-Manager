@@ -362,7 +362,7 @@ namespace CaptureTaskManager
 
             if (serverResponse.TryGetValue("state", out var ingestState))
             {
-                if (string.Equals((string)ingestState, "failed", StringComparison.InvariantCultureIgnoreCase) ||
+                if (string.Equals((string)ingestState, "failed", StringComparison.OrdinalIgnoreCase) ||
                     !string.IsNullOrWhiteSpace(errorMessage))
                 {
                     // Error should have already been logged during the call to GetIngestStatus

@@ -166,7 +166,7 @@ namespace DatasetIntegrityPlugin
 
                 case clsInstrumentClassInfo.eInstrumentClass.LTQ_FT:
                     dataFileNamePath = Path.Combine(datasetFolder, m_Dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
-                    if (instrumentName.StartsWith("21T", StringComparison.InvariantCultureIgnoreCase))
+                    if (instrumentName.StartsWith("21T", StringComparison.OrdinalIgnoreCase))
                         mRetData.CloseoutType = Test21TRawFile(dataFileNamePath);
                     else
                         mRetData.CloseoutType = TestLTQFTFile(dataFileNamePath);
@@ -1637,7 +1637,7 @@ namespace DatasetIntegrityPlugin
             {
                 // Verify size of the largest .mcf file
                 float minSizeKB;
-                if (String.Equals(mctFileName, "Storage.mcf_idx", StringComparison.InvariantCultureIgnoreCase))
+                if (String.Equals(mctFileName, "Storage.mcf_idx", StringComparison.OrdinalIgnoreCase))
                     minSizeKB = 4;
                 else
                     minSizeKB = MCF_FILE_MIN_SIZE_KB;

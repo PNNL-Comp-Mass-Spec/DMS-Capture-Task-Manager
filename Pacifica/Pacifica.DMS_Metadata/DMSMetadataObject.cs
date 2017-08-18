@@ -947,7 +947,7 @@ namespace Pacifica.DMS_Metadata
 
                     if (FileHashExists(fileVersions, fileHash))
                     {
-                        if (string.Equals(fileHash, "none", StringComparison.InvariantCultureIgnoreCase))
+                        if (string.Equals(fileHash, "none", StringComparison.OrdinalIgnoreCase))
                         {
                             // Do not log a warning; just silently ignore it
                             // Example of a dataset with hash values of "None" is test dataset SWT_LCQData_300

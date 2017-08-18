@@ -166,7 +166,7 @@ namespace Pacifica.Core
                     {
                         OnErrorEvent(string.Format("{0}; exception \"{1}\"; see {2}", errorMessage, exception, statusURI));
 
-                        if (exception.IndexOf("ConnectionTimeout", StringComparison.InvariantCultureIgnoreCase) >= 0)
+                        if (exception.IndexOf("ConnectionTimeout", StringComparison.OrdinalIgnoreCase) >= 0)
                         {
                             errorMessage += "; ConnectionTimeout exception";
                         }
