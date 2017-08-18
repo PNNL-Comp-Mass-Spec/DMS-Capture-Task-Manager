@@ -862,8 +862,9 @@ namespace CaptureToolPlugin
                         {
                             datasetInfo.DatasetType = RawDSTypes.MultiFile;
                             var fileNames = foundFiles.Select(file => file.Name).ToList();
-                            LogWarning("Dataset name matched multiple files in folder " + diSourceDir.FullName + ": " +
-                                       string.Join(", ", fileNames.Take(5)));
+                            LogWarning(
+                                "Dataset name matched multiple files in folder " + diSourceDir.FullName + ": " +
+                                string.Join(", ", fileNames.Take(5)));
                         }
 
                         return datasetInfo;
@@ -1343,8 +1344,17 @@ namespace CaptureToolPlugin
                     }
                     else
                     {
-                        LogMessage("Appending captureSubFolder to sourceFolderPath: " + sourceFolderPath + Path.DirectorySeparatorChar + captureSubfolder);
-                        sourceFolderPath = candidateFolderPath;
+                        if (captureSubfolder.Equals(sSourceFolderName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            LogWarning(string.Format(
+                                "Dataset Capture_Subfolder is the dataset name; leaving the capture path as {0} " +
+                                "so that the entire dataset folder will be copied", sourceFolderPath));
+                        }
+                        else
+                        {
+                            LogMessage("Appending captureSubFolder to sourceFolderPath, giving: " + candidateFolderPath);
+                            sourceFolderPath = candidateFolderPath;
+                        }
                     }
 
                 }
