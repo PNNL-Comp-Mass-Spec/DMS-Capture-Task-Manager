@@ -352,7 +352,6 @@ namespace Pacifica.Core
             return lstItems;
         }
 
-
         public static string GetMetadataFilenameForJob(string jobNumber)
         {
             if (string.IsNullOrWhiteSpace(jobNumber))

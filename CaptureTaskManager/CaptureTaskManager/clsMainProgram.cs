@@ -656,7 +656,6 @@ namespace CaptureTaskManager
                         break;
                     }
 
-
                     // Delete temp files between 1:00 am and 1:30 am, or after every 50 tasks
                     if (taskCount == 1 && DateTime.Now.Hour == 1 && DateTime.Now.Minute < 30 || taskCount % 50 == 0)
                     {
@@ -737,7 +736,6 @@ namespace CaptureTaskManager
             return restartOK;
         }
 
-
         private void PerformTask(out EnumCloseOutType eTaskCloseout)
         {
             eTaskCloseout = EnumCloseOutType.CLOSEOUT_NOT_READY;
@@ -777,7 +775,6 @@ namespace CaptureTaskManager
                     m_StatusFile.UpdateIdle();
                     return;
                 }
-
 
                 // Make sure we have enough free space on the drive with the dataset folder
                 if (!ValidateFreeDiskSpace(out var diskSpaceMsg))
@@ -867,7 +864,6 @@ namespace CaptureTaskManager
                 m_Task.CloseTask(EnumCloseOutType.CLOSEOUT_FAILED, "Exception: " + ex.Message, EnumEvalCode.EVAL_CODE_FAILED,
                                  "Exception running tool");
             }
-
 
             // Update the status
             m_StatusFile.ClearCachedInfo();
@@ -1033,7 +1029,6 @@ namespace CaptureTaskManager
                 LogError("Exception removing old temp files", ex);
             }
         }
-
 
         /// <summary>
         /// Sets the tool runner object for this job
@@ -1266,8 +1261,8 @@ namespace CaptureTaskManager
 
                 var success = GetDiskFreeSpace(
                     datasetStoragePath,
-                    out var freeBytesAvailableToUser,
-                    out var totalDriveCapacityBytes,
+                    out _,
+                    out _,
                     out var totalNumberOfFreeBytes);
 
                 if (success)
@@ -1326,7 +1321,6 @@ namespace CaptureTaskManager
                 @"C:\CapMan_WorkDir",
                 @"E:\CapMan_WorkDir",
                 @"D:\CapMan_WorkDir" };
-
 
             foreach (var alternateWorkDir in alternateWorkDirs)
             {

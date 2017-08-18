@@ -82,7 +82,6 @@ namespace CaptureTaskManager
                 m_ParamDictionary = null;
             }
 
-
             // Get settings from config file
             m_ParamDictionary = LoadMgrSettingsFromFile();
 
@@ -259,7 +258,6 @@ namespace CaptureTaskManager
         {
             // Requests manager parameters from database. Input string specifies view to use. Performs retries if necessary.
 
-
             var managerName = GetParam(MGR_PARAM_MGR_NAME, string.Empty);
 
             if (string.IsNullOrEmpty(managerName))
@@ -270,16 +268,14 @@ namespace CaptureTaskManager
                 return false;
             }
 
-            var returnErrorIfNoParameters = true;
             var success = LoadMgrSettingsFromDBWork(managerName, out var dtSettings, logConnectionErrors,
-                                                    returnErrorIfNoParameters);
+                                                    returnErrorIfNoParameters: true);
             if (!success)
             {
                 return false;
             }
 
-            var skipExistingParameters = false;
-            success = StoreParameters(dtSettings, skipExistingParameters, managerName);
+            success = StoreParameters(dtSettings, skipExistingParameters: false, managerName: managerName);
 
             if (!success)
                 return false;
@@ -294,14 +290,12 @@ namespace CaptureTaskManager
 
                 // This manager has group-based settings defined; load them now
 
-                returnErrorIfNoParameters = false;
                 success = LoadMgrSettingsFromDBWork(strMgrSettingsGroup, out dtSettings, logConnectionErrors,
-                                                    returnErrorIfNoParameters);
+                                                    returnErrorIfNoParameters: false);
 
                 if (success)
                 {
-                    skipExistingParameters = true;
-                    success = StoreParameters(dtSettings, skipExistingParameters, managerName);
+                    success = StoreParameters(dtSettings, skipExistingParameters: true, managerName: managerName);
                 }
             }
 
@@ -458,7 +452,6 @@ namespace CaptureTaskManager
 
             return success;
         }
-
 
         /// <summary>
         /// Lookup the value of a boolean parameter

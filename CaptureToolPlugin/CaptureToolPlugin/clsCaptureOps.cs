@@ -3087,7 +3087,6 @@ namespace CaptureToolPlugin
 
         #region "Event handlers"
 
-
         private void OnCopyingFile(string filename)
         {
             LogDebug("Copying file " + filename);
@@ -3112,7 +3111,6 @@ namespace CaptureToolPlugin
                 m_LastProgressPercent = percentComplete;
                 LogMessage("  copying " + Path.GetFileName(filename) + ": " + percentComplete.ToString("0.0") + "% complete");
             }
-
 
         }
 
@@ -3152,7 +3150,6 @@ namespace CaptureToolPlugin
                 return "Error: " + ex.Message;
             }
         }
-
 
         /// <summary>
         /// Make sure that we matched a file for instruments that save data as a file, or a folder for instruments that save data to a folder
@@ -3266,7 +3263,9 @@ namespace CaptureToolPlugin
                             }
 
                             var fileNames = foundFiles.Select(file => file.Name).ToList();
-                            LogWarning("Dataset name matched multiple files in folder " + diSourceDir.FullName + ": " + string.Join(", ", fileNames.Take(5)));
+                            LogWarning(
+                                "Dataset name matched multiple files in folder " + diSourceDir.FullName + ": " +
+                                string.Join(", ", fileNames.Take(5)));
 
                         }
 

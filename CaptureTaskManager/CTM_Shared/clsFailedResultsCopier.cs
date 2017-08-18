@@ -130,7 +130,6 @@ namespace CaptureTaskManager
             swArchivedFolderInfoFile.Close();
         }
 
-
         private void DeleteOldFailedResultsFolders(DirectoryInfo diFailedResultsFolder)
         {
             var strTargetFilePath = "";

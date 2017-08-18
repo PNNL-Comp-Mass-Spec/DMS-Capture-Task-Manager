@@ -426,7 +426,6 @@ namespace ImsDemuxPlugin
             if (!bAutoCalibrate)
                 return retData;
 
-
             // Perform calibration operation
             OnDebugEvent("Calling UIMFDemultiplexer to calibrate");
 
@@ -652,7 +651,6 @@ namespace ImsDemuxPlugin
                 }
             }
 
-
             // Perform demux operation
             OnDebugEvent("Calling UIMFDemultiplexer_Console.exe");
 
@@ -676,7 +674,6 @@ namespace ImsDemuxPlugin
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return retData;
             }
-
 
             // Look for the demultiplexed .UIMF file
             var localUimfDecodedFilePath = Path.Combine(mWorkDir, mDataset + DECODED_UIMF_SUFFIX);
@@ -858,7 +855,6 @@ namespace ImsDemuxPlugin
 
         }
 
-
         /// <summary>
         /// Copies the result files to the storage server
         /// </summary>
@@ -939,7 +935,6 @@ namespace ImsDemuxPlugin
 
             return sCurrentText + sSeparator + sNewText;
         }
-
 
         /// <summary>
         /// Performs actual calbration operation
@@ -1107,7 +1102,6 @@ namespace ImsDemuxPlugin
 
         }
 
-
         private void ParseConsoleOutputFileDemux()
         {
             // Example Console output:
@@ -1136,7 +1130,6 @@ namespace ImsDemuxPlugin
             // Finished demultiplexing all frames. Now performing calibration
             // Calibration frame 26 matched 7 / 7 calibrants within 10 ppm; Slope = 0.347632, Intercept = 0.034093;
             //  Average AbsoluteValue(mass error) = 1.736 ppm; average mass error = 0.007 ppm
-
 
             var rePercentComplete = new Regex(@"Processing: (\d+)%", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             var reTotalFrames = new Regex(@"frames to demultiplex: (\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -1224,7 +1217,6 @@ namespace ImsDemuxPlugin
                     if (percentCompleteFractional > mDemuxProgressPercentComplete)
                         mDemuxProgressPercentComplete = percentCompleteFractional;
                 }
-
 
             }
             catch (Exception ex)
@@ -1424,7 +1416,6 @@ namespace ImsDemuxPlugin
                 return false;
             }
 
-
         }
 
         private void UpdateDatasetInfo(IMgrParams mgrParams, ITaskParams taskParams)
@@ -1536,7 +1527,6 @@ namespace ImsDemuxPlugin
 
             return bUIMFCalibrated;
         }
-
 
         #endregion
 

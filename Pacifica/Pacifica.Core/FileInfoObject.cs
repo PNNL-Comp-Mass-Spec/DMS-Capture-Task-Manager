@@ -134,7 +134,6 @@ namespace Pacifica.Core
                 {"fileName", FileName}
             };
 
-
             return d;
         }
 

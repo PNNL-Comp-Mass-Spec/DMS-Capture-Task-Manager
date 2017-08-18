@@ -97,7 +97,6 @@ namespace CaptureTaskManager
             if (!mInitialized)
                 return false;
 
-
             if (eManagerErrorCleanupMode != eCleanupModeConstants.Disabled)
             {
                 LogMessage("Attempting to automatically clean the work directory");
@@ -115,7 +114,7 @@ namespace CaptureTaskManager
                 }
                 else
                 {
-                    // If successful, delete flagfile.txt 
+                    // If successful, delete flagfile.txt
                     blnSuccess = m_StatusFile.DeleteStatusFlagFile();
                     if (!blnSuccess)
                     {
@@ -123,8 +122,7 @@ namespace CaptureTaskManager
                     }
                 }
 
-
-                // If successful, then call SP with ReportManagerErrorCleanup @ActionCode=2 
+                // If successful, then call SP with ReportManagerErrorCleanup @ActionCode=2
                 //    otherwise call SP ReportManagerErrorCleanup with @ActionCode=3
 
                 if (blnSuccess)

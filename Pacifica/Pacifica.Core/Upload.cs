@@ -309,7 +309,6 @@ namespace Pacifica.Core
                 // Ignore errors here
             }
 
-
             if (fileList.Count == 0)
             {
                 OnDebugEvent("File list is empty in StartUpload; nothing to do");

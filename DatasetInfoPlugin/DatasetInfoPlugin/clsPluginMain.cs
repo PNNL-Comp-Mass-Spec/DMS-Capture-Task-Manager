@@ -1,6 +1,6 @@
 ﻿
 //*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 10/06/2009
@@ -77,7 +77,6 @@ namespace DatasetInfoPlugin
 
             return retData;
         }
-
 
         private iMSFileInfoScanner LoadMSFileInfoScanner(string strMSFileInfoScannerDLLPath)
         {
@@ -335,7 +334,7 @@ namespace DatasetInfoPlugin
 
             } // foreach file in sFileOrFolderNames
 
-            // Merge the dataset info defined in cachedDatasetInfoXML 
+            // Merge the dataset info defined in cachedDatasetInfoXML
             // If cachedDatasetInfoXml contains just one item, simply return it
             var datasetXmlMerger = new clsDatasetInfoXmlMerger();
             var dsInfoXML = CombineDatasetInfoXML(datasetXmlMerger, cachedDatasetInfoXML);
@@ -345,7 +344,7 @@ namespace DatasetInfoPlugin
                 ProcessMultiDatasetInfoScannerResults(outputPathBase, datasetXmlMerger, dsInfoXML, outputFolderNames);
             }
 
-            // Check for dataset acq time gap warnings            
+            // Check for dataset acq time gap warnings
             if (AcqTimeWarningsReported(datasetXmlMerger, result))
                 return result;
 
@@ -562,7 +561,6 @@ namespace DatasetInfoPlugin
                                         htmlToAppend.Add(dataLine);
                                     }
 
-
                                 }
                                 else if (dataLine.Trim().StartsWith("<table>"))
                                 {
@@ -620,11 +618,10 @@ namespace DatasetInfoPlugin
                 LogError(msg, ex);
             }
 
-
         }
 
         /// <summary>
-        /// Merge the dataset info defined in cachedDatasetInfoXml 
+        /// Merge the dataset info defined in cachedDatasetInfoXml
         /// If cachedDatasetInfoXml contains just one item, simply return it
         /// </summary>
         /// <param name="datasetXmlMerger">DatasetInfo XML Merger</param>
@@ -744,7 +741,7 @@ namespace DatasetInfoPlugin
 
         /// <summary>
         /// Returns the file or folder name list for the specified dataset based on dataset type
-        /// Most datasets only have a single dataset file or folder, but FTICR_Imaging datasets 
+        /// Most datasets only have a single dataset file or folder, but FTICR_Imaging datasets
         /// can have multiple .D folders below a parent folder
         /// </summary>
         /// <returns>List of data file file or folder names; empty list if not found</returns>
@@ -810,7 +807,7 @@ namespace DatasetInfoPlugin
                 case clsInstrumentClassInfo.eRawDataType.BrukerFTFolder:
                     // 12T_FTICR_B, 15T_FTICR, 9T_FTICR_B
                     // Also, Bruker_FT_IonTrap01, which is Bruker_Amazon_Ion_Trap
-                    // 12T_FTICR_Imaging and 15T_FTICR_Imaging datasets with instrument class BrukerMALDI_Imaging_V2 will also have bruker_ft format; 
+                    // 12T_FTICR_Imaging and 15T_FTICR_Imaging datasets with instrument class BrukerMALDI_Imaging_V2 will also have bruker_ft format;
                     // however, instead of an analysis.baf file, they might have a .mcf file
 
                     bIsFile = true;
@@ -981,7 +978,6 @@ namespace DatasetInfoPlugin
                 }
             }
 
-
             // Look for dataset folders
             var primaryDotDFolder = new DirectoryInfo(Path.Combine(diDatasetFolder.FullName, m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION));
 
@@ -1092,7 +1088,7 @@ namespace DatasetInfoPlugin
 
         #endregion
 
-        #region "Event handlers"       
+        #region "Event handlers"
 
         /// <summary>
         /// Handles an error event from MS file scanner

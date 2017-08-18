@@ -17,7 +17,7 @@ namespace CaptureTaskManager
         // Application startup program
         //**********************************************************************************************************
 
-        private const string PROGRAM_DATE = "August 17, 2017";
+        private const string PROGRAM_DATE = "August 18, 2017";
 
         private static bool mCodeTestMode;
         private static bool mCreateEventLog;
@@ -47,7 +47,6 @@ namespace CaptureTaskManager
                 ShowProgramHelp();
                 return;
             }
-
 
             // Note: CodeTestMode is enabled using command line switch /T
             if (mCodeTestMode)
@@ -142,7 +141,6 @@ namespace CaptureTaskManager
                     return;
                 }
 
-
                 // Query objParseCommandLine to see if various parameters are present
                 if (objParseCommandLine.IsParameterPresent("T"))
                 {
@@ -170,7 +168,6 @@ namespace CaptureTaskManager
             }
         }
 
-
         private static void ShowProgramHelp()
         {
             try
@@ -183,7 +180,7 @@ namespace CaptureTaskManager
                                   @" [/EL] [/T] [/Test] [/Trace]");
                 Console.WriteLine();
 
-                Console.WriteLine(@"Use /EL to post a test message to the Windows Event Log named 'DMSCapTaskMgr' then exit the program. " + 
+                Console.WriteLine(@"Use /EL to post a test message to the Windows Event Log named 'DMSCapTaskMgr' then exit the program. " +
                                   "When setting up the Capture Task Manager on a new computer, you should call this command once from a Windows Command Prompt that you started using 'Run as Administrator'");
                 Console.WriteLine();
                 Console.WriteLine(@"Use /T or /Test to start the program in code test mode.");
@@ -202,7 +199,6 @@ namespace CaptureTaskManager
                 Console.WriteLine(@"E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com");
                 Console.WriteLine(@"Website: http://panomics.pnnl.gov/ or http://www.sysbio.org/resources/staff/");
                 Console.WriteLine();
-
 
                 // Delay for 750 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
                 System.Threading.Thread.Sleep(750);

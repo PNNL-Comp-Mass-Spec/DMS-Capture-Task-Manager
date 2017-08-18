@@ -33,7 +33,6 @@ namespace Pacifica.Core
             Put = 2
         }
 
-
         public enum eDebugMode
         {
             [Description("Debugging is disabled")]
@@ -79,7 +78,6 @@ namespace Pacifica.Core
             const HttpMethod method = HttpMethod.Get;
             request.Method = method.GetDescription<HttpMethod>();
             request.PreAuthenticate = false;
-
 
             // Receive response
             HttpWebResponse response = null;

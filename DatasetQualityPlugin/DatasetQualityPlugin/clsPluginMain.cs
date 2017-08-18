@@ -1,6 +1,6 @@
 ﻿
 //*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 10/02/2009
@@ -36,7 +36,6 @@ namespace DatasetQualityPlugin
 
         #region "Class-wide variables"
         clsToolReturnData mRetData = new clsToolReturnData();
-
 
         DateTime mLastStatusUpdate = DateTime.UtcNow;
         DateTime mQuameterStartTime = DateTime.UtcNow;
@@ -220,7 +219,6 @@ namespace DatasetQualityPlugin
                 return false;
             }
 
-
             var bSuccess = ProcessThermoRawFile(dataFilePathRemote, instrumentClass, fiQuameter, ignoreQuameterFailure, instrumentName);
 
             if (bSuccess)
@@ -334,7 +332,6 @@ namespace DatasetQualityPlugin
         private bool CopyFilesToDatasetFolder(string datasetFolder)
         {
 
-
             try
             {
                 var diDatasetQCFolder = new DirectoryInfo(Path.Combine(datasetFolder, "QC"));
@@ -344,13 +341,11 @@ namespace DatasetQualityPlugin
                     diDatasetQCFolder.Create();
                 }
 
-
                 if (!CopyFileToServer(QUAMETER_CONSOLE_OUTPUT_FILE, m_WorkDir, diDatasetQCFolder.FullName))
                     return false;
 
                 // Uncomment the following to copy the Metrics file to the server
                 //if (!CopyFileToServer(QUAMETER_IDFREE_METRICS_FILE, m_WorkDir, diDatasetQCFolder.FullName)) return false;
-
 
             }
             catch (Exception ex)
@@ -401,7 +396,6 @@ namespace DatasetQualityPlugin
                 return string.Empty;
             return Path.Combine(sQuameterFolder, "Quameter.exe");
         }
-
 
         /// <summary>
         /// Extract the results from the Quameter results file
@@ -672,7 +666,6 @@ namespace DatasetQualityPlugin
                 throw new Exception("Error in PostProcessMetricsFile: " + ex.Message, ex);
             }
 
-
             return true;
 
         }
@@ -735,7 +728,6 @@ namespace DatasetQualityPlugin
                     resultCode = CaptureDBProcedureExecutor.ExecuteSP(objCommand, MAX_RETRY_COUNT, SEC_BETWEEN_RETRIES);
                 }
 
-
                 if (resultCode == PRISM.clsExecuteDatabaseSP.RET_VAL_OK)
                 {
                     // No errors
@@ -758,7 +750,6 @@ namespace DatasetQualityPlugin
 
             return blnSuccess;
         }
-
 
         private bool ProcessThermoRawFile(
             string dataFilePathRemote,
@@ -922,7 +913,6 @@ namespace DatasetQualityPlugin
 
             }
 
-
             if (scanCount > 0)
             {
                 if (scanCountMS == 0)
@@ -933,7 +923,6 @@ namespace DatasetQualityPlugin
 
                 return true;
             }
-
 
             // The DatasetInfo.xml file was not found
             // We don't know if Quameter can process the dataset or not, so we'll err on the side of "Sure, let's give it a try"
@@ -1028,7 +1017,7 @@ namespace DatasetQualityPlugin
                 AttachCmdrunnerEvents(cmdRunner);
 
                 // Create a batch file to run the command
-                // Capture the console output (including output to the error stream) via redirection symbols: 
+                // Capture the console output (including output to the error stream) via redirection symbols:
                 //    strExePath CmdStr > ConsoleOutputFile.txt 2>&1
 
                 const string sBatchFileName = "Run_Quameter.bat";
