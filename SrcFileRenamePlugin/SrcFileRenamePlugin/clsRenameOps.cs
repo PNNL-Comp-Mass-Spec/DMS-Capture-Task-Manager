@@ -138,25 +138,44 @@ namespace SrcFileRenamePlugin
                 OnDebugEvent(msg);
             }
 
+            // If Source_Folder_Name is non-blank, use it. Otherwise use dataset name
+            var sSourceFolderName = taskParams.GetParam("Source_Folder_Name");
+
+            if (string.IsNullOrWhiteSpace(sSourceFolderName))
+            {
+                sSourceFolderName = datasetName;
+            }
+
             // Now that we've had a chance to connect to the share, possibly append a subfolder to the source path
             if (!string.IsNullOrWhiteSpace(captureSubfolder))
             {
 
                 // However, if the subfolder name matches the dataset name, this was probably an error on the operator's part and we likely do not want to use the subfolder name
-                if (captureSubfolder.EndsWith(Path.DirectorySeparatorChar + datasetName, StringComparison.OrdinalIgnoreCase))
+                if (captureSubfolder.EndsWith(Path.DirectorySeparatorChar + sSourceFolderName, StringComparison.OrdinalIgnoreCase) ||
+                    captureSubfolder.Equals(sSourceFolderName, StringComparison.OrdinalIgnoreCase))
                 {
                     var candidateFolderPath = Path.Combine(sourceFolderPath, captureSubfolder);
 
                     if (!Directory.Exists(candidateFolderPath))
                     {
+                        // Leave sourceFolderPath unchanged
                         // Dataset Capture_Subfolder ends with the dataset name. Gracefully ignoring because this appears to be a data entry error; folder not found:
                         OnWarningEvent("Dataset Capture_Subfolder ends with the dataset name. Gracefully ignoring " +
                                        "because this appears to be a data entry error; folder not found: " + candidateFolderPath);
-                        sourceFolderPath = candidateFolderPath.Substring(0, candidateFolderPath.Length - datasetName.Length - 1);
                     }
                     else
                     {
-                        sourceFolderPath = candidateFolderPath;
+                        if (captureSubfolder.Equals(sSourceFolderName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            OnWarningEvent(string.Format(
+                                           "Dataset Capture_Subfolder is the dataset name; leaving the capture path as {0} " +
+                                           "so that the entire dataset folder will be copied", sourceFolderPath));
+                        }
+                        else
+                        {
+                            OnStatusEvent("Appending captureSubFolder to sourceFolderPath, giving: " + candidateFolderPath);
+                            sourceFolderPath = candidateFolderPath;
+                        }
                     }
 
                 }
