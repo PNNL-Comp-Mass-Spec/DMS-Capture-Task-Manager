@@ -69,70 +69,67 @@ namespace CaptureTaskManager
         /// <returns></returns>
         public bool AutoCleanupManagerErrors(int managerErrorCleanupMode)
         {
-            eCleanupModeConstants eManagerErrorCleanupMode;
+            eCleanupModeConstants cleanupMode;
 
-            switch (managerErrorCleanupMode)
+            if (Enum.IsDefined(typeof(eCleanupModeConstants), managerErrorCleanupMode))
             {
-                case 0:
-                    eManagerErrorCleanupMode = eCleanupModeConstants.Disabled;
-                    break;
-                case 1:
-                    eManagerErrorCleanupMode = eCleanupModeConstants.CleanupOnce;
-                    break;
-                case 2:
-                    eManagerErrorCleanupMode = eCleanupModeConstants.CleanupAlways;
-                    break;
-                default:
-                    eManagerErrorCleanupMode = eCleanupModeConstants.Disabled;
-                    break;
+                cleanupMode = (eCleanupModeConstants)managerErrorCleanupMode;
+            }
+            else
+            {
+                cleanupMode = eCleanupModeConstants.Disabled;
             }
 
-            return AutoCleanupManagerErrors(eManagerErrorCleanupMode);
+            return AutoCleanupManagerErrors(cleanupMode);
         }
 
+        /// <summary>
+        /// Remove all files in the working directory
+        /// Also calls stored procedure ReportManagerErrorCleanup at the start and finish of the cleanup
+        /// </summary>
+        /// <param name="eManagerErrorCleanupMode"></param>
+        /// <returns>True if success, false if an error</returns>
         public bool AutoCleanupManagerErrors(eCleanupModeConstants eManagerErrorCleanupMode)
         {
-            var blnSuccess = false;
-
             if (!mInitialized)
                 return false;
 
-            if (eManagerErrorCleanupMode != eCleanupModeConstants.Disabled)
+            if (eManagerErrorCleanupMode == eCleanupModeConstants.Disabled)
+                return false;
+
+            LogMessage("Attempting to automatically clean the work directory");
+
+            // Call SP ReportManagerErrorCleanup @ActionCode=1
+            ReportManagerErrorCleanup(eCleanupActionCodeConstants.Start);
+
+            // Delete all folders and subfolders in work folder
+            var blnSuccess = clsToolRunnerBase.CleanWorkDir(mWorkingDirPath, 1, out var failureMessage);
+
+            if (!blnSuccess)
             {
-                LogMessage("Attempting to automatically clean the work directory");
-
-                // Call SP ReportManagerErrorCleanup @ActionCode=1
-                ReportManagerErrorCleanup(eCleanupActionCodeConstants.Start);
-
-                // Delete all folders and subfolders in work folder
-                blnSuccess = clsToolRunnerBase.CleanWorkDir(mWorkingDirPath, 1, out var strFailureMessage);
-
+                if (string.IsNullOrEmpty(failureMessage))
+                    failureMessage = "unable to clear work directory";
+            }
+            else
+            {
+                // If successful, delete flagfile.txt
+                blnSuccess = m_StatusFile.DeleteStatusFlagFile();
                 if (!blnSuccess)
                 {
-                    if (string.IsNullOrEmpty(strFailureMessage))
-                        strFailureMessage = "unable to clear work directory";
+                    failureMessage = "error deleting " + clsStatusFile.FLAG_FILE_NAME;
                 }
-                else
-                {
-                    // If successful, delete flagfile.txt
-                    blnSuccess = m_StatusFile.DeleteStatusFlagFile();
-                    if (!blnSuccess)
-                    {
-                        strFailureMessage = "error deleting " + clsStatusFile.FLAG_FILE_NAME;
-                    }
-                }
+            }
 
-                // If successful, then call SP with ReportManagerErrorCleanup @ActionCode=2
-                //    otherwise call SP ReportManagerErrorCleanup with @ActionCode=3
+            // If successful, then call SP with ReportManagerErrorCleanup @ActionCode=2
+            //    otherwise call SP ReportManagerErrorCleanup with @ActionCode=3
 
-                if (blnSuccess)
-                {
-                    ReportManagerErrorCleanup(eCleanupActionCodeConstants.Success);
-                }
-                else
-                {
-                    ReportManagerErrorCleanup(eCleanupActionCodeConstants.Fail, strFailureMessage);
-                }
+            if (blnSuccess)
+            {
+                ReportManagerErrorCleanup(eCleanupActionCodeConstants.Success);
+            }
+            else
+            {
+                ReportManagerErrorCleanup(eCleanupActionCodeConstants.Fail, failureMessage);
             }
 
             return blnSuccess;
@@ -144,12 +141,12 @@ namespace CaptureTaskManager
         }
 
         protected void ReportManagerErrorCleanup(eCleanupActionCodeConstants eMgrCleanupActionCode,
-                                                 string strFailureMessage)
+                                                 string failureMessage)
         {
             try
             {
-                if (strFailureMessage == null)
-                    strFailureMessage = string.Empty;
+                if (failureMessage == null)
+                    failureMessage = string.Empty;
 
                 var myConnection = new System.Data.SqlClient.SqlConnection(mMgrConfigDBConnectionString);
                 myConnection.Open();
@@ -165,7 +162,7 @@ namespace CaptureTaskManager
                 spCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
                 spCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@ManagerName", SqlDbType.VarChar, 128)).Value = mManagerName;
                 spCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@State", SqlDbType.Int)).Value = eMgrCleanupActionCode;
-                spCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@FailureMsg", SqlDbType.VarChar, 512)).Value = strFailureMessage;
+                spCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@FailureMsg", SqlDbType.VarChar, 512)).Value = failureMessage;
                 spCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
 
                 // Execute the SP
