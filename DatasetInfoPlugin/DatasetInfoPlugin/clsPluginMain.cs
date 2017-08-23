@@ -268,15 +268,49 @@ namespace DatasetInfoPlugin
             {
                 m_FailedScanCount = 0;
 
+                var remoteFileOrFolderPath = Path.Combine(sourceFolder, datasetFileOrFolder);
+
+                string pathToProcess;
+                bool fileCopiedLocally;
+
+                var datasetFile = new FileInfo(remoteFileOrFolderPath);
+                if (datasetFile.Exists && string.Equals(datasetFile.Extension, clsInstrumentClassInfo.DOT_RAW_EXTENSION,
+                                                        StringComparison.OrdinalIgnoreCase))
+                {
+                    // Thermo .raw file; copy it locally
+                    var localFilePath = Path.Combine(m_WorkDir, datasetFileOrFolder);
+                    var success = m_FileTools.CopyFileUsingLocks(datasetFile, localFilePath, true);
+
+                    if (!success)
+                    {
+                        result.CloseoutMsg = "Error copying instrument data file to local working directory";
+                        result.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                        return result;
+                    }
+
+                    pathToProcess = localFilePath;
+                    fileCopiedLocally = true;
+                }
+                else
+                {
+                    pathToProcess = remoteFileOrFolderPath;
+                    fileCopiedLocally = false;
+                }
+
                 var currentOutputFolder = ConstructOutputFolderPath(
                     outputPathBase, datasetFileOrFolder, sFileOrFolderNames.Count,
                     outputFolderNames, ref nextSubFolderSuffix);
 
-                var successProcessing = m_MsFileScanner.ProcessMSFileOrFolder(Path.Combine(sourceFolder, datasetFileOrFolder), currentOutputFolder);
+                var successProcessing = m_MsFileScanner.ProcessMSFileOrFolder(pathToProcess, currentOutputFolder);
 
                 if (m_ErrOccurred)
                 {
                     successProcessing = false;
+                }
+
+                if (fileCopiedLocally)
+                {
+                    m_FileTools.DeleteFileWithRetry(new FileInfo(pathToProcess), 2, out _);
                 }
 
                 if (successProcessing)
