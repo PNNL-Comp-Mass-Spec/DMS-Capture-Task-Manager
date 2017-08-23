@@ -3,17 +3,17 @@
 namespace CaptureTaskManager
 {
     // ReSharper disable once ClassNeverInstantiated.Global
-    // Used in the DatasetIntegrityPlugin and elsewhere 
+    // Used in the DatasetIntegrityPlugin and elsewhere
     public class clsInstrumentClassInfo
     {
         #region "Raw Data Type Constants"
 
         // Note: All of the RAW_DATA_TYPE constants need to be all lowercase
-        
+
         // Agilent ion trap data, Agilent TOF data
         public const string RAW_DATA_TYPE_DOT_D_FOLDERS = "dot_d_folders";
 
-        // FTICR data, including instrument 3T_FTICR, 7T_FTICR, 9T_FTICR, 11T_FTICR, 11T_FTICR_B, and 12T_FTICR 
+        // FTICR data, including instrument 3T_FTICR, 7T_FTICR, 9T_FTICR, 11T_FTICR, 11T_FTICR_B, and 12T_FTICR
         public const string RAW_DATA_TYPE_ZIPPED_S_FOLDERS = "zipped_s_folders";
 
         // Micromass QTOF data
@@ -60,7 +60,7 @@ namespace CaptureTaskManager
 
         // The following is used by instrument External_Illumina
         public const string RAW_DATA_TYPE_ILLUMINA_FOLDER = "illumina_folder";
-        
+
         #endregion
 
         #region "File Extension Constants"
@@ -90,7 +90,7 @@ namespace CaptureTaskManager
             AgilentQStarWiffFile = 6,
             MicromassRawFolder = 7, // Micromass QTOF data
             ZippedSFolders = 8,
-            // FTICR data, including instrument 3T_FTICR, 7T_FTICR, 9T_FTICR, 11T_FTICR, 11T_FTICR_B, and 12T_FTICR 
+            // FTICR data, including instrument 3T_FTICR, 7T_FTICR, 9T_FTICR, 11T_FTICR, 11T_FTICR_B, and 12T_FTICR
             BrukerFTFolder = 9,
             // .D folder is the analysis.baf file; there is also .m subfolder that has a apexAcquisition.method file
             BrukerMALDISpot = 10, // has a .EMF file and a single sub-folder that has an acqu file and fid file
