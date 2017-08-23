@@ -443,7 +443,7 @@ namespace DatasetInfoPlugin
 
         }
 
-        private string GetXmlValue(XmlDocument xmlDoc, string xPath, string defaultValue)
+        private string GetXmlValue(XmlNode xmlDoc, string xPath, string defaultValue)
         {
             var match = xmlDoc.SelectSingleNode(xPath);
 
@@ -453,7 +453,7 @@ namespace DatasetInfoPlugin
             return match.InnerText;
         }
 
-        private int GetXmlValue(XmlDocument xmlDoc, string xPath, int defaultValue)
+        private int GetXmlValue(XmlNode xmlDoc, string xPath, int defaultValue)
         {
             var match = GetXmlValue(xmlDoc, xPath, defaultValue.ToString());
 
@@ -463,7 +463,7 @@ namespace DatasetInfoPlugin
             return defaultValue;
         }
 
-        private long GetXmlValueLong(XmlDocument xmlDoc, string xPath, long defaultValue)
+        private long GetXmlValueLong(XmlNode xmlDoc, string xPath, long defaultValue)
         {
             var match = GetXmlValue(xmlDoc, xPath, defaultValue.ToString(CultureInfo.InvariantCulture));
 
@@ -473,7 +473,7 @@ namespace DatasetInfoPlugin
             return defaultValue;
         }
 
-        private double GetXmlValue(XmlDocument xmlDoc, string xPath, double defaultValue)
+        private double GetXmlValue(XmlNode xmlDoc, string xPath, double defaultValue)
         {
             var match = GetXmlValue(xmlDoc, xPath, defaultValue.ToString(CultureInfo.InvariantCulture));
 
