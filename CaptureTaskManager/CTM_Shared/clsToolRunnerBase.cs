@@ -220,33 +220,39 @@ namespace CaptureTaskManager
         /// Delete files in the working directory
         /// </summary>
         /// <param name="workDir">Working directory path</param>
-        /// <param name="holdoffSeconds"></param>
+        /// <param name="holdoffSeconds">
+        /// Time to wait after garbage collection before deleting files.
+        /// Set to 0 (or a negative number) to skip garbage collection</param>
         /// <param name="failureMessage">Output: failure message</param>
         /// <returns></returns>
         public static bool CleanWorkDir(string workDir, float holdoffSeconds, out string failureMessage)
         {
-            int HoldoffMilliseconds;
+            int holdoffMilliseconds;
 
             var strCurrentSubfolder = string.Empty;
 
             failureMessage = string.Empty;
 
-            try
-            {
-                HoldoffMilliseconds = Convert.ToInt32(holdoffSeconds * 1000);
-                if (HoldoffMilliseconds < 100)
-                    HoldoffMilliseconds = 100;
-                if (HoldoffMilliseconds > 300000)
-                    HoldoffMilliseconds = 300000;
-            }
-            catch (Exception)
-            {
-                HoldoffMilliseconds = 3000;
-            }
 
-            // Try to ensure there are no open objects with file handles
-            clsProgRunner.GarbageCollectNow();
-            Thread.Sleep(HoldoffMilliseconds);
+            if (holdoffSeconds > 0)
+            {
+                try
+                {
+                    holdoffMilliseconds = Convert.ToInt32(holdoffSeconds * 1000);
+                    if (holdoffMilliseconds < 100)
+                        holdoffMilliseconds = 100;
+                    if (holdoffMilliseconds > 300000)
+                        holdoffMilliseconds = 300000;
+                }
+                catch (Exception)
+                {
+                    holdoffMilliseconds = 3000;
+                }
+
+                // Try to ensure there are no open objects with file handles
+                clsProgRunner.GarbageCollectNow();
+                Thread.Sleep(holdoffMilliseconds);
+            }
 
             var diWorkFolder = new DirectoryInfo(workDir);
 
