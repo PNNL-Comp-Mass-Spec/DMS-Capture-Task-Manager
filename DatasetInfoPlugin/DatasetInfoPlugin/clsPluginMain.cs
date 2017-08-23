@@ -78,27 +78,27 @@ namespace DatasetInfoPlugin
             return retData;
         }
 
-        private iMSFileInfoScanner LoadMSFileInfoScanner(string strMSFileInfoScannerDLLPath)
+        private iMSFileInfoScanner LoadMSFileInfoScanner(string msFileInfoScannerDLLPath)
         {
             const string MsDataFileReaderClass = "MSFileInfoScanner.clsMSFileInfoScanner";
 
-            iMSFileInfoScanner objMSFileInfoScanner = null;
+            iMSFileInfoScanner msFileInfoScanner = null;
             string msg;
 
             try
             {
-                if (!File.Exists(strMSFileInfoScannerDLLPath))
+                if (!File.Exists(msFileInfoScannerDLLPath))
                 {
-                    msg = "DLL not found: " + strMSFileInfoScannerDLLPath;
+                    msg = "DLL not found: " + msFileInfoScannerDLLPath;
                     LogError(msg);
                 }
                 else
                 {
-                    var obj = LoadObject(MsDataFileReaderClass, strMSFileInfoScannerDLLPath);
+                    var obj = LoadObject(MsDataFileReaderClass, msFileInfoScannerDLLPath);
                     if (obj != null)
                     {
-                        objMSFileInfoScanner = (iMSFileInfoScanner)obj;
-                        msg = "Loaded MSFileInfoScanner from " + strMSFileInfoScannerDLLPath;
+                        msFileInfoScanner = (iMSFileInfoScanner)obj;
+                        msg = "Loaded MSFileInfoScanner from " + msFileInfoScannerDLLPath;
                         LogMessage(msg);
                     }
                 }
@@ -109,22 +109,22 @@ namespace DatasetInfoPlugin
                 LogError(msg, ex);
             }
 
-            return objMSFileInfoScanner;
+            return msFileInfoScanner;
         }
 
-        private object LoadObject(string className, string strDLLFilePath)
+        private object LoadObject(string className, string dllFilePath)
         {
             object obj = null;
             try
             {
-                // Dynamically load the specified class from strDLLFilePath
-                var assem = Assembly.LoadFrom(strDLLFilePath);
+                // Dynamically load the specified class from dllFilePath
+                var assem = Assembly.LoadFrom(dllFilePath);
                 var dllType = assem.GetType(className, false, true);
                 obj = Activator.CreateInstance(dllType);
             }
             catch (Exception ex)
             {
-                var msg = "Exception loading DLL " + strDLLFilePath + ": " + ex.Message;
+                var msg = "Exception loading DLL " + dllFilePath + ": " + ex.Message;
                 LogError(msg, ex);
             }
             return obj;
@@ -143,17 +143,17 @@ namespace DatasetInfoPlugin
 
             base.Setup(mgrParams, taskParams, statusTools);
 
-            var strMSFileInfoScannerPath = GetMSFileInfoScannerDLLPath();
-            if (string.IsNullOrEmpty(strMSFileInfoScannerPath))
+            var msFileInfoScannerDLLPath = GetMSFileInfoScannerDLLPath();
+            if (string.IsNullOrEmpty(msFileInfoScannerDLLPath))
                 throw new NotSupportedException("Manager parameter 'MSFileInfoScannerDir' is not defined");
 
-            if (!File.Exists(strMSFileInfoScannerPath))
+            if (!File.Exists(msFileInfoScannerDLLPath))
             {
-                throw new FileNotFoundException("File Not Found: " + strMSFileInfoScannerPath);
+                throw new FileNotFoundException("File Not Found: " + msFileInfoScannerDLLPath);
             }
 
             // Initialize the MSFileScanner class
-            m_MsFileScanner = LoadMSFileInfoScanner(strMSFileInfoScannerPath);
+            m_MsFileScanner = LoadMSFileInfoScanner(msFileInfoScannerDLLPath);
             RegisterEvents(m_MsFileScanner);
 
             UnregisterEventHandler(m_MsFileScanner, clsLogTools.LogLevels.ERROR);
@@ -198,9 +198,9 @@ namespace DatasetInfoPlugin
             m_MsFileScanner.CheckCentroidingStatus = true;
 
             // Get the input file name
-            var sFileOrFolderNames = GetDataFileOrFolderName(sourceFolder, out var bSkipPlots, out var rawDataType, out var instrumentClass, out var bBrukerDotDBaf);
+            var fileOrFolderNames = GetDataFileOrFolderName(sourceFolder, out var bSkipPlots, out var rawDataType, out var instrumentClass, out var bBrukerDotDBaf);
 
-            if (sFileOrFolderNames.Count > 0 && sFileOrFolderNames.First() == UNKNOWN_FILE_TYPE)
+            if (fileOrFolderNames.Count > 0 && fileOrFolderNames.First() == UNKNOWN_FILE_TYPE)
             {
                 // Raw_Data_Type not recognized
                 result.CloseoutMsg = m_Msg;
@@ -208,7 +208,7 @@ namespace DatasetInfoPlugin
                 return result;
             }
 
-            if (sFileOrFolderNames.Count > 0 && sFileOrFolderNames.First() == INVALID_FILE_TYPE)
+            if (fileOrFolderNames.Count > 0 && fileOrFolderNames.First() == INVALID_FILE_TYPE)
             {
                 // DS quality test not implemented for this file type
                 result.CloseoutMsg = string.Empty;
@@ -218,7 +218,7 @@ namespace DatasetInfoPlugin
                 return result;
             }
 
-            if (sFileOrFolderNames.Count == 0 || string.IsNullOrEmpty(sFileOrFolderNames.First()))
+            if (fileOrFolderNames.Count == 0 || string.IsNullOrEmpty(fileOrFolderNames.First()))
             {
                 // There was a problem with getting the file name; Details reported by called method
                 result.CloseoutMsg = m_Msg;
@@ -264,7 +264,7 @@ namespace DatasetInfoPlugin
             var primaryFileOrFolderProcessed = false;
             var nextSubFolderSuffix = 1;
 
-            foreach (var datasetFileOrFolder in sFileOrFolderNames)
+            foreach (var datasetFileOrFolder in fileOrFolderNames)
             {
                 m_FailedScanCount = 0;
 
@@ -298,7 +298,7 @@ namespace DatasetInfoPlugin
                 }
 
                 var currentOutputFolder = ConstructOutputFolderPath(
-                    outputPathBase, datasetFileOrFolder, sFileOrFolderNames.Count,
+                    outputPathBase, datasetFileOrFolder, fileOrFolderNames.Count,
                     outputFolderNames, ref nextSubFolderSuffix);
 
                 var successProcessing = m_MsFileScanner.ProcessMSFileOrFolder(pathToProcess, currentOutputFolder);
@@ -366,7 +366,7 @@ namespace DatasetInfoPlugin
                     LogWarning(string.Format("Unable to load data for {0} spectra", m_FailedScanCount));
                 }
 
-            } // foreach file in sFileOrFolderNames
+            } // foreach file in fileOrFolderName
 
             // Merge the dataset info defined in cachedDatasetInfoXML
             // If cachedDatasetInfoXml contains just one item, simply return it
@@ -790,7 +790,7 @@ namespace DatasetInfoPlugin
             out clsInstrumentClassInfo.eInstrumentClass instrumentClass,
             out bool bBrukerDotDBaf)
         {
-            bool bIsFile;
+            bool isFile;
 
             bSkipPlots = false;
             rawDataType = clsInstrumentClassInfo.eRawDataType.Unknown;
@@ -805,7 +805,7 @@ namespace DatasetInfoPlugin
             {
                 m_Msg = "Instrument class not recognized: " + instClassName;
                 LogError(m_Msg);
-                return new List<string>() { UNKNOWN_FILE_TYPE };
+                return new List<string> { UNKNOWN_FILE_TYPE };
             }
 
             rawDataType = clsInstrumentClassInfo.GetRawDataType(rawDataTypeName);
@@ -813,11 +813,11 @@ namespace DatasetInfoPlugin
             {
                 m_Msg = "RawDataType not recognized: " + rawDataTypeName;
                 LogError(m_Msg);
-                return new List<string>() { UNKNOWN_FILE_TYPE };
+                return new List<string> { UNKNOWN_FILE_TYPE };
             }
 
             var diDatasetFolder = new DirectoryInfo(inputFolder);
-            string sFileOrFolderName;
+            string fileOrFolderName;
 
             // Get the expected file name based on the dataset type
             switch (rawDataType)
@@ -828,14 +828,14 @@ namespace DatasetInfoPlugin
                     // VOrbiETD01, VOrbiETD02, etc.
                     // TSQ_3
                     // Thermo_GC_MS_01
-                    sFileOrFolderName = m_Dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION;
-                    bIsFile = true;
+                    fileOrFolderName = m_Dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION;
+                    isFile = true;
                     break;
 
                 case clsInstrumentClassInfo.eRawDataType.ZippedSFolders:
                     // 9T_FTICR, 11T_FTICR_B, and 12T_FTICR
-                    sFileOrFolderName = "analysis.baf";
-                    bIsFile = true;
+                    fileOrFolderName = "analysis.baf";
+                    isFile = true;
                     break;
 
                 case clsInstrumentClassInfo.eRawDataType.BrukerFTFolder:
@@ -844,43 +844,43 @@ namespace DatasetInfoPlugin
                     // 12T_FTICR_Imaging and 15T_FTICR_Imaging datasets with instrument class BrukerMALDI_Imaging_V2 will also have bruker_ft format;
                     // however, instead of an analysis.baf file, they might have a .mcf file
 
-                    bIsFile = true;
+                    isFile = true;
                     if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Bruker_Amazon_Ion_Trap)
                     {
-                        sFileOrFolderName = Path.Combine(m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION, "analysis.yep");
+                        fileOrFolderName = Path.Combine(m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION, "analysis.yep");
                     }
                     else
                     {
-                        sFileOrFolderName = Path.Combine(m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION, "analysis.baf");
+                        fileOrFolderName = Path.Combine(m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION, "analysis.baf");
                         bBrukerDotDBaf = true;
                     }
 
-                    if (!File.Exists(Path.Combine(diDatasetFolder.FullName, sFileOrFolderName)))
-                        sFileOrFolderName = CheckForBrukerImagingZipFiles(diDatasetFolder);
+                    if (!File.Exists(Path.Combine(diDatasetFolder.FullName, fileOrFolderName)))
+                        fileOrFolderName = CheckForBrukerImagingZipFiles(diDatasetFolder);
 
                     break;
 
                 case clsInstrumentClassInfo.eRawDataType.UIMF:
                     // IMS_TOF_2, IMS_TOF_3, IMS_TOF_4, IMS_TOF_5, IMS_TOF_6, etc.
-                    sFileOrFolderName = m_Dataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION;
-                    bIsFile = true;
+                    fileOrFolderName = m_Dataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION;
+                    isFile = true;
                     break;
 
                 case clsInstrumentClassInfo.eRawDataType.SciexWiffFile:
                     // QTrap01
-                    sFileOrFolderName = m_Dataset + clsInstrumentClassInfo.DOT_WIFF_EXTENSION;
-                    bIsFile = true;
+                    fileOrFolderName = m_Dataset + clsInstrumentClassInfo.DOT_WIFF_EXTENSION;
+                    isFile = true;
                     break;
 
                 case clsInstrumentClassInfo.eRawDataType.AgilentDFolder:
                     // Agilent_GC_MS_01, AgQTOF03, AgQTOF04, PrepHPLC1
-                    sFileOrFolderName = m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
-                    bIsFile = false;
+                    fileOrFolderName = m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
+                    isFile = false;
 
                     if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.PrepHPLC)
                     {
                         LogMessage("Skipping MSFileInfoScanner since PrepHPLC dataset");
-                        return new List<string>() { INVALID_FILE_TYPE };
+                        return new List<string> { INVALID_FILE_TYPE };
                     }
 
                     break;
@@ -889,29 +889,29 @@ namespace DatasetInfoPlugin
                     // bruker_maldi_imaging: 12T_FTICR_Imaging, 15T_FTICR_Imaging, and BrukerTOF_Imaging_01
                     // Find the name of the first zip file
 
-                    sFileOrFolderName = CheckForBrukerImagingZipFiles(diDatasetFolder);
+                    fileOrFolderName = CheckForBrukerImagingZipFiles(diDatasetFolder);
                     bSkipPlots = true;
-                    bIsFile = true;
+                    isFile = true;
 
-                    if (string.IsNullOrEmpty(sFileOrFolderName))
+                    if (string.IsNullOrEmpty(fileOrFolderName))
                     {
                         m_Msg = "Did not find any 0_R*.zip files in the dataset folder";
                         LogWarning("clsPluginMain.GetDataFileOrFolderName: " + m_Msg);
-                        return new List<string>() { INVALID_FILE_TYPE };
+                        return new List<string> { INVALID_FILE_TYPE };
                     }
 
                     break;
 
                 case clsInstrumentClassInfo.eRawDataType.BrukerTOFBaf:
-                    sFileOrFolderName = m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
-                    bIsFile = false;
+                    fileOrFolderName = m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
+                    isFile = false;
                     break;
                 case clsInstrumentClassInfo.eRawDataType.IlluminaFolder:
-                    // sFileOrFolderName = m_Dataset + clsInstrumentClassInfo.DOT_TXT_GZ_EXTENSION;
-                    // bIsFile = true;
+                    // fileOrFolderName = m_Dataset + clsInstrumentClassInfo.DOT_TXT_GZ_EXTENSION;
+                    // isFile = true;
 
                     LogMessage("Skipping MSFileInfoScanner since Illumina RNASeq dataset");
-                    return new List<string>() { INVALID_FILE_TYPE };
+                    return new List<string> { INVALID_FILE_TYPE };
 
                 default:
                     // Other instruments; do not process them with MSFileInfoScanner
@@ -921,55 +921,55 @@ namespace DatasetInfoPlugin
                     // bruker_maldi_spot (BrukerMALDISpot): BrukerTOF_01
                     m_Msg = "Data type " + rawDataType + " not recognized";
                     LogWarning("clsPluginMain.GetDataFileOrFolderName: " + m_Msg);
-                    return new List<string>() { INVALID_FILE_TYPE };
+                    return new List<string> { INVALID_FILE_TYPE };
             }
 
             // Test to verify the file (or folder) exists
-            var sFileOrFolderPath = Path.Combine(diDatasetFolder.FullName, sFileOrFolderName);
+            var fileOrFolderPath = Path.Combine(diDatasetFolder.FullName, fileOrFolderName);
 
-            if (bIsFile)
+            if (isFile)
             {
                 // Expecting to match a file
-                if (File.Exists(sFileOrFolderPath))
+                if (File.Exists(fileOrFolderPath))
                 {
                     // File exists
                     // Even if it is in a .D folder, we will only examine this file
-                    return new List<string>() { sFileOrFolderName };
+                    return new List<string> { fileOrFolderName };
                 }
 
                 // File not found; check for alternative files or folders
                 // This function also looks for .D folders
-                var fileOrFolderNames = LookForAlternateFileOrFolder(diDatasetFolder, sFileOrFolderName);
+                var fileOrFolderNames = LookForAlternateFileOrFolder(diDatasetFolder, fileOrFolderName);
 
                 if (fileOrFolderNames.Count > 0)
                     return fileOrFolderNames;
 
-                m_Msg = "clsPluginMain.GetDataFileOrFolderName: File " + sFileOrFolderPath + " not found";
+                m_Msg = "clsPluginMain.GetDataFileOrFolderName: File " + fileOrFolderPath + " not found";
                 LogError(m_Msg);
-                m_Msg = "File " + sFileOrFolderPath + " not found";
+                m_Msg = "File " + fileOrFolderPath + " not found";
 
                 return new List<string>();
             }
 
             // Expecting to match a folder
-            if (Directory.Exists(sFileOrFolderPath))
+            if (Directory.Exists(fileOrFolderPath))
             {
-                if (Path.GetExtension(sFileOrFolderName).ToUpper() != ".D")
+                if (Path.GetExtension(fileOrFolderName).ToUpper() != ".D")
                 {
                     // Folder exists, and it does not end in .D
-                    return new List<string>() { sFileOrFolderName };
+                    return new List<string> { fileOrFolderName };
                 }
 
                 // Look for other .D folders
-                var fileOrFolderNames = new List<string>() { sFileOrFolderName };
+                var fileOrFolderNames = new List<string> { fileOrFolderName };
                 FindDotDFolders(diDatasetFolder, fileOrFolderNames);
 
                 return fileOrFolderNames;
             }
 
-            m_Msg = "clsPluginMain.GetDataFileOrFolderName: Folder " + sFileOrFolderPath + " not found";
+            m_Msg = "clsPluginMain.GetDataFileOrFolderName: Folder " + fileOrFolderPath + " not found";
             LogError(m_Msg);
-            m_Msg = "Folder " + sFileOrFolderPath + " not found";
+            m_Msg = "Folder " + fileOrFolderPath + " not found";
 
             return new List<string>();
 
@@ -981,11 +981,11 @@ namespace DatasetInfoPlugin
         /// <returns></returns>
         protected string GetMSFileInfoScannerDLLPath()
         {
-            var strMSFileInfoScannerFolder = m_MgrParams.GetParam("MSFileInfoScannerDir", string.Empty);
-            if (string.IsNullOrEmpty(strMSFileInfoScannerFolder))
+            var msFileInfoScannerFolder = m_MgrParams.GetParam("MSFileInfoScannerDir", string.Empty);
+            if (string.IsNullOrEmpty(msFileInfoScannerFolder))
                 return string.Empty;
 
-            return Path.Combine(strMSFileInfoScannerFolder, "MSFileInfoScanner.dll");
+            return Path.Combine(msFileInfoScannerFolder, "MSFileInfoScanner.dll");
         }
 
         /// <summary>
@@ -1008,7 +1008,7 @@ namespace DatasetInfoPlugin
                 {
                     m_Msg = "Data file not found, but ." + altExtension + " file exists";
                     LogMessage(m_Msg);
-                    return new List<string>() { INVALID_FILE_TYPE };
+                    return new List<string> { INVALID_FILE_TYPE };
                 }
             }
 
@@ -1069,7 +1069,7 @@ namespace DatasetInfoPlugin
 
             LogDebug("Determining tool version info");
 
-            var strToolVersionInfo = string.Empty;
+            var toolVersionInfo = string.Empty;
             var appFolder = clsUtilities.GetAppFolderPath();
 
             if (string.IsNullOrWhiteSpace(appFolder))
@@ -1079,38 +1079,38 @@ namespace DatasetInfoPlugin
             }
 
             // Lookup the version of the dataset info plugin
-            var strPluginPath = Path.Combine(appFolder, "DatasetInfoPlugin.dll");
-            var bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strPluginPath);
+            var pluginPath = Path.Combine(appFolder, "DatasetInfoPlugin.dll");
+            var bSuccess = StoreToolVersionInfoOneFile(ref toolVersionInfo, pluginPath);
             if (!bSuccess)
                 return false;
 
             // Lookup the version of the MSFileInfoScanner DLL
-            var strMSFileInfoScannerPath = GetMSFileInfoScannerDLLPath();
-            if (!string.IsNullOrEmpty(strMSFileInfoScannerPath))
+            var msFileInfoScannerDLLPath = GetMSFileInfoScannerDLLPath();
+            if (!string.IsNullOrEmpty(msFileInfoScannerDLLPath))
             {
-                bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strMSFileInfoScannerPath);
+                bSuccess = StoreToolVersionInfoOneFile(ref toolVersionInfo, msFileInfoScannerDLLPath);
                 if (!bSuccess)
                     return false;
             }
 
             // Lookup the version of the UIMFLibrary DLL
-            var strUIMFLibraryPath = Path.Combine(appFolder, "UIMFLibrary.dll");
-            bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strUIMFLibraryPath);
+            var uimfLibraryPath = Path.Combine(appFolder, "UIMFLibrary.dll");
+            bSuccess = StoreToolVersionInfoOneFile(ref toolVersionInfo, uimfLibraryPath);
             if (!bSuccess)
                 return false;
 
             // Store path to CaptureToolPlugin.dll and MSFileInfoScanner.dll in ioToolFiles
             var ioToolFiles = new List<FileInfo>
             {
-                new FileInfo(strPluginPath)
+                new FileInfo(pluginPath)
             };
 
-            if (!string.IsNullOrEmpty(strMSFileInfoScannerPath))
-                ioToolFiles.Add(new FileInfo(strMSFileInfoScannerPath));
+            if (!string.IsNullOrEmpty(msFileInfoScannerDLLPath))
+                ioToolFiles.Add(new FileInfo(msFileInfoScannerDLLPath));
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, false);
+                return SetStepTaskToolVersion(toolVersionInfo, ioToolFiles, false);
             }
             catch (Exception ex)
             {
