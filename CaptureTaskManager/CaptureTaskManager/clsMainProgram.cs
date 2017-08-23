@@ -582,17 +582,21 @@ namespace CaptureTaskManager
 
             m_Running = true;
 
+            var clearWorkDirectory = true;
+
             // Begin main execution loop
             while (m_Running)
             {
                 try
                 {
                     // Verify that an error hasn't left the the system in an odd state
-                    if (StatusFlagFileError())
+                    if (StatusFlagFileError(clearWorkDirectory))
                     {
                         m_LoopExitCode = LoopExitCode.FlagFile;
                         break;
                     }
+
+                    clearWorkDirectory = false;
 
                     // Check for configuration change
                     // This variable will be true if the CaptureTaskManager.exe.config file has been updated
@@ -1091,11 +1095,32 @@ namespace CaptureTaskManager
         /// Looks for flag file; auto cleans if ManagerErrorCleanupMode is >= 1
         /// </summary>
         /// <returns>True if a flag file exists and it was not auto-cleaned; false if no problems</returns>
-        private bool StatusFlagFileError()
+        private bool StatusFlagFileError(bool clearWorkDirectory)
         {
+            var cleanupModeVal = m_MgrSettings.GetParam("ManagerErrorCleanupMode", 0);
+            clsCleanupMgrErrors.eCleanupModeConstants cleanupMode;
+
+            if (Enum.IsDefined(typeof(clsCleanupMgrErrors.eCleanupModeConstants), cleanupModeVal))
+            {
+                cleanupMode = (clsCleanupMgrErrors.eCleanupModeConstants)cleanupModeVal;
+            }
+            else
+            {
+                cleanupMode = clsCleanupMgrErrors.eCleanupModeConstants.Disabled;
+            }
+
             if (!m_StatusFile.DetectStatusFlagFile())
             {
                 // No flag file
+
+                if (clearWorkDirectory && cleanupMode == clsCleanupMgrErrors.eCleanupModeConstants.CleanupAlways)
+                {
+                    // Delete all files in the working directory (but ignore errors)
+                    // Delete all folders and subfolders in work folder
+                    var workingDir = m_MgrSettings.GetParam("WorkDir");
+                    clsToolRunnerBase.CleanWorkDir(workingDir, 1, out _);
+                }
+
                 return false;
             }
 
@@ -1108,8 +1133,7 @@ namespace CaptureTaskManager
                     m_MgrSettings.GetParam("WorkDir"),
                     m_StatusFile);
 
-                var cleanupModeVal = m_MgrSettings.GetParam("ManagerErrorCleanupMode", 0);
-                var cleanupSuccess = objCleanupMgrErrors.AutoCleanupManagerErrors(cleanupModeVal);
+                var cleanupSuccess = objCleanupMgrErrors.AutoCleanupManagerErrors(cleanupMode);
 
                 if (cleanupSuccess)
                 {
