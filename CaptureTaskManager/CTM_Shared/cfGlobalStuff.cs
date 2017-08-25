@@ -298,9 +298,7 @@ namespace CaptureTaskManager
         /// <remarks>The message is shown in dark grey in the console.</remarks>
         public static void LogDebug(string statusMessage, bool writeToLog = true)
         {
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine("  " + statusMessage);
-            Console.ResetColor();
+            ConsoleMsgUtils.ShowDebug(statusMessage);
 
             if (writeToLog)
             {
@@ -314,9 +312,7 @@ namespace CaptureTaskManager
         /// <param name="logToDb">When true, log the message to the database and the local log file</param>
         public static void LogError(string errorMessage, bool logToDb = false)
         {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine(errorMessage);
-            Console.ResetColor();
+            ConsoleMsgUtils.ShowError(errorMessage);
 
             var loggerType = logToDb ? clsLogTools.LoggerTypes.LogDb : clsLogTools.LoggerTypes.LogFile;
             clsLogTools.WriteLog(loggerType, clsLogTools.LogLevels.ERROR, errorMessage);
@@ -329,25 +325,8 @@ namespace CaptureTaskManager
         /// <param name="ex">Exception to log</param>
         public static void LogError(string errorMessage, Exception ex)
         {
-            string formattedError;
-            if (ex == null || errorMessage.EndsWith(ex.Message))
-            {
-                formattedError = errorMessage;
-            }
-            else
-            {
-                formattedError = errorMessage + ": " + ex.Message;
-            }
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine(formattedError);
+            var formattedError = ConsoleMsgUtils.ShowError(errorMessage, ex);
 
-            if (ex != null)
-            {
-                Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.WriteLine(clsStackTraceFormatter.GetExceptionStackTraceMultiLine(ex));
-            }
-
-            Console.ResetColor();
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, formattedError, ex);
         }
 
@@ -361,9 +340,7 @@ namespace CaptureTaskManager
         {
             if (isError)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine(statusMessage);
-                Console.ResetColor();
+                ConsoleMsgUtils.ShowError(statusMessage, false);
             }
             else
             {
@@ -390,9 +367,7 @@ namespace CaptureTaskManager
         /// <param name="logToDb">When true, log the message to the database and the local log file</param>
         public static void LogWarning(string warningMessage, bool logToDb = false)
         {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine(warningMessage);
-            Console.ResetColor();
+            ConsoleMsgUtils.ShowWarning(warningMessage);
 
             var loggerType = logToDb ? clsLogTools.LoggerTypes.LogDb : clsLogTools.LoggerTypes.LogFile;
             clsLogTools.WriteLog(loggerType, clsLogTools.LogLevels.WARN, warningMessage);
