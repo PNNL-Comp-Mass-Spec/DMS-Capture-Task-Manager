@@ -995,6 +995,10 @@ namespace ArchiveVerifyPlugin
                     return false;
 
                 var hashFileUpdateSuccess = CreateOrUpdateHashResultsFile(filteredFiles);
+
+                if (!hashFileUpdateSuccess)
+                    mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
+
                 return hashFileUpdateSuccess;
 
             }
