@@ -52,9 +52,9 @@ namespace CaptureToolPlugin
 
         #region "Classwide variables"
 
-        private readonly IMgrParams m_MgrParams;
+        private readonly IMgrParams mMgrParams;
 
-        private readonly int m_SleepInterval;
+        private readonly int mSleepInterval;
 
         // True means MgrParam "perspective" =  "client" which means we will use paths like \\proto-5\Exact04\2012_1
         // False means MgrParam "perspective" = "server" which means we use paths like E:\Exact04\2012_1
@@ -63,38 +63,38 @@ namespace CaptureToolPlugin
         // Capture tasks that occur on the Proto-x servers should be limited to certain instruments via table T_Processor_Instrument in the DMS_Capture DB
         // If a capture task manager running on a Proto-x server has the DatasetCapture tool enabled, yet does not have an entry in T_Processor_Instrument,
         //  then no capture tasks are allowed to be assigned to avoid drive path problems
-        private bool m_ClientServer;
+        private bool mClientServer;
 
-        private readonly bool m_UseBioNet;
-        private readonly bool m_TraceMode;
+        private readonly bool mUseBioNet;
+        private readonly bool mTraceMode;
 
-        private readonly string m_UserName = "";
-        private readonly string m_Pwd = "";
-        private ShareConnector m_ShareConnectorPRISM;
+        private readonly string mUserName = "";
+        private readonly string mPassword = "";
+        private ShareConnector mShareConnectorPRISM;
         private NetworkConnection m_ShareConnectorDotNET;
         private ConnectionType m_ConnectionType = ConnectionType.NotConnected;
-        private bool m_NeedToAbortProcessing;
+        private bool mNeedToAbortProcessing;
 
-        private readonly clsFileTools m_FileTools;
+        private readonly clsFileTools mFileTools;
 
-        DateTime m_LastProgressUpdate = DateTime.Now;
+        DateTime mLastProgressUpdate = DateTime.Now;
 
-        string m_LastProgressFileName = string.Empty;
-        float m_LastProgressPercent = -1;
+        string mLastProgressFileName = string.Empty;
+        float mLastProgressPercent = -1;
         private bool mFileCopyEventsWired;
 
-        string m_ErrorMessage = string.Empty;
+        string mErrorMessage = string.Empty;
 
         /// <summary>
         /// List of characters that should be automatically replaced if doing so makes the filename match the dataset name
         /// </summary>
-        private readonly Dictionary<char, string> m_FilenameAutoFixes;
+        private readonly Dictionary<char, string> mFilenameAutoFixes;
 
         #endregion
 
         #region "Properties"
 
-        public bool NeedToAbortProcessing => m_NeedToAbortProcessing;
+        public bool NeedToAbortProcessing => mNeedToAbortProcessing;
 
         #endregion
 
@@ -108,45 +108,45 @@ namespace CaptureToolPlugin
         /// <param name="traceMode">When true, show debug messages at the console</param>
         public clsCaptureOps(IMgrParams mgrParams, bool useBioNet, bool traceMode)
         {
-            m_MgrParams = mgrParams;
-            m_TraceMode = traceMode;
+            mMgrParams = mgrParams;
+            mTraceMode = traceMode;
 
             // Get client/server perspective
             //   True means MgrParam "perspective" =  "client" which means we will use paths like \\proto-5\Exact04\2012_1
             //   False means MgrParam "perspective" = "server" which means we use paths like E:\Exact04\2012_1
-            var tmpParam = m_MgrParams.GetParam("perspective");
-            m_ClientServer = tmpParam.ToLower() == "client";
+            var tmpParam = mMgrParams.GetParam("perspective");
+            mClientServer = tmpParam.ToLower() == "client";
 
             // Setup for BioNet use, if applicable
-            m_UseBioNet = useBioNet;
-            if (m_UseBioNet)
+            mUseBioNet = useBioNet;
+            if (mUseBioNet)
             {
-                m_UserName = m_MgrParams.GetParam("bionetuser");
-                m_Pwd = m_MgrParams.GetParam("bionetpwd");
+                mUserName = mMgrParams.GetParam("bionetuser");
+                mPassword = mMgrParams.GetParam("bionetpwd");
 
-                if (!m_UserName.Contains(@"\"))
+                if (!mUserName.Contains(@"\"))
                 {
                     // Prepend this computer's name to the username
-                    m_UserName = Environment.MachineName + @"\" + m_UserName;
+                    mUserName = Environment.MachineName + @"\" + mUserName;
                 }
             }
 
             // Sleep interval for "is dataset complete" testing
-            m_SleepInterval = m_MgrParams.GetParam("sleepinterval", 30);
+            mSleepInterval = mMgrParams.GetParam("sleepinterval", 30);
 
-            // Instantiate m_FileTools
-            m_FileTools = new clsFileTools(m_MgrParams.GetParam("MgrName", "CaptureTaskManager"), 1);
+            // Instantiate mFileTools
+            mFileTools = new clsFileTools(mMgrParams.GetParam("MgrName", "CaptureTaskManager"), 1);
 
             // Note that all of the events and methods in clsFileTools are static
             if (!mFileCopyEventsWired)
             {
                 mFileCopyEventsWired = true;
-                m_FileTools.CopyingFile += OnCopyingFile;
-                m_FileTools.FileCopyProgress += OnFileCopyProgress;
-                m_FileTools.ResumingFileCopy += OnResumingFileCopy;
+                mFileTools.CopyingFile += OnCopyingFile;
+                mFileTools.FileCopyProgress += OnFileCopyProgress;
+                mFileTools.ResumingFileCopy += OnResumingFileCopy;
             }
 
-            m_FilenameAutoFixes = new Dictionary<char, string> {
+            mFilenameAutoFixes = new Dictionary<char, string> {
                 { ' ', "_"},
                 { '%', "pct"},
                 { '.', "pt"}};
@@ -167,7 +167,7 @@ namespace CaptureToolPlugin
             var candidateFiles = new List<FileSystemInfo>();
 
             // Find items matching "* *" and "*%*" and "*.*"
-            foreach (var item in m_FilenameAutoFixes)
+            foreach (var item in mFilenameAutoFixes)
             {
                 if (item.Key == '.')
                 {
@@ -194,7 +194,7 @@ namespace CaptureToolPlugin
 
                 processedFiles.Add(datasetFile.FullName);
 
-                var updatedFileName = AutoFixFilename(datasetName, datasetFile.Name, m_FilenameAutoFixes);
+                var updatedFileName = AutoFixFilename(datasetName, datasetFile.Name, mFilenameAutoFixes);
 
                 if (string.Equals(datasetFile.Name, updatedFileName, StringComparison.OrdinalIgnoreCase))
                 {
@@ -247,12 +247,12 @@ namespace CaptureToolPlugin
         public void DetachEvents()
         {
             // Un-wire the events
-            if (mFileCopyEventsWired && m_FileTools != null)
+            if (mFileCopyEventsWired && mFileTools != null)
             {
                 mFileCopyEventsWired = false;
-                m_FileTools.CopyingFile -= OnCopyingFile;
-                m_FileTools.FileCopyProgress -= OnFileCopyProgress;
-                m_FileTools.ResumingFileCopy -= OnResumingFileCopy;
+                mFileTools.CopyingFile -= OnCopyingFile;
+                mFileTools.FileCopyProgress -= OnFileCopyProgress;
+                mFileTools.ResumingFileCopy -= OnResumingFileCopy;
             }
         }
 
@@ -274,8 +274,8 @@ namespace CaptureToolPlugin
             }
             catch (Exception ex)
             {
-                m_ErrorMessage = "Exception creating directory " + inpPath;
-                LogError(m_ErrorMessage, ex);
+                mErrorMessage = "Exception creating directory " + inpPath;
+                LogError(mErrorMessage, ex);
             }
 
         }
@@ -296,7 +296,7 @@ namespace CaptureToolPlugin
                 if (!diFolder.Exists)
                     return true;
 
-                string sTargetPath;
+                string targetPath;
                 var itemCountRenamed = 0;
 
                 var foundFiles = diFolder.GetFiles();
@@ -306,7 +306,7 @@ namespace CaptureToolPlugin
                 foreach (var fiFile in foundFiles)
                 {
                     // Rename the file, but only if it is not in filesToSkip
-                    var bSkipFile = filesToSkip.Any(fiFileToSkip => fiFileToSkip.FullName == fiFile.FullName);
+                    var skipFile = filesToSkip.Any(fiFileToSkip => fiFileToSkip.FullName == fiFile.FullName);
 
                     if (fiFile.Name.StartsWith("x_") && foundFiles.Length == 1)
                     {
@@ -314,20 +314,20 @@ namespace CaptureToolPlugin
                         continue;
                     }
 
-                    if (bSkipFile)
+                    if (skipFile)
                     {
                         continue;
                     }
 
-                    sTargetPath = Path.Combine(diFolder.FullName, "x_" + fiFile.Name);
+                    targetPath = Path.Combine(diFolder.FullName, "x_" + fiFile.Name);
 
-                    if (File.Exists(sTargetPath))
+                    if (File.Exists(targetPath))
                     {
                         // Target exists; delete it
-                        File.Delete(sTargetPath);
+                        File.Delete(targetPath);
                     }
 
-                    fiFile.MoveTo(sTargetPath);
+                    fiFile.MoveTo(targetPath);
                     itemCountRenamed++;
                 }
 
@@ -347,15 +347,15 @@ namespace CaptureToolPlugin
                         continue;
                     }
 
-                    sTargetPath = Path.Combine(diFolder.FullName, "x_" + diSubFolder.Name);
+                    targetPath = Path.Combine(diFolder.FullName, "x_" + diSubFolder.Name);
 
-                    if (Directory.Exists(sTargetPath))
+                    if (Directory.Exists(targetPath))
                     {
                         // Target exists; delete it
-                        Directory.Delete(sTargetPath, true);
+                        Directory.Delete(targetPath, true);
                     }
 
-                    diSubFolder.MoveTo(sTargetPath);
+                    diSubFolder.MoveTo(targetPath);
                     itemCountRenamed++;
                 }
 
@@ -368,8 +368,8 @@ namespace CaptureToolPlugin
             }
             catch (Exception ex)
             {
-                m_ErrorMessage = "Exception renaming files/folders to start with x_";
-                var msg = m_ErrorMessage + " at " + folderPath;
+                mErrorMessage = "Exception renaming files/folders to start with x_";
+                var msg = mErrorMessage + " at " + folderPath;
                 LogError(msg, true);
                 LogError("Stack trace", ex);
                 return false;
@@ -418,9 +418,9 @@ namespace CaptureToolPlugin
             catch (Exception ex)
             {
                 // Something really bad happened
-                m_ErrorMessage = "Error checking for empty dataset folder";
+                mErrorMessage = "Error checking for empty dataset folder";
 
-                var msg = m_ErrorMessage + ": " + dsFolder;
+                var msg = mErrorMessage + ": " + dsFolder;
                 LogError(msg, true);
                 LogError("Stack trace", ex);
                 return DatasetFolderState.Error;
@@ -463,7 +463,7 @@ namespace CaptureToolPlugin
                     // (Error reporting was handled by call to IsDSFolderEmpty above)
                     break;
                 case DatasetFolderState.NotEmpty:
-                    var DSAction = m_MgrParams.GetParam("DSFolderExistsAction");
+                    var DSAction = mMgrParams.GetParam("DSFolderExistsAction");
 
                     switch (DSAction.ToLower())
                     {
@@ -589,8 +589,8 @@ namespace CaptureToolPlugin
             }
             catch (Exception ex)
             {
-                m_ErrorMessage = "Error renaming directory " + DSPath;
-                LogError(m_ErrorMessage, ex);
+                mErrorMessage = "Error renaming directory " + DSPath;
+                LogError(mErrorMessage, ex);
                 return false;
             }
         }
@@ -657,13 +657,13 @@ namespace CaptureToolPlugin
                 var targetFolder = new DirectoryInfo(folderPath);
 
                 // Get the initial size of the folder
-                var initialFolderSize = m_FileTools.GetDirectorySize(targetFolder.FullName);
+                var initialFolderSize = mFileTools.GetDirectorySize(targetFolder.FullName);
 
                 // Wait for specified sleep interval
                 VerifyConstantSizeSleep(sleepIntervalSeconds, "folder " + targetFolder.Name);
 
                 // Get the final size of the folder and compare
-                var finalFolderSize = m_FileTools.GetDirectorySize(folderPath);
+                var finalFolderSize = mFileTools.GetDirectorySize(folderPath);
 
                 if (finalFolderSize == initialFolderSize)
                     return true;
@@ -717,7 +717,7 @@ namespace CaptureToolPlugin
 
                 if (finalFileSize == initialFileSize)
                 {
-                    if (m_TraceMode)
+                    if (mTraceMode)
                         clsToolRunnerBase.ShowTraceMessage("File size did not change");
                     return true;
                 }
@@ -748,7 +748,7 @@ namespace CaptureToolPlugin
         {
             const int STATUS_MESSAGE_INTERVAL = 5;
 
-            if (m_TraceMode)
+            if (mTraceMode)
             {
                 clsToolRunnerBase.ShowTraceMessage(
                     string.Format("Monitoring {0} for {1} seconds", fileOrFolderName, sleepIntervalSeconds));
@@ -766,7 +766,7 @@ namespace CaptureToolPlugin
                     continue;
 
                 nextStatusTime = nextStatusTime.AddSeconds(STATUS_MESSAGE_INTERVAL);
-                if (m_TraceMode)
+                if (mTraceMode)
                 {
                     clsToolRunnerBase.ShowTraceMessage(
                         string.Format("{0:0} seconds remaining", verificationEndTime.Subtract(DateTime.UtcNow).TotalSeconds));
@@ -781,43 +781,43 @@ namespace CaptureToolPlugin
         /// <returns></returns>
         private string GetConnectionDescription()
         {
-            string sConnectionMode;
+            string connectionMode;
 
             switch (m_ConnectionType)
             {
                 case ConnectionType.NotConnected:
-                    sConnectionMode = " as user " + Environment.UserName + " using fso";
+                    connectionMode = " as user " + Environment.UserName + " using fso";
                     break;
                 case ConnectionType.DotNET:
-                    sConnectionMode = " as user " + m_UserName + " using CaptureTaskManager.NetworkConnection";
+                    connectionMode = " as user " + mUserName + " using CaptureTaskManager.NetworkConnection";
                     break;
                 case ConnectionType.Prism:
-                    sConnectionMode = " as user " + m_UserName + " using PRISM.ShareConnector";
+                    connectionMode = " as user " + mUserName + " using PRISM.ShareConnector";
                     break;
                 default:
-                    sConnectionMode = " via unknown connection mode";
+                    connectionMode = " via unknown connection mode";
                     break;
             }
 
-            return sConnectionMode;
+            return connectionMode;
         }
         /// <summary>
         /// Determines if raw dataset exists as a file or folder
         /// </summary>
-        /// <param name="InstFolder">Full path to instrument transfer folder</param>
-        /// <param name="DSName">Dataset name</param>
+        /// <param name="sourceFolderPath">Full path to instrument transfer folder</param>
+        /// <param name="datasetName">Dataset name</param>
         /// <param name="instrumentClass">Instrument class for dataet to be located</param>
         /// <returns>clsDatasetInfo object containing info on found dataset</returns>
-        private clsDatasetInfo GetRawDSType(string InstFolder, string DSName, clsInstrumentClassInfo.eInstrumentClass instrumentClass)
+        private clsDatasetInfo GetRawDSType(string sourceFolderPath, string datasetName, clsInstrumentClassInfo.eInstrumentClass instrumentClass)
         {
             // Determines if raw dataset exists as a single file, folder with same name as dataset, or
             // folder with dataset name + extension. Returns object containing info on dataset found
 
-            bool bLookForDatasetFile;
+            bool lookForDatasetFile;
 
-            var datasetInfo = new clsDatasetInfo(DSName);
+            var datasetInfo = new clsDatasetInfo(datasetName);
 
-            var diSourceFolder = new DirectoryInfo(InstFolder);
+            var diSourceFolder = new DirectoryInfo(sourceFolderPath);
 
             // Verify that the instrument transfer folder exists
             if (!diSourceFolder.Exists)
@@ -832,25 +832,27 @@ namespace CaptureToolPlugin
             {
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging:
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging_V2:
-                    bLookForDatasetFile = false;
+                case clsInstrumentClassInfo.eInstrumentClass.IMS_Agilent_TOF:
+                    // Preferentially capture dataset folders
+                    // If a folder is not found, will instead look for a dataset file
+                    lookForDatasetFile = false;
                     break;
                 default:
-                    bLookForDatasetFile = true;
+                    // First look for a file with name DSName, if not found, look for a folder
+                    lookForDatasetFile = true;
                     break;
             }
 
-            // First look for a file with name DSName, if not found, look for a folder
-            // If bLookForDatasetFile=False, we do the reverse: first look for a folder, then look for a file
-            for (var iIteration = 0; iIteration < 2; ++iIteration)
+            for (var iteration = 1; iteration <= 2; iteration++)
             {
-                if (bLookForDatasetFile)
+                if (lookForDatasetFile)
                 {
                     // Get all files with a specified name
-                    var diSourceDir = new DirectoryInfo(Path.Combine(InstFolder));
-                    var foundFiles = diSourceDir.GetFiles(DSName + ".*");
+                    var diSourceDir = new DirectoryInfo(Path.Combine(sourceFolderPath));
+                    var foundFiles = diSourceDir.GetFiles(datasetName + ".*");
                     if (foundFiles.Length > 0)
                     {
-                        datasetInfo.FileOrFolderName = DSName;
+                        datasetInfo.FileOrFolderName = datasetName;
                         datasetInfo.FileList = foundFiles;
 
                         if (datasetInfo.FileCount == 1)
@@ -875,7 +877,7 @@ namespace CaptureToolPlugin
                 else
                 {
                     // Check for a folder with specified name
-                    var subFolders = Directory.GetDirectories(InstFolder);
+                    var subFolders = Directory.GetDirectories(sourceFolderPath);
                     foreach (var testFolder in subFolders)
                     {
                         // Using Path.GetFileNameWithoutExtension on folders is cheezy, but it works. This is done
@@ -884,7 +886,7 @@ namespace CaptureToolPlugin
                         // a directory
                         var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(testFolder);
                         if (fileNameWithoutExtension == null ||
-                            !string.Equals(fileNameWithoutExtension, DSName, StringComparison.CurrentCultureIgnoreCase))
+                            !string.Equals(fileNameWithoutExtension, datasetName, StringComparison.CurrentCultureIgnoreCase))
                         {
                             continue;
                         }
@@ -907,12 +909,14 @@ namespace CaptureToolPlugin
                                     datasetInfo.DatasetType = RawDSTypes.FolderNoExt;
                                     break;
                             }
-                            return datasetInfo;
+                        }
+                        else
+                        {
+                            // Directory name has an extension
+                            datasetInfo.FileOrFolderName = Path.GetFileName(testFolder);
+                            datasetInfo.DatasetType = RawDSTypes.FolderExt;
                         }
 
-                        // Directory name has an extension
-                        datasetInfo.FileOrFolderName = Path.GetFileName(testFolder);
-                        datasetInfo.DatasetType = RawDSTypes.FolderExt;
                         if (iteration > 1)
                         {
                             LogMessage(string.Format(
@@ -924,7 +928,7 @@ namespace CaptureToolPlugin
                     }
                 }
 
-                bLookForDatasetFile = !bLookForDatasetFile;
+                lookForDatasetFile = !lookForDatasetFile;
             }
 
             // If we got to here, the raw dataset wasn't found (either as a file or a folder), so there was a problem
@@ -934,30 +938,36 @@ namespace CaptureToolPlugin
         }
 
         /// <summary>
-        /// Connect to a BioNet share using either m_ShareConnectorPRISM or m_ShareConnectorDotNET
+        /// Connect to a BioNet share using either mShareConnectorPRISM or m_ShareConnectorDotNET
         /// </summary>
         /// <param name="userName">Username</param>
         /// <param name="pwd">Password</param>
         /// <param name="shareFolderPath">Share path</param>
-        /// <param name="eConnectionType">Connection type enum (ConnectionType.DotNET or ConnectionType.Prism)</param>
-        /// <param name="eCloseoutType">Closeout code (output)</param>
-        /// <param name="eEvalCode"></param>
+        /// <param name="connectionType">Connection type enum (ConnectionType.DotNET or ConnectionType.Prism)</param>
+        /// <param name="closeoutType">Closeout code (output)</param>
+        /// <param name="evalCode"></param>
         /// <returns>True if success, false if an error</returns>
-        private bool ConnectToShare(string userName, string pwd, string shareFolderPath, ConnectionType eConnectionType, out EnumCloseOutType eCloseoutType, out EnumEvalCode eEvalCode)
+        private bool ConnectToShare(
+            string userName,
+            string pwd,
+            string shareFolderPath,
+            ConnectionType connectionType,
+            out EnumCloseOutType closeoutType,
+            out EnumEvalCode evalCode)
         {
-            bool bSuccess;
+            bool success;
 
-            if (eConnectionType == ConnectionType.DotNET)
+            if (connectionType == ConnectionType.DotNET)
             {
-                bSuccess = ConnectToShare(userName, pwd, shareFolderPath, out m_ShareConnectorDotNET, out eCloseoutType, out eEvalCode);
+                success = ConnectToShare(userName, pwd, shareFolderPath, out m_ShareConnectorDotNET, out closeoutType, out evalCode);
             }
             else
             {
                 // Assume Prism Connector
-                bSuccess = ConnectToShare(userName, pwd, shareFolderPath, out m_ShareConnectorPRISM, out eCloseoutType, out eEvalCode);
+                success = ConnectToShare(userName, pwd, shareFolderPath, out mShareConnectorPRISM, out closeoutType, out evalCode);
             }
 
-            return bSuccess;
+            return success;
 
         }
 
@@ -969,13 +979,19 @@ namespace CaptureToolPlugin
         /// <param name="pwd">Password</param>
         /// <param name="shareFolderPath">Share path</param>
         /// <param name="myConn">Connection object (output)</param>
-        /// <param name="eCloseoutType">Closeout code (output)</param>
-        /// <param name="eEvalCode"></param>
+        /// <param name="closeoutType">Closeout code (output)</param>
+        /// <param name="evalCode"></param>
         /// <returns>True if success, false if an error</returns>
-        private bool ConnectToShare(string userName, string pwd, string shareFolderPath, out ShareConnector myConn, out EnumCloseOutType eCloseoutType, out EnumEvalCode eEvalCode)
+        private bool ConnectToShare(
+            string userName,
+            string pwd,
+            string shareFolderPath,
+            out ShareConnector myConn,
+            out EnumCloseOutType closeoutType,
+            out EnumEvalCode evalCode)
         {
-            eCloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
-            eEvalCode = EnumEvalCode.EVAL_CODE_SUCCESS;
+            closeoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+            evalCode = EnumEvalCode.EVAL_CODE_SUCCESS;
 
             myConn = new ShareConnector(userName, pwd)
             {
@@ -989,9 +1005,9 @@ namespace CaptureToolPlugin
                 return true;
             }
 
-            m_ErrorMessage = "Error " + myConn.ErrorMessage + " connecting to " + shareFolderPath + " as user " + userName + " using 'secfso'";
+            mErrorMessage = "Error " + myConn.ErrorMessage + " connecting to " + shareFolderPath + " as user " + userName + " using 'secfso'";
 
-            var msg = string.Copy(m_ErrorMessage);
+            var msg = string.Copy(mErrorMessage);
 
             if (myConn.ErrorMessage == "1326")
                 msg += "; you likely need to change the Capture_Method from secfso to fso";
@@ -1004,13 +1020,13 @@ namespace CaptureToolPlugin
             {
                 // Likely had error "An unexpected network error occurred" while copying a file for a previous dataset
                 // Need to completely exit the capture task manager
-                m_NeedToAbortProcessing = true;
-                eCloseoutType = EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING;
-                eEvalCode = EnumEvalCode.EVAL_CODE_NETWORK_ERROR_RETRY_CAPTURE;
+                mNeedToAbortProcessing = true;
+                closeoutType = EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING;
+                evalCode = EnumEvalCode.EVAL_CODE_NETWORK_ERROR_RETRY_CAPTURE;
             }
             else
             {
-                eCloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                closeoutType = EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
             m_ConnectionType = ConnectionType.NotConnected;
@@ -1025,12 +1041,18 @@ namespace CaptureToolPlugin
         /// <param name="pwd">Password</param>
         /// <param name="shareFolderPath">Share path</param>
         /// <param name="myConn">Connection object (output)</param>
-        /// <param name="eCloseoutType">Closeout code (output)</param>
-        /// <param name="eEvalCode"></param>
+        /// <param name="closeoutType">Closeout code (output)</param>
+        /// <param name="evalCode"></param>
         /// <returns>True if success, false if an error</returns>
-        private bool ConnectToShare(string userName, string pwd, string shareFolderPath, out NetworkConnection myConn, out EnumCloseOutType eCloseoutType, out EnumEvalCode eEvalCode)
+        private bool ConnectToShare(
+            string userName,
+            string pwd,
+            string shareFolderPath,
+            out NetworkConnection myConn,
+            out EnumCloseOutType closeoutType,
+            out EnumEvalCode evalCode)
         {
-            eEvalCode = EnumEvalCode.EVAL_CODE_SUCCESS;
+            evalCode = EnumEvalCode.EVAL_CODE_SUCCESS;
             myConn = null;
 
             try
@@ -1046,20 +1068,20 @@ namespace CaptureToolPlugin
                 LogDebug("Connected to Bionet (" + shareFolderPath + ") as user " + userName + " using CaptureTaskManager.NetworkConnection");
                 m_ConnectionType = ConnectionType.DotNET;
 
-                eCloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+                closeoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
                 return true;
 
             }
             catch (Exception ex)
             {
-                m_ErrorMessage = "Error connecting to " + shareFolderPath + " as user " + userName + " (using NetworkConnection class)";
-                LogError(m_ErrorMessage, ex);
+                mErrorMessage = "Error connecting to " + shareFolderPath + " as user " + userName + " (using NetworkConnection class)";
+                LogError(mErrorMessage, ex);
 
                 var retData = new clsToolReturnData();
                 HandleCopyException(ref retData, ex);
 
-                eCloseoutType = retData.CloseoutType;
-                eEvalCode = retData.EvalCode;
+                closeoutType = retData.CloseoutType;
+                evalCode = retData.EvalCode;
 
                 m_ConnectionType = ConnectionType.NotConnected;
                 return false;
@@ -1074,7 +1096,7 @@ namespace CaptureToolPlugin
         private void DisconnectShareIfRequired()
         {
             if (m_ConnectionType == ConnectionType.Prism)
-                DisconnectShare(ref m_ShareConnectorPRISM);
+                DisconnectShare(ref mShareConnectorPRISM);
             else if (m_ConnectionType == ConnectionType.DotNET)
                 DisconnectShare(ref m_ShareConnectorDotNET);
         }
@@ -1129,10 +1151,10 @@ namespace CaptureToolPlugin
             var instrumentClass = clsInstrumentClassInfo.GetInstrumentClass(instClassName);     // Enum of instrument class type
             var instName = taskParams.GetParam("Instrument_Name");                  // Instrument name
 
-            var shareConnectorType = m_MgrParams.GetParam("ShareConnectorType");        // Can be PRISM or DotNET (but has been PRISM since 2012)
+            var shareConnectorType = mMgrParams.GetParam("ShareConnectorType");        // Can be PRISM or DotNET (but has been PRISM since 2012)
             var computerName = Environment.MachineName;
 
-            ConnectionType eConnectionType;
+            ConnectionType connectionType;
 
             var maxFileCountToAllowResume = 0;
             var maxInstrumentFolderCountToAllowResume = 0;
@@ -1155,9 +1177,9 @@ namespace CaptureToolPlugin
             // This is defined by manager parameter ShareConnectorType
             // Default in October 2014 is PRISM
             if (shareConnectorType.ToLower() == "dotnet")
-                eConnectionType = ConnectionType.DotNET;
+                connectionType = ConnectionType.DotNET;
             else
-                eConnectionType = ConnectionType.Prism;
+                connectionType = ConnectionType.Prism;
 
             // Determine whether or not we will use Copy with Resume
             // This determines whether or not we add x_ to an existing file or folder,
@@ -1177,38 +1199,38 @@ namespace CaptureToolPlugin
                     break;
             }
 
-            var pwd = DecodePassword(m_Pwd);
+            var pwd = DecodePassword(mPassword);
             string tempVol;
 
             LogDebug("Started clsCaptureOps.DoOperation()");
 
-            // Setup destination folder based on client/server switch, m_ClientServer
+            // Setup destination folder based on client/server switch, mClientServer
             // True means MgrParam "perspective" =  "client" which means we will use paths like \\proto-5\Exact04\2012_1
             // False means MgrParam "perspective" = "server" which means we use paths like E:\Exact04\2012_1
 
-            if (!m_ClientServer)
+            if (!mClientServer)
             {
                 // Look for job parameter Storage_Server_Name in storageVolExternal
-                // If m_ClientServer=false but storageVolExternal does not contain Storage_Server_Name then auto-switch m_ClientServer to true
+                // If mClientServer=false but storageVolExternal does not contain Storage_Server_Name then auto-switch mClientServer to true
 
                 if (!storageVolExternal.ToLower().Contains(computerName.ToLower()))
                 {
                     var autoEnableFlag = "AutoEnableClientServer_for_" + computerName;
-                    var autoEnabledParamValue = m_MgrParams.GetParam(autoEnableFlag, string.Empty);
+                    var autoEnabledParamValue = mMgrParams.GetParam(autoEnableFlag, string.Empty);
                     if (string.IsNullOrEmpty(autoEnabledParamValue))
                     {
                         // Using a Manager Parameter to assure that the following log message is only logged once per session
                         // (in case this manager captures multiple datasets in a row)
-                        m_MgrParams.SetParam(autoEnableFlag, "True");
-                        LogMessage("Auto-changing m_ClientServer to True (perspective=client) " +
+                        mMgrParams.SetParam(autoEnableFlag, "True");
+                        LogMessage("Auto-changing mClientServer to True (perspective=client) " +
                                    "because " + storageVolExternal.ToLower() + " does not contain " + computerName.ToLower());
                     }
 
-                    m_ClientServer = true;
+                    mClientServer = true;
                 }
             }
 
-            if (m_ClientServer)
+            if (mClientServer)
             {
                 // Example: \\proto-5\
                 tempVol = storageVolExternal;
@@ -1296,14 +1318,14 @@ namespace CaptureToolPlugin
                 return false;
 
             // Connect to Bionet if necessary
-            if (m_UseBioNet)
+            if (mUseBioNet)
             {
                 LogDebug("Bionet connection required for " + sourceVol);
 
-                if (!ConnectToShare(m_UserName, pwd, sourceFolderPath, eConnectionType, out var eCloseoutType, out var eEvalCode))
+                if (!ConnectToShare(mUserName, pwd, sourceFolderPath, connectionType, out var closeoutType, out var evalCode))
                 {
-                    retData.CloseoutType = eCloseoutType;
-                    retData.EvalCode = eEvalCode;
+                    retData.CloseoutType = closeoutType;
+                    retData.EvalCode = evalCode;
 
                     PossiblyStoreErrorMessage(ref retData);
                     if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
@@ -1322,16 +1344,16 @@ namespace CaptureToolPlugin
             }
 
             // If Source_Folder_Name is non-blank, use it. Otherwise use dataset name
-            var sSourceFolderName = taskParams.GetParam("Source_Folder_Name");
+            var sourceFolderName = taskParams.GetParam("Source_Folder_Name");
 
-            if (string.IsNullOrWhiteSpace(sSourceFolderName))
+            if (string.IsNullOrWhiteSpace(sourceFolderName))
             {
-                sSourceFolderName = datasetName;
+                sourceFolderName = datasetName;
             }
             else
             {
                 // Confirm that the source folder name has no invalid characters
-                if (NameHasInvalidCharacter(sSourceFolderName, "Job param Source_Folder_Name", true, ref retData))
+                if (NameHasInvalidCharacter(sourceFolderName, "Job param Source_Folder_Name", true, ref retData))
                     return false;
             }
 
@@ -1339,8 +1361,8 @@ namespace CaptureToolPlugin
             if (!string.IsNullOrWhiteSpace(captureSubfolder))
             {
                 // However, if the subfolder name matches the dataset name, this was probably an error on the operator's part and we likely do not want to use the subfolder name
-                if (captureSubfolder.EndsWith(Path.DirectorySeparatorChar + sSourceFolderName, StringComparison.OrdinalIgnoreCase) ||
-                    captureSubfolder.Equals(sSourceFolderName, StringComparison.OrdinalIgnoreCase))
+                if (captureSubfolder.EndsWith(Path.DirectorySeparatorChar + sourceFolderName, StringComparison.OrdinalIgnoreCase) ||
+                    captureSubfolder.Equals(sourceFolderName, StringComparison.OrdinalIgnoreCase))
                 {
                     var candidateFolderPath = Path.Combine(sourceFolderPath, captureSubfolder);
 
@@ -1353,7 +1375,7 @@ namespace CaptureToolPlugin
                     }
                     else
                     {
-                        if (captureSubfolder.Equals(sSourceFolderName, StringComparison.OrdinalIgnoreCase))
+                        if (captureSubfolder.Equals(sourceFolderName, StringComparison.OrdinalIgnoreCase))
                         {
                             LogWarning(string.Format(
                                 "Dataset Capture_Subfolder is the dataset name; leaving the capture path as {0} " +
@@ -1392,9 +1414,19 @@ namespace CaptureToolPlugin
 
             }
 
-            var datasetInfo = GetRawDSType(sourceFolderPath, sSourceFolderName, instrumentClass);
+            var datasetInfo = GetRawDSType(sourceFolderPath, datasetName, instrumentClass);
             var sourceType = datasetInfo.DatasetType;
-            datasetInfo.DatasetName = datasetName;
+
+
+            if (!string.Equals(datasetInfo.DatasetName, datasetName))
+            {
+                LogWarning(string.Format(
+                    "DatasetName in the datasetInfo object is {0}; changing to {1}",
+                    datasetInfo.DatasetName,
+                    datasetName));
+
+                datasetInfo.DatasetName = datasetName;
+            }
 
             // Set the closeout type to Failed for now
             retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -1404,7 +1436,7 @@ namespace CaptureToolPlugin
             {
                 // No dataset file or folder found
 
-                if (m_UseBioNet)
+                if (mUseBioNet)
                 {
                     retData.CloseoutMsg = "Dataset data file not found on Bionet at " + sourceFolderPath;
                 }
@@ -1415,15 +1447,15 @@ namespace CaptureToolPlugin
 
                 string folderStatsMsg;
 
-                if (string.IsNullOrWhiteSpace(sSourceFolderName))
+                if (string.IsNullOrWhiteSpace(sourceFolderName))
                 {
                     folderStatsMsg = ReportFolderStats(sourceFolderPath);
                     retData.CloseoutMsg += "; empty SourceFolderName";
                 }
                 else
                 {
-                    folderStatsMsg = ReportFolderStats(Path.Combine(sourceFolderPath, sSourceFolderName));
-                    retData.CloseoutMsg += "; SourceFolderName: " + sSourceFolderName;
+                    folderStatsMsg = ReportFolderStats(Path.Combine(sourceFolderPath, sourceFolderName));
+                    retData.CloseoutMsg += "; SourceFolderName: " + sourceFolderName;
                 }
 
                 LogError(retData.CloseoutMsg + " (" + datasetName + ", job " + jobNum + "); " + folderStatsMsg);
@@ -1634,7 +1666,7 @@ namespace CaptureToolPlugin
                 return;
             }
 
-            var bSuccess = false;
+            var success = false;
 
             // Copy the data file (or files) to the dataset folder
             // If any of the source files have an invalid character (space, % or period),
@@ -1647,7 +1679,7 @@ namespace CaptureToolPlugin
                     var sourceFilePath = Path.Combine(sourceFolderPath, fileName);
                     var sourceFileName = Path.GetFileName(sourceFilePath);
 
-                    var targetFileName = AutoFixFilename(datasetName, fileName, m_FilenameAutoFixes);
+                    var targetFileName = AutoFixFilename(datasetName, fileName, mFilenameAutoFixes);
                     var targetFilePath = Path.Combine(datasetFolderPath, targetFileName);
 
                     if (!string.Equals(sourceFileName, targetFileName, StringComparison.OrdinalIgnoreCase))
@@ -1659,15 +1691,15 @@ namespace CaptureToolPlugin
                     {
                         var fiSourceFile = new FileInfo(sourceFilePath);
 
-                        bSuccess = m_FileTools.CopyFileWithResume(fiSourceFile, targetFilePath, out var bResumed);
+                        success = mFileTools.CopyFileWithResume(fiSourceFile, targetFilePath, out _);
                     }
                     else
                     {
                         File.Copy(sourceFilePath, targetFilePath);
-                        bSuccess = true;
+                        success = true;
                     }
 
-                    if (bSuccess)
+                    if (success)
                     {
                         LogMessage("  copied file " + sourceFilePath + " to " + targetFilePath + GetConnectionDescription());
                     }
@@ -1689,12 +1721,12 @@ namespace CaptureToolPlugin
                 DisconnectShareIfRequired();
             }
 
-            if (bSuccess)
+            if (success)
             {
-                bSuccess = CaptureLCMethodFile(datasetName, datasetFolderPath);
+                success = CaptureLCMethodFile(datasetName, datasetFolderPath);
             }
 
-            if (bSuccess)
+            if (success)
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
             else
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -1713,7 +1745,7 @@ namespace CaptureToolPlugin
         {
             const string DEFAULT_METHOD_FOLDER_BASE_PATH = @"\\proto-5\BionetXfer\Run_Complete_Trigger\MethodFiles";
 
-            var bSuccess = true;
+            var success = true;
             var methodFolderBasePath = string.Empty;
 
             // Look for an LCMethod file associated with this raw spectra file
@@ -1724,7 +1756,7 @@ namespace CaptureToolPlugin
 
             try
             {
-                methodFolderBasePath = m_MgrParams.GetParam("LCMethodFilesDir", DEFAULT_METHOD_FOLDER_BASE_PATH);
+                methodFolderBasePath = mMgrParams.GetParam("LCMethodFilesDir", DEFAULT_METHOD_FOLDER_BASE_PATH);
 
                 if (string.IsNullOrEmpty(methodFolderBasePath) ||
                     string.Equals(methodFolderBasePath, "na", StringComparison.CurrentCultureIgnoreCase))
@@ -1748,22 +1780,22 @@ namespace CaptureToolPlugin
                     datasetName
                 };
 
-                var iYear = DateTime.Now.Year;
-                var iQuarter = GetQuarter(DateTime.Now);
+                var year = DateTime.Now.Year;
+                var quarter = GetQuarter(DateTime.Now);
 
-                while (iYear >= 2011)
+                while (year >= 2011)
                 {
-                    lstFoldersToSearch.Add(iYear + "_" + iQuarter);
+                    lstFoldersToSearch.Add(year + "_" + quarter);
 
-                    if (iQuarter > 1)
-                        --iQuarter;
+                    if (quarter > 1)
+                        --quarter;
                     else
                     {
-                        iQuarter = 4;
-                        --iYear;
+                        quarter = 4;
+                        --year;
                     }
 
-                    if (iYear == 2011 && iQuarter == 2)
+                    if (year == 2011 && quarter == 2)
                         break;
                 }
 
@@ -1773,21 +1805,21 @@ namespace CaptureToolPlugin
                 var lstMethodFiles = new List<FileInfo>();
 
                 // Define the file match spec
-                var sLCMethodSearchSpec = "*_" + datasetName + ".lcmethod";
+                var lcMethodSearchSpec = "*_" + datasetName + ".lcmethod";
 
-                for (var iIteration = 0; iIteration <= 1; iIteration++)
+                for (var iteration = 1; iteration <= 2; iteration++)
                 {
 
-                    foreach (var sFolderName in lstFoldersToSearch)
+                    foreach (var folderName in lstFoldersToSearch)
                     {
-                        var diSubFolder = new DirectoryInfo(Path.Combine(diSourceFolder.FullName, sFolderName));
+                        var diSubFolder = new DirectoryInfo(Path.Combine(diSourceFolder.FullName, folderName));
                         if (diSubFolder.Exists)
                         {
-                            // Look for files that match sLCMethodSearchSpec
+                            // Look for files that match lcMethodSearchSpec
                             // There might be multiple files if the dataset was analyzed more than once
-                            foreach (var methodFile in diSubFolder.GetFiles(sLCMethodSearchSpec))
+                            foreach (var methodFile in diSubFolder.GetFiles(lcMethodSearchSpec))
                             {
-                                if (iIteration == 0)
+                                if (iteration == 1)
                                 {
                                     // First iteration
                                     // Check each file against the RegEx
@@ -1873,11 +1905,11 @@ namespace CaptureToolPlugin
             catch (Exception ex)
             {
                 LogError("Exception copying LCMethod file for " + datasetName, ex);
-                bSuccess = false;
+                success = false;
             }
 
             if (string.IsNullOrWhiteSpace(methodFolderBasePath))
-                return bSuccess;
+                return success;
 
             var dtCurrentTime = DateTime.Now;
             if (dtCurrentTime.Hour == 18 || dtCurrentTime.Hour == 19 || Environment.MachineName.ToLower().StartsWith("monroe"))
@@ -1888,7 +1920,7 @@ namespace CaptureToolPlugin
                 DeleteOldLCMethodFolders(methodFolderBasePath);
             }
 
-            return bSuccess;
+            return success;
         }
 
         /// <summary>
@@ -1915,7 +1947,7 @@ namespace CaptureToolPlugin
 
             SortedSet<string> filesToSkip = null;
 
-            bool bSuccess;
+            bool success;
 
             var diSourceDir = new DirectoryInfo(Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName));
             var diTargetDir = new DirectoryInfo(Path.Combine(datasetFolderPath, datasetInfo.FileOrFolderName));
@@ -1963,8 +1995,8 @@ namespace CaptureToolPlugin
                     searchSpecList.Add("ProjectCreationHelper", "project creation helper");
                 }
 
-                bSuccess = FindFilesToSkip(diSourceDir, datasetInfo, searchSpecList, ref retData, out filesToSkip);
-                if (!bSuccess)
+                success = FindFilesToSkip(diSourceDir, datasetInfo, searchSpecList, ref retData, out filesToSkip);
+                if (!success)
                 {
                     msg = "Error looking for journal files to skip";
                     retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -2010,19 +2042,19 @@ namespace CaptureToolPlugin
 
                 if (copyWithResume)
                 {
-                    const bool bRecurse = true;
-                    bSuccess = CopyFolderWithResume(diSourceDir.FullName, diTargetDir.FullName, bRecurse, ref retData, filesToSkip);
+                    const bool recurse = true;
+                    success = CopyFolderWithResume(diSourceDir.FullName, diTargetDir.FullName, recurse, ref retData, filesToSkip);
                 }
                 else
                 {
                     if (filesToSkip == null)
-                        m_FileTools.CopyDirectory(diSourceDir.FullName, diTargetDir.FullName);
+                        mFileTools.CopyDirectory(diSourceDir.FullName, diTargetDir.FullName);
                     else
-                        m_FileTools.CopyDirectory(diSourceDir.FullName, diTargetDir.FullName, filesToSkip.ToList());
-                    bSuccess = true;
+                        mFileTools.CopyDirectory(diSourceDir.FullName, diTargetDir.FullName, filesToSkip.ToList());
+                    success = true;
                 }
 
-                if (bSuccess)
+                if (success)
                 {
                     msg = "Copied folder " + diSourceDir.FullName + " to " + diTargetDir.FullName + GetConnectionDescription();
                     LogMessage(msg);
@@ -2047,9 +2079,9 @@ namespace CaptureToolPlugin
 
             DisconnectShareIfRequired();
 
-            if (bSuccess)
+            if (success)
             {
-                bSuccess = CaptureLCMethodFile(datasetInfo.DatasetName, datasetFolderPath);
+                success = CaptureLCMethodFile(datasetInfo.DatasetName, datasetFolderPath);
 
                 if (brukerDotDFolder)
                 {
@@ -2058,7 +2090,7 @@ namespace CaptureToolPlugin
                 }
             }
 
-            if (bSuccess)
+            if (success)
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
             else
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -2320,7 +2352,7 @@ namespace CaptureToolPlugin
         {
             var filesToSkip = new SortedSet<string>();
 
-            bool bSuccess;
+            bool success;
 
             var diSourceDir = new DirectoryInfo(Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName));
             var diTargetDir = new DirectoryInfo(datasetFolderPath);
@@ -2434,16 +2466,16 @@ namespace CaptureToolPlugin
 
                 if (copyWithResume)
                 {
-                    const bool bRecurse = true;
-                    bSuccess = CopyFolderWithResume(diSourceDir.FullName, diTargetDir.FullName, bRecurse, ref retData, filesToSkip);
+                    const bool recurse = true;
+                    success = CopyFolderWithResume(diSourceDir.FullName, diTargetDir.FullName, recurse, ref retData, filesToSkip);
                 }
                 else
                 {
-                    m_FileTools.CopyDirectory(diSourceDir.FullName, diTargetDir.FullName, filesToSkip.ToList());
-                    bSuccess = true;
+                    mFileTools.CopyDirectory(diSourceDir.FullName, diTargetDir.FullName, filesToSkip.ToList());
+                    success = true;
                 }
 
-                if (bSuccess)
+                if (success)
                 {
                     msg = "Copied folder " + diSourceDir.FullName + " to " + diTargetDir.FullName + GetConnectionDescription();
                     LogMessage(msg);
@@ -2469,12 +2501,12 @@ namespace CaptureToolPlugin
                 DisconnectShareIfRequired();
             }
 
-            if (bSuccess)
+            if (success)
             {
-                bSuccess = CaptureLCMethodFile(datasetInfo.DatasetName, diTargetDir.FullName);
+                success = CaptureLCMethodFile(datasetInfo.DatasetName, diTargetDir.FullName);
             }
 
-            if (bSuccess)
+            if (success)
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
             else
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -2500,7 +2532,7 @@ namespace CaptureToolPlugin
         {
             // Dataset found; it's a Bruker imaging folder
 
-            bool bSuccess;
+            bool success;
 
             // First, verify the folder size is constant (indicates acquisition is actually finished)
             var diSourceDir = new DirectoryInfo(Path.Combine(sourceFolderPath, datasetInfo.FileOrFolderName));
@@ -2553,8 +2585,8 @@ namespace CaptureToolPlugin
             {
                 if (copyWithResume)
                 {
-                    const bool bRecurse = false;
-                    bSuccess = CopyFolderWithResume(diSourceDir.FullName, diTargetDir.FullName, bRecurse, ref retData);
+                    const bool recurse = false;
+                    success = CopyFolderWithResume(diSourceDir.FullName, diTargetDir.FullName, recurse, ref retData);
                 }
                 else
                 {
@@ -2566,10 +2598,10 @@ namespace CaptureToolPlugin
                         var fi = new FileInfo(fileToCopy);
                         fi.CopyTo(Path.Combine(diTargetDir.FullName, fi.Name));
                     }
-                    bSuccess = true;
+                    success = true;
                 }
 
-                if (bSuccess)
+                if (success)
                 {
                     msg = "Copied files in folder " + diSourceDir.FullName + " to " + diTargetDir.FullName + GetConnectionDescription();
                     LogMessage(msg);
@@ -2598,7 +2630,7 @@ namespace CaptureToolPlugin
                 DisconnectShareIfRequired();
             }
 
-            if (bSuccess)
+            if (success)
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
             else
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -2660,13 +2692,13 @@ namespace CaptureToolPlugin
                 const string MALDI_SPOT_FOLDER_REGEX = @"^\d_[A-Z]\d+$";
                 var reMaldiSpotFolder = new Regex(MALDI_SPOT_FOLDER_REGEX, RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-                foreach (var sDir in dataFolders)
+                foreach (var folder in dataFolders)
                 {
-                    LogDebug("Test folder " + sDir + " against RegEx " + reMaldiSpotFolder);
+                    LogDebug("Test folder " + folder + " against RegEx " + reMaldiSpotFolder);
 
-                    if (!reMaldiSpotFolder.IsMatch(sDir.Name, 0))
+                    if (!reMaldiSpotFolder.IsMatch(folder.Name, 0))
                     {
-                        retData.CloseoutMsg = "Dataset folder contains multiple subfolders, but folder " + sDir.Name + " does not match the expected pattern";
+                        retData.CloseoutMsg = "Dataset folder contains multiple subfolders, but folder " + folder.Name + " does not match the expected pattern";
                         msg = retData.CloseoutMsg + " (" + reMaldiSpotFolder + "); see " + diSourceDir.FullName;
                         LogError(msg);
                         retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -2689,7 +2721,7 @@ namespace CaptureToolPlugin
             // Copy the dataset folder (and all subfolders) to the storage server
             try
             {
-                m_FileTools.CopyDirectory(diSourceDir.FullName, diTargetDir.FullName);
+                mFileTools.CopyDirectory(diSourceDir.FullName, diTargetDir.FullName);
                 msg = "Copied folder " + diSourceDir.FullName + " to " + diTargetDir.FullName + GetConnectionDescription();
                 LogMessage(msg);
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
@@ -2709,26 +2741,27 @@ namespace CaptureToolPlugin
         }
 
         private bool CopyFolderWithResume(
-            string sSourceFolderPath,
-            string sTargetFolderPath,
-            bool bRecurse,
+            string sourceFolderPath,
+            string targetFolderPath,
+            bool recurse,
             ref clsToolReturnData retData)
         {
-            return CopyFolderWithResume(sSourceFolderPath, sTargetFolderPath, bRecurse, ref retData, new SortedSet<string>());
+            return CopyFolderWithResume(sourceFolderPath, targetFolderPath, recurse, ref retData, new SortedSet<string>());
         }
 
         private bool CopyFolderWithResume(
-            string sSourceFolderPath, string sTargetFolderPath,
-            bool bRecurse,
+            string sourceFolderPath,
+            string targetFolderPath,
+            bool recurse,
             ref clsToolReturnData retData,
             SortedSet<string> filesToSkip)
         {
-            const clsFileTools.FileOverwriteMode eFileOverwriteMode = clsFileTools.FileOverwriteMode.OverWriteIfDateOrLengthDiffer;
+            const clsFileTools.FileOverwriteMode overwriteMode = clsFileTools.FileOverwriteMode.OverWriteIfDateOrLengthDiffer;
 
-            var bSuccess = false;
-            var bDoCopy = true;
+            var success = false;
+            var doCopy = true;
 
-            while (bDoCopy)
+            while (doCopy)
             {
                 var dtCopyStart = DateTime.UtcNow;
 
@@ -2736,36 +2769,37 @@ namespace CaptureToolPlugin
                 try
                 {
                     // Clear any previous errors
-                    m_ErrorMessage = string.Empty;
+                    mErrorMessage = string.Empty;
 
-                    bSuccess = m_FileTools.CopyDirectoryWithResume(
-                        sSourceFolderPath, sTargetFolderPath,
-                        bRecurse, eFileOverwriteMode, filesToSkip.ToList(),
-                        out var iFileCountSkipped, out var iFileCountResumed, out var iFileCountNewlyCopied);
-                    bDoCopy = false;
+                    success = mFileTools.CopyDirectoryWithResume(
+                        sourceFolderPath, targetFolderPath,
+                        recurse, overwriteMode, filesToSkip.ToList(),
+                        out var fileCountSkipped, out var fileCountResumed, out var fileCountNewlyCopied);
 
-                    if (bSuccess)
+                    doCopy = false;
+
+                    if (success)
                     {
-                        msg = "  directory copy complete; CountCopied = " + iFileCountNewlyCopied + "; " +
-                              "CountSkipped = " + iFileCountSkipped + "; " +
-                              "CountResumed = " + iFileCountResumed;
+                        msg = "  directory copy complete; CountCopied = " + fileCountNewlyCopied + "; " +
+                              "CountSkipped = " + fileCountSkipped + "; " +
+                              "CountResumed = " + fileCountResumed;
                         LogDebug(msg);
                     }
                     else
                     {
-                        msg = "  directory copy failed for " + sSourceFolderPath + " to " + sTargetFolderPath + GetConnectionDescription();
+                        msg = "  directory copy failed for " + sourceFolderPath + " to " + targetFolderPath + GetConnectionDescription();
                         LogError(msg);
                     }
 
                 }
                 catch (Exception ex)
                 {
-                    if (string.IsNullOrWhiteSpace(m_FileTools.CurrentSourceFile))
+                    if (string.IsNullOrWhiteSpace(mFileTools.CurrentSourceFile))
                         msg = "Error while copying directory: ";
                     else
-                        msg = "Error while copying " + m_FileTools.CurrentSourceFile + ": ";
+                        msg = "Error while copying " + mFileTools.CurrentSourceFile + ": ";
 
-                    m_ErrorMessage = string.Copy(msg);
+                    mErrorMessage = string.Copy(msg);
 
                     if (ex.Message.Length <= 350)
                         msg += ex.Message;
@@ -2774,17 +2808,17 @@ namespace CaptureToolPlugin
 
                     LogError(msg);
 
-                    bDoCopy = false;
-                    if (m_FileTools.CurrentCopyStatus == clsFileTools.CopyStatus.BufferedCopy ||
-                        m_FileTools.CurrentCopyStatus == clsFileTools.CopyStatus.BufferedCopyResume)
+                    doCopy = false;
+                    if (mFileTools.CurrentCopyStatus == clsFileTools.CopyStatus.BufferedCopy ||
+                        mFileTools.CurrentCopyStatus == clsFileTools.CopyStatus.BufferedCopyResume)
                     {
                         // Exception occurred during the middle of a buffered copy
                         // If at least 10 seconds have elapsed, auto-retry the copy again
-                        var dElapsedTime = DateTime.UtcNow.Subtract(dtCopyStart).TotalSeconds;
-                        if (dElapsedTime >= 10)
+                        var elapsedTime = DateTime.UtcNow.Subtract(dtCopyStart).TotalSeconds;
+                        if (elapsedTime >= 10)
                         {
-                            bDoCopy = true;
-                            msg = "  " + dElapsedTime.ToString("0") + " seconds have elapsed; will attempt to resume copy";
+                            doCopy = true;
+                            msg = "  " + elapsedTime.ToString("0") + " seconds have elapsed; will attempt to resume copy";
                             LogMessage(msg);
                         }
                     }
@@ -2794,13 +2828,13 @@ namespace CaptureToolPlugin
                 }
             }
 
-            if (bSuccess)
+            if (success)
             {
                 // CloseoutType may have been set to CLOSEOUT_FAILED by HandleCopyException; reset it to CLOSEOUT_SUCCESS
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
                 retData.EvalCode = EnumEvalCode.EVAL_CODE_SUCCESS;
             }
-            return bSuccess;
+            return success;
 
         }
 
@@ -2809,12 +2843,12 @@ namespace CaptureToolPlugin
         /// Matching folders are deleted
         /// Note that in February 2012 we plan to switch to saving .lcmethod files in Year_Quarter folders (e.g. 2012_1 or 2012_2) and thus we won't need to call this function in the future
         /// </summary>
-        /// <param name="sLCMethodsFolderPath"></param>
-        private void DeleteOldLCMethodFolders(string sLCMethodsFolderPath)
+        /// <param name="lcMethodsFolderPath"></param>
+        private void DeleteOldLCMethodFolders(string lcMethodsFolderPath)
         {
             try
             {
-                var diLCMethodsFolder = new DirectoryInfo(sLCMethodsFolderPath);
+                var diLCMethodsFolder = new DirectoryInfo(lcMethodsFolderPath);
                 if (!diLCMethodsFolder.Exists)
                     return;
 
@@ -2822,21 +2856,21 @@ namespace CaptureToolPlugin
 
                 foreach (var diFolder in diSubfolders)
                 {
-                    var bSafeToDelete = true;
+                    var safeToDelete = true;
 
                     // Make sure all of the files in the folder are at least 14 days old
-                    foreach (var oFileOrFolder in diFolder.GetFileSystemInfos())
+                    foreach (var fileOrFolder in diFolder.GetFileSystemInfos())
                     {
-                        if (DateTime.UtcNow.Subtract(oFileOrFolder.LastWriteTimeUtc).TotalDays <= 14)
+                        if (DateTime.UtcNow.Subtract(fileOrFolder.LastWriteTimeUtc).TotalDays <= 14)
                         {
                             // File was modified within the last 2 weeks; do not delete this folder
-                            bSafeToDelete = false;
+                            safeToDelete = false;
                             break;
                         }
 
                     }
 
-                    if (!bSafeToDelete)
+                    if (!safeToDelete)
                         continue;
 
                     try
@@ -2932,9 +2966,9 @@ namespace CaptureToolPlugin
         /// <param name="itemAgeDays">Days before now that the file or folder was modified</param>
         /// <param name="minimumTimeSeconds">Minimum sleep time</param>
         /// <returns>
-        /// m_SleepInterval if less than 10 days old
+        /// mSleepInterval if less than 10 days old
         /// minimumTimeSeconds if more than 30 days old
-        /// Otherwise, a value between minimumTimeSeconds and m_SleepInterval
+        /// Otherwise, a value between minimumTimeSeconds and mSleepInterval
         /// </returns>
         private int GetSleepInterval(double itemAgeDays, int minimumTimeSeconds)
         {
@@ -2942,7 +2976,7 @@ namespace CaptureToolPlugin
             const int AGED_FILE_DAYS_MAXIMUM = 30;
 
             if (itemAgeDays < AGED_FILE_DAYS_MINIMUM)
-                return m_SleepInterval;
+                return mSleepInterval;
 
             if (itemAgeDays > AGED_FILE_DAYS_MAXIMUM)
                 return minimumTimeSeconds;
@@ -2950,7 +2984,7 @@ namespace CaptureToolPlugin
             var scalingMultiplier = (AGED_FILE_DAYS_MAXIMUM - itemAgeDays) /
                                     (AGED_FILE_DAYS_MAXIMUM - AGED_FILE_DAYS_MINIMUM);
 
-            var maximumTimeSeconds = Math.Max(m_SleepInterval, minimumTimeSeconds);
+            var maximumTimeSeconds = Math.Max(mSleepInterval, minimumTimeSeconds);
 
             var sleepTimeSeconds = scalingMultiplier * (maximumTimeSeconds - minimumTimeSeconds) + minimumTimeSeconds;
 
@@ -2981,7 +3015,7 @@ namespace CaptureToolPlugin
             catch (Exception ex)
             {
                 LogError("Error in GetSleepIntervalForFile", ex);
-                return m_SleepInterval;
+                return mSleepInterval;
             }
         }
 
@@ -3016,7 +3050,7 @@ namespace CaptureToolPlugin
             catch (Exception ex)
             {
                 LogError("Error in GetSleepIntervalForFolder", ex);
-                return m_SleepInterval;
+                return mSleepInterval;
             }
         }
 
@@ -3027,7 +3061,7 @@ namespace CaptureToolPlugin
                 ex.Message.Contains("specified network name is no longer available"))
             {
                 // Need to completely exit the capture task manager
-                m_NeedToAbortProcessing = true;
+                mNeedToAbortProcessing = true;
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING;
                 retData.EvalCode = EnumEvalCode.EVAL_CODE_NETWORK_ERROR_RETRY_CAPTURE;
             }
@@ -3072,17 +3106,17 @@ namespace CaptureToolPlugin
         }
 
         /// <summary>
-        /// Store m_ErrorMessage in retData.CloseoutMsg if an error exists yet retData.CloseoutMsg is empty
+        /// Store mErrorMessage in retData.CloseoutMsg if an error exists yet retData.CloseoutMsg is empty
         /// </summary>
         /// <param name="retData"></param>
         private void PossiblyStoreErrorMessage(ref clsToolReturnData retData)
         {
 
-            if (!string.IsNullOrWhiteSpace(m_ErrorMessage) && string.IsNullOrWhiteSpace(retData.CloseoutMsg))
+            if (!string.IsNullOrWhiteSpace(mErrorMessage) && string.IsNullOrWhiteSpace(retData.CloseoutMsg))
             {
-                retData.CloseoutMsg = m_ErrorMessage;
-                if (m_TraceMode)
-                    clsToolRunnerBase.ShowTraceMessage(m_ErrorMessage);
+                retData.CloseoutMsg = mErrorMessage;
+                if (mTraceMode)
+                    clsToolRunnerBase.ShowTraceMessage(mErrorMessage);
             }
         }
 
@@ -3123,15 +3157,15 @@ namespace CaptureToolPlugin
         private void OnFileCopyProgress(string filename, float percentComplete)
         {
 
-            if (DateTime.Now.Subtract(m_LastProgressUpdate).TotalSeconds >= 20 || percentComplete >= 100 && filename == m_LastProgressFileName)
+            if (DateTime.Now.Subtract(mLastProgressUpdate).TotalSeconds >= 20 || percentComplete >= 100 && filename == mLastProgressFileName)
             {
-                if ((m_LastProgressFileName == filename) && (Math.Abs(m_LastProgressPercent - percentComplete) < float.Epsilon))
+                if ((mLastProgressFileName == filename) && (Math.Abs(mLastProgressPercent - percentComplete) < float.Epsilon))
                     // Don't re-display this progress
                     return;
 
-                m_LastProgressUpdate = DateTime.Now;
-                m_LastProgressFileName = filename;
-                m_LastProgressPercent = percentComplete;
+                mLastProgressUpdate = DateTime.Now;
+                mLastProgressFileName = filename;
+                mLastProgressPercent = percentComplete;
                 LogMessage("  copying " + Path.GetFileName(filename) + ": " + percentComplete.ToString("0.0") + "% complete");
             }
 
