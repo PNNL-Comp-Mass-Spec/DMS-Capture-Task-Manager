@@ -862,9 +862,11 @@ namespace CaptureToolPlugin
                         {
                             datasetInfo.DatasetType = RawDSTypes.MultiFile;
                             var fileNames = foundFiles.Select(file => file.Name).ToList();
-                            LogWarning(
-                                "Dataset name matched multiple files in folder " + diSourceDir.FullName + ": " +
-                                string.Join(", ", fileNames.Take(5)));
+                            LogWarning(string.Format(
+                                "Dataset name matched multiple files for iteration {0} in folder {1}: {2}",
+                                iteration,
+                                diSourceDir.FullName,
+                                string.Join(", ", fileNames.Take(5))));
                         }
 
                         return datasetInfo;
@@ -911,6 +913,13 @@ namespace CaptureToolPlugin
                         // Directory name has an extension
                         datasetInfo.FileOrFolderName = Path.GetFileName(testFolder);
                         datasetInfo.DatasetType = RawDSTypes.FolderExt;
+                        if (iteration > 1)
+                        {
+                            LogMessage(string.Format(
+                                           "Dataset name did not match a file, but it did match folder {0}, dataset type is {1}",
+                                           datasetInfo.FileOrFolderName,
+                                           datasetInfo.DatasetType));
+                        }
                         return datasetInfo;
                     }
                 }
