@@ -1352,8 +1352,22 @@ namespace CaptureToolPlugin
                         }
                         else
                         {
-                            LogMessage("Appending captureSubFolder to sourceFolderPath, giving: " + candidateFolderPath);
-                            sourceFolderPath = candidateFolderPath;
+                            if (candidateFolderPath.EndsWith(Path.DirectorySeparatorChar + sourceFolderName, StringComparison.OrdinalIgnoreCase))
+                            {
+                                var candidateFolderPathTrimmed = candidateFolderPath.Substring(0, candidateFolderPath.Length - sourceFolderName.Length - 1);
+                                LogMessage(string.Format(
+                                    "Appending captureSubFolder to sourceFolderPath, but removing SourceFolderName, giving: {0} (removed {1})",
+                                    candidateFolderPathTrimmed,
+                                               sourceFolderName));
+
+                                sourceFolderPath = candidateFolderPathTrimmed;
+                            }
+                            else
+                            {
+                                LogMessage("Appending captureSubFolder to sourceFolderPath, giving: " + candidateFolderPath);
+                                sourceFolderPath = candidateFolderPath;
+                            }
+
                         }
                     }
 
