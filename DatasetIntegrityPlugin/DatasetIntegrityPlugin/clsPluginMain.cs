@@ -1532,16 +1532,39 @@ namespace DatasetIntegrityPlugin
 
                 if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging_V2)
                 {
-                    // Each .D folder should have a ser file or a fid file
+                    var serFound = false;
+                    var fidFound = false;
+
+                    // Each .D folder should have a ser file, fid file, or .baf file
                     foreach (var diFolder in lstDotDFolders)
                     {
-                        if (diFolder.GetFiles("ser", SearchOption.TopDirectoryOnly).Length == 0 &&
-                            diFolder.GetFiles("fid", SearchOption.TopDirectoryOnly).Length == 0)
+                        var serFiles = diFolder.GetFiles("ser", SearchOption.TopDirectoryOnly).Length;
+                        var fidFiles = diFolder.GetFiles("fid", SearchOption.TopDirectoryOnly).Length;
+                        var bafFiles = diFolder.GetFiles("*.baf", SearchOption.TopDirectoryOnly).Length;
+
+                        if (serFiles > 0)
+                            serFound = true;
+
+                        if (fidFiles > 0)
+                            fidFound = true;
+
+                        if (serFiles == 0 && fidFiles == 0 && bafFiles == 0)
                         {
-                            mRetData.EvalMsg = "Invalid dataset. ser or fid file not found in " + diFolder.Name;
+                            mRetData.EvalMsg = "Invalid dataset; ser, fid, or .baf file not found in " + diFolder.Name;
                             LogError(mRetData.EvalMsg);
                             return EnumCloseOutType.CLOSEOUT_FAILED;
                         }
+                    }
+
+                    // Require at least one folder to have a ser or fid file
+                    if (!(serFound || fidFound))
+                    {
+                        // If we get here, none of the folders had a ser or fid file
+                        // Based on logic in the above for loop, then must have had a .baf file
+
+                        mRetData.EvalMsg = "Invalid dataset; none of the .D folders had a ser or fid file, but instead had .baf files; instrument class should likely be BrukerFT_BAF or BrukerTOF_BAF";
+                        LogError(mRetData.EvalMsg);
+                        return EnumCloseOutType.CLOSEOUT_FAILED;
                     }
 
                     allowMultipleFolders = true;
