@@ -166,23 +166,19 @@ namespace Pacifica.Core
                 // Full path to Pacifica.core.dll
                 var assemblyPath = Assembly.GetExecutingAssembly().Location;
 
-                if (assemblyPath != null)
+                // Look for svc-dms.pfx in the folder with Pacifica.core.dll
+                var assemblyFile = new FileInfo(assemblyPath);
+                if (assemblyFile.DirectoryName != null)
                 {
-                    // Look for svc-dms.pfx in the folder with Pacifica.core.dll
-                    var assemblyFile = new FileInfo(assemblyPath);
-                    if (assemblyFile.DirectoryName != null)
-                    {
-                        var localCertFile = new FileInfo(Path.Combine(assemblyFile.DirectoryName, CLIENT_CERT_FILENAME));
-                        if (localCertFile.Exists)
-                            return localCertFile.FullName;
-                    }
+                    var localCertFile = new FileInfo(Path.Combine(assemblyFile.DirectoryName, CLIENT_CERT_FILENAME));
+                    if (localCertFile.Exists)
+                        return localCertFile.FullName;
                 }
 
                 // Look for svc-dms.pfx at C:\client_certs\
                 var sharedCertFile = new FileInfo(CLIENT_CERT_FILEPATH);
                 if (sharedCertFile.Exists)
                     return sharedCertFile.FullName;
-
             }
             catch (Exception ex)
             {
@@ -211,10 +207,7 @@ namespace Pacifica.Core
         /// </summary>
         public bool UseTestInstance
         {
-            get
-            {
-                return mUseTestInstance;
-            }
+            get => mUseTestInstance;
 
             set
             {

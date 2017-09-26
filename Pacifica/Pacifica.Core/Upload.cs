@@ -647,34 +647,28 @@ namespace Pacifica.Core
                 if (!GetDictionaryValue(item, "destinationTable", out var tableName))
                     continue;
 
-                if (tableName == "TransactionKeyValue")
+                switch (tableName)
                 {
-                    if (GetDictionaryValue(item, "key", out var keyName))
+                    case "TransactionKeyValue":
                     {
-                        if (GetDictionaryValue(item, "value", out var keyValue))
+                        if (!GetDictionaryValue(item, "key", out var keyName)) continue;
+                        if (!GetDictionaryValue(item, "value", out var keyValue)) continue;
+                        if (!GetDictionaryValue(kvLookup, keyName, out var valueDescription)) continue;
+
+                        metadataList.Add(valueDescription + "=" + keyValue);
+                        matchedKeys.Add(valueDescription);
+                        break;
+                    }
+                    case "Files":
+                        if (item.TryGetValue("size", out _))
                         {
-                            if (GetDictionaryValue(kvLookup, keyName, out var valueDescription))
-                            {
-                                metadataList.Add(valueDescription + "=" + keyValue);
-                                matchedKeys.Add(valueDescription);
-                            }
-
+                            fileCount += 1;
                         }
-                    }
-
-                }
-                else if (tableName == "Files")
-                {
-                    if (item.TryGetValue("size", out _))
+                        break;
+                    default:
                     {
-                        fileCount += 1;
-                    }
+                        if (!transactionValueLookup.TryGetValue(tableName, out var valueDescription)) continue;
 
-                }
-                else
-                {
-                    if (transactionValueLookup.TryGetValue(tableName, out var valueDescription))
-                    {
                         if (matchedKeys.Contains(valueDescription))
                         {
                             // This item has already been added (typically EUS_Instrument_ID)
@@ -682,11 +676,11 @@ namespace Pacifica.Core
                         }
 
                         // Include the value for this item in the description
-                        if (GetDictionaryValue(item, "value", out var keyValue))
-                        {
-                            metadataList.Add(valueDescription + "=" + keyValue);
-                            matchedKeys.Add(valueDescription);
-                        }
+                        if (!GetDictionaryValue(item, "value", out var keyValue)) continue;
+
+                        metadataList.Add(valueDescription + "=" + keyValue);
+                        matchedKeys.Add(valueDescription);
+                        break;
                     }
                 }
             }

@@ -84,7 +84,7 @@ namespace Pacifica.Core
         {
             var valueText = GetDictionaryValue(dictionary, keyName, valueIfMissingOrNull.ToString());
 
-            if (int.TryParse(valueText, out int value))
+            if (int.TryParse(valueText, out var value))
                 return value;
 
             return valueIfMissingOrNull;
@@ -100,7 +100,7 @@ namespace Pacifica.Core
         public static string GetDictionaryValue(IReadOnlyDictionary<string, string> dictionary, string keyName, string valueIfMissingOrNull)
         {
 
-            if (dictionary.TryGetValue(keyName, out string value))
+            if (dictionary.TryGetValue(keyName, out var value))
             {
                 return value ?? valueIfMissingOrNull;
             }
@@ -153,7 +153,7 @@ namespace Pacifica.Core
             var fileList = new List<FileInfoObject>();
             foreach (var item in metadataObject)
             {
-                if (item.TryGetValue("destinationTable", out object destTable))
+                if (item.TryGetValue("destinationTable", out var destTable))
                 {
                     var t = (string)destTable;
                     if (t.ToLower() == "files")
@@ -310,7 +310,7 @@ namespace Pacifica.Core
 
             foreach (var item in lstStrings)
             {
-                if (int.TryParse(item, out int value))
+                if (int.TryParse(item, out var value))
                     lstInts.Add(value);
                 else
                     throw new InvalidCastException("JsonArrayToIntList cannot convert item '" + value + "' to an integer");

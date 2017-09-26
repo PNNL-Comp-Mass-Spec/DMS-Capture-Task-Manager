@@ -184,15 +184,15 @@ namespace Pacifica.DMS_Metadata
 
             DatasetName = Utilities.GetDictionaryValue(taskParams, "Dataset", "Unknown_Dataset");
 
-            var lstDatasetFilesToArchive = FindDatasetFilesToArchive(taskParams, mgrParams, out Upload.UploadMetadata uploadMetadata);
+            var lstDatasetFilesToArchive = FindDatasetFilesToArchive(taskParams, mgrParams, out var uploadMetadata);
 
             // DMS5 database
-            mgrParams.TryGetValue("DefaultDMSConnString", out string connectionString);
+            mgrParams.TryGetValue("DefaultDMSConnString", out var connectionString);
 
             // DMS_Capture database
-            mgrParams.TryGetValue("ConnectionString", out string captureDbConnectionString);
+            mgrParams.TryGetValue("ConnectionString", out var captureDbConnectionString);
 
-            taskParams.TryGetValue("Dataset_ID", out string datasetID);
+            taskParams.TryGetValue("Dataset_ID", out var datasetID);
 
             var supplementalDataSuccess = GetSupplementalDMSMetadata(connectionString, datasetID, uploadMetadata);
             if (!supplementalDataSuccess)
@@ -217,7 +217,7 @@ namespace Pacifica.DMS_Metadata
             if (criticalError)
                 return false;
 
-            mMetadataObject = Upload.CreatePacificaMetadataObject(uploadMetadata, lstUnmatchedFiles, out Upload.EUSInfo eusInfo);
+            mMetadataObject = Upload.CreatePacificaMetadataObject(uploadMetadata, lstUnmatchedFiles, out var eusInfo);
 
             if (lstUnmatchedFiles.Count > 0)
             {
@@ -321,7 +321,7 @@ namespace Pacifica.DMS_Metadata
 
                         while (reader.Read())
                         {
-                            var personId = GetDbValue(reader, "EUS_Person_ID", 0, out bool isNull);
+                            var personId = GetDbValue(reader, "EUS_Person_ID", 0, out var isNull);
                             if (!isNull)
                                 personList.Add(personId);
                         }
@@ -365,7 +365,7 @@ namespace Pacifica.DMS_Metadata
                 if (TraceMode)
                     OnDebugEvent("Contacting " + policyURL);
 
-                var response = EasyHttp.Send(mPacificaConfig, policyURL, null, out HttpStatusCode responseStatusCode, mdJSON, EasyHttp.HttpMethod.Post, 100, "application/json");
+                var response = EasyHttp.Send(mPacificaConfig, policyURL, null, out var responseStatusCode, mdJSON, EasyHttp.HttpMethod.Post, 100, "application/json");
 
                 if ((int)responseStatusCode == 200 && response.ToLower().Contains("success"))
                 {
@@ -458,14 +458,11 @@ namespace Pacifica.DMS_Metadata
             var archiveDir = new DirectoryInfo(pathToBeArchived);
             if (!archiveDir.Exists)
             {
-                throw new DirectoryNotFoundException("Source directory not found: " + archiveDir);
+                throw new DirectoryNotFoundException(
+                    string.Format("Source directory not found: {0} (CollectFileInformation)", archiveDir));
             }
 
-            SearchOption eSearchOption;
-            if (recurse)
-                eSearchOption = SearchOption.AllDirectories;
-            else
-                eSearchOption = SearchOption.TopDirectoryOnly;
+            var eSearchOption = recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
 
             var fileList = archiveDir.GetFiles("*", eSearchOption).ToList();
 
@@ -505,7 +502,7 @@ namespace Pacifica.DMS_Metadata
                     // This is a cache info file that likely points to a .mzXML or .mzML file (possibly gzipped)
                     // Auto-include that file in the .tar to be uploaded
 
-                    var success = AddUsingCacheInfoFile(fiFile, fileCollection, baseDSPath, out string remoteFilePath);
+                    var success = AddUsingCacheInfoFile(fiFile, fileCollection, baseDSPath, out var remoteFilePath);
                     if (!success)
                         throw new Exception("Error reported by AddUsingCacheInfoFile for " + fiFile.FullName);
 
@@ -730,6 +727,13 @@ namespace Pacifica.DMS_Metadata
             return (from item in fileVersions where string.Equals(item.HashSum, fileHash) select item).Any();
         }
 
+        /// <summary>
+        /// Find new or updated files to archive
+        /// </summary>
+        /// <param name="taskParams"></param>
+        /// <param name="mgrParams"></param>
+        /// <param name="uploadMetadata"></param>
+        /// <returns></returns>
         public List<FileInfoObject> FindDatasetFilesToArchive(
             Dictionary<string, string> taskParams,
             Dictionary<string, string> mgrParams,

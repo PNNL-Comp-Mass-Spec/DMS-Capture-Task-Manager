@@ -615,7 +615,7 @@ namespace Pacifica.Core
 
         private static long AddTarFileContentLength(string pathInArchive, long fileSizeBytes)
         {
-            return AddTarFileContentLength(pathInArchive, fileSizeBytes, out int headerBlocks);
+            return AddTarFileContentLength(pathInArchive, fileSizeBytes, out var headerBlocks);
         }
 
         private static long AddTarFileContentLength(string pathInArchive, long fileSizeBytes, out int headerBlocks)
