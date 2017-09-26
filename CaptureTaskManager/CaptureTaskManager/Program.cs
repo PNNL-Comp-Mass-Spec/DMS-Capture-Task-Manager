@@ -15,7 +15,7 @@ namespace CaptureTaskManager
     /// </summary>
     static class Program
     {
-        private const string PROGRAM_DATE = "August 22, 2017";
+        private const string PROGRAM_DATE = "September 21, 2017";
 
         private static bool mCodeTestMode;
         private static bool mCreateEventLog;
