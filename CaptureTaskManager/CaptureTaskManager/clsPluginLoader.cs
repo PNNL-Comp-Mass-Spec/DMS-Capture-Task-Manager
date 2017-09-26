@@ -17,19 +17,10 @@ namespace CaptureTaskManager
     /// </summary>
     public class clsPluginLoader : clsLoggerBase
     {
-        #region "Class variables"
-
-        private static string m_pluginConfigFile = "plugin_info.xml";
-
-        #endregion
 
         #region "Properties"
 
-        public static string FileName
-        {
-            get { return m_pluginConfigFile; }
-            set { m_pluginConfigFile = value; }
-        }
+        public static string FileName { get; set; } = "plugin_info.xml";
 
         public static string ErrMsg { get; set; }
 
@@ -103,7 +94,7 @@ namespace CaptureTaskManager
 #endif
 
                 var obj = LoadObject(className, assyName);
-                
+
                 if (obj != null)
                 {
                     try
@@ -145,12 +136,12 @@ namespace CaptureTaskManager
                 strPluginInfo = "XPath=\"" + xPath + "\"; className=\"" + className + "\"; assyName=" + assyName + "\"";
 
                 // Read the tool runner info file
-                doc.Load(GetPluginInfoFilePath(m_pluginConfigFile));
+                doc.Load(GetPluginInfoFilePath(FileName));
                 var root = doc.DocumentElement;
 
                 if (root == null)
                 {
-                    ErrMsg = "Error in GetPluginInfo: root element not found in " + m_pluginConfigFile;
+                    ErrMsg = "Error in GetPluginInfo: root element not found in " + FileName;
                     return false;
                 }
 

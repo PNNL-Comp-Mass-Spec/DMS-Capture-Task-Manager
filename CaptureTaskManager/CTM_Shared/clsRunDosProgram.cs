@@ -136,7 +136,7 @@ namespace CaptureTaskManager
         /// </summary>
         public int MonitorInterval
         {
-            get { return m_MonitorInterval; }
+            get => m_MonitorInterval;
             set
             {
                 if (value < 250)

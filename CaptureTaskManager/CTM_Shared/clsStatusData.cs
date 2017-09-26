@@ -29,7 +29,7 @@ namespace CaptureTaskManager
 
         public static string MostRecentLogMessage
         {
-            get { return m_MostRecentLogMessage; }
+            get => m_MostRecentLogMessage;
             set
             {
                 // Filter out routine startup and shutdown messages
@@ -44,10 +44,7 @@ namespace CaptureTaskManager
             }
         }
 
-        public static Queue<string> ErrorQueue
-        {
-            get { return m_ErrorQueue; }
-        }
+        public static Queue<string> ErrorQueue => m_ErrorQueue;
 
         #endregion
 

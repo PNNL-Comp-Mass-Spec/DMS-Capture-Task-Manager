@@ -14,9 +14,6 @@ namespace DatasetArchivePlugin
     /// </summary>
     class clsJobData
     {
-        #region "Class variables"
-        string m_SvrFileToUpdate = string.Empty;    // File, including path on storage server, needing copied
-        string m_SvrDSNamePath;                 // Full path to dataset on storage server
 
         /// <summary>
         /// Constructor
@@ -25,8 +22,6 @@ namespace DatasetArchivePlugin
         {
             CopySuccess = false;
         }
-
-        #endregion
 
         #region "Properties"
 
@@ -38,11 +33,7 @@ namespace DatasetArchivePlugin
         /// <summary>
         /// Full file name and path of file on storage server
         /// </summary>
-        public string SvrFileToUpdate
-        {
-            get { return m_SvrFileToUpdate; }
-            set { m_SvrFileToUpdate = value; }
-        }
+        public string SvrFileToUpdate { get; set; } = string.Empty;
 
         /// <summary>
         /// Full name and path of file on Samba share
@@ -57,21 +48,17 @@ namespace DatasetArchivePlugin
         /// <summary>
         /// Dataset name and path on storage server
         /// </summary>
-        public string SvrDsNamePath
-        {
-            get { return m_SvrDSNamePath; }
-            set { m_SvrDSNamePath = value; }
-        }
+        public string SvrDsNamePath { get; set; }
 
         /// <summary>
         /// Relative file path (remove parent folder)
         /// </summary>
-        public string RelativeFilePath => GetRelativeFilePath(m_SvrFileToUpdate, m_SvrDSNamePath);
+        public string RelativeFilePath => GetRelativeFilePath(SvrFileToUpdate, SvrDsNamePath);
 
         /// <summary>
         /// Name of the file (no path info)
         /// </summary>
-        public string FileName => Path.GetFileName(m_SvrFileToUpdate);
+        public string FileName => Path.GetFileName(SvrFileToUpdate);
 
         #endregion
 

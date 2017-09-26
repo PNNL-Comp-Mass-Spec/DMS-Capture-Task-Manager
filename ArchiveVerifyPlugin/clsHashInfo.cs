@@ -3,34 +3,22 @@ namespace ArchiveVerifyPlugin
 {
     public class clsHashInfo
     {
-        protected string mHashCode;
-        protected string mMyEMSLFileID;
+        private string mHashCode;
+        private string mMyEMSLFileID;
 
         /// <summary>
         /// MD5 or Sha-1 Hash
         /// </summary>
         public string HashCode
         {
-            get
-            {
-                return mHashCode;
-            }
-            set
-            {
-                mHashCode = value ?? string.Empty;
-            }
+            get => mHashCode;
+            set => mHashCode = value ?? string.Empty;
         }
 
         public string MyEMSLFileID
         {
-            get
-            {
-                return mMyEMSLFileID;
-            }
-            set
-            {
-                mMyEMSLFileID = value ?? string.Empty;
-            }
+            get => mMyEMSLFileID;
+            set => mMyEMSLFileID = value ?? string.Empty;
         }
 
         /// <summary>

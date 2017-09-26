@@ -49,13 +49,13 @@ namespace CaptureTaskManager
 
         public clsMgrSettings MgrSettings
         {
-            set { m_MgrSettings = value; }
+            set => m_MgrSettings = value;
         }
 
         public string BrokerUri
         {
-            get { return m_BrokerUri; }
-            set { m_BrokerUri = value; }
+            get => m_BrokerUri;
+            set => m_BrokerUri = value;
         }
 
         //[Obsolete("Unused")]
@@ -74,8 +74,8 @@ namespace CaptureTaskManager
 
         public string StatusTopicName
         {
-            get { return m_StatusTopicName; }
-            set { m_StatusTopicName = value; }
+            get => m_StatusTopicName;
+            set => m_StatusTopicName = value;
         }
 
         #endregion
