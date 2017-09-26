@@ -32,8 +32,11 @@ namespace DatasetInfoPlugin
 
         #region "Class-wide variables"
         iMSFileInfoScanner m_MsFileScanner;
+
         string m_Msg;
+
         bool m_ErrOccurred;
+
         private int m_FailedScanCount;
 
         #endregion
@@ -176,6 +179,18 @@ namespace DatasetInfoPlugin
             sourceFolder = Path.Combine(sourceFolder, m_TaskParams.GetParam("Storage_Path"));
             sourceFolder = Path.Combine(sourceFolder, m_TaskParams.GetParam("Folder"));
             var outputPathBase = Path.Combine(sourceFolder, "QC");
+
+            /*
+            result.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+            result.EvalCode = EnumEvalCode.EVAL_CODE_SKIPPED;
+            result.EvalMsg = "Plugin skipped due to OxyPlot bug";
+
+            var qcFolder = new DirectoryInfo(outputPathBase);
+            if (!qcFolder.Exists)
+                qcFolder.Create();
+
+            return result;
+            */
 
             // Set up the params for the MS file scanner
             m_MsFileScanner.DSInfoDBPostingEnabled = false;
