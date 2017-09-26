@@ -208,7 +208,7 @@ namespace DatasetInfoPlugin
             m_MsFileScanner.CheckCentroidingStatus = true;
 
             // Get the input file name
-            var fileOrFolderNames = GetDataFileOrFolderName(sourceFolder, out var bSkipPlots, out var rawDataType, out var instrumentClass, out var bBrukerDotDBaf);
+            var fileOrFolderNames = GetDataFileOrFolderName(sourceFolder, out var skipPlots, out var rawDataType, out var instrumentClass, out var brukerDotDBaf);
 
             if (fileOrFolderNames.Count > 0 && fileOrFolderNames.First() == UNKNOWN_FILE_TYPE)
             {
@@ -236,7 +236,7 @@ namespace DatasetInfoPlugin
                 return result;
             }
 
-            if (bSkipPlots)
+            if (skipPlots)
             {
                 // Do not create any plots
                 m_MsFileScanner.SaveTICAndBPIPlots = false;
@@ -287,6 +287,8 @@ namespace DatasetInfoPlugin
                 if (datasetFile.Exists && string.Equals(datasetFile.Extension, clsInstrumentClassInfo.DOT_RAW_EXTENSION,
                                                         StringComparison.OrdinalIgnoreCase))
                 {
+                    LogMessage("Copying instrument file to local disk: " + datasetFile.FullName, false, false);
+
                     // Thermo .raw file; copy it locally
                     var localFilePath = Path.Combine(m_WorkDir, datasetFileOrFolder);
                     var success = m_FileTools.CopyFileUsingLocks(datasetFile, localFilePath, true);
@@ -323,6 +325,17 @@ namespace DatasetInfoPlugin
                     m_FileTools.DeleteFileWithRetry(new FileInfo(pathToProcess), 2, out _);
                 }
 
+                if (successProcessing && !skipPlots)
+                {
+                    var success = ValidateQCGraphics(currentOutputFolder, primaryFileOrFolderProcessed, result);
+                    if (result.CloseoutType != EnumCloseOutType.CLOSEOUT_SUCCESS)
+                        return result;
+
+                    if (!success)
+                        continue;
+                }
+
+
                 if (successProcessing)
                 {
                     cachedDatasetInfoXML.Add(m_MsFileScanner.DatasetInfoXML);
@@ -332,7 +345,8 @@ namespace DatasetInfoPlugin
 
                 // Either a bad result code was returned, or an error event was received
 
-                if (bBrukerDotDBaf && IGNORE_BRUKER_BAF_ERRORS)
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+                if (brukerDotDBaf && IGNORE_BRUKER_BAF_ERRORS)
                 {
                     // 12T_FTICR_B datasets (with .D folders and analysis.baf and/or fid files) sometimes work with MSFileInfoscanner, and sometimes don't
                     // The problem is that ProteoWizard doesn't support certain forms of these datasets
@@ -989,7 +1003,7 @@ namespace DatasetInfoPlugin
         /// Construct the full path to the MSFileInfoScanner.DLL
         /// </summary>
         /// <returns></returns>
-        protected string GetMSFileInfoScannerDLLPath()
+        private string GetMSFileInfoScannerDLLPath()
         {
             var msFileInfoScannerFolder = m_MgrParams.GetParam("MSFileInfoScannerDir", string.Empty);
             if (string.IsNullOrEmpty(msFileInfoScannerFolder))
@@ -1074,7 +1088,7 @@ namespace DatasetInfoPlugin
         /// Stores the tool version info in the database
         /// </summary>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfo()
+        private bool StoreToolVersionInfo()
         {
 
             LogDebug("Determining tool version info");
@@ -1127,6 +1141,76 @@ namespace DatasetInfoPlugin
                 LogError("Exception calling SetStepTaskToolVersion: " + ex.Message, ex);
                 return false;
             }
+
+        }
+
+        private bool ValidateQCGraphics(string currentOutputFolder, bool primaryFileOrFolderProcessed, clsToolReturnData result)
+        {
+            // Make sure at least one of the PNG files created by MSFileInfoScanner is over 10 KB in size
+            var outputDirectory = new DirectoryInfo(currentOutputFolder);
+            if (!outputDirectory.Exists)
+            {
+                var errMsg = "Output directory not found: " + currentOutputFolder;
+
+                if (primaryFileOrFolderProcessed)
+                {
+                    LogWarning(errMsg);
+                    result.EvalMsg = AppendToComment(result.EvalMsg, errMsg);
+                    return false;
+                }
+
+                LogError(errMsg);
+                result.CloseoutMsg = errMsg;
+                result.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                return false;
+            }
+
+            var pngFiles = outputDirectory.GetFiles("*.png");
+
+            if (pngFiles.Length == 0)
+            {
+                var errMsg = "No PNG files were created";
+                if (primaryFileOrFolderProcessed)
+                {
+                    LogWarning(errMsg);
+                    result.EvalMsg = AppendToComment(result.EvalMsg, errMsg);
+                    return false;
+                }
+
+                LogError(errMsg);
+                result.CloseoutMsg = errMsg;
+                result.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                return false;
+            }
+
+            var minimumGraphicsSizeKB = 10;
+
+            var validGraphics = false;
+            foreach (var pngFile in pngFiles)
+            {
+                if (pngFile.Length >= 1024 * minimumGraphicsSizeKB)
+                {
+                    validGraphics = true;
+                    break;
+                }
+            }
+
+            if (validGraphics)
+                return true;
+
+            var errMsg2 = string.Format("All {0} PNG files created by MSFileInfoScanner are less than {1} KB and likely blank graphics", pngFiles.Length, minimumGraphicsSizeKB);
+
+            if (primaryFileOrFolderProcessed)
+            {
+                LogWarning(errMsg2);
+                result.EvalMsg = AppendToComment(result.EvalMsg, errMsg2);
+                return false;
+            }
+
+            LogError(errMsg2);
+            result.CloseoutMsg = errMsg2;
+            result.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+            return false;
 
         }
 
@@ -1207,4 +1291,3 @@ namespace DatasetInfoPlugin
     }
 
 }
-
