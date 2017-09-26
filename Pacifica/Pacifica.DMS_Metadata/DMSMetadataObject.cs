@@ -468,7 +468,8 @@ namespace Pacifica.DMS_Metadata
 
             if (fileList.Count >= MAX_FILES_TO_ARCHIVE)
             {
-                throw new ArgumentOutOfRangeException("Source directory has over " + MAX_FILES_TO_ARCHIVE + " files; files must be zipped before upload to MyEMSL");
+                throw new ArgumentOutOfRangeException(
+                    "Source directory has over " + MAX_FILES_TO_ARCHIVE + " files; files must be zipped before upload to MyEMSL (CollectFileInformation)");
             }
 
             var fracCompleted = 0f;
@@ -504,7 +505,8 @@ namespace Pacifica.DMS_Metadata
 
                     var success = AddUsingCacheInfoFile(fiFile, fileCollection, baseDSPath, out var remoteFilePath);
                     if (!success)
-                        throw new Exception("Error reported by AddUsingCacheInfoFile for " + fiFile.FullName);
+                        throw new Exception(
+                            string.Format("Error reported by AddUsingCacheInfoFile for {0} (CollectFileInformation)" , fiFile.FullName));
 
                     mRemoteCacheInfoFilesToRetrieve.Add(remoteFilePath);
 
@@ -755,9 +757,9 @@ namespace Pacifica.DMS_Metadata
                 driveLocation = Utilities.GetDictionaryValue(taskParams, "Storage_Vol", string.Empty);
 
             // Construct the dataset folder path
-            var pathToArchive = Utilities.GetDictionaryValue(taskParams, "Folder", string.Empty);
-            pathToArchive = Path.Combine(Utilities.GetDictionaryValue(taskParams, "Storage_Path", string.Empty), pathToArchive);
-            pathToArchive = Path.Combine(driveLocation, pathToArchive);
+            var datasetFolder = Utilities.GetDictionaryValue(taskParams, "Folder", string.Empty);
+            var pathToArchiveBase = Path.Combine(Utilities.GetDictionaryValue(taskParams, "Storage_Path", string.Empty), datasetFolder);
+            var pathToArchive = Path.Combine(driveLocation, pathToArchiveBase);
 
             uploadMetadata.DatasetName = Utilities.GetDictionaryValue(taskParams, "Dataset", string.Empty);
             uploadMetadata.DMSInstrumentName = Utilities.GetDictionaryValue(taskParams, "Instrument_Name", string.Empty);
@@ -776,11 +778,41 @@ namespace Pacifica.DMS_Metadata
             {
                 uploadMetadata.SubFolder = Utilities.GetDictionaryValue(taskParams, "OutputFolderName", string.Empty);
 
-                if (!string.IsNullOrWhiteSpace(uploadMetadata.SubFolder))
-                    pathToArchive = Path.Combine(pathToArchive, uploadMetadata.SubFolder);
-                else
+                if (string.IsNullOrWhiteSpace(uploadMetadata.SubFolder))
+                {
                     uploadMetadata.SubFolder = string.Empty;
+                }
+                else
+                {
+                    // Subfolder is defined; make sure it has the same capitalization as the one on disk
+                    var archiveDir = new DirectoryInfo(pathToArchive);
+                    if (!archiveDir.Exists)
+                    {
+                        throw new DirectoryNotFoundException(
+                            string.Format("Source directory not found: {0} (FindDatasetFilesToArchive)", archiveDir));
+                    }
+
+                    // Make sure pathToBeArchived is capitalized properly
+                    var subDirs = archiveDir.GetDirectories(uploadMetadata.SubFolder);
+                    if (subDirs.Length == 0)
+                    {
+                        throw new DirectoryNotFoundException(
+                            string.Format("Directory {0} not found below {1} (FindDatasetFilesToArchive)", uploadMetadata.SubFolder, archiveDir.FullName));
+                    }
+
+                    var matchingDirectory = subDirs.First();
+
+                    if (matchingDirectory.Name != uploadMetadata.SubFolder)
+                    {
+                        // Case mis-match; update uploadMetadata and taskParams
+                        uploadMetadata.SubFolder = matchingDirectory.Name;
+                        taskParams["OutputFolderName"] = matchingDirectory.Name;
+                    }
+
+                    pathToArchive = matchingDirectory.FullName;
+                }
             }
+
             uploadMetadata.EUSInstrumentID = Utilities.GetDictionaryValue(taskParams, "EUS_Instrument_ID", 0);
             uploadMetadata.EUSProposalID = Utilities.GetDictionaryValue(taskParams, "EUS_Proposal_ID", string.Empty);
 
