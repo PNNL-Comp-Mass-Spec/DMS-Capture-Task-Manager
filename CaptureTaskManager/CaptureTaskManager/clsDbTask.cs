@@ -3,21 +3,19 @@
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/10/2009
-//
 //*********************************************************************************************************
 
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
-using System.Data;
 
 namespace CaptureTaskManager
 {
+    /// <summary>
+    /// Base class for handling task-related data
+    /// </summary>
     abstract class clsDbTask : clsLoggerBase
     {
-        //*********************************************************************************************************
-        // Base class for handling task-related data
-        //**********************************************************************************************************
 
         #region "Constants"
 

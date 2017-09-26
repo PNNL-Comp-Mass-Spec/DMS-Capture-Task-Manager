@@ -3,7 +3,6 @@
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 06/26/2009
-//
 //*********************************************************************************************************
 
 using System;
@@ -14,15 +13,17 @@ using Apache.NMS.ActiveMQ.Commands;
 
 namespace CaptureTaskManager
 {
-    // received commands are sent to a delegate function with this signature
+    /// <summary>
+    /// Received commands are sent to a delegate function with this signature
+    /// </summary>
+    /// <param name="cmdText"></param>
     public delegate void MessageProcessorDelegate(string cmdText);
 
+    /// <summary>
+    /// Handles sending and receiving of control and status messages
+    /// </summary>
     class clsMessageHandler : clsLoggerBase, IDisposable
     {
-        //*********************************************************************************************************
-        // Handles sending and receiving of control and status messages
-        // Base code provided by Gary Kiebel
-        //**********************************************************************************************************
 
         #region "Class variables"
 

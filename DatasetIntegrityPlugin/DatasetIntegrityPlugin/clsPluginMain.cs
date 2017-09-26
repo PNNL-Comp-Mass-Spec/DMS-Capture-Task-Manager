@@ -1,10 +1,8 @@
-﻿
-//*********************************************************************************************************
+﻿//*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 10/02/2009
-//
 //*********************************************************************************************************
 
 using System;
@@ -22,11 +20,11 @@ using UIMFLibrary;
 
 namespace DatasetIntegrityPlugin
 {
+    /// <summary>
+    /// Dataset Integrity plugin
+    /// </summary>
     public class clsPluginMain : clsToolRunnerBase
     {
-        //*********************************************************************************************************
-        // Main class for plugin
-        //**********************************************************************************************************
 
         #region "Constants"
         const float RAW_FILE_MIN_SIZE_KB = 50;

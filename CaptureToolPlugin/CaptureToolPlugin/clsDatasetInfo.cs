@@ -9,11 +9,11 @@ using System.IO;
 
 namespace CaptureToolPlugin
 {
+    /// <summary>
+    /// Holds info for a dataset to be captured
+    /// </summary>
     class clsDatasetInfo
     {
-        //*********************************************************************************************************
-        // Class to hold info for a dataset to be captured
-        //**********************************************************************************************************
 
         #region "Properties"
 

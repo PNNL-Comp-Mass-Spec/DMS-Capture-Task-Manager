@@ -3,7 +3,6 @@
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/25/2009
-//
 //*********************************************************************************************************
 
 using System;
@@ -11,7 +10,6 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.IO;
-using System.Net;
 using System.Reflection;
 using System.Threading;
 using Pacifica.Core;
@@ -19,13 +17,12 @@ using PRISM;
 
 namespace CaptureTaskManager
 {
-    // ReSharper disable once ClassNeverInstantiated.Global
-    // Used in CaptureTaskManager.clsMainProgram
+    /// <summary>
+    /// Base class for capture step tool plugins
+    /// </summary>
+    /// <remarks>Used in CaptureTaskManager.clsMainProgram</remarks>
     public class clsToolRunnerBase : clsLoggerBase, IToolRunner
     {
-        //*********************************************************************************************************
-        // Base class for capture step tool plugins
-        //**********************************************************************************************************
 
         #region "Constants"
 

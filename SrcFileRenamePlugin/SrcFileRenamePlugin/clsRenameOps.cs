@@ -1,10 +1,8 @@
-﻿
-//*********************************************************************************************************
+﻿//*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 11/17/2009
-//
 //*********************************************************************************************************
 
 using System;
@@ -16,11 +14,11 @@ using PRISM;
 
 namespace SrcFileRenamePlugin
 {
+    /// <summary>
+    /// Class for performing rename operations
+    /// </summary>
     class clsRenameOps : clsEventNotifier
     {
-        //*********************************************************************************************************
-        // Class for performing rename operations
-        //**********************************************************************************************************
 
         #region "Enums"
         protected enum RawDSTypes

@@ -1,10 +1,8 @@
-
 //*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 10/08/2009
-//
 //*********************************************************************************************************
 
 using System;
@@ -16,11 +14,12 @@ using CaptureTaskManager;
 
 namespace DatasetArchivePlugin
 {
+    /// <summary>
+    /// Dataset archive plugin
+    /// </summary>
+    /// <remarks>Also used for archive update</remarks>
     public class clsPluginMain : clsToolRunnerBase
     {
-        //*********************************************************************************************************
-        // Main class for plugin
-        //**********************************************************************************************************
 
         #region "Constants"
         protected const string SP_NAME_STORE_MYEMSL_STATS = "StoreMyEMSLUploadStats";
@@ -136,7 +135,7 @@ namespace DatasetArchivePlugin
         }
 
         /// <summary>
-        /// Communicates with database to store the MyEMSL upload stats
+        /// Communicates with database to store the MyEMSL upload stats in table T_MyEMSL_Uploads
         /// </summary>
         /// <param name="fileCountNew"></param>
         /// <param name="fileCountUpdated"></param>

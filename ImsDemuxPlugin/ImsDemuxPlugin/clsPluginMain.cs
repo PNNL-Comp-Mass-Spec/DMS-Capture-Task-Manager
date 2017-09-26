@@ -22,11 +22,11 @@ namespace ImsDemuxPlugin
 
     #endregion
 
+    /// <summary>
+    /// IMS Demultiplexer plugin
+    /// </summary>
     public class clsPluginMain : clsToolRunnerBase
     {
-        //*********************************************************************************************************
-        // Main class for plugin
-        //**********************************************************************************************************
 
         #region "Constants"
 

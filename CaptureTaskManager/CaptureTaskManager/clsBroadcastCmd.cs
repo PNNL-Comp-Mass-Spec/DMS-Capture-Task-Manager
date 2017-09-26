@@ -3,18 +3,17 @@
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 10/01/2009
-//
 //*********************************************************************************************************
 
 using System.Collections.Generic;
 
 namespace CaptureTaskManager
 {
+    /// <summary>
+    /// Class to hold data receieved from Broadcast command queue for control of manager
+    /// </summary>
     class clsBroadcastCmd
     {
-        //*********************************************************************************************************
-        // Class to hold data receieved from Broadcast command queue for control of manager
-        //**********************************************************************************************************
 
         #region "Class variables"
 

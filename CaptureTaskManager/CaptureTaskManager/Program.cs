@@ -3,7 +3,6 @@
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/10/2009
-//
 //*********************************************************************************************************
 
 using System;
@@ -11,12 +10,11 @@ using PRISM;
 
 namespace CaptureTaskManager
 {
+    /// <summary>
+    /// Application entry class
+    /// </summary>
     static class Program
     {
-        //*********************************************************************************************************
-        // Application startup program
-        //**********************************************************************************************************
-
         private const string PROGRAM_DATE = "August 22, 2017";
 
         private static bool mCodeTestMode;
@@ -28,6 +26,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
+        /// <remarks>The STAThread attribute is required for OxyPlot functionality</remarks>
         [STAThread]
         static void Main()
         {

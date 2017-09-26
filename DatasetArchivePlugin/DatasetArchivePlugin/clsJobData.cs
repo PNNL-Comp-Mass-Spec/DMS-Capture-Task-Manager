@@ -1,26 +1,26 @@
-﻿
-//*********************************************************************************************************
+﻿//*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 10/20/2009
-//
 //*********************************************************************************************************
 
 using System.IO;
 
 namespace DatasetArchivePlugin
 {
+    /// <summary>
+    /// Class to hold data for each archive update task
+    /// </summary>
     class clsJobData
     {
-        //*********************************************************************************************************
-        // Class to hold data for each archive update task
-        //**********************************************************************************************************
-
         #region "Class variables"
         string m_SvrFileToUpdate = string.Empty;    // File, including path on storage server, needing copied
         string m_SvrDSNamePath;                 // Full path to dataset on storage server
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
         public clsJobData()
         {
             CopySuccess = false;

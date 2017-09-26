@@ -1,19 +1,17 @@
-﻿
-//*********************************************************************************************************
+﻿//*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 10/19/2009
-//
 //*********************************************************************************************************
 
 namespace DatasetArchivePlugin
 {
+    /// <summary>
+    /// Interface for archive or archive update classes
+    /// </summary>
     public interface IArchiveOps
     {
-        //*********************************************************************************************************
-        // Interface for archive or archive update classes
-        //**********************************************************************************************************
 
         #region "Properties"
         /// <summary>

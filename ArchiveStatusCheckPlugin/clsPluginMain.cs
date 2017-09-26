@@ -4,17 +4,15 @@ using Pacifica.Core;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Net;
 using System.Data.SqlClient;
-using System.Runtime.InteropServices;
 
 namespace ArchiveStatusCheckPlugin
 {
+    /// <summary>
+    /// Archive status check plugin
+    /// </summary>
     public class clsPluginMain : clsToolRunnerBase
     {
-        //*********************************************************************************************************
-        // Main class for plugin
-        //**********************************************************************************************************
 
         #region "Class-wide variables"
 

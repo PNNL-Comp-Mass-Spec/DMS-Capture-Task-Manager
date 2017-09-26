@@ -3,7 +3,6 @@
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/10/2009
-//
 //*********************************************************************************************************
 
 using System;
@@ -14,16 +13,15 @@ using System.Data;
 using log4net.Appender;
 
 // This assembly attribute tells Log4Net where to find the config file
-
 [assembly: log4net.Config.XmlConfigurator(ConfigFile = "Logging.config", Watch = true)]
 
 namespace CaptureTaskManager
 {
+    /// <summary>
+    /// Wraps Log4Net functions
+    /// </summary>
     public static class clsLogTools
     {
-        //*********************************************************************************************************
-        // Wraps Log4Net functions
-        //**********************************************************************************************************
 
         #region "Contants"
 

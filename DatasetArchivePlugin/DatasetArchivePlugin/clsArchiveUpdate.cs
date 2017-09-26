@@ -1,10 +1,8 @@
-﻿
-//*********************************************************************************************************
+﻿//*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 10/20/2009
-//
 //*********************************************************************************************************
 
 using System;
@@ -12,11 +10,11 @@ using CaptureTaskManager;
 
 namespace DatasetArchivePlugin
 {
+    /// <summary>
+    /// Used for both dataset archive and archive update
+    /// </summary>
     class clsArchiveUpdate : clsOpsBase
     {
-        //*********************************************************************************************************
-        // Tools to perform both dataset archive and archive update operations
-        //**********************************************************************************************************
 
         #region "Class variables"
 
@@ -84,6 +82,7 @@ namespace DatasetArchivePlugin
             bool allowRetry;
             string criticalErrorMessage;
 
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (!debugTestInstanceOnly)
             {
                 const bool USE_TEST_INSTANCE_FALSE = false;
@@ -107,10 +106,12 @@ namespace DatasetArchivePlugin
                 OnDebugEvent(statusMessage);
             }
 
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (!PUSH_TO_TEST_SERVER)
                 return true;
 
             // Possibly also upload the dataset to the MyEMSL test instance
+#pragma warning disable 162
             const int PERCENT_DATA_TO_SEND_TO_TEST = 20;
             var testDateCuttoff = new DateTime(2017, 7, 4);
 
@@ -152,6 +153,7 @@ namespace DatasetArchivePlugin
             }
 
             return true;
+#pragma warning restore 162
 
         }
 

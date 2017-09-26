@@ -1,10 +1,8 @@
-﻿
-//*********************************************************************************************************
+﻿//*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 11/17/2009
-//
 //*********************************************************************************************************
 
 using System;
@@ -12,11 +10,11 @@ using CaptureTaskManager;
 
 namespace SrcFileRenamePlugin
 {
+    /// <summary>
+    /// Source file rename plugin
+    /// </summary>
     public class clsPluginMain : clsToolRunnerBase
     {
-        //*********************************************************************************************************
-        // Main class for plugin
-        //**********************************************************************************************************
 
         #region "Methods"
         /// <summary>

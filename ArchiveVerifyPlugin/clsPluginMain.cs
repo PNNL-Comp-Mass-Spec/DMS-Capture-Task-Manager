@@ -10,11 +10,11 @@ using Jayrock.Json.Conversion;
 
 namespace ArchiveVerifyPlugin
 {
+    /// <summary>
+    /// Archive verify plugin
+    /// </summary>
     public class clsPluginMain : clsToolRunnerBase
     {
-        //*********************************************************************************************************
-        // Main class for plugin
-        //**********************************************************************************************************
 
         #region "Constants and Enums"
         private const string HASH_RESULTS_FILE_PREFIX = "results.";

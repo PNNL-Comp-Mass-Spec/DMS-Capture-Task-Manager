@@ -3,7 +3,6 @@
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/10/2009
-//
 //*********************************************************************************************************
 
 using System;
@@ -17,14 +16,16 @@ using PRISM;
 
 namespace CaptureTaskManager
 {
+    /// <summary>
+    /// Class for loading, storing and accessing manager parameters.
+    /// </summary>
+    /// <remarks>
+    /// Loads initial settings from local config file, then checks to see if remainder of settings
+    /// should be loaded or manager set to inactive. If manager active, retrieves remainder of settings
+    /// from manager control database.
+    /// </remarks>
     public class clsMgrSettings : clsLoggerBase, IMgrParams
     {
-        //*********************************************************************************************************
-        //  Class for loading, storing and accessing manager parameters.
-        //  Loads initial settings from local config file, then checks to see if remainder of settings should be
-        //      loaded or manager set to inactive. If manager active, retrieves remainder of settings from manager
-        //      parameters database.
-        //**********************************************************************************************************
 
         #region "Constants"
 

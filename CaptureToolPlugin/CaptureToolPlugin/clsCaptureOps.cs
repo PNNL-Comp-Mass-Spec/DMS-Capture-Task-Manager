@@ -17,11 +17,11 @@ using System.Threading.Tasks;
 
 namespace CaptureToolPlugin
 {
+    /// <summary>
+    /// Dataest capture plugin
+    /// </summary>
     public class clsCaptureOps : clsLoggerBase
     {
-        //*********************************************************************************************************
-        // Base class for performing capture operations
-        //**********************************************************************************************************
 
         #region "Enums"
         public enum RawDSTypes

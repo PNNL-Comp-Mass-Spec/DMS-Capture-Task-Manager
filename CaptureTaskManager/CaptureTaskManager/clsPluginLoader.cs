@@ -1,9 +1,8 @@
 ﻿//*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/22/2009
-//
 //*********************************************************************************************************
 
 using System;
@@ -13,13 +12,11 @@ using System.IO;
 
 namespace CaptureTaskManager
 {
-    // ReSharper disable once ClassNeverInstantiated.Global
+    /// <summary>
+    /// Handles creation of plugin objects
+    /// </summary>
     public class clsPluginLoader : clsLoggerBase
     {
-        //*********************************************************************************************************
-        // Handles creation of plugin objects
-        //**********************************************************************************************************
-
         #region "Class variables"
 
         private static string m_pluginConfigFile = "plugin_info.xml";

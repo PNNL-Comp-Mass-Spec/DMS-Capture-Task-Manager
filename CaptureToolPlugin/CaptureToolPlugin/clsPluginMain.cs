@@ -12,11 +12,11 @@ using CaptureTaskManager;
 
 namespace CaptureToolPlugin
 {
+    /// <summary>
+    /// Dataset capture plugin
+    /// </summary>
     public class clsPluginMain : clsToolRunnerBase
     {
-        //*********************************************************************************************************
-        // Main class for plugin
-        //**********************************************************************************************************
 
         #region "Methods"
         /// <summary>

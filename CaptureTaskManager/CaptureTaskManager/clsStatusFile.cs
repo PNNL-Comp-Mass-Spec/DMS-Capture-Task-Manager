@@ -3,7 +3,6 @@
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/10/2009
-//
 //*********************************************************************************************************
 
 using System;
@@ -15,11 +14,11 @@ using PRISM;
 
 namespace CaptureTaskManager
 {
+    /// <summary>
+    /// Handles status file updates
+    /// </summary>
     public class clsStatusFile : clsEventNotifier, IStatusFile
     {
-        //*********************************************************************************************************
-        // Class to handle status file updates
-        //**********************************************************************************************************
 
         #region "Constants"
 

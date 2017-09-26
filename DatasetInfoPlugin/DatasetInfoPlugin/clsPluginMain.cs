@@ -1,14 +1,10 @@
-﻿
-//*********************************************************************************************************
+﻿//*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 10/06/2009
-//
-// Last modified 10/06/2009
-//               05/04/2010 dac - Added Matt Monroe MSFileScanner for quality checks
-//               09/17/2012 mem - Moved from the DatasetQuality plugin to the Dataset Info plugin
 //*********************************************************************************************************
+
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -20,12 +16,11 @@ using MSFileInfoScannerInterfaces;
 
 namespace DatasetInfoPlugin
 {
-
+    /// <summary>
+    /// Dataset Info plugin: generates QC graphics
+    /// </summary>
     public class clsPluginMain : clsToolRunnerBase
     {
-        //*********************************************************************************************************
-        // Main class for plugin
-        //**********************************************************************************************************
 
         #region "Constants"
         const string MS_FILE_SCANNER_DS_INFO_SP = "CacheDatasetInfoXML";

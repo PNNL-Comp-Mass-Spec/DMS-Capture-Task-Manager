@@ -3,18 +3,17 @@
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 06/18/2009
-//
 //*********************************************************************************************************
 
 using System;
 
 namespace CaptureTaskManager
 {
+    /// <summary>
+    /// Interface used by classes that create and update task status file
+    /// </summary>
     public interface IStatusFile
     {
-        //*********************************************************************************************************
-        // Interface used by classes that create and update task status file
-        //**********************************************************************************************************
 
         #region "Events"
 

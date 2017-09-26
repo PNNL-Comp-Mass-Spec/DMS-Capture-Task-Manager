@@ -33,7 +33,9 @@ namespace ArchiveVerifyPlugin
             }
         }
 
-        // Constructor
+        /// <summary>
+        /// Constructor
+        /// </summary>
         public clsHashInfo() :
             this(string.Empty, string.Empty)
         { }

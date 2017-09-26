@@ -1,21 +1,22 @@
 ﻿//*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/10/2009
-//
 //*********************************************************************************************************
 
 using System.Collections.Generic;
 
 namespace CaptureTaskManager
 {
+    /// <summary>
+    /// Holds long-term data for status reporting.
+    /// </summary>
+    /// <remarks>
+    /// Static class to avoid adding an instance of the status file class to the log tools class
+    /// </remarks>
     public static class clsStatusData
     {
-        //*********************************************************************************************************
-        // Class to hold long-term data for status reporting. This is a hack to avoid adding an instance of the
-        //  status file class to the log tools class
-        //**********************************************************************************************************
 
         #region "Class variables"
 

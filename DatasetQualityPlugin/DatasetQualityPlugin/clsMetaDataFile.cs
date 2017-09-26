@@ -1,15 +1,10 @@
-﻿
-//*********************************************************************************************************
+﻿//*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 10/29/2009
-//
-// Last modified 10/29/2009
-//               11/03/2009 mem - Corrected bug in XML formatting
-//               09/17/2012 mem - Moved from the DatasetInfo plugin to the DatasetQuality plugin
-//
 //*********************************************************************************************************
+
 using System;
 using CaptureTaskManager;
 using System.Xml;
@@ -17,11 +12,11 @@ using System.IO;
 
 namespace DatasetQualityPlugin
 {
+    /// <summary>
+    /// Creates a metadata file in the dataset folder
+    /// </summary>
     public class clsMetaDataFile
     {
-        //*********************************************************************************************************
-        // Creates a metadata file in the dataset folder
-        //**********************************************************************************************************
 
         #region "Constants"
         private const string META_FILE_NAME = "metadata.xml";

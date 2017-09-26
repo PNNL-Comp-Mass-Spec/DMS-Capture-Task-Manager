@@ -1,10 +1,8 @@
-
 //*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 10/20/2009
-//
 //*********************************************************************************************************
 
 using System;
@@ -17,11 +15,11 @@ using System.IO;
 
 namespace DatasetArchivePlugin
 {
-    class clsOpsBase : clsEventNotifier, IArchiveOps
+    /// <summary>
+    /// Base class for archive and archive update operations classes. 
+    /// </summary>
+    abstract class clsOpsBase : clsEventNotifier, IArchiveOps
     {
-        //*********************************************************************************************************
-        // Base class for archive and archive update operations classes. This class should always be overridden.
-        //**********************************************************************************************************
 
         #region "Constants"
         private const string ARCHIVE = "Archive ";

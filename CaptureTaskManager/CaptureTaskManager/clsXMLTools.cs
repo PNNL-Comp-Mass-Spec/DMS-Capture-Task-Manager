@@ -1,9 +1,8 @@
 ﻿//*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 10/01/2009
-//
 //*********************************************************************************************************
 
 using System;
@@ -11,13 +10,12 @@ using System.Xml;
 
 namespace CaptureTaskManager
 {
+    /// <summary>
+    /// Tools for parsing input XML
+    /// </summary>
     [Obsolete("Unused")]
     class clsXMLTools
     {
-        //*********************************************************************************************************
-        // Tools for parsing input XML
-        //**********************************************************************************************************
-
         #region "Methods"
 
         /// <summary>

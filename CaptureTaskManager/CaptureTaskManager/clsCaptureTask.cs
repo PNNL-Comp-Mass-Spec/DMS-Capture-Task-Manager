@@ -3,7 +3,6 @@
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/15/2009
-//
 //*********************************************************************************************************
 
 using System;
@@ -14,11 +13,11 @@ using PRISM;
 
 namespace CaptureTaskManager
 {
+    /// <summary>
+    /// Contacts the database to retrieve a task or mark a task as complete (or failed)
+    /// </summary>
     class clsCaptureTask : clsDbTask, ITaskParams
     {
-        //*********************************************************************************************************
-        // Provides database access and tools for one capture task
-        //**********************************************************************************************************
 
         #region "Constants"
 
