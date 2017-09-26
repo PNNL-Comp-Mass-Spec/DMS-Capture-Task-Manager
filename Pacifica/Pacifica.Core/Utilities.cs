@@ -74,6 +74,23 @@ namespace Pacifica.Core
         }
 
         /// <summary>
+        /// Lookup the value associated with the given key in the dictionary
+        /// </summary>
+        /// <param name="dictionary">Dictionary</param>
+        /// <param name="keyName">Key name</param>
+        /// <param name="valueIfMissingOrNull">Value to return if the dictionary value is missing or null</param>
+        /// <returns>Value for the given key, or valueIfMissingOrNull if the value is missing or null</returns>
+        public static bool GetDictionaryValue(IReadOnlyDictionary<string, string> dictionary, string keyName, bool valueIfMissingOrNull)
+        {
+            var valueText = GetDictionaryValue(dictionary, keyName, valueIfMissingOrNull.ToString());
+
+            if (bool.TryParse(valueText, out var value))
+                return value;
+
+            return valueIfMissingOrNull;
+        }
+
+        /// <summary>
         /// Lookup the integer value associated with the given key in the dictionary
         /// </summary>
         /// <param name="dictionary">Dictionary</param>

@@ -799,12 +799,7 @@ namespace Pacifica.DMS_Metadata
                 throw new Exception(errorMessage);
             }
 
-            var recurse = true;
-
-            if (taskParams.TryGetValue(MyEMSLUploader.RECURSIVE_UPLOAD, out string sValue))
-            {
-                bool.TryParse(sValue, out recurse);
-            }
+            var recurse = Utilities.GetDictionaryValue(taskParams, MyEMSLUploader.RECURSIVE_UPLOAD, true);
 
             // Grab file information from this dataset directory
             // This process will also compute the Sha-1 hash value for each file
