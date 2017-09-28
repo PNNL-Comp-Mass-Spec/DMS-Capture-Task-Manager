@@ -1651,7 +1651,7 @@ namespace DatasetIntegrityPlugin
             {
                 // Verify size of the largest .mcf file
                 float minSizeKB;
-                if (String.Equals(mctFileName, "Storage.mcf_idx", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(mctFileName, "Storage.mcf_idx", StringComparison.OrdinalIgnoreCase))
                     minSizeKB = 4;
                 else
                     minSizeKB = MCF_FILE_MIN_SIZE_KB;
@@ -2035,10 +2035,10 @@ namespace DatasetIntegrityPlugin
                 LogDebug("Opening UIMF file to look for valid data");
 
                 // Open the .UIMF file and read the first scan of the first frame
-                using (var reader = new DataReader(uimfFilePath))
+                using (var uimfReader = new DataReader(uimfFilePath))
                 {
 
-                    var frameList = reader.GetMasterFrameList();
+                    var frameList = uimfReader.GetMasterFrameList();
 
                     if (frameList.Count <= 0)
                     {
@@ -2050,12 +2050,12 @@ namespace DatasetIntegrityPlugin
                     {
                         var frameNumber = frameEntry.Key;
                         var frameType = frameEntry.Value;
-                        var frameScans = reader.GetFrameScans(frameEntry.Key);
+                        var frameScans = uimfReader.GetFrameScans(frameEntry.Key);
 
                         foreach (var scanNum in frameScans)
                         {
 
-                            var dataCount = reader.GetSpectrum(
+                            var dataCount = uimfReader.GetSpectrum(
                                 frameNumber, frameType, scanNum.Scan,
                                 out _, out _);
 

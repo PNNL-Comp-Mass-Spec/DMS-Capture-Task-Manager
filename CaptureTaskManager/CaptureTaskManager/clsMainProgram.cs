@@ -406,7 +406,7 @@ namespace CaptureTaskManager
                     // The using statement also closes the StreamReader.
                     using (var sr = new StreamReader(historyFile))
                     {
-                        String line;
+                        string line;
                         // Read and display lines from the file until the end of
                         // the file is reached.
                         while ((line = sr.ReadLine()) != null)

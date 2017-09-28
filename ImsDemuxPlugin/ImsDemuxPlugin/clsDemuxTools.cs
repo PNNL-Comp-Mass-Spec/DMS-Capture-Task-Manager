@@ -39,8 +39,6 @@ namespace ImsDemuxPlugin
 
         #region "Module variables"
 
-        // Deprecated: UIMFDemultiplexer.UIMFDemultiplexer m_DeMuxTool;
-
         private string mDataset;
         private string mDatasetFolderPathRemote = string.Empty;
         private string mWorkDir;
@@ -124,17 +122,17 @@ namespace ImsDemuxPlugin
 
                 // Locate data file on storage server
                 // Don't copy it locally yet
-                var sUimfPath = GetRemoteUIMFFilePath(taskParams, ref retData);
-                if (string.IsNullOrEmpty(sUimfPath))
+                var uimfFilePath = GetRemoteUIMFFilePath(ref retData);
+                if (string.IsNullOrEmpty(uimfFilePath))
                 {
                     if (retData != null && retData.CloseoutType != EnumCloseOutType.CLOSEOUT_FAILED)
                         retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     return retData;
                 }
 
-                using (var objReader = new UIMFLibrary.DataReader(sUimfPath))
+                using (var uimfReader = new DataReader(uimfFilePath))
                 {
-                    var hasBinCentricData = objReader.DoesContainBinCentricData();
+                    var hasBinCentricData = uimfReader.DoesContainBinCentricData();
 
                     if (hasBinCentricData)
                     {
@@ -149,12 +147,12 @@ namespace ImsDemuxPlugin
                 // Copy the UIMF file from the storage server to the working directory
                 var uimfFileName = mDataset + ".uimf";
 
-                retData = CopyUIMFToWorkDir(uimfFileName, retData, out var uimfRemoteFileNamePath, out var uimfLocalFileNamePath);
+                retData = CopyUIMFToWorkDir(uimfFileName, retData, out _, out var uimfLocalFileNamePath);
                 if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
                     return retData;
 
                 // Add the bin-centric tables
-                using (var uimfReader = new UIMFLibrary.DataReader(uimfLocalFileNamePath))
+                using (var uimfReader = new DataReader(uimfLocalFileNamePath))
                 {
                     // Note: providing true for parseViaFramework as a workaround for reading SqLite files located on a remote UNC share or in readonly folders
                     var connectionString = "Data Source = " + uimfLocalFileNamePath;
@@ -169,7 +167,7 @@ namespace ImsDemuxPlugin
                             dbCommand.ExecuteNonQuery();
                         }
 
-                        var binCentricTableCreator = new UIMFLibrary.BinCentricTableCreation();
+                        var binCentricTableCreator = new BinCentricTableCreation();
 
                         // Attach the events
                         binCentricTableCreator.OnProgress += binCentricTableCreator_ProgressEvent;
@@ -195,9 +193,9 @@ namespace ImsDemuxPlugin
                 }
 
                 // Confirm that the bin-centric tables were truly added
-                using (var objReader = new UIMFLibrary.DataReader(uimfLocalFileNamePath))
+                using (var uimfReader = new DataReader(uimfLocalFileNamePath))
                 {
-                    var hasBinCentricData = objReader.DoesContainBinCentricData();
+                    var hasBinCentricData = uimfReader.DoesContainBinCentricData();
 
                     if (!hasBinCentricData)
                     {
@@ -263,19 +261,19 @@ namespace ImsDemuxPlugin
 
         }
 
-        private string GetRemoteUIMFFilePath(ITaskParams taskParams, ref clsToolReturnData retData)
+        private string GetRemoteUIMFFilePath(ref clsToolReturnData retData)
         {
 
             try
             {
                 // Locate data file on storage server
                 // Don't copy it locally; just work with it over the network
-                var sUimfPath = Path.Combine(mDatasetFolderPathRemote, mDataset + ".uimf");
+                var uimfFilePath = Path.Combine(mDatasetFolderPathRemote, mDataset + ".uimf");
 
-                if (File.Exists(sUimfPath))
-                    return sUimfPath;
+                if (File.Exists(uimfFilePath))
+                    return uimfFilePath;
 
-                var msg = "UIMF file not found on storage server, unable to calibrate: " + sUimfPath;
+                var msg = "UIMF file not found on storage server, unable to calibrate: " + uimfFilePath;
                 OnErrorEvent(msg);
                 retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, "UIMF file not found on storage server, unable to calibrate");
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -307,15 +305,15 @@ namespace ImsDemuxPlugin
             var msg = "Calibrating dataset " + mDataset;
             OnDebugEvent(msg);
 
-            bool bAutoCalibrate;
+            bool autoCalibrate;
 
             // Make sure the working directory is empty
             clsToolRunnerBase.CleanWorkDir(mWorkDir);
 
             // Locate data file on storage server
             // Don't copy it locally; just work with it over the network
-            var sUimfPath = GetRemoteUIMFFilePath(taskParams, ref retData);
-            if (string.IsNullOrEmpty(sUimfPath))
+            var uimfFilePath = GetRemoteUIMFFilePath(ref retData);
+            if (string.IsNullOrEmpty(uimfFilePath))
             {
                 if (retData != null && retData.CloseoutType != EnumCloseOutType.CLOSEOUT_FAILED)
                     retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -335,10 +333,10 @@ namespace ImsDemuxPlugin
                     case "ims_tof_3":
                         msg = "Skipping calibration since instrument is " + instrumentName;
                         OnStatusEvent(msg);
-                        bAutoCalibrate = false;
+                        autoCalibrate = false;
                         break;
                     default:
-                        bAutoCalibrate = true;
+                        autoCalibrate = true;
                         break;
                 }
 
@@ -352,7 +350,7 @@ namespace ImsDemuxPlugin
                 return retData;
             }
 
-            if (!bAutoCalibrate)
+            if (!autoCalibrate)
                 return retData;
 
             try
@@ -409,23 +407,23 @@ namespace ImsDemuxPlugin
                 return retData;
             }
 
-            if (!bAutoCalibrate)
+            if (!autoCalibrate)
                 return retData;
 
             // Perform calibration operation
             OnDebugEvent("Calling UIMFDemultiplexer to calibrate");
 
-            var bCalibrationFailed = false;
+            var calibrationFailed = false;
 
             try
             {
-                if (!CalibrateFile(sUimfPath, mDataset, out var errorMessage))
+                if (!CalibrateFile(uimfFilePath, mDataset, out var errorMessage))
                 {
                     if (string.IsNullOrEmpty(errorMessage))
                         errorMessage = "Error calibrating UIMF file";
 
                     retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, errorMessage);
-                    bCalibrationFailed = true;
+                    calibrationFailed = true;
                 }
             }
             catch (Exception ex)
@@ -433,17 +431,17 @@ namespace ImsDemuxPlugin
                 msg = "Exception calling CalibrateFile for dataset " + mDataset;
                 OnErrorEvent(msg, ex);
                 retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, "Exception while calibrating UIMF file");
-                bCalibrationFailed = true;
+                calibrationFailed = true;
             }
 
-            if (!bCalibrationFailed)
+            if (!calibrationFailed)
             {
                 try
                 {
-                    if (!ValidateUIMFCalibrated(sUimfPath, retData))
+                    if (!ValidateUIMFCalibrated(uimfFilePath, retData))
                     {
                         // Calibration failed
-                        bCalibrationFailed = true;
+                        calibrationFailed = true;
                     }
                 }
                 catch (Exception ex)
@@ -457,14 +455,14 @@ namespace ImsDemuxPlugin
 
             }
 
-            if (!sUimfPath.StartsWith(@"\\"))
+            if (!uimfFilePath.StartsWith(@"\\"))
             {
                 // Copy the CalibrationLog.txt file to the storage server (even if calibration failed)
                 CopyCalibrationLogToStorageServer(retData);
             }
 
             // Update the return data
-            if (bCalibrationFailed)
+            if (calibrationFailed)
             {
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 retData.EvalMsg = AppendToString(retData.EvalMsg, " but Calibration failed", "");
@@ -498,8 +496,8 @@ namespace ImsDemuxPlugin
             {
                 // Locate data file on storage server
                 // Don't copy it locally; just work with it over the network
-                var sUimfPath = GetRemoteUIMFFilePath(taskParams, ref retData);
-                if (string.IsNullOrEmpty(sUimfPath))
+                var uimfFilePath = GetRemoteUIMFFilePath(ref retData);
+                if (string.IsNullOrEmpty(uimfFilePath))
                 {
                     if (retData != null && retData.CloseoutType != EnumCloseOutType.CLOSEOUT_FAILED)
                         retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -608,9 +606,9 @@ namespace ImsDemuxPlugin
 
             // Look for a _decoded.uimf.tmp file on the storage server
             // Copy it local if present
-            var sTmpUIMFFileName = mDataset + DECODED_UIMF_SUFFIX + ".tmp";
-            var sTmpUIMFRemoteFileNamePath = Path.Combine(mDatasetFolderPathRemote, sTmpUIMFFileName);
-            var sTmpUIMFLocalFileNamePath = Path.Combine(mWorkDir, sTmpUIMFFileName);
+            var tmpUIMFFileName = mDataset + DECODED_UIMF_SUFFIX + ".tmp";
+            var tmpUIMFRemoteFileNamePath = Path.Combine(mDatasetFolderPathRemote, tmpUIMFFileName);
+            var tmpUIMFLocalFileNamePath = Path.Combine(mWorkDir, tmpUIMFFileName);
 
             var demuxOptions = new udtDemuxOptionsType
             {
@@ -622,18 +620,18 @@ namespace ImsDemuxPlugin
 
             int resumeStartFrame;
 
-            if (File.Exists(sTmpUIMFRemoteFileNamePath))
+            if (File.Exists(tmpUIMFRemoteFileNamePath))
             {
                 // Copy _decoded.uimf.tmp file to working directory so that we can resume demultiplexing where we left off
                 const int retryCount = 0;
-                if (CopyFileWithRetry(sTmpUIMFRemoteFileNamePath, sTmpUIMFLocalFileNamePath, false, retryCount))
+                if (CopyFileWithRetry(tmpUIMFRemoteFileNamePath, tmpUIMFLocalFileNamePath, false, retryCount))
                 {
-                    OnStatusEvent(".tmp decoded file found at " + sTmpUIMFRemoteFileNamePath + "; will resume demultiplexing");
+                    OnStatusEvent(".tmp decoded file found at " + tmpUIMFRemoteFileNamePath + "; will resume demultiplexing");
                     demuxOptions.ResumeDemultiplexing = true;
                 }
                 else
                 {
-                    OnStatusEvent("Error copying .tmp decoded file from " + sTmpUIMFRemoteFileNamePath + " to work folder; unable to resume demultiplexing");
+                    OnStatusEvent("Error copying .tmp decoded file from " + tmpUIMFRemoteFileNamePath + " to work folder; unable to resume demultiplexing");
                 }
             }
 
@@ -709,7 +707,7 @@ namespace ImsDemuxPlugin
 
                     try
                     {
-                        var sCheckpointTargetPath = Path.Combine(mDatasetFolderPathRemote, sTmpUIMFFileName);
+                        var sCheckpointTargetPath = Path.Combine(mDatasetFolderPathRemote, tmpUIMFFileName);
 
                         if (File.Exists(sCheckpointTargetPath))
                             File.Delete(sCheckpointTargetPath);
@@ -1028,7 +1026,6 @@ namespace ImsDemuxPlugin
                         if (iMaxDemultiplexedFrameNum > 0)
                         {
                             resumeStartFrame = iMaxDemultiplexedFrameNum + 1;
-                            demuxOptions.ResumeDemultiplexing = true;
                             msg = "Resuming demultiplexing, dataset " + datasetName + " frame " + resumeStartFrame;
                             OnStatusEvent(msg);
                         }
@@ -1049,7 +1046,6 @@ namespace ImsDemuxPlugin
                 {
                     msg = "Starting demultiplexing, dataset " + datasetName;
                     OnStatusEvent(msg);
-                    demuxOptions.ResumeDemultiplexing = false;
                 }
 
                 // Enable checkpoint file creation
@@ -1285,7 +1281,7 @@ namespace ImsDemuxPlugin
                 // Input file
                 var cmdStr = clsConversion.PossiblyQuotePath(inputFilePath);
 
-                if (String.Compare(fiInputFile.DirectoryName, fiOutputFile.DirectoryName, StringComparison.OrdinalIgnoreCase) != 0)
+                if (string.Compare(fiInputFile.DirectoryName, fiOutputFile.DirectoryName, StringComparison.OrdinalIgnoreCase) != 0)
                 {
                     // Output folder
                     cmdStr += " /O:" + clsConversion.PossiblyQuotePath(fiOutputFile.DirectoryName);
@@ -1385,7 +1381,7 @@ namespace ImsDemuxPlugin
 
                 if (cmdRunner.ExitCode != 0)
                 {
-                    OnWarningEvent("UIMFDemultiplexer returned a non-zero exit code: " + cmdRunner.ExitCode.ToString());
+                    OnWarningEvent("UIMFDemultiplexer returned a non-zero exit code: " + cmdRunner.ExitCode);
                 }
                 else
                 {
@@ -1566,7 +1562,7 @@ namespace ImsDemuxPlugin
             }
         }
 
-        void binCentricTableCreator_ProgressEvent(object sender, UIMFLibrary.ProgressEventArgs e)
+        void binCentricTableCreator_ProgressEvent(object sender, ProgressEventArgs e)
         {
             if (DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds < mProgressUpdateIntervalSeconds)
                 return;
@@ -1591,7 +1587,7 @@ namespace ImsDemuxPlugin
             mLastProgressUpdateTime = DateTime.UtcNow;
         }
 
-        void binCentricTableCreator_MessageEvent(object sender, UIMFLibrary.MessageEventArgs e)
+        void binCentricTableCreator_MessageEvent(object sender, MessageEventArgs e)
         {
             if (DateTime.UtcNow.Subtract(mLastProgressMessageTime).TotalSeconds < 30)
                 return;

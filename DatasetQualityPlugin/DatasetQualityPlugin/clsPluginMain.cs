@@ -273,7 +273,7 @@ namespace DatasetQualityPlugin
         /// <param name="lstResults"></param>
         /// <param name="sXMLResults"></param>
         /// <returns></returns>
-        private bool ConvertResultsToXML(List<KeyValuePair<String, String>> lstResults, out string sXMLResults)
+        private bool ConvertResultsToXML(List<KeyValuePair<string, string>> lstResults, out string sXMLResults)
         {
 
             // XML will look like:
@@ -409,7 +409,7 @@ namespace DatasetQualityPlugin
             // QC_Shew_12_02_Run-06_4Sep12_Roc_12-03-30.RAW   2012-09-04T20:33:29Z   0.35347   20.7009   22.3192   24.794   etc.
 
             // The measurments are returned via this list
-            var lstResults = new List<KeyValuePair<String, String>>();
+            var lstResults = new List<KeyValuePair<string, string>>();
 
             if (!File.Exists(ResultsFilePath))
             {
@@ -513,7 +513,7 @@ namespace DatasetQualityPlugin
                         else
                             sDataItem = string.Copy(strData[index]).Trim();
 
-                        lstResults.Add(new KeyValuePair<String, String>(sHeaderName, sDataItem));
+                        lstResults.Add(new KeyValuePair<string, string>(sHeaderName, sDataItem));
                     }
 
                 }
