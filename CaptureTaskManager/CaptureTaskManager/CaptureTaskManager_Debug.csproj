@@ -36,7 +36,8 @@
     <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
     <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
-    <DocumentationFile></DocumentationFile>
+    <DocumentationFile>
+    </DocumentationFile>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
@@ -162,7 +163,7 @@
       <Version>1.0.97</Version>
     </PackageReference>
     <PackageReference Include="UIMFLibrary">
-      <Version>1.0.9</Version>
+      <Version>3.5.7.7</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
@@ -191,6 +192,7 @@ xcopy "$(TargetDir)plugin_info.xml" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
 xcopy "$(ProjectDir)..\..\RefLib\PNNLOmics.dll" "$(TargetDir)" /D /Y</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PreBuildEvent></PreBuildEvent>
+    <PreBuildEvent>
+    </PreBuildEvent>
   </PropertyGroup>
 </Project>

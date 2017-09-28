@@ -12,7 +12,8 @@
     <AssemblyName>ImsDemuxPlugin</AssemblyName>
     <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <FileUpgradeFlags></FileUpgradeFlags>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
     <OldToolsVersion>3.5</OldToolsVersion>
     <UpgradeBackupLocation />
     <PublishUrl>publish\</PublishUrl>
@@ -83,7 +84,7 @@
       <Version>3.20.0</Version>
     </PackageReference>
     <PackageReference Include="UIMFLibrary">
-      <Version>1.0.9</Version>
+      <Version>3.5.7.7</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
