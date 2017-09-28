@@ -12,6 +12,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using CaptureTaskManager;
 using PRISM;
+using UIMFLibrary;
 
 namespace ImsDemuxPlugin
 {
@@ -359,57 +360,43 @@ namespace ImsDemuxPlugin
 
                 // Count the number of frames
                 // If fewer than 5 frames, then don't calibrate
-                var objReader = new UIMFLibrary.DataReader(sUimfPath);
-
-                var oFrameList = objReader.GetMasterFrameList();
-
-                if (oFrameList.Count < 5)
+                using (var uimfReader = new DataReader(uimfFilePath))
                 {
-                    if (oFrameList.Count == 0)
-                        msg = "Skipping calibration since .UIMF file has no frames";
-                    else
-                    {
-                        msg = "Skipping calibration since .UIMF file only has " + oFrameList.Count + " frame";
-                        if (oFrameList.Count != 1)
-                            msg += "s";
-                    }
 
-                    OnStatusEvent(msg);
-                    bAutoCalibrate = false;
-                }
-                else
-                {
-                    // Look for the presence of calibration frames or calibration tables
-                    // If neither exists, then we cannot perform calibration
-                    var bCalibrationDataExists = false;
+                    var frameList = uimfReader.GetMasterFrameList();
 
-                    using (var objFrameEnumerator = oFrameList.GetEnumerator())
+                    if (frameList.Count < 5)
                     {
-                        while (objFrameEnumerator.MoveNext())
-                        {
-                            if (objFrameEnumerator.Current.Value == UIMFLibrary.DataReader.FrameType.Calibration)
-                            {
-                                bCalibrationDataExists = true;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (!bCalibrationDataExists)
-                    {
-                        // No calibration frames were found
-                        var sCalibrationTables = objReader.GetCalibrationTableNames();
-                        if (sCalibrationTables.Count > 0)
-                        {
-                            bCalibrationDataExists = true;
-                        }
+                        if (frameList.Count == 0)
+                            msg = "Skipping calibration since .UIMF file has no frames";
                         else
                         {
-                            msg = "Skipping calibration since .UIMF file does not contain any calibration frames or calibration tables";
-                            OnWarningEvent(msg);
-                            bAutoCalibrate = false;
+                            msg = "Skipping calibration since .UIMF file only has " + frameList.Count + " frame";
+                            if (frameList.Count != 1)
+                                msg += "s";
                         }
 
+                        OnStatusEvent(msg);
+                        autoCalibrate = false;
+                    }
+                    else
+                    {
+                        // Look for the presence of calibration frames or calibration tables
+                        // If neither exists, then we cannot perform calibration
+                        var calibrationDataExists = frameList.Any(item => item.Value == UIMFData.FrameType.Calibration);
+
+                        if (!calibrationDataExists)
+                        {
+                            // No calibration frames were found
+                            var sCalibrationTables = uimfReader.GetCalibrationTableNames();
+                            if (sCalibrationTables.Count == 0)
+                            {
+                                msg = "Skipping calibration since .UIMF file does not contain any calibration frames or calibration tables";
+                                OnWarningEvent(msg);
+                                autoCalibrate = false;
+                            }
+
+                        }
                     }
                 }
             }

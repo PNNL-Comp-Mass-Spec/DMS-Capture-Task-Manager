@@ -9,6 +9,7 @@ using System;
 using CaptureTaskManager;
 using System.IO;
 using System.Data.SQLite;
+using UIMFLibrary;
 
 namespace ImsDemuxPlugin
 {
@@ -369,11 +370,15 @@ namespace ImsDemuxPlugin
                 return false;
             }
 
-            var oReader = new UIMFLibrary.DataReader(decodedUimfFilePath);
-            var manuallyCalibrated = false;
-
-            if (oReader.TableExists("Log_Entries"))
+            using (var uimfReader = new DataReader(decodedUimfFilePath))
             {
+                var manuallyCalibrated = false;
+
+                if (!uimfReader.TableExists("Log_Entries"))
+                {
+                    return false;
+                }
+
                 // Note: providing true for parseViaFramework as a workaround for reading SqLite files located on a remote UNC share or in readonly folders
                 var connectionString = "Data Source = " + decodedUimfFilePath + "; Version=3; DateTimeFormat=Ticks;";
                 using (var cnUIMF = new SQLiteConnection(connectionString, true))
@@ -381,7 +386,8 @@ namespace ImsDemuxPlugin
                     cnUIMF.Open();
                     var cmdLogEntries = cnUIMF.CreateCommand();
 
-                    cmdLogEntries.CommandText = "SELECT Message FROM Log_Entries where Posted_By = '" + clsDemuxTools.UIMF_CALIBRATION_UPDATER_NAME +
+                    cmdLogEntries.CommandText = "SELECT Message FROM Log_Entries where Posted_By = '" +
+                                                clsDemuxTools.UIMF_CALIBRATION_UPDATER_NAME +
                                                 "' order by Entry_ID desc";
                     using (var logEntriesReader = cmdLogEntries.ExecuteReader())
                     {
@@ -406,15 +412,16 @@ namespace ImsDemuxPlugin
                         }
                     }
                 }
+
+                if (manuallyCalibrated && Math.Abs(calibrationSlope) < double.Epsilon)
+                {
+                    LogError("Found message 'Manually applied calibration coefficients' but could not determine slope or intercept manually applied");
+                    manuallyCalibrated = false;
+                }
+
+                return manuallyCalibrated;
             }
 
-            if (manuallyCalibrated && Math.Abs(calibrationSlope) < Double.Epsilon)
-            {
-                LogError("Found message 'Manually applied calibration coefficients' but could not determine slope or intercept manually applied");
-                manuallyCalibrated = false;
-            }
-
-            return manuallyCalibrated;
         }
 
         protected bool CopyFileToStorageServer(string sourceDirPath, string fileName)
