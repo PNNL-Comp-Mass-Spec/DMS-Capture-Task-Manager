@@ -5,11 +5,11 @@
 // Created 03/07/2011
 //*********************************************************************************************************
 
-using System;
-using System.Data.SQLite;
-using System.Data;
+using System.Collections.Generic;
+using System.IO;
 using System.Text.RegularExpressions;
 using PRISM;
+using UIMFLibrary;
 
 namespace ImsDemuxPlugin
 {
@@ -19,85 +19,77 @@ namespace ImsDemuxPlugin
     public class clsSQLiteTools : clsEventNotifier
     {
 
-        #region "Enums"
         public enum UimfQueryResults
         {
             NonMultiplexed,
             Multiplexed,
             Error
         }
-        #endregion
-
-        #region "Constants"
-        const string DEF_QUERY_STRING = "SELECT DISTINCT IMFProfile FROM Frame_Parameters";
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
-        /// Evaluates the UMIF file to determine if it is multiplexed or not
+        /// Evaluates the UIMF file to determine if it is multiplexed or not
         /// </summary>
         /// <param name="uimfFilePath">Full path to uimf file</param>
         /// <param name="numBitsForEncoding">Number of bits used for encoding; 0 if not multiplexed</param>
         /// <returns>Enum indicating test results</returns>
         public UimfQueryResults GetUimfMuxStatus(string uimfFilePath, out byte numBitsForEncoding)
         {
-            var connStr = "data source=" + uimfFilePath + ";Version=3;Read Only=True;";
-            const string sqlStr = DEF_QUERY_STRING;
-
             numBitsForEncoding = 0;
 
-            // Get a data table containing the multiplexing information for the UIMF file
-            var queryResult = GetDataTable(sqlStr, connStr);
+            var encodingSequenceList = new SortedSet<string>();
 
-            // If null returned, there was an error
-            if (queryResult == null)
-                return UimfQueryResults.Error;
+            using (var reader = new DataReader(uimfFilePath))
+            {
+                var frameList = reader.GetMasterFrameList();
+
+                foreach (var frame in frameList)
+                {
+                    var frameParams = reader.GetFrameParams(frame.Key);
+
+                    var encodingSequence = frameParams.GetValue(FrameParamKeyType.MultiplexingEncodingSequence, string.Empty) ?? string.Empty;
+
+                    if (!encodingSequenceList.Contains(encodingSequence))
+                        encodingSequenceList.Add(encodingSequence);
+
+                }
+            }
 
             // If empty table returned, there was an error
-            if (queryResult.Rows.Count < 1)
+            if (encodingSequenceList.Count < 1)
             {
-                const string msg = "No rows retrieved when querying UIMF file with " + sqlStr;
-                OnErrorEvent(msg);
+                OnErrorEvent("UIMF file has no frames: " + uimfFilePath);
                 return UimfQueryResults.Error;
             }
 
             var reBitValue = new Regex(@"^(\d)bit", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             var imfProfileFieldAlwaysBlank = true;
 
-            // Evaluate results. If any row in table has a file name containing "bit" then de-multiplexing is required
+            // Evaluate results. If any of the frames has a filename containing "bit", de-multiplexing is required
             // In addition, parse the "bit" value to determine numBitsForEncoding
             var deMuxRequired = false;
-            foreach (DataRow currRow in queryResult.Rows)
+            foreach (var encodingSequence in encodingSequenceList)
             {
-                var tmpObj = currRow[queryResult.Columns[0]];
-                if (tmpObj == DBNull.Value)
-                {
-                    // Null field means demux not required
-                    continue;
-                }
-
-                var testStr = (string)tmpObj;
 
                 // Empty string means demux not required
-                if (string.IsNullOrEmpty(testStr))
+                if (string.IsNullOrWhiteSpace(encodingSequence))
                     continue;
 
                 imfProfileFieldAlwaysBlank = false;
 
                 // Get the file name, and check to see if it starts with 3bit (or 4bit or 5bit etc.)
-                var multiplexFilename = System.IO.Path.GetFileName(testStr).ToLower();
+                var multiplexFilename = Path.GetFileName(encodingSequence).ToLower();
+
                 var reMatch = reBitValue.Match(multiplexFilename);
-                if (reMatch.Success)
-                {
-                    // Multiplex Filename contains "bit", so de-multiplexing is required
-                    deMuxRequired = true;
+                if (!reMatch.Success)
+                    continue;
 
-                    byte.TryParse(reMatch.Groups[1].Value, out numBitsForEncoding);
+                // Multiplex Filename contains "bit", so de-multiplexing is required
+                deMuxRequired = true;
 
-                    // No need to check additional rows; we assume the same multiplexing is used throughout the dataset
-                    break;
-                }
+                byte.TryParse(reMatch.Groups[1].Value, out numBitsForEncoding);
+
+                // No need to check additional rows; we assume the same multiplexing is used throughout the dataset
+                break;
             }
 
             if (imfProfileFieldAlwaysBlank)
@@ -109,7 +101,7 @@ namespace ImsDemuxPlugin
 
                 reBitValue = new Regex(@"(_(\d)bit_|_(\d)bit$)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-                var fileName = System.IO.Path.GetFileNameWithoutExtension(uimfFilePath);
+                var fileName = Path.GetFileNameWithoutExtension(uimfFilePath);
                 if (fileName != null)
                 {
                     var reMatch = reBitValue.Match(fileName);
@@ -131,51 +123,5 @@ namespace ImsDemuxPlugin
             return UimfQueryResults.NonMultiplexed;
         }
 
-        /// <summary>
-        /// Gets a table from a UIMF file
-        /// </summary>
-        /// <param name="cmdStr">SQL query string</param>
-        /// <param name="connStr">Connection string</param>
-        /// <returns>Table containg query results</returns>
-        private DataTable GetDataTable(string cmdStr, string connStr)
-        {
-            // Note: providing true for parseViaFramework as a workaround for reading SqLite files located on a remote UNC share or in readonly folders
-            using (var cn = new SQLiteConnection(connStr, true))
-            {
-                using (var da = new SQLiteDataAdapter())
-                {
-                    using (var cmd = new SQLiteCommand(cmdStr, cn))
-                    {
-                        cmd.CommandType = CommandType.Text;
-                        da.SelectCommand = cmd;
-                        try
-                        {
-                            var retTable = new DataTable();
-                            da.Fill(retTable);
-                            return retTable;
-                        }
-                        catch (Exception ex)
-                        {
-                            var msg = "Exception reading UIMF file: " + ex.Message;
-                            OnErrorEvent(msg, ex);
-                            return null;
-                        }
-                    }
-                }
-            }
-
-            // Alternative method:
-            //using (var cn = new SQLiteConnection(connStr, true)) {
-            //    cn.Open();
-            //    using (var command = new SQLiteCommand(cmdStr, cn)) {
-            //        command.CommandType = CommandType.Text;
-            //        using (SQLiteDataReader reader = command.ExecuteReader()) {
-            //            var retTable = new DataTable();
-            //            retTable.Load(reader);
-            //            return retTable;
-            //        } }   }
-
-        }
-        #endregion
     }
 }
