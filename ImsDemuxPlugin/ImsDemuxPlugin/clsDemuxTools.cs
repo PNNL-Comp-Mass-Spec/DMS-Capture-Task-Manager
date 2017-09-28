@@ -504,33 +504,34 @@ namespace ImsDemuxPlugin
                     return retData;
                 }
 
-                // Note: providing true for parseViaFramework as a workaround for reading SqLite files located on a remote UNC share or in readonly folders
-                var connectionString = "Data Source = " + sUimfPath;
-                using (var dbConnection = new System.Data.SQLite.SQLiteConnection(connectionString, true))
+                double currentSlope;
+                double currentIntercept;
+
+                using (var reader = new DataReader(uimfFilePath))
                 {
-                    dbConnection.Open();
+                    var frameList = reader.GetMasterFrameList();
 
-                    double currentSlope = 0;
-                    double currentIntercept = 0;
-
-                    using (var dbCommand = dbConnection.CreateCommand())
+                    if (frameList.Count > 0)
                     {
-                        dbCommand.CommandText = "SELECT CalibrationSlope, CalibrationIntercept FROM Frame_Parameters LIMIT 1";
-                        using (var reader = dbCommand.ExecuteReader())
+                        var firstFrame = frameList.Keys.Min();
+
+                        var frameParams = reader.GetFrameParams(firstFrame);
+
+                        currentSlope = frameParams.CalibrationSlope;
+                        currentIntercept = frameParams.CalibrationIntercept;
+
+                        if (Math.Abs(currentSlope) < double.Epsilon)
                         {
-                            if (reader.Read())
-                            {
-                                currentSlope = reader.GetDouble(0);
-                                currentIntercept = reader.GetDouble(1);
-                            }
+                            var msg = $"Existing CalibrationSlope is 0 in PerformManualCalibration for frame {firstFrame}; this is unexpected";
+                            OnWarningEvent(msg);
                         }
                     }
-
-                    if (Math.Abs(currentSlope) < double.Epsilon)
+                    else
                     {
-                        const string msg = "Existing CalibrationSlope is 0 in PerformManualCalibration; this is unexpected";
-                        OnWarningEvent(msg);
+                        currentSlope = 0;
+                        currentIntercept = 0;
                     }
+                }
 
                     using (var dbCommand = dbConnection.CreateCommand())
                     {
