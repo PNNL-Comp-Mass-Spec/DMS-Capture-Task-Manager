@@ -6,31 +6,7 @@ namespace CaptureTaskManager
 {
     class clsCodeTest
     {
-        //public void TestCalibrate()
-        //{
-        //    var m_DeMuxTool = new UIMFDemultiplexer.UIMFDemultiplexer();
-
-        //    // Set the options
-        //    m_DeMuxTool.ResumeDemultiplexing = false;
-        //    m_DeMuxTool.CreateCheckpointFiles = false;
-
-        //    // Set additional options
-        //    m_DeMuxTool.MissingCalTableSearchExternal = true;       // Instruct tool to look for calibration table names in other similarly named .UIMF files if not found in the primary .UIMF file
-
-        //    // Disable calibration if processing a .UIMF from the older IMS TOFs
-        //    m_DeMuxTool.CalibrateAfterDemultiplexing = true;
-
-        //    // Use all of the cores
-        //    m_DeMuxTool.CPUCoresToUse = -1;
-
-        //    bool success = m_DeMuxTool.CalibrateUIMFFile(@"\\proto-10\IMS04_AgTOF05\2011_2\Sarc_MS2_2_1Apr11_Cheetah_11-02-18\Sarc_MS2_2_1Apr11_Cheetah_11-02-18.uimf");
-
-        //    if (success)
-        //        Console.WriteLine("Success");
-        //    else
-        //        Console.WriteLine("Failed");
-        //}
-
+        
         public void TestConnection()
         {
             Console.WriteLine(@"Code test mode");

@@ -224,7 +224,7 @@ namespace ArchiveStatusCheckPlugin
                     var ingestSuccess = GetMyEMSLIngestStatus(
                         m_Job, statusChecker, statusInfo.StatusURI,
                         statusInfo.EUS_InstrumentID, statusInfo.EUS_ProposalID, statusInfo.EUS_UploaderID,
-                        mRetData, out var serverResponse, out int percentComplete);
+                        mRetData, out var serverResponse, out var percentComplete);
 
                     // Convert the percent complete value (between 0 and 100) to a number between 0 and 7
                     // since historically there were 7 steps to the ingest process
@@ -289,7 +289,7 @@ namespace ArchiveStatusCheckPlugin
             {
                 var unverifiedStatusNum = unverifiedEntry.Key;
 
-                if (!dctStatusData.TryGetValue(unverifiedStatusNum, out clsIngestStatusInfo unverifiedStatusInfo))
+                if (!dctStatusData.TryGetValue(unverifiedStatusNum, out var unverifiedStatusInfo))
                     continue;
 
                 var unverifiedSubfolder = unverifiedStatusInfo.Subfolder;
@@ -346,7 +346,7 @@ namespace ArchiveStatusCheckPlugin
             byte ingestStepsCompleted = 0;
             foreach (var statusNum in statusNums)
             {
-                if (dctStatusData.TryGetValue(statusNum, out clsIngestStatusInfo statusInfo))
+                if (dctStatusData.TryGetValue(statusNum, out var statusInfo))
                 {
                     ingestStepsCompleted = Math.Max(ingestStepsCompleted, statusInfo.IngestStepsCompletedNew);
                 }
@@ -514,7 +514,7 @@ namespace ArchiveStatusCheckPlugin
                 foreach (var statusNum in statusNumsToUpdate)
                 {
 
-                    if (!dctStatusData.TryGetValue(statusNum, out clsIngestStatusInfo statusInfo))
+                    if (!dctStatusData.TryGetValue(statusNum, out var statusInfo))
                     {
                         continue;
                     }
