@@ -533,21 +533,22 @@ namespace ImsDemuxPlugin
                     }
                 }
 
-                    using (var dbCommand = dbConnection.CreateCommand())
-                    {
-                        dbCommand.CommandText = "UPDATE Frame_Parameters SET CalibrationSlope = " + calibrationSlope.ToString("0.0000000") + ", CalibrationIntercept = " + calibrationIntercept.ToString("0.0000000") + ", CALIBRATIONDONE = -1";
-                        dbCommand.ExecuteNonQuery();
-                    }
+                using (var writer = new DataWriter(uimfFilePath, false))
+                {
+
+                    writer.UpdateAllCalibrationCoefficients(calibrationSlope, calibrationIntercept, false, true);
 
                     var logMessage = "Manually applied calibration coefficients to all frames using user-specified calibration coefficients";
-                    UIMFLibrary.DataWriter.PostLogEntry(dbConnection, "Normal", logMessage, UIMF_CALIBRATION_UPDATER_NAME);
+                    writer.PostLogEntry("Normal", logMessage, UIMF_CALIBRATION_UPDATER_NAME);
 
                     logMessage = "Old calibration coefficients: slope = " + currentSlope + ", intercept = " + currentIntercept;
-                    UIMFLibrary.DataWriter.PostLogEntry(dbConnection, "Normal", logMessage, UIMF_CALIBRATION_UPDATER_NAME);
+                    writer.PostLogEntry("Normal", logMessage, UIMF_CALIBRATION_UPDATER_NAME);
 
-                    logMessage = "New calibration coefficients: slope = " + calibrationSlope.ToString("0.0000000") + ", intercept = " + calibrationIntercept.ToString("0.0000000");
-                    UIMFLibrary.DataWriter.PostLogEntry(dbConnection, "Normal", logMessage, UIMF_CALIBRATION_UPDATER_NAME);
+                    logMessage = string.Format(
+                        "New calibration coefficients: slope = {0:0.0000000}, intercept = {1:0.0000000}",
+                        calibrationSlope, calibrationIntercept);
 
+                    writer.PostLogEntry("Normal", logMessage, UIMF_CALIBRATION_UPDATER_NAME);
                 }
 
             }
