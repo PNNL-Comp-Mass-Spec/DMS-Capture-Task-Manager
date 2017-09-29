@@ -540,11 +540,11 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="toolVersionInfo">Version info (maximum length is 900 characters)</param>
         /// <param name="ioToolFiles">FileSystemInfo list of program files related to the step tool</param>
-        /// <param name="blnSaveToolVersionTextFile">If true, then creates a text file with the tool version information</param>
+        /// <param name="saveToolVersionTextFile">If true, creates a text file with the tool version information</param>
         /// <returns>True for success, False for failure</returns>
         /// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
         protected bool SetStepTaskToolVersion(string toolVersionInfo, IReadOnlyList<FileInfo> ioToolFiles,
-                                              bool blnSaveToolVersionTextFile)
+                                              bool saveToolVersionTextFile)
         {
             var strExeInfo = string.Empty;
             string toolVersionInfoCombined;
@@ -593,7 +593,7 @@ namespace CaptureTaskManager
                 toolVersionInfoCombined = AppendToComment(toolVersionInfo, strExeInfo);
             }
 
-            if (blnSaveToolVersionTextFile)
+            if (saveToolVersionTextFile)
             {
                 SaveToolVersionInfoFile(m_WorkDir, toolVersionInfoCombined);
             }

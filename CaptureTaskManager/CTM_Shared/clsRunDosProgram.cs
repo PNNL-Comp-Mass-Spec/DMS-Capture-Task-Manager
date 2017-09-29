@@ -220,17 +220,17 @@ namespace CaptureTaskManager
         /// </summary>
         public void AbortProgramNow()
         {
-            AbortProgramNow(blnPostLogEntry: true);
+            AbortProgramNow(postLogEntry: true);
         }
 
         /// <summary>
         /// Call this function to instruct this class to terminate the running program
         /// </summary>
-        /// <param name="blnPostLogEntry">True if an entry should be posted to the log</param>
+        /// <param name="postLogEntry">True if an entry should be posted to the log</param>
         /// <remarks></remarks>
-        public void AbortProgramNow(bool blnPostLogEntry)
+        public void AbortProgramNow(bool postLogEntry)
         {
-            m_AbortProgramPostLogEntry = blnPostLogEntry;
+            m_AbortProgramPostLogEntry = postLogEntry;
             ProgramAborted = true;
         }
 
@@ -323,9 +323,9 @@ namespace CaptureTaskManager
             m_AbortProgramPostLogEntry = true;
             ProgramAborted = false;
 
-            var blnRuntimeExceeded = false;
-            var blnAbortLogged = false;
-            var dtStartTime = DateTime.UtcNow;
+            var runtimeExceeded = false;
+            var abortLogged = false;
+            var startTime = DateTime.UtcNow;
 
             try
             {
@@ -340,10 +340,10 @@ namespace CaptureTaskManager
 
                     if (MaxRuntimeSeconds > 0)
                     {
-                        if (DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds > MaxRuntimeSeconds && !ProgramAborted)
+                        if (DateTime.UtcNow.Subtract(startTime).TotalSeconds > MaxRuntimeSeconds && !ProgramAborted)
                         {
                             AbortProgramNow(false);
-                            blnRuntimeExceeded = true;
+                            runtimeExceeded = true;
                             OnTimeout();
                         }
                     }
@@ -353,11 +353,11 @@ namespace CaptureTaskManager
                         continue;
                     }
 
-                    if (m_AbortProgramPostLogEntry && !blnAbortLogged)
+                    if (m_AbortProgramPostLogEntry && !abortLogged)
                     {
-                        blnAbortLogged = true;
+                        abortLogged = true;
                         string msg;
-                        if (blnRuntimeExceeded)
+                        if (runtimeExceeded)
                         {
                             msg = "  Aborting ProgRunner for " + progName + " since " + MaxRuntimeSeconds + " seconds has elapsed";
                         }
