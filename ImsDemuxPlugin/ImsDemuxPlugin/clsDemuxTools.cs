@@ -838,6 +838,10 @@ namespace ImsDemuxPlugin
 
             var oFileTools = new clsFileTools(managerName, 1);
 
+            if (backupDestFileBeforeCopy)
+            {
+                clsFileTools.BackupFileBeforeCopy(targetFilePath);
+            }
 
             while (retryCount >= 0)
             {
@@ -850,7 +854,7 @@ namespace ImsDemuxPlugin
                         clsUtilities.LogMessage(msg);
                     }
 
-                    oFileTools.CopyFile(sourceFilePath, targetFilePath, overWrite, backupDestFileBeforeCopy);
+                    oFileTools.CopyFileUsingLocks(sourceFilePath, targetFilePath, overWrite);
                     return true;
                 }
                 catch (Exception ex)
