@@ -88,7 +88,7 @@ namespace ImsDemuxPlugin
             // Note that stored procedure GetJobParamTable in the DMS_Capture database
             // sets this value based on the value in column Perform_Calibration of table T_Instrument_Name in the DMS5 database
             //
-            // Furthermore, if the value for Perform_Calibration is changed for a given instrument, then you must update the job parameters
+            // Furthermore, if the value for Perform_Calibration is changed for a given instrument, you must update the job parameters
             // using UpdateParametersForJob for any jobs that need to be re-run
             //   exec dbo.UpdateParametersForJob 356778
             //   exec dbo.GetJobStepParamsAsTable 356778, 3
@@ -116,9 +116,9 @@ namespace ImsDemuxPlugin
                 // Look for a CalibrationLog.txt file
                 // If it exists, and if the last line contains "Could not obtain a good calibration"
                 //   then we need to examine table T_Log_Entries for messages regarding manual calibration
-                // If manual calibration values are found, then we should cache the calibration slope and intercept values
+                // If manual calibration values are found, we should cache the calibration slope and intercept values
                 //   and apply them to the new demultiplexed file and skip auto-calibration
-                // If manual calibration values are not found, then we want to fail out the job immediately,
+                // If manual calibration values are not found, we want to fail out the job immediately,
                 //   since demultiplexing succeeded, but calibration failed, and manual calibration was not performed
 
                 var calibrationError = CheckForCalibrationError(dsPath);
@@ -137,13 +137,13 @@ namespace ImsDemuxPlugin
                     else
                     {
                         msg = "CalibrationLog.txt file ends with '" + COULD_NOT_OBTAIN_GOOD_CALIBRATION +
-                              "'; will not attempt to re-demultiplex the _encoded.uimf file.  If you want to re-demultiplex the _encoded.uimf file, then you should rename the CalibrationLog.txt file";
+                              "'; will not attempt to re-demultiplex the _encoded.uimf file.  If you want to re-demultiplex the _encoded.uimf file, you should rename the CalibrationLog.txt file";
                         LogError(msg);
 
                         retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                         retData.CloseoutMsg = "Error calibrating UIMF file; see " + clsDemuxTools.CALIBRATION_LOG_FILE;
                         retData.EvalMsg =
-                            "De-multiplexed but Calibration failed.  If you want to re-demultiplex the _encoded.uimf file, then you should rename the CalibrationLog.txt file";
+                            "De-multiplexed but Calibration failed.  If you want to re-demultiplex the _encoded.uimf file, you should rename the CalibrationLog.txt file";
 
                         msg = "Completed clsPluginMain.RunTool()";
                         LogDebug(msg);
@@ -153,7 +153,7 @@ namespace ImsDemuxPlugin
             }
             else
             {
-                // Was the file zero bytes? If so, then delete it
+                // Was the file zero bytes? If so, delete it
                 if (fiUIMFFile.Exists && (fiUIMFFile.Length == 0))
                 {
                     try

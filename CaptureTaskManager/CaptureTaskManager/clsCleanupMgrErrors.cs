@@ -120,7 +120,7 @@ namespace CaptureTaskManager
                 }
             }
 
-            // If successful, then call SP with ReportManagerErrorCleanup @ActionCode=2
+            // If successful, call SP with ReportManagerErrorCleanup @ActionCode=2
             //    otherwise call SP ReportManagerErrorCleanup with @ActionCode=3
 
             if (blnSuccess)

@@ -55,7 +55,7 @@ namespace CaptureTaskManager
             // Add the most recent error message
             m_ErrorQueue.Enqueue(ErrMsg);
 
-            // If there are > 4 entries in the queue, then delete the oldest ones
+            // If there are > 4 entries in the queue, delete the oldest ones
             while (m_ErrorQueue.Count > 4)
             {
                 m_ErrorQueue.Dequeue();

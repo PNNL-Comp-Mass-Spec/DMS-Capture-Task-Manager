@@ -357,7 +357,7 @@ namespace ImsDemuxPlugin
             {
 
                 // Count the number of frames
-                // If fewer than 5 frames, then don't calibrate
+                // If fewer than 5 frames, don't calibrate
                 using (var uimfReader = new DataReader(uimfFilePath))
                 {
 
@@ -380,7 +380,7 @@ namespace ImsDemuxPlugin
                     else
                     {
                         // Look for the presence of calibration frames or calibration tables
-                        // If neither exists, then we cannot perform calibration
+                        // If neither exists, we cannot perform calibration
                         var calibrationDataExists = frameList.Any(item => item.Value == UIMFData.FrameType.Calibration);
 
                         if (!calibrationDataExists)
@@ -686,7 +686,7 @@ namespace ImsDemuxPlugin
                 msg = "Renaming uimf file on storage server";
                 OnDebugEvent(msg);
 
-                // If this is a re-run, then encoded file has already been renamed
+                // If this is a re-run, the encoded file has already been renamed
                 // This is determined by looking for "_encoded" in uimf file name
                 if (!uimfFileName.Contains("_encoded"))
                 {
@@ -836,7 +836,7 @@ namespace ImsDemuxPlugin
                 }
             }
 
-            // If we get here, then we were not able to successfully copy the file
+            // If we get here, we were not able to successfully copy the file
             return false;
 
         }

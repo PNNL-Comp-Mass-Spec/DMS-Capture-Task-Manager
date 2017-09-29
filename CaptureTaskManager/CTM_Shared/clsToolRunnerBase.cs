@@ -681,7 +681,7 @@ namespace CaptureTaskManager
             }
             catch (Exception ex)
             {
-                // If you get an exception regarding .NET 4.0 not being able to read a .NET 1.0 runtime, then add these lines to the end of file AnalysisManagerProg.exe.config
+                // If you get an exception regarding .NET 4.0 not being able to read a .NET 1.0 runtime, add these lines to the end of file AnalysisManagerProg.exe.config
                 //  <startup useLegacyV2RuntimeActivationPolicy="true">
                 //    <supportedRuntime version="v4.0" />
                 //  </startup>
