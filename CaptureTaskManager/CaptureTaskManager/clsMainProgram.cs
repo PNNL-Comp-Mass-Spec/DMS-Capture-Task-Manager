@@ -1,5 +1,5 @@
 ﻿//*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy
+// Written by Dave Clark and Matthew Monroe for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/10/2009
@@ -307,9 +307,6 @@ namespace CaptureTaskManager
             // LogLevel is 1 to 5: 1 for Fatal errors only, 4 for Fatal, Error, Warning, and Info, and 5 for everything including Debug messages
             m_DebugLevel = m_MgrSettings.GetParam("debuglevel", 4);
             clsLogTools.CreateFileLogger(logFileName, m_DebugLevel);
-
-            if (m_MgrSettings.GetBooleanParam("ftplogging"))
-                clsLogTools.CreateFtpLogFileLogger();
 
             var logCnStr = m_MgrSettings.GetParam("connectionstring");
 
@@ -663,7 +660,6 @@ namespace CaptureTaskManager
                     if (taskCount == 1 && DateTime.Now.Hour == 1 && DateTime.Now.Minute < 30 || taskCount % 50 == 0)
                     {
                         RemoveOldTempFiles();
-                        RemoveOldFTPLogFiles();
                     }
 
                     // Attempt to get a capture task
@@ -892,59 +888,6 @@ namespace CaptureTaskManager
             catch (Exception ex)
             {
                 Console.WriteLine(@"Error writing to event log: " + ex.Message);
-            }
-        }
-
-        /// <summary>
-        /// Look for and remove FTPLog_ files that were created over 64 days ago in the application folder
-        /// </summary>
-        protected void RemoveOldFTPLogFiles()
-        {
-            const int iAgedLogFileDays = 64;
-            RemoveOldFTPLogFiles(iAgedLogFileDays);
-        }
-
-        /// <summary>
-        /// Look for and remove FTPLog_ files that were created over iAgedLogFileDays days ago in the application folder
-        /// </summary>
-        /// <remarks>Also removes zero-byte FTPLog_ files</remarks>
-        protected void RemoveOldFTPLogFiles(int iAgedLogFileDays)
-        {
-            if (iAgedLogFileDays < 7)
-                iAgedLogFileDays = 7;
-
-            try
-            {
-                var appFolder = clsUtilities.GetAppFolderPath();
-
-                if (string.IsNullOrWhiteSpace(appFolder))
-                {
-                    LogWarning("GetAppFolderPath returned an empty directory path to RemoveOldFTPLogFiles");
-                    return;
-                }
-
-                var appFolderInfo = new DirectoryInfo(appFolder);
-
-                foreach (var fiFile in appFolderInfo.GetFiles("FTPlog_*"))
-                {
-                    try
-                    {
-                        if (DateTime.UtcNow.Subtract(fiFile.LastWriteTimeUtc).TotalDays > iAgedLogFileDays ||
-                            fiFile.Length == 0)
-                        {
-                            fiFile.Delete();
-                        }
-                    }
-                    // ReSharper disable once EmptyGeneralCatchClause
-                    catch
-                    {
-                        // Ignore exceptions
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception removing old FTP log files", ex);
             }
         }
 

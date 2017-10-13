@@ -1,5 +1,5 @@
 //*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy
+// Written by Dave Clark and Matthew Monroe for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 09/10/2009
@@ -23,9 +23,16 @@ namespace CaptureTaskManager
     public static class clsLogTools
     {
 
-        #region "Contants"
+        #region "Constants"
 
+        /// <summary>
+        /// Name of the manager control database logger
+        /// </summary>
         public const string DB_LOGGER_MGR_CONTROL = "MgrControlDbDefinedAppender";
+
+        /// <summary>
+        /// Name of the logger before manager control parameters have been loaded
+        /// </summary>
         public const string DB_LOGGER_NO_MGR_CONTROL_PARAMS = "DbAppenderBeforeMgrControlParams";
 
         private const string LOG_FILE_APPENDER = "FileAppender";
@@ -34,19 +41,55 @@ namespace CaptureTaskManager
 
         #region "Enums"
 
+        /// <summary>
+        /// Log levels
+        /// </summary>
         public enum LogLevels
         {
+            /// <summary>
+            /// Debug message
+            /// </summary>
             DEBUG = 5,
+
+            /// <summary>
+            /// Informational message
+            /// </summary>
             INFO = 4,
+
+            /// <summary>
+            /// Warning message
+            /// </summary>
             WARN = 3,
+
+            /// <summary>
+            /// Error message
+            /// </summary>
             ERROR = 2,
+
+            /// <summary>
+            /// Fatal error message
+            /// </summary>
             FATAL = 1
         }
 
+        /// <summary>
+        /// Log types
+        /// </summary>
         public enum LoggerTypes
         {
+            /// <summary>
+            /// Log to a log file
+            /// </summary>
             LogFile,
+
+            /// <summary>
+            /// Log to the database and to the log file
+            /// </summary>
             LogDb,
+
+            /// <summary>
+            /// Log to the system event log and to the log file
+            /// </summary>
             LogSystem
         }
 
@@ -96,7 +139,7 @@ namespace CaptureTaskManager
         #region "Methods"
 
         /// <summary>
-        /// Writes a message to the logging system
+        /// Write a message to the logging system
         /// </summary>
         /// <param name="loggerType">Type of logger to use</param>
         /// <param name="logLevel">Level of log reporting</param>
@@ -107,7 +150,7 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Overload to write a message and exception to the logging system
+        /// Write a message and exception to the logging system
         /// </summary>
         /// <param name="loggerType">Type of logger to use</param>
         /// <param name="logLevel">Level of log reporting</param>
