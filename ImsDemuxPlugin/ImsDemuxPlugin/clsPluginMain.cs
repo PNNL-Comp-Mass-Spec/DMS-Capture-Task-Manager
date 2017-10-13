@@ -32,7 +32,7 @@ namespace ImsDemuxPlugin
         #region "Constants"
 
         public const int MANAGER_UPDATE_INTERVAL_MINUTES = 10;
-        protected const string COULD_NOT_OBTAIN_GOOD_CALIBRATION = "Could not obtain a good calibration";
+        private const string COULD_NOT_OBTAIN_GOOD_CALIBRATION = "Could not obtain a good calibration";
 
         #endregion
 
@@ -49,8 +49,8 @@ namespace ImsDemuxPlugin
 
         #region "Module variables"
 
-        protected clsDemuxTools mDemuxTools;
-        protected bool mDemultiplexingPerformed;
+        private clsDemuxTools mDemuxTools;
+        private bool mDemultiplexingPerformed;
 
         #endregion
 
