@@ -7,14 +7,16 @@
 
 using System;
 using System.Collections.Generic;
-using System.Globalization;
-using log4net;
 using System.Data;
+using System.Globalization;
+using System.IO;
+using System.Text.RegularExpressions;
+using log4net;
 using log4net.Appender;
+using log4net.Util.TypeConverters;
 
 // This assembly attribute tells Log4Net where to find the config file
 [assembly: log4net.Config.XmlConfigurator(ConfigFile = "Logging.config", Watch = true)]
-
 namespace CaptureTaskManager
 {
     /// <summary>
@@ -36,6 +38,19 @@ namespace CaptureTaskManager
         public const string DB_LOGGER_NO_MGR_CONTROL_PARAMS = "DbAppenderBeforeMgrControlParams";
 
         private const string LOG_FILE_APPENDER = "FileAppender";
+
+        /// <summary>
+        /// Date format for log file names
+        /// </summary>
+        public const string LOG_FILE_DATECODE = "MM-dd-yyyy";
+
+        private const string LOG_FILE_MATCH_SPEC = "??-??-????";
+
+        private const string LOG_FILE_DATE_REGEX = @"(?<Month>\d+)-(?<Day>\d+)-(?<Year>\d{4,4})";
+
+        private const string LOG_FILE_EXTENSION = ".txt";
+
+        private const int OLD_LOG_FILE_AGE_THRESHOLD_DAYS = 32;
 
         #endregion
 
@@ -101,8 +116,8 @@ namespace CaptureTaskManager
         private static readonly ILog m_DbLogger = LogManager.GetLogger("DbLogger");
         private static readonly ILog m_SysLogger = LogManager.GetLogger("SysLogger");
 
-        private static string m_FileDate;
-        private static string m_BaseFileName;
+        private static string m_FileDate = "";
+        private static string m_BaseFileName = "";
         private static FileAppender m_FileAppender;
 
         #endregion
@@ -117,7 +132,9 @@ namespace CaptureTaskManager
             get
             {
                 if (string.IsNullOrEmpty(m_FileAppender?.File))
+                {
                     return string.Empty;
+                }
 
                 return m_FileAppender.File;
             }
@@ -173,11 +190,13 @@ namespace CaptureTaskManager
             {
                 case LoggerTypes.LogDb:
                     myLogger = m_DbLogger;
+                    message = System.Net.Dns.GetHostName() + ": " + message;
                     break;
                 case LoggerTypes.LogFile:
                     myLogger = m_FileLogger;
+
                     // Check to determine if a new file should be started
-                    var testFileDate = DateTime.Now.ToString("MM-dd-yyyy");
+                    var testFileDate = DateTime.Now.ToString(LOG_FILE_DATECODE);
                     if (!string.Equals(testFileDate, m_FileDate))
                     {
                         m_FileDate = testFileDate;
@@ -201,9 +220,13 @@ namespace CaptureTaskManager
                     if (myLogger.IsDebugEnabled)
                     {
                         if (ex == null)
+                        {
                             myLogger.Debug(message);
+                        }
                         else
+                        {
                             myLogger.Debug(message, ex);
+                        }
                     }
                     break;
                 case LogLevels.ERROR:
@@ -211,36 +234,52 @@ namespace CaptureTaskManager
                     if (myLogger.IsErrorEnabled)
                     {
                         if (ex == null)
+                        {
                             myLogger.Error(message);
+                        }
                         else
+                        {
                             myLogger.Error(message, ex);
+                        }
                     }
                     break;
                 case LogLevels.FATAL:
                     if (myLogger.IsFatalEnabled)
                     {
                         if (ex == null)
+                        {
                             myLogger.Fatal(message);
+                        }
                         else
+                        {
                             myLogger.Fatal(message, ex);
+                        }
                     }
                     break;
                 case LogLevels.INFO:
                     if (myLogger.IsInfoEnabled)
                     {
                         if (ex == null)
+                        {
                             myLogger.Info(message);
+                        }
                         else
+                        {
                             myLogger.Info(message, ex);
+                        }
                     }
                     break;
                 case LogLevels.WARN:
                     if (myLogger.IsWarnEnabled)
                     {
                         if (ex == null)
+                        {
                             myLogger.Warn(message);
+                        }
                         else
+                        {
                             myLogger.Warn(message, ex);
+                        }
                     }
                     break;
                 default:
@@ -249,14 +288,20 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
+        /// Changes the base log file name
         /// </summary>
+        public static void ChangeLogFileName()
         {
+            m_FileDate = DateTime.Now.ToString(LOG_FILE_DATECODE);
+            ChangeLogFileName(m_BaseFileName + "_" + m_FileDate + LOG_FILE_EXTENSION);
         }
 
         /// <summary>
         /// Changes the base log file name
         /// </summary>
-        public static void ChangeLogFileName()
+        /// <param name="relativeFilePath">Log file base name and path (relative to program folder)</param>
+        /// <remarks>This method is called by the Mage, Ascore, and Multialign plugins</remarks>
+        public static void ChangeLogFileName(string relativeFilePath)
         {
             // Get a list of appenders
             var appendList = FindAppenders(LOG_FILE_APPENDER);
@@ -268,16 +313,16 @@ namespace CaptureTaskManager
 
             foreach (var selectedAppender in appendList)
             {
-                // Convert the IAppender object to a FileAppender
-                var AppenderToChange = selectedAppender as FileAppender;
-                if (AppenderToChange == null)
+                // Convert the IAppender object to a FileAppender instance
+                if (!(selectedAppender is FileAppender appenderToChange))
                 {
                     WriteLog(LoggerTypes.LogSystem, LogLevels.ERROR, "Unable to convert appender");
                     return;
                 }
+
                 // Change the file name and activate change
-                AppenderToChange.File = m_BaseFileName + "_" + m_FileDate + ".txt";
-                AppenderToChange.ActivateOptions();
+                appenderToChange.File = relativeFilePath;
+                appenderToChange.ActivateOptions();
             }
         }
 
@@ -285,12 +330,14 @@ namespace CaptureTaskManager
         /// Gets the specified appender
         /// </summary>
         /// <param name="appenderName">Name of appender to find</param>
-        /// <returns>List(IAppender) objects if found; NULL otherwise</returns>
+        /// <returns>List(IAppender) objects if found; null otherwise</returns>
         private static IEnumerable<IAppender> FindAppenders(string appenderName)
         {
+
             // Get a list of the current loggers
             var loggerList = LogManager.GetCurrentLoggers();
-            if (loggerList.GetLength(0) < 1) return null;
+            if (loggerList.GetLength(0) < 1)
+                return null;
 
             // Create a List of appenders matching the criteria for each logger
             var retList = new List<IAppender>();
@@ -298,7 +345,8 @@ namespace CaptureTaskManager
             {
                 foreach (var testAppender in testLogger.Logger.Repository.GetAppenders())
                 {
-                    if (testAppender.Name == appenderName) retList.Add(testAppender);
+                    if (testAppender.Name == appenderName)
+                        retList.Add(testAppender);
                 }
             }
 
@@ -361,13 +409,64 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
+        /// Look for log files over 32 days old that can be moved into a subdirectory
+        /// </summary>
+        /// <param name="logFilePath"></param>
+        private static void ArchiveOldLogs(string logFilePath)
+        {
+            var targetPath = "??";
+
+            try
+            {
+                var currentLogFile = new FileInfo(logFilePath);
+
+                var matchSpec = "*_" + LOG_FILE_MATCH_SPEC + LOG_FILE_EXTENSION;
+
+                var logDirectory = currentLogFile.Directory;
+                var logFiles = logDirectory.GetFiles(matchSpec);
+
+                var matcher = new Regex(LOG_FILE_DATE_REGEX, RegexOptions.Compiled);
+
+                foreach (var logFile in logFiles)
+                {
+                    var match = matcher.Match(logFile.Name);
+
+                    if (!match.Success)
+                        continue;
+
+                    var logFileYear = int.Parse(match.Groups["Year"].Value);
+                    var logFileMonth = int.Parse(match.Groups["Month"].Value);
+                    var logFileDay = int.Parse(match.Groups["Day"].Value);
+
+                    var logDate = new DateTime(logFileYear, logFileMonth, logFileDay);
+
+                    if (DateTime.Now.Subtract(logDate).TotalDays <= OLD_LOG_FILE_AGE_THRESHOLD_DAYS)
+                        continue;
+
+                    var targetDirectory = new DirectoryInfo(Path.Combine(logDirectory.FullName, logFileYear.ToString()));
+                    if (!targetDirectory.Exists)
+                        targetDirectory.Create();
+
+                    targetPath = Path.Combine(targetDirectory.FullName, logFile.Name);
+
+                    logFile.MoveTo(targetPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteLog(LoggerTypes.LogFile, LogLevels.ERROR, "Error moving old log file to " + targetPath, ex);
+            }
+        }
+
+        /// <summary>
         /// Creates a file appender
         /// </summary>
-        /// <param name="logfileName">Log file name for the appender to use</param>
-        private static FileAppender CreateFileAppender(string logfileName)
+        /// <param name="logFileNameBase">Base name for log file</param>
+        /// <returns>A configured file appender</returns>
+        private static FileAppender CreateFileAppender(string logFileNameBase)
         {
-            m_FileDate = DateTime.Now.ToString("MM-dd-yyyy");
-            m_BaseFileName = logfileName;
+            m_FileDate = DateTime.Now.ToString(LOG_FILE_DATECODE);
+            m_BaseFileName = logFileNameBase;
 
             var layout = new log4net.Layout.PatternLayout
             {
@@ -378,26 +477,7 @@ namespace CaptureTaskManager
             var returnAppender = new FileAppender
             {
                 Name = LOG_FILE_APPENDER,
-                File = m_BaseFileName + "_" + m_FileDate + ".txt",
-                AppendToFile = true,
-                Layout = layout
-            };
-
-            returnAppender.ActivateOptions();
-
-            return returnAppender;
-        }
-
-        /// <summary>
-        /// </summary>
-        /// <returns>A configured file appender</returns>
-        {
-            var layout = new log4net.Layout.PatternLayout
-            {
-            };
-            layout.ActivateOptions();
-
-            {
+                File = m_BaseFileName + "_" + m_FileDate + LOG_FILE_EXTENSION,
                 AppendToFile = true,
                 Layout = layout
             };
@@ -417,6 +497,9 @@ namespace CaptureTaskManager
             var curLogger = (log4net.Repository.Hierarchy.Logger)m_FileLogger.Logger;
             m_FileAppender = CreateFileAppender(logFileName);
             curLogger.AddAppender(m_FileAppender);
+
+            ArchiveOldLogs(m_FileAppender.File);
+
             SetFileLogLevel(logLevel);
         }
 
@@ -431,7 +514,7 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Configures the Db logger
+        /// Configures the database logger
         /// </summary>
         /// <param name="connStr">Database connection string</param>
         /// <param name="moduleName">Module name used by logger</param>
@@ -458,7 +541,7 @@ namespace CaptureTaskManager
             var addFileAppender = true;
             foreach (var appender in curLogger.Appenders)
             {
-                if (appender == m_FileAppender)
+                if (ReferenceEquals(appender, m_FileAppender))
                 {
                     addFileAppender = false;
                     break;
@@ -558,9 +641,16 @@ namespace CaptureTaskManager
             returnLayout.ActivateOptions();
 
             var retItem = (log4net.Layout.IRawLayout)layoutConvert.ConvertFrom(returnLayout);
+
+            if (retItem == null)
+            {
+                throw new ConversionNotSupportedException("Error converting a PatternLayout to IRawLayout");
+            }
+
             return retItem;
         }
 
         #endregion
+
     }
 }
