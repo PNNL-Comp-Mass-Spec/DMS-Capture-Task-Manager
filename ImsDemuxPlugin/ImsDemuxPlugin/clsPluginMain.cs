@@ -34,6 +34,8 @@ namespace ImsDemuxPlugin
         public const int MANAGER_UPDATE_INTERVAL_MINUTES = 10;
         private const string COULD_NOT_OBTAIN_GOOD_CALIBRATION = "Could not obtain a good calibration";
 
+        private const bool ADD_BIN_CENTRIC_TABLES = false;
+
         #endregion
 
         #region "Enums"
@@ -64,6 +66,7 @@ namespace ImsDemuxPlugin
         {
             var msg = "Starting ImsDemuxPlugin.clsPluginMain.RunTool()";
             LogDebug(msg);
+            mDemultiplexingPerformed = false;
 
             // Perform base class operations, if any
             var retData = base.RunTool();
@@ -235,6 +238,8 @@ namespace ImsDemuxPlugin
 
                     m_NeedToAbortProcessing = true;
                 }
+
+                mDemultiplexingPerformed = true;
             }
 
             if (retData.CloseoutType != EnumCloseOutType.CLOSEOUT_SUCCESS)
@@ -262,28 +267,35 @@ namespace ImsDemuxPlugin
             // October 2013: Disabled the addition of bin-centric tables since datasets currently being acquired on the IMS platform will not have IQ run on them
             // March 2015: Re-enabled automatic addition of bin-centric tables
             // May 22, 2015: Now adding bin-centric tables only if the original .UIMF file is less than 2 GB in size
+            // October 12, 2017: Again disabled the addition of bin-centric tables since they can greatly increase .UIMF file size and because usage of the bin-centric tables is low
 
-            var fileSizeGBStart = fiUIMF.Length / 1024.0 / 1024.0 / 1024.0;
-            var fileSizeText = " (" + Math.Round(fileSizeGBStart, 0).ToString("0") + " GB)";
-
-            if (fileSizeGBStart > 2)
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+            if (ADD_BIN_CENTRIC_TABLES)
+#pragma warning disable 162
             {
-                LogMessage("Not adding bin-centric tables to " + fiUIMF.Name + " since over 2 GB in size" + fileSizeText);
-            }
-            else
-            {
-                // Add the bin-centric tables if not yet present
-                LogMessage("Adding bin-centric tables to " + fiUIMF.Name + fileSizeText);
-                retData = mDemuxTools.AddBinCentricTablesIfMissing(m_MgrParams, m_TaskParams, retData);
+                var fileSizeGBStart = fiUIMF.Length / 1024.0 / 1024.0 / 1024.0;
+                var fileSizeText = " (" + Math.Round(fileSizeGBStart, 0).ToString("0") + " GB)";
 
-                fiUIMF.Refresh();
-                var fileSizeGBEnd = fiUIMF.Length / 1024.0 / 1024.0 / 1024.0;
-                double foldIncrease = 0;
-                if (fileSizeGBStart > 0)
-                    foldIncrease = fileSizeGBEnd / fileSizeGBStart;
+                if (fileSizeGBStart > 2)
+                {
+                    LogMessage("Not adding bin-centric tables to " + fiUIMF.Name + " since over 2 GB in size" + fileSizeText);
+                }
+                else
+                {
+                    // Add the bin-centric tables if not yet present
+                    LogMessage("Adding bin-centric tables to " + fiUIMF.Name + fileSizeText);
+                    retData = mDemuxTools.AddBinCentricTablesIfMissing(m_MgrParams, m_TaskParams, retData);
 
-                LogMessage("UIMF file size increased from " + fileSizeGBStart.ToString("0.00") + " GB to " + fileSizeGBEnd.ToString("0.00") +
-                           " GB, a " + foldIncrease.ToString("0.0" + " fold increase"));
+                    fiUIMF.Refresh();
+                    var fileSizeGBEnd = fiUIMF.Length / 1024.0 / 1024.0 / 1024.0;
+                    double foldIncrease = 0;
+                    if (fileSizeGBStart > 0)
+                        foldIncrease = fileSizeGBEnd / fileSizeGBStart;
+
+                    LogMessage("UIMF file size increased from " + fileSizeGBStart.ToString("0.00") + " GB to " + fileSizeGBEnd.ToString("0.00") +
+                               " GB, a " + foldIncrease.ToString("0.0" + " fold increase"));
+                }
+#pragma warning restore 162
             }
 
             if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
@@ -545,8 +557,13 @@ namespace ImsDemuxPlugin
         void clsDemuxTools_DemuxProgress(float newProgress)
         {
 
-            // Multiplying by 0.9 since we're assuming that demultiplexing will take 90% of the time while addition of bin-centric tables will take 10% of the time
-            m_StatusTools.UpdateAndWrite(0 + newProgress * 0.90f);
+            if (ADD_BIN_CENTRIC_TABLES)
+#pragma warning disable 162
+            {
+                // Multiplying by 0.9 since we're assuming that demultiplexing will take 90% of the time while addition of bin-centric tables will take 10% of the time
+                m_StatusTools.UpdateAndWrite(0 + newProgress * 0.90f);
+#pragma warning restore 162
+            }
 
             // Update the manager settings every MANAGER_UPDATE_INTERVAL_MINUTESS
             UpdateMgrSettings();
