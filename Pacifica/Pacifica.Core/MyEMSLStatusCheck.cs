@@ -36,6 +36,8 @@ namespace Pacifica.Core
         {
             ErrorMessage = string.Empty;
             mPacificaConfig = new Configuration();
+
+            EasyHttp.MyEMSLOffline += EasyHttp_MyEMSLOffline;
         }
 
         /// <summary>
@@ -288,6 +290,12 @@ namespace Pacifica.Core
 
             OnErrorEvent(errorMessage);
             return false;
+        }
+
+
+        private void EasyHttp_MyEMSLOffline(object sender, MessageEventArgs e)
+        {
+            OnWarningEvent("MyEMSL is offline; unable to retrieve data: " + e.Message);
         }
 
     }
