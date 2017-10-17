@@ -197,6 +197,8 @@ namespace Pacifica.Core
             // Be careful about instantiating this class (Upload) multiple times
             EasyHttp.StatusUpdate += EasyHttp_StatusUpdate;
 
+            EasyHttp.MyEMSLOffline += EasyHttp_MyEMSLOffline;
+
             ErrorMessage = string.Empty;
             TransferFolderPath = transferFolderPath;
             JobNumber = jobNumber;
@@ -206,8 +208,14 @@ namespace Pacifica.Core
 
         #region Events and Handlers
 
+        public event MessageEventHandler MyEMSLOffline;
         public event UploadCompletedEventHandler UploadCompleted;
         public event StatusUpdateEventHandler StatusUpdate;
+
+        private void EasyHttp_MyEMSLOffline(object sender, MessageEventArgs e)
+        {
+            MyEMSLOffline?.Invoke(this, e);
+        }
 
         void EasyHttp_StatusUpdate(object sender, StatusEventArgs e)
         {
