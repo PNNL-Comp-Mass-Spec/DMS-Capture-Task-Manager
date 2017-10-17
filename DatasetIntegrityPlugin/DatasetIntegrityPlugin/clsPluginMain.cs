@@ -88,9 +88,15 @@ namespace DatasetIntegrityPlugin
             var openChromProgPath = string.Empty;
 
             // Check whether we need to convert from a .D folder to a .UIMF file
-            var agilentDFolderToUimfConversionRequired = (instrumentName.StartsWith("IMS08") || instrumentName.StartsWith("IMS09"));
+            var instrumentNamesToConvert = new List<string> {
+                "IMS08",
+                "IMS09"
+            };
 
-            if (agilentDFolderToUimfConversionRequired)
+            var convertAgilentDotDToUIMF = instrumentNamesToConvert.Any(
+                instrument => instrumentName.StartsWith(instrument, StringComparison.InvariantCultureIgnoreCase));
+
+            if (convertAgilentDotDToUIMF)
             {
                 agilentToUimfConverterPath = GetAgilentToUIMFProgPath();
 
@@ -184,7 +190,7 @@ namespace DatasetIntegrityPlugin
                     break;
 
                 case clsInstrumentClassInfo.eInstrumentClass.IMS_Agilent_TOF:
-                    if (agilentDFolderToUimfConversionRequired)
+                    if (convertAgilentDotDToUIMF)
                     {
                         // Need to first convert the .d folder to a .UIMF file
                         if (!ConvertAgilentDFolderToUIMF(datasetFolder, agilentToUimfConverterPath))
