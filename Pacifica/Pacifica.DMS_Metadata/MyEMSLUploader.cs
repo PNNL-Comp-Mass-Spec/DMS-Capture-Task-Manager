@@ -299,9 +299,9 @@ namespace Pacifica.DMS_Metadata
             MetadataDefinedEvent?.Invoke(this, e);
         }
 
-        private void myEmslUploadOnMyEmslOffline(object sender, MessageEventArgs messageEventArgs)
+        private void myEmslUploadOnMyEmslOffline(object sender, MessageEventArgs e)
         {
-            OnWarningEvent("MyEMSL is offline; unable to retrieve data or upload files");
+            OnWarningEvent("MyEMSL is offline; unable to retrieve data or upload files: " + e.Message);
         }
 
         void myEMSLUpload_StatusUpdate(object sender, StatusEventArgs e)
