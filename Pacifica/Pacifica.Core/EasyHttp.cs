@@ -46,6 +46,13 @@ namespace Pacifica.Core
         private const int TAR_BLOCK_SIZE_BYTES = 512;
         public const string MYEMSL_METADATA_FILE_NAME = "metadata.txt";
 
+        /// <summary>
+        /// This event is raised if we are unable to connect to MyEMSL, leading to events
+        /// System.Net.WebException: Unable to connect to the remote server
+        /// System.Net.Sockets.SocketException: A connection attempt failed because the connected party did not properly respond after a period of time
+        /// </summary>
+        public static event MessageEventHandler MyEMSLOffline;
+
         public static event StatusUpdateEventHandler StatusUpdate;
 
         /// <summary>
@@ -217,6 +224,11 @@ namespace Pacifica.Core
                 {
                     responseData = string.Empty;
                 }
+            }
+
+            if (ex.Message.IndexOf("Unable to connect", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                MyEMSLOffline?.Invoke(null, new MessageEventArgs("HandleWebException", ex.Message));
             }
 
             if (string.IsNullOrWhiteSpace(responseData))
