@@ -134,7 +134,7 @@ namespace ArchiveVerifyPlugin
                     LogWarning(
                         "Success is false yet CloseoutType is EnumCloseOutType.CLOSEOUT_SUCCESS; " +
                         "track down where to properly change CloseoutType " +
-                        "(Job "+ m_Job + " on " + m_MgrName + ")", true);
+                        "(Job " + m_Job + " on " + m_MgrName + ")", true);
 
                     mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
                     if (string.IsNullOrWhiteSpace(mRetData.CloseoutMsg))
@@ -310,7 +310,8 @@ namespace ArchiveVerifyPlugin
 
                 var config = new Configuration();
 
-                var metadataObject = new DMSMetadataObject(config, m_MgrName, m_Job) {
+                var metadataObject = new DMSMetadataObject(config, m_MgrName, m_Job)
+                {
                     TraceMode = m_TraceMode,
                     IgnoreMyEMSLFileTrackingError = ignoreMyEMSLFileTrackingError
                 };
@@ -387,12 +388,12 @@ namespace ArchiveVerifyPlugin
         }
 
         /// <summary>
-        /// Compare local files (tracked by dctFilePathHashMap) to files in MyEMSL (tracked by archivedFiles)
+        /// Compare local files to files in MyEMSL
         /// </summary>
-        /// <param name="archivedFiles"></param>
+        /// <param name="archivedFiles">Files in MyEMSL</param>
         /// <param name="matchCount"></param>
         /// <param name="mismatchCount"></param>
-        /// <param name="dctFilePathHashMap">Keys are relative file paths (Windows slashes); values are the Sha-1 hash values</param>
+        /// <param name="dctFilePathHashMap">Local files; keys are relative file paths (Windows slashes); values are the Sha-1 hash values</param>
         /// <param name="transactionIdStats">Keys are transaction IDs, values are the number of files for each transaction ID</param>
         private void CompareArchiveFilesToList(
             IReadOnlyCollection<MyEMSLReader.ArchivedFileInfo> archivedFiles,
@@ -464,7 +465,7 @@ namespace ArchiveVerifyPlugin
         /// <summary>
         /// Compare the files that MyEMSL is tracking for this dataset to the files in the metadata file
         /// </summary>
-        /// <param name="archivedFiles"></param>
+        /// <param name="archivedFiles">Files in MyEMSL</param>
         /// <param name="fiMetadataFile"></param>
         /// <param name="matchCount"></param>
         /// <param name="mismatchCount"></param>
@@ -506,6 +507,7 @@ namespace ArchiveVerifyPlugin
             // metadataInfo is a list of Dictionaries
             var metadataInfo = Utilities.JsonArrayToDictionaryList(jsa);
 
+            // This dictionary tracks files that were previously pushed to MyEMSL
             var dctMetadataFiles = new List<Dictionary<string, object>>();
 
             foreach (var item in metadataInfo)
@@ -534,6 +536,7 @@ namespace ArchiveVerifyPlugin
             // Get the list of filenames that we can ignore
             var filesToIgnore = DMSMetadataObject.GetFilesToIgnore();
 
+            // This dictionary tracks files on the local disk
             // Keys are relative file paths (Windows slashes); values are the Sha-1 hash values
             var dctFilePathHashMap = new Dictionary<string, string>();
 
