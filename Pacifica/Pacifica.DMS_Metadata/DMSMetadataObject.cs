@@ -472,6 +472,9 @@ namespace Pacifica.DMS_Metadata
                     "Source directory has over " + MAX_FILES_TO_ARCHIVE + " files; files must be zipped before upload to MyEMSL (CollectFileInformation)");
             }
 
+            // Get the list of filenames tht we can ignore
+            var filesToIgnore = GetFilesToIgnore();
+
             var fracCompleted = 0f;
 
             // Generate file size sum for status purposes
@@ -487,6 +490,9 @@ namespace Pacifica.DMS_Metadata
 
             foreach (var fiFile in fileList)
             {
+                if (filesToIgnore.Contains(fiFile.Name))
+                    continue;
+
                 runningFileSize += fiFile.Length;
 
                 if (totalFileSize > 0)
@@ -1045,6 +1051,20 @@ namespace Pacifica.DMS_Metadata
             var datasetDateCodeString = date_code.Year + "_" + yearQuarter;
 
             return datasetDateCodeString;
+        }
+
+        /// <summary>
+        /// Get a list of file names that we can ignore when transferring data to MyEMSL or comparing files on disk to files in MyEMSL
+        /// </summary>
+        /// <returns>SortedSet of strings (case insensitive)</returns>
+        public static SortedSet<string> GetFilesToIgnore()
+        {
+            var filesToIgnore = new SortedSet<string>(StringComparer.InvariantCultureIgnoreCase) {
+                ".DS_Store",
+                "Thumbs.db"
+            };
+
+            return filesToIgnore;
         }
 
         private void ReportProgress(float percentComplete)

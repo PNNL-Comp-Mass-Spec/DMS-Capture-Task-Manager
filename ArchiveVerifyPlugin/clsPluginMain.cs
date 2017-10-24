@@ -531,6 +531,9 @@ namespace ArchiveVerifyPlugin
                 return;
             }
 
+            // Get the list of filenames that we can ignore
+            var filesToIgnore = DMSMetadataObject.GetFilesToIgnore();
+
             // Keys are relative file paths (Windows slashes); values are the Sha-1 hash values
             var dctFilePathHashMap = new Dictionary<string, string>();
 
@@ -539,6 +542,9 @@ namespace ArchiveVerifyPlugin
                 var sha1Hash = Utilities.GetDictionaryValue(metadataFile, "hashsum");
                 var destinationDirectory = Utilities.GetDictionaryValue(metadataFile, "subdir");
                 var fileName = Utilities.GetDictionaryValue(metadataFile, "name");
+
+                if (filesToIgnore.Contains(fileName))
+                    continue;
 
                 // DestinationDirectory will likely be "data" or start with "data/"
                 // For the reason why, see method CreatePacificaMetadataObject in Pacifica.Core.Upload
