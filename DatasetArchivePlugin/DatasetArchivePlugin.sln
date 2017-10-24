@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26430.16
+VisualStudioVersion = 15.0.27004.2005
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DatasetArchivePlugin", "DatasetArchivePlugin\DatasetArchivePlugin.csproj", "{FC0E683A-38BE-494C-93F1-65747197DCD7}"
 EndProject
@@ -55,5 +55,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {9C4FADC3-A404-4BE3-8977-56AE6606E977}
 	EndGlobalSection
 EndGlobal
