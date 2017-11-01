@@ -61,6 +61,9 @@ namespace Pacifica.Core
 
             var fileListJSON = EasyHttp.Send(mPacificaConfig, metadataURL, out var responseStatusCode);
 
+            if (responseStatusCode.ToString() != "200")
+                return false;
+
             // Example response for just one file (hashsum=0a7bcbcf4085abc41bdbd98724f3e5c567726c56)
             // [{"mimetype": "application/octet-stream", "updated": "2017-07-02T23:54:53", "name": "QC_Mam_16_01_125ng_HCD-3_30Jun17_Frodo_REP-17-06-01_msgfplus_syn_ProteinMods.txt", "created": "2017-07-02T23:54:53", "deleted": null, "size": 899907, "hashsum": "0a7bcbcf4085abc41bdbd98724f3e5c567726c56", "hashtype": "sha1", "subdir": "MSG201707021504_Auto1467864", "mtime": "2017-07-02T23:49:14", "_id": 15578789, "encoding": "UTF8", "transaction_id": 1302996, "ctime": "2017-07-02T23:53:28"}]
 
@@ -70,10 +73,13 @@ namespace Pacifica.Core
             var jsa = (Jayrock.Json.JsonArray)JsonConvert.Import(fileListJSON);
             var fileList = Utilities.JsonArrayToDictionaryList(jsa);
 
-            if (responseStatusCode.ToString() == "200" && fileListJSON != "[]" && fileListJSON.Contains(fileSHA1HashSum))
+            foreach (var fileObj in fileList)
             {
-                return true;
+                var fileHash = Utilities.GetDictionaryValue(fileObj, "hashsum");
+                if (string.Equals(fileHash, fileSHA1HashSum))
+                    return true;
             }
+
             return false;
         }
 
