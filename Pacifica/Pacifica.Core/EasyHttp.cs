@@ -78,7 +78,7 @@ namespace Pacifica.Core
             int timeoutSeconds = 100,
             NetworkCredential loginCredentials = null)
         {
-            var request = InitializeRequest(config, url, ref cookies, ref timeoutSeconds, loginCredentials, maxTimeoutHours: 24);
+            var request = InitializeRequest(config, url, ref cookies, ref timeoutSeconds, loginCredentials);
             responseStatusCode = HttpStatusCode.NotFound;
 
             // Prepare the request object
@@ -328,11 +328,7 @@ namespace Pacifica.Core
             HttpMethod method = HttpMethod.Get,
             int timeoutSeconds = 100)
         {
-            const string contentType = "";
-            const bool sendStringInHeader = false;
-            NetworkCredential loginCredentials = null;
-
-            return Send(config, url, new CookieContainer(), out responseStatusCode, postData, method, timeoutSeconds, contentType, sendStringInHeader, loginCredentials);
+            return Send(config, url, new CookieContainer(), out responseStatusCode, postData, method, timeoutSeconds);
         }
 
         public static string Send(
@@ -390,7 +386,7 @@ namespace Pacifica.Core
             bool sendStringInHeader = false,
             NetworkCredential loginCredentials = null)
         {
-            var request = InitializeRequest(config, url, ref cookies, ref timeoutSeconds, loginCredentials, maxTimeoutHours: 24);
+            var request = InitializeRequest(config, url, ref cookies, ref timeoutSeconds, loginCredentials);
             responseStatusCode = HttpStatusCode.NotFound;
 
             // Prepare the request object
@@ -627,7 +623,7 @@ namespace Pacifica.Core
 
         private static long AddTarFileContentLength(string pathInArchive, long fileSizeBytes)
         {
-            return AddTarFileContentLength(pathInArchive, fileSizeBytes, out var headerBlocks);
+            return AddTarFileContentLength(pathInArchive, fileSizeBytes, out _);
         }
 
         private static long AddTarFileContentLength(string pathInArchive, long fileSizeBytes, out int headerBlocks)
@@ -772,7 +768,7 @@ namespace Pacifica.Core
             return contentLength;
         }
 
-        private static void AppendFolderToTar(TarOutputStream tarOutputStream, DirectoryInfo diFolder, string pathInArchive, ref long bytesWritten)
+        private static void AppendFolderToTar(TarOutputStream tarOutputStream, FileSystemInfo diFolder, string pathInArchive, ref long bytesWritten)
         {
             var tarEntry = TarEntry.CreateEntryFromFile(diFolder.FullName);
 

@@ -49,7 +49,6 @@ namespace CaptureTaskManager
         protected DateTime m_LastConfigDBUpdate = DateTime.UtcNow;
         protected int m_MinutesBetweenConfigDBUpdates = 10;
 
-        // ReSharper disable once UnusedMember.Global
         // Used by CTM plugins
         protected bool m_NeedToAbortProcessing = false;
 
@@ -224,8 +223,6 @@ namespace CaptureTaskManager
         /// <returns></returns>
         public static bool CleanWorkDir(string workDir, float holdoffSeconds, out string failureMessage)
         {
-            int holdoffMilliseconds;
-
             var strCurrentSubfolder = string.Empty;
 
             failureMessage = string.Empty;
@@ -233,6 +230,7 @@ namespace CaptureTaskManager
 
             if (holdoffSeconds > 0)
             {
+                int holdoffMilliseconds;
                 try
                 {
                     holdoffMilliseconds = Convert.ToInt32(holdoffSeconds * 1000);
@@ -838,7 +836,7 @@ namespace CaptureTaskManager
 
                 Thread.Sleep(100);
 
-                success = ReadVersionInfoFile(dllFilePath, versionInfoFilePath, out string strVersion);
+                success = ReadVersionInfoFile(dllFilePath, versionInfoFilePath, out var strVersion);
 
                 // Delete the version info file
                 try

@@ -224,7 +224,7 @@ namespace ArchiveStatusCheckPlugin
                     var ingestSuccess = GetMyEMSLIngestStatus(
                         m_Job, statusChecker, statusInfo.StatusURI,
                         statusInfo.EUS_InstrumentID, statusInfo.EUS_ProposalID, statusInfo.EUS_UploaderID,
-                        mRetData, out var serverResponse, out var percentComplete);
+                        mRetData, out _, out var percentComplete);
 
                     // Convert the percent complete value (between 0 and 100) to a number between 0 and 7
                     // since historically there were 7 steps to the ingest process
