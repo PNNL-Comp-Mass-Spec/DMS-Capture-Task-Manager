@@ -16,7 +16,7 @@ using System.IO;
 namespace DatasetArchivePlugin
 {
     /// <summary>
-    /// Base class for archive and archive update operations classes. 
+    /// Base class for archive and archive update operations classes.
     /// </summary>
     abstract class clsOpsBase : clsEventNotifier, IArchiveOps
     {
@@ -78,7 +78,7 @@ namespace DatasetArchivePlugin
 
         #region "Constructor"
 
-        public clsOpsBase(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
+        protected clsOpsBase(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
         {
             m_MgrParams = mgrParams;
             m_TaskParams = taskParams;
