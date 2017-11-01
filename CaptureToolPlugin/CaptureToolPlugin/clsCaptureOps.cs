@@ -675,6 +675,15 @@ namespace CaptureToolPlugin
             }
             catch (Exception ex)
             {
+                if (ex is IOException && (ex.Message.Contains("user name") || ex.Message.Contains("password")))
+                {
+                    // Note that this will call LogError and update retData.CloseoutMsg
+                    HandleCopyException(ref retData, ex);
+
+                    LogWarning("Source folder path: " + folderPath);
+                    return false;
+                }
+
                 retData.CloseoutMsg = "Exception validating constant folder size";
                 var msg = retData.CloseoutMsg + ": " + folderPath;
 
@@ -3111,10 +3120,10 @@ namespace CaptureToolPlugin
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING;
                 retData.EvalCode = EnumEvalCode.EVAL_CODE_NETWORK_ERROR_RETRY_CAPTURE;
             }
-            else if (ex.Message.Contains("unknown user name or bad password"))
+            else if (ex.Message.Contains("unknown user name or bad password") || ex.Message.Contains("user name or password"))
             {
                 // This error randomly occurs; no need to log a full stack trace
-                retData.CloseoutMsg = "Logon failure: unknown user name or bad password";
+                retData.CloseoutMsg = "Authentication failure: " + ex.Message;
                 LogError(retData.CloseoutMsg);
 
                 // Set the EvalCode to 3 so that capture can be retried
