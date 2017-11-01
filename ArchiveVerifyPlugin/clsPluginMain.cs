@@ -932,6 +932,7 @@ namespace ArchiveVerifyPlugin
                 var reader = new MyEMSLReader.Reader
                 {
                     IncludeAllRevisions = false,
+                    ReportMetadataURLs = m_TraceMode || m_DebugLevel >= 5,
                     TraceMode = m_TraceMode,
                     UseTestInstance = false,
                 };
