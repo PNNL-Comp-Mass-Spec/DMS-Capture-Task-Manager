@@ -1635,15 +1635,23 @@ namespace CaptureToolPlugin
 
             if (validFiles.Count < fileNames.Count)
             {
-                LogWarning("Dataset '" + datasetName + "' not ready; source file's size changed");
+                LogWarning("Dataset '" + datasetName + "' not ready; source file's size changed (or authentication error)");
                 DisconnectShareIfRequired();
                 if (errorMsgs.Count > 0)
                 {
                     retData.CloseoutMsg = errorMsgs[0];
                     LogMessage(retData.CloseoutMsg);
                 }
-                retData.CloseoutMsg = "File size changed";
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
+                else
+                {
+                    retData.CloseoutMsg = "File size changed";
+                }
+
+                if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
+                }
+
                 return;
             }
 
@@ -2006,13 +2014,24 @@ namespace CaptureToolPlugin
 
             }
 
+            retData.CloseoutMsg = string.Empty;
+
             if (!VerifyConstantFolderSize(diSourceDir.FullName, ref retData))
             {
                 msg = "Dataset '" + datasetInfo.DatasetName + "' not ready";
                 LogWarning(msg);
                 DisconnectShareIfRequired();
-                retData.CloseoutMsg = "Folder size changed";
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
+
+                if (string.IsNullOrWhiteSpace(retData.CloseoutMsg))
+                {
+                    retData.CloseoutMsg = "Folder size changed";
+                }
+
+                if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
+                }
+
                 return;
             }
 
@@ -2455,8 +2474,17 @@ namespace CaptureToolPlugin
                 msg = "Dataset '" + datasetInfo.DatasetName + "' not ready";
                 LogWarning(msg);
                 DisconnectShareIfRequired();
-                retData.CloseoutMsg = "Folder size changed";
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
+
+                if (string.IsNullOrWhiteSpace(retData.CloseoutMsg))
+                {
+                    retData.CloseoutMsg = "Folder size changed";
+                }
+
+                if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
+                }
+
                 return;
             }
 
@@ -2557,8 +2585,17 @@ namespace CaptureToolPlugin
                 msg = "Dataset '" + datasetInfo.DatasetName + "' not ready";
                 LogWarning(msg);
                 DisconnectShareIfRequired();
-                retData.CloseoutMsg = "Folder size changed";
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
+
+                if (string.IsNullOrWhiteSpace(retData.CloseoutMsg))
+                {
+                    retData.CloseoutMsg = "Folder size changed";
+                }
+
+                if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
+                }
+
                 return;
             }
 
@@ -2713,8 +2750,17 @@ namespace CaptureToolPlugin
                 msg = "Dataset '" + datasetInfo.DatasetName + "' not ready";
                 LogWarning(msg);
                 DisconnectShareIfRequired();
-                retData.CloseoutMsg = "Folder size changed";
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
+
+                if (string.IsNullOrWhiteSpace(retData.CloseoutMsg))
+                {
+                    retData.CloseoutMsg = "Folder size changed";
+                }
+
+                if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
+                }
+
                 return;
             }
 
