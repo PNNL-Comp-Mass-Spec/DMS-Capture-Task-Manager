@@ -503,9 +503,7 @@ namespace ArchiveStatusCheckPlugin
         /// <param name="statusNumsToUpdate"></param>
         /// <param name="dctStatusData"></param>
         /// <returns></returns>
-        private bool UpdateIngestStepsCompletedInDB(
-            IEnumerable<int> statusNumsToUpdate,
-            IReadOnlyDictionary<int, clsIngestStatusInfo> dctStatusData)
+        private void UpdateIngestStepsCompletedInDB(IEnumerable<int> statusNumsToUpdate, IReadOnlyDictionary<int, clsIngestStatusInfo> dctStatusData)
         {
             try
             {
@@ -531,24 +529,18 @@ namespace ArchiveStatusCheckPlugin
                 if (spError)
                 {
                     // One or more calls to the stored procedure failed
-                    return false;
                 }
-
-                return true;
 
             }
             catch (Exception ex)
             {
                 var msg = "Exception calling stored procedure SetMyEMSLUploadSupersededIfFailed, job " + m_Job;
                 LogError(msg, ex);
-                return false;
             }
 
         }
 
-        private bool UpdateSupersededURIs(
-            IReadOnlyCollection<int> lstStatusNumsToIgnore,
-            IReadOnlyDictionary<int, clsIngestStatusInfo> dctStatusData)
+        private void UpdateSupersededURIs(IReadOnlyCollection<int> lstStatusNumsToIgnore, IReadOnlyDictionary<int, clsIngestStatusInfo> dctStatusData)
         {
             const string SP_NAME = "SetMyEMSLUploadSupersededIfFailed";
 
@@ -576,24 +568,20 @@ namespace ArchiveStatusCheckPlugin
                 var resCode = CaptureDBProcedureExecutor.ExecuteSP(spCmd, 2);
 
                 if (resCode == 0)
-                    return true;
+                    return;
 
                 var msg = "Error " + resCode + " calling stored procedure " + SP_NAME + ", job " + m_Job;
                 LogError(msg);
-                return false;
             }
             catch (Exception ex)
             {
                 var msg = "Exception calling stored procedure " + SP_NAME + ", job " + m_Job;
                 LogError(msg, ex);
-                return false;
             }
 
         }
 
-        private bool UpdateVerifiedURIs(
-            Dictionary<int, string> dctVerifiedURIs,
-            IReadOnlyDictionary<int, clsIngestStatusInfo> dctStatusData)
+        private void UpdateVerifiedURIs(Dictionary<int, string> dctVerifiedURIs, IReadOnlyDictionary<int, clsIngestStatusInfo> dctStatusData)
         {
             const string SP_NAME = "SetMyEMSLUploadVerified";
 
@@ -628,17 +616,15 @@ namespace ArchiveStatusCheckPlugin
                 var resCode = CaptureDBProcedureExecutor.ExecuteSP(spCmd, 2);
 
                 if (resCode == 0)
-                    return true;
+                    return;
 
                 var msg = "Error " + resCode + " calling stored procedure " + SP_NAME + ", job " + m_Job;
                 LogError(msg);
-                return false;
             }
             catch (Exception ex)
             {
                 var msg = "Exception calling stored procedure " + SP_NAME + ", job " + m_Job;
                 LogError(msg, ex);
-                return false;
             }
 
         }

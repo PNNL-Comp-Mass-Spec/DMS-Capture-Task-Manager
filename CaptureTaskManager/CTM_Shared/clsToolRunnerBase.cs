@@ -483,7 +483,7 @@ namespace CaptureTaskManager
         /// <param name="toolVersionInfo"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        private bool SaveToolVersionInfoFile(string strFolderPath, string toolVersionInfo)
+        private void SaveToolVersionInfoFile(string strFolderPath, string toolVersionInfo)
         {
             try
             {
@@ -505,10 +505,8 @@ namespace CaptureTaskManager
             catch (Exception ex)
             {
                 LogError("Exception saving tool version info: " + ex.Message);
-                return false;
             }
 
-            return true;
         }
 
         /// <summary>

@@ -789,7 +789,7 @@ namespace ArchiveVerifyPlugin
         /// <param name="lstHashResults">Dictionary where keys are unix file paths and values are clsHashInfo, tracking the Hash value and MyEMSL File ID</param>
         /// <returns>True if lstHashResults is updated, false if unchanged</returns>
         /// <remarks></remarks>
-        private bool ParseAndStoreHashInfo(string dataLine, ref Dictionary<string, clsHashInfo> lstHashResults)
+        private void ParseAndStoreHashInfo(string dataLine, ref Dictionary<string, clsHashInfo> lstHashResults)
         {
             // Data Line Format
             //
@@ -819,7 +819,7 @@ namespace ArchiveVerifyPlugin
             if (lstValues.Count < 2)
             {
                 // Line doesn't contain two strings separated by a space
-                return false;
+                return;
             }
 
             hashInfo.HashCode = lstValues[0];
@@ -839,21 +839,21 @@ namespace ArchiveVerifyPlugin
                 if (hashInfo.IsMatch(hashInfoCached))
                 {
                     // Values match; nothing to update
-                    return false;
+                    return;
                 }
 
                 // Preferentially use the newer value, unless the older value has a MyEMSL file ID but the newer one does not
                 if (string.IsNullOrEmpty(hashInfo.MyEMSLFileID) && !string.IsNullOrEmpty(hashInfoCached.MyEMSLFileID))
                     // Do not update the dictionary
-                    return false;
+                    return;
 
                 lstHashResults[archiveFilePath] = hashInfo;
-                return true;
+                return;
             }
 
             // Append a new entry to the cached info
             lstHashResults.Add(archiveFilePath, hashInfo);
-            return true;
+
         }
 
         private bool UpdateHashResultsFile(
