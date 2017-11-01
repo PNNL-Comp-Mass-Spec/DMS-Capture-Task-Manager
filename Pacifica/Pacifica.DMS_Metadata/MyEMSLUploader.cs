@@ -170,7 +170,8 @@ namespace Pacifica.DMS_Metadata
             var ignoreMyEMSLFileTrackingError = GetParam("IgnoreMyEMSLFileTrackingError", false);
 
             // Instantiate the metadata object
-            _mdContainer = new DMSMetadataObject(config, mManagerName, jobNumber) {
+            _mdContainer = new DMSMetadataObject(config, mManagerName, jobNumber)
+            {
                 TraceMode = TraceMode,
                 IgnoreMyEMSLFileTrackingError = ignoreMyEMSLFileTrackingError
             };
