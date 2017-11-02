@@ -582,45 +582,40 @@ namespace DatasetQualityPlugin
 
         }
 
-        private bool ParseDatasetInfoFile(string datasetFolderPath, string datasetName, out int scanCount, out int scanCountMS)
+        private void ParseDatasetInfoFile(string datasetFolderPath, string datasetName, out int scanCount, out int scanCountMS)
         {
             var fiDatasetInfo = new FileInfo(Path.Combine(datasetFolderPath, "QC", datasetName + "_DatasetInfo.xml"));
-            var success = false;
 
             scanCount = 0;
             scanCountMS = 0;
 
-            if (fiDatasetInfo.Exists)
+            if (!fiDatasetInfo.Exists)
+                return;
+
+            using (var xmlReader = new XmlTextReader(new FileStream(fiDatasetInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.Write)))
             {
-                using (var xmlReader = new XmlTextReader(new FileStream(fiDatasetInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.Write)))
+                while (xmlReader.Read())
                 {
-                    while (xmlReader.Read())
+                    if (xmlReader.NodeType != XmlNodeType.Element)
+                        continue;
+
+                    switch (xmlReader.Name)
                     {
-
-                        if (xmlReader.NodeType == XmlNodeType.Element)
-                        {
-                            if (xmlReader.Name == "ScanCount")
-                            {
-                                scanCount = xmlReader.ReadElementContentAsInt();
-                                success = true;
-                            }
-
-                            if (xmlReader.Name == "ScanCountMS")
-                            {
-                                scanCountMS = xmlReader.ReadElementContentAsInt();
-                                success = true;
-                            }
-                        }
+                        case "ScanCount":
+                            scanCount = xmlReader.ReadElementContentAsInt();
+                            break;
+                        case "ScanCountMS":
+                            scanCountMS = xmlReader.ReadElementContentAsInt();
+                            break;
                     }
                 }
             }
 
-            return success;
         }
 
-        private bool PostProcessMetricsFile(string metricsOutputFileName)
+        private void PostProcessMetricsFile(string metricsOutputFileName)
         {
-            var bReplaceOrginal = false;
+            var replaceOrginal = false;
 
             try
             {
@@ -632,16 +627,16 @@ namespace DatasetQualityPlugin
                     {
                         while (srMetricsFile.Peek() > -1)
                         {
-                            var sLineIn = srMetricsFile.ReadLine();
+                            var dataLine = srMetricsFile.ReadLine();
 
-                            if (!string.IsNullOrEmpty(sLineIn))
+                            if (!string.IsNullOrEmpty(dataLine))
                             {
-                                if (sLineIn.IndexOf("-1.#IND", StringComparison.Ordinal) > 0)
+                                if (dataLine.IndexOf("-1.#IND", StringComparison.Ordinal) > 0)
                                 {
-                                    sLineIn = sLineIn.Replace("-1.#IND", "");
-                                    bReplaceOrginal = true;
+                                    dataLine = dataLine.Replace("-1.#IND", "");
+                                    replaceOrginal = true;
                                 }
-                                swCorrectedFile.WriteLine(sLineIn);
+                                swCorrectedFile.WriteLine(dataLine);
                             }
                             else
                             {
@@ -651,7 +646,7 @@ namespace DatasetQualityPlugin
                     }
                 }
 
-                if (bReplaceOrginal)
+                if (replaceOrginal)
                 {
                     System.Threading.Thread.Sleep(100);
 
@@ -663,8 +658,6 @@ namespace DatasetQualityPlugin
             {
                 throw new Exception("Error in PostProcessMetricsFile: " + ex.Message, ex);
             }
-
-            return true;
 
         }
 
@@ -986,7 +979,7 @@ namespace DatasetQualityPlugin
         }
 
         private bool RunQuameter(
-            FileInfo fiQuameter,
+            FileSystemInfo fiQuameter,
             string dataFileName,
             string metricsOutputFileName,
             bool ignoreQuameterFailure,
