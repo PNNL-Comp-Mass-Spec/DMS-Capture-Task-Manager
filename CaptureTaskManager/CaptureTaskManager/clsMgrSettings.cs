@@ -113,17 +113,29 @@ namespace CaptureTaskManager
         /// <remarks></remarks>
         public bool LoadSettings()
         {
-            m_ErrMsg = "";
+            // Get settings from config file
+            var configFileSettings = LoadMgrSettingsFromFile();
 
-            // If the param dictionary exists, it needs to be cleared out
-            if (m_ParamDictionary != null)
+            return LoadSettings(configFileSettings);
+        }
+
+        /// <summary>
+        /// Updates manager settings, then loads settings from the database or from ManagerSettingsLocal.xml if clsGlobal.OfflineMode is true
+        /// </summary>
+        /// <param name="configFileSettings">Manager settings loaded from file AnalysisManagerProg.exe.config</param>
+        /// <returns>True if successful; False on error</returns>
+        /// <remarks></remarks>
+        public bool LoadSettings(Dictionary<string, string> configFileSettings)
+        {
+            mErrMsg = string.Empty;
+
+            mParamDictionary.Clear();
+
+            foreach (var item in configFileSettings)
             {
-                m_ParamDictionary.Clear();
-                m_ParamDictionary = null;
+                mParamDictionary.Add(item.Key, item.Value);
             }
 
-            // Get settings from config file
-            m_ParamDictionary = LoadMgrSettingsFromFile();
             // Get directory for main executable
             var appPath = Application.ExecutablePath;
             var fi = new FileInfo(appPath);
