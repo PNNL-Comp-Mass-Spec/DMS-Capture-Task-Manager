@@ -557,6 +557,7 @@ namespace ImsDemuxPlugin
         void clsDemuxTools_DemuxProgress(float newProgress)
         {
 
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (ADD_BIN_CENTRIC_TABLES)
 #pragma warning disable 162
             {

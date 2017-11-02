@@ -311,7 +311,6 @@ namespace Pacifica.Core
                 }
 
             }
-            // ReSharper disable once EmptyGeneralCatchClause
             catch
             {
                 // Ignore errors here
@@ -407,7 +406,6 @@ namespace Pacifica.Core
                 // Delete the local temporary file
                 mdTextFile.Delete();
             }
-            // ReSharper disable once EmptyGeneralCatchClause
             catch
             {
                 // Ignore errors here

@@ -3,7 +3,6 @@ using System.IO;
 
 namespace CaptureTaskManager
 {
-    // ReSharper disable once UnusedMember.Global
     // Used by ImsDemuxPlugin.clsDemuxTools
     public class clsFailedResultsCopier : clsLoggerBase
     {

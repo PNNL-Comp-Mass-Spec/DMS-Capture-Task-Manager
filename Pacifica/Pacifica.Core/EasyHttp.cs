@@ -515,7 +515,6 @@ namespace Pacifica.Core
 
             Stream oRequestStream;
 
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (writeToDisk)
                 oRequestStream = new FileStream(@"C:\CTM_Workdir\TestFile3.tar", FileMode.Create, FileAccess.Write, FileShare.Read);
             else
@@ -588,7 +587,6 @@ namespace Pacifica.Core
 
             RaiseStatusUpdate(100, contentLength, contentLength, string.Empty);
 
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (writeToDisk)
                 return string.Empty;
 

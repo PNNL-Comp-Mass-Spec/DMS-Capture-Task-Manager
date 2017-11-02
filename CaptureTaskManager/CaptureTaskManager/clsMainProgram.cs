@@ -950,7 +950,6 @@ namespace CaptureTaskManager
                                 iDeleteCount += 1;
                             }
                         }
-                        // ReSharper disable once EmptyGeneralCatchClause
                         catch
                         {
                             // Ignore exceptions

@@ -36,11 +36,9 @@ namespace CaptureTaskManager
         protected IMgrParams m_MgrParams;
         protected ITaskParams m_TaskParams;
 
-        // ReSharper disable once NotAccessedField.Global
         // Used by CTM plugins
         protected IStatusFile m_StatusTools;
 
-        // ReSharper disable once NotAccessedField.Global
         // Used by CTM plugins
         protected clsFileTools m_FileTools;
 
@@ -147,7 +145,6 @@ namespace CaptureTaskManager
             m_TraceMode = m_MgrParams.GetParam("TraceMode", false);
         }
 
-        // ReSharper disable once UnusedMember.Global
         // Used by CTM plugins
         protected bool UpdateMgrSettings()
         {
@@ -204,7 +201,6 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="workDir">Working directory path</param>
         /// <returns></returns>
-        // ReSharper disable once UnusedMember.Global
         public static bool CleanWorkDir(string workDir)
         {
             const float HoldoffSeconds = 0.1f;
@@ -299,7 +295,6 @@ namespace CaptureTaskManager
             return true;
         }
 
-        // ReSharper disable once UnusedMember.Global
         // Used by CTM plugins
         protected void DeleteFileIgnoreErrors(string sFilePath)
         {
@@ -307,7 +302,6 @@ namespace CaptureTaskManager
             {
                 File.Delete(sFilePath);
             }
-                // ReSharper disable once EmptyGeneralCatchClause
             catch
             {
                 // Ignore errors here
@@ -328,7 +322,6 @@ namespace CaptureTaskManager
         /// <param name="percentComplete">Output: ingest process percent complete (value between 0 and 100)</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>This function is used by the ArchiveStatusCheck plugin and the ArchiveVerify plugin </remarks>
-        // ReSharper disable once UnusedMember.Global
         protected bool GetMyEMSLIngestStatus(
             int job,
             MyEMSLStatusCheck statusChecker,
@@ -513,7 +506,6 @@ namespace CaptureTaskManager
         /// <param name="toolVersionInfo">Version info (maximum length is 900 characters)</param>
         /// <returns>True for success, False for failure</returns>
         /// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
-        // ReSharper disable once UnusedMember.Global
         protected bool SetStepTaskToolVersion(string toolVersionInfo)
         {
             return SetStepTaskToolVersion(toolVersionInfo, new List<FileInfo>());
@@ -640,7 +632,6 @@ namespace CaptureTaskManager
         /// <param name="dllFilePath">Path to the DLL</param>
         /// <returns>True if success; false if an error</returns>
         /// <remarks>Used by CTM plugins</remarks>
-        // ReSharper disable once UnusedMember.Global
         protected virtual bool StoreToolVersionInfoOneFile(ref string toolVersionInfo, string dllFilePath)
         {
             bool success;
@@ -772,7 +763,6 @@ namespace CaptureTaskManager
         /// <param name="dllFilePath"></param>
         /// <returns>True if success; false if an error</returns>
         /// <remarks>Used by CTM plugins</remarks>
-        // ReSharper disable once UnusedMember.Global
         protected bool StoreToolVersionInfoOneFile64Bit(ref string toolVersionInfo, string dllFilePath)
         {
             return StoreToolVersionInfoOneFileUseExe(ref toolVersionInfo, dllFilePath, "DLLVersionInspector_x64.exe");
@@ -879,7 +869,6 @@ namespace CaptureTaskManager
         /// <param name="fatalError">True if ingest failed with a fatal error and thus the ErrorCode should be updated in T_MyEMSL_Uploads</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>This function is used by the ArchiveStatusCheck plugin and the ArchiveVerify plugin </remarks>
-        // ReSharper disable once UnusedMember.Global
         protected bool UpdateIngestStepsCompletedOneTask(
             int statusNum,
             byte ingestStepsCompleted,

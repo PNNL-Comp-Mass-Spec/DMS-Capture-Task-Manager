@@ -2,7 +2,6 @@
 
 namespace CaptureTaskManager
 {
-    // ReSharper disable once ClassNeverInstantiated.Global
     // Used in the DatasetIntegrityPlugin and elsewhere
     public class clsInstrumentClassInfo
     {

@@ -29,11 +29,30 @@ namespace CaptureTaskManager
 
         #region "Constants"
 
+        /// <summary>
+        /// Status message for when the manager is deactivated locally
+        /// </summary>
+        /// <remarks>Used when MgrActive_Local is False in AppName.exe.config</remarks>
         public const string DEACTIVATED_LOCALLY = "Manager deactivated locally";
 
+        /// <summary>
+        /// Manager parameter: config database connection string
+        /// </summary>
         public const string MGR_PARAM_MGR_CFG_DB_CONN_STRING = "MgrCnfgDbConnectStr";
+        /// <summary>
+        /// Manager parameter: manager active
+        /// </summary>
+        /// <remarks>Defined in AppName.exe.config</remarks>
         public const string MGR_PARAM_MGR_ACTIVE_LOCAL = "MgrActive_Local";
+
+        /// <summary>
+        /// Manager parameter: manager name
+        /// </summary>
         public const string MGR_PARAM_MGR_NAME = "MgrName";
+
+        /// <summary>
+        /// Manager parameter: using defaults flag
+        /// </summary>
         public const string MGR_PARAM_USING_DEFAULTS = "UsingDefaults";
 
         /// <summary>
@@ -54,6 +73,12 @@ namespace CaptureTaskManager
         #region "Properties"
 
         public string ErrMsg => m_ErrMsg;
+        /// <summary>
+        /// Error message
+        /// </summary>
+        /// <summary>
+        /// Manager name
+        /// </summary>
 
         public Dictionary<string, string> TaskDictionary => m_ParamDictionary;
 
@@ -61,6 +86,10 @@ namespace CaptureTaskManager
 
         #region "Methods"
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <remarks></remarks>
         public clsMgrSettings()
         {
             if (!LoadSettings())
@@ -72,6 +101,11 @@ namespace CaptureTaskManager
             }
         }
 
+        /// <summary>
+        /// Updates manager settings, then loads settings from the database or from ManagerSettingsLocal.xml if clsGlobal.OfflineMode is true
+        /// </summary>
+        /// <returns>True if successful; False on error</returns>
+        /// <remarks></remarks>
         public bool LoadSettings()
         {
             m_ErrMsg = "";
@@ -192,7 +226,13 @@ namespace CaptureTaskManager
             }
         }
 
-        private bool CheckInitialSettings(IReadOnlyDictionary<string, string> InpDict)
+        /// <summary>
+        /// Tests initial settings retrieved from config file
+        /// </summary>
+        /// <param name="paramDictionary"></param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        private bool CheckInitialSettings(IReadOnlyDictionary<string, string> paramDictionary)
         {
             // Verify manager settings dictionary exists
             if (InpDict == null)
@@ -249,12 +289,21 @@ namespace CaptureTaskManager
             return string.Empty;
         }
 
+        /// <summary>
+        /// Retrieves the manager and global settings from various databases
+        /// </summary>
+        /// <returns></returns>
         public bool LoadMgrSettingsFromDB()
         {
             const bool logConnectionErrors = true;
             return LoadMgrSettingsFromDB(logConnectionErrors);
         }
 
+        /// <summary>
+        /// Gets manager config settings from manager control DB (Manager_Control)
+        /// </summary>
+        /// <returns>True if success, otherwise false</returns>
+        /// <remarks>Performs retries if necessary.</remarks>
         public bool LoadMgrSettingsFromDB(bool logConnectionErrors)
         {
             // Requests manager parameters from database. Input string specifies view to use. Performs retries if necessary.
@@ -401,7 +450,14 @@ namespace CaptureTaskManager
             return true;
         }
 
-        public bool StoreParameters(DataTable dtSettings, bool skipExistingParameters, string managerName)
+        /// <summary>
+        /// Update mParamDictionary with settings in dtSettings, optionally skipping existing parameters
+        /// </summary>
+        /// <param name="dtSettings"></param>
+        /// <param name="skipExistingParameters"></param>
+        /// <param name="managerName"></param>
+        /// <returns></returns>
+        private bool StoreParameters(DataTable dtSettings, bool skipExistingParameters, string managerName)
         {
             bool success;
 
