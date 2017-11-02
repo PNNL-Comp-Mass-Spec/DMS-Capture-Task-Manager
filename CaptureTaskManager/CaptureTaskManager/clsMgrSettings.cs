@@ -137,7 +137,13 @@ namespace CaptureTaskManager
             }
 
             // Determine if manager is deactivated locally
-            if (!GetBooleanParam(MGR_PARAM_MGR_ACTIVE_LOCAL))
+            if (!mParamDictionary.TryGetValue(MGR_PARAM_MGR_ACTIVE_LOCAL, out var activeLocalText))
+            {
+                mErrMsg = "Manager parameter " + MGR_PARAM_MGR_ACTIVE_LOCAL + " is missing from file " + Path.GetFileName(GetConfigFilePath());
+                LogError(mErrMsg);
+            }
+
+            if (!bool.TryParse(activeLocalText, out var activeLocal) || !activeLocal)
             {
                 LogWarning(DEACTIVATED_LOCALLY);
                 mErrMsg = DEACTIVATED_LOCALLY;
