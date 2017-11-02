@@ -159,8 +159,7 @@ namespace CaptureTaskManager
 
                 LogDebug("Updating manager settings using Manager Control database");
 
-                const bool logConnectionErrors = false;
-                if (!m_MgrParams.LoadMgrSettingsFromDB(logConnectionErrors))
+                if (!m_MgrParams.LoadMgrSettingsFromDB(logConnectionErrors: false))
                 {
                     // Error retrieving settings from the manager control DB
                     LogWarning("Error calling m_MgrSettings.LoadMgrSettingsFromDB to update manager settings");
