@@ -178,22 +178,36 @@ namespace CaptureTaskManager
             return bSuccess;
         }
 
-        protected string AppendToComment(string InpComment, string NewComment)
+
+        /// <summary>
+        /// Appends a string to a job comment string
+        /// </summary>
+        /// <param name="baseComment">Initial comment</param>
+        /// <param name="addnlComment">Comment to be appended</param>
+        /// <returns>String containing both comments</returns>
+        /// <remarks></remarks>
+        protected static string AppendToComment(string baseComment, string addnlComment)
         {
-            // Appends a comment string to an existing comment string
 
-            if (string.IsNullOrWhiteSpace(InpComment))
+            if (string.IsNullOrWhiteSpace(baseComment))
             {
-                return NewComment;
+                return addnlComment.Trim();
             }
 
-            // Append a semicolon to InpComment, but only if it doesn't already end in a semicolon
-            if (!InpComment.TrimEnd(' ').EndsWith(";"))
+            if (string.IsNullOrWhiteSpace(addnlComment) || baseComment.Contains(addnlComment))
             {
-                InpComment += "; ";
+                // Either addnlComment is empty (unlikely) or addnlComment is a duplicate comment
+                // Return the base comment
+                return baseComment.Trim();
             }
 
-            return InpComment + NewComment;
+            // Append a semicolon to baseComment, but only if it doesn't already end in a semicolon
+            if (baseComment.TrimEnd().EndsWith(";"))
+            {
+                return baseComment.TrimEnd() + addnlComment.Trim();
+            }
+
+            return baseComment.Trim() + "; " + addnlComment.Trim();
         }
 
         /// <summary>
