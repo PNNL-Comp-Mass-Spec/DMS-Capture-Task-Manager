@@ -310,11 +310,11 @@ namespace CaptureTaskManager
         }
 
         // Used by CTM plugins
-        protected void DeleteFileIgnoreErrors(string sFilePath)
+        protected void DeleteFileIgnoreErrors(string filePath)
         {
             try
             {
-                File.Delete(sFilePath);
+                File.Delete(filePath);
             }
             catch
             {
