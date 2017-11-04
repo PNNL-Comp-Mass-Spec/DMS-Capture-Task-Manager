@@ -1307,22 +1307,25 @@ namespace DatasetIntegrityPlugin
 
                     try
                     {
-                        var reader = new XRawFileIO();
-                        reader.OpenRawFile(dataFileNamePath);
-
-                        var scanCount = reader.GetNumScans();
-
-                        if (scanCount > 0)
+                        using (var reader = new XRawFileIO(dataFileNamePath))
                         {
+                            RegisterEvents(reader);
 
-                            var dataCount = reader.GetScanData2D(1, out _);
+                            var scanCount = reader.GetNumScans();
 
-                            if (dataCount > 0)
+                            if (scanCount > 0)
                             {
-                                validFile = true;
-                            }
 
+                                var dataCount = reader.GetScanData2D(1, out _);
+
+                                if (dataCount > 0)
+                                {
+                                    validFile = true;
+                                }
+
+                            }
                         }
+
                     }
                     catch (Exception ex)
                     {
