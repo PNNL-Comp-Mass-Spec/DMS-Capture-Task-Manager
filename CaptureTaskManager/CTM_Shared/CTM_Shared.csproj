@@ -59,9 +59,6 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="log4net">
-      <HintPath>..\..\RefLib\log4net.dll</HintPath>
-    </Reference>
     <Reference Include="MSFileInfoScannerInterfaces">
       <HintPath>..\..\RefLib\MSFileInfoScannerInterfaces.dll</HintPath>
     </Reference>
@@ -88,8 +85,11 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="log4net">
+      <Version>2.0.8</Version>
+    </PackageReference>
     <PackageReference Include="PRISM-Library">
-      <Version>2.4.40</Version>
+      <Version>2.4.41</Version>
     </PackageReference>
     <PackageReference Include="PRISMWin-Library">
       <Version>1.0.3</Version>
