@@ -1225,7 +1225,12 @@ namespace DatasetInfoPlugin
         /// <param name="ex"></param>
         void m_MsFileScanner_ErrorEvent(string message, Exception ex)
         {
-            var errorMsg = "Error running MSFileInfoScanner: " + message + "; " + ex.Message;
+            var errorMsg = "Error running MSFileInfoScanner: " + message;
+
+            if (ex != null)
+            {
+                errorMsg += "; " + ex.Message;
+            }
 
             if (message.StartsWith("Error using ProteoWizard reader"))
             {
