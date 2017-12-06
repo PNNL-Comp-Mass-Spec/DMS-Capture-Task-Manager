@@ -168,6 +168,7 @@ namespace ArchiveVerifyPlugin
                 const string msg = "MyEMSL_Status_URI is empty; cannot verify upload status";
                 mRetData.CloseoutMsg = msg;
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                mRetData.EvalCode = EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY;
                 LogError(msg);
 
                 statusNum = 0;
