@@ -15,7 +15,7 @@ namespace CaptureTaskManager
     /// </summary>
     static class Program
     {
-        private const string PROGRAM_DATE = "November 1, 2017";
+        private const string PROGRAM_DATE = "December 6, 2017";
 
         private static bool mCodeTestMode;
         private static bool mCreateEventLog;
@@ -64,8 +64,8 @@ namespace CaptureTaskManager
                 }
                 return;
             }
-            // Initiate automated analysis
 
+            // Initiate automated analysis
             do
             {
                 try
