@@ -396,32 +396,34 @@ namespace CaptureTaskManager
 
             // Get the most recent job history
             var historyFile = Path.Combine(m_MgrSettings.GetParam("ApplicationPath"), "History.txt");
-            if (File.Exists(historyFile))
+            if (!File.Exists(historyFile))
             {
-                try
+                return true;
+            }
+
+            try
+            {
+                // Create an instance of StreamReader to read from a file.
+                // The using statement also closes the StreamReader.
+                using (var sr = new StreamReader(historyFile))
                 {
-                    // Create an instance of StreamReader to read from a file.
-                    // The using statement also closes the StreamReader.
-                    using (var sr = new StreamReader(historyFile))
+                    string line;
+                    // Read and display lines from the file until the end of
+                    // the file is reached.
+                    while ((line = sr.ReadLine()) != null)
                     {
-                        string line;
-                        // Read and display lines from the file until the end of
-                        // the file is reached.
-                        while ((line = sr.ReadLine()) != null)
+                        if (line.Contains("RecentJob: "))
                         {
-                            if (line.Contains("RecentJob: "))
-                            {
-                                var tmpStr = line.Replace("RecentJob: ", "");
-                                m_StatusFile.MostRecentJobInfo = tmpStr;
-                                break;
-                            }
+                            var tmpStr = line.Replace("RecentJob: ", "");
+                            m_StatusFile.MostRecentJobInfo = tmpStr;
+                            break;
                         }
                     }
                 }
-                catch (Exception ex)
-                {
-                    LogError("Exception reading status history file", ex);
-                }
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception reading status history file", ex);
             }
 
             return true;
