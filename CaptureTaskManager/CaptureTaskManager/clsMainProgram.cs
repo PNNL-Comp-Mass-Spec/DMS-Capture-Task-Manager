@@ -245,8 +245,9 @@ namespace CaptureTaskManager
             // we remove this logger than make a new one using the connection string read from the Manager Control DB
             var defaultDmsConnectionString = Properties.Settings.Default.DefaultDMSConnString;
 
-            clsLogTools.CreateDbLogger(defaultDmsConnectionString, "CaptureTaskMan: " + System.Net.Dns.GetHostName(),
-                                       true);
+            clsLogTools.CreateDbLogger(defaultDmsConnectionString, "CaptureTaskMan: " + System.Net.Dns.GetHostName(), true);
+
+            clsLogTools.MessageLogged += MessageLoggedHandler;
 
             // Get the manager settings
             // If you get an exception here while debugging in Visual Studio, be sure
@@ -564,6 +565,20 @@ namespace CaptureTaskManager
             {
                 LogError("Exception in LogErrorToDatabasePeriodically", ex);
             }
+        }
+
+        private void MessageLoggedHandler(string message, clsLogTools.LogLevels logLevel)
+        {
+            var timeStamp = DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss");
+
+            // Update the status file data
+            clsStatusData.MostRecentLogMessage = timeStamp + "; " + message + "; " + logLevel;
+
+            if (logLevel <= clsLogTools.LogLevels.ERROR)
+            {
+                clsStatusData.AddErrorMessage(timeStamp + "; " + message + "; " + logLevel);
+            }
+
         }
 
         /// <summary>
