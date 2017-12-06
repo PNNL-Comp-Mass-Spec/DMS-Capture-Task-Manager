@@ -288,8 +288,7 @@ namespace CaptureTaskManager
 
             // Update the cached values for this manager and job
             m_MgrName = m_MgrSettings.GetParam(clsMgrSettings.MGR_PARAM_MGR_NAME);
-            if (m_TraceMode)
-                ShowTraceMessage("Manager name is " + m_MgrName);
+            ShowTrace("Manager name is " + m_MgrName);
 
             m_StepTool = "Unknown";
             m_Job = "Unknown";
@@ -317,8 +316,7 @@ namespace CaptureTaskManager
             clsLogTools.CreateDbLogger(logCnStr, "CaptureTaskMan: " + m_MgrName, false);
 
             // Make initial log entry
-            if (m_TraceMode)
-                ShowTraceMessage("Initializing log file " + logFileName);
+            ShowTrace("Initializing log file " + clsPathUtils.CompactPathString(clsLogTools.CurrentFileAppenderPath, 60));
 
             LogMessage("=== Started Capture Task Manager V" + Application.ProductVersion + " ===== ");
 
@@ -426,7 +424,6 @@ namespace CaptureTaskManager
                 }
             }
 
-            // Everything worked!
             return true;
         }
 
@@ -463,15 +460,13 @@ namespace CaptureTaskManager
                 // Most error messages provided by .Init method, but debug message is here for program tracking
                 LogDebug("Message handler init error");
                 m_MsgQueueInitSuccess = false;
-                if (m_TraceMode)
-                    ShowTraceMessage("m_MsgQueueInitSuccess = false: Message handler init error");
+                ShowTrace("m_MsgQueueInitSuccess = false: Message handler init error");
             }
             else
             {
                 LogDebug("Message handler initialized");
                 m_MsgQueueInitSuccess = true;
-                if (m_TraceMode)
-                    ShowTraceMessage("m_MsgQueueInitSuccess = true");
+                ShowTrace("m_MsgQueueInitSuccess = true");
             }
         }
 
@@ -1038,6 +1033,12 @@ namespace CaptureTaskManager
             }
 
             return true;
+        }
+
+        private void ShowTrace(string message)
+        {
+            if (m_TraceMode)
+                ShowTraceMessage(message);
         }
 
         /// <summary>

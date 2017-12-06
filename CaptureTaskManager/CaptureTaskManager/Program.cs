@@ -70,7 +70,8 @@ namespace CaptureTaskManager
             {
                 try
                 {
-                    if (mTraceMode) clsUtilities.VerifyFolder("Program.Main");
+                    // if (mTraceMode)
+                    //    clsUtilities.VerifyFolder("Program.Main");
 
                     // Initialize the main execution class
                     var oMainProgram = new clsMainProgram(mTraceMode);
