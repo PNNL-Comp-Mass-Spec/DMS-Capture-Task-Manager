@@ -20,7 +20,7 @@ using log4net.Util.TypeConverters;
 namespace CaptureTaskManager
 {
     /// <summary>
-    /// Wraps Log4Net functions
+    /// Class for handling logging via Log4Net
     /// </summary>
     public static class clsLogTools
     {
@@ -213,6 +213,9 @@ namespace CaptureTaskManager
             // Update the status file data
             clsStatusData.MostRecentLogMessage = DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss") + "; "+ message + "; " + logLevel;
 
+            if (myLogger == null)
+                return;
+
             // Send the log message
             switch (logLevel)
             {
@@ -285,6 +288,17 @@ namespace CaptureTaskManager
                 default:
                     throw new Exception("Invalid log level specified");
             }
+        }
+
+        /// <summary>
+        /// Update the log file's base name
+        /// </summary>
+        /// <param name="baseName"></param>
+        /// <remarks>Will append today's date to the base name</remarks>
+        public static void ChangeLogFileBaseName(string baseName)
+        {
+            m_BaseFileName = baseName;
+            ChangeLogFileName();
         }
 
         /// <summary>
@@ -423,6 +437,12 @@ namespace CaptureTaskManager
                 var matchSpec = "*_" + LOG_FILE_MATCH_SPEC + LOG_FILE_EXTENSION;
 
                 var logDirectory = currentLogFile.Directory;
+                if (logDirectory == null)
+                {
+                    WriteLog(LoggerTypes.LogFile, LogLevels.WARN, "Error archiving old log files; cannot determine the parent directory of " + currentLogFile);
+                    return;
+                }
+
                 var logFiles = logDirectory.GetFiles(matchSpec);
 
                 var matcher = new Regex(LOG_FILE_DATE_REGEX, RegexOptions.Compiled);
@@ -491,7 +511,7 @@ namespace CaptureTaskManager
         /// Configures the file logger
         /// </summary>
         /// <param name="logFileName">Base name for log file</param>
-        /// <param name="logLevel">Debug level for file logger</param>
+        /// <param name="logLevel">Debug level for file logger (1-5, 5 being most verbose)</param>
         public static void CreateFileLogger(string logFileName, int logLevel)
         {
             var curLogger = (log4net.Repository.Hierarchy.Logger)m_FileLogger.Logger;
