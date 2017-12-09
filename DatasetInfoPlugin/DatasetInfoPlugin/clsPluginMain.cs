@@ -206,6 +206,7 @@ namespace DatasetInfoPlugin
             m_MsFileScanner.LCMS2DOverviewPlotDivisor = m_TaskParams.GetParam("LCMS2DOverviewPlotDivisor", clsLCMSDataPlotterOptions.DEFAULT_LCMS2D_OVERVIEW_PLOT_DIVISOR);
 
             m_MsFileScanner.CheckCentroidingStatus = true;
+            m_MsFileScanner.PlotWithPython = true;
 
             // Get the input file name
             var fileOrFolderNames = GetDataFileOrFolderName(sourceFolder, out var skipPlots, out var rawDataType, out var instrumentClass, out var brukerDotDBaf);
