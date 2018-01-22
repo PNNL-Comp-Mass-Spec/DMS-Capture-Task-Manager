@@ -27,6 +27,16 @@ namespace Pacifica.DMS_Metadata
         public const int MAX_FILES_TO_ARCHIVE = 500;
 
         /// <summary>
+        /// Error message thrown when the dataset directory is not found
+        /// </summary>
+        public const string SOURCE_DIRECTORY_NOT_FOUND = "Source directory not found";
+
+        /// <summary>
+        /// Error message thrown when teh dataset directory has too many files to archive
+        /// </summary>
+        public static readonly string TOO_MANY_FILES_TO_ARCHIVE = "Source directory has over " + MAX_FILES_TO_ARCHIVE + " files";
+
+        /// <summary>
         /// Error message thrown when the dataset's instrument operator does not have an EUS person ID
         /// </summary>
         public const string UNDEFINED_EUS_OPERATOR_ID = "Operator does not have an EUS person ID in DMS";
@@ -459,7 +469,7 @@ namespace Pacifica.DMS_Metadata
             if (!archiveDir.Exists)
             {
                 throw new DirectoryNotFoundException(
-                    string.Format("Source directory not found: {0} (CollectFileInformation)", archiveDir));
+                    string.Format("{0}: {1} (CollectFileInformation)", SOURCE_DIRECTORY_NOT_FOUND, archiveDir));
             }
 
             var eSearchOption = recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
@@ -469,10 +479,10 @@ namespace Pacifica.DMS_Metadata
             if (fileList.Count >= MAX_FILES_TO_ARCHIVE)
             {
                 throw new ArgumentOutOfRangeException(
-                    "Source directory has over " + MAX_FILES_TO_ARCHIVE + " files; files must be zipped before upload to MyEMSL (CollectFileInformation)");
+                    TOO_MANY_FILES_TO_ARCHIVE + "; files must be zipped before upload to MyEMSL (CollectFileInformation)");
             }
 
-            // Get the list of filenames tht we can ignore
+            // Get the list of filenames that we can ignore
             var filesToIgnore = GetFilesToIgnore();
 
             var fracCompleted = 0f;

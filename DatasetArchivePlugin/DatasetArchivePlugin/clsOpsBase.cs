@@ -363,6 +363,22 @@ namespace DatasetArchivePlugin
                     allowRetry = false;
                     LogOperationFailed(m_DatasetName, ex.Message, true);
                 }
+                else if (ex.Message.Contains(DMSMetadataObject.SOURCE_DIRECTORY_NOT_FOUND))
+                {
+                    m_ErrMsg += ": " + DMSMetadataObject.SOURCE_DIRECTORY_NOT_FOUND;
+
+                    // Do not retry the upload; it will fail again due to the same error
+                    allowRetry = false;
+                    LogOperationFailed(m_DatasetName, m_ErrMsg, true);
+                }
+                else if (ex.Message.Contains(DMSMetadataObject.TOO_MANY_FILES_TO_ARCHIVE))
+                {
+                    m_ErrMsg += ": " + DMSMetadataObject.TOO_MANY_FILES_TO_ARCHIVE;
+
+                    // Do not retry the upload; it will fail again due to the same error
+                    allowRetry = false;
+                    LogOperationFailed(m_DatasetName, m_ErrMsg, true);
+                }
                 else
                 {
                     LogOperationFailed(m_DatasetName);
