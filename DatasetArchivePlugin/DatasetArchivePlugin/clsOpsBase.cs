@@ -530,7 +530,15 @@ namespace DatasetArchivePlugin
 
                 // Example log message:
                 // ... uploading files, 97.3% complete for 35,540 KB; QC_Shew_16-01_1_20Jul17_Merry_17-05-03_dta.zip
-                var msg = "  ... " + verb + ", " + e.PercentCompleted.ToString("0.0") + "% complete for " + (e.TotalBytesToSend / 1024.0).ToString("#,##0") + " KB";
+
+                var msgBase = "  ... " + verb + ", " + e.PercentCompleted.ToString("0.0") + "% complete";
+
+                string msg;
+
+                if (e.TotalBytesToSend > 0)
+                    msg = msgBase + " for " + (e.TotalBytesToSend / 1024.0).ToString("#,##0") + " KB";
+                else
+                    msg = msgBase;
 
                 if (string.IsNullOrEmpty(filename))
                     LogStatusMessageSkipDuplicate(msg);
