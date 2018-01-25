@@ -11,6 +11,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
+using System.Threading;
 using PRISM;
 using PRISM.Logging;
 
@@ -528,7 +529,7 @@ namespace CaptureTaskManager
                 if (messageCacheFile.Exists)
                 {
                     cachedMessages = LoadCachedLogMessages(messageCacheFile);
-                    System.Threading.Thread.Sleep(150);
+                    Thread.Sleep(150);
                 }
                 else
                 {
@@ -1089,13 +1090,13 @@ namespace CaptureTaskManager
             string errorMessage;
             try
             {
-                var objCleanupMgrErrors = new clsCleanupMgrErrors(
+                var cleanupMgrErrors = new clsCleanupMgrErrors(
                     m_MgrSettings.GetParam(clsMgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING),
                     m_MgrName,
                     m_MgrSettings.GetParam("WorkDir"),
                     m_StatusFile);
 
-                var cleanupSuccess = objCleanupMgrErrors.AutoCleanupManagerErrors(cleanupMode);
+                var cleanupSuccess = cleanupMgrErrors.AutoCleanupManagerErrors(cleanupMode);
 
                 if (cleanupSuccess)
                 {

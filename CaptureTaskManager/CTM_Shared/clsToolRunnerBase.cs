@@ -819,7 +819,7 @@ namespace CaptureTaskManager
                 var strArgs = clsConversion.PossiblyQuotePath(fiDLLFile.FullName) + " /O:" +
                               clsConversion.PossiblyQuotePath(versionInfoFilePath);
 
-                var objProgRunner = new clsRunDosProgram(clsUtilities.GetAppFolderPath())
+                var progRunner = new clsRunDosProgram(clsUtilities.GetAppFolderPath())
                 {
                     CacheStandardOutput = false,
                     CreateNoWindow = true,
@@ -828,9 +828,9 @@ namespace CaptureTaskManager
                     MonitorInterval = 250
                 };
 
-                RegisterEvents(objProgRunner);
+                RegisterEvents(progRunner);
 
-                var success = objProgRunner.RunProgram(strAppPath, strArgs, "DLLVersionInspector", false);
+                var success = progRunner.RunProgram(strAppPath, strArgs, "DLLVersionInspector", false);
 
                 if (!success)
                 {

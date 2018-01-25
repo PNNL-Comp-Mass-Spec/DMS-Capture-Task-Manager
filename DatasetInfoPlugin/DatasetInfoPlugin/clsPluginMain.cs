@@ -93,10 +93,10 @@ namespace DatasetInfoPlugin
                 }
                 else
                 {
-                    var obj = LoadObject(MsDataFileReaderClass, msFileInfoScannerDLLPath);
-                    if (obj != null)
+                    var newInstance = LoadObject(MsDataFileReaderClass, msFileInfoScannerDLLPath);
+                    if (newInstance != null)
                     {
-                        msFileInfoScanner = (iMSFileInfoScanner)obj;
+                        msFileInfoScanner = (iMSFileInfoScanner)newInstance;
                         msg = "Loaded MSFileInfoScanner from " + msFileInfoScannerDLLPath;
                         LogMessage(msg);
                     }

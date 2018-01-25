@@ -273,23 +273,15 @@ namespace CaptureTaskManager
         /// <returns>Full directory path</returns>
         public static string GetAppFolderPath()
         {
-            var entryAssembly = System.Reflection.Assembly.GetEntryAssembly();
-            var exePath = entryAssembly.Location;
-            if (exePath == null)
-            {
-                LogWarning("Unable to determine the exe path in GetAppFolderPath");
-                return string.Empty;
-            }
+            if (mAppFolderPath != null)
+                return mAppFolderPath;
 
-            var fiAssemblyFile = new FileInfo(exePath);
+            var entryAssembly = Assembly.GetEntryAssembly();
 
-            if (string.IsNullOrEmpty(fiAssemblyFile.DirectoryName))
-            {
-                LogWarning("Unable to determine the parent directory in GetAppFolderPath for " + exePath);
-                return string.Empty;
-            }
+            var assemblyFile = new FileInfo(entryAssembly.Location);
+            mAppFolderPath = assemblyFile.DirectoryName;
 
-            return fiAssemblyFile.DirectoryName;
+            return mAppFolderPath;
         }
 
         /// <summary>

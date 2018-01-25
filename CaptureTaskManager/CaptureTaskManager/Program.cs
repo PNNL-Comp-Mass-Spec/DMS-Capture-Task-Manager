@@ -6,6 +6,7 @@
 //*********************************************************************************************************
 
 using System;
+using System.Threading;
 using PRISM;
 
 namespace CaptureTaskManager
@@ -26,25 +27,38 @@ namespace CaptureTaskManager
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
+        /// <returns>0 if no error; error code if an error</returns>
         /// <remarks>The STAThread attribute is required for OxyPlot functionality</remarks>
         [STAThread]
-        static void Main()
+        static int Main()
         {
-            var restart = false;
+            mCodeTestMode = false;
 
-            var objParseCommandLine = new clsParseCommandLine();
+            mTraceMode = false;
+
+            var osVersionInfo = new clsOSVersionInfo();
+
+            var osVersion = osVersionInfo.GetOSVersion();
+            if (osVersion.IndexOf("windows", StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                // Running on Linux
+                // Auto-enable offline mode
+                clsUtilities.EnableOfflineMode(true);
+            }
+
+            var commandLineParser = new clsParseCommandLine();
 
             // Look for /T or /Test on the command line
             // If present, this means "code test mode" is enabled
-            if (objParseCommandLine.ParseCommandLine())
+            if (commandLineParser.ParseCommandLine())
             {
-                SetOptionsUsingCommandLineParameters(objParseCommandLine);
+                SetOptionsUsingCommandLineParameters(commandLineParser);
             }
 
-            if (objParseCommandLine.NeedToShowHelp)
+            if (commandLineParser.NeedToShowHelp)
             {
                 ShowProgramHelp();
-                return;
+                return -1;
             }
 
             // Note: CodeTestMode is enabled using command line switch /T
@@ -52,20 +66,22 @@ namespace CaptureTaskManager
             {
                 try
                 {
-                    var oCodeTest = new clsCodeTest();
+                    var testHarness = new clsCodeTest();
 
-                    oCodeTest.TestConnection();
+                    testHarness.TestConnection();
 
-                    return;
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(@"Exception calling clsCodeTest: " + ex.Message);
+                    ConsoleMsgUtils.ShowError(@"Exception calling clsCodeTest", ex);
+                    return -1;
                 }
-                return;
+                return 0;
+
             }
 
             // Initiate automated analysis
+            var restart = true;
             do
             {
                 try
@@ -123,11 +139,11 @@ namespace CaptureTaskManager
                 }
             } while (restart);
 
-            if (mTraceMode)
-                Console.WriteLine("Exiting");
+            ShowTrace("Exiting");
+            return 0;
         }
 
-        private static void SetOptionsUsingCommandLineParameters(clsParseCommandLine objParseCommandLine)
+        private static void SetOptionsUsingCommandLineParameters(clsParseCommandLine commandLineParser)
         {
             // Returns True if no problems; otherwise, returns false
 
@@ -136,18 +152,18 @@ namespace CaptureTaskManager
             try
             {
                 // Make sure no invalid parameters are present
-                if (objParseCommandLine.InvalidParametersPresent(strValidParameters))
+                if (commandLineParser.InvalidParametersPresent(strValidParameters))
                 {
                     return;
                 }
 
-                // Query objParseCommandLine to see if various parameters are present
-                if (objParseCommandLine.IsParameterPresent("T"))
+                // Query commandLineParser to see if various parameters are present
+                if (commandLineParser.IsParameterPresent("T"))
                 {
                     mCodeTestMode = true;
                 }
 
-                if (objParseCommandLine.IsParameterPresent("Test"))
+                if (commandLineParser.IsParameterPresent("Test"))
                 {
                     mCodeTestMode = true;
                 }
@@ -156,15 +172,14 @@ namespace CaptureTaskManager
                 {
                     mCreateEventLog = true;
                 }
-
-                if (objParseCommandLine.IsParameterPresent("Trace"))
+                if (commandLineParser.IsParameterPresent("Trace"))
                 {
                     mTraceMode = true;
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine(@"Error parsing the command line parameters: " + Environment.NewLine + ex.Message);
+                ConsoleMsgUtils.ShowError(@"Error parsing the command line parameters", ex);
             }
         }
 
@@ -201,12 +216,27 @@ namespace CaptureTaskManager
                 Console.WriteLine();
 
                 // Delay for 750 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
-                System.Threading.Thread.Sleep(750);
+                Thread.Sleep(750);
             }
             catch (Exception ex)
             {
-                Console.WriteLine(@"Error displaying the program syntax: " + ex.Message);
+                ConsoleMsgUtils.ShowWarning("Error displaying the program syntax: " + ex.Message);
             }
+        }
+
+        private static void ShowTrace(string message)
+        {
+            if (mTraceMode)
+                ShowTraceMessage(message);
+        }
+
+        /// <summary>
+        /// Display a trace message at the console, preceded by a time stamp
+        /// </summary>
+        /// <param name="message"></param>
+        public static void ShowTraceMessage(string message)
+        {
+            ConsoleMsgUtils.ShowDebug(DateTime.Now.ToString("hh:mm:ss.fff tt") + ": " + message);
         }
 
         #endregion

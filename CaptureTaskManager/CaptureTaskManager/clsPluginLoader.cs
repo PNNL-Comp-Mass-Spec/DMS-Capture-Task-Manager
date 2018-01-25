@@ -87,19 +87,19 @@ namespace CaptureTaskManager
             {
 #if PLUGIN_DEBUG_MODE_ENABLED
                 myToolRunner = DebugModeGetToolRunner(className);
-                if ((myToolRunner != null))
+                if (myToolRunner != null)
                 {
                     return myToolRunner;
                 }
 #endif
 
-                var obj = LoadObject(className, assyName);
+                var newInstance = LoadObject(className, assyName);
 
-                if (obj != null)
+                if (newInstance != null)
                 {
                     try
                     {
-                        myToolRunner = (IToolRunner)obj;
+                        myToolRunner = (IToolRunner)newInstance;
                         LogDebug("Loaded tool runner: " + className + " from " + assyName);
                     }
                     catch (Exception ex)

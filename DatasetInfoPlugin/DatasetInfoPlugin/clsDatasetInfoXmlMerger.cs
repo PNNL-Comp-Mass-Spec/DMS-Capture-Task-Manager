@@ -320,101 +320,103 @@ namespace DatasetInfoPlugin
             udtAcquisitionInfo acqInfo,
             udtTicInfo ticInfo)
         {
-            var objXMLSettings = new XmlWriterSettings
+            var xmlSettings = new XmlWriterSettings
             {
                 CheckCharacters = true,
                 Indent = true,
                 IndentChars = "  ",
                 Encoding = Encoding.UTF8,
-                CloseOutput = false
-                // Do not close output automatically so that MemoryStream can be read after the XmlWriter has been closed
             };
 
-            var objMemStream = new MemoryStream();
-            var objDSInfo = XmlWriter.Create(objMemStream, objXMLSettings);
-
-            objDSInfo.WriteStartDocument(true);
-
-            // Write the beginning of the "Root" element.
-            objDSInfo.WriteStartElement("DatasetInfo");
-
-            objDSInfo.WriteElementString("Dataset", datasetName);
-
-            objDSInfo.WriteStartElement("ScanTypes");
-
-            foreach (var scanType in scanTypes)
+            var memoryStream = new MemoryStream();
+            using (var xWriter = XmlWriter.Create(memoryStream, xmlSettings))
             {
-                var scanTypeName = scanType.Key.Key;
-                var scanFilterText = scanType.Key.Value;
-                var scanTypeCount = scanType.Value;
 
-                objDSInfo.WriteStartElement("ScanType");
-                objDSInfo.WriteAttributeString("ScanCount", scanTypeCount.ToString());
-                objDSInfo.WriteAttributeString("ScanFilterText", scanFilterText);
-                objDSInfo.WriteString(scanTypeName);
-                objDSInfo.WriteEndElement();                // ScanType EndElement
-            }
+                xWriter.WriteStartDocument(true);
 
-            objDSInfo.WriteEndElement();                    // ScanTypes EndElement
+                // Write the beginning of the "Root" element.
+                xWriter.WriteStartElement("DatasetInfo");
 
-            objDSInfo.WriteStartElement("AcquisitionInfo");
+                xWriter.WriteElementString("Dataset", datasetName);
 
-            objDSInfo.WriteElementString("ScanCount", acqInfo.ScanCount.ToString());
+                xWriter.WriteStartElement("ScanTypes");
 
-            objDSInfo.WriteElementString("ScanCountMS", acqInfo.ScanCountMS.ToString());
-            objDSInfo.WriteElementString("ScanCountMSn", acqInfo.ScanCountMSn.ToString());
-            objDSInfo.WriteElementString("Elution_Time_Max", acqInfo.Elution_Time_Max.ToString("0.00"));
-
-            objDSInfo.WriteElementString("AcqTimeMinutes", acqInfo.AcqTimeMinutes.ToString("0.00"));
-            objDSInfo.WriteElementString("StartTime", acqInfo.StartTime.ToString("yyyy-MM-dd hh:mm:ss tt"));
-            objDSInfo.WriteElementString("EndTime", acqInfo.EndTime.ToString("yyyy-MM-dd hh:mm:ss tt"));
-
-            objDSInfo.WriteElementString("FileSizeBytes", acqInfo.FileSizeBytes.ToString());
-
-            if (acqInfo.ProfileScanCountMS1 > 0 || acqInfo.ProfileScanCountMS2 > 0 ||
-                acqInfo.CentroidScanCountMS1 > 0 || acqInfo.CentroidScanCountMS2 > 0 ||
-                acqInfo.CentroidMS1ScansClassifiedAsProfile > 0 || acqInfo.CentroidMS2ScansClassifiedAsProfile > 0)
-            {
-                objDSInfo.WriteElementString("ProfileScanCountMS1", acqInfo.ProfileScanCountMS1.ToString());
-                objDSInfo.WriteElementString("ProfileScanCountMS2", acqInfo.ProfileScanCountMS2.ToString());
-
-                objDSInfo.WriteElementString("CentroidScanCountMS1", acqInfo.CentroidScanCountMS1.ToString());
-                objDSInfo.WriteElementString("CentroidScanCountMS2", acqInfo.CentroidScanCountMS2.ToString());
-
-                if (acqInfo.CentroidMS1ScansClassifiedAsProfile > 0 || acqInfo.CentroidMS2ScansClassifiedAsProfile > 0)
+                foreach (var scanType in scanTypes)
                 {
-                    objDSInfo.WriteElementString("CentroidMS1ScansClassifiedAsProfile",
-                                                 acqInfo.CentroidMS1ScansClassifiedAsProfile.ToString());
-                    objDSInfo.WriteElementString("CentroidMS2ScansClassifiedAsProfile",
-                                                 acqInfo.CentroidMS2ScansClassifiedAsProfile.ToString());
+                    var scanTypeName = scanType.Key.Key;
+                    var scanFilterText = scanType.Key.Value;
+                    var scanTypeCount = scanType.Value;
+
+                    xWriter.WriteStartElement("ScanType");
+                    xWriter.WriteAttributeString("ScanCount", scanTypeCount.ToString());
+                    xWriter.WriteAttributeString("ScanFilterText", scanFilterText);
+                    xWriter.WriteString(scanTypeName);
+                    xWriter.WriteEndElement(); // ScanType EndElement
                 }
+
+                xWriter.WriteEndElement(); // ScanTypes EndElement
+
+                xWriter.WriteStartElement("AcquisitionInfo");
+
+                xWriter.WriteElementString("ScanCount", acqInfo.ScanCount.ToString());
+
+                xWriter.WriteElementString("ScanCountMS", acqInfo.ScanCountMS.ToString());
+                xWriter.WriteElementString("ScanCountMSn", acqInfo.ScanCountMSn.ToString());
+                xWriter.WriteElementString("Elution_Time_Max", acqInfo.Elution_Time_Max.ToString("0.00"));
+
+                xWriter.WriteElementString("AcqTimeMinutes", acqInfo.AcqTimeMinutes.ToString("0.00"));
+                xWriter.WriteElementString("StartTime", acqInfo.StartTime.ToString("yyyy-MM-dd hh:mm:ss tt"));
+                xWriter.WriteElementString("EndTime", acqInfo.EndTime.ToString("yyyy-MM-dd hh:mm:ss tt"));
+
+                xWriter.WriteElementString("FileSizeBytes", acqInfo.FileSizeBytes.ToString());
+
+                if (acqInfo.ProfileScanCountMS1 > 0 || acqInfo.ProfileScanCountMS2 > 0 ||
+                    acqInfo.CentroidScanCountMS1 > 0 || acqInfo.CentroidScanCountMS2 > 0 ||
+                    acqInfo.CentroidMS1ScansClassifiedAsProfile > 0 || acqInfo.CentroidMS2ScansClassifiedAsProfile > 0)
+                {
+                    xWriter.WriteElementString("ProfileScanCountMS1", acqInfo.ProfileScanCountMS1.ToString());
+                    xWriter.WriteElementString("ProfileScanCountMS2", acqInfo.ProfileScanCountMS2.ToString());
+
+                    xWriter.WriteElementString("CentroidScanCountMS1", acqInfo.CentroidScanCountMS1.ToString());
+                    xWriter.WriteElementString("CentroidScanCountMS2", acqInfo.CentroidScanCountMS2.ToString());
+
+                    if (acqInfo.CentroidMS1ScansClassifiedAsProfile > 0 || acqInfo.CentroidMS2ScansClassifiedAsProfile > 0)
+                    {
+                        xWriter.WriteElementString("CentroidMS1ScansClassifiedAsProfile",
+                                                   acqInfo.CentroidMS1ScansClassifiedAsProfile.ToString());
+                        xWriter.WriteElementString("CentroidMS2ScansClassifiedAsProfile",
+                                                   acqInfo.CentroidMS2ScansClassifiedAsProfile.ToString());
+                    }
+                }
+
+                xWriter.WriteEndElement(); // AcquisitionInfo EndElement
+
+                xWriter.WriteStartElement("TICInfo");
+                xWriter.WriteElementString("TIC_Max_MS", StringUtilities.ValueToString(ticInfo.TIC_Max_MS, 5));
+                xWriter.WriteElementString("TIC_Max_MSn", StringUtilities.ValueToString(ticInfo.TIC_Max_MSn, 5));
+                xWriter.WriteElementString("BPI_Max_MS", StringUtilities.ValueToString(ticInfo.BPI_Max_MS, 5));
+                xWriter.WriteElementString("BPI_Max_MSn", StringUtilities.ValueToString(ticInfo.BPI_Max_MSn, 5));
+                xWriter.WriteElementString("TIC_Median_MS", StringUtilities.ValueToString(ticInfo.TIC_Median_MS, 5));
+                xWriter.WriteElementString("TIC_Median_MSn", StringUtilities.ValueToString(ticInfo.TIC_Median_MSn, 5));
+                xWriter.WriteElementString("BPI_Median_MS", StringUtilities.ValueToString(ticInfo.BPI_Median_MS, 5));
+                xWriter.WriteElementString("BPI_Median_MSn", StringUtilities.ValueToString(ticInfo.BPI_Median_MSn, 5));
+
+                xWriter.WriteEndElement(); // TICInfo EndElement
+
+                xWriter.WriteEndElement(); // End the "Root" element (DatasetInfo)
+
+                // Close out the XML document (but do not close XWriter yet)
+                xWriter.WriteEndDocument();
+                xWriter.Flush();
+
+                // Now use a StreamReader to copy the XML text to a string variable
+                memoryStream.Seek(0, SeekOrigin.Begin);
+
+                var memoryStreamReader = new StreamReader(memoryStream);
+                var combinedXml = memoryStreamReader.ReadToEnd();
+
+                return combinedXml;
             }
-
-            objDSInfo.WriteEndElement();            // AcquisitionInfo EndElement
-
-            objDSInfo.WriteStartElement("TICInfo");
-            objDSInfo.WriteElementString("TIC_Max_MS", StringUtilities.ValueToString(ticInfo.TIC_Max_MS, 5));
-            objDSInfo.WriteElementString("TIC_Max_MSn", StringUtilities.ValueToString(ticInfo.TIC_Max_MSn, 5));
-            objDSInfo.WriteElementString("BPI_Max_MS", StringUtilities.ValueToString(ticInfo.BPI_Max_MS, 5));
-            objDSInfo.WriteElementString("BPI_Max_MSn", StringUtilities.ValueToString(ticInfo.BPI_Max_MSn, 5));
-            objDSInfo.WriteElementString("TIC_Median_MS", StringUtilities.ValueToString(ticInfo.TIC_Median_MS, 5));
-            objDSInfo.WriteElementString("TIC_Median_MSn", StringUtilities.ValueToString(ticInfo.TIC_Median_MSn, 5));
-            objDSInfo.WriteElementString("BPI_Median_MS", StringUtilities.ValueToString(ticInfo.BPI_Median_MS, 5));
-            objDSInfo.WriteElementString("BPI_Median_MSn", StringUtilities.ValueToString(ticInfo.BPI_Median_MSn, 5));
-
-            objDSInfo.WriteEndElement();        // TICInfo EndElement
-
-            objDSInfo.WriteEndElement();        // End the "Root" element (DatasetInfo)
-            objDSInfo.WriteEndDocument();       // End the document
-
-            objDSInfo.Close();
-
-            // Now Rewind the memory stream and output as a string
-            objMemStream.Position = 0;
-            var srStreamReader = new StreamReader(objMemStream);
-
-            var combinedXml = srStreamReader.ReadToEnd();
-            return combinedXml;
         }
 
         /// <summary>
