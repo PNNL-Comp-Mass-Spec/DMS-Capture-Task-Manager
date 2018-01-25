@@ -12,6 +12,7 @@ using System.IO;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using PRISM;
+using PRISM.Logging;
 
 namespace CaptureTaskManager
 {
@@ -74,7 +75,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// DebugLevel of 4 means Info level (normal) logging; 5 for Debug level (verbose) logging
         /// </summary>
-        private int m_DebugLevel = 4;
+        private BaseLogger.LogLevels m_DebugLevel = BaseLogger.LogLevels.DEBUG;
 
         private bool m_Running;
         private System.Timers.Timer m_StatusTimer;
@@ -306,9 +307,9 @@ namespace CaptureTaskManager
             if (string.IsNullOrWhiteSpace(logFileNameBase))
                 logFileNameBase = "CapTaskMan";
 
-            // LogLevel is 1 to 5: 1 for Fatal errors only, 4 for Fatal, Error, Warning, and Info, and 5 for everything including Debug messages
-            m_DebugLevel = m_MgrSettings.GetParam("debuglevel", 4);
-            clsLogTools.CreateFileLogger(logFileNameBase, m_DebugLevel);
+            UpdateLogLevel(m_MgrSettings);
+
+            clsLogTools.CreateFileLogger(logFileNameBase);
 
             var logCnStr = m_MgrSettings.GetParam("connectionstring");
 
@@ -566,14 +567,14 @@ namespace CaptureTaskManager
             }
         }
 
-        private void MessageLoggedHandler(string message, clsLogTools.LogLevels logLevel)
+        private void MessageLoggedHandler(string message, BaseLogger.LogLevels logLevel)
         {
             var timeStamp = DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss");
 
             // Update the status file data
             clsStatusData.MostRecentLogMessage = timeStamp + "; " + message + "; " + logLevel;
 
-            if (logLevel <= clsLogTools.LogLevels.ERROR)
+            if (logLevel <= BaseLogger.LogLevels.ERROR)
             {
                 clsStatusData.AddErrorMessage(timeStamp + "; " + message + "; " + logLevel);
             }
@@ -1125,6 +1126,24 @@ namespace CaptureTaskManager
             return true;
         }
 
+        private void UpdateLogLevel(IMgrParams mgrSettings)
+        {
+            try
+            {
+                // LogLevel is 1 to 5: 1 for Fatal errors only, 4 for Fatal, Error, Warning, and Info, and 5 for everything including Debug messages
+                var debugLevel = mgrSettings.GetParam("debuglevel", 4);
+
+                m_DebugLevel = (BaseLogger.LogLevels)debugLevel;
+
+                clsLogTools.SetFileLogLevel(m_DebugLevel);
+            }
+            catch (Exception ex)
+            {
+                LogError("Could not convert manager parameter debugLevel to enum BaseLogger.LogLevels", ex);
+            }
+
+        }
+
         /// <summary>
         /// Reloads the manager settings from the manager control database
         /// if at least MinutesBetweenUpdates minutes have elapsed since the last update
@@ -1161,10 +1180,7 @@ namespace CaptureTaskManager
             }
             else
             {
-                // Update the log level
-                // 4 means Info level (normal) logging; 5 for Debug level (verbose) logging
-                m_DebugLevel = m_MgrSettings.GetParam("debuglevel", 4);
-                clsLogTools.SetFileLogLevel(m_DebugLevel);
+                UpdateLogLevel(m_MgrSettings);
             }
 
             return bSuccess;

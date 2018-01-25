@@ -2,6 +2,7 @@
 using System.Data.SqlClient;
 using System.IO;
 using PRISM;
+using PRISM.Logging;
 
 namespace CaptureTaskManager
 {
@@ -303,7 +304,7 @@ namespace CaptureTaskManager
 
             if (writeToLog)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, statusMessage);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, statusMessage);
             }
         }
         /// <summary>
@@ -316,7 +317,7 @@ namespace CaptureTaskManager
             ConsoleMsgUtils.ShowError(errorMessage);
 
             var loggerType = logToDb ? clsLogTools.LoggerTypes.LogDb : clsLogTools.LoggerTypes.LogFile;
-            clsLogTools.WriteLog(loggerType, clsLogTools.LogLevels.ERROR, errorMessage);
+            clsLogTools.WriteLog(loggerType, BaseLogger.LogLevels.ERROR, errorMessage);
         }
 
         /// <summary>
@@ -328,7 +329,7 @@ namespace CaptureTaskManager
         {
             var formattedError = ConsoleMsgUtils.ShowError(errorMessage, ex);
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, formattedError, ex);
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, formattedError, ex);
         }
 
         /// <summary>
@@ -353,11 +354,11 @@ namespace CaptureTaskManager
 
             if (isError)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, statusMessage);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, statusMessage);
             }
             else
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, statusMessage);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, statusMessage);
             }
         }
 
@@ -371,7 +372,7 @@ namespace CaptureTaskManager
             ConsoleMsgUtils.ShowWarning(warningMessage);
 
             var loggerType = logToDb ? clsLogTools.LoggerTypes.LogDb : clsLogTools.LoggerTypes.LogFile;
-            clsLogTools.WriteLog(loggerType, clsLogTools.LogLevels.WARN, warningMessage);
+            clsLogTools.WriteLog(loggerType, BaseLogger.LogLevels.WARN, warningMessage);
         }
 
         /// <summary>

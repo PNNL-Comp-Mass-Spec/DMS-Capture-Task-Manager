@@ -13,6 +13,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using MSFileInfoScannerInterfaces;
+using PRISM.Logging;
 
 namespace DatasetInfoPlugin
 {
@@ -154,8 +155,8 @@ namespace DatasetInfoPlugin
             m_MsFileScanner = LoadMSFileInfoScanner(msFileInfoScannerDLLPath);
             RegisterEvents(m_MsFileScanner);
 
-            UnregisterEventHandler(m_MsFileScanner, clsLogTools.LogLevels.ERROR);
-            UnregisterEventHandler(m_MsFileScanner, clsLogTools.LogLevels.WARN);
+            UnregisterEventHandler(m_MsFileScanner, BaseLogger.LogLevels.ERROR);
+            UnregisterEventHandler(m_MsFileScanner, BaseLogger.LogLevels.WARN);
 
             m_MsFileScanner.ErrorEvent += m_MsFileScanner_ErrorEvent;
             m_MsFileScanner.WarningEvent += m_MsFileScanner_WarningEvent;

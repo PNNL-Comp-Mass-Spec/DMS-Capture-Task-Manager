@@ -943,21 +943,21 @@ namespace CaptureTaskManager
             // Ignore: processingClass.ProgressUpdate += ProgressUpdateHandler;
         }
 
-        protected void UnregisterEventHandler(clsEventNotifier processingClass, clsLogTools.LogLevels messageType)
+        protected void UnregisterEventHandler(clsEventNotifier processingClass, PRISM.Logging.BaseLogger.LogLevels messageType)
         {
             switch (messageType)
             {
-                case clsLogTools.LogLevels.DEBUG:
+                case PRISM.Logging.BaseLogger.LogLevels.DEBUG:
                     processingClass.DebugEvent -= DebugEventHandler;
                     processingClass.DebugEvent -= DebugEventHandlerConsoleOnly;
                     break;
-                case clsLogTools.LogLevels.ERROR:
+                case PRISM.Logging.BaseLogger.LogLevels.ERROR:
                     processingClass.ErrorEvent -= ErrorEventHandler;
                     break;
-                case clsLogTools.LogLevels.WARN:
+                case PRISM.Logging.BaseLogger.LogLevels.WARN:
                     processingClass.WarningEvent -= WarningEventHandler;
                     break;
-                case clsLogTools.LogLevels.INFO:
+                case PRISM.Logging.BaseLogger.LogLevels.INFO:
                     processingClass.StatusEvent -= StatusEventHandler;
                     break;
                 default:
