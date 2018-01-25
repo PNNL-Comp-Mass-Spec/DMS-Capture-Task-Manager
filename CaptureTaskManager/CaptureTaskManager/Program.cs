@@ -16,10 +16,9 @@ namespace CaptureTaskManager
     /// </summary>
     static class Program
     {
-        private const string PROGRAM_DATE = "December 6, 2017";
+        private const string PROGRAM_DATE = "January 24, 2018";
 
         private static bool mCodeTestMode;
-        private static bool mCreateEventLog;
         private static bool mTraceMode;
 
         #region "Methods"
@@ -97,45 +96,16 @@ namespace CaptureTaskManager
                         restart = false;
                     }
 
-                    if (mCreateEventLog && (mgrInitSuccess || (oMainProgram.ManagerDeactivatedLocally)))
-                    {
-                        oMainProgram.PostTestLogMessage();
-                        restart = false;
-                    }
-                    else
-                    {
-                        if (mgrInitSuccess)
-                            restart = oMainProgram.PerformMainLoop();
-                    }
-                }
-                catch (System.Security.SecurityException ex)
-                {
-                    const string errMsg = "Security exception";
-
-                    Console.WriteLine();
-                    Console.WriteLine(@"===============================================================");
-                    Console.WriteLine(errMsg + @": " + ex.Message);
-                    Console.WriteLine(@"===============================================================");
-                    Console.WriteLine();
-                    Console.WriteLine(
-                        @"You may need to start this application once from an elevated (administrative level) command prompt using the /EL switch so that it can create the " +
-                        clsMainProgram.CUSTOM_LOG_NAME + @" application log");
-                    Console.WriteLine();
+                    if (mgrInitSuccess)
+                        restart = oMainProgram.PerformMainLoop();
                 }
                 catch (Exception ex)
                 {
-                    const string errMsg = "Critical exception starting application";
-
-                    Console.WriteLine();
-                    Console.WriteLine(@"===============================================================");
-                    Console.WriteLine(errMsg + @": " + ex.Message);
-                    Console.WriteLine(@"===============================================================");
-                    Console.WriteLine();
-
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.FATAL, errMsg, ex);
-                    System.Threading.Thread.Sleep(500);
-
-                    return;
+                    // Report any exceptions not handled at a lower level to the console
+                    var errMsg = "Critical exception starting application: " + ex.Message;
+                    ShowTrace(errMsg + "; " + clsStackTraceFormatter.GetExceptionStackTrace(ex, true));
+                    ShowTrace("Exiting clsMainProcess.Main with error code = 1");
+                    return 1;
                 }
             } while (restart);
 
@@ -147,7 +117,7 @@ namespace CaptureTaskManager
         {
             // Returns True if no problems; otherwise, returns false
 
-            var strValidParameters = new[] {"T", "EL", "Test", "Trace"};
+            var strValidParameters = new[] { "T", "Test", "Trace" };
 
             try
             {
@@ -168,10 +138,6 @@ namespace CaptureTaskManager
                     mCodeTestMode = true;
                 }
 
-                if (objParseCommandLine.IsParameterPresent("EL"))
-                {
-                    mCreateEventLog = true;
-                }
                 if (commandLineParser.IsParameterPresent("Trace"))
                 {
                     mTraceMode = true;

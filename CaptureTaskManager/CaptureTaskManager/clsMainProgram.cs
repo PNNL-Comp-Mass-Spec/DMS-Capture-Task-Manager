@@ -7,7 +7,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
@@ -45,9 +44,6 @@ namespace CaptureTaskManager
         #region "Constants"
 
         private const int MAX_ERROR_COUNT = 4;
-
-        private const string CUSTOM_LOG_SOURCE_NAME = "Capture Task Manager";
-        public const string CUSTOM_LOG_NAME = "DMSCapTaskMgr";
 
         private const string DATE_TIME_FORMAT = "yyyy-MM-dd hh:mm:ss tt";
 
@@ -266,23 +262,8 @@ namespace CaptureTaskManager
                 }
                 else
                 {
-                    // Failures are logged by clsMgrSettings to application event logs;
-                    //  this includes MgrActive_Local = False
-                    //
-                    // If the DMSCapTaskMgr application log does not exist yet, the Log4Net SysLogger will create it (see file Logging.config)
-                    // However, in order to do that, the program needs to be running from an elevated (administrative level) command prompt
-                    // Thus, it is advisable to run this program once from an elevated command prompt while MgrActive_Local is set to false
-
-                    Console.WriteLine();
-                    Console.WriteLine(@"===============================================================");
-                    Console.WriteLine(@"Exception instantiating clsMgrSettings: " + ex.Message);
-                    Console.WriteLine(@"===============================================================");
-                    Console.WriteLine();
-                    Console.WriteLine(
-                        @"You may need to start this application once from an elevated (administrative level) command prompt using the /EL switch so that it can create the " +
-                        CUSTOM_LOG_NAME + @" application log");
-                    Console.WriteLine();
-                    System.Threading.Thread.Sleep(500);
+                    ConsoleMsgUtils.ShowError("Exception instantiating clsMgrSettings: " + ex.Message);
+                    Thread.Sleep(500);
                 }
 
                 return false;
@@ -295,13 +276,6 @@ namespace CaptureTaskManager
             m_StepTool = "Unknown";
             m_Job = "Unknown";
             m_Dataset = "Unknown";
-
-            // Confirm that the application event log exists
-            if (!EventLog.SourceExists(CUSTOM_LOG_SOURCE_NAME))
-            {
-                var sourceData = new EventSourceCreationData(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME);
-                EventLog.CreateEventSource(sourceData);
-            }
 
             // Setup the loggers
             var logFileNameBase = m_MgrSettings.GetParam("logfilename");
@@ -887,24 +861,6 @@ namespace CaptureTaskManager
             m_StatusFile.TaskStatus = EnumTaskStatus.No_Task;
             m_StatusFile.TaskStatusDetail = EnumTaskStatusDetail.No_Task;
             m_StatusFile.WriteStatusFile();
-        }
-
-        /// <summary>
-        /// Post a test log message
-        /// </summary>
-        public void PostTestLogMessage()
-        {
-            try
-            {
-                var sMessage = "Test log message: " + DateTime.Now.ToString(DATE_TIME_FORMAT);
-                Console.WriteLine(@"Posting test log message to the " + CUSTOM_LOG_NAME + @" Windows event log");
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogSystem, clsLogTools.LogLevels.INFO, sMessage);
-                Console.WriteLine(@" ... Success!");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(@"Error writing to event log: " + ex.Message);
-            }
         }
 
         /// <summary>
