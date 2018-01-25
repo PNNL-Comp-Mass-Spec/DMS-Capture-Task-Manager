@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Data.SqlClient;
 using System.IO;
+using System.Reflection;
 using PRISM;
 using PRISM.Logging;
 
@@ -267,6 +268,44 @@ namespace CaptureTaskManager
 
     public static class clsUtilities
     {
+
+        #region Properties
+
+        /// <summary>
+        /// When true, we are running on Linux and thus should not access any Windows features
+        /// </summary>
+        /// <remarks>Call EnableOfflineMode to set this to true</remarks>
+        public static bool LinuxOS { get; private set; }
+
+        /// <summary>
+        /// When true, does not contact any databases or remote shares
+        /// </summary>
+        public static bool OfflineMode { get; private set; }
+
+        #endregion
+
+        #region "Module variables"
+
+        private static string mAppFolderPath;
+
+        #endregion
+
+        /// <summary>
+        /// Enable offline mode
+        /// </summary>
+        /// <param name="runningLinux">Set to True if running Linux</param>
+        /// <remarks>When offline, does not contact any databases or remote shares</remarks>
+        public static void EnableOfflineMode(bool runningLinux = true)
+        {
+            OfflineMode = true;
+            LinuxOS = runningLinux;
+
+            if (runningLinux)
+                Console.WriteLine("Offline mode enabled globally (running Linux)");
+            else
+                Console.WriteLine("Offline mode enabled globally");
+        }
+
         /// <summary>
         /// Returns the directory in which the entry assembly (typically the Program .exe file) resides
         /// </summary>
