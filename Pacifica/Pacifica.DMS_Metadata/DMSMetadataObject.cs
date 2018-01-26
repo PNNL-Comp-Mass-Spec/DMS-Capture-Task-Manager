@@ -1173,7 +1173,7 @@ namespace Pacifica.DMS_Metadata
 
         void mFileTools_WaitingForLockQueue(string sourceFilePath, string targetFilePath, int MBBacklogSource, int MBBacklogTarget)
         {
-            Console.WriteLine("mFileTools_WaitingForLockQueue for " + sourceFilePath);
+            ConsoleMsgUtils.ShowDebug("  mFileTools_WaitingForLockQueue for " + sourceFilePath);
         }
 
         #endregion

@@ -673,22 +673,21 @@ namespace Pacifica.Core
             if (debugging)
             {
                 // Note that "HB" stands for HeaderBlocks
-                Console.WriteLine();
-                Console.WriteLine("FileSize".PadRight(12) + "addonBytes".PadRight(12) + "StartOffset".PadRight(12) + "HB".PadRight(3) + "FilePath");
+                ConsoleMsgUtils.ShowDebug("FileSize".PadRight(12) + "addonBytes".PadRight(12) + "StartOffset".PadRight(12) + "HB".PadRight(3) + "FilePath");
             }
 
             // Add the metadata file
             var addonBytes = AddTarFileContentLength(MYEMSL_METADATA_FILE_NAME, metadataFile.Length);
 
             if (debugging)
-                Console.WriteLine(fiMetadataFile.Length.ToString().PadRight(12) + addonBytes.ToString().PadRight(12) + contentLength.ToString().PadRight(12) + "1".PadRight(3) + "metadata.txt");
+                ConsoleMsgUtils.ShowDebug(metadataFile.Length.ToString().PadRight(12) + addonBytes.ToString().PadRight(12) + contentLength.ToString().PadRight(12) + "1".PadRight(3) + "metadata.txt");
 
             contentLength += addonBytes;
 
             // Add the data/ directory
 
             if (debugging)
-                Console.WriteLine("0".PadRight(12) + TAR_BLOCK_SIZE_BYTES.ToString().PadRight(12) + contentLength.ToString().PadRight(12) + "1".PadRight(3) + "data/");
+                ConsoleMsgUtils.ShowDebug("0".PadRight(12) + TAR_BLOCK_SIZE_BYTES.ToString().PadRight(12) + contentLength.ToString().PadRight(12) + "1".PadRight(3) + "data/");
 
             contentLength += TAR_BLOCK_SIZE_BYTES;
 
@@ -711,7 +710,7 @@ namespace Pacifica.Core
                         addonBytes = AddTarFileContentLength(dirPathInArchive, 0, out headerBlocks);
 
                         if (debugging)
-                            Console.WriteLine(
+                            ConsoleMsgUtils.ShowDebug(
                                 "0".PadRight(12) +
                                 addonBytes.ToString().PadRight(12) +
                                 contentLength.ToString().PadRight(12) +
@@ -733,7 +732,7 @@ namespace Pacifica.Core
                 addonBytes = AddTarFileContentLength(pathInArchive, fileToArchive.Value.FileSizeInBytes, out headerBlocks);
 
                 if (debugging)
-                    Console.WriteLine(
+                    ConsoleMsgUtils.ShowDebug(
                         fileToArchive.Value.FileSizeInBytes.ToString().PadRight(12) +
                         addonBytes.ToString().PadRight(12) +
                         contentLength.ToString().PadRight(12) +
@@ -746,7 +745,7 @@ namespace Pacifica.Core
 
             // Append one empty block (appended by SharpZipLib at the end of the .tar file
             if (debugging)
-                Console.WriteLine("0".PadRight(12) + TAR_BLOCK_SIZE_BYTES.ToString().PadRight(12) + contentLength.ToString().PadRight(12) + "0".PadRight(3) + "512 block at end of .tar");
+                ConsoleMsgUtils.ShowDebug("0".PadRight(12) + TAR_BLOCK_SIZE_BYTES.ToString().PadRight(12) + contentLength.ToString().PadRight(12) + "0".PadRight(3) + "512 block at end of .tar");
 
             contentLength += TAR_BLOCK_SIZE_BYTES;
 
@@ -756,12 +755,12 @@ namespace Pacifica.Core
             var finalPadderLength = (recordCount * TarBuffer.DefaultRecordSize) - contentLength;
 
             if (debugging)
-                Console.WriteLine("0".PadRight(12) + finalPadderLength.ToString().PadRight(12) + contentLength.ToString().PadRight(12) + "0".PadRight(3) + "Padder block at end (to make multiple of " + TarBuffer.DefaultRecordSize + ")");
+                ConsoleMsgUtils.ShowDebug("0".PadRight(12) + finalPadderLength.ToString().PadRight(12) + contentLength.ToString().PadRight(12) + "0".PadRight(3) + "Padder block at end (to make multiple of " + TarBuffer.DefaultRecordSize + ")");
 
             contentLength = recordCount * TarBuffer.DefaultRecordSize;
 
             if (debugging)
-                Console.WriteLine("0".PadRight(12) + "0".PadRight(12) + contentLength.ToString().PadRight(12) + "0".PadRight(3) + "End of file");
+                ConsoleMsgUtils.ShowDebug("0".PadRight(12) + "0".PadRight(12) + contentLength.ToString().PadRight(12) + "0".PadRight(3) + "End of file");
 
             return contentLength;
         }

@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Net;
 using System.Reflection;
+using PRISM;
 
 namespace Pacifica.Core
 {
@@ -182,7 +183,7 @@ namespace Pacifica.Core
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Exception looking for " + CLIENT_CERT_FILENAME + ": " + ex.Message);
+                ConsoleMsgUtils.ShowWarning("Exception looking for " + CLIENT_CERT_FILENAME + ": " + ex.Message);
             }
 
             return string.Empty;

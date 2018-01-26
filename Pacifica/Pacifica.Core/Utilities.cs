@@ -8,6 +8,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using Jayrock.Json;
 using Jayrock.Json.Conversion;
+using PRISM;
 
 namespace Pacifica.Core
 {
@@ -224,7 +225,7 @@ namespace Pacifica.Core
 
             if (jso == null)
             {
-                Console.WriteLine("Skipping null item in JsonObjectToDictionary");
+                ConsoleMsgUtils.ShowWarning("Skipping null item in JsonObjectToDictionary");
                 return settingsDictionary;
             }
 
@@ -286,7 +287,7 @@ namespace Pacifica.Core
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine("Error in parsing a JsonArray in JsonObjectToDictionary:" + ex.Message);
+                        ConsoleMsgUtils.ShowWarning("Error in parsing a JsonArray in JsonObjectToDictionary:" + ex.Message);
                     }
 
                 }
@@ -365,7 +366,9 @@ namespace Pacifica.Core
                 }
                 else
                 {
-                    Console.WriteLine("Unsupported JsonArrayList type: " + value.GetType().Name);
+                    ConsoleMsgUtils.ShowWarning(
+                        string.Format("Unsupported JsonArrayList type {0}; will not be stored in the dictionary returned by JsonArrayToDictionaryList", 
+                                      value.GetType().Name));
                 }
             }
             return parsedItems;
@@ -418,7 +421,7 @@ namespace Pacifica.Core
             else
                 domainToValidate = cert.Subject;
 
-            // Console.WriteLine("Checking " + domainToValidate + " against trusted domains");
+            // ConsoleMsgUtils.ShowDebug("Checking " + domainToValidate + " against trusted domains");
 
             foreach (var domainName in trustedDomains)
             {
