@@ -141,6 +141,7 @@ namespace CaptureTaskManager
             // Debug level 4 means Info level (normal) logging; 5 for Debug level (verbose) logging
             // Log level 4 will also log error messages
             m_DebugLevel = m_MgrParams.GetParam("debuglevel", 4);
+            clsLogTools.SetFileLogLevel(m_DebugLevel);
 
             m_TraceMode = m_MgrParams.GetParam("TraceMode", false);
         }
