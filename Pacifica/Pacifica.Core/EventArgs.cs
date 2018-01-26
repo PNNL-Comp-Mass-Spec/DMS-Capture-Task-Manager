@@ -4,8 +4,15 @@ namespace Pacifica.Core
 {
     public class MessageEventArgs : EventArgs
     {
-        public readonly string CallingFunction;
-        public readonly string Message;
+        /// <summary>
+        /// Calling function
+        /// </summary>
+        public string CallingFunction { get; }
+
+        /// <summary>
+        /// Message
+        /// </summary>
+        public string Message { get; }
 
         public MessageEventArgs(string callingFunction, string message)
         {
@@ -19,8 +26,12 @@ namespace Pacifica.Core
         /// <summary>
         /// Value between 0 and 100
         /// </summary>
-        public readonly double PercentComplete;
-        public readonly string CurrentTask;
+        public double PercentComplete { get; }
+
+        /// <summary>
+        /// Current task
+        /// </summary>
+        public string CurrentTask { get; }
 
         public ProgressEventArgs(double percentComplete, string currentTask)
         {
@@ -35,13 +46,22 @@ namespace Pacifica.Core
         /// <summary>
         /// Value between 0 and 100
         /// </summary>
-        public readonly double PercentCompleted;
+        public double PercentCompleted { get; }
 
-        public readonly long TotalBytesSent;
+        /// <summary>
+        /// Total bytes that have been sent
+        /// </summary>
+        public long TotalBytesSent { get; }
 
-        public readonly long TotalBytesToSend;
+        /// <summary>
+        /// Total bytes to send
+        /// </summary>
+        public long TotalBytesToSend { get; }
 
-        public readonly string StatusMessage;
+        /// <summary>
+        /// Status message
+        /// </summary>
+        public string StatusMessage { get; }
 
         /// <summary>
         /// Constructor
@@ -61,7 +81,10 @@ namespace Pacifica.Core
 
     public class UploadCompletedEventArgs : EventArgs
     {
-        public readonly string ServerResponse;
+        /// <summary>
+        /// Server response
+        /// </summary>
+        public string ServerResponse { get; }
 
         public UploadCompletedEventArgs(string serverResponse)
         {
