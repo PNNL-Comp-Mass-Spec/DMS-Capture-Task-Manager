@@ -471,10 +471,10 @@ namespace Pacifica.Core
             var baseUri = new Uri(serverBaseAddress);
             var uploadUri = new Uri(baseUri, location);
             HttpWebRequest oWebRequest = null;
-            var fiMetadataFile = new FileInfo(metadataFilePath);
+            var metadataFile = new FileInfo(metadataFilePath);
 
             // Compute the total number of bytes that will be written to the tar file
-            var contentLength = ComputeTarFileSize(fileListObject, fiMetadataFile, debugMode);
+            var contentLength = ComputeTarFileSize(fileListObject, metadataFile, debugMode);
 
             long bytesWritten = 0;
             var lastStatusUpdateTime = DateTime.UtcNow;
@@ -529,38 +529,38 @@ namespace Pacifica.Core
             var dctDirectoryEntries = new SortedSet<string>();
 
             // Add the metadata.txt file
-            AppendFileToTar(tarOutputStream, fiMetadataFile, MYEMSL_METADATA_FILE_NAME, ref bytesWritten);
+            AppendFileToTar(tarOutputStream, metadataFile, MYEMSL_METADATA_FILE_NAME, ref bytesWritten);
 
             // Add the "data" directory, which will hold all of the files
             // Need a dummy "data" directory to do this
-            var diTempFolder = Utilities.GetTempDirectory(config);
-            var diDummyDataFolder = new DirectoryInfo(Path.Combine(diTempFolder.FullName, "data"));
-            if (!diDummyDataFolder.Exists)
-                diDummyDataFolder.Create();
+            var tempFolder = Utilities.GetTempDirectory(config);
+            var dummyDataFolder = new DirectoryInfo(Path.Combine(tempFolder.FullName, "data"));
+            if (!dummyDataFolder.Exists)
+                dummyDataFolder.Create();
 
-            AppendFolderToTar(tarOutputStream, diDummyDataFolder, "data", ref bytesWritten);
+            AppendFolderToTar(tarOutputStream, dummyDataFolder, "data", ref bytesWritten);
 
             var startTime = DateTime.UtcNow;
 
             foreach (var fileToArchive in fileListObject)
             {
-                var fiSourceFile = new FileInfo(fileToArchive.Key);
+                var sourceFile = new FileInfo(fileToArchive.Key);
 
                 if (!string.IsNullOrEmpty(fileToArchive.Value.RelativeDestinationDirectory))
                 {
-                    if (fiSourceFile.Directory == null)
+                    if (sourceFile.Directory == null)
                         throw new DirectoryNotFoundException("Cannot access the parent folder for the source file: " + fileToArchive.Value.RelativeDestinationFullPath);
 
-                    if (!dctDirectoryEntries.Contains(fiSourceFile.Directory.FullName))
+                    if (!dctDirectoryEntries.Contains(sourceFile.Directory.FullName))
                     {
                         // Make a directory entry
-                        AppendFolderToTar(tarOutputStream, fiSourceFile.Directory, fileToArchive.Value.RelativeDestinationDirectory, ref bytesWritten);
+                        AppendFolderToTar(tarOutputStream, sourceFile.Directory, fileToArchive.Value.RelativeDestinationDirectory, ref bytesWritten);
 
-                        dctDirectoryEntries.Add(fiSourceFile.Directory.FullName);
+                        dctDirectoryEntries.Add(sourceFile.Directory.FullName);
                     }
                 }
 
-                AppendFileToTar(tarOutputStream, fiSourceFile, fileToArchive.Value.RelativeDestinationFullPath, ref bytesWritten);
+                AppendFileToTar(tarOutputStream, sourceFile, fileToArchive.Value.RelativeDestinationFullPath, ref bytesWritten);
 
                 var percentComplete = bytesWritten / (double)contentLength * 100;
 
@@ -571,7 +571,7 @@ namespace Pacifica.Core
                 if (DateTime.UtcNow.Subtract(lastStatusUpdateTime).TotalSeconds >= statusIntervalSeconds)
                 {
                     lastStatusUpdateTime = DateTime.UtcNow;
-                    RaiseStatusUpdate(percentComplete, bytesWritten, contentLength, UPLOADING_FILES + ": " + fiSourceFile.Name);
+                    RaiseStatusUpdate(percentComplete, bytesWritten, contentLength, UPLOADING_FILES + ": " + sourceFile.Name);
                 }
             }
 
@@ -664,7 +664,7 @@ namespace Pacifica.Core
             return contentLength;
         }
 
-        private static long ComputeTarFileSize(SortedDictionary<string, FileInfoObject> fileListObject, FileInfo fiMetadataFile, eDebugMode debugMode)
+        private static long ComputeTarFileSize(SortedDictionary<string, FileInfoObject> fileListObject, FileInfo metadataFile, eDebugMode debugMode)
         {
             long contentLength = 0;
 
@@ -678,7 +678,7 @@ namespace Pacifica.Core
             }
 
             // Add the metadata file
-            var addonBytes = AddTarFileContentLength(MYEMSL_METADATA_FILE_NAME, fiMetadataFile.Length);
+            var addonBytes = AddTarFileContentLength(MYEMSL_METADATA_FILE_NAME, metadataFile.Length);
 
             if (debugging)
                 Console.WriteLine(fiMetadataFile.Length.ToString().PadRight(12) + addonBytes.ToString().PadRight(12) + contentLength.ToString().PadRight(12) + "1".PadRight(3) + "metadata.txt");
@@ -697,15 +697,15 @@ namespace Pacifica.Core
             // Add the files to be archived
             foreach (var fileToArchive in fileListObject)
             {
-                var fiSourceFile = new FileInfo(fileToArchive.Key);
+                var sourceFile = new FileInfo(fileToArchive.Key);
 
                 int headerBlocks;
                 if (!string.IsNullOrEmpty(fileToArchive.Value.RelativeDestinationDirectory))
                 {
-                    if (fiSourceFile.Directory == null)
+                    if (sourceFile.Directory == null)
                         throw new DirectoryNotFoundException("Cannot access the parent folder for the source file: " + fileToArchive.Value.RelativeDestinationFullPath);
 
-                    if (!dctDirectoryEntries.Contains(fiSourceFile.Directory.FullName))
+                    if (!dctDirectoryEntries.Contains(sourceFile.Directory.FullName))
                     {
                         var dirPathInArchive = fileToArchive.Value.RelativeDestinationDirectory.TrimEnd('/') + "/";
                         addonBytes = AddTarFileContentLength(dirPathInArchive, 0, out headerBlocks);
@@ -720,7 +720,7 @@ namespace Pacifica.Core
 
                         contentLength += addonBytes;
 
-                        dctDirectoryEntries.Add(fiSourceFile.Directory.FullName);
+                        dctDirectoryEntries.Add(sourceFile.Directory.FullName);
                     }
                 }
 
@@ -766,9 +766,9 @@ namespace Pacifica.Core
             return contentLength;
         }
 
-        private static void AppendFolderToTar(TarOutputStream tarOutputStream, FileSystemInfo diFolder, string pathInArchive, ref long bytesWritten)
+        private static void AppendFolderToTar(TarOutputStream tarOutputStream, FileSystemInfo sourceFolder, string pathInArchive, ref long bytesWritten)
         {
-            var tarEntry = TarEntry.CreateEntryFromFile(diFolder.FullName);
+            var tarEntry = TarEntry.CreateEntryFromFile(sourceFolder.FullName);
 
             // Override the name
             if (!pathInArchive.EndsWith("/"))
@@ -780,11 +780,11 @@ namespace Pacifica.Core
 
         }
 
-        private static void AppendFileToTar(TarOutputStream tarOutputStream, FileInfo fiSourceFile, string destFilenameInTar, ref long bytesWritten)
+        private static void AppendFileToTar(TarOutputStream tarOutputStream, FileInfo sourceFile, string destFilenameInTar, ref long bytesWritten)
         {
-            using (Stream inputStream = new FileStream(fiSourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+            using (Stream inputStream = new FileStream(sourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
-                var fileSize = fiSourceFile.Length;
+                var fileSize = sourceFile.Length;
 
                 // Create a tar entry named as appropriate. You can set the name to anything,
                 // but avoid names starting with drive or UNC.
@@ -809,7 +809,7 @@ namespace Pacifica.Core
                     tarOutputStream.Write(localBuffer, 0, numRead);
                 }
 
-                bytesWritten += AddTarFileContentLength(destFilenameInTar, fiSourceFile.Length);
+                bytesWritten += AddTarFileContentLength(destFilenameInTar, sourceFile.Length);
 
             }
             tarOutputStream.CloseEntry();

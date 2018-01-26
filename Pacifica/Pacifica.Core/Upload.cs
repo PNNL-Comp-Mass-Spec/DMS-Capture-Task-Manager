@@ -163,10 +163,6 @@ namespace Pacifica.Core
 
         #endregion
 
-        #region Private Members
-
-        #endregion
-
         #region Constructor
 
         /// <summary>
@@ -278,23 +274,21 @@ namespace Pacifica.Core
 
             foreach (var file in fileList)
             {
-
-                var fiObj = new FileInfoObject(file.AbsoluteLocalPath, file.RelativeDestinationDirectory, file.Sha1HashHex);
-
-                fileListObject.Add(file.AbsoluteLocalPath, fiObj);
+                var fio = new FileInfoObject(file.AbsoluteLocalPath, file.RelativeDestinationDirectory, file.Sha1HashHex);
+                fileListObject.Add(file.AbsoluteLocalPath, fio);
             }
 
             // Optionally use the test instance
             mPacificaConfig.UseTestInstance = UseTestInstance;
 
-            var mdJson = Utilities.ObjectToJson(metadataObject);
+            var jsonMetadata = Utilities.ObjectToJson(metadataObject);
 
             // Create the metadata.txt file
             var metadataFilePath = Path.GetTempFileName();
-            var mdTextFile = new FileInfo(metadataFilePath);
-            using (var sw = mdTextFile.CreateText())
+            var metadataFile = new FileInfo(metadataFilePath);
+            using (var metadataWriter = metadataFile.CreateText())
             {
-                sw.Write(mdJson);
+                metadataWriter.Write(jsonMetadata);
             }
 
             try
@@ -303,11 +297,11 @@ namespace Pacifica.Core
                 // Example path: \\proto-4\DMS3_Xfer\QC_Shew_16_01_125ng_CID-STD_newCol-1_5Apr17_Frodo_16-11-08\MyEMSL_metadata_CaptureJob_2836788.txt
                 if (!string.IsNullOrWhiteSpace(TransferFolderPath))
                 {
-                    var fiTargetFile = new FileInfo(Path.Combine(TransferFolderPath, Utilities.GetMetadataFilenameForJob(JobNumber)));
-                    if (fiTargetFile.Directory != null && !fiTargetFile.Directory.Exists)
-                        fiTargetFile.Directory.Create();
+                    var targetFile = new FileInfo(Path.Combine(TransferFolderPath, Utilities.GetMetadataFilenameForJob(JobNumber)));
+                    if (targetFile.Directory != null && !targetFile.Directory.Exists)
+                        targetFile.Directory.Create();
 
-                    mdTextFile.CopyTo(fiTargetFile.FullName, true);
+                    metadataFile.CopyTo(targetFile.FullName, true);
                 }
 
             }
@@ -342,7 +336,7 @@ namespace Pacifica.Core
             }
 
             var responseData = EasyHttp.SendFileListToIngester(
-                mPacificaConfig, location, serverUri, fileListObject, mdTextFile.FullName, debugMode);
+                mPacificaConfig, location, serverUri, fileListObject, metadataFile.FullName, debugMode);
 
             if (debugMode != EasyHttp.eDebugMode.DebugDisabled)
             {
@@ -404,7 +398,7 @@ namespace Pacifica.Core
             try
             {
                 // Delete the local temporary file
-                mdTextFile.Delete();
+                metadataFile.Delete();
             }
             catch
             {

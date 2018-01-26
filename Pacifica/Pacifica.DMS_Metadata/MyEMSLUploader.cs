@@ -13,11 +13,11 @@ namespace Pacifica.DMS_Metadata
 
         public const string CRITICAL_UPLOAD_ERROR = "Critical Error";
 
-        private DMSMetadataObject _mdContainer;
-        private readonly Upload myEMSLUpload;
+        private DMSMetadataObject mMetadataContainer;
+        private readonly Upload mUploadWorker;
 
-        private readonly Dictionary<string, string> m_MgrParams;
-        private readonly Dictionary<string, string> m_TaskParams;
+        private readonly Dictionary<string, string> mMgrParams;
+        private readonly Dictionary<string, string> mTaskParams;
 
         private readonly string mManagerName;
 
@@ -46,10 +46,10 @@ namespace Pacifica.DMS_Metadata
         {
             get
             {
-                if (myEMSLUpload == null)
+                if (mUploadWorker == null)
                     return string.Empty;
 
-                return myEMSLUpload.ErrorMessage;
+                return mUploadWorker.ErrorMessage;
             }
         }
 
@@ -105,7 +105,7 @@ namespace Pacifica.DMS_Metadata
             set
             {
                 mUseTestInstance = value;
-                myEMSLUpload.UseTestInstance = value;
+                mUploadWorker.UseTestInstance = value;
                 mPacificaConfig.UseTestInstance = value;
             }
         }
@@ -132,33 +132,33 @@ namespace Pacifica.DMS_Metadata
             EUSInfo = new Upload.EUSInfo();
             EUSInfo.Clear();
 
-            m_MgrParams = mgrParams;
-            m_TaskParams = taskParams;
+            mMgrParams = mgrParams;
+            mTaskParams = taskParams;
 
-            if (!m_MgrParams.TryGetValue("MgrName", out mManagerName))
+            if (!mMgrParams.TryGetValue("MgrName", out mManagerName))
                 mManagerName = "MyEMSLUploader_" + Environment.MachineName;
 
-            var transferFolderPath = Utilities.GetDictionaryValue(m_TaskParams, "TransferFolderPath", string.Empty);
+            var transferFolderPath = Utilities.GetDictionaryValue(mTaskParams, "TransferFolderPath", string.Empty);
             if (string.IsNullOrEmpty(transferFolderPath))
                 throw new InvalidDataException("Job parameters do not have TransferFolderPath defined; unable to continue");
 
-            var datasetName = Utilities.GetDictionaryValue(m_TaskParams, "Dataset", string.Empty);
+            var datasetName = Utilities.GetDictionaryValue(mTaskParams, "Dataset", string.Empty);
             if (string.IsNullOrEmpty(transferFolderPath))
                 throw new InvalidDataException("Job parameters do not have Dataset defined; unable to continue");
 
             transferFolderPath = Path.Combine(transferFolderPath, datasetName);
 
-            var jobNumber = Utilities.GetDictionaryValue(m_TaskParams, "Job", string.Empty);
+            var jobNumber = Utilities.GetDictionaryValue(mTaskParams, "Job", string.Empty);
             if (string.IsNullOrEmpty(jobNumber))
                 throw new InvalidDataException("Job parameters do not have Job defined; unable to continue");
 
-            myEMSLUpload = new Upload(config, transferFolderPath, jobNumber);
-            RegisterEvents(myEMSLUpload);
+            mUploadWorker = new Upload(config, transferFolderPath, jobNumber);
+            RegisterEvents(mUploadWorker);
 
             // Attach the events
-            myEMSLUpload.MyEMSLOffline += myEmslUploadOnMyEmslOffline;
-            myEMSLUpload.StatusUpdate += myEMSLUpload_StatusUpdate;
-            myEMSLUpload.UploadCompleted += myEMSLUpload_UploadCompleted;
+            mUploadWorker.MyEMSLOffline += myEmslUploadOnMyEmslOffline;
+            mUploadWorker.StatusUpdate += myEMSLUpload_StatusUpdate;
+            mUploadWorker.UploadCompleted += myEMSLUpload_UploadCompleted;
 
         }
 
@@ -170,19 +170,19 @@ namespace Pacifica.DMS_Metadata
             var ignoreMyEMSLFileTrackingError = GetParam("IgnoreMyEMSLFileTrackingError", false);
 
             // Instantiate the metadata object
-            _mdContainer = new DMSMetadataObject(config, mManagerName, jobNumber)
+            mMetadataContainer = new DMSMetadataObject(config, mManagerName, jobNumber)
             {
                 TraceMode = TraceMode,
                 IgnoreMyEMSLFileTrackingError = ignoreMyEMSLFileTrackingError
             };
 
             // Attach the events
-            RegisterEvents(_mdContainer);
+            RegisterEvents(mMetadataContainer);
 
             // Also process Progress Updates using _mdContainer_ProgressEvent, which triggers event StatusUpdate
-            _mdContainer.ProgressUpdate += _mdContainer_ProgressEvent;
+            mMetadataContainer.ProgressUpdate += _mdContainer_ProgressEvent;
 
-            _mdContainer.UseTestInstance = UseTestInstance;
+            mMetadataContainer.UseTestInstance = UseTestInstance;
 
             var certificateFilePath = EasyHttp.ResolveCertFile(mPacificaConfig, "SetupMetadataAndUpload", out var errorMessage);
 
@@ -192,7 +192,7 @@ namespace Pacifica.DMS_Metadata
             }
 
             // Look for files to upload, compute a Sha-1 hash for each, and compare those hashes to existing files in MyEMSL
-            var success = _mdContainer.SetupMetadata(m_TaskParams, m_MgrParams, debugMode, out var criticalError, out var criticalErrorMessage);
+            var success = mMetadataContainer.SetupMetadata(mTaskParams, mMgrParams, debugMode, out var criticalError, out var criticalErrorMessage);
 
             if (!success)
             {
@@ -205,16 +205,16 @@ namespace Pacifica.DMS_Metadata
             }
 
             // Send the metadata object to the calling procedure (in case it wants to log it)
-            ReportMetadataDefined("StartUpload", _mdContainer.MetadataObjectJSON);
+            ReportMetadataDefined("StartUpload", mMetadataContainer.MetadataObjectJSON);
 
-            mPacificaConfig.LocalTempDirectory = Utilities.GetDictionaryValue(m_MgrParams, "workdir", string.Empty);
-            FileCountUpdated = _mdContainer.TotalFileCountUpdated;
-            FileCountNew = _mdContainer.TotalFileCountNew;
-            Bytes = _mdContainer.TotalFileSizeToUpload;
+            mPacificaConfig.LocalTempDirectory = Utilities.GetDictionaryValue(mMgrParams, "workdir", string.Empty);
+            FileCountUpdated = mMetadataContainer.TotalFileCountUpdated;
+            FileCountNew = mMetadataContainer.TotalFileCountNew;
+            Bytes = mMetadataContainer.TotalFileSizeToUpload;
 
-            EUSInfo = _mdContainer.EUSInfo;
+            EUSInfo = mMetadataContainer.EUSInfo;
 
-            var fileList = Utilities.GetFileListFromMetadataObject(_mdContainer.MetadataObject);
+            var fileList = Utilities.GetFileListFromMetadataObject(mMetadataContainer.MetadataObject);
             if (fileList.Count == 0)
             {
                 OnDebugEvent("File list is empty in StartUpload; nothing to do");
@@ -224,13 +224,13 @@ namespace Pacifica.DMS_Metadata
                 return true;
             }
 
-            _mdContainer.CreateLockFiles();
+            mMetadataContainer.CreateLockFiles();
 
             bool uploadSuccess;
 
             try
             {
-                uploadSuccess = myEMSLUpload.StartUpload(_mdContainer.MetadataObject, debugMode, out statusURL);
+                uploadSuccess = mUploadWorker.StartUpload(mMetadataContainer.MetadataObject, debugMode, out statusURL);
             }
             catch (Exception ex)
             {
@@ -239,7 +239,7 @@ namespace Pacifica.DMS_Metadata
                 throw;
             }
 
-            _mdContainer.DeleteLockFiles();
+            mMetadataContainer.DeleteLockFiles();
 
             if (!string.IsNullOrEmpty(statusURL))
                 StatusURI = statusURL;
@@ -255,7 +255,7 @@ namespace Pacifica.DMS_Metadata
         /// <returns>Parameter value if found, otherwise empty string</returns>
         private bool GetParam(string name, bool valueIfMissing)
         {
-            if (m_TaskParams.TryGetValue(name, out var valueText))
+            if (mTaskParams.TryGetValue(name, out var valueText))
             {
                 if (bool.TryParse(valueText, out var value))
                     return value;
@@ -274,7 +274,7 @@ namespace Pacifica.DMS_Metadata
         /// <returns>Parameter value if found, otherwise empty string</returns>
         private int GetParam(string name, int valueIfMissing)
         {
-            if (m_TaskParams.TryGetValue(name, out var valueText))
+            if (mTaskParams.TryGetValue(name, out var valueText))
             {
                 if (int.TryParse(valueText, out var value))
                     return value;
@@ -309,7 +309,7 @@ namespace Pacifica.DMS_Metadata
         {
             if (StatusUpdate != null)
             {
-                // Multiplying by 0.25 because we're assuming 25% of the time is required for _mdContainer to compute the Sha-1 hashes of files to be uploaded while 75% of the time is required to create and upload the .tar file
+                // Multiplying by 0.25 because we're assuming 25% of the time is required for mMetadataContainer to compute the Sha-1 hashes of files to be uploaded while 75% of the time is required to create and upload the .tar file
                 var percentCompleteOverall = 25 + e.PercentCompleted * 0.75;
                 StatusUpdate(this, new StatusEventArgs(percentCompleteOverall, e.TotalBytesSent, e.TotalBytesToSend, e.StatusMessage));
             }
@@ -324,9 +324,9 @@ namespace Pacifica.DMS_Metadata
         {
             if (StatusUpdate != null)
             {
-                // Multiplying by 0.25 because we're assuming 25% of the time is required for _mdContainer to compute the Sha-1 hashes of files to be uploaded while 75% of the time is required to create and upload the .tar file
+                // Multiplying by 0.25 because we're assuming 25% of the time is required for mMetadataContainer to compute the Sha-1 hashes of files to be uploaded while 75% of the time is required to create and upload the .tar file
                 var percentCompleteOverall = 0 + percentComplete * 0.25;
-                StatusUpdate(this, new StatusEventArgs(percentCompleteOverall, 0, _mdContainer.TotalFileSizeToUpload, progressMessage));
+                StatusUpdate(this, new StatusEventArgs(percentCompleteOverall, 0, mMetadataContainer.TotalFileSizeToUpload, progressMessage));
             }
 
         }

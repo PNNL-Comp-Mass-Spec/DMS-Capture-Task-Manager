@@ -212,20 +212,20 @@ namespace Pacifica.Core
             return JsonObjectToDictionary(jso);
         }
 
-        public static string ObjectToJson(IList mdObject)
+        public static string ObjectToJson(IList metadataList)
         {
-            var jso = new JsonArray(mdObject);
+            var jso = new JsonArray(metadataList);
             return jso.ToString();
         }
 
         public static Dictionary<string, object> JsonObjectToDictionary(JsonObject jso)
         {
-            var d = new Dictionary<string, object>();
+            var settingsDictionary = new Dictionary<string, object>();
 
             if (jso == null)
             {
                 Console.WriteLine("Skipping null item in JsonObjectToDictionary");
-                return d;
+                return settingsDictionary;
             }
 
             foreach (string key in jso.Names)
@@ -239,7 +239,7 @@ namespace Pacifica.Core
                 if (value.GetType().Name == "JsonObject")
                 {
                     var tmpJso = value as JsonObject;
-                    d.Add(key, JsonObjectToDictionary(tmpJso));  //Recurse!
+                    settingsDictionary.Add(key, JsonObjectToDictionary(tmpJso));  //Recurse!
                 }
                 else if (value.GetType().Name == "JsonArray")
                 {
@@ -250,35 +250,35 @@ namespace Pacifica.Core
                         {
                             case "users":
                                 // EUS User IDs are always integers
-                                d.Add(key, JsonArrayToIntList(tmpJsa));
+                                settingsDictionary.Add(key, JsonArrayToIntList(tmpJsa));
                                 break;
 
                             case "proposals":
                                 // EUS Proposals are usually integers, but not always
                                 // Thus, store as strings
-                                d.Add(key, JsonArrayToStringList(tmpJsa));
+                                settingsDictionary.Add(key, JsonArrayToStringList(tmpJsa));
                                 break;
 
                             default:
                                 if (tmpJsa == null || tmpJsa.Count == 0)
                                 {
-                                    d.Add(key, new List<Dictionary<string, object>>());
+                                    settingsDictionary.Add(key, new List<Dictionary<string, object>>());
                                 }
                                 else
                                 {
                                     var nextValue = tmpJsa.GetValue(0);
                                     if (nextValue == null)
                                     {
-                                        d.Add(key, new List<Dictionary<string, object>>());
+                                        settingsDictionary.Add(key, new List<Dictionary<string, object>>());
                                     }
                                     else
                                     {
                                         var typeName = nextValue.GetType().Name;
 
                                         if (typeName == "String" || typeName == "JsonNumber")
-                                            d.Add(key, JsonArrayToStringList(tmpJsa));
+                                            settingsDictionary.Add(key, JsonArrayToStringList(tmpJsa));
                                         else
-                                            d.Add(key, JsonArrayToDictionaryList(tmpJsa));
+                                            settingsDictionary.Add(key, JsonArrayToDictionaryList(tmpJsa));
                                     }
                                 }
                                 break;
@@ -292,16 +292,18 @@ namespace Pacifica.Core
                 }
                 else
                 {
-                    d.Add(key, value);
+                    // Not a JsonObject or a JsonArray
+                    // Store it as-is
+                    settingsDictionary.Add(key, value);
                 }
             }
 
-            return d;
+            return settingsDictionary;
         }
 
         public static List<string> JsonArrayToStringList(JsonArray jsa)
         {
-            var lstItems = new List<string>();
+            var jsonStrings = new List<string>();
 
             while (jsa.Length > 0)
             {
@@ -309,7 +311,7 @@ namespace Pacifica.Core
                 var typeName = value.GetType().Name;
                 if (typeName == "JsonNumber" || typeName == "String")
                 {
-                    lstItems.Add(value.ToString());
+                    jsonStrings.Add(value.ToString());
                 }
                 else
                 {
@@ -317,28 +319,28 @@ namespace Pacifica.Core
                 }
             }
 
-            return lstItems;
+            return jsonStrings;
         }
 
         public static List<int> JsonArrayToIntList(JsonArray jsa)
         {
-            var lstStrings = JsonArrayToStringList(jsa);
-            var lstInts = new List<int>();
+            var jsonStrings = JsonArrayToStringList(jsa);
+            var parsedIntegers = new List<int>();
 
-            foreach (var item in lstStrings)
+            foreach (var jsonItem in jsonStrings)
             {
-                if (int.TryParse(item, out var value))
-                    lstInts.Add(value);
+                if (int.TryParse(jsonItem, out var value))
+                    parsedIntegers.Add(value);
                 else
                     throw new InvalidCastException("JsonArrayToIntList cannot convert item '" + value + "' to an integer");
             }
 
-            return lstInts;
+            return parsedIntegers;
         }
 
         public static List<Dictionary<string, object>> JsonArrayToDictionaryList(JsonArray jsa)
         {
-            var lstItems = new List<Dictionary<string, object>>();
+            var parsedItems = new List<Dictionary<string, object>>();
             while (jsa.Length > 0)
             {
                 var value = jsa.Pop();
@@ -347,26 +349,26 @@ namespace Pacifica.Core
                     var dctValue = new Dictionary<string, object> {
                         { value.ToString(), string.Empty}
                     };
-                    lstItems.Add(dctValue);
+                    parsedItems.Add(dctValue);
                 }
                 else if (value.GetType().Name == "String")
                 {
                     var dctValue = new Dictionary<string, object> {
                         { value.ToString(), string.Empty}
                     };
-                    lstItems.Add(dctValue);
+                    parsedItems.Add(dctValue);
                 }
                 else if (value.GetType().Name == "JsonObject")
                 {
                     var jso = (JsonObject)value;
-                    lstItems.Add(JsonObjectToDictionary(jso));
+                    parsedItems.Add(JsonObjectToDictionary(jso));
                 }
                 else
                 {
                     Console.WriteLine("Unsupported JsonArrayList type: " + value.GetType().Name);
                 }
             }
-            return lstItems;
+            return parsedItems;
         }
 
         public static string GetMetadataFilenameForJob(string jobNumber)
@@ -400,7 +402,7 @@ namespace Pacifica.Core
         /// <returns>True if the server is trusted</returns>
         public static bool ValidateRemoteCertificate(object sender, X509Certificate cert, X509Chain chain, SslPolicyErrors policyErrors)
         {
-            var lstTrustedDomains = new List<string>
+            var trustedDomains = new List<string>
             {
                 "my.emsl.pnl.gov",
                 "emsl.pnl.gov",
@@ -418,7 +420,7 @@ namespace Pacifica.Core
 
             // Console.WriteLine("Checking " + domainToValidate + " against trusted domains");
 
-            foreach (var domainName in lstTrustedDomains)
+            foreach (var domainName in trustedDomains)
             {
                 if (domainToValidate.IndexOf(domainName, StringComparison.CurrentCultureIgnoreCase) >= 0)
                     return true;

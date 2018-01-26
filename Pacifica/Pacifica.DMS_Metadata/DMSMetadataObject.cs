@@ -194,7 +194,7 @@ namespace Pacifica.DMS_Metadata
 
             DatasetName = Utilities.GetDictionaryValue(taskParams, "Dataset", "Unknown_Dataset");
 
-            var lstDatasetFilesToArchive = FindDatasetFilesToArchive(taskParams, mgrParams, out var uploadMetadata);
+            var datasetFilesToArchive = FindDatasetFilesToArchive(taskParams, mgrParams, out var uploadMetadata);
 
             // DMS5 database
             mgrParams.TryGetValue("DefaultDMSConnString", out var connectionString);
@@ -217,9 +217,9 @@ namespace Pacifica.DMS_Metadata
             uploadMetadata.DateCodeString = GetDatasetYearQuarter(taskParams);
 
             // Find the files that are new or need to be updated
-            var lstUnmatchedFiles = CompareDatasetContentsWithMyEMSLMetadata(
+            var unmatchedFiles = CompareDatasetContentsWithMyEMSLMetadata(
                 captureDbConnectionString,
-                lstDatasetFilesToArchive,
+                datasetFilesToArchive,
                 uploadMetadata,
                 out criticalError,
                 out criticalErrorMessage);
@@ -227,12 +227,12 @@ namespace Pacifica.DMS_Metadata
             if (criticalError)
                 return false;
 
-            mMetadataObject = Upload.CreatePacificaMetadataObject(uploadMetadata, lstUnmatchedFiles, out var eusInfo);
+            mMetadataObject = Upload.CreatePacificaMetadataObject(uploadMetadata, unmatchedFiles, out var eusInfo);
 
-            if (lstUnmatchedFiles.Count > 0)
+            if (unmatchedFiles.Count > 0)
             {
-                var mdJSON = Utilities.ObjectToJson(mMetadataObject);
-                if (!CheckMetadataValidity(mdJSON, out _))
+                var jsonMetadata = Utilities.ObjectToJson(mMetadataObject);
+                if (!CheckMetadataValidity(jsonMetadata, out _))
                 {
                     return false;
                 }
@@ -359,7 +359,7 @@ namespace Pacifica.DMS_Metadata
             return new List<int>();
         }
 
-        private bool CheckMetadataValidity(string mdJSON, out string validityMessage)
+        private bool CheckMetadataValidity(string jsonMetadata, out string validityMessage)
         {
             var policyURL = mPacificaConfig.PolicyServerUri + "/ingest";
             validityMessage = string.Empty;
@@ -375,7 +375,7 @@ namespace Pacifica.DMS_Metadata
                 if (TraceMode)
                     OnDebugEvent("Contacting " + policyURL);
 
-                var response = EasyHttp.Send(mPacificaConfig, policyURL, null, out var responseStatusCode, mdJSON, EasyHttp.HttpMethod.Post, 100, "application/json");
+                var response = EasyHttp.Send(mPacificaConfig, policyURL, null, out var responseStatusCode, jsonMetadata, EasyHttp.HttpMethod.Post, 100, "application/json");
 
                 if ((int)responseStatusCode == 200 && response.ToLower().Contains("success"))
                 {
@@ -388,10 +388,10 @@ namespace Pacifica.DMS_Metadata
 
                 OnErrorEvent("Policy server reports that metadata is not valid: " + policyURL);
 
-                if (mdJSON.Length < 1255)
-                    OnDebugEvent(mdJSON);
+                if (jsonMetadata.Length < 1255)
+                    OnDebugEvent(jsonMetadata);
                 else
-                    OnDebugEvent(mdJSON.Substring(0, 1250) + " ...");
+                    OnDebugEvent(jsonMetadata.Substring(0, 1250) + " ...");
 
                 return false;
             }
@@ -404,7 +404,7 @@ namespace Pacifica.DMS_Metadata
         }
 
         private bool AddUsingCacheInfoFile(
-            FileInfo fiCacheInfoFile,
+            FileInfo cacheInfoFile,
             ICollection<FileInfoObject> fileCollection,
             string baseDSPath,
             out string remoteFilePath)
@@ -412,38 +412,38 @@ namespace Pacifica.DMS_Metadata
 
             remoteFilePath = string.Empty;
 
-            using (var srCacheInfoFile = new StreamReader(new FileStream(fiCacheInfoFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+            using (var infoFileReader = new StreamReader(new FileStream(cacheInfoFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
             {
-                if (!srCacheInfoFile.EndOfStream)
+                if (!infoFileReader.EndOfStream)
                 {
-                    remoteFilePath = srCacheInfoFile.ReadLine();
+                    remoteFilePath = infoFileReader.ReadLine();
                 }
             }
 
             if (string.IsNullOrWhiteSpace(remoteFilePath))
             {
-                OnErrorEvent("Warning: Cache info file did not contain a file path; see " + fiCacheInfoFile.FullName);
+                OnErrorEvent("Warning: Cache info file did not contain a file path; see " + cacheInfoFile.FullName);
                 return false;
             }
 
-            var fiRemoteFile = new FileInfo(remoteFilePath);
-            if (!fiRemoteFile.Exists)
+            var remoteFile = new FileInfo(remoteFilePath);
+            if (!remoteFile.Exists)
             {
                 // This is not a fatal error; the file may have been purged
-                OnDebugEvent("Note: Remote file referred to by the cache info file was not found: " + fiRemoteFile.FullName);
+                OnDebugEvent("Note: Remote file referred to by the cache info file was not found: " + remoteFile.FullName);
                 return false;
             }
 
-            if (fiCacheInfoFile.Directory == null)
+            if (cacheInfoFile.Directory == null)
             {
                 OnErrorEvent("Unable to determine the parent directory of the cache info file (this should never happen)");
                 return false;
             }
 
-            var relativeDestinationDirectory = FileInfoObject.GenerateRelativePath(fiCacheInfoFile.Directory.FullName, baseDSPath);
+            var relativeDestinationDirectory = FileInfoObject.GenerateRelativePath(cacheInfoFile.Directory.FullName, baseDSPath);
 
             // This constructor will auto-compute the Sha-1 hash value for the file
-            var fio = new FileInfoObject(fiRemoteFile.FullName, relativeDestinationDirectory, sha1Hash: string.Empty);
+            var fio = new FileInfoObject(remoteFile.FullName, relativeDestinationDirectory, sha1Hash: string.Empty);
             fileCollection.Add(fio);
 
             return true;
@@ -498,20 +498,20 @@ namespace Pacifica.DMS_Metadata
             mRemoteCacheInfoFilesToRetrieve.Clear();
             mRemoteCacheInfoLockFiles.Clear();
 
-            foreach (var fiFile in fileList)
+            foreach (var dataFile in fileList)
             {
-                if (filesToIgnore.Contains(fiFile.Name))
+                if (filesToIgnore.Contains(dataFile.Name))
                     continue;
 
-                runningFileSize += fiFile.Length;
+                runningFileSize += dataFile.Length;
 
                 if (totalFileSize > 0)
                     fracCompleted = runningFileSize / (float)totalFileSize;
 
-                ReportProgress(HASHING_FILES + ": " + fiFile.Name, fracCompleted * 100);
+                ReportProgress(HASHING_FILES + ": " + dataFile.Name, fracCompleted * 100);
 
                 // This constructor will auto-compute the Sha-1 hash value for the file
-                var fio = new FileInfoObject(fiFile.FullName, baseDSPath);
+                var fio = new FileInfoObject(dataFile.FullName, baseDSPath);
                 fileCollection.Add(fio);
 
                 if (fio.FileName.EndsWith("_CacheInfo.txt"))
@@ -519,10 +519,10 @@ namespace Pacifica.DMS_Metadata
                     // This is a cache info file that likely points to a .mzXML or .mzML file (possibly gzipped)
                     // Auto-include that file in the .tar to be uploaded
 
-                    var success = AddUsingCacheInfoFile(fiFile, fileCollection, baseDSPath, out var remoteFilePath);
+                    var success = AddUsingCacheInfoFile(dataFile, fileCollection, baseDSPath, out var remoteFilePath);
                     if (!success)
                         throw new Exception(
-                            string.Format("Error reported by AddUsingCacheInfoFile for {0} (CollectFileInformation)" , fiFile.FullName));
+                            string.Format("Error reported by AddUsingCacheInfoFile for {0} (CollectFileInformation)" , dataFile.FullName));
 
                     mRemoteCacheInfoFilesToRetrieve.Add(remoteFilePath);
 
@@ -530,7 +530,7 @@ namespace Pacifica.DMS_Metadata
 
                 if (TraceMode)
                 {
-                    OnDebugEvent(string.Format("{0}, {1:F1}% complete: {2}", HASHING_FILES, fracCompleted * 100, fiFile.Name));
+                    OnDebugEvent(string.Format("{0}, {1:F1}% complete: {2}", HASHING_FILES, fracCompleted * 100, dataFile.Name));
                 }
 
             }
@@ -673,17 +673,17 @@ namespace Pacifica.DMS_Metadata
 
             foreach (var remoteFilePath in mRemoteCacheInfoFilesToRetrieve)
             {
-                // Construct a list of first file required from each distinct server
-                var fiSource = new FileInfo(remoteFilePath);
-                var strLockFolderPathSource = mFileTools.GetLockFolder(fiSource);
+                // Construct a list of the first file required from each distinct server
+                var sourceFile = new FileInfo(remoteFilePath);
+                var lockFolderPathSource = mFileTools.GetLockFolder(sourceFile);
 
-                if (string.IsNullOrWhiteSpace(strLockFolderPathSource))
+                if (string.IsNullOrWhiteSpace(lockFolderPathSource))
                     continue;
 
-                if (mRemoteCacheInfoLockFiles.ContainsKey(strLockFolderPathSource))
+                if (mRemoteCacheInfoLockFiles.ContainsKey(lockFolderPathSource))
                     continue;
 
-                var sourceFileSizeMB = Convert.ToInt32(fiSource.Length / 1024.0 / 1024.0);
+                var sourceFileSizeMB = Convert.ToInt32(sourceFile.Length / 1024.0 / 1024.0);
                 if (sourceFileSizeMB < clsFileTools.LOCKFILE_MININUM_SOURCE_FILE_SIZE_MB)
                 {
                     // Do not use a lock file for this remote file
@@ -692,21 +692,21 @@ namespace Pacifica.DMS_Metadata
 
                 var lockFileTimestamp = mFileTools.GetLockFileTimeStamp();
 
-                var diLockFolderSource = new DirectoryInfo(strLockFolderPathSource);
+                var lockFolderSource = new DirectoryInfo(lockFolderPathSource);
 
-                var strTargetFilePath = Path.Combine(@"\\MyEMSL\", DatasetName, fiSource.Name);
+                var targetFilePath = Path.Combine(@"\\MyEMSL\", DatasetName, sourceFile.Name);
 
-                var strLockFilePathSource = mFileTools.CreateLockFile(diLockFolderSource, lockFileTimestamp, fiSource, strTargetFilePath, ManagerName);
+                var lockFilePathSource = mFileTools.CreateLockFile(lockFolderSource, lockFileTimestamp, sourceFile, targetFilePath, ManagerName);
 
-                if (string.IsNullOrEmpty(strLockFilePathSource))
+                if (string.IsNullOrEmpty(lockFilePathSource))
                 {
                     // Do not use a lock file for this remote file
                     continue;
                 }
 
-                mRemoteCacheInfoLockFiles.Add(strLockFolderPathSource, new FileInfo(strLockFilePathSource));
+                mRemoteCacheInfoLockFiles.Add(lockFolderPathSource, new FileInfo(lockFilePathSource));
 
-                mFileTools.WaitForLockFileQueue(lockFileTimestamp, diLockFolderSource, fiSource, MAX_LOCKFILE_WAIT_TIME_MINUTES);
+                mFileTools.WaitForLockFileQueue(lockFileTimestamp, lockFolderSource, sourceFile, MAX_LOCKFILE_WAIT_TIME_MINUTES);
 
             }
         }
@@ -851,9 +851,9 @@ namespace Pacifica.DMS_Metadata
 
             // Grab file information from this dataset directory
             // This process will also compute the Sha-1 hash value for each file
-            var lstDatasetFilesToArchive = CollectFileInformation(pathToArchive, baseDSPath, recurse);
+            var datasetFilesToArchive = CollectFileInformation(pathToArchive, baseDSPath, recurse);
 
-            return lstDatasetFilesToArchive;
+            return datasetFilesToArchive;
         }
 
         /// <summary>

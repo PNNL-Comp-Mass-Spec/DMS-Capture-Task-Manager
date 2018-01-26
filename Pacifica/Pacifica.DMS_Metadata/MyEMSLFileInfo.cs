@@ -198,40 +198,40 @@ namespace Pacifica.DMS_Metadata
         {
             if (!string.IsNullOrWhiteSpace(createdInMyEMSL))
             {
-                if (DateTime.TryParse(createdInMyEMSL, out var dtCreationTime))
-                    Created = dtCreationTime;
+                if (DateTime.TryParse(createdInMyEMSL, out var creationTime))
+                    Created = creationTime;
             }
 
             if (!string.IsNullOrWhiteSpace(updatedInMyEMSL))
             {
-                if (DateTime.TryParse(updatedInMyEMSL, out var dtUpdateTime))
-                    Updated = dtUpdateTime;
+                if (DateTime.TryParse(updatedInMyEMSL, out var updateTime))
+                    Updated = updateTime;
             }
 
             if (!string.IsNullOrWhiteSpace(deletedInMyEMSL))
             {
-                if (DateTime.TryParse(deletedInMyEMSL, out var dtDeletionTime))
-                    Deleted = dtDeletionTime;
+                if (DateTime.TryParse(deletedInMyEMSL, out var deletionTime))
+                    Deleted = deletionTime;
             }
         }
 
         /// <summary>
         /// Update file creation and modification times using the string values reported by MyEMSL
         /// </summary>
-        /// <param name="creationTime"></param>
-        /// <param name="lastWriteTime"></param>
-        public void UpdateSourceFileTimes(string creationTime, string lastWriteTime)
+        /// <param name="creationTimeText"></param>
+        /// <param name="lastWriteTimeText"></param>
+        public void UpdateSourceFileTimes(string creationTimeText, string lastWriteTimeText)
         {
-            if (!string.IsNullOrWhiteSpace(creationTime))
+            if (!string.IsNullOrWhiteSpace(creationTimeText))
             {
-                if (DateTime.TryParse(creationTime, out var dtCreationTime))
-                    FileCreationTime = dtCreationTime;
+                if (DateTime.TryParse(creationTimeText, out var creationTime))
+                    FileCreationTime = creationTime;
             }
 
-            if (!string.IsNullOrWhiteSpace(lastWriteTime))
+            if (!string.IsNullOrWhiteSpace(lastWriteTimeText))
             {
-                if (DateTime.TryParse(lastWriteTime, out var dtLastWriteTime))
-                    FileLastWriteTime = dtLastWriteTime;
+                if (DateTime.TryParse(lastWriteTimeText, out var lastWriteTime))
+                    FileLastWriteTime = lastWriteTime;
             }
         }
 
