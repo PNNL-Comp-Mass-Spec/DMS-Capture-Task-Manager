@@ -36,15 +36,14 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="jayrock-json">
+      <Version>0.9.16530.1</Version>
+    </PackageReference>
     <PackageReference Include="PRISM-Library">
       <Version>2.4.58</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="Jayrock.Json, Version=0.9.12915.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\RefLib\Jayrock.Json.dll</HintPath>
-    </Reference>
     <Reference Include="Pacifica.Core, Version=2.0.6303.33627, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\DeployedFiles\Pacifica.Core.dll</HintPath>

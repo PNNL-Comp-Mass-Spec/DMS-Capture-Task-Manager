@@ -39,10 +39,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\RefLib\ICSharpCode.SharpZipLib.dll</HintPath>
     </Reference>
-    <Reference Include="Jayrock.Json, Version=0.9.12915.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\RefLib\Jayrock.Json.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Net" />
     <Reference Include="System.Net.Http" />
@@ -85,6 +81,9 @@
     <Content Include="README.txt" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="jayrock-json">
+      <Version>0.9.16530.1</Version>
+    </PackageReference>
     <PackageReference Include="PRISM-Library">
       <Version>2.4.58</Version>
     </PackageReference>
