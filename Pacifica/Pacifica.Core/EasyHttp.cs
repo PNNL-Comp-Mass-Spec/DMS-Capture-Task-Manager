@@ -447,7 +447,13 @@ namespace Pacifica.Core
             }
             finally
             {
-                ((IDisposable)response)?.Dispose();
+                if (response != null)
+                {
+                    if (response is IDisposable toDispose)
+                    {
+                        toDispose.Dispose();
+                    }
+                }
             }
 
             return responseData;
