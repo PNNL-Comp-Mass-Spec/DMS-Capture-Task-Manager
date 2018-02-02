@@ -48,6 +48,8 @@ namespace CaptureTaskManager
 
         private const string DATE_TIME_FORMAT = "yyyy-MM-dd hh:mm:ss tt";
 
+        private const bool ENABLE_LOGGER_TRACE_MODE = false;
+            
         #endregion
 
         #region "Class variables"
@@ -247,7 +249,8 @@ namespace CaptureTaskManager
             // we remove this logger than make a new one using the connection string read from the Manager Control DB
             var defaultDmsConnectionString = Properties.Settings.Default.DefaultDMSConnString;
 
-            clsLogTools.CreateDbLogger(defaultDmsConnectionString, "CaptureTaskMan: " + System.Net.Dns.GetHostName(), true);
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+            clsLogTools.CreateDbLogger(defaultDmsConnectionString, "CaptureTaskMan: " + hostName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
 
             clsLogTools.MessageLogged += MessageLoggedHandler;
 
@@ -293,8 +296,9 @@ namespace CaptureTaskManager
             var logCnStr = m_MgrSettings.GetParam("connectionstring");
 
             clsLogTools.RemoveDefaultDbLogger();
-            clsLogTools.CreateDbLogger(logCnStr, "CaptureTaskMan: " + m_MgrName, false);
 
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+            clsLogTools.CreateDbLogger(logCnStr, "CaptureTaskMan: " + m_MgrName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
 
             // Setup the message queue
             m_MsgQueueInitSuccess = false;
