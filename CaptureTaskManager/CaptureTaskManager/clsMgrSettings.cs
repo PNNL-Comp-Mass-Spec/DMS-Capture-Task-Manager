@@ -306,20 +306,11 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Retrieves the manager and global settings from various databases
-        /// </summary>
-        /// <returns></returns>
-        public bool LoadMgrSettingsFromDB()
-        {
-            return LoadMgrSettingsFromDB(logConnectionErrors: true);
-        }
-
-        /// <summary>
         /// Gets manager config settings from manager control DB (Manager_Control)
         /// </summary>
         /// <returns>True if success, otherwise false</returns>
         /// <remarks>Performs retries if necessary.</remarks>
-        public bool LoadMgrSettingsFromDB(bool logConnectionErrors)
+        public bool LoadMgrSettingsFromDB(bool logConnectionErrors = true)
         {
 
             var managerName = GetParam(MGR_PARAM_MGR_NAME, string.Empty);
