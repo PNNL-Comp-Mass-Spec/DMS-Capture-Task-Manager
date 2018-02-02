@@ -244,6 +244,8 @@ namespace CaptureTaskManager
         /// <returns>TRUE for success; FALSE otherwise</returns>
         public bool InitMgr()
         {
+            var hostName = System.Net.Dns.GetHostName();
+
             // Create a database logger connected to DMS5
             // Once the initial parameters have been successfully read,
             // we remove this logger than make a new one using the connection string read from the Manager Control DB
@@ -300,23 +302,11 @@ namespace CaptureTaskManager
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             clsLogTools.CreateDbLogger(logCnStr, "CaptureTaskMan: " + m_MgrName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
 
-            // Setup the message queue
-            m_MsgQueueInitSuccess = false;
-            m_MsgHandler = new clsMessageHandler();
-            m_MsgHandler.BrokerUri = m_MsgHandler.BrokerUri = m_MgrSettings.GetParam("MessageQueueURI");
             // Make the initial log entry
             var relativeLogFilePath = clsLogTools.CurrentFileAppenderPath;
             var logFile = new FileInfo(relativeLogFilePath);
             ShowTrace("Initializing log file " + clsPathUtils.CompactPathString(logFile.FullName, 60));
 
-            // Typically "Manager.Status"
-            m_MsgHandler.StatusTopicName = m_MgrSettings.GetParam("MessageQueueTopicMgrStatus");
-
-            m_MsgHandler.MgrSettings = m_MgrSettings;
-
-            // Initialize the message queue
-            // Start this in a separate thread so that we can abort the initialization if necessary
-            InitializeMessageQueue();
             var appVersion = Assembly.GetEntryAssembly().GetName().Version;
             var startupMsg = "=== Started Capture Task Manager V" + appVersion + " ===== ";
             LogMessage(startupMsg);
@@ -343,6 +333,33 @@ namespace CaptureTaskManager
 
             // Subscribe to the file watcher Changed event
             m_FileWatcher.Changed += FileWatcherChanged;
+
+            // Make sure that the manager name matches the machine name (with a few exceptions)
+            if (!hostName.StartsWith("emslmq", StringComparison.OrdinalIgnoreCase) &&
+                !hostName.StartsWith("emslpub", StringComparison.OrdinalIgnoreCase) &&
+                !hostName.StartsWith("monroe", StringComparison.OrdinalIgnoreCase) &&
+                !hostName.StartsWith("WE27676", StringComparison.OrdinalIgnoreCase))
+            {
+                if (!m_MgrName.StartsWith(hostName, StringComparison.OrdinalIgnoreCase))
+                {
+                    LogError("Manager name does not match the host name: " + m_MgrName + " vs. " + hostName + "; update " + configFileName);
+                    return false;
+                }
+            }
+
+            // Setup the message queue
+            m_MsgQueueInitSuccess = false;
+            m_MsgHandler = new clsMessageHandler();
+            m_MsgHandler.BrokerUri = m_MsgHandler.BrokerUri = m_MgrSettings.GetParam("MessageQueueURI");
+
+            // Typically "Manager.Status"
+            m_MsgHandler.StatusTopicName = m_MgrSettings.GetParam("MessageQueueTopicMgrStatus");
+
+            m_MsgHandler.MgrSettings = m_MgrSettings;
+
+            // Initialize the message queue
+            // Start this in a separate thread so that we can abort the initialization if necessary
+            InitializeMessageQueue();
 
             // Set up the tool for getting tasks
             m_Task = new clsCaptureTask(m_MgrSettings);
