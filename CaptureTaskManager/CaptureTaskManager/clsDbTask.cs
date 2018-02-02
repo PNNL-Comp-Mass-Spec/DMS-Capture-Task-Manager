@@ -27,7 +27,9 @@ namespace CaptureTaskManager
         #region "Class variables"
 
         protected readonly IMgrParams m_MgrParams;
+
         protected readonly string m_ConnStr;
+
         protected bool m_TaskWasAssigned = false;
 
         /// <summary>
@@ -36,9 +38,14 @@ namespace CaptureTaskManager
         /// <remarks>4 means Info level (normal) logging; 5 for Debug level (verbose) logging</remarks>
         protected readonly int m_DebugLevel;
 
-        protected readonly Dictionary<string, string> m_JobParams =
-            new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+        /// <summary>
+        /// Job parameters
+        /// </summary>
+        protected readonly Dictionary<string, string> m_JobParams = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
 
+        /// <summary>
+        /// Stored procedure executor
+        /// </summary>
         protected readonly PRISM.clsExecuteDatabaseSP m_CaptureTaskDBProcedureExecutor;
 
         #endregion
@@ -62,11 +69,15 @@ namespace CaptureTaskManager
 
         #endregion
 
-        #region "Constructors"
+        #region "Constructor"
 
-        protected clsDbTask(IMgrParams MgrParams)
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="mgrParams"></param>
+        protected clsDbTask(IMgrParams mgrParams)
         {
-            m_MgrParams = MgrParams;
+            m_MgrParams = mgrParams;
 
             ManagerName = m_MgrParams.GetParam("MgrName", Environment.MachineName + "_Undefined-Manager");
 
@@ -79,7 +90,7 @@ namespace CaptureTaskManager
 
             // Cache the log level
             // 4 means Info level (normal) logging; 5 for Debug level (verbose) logging
-            m_DebugLevel = MgrParams.GetParam("debuglevel", 4);
+            m_DebugLevel = mgrParams.GetParam("debuglevel", 4);
         }
 
         #endregion
@@ -120,8 +131,7 @@ namespace CaptureTaskManager
         /// <param name="closeoutMsg">Message related to task closeout</param>
         /// <param name="evalCode">Enum representing evaluation results</param>
         /// <param name="evalMsg">Message related to evaluation results</param>
-        public abstract void CloseTask(EnumCloseOutType taskResult, string closeoutMsg, EnumEvalCode evalCode,
-                                       string evalMsg);
+        public abstract void CloseTask(EnumCloseOutType taskResult, string closeoutMsg, EnumEvalCode evalCode, string evalMsg);
 
         /// <summary>
         /// Debugging routine for printing SP calling params
@@ -130,19 +140,21 @@ namespace CaptureTaskManager
         protected virtual void PrintCommandParams(SqlCommand inpCmd)
         {
             // Verify there really are command paramters
-            if (inpCmd == null) return;
+            if (inpCmd == null)
+                return;
 
-            if (inpCmd.Parameters.Count < 1) return;
+            if (inpCmd.Parameters.Count < 1)
+                return;
 
-            var myMsg = "";
+            var msg = "";
 
             foreach (SqlParameter myParam in inpCmd.Parameters)
             {
-                myMsg += Environment.NewLine + "Name= " + myParam.ParameterName + "\t, Value= " + DbCStr(myParam.Value);
+                msg += Environment.NewLine + string.Format("  Name= {0,-20}, Value= {1}", myParam.ParameterName, DbCStr(myParam.Value));
             }
 
             var writeToLog = m_DebugLevel >= 5;
-            LogDebug("Parameter list:" + myMsg, writeToLog);
+            LogDebug("Parameter list:" + msg, writeToLog);
         }
 
         /// <summary>
@@ -192,7 +204,7 @@ namespace CaptureTaskManager
             }
         }
 
-        protected string DbCStr(object InpObj)
+        private string DbCStr(object InpObj)
         {
             // If input object is DbNull, returns "", otherwise returns String representation of object
             if (InpObj == null || ReferenceEquals(InpObj, DBNull.Value))

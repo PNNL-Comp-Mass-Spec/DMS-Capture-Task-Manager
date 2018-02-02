@@ -79,8 +79,6 @@ namespace CaptureTaskManager
         private System.Timers.Timer m_StatusTimer;
         private bool m_ManagerDeactivatedLocally;
 
-        private readonly bool m_TraceMode;
-
         #endregion
 
         #region "Delegates"
@@ -98,6 +96,11 @@ namespace CaptureTaskManager
         /// </summary>
         public bool ManagerDeactivatedLocally => m_ManagerDeactivatedLocally;
 
+        /// <summary>
+        /// When true, show additional trace log messages
+        /// </summary>
+        public bool TraceMode { get; set; }
+
         #endregion
 
         #region "Constructors"
@@ -107,7 +110,7 @@ namespace CaptureTaskManager
         /// </summary>
         public clsMainProgram(bool traceMode)
         {
-            m_TraceMode = traceMode;
+            TraceMode = traceMode;
         }
 
         #endregion
@@ -978,7 +981,7 @@ namespace CaptureTaskManager
     m_Task.AddAdditionalParameter("DebugTestTar", "true");
     LogMessage("Adding job parameter DebugTestTar=true");
 #endif
-                if (m_TraceMode)
+                if (TraceMode)
                 {
                     m_MgrSettings.SetParam("TraceMode", "True");
                 }
@@ -997,7 +1000,7 @@ namespace CaptureTaskManager
 
         private void ShowTrace(string message)
         {
-            if (m_TraceMode)
+            if (TraceMode)
                 ShowTraceMessage(message);
         }
 
