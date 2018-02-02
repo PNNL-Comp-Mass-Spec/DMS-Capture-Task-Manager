@@ -8,7 +8,7 @@
 using System;
 using System.Data.SqlClient;
 using System.Data;
-using System.Windows.Forms;
+using System.Reflection;
 using PRISM;
 
 namespace CaptureTaskManager
@@ -205,7 +205,7 @@ namespace CaptureTaskManager
         private EnumRequestTaskResult RequestTaskDetailed()
         {
             EnumRequestTaskResult outcome;
-            var strProductVersion = Application.ProductVersion;
+            var appVersion = Assembly.GetEntryAssembly().GetName().Version.ToString();
 
             try
             {
@@ -224,7 +224,7 @@ namespace CaptureTaskManager
 
                 spCmd.Parameters.Add(new SqlParameter("@infoOnly", SqlDbType.TinyInt)).Value = 0;
 
-                spCmd.Parameters.Add(new SqlParameter("@ManagerVersion", SqlDbType.VarChar, 128)).Value = strProductVersion;
+                spCmd.Parameters.Add(new SqlParameter("@ManagerVersion", SqlDbType.VarChar, 128)).Value = appVersion;
 
                 spCmd.Parameters.Add(new SqlParameter("@JobCountToPreview", SqlDbType.Int)).Value = 10;
 

@@ -16,7 +16,7 @@ namespace CaptureTaskManager
     /// </summary>
     static class Program
     {
-        private const string PROGRAM_DATE = "January 26, 2018";
+        private const string PROGRAM_DATE = "February 2, 2018";
 
         private static bool mCodeTestMode;
         private static bool mTraceMode;
@@ -72,7 +72,7 @@ namespace CaptureTaskManager
                 }
                 catch (Exception ex)
                 {
-                    ConsoleMsgUtils.ShowError(@"Exception calling clsCodeTest", ex);
+                    ConsoleMsgUtils.ShowError("Exception calling clsCodeTest", ex);
                     return -1;
                 }
                 return 0;
@@ -145,7 +145,7 @@ namespace CaptureTaskManager
             }
             catch (Exception ex)
             {
-                ConsoleMsgUtils.ShowError(@"Error parsing the command line parameters", ex);
+                ConsoleMsgUtils.ShowError("Error parsing the command line parameters: " + ex.Message, ex);
             }
         }
 
@@ -153,32 +153,30 @@ namespace CaptureTaskManager
         {
             try
             {
-                Console.WriteLine(
-                    @"This program processes DMS analysis jobs for PRISM. Normal operation is to run the program without any command line switches.");
+                Console.WriteLine("This program processes DMS analysis jobs for PRISM. " +
+                                  "Normal operation is to run the program without any command line switches.");
                 Console.WriteLine();
-                Console.WriteLine(@"Program syntax:" + Environment.NewLine +
+                Console.WriteLine("Program syntax:" + Environment.NewLine +
                                   System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location) +
-                                  @" [/EL] [/T] [/Test] [/Trace]");
+                                  " [/EL] [/T] [/Test] [/Trace]");
                 Console.WriteLine();
 
-                Console.WriteLine(@"Use /EL to post a test message to the Windows Event Log named 'DMSCapTaskMgr' then exit the program. " +
+                Console.WriteLine("Use /EL to post a test message to the Windows Event Log named 'DMSCapTaskMgr' then exit the program. " +
                                   "When setting up the Capture Task Manager on a new computer, you should call this command once from a Windows Command Prompt that you started using 'Run as Administrator'");
                 Console.WriteLine();
-                Console.WriteLine(@"Use /T or /Test to start the program in code test mode.");
+                Console.WriteLine("Use /T or /Test to start the program in code test mode.");
                 Console.WriteLine();
-                Console.WriteLine(@"Use /Trace to enable trace mode");
-                Console.WriteLine();
-
-                Console.WriteLine(
-                    @"Program written by Dave Clark and Matthew Monroe for the Department of Energy (PNNL, Richland, WA)");
+                Console.WriteLine("Use /Trace to enable trace mode");
                 Console.WriteLine();
 
-                Console.WriteLine(@"This is version " + System.Windows.Forms.Application.ProductVersion + @" (" +
-                                  PROGRAM_DATE + @")");
+                Console.WriteLine("Program written by Dave Clark and Matthew Monroe for the Department of Energy (PNNL, Richland, WA)");
                 Console.WriteLine();
 
-                Console.WriteLine(@"E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com");
-                Console.WriteLine(@"Website: http://panomics.pnnl.gov/ or http://www.sysbio.org/resources/staff/");
+                Console.WriteLine("This is version " + PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppVersion(PROGRAM_DATE));
+                Console.WriteLine();
+
+                Console.WriteLine("E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com");
+                Console.WriteLine("Website: http://panomics.pnnl.gov/ or http://www.sysbio.org/resources/staff/");
                 Console.WriteLine();
 
                 // Delay for 750 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)

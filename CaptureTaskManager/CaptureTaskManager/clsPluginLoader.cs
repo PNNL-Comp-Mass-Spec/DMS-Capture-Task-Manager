@@ -177,7 +177,7 @@ namespace CaptureTaskManager
         /// <returns>Path to plugin info file</returns>
         private static string GetPluginInfoFilePath(string PluginInfoFileName)
         {
-            var fi = new FileInfo(System.Windows.Forms.Application.ExecutablePath);
+            var fi = new FileInfo(PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppPath());
             if (fi.DirectoryName == null)
                 throw new DirectoryNotFoundException("Could not determine parent folder path for the exe");
 

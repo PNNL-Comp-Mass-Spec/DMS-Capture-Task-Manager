@@ -8,6 +8,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -291,10 +292,6 @@ namespace CaptureTaskManager
             clsLogTools.RemoveDefaultDbLogger();
             clsLogTools.CreateDbLogger(logCnStr, "CaptureTaskMan: " + m_MgrName, false);
 
-            // Make initial log entry
-            ShowTrace("Initializing log file " + clsPathUtils.CompactPathString(clsLogTools.CurrentFileAppenderPath, 60));
-
-            LogMessage("=== Started Capture Task Manager V" + Application.ProductVersion + " ===== ");
 
             // Setup the message queue
             m_MsgQueueInitSuccess = false;
@@ -309,6 +306,9 @@ namespace CaptureTaskManager
             // Initialize the message queue
             // Start this in a separate thread so that we can abort the initialization if necessary
             InitializeMessageQueue();
+            var appVersion = Assembly.GetEntryAssembly().GetName().Version;
+            var startupMsg = "=== Started Capture Task Manager V" + appVersion + " ===== ";
+            LogMessage(startupMsg);
 
             var configFileName = m_MgrSettings.GetParam("configfilename");
             if (string.IsNullOrEmpty(configFileName))

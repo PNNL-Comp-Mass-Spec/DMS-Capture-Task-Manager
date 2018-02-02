@@ -315,10 +315,7 @@ namespace CaptureTaskManager
             if (mAppFolderPath != null)
                 return mAppFolderPath;
 
-            var entryAssembly = Assembly.GetEntryAssembly();
-
-            var assemblyFile = new FileInfo(entryAssembly.Location);
-            mAppFolderPath = assemblyFile.DirectoryName;
+            mAppFolderPath = PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppFolderPath();
 
             return mAppFolderPath;
         }
@@ -338,6 +335,7 @@ namespace CaptureTaskManager
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, statusMessage);
             }
         }
+
         /// <summary>
         /// Log an error message
         /// </summary>
