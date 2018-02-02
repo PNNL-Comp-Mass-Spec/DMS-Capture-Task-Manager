@@ -41,10 +41,6 @@ namespace CaptureTaskManager
 
         #endregion
 
-        #region "Events"
-
-        #endregion
-
         #region "Properties"
 
         public clsMgrSettings MgrSettings
@@ -57,20 +53,6 @@ namespace CaptureTaskManager
             get => m_BrokerUri;
             set => m_BrokerUri = value;
         }
-
-        //[Obsolete("Unused")]
-        //public string CommandQueueName
-        //{
-        //    get { return m_CommandQueueName; }
-        //    set { m_CommandQueueName = value; }
-        //}
-
-        //[Obsolete("Unused")]
-        //public string BroadcastTopicName
-        //{
-        //    get { return m_BroadcastTopicName; }
-        //    set { m_BroadcastTopicName = value; }
-        //}
 
         public string StatusTopicName
         {
@@ -230,17 +212,6 @@ namespace CaptureTaskManager
             DestroyConnection();
             m_IsDisposed = true;
         }
-
-        // <summary>
-        // Registers the command and broadcast listeners under control of main program.
-        // This is done to prevent loss of queued messages if listeners are registered too early.
-        // </summary>
-        // [Obsolete("Unused")]
-        // public void RegisterListeners()
-        // {
-        //    m_CommandConsumer.Listener += OnCommandReceived;
-        //    m_BroadcastConsumer.Listener += OnBroadcastReceived;
-        // }
 
         #endregion
     }
