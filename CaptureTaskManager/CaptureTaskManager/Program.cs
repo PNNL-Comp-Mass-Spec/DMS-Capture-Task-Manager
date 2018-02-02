@@ -103,8 +103,8 @@ namespace CaptureTaskManager
                 {
                     // Report any exceptions not handled at a lower level to the console
                     var errMsg = "Critical exception starting application: " + ex.Message;
-                    ShowTrace(errMsg + "; " + clsStackTraceFormatter.GetExceptionStackTrace(ex, true));
-                    ShowTrace("Exiting clsMainProcess.Main with error code = 1");
+                    ConsoleMsgUtils.ShowWarning(errMsg + "; " + clsStackTraceFormatter.GetExceptionStackTrace(ex, true));
+                    ConsoleMsgUtils.ShowWarning("Exiting clsMainProcess.Main with error code = 1");
                     return 1;
                 }
             } while (restart);
