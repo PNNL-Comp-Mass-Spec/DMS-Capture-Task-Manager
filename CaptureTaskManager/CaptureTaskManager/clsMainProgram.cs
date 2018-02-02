@@ -300,6 +300,10 @@ namespace CaptureTaskManager
             m_MsgQueueInitSuccess = false;
             m_MsgHandler = new clsMessageHandler();
             m_MsgHandler.BrokerUri = m_MsgHandler.BrokerUri = m_MgrSettings.GetParam("MessageQueueURI");
+            // Make the initial log entry
+            var relativeLogFilePath = clsLogTools.CurrentFileAppenderPath;
+            var logFile = new FileInfo(relativeLogFilePath);
+            ShowTrace("Initializing log file " + clsPathUtils.CompactPathString(logFile.FullName, 60));
 
             // Typically "Manager.Status"
             m_MsgHandler.StatusTopicName = m_MgrSettings.GetParam("MessageQueueTopicMgrStatus");

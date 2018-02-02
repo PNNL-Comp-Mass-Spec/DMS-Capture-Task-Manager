@@ -95,7 +95,10 @@ namespace CaptureTaskManager
 
                     m_HasConnection = true;
 
-                    LogDebug("Connected to broker");
+                    var username = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
+
+                    LogDebug(string.Format("Connected to broker as user {0}", username));
+
                     return;
                 }
                 catch (Exception ex)
