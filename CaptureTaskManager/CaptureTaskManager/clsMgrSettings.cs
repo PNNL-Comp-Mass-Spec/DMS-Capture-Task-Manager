@@ -619,82 +619,10 @@ namespace CaptureTaskManager
             return inpObj.ToString();
         }
 
-        /// <summary>
-        /// Writes specfied value to an application config file.
-        /// </summary>
-        /// <param name="key">Name for parameter (case sensitive)</param>
-        /// <param name="value">New value for parameter</param>
-        /// <returns>TRUE for success; FALSE for error (ErrMsg property contains reason)</returns>
-        /// <remarks>This bit of lunacy is needed because MS doesn't supply a means to write to an app config file</remarks>
-        public bool WriteConfigSetting(string key, string value)
-        {
-            mErrMsg = "";
-
-            // Load the config document
-            var doc = LoadConfigDocument();
-            if (doc == null)
-            {
-                // Error message has already been produced by LoadConfigDocument
-                return false;
-            }
-
-            // Retrieve the settings node
-            var appSettingsNode = doc.SelectSingleNode("//applicationSettings");
-
-            if (appSettingsNode == null)
-            {
-                mErrMsg = "clsMgrSettings.WriteConfigSettings; appSettings node not found";
-                return false;
-            }
-
-            try
-            {
-                // Select the element containing the value for the specified key containing the key
-                var matchingElement = (XmlElement)appSettingsNode.SelectSingleNode(string.Format("//setting[@name='{0}']/value", key));
-                if (matchingElement != null)
-                {
-                    // Set key to specified value
-                    matchingElement.InnerText = value;
-                }
-                else
-                {
-                    // Key was not found
-                    mErrMsg = "clsMgrSettings.WriteConfigSettings; specified key not found: " + key;
-                    return false;
-                }
-                doc.Save(GetConfigFilePath());
-                return true;
-            }
-            catch (Exception ex)
-            {
-                mErrMsg = "clsMgrSettings.WriteConfigSettings; Exception updating settings file: " + ex.Message;
-                return false;
-            }
-        }
-
         private void WriteErrorMsg(string errorMessage, bool allowLogToDB = true)
         {
             var logToDb = !mMCParamsLoaded && allowLogToDB;
             LogError(errorMessage, logToDb);
-        }
-
-        /// <summary>
-        /// Loads an app config file for changing parameters
-        /// </summary>
-        /// <returns>App config file as an XML document if successful; NOTHING on failure</returns>
-        private XmlDocument LoadConfigDocument()
-        {
-            try
-            {
-                var doc = new XmlDocument();
-                doc.Load(GetConfigFilePath());
-                return doc;
-            }
-            catch (Exception ex)
-            {
-                mErrMsg = "clsMgrSettings.LoadConfigDocument; Exception loading settings file: " + ex.Message;
-                return null;
-            }
         }
 
         /// <summary>
