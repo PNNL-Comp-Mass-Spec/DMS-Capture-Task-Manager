@@ -5,6 +5,7 @@
 // Created 10/01/2009
 //*********************************************************************************************************
 
+using System;
 using System.Collections.Generic;
 
 namespace CaptureTaskManager
@@ -12,6 +13,7 @@ namespace CaptureTaskManager
     /// <summary>
     /// Class to hold data receieved from Broadcast command queue for control of manager
     /// </summary>
+    [Obsolete("Unused")]
     class clsBroadcastCmd
     {
 
