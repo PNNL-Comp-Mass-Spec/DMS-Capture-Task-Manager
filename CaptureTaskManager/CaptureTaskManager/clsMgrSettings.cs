@@ -285,14 +285,14 @@ namespace CaptureTaskManager
 
         private string GetGroupNameFromSettings(DataTable dtSettings)
         {
-            foreach (DataRow oRow in dtSettings.Rows)
+            foreach (DataRow currentRow in dtSettings.Rows)
             {
                 // Add the column heading and value to the dictionary
-                var paramKey = DbCStr(oRow[dtSettings.Columns["ParameterName"]]);
+                var paramKey = DbCStr(currentRow[dtSettings.Columns["ParameterName"]]);
 
                 if (string.Equals(paramKey, "MgrSettingGroupName", StringComparison.OrdinalIgnoreCase))
                 {
-                    var groupName = DbCStr(oRow[dtSettings.Columns["ParameterValue"]]);
+                    var groupName = DbCStr(currentRow[dtSettings.Columns["ParameterValue"]]);
                     if (!string.IsNullOrWhiteSpace(groupName))
                     {
                         return groupName;
@@ -473,11 +473,11 @@ namespace CaptureTaskManager
 
             try
             {
-                foreach (DataRow oRow in dtSettings.Rows)
+                foreach (DataRow currentRow in dtSettings.Rows)
                 {
                     // Add the column heading and value to the dictionary
-                    var paramKey = DbCStr(oRow[dtSettings.Columns["ParameterName"]]);
-                    var paramVal = DbCStr(oRow[dtSettings.Columns["ParameterValue"]]);
+                    var paramKey = DbCStr(currentRow[dtSettings.Columns["ParameterName"]]);
+                    var paramVal = DbCStr(currentRow[dtSettings.Columns["ParameterValue"]]);
 
                     if (paramKey.ToLower() == "perspective" && Environment.MachineName.ToLower().StartsWith("monroe"))
                     {
