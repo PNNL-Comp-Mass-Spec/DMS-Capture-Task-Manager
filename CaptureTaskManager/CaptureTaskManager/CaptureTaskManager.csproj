@@ -92,7 +92,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsBroadcastCmd.cs" />
     <Compile Include="clsCaptureTask.cs" />
     <Compile Include="clsCleanupMgrErrors.cs" />
     <Compile Include="clsCodeTest.cs" />
@@ -102,7 +101,6 @@
     <Compile Include="clsMgrSettings.cs" />
     <Compile Include="clsPluginLoader.cs" />
     <Compile Include="clsStatusFile.cs" />
-    <Compile Include="clsXMLTools.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -117,9 +115,6 @@
     </Compile>
     <None Include="app.config">
       <SubType>Designer</SubType>
-    </None>
-    <None Include="Logging.config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
