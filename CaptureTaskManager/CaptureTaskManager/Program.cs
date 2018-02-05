@@ -98,6 +98,7 @@ namespace CaptureTaskManager
 
                     if (mgrInitSuccess)
                         restart = oMainProgram.PerformMainLoop();
+
                 }
                 catch (Exception ex)
                 {
@@ -105,11 +106,13 @@ namespace CaptureTaskManager
                     var errMsg = "Critical exception starting application: " + ex.Message;
                     ConsoleMsgUtils.ShowWarning(errMsg + "; " + clsStackTraceFormatter.GetExceptionStackTrace(ex, true));
                     ConsoleMsgUtils.ShowWarning("Exiting clsMainProcess.Main with error code = 1");
+                    PRISM.Logging.FileLogger.FlushPendingMessages();
                     return 1;
                 }
             } while (restart);
 
             ShowTrace("Exiting");
+            PRISM.Logging.FileLogger.FlushPendingMessages();
             return 0;
         }
 
