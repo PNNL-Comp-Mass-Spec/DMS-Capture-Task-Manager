@@ -382,7 +382,7 @@ namespace CaptureTaskManager
 
             m_StatusFile.MonitorUpdateRequired += OnStatusMonitorUpdateReceived;
 
-            var logStatusToMessageQueue = m_MgrSettings.GetBooleanParam("LogStatusToMessageQueue");
+            var logStatusToMessageQueue = m_MgrSettings.GetParam("LogStatusToMessageQueue", false);
             var messageQueueUri = m_MgrSettings.GetParam("MessageQueueURI");
             var messageQueueTopicMgrStatus = m_MgrSettings.GetParam("MessageQueueTopicMgrStatus");
 
@@ -631,20 +631,20 @@ namespace CaptureTaskManager
                     }
 
                     // Check to see if manager is still active
-                    if (!m_MgrSettings.GetBooleanParam("mgractive"))
+                    if (!m_MgrSettings.GetParam("mgractive", false))
                     {
                         // Disabled via manager control db
                         m_LoopExitCode = LoopExitCode.DisabledMC;
                         break;
                     }
 
-                    if (!m_MgrSettings.GetBooleanParam(clsMgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL))
+                    if (!m_MgrSettings.GetParam(clsMgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL, false))
                     {
                         m_LoopExitCode = LoopExitCode.DisabledLocally;
                         break;
                     }
 
-                    if (m_MgrSettings.GetBooleanParam("ManagerUpdateRequired"))
+                    if (m_MgrSettings.GetParam("ManagerUpdateRequired", false))
                     {
                         m_LoopExitCode = LoopExitCode.UpdateRequired;
                         break;

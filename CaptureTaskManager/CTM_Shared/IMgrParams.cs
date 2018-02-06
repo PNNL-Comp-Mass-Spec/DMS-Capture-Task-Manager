@@ -23,8 +23,6 @@ namespace CaptureTaskManager
 
         #region "Methods"
 
-        bool GetBooleanParam(string itemKey);
-
         /// <summary>
         /// Gets a parameter from the manager parameters dictionary
         /// </summary>
