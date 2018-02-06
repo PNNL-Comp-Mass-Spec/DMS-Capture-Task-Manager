@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Data;
 using System.IO;
+using System.Linq;
 using PRISM;
 
 namespace CaptureTaskManager
@@ -26,6 +27,8 @@ namespace CaptureTaskManager
     {
 
         #region "Constants"
+
+        const string SP_NAME_ACKMANAGERUPDATE = "AckManagerUpdateRequired";
 
         /// <summary>
         /// Status message for when the manager is deactivated locally
@@ -65,7 +68,8 @@ namespace CaptureTaskManager
         private readonly Dictionary<string, string> mParamDictionary;
 
         private bool mMCParamsLoaded;
-        private string mErrMsg = "";
+
+        private string mErrMsg = string.Empty;
 
         #endregion
 
@@ -81,7 +85,15 @@ namespace CaptureTaskManager
         /// </summary>
         public string ManagerName => GetParam(MGR_PARAM_MGR_NAME, Environment.MachineName + "_Undefined-Manager");
 
+        /// <summary>
+        /// Manager parameters dictionary
+        /// </summary>
         public Dictionary<string, string> TaskDictionary => mParamDictionary;
+
+        /// <summary>
+        /// True when TraceMode has been enabled at the command line via /trace
+        /// </summary>
+        public bool TraceMode { get; }
 
         #endregion
 
@@ -90,9 +102,12 @@ namespace CaptureTaskManager
         /// <summary>
         /// Constructor
         /// </summary>
+        /// <param name="traceMode"></param>
         /// <remarks></remarks>
-        public clsMgrSettings()
+        public clsMgrSettings(bool traceMode)
         {
+            TraceMode = traceMode;
+
             mParamDictionary = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             if (!LoadSettings())
@@ -102,10 +117,67 @@ namespace CaptureTaskManager
 
                 throw new ApplicationException("Unable to initialize manager settings class: " + mErrMsg);
             }
+
+            if (TraceMode)
+            {
+                ShowTraceMessage("Initialized IMgrParams");
+
+                Console.ForegroundColor = ConsoleMsgUtils.DebugFontColor;
+                foreach (var key in from item in mParamDictionary.Keys orderby item select item)
+                {
+                    var value = mParamDictionary[key];
+                    Console.WriteLine("  {0,-30} {1}", key, value);
+                }
+                Console.ResetColor();
+            }
         }
 
         /// <summary>
-        /// Updates manager settings, then loads settings from the database or from ManagerSettingsLocal.xml if clsGlobal.OfflineMode is true
+        /// Calls stored procedure AckManagerUpdateRequired to acknowledge that the manager has exited so that an update can be applied
+        /// </summary>
+        public void AckManagerUpdateRequired()
+        {
+            try
+            {
+                // Data Source=proteinseqs;Initial Catalog=manager_control
+                var connectionString = GetParam(MGR_PARAM_MGR_CFG_DB_CONN_STRING);
+
+                if (string.IsNullOrWhiteSpace(connectionString))
+                {
+                    if (clsUtilities.OfflineMode)
+                        LogDebug("Skipping call to " + SP_NAME_ACKMANAGERUPDATE + " since offline");
+                    else
+                        LogError("Skipping call to " + SP_NAME_ACKMANAGERUPDATE + " since the Manager Control connection string is empty");
+
+                    return;
+                }
+
+                if (TraceMode)
+                    ShowTraceMessage("AckManagerUpdateRequired using " + connectionString);
+
+                var conn = new SqlConnection(connectionString);
+                conn.Open();
+
+                // Set up the command object prior to SP execution
+                var cmd = new SqlCommand(SP_NAME_ACKMANAGERUPDATE, conn) {
+                    CommandType = CommandType.StoredProcedure
+                };
+
+                cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
+                cmd.Parameters.Add(new SqlParameter("@managerName", SqlDbType.VarChar, 128)).Value = ManagerName;
+                cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
+
+                // Execute the SP
+                cmd.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception calling " + SP_NAME_ACKMANAGERUPDATE, ex);
+            }
+        }
+
+        /// <summary>
+        /// Updates manager settings, then loads settings from the database or from ManagerSettingsLocal.xml if clsUtilities.OfflineMode is true
         /// </summary>
         /// <returns>True if successful; False on error</returns>
         /// <remarks></remarks>
@@ -118,7 +190,7 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Updates manager settings, then loads settings from the database or from ManagerSettingsLocal.xml if clsGlobal.OfflineMode is true
+        /// Updates manager settings, then loads settings from the database or from ManagerSettingsLocal.xml if clsUtilities.OfflineMode is true
         /// </summary>
         /// <param name="configFileSettings">Manager settings loaded from file AnalysisManagerProg.exe.config</param>
         /// <returns>True if successful; False on error</returns>
@@ -167,7 +239,7 @@ namespace CaptureTaskManager
                 return false;
             }
 
-            // Set flag indicating params have been loaded from manger config db
+            // Set flag indicating manager parameters have been loaded
             mMCParamsLoaded = true;
 
             // No problems found
@@ -211,42 +283,6 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Calls stored procedure AckManagerUpdateRequired to acknowledge that the manager has exited so that an update can be applied
-        /// </summary>
-        public void AckManagerUpdateRequired()
-        {
-            const string SP_NAME_ACKMANAGERUPDATE = "AckManagerUpdateRequired";
-
-            try
-            {
-                var ConnectionString = GetParam(MGR_PARAM_MGR_CFG_DB_CONN_STRING);
-
-                var conn = new SqlConnection(ConnectionString);
-                conn.Open();
-
-                // Set up the command object prior to SP execution
-                var cmd = conn.CreateCommand();
-                {
-                    cmd.CommandType = CommandType.StoredProcedure;
-                    cmd.CommandText = SP_NAME_ACKMANAGERUPDATE;
-
-                    cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-
-                    cmd.Parameters.Add(new SqlParameter("@managerName", SqlDbType.VarChar, 128)).Value = GetParam(MGR_PARAM_MGR_NAME);
-
-                    cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
-                }
-
-                // Execute the SP
-                cmd.ExecuteNonQuery();
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception calling " + SP_NAME_ACKMANAGERUPDATE, ex);
-            }
-        }
-
-        /// <summary>
         /// Tests initial settings retrieved from config file
         /// </summary>
         /// <param name="paramDictionary"></param>
@@ -270,7 +306,6 @@ namespace CaptureTaskManager
             }
             else
             {
-
                 if (bool.TryParse(usingDefaultsText, out var usingDefaults) && usingDefaults)
                 {
                     mErrMsg = "CheckInitialSettings: Config file problem, contains UsingDefaults=True";
@@ -354,97 +389,68 @@ namespace CaptureTaskManager
             return success;
         }
 
-        private bool LoadMgrSettingsFromDBWork(string managerName, out DataTable dtSettings, bool logConnectionErrors,
-                                               bool returnErrorIfNoParameters, int retryCount = 3)
+        private bool LoadMgrSettingsFromDBWork(
+            string managerName,
+            out DataTable dtSettings,
+            bool logConnectionErrors,
+            bool returnErrorIfNoParameters)
         {
-            var DBConnectionString = GetParam(MGR_PARAM_MGR_CFG_DB_CONN_STRING, "");
-            dtSettings = null;
+            const short retryCount = 6;
 
-            if (string.IsNullOrEmpty(DBConnectionString))
+            // Data Source=proteinseqs;Initial Catalog=manager_control
+            var connectionString = GetParam(MGR_PARAM_MGR_CFG_DB_CONN_STRING, string.Empty);
+
+            if (string.IsNullOrEmpty(managerName))
+            {
+                mErrMsg = "MgrCnfgDbConnectStr parameter not found in m_ParamDictionary; " +
+                          "it should be defined in the " + Path.GetFileName(GetConfigFilePath()) + " file";
+
+                if (TraceMode)
+                    ShowTraceMessage("LoadMgrSettingsFromDBWork: " + mErrMsg);
+
+                dtSettings = null;
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(connectionString))
             {
                 mErrMsg = MGR_PARAM_MGR_CFG_DB_CONN_STRING +
                            " parameter not found in mParamDictionary; it should be defined in the " + Path.GetFileName(GetConfigFilePath()) + " file";
                 WriteErrorMsg(mErrMsg);
+                dtSettings = null;
                 return false;
             }
 
+            if (TraceMode)
+                ShowTraceMessage("LoadMgrSettingsFromDBWork using [" + connectionString + "] for manager " + managerName);
+
             var sqlStr = "SELECT ParameterName, ParameterValue FROM V_MgrParams WHERE ManagerName = '" + managerName + "'";
 
-            // Get a table holding the parameters for this manager
-            while (retryCount >= 0)
-            {
-                try
-                {
-                    using (var cn = new SqlConnection(DBConnectionString))
-                    {
-                        var cmd = new SqlCommand
-                        {
-                            CommandType = CommandType.Text,
-                            CommandText = sqlStr,
-                            Connection = cn,
-                            CommandTimeout = 30
-                        };
+            // Get a table to hold the results of the query
+            var success = clsUtilities.GetDataTableByQuery(sqlStr, connectionString, "LoadMgrSettingsFromDBWork", retryCount, out dtSettings);
 
-                        using (var da = new SqlDataAdapter(cmd))
-                        {
-                            using (var ds = new DataSet())
-                            {
-                                da.Fill(ds);
-                                dtSettings = ds.Tables[0];
-                            }
-                        }
-                    }
-                    break;
-                }
-                catch (Exception ex)
-                {
-                    retryCount -= 1;
-                    var msg = string.Format("LoadMgrSettingsFromDB; Exception getting manager settings from database: {0}; " +
-                                            "ConnectionString: {1}, RetryCount = {2}",
-                                            ex.Message, DBConnectionString, retryCount);
-
-                    if (logConnectionErrors)
-                        WriteErrorMsg(msg, allowLogToDB: false);
-
-                    // Delay for 5 seconds before trying again
-                    if (retryCount >= 0)
-                        System.Threading.Thread.Sleep(5000);
-                }
-
-            } // while
-
-            // If loop exited due to errors, return false
-            if (retryCount < 0)
+            // If unable to retrieve the data, return false
+            if (!success)
             {
                 // Log the message to the DB if the monthly Windows updates are not pending
                 var allowLogToDB = !clsWindowsUpdateStatus.ServerUpdatesArePending();
 
-                mErrMsg = "clsMgrSettings.LoadMgrSettingsFromDB; Excessive failures attempting to retrieve manager settings from database";
+                mErrMsg = "LoadMgrSettingsFromDBWork; Excessive failures attempting to retrieve manager settings from database " +
+                          "for manager '" + managerName + "'";
                 if (logConnectionErrors)
                     WriteErrorMsg(mErrMsg, allowLogToDB);
-
-                return false;
-            }
-
-            // Validate that the data table object is initialized
-            if (dtSettings == null)
-            {
-                // Data table not initialized
-                mErrMsg = "LoadMgrSettingsFromDB; dtSettings datatable is null; using " +
-                           DBConnectionString;
-                if (logConnectionErrors)
-                    WriteErrorMsg(mErrMsg);
-
+                dtSettings?.Dispose();
                 return false;
             }
 
             // Verify at least one row returned
             if (dtSettings.Rows.Count < 1 && returnErrorIfNoParameters)
             {
-                // Wrong number of rows returned
-                mErrMsg = "LoadMgrSettingsFromDB; Manager " + managerName + " not defined in the manager control database; using " + DBConnectionString;
-                WriteErrorMsg(mErrMsg);
-                dtSettings.Dispose();
+                // No data was returned
+                mErrMsg = "LoadMgrSettingsFromDBWork; Manager '" + managerName + "' not defined in the manager control database; using " + connectionString;
+                if (logConnectionErrors)
+                    WriteErrorMsg(mErrMsg);
+                dtSettings?.Dispose();
                 return false;
             }
 
@@ -496,7 +502,7 @@ namespace CaptureTaskManager
             }
             catch (Exception ex)
             {
-                mErrMsg = "LoadMgrSettingsFromDB: Exception filling string dictionary from table for manager " +
+                mErrMsg = "clsAnalysisMgrSettings.StoreParameters; Exception filling string dictionary from table for manager " +
                           "'" + managerName + "': " + ex.Message;
                 WriteErrorMsg(mErrMsg);
                 success = false;
@@ -510,78 +516,67 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Lookup the value of a boolean parameter
+        /// Gets a parameter from the manager parameters dictionary
         /// </summary>
-        /// <param name="itemKey"></param>
-        /// <returns>True/false for the given parameter; false if the parameter is not present</returns>
-        public bool GetBooleanParam(string itemKey)
-        {
-            var itemValue = GetParam(itemKey, string.Empty);
-
-            if (string.IsNullOrWhiteSpace(itemValue))
-                return false;
-
-            if (bool.TryParse(itemValue, out var itemBool))
-                return itemBool;
-
-            return false;
-        }
-
+        /// <param name="itemKey">Key name for item</param>
+        /// <returns>String value associated with specified key</returns>
+        /// <remarks>Returns empty string if key isn't found</remarks>
         public string GetParam(string itemKey)
         {
-            return GetParam(itemKey, string.Empty);
+            if (mParamDictionary == null)
+                return string.Empty;
+
+            if (!mParamDictionary.TryGetValue(itemKey, out var value))
+                return string.Empty;
+
+            return string.IsNullOrWhiteSpace(value) ? string.Empty : value;
         }
 
         /// <summary>
-        /// Gets a manager parameter
+        /// Gets a parameter from the manager parameters dictionary
         /// </summary>
-        /// <param name="itemKey">Parameter name</param>
-        /// <param name="valueIfMissing">Value to return if the parameter does not exist</param>
-        /// <returns>Parameter value if found, otherwise empty string</returns>
-        public string GetParam(string itemKey, string valueIfMissing)
-        {
-            if (mParamDictionary.TryGetValue(itemKey, out var itemValue))
-            {
-                return itemValue ?? string.Empty;
-            }
-
-            return valueIfMissing ?? string.Empty;
-        }
-
-        /// <summary>
-        /// Gets a manager parameter
-        /// </summary>
-        /// <param name="itemKey">Parameter name</param>
-        /// <param name="valueIfMissing">Value to return if the parameter does not exist</param>
-        /// <returns>Parameter value if found, otherwise empty string</returns>
+        /// <param name="itemKey">Key name for item</param>
+        /// <param name="valueIfMissing">Value to return if the parameter is not found</param>
+        /// <returns>Value for specified parameter; valueIfMissing if not found</returns>
         public bool GetParam(string itemKey, bool valueIfMissing)
         {
-            if (mParamDictionary.TryGetValue(itemKey, out var valueText))
-            {
-                var value = clsConversion.CBoolSafe(valueText, valueIfMissing);
-                return value;
-            }
-
-            return valueIfMissing;
+            return clsConversion.CBoolSafe(GetParam(itemKey), valueIfMissing);
         }
 
         /// <summary>
-        /// Gets a manager parameter
+        /// Gets a parameter from the manager parameters dictionary
         /// </summary>
-        /// <param name="itemKey">Parameter name</param>
-        /// <param name="valueIfMissing">Value to return if the parameter does not exist</param>
-        /// <returns>Parameter value if found, otherwise empty string</returns>
+        /// <param name="itemKey">Key name for item</param>
+        /// <param name="valueIfMissing">Value to return if the parameter is not found</param>
+        /// <returns>Value for specified parameter; valueIfMissing if not found</returns>
         public int GetParam(string itemKey, int valueIfMissing)
         {
-            if (mParamDictionary.TryGetValue(itemKey, out var valueText))
-            {
-                var value = clsConversion.CIntSafe(valueText, valueIfMissing);
-                return value;
-            }
-
-            return valueIfMissing;
+            return clsConversion.CIntSafe(GetParam(itemKey), valueIfMissing);
         }
 
+        /// <summary>
+        /// Gets a parameter from the manager parameters dictionary
+        /// </summary>
+        /// <param name="itemKey">Key name for item</param>
+        /// <param name="valueIfMissing">Value to return if the parameter is not found</param>
+        /// <returns>Value for specified parameter; valueIfMissing if not found</returns>
+        public string GetParam(string itemKey, string valueIfMissing)
+        {
+            var value = GetParam(itemKey);
+            if (string.IsNullOrEmpty(value))
+            {
+                return valueIfMissing;
+            }
+
+            return value;
+        }
+
+        /// <summary>
+        /// Sets a parameter in the parameters string dictionary
+        /// </summary>
+        /// <param name="itemKey">Key name for the item</param>
+        /// <param name="itemValue">Value to assign to the key</param>
+        /// <remarks></remarks>
         public void SetParam(string itemKey, string itemValue)
         {
             if (mParamDictionary.ContainsKey(itemKey))
@@ -594,6 +589,11 @@ namespace CaptureTaskManager
             }
         }
 
+        private static void ShowTraceMessage(string message)
+        {
+            clsMainProgram.ShowTraceMessage(message);
+        }
+
         /// <summary>
         /// Converts a database output object that could be dbNull to a string
         /// </summary>
@@ -602,18 +602,30 @@ namespace CaptureTaskManager
         /// <remarks></remarks>
         private string DbCStr(object inpObj)
         {
-            if (inpObj == null)
+            // If input object is DbNull, returns "", otherwise returns String representation of object
+            if (ReferenceEquals(inpObj, DBNull.Value))
             {
-                return "";
+                return string.Empty;
             }
 
-            return inpObj.ToString();
+            return Convert.ToString(inpObj);
         }
 
+        /// <summary>
+        /// Writes an error message to the application log and the database
+        /// </summary>
+        /// <param name="errorMessage">Message to write</param>
+        /// <param name="allowLogToDB"></param>
+        /// <remarks></remarks>
         private void WriteErrorMsg(string errorMessage, bool allowLogToDB = true)
         {
             var logToDb = !mMCParamsLoaded && allowLogToDB;
             LogError(errorMessage, logToDb);
+
+            if (TraceMode)
+            {
+                ShowTraceMessage(errorMessage);
+            }
         }
 
         /// <summary>
