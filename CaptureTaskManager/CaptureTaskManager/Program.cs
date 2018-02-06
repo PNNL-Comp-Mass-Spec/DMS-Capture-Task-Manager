@@ -6,8 +6,12 @@
 //*********************************************************************************************************
 
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Threading;
 using PRISM;
+using PRISM.Logging;
 
 namespace CaptureTaskManager
 {
@@ -33,6 +37,8 @@ namespace CaptureTaskManager
         {
             mCodeTestMode = false;
 
+            var commandLineParser = new clsParseCommandLine();
+
             mTraceMode = false;
 
             var osVersionInfo = new clsOSVersionInfo();
@@ -45,20 +51,41 @@ namespace CaptureTaskManager
                 clsUtilities.EnableOfflineMode(true);
             }
 
-            var commandLineParser = new clsParseCommandLine();
+            bool validArgs;
 
             // Look for /T or /Test on the command line
             // If present, this means "code test mode" is enabled
             if (commandLineParser.ParseCommandLine())
             {
-                SetOptionsUsingCommandLineParameters(commandLineParser);
+                validArgs = SetOptionsUsingCommandLineParameters(commandLineParser);
+            }
+            else
+            {
+                if (commandLineParser.NoParameters)
+                {
+                    validArgs = true;
+                }
+                else
+                {
+                    if (commandLineParser.NeedToShowHelp)
+                    {
+                        ShowProgramHelp();
+                    }
+                    else
+                    {
+                        Console.WriteLine("Error parsing the command line arguments");
+                    }
+                    return -1;
+                }
             }
 
-            if (commandLineParser.NeedToShowHelp)
+            if (commandLineParser.NeedToShowHelp || !validArgs)
             {
                 ShowProgramHelp();
                 return -1;
             }
+
+            ShowTraceMessage("Command line arguments parsed");
 
             // Note: CodeTestMode is enabled using command line switch /T
             if (mCodeTestMode)
@@ -132,9 +159,12 @@ namespace CaptureTaskManager
             try
             {
                 // Make sure no invalid parameters are present
-                if (commandLineParser.InvalidParametersPresent(strValidParameters))
+                if (commandLineParser.InvalidParametersPresent(lstValidParameters))
                 {
-                    return;
+                    ShowErrorMessage("Invalid commmand line parameters",
+                                     (from item in commandLineParser.InvalidParameters(lstValidParameters) select "/" + item).ToList());
+
+                    return false;
                 }
 
                 // Query commandLineParser to see if various parameters are present
