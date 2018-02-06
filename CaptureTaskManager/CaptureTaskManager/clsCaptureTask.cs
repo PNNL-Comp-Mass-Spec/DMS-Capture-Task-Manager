@@ -27,7 +27,12 @@ namespace CaptureTaskManager
 
         #endregion
 
-        #region "Class variables"
+        #region "Properties"
+
+        /// <summary>
+        /// When true, show additional messages at the console
+        /// </summary>
+        public bool TraceMode { get; set; }
 
         #endregion
 
@@ -230,7 +235,7 @@ namespace CaptureTaskManager
 
                 LogDebug("clsCaptureTask.RequestTaskDetailed(), connection string: " + m_ConnStr);
 
-                if (m_DebugLevel >= 5)
+                if (m_DebugLevel >= 5 || TraceMode)
                 {
                     PrintCommandParams(spCmd);
                 }

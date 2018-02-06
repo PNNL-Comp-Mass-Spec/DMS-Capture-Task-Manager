@@ -364,7 +364,9 @@ namespace CaptureTaskManager
             InitializeMessageQueue();
 
             // Set up the tool for getting tasks
-            m_Task = new clsCaptureTask(m_MgrSettings);
+            m_Task = new clsCaptureTask(m_MgrSettings) {
+                TraceMode = TraceMode
+            };
 
             // Set up the status file class
             if (fInfo.DirectoryName == null)
