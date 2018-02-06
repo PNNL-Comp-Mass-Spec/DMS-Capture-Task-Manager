@@ -110,25 +110,20 @@ namespace CaptureTaskManager
 
             mParamDictionary = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-            if (!LoadSettings())
-            {
-                if (string.Equals(mErrMsg, DEACTIVATED_LOCALLY))
-                    throw new ApplicationException(DEACTIVATED_LOCALLY);
-
-                throw new ApplicationException("Unable to initialize manager settings class: " + mErrMsg);
-            }
+            var success = LoadSettings();
 
             if (TraceMode)
             {
-                ShowTraceMessage("Initialized IMgrParams");
+                ShowTraceMessage("Initialized clsMgrSettings");
+                ShowDictionaryTrace(mParamDictionary);
+            }
 
-                Console.ForegroundColor = ConsoleMsgUtils.DebugFontColor;
-                foreach (var key in from item in mParamDictionary.Keys orderby item select item)
-                {
-                    var value = mParamDictionary[key];
-                    Console.WriteLine("  {0,-30} {1}", key, value);
-                }
-                Console.ResetColor();
+            if (!success)
+            {
+                if (string.Equals(ErrMsg, DEACTIVATED_LOCALLY))
+                    throw new ApplicationException(DEACTIVATED_LOCALLY);
+
+                throw new ApplicationException("Unable to initialize manager settings class: " + ErrMsg);
             }
         }
 
@@ -278,6 +273,15 @@ namespace CaptureTaskManager
             // Will get updated later when manager settings are loaded from the manager control database
             var defaultDMSConnectionString = Properties.Settings.Default.DefaultDMSConnString;
             mgrSettingsFromFile.Add(MGR_PARAM_DEFAULT_DMS_CONN_STRING, defaultDMSConnectionString);
+
+            if (TraceMode)
+            {
+
+                var exePath = PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppPath();
+                var configFilePath = exePath + ".config";
+                ShowTraceMessage("Settings loaded from " + clsPathUtils.CompactPathString(configFilePath, 60));
+                ShowDictionaryTrace(mgrSettingsFromFile);
+            }
 
             return mgrSettingsFromFile;
         }
@@ -587,6 +591,23 @@ namespace CaptureTaskManager
             {
                 mParamDictionary.Add(itemKey, itemValue);
             }
+        }
+
+        /// <summary>
+        /// Show contents of a dictionary
+        /// </summary>
+        /// <param name="settings"></param>
+        public static void ShowDictionaryTrace(IReadOnlyDictionary<string, string> settings)
+        {
+            Console.ForegroundColor = ConsoleMsgUtils.DebugFontColor;
+            foreach (var key in from item in settings.Keys orderby item select item)
+            {
+                var value = settings[key];
+                var keyWidth = Math.Max(30, Math.Ceiling(key.Length / 15.0) * 15);
+                var formatString = "  {0,-" + keyWidth + "} {1}";
+                Console.WriteLine(formatString, key, value);
+            }
+            Console.ResetColor();
         }
 
         private static void ShowTraceMessage(string message)
