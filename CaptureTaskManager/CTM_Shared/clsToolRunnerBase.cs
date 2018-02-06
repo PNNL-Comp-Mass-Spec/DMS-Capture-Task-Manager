@@ -552,8 +552,6 @@ namespace CaptureTaskManager
             var strExeInfo = string.Empty;
             string toolVersionInfoCombined;
 
-            bool Outcome;
-
             if (string.IsNullOrWhiteSpace(m_WorkDir))
             {
                 return false;
@@ -620,15 +618,11 @@ namespace CaptureTaskManager
 
             if (resCode == 0)
             {
-                Outcome = true;
-            }
-            else
-            {
-                LogError("Error " + resCode + " storing tool version for current processing step");
-                Outcome = false;
+                return true;
             }
 
-            return Outcome;
+            LogError("Error " + resCode + " storing tool version for current processing step");
+            return false;
         }
 
         /// <summary>
