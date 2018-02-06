@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data;
+using System.Data.SqlClient;
 
 namespace CaptureTaskManager
 {
@@ -7,19 +8,47 @@ namespace CaptureTaskManager
     {
         #region "Constants"
 
-        protected const string SP_NAME_REPORTMGRCLEANUP = "ReportManagerErrorCleanup";
+        private const string SP_NAME_REPORTMGRCLEANUP = "ReportManagerErrorCleanup";
 
+        /// <summary>
+        /// Options for auto-removing files from the working directory when the manager starts
+        /// </summary>
         public enum eCleanupModeConstants
         {
+            /// <summary>
+            /// Never auto-remove files from the working directory
+            /// </summary>
             Disabled = 0,
+
+            /// <summary>
+            /// Auto-remove files from the working directory once
+            /// </summary>
             CleanupOnce = 1,
+
+            /// <summary>
+            /// Always auto-remove files from the working directory
+            /// </summary>
             CleanupAlways = 2
         }
 
-        protected enum eCleanupActionCodeConstants
+        /// <summary>
+        /// Cleanup status codes for stored procedure ReportManagerErrorCleanup
+        /// </summary>
+        public enum eCleanupActionCodeConstants
         {
+            /// <summary>
+            /// Starting
+            /// </summary>
             Start = 1,
+
+            /// <summary>
+            /// Success
+            /// </summary>
             Success = 2,
+
+            /// <summary>
+            /// Failed
+            /// </summary>
             Fail = 3
         }
 
@@ -27,33 +56,40 @@ namespace CaptureTaskManager
 
         #region "Class wide Variables"
 
-        protected readonly bool mInitialized;
-        protected string mMgrConfigDBConnectionString;
+        private readonly bool mInitialized;
+        private readonly string mMgrConfigDBConnectionString;
 
-        protected readonly string mManagerName;
-        protected readonly string mWorkingDirPath;
+        private readonly string mManagerName;
 
         private readonly IStatusFile m_StatusFile;
 
+        private readonly string mWorkingDirPath;
         #endregion
 
-        public clsCleanupMgrErrors(string strMgrConfigDBConnectionString,
-                                   string strManagerName,
-                                   string strWorkingDirPath,
-                                   IStatusFile oStatusFile)
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="mgrConfigDBConnectionString">Connection string to the manager_control database; if empty, database access is disabled</param>
+        /// <param name="managerName"></param>
+        /// <param name="workingDirPath"></param>
+        /// <param name="statusFile"></param>
+        public clsCleanupMgrErrors(string mgrConfigDBConnectionString,
+                                   string managerName,
+                                   string workingDirPath,
+                                   IStatusFile statusFile)
         {
-            if (string.IsNullOrEmpty(strMgrConfigDBConnectionString))
+            if (string.IsNullOrEmpty(mgrConfigDBConnectionString))
                 throw new Exception("Manager config DB connection string is not defined");
 
-            if (string.IsNullOrEmpty(strManagerName))
+            if (string.IsNullOrEmpty(managerName))
                 throw new Exception("Manager name is not defined");
 
-            mMgrConfigDBConnectionString = string.Copy(strMgrConfigDBConnectionString);
-            mManagerName = string.Copy(strManagerName);
+            mMgrConfigDBConnectionString = string.Copy(mgrConfigDBConnectionString);
+            mManagerName = string.Copy(managerName);
 
-            mWorkingDirPath = strWorkingDirPath;
+            mWorkingDirPath = workingDirPath;
 
-            m_StatusFile = oStatusFile;
+            m_StatusFile = statusFile;
 
             mInitialized = true;
         }
@@ -103,9 +139,9 @@ namespace CaptureTaskManager
             ReportManagerErrorCleanup(eCleanupActionCodeConstants.Start);
 
             // Delete all folders and subfolders in work folder
-            var blnSuccess = clsToolRunnerBase.CleanWorkDir(mWorkingDirPath, 1, out var failureMessage);
+            var success = clsToolRunnerBase.CleanWorkDir(mWorkingDirPath, 1, out var failureMessage);
 
-            if (!blnSuccess)
+            if (!success)
             {
                 if (string.IsNullOrEmpty(failureMessage))
                     failureMessage = "unable to clear work directory";
@@ -113,17 +149,17 @@ namespace CaptureTaskManager
             else
             {
                 // If successful, delete flagfile.txt
-                blnSuccess = m_StatusFile.DeleteStatusFlagFile();
-                if (!blnSuccess)
+                success = m_StatusFile.DeleteStatusFlagFile();
+                if (!success)
                 {
                     failureMessage = "error deleting " + clsStatusFile.FLAG_FILE_NAME;
                 }
             }
 
             // If successful, call SP with ReportManagerErrorCleanup @ActionCode=2
-            //    otherwise call SP ReportManagerErrorCleanup with @ActionCode=3
+            // Otherwise call SP ReportManagerErrorCleanup with @ActionCode=3
 
-            if (blnSuccess)
+            if (success)
             {
                 ReportManagerErrorCleanup(eCleanupActionCodeConstants.Success);
             }
@@ -132,48 +168,63 @@ namespace CaptureTaskManager
                 ReportManagerErrorCleanup(eCleanupActionCodeConstants.Fail, failureMessage);
             }
 
-            return blnSuccess;
+            return success;
         }
 
-        protected void ReportManagerErrorCleanup(eCleanupActionCodeConstants eMgrCleanupActionCode)
+        private void ReportManagerErrorCleanup(eCleanupActionCodeConstants eMgrCleanupActionCode)
         {
             ReportManagerErrorCleanup(eMgrCleanupActionCode, string.Empty);
         }
 
-        protected void ReportManagerErrorCleanup(eCleanupActionCodeConstants eMgrCleanupActionCode,
-                                                 string failureMessage)
+        private void ReportManagerErrorCleanup(eCleanupActionCodeConstants eMgrCleanupActionCode, string failureMessage)
         {
+            if (string.IsNullOrWhiteSpace(mMgrConfigDBConnectionString))
+            {
+                if (clsUtilities.OfflineMode)
+                    LogDebug("Skipping call to " + SP_NAME_REPORTMGRCLEANUP + " since offline");
+                else
+                    LogError("Skipping call to " + SP_NAME_REPORTMGRCLEANUP + " since the Manager Control connection string is empty");
+
+                return;
+            }
+
             try
             {
                 if (failureMessage == null)
                     failureMessage = string.Empty;
 
-                var myConnection = new System.Data.SqlClient.SqlConnection(mMgrConfigDBConnectionString);
+                var myConnection = new SqlConnection(mMgrConfigDBConnectionString);
                 myConnection.Open();
 
-                // Set up the command object prior to SP execution
-                var spCmd = new System.Data.SqlClient.SqlCommand
+                var cmd = new SqlCommand
                 {
                     CommandType = CommandType.StoredProcedure,
                     CommandText = SP_NAME_REPORTMGRCLEANUP,
                     Connection = myConnection
                 };
 
-                spCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-                spCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@ManagerName", SqlDbType.VarChar, 128)).Value = mManagerName;
-                spCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@State", SqlDbType.Int)).Value = eMgrCleanupActionCode;
-                spCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@FailureMsg", SqlDbType.VarChar, 512)).Value = failureMessage;
-                spCmd.Parameters.Add(new System.Data.SqlClient.SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
+                cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
+                cmd.Parameters.Add(new SqlParameter("@ManagerName", SqlDbType.VarChar, 128)).Value = mManagerName;
+                cmd.Parameters.Add(new SqlParameter("@State", SqlDbType.Int)).Value = eMgrCleanupActionCode;
+                cmd.Parameters.Add(new SqlParameter("@FailureMsg", SqlDbType.VarChar, 512)).Value = failureMessage;
+                cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
 
                 // Execute the SP
-                spCmd.ExecuteNonQuery();
+                cmd.ExecuteNonQuery();
             }
             catch (Exception ex)
             {
+                string errorMessage;
                 if (mMgrConfigDBConnectionString == null)
-                    mMgrConfigDBConnectionString = string.Empty;
-                LogError("Exception calling " + SP_NAME_REPORTMGRCLEANUP +
-                    " in ReportManagerErrorCleanup with connection string " + mMgrConfigDBConnectionString, ex);
+                {
+                    errorMessage = "Exception calling " + SP_NAME_REPORTMGRCLEANUP + " in ReportManagerErrorCleanup; empty connection string";
+                }
+                else
+                {
+                    errorMessage = "Exception calling " + SP_NAME_REPORTMGRCLEANUP + " in ReportManagerErrorCleanup with connection string " + mMgrConfigDBConnectionString;
+                }
+
+                LogError(errorMessage, ex);
             }
         }
     }
