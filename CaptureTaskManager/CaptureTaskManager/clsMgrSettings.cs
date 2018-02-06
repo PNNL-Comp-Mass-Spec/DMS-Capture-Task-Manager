@@ -263,11 +263,18 @@ namespace CaptureTaskManager
             // that text is replaced with this computer's domain name
             // This is a case-sensitive comparison
             //
-            var mgrName = Properties.Settings.Default.MgrName;
-            if (mgrName.Contains("$ComputerName$"))
-                mgrSettingsFromFile.Add(MGR_PARAM_MGR_NAME, mgrName.Replace("$ComputerName$", Environment.MachineName));
+            var managerName = Properties.Settings.Default.MgrName;
+            var autoDefinedName = managerName.Replace("$ComputerName$", Environment.MachineName);
+
+            if (!string.Equals(managerName, autoDefinedName))
+            {
+                ShowTraceMessage("Auto-defining the manager name as " + autoDefinedName);
+                mgrSettingsFromFile.Add(MGR_PARAM_MGR_NAME, autoDefinedName);
+            }
             else
-                mgrSettingsFromFile.Add(MGR_PARAM_MGR_NAME, mgrName);
+            {
+                mgrSettingsFromFile.Add(MGR_PARAM_MGR_NAME, managerName);
+            }
 
             // Default settings in use flag
             var usingDefaults = Properties.Settings.Default.UsingDefaults.ToString();
