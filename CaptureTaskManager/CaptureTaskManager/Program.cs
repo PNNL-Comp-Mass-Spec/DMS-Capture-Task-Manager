@@ -20,10 +20,11 @@ namespace CaptureTaskManager
     /// </summary>
     static class Program
     {
-        private const string PROGRAM_DATE = "February 5, 2018";
+        private const string PROGRAM_DATE = "February 6, 2018";
 
         private static bool mCodeTestMode;
         private static bool mTraceMode;
+        private static bool mShowVersionOnly;
 
         #region "Methods"
 
@@ -35,11 +36,12 @@ namespace CaptureTaskManager
         [STAThread]
         static int Main()
         {
-            mCodeTestMode = false;
 
             var commandLineParser = new clsParseCommandLine();
 
+            mCodeTestMode = false;
             mTraceMode = false;
+            mShowVersionOnly = false;
 
             var osVersionInfo = new clsOSVersionInfo();
 
@@ -86,6 +88,13 @@ namespace CaptureTaskManager
             }
 
             ShowTraceMessage("Command line arguments parsed");
+
+            if (mShowVersionOnly)
+            {
+                DisplayVersion();
+                Thread.Sleep(500);
+                return 0;
+            }
 
             // Note: CodeTestMode is enabled using command line switch /T
             if (mCodeTestMode)
@@ -150,11 +159,54 @@ namespace CaptureTaskManager
             return 0;
         }
 
-        private static void SetOptionsUsingCommandLineParameters(clsParseCommandLine commandLineParser)
+        private static void DisplayVersion()
+        {
+            Console.WriteLine();
+            Console.WriteLine("DMS Capture Task Manager");
+            Console.WriteLine("Version " + GetAppVersion(PROGRAM_DATE));
+            Console.WriteLine();
+
+            DisplayOSVersion();
+        }
+
+        private static void DisplayOSVersion()
+        {
+
+            try
+            {
+                var osVersionInfo = new clsOSVersionInfo();
+                var osDescription = osVersionInfo.GetOSVersion();
+
+                Console.WriteLine("OS Version: " + osDescription);
+            }
+            catch (Exception ex)
+            {
+                LogTools.LogError("Error displaying the OS version: " + Environment.NewLine + ex.Message, ex);
+            }
+        }
+
+        /// <summary>
+        /// Returns the .NET assembly version followed by the program date
+        /// </summary>
+        /// <param name="programDate"></param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        private static string GetAppVersion(string programDate)
+        {
+            return PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppVersion(programDate);
+        }
+
+        private static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine commandLineParser)
         {
             // Returns True if no problems; otherwise, returns false
 
-            var strValidParameters = new[] { "T", "Test", "Trace" };
+            var lstValidParameters = new List<string> {
+                "T",
+                "Test",
+                "Trace",
+                "V",
+                "Version"
+            };
 
             try
             {
@@ -169,19 +221,21 @@ namespace CaptureTaskManager
 
                 // Query commandLineParser to see if various parameters are present
                 if (commandLineParser.IsParameterPresent("T"))
-                {
                     mCodeTestMode = true;
-                }
 
                 if (commandLineParser.IsParameterPresent("Test"))
-                {
                     mCodeTestMode = true;
-                }
 
                 if (commandLineParser.IsParameterPresent("Trace"))
-                {
                     mTraceMode = true;
-                }
+
+                if (commandLineParser.IsParameterPresent("V"))
+                    mTraceMode = true;
+
+                if (commandLineParser.IsParameterPresent("Version"))
+                    mShowVersionOnly = true;
+
+                return true;
             }
             catch (Exception ex)
             {
@@ -210,30 +264,31 @@ namespace CaptureTaskManager
                                   "Normal operation is to run the program without any command line switches.");
                 Console.WriteLine();
                 Console.WriteLine("Program syntax:" + Environment.NewLine +
-                                  System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location) +
-                                  " [/EL] [/T] [/Test] [/Trace]");
+                                  exeName + " [/T] [/Test] [/Trace] [/Version]");
                 Console.WriteLine();
 
-                Console.WriteLine("Use /EL to post a test message to the Windows Event Log named 'DMSCapTaskMgr' then exit the program. " +
-                                  "When setting up the Capture Task Manager on a new computer, you should call this command once from a Windows Command Prompt that you started using 'Run as Administrator'");
                 Console.WriteLine();
                 Console.WriteLine("Use /T or /Test to start the program in code test mode.");
                 Console.WriteLine();
-                Console.WriteLine("Use /Trace to enable trace mode");
+                Console.WriteLine("Use /Trace or /V to enable trace mode");
                 Console.WriteLine();
-
+                Console.WriteLine("Use /Version to see the program version and OS version");
+                Console.WriteLine();
                 Console.WriteLine("Program written by Dave Clark and Matthew Monroe for the Department of Energy (PNNL, Richland, WA)");
                 Console.WriteLine();
 
-                Console.WriteLine("This is version " + PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppVersion(PROGRAM_DATE));
+                Console.WriteLine("Version: " + GetAppVersion(PROGRAM_DATE));
                 Console.WriteLine();
 
-                Console.WriteLine("E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com");
-                Console.WriteLine("Website: http://panomics.pnnl.gov/ or http://www.sysbio.org/resources/staff/");
+                Console.WriteLine("E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov");
+                Console.WriteLine("Website: https://omics.pnl.gov/ or https://panomics.pnnl.gov/");
                 Console.WriteLine();
 
-                // Delay for 750 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
-                Thread.Sleep(750);
+                Console.WriteLine("Licensed under the Apache License, Version 2.0; you may not use this file except in compliance with the License.  " +
+                                  "You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0");
+                Console.WriteLine();
+
+                Thread.Sleep(1500);
             }
             catch (Exception ex)
             {
