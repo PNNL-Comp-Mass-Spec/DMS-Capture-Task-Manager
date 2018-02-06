@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Data.SqlClient;
 using System.IO;
-using System.Reflection;
 using PRISM;
 using PRISM.Logging;
 
@@ -300,6 +299,8 @@ namespace CaptureTaskManager
             OfflineMode = true;
             LinuxOS = runningLinux;
 
+            LogTools.OfflineMode = true;
+
             if (runningLinux)
                 Console.WriteLine("Offline mode enabled globally (running Linux)");
             else
@@ -318,120 +319,6 @@ namespace CaptureTaskManager
             mAppFolderPath = PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppFolderPath();
 
             return mAppFolderPath;
-        }
-
-        /// <summary>
-        /// Show a status message at the console and optionally include in the log file, tagging it as a debug message
-        /// </summary>
-        /// <param name="statusMessage">Status message</param>
-        /// <param name="writeToLog">True to write to the log file; false to only display at console</param>
-        /// <remarks>The message is shown in dark grey in the console.</remarks>
-        public static void LogDebug(string statusMessage, bool writeToLog = true)
-        {
-            ConsoleMsgUtils.ShowDebug(statusMessage);
-
-            if (writeToLog)
-            {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, statusMessage);
-            }
-        }
-
-        /// <summary>
-        /// Log an error message
-        /// </summary>
-        /// <param name="errorMessage">Error message</param>
-        /// <param name="logToDb">When true, log the message to the database and the local log file</param>
-        public static void LogError(string errorMessage, bool logToDb = false)
-        {
-            ConsoleMsgUtils.ShowError(errorMessage);
-
-            var loggerType = logToDb ? clsLogTools.LoggerTypes.LogDb : clsLogTools.LoggerTypes.LogFile;
-            clsLogTools.WriteLog(loggerType, BaseLogger.LogLevels.ERROR, errorMessage);
-        }
-
-        /// <summary>
-        /// Log an error message and exception
-        /// </summary>
-        /// <param name="errorMessage">Error message</param>
-        /// <param name="ex">Exception to log</param>
-        public static void LogError(string errorMessage, Exception ex)
-        {
-            var formattedError = ConsoleMsgUtils.ShowError(errorMessage, ex);
-
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, formattedError, ex);
-        }
-
-        /// <summary>
-        /// Show a status message at the console and optionally include in the log file
-        /// </summary>
-        /// <param name="statusMessage">Status message</param>
-        /// <param name="isError">True if this is an error</param>
-        /// <param name="writeToLog">True to write to the log file; false to only display at console</param>
-        public static void LogMessage(string statusMessage, bool isError = false, bool writeToLog = true)
-        {
-            if (isError)
-            {
-                ConsoleMsgUtils.ShowError(statusMessage, false);
-            }
-            else
-            {
-                Console.WriteLine(statusMessage);
-            }
-
-            if (!writeToLog)
-                return;
-
-            if (isError)
-            {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, statusMessage);
-            }
-            else
-            {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, statusMessage);
-            }
-        }
-
-        /// <summary>
-        /// Log a warning message
-        /// </summary>
-        /// <param name="warningMessage">Warning message</param>
-        /// <param name="logToDb">When true, log the message to the database and the local log file</param>
-        public static void LogWarning(string warningMessage, bool logToDb = false)
-        {
-            ConsoleMsgUtils.ShowWarning(warningMessage);
-
-            var loggerType = logToDb ? clsLogTools.LoggerTypes.LogDb : clsLogTools.LoggerTypes.LogFile;
-            clsLogTools.WriteLog(loggerType, BaseLogger.LogLevels.WARN, warningMessage);
-        }
-
-        /// <summary>
-        /// Shows information about an exception at the console and in the log file
-        /// </summary>
-        /// <param name="errorMessage">Error message (do not include ex.message)</param>
-        /// <param name="ex">Exception</param>
-        [Obsolete("Use LogError instead")]
-        public static void ReportStatus(string errorMessage, Exception ex)
-        {
-            LogError(errorMessage, ex);
-        }
-
-        /// <summary>
-        /// Show a status message at the console and optionally include in the log file
-        /// </summary>
-        /// <param name="statusMessage">Status message</param>
-        /// <param name="isDebug">True if a debug level message</param>
-        [Obsolete("Use LogDebug or LogMessage")]
-        public static void ReportStatus(string statusMessage, bool isDebug)
-        {
-            if (isDebug)
-            {
-                LogDebug(statusMessage, writeToLog: true);
-            }
-            else
-            {
-                LogMessage(statusMessage);
-            }
-
         }
 
         /// <summary>
@@ -462,11 +349,11 @@ namespace CaptureTaskManager
                 else
                     msg = "Folder not found [" + pathToCheck + "]; called from " + callingFunction;
 
-                LogMessage(msg);
+                LogTools.LogMessage(msg);
             }
             catch (Exception ex)
             {
-                LogError("Exception in VerifyFolder", ex);
+                LogTools.LogError("Exception in VerifyFolder", ex);
             }
         }
     }

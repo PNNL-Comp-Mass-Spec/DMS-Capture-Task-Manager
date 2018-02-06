@@ -14,6 +14,7 @@ using System.Reflection;
 using System.Threading;
 using Pacifica.Core;
 using PRISM;
+using PRISM.Logging;
 
 namespace CaptureTaskManager
 {
@@ -141,7 +142,7 @@ namespace CaptureTaskManager
             // Debug level 4 means Info level (normal) logging; 5 for Debug level (verbose) logging
             // Log level 4 will also log error messages
             m_DebugLevel = m_MgrParams.GetParam("debuglevel", 4);
-            clsLogTools.SetFileLogLevel(m_DebugLevel);
+            LogTools.SetFileLogLevel(m_DebugLevel);
 
             m_TraceMode = m_MgrParams.GetParam("TraceMode", false);
         }
@@ -171,7 +172,7 @@ namespace CaptureTaskManager
                 {
                     // Update the log level
                     m_DebugLevel = m_MgrParams.GetParam("debuglevel", 4);
-                    clsLogTools.SetFileLogLevel(m_DebugLevel);
+                    LogTools.SetFileLogLevel(m_DebugLevel);
                 }
             }
 
@@ -944,21 +945,21 @@ namespace CaptureTaskManager
             // Ignore: processingClass.ProgressUpdate += ProgressUpdateHandler;
         }
 
-        protected void UnregisterEventHandler(clsEventNotifier processingClass, PRISM.Logging.BaseLogger.LogLevels messageType)
+        protected void UnregisterEventHandler(clsEventNotifier processingClass, BaseLogger.LogLevels messageType)
         {
             switch (messageType)
             {
-                case PRISM.Logging.BaseLogger.LogLevels.DEBUG:
+                case BaseLogger.LogLevels.DEBUG:
                     processingClass.DebugEvent -= DebugEventHandler;
                     processingClass.DebugEvent -= DebugEventHandlerConsoleOnly;
                     break;
-                case PRISM.Logging.BaseLogger.LogLevels.ERROR:
+                case BaseLogger.LogLevels.ERROR:
                     processingClass.ErrorEvent -= ErrorEventHandler;
                     break;
-                case PRISM.Logging.BaseLogger.LogLevels.WARN:
+                case BaseLogger.LogLevels.WARN:
                     processingClass.WarningEvent -= WarningEventHandler;
                     break;
-                case PRISM.Logging.BaseLogger.LogLevels.INFO:
+                case BaseLogger.LogLevels.INFO:
                     processingClass.StatusEvent -= StatusEventHandler;
                     break;
                 default:

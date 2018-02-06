@@ -49,7 +49,7 @@ namespace CaptureTaskManager
         private const string DATE_TIME_FORMAT = "yyyy-MM-dd hh:mm:ss tt";
 
         private const bool ENABLE_LOGGER_TRACE_MODE = false;
-            
+
         #endregion
 
         #region "Class variables"
@@ -252,9 +252,9 @@ namespace CaptureTaskManager
             var defaultDmsConnectionString = Properties.Settings.Default.DefaultDMSConnString;
 
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-            clsLogTools.CreateDbLogger(defaultDmsConnectionString, "CaptureTaskMan: " + hostName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
+            LogTools.CreateDbLogger(defaultDmsConnectionString, "CaptureTaskMan: " + hostName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
 
-            clsLogTools.MessageLogged += MessageLoggedHandler;
+            LogTools.MessageLogged += MessageLoggedHandler;
 
             // Get the manager settings
             // If you get an exception here while debugging in Visual Studio, be sure
@@ -293,17 +293,17 @@ namespace CaptureTaskManager
 
             UpdateLogLevel(m_MgrSettings);
 
-            clsLogTools.CreateFileLogger(logFileNameBase);
+            LogTools.CreateFileLogger(logFileNameBase);
 
             var logCnStr = m_MgrSettings.GetParam("connectionstring");
 
-            clsLogTools.RemoveDefaultDbLogger();
+            LogTools.RemoveDefaultDbLogger();
 
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-            clsLogTools.CreateDbLogger(logCnStr, "CaptureTaskMan: " + m_MgrName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
+            LogTools.CreateDbLogger(logCnStr, "CaptureTaskMan: " + m_MgrName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
 
             // Make the initial log entry
-            var relativeLogFilePath = clsLogTools.CurrentFileAppenderPath;
+            var relativeLogFilePath = LogTools.CurrentLogFilePath;
             var logFile = new FileInfo(relativeLogFilePath);
             ShowTrace("Initializing log file " + clsPathUtils.CompactPathString(logFile.FullName, 60));
 
@@ -1120,7 +1120,7 @@ namespace CaptureTaskManager
 
                 m_DebugLevel = (BaseLogger.LogLevels)debugLevel;
 
-                clsLogTools.SetFileLogLevel(m_DebugLevel);
+                LogTools.SetFileLogLevel(m_DebugLevel);
             }
             catch (Exception ex)
             {

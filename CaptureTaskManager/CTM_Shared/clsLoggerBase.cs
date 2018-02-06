@@ -1,5 +1,6 @@
 ﻿
 using System;
+using PRISM.Logging;
 
 namespace CaptureTaskManager
 {
@@ -15,7 +16,7 @@ namespace CaptureTaskManager
         /// <remarks>The message is shown in dark grey in the console.</remarks>
         protected static void LogDebug(string statusMessage, bool writeToLog = true)
         {
-            clsUtilities.LogDebug(statusMessage, writeToLog);
+            LogTools.LogDebug(statusMessage, writeToLog);
         }
 
         /// <summary>
@@ -25,7 +26,7 @@ namespace CaptureTaskManager
         /// <param name="logToDb">When true, log the message to the database and the local log file</param>
         protected static void LogError(string errorMessage, bool logToDb = false)
         {
-            clsUtilities.LogError(errorMessage, logToDb);
+            LogTools.LogError(errorMessage, null, logToDb);
         }
 
         /// <summary>
@@ -35,7 +36,7 @@ namespace CaptureTaskManager
         /// <param name="ex">Exception to log</param>
         protected static void LogError(string errorMessage, Exception ex)
         {
-            clsUtilities.LogError(errorMessage, ex);
+            LogTools.LogError(errorMessage, ex);
         }
 
         /// <summary>
@@ -46,7 +47,7 @@ namespace CaptureTaskManager
         /// <param name="writeToLog">True to write to the log file; false to only display at console</param>
         public static void LogMessage(string statusMessage, bool isError = false, bool writeToLog = true)
         {
-            clsUtilities.LogMessage(statusMessage, isError, writeToLog);
+            LogTools.LogMessage(statusMessage, isError, writeToLog);
         }
 
         /// <summary>
@@ -56,18 +57,7 @@ namespace CaptureTaskManager
         /// <param name="logToDb">When true, log the message to the database and the local log file</param>
         protected static void LogWarning(string warningMessage, bool logToDb = false)
         {
-            clsUtilities.LogWarning(warningMessage, logToDb);
-        }
-
-        /// <summary>
-        /// Show a status message at the console and optionally include in the log file
-        /// </summary>
-        /// <param name="statusMessage">Status message</param>
-        /// <param name="isDebug">True if a debug level message</param>
-        [Obsolete("Use LogDebug or LogMessage")]
-        protected static void ReportStatus(string statusMessage, bool isDebug = false)
-        {
-            clsUtilities.ReportStatus(statusMessage, isDebug);
+            LogTools.LogWarning(warningMessage, logToDb);
         }
 
     }

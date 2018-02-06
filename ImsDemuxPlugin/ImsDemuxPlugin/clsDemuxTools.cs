@@ -12,6 +12,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using CaptureTaskManager;
 using PRISM;
+using PRISM.Logging;
 using UIMFLibrary;
 
 namespace ImsDemuxPlugin
@@ -851,7 +852,7 @@ namespace ImsDemuxPlugin
                     if (retryingCopy)
                     {
                         msg = "Retrying copy; retryCount = " + retryCount;
-                        clsUtilities.LogMessage(msg);
+                        LogTools.LogMessage(msg);
                     }
 
                     oFileTools.CopyFileUsingLocks(sourceFilePath, targetFilePath, overWrite);
@@ -860,7 +861,7 @@ namespace ImsDemuxPlugin
                 catch (Exception ex)
                 {
                     msg = "Exception copying file " + sourceFilePath + " to " + targetFilePath + ": " + ex.Message;
-                    clsUtilities.LogError(msg, ex);
+                    LogTools.LogError(msg, ex);
 
                     System.Threading.Thread.Sleep(2000);
                     retryCount -= 1;

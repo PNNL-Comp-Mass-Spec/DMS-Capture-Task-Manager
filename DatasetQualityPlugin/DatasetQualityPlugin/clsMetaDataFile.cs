@@ -9,6 +9,7 @@ using System;
 using CaptureTaskManager;
 using System.Xml;
 using System.IO;
+using PRISM.Logging;
 
 namespace DatasetQualityPlugin
 {
@@ -81,13 +82,13 @@ namespace DatasetQualityPlugin
             {
                 File.WriteAllText(metaFileNamePath, xmlText);
                 var msg = "Metadata file created for dataset " + TaskParams.GetParam("Dataset");
-                clsUtilities.LogDebug(msg);
+                LogTools.LogDebug(msg);
                 return true;
             }
             catch (Exception ex)
             {
                 var msg = "Exception creating metadata file for dataset " + TaskParams.GetParam("Dataset");
-                clsUtilities.LogError(msg, ex);
+                LogTools.LogError(msg, ex);
                 return false;
             }
         }

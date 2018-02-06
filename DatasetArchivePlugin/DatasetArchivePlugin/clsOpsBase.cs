@@ -12,6 +12,7 @@ using Pacifica.Core;
 using Pacifica.DMS_Metadata;
 using PRISM;
 using System.IO;
+using PRISM.Logging;
 
 namespace DatasetArchivePlugin
 {
@@ -475,7 +476,7 @@ namespace DatasetArchivePlugin
                 msg += "; " + reason;
 
             if (logToDB)
-                clsUtilities.LogError(msg, true);
+                LogTools.LogError(msg, null, true);
             else
                 OnErrorEvent(msg);
         }
