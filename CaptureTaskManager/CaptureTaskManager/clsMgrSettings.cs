@@ -185,9 +185,9 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Updates manager settings, then loads settings from the database or from ManagerSettingsLocal.xml if clsUtilities.OfflineMode is true
+        /// Updates manager settings, then loads settings from the database
         /// </summary>
-        /// <param name="configFileSettings">Manager settings loaded from file AnalysisManagerProg.exe.config</param>
+        /// <param name="configFileSettings">Manager settings loaded from file AppName.exe.config</param>
         /// <returns>True if successful; False on error</returns>
         /// <remarks></remarks>
         public bool LoadSettings(Dictionary<string, string> configFileSettings)
@@ -243,6 +243,10 @@ namespace CaptureTaskManager
 
         private Dictionary<string, string> LoadMgrSettingsFromFile()
         {
+            // Note: When you are editing this project using the Visual Studio IDE, if you edit the values
+            //  ->Properties>Settings.settings, then when you run the program (from within the IDE), it
+            //  will update file CaptureTaskManager.exe.config with your settings
+
             // Load initial settings into string dictionary for return
             var mgrSettingsFromFile = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 

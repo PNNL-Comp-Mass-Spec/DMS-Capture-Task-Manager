@@ -183,7 +183,7 @@ namespace CaptureTaskManager
 
                 case LoopExitCode.NoTaskFound:
                     // No capture task found
-                    LogDebug("No capture tasks found");
+                    LogDebug("No capture tasks found for " + m_MgrName);
 
                     m_StatusFile.UpdateStopped(false);
                     restartOK = false;
@@ -258,10 +258,12 @@ namespace CaptureTaskManager
 
             // Get the manager settings
             // If you get an exception here while debugging in Visual Studio, be sure
-            //  that "UsingDefaults" is set to False in CaptureTaskManager.exe.config
+            //  that "UsingDefaults" is set to False in AppName.exe.config
             try
             {
-                m_MgrSettings = new clsMgrSettings();
+                ShowTrace("Reading application config file");
+
+                m_MgrSettings = new clsMgrSettings(TraceMode);
             }
             catch (Exception ex)
             {
@@ -696,6 +698,8 @@ namespace CaptureTaskManager
 
                         case EnumRequestTaskResult.TaskFound:
 
+                            ShowTrace("Task found for " + m_MgrName);
+
                             PerformTask(out var eTaskCloseout);
 
                             // Increment and test the task counter
@@ -1033,7 +1037,7 @@ namespace CaptureTaskManager
         /// Display a timestamp and message at the console
         /// </summary>
         /// <param name="message"></param>
-        private static void ShowTraceMessage(string message)
+        public static void ShowTraceMessage(string message)
         {
             clsToolRunnerBase.ShowTraceMessage(message);
         }

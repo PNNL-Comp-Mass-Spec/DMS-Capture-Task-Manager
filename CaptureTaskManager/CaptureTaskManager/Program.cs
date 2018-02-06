@@ -65,6 +65,8 @@ namespace CaptureTaskManager
             {
                 try
                 {
+                    ShowTraceMessage("Code test mode enabled");
+
                     var testHarness = new clsCodeTest();
 
                     testHarness.TestConnection();
@@ -72,9 +74,13 @@ namespace CaptureTaskManager
                 }
                 catch (Exception ex)
                 {
-                    ConsoleMsgUtils.ShowError("Exception calling clsCodeTest", ex);
+                    ShowErrorMessage("Exception calling clsCodeTest", ex);
                     return -1;
                 }
+
+                ShowTraceMessage("Exiting application");
+
+                clsParseCommandLine.PauseAtConsole(500);
                 return 0;
 
             }
@@ -87,6 +93,8 @@ namespace CaptureTaskManager
                 {
                     // if (mTraceMode)
                     //    clsUtilities.VerifyFolder("Program.Main");
+
+                    ShowTraceMessage("Instantiating clsMainProgram");
 
                     // Initialize the main execution class
                     var oMainProgram = new clsMainProgram(mTraceMode);
@@ -103,16 +111,15 @@ namespace CaptureTaskManager
                 catch (Exception ex)
                 {
                     // Report any exceptions not handled at a lower level to the console
-                    var errMsg = "Critical exception starting application: " + ex.Message;
-                    ConsoleMsgUtils.ShowWarning(errMsg + "; " + clsStackTraceFormatter.GetExceptionStackTrace(ex, true));
-                    ConsoleMsgUtils.ShowWarning("Exiting clsMainProcess.Main with error code = 1");
-                    PRISM.Logging.FileLogger.FlushPendingMessages();
+                    LogTools.LogError("Critical exception starting application", ex);
+                    clsParseCommandLine.PauseAtConsole(1500);
+                    FileLogger.FlushPendingMessages();
                     return 1;
                 }
             } while (restart);
 
-            ShowTrace("Exiting");
-            PRISM.Logging.FileLogger.FlushPendingMessages();
+            ShowTraceMessage("Exiting application");
+            FileLogger.FlushPendingMessages();
             return 0;
         }
 
@@ -148,15 +155,28 @@ namespace CaptureTaskManager
             }
             catch (Exception ex)
             {
-                ConsoleMsgUtils.ShowError("Error parsing the command line parameters: " + ex.Message, ex);
+                ShowErrorMessage("Error parsing the command line parameters", ex);
+                return false;
             }
+        }
+
+        private static void ShowErrorMessage(string message, Exception ex = null)
+        {
+            ConsoleMsgUtils.ShowError(message);
+        }
+
+        private static void ShowErrorMessage(string title, IEnumerable<string> errorMessages)
+        {
+            ConsoleMsgUtils.ShowErrors(title, errorMessages);
         }
 
         private static void ShowProgramHelp()
         {
             try
             {
-                Console.WriteLine("This program processes DMS analysis jobs for PRISM. " +
+                var exeName = Path.GetFileName(PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppPath());
+
+                Console.WriteLine("This program processes DMS datasets for PRISM. " +
                                   "Normal operation is to run the program without any command line switches.");
                 Console.WriteLine();
                 Console.WriteLine("Program syntax:" + Environment.NewLine +
@@ -191,19 +211,10 @@ namespace CaptureTaskManager
             }
         }
 
-        private static void ShowTrace(string message)
+        private static void ShowTraceMessage(string message)
         {
             if (mTraceMode)
-                ShowTraceMessage(message);
-        }
-
-        /// <summary>
-        /// Display a trace message at the console, preceded by a time stamp
-        /// </summary>
-        /// <param name="message"></param>
-        public static void ShowTraceMessage(string message)
-        {
-            ConsoleMsgUtils.ShowDebug(DateTime.Now.ToString("hh:mm:ss.fff tt") + ": " + message);
+                clsMainProgram.ShowTraceMessage(message);
         }
 
         #endregion
