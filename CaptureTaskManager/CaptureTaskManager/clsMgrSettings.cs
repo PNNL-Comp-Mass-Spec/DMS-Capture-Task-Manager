@@ -91,7 +91,7 @@ namespace CaptureTaskManager
         public Dictionary<string, string> TaskDictionary => mParamDictionary;
 
         /// <summary>
-        /// True when TraceMode has been enabled at the command line via /trace
+        /// When true, show additional messages at the console
         /// </summary>
         public bool TraceMode { get; }
 

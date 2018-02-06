@@ -1,5 +1,5 @@
 using System;
-using System.Threading;
+using System.IO;
 using PRISM;
 
 namespace CaptureTaskManager
