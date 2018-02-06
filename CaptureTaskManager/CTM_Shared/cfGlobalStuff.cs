@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.Data.SqlClient;
 using System.IO;
 using PRISM;
@@ -319,6 +320,156 @@ namespace CaptureTaskManager
             mAppFolderPath = PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppFolderPath();
 
             return mAppFolderPath;
+        }
+
+        /// <summary>
+        /// Runs the specified Sql query
+        /// </summary>
+        /// <param name="sqlStr">Sql query</param>
+        /// <param name="connectionString">Connection string</param>
+        /// <param name="callingFunction">Name of the calling function</param>
+        /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
+        /// <param name="dtResults">Datatable (Output Parameter)</param>
+        /// <returns>True if success, false if an error</returns>
+        /// <remarks>Uses a timeout of 30 seconds</remarks>
+        public static bool GetDataTableByQuery(string sqlStr, string connectionString, string callingFunction, short retryCount, out DataTable dtResults)
+        {
+
+            const int timeoutSeconds = 30;
+
+            return GetDataTableByQuery(sqlStr, connectionString, callingFunction, retryCount, out dtResults, timeoutSeconds);
+
+        }
+
+        /// <summary>
+        /// Runs the specified Sql query
+        /// </summary>
+        /// <param name="sqlStr">Sql query</param>
+        /// <param name="connectionString">Connection string</param>
+        /// <param name="callingFunction">Name of the calling function</param>
+        /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
+        /// <param name="dtResults">Datatable (Output Parameter)</param>
+        /// <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
+        /// <returns>True if success, false if an error</returns>
+        /// <remarks></remarks>
+        public static bool GetDataTableByQuery(
+            string sqlStr, string connectionString, string callingFunction,
+            short retryCount, out DataTable dtResults, int timeoutSeconds)
+        {
+
+            var cmd = new SqlCommand(sqlStr)
+            {
+                CommandType = CommandType.Text
+            };
+
+            return GetDataTableByCmd(cmd, connectionString, callingFunction, retryCount, out dtResults, timeoutSeconds);
+
+        }
+
+        /// <summary>
+        /// Runs the stored procedure or database query defined by "cmd"
+        /// </summary>
+        /// <param name="cmd">SqlCommand var (query or stored procedure)</param>
+        /// <param name="connectionString">Connection string</param>
+        /// <param name="callingFunction">Name of the calling function</param>
+        /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
+        /// <param name="dtResults">Datatable (Output Parameter)</param>
+        /// <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
+        /// <returns>True if success, false if an error</returns>
+        /// <remarks></remarks>
+        public static bool GetDataTableByCmd(
+            SqlCommand cmd,
+            string connectionString,
+            string callingFunction,
+            short retryCount,
+            out DataTable dtResults,
+            int timeoutSeconds)
+        {
+
+            if (cmd == null)
+                throw new ArgumentException("command is undefined", nameof(cmd));
+
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                throw new ArgumentException("ConnectionString cannot be empty", nameof(connectionString));
+            }
+
+            if (string.IsNullOrEmpty(callingFunction))
+                callingFunction = "UnknownCaller";
+            if (retryCount < 1)
+                retryCount = 1;
+            if (timeoutSeconds < 5)
+                timeoutSeconds = 5;
+
+            // When data retrieval fails, delay for 5 seconds on the first try
+            // Double the delay time for each subsequent attempt, up to a maximum of 90 seconds between attempts
+            var retryDelaySeconds = 5;
+
+            while (retryCount > 0)
+            {
+                try
+                {
+                    using (var cn = new SqlConnection(connectionString))
+                    {
+
+                        cmd.Connection = cn;
+                        cmd.CommandTimeout = timeoutSeconds;
+
+                        using (var da = new SqlDataAdapter(cmd))
+                        {
+                            using (var ds = new DataSet())
+                            {
+                                da.Fill(ds);
+                                dtResults = ds.Tables[0];
+                            }
+                        }
+                    }
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    string msg;
+
+                    retryCount -= 1;
+                    if (cmd.CommandType == CommandType.StoredProcedure)
+                    {
+                        msg = callingFunction + "; Exception running stored procedure " + cmd.CommandText;
+                    }
+                    else if (cmd.CommandType == CommandType.TableDirect)
+                    {
+                        msg = callingFunction + "; Exception querying table " + cmd.CommandText;
+                    }
+                    else
+                    {
+                        msg = callingFunction + "; Exception querying database";
+                    }
+
+                    msg += ": " + ex.Message + "; ConnectionString: " + connectionString;
+                    msg += ", RetryCount = " + retryCount;
+
+                    if (cmd.CommandType == CommandType.Text)
+                    {
+                        msg += ", Query = " + cmd.CommandText;
+                    }
+
+                    LogTools.LogError(msg);
+
+                    if (retryCount <= 0)
+                        break;
+
+                    clsProgRunner.SleepMilliseconds(retryDelaySeconds * 1000);
+
+                    retryDelaySeconds *= 2;
+                    if (retryDelaySeconds > 90)
+                    {
+                        retryDelaySeconds = 90;
+                    }
+                }
+            }
+
+            dtResults = null;
+            return false;
+
         }
 
         /// <summary>
