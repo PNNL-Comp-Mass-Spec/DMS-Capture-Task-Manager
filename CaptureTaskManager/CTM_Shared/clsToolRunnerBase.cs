@@ -815,7 +815,7 @@ namespace CaptureTaskManager
                 var strArgs = clsConversion.PossiblyQuotePath(fiDLLFile.FullName) + " /O:" +
                               clsConversion.PossiblyQuotePath(versionInfoFilePath);
 
-                var progRunner = new clsRunDosProgram(clsUtilities.GetAppFolderPath())
+                var progRunner = new clsRunDosProgram(clsUtilities.GetAppFolderPath(), m_DebugLevel)
                 {
                     CacheStandardOutput = false,
                     CreateNoWindow = true,

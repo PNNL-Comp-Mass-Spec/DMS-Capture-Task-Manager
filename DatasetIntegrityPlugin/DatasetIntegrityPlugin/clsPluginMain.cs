@@ -315,7 +315,7 @@ namespace DatasetIntegrityPlugin
                 var cmdStr = "-cli -batchfile " + batchJobFilePath;
                 var consoleOutputFilePath = Path.Combine(m_WorkDir, "OpenChrom_ConsoleOutput_" + mgrName + ".txt");
 
-                var cmdRunner = new clsRunDosProgram(m_WorkDir);
+                var cmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
                 mLastStatusUpdate = DateTime.UtcNow;
 
                 // This will also call RegisterEvents
@@ -412,7 +412,7 @@ namespace DatasetIntegrityPlugin
                 var cmdStr = clsConversion.PossiblyQuotePath(dotDFolderPathLocal) + " " + clsConversion.PossiblyQuotePath(m_WorkDir);
                 var consoleOutputFilePath = Path.Combine(m_WorkDir, "AgilentToUIMF_ConsoleOutput_" + mgrName + ".txt");
 
-                var cmdRunner = new clsRunDosProgram(m_WorkDir);
+                var cmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
                 mAgilentToUIMFStartTime = DateTime.UtcNow;
                 mLastStatusUpdate = DateTime.UtcNow;
 
