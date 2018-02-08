@@ -295,7 +295,7 @@ namespace CaptureTaskManager
 
             UpdateLogLevel(m_MgrSettings);
 
-            LogTools.CreateFileLogger(logFileNameBase);
+            LogTools.CreateFileLogger(logFileNameBase, m_DebugLevel);
 
             var logCnStr = m_MgrSettings.GetParam("connectionstring");
 
