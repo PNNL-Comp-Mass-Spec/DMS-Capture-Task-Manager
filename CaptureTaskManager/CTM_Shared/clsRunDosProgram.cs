@@ -368,11 +368,7 @@ namespace CaptureTaskManager
             m_ProgRunner.ConsoleOutputEvent += ProgRunner_ConsoleOutputEvent;
             m_ProgRunner.ProgChanged += ProgRunner_ProgChanged;
 
-            if (DebugLevel >= 4)
-            {
-                OnStatusEvent("  ProgRunner.Arguments = " + m_ProgRunner.Arguments);
-                OnStatusEvent("  ProgRunner.Program = " + m_ProgRunner.Program);
-            }
+            OnStatusEvent("RunProgram " + m_ProgRunner.Program + " " + m_ProgRunner.Arguments);
 
             m_AbortProgramPostLogEntry = true;
             ProgramAborted = false;
