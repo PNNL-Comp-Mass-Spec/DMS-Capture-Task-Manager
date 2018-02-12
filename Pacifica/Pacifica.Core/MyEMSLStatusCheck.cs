@@ -129,80 +129,98 @@ namespace Pacifica.Core
             // {"task_percent": "100.00000", "state": "OK", "task": "ingest metadata",     "job_id": 1300004}  (complete)
             // {"task_percent": "0.00000", "updated": "2017-07-06 22:00:49", "task": "ingest files", "job_id": 1303430, "created": "2017-07-06 22:00:51", "exception": "", "state": "OK"}
 
-            var statusJSON = Utilities.JsonToObject(statusResult);
-
-            var state = Utilities.GetDictionaryValue(statusJSON, "state").ToLower();
-
-            var task = Utilities.GetDictionaryValue(statusJSON, "task");
-
-            var exception = Utilities.GetDictionaryValue(statusJSON, "exception");
-
-            var percentCompleteText = Utilities.GetDictionaryValue(statusJSON, "task_percent");
-
-            if (float.TryParse(percentCompleteText, out var percentCompleteFloat))
+            try
             {
-                percentComplete = (int)percentCompleteFloat;
-            }
-            else
-            {
-                percentComplete = 0;
-            }
+                if (string.Equals(statusResult, EasyHttp.REQUEST_TIMEOUT_RESPONSE))
+                {
+                    OnWarningEvent("Ingest status lookup timed out");
+                    percentComplete = 0;
+                    return new Dictionary<string, object>();
+                }
 
-            switch (state)
-            {
-                case "ok":
-                    if (string.IsNullOrWhiteSpace(exception))
-                    {
-                        OnDebugEvent("Archive state is OK for " + statusURI);
-                    }
-                    else
-                    {
-                        errorMessage = "Upload state is OK, but an exception was reported for task \"" + task + "\"" +
-                                       "; exception \"" + exception + "\"";
+                var statusJSON = Utilities.JsonToObject(statusResult);
 
-                        OnErrorEvent(errorMessage + "; see " + statusURI);
-                    }
-                    break;
+                var state = Utilities.GetDictionaryValue(statusJSON, "state").ToLower();
 
-                case "failed":
-                    errorMessage = "Upload failed, task \"" + task + "\"";
-                    if (string.IsNullOrWhiteSpace(exception))
-                    {
-                        OnErrorEvent(string.Format("{0}; see {1}", errorMessage, statusURI));
-                    }
-                    else
-                    {
-                        OnErrorEvent(string.Format("{0}; exception \"{1}\"; see {2}", errorMessage, exception, statusURI));
+                var task = Utilities.GetDictionaryValue(statusJSON, "task");
 
-                        if (exception.IndexOf("ConnectionTimeout", StringComparison.OrdinalIgnoreCase) >= 0)
+                var exception = Utilities.GetDictionaryValue(statusJSON, "exception");
+
+                var percentCompleteText = Utilities.GetDictionaryValue(statusJSON, "task_percent");
+
+                if (float.TryParse(percentCompleteText, out var percentCompleteFloat))
+                {
+                    percentComplete = (int)percentCompleteFloat;
+                }
+                else
+                {
+                    percentComplete = 0;
+                }
+
+
+                switch (state)
+                {
+                    case "ok":
+                        if (string.IsNullOrWhiteSpace(exception))
                         {
-                            errorMessage += "; ConnectionTimeout exception";
+                            OnDebugEvent("Archive state is OK for " + statusURI);
                         }
                         else
                         {
-                            // Unrecognized exception; include the first 75 characters
-                            if (exception.Length < 80)
-                                errorMessage += "; exception " + exception;
-                            else
-                                errorMessage += "; exception " + exception.Substring(0, 75) + " ...";
+                            errorMessage = "Upload state is OK, but an exception was reported for task \"" + task + "\"" +
+                                           "; exception \"" + exception + "\"";
+
+                            OnErrorEvent(errorMessage + "; see " + statusURI);
                         }
-                    }
+                        break;
 
-                    break;
+                    case "failed":
+                        errorMessage = "Upload failed, task \"" + task + "\"";
+                        if (string.IsNullOrWhiteSpace(exception))
+                        {
+                            OnErrorEvent(string.Format("{0}; see {1}", errorMessage, statusURI));
+                        }
+                        else
+                        {
+                            OnErrorEvent(string.Format("{0}; exception \"{1}\"; see {2}", errorMessage, exception, statusURI));
 
-                default:
-                    if (state.Contains("error"))
-                    {
-                        OnErrorEvent("Status server is offline or having issues; cannot check " + statusURI);
-                    }
-                    else
-                    {
-                        OnErrorEvent("Unrecognized state " + state + " for " + statusURI);
-                    }
-                    break;
+                            if (exception.IndexOf("ConnectionTimeout", StringComparison.OrdinalIgnoreCase) >= 0)
+                            {
+                                errorMessage += "; ConnectionTimeout exception";
+                            }
+                            else
+                            {
+                                // Unrecognized exception; include the first 75 characters
+                                if (exception.Length < 80)
+                                    errorMessage += "; exception " + exception;
+                                else
+                                    errorMessage += "; exception " + exception.Substring(0, 75) + " ...";
+                            }
+                        }
+
+                        break;
+
+                    default:
+                        if (state.Contains("error"))
+                        {
+                            OnErrorEvent("Status server is offline or having issues; cannot check " + statusURI);
+                        }
+                        else
+                        {
+                            OnErrorEvent("Unrecognized state " + state + " for " + statusURI);
+                        }
+                        break;
+                }
+
+                return statusJSON;
             }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Error parsing ingest status response", ex);
 
-            return statusJSON;
+                percentComplete = 0;
+                return new Dictionary<string, object>();
+            }
         }
 
         /// <summary>

@@ -344,11 +344,23 @@ namespace Pacifica.Core
                 return false;
             }
 
-            var responseJSON = Utilities.JsonToObject(responseData);
+            try
+            {
 
-            var transactionID = Convert.ToInt32(responseJSON["job_id"].ToString());
+                var responseJSON = Utilities.JsonToObject(responseData);
 
-            statusURI = mPacificaConfig.IngestServerUri + "/get_state?job_id=" + transactionID;
+                var transactionID = Convert.ToInt32(responseJSON["job_id"].ToString());
+
+                statusURI = mPacificaConfig.IngestServerUri + "/get_state?job_id=" + transactionID;
+            }
+            catch (Exception ex)
+            {
+                OnError("Error converting the response data to a JSON object", ex);
+
+                // Delete the local temporary file
+                Utilities.DeleteFileIgnoreErrors(metadataFile);
+                return false;
+            }
 
             var success = false;
 
