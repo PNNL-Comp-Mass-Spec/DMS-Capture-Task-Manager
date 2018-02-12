@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -175,6 +175,8 @@ rem xcopy "$(ProjectDir)..\..\RefLib\x86\SQLite.Interop.dll" "$(TargetDir)x86" /
 rem xcopy "$(ProjectDir)..\..\RefLib\x64\SQLite.Interop.dll" "$(TargetDir)x64" /D /Y
 
 xcopy "$(TargetPath)" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
+xcopy "$(TargetDir)CaptureTaskManager.pdb" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
+
 xcopy "$(TargetDir)*.config" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
 xcopy "$(TargetDir)Apache.NMS.ActiveMQ.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
 xcopy "$(TargetDir)Apache.NMS.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
