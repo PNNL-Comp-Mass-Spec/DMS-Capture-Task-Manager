@@ -13,6 +13,12 @@ namespace Pacifica.Core
 {
     public class EasyHttp
     {
+
+        /// <summary>
+        /// Response to return when a request times out
+        /// </summary>
+        public const string REQUEST_TIMEOUT_RESPONSE = "(no response, request timed out)";
+
         public const string UPLOADING_FILES = "Uploading files";
 
         private static X509Certificate2 mLoginCertificate;
@@ -257,7 +263,7 @@ namespace Pacifica.Core
             {
                 if (ex.Message.Contains("timed out"))
                 {
-                    responseData.ResponseText = "(no response, request timed out)";
+                    responseData.ResponseText = REQUEST_TIMEOUT_RESPONSE;
                     responseData.ResponseStatusCode = HttpStatusCode.RequestTimeout;
                 }
                 else
@@ -506,7 +512,7 @@ namespace Pacifica.Core
             }
             else
             {
-                responseData.ResponseText = "(no response, request timed out)";
+                responseData.ResponseText = REQUEST_TIMEOUT_RESPONSE;
                 responseData.ResponseStatusCode = HttpStatusCode.RequestTimeout;
                 responseStatusCode = responseData.ResponseStatusCode;
             }
