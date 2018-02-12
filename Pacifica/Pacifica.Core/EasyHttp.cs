@@ -34,6 +34,9 @@ namespace Pacifica.Core
             Put = 2
         }
 
+        /// <summary>
+        /// Debug options
+        /// </summary>
         public enum eDebugMode
         {
             [Description("Debugging is disabled")]
@@ -70,6 +73,17 @@ namespace Pacifica.Core
             StatusUpdate?.Invoke(null, new StatusEventArgs(percentCompleted, totalBytesSent, totalBytesToSend, statusMessage));
         }
 
+        /// <summary>
+        /// Retrieve a file
+        /// </summary>
+        /// <param name="config"></param>
+        /// <param name="url"></param>
+        /// <param name="cookies"></param>
+        /// <param name="responseStatusCode"></param>
+        /// <param name="downloadFilePath"></param>
+        /// <param name="timeoutSeconds"></param>
+        /// <param name="loginCredentials"></param>
+        /// <returns></returns>
         public static bool GetFile(
             Configuration config,
             string url,
@@ -263,6 +277,16 @@ namespace Pacifica.Core
             throw new Exception("Response from " + url + ": " + responseData.ResponseText, ex);
         }
 
+        /// <summary>
+        /// Initialize a request
+        /// </summary>
+        /// <param name="config">Configuration options</param>
+        /// <param name="url">URL</param>
+        /// <param name="cookies">Cookies</param>
+        /// <param name="timeoutSeconds">Timeout, in seconds</param>
+        /// <param name="loginCredentials">Login credentials</param>
+        /// <param name="maxTimeoutHours"></param>
+        /// <returns></returns>
         public static HttpWebRequest InitializeRequest(
             Configuration config,
             string url,
@@ -325,6 +349,14 @@ namespace Pacifica.Core
             return request;
         }
 
+        /// <summary>
+        /// Get or post data to a URL
+        /// </summary>
+        /// <param name="config">Configuration options</param>
+        /// <param name="url">URL</param>
+        /// <param name="responseStatusCode">Response status code</param>
+        /// <param name="timeoutSeconds">Timeout, in seconds</param>
+        /// <returns>Response data</returns>
         public static string Send(
             Configuration config,
             string url,
@@ -335,6 +367,15 @@ namespace Pacifica.Core
             return Send(config, url, out responseStatusCode, postData, HttpMethod.Get, timeoutSeconds);
         }
 
+        /// <summary>
+        /// Get or post data to a URL
+        /// </summary>
+        /// <param name="config">Configuration options</param>
+        /// <param name="url">URL</param>
+        /// <param name="cookies">Cookies</param>
+        /// <param name="responseStatusCode">Response status code</param>
+        /// <param name="timeoutSeconds">Timeout, in seconds</param>
+        /// <returns>Response data</returns>
         public static string Send(
             Configuration config,
             string url,
@@ -346,6 +387,16 @@ namespace Pacifica.Core
             return Send(config, url, cookies, out responseStatusCode, postData, HttpMethod.Get, timeoutSeconds);
         }
 
+        /// <summary>
+        /// Get or post data to a URL
+        /// </summary>
+        /// <param name="config">Configuration options</param>
+        /// <param name="url">URL</param>
+        /// <param name="responseStatusCode">Response status code</param>
+        /// <param name="postData">Data to post (when method is HttpMethod.Post)</param>
+        /// <param name="method">Get, Post, or Put</param>
+        /// <param name="timeoutSeconds">Timeout, in seconds</param>
+        /// <returns>Response data</returns>
         public static string Send(
             Configuration config,
             string url,
@@ -357,6 +408,19 @@ namespace Pacifica.Core
             return Send(config, url, new CookieContainer(), out responseStatusCode, postData, method, timeoutSeconds);
         }
 
+        /// <summary>
+        /// Get or post data to a URL
+        /// </summary>
+        /// <param name="config">Configuration options</param>
+        /// <param name="url">URL</param>
+        /// <param name="responseStatusCode">Response status code</param>
+        /// <param name="postData">Data to post (when method is HttpMethod.Post)</param>
+        /// <param name="method">Get, Post, or Put</param>
+        /// <param name="timeoutSeconds">Timeout, in seconds</param>
+        /// <param name="contentType">Form/post content-type</param>
+        /// <param name="sendStringInHeader">If True, and the method is Get, include postData in the header</param>
+        /// <param name="loginCredentials">Login credentials</param>
+        /// <returns>Response data</returns>
         public static string Send(
             Configuration config,
             string url,
@@ -371,6 +435,18 @@ namespace Pacifica.Core
             return Send(config, url, new CookieContainer(), out responseStatusCode, postData, method, timeoutSeconds, contentType, sendStringInHeader, loginCredentials);
         }
 
+        /// <summary>
+        /// Get or post data to a URL
+        /// </summary>
+        /// <param name="config">Configuration options</param>
+        /// <param name="url">URL</param>
+        /// <param name="cookies">Cookies</param>
+        /// <param name="responseStatusCode">Response status code</param>
+        /// <param name="postData">Data to post (when method is HttpMethod.Post)</param>
+        /// <param name="method">Get, Post, or Put</param>
+        /// <param name="timeoutSeconds">Timeout, in seconds</param>
+        /// <param name="loginCredentials">Login credentials</param>
+        /// <returns>Response data</returns>
         public static string Send(
             Configuration config,
             string url,
@@ -389,16 +465,16 @@ namespace Pacifica.Core
         /// <summary>
         /// Get or post data to a URL
         /// </summary>
-        /// <param name="config"></param>
-        /// <param name="url"></param>
-        /// <param name="cookies"></param>
-        /// <param name="responseStatusCode"></param>
-        /// <param name="postData"></param>
-        /// <param name="method"></param>
-        /// <param name="timeoutSeconds"></param>
-        /// <param name="contentType"></param>
-        /// <param name="sendStringInHeader"></param>
-        /// <param name="loginCredentials"></param>
+        /// <param name="config">Configuration options</param>
+        /// <param name="url">URL</param>
+        /// <param name="cookies">Cookies</param>
+        /// <param name="responseStatusCode">Response status code</param>
+        /// <param name="postData">Data to post (when method is HttpMethod.Post)</param>
+        /// <param name="method">Get, Post, or Put</param>
+        /// <param name="timeoutSeconds">Timeout, in seconds</param>
+        /// <param name="contentType">Form/post content-type</param>
+        /// <param name="sendStringInHeader">If True, and the method is Get, include postData in the header</param>
+        /// <param name="loginCredentials">Login credentials</param>
         /// <returns>Response data</returns>
         public static string Send(
             Configuration config,

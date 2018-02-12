@@ -367,7 +367,7 @@ namespace Pacifica.Core
                 else
                 {
                     ConsoleMsgUtils.ShowWarning(
-                        string.Format("Unsupported JsonArrayList type {0}; will not be stored in the dictionary returned by JsonArrayToDictionaryList", 
+                        string.Format("Unsupported JsonArrayList type {0}; will not be stored in the dictionary returned by JsonArrayToDictionaryList",
                                       value.GetType().Name));
                 }
             }
@@ -431,5 +431,6 @@ namespace Pacifica.Core
 
             return false;
         }
+
     }
 }
