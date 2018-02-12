@@ -49,7 +49,7 @@ namespace ArchiveVerifyPlugin
             // already logged by the DatasetArchive plugin, and we don't need to make the
             // additional database call to SetStepTaskToolVersion
 
-            var writeToLog = m_DebugLevel >= 5;
+            var writeToLog = m_DebugLevel >= 4;
             LogDebug("Verifying files in MyEMSL for dataset '" + m_Dataset + "'", writeToLog);
 
             // Set this to Success for now

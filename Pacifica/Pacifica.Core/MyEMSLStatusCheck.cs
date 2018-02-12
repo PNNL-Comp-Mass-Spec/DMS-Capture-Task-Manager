@@ -114,11 +114,11 @@ namespace Pacifica.Core
             if (ServicePointManager.ServerCertificateValidationCallback == null)
                 ServicePointManager.ServerCertificateValidationCallback += Utilities.ValidateRemoteCertificate;
 
-            OnDebugEvent("Contacting " + statusURI);
+            OnStatusEvent("Contacting " + statusURI);
 
             var statusResult = EasyHttp.Send(mPacificaConfig, statusURI, out _);
 
-            OnDebugEvent("Result received: " + statusResult);
+            OnStatusEvent("Result received: " + statusResult);
 
             // Example contents of statusResult
             // (as returned by https://ingestdms.my.emsl.pnl.gov/get_state?job_id=123456)
