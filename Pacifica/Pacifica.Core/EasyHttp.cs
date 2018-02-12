@@ -7,6 +7,7 @@ using ICSharpCode.SharpZipLib.Tar;
 using PRISM;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Pacifica.Core
 {
@@ -203,26 +204,51 @@ namespace Pacifica.Core
             return responseData.ToString();
         }
 
+        private static void HandleWebException(WebException ex, string url)
+        {
+            var responseData = new WebResponseData();
+            HandleWebException(ex, url, responseData);
+        }
+
         private static void HandleWebException(WebException ex, string url, out HttpStatusCode responseStatusCode)
         {
-            string responseData;
+            responseStatusCode = HttpStatusCode.RequestTimeout;
+
+            var responseData = new WebResponseData {
+                ResponseStatusCode = responseStatusCode
+            };
+
+            try
+            {
+                HandleWebException(ex, url, responseData);
+            }
+            catch
+            {
+                responseStatusCode = responseData.ResponseStatusCode;
+                throw;
+            }
+
+        }
+
+        private static void HandleWebException(WebException ex, string url, WebResponseData responseData)
+        {
             if (ex.Response != null)
             {
                 var responseStream = ex.Response.GetResponseStream();
-                responseData = GetTrimmedResponseData(responseStream);
+                responseData.ResponseText = GetTrimmedResponseData(responseStream);
 
-                responseStatusCode = ((HttpWebResponse)ex.Response).StatusCode;
+                responseData.ResponseStatusCode = ((HttpWebResponse)ex.Response).StatusCode;
             }
             else
             {
                 if (ex.Message.Contains("timed out"))
                 {
-                    responseData = "(no response, request timed out)";
-                    responseStatusCode = HttpStatusCode.RequestTimeout;
+                    responseData.ResponseText = "(no response, request timed out)";
+                    responseData.ResponseStatusCode = HttpStatusCode.RequestTimeout;
                 }
                 else
                 {
-                    responseData = string.Empty;
+                    responseData.ResponseText = string.Empty;
                 }
             }
 
@@ -231,10 +257,10 @@ namespace Pacifica.Core
                 MyEMSLOffline?.Invoke(null, new MessageEventArgs("HandleWebException", ex.Message));
             }
 
-            if (string.IsNullOrWhiteSpace(responseData))
+            if (string.IsNullOrWhiteSpace(responseData.ResponseText))
                 throw new Exception("Empty response for " + url + ": " + ex.Message, ex);
 
-            throw new Exception("Response from " + url + ": " + responseData, ex);
+            throw new Exception("Response from " + url + ": " + responseData.ResponseText, ex);
         }
 
         public static HttpWebRequest InitializeRequest(
@@ -386,8 +412,59 @@ namespace Pacifica.Core
             bool sendStringInHeader = false,
             NetworkCredential loginCredentials = null)
         {
+
+            var responseData = new WebResponseData();
+
+            // Contact the URL in a separate thread so that we can abort the search if it takes too long
+            var task = Task.Factory.StartNew(() => Send(
+                                                 config, url, cookies,
+                                                 responseData, postData, method,
+                                                 timeoutSeconds, contentType,
+                                                 sendStringInHeader, loginCredentials));
+
+            var success = task.Wait((timeoutSeconds + 5) * 1000);
+
+            if (success)
+            {
+                responseStatusCode = responseData.ResponseStatusCode;
+            }
+            else
+            {
+                responseData.ResponseText = "(no response, request timed out)";
+                responseData.ResponseStatusCode = HttpStatusCode.RequestTimeout;
+                responseStatusCode = responseData.ResponseStatusCode;
+            }
+
+            return responseData.ResponseText;
+        }
+
+        /// <summary>
+        /// Get or post data to a URL
+        /// </summary>
+        /// <param name="config">Configuration options</param>
+        /// <param name="url">URL</param>
+        /// <param name="cookies">Cookies</param>
+        /// <param name="responseData">Tracks response text and response code</param>
+        /// <param name="postData">Data to post (when method is HttpMethod.Post)</param>
+        /// <param name="method">Get, Post, or Put</param>
+        /// <param name="timeoutSeconds">Timeout, in seconds</param>
+        /// <param name="contentType">Form/post content-type</param>
+        /// <param name="sendStringInHeader">If True, and the method is Get, include postData in the header</param>
+        /// <param name="loginCredentials">Login credentials</param>
+        private static void Send(
+            Configuration config,
+            string url,
+            CookieContainer cookies,
+            WebResponseData responseData,
+            string postData = "",
+            HttpMethod method = HttpMethod.Get,
+            int timeoutSeconds = 100,
+            string contentType = "",
+            bool sendStringInHeader = false,
+            NetworkCredential loginCredentials = null)
+        {
             var request = InitializeRequest(config, url, ref cookies, ref timeoutSeconds, loginCredentials);
-            responseStatusCode = HttpStatusCode.NotFound;
+            responseData.ResponseStatusCode = HttpStatusCode.NotFound;
 
             // Prepare the request object
             request.Method = method.GetDescription<HttpMethod>();
@@ -424,26 +501,26 @@ namespace Pacifica.Core
             }
 
             // Receive response
-            var responseData = string.Empty;
+            responseData.ResponseText = string.Empty;
             HttpWebResponse response = null;
             try
             {
                 request.Timeout = timeoutSeconds * 1000;
                 response = (HttpWebResponse)request.GetResponse();
-                responseStatusCode = response.StatusCode;
+                responseData.ResponseStatusCode = response.StatusCode;
                 var responseStream = response.GetResponseStream();
 
                 if (responseStream != null)
                 {
                     using (var sr = new StreamReader(responseStream))
                     {
-                        responseData = sr.ReadToEnd();
+                        responseData.ResponseText = sr.ReadToEnd();
                     }
                 }
             }
             catch (WebException ex)
             {
-                HandleWebException(ex, url, out responseStatusCode);
+                HandleWebException(ex, url, responseData);
             }
             finally
             {
@@ -456,7 +533,6 @@ namespace Pacifica.Core
                 }
             }
 
-            return responseData;
         }
 
         public static string SendFileListToIngester(
@@ -614,7 +690,7 @@ namespace Pacifica.Core
             }
             catch (WebException ex)
             {
-                HandleWebException(ex, uploadUri.ToString(), out _);
+                HandleWebException(ex, uploadUri.ToString());
             }
             finally
             {
