@@ -407,15 +407,8 @@ namespace Pacifica.Core
                 OnError("Exception examining the MyEMSL response string: " + ex.Message, ex);
             }
 
-            try
-            {
-                // Delete the local temporary file
-                metadataFile.Delete();
-            }
-            catch
-            {
-                // Ignore errors here
-            }
+            // Delete the local temporary file
+            Utilities.DeleteFileIgnoreErrors(metadataFile);
 
             return success;
         }

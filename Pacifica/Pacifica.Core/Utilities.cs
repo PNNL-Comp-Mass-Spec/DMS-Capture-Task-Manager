@@ -50,6 +50,23 @@ namespace Pacifica.Core
 
         }
 
+        /// <summary>
+        /// Try to delete the file; ignore any errors
+        /// </summary>
+        /// <param name="fileToDelete"></param>
+        public static void DeleteFileIgnoreErrors(FileInfo fileToDelete)
+        {
+            try
+            {
+                fileToDelete.Delete();
+            }
+            catch
+            {
+                // Ignore errors here
+            }
+
+        }
+
         private static SHA1Managed _hashProvider;
         public static string GenerateSha1Hash(string filePath)
         {
