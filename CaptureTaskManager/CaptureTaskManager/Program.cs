@@ -20,7 +20,7 @@ namespace CaptureTaskManager
     /// </summary>
     static class Program
     {
-        private const string PROGRAM_DATE = "February 7, 2018";
+        private const string PROGRAM_DATE = "February 12, 2018";
 
         private static bool mCodeTestMode;
         private static bool mTraceMode;
@@ -247,7 +247,7 @@ namespace CaptureTaskManager
 
         private static void ShowErrorMessage(string message, Exception ex = null)
         {
-            ConsoleMsgUtils.ShowError(message);
+            ConsoleMsgUtils.ShowError(message, ex);
         }
 
         private static void ShowErrorMessage(string title, IEnumerable<string> errorMessages)
