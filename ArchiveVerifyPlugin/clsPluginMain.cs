@@ -969,7 +969,7 @@ namespace ArchiveVerifyPlugin
                     mRetData.CloseoutMsg = msg;
                     mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
 
-                    LogError(" ... " + msg);
+                    LogWarning(" ... " + msg);
                     transactionId = 0;
                     return false;
                 }

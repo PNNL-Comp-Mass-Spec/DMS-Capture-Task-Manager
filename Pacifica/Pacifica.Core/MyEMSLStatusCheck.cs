@@ -114,7 +114,7 @@ namespace Pacifica.Core
             if (ServicePointManager.ServerCertificateValidationCallback == null)
                 ServicePointManager.ServerCertificateValidationCallback += Utilities.ValidateRemoteCertificate;
 
-            OnDebugEvent("Contacting " + statusURI);
+            OnStatusEvent("Contacting " + statusURI);
 
             var statusResult = EasyHttp.SendViaThreadStart(mPacificaConfig, statusURI, out _);
 
