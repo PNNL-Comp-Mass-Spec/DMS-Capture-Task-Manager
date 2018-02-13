@@ -26,10 +26,19 @@ namespace Pacifica.Core
         /// </summary>
         public const string REQUEST_TIMEOUT_RESPONSE = "(no response, request timed out)";
 
+        /// <summary>
+        /// Used to report status
+        /// </summary>
         public const string UPLOADING_FILES = "Uploading files";
 
+        /// <summary>
+        /// Block size for tar files
+        /// </summary>
         private const int TAR_BLOCK_SIZE_BYTES = 512;
 
+        /// <summary>
+        /// Metadata file name
+        /// </summary>
         public const string MYEMSL_METADATA_FILE_NAME = "metadata.txt";
 
         #endregion
@@ -37,6 +46,8 @@ namespace Pacifica.Core
         #region "Fields"
 
         private static X509Certificate2 mLoginCertificate;
+
+        private static Thread mThreadedSend;
 
         private static UrlContactInfo mUrlContactInfo;
 
@@ -85,6 +96,9 @@ namespace Pacifica.Core
         /// </summary>
         public static event MessageEventHandler MyEMSLOffline;
 
+        /// <summary>
+        /// This event is used by SendFileListToIngester to report upload status
+        /// </summary>
         public static event StatusUpdateEventHandler StatusUpdate;
 
         #endregion
@@ -107,14 +121,14 @@ namespace Pacifica.Core
         /// <summary>
         /// Retrieve a file
         /// </summary>
-        /// <param name="config"></param>
-        /// <param name="url"></param>
-        /// <param name="cookies"></param>
-        /// <param name="responseStatusCode"></param>
-        /// <param name="downloadFilePath"></param>
-        /// <param name="timeoutSeconds"></param>
-        /// <param name="loginCredentials"></param>
-        /// <returns></returns>
+        /// <param name="config">Configuration options</param>
+        /// <param name="url">URL</param>
+        /// <param name="cookies">Cookies</param>
+        /// <param name="responseStatusCode">Response status code</param>
+        /// <param name="downloadFilePath">Local file path to save the file as</param>
+        /// <param name="timeoutSeconds">Timeout, in seconds</param>
+        /// <param name="loginCredentials">Login credentials</param>
+        /// <returns>True if success, false if an error</returns>
         public static bool GetFile(
             Configuration config,
             string url,
@@ -179,6 +193,14 @@ namespace Pacifica.Core
             return true;
         }
 
+        /// <summary>
+        /// Get the headers for a URL
+        /// </summary>
+        /// <param name="config">Configuration options</param>
+        /// <param name="url">URL</param>
+        /// <param name="responseStatusCode">Response status code</param>
+        /// <param name="timeoutSeconds">Timeout, in seconds</param>
+        /// <returns>Headers</returns>
         public static WebHeaderCollection GetHeaders(
             Configuration config,
             string url,
@@ -188,6 +210,16 @@ namespace Pacifica.Core
             return GetHeaders(config, url, new CookieContainer(), out responseStatusCode, timeoutSeconds);
         }
 
+        /// <summary>
+        /// Get the headers for a URL
+        /// </summary>
+        /// <param name="config">Configuration options</param>
+        /// <param name="url">URL</param>
+        /// <param name="cookies">Cookies</param>
+        /// <param name="responseStatusCode"></param>
+        /// <param name="timeoutSeconds">Timeout, in seconds</param>
+        /// <param name="loginCredentials">Login credentials</param>
+        /// <returns>Headers</returns>
         public static WebHeaderCollection GetHeaders(
             Configuration config,
             string url,
@@ -318,7 +350,7 @@ namespace Pacifica.Core
         /// <param name="timeoutSeconds">Timeout, in seconds</param>
         /// <param name="loginCredentials">Login credentials</param>
         /// <param name="maxTimeoutHours"></param>
-        /// <returns></returns>
+        /// <returns>Web request</returns>
         public static HttpWebRequest InitializeRequest(
             Configuration config,
             string url,
@@ -392,6 +424,20 @@ namespace Pacifica.Core
             urlContactInfo.Cookies.Add(cookie);
             request.CookieContainer = urlContactInfo.Cookies;
             return request;
+        }
+
+        /// <summary>
+        /// Report a status update
+        /// </summary>
+        /// <param name="percentCompleted">Value between 0 and 100</param>
+        /// <param name="totalBytesSent">Total bytes to send</param>
+        /// <param name="totalBytesToSend">Total bytes sent</param>
+        /// <param name="statusMessage">Status message</param>
+        private static void RaiseStatusUpdate(
+            double percentCompleted, long totalBytesSent,
+            long totalBytesToSend, string statusMessage)
+        {
+            StatusUpdate?.Invoke(null, new StatusEventArgs(percentCompleted, totalBytesSent, totalBytesToSend, statusMessage));
         }
 
         /// <summary>
@@ -566,6 +612,7 @@ namespace Pacifica.Core
         /// <param name="responseStatusCode">Response status code</param>
         /// <param name="timeoutSeconds">Timeout, in seconds</param>
         /// <returns>Response data</returns>
+        /// <remarks>Uses Threadstart instead of TPL</remarks>
         public static string SendViaThreadStart(
             Configuration config,
             string url,
@@ -750,6 +797,16 @@ namespace Pacifica.Core
 
         }
 
+        /// <summary>
+        /// Upload a file via POST
+        /// </summary>
+        /// <param name="config"></param>
+        /// <param name="location"></param>
+        /// <param name="serverBaseAddress"></param>
+        /// <param name="fileListObject"></param>
+        /// <param name="metadataFilePath"></param>
+        /// <param name="debugMode"></param>
+        /// <returns></returns>
         public static string SendFileListToIngester(
             Configuration config,
             string location, string serverBaseAddress,
