@@ -301,11 +301,11 @@ namespace Pacifica.Core
             NetworkCredential loginCredentials,
             double maxTimeoutHours = 24)
         {
-            var uri = new Uri(url);
-            var cleanUserName = Utilities.GetUserName(true);
 
-            var request = (HttpWebRequest)WebRequest.Create(uri);
-            config.SetProxy(request);
+            if (cookies == null)
+            {
+                cookies = new CookieContainer();
+            }
 
             if (timeoutSeconds < 3)
                 timeoutSeconds = 3;
@@ -314,11 +314,29 @@ namespace Pacifica.Core
             if (timeoutSeconds > maxTimeoutHoursInt)
                 timeoutSeconds = maxTimeoutHoursInt;
 
-            if (loginCredentials == null)
+            var urlContactInfo = new UrlContactInfo(config, url, cookies, timeoutSeconds: timeoutSeconds, loginCredentials: loginCredentials);
+
+            var request = InitializeRequest(urlContactInfo);
+            return request;
+        }
+
+        /// <summary>
+        /// Initialize a request
+        /// </summary>
+        /// <returns></returns>
+        private static HttpWebRequest InitializeRequest(UrlContactInfo urlContactInfo)
+        {
+            var uri = new Uri(urlContactInfo.Url);
+            var cleanUserName = Utilities.GetUserName(true);
+
+            var request = (HttpWebRequest)WebRequest.Create(uri);
+            urlContactInfo.Config.SetProxy(request);
+
+            if (urlContactInfo.LoginCredentials == null)
             {
                 if (mLoginCertificate == null)
                 {
-                    var certificateFilePath = ResolveCertFile(config, "InitializeRequest", out var errorMessage);
+                    var certificateFilePath = ResolveCertFile(urlContactInfo.Config, "InitializeRequest", out var errorMessage);
 
                     if (string.IsNullOrWhiteSpace(certificateFilePath))
                     {
@@ -335,14 +353,9 @@ namespace Pacifica.Core
             {
                 var c = new CredentialCache
                 {
-                    { new Uri(url), "Basic", new NetworkCredential(loginCredentials.UserName, loginCredentials.SecurePassword) }
+                    { new Uri(urlContactInfo.Url), "Basic", new NetworkCredential(urlContactInfo.LoginCredentials.UserName, urlContactInfo.LoginCredentials.SecurePassword) }
                 };
                 request.Credentials = c;
-            }
-
-            if (cookies == null)
-            {
-                cookies = new CookieContainer();
             }
 
             var cookie = new Cookie("user_name", cleanUserName)
@@ -350,8 +363,8 @@ namespace Pacifica.Core
                 Domain = "pnl.gov"
             };
 
-            cookies.Add(cookie);
-            request.CookieContainer = cookies;
+            urlContactInfo.Cookies.Add(cookie);
+            request.CookieContainer = urlContactInfo.Cookies;
             return request;
         }
 
@@ -482,6 +495,7 @@ namespace Pacifica.Core
         /// <param name="sendStringInHeader">If True, and the method is Get, include postData in the header</param>
         /// <param name="loginCredentials">Login credentials</param>
         /// <returns>Response data</returns>
+        /// <remarks>Uses the Task Parallel Library (TPL)</remarks>
         public static string Send(
             Configuration config,
             string url,
@@ -495,29 +509,28 @@ namespace Pacifica.Core
             NetworkCredential loginCredentials = null)
         {
 
-            var responseData = new WebResponseData();
+            var urlContactInfo = new UrlContactInfo(
+                config, url, cookies, postData, method,
+                timeoutSeconds, contentType, sendStringInHeader, loginCredentials);
 
-            // Contact the URL in a separate thread so that we can abort the search if it takes too long
-            var task = Task.Factory.StartNew(() => Send(
-                                                 config, url, cookies,
-                                                 responseData, postData, method,
-                                                 timeoutSeconds, contentType,
-                                                 sendStringInHeader, loginCredentials));
+            // Contact the URL in a separate thread so that we can abort the call if it takes too long
+            var task = Task.Factory.StartNew(() => Send(urlContactInfo));
 
             var success = task.Wait((timeoutSeconds + 5) * 1000);
 
             if (success)
             {
-                responseStatusCode = responseData.ResponseStatusCode;
+                responseStatusCode = urlContactInfo.ResponseData.ResponseStatusCode;
             }
             else
             {
-                responseData.ResponseText = REQUEST_TIMEOUT_RESPONSE;
-                responseData.ResponseStatusCode = HttpStatusCode.RequestTimeout;
-                responseStatusCode = responseData.ResponseStatusCode;
+                urlContactInfo.ResponseData.ResponseText = REQUEST_TIMEOUT_RESPONSE;
+                urlContactInfo.ResponseData.ResponseStatusCode = HttpStatusCode.RequestTimeout;
+                responseStatusCode = urlContactInfo.ResponseData.ResponseStatusCode;
             }
 
-            return responseData.ResponseText;
+            return urlContactInfo.ResponseData.ResponseText;
+        }
         }
 
         /// <summary>
@@ -545,64 +558,69 @@ namespace Pacifica.Core
             bool sendStringInHeader = false,
             NetworkCredential loginCredentials = null)
         {
-            var request = InitializeRequest(config, url, ref cookies, ref timeoutSeconds, loginCredentials);
-            responseData.ResponseStatusCode = HttpStatusCode.NotFound;
+        /// <summary>
+        /// Get or post data to a URL
+        /// </summary>
+        private static void Send(UrlContactInfo urlContactInfo)
+        {
+            var request = InitializeRequest(urlContactInfo);
+            urlContactInfo.ResponseData.ResponseStatusCode = HttpStatusCode.NotFound;
 
             // Prepare the request object
-            request.Method = method.GetDescription<HttpMethod>();
+            request.Method = urlContactInfo.Method.GetDescription<HttpMethod>();
             request.PreAuthenticate = false;
 
-            if (sendStringInHeader && method == HttpMethod.Get)
+            if (urlContactInfo.SendStringInHeader && urlContactInfo.Method == HttpMethod.Get)
             {
-                request.Headers.Add("X-Json-Data", postData);
+                request.Headers.Add("X-Json-Data", urlContactInfo.PostData);
             }
 
             // Set form/post content-type if necessary
-            if (method == HttpMethod.Post && !string.IsNullOrEmpty(postData) && string.IsNullOrEmpty(contentType))
+            if (urlContactInfo.Method == HttpMethod.Post && !string.IsNullOrEmpty(urlContactInfo.PostData) && string.IsNullOrEmpty(urlContactInfo.ContentType))
             {
-                contentType = "application/x-www-form-urlencoded";
+                urlContactInfo.ContentType = "application/x-www-form-urlencoded";
             }
 
             // Set Content-Type
-            if (method == HttpMethod.Post && !string.IsNullOrEmpty(contentType))
+            if (urlContactInfo.Method == HttpMethod.Post && !string.IsNullOrEmpty(urlContactInfo.ContentType))
             {
-                request.ContentType = contentType;
-                if (postData != null)
+                request.ContentType = urlContactInfo.ContentType;
+                if (urlContactInfo.PostData != null)
                 {
-                    request.ContentLength = postData.Length;
+                    request.ContentLength = urlContactInfo.PostData.Length;
                 }
             }
 
             // Write POST data, if POST
-            if (method == HttpMethod.Post)
+            if (urlContactInfo.Method == HttpMethod.Post)
             {
                 using (var sw = new StreamWriter(request.GetRequestStream()))
                 {
-                    sw.Write(postData);
+                    sw.Write(urlContactInfo.PostData);
                 }
             }
 
             // Receive response
-            responseData.ResponseText = string.Empty;
+            urlContactInfo.ResponseData.ResponseText = string.Empty;
             HttpWebResponse response = null;
             try
             {
-                request.Timeout = timeoutSeconds * 1000;
+                request.Timeout = urlContactInfo.TimeoutSeconds * 1000;
                 response = (HttpWebResponse)request.GetResponse();
-                responseData.ResponseStatusCode = response.StatusCode;
+                urlContactInfo.ResponseData.ResponseStatusCode = response.StatusCode;
                 var responseStream = response.GetResponseStream();
 
                 if (responseStream != null)
                 {
                     using (var sr = new StreamReader(responseStream))
                     {
-                        responseData.ResponseText = sr.ReadToEnd();
+                        urlContactInfo.ResponseData.ResponseText = sr.ReadToEnd();
                     }
                 }
             }
             catch (WebException ex)
             {
-                HandleWebException(ex, url, responseData);
+                HandleWebException(ex, urlContactInfo.Url, urlContactInfo.ResponseData);
             }
             finally
             {

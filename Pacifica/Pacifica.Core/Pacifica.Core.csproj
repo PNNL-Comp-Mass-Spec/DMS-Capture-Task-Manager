@@ -55,6 +55,7 @@
     <Compile Include="Schema\Group.cs" />
     <Compile Include="Schema\Item.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="UrlContactInfo.cs" />
     <Compile Include="WebResponseData.cs" />
   </ItemGroup>
   <ItemGroup>
