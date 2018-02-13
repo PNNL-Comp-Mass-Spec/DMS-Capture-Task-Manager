@@ -14,6 +14,7 @@ namespace Pacifica.Core
 {
     public class EasyHttp
     {
+        #region "Constants"
 
         /// <summary>
         /// Response to return when the thread used to send a request aborts
@@ -27,9 +28,21 @@ namespace Pacifica.Core
 
         public const string UPLOADING_FILES = "Uploading files";
 
+        private const int TAR_BLOCK_SIZE_BYTES = 512;
+
+        public const string MYEMSL_METADATA_FILE_NAME = "metadata.txt";
+
+        #endregion
+
+        #region "Fields"
+
         private static X509Certificate2 mLoginCertificate;
 
         private static UrlContactInfo mUrlContactInfo;
+
+        #endregion
+
+        #region "Enums"
 
         /// <summary>
         /// An enumeration of standard HTTP methods.
@@ -61,8 +74,9 @@ namespace Pacifica.Core
             MyEMSLOfflineMode = 2
         }
 
-        private const int TAR_BLOCK_SIZE_BYTES = 512;
-        public const string MYEMSL_METADATA_FILE_NAME = "metadata.txt";
+        #endregion
+
+        #region "Events"
 
         /// <summary>
         /// This event is raised if we are unable to connect to MyEMSL, leading to events
@@ -72,6 +86,8 @@ namespace Pacifica.Core
         public static event MessageEventHandler MyEMSLOffline;
 
         public static event StatusUpdateEventHandler StatusUpdate;
+
+        #endregion
 
         /// <summary>
         /// Report a status update
