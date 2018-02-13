@@ -116,7 +116,7 @@ namespace Pacifica.Core
 
             OnDebugEvent("Contacting " + statusURI);
 
-            var statusResult = EasyHttp.Send(mPacificaConfig, statusURI, out _);
+            var statusResult = EasyHttp.SendViaThreadStart(mPacificaConfig, statusURI, out _);
 
             OnDebugEvent("Result received: " + statusResult);
 

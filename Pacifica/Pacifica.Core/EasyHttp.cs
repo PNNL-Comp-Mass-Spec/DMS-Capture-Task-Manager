@@ -7,12 +7,18 @@ using ICSharpCode.SharpZipLib.Tar;
 using PRISM;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Pacifica.Core
 {
     public class EasyHttp
     {
+
+        /// <summary>
+        /// Response to return when the thread used to send a request aborts
+        /// </summary>
+        public const string REQUEST_ABORTED_RESPONSE = "(no response, request aborted)";
 
         /// <summary>
         /// Response to return when a request times out
@@ -22,6 +28,8 @@ namespace Pacifica.Core
         public const string UPLOADING_FILES = "Uploading files";
 
         private static X509Certificate2 mLoginCertificate;
+
+        private static UrlContactInfo mUrlContactInfo;
 
         /// <summary>
         /// An enumeration of standard HTTP methods.
@@ -234,7 +242,8 @@ namespace Pacifica.Core
         {
             responseStatusCode = HttpStatusCode.RequestTimeout;
 
-            var responseData = new WebResponseData {
+            var responseData = new WebResponseData
+            {
                 ResponseStatusCode = responseStatusCode
             };
 
@@ -531,6 +540,23 @@ namespace Pacifica.Core
 
             return urlContactInfo.ResponseData.ResponseText;
         }
+
+        /// <summary>
+        /// Get or post data to a URL
+        /// </summary>
+        /// <param name="config">Configuration options</param>
+        /// <param name="url">URL</param>
+        /// <param name="responseStatusCode">Response status code</param>
+        /// <param name="timeoutSeconds">Timeout, in seconds</param>
+        /// <returns>Response data</returns>
+        public static string SendViaThreadStart(
+            Configuration config,
+            string url,
+            out HttpStatusCode responseStatusCode,
+            int timeoutSeconds = 100)
+        {
+            const string postData = "";
+            return SendViaThreadStart(config, url, new CookieContainer(), out responseStatusCode, postData, HttpMethod.Get, timeoutSeconds);
         }
 
         /// <summary>
@@ -539,18 +565,20 @@ namespace Pacifica.Core
         /// <param name="config">Configuration options</param>
         /// <param name="url">URL</param>
         /// <param name="cookies">Cookies</param>
-        /// <param name="responseData">Tracks response text and response code</param>
+        /// <param name="responseStatusCode">Response status code</param>
         /// <param name="postData">Data to post (when method is HttpMethod.Post)</param>
         /// <param name="method">Get, Post, or Put</param>
         /// <param name="timeoutSeconds">Timeout, in seconds</param>
         /// <param name="contentType">Form/post content-type</param>
         /// <param name="sendStringInHeader">If True, and the method is Get, include postData in the header</param>
         /// <param name="loginCredentials">Login credentials</param>
-        private static void Send(
+        /// <returns>Response data</returns>
+        /// <remarks>Uses Threadstart instead of TPL</remarks>
+        public static string SendViaThreadStart(
             Configuration config,
             string url,
             CookieContainer cookies,
-            WebResponseData responseData,
+            out HttpStatusCode responseStatusCode,
             string postData = "",
             HttpMethod method = HttpMethod.Get,
             int timeoutSeconds = 100,
@@ -558,6 +586,73 @@ namespace Pacifica.Core
             bool sendStringInHeader = false,
             NetworkCredential loginCredentials = null)
         {
+
+            try
+            {
+                if (timeoutSeconds < 5)
+                    timeoutSeconds = 5;
+
+                mUrlContactInfo = new UrlContactInfo(
+                    config, url, cookies, postData, method,
+                    timeoutSeconds, contentType, sendStringInHeader, loginCredentials);
+
+                var startTime = DateTime.UtcNow;
+                var runtimeExceeded = false;
+                var threadAborted = false;
+
+                var newThread = new Thread(StartThreadedSend);
+                newThread.Start();
+
+                // Loop until URL call finishes, or until timeoutSeconds elapses
+                while (newThread.ThreadState != ThreadState.Stopped)
+                {
+                    clsProgRunner.SleepMilliseconds(25);
+
+                    if (newThread.ThreadState == ThreadState.Aborted)
+                    {
+                        threadAborted = true;
+                        break;
+                    }
+
+                    if (DateTime.UtcNow.Subtract(startTime).TotalSeconds < timeoutSeconds)
+                        continue;
+
+                    newThread.Abort();
+                    runtimeExceeded = true;
+                    threadAborted = true;
+                    break;
+                }
+
+                if (!threadAborted)
+                {
+                    responseStatusCode = mUrlContactInfo.ResponseData.ResponseStatusCode;
+                }
+                else
+                {
+                    if (runtimeExceeded)
+                    {
+                        mUrlContactInfo.ResponseData.ResponseText = REQUEST_TIMEOUT_RESPONSE;
+                        mUrlContactInfo.ResponseData.ResponseStatusCode = HttpStatusCode.RequestTimeout;
+                    }
+                    else
+                    {
+                        mUrlContactInfo.ResponseData.ResponseText = REQUEST_ABORTED_RESPONSE;
+                        mUrlContactInfo.ResponseData.ResponseStatusCode = HttpStatusCode.BadRequest;
+                    }
+
+                    responseStatusCode = mUrlContactInfo.ResponseData.ResponseStatusCode;
+                }
+
+                return mUrlContactInfo.ResponseData.ResponseText;
+            }
+            catch (Exception ex)
+            {
+                mUrlContactInfo.ResponseData.ResponseStatusCode = HttpStatusCode.BadRequest;
+                throw new Exception("Caught exception while trying to start a thread to contact " + url, ex);
+            }
+
+        }
+
         /// <summary>
         /// Get or post data to a URL
         /// </summary>
@@ -799,6 +894,15 @@ namespace Pacifica.Core
 
             return responseData;
 
+        }
+
+        /// <summary>
+        /// Start a thread to contact the url
+        /// </summary>
+        private static void StartThreadedSend(object obj)
+        {
+            // var token = (CancellationToken)obj;
+            Send(mUrlContactInfo);
         }
 
         private static long AddTarFileContentLength(string pathInArchive, long fileSizeBytes)
