@@ -90,17 +90,18 @@ namespace Pacifica.Core
         #endregion
 
         /// <summary>
-        /// Report a status update
+        /// Abort thread mThreadedSend
         /// </summary>
-        /// <param name="percentCompleted">Value between 0 and 100</param>
-        /// <param name="totalBytesSent">Total bytes to send</param>
-        /// <param name="totalBytesToSend">Total bytes sent</param>
-        /// <param name="statusMessage">Status message</param>
-        private static void RaiseStatusUpdate(
-            double percentCompleted, long totalBytesSent,
-            long totalBytesToSend, string statusMessage)
+        private static void AbortThreadedSendNow()
         {
-            StatusUpdate?.Invoke(null, new StatusEventArgs(percentCompleted, totalBytesSent, totalBytesToSend, statusMessage));
+            try
+            {
+                mThreadedSend?.Abort();
+            }
+            catch
+            {
+                // Ignore errors
+            }
         }
 
         /// <summary>
@@ -616,24 +617,27 @@ namespace Pacifica.Core
                 var runtimeExceeded = false;
                 var threadAborted = false;
 
-                var newThread = new Thread(StartThreadedSend);
-                newThread.Start();
+                mThreadedSend = new Thread(StartThreadedSend);
+                mThreadedSend.Start();
 
                 // Loop until URL call finishes, or until timeoutSeconds elapses
-                while (newThread.ThreadState != ThreadState.Stopped)
+                while (mThreadedSend.ThreadState != ThreadState.Stopped)
                 {
                     clsProgRunner.SleepMilliseconds(25);
 
-                    if (newThread.ThreadState == ThreadState.Aborted)
+                    if (mThreadedSend.ThreadState == ThreadState.Aborted)
                     {
                         threadAborted = true;
                         break;
                     }
 
-                    if (DateTime.UtcNow.Subtract(startTime).TotalSeconds < timeoutSeconds)
+                    if (DateTime.UtcNow.Subtract(startTime).TotalSeconds < timeoutSeconds + 5)
                         continue;
 
-                    newThread.Abort();
+                    var abortThread = new Thread(AbortThreadedSendNow);
+                    abortThread.Start();
+                    clsProgRunner.SleepMilliseconds(25);
+
                     runtimeExceeded = true;
                     threadAborted = true;
                     break;
@@ -915,9 +919,8 @@ namespace Pacifica.Core
         /// <summary>
         /// Start a thread to contact the url
         /// </summary>
-        private static void StartThreadedSend(object obj)
+        private static void StartThreadedSend()
         {
-            // var token = (CancellationToken)obj;
             Send(mUrlContactInfo);
         }
 
