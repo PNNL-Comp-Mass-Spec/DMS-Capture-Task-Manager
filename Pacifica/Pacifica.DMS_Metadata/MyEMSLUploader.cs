@@ -234,7 +234,7 @@ namespace Pacifica.DMS_Metadata
             }
             catch (Exception ex)
             {
-                ConsoleMsgUtils.ShowError("MyEMSL Upload exception: " + ex.Message, ex);
+                OnWarningEvent("Exception calling UploadWorker.StartUpload: " + ex.Message);
                 mMetadataContainer.DeleteLockFiles();
                 throw;
             }

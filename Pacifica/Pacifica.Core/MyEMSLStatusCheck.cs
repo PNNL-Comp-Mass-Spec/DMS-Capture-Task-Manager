@@ -117,10 +117,19 @@ namespace Pacifica.Core
                 ServicePointManager.ServerCertificateValidationCallback += Utilities.ValidateRemoteCertificate;
 
             OnStatusEvent("Contacting " + statusURI);
+            var startTime = DateTime.UtcNow;
 
             var statusResult = EasyHttp.SendViaThreadStart(mPacificaConfig, statusURI, out _);
 
-            OnDebugEvent("Result received: " + statusResult);
+            var elapsedSeconds = DateTime.UtcNow.Subtract(startTime).TotalSeconds;
+            if (elapsedSeconds > 20)
+            {
+                OnStatusEvent(string.Format("Result received after {0} seconds: {1}", (int)elapsedSeconds, statusResult));
+            }
+            else
+            {
+                OnDebugEvent("Result received: " + statusResult);
+            }
 
             // Example contents of statusResult
             // (as returned by https://ingestdms.my.emsl.pnl.gov/get_state?job_id=123456)

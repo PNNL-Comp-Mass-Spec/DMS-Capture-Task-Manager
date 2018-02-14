@@ -565,7 +565,7 @@ namespace Pacifica.DMS_Metadata
             if (!string.IsNullOrWhiteSpace(uploadMetadata.SubFolder))
                 currentTask += ", subfolder " + uploadMetadata.SubFolder;
 
-            OnDebugEvent(currentTask);
+            OnStatusEvent(currentTask);
 
             var datasetID = uploadMetadata.DatasetID;
 

@@ -422,7 +422,8 @@ namespace Pacifica.Core
             }
             catch (Exception ex)
             {
-                OnError("Exception examining the MyEMSL response string: " + ex.Message, ex);
+                OnError("Exception examining the MyEMSL response string", ex);
+            }
             }
 
             // Delete the local temporary file
@@ -751,6 +752,9 @@ namespace Pacifica.Core
         private void OnError(string errorMessage, Exception ex = null)
         {
             ErrorMessage = errorMessage;
+            if (ex != null && !ErrorMessage.Contains(ex.Message))
+                ErrorMessage += ": " + ex.Message;
+
             OnErrorEvent(errorMessage, ex);
 
         }
