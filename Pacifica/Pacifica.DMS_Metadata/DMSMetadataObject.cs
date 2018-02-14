@@ -375,7 +375,11 @@ namespace Pacifica.DMS_Metadata
                 if (TraceMode)
                     OnDebugEvent("Contacting " + policyURL);
 
-                var response = EasyHttp.Send(mPacificaConfig, policyURL, null, out var responseStatusCode, jsonMetadata, EasyHttp.HttpMethod.Post, 100, "application/json");
+                var response = EasyHttp.SendViaThreadStart(
+                    mPacificaConfig, policyURL, null,
+                    out var responseStatusCode,
+                    jsonMetadata,
+                    EasyHttp.HttpMethod.Post, 100, "application/json");
 
                 if ((int)responseStatusCode == 200 && response.ToLower().Contains("success"))
                 {
@@ -943,7 +947,7 @@ namespace Pacifica.DMS_Metadata
                 OnDebugEvent("Contacting " + metadataURL);
 
             // Retrieve a list of files already in MyEMSL for this dataset
-            var fileInfoListJSON = EasyHttp.Send(mPacificaConfig, metadataURL, out _);
+            var fileInfoListJSON = EasyHttp.SendViaThreadStart(mPacificaConfig, metadataURL, out _);
 
             if (string.IsNullOrEmpty(fileInfoListJSON))
             {
