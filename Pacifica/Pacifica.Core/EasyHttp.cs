@@ -19,7 +19,12 @@ namespace Pacifica.Core
         /// <summary>
         /// Response to return when the thread used to send a request aborts
         /// </summary>
-        public const string REQUEST_ABORTED_RESPONSE = "(no response, request aborted)";
+        private const string REQUEST_ABORTED_RESPONSE = "(no response, request aborted)";
+
+        /// <summary>
+        /// Response to return when the thread used to send a request catches an exception
+        /// </summary>
+        private const string REQUEST_EXCEPTION_RESPONSE = "(no response, exception caught)";
 
         /// <summary>
         /// Response to return when a request times out
@@ -100,6 +105,11 @@ namespace Pacifica.Core
         /// This event is used by SendFileListToIngester to report upload status
         /// </summary>
         public static event StatusUpdateEventHandler StatusUpdate;
+
+        /// <summary>
+        /// Error event
+        /// </summary>
+        public static event clsEventNotifier.ErrorEventEventHandler ErrorEvent;
 
         #endregion
 
@@ -310,6 +320,9 @@ namespace Pacifica.Core
 
         private static void HandleWebException(WebException ex, string url, WebResponseData responseData)
         {
+
+            responseData.RegisterException(ex);
+
             if (ex.Response != null)
             {
                 var responseStream = ex.Response.GetResponseStream();
@@ -384,6 +397,8 @@ namespace Pacifica.Core
         /// <returns></returns>
         private static HttpWebRequest InitializeRequest(UrlContactInfo urlContactInfo)
         {
+            urlContactInfo.ResponseData.ResetExceptionInfo();
+
             var uri = new Uri(urlContactInfo.Url);
             var cleanUserName = Utilities.GetUserName(true);
 
@@ -423,7 +438,39 @@ namespace Pacifica.Core
 
             urlContactInfo.Cookies.Add(cookie);
             request.CookieContainer = urlContactInfo.Cookies;
+
             return request;
+        }
+
+        /// <summary>
+        /// Return True if responseText is one of the custom responses that this class uses to report errors (timeout, abort, or exception)
+        /// </summary>
+        /// <param name="responseText"></param>
+        public static bool IsResponseError(string responseText)
+        {
+            switch (responseText)
+            {
+                case REQUEST_ABORTED_RESPONSE:
+                case REQUEST_EXCEPTION_RESPONSE:
+                case REQUEST_TIMEOUT_RESPONSE:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        /// <summary>
+        /// Report an error
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="ex">Exception (allowed to be nothing)</param>
+        private static void OnErrorEvent(string message, Exception ex)
+        {
+            if (ErrorEvent == null)
+            {
+                ConsoleMsgUtils.ShowError(message, ex, false, false);
+            }
+            ErrorEvent?.Invoke(message, ex);
         }
 
         /// <summary>
@@ -690,7 +737,7 @@ namespace Pacifica.Core
                     break;
                 }
 
-                if (!threadAborted)
+                if (!threadAborted && !mUrlContactInfo.ResponseData.ExceptionCaught)
                 {
                     responseStatusCode = mUrlContactInfo.ResponseData.ResponseStatusCode;
                 }
@@ -700,6 +747,11 @@ namespace Pacifica.Core
                     {
                         mUrlContactInfo.ResponseData.ResponseText = REQUEST_TIMEOUT_RESPONSE;
                         mUrlContactInfo.ResponseData.ResponseStatusCode = HttpStatusCode.RequestTimeout;
+                    }
+                    else if (mUrlContactInfo.ResponseData.ExceptionCaught)
+                    {
+                        mUrlContactInfo.ResponseData.ResponseText = REQUEST_EXCEPTION_RESPONSE;
+                        mUrlContactInfo.ResponseData.ResponseStatusCode = HttpStatusCode.BadRequest;
                     }
                     else
                     {
@@ -978,7 +1030,16 @@ namespace Pacifica.Core
         /// </summary>
         private static void StartThreadedSend()
         {
-            Send(mUrlContactInfo);
+            try
+            {
+                Send(mUrlContactInfo);
+            }
+            catch (Exception ex)
+            {
+                mUrlContactInfo.ResponseData.RegisterException(ex);
+                OnErrorEvent(ex.Message, ex);
+            }
+
         }
 
         private static long AddTarFileContentLength(string pathInArchive, long fileSizeBytes)
@@ -1200,5 +1261,6 @@ namespace Pacifica.Core
 
             return string.Empty;
         }
+
     }
 }

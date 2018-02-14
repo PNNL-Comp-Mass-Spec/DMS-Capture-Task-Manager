@@ -195,6 +195,8 @@ namespace Pacifica.Core
 
             EasyHttp.MyEMSLOffline += EasyHttp_MyEMSLOffline;
 
+            EasyHttp.ErrorEvent += OnErrorEvent;
+
             ErrorMessage = string.Empty;
             TransferFolderPath = transferFolderPath;
             JobNumber = jobNumber;
@@ -374,10 +376,26 @@ namespace Pacifica.Core
                 }
                 else
                 {
-                    statusResult = EasyHttp.Send(mPacificaConfig, statusURI, out _);
+                    statusResult = EasyHttp.SendViaThreadStart(mPacificaConfig, statusURI, out _);
                 }
 
-                var statusJSON = Utilities.JsonToObject(statusResult);
+                if (EasyHttp.IsResponseError(statusResult))
+                {
+                    OnError("Error checking status: " + statusResult);
+                    return false;
+                }
+
+                Dictionary<string, object> statusJSON;
+
+                try
+                {
+                    statusJSON = Utilities.JsonToObject(statusResult);
+                }
+                catch (Exception)
+                {
+                    OnError("Unable to parse response into JSON: " + statusResult);
+                    return false;
+                }
 
                 var state = statusJSON["state"].ToString().ToLower();
 

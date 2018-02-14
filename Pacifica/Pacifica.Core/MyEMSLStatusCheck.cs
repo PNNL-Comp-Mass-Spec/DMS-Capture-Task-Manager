@@ -38,6 +38,8 @@ namespace Pacifica.Core
             mPacificaConfig = new Configuration();
 
             EasyHttp.MyEMSLOffline += EasyHttp_MyEMSLOffline;
+
+            EasyHttp.ErrorEvent += OnErrorEvent;
         }
 
         /// <summary>
@@ -134,6 +136,13 @@ namespace Pacifica.Core
                 if (string.Equals(statusResult, EasyHttp.REQUEST_TIMEOUT_RESPONSE))
                 {
                     OnWarningEvent("Ingest status lookup timed out");
+                    percentComplete = 0;
+                    return new Dictionary<string, object>();
+                }
+
+                if (EasyHttp.IsResponseError(statusResult))
+                {
+                    OnWarningEvent("Ingest status error: " + statusResult);
                     percentComplete = 0;
                     return new Dictionary<string, object>();
                 }
