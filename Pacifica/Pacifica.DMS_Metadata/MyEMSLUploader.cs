@@ -191,17 +191,28 @@ namespace Pacifica.DMS_Metadata
                 throw new Exception(errorMessage);
             }
 
-            // Look for files to upload, compute a Sha-1 hash for each, and compare those hashes to existing files in MyEMSL
-            var success = mMetadataContainer.SetupMetadata(mTaskParams, mMgrParams, debugMode, out var criticalError, out var criticalErrorMessage);
-
-            if (!success)
+            try
             {
-                if (criticalError)
-                    CriticalErrorMessage = criticalErrorMessage;
 
-                statusURL = criticalError ? CRITICAL_UPLOAD_ERROR : string.Empty;
+                // Look for files to upload, compute a Sha-1 hash for each, and compare those hashes to existing files in MyEMSL
+                var success = mMetadataContainer.SetupMetadata(mTaskParams, mMgrParams, debugMode, out var criticalError, out var criticalErrorMessage);
 
-                return false;
+                if (!success)
+                {
+                    if (criticalError)
+                        CriticalErrorMessage = criticalErrorMessage;
+
+                    statusURL = criticalError ? CRITICAL_UPLOAD_ERROR : string.Empty;
+
+                    return false;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                OnWarningEvent("Exception calling MetadataContainer.SetupMetadata: " + ex.Message);
+                mMetadataContainer.DeleteLockFiles();
+                throw;
             }
 
             // Send the metadata object to the calling procedure (in case it wants to log it)
