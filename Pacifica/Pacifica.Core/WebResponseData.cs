@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
 
 namespace Pacifica.Core
 {
@@ -7,6 +8,22 @@ namespace Pacifica.Core
     /// </summary>
     class WebResponseData
     {
+        /// <summary>
+        /// Set to true when an exception was caught
+        /// </summary>
+        /// <remarks>For details, see exceptionMessage and ExceptionStackTrace</remarks>
+        public bool ExceptionCaught { get; private set; }
+
+        /// <summary>
+        /// Exception message
+        /// </summary>
+        public string ExceptionMessage { get; private set; }
+
+        /// <summary>
+        /// Stacktrace for the exception
+        /// </summary>
+        public string ExceptionStackTrace { get; private set; }
+
         /// <summary>
         /// Response code
         /// </summary>
@@ -23,6 +40,28 @@ namespace Pacifica.Core
         public WebResponseData()
         {
             ResponseText = string.Empty;
+            ResetExceptionInfo();
+        }
+
+        /// <summary>
+        /// Clear cached exception info
+        /// </summary>
+        public void ResetExceptionInfo()
+        {
+            ExceptionCaught = false;
+            ExceptionMessage = string.Empty;
+            ExceptionStackTrace = string.Empty;
+        }
+
+        /// <summary>
+        /// Store information on a new exception
+        /// </summary>
+        /// <param name="ex"></param>
+        public void RegisterException(Exception ex)
+        {
+            ExceptionCaught = true;
+            ExceptionMessage = ex.Message;
+            ExceptionStackTrace = PRISM.clsStackTraceFormatter.GetExceptionStackTraceMultiLine(ex);
         }
     }
 }
