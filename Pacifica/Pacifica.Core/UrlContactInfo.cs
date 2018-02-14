@@ -94,7 +94,6 @@ namespace Pacifica.Core
             SendStringInHeader = sendStringInHeader;
             LoginCredentials = loginCredentials;
 
-
         }
 
     }
