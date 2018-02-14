@@ -424,10 +424,11 @@ namespace Pacifica.Core
             {
                 OnError("Exception examining the MyEMSL response string", ex);
             }
+            finally
+            {
+                // Delete the local temporary file
+                Utilities.DeleteFileIgnoreErrors(metadataFile);
             }
-
-            // Delete the local temporary file
-            Utilities.DeleteFileIgnoreErrors(metadataFile);
 
             return success;
         }
