@@ -953,6 +953,12 @@ namespace Pacifica.DMS_Metadata
                 return new Dictionary<string, List<MyEMSLFileInfo>>();
             }
 
+            if (EasyHttp.IsResponseError(fileInfoListJSON))
+            {
+                OnErrorEvent("Error response in GetDatasetFilesInMyEMSL: " + fileInfoListJSON);
+                return new Dictionary<string, List<MyEMSLFileInfo>>();
+            }
+
             if (TraceMode)
             {
                 var previewLength = Math.Min(fileInfoListJSON.Length, 75);
