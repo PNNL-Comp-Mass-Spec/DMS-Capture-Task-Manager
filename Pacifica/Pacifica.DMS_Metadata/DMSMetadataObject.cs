@@ -232,7 +232,7 @@ namespace Pacifica.DMS_Metadata
             if (unmatchedFiles.Count > 0)
             {
                 var jsonMetadata = Utilities.ObjectToJson(mMetadataObject);
-                if (!CheckMetadataValidity(jsonMetadata, out _))
+                if (!CheckMetadataValidity(jsonMetadata))
                 {
                     return false;
                 }
@@ -359,10 +359,9 @@ namespace Pacifica.DMS_Metadata
             return new List<int>();
         }
 
-        private bool CheckMetadataValidity(string jsonMetadata, out string validityMessage)
+        private bool CheckMetadataValidity(string jsonMetadata)
         {
             var policyURL = mPacificaConfig.PolicyServerUri + "/ingest";
-            validityMessage = string.Empty;
 
             try
             {
@@ -386,7 +385,6 @@ namespace Pacifica.DMS_Metadata
                     if (TraceMode)
                         OnDebugEvent("Response received " + response);
 
-                    validityMessage = response;
                     return true;
                 }
 
