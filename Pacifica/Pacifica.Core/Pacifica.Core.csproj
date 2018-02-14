@@ -49,11 +49,8 @@
   <ItemGroup>
     <Compile Include="EventArgs.cs" />
     <Compile Include="MyEMSLStatusCheck.cs" />
-    <Compile Include="Schema\Action.cs" />
     <Compile Include="Configuration.cs" />
     <Compile Include="Delegates.cs" />
-    <Compile Include="Schema\Group.cs" />
-    <Compile Include="Schema\Item.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UrlContactInfo.cs" />
     <Compile Include="WebResponseData.cs" />
