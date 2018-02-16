@@ -68,8 +68,16 @@ namespace CaptureToolPlugin
         private readonly bool mUseBioNet;
         private readonly bool mTraceMode;
 
+        /// <summary>
+        /// Username for connecting to bionet
+        /// </summary>
         private readonly string mUserName = "";
+
+        /// <summary>
+        /// Encoded password for the bionet user
+        /// </summary>
         private readonly string mPassword = "";
+
         private ShareConnector mShareConnectorPRISM;
         private NetworkConnection m_ShareConnectorDotNET;
         private ConnectionType m_ConnectionType = ConnectionType.NotConnected;
