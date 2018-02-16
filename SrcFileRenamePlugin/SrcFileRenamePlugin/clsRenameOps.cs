@@ -202,7 +202,7 @@ namespace SrcFileRenamePlugin
 
             // Close connection, if open
             if (m_Connected)
-                DisconnectShare(ref m_ShareConnector, out m_Connected);
+                DisconnectShare(ref m_ShareConnector);
 
             if (countRenamed == 0)
             {
@@ -408,15 +408,14 @@ namespace SrcFileRenamePlugin
         /// <summary>
         /// Disconnects a Bionet shared drive
         /// </summary>
-        /// <param name="MyConn">Connection object for shared drive</param>
-        /// <param name="ConnState">Return value specifying connection has been closed</param>
-        private void DisconnectShare(ref ShareConnector MyConn, out bool ConnState)
+        /// <param name="myConn">Connection object for shared drive</param>
+        private void DisconnectShare(ref ShareConnector myConn)
         {
             // Disconnects a shared drive
-            MyConn.Disconnect();
+            myConn.Disconnect();
             m_Msg = "Bionet disconnected";
             OnDebugEvent(m_Msg);
-            ConnState = false;
+            m_Connected = false;
         }
 
         /// <summary>
