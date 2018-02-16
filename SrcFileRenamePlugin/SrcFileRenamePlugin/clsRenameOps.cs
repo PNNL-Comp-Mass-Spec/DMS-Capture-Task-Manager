@@ -86,7 +86,7 @@ namespace SrcFileRenamePlugin
             // Typically an empty string, but could be a partial path like: "CapDev" or "Smith\2014"
             var captureSubfolder = taskParams.GetParam("Capture_Subfolder");
 
-            var pwd = DecodePassword(m_Pwd);
+            var pwd = Pacifica.Core.Utilities.DecodePassword(m_Pwd);
 
             var msg = "Started clsRenameOps.DoOperation()";
             OnDebugEvent(msg);
@@ -403,44 +403,6 @@ namespace SrcFileRenamePlugin
 
                 return false;
             }
-        }
-
-        /// <summary>
-        /// Decrypts password received from ini file
-        /// </summary>
-        /// <param name="enPwd">Encoded password</param>
-        /// <returns>Clear text password</returns>
-        private string DecodePassword(string enPwd)
-        {
-            // Decrypts password received from ini file
-            // Password was created by alternately subtracting or adding 1 to the ASCII value of each character
-
-            // Convert the password string to a character array
-            var pwdChars = enPwd.ToCharArray();
-            var pwdBytes = new byte[pwdChars.Length];
-            var pwdCharsAdj = new char[pwdChars.Length];
-
-            for (var i = 0; i < pwdChars.Length; i++)
-            {
-                pwdBytes[i] = (byte)pwdChars[i];
-            }
-
-            // Modify the byte array by shifting alternating bytes up or down and convert back to char, and add to output string
-            var retStr = "";
-            for (var byteCntr = 0; byteCntr < pwdBytes.Length; byteCntr++)
-            {
-                if ((byteCntr % 2) == 0)
-                {
-                    pwdBytes[byteCntr] += 1;
-                }
-                else
-                {
-                    pwdBytes[byteCntr] -= 1;
-                }
-                pwdCharsAdj[byteCntr] = (char)pwdBytes[byteCntr];
-                retStr += pwdCharsAdj[byteCntr].ToString();
-            }
-            return retStr;
         }
 
         /// <summary>
