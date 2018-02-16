@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sections>
+  <section name="DMSUpdateManager">
+    <item key="OverwriteNewerFiles" value="False" />
+    <item key="SourceFolderPath" value="\\pnl\projects\OmicsSW\DMS_Programs\CaptureTaskManagerDistribution" />
+    <item key="TargetFolderPath" value="." />
+    <item key="CopySubdirectoriesToParentFolder" value="True" />
+    <item key="RebootCommandFolderPath" value="" />
+    <item key="FilesToIgnore" value="CaptureTaskManager.exe.config, thumbs.db" />
+    <item key="LogMessages" value="True" />
+    <item key="MinimumRepeatTimeSeconds" value="60" />
+    <item key="LogFolderPath" value="..\DMSUpdateManager_CTM\Logs" />
+    <item key="LoggingLevel" value="Normal" />
+  </section>
+</sections>
