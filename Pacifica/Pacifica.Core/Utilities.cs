@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -14,40 +15,55 @@ namespace Pacifica.Core
 {
     public class Utilities
     {
+
         /// <summary>
-        /// Decrypts an encoded password
+        /// Decode a password
         /// </summary>
-        /// <param name="enPwd">Encoded password</param>
+        /// <param name="encodedPwd">Encoded password</param>
         /// <returns>Clear text password</returns>
-        public static string DecodePassword(string enPwd)
+        public static string DecodePassword(string encodedPwd)
+        {
+            return EncryptDecrypt(encodedPwd, false);
+        }
+
+        /// <summary>
+        /// Encode a password
+        /// </summary>
+        /// <param name="password">Clear text password</param>
+        /// <returns>Encoded password</returns>
+        public static string EncodePassword(string password)
+        {
+            return EncryptDecrypt(password, true);
+        }
+
+        /// <summary>
+        /// Encode or decode a password
+        /// </summary>
+        /// <param name="password">Password</param>
+        /// <param name="encrypt">True to encode the password; false to decode the password</param>
+        /// <returns>Encoded password</returns>
+        private static string EncryptDecrypt(string password, bool encrypt)
         {
             // Convert the password string to a character array
-            var pwdChars = enPwd.ToCharArray();
-            var pwdBytes = new List<byte>();
+            var pwdChars = password.ToCharArray();
             var pwdCharsAdj = new List<char>();
 
-            for (var i = 0; i <= pwdChars.Length - 1; i++)
-            {
-                pwdBytes.Add((byte)pwdChars[i]);
-            }
+            var pwdBytes = pwdChars.Select(t => (byte)t).ToList();
 
-            // Modify the byte array by shifting alternating bytes up or down and convert back to char, and add to output string
+            var modTest = encrypt ? 1 : 0;
 
-            for (var byteCntr = 0; byteCntr <= pwdBytes.Count - 1; byteCntr++)
+            // Modify the byte array by shifting alternating bytes up or down and converting back to char
+            for (var index = 0; index < pwdBytes.Count; index++)
             {
-                if (byteCntr % 2 == 0)
-                {
-                    pwdBytes[byteCntr] += 1;
-                }
+                if (index % 2 == modTest)
+                    pwdBytes[index] += 1;
                 else
-                {
-                    pwdBytes[byteCntr] -= 1;
-                }
-                pwdCharsAdj.Add((char)pwdBytes[byteCntr]);
+                    pwdBytes[index] -= 1;
+
+                pwdCharsAdj.Add((char)pwdBytes[index]);
             }
 
             return string.Join("", pwdCharsAdj);
-
         }
 
         /// <summary>
