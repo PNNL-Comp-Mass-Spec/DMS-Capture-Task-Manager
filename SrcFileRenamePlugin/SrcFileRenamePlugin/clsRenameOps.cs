@@ -86,7 +86,7 @@ namespace SrcFileRenamePlugin
             // Typically an empty string, but could be a partial path like: "CapDev" or "Smith\2014"
             var captureSubfolder = taskParams.GetParam("Capture_Subfolder");
 
-            var pwd = Pacifica.Core.Utilities.DecodePassword(m_Pwd);
+            var pwd = clsUtilities.DecodePassword(m_Pwd);
 
             var msg = "Started clsRenameOps.DoOperation()";
             OnDebugEvent(msg);

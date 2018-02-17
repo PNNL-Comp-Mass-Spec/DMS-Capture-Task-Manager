@@ -1178,7 +1178,7 @@ namespace CaptureToolPlugin
                     break;
             }
 
-            var pwd = Pacifica.Core.Utilities.DecodePassword(mPassword);
+            var pwd = clsUtilities.DecodePassword(mPassword);
 
             string tempVol;
 
