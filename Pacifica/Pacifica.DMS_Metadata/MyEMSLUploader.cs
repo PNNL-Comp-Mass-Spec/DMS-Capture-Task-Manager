@@ -81,6 +81,11 @@ namespace Pacifica.DMS_Metadata
         }
 
         /// <summary>
+        /// DMS Metadata container
+        /// </summary>
+        public DMSMetadataObject MetadataContainer => mMetadataContainer;
+
+        /// <summary>
         /// Status URI
         /// </summary>
         public string StatusURI
@@ -162,6 +167,17 @@ namespace Pacifica.DMS_Metadata
 
         }
 
+        /// <summary>
+        /// Look for files to upload, compute a Sha-1 hash for each, compare those hashes to existing files in MyEMSL,
+        /// and upload new/changed files
+        /// </summary>
+        /// <param name="config"></param>
+        /// <param name="debugMode">
+        /// Set to eDebugMode.CreateTarLocal to authenticate with MyEMSL, then create a .tar file locally instead of actually uploading it
+        /// Set to eDebugMode.MyEMSLOfflineMode to create the .tar file locally without contacting MyEMSL
+        /// </param>
+        /// <param name="statusURL">Output: status URL</param>
+        /// <returns>True if success, false if an error</returns>
         public bool SetupMetadataAndUpload(Configuration config, EasyHttp.eDebugMode debugMode, out string statusURL)
         {
 

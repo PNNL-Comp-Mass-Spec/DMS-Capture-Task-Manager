@@ -14,6 +14,11 @@ namespace Pacifica.DMS_Metadata
 {
     public class DMSMetadataObject : clsEventNotifier
     {
+        /// <summary>
+        /// If a dataset archive task involves more 15 GB of data, only archive the root directory and the QC directory
+        /// Use property SkippedDatasetArchiveSubdirectories to view the skipped subdirectory names
+        /// </summary>
+        private const int LARGE_DATASETARCHIVE_THRESHOLD_GB = 15;
 
         /// <summary>
         /// Maximum number of files to archive
@@ -32,7 +37,7 @@ namespace Pacifica.DMS_Metadata
         public const string SOURCE_DIRECTORY_NOT_FOUND = "Source directory not found";
 
         /// <summary>
-        /// Error message thrown when teh dataset directory has too many files to archive
+        /// Error message thrown when the dataset directory has too many files to archive
         /// </summary>
         public static readonly string TOO_MANY_FILES_TO_ARCHIVE = "Source directory has over " + MAX_FILES_TO_ARCHIVE + " files";
 
@@ -107,6 +112,11 @@ namespace Pacifica.DMS_Metadata
         public List<Dictionary<string, object>> MetadataObject => mMetadataObject;
 
         /// <summary>
+        /// Subdirectory names that were skipped during a datasetarchive task because we're pushing more than 15 GB of data
+        /// </summary>
+        public List<string> SkippedDatasetArchiveSubdirectories { get; }
+
+        /// <summary>
         /// Number of bytes to upload
         /// </summary>
         public long TotalFileSizeToUpload { get; set; }
@@ -166,6 +176,8 @@ namespace Pacifica.DMS_Metadata
             mFileTools = new clsFileTools(managerName, 1);
 
             mFileTools.WaitingForLockQueue += mFileTools_WaitingForLockQueue;
+
+            SkippedDatasetArchiveSubdirectories = new List<string>();
         }
 
         /// <summary>
@@ -451,13 +463,25 @@ namespace Pacifica.DMS_Metadata
         }
 
         /// <summary>
+        /// Convert a file size in bytes to gigabytes
+        /// </summary>
+        /// <param name="sizeBytes"></param>
+        /// <returns></returns>
+        private static double BytesToGB(long sizeBytes)
+        {
+            return sizeBytes / 1024.0 / 1024 / 1024;
+        }
+
+        /// <summary>
         /// Find all of the files in the path to be archived
         /// </summary>
+        /// <param name="archiveMode">Archive for the initial archive of a dataset, or update for updating a specific subdirectory</param>
         /// <param name="pathToBeArchived">Folder path to be archived</param>
         /// <param name="baseDSPath">Base dataset folder path</param>
         /// <param name="recurse">True to find files in all subdirectories</param>
-        /// <returns></returns>
+        /// <returns>List of files to be archived</returns>
         private List<FileInfoObject> CollectFileInformation(
+            ArchiveModes archiveMode,
             string pathToBeArchived,
             string baseDSPath,
             bool recurse
@@ -465,16 +489,16 @@ namespace Pacifica.DMS_Metadata
         {
             var fileCollection = new List<FileInfoObject>();
 
-            var archiveDir = new DirectoryInfo(pathToBeArchived);
-            if (!archiveDir.Exists)
+            var sourceDirectory = new DirectoryInfo(pathToBeArchived);
+            if (!sourceDirectory.Exists)
             {
                 throw new DirectoryNotFoundException(
-                    string.Format("{0}: {1} (CollectFileInformation)", SOURCE_DIRECTORY_NOT_FOUND, archiveDir));
+                    string.Format("{0}: {1} (CollectFileInformation)", SOURCE_DIRECTORY_NOT_FOUND, sourceDirectory));
             }
 
             var eSearchOption = recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
 
-            var fileList = archiveDir.GetFiles("*", eSearchOption).ToList();
+            var fileList = sourceDirectory.GetFiles("*", eSearchOption).ToList();
 
             if (fileList.Count >= MAX_FILES_TO_ARCHIVE)
             {
@@ -487,16 +511,52 @@ namespace Pacifica.DMS_Metadata
 
             var fracCompleted = 0f;
 
-            // Generate file size sum for status purposes
-            long totalFileSize = 0;             // how much data is there to crunch?
-            long runningFileSize = 0;           // how much data we've crunched so far
+            // Determine the amount of data to be pushed
+            long totalFileSize = 0;
             foreach (var fi in fileList)
             {
                 totalFileSize += fi.Length;
             }
 
+            SkippedDatasetArchiveSubdirectories.Clear();
+
+            if (archiveMode == ArchiveModes.archive && recurse && BytesToGB(totalFileSize) > LARGE_DATASETARCHIVE_THRESHOLD_GB)
+            {
+                // Dataset archive task pushing more than 15 GB of data
+                // If the dataset has subdirectories, only push the QC subdirectory at this time
+                // Create separate ArchiveUpdate jobs for the other directories
+
+                var subDirectories = sourceDirectory.GetDirectories();
+
+                // Clear the list of files, then add dataset files in the dataset folder
+                fileList.Clear();
+                fileList.AddRange(sourceDirectory.GetFiles("*", SearchOption.TopDirectoryOnly).ToList());
+
+                // Step through the subdirectories
+                foreach (var subDirectory in subDirectories)
+                {
+                    if (string.Equals(subDirectory.Name, "QC", StringComparison.OrdinalIgnoreCase))
+                    {
+                        fileList.AddRange(subDirectory.GetFiles("*", SearchOption.AllDirectories).ToList());
+                    }
+                    else
+                    {
+                        SkippedDatasetArchiveSubdirectories.Add(subDirectory.Name);
+                    }
+                }
+
+                // Recompute the total file size
+                totalFileSize = 0;
+                foreach (var fi in fileList)
+                {
+                    totalFileSize += fi.Length;
+                }
+            }
+
             mRemoteCacheInfoFilesToRetrieve.Clear();
             mRemoteCacheInfoLockFiles.Clear();
+
+            long runningFileSize = 0;
 
             foreach (var dataFile in fileList)
             {
@@ -522,7 +582,7 @@ namespace Pacifica.DMS_Metadata
                     var success = AddUsingCacheInfoFile(dataFile, fileCollection, baseDSPath, out var remoteFilePath);
                     if (!success)
                         throw new Exception(
-                            string.Format("Error reported by AddUsingCacheInfoFile for {0} (CollectFileInformation)" , dataFile.FullName));
+                            string.Format("Error reported by AddUsingCacheInfoFile for {0} (CollectFileInformation)", dataFile.FullName));
 
                     mRemoteCacheInfoFilesToRetrieve.Add(remoteFilePath);
 
@@ -683,7 +743,7 @@ namespace Pacifica.DMS_Metadata
                 if (mRemoteCacheInfoLockFiles.ContainsKey(lockFolderPathSource))
                     continue;
 
-                var sourceFileSizeMB = Convert.ToInt32(sourceFile.Length / 1024.0 / 1024.0);
+                var sourceFileSizeMB = sourceFile.Length / 1024.0 / 1024.0;
                 if (sourceFileSizeMB < clsFileTools.LOCKFILE_MININUM_SOURCE_FILE_SIZE_MB)
                 {
                     // Do not use a lock file for this remote file

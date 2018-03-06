@@ -6,6 +6,9 @@
 //*********************************************************************************************************
 
 using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
 using System.Threading;
 using CaptureTaskManager;
 using Pacifica.Core;
@@ -26,6 +29,8 @@ namespace DatasetArchivePlugin
         private const string ARCHIVE = "Archive ";
         private const string UPDATE = "Archive update ";
 
+        private const string SP_NAME_MAKE_NEW_ARCHIVE_UPDATE_JOB = "MakeNewArchiveUpdateJob";
+
         #endregion
 
         #region "Class variables"
@@ -43,6 +48,9 @@ namespace DatasetArchivePlugin
         private readonly int m_DebugLevel;
 
         private readonly string m_ArchiveOrUpdate;
+
+        private readonly clsExecuteDatabaseSP m_CaptureDBProcedureExecutor;
+
         protected string m_DatasetName = string.Empty;
 
         protected DateTime mLastStatusUpdateTime = DateTime.UtcNow;
@@ -96,6 +104,12 @@ namespace DatasetArchivePlugin
             {
                 m_ArchiveOrUpdate = UPDATE;
             }
+
+            // This connection string points to the DMS_Capture database
+            var connectionString = m_MgrParams.GetParam("connectionstring");
+            m_CaptureDBProcedureExecutor = new clsExecuteDatabaseSP(connectionString);
+
+            RegisterEvents(m_CaptureDBProcedureExecutor);
 
             TraceMode = m_MgrParams.GetParam("TraceMode", false);
         }
@@ -172,6 +186,67 @@ namespace DatasetArchivePlugin
                 text += "; ";
 
             return text + append;
+        }
+
+        private void CreateArchiveUpdateJobsForDataset(IReadOnlyCollection<string> subdirectoryNames)
+        {
+            var failureMsg = "Error creating archive update tasks for dataset " + m_DatasetName + "; " +
+                             "need to create ArchiveUpdate tasks for subdirectories " +
+                             string.Join(", ", subdirectoryNames);
+
+            try
+            {
+
+                // Setup for execution of the stored procedure
+                var spCmd = new SqlCommand(SP_NAME_MAKE_NEW_ARCHIVE_UPDATE_JOB)
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
+
+                spCmd.Parameters.Add("@Return", SqlDbType.Int).Direction = ParameterDirection.ReturnValue;
+                spCmd.Parameters.Add("@DatasetName", SqlDbType.VarChar, 128).Value = m_DatasetName;
+                var resultsFolderParam = spCmd.Parameters.Add("@ResultsFolderName", SqlDbType.VarChar, 128);
+                spCmd.Parameters.Add("@AllowBlankResultsFolder", SqlDbType.TinyInt).Value = 0;
+                spCmd.Parameters.Add("@PushDatasetToMyEMSL", SqlDbType.TinyInt).Value = 1;
+                spCmd.Parameters.Add("@PushDatasetRecursive", SqlDbType.TinyInt).Value = 1;
+                spCmd.Parameters.Add("@infoOnly", SqlDbType.TinyInt).Value = 0;
+                spCmd.Parameters.Add("@message", SqlDbType.VarChar, 512).Direction = ParameterDirection.Output;
+
+                var successCount = 0;
+                foreach (var subdirectoryName in subdirectoryNames)
+                {
+                    resultsFolderParam.Value = subdirectoryName;
+
+                    var datasetAndDirectory = string.Format("dataset {0}, subdirectory {1}", m_DatasetName, subdirectoryName);
+
+                    LogTools.LogMessage("Creating archive update job for " + datasetAndDirectory);
+
+                    // Execute the SP (retry the call up to 4 times)
+                    var resCode = m_CaptureDBProcedureExecutor.ExecuteSP(spCmd, 4);
+
+                    if (resCode == 0)
+                    {
+                        LogTools.LogDebug("Job successfully created");
+                        successCount += 1;
+                    }
+                    else
+                    {
+                        LogTools.LogWarning(string.Format(
+                                                "Unable to create archive update job for {0}; stored procedure returned resultCode {1}",
+                                                datasetAndDirectory, resCode));
+                    }
+                }
+
+                if (successCount < subdirectoryNames.Count)
+                {
+                    LogTools.LogError(failureMsg, null, true);
+                }
+            }
+            catch (Exception ex)
+            {
+                LogTools.LogError(failureMsg, ex, true);
+            }
+
         }
 
         /// <summary>
@@ -342,7 +417,27 @@ namespace DatasetArchivePlugin
 
                 m_StatusTools.UpdateAndWrite(100);
 
-                return success;
+                if (!success)
+                    return false;
+
+                var skippedSubdirectories = myEMSLUL.MetadataContainer.SkippedDatasetArchiveSubdirectories;
+                if (skippedSubdirectories.Count == 0)
+                    return true;
+
+                if (!m_MyEmslUploadSuccess)
+                {
+                    var msg = "SetupMetadataAndUpload reported true for dataset " + m_DatasetName +
+                              " but m_MyEmslUploadSuccess is false; need to create ArchiveUpdate tasks for subdirectories " +
+                              string.Join(", ", skippedSubdirectories);
+                    LogTools.LogError(msg, null, true);
+
+                    // Return true since the primary archive task succeeded
+                    return true;
+                }
+
+                CreateArchiveUpdateJobsForDataset(myEMSLUL.MetadataContainer.SkippedDatasetArchiveSubdirectories);
+
+                return true;
 
             }
             catch (Exception ex)
