@@ -776,14 +776,14 @@ namespace Pacifica.DMS_Metadata
 
             // Construct the dataset folder path
             var datasetFolder = Utilities.GetDictionaryValue(taskParams, "Folder", string.Empty);
-            var pathToArchiveBase = Path.Combine(Utilities.GetDictionaryValue(taskParams, "Storage_Path", string.Empty), datasetFolder);
-            var pathToArchive = Path.Combine(driveLocation, pathToArchiveBase);
+            var sourceDirectoryBase = Path.Combine(Utilities.GetDictionaryValue(taskParams, "Storage_Path", string.Empty), datasetFolder);
+            var sourceDirectoryPath = Path.Combine(driveLocation, sourceDirectoryBase);
 
             uploadMetadata.DatasetName = Utilities.GetDictionaryValue(taskParams, "Dataset", string.Empty);
             uploadMetadata.DMSInstrumentName = Utilities.GetDictionaryValue(taskParams, "Instrument_Name", string.Empty);
             uploadMetadata.DatasetID = Utilities.GetDictionaryValue(taskParams, "Dataset_ID", 0);
 
-            var baseDSPath = pathToArchive;
+            var baseDSPath = sourceDirectoryPath;
             uploadMetadata.SubFolder = string.Empty;
 
             ArchiveModes archiveMode;
@@ -803,19 +803,19 @@ namespace Pacifica.DMS_Metadata
                 else
                 {
                     // Subfolder is defined; make sure it has the same capitalization as the one on disk
-                    var archiveDir = new DirectoryInfo(pathToArchive);
-                    if (!archiveDir.Exists)
+                    var sourceDirectory = new DirectoryInfo(sourceDirectoryPath);
+                    if (!sourceDirectory.Exists)
                     {
                         throw new DirectoryNotFoundException(
-                            string.Format("Source directory not found: {0} (FindDatasetFilesToArchive)", archiveDir));
+                            string.Format("Source directory not found: {0} (FindDatasetFilesToArchive)", sourceDirectory));
                     }
 
-                    // Make sure pathToBeArchived is capitalized properly
-                    var subDirs = archiveDir.GetDirectories(uploadMetadata.SubFolder);
+                    // Make sure sourceDirectoryPath is capitalized properly
+                    var subDirs = sourceDirectory.GetDirectories(uploadMetadata.SubFolder);
                     if (subDirs.Length == 0)
                     {
                         throw new DirectoryNotFoundException(
-                            string.Format("Directory {0} not found below {1} (FindDatasetFilesToArchive)", uploadMetadata.SubFolder, archiveDir.FullName));
+                            string.Format("Directory {0} not found below {1} (FindDatasetFilesToArchive)", uploadMetadata.SubFolder, sourceDirectory.FullName));
                     }
 
                     var matchingDirectory = subDirs.First();
@@ -827,7 +827,7 @@ namespace Pacifica.DMS_Metadata
                         taskParams["OutputFolderName"] = matchingDirectory.Name;
                     }
 
-                    pathToArchive = matchingDirectory.FullName;
+                    sourceDirectoryPath = matchingDirectory.FullName;
                 }
             }
 
@@ -853,7 +853,7 @@ namespace Pacifica.DMS_Metadata
 
             // Grab file information from this dataset directory
             // This process will also compute the Sha-1 hash value for each file
-            var datasetFilesToArchive = CollectFileInformation(pathToArchive, baseDSPath, recurse);
+            var datasetFilesToArchive = CollectFileInformation(archiveMode, sourceDirectoryPath, baseDSPath, recurse);
 
             return datasetFilesToArchive;
         }

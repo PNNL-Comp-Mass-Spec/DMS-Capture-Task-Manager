@@ -209,7 +209,7 @@ namespace DatasetArchivePlugin
                 spCmd.Parameters.Add("@EUSUploaderID", SqlDbType.Int).Value = eusUploaderID;
 
                 // Execute the SP (retry the call up to 4 times)
-                var resCode = CaptureDBProcedureExecutor.ExecuteSP(spCmd, 4);
+                var resCode = m_CaptureDBProcedureExecutor.ExecuteSP(spCmd, 4);
 
                 if (resCode == 0)
                 {

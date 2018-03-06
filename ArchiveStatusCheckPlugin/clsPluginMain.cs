@@ -565,7 +565,7 @@ namespace ArchiveStatusCheckPlugin
 
                 spCmd.Parameters.Add("@message", SqlDbType.VarChar, 512).Direction = ParameterDirection.Output;
 
-                var resCode = CaptureDBProcedureExecutor.ExecuteSP(spCmd, 2);
+                var resCode = m_CaptureDBProcedureExecutor.ExecuteSP(spCmd, 2);
 
                 if (resCode == 0)
                     return;
@@ -613,7 +613,7 @@ namespace ArchiveStatusCheckPlugin
 
                 spCmd.Parameters.Add("@message", SqlDbType.VarChar, 512).Direction = ParameterDirection.Output;
 
-                var resCode = CaptureDBProcedureExecutor.ExecuteSP(spCmd, 2);
+                var resCode = m_CaptureDBProcedureExecutor.ExecuteSP(spCmd, 2);
 
                 if (resCode == 0)
                     return;

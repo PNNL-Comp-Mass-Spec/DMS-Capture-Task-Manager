@@ -192,8 +192,8 @@ namespace DatasetArchivePlugin
             out bool allowRetry,
             out string criticalErrorMessage)
         {
-            var bSuccess = false;
-            var iAttempts = 0;
+            var success = false;
+            var attempts = 0;
 
             allowRetry = true;
             m_MyEmslUploadSuccess = false;
@@ -202,13 +202,13 @@ namespace DatasetArchivePlugin
             if (maxAttempts < 1)
                 maxAttempts = 1;
 
-            while (!bSuccess && iAttempts < maxAttempts)
+            while (!success && attempts < maxAttempts)
             {
-                iAttempts += 1;
+                attempts += 1;
 
-                Console.WriteLine("Uploading files for " + m_DatasetName + " to MyEMSL; attempt=" + iAttempts);
+                Console.WriteLine("Uploading files for " + m_DatasetName + " to MyEMSL; attempt=" + attempts);
 
-                bSuccess = UploadToMyEMSL(recurse, debugMode, useTestInstance, out allowRetry, out criticalErrorMessage);
+                success = UploadToMyEMSL(recurse, debugMode, useTestInstance, out allowRetry, out criticalErrorMessage);
 
                 if (!allowRetry)
                     break;
@@ -216,7 +216,7 @@ namespace DatasetArchivePlugin
                 if (debugMode != EasyHttp.eDebugMode.DebugDisabled)
                     break;
 
-                if (!bSuccess && iAttempts < maxAttempts)
+                if (!success && attempts < maxAttempts)
                 {
                     // Wait 5 seconds, then retry
                     Thread.Sleep(5000);
@@ -225,7 +225,7 @@ namespace DatasetArchivePlugin
                 }
             }
 
-            if (!bSuccess)
+            if (!success)
             {
                 if (debugMode != EasyHttp.eDebugMode.DebugDisabled)
                     m_WarningMsg = "Debug mode was enabled; thus, .tar file was created locally and not uploaded to MyEMSL";
@@ -233,10 +233,10 @@ namespace DatasetArchivePlugin
                     m_WarningMsg = AppendToString(m_WarningMsg, "UploadToMyEMSL reports False");
             }
 
-            if (bSuccess && !m_MyEmslUploadSuccess)
+            if (success && !m_MyEmslUploadSuccess)
                 m_WarningMsg = AppendToString(m_WarningMsg, "UploadToMyEMSL reports True but m_MyEmslUploadSuccess is False");
 
-            return bSuccess && m_MyEmslUploadSuccess;
+            return success && m_MyEmslUploadSuccess;
         }
 
         /// <summary>
@@ -250,7 +250,7 @@ namespace DatasetArchivePlugin
         /// <returns>True if success, false if an error</returns>
         private bool UploadToMyEMSL(bool recurse, EasyHttp.eDebugMode debugMode, bool useTestInstance, out bool allowRetry, out string criticalErrorMessage)
         {
-            var dtStartTime = DateTime.UtcNow;
+            var startTime = DateTime.UtcNow;
 
             MyEMSLUploader myEMSLUL = null;
             var operatorUsername = "??";
@@ -303,9 +303,9 @@ namespace DatasetArchivePlugin
                     allowRetry = false;
                 }
 
-                var tsElapsedTime = DateTime.UtcNow.Subtract(dtStartTime);
+                var elapsedTime = DateTime.UtcNow.Subtract(startTime);
 
-                statusMessage = "Upload of " + m_DatasetName + " completed in " + tsElapsedTime.TotalSeconds.ToString("0.0") + " seconds";
+                statusMessage = "Upload of " + m_DatasetName + " completed in " + elapsedTime.TotalSeconds.ToString("0.0") + " seconds";
                 if (!success)
                     statusMessage += " (success=false)";
 
@@ -334,7 +334,7 @@ namespace DatasetArchivePlugin
                 // If an error occurs while storing to the database, the status URI will be listed in the manager's local log file
                 var e = new MyEMSLUploadEventArgs(
                     myEMSLUL.FileCountNew, myEMSLUL.FileCountUpdated,
-                    myEMSLUL.Bytes, tsElapsedTime.TotalSeconds,
+                    myEMSLUL.Bytes, elapsedTime.TotalSeconds,
                     statusURL, myEMSLUL.EUSInfo,
                     iErrorCode: 0, usedTestInstance: useTestInstance);
 
@@ -391,7 +391,7 @@ namespace DatasetArchivePlugin
                 if (errorCode == 0)
                     errorCode = 1;
 
-                var tsElapsedTime = DateTime.UtcNow.Subtract(dtStartTime);
+                var elapsedTime = DateTime.UtcNow.Subtract(startTime);
 
                 if (myEMSLUL == null)
                 {
@@ -403,7 +403,7 @@ namespace DatasetArchivePlugin
 
                     var emptyArgs = new MyEMSLUploadEventArgs(
                         0, 0,
-                        0, tsElapsedTime.TotalSeconds,
+                        0, elapsedTime.TotalSeconds,
                         string.Empty, eusInfo,
                         errorCode, useTestInstance);
 
@@ -417,7 +417,7 @@ namespace DatasetArchivePlugin
 
                 var uploadArgs = new MyEMSLUploadEventArgs(
                     myEMSLUL.FileCountNew, myEMSLUL.FileCountUpdated,
-                    myEMSLUL.Bytes, tsElapsedTime.TotalSeconds,
+                    myEMSLUL.Bytes, elapsedTime.TotalSeconds,
                     myEMSLUL.StatusURI, myEMSLUL.EUSInfo,
                     errorCode, useTestInstance);
 

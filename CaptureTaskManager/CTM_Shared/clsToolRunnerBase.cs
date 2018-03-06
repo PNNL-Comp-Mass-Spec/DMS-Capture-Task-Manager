@@ -43,7 +43,7 @@ namespace CaptureTaskManager
         // Used by CTM plugins
         protected clsFileTools m_FileTools;
 
-        protected clsExecuteDatabaseSP CaptureDBProcedureExecutor;
+        protected clsExecuteDatabaseSP m_CaptureDBProcedureExecutor;
 
         protected DateTime m_LastConfigDBUpdate = DateTime.UtcNow;
         protected int m_MinutesBetweenConfigDBUpdates = 10;
@@ -125,11 +125,11 @@ namespace CaptureTaskManager
             m_MgrName = m_MgrParams.GetParam("MgrName", "CaptureTaskManager");
             m_FileTools = new clsFileTools(m_MgrName, 1);
 
-            // This Connection String points to the DMS_Capture database
-            var sConnectionString = m_MgrParams.GetParam("connectionstring");
-            CaptureDBProcedureExecutor = new clsExecuteDatabaseSP(sConnectionString);
+            // This connection string points to the DMS_Capture database
+            var connectionString = m_MgrParams.GetParam("connectionstring");
+            m_CaptureDBProcedureExecutor = new clsExecuteDatabaseSP(connectionString);
 
-            RegisterEvents(CaptureDBProcedureExecutor);
+            RegisterEvents(m_CaptureDBProcedureExecutor);
 
             m_WorkDir = m_MgrParams.GetParam("workdir");
 
@@ -614,7 +614,7 @@ namespace CaptureTaskManager
             spCmd.Parameters.Add(new SqlParameter("@ToolVersionInfo", System.Data.SqlDbType.VarChar, 900)).Value = toolVersionInfoCombined;
 
             // Execute the SP (retry the call up to 4 times)
-            var resCode = CaptureDBProcedureExecutor.ExecuteSP(spCmd, 4);
+            var resCode = m_CaptureDBProcedureExecutor.ExecuteSP(spCmd, 4);
 
             if (resCode == 0)
             {
@@ -917,8 +917,8 @@ namespace CaptureTaskManager
 
             spCmd.Parameters.Add("@message", System.Data.SqlDbType.VarChar, 512).Direction = System.Data.ParameterDirection.Output;
 
-            CaptureDBProcedureExecutor.TimeoutSeconds = 20;
-            var resCode = CaptureDBProcedureExecutor.ExecuteSP(spCmd, 2);
+            m_CaptureDBProcedureExecutor.TimeoutSeconds = 20;
+            var resCode = m_CaptureDBProcedureExecutor.ExecuteSP(spCmd, 2);
 
             if (resCode != 0)
             {
