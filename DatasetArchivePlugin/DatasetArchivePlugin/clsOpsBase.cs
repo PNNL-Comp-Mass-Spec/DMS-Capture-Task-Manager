@@ -26,8 +26,14 @@ namespace DatasetArchivePlugin
     {
 
         #region "Constants"
+
         private const string ARCHIVE = "Archive ";
+
         private const string UPDATE = "Archive update ";
+
+        private const int LARGE_DATASET_THRESHOLD_GB_NO_RETRY = 15;
+
+        private const string LARGE_DATASET_UPLOAD_ERROR = "Failure uploading a large amount of data; manual reset required";
 
         private const string SP_NAME_MAKE_NEW_ARCHIVE_UPDATE_JOB = "MakeNewArchiveUpdateJob";
 
@@ -335,6 +341,8 @@ namespace DatasetArchivePlugin
 
             try
             {
+                m_ErrMsg = string.Empty;
+
                 var statusMessage = "Bundling changes to dataset " + m_DatasetName + " for transmission to MyEMSL";
                 OnStatusEvent(statusMessage);
 
@@ -382,7 +390,16 @@ namespace DatasetArchivePlugin
 
                 statusMessage = "Upload of " + m_DatasetName + " completed in " + elapsedTime.TotalSeconds.ToString("0.0") + " seconds";
                 if (!success)
+                {
                     statusMessage += " (success=false)";
+                    if (clsUtilities.BytesToGB(myEMSLUL.MetadataContainer.TotalFileSizeToUpload) > LARGE_DATASET_THRESHOLD_GB_NO_RETRY)
+                    {
+                        m_ErrMsg = LARGE_DATASET_UPLOAD_ERROR;
+
+                        // Do not auto-retry uploads over 15 GB; force an admin to check on things
+                        allowRetry = false;
+                    }
+                }
 
                 statusMessage += ": " + myEMSLUL.FileCountNew + " new files, " + myEMSLUL.FileCountUpdated + " updated files, " + myEMSLUL.Bytes +
                                  " bytes";
@@ -472,6 +489,14 @@ namespace DatasetArchivePlugin
                     m_ErrMsg += ": " + DMSMetadataObject.TOO_MANY_FILES_TO_ARCHIVE;
 
                     // Do not retry the upload; it will fail again due to the same error
+                    allowRetry = false;
+                    LogOperationFailed(m_DatasetName, m_ErrMsg, true);
+                }
+                else if (clsUtilities.BytesToGB(myEMSLUL.MetadataContainer.TotalFileSizeToUpload) > LARGE_DATASET_THRESHOLD_GB_NO_RETRY)
+                {
+                    m_ErrMsg += ": " + LARGE_DATASET_UPLOAD_ERROR;
+
+                    // Do not auto-retry uploads of over 15 GB in size; force an admin to check on things
                     allowRetry = false;
                     LogOperationFailed(m_DatasetName, m_ErrMsg, true);
                 }
