@@ -173,14 +173,12 @@ namespace Pacifica.DMS_Metadata
         /// </summary>
         /// <param name="taskParams"></param>
         /// <param name="mgrParams"></param>
-        /// <param name="debugMode"></param>
         /// <param name="criticalError"></param>
         /// <param name="criticalErrorMessage"></param>
         /// <returns>True if success, otherwise false</returns>
         public bool SetupMetadata(
             Dictionary<string, string> taskParams,
             Dictionary<string, string> mgrParams,
-            EasyHttp.eDebugMode debugMode,
             out bool criticalError,
             out string criticalErrorMessage)
         {

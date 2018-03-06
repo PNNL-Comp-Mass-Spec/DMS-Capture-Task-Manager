@@ -195,7 +195,7 @@ namespace Pacifica.DMS_Metadata
             {
 
                 // Look for files to upload, compute a Sha-1 hash for each, and compare those hashes to existing files in MyEMSL
-                var success = mMetadataContainer.SetupMetadata(mTaskParams, mMgrParams, debugMode, out var criticalError, out var criticalErrorMessage);
+                var success = mMetadataContainer.SetupMetadata(mTaskParams, mMgrParams, out var criticalError, out var criticalErrorMessage);
 
                 if (!success)
                 {
