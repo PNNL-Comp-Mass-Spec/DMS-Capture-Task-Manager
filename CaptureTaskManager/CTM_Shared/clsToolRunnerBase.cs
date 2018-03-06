@@ -890,6 +890,13 @@ namespace CaptureTaskManager
         {
             const string SP_NAME = "UpdateMyEMSLUploadIngestStats";
 
+            if (transactionId > 0 && transactionId != statusNum)
+            {
+                // Starting in July 2017, StatusNum and TransactionID are identical
+                // Assure that they match
+                transactionId = statusNum;
+            }
+
             var spCmd = new SqlCommand(SP_NAME)
             {
                 CommandType = System.Data.CommandType.StoredProcedure
