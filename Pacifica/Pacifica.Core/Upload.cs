@@ -248,7 +248,8 @@ namespace Pacifica.Core
         /// <param name="metadataObject"></param>
         /// <param name="debugMode">
         /// Set to eDebugMode.CreateTarLocal to authenticate with MyEMSL, then create a .tar file locally instead of actually uploading it
-        /// Set to eDebugMode.MyEMSLOfflineMode to create the .tar file locally without contacting MyEMSL</param>
+        /// Set to eDebugMode.MyEMSLOfflineMode to create the .tar file locally without contacting MyEMSL
+        /// </param>
         /// <param name="statusURI">Status URL</param>
         /// <returns>True if successfully uploaded, false if an error</returns>
         public bool StartUpload(

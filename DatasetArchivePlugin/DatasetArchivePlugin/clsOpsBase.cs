@@ -324,7 +324,10 @@ namespace DatasetArchivePlugin
         /// Use MyEMSLUploader to upload the data to MyEMSL, trying up to maxAttempts times
         /// </summary>
         /// <param name="recurse">True to find files in all subdirectories</param>
-        /// <param name="debugMode">Debug mode options</param>
+        /// <param name="debugMode">
+        /// Set to eDebugMode.CreateTarLocal to authenticate with MyEMSL, then create a .tar file locally instead of actually uploading it
+        /// Set to eDebugMode.MyEMSLOfflineMode to create the .tar file locally without contacting MyEMSL
+        /// </param>
         /// <param name="useTestInstance">True to use the test instance</param>
         /// <param name="allowRetry">Output: whether the upload should be retried if it failed</param>
         /// <param name="criticalErrorMessage">Output: critical error message</param>
