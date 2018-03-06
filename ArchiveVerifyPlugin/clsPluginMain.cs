@@ -740,9 +740,9 @@ namespace ArchiveVerifyPlugin
         }
 
         /// <summary>
-        /// Find the transactionId in that has the highest value (i.e. the one used by the majority of the files)
+        /// Find the transactionId that has the highest value (i.e. the one used by the majority of the files)
         /// </summary>
-        /// <param name="transactionIdStats">Dictionary where keys as transactionIds and values are the number of files that had the given transactionId</param>
+        /// <param name="transactionIdStats">Dictionary where keys are transactionIds and values are the number of files that had the given transactionId</param>
         /// <returns></returns>
         private long GetBestTransactionId(Dictionary<long, int> transactionIdStats)
         {

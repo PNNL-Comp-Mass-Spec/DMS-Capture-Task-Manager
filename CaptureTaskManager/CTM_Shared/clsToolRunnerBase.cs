@@ -874,7 +874,11 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="statusNum">MyEMSL Status number</param>
         /// <param name="ingestStepsCompleted">Number of completed ingest steps</param>
-        /// <param name="transactionId">TransactionID for the given status item; if 0, the Transaction ID is not updated</param>
+        /// <param name="transactionId">
+        /// TransactionID for the given status item; if 0, the Transaction ID is not updated
+        /// Prior to July 2017, TransactionID was the transactionID used by the majority of the verified files
+        /// Starting in July 2017, StatusNum and TransactionID are identical
+        /// </param>
         /// <param name="fatalError">True if ingest failed with a fatal error and thus the ErrorCode should be updated in T_MyEMSL_Uploads</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>This function is used by the ArchiveStatusCheck plugin and the ArchiveVerify plugin </remarks>
