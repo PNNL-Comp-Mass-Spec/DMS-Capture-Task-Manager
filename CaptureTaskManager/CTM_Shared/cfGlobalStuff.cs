@@ -291,6 +291,16 @@ namespace CaptureTaskManager
         #endregion
 
         /// <summary>
+        /// Convert a file size in bytes to gigabytes
+        /// </summary>
+        /// <param name="sizeBytes"></param>
+        /// <returns></returns>
+        public static double BytesToGB(long sizeBytes)
+        {
+            return sizeBytes / 1024.0 / 1024 / 1024;
+        }
+
+        /// <summary>
         /// Decode a password
         /// </summary>
         /// <param name="encodedPwd">Encoded password</param>

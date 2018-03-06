@@ -1259,7 +1259,7 @@ namespace CaptureTaskManager
 
                 if (success)
                 {
-                    var freeSpaceGB = totalNumberOfFreeBytes / 1024.0 / 1024.0 / 1024.0;
+                    var freeSpaceGB = clsUtilities.BytesToGB(totalNumberOfFreeBytes);
 
                     if (freeSpaceGB < DEFAULT_DATASET_STORAGE_MIN_FREE_SPACE_GB)
                     {
