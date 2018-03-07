@@ -698,26 +698,19 @@ namespace DatasetQualityPlugin
                 }
 
                 // Call stored procedure StoreQuameterResults in the DMS_Capture database
-                int resultCode;
 
-                using (var objCommand = new SqlCommand())
+                var spCmd = new SqlCommand
                 {
-                    objCommand.CommandType = CommandType.StoredProcedure;
-                    objCommand.CommandText = STORE_QUAMETER_RESULTS_SP_NAME;
+                    CommandType = CommandType.StoredProcedure,
+                    CommandText = STORE_QUAMETER_RESULTS_SP_NAME
+                };
 
-                    objCommand.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int));
-                    objCommand.Parameters["@Return"].Direction = ParameterDirection.ReturnValue;
+                spCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
+                spCmd.Parameters.Add(new SqlParameter("@DatasetID", SqlDbType.Int)).Value = intDatasetID;
+                spCmd.Parameters.Add(new SqlParameter("@ResultsXML", SqlDbType.Xml)).Value = sXMLResultsClean;
 
-                    objCommand.Parameters.Add(new SqlParameter("@DatasetID", SqlDbType.Int));
-                    objCommand.Parameters["@DatasetID"].Direction = ParameterDirection.Input;
-                    objCommand.Parameters["@DatasetID"].Value = intDatasetID;
-
-                    objCommand.Parameters.Add(new SqlParameter("@ResultsXML", SqlDbType.Xml));
-                    objCommand.Parameters["@ResultsXML"].Direction = ParameterDirection.Input;
-                    objCommand.Parameters["@ResultsXML"].Value = sXMLResultsClean;
 
                     resultCode = CaptureDBProcedureExecutor.ExecuteSP(objCommand, MAX_RETRY_COUNT, SEC_BETWEEN_RETRIES);
-                }
 
                 if (resultCode == PRISM.clsExecuteDatabaseSP.RET_VAL_OK)
                 {
@@ -880,18 +873,16 @@ namespace DatasetQualityPlugin
             {
                 cnDB.Open();
 
-                using (var cmd = new SqlCommand(sql, cnDB))
+                var spCmd = new SqlCommand(sql, cnDB);
+                var reader = spCmd.ExecuteReader();
+
+                if (reader.Read())
                 {
-                    var reader = cmd.ExecuteReader();
+                    if (!reader.IsDBNull(0))
+                        scanCount = reader.GetInt32(0);
 
-                    if (reader.Read())
-                    {
-                        if (!reader.IsDBNull(0))
-                            scanCount = reader.GetInt32(0);
-
-                        if (!reader.IsDBNull(1))
-                            scanCountMS = reader.GetInt32(1);
-                    }
+                    if (!reader.IsDBNull(1))
+                        scanCountMS = reader.GetInt32(1);
                 }
             }
 

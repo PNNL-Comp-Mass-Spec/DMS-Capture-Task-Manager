@@ -220,17 +220,11 @@ namespace CaptureTaskManager
                 };
 
                 spCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-
                 spCmd.Parameters.Add(new SqlParameter("@processorName", SqlDbType.VarChar, 128)).Value = ManagerName;
-
                 spCmd.Parameters.Add(new SqlParameter("@jobNumber", SqlDbType.Int)).Direction = ParameterDirection.Output;
-
                 spCmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
-
                 spCmd.Parameters.Add(new SqlParameter("@infoOnly", SqlDbType.TinyInt)).Value = 0;
-
                 spCmd.Parameters.Add(new SqlParameter("@ManagerVersion", SqlDbType.VarChar, 128)).Value = appVersion;
-
                 spCmd.Parameters.Add(new SqlParameter("@JobCountToPreview", SqlDbType.Int)).Value = 10;
 
                 LogDebug("clsCaptureTask.RequestTaskDetailed(), connection string: " + m_ConnStr);
@@ -347,25 +341,25 @@ namespace CaptureTaskManager
         private void ReportManagerIdle()
         {
             // Setup for execution of the stored procedure
-            var cmd = new SqlCommand(SP_NAME_REPORT_IDLE)
+            var spCmd = new SqlCommand(SP_NAME_REPORT_IDLE)
             {
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-            cmd.Parameters.Add(new SqlParameter("@managerName", SqlDbType.VarChar, 128)).Value = ManagerName;
-            cmd.Parameters.Add(new SqlParameter("@infoOnly", SqlDbType.TinyInt)).Value = 0;
-            cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
+            spCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
+            spCmd.Parameters.Add(new SqlParameter("@managerName", SqlDbType.VarChar, 128)).Value = ManagerName;
+            spCmd.Parameters.Add(new SqlParameter("@infoOnly", SqlDbType.TinyInt)).Value = 0;
+            spCmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
 
             // Execute the Stored Procedure (retry the call up to 3 times)
-            var returnCode = m_CaptureTaskDBProcedureExecutor.ExecuteSP(cmd, 3);
+            var returnCode = m_CaptureTaskDBProcedureExecutor.ExecuteSP(spCmd, 3);
 
             if (returnCode == 0)
             {
                 return;
             }
 
-            LogError("Error " + returnCode + " calling " + cmd.CommandText);
+            LogError("Error " + returnCode + " calling " + spCmd.CommandText);
         }
 
         /// <summary>
@@ -390,19 +384,12 @@ namespace CaptureTaskManager
                 };
 
                 spCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-
                 spCmd.Parameters.Add(new SqlParameter("@job", SqlDbType.Int)).Value = int.Parse(m_JobParams["Job"]);
-
                 spCmd.Parameters.Add(new SqlParameter("@step", SqlDbType.Int)).Value = int.Parse(m_JobParams["Step"]);
-
                 spCmd.Parameters.Add(new SqlParameter("@completionCode", SqlDbType.Int)).Value = compCode;
-
                 spCmd.Parameters.Add(new SqlParameter("@completionMessage", SqlDbType.VarChar, 256)).Value = compMsg;
-
                 spCmd.Parameters.Add(new SqlParameter("@evaluationCode", SqlDbType.Int)).Value = evalCode;
-
                 spCmd.Parameters.Add(new SqlParameter("@evaluationMessage", SqlDbType.VarChar, 256)).Value = evalMsg;
-
                 spCmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
 
                 LogDebug("Calling stored procedure " + spName);

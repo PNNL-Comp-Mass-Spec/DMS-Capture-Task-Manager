@@ -556,13 +556,9 @@ namespace ArchiveStatusCheckPlugin
                 };
 
                 spCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-
                 spCmd.Parameters.Add("@DatasetID", SqlDbType.Int).Value = m_DatasetID;
-
                 spCmd.Parameters.Add("@statusNumList", SqlDbType.VarChar, 1024).Value = statusNums;
-
                 spCmd.Parameters.Add("@ingestStepsCompleted", SqlDbType.TinyInt).Value = ingestStepsCompleted;
-
                 spCmd.Parameters.Add("@message", SqlDbType.VarChar, 512).Direction = ParameterDirection.Output;
 
                 var resCode = m_CaptureDBProcedureExecutor.ExecuteSP(spCmd, 2);
@@ -602,15 +598,10 @@ namespace ArchiveStatusCheckPlugin
                 };
 
                 spCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-
                 spCmd.Parameters.Add("@datasetID", SqlDbType.Int).Value = m_DatasetID;
-
                 spCmd.Parameters.Add("@StatusNumList", SqlDbType.VarChar, 1024).Value = statusNums;
-
                 spCmd.Parameters.Add("@statusURIList", SqlDbType.VarChar, 4000).Value = statusURIs;
-
                 spCmd.Parameters.Add("@ingestStepsCompleted", SqlDbType.TinyInt).Value = ingestStepsCompleted;
-
                 spCmd.Parameters.Add("@message", SqlDbType.VarChar, 512).Direction = ParameterDirection.Output;
 
                 var resCode = m_CaptureDBProcedureExecutor.ExecuteSP(spCmd, 2);

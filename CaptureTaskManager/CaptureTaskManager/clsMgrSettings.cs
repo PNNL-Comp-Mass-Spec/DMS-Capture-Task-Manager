@@ -154,16 +154,16 @@ namespace CaptureTaskManager
                 conn.Open();
 
                 // Set up the command object prior to SP execution
-                var cmd = new SqlCommand(SP_NAME_ACKMANAGERUPDATE, conn) {
+                var spCmd = new SqlCommand(SP_NAME_ACKMANAGERUPDATE, conn) {
                     CommandType = CommandType.StoredProcedure
                 };
 
-                cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-                cmd.Parameters.Add(new SqlParameter("@managerName", SqlDbType.VarChar, 128)).Value = ManagerName;
-                cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
+                spCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
+                spCmd.Parameters.Add(new SqlParameter("@managerName", SqlDbType.VarChar, 128)).Value = ManagerName;
+                spCmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
 
                 // Execute the SP
-                cmd.ExecuteNonQuery();
+                spCmd.ExecuteNonQuery();
             }
             catch (Exception ex)
             {
