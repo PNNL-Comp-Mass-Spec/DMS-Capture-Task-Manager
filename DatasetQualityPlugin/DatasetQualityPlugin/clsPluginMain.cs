@@ -709,8 +709,7 @@ namespace DatasetQualityPlugin
                 spCmd.Parameters.Add(new SqlParameter("@DatasetID", SqlDbType.Int)).Value = intDatasetID;
                 spCmd.Parameters.Add(new SqlParameter("@ResultsXML", SqlDbType.Xml)).Value = sXMLResultsClean;
 
-
-                    resultCode = CaptureDBProcedureExecutor.ExecuteSP(objCommand, MAX_RETRY_COUNT, SEC_BETWEEN_RETRIES);
+                var resultCode = m_CaptureDBProcedureExecutor.ExecuteSP(spCmd, MAX_RETRY_COUNT, SEC_BETWEEN_RETRIES);
 
                 if (resultCode == PRISM.clsExecuteDatabaseSP.RET_VAL_OK)
                 {
