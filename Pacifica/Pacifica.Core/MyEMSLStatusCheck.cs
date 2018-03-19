@@ -43,6 +43,52 @@ namespace Pacifica.Core
         }
 
         /// <summary>
+        /// Examine the task name and percent complete to determine the number of ingest steps that have been completed
+        /// </summary>
+        /// <param name="currentTask"></param>
+        /// <param name="percentComplete">percent complete; typically meaningless (either 0 or 100)</param>
+        /// <param name="ingestStepsCompletedOld"></param>
+        /// <returns></returns>
+        public byte DetermineIngestStepsCompleted(string currentTask, int percentComplete, byte ingestStepsCompletedOld)
+        {
+
+            byte ingestStepsCompleted;
+            if (percentComplete > 0)
+            {
+                // PercentComplete (between 0 and 100) is non-zero
+                // Convert it to a number between 0 and 7 since historically there were 7 steps to the ingest process
+                ingestStepsCompleted = IngestStepCompletionCount(percentComplete);
+            }
+            else
+            {
+                // Define the ingestStepsCompleted value based on the current task reported by the status page
+                switch (currentTask.ToLower())
+                {
+                    case "open tar":
+                        ingestStepsCompleted = 2;
+                        break;
+                    case "policy validation":
+                        ingestStepsCompleted = 3;
+                        break;
+                    case "uploading":
+                        ingestStepsCompleted = 4;
+                        break;
+                    case "ingest files":
+                        ingestStepsCompleted = 5;
+                        break;
+                    case "ingest metadata":
+                        ingestStepsCompleted = 6;
+                        break;
+                    default:
+                        ingestStepsCompleted = ingestStepsCompletedOld;
+                        break;
+                }
+            }
+
+            return ingestStepsCompleted;
+        }
+
+        /// <summary>
         /// Check whether a file exists in MyEMSL
         /// </summary>
         /// <param name="fileInfo">File info object</param>
@@ -91,12 +137,14 @@ namespace Pacifica.Core
         /// <param name="statusURI">
         /// URI to examine, e.g. https://ingestdms.my.emsl.pnl.gov/get_state?job_id=1300782
         /// </param>
+        /// <param name="currentTask">Current task</param>
         /// <param name="percentComplete">Output: ingest process percent complete (value between 0 and 100)</param>
         /// <param name="lookupError">Output: true if an error occurs</param>
         /// <param name="errorMessage">Output: error message if lookupError is true</param>
         /// <returns>Status dictionary (empty dictionary if an error)</returns>
         public Dictionary<string, object> GetIngestStatus(
             string statusURI,
+            out string currentTask,
             out int percentComplete,
             out bool lookupError,
             out string errorMessage)
@@ -106,6 +154,7 @@ namespace Pacifica.Core
 
             if (!ValidateCertFile("GetIngestStatus", out errorMessage))
             {
+                currentTask = string.Empty;
                 percentComplete = 0;
                 lookupError = true;
                 return new Dictionary<string, object>();
@@ -145,6 +194,7 @@ namespace Pacifica.Core
                 if (string.Equals(statusResult, EasyHttp.REQUEST_TIMEOUT_RESPONSE))
                 {
                     OnWarningEvent("Ingest status lookup timed out");
+                    currentTask = string.Empty;
                     percentComplete = 0;
                     return new Dictionary<string, object>();
                 }
@@ -152,6 +202,7 @@ namespace Pacifica.Core
                 if (EasyHttp.IsResponseError(statusResult))
                 {
                     OnWarningEvent("Ingest status error: " + statusResult);
+                    currentTask = string.Empty;
                     percentComplete = 0;
                     return new Dictionary<string, object>();
                 }
@@ -160,7 +211,7 @@ namespace Pacifica.Core
 
                 var state = Utilities.GetDictionaryValue(statusJSON, "state").ToLower();
 
-                var task = Utilities.GetDictionaryValue(statusJSON, "task");
+                currentTask = Utilities.GetDictionaryValue(statusJSON, "task");
 
                 var exception = Utilities.GetDictionaryValue(statusJSON, "exception");
 
@@ -185,7 +236,7 @@ namespace Pacifica.Core
                         }
                         else
                         {
-                            errorMessage = "Upload state is OK, but an exception was reported for task \"" + task + "\"" +
+                            errorMessage = "Upload state is OK, but an exception was reported for task \"" + currentTask + "\"" +
                                            "; exception \"" + exception + "\"";
 
                             OnErrorEvent(errorMessage + "; see " + statusURI);
@@ -193,7 +244,7 @@ namespace Pacifica.Core
                         break;
 
                     case "failed":
-                        errorMessage = "Upload failed, task \"" + task + "\"";
+                        errorMessage = "Upload failed, task \"" + currentTask + "\"";
                         if (string.IsNullOrWhiteSpace(exception))
                         {
                             OnErrorEvent(string.Format("{0}; see {1}", errorMessage, statusURI));
@@ -235,7 +286,7 @@ namespace Pacifica.Core
             catch (Exception ex)
             {
                 OnErrorEvent("Error parsing ingest status response", ex);
-
+                currentTask = string.Empty;
                 percentComplete = 0;
                 return new Dictionary<string, object>();
             }
@@ -285,7 +336,7 @@ namespace Pacifica.Core
         /// <param name="percentComplete"></param>
         /// <returns>Number of steps completed</returns>
         /// <remarks>Reports 7 when percentComplete is 100</remarks>
-        public byte IngestStepCompletionCount(int percentComplete)
+        private byte IngestStepCompletionCount(int percentComplete)
         {
             // Convert the percent complete value to a number between 0 and 7
             // since historically there were 7 steps to the ingest process:

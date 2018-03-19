@@ -335,6 +335,7 @@ namespace CaptureTaskManager
         /// <param name="eusUploaderID"></param>
         /// <param name="retData"></param>
         /// <param name="serverResponse">Server response (dictionary representation of JSON)</param>
+        /// <param name="currentTask">Output: current task</param>
         /// <param name="percentComplete">Output: ingest process percent complete (value between 0 and 100)</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>This function is used by the ArchiveStatusCheck plugin and the ArchiveVerify plugin </remarks>
@@ -347,10 +348,12 @@ namespace CaptureTaskManager
             int eusUploaderID,
             clsToolReturnData retData,
             out Dictionary<string, object> serverResponse,
+            out string currentTask,
             out int percentComplete)
         {
             serverResponse = statusChecker.GetIngestStatus(
                 statusURI,
+                out currentTask,
                 out percentComplete,
                 out var lookupError,
                 out var errorMessage);
