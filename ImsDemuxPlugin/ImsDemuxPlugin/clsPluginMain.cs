@@ -566,8 +566,8 @@ namespace ImsDemuxPlugin
 
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (ADD_BIN_CENTRIC_TABLES)
-#pragma warning disable 162
             {
+#pragma warning disable 162
                 // Multiplying by 0.9 since we're assuming that demultiplexing will take 90% of the time while addition of bin-centric tables will take 10% of the time
                 m_StatusTools.UpdateAndWrite(0 + newProgress * 0.90f);
 #pragma warning restore 162

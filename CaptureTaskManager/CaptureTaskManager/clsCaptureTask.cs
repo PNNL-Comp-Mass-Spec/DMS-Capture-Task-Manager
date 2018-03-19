@@ -241,7 +241,6 @@ namespace CaptureTaskManager
                 {
                     case RET_VAL_OK:
                         // No errors found in SP call, so see if any step tasks were found
-                        var jobID = (int)spCmd.Parameters["@jobNumber"].Value;
 
                         // Step task was found; get the data for it
                         var paramSuccess = FillParamDict(results);
@@ -278,7 +277,7 @@ namespace CaptureTaskManager
             catch (Exception ex)
             {
                 LogError("Exception requesting analysis job", ex);
-                LogError("Stack trace: " + PRISM.clsStackTraceFormatter.GetExceptionStackTrace(ex));
+                LogError("Stack trace: " + clsStackTraceFormatter.GetExceptionStackTrace(ex));
                 outcome = EnumRequestTaskResult.ResultError;
             }
             return outcome;

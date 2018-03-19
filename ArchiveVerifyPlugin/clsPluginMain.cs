@@ -194,9 +194,9 @@ namespace ArchiveVerifyPlugin
                 // Examine the current task and percent complete to determine the number of ingest steps completed
                 ingestStepsCompleted = statusChecker.DetermineIngestStepsCompleted(currentTask, percentComplete, 0);
 
-                fatalError = (
+                fatalError =
                     mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED &&
-                    mRetData.EvalCode == EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY);
+                    mRetData.EvalCode == EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY;
 
                 statusNum = MyEMSLStatusCheck.GetStatusNumFromURI(statusURI);
 
