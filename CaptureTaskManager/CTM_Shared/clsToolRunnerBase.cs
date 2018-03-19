@@ -65,7 +65,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// LogLevel is 1 to 5: 1 for Fatal errors only, 4 for Fatal, Error, Warning, and Info, and 5 for everything including Debug messages
         /// </summary>
-        protected int m_DebugLevel;
+        protected short m_DebugLevel;
 
         protected bool m_TraceMode;
 
@@ -145,7 +145,7 @@ namespace CaptureTaskManager
 
             // Debug level 4 means Info level (normal) logging; 5 for Debug level (verbose) logging
             // Log level 4 will also log error messages
-            m_DebugLevel = m_MgrParams.GetParam("debuglevel", 4);
+            m_DebugLevel = (short)m_MgrParams.GetParam("debuglevel", 4);
             LogTools.SetFileLogLevel(m_DebugLevel);
 
             m_TraceMode = m_MgrParams.GetParam("TraceMode", false);
@@ -177,7 +177,7 @@ namespace CaptureTaskManager
                 else
                 {
                     // Update the log level
-                    m_DebugLevel = m_MgrParams.GetParam("debuglevel", 4);
+                    m_DebugLevel = (short)m_MgrParams.GetParam("debuglevel", 4);
                     LogTools.SetFileLogLevel(m_DebugLevel);
                 }
             }
