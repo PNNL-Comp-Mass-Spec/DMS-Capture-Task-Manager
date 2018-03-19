@@ -94,6 +94,8 @@ namespace ImsDemuxPlugin
         public event DelDemuxProgressHandler DemuxProgress;
         public event DelDemuxProgressHandler BinCentricTableProgress;
 
+        public event StatusEventEventHandler CopyFileWithRetryEvent;
+
         #endregion
 
         #region "Properties"
@@ -1107,6 +1109,11 @@ namespace ImsDemuxPlugin
                 return false;
             }
 
+        }
+
+        private void OnCopyFileWithRetry(string sourceFilePath, string targetFilePath)
+        {
+            CopyFileWithRetryEvent?.Invoke(sourceFilePath + " -> " + targetFilePath);
         }
 
         private void ParseConsoleOutputFileDemux()

@@ -341,6 +341,7 @@ namespace ImsDemuxPlugin
             // Add a handler to catch progress events
             mDemuxTools.DemuxProgress += clsDemuxTools_DemuxProgress;
             mDemuxTools.BinCentricTableProgress += clsDemuxTools_BinCentricTableProgress;
+            mDemuxTools.CopyFileWithRetryEvent += clsDemuxTools_CopyFileWithRetryEvent;
         }
 
         protected bool CheckForCalibrationError(string dsPath)
@@ -595,6 +596,9 @@ namespace ImsDemuxPlugin
             UpdateMgrSettings();
         }
 
+        private void clsDemuxTools_CopyFileWithRetryEvent(string message)
+        {
+        }
         #endregion
     }
 }
