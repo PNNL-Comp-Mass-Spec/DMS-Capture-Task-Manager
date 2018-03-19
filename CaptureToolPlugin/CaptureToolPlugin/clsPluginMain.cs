@@ -58,7 +58,7 @@ namespace CaptureToolPlugin
             }
 
             // Create the object that will perform capture operation
-            var capOpTool = new clsCaptureOps(m_MgrParams, useBionet, m_TraceMode);
+            var capOpTool = new clsCaptureOps(m_MgrParams, m_FileTools, useBionet, m_TraceMode);
             try
             {
                 LogDebug("clsPluginMain.RunTool(): Starting capture operation");

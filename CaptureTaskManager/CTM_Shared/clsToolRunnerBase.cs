@@ -124,7 +124,6 @@ namespace CaptureTaskManager
             m_StatusTools = statusTools;
 
             m_MgrName = m_MgrParams.GetParam("MgrName", "CaptureTaskManager");
-            m_FileTools = new clsFileTools(m_MgrName, 1);
 
             // This connection string points to the DMS_Capture database
             var connectionString = m_MgrParams.GetParam("connectionstring");
@@ -146,6 +145,8 @@ namespace CaptureTaskManager
             LogTools.SetFileLogLevel(m_DebugLevel);
 
             m_TraceMode = m_MgrParams.GetParam("TraceMode", false);
+
+            InitFileTools(m_MgrName, m_DebugLevel);
         }
 
         // Used by CTM plugins
@@ -396,6 +397,57 @@ namespace CaptureTaskManager
 
             retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
             retData.CloseoutMsg = "State parameter not found in ingest status; see " + statusURI;
+
+            return false;
+        }
+
+        /// <summary>
+        /// Initialize m_FileTools
+        /// </summary>
+        /// <param name="mgrName"></param>
+        /// <param name="debugLevel"></param>
+        protected void InitFileTools(string mgrName, short debugLevel)
+        {
+            ResetTimestampForQueueWaitTimeLogging();
+            m_FileTools = new clsFileTools(mgrName, debugLevel);
+            RegisterEvents(m_FileTools, false);
+
+            m_FileTools.LockQueueTimedOut += m_FileTools_LockQueueTimedOut;
+            m_FileTools.LockQueueWaitComplete += m_FileTools_LockQueueWaitComplete;
+            m_FileTools.WaitingForLockQueue += m_FileTools_WaitingForLockQueue;
+        }
+
+        private bool IsLockQueueLogMessageNeeded(ref DateTime dtLockQueueWaitTimeStart, ref DateTime dtLastLockQueueWaitTimeLog)
+        {
+
+            int waitTimeLogIntervalSeconds;
+
+            if (dtLockQueueWaitTimeStart == DateTime.MinValue)
+                dtLockQueueWaitTimeStart = DateTime.UtcNow;
+
+            var waitTimeMinutes = DateTime.UtcNow.Subtract(dtLockQueueWaitTimeStart).TotalMinutes;
+
+            if (waitTimeMinutes >= 30)
+            {
+                waitTimeLogIntervalSeconds = 240;
+            }
+            else if (waitTimeMinutes >= 15)
+            {
+                waitTimeLogIntervalSeconds = 120;
+            }
+            else if (waitTimeMinutes >= 5)
+            {
+                waitTimeLogIntervalSeconds = 60;
+            }
+            else
+            {
+                waitTimeLogIntervalSeconds = 30;
+            }
+
+            if (DateTime.UtcNow.Subtract(dtLastLockQueueWaitTimeLog).TotalSeconds >= waitTimeLogIntervalSeconds)
+            {
+                return true;
+            }
 
             return false;
         }

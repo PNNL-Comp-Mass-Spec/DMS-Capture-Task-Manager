@@ -112,9 +112,10 @@ namespace CaptureToolPlugin
         /// Constructor
         /// </summary>
         /// <param name="mgrParams">Parameters for manager operation</param>
+        /// <param name="fileTools">Instance of clsFileTools</param>
         /// <param name="useBioNet">Flag to indicate if source instrument is on Bionet</param>
         /// <param name="traceMode">When true, show debug messages at the console</param>
-        public clsCaptureOps(IMgrParams mgrParams, bool useBioNet, bool traceMode)
+        public clsCaptureOps(IMgrParams mgrParams, clsFileTools fileTools, bool useBioNet, bool traceMode)
         {
             mMgrParams = mgrParams;
             mTraceMode = traceMode;
@@ -142,8 +143,7 @@ namespace CaptureToolPlugin
             // Sleep interval for "is dataset complete" testing
             mSleepInterval = mMgrParams.GetParam("sleepinterval", 30);
 
-            // Instantiate mFileTools
-            mFileTools = new clsFileTools(mMgrParams.GetParam("MgrName", "CaptureTaskManager"), 1);
+            mFileTools = fileTools;
 
             // Note that all of the events and methods in clsFileTools are static
             if (!mFileCopyEventsWired)

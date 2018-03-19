@@ -42,8 +42,9 @@ namespace DatasetArchivePlugin
         #region "Class variables"
 
         private readonly IMgrParams m_MgrParams;
-        protected ITaskParams m_TaskParams;
+        protected readonly ITaskParams m_TaskParams;
         private readonly IStatusFile m_StatusTools;
+        private readonly clsFileTools m_FileTools;
 
         protected string m_ErrMsg = string.Empty;
         private string m_WarningMsg = string.Empty;
@@ -93,11 +94,19 @@ namespace DatasetArchivePlugin
 
         #region "Constructor"
 
-        protected clsOpsBase(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="mgrParams"></param>
+        /// <param name="taskParams"></param>
+        /// <param name="statusTools"></param>
+        /// <param name="fileTools"></param>
+        protected clsOpsBase(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools, clsFileTools fileTools)
         {
             m_MgrParams = mgrParams;
             m_TaskParams = taskParams;
             m_StatusTools = statusTools;
+            m_FileTools = fileTools;
 
             // DebugLevel of 4 means Info level (normal) logging; 5 for Debug level (verbose) logging
             m_DebugLevel = m_MgrParams.GetParam("debuglevel", 4);
@@ -351,7 +360,7 @@ namespace DatasetArchivePlugin
 
                 var config = new Configuration();
 
-                myEMSLUL = new MyEMSLUploader(config, m_MgrParams.TaskDictionary, m_TaskParams.TaskDictionary)
+                myEMSLUL = new MyEMSLUploader(config, m_MgrParams.TaskDictionary, m_TaskParams.TaskDictionary, m_FileTools)
                 {
                     TraceMode = TraceMode
                 };

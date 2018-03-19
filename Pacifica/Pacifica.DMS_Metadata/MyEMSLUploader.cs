@@ -21,6 +21,8 @@ namespace Pacifica.DMS_Metadata
 
         private readonly string mManagerName;
 
+        private readonly clsFileTools mFileTools;
+
         private readonly Configuration mPacificaConfig;
 
         #region "Properties"
@@ -123,7 +125,8 @@ namespace Pacifica.DMS_Metadata
         /// <param name="config">Pacifica configuration</param>
         /// <param name="mgrParams"></param>
         /// <param name="taskParams"></param>
-        public MyEMSLUploader(Configuration config, Dictionary<string, string> mgrParams, Dictionary<string, string> taskParams)
+        /// <param name="fileTools"></param>
+        public MyEMSLUploader(Configuration config, Dictionary<string, string> mgrParams, Dictionary<string, string> taskParams, clsFileTools fileTools)
         {
             mPacificaConfig = config;
 
@@ -142,6 +145,8 @@ namespace Pacifica.DMS_Metadata
 
             if (!mMgrParams.TryGetValue("MgrName", out mManagerName))
                 mManagerName = "MyEMSLUploader_" + Environment.MachineName;
+
+            mFileTools = fileTools;
 
             var transferFolderPath = Utilities.GetDictionaryValue(mTaskParams, "TransferFolderPath", string.Empty);
             if (string.IsNullOrEmpty(transferFolderPath))
@@ -186,7 +191,7 @@ namespace Pacifica.DMS_Metadata
             var ignoreMyEMSLFileTrackingError = GetParam("IgnoreMyEMSLFileTrackingError", false);
 
             // Instantiate the metadata object
-            mMetadataContainer = new DMSMetadataObject(config, mManagerName, jobNumber)
+            mMetadataContainer = new DMSMetadataObject(config, mManagerName, jobNumber, mFileTools)
             {
                 TraceMode = TraceMode,
                 IgnoreMyEMSLFileTrackingError = ignoreMyEMSLFileTrackingError

@@ -7,6 +7,7 @@
 
 using System;
 using CaptureTaskManager;
+using PRISM;
 
 namespace DatasetArchivePlugin
 {
@@ -30,11 +31,12 @@ namespace DatasetArchivePlugin
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="MgrParams">Manager parameters</param>
-        /// <param name="TaskParams">Task parameters</param>
-        /// <param name="StatusTools"></param>
-        public clsArchiveUpdate(IMgrParams MgrParams, ITaskParams TaskParams, IStatusFile StatusTools)
-            : base(MgrParams, TaskParams, StatusTools)
+        /// <param name="mgrParams">Manager parameters</param>
+        /// <param name="taskParams">Task parameters</param>
+        /// <param name="statusTools">Status Tools</param>
+        /// <param name="fileTools">Instance of clsFileTools</param>
+        public clsArchiveUpdate(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools, clsFileTools fileTools)
+            : base(mgrParams, taskParams, statusTools, fileTools)
         {
         }
         #endregion

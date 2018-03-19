@@ -159,7 +159,11 @@ namespace Pacifica.DMS_Metadata
         /// <summary>
         /// Constructor
         /// </summary>
-        public DMSMetadataObject(Configuration config, string managerName, int jobNumber)
+        /// <param name="config"></param>
+        /// <param name="managerName"></param>
+        /// <param name="jobNumber"></param>
+        /// <param name="fileTools"></param>
+        public DMSMetadataObject(Configuration config, string managerName, int jobNumber, clsFileTools fileTools)
         {
             mPacificaConfig = config;
 
@@ -173,7 +177,7 @@ namespace Pacifica.DMS_Metadata
 
             JobNumber = jobNumber;
 
-            mFileTools = new clsFileTools(managerName, 1);
+            mFileTools = fileTools;
 
             mFileTools.WaitingForLockQueue += mFileTools_WaitingForLockQueue;
 

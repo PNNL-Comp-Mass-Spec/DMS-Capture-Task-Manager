@@ -61,7 +61,7 @@ namespace DatasetArchivePlugin
             }
 
             // Always use clsArchiveUpdate for both archiving new datasets and updating existing datasets
-            clsOpsBase archOpTool = new clsArchiveUpdate(m_MgrParams, m_TaskParams, m_StatusTools);
+            clsOpsBase archOpTool = new clsArchiveUpdate(m_MgrParams, m_TaskParams, m_StatusTools, m_FileTools);
             RegisterEvents(archOpTool);
 
             if (m_TaskParams.GetParam("StepTool").ToLower() == "datasetarchive")

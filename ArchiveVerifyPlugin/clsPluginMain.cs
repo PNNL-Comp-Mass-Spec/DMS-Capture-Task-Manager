@@ -312,7 +312,8 @@ namespace ArchiveVerifyPlugin
 
                 var config = new Configuration();
 
-                var metadataObject = new DMSMetadataObject(config, m_MgrName, m_Job)
+
+                var metadataObject = new DMSMetadataObject(config, m_MgrName, m_Job, m_FileTools)
                 {
                     TraceMode = m_TraceMode,
                     IgnoreMyEMSLFileTrackingError = ignoreMyEMSLFileTrackingError

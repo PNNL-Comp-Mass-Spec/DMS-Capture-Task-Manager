@@ -43,6 +43,7 @@ namespace ImsDemuxPlugin
         private readonly string mManagerName;
         private string mDataset;
         private string mDatasetFolderPathRemote = string.Empty;
+        private readonly clsFileTools mFileTools;
         private string mWorkDir;
 
         private readonly string mUimfDemultiplexerPath;
@@ -89,9 +90,6 @@ namespace ImsDemuxPlugin
         #region "Events"
 
         // Events used for communication back to clsPluginMain, where the logging and status updates are handled
-        //public event DelDemuxErrorHandler DemuxError;
-        //public event DelDemuxMessageHandler DumuxMsg;
-        //public event DelDumuxExceptionHandler DemuxException;
 
         public event DelDemuxProgressHandler DemuxProgress;
         public event DelDemuxProgressHandler BinCentricTableProgress;
@@ -109,12 +107,14 @@ namespace ImsDemuxPlugin
         /// </summary>
         /// <param name="uimDemultiplexerPath"></param>
         /// <param name="managerName"></param>
-        public clsDemuxTools(string uimDemultiplexerPath, string managerName)
+        /// <param name="fileTools"></param>
+        public clsDemuxTools(string uimDemultiplexerPath, string managerName, clsFileTools fileTools)
         {
             mProgressUpdateIntervalSeconds = 5;
 
             mUimfDemultiplexerPath = uimDemultiplexerPath;
             mManagerName = managerName;
+            mFileTools = fileTools;
 
             mLoggedConsoleOutputErrors = new List<string>();
         }
@@ -794,24 +794,12 @@ namespace ImsDemuxPlugin
         /// <param name="targetFilePath">Destination file</param>
         /// <param name="overWrite">True to overWrite existing files</param>
         /// <param name="retryCount">Number of attempts</param>
+        /// <param name="backupDestFileBeforeCopy">If True and if the target file exists, renames the target file to have _Old1 before the extension</param>
         /// <returns>True if success, false if an error</returns>
-        private bool CopyFileWithRetry(string sourceFilePath, string targetFilePath, bool overWrite, int retryCount)
+        private bool CopyFileWithRetry(string sourceFilePath, string targetFilePath, bool overWrite, int retryCount, bool backupDestFileBeforeCopy = false)
         {
-            return CopyFileWithRetry(sourceFilePath, targetFilePath, overWrite, retryCount, false, mManagerName);
-        }
-
-        /// <summary>
-        /// Copies a file, allowing for retries
-        /// </summary>
-        /// <param name="sourceFilePath">Source file</param>
-        /// <param name="targetFilePath">Destination file</param>
-        /// <param name="overWrite">True to overWrite existing files</param>
-        /// <param name="retryCount">Number of attempts</param>
-        /// <param name="managerName">Manager name</param>
-        /// <returns>True if success, false if an error</returns>
-        public static bool CopyFileWithRetry(string sourceFilePath, string targetFilePath, bool overWrite, int retryCount, string managerName)
-        {
-            return CopyFileWithRetry(sourceFilePath, targetFilePath, overWrite, retryCount, false, managerName);
+            OnCopyFileWithRetry(sourceFilePath, targetFilePath);
+            return CopyFileWithRetry(sourceFilePath, targetFilePath, overWrite, retryCount, backupDestFileBeforeCopy, mManagerName, mFileTools);
         }
 
         /// <summary>
@@ -823,6 +811,7 @@ namespace ImsDemuxPlugin
         /// <param name="retryCount">Number of attempts</param>
         /// <param name="backupDestFileBeforeCopy">If True and if the target file exists, renames the target file to have _Old1 before the extension</param>
         /// <param name="managerName">Manager name</param>
+        /// <param name="fileTools">Instance of clsFileTools</param>
         /// <returns>True if success, false if an error</returns>
         public static bool CopyFileWithRetry(
             string sourceFilePath,
@@ -830,14 +819,13 @@ namespace ImsDemuxPlugin
             bool overWrite,
             int retryCount,
             bool backupDestFileBeforeCopy,
-            string managerName)
+            string managerName,
+            clsFileTools fileTools)
         {
             var retryingCopy = false;
 
             if (retryCount < 0)
                 retryCount = 0;
-
-            var oFileTools = new clsFileTools(managerName, 1);
 
             if (backupDestFileBeforeCopy)
             {
@@ -855,7 +843,9 @@ namespace ImsDemuxPlugin
                         LogTools.LogMessage(msg);
                     }
 
-                    oFileTools.CopyFileUsingLocks(sourceFilePath, targetFilePath, overWrite);
+                    // The parent method should call OnCopyFileWithRetry() or ResetTimestampForQueueWaitTimeLogging() prior to calling this method
+
+                    fileTools.CopyFileUsingLocks(sourceFilePath, targetFilePath, overWrite);
                     return true;
                 }
                 catch (Exception ex)
@@ -933,7 +923,7 @@ namespace ImsDemuxPlugin
                 OnDebugEvent(msg);
                 const int retryCount = 3;
                 const bool backupDestFileBeforeCopy = true;
-                if (!CopyFileWithRetry(calibrationLogFilePath, targetFilePath, true, retryCount, backupDestFileBeforeCopy, mManagerName))
+                if (!CopyFileWithRetry(calibrationLogFilePath, targetFilePath, true, retryCount, backupDestFileBeforeCopy))
                 {
                     retData.CloseoutMsg = "Error copying CalibrationLog.txt file to storage server";
                     retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;

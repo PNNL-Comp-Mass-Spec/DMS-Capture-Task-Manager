@@ -289,10 +289,9 @@ namespace DatasetIntegrityPlugin
                 }
 
                 var mgrName = m_MgrParams.GetParam("MgrName", "CTM");
-                var fileTools = new clsFileTools(mgrName, m_DebugLevel);
                 var dotDFolderPathLocal = Path.Combine(m_WorkDir, m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION);
 
-                var success = CopyDotDFolderToLocal(fileTools, datasetFolderPath, dotDFolderPathLocal, false);
+                var success = CopyDotDFolderToLocal(m_FileTools, datasetFolderPath, dotDFolderPathLocal, false);
                 if (!success)
                     return false;
 
@@ -339,7 +338,7 @@ namespace DatasetIntegrityPlugin
                 try
                 {
                     clsProgRunner.GarbageCollectNow();
-                    fileTools.DeleteDirectory(dotDFolderPathLocal, ignoreErrors: true);
+                    m_FileTools.DeleteDirectory(dotDFolderPathLocal, ignoreErrors: true);
                 }
                 catch (Exception ex)
                 {
@@ -367,7 +366,7 @@ namespace DatasetIntegrityPlugin
                 Thread.Sleep(100);
 
                 // Copy the .CDF file to the dataset folder
-                success = CopyCDFToDatasetFolder(fileTools, datasetFolderPath);
+                success = CopyCDFToDatasetFolder(m_FileTools, datasetFolderPath);
                 if (!success)
                 {
                     return false;
@@ -397,10 +396,9 @@ namespace DatasetIntegrityPlugin
             {
 
                 var mgrName = m_MgrParams.GetParam("MgrName", "CTM");
-                var fileTools = new clsFileTools(mgrName, m_DebugLevel);
                 var dotDFolderPathLocal = Path.Combine(m_WorkDir, m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION);
 
-                var success = CopyDotDFolderToLocal(fileTools, datasetFolderPath, dotDFolderPathLocal, true);
+                var success = CopyDotDFolderToLocal(m_FileTools, datasetFolderPath, dotDFolderPathLocal, true);
                 if (!success)
                     return false;
 
@@ -437,7 +435,7 @@ namespace DatasetIntegrityPlugin
                 try
                 {
                     clsProgRunner.GarbageCollectNow();
-                    fileTools.DeleteDirectory(dotDFolderPathLocal, ignoreErrors: true);
+                    m_FileTools.DeleteDirectory(dotDFolderPathLocal, ignoreErrors: true);
                 }
                 catch (Exception ex)
                 {
@@ -465,7 +463,7 @@ namespace DatasetIntegrityPlugin
                 Thread.Sleep(100);
 
                 // Copy the .UIMF file to the dataset folder
-                success = CopyUIMFToDatasetFolder(fileTools, datasetFolderPath);
+                success = CopyUIMFToDatasetFolder(m_FileTools, datasetFolderPath);
                 if (!success)
                 {
                     return false;

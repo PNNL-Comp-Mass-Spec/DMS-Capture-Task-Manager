@@ -334,7 +334,8 @@ namespace ImsDemuxPlugin
             // Determine the path to UIMFDemultiplexer_Console.exe
             var uimfDemultiplexerProgLoc = GetUimfDemultiplexerPath();
 
-            mDemuxTools = new clsDemuxTools(uimfDemultiplexerProgLoc, m_MgrName);
+
+            mDemuxTools = new clsDemuxTools(uimfDemultiplexerProgLoc, m_MgrName, m_FileTools);
             RegisterEvents(mDemuxTools);
 
             // Add a handler to catch progress events
@@ -457,7 +458,9 @@ namespace ImsDemuxPlugin
             else
             {
                 const int retryCount = 3;
-                if (!clsDemuxTools.CopyFileWithRetry(sSourceFilePath, sTargetFilePath, true, retryCount, m_MgrName))
+                const bool backupDestFileBeforeCopy = false;
+
+                if (!clsDemuxTools.CopyFileWithRetry(sSourceFilePath, sTargetFilePath, true, retryCount, backupDestFileBeforeCopy, m_MgrName, m_FileTools))
                 {
                     msg = "Error copying " + fileName + " to storage server";
                     LogError(msg);
