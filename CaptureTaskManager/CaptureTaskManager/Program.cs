@@ -20,7 +20,7 @@ namespace CaptureTaskManager
     /// </summary>
     static class Program
     {
-        private const string PROGRAM_DATE = "March 6, 2018";
+        private const string PROGRAM_DATE = "March 19, 2018";
 
         private static bool mCodeTestMode;
         private static bool mTraceMode;
@@ -205,7 +205,7 @@ namespace CaptureTaskManager
                 "T",
                 "Test",
                 "Trace",
-                "V",
+                "Verbose",
                 "Version"
             };
 
@@ -230,7 +230,7 @@ namespace CaptureTaskManager
                 if (commandLineParser.IsParameterPresent("Trace"))
                     mTraceMode = true;
 
-                if (commandLineParser.IsParameterPresent("V"))
+                if (commandLineParser.IsParameterPresent("Verbose"))
                     mTraceMode = true;
 
                 if (commandLineParser.IsParameterPresent("Version"))
@@ -271,7 +271,7 @@ namespace CaptureTaskManager
                 Console.WriteLine();
                 Console.WriteLine("Use /T or /Test to start the program in code test mode.");
                 Console.WriteLine();
-                Console.WriteLine("Use /Trace or /V to enable trace mode");
+                Console.WriteLine("Use /Trace or /Verbose to enable trace mode");
                 Console.WriteLine();
                 Console.WriteLine("Use /Version to see the program version and OS version");
                 Console.WriteLine();
