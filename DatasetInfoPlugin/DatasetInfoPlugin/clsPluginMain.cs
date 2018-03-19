@@ -291,6 +291,8 @@ namespace DatasetInfoPlugin
                 {
                     LogMessage("Copying instrument file to local disk: " + datasetFile.FullName, false, false);
 
+                    ResetTimestampForQueueWaitTimeLogging();
+
                     // Thermo .raw file; copy it locally
                     var localFilePath = Path.Combine(m_WorkDir, datasetFileOrFolder);
                     var success = m_FileTools.CopyFileUsingLocks(datasetFile, localFilePath, true);

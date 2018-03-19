@@ -532,6 +532,7 @@ namespace DatasetIntegrityPlugin
             // Copy the dataset folder locally using Prism.DLL
             // Note that lock files will be used when copying large files (over 20 MB)
 
+            ResetTimestampForQueueWaitTimeLogging();
             fileTools.CopyDirectory(dotDFolderPathRemote.FullName, dotDFolderPathLocal, true);
 
             return true;
@@ -574,6 +575,8 @@ namespace DatasetIntegrityPlugin
             {
                 LogDebug("Copying " + dataFile.Extension + " file to the dataset folder");
             }
+
+            ResetTimestampForQueueWaitTimeLogging();
 
             var targetFilePath = Path.Combine(datasetFolderPath, dataFile.Name);
             fileTools.CopyFileUsingLocks(dataFile.FullName, targetFilePath, overWrite: true);

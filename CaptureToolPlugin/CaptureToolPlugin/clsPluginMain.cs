@@ -57,6 +57,8 @@ namespace CaptureToolPlugin
                 useBionet = false;
             }
 
+            ResetTimestampForQueueWaitTimeLogging();
+
             // Create the object that will perform capture operation
             var capOpTool = new clsCaptureOps(m_MgrParams, m_FileTools, useBionet, m_TraceMode);
             try

@@ -69,6 +69,10 @@ namespace CaptureTaskManager
 
         protected bool m_TraceMode;
 
+        private DateTime m_LastLockQueueWaitTimeLog = DateTime.UtcNow;
+
+        private DateTime m_LockQueueWaitTimeStart = DateTime.UtcNow;
+
         #endregion
 
         #region "Delegates"
@@ -538,6 +542,16 @@ namespace CaptureTaskManager
             }
         }
 
+
+        /// <summary>
+        /// Reset the timestamp for logging that we are waiting for a lock file queue to decrease
+        /// </summary>
+        protected void ResetTimestampForQueueWaitTimeLogging()
+        {
+            m_LastLockQueueWaitTimeLog = DateTime.UtcNow;
+            m_LockQueueWaitTimeStart = DateTime.UtcNow;
+        }
+
         /// <summary>
         /// Creates a Tool Version Info file
         /// </summary>
@@ -983,6 +997,41 @@ namespace CaptureTaskManager
             }
 
             return true;
+        }
+
+        #endregion
+
+
+        #region "Event Handlers"
+
+        private void m_FileTools_LockQueueTimedOut(string sourceFilePath, string targetFilePath, double waitTimeMinutes)
+        {
+            var msg = "Lockfile queue timed out after " + waitTimeMinutes.ToString("0") + " minutes; Source=" + sourceFilePath + ", Target=" + targetFilePath;
+            LogWarning(msg);
+        }
+
+        private void m_FileTools_LockQueueWaitComplete(string sourceFilePath, string targetFilePath, double waitTimeMinutes)
+        {
+            if (waitTimeMinutes >= 1)
+            {
+                var msg = "Exited lockfile queue after " + waitTimeMinutes.ToString("0") + " minutes; will now copy file";
+                LogMessage(msg);
+            }
+        }
+
+        private void m_FileTools_WaitingForLockQueue(string sourceFilePath, string targetFilePath, int backlogSourceMB, int backlogTargetMB)
+        {
+            if (IsLockQueueLogMessageNeeded(ref m_LockQueueWaitTimeStart, ref m_LastLockQueueWaitTimeLog))
+            {
+                m_LastLockQueueWaitTimeLog = DateTime.UtcNow;
+                var msg = "Waiting for lockfile queue to fall below threshold; " +
+                          "SourceBacklog=" + backlogSourceMB + " MB, " +
+                          "TargetBacklog=" + backlogTargetMB + " MB, " +
+                          "Source=" + sourceFilePath + ", " +
+                          "Target=" + targetFilePath;
+                LogMessage(msg);
+            }
+
         }
 
         #endregion

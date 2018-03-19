@@ -312,6 +312,7 @@ namespace ArchiveVerifyPlugin
 
                 var config = new Configuration();
 
+                ResetTimestampForQueueWaitTimeLogging();
 
                 var metadataObject = new DMSMetadataObject(config, m_MgrName, m_Job, m_FileTools)
                 {

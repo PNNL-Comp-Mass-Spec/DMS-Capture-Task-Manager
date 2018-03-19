@@ -60,6 +60,8 @@ namespace DatasetArchivePlugin
                 return retData;
             }
 
+            ResetTimestampForQueueWaitTimeLogging();
+
             // Always use clsArchiveUpdate for both archiving new datasets and updating existing datasets
             clsOpsBase archOpTool = new clsArchiveUpdate(m_MgrParams, m_TaskParams, m_StatusTools, m_FileTools);
             RegisterEvents(archOpTool);

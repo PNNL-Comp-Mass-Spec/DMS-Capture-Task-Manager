@@ -334,6 +334,7 @@ namespace ImsDemuxPlugin
             // Determine the path to UIMFDemultiplexer_Console.exe
             var uimfDemultiplexerProgLoc = GetUimfDemultiplexerPath();
 
+            ResetTimestampForQueueWaitTimeLogging();
 
             mDemuxTools = new clsDemuxTools(uimfDemultiplexerProgLoc, m_MgrName, m_FileTools);
             RegisterEvents(mDemuxTools);
@@ -460,6 +461,8 @@ namespace ImsDemuxPlugin
             {
                 const int retryCount = 3;
                 const bool backupDestFileBeforeCopy = false;
+
+                ResetTimestampForQueueWaitTimeLogging();
 
                 if (!clsDemuxTools.CopyFileWithRetry(sSourceFilePath, sTargetFilePath, true, retryCount, backupDestFileBeforeCopy, m_MgrName, m_FileTools))
                 {
@@ -598,7 +601,9 @@ namespace ImsDemuxPlugin
 
         private void clsDemuxTools_CopyFileWithRetryEvent(string message)
         {
+            ResetTimestampForQueueWaitTimeLogging();
         }
+
         #endregion
     }
 }
