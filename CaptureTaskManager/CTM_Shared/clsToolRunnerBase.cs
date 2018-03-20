@@ -416,6 +416,10 @@ namespace CaptureTaskManager
             m_FileTools = new clsFileTools(mgrName, debugLevel);
             RegisterEvents(m_FileTools, false);
 
+            // Use a custom event handler for status messages
+            UnregisterEventHandler(m_FileTools, BaseLogger.LogLevels.INFO);
+            m_FileTools.StatusEvent += m_FileTools_StatusEvent;
+
             m_FileTools.LockQueueTimedOut += m_FileTools_LockQueueTimedOut;
             m_FileTools.LockQueueWaitComplete += m_FileTools_LockQueueWaitComplete;
             m_FileTools.WaitingForLockQueue += m_FileTools_WaitingForLockQueue;
@@ -1019,6 +1023,22 @@ namespace CaptureTaskManager
             }
         }
 
+        private void m_FileTools_StatusEvent(string message)
+        {
+            // Do not log certain common messages
+            if (message.StartsWith("Created lock file") ||
+                message.StartsWith("Copying file with CopyFileEx") ||
+                message.StartsWith("File to copy is") && message.Contains("will use CopyFileEx for"))
+            {
+                if (m_TraceMode)
+                    ConsoleMsgUtils.ShowDebug(message);
+
+                return;
+            }
+
+            LogMessage(message);
+        }
+
         private void m_FileTools_WaitingForLockQueue(string sourceFilePath, string targetFilePath, int backlogSourceMB, int backlogTargetMB)
         {
             if (IsLockQueueLogMessageNeeded(ref m_LockQueueWaitTimeStart, ref m_LastLockQueueWaitTimeLog))
@@ -1038,6 +1058,11 @@ namespace CaptureTaskManager
 
         #region "clsEventNotifier events"
 
+        /// <summary>
+        /// Register event handlers
+        /// </summary>
+        /// <param name="processingClass"></param>
+        /// <param name="writeDebugEventsToLog"></param>
         protected void RegisterEvents(clsEventNotifier processingClass, bool writeDebugEventsToLog = true)
         {
             if (writeDebugEventsToLog)
@@ -1055,6 +1080,11 @@ namespace CaptureTaskManager
             // Ignore: processingClass.ProgressUpdate += ProgressUpdateHandler;
         }
 
+        /// <summary>
+        /// Unregister the event handler for the given LogLevel
+        /// </summary>
+        /// <param name="processingClass"></param>
+        /// <param name="messageType"></param>
         protected void UnregisterEventHandler(clsEventNotifier processingClass, BaseLogger.LogLevels messageType)
         {
             switch (messageType)
