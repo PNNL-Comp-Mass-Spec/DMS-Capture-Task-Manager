@@ -24,8 +24,8 @@ namespace Pacifica.DMS_Metadata
         /// Maximum number of files to archive
         /// </summary>
         /// <remarks>
-        /// If uploading an entire dataset folder and all of its subfolders via a DatasetArchive operation,
-        ///   then this value applies to all files in the dataset folder (and subfolders)
+        /// If uploading an entire dataset directory and all of its subdirectories via a DatasetArchive operation,
+        ///   this value applies to all files in the dataset folder (and subfolders)
         /// If uploading just one dataset subfolder via an ArchiveUpdate operation,
         ///   then this value applies to all files in that subfolder
         /// </remarks>
@@ -65,7 +65,7 @@ namespace Pacifica.DMS_Metadata
         // List of remote files that were found using CacheInfo files
         private readonly List<string> mRemoteCacheInfoFilesToRetrieve;
 
-        // Keys in this dictionary are lock folder share paths (for example \\proto-6\DMS_LockFiles)
+        // Keys in this dictionary are lock directory share paths (for example \\proto-6\DMS_LockFiles)
         // Values are the corresponding lock file info object
         private readonly Dictionary<string, FileInfo> mRemoteCacheInfoLockFiles;
 
@@ -228,7 +228,7 @@ namespace Pacifica.DMS_Metadata
                 return false;
             }
 
-            // Calculate the "year_quarter" code used for subfolders within an instrument folder
+            // Calculate the "year_quarter" code used for subdirectories within an instrument directory
             // This value is based on the date the dataset was created in DMS
             uploadMetadata.DateCodeString = GetDatasetYearQuarter(taskParams);
 
@@ -482,8 +482,8 @@ namespace Pacifica.DMS_Metadata
         /// Find all of the files in the path to be archived
         /// </summary>
         /// <param name="archiveMode">Archive for the initial archive of a dataset, or update for updating a specific subdirectory</param>
-        /// <param name="pathToBeArchived">Folder path to be archived</param>
-        /// <param name="baseDSPath">Base dataset folder path</param>
+        /// <param name="pathToBeArchived">Directory path to be archived</param>
+        /// <param name="baseDSPath">Base dataset directory path</param>
         /// <param name="recurse">True to find files in all subdirectories</param>
         /// <returns>List of files to be archived</returns>
         private List<FileInfoObject> CollectFileInformation(
@@ -534,7 +534,7 @@ namespace Pacifica.DMS_Metadata
 
                 var subDirectories = sourceDirectory.GetDirectories();
 
-                // Clear the list of files, then add dataset files in the dataset folder
+                // Clear the list of files, then add dataset files in the dataset directory
                 fileList.Clear();
                 fileList.AddRange(sourceDirectory.GetFiles("*", SearchOption.TopDirectoryOnly).ToList());
 
@@ -629,7 +629,7 @@ namespace Pacifica.DMS_Metadata
             var currentTask = "Looking for existing files in MyEMSL for DatasetID " + uploadMetadata.DatasetID;
 
             if (!string.IsNullOrWhiteSpace(uploadMetadata.SubFolder))
-                currentTask += ", subfolder " + uploadMetadata.SubFolder;
+                currentTask += ", subdirectory " + uploadMetadata.SubFolder;
 
             OnStatusEvent(currentTask);
 
@@ -741,12 +741,12 @@ namespace Pacifica.DMS_Metadata
             {
                 // Construct a list of the first file required from each distinct server
                 var sourceFile = new FileInfo(remoteFilePath);
-                var lockFolderPathSource = mFileTools.GetLockFolder(sourceFile);
+                var lockDirectoryPathSource = mFileTools.GetLockDirectory(sourceFile);
 
-                if (string.IsNullOrWhiteSpace(lockFolderPathSource))
+                if (string.IsNullOrWhiteSpace(lockDirectoryPathSource))
                     continue;
 
-                if (mRemoteCacheInfoLockFiles.ContainsKey(lockFolderPathSource))
+                if (mRemoteCacheInfoLockFiles.ContainsKey(lockDirectoryPathSource))
                     continue;
 
                 var sourceFileSizeMB = sourceFile.Length / 1024.0 / 1024.0;
@@ -758,11 +758,11 @@ namespace Pacifica.DMS_Metadata
 
                 var lockFileTimestamp = mFileTools.GetLockFileTimeStamp();
 
-                var lockFolderSource = new DirectoryInfo(lockFolderPathSource);
+                var lockDirectorySource = new DirectoryInfo(lockDirectoryPathSource);
 
                 var targetFilePath = Path.Combine(@"\\MyEMSL\", DatasetName, sourceFile.Name);
 
-                var lockFilePathSource = mFileTools.CreateLockFile(lockFolderSource, lockFileTimestamp, sourceFile, targetFilePath, ManagerName);
+                var lockFilePathSource = mFileTools.CreateLockFile(lockDirectorySource, lockFileTimestamp, sourceFile, targetFilePath, ManagerName);
 
                 if (string.IsNullOrEmpty(lockFilePathSource))
                 {
@@ -770,9 +770,9 @@ namespace Pacifica.DMS_Metadata
                     continue;
                 }
 
-                mRemoteCacheInfoLockFiles.Add(lockFolderPathSource, new FileInfo(lockFilePathSource));
+                mRemoteCacheInfoLockFiles.Add(lockDirectoryPathSource, new FileInfo(lockFilePathSource));
 
-                mFileTools.WaitForLockFileQueue(lockFileTimestamp, lockFolderSource, sourceFile, MAX_LOCKFILE_WAIT_TIME_MINUTES);
+                mFileTools.WaitForLockFileQueue(lockFileTimestamp, lockDirectorySource, sourceFile, MAX_LOCKFILE_WAIT_TIME_MINUTES);
 
             }
         }
@@ -838,9 +838,9 @@ namespace Pacifica.DMS_Metadata
             else
                 driveLocation = Utilities.GetDictionaryValue(taskParams, "Storage_Vol", string.Empty);
 
-            // Construct the dataset folder path
-            var datasetFolder = Utilities.GetDictionaryValue(taskParams, "Folder", string.Empty);
-            var sourceDirectoryBase = Path.Combine(Utilities.GetDictionaryValue(taskParams, "Storage_Path", string.Empty), datasetFolder);
+            // Construct the dataset directory path
+            var datasetDirectory = Utilities.GetDictionaryValue(taskParams, "Folder", string.Empty);
+            var sourceDirectoryBase = Path.Combine(Utilities.GetDictionaryValue(taskParams, "Storage_Path", string.Empty), datasetDirectory);
             var sourceDirectoryPath = Path.Combine(driveLocation, sourceDirectoryBase);
 
             uploadMetadata.DatasetName = Utilities.GetDictionaryValue(taskParams, "Dataset", string.Empty);
@@ -985,9 +985,9 @@ namespace Pacifica.DMS_Metadata
         /// Find files in MyEMSL associated with the given dataset ID
         /// </summary>
         /// <param name="datasetID">Dataset ID</param>
-        /// <param name="subDir">Optional subdirectory (subfolder) to filter on</param>
+        /// <param name="subDirFilter">Optional subdirectory (subfolder) to filter on</param>
         /// <returns>Dictionary of files in MyEMSL; keys are relative file paths (Unix style paths) and values are file details</returns>
-        public Dictionary<string, List<MyEMSLFileInfo>> GetDatasetFilesInMyEMSL(int datasetID, string subDir = "")
+        public Dictionary<string, List<MyEMSLFileInfo>> GetDatasetFilesInMyEMSL(int datasetID, string subDirFilter = "")
         {
             const int DUPLICATE_HASH_MESSAGES_TO_LOG = 5;
 
@@ -1047,16 +1047,16 @@ namespace Pacifica.DMS_Metadata
                 var fileName = Utilities.GetDictionaryValue(fileObj, "name");
                 var fileId = Utilities.GetDictionaryValue(fileObj, "_id", 0);
                 var fileHash = Utilities.GetDictionaryValue(fileObj, "hashsum");
-                var subFolder = Utilities.GetDictionaryValue(fileObj, "subdir");
+                var fileSubDir = Utilities.GetDictionaryValue(fileObj, "subdir");
 
-                if (!string.IsNullOrWhiteSpace(subDir))
+                if (!string.IsNullOrWhiteSpace(subDirFilter))
                 {
-                    if (!string.Equals(subDir, subFolder, StringComparison.OrdinalIgnoreCase))
+                    if (!string.Equals(subDirFilter, fileSubDir, StringComparison.OrdinalIgnoreCase))
                         continue;
                 }
 
                 // Unix style path
-                var relativeFilePath = clsPathUtils.CombineLinuxPaths(subFolder, fileName);
+                var relativeFilePath = clsPathUtils.CombineLinuxPaths(fileSubDir, fileName);
 
                 if (remoteFiles.TryGetValue(relativeFilePath, out var fileVersions))
                 {
@@ -1079,8 +1079,8 @@ namespace Pacifica.DMS_Metadata
                         {
                             // This warning is logged as a debug event since it's not a critical error
                             OnDebugEvent(string.Format(
-                                "Remote file listing reports the same file with the same hash more than once;\n" +
-                                "  ignoring duplicate hash {0} for {1}", fileHash, relativeFilePath));
+                                "Remote file listing reports the same file with the same hash more than once; " +
+                                "ignoring duplicate hash {0} for {1}", fileHash, relativeFilePath));
                         }
                         continue;
                     }
@@ -1096,7 +1096,7 @@ namespace Pacifica.DMS_Metadata
                 {
                     DatasetYearQuarter = string.Empty,
                     HashType = Utilities.GetDictionaryValue(fileObj, "hashtype"),
-                    SubDir = subFolder,
+                    SubDir = fileSubDir,
                     Size = Utilities.GetDictionaryValue(fileObj, "size", 0),
                     TransactionId = Utilities.GetDictionaryValue(fileObj, "transaction_id", 0)
                 };
