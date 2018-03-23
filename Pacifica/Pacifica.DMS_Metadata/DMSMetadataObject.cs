@@ -27,7 +27,7 @@ namespace Pacifica.DMS_Metadata
         /// If uploading an entire dataset directory and all of its subdirectories via a DatasetArchive operation,
         ///   this value applies to all files in the dataset folder (and subfolders)
         /// If uploading just one dataset subfolder via an ArchiveUpdate operation,
-        ///   then this value applies to all files in that subfolder
+        ///   this value applies to all files in that subdirectory
         /// </remarks>
         public const int MAX_FILES_TO_ARCHIVE = 500;
 

@@ -244,7 +244,7 @@ namespace CaptureTaskManager
         private Dictionary<string, string> LoadMgrSettingsFromFile()
         {
             // Note: When you are editing this project using the Visual Studio IDE, if you edit the values
-            //  ->Properties>Settings.settings, then when you run the program (from within the IDE), it
+            //  ->Properties>Settings.settings, when you run the program (from within the IDE), it
             //  will update file CaptureTaskManager.exe.config with your settings
 
             // Load initial settings into string dictionary for return

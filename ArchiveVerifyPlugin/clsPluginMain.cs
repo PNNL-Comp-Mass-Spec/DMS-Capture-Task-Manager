@@ -978,7 +978,7 @@ namespace ArchiveVerifyPlugin
                 }
 
                 // Make sure the entries in archivedFiles only correspond to this dataset
-                // We performed the search using DatasetID, but if a dataset is renamed in DMS, then multiple datasets could have the same DatasetID
+                // We performed the search using DatasetID, but if a dataset is renamed in DMS, multiple datasets could have the same DatasetID
                 // Dataset renames are rare, but do happen (e.g. Dataset ID 382287 renamed from TB_UR_07_14Jul14_Methow_13-10-13 to TB_UR_08_14Jul14_Methow_13-10-14)
 
                 // Unfortunately, starting in June 2017, the results reported by
