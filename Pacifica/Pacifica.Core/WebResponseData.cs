@@ -59,6 +59,12 @@ namespace Pacifica.Core
         /// <param name="ex"></param>
         public void RegisterException(Exception ex)
         {
+            if (ExceptionCaught && !string.IsNullOrWhiteSpace(ExceptionMessage))
+            {
+                // An exception has already been cached
+                return;
+            }
+
             ExceptionCaught = true;
             ExceptionMessage = ex.Message;
             ExceptionStackTrace = PRISM.clsStackTraceFormatter.GetExceptionStackTraceMultiLine(ex);
