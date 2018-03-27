@@ -527,6 +527,14 @@ namespace Pacifica.Core
             eusInfo.EUSProposalID = GetEUSProposalID(uploadMetadata.EUSProposalID, DEFAULT_EUS_PROPOSAL_ID);
             eusInfo.EUSUploaderID = GetEUSSubmitterID(uploadMetadata.EUSOperatorID, DEFAULT_EUS_OPERATOR_ID);
 
+            // Possibly override EUSProposal ID
+            if (eusInfo.EUSProposalID.StartsWith("EPR"))
+            {
+                PRISM.Logging.LogTools.LogWarning(string.Format("Overriding proposal {0} with {1} for dataset {2}", eusInfo.EUSProposalID,
+                                                                DEFAULT_EUS_PROPOSAL_ID, uploadMetadata.DatasetName));
+                eusInfo.EUSProposalID = DEFAULT_EUS_PROPOSAL_ID;
+            }
+
             // Fill out Transaction Key/Value pairs
             if (uploadMetadata.DatasetID > 0)
             {
