@@ -27,6 +27,11 @@ namespace Pacifica.Core
         private const string REQUEST_EXCEPTION_RESPONSE = "(no response, exception caught)";
 
         /// <summary>
+        /// Response to return the Policy server reports Precondition Failed
+        /// </summary>
+        public const string REQUEST_PRECONDITION_FAILED_RESPONSE = "(no response, precondition failed)";
+
+        /// <summary>
         /// Response to return when a request times out
         /// </summary>
         public const string REQUEST_TIMEOUT_RESPONSE = "(no response, request timed out)";
@@ -332,10 +337,15 @@ namespace Pacifica.Core
             }
             else
             {
-                if (ex.Message.Contains("timed out"))
+                if (ex.Message.IndexOf("timed out", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     responseData.ResponseText = REQUEST_TIMEOUT_RESPONSE;
                     responseData.ResponseStatusCode = HttpStatusCode.RequestTimeout;
+                }
+                else if (ex.Message.IndexOf("Precondition Failed", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    responseData.ResponseText = REQUEST_PRECONDITION_FAILED_RESPONSE;
+                    responseData.ResponseStatusCode = HttpStatusCode.PreconditionFailed;
                 }
                 else
                 {
@@ -740,29 +750,40 @@ namespace Pacifica.Core
                 if (!threadAborted && !mUrlContactInfo.ResponseData.ExceptionCaught)
                 {
                     responseStatusCode = mUrlContactInfo.ResponseData.ResponseStatusCode;
+                    return mUrlContactInfo.ResponseData.ResponseText;
+                }
+
+                string responseTextToReturn;
+
+                if (runtimeExceeded)
+                {
+                    mUrlContactInfo.ResponseData.ResponseText = REQUEST_TIMEOUT_RESPONSE;
+                    mUrlContactInfo.ResponseData.ResponseStatusCode = HttpStatusCode.RequestTimeout;
+                    responseTextToReturn = mUrlContactInfo.ResponseData.ResponseText;
+                }
+                else if (mUrlContactInfo.ResponseData.ExceptionCaught)
+                {
+                    mUrlContactInfo.ResponseData.ResponseText = REQUEST_EXCEPTION_RESPONSE;
+
+                    if (mUrlContactInfo.ResponseData.ResponseStatusCode != HttpStatusCode.PreconditionFailed)
+                        mUrlContactInfo.ResponseData.ResponseStatusCode = HttpStatusCode.BadRequest;
+
+                    if (string.IsNullOrWhiteSpace(mUrlContactInfo.ResponseData.ExceptionMessage))
+                        responseTextToReturn = mUrlContactInfo.ResponseData.ResponseText;
+                    else
+                        responseTextToReturn = mUrlContactInfo.ResponseData.ResponseText + "; " + mUrlContactInfo.ResponseData.ExceptionMessage;
                 }
                 else
                 {
-                    if (runtimeExceeded)
-                    {
-                        mUrlContactInfo.ResponseData.ResponseText = REQUEST_TIMEOUT_RESPONSE;
-                        mUrlContactInfo.ResponseData.ResponseStatusCode = HttpStatusCode.RequestTimeout;
-                    }
-                    else if (mUrlContactInfo.ResponseData.ExceptionCaught)
-                    {
-                        mUrlContactInfo.ResponseData.ResponseText = REQUEST_EXCEPTION_RESPONSE;
-                        mUrlContactInfo.ResponseData.ResponseStatusCode = HttpStatusCode.BadRequest;
-                    }
-                    else
-                    {
-                        mUrlContactInfo.ResponseData.ResponseText = REQUEST_ABORTED_RESPONSE;
-                        mUrlContactInfo.ResponseData.ResponseStatusCode = HttpStatusCode.BadRequest;
-                    }
-
-                    responseStatusCode = mUrlContactInfo.ResponseData.ResponseStatusCode;
+                    mUrlContactInfo.ResponseData.ResponseText = REQUEST_ABORTED_RESPONSE;
+                    mUrlContactInfo.ResponseData.ResponseStatusCode = HttpStatusCode.BadRequest;
+                    responseTextToReturn = mUrlContactInfo.ResponseData.ResponseText;
                 }
 
-                return mUrlContactInfo.ResponseData.ResponseText;
+                responseStatusCode = mUrlContactInfo.ResponseData.ResponseStatusCode;
+
+                return responseTextToReturn;
+
             }
             catch (Exception ex)
             {

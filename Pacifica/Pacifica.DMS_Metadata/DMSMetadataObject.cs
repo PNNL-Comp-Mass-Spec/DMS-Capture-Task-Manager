@@ -191,8 +191,8 @@ namespace Pacifica.DMS_Metadata
         /// </summary>
         /// <param name="taskParams"></param>
         /// <param name="mgrParams"></param>
-        /// <param name="criticalError"></param>
-        /// <param name="criticalErrorMessage"></param>
+        /// <param name="criticalError">Output: set to true if the job should be failed</param>
+        /// <param name="criticalErrorMessage">Output: explanation of the critical error</param>
         /// <returns>True if success, otherwise false</returns>
         public bool SetupMetadata(
             Dictionary<string, string> taskParams,
@@ -248,8 +248,14 @@ namespace Pacifica.DMS_Metadata
             if (unmatchedFiles.Count > 0)
             {
                 var jsonMetadata = Utilities.ObjectToJson(mMetadataObject);
-                if (!CheckMetadataValidity(jsonMetadata))
+                if (!CheckMetadataValidity(jsonMetadata, out var policyError))
                 {
+                    if (policyError)
+                    {
+                        criticalError = true;
+                        criticalErrorMessage = "Policy validation error, e.g. invalid EUS proposal";
+                    }
+
                     return false;
                 }
             }
@@ -375,7 +381,7 @@ namespace Pacifica.DMS_Metadata
             return new List<int>();
         }
 
-        private bool CheckMetadataValidity(string jsonMetadata)
+        private bool CheckMetadataValidity(string jsonMetadata, out bool policyError)
         {
             var policyURL = mPacificaConfig.PolicyServerUri + "/ingest";
 
@@ -384,6 +390,7 @@ namespace Pacifica.DMS_Metadata
 
                 if (!ValidateCertFile("CheckMetadataValidity"))
                 {
+                    policyError = false;
                     return false;
                 }
 
@@ -401,6 +408,7 @@ namespace Pacifica.DMS_Metadata
                     if (TraceMode)
                         OnDebugEvent("Response received " + response);
 
+                    policyError = false;
                     return true;
                 }
 
@@ -411,11 +419,13 @@ namespace Pacifica.DMS_Metadata
                 else
                     OnDebugEvent(jsonMetadata.Substring(0, 1250) + " ...");
 
+                policyError = true;
                 return false;
             }
             catch (Exception ex)
             {
                 OnErrorEvent("Error in CheckMetadataValidity: " + ex.Message, ex);
+                policyError = false;
                 return false;
             }
 
