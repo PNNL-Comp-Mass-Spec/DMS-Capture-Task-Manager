@@ -413,8 +413,10 @@ namespace DatasetArchivePlugin
                     }
                 }
 
-                statusMessage += ": " + myEMSLUL.FileCountNew + " new files, " + myEMSLUL.FileCountUpdated + " updated files, " + myEMSLUL.Bytes +
-                                 " bytes";
+                statusMessage += ": " +
+                                 myEMSLUL.FileCountNew + " new files, " +
+                                 myEMSLUL.FileCountUpdated + " updated files, " +
+                                 myEMSLUL.Bytes + " bytes";
 
                 OnStatusEvent(statusMessage);
 

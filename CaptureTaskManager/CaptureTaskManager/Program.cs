@@ -20,7 +20,7 @@ namespace CaptureTaskManager
     /// </summary>
     static class Program
     {
-        private const string PROGRAM_DATE = "March 19, 2018";
+        private const string PROGRAM_DATE = "March 26, 2018";
 
         private static bool mCodeTestMode;
         private static bool mTraceMode;
@@ -134,16 +134,17 @@ namespace CaptureTaskManager
                     ShowTraceMessage("Instantiating clsMainProgram");
 
                     // Initialize the main execution class
-                    var oMainProgram = new clsMainProgram(mTraceMode);
-                    var mgrInitSuccess = oMainProgram.InitMgr();
+                    var mainProcess = new clsMainProgram(mTraceMode);
+                    var mgrInitSuccess = mainProcess.InitMgr();
                     if (!mgrInitSuccess)
                     {
                         restart = false;
                     }
 
                     if (mgrInitSuccess)
-                        restart = oMainProgram.PerformMainLoop();
-
+                    {
+                        restart = mainProcess.PerformMainLoop();
+                    }
                 }
                 catch (Exception ex)
                 {
