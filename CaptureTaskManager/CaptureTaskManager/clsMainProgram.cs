@@ -55,6 +55,10 @@ namespace CaptureTaskManager
         #region "Class variables"
 
         private clsMgrSettings m_MgrSettings;
+
+        private readonly string m_MgrExeName;
+        private readonly string m_MgrDirectoryPath;
+
         private clsCaptureTask m_Task;
         private FileSystemWatcher m_FileWatcher;
         private IToolRunner m_CapTool;
@@ -113,6 +117,10 @@ namespace CaptureTaskManager
         public clsMainProgram(bool traceMode)
         {
             TraceMode = traceMode;
+
+            var exeInfo = new FileInfo(PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppPath());
+            m_MgrExeName = exeInfo.Name;
+            m_MgrDirectoryPath = exeInfo.DirectoryName;
         }
 
         #endregion
@@ -326,7 +334,7 @@ namespace CaptureTaskManager
             var fInfo = new FileInfo(Application.ExecutablePath);
             m_FileWatcher = new FileSystemWatcher
             {
-                Path = fInfo.DirectoryName,
+                Path = m_MgrDirectoryPath,
                 IncludeSubdirectories = false,
                 Filter = configFileName,
                 NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size,
@@ -369,13 +377,13 @@ namespace CaptureTaskManager
             };
 
             // Set up the status file class
-            if (fInfo.DirectoryName == null)
+            if (string.IsNullOrWhiteSpace(m_MgrDirectoryPath))
             {
-                LogError("Error determining the parent path for the executable, " + Application.ExecutablePath);
+                LogError("Error determining the parent path for the executable, " + m_MgrExeName);
                 return false;
             }
 
-            var statusFileNameLoc = Path.Combine(fInfo.DirectoryName, "Status.xml");
+            var statusFileNameLoc = Path.Combine(m_MgrDirectoryPath, "Status.xml");
             m_StatusFile = new clsStatusFile(statusFileNameLoc)
             {
                 MgrName = m_MgrName,
