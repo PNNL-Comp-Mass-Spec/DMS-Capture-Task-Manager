@@ -1185,35 +1185,6 @@ namespace CaptureTaskManager
             return bSuccess;
         }
 
-        [DllImport("kernel32", CharSet = CharSet.Auto)]
-        static extern int GetDiskFreeSpaceEx(
-            string lpDirectoryName,
-            out ulong lpFreeBytesAvailable,
-            out ulong lpTotalNumberOfBytes,
-            out ulong lpTotalNumberOfFreeBytes);
-
-        protected bool GetDiskFreeSpace(string directoryPath, out long freeBytesAvailableToUser,
-                                        out long totalDriveCapacityBytes, out long totalNumberOfFreeBytes)
-        {
-
-            var iResult = GetDiskFreeSpaceEx(directoryPath, out var freeAvailableUser, out var totalDriveCapacity, out var totalFree);
-
-            if (iResult == 0)
-            {
-                freeBytesAvailableToUser = 0;
-                totalDriveCapacityBytes = 0;
-                totalNumberOfFreeBytes = 0;
-
-                return false;
-            }
-
-            freeBytesAvailableToUser = (long)freeAvailableUser;
-            totalDriveCapacityBytes = (long)totalDriveCapacity;
-            totalNumberOfFreeBytes = (long)totalFree;
-
-            return true;
-        }
-
         protected string GetStoragePathBase()
         {
             var storagePath = m_Task.GetParam("Storage_Path");
@@ -1259,11 +1230,15 @@ namespace CaptureTaskManager
 
                 datasetStoragePath = GetStoragePathBase();
 
-                var success = GetDiskFreeSpace(
-                    datasetStoragePath,
-                    out _,
-                    out _,
-                    out var totalNumberOfFreeBytes);
+                var targetFilePath = Path.Combine(datasetStoragePath, "DummyFile.txt");
+
+                var success = clsDiskInfo.GetDiskFreeSpace(
+                    targetFilePath, out var totalNumberOfFreeBytes, out var errorMessage, reportFreeSpaceAvailableToUser: false);
+
+                if (!string.IsNullOrWhiteSpace(errorMessage))
+                {
+                    LogWarning("clsDiskInfo.GetDiskFreeSpace: " + errorMessage);
+                }
 
                 if (success)
                 {
@@ -1283,7 +1258,8 @@ namespace CaptureTaskManager
                 else
                 {
                     errMsg = "Error validating dataset storage free drive space: " + datasetStoragePath +
-                             " (GetDiskFreeSpaceEx returned false)";
+                             " (GetDiskFreeSpace returned false)";
+
                     if (Environment.MachineName.ToLower().StartsWith("monroe"))
                     {
                         Console.WriteLine(@"Warning: " + errMsg);
