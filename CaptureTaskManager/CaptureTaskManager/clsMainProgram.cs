@@ -9,11 +9,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
-using System.Windows.Forms;
-using System.Runtime.InteropServices;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using PRISM;
 using PRISM.Logging;
+using PRISMWin;
 
 namespace CaptureTaskManager
 {
@@ -47,6 +48,8 @@ namespace CaptureTaskManager
         private const int MAX_ERROR_COUNT = 4;
 
         private const string DATE_TIME_FORMAT = "yyyy-MM-dd hh:mm:ss tt";
+
+        private const string DEFAULT_BASE_LOGFILE_NAME = @"Logs\CapTaskMan";
 
         private const bool ENABLE_LOGGER_TRACE_MODE = false;
 
@@ -254,10 +257,30 @@ namespace CaptureTaskManager
         {
             var hostName = System.Net.Dns.GetHostName();
 
+            // Define the default logging info
+            // This will get updated below
+            LogTools.CreateFileLogger(DEFAULT_BASE_LOGFILE_NAME, BaseLogger.LogLevels.DEBUG);
+
             // Create a database logger connected to DMS5
             // Once the initial parameters have been successfully read,
-            // we remove this logger than make a new one using the connection string read from the Manager Control DB
-            var defaultDmsConnectionString = Properties.Settings.Default.DefaultDMSConnString;
+            // we update the dbLogger to use the connection string read from the Manager Control DB
+            string defaultDmsConnectionString;
+
+            // Open CaptureTaskManager.exe.config to look for setting DefaultDMSConnString, so we know which server to log to by default
+            var dmsConnectionStringFromConfig = GetXmlConfigDefaultConnectionString();
+
+            if (string.IsNullOrWhiteSpace(dmsConnectionStringFromConfig))
+            {
+                // Use the hard-coded default that points to Gigasax
+                defaultDmsConnectionString = Properties.Settings.Default.DefaultDMSConnString;
+            }
+            else
+            {
+                // Use the connection string from CaptureTaskManager.exe.config
+                defaultDmsConnectionString = dmsConnectionStringFromConfig;
+            }
+
+            ShowTrace("Instantiate a DbLogger using " + defaultDmsConnectionString);
 
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             LogTools.CreateDbLogger(defaultDmsConnectionString, "CaptureTaskMan: " + hostName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
@@ -297,17 +320,13 @@ namespace CaptureTaskManager
             m_Dataset = "Unknown";
 
             // Setup the loggers
-            var logFileNameBase = m_MgrSettings.GetParam("logfilename");
-            if (string.IsNullOrWhiteSpace(logFileNameBase))
-                logFileNameBase = "CapTaskMan";
+            var logFileNameBase = m_MgrSettings.GetParam("logfilename", "CapTaskMan");
 
             UpdateLogLevel(m_MgrSettings);
 
             LogTools.CreateFileLogger(logFileNameBase, m_DebugLevel);
 
             var logCnStr = m_MgrSettings.GetParam("connectionstring");
-
-            LogTools.RemoveDefaultDbLogger();
 
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             LogTools.CreateDbLogger(logCnStr, "CaptureTaskMan: " + m_MgrName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
@@ -331,7 +350,7 @@ namespace CaptureTaskManager
             }
 
             // Setup a file watcher for the config file
-            var fInfo = new FileInfo(Application.ExecutablePath);
+
             m_FileWatcher = new FileSystemWatcher
             {
                 Path = m_MgrDirectoryPath,
@@ -449,7 +468,7 @@ namespace CaptureTaskManager
         {
             const int MAX_WAIT_TIME_SECONDS = 60;
 
-            var worker = new System.Threading.Thread(InitializeMessageQueueWork);
+            var worker = new Thread(InitializeMessageQueueWork);
             worker.Start();
 
             var dtWaitStart = DateTime.UtcNow;
@@ -1202,6 +1221,73 @@ namespace CaptureTaskManager
             datasetStoragePathBase = Path.Combine(datasetStoragePathBase, storagePath);
 
             return datasetStoragePathBase;
+        }
+
+        /// <summary>
+        /// Extract the value DefaultDMSConnString from CaptureTaskManager.exe.config
+        /// </summary>
+        /// <returns></returns>
+        private string GetXmlConfigDefaultConnectionString()
+        {
+            return GetXmlConfigFileSetting(clsMgrSettings.MGR_PARAM_DEFAULT_DMS_CONN_STRING);
+        }
+
+        /// <summary>
+        /// Extract the value for the given setting from CaptureTaskManager.exe.config
+        /// </summary>
+        /// <returns>Setting value if found, otherwise an empty string</returns>
+        /// <remarks>Uses a simple text reader in case the file has malformed XML</remarks>
+        private string GetXmlConfigFileSetting(string settingName)
+        {
+
+            if (string.IsNullOrWhiteSpace(settingName))
+                throw new ArgumentException("Setting name cannot be blank", nameof(settingName));
+
+            try
+            {
+                var configFilePath = Path.Combine(m_MgrDirectoryPath, m_MgrExeName + ".config");
+                var configfile = new FileInfo(configFilePath);
+
+                if (!configfile.Exists)
+                {
+                    LogError("File not found: " + configFilePath);
+                    return string.Empty;
+                }
+
+                var configXml = new StringBuilder();
+
+                // Open CaptureTaskManager.exe.config using a simple text reader in case the file has malformed XML
+
+                ShowTrace(string.Format("Extracting setting {0} from {1}", settingName, configfile.FullName));
+
+                using (var reader = new StreamReader(new FileStream(configfile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+                    while (!reader.EndOfStream)
+                    {
+                        var dataLine = reader.ReadLine();
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                            continue;
+
+                        configXml.Append(dataLine);
+                    }
+                }
+
+                var matcher = new Regex(settingName + ".+?<value>(?<ConnString>.+?)</value>", RegexOptions.IgnoreCase);
+
+                var match = matcher.Match(configXml.ToString());
+
+                if (match.Success)
+                    return match.Groups["ConnString"].Value;
+
+                LogError(settingName + " setting not found in " + configFilePath);
+                return string.Empty;
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception reading setting " + settingName + " in CaptureTaskManager.exe.config", ex);
+                return string.Empty;
+            }
+
         }
 
         /// <summary>
