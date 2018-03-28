@@ -412,7 +412,10 @@ namespace Pacifica.DMS_Metadata
                     return true;
                 }
 
-                OnErrorEvent("Policy server reports that metadata is not valid: " + policyURL);
+                if (response.Contains("request was aborted"))
+                    OnErrorEvent("Metadata validation error: the request was aborted");
+                else
+                    OnErrorEvent("Policy server reports that metadata is not valid: " + policyURL);
 
                 if (jsonMetadata.Length < 1255)
                     OnDebugEvent(jsonMetadata);
