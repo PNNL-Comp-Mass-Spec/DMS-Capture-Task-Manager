@@ -63,14 +63,6 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Apache.NMS">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\RefLib\Apache.NMS.dll</HintPath>
-    </Reference>
-    <Reference Include="Apache.NMS.ActiveMQ">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\RefLib\Apache.NMS.ActiveMQ.dll</HintPath>
-    </Reference>
     <Reference Include="Pacifica.DMS_Metadata, Version=1.0.6303.32068, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\DeployedFiles\Pacifica.DMS_Metadata.dll</HintPath>
@@ -132,6 +124,9 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Apache.NMS.ActiveMQ">
+      <Version>1.7.2</Version>
+    </PackageReference>
     <PackageReference Include="jayrock-json">
       <Version>0.9.16530.1</Version>
     </PackageReference>

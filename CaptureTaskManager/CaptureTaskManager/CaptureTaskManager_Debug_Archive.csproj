@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -66,14 +66,6 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Apache.NMS">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\RefLib\Apache.NMS.dll</HintPath>
-    </Reference>
-    <Reference Include="Apache.NMS.ActiveMQ">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\RefLib\Apache.NMS.ActiveMQ.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -147,6 +139,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Apache.NMS.ActiveMQ">
+      <Version>1.7.2</Version>
+    </PackageReference>
     <PackageReference Include="jayrock-json">
       <Version>0.9.16530.1</Version>
     </PackageReference>
