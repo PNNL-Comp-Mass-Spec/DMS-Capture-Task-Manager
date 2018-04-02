@@ -63,7 +63,8 @@ namespace DatasetArchivePlugin
             mLastStatusUpdateTime = DateTime.UtcNow;
 
             const int iMaxMyEMSLUploadAttempts = 2;
-            const bool recurse = true;
+
+            var recurse = m_TaskParams.GetParam("MyEMSLRecurse", true);
 
             // Set this to .CreateTarLocal to create the .tar file locally and thus not upload the data to MyEMSL
             var debugMode = Pacifica.Core.EasyHttp.eDebugMode.DebugDisabled;

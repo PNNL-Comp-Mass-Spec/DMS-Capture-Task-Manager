@@ -358,6 +358,11 @@ namespace DatasetArchivePlugin
                 var statusMessage = "Bundling changes to dataset " + m_DatasetName + " for transmission to MyEMSL";
                 OnStatusEvent(statusMessage);
 
+                if (!recurse)
+                {
+                    OnStatusEvent("Recursion is disabled since job param MyEMSLRecurse is false");
+                }
+
                 var config = new Configuration();
 
                 myEMSLUL = new MyEMSLUploader(config, m_MgrParams.TaskDictionary, m_TaskParams.TaskDictionary, m_FileTools)
