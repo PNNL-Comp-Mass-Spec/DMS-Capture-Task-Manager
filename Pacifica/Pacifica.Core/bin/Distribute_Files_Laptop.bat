@@ -81,6 +81,49 @@ xcopy debug\Pacifica.Core.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS
 xcopy debug\Pacifica.Core.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Managers\Space_Manager\DMS_Space_Manager\bin\Release" /D /Y
 xcopy debug\Pacifica.Core.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Managers\Space_Manager\DMS_Space_Manager\RefLib" /D /Y
 
+@echo off
+echo.
+echo.
+pause
+echo.
+echo.
+echo.
+@echo on
+
+xcopy debug\Pacifica.Core.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Programs\Mage\BiodiversityFileCopy\bin\Release" /D /Y
+xcopy debug\Pacifica.Core.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Programs\Mage\DeployedFiles\MageConcatenator" /D /Y
+xcopy debug\Pacifica.Core.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Programs\Mage\DeployedFiles\MageExtractor" /D /Y
+xcopy debug\Pacifica.Core.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Programs\Mage\DeployedFiles\MageFilePackager" /D /Y
+xcopy debug\Pacifica.Core.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Programs\Mage\DeployedFiles\MageFileProcessor" /D /Y
+xcopy debug\Pacifica.Core.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Programs\Mage\DeployedFiles\MageMetaDataProcessor" /D /Y
+xcopy debug\Pacifica.Core.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Programs\Mage\DeployedFiles\Ranger" /D /Y
+xcopy debug\Pacifica.Core.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Programs\Mage\Mage\bin\Release" /D /Y
+xcopy debug\Pacifica.Core.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Programs\Mage\Mage\lib" /D /Y
+xcopy debug\Pacifica.Core.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Programs\Mage\MageConcatenator\bin\Release" /D /Y
+xcopy debug\Pacifica.Core.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Programs\Mage\MageDisplayLib\bin\Debug" /D /Y
+xcopy debug\Pacifica.Core.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Programs\Mage\MageDisplayLib\bin\Release" /D /Y
+xcopy debug\Pacifica.Core.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Programs\Mage\MageExtContentFilters\bin\Debug" /D /Y
+xcopy debug\Pacifica.Core.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Programs\Mage\MageExtContentFilters\bin\Release" /D /Y
+xcopy debug\Pacifica.Core.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Programs\Mage\MageExtExtractionFilters\bin\Debug" /D /Y
+xcopy debug\Pacifica.Core.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Programs\Mage\MageExtExtractionFilters\bin\Release" /D /Y
+xcopy debug\Pacifica.Core.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Programs\Mage\MageExtractor\bin\Debug" /D /Y
+xcopy debug\Pacifica.Core.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Programs\Mage\MageExtractor\bin\Release" /D /Y
+xcopy debug\Pacifica.Core.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Programs\Mage\MageFilePackager\bin\Debug" /D /Y
+xcopy debug\Pacifica.Core.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Programs\Mage\MageFilePackager\bin\Release" /D /Y
+xcopy debug\Pacifica.Core.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Programs\Mage\MageFileProcessor\bin\Debug" /D /Y
+xcopy debug\Pacifica.Core.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Programs\Mage\MageFileProcessor\bin\Release" /D /Y
+xcopy debug\Pacifica.Core.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Programs\Mage\MageMetadataProcessor\bin\Debug" /D /Y
+xcopy debug\Pacifica.Core.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Programs\Mage\MageMetadataProcessor\bin\Release" /D /Y
+xcopy debug\Pacifica.Core.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Programs\Mage\MageUIComponents\bin\Debug" /D /Y
+xcopy debug\Pacifica.Core.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Programs\Mage\MageUIComponents\bin\Release" /D /Y
+xcopy debug\Pacifica.Core.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Programs\Mage\MageUnitTests\bin\Release" /D /Y
+xcopy debug\Pacifica.Core.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Programs\Mage\MageUnitTestsForFileProcessor\bin\Release" /D /Y
+xcopy debug\Pacifica.Core.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Programs\Mage\Ranger\bin\Debug" /D /Y
+xcopy debug\Pacifica.Core.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Programs\Mage\Ranger\bin\Release" /D /Y
+xcopy debug\Pacifica.Core.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Programs\Mage\RangerLib\bin\Debug" /D /Y
+xcopy debug\Pacifica.Core.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Programs\Mage\RangerLib\bin\Release" /D /Y
+xcopy debug\Pacifica.Core.pdb "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Programs\Mage\Mage\lib" /D /Y
+
 xcopy ..\..\Pacifica.DMS_Metadata\bin\Debug\Pacifica.DMS_Metadata.dll "C:\Users\d3l243\Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\CaptureTaskManager\CaptureTaskManager\bin\Debug" /D /Y
 
 pause
