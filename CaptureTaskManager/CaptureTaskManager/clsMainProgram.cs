@@ -378,13 +378,12 @@ namespace CaptureTaskManager
 
             // Setup the message queue
             m_MsgQueueInitSuccess = false;
-            m_MsgHandler = new clsMessageHandler();
-            m_MsgHandler.BrokerUri = m_MsgHandler.BrokerUri = m_MgrSettings.GetParam("MessageQueueURI");
-
-            // Typically "Manager.Status"
-            m_MsgHandler.StatusTopicName = m_MgrSettings.GetParam("MessageQueueTopicMgrStatus");
-
-            m_MsgHandler.MgrSettings = m_MgrSettings;
+            m_MsgHandler = new clsMessageHandler
+            {
+                BrokerUri = m_MgrSettings.GetParam("MessageQueueURI"),
+                StatusTopicName = m_MgrSettings.GetParam("MessageQueueTopicMgrStatus"),    // Typically "Manager.Status"
+                MgrSettings = m_MgrSettings
+            };
 
             // Initialize the message queue
             // Start this in a separate thread so that we can abort the initialization if necessary
