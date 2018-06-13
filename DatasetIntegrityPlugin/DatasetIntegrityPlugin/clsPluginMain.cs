@@ -46,13 +46,15 @@ namespace DatasetIntegrityPlugin
         const float AGILENT_MSPEAK_BIN_FILE_SMALL_SIZE_KB = 500;
         const float AGILENT_DATA_MS_FILE_MIN_SIZE_KB = 75;
 
-        // Malding imaging file; Prior to May 2014, used a minimum of 4 KB; however, seeing 12T_FTICR_B datasets where this file is as small as 120 Bytes
+        // MALDI imaging file
+        // Prior to May 2014, used a minimum of 4 KB
+        // However, seeing 12T_FTICR_B datasets where this file is as small as 120 Bytes
         const float MCF_FILE_MIN_SIZE_KB = 0.1F;
 
         const float ILLUMINA_TXT_GZ_FILE_MIN_SIZE_KB = 500;
         const float ILLUMINA_TXT_GZ_FILE_SMALL_SIZE_KB = 1000;
 
-        const int MAX_AGILENT_TO_UIMF_RUNTIME_MINUTES = 30;
+        const int MAX_AGILENT_TO_UIMF_RUNTIME_MINUTES = 90;
         const int MAX_AGILENT_TO_CDF_RUNTIME_MINUTES = 10;
 
         #endregion
