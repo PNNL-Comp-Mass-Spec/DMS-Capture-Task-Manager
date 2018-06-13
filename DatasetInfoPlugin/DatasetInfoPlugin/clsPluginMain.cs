@@ -13,6 +13,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using MSFileInfoScannerInterfaces;
+using PRISM;
 using PRISM.Logging;
 
 namespace DatasetInfoPlugin
@@ -24,14 +25,19 @@ namespace DatasetInfoPlugin
     {
 
         #region "Constants"
-        const string MS_FILE_SCANNER_DS_INFO_SP = "CacheDatasetInfoXML";
-        const string UNKNOWN_FILE_TYPE = "Unknown File Type";
-        const string INVALID_FILE_TYPE = "Invalid File Type";
+
+        private const string MS_FILE_SCANNER_DS_INFO_SP = "CacheDatasetInfoXML";
+
+        private const string UNKNOWN_FILE_TYPE = "Unknown File Type";
+
+        private const string INVALID_FILE_TYPE = "Invalid File Type";
 
         private const bool IGNORE_BRUKER_BAF_ERRORS = false;
+
         #endregion
 
         #region "Class-wide variables"
+
         iMSFileInfoScanner m_MsFileScanner;
 
         string m_Msg;
@@ -155,6 +161,7 @@ namespace DatasetInfoPlugin
             m_MsFileScanner = LoadMSFileInfoScanner(msFileInfoScannerDLLPath);
             RegisterEvents(m_MsFileScanner);
 
+            // Add custom error and warning handlers
             UnregisterEventHandler(m_MsFileScanner, BaseLogger.LogLevels.ERROR);
             UnregisterEventHandler(m_MsFileScanner, BaseLogger.LogLevels.WARN);
 
@@ -193,6 +200,26 @@ namespace DatasetInfoPlugin
             m_MsFileScanner.LCMS2DPlotMinPointsPerSpectrum = m_TaskParams.GetParam("LCMS2DPlotMinPointsPerSpectrum", clsLCMSDataPlotterOptions.DEFAULT_MIN_POINTS_PER_SPECTRUM);
             m_MsFileScanner.LCMS2DPlotMinIntensity = m_TaskParams.GetParam("LCMS2DPlotMinIntensity", (float)0);
             m_MsFileScanner.LCMS2DOverviewPlotDivisor = m_TaskParams.GetParam("LCMS2DOverviewPlotDivisor", clsLCMSDataPlotterOptions.DEFAULT_LCMS2D_OVERVIEW_PLOT_DIVISOR);
+
+            var sampleLabelling = m_TaskParams.GetParam("Meta_Experiment_sample_labelling", "");
+
+            m_MsFileScanner.MS2MzMin = 0;
+            if (!string.IsNullOrEmpty(sampleLabelling))
+            {
+                // Check whether this label has a reporter ion minimum m/z value defined
+                // If it does, instruct the MSFileInfoScanner to validate that all of the MS/MS spectra
+                // have a scan range that starts below the minimum reporter ion m/z
+
+                var reporterIonMzMinText = m_TaskParams.GetParam("Meta_Experiment_labelling_reporter_mz_min", "");
+                if (!string.IsNullOrEmpty(reporterIonMzMinText))
+                {
+                    if (float.TryParse(reporterIonMzMinText, out var reporterIonMzMin))
+                    {
+                        m_MsFileScanner.MS2MzMin = (int)Math.Floor(reporterIonMzMin);
+                    }
+                }
+
+            }
 
             m_MsFileScanner.CheckCentroidingStatus = true;
             m_MsFileScanner.PlotWithPython = true;
@@ -315,6 +342,19 @@ namespace DatasetInfoPlugin
                 if (fileCopiedLocally)
                 {
                     m_FileTools.DeleteFileWithRetry(new FileInfo(pathToProcess), 2, out _);
+                }
+
+                if (m_MsFileScanner.ErrorCode == iMSFileInfoScanner.eMSFileScannerErrorCodes.MS2MzMinValidationError)
+                {
+                    m_Msg = m_MsFileScanner.GetErrorMessage();
+                    successProcessing = false;
+                }
+
+                if (m_MsFileScanner.ErrorCode == iMSFileInfoScanner.eMSFileScannerErrorCodes.MS2MzMinValidationWarning)
+                {
+                    var warningMsg = m_MsFileScanner.GetErrorMessage();
+                    retData.EvalMsg = AppendToComment(retData.EvalMsg,
+                                                     "MS2MzMinValidationWarning: " + warningMsg);
                 }
 
                 if (successProcessing && !skipPlots)
