@@ -953,7 +953,7 @@ namespace Pacifica.DMS_Metadata
                 "SELECT SUM(FileCountNew) AS Files " +
                 "FROM V_MyEMSL_Uploads " +
                 "WHERE Dataset_ID = {0} AND " +
-                      "(Verified > 0 AND Ingest_Steps_Completed >= 5 OR " +
+                      "(Verified > 0 AND Ingest_Steps_Completed >= 5 AND ErrorCode = 0 OR " +
                       " Ingest_Steps_Completed >= 7)",
                 datasetID);
 
