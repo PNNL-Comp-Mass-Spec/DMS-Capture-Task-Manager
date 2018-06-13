@@ -171,16 +171,12 @@ namespace DatasetInfoPlugin
         /// <returns></returns>
         private clsToolReturnData RunMsFileInfoScanner()
         {
-            var result = new clsToolReturnData();
+            var retData = new clsToolReturnData();
 
-            // Always use client perspective for the source folder (allows MSFileInfoScanner to run from any CTM)
-            var sourceFolder = m_TaskParams.GetParam("Storage_Vol_External");
+            // Always use client perspective for the source directory (allows MSFileInfoScanner to run from any CTM)
+            var sourceDirectory = m_TaskParams.GetParam("Storage_Vol_External");
 
             // Set up the rest of the paths
-            sourceFolder = Path.Combine(sourceFolder, m_TaskParams.GetParam("Storage_Path"));
-            sourceFolder = Path.Combine(sourceFolder, m_TaskParams.GetParam("Folder"));
-            var outputPathBase = Path.Combine(sourceFolder, "QC");
-
             /*
             result.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
             result.EvalCode = EnumEvalCode.EVAL_CODE_SKIPPED;
@@ -192,6 +188,9 @@ namespace DatasetInfoPlugin
 
             return result;
             */
+            sourceDirectory = Path.Combine(sourceDirectory, m_TaskParams.GetParam("Storage_Path"));
+            sourceDirectory = Path.Combine(sourceDirectory, m_TaskParams.GetParam("Folder"));
+            var outputPathBase = Path.Combine(sourceDirectory, "QC");
 
             // Set up the params for the MS file scanner
             m_MsFileScanner.DSInfoDBPostingEnabled = false;
@@ -210,32 +209,32 @@ namespace DatasetInfoPlugin
             m_MsFileScanner.PlotWithPython = true;
 
             // Get the input file name
-            var fileOrFolderNames = GetDataFileOrFolderName(sourceFolder, out var skipPlots, out var rawDataType, out var instrumentClass, out var brukerDotDBaf);
+            var fileOrDirectoryNames = GetDataFileOrDirectoryName(sourceDirectory, out var skipPlots, out var rawDataType, out var instrumentClass, out var brukerDotDBaf);
 
-            if (fileOrFolderNames.Count > 0 && fileOrFolderNames.First() == UNKNOWN_FILE_TYPE)
+            if (fileOrDirectoryNames.Count > 0 && fileOrDirectoryNames.First() == UNKNOWN_FILE_TYPE)
             {
                 // Raw_Data_Type not recognized
-                result.CloseoutMsg = m_Msg;
-                result.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                return result;
+                retData.CloseoutMsg = m_Msg;
+                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                return retData;
             }
 
-            if (fileOrFolderNames.Count > 0 && fileOrFolderNames.First() == INVALID_FILE_TYPE)
+            if (fileOrDirectoryNames.Count > 0 && fileOrDirectoryNames.First() == INVALID_FILE_TYPE)
             {
                 // DS quality test not implemented for this file type
-                result.CloseoutMsg = string.Empty;
-                result.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
-                result.EvalMsg = "Dataset info test not implemented for data type " + clsInstrumentClassInfo.GetRawDataTypeName(rawDataType) + ", instrument class " + clsInstrumentClassInfo.GetInstrumentClassName(instrumentClass);
-                result.EvalCode = EnumEvalCode.EVAL_CODE_NOT_EVALUATED;
-                return result;
+                retData.CloseoutMsg = string.Empty;
+                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+                retData.EvalMsg = "Dataset info test not implemented for data type " + clsInstrumentClassInfo.GetRawDataTypeName(rawDataType) + ", instrument class " + clsInstrumentClassInfo.GetInstrumentClassName(instrumentClass);
+                retData.EvalCode = EnumEvalCode.EVAL_CODE_NOT_EVALUATED;
+                return retData;
             }
 
-            if (fileOrFolderNames.Count == 0 || string.IsNullOrEmpty(fileOrFolderNames.First()))
+            if (fileOrDirectoryNames.Count == 0 || string.IsNullOrEmpty(fileOrDirectoryNames.First()))
             {
                 // There was a problem with getting the file name; Details reported by called method
-                result.CloseoutMsg = m_Msg;
-                result.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                return result;
+                retData.CloseoutMsg = m_Msg;
+                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                return retData;
             }
 
             if (skipPlots)
@@ -245,47 +244,47 @@ namespace DatasetInfoPlugin
                 m_MsFileScanner.SaveLCMS2DPlots = false;
             }
 
-            // Make the output folder
+            // Make the output directory
             if (!Directory.Exists(outputPathBase))
             {
                 try
                 {
                     Directory.CreateDirectory(outputPathBase);
-                    var msg = "clsPluginMain.RunMsFileInfoScanner: Created output folder " + outputPathBase;
+                    var msg = "clsPluginMain.RunMsFileInfoScanner: Created output directory " + outputPathBase;
                     LogDebug(msg);
                 }
                 catch (Exception ex)
                 {
-                    var msg = "clsPluginMain.RunMsFileInfoScanner: Exception creating output folder " + outputPathBase;
+                    var msg = "clsPluginMain.RunMsFileInfoScanner: Exception creating output directory " + outputPathBase;
                     LogError(msg, ex);
 
-                    result.CloseoutMsg = "Exception creating output folder " + outputPathBase;
-                    result.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                    return result;
+                    retData.CloseoutMsg = "Exception creating output directory " + outputPathBase;
+                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    return retData;
                 }
             }
 
             // Call the file scanner DLL
-            // Typically only call it once, but for Bruker datasets with multiple .D folders, we'll call it once for each .D folder
+            // Typically only call it once, but for Bruker datasets with multiple .D directories, we'll call it once for each .D directory
 
             m_ErrOccurred = false;
             m_Msg = string.Empty;
 
             var cachedDatasetInfoXML = new List<string>();
-            var outputFolderNames = new List<string>();
-            var primaryFileOrFolderProcessed = false;
-            var nextSubFolderSuffix = 1;
+            var outputDirectoryNames = new List<string>();
+            var primaryFileOrDirectoryProcessed = false;
+            var nextSubdirectorySuffix = 1;
 
-            foreach (var datasetFileOrFolder in fileOrFolderNames)
+            foreach (var datasetFileOrDirectory in fileOrDirectoryNames)
             {
                 m_FailedScanCount = 0;
 
-                var remoteFileOrFolderPath = Path.Combine(sourceFolder, datasetFileOrFolder);
+                var remoteFileOrDirectoryPath = Path.Combine(sourceDirectory, datasetFileOrDirectory);
 
                 string pathToProcess;
                 bool fileCopiedLocally;
 
-                var datasetFile = new FileInfo(remoteFileOrFolderPath);
+                var datasetFile = new FileInfo(remoteFileOrDirectoryPath);
                 if (datasetFile.Exists && string.Equals(datasetFile.Extension, clsInstrumentClassInfo.DOT_RAW_EXTENSION,
                                                         StringComparison.OrdinalIgnoreCase))
                 {
@@ -294,14 +293,14 @@ namespace DatasetInfoPlugin
                     ResetTimestampForQueueWaitTimeLogging();
 
                     // Thermo .raw file; copy it locally
-                    var localFilePath = Path.Combine(m_WorkDir, datasetFileOrFolder);
+                    var localFilePath = Path.Combine(m_WorkDir, datasetFileOrDirectory);
                     var success = m_FileTools.CopyFileUsingLocks(datasetFile, localFilePath, true);
 
                     if (!success)
                     {
-                        result.CloseoutMsg = "Error copying instrument data file to local working directory";
-                        result.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                        return result;
+                        retData.CloseoutMsg = "Error copying instrument data file to local working directory";
+                        retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                        return retData;
                     }
 
                     pathToProcess = localFilePath;
@@ -309,13 +308,13 @@ namespace DatasetInfoPlugin
                 }
                 else
                 {
-                    pathToProcess = remoteFileOrFolderPath;
+                    pathToProcess = remoteFileOrDirectoryPath;
                     fileCopiedLocally = false;
                 }
 
-                var currentOutputFolder = ConstructOutputFolderPath(
-                    outputPathBase, datasetFileOrFolder, fileOrFolderNames.Count,
-                    outputFolderNames, ref nextSubFolderSuffix);
+                var currentOutputDirectory = ConstructOutputDirectoryPath(
+                    outputPathBase, datasetFileOrDirectory, fileOrDirectoryNames.Count,
+                    outputDirectoryNames, ref nextSubdirectorySuffix);
 
                 var successProcessing = m_MsFileScanner.ProcessMSFileOrFolder(pathToProcess, currentOutputFolder);
 
@@ -331,47 +330,46 @@ namespace DatasetInfoPlugin
 
                 if (successProcessing && !skipPlots)
                 {
-                    var success = ValidateQCGraphics(currentOutputFolder, primaryFileOrFolderProcessed, result);
-                    if (result.CloseoutType != EnumCloseOutType.CLOSEOUT_SUCCESS)
-                        return result;
+                    var success = ValidateQCGraphics(currentOutputDirectory, primaryFileOrDirectoryProcessed, retData);
+                    if (retData.CloseoutType != EnumCloseOutType.CLOSEOUT_SUCCESS)
+                        return retData;
 
                     if (!success)
                         continue;
                 }
 
-
                 if (successProcessing)
                 {
                     cachedDatasetInfoXML.Add(m_MsFileScanner.DatasetInfoXML);
-                    primaryFileOrFolderProcessed = true;
+                    primaryFileOrDirectoryProcessed = true;
                     continue;
                 }
 
-                // Either a bad result code was returned, or an error event was received
+                // Either a bad retData code was returned, or an error event was received
 
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                 if (brukerDotDBaf && IGNORE_BRUKER_BAF_ERRORS)
                 {
-                    // 12T_FTICR_B datasets (with .D folders and analysis.baf and/or fid files) sometimes work with MSFileInfoscanner, and sometimes don't
+                    // 12T_FTICR_B datasets (with .D directories and analysis.baf and/or fid files) sometimes work with MSFileInfoscanner, and sometimes don't
                     // The problem is that ProteoWizard doesn't support certain forms of these datasets
                     // In particular, small datasets (lasting just a few seconds) don't work
 
-                    result.CloseoutMsg = string.Empty;
-                    result.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
-                    result.EvalMsg = "MSFileInfoScanner error for data type " +
+                    retData.CloseoutMsg = string.Empty;
+                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+                    retData.EvalMsg = "MSFileInfoScanner error for data type " +
                                      clsInstrumentClassInfo.GetRawDataTypeName(rawDataType) + ", instrument class " +
                                      clsInstrumentClassInfo.GetInstrumentClassName(instrumentClass);
-                    result.EvalCode = EnumEvalCode.EVAL_CODE_NOT_EVALUATED;
-                    return result;
+                    retData.EvalCode = EnumEvalCode.EVAL_CODE_NOT_EVALUATED;
+                    return retData;
 
                 }
 
-                if (primaryFileOrFolderProcessed)
+                if (primaryFileOrDirectoryProcessed)
                 {
-                    // MSFileInfoScanner already processed the primary file or folder
+                    // MSFileInfoScanner already processed the primary file or directory
                     // Mention this failure in the EvalMsg but still return success
-                    result.EvalMsg = AppendToComment(result.EvalMsg,
-                                                     "ProcessMSFileOrFolder returned false for " + datasetFileOrFolder);
+                    retData.EvalMsg = AppendToComment(retData.EvalMsg,
+                                                     "ProcessMSFileOrFolder returned false for " + datasetFileOrDirectory);
                 }
                 else
                 {
@@ -379,14 +377,14 @@ namespace DatasetInfoPlugin
                     {
                         m_Msg = "ProcessMSFileOrFolder returned false. Message = " +
                                 m_MsFileScanner.GetErrorMessage() +
-                                " Result code = " + (int)m_MsFileScanner.ErrorCode;
+                                " retData code = " + (int)m_MsFileScanner.ErrorCode;
                     }
 
                     LogError(m_Msg);
 
-                    result.CloseoutMsg = m_Msg;
-                    result.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                    return result;
+                    retData.CloseoutMsg = m_Msg;
+                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    return retData;
                 }
 
                 if (m_FailedScanCount > 10)
@@ -394,7 +392,7 @@ namespace DatasetInfoPlugin
                     LogWarning(string.Format("Unable to load data for {0} spectra", m_FailedScanCount));
                 }
 
-            } // foreach file in fileOrFolderName
+            } // foreach file in fileOrDirectoryNames
 
             // Merge the dataset info defined in cachedDatasetInfoXML
             // If cachedDatasetInfoXml contains just one item, simply return it
@@ -403,28 +401,29 @@ namespace DatasetInfoPlugin
 
             if (cachedDatasetInfoXML.Count > 1)
             {
-                ProcessMultiDatasetInfoScannerResults(outputPathBase, datasetXmlMerger, dsInfoXML, outputFolderNames);
+                ProcessMultiDatasetInfoScannerResults(outputPathBase, datasetXmlMerger, dsInfoXML, outputDirectoryNames);
             }
 
             // Check for dataset acq time gap warnings
-            if (AcqTimeWarningsReported(datasetXmlMerger, result))
-                return result;
+            if (AcqTimeWarningsReported(datasetXmlMerger, retData))
+                return retData;
 
             // Call SP CacheDatasetInfoXML to store dsInfoXML in table T_Dataset_Info_XML
-            PostDatasetInfoXml(dsInfoXML, result);
+            PostDatasetInfoXml(dsInfoXML, retData);
 
-            return result;
+
+            return retData;
 
         }
 
         /// <summary>
         /// Examine datasetXmlMerger.AcqTimeWarnings
-        /// If non-empty, summarize the errors and update result
+        /// If non-empty, summarize the errors and update retData
         /// </summary>
         /// <param name="datasetXmlMerger"></param>
-        /// <param name="result"></param>
+        /// <param name="retData"></param>
         /// <returns>True if warnings exist, otherwise false</returns>
-        private bool AcqTimeWarningsReported(clsDatasetInfoXmlMerger datasetXmlMerger, clsToolReturnData result)
+        private bool AcqTimeWarningsReported(clsDatasetInfoXmlMerger datasetXmlMerger, clsToolReturnData retData)
         {
             if (datasetXmlMerger.AcqTimeWarnings.Count == 0)
             {
@@ -442,13 +441,13 @@ namespace DatasetInfoPlugin
 
             LogError(m_Msg);
 
-            result.CloseoutMsg = "Large gap between acq times: " + datasetXmlMerger.AcqTimeWarnings.FirstOrDefault();
-            result.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+            retData.CloseoutMsg = "Large gap between acq times: " + datasetXmlMerger.AcqTimeWarnings.FirstOrDefault();
+            retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 
             return true;
         }
 
-        private void PostDatasetInfoXml(string dsInfoXML, clsToolReturnData result)
+        private void PostDatasetInfoXml(string dsInfoXML, clsToolReturnData retData)
         {
             var iPostCount = 0;
             var connectionString = m_MgrParams.GetParam("connectionstring");
@@ -482,21 +481,21 @@ namespace DatasetInfoPlugin
             {
                 errorCode = m_MsFileScanner.ErrorCode;
                 m_Msg = "Error running info scanner. Message = " +
-                        m_MsFileScanner.GetErrorMessage() + " Result code = " + (int)m_MsFileScanner.ErrorCode;
+                        m_MsFileScanner.GetErrorMessage() + " retData code = " + (int)m_MsFileScanner.ErrorCode;
                 LogError(m_Msg);
             }
 
             if (errorCode == iMSFileInfoScanner.eMSFileScannerErrorCodes.NoError)
             {
                 // Everything went wonderfully
-                result.CloseoutMsg = string.Empty;
-                result.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+                retData.CloseoutMsg = string.Empty;
+                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
             }
             else
             {
-                // Either a bad result code was returned, or an error event was received
-                result.CloseoutMsg = "MSFileInfoScanner error";
-                result.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                // Either a bad retData code was returned, or an error event was received
+                retData.CloseoutMsg = "MSFileInfoScanner error";
+                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
             }
         }
 
@@ -504,7 +503,7 @@ namespace DatasetInfoPlugin
             string outputPathBase,
             clsDatasetInfoXmlMerger datasetXmlMerger,
             string dsInfoXML,
-            IEnumerable<string> outputFolderNames)
+            IEnumerable<string> outputDirectoryNames)
         {
 
             var combinedDatasetInfoFilename = m_Dataset + "_Combined_DatasetInfo.xml";
@@ -528,7 +527,7 @@ namespace DatasetInfoPlugin
             {
                 var pngMatcher = new Regex(@"""(?<Filename>[^""]+\.png)""");
 
-                // Create an index.html file that shows all of the plots in the subfolders
+                // Create an index.html file that shows all of the plots in the subdierctories
                 var indexHtmlFilePath = Path.Combine(outputPathBase, "index.html");
                 using (var htmlWriter = new StreamWriter(new FileStream(indexHtmlFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
@@ -543,10 +542,10 @@ namespace DatasetInfoPlugin
                     htmlWriter.WriteLine();
                     htmlWriter.WriteLine("  <table>");
 
-                    foreach (var subfolderName in outputFolderNames)
+                    foreach (var subdirectoryName in outputDirectoryNames)
                     {
-                        var diSubFolder = new DirectoryInfo(Path.Combine(outputPathBase, subfolderName));
-                        var htmlFiles = diSubFolder.GetFiles("index.html");
+                        var subdirectoryInfo = new DirectoryInfo(Path.Combine(outputPathBase, subdirectoryName));
+                        var htmlFiles = subdirectoryInfo.GetFiles("index.html");
                         if (htmlFiles.Length == 0)
                             continue;
 
@@ -572,8 +571,8 @@ namespace DatasetInfoPlugin
                                     // Look for png files
                                     if (pngMatcher.IsMatch(dataLine))
                                     {
-                                        // Match found; prepend the subfolder name
-                                        dataLine = pngMatcher.Replace(dataLine, '"' + subfolderName + "/${Filename}" + '"');
+                                        // Match found; prepend the subdirectory name
+                                        dataLine = pngMatcher.Replace(dataLine, '"' + subdirectoryInfo.Name + "/${Filename}" + '"');
                                         htmlHasImageInfo = true;
                                     }
 
@@ -706,11 +705,11 @@ namespace DatasetInfoPlugin
         /// <summary>
         /// Looks for a zip file matching "0_R*X*.zip"
         /// </summary>
-        /// <param name="diDatasetFolder">Dataset folder</param>
+        /// <param name="diDatasetDirectory">Dataset directory</param>
         /// <returns>Returns the file name if found, otherwise an empty string</returns>
-        private string CheckForBrukerImagingZipFiles(DirectoryInfo diDatasetFolder)
+        private string CheckForBrukerImagingZipFiles(DirectoryInfo diDatasetDirectory)
         {
-            var fiFiles = diDatasetFolder.GetFiles("0_R*X*.zip");
+            var fiFiles = diDatasetDirectory.GetFiles("0_R*X*.zip");
 
             if (fiFiles.Length > 0)
             {
@@ -721,98 +720,98 @@ namespace DatasetInfoPlugin
         }
 
         /// <summary>
-        /// Determine the appropriate output folder path
-        /// If we are only processing one dataset file or folder, the output folder path is simply outputPathBase
-        /// Otherwise, it is based on the current file or folder being processed (datasetFileOrFolder)
-        /// nextSubFolderSuffix is used to avoid folder name conflicts
+        /// Determine the appropriate output directory path
+        /// If we are only processing one dataset file or directory, the output directory path is simply outputPathBase
+        /// Otherwise, it is based on the current file or directory being processed (datasetFileOrDirectory)
+        /// nextSubdirectorySuffix is used to avoid directory name conflicts
         /// </summary>
         /// <param name="outputPathBase"></param>
-        /// <param name="datasetFileOrFolder"></param>
-        /// <param name="totalDatasetFilesOrFolders"></param>
-        /// <param name="outputFolderNames"></param>
-        /// <param name="nextSubFolderSuffix">Input/output parameter</param>
-        /// <returns>Full path to the output folder to use for the current file or folder being processed</returns>
-        private string ConstructOutputFolderPath(
+        /// <param name="datasetFileOrDirectory"></param>
+        /// <param name="totalDatasetFilesOrDirectories"></param>
+        /// <param name="outputDirectoryNames"></param>
+        /// <param name="nextSubdirectorySuffix">Input/output parameter</param>
+        /// <returns>Full path to the output directory to use for the current file or directory being processed</returns>
+        private string ConstructOutputDirectoryPath(
             string outputPathBase,
-            string datasetFileOrFolder,
-            int totalDatasetFilesOrFolders,
-            ICollection<string> outputFolderNames,
-            ref int nextSubFolderSuffix)
+            string datasetFileOrDirectory,
+            int totalDatasetFilesOrDirectories,
+            ICollection<string> outputDirectoryNames,
+            ref int nextSubdirectorySuffix)
         {
 
-            string currentOutputFolder;
+            string currentOutputDirectory;
 
-            if (totalDatasetFilesOrFolders > 1)
+            if (totalDatasetFilesOrDirectories > 1)
             {
-                var subFolder = Path.GetFileNameWithoutExtension(datasetFileOrFolder);
-                if (string.IsNullOrWhiteSpace(subFolder))
+                var subDirectory = Path.GetFileNameWithoutExtension(datasetFileOrDirectory);
+                if (string.IsNullOrWhiteSpace(subDirectory))
                 {
-                    var subFolderToUse = m_Dataset + "_" + nextSubFolderSuffix;
-                    while (outputFolderNames.Contains(subFolderToUse))
+                    var subdirectoryToUse = m_Dataset + "_" + nextSubdirectorySuffix;
+                    while (outputDirectoryNames.Contains(subdirectoryToUse))
                     {
-                        nextSubFolderSuffix++;
-                        subFolderToUse = m_Dataset + "_" + nextSubFolderSuffix;
+                        nextSubdirectorySuffix++;
+                        subdirectoryToUse = m_Dataset + "_" + nextSubdirectorySuffix;
                     }
 
-                    currentOutputFolder = Path.Combine(outputPathBase, subFolderToUse);
-                    outputFolderNames.Add(subFolderToUse);
+                    currentOutputDirectory = Path.Combine(outputPathBase, subdirectoryToUse);
+                    outputDirectoryNames.Add(subdirectoryToUse);
                 }
                 else
                 {
-                    var subFolderToUse = string.Copy(subFolder);
-                    while (outputFolderNames.Contains(subFolderToUse))
+                    var subdirectoryToUse = string.Copy(subDirectory);
+                    while (outputDirectoryNames.Contains(subdirectoryToUse))
                     {
-                        subFolderToUse = subFolder + "_" + nextSubFolderSuffix;
-                        nextSubFolderSuffix++;
+                        subdirectoryToUse = subDirectory + "_" + nextSubdirectorySuffix;
+                        nextSubdirectorySuffix++;
                     }
 
-                    currentOutputFolder = Path.Combine(outputPathBase, subFolderToUse);
-                    outputFolderNames.Add(subFolderToUse);
+                    currentOutputDirectory = Path.Combine(outputPathBase, subdirectoryToUse);
+                    outputDirectoryNames.Add(subdirectoryToUse);
                 }
             }
             else
             {
-                currentOutputFolder = outputPathBase;
+                currentOutputDirectory = outputPathBase;
             }
-            return currentOutputFolder;
+            return currentOutputDirectory;
         }
 
         /// <summary>
-        /// Look for .D folders below diDatasetFolder
-        /// Add them to list fileOrFolderNames
+        /// Look for .D directories below diDatasetDirectory
+        /// Add them to list fileOrDirectoryNames
         /// </summary>
-        /// <param name="diDatasetFolder">Dataset folder to examine</param>
-        /// <param name="fileOrFolderNames">List to append .D folders to (calling function must initialize)</param>
-        private void FindDotDFolders(DirectoryInfo diDatasetFolder, ICollection<string> fileOrFolderNames)
+        /// <param name="diDatasetDirectory">Dataset directory to examine</param>
+        /// <param name="fileOrDirectoryNames">List to append .D directories to (calling function must initialize)</param>
+        private void FindDotDDirectories(DirectoryInfo diDatasetDirectory, ICollection<string> fileOrDirectoryNames)
         {
-            var diDotDFolders = diDatasetFolder.GetDirectories("*.d");
-            if (diDotDFolders.Length <= 0)
+            var diDotDDirectories = diDatasetDirectory.GetDirectories("*.d");
+            if (diDotDDirectories.Length <= 0)
                 return;
 
-            // Look for a .mcf file in each of the .D folders
-            foreach (var dotDFolder in diDotDFolders)
+            // Look for a .mcf file in each of the .D directories
+            foreach (var dotDDirectory in diDotDDirectories)
             {
-                var mcfFileExists = LookForMcfFileInDotDFolder(dotDFolder, out var dotDFolderName);
-                if (mcfFileExists && !fileOrFolderNames.Contains(dotDFolderName))
+                var mcfFileExists = LookForMcfFileIndotDDirectory(dotDDirectory, out var dotDDirectoryName);
+                if (mcfFileExists && !fileOrDirectoryNames.Contains(dotDDirectoryName))
                 {
-                    fileOrFolderNames.Add(dotDFolderName);
+                    fileOrDirectoryNames.Add(dotDDirectoryName);
                 }
             }
 
         }
 
         /// <summary>
-        /// Returns the file or folder name list for the specified dataset based on dataset type
-        /// Most datasets only have a single dataset file or folder, but FTICR_Imaging datasets
-        /// can have multiple .D folders below a parent folder
+        /// Returns the file or directory name list for the specified dataset based on dataset type
+        /// Most datasets only have a single dataset file or directory, but FTICR_Imaging datasets
+        /// can have multiple .D directories below a parent directory
         /// </summary>
-        /// <returns>List of data file file or folder names; empty list if not found</returns>
+        /// <returns>List of data file file or directory names; empty list if not found</returns>
         /// <remarks>
         /// Returns UNKNOWN_FILE_TYPE for instrument types that are not recognized.
         /// Returns INVALID_FILE_TYPE for instruments for which we do not run MSFileInfoScanner
         /// </remarks>
-        private List<string> GetDataFileOrFolderName(
-            string inputFolder,
+        private List<string> GetDataFileOrDirectoryName(
+            string inputDirectory,
             out bool bSkipPlots,
             out clsInstrumentClassInfo.eRawDataType rawDataType,
             out clsInstrumentClassInfo.eInstrumentClass instrumentClass,
@@ -844,8 +843,8 @@ namespace DatasetInfoPlugin
                 return new List<string> { UNKNOWN_FILE_TYPE };
             }
 
-            var diDatasetFolder = new DirectoryInfo(inputFolder);
-            string fileOrFolderName;
+            var diDatasetDirectory = new DirectoryInfo(inputDirectory);
+            string fileOrDirectoryName;
 
             // Get the expected file name based on the dataset type
             switch (rawDataType)
@@ -856,13 +855,13 @@ namespace DatasetInfoPlugin
                     // VOrbiETD01, VOrbiETD02, etc.
                     // TSQ_3
                     // Thermo_GC_MS_01
-                    fileOrFolderName = m_Dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION;
+                    fileOrDirectoryName = m_Dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION;
                     isFile = true;
                     break;
 
                 case clsInstrumentClassInfo.eRawDataType.ZippedSFolders:
                     // 9T_FTICR, 11T_FTICR_B, and 12T_FTICR
-                    fileOrFolderName = "analysis.baf";
+                    fileOrDirectoryName = "analysis.baf";
                     isFile = true;
                     break;
 
@@ -875,34 +874,34 @@ namespace DatasetInfoPlugin
                     isFile = true;
                     if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Bruker_Amazon_Ion_Trap)
                     {
-                        fileOrFolderName = Path.Combine(m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION, "analysis.yep");
+                        fileOrDirectoryName = Path.Combine(m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION, "analysis.yep");
                     }
                     else
                     {
-                        fileOrFolderName = Path.Combine(m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION, "analysis.baf");
+                        fileOrDirectoryName = Path.Combine(m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION, "analysis.baf");
                         bBrukerDotDBaf = true;
                     }
 
-                    if (!File.Exists(Path.Combine(diDatasetFolder.FullName, fileOrFolderName)))
-                        fileOrFolderName = CheckForBrukerImagingZipFiles(diDatasetFolder);
+                    if (!File.Exists(Path.Combine(diDatasetDirectory.FullName, fileOrDirectoryName)))
+                        fileOrDirectoryName = CheckForBrukerImagingZipFiles(diDatasetDirectory);
 
                     break;
 
                 case clsInstrumentClassInfo.eRawDataType.UIMF:
                     // IMS_TOF_2, IMS_TOF_3, IMS_TOF_4, IMS_TOF_5, IMS_TOF_6, etc.
-                    fileOrFolderName = m_Dataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION;
+                    fileOrDirectoryName = m_Dataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION;
                     isFile = true;
                     break;
 
                 case clsInstrumentClassInfo.eRawDataType.SciexWiffFile:
                     // QTrap01
-                    fileOrFolderName = m_Dataset + clsInstrumentClassInfo.DOT_WIFF_EXTENSION;
+                    fileOrDirectoryName = m_Dataset + clsInstrumentClassInfo.DOT_WIFF_EXTENSION;
                     isFile = true;
                     break;
 
                 case clsInstrumentClassInfo.eRawDataType.AgilentDFolder:
                     // Agilent_GC_MS_01, AgQTOF03, AgQTOF04, PrepHPLC1
-                    fileOrFolderName = m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
+                    fileOrDirectoryName = m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
                     isFile = false;
 
                     if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.PrepHPLC)
@@ -917,25 +916,25 @@ namespace DatasetInfoPlugin
                     // bruker_maldi_imaging: 12T_FTICR_Imaging, 15T_FTICR_Imaging, and BrukerTOF_Imaging_01
                     // Find the name of the first zip file
 
-                    fileOrFolderName = CheckForBrukerImagingZipFiles(diDatasetFolder);
+                    fileOrDirectoryName = CheckForBrukerImagingZipFiles(diDatasetDirectory);
                     bSkipPlots = true;
                     isFile = true;
 
-                    if (string.IsNullOrEmpty(fileOrFolderName))
+                    if (string.IsNullOrEmpty(fileOrDirectoryName))
                     {
-                        m_Msg = "Did not find any 0_R*.zip files in the dataset folder";
-                        LogWarning("clsPluginMain.GetDataFileOrFolderName: " + m_Msg);
+                        m_Msg = "Did not find any 0_R*.zip files in the dataset directory";
+                        LogWarning("clsPluginMain.GetDataFileOrDirectoryName: " + m_Msg);
                         return new List<string> { INVALID_FILE_TYPE };
                     }
 
                     break;
 
                 case clsInstrumentClassInfo.eRawDataType.BrukerTOFBaf:
-                    fileOrFolderName = m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
+                    fileOrDirectoryName = m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
                     isFile = false;
                     break;
                 case clsInstrumentClassInfo.eRawDataType.IlluminaFolder:
-                    // fileOrFolderName = m_Dataset + clsInstrumentClassInfo.DOT_TXT_GZ_EXTENSION;
+                    // fileOrDirectoryName = m_Dataset + clsInstrumentClassInfo.DOT_TXT_GZ_EXTENSION;
                     // isFile = true;
 
                     LogMessage("Skipping MSFileInfoScanner since Illumina RNASeq dataset");
@@ -948,56 +947,56 @@ namespace DatasetInfoPlugin
                     // dot_wiff_files (AgilentQStarWiffFile): AgTOF02
                     // bruker_maldi_spot (BrukerMALDISpot): BrukerTOF_01
                     m_Msg = "Data type " + rawDataType + " not recognized";
-                    LogWarning("clsPluginMain.GetDataFileOrFolderName: " + m_Msg);
+                    LogWarning("clsPluginMain.GetDataFileOrDirectoryName: " + m_Msg);
                     return new List<string> { INVALID_FILE_TYPE };
             }
 
-            // Test to verify the file (or folder) exists
-            var fileOrFolderPath = Path.Combine(diDatasetFolder.FullName, fileOrFolderName);
+            // Test to verify the file (or directory) exists
+            var fileOrDirectoryPath = Path.Combine(diDatasetDirectory.FullName, fileOrDirectoryName);
 
             if (isFile)
             {
                 // Expecting to match a file
-                if (File.Exists(fileOrFolderPath))
+                if (File.Exists(fileOrDirectoryPath))
                 {
                     // File exists
-                    // Even if it is in a .D folder, we will only examine this file
-                    return new List<string> { fileOrFolderName };
+                    // Even if it is in a .D directory, we will only examine this file
+                    return new List<string> { fileOrDirectoryName };
                 }
 
-                // File not found; check for alternative files or folders
-                // This function also looks for .D folders
-                var fileOrFolderNames = LookForAlternateFileOrFolder(diDatasetFolder, fileOrFolderName);
+                // File not found; check for alternative files or directores
+                // This function also looks for .D directories
+                var fileOrDirectoryNames = LookForAlternateFileOrDirectory(diDatasetDirectory, fileOrDirectoryName);
 
-                if (fileOrFolderNames.Count > 0)
-                    return fileOrFolderNames;
+                if (fileOrDirectoryNames.Count > 0)
+                    return fileOrDirectoryNames;
 
-                m_Msg = "clsPluginMain.GetDataFileOrFolderName: File " + fileOrFolderPath + " not found";
+                m_Msg = "clsPluginMain.GetDataFileOrDirectoryName: File " + fileOrDirectoryPath + " not found";
                 LogError(m_Msg);
-                m_Msg = "File " + fileOrFolderPath + " not found";
+                m_Msg = "File " + fileOrDirectoryPath + " not found";
 
                 return new List<string>();
             }
 
-            // Expecting to match a folder
-            if (Directory.Exists(fileOrFolderPath))
+            // Expecting to match a directory
+            if (Directory.Exists(fileOrDirectoryPath))
             {
-                if (Path.GetExtension(fileOrFolderName).ToUpper() != ".D")
+                if (Path.GetExtension(fileOrDirectoryName).ToUpper() != ".D")
                 {
-                    // Folder exists, and it does not end in .D
-                    return new List<string> { fileOrFolderName };
+                    // Directory exists, and it does not end in .D
+                    return new List<string> { fileOrDirectoryName };
                 }
 
-                // Look for other .D folders
-                var fileOrFolderNames = new List<string> { fileOrFolderName };
-                FindDotDFolders(diDatasetFolder, fileOrFolderNames);
+                // Look for other .D directories
+                var fileOrDirectoryNames = new List<string> { fileOrDirectoryName };
+                FindDotDDirectories(diDatasetDirectory, fileOrDirectoryNames);
 
-                return fileOrFolderNames;
+                return fileOrDirectoryNames;
             }
 
-            m_Msg = "clsPluginMain.GetDataFileOrFolderName: Folder " + fileOrFolderPath + " not found";
+            m_Msg = "clsPluginMain.GetDataFileOrDirectoryName; directory not found: " + fileOrDirectoryPath;
             LogError(m_Msg);
-            m_Msg = "Folder " + fileOrFolderPath + " not found";
+            m_Msg = "Directory not found: " + fileOrDirectoryPath;
 
             return new List<string>();
 
@@ -1009,21 +1008,21 @@ namespace DatasetInfoPlugin
         /// <returns></returns>
         private string GetMSFileInfoScannerDLLPath()
         {
-            var msFileInfoScannerFolder = m_MgrParams.GetParam("MSFileInfoScannerDir", string.Empty);
-            if (string.IsNullOrEmpty(msFileInfoScannerFolder))
+            var msFileInfoScannerDir = m_MgrParams.GetParam("MSFileInfoScannerDir", string.Empty);
+            if (string.IsNullOrEmpty(msFileInfoScannerDir))
                 return string.Empty;
 
-            return Path.Combine(msFileInfoScannerFolder, "MSFileInfoScanner.dll");
+            return Path.Combine(msFileInfoScannerDir, "MSFileInfoScanner.dll");
         }
 
         /// <summary>
         /// A dataset file was not found
-        /// Look for alternate dataset files, or look for .D folders
+        /// Look for alternate dataset files, or look for .D directories
         /// </summary>
-        /// <param name="diDatasetFolder"></param>
-        /// <param name="initialFileOrFolderName"></param>
+        /// <param name="diDatasetDirectory"></param>
+        /// <param name="initialfileOrDirectoryName"></param>
         /// <returns></returns>
-        private List<string> LookForAlternateFileOrFolder(DirectoryInfo diDatasetFolder, string initialFileOrFolderName)
+        private List<string> LookForAlternateFileOrDirectory(DirectoryInfo diDatasetDirectory, string initialfileOrDirectoryName)
         {
 
             // File not found; look for alternate extensions
@@ -1031,7 +1030,7 @@ namespace DatasetInfoPlugin
 
             foreach (var altExtension in lstAlternateExtensions)
             {
-                var dataFileNamePathAlt = Path.ChangeExtension(initialFileOrFolderName, altExtension);
+                var dataFileNamePathAlt = Path.ChangeExtension(initialfileOrDirectoryName, altExtension);
                 if (File.Exists(dataFileNamePathAlt))
                 {
                     m_Msg = "Data file not found, but ." + altExtension + " file exists";
@@ -1040,48 +1039,48 @@ namespace DatasetInfoPlugin
                 }
             }
 
-            // Look for dataset folders
-            var primaryDotDFolder = new DirectoryInfo(Path.Combine(diDatasetFolder.FullName, m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION));
+            // Look for dataset directories
+            var primarydotDDirectory = new DirectoryInfo(Path.Combine(diDatasetDirectory.FullName, m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION));
 
-            var fileOrFolderNames = new List<string>();
+            var fileOrDirectoryNames = new List<string>();
 
-            if (primaryDotDFolder.Exists)
+            if (primarydotDDirectory.Exists)
             {
-                // Look for a .mcf file in the .D folder
-                var mcfFileExists = LookForMcfFileInDotDFolder(primaryDotDFolder, out var dotDFolderName);
+                // Look for a .mcf file in the .D directory
+                var mcfFileExists = LookForMcfFileIndotDDirectory(primarydotDDirectory, out var dotDDirectoryName);
                 if (mcfFileExists)
                 {
-                    fileOrFolderNames.Add(dotDFolderName);
+                    fileOrDirectoryNames.Add(dotDDirectoryName);
                 }
             }
 
-            // With instrument class BrukerMALDI_Imaging_V2 (e.g. 15T_FTICR_Imaging) we allow multiple .D folders to be captured
-            // Look for additional folders now
-            FindDotDFolders(diDatasetFolder, fileOrFolderNames);
+            // With instrument class BrukerMALDI_Imaging_V2 (e.g. 15T_FTICR_Imaging) we allow multiple .D directories to be captured
+            // Look for additional directories now
+            FindDotDDirectories(diDatasetDirectory, fileOrDirectoryNames);
 
-            return fileOrFolderNames;
+            return fileOrDirectoryNames;
 
         }
 
         /// <summary>
-        /// Look for any .mcf file in a Bruker .D folder
+        /// Look for any .mcf file in a Bruker .D directory
         /// </summary>
-        /// <param name="diDotDFolder"></param>
-        /// <param name="dotDFolderName">Output: name of the .D folder</param>
+        /// <param name="didotDDirectory"></param>
+        /// <param name="dotDDirectoryName">Output: name of the .D directory</param>
         /// <returns>True if a .mcf file is found</returns>
-        private bool LookForMcfFileInDotDFolder(DirectoryInfo diDotDFolder, out string dotDFolderName)
+        private bool LookForMcfFileIndotDDirectory(DirectoryInfo didotDDirectory, out string dotDDirectoryName)
         {
 
             long mcfFileSizeBytes = 0;
-            dotDFolderName = string.Empty;
+            dotDDirectoryName = string.Empty;
 
-            foreach (var fiFile in diDotDFolder.GetFiles("*.mcf"))
+            foreach (var fiFile in didotDDirectory.GetFiles("*.mcf"))
             {
                 // Return the .mcf file that is the largest
                 if (fiFile.Length > mcfFileSizeBytes)
                 {
                     mcfFileSizeBytes = fiFile.Length;
-                    dotDFolderName = diDotDFolder.Name;
+                    dotDDirectoryName = didotDDirectory.Name;
                 }
             }
 
@@ -1098,16 +1097,16 @@ namespace DatasetInfoPlugin
             LogDebug("Determining tool version info");
 
             var toolVersionInfo = string.Empty;
-            var appFolder = clsUtilities.GetAppFolderPath();
+            var appDirectory = clsUtilities.GetAppFolderPath();
 
-            if (string.IsNullOrWhiteSpace(appFolder))
+            if (string.IsNullOrWhiteSpace(appDirectory))
             {
                 LogError("GetAppFolderPath returned an empty directory path to StoreToolVersionInfo for the Dataset Info plugin");
                 return false;
             }
 
             // Lookup the version of the dataset info plugin
-            var pluginPath = Path.Combine(appFolder, "DatasetInfoPlugin.dll");
+            var pluginPath = Path.Combine(appDirectory, "DatasetInfoPlugin.dll");
             var bSuccess = StoreToolVersionInfoOneFile(ref toolVersionInfo, pluginPath);
             if (!bSuccess)
                 return false;
@@ -1122,7 +1121,7 @@ namespace DatasetInfoPlugin
             }
 
             // Lookup the version of the UIMFLibrary DLL
-            var uimfLibraryPath = Path.Combine(appFolder, "UIMFLibrary.dll");
+            var uimfLibraryPath = Path.Combine(appDirectory, "UIMFLibrary.dll");
             bSuccess = StoreToolVersionInfoOneFile(ref toolVersionInfo, uimfLibraryPath);
             if (!bSuccess)
                 return false;
@@ -1148,24 +1147,24 @@ namespace DatasetInfoPlugin
 
         }
 
-        private bool ValidateQCGraphics(string currentOutputFolder, bool primaryFileOrFolderProcessed, clsToolReturnData result)
+        private bool ValidateQCGraphics(string currentOutputDirectory, bool primaryFileOrDirectoryProcessed, clsToolReturnData retData)
         {
             // Make sure at least one of the PNG files created by MSFileInfoScanner is over 10 KB in size
-            var outputDirectory = new DirectoryInfo(currentOutputFolder);
+            var outputDirectory = new DirectoryInfo(currentOutputDirectory);
             if (!outputDirectory.Exists)
             {
-                var errMsg = "Output directory not found: " + currentOutputFolder;
+                var errMsg = "Output directory not found: " + currentOutputDirectory;
 
-                if (primaryFileOrFolderProcessed)
+                if (primaryFileOrDirectoryProcessed)
                 {
                     LogWarning(errMsg);
-                    result.EvalMsg = AppendToComment(result.EvalMsg, errMsg);
+                    retData.EvalMsg = AppendToComment(retData.EvalMsg, errMsg);
                     return false;
                 }
 
                 LogError(errMsg);
-                result.CloseoutMsg = errMsg;
-                result.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                retData.CloseoutMsg = errMsg;
+                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return false;
             }
 
@@ -1174,16 +1173,16 @@ namespace DatasetInfoPlugin
             if (pngFiles.Length == 0)
             {
                 var errMsg = "No PNG files were created";
-                if (primaryFileOrFolderProcessed)
+                if (primaryFileOrDirectoryProcessed)
                 {
                     LogWarning(errMsg);
-                    result.EvalMsg = AppendToComment(result.EvalMsg, errMsg);
+                    retData.EvalMsg = AppendToComment(retData.EvalMsg, errMsg);
                     return false;
                 }
 
                 LogError(errMsg);
-                result.CloseoutMsg = errMsg;
-                result.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                retData.CloseoutMsg = errMsg;
+                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return false;
             }
 
@@ -1204,16 +1203,16 @@ namespace DatasetInfoPlugin
 
             var errMsg2 = string.Format("All {0} PNG files created by MSFileInfoScanner are less than {1} KB and likely blank graphics", pngFiles.Length, minimumGraphicsSizeKB);
 
-            if (primaryFileOrFolderProcessed)
+            if (primaryFileOrDirectoryProcessed)
             {
                 LogWarning(errMsg2);
-                result.EvalMsg = AppendToComment(result.EvalMsg, errMsg2);
+                retData.EvalMsg = AppendToComment(retData.EvalMsg, errMsg2);
                 return false;
             }
 
             LogError(errMsg2);
-            result.CloseoutMsg = errMsg2;
-            result.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+            retData.CloseoutMsg = errMsg2;
+            retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
             return false;
 
         }
@@ -1245,12 +1244,12 @@ namespace DatasetInfoPlugin
             {
                 m_ErrOccurred = true;
 
-                // Message often contains long folder paths; check for this and shorten them.
+                // Message often contains long paths; check for this and shorten them.
                 // For example, switch
                 // from: \\proto-6\LTQ_Orb_1\2015_4\QC_Shew_pep_Online_Dig_v12_c0pt5_05_10-08-13\QC_Shew_pep_Online_Dig_v12_c0pt5_05_10-08-13.raw
                 // to:   QC_Shew_pep_Online_Dig_v12_c0pt5_05_10-08-13.raw
 
-                // Match text of the form         \\server\share\folder<anything>DatasetName.Extension
+                // Match text of the form         \\server\share\directory<anything>DatasetName.Extension
                 var reDatasetFile = new Regex(@"\\\\[^\\]+\\[^\\]+\\[^\\]+.+(" + m_Dataset + @"\.[a-z0-9]+)");
 
                 if (reDatasetFile.IsMatch(message))

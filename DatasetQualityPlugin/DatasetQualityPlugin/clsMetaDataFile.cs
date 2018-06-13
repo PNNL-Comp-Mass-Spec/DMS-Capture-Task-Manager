@@ -20,7 +20,9 @@ namespace DatasetQualityPlugin
     {
 
         #region "Constants"
+
         private const string META_FILE_NAME = "metadata.xml";
+
         #endregion
 
         #region "Methods"
@@ -28,8 +30,8 @@ namespace DatasetQualityPlugin
         /// Creates an XML metadata file for a dataset
         /// </summary>
         /// <param name="mgrParams">Manager parameters</param>
-        /// <param name="TaskParams">Task parameters</param>
-        public static bool CreateMetadataFile(IMgrParams mgrParams, ITaskParams TaskParams)
+        /// <param name="taskParams">Task parameters</param>
+        public static bool CreateMetadataFile(IMgrParams mgrParams, ITaskParams taskParams)
         {
             string xmlText;
 
@@ -46,13 +48,16 @@ namespace DatasetQualityPlugin
                 xWriter.WriteStartElement("Root");
 
                 // Loop through the task parameters, selecting only the ones beginning with "Meta_"
-                foreach (var testKey in TaskParams.TaskDictionary.Keys)
+                // These parameters are included in the table returned by stored procedure RequestStepTask
+                // That procedure calls procedure GetJobStepParams to get the parameters
+                // Additionally, if the step tool is 'DatasetInfo' or 'DatasetQuality', GetJobStepParams calls GetMetadataForDataset
+                foreach (var taskParam in taskParams.TaskDictionary.Keys)
                 {
-                    if (testKey.StartsWith("Meta_"))
+                    if (taskParam.StartsWith("Meta_"))
                     {
                         // This parameter is metadata, so write it out
-                        var tmpStr = testKey.Replace("Meta_", "");
-                        xWriter.WriteElementString(tmpStr, TaskParams.GetParam(testKey));
+                        var tmpStr = taskParam.Replace("Meta_", "");
+                        xWriter.WriteElementString(tmpStr, taskParams.GetParam(taskParam));
                     }
                 }
 
@@ -75,19 +80,19 @@ namespace DatasetQualityPlugin
             }
 
             // Write the string to the output file
-            var svrPath = Path.Combine(TaskParams.GetParam("Storage_Vol_External"), TaskParams.GetParam("Storage_Path"));
-            var dsPath = Path.Combine(svrPath, TaskParams.GetParam("Folder"));
+            var svrPath = Path.Combine(taskParams.GetParam("Storage_Vol_External"), taskParams.GetParam("Storage_Path"));
+            var dsPath = Path.Combine(svrPath, taskParams.GetParam("Folder"));
             var metaFileNamePath = Path.Combine(dsPath, META_FILE_NAME);
             try
             {
                 File.WriteAllText(metaFileNamePath, xmlText);
-                var msg = "Metadata file created for dataset " + TaskParams.GetParam("Dataset");
+                var msg = "Metadata file created for dataset " + taskParams.GetParam("Dataset");
                 LogTools.LogDebug(msg);
                 return true;
             }
             catch (Exception ex)
             {
-                var msg = "Exception creating metadata file for dataset " + TaskParams.GetParam("Dataset");
+                var msg = "Exception creating metadata file for dataset " + taskParams.GetParam("Dataset");
                 LogTools.LogError(msg, ex);
                 return false;
             }
