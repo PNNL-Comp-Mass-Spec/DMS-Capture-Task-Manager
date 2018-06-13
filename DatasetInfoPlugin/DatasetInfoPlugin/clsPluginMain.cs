@@ -332,7 +332,24 @@ namespace DatasetInfoPlugin
                     outputPathBase, datasetFileOrDirectory, fileOrDirectoryNames.Count,
                     outputDirectoryNames, ref nextSubdirectorySuffix);
 
-                var successProcessing = m_MsFileScanner.ProcessMSFileOrFolder(pathToProcess, currentOutputFolder);
+                if (string.IsNullOrWhiteSpace(currentOutputDirectory))
+                {
+                    retData.CloseoutMsg = "ConstructOutputDirectoryPath returned an empty string; cannot process this dataset";
+                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    return retData;
+                }
+
+                if (Environment.MachineName.StartsWith("monroe", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Override the output directory
+                    var localOutputDir = Path.Combine(m_WorkDir, Path.GetFileName(currentOutputDirectory));
+                    ConsoleMsgUtils.ShowDebug(string.Format(
+                                                  "Overriding MSFileInfoScanner output directory from {0}\n  to {1}",
+                                                  currentOutputDirectory, localOutputDir));
+                    currentOutputDirectory = localOutputDir;
+                }
+
+                var successProcessing = m_MsFileScanner.ProcessMSFileOrFolder(pathToProcess, currentOutputDirectory);
 
                 if (m_ErrOccurred)
                 {
@@ -440,6 +457,13 @@ namespace DatasetInfoPlugin
             // Call SP CacheDatasetInfoXML to store dsInfoXML in table T_Dataset_Info_XML
             PostDatasetInfoXml(dsInfoXML, retData);
 
+            if (Environment.MachineName.StartsWith("monroe", StringComparison.OrdinalIgnoreCase))
+            {
+                // Set this to failed since we stored the QC graphics in the local work dir instead of on the storage server
+                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                retData.CloseoutMsg = "QC graphics were saved locally for debugging purposes; " +
+                                      "need to run this job step with a manager that has write access to the storage server";
+            }
 
             return retData;
 
