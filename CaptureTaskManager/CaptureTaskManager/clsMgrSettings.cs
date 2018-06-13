@@ -491,7 +491,7 @@ namespace CaptureTaskManager
                     var paramKey = DbCStr(currentRow[dtSettings.Columns["ParameterName"]]);
                     var paramVal = DbCStr(currentRow[dtSettings.Columns["ParameterValue"]]);
 
-                    if (paramKey.ToLower() == "perspective" && Environment.MachineName.ToLower().StartsWith("monroe"))
+                    if (paramKey.ToLower() == "perspective" && Environment.MachineName.StartsWith("monroe", StringComparison.OrdinalIgnoreCase))
                     {
                         if (paramVal.ToLower() == "server")
                         {

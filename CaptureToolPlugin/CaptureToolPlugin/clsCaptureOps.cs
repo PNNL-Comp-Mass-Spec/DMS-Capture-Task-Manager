@@ -1900,7 +1900,7 @@ namespace CaptureToolPlugin
                 return success;
 
             var dtCurrentTime = DateTime.Now;
-            if (dtCurrentTime.Hour == 18 || dtCurrentTime.Hour == 19 || Environment.MachineName.ToLower().StartsWith("monroe"))
+            if (dtCurrentTime.Hour == 18 || dtCurrentTime.Hour == 19 || Environment.MachineName.StartsWith("monroe", StringComparison.OrdinalIgnoreCase))
             {
                 // Time is between 6 pm and 7:59 pm
                 // Check for folders at METHOD_FOLDER_BASE_PATH that start with x_ and have .lcmethod files that are all at least 14 days old
