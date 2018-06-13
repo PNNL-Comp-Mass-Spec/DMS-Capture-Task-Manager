@@ -177,17 +177,6 @@ namespace DatasetInfoPlugin
             var sourceDirectory = m_TaskParams.GetParam("Storage_Vol_External");
 
             // Set up the rest of the paths
-            /*
-            result.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
-            result.EvalCode = EnumEvalCode.EVAL_CODE_SKIPPED;
-            result.EvalMsg = "Plugin skipped due to OxyPlot bug";
-
-            var qcFolder = new DirectoryInfo(outputPathBase);
-            if (!qcFolder.Exists)
-                qcFolder.Create();
-
-            return result;
-            */
             sourceDirectory = Path.Combine(sourceDirectory, m_TaskParams.GetParam("Storage_Path"));
             sourceDirectory = Path.Combine(sourceDirectory, m_TaskParams.GetParam("Folder"));
             var outputPathBase = Path.Combine(sourceDirectory, "QC");
