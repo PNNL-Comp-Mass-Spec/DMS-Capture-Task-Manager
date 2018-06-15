@@ -202,24 +202,7 @@ namespace DatasetInfoPlugin
             m_MsFileScanner.LCMS2DOverviewPlotDivisor = m_TaskParams.GetParam("LCMS2DOverviewPlotDivisor", clsLCMSDataPlotterOptions.DEFAULT_LCMS2D_OVERVIEW_PLOT_DIVISOR);
 
             var sampleLabelling = m_TaskParams.GetParam("Meta_Experiment_sample_labelling", "");
-
-            m_MsFileScanner.MS2MzMin = 0;
-            if (!string.IsNullOrEmpty(sampleLabelling))
-            {
-                // Check whether this label has a reporter ion minimum m/z value defined
-                // If it does, instruct the MSFileInfoScanner to validate that all of the MS/MS spectra
-                // have a scan range that starts below the minimum reporter ion m/z
-
-                var reporterIonMzMinText = m_TaskParams.GetParam("Meta_Experiment_labelling_reporter_mz_min", "");
-                if (!string.IsNullOrEmpty(reporterIonMzMinText))
-                {
-                    if (float.TryParse(reporterIonMzMinText, out var reporterIonMzMin))
-                    {
-                        m_MsFileScanner.MS2MzMin = (int)Math.Floor(reporterIonMzMin);
-                    }
-                }
-
-            }
+            ConfigureMinimumMzValidation(m_MsFileScanner, sampleLabelling);
 
             m_MsFileScanner.CheckCentroidingStatus = true;
             m_MsFileScanner.PlotWithPython = true;
@@ -770,6 +753,75 @@ namespace DatasetInfoPlugin
             }
 
             return string.Empty;
+        }
+
+        /// <summary>
+        /// Check whether the experiment for this dataset has labelling value defined
+        /// If it doesn't, or if it is Unknown or None, examine the dataset name
+        /// </summary>
+        /// <param name="msFileInfoScanner"></param>
+        /// <param name="sampleLabelling"></param>
+        private void ConfigureMinimumMzValidation(iMSFileInfoScanner msFileInfoScanner, string sampleLabelling)
+        {
+
+            m_MsFileScanner.MS2MzMin = 0;
+            if (!string.IsNullOrEmpty(sampleLabelling))
+            {
+
+                // Check whether this label has a reporter ion minimum m/z value defined
+                // If it does, instruct the MSFileInfoScanner to validate that all of the MS/MS spectra
+                // have a scan range that starts below the minimum reporter ion m/z
+
+                var reporterIonMzMinText = m_TaskParams.GetParam("Meta_Experiment_labelling_reporter_mz_min", "");
+                if (!string.IsNullOrEmpty(reporterIonMzMinText))
+                {
+                    if (float.TryParse(reporterIonMzMinText, out var reporterIonMzMin))
+                    {
+                        msFileInfoScanner.MS2MzMin = (int)Math.Floor(reporterIonMzMin);
+                        LogMessage(string.Format(
+                                       "Verifying that MS/MS spectra have minimum m/z values below {0:N0} since the experiment labelling is {1}",
+                                       msFileInfoScanner.MS2MzMin, sampleLabelling));
+                    }
+                }
+            }
+
+            if (msFileInfoScanner.MS2MzMin > 0)
+                return;
+
+            // People sometimes forget to define the sample label for the experiment, but put iTRAQ or TMT in the dataset name
+            // Check for this
+
+            // Match names like:
+            // _iTRAQ_
+            // _iTRAQ4_
+            // _iTRAQ8_
+            // _iTRAQ-8_
+            var itraqMatcher = new Regex("_iTRAQ[0-9-]*_", RegexOptions.IgnoreCase);
+
+            // Match names like:
+            // _TMT_
+            // _TMT6_
+            // _TMT10_
+            // _TMT-10_
+            var tmtMatcher = new Regex("_TMT[0-9-]*_", RegexOptions.IgnoreCase);
+
+            var itraqMatch = itraqMatcher.Match(m_Dataset);
+            if (itraqMatch.Success)
+            {
+                msFileInfoScanner.MS2MzMin = 113;
+                LogMessage(string.Format(
+                               "Verifying that MS/MS spectra have minimum m/z values below {0:N0} since the dataset name contains {1}",
+                               msFileInfoScanner.MS2MzMin, itraqMatch.Value));
+            }
+
+            var tmtMatch = tmtMatcher.Match(m_Dataset);
+            if (tmtMatch.Success)
+            {
+                msFileInfoScanner.MS2MzMin = 126;
+                LogMessage(string.Format(
+                               "Verifying that MS/MS spectra have minimum m/z values below {0:N0} since the dataset name contains {1}",
+                               msFileInfoScanner.MS2MzMin, tmtMatch.Value));
+            }
         }
 
         /// <summary>
