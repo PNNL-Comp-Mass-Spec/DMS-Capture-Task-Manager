@@ -178,7 +178,7 @@ namespace CaptureTaskManager
 
             try
             {
-                // For this to work property on Windows 10, you must add a app.manifest file
+                // For this to work properly on Windows 10, you must add a app.manifest file
                 // and uncomment the versions of Windows listed below
                 // <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
                 //
@@ -191,7 +191,7 @@ namespace CaptureTaskManager
             }
             catch (Exception ex)
             {
-                LogTools.LogError("Error displaying the OS version: " + Environment.NewLine + ex.Message, ex);
+                LogTools.LogError("Error displaying the OS version", ex);
             }
         }
 
