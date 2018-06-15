@@ -20,7 +20,7 @@ namespace CaptureTaskManager
     /// </summary>
     static class Program
     {
-        private const string PROGRAM_DATE = "June 12, 2018";
+        private const string PROGRAM_DATE = "June 14, 2018";
 
         private static bool mCodeTestMode;
         private static bool mTraceMode;
@@ -176,6 +176,12 @@ namespace CaptureTaskManager
 
             try
             {
+                // For this to work property on Windows 10, you must add a app.manifest file
+                // and uncomment the versions of Windows listed below
+                // <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
+                //
+                // See https://stackoverflow.com/a/36158739/1179467
+
                 var osVersionInfo = new clsOSVersionInfo();
                 var osDescription = osVersionInfo.GetOSVersion();
 
