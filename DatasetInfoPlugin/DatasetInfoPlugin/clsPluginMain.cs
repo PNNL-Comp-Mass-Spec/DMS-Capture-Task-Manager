@@ -263,6 +263,17 @@ namespace DatasetInfoPlugin
                 }
             }
 
+            bool useLocalOutputDirectory;
+            if (Environment.MachineName.StartsWith("monroe", StringComparison.OrdinalIgnoreCase) &&
+                !Environment.UserName.StartsWith("svc", StringComparison.OrdinalIgnoreCase))
+            {
+                useLocalOutputDirectory = true;
+            }
+            else
+            {
+                useLocalOutputDirectory = false;
+            }
+
             // Call the file scanner DLL
             // Typically only call it once, but for Bruker datasets with multiple .D directories, we'll call it once for each .D directory
 
@@ -322,7 +333,7 @@ namespace DatasetInfoPlugin
                     return retData;
                 }
 
-                if (Environment.MachineName.StartsWith("monroe", StringComparison.OrdinalIgnoreCase))
+                if (useLocalOutputDirectory)
                 {
                     // Override the output directory
                     var localOutputDir = Path.Combine(m_WorkDir, Path.GetFileName(currentOutputDirectory));
@@ -440,7 +451,7 @@ namespace DatasetInfoPlugin
             // Call SP CacheDatasetInfoXML to store dsInfoXML in table T_Dataset_Info_XML
             PostDatasetInfoXml(dsInfoXML, retData);
 
-            if (Environment.MachineName.StartsWith("monroe", StringComparison.OrdinalIgnoreCase))
+            if (useLocalOutputDirectory)
             {
                 // Set this to failed since we stored the QC graphics in the local work dir instead of on the storage server
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
