@@ -2783,15 +2783,28 @@ namespace CaptureToolPlugin
             SortedSet<string> filesToSkip)
         {
             const clsFileTools.FileOverwriteMode overwriteMode = clsFileTools.FileOverwriteMode.OverWriteIfDateOrLengthDiffer;
+            const int MAX_RETRY_TIME_HOURS = 6;
 
             var success = false;
             var doCopy = true;
+            var folderCopyStartTime = DateTime.UtcNow;
 
             while (doCopy)
             {
+                if (DateTime.UtcNow.Subtract(folderCopyStartTime).TotalHours > MAX_RETRY_TIME_HOURS)
+                {
+                    success = false;
+                    var msg = string.Format("Aborting CopyFolderWithResume since over {0} hours has elapsed",
+                                            MAX_RETRY_TIME_HOURS);
+                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    retData.EvalCode = EnumEvalCode.EVAL_CODE_FAILED;
+                    retData.CloseoutMsg = msg;
+                    LogError(retData.CloseoutMsg);
+                    break;
+                }
+
                 var dtCopyStart = DateTime.UtcNow;
 
-                string msg;
                 try
                 {
                     // Clear any previous errors
@@ -2806,20 +2819,21 @@ namespace CaptureToolPlugin
 
                     if (success)
                     {
-                        msg = "  directory copy complete; CountCopied = " + fileCountNewlyCopied + "; " +
+                        var msg = "  directory copy complete; CountCopied = " + fileCountNewlyCopied + "; " +
                               "CountSkipped = " + fileCountSkipped + "; " +
                               "CountResumed = " + fileCountResumed;
                         LogDebug(msg);
                     }
                     else
                     {
-                        msg = "  directory copy failed for " + sourceFolderPath + " to " + targetFolderPath + GetConnectionDescription();
+                        var msg = "  directory copy failed for " + sourceFolderPath + " to " + targetFolderPath + GetConnectionDescription();
                         LogError(msg);
                     }
 
                 }
                 catch (Exception ex)
                 {
+                    string msg;
                     if (string.IsNullOrWhiteSpace(mFileTools.CurrentSourceFile))
                         msg = "Error while copying directory: ";
                     else
@@ -2860,6 +2874,7 @@ namespace CaptureToolPlugin
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
                 retData.EvalCode = EnumEvalCode.EVAL_CODE_SUCCESS;
             }
+
             return success;
 
         }
