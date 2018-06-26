@@ -304,9 +304,9 @@ namespace DatasetInfoPlugin
 
                     // Thermo .raw file; copy it locally
                     var localFilePath = Path.Combine(m_WorkDir, datasetFileOrDirectory);
-                    var success = m_FileTools.CopyFileUsingLocks(datasetFile, localFilePath, true);
+                    var fileCopied = m_FileTools.CopyFileUsingLocks(datasetFile, localFilePath, true);
 
-                    if (!success)
+                    if (!fileCopied)
                     {
                         retData.CloseoutMsg = "Error copying instrument data file to local working directory";
                         retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -355,7 +355,8 @@ namespace DatasetInfoPlugin
                     m_FileTools.DeleteFileWithRetry(new FileInfo(pathToProcess), 2, out _);
                 }
 
-                if (m_MsFileScanner.ErrorCode == iMSFileInfoScanner.eMSFileScannerErrorCodes.MS2MzMinValidationError)
+                var mzMinValidationError = m_MsFileScanner.ErrorCode == iMSFileInfoScanner.eMSFileScannerErrorCodes.MS2MzMinValidationError;
+                if (mzMinValidationError)
                 {
                     m_Msg = m_MsFileScanner.GetErrorMessage();
                     successProcessing = false;
@@ -370,11 +371,11 @@ namespace DatasetInfoPlugin
 
                 if (successProcessing && !skipPlots)
                 {
-                    var success = ValidateQCGraphics(currentOutputDirectory, primaryFileOrDirectoryProcessed, retData);
+                    var validQcGraphics = ValidateQCGraphics(currentOutputDirectory, primaryFileOrDirectoryProcessed, retData);
                     if (retData.CloseoutType != EnumCloseOutType.CLOSEOUT_SUCCESS)
                         return retData;
 
-                    if (!success)
+                    if (!validQcGraphics)
                         continue;
                 }
 
@@ -385,7 +386,7 @@ namespace DatasetInfoPlugin
                     continue;
                 }
 
-                // Either a bad retData code was returned, or an error event was received
+                // Either a non-zero error code was returned, or an error event was received
 
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                 if (brukerDotDBaf && IGNORE_BRUKER_BAF_ERRORS)
@@ -424,6 +425,15 @@ namespace DatasetInfoPlugin
 
                     retData.CloseoutMsg = m_Msg;
                     retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+
+
+                    if (mzMinValidationError && !string.IsNullOrWhiteSpace(m_MsFileScanner.DatasetInfoXML))
+                    {
+                        cachedDatasetInfoXML.Add(m_MsFileScanner.DatasetInfoXML);
+                        // Do not exit this method yet; we want to store the dataset info in the database
+                        break;
+                    }
+
                     return retData;
                 }
 
@@ -449,15 +459,21 @@ namespace DatasetInfoPlugin
                 return retData;
 
             // Call SP CacheDatasetInfoXML to store dsInfoXML in table T_Dataset_Info_XML
-            PostDatasetInfoXml(dsInfoXML, retData);
-
-            if (useLocalOutputDirectory)
+            var success = PostDatasetInfoXml(dsInfoXML, out var errorMessage);
+            if (!success)
             {
-                // Set this to failed since we stored the QC graphics in the local work dir instead of on the storage server
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                retData.CloseoutMsg = "QC graphics were saved locally for debugging purposes; " +
-                                      "need to run this job step with a manager that has write access to the storage server";
+                retData.CloseoutMsg = AppendToComment(retData.CloseoutMsg, errorMessage);
             }
+
+            if (!useLocalOutputDirectory)
+                return retData;
+
+            // Set this to failed since we stored the QC graphics in the local work dir instead of on the storage server
+            retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+            retData.CloseoutMsg = AppendToComment(retData.CloseoutMsg,
+                                                  "QC graphics were saved locally for debugging purposes; " +
+                                                  "need to run this job step with a manager that has write access to the storage server");
 
             return retData;
 
@@ -494,7 +510,7 @@ namespace DatasetInfoPlugin
             return true;
         }
 
-        private void PostDatasetInfoXml(string dsInfoXML, clsToolReturnData retData)
+        private bool PostDatasetInfoXml(string dsInfoXML, out string errorMessage)
         {
             var iPostCount = 0;
             var connectionString = m_MgrParams.GetParam("connectionstring");
@@ -505,8 +521,8 @@ namespace DatasetInfoPlugin
 
             while (iPostCount <= 2)
             {
-                successPosting = m_MsFileScanner.PostDatasetInfoUseDatasetID(iDatasetID, dsInfoXML, connectionString,
-                                                                             MS_FILE_SCANNER_DS_INFO_SP);
+                successPosting = m_MsFileScanner.PostDatasetInfoUseDatasetID(
+                    iDatasetID, dsInfoXML, connectionString, MS_FILE_SCANNER_DS_INFO_SP);
 
                 if (successPosting)
                     break;
@@ -527,7 +543,7 @@ namespace DatasetInfoPlugin
             else
             {
                 errorCode = m_MsFileScanner.ErrorCode;
-                m_Msg = "Error running info scanner. Message = " +
+                m_Msg = "Error posting dataset info XML. Message = " +
                         m_MsFileScanner.GetErrorMessage() + " retData code = " + (int)m_MsFileScanner.ErrorCode;
                 LogError(m_Msg);
             }
@@ -535,15 +551,13 @@ namespace DatasetInfoPlugin
             if (errorCode == iMSFileInfoScanner.eMSFileScannerErrorCodes.NoError)
             {
                 // Everything went wonderfully
-                retData.CloseoutMsg = string.Empty;
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+                errorMessage = string.Empty;
+                return true;
             }
-            else
-            {
-                // Either a bad retData code was returned, or an error event was received
-                retData.CloseoutMsg = "MSFileInfoScanner error";
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-            }
+
+            // Either a non-zero error code was returned, or an error event was received
+            errorMessage = "Error posting dataset info XML";
+            return false;
         }
 
         private void ProcessMultiDatasetInfoScannerResults(
