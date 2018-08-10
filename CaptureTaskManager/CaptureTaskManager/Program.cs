@@ -1,9 +1,15 @@
-﻿//*********************************************************************************************************
-// Written by Dave Clark and Matthew Monroe for the US Department of Energy
-// Pacific Northwest National Laboratory, Richland, WA
-// Copyright 2009, Battelle Memorial Institute
-// Created 09/10/2009
-//*********************************************************************************************************
+﻿// -------------------------------------------------------------------------------
+// Written by Dave Clark and Matthew Monroe for the Department of Energy (PNNL, Richland, WA) in 2009
+//
+// E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov
+// Website: https://omics.pnl.gov/ or https://www.pnnl.gov/sysbio/ or https://panomics.pnnl.gov/
+// -------------------------------------------------------------------------------
+//
+// Licensed under the 2-Clause BSD License; you may not use this file except
+// in compliance with the License.  You may obtain a copy of the License at
+// https://opensource.org/licenses/BSD-2-Clause
+//
+// Copyright 2018 Battelle Memorial Institute
 
 using System;
 using System.Collections.Generic;
@@ -20,7 +26,7 @@ namespace CaptureTaskManager
     /// </summary>
     static class Program
     {
-        private const string PROGRAM_DATE = "August 9, 2018";
+        private const string PROGRAM_DATE = "August 10, 2018";
 
         private static bool mCodeTestMode;
         private static bool mTraceMode;
@@ -294,8 +300,8 @@ namespace CaptureTaskManager
                 Console.WriteLine("Website: https://omics.pnl.gov/ or https://panomics.pnnl.gov/");
                 Console.WriteLine();
 
-                Console.WriteLine("Licensed under the Apache License, Version 2.0; you may not use this file except in compliance with the License.  " +
-                                  "You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0");
+                Console.WriteLine("Licensed under the 2-Clause BSD License; you may not use this file except in compliance with the License. " +
+                                  "You may obtain a copy of the License at https://opensource.org/licenses/BSD-2-Clause");
                 Console.WriteLine();
 
                 Thread.Sleep(1500);
