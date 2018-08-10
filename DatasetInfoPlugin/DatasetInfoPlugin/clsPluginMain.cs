@@ -455,8 +455,8 @@ namespace DatasetInfoPlugin
             }
 
             // Check for dataset acq time gap warnings
-            if (AcqTimeWarningsReported(datasetXmlMerger, retData))
-                return retData;
+            // If any are found, CloseoutMsg is updated
+            AcqTimeWarningsReported(datasetXmlMerger, retData);
 
             // Call SP CacheDatasetInfoXML to store dsInfoXML in table T_Dataset_Info_XML
             var success = PostDatasetInfoXml(dsInfoXML, out var errorMessage);
@@ -486,11 +486,11 @@ namespace DatasetInfoPlugin
         /// <param name="datasetXmlMerger"></param>
         /// <param name="retData"></param>
         /// <returns>True if warnings exist, otherwise false</returns>
-        private bool AcqTimeWarningsReported(clsDatasetInfoXmlMerger datasetXmlMerger, clsToolReturnData retData)
+        private void AcqTimeWarningsReported(clsDatasetInfoXmlMerger datasetXmlMerger, clsToolReturnData retData)
         {
             if (datasetXmlMerger.AcqTimeWarnings.Count == 0)
             {
-                return false;
+                return;
             }
 
             // Large gap found
@@ -504,10 +504,8 @@ namespace DatasetInfoPlugin
 
             LogError(m_Msg);
 
-            retData.CloseoutMsg = "Large gap between acq times: " + datasetXmlMerger.AcqTimeWarnings.FirstOrDefault();
+            retData.CloseoutMsg = AppendToComment(retData.CloseoutMsg, "Large gap between acq times: " + datasetXmlMerger.AcqTimeWarnings.FirstOrDefault());
             retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-
-            return true;
         }
 
         private bool PostDatasetInfoXml(string dsInfoXML, out string errorMessage)
