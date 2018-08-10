@@ -426,16 +426,22 @@ namespace DatasetInfoPlugin
                     retData.CloseoutMsg = m_Msg;
                     retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 
-                    if (mzMinValidationError && !string.IsNullOrWhiteSpace(m_MsFileScanner.DatasetInfoXML))
+                    if (!string.IsNullOrWhiteSpace(m_MsFileScanner.DatasetInfoXML))
                     {
                         cachedDatasetInfoXML.Add(m_MsFileScanner.DatasetInfoXML);
+                    }
 
+                    if (mzMinValidationError)
+                    {
                         var jobParamNote = string.Format(
                             "To ignore this error, use Exec AddUpdateJobParameter {0}, 'JobParameters', 'SkipMinimumMzValidation', 'true'",
                             m_Job);
 
                         retData.CloseoutMsg = AppendToComment(retData.CloseoutMsg, jobParamNote);
+                    }
 
+                    if (cachedDatasetInfoXML.Count > 0)
+                    {
                         // Do not exit this method yet; we want to store the dataset info in the database
                         break;
                     }
@@ -472,7 +478,7 @@ namespace DatasetInfoPlugin
                 retData.CloseoutMsg = AppendToComment(retData.CloseoutMsg, errorMessage);
             }
 
-            if (!useLocalOutputDirectory)
+            if (!useLocalOutputDirectory || retData.CloseoutType != EnumCloseOutType.CLOSEOUT_SUCCESS)
                 return retData;
 
             // Set this to failed since we stored the QC graphics in the local work dir instead of on the storage server
