@@ -426,10 +426,16 @@ namespace DatasetInfoPlugin
                     retData.CloseoutMsg = m_Msg;
                     retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 
-
                     if (mzMinValidationError && !string.IsNullOrWhiteSpace(m_MsFileScanner.DatasetInfoXML))
                     {
                         cachedDatasetInfoXML.Add(m_MsFileScanner.DatasetInfoXML);
+
+                        var jobParamNote = string.Format(
+                            "To ignore this error, use Exec AddUpdateJobParameter {0}, 'JobParameters', 'SkipMinimumMzValidation', 'true'",
+                            m_Job);
+
+                        retData.CloseoutMsg = AppendToComment(retData.CloseoutMsg, jobParamNote);
+
                         // Do not exit this method yet; we want to store the dataset info in the database
                         break;
                     }
@@ -788,6 +794,13 @@ namespace DatasetInfoPlugin
         {
 
             m_MsFileScanner.MS2MzMin = 0;
+
+            if (m_TaskParams.GetParam("SkipMinimumMzValidation", false))
+            {
+                // Skip minimum m/z validation
+                return;
+            }
+
             if (!string.IsNullOrEmpty(sampleLabelling))
             {
 
