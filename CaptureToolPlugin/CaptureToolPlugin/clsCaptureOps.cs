@@ -3109,7 +3109,7 @@ namespace CaptureToolPlugin
             else if (ex.Message.Contains("unknown user name or bad password") || ex.Message.Contains("user name or password"))
             {
                 // This error randomly occurs; no need to log a full stack trace
-                retData.CloseoutMsg = "Authentication failure: " + ex.Message;
+                retData.CloseoutMsg = "Authentication failure: " + ex.Message.Trim('\r', '\n');
                 LogError(retData.CloseoutMsg);
 
                 // Set the EvalCode to 3 so that capture can be retried
