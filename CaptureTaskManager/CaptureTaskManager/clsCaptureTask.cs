@@ -322,7 +322,7 @@ namespace CaptureTaskManager
         /// <param name="evalMsg">Message related to evaluation results</param>
         public override void CloseTask(EnumCloseOutType taskResult, string closeoutMsg, EnumEvalCode evalCode, string evalMsg)
         {
-            var success = SetCaptureTaskComplete(SP_NAME_SET_COMPLETE, (int)taskResult, closeoutMsg, (int)evalCode, evalMsg);
+            var success = SetCaptureTaskComplete((int)taskResult, closeoutMsg, (int)evalCode, evalMsg);
             if (!success)
             {
                 LogError("Error setting task complete in database, job " + GetParam("Job", "??"));
@@ -364,20 +364,19 @@ namespace CaptureTaskManager
         /// <summary>
         /// Database calls to set a capture task complete
         /// </summary>
-        /// <param name="spName">Name of SetComplete stored procedure</param>
         /// <param name="compCode">Integer representation of completion code</param>
         /// <param name="compMsg">Completion message</param>
         /// <param name="evalCode">Integer representation of evaluation code</param>
         /// <param name="evalMsg">Evaluation message</param>
         /// <returns>TRUE for sucesss; FALSE for failure</returns>
-        public bool SetCaptureTaskComplete(string spName, int compCode, string compMsg, int evalCode, string evalMsg)
+        private bool SetCaptureTaskComplete(int compCode, string compMsg, int evalCode, string evalMsg)
         {
             bool outcome;
 
             try
             {
                 // Setup for execution of the stored procedure
-                var spCmd = new SqlCommand(spName)
+                var spCmd = new SqlCommand(SP_NAME_SET_COMPLETE)
                 {
                     CommandType = CommandType.StoredProcedure
                 };
@@ -386,12 +385,12 @@ namespace CaptureTaskManager
                 spCmd.Parameters.Add(new SqlParameter("@job", SqlDbType.Int)).Value = int.Parse(m_JobParams["Job"]);
                 spCmd.Parameters.Add(new SqlParameter("@step", SqlDbType.Int)).Value = int.Parse(m_JobParams["Step"]);
                 spCmd.Parameters.Add(new SqlParameter("@completionCode", SqlDbType.Int)).Value = compCode;
-                spCmd.Parameters.Add(new SqlParameter("@completionMessage", SqlDbType.VarChar, 256)).Value = compMsg;
+                spCmd.Parameters.Add(new SqlParameter("@completionMessage", SqlDbType.VarChar, 512)).Value = compMsg.Trim('\r', '\n');
                 spCmd.Parameters.Add(new SqlParameter("@evaluationCode", SqlDbType.Int)).Value = evalCode;
-                spCmd.Parameters.Add(new SqlParameter("@evaluationMessage", SqlDbType.VarChar, 256)).Value = evalMsg;
+                spCmd.Parameters.Add(new SqlParameter("@evaluationMessage", SqlDbType.VarChar, 256)).Value = evalMsg.Trim('\r', '\n');
                 spCmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
 
-                LogDebug("Calling stored procedure " + spName);
+                LogDebug("Calling stored procedure " + SP_NAME_SET_COMPLETE);
 
                 if (m_DebugLevel >= 5)
                 {
@@ -414,7 +413,7 @@ namespace CaptureTaskManager
             }
             catch (Exception ex)
             {
-                LogError("Exception calling stored procedure " + spName, ex);
+                LogError("Exception calling stored procedure " + SP_NAME_SET_COMPLETE, ex);
                 outcome = false;
             }
 
