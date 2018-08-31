@@ -27,16 +27,6 @@ namespace Pacifica.Core
         }
 
         /// <summary>
-        /// Encode a password
-        /// </summary>
-        /// <param name="password">Clear text password</param>
-        /// <returns>Encoded password</returns>
-        public static string EncodePassword(string password)
-        {
-            return EncryptDecrypt(password, true);
-        }
-
-        /// <summary>
         /// Encode or decode a password
         /// </summary>
         /// <param name="password">Password</param>

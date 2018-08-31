@@ -133,28 +133,6 @@ namespace DatasetArchivePlugin
 
         #region "Methods"
 
-        public static bool OnlyUseMyEMSL(string instrumentName)
-        {
-            /*
-            var lstExclusionPrefix = new List<string>();
-
-            //lstExclusionPrefix.Add("DMS_Pipeline_Data");
-            //                  .Add("QExact");
-            //                  .Add("QTrap");
-            //                  .Add("VOrbi05");
-            //                  .Add("VOrbiETD03");
-
-            foreach (string prefix in lstExclusionPrefix)
-            {
-                if (instrumentName.StartsWith(prefix))
-                    return false;
-            }
-            */
-
-            return true;
-
-        }
-
         /// <summary>
         /// Sets up to perform an archive or update task (Implements IArchiveOps.PerformTask)
         /// Must be overridden in derived class

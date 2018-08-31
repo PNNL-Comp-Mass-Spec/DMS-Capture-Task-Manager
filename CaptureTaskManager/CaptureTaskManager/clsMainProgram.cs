@@ -86,7 +86,6 @@ namespace CaptureTaskManager
 
         private bool m_Running;
         private System.Timers.Timer m_StatusTimer;
-        private bool m_ManagerDeactivatedLocally;
 
         #endregion
 
@@ -99,11 +98,6 @@ namespace CaptureTaskManager
         #endregion
 
         #region "Properties"
-
-        /// <summary>
-        /// When true, the manager is deactivated locally
-        /// </summary>
-        public bool ManagerDeactivatedLocally => m_ManagerDeactivatedLocally;
 
         /// <summary>
         /// When true, show additional messages at the console
@@ -151,7 +145,6 @@ namespace CaptureTaskManager
                     {
                         m_MsgHandler.Dispose();
                     }
-                    restartOK = true;
                     break;
 
                 case LoopExitCode.DisabledMC:
@@ -300,7 +293,7 @@ namespace CaptureTaskManager
             {
                 if (string.Equals(ex.Message, clsMgrSettings.DEACTIVATED_LOCALLY))
                 {
-                    m_ManagerDeactivatedLocally = true;
+                    // Manager is deactivated locally
                 }
                 else
                 {

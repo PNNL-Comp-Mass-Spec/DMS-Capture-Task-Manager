@@ -59,11 +59,6 @@ namespace CaptureTaskManager
         public string ManagerName { get; }
 
         /// <summary>
-        /// True if a task was assigned
-        /// </summary>
-        public bool TaskWasAssigned => m_TaskWasAssigned;
-
-        /// <summary>
         /// Job parameters
         /// </summary>
         public Dictionary<string, string> TaskDictionary => m_JobParams;

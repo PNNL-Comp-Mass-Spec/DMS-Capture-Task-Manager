@@ -20,16 +20,6 @@ namespace SrcFileRenamePlugin
     class clsRenameOps : clsEventNotifier
     {
 
-        #region "Enums"
-        protected enum RawDSTypes
-        {
-            None,
-            File,
-            FolderNoExt,
-            FolderExt
-        }
-        #endregion
-
         #region "Class variables"
         protected IMgrParams m_MgrParams;
         protected string m_Msg = "";
