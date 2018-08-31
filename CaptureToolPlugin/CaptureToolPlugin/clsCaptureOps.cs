@@ -88,7 +88,6 @@ namespace CaptureToolPlugin
         private ShareConnector mShareConnectorPRISM;
         private NetworkConnection m_ShareConnectorDotNET;
         private ConnectionType m_ConnectionType = ConnectionType.NotConnected;
-        private bool mNeedToAbortProcessing;
 
         private readonly clsFileTools mFileTools;
 
@@ -109,7 +108,10 @@ namespace CaptureToolPlugin
 
         #region "Properties"
 
-        public bool NeedToAbortProcessing => mNeedToAbortProcessing;
+        /// <summary>
+        /// Set to true if an error occurs connecting to the source computer
+        /// </summary>
+        public bool NeedToAbortProcessing { get; private set; }
 
         #endregion
 
