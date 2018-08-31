@@ -382,6 +382,78 @@ namespace DatasetQualityPlugin
         }
 
         /// <summary>
+        /// Open a Thermo .raw file and determine both the first MS1 scan and the scan count
+        /// </summary>
+        /// <param name="dataFilePath">Thermo .raw file path</param>
+        /// <param name="firstMS1Scan">First MS1 scan; typically 1, but greater than one for some datasets</param>
+        /// <param name="lastScan">Last Scan Number</param>
+        /// <returns></returns>
+        private bool ExamineThermoRawFileScans(string dataFilePath, out int firstMS1Scan, out int lastScan)
+        {
+            firstMS1Scan = 0;
+            lastScan = 0;
+
+            var firstMS2Scan = 0;
+
+            try
+            {
+                var reader = new ThermoRawFileReader.XRawFileIO(dataFilePath);
+                RegisterEvents(reader);
+
+                var scanStart = reader.FileInfo.ScanStart;
+                lastScan = reader.FileInfo.ScanEnd;
+
+                for (var scanNumber = scanStart; scanNumber <= lastScan; scanNumber++)
+                {
+                    var msLevel = reader.GetMSLevel(scanNumber);
+                    if (msLevel == 1)
+                    {
+                        firstMS1Scan = scanNumber;
+                        break;
+                    }
+
+                    if (msLevel > 1 && firstMS2Scan == 0)
+                    {
+                        firstMS2Scan = scanNumber;
+                    }
+                }
+
+                if (firstMS1Scan > 0)
+                {
+                    if (firstMS1Scan > 1)
+                    {
+                        LogMessage(string.Format("First MS1 scan for {0} is {1}", Path.GetFileName(dataFilePath), firstMS1Scan));
+                    }
+                    return true;
+                }
+
+                if (firstMS1Scan == 0 && firstMS2Scan == 0)
+                {
+                    mRetData.CloseoutMsg = "Dataset has no MS1 or MS2 spectra and is either corrupt or not supported; cannot process with Quameter";
+                    LogWarning(mRetData.CloseoutMsg);
+                    mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+
+                if (firstMS1Scan == 0 && firstMS2Scan > 0)
+                {
+                    mRetData.CloseoutMsg = "Dataset only has MS2 spectra; cannot process with Quameter";
+                    LogWarning(mRetData.CloseoutMsg);
+                    mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                mRetData.CloseoutMsg = "Exception examining scans in the .raw file to determine the first MS1 scan";
+                LogError(mRetData.CloseoutMsg + ": " + ex.Message);
+                mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                return false;
+            }
+
+        }
+
+        /// <summary>
         /// Construct the full path to Quameter.exe
         /// </summary>
         /// <returns></returns>
@@ -826,11 +898,30 @@ namespace DatasetQualityPlugin
                     return false;
                 }
 
+                // Determine the first scan that is MS1 and the last scan number
+                // This is required for .raw files that start with MS2 spectra
+                var scanInfoSuccess = ExamineThermoRawFileScans(dataFilePathLocal, out var firstMS1Scan, out var lastScan);
+
+                if (!scanInfoSuccess)
+                {
+                    if (string.IsNullOrEmpty(mRetData.CloseoutMsg))
+                    {
+                        mRetData.CloseoutMsg = "Error examining scans in the .raw file to determine the first MS1 scan";
+                        LogError(mRetData.CloseoutMsg);
+                    }
+
+                    mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    return false;
+                }
+
                 // Run Quameter
                 mRetData.CloseoutMsg = string.Empty;
-                var bSuccess = RunQuameter(fiQuameter, Path.GetFileName(dataFilePathLocal), QUAMETER_IDFREE_METRICS_FILE, ignoreQuameterFailure, instrumentName, configFilePathTarget);
+                var success = RunQuameter(fiQuameter, Path.GetFileName(dataFilePathLocal),
+                                           QUAMETER_IDFREE_METRICS_FILE, ignoreQuameterFailure,
+                                           instrumentName, configFilePathTarget,
+                                           firstMS1Scan, lastScan);
 
-                if (!bSuccess)
+                if (!success)
                 {
 
                     if (string.IsNullOrEmpty(mRetData.CloseoutMsg))
@@ -975,21 +1066,34 @@ namespace DatasetQualityPlugin
             string metricsOutputFileName,
             bool ignoreQuameterFailure,
             string instrumentName,
-            string configFilePath)
+            string configFilePath,
+            int firstMS1Scan,
+            int lastScan)
         {
             clsRunDosProgram cmdRunner = null;
             try
             {
                 // Construct the command line arguments
                 // Always use "cpus 1" since it guarantees that the metrics will always be written out in the same order
-                var cmdStrQuameter = new StringBuilder();
+                var quameterArgs = new StringBuilder();
 
-                cmdStrQuameter.Append(clsConversion.PossiblyQuotePath(dataFileName));
-                cmdStrQuameter.Append(" -MetricsType idfree");
-                cmdStrQuameter.Append(" -cfg " + clsConversion.PossiblyQuotePath(configFilePath));
-                cmdStrQuameter.Append(" -OutputFilepath " + clsConversion.PossiblyQuotePath(metricsOutputFileName));
-                cmdStrQuameter.Append(" -cpus 1");
-                cmdStrQuameter.Append(" -dump");
+                quameterArgs.Append(clsConversion.PossiblyQuotePath(dataFileName));
+                quameterArgs.Append(" -MetricsType idfree");
+                quameterArgs.Append(" -cfg " + clsConversion.PossiblyQuotePath(configFilePath));
+                quameterArgs.Append(" -OutputFilepath " + clsConversion.PossiblyQuotePath(metricsOutputFileName));
+                quameterArgs.Append(" -cpus 1");
+                quameterArgs.Append(" -dump");
+
+                if (firstMS1Scan > 1)
+                {
+                    // Append the -SpectrumListFilters argument, e.g.
+                    // -SpectrumListFilters: "peakPicking true 1-;threshold absolute 0.00000000001 most-intense; scanNumber [14,24843]"
+                    quameterArgs.Append(" -SpectrumListFilters: \"");
+                    quameterArgs.Append("peakPicking true 1-;");
+                    quameterArgs.Append("threshold absolute 0.00000000001 most-intense;");
+                    quameterArgs.Append(string.Format("scanNumber [{0},{1}]", firstMS1Scan, lastScan));
+                    quameterArgs.Append("\"");
+                }
 
                 cmdRunner = new clsRunDosProgram(m_WorkDir);
                 mQuameterStartTime = DateTime.UtcNow;
