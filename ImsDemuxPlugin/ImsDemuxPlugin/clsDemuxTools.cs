@@ -1149,7 +1149,7 @@ namespace ImsDemuxPlugin
             var reTotalFrames = new Regex(@"frames to demultiplex: (\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             var reCurrentFrame = new Regex(@"Demultiplexing frame (\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-            var totalframeCount = 0;
+            var totalFrameCount = 0;
             var framesProcessed = 0;
 
             try
@@ -1157,36 +1157,36 @@ namespace ImsDemuxPlugin
                 if (string.IsNullOrEmpty(mUimfDemultiplexerConsoleOutputFilePath))
                     return;
 
-                using (var srInFile = new StreamReader(new FileStream(mUimfDemultiplexerConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(mUimfDemultiplexerConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
 
-                    while (srInFile.Peek() >= 0)
+                    while (!reader.EndOfStream)
                     {
-                        var lineIn = srInFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (string.IsNullOrWhiteSpace(lineIn))
+                        if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
-                        if (lineIn.StartsWith("Error in") ||
-                            lineIn.StartsWith("Error:") ||
-                            lineIn.StartsWith("Exception"))
+                        if (dataLine.StartsWith("Error in") ||
+                            dataLine.StartsWith("Error:") ||
+                            dataLine.StartsWith("Exception"))
                         {
-                            if (!mLoggedConsoleOutputErrors.Contains(lineIn))
+                            if (!mLoggedConsoleOutputErrors.Contains(dataLine))
                             {
-                                OnErrorEvent(lineIn);
-                                mLoggedConsoleOutputErrors.Add(lineIn);
+                                OnErrorEvent(dataLine);
+                                mLoggedConsoleOutputErrors.Add(dataLine);
                             }
 
-                            if (lineIn.Contains("OutOfMemoryException"))
+                            if (dataLine.Contains("OutOfMemoryException"))
                                 OutOfMemoryException = true;
 
                         }
-                        else if (lineIn.StartsWith("Warning:"))
+                        else if (dataLine.StartsWith("Warning:"))
                         {
-                            if (!mLoggedConsoleOutputErrors.Contains(lineIn))
+                            if (!mLoggedConsoleOutputErrors.Contains(dataLine))
                             {
-                                OnWarningEvent(lineIn);
-                                mLoggedConsoleOutputErrors.Add(lineIn);
+                                OnWarningEvent(dataLine);
+                                mLoggedConsoleOutputErrors.Add(dataLine);
                             }
                         }
                         else
@@ -1194,7 +1194,7 @@ namespace ImsDemuxPlugin
                             // Compare the line against the various Regex specs
 
                             // % complete (integer values only)
-                            var oMatch = rePercentComplete.Match(lineIn);
+                            var oMatch = rePercentComplete.Match(dataLine);
 
                             if (oMatch.Success)
                             {
@@ -1205,15 +1205,15 @@ namespace ImsDemuxPlugin
                             }
 
                             // Total frames
-                            oMatch = reTotalFrames.Match(lineIn);
+                            oMatch = reTotalFrames.Match(dataLine);
 
                             if (oMatch.Success)
                             {
-                                int.TryParse(oMatch.Groups[1].Value, out totalframeCount);
+                                int.TryParse(oMatch.Groups[1].Value, out totalFrameCount);
                             }
 
                             // Current frame processed
-                            oMatch = reCurrentFrame.Match(lineIn);
+                            oMatch = reCurrentFrame.Match(dataLine);
 
                             if (oMatch.Success)
                             {
@@ -1224,9 +1224,9 @@ namespace ImsDemuxPlugin
                     }
                 }
 
-                if (totalframeCount > 0)
+                if (totalFrameCount > 0)
                 {
-                    var percentCompleteFractional = framesProcessed / (float)totalframeCount * 100;
+                    var percentCompleteFractional = framesProcessed / (float)totalFrameCount * 100;
 
                     if (percentCompleteFractional > mDemuxProgressPercentComplete)
                         mDemuxProgressPercentComplete = percentCompleteFractional;

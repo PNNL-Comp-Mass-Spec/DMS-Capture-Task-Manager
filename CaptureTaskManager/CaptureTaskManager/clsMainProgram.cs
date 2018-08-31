@@ -422,8 +422,8 @@ namespace CaptureTaskManager
             m_StatusTimer.Elapsed += m_StatusTimer_Elapsed;
 
             // Get the most recent job history
-            var historyFile = Path.Combine(m_MgrSettings.GetParam("ApplicationPath"), "History.txt");
-            if (!File.Exists(historyFile))
+            var historyFilePath = Path.Combine(m_MgrSettings.GetParam("ApplicationPath"), "History.txt");
+            if (!File.Exists(historyFilePath))
             {
                 return true;
             }
@@ -432,16 +432,19 @@ namespace CaptureTaskManager
             {
                 // Create an instance of StreamReader to read from a file.
                 // The using statement also closes the StreamReader.
-                using (var sr = new StreamReader(historyFile))
+                using (var reader = new StreamReader(new FileStream(historyFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    string line;
                     // Read and display lines from the file until the end of
                     // the file is reached.
-                    while ((line = sr.ReadLine()) != null)
+                    while (!reader.EndOfStream)
                     {
-                        if (line.Contains("RecentJob: "))
+                        var dataLine = reader.ReadLine();
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                            continue;
+
+                        if (dataLine.Contains("RecentJob: "))
                         {
-                            var tmpStr = line.Replace("RecentJob: ", "");
+                            var tmpStr = dataLine.Replace("RecentJob: ", "");
                             m_StatusFile.MostRecentJobInfo = tmpStr;
                             break;
                         }

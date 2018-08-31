@@ -105,7 +105,7 @@ namespace DatasetQualityPlugin
             var storagePath = m_TaskParams.GetParam("Storage_Path");
             var datasetFolder = Path.Combine(storageVolExt, Path.Combine(storagePath, m_Dataset));
             string dataFilePathRemote;
-            var bRunQuameter = false;
+            var runQuameter = false;
 
             var instClassName = m_TaskParams.GetParam("Instrument_Class");
 
@@ -150,11 +150,11 @@ namespace DatasetQualityPlugin
             }
 
             if (!string.IsNullOrEmpty(dataFilePathRemote))
-                bRunQuameter = true;
+                runQuameter = true;
 
             // Store the version info in the database
             // Store the Quameter version if dataFileNamePath is not empty
-            if (!StoreToolVersionInfo(bRunQuameter))
+            if (!StoreToolVersionInfo(runQuameter))
             {
                 LogError("Aborting since StoreToolVersionInfo returned false");
                 mRetData.CloseoutMsg = "Error determining tool version info";
@@ -162,7 +162,7 @@ namespace DatasetQualityPlugin
                 return false;
             }
 
-            if (!bRunQuameter)
+            if (!runQuameter)
             {
                 msg = "Skipped Quameter since " + skipReason;
                 mRetData.EvalMsg = string.Copy(msg);
@@ -187,12 +187,12 @@ namespace DatasetQualityPlugin
                 return false;
             }
 
-            var fiDataFile = new FileInfo(dataFilePathRemote);
-            if (!fiDataFile.Exists)
+            var instrumentDataFile = new FileInfo(dataFilePathRemote);
+            if (!instrumentDataFile.Exists)
             {
                 // File has likely been purged from the storage server
                 // Look in the Aurora archive (aurora.emsl.pnl.gov) using samba; was previously a2.emsl.pnl.gov
-                var dataFilePathArchive = Path.Combine(m_TaskParams.GetParam("Archive_Network_Share_Path"), m_TaskParams.GetParam("Folder"), fiDataFile.Name);
+                var dataFilePathArchive = Path.Combine(m_TaskParams.GetParam("Archive_Network_Share_Path"), m_TaskParams.GetParam("Folder"), instrumentDataFile.Name);
 
                 var fiDataFileInArchive = new FileInfo(dataFilePathArchive);
                 if (fiDataFileInArchive.Exists)
@@ -424,20 +424,20 @@ namespace DatasetQualityPlugin
                 LogDebug("Parsing Quameter Results file " + ResultsFilePath);
             }
 
-            using (var srInFile = new StreamReader(new FileStream(ResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+            using (var reader = new StreamReader(new FileStream(ResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
             {
-                string sLineIn;
-                if (srInFile.Peek() > -1)
+                string headerLine;
+                if (!reader.EndOfStream)
                 {
                     // Read the header line
-                    sLineIn = srInFile.ReadLine();
+                    headerLine = reader.ReadLine();
                 }
                 else
                 {
-                    sLineIn = string.Empty;
+                    headerLine = string.Empty;
                 }
 
-                if (string.IsNullOrWhiteSpace(sLineIn))
+                if (string.IsNullOrWhiteSpace(headerLine))
                 {
                     mRetData.CloseoutMsg = "Quameter Results file is empty (no header line)";
                     LogDebug(mRetData.CloseoutMsg);
@@ -445,20 +445,20 @@ namespace DatasetQualityPlugin
                 }
 
                 // Parse the headers
-                var strHeaders = sLineIn.Split('\t');
+                var headerNames = headerLine.Split('\t');
 
-                if (srInFile.Peek() > -1)
+                string dataLine;
+                if (!reader.EndOfStream)
                 {
                     // Read the data line
-                    // Read the header line
-                    sLineIn = srInFile.ReadLine();
+                    dataLine = reader.ReadLine();
                 }
                 else
                 {
-                    sLineIn = string.Empty;
+                    dataLine = string.Empty;
                 }
 
-                if (string.IsNullOrWhiteSpace(sLineIn))
+                if (string.IsNullOrWhiteSpace(dataLine))
                 {
                     mRetData.CloseoutMsg = "Quameter Results file is empty (headers, but no data)";
                     LogDebug(mRetData.CloseoutMsg);
@@ -466,12 +466,12 @@ namespace DatasetQualityPlugin
                 }
 
                 // Parse the data
-                var strData = sLineIn.Split('\t');
+                var dataValues = dataLine.Split('\t');
 
-                if (strHeaders.Length > strData.Length)
+                if (headerNames.Length > dataValues.Length)
                 {
                     // More headers than data values
-                    mRetData.CloseoutMsg = "Quameter Results file data line (" + strData.Length + " items) does not match the header line (" + strHeaders.Length + " items)";
+                    mRetData.CloseoutMsg = "Quameter Results file data line (" + dataValues.Length + " items) does not match the header line (" + headerNames.Length + " items)";
                     LogDebug(mRetData.CloseoutMsg);
                     return lstResults;
                 }
@@ -479,11 +479,11 @@ namespace DatasetQualityPlugin
                 // Store the results by stepping through the arrays
                 // Skip the first two items provided they are "filename" and "StartTimeStamp")
                 var indexStart = 0;
-                if (strHeaders[indexStart].ToLower() == "filename")
+                if (headerNames[indexStart].ToLower() == "filename")
                 {
                     indexStart++;
 
-                    if (strHeaders[indexStart].Equals("StartTimestamp", StringComparison.OrdinalIgnoreCase))
+                    if (headerNames[indexStart].Equals("StartTimestamp", StringComparison.OrdinalIgnoreCase))
                     {
                         indexStart++;
                     }
@@ -497,22 +497,22 @@ namespace DatasetQualityPlugin
                     LogWarning("The first column in the Quameter metrics file is not Filename; this is unexpected");
                 }
 
-                for (var index = indexStart; index < strHeaders.Length; index++)
+                for (var index = indexStart; index < headerNames.Length; index++)
                 {
-                    if (string.IsNullOrWhiteSpace(strHeaders[index]))
+                    if (string.IsNullOrWhiteSpace(headerNames[index]))
                     {
                         LogWarning("Column " + (index + 1) + " in the Quameter metrics file is empty; this is unexpected");
                     }
                     else
                     {
                         // Replace dashes with underscores in the metric names
-                        var sHeaderName = strHeaders[index].Trim().Replace("-", "_");
+                        var sHeaderName = headerNames[index].Trim().Replace("-", "_");
 
                         string sDataItem;
-                        if (string.IsNullOrWhiteSpace(strData[index]))
+                        if (string.IsNullOrWhiteSpace(dataValues[index]))
                             sDataItem = string.Empty;
                         else
-                            sDataItem = string.Copy(strData[index]).Trim();
+                            sDataItem = string.Copy(dataValues[index]).Trim();
 
                         lstResults.Add(new KeyValuePair<string, string>(sHeaderName, sDataItem));
                     }
@@ -527,52 +527,52 @@ namespace DatasetQualityPlugin
 
         private void ParseConsoleOutputFileForErrors(string sConsoleOutputFilePath)
         {
-            var blnUnhandledException = false;
-            var sExceptionText = string.Empty;
+            var unhandledException = false;
+            var exceptionText = string.Empty;
 
             try
             {
-                if (File.Exists(sConsoleOutputFilePath))
+                if (!File.Exists(sConsoleOutputFilePath))
+                    return;
+
+                using (var reader = new StreamReader(new FileStream(sConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    using (var srInFile = new StreamReader(new FileStream(sConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+
+                    while (!reader.EndOfStream)
                     {
+                        var dataLine = reader.ReadLine();
 
-                        while (srInFile.Peek() > -1)
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                            continue;
+
+                        if (unhandledException)
                         {
-                            var sLineIn = srInFile.ReadLine();
-
-                            if (!string.IsNullOrEmpty(sLineIn))
+                            if (string.IsNullOrEmpty(exceptionText))
                             {
-                                if (blnUnhandledException)
-                                {
-                                    if (string.IsNullOrEmpty(sExceptionText))
-                                    {
-                                        sExceptionText = string.Copy(sLineIn);
-                                    }
-                                    else
-                                    {
-                                        sExceptionText = ";" + sLineIn;
-                                    }
-
-                                }
-                                else if (sLineIn.StartsWith("Error:"))
-                                {
-                                    LogError("Quameter error: " + sLineIn);
-
-                                }
-                                else if (sLineIn.StartsWith("Unhandled Exception"))
-                                {
-                                    LogError("Quameter error: " + sLineIn);
-                                    blnUnhandledException = true;
-                                }
+                                exceptionText = string.Copy(dataLine);
                             }
+                            else
+                            {
+                                exceptionText = "; " + dataLine;
+                            }
+
+                        }
+                        else if (dataLine.StartsWith("Error:"))
+                        {
+                            LogError("Quameter error: " + dataLine);
+
+                        }
+                        else if (dataLine.StartsWith("Unhandled Exception"))
+                        {
+                            LogError("Quameter error: " + dataLine);
+                            unhandledException = true;
                         }
                     }
+                }
 
-                    if (!string.IsNullOrEmpty(sExceptionText))
-                    {
-                        LogError(sExceptionText);
-                    }
+                if (!string.IsNullOrEmpty(exceptionText))
+                {
+                    LogError(exceptionText);
                 }
 
             }
@@ -585,28 +585,28 @@ namespace DatasetQualityPlugin
 
         private void ParseDatasetInfoFile(string datasetFolderPath, string datasetName, out int scanCount, out int scanCountMS)
         {
-            var fiDatasetInfo = new FileInfo(Path.Combine(datasetFolderPath, "QC", datasetName + "_DatasetInfo.xml"));
+            var datasetInfoFile = new FileInfo(Path.Combine(datasetFolderPath, "QC", datasetName + "_DatasetInfo.xml"));
 
             scanCount = 0;
             scanCountMS = 0;
 
-            if (!fiDatasetInfo.Exists)
+            if (!datasetInfoFile.Exists)
                 return;
 
-            using (var xmlReader = new XmlTextReader(new FileStream(fiDatasetInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.Write)))
+            using (var reader = new XmlTextReader(new FileStream(datasetInfoFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Write)))
             {
-                while (xmlReader.Read())
+                while (reader.Read())
                 {
-                    if (xmlReader.NodeType != XmlNodeType.Element)
+                    if (reader.NodeType != XmlNodeType.Element)
                         continue;
 
-                    switch (xmlReader.Name)
+                    switch (reader.Name)
                     {
                         case "ScanCount":
-                            scanCount = xmlReader.ReadElementContentAsInt();
+                            scanCount = reader.ReadElementContentAsInt();
                             break;
                         case "ScanCountMS":
-                            scanCountMS = xmlReader.ReadElementContentAsInt();
+                            scanCountMS = reader.ReadElementContentAsInt();
                             break;
                     }
                 }
@@ -620,15 +620,15 @@ namespace DatasetQualityPlugin
 
             try
             {
-                var sCorrectedFilePath = metricsOutputFileName + ".new";
+                var correctedFilePath = metricsOutputFileName + ".new";
 
-                using (var swCorrectedFile = new StreamWriter(new FileStream(sCorrectedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var correctedFileWriter = new StreamWriter(new FileStream(correctedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    using (var srMetricsFile = new StreamReader(new FileStream(metricsOutputFileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                    using (var metricsReader = new StreamReader(new FileStream(metricsOutputFileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                     {
-                        while (srMetricsFile.Peek() > -1)
+                        while (!metricsReader.EndOfStream)
                         {
-                            var dataLine = srMetricsFile.ReadLine();
+                            var dataLine = metricsReader.ReadLine();
 
                             if (!string.IsNullOrEmpty(dataLine))
                             {
@@ -637,11 +637,11 @@ namespace DatasetQualityPlugin
                                     dataLine = dataLine.Replace("-1.#IND", "");
                                     replaceOriginal = true;
                                 }
-                                swCorrectedFile.WriteLine(dataLine);
+                                correctedFileWriter.WriteLine(dataLine);
                             }
                             else
                             {
-                                swCorrectedFile.WriteLine();
+                                correctedFileWriter.WriteLine();
                             }
                         }
                     }
@@ -652,7 +652,7 @@ namespace DatasetQualityPlugin
                     System.Threading.Thread.Sleep(100);
 
                     // Corrections were made; replace the original file
-                    File.Copy(sCorrectedFilePath, metricsOutputFileName, true);
+                    File.Copy(correctedFilePath, metricsOutputFileName, true);
                 }
             }
             catch (Exception ex)
@@ -1002,20 +1002,20 @@ namespace DatasetQualityPlugin
                 // Capture the console output (including output to the error stream) via redirection symbols:
                 //    strExePath CmdStr > ConsoleOutputFile.txt 2>&1
 
-                const string sBatchFileName = "Run_Quameter.bat";
+                const string batchFileName = "Run_Quameter.bat";
 
                 // Update the Exe path to point to the RunProgram batch file; update CmdStr to be empty
-                var sExePath = Path.Combine(m_WorkDir, sBatchFileName);
+                var sExePath = Path.Combine(m_WorkDir, batchFileName);
                 var cmdStr = string.Empty;
 
-                const string sConsoleOutputFileName = QUAMETER_CONSOLE_OUTPUT_FILE;
+                const string consoleOutputFileName = QUAMETER_CONSOLE_OUTPUT_FILE;
 
                 // Create the batch file
                 using (var swBatchFile = new StreamWriter(new FileStream(sExePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    var batchCommand = fiQuameter.FullName + " " + cmdStrQuameter + " > " + sConsoleOutputFileName + " 2>&1";
+                    var batchCommand = fiQuameter.FullName + " " + quameterArgs + " > " + consoleOutputFileName + " 2>&1";
 
-                    LogMessage("Creating " + sBatchFileName + " with: " + batchCommand);
+                    LogMessage("Creating " + batchFileName + " with: " + batchCommand);
                     swBatchFile.WriteLine(batchCommand);
                 }
 
@@ -1029,7 +1029,7 @@ namespace DatasetQualityPlugin
                 const int iMaxRuntimeSeconds = MAX_QUAMETER_RUNTIME_MINUTES * 60;
                 var bSuccess = cmdRunner.RunProgram(sExePath, cmdStr, "Quameter", true, iMaxRuntimeSeconds);
 
-                ParseConsoleOutputFileForErrors(Path.Combine(m_WorkDir, sConsoleOutputFileName));
+                ParseConsoleOutputFileForErrors(Path.Combine(m_WorkDir, consoleOutputFileName));
 
                 if (!bSuccess)
                 {

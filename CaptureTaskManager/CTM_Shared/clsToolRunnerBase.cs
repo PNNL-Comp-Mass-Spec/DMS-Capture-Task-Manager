@@ -484,39 +484,37 @@ namespace CaptureTaskManager
 
                 var success = false;
 
-                using (var srInFile = new StreamReader(new FileStream(strVersionInfoFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(strVersionInfoFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    while (!srInFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
+                        var dataLine = reader.ReadLine();
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                            continue;
 
-                        if (string.IsNullOrWhiteSpace(strLineIn))
+                        var equalsIndex = dataLine.IndexOf('=');
+
+                        if (equalsIndex <= 0)
                         {
                             continue;
                         }
-                        var intEqualsLoc = strLineIn.IndexOf('=');
 
-                        if (intEqualsLoc <= 0)
+                        var keyName = dataLine.Substring(0, equalsIndex);
+                        var value = string.Empty;
+
+                        if (equalsIndex < dataLine.Length)
                         {
-                            continue;
+                            value = dataLine.Substring(equalsIndex + 1);
                         }
 
-                        var strKey = strLineIn.Substring(0, intEqualsLoc);
-                        var strValue = string.Empty;
-
-                        if (intEqualsLoc < strLineIn.Length)
-                        {
-                            strValue = strLineIn.Substring(intEqualsLoc + 1);
-                        }
-
-                        switch (strKey.ToLower())
+                        switch (keyName.ToLower())
                         {
                             case "filename":
                                 break;
                             case "path":
                                 break;
                             case "version":
-                                strVersion = string.Copy(strValue);
+                                strVersion = string.Copy(value);
                                 if (string.IsNullOrWhiteSpace(strVersion))
                                 {
                                     LogError("Empty version line in Version Info file for " +
@@ -530,7 +528,7 @@ namespace CaptureTaskManager
                                 break;
                             case "error":
                                 LogError("Error reported by DLLVersionInspector for " +
-                                         Path.GetFileName(dllFilePath) + ": " + strValue);
+                                         Path.GetFileName(dllFilePath) + ": " + value);
                                 success = false;
                                 break;
                         }

@@ -817,8 +817,8 @@ namespace DatasetIntegrityPlugin
 
         private void ParseConsoleOutputFileForErrors(string consoleOutputFilePath)
         {
-            var blnUnhandledException = false;
-            var sExceptionText = string.Empty;
+            var unhandledException = false;
+            var exceptionText = string.Empty;
 
             try
             {
@@ -827,48 +827,48 @@ namespace DatasetIntegrityPlugin
                     return;
                 }
 
-                using (var srInFile = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
 
-                    while (srInFile.Peek() > -1)
+                    while (!reader.EndOfStream)
                     {
-                        var sLineIn = srInFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                        if (string.IsNullOrEmpty(sLineIn))
+                        if (string.IsNullOrEmpty(dataLine))
                         {
                             continue;
                         }
 
-                        if (blnUnhandledException)
+                        if (unhandledException)
                         {
-                            if (string.IsNullOrEmpty(sExceptionText))
+                            if (string.IsNullOrEmpty(exceptionText))
                             {
-                                sExceptionText = string.Copy(sLineIn);
+                                exceptionText = string.Copy(dataLine);
                             }
                             else
                             {
-                                sExceptionText = ";" + sLineIn;
+                                exceptionText = "; " + dataLine;
                             }
                         }
-                        else if (sLineIn.StartsWith("Error:"))
+                        else if (dataLine.StartsWith("Error:"))
                         {
-                            LogError("AgilentToUIMFConverter error: " + sLineIn);
+                            LogError("AgilentToUIMFConverter error: " + dataLine);
                         }
-                        else if (sLineIn.StartsWith("Exception in"))
+                        else if (dataLine.StartsWith("Exception in"))
                         {
-                            LogError("AgilentToUIMFConverter error: " + sLineIn);
+                            LogError("AgilentToUIMFConverter error: " + dataLine);
                         }
-                        else if (sLineIn.StartsWith("Unhandled Exception"))
+                        else if (dataLine.StartsWith("Unhandled Exception"))
                         {
-                            LogError("AgilentToUIMFConverter error: " + sLineIn);
-                            blnUnhandledException = true;
+                            LogError("AgilentToUIMFConverter error: " + dataLine);
+                            unhandledException = true;
                         }
                     }
                 }
 
-                if (!string.IsNullOrEmpty(sExceptionText))
+                if (!string.IsNullOrEmpty(exceptionText))
                 {
-                    LogError(sExceptionText);
+                    LogError(exceptionText);
                 }
             }
             catch (Exception ex)

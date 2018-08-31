@@ -13,11 +13,11 @@ namespace CaptureTaskManager
 
             var lstCredentials = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
 
-            var sShareFolderPath = @"\\15T_FTICR.bionet\ProteomicsData";
+            var sharePath = @"\\15T_FTICR.bionet\ProteomicsData";
 
-            // Make sure sShareFolderPath does not end in a back slash
-            if (sShareFolderPath.EndsWith(@"\"))
-                sShareFolderPath = sShareFolderPath.Substring(0, sShareFolderPath.Length - 1);
+            // Make sure sharePath does not end in a back slash
+            if (sharePath.EndsWith(@"\"))
+                sharePath = sharePath.Substring(0, sharePath.Length - 1);
 
             lstCredentials.Add("ftms", "PasswordHere");
             lstCredentials.Add("lcmsoperator", "PasswordHere");
@@ -34,11 +34,11 @@ namespace CaptureTaskManager
 
                         Console.WriteLine(@"Credentials created for " + enumCurrent.Current.Key);
 
-                        var cnBionet = new NetworkConnection(sShareFolderPath, accessCredentials);
+                        var cnBionet = new NetworkConnection(sharePath, accessCredentials);
 
                         Console.WriteLine(@"Connected to share");
 
-                        var diDirectory = new System.IO.DirectoryInfo(sShareFolderPath);
+                        var diDirectory = new System.IO.DirectoryInfo(sharePath);
 
                         Console.WriteLine(@"Instantiated DirectoryInfo object: " + diDirectory.FullName);
 

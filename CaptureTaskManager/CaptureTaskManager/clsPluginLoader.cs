@@ -80,10 +80,10 @@ namespace CaptureTaskManager
         {
             var xPath = "//ToolRunners/ToolRunner[@Tool='" + toolName.ToLower() + "']";
             var className = "";
-            var assyName = "";
+            var assemblyName = "";
             IToolRunner myToolRunner = null;
 
-            if (GetPluginInfo(xPath, ref className, ref assyName))
+            if (GetPluginInfo(xPath, ref className, ref assemblyName))
             {
 #if PLUGIN_DEBUG_MODE_ENABLED
                 myToolRunner = DebugModeGetToolRunner(className);
@@ -93,14 +93,14 @@ namespace CaptureTaskManager
                 }
 #endif
 
-                var newInstance = LoadObject(className, assyName);
+                var newInstance = LoadObject(className, assemblyName);
 
                 if (newInstance != null)
                 {
                     try
                     {
                         myToolRunner = (IToolRunner)newInstance;
-                        LogDebug("Loaded tool runner: " + className + " from " + assyName);
+                        LogDebug("Loaded tool runner: " + className + " from " + assemblyName);
                     }
                     catch (Exception ex)
                     {
@@ -109,7 +109,7 @@ namespace CaptureTaskManager
                 }
                 else
                 {
-                    LogError("Unable to load tool runner: " + className + " from " + assyName);
+                    LogError("Unable to load tool runner: " + className + " from " + assemblyName);
                 }
             }
             return myToolRunner;
@@ -120,9 +120,9 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="xPath">XPath spec for specified plugin</param>
         /// <param name="className">Name of class for plugin (return value)</param>
-        /// <param name="assyName">Name of assembly for plugin (return value)</param>
+        /// <param name="assemblyName">Name of assembly for plugin (return value)</param>
         /// <returns>TRUE for success, FALSE for failure</returns>
-        private static bool GetPluginInfo(string xPath, ref string className, ref string assyName)
+        private static bool GetPluginInfo(string xPath, ref string className, ref string assemblyName)
         {
             var doc = new XmlDocument();
             var strPluginInfo = string.Empty;
@@ -131,9 +131,9 @@ namespace CaptureTaskManager
             {
                 if (xPath == null) xPath = string.Empty;
                 if (className == null) className = string.Empty;
-                if (assyName == null) assyName = string.Empty;
+                if (assemblyName == null) assemblyName = string.Empty;
 
-                strPluginInfo = "XPath=\"" + xPath + "\"; className=\"" + className + "\"; assyName=" + assyName + "\"";
+                strPluginInfo = "XPath=\"" + xPath + "\"; className=\"" + className + "\"; assemblyName=" + assemblyName + "\"";
 
                 // Read the tool runner info file
                 doc.Load(GetPluginInfoFilePath(FileName));
@@ -154,7 +154,7 @@ namespace CaptureTaskManager
                     foreach (XmlElement el in nodeList)
                     {
                         className = el.GetAttribute("Class");
-                        assyName = el.GetAttribute("AssemblyFile");
+                        assemblyName = el.GetAttribute("AssemblyFile");
                     }
                 }
                 else
@@ -188,16 +188,16 @@ namespace CaptureTaskManager
         /// Loads the specifed dll
         /// </summary>
         /// <param name="className">Name of class to load (from GetPluginInfo)</param>
-        /// <param name="assyName">Name of assembly to load (from GetPluginInfo)</param>
+        /// <param name="assemblyName">Name of assembly to load (from GetPluginInfo)</param>
         /// <returns>An object referencing the specified dll</returns>
-        private static object LoadObject(string className, string assyName)
+        private static object LoadObject(string className, string assemblyName)
         {
             object obj = null;
             try
             {
                 // Build instance of tool runner class from class and assembly names
-                var assem = Assembly.LoadFrom(GetPluginInfoFilePath(assyName));
-                var dllType = assem.GetType(className, false, true);
+                var assembly = Assembly.LoadFrom(GetPluginInfoFilePath(assemblyName));
+                var dllType = assembly.GetType(className, false, true);
                 obj = Activator.CreateInstance(dllType);
             }
             catch (Exception ex)

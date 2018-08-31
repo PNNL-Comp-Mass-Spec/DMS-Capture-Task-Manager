@@ -348,31 +348,32 @@ namespace ImsDemuxPlugin
 
         protected bool CheckForCalibrationError(string dsPath)
         {
-            var sCalibrationLogPath = Path.Combine(dsPath, clsDemuxTools.CALIBRATION_LOG_FILE);
-            var bCalibrationError = false;
+            var calibrationLogPath = Path.Combine(dsPath, clsDemuxTools.CALIBRATION_LOG_FILE);
 
-            if (File.Exists(sCalibrationLogPath))
+            if (!File.Exists(calibrationLogPath))
+                return false;
+
+            var calibrationError = false;
+
+            using (var reader = new StreamReader(new FileStream(calibrationLogPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
             {
-                var srInFile = new StreamReader(new FileStream(sCalibrationLogPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
-                while (srInFile.Peek() >= 0)
+                while (!reader.EndOfStream)
                 {
-                    var sLine = srInFile.ReadLine();
+                    var dataLine = reader.ReadLine();
 
-                    if (!string.IsNullOrEmpty(sLine) && sLine.Trim().Length > 0)
-                    {
-                        if (sLine.Contains(COULD_NOT_OBTAIN_GOOD_CALIBRATION))
-                            bCalibrationError = true;
-                        else
-                            // Only count this as a calibration error if the last non-blank line of the file contains the error message
-                            bCalibrationError = false;
-                    }
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
+
+                    if (dataLine.Contains(COULD_NOT_OBTAIN_GOOD_CALIBRATION))
+                        calibrationError = true;
+                    else
+                        // Only count this as a calibration error if the last non-blank line of the file contains the error message
+                        calibrationError = false;
                 }
-
-                srInFile.Close();
             }
 
-            return bCalibrationError;
+            return calibrationError;
         }
 
         protected bool CheckForManualCalibration(string decodedUimfFilePath, out double calibrationSlope, out double calibrationIntercept)
