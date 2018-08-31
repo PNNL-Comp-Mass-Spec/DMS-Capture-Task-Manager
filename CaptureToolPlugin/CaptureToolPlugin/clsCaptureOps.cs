@@ -605,30 +605,36 @@ namespace CaptureToolPlugin
         }
 
         /// <summary>
-        /// Prefixes specified folder name with "x_"
+        /// Prefixes specified directory name with "x_"
         /// </summary>
-        /// <param name="DSPath">Full path specifying folder to be renamed</param>
+        /// <param name="directoryPath">Full path specifying directory to be renamed</param>
         /// <returns>TRUE for success, FALSE for failure</returns>
-        private bool RenameDatasetFolder(string DSPath)
+        private bool RenameDatasetDirectory(string directoryPath)
         {
-            // Rename dataset folder on instrument
             try
             {
-                var di = new DirectoryInfo(DSPath);
-                if (di.Parent == null)
+                var targetDirectory = new DirectoryInfo(directoryPath);
+                if (targetDirectory.Parent == null)
                     return true;
 
-                var n = Path.Combine(di.Parent.FullName, "x_" + di.Name);
-                di.MoveTo(n);
+                var newDirectoryPath = Path.Combine(targetDirectory.Parent.FullName, "x_" + targetDirectory.Name);
+                targetDirectory.MoveTo(newDirectoryPath);
 
-                var msg = "Renamed directory " + DSPath;
+                if (Directory.Exists(newDirectoryPath))
+                {
+                    mErrorMessage = "Cannot add x_ to directory; the target already exists: " + newDirectoryPath;
+                    LogError(mErrorMessage);
+                    return false;
+                }
+
+                var msg = "Added x_ to directory " + directoryPath;
                 LogMessage(msg);
 
                 return true;
             }
             catch (Exception ex)
             {
-                mErrorMessage = "Error renaming directory " + DSPath;
+                mErrorMessage = "Error adding x_ to directory " + directoryPath;
                 LogError(mErrorMessage, ex);
                 return false;
             }
