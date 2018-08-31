@@ -21,7 +21,7 @@ namespace CaptureToolPlugin
 
         public clsCaptureOps.RawDSTypes DatasetType { get; set; }
 
-        public string FileOrFolderName { get; set; }
+        public string FileOrDirectoryName { get; set; }
 
         public FileInfo[] FileList { get; set; }
 

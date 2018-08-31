@@ -11,6 +11,7 @@ namespace ArchiveStatusCheckPlugin
     /// <summary>
     /// Archive status check plugin
     /// </summary>
+    // ReSharper disable once UnusedMember.Global
     public class clsPluginMain : clsToolRunnerBase
     {
 
@@ -386,7 +387,7 @@ namespace ArchiveStatusCheckPlugin
                     dctStatusData.First().Value.ExistingErrorCode == 101)
                 {
                     // The verification of this step has already been manually skipped (an admin set the ErrorCode to -1 or 101)
-                    // Return an empty dictioary
+                    // Return an empty dictionary
                     return new Dictionary<int, clsIngestStatusInfo>();
                 }
 
@@ -421,7 +422,7 @@ namespace ArchiveStatusCheckPlugin
         private void GetStatusURIsAndSubfolders(string sql, IDictionary<int, clsIngestStatusInfo> dctStatusData, int retryCount = 2)
         {
             // This Connection String points to the DMS_Capture database
-            var connectionString = m_MgrParams.GetParam("connectionstring");
+            var connectionString = m_MgrParams.GetParam("ConnectionString");
 
             while (retryCount >= 0)
             {

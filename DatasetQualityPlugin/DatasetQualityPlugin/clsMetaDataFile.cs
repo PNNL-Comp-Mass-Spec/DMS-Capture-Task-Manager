@@ -67,7 +67,7 @@ namespace DatasetQualityPlugin
                 xWriter.WriteEndDocument();
                 xWriter.Flush();
 
-                // Use a streamreader to copy the XML text to a string variable
+                // Use a StreamReader to copy the XML text to a string variable
                 memStream.Seek(0, SeekOrigin.Begin);
                 var memStreamReader = new StreamReader(memStream);
                 xmlText = memStreamReader.ReadToEnd();

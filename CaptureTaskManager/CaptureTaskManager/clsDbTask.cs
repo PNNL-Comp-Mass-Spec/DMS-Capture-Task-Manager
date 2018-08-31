@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 
+// ReSharper disable UnusedMember.Global
 namespace CaptureTaskManager
 {
     /// <summary>
@@ -90,7 +91,7 @@ namespace CaptureTaskManager
 
             // Cache the log level
             // 4 means Info level (normal) logging; 5 for Debug level (verbose) logging
-            m_DebugLevel = mgrParams.GetParam("debuglevel", 4);
+            m_DebugLevel = mgrParams.GetParam("DebugLevel", 4);
         }
 
         #endregion
@@ -139,7 +140,7 @@ namespace CaptureTaskManager
         /// <param name="inpCmd">SQL command object containing params</param>
         protected virtual void PrintCommandParams(SqlCommand inpCmd)
         {
-            // Verify there really are command paramters
+            // Verify there really are command parameters
             if (inpCmd == null)
                 return;
 

@@ -13,6 +13,7 @@ namespace SrcFileRenamePlugin
     /// <summary>
     /// Source file rename plugin
     /// </summary>
+    // ReSharper disable once UnusedMember.Global
     public class clsPluginMain : clsToolRunnerBase
     {
 
@@ -111,34 +112,34 @@ namespace SrcFileRenamePlugin
             LogDebug("Determining tool version info");
 
             var strToolVersionInfo = string.Empty;
-            var appFolder = clsUtilities.GetAppFolderPath();
+            var appDirectory = clsUtilities.GetAppDirectoryPath();
 
-            if (string.IsNullOrWhiteSpace(appFolder))
+            if (string.IsNullOrWhiteSpace(appDirectory))
             {
-                LogError("GetAppFolderPath returned an empty directory path to StoreToolVersionInfo for the Source File Rename plugin");
+                LogError("GetAppDirectoryPath returned an empty directory path to StoreToolVersionInfo for the Source File Rename plugin");
                 return false;
             }
 
             // Lookup the version of the Source File Rename plugin
-            var strPluginPath = System.IO.Path.Combine(appFolder, "SrcFileRenamePlugin.dll");
+            var strPluginPath = System.IO.Path.Combine(appDirectory, "SrcFileRenamePlugin.dll");
             var bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strPluginPath);
             if (!bSuccess)
                 return false;
 
             // Lookup the version of the Capture task manager
-            var strCTMPath = System.IO.Path.Combine(appFolder, "CaptureTaskManager.exe");
+            var strCTMPath = System.IO.Path.Combine(appDirectory, "CaptureTaskManager.exe");
             bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strCTMPath);
             if (!bSuccess)
                 return false;
 
-            // Store path to SrcFileRenamePlugin.dll in ioToolFiles
-            var ioToolFiles = new System.Collections.Generic.List<System.IO.FileInfo> {
+            // Store path to SrcFileRenamePlugin.dll in toolFiles
+            var toolFiles = new System.Collections.Generic.List<System.IO.FileInfo> {
                 new System.IO.FileInfo(strPluginPath)
             };
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, false);
+                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, false);
             }
             catch (Exception ex)
             {

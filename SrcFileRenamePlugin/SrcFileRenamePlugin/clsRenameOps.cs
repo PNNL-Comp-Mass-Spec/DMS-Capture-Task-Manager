@@ -54,8 +54,8 @@ namespace SrcFileRenamePlugin
             m_UseBioNet = useBioNet;
             if (m_UseBioNet)
             {
-                m_UserName = m_MgrParams.GetParam("bionetuser");
-                m_Pwd = m_MgrParams.GetParam("bionetpwd");
+                m_UserName = m_MgrParams.GetParam("BionetUser");
+                m_Pwd = m_MgrParams.GetParam("BionetPwd");
 
                 if (!m_UserName.Contains(@"\"))
                 {
@@ -84,7 +84,7 @@ namespace SrcFileRenamePlugin
             var sourcePath = taskParams.GetParam("Source_Path");
 
             // Typically an empty string, but could be a partial path like: "CapDev" or "Smith\2014"
-            var captureSubfolder = taskParams.GetParam("Capture_Subfolder");
+            var captureSubDirectory = taskParams.GetParam("Capture_Subfolder");
 
             var pwd = clsUtilities.DecodePassword(m_Pwd);
 
@@ -95,8 +95,8 @@ namespace SrcFileRenamePlugin
 
             // Set up paths
 
-            // Determine if source dataset exists, and if it is a file or a folder
-            var sourceFolderPath = Path.Combine(sourceVol, sourcePath);
+            // Determine if source dataset exists, and if it is a file or a directory
+            var sourceDirectoryPath = Path.Combine(sourceVol, sourcePath);
 
             // Connect to Bionet if necessary
             if (m_UseBioNet)
@@ -106,7 +106,7 @@ namespace SrcFileRenamePlugin
 
                 m_ShareConnector = new ShareConnector(m_UserName, pwd)
                 {
-                    Share = sourceFolderPath
+                    Share = sourceDirectoryPath
                 };
 
                 if (m_ShareConnector.Connect())
@@ -117,7 +117,7 @@ namespace SrcFileRenamePlugin
                 }
                 else
                 {
-                    msg = "Error " + m_ShareConnector.ErrorMessage + " connecting to " + sourceFolderPath + " as user " + m_UserName + " using 'secfso'";
+                    msg = "Error " + m_ShareConnector.ErrorMessage + " connecting to " + sourceDirectoryPath + " as user " + m_UserName + " using 'secfso'";
 
                     if (m_ShareConnector.ErrorMessage == "1326")
                         msg += "; you likely need to change the Capture_Method from secfso to fso";
@@ -126,7 +126,7 @@ namespace SrcFileRenamePlugin
 
                     OnErrorEvent(msg);
 
-                    errorMessage = "Error connecting to " + sourceFolderPath + " as user " + m_UserName + " using 'secfso'";
+                    errorMessage = "Error connecting to " + sourceDirectoryPath + " as user " + m_UserName + " using 'secfso'";
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
             }
@@ -137,66 +137,67 @@ namespace SrcFileRenamePlugin
             }
 
             // If Source_Folder_Name is non-blank, use it. Otherwise use dataset name
-            var sSourceFolderName = taskParams.GetParam("Source_Folder_Name");
+            var sourceDirectoryName = taskParams.GetParam("Source_Folder_Name");
 
-            if (string.IsNullOrWhiteSpace(sSourceFolderName))
+            if (string.IsNullOrWhiteSpace(sourceDirectoryName))
             {
-                sSourceFolderName = datasetName;
+                sourceDirectoryName = datasetName;
             }
 
-            // Now that we've had a chance to connect to the share, possibly append a subfolder to the source path
-            if (!string.IsNullOrWhiteSpace(captureSubfolder))
+            // Now that we've had a chance to connect to the share, possibly append a subdirectory to the source path
+            if (!string.IsNullOrWhiteSpace(captureSubDirectory))
             {
 
-                // However, if the subfolder name matches the dataset name, this was probably an error on the operator's part and we likely do not want to use the subfolder name
-                if (captureSubfolder.EndsWith(Path.DirectorySeparatorChar + sSourceFolderName, StringComparison.OrdinalIgnoreCase) ||
-                    captureSubfolder.Equals(sSourceFolderName, StringComparison.OrdinalIgnoreCase))
+                // However, if the subdirectory name matches the dataset name, this was probably an error on the operator's part
+                // and we likely do not want to use the subdirectory name
+                if (captureSubDirectory.EndsWith(Path.DirectorySeparatorChar + sourceDirectoryName, StringComparison.OrdinalIgnoreCase) ||
+                    captureSubDirectory.Equals(sourceDirectoryName, StringComparison.OrdinalIgnoreCase))
                 {
-                    var candidateFolderPath = Path.Combine(sourceFolderPath, captureSubfolder);
+                    var candidateDirectoryPath = Path.Combine(sourceDirectoryPath, captureSubDirectory);
 
-                    if (!Directory.Exists(candidateFolderPath))
+                    if (!Directory.Exists(candidateDirectoryPath))
                     {
-                        // Leave sourceFolderPath unchanged
-                        // Dataset Capture_Subfolder ends with the dataset name. Gracefully ignoring because this appears to be a data entry error; folder not found:
+                        // Leave sourceDirectoryPath unchanged
+                        // Dataset Capture_Subfolder ends with the dataset name. Gracefully ignoring because this appears to be a data entry error; directory not found:
                         OnWarningEvent("Dataset Capture_Subfolder ends with the dataset name. Gracefully ignoring " +
-                                       "because this appears to be a data entry error; folder not found: " + candidateFolderPath);
+                                       "because this appears to be a data entry error; directory not found: " + candidateDirectoryPath);
                     }
                     else
                     {
-                        if (captureSubfolder.Equals(sSourceFolderName, StringComparison.OrdinalIgnoreCase))
+                        if (captureSubDirectory.Equals(sourceDirectoryName, StringComparison.OrdinalIgnoreCase))
                         {
                             OnWarningEvent(string.Format(
                                            "Dataset Capture_Subfolder is the dataset name; leaving the capture path as {0} " +
-                                           "so that the entire dataset folder will be copied", sourceFolderPath));
+                                           "so that the entire dataset directory will be copied", sourceDirectoryPath));
                         }
                         else
                         {
-                            OnStatusEvent("Appending captureSubFolder to sourceFolderPath, giving: " + candidateFolderPath);
-                            sourceFolderPath = candidateFolderPath;
+                            OnStatusEvent("Appending captureSubDirectory to sourceDirectoryPath, giving: " + candidateDirectoryPath);
+                            sourceDirectoryPath = candidateDirectoryPath;
                         }
                     }
 
                 }
                 else
                 {
-                    sourceFolderPath = Path.Combine(sourceFolderPath, captureSubfolder);
+                    sourceDirectoryPath = Path.Combine(sourceDirectoryPath, captureSubDirectory);
                 }
 
             }
 
-            var diSourceFolder = new DirectoryInfo(sourceFolderPath);
+            var sourceDirectory = new DirectoryInfo(sourceDirectoryPath);
             int countRenamed;
 
-            if (diSourceFolder.Exists)
+            if (sourceDirectory.Exists)
             {
-                countRenamed = FindFilesToRename(datasetName, diSourceFolder, out errorMessage);
+                countRenamed = FindFilesToRename(datasetName, sourceDirectory, out errorMessage);
             }
             else
             {
-                msg = "Instrument folder not found for dataset " + datasetName + ": " + sourceFolderPath;
+                msg = "Instrument directory not found for dataset " + datasetName + ": " + sourceDirectoryPath;
                 OnErrorEvent(msg);
 
-                errorMessage = "Remote folder not found: " + sourceFolderPath;
+                errorMessage = "Remote directory not found: " + sourceDirectoryPath;
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -207,7 +208,7 @@ namespace SrcFileRenamePlugin
             if (countRenamed == 0)
             {
                 if (string.IsNullOrEmpty(errorMessage))
-                    errorMessage = "Data file and/or folder not found on the instrument; cannot rename";
+                    errorMessage = "Data file and/or directory not found on the instrument; cannot rename";
 
                 msg = "Dataset " + datasetName + ":" + errorMessage;
                 OnErrorEvent(msg);
@@ -218,7 +219,7 @@ namespace SrcFileRenamePlugin
             return EnumCloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private int FindFilesToRename(string dataset, DirectoryInfo diSourceFolder, out string errorMessage)
+        private int FindFilesToRename(string dataset, DirectoryInfo sourceDirectory, out string errorMessage)
         {
             errorMessage = string.Empty;
 
@@ -234,6 +235,7 @@ namespace SrcFileRenamePlugin
                 dataset + "_corrupt",
                 dataset + "-corrupted",
                 dataset + "_corrupted",
+                // ReSharper disable StringLiteralTypo
                 dataset + "-chromooff",
                 dataset + "-flatline",
                 dataset + "-LCFroze",
@@ -253,6 +255,7 @@ namespace SrcFileRenamePlugin
                 dataset + "-plugsplit",
                 dataset + "-rotor",
                 dataset + "-slowsplit",
+                // ReSharper restore StringLiteralTypo
                 "x_" + dataset,
                 "x_" + dataset + "-bad"
             };
@@ -274,19 +277,19 @@ namespace SrcFileRenamePlugin
                     bAlreadyRenamed = false;
 
                 // Get a list of files containing the dataset name
-                var matchedFiles = GetMatchingFileNames(diSourceFolder, sDatasetNameBase);
+                var matchedFiles = GetMatchingFileNames(sourceDirectory, sDatasetNameBase);
 
-                // Get a list of folders containing the dataset name
-                var matchedFolders = GetMatchingFolderNames(diSourceFolder, sDatasetNameBase);
+                // Get a list of directories containing the dataset name
+                var matchedDirectories = GetMatchingDirectoryNames(sourceDirectory, sDatasetNameBase);
 
-                // If no files or folders found, return error
-                if (matchedFiles.Count + matchedFolders.Count == 0)
+                // If no files or directories found, return error
+                if (matchedFiles.Count + matchedDirectories.Count == 0)
                 {
-                    // No file or folder found
+                    // No file or directory found
                     // Log a message for the first item checked in lstFileNamesToCheck
                     if (!bLoggedDatasetNotFound)
                     {
-                        var msg = "Dataset " + dataset + ": data file and/or folder not found using " + sDatasetNameBase + ".*";
+                        var msg = "Dataset " + dataset + ": data file and/or directory not found using " + sDatasetNameBase + ".*";
                         OnWarningEvent(msg);
                         bLoggedDatasetNotFound = true;
                     }
@@ -295,7 +298,7 @@ namespace SrcFileRenamePlugin
 
                 if (bAlreadyRenamed)
                 {
-                    var msg = "Skipping dataset " + dataset + " since data file and/or folder already renamed to " + sDatasetNameBase;
+                    var msg = "Skipping dataset " + dataset + " since data file and/or directory already renamed to " + sDatasetNameBase;
                     OnStatusEvent(msg);
                     countRenamed++;
                     break;
@@ -313,10 +316,10 @@ namespace SrcFileRenamePlugin
                     return 0;
                 }
 
-                // Rename any folders found
-                foreach (var folderToRename in matchedFolders)
+                // Rename any directories found
+                foreach (var directoryToRename in matchedDirectories)
                 {
-                    if (RenameInstFolder(folderToRename, out errorMessage))
+                    if (RenameInstrumentDirectory(directoryToRename, out errorMessage))
                     {
                         countRenamed++;
                         continue;
@@ -369,31 +372,31 @@ namespace SrcFileRenamePlugin
         }
 
         /// <summary>
-        /// Prefixes specified folder name with "x_"
+        /// Prefixes specified directory name with "x_"
         /// </summary>
-        /// <param name="diFolder">Folder to be renamed</param>
+        /// <param name="instrumentDirectory">Directory to be renamed</param>
         /// <param name="errorMessage">Output: error message</param>
         /// <returns>TRUE for success, FALSE for failure</returns>
-        private bool RenameInstFolder(DirectoryInfo diFolder, out string errorMessage)
+        private bool RenameInstrumentDirectory(DirectoryInfo instrumentDirectory, out string errorMessage)
         {
-            // Rename dataset folder on instrument
+            // Rename dataset directory on instrument
             var newPath = "??";
             errorMessage = string.Empty;
 
             try
             {
-                if (!diFolder.Exists || diFolder.Parent == null)
+                if (!instrumentDirectory.Exists || instrumentDirectory.Parent == null)
                     return true;
 
-                newPath = Path.Combine(diFolder.Parent.FullName, "x_" + diFolder.Name);
-                diFolder.MoveTo(newPath);
-                m_Msg = "Renamed directory to " + diFolder.FullName;
+                newPath = Path.Combine(instrumentDirectory.Parent.FullName, "x_" + instrumentDirectory.Name);
+                instrumentDirectory.MoveTo(newPath);
+                m_Msg = "Renamed directory to " + instrumentDirectory.FullName;
                 OnStatusEvent(m_Msg);
                 return true;
             }
             catch (Exception ex)
             {
-                m_Msg = "Error renaming directory '" + diFolder.FullName + "' to '" + newPath + "'";
+                m_Msg = "Error renaming directory '" + instrumentDirectory.FullName + "' to '" + newPath + "'";
                 OnErrorEvent(m_Msg, ex);
 
                 if (ex.Message.Contains("Access to the path") && ex.Message.Contains("is denied"))
@@ -421,23 +424,23 @@ namespace SrcFileRenamePlugin
         /// <summary>
         /// Gets a list of files containing the dataset name
         /// </summary>
-        /// <param name="diSourceFolder">Folder to search</param>
-        /// <param name="dsName">Dataset name to match</param>
+        /// <param name="sourceDirectory">Directory to search</param>
+        /// <param name="datasetName">Dataset name to match</param>
         /// <returns>Array of file paths</returns>
-        private List<FileInfo> GetMatchingFileNames(DirectoryInfo diSourceFolder, string dsName)
+        private List<FileInfo> GetMatchingFileNames(DirectoryInfo sourceDirectory, string datasetName)
         {
-            return diSourceFolder.GetFiles(dsName + ".*").ToList();
+            return sourceDirectory.GetFiles(datasetName + ".*").ToList();
         }
 
         /// <summary>
-        /// Gets a list of folders containing the dataset name
+        /// Gets a list of directories containing the dataset name
         /// </summary>
-        /// <param name="diSourceFolder">Folder to search</param>
-        /// <param name="dsName">Dataset name to match</param>
+        /// <param name="sourceDirectory">Directory to search</param>
+        /// <param name="datasetName">Dataset name to match</param>
         /// <returns>Array of folder paths</returns>
-        private List<DirectoryInfo> GetMatchingFolderNames(DirectoryInfo diSourceFolder, string dsName)
+        private List<DirectoryInfo> GetMatchingDirectoryNames(DirectoryInfo sourceDirectory, string datasetName)
         {
-            return diSourceFolder.GetDirectories(dsName + ".*").ToList();
+            return sourceDirectory.GetDirectories(datasetName + ".*").ToList();
         }
 
         #endregion

@@ -5,6 +5,7 @@ using System.IO;
 using PRISM;
 using PRISM.Logging;
 
+// ReSharper disable UnusedMember.Global
 namespace CaptureTaskManager
 {
 
@@ -286,7 +287,7 @@ namespace CaptureTaskManager
 
         #region "Module variables"
 
-        private static string mAppFolderPath;
+        private static string mAppDirectoryPath;
 
         #endregion
 
@@ -332,14 +333,14 @@ namespace CaptureTaskManager
         /// Returns the directory in which the entry assembly (typically the Program .exe file) resides
         /// </summary>
         /// <returns>Full directory path</returns>
-        public static string GetAppFolderPath()
+        public static string GetAppDirectoryPath()
         {
-            if (mAppFolderPath != null)
-                return mAppFolderPath;
+            if (mAppDirectoryPath != null)
+                return mAppDirectoryPath;
 
-            mAppFolderPath = PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppFolderPath();
+            mAppDirectoryPath = PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppFolderPath();
 
-            return mAppFolderPath;
+            return mAppDirectoryPath;
         }
 
         /// <summary>
@@ -349,7 +350,7 @@ namespace CaptureTaskManager
         /// <param name="connectionString">Connection string</param>
         /// <param name="callingFunction">Name of the calling function</param>
         /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
-        /// <param name="dtResults">Datatable (Output Parameter)</param>
+        /// <param name="dtResults">DataTable (Output Parameter)</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>Uses a timeout of 30 seconds</remarks>
         public static bool GetDataTableByQuery(string sqlStr, string connectionString, string callingFunction, short retryCount, out DataTable dtResults)
@@ -368,7 +369,7 @@ namespace CaptureTaskManager
         /// <param name="connectionString">Connection string</param>
         /// <param name="callingFunction">Name of the calling function</param>
         /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
-        /// <param name="dtResults">Datatable (Output Parameter)</param>
+        /// <param name="dtResults">DataTable (Output Parameter)</param>
         /// <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
@@ -393,7 +394,7 @@ namespace CaptureTaskManager
         /// <param name="connectionString">Connection string</param>
         /// <param name="callingFunction">Name of the calling function</param>
         /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
-        /// <param name="dtResults">Datatable (Output Parameter)</param>
+        /// <param name="dtResults">DataTable (Output Parameter)</param>
         /// <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>

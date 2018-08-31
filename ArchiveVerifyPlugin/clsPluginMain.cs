@@ -13,6 +13,7 @@ namespace ArchiveVerifyPlugin
     /// <summary>
     /// Archive verify plugin
     /// </summary>
+    // ReSharper disable once UnusedMember.Global
     public class clsPluginMain : clsToolRunnerBase
     {
 
@@ -325,7 +326,7 @@ namespace ArchiveVerifyPlugin
 
                 var lstDatasetFilesLocal = metadataObject.FindDatasetFilesToArchive(
                     m_TaskParams.TaskDictionary,
-                    m_MgrParams.TaskDictionary,
+                    m_MgrParams.ParamDictionary,
                     out _);
 
                 if (lstDatasetFilesLocal.Count == 0)
@@ -537,7 +538,7 @@ namespace ArchiveVerifyPlugin
                 return;
             }
 
-            // Get the list of filenames that we can ignore
+            // Get the list of files that we can ignore
             var filesToIgnore = DMSMetadataObject.GetFilesToIgnore();
 
             // This dictionary tracks files on the local disk

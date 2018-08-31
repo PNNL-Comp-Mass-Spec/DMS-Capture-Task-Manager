@@ -368,7 +368,7 @@ namespace CaptureTaskManager
         /// <param name="compMsg">Completion message</param>
         /// <param name="evalCode">Integer representation of evaluation code</param>
         /// <param name="evalMsg">Evaluation message</param>
-        /// <returns>TRUE for sucesss; FALSE for failure</returns>
+        /// <returns>TRUE for success; FALSE for failure</returns>
         private bool SetCaptureTaskComplete(int compCode, string compMsg, int evalCode, string evalMsg)
         {
             bool outcome;

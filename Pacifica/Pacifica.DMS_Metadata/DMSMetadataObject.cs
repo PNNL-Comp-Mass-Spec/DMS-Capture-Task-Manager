@@ -18,15 +18,15 @@ namespace Pacifica.DMS_Metadata
         /// If a dataset archive task involves more 15 GB of data, only archive the root directory and the QC directory
         /// Use property SkippedDatasetArchiveSubdirectories to view the skipped subdirectory names
         /// </summary>
-        private const int LARGE_DATASETARCHIVE_THRESHOLD_GB = 15;
+        private const int LARGE_DATASET_ARCHIVE_THRESHOLD_GB = 15;
 
         /// <summary>
         /// Maximum number of files to archive
         /// </summary>
         /// <remarks>
         /// If uploading an entire dataset directory and all of its subdirectories via a DatasetArchive operation,
-        ///   this value applies to all files in the dataset folder (and subfolders)
-        /// If uploading just one dataset subfolder via an ArchiveUpdate operation,
+        ///   this value applies to all files in the dataset directory (and subdirectories)
+        /// If uploading just one dataset subdirectory via an ArchiveUpdate operation,
         ///   this value applies to all files in that subdirectory
         /// </remarks>
         public const int MAX_FILES_TO_ARCHIVE = 500;
@@ -42,7 +42,7 @@ namespace Pacifica.DMS_Metadata
         public static readonly string TOO_MANY_FILES_TO_ARCHIVE = "Source directory has over " + MAX_FILES_TO_ARCHIVE + " files";
 
         /// <summary>
-        /// Error message thrown when the dataset's instrument operator does not have an EUS person ID
+        /// Error message thrown when the dataset instrument operator does not have an EUS person ID
         /// </summary>
         public const string UNDEFINED_EUS_OPERATOR_ID = "Operator does not have an EUS person ID in DMS";
 
@@ -112,7 +112,7 @@ namespace Pacifica.DMS_Metadata
         public List<Dictionary<string, object>> MetadataObject => mMetadataObject;
 
         /// <summary>
-        /// Subdirectory names that were skipped during a datasetarchive task because we're pushing more than 15 GB of data
+        /// Subdirectory names that were skipped during a DatasetArchive task because we're pushing more than 15 GB of data
         /// </summary>
         public List<string> SkippedDatasetArchiveSubdirectories { get; }
 
@@ -530,7 +530,7 @@ namespace Pacifica.DMS_Metadata
                     TOO_MANY_FILES_TO_ARCHIVE + "; files must be zipped before upload to MyEMSL (CollectFileInformation)");
             }
 
-            // Get the list of filenames that we can ignore
+            // Get the file names that we can ignore
             var filesToIgnore = GetFilesToIgnore();
 
             var fracCompleted = 0f;
@@ -544,7 +544,7 @@ namespace Pacifica.DMS_Metadata
 
             SkippedDatasetArchiveSubdirectories.Clear();
 
-            if (archiveMode == ArchiveModes.archive && recurse && BytesToGB(totalFileSize) > LARGE_DATASETARCHIVE_THRESHOLD_GB)
+            if (archiveMode == ArchiveModes.archive && recurse && BytesToGB(totalFileSize) > LARGE_DATASET_ARCHIVE_THRESHOLD_GB)
             {
                 // Dataset archive task pushing more than 15 GB of data
                 // If the dataset has subdirectories, only push the QC subdirectory at this time
@@ -687,7 +687,7 @@ namespace Pacifica.DMS_Metadata
                 {
                     OnWarningEvent(
                         string.Format("MyEMSL reported {0} files for Dataset ID {1}; it should be tracking at least {2} files; " +
-                                      "ignoring because job paramater IgnoreMyEMSLFileTrackingError is True",
+                                      "ignoring because job parameter IgnoreMyEMSLFileTrackingError is True",
                                       remoteFiles.Count, datasetID, expectedRemoteFileCount));
                 }
                 else
@@ -869,7 +869,7 @@ namespace Pacifica.DMS_Metadata
             uploadMetadata.SubFolder = string.Empty;
 
             ArchiveModes archiveMode;
-            if (Utilities.GetDictionaryValue(taskParams, "StepTool", string.Empty).ToLower() == "datasetarchive")
+            if (Utilities.GetDictionaryValue(taskParams, "StepTool", string.Empty).Equals("DatasetArchive", StringComparison.OrdinalIgnoreCase))
                 archiveMode = ArchiveModes.archive;
             else
                 archiveMode = ArchiveModes.update;

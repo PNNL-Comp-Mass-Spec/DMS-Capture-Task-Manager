@@ -28,7 +28,7 @@ namespace CaptureTaskManager
 
         #region "Constants"
 
-        const string SP_NAME_ACKMANAGERUPDATE = "AckManagerUpdateRequired";
+        const string SP_NAME_ACK_MANAGER_UPDATE = "AckManagerUpdateRequired";
 
         /// <summary>
         /// Status message for when the manager is deactivated locally
@@ -62,10 +62,7 @@ namespace CaptureTaskManager
         public const string MGR_PARAM_DEFAULT_DMS_CONN_STRING = "DefaultDMSConnString";
 
         #endregion
-
         #region "Class variables"
-
-        private readonly Dictionary<string, string> mParamDictionary;
 
         private bool mMCParamsLoaded;
 
@@ -88,7 +85,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Manager parameters dictionary
         /// </summary>
-        public Dictionary<string, string> TaskDictionary => mParamDictionary;
+        public Dictionary<string, string> ParamDictionary { get; }
 
         /// <summary>
         /// When true, show additional messages at the console
@@ -108,14 +105,14 @@ namespace CaptureTaskManager
         {
             TraceMode = traceMode;
 
-            mParamDictionary = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            ParamDictionary = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             var success = LoadSettings();
 
             if (TraceMode)
             {
                 ShowTraceMessage("Initialized clsMgrSettings");
-                ShowDictionaryTrace(mParamDictionary);
+                ShowDictionaryTrace(ParamDictionary);
             }
 
             if (!success)
@@ -134,15 +131,15 @@ namespace CaptureTaskManager
         {
             try
             {
-                // Data Source=proteinseqs;Initial Catalog=manager_control
+                // Data Source=ProteinSeqs;Initial Catalog=manager_control
                 var connectionString = GetParam(MGR_PARAM_MGR_CFG_DB_CONN_STRING);
 
                 if (string.IsNullOrWhiteSpace(connectionString))
                 {
                     if (clsUtilities.OfflineMode)
-                        LogDebug("Skipping call to " + SP_NAME_ACKMANAGERUPDATE + " since offline");
+                        LogDebug("Skipping call to " + SP_NAME_ACK_MANAGER_UPDATE + " since offline");
                     else
-                        LogError("Skipping call to " + SP_NAME_ACKMANAGERUPDATE + " since the Manager Control connection string is empty");
+                        LogError("Skipping call to " + SP_NAME_ACK_MANAGER_UPDATE + " since the Manager Control connection string is empty");
 
                     return;
                 }
@@ -154,7 +151,7 @@ namespace CaptureTaskManager
                 conn.Open();
 
                 // Set up the command object prior to SP execution
-                var spCmd = new SqlCommand(SP_NAME_ACKMANAGERUPDATE, conn) {
+                var spCmd = new SqlCommand(SP_NAME_ACK_MANAGER_UPDATE, conn) {
                     CommandType = CommandType.StoredProcedure
                 };
 
@@ -167,7 +164,7 @@ namespace CaptureTaskManager
             }
             catch (Exception ex)
             {
-                LogError("Exception calling " + SP_NAME_ACKMANAGERUPDATE, ex);
+                LogError("Exception calling " + SP_NAME_ACK_MANAGER_UPDATE, ex);
             }
         }
 
@@ -194,27 +191,27 @@ namespace CaptureTaskManager
         {
             mErrMsg = string.Empty;
 
-            mParamDictionary.Clear();
+            ParamDictionary.Clear();
 
             foreach (var item in configFileSettings)
             {
-                mParamDictionary.Add(item.Key, item.Value);
+                ParamDictionary.Add(item.Key, item.Value);
             }
 
             // Get directory for main executable
             var appPath = PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppPath();
             var fi = new FileInfo(appPath);
-            mParamDictionary.Add("ApplicationPath", fi.DirectoryName);
+            ParamDictionary.Add("ApplicationPath", fi.DirectoryName);
 
             // Test the settings retrieved from the config file
-            if (!CheckInitialSettings(mParamDictionary))
+            if (!CheckInitialSettings(ParamDictionary))
             {
                 // Error logging handled by CheckInitialSettings
                 return false;
             }
 
             // Determine if manager is deactivated locally
-            if (!mParamDictionary.TryGetValue(MGR_PARAM_MGR_ACTIVE_LOCAL, out var activeLocalText))
+            if (!ParamDictionary.TryGetValue(MGR_PARAM_MGR_ACTIVE_LOCAL, out var activeLocalText))
             {
                 mErrMsg = "Manager parameter " + MGR_PARAM_MGR_ACTIVE_LOCAL + " is missing from file " + Path.GetFileName(GetConfigFilePath());
                 LogError(mErrMsg);
@@ -412,7 +409,7 @@ namespace CaptureTaskManager
         {
             const short retryCount = 6;
 
-            // Data Source=proteinseqs;Initial Catalog=manager_control
+            // Data Source=ProteinSeqs;Initial Catalog=manager_control
             var connectionString = GetParam(MGR_PARAM_MGR_CFG_DB_CONN_STRING, string.Empty);
 
             if (string.IsNullOrEmpty(managerName))
@@ -430,7 +427,7 @@ namespace CaptureTaskManager
             if (string.IsNullOrEmpty(connectionString))
             {
                 mErrMsg = MGR_PARAM_MGR_CFG_DB_CONN_STRING +
-                           " parameter not found in mParamDictionary; it should be defined in the " + Path.GetFileName(GetConfigFilePath()) + " file";
+                           " parameter not found in ParamDictionary; it should be defined in the " + Path.GetFileName(GetConfigFilePath()) + " file";
                 WriteErrorMsg(mErrMsg);
                 dtSettings = null;
                 return false;
@@ -473,7 +470,7 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Update mParamDictionary with settings in dtSettings, optionally skipping existing parameters
+        /// Update ParamDictionary with settings in dtSettings, optionally skipping existing parameters
         /// </summary>
         /// <param name="dtSettings"></param>
         /// <param name="skipExistingParameters"></param>
@@ -501,16 +498,16 @@ namespace CaptureTaskManager
                         }
                     }
 
-                    if (mParamDictionary.ContainsKey(paramKey))
+                    if (ParamDictionary.ContainsKey(paramKey))
                     {
                         if (!skipExistingParameters)
                         {
-                            mParamDictionary[paramKey] = paramVal;
+                            ParamDictionary[paramKey] = paramVal;
                         }
                     }
                     else
                     {
-                        mParamDictionary.Add(paramKey, paramVal);
+                        ParamDictionary.Add(paramKey, paramVal);
                     }
                 }
                 success = true;
@@ -538,10 +535,10 @@ namespace CaptureTaskManager
         /// <remarks>Returns empty string if key isn't found</remarks>
         public string GetParam(string itemKey)
         {
-            if (mParamDictionary == null)
+            if (ParamDictionary == null)
                 return string.Empty;
 
-            if (!mParamDictionary.TryGetValue(itemKey, out var value))
+            if (!ParamDictionary.TryGetValue(itemKey, out var value))
                 return string.Empty;
 
             return string.IsNullOrWhiteSpace(value) ? string.Empty : value;
@@ -594,13 +591,13 @@ namespace CaptureTaskManager
         /// <remarks></remarks>
         public void SetParam(string itemKey, string itemValue)
         {
-            if (mParamDictionary.ContainsKey(itemKey))
+            if (ParamDictionary.ContainsKey(itemKey))
             {
-                mParamDictionary[itemKey] = itemValue;
+                ParamDictionary[itemKey] = itemValue;
             }
             else
             {
-                mParamDictionary.Add(itemKey, itemValue);
+                ParamDictionary.Add(itemKey, itemValue);
             }
         }
 

@@ -18,6 +18,7 @@ namespace DatasetArchivePlugin
     /// Dataset archive plugin
     /// </summary>
     /// <remarks>Also used for archive update</remarks>
+    // ReSharper disable once UnusedMember.Global
     public class clsPluginMain : clsToolRunnerBase
     {
 
@@ -66,7 +67,7 @@ namespace DatasetArchivePlugin
             clsOpsBase archOpTool = new clsArchiveUpdate(m_MgrParams, m_TaskParams, m_StatusTools, m_FileTools);
             RegisterEvents(archOpTool);
 
-            if (m_TaskParams.GetParam("StepTool").ToLower() == "datasetarchive")
+            if (m_TaskParams.GetParam("StepTool").Equals("DatasetArchive", StringComparison.OrdinalIgnoreCase))
             {
                 archiveOpDescription = "archive";
             }
@@ -239,29 +240,29 @@ namespace DatasetArchivePlugin
             LogDebug("Determining tool version info");
 
             var strToolVersionInfo = string.Empty;
-            var appFolder = clsUtilities.GetAppFolderPath();
+            var appDirectory = clsUtilities.GetAppDirectoryPath();
 
-            if (string.IsNullOrWhiteSpace(appFolder))
+            if (string.IsNullOrWhiteSpace(appDirectory))
             {
-                LogError("GetAppFolderPath returned an empty directory path to StoreToolVersionInfo for the Dataset Archive plugin");
+                LogError("GetAppDirectoryPath returned an empty directory path to StoreToolVersionInfo for the Dataset Archive plugin");
                 return false;
             }
 
             // Lookup the version of the Dataset Archive plugin
-            var strPluginPath = Path.Combine(appFolder, "DatasetArchivePlugin.dll");
+            var strPluginPath = Path.Combine(appDirectory, "DatasetArchivePlugin.dll");
             var bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strPluginPath);
             if (!bSuccess)
                 return false;
 
-            // Store path to DatasetArchivePlugin.dll in ioToolFiles
-            var ioToolFiles = new List<FileInfo>
+            // Store path to DatasetArchivePlugin.dll in toolFiles
+            var toolFiles = new List<FileInfo>
             {
                 new FileInfo(strPluginPath)
             };
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, false);
+                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, false);
             }
             catch (Exception ex)
             {

@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 /*
  * Code written by Luke Quinane and posted to
  * http://stackoverflow.com/questions/295538/how-to-provide-user-name-and-password-when-connecting-to-a-network-share
- * 
+ *
  */
 
 namespace CaptureTaskManager
@@ -24,7 +24,7 @@ namespace CaptureTaskManager
             {
                 Scope = ResourceScope.GlobalNetwork,
                 ResourceType = ResourceType.Disk,
-                DisplayType = ResourceDisplaytype.Share,
+                DisplayType = ResourceDisplayType.Share,
                 RemoteName = networkName
             };
 
@@ -70,7 +70,7 @@ namespace CaptureTaskManager
     {
         public ResourceScope Scope;
         public ResourceType ResourceType;
-        public ResourceDisplaytype DisplayType;
+        public ResourceDisplayType DisplayType;
         public int Usage;
         public string LocalName;
         public string RemoteName;
@@ -95,7 +95,7 @@ namespace CaptureTaskManager
         Reserved = 8,
     }
 
-    public enum ResourceDisplaytype
+    public enum ResourceDisplayType
     {
         Generic = 0x0,
         Domain = 0x01,
@@ -105,9 +105,9 @@ namespace CaptureTaskManager
         Group = 0x05,
         Network = 0x06,
         Root = 0x07,
-        Shareadmin = 0x08,
+        ShareAdmin = 0x08,
         Directory = 0x09,
         Tree = 0x0a,
-        Ndscontainer = 0x0b
+        NdsContainer = 0x0b
     }
 }

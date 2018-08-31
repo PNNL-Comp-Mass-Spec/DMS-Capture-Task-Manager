@@ -26,6 +26,7 @@ namespace ImsDemuxPlugin
     /// <summary>
     /// IMS Demultiplexer plugin
     /// </summary>
+    // ReSharper disable once UnusedMember.Global
     public class clsPluginMain : clsToolRunnerBase
     {
 
@@ -534,8 +535,8 @@ namespace ImsDemuxPlugin
             if (!bSuccess)
                 return false;
 
-            // Store path to the demultiplexer DLL in ioToolFiles
-            var ioToolFiles = new System.Collections.Generic.List<FileInfo>
+            // Store path to the demultiplexer DLL in toolFiles
+            var toolFiles = new System.Collections.Generic.List<FileInfo>
             {
                 new FileInfo(strDemultiplexerPath)
             };
@@ -543,7 +544,7 @@ namespace ImsDemuxPlugin
             try
             {
                 const bool bSaveToolVersionTextFile = false;
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, bSaveToolVersionTextFile);
+                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, bSaveToolVersionTextFile);
             }
             catch (Exception ex)
             {
@@ -573,7 +574,7 @@ namespace ImsDemuxPlugin
 #pragma warning restore 162
             }
 
-            // Update the manager settings every MANAGER_UPDATE_INTERVAL_MINUTESS
+            // Update the manager settings every MANAGER_UPDATE_INTERVAL_MINUTES
             UpdateMgrSettings();
         }
 
@@ -595,7 +596,7 @@ namespace ImsDemuxPlugin
 
             m_StatusTools.UpdateAndWrite(progressOverall);
 
-            // Update the manager settings every MANAGER_UPDATE_INTERVAL_MINUTESS
+            // Update the manager settings every MANAGER_UPDATE_INTERVAL_MINUTES
             UpdateMgrSettings();
         }
 

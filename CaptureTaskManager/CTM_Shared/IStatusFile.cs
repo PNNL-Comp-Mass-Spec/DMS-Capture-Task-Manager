@@ -95,7 +95,7 @@ namespace CaptureTaskManager
         string MostRecentJobInfo { get; set; }
 
         /// <summary>
-        /// Flagfile path
+        /// Flag file path
         /// </summary>
         string FlagFilePath { get; }
 

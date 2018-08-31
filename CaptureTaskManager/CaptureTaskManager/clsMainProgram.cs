@@ -146,7 +146,7 @@ namespace CaptureTaskManager
                     // Reload the manager config
                     LogMessage("Reloading configuration and restarting manager");
 
-                    // Unsubscribe message handler events and close msssage handler
+                    // Unsubscribe message handler events and close the message handler
                     if (m_MsgQueueInitSuccess)
                     {
                         m_MsgHandler.Dispose();
@@ -320,13 +320,13 @@ namespace CaptureTaskManager
             m_Dataset = "Unknown";
 
             // Setup the loggers
-            var logFileNameBase = m_MgrSettings.GetParam("logfilename", "CapTaskMan");
+            var logFileNameBase = m_MgrSettings.GetParam("LogFileName", "CapTaskMan");
 
             UpdateLogLevel(m_MgrSettings);
 
             LogTools.CreateFileLogger(logFileNameBase, m_DebugLevel);
 
-            var logCnStr = m_MgrSettings.GetParam("connectionstring");
+            var logCnStr = m_MgrSettings.GetParam("ConnectionString");
 
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             LogTools.CreateDbLogger(logCnStr, "CaptureTaskMan: " + m_MgrName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
@@ -340,11 +340,11 @@ namespace CaptureTaskManager
             var startupMsg = "=== Started Capture Task Manager V" + appVersion + " ===== ";
             LogMessage(startupMsg);
 
-            var configFileName = m_MgrSettings.GetParam("configfilename");
+            var configFileName = m_MgrSettings.GetParam("ConfigFileName");
             if (string.IsNullOrEmpty(configFileName))
             {
                 // Manager parameter error; log an error and exit
-                LogError("Manager parameter 'configfilename' is undefined; this likely indicates a problem retrieving manager parameters. " +
+                LogError("Manager parameter 'ConfigFileName' is undefined; this likely indicates a problem retrieving manager parameters. " +
                          "Shutting down the manager");
                 return false;
             }
@@ -364,8 +364,8 @@ namespace CaptureTaskManager
             m_FileWatcher.Changed += FileWatcherChanged;
 
             // Make sure that the manager name matches the machine name (with a few exceptions)
-            if (!hostName.StartsWith("emslmq", StringComparison.OrdinalIgnoreCase) &&
-                !hostName.StartsWith("emslpub", StringComparison.OrdinalIgnoreCase) &&
+            if (!hostName.StartsWith("EMSLMQ", StringComparison.OrdinalIgnoreCase) &&
+                !hostName.StartsWith("EMSLPub", StringComparison.OrdinalIgnoreCase) &&
                 !hostName.StartsWith("monroe", StringComparison.OrdinalIgnoreCase) &&
                 !hostName.StartsWith("WE27676", StringComparison.OrdinalIgnoreCase))
             {
@@ -481,11 +481,11 @@ namespace CaptureTaskManager
                 return;
             }
 
-            var elaspedTime = DateTime.UtcNow.Subtract(dtWaitStart).TotalSeconds;
+            var elapsedTime = DateTime.UtcNow.Subtract(dtWaitStart).TotalSeconds;
 
-            if (elaspedTime > 25)
+            if (elapsedTime > 25)
             {
-                LogWarning("Connection to the message queue was slow, taking " + (int)elaspedTime + " seconds");
+                LogWarning("Connection to the message queue was slow, taking " + (int)elapsedTime + " seconds");
             }
         }
 
@@ -556,7 +556,7 @@ namespace CaptureTaskManager
             {
                 Dictionary<string, DateTime> cachedMessages;
 
-                var messageCacheFile = new FileInfo(Path.Combine(clsUtilities.GetAppFolderPath(), PERIODIC_LOG_FILE));
+                var messageCacheFile = new FileInfo(Path.Combine(clsUtilities.GetAppDirectoryPath(), PERIODIC_LOG_FILE));
 
                 if (messageCacheFile.Exists)
                 {
@@ -661,7 +661,7 @@ namespace CaptureTaskManager
                     }
 
                     // Check to see if manager is still active
-                    if (!m_MgrSettings.GetParam("mgractive", false))
+                    if (!m_MgrSettings.GetParam("MgrActive", false))
                     {
                         // Disabled via manager control db
                         m_LoopExitCode = LoopExitCode.DisabledMC;
@@ -732,7 +732,7 @@ namespace CaptureTaskManager
 
                             // Increment and test the task counter
                             taskCount++;
-                            if (taskCount > m_MgrSettings.GetParam("maxrepetitions", 1))
+                            if (taskCount > m_MgrSettings.GetParam("MaxRepetitions", 1))
                             {
                                 m_Running = false;
                                 m_LoopExitCode = LoopExitCode.ExceededMaxTaskCount;
@@ -1148,7 +1148,7 @@ namespace CaptureTaskManager
             try
             {
                 // LogLevel is 1 to 5: 1 for Fatal errors only, 4 for Fatal, Error, Warning, and Info, and 5 for everything including Debug messages
-                var debugLevel = mgrSettings.GetParam("debuglevel", 4);
+                var debugLevel = mgrSettings.GetParam("DebugLevel", 4);
 
                 m_DebugLevel = (BaseLogger.LogLevels)debugLevel;
 
@@ -1245,9 +1245,9 @@ namespace CaptureTaskManager
             try
             {
                 var configFilePath = Path.Combine(m_MgrDirectoryPath, m_MgrExeName + ".config");
-                var configfile = new FileInfo(configFilePath);
+                var configFile = new FileInfo(configFilePath);
 
-                if (!configfile.Exists)
+                if (!configFile.Exists)
                 {
                     LogError("File not found: " + configFilePath);
                     return string.Empty;
@@ -1257,9 +1257,9 @@ namespace CaptureTaskManager
 
                 // Open CaptureTaskManager.exe.config using a simple text reader in case the file has malformed XML
 
-                ShowTrace(string.Format("Extracting setting {0} from {1}", settingName, configfile.FullName));
+                ShowTrace(string.Format("Extracting setting {0} from {1}", settingName, configFile.FullName));
 
-                using (var reader = new StreamReader(new FileStream(configfile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(configFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     while (!reader.EndOfStream)
                     {
@@ -1305,9 +1305,9 @@ namespace CaptureTaskManager
             {
                 var stepToolLCase = m_StepTool.ToLower();
 
-                if (stepToolLCase.Contains("archiveupdate") ||
-                    stepToolLCase.Contains("datasetarchive") ||
-                    stepToolLCase.Contains("sourcefilerename"))
+                if (stepToolLCase.Contains("ArchiveUpdate".ToLower()) ||
+                    stepToolLCase.Contains("DatasetArchive".ToLower()) ||
+                    stepToolLCase.Contains("SourceFileRename".ToLower()))
                 {
                     // We don't need to validate free space with these step tools
                     return true;

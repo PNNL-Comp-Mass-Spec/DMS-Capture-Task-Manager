@@ -109,7 +109,7 @@ namespace DatasetArchivePlugin
             m_FileTools = fileTools;
 
             // DebugLevel of 4 means Info level (normal) logging; 5 for Debug level (verbose) logging
-            m_DebugLevel = m_MgrParams.GetParam("debuglevel", 4);
+            m_DebugLevel = m_MgrParams.GetParam("DebugLevel", 4);
 
             if (m_TaskParams.GetParam("StepTool") == "DatasetArchive")
             {
@@ -121,7 +121,7 @@ namespace DatasetArchivePlugin
             }
 
             // This connection string points to the DMS_Capture database
-            var connectionString = m_MgrParams.GetParam("connectionstring");
+            var connectionString = m_MgrParams.GetParam("ConnectionString");
             m_CaptureDBProcedureExecutor = new clsExecuteDatabaseSP(connectionString);
 
             RegisterEvents(m_CaptureDBProcedureExecutor);
@@ -345,7 +345,7 @@ namespace DatasetArchivePlugin
         {
             var startTime = DateTime.UtcNow;
 
-            MyEMSLUploader myEMSLUL = null;
+            MyEMSLUploader myEMSLUploader = null;
             var operatorUsername = "??";
 
             allowRetry = true;
@@ -365,18 +365,18 @@ namespace DatasetArchivePlugin
 
                 var config = new Configuration();
 
-                myEMSLUL = new MyEMSLUploader(config, m_MgrParams.TaskDictionary, m_TaskParams.TaskDictionary, m_FileTools)
+                myEMSLUploader = new MyEMSLUploader(config, m_MgrParams.ParamDictionary, m_TaskParams.TaskDictionary, m_FileTools)
                 {
                     TraceMode = TraceMode
                 };
 
                 // Attach the events
-                RegisterEvents(myEMSLUL);
+                RegisterEvents(myEMSLUploader);
 
-                myEMSLUL.StatusUpdate += myEMSLUL_StatusUpdate;
-                myEMSLUL.UploadCompleted += myEMSLUL_UploadCompleted;
+                myEMSLUploader.StatusUpdate += myEMSLUploader_StatusUpdate;
+                myEMSLUploader.UploadCompleted += myEMSLUploader_UploadCompleted;
 
-                myEMSLUL.MetadataDefinedEvent += myEMSLUL_MetadataDefinedEvent;
+                myEMSLUploader.MetadataDefinedEvent += myEMSLUploader_MetadataDefinedEvent;
 
                 m_TaskParams.AddAdditionalParameter(MyEMSLUploader.RECURSIVE_UPLOAD, recurse.ToString());
 
@@ -387,16 +387,16 @@ namespace DatasetArchivePlugin
 
                 if (useTestInstance)
                 {
-                    myEMSLUL.UseTestInstance = true;
+                    myEMSLUploader.UseTestInstance = true;
 
                     statusMessage = "Sending dataset to MyEMSL test instance";
                     OnStatusEvent(statusMessage);
                 }
 
                 // Start the upload
-                var success = myEMSLUL.SetupMetadataAndUpload(config, debugMode, out var statusURL);
+                var success = myEMSLUploader.SetupMetadataAndUpload(config, debugMode, out var statusURL);
 
-                criticalErrorMessage = myEMSLUL.CriticalErrorMessage;
+                criticalErrorMessage = myEMSLUploader.CriticalErrorMessage;
 
                 if (!string.IsNullOrWhiteSpace(criticalErrorMessage) || string.Equals(statusURL, MyEMSLUploader.CRITICAL_UPLOAD_ERROR))
                 {
@@ -409,7 +409,7 @@ namespace DatasetArchivePlugin
                 if (!success)
                 {
                     statusMessage += " (success=false)";
-                    if (clsUtilities.BytesToGB(myEMSLUL.MetadataContainer.TotalFileSizeToUpload) > LARGE_DATASET_THRESHOLD_GB_NO_RETRY)
+                    if (clsUtilities.BytesToGB(myEMSLUploader.MetadataContainer.TotalFileSizeToUpload) > LARGE_DATASET_THRESHOLD_GB_NO_RETRY)
                     {
                         m_ErrMsg = LARGE_DATASET_UPLOAD_ERROR;
 
@@ -419,16 +419,16 @@ namespace DatasetArchivePlugin
                 }
 
                 statusMessage += ": " +
-                                 myEMSLUL.FileCountNew + " new files, " +
-                                 myEMSLUL.FileCountUpdated + " updated files, " +
-                                 myEMSLUL.Bytes + " bytes";
+                                 myEMSLUploader.FileCountNew + " new files, " +
+                                 myEMSLUploader.FileCountUpdated + " updated files, " +
+                                 myEMSLUploader.Bytes + " bytes";
 
                 OnStatusEvent(statusMessage);
 
                 if (debugMode != EasyHttp.eDebugMode.DebugDisabled)
                     return false;
 
-                statusMessage = "myEMSL statusURI => " + myEMSLUL.StatusURI;
+                statusMessage = "myEMSL statusURI => " + myEMSLUploader.StatusURI;
 
                 if (!string.IsNullOrEmpty(statusURL) && statusURL.EndsWith("/1323420608"))
                 {
@@ -437,16 +437,16 @@ namespace DatasetArchivePlugin
                     return false;
                 }
 
-                if (myEMSLUL.FileCountNew + myEMSLUL.FileCountUpdated > 0 || !string.IsNullOrEmpty(statusURL))
+                if (myEMSLUploader.FileCountNew + myEMSLUploader.FileCountUpdated > 0 || !string.IsNullOrEmpty(statusURL))
                     OnStatusEvent(statusMessage);
 
                 // Raise an event with the stats
                 // This will cause clsPluginMain to call StoreMyEMSLUploadStats to store the results in the database (Table T_MyEmsl_Uploads)
                 // If an error occurs while storing to the database, the status URI will be listed in the manager's local log file
                 var e = new MyEMSLUploadEventArgs(
-                    myEMSLUL.FileCountNew, myEMSLUL.FileCountUpdated,
-                    myEMSLUL.Bytes, elapsedTime.TotalSeconds,
-                    statusURL, myEMSLUL.EUSInfo,
+                    myEMSLUploader.FileCountNew, myEMSLUploader.FileCountUpdated,
+                    myEMSLUploader.Bytes, elapsedTime.TotalSeconds,
+                    statusURL, myEMSLUploader.EUSInfo,
                     iErrorCode: 0, usedTestInstance: useTestInstance);
 
                 OnMyEMSLUploadComplete(e);
@@ -456,7 +456,7 @@ namespace DatasetArchivePlugin
                 if (!success)
                     return false;
 
-                var skippedSubdirectories = myEMSLUL.MetadataContainer.SkippedDatasetArchiveSubdirectories;
+                var skippedSubdirectories = myEMSLUploader.MetadataContainer.SkippedDatasetArchiveSubdirectories;
                 if (skippedSubdirectories.Count == 0)
                     return true;
 
@@ -471,7 +471,7 @@ namespace DatasetArchivePlugin
                     return true;
                 }
 
-                CreateArchiveUpdateJobsForDataset(myEMSLUL.MetadataContainer.SkippedDatasetArchiveSubdirectories);
+                CreateArchiveUpdateJobsForDataset(myEMSLUploader.MetadataContainer.SkippedDatasetArchiveSubdirectories);
 
                 return true;
 
@@ -511,7 +511,7 @@ namespace DatasetArchivePlugin
                     allowRetry = false;
                     LogOperationFailed(m_DatasetName, m_ErrMsg, true);
                 }
-                else if (clsUtilities.BytesToGB(myEMSLUL.MetadataContainer.TotalFileSizeToUpload) > LARGE_DATASET_THRESHOLD_GB_NO_RETRY)
+                else if (clsUtilities.BytesToGB(myEMSLUploader.MetadataContainer.TotalFileSizeToUpload) > LARGE_DATASET_THRESHOLD_GB_NO_RETRY)
                 {
                     m_ErrMsg += ": " + LARGE_DATASET_UPLOAD_ERROR;
 
@@ -532,7 +532,7 @@ namespace DatasetArchivePlugin
 
                 var elapsedTime = DateTime.UtcNow.Subtract(startTime);
 
-                if (myEMSLUL == null)
+                if (myEMSLUploader == null)
                 {
                     if (errorCode == 0)
                         return false;
@@ -551,13 +551,13 @@ namespace DatasetArchivePlugin
                 }
 
                 // Exit this method (skipping the call to MyEMSLUploadEventArgs) if the error code is 0 and no files were added or updated
-                if (errorCode == 0 && myEMSLUL.FileCountNew == 0 && myEMSLUL.FileCountUpdated == 0)
+                if (errorCode == 0 && myEMSLUploader.FileCountNew == 0 && myEMSLUploader.FileCountUpdated == 0)
                     return false;
 
                 var uploadArgs = new MyEMSLUploadEventArgs(
-                    myEMSLUL.FileCountNew, myEMSLUL.FileCountUpdated,
-                    myEMSLUL.Bytes, elapsedTime.TotalSeconds,
-                    myEMSLUL.StatusURI, myEMSLUL.EUSInfo,
+                    myEMSLUploader.FileCountNew, myEMSLUploader.FileCountUpdated,
+                    myEMSLUploader.Bytes, elapsedTime.TotalSeconds,
+                    myEMSLUploader.StatusURI, myEMSLUploader.EUSInfo,
                     errorCode, useTestInstance);
 
                 OnMyEMSLUploadComplete(uploadArgs);
@@ -566,23 +566,23 @@ namespace DatasetArchivePlugin
             }
             finally
             {
-                if (myEMSLUL != null)
+                if (myEMSLUploader != null)
                 {
                     // Unsubscribe from the events
                     // This should be automatic, but we're seeing duplicate messages of the form
                     // "... uploading, 25.0% complete for 48,390 KB",
                     // implying these are not being removed
 
-                    myEMSLUL.DebugEvent -= OnDebugEvent;
-                    myEMSLUL.StatusEvent -= OnStatusEvent;
-                    myEMSLUL.ErrorEvent -= OnErrorEvent;
-                    myEMSLUL.WarningEvent -= OnWarningEvent;
-                    myEMSLUL.ProgressUpdate -= OnProgressUpdate;
+                    myEMSLUploader.DebugEvent -= OnDebugEvent;
+                    myEMSLUploader.StatusEvent -= OnStatusEvent;
+                    myEMSLUploader.ErrorEvent -= OnErrorEvent;
+                    myEMSLUploader.WarningEvent -= OnWarningEvent;
+                    myEMSLUploader.ProgressUpdate -= OnProgressUpdate;
 
-                    myEMSLUL.StatusUpdate -= myEMSLUL_StatusUpdate;
-                    myEMSLUL.UploadCompleted -= myEMSLUL_UploadCompleted;
+                    myEMSLUploader.StatusUpdate -= myEMSLUploader_StatusUpdate;
+                    myEMSLUploader.UploadCompleted -= myEMSLUploader_UploadCompleted;
 
-                    myEMSLUL.MetadataDefinedEvent -= myEMSLUL_MetadataDefinedEvent;
+                    myEMSLUploader.MetadataDefinedEvent -= myEMSLUploader_MetadataDefinedEvent;
                 }
             }
 
@@ -650,7 +650,7 @@ namespace DatasetArchivePlugin
             }
         }
 
-        void myEMSLUL_MetadataDefinedEvent(object sender, MessageEventArgs e)
+        void myEMSLUploader_MetadataDefinedEvent(object sender, MessageEventArgs e)
         {
             if (m_DebugLevel >= 5)
             {
@@ -659,7 +659,7 @@ namespace DatasetArchivePlugin
             }
         }
 
-        void myEMSLUL_StatusUpdate(object sender, StatusEventArgs e)
+        void myEMSLUploader_StatusUpdate(object sender, StatusEventArgs e)
         {
 
             if (DateTime.UtcNow.Subtract(mLastStatusUpdateTime).TotalSeconds >= 60 && e.PercentCompleted > 0)
@@ -711,14 +711,14 @@ namespace DatasetArchivePlugin
 
         }
 
-        void myEMSLUL_UploadCompleted(object sender, UploadCompletedEventArgs e)
+        void myEMSLUploader_UploadCompleted(object sender, UploadCompletedEventArgs e)
         {
             var msg = "  ... MyEmsl upload task complete";
 
             // Note that e.ServerResponse will simply have the StatusURL if the upload succeeded
-            // If a problem occurred, e.ServerResponse will either have the full server reponse, or may even be blank
+            // If a problem occurred, e.ServerResponse will either have the full server response, or may even be blank
             if (string.IsNullOrEmpty(e.ServerResponse))
-                msg += ": empty server reponse";
+                msg += ": empty server response";
             else
                 msg += ": " + e.ServerResponse;
 

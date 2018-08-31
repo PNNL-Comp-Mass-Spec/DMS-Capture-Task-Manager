@@ -26,7 +26,7 @@ namespace CaptureTaskManager
     /// </summary>
     static class Program
     {
-        private const string PROGRAM_DATE = "August 10, 2018";
+        private const string PROGRAM_DATE = "August 30, 2018";
 
         private static bool mCodeTestMode;
         private static bool mTraceMode;
@@ -229,7 +229,7 @@ namespace CaptureTaskManager
                 // Make sure no invalid parameters are present
                 if (commandLineParser.InvalidParametersPresent(lstValidParameters))
                 {
-                    ShowErrorMessage("Invalid commmand line parameters",
+                    ShowErrorMessage("Invalid command line parameters",
                                      (from item in commandLineParser.InvalidParameters(lstValidParameters) select "/" + item).ToList());
 
                     return false;

@@ -77,7 +77,7 @@ namespace CaptureTaskManager
         public float Progress { get; set; }
 
         /// <summary>
-        // Current task
+        /// Current task
         /// </summary>
         public string CurrentOperation { get; set; }
 
@@ -109,7 +109,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Path to the flag file (it may or may not exist)
         /// </summary>
-        public string FlagFilePath => Path.Combine(AppFolderPath(), FLAG_FILE_NAME);
+        public string FlagFilePath => Path.Combine(AppDirectoryPath(), FLAG_FILE_NAME);
 
         /// <summary>
         /// URI for the manager status message queue, e.g. tcp://Proto-7.pnl.gov:61616
@@ -159,10 +159,10 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Returns the folder path that contains the program .exe
+        /// Returns the directory path that contains the program .exe
         /// </summary>
         /// <returns></returns>
-        private string AppFolderPath()
+        private string AppDirectoryPath()
         {
             return PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppFolderPath();
         }
@@ -280,7 +280,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Writes the status to the message queue
         /// </summary>
-        /// <param name="statusXML">A string contiaining the XML to write</param>
+        /// <param name="statusXML">A string containing the XML to write</param>
         private void LogStatusToMessageQueue(string statusXML)
         {
             MonitorUpdateRequired?.Invoke(statusXML);

@@ -19,6 +19,7 @@ namespace DatasetQualityPlugin
     /// <summary>
     /// Dataset quality plugin
     /// </summary>
+    // ReSharper disable once UnusedMember.Global
     public class clsPluginMain : clsToolRunnerBase
     {
 
@@ -190,7 +191,7 @@ namespace DatasetQualityPlugin
             if (!fiDataFile.Exists)
             {
                 // File has likely been purged from the storage server
-                // Look in the Aurora archive (aurora.emsl.pnl.gov) using samba; was prevously a2.emsl.pnl.gov
+                // Look in the Aurora archive (aurora.emsl.pnl.gov) using samba; was previously a2.emsl.pnl.gov
                 var dataFilePathArchive = Path.Combine(m_TaskParams.GetParam("Archive_Network_Share_Path"), m_TaskParams.GetParam("Folder"), fiDataFile.Name);
 
                 var fiDataFileInArchive = new FileInfo(dataFilePathArchive);
@@ -226,7 +227,7 @@ namespace DatasetQualityPlugin
             else
             {
                 // Quameter failed
-                // Copy the Quameter log file to the Dataset's QC folder
+                // Copy the Quameter log file to the Dataset QC folder
                 // We only save the log file if an error occurs since it typically doesn't contain any useful information
                 bSuccess = CopyFilesToDatasetFolder(datasetFolder);
 
@@ -348,7 +349,7 @@ namespace DatasetQualityPlugin
             }
             catch (Exception ex)
             {
-                mRetData.CloseoutMsg = "Error creating the Dataest QC folder";
+                mRetData.CloseoutMsg = "Error creating the Dataset QC folder";
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 LogError(mRetData.CloseoutMsg + ": " + ex.Message);
                 return false;
@@ -408,7 +409,7 @@ namespace DatasetQualityPlugin
             // Filename StartTimeStamp   XIC-WideFrac   XIC-FWHM-Q1   XIC-FWHM-Q2   XIC-FWHM-Q3   XIC-Height-Q2   etc.
             // QC_Shew_12_02_Run-06_4Sep12_Roc_12-03-30.RAW   2012-09-04T20:33:29Z   0.35347   20.7009   22.3192   24.794   etc.
 
-            // The measurments are returned via this list
+            // The measurements are returned via this list
             var lstResults = new List<KeyValuePair<string, string>>();
 
             if (!File.Exists(ResultsFilePath))
@@ -482,7 +483,7 @@ namespace DatasetQualityPlugin
                 {
                     indexStart++;
 
-                    if (strHeaders[indexStart].ToLower() == "starttimestamp")
+                    if (strHeaders[indexStart].Equals("StartTimestamp", StringComparison.OrdinalIgnoreCase))
                     {
                         indexStart++;
                     }
@@ -615,7 +616,7 @@ namespace DatasetQualityPlugin
 
         private void PostProcessMetricsFile(string metricsOutputFileName)
         {
-            var replaceOrginal = false;
+            var replaceOriginal = false;
 
             try
             {
@@ -634,7 +635,7 @@ namespace DatasetQualityPlugin
                                 if (dataLine.IndexOf("-1.#IND", StringComparison.Ordinal) > 0)
                                 {
                                     dataLine = dataLine.Replace("-1.#IND", "");
-                                    replaceOrginal = true;
+                                    replaceOriginal = true;
                                 }
                                 swCorrectedFile.WriteLine(dataLine);
                             }
@@ -646,7 +647,7 @@ namespace DatasetQualityPlugin
                     }
                 }
 
-                if (replaceOrginal)
+                if (replaceOriginal)
                 {
                     System.Threading.Thread.Sleep(100);
 
@@ -863,7 +864,7 @@ namespace DatasetQualityPlugin
                 " FROM S_DMS_V_Dataset_Scans " +
                 " WHERE (Dataset_ID = " + datasetID + ") ";
 
-            var sConnectionString = m_MgrParams.GetParam("connectionstring");
+            var sConnectionString = m_MgrParams.GetParam("ConnectionString");
 
             var scanCount = 0;
             var scanCountMS = 0;
@@ -995,7 +996,7 @@ namespace DatasetQualityPlugin
                 mLastStatusUpdate = DateTime.UtcNow;
 
                 // This will also call RegisterEvents
-                AttachCmdrunnerEvents(cmdRunner);
+                AttachCmdRunnerEvents(cmdRunner);
 
                 // Create a batch file to run the command
                 // Capture the console output (including output to the error stream) via redirection symbols:
@@ -1093,7 +1094,7 @@ namespace DatasetQualityPlugin
             }
             finally
             {
-                DetachCmdrunnerEvents(cmdRunner);
+                DetachCmdRunnerEvents(cmdRunner);
             }
 
             return true;
@@ -1129,22 +1130,22 @@ namespace DatasetQualityPlugin
             LogDebug("Determining tool version info");
 
             var strToolVersionInfo = string.Empty;
-            var appFolder = clsUtilities.GetAppFolderPath();
+            var appDirectory = clsUtilities.GetAppDirectoryPath();
 
-            if (string.IsNullOrWhiteSpace(appFolder))
+            if (string.IsNullOrWhiteSpace(appDirectory))
             {
-                LogError("GetAppFolderPath returned an empty directory path to StoreToolVersionInfo for the Dataset Info plugin");
+                LogError("GetAppDirectoryPath returned an empty directory path to StoreToolVersionInfo for the Dataset Info plugin");
                 return false;
             }
 
             // Lookup the version of the dataset quality plugin
-            var sPluginPath = Path.Combine(appFolder, "DatasetQualityPlugin.dll");
+            var sPluginPath = Path.Combine(appDirectory, "DatasetQualityPlugin.dll");
             var bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, sPluginPath);
             if (!bSuccess)
                 return false;
 
-            // Store path to CaptureToolPlugin.dll in ioToolFiles
-            var ioToolFiles = new List<FileInfo>
+            // Store path to CaptureToolPlugin.dll in toolFiles
+            var toolFiles = new List<FileInfo>
             {
                 new FileInfo(sPluginPath)
             };
@@ -1152,12 +1153,12 @@ namespace DatasetQualityPlugin
             if (storeQuameterVersion)
             {
                 // Quameter is a C++ program, so we can only store the date
-                ioToolFiles.Add(new FileInfo(GetQuameterPath()));
+                toolFiles.Add(new FileInfo(GetQuameterPath()));
             }
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, false);
+                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, false);
             }
             catch (Exception ex)
             {
@@ -1171,7 +1172,7 @@ namespace DatasetQualityPlugin
 
         #region "Event handlers"
 
-        private void AttachCmdrunnerEvents(clsRunDosProgram cmdRunner)
+        private void AttachCmdRunnerEvents(clsRunDosProgram cmdRunner)
         {
             try
             {
@@ -1185,14 +1186,14 @@ namespace DatasetQualityPlugin
             }
         }
 
-        private void DetachCmdrunnerEvents(clsRunDosProgram CmdRunner)
+        private void DetachCmdRunnerEvents(clsRunDosProgram cmdRunner)
         {
             try
             {
-                if (CmdRunner != null)
+                if (cmdRunner != null)
                 {
-                    CmdRunner.LoopWaiting -= CmdRunner_LoopWaiting;
-                    CmdRunner.Timeout -= CmdRunner_Timeout;
+                    cmdRunner.LoopWaiting -= CmdRunner_LoopWaiting;
+                    cmdRunner.Timeout -= CmdRunner_Timeout;
                 }
             }
             // ReSharper disable once EmptyGeneralCatchClause

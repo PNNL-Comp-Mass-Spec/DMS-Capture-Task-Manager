@@ -17,7 +17,7 @@ namespace CaptureTaskManager
 
         #region "Properties"
 
-        Dictionary<string, string> TaskDictionary { get; }
+        Dictionary<string, string> ParamDictionary { get; }
 
         #endregion
 

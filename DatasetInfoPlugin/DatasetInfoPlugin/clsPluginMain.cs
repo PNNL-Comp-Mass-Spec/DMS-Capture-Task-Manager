@@ -21,6 +21,7 @@ namespace DatasetInfoPlugin
     /// <summary>
     /// Dataset Info plugin: generates QC graphics
     /// </summary>
+    // ReSharper disable once UnusedMember.Global
     public class clsPluginMain : clsToolRunnerBase
     {
 
@@ -123,8 +124,8 @@ namespace DatasetInfoPlugin
             try
             {
                 // Dynamically load the specified class from dllFilePath
-                var assem = Assembly.LoadFrom(dllFilePath);
-                var dllType = assem.GetType(className, false, true);
+                var assembly = Assembly.LoadFrom(dllFilePath);
+                var dllType = assembly.GetType(className, false, true);
                 obj = Activator.CreateInstance(dllType);
             }
             catch (Exception ex)
@@ -391,7 +392,7 @@ namespace DatasetInfoPlugin
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                 if (brukerDotDBaf && IGNORE_BRUKER_BAF_ERRORS)
                 {
-                    // 12T_FTICR_B datasets (with .D directories and analysis.baf and/or fid files) sometimes work with MSFileInfoscanner, and sometimes don't
+                    // 12T_FTICR_B datasets (with .D directories and analysis.baf and/or fid files) sometimes work with MSFileInfoScanner, and sometimes don't
                     // The problem is that ProteoWizard doesn't support certain forms of these datasets
                     // In particular, small datasets (lasting just a few seconds) don't work
 
@@ -523,7 +524,7 @@ namespace DatasetInfoPlugin
         private bool PostDatasetInfoXml(string dsInfoXML, out string errorMessage)
         {
             var iPostCount = 0;
-            var connectionString = m_MgrParams.GetParam("connectionstring");
+            var connectionString = m_MgrParams.GetParam("ConnectionString");
 
             var iDatasetID = m_TaskParams.GetParam("Dataset_ID", 0);
 
@@ -598,7 +599,7 @@ namespace DatasetInfoPlugin
             {
                 var pngMatcher = new Regex(@"""(?<Filename>[^""]+\.png)""");
 
-                // Create an index.html file that shows all of the plots in the subdierctories
+                // Create an index.html file that shows all of the plots in the subdirectories
                 var indexHtmlFilePath = Path.Combine(outputPathBase, "index.html");
                 using (var htmlWriter = new StreamWriter(new FileStream(indexHtmlFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
@@ -838,7 +839,7 @@ namespace DatasetInfoPlugin
             // _iTRAQ4_
             // _iTRAQ8_
             // _iTRAQ-8_
-            var itraqMatcher = new Regex("_iTRAQ[0-9-]*_", RegexOptions.IgnoreCase);
+            var iTRAQMatcher = new Regex("_iTRAQ[0-9-]*_", RegexOptions.IgnoreCase);
 
             // Match names like:
             // _TMT_
@@ -847,13 +848,13 @@ namespace DatasetInfoPlugin
             // _TMT-10_
             var tmtMatcher = new Regex("_TMT[0-9-]*_", RegexOptions.IgnoreCase);
 
-            var itraqMatch = itraqMatcher.Match(m_Dataset);
-            if (itraqMatch.Success)
+            var iTRAQMatch = iTRAQMatcher.Match(m_Dataset);
+            if (iTRAQMatch.Success)
             {
                 msFileInfoScanner.MS2MzMin = 113;
                 LogMessage(string.Format(
                                "Verifying that MS/MS spectra have minimum m/z values below {0:N0} since the dataset name contains {1}",
-                               msFileInfoScanner.MS2MzMin, itraqMatch.Value));
+                               msFileInfoScanner.MS2MzMin, iTRAQMatch.Value));
             }
 
             var tmtMatch = tmtMatcher.Match(m_Dataset);
@@ -938,7 +939,7 @@ namespace DatasetInfoPlugin
             // Look for a .mcf file in each of the .D directories
             foreach (var dotDDirectory in diDotDDirectories)
             {
-                var mcfFileExists = LookForMcfFileIndotDDirectory(dotDDirectory, out var dotDDirectoryName);
+                var mcfFileExists = LookForMcfFileInDotDDirectory(dotDDirectory, out var dotDDirectoryName);
                 if (mcfFileExists && !fileOrDirectoryNames.Contains(dotDDirectoryName))
                 {
                     fileOrDirectoryNames.Add(dotDDirectoryName);
@@ -972,7 +973,7 @@ namespace DatasetInfoPlugin
 
             // Determine the Instrument Class and RawDataType
             var instClassName = m_TaskParams.GetParam("Instrument_Class");
-            var rawDataTypeName = m_TaskParams.GetParam("rawdatatype", "UnknownRawDataType");
+            var rawDataTypeName = m_TaskParams.GetParam("RawDataType", "UnknownRawDataType");
 
             instrumentClass = clsInstrumentClassInfo.GetInstrumentClass(instClassName);
             if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Unknown)
@@ -1111,7 +1112,7 @@ namespace DatasetInfoPlugin
                     return new List<string> { fileOrDirectoryName };
                 }
 
-                // File not found; check for alternative files or directores
+                // File not found; check for alternative files or directories
                 // This function also looks for .D directories
                 var fileOrDirectoryNames = LookForAlternateFileOrDirectory(diDatasetDirectory, fileOrDirectoryName);
 
@@ -1167,9 +1168,9 @@ namespace DatasetInfoPlugin
         /// Look for alternate dataset files, or look for .D directories
         /// </summary>
         /// <param name="diDatasetDirectory"></param>
-        /// <param name="initialfileOrDirectoryName"></param>
+        /// <param name="initialFileOrDirectoryName"></param>
         /// <returns></returns>
-        private List<string> LookForAlternateFileOrDirectory(DirectoryInfo diDatasetDirectory, string initialfileOrDirectoryName)
+        private List<string> LookForAlternateFileOrDirectory(DirectoryInfo diDatasetDirectory, string initialFileOrDirectoryName)
         {
 
             // File not found; look for alternate extensions
@@ -1177,7 +1178,7 @@ namespace DatasetInfoPlugin
 
             foreach (var altExtension in lstAlternateExtensions)
             {
-                var dataFileNamePathAlt = Path.ChangeExtension(initialfileOrDirectoryName, altExtension);
+                var dataFileNamePathAlt = Path.ChangeExtension(initialFileOrDirectoryName, altExtension);
                 if (File.Exists(dataFileNamePathAlt))
                 {
                     m_Msg = "Data file not found, but ." + altExtension + " file exists";
@@ -1187,14 +1188,14 @@ namespace DatasetInfoPlugin
             }
 
             // Look for dataset directories
-            var primarydotDDirectory = new DirectoryInfo(Path.Combine(diDatasetDirectory.FullName, m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION));
+            var primaryDotDDirectory = new DirectoryInfo(Path.Combine(diDatasetDirectory.FullName, m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION));
 
             var fileOrDirectoryNames = new List<string>();
 
-            if (primarydotDDirectory.Exists)
+            if (primaryDotDDirectory.Exists)
             {
                 // Look for a .mcf file in the .D directory
-                var mcfFileExists = LookForMcfFileIndotDDirectory(primarydotDDirectory, out var dotDDirectoryName);
+                var mcfFileExists = LookForMcfFileInDotDDirectory(primaryDotDDirectory, out var dotDDirectoryName);
                 if (mcfFileExists)
                 {
                     fileOrDirectoryNames.Add(dotDDirectoryName);
@@ -1212,22 +1213,22 @@ namespace DatasetInfoPlugin
         /// <summary>
         /// Look for any .mcf file in a Bruker .D directory
         /// </summary>
-        /// <param name="didotDDirectory"></param>
+        /// <param name="dotDDirectory"></param>
         /// <param name="dotDDirectoryName">Output: name of the .D directory</param>
         /// <returns>True if a .mcf file is found</returns>
-        private bool LookForMcfFileIndotDDirectory(DirectoryInfo didotDDirectory, out string dotDDirectoryName)
+        private bool LookForMcfFileInDotDDirectory(DirectoryInfo dotDDirectory, out string dotDDirectoryName)
         {
 
             long mcfFileSizeBytes = 0;
             dotDDirectoryName = string.Empty;
 
-            foreach (var fiFile in didotDDirectory.GetFiles("*.mcf"))
+            foreach (var mcfFile in dotDDirectory.GetFiles("*.mcf"))
             {
                 // Return the .mcf file that is the largest
-                if (fiFile.Length > mcfFileSizeBytes)
+                if (mcfFile.Length > mcfFileSizeBytes)
                 {
-                    mcfFileSizeBytes = fiFile.Length;
-                    dotDDirectoryName = didotDDirectory.Name;
+                    mcfFileSizeBytes = mcfFile.Length;
+                    dotDDirectoryName = dotDDirectory.Name;
                 }
             }
 
@@ -1244,11 +1245,11 @@ namespace DatasetInfoPlugin
             LogDebug("Determining tool version info");
 
             var toolVersionInfo = string.Empty;
-            var appDirectory = clsUtilities.GetAppFolderPath();
+            var appDirectory = clsUtilities.GetAppDirectoryPath();
 
             if (string.IsNullOrWhiteSpace(appDirectory))
             {
-                LogError("GetAppFolderPath returned an empty directory path to StoreToolVersionInfo for the Dataset Info plugin");
+                LogError("GetAppDirectoryPath returned an empty directory path to StoreToolVersionInfo for the Dataset Info plugin");
                 return false;
             }
 
@@ -1273,18 +1274,18 @@ namespace DatasetInfoPlugin
             if (!bSuccess)
                 return false;
 
-            // Store path to CaptureToolPlugin.dll and MSFileInfoScanner.dll in ioToolFiles
-            var ioToolFiles = new List<FileInfo>
+            // Store path to CaptureToolPlugin.dll and MSFileInfoScanner.dll in toolFiles
+            var toolFiles = new List<FileInfo>
             {
                 new FileInfo(pluginPath)
             };
 
             if (!string.IsNullOrEmpty(msFileInfoScannerDLLPath))
-                ioToolFiles.Add(new FileInfo(msFileInfoScannerDLLPath));
+                toolFiles.Add(new FileInfo(msFileInfoScannerDLLPath));
 
             try
             {
-                return SetStepTaskToolVersion(toolVersionInfo, ioToolFiles, false);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, false);
             }
             catch (Exception ex)
             {

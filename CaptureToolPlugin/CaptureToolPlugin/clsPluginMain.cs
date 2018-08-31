@@ -15,6 +15,7 @@ namespace CaptureToolPlugin
     /// <summary>
     /// Dataset capture plugin
     /// </summary>
+    // ReSharper disable once UnusedMember.Global
     public class clsPluginMain : clsToolRunnerBase
     {
 
@@ -134,16 +135,16 @@ namespace CaptureToolPlugin
             LogDebug("Determining tool version info");
 
             var strToolVersionInfo = string.Empty;
-            var appFolder = clsUtilities.GetAppFolderPath();
+            var appDirectory = clsUtilities.GetAppDirectoryPath();
 
-            if (string.IsNullOrWhiteSpace(appFolder))
+            if (string.IsNullOrWhiteSpace(appDirectory))
             {
-                LogError("GetAppFolderPath returned an empty directory path to StoreToolVersionInfo for the Capture plugin");
+                LogError("GetAppDirectoryPath returned an empty directory path to StoreToolVersionInfo for the Capture plugin");
                 return false;
             }
 
             // Lookup the version of the Capture tool plugin
-            var strPluginPath = Path.Combine(appFolder, "CaptureToolPlugin.dll");
+            var strPluginPath = Path.Combine(appDirectory, "CaptureToolPlugin.dll");
             var bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strPluginPath);
             if (!bSuccess)
             {
@@ -151,22 +152,22 @@ namespace CaptureToolPlugin
             }
 
             // Lookup the version of the Capture task manager
-            var strCTMPath = Path.Combine(appFolder, "CaptureTaskManager.exe");
+            var strCTMPath = Path.Combine(appDirectory, "CaptureTaskManager.exe");
             bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strCTMPath);
             if (!bSuccess)
             {
                 return false;
             }
 
-            // Store path to CaptureToolPlugin.dll in ioToolFiles
-            var ioToolFiles = new List<FileInfo>
+            // Store path to CaptureToolPlugin.dll in toolFiles
+            var toolFiles = new List<FileInfo>
                 {
                     new FileInfo(strPluginPath)
                 };
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, false);
+                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, false);
             }
             catch (Exception ex)
             {

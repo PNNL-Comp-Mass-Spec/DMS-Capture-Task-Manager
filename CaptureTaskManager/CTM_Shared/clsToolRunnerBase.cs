@@ -130,12 +130,12 @@ namespace CaptureTaskManager
             m_MgrName = m_MgrParams.GetParam("MgrName", "CaptureTaskManager");
 
             // This connection string points to the DMS_Capture database
-            var connectionString = m_MgrParams.GetParam("connectionstring");
+            var connectionString = m_MgrParams.GetParam("ConnectionString");
             m_CaptureDBProcedureExecutor = new clsExecuteDatabaseSP(connectionString);
 
             RegisterEvents(m_CaptureDBProcedureExecutor);
 
-            m_WorkDir = m_MgrParams.GetParam("workdir");
+            m_WorkDir = m_MgrParams.GetParam("WorkDir");
 
             m_Dataset = m_TaskParams.GetParam("Dataset");
 
@@ -145,7 +145,7 @@ namespace CaptureTaskManager
 
             // Debug level 4 means Info level (normal) logging; 5 for Debug level (verbose) logging
             // Log level 4 will also log error messages
-            m_DebugLevel = (short)m_MgrParams.GetParam("debuglevel", 4);
+            m_DebugLevel = (short)m_MgrParams.GetParam("DebugLevel", 4);
             LogTools.SetFileLogLevel(m_DebugLevel);
 
             m_TraceMode = m_MgrParams.GetParam("TraceMode", false);
@@ -177,7 +177,7 @@ namespace CaptureTaskManager
                 else
                 {
                     // Update the log level
-                    m_DebugLevel = (short)m_MgrParams.GetParam("debuglevel", 4);
+                    m_DebugLevel = (short)m_MgrParams.GetParam("DebugLevel", 4);
                     LogTools.SetFileLogLevel(m_DebugLevel);
                 }
             }
@@ -616,12 +616,14 @@ namespace CaptureTaskManager
         /// Communicates with database to record the tool version(s) for the current step task
         /// </summary>
         /// <param name="toolVersionInfo">Version info (maximum length is 900 characters)</param>
-        /// <param name="ioToolFiles">FileSystemInfo list of program files related to the step tool</param>
+        /// <param name="toolFiles">FileSystemInfo list of program files related to the step tool</param>
         /// <param name="saveToolVersionTextFile">If true, creates a text file with the tool version information</param>
         /// <returns>True for success, False for failure</returns>
         /// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
-        protected bool SetStepTaskToolVersion(string toolVersionInfo, IReadOnlyList<FileInfo> ioToolFiles,
-                                              bool saveToolVersionTextFile)
+        protected bool SetStepTaskToolVersion(
+            string toolVersionInfo,
+            IReadOnlyList<FileInfo> toolFiles,
+            bool saveToolVersionTextFile)
         {
             var strExeInfo = string.Empty;
             string toolVersionInfoCombined;
@@ -631,24 +633,24 @@ namespace CaptureTaskManager
                 return false;
             }
 
-            if (ioToolFiles != null)
+            if (toolFiles != null)
             {
-                foreach (var fiFile in ioToolFiles)
+                foreach (var toolFile in toolFiles)
                 {
                     try
                     {
-                        if (fiFile.Exists)
+                        if (toolFile.Exists)
                         {
                             strExeInfo = AppendToComment(strExeInfo,
-                                                         fiFile.Name + ": " +
-                                                         fiFile.LastWriteTime.ToString(DATE_TIME_FORMAT));
+                                                         toolFile.Name + ": " +
+                                                         toolFile.LastWriteTime.ToString(DATE_TIME_FORMAT));
 
                             var writeToLog = m_DebugLevel >= 5;
                             LogDebug("EXE Info: " + strExeInfo, writeToLog);
                         }
                         else
                         {
-                            LogWarning("Tool file not found: " + fiFile.FullName);
+                            LogWarning("Tool file not found: " + toolFile.FullName);
                         }
                     }
                     catch (Exception ex)
@@ -711,7 +713,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Determines the version info for a DLL using reflection
         /// </summary>
-        /// <param name="toolVersionInfo">Version info string to append the veresion info to</param>
+        /// <param name="toolVersionInfo">Version info string to append the version info to</param>
         /// <param name="dllFilePath">Path to the DLL</param>
         /// <returns>True if success; false if an error</returns>
         /// <remarks>Used by CTM plugins</remarks>
@@ -864,7 +866,7 @@ namespace CaptureTaskManager
         {
             try
             {
-                var strAppPath = Path.Combine(clsUtilities.GetAppFolderPath(), versionInspectorExeName);
+                var strAppPath = Path.Combine(clsUtilities.GetAppDirectoryPath(), versionInspectorExeName);
 
                 var fiDLLFile = new FileInfo(dllFilePath);
 
@@ -889,7 +891,7 @@ namespace CaptureTaskManager
                 var strArgs = clsConversion.PossiblyQuotePath(fiDLLFile.FullName) + " /O:" +
                               clsConversion.PossiblyQuotePath(versionInfoFilePath);
 
-                var progRunner = new clsRunDosProgram(clsUtilities.GetAppFolderPath(), m_DebugLevel)
+                var progRunner = new clsRunDosProgram(clsUtilities.GetAppDirectoryPath(), m_DebugLevel)
                 {
                     CacheStandardOutput = false,
                     CreateNoWindow = true,

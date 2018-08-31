@@ -247,7 +247,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="workDir">Workdirectory for input/output files, if any</param>
+        /// <param name="workDir">Work directory for input/output files, if any</param>
         /// <param name="debugLevel">Debug level (Higher values mean more log messages)</param>
         /// <remarks></remarks>
         public clsRunDosProgram(string workDir, int debugLevel = 1)
