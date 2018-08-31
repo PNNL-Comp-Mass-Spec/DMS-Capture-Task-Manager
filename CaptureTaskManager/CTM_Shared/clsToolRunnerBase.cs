@@ -50,6 +50,7 @@ namespace CaptureTaskManager
         protected int m_MinutesBetweenConfigDBUpdates = 10;
 
         // Used by CTM plugins
+        // ReSharper disable once UnusedMember.Global
         protected bool m_NeedToAbortProcessing = false;
 
         protected string m_WorkDir;
@@ -154,6 +155,7 @@ namespace CaptureTaskManager
         }
 
         // Used by CTM plugins
+        // ReSharper disable once UnusedMember.Global
         protected bool UpdateMgrSettings()
         {
             var bSuccess = true;
@@ -222,6 +224,7 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="workDir">Working directory path</param>
         /// <returns></returns>
+        // ReSharper disable once UnusedMember.Global
         public static bool CleanWorkDir(string workDir)
         {
             const float HoldoffSeconds = 0.1f;
@@ -317,6 +320,7 @@ namespace CaptureTaskManager
         }
 
         // Used by CTM plugins
+        // ReSharper disable once UnusedMember.Global
         protected void DeleteFileIgnoreErrors(string filePath)
         {
             try
@@ -344,6 +348,7 @@ namespace CaptureTaskManager
         /// <param name="percentComplete">Output: ingest process percent complete (value between 0 and 100)</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>This function is used by the ArchiveStatusCheck plugin and the ArchiveVerify plugin </remarks>
+        // ReSharper disable once UnusedMember.Global
         protected bool GetMyEMSLIngestStatus(
             int job,
             MyEMSLStatusCheck statusChecker,
@@ -595,6 +600,7 @@ namespace CaptureTaskManager
         /// <param name="saveToolVersionTextFile">If true, creates a text file with the tool version information</param>
         /// <returns>True for success, False for failure</returns>
         /// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
+        // ReSharper disable once UnusedMember.Global
         protected bool SetStepTaskToolVersion(
             string toolVersionInfo,
             IReadOnlyList<FileInfo> toolFiles,
@@ -692,6 +698,7 @@ namespace CaptureTaskManager
         /// <param name="dllFilePath">Path to the DLL</param>
         /// <returns>True if success; false if an error</returns>
         /// <remarks>Used by CTM plugins</remarks>
+        // ReSharper disable once UnusedMember.Global
         protected virtual bool StoreToolVersionInfoOneFile(ref string toolVersionInfo, string dllFilePath)
         {
             bool success;
@@ -823,6 +830,7 @@ namespace CaptureTaskManager
         /// <param name="dllFilePath"></param>
         /// <returns>True if success; false if an error</returns>
         /// <remarks>Used by CTM plugins</remarks>
+        // ReSharper disable once UnusedMember.Global
         protected bool StoreToolVersionInfoOneFile64Bit(ref string toolVersionInfo, string dllFilePath)
         {
             return StoreToolVersionInfoOneFileUseExe(ref toolVersionInfo, dllFilePath, "DLLVersionInspector_x64.exe");
@@ -933,6 +941,7 @@ namespace CaptureTaskManager
         /// <param name="fatalError">True if ingest failed with a fatal error and thus the ErrorCode should be updated in T_MyEMSL_Uploads</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>This function is used by the ArchiveStatusCheck plugin and the ArchiveVerify plugin </remarks>
+        // ReSharper disable once UnusedMember.Global
         protected bool UpdateIngestStepsCompletedOneTask(
             int statusNum,
             byte ingestStepsCompleted,

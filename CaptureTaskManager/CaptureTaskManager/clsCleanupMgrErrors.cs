@@ -103,6 +103,7 @@ namespace CaptureTaskManager
         /// 2 = Cleanup always
         /// </param>
         /// <returns></returns>
+        // ReSharper disable once UnusedMember.Global
         public bool AutoCleanupManagerErrors(int managerErrorCleanupMode)
         {
             eCleanupModeConstants cleanupMode;
@@ -148,7 +149,7 @@ namespace CaptureTaskManager
             }
             else
             {
-                // If successful, delete flagfile.txt
+                // If successful, delete FlagFile.txt
                 success = m_StatusFile.DeleteStatusFlagFile();
                 if (!success)
                 {

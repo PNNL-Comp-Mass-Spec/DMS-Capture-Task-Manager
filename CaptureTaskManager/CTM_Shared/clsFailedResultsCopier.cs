@@ -4,6 +4,7 @@ using System.IO;
 namespace CaptureTaskManager
 {
     // Used by ImsDemuxPlugin.clsDemuxTools
+    // ReSharper disable once UnusedMember.Global
     public class clsFailedResultsCopier : clsLoggerBase
     {
         protected const string FAILED_RESULTS_FOLDER_INFO_TEXT = "FailedResultsFolderInfo_";
@@ -19,6 +20,7 @@ namespace CaptureTaskManager
             m_taskParams = taskParams;
         }
 
+        // ReSharper disable once UnusedMember.Global
         public void CopyFailedResultsToArchiveFolder(string ResultsFolderPath)
         {
             var strFailedResultsFolderPath = string.Empty;

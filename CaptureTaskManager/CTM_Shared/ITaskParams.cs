@@ -5,6 +5,7 @@
 // Created 09/15/2009
 //*********************************************************************************************************
 
+// ReSharper disable UnusedMember.Global
 namespace CaptureTaskManager
 {
     /// <summary>

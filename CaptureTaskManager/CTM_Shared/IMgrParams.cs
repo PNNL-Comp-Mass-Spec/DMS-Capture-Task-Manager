@@ -17,6 +17,7 @@ namespace CaptureTaskManager
 
         #region "Properties"
 
+        // ReSharper disable once UnusedMember.Global
         Dictionary<string, string> ParamDictionary { get; }
 
         #endregion
@@ -60,6 +61,7 @@ namespace CaptureTaskManager
         /// <param name="itemKey">Key name for the item</param>
         /// <param name="itemValue">Value to assign to the key</param>
         /// <remarks></remarks>
+        // ReSharper disable once UnusedMember.Global
         void SetParam(string itemKey, string itemValue);
 
         /// <summary>

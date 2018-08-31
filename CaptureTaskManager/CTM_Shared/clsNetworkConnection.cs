@@ -65,6 +65,8 @@ namespace CaptureTaskManager
                                                         bool force);
     }
 
+    // ReSharper disable UnusedMember.Global
+
     [StructLayout(LayoutKind.Sequential)]
     public class NetResource
     {
@@ -110,4 +112,7 @@ namespace CaptureTaskManager
         Tree = 0x0a,
         NdsContainer = 0x0b
     }
+
+    // ReSharper restore UnusedMember.Global
+
 }

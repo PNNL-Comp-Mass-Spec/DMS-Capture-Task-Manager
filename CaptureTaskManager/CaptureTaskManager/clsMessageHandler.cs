@@ -17,6 +17,7 @@ namespace CaptureTaskManager
     /// Received commands are sent to a delegate function with this signature
     /// </summary>
     /// <param name="cmdText"></param>
+    // ReSharper disable once UnusedMember.Global
     public delegate void MessageProcessorDelegate(string cmdText);
 
     /// <summary>

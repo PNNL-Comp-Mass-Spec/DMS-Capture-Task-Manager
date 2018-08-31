@@ -7,6 +7,7 @@
 
 using System;
 
+// ReSharper disable UnusedMember.Global
 namespace CaptureTaskManager
 {
     /// <summary>

@@ -67,6 +67,7 @@ namespace CaptureTaskManager
                     break;
             }
 
+            // ReSharper disable once ExpressionIsAlwaysNull
             return myToolRunner;
         }
 #endif
@@ -185,7 +186,7 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Loads the specifed dll
+        /// Loads the specified dll
         /// </summary>
         /// <param name="className">Name of class to load (from GetPluginInfo)</param>
         /// <param name="assemblyName">Name of assembly to load (from GetPluginInfo)</param>

@@ -74,6 +74,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Text written to the Console by the external program (including carriage returns)
         /// </summary>
+        // ReSharper disable once UnusedMember.Global
         public string CachedConsoleOutput
         {
             get
@@ -90,6 +91,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Any text written to the Error buffer by the external program
         /// </summary>
+        // ReSharper disable once UnusedMember.Global
         public string CachedConsoleError
         {
             get
@@ -173,6 +175,7 @@ namespace CaptureTaskManager
         /// ProcessID of an externally spawned process
         /// </summary>
         /// <remarks>0 if no external process running</remarks>
+        // ReSharper disable once UnusedMember.Global
         public int ProcessID
         {
             get
@@ -210,6 +213,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Current monitoring state
         /// </summary>
+        // ReSharper disable once UnusedMember.Global
         public clsProgRunner.States State
         {
             get
@@ -260,6 +264,7 @@ namespace CaptureTaskManager
         /// Call this function to instruct this class to terminate the running program
         /// Will post an entry to the log
         /// </summary>
+        // ReSharper disable once UnusedMember.Global
         public void AbortProgramNow()
         {
             AbortProgramNow(postLogEntry: true);
@@ -294,6 +299,7 @@ namespace CaptureTaskManager
         /// <param name="progName">The name of the program to use for the Window title</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>Ignores the result code reported by the program</remarks>
+        // ReSharper disable once UnusedMember.Global
         public bool RunProgram(string executablePath, string arguments, string progName)
         {
             const bool useResCode = false;
