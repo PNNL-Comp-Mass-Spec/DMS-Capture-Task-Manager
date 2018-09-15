@@ -388,6 +388,7 @@ namespace DatasetQualityPlugin
         /// <param name="firstMS1Scan">First MS1 scan; typically 1, but greater than one for some datasets</param>
         /// <param name="lastScan">Last Scan Number</param>
         /// <returns></returns>
+        [Obsolete("Unused")]
         private bool ExamineThermoRawFileScans(string dataFilePath, out int firstMS1Scan, out int lastScan)
         {
             firstMS1Scan = 0;
@@ -898,10 +899,12 @@ namespace DatasetQualityPlugin
                     return false;
                 }
 
-                // Determine the first scan that is MS1 and the last scan number
-                // This is required for .raw files that start with MS2 spectra
-                var scanInfoSuccess = ExamineThermoRawFileScans(dataFilePathLocal, out var firstMS1Scan, out var lastScan);
+                /*
+                 *
 
+                // Determine the first scan that is MS1 and the last scan number
+                // Prior to September 2018, this was required for .raw files that start with MS2 spectra
+                var scanInfoSuccess = ExamineThermoRawFileScans(dataFilePathLocal, out var firstMS1Scan, out var lastScan);
                 if (!scanInfoSuccess)
                 {
                     if (string.IsNullOrEmpty(mRetData.CloseoutMsg))
@@ -913,13 +916,14 @@ namespace DatasetQualityPlugin
                     mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     return false;
                 }
+                 *
+                 */
 
                 // Run Quameter
                 mRetData.CloseoutMsg = string.Empty;
                 var success = RunQuameter(fiQuameter, Path.GetFileName(dataFilePathLocal),
                                            QUAMETER_IDFREE_METRICS_FILE, ignoreQuameterFailure,
-                                           instrumentName, configFilePathTarget,
-                                           firstMS1Scan, lastScan);
+                                           instrumentName, configFilePathTarget);
 
                 if (!success)
                 {
@@ -1067,8 +1071,8 @@ namespace DatasetQualityPlugin
             bool ignoreQuameterFailure,
             string instrumentName,
             string configFilePath,
-            int firstMS1Scan,
-            int lastScan)
+            int firstMS1Scan = 0,
+            int lastScan = 0)
         {
             clsRunDosProgram cmdRunner = null;
             try
