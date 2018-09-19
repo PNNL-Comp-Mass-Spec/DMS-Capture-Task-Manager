@@ -498,7 +498,7 @@ namespace DatasetQualityPlugin
             if (!File.Exists(ResultsFilePath))
             {
                 mRetData.CloseoutMsg = "Quameter Results file not found";
-                LogDebug(mRetData.CloseoutMsg + ": " + ResultsFilePath);
+                LogWarning(mRetData.CloseoutMsg + ": " + ResultsFilePath);
                 return lstResults;
             }
 
@@ -523,7 +523,7 @@ namespace DatasetQualityPlugin
                 if (string.IsNullOrWhiteSpace(headerLine))
                 {
                     mRetData.CloseoutMsg = "Quameter Results file is empty (no header line)";
-                    LogDebug(mRetData.CloseoutMsg);
+                    LogWarning(mRetData.CloseoutMsg);
                     return lstResults;
                 }
 
@@ -544,7 +544,7 @@ namespace DatasetQualityPlugin
                 if (string.IsNullOrWhiteSpace(dataLine))
                 {
                     mRetData.CloseoutMsg = "Quameter Results file is empty (headers, but no data)";
-                    LogDebug(mRetData.CloseoutMsg);
+                    LogWarning(mRetData.CloseoutMsg);
                     return lstResults;
                 }
 
@@ -555,7 +555,7 @@ namespace DatasetQualityPlugin
                 {
                     // More headers than data values
                     mRetData.CloseoutMsg = "Quameter Results file data line (" + dataValues.Length + " items) does not match the header line (" + headerNames.Length + " items)";
-                    LogDebug(mRetData.CloseoutMsg);
+                    LogWarning(mRetData.CloseoutMsg);
                     return lstResults;
                 }
 
