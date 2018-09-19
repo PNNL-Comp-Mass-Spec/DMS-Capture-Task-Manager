@@ -510,12 +510,19 @@ namespace DatasetIntegrityPlugin
                 if (altDirFound)
                 {
                     // We need to rename the .uimf file since we processed a .d directory inside a .d directory
-                    var sourceUimfName = Path.GetFileName(dotDDirectoryPathLocal) + clsInstrumentClassInfo.DOT_UIMF_EXTENSION;
+                    var sourceUimfName = Path.ChangeExtension(Path.GetFileName(dotDDirectoryPathLocal), clsInstrumentClassInfo.DOT_UIMF_EXTENSION);
                     var sourceUimf = new FileInfo(Path.Combine(m_WorkDir, sourceUimfName));
                     var targetUimfPath = Path.Combine(m_WorkDir, m_Dataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION);
 
                     if (!string.Equals(sourceUimf.FullName, targetUimfPath, StringComparison.OrdinalIgnoreCase))
                     {
+                        if (!sourceUimf.Exists)
+                        {
+                            mRetData.CloseoutMsg = "AgilentToUIMFConverter did not create a .UIMF file named " + sourceUimf.Name;
+                            LogError(mRetData.CloseoutMsg + ": " + sourceUimf.FullName);
+                            return false;
+                        }
+
                         LogDebug(string.Format("Renaming {0} to {1}", sourceUimf.FullName, Path.GetFileName(targetUimfPath)));
                         sourceUimf.MoveTo(targetUimfPath);
                     }
@@ -621,7 +628,7 @@ namespace DatasetIntegrityPlugin
 
             if (!uimfFile.Exists)
             {
-                mRetData.CloseoutMsg = "AgilentToUIMFConverter did not create a .UIMF file";
+                mRetData.CloseoutMsg = "AgilentToUIMFConverter did not create a .UIMF file named " + uimfFile.Name;
                 LogError(mRetData.CloseoutMsg + ": " + uimfFile.FullName);
                 return false;
             }
