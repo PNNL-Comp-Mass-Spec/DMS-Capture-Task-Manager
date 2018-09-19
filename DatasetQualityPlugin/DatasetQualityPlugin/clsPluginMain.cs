@@ -49,6 +49,8 @@ namespace DatasetQualityPlugin
         public override clsToolReturnData RunTool()
         {
 
+            // Note that Debug messages are logged if m_DebugLevel == 5
+
             var msg = "Starting DatasetQualityPlugin.clsPluginMain.RunTool()";
             LogDebug(msg);
 
@@ -605,10 +607,10 @@ namespace DatasetQualityPlugin
 
             try
             {
-                if (!File.Exists(sConsoleOutputFilePath))
+                if (!File.Exists(mConsoleOutputFilePath))
                     return;
 
-                using (var reader = new StreamReader(new FileStream(sConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(mConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
 
                     while (!reader.EndOfStream)
@@ -1113,18 +1115,18 @@ namespace DatasetQualityPlugin
                 const string batchFileName = "Run_Quameter.bat";
 
                 // Update the Exe path to point to the RunProgram batch file; update CmdStr to be empty
-                var sExePath = Path.Combine(m_WorkDir, batchFileName);
+                var exePath = Path.Combine(m_WorkDir, batchFileName);
                 var cmdStr = string.Empty;
 
                 const string consoleOutputFileName = QUAMETER_CONSOLE_OUTPUT_FILE;
 
                 // Create the batch file
-                using (var swBatchFile = new StreamWriter(new FileStream(sExePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var batchFileWriter = new StreamWriter(new FileStream(exePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     var batchCommand = fiQuameter.FullName + " " + quameterArgs + " > " + consoleOutputFileName + " 2>&1";
 
                     LogMessage("Creating " + batchFileName + " with: " + batchCommand);
-                    swBatchFile.WriteLine(batchCommand);
+                    batchFileWriter.WriteLine(batchCommand);
                 }
 
                 System.Threading.Thread.Sleep(100);

@@ -75,6 +75,8 @@ namespace DatasetIntegrityPlugin
         /// <returns>Enum indicating success or failure</returns>
         public override clsToolReturnData RunTool()
         {
+            // Note that Debug messages are logged if m_DebugLevel == 5
+
             var msg = "Starting DatasetIntegrityPlugin.clsPluginMain.RunTool()";
             LogDebug(msg);
 
@@ -336,8 +338,8 @@ namespace DatasetIntegrityPlugin
                 var msg = "Converting .D directory to .CDF: " + exePath + " " + cmdStr;
                 LogMessage(msg);
 
-                const int iMaxRuntimeSeconds = MAX_AGILENT_TO_CDF_RUNTIME_MINUTES * 60;
-                success = cmdRunner.RunProgram(exePath, cmdStr, "OpenChrom", true, iMaxRuntimeSeconds);
+                const int maxRuntimeSeconds = MAX_AGILENT_TO_CDF_RUNTIME_MINUTES * 60;
+                success = cmdRunner.RunProgram(exePath, cmdStr, "OpenChrom", true, maxRuntimeSeconds);
 
                 // Delete the locally cached .D directory
                 try
@@ -448,7 +450,7 @@ namespace DatasetIntegrityPlugin
 
                 // Syntax:
                 // AgilentToUIMFConverter.exe [Agilent .d directory] [Directory to insert file (optional)]
-                //
+
                 var cmdStr = clsConversion.PossiblyQuotePath(dotDDirectoryPathLocal) + " " + clsConversion.PossiblyQuotePath(m_WorkDir);
                 mConsoleOutputFilePath = Path.Combine(m_WorkDir, "AgilentToUIMF_ConsoleOutput_" + mgrName + ".txt");
 

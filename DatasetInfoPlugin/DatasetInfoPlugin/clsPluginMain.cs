@@ -19,7 +19,7 @@ using PRISM.Logging;
 namespace DatasetInfoPlugin
 {
     /// <summary>
-    /// Dataset Info plugin: generates QC graphics
+    /// Dataset Info plugin: generates QC graphics using MSFileInfoScanner
     /// </summary>
     // ReSharper disable once UnusedMember.Global
     public class clsPluginMain : clsToolRunnerBase
@@ -39,13 +39,14 @@ namespace DatasetInfoPlugin
 
         #region "Class-wide variables"
 
-        iMSFileInfoScanner m_MsFileScanner;
+        iMSFileInfoScanner mMsFileScanner;
 
-        string m_Msg;
+        string mMsg;
 
-        bool m_ErrOccurred;
+        bool mErrOccurred;
 
-        private int m_FailedScanCount;
+        private int mFailedScanCount;
+
 
         #endregion
 
@@ -56,6 +57,8 @@ namespace DatasetInfoPlugin
         /// <returns>Enum indicating success or failure</returns>
         public override clsToolReturnData RunTool()
         {
+            // Note that Debug messages are logged if m_DebugLevel == 5
+
             var msg = "Starting DatasetInfoPlugin.clsPluginMain.RunTool()";
             LogDebug(msg);
 
@@ -137,7 +140,7 @@ namespace DatasetInfoPlugin
         }
 
         /// <summary>
-        /// Initializes the dataset info tool
+        /// Initializes MSFileInfoScanner
         /// </summary>
         /// <param name="mgrParams">Parameters for manager operation</param>
         /// <param name="taskParams">Parameters for the assigned task</param>
@@ -159,15 +162,16 @@ namespace DatasetInfoPlugin
             }
 
             // Initialize the MSFileScanner class
-            m_MsFileScanner = LoadMSFileInfoScanner(msFileInfoScannerDLLPath);
-            RegisterEvents(m_MsFileScanner);
+            mMsFileScanner = LoadMSFileInfoScanner(msFileInfoScannerDLLPath);
+            RegisterEvents(mMsFileScanner);
 
             // Add custom error and warning handlers
-            UnregisterEventHandler(m_MsFileScanner, BaseLogger.LogLevels.ERROR);
-            UnregisterEventHandler(m_MsFileScanner, BaseLogger.LogLevels.WARN);
+            UnregisterEventHandler(mMsFileScanner, BaseLogger.LogLevels.ERROR);
+            UnregisterEventHandler(mMsFileScanner, BaseLogger.LogLevels.WARN);
 
-            m_MsFileScanner.ErrorEvent += m_MsFileScanner_ErrorEvent;
-            m_MsFileScanner.WarningEvent += m_MsFileScanner_WarningEvent;
+            mMsFileScanner.ErrorEvent += mMsFileScanner_ErrorEvent;
+            mMsFileScanner.WarningEvent += mMsFileScanner_WarningEvent;
+
 
             msg = "Completed clsPluginMain.Setup()";
             LogDebug(msg);
@@ -190,23 +194,23 @@ namespace DatasetInfoPlugin
             var outputPathBase = Path.Combine(sourceDirectory, "QC");
 
             // Set up the params for the MS file scanner
-            m_MsFileScanner.DSInfoDBPostingEnabled = false;
-            m_MsFileScanner.SaveTICAndBPIPlots = m_TaskParams.GetParam("SaveTICAndBPIPlots", true);
-            m_MsFileScanner.SaveLCMS2DPlots = m_TaskParams.GetParam("SaveLCMS2DPlots", true);
-            m_MsFileScanner.ComputeOverallQualityScores = m_TaskParams.GetParam("ComputeOverallQualityScores", false);
-            m_MsFileScanner.CreateDatasetInfoFile = m_TaskParams.GetParam("CreateDatasetInfoFile", true);
+            mMsFileScanner.DSInfoDBPostingEnabled = false;
+            mMsFileScanner.SaveTICAndBPIPlots = m_TaskParams.GetParam("SaveTICAndBPIPlots", true);
+            mMsFileScanner.SaveLCMS2DPlots = m_TaskParams.GetParam("SaveLCMS2DPlots", true);
+            mMsFileScanner.ComputeOverallQualityScores = m_TaskParams.GetParam("ComputeOverallQualityScores", false);
+            mMsFileScanner.CreateDatasetInfoFile = m_TaskParams.GetParam("CreateDatasetInfoFile", true);
 
-            m_MsFileScanner.LCMS2DPlotMZResolution = m_TaskParams.GetParam("LCMS2DPlotMZResolution", clsLCMSDataPlotterOptions.DEFAULT_MZ_RESOLUTION);
-            m_MsFileScanner.LCMS2DPlotMaxPointsToPlot = m_TaskParams.GetParam("LCMS2DPlotMaxPointsToPlot", clsLCMSDataPlotterOptions.DEFAULT_MAX_POINTS_TO_PLOT);
-            m_MsFileScanner.LCMS2DPlotMinPointsPerSpectrum = m_TaskParams.GetParam("LCMS2DPlotMinPointsPerSpectrum", clsLCMSDataPlotterOptions.DEFAULT_MIN_POINTS_PER_SPECTRUM);
-            m_MsFileScanner.LCMS2DPlotMinIntensity = m_TaskParams.GetParam("LCMS2DPlotMinIntensity", (float)0);
-            m_MsFileScanner.LCMS2DOverviewPlotDivisor = m_TaskParams.GetParam("LCMS2DOverviewPlotDivisor", clsLCMSDataPlotterOptions.DEFAULT_LCMS2D_OVERVIEW_PLOT_DIVISOR);
+            mMsFileScanner.LCMS2DPlotMZResolution = m_TaskParams.GetParam("LCMS2DPlotMZResolution", clsLCMSDataPlotterOptions.DEFAULT_MZ_RESOLUTION);
+            mMsFileScanner.LCMS2DPlotMaxPointsToPlot = m_TaskParams.GetParam("LCMS2DPlotMaxPointsToPlot", clsLCMSDataPlotterOptions.DEFAULT_MAX_POINTS_TO_PLOT);
+            mMsFileScanner.LCMS2DPlotMinPointsPerSpectrum = m_TaskParams.GetParam("LCMS2DPlotMinPointsPerSpectrum", clsLCMSDataPlotterOptions.DEFAULT_MIN_POINTS_PER_SPECTRUM);
+            mMsFileScanner.LCMS2DPlotMinIntensity = m_TaskParams.GetParam("LCMS2DPlotMinIntensity", (float)0);
+            mMsFileScanner.LCMS2DOverviewPlotDivisor = m_TaskParams.GetParam("LCMS2DOverviewPlotDivisor", clsLCMSDataPlotterOptions.DEFAULT_LCMS2D_OVERVIEW_PLOT_DIVISOR);
 
             var sampleLabelling = m_TaskParams.GetParam("Meta_Experiment_sample_labelling", "");
-            ConfigureMinimumMzValidation(m_MsFileScanner, sampleLabelling);
+            ConfigureMinimumMzValidation(mMsFileScanner, sampleLabelling);
 
-            m_MsFileScanner.CheckCentroidingStatus = true;
-            m_MsFileScanner.PlotWithPython = true;
+            mMsFileScanner.CheckCentroidingStatus = true;
+            mMsFileScanner.PlotWithPython = true;
 
             // Get the input file name
             var fileOrDirectoryNames = GetDataFileOrDirectoryName(sourceDirectory, out var skipPlots, out var rawDataType, out var instrumentClass, out var brukerDotDBaf);
@@ -214,7 +218,7 @@ namespace DatasetInfoPlugin
             if (fileOrDirectoryNames.Count > 0 && fileOrDirectoryNames.First() == UNKNOWN_FILE_TYPE)
             {
                 // Raw_Data_Type not recognized
-                retData.CloseoutMsg = m_Msg;
+                retData.CloseoutMsg = mMsg;
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return retData;
             }
@@ -232,7 +236,7 @@ namespace DatasetInfoPlugin
             if (fileOrDirectoryNames.Count == 0 || string.IsNullOrEmpty(fileOrDirectoryNames.First()))
             {
                 // There was a problem with getting the file name; Details reported by called method
-                retData.CloseoutMsg = m_Msg;
+                retData.CloseoutMsg = mMsg;
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return retData;
             }
@@ -240,8 +244,8 @@ namespace DatasetInfoPlugin
             if (skipPlots)
             {
                 // Do not create any plots
-                m_MsFileScanner.SaveTICAndBPIPlots = false;
-                m_MsFileScanner.SaveLCMS2DPlots = false;
+                mMsFileScanner.SaveTICAndBPIPlots = false;
+                mMsFileScanner.SaveLCMS2DPlots = false;
             }
 
             // Make the output directory
@@ -278,8 +282,8 @@ namespace DatasetInfoPlugin
             // Call the file scanner DLL
             // Typically only call it once, but for Bruker datasets with multiple .D directories, we'll call it once for each .D directory
 
-            m_ErrOccurred = false;
-            m_Msg = string.Empty;
+            mErrOccurred = false;
+            mMsg = string.Empty;
 
             var cachedDatasetInfoXML = new List<string>();
             var outputDirectoryNames = new List<string>();
@@ -288,7 +292,7 @@ namespace DatasetInfoPlugin
 
             foreach (var datasetFileOrDirectory in fileOrDirectoryNames)
             {
-                m_FailedScanCount = 0;
+                mFailedScanCount = 0;
 
                 var remoteFileOrDirectoryPath = Path.Combine(sourceDirectory, datasetFileOrDirectory);
 
@@ -344,9 +348,9 @@ namespace DatasetInfoPlugin
                     currentOutputDirectory = localOutputDir;
                 }
 
-                var successProcessing = m_MsFileScanner.ProcessMSFileOrFolder(pathToProcess, currentOutputDirectory);
+                var successProcessing = mMsFileScanner.ProcessMSFileOrFolder(pathToProcess, currentOutputDirectory);
 
-                if (m_ErrOccurred)
+                if (mErrOccurred)
                 {
                     successProcessing = false;
                 }
@@ -356,16 +360,16 @@ namespace DatasetInfoPlugin
                     m_FileTools.DeleteFileWithRetry(new FileInfo(pathToProcess), 2, out _);
                 }
 
-                var mzMinValidationError = m_MsFileScanner.ErrorCode == iMSFileInfoScanner.eMSFileScannerErrorCodes.MS2MzMinValidationError;
+                var mzMinValidationError = mMsFileScanner.ErrorCode == iMSFileInfoScanner.eMSFileScannerErrorCodes.MS2MzMinValidationError;
                 if (mzMinValidationError)
                 {
-                    m_Msg = m_MsFileScanner.GetErrorMessage();
+                    mMsg = mMsFileScanner.GetErrorMessage();
                     successProcessing = false;
                 }
 
-                if (m_MsFileScanner.ErrorCode == iMSFileInfoScanner.eMSFileScannerErrorCodes.MS2MzMinValidationWarning)
+                if (mMsFileScanner.ErrorCode == iMSFileInfoScanner.eMSFileScannerErrorCodes.MS2MzMinValidationWarning)
                 {
-                    var warningMsg = m_MsFileScanner.GetErrorMessage();
+                    var warningMsg = mMsFileScanner.GetErrorMessage();
                     retData.EvalMsg = AppendToComment(retData.EvalMsg,
                                                      "MS2MzMinValidationWarning: " + warningMsg);
                 }
@@ -382,7 +386,7 @@ namespace DatasetInfoPlugin
 
                 if (successProcessing)
                 {
-                    cachedDatasetInfoXML.Add(m_MsFileScanner.DatasetInfoXML);
+                    cachedDatasetInfoXML.Add(mMsFileScanner.DatasetInfoXML);
                     primaryFileOrDirectoryProcessed = true;
                     continue;
                 }
@@ -415,21 +419,21 @@ namespace DatasetInfoPlugin
                 }
                 else
                 {
-                    if (string.IsNullOrEmpty(m_Msg))
+                    if (string.IsNullOrEmpty(mMsg))
                     {
-                        m_Msg = "ProcessMSFileOrFolder returned false. Message = " +
-                                m_MsFileScanner.GetErrorMessage() +
-                                " retData code = " + (int)m_MsFileScanner.ErrorCode;
+                        mMsg = "ProcessMSFileOrFolder returned false. Message = " +
+                                mMsFileScanner.GetErrorMessage() +
+                                " retData code = " + (int)mMsFileScanner.ErrorCode;
                     }
 
-                    LogError(m_Msg);
+                    LogError(mMsg);
 
-                    retData.CloseoutMsg = m_Msg;
+                    retData.CloseoutMsg = mMsg;
                     retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 
-                    if (!string.IsNullOrWhiteSpace(m_MsFileScanner.DatasetInfoXML))
+                    if (!string.IsNullOrWhiteSpace(mMsFileScanner.DatasetInfoXML))
                     {
-                        cachedDatasetInfoXML.Add(m_MsFileScanner.DatasetInfoXML);
+                        cachedDatasetInfoXML.Add(mMsFileScanner.DatasetInfoXML);
                     }
 
                     if (mzMinValidationError)
@@ -450,9 +454,9 @@ namespace DatasetInfoPlugin
                     return retData;
                 }
 
-                if (m_FailedScanCount > 10)
+                if (mFailedScanCount > 10)
                 {
-                    LogWarning(string.Format("Unable to load data for {0} spectra", m_FailedScanCount));
+                    LogWarning(string.Format("Unable to load data for {0} spectra", mFailedScanCount));
                 }
 
             } // foreach file in fileOrDirectoryNames
@@ -512,10 +516,10 @@ namespace DatasetInfoPlugin
 
             foreach (var warning in datasetXmlMerger.AcqTimeWarnings)
             {
-                m_Msg = AppendToComment(m_Msg, warning);
+                mMsg = AppendToComment(mMsg, warning);
             }
 
-            LogError(m_Msg);
+            LogError(mMsg);
 
             retData.CloseoutMsg = AppendToComment(retData.CloseoutMsg, "Large gap between acq times: " + datasetXmlMerger.AcqTimeWarnings.FirstOrDefault());
             retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -532,14 +536,14 @@ namespace DatasetInfoPlugin
 
             while (iPostCount <= 2)
             {
-                successPosting = m_MsFileScanner.PostDatasetInfoUseDatasetID(
+                successPosting = mMsFileScanner.PostDatasetInfoUseDatasetID(
                     iDatasetID, dsInfoXML, connectionString, MS_FILE_SCANNER_DS_INFO_SP);
 
                 if (successPosting)
                     break;
 
                 // If the error message contains the text "timeout expired" then try again, up to 2 times
-                if (!m_Msg.ToLower().Contains("timeout expired"))
+                if (!mMsg.ToLower().Contains("timeout expired"))
                     break;
 
                 System.Threading.Thread.Sleep(1500);
@@ -553,10 +557,10 @@ namespace DatasetInfoPlugin
             }
             else
             {
-                errorCode = m_MsFileScanner.ErrorCode;
-                m_Msg = "Error posting dataset info XML. Message = " +
-                        m_MsFileScanner.GetErrorMessage() + " retData code = " + (int)m_MsFileScanner.ErrorCode;
-                LogError(m_Msg);
+                errorCode = mMsFileScanner.ErrorCode;
+                mMsg = "Error posting dataset info XML. Message = " +
+                        mMsFileScanner.GetErrorMessage() + " retData code = " + (int)mMsFileScanner.ErrorCode;
+                LogError(mMsg);
             }
 
             if (errorCode == iMSFileInfoScanner.eMSFileScannerErrorCodes.NoError)
@@ -800,7 +804,7 @@ namespace DatasetInfoPlugin
         private void ConfigureMinimumMzValidation(iMSFileInfoScanner msFileInfoScanner, string sampleLabelling)
         {
 
-            m_MsFileScanner.MS2MzMin = 0;
+            mMsFileScanner.MS2MzMin = 0;
 
             if (m_TaskParams.GetParam("SkipMinimumMzValidation", false))
             {
@@ -978,16 +982,16 @@ namespace DatasetInfoPlugin
             instrumentClass = clsInstrumentClassInfo.GetInstrumentClass(instClassName);
             if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Unknown)
             {
-                m_Msg = "Instrument class not recognized: " + instClassName;
-                LogError(m_Msg);
+                mMsg = "Instrument class not recognized: " + instClassName;
+                LogError(mMsg);
                 return new List<string> { UNKNOWN_FILE_TYPE };
             }
 
             rawDataType = clsInstrumentClassInfo.GetRawDataType(rawDataTypeName);
             if (rawDataType == clsInstrumentClassInfo.eRawDataType.Unknown)
             {
-                m_Msg = "RawDataType not recognized: " + rawDataTypeName;
-                LogError(m_Msg);
+                mMsg = "RawDataType not recognized: " + rawDataTypeName;
+                LogError(mMsg);
                 return new List<string> { UNKNOWN_FILE_TYPE };
             }
 
@@ -1070,8 +1074,8 @@ namespace DatasetInfoPlugin
 
                     if (string.IsNullOrEmpty(fileOrDirectoryName))
                     {
-                        m_Msg = "Did not find any 0_R*.zip files in the dataset directory";
-                        LogWarning("clsPluginMain.GetDataFileOrDirectoryName: " + m_Msg);
+                        mMsg = "Did not find any 0_R*.zip files in the dataset directory";
+                        LogWarning("clsPluginMain.GetDataFileOrDirectoryName: " + mMsg);
                         return new List<string> { INVALID_FILE_TYPE };
                     }
 
@@ -1094,8 +1098,8 @@ namespace DatasetInfoPlugin
                     // Excluded instruments include:
                     // dot_wiff_files (AgilentQStarWiffFile): AgTOF02
                     // bruker_maldi_spot (BrukerMALDISpot): BrukerTOF_01
-                    m_Msg = "Data type " + rawDataType + " not recognized";
-                    LogWarning("clsPluginMain.GetDataFileOrDirectoryName: " + m_Msg);
+                    mMsg = "Data type " + rawDataType + " not recognized";
+                    LogWarning("clsPluginMain.GetDataFileOrDirectoryName: " + mMsg);
                     return new List<string> { INVALID_FILE_TYPE };
             }
 
@@ -1119,9 +1123,9 @@ namespace DatasetInfoPlugin
                 if (fileOrDirectoryNames.Count > 0)
                     return fileOrDirectoryNames;
 
-                m_Msg = "clsPluginMain.GetDataFileOrDirectoryName: File " + fileOrDirectoryPath + " not found";
-                LogError(m_Msg);
-                m_Msg = "File " + fileOrDirectoryPath + " not found";
+                mMsg = "clsPluginMain.GetDataFileOrDirectoryName: File " + fileOrDirectoryPath + " not found";
+                LogError(mMsg);
+                mMsg = "File " + fileOrDirectoryPath + " not found";
 
                 return new List<string>();
             }
@@ -1142,9 +1146,9 @@ namespace DatasetInfoPlugin
                 return fileOrDirectoryNames;
             }
 
-            m_Msg = "clsPluginMain.GetDataFileOrDirectoryName; directory not found: " + fileOrDirectoryPath;
-            LogError(m_Msg);
-            m_Msg = "Directory not found: " + fileOrDirectoryPath;
+            mMsg = "clsPluginMain.GetDataFileOrDirectoryName; directory not found: " + fileOrDirectoryPath;
+            LogError(mMsg);
+            mMsg = "Directory not found: " + fileOrDirectoryPath;
 
             return new List<string>();
 
@@ -1181,8 +1185,8 @@ namespace DatasetInfoPlugin
                 var dataFileNamePathAlt = Path.ChangeExtension(initialFileOrDirectoryName, altExtension);
                 if (File.Exists(dataFileNamePathAlt))
                 {
-                    m_Msg = "Data file not found, but ." + altExtension + " file exists";
-                    LogMessage(m_Msg);
+                    mMsg = "Data file not found, but ." + altExtension + " file exists";
+                    LogMessage(mMsg);
                     return new List<string> { INVALID_FILE_TYPE };
                 }
             }
@@ -1374,7 +1378,7 @@ namespace DatasetInfoPlugin
         /// </summary>
         /// <param name="message">Error message</param>
         /// <param name="ex"></param>
-        void m_MsFileScanner_ErrorEvent(string message, Exception ex)
+        void mMsFileScanner_ErrorEvent(string message, Exception ex)
         {
             var errorMsg = "Error running MSFileInfoScanner: " + message;
 
@@ -1390,7 +1394,7 @@ namespace DatasetInfoPlugin
             }
             else
             {
-                m_ErrOccurred = true;
+                mErrOccurred = true;
 
                 // Message often contains long paths; check for this and shorten them.
                 // For example, switch
@@ -1402,11 +1406,11 @@ namespace DatasetInfoPlugin
 
                 if (reDatasetFile.IsMatch(message))
                 {
-                    m_Msg = "Error running MSFileInfoScanner: " + reDatasetFile.Replace(message, "$1");
+                    mMsg = "Error running MSFileInfoScanner: " + reDatasetFile.Replace(message, "$1");
                 }
                 else
                 {
-                    m_Msg = "Error running MSFileInfoScanner: " + message;
+                    mMsg = "Error running MSFileInfoScanner: " + message;
                 }
 
                 LogError(errorMsg);
@@ -1418,22 +1422,22 @@ namespace DatasetInfoPlugin
         /// Handles a warning event from MS file scanner
         /// </summary>
         /// <param name="message"></param>
-        void m_MsFileScanner_WarningEvent(string message)
+        void mMsFileScanner_WarningEvent(string message)
         {
             if (message.StartsWith("Unable to load data for scan"))
             {
-                m_FailedScanCount++;
+                mFailedScanCount++;
 
-                if (m_FailedScanCount < 10)
+                if (mFailedScanCount < 10)
                 {
                     LogWarning(message);
                 }
                 else if (
-                    m_FailedScanCount < 100 && m_FailedScanCount % 25 == 0 ||
-                    m_FailedScanCount < 1000 && m_FailedScanCount % 250 == 0 ||
-                    m_FailedScanCount % 500 == 0)
+                    mFailedScanCount < 100 && mFailedScanCount % 25 == 0 ||
+                    mFailedScanCount < 1000 && mFailedScanCount % 250 == 0 ||
+                    mFailedScanCount % 500 == 0)
                 {
-                    LogWarning(string.Format("Unable to load data for {0} spectra", m_FailedScanCount));
+                    LogWarning(string.Format("Unable to load data for {0} spectra", mFailedScanCount));
                 }
             }
             else
