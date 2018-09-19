@@ -178,7 +178,7 @@ namespace DatasetIntegrityPlugin
                         mRetData.CloseoutType = TestLTQ_FTFile(dataFileNamePath);
                     break;
 
-                case clsInstrumentClassInfo.eInstrumentClass.BRUKERFTMS:
+                case clsInstrumentClassInfo.eInstrumentClass.BrukerFTMS:
                     mRetData.CloseoutType = TestBrukerDirectory(datasetDirectory);
                     break;
 
@@ -617,16 +617,16 @@ namespace DatasetIntegrityPlugin
         private bool CopyUIMFToDatasetDirectory(clsFileTools fileTools, string datasetDirectoryPath)
         {
 
-            var fiUIMF = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION));
+            var uimfFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION));
 
-            if (!fiUIMF.Exists)
+            if (!uimfFile.Exists)
             {
                 mRetData.CloseoutMsg = "AgilentToUIMFConverter did not create a .UIMF file";
-                LogError(mRetData.CloseoutMsg + ": " + fiUIMF.FullName);
+                LogError(mRetData.CloseoutMsg + ": " + uimfFile.FullName);
                 return false;
             }
 
-            var success = CopyFileToDatasetDirectory(fileTools, fiUIMF, datasetDirectoryPath);
+            var success = CopyFileToDatasetDirectory(fileTools, uimfFile, datasetDirectoryPath);
             return success;
         }
 
