@@ -1130,15 +1130,16 @@ namespace DatasetQualityPlugin
             string metricsOutputFileName,
             bool ignoreQuameterFailure,
             string instrumentName,
-            string configFilePath,
-            int firstMS1Scan = 0,
-            int lastScan = 0)
+            string configFilePath)
         {
-            clsRunDosProgram cmdRunner = null;
             try
             {
                 // Construct the command line arguments
                 // Always use "cpus 1" since it guarantees that the metrics will always be written out in the same order
+
+                // Note that we could filter on scan range using the -SpectrumListFilters argument, e.g.
+                // -SpectrumListFilters: "peakPicking true 1-;threshold absolute 0.00000000001 most-intense; scanNumber [14,24843]"
+
                 var quameterArgs = new StringBuilder();
 
                 quameterArgs.Append(clsConversion.PossiblyQuotePath(dataFileName));
@@ -1147,24 +1148,6 @@ namespace DatasetQualityPlugin
                 quameterArgs.Append(" -OutputFilepath " + clsConversion.PossiblyQuotePath(metricsOutputFileName));
                 quameterArgs.Append(" -cpus 1");
                 quameterArgs.Append(" -dump");
-
-                if (firstMS1Scan > 1)
-                {
-                    // Append the -SpectrumListFilters argument, e.g.
-                    // -SpectrumListFilters: "peakPicking true 1-;threshold absolute 0.00000000001 most-intense; scanNumber [14,24843]"
-                    quameterArgs.Append(" -SpectrumListFilters: \"");
-                    quameterArgs.Append("peakPicking true 1-;");
-                    quameterArgs.Append("threshold absolute 0.00000000001 most-intense;");
-                    quameterArgs.Append(string.Format("scanNumber [{0},{1}]", firstMS1Scan, lastScan));
-                    quameterArgs.Append("\"");
-                }
-
-                cmdRunner = new clsRunDosProgram(m_WorkDir);
-                mQuameterStartTime = DateTime.UtcNow;
-                mLastStatusUpdate = DateTime.UtcNow;
-
-                // This will also call RegisterEvents
-                AttachCmdRunnerEvents(cmdRunner);
 
                 // Create a batch file to run the command
                 // Capture the console output (including output to the error stream) via redirection symbols:
