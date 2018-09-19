@@ -62,6 +62,8 @@ namespace DatasetIntegrityPlugin
 
         private clsToolReturnData mRetData = new clsToolReturnData();
         private DateTime mAgilentToUIMFStartTime;
+        private string mConsoleOutputFilePath;
+        private DateTime mLastProgressUpdate;
         private DateTime mLastStatusUpdate;
 
         #endregion
@@ -317,6 +319,7 @@ namespace DatasetIntegrityPlugin
                 var consoleOutputFilePath = Path.Combine(m_WorkDir, "OpenChrom_ConsoleOutput_" + mgrName + ".txt");
 
                 var cmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
+                mLastProgressUpdate = DateTime.UtcNow;
                 mLastStatusUpdate = DateTime.UtcNow;
 
                 // This will also call RegisterEvents
@@ -447,20 +450,22 @@ namespace DatasetIntegrityPlugin
                 // AgilentToUIMFConverter.exe [Agilent .d directory] [Directory to insert file (optional)]
                 //
                 var cmdStr = clsConversion.PossiblyQuotePath(dotDDirectoryPathLocal) + " " + clsConversion.PossiblyQuotePath(m_WorkDir);
-                var consoleOutputFilePath = Path.Combine(m_WorkDir, "AgilentToUIMF_ConsoleOutput_" + mgrName + ".txt");
+                mConsoleOutputFilePath = Path.Combine(m_WorkDir, "AgilentToUIMF_ConsoleOutput_" + mgrName + ".txt");
 
-                var cmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
+                var cmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel)
+                {
+                    CreateNoWindow = false,
+                    EchoOutputToConsole = false,
+                    CacheStandardOutput = false,
+                    WriteConsoleOutputToFile = true,
+                    ConsoleOutputFilePath = mConsoleOutputFilePath
+                };
+
                 mAgilentToUIMFStartTime = DateTime.UtcNow;
                 mLastStatusUpdate = DateTime.UtcNow;
 
                 // This will also call RegisterEvents
                 AttachCmdRunnerEvents(cmdRunner);
-
-                cmdRunner.CreateNoWindow = false;
-                cmdRunner.EchoOutputToConsole = false;
-                cmdRunner.CacheStandardOutput = false;
-                cmdRunner.WriteConsoleOutputToFile = true;
-                cmdRunner.ConsoleOutputFilePath = consoleOutputFilePath;
 
                 var msg = "Converting .D directory to .UIMF: " + exePath + " " + cmdStr;
                 LogMessage(msg);
@@ -468,7 +473,8 @@ namespace DatasetIntegrityPlugin
                 const int iMaxRuntimeSeconds = MAX_AGILENT_TO_UIMF_RUNTIME_MINUTES * 60;
                 success = cmdRunner.RunProgram(exePath, cmdStr, "AgilentToUIMFConverter", true, iMaxRuntimeSeconds);
 
-                ParseConsoleOutputFileForErrors(consoleOutputFilePath);
+                // Parse the console output file one more time to check for errors
+                ParseConsoleOutputFile();
 
                 // Delete the locally cached .D directory
                 try
@@ -524,7 +530,7 @@ namespace DatasetIntegrityPlugin
                 }
 
                 // Delete the console output file
-                DeleteFileIgnoreErrors(consoleOutputFilePath);
+                DeleteFileIgnoreErrors(mConsoleOutputFilePath);
 
             }
             catch (Exception ex)
@@ -869,19 +875,22 @@ namespace DatasetIntegrityPlugin
             }
         }
 
-        private void ParseConsoleOutputFileForErrors(string consoleOutputFilePath)
+        private void ParseConsoleOutputFile()
         {
             var unhandledException = false;
             var exceptionText = string.Empty;
+            float percentComplete = 0;
+
+            var reProgressMatcher = new Regex(@"Converting frame (?<FramesProcessed>\d+) / (?<TotalFrames>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             try
             {
-                if (!File.Exists(consoleOutputFilePath))
+                if (!File.Exists(mConsoleOutputFilePath))
                 {
                     return;
                 }
 
-                using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(mConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
 
                     while (!reader.EndOfStream)
@@ -893,7 +902,15 @@ namespace DatasetIntegrityPlugin
                             continue;
                         }
 
-                        if (unhandledException)
+                        var match = reProgressMatcher.Match(dataLine);
+                        if (match.Success)
+                        {
+                            var framesProcessed = int.Parse(match.Groups["FramesProcessed"].Value);
+                            var totalFrames = int.Parse(match.Groups["TotalFrames"].Value);
+
+                            percentComplete = framesProcessed / (float)totalFrames * 100;
+                        }
+                        else if (unhandledException)
                         {
                             if (string.IsNullOrEmpty(exceptionText))
                             {
@@ -924,10 +941,13 @@ namespace DatasetIntegrityPlugin
                 {
                     LogError(exceptionText);
                 }
+
+                m_StatusTools.UpdateAndWrite(EnumTaskStatusDetail.Running_Tool, percentComplete);
+
             }
             catch (Exception ex)
             {
-                LogError("Exception in ParseConsoleOutputFileForErrors: " + ex.Message);
+                LogError("Exception in ParseConsoleOutputFile: " + ex.Message);
             }
 
         }
@@ -2474,12 +2494,19 @@ namespace DatasetIntegrityPlugin
 
         private void CmdRunner_LoopWaiting()
         {
+            if (DateTime.UtcNow.Subtract(mLastProgressUpdate).TotalSeconds >= 30)
+            {
+                mLastProgressUpdate = DateTime.UtcNow;
+                ParseConsoleOutputFile();
+                return;
+            }
 
-            if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalSeconds >= 300)
+            if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalMinutes >= 5)
             {
                 mLastStatusUpdate = DateTime.UtcNow;
                 LogDebug("AgilentToUIMFConverter running; " + DateTime.UtcNow.Subtract(mAgilentToUIMFStartTime).TotalMinutes + " minutes elapsed");
             }
+
         }
 
         #endregion
