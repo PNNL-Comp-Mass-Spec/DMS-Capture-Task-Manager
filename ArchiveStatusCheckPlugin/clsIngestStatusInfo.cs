@@ -1,6 +1,4 @@
 ﻿
-using System;
-
 namespace ArchiveStatusCheckPlugin
 {
     public class clsIngestStatusInfo
@@ -51,14 +49,6 @@ namespace ArchiveStatusCheckPlugin
         /// Error code, prior to the most recent check
         /// </summary>
         public int ExistingErrorCode { get; set; }
-
-        /// <summary>
-        /// Constructor that takes statusNum
-        /// </summary>
-        /// <remarks>Calls the other constructor with an empty string for statusURI</remarks>
-        public clsIngestStatusInfo(int statusNum) : this(statusNum, string.Empty)
-        {
-        }
 
         /// <summary>
         /// Constructor that takes statusNum and statusURI

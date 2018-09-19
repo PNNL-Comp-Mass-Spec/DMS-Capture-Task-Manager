@@ -21,25 +21,6 @@ namespace Pacifica.Core
         }
     }
 
-    public class ProgressEventArgs : EventArgs
-    {
-        /// <summary>
-        /// Value between 0 and 100
-        /// </summary>
-        public double PercentComplete { get; }
-
-        /// <summary>
-        /// Current task
-        /// </summary>
-        public string CurrentTask { get; }
-
-        public ProgressEventArgs(double percentComplete, string currentTask)
-        {
-            PercentComplete = percentComplete;
-            CurrentTask = currentTask;
-        }
-    }
-
     public class StatusEventArgs : EventArgs
     {
 

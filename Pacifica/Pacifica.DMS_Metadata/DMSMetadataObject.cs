@@ -152,16 +152,6 @@ namespace Pacifica.DMS_Metadata
         /// Constructor
         /// </summary>
         /// <param name="config"></param>
-        [Obsolete("Use the constructor that takes manager name, job number, and clsFileTools")]
-        public DMSMetadataObject(Configuration config)
-            : this(config, string.Empty, 0, new clsFileTools("Unknown", 1))
-        {
-        }
-
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        /// <param name="config"></param>
         /// <param name="managerName"></param>
         /// <param name="jobNumber"></param>
         /// <param name="fileTools"></param>

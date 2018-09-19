@@ -443,11 +443,6 @@ namespace Pacifica.Core
             return success;
         }
 
-        public string GenerateSha1Hash(string fullFilePath)
-        {
-            return Utilities.GenerateSha1Hash(fullFilePath);
-        }
-
         #endregion
 
         #region Member Methods

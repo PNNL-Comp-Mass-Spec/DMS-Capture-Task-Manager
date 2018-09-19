@@ -15,8 +15,6 @@ namespace CaptureToolPlugin
     class clsDatasetInfo
     {
 
-        #region "Properties"
-
         public string DatasetName { get; set; }
 
         public clsCaptureOps.RawDSTypes DatasetType { get; set; }
@@ -27,9 +25,6 @@ namespace CaptureToolPlugin
 
         public int FileCount => FileList?.Length ?? 0;
 
-        #endregion
-
-        #region "Constructor"
         /// <summary>
         /// Constructor
         /// </summary>
@@ -39,11 +34,5 @@ namespace CaptureToolPlugin
             DatasetName = datasetName;
         }
 
-        public clsDatasetInfo(clsCaptureOps.RawDSTypes dsType)
-        {
-            DatasetType = dsType;
-        }
-
-        #endregion
     }
 }

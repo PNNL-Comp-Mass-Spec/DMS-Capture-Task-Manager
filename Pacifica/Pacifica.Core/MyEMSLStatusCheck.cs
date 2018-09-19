@@ -16,8 +16,6 @@ namespace Pacifica.Core
     /// </remarks>
     public class MyEMSLStatusCheck : clsEventNotifier
     {
-        public const string PERMISSIONS_ERROR = "Permissions error:";
-
         private readonly Configuration mPacificaConfig;
 
         /// <summary>
@@ -358,21 +356,6 @@ namespace Pacifica.Core
             var stepsCompleted = (byte)(Math.Round(7 * (percentComplete / 100.0)));
 
             return stepsCompleted;
-        }
-
-        /// <summary>
-        /// Report true if the error message contains a critical error
-        /// </summary>
-        /// <param name="errorMessage"></param>
-        /// <returns></returns>
-        public bool IsCriticalError(string errorMessage)
-        {
-            if (errorMessage.StartsWith("error submitting ingest job"))
-            {
-                return true;
-            }
-
-            return false;
         }
 
         /// <summary>

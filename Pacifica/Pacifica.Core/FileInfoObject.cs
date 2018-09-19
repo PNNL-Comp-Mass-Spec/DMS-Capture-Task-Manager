@@ -141,8 +141,6 @@ namespace Pacifica.Core
         /// </summary>
         public DateTime LastWriteTime => File.LastWriteTime;
 
-        public DateTime SubmittedTime { get; } = DateTime.Now;
-
         [Obsolete("Unused")]
         // ReSharper disable once UnusedMember.Global
         public Dictionary<string, string> SerializeToDictionaryObject()
