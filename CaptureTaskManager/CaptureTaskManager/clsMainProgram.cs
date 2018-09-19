@@ -235,8 +235,7 @@ namespace CaptureTaskManager
                     break;
 
                 default:
-                    // Should never get here
-                    break;
+                    throw new Exception("Unrecognized enum in EvaluateLoopExitCode: " + eLoopExitCode);
             }
 
             return restartOK;
@@ -740,8 +739,7 @@ namespace CaptureTaskManager
                             break;
 
                         default:
-                            // Should never get here
-                            break;
+                            throw new Exception("Unrecognized enum in PerformMainLoop: " + taskReturn);
                     }
                 }
                 catch (Exception ex)
@@ -890,8 +888,7 @@ namespace CaptureTaskManager
                         break;
 
                     default:
-                        // Should never get here
-                        break;
+                        throw new Exception("Unrecognized enum in PerformTask: " + eTaskCloseout);
                 }
             }
             catch (Exception ex)

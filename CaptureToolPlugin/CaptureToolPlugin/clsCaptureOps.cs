@@ -491,7 +491,11 @@ namespace CaptureToolPlugin
         {
             var switchResult = false;
 
-            switch (IsDatasetDirectoryEmpty(datasetDirectoryPath, out var fileCount, out var instrumentDataDirCount, out var nonInstrumentDataDirCount))
+            var directoryState = IsDatasetDirectoryEmpty(datasetDirectoryPath,
+                                                         out var fileCount,
+                                                         out var instrumentDataDirCount,
+                                                         out var nonInstrumentDataDirCount);
+            switch (directoryState)
             {
                 case DatasetDirectoryState.Empty:
                     // Directory is empty; all is good
@@ -569,13 +573,10 @@ namespace CaptureToolPlugin
                             break;
                         case "rename":
                             // Attempt to rename dataset directory
+                            // (If the rename fails, it should have been logged via a previous call to RenameDatasetDirectory)
                             if (RenameDatasetDirectory(datasetDirectoryPath))
                             {
                                 switchResult = true;
-                            }
-                            else
-                            {
-                                // (Error reporting was handled by previous call to RenameDatasetDirectory)
                             }
                             break;
                         case "fail":
@@ -596,8 +597,7 @@ namespace CaptureToolPlugin
                     }   // directoryExistsAction selection
                     break;
                 default:
-                    // Shouldn't ever get to here
-                    break;
+                    throw new Exception("Unrecognized enum value in PerformDSExistsActions: " + directoryState);
             }
 
             return switchResult;
