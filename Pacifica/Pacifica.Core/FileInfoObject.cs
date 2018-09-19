@@ -106,12 +106,10 @@ namespace Pacifica.Core
             }
         }
 
-        public string _destinationFileName;
-        public string DestinationFileName
-        {
-            get => _destinationFileName;
-            set => _destinationFileName = value;
-        }
+        /// <summary>
+        /// Optional alternate name to use for the file
+        /// </summary>
+        public string DestinationFileName { get; set; }
 
         /// <summary>
         /// Filename
