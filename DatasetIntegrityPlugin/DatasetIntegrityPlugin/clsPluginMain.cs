@@ -290,9 +290,10 @@ namespace DatasetIntegrityPlugin
                 }
 
                 var mgrName = m_MgrParams.GetParam("MgrName", "CTM");
-                var dotDDirectoryPathLocal = Path.Combine(m_WorkDir, m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION);
+                var dotDDirectoryName = m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
+                var dotDDirectoryPathLocal = Path.Combine(m_WorkDir, dotDDirectoryName);
 
-                var success = CopyDotDDirectoryToLocal(m_FileTools, datasetDirectoryPath, dotDDirectoryPathLocal, false);
+                var success = CopyDotDDirectoryToLocal(m_FileTools, datasetDirectoryPath, dotDDirectoryName, dotDDirectoryPathLocal, false);
                 if (!success)
                     return false;
 
@@ -397,11 +398,48 @@ namespace DatasetIntegrityPlugin
             {
 
                 var mgrName = m_MgrParams.GetParam("MgrName", "CTM");
-                var dotDDirectoryPathLocal = Path.Combine(m_WorkDir, m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION);
+                var dotDDirectoryName = m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
+                var dotDDirectoryPathLocal = Path.Combine(m_WorkDir, dotDDirectoryName);
 
-                var success = CopyDotDDirectoryToLocal(m_FileTools, datasetDirectoryPath, dotDDirectoryPathLocal, true);
+                var success = CopyDotDDirectoryToLocal(m_FileTools, datasetDirectoryPath, dotDDirectoryName, dotDDirectoryPathLocal, true);
                 if (!success)
                     return false;
+
+                // Examine the .d directory to look for an AcqData subdirectory
+                // If it does not have one, it might have a .d subdirectory that itself has an AcqData directory
+                // For example, 001_14Sep18_RapidFire.d\sequence1.d\AcqData
+
+                var dotDDirectory = new DirectoryInfo(dotDDirectoryPathLocal);
+                var acqDataDir = dotDDirectory.GetDirectories("AcqData");
+                var altDirFound = false;
+
+                if (acqDataDir.Length == 0)
+                {
+                    // Use *.d to look for .d subdirectories
+                    var dotDDirectoryAlt = dotDDirectory.GetDirectories("*" + clsInstrumentClassInfo.DOT_D_EXTENSION);
+
+                    if (dotDDirectoryAlt.Length > 0)
+                    {
+                        foreach (var altDir in dotDDirectoryAlt)
+                        {
+                            var acqDataDirAlt = altDir.GetDirectories("AcqData");
+                            if (acqDataDirAlt.Length > 0)
+                            {
+                                dotDDirectoryPathLocal = altDir.FullName;
+                                altDirFound = true;
+                                LogMessage("Using the .d directory below the primary .d subdirectory: " + altDir.FullName);
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!altDirFound)
+                    {
+                        mRetData.CloseoutMsg = ".D directory does not have an AcqData subdirectory";
+                        LogError(mRetData.CloseoutMsg);
+                        return false;
+                    }
+                }
 
                 // Construct the command line arguments to run the AgilentToUIMFConverter
 
@@ -463,6 +501,21 @@ namespace DatasetIntegrityPlugin
 
                 Thread.Sleep(100);
 
+                if (altDirFound)
+                {
+                    // We need to rename the .uimf file since we processed a .d directory inside a .d directory
+                    var sourceUimfName = Path.GetFileName(dotDDirectoryPathLocal) + clsInstrumentClassInfo.DOT_UIMF_EXTENSION;
+                    var sourceUimf = new FileInfo(Path.Combine(m_WorkDir, sourceUimfName));
+                    var targetUimfPath = Path.Combine(m_WorkDir, m_Dataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION);
+
+                    if (!string.Equals(sourceUimf.FullName, targetUimfPath, StringComparison.OrdinalIgnoreCase))
+                    {
+                        LogDebug(string.Format("Renaming {0} to {1}", sourceUimf.FullName, Path.GetFileName(targetUimfPath)));
+                        sourceUimf.MoveTo(targetUimfPath);
+                    }
+
+                }
+
                 // Copy the .UIMF file to the dataset directory
                 success = CopyUIMFToDatasetDirectory(m_FileTools, datasetDirectoryPath);
                 if (!success)
@@ -487,10 +540,11 @@ namespace DatasetIntegrityPlugin
         private bool CopyDotDDirectoryToLocal(
             clsFileTools fileTools,
             string datasetDirectoryPath,
+            string dotDDirectoryName,
             string dotDDirectoryPathLocal,
             bool requireIMSFiles)
         {
-            var dotDDirectoryPathRemote = new DirectoryInfo(Path.Combine(datasetDirectoryPath, m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION));
+            var dotDDirectoryPathRemote = new DirectoryInfo(Path.Combine(datasetDirectoryPath, dotDDirectoryName));
 
             if (requireIMSFiles)
             {
