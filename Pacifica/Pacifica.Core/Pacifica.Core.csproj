@@ -65,12 +65,6 @@
     <Compile Include="ExtensionMethods.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="IFileInfoObject.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="IUpload.cs" />
-  </ItemGroup>
-  <ItemGroup>
     <Compile Include="Upload.cs" />
   </ItemGroup>
   <ItemGroup>

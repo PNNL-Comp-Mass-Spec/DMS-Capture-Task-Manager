@@ -22,7 +22,7 @@ namespace DatasetArchivePlugin
     /// <summary>
     /// Base class for archive and archive update operations classes.
     /// </summary>
-    abstract class clsOpsBase : clsEventNotifier, IArchiveOps
+    abstract class clsOpsBase : clsEventNotifier
     {
 
         #region "Constants"

@@ -4,7 +4,7 @@ using System.IO;
 
 namespace Pacifica.Core
 {
-    public class FileInfoObject : IFileInfoObject
+    public class FileInfoObject
     {
         #region Constructor
 
