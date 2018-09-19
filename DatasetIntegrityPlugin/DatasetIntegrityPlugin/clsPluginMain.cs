@@ -53,7 +53,7 @@ namespace DatasetIntegrityPlugin
         private const float MCF_FILE_MIN_SIZE_KB = 0.1F;
         private const float ILLUMINA_TXT_GZ_FILE_MIN_SIZE_KB = 500;
         private const float ILLUMINA_TXT_GZ_FILE_SMALL_SIZE_KB = 1000;
-        private const int MAX_AGILENT_TO_UIMF_RUNTIME_MINUTES = 90;
+        private const int MAX_AGILENT_TO_UIMF_RUNTIME_MINUTES = 180;
         private const int MAX_AGILENT_TO_CDF_RUNTIME_MINUTES = 10;
 
         #endregion
@@ -470,8 +470,8 @@ namespace DatasetIntegrityPlugin
                 var msg = "Converting .D directory to .UIMF: " + exePath + " " + cmdStr;
                 LogMessage(msg);
 
-                const int iMaxRuntimeSeconds = MAX_AGILENT_TO_UIMF_RUNTIME_MINUTES * 60;
-                success = cmdRunner.RunProgram(exePath, cmdStr, "AgilentToUIMFConverter", true, iMaxRuntimeSeconds);
+                const int maxRuntimeSeconds = MAX_AGILENT_TO_UIMF_RUNTIME_MINUTES * 60;
+                success = cmdRunner.RunProgram(exePath, cmdStr, "AgilentToUIMFConverter", true, maxRuntimeSeconds);
 
                 // Parse the console output file one more time to check for errors
                 ParseConsoleOutputFile();
