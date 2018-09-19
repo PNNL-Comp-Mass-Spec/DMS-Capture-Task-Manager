@@ -30,7 +30,10 @@ namespace CaptureToolPlugin
         #endregion
 
         #region "Constructor"
-
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="datasetName"></param>
         public clsDatasetInfo(string datasetName)
         {
             DatasetName = datasetName;

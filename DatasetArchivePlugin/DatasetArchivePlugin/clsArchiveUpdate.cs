@@ -116,9 +116,9 @@ namespace DatasetArchivePlugin
             // Possibly also upload the dataset to the MyEMSL test instance
 #pragma warning disable 162
             const int PERCENT_DATA_TO_SEND_TO_TEST = 20;
-            var testDateCuttoff = new DateTime(2017, 7, 4);
+            var testDateCutoff = new DateTime(2017, 7, 4);
 
-            if (DateTime.Now > testDateCuttoff)
+            if (DateTime.Now > testDateCutoff)
             {
                 // Testing has finished
                 // Return true if debutTestInstanceOnly is false

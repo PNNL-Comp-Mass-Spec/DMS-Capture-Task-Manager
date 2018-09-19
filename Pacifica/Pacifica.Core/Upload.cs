@@ -5,7 +5,11 @@ using PRISM;
 
 namespace Pacifica.Core
 {
-    public class Upload : clsEventNotifier, IUpload
+    /// <summary>
+    /// MyEMSL Upload metadata class
+    /// </summary>
+    // ReSharper disable once UnusedMember.Global
+    public class Upload : clsEventNotifier
     {
         /// <summary>
         /// EUS Operator ID to use when operator ID is unknown
@@ -17,7 +21,7 @@ namespace Pacifica.Core
         /// EUS Proposal ID to use when the proposal ID is unknown
         /// </summary>
         /// <remarks>
-        /// Proposal ID 17797 is "Development of High Throughput Proteomic Production Operations"
+        /// Proposal ID 17797 is "Development of High Throughput Proteomics Production Operations"
         /// It is a string because it may contain suffix letters
         /// </remarks>
         public const string DEFAULT_EUS_PROPOSAL_ID = "17797";
@@ -31,6 +35,7 @@ namespace Pacifica.Core
         /// <summary>
         /// DMS Instrument Name corresponding to EUS Instrument ID 34127
         /// </summary>
+        // ReSharper disable once UnusedMember.Global
         public const string UNKNOWN_INSTRUMENT_NAME = "VOrbiETD04";
 
         private readonly Configuration mPacificaConfig;
@@ -98,6 +103,7 @@ namespace Pacifica.Core
             /// <remarks>DEFAULT_EUS_OPERATOR_ID if unknown</remarks>
             public int EUSOperatorID;
 
+            // ReSharper disable once UnusedMember.Global
             public void Clear()
             {
                 DatasetID = 0;
@@ -166,10 +172,11 @@ namespace Pacifica.Core
         #region Constructor
 
         /// <summary>
-        /// Constructor
+        /// Constructor (TransferFolderPath and JobNumber will be empty)
         /// </summary>
         /// <param name="config">Pacifica configuration</param>
-        /// <remarks>TransferFolderPath and JobNumber will be empty</remarks>
+        /// <remarks>This constructor is used by the DataPackage Archive Manager</remarks>
+        // ReSharper disable once UnusedMember.Global
         public Upload(Configuration config) : this(config, string.Empty, string.Empty)
         {
         }
@@ -180,7 +187,7 @@ namespace Pacifica.Core
         /// <param name="config">Pacifica config</param>
         /// <param name="transferFolderPath">
         /// Transfer folder path for this dataset,
-        /// for example \\proto-4\DMS3_Xfer\SysVirol_IFT001_Pool_17_B_10x_27Aug13_Tiger_13-07-36
+        /// for example \\proto-4\DMS3_Xfer\IFT001_Pool_17_B_10x_27Aug13_Tiger_13-07-36
         /// </param>
         /// <param name="jobNumber">DMS Data Capture job number</param>
         /// <remarks>The metadata.txt file will be copied to the transfer folder</remarks>
@@ -235,6 +242,8 @@ namespace Pacifica.Core
         /// <param name="metadataObject"></param>
         /// <param name="statusURI">Status URL</param>
         /// <returns>True if successfully uploaded, false if an error</returns>
+        /// <remarks>This method is used by the DataPackage Archive Manager</remarks>
+        // ReSharper disable once UnusedMember.Global
         public bool StartUpload(List<Dictionary<string, object>> metadataObject, out string statusURI)
         {
             const EasyHttp.eDebugMode debugMode = EasyHttp.eDebugMode.DebugDisabled;
@@ -492,6 +501,7 @@ namespace Pacifica.Core
         /// Dictionary of the information to translate to JSON;
         /// Keys are key names; values are either strings or dictionary objects or even a list of dictionary objects
         /// </returns>
+        // ReSharper disable once UnusedMember.Global
         public static List<Dictionary<string, object>> CreatePacificaMetadataObject(
             UploadMetadata uploadMetadata,
             List<FileInfoObject> filesToUpload,
@@ -653,6 +663,7 @@ namespace Pacifica.Core
         /// </summary>
         /// <param name="metadataObject"></param>
         /// <returns></returns>
+        // ReSharper disable once UnusedMember.Global
         public static string GetMetadataObjectDescription(List<Dictionary<string, object>> metadataObject)
         {
 

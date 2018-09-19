@@ -114,7 +114,7 @@ namespace CaptureTaskManager
             Agilent_TOF_V2 = 7,             // AgQTOF03, AgQTOF04, AgTOF05, Agilent_QQQ_04
             Bruker_Amazon_Ion_Trap = 8,     // Bruker_FT_IonTrap01                  (last used in 2012)
             BrukerFT_BAF = 9,               // 9T_FTICR_B, 12T_FTICR_B, 15T_FTICR,
-            BRUKERFTMS = 10,                // 9T_FTICR, 11T_FTICR_B, 12T_FTICR     (last used in 2010)
+            BrukerFTMS = 10,                // 9T_FTICR, 11T_FTICR_B, 12T_FTICR     (last used in 2010)
             BrukerMALDI_Imaging = 11,       // 9T_FTICR_Imaging                     (last used in 2012)
             BrukerMALDI_Spot = 12,          // BrukerTOF_01
             BrukerTOF_BAF = 13,             // Maxis_01

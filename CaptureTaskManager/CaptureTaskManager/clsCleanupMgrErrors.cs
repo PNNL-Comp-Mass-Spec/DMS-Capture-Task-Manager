@@ -23,6 +23,7 @@ namespace CaptureTaskManager
             /// <summary>
             /// Auto-remove files from the working directory once
             /// </summary>
+            [Obsolete("Not used by this manager")]
             CleanupOnce = 1,
 
             /// <summary>

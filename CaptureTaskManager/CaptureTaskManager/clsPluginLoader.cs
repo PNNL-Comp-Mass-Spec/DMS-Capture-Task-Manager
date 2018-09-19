@@ -63,6 +63,7 @@ namespace CaptureTaskManager
                 //    myToolRunner = (IToolRunner)new DatasetInfoPlugin.clsPluginMain();
                 //    break;
 
+                // ReSharper disable once RedundantEmptySwitchSection
                 default:
                     break;
             }

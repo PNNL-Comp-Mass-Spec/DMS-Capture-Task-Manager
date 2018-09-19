@@ -456,7 +456,7 @@ namespace ImsDemuxPlugin
                 }
                 catch (Exception ex)
                 {
-                    msg = "Exception validating calibrated .UIMF ifle";
+                    msg = "Exception validating calibrated .UIMF file";
                     OnErrorEvent(msg, ex);
                     retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, "Exception while calibrating UIMF file");
                     retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -877,7 +877,7 @@ namespace ImsDemuxPlugin
         {
             var success = true;
 
-            // Copy demuxed file to storage server, renaming as datasetname.uimf in the process
+            // Copy the demultiplexed file to the storage server, renaming as DatasetName.uimf in the process
             var msg = "Copying " + fileDescription + " file to storage server";
             OnDebugEvent(msg);
             const int retryCount = 3;
@@ -948,7 +948,7 @@ namespace ImsDemuxPlugin
         }
 
         /// <summary>
-        /// Performs actual calbration operation
+        /// Performs actual calibration operation
         /// </summary>
         /// <param name="inputFilePath">Input file name</param>
         /// <param name="datasetName">Dataset name</param>
@@ -1118,6 +1118,8 @@ namespace ImsDemuxPlugin
 
         private void ParseConsoleOutputFileDemux()
         {
+            // ReSharper disable CommentTypo
+
             // Example Console output:
             //
             // Demultiplexing PlasmaND_2pt5ng_0pt005fmol_Frac05_9Sep14_Methow_14-06-13_encoded.uimf
@@ -1144,6 +1146,8 @@ namespace ImsDemuxPlugin
             // Finished demultiplexing all frames. Now performing calibration
             // Calibration frame 26 matched 7 / 7 calibrants within 10 ppm; Slope = 0.347632, Intercept = 0.034093;
             //  Average AbsoluteValue(mass error) = 1.736 ppm; average mass error = 0.007 ppm
+
+            // ReSharper restore CommentTypo
 
             var rePercentComplete = new Regex(@"Processing: (\d+)%", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             var reTotalFrames = new Regex(@"frames to demultiplex: (\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -1248,20 +1252,20 @@ namespace ImsDemuxPlugin
         /// <summary>
         /// Renames a file
         /// </summary>
-        /// <param name="currFileNamePath">Original file name and path</param>
-        /// <param name="newFileNamePath">New file name and path</param>
+        /// <param name="sourceFilePath">Original file path</param>
+        /// <param name="newFilePath">New file path</param>
         /// <returns></returns>
-        private bool RenameFile(string currFileNamePath, string newFileNamePath)
+        private bool RenameFile(string sourceFilePath, string newFilePath)
         {
             try
             {
-                var fi = new FileInfo(currFileNamePath);
-                fi.MoveTo(newFileNamePath);
+                var fi = new FileInfo(sourceFilePath);
+                fi.MoveTo(newFilePath);
                 return true;
             }
             catch (Exception ex)
             {
-                var msg = "Exception renaming file " + currFileNamePath + " to " + Path.GetFileName(newFileNamePath) + ": " + ex.Message;
+                var msg = "Exception renaming file " + sourceFilePath + " to " + Path.GetFileName(newFilePath) + ": " + ex.Message;
                 OnErrorEvent(msg);
 
                 // Garbage collect, then try again to rename the file
@@ -1271,8 +1275,8 @@ namespace ImsDemuxPlugin
 
                 try
                 {
-                    var fi = new FileInfo(currFileNamePath);
-                    fi.MoveTo(newFileNamePath);
+                    var fi = new FileInfo(sourceFilePath);
+                    fi.MoveTo(newFilePath);
                     return true;
                 }
                 catch (Exception ex2)
@@ -1382,7 +1386,7 @@ namespace ImsDemuxPlugin
                 mLastProgressUpdateTime = DateTime.UtcNow;
                 mLastProgressMessageTime = DateTime.UtcNow;
 
-                AttachCmdrunnerEvents(cmdRunner);
+                AttachCmdRunnerEvents(cmdRunner);
 
                 cmdRunner.CreateNoWindow = false;
                 cmdRunner.EchoOutputToConsole = false;
@@ -1546,7 +1550,7 @@ namespace ImsDemuxPlugin
 
         #region "Event handlers"
 
-        private void AttachCmdrunnerEvents(clsRunDosProgram cmdRunner)
+        private void AttachCmdRunnerEvents(clsRunDosProgram cmdRunner)
         {
             try
             {

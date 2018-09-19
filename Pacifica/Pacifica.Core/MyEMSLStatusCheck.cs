@@ -49,6 +49,7 @@ namespace Pacifica.Core
         /// <param name="percentComplete">percent complete; typically meaningless (either 0 or 100)</param>
         /// <param name="ingestStepsCompletedOld"></param>
         /// <returns></returns>
+        // ReSharper disable once UnusedMember.Global
         public byte DetermineIngestStepsCompleted(string currentTask, int percentComplete, byte ingestStepsCompletedOld)
         {
 
@@ -94,6 +95,7 @@ namespace Pacifica.Core
         /// <param name="fileInfo">File info object</param>
         /// <returns>True if found, otherwise false</returns>
         /// <remarks>Searches using Sha1HashHex, so could match a file in a different location than the specific path tracked by fileInfo</remarks>
+        // ReSharper disable once UnusedMember.Global
         public bool DoesFileExistInMyEMSL(FileInfoObject fileInfo)
         {
             var fileSHA1HashSum = fileInfo.Sha1HashHex;
@@ -112,11 +114,15 @@ namespace Pacifica.Core
             if (responseStatusCode.ToString() != "200")
                 return false;
 
+            // ReSharper disable CommentTypo
+
             // Example response for just one file (hashsum=0a7bcbcf4085abc41bdbd98724f3e5c567726c56)
             // [{"mimetype": "application/octet-stream", "updated": "2017-07-02T23:54:53", "name": "QC_Mam_16_01_125ng_HCD-3_30Jun17_Frodo_REP-17-06-01_msgfplus_syn_ProteinMods.txt", "created": "2017-07-02T23:54:53", "deleted": null, "size": 899907, "hashsum": "0a7bcbcf4085abc41bdbd98724f3e5c567726c56", "hashtype": "sha1", "subdir": "MSG201707021504_Auto1467864", "mtime": "2017-07-02T23:49:14", "_id": 15578789, "encoding": "UTF8", "transaction_id": 1302996, "ctime": "2017-07-02T23:53:28"}]
 
             // Example response for multiple files (hashsum=627ad3a8a1eaad358e0c89f8e5b7db1473f33278):
             // [{"mimetype": "None", "updated": "2017-06-30T03:08:36", "name": "MSGFDB_PartArgC_MetOx_StatCysAlk_20ppmParTol_ModDefs.txt", "created": "2017-06-30T03:08:36", "deleted": null, "size": 52, "hashsum": "627ad3a8a1eaad358e0c89f8e5b7db1473f33278", "hashtype": "sha1", "subdir": "MSG201405141726_Auto1058369", "mtime": "2014-05-14T18:00:53", "_id": 3694295, "encoding": "UTF-8", "transaction_id": 443104, "ctime": "2014-05-14T18:01:08"}, {"mimetype": "None", "updated": "2017-06-30T03:23:14", "name": "MSGFDB_PartAspN_MetOx_StatCysAlk_20ppmParTol_ModDefs.txt", "created": "2017-06-30T03:23:14", "deleted": null, "size": 52, "hashsum": "627ad3a8a1eaad358e0c89f8e5b7db1473f33278", "hashtype": "sha1", "subdir": "MSG201405141729_Auto1058370", "mtime": "2014-06-03T13:43:05", "_id": 3841932, "encoding": "UTF-8", "transaction_id": 457902, "ctime": "2014-06-03T13:43:09"}]
+
+            // ReSharper restore CommentTypo
 
             var jsa = (Jayrock.Json.JsonArray)JsonConvert.Import(fileListJSON);
             var fileList = Utilities.JsonArrayToDictionaryList(jsa);
@@ -297,14 +303,15 @@ namespace Pacifica.Core
         /// </summary>
         /// <param name="statusURI"></param>
         /// <returns>The status number, or 0 if an error</returns>
+        // ReSharper disable once UnusedMember.Global
         public static int GetStatusNumFromURI(string statusURI)
         {
             // Check for a match to a URI of the form
             // https://ingestdms.my.emsl.pnl.gov/get_state?job_id=1302995
 
-            var reGetstatusNum = new Regex(@"job_id=(\d+)");
+            var statusNumMatcher = new Regex(@"job_id=(\d+)");
 
-            var match = reGetstatusNum.Match(statusURI);
+            var match = statusNumMatcher.Match(statusURI);
             if (match.Success)
             {
                 var statusNum = int.Parse(match.Groups[1].Value);

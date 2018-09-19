@@ -114,7 +114,7 @@ namespace DatasetInfoPlugin
         /// <summary>
         /// Merge the dataset info defined in cachedDatasetInfoXml
         /// </summary>
-        /// <param name="datasetName">Dataset Name overrride</param>
+        /// <param name="datasetName">Dataset Name override</param>
         /// <param name="cachedDatasetInfoXml">List of cached DatasetInfo XML</param>
         /// <returns>Merged DatasetInfo XML</returns>
         public string CombineDatasetInfoXML(string datasetName, List<string> cachedDatasetInfoXml)
@@ -148,7 +148,7 @@ namespace DatasetInfoPlugin
             }
 
             // Make sure none of the datasets has a start time more than 120 minutes after the previous datasets end time
-            // If it does, the operator likely lumped together unrelated datasets, and therefore the overal dataset stats will be wrong
+            // If it does, the operator likely lumped together unrelated datasets, and therefore the overall dataset stats will be wrong
             var sortedDsAcqTimes = (from item in datasetAcqTimes orderby item.Value.StartTime select item.Value).ToList();
 
             for (var i = 1; i < sortedDsAcqTimes.Count; i++)
@@ -170,7 +170,7 @@ namespace DatasetInfoPlugin
         }
 
         /// <summary>
-        /// Parase the xml to populate scanTypes, acqInfo, and ticInfo
+        /// Parse the XML to populate scanTypes, acqInfo, and ticInfo
         /// </summary>
         /// <param name="cachedInfoXml">XML to parse</param>
         /// <param name="scanTypes">Scan type stats. Keys in this dictionary are KeyValuePairs of [ScanType,ScanFilterText] while the values are the scan count</param>

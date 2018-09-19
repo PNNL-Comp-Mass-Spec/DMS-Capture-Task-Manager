@@ -44,6 +44,7 @@ namespace Pacifica.DMS_Metadata
         /// <summary>
         /// Error message from the MyEMSLUploader
         /// </summary>
+        // ReSharper disable once UnusedMember.Global
         public string ErrorMessage
         {
             get

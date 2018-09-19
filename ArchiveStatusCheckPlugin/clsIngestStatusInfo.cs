@@ -48,7 +48,7 @@ namespace ArchiveStatusCheckPlugin
         public int EUS_UploaderID { get; set; }
 
         /// <summary>
-        /// Error code, prior to the most recen tcheck
+        /// Error code, prior to the most recent check
         /// </summary>
         public int ExistingErrorCode { get; set; }
 

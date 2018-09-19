@@ -13,6 +13,7 @@ namespace Pacifica.Core
         /// </summary>
         /// <param name="absoluteLocalFullPath">Full path to the local file</param>
         /// <param name="baseDSPath">Base dataset folder path</param>
+        // ReSharper disable once UnusedMember.Global
         public FileInfoObject(string absoluteLocalFullPath, string baseDSPath)
         {
             AbsoluteLocalPath = absoluteLocalFullPath;
@@ -69,6 +70,9 @@ namespace Pacifica.Core
 
         #region IFileInfoObject Members
 
+        /// <summary>
+        /// Full path to the local file
+        /// </summary>
         public string AbsoluteLocalPath
         {
             get;
@@ -81,6 +85,9 @@ namespace Pacifica.Core
         /// </summary>
         public string RelativeDestinationDirectory => ConvertWindowsPathToUnix(mRelativeDestinationDirectory);
 
+        /// <summary>
+        ///  Relative destination path, with Unix-style slashes
+        /// </summary>
         public string RelativeDestinationFullPath
         {
             get
@@ -106,6 +113,9 @@ namespace Pacifica.Core
             set => _destinationFileName = value;
         }
 
+        /// <summary>
+        /// Filename
+        /// </summary>
         public string FileName => File.Name;
 
         /// <summary>
@@ -116,14 +126,25 @@ namespace Pacifica.Core
             get;
         }
 
+        /// <summary>
+        /// File size, in bytes
+        /// </summary>
         public long FileSizeInBytes => File.Length;
 
+        /// <summary>
+        /// File creation time
+        /// </summary>
         public DateTime CreationTime => File.CreationTime;
 
+        /// <summary>
+        /// File last write time
+        /// </summary>
         public DateTime LastWriteTime => File.LastWriteTime;
 
         public DateTime SubmittedTime { get; } = DateTime.Now;
 
+        [Obsolete("Unused")]
+        // ReSharper disable once UnusedMember.Global
         public Dictionary<string, string> SerializeToDictionaryObject()
         {
             var d = new Dictionary<string, string>

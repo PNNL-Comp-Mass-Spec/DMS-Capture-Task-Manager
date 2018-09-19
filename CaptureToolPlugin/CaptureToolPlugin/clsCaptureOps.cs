@@ -1824,7 +1824,7 @@ namespace CaptureToolPlugin
                 }
 
                 // This regex is used to match files with names like:
-                // Cheetah_01.04.2012_08.46.17_Sarc_P28_D01_2629_192_3Jan12_Cheetah_11-09-32.lcmethod
+                // Cheetah_01.04.2012_08.46.17_Dataset_P28_D01_2629_192_3Jan12_Cheetah_11-09-32.lcmethod
                 var reLCMethodFile = new Regex(@".+\d+\.\d+\.\d+_\d+\.\d+\.\d+_.+\.lcmethod");
                 var lstMethodFiles = new List<FileInfo>();
 

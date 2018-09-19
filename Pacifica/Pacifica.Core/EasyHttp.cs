@@ -78,6 +78,7 @@ namespace Pacifica.Core
             Get = 0,
             [Description("POST")]
             Post = 1,
+            // ReSharper disable once UnusedMember.Global
             [Description("PUT")]
             Put = 2
         }
@@ -144,6 +145,7 @@ namespace Pacifica.Core
         /// <param name="timeoutSeconds">Timeout, in seconds</param>
         /// <param name="loginCredentials">Login credentials</param>
         /// <returns>True if success, false if an error</returns>
+        // ReSharper disable once UnusedMember.Global
         public static bool GetFile(
             Configuration config,
             string url,
@@ -216,6 +218,7 @@ namespace Pacifica.Core
         /// <param name="responseStatusCode">Response status code</param>
         /// <param name="timeoutSeconds">Timeout, in seconds</param>
         /// <returns>Headers</returns>
+        // ReSharper disable once UnusedMember.Global
         public static WebHeaderCollection GetHeaders(
             Configuration config,
             string url,
@@ -524,6 +527,7 @@ namespace Pacifica.Core
         /// <param name="responseStatusCode">Response status code</param>
         /// <param name="timeoutSeconds">Timeout, in seconds</param>
         /// <returns>Response data</returns>
+        // ReSharper disable once UnusedMember.Global
         public static string Send(
             Configuration config,
             string url,
@@ -569,6 +573,7 @@ namespace Pacifica.Core
         /// <param name="sendStringInHeader">If True, and the method is Get, include postData in the header</param>
         /// <param name="loginCredentials">Login credentials</param>
         /// <returns>Response data</returns>
+        // ReSharper disable once UnusedMember.Global
         public static string Send(
             Configuration config,
             string url,
@@ -595,6 +600,7 @@ namespace Pacifica.Core
         /// <param name="timeoutSeconds">Timeout, in seconds</param>
         /// <param name="loginCredentials">Login credentials</param>
         /// <returns>Response data</returns>
+        // ReSharper disable once UnusedMember.Global
         public static string Send(
             Configuration config,
             string url,
@@ -669,7 +675,7 @@ namespace Pacifica.Core
         /// <param name="responseStatusCode">Response status code</param>
         /// <param name="timeoutSeconds">Timeout, in seconds</param>
         /// <returns>Response data</returns>
-        /// <remarks>Uses Threadstart instead of TPL</remarks>
+        /// <remarks>Uses ThreadStart instead of TPL</remarks>
         public static string SendViaThreadStart(
             Configuration config,
             string url,
@@ -694,7 +700,7 @@ namespace Pacifica.Core
         /// <param name="sendStringInHeader">If True, and the method is Get, include postData in the header</param>
         /// <param name="loginCredentials">Login credentials</param>
         /// <returns>Response data</returns>
-        /// <remarks>Uses Threadstart instead of TPL</remarks>
+        /// <remarks>Uses ThreadStart instead of TPL</remarks>
         public static string SendViaThreadStart(
             Configuration config,
             string url,
@@ -910,7 +916,7 @@ namespace Pacifica.Core
 
             // Set this to .CreateTarLocal to debug things and create the .tar file locally instead of sending to the server
             // See method PerformTask in clsArchiveUpdate
-            var writeToDisk = (debugMode != eDebugMode.DebugDisabled); // aka Writefile or Savefile
+            var writeToDisk = (debugMode != eDebugMode.DebugDisabled); // aka WriteFile or SaveFile
 
             if (writeToDisk && Environment.MachineName.IndexOf("proto", StringComparison.CurrentCultureIgnoreCase) >= 0)
             {
@@ -1124,14 +1130,16 @@ namespace Pacifica.Core
             var addonBytes = AddTarFileContentLength(MYEMSL_METADATA_FILE_NAME, metadataFile.Length);
 
             if (debugging)
-                ConsoleMsgUtils.ShowDebug(metadataFile.Length.ToString().PadRight(12) + addonBytes.ToString().PadRight(12) + contentLength.ToString().PadRight(12) + "1".PadRight(3) + "metadata.txt");
+                ConsoleMsgUtils.ShowDebug(metadataFile.Length.ToString().PadRight(12) + addonBytes.ToString().PadRight(12) + contentLength.ToString().PadRight(12) + "1".PadRight(3) +
+                                          "metadata.txt");
 
             contentLength += addonBytes;
 
             // Add the data/ directory
 
             if (debugging)
-                ConsoleMsgUtils.ShowDebug("0".PadRight(12) + TAR_BLOCK_SIZE_BYTES.ToString().PadRight(12) + contentLength.ToString().PadRight(12) + "1".PadRight(3) + "data/");
+                ConsoleMsgUtils.ShowDebug("0".PadRight(12) + TAR_BLOCK_SIZE_BYTES.ToString().PadRight(12) + contentLength.ToString().PadRight(12) + "1".PadRight(3) +
+                                          "data/");
 
             contentLength += TAR_BLOCK_SIZE_BYTES;
 
@@ -1189,22 +1197,25 @@ namespace Pacifica.Core
 
             // Append one empty block (appended by SharpZipLib at the end of the .tar file
             if (debugging)
-                ConsoleMsgUtils.ShowDebug("0".PadRight(12) + TAR_BLOCK_SIZE_BYTES.ToString().PadRight(12) + contentLength.ToString().PadRight(12) + "0".PadRight(3) + "512 block at end of .tar");
+                ConsoleMsgUtils.ShowDebug("0".PadRight(12) + TAR_BLOCK_SIZE_BYTES.ToString().PadRight(12) + contentLength.ToString().PadRight(12) + "0".PadRight(3) +
+                                          "512 block at end of .tar");
 
             contentLength += TAR_BLOCK_SIZE_BYTES;
 
             // Round up contentLength to the nearest 10240 bytes
-            // Note that recordCount is a long to prevent overflow errors when computing finalPadderLength
+            // Note that recordCount is a long to prevent overflow errors when computing finalPaddingLength
             var recordCount = (long)Math.Ceiling(contentLength / (double)TarBuffer.DefaultRecordSize);
-            var finalPadderLength = (recordCount * TarBuffer.DefaultRecordSize) - contentLength;
+            var finalPaddingLength = (recordCount * TarBuffer.DefaultRecordSize) - contentLength;
 
             if (debugging)
-                ConsoleMsgUtils.ShowDebug("0".PadRight(12) + finalPadderLength.ToString().PadRight(12) + contentLength.ToString().PadRight(12) + "0".PadRight(3) + "Padder block at end (to make multiple of " + TarBuffer.DefaultRecordSize + ")");
+                ConsoleMsgUtils.ShowDebug("0".PadRight(12) + finalPaddingLength.ToString().PadRight(12) + contentLength.ToString().PadRight(12) + "0".PadRight(3) +
+                                          "Padding at end (to make multiple of " + TarBuffer.DefaultRecordSize + ")");
 
             contentLength = recordCount * TarBuffer.DefaultRecordSize;
 
             if (debugging)
-                ConsoleMsgUtils.ShowDebug("0".PadRight(12) + "0".PadRight(12) + contentLength.ToString().PadRight(12) + "0".PadRight(3) + "End of file");
+                ConsoleMsgUtils.ShowDebug("0".PadRight(12) + "0".PadRight(12) + contentLength.ToString().PadRight(12) + "0".PadRight(3) +
+                                          "End of file");
 
             return contentLength;
         }

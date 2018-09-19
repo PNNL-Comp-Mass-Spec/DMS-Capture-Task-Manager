@@ -430,12 +430,9 @@ namespace CaptureTaskManager
 
             try
             {
-                // Create an instance of StreamReader to read from a file.
-                // The using statement also closes the StreamReader.
+                // Read the History.txt file
                 using (var reader = new StreamReader(new FileStream(historyFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    // Read and display lines from the file until the end of
-                    // the file is reached.
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
@@ -901,9 +898,9 @@ namespace CaptureTaskManager
             {
                 LogError("Error running task", ex);
 
-                LogError(m_MgrName + ": Failure running tool " + m_StepTool
-                      + ", job " + m_Job + ", Dataset " + m_Dataset
-                      + "; CloseOut = Exception", true);
+                LogError(string.Format("{0}: Failure running tool {1}, job {2}, Dataset {3}; CloseOut = Exception",
+                                       m_MgrName, m_StepTool, m_Job, m_Dataset),
+                         true);
 
                 LogError("Tool runner exception", ex);
                 m_Task.CloseTask(EnumCloseOutType.CLOSEOUT_FAILED, "Exception: " + ex.Message, EnumEvalCode.EVAL_CODE_FAILED,
@@ -1090,8 +1087,7 @@ namespace CaptureTaskManager
 
                 if (clearWorkDirectory && cleanupMode == clsCleanupMgrErrors.eCleanupModeConstants.CleanupAlways)
                 {
-                    // Delete all files in the working directory (but ignore errors)
-                    // Delete all folders and subfolders in work folder
+                    // Delete all files and subdirectories in the working directory (but ignore errors)
                     var workingDir = m_MgrSettings.GetParam("WorkDir");
                     clsToolRunnerBase.CleanWorkDir(workingDir, 1, out _);
                 }

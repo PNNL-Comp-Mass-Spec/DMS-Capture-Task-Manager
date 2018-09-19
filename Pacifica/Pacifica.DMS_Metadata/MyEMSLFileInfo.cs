@@ -82,6 +82,7 @@ namespace Pacifica.DMS_Metadata
         /// <summary>
         /// DatasetID
         /// </summary>
+        // ReSharper disable once UnusedMember.Global
         public int DatasetID { get; set; }
 
         /// <summary>

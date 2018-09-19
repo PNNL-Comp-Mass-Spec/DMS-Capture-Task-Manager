@@ -12,8 +12,12 @@ namespace Pacifica.Core
         /// </summary>
         /// <param name="dt">A DateTime to be converted.</param>
         /// <returns>Seconds since January 1st, 1970 00:00:00 UTC.</returns>
-        /// <remarks>Inputing a DateTime with Kind set to anything other than DateTimeKind.Utc
-        /// will convert the structure to UTC before adjusting to the UNIX epoch.</remarks>
+        /// <remarks>
+        /// Providing a DateTime with Kind set to anything other than DateTimeKind.Utc
+        /// will convert the structure to UTC before adjusting to the UNIX epoch.
+        /// </remarks>
+        [Obsolete("Unused")]
+        // ReSharper disable once UnusedMember.Global
         public static ulong ToUnixTime(this DateTime dt)
         {
             if (dt.Kind != DateTimeKind.Utc)
@@ -56,6 +60,8 @@ namespace Pacifica.Core
             return enumerationValue.ToString();
         }
 
+        [Obsolete("Unused")]
+        // ReSharper disable once UnusedMember.Global
         public static T DeepClone<T>(this T a)
         {
             using (var stream = new MemoryStream())

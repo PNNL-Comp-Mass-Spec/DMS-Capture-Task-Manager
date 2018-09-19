@@ -3,6 +3,7 @@ using System.Net;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 
+// ReSharper disable once CommentTypo
 /*
  * Code written by Luke Quinane and posted to
  * http://stackoverflow.com/questions/295538/how-to-provide-user-name-and-password-when-connecting-to-a-network-share
