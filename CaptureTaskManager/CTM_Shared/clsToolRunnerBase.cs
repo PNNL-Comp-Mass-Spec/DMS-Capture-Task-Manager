@@ -1046,6 +1046,8 @@ namespace CaptureTaskManager
 
         /// <summary>
         /// Register event handlers
+        /// However, does not subscribe to .ProgressUpdate
+        /// Note: the DatasetInfoPlugin does subscribe to .ProgressUpdate
         /// </summary>
         /// <param name="processingClass"></param>
         /// <param name="writeDebugEventsToLog"></param>

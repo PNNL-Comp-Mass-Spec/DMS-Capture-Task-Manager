@@ -61,10 +61,16 @@ namespace DatasetIntegrityPlugin
         #region "Class-wide variables"
 
         private clsToolReturnData mRetData = new clsToolReturnData();
-        private DateTime mAgilentToUIMFStartTime;
+
+        private DateTime mProcessingStartTime;
+
         private string mConsoleOutputFilePath;
+
         private DateTime mLastProgressUpdate;
+
         private DateTime mLastStatusUpdate;
+
+        private int mStatusUpdateIntervalMinutes;
 
         #endregion
 
@@ -320,20 +326,22 @@ namespace DatasetIntegrityPlugin
                 var cmdStr = "-cli -batchfile " + batchJobFilePath;
                 var consoleOutputFilePath = Path.Combine(m_WorkDir, "OpenChrom_ConsoleOutput_" + mgrName + ".txt");
 
-                var cmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
-                mLastProgressUpdate = DateTime.UtcNow;
-                mLastStatusUpdate = DateTime.UtcNow;
+                var cmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel)
+                {
+                    CreateNoWindow = false,
+                    EchoOutputToConsole = false,
+                    CacheStandardOutput = false,
+                    WriteConsoleOutputToFile = false,    // OpenChrom does not produce any console output; so no point in creating it
+                    ConsoleOutputFilePath = consoleOutputFilePath
+                };
 
                 // This will also call RegisterEvents
                 AttachCmdRunnerEvents(cmdRunner);
 
-                cmdRunner.CreateNoWindow = false;
-                cmdRunner.EchoOutputToConsole = false;
-                cmdRunner.CacheStandardOutput = false;
-
-                // OpenChrom does not produce any console output; so no point in creating it
-                cmdRunner.WriteConsoleOutputToFile = false;
-                cmdRunner.ConsoleOutputFilePath = consoleOutputFilePath;
+                mProcessingStartTime = DateTime.UtcNow;
+                mLastProgressUpdate = DateTime.UtcNow;
+                mLastStatusUpdate = DateTime.UtcNow;
+                mStatusUpdateIntervalMinutes = 5;
 
                 var msg = "Converting .D directory to .CDF: " + exePath + " " + cmdStr;
                 LogMessage(msg);
@@ -463,11 +471,13 @@ namespace DatasetIntegrityPlugin
                     ConsoleOutputFilePath = mConsoleOutputFilePath
                 };
 
-                mAgilentToUIMFStartTime = DateTime.UtcNow;
-                mLastStatusUpdate = DateTime.UtcNow;
-
                 // This will also call RegisterEvents
                 AttachCmdRunnerEvents(cmdRunner);
+
+                mProcessingStartTime = DateTime.UtcNow;
+                mLastProgressUpdate = DateTime.UtcNow;
+                mLastStatusUpdate = DateTime.UtcNow;
+                mStatusUpdateIntervalMinutes = 5;
 
                 var msg = "Converting .D directory to .UIMF: " + exePath + " " + cmdStr;
                 LogMessage(msg);
@@ -2510,10 +2520,16 @@ namespace DatasetIntegrityPlugin
                 return;
             }
 
-            if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalMinutes >= 5)
+            if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalMinutes >= mStatusUpdateIntervalMinutes)
             {
                 mLastStatusUpdate = DateTime.UtcNow;
-                LogDebug("AgilentToUIMFConverter running; " + DateTime.UtcNow.Subtract(mAgilentToUIMFStartTime).TotalMinutes + " minutes elapsed");
+                LogMessage("AgilentToUIMFConverter running; " + DateTime.UtcNow.Subtract(mProcessingStartTime).TotalMinutes + " minutes elapsed");
+
+                // Increment mStatusUpdateIntervalMinutes by 5 minutes every time the status is logged, up to a maximum of 30
+                if (mStatusUpdateIntervalMinutes < 30)
+                {
+                    mStatusUpdateIntervalMinutes += 5;
+                }
             }
 
         }

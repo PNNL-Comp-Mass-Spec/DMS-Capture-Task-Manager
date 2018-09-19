@@ -47,6 +47,14 @@ namespace DatasetInfoPlugin
 
         private int mFailedScanCount;
 
+        private DateTime mProcessingStartTime;
+
+        private DateTime mLastProgressUpdate;
+
+        private DateTime mLastStatusUpdate;
+
+        private int mStatusUpdateIntervalMinutes;
+
 
         #endregion
 
@@ -161,6 +169,9 @@ namespace DatasetInfoPlugin
                 throw new FileNotFoundException("File Not Found: " + msFileInfoScannerDLLPath);
             }
 
+            mProcessingStartTime = DateTime.UtcNow;
+            mLastProgressUpdate = DateTime.UtcNow;
+
             // Initialize the MSFileScanner class
             mMsFileScanner = LoadMSFileInfoScanner(msFileInfoScannerDLLPath);
             RegisterEvents(mMsFileScanner);
@@ -172,6 +183,8 @@ namespace DatasetInfoPlugin
             mMsFileScanner.ErrorEvent += mMsFileScanner_ErrorEvent;
             mMsFileScanner.WarningEvent += mMsFileScanner_WarningEvent;
 
+            // Monitor progress reported by MSFileInfoScanner
+            mMsFileScanner.ProgressUpdate += ProgressUpdateHandler;
 
             msg = "Completed clsPluginMain.Setup()";
             LogDebug(msg);
@@ -1445,6 +1458,29 @@ namespace DatasetInfoPlugin
                 LogWarning(message);
             }
 
+        }
+
+        private void ProgressUpdateHandler(string progressMessage, float percentComplete)
+        {
+            if (DateTime.UtcNow.Subtract(mLastProgressUpdate).TotalSeconds < 30)
+                return;
+
+            mLastProgressUpdate = DateTime.UtcNow;
+
+            m_StatusTools.UpdateAndWrite(EnumTaskStatusDetail.Running_Tool, percentComplete);
+
+
+            if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalMinutes >= mStatusUpdateIntervalMinutes)
+            {
+                mLastStatusUpdate = DateTime.UtcNow;
+                LogMessage("MSFileInfoScanner running; " + DateTime.UtcNow.Subtract(mProcessingStartTime).TotalMinutes + " minutes elapsed");
+
+                // Increment mStatusUpdateIntervalMinutes by 5 minutes every time the status is logged, up to a maximum of 30
+                if (mStatusUpdateIntervalMinutes < 30)
+                {
+                    mStatusUpdateIntervalMinutes += 5;
+                }
+            }
         }
 
         #endregion

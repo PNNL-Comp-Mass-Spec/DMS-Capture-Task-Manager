@@ -11,6 +11,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Xml;
 using CaptureTaskManager;
 
@@ -36,8 +37,15 @@ namespace DatasetQualityPlugin
         #region "Class-wide variables"
         clsToolReturnData mRetData = new clsToolReturnData();
 
-        DateTime mLastStatusUpdate = DateTime.UtcNow;
-        DateTime mQuameterStartTime = DateTime.UtcNow;
+        private DateTime mProcessingStartTime;
+
+        private string mConsoleOutputFilePath;
+
+        private DateTime mLastProgressUpdate;
+
+        private DateTime mLastStatusUpdate;
+
+        private int mStatusUpdateIntervalMinutes;
 
         #endregion
 
@@ -600,10 +608,48 @@ namespace DatasetQualityPlugin
 
         }
 
-        private void ParseConsoleOutputFileForErrors(string sConsoleOutputFilePath)
+        private void ParseConsoleOutputFile()
         {
             var unhandledException = false;
             var exceptionText = string.Empty;
+            float metadataPercentComplete = 0;
+            float peaksPercentComplete = 0;
+            float precursorPercentComplete = 0;
+
+            var reMetadataProgress = new Regex(@"Reading metadata: (?<ScansRead>\d+)/(?<TotalScans>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var rePeaksProgress = new Regex(@"Reading peaks: (?<ScansRead>\d+)/(?<TotalScans>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var rePrecursorProgress = new Regex(@"Finding precursor peaks: (?<ScansRead>\d+)/(?<TotalScans>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+            // ReSharper disable CommentTypo
+
+            // Example output from Quameter
+
+            // Quameter 1.1.18254 (c18e43d39)
+            // Vanderbilt University (c) 2012, D.Tabb/M.Chambers/S.Dasari
+            // Licensed under the Apache License, Version 2.0
+            //
+            // ChromatogramMzLowerOffset: "10ppm"
+            // ChromatogramMzUpperOffset: "10ppm"
+            //        ChromatogramOutput: "0"
+            //                Instrument: "orbi"
+            //               MetricsType: "idfree"
+            //  MonoisotopeAdjustmentSet: "[0,0] "
+            //           NumChargeStates: "3"
+            //            OutputFilepath: "Quameter_IDFree.tsv"
+            //             RawDataFormat: "RAW"
+            //               RawDataPath: ""
+            //               ScoreCutoff: "0.050000000000000003"
+            //       SpectrumListFilters: "peakPicking true 1-;threshold absolute 0.00000000001 most-intense"
+            //     StatusUpdateFrequency: "5"
+            //     UseMultipleProcessors: "1"
+            //          WorkingDirectory: "C:\CapMan_WorkDir"
+            // Opening source file Dataset_18Sep18.raw
+            // Started processing file Dataset_18Sep18.raw
+            // Reading metadata: 4347/4347
+            // Reading peaks: 4347/4347
+            // Finding precursor peaks: 3817/3817
+
+            // ReSharper restore CommentTypo
 
             try
             {
@@ -619,6 +665,15 @@ namespace DatasetQualityPlugin
 
                         if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
+
+                        var metadataProgressMatched = UpdateProgress(dataLine, reMetadataProgress, ref metadataPercentComplete);
+                        var peaksProgressMatched = UpdateProgress(dataLine, rePeaksProgress, ref peaksPercentComplete);
+                        var precursorProgressMatched = UpdateProgress(dataLine, rePrecursorProgress, ref precursorPercentComplete);
+
+                        if (metadataProgressMatched || peaksProgressMatched || precursorProgressMatched)
+                        {
+                            continue;
+                        }
 
                         if (unhandledException)
                         {
@@ -650,10 +705,13 @@ namespace DatasetQualityPlugin
                     LogError(exceptionText);
                 }
 
+                var percentComplete = metadataPercentComplete / 3 + peaksPercentComplete / 3 + precursorPercentComplete / 3;
+
+                m_StatusTools.UpdateAndWrite(EnumTaskStatusDetail.Running_Tool, percentComplete);
             }
             catch (Exception ex)
             {
-                LogError("Exception in ParseConsoleOutputFileForErrors: " + ex.Message);
+                LogError("Exception in ParseConsoleOutputFile: " + ex.Message);
             }
 
         }
@@ -1129,19 +1187,33 @@ namespace DatasetQualityPlugin
                     batchFileWriter.WriteLine(batchCommand);
                 }
 
-                System.Threading.Thread.Sleep(100);
+                mConsoleOutputFilePath = Path.Combine(m_WorkDir, consoleOutputFileName);
 
-                cmdRunner.CreateNoWindow = false;
-                cmdRunner.EchoOutputToConsole = false;
-                cmdRunner.CacheStandardOutput = false;
-                cmdRunner.WriteConsoleOutputToFile = false;
+                var cmdRunner = new clsRunDosProgram(m_WorkDir)
+                {
+                    CreateNoWindow = false,
+                    EchoOutputToConsole = false,
+                    CacheStandardOutput = false,
+                    WriteConsoleOutputToFile = false        // We are using a batch file to capture the console output
+                };
 
-                const int iMaxRuntimeSeconds = MAX_QUAMETER_RUNTIME_MINUTES * 60;
-                var bSuccess = cmdRunner.RunProgram(sExePath, cmdStr, "Quameter", true, iMaxRuntimeSeconds);
+                // This will also call RegisterEvents
+                AttachCmdRunnerEvents(cmdRunner);
 
-                ParseConsoleOutputFileForErrors(Path.Combine(m_WorkDir, consoleOutputFileName));
+                mProcessingStartTime = DateTime.UtcNow;
+                mLastProgressUpdate = DateTime.UtcNow;
+                mLastStatusUpdate = DateTime.UtcNow;
+                mStatusUpdateIntervalMinutes = 5;
 
-                if (!bSuccess)
+                const int maxRuntimeSeconds = MAX_QUAMETER_RUNTIME_MINUTES * 60;
+                var success = cmdRunner.RunProgram(exePath, cmdStr, "Quameter", true, maxRuntimeSeconds);
+
+                // Parse the console output file one more time to check for errors
+                ParseConsoleOutputFile();
+
+                DetachCmdRunnerEvents(cmdRunner);
+
+                if (!success)
                 {
                     if (ignoreQuameterFailure)
                     {
@@ -1166,8 +1238,7 @@ namespace DatasetQualityPlugin
                     return false;
                 }
 
-                // This message is logged if m_DebugLevel == 5
-                LogDebug("Quameter Complete");
+                LogMessage("Quameter Complete");
 
                 System.Threading.Thread.Sleep(100);
 
@@ -1201,10 +1272,6 @@ namespace DatasetQualityPlugin
                 LogError(mRetData.CloseoutMsg + ": " + ex.Message);
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return false;
-            }
-            finally
-            {
-                DetachCmdRunnerEvents(cmdRunner);
             }
 
             return true;
@@ -1278,6 +1345,29 @@ namespace DatasetQualityPlugin
 
         }
 
+        /// <summary>
+        /// Examine the data line with the RegEx matcher
+        /// If a match, compute the new progress
+        /// </summary>
+        /// <param name="dataLine"></param>
+        /// <param name="progressMatcher"></param>
+        /// <param name="percentComplete"></param>
+        /// <returns></returns>
+        private bool UpdateProgress(string dataLine, Regex progressMatcher, ref float percentComplete)
+        {
+            var match = progressMatcher.Match(dataLine);
+
+            if (!match.Success)
+                return false;
+
+            var scansRead = int.Parse(match.Groups["ScansRead"].Value);
+            var totalScans = int.Parse(match.Groups["TotalScans"].Value);
+
+            percentComplete = scansRead / (float)totalScans * 100;
+            return true;
+
+        }
+
         #endregion
 
         #region "Event handlers"
@@ -1320,13 +1410,25 @@ namespace DatasetQualityPlugin
 
         void CmdRunner_LoopWaiting()
         {
+            if (DateTime.UtcNow.Subtract(mLastProgressUpdate).TotalSeconds >= 30)
+            {
+                mLastProgressUpdate = DateTime.UtcNow;
+                ParseConsoleOutputFile();
+                return;
+            }
 
-            if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalSeconds >= 300)
+            if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalMinutes >= mStatusUpdateIntervalMinutes)
             {
                 mLastStatusUpdate = DateTime.UtcNow;
-                // This message is logged to disk m_DebugLevel == 5
-                LogDebug("Quameter running; " + DateTime.UtcNow.Subtract(mQuameterStartTime).TotalMinutes + " minutes elapsed");
+                LogMessage("Quameter running; " + DateTime.UtcNow.Subtract(mProcessingStartTime).TotalMinutes + " minutes elapsed");
+
+                // Increment mStatusUpdateIntervalMinutes by 5 minutes every time the status is logged, up to a maximum of 30
+                if (mStatusUpdateIntervalMinutes < 30)
+                {
+                    mStatusUpdateIntervalMinutes += 5;
+                }
             }
+
         }
 
         #endregion
