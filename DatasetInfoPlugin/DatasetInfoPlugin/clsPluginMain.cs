@@ -55,7 +55,6 @@ namespace DatasetInfoPlugin
 
         private int mStatusUpdateIntervalMinutes;
 
-
         #endregion
 
         #region "Methods"
@@ -171,6 +170,8 @@ namespace DatasetInfoPlugin
 
             mProcessingStartTime = DateTime.UtcNow;
             mLastProgressUpdate = DateTime.UtcNow;
+            mLastStatusUpdate = DateTime.UtcNow;
+            mStatusUpdateIntervalMinutes = 5;
 
             // Initialize the MSFileScanner class
             mMsFileScanner = LoadMSFileInfoScanner(msFileInfoScannerDLLPath);
@@ -1473,12 +1474,13 @@ namespace DatasetInfoPlugin
             if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalMinutes >= mStatusUpdateIntervalMinutes)
             {
                 mLastStatusUpdate = DateTime.UtcNow;
-                LogMessage("MSFileInfoScanner running; " + DateTime.UtcNow.Subtract(mProcessingStartTime).TotalMinutes + " minutes elapsed");
+                var elapsedMinutes = DateTime.UtcNow.Subtract(mProcessingStartTime).TotalMinutes;
+                LogMessage(string.Format("MSFileInfoScanner running; {0:F1} minutes elapsed", elapsedMinutes));
 
-                // Increment mStatusUpdateIntervalMinutes by 5 minutes every time the status is logged, up to a maximum of 30
+                // Increment mStatusUpdateIntervalMinutes by 1 minute every time the status is logged, up to a maximum of 30 minutes
                 if (mStatusUpdateIntervalMinutes < 30)
                 {
-                    mStatusUpdateIntervalMinutes += 5;
+                    mStatusUpdateIntervalMinutes += 1;
                 }
             }
         }
