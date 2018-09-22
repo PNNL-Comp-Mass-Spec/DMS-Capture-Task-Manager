@@ -17,7 +17,7 @@ namespace SrcFileRenamePlugin
     /// <summary>
     /// Class for performing rename operations
     /// </summary>
-    class clsRenameOps : clsEventNotifier
+    class clsRenameOps : EventNotifier
     {
 
         #region "Class variables"

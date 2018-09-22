@@ -287,7 +287,7 @@ namespace CaptureTaskManager
 
                 var exePath = PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppPath();
                 var configFilePath = exePath + ".config";
-                ShowTraceMessage("Settings loaded from " + clsPathUtils.CompactPathString(configFilePath, 60));
+                ShowTraceMessage("Settings loaded from " + PathUtils.CompactPathString(configFilePath, 60));
                 ShowDictionaryTrace(mgrSettingsFromFile);
             }
 
@@ -445,7 +445,7 @@ namespace CaptureTaskManager
             if (!success)
             {
                 // Log the message to the DB if the monthly Windows updates are not pending
-                var allowLogToDB = !clsWindowsUpdateStatus.ServerUpdatesArePending();
+                var allowLogToDB = !WindowsUpdateStatus.ServerUpdatesArePending();
 
                 mErrMsg = "LoadMgrSettingsFromDBWork; Excessive failures attempting to retrieve manager settings from database " +
                           "for manager '" + managerName + "'";

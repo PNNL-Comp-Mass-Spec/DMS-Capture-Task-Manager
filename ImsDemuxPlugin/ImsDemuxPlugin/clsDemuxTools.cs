@@ -20,7 +20,7 @@ namespace ImsDemuxPlugin
     /// <summary>
     /// This class demultiplexes a .UIMF file using the UIMFDemultiplexer
     /// </summary>
-    public class clsDemuxTools : clsEventNotifier
+    public class clsDemuxTools : EventNotifier
     {
 
         #region "Constants"
@@ -43,7 +43,7 @@ namespace ImsDemuxPlugin
         private readonly string mManagerName;
         private string mDataset;
         private string mDatasetFolderPathRemote = string.Empty;
-        private readonly clsFileTools mFileTools;
+        private readonly FileTools mFileTools;
         private string mWorkDir;
 
         private readonly string mUimfDemultiplexerPath;
@@ -110,7 +110,7 @@ namespace ImsDemuxPlugin
         /// <param name="uimDemultiplexerPath"></param>
         /// <param name="managerName"></param>
         /// <param name="fileTools"></param>
-        public clsDemuxTools(string uimDemultiplexerPath, string managerName, clsFileTools fileTools)
+        public clsDemuxTools(string uimDemultiplexerPath, string managerName, FileTools fileTools)
         {
             mProgressUpdateIntervalSeconds = 5;
 
@@ -813,7 +813,7 @@ namespace ImsDemuxPlugin
         /// <param name="retryCount">Number of attempts</param>
         /// <param name="backupDestFileBeforeCopy">If True and if the target file exists, renames the target file to have _Old1 before the extension</param>
         /// <param name="managerName">Manager name</param>
-        /// <param name="fileTools">Instance of clsFileTools</param>
+        /// <param name="fileTools">Instance of FileTools</param>
         /// <returns>True if success, false if an error</returns>
         public static bool CopyFileWithRetry(
             string sourceFilePath,
@@ -822,7 +822,7 @@ namespace ImsDemuxPlugin
             int retryCount,
             bool backupDestFileBeforeCopy,
             string managerName,
-            clsFileTools fileTools)
+            FileTools fileTools)
         {
             var retryingCopy = false;
 
@@ -831,7 +831,7 @@ namespace ImsDemuxPlugin
 
             if (backupDestFileBeforeCopy)
             {
-                clsFileTools.BackupFileBeforeCopy(targetFilePath);
+                FileTools.BackupFileBeforeCopy(targetFilePath);
             }
 
             while (retryCount >= 0)
@@ -1270,7 +1270,7 @@ namespace ImsDemuxPlugin
 
                 // Garbage collect, then try again to rename the file
                 System.Threading.Thread.Sleep(250);
-                clsProgRunner.GarbageCollectNow();
+                ProgRunner.GarbageCollectNow();
                 System.Threading.Thread.Sleep(250);
 
                 try

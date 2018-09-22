@@ -9,7 +9,7 @@ namespace Pacifica.Core
     /// MyEMSL Upload metadata class
     /// </summary>
     // ReSharper disable once UnusedMember.Global
-    public class Upload : clsEventNotifier
+    public class Upload : EventNotifier
     {
         /// <summary>
         /// EUS Operator ID to use when operator ID is unknown

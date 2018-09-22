@@ -12,7 +12,7 @@ using System.Data.SqlClient;
 
 namespace Pacifica.DMS_Metadata
 {
-    public class DMSMetadataObject : clsEventNotifier
+    public class DMSMetadataObject : EventNotifier
     {
         /// <summary>
         /// If a dataset archive task involves more 15 GB of data, only archive the root directory and the QC directory
@@ -69,7 +69,7 @@ namespace Pacifica.DMS_Metadata
         // Values are the corresponding lock file info object
         private readonly Dictionary<string, FileInfo> mRemoteCacheInfoLockFiles;
 
-        private readonly clsFileTools mFileTools;
+        private readonly FileTools mFileTools;
 
         private readonly Configuration mPacificaConfig;
 
@@ -155,7 +155,7 @@ namespace Pacifica.DMS_Metadata
         /// <param name="managerName"></param>
         /// <param name="jobNumber"></param>
         /// <param name="fileTools"></param>
-        public DMSMetadataObject(Configuration config, string managerName, int jobNumber, clsFileTools fileTools)
+        public DMSMetadataObject(Configuration config, string managerName, int jobNumber, FileTools fileTools)
         {
             mPacificaConfig = config;
 
@@ -708,7 +708,7 @@ namespace Pacifica.DMS_Metadata
 
             foreach (var fileObj in candidateFilesToUpload)
             {
-                var relativeFilePath = clsPathUtils.CombineLinuxPaths(fileObj.RelativeDestinationDirectory, fileObj.FileName);
+                var relativeFilePath = PathUtils.CombineLinuxPaths(fileObj.RelativeDestinationDirectory, fileObj.FileName);
 
                 if (remoteFiles.TryGetValue(relativeFilePath, out var fileVersions))
                 {
@@ -758,7 +758,7 @@ namespace Pacifica.DMS_Metadata
                     continue;
 
                 var sourceFileSizeMB = sourceFile.Length / 1024.0 / 1024.0;
-                if (sourceFileSizeMB < clsFileTools.LOCKFILE_MININUM_SOURCE_FILE_SIZE_MB)
+                if (sourceFileSizeMB < FileTools.LOCKFILE_MINIMUM_SOURCE_FILE_SIZE_MB)
                 {
                     // Do not use a lock file for this remote file
                     continue;
@@ -1064,7 +1064,7 @@ namespace Pacifica.DMS_Metadata
                 }
 
                 // Unix style path
-                var relativeFilePath = clsPathUtils.CombineLinuxPaths(fileSubDir, fileName);
+                var relativeFilePath = PathUtils.CombineLinuxPaths(fileSubDir, fileName);
 
                 if (remoteFiles.TryGetValue(relativeFilePath, out var fileVersions))
                 {

@@ -26,7 +26,7 @@ namespace CaptureTaskManager
     /// </summary>
     static class Program
     {
-        private const string PROGRAM_DATE = "September 18, 2018";
+        private const string PROGRAM_DATE = "September 21, 2018";
 
         private static bool mCodeTestMode;
         private static bool mTraceMode;
@@ -49,7 +49,7 @@ namespace CaptureTaskManager
             mTraceMode = false;
             mShowVersionOnly = false;
 
-            var osVersionInfo = new clsOSVersionInfo();
+            var osVersionInfo = new OSVersionInfo();
 
             var osVersion = osVersionInfo.GetOSVersion();
             if (osVersion.IndexOf("windows", StringComparison.OrdinalIgnoreCase) < 0)
@@ -190,7 +190,7 @@ namespace CaptureTaskManager
                 //
                 // See https://stackoverflow.com/a/36158739/1179467
 
-                var osVersionInfo = new clsOSVersionInfo();
+                var osVersionInfo = new OSVersionInfo();
                 var osDescription = osVersionInfo.GetOSVersion();
 
                 Console.WriteLine("OS Version: " + osDescription);

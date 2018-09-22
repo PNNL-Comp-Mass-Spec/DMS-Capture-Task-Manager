@@ -115,7 +115,7 @@ namespace Pacifica.Core
         /// <summary>
         /// Error event
         /// </summary>
-        public static event clsEventNotifier.ErrorEventEventHandler ErrorEvent;
+        public static event EventNotifier.ErrorEventEventHandler ErrorEvent;
 
         #endregion
 
@@ -733,7 +733,7 @@ namespace Pacifica.Core
                 // Loop until URL call finishes, or until timeoutSeconds elapses
                 while (mThreadedSend.ThreadState != ThreadState.Stopped)
                 {
-                    clsProgRunner.SleepMilliseconds(25);
+                    ProgRunner.SleepMilliseconds(25);
 
                     if (mThreadedSend.ThreadState == ThreadState.Aborted)
                     {
@@ -746,7 +746,7 @@ namespace Pacifica.Core
 
                     var abortThread = new Thread(AbortThreadedSendNow);
                     abortThread.Start();
-                    clsProgRunner.SleepMilliseconds(25);
+                    ProgRunner.SleepMilliseconds(25);
 
                     runtimeExceeded = true;
                     threadAborted = true;
@@ -1167,7 +1167,7 @@ namespace Pacifica.Core
                                 addonBytes.ToString().PadRight(12) +
                                 contentLength.ToString().PadRight(12) +
                                 headerBlocks.ToString().PadRight(3) +
-                                clsFileTools.CompactPathString(dirPathInArchive, 75));
+                                FileTools.CompactPathString(dirPathInArchive, 75));
 
                         contentLength += addonBytes;
 
@@ -1189,7 +1189,7 @@ namespace Pacifica.Core
                         addonBytes.ToString().PadRight(12) +
                         contentLength.ToString().PadRight(12) +
                         headerBlocks.ToString().PadRight(3) +
-                        clsFileTools.CompactPathString(fileToArchive.Value.RelativeDestinationFullPath, 100));
+                        FileTools.CompactPathString(fileToArchive.Value.RelativeDestinationFullPath, 100));
 
                 contentLength += addonBytes;
 

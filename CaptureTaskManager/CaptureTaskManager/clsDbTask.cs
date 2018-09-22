@@ -47,7 +47,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Stored procedure executor
         /// </summary>
-        protected readonly PRISM.clsExecuteDatabaseSP m_CaptureTaskDBProcedureExecutor;
+        protected readonly PRISM.ExecuteDatabaseSP m_CaptureTaskDBProcedureExecutor;
 
         #endregion
 
@@ -80,7 +80,7 @@ namespace CaptureTaskManager
             // Gigasax.DMS_Capture
             m_ConnStr = m_MgrParams.GetParam("ConnectionString");
 
-            m_CaptureTaskDBProcedureExecutor = new PRISM.clsExecuteDatabaseSP(m_ConnStr);
+            m_CaptureTaskDBProcedureExecutor = new PRISM.ExecuteDatabaseSP(m_ConnStr);
 
             m_CaptureTaskDBProcedureExecutor.ErrorEvent += CaptureTaskDBProcedureExecutor_DBErrorEvent;
 

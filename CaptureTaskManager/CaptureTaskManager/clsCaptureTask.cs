@@ -258,11 +258,11 @@ namespace CaptureTaskManager
                         // No jobs found
                         outcome = EnumRequestTaskResult.NoTaskFound;
                         break;
-                    case clsExecuteDatabaseSP.RET_VAL_EXCESSIVE_RETRIES:
+                    case ExecuteDatabaseSP.RET_VAL_EXCESSIVE_RETRIES:
                         // Too many retries
                         outcome = EnumRequestTaskResult.TooManyRetries;
                         break;
-                    case clsExecuteDatabaseSP.RET_VAL_DEADLOCK:
+                    case ExecuteDatabaseSP.RET_VAL_DEADLOCK:
                         // Transaction was deadlocked on lock resources with another process and has been chosen as the deadlock victim
                         outcome = EnumRequestTaskResult.Deadlock;
                         break;
@@ -277,7 +277,7 @@ namespace CaptureTaskManager
             catch (Exception ex)
             {
                 LogError("Exception requesting analysis job", ex);
-                LogError("Stack trace: " + clsStackTraceFormatter.GetExceptionStackTrace(ex));
+                LogError("Stack trace: " + StackTraceFormatter.GetExceptionStackTrace(ex));
                 outcome = EnumRequestTaskResult.ResultError;
             }
             return outcome;

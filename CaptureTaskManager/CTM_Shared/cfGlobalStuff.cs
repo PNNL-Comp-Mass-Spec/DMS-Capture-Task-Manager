@@ -261,9 +261,9 @@ namespace CaptureTaskManager
         public static string GetExceptionStackTrace(Exception ex, bool useMultiLine)
         {
             if (useMultiLine)
-                return clsStackTraceFormatter.GetExceptionStackTraceMultiLine(ex);
+                return StackTraceFormatter.GetExceptionStackTraceMultiLine(ex);
 
-            return clsStackTraceFormatter.GetExceptionStackTrace(ex);
+            return StackTraceFormatter.GetExceptionStackTrace(ex);
         }
     }
 
@@ -478,7 +478,7 @@ namespace CaptureTaskManager
                     if (retryCount <= 0)
                         break;
 
-                    clsProgRunner.SleepMilliseconds(retryDelaySeconds * 1000);
+                    ProgRunner.SleepMilliseconds(retryDelaySeconds * 1000);
 
                     retryDelaySeconds *= 2;
                     if (retryDelaySeconds > 90)

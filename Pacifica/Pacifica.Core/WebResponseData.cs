@@ -67,7 +67,7 @@ namespace Pacifica.Core
 
             ExceptionCaught = true;
             ExceptionMessage = ex.Message;
-            ExceptionStackTrace = PRISM.clsStackTraceFormatter.GetExceptionStackTraceMultiLine(ex);
+            ExceptionStackTrace = PRISM.StackTraceFormatter.GetExceptionStackTraceMultiLine(ex);
         }
     }
 }

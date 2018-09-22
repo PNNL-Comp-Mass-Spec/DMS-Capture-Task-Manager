@@ -326,7 +326,7 @@ namespace CaptureTaskManager
             // Make the initial log entry
             var relativeLogFilePath = LogTools.CurrentLogFilePath;
             var logFile = new FileInfo(relativeLogFilePath);
-            ShowTrace("Initializing log file " + clsPathUtils.CompactPathString(logFile.FullName, 60));
+            ShowTrace("Initializing log file " + PathUtils.CompactPathString(logFile.FullName, 60));
 
             var appVersion = Assembly.GetEntryAssembly().GetName().Version;
             var startupMsg = "=== Started Capture Task Manager V" + appVersion + " ===== ";
@@ -400,7 +400,7 @@ namespace CaptureTaskManager
                 MgrStatus = EnumMgrStatus.Running
             };
 
-            RegisterEvents((clsEventNotifier)m_StatusFile);
+            RegisterEvents((EventNotifier)m_StatusFile);
 
             m_StatusFile.MonitorUpdateRequired += OnStatusMonitorUpdateReceived;
 
@@ -689,7 +689,7 @@ namespace CaptureTaskManager
                     // Check whether the computer is likely to install the monthly Windows Updates within the next few hours
                     // Do not request a task between 12 am and 6 am on Thursday in the week with the third Tuesday of the month
                     // Do not request a task between 2 am and 4 am or between 9 am and 11 am on Sunday following the week with the second Tuesday of the month
-                    if (clsWindowsUpdateStatus.UpdatesArePending(out var pendingWindowsUpdateMessage))
+                    if (WindowsUpdateStatus.UpdatesArePending(out var pendingWindowsUpdateMessage))
                     {
                         LogMessage(pendingWindowsUpdateMessage);
                         m_LoopExitCode = LoopExitCode.NoTaskFound;
@@ -1306,12 +1306,12 @@ namespace CaptureTaskManager
 
                 var targetFilePath = Path.Combine(datasetStoragePath, "DummyFile.txt");
 
-                var success = clsDiskInfo.GetDiskFreeSpace(
+                var success = DiskInfo.GetDiskFreeSpace(
                     targetFilePath, out var totalNumberOfFreeBytes, out var errorMessage, reportFreeSpaceAvailableToUser: false);
 
                 if (!string.IsNullOrWhiteSpace(errorMessage))
                 {
-                    LogWarning("clsDiskInfo.GetDiskFreeSpace: " + errorMessage);
+                    LogWarning("DiskInfo.GetDiskFreeSpace: " + errorMessage);
                 }
 
                 if (success)
@@ -1390,9 +1390,9 @@ namespace CaptureTaskManager
 
         #endregion
 
-        #region "clsEventNotifier events"
+        #region "EventNotifier events"
 
-        private void RegisterEvents(clsEventNotifier oProcessingClass, bool writeDebugEventsToLog = true)
+        private void RegisterEvents(EventNotifier oProcessingClass, bool writeDebugEventsToLog = true)
         {
             if (writeDebugEventsToLog)
             {

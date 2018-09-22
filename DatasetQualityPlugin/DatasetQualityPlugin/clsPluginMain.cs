@@ -845,7 +845,7 @@ namespace DatasetQualityPlugin
 
                 var resultCode = m_CaptureDBProcedureExecutor.ExecuteSP(spCmd, MAX_RETRY_COUNT, SEC_BETWEEN_RETRIES);
 
-                if (resultCode == PRISM.clsExecuteDatabaseSP.RET_VAL_OK)
+                if (resultCode == PRISM.ExecuteDatabaseSP.RET_VAL_OK)
                 {
                     // No errors
                     blnSuccess = true;

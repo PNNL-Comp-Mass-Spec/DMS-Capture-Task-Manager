@@ -89,7 +89,7 @@ namespace CaptureToolPlugin
         private NetworkConnection m_ShareConnectorDotNET;
         private ConnectionType m_ConnectionType = ConnectionType.NotConnected;
 
-        private readonly clsFileTools mFileTools;
+        private readonly FileTools mFileTools;
 
         DateTime mLastProgressUpdate = DateTime.Now;
 
@@ -121,10 +121,10 @@ namespace CaptureToolPlugin
         /// Constructor
         /// </summary>
         /// <param name="mgrParams">Parameters for manager operation</param>
-        /// <param name="fileTools">Instance of clsFileTools</param>
+        /// <param name="fileTools">Instance of FileTools</param>
         /// <param name="useBioNet">Flag to indicate if source instrument is on Bionet</param>
         /// <param name="traceMode">When true, show debug messages at the console</param>
-        public clsCaptureOps(IMgrParams mgrParams, clsFileTools fileTools, bool useBioNet, bool traceMode)
+        public clsCaptureOps(IMgrParams mgrParams, FileTools fileTools, bool useBioNet, bool traceMode)
         {
             mMgrParams = mgrParams;
             mTraceMode = traceMode;
@@ -154,7 +154,7 @@ namespace CaptureToolPlugin
 
             mFileTools = fileTools;
 
-            // Note that all of the events and methods in clsFileTools are static
+            // Note that all of the events and methods in FileTools are static
             if (!mFileCopyEventsWired)
             {
                 mFileCopyEventsWired = true;
@@ -1124,7 +1124,7 @@ namespace CaptureToolPlugin
         private void DisconnectShare(ref ShareConnector myConn)
         {
             myConn.Disconnect();
-            clsProgRunner.GarbageCollectNow();
+            ProgRunner.GarbageCollectNow();
 
             LogDebug("Bionet disconnected");
             m_ConnectionType = ConnectionType.NotConnected;
@@ -1139,7 +1139,7 @@ namespace CaptureToolPlugin
         {
             myConn.Dispose();
             myConn = null;
-            clsProgRunner.GarbageCollectNow();
+            ProgRunner.GarbageCollectNow();
 
             LogDebug("Bionet disconnected");
             m_ConnectionType = ConnectionType.NotConnected;
@@ -2820,7 +2820,7 @@ namespace CaptureToolPlugin
             ref clsToolReturnData retData,
             SortedSet<string> filesToSkip)
         {
-            const clsFileTools.FileOverwriteMode overwriteMode = clsFileTools.FileOverwriteMode.OverWriteIfDateOrLengthDiffer;
+            const FileTools.FileOverwriteMode overwriteMode = FileTools.FileOverwriteMode.OverWriteIfDateOrLengthDiffer;
             const int MAX_RETRY_TIME_HOURS = 6;
 
             var success = false;
@@ -2887,8 +2887,8 @@ namespace CaptureToolPlugin
                     LogError(msg);
 
                     doCopy = false;
-                    if (mFileTools.CurrentCopyStatus == clsFileTools.CopyStatus.BufferedCopy ||
-                        mFileTools.CurrentCopyStatus == clsFileTools.CopyStatus.BufferedCopyResume)
+                    if (mFileTools.CurrentCopyStatus == FileTools.CopyStatus.BufferedCopy ||
+                        mFileTools.CurrentCopyStatus == FileTools.CopyStatus.BufferedCopyResume)
                     {
                         // Exception occurred during the middle of a buffered copy
                         // If at least 10 seconds have elapsed, auto-retry the copy again

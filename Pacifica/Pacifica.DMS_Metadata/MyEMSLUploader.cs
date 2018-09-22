@@ -7,7 +7,7 @@ using Utilities = Pacifica.Core.Utilities;
 
 namespace Pacifica.DMS_Metadata
 {
-    public class MyEMSLUploader : clsEventNotifier
+    public class MyEMSLUploader : EventNotifier
     {
         public const string RECURSIVE_UPLOAD = "MyEMSL_Recurse";
 
@@ -21,7 +21,7 @@ namespace Pacifica.DMS_Metadata
 
         private readonly string mManagerName;
 
-        private readonly clsFileTools mFileTools;
+        private readonly FileTools mFileTools;
 
         private readonly Configuration mPacificaConfig;
 
@@ -127,7 +127,7 @@ namespace Pacifica.DMS_Metadata
         /// <param name="mgrParams"></param>
         /// <param name="taskParams"></param>
         /// <param name="fileTools"></param>
-        public MyEMSLUploader(Configuration config, Dictionary<string, string> mgrParams, Dictionary<string, string> taskParams, clsFileTools fileTools)
+        public MyEMSLUploader(Configuration config, Dictionary<string, string> mgrParams, Dictionary<string, string> taskParams, FileTools fileTools)
         {
             mPacificaConfig = config;
 

@@ -14,7 +14,7 @@ namespace Pacifica.Core
     /// First call GetIngestStatus then call IngestStepCompleted.
     /// This allows for just one web request, but the ability to examine the status of multiple steps
     /// </remarks>
-    public class MyEMSLStatusCheck : clsEventNotifier
+    public class MyEMSLStatusCheck : EventNotifier
     {
         private readonly Configuration mPacificaConfig;
 

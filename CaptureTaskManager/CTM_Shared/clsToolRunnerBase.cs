@@ -42,9 +42,9 @@ namespace CaptureTaskManager
         protected IStatusFile m_StatusTools;
 
         // Used by CTM plugins
-        protected clsFileTools m_FileTools;
+        protected FileTools m_FileTools;
 
-        protected clsExecuteDatabaseSP m_CaptureDBProcedureExecutor;
+        protected ExecuteDatabaseSP m_CaptureDBProcedureExecutor;
 
         protected DateTime m_LastConfigDBUpdate = DateTime.UtcNow;
         protected int m_MinutesBetweenConfigDBUpdates = 10;
@@ -132,7 +132,7 @@ namespace CaptureTaskManager
 
             // This connection string points to the DMS_Capture database
             var connectionString = m_MgrParams.GetParam("ConnectionString");
-            m_CaptureDBProcedureExecutor = new clsExecuteDatabaseSP(connectionString);
+            m_CaptureDBProcedureExecutor = new ExecuteDatabaseSP(connectionString);
 
             RegisterEvents(m_CaptureDBProcedureExecutor);
 
@@ -265,7 +265,7 @@ namespace CaptureTaskManager
                 }
 
                 // Try to ensure there are no open objects with file handles
-                clsProgRunner.GarbageCollectNow();
+                ProgRunner.GarbageCollectNow();
                 Thread.Sleep(holdoffMilliseconds);
             }
 
@@ -418,7 +418,7 @@ namespace CaptureTaskManager
         protected void InitFileTools(string mgrName, short debugLevel)
         {
             ResetTimestampForQueueWaitTimeLogging();
-            m_FileTools = new clsFileTools(mgrName, debugLevel);
+            m_FileTools = new FileTools(mgrName, debugLevel);
             RegisterEvents(m_FileTools, false);
 
             // Use a custom event handler for status messages
@@ -1042,7 +1042,7 @@ namespace CaptureTaskManager
 
         #endregion
 
-        #region "clsEventNotifier events"
+        #region "EventNotifier events"
 
         /// <summary>
         /// Register event handlers
@@ -1051,7 +1051,7 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="processingClass"></param>
         /// <param name="writeDebugEventsToLog"></param>
-        protected void RegisterEvents(clsEventNotifier processingClass, bool writeDebugEventsToLog = true)
+        protected void RegisterEvents(EventNotifier processingClass, bool writeDebugEventsToLog = true)
         {
             if (writeDebugEventsToLog)
             {
@@ -1073,7 +1073,7 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="processingClass"></param>
         /// <param name="messageType"></param>
-        protected void UnregisterEventHandler(clsEventNotifier processingClass, BaseLogger.LogLevels messageType)
+        protected void UnregisterEventHandler(EventNotifier processingClass, BaseLogger.LogLevels messageType)
         {
             switch (messageType)
             {

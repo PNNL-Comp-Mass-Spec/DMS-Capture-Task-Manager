@@ -352,7 +352,7 @@ namespace DatasetIntegrityPlugin
                 // Delete the locally cached .D directory
                 try
                 {
-                    clsProgRunner.GarbageCollectNow();
+                    ProgRunner.GarbageCollectNow();
                     m_FileTools.DeleteDirectory(dotDDirectoryPathLocal, ignoreErrors: true);
                 }
                 catch (Exception ex)
@@ -491,7 +491,7 @@ namespace DatasetIntegrityPlugin
                 // Delete the locally cached .D directory
                 try
                 {
-                    clsProgRunner.GarbageCollectNow();
+                    ProgRunner.GarbageCollectNow();
                     m_FileTools.DeleteDirectory(dotDDirectoryPathLocal, ignoreErrors: true);
                 }
                 catch (Exception ex)
@@ -563,7 +563,7 @@ namespace DatasetIntegrityPlugin
         }
 
         private bool CopyDotDDirectoryToLocal(
-            clsFileTools fileTools,
+            FileTools fileTools,
             string datasetDirectoryPath,
             string dotDDirectoryName,
             string dotDDirectoryPathLocal,
@@ -618,7 +618,7 @@ namespace DatasetIntegrityPlugin
             return true;
         }
 
-        private bool CopyCDFToDatasetDirectory(clsFileTools fileTools, string datasetDirectoryPath)
+        private bool CopyCDFToDatasetDirectory(FileTools fileTools, string datasetDirectoryPath)
         {
             var fiCDF = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + ".cdf"));
 
@@ -633,7 +633,7 @@ namespace DatasetIntegrityPlugin
             return success;
         }
 
-        private bool CopyUIMFToDatasetDirectory(clsFileTools fileTools, string datasetDirectoryPath)
+        private bool CopyUIMFToDatasetDirectory(FileTools fileTools, string datasetDirectoryPath)
         {
 
             var uimfFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION));
@@ -649,7 +649,7 @@ namespace DatasetIntegrityPlugin
             return success;
         }
 
-        private bool CopyFileToDatasetDirectory(clsFileTools fileTools, FileSystemInfo dataFile, string datasetDirectoryPath)
+        private bool CopyFileToDatasetDirectory(FileTools fileTools, FileSystemInfo dataFile, string datasetDirectoryPath)
         {
             if (m_DebugLevel >= 4)
             {

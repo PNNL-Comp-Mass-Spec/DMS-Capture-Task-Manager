@@ -17,7 +17,7 @@ namespace CaptureTaskManager
     /// <summary>
     /// Handles status file updates
     /// </summary>
-    public class clsStatusFile : clsEventNotifier, IStatusFile
+    public class clsStatusFile : EventNotifier, IStatusFile
     {
 
         #region "Constants"

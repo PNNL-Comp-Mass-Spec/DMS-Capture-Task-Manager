@@ -22,7 +22,7 @@ namespace DatasetArchivePlugin
     /// <summary>
     /// Base class for archive and archive update operations classes.
     /// </summary>
-    abstract class clsOpsBase : clsEventNotifier
+    abstract class clsOpsBase : EventNotifier
     {
 
         #region "Constants"
@@ -44,7 +44,7 @@ namespace DatasetArchivePlugin
         private readonly IMgrParams m_MgrParams;
         protected readonly ITaskParams m_TaskParams;
         private readonly IStatusFile m_StatusTools;
-        private readonly clsFileTools m_FileTools;
+        private readonly FileTools m_FileTools;
 
         protected string m_ErrMsg = string.Empty;
         private string m_WarningMsg = string.Empty;
@@ -56,7 +56,7 @@ namespace DatasetArchivePlugin
 
         private readonly string m_ArchiveOrUpdate;
 
-        private readonly clsExecuteDatabaseSP m_CaptureDBProcedureExecutor;
+        private readonly ExecuteDatabaseSP m_CaptureDBProcedureExecutor;
 
         protected string m_DatasetName = string.Empty;
 
@@ -101,7 +101,7 @@ namespace DatasetArchivePlugin
         /// <param name="taskParams"></param>
         /// <param name="statusTools"></param>
         /// <param name="fileTools"></param>
-        protected clsOpsBase(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools, clsFileTools fileTools)
+        protected clsOpsBase(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools, FileTools fileTools)
         {
             m_MgrParams = mgrParams;
             m_TaskParams = taskParams;
@@ -122,7 +122,7 @@ namespace DatasetArchivePlugin
 
             // This connection string points to the DMS_Capture database
             var connectionString = m_MgrParams.GetParam("ConnectionString");
-            m_CaptureDBProcedureExecutor = new clsExecuteDatabaseSP(connectionString);
+            m_CaptureDBProcedureExecutor = new ExecuteDatabaseSP(connectionString);
 
             RegisterEvents(m_CaptureDBProcedureExecutor);
 

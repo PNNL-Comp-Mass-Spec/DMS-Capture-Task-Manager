@@ -34,8 +34,8 @@ namespace DatasetArchivePlugin
         /// <param name="mgrParams">Manager parameters</param>
         /// <param name="taskParams">Task parameters</param>
         /// <param name="statusTools">Status Tools</param>
-        /// <param name="fileTools">Instance of clsFileTools</param>
-        public clsArchiveUpdate(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools, clsFileTools fileTools)
+        /// <param name="fileTools">Instance of FileTools</param>
+        public clsArchiveUpdate(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools, FileTools fileTools)
             : base(mgrParams, taskParams, statusTools, fileTools)
         {
         }
