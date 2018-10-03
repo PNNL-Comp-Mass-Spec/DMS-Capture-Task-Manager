@@ -21,13 +21,13 @@ namespace SrcFileRenamePlugin
     {
 
         #region "Class variables"
-        protected IMgrParams m_MgrParams;
-        protected string m_Msg = "";
-        protected bool m_UseBioNet;
-        protected string m_UserName = "";
-        protected string m_Pwd = "";
-        protected ShareConnector m_ShareConnector;
-        protected bool m_Connected;
+        protected IMgrParams mMgrParams;
+        protected string mMsg = "";
+        protected bool mUseBioNet;
+        protected string mUserName = "";
+        protected string mPwd = "";
+        protected ShareConnector mShareConnector;
+        protected bool mConnected;
         #endregion
 
         #region "Constructors"
@@ -38,19 +38,19 @@ namespace SrcFileRenamePlugin
         /// <param name="useBioNet">Flag to indicate if source instrument is on Bionet</param>
         public clsRenameOps(IMgrParams mgrParams, bool useBioNet)
         {
-            m_MgrParams = mgrParams;
+            mMgrParams = mgrParams;
 
             // Setup for BioNet use, if applicable
-            m_UseBioNet = useBioNet;
-            if (m_UseBioNet)
+            mUseBioNet = useBioNet;
+            if (mUseBioNet)
             {
-                m_UserName = m_MgrParams.GetParam("BionetUser");
-                m_Pwd = m_MgrParams.GetParam("BionetPwd");
+                mUserName = mMgrParams.GetParam("BionetUser");
+                mPwd = mMgrParams.GetParam("BionetPwd");
 
-                if (!m_UserName.Contains(@"\"))
+                if (!mUserName.Contains(@"\"))
                 {
                     // Prepend this computer's name to the username
-                    m_UserName = Environment.MachineName + @"\" + m_UserName;
+                    mUserName = Environment.MachineName + @"\" + mUserName;
                 }
             }
         }
@@ -76,7 +76,7 @@ namespace SrcFileRenamePlugin
             // Typically an empty string, but could be a partial path like: "CapDev" or "Smith\2014"
             var captureSubDirectory = taskParams.GetParam("Capture_Subfolder");
 
-            var pwd = clsUtilities.DecodePassword(m_Pwd);
+            var pwd = clsUtilities.DecodePassword(mPwd);
 
             var msg = "Started clsRenameOps.DoOperation()";
             OnDebugEvent(msg);
@@ -89,34 +89,34 @@ namespace SrcFileRenamePlugin
             var sourceDirectoryPath = Path.Combine(sourceVol, sourcePath);
 
             // Connect to Bionet if necessary
-            if (m_UseBioNet)
+            if (mUseBioNet)
             {
                 msg = "Bionet connection required for " + sourceVol;
                 OnDebugEvent(msg);
 
-                m_ShareConnector = new ShareConnector(m_UserName, pwd)
+                mShareConnector = new ShareConnector(mUserName, pwd)
                 {
                     Share = sourceDirectoryPath
                 };
 
-                if (m_ShareConnector.Connect())
+                if (mShareConnector.Connect())
                 {
                     msg = "Connected to Bionet";
                     OnDebugEvent(msg);
-                    m_Connected = true;
+                    mConnected = true;
                 }
                 else
                 {
-                    msg = "Error " + m_ShareConnector.ErrorMessage + " connecting to " + sourceDirectoryPath + " as user " + m_UserName + " using 'secfso'";
+                    msg = "Error " + mShareConnector.ErrorMessage + " connecting to " + sourceDirectoryPath + " as user " + mUserName + " using 'secfso'";
 
-                    if (m_ShareConnector.ErrorMessage == "1326")
+                    if (mShareConnector.ErrorMessage == "1326")
                         msg += "; you likely need to change the Capture_Method from secfso to fso";
-                    if (m_ShareConnector.ErrorMessage == "53")
+                    if (mShareConnector.ErrorMessage == "53")
                         msg += "; the password may need to be reset";
 
                     OnErrorEvent(msg);
 
-                    errorMessage = "Error connecting to " + sourceDirectoryPath + " as user " + m_UserName + " using 'secfso'";
+                    errorMessage = "Error connecting to " + sourceDirectoryPath + " as user " + mUserName + " using 'secfso'";
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
             }
@@ -192,8 +192,8 @@ namespace SrcFileRenamePlugin
             }
 
             // Close connection, if open
-            if (m_Connected)
-                DisconnectShare(ref m_ShareConnector);
+            if (mConnected)
+                DisconnectShare(ref mShareConnector);
 
             if (countRenamed == 0)
             {
@@ -343,14 +343,14 @@ namespace SrcFileRenamePlugin
 
                 newPath = Path.Combine(fiFile.DirectoryName, "x_" + fiFile.Name);
                 fiFile.MoveTo(newPath);
-                m_Msg = "Renamed file to " + fiFile.FullName;
-                OnStatusEvent(m_Msg);
+                mMsg = "Renamed file to " + fiFile.FullName;
+                OnStatusEvent(mMsg);
                 return true;
             }
             catch (Exception ex)
             {
-                m_Msg = "Error renaming file '" + fiFile.FullName + "' to '" + newPath + "'";
-                OnErrorEvent(m_Msg, ex);
+                mMsg = "Error renaming file '" + fiFile.FullName + "' to '" + newPath + "'";
+                OnErrorEvent(mMsg, ex);
 
                 if (ex.Message.Contains("Access to the path") && ex.Message.Contains("is denied"))
                     errorMessage = "Error renaming file: access is denied";
@@ -380,14 +380,14 @@ namespace SrcFileRenamePlugin
 
                 newPath = Path.Combine(instrumentDirectory.Parent.FullName, "x_" + instrumentDirectory.Name);
                 instrumentDirectory.MoveTo(newPath);
-                m_Msg = "Renamed directory to " + instrumentDirectory.FullName;
-                OnStatusEvent(m_Msg);
+                mMsg = "Renamed directory to " + instrumentDirectory.FullName;
+                OnStatusEvent(mMsg);
                 return true;
             }
             catch (Exception ex)
             {
-                m_Msg = "Error renaming directory '" + instrumentDirectory.FullName + "' to '" + newPath + "'";
-                OnErrorEvent(m_Msg, ex);
+                mMsg = "Error renaming directory '" + instrumentDirectory.FullName + "' to '" + newPath + "'";
+                OnErrorEvent(mMsg, ex);
 
                 if (ex.Message.Contains("Access to the path") && ex.Message.Contains("is denied"))
                     errorMessage = "Error renaming directory: access is denied";
@@ -406,9 +406,9 @@ namespace SrcFileRenamePlugin
         {
             // Disconnects a shared drive
             myConn.Disconnect();
-            m_Msg = "Bionet disconnected";
-            OnDebugEvent(m_Msg);
-            m_Connected = false;
+            mMsg = "Bionet disconnected";
+            OnDebugEvent(mMsg);
+            mConnected = false;
         }
 
         /// <summary>

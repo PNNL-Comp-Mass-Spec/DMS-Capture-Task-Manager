@@ -44,10 +44,10 @@ namespace CaptureToolPlugin
                 return retData;
             }
 
-            LogMessage( "Capturing dataset '" + m_Dataset + "'");
+            LogMessage( "Capturing dataset '" + mDataset + "'");
 
             // Determine if instrument is on Bionet
-            var capMethod = m_TaskParams.GetParam("Method");
+            var capMethod = mTaskParams.GetParam("Method");
             bool useBionet;
             if (capMethod.ToLower() == "secfso")
             {
@@ -61,19 +61,19 @@ namespace CaptureToolPlugin
             ResetTimestampForQueueWaitTimeLogging();
 
             // Create the object that will perform capture operation
-            var capOpTool = new clsCaptureOps(m_MgrParams, m_FileTools, useBionet, m_TraceMode);
+            var capOpTool = new clsCaptureOps(mMgrParams, mFileTools, useBionet, mTraceMode);
             try
             {
                 LogDebug("clsPluginMain.RunTool(): Starting capture operation");
 
-                var success = capOpTool.DoOperation(m_TaskParams, ref retData);
+                var success = capOpTool.DoOperation(mTaskParams, ref retData);
 
-                if (!success && !string.IsNullOrWhiteSpace(retData.CloseoutMsg) && m_TraceMode)
+                if (!success && !string.IsNullOrWhiteSpace(retData.CloseoutMsg) && mTraceMode)
                     ShowTraceMessage(retData.CloseoutMsg);
 
                 if (capOpTool.NeedToAbortProcessing)
                 {
-                    m_NeedToAbortProcessing = true;
+                    mNeedToAbortProcessing = true;
                     if (retData.CloseoutType != EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING)
                         retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING;
                 }

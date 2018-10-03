@@ -57,7 +57,7 @@ namespace DatasetQualityPlugin
         public override clsToolReturnData RunTool()
         {
 
-            // Note that Debug messages are logged if m_DebugLevel == 5
+            // Note that Debug messages are logged if mDebugLevel == 5
 
             var msg = "Starting DatasetQualityPlugin.clsPluginMain.RunTool()";
             LogDebug(msg);
@@ -67,13 +67,13 @@ namespace DatasetQualityPlugin
             if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
                 return mRetData;
 
-            msg = "Creating dataset info for dataset '" + m_Dataset + "'";
+            msg = "Creating dataset info for dataset '" + mDataset + "'";
             LogDebug(msg);
 
-            if (clsMetaDataFile.CreateMetadataFile(m_MgrParams, m_TaskParams))
+            if (clsMetaDataFile.CreateMetadataFile(mMgrParams, mTaskParams))
             {
                 // Everything was good
-                msg = "Metadata file created for dataset " + m_Dataset;
+                msg = "Metadata file created for dataset " + mDataset;
                 LogMessage(msg);
 
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
@@ -81,7 +81,7 @@ namespace DatasetQualityPlugin
             else
             {
                 // There was a problem
-                msg = "Problem creating metadata file for dataset " + m_Dataset + ". See local log for details";
+                msg = "Problem creating metadata file for dataset " + mDataset + ". See local log for details";
                 LogError(msg, true);
                 mRetData.EvalCode = EnumEvalCode.EVAL_CODE_FAILED;
                 mRetData.EvalMsg = msg;
@@ -111,13 +111,13 @@ namespace DatasetQualityPlugin
         {
 
             // Set up the file paths
-            var storageVolExt = m_TaskParams.GetParam("Storage_Vol_External");
-            var storagePath = m_TaskParams.GetParam("Storage_Path");
-            var datasetFolder = Path.Combine(storageVolExt, Path.Combine(storagePath, m_Dataset));
+            var storageVolExt = mTaskParams.GetParam("Storage_Vol_External");
+            var storagePath = mTaskParams.GetParam("Storage_Path");
+            var datasetFolder = Path.Combine(storageVolExt, Path.Combine(storagePath, mDataset));
             string dataFilePathRemote;
             var runQuameter = false;
 
-            var instClassName = m_TaskParams.GetParam("Instrument_Class");
+            var instClassName = mTaskParams.GetParam("Instrument_Class");
 
             var msg = "Instrument class: " + instClassName;
             LogDebug(msg);
@@ -141,10 +141,10 @@ namespace DatasetQualityPlugin
                 case clsInstrumentClassInfo.eInstrumentClass.GC_QExactive:
                 case clsInstrumentClassInfo.eInstrumentClass.LTQ_FT:
                 case clsInstrumentClassInfo.eInstrumentClass.Thermo_Exactive:
-                    dataFilePathRemote = Path.Combine(datasetFolder, m_Dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
+                    dataFilePathRemote = Path.Combine(datasetFolder, mDataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
 
                     // Confirm that the file has MS1 spectra (since Quameter requires that they be present)
-                    if (!QuameterCanProcessDataset(m_DatasetID, m_Dataset, datasetFolder, ref skipReason))
+                    if (!QuameterCanProcessDataset(mDatasetID, mDataset, datasetFolder, ref skipReason))
                     {
                         dataFilePathRemote = string.Empty;
                     }
@@ -180,7 +180,7 @@ namespace DatasetQualityPlugin
                 return true;
             }
 
-            var instrumentName = m_TaskParams.GetParam("Instrument_Name");
+            var instrumentName = mTaskParams.GetParam("Instrument_Name");
 
             // Lumos datasets will fail with Quameter if they have unsupported scan types
             // 21T datasets will fail with Quameter if they only have one scan
@@ -202,7 +202,7 @@ namespace DatasetQualityPlugin
             {
                 // File has likely been purged from the storage server
                 // Look in the Aurora archive (aurora.emsl.pnl.gov) using samba; was previously a2.emsl.pnl.gov
-                var dataFilePathArchive = Path.Combine(m_TaskParams.GetParam("Archive_Network_Share_Path"), m_TaskParams.GetParam("Folder"), instrumentDataFile.Name);
+                var dataFilePathArchive = Path.Combine(mTaskParams.GetParam("Archive_Network_Share_Path"), mTaskParams.GetParam("Folder"), instrumentDataFile.Name);
 
                 var fiDataFileInArchive = new FileInfo(dataFilePathArchive);
                 if (fiDataFileInArchive.Exists)
@@ -255,10 +255,10 @@ namespace DatasetQualityPlugin
 
             try
             {
-                var diWorkDir = new DirectoryInfo(m_WorkDir);
+                var diWorkDir = new DirectoryInfo(mWorkDir);
 
                 // Delete any files that start with the dataset name
-                foreach (var fiFile in diWorkDir.GetFiles(m_Dataset + "*.*"))
+                foreach (var fiFile in diWorkDir.GetFiles(mDataset + "*.*"))
                 {
                     DeleteFileIgnoreErrors(fiFile.FullName);
                 }
@@ -311,8 +311,8 @@ namespace DatasetQualityPlugin
                 sbXML.Append("<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\"?>");
                 sbXML.Append("<Quameter_Results>");
 
-                sbXML.Append("<Dataset>" + m_Dataset + "</Dataset>");
-                sbXML.Append("<Job>" + m_Job + "</Job>");
+                sbXML.Append("<Dataset>" + mDataset + "</Dataset>");
+                sbXML.Append("<Job>" + mJob + "</Job>");
 
                 sbXML.Append("<Measurements>");
 
@@ -350,11 +350,11 @@ namespace DatasetQualityPlugin
                     diDatasetQCFolder.Create();
                 }
 
-                if (!CopyFileToServer(QUAMETER_CONSOLE_OUTPUT_FILE, m_WorkDir, diDatasetQCFolder.FullName))
+                if (!CopyFileToServer(QUAMETER_CONSOLE_OUTPUT_FILE, mWorkDir, diDatasetQCFolder.FullName))
                     return false;
 
                 // Uncomment the following to copy the Metrics file to the server
-                //if (!CopyFileToServer(QUAMETER_IDFREE_METRICS_FILE, m_WorkDir, diDatasetQCFolder.FullName)) return false;
+                //if (!CopyFileToServer(QUAMETER_IDFREE_METRICS_FILE, mWorkDir, diDatasetQCFolder.FullName)) return false;
 
             }
             catch (Exception ex)
@@ -377,7 +377,7 @@ namespace DatasetQualityPlugin
                 if (File.Exists(sSourceFilePath))
                 {
                     var sTargetFilePath = Path.Combine(sTargetFolder, sFileName);
-                    m_FileTools.CopyFile(sSourceFilePath, sTargetFilePath, true);
+                    mFileTools.CopyFile(sSourceFilePath, sTargetFilePath, true);
                 }
             }
             catch (Exception ex)
@@ -472,7 +472,7 @@ namespace DatasetQualityPlugin
         {
 
             // Typically C:\DMS_Programs\Quameter\x64\
-            var sQuameterFolder = m_MgrParams.GetParam("QuameterProgLoc", string.Empty);
+            var sQuameterFolder = mMgrParams.GetParam("QuameterProgLoc", string.Empty);
 
             if (string.IsNullOrEmpty(sQuameterFolder))
                 return string.Empty;
@@ -502,7 +502,7 @@ namespace DatasetQualityPlugin
                 return lstResults;
             }
 
-            if (m_DebugLevel >= 5)
+            if (mDebugLevel >= 5)
             {
                 LogDebug("Parsing Quameter Results file " + ResultsFilePath);
             }
@@ -707,7 +707,7 @@ namespace DatasetQualityPlugin
 
                 var percentComplete = metadataPercentComplete / 3 + peaksPercentComplete / 3 + precursorPercentComplete / 3;
 
-                m_StatusTools.UpdateAndWrite(EnumTaskStatusDetail.Running_Tool, percentComplete);
+                mStatusTools.UpdateAndWrite(EnumTaskStatusDetail.Running_Tool, percentComplete);
             }
             catch (Exception ex)
             {
@@ -798,8 +798,8 @@ namespace DatasetQualityPlugin
         private bool PostQuameterResultsToDB(string sXMLResults)
         {
 
-            // Note that m_DatasetID gets populated by runTool
-            return PostQuameterResultsToDB(m_DatasetID, sXMLResults);
+            // Note that mDatasetID gets populated by runTool
+            return PostQuameterResultsToDB(mDatasetID, sXMLResults);
 
         }
 
@@ -813,7 +813,7 @@ namespace DatasetQualityPlugin
 
             try
             {
-                var writeLog = m_DebugLevel >= 5;
+                var writeLog = mDebugLevel >= 5;
                 LogDebug("Posting Quameter Results to the database (using Dataset ID " + intDatasetID + ")", writeLog);
 
                 // We need to remove the encoding line from sXMLResults before posting to the DB
@@ -843,7 +843,7 @@ namespace DatasetQualityPlugin
                 spCmd.Parameters.Add(new SqlParameter("@DatasetID", SqlDbType.Int)).Value = intDatasetID;
                 spCmd.Parameters.Add(new SqlParameter("@ResultsXML", SqlDbType.Xml)).Value = sXMLResultsClean;
 
-                var resultCode = m_CaptureDBProcedureExecutor.ExecuteSP(spCmd, MAX_RETRY_COUNT, SEC_BETWEEN_RETRIES);
+                var resultCode = mCaptureDbProcedureExecutor.ExecuteSP(spCmd, MAX_RETRY_COUNT, SEC_BETWEEN_RETRIES);
 
                 if (resultCode == PRISM.ExecuteDatabaseSP.RET_VAL_OK)
                 {
@@ -910,7 +910,7 @@ namespace DatasetQualityPlugin
                 }
 
                 var configFilePathSource = Path.Combine(fiQuameter.DirectoryName, configFileNameSource);
-                var configFilePathTarget = Path.Combine(m_WorkDir, configFileNameSource);
+                var configFilePathTarget = Path.Combine(mWorkDir, configFileNameSource);
 
                 if (!File.Exists(configFilePathSource) && fiQuameter.DirectoryName.ToLower().EndsWith("x64"))
                 {
@@ -942,14 +942,14 @@ namespace DatasetQualityPlugin
                 }
 
                 // Copy the .Raw file to the working directory
-                // This message is logged if m_DebugLevel == 5
+                // This message is logged if mDebugLevel == 5
                 LogDebug("Copying the .Raw file from " + dataFilePathRemote);
 
-                var dataFilePathLocal = Path.Combine(m_WorkDir, Path.GetFileName(dataFilePathRemote));
+                var dataFilePathLocal = Path.Combine(mWorkDir, Path.GetFileName(dataFilePathRemote));
 
                 try
                 {
-                    m_FileTools.CopyFile(dataFilePathRemote, dataFilePathLocal, true);
+                    mFileTools.CopyFile(dataFilePathRemote, dataFilePathLocal, true);
                 }
                 catch (Exception ex)
                 {
@@ -1019,7 +1019,7 @@ namespace DatasetQualityPlugin
                 " FROM S_DMS_V_Dataset_Scans " +
                 " WHERE (Dataset_ID = " + datasetID + ") ";
 
-            var sConnectionString = m_MgrParams.GetParam("ConnectionString");
+            var sConnectionString = mMgrParams.GetParam("ConnectionString");
 
             var scanCount = 0;
             var scanCountMS = 0;
@@ -1156,7 +1156,7 @@ namespace DatasetQualityPlugin
                 const string batchFileName = "Run_Quameter.bat";
 
                 // Update the Exe path to point to the RunProgram batch file; update CmdStr to be empty
-                var exePath = Path.Combine(m_WorkDir, batchFileName);
+                var exePath = Path.Combine(mWorkDir, batchFileName);
                 var cmdStr = string.Empty;
 
                 const string consoleOutputFileName = QUAMETER_CONSOLE_OUTPUT_FILE;
@@ -1170,9 +1170,9 @@ namespace DatasetQualityPlugin
                     batchFileWriter.WriteLine(batchCommand);
                 }
 
-                mConsoleOutputFilePath = Path.Combine(m_WorkDir, consoleOutputFileName);
+                mConsoleOutputFilePath = Path.Combine(mWorkDir, consoleOutputFileName);
 
-                var cmdRunner = new clsRunDosProgram(m_WorkDir)
+                var cmdRunner = new clsRunDosProgram(mWorkDir)
                 {
                     CreateNoWindow = false,
                     EchoOutputToConsole = false,
@@ -1225,7 +1225,7 @@ namespace DatasetQualityPlugin
 
                 System.Threading.Thread.Sleep(100);
 
-                var metricsOutputFilePath = Path.Combine(m_WorkDir, metricsOutputFileName);
+                var metricsOutputFilePath = Path.Combine(mWorkDir, metricsOutputFileName);
 
                 if (!File.Exists(metricsOutputFilePath))
                 {
@@ -1271,7 +1271,7 @@ namespace DatasetQualityPlugin
         {
             var msg = "Starting clsPluginMain.Setup()";
 
-            // This message is logged if m_DebugLevel == 5
+            // This message is logged if mDebugLevel == 5
             LogDebug(msg);
 
             base.Setup(mgrParams, taskParams, statusTools);

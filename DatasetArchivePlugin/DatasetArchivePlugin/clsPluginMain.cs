@@ -64,10 +64,10 @@ namespace DatasetArchivePlugin
             ResetTimestampForQueueWaitTimeLogging();
 
             // Always use clsArchiveUpdate for both archiving new datasets and updating existing datasets
-            clsOpsBase archOpTool = new clsArchiveUpdate(m_MgrParams, m_TaskParams, m_StatusTools, m_FileTools);
+            clsOpsBase archOpTool = new clsArchiveUpdate(mMgrParams, mTaskParams, mStatusTools, mFileTools);
             RegisterEvents(archOpTool);
 
-            if (m_TaskParams.GetParam("StepTool").Equals("DatasetArchive", StringComparison.OrdinalIgnoreCase))
+            if (mTaskParams.GetParam("StepTool").Equals("DatasetArchive", StringComparison.OrdinalIgnoreCase))
             {
                 archiveOpDescription = "archive";
             }
@@ -79,7 +79,7 @@ namespace DatasetArchivePlugin
             // Attach the MyEMSL Upload event handler
             archOpTool.MyEMSLUploadComplete += MyEMSLUploadCompleteHandler;
 
-            msg = "Starting " + archiveOpDescription + ", job " + m_Job + ", dataset " + m_Dataset;
+            msg = "Starting " + archiveOpDescription + ", job " + mJob + ", dataset " + mDataset;
 
             LogMessage(msg);
             if (archOpTool.PerformTask())
@@ -111,7 +111,7 @@ namespace DatasetArchivePlugin
                 }
             }
 
-            msg = "Completed " + archiveOpDescription + ", job " + m_Job;
+            msg = "Completed " + archiveOpDescription + ", job " + mJob;
             LogMessage(msg);
 
             msg = "Completed clsPluginMain.RunTool()";
@@ -179,11 +179,11 @@ namespace DatasetArchivePlugin
 
                 spCmd.Parameters.Add("@Return", SqlDbType.Int).Direction = ParameterDirection.ReturnValue;
 
-                spCmd.Parameters.Add("@Job", SqlDbType.Int).Value = m_TaskParams.GetParam("Job", 0);
+                spCmd.Parameters.Add("@Job", SqlDbType.Int).Value = mTaskParams.GetParam("Job", 0);
 
-                spCmd.Parameters.Add("@DatasetID", SqlDbType.Int).Value = m_TaskParams.GetParam("Dataset_ID", 0);
+                spCmd.Parameters.Add("@DatasetID", SqlDbType.Int).Value = mTaskParams.GetParam("Dataset_ID", 0);
 
-                spCmd.Parameters.Add("@Subfolder", SqlDbType.VarChar, 128).Value = m_TaskParams.GetParam("OutputFolderName", string.Empty);
+                spCmd.Parameters.Add("@Subfolder", SqlDbType.VarChar, 128).Value = mTaskParams.GetParam("OutputFolderName", string.Empty);
 
                 spCmd.Parameters.Add("@FileCountNew", SqlDbType.Int).Value = fileCountNew;
 
@@ -212,7 +212,7 @@ namespace DatasetArchivePlugin
                 spCmd.Parameters.Add("@EUSUploaderID", SqlDbType.Int).Value = eusUploaderID;
 
                 // Execute the SP (retry the call up to 4 times)
-                var resCode = m_CaptureDBProcedureExecutor.ExecuteSP(spCmd, 4);
+                var resCode = mCaptureDbProcedureExecutor.ExecuteSP(spCmd, 4);
 
                 if (resCode == 0)
                 {

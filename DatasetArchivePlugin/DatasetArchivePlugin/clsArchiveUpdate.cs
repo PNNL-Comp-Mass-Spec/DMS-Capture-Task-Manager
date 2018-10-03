@@ -20,9 +20,9 @@ namespace DatasetArchivePlugin
         #region "Class variables"
 
         // Obsolete: "No longer used"
-        // string m_ArchiveSharePath = string.Empty;                // The dataset folder path in the archive, for example: \\aurora.emsl.pnl.gov\dmsarch\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25
-        // string m_ResultsFolderPathArchive = string.Empty;        // The target path to copy the data to, for example:    \\aurora.emsl.pnl.gov\dmsarch\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25\SIC201304300029_Auto938684
-        // string m_ResultsFolderPathServer = string.Empty;     // The source path of the dataset folder (or dataset job results folder) to archive, for example: \\proto-7\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25\SIC201304300029_Auto938684
+        // string mArchiveSharePath = string.Empty;                // The dataset folder path in the archive, for example: \\aurora.emsl.pnl.gov\dmsarch\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25
+        // string mResultsFolderPathArchive = string.Empty;        // The target path to copy the data to, for example:    \\aurora.emsl.pnl.gov\dmsarch\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25\SIC201304300029_Auto938684
+        // string mResultsFolderPathServer = string.Empty;     // The source path of the dataset folder (or dataset job results folder) to archive, for example: \\proto-7\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25\SIC201304300029_Auto938684
 
         #endregion
 
@@ -53,7 +53,7 @@ namespace DatasetArchivePlugin
             if (!base.PerformTask())
                 return false;
 
-            var statusMessage = "Updating dataset " + m_DatasetName + ", job " + m_TaskParams.GetParam("Job");
+            var statusMessage = "Updating dataset " + mDatasetName + ", job " + mTaskParams.GetParam("Job");
             OnDebugEvent(statusMessage);
 
             statusMessage = "Pushing dataset folder to MyEMSL";
@@ -64,15 +64,15 @@ namespace DatasetArchivePlugin
 
             const int iMaxMyEMSLUploadAttempts = 2;
 
-            var recurse = m_TaskParams.GetParam("MyEMSLRecurse", true);
+            var recurse = mTaskParams.GetParam("MyEMSLRecurse", true);
 
             // Set this to .CreateTarLocal to create the .tar file locally and thus not upload the data to MyEMSL
             var debugMode = Pacifica.Core.EasyHttp.eDebugMode.DebugDisabled;
 
-            if (m_TaskParams.GetParam("DebugTestTar", false))
+            if (mTaskParams.GetParam("DebugTestTar", false))
                 debugMode = Pacifica.Core.EasyHttp.eDebugMode.CreateTarLocal;
             else
-                if (m_TaskParams.GetParam("MyEMSLOffline", false))
+                if (mTaskParams.GetParam("MyEMSLOffline", false))
                 debugMode = Pacifica.Core.EasyHttp.eDebugMode.MyEMSLOfflineMode;
 
             if (debugMode != Pacifica.Core.EasyHttp.eDebugMode.DebugDisabled)
@@ -95,7 +95,7 @@ namespace DatasetArchivePlugin
                                                           out allowRetry, out criticalErrorMessage);
 
                 if (!string.IsNullOrWhiteSpace(criticalErrorMessage))
-                    m_ErrMsg = criticalErrorMessage;
+                    mErrMsg = criticalErrorMessage;
 
                 if (!allowRetry)
                     FailureDoNotRetry = true;
@@ -104,8 +104,8 @@ namespace DatasetArchivePlugin
                     return false;
 
                 // Finished with this update task
-                statusMessage = "Completed push to MyEMSL, dataset " + m_DatasetName + ", Folder " +
-                                m_TaskParams.GetParam("OutputFolderName") + ", job " + m_TaskParams.GetParam("Job");
+                statusMessage = "Completed push to MyEMSL, dataset " + mDatasetName + ", Folder " +
+                                mTaskParams.GetParam("OutputFolderName") + ", job " + mTaskParams.GetParam("Job");
                 OnDebugEvent(statusMessage);
             }
 
@@ -143,7 +143,7 @@ namespace DatasetArchivePlugin
                                                           out allowRetry, out criticalErrorMessage);
 
             if (!string.IsNullOrWhiteSpace(criticalErrorMessage))
-                m_ErrMsg = criticalErrorMessage;
+                mErrMsg = criticalErrorMessage;
 
             if (!testCopySuccess)
             {
@@ -151,7 +151,7 @@ namespace DatasetArchivePlugin
             }
             else
             {
-                statusMessage = "Completed push to the MyEMSL test server, dataset " + m_DatasetName;
+                statusMessage = "Completed push to the MyEMSL test server, dataset " + mDatasetName;
                 OnDebugEvent(statusMessage);
             }
 

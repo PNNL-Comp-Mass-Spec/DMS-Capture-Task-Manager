@@ -10,14 +10,14 @@ namespace CaptureTaskManager
         protected const string FAILED_RESULTS_FOLDER_INFO_TEXT = "FailedResultsFolderInfo_";
         protected const int FAILED_RESULTS_FOLDER_RETAIN_DAYS = 31;
 
-        protected readonly IMgrParams m_mgrParams;
-        protected readonly ITaskParams m_taskParams;
+        protected readonly IMgrParams mMgrParams;
+        protected readonly ITaskParams mTaskParams;
 
         // Constructor
         public clsFailedResultsCopier(IMgrParams mgrParams, ITaskParams taskParams)
         {
-            m_mgrParams = mgrParams;
-            m_taskParams = taskParams;
+            mMgrParams = mgrParams;
+            mTaskParams = taskParams;
         }
 
         // ReSharper disable once UnusedMember.Global
@@ -28,7 +28,7 @@ namespace CaptureTaskManager
 
             try
             {
-                strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
+                strFailedResultsFolderPath = mMgrParams.GetParam("FailedResultsFolderPath");
 
                 if (string.IsNullOrEmpty(strFailedResultsFolderPath))
                 {
@@ -46,11 +46,11 @@ namespace CaptureTaskManager
 
                 // Define the target folder name to be Dataset_Job_Step
 
-                var strTargetFolder = m_taskParams.GetParam("Dataset");
+                var strTargetFolder = mTaskParams.GetParam("Dataset");
                 if (string.IsNullOrEmpty(strTargetFolder))
                     strTargetFolder = "Unknown_Dataset";
 
-                strTargetFolder += "_Job" + m_taskParams.GetParam("Job") + "_Step" + m_taskParams.GetParam("Step");
+                strTargetFolder += "_Job" + mTaskParams.GetParam("Job") + "_Step" + mTaskParams.GetParam("Step");
 
                 strTargetFolder = Path.Combine(diFailedResultsFolder.FullName, strTargetFolder);
                 var diTargetFolder = new DirectoryInfo(strTargetFolder);
@@ -117,13 +117,13 @@ namespace CaptureTaskManager
             {
                 swArchivedFolderInfoFile.WriteLine("Date\t" + DateTime.Now);
                 swArchivedFolderInfoFile.WriteLine("ResultsFolderName\t" + strResultsFolderName);
-                swArchivedFolderInfoFile.WriteLine("Manager\t" + m_mgrParams.GetParam("MgrName"));
-                if ((m_taskParams != null))
+                swArchivedFolderInfoFile.WriteLine("Manager\t" + mMgrParams.GetParam("MgrName"));
+                if ((mTaskParams != null))
                 {
-                    swArchivedFolderInfoFile.WriteLine("Job\t" + m_taskParams.GetParam("Job"));
-                    swArchivedFolderInfoFile.WriteLine("Step\t" + m_taskParams.GetParam("Step"));
-                    swArchivedFolderInfoFile.WriteLine("StepTool\t" + m_taskParams.GetParam("StepTool"));
-                    swArchivedFolderInfoFile.WriteLine("Dataset\t" + m_taskParams.GetParam("Dataset"));
+                    swArchivedFolderInfoFile.WriteLine("Job\t" + mTaskParams.GetParam("Job"));
+                    swArchivedFolderInfoFile.WriteLine("Step\t" + mTaskParams.GetParam("Step"));
+                    swArchivedFolderInfoFile.WriteLine("StepTool\t" + mTaskParams.GetParam("StepTool"));
+                    swArchivedFolderInfoFile.WriteLine("Dataset\t" + mTaskParams.GetParam("Dataset"));
                 }
                 swArchivedFolderInfoFile.WriteLine("Date\t" + DateTime.Now);
             }

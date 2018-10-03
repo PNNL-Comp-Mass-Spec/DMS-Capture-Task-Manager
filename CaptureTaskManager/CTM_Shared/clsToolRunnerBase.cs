@@ -35,44 +35,44 @@ namespace CaptureTaskManager
 
         #region "Class variables"
 
-        protected IMgrParams m_MgrParams;
-        protected ITaskParams m_TaskParams;
+        protected IMgrParams mMgrParams;
+        protected ITaskParams mTaskParams;
 
         // Used by CTM plugins
-        protected IStatusFile m_StatusTools;
+        protected IStatusFile mStatusTools;
 
         // Used by CTM plugins
-        protected FileTools m_FileTools;
+        protected FileTools mFileTools;
 
-        protected ExecuteDatabaseSP m_CaptureDBProcedureExecutor;
+        protected ExecuteDatabaseSP mCaptureDbProcedureExecutor;
 
-        protected DateTime m_LastConfigDBUpdate = DateTime.UtcNow;
-        protected int m_MinutesBetweenConfigDBUpdates = 10;
+        protected DateTime mLastConfigDbUpdate = DateTime.UtcNow;
+        protected int mMinutesBetweenConfigDbUpdates = 10;
 
         // Used by CTM plugins
         // ReSharper disable once UnusedMember.Global
-        protected bool m_NeedToAbortProcessing = false;
+        protected bool mNeedToAbortProcessing = false;
 
-        protected string m_WorkDir;
+        protected string mWorkDir;
 
-        protected string m_Dataset;
+        protected string mDataset;
 
-        protected int m_Job;
+        protected int mJob;
 
-        protected int m_DatasetID;
+        protected int mDatasetID;
 
-        protected string m_MgrName;
+        protected string mMgrName;
 
         /// <summary>
         /// LogLevel is 1 to 5: 1 for Fatal errors only, 4 for Fatal, Error, Warning, and Info, and 5 for everything including Debug messages
         /// </summary>
-        protected short m_DebugLevel;
+        protected short mDebugLevel;
 
-        protected bool m_TraceMode;
+        protected bool mTraceMode;
 
-        private DateTime m_LastLockQueueWaitTimeLog = DateTime.UtcNow;
+        private DateTime mLastLockQueueWaitTimeLog = DateTime.UtcNow;
 
-        private DateTime m_LockQueueWaitTimeStart = DateTime.UtcNow;
+        private DateTime mLockQueueWaitTimeStart = DateTime.UtcNow;
 
         #endregion
 
@@ -124,34 +124,34 @@ namespace CaptureTaskManager
         /// <param name="statusTools">Tools for status reporting</param>
         public virtual void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
         {
-            m_MgrParams = mgrParams;
-            m_TaskParams = taskParams;
-            m_StatusTools = statusTools;
+            mMgrParams = mgrParams;
+            mTaskParams = taskParams;
+            mStatusTools = statusTools;
 
-            m_MgrName = m_MgrParams.GetParam("MgrName", "CaptureTaskManager");
+            mMgrName = mMgrParams.GetParam("MgrName", "CaptureTaskManager");
 
             // This connection string points to the DMS_Capture database
-            var connectionString = m_MgrParams.GetParam("ConnectionString");
-            m_CaptureDBProcedureExecutor = new ExecuteDatabaseSP(connectionString);
+            var connectionString = mMgrParams.GetParam("ConnectionString");
+            mCaptureDbProcedureExecutor = new ExecuteDatabaseSP(connectionString);
 
-            RegisterEvents(m_CaptureDBProcedureExecutor);
+            RegisterEvents(mCaptureDbProcedureExecutor);
 
-            m_WorkDir = m_MgrParams.GetParam("WorkDir");
+            mWorkDir = mMgrParams.GetParam("WorkDir");
 
-            m_Dataset = m_TaskParams.GetParam("Dataset");
+            mDataset = mTaskParams.GetParam("Dataset");
 
-            m_DatasetID = m_TaskParams.GetParam("Dataset_ID", 0);
+            mDatasetID = mTaskParams.GetParam("Dataset_ID", 0);
 
-            m_Job = m_TaskParams.GetParam("Job", 0);
+            mJob = mTaskParams.GetParam("Job", 0);
 
             // Debug level 4 means Info level (normal) logging; 5 for Debug level (verbose) logging
             // Log level 4 will also log error messages
-            m_DebugLevel = (short)m_MgrParams.GetParam("DebugLevel", 4);
-            LogTools.SetFileLogLevel(m_DebugLevel);
+            mDebugLevel = (short)mMgrParams.GetParam("DebugLevel", 4);
+            LogTools.SetFileLogLevel(mDebugLevel);
 
-            m_TraceMode = m_MgrParams.GetParam("TraceMode", false);
+            mTraceMode = mMgrParams.GetParam("TraceMode", false);
 
-            InitFileTools(m_MgrName, m_DebugLevel);
+            InitFileTools(mMgrName, mDebugLevel);
         }
 
         // Used by CTM plugins
@@ -160,27 +160,27 @@ namespace CaptureTaskManager
         {
             var bSuccess = true;
 
-            if (m_MinutesBetweenConfigDBUpdates < 1)
-                m_MinutesBetweenConfigDBUpdates = 1;
+            if (mMinutesBetweenConfigDbUpdates < 1)
+                mMinutesBetweenConfigDbUpdates = 1;
 
-            if (DateTime.UtcNow.Subtract(m_LastConfigDBUpdate).TotalMinutes >= m_MinutesBetweenConfigDBUpdates)
+            if (DateTime.UtcNow.Subtract(mLastConfigDbUpdate).TotalMinutes >= mMinutesBetweenConfigDbUpdates)
             {
-                m_LastConfigDBUpdate = DateTime.UtcNow;
+                mLastConfigDbUpdate = DateTime.UtcNow;
 
                 LogDebug("Updating manager settings using Manager Control database");
 
-                if (!m_MgrParams.LoadMgrSettingsFromDB(logConnectionErrors: false))
+                if (!mMgrParams.LoadMgrSettingsFromDB(logConnectionErrors: false))
                 {
                     // Error retrieving settings from the manager control DB
-                    LogWarning("Error calling m_MgrSettings.LoadMgrSettingsFromDB to update manager settings");
+                    LogWarning("Error calling mMgrSettings.LoadMgrSettingsFromDB to update manager settings");
 
                     bSuccess = false;
                 }
                 else
                 {
                     // Update the log level
-                    m_DebugLevel = (short)m_MgrParams.GetParam("DebugLevel", 4);
-                    LogTools.SetFileLogLevel(m_DebugLevel);
+                    mDebugLevel = (short)mMgrParams.GetParam("DebugLevel", 4);
+                    LogTools.SetFileLogLevel(mDebugLevel);
                 }
             }
 
@@ -411,23 +411,23 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Initialize m_FileTools
+        /// Initialize mFileTools
         /// </summary>
         /// <param name="mgrName"></param>
         /// <param name="debugLevel"></param>
         protected void InitFileTools(string mgrName, short debugLevel)
         {
             ResetTimestampForQueueWaitTimeLogging();
-            m_FileTools = new FileTools(mgrName, debugLevel);
-            RegisterEvents(m_FileTools, false);
+            mFileTools = new FileTools(mgrName, debugLevel);
+            RegisterEvents(mFileTools, false);
 
             // Use a custom event handler for status messages
-            UnregisterEventHandler(m_FileTools, BaseLogger.LogLevels.INFO);
-            m_FileTools.StatusEvent += m_FileTools_StatusEvent;
+            UnregisterEventHandler(mFileTools, BaseLogger.LogLevels.INFO);
+            mFileTools.StatusEvent += FileTools_StatusEvent;
 
-            m_FileTools.LockQueueTimedOut += m_FileTools_LockQueueTimedOut;
-            m_FileTools.LockQueueWaitComplete += m_FileTools_LockQueueWaitComplete;
-            m_FileTools.WaitingForLockQueue += m_FileTools_WaitingForLockQueue;
+            mFileTools.LockQueueTimedOut += FileTools_LockQueueTimedOut;
+            mFileTools.LockQueueWaitComplete += FileTools_LockQueueWaitComplete;
+            mFileTools.WaitingForLockQueue += FileTools_WaitingForLockQueue;
         }
 
         private bool IsLockQueueLogMessageNeeded(ref DateTime dtLockQueueWaitTimeStart, ref DateTime dtLastLockQueueWaitTimeLog)
@@ -555,8 +555,8 @@ namespace CaptureTaskManager
         /// </summary>
         protected void ResetTimestampForQueueWaitTimeLogging()
         {
-            m_LastLockQueueWaitTimeLog = DateTime.UtcNow;
-            m_LockQueueWaitTimeStart = DateTime.UtcNow;
+            mLastLockQueueWaitTimeLog = DateTime.UtcNow;
+            mLockQueueWaitTimeStart = DateTime.UtcNow;
         }
 
         /// <summary>
@@ -570,15 +570,15 @@ namespace CaptureTaskManager
         {
             try
             {
-                var strToolVersionFilePath = Path.Combine(strFolderPath, "Tool_Version_Info_" + m_TaskParams.GetParam("StepTool") + ".txt");
+                var strToolVersionFilePath = Path.Combine(strFolderPath, "Tool_Version_Info_" + mTaskParams.GetParam("StepTool") + ".txt");
 
                 using (var swToolVersionFile = new StreamWriter(new FileStream(strToolVersionFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
                 {
                     swToolVersionFile.WriteLine("Date: " + DateTime.Now.ToString(DATE_TIME_FORMAT));
-                    swToolVersionFile.WriteLine("Dataset: " + m_Dataset);
-                    swToolVersionFile.WriteLine("Job: " + m_Job);
-                    swToolVersionFile.WriteLine("Step: " + m_TaskParams.GetParam("Step"));
-                    swToolVersionFile.WriteLine("Tool: " + m_TaskParams.GetParam("StepTool"));
+                    swToolVersionFile.WriteLine("Dataset: " + mDataset);
+                    swToolVersionFile.WriteLine("Job: " + mJob);
+                    swToolVersionFile.WriteLine("Step: " + mTaskParams.GetParam("Step"));
+                    swToolVersionFile.WriteLine("Tool: " + mTaskParams.GetParam("StepTool"));
                     swToolVersionFile.WriteLine("ToolVersionInfo:");
 
                     swToolVersionFile.WriteLine(toolVersionInfo.Replace("; ", Environment.NewLine));
@@ -609,7 +609,7 @@ namespace CaptureTaskManager
             var strExeInfo = string.Empty;
             string toolVersionInfoCombined;
 
-            if (string.IsNullOrWhiteSpace(m_WorkDir))
+            if (string.IsNullOrWhiteSpace(mWorkDir))
             {
                 return false;
             }
@@ -626,7 +626,7 @@ namespace CaptureTaskManager
                                                          toolFile.Name + ": " +
                                                          toolFile.LastWriteTime.ToString(DATE_TIME_FORMAT));
 
-                            var writeToLog = m_DebugLevel >= 5;
+                            var writeToLog = mDebugLevel >= 5;
                             LogDebug("EXE Info: " + strExeInfo, writeToLog);
                         }
                         else
@@ -653,7 +653,7 @@ namespace CaptureTaskManager
 
             if (saveToolVersionTextFile)
             {
-                SaveToolVersionInfoFile(m_WorkDir, toolVersionInfoCombined);
+                SaveToolVersionInfoFile(mWorkDir, toolVersionInfoCombined);
             }
 
             // Setup for execution of the stored procedure
@@ -664,14 +664,14 @@ namespace CaptureTaskManager
 
             spCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
 
-            spCmd.Parameters.Add(new SqlParameter("@job", SqlDbType.Int)).Value = m_TaskParams.GetParam("Job", 0);
+            spCmd.Parameters.Add(new SqlParameter("@job", SqlDbType.Int)).Value = mTaskParams.GetParam("Job", 0);
 
-            spCmd.Parameters.Add(new SqlParameter("@step", SqlDbType.Int)).Value = m_TaskParams.GetParam("Step", 0);
+            spCmd.Parameters.Add(new SqlParameter("@step", SqlDbType.Int)).Value = mTaskParams.GetParam("Step", 0);
 
             spCmd.Parameters.Add(new SqlParameter("@ToolVersionInfo", SqlDbType.VarChar, 900)).Value = toolVersionInfoCombined;
 
             // Execute the SP (retry the call up to 4 times)
-            var resCode = m_CaptureDBProcedureExecutor.ExecuteSP(spCmd, 4);
+            var resCode = mCaptureDbProcedureExecutor.ExecuteSP(spCmd, 4);
 
             if (resCode == 0)
             {
@@ -867,14 +867,14 @@ namespace CaptureTaskManager
 
                 // Call DLLVersionInspector.exe to determine the tool version
 
-                var versionInfoFilePath = Path.Combine(m_WorkDir,
+                var versionInfoFilePath = Path.Combine(mWorkDir,
                                                        Path.GetFileNameWithoutExtension(fiDLLFile.Name) +
                                                        "_VersionInfo.txt");
 
                 var strArgs = clsConversion.PossiblyQuotePath(fiDLLFile.FullName) + " /O:" +
                               clsConversion.PossiblyQuotePath(versionInfoFilePath);
 
-                var progRunner = new clsRunDosProgram(clsUtilities.GetAppDirectoryPath(), m_DebugLevel)
+                var progRunner = new clsRunDosProgram(clsUtilities.GetAppDirectoryPath(), mDebugLevel)
                 {
                     CacheStandardOutput = false,
                     CreateNoWindow = true,
@@ -964,7 +964,7 @@ namespace CaptureTaskManager
 
             spCmd.Parameters.Add("@Return", SqlDbType.Int).Direction = ParameterDirection.ReturnValue;
 
-            spCmd.Parameters.Add("@datasetID", SqlDbType.Int).Value = m_DatasetID;
+            spCmd.Parameters.Add("@datasetID", SqlDbType.Int).Value = mDatasetID;
 
             spCmd.Parameters.Add("@statusNum", SqlDbType.Int).Value = statusNum;
 
@@ -977,12 +977,12 @@ namespace CaptureTaskManager
 
             spCmd.Parameters.Add("@message", SqlDbType.VarChar, 512).Direction = ParameterDirection.Output;
 
-            m_CaptureDBProcedureExecutor.TimeoutSeconds = 20;
-            var resCode = m_CaptureDBProcedureExecutor.ExecuteSP(spCmd, 2);
+            mCaptureDbProcedureExecutor.TimeoutSeconds = 20;
+            var resCode = mCaptureDbProcedureExecutor.ExecuteSP(spCmd, 2);
 
             if (resCode != 0)
             {
-                LogError("Error " + resCode + " calling stored procedure " + SP_NAME + ", job " + m_Job);
+                LogError("Error " + resCode + " calling stored procedure " + SP_NAME + ", job " + mJob);
                 return false;
             }
 
@@ -994,13 +994,13 @@ namespace CaptureTaskManager
 
         #region "Event Handlers"
 
-        private void m_FileTools_LockQueueTimedOut(string sourceFilePath, string targetFilePath, double waitTimeMinutes)
+        private void FileTools_LockQueueTimedOut(string sourceFilePath, string targetFilePath, double waitTimeMinutes)
         {
             var msg = "Lockfile queue timed out after " + waitTimeMinutes.ToString("0") + " minutes; Source=" + sourceFilePath + ", Target=" + targetFilePath;
             LogWarning(msg);
         }
 
-        private void m_FileTools_LockQueueWaitComplete(string sourceFilePath, string targetFilePath, double waitTimeMinutes)
+        private void FileTools_LockQueueWaitComplete(string sourceFilePath, string targetFilePath, double waitTimeMinutes)
         {
             if (waitTimeMinutes >= 1)
             {
@@ -1009,14 +1009,14 @@ namespace CaptureTaskManager
             }
         }
 
-        private void m_FileTools_StatusEvent(string message)
+        private void FileTools_StatusEvent(string message)
         {
             // Do not log certain common messages
             if (message.StartsWith("Created lock file") ||
                 message.StartsWith("Copying file with CopyFileEx") ||
                 message.StartsWith("File to copy is") && message.Contains("will use CopyFileEx for"))
             {
-                if (m_TraceMode)
+                if (mTraceMode)
                     ConsoleMsgUtils.ShowDebug(message);
 
                 return;
@@ -1025,11 +1025,11 @@ namespace CaptureTaskManager
             LogMessage(message);
         }
 
-        private void m_FileTools_WaitingForLockQueue(string sourceFilePath, string targetFilePath, int backlogSourceMB, int backlogTargetMB)
+        private void FileTools_WaitingForLockQueue(string sourceFilePath, string targetFilePath, int backlogSourceMB, int backlogTargetMB)
         {
-            if (IsLockQueueLogMessageNeeded(ref m_LockQueueWaitTimeStart, ref m_LastLockQueueWaitTimeLog))
+            if (IsLockQueueLogMessageNeeded(ref mLockQueueWaitTimeStart, ref mLastLockQueueWaitTimeLog))
             {
-                m_LastLockQueueWaitTimeLog = DateTime.UtcNow;
+                mLastLockQueueWaitTimeLog = DateTime.UtcNow;
                 var msg = "Waiting for lockfile queue to fall below threshold; " +
                           "SourceBacklog=" + backlogSourceMB + " MB, " +
                           "TargetBacklog=" + backlogTargetMB + " MB, " +

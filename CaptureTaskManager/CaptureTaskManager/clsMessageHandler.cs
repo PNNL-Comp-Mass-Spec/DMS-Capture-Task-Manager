@@ -28,17 +28,17 @@ namespace CaptureTaskManager
 
         #region "Class variables"
 
-        private string m_BrokerUri;
+        private string mBrokerUri;
 
-        private string m_StatusTopicName;       // Used for status output
-        private clsMgrSettings m_MgrSettings;
+        private string mStatusTopicName;       // Used for status output
+        private clsMgrSettings mMgrSettings;
 
-        private IConnection m_Connection;
-        private ISession m_StatusSession;
-        private IMessageProducer m_StatusSender;
+        private IConnection mConnection;
+        private ISession mStatusSession;
+        private IMessageProducer mStatusSender;
 
-        private bool m_IsDisposed;
-        private bool m_HasConnection;
+        private bool mIsDisposed;
+        private bool mHasConnection;
 
         #endregion
 
@@ -46,19 +46,19 @@ namespace CaptureTaskManager
 
         public clsMgrSettings MgrSettings
         {
-            set => m_MgrSettings = value;
+            set => mMgrSettings = value;
         }
 
         public string BrokerUri
         {
-            get => m_BrokerUri;
-            set => m_BrokerUri = value;
+            get => mBrokerUri;
+            set => mBrokerUri = value;
         }
 
         public string StatusTopicName
         {
-            get => m_StatusTopicName;
-            set => m_StatusTopicName = value;
+            get => mStatusTopicName;
+            set => mStatusTopicName = value;
         }
 
         #endregion
@@ -72,7 +72,7 @@ namespace CaptureTaskManager
         /// <param name="timeoutSeconds">Number of seconds to wait for the broker to respond</param>
         protected void CreateConnection(int retryCount = 2, int timeoutSeconds = 15)
         {
-            if (m_HasConnection)
+            if (mHasConnection)
                 return;
 
             if (retryCount < 0)
@@ -89,12 +89,12 @@ namespace CaptureTaskManager
             {
                 try
                 {
-                    IConnectionFactory connectionFactory = new ConnectionFactory(m_BrokerUri);
-                    m_Connection = connectionFactory.CreateConnection();
-                    m_Connection.RequestTimeout = new TimeSpan(0, 0, timeoutSeconds);
-                    m_Connection.Start();
+                    IConnectionFactory connectionFactory = new ConnectionFactory(mBrokerUri);
+                    mConnection = connectionFactory.CreateConnection();
+                    mConnection.RequestTimeout = new TimeSpan(0, 0, timeoutSeconds);
+                    mConnection.Start();
 
-                    m_HasConnection = true;
+                    mHasConnection = true;
 
                     var username = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
 
@@ -134,21 +134,21 @@ namespace CaptureTaskManager
         {
             try
             {
-                if (!m_HasConnection)
+                if (!mHasConnection)
                     CreateConnection();
 
-                if (!m_HasConnection)
+                if (!mHasConnection)
                     return false;
 
-                if (string.IsNullOrWhiteSpace(m_StatusTopicName))
+                if (string.IsNullOrWhiteSpace(mStatusTopicName))
                 {
                     LogWarning("Status topic queue name is undefined");
                 }
                 else
                 {
                     // topic for the capture tool manager to send status information over
-                    m_StatusSession = m_Connection.CreateSession();
-                    m_StatusSender = m_StatusSession.CreateProducer(new ActiveMQTopic(m_StatusTopicName));
+                    mStatusSession = mConnection.CreateSession();
+                    mStatusSender = mStatusSession.CreateProducer(new ActiveMQTopic(mStatusTopicName));
                     LogDebug("Status sender established");
                 }
 
@@ -168,13 +168,13 @@ namespace CaptureTaskManager
         /// <param name="message">Outgoing message string</param>
         public void SendMessage(string message)
         {
-            if (!m_IsDisposed)
+            if (!mIsDisposed)
             {
-                var textMessage = m_StatusSession.CreateTextMessage(message);
-                textMessage.Properties.SetString("ProcessorName", m_MgrSettings.ManagerName);
+                var textMessage = mStatusSession.CreateTextMessage(message);
+                textMessage.Properties.SetString("ProcessorName", mMgrSettings.ManagerName);
                 try
                 {
-                    m_StatusSender.Send(textMessage);
+                    mStatusSender.Send(textMessage);
                 }
                 catch
                 {
@@ -196,10 +196,10 @@ namespace CaptureTaskManager
         /// </summary>
         protected void DestroyConnection()
         {
-            if (m_HasConnection)
+            if (mHasConnection)
             {
-                m_Connection.Dispose();
-                m_HasConnection = false;
+                mConnection.Dispose();
+                mHasConnection = false;
                 LogDebug("Message connection closed");
             }
         }
@@ -209,11 +209,11 @@ namespace CaptureTaskManager
         /// </summary>
         public void Dispose()
         {
-            if (m_IsDisposed)
+            if (mIsDisposed)
                 return;
 
             DestroyConnection();
-            m_IsDisposed = true;
+            mIsDisposed = true;
         }
 
         #endregion

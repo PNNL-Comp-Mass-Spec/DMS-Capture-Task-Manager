@@ -81,7 +81,7 @@ namespace DatasetIntegrityPlugin
         /// <returns>Enum indicating success or failure</returns>
         public override clsToolReturnData RunTool()
         {
-            // Note that Debug messages are logged if m_DebugLevel == 5
+            // Note that Debug messages are logged if mDebugLevel == 5
 
             var msg = "Starting DatasetIntegrityPlugin.clsPluginMain.RunTool()";
             LogDebug(msg);
@@ -91,8 +91,8 @@ namespace DatasetIntegrityPlugin
             if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
                 return mRetData;
 
-            var instrumentName = m_TaskParams.GetParam("Instrument_Name");
-            var instClassName = m_TaskParams.GetParam("Instrument_Class");
+            var instrumentName = mTaskParams.GetParam("Instrument_Name");
+            var instClassName = mTaskParams.GetParam("Instrument_Class");
             var instrumentClass = clsInstrumentClassInfo.GetInstrumentClass(instClassName);
 
             var agilentToUimfConverterPath = string.Empty;
@@ -143,13 +143,13 @@ namespace DatasetIntegrityPlugin
                 return mRetData;
             }
 
-            msg = "Performing integrity test, dataset '" + m_Dataset + "'";
+            msg = "Performing integrity test, dataset '" + mDataset + "'";
             LogMessage(msg);
 
             // Set up the file paths
-            var storageVolExt = m_TaskParams.GetParam("Storage_Vol_External");
-            var storagePath = m_TaskParams.GetParam("Storage_Path");
-            var datasetDirectory = Path.Combine(storageVolExt, Path.Combine(storagePath, m_Dataset));
+            var storageVolExt = mTaskParams.GetParam("Storage_Vol_External");
+            var storagePath = mTaskParams.GetParam("Storage_Path");
+            var datasetDirectory = Path.Combine(storageVolExt, Path.Combine(storagePath, mDataset));
             string dataFileNamePath;
 
             // Select which tests will be performed based on instrument class
@@ -169,17 +169,17 @@ namespace DatasetIntegrityPlugin
             switch (instrumentClass)
             {
                 case clsInstrumentClassInfo.eInstrumentClass.Finnigan_Ion_Trap:
-                    dataFileNamePath = Path.Combine(datasetDirectory, m_Dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
+                    dataFileNamePath = Path.Combine(datasetDirectory, mDataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
                     mRetData.CloseoutType = TestFinniganIonTrapFile(dataFileNamePath);
                     break;
 
                 case clsInstrumentClassInfo.eInstrumentClass.GC_QExactive:
-                    dataFileNamePath = Path.Combine(datasetDirectory, m_Dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
+                    dataFileNamePath = Path.Combine(datasetDirectory, mDataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
                     mRetData.CloseoutType = TestGQExactiveFile(dataFileNamePath);
                     break;
 
                 case clsInstrumentClassInfo.eInstrumentClass.LTQ_FT:
-                    dataFileNamePath = Path.Combine(datasetDirectory, m_Dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
+                    dataFileNamePath = Path.Combine(datasetDirectory, mDataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
                     if (instrumentName.StartsWith("21T", StringComparison.OrdinalIgnoreCase))
                         mRetData.CloseoutType = Test21TRawFile(dataFileNamePath);
                     else
@@ -191,12 +191,12 @@ namespace DatasetIntegrityPlugin
                     break;
 
                 case clsInstrumentClassInfo.eInstrumentClass.Thermo_Exactive:
-                    dataFileNamePath = Path.Combine(datasetDirectory, m_Dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
+                    dataFileNamePath = Path.Combine(datasetDirectory, mDataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
                     mRetData.CloseoutType = TestThermoExactiveFile(dataFileNamePath);
                     break;
 
                 case clsInstrumentClassInfo.eInstrumentClass.Triple_Quad:
-                    dataFileNamePath = Path.Combine(datasetDirectory, m_Dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
+                    dataFileNamePath = Path.Combine(datasetDirectory, mDataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
                     mRetData.CloseoutType = TestTripleQuadFile(dataFileNamePath);
                     break;
 
@@ -217,7 +217,7 @@ namespace DatasetIntegrityPlugin
                         }
                     }
 
-                    dataFileNamePath = Path.Combine(datasetDirectory, m_Dataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION);
+                    dataFileNamePath = Path.Combine(datasetDirectory, mDataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION);
                     mRetData.CloseoutType = TestIMSAgilentTOF(dataFileNamePath, instrumentName);
                     break;
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerFT_BAF:
@@ -242,7 +242,7 @@ namespace DatasetIntegrityPlugin
                     break;
 
                 case clsInstrumentClassInfo.eInstrumentClass.Sciex_QTrap:
-                    mRetData.CloseoutType = TestSciexQTrapFile(datasetDirectory, m_Dataset);
+                    mRetData.CloseoutType = TestSciexQTrapFile(datasetDirectory, mDataset);
                     break;
 
                 case clsInstrumentClassInfo.eInstrumentClass.Agilent_Ion_Trap:
@@ -299,11 +299,11 @@ namespace DatasetIntegrityPlugin
                     return false;
                 }
 
-                var mgrName = m_MgrParams.GetParam("MgrName", "CTM");
-                var dotDDirectoryName = m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
-                var dotDDirectoryPathLocal = Path.Combine(m_WorkDir, dotDDirectoryName);
+                var mgrName = mMgrParams.GetParam("MgrName", "CTM");
+                var dotDDirectoryName = mDataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
+                var dotDDirectoryPathLocal = Path.Combine(mWorkDir, dotDDirectoryName);
 
-                var success = CopyDotDDirectoryToLocal(m_FileTools, datasetDirectoryPath, dotDDirectoryName, dotDDirectoryPathLocal, false);
+                var success = CopyDotDDirectoryToLocal(mFileTools, datasetDirectoryPath, dotDDirectoryName, dotDDirectoryPathLocal, false);
                 if (!success)
                     return false;
 
@@ -324,9 +324,9 @@ namespace DatasetIntegrityPlugin
                 // Optional: -nosplash
 
                 var cmdStr = "-cli -batchfile " + batchJobFilePath;
-                var consoleOutputFilePath = Path.Combine(m_WorkDir, "OpenChrom_ConsoleOutput_" + mgrName + ".txt");
+                var consoleOutputFilePath = Path.Combine(mWorkDir, "OpenChrom_ConsoleOutput_" + mgrName + ".txt");
 
-                var cmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel)
+                var cmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
                 {
                     CreateNoWindow = false,
                     EchoOutputToConsole = false,
@@ -353,7 +353,7 @@ namespace DatasetIntegrityPlugin
                 try
                 {
                     ProgRunner.GarbageCollectNow();
-                    m_FileTools.DeleteDirectory(dotDDirectoryPathLocal, ignoreErrors: true);
+                    mFileTools.DeleteDirectory(dotDDirectoryPathLocal, ignoreErrors: true);
                 }
                 catch (Exception ex)
                 {
@@ -381,7 +381,7 @@ namespace DatasetIntegrityPlugin
                 Thread.Sleep(100);
 
                 // Copy the .CDF file to the dataset directory
-                success = CopyCDFToDatasetDirectory(m_FileTools, datasetDirectoryPath);
+                success = CopyCDFToDatasetDirectory(mFileTools, datasetDirectoryPath);
                 if (!success)
                 {
                     return false;
@@ -410,11 +410,11 @@ namespace DatasetIntegrityPlugin
             try
             {
 
-                var mgrName = m_MgrParams.GetParam("MgrName", "CTM");
-                var dotDDirectoryName = m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
-                var dotDDirectoryPathLocal = Path.Combine(m_WorkDir, dotDDirectoryName);
+                var mgrName = mMgrParams.GetParam("MgrName", "CTM");
+                var dotDDirectoryName = mDataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
+                var dotDDirectoryPathLocal = Path.Combine(mWorkDir, dotDDirectoryName);
 
-                var success = CopyDotDDirectoryToLocal(m_FileTools, datasetDirectoryPath, dotDDirectoryName, dotDDirectoryPathLocal, true);
+                var success = CopyDotDDirectoryToLocal(mFileTools, datasetDirectoryPath, dotDDirectoryName, dotDDirectoryPathLocal, true);
                 if (!success)
                     return false;
 
@@ -459,10 +459,10 @@ namespace DatasetIntegrityPlugin
                 // Syntax:
                 // AgilentToUIMFConverter.exe [Agilent .d directory] [Directory to insert file (optional)]
 
-                var cmdStr = clsConversion.PossiblyQuotePath(dotDDirectoryPathLocal) + " " + clsConversion.PossiblyQuotePath(m_WorkDir);
-                mConsoleOutputFilePath = Path.Combine(m_WorkDir, "AgilentToUIMF_ConsoleOutput_" + mgrName + ".txt");
+                var cmdStr = clsConversion.PossiblyQuotePath(dotDDirectoryPathLocal) + " " + clsConversion.PossiblyQuotePath(mWorkDir);
+                mConsoleOutputFilePath = Path.Combine(mWorkDir, "AgilentToUIMF_ConsoleOutput_" + mgrName + ".txt");
 
-                var cmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel)
+                var cmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
                 {
                     CreateNoWindow = false,
                     EchoOutputToConsole = false,
@@ -492,7 +492,7 @@ namespace DatasetIntegrityPlugin
                 try
                 {
                     ProgRunner.GarbageCollectNow();
-                    m_FileTools.DeleteDirectory(dotDDirectoryPathLocal, ignoreErrors: true);
+                    mFileTools.DeleteDirectory(dotDDirectoryPathLocal, ignoreErrors: true);
                 }
                 catch (Exception ex)
                 {
@@ -523,8 +523,8 @@ namespace DatasetIntegrityPlugin
                 {
                     // We need to rename the .uimf file since we processed a .d directory inside a .d directory
                     var sourceUimfName = Path.ChangeExtension(Path.GetFileName(dotDDirectoryPathLocal), clsInstrumentClassInfo.DOT_UIMF_EXTENSION);
-                    var sourceUimf = new FileInfo(Path.Combine(m_WorkDir, sourceUimfName));
-                    var targetUimfPath = Path.Combine(m_WorkDir, m_Dataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION);
+                    var sourceUimf = new FileInfo(Path.Combine(mWorkDir, sourceUimfName));
+                    var targetUimfPath = Path.Combine(mWorkDir, mDataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION);
 
                     if (!string.Equals(sourceUimf.FullName, targetUimfPath, StringComparison.OrdinalIgnoreCase))
                     {
@@ -542,7 +542,7 @@ namespace DatasetIntegrityPlugin
                 }
 
                 // Copy the .UIMF file to the dataset directory
-                success = CopyUIMFToDatasetDirectory(m_FileTools, datasetDirectoryPath);
+                success = CopyUIMFToDatasetDirectory(mFileTools, datasetDirectoryPath);
                 if (!success)
                 {
                     return false;
@@ -620,7 +620,7 @@ namespace DatasetIntegrityPlugin
 
         private bool CopyCDFToDatasetDirectory(FileTools fileTools, string datasetDirectoryPath)
         {
-            var fiCDF = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + ".cdf"));
+            var fiCDF = new FileInfo(Path.Combine(mWorkDir, mDataset + ".cdf"));
 
             if (!fiCDF.Exists)
             {
@@ -636,7 +636,7 @@ namespace DatasetIntegrityPlugin
         private bool CopyUIMFToDatasetDirectory(FileTools fileTools, string datasetDirectoryPath)
         {
 
-            var uimfFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION));
+            var uimfFile = new FileInfo(Path.Combine(mWorkDir, mDataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION));
 
             if (!uimfFile.Exists)
             {
@@ -651,7 +651,7 @@ namespace DatasetIntegrityPlugin
 
         private bool CopyFileToDatasetDirectory(FileTools fileTools, FileSystemInfo dataFile, string datasetDirectoryPath)
         {
-            if (m_DebugLevel >= 4)
+            if (mDebugLevel >= 4)
             {
                 LogDebug("Copying " + dataFile.Extension + " file to the dataset directory");
             }
@@ -661,7 +661,7 @@ namespace DatasetIntegrityPlugin
             var targetFilePath = Path.Combine(datasetDirectoryPath, dataFile.Name);
             fileTools.CopyFileUsingLocks(dataFile.FullName, targetFilePath, overWrite: true);
 
-            if (m_DebugLevel >= 4)
+            if (mDebugLevel >= 4)
             {
                 LogDebug("Copy complete");
             }
@@ -701,7 +701,7 @@ namespace DatasetIntegrityPlugin
                 sbXML.Append(@"<!--Write each processed chromatogram to the given output formats.-->");
                 sbXML.Append(@"<OutputEntries>");
                 sbXML.Append(@"<OutputEntry converterId=""net.openchrom.msd.converter.supplier.cdf"">");
-                sbXML.Append(@"<![CDATA[" + m_WorkDir + "]]>");
+                sbXML.Append(@"<![CDATA[" + mWorkDir + "]]>");
                 sbXML.Append(@"</OutputEntry>");
                 sbXML.Append(@"</OutputEntries>");
 
@@ -709,7 +709,7 @@ namespace DatasetIntegrityPlugin
                 sbXML.Append(@"<ReportEntries></ReportEntries>");
                 sbXML.Append(@"</BatchProcessJob>");
 
-                var jobFilePath = Path.Combine(m_WorkDir, "CDFBatchJob.obj");
+                var jobFilePath = Path.Combine(mWorkDir, "CDFBatchJob.obj");
 
                 using (var writer = new StreamWriter(new FileStream(jobFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
@@ -845,14 +845,14 @@ namespace DatasetIntegrityPlugin
 
         private string GetAgilentToUIMFProgPath()
         {
-            var exeName = m_MgrParams.GetParam("AgilentToUIMFProgLoc");
+            var exeName = mMgrParams.GetParam("AgilentToUIMFProgLoc");
             var exePath = Path.Combine(exeName, "AgilentToUimfConverter.exe");
             return exePath;
         }
 
         private string GetOpenChromProgPath()
         {
-            var exeName = m_MgrParams.GetParam("OpenChromProgLoc");
+            var exeName = mMgrParams.GetParam("OpenChromProgLoc");
             var exePath = Path.Combine(exeName, "openchrom.exe");
             return exePath;
         }
@@ -864,14 +864,14 @@ namespace DatasetIntegrityPlugin
         /// </summary>
         /// <param name="datasetDirectory"></param>
         /// <param name="fileSpec">Files to match, for example *.mis</param>
-        /// <param name="matchDatasetName">True if file names must start with m_Dataset</param>
+        /// <param name="matchDatasetName">True if file names must start with mDataset</param>
         /// <param name="copyFile">True to copy the file, false to move it</param>
         private void MoveOrCopyUpOneLevel(DirectoryInfo datasetDirectory, string fileSpec, bool matchDatasetName, bool copyFile)
         {
             foreach (var instrumentFile in datasetDirectory.GetFiles(fileSpec))
             {
                 if (matchDatasetName &&
-                    !Path.GetFileNameWithoutExtension(instrumentFile.Name).ToLower().StartsWith(m_Dataset.ToLower()))
+                    !Path.GetFileNameWithoutExtension(instrumentFile.Name).ToLower().StartsWith(mDataset.ToLower()))
                 {
                     continue;
                 }
@@ -961,7 +961,7 @@ namespace DatasetIntegrityPlugin
                     LogError(exceptionText);
                 }
 
-                m_StatusTools.UpdateAndWrite(EnumTaskStatusDetail.Running_Tool, percentComplete);
+                mStatusTools.UpdateAndWrite(EnumTaskStatusDetail.Running_Tool, percentComplete);
 
             }
             catch (Exception ex)
@@ -1622,7 +1622,7 @@ namespace DatasetIntegrityPlugin
             if (dotDDirectories.Count == 1)
             {
                 var baseName = Path.GetFileNameWithoutExtension(dotDDirectories[0].Name);
-                if (!string.Equals(m_Dataset, baseName, StringComparison.OrdinalIgnoreCase))
+                if (!string.Equals(mDataset, baseName, StringComparison.OrdinalIgnoreCase))
                 {
                     mRetData.EvalMsg = string.Format(
                         "Invalid dataset: directory name {0} does not match the dataset name",
@@ -2023,7 +2023,7 @@ namespace DatasetIntegrityPlugin
 
         private EnumCloseOutType TestIlluminaSequencerDirectory(string datasetDirectoryPath)
         {
-            var dataFileNamePath = Path.Combine(datasetDirectoryPath, m_Dataset + clsInstrumentClassInfo.DOT_TXT_GZ_EXTENSION);
+            var dataFileNamePath = Path.Combine(datasetDirectoryPath, mDataset + clsInstrumentClassInfo.DOT_TXT_GZ_EXTENSION);
 
             // Verify file exists in storage directory
             if (!File.Exists(dataFileNamePath))
@@ -2206,7 +2206,7 @@ namespace DatasetIntegrityPlugin
 
             LogDebug("Opening UIMF file to read pressure data");
 
-            var ignorePressureErrors = m_TaskParams.GetParam("IgnorePressureInfoErrors", false);
+            var ignorePressureErrors = mTaskParams.GetParam("IgnorePressureInfoErrors", false);
             var loggedPressureErrorWarning = false;
 
             // Open the file with the UIMFReader
@@ -2249,7 +2249,7 @@ namespace DatasetIntegrityPlugin
 
                         if (!pressuresAreInCorrectOrder)
                         {
-                            mRetData.EvalMsg = "Invalid pressure info in the Frame_Parameters table for frame " + frameNumber + ", dataset " + m_Dataset + "; QuadrupolePressure should be less than the RearIonFunnelPressure and the RearIonFunnelPressure should be less than the HighPressureFunnelPressure";
+                            mRetData.EvalMsg = "Invalid pressure info in the Frame_Parameters table for frame " + frameNumber + ", dataset " + mDataset + "; QuadrupolePressure should be less than the RearIonFunnelPressure and the RearIonFunnelPressure should be less than the HighPressureFunnelPressure";
 
                             if (ignorePressureErrors)
                             {
@@ -2455,7 +2455,7 @@ namespace DatasetIntegrityPlugin
 
                 if (!settingsFileUpdateRequired)
                 {
-                    if (m_DebugLevel >= 2)
+                    if (mDebugLevel >= 2)
                         LogDebug("OpenChrom settings file is up to date at " + fiSettingsFile.FullName);
 
                     return true;

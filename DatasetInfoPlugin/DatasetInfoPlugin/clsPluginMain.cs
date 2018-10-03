@@ -64,7 +64,7 @@ namespace DatasetInfoPlugin
         /// <returns>Enum indicating success or failure</returns>
         public override clsToolReturnData RunTool()
         {
-            // Note that Debug messages are logged if m_DebugLevel == 5
+            // Note that Debug messages are logged if mDebugLevel == 5
 
             var msg = "Starting DatasetInfoPlugin.clsPluginMain.RunTool()";
             LogDebug(msg);
@@ -83,7 +83,7 @@ namespace DatasetInfoPlugin
                 return retData;
             }
 
-            msg = "Running DatasetInfo on dataset '" + m_Dataset + "'";
+            msg = "Running DatasetInfo on dataset '" + mDataset + "'";
             LogMessage(msg);
 
             retData = RunMsFileInfoScanner();
@@ -200,27 +200,27 @@ namespace DatasetInfoPlugin
             var retData = new clsToolReturnData();
 
             // Always use client perspective for the source directory (allows MSFileInfoScanner to run from any CTM)
-            var sourceDirectory = m_TaskParams.GetParam("Storage_Vol_External");
+            var sourceDirectory = mTaskParams.GetParam("Storage_Vol_External");
 
             // Set up the rest of the paths
-            sourceDirectory = Path.Combine(sourceDirectory, m_TaskParams.GetParam("Storage_Path"));
-            sourceDirectory = Path.Combine(sourceDirectory, m_TaskParams.GetParam("Folder"));
+            sourceDirectory = Path.Combine(sourceDirectory, mTaskParams.GetParam("Storage_Path"));
+            sourceDirectory = Path.Combine(sourceDirectory, mTaskParams.GetParam("Folder"));
             var outputPathBase = Path.Combine(sourceDirectory, "QC");
 
             // Set up the params for the MS file scanner
             mMsFileScanner.DSInfoDBPostingEnabled = false;
-            mMsFileScanner.SaveTICAndBPIPlots = m_TaskParams.GetParam("SaveTICAndBPIPlots", true);
-            mMsFileScanner.SaveLCMS2DPlots = m_TaskParams.GetParam("SaveLCMS2DPlots", true);
-            mMsFileScanner.ComputeOverallQualityScores = m_TaskParams.GetParam("ComputeOverallQualityScores", false);
-            mMsFileScanner.CreateDatasetInfoFile = m_TaskParams.GetParam("CreateDatasetInfoFile", true);
+            mMsFileScanner.SaveTICAndBPIPlots = mTaskParams.GetParam("SaveTICAndBPIPlots", true);
+            mMsFileScanner.SaveLCMS2DPlots = mTaskParams.GetParam("SaveLCMS2DPlots", true);
+            mMsFileScanner.ComputeOverallQualityScores = mTaskParams.GetParam("ComputeOverallQualityScores", false);
+            mMsFileScanner.CreateDatasetInfoFile = mTaskParams.GetParam("CreateDatasetInfoFile", true);
 
-            mMsFileScanner.LCMS2DPlotMZResolution = m_TaskParams.GetParam("LCMS2DPlotMZResolution", clsLCMSDataPlotterOptions.DEFAULT_MZ_RESOLUTION);
-            mMsFileScanner.LCMS2DPlotMaxPointsToPlot = m_TaskParams.GetParam("LCMS2DPlotMaxPointsToPlot", clsLCMSDataPlotterOptions.DEFAULT_MAX_POINTS_TO_PLOT);
-            mMsFileScanner.LCMS2DPlotMinPointsPerSpectrum = m_TaskParams.GetParam("LCMS2DPlotMinPointsPerSpectrum", clsLCMSDataPlotterOptions.DEFAULT_MIN_POINTS_PER_SPECTRUM);
-            mMsFileScanner.LCMS2DPlotMinIntensity = m_TaskParams.GetParam("LCMS2DPlotMinIntensity", (float)0);
-            mMsFileScanner.LCMS2DOverviewPlotDivisor = m_TaskParams.GetParam("LCMS2DOverviewPlotDivisor", clsLCMSDataPlotterOptions.DEFAULT_LCMS2D_OVERVIEW_PLOT_DIVISOR);
+            mMsFileScanner.LCMS2DPlotMZResolution = mTaskParams.GetParam("LCMS2DPlotMZResolution", clsLCMSDataPlotterOptions.DEFAULT_MZ_RESOLUTION);
+            mMsFileScanner.LCMS2DPlotMaxPointsToPlot = mTaskParams.GetParam("LCMS2DPlotMaxPointsToPlot", clsLCMSDataPlotterOptions.DEFAULT_MAX_POINTS_TO_PLOT);
+            mMsFileScanner.LCMS2DPlotMinPointsPerSpectrum = mTaskParams.GetParam("LCMS2DPlotMinPointsPerSpectrum", clsLCMSDataPlotterOptions.DEFAULT_MIN_POINTS_PER_SPECTRUM);
+            mMsFileScanner.LCMS2DPlotMinIntensity = mTaskParams.GetParam("LCMS2DPlotMinIntensity", (float)0);
+            mMsFileScanner.LCMS2DOverviewPlotDivisor = mTaskParams.GetParam("LCMS2DOverviewPlotDivisor", clsLCMSDataPlotterOptions.DEFAULT_LCMS2D_OVERVIEW_PLOT_DIVISOR);
 
-            var sampleLabelling = m_TaskParams.GetParam("Meta_Experiment_sample_labelling", "");
+            var sampleLabelling = mTaskParams.GetParam("Meta_Experiment_sample_labelling", "");
             ConfigureMinimumMzValidation(mMsFileScanner, sampleLabelling);
 
             mMsFileScanner.CheckCentroidingStatus = true;
@@ -322,8 +322,8 @@ namespace DatasetInfoPlugin
                     ResetTimestampForQueueWaitTimeLogging();
 
                     // Thermo .raw file; copy it locally
-                    var localFilePath = Path.Combine(m_WorkDir, datasetFileOrDirectory);
-                    var fileCopied = m_FileTools.CopyFileUsingLocks(datasetFile, localFilePath, true);
+                    var localFilePath = Path.Combine(mWorkDir, datasetFileOrDirectory);
+                    var fileCopied = mFileTools.CopyFileUsingLocks(datasetFile, localFilePath, true);
 
                     if (!fileCopied)
                     {
@@ -355,7 +355,7 @@ namespace DatasetInfoPlugin
                 if (useLocalOutputDirectory)
                 {
                     // Override the output directory
-                    var localOutputDir = Path.Combine(m_WorkDir, Path.GetFileName(currentOutputDirectory));
+                    var localOutputDir = Path.Combine(mWorkDir, Path.GetFileName(currentOutputDirectory));
                     ConsoleMsgUtils.ShowDebug(string.Format(
                                                   "Overriding MSFileInfoScanner output directory from {0}\n  to {1}",
                                                   currentOutputDirectory, localOutputDir));
@@ -371,7 +371,7 @@ namespace DatasetInfoPlugin
 
                 if (fileCopiedLocally)
                 {
-                    m_FileTools.DeleteFileWithRetry(new FileInfo(pathToProcess), 2, out _);
+                    mFileTools.DeleteFileWithRetry(new FileInfo(pathToProcess), 2, out _);
                 }
 
                 var mzMinValidationError = mMsFileScanner.ErrorCode == iMSFileInfoScanner.eMSFileScannerErrorCodes.MS2MzMinValidationError;
@@ -454,7 +454,7 @@ namespace DatasetInfoPlugin
                     {
                         var jobParamNote = string.Format(
                             "To ignore this error, use Exec AddUpdateJobParameter {0}, 'JobParameters', 'SkipMinimumMzValidation', 'true'",
-                            m_Job);
+                            mJob);
 
                         retData.CloseoutMsg = AppendToComment(retData.CloseoutMsg, jobParamNote);
                     }
@@ -542,9 +542,9 @@ namespace DatasetInfoPlugin
         private bool PostDatasetInfoXml(string dsInfoXML, out string errorMessage)
         {
             var iPostCount = 0;
-            var connectionString = m_MgrParams.GetParam("ConnectionString");
+            var connectionString = mMgrParams.GetParam("ConnectionString");
 
-            var iDatasetID = m_TaskParams.GetParam("Dataset_ID", 0);
+            var iDatasetID = mTaskParams.GetParam("Dataset_ID", 0);
 
             var successPosting = false;
 
@@ -596,7 +596,7 @@ namespace DatasetInfoPlugin
             IEnumerable<string> outputDirectoryNames)
         {
 
-            var combinedDatasetInfoFilename = m_Dataset + "_Combined_DatasetInfo.xml";
+            var combinedDatasetInfoFilename = mDataset + "_Combined_DatasetInfo.xml";
 
             try
             {
@@ -609,7 +609,7 @@ namespace DatasetInfoPlugin
             }
             catch (Exception ex)
             {
-                var msg = "Exception creating the combined _DatasetInfo.xml file for " + m_Dataset + ": " + ex.Message;
+                var msg = "Exception creating the combined _DatasetInfo.xml file for " + mDataset + ": " + ex.Message;
                 LogError(msg, ex);
             }
 
@@ -624,11 +624,11 @@ namespace DatasetInfoPlugin
                     htmlWriter.WriteLine("<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 3.2//EN\">");
                     htmlWriter.WriteLine("<html>");
                     htmlWriter.WriteLine("<head>");
-                    htmlWriter.WriteLine("  <title>" + m_Dataset + "</title>");
+                    htmlWriter.WriteLine("  <title>" + mDataset + "</title>");
                     htmlWriter.WriteLine("</head>");
                     htmlWriter.WriteLine();
                     htmlWriter.WriteLine("<body>");
-                    htmlWriter.WriteLine("  <h2>" + m_Dataset + "</h2>");
+                    htmlWriter.WriteLine("  <h2>" + mDataset + "</h2>");
                     htmlWriter.WriteLine();
                     htmlWriter.WriteLine("  <table>");
 
@@ -752,7 +752,7 @@ namespace DatasetInfoPlugin
                     // Add a link to the Dataset detail report
                     htmlWriter.WriteLine("    <tr>");
                     htmlWriter.WriteLine("      <td>&nbsp;</td>");
-                    htmlWriter.WriteLine("      <td align=\"center\">DMS <a href=\"http://dms2.pnl.gov/dataset/show/" + m_Dataset + "\">Dataset Detail Report</a></td>");
+                    htmlWriter.WriteLine("      <td align=\"center\">DMS <a href=\"http://dms2.pnl.gov/dataset/show/" + mDataset + "\">Dataset Detail Report</a></td>");
                     htmlWriter.WriteLine("      <td align=\"center\"><a href=\"" + combinedDatasetInfoFilename + "\">Dataset Info XML file</a></td>");
                     htmlWriter.WriteLine("    </tr>");
                     htmlWriter.WriteLine("");
@@ -765,7 +765,7 @@ namespace DatasetInfoPlugin
             }
             catch (Exception ex)
             {
-                var msg = "Exception creating the combined _DatasetInfo.xml file for " + m_Dataset + ": " + ex.Message;
+                var msg = "Exception creating the combined _DatasetInfo.xml file for " + mDataset + ": " + ex.Message;
                 LogError(msg, ex);
             }
 
@@ -786,7 +786,7 @@ namespace DatasetInfoPlugin
                 return cachedDatasetInfoXml.First();
             }
 
-            var combinedXML = datasetXmlMerger.CombineDatasetInfoXML(m_Dataset, cachedDatasetInfoXml);
+            var combinedXML = datasetXmlMerger.CombineDatasetInfoXML(mDataset, cachedDatasetInfoXml);
 
             return combinedXML;
 
@@ -820,7 +820,7 @@ namespace DatasetInfoPlugin
 
             mMsFileScanner.MS2MzMin = 0;
 
-            if (m_TaskParams.GetParam("SkipMinimumMzValidation", false))
+            if (mTaskParams.GetParam("SkipMinimumMzValidation", false))
             {
                 // Skip minimum m/z validation
                 return;
@@ -833,7 +833,7 @@ namespace DatasetInfoPlugin
                 // If it does, instruct the MSFileInfoScanner to validate that all of the MS/MS spectra
                 // have a scan range that starts below the minimum reporter ion m/z
 
-                var reporterIonMzMinText = m_TaskParams.GetParam("Meta_Experiment_labelling_reporter_mz_min", "");
+                var reporterIonMzMinText = mTaskParams.GetParam("Meta_Experiment_labelling_reporter_mz_min", "");
                 if (!string.IsNullOrEmpty(reporterIonMzMinText))
                 {
                     if (float.TryParse(reporterIonMzMinText, out var reporterIonMzMin))
@@ -866,7 +866,7 @@ namespace DatasetInfoPlugin
             // _TMT-10_
             var tmtMatcher = new Regex("_TMT[0-9-]*_", RegexOptions.IgnoreCase);
 
-            var iTRAQMatch = iTRAQMatcher.Match(m_Dataset);
+            var iTRAQMatch = iTRAQMatcher.Match(mDataset);
             if (iTRAQMatch.Success)
             {
                 msFileInfoScanner.MS2MzMin = 113;
@@ -875,7 +875,7 @@ namespace DatasetInfoPlugin
                                msFileInfoScanner.MS2MzMin, iTRAQMatch.Value));
             }
 
-            var tmtMatch = tmtMatcher.Match(m_Dataset);
+            var tmtMatch = tmtMatcher.Match(mDataset);
             if (tmtMatch.Success)
             {
                 msFileInfoScanner.MS2MzMin = 126;
@@ -912,11 +912,11 @@ namespace DatasetInfoPlugin
                 var subDirectory = Path.GetFileNameWithoutExtension(datasetFileOrDirectory);
                 if (string.IsNullOrWhiteSpace(subDirectory))
                 {
-                    var subdirectoryToUse = m_Dataset + "_" + nextSubdirectorySuffix;
+                    var subdirectoryToUse = mDataset + "_" + nextSubdirectorySuffix;
                     while (outputDirectoryNames.Contains(subdirectoryToUse))
                     {
                         nextSubdirectorySuffix++;
-                        subdirectoryToUse = m_Dataset + "_" + nextSubdirectorySuffix;
+                        subdirectoryToUse = mDataset + "_" + nextSubdirectorySuffix;
                     }
 
                     currentOutputDirectory = Path.Combine(outputPathBase, subdirectoryToUse);
@@ -990,8 +990,8 @@ namespace DatasetInfoPlugin
             bBrukerDotDBaf = false;
 
             // Determine the Instrument Class and RawDataType
-            var instClassName = m_TaskParams.GetParam("Instrument_Class");
-            var rawDataTypeName = m_TaskParams.GetParam("RawDataType", "UnknownRawDataType");
+            var instClassName = mTaskParams.GetParam("Instrument_Class");
+            var rawDataTypeName = mTaskParams.GetParam("RawDataType", "UnknownRawDataType");
 
             instrumentClass = clsInstrumentClassInfo.GetInstrumentClass(instClassName);
             if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Unknown)
@@ -1021,7 +1021,7 @@ namespace DatasetInfoPlugin
                     // VOrbiETD01, VOrbiETD02, etc.
                     // TSQ_3
                     // Thermo_GC_MS_01
-                    fileOrDirectoryName = m_Dataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION;
+                    fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION;
                     isFile = true;
                     break;
 
@@ -1040,11 +1040,11 @@ namespace DatasetInfoPlugin
                     isFile = true;
                     if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Bruker_Amazon_Ion_Trap)
                     {
-                        fileOrDirectoryName = Path.Combine(m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION, "analysis.yep");
+                        fileOrDirectoryName = Path.Combine(mDataset + clsInstrumentClassInfo.DOT_D_EXTENSION, "analysis.yep");
                     }
                     else
                     {
-                        fileOrDirectoryName = Path.Combine(m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION, "analysis.baf");
+                        fileOrDirectoryName = Path.Combine(mDataset + clsInstrumentClassInfo.DOT_D_EXTENSION, "analysis.baf");
                         bBrukerDotDBaf = true;
                     }
 
@@ -1055,19 +1055,19 @@ namespace DatasetInfoPlugin
 
                 case clsInstrumentClassInfo.eRawDataType.UIMF:
                     // IMS_TOF_2, IMS_TOF_3, IMS_TOF_4, IMS_TOF_5, IMS_TOF_6, etc.
-                    fileOrDirectoryName = m_Dataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION;
+                    fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION;
                     isFile = true;
                     break;
 
                 case clsInstrumentClassInfo.eRawDataType.SciexWiffFile:
                     // QTrap01
-                    fileOrDirectoryName = m_Dataset + clsInstrumentClassInfo.DOT_WIFF_EXTENSION;
+                    fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_WIFF_EXTENSION;
                     isFile = true;
                     break;
 
                 case clsInstrumentClassInfo.eRawDataType.AgilentDFolder:
                     // Agilent_GC_MS_01, AgQTOF03, AgQTOF04, PrepHPLC1
-                    fileOrDirectoryName = m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
+                    fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
                     isFile = false;
 
                     if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.PrepHPLC)
@@ -1096,11 +1096,11 @@ namespace DatasetInfoPlugin
                     break;
 
                 case clsInstrumentClassInfo.eRawDataType.BrukerTOFBaf:
-                    fileOrDirectoryName = m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
+                    fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
                     isFile = false;
                     break;
                 case clsInstrumentClassInfo.eRawDataType.IlluminaFolder:
-                    // fileOrDirectoryName = m_Dataset + clsInstrumentClassInfo.DOT_TXT_GZ_EXTENSION;
+                    // fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_TXT_GZ_EXTENSION;
                     // isFile = true;
 
                     LogMessage("Skipping MSFileInfoScanner since Illumina RNASeq dataset");
@@ -1174,7 +1174,7 @@ namespace DatasetInfoPlugin
         /// <returns></returns>
         private string GetMSFileInfoScannerDLLPath()
         {
-            var msFileInfoScannerDir = m_MgrParams.GetParam("MSFileInfoScannerDir", string.Empty);
+            var msFileInfoScannerDir = mMgrParams.GetParam("MSFileInfoScannerDir", string.Empty);
             if (string.IsNullOrEmpty(msFileInfoScannerDir))
                 return string.Empty;
 
@@ -1206,7 +1206,7 @@ namespace DatasetInfoPlugin
             }
 
             // Look for dataset directories
-            var primaryDotDDirectory = new DirectoryInfo(Path.Combine(diDatasetDirectory.FullName, m_Dataset + clsInstrumentClassInfo.DOT_D_EXTENSION));
+            var primaryDotDDirectory = new DirectoryInfo(Path.Combine(diDatasetDirectory.FullName, mDataset + clsInstrumentClassInfo.DOT_D_EXTENSION));
 
             var fileOrDirectoryNames = new List<string>();
 
@@ -1416,7 +1416,7 @@ namespace DatasetInfoPlugin
                 // to:   QC_Shew_pep_Online_Dig_v12_c0pt5_05_10-08-13.raw
 
                 // Match text of the form         \\server\share\directory<anything>DatasetName.Extension
-                var reDatasetFile = new Regex(@"\\\\[^\\]+\\[^\\]+\\[^\\]+.+(" + m_Dataset + @"\.[a-z0-9]+)");
+                var reDatasetFile = new Regex(@"\\\\[^\\]+\\[^\\]+\\[^\\]+.+(" + mDataset + @"\.[a-z0-9]+)");
 
                 if (reDatasetFile.IsMatch(message))
                 {
@@ -1468,7 +1468,7 @@ namespace DatasetInfoPlugin
 
             mLastProgressUpdate = DateTime.UtcNow;
 
-            m_StatusTools.UpdateAndWrite(EnumTaskStatusDetail.Running_Tool, percentComplete);
+            mStatusTools.UpdateAndWrite(EnumTaskStatusDetail.Running_Tool, percentComplete);
 
 
             if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalMinutes >= mStatusUpdateIntervalMinutes)

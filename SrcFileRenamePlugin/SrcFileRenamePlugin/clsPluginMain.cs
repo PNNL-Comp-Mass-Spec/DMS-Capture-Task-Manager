@@ -41,11 +41,11 @@ namespace SrcFileRenamePlugin
                 return retData;
             }
 
-            msg = "Renaming dataset '" + m_Dataset + "'";
+            msg = "Renaming dataset '" + mDataset + "'";
             LogMessage(msg);
 
             // Determine if instrument is on Bionet
-            var capMethod = m_TaskParams.GetParam("Method");
+            var capMethod = mTaskParams.GetParam("Method");
             bool useBionet;
             if (capMethod.ToLower() == "secfso")
             {
@@ -57,7 +57,7 @@ namespace SrcFileRenamePlugin
             }
 
             // Create the object that will perform capture operation
-            var renameOpTool = new clsRenameOps(m_MgrParams, useBionet);
+            var renameOpTool = new clsRenameOps(mMgrParams, useBionet);
             RegisterEvents(renameOpTool);
 
             try
@@ -65,7 +65,7 @@ namespace SrcFileRenamePlugin
                 msg = "clsPluginMain.RunTool(): Starting rename operation";
                 LogDebug(msg);
 
-                retData.CloseoutType = renameOpTool.DoOperation(m_TaskParams, out var errorMessage);
+                retData.CloseoutType = renameOpTool.DoOperation(mTaskParams, out var errorMessage);
 
                 if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
                     retData.CloseoutMsg = errorMessage;

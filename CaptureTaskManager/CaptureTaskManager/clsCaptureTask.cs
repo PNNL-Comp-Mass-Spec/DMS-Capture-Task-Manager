@@ -45,7 +45,7 @@ namespace CaptureTaskManager
         public clsCaptureTask(IMgrParams mgrParams)
             : base(mgrParams)
         {
-            m_JobParams.Clear();
+            mJobParams.Clear();
         }
 
         #endregion
@@ -70,7 +70,7 @@ namespace CaptureTaskManager
         /// <returns>Parameter value if found, otherwise empty string</returns>
         public string GetParam(string name, string valueIfMissing)
         {
-            if (m_JobParams.TryGetValue(name, out var ItemValue))
+            if (mJobParams.TryGetValue(name, out var ItemValue))
             {
                 return ItemValue ?? string.Empty;
             }
@@ -86,7 +86,7 @@ namespace CaptureTaskManager
         /// <returns>Parameter value if found, otherwise empty string</returns>
         public bool GetParam(string name, bool valueIfMissing)
         {
-            if (m_JobParams.TryGetValue(name, out var valueText))
+            if (mJobParams.TryGetValue(name, out var valueText))
             {
                 if (bool.TryParse(valueText, out var value))
                     return value;
@@ -105,7 +105,7 @@ namespace CaptureTaskManager
         /// <returns>Parameter value if found, otherwise empty string</returns>
         public float GetParam(string name, float valueIfMissing)
         {
-            if (m_JobParams.TryGetValue(name, out var valueText))
+            if (mJobParams.TryGetValue(name, out var valueText))
             {
                 if (float.TryParse(valueText, out var value))
                     return value;
@@ -124,7 +124,7 @@ namespace CaptureTaskManager
         /// <returns>Parameter value if found, otherwise empty string</returns>
         public int GetParam(string name, int valueIfMissing)
         {
-            if (m_JobParams.TryGetValue(name, out var valueText))
+            if (mJobParams.TryGetValue(name, out var valueText))
             {
                 if (int.TryParse(valueText, out var value))
                     return value;
@@ -145,10 +145,10 @@ namespace CaptureTaskManager
         {
             try
             {
-                if (m_JobParams.ContainsKey(paramName))
-                    m_JobParams[paramName] = paramValue;
+                if (mJobParams.ContainsKey(paramName))
+                    mJobParams[paramName] = paramValue;
                 else
-                    m_JobParams.Add(paramName, paramValue);
+                    mJobParams.Add(paramName, paramValue);
 
                 return true;
             }
@@ -170,7 +170,7 @@ namespace CaptureTaskManager
             {
                 value = "";
             }
-            m_JobParams[keyName] = value;
+            mJobParams[keyName] = value;
         }
 
         /// <summary>
@@ -184,19 +184,19 @@ namespace CaptureTaskManager
             switch (retVal)
             {
                 case EnumRequestTaskResult.TaskFound:
-                    m_TaskWasAssigned = true;
+                    mTaskWasAssigned = true;
                     break;
                 case EnumRequestTaskResult.NoTaskFound:
-                    m_TaskWasAssigned = false;
+                    mTaskWasAssigned = false;
                     break;
                 case EnumRequestTaskResult.TooManyRetries:
                 case EnumRequestTaskResult.Deadlock:
                     // Make sure the database didn't actually assign a job to this manager
                     ReportManagerIdle();
-                    m_TaskWasAssigned = false;
+                    mTaskWasAssigned = false;
                     break;
                 default:
-                    m_TaskWasAssigned = false;
+                    mTaskWasAssigned = false;
                     break;
             }
 
@@ -227,15 +227,15 @@ namespace CaptureTaskManager
                 spCmd.Parameters.Add(new SqlParameter("@ManagerVersion", SqlDbType.VarChar, 128)).Value = appVersion;
                 spCmd.Parameters.Add(new SqlParameter("@JobCountToPreview", SqlDbType.Int)).Value = 10;
 
-                LogDebug("clsCaptureTask.RequestTaskDetailed(), connection string: " + m_ConnStr);
+                LogDebug("clsCaptureTask.RequestTaskDetailed(), connection string: " + mConnStr);
 
-                if (m_DebugLevel >= 5 || TraceMode)
+                if (mDebugLevel >= 5 || TraceMode)
                 {
                     PrintCommandParams(spCmd);
                 }
 
                 // Execute the SP
-                var resCode = m_CaptureTaskDBProcedureExecutor.ExecuteSP(spCmd, out var results);
+                var resCode = mCaptureTaskDBProcedureExecutor.ExecuteSP(spCmd, out var results);
 
                 switch (resCode)
                 {
@@ -351,7 +351,7 @@ namespace CaptureTaskManager
             spCmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
 
             // Execute the Stored Procedure (retry the call up to 3 times)
-            var returnCode = m_CaptureTaskDBProcedureExecutor.ExecuteSP(spCmd, 3);
+            var returnCode = mCaptureTaskDBProcedureExecutor.ExecuteSP(spCmd, 3);
 
             if (returnCode == 0)
             {
@@ -382,8 +382,8 @@ namespace CaptureTaskManager
                 };
 
                 spCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-                spCmd.Parameters.Add(new SqlParameter("@job", SqlDbType.Int)).Value = int.Parse(m_JobParams["Job"]);
-                spCmd.Parameters.Add(new SqlParameter("@step", SqlDbType.Int)).Value = int.Parse(m_JobParams["Step"]);
+                spCmd.Parameters.Add(new SqlParameter("@job", SqlDbType.Int)).Value = int.Parse(mJobParams["Job"]);
+                spCmd.Parameters.Add(new SqlParameter("@step", SqlDbType.Int)).Value = int.Parse(mJobParams["Step"]);
                 spCmd.Parameters.Add(new SqlParameter("@completionCode", SqlDbType.Int)).Value = compCode;
                 spCmd.Parameters.Add(new SqlParameter("@completionMessage", SqlDbType.VarChar, 512)).Value = compMsg.Trim('\r', '\n');
                 spCmd.Parameters.Add(new SqlParameter("@evaluationCode", SqlDbType.Int)).Value = evalCode;
@@ -392,13 +392,13 @@ namespace CaptureTaskManager
 
                 LogDebug("Calling stored procedure " + SP_NAME_SET_COMPLETE);
 
-                if (m_DebugLevel >= 5)
+                if (mDebugLevel >= 5)
                 {
                     PrintCommandParams(spCmd);
                 }
 
                 // Execute the SP
-                var resCode = m_CaptureTaskDBProcedureExecutor.ExecuteSP(spCmd);
+                var resCode = mCaptureTaskDBProcedureExecutor.ExecuteSP(spCmd);
 
                 if (resCode == 0)
                 {

@@ -27,27 +27,27 @@ namespace CaptureTaskManager
 
         #region "Class variables"
 
-        protected readonly IMgrParams m_MgrParams;
+        protected readonly IMgrParams mMgrParams;
 
-        protected readonly string m_ConnStr;
+        protected readonly string mConnStr;
 
-        protected bool m_TaskWasAssigned = false;
+        protected bool mTaskWasAssigned = false;
 
         /// <summary>
         /// Debug level
         /// </summary>
         /// <remarks>4 means Info level (normal) logging; 5 for Debug level (verbose) logging</remarks>
-        protected readonly int m_DebugLevel;
+        protected readonly int mDebugLevel;
 
         /// <summary>
         /// Job parameters
         /// </summary>
-        protected readonly Dictionary<string, string> m_JobParams = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+        protected readonly Dictionary<string, string> mJobParams = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
 
         /// <summary>
         /// Stored procedure executor
         /// </summary>
-        protected readonly PRISM.ExecuteDatabaseSP m_CaptureTaskDBProcedureExecutor;
+        protected readonly PRISM.ExecuteDatabaseSP mCaptureTaskDBProcedureExecutor;
 
         #endregion
 
@@ -61,7 +61,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Job parameters
         /// </summary>
-        public Dictionary<string, string> TaskDictionary => m_JobParams;
+        public Dictionary<string, string> TaskDictionary => mJobParams;
 
         #endregion
 
@@ -73,20 +73,20 @@ namespace CaptureTaskManager
         /// <param name="mgrParams"></param>
         protected clsDbTask(IMgrParams mgrParams)
         {
-            m_MgrParams = mgrParams;
+            mMgrParams = mgrParams;
 
-            ManagerName = m_MgrParams.GetParam("MgrName", Environment.MachineName + "_Undefined-Manager");
+            ManagerName = mMgrParams.GetParam("MgrName", Environment.MachineName + "_Undefined-Manager");
 
             // Gigasax.DMS_Capture
-            m_ConnStr = m_MgrParams.GetParam("ConnectionString");
+            mConnStr = mMgrParams.GetParam("ConnectionString");
 
-            m_CaptureTaskDBProcedureExecutor = new PRISM.ExecuteDatabaseSP(m_ConnStr);
+            mCaptureTaskDBProcedureExecutor = new PRISM.ExecuteDatabaseSP(mConnStr);
 
-            m_CaptureTaskDBProcedureExecutor.ErrorEvent += CaptureTaskDBProcedureExecutor_DBErrorEvent;
+            mCaptureTaskDBProcedureExecutor.ErrorEvent += CaptureTaskDBProcedureExecutor_DBErrorEvent;
 
             // Cache the log level
             // 4 means Info level (normal) logging; 5 for Debug level (verbose) logging
-            m_DebugLevel = mgrParams.GetParam("DebugLevel", 4);
+            mDebugLevel = mgrParams.GetParam("DebugLevel", 4);
         }
 
         #endregion
@@ -149,7 +149,7 @@ namespace CaptureTaskManager
                 msg += Environment.NewLine + string.Format("  Name= {0,-20}, Value= {1}", myParam.ParameterName, DbCStr(myParam.Value));
             }
 
-            var writeToLog = m_DebugLevel >= 5;
+            var writeToLog = mDebugLevel >= 5;
             LogDebug("Parameter list:" + msg, writeToLog);
         }
 
@@ -174,7 +174,7 @@ namespace CaptureTaskManager
                 return false;
             }
 
-            m_JobParams.Clear();
+            mJobParams.Clear();
 
             try
             {
@@ -188,7 +188,7 @@ namespace CaptureTaskManager
 
                     if (!string.IsNullOrWhiteSpace(paramName))
                     {
-                        m_JobParams.Add(paramName, paramValue);
+                        mJobParams.Add(paramName, paramValue);
                     }
                 }
                 return true;

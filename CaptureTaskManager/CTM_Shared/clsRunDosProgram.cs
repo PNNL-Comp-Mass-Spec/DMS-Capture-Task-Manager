@@ -16,18 +16,18 @@ namespace CaptureTaskManager
         /// <summary>
         /// Monitor interval, in milliseconds
         /// </summary>
-        private int m_MonitorInterval = 2000;
+        private int mMonitorInterval = 2000;
 
-        private bool m_AbortProgramPostLogEntry;
+        private bool mAbortProgramPostLogEntry;
 
         /// <summary>
         /// Program runner
         /// </summary>
-        private ProgRunner m_ProgRunner;
+        private ProgRunner mProgRunner;
 
-        private DateTime m_StopTime;
+        private DateTime mStopTime;
 
-        private bool m_IsRunning;
+        private bool mIsRunning;
 
         #endregion
 
@@ -79,12 +79,12 @@ namespace CaptureTaskManager
         {
             get
             {
-                if (m_ProgRunner == null)
+                if (mProgRunner == null)
                 {
                     return string.Empty;
                 }
 
-                return m_ProgRunner.CachedConsoleOutput;
+                return mProgRunner.CachedConsoleOutput;
             }
         }
 
@@ -96,12 +96,12 @@ namespace CaptureTaskManager
         {
             get
             {
-                if (m_ProgRunner == null)
+                if (mProgRunner == null)
                 {
                     return string.Empty;
                 }
 
-                return m_ProgRunner.CachedConsoleError;
+                return mProgRunner.CachedConsoleError;
             }
         }
 
@@ -162,12 +162,12 @@ namespace CaptureTaskManager
         /// </summary>
         public int MonitorInterval
         {
-            get => m_MonitorInterval;
+            get => mMonitorInterval;
             set
             {
                 if (value < 250)
                     value = 250;
-                m_MonitorInterval = value;
+                mMonitorInterval = value;
             }
         }
 
@@ -180,12 +180,12 @@ namespace CaptureTaskManager
         {
             get
             {
-                if (m_ProgRunner == null)
+                if (mProgRunner == null)
                 {
                     return 0;
                 }
 
-                return m_ProgRunner.PID;
+                return mProgRunner.PID;
             }
         }
 
@@ -208,7 +208,7 @@ namespace CaptureTaskManager
         /// Time the program runner finished (UTC-based)
         /// </summary>
         /// <remarks>Will be the current time-of-day if still running</remarks>
-        public DateTime StopTime => m_IsRunning ? DateTime.UtcNow : m_StopTime;
+        public DateTime StopTime => mIsRunning ? DateTime.UtcNow : mStopTime;
 
         /// <summary>
         /// Current monitoring state
@@ -218,12 +218,12 @@ namespace CaptureTaskManager
         {
             get
             {
-                if (m_ProgRunner == null)
+                if (mProgRunner == null)
                 {
                     return ProgRunner.States.NotMonitoring;
                 }
 
-                return m_ProgRunner.State;
+                return mProgRunner.State;
             }
         }
 
@@ -277,7 +277,7 @@ namespace CaptureTaskManager
         /// <remarks></remarks>
         public void AbortProgramNow(bool postLogEntry)
         {
-            m_AbortProgramPostLogEntry = postLogEntry;
+            mAbortProgramPostLogEntry = postLogEntry;
             ProgramAborted = true;
         }
 
@@ -334,8 +334,8 @@ namespace CaptureTaskManager
         public bool RunProgram(string executablePath, string arguments, string progName, bool useResCode, int maxRuntimeSeconds)
         {
             // Require a minimum monitoring interval of 250 milliseconds
-            if (m_MonitorInterval < 250)
-                m_MonitorInterval = 250;
+            if (mMonitorInterval < 250)
+                mMonitorInterval = 250;
 
             if (maxRuntimeSeconds > 0 && maxRuntimeSeconds < 15)
             {
@@ -349,13 +349,13 @@ namespace CaptureTaskManager
                 OnWarningEvent("Unix-style path on a Windows machine; program execution may fail: " + executablePath);
             }
 
-            // Re-instantiate m_ProgRunner each time RunProgram is called since it is disposed of later in this function
+            // Re-instantiate mProgRunner each time RunProgram is called since it is disposed of later in this function
             // Also necessary to avoid problems caching the console output
-            m_ProgRunner = new ProgRunner
+            mProgRunner = new ProgRunner
             {
                 Arguments = arguments,
                 CreateNoWindow = CreateNoWindow,
-                MonitoringInterval = m_MonitorInterval,
+                MonitoringInterval = mMonitorInterval,
                 Name = progName,
                 Program = executablePath,
                 Repeat = false,
@@ -368,15 +368,15 @@ namespace CaptureTaskManager
                 ConsoleOutputFileIncludesCommandLine = ConsoleOutputFileIncludesCommandLine
             };
 
-            RegisterEvents(m_ProgRunner);
+            RegisterEvents(mProgRunner);
 
-            m_ProgRunner.ConsoleErrorEvent += ProgRunner_ConsoleErrorEvent;
-            m_ProgRunner.ConsoleOutputEvent += ProgRunner_ConsoleOutputEvent;
-            m_ProgRunner.ProgChanged += ProgRunner_ProgChanged;
+            mProgRunner.ConsoleErrorEvent += ProgRunner_ConsoleErrorEvent;
+            mProgRunner.ConsoleOutputEvent += ProgRunner_ConsoleOutputEvent;
+            mProgRunner.ProgChanged += ProgRunner_ProgChanged;
 
-            OnStatusEvent("RunProgram " + m_ProgRunner.Program + " " + m_ProgRunner.Arguments);
+            OnStatusEvent("RunProgram " + mProgRunner.Program + " " + mProgRunner.Arguments);
 
-            m_AbortProgramPostLogEntry = true;
+            mAbortProgramPostLogEntry = true;
             ProgramAborted = false;
 
             var runtimeExceeded = false;
@@ -385,17 +385,17 @@ namespace CaptureTaskManager
             try
             {
                 // Start the program executing
-                m_ProgRunner.StartAndMonitorProgram();
+                mProgRunner.StartAndMonitorProgram();
 
                 StartTime = DateTime.UtcNow;
-                m_StopTime = DateTime.MinValue;
-                m_IsRunning = true;
+                mStopTime = DateTime.MinValue;
+                mIsRunning = true;
 
                 // Loop until program is complete, or until MaxRuntimeSeconds seconds elapses
-                while (m_ProgRunner.State != ProgRunner.States.NotMonitoring)
+                while (mProgRunner.State != ProgRunner.States.NotMonitoring)
                 {
                     OnLoopWaiting();
-                    ProgRunner.SleepMilliseconds(m_MonitorInterval);
+                    ProgRunner.SleepMilliseconds(mMonitorInterval);
 
                     if (MaxRuntimeSeconds > 0)
                     {
@@ -410,7 +410,7 @@ namespace CaptureTaskManager
                     if (!ProgramAborted)
                         continue;
 
-                    if (m_AbortProgramPostLogEntry && !abortLogged)
+                    if (mAbortProgramPostLogEntry && !abortLogged)
                     {
                         abortLogged = true;
                         string msg;
@@ -426,33 +426,33 @@ namespace CaptureTaskManager
                         OnErrorEvent(msg);
                     }
 
-                    m_ProgRunner.StopMonitoringProgram(kill: true);
+                    mProgRunner.StopMonitoringProgram(kill: true);
 
                 } // end while
 
-                m_StopTime = DateTime.UtcNow;
-                m_IsRunning = false;
+                mStopTime = DateTime.UtcNow;
+                mIsRunning = false;
 
             }
             catch (Exception ex)
             {
                 var msg = "Exception running external program " + executablePath;
                 OnErrorEvent(msg, ex);
-                m_ProgRunner = null;
+                mProgRunner = null;
 
-                m_StopTime = DateTime.UtcNow;
-                m_IsRunning = false;
+                mStopTime = DateTime.UtcNow;
+                mIsRunning = false;
 
                 return false;
             }
 
             // Cache the exit code in ExitCode
-            ExitCode = m_ProgRunner.ExitCode;
-            m_ProgRunner = null;
+            ExitCode = mProgRunner.ExitCode;
+            mProgRunner = null;
 
             if (useResCode && ExitCode != 0)
             {
-                if (ProgramAborted && m_AbortProgramPostLogEntry || !ProgramAborted)
+                if (ProgramAborted && mAbortProgramPostLogEntry || !ProgramAborted)
                 {
                     var msg = "  ProgRunner.ExitCode = " + ExitCode + " for Program = " + executablePath;
                     OnErrorEvent(msg);

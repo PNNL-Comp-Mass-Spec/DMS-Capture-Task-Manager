@@ -41,24 +41,23 @@ namespace DatasetArchivePlugin
 
         #region "Class variables"
 
-        private readonly IMgrParams m_MgrParams;
-        protected readonly ITaskParams m_TaskParams;
-        private readonly IStatusFile m_StatusTools;
-        private readonly FileTools m_FileTools;
+        private readonly IMgrParams mMgrParams;
+        protected readonly ITaskParams mTaskParams;
+        private readonly IStatusFile mStatusTools;
+        private readonly FileTools mFileTools;
 
-        protected string m_ErrMsg = string.Empty;
-        private string m_WarningMsg = string.Empty;
-        private string m_DSNamePath;
+        protected string mErrMsg = string.Empty;
+        private string mDSNamePath;
 
-        private bool m_MyEmslUploadSuccess;
+        private bool mMyEmslUploadSuccess;
 
-        private readonly int m_DebugLevel;
+        private readonly int mDebugLevel;
 
-        private readonly string m_ArchiveOrUpdate;
+        private readonly string mArchiveOrUpdate;
 
-        private readonly ExecuteDatabaseSP m_CaptureDBProcedureExecutor;
+        private readonly ExecuteDatabaseSP mCaptureDbProcedureExecutor;
 
-        protected string m_DatasetName = string.Empty;
+        protected string mDatasetName = string.Empty;
 
         protected DateTime mLastStatusUpdateTime = DateTime.UtcNow;
         private DateTime mLastProgressUpdateTime = DateTime.UtcNow;
@@ -73,7 +72,7 @@ namespace DatasetArchivePlugin
         /// <summary>
         /// Implements IArchiveOps.ErrMsg
         /// </summary>
-        public string ErrMsg => m_ErrMsg;
+        public string ErrMsg => mErrMsg;
 
         /// <summary>
         /// True if the status indicates a critical error and there is no point in retrying
@@ -88,7 +87,7 @@ namespace DatasetArchivePlugin
         /// <summary>
         /// Warning message
         /// </summary>
-        public string WarningMsg => m_WarningMsg;
+        public string WarningMsg { get; private set; } = string.Empty;
 
         #endregion
 
@@ -103,30 +102,30 @@ namespace DatasetArchivePlugin
         /// <param name="fileTools"></param>
         protected clsOpsBase(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools, FileTools fileTools)
         {
-            m_MgrParams = mgrParams;
-            m_TaskParams = taskParams;
-            m_StatusTools = statusTools;
-            m_FileTools = fileTools;
+            mMgrParams = mgrParams;
+            mTaskParams = taskParams;
+            mStatusTools = statusTools;
+            mFileTools = fileTools;
 
             // DebugLevel of 4 means Info level (normal) logging; 5 for Debug level (verbose) logging
-            m_DebugLevel = m_MgrParams.GetParam("DebugLevel", 4);
+            mDebugLevel = mMgrParams.GetParam("DebugLevel", 4);
 
-            if (m_TaskParams.GetParam("StepTool") == "DatasetArchive")
+            if (mTaskParams.GetParam("StepTool") == "DatasetArchive")
             {
-                m_ArchiveOrUpdate = ARCHIVE;
+                mArchiveOrUpdate = ARCHIVE;
             }
             else
             {
-                m_ArchiveOrUpdate = UPDATE;
+                mArchiveOrUpdate = UPDATE;
             }
 
             // This connection string points to the DMS_Capture database
-            var connectionString = m_MgrParams.GetParam("ConnectionString");
-            m_CaptureDBProcedureExecutor = new ExecuteDatabaseSP(connectionString);
+            var connectionString = mMgrParams.GetParam("ConnectionString");
+            mCaptureDbProcedureExecutor = new ExecuteDatabaseSP(connectionString);
 
-            RegisterEvents(m_CaptureDBProcedureExecutor);
+            RegisterEvents(mCaptureDbProcedureExecutor);
 
-            TraceMode = m_MgrParams.GetParam("TraceMode", false);
+            TraceMode = mMgrParams.GetParam("TraceMode", false);
         }
 
         #endregion
@@ -140,29 +139,29 @@ namespace DatasetArchivePlugin
         /// <returns>TRUE for success, FALSE for failure</returns>
         public virtual bool PerformTask()
         {
-            m_DatasetName = m_TaskParams.GetParam("Dataset");
+            mDatasetName = mTaskParams.GetParam("Dataset");
 
             // Set client/server perspective & setup paths
             string baseStoragePath;
-            if (m_MgrParams.GetParam("perspective").ToLower() == "client")
+            if (mMgrParams.GetParam("perspective").ToLower() == "client")
             {
-                baseStoragePath = m_TaskParams.GetParam("Storage_Vol_External");
+                baseStoragePath = mTaskParams.GetParam("Storage_Vol_External");
             }
             else
             {
-                baseStoragePath = m_TaskParams.GetParam("Storage_Vol");
+                baseStoragePath = mTaskParams.GetParam("Storage_Vol");
             }
 
             // Path to dataset on storage server
-            m_DSNamePath = Path.Combine(Path.Combine(baseStoragePath, m_TaskParams.GetParam("Storage_Path")), m_TaskParams.GetParam("Folder"));
+            mDSNamePath = Path.Combine(Path.Combine(baseStoragePath, mTaskParams.GetParam("Storage_Path")), mTaskParams.GetParam("Folder"));
 
             // Verify dataset is in specified location
-            if (!VerifyDSPresent(m_DSNamePath))
+            if (!VerifyDSPresent(mDSNamePath))
             {
-                var errorMessage = "Dataset folder " + m_DSNamePath + " not found";
-                m_ErrMsg = string.Copy(errorMessage);
+                var errorMessage = "Dataset folder " + mDSNamePath + " not found";
+                mErrMsg = string.Copy(errorMessage);
                 OnErrorEvent(errorMessage);
-                LogOperationFailed(m_DatasetName, string.Empty, true);
+                LogOperationFailed(mDatasetName, string.Empty, true);
                 return false;
             }
 
@@ -183,7 +182,7 @@ namespace DatasetArchivePlugin
 
         private void CreateArchiveUpdateJobsForDataset(IReadOnlyCollection<string> subdirectoryNames)
         {
-            var failureMsg = "Error creating archive update tasks for dataset " + m_DatasetName + "; " +
+            var failureMsg = "Error creating archive update tasks for dataset " + mDatasetName + "; " +
                              "need to create ArchiveUpdate tasks for subdirectories " +
                              string.Join(", ", subdirectoryNames);
 
@@ -197,7 +196,7 @@ namespace DatasetArchivePlugin
                 };
 
                 spCmd.Parameters.Add("@Return", SqlDbType.Int).Direction = ParameterDirection.ReturnValue;
-                spCmd.Parameters.Add("@DatasetName", SqlDbType.VarChar, 128).Value = m_DatasetName;
+                spCmd.Parameters.Add("@DatasetName", SqlDbType.VarChar, 128).Value = mDatasetName;
                 var resultsFolderParam = spCmd.Parameters.Add("@ResultsFolderName", SqlDbType.VarChar, 128);
                 spCmd.Parameters.Add("@AllowBlankResultsFolder", SqlDbType.TinyInt).Value = 0;
                 spCmd.Parameters.Add("@PushDatasetToMyEMSL", SqlDbType.TinyInt).Value = 1;
@@ -210,12 +209,12 @@ namespace DatasetArchivePlugin
                 {
                     resultsFolderParam.Value = subdirectoryName;
 
-                    var datasetAndDirectory = string.Format("dataset {0}, subdirectory {1}", m_DatasetName, subdirectoryName);
+                    var datasetAndDirectory = string.Format("dataset {0}, subdirectory {1}", mDatasetName, subdirectoryName);
 
                     LogTools.LogMessage("Creating archive update job for " + datasetAndDirectory);
 
                     // Execute the SP (retry the call up to 4 times)
-                    var resCode = m_CaptureDBProcedureExecutor.ExecuteSP(spCmd, 4);
+                    var resCode = mCaptureDbProcedureExecutor.ExecuteSP(spCmd, 4);
 
                     if (resCode == 0)
                     {
@@ -264,7 +263,7 @@ namespace DatasetArchivePlugin
             var attempts = 0;
 
             allowRetry = true;
-            m_MyEmslUploadSuccess = false;
+            mMyEmslUploadSuccess = false;
             criticalErrorMessage = string.Empty;
 
             if (maxAttempts < 1)
@@ -274,7 +273,7 @@ namespace DatasetArchivePlugin
             {
                 attempts += 1;
 
-                Console.WriteLine("Uploading files for " + m_DatasetName + " to MyEMSL; attempt=" + attempts);
+                Console.WriteLine("Uploading files for " + mDatasetName + " to MyEMSL; attempt=" + attempts);
 
                 success = UploadToMyEMSL(recurse, debugMode, useTestInstance, out allowRetry, out criticalErrorMessage);
 
@@ -296,15 +295,15 @@ namespace DatasetArchivePlugin
             if (!success)
             {
                 if (debugMode != EasyHttp.eDebugMode.DebugDisabled)
-                    m_WarningMsg = "Debug mode was enabled; thus, .tar file was created locally and not uploaded to MyEMSL";
+                    WarningMsg = "Debug mode was enabled; thus, .tar file was created locally and not uploaded to MyEMSL";
                 else
-                    m_WarningMsg = AppendToString(m_WarningMsg, "UploadToMyEMSL reports False");
+                    WarningMsg = AppendToString(WarningMsg, "UploadToMyEMSL reports False");
             }
 
-            if (success && !m_MyEmslUploadSuccess)
-                m_WarningMsg = AppendToString(m_WarningMsg, "UploadToMyEMSL reports True but m_MyEmslUploadSuccess is False");
+            if (success && !mMyEmslUploadSuccess)
+                WarningMsg = AppendToString(WarningMsg, "UploadToMyEMSL reports True but mMyEmslUploadSuccess is False");
 
-            return success && m_MyEmslUploadSuccess;
+            return success && mMyEmslUploadSuccess;
         }
 
         /// <summary>
@@ -331,9 +330,9 @@ namespace DatasetArchivePlugin
 
             try
             {
-                m_ErrMsg = string.Empty;
+                mErrMsg = string.Empty;
 
-                var statusMessage = "Bundling changes to dataset " + m_DatasetName + " for transmission to MyEMSL";
+                var statusMessage = "Bundling changes to dataset " + mDatasetName + " for transmission to MyEMSL";
                 OnStatusEvent(statusMessage);
 
                 if (!recurse)
@@ -343,7 +342,7 @@ namespace DatasetArchivePlugin
 
                 var config = new Configuration();
 
-                myEMSLUploader = new MyEMSLUploader(config, m_MgrParams.ParamDictionary, m_TaskParams.TaskDictionary, m_FileTools)
+                myEMSLUploader = new MyEMSLUploader(config, mMgrParams.ParamDictionary, mTaskParams.TaskDictionary, mFileTools)
                 {
                     TraceMode = TraceMode
                 };
@@ -356,10 +355,10 @@ namespace DatasetArchivePlugin
 
                 myEMSLUploader.MetadataDefinedEvent += myEMSLUploader_MetadataDefinedEvent;
 
-                m_TaskParams.AddAdditionalParameter(MyEMSLUploader.RECURSIVE_UPLOAD, recurse.ToString());
+                mTaskParams.AddAdditionalParameter(MyEMSLUploader.RECURSIVE_UPLOAD, recurse.ToString());
 
                 // Cache the operator name; used in the exception handler below
-                operatorUsername = m_TaskParams.GetParam("Operator_PRN", "Unknown_Operator");
+                operatorUsername = mTaskParams.GetParam("Operator_PRN", "Unknown_Operator");
 
                 config.UseTestInstance = useTestInstance;
 
@@ -383,13 +382,13 @@ namespace DatasetArchivePlugin
 
                 var elapsedTime = DateTime.UtcNow.Subtract(startTime);
 
-                statusMessage = "Upload of " + m_DatasetName + " completed in " + elapsedTime.TotalSeconds.ToString("0.0") + " seconds";
+                statusMessage = "Upload of " + mDatasetName + " completed in " + elapsedTime.TotalSeconds.ToString("0.0") + " seconds";
                 if (!success)
                 {
                     statusMessage += " (success=false)";
                     if (clsUtilities.BytesToGB(myEMSLUploader.MetadataContainer.TotalFileSizeToUpload) > LARGE_DATASET_THRESHOLD_GB_NO_RETRY)
                     {
-                        m_ErrMsg = LARGE_DATASET_UPLOAD_ERROR;
+                        mErrMsg = LARGE_DATASET_UPLOAD_ERROR;
 
                         // Do not auto-retry uploads over 15 GB; force an admin to check on things
                         allowRetry = false;
@@ -429,7 +428,7 @@ namespace DatasetArchivePlugin
 
                 OnMyEMSLUploadComplete(e);
 
-                m_StatusTools.UpdateAndWrite(100);
+                mStatusTools.UpdateAndWrite(100);
 
                 if (!success)
                     return false;
@@ -438,10 +437,10 @@ namespace DatasetArchivePlugin
                 if (skippedSubdirectories.Count == 0)
                     return true;
 
-                if (!m_MyEmslUploadSuccess)
+                if (!mMyEmslUploadSuccess)
                 {
-                    var msg = "SetupMetadataAndUpload reported true for dataset " + m_DatasetName +
-                              " but m_MyEmslUploadSuccess is false; need to create ArchiveUpdate tasks for subdirectories " +
+                    var msg = "SetupMetadataAndUpload reported true for dataset " + mDatasetName +
+                              " but mMyEmslUploadSuccess is false; need to create ArchiveUpdate tasks for subdirectories " +
                               string.Join(", ", skippedSubdirectories);
                     LogTools.LogError(msg, null, true);
 
@@ -457,49 +456,49 @@ namespace DatasetArchivePlugin
             catch (Exception ex)
             {
                 const string errorMessage = "Exception uploading to MyEMSL";
-                m_ErrMsg = string.Copy(errorMessage);
+                mErrMsg = string.Copy(errorMessage);
                 OnErrorEvent(errorMessage, ex);
 
                 if (ex.Message.Contains(DMSMetadataObject.UNDEFINED_EUS_OPERATOR_ID))
                 {
                     if (ex.Message.Contains(DMSMetadataObject.UNDEFINED_EUS_OPERATOR_ID))
 
-                        m_ErrMsg += "; operator not defined in EUS. " +
+                        mErrMsg += "; operator not defined in EUS. " +
                                     "Have " + operatorUsername + " login to " + DMSMetadataObject.EUS_PORTAL_URL + " " +
                                     "then wait for T_EUS_Users to update, " +
                                     "then update job parameters using SP UpdateParametersForJob";
 
                     // Do not retry the upload; it will fail again due to the same error
                     allowRetry = false;
-                    LogOperationFailed(m_DatasetName, ex.Message, true);
+                    LogOperationFailed(mDatasetName, ex.Message, true);
                 }
                 else if (ex.Message.Contains(DMSMetadataObject.SOURCE_DIRECTORY_NOT_FOUND))
                 {
-                    m_ErrMsg += ": " + DMSMetadataObject.SOURCE_DIRECTORY_NOT_FOUND;
+                    mErrMsg += ": " + DMSMetadataObject.SOURCE_DIRECTORY_NOT_FOUND;
 
                     // Do not retry the upload; it will fail again due to the same error
                     allowRetry = false;
-                    LogOperationFailed(m_DatasetName, m_ErrMsg, true);
+                    LogOperationFailed(mDatasetName, mErrMsg, true);
                 }
                 else if (ex.Message.Contains(DMSMetadataObject.TOO_MANY_FILES_TO_ARCHIVE))
                 {
-                    m_ErrMsg += ": " + DMSMetadataObject.TOO_MANY_FILES_TO_ARCHIVE;
+                    mErrMsg += ": " + DMSMetadataObject.TOO_MANY_FILES_TO_ARCHIVE;
 
                     // Do not retry the upload; it will fail again due to the same error
                     allowRetry = false;
-                    LogOperationFailed(m_DatasetName, m_ErrMsg, true);
+                    LogOperationFailed(mDatasetName, mErrMsg, true);
                 }
                 else if (clsUtilities.BytesToGB(myEMSLUploader.MetadataContainer.TotalFileSizeToUpload) > LARGE_DATASET_THRESHOLD_GB_NO_RETRY)
                 {
-                    m_ErrMsg += ": " + LARGE_DATASET_UPLOAD_ERROR;
+                    mErrMsg += ": " + LARGE_DATASET_UPLOAD_ERROR;
 
                     // Do not auto-retry uploads of over 15 GB in size; force an admin to check on things
                     allowRetry = false;
-                    LogOperationFailed(m_DatasetName, m_ErrMsg, true);
+                    LogOperationFailed(mDatasetName, mErrMsg, true);
                 }
                 else
                 {
-                    LogOperationFailed(m_DatasetName);
+                    LogOperationFailed(mDatasetName);
                 }
 
                 // Raise an event with the stats, though only if errorCode is non-zero or FileCountNew or FileCountUpdated are positive
@@ -588,7 +587,7 @@ namespace DatasetArchivePlugin
         /// <param name="logToDB">True to log to the database and a local file; false for local file only</param>
         private void LogOperationFailed(string dsName, string reason = "", bool logToDB = false)
         {
-            var msg = m_ArchiveOrUpdate + "failed, dataset " + dsName;
+            var msg = mArchiveOrUpdate + "failed, dataset " + dsName;
             if (!string.IsNullOrEmpty(reason))
                 msg += "; " + reason;
 
@@ -630,7 +629,7 @@ namespace DatasetArchivePlugin
 
         void myEMSLUploader_MetadataDefinedEvent(object sender, MessageEventArgs e)
         {
-            if (m_DebugLevel >= 5)
+            if (mDebugLevel >= 5)
             {
                 // e.Message contains the metadata JSON
                 OnDebugEvent(e.Message);
@@ -684,7 +683,7 @@ namespace DatasetArchivePlugin
             if (DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds >= 3 && e.PercentCompleted > 0)
             {
                 mLastProgressUpdateTime = DateTime.UtcNow;
-                m_StatusTools.UpdateAndWrite((float)e.PercentCompleted);
+                mStatusTools.UpdateAndWrite((float)e.PercentCompleted);
             }
 
         }
@@ -701,7 +700,7 @@ namespace DatasetArchivePlugin
                 msg += ": " + e.ServerResponse;
 
             OnDebugEvent(msg);
-            m_MyEmslUploadSuccess = true;
+            mMyEmslUploadSuccess = true;
         }
 
         private void OnMyEMSLUploadComplete(MyEMSLUploadEventArgs e)

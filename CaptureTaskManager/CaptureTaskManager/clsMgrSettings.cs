@@ -414,7 +414,7 @@ namespace CaptureTaskManager
 
             if (string.IsNullOrEmpty(managerName))
             {
-                mErrMsg = "MgrCnfgDbConnectStr parameter not found in m_ParamDictionary; " +
+                mErrMsg = "MgrCnfgDbConnectStr parameter not found in mParamDictionary; " +
                           "it should be defined in the " + Path.GetFileName(GetConfigFilePath()) + " file";
 
                 if (TraceMode)

@@ -37,9 +37,9 @@ namespace ArchiveStatusCheckPlugin
             if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
                 return mRetData;
 
-            if (m_DebugLevel >= 5)
+            if (mDebugLevel >= 5)
             {
-                msg = "Verifying status of files in MyEMSL for dataset '" + m_Dataset + "'";
+                msg = "Verifying status of files in MyEMSL for dataset '" + mDataset + "'";
                 LogMessage(msg);
             }
 
@@ -56,16 +56,16 @@ namespace ArchiveStatusCheckPlugin
             {
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;       // Possibly instead use CLOSEOUT_NOT_READY
                 mRetData.CloseoutMsg = "Exception checking archive status (ArchiveStatusCheckPlugin): " + ex.Message;
-                msg = "Exception checking archive status for job " + m_Job;
+                msg = "Exception checking archive status for job " + mJob;
                 LogError(msg, ex);
             }
 
             if (success)
             {
                 // Everything was good
-                if (m_DebugLevel >= 4)
+                if (mDebugLevel >= 4)
                 {
-                    msg = "MyEMSL status verification successful for dataset " + m_Dataset;
+                    msg = "MyEMSL status verification successful for dataset " + mDataset;
                     LogMessage(msg);
                 }
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
@@ -103,11 +103,11 @@ namespace ArchiveStatusCheckPlugin
             if (dctStatusData.Count == 0)
             {
                 msg = "Could not find any MyEMSL_Status_URIs; cannot verify archive status. " +
-                      "If all entries for Dataset " + m_DatasetID + " have ErrorCode -1 or 101 this job step should be manually skipped";
+                      "If all entries for Dataset " + mDatasetID + " have ErrorCode -1 or 101 this job step should be manually skipped";
 
                 mRetData.CloseoutMsg = msg;
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                LogError(msg + " for job " + m_Job);
+                LogError(msg + " for job " + mJob);
                 return false;
             }
 
@@ -134,7 +134,7 @@ namespace ArchiveStatusCheckPlugin
 
                 foreach (var criticalError in dctCriticalErrors)
                 {
-                    LogError("Critical MyEMSL upload error for job " + m_Job + ", status num " + criticalError.Key + ": " + criticalError.Value);
+                    LogError("Critical MyEMSL upload error for job " + mJob + ", status num " + criticalError.Key + ": " + criticalError.Value);
                 }
             }
 
@@ -223,7 +223,7 @@ namespace ArchiveStatusCheckPlugin
                 try
                 {
                     var ingestSuccess = GetMyEMSLIngestStatus(
-                        m_Job, statusChecker, statusInfo.StatusURI,
+                        mJob, statusChecker, statusInfo.StatusURI,
                         statusInfo.EUS_InstrumentID, statusInfo.EUS_ProposalID, statusInfo.EUS_UploaderID,
                         mRetData, out _, out var currentTask, out var percentComplete);
 
@@ -241,7 +241,7 @@ namespace ArchiveStatusCheckPlugin
                     // statusInfo.TransactionId = statusChecker.IngestStepTransactionId(xmlServerResponse);
 
                     dctVerifiedURIs.Add(statusNum, statusInfo.StatusURI);
-                    LogDebug("Successful MyEMSL upload for job " + m_Job + ", status num " + statusNum + ": " + statusInfo.StatusURI);
+                    LogDebug("Successful MyEMSL upload for job " + mJob + ", status num " + statusNum + ": " + statusInfo.StatusURI);
                     continue;
 
                 }
@@ -250,11 +250,11 @@ namespace ArchiveStatusCheckPlugin
                     exceptionCount++;
                     if (exceptionCount < 3)
                     {
-                        LogWarning("Exception verifying archive status for job " + m_Job + ": " + ex.Message);
+                        LogWarning("Exception verifying archive status for job " + mJob + ": " + ex.Message);
                     }
                     else
                     {
-                        LogError("Exception verifying archive status for job " + m_Job + ": ", ex);
+                        LogError("Exception verifying archive status for job " + mJob + ": ", ex);
                         break;
                     }
                 }
@@ -362,7 +362,7 @@ namespace ArchiveStatusCheckPlugin
             // First look for a specific Status_URI for this job
             // Only DatasetArchive or ArchiveUpdate jobs will have this job parameter
             // MyEMSLVerify will not have this parameter
-            var statusURI = m_TaskParams.GetParam("MyEMSL_Status_URI", string.Empty);
+            var statusURI = mTaskParams.GetParam("MyEMSL_Status_URI", string.Empty);
 
             // Note that GetStatusURIsAndSubfolders requires that the column order be StatusNum, Status_URI, Subfolder, Ingest_Steps_Completed, EUS_InstrumentID, EUS_ProposalID, EUS_UploaderID, ErrorCode
             var sql =
@@ -370,7 +370,7 @@ namespace ArchiveStatusCheckPlugin
                        " IsNull(Ingest_Steps_Completed, 0) AS Ingest_Steps_Completed, " +
                        " EUS_InstrumentID, EUS_ProposalID, EUS_UploaderID, ErrorCode" +
                 " FROM V_MyEMSL_Uploads " +
-                " WHERE Dataset_ID = " + m_DatasetID;
+                " WHERE Dataset_ID = " + mDatasetID;
 
             if (!string.IsNullOrEmpty(statusURI))
             {
@@ -396,7 +396,7 @@ namespace ArchiveStatusCheckPlugin
 
             try
             {
-                sql += " AND Job <= " + m_Job +
+                sql += " AND Job <= " + mJob +
                        " AND ISNULL(StatusNum, 0) > 0 " +
                        " AND ErrorCode NOT IN (-1, 101)" +
                        " ORDER BY Entry_ID";
@@ -406,7 +406,7 @@ namespace ArchiveStatusCheckPlugin
             }
             catch (Exception ex)
             {
-                var msg = "Exception connecting to database for job " + m_Job + ": " + ex.Message;
+                var msg = "Exception connecting to database for job " + mJob + ": " + ex.Message;
                 LogError(msg);
             }
 
@@ -422,7 +422,7 @@ namespace ArchiveStatusCheckPlugin
         private void GetStatusURIsAndSubfolders(string sql, IDictionary<int, clsIngestStatusInfo> dctStatusData, int retryCount = 2)
         {
             // This Connection String points to the DMS_Capture database
-            var connectionString = m_MgrParams.GetParam("ConnectionString");
+            var connectionString = mMgrParams.GetParam("ConnectionString");
 
             while (retryCount >= 0)
             {
@@ -484,7 +484,7 @@ namespace ArchiveStatusCheckPlugin
 
                     var msg = string.Format("GetStatusURIs; Exception querying database for job {0}: {1}; " +
                                             "ConnectionString: {2}, RetryCount = {3}",
-                                            m_Job, ex.Message, connectionString, retryCount);
+                                            mJob, ex.Message, connectionString, retryCount);
                     LogError(msg);
 
                     // Delay for 5 seconds before trying again
@@ -533,7 +533,7 @@ namespace ArchiveStatusCheckPlugin
             }
             catch (Exception ex)
             {
-                var msg = "Exception calling stored procedure SetMyEMSLUploadSupersededIfFailed, job " + m_Job;
+                var msg = "Exception calling stored procedure SetMyEMSLUploadSupersededIfFailed, job " + mJob;
                 LogError(msg, ex);
             }
 
@@ -555,22 +555,22 @@ namespace ArchiveStatusCheckPlugin
                 };
 
                 spCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-                spCmd.Parameters.Add("@DatasetID", SqlDbType.Int).Value = m_DatasetID;
+                spCmd.Parameters.Add("@DatasetID", SqlDbType.Int).Value = mDatasetID;
                 spCmd.Parameters.Add("@statusNumList", SqlDbType.VarChar, 1024).Value = statusNums;
                 spCmd.Parameters.Add("@ingestStepsCompleted", SqlDbType.TinyInt).Value = ingestStepsCompleted;
                 spCmd.Parameters.Add("@message", SqlDbType.VarChar, 512).Direction = ParameterDirection.Output;
 
-                var resCode = m_CaptureDBProcedureExecutor.ExecuteSP(spCmd, 2);
+                var resCode = mCaptureDbProcedureExecutor.ExecuteSP(spCmd, 2);
 
                 if (resCode == 0)
                     return;
 
-                var msg = "Error " + resCode + " calling stored procedure " + SP_NAME + ", job " + m_Job;
+                var msg = "Error " + resCode + " calling stored procedure " + SP_NAME + ", job " + mJob;
                 LogError(msg);
             }
             catch (Exception ex)
             {
-                var msg = "Exception calling stored procedure " + SP_NAME + ", job " + m_Job;
+                var msg = "Exception calling stored procedure " + SP_NAME + ", job " + mJob;
                 LogError(msg, ex);
             }
 
@@ -597,23 +597,23 @@ namespace ArchiveStatusCheckPlugin
                 };
 
                 spCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-                spCmd.Parameters.Add("@datasetID", SqlDbType.Int).Value = m_DatasetID;
+                spCmd.Parameters.Add("@datasetID", SqlDbType.Int).Value = mDatasetID;
                 spCmd.Parameters.Add("@StatusNumList", SqlDbType.VarChar, 1024).Value = statusNums;
                 spCmd.Parameters.Add("@statusURIList", SqlDbType.VarChar, 4000).Value = statusURIs;
                 spCmd.Parameters.Add("@ingestStepsCompleted", SqlDbType.TinyInt).Value = ingestStepsCompleted;
                 spCmd.Parameters.Add("@message", SqlDbType.VarChar, 512).Direction = ParameterDirection.Output;
 
-                var resCode = m_CaptureDBProcedureExecutor.ExecuteSP(spCmd, 2);
+                var resCode = mCaptureDbProcedureExecutor.ExecuteSP(spCmd, 2);
 
                 if (resCode == 0)
                     return;
 
-                var msg = "Error " + resCode + " calling stored procedure " + SP_NAME + ", job " + m_Job;
+                var msg = "Error " + resCode + " calling stored procedure " + SP_NAME + ", job " + mJob;
                 LogError(msg);
             }
             catch (Exception ex)
             {
-                var msg = "Exception calling stored procedure " + SP_NAME + ", job " + m_Job;
+                var msg = "Exception calling stored procedure " + SP_NAME + ", job " + mJob;
                 LogError(msg, ex);
             }
 

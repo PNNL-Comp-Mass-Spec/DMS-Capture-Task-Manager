@@ -50,8 +50,8 @@ namespace ArchiveVerifyPlugin
             // already logged by the DatasetArchive plugin, and we don't need to make the
             // additional database call to SetStepTaskToolVersion
 
-            var writeToLog = m_DebugLevel >= 4;
-            LogDebug("Verifying files in MyEMSL for dataset '" + m_Dataset + "'", writeToLog);
+            var writeToLog = mDebugLevel >= 4;
+            LogDebug("Verifying files in MyEMSL for dataset '" + mDataset + "'", writeToLog);
 
             // Set this to Success for now
             mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
@@ -74,7 +74,7 @@ namespace ArchiveVerifyPlugin
                 mRetData.CloseoutMsg = "Exception checking archive status (ArchiveVerifyPlugin): " + ex.Message;
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 
-                LogError("Exception checking archive status for job " + m_Job, ex);
+                LogError("Exception checking archive status for job " + mJob, ex);
 
                 statusNum = 0;
                 ingestStepsCompleted = 0;
@@ -120,7 +120,7 @@ namespace ArchiveVerifyPlugin
             if (success)
             {
                 // Everything was good
-                LogMessage("MyEMSL verification successful for job " + m_Job + ", dataset " + m_Dataset);
+                LogMessage("MyEMSL verification successful for job " + mJob + ", dataset " + mDataset);
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
 
                 // Note that stored procedure SetStepTaskComplete will update MyEMSL State values if mRetData.EvalCode = 5
@@ -135,7 +135,7 @@ namespace ArchiveVerifyPlugin
                     LogWarning(
                         "Success is false yet CloseoutType is EnumCloseOutType.CLOSEOUT_SUCCESS; " +
                         "track down where to properly change CloseoutType " +
-                        "(Job " + m_Job + " on " + m_MgrName + ")", true);
+                        "(Job " + mJob + " on " + mMgrName + ")", true);
 
                     mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
                     if (string.IsNullOrWhiteSpace(mRetData.CloseoutMsg))
@@ -158,11 +158,11 @@ namespace ArchiveVerifyPlugin
             // If not complete, this manager will return completionCode CLOSEOUT_NOT_READY=2
             // which will tell the DMS_Capture DB to reset the task to state 2 and bump up the Next_Try value by 30 minutes
 
-            var statusURI = m_TaskParams.GetParam("MyEMSL_Status_URI", string.Empty);
+            var statusURI = mTaskParams.GetParam("MyEMSL_Status_URI", string.Empty);
 
-            var eusInstrumentID = m_TaskParams.GetParam("EUS_InstrumentID", 0);
-            var eusProposalID = m_TaskParams.GetParam("EUS_ProposalID", string.Empty);
-            var eusUploaderID = m_TaskParams.GetParam("EUS_UploaderID", 0);
+            var eusInstrumentID = mTaskParams.GetParam("EUS_InstrumentID", 0);
+            var eusProposalID = mTaskParams.GetParam("EUS_ProposalID", string.Empty);
+            var eusUploaderID = mTaskParams.GetParam("EUS_UploaderID", 0);
 
             if (string.IsNullOrEmpty(statusURI))
             {
@@ -188,7 +188,7 @@ namespace ArchiveVerifyPlugin
                 mRetData.CloseoutMsg = "";
 
                 var ingestSuccess = GetMyEMSLIngestStatus(
-                    m_Job, statusChecker, statusURI,
+                    mJob, statusChecker, statusURI,
                     eusInstrumentID, eusProposalID, eusUploaderID,
                     mRetData, out _, out var currentTask, out var percentComplete);
 
@@ -249,20 +249,20 @@ namespace ArchiveVerifyPlugin
             try
             {
 
-                var transferFolderPathBase = m_TaskParams.GetParam("TransferFolderPath", string.Empty);
+                var transferFolderPathBase = mTaskParams.GetParam("TransferFolderPath", string.Empty);
                 if (!ParameterDefined("TransferFolderPath", transferFolderPathBase))
                     return false;
 
-                if (string.IsNullOrEmpty(m_Dataset))
+                if (string.IsNullOrEmpty(mDataset))
                 {
-                    mRetData.CloseoutMsg = "m_Dataset is empty; unable to continue";
+                    mRetData.CloseoutMsg = "mDataset is empty; unable to continue";
                     LogError(mRetData.CloseoutMsg);
                     return false;
                 }
 
-                var transferFolderPath = Path.Combine(transferFolderPathBase, m_Dataset);
+                var transferFolderPath = Path.Combine(transferFolderPathBase, mDataset);
 
-                var jobNumber = m_TaskParams.GetParam("Job", string.Empty);
+                var jobNumber = mTaskParams.GetParam("Job", string.Empty);
                 if (!ParameterDefined("Job", jobNumber))
                     return false;
 
@@ -288,7 +288,7 @@ namespace ArchiveVerifyPlugin
                     if (mismatchCountToMetadata > 0)
                     {
                         if (mTotalMismatchCount == 0)
-                            LogError("MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
+                            LogError("MyEmsl verification errors for dataset " + mDataset + ", job " + mJob);
 
                         mTotalMismatchCount += mismatchCountToMetadata;
 
@@ -309,15 +309,15 @@ namespace ArchiveVerifyPlugin
 
                 // Look for files that should have been uploaded, compute a Sha-1 hash for each, and compare those hashes to existing files in MyEMSL
 
-                var ignoreMyEMSLFileTrackingError = m_TaskParams.GetParam("IgnoreMyEMSLFileTrackingError", false);
+                var ignoreMyEMSLFileTrackingError = mTaskParams.GetParam("IgnoreMyEMSLFileTrackingError", false);
 
                 var config = new Configuration();
 
                 ResetTimestampForQueueWaitTimeLogging();
 
-                var metadataObject = new DMSMetadataObject(config, m_MgrName, m_Job, m_FileTools)
+                var metadataObject = new DMSMetadataObject(config, mMgrName, mJob, mFileTools)
                 {
-                    TraceMode = m_TraceMode,
+                    TraceMode = mTraceMode,
                     IgnoreMyEMSLFileTrackingError = ignoreMyEMSLFileTrackingError
                 };
 
@@ -325,14 +325,14 @@ namespace ArchiveVerifyPlugin
                 RegisterEvents(metadataObject);
 
                 var lstDatasetFilesLocal = metadataObject.FindDatasetFilesToArchive(
-                    m_TaskParams.TaskDictionary,
-                    m_MgrParams.ParamDictionary,
+                    mTaskParams.TaskDictionary,
+                    mMgrParams.ParamDictionary,
                     out _);
 
                 if (lstDatasetFilesLocal.Count == 0)
                 {
                     if (mTotalMismatchCount == 0)
-                        LogError("MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
+                        LogError("MyEmsl verification errors for dataset " + mDataset + ", job " + mJob);
 
                     mTotalMismatchCount += 1;
 
@@ -370,7 +370,7 @@ namespace ArchiveVerifyPlugin
                 if (mismatchCountToDisk > 0)
                 {
                     if (mTotalMismatchCount == 0)
-                        LogError("MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
+                        LogError("MyEmsl verification errors for dataset " + mDataset + ", job " + mJob);
 
                     mTotalMismatchCount += mismatchCountToDisk;
 
@@ -418,7 +418,7 @@ namespace ArchiveVerifyPlugin
                 if (lstMatchingArchivedFiles.Count == 0)
                 {
                     if (mTotalMismatchCount == 0)
-                        LogError("MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
+                        LogError("MyEmsl verification errors for dataset " + mDataset + ", job " + mJob);
 
                     mTotalMismatchCount += 1;
 
@@ -451,7 +451,7 @@ namespace ArchiveVerifyPlugin
                     else
                     {
                         if (mTotalMismatchCount == 0)
-                            LogError("MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
+                            LogError("MyEmsl verification errors for dataset " + mDataset + ", job " + mJob);
 
                         mTotalMismatchCount++;
 
@@ -499,7 +499,7 @@ namespace ArchiveVerifyPlugin
             if (string.IsNullOrEmpty(metadataJson))
             {
                 if (mTotalMismatchCount == 0)
-                    LogError("MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
+                    LogError("MyEmsl verification errors for dataset " + mDataset + ", job " + mJob);
 
                 mTotalMismatchCount += 1;
 
@@ -530,7 +530,7 @@ namespace ArchiveVerifyPlugin
             if (dctMetadataFiles.Count == 0)
             {
                 if (mTotalMismatchCount == 0)
-                    LogError("MyEmsl verification errors for dataset " + m_Dataset + ", job " + m_Job);
+                    LogError("MyEmsl verification errors for dataset " + mDataset + ", job " + mJob);
 
                 mTotalMismatchCount += 1;
 
@@ -586,7 +586,7 @@ namespace ArchiveVerifyPlugin
             // Copy the updated file to hashResultsFolderPathBackup
             try
             {
-                var hashResultsFolderPathBackup = GetHashResultsFilePath(DEFAULT_HASH_RESULTS_BACKUP_FOLDER_PATH, m_Dataset, datasetInstrument, datasetYearQuarter);
+                var hashResultsFolderPathBackup = GetHashResultsFilePath(DEFAULT_HASH_RESULTS_BACKUP_FOLDER_PATH, mDataset, datasetInstrument, datasetYearQuarter);
 
                 var fiBackupHashResultsFile = new FileInfo(hashResultsFolderPathBackup);
 
@@ -681,15 +681,15 @@ namespace ArchiveVerifyPlugin
             try
             {
 
-                var datasetInstrument = m_TaskParams.GetParam("Instrument_Name");
+                var datasetInstrument = mTaskParams.GetParam("Instrument_Name");
                 if (!ParameterDefined("Instrument_Name", datasetInstrument))
                     return false;
 
                 // Calculate the "year_quarter" code used for subfolders within an instrument folder
                 // This value is based on the date the dataset was created in DMS
-                var datasetYearQuarter = DMSMetadataObject.GetDatasetYearQuarter(m_TaskParams.TaskDictionary);
+                var datasetYearQuarter = DMSMetadataObject.GetDatasetYearQuarter(mTaskParams.TaskDictionary);
 
-                var hashResultsFilePath = GetHashResultsFilePath(DEFAULT_HASH_RESULTS_FOLDER_PATH, m_Dataset, datasetInstrument, datasetYearQuarter);
+                var hashResultsFilePath = GetHashResultsFilePath(DEFAULT_HASH_RESULTS_FOLDER_PATH, mDataset, datasetInstrument, datasetYearQuarter);
 
                 var hashResultsFile = new FileInfo(hashResultsFilePath);
 
@@ -937,8 +937,8 @@ namespace ArchiveVerifyPlugin
                 var reader = new MyEMSLReader.Reader
                 {
                     IncludeAllRevisions = false,
-                    ReportMetadataURLs = m_TraceMode || m_DebugLevel >= 5,
-                    TraceMode = m_TraceMode,
+                    ReportMetadataURLs = mTraceMode || mDebugLevel >= 5,
+                    TraceMode = mTraceMode,
                     UseTestInstance = false,
                 };
 
@@ -955,18 +955,18 @@ namespace ArchiveVerifyPlugin
                     return false;
                 }
 
-                var subDir = m_TaskParams.GetParam("OutputFolderName", string.Empty);
+                var subDir = mTaskParams.GetParam("OutputFolderName", string.Empty);
 
                 // Find files tracked by MyEMSL for this dataset
-                var remoteFiles = reader.FindFilesByDatasetID(m_DatasetID, subDir);
+                var remoteFiles = reader.FindFilesByDatasetID(mDatasetID, subDir);
                 if (remoteFiles.Count == 0)
                 {
                     if (mTotalMismatchCount == 0)
-                        LogError("MyEmsl verification error for dataset " + m_Dataset + ", job " + m_Job);
+                        LogError("MyEmsl verification error for dataset " + mDataset + ", job " + mJob);
 
                     mTotalMismatchCount += 1;
 
-                    var msg = "MyEMSL status lookup did not report any files for Dataset_ID " + m_DatasetID;
+                    var msg = "MyEMSL status lookup did not report any files for Dataset_ID " + mDatasetID;
                     if (!string.IsNullOrEmpty(subDir))
                         msg += " and subdirectory " + subDir;
 
@@ -992,14 +992,14 @@ namespace ArchiveVerifyPlugin
                 {
                     filteredFiles.Add(archiveFile);
 
-                    //if (string.Equals(fileVersion.Dataset, m_Dataset, StringComparison.OrdinalIgnoreCase))
+                    //if (string.Equals(fileVersion.Dataset, mDataset, StringComparison.OrdinalIgnoreCase))
                     //{
                     //    filteredFiles.Add(fileVersion);
                     //}
                     //else
                     //{
                     //    LogMessage(
-                    //        "Query for dataset ID " + m_DatasetID + " yielded match to " + fileVersion.PathWithDataset +
+                    //        "Query for dataset ID " + mDatasetID + " yielded match to " + fileVersion.PathWithDataset +
                     //        " - skipping since wrong dataset", true);
                     //}
                 }

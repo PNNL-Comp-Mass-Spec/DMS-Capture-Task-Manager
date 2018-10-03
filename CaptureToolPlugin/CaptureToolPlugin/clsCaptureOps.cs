@@ -86,8 +86,8 @@ namespace CaptureToolPlugin
         private readonly string mPassword = "";
 
         private ShareConnector mShareConnectorPRISM;
-        private NetworkConnection m_ShareConnectorDotNET;
-        private ConnectionType m_ConnectionType = ConnectionType.NotConnected;
+        private NetworkConnection mShareConnectorDotNET;
+        private ConnectionType mConnectionType = ConnectionType.NotConnected;
 
         private readonly FileTools mFileTools;
 
@@ -799,7 +799,7 @@ namespace CaptureToolPlugin
         {
             string connectionMode;
 
-            switch (m_ConnectionType)
+            switch (mConnectionType)
             {
                 case ConnectionType.NotConnected:
                     connectionMode = " as user " + Environment.UserName + " using fso";
@@ -954,7 +954,7 @@ namespace CaptureToolPlugin
         }
 
         /// <summary>
-        /// Connect to a BioNet share using either mShareConnectorPRISM or m_ShareConnectorDotNET
+        /// Connect to a BioNet share using either mShareConnectorPRISM or mShareConnectorDotNET
         /// </summary>
         /// <param name="userName">Username</param>
         /// <param name="pwd">Password</param>
@@ -975,7 +975,7 @@ namespace CaptureToolPlugin
 
             if (connectionType == ConnectionType.DotNET)
             {
-                success = ConnectToShare(userName, pwd, directorySharePath, out m_ShareConnectorDotNET, out closeoutType, out evalCode);
+                success = ConnectToShare(userName, pwd, directorySharePath, out mShareConnectorDotNET, out closeoutType, out evalCode);
             }
             else
             {
@@ -1017,7 +1017,7 @@ namespace CaptureToolPlugin
             if (myConn.Connect())
             {
                 LogDebug("Connected to Bionet (" + shareDirectoryPath + ") as user " + userName + " using PRISM.ShareConnector");
-                m_ConnectionType = ConnectionType.Prism;
+                mConnectionType = ConnectionType.Prism;
                 return true;
             }
 
@@ -1045,7 +1045,7 @@ namespace CaptureToolPlugin
                 closeoutType = EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
-            m_ConnectionType = ConnectionType.NotConnected;
+            mConnectionType = ConnectionType.NotConnected;
             return false;
         }
 
@@ -1082,7 +1082,7 @@ namespace CaptureToolPlugin
                 myConn = new NetworkConnection(directorySharePath, accessCredentials);
 
                 LogDebug("Connected to Bionet (" + directorySharePath + ") as user " + userName + " using CaptureTaskManager.NetworkConnection");
-                m_ConnectionType = ConnectionType.DotNET;
+                mConnectionType = ConnectionType.DotNET;
 
                 closeoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
                 return true;
@@ -1099,7 +1099,7 @@ namespace CaptureToolPlugin
                 closeoutType = retData.CloseoutType;
                 evalCode = retData.EvalCode;
 
-                m_ConnectionType = ConnectionType.NotConnected;
+                mConnectionType = ConnectionType.NotConnected;
                 return false;
 
             }
@@ -1111,10 +1111,10 @@ namespace CaptureToolPlugin
         /// </summary>
         private void DisconnectShareIfRequired()
         {
-            if (m_ConnectionType == ConnectionType.Prism)
+            if (mConnectionType == ConnectionType.Prism)
                 DisconnectShare(ref mShareConnectorPRISM);
-            else if (m_ConnectionType == ConnectionType.DotNET)
-                DisconnectShare(ref m_ShareConnectorDotNET);
+            else if (mConnectionType == ConnectionType.DotNET)
+                DisconnectShare(ref mShareConnectorDotNET);
         }
 
         /// <summary>
@@ -1127,7 +1127,7 @@ namespace CaptureToolPlugin
             ProgRunner.GarbageCollectNow();
 
             LogDebug("Bionet disconnected");
-            m_ConnectionType = ConnectionType.NotConnected;
+            mConnectionType = ConnectionType.NotConnected;
 
         }
 
@@ -1142,7 +1142,7 @@ namespace CaptureToolPlugin
             ProgRunner.GarbageCollectNow();
 
             LogDebug("Bionet disconnected");
-            m_ConnectionType = ConnectionType.NotConnected;
+            mConnectionType = ConnectionType.NotConnected;
 
         }
 

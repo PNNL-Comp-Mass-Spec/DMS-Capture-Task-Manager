@@ -75,8 +75,8 @@ namespace ImsDemuxPlugin
                 return retData;
 
             // Initialize the config DB update interval
-            m_LastConfigDBUpdate = DateTime.UtcNow;
-            m_MinutesBetweenConfigDBUpdates = MANAGER_UPDATE_INTERVAL_MINUTES;
+            mLastConfigDbUpdate = DateTime.UtcNow;
+            mMinutesBetweenConfigDbUpdates = MANAGER_UPDATE_INTERVAL_MINUTES;
 
             // Store the version info in the database
             if (!StoreToolVersionInfo())
@@ -101,17 +101,17 @@ namespace ImsDemuxPlugin
             double calibrationSlope = 0;
             double calibrationIntercept = 0;
 
-            if (m_TaskParams.GetParam("PerformCalibration", true))
+            if (mTaskParams.GetParam("PerformCalibration", true))
                 calibrationMode = CalibrationMode.AutoCalibration;
             else
                 calibrationMode = CalibrationMode.NoCalibration;
 
             // Locate data file on storage server
-            var svrPath = Path.Combine(m_TaskParams.GetParam("Storage_Vol_External"), m_TaskParams.GetParam("Storage_Path"));
-            var dsPath = Path.Combine(svrPath, m_TaskParams.GetParam("Folder"));
+            var svrPath = Path.Combine(mTaskParams.GetParam("Storage_Vol_External"), mTaskParams.GetParam("Storage_Path"));
+            var dsPath = Path.Combine(svrPath, mTaskParams.GetParam("Folder"));
 
             // Use this name first to test if demux has already been performed once
-            var uimfFileName = m_Dataset + "_encoded.uimf";
+            var uimfFileName = mDataset + "_encoded.uimf";
             var fiUIMFFile = new FileInfo(Path.Combine(dsPath, uimfFileName));
             if (fiUIMFFile.Exists && (fiUIMFFile.Length != 0))
             {
@@ -129,7 +129,7 @@ namespace ImsDemuxPlugin
 
                 if (calibrationError)
                 {
-                    var fiDecodedUIMFFile = new FileInfo(Path.Combine(dsPath, m_Dataset + ".uimf"));
+                    var fiDecodedUIMFFile = new FileInfo(Path.Combine(dsPath, mDataset + ".uimf"));
 
                     var manuallyCalibrated = CheckForManualCalibration(fiDecodedUIMFFile.FullName, out calibrationSlope, out calibrationIntercept);
 
@@ -179,7 +179,7 @@ namespace ImsDemuxPlugin
                 }
 
                 // If we got to here, _encoded uimf file doesn't exist. So, use the other uimf file
-                uimfFileName = m_Dataset + ".uimf";
+                uimfFileName = mDataset + ".uimf";
                 if (!File.Exists(Path.Combine(dsPath, uimfFileName)))
                 {
                     msg = "UIMF file not found: " + uimfFileName;
@@ -205,7 +205,7 @@ namespace ImsDemuxPlugin
             if (queryResult == clsSQLiteTools.UimfQueryResults.NonMultiplexed)
             {
                 // De-multiplexing not required, but we should still attempt calibration (if enabled)
-                msg = "No de-multiplexing required for dataset " + m_Dataset;
+                msg = "No de-multiplexing required for dataset " + mDataset;
                 LogMessage(msg);
                 retData.EvalMsg = "Non-Multiplexed";
                 needToDemultiplex = false;
@@ -213,7 +213,7 @@ namespace ImsDemuxPlugin
             else if (queryResult == clsSQLiteTools.UimfQueryResults.Error)
             {
                 // There was a problem determining the UIMF file status. Set state and exit
-                msg = "Problem determining UIMF file status for dataset " + m_Dataset;
+                msg = "Problem determining UIMF file status for dataset " + mDataset;
 
                 retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 retData.CloseoutMsg = msg;
@@ -226,7 +226,7 @@ namespace ImsDemuxPlugin
             if (needToDemultiplex)
             {
                 // De-multiplexing is needed
-                retData = mDemuxTools.PerformDemux(m_MgrParams, m_TaskParams, uimfFileName, numBitsForEncoding);
+                retData = mDemuxTools.PerformDemux(mMgrParams, mTaskParams, uimfFileName, numBitsForEncoding);
 
                 if (mDemuxTools.OutOfMemoryException)
                 {
@@ -237,7 +237,7 @@ namespace ImsDemuxPlugin
                             retData.CloseoutMsg = "Out of memory";
                     }
 
-                    m_NeedToAbortProcessing = true;
+                    mNeedToAbortProcessing = true;
                 }
 
                 mDemultiplexingPerformed = true;
@@ -285,7 +285,7 @@ namespace ImsDemuxPlugin
                 {
                     // Add the bin-centric tables if not yet present
                     LogMessage("Adding bin-centric tables to " + fiUIMF.Name + fileSizeText);
-                    retData = mDemuxTools.AddBinCentricTablesIfMissing(m_MgrParams, m_TaskParams, retData);
+                    retData = mDemuxTools.AddBinCentricTablesIfMissing(mMgrParams, mTaskParams, retData);
 
                     fiUIMF.Refresh();
                     var fileSizeGBEnd = fiUIMF.Length / 1024.0 / 1024.0 / 1024.0;
@@ -303,10 +303,10 @@ namespace ImsDemuxPlugin
             {
 
                 if (calibrationMode == CalibrationMode.AutoCalibration)
-                    retData = mDemuxTools.PerformCalibration(m_MgrParams, m_TaskParams, retData);
+                    retData = mDemuxTools.PerformCalibration(mMgrParams, mTaskParams, retData);
                 else if (calibrationMode == CalibrationMode.ManualCalibration)
                 {
-                    retData = mDemuxTools.PerformManualCalibration(m_MgrParams, m_TaskParams, retData, calibrationSlope, calibrationIntercept);
+                    retData = mDemuxTools.PerformManualCalibration(mMgrParams, mTaskParams, retData, calibrationSlope, calibrationIntercept);
                 }
             }
 
@@ -337,7 +337,7 @@ namespace ImsDemuxPlugin
 
             ResetTimestampForQueueWaitTimeLogging();
 
-            mDemuxTools = new clsDemuxTools(uimfDemultiplexerProgLoc, m_MgrName, m_FileTools);
+            mDemuxTools = new clsDemuxTools(uimfDemultiplexerProgLoc, mMgrName, mFileTools);
             RegisterEvents(mDemuxTools);
 
             // Add a handler to catch progress events
@@ -447,8 +447,8 @@ namespace ImsDemuxPlugin
             string msg;
             var bSuccess = true;
 
-            var svrPath = Path.Combine(m_TaskParams.GetParam("Storage_Vol_External"), m_TaskParams.GetParam("Storage_Path"));
-            var sDatasetFolderPathRemote = Path.Combine(svrPath, m_TaskParams.GetParam("Folder"));
+            var svrPath = Path.Combine(mTaskParams.GetParam("Storage_Vol_External"), mTaskParams.GetParam("Storage_Path"));
+            var sDatasetFolderPathRemote = Path.Combine(svrPath, mTaskParams.GetParam("Folder"));
 
             // Copy file fileName from sourceDirPath to the dataset folder
             var sSourceFilePath = Path.Combine(sourceDirPath, fileName);
@@ -466,7 +466,7 @@ namespace ImsDemuxPlugin
 
                 ResetTimestampForQueueWaitTimeLogging();
 
-                if (!clsDemuxTools.CopyFileWithRetry(sSourceFilePath, sTargetFilePath, true, retryCount, backupDestFileBeforeCopy, m_MgrName, m_FileTools))
+                if (!clsDemuxTools.CopyFileWithRetry(sSourceFilePath, sTargetFilePath, true, retryCount, backupDestFileBeforeCopy, mMgrName, mFileTools))
                 {
                     msg = "Error copying " + fileName + " to storage server";
                     LogError(msg);
@@ -484,7 +484,7 @@ namespace ImsDemuxPlugin
         /// <returns></returns>
         protected string GetUimfDemultiplexerPath()
         {
-            var uimfDemuxFolder = m_MgrParams.GetParam("UimfDemultiplexerProgLoc", string.Empty);
+            var uimfDemuxFolder = mMgrParams.GetParam("UimfDemultiplexerProgLoc", string.Empty);
 
             if (string.IsNullOrEmpty(uimfDemuxFolder))
             {
@@ -571,7 +571,7 @@ namespace ImsDemuxPlugin
             {
 #pragma warning disable 162
                 // Multiplying by 0.9 since we're assuming that demultiplexing will take 90% of the time while addition of bin-centric tables will take 10% of the time
-                m_StatusTools.UpdateAndWrite(0 + newProgress * 0.90f);
+                mStatusTools.UpdateAndWrite(0 + newProgress * 0.90f);
 #pragma warning restore 162
             }
 
@@ -595,7 +595,7 @@ namespace ImsDemuxPlugin
             else
                 progressOverall = newProgress;
 
-            m_StatusTools.UpdateAndWrite(progressOverall);
+            mStatusTools.UpdateAndWrite(progressOverall);
 
             // Update the manager settings every MANAGER_UPDATE_INTERVAL_MINUTES
             UpdateMgrSettings();

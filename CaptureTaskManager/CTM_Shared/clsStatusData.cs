@@ -20,8 +20,7 @@ namespace CaptureTaskManager
 
         #region "Class variables"
 
-        private static string m_MostRecentLogMessage;
-        private static readonly Queue<string> m_ErrorQueue = new Queue<string>();
+        private static string mMostRecentLogMessage;
 
         #endregion
 
@@ -29,7 +28,7 @@ namespace CaptureTaskManager
 
         public static string MostRecentLogMessage
         {
-            get => m_MostRecentLogMessage;
+            get => mMostRecentLogMessage;
             set
             {
                 // Filter out routine startup and shutdown messages
@@ -39,12 +38,12 @@ namespace CaptureTaskManager
                 }
                 else
                 {
-                    m_MostRecentLogMessage = value;
+                    mMostRecentLogMessage = value;
                 }
             }
         }
 
-        public static Queue<string> ErrorQueue => m_ErrorQueue;
+        public static Queue<string> ErrorQueue { get; } = new Queue<string>();
 
         #endregion
 
@@ -53,12 +52,12 @@ namespace CaptureTaskManager
         public static void AddErrorMessage(string ErrMsg)
         {
             // Add the most recent error message
-            m_ErrorQueue.Enqueue(ErrMsg);
+            ErrorQueue.Enqueue(ErrMsg);
 
             // If there are > 4 entries in the queue, delete the oldest ones
-            while (m_ErrorQueue.Count > 4)
+            while (ErrorQueue.Count > 4)
             {
-                m_ErrorQueue.Dequeue();
+                ErrorQueue.Dequeue();
             }
         }
 

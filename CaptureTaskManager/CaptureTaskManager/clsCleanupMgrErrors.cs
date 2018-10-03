@@ -62,7 +62,7 @@ namespace CaptureTaskManager
 
         private readonly string mManagerName;
 
-        private readonly IStatusFile m_StatusFile;
+        private readonly IStatusFile mStatusFile;
 
         private readonly string mWorkingDirPath;
         #endregion
@@ -90,7 +90,7 @@ namespace CaptureTaskManager
 
             mWorkingDirPath = workingDirPath;
 
-            m_StatusFile = statusFile;
+            mStatusFile = statusFile;
 
             mInitialized = true;
         }
@@ -151,7 +151,7 @@ namespace CaptureTaskManager
             else
             {
                 // If successful, delete FlagFile.txt
-                success = m_StatusFile.DeleteStatusFlagFile();
+                success = mStatusFile.DeleteStatusFlagFile();
                 if (!success)
                 {
                     failureMessage = "error deleting " + clsStatusFile.FLAG_FILE_NAME;
