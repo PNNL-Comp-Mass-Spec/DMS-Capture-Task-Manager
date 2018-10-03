@@ -1403,7 +1403,8 @@ namespace DatasetQualityPlugin
             if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalMinutes >= mStatusUpdateIntervalMinutes)
             {
                 mLastStatusUpdate = DateTime.UtcNow;
-                LogMessage("Quameter running; " + DateTime.UtcNow.Subtract(mProcessingStartTime).TotalMinutes + " minutes elapsed");
+                LogMessage(string.Format("Quameter running; {0:F1} minutes elapsed",
+                                         DateTime.UtcNow.Subtract(mProcessingStartTime).TotalMinutes));
 
                 // Increment mStatusUpdateIntervalMinutes by 5 minutes every time the status is logged, up to a maximum of 30
                 if (mStatusUpdateIntervalMinutes < 30)

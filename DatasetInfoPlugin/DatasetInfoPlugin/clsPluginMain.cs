@@ -1474,8 +1474,8 @@ namespace DatasetInfoPlugin
             if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalMinutes >= mStatusUpdateIntervalMinutes)
             {
                 mLastStatusUpdate = DateTime.UtcNow;
-                var elapsedMinutes = DateTime.UtcNow.Subtract(mProcessingStartTime).TotalMinutes;
-                LogMessage(string.Format("MSFileInfoScanner running; {0:F1} minutes elapsed", elapsedMinutes));
+                LogMessage(string.Format("MSFileInfoScanner running; {0:F1} minutes elapsed",
+                                         DateTime.UtcNow.Subtract(mProcessingStartTime).TotalMinutes));
 
                 // Increment mStatusUpdateIntervalMinutes by 1 minute every time the status is logged, up to a maximum of 30 minutes
                 if (mStatusUpdateIntervalMinutes < 30)

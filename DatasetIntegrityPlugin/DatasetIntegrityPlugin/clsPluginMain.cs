@@ -2523,7 +2523,8 @@ namespace DatasetIntegrityPlugin
             if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalMinutes >= mStatusUpdateIntervalMinutes)
             {
                 mLastStatusUpdate = DateTime.UtcNow;
-                LogMessage("AgilentToUIMFConverter running; " + DateTime.UtcNow.Subtract(mProcessingStartTime).TotalMinutes + " minutes elapsed");
+                LogMessage(string.Format("AgilentToUIMFConverter running; {0:F1} minutes elapsed",
+                                         DateTime.UtcNow.Subtract(mProcessingStartTime).TotalMinutes));
 
                 // Increment mStatusUpdateIntervalMinutes by 1 minute every time the status is logged, up to a maximum of 30 minutes
                 if (mStatusUpdateIntervalMinutes < 30)

@@ -1152,14 +1152,14 @@ namespace CaptureTaskManager
 
         /// <summary>
         /// Reloads the manager settings from the manager control database
-        /// if at least MinutesBetweenUpdates minutes have elapsed since the last update
+        /// if at least minutesBetweenUpdates minutes have elapsed since the last update
         /// </summary>
         /// <param name="dtLastConfigDBUpdate"></param>
-        /// <param name="MinutesBetweenUpdates"></param>
+        /// <param name="minutesBetweenUpdates"></param>
         /// <returns></returns>
-        private bool UpdateMgrSettings(ref DateTime dtLastConfigDBUpdate, double MinutesBetweenUpdates)
+        private bool UpdateMgrSettings(ref DateTime dtLastConfigDBUpdate, double minutesBetweenUpdates)
         {
-            if (!(DateTime.UtcNow.Subtract(dtLastConfigDBUpdate).TotalMinutes >= MinutesBetweenUpdates))
+            if (!(DateTime.UtcNow.Subtract(dtLastConfigDBUpdate).TotalMinutes >= minutesBetweenUpdates))
             {
                 return true;
             }

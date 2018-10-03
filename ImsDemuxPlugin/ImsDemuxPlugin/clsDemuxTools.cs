@@ -1593,7 +1593,10 @@ namespace ImsDemuxPlugin
             if (DateTime.UtcNow.Subtract(mLastProgressMessageTime).TotalSeconds >= 300)
             {
                 mLastProgressMessageTime = DateTime.UtcNow;
-                OnDebugEvent(toolName + " running; " + DateTime.UtcNow.Subtract(mDemuxStartTime).TotalMinutes.ToString("0.0") + " minutes elapsed, " + mDemuxProgressPercentComplete.ToString("0.0") + "% complete");
+                OnDebugEvent(string.Format("{0} running; {1:F1} minutes elapsed, {2:F1}% complete",
+                                           toolName,
+                                           DateTime.UtcNow.Subtract(mDemuxStartTime).TotalMinutes,
+                                           mDemuxProgressPercentComplete));
             }
         }
 
