@@ -418,7 +418,7 @@ namespace CaptureTaskManager
                 Enabled = false,
                 Interval = 60 * 1000
             };
-            mStatusTimer.Elapsed += mStatusTimer_Elapsed;
+            mStatusTimer.Elapsed += StatusTimer_Elapsed;
 
             // Get the most recent job history
             var historyFilePath = Path.Combine(mMgrSettings.GetParam("ApplicationPath"), "History.txt");
@@ -1462,7 +1462,7 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        void mStatusTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        void StatusTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
             mStatusFile.WriteStatusFile();
         }
