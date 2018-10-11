@@ -338,7 +338,7 @@ namespace CaptureTaskManager
             if (mAppDirectoryPath != null)
                 return mAppDirectoryPath;
 
-            mAppDirectoryPath = PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppFolderPath();
+            mAppDirectoryPath = PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppDirectoryPath();
 
             return mAppDirectoryPath;
         }

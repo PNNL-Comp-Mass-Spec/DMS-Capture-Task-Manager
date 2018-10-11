@@ -209,7 +209,7 @@ namespace CaptureTaskManager
         /// <remarks></remarks>
         private static string GetAppVersion(string programDate)
         {
-            return PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppVersion(programDate);
+            return PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppVersion(programDate);
         }
 
         private static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine commandLineParser)
@@ -274,7 +274,7 @@ namespace CaptureTaskManager
         {
             try
             {
-                var exeName = Path.GetFileName(PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppPath());
+                var exeName = Path.GetFileName(PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppPath());
 
                 Console.WriteLine("This program processes DMS datasets for PRISM. " +
                                   "Normal operation is to run the program without any command line switches.");

@@ -199,7 +199,7 @@ namespace CaptureTaskManager
             }
 
             // Get directory for main executable
-            var appPath = PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppPath();
+            var appPath = PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppPath();
             var fi = new FileInfo(appPath);
             ParamDictionary.Add("ApplicationPath", fi.DirectoryName);
 
@@ -285,7 +285,7 @@ namespace CaptureTaskManager
             if (TraceMode)
             {
 
-                var exePath = PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppPath();
+                var exePath = PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppPath();
                 var configFilePath = exePath + ".config";
                 ShowTraceMessage("Settings loaded from " + PathUtils.CompactPathString(configFilePath, 60));
                 ShowDictionaryTrace(mgrSettingsFromFile);
@@ -663,7 +663,7 @@ namespace CaptureTaskManager
         /// <returns>String containing full name and path</returns>
         private string GetConfigFilePath()
         {
-            var configFilePath = PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppPath() + ".config";
+            var configFilePath = PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppPath() + ".config";
             return configFilePath;
         }
 
