@@ -54,6 +54,7 @@
     <Compile Include="clsStatusData.cs" />
     <Compile Include="clsToolReturnData.cs" />
     <Compile Include="clsToolRunnerBase.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="IMgrParams.cs" />
     <Compile Include="IStatusFile.cs" />
     <Compile Include="ITaskParams.cs" />
