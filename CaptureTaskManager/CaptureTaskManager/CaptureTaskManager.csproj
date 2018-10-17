@@ -67,7 +67,7 @@
     <Compile Include="clsDbTask.cs" />
     <Compile Include="clsMainProgram.cs" />
     <Compile Include="clsMessageHandler.cs" />
-    <Compile Include="clsMgrSettings.cs" />
+    <Compile Include="clsCaptureTaskMgrSettings.cs" />
     <Compile Include="clsPluginLoader.cs" />
     <Compile Include="clsStatusFile.cs" />
     <Compile Include="Program.cs" />
