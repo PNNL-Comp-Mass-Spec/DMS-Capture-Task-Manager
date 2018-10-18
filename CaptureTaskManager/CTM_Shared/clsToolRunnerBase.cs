@@ -686,9 +686,10 @@ namespace CaptureTaskManager
         /// Display a timestamp and message at the console
         /// </summary>
         /// <param name="message"></param>
-        public static void ShowTraceMessage(string message)
+        /// <param name="includeDate"></param>
+        public static void ShowTraceMessage(string message, bool includeDate = false)
         {
-            ConsoleMsgUtils.ShowDebug(DateTime.Now.ToString("hh:mm:ss.fff tt") + ": " + message);
+            BaseLogger.ShowTrace(message, includeDate);
         }
 
         /// <summary>
