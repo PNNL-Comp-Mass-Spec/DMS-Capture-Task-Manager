@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using Apache.NMS;
 using Apache.NMS.ActiveMQ;
 using Apache.NMS.ActiveMQ.Commands;
+using PRISM.AppSettings;
 
 namespace CaptureTaskManager
 {
@@ -31,7 +32,7 @@ namespace CaptureTaskManager
         private string mBrokerUri;
 
         private string mStatusTopicName;       // Used for status output
-        private clsMgrSettings mMgrSettings;
+        private MgrSettings mMgrSettings;
 
         private IConnection mConnection;
         private ISession mStatusSession;
@@ -44,7 +45,7 @@ namespace CaptureTaskManager
 
         #region "Properties"
 
-        public clsMgrSettings MgrSettings
+        public MgrSettings MgrSettings
         {
             set => mMgrSettings = value;
         }

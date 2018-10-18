@@ -13,6 +13,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using PRISM;
+using PRISM.AppSettings;
 using PRISM.Logging;
 using PRISMWin;
 
@@ -57,7 +58,7 @@ namespace CaptureTaskManager
 
         #region "Class variables"
 
-        private clsMgrSettings mMgrSettings;
+        private clsCaptureTaskMgrSettings mMgrSettings;
 
         private readonly string mMgrExeName;
         private readonly string mMgrDirectoryPath;
@@ -286,25 +287,64 @@ namespace CaptureTaskManager
             {
                 ShowTrace("Reading application config file");
 
-                mMgrSettings = new clsMgrSettings(TraceMode);
+                try
+                {
+                    mMgrSettings = new clsCaptureTaskMgrSettings(TraceMode);
+
+                    // Load settings from config file CaptureTaskManager.exe.config
+                    var configFileSettings = LoadMgrSettingsFromFile();
+
+                    var settingsClass = mMgrSettings;
+                    if (settingsClass != null)
+                    {
+                        RegisterEvents(settingsClass);
+                        settingsClass.CriticalErrorEvent += CriticalErrorEvent;
+                    }
+
+                    var success = mMgrSettings.LoadSettings(configFileSettings);
+                    if (!success)
+                    {
+                        if (!string.IsNullOrEmpty(mMgrSettings.ErrMsg))
+                        {
+                            throw new ApplicationException("Unable to initialize manager settings class: " + mMgrSettings.ErrMsg);
+                        }
+
+                        throw new ApplicationException("Unable to initialize manager settings class: unknown error");
+                    }
+
+                    if (TraceMode)
+                    {
+                        ShowTraceMessage("Initialized MgrParams");
+                        MgrSettings.ShowDictionaryTrace(mMgrSettings.MgrParams);
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    ConsoleMsgUtils.ShowError("Exception instantiating clsCaptureTaskMgrSettings: " + ex.Message);
+                    ConsoleMsgUtils.SleepSeconds(0.5);
+                    return false;
+                }
+
+
             }
             catch (Exception ex)
             {
-                if (string.Equals(ex.Message, clsMgrSettings.DEACTIVATED_LOCALLY))
+                if (string.Equals(ex.Message, MgrSettings.DEACTIVATED_LOCALLY))
                 {
                     // Manager is deactivated locally
                 }
                 else
                 {
-                    ConsoleMsgUtils.ShowError("Exception instantiating clsMgrSettings: " + ex.Message);
-                    Thread.Sleep(500);
+                    ConsoleMsgUtils.ShowError("Exception loading settings from CaptureTaskManager.exe.config: " + ex.Message);
+                    ConsoleMsgUtils.SleepSeconds(0.5);
                 }
 
                 return false;
             }
 
             // Update the cached values for this manager and job
-            mMgrName = mMgrSettings.GetParam(clsMgrSettings.MGR_PARAM_MGR_NAME);
+            mMgrName = mMgrSettings.ManagerName;
             ShowTrace("Manager name is " + mMgrName);
 
             mStepTool = "Unknown";
@@ -382,7 +422,8 @@ namespace CaptureTaskManager
             InitializeMessageQueue();
 
             // Set up the tool for getting tasks
-            mTask = new clsCaptureTask(mMgrSettings) {
+            mTask = new clsCaptureTask(mMgrSettings)
+            {
                 TraceMode = TraceMode
             };
 
@@ -540,6 +581,59 @@ namespace CaptureTaskManager
             return cachedMessages;
         }
 
+        private Dictionary<string, string> LoadMgrSettingsFromFile()
+        {
+            // Note: When you are editing this project using the Visual Studio IDE, if you edit the values
+            //  ->Properties>Settings.settings, when you run the program (from within the IDE), it
+            //  will update file CaptureTaskManager.exe.config with your settings
+
+            // Construct the path to the config document
+            var configFilePath = Path.Combine(mMgrDirectoryPath, mMgrExeName + ".config");
+
+            var mgrSettings = mMgrSettings.LoadMgrSettingsFromFile(configFilePath, TraceMode);
+
+            // Manager Config DB connection string
+            if (!mgrSettings.ContainsKey(MgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING))
+            {
+                mgrSettings.Add(MgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING, Properties.Settings.Default.MgrCnfgDbConnectStr);
+            }
+
+            // Manager active flag
+            if (!mgrSettings.ContainsKey(MgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL))
+            {
+                mgrSettings.Add(MgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL, "False");
+            }
+
+            // Manager name
+            // The manager name may contain $ComputerName$
+            // If it does, InitializeMgrSettings in MgrSettings will replace "$ComputerName$ with the local host name
+            if (!mgrSettings.ContainsKey(MgrSettings.MGR_PARAM_MGR_NAME))
+            {
+                mgrSettings.Add(MgrSettings.MGR_PARAM_MGR_NAME, "LoadMgrSettingsFromFile__Undefined_manager_name");
+            }
+
+            // Default settings in use flag
+            if (!mgrSettings.ContainsKey(MgrSettings.MGR_PARAM_USING_DEFAULTS))
+            {
+                mgrSettings.Add(MgrSettings.MGR_PARAM_USING_DEFAULTS, Properties.Settings.Default.UsingDefaults.ToString());
+            }
+
+            // Default connection string for logging errors to the database
+            // Will get updated later when manager settings are loaded from the manager control database
+            if (!mgrSettings.ContainsKey(clsCaptureTaskMgrSettings.MGR_PARAM_DEFAULT_DMS_CONN_STRING))
+            {
+                mgrSettings.Add(clsCaptureTaskMgrSettings.MGR_PARAM_DEFAULT_DMS_CONN_STRING, Properties.Settings.Default.DefaultDMSConnString);
+            }
+
+            if (TraceMode)
+            {
+                ShowTrace("Settings loaded from " + PathUtils.CompactPathString(configFilePath, 60));
+                MgrSettings.ShowDictionaryTrace(mgrSettings);
+            }
+
+            return mgrSettings;
+        }
+
         private void LogErrorToDatabasePeriodically(string errorMessage, int logIntervalHours)
         {
             const string PERIODIC_LOG_FILE = "Periodic_ErrorMessages.txt";
@@ -645,7 +739,7 @@ namespace CaptureTaskManager
 
                     // Reload the manager control DB settings in case they have changed
                     // However, only reload every 2 minutes
-                    if (!UpdateMgrSettings(ref dtLastConfigDBUpdate, 2))
+                    if (!ReloadManagerSettings(ref dtLastConfigDBUpdate, 2))
                     {
                         // Error updating manager settings
                         mLoopExitCode = LoopExitCode.UpdateRequired;
@@ -660,7 +754,7 @@ namespace CaptureTaskManager
                         break;
                     }
 
-                    if (!mMgrSettings.GetParam(clsMgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL, false))
+                    if (!mMgrSettings.GetParam(MgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL, false))
                     {
                         mLoopExitCode = LoopExitCode.DisabledLocally;
                         break;
@@ -1096,7 +1190,7 @@ namespace CaptureTaskManager
             try
             {
                 var cleanupMgrErrors = new clsCleanupMgrErrors(
-                    mMgrSettings.GetParam(clsMgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING),
+                    mMgrSettings.GetParam(MgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING),
                     mMgrName,
                     mMgrSettings.GetParam("WorkDir"),
                     mStatusFile);
@@ -1157,39 +1251,52 @@ namespace CaptureTaskManager
         /// <param name="dtLastConfigDBUpdate"></param>
         /// <param name="minutesBetweenUpdates"></param>
         /// <returns></returns>
-        private bool UpdateMgrSettings(ref DateTime dtLastConfigDBUpdate, double minutesBetweenUpdates)
+        private bool ReloadManagerSettings(ref DateTime dtLastConfigDBUpdate, double minutesBetweenUpdates)
         {
             if (!(DateTime.UtcNow.Subtract(dtLastConfigDBUpdate).TotalMinutes >= minutesBetweenUpdates))
             {
                 return true;
             }
 
-            var bSuccess = true;
-
             dtLastConfigDBUpdate = DateTime.UtcNow;
 
-            LogDebug("Updating manager settings using Manager Control database");
-
-            if (!mMgrSettings.LoadMgrSettingsFromDB())
+            try
             {
-                // Error retrieving settings from the manager control DB
-                string msg;
+                ShowTrace("Reading application config file");
 
-                if (string.IsNullOrEmpty(mMgrSettings.ErrMsg))
-                    msg = "Error calling mMgrSettings.LoadMgrSettingsFromDB to update manager settings";
+                // Load settings from config file CaptureTaskManager.exe.config
+                var configFileSettings = LoadMgrSettingsFromFile();
+
+                if (configFileSettings == null)
+                    return false;
+
+                LogDebug("Updating manager settings using Manager Control database");
+
+                // Store the new settings then retrieve updated settings from the database
+                if (mMgrSettings.LoadSettings(configFileSettings, true))
+                {
+                    UpdateLogLevel(mMgrSettings);
+                    return true;
+                }
+
+                if (!string.IsNullOrWhiteSpace(mMgrSettings.ErrMsg))
+                {
+                    // Log the error
+                    LogMessage(mMgrSettings.ErrMsg);
+                }
                 else
-                    msg = mMgrSettings.ErrMsg;
+                {
+                    // Unknown problem reading config file
+                    LogError("Error re-reading config file in ReloadManagerSettings");
+                }
 
-                LogError(msg);
-
-                bSuccess = false;
+                return false;
             }
-            else
+            catch (Exception ex)
             {
-                UpdateLogLevel(mMgrSettings);
+                LogError("Error re-loading manager settings", ex);
+                return false;
             }
-
-            return bSuccess;
         }
 
         protected string GetStoragePathBase()
@@ -1217,7 +1324,7 @@ namespace CaptureTaskManager
         /// <returns></returns>
         private string GetXmlConfigDefaultConnectionString()
         {
-            return GetXmlConfigFileSetting(clsMgrSettings.MGR_PARAM_DEFAULT_DMS_CONN_STRING);
+            return GetXmlConfigFileSetting(clsCaptureTaskMgrSettings.MGR_PARAM_DEFAULT_DMS_CONN_STRING);
         }
 
         /// <summary>
@@ -1422,6 +1529,11 @@ namespace CaptureTaskManager
         private void StatusEventHandler(string statusMessage)
         {
             LogMessage(statusMessage);
+        }
+
+        private void CriticalErrorEvent(string message, Exception ex)
+        {
+            LogError(message, true);
         }
 
         private void ErrorEventHandler(string errorMessage, Exception ex)

@@ -16,9 +16,13 @@ namespace CaptureTaskManager
     {
 
         #region "Properties"
+        /// <summary>
+        /// Error message
+        /// </summary>
+        string ErrMsg { get; }
 
         // ReSharper disable once UnusedMember.Global
-        Dictionary<string, string> ParamDictionary { get; }
+        Dictionary<string, string> MgrParams { get; }
 
         #endregion
 
@@ -68,7 +72,7 @@ namespace CaptureTaskManager
         /// Retrieves the manager and global settings from various databases
         /// </summary>
         /// <returns></returns>
-        bool LoadMgrSettingsFromDB(bool logConnectionErrors = true);
+        bool LoadMgrSettingsFromDB(bool logConnectionErrors = true, short retryCount = 3);
 
         #endregion
     }

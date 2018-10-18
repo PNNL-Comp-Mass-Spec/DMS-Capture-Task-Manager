@@ -342,7 +342,7 @@ namespace DatasetArchivePlugin
 
                 var config = new Configuration();
 
-                myEMSLUploader = new MyEMSLUploader(config, mMgrParams.ParamDictionary, mTaskParams.TaskDictionary, mFileTools)
+                myEMSLUploader = new MyEMSLUploader(config, mMgrParams.MgrParams, mTaskParams.TaskDictionary, mFileTools)
                 {
                     TraceMode = TraceMode
                 };

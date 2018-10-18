@@ -326,7 +326,7 @@ namespace ArchiveVerifyPlugin
 
                 var lstDatasetFilesLocal = metadataObject.FindDatasetFilesToArchive(
                     mTaskParams.TaskDictionary,
-                    mMgrParams.ParamDictionary,
+                    mMgrParams.MgrParams,
                     out _);
 
                 if (lstDatasetFilesLocal.Count == 0)
