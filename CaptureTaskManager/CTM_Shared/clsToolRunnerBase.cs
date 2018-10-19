@@ -687,9 +687,10 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="message"></param>
         /// <param name="includeDate"></param>
-        public static void ShowTraceMessage(string message, bool includeDate = false)
+        /// <param name="emptyLinesBeforeMessage"></param>
+        public static void ShowTraceMessage(string message, bool includeDate = false, int emptyLinesBeforeMessage = 1)
         {
-            BaseLogger.ShowTrace(message, includeDate);
+            BaseLogger.ShowTraceMessage(message, includeDate, "  " , emptyLinesBeforeMessage);
         }
 
         /// <summary>

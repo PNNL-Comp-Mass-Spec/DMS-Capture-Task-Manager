@@ -26,7 +26,7 @@ namespace CaptureTaskManager
     /// </summary>
     static class Program
     {
-        private const string PROGRAM_DATE = "October 17, 2018";
+        private const string PROGRAM_DATE = "October 18, 2018";
 
         private static bool mCodeTestMode;
         private static bool mTraceMode;
@@ -94,7 +94,7 @@ namespace CaptureTaskManager
                 return -1;
             }
 
-            ShowTraceMessage("Command line arguments parsed");
+            ShowTrace("Command line arguments parsed");
 
             if (mShowVersionOnly)
             {
@@ -108,7 +108,7 @@ namespace CaptureTaskManager
             {
                 try
                 {
-                    ShowTraceMessage("Code test mode enabled");
+                    ShowTrace("Code test mode enabled");
 
                     var testHarness = new clsCodeTest();
 
@@ -121,7 +121,7 @@ namespace CaptureTaskManager
                     return -1;
                 }
 
-                ShowTraceMessage("Exiting application");
+                ShowTrace("Exiting application");
 
                 clsParseCommandLine.PauseAtConsole(500);
                 return 0;
@@ -137,7 +137,7 @@ namespace CaptureTaskManager
                     // if (mTraceMode)
                     //    clsUtilities.VerifyFolder("Program.Main");
 
-                    ShowTraceMessage("Instantiating clsMainProgram");
+                    ShowTrace("Instantiating clsMainProgram");
 
                     // Initialize the main execution class
                     var mainProcess = new clsMainProgram(mTraceMode);
@@ -162,7 +162,7 @@ namespace CaptureTaskManager
                 }
             } while (restart);
 
-            ShowTraceMessage("Exiting application");
+            ShowTrace("Exiting application");
             FileLogger.FlushPendingMessages();
             return 0;
         }
@@ -312,7 +312,7 @@ namespace CaptureTaskManager
             }
         }
 
-        private static void ShowTraceMessage(string message)
+        private static void ShowTrace(string message)
         {
             if (mTraceMode)
                 clsMainProgram.ShowTraceMessage(message);

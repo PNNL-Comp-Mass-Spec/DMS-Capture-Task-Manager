@@ -67,7 +67,7 @@ namespace CaptureTaskManager
                     return;
                 }
 
-                ShowTraceIfEnabled("AckManagerUpdateRequired using " + connectionString);
+                ShowTrace("AckManagerUpdateRequired using " + connectionString);
 
                 var conn = new SqlConnection(connectionString);
                 conn.Open();

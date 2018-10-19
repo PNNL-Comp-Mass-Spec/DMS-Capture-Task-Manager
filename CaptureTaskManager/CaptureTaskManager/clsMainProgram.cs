@@ -312,11 +312,7 @@ namespace CaptureTaskManager
                         throw new ApplicationException("Unable to initialize manager settings class: unknown error");
                     }
 
-                    if (TraceMode)
-                    {
-                        ShowTraceMessage("Initialized MgrParams");
-                        MgrSettings.ShowDictionaryTrace(mMgrSettings.MgrParams);
-                    }
+                    ShowTrace("Initialized MgrParams");
 
                 }
                 catch (Exception ex)
@@ -590,7 +586,7 @@ namespace CaptureTaskManager
             // Construct the path to the config document
             var configFilePath = Path.Combine(mMgrDirectoryPath, mMgrExeName + ".config");
 
-            var mgrSettings = mMgrSettings.LoadMgrSettingsFromFile(configFilePath, TraceMode);
+            var mgrSettings = mMgrSettings.LoadMgrSettingsFromFile(configFilePath);
 
             // Manager Config DB connection string
             if (!mgrSettings.ContainsKey(MgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING))
@@ -1139,19 +1135,25 @@ namespace CaptureTaskManager
             return true;
         }
 
-        private void ShowTrace(string message)
+        /// <summary>
+        /// If TraceMode is True, display a timestamp and message at the console
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="emptyLinesBeforeMessage"></param>
+        private void ShowTrace(string message, int emptyLinesBeforeMessage= 1)
         {
             if (TraceMode)
-                ShowTraceMessage(message);
+                ShowTraceMessage(message, emptyLinesBeforeMessage);
         }
 
         /// <summary>
         /// Display a timestamp and message at the console
         /// </summary>
         /// <param name="message"></param>
-        public static void ShowTraceMessage(string message)
+        /// <param name="emptyLinesBeforeMessage"></param>
+        public static void ShowTraceMessage(string message, int emptyLinesBeforeMessage = 1)
         {
-            clsToolRunnerBase.ShowTraceMessage(message);
+            clsToolRunnerBase.ShowTraceMessage(message, false, emptyLinesBeforeMessage);
         }
 
         /// <summary>
