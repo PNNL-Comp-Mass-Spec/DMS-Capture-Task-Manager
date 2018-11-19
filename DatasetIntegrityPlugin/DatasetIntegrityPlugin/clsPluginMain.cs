@@ -620,16 +620,16 @@ namespace DatasetIntegrityPlugin
 
         private bool CopyCDFToDatasetDirectory(FileTools fileTools, string datasetDirectoryPath)
         {
-            var fiCDF = new FileInfo(Path.Combine(mWorkDir, mDataset + ".cdf"));
+            var cdfFile = new FileInfo(Path.Combine(mWorkDir, mDataset + ".cdf"));
 
-            if (!fiCDF.Exists)
+            if (!cdfFile.Exists)
             {
                 mRetData.CloseoutMsg = "OpenChrom did not create a .CDF file";
-                LogError(mRetData.CloseoutMsg + ": " + fiCDF.FullName);
+                LogError(mRetData.CloseoutMsg + ": " + cdfFile.FullName);
                 return false;
             }
 
-            var success = CopyFileToDatasetDirectory(fileTools, fiCDF, datasetDirectoryPath);
+            var success = CopyFileToDatasetDirectory(fileTools, cdfFile, datasetDirectoryPath);
             return success;
         }
 
@@ -1283,7 +1283,7 @@ namespace DatasetIntegrityPlugin
         }
 
         /// <summary>
-        /// Tests the integrity of a a Finnigan Ion Trap dataset
+        /// Tests the integrity of a Thermo Ion Trap Raw File
         /// </summary>
         /// <param name="dataFileNamePath">Fully qualified path to dataset file</param>
         /// <returns>Enum indicating success or failure</returns>
@@ -1452,7 +1452,7 @@ namespace DatasetIntegrityPlugin
         }
 
         /// <summary>
-        /// Tests a bruker directory for integrity
+        /// Tests a Bruker directory for integrity
         /// </summary>
         /// <param name="datasetDirectoryPath">Fully qualified path to the dataset directory</param>
         /// <returns></returns>
@@ -1733,17 +1733,17 @@ namespace DatasetIntegrityPlugin
             fileExists = false;
             long mcfFileSizeMax = 0;
 
-            foreach (var fiFile in dotDDirectories[0].GetFiles("*.mcf"))
+            foreach (var mcfFile in dotDDirectories[0].GetFiles("*.mcf"))
             {
-                if (fiFile.Length > dataFileSizeKB * 1024)
+                if (mcfFile.Length > dataFileSizeKB * 1024)
                 {
-                    dataFileSizeKB = fiFile.Length / (1024F);
-                    mctFileName = fiFile.Name;
+                    dataFileSizeKB = mcfFile.Length / (1024F);
+                    mctFileName = mcfFile.Name;
                     fileExists = true;
                 }
 
-                if (fiFile.Length > mcfFileSizeMax)
-                    mcfFileSizeMax = fiFile.Length;
+                if (mcfFile.Length > mcfFileSizeMax)
+                    mcfFileSizeMax = mcfFile.Length;
             }
 
             if (!fileExists && requireMCFFile)
@@ -2304,18 +2304,18 @@ namespace DatasetIntegrityPlugin
         /// <returns>File size in KB</returns>
         private float GetFileSize(string fileNamePath)
         {
-            var fiFile = new FileInfo(fileNamePath);
-            return GetFileSize(fiFile);
+            var dataFile = new FileInfo(fileNamePath);
+            return GetFileSize(dataFile);
         }
 
         /// <summary>
         /// Gets the length of a single file in KB
         /// </summary>
-        /// <param name="fiFile">File info object</param>
+        /// <param name="dataFile">File info object</param>
         /// <returns>File size in KB</returns>
-        private float GetFileSize(FileInfo fiFile)
+        private float GetFileSize(FileInfo dataFile)
         {
-            var fileLengthKB = fiFile.Length / (1024F);
+            var fileLengthKB = dataFile.Length / 1024F;
             return fileLengthKB;
         }
 
@@ -2395,23 +2395,23 @@ namespace DatasetIntegrityPlugin
 
                 if (!openChromSettingsDirectory.Exists)
                 {
-                    LogMessage("Creating OpenChrom settings file folder at " + openChromSettingsDirectory.FullName);
+                    LogMessage("Creating OpenChrom settings file directory at " + openChromSettingsDirectory.FullName);
 
                     openChromSettingsDirectory.Create();
                     return false;
                 }
 
-                var fiSettingsFile = new FileInfo(
+                var settingsFile = new FileInfo(
                     Path.Combine(openChromSettingsDirectory.FullName,
                                  "net.openchrom.msd.converter.supplier.agilent.hp.prefs"));
 
-                if (!fiSettingsFile.Exists)
+                if (!settingsFile.Exists)
                 {
                     // Create the file
 
-                    LogMessage("Creating OpenChrom settings file at " + fiSettingsFile.FullName);
+                    LogMessage("Creating OpenChrom settings file at " + settingsFile.FullName);
 
-                    using (var writer = fiSettingsFile.CreateText())
+                    using (var writer = settingsFile.CreateText())
                     {
                         writer.WriteLine("eclipse.preferences.version=1");
                         writer.WriteLine("productSerialKey=wlkXZsvC-miP6A2KH-DgAuTix2");
@@ -2427,7 +2427,7 @@ namespace DatasetIntegrityPlugin
                 var settingsFileUpdateRequired = false;
                 var traceFound = false;
 
-                using (var reader = new StreamReader(new FileStream(fiSettingsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(settingsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     while (!reader.EndOfStream)
                     {
@@ -2456,7 +2456,7 @@ namespace DatasetIntegrityPlugin
                 if (!settingsFileUpdateRequired)
                 {
                     if (mDebugLevel >= 2)
-                        LogDebug("OpenChrom settings file is up to date at " + fiSettingsFile.FullName);
+                        LogDebug("OpenChrom settings file is up to date at " + settingsFile.FullName);
 
                     return true;
                 }
@@ -2468,10 +2468,10 @@ namespace DatasetIntegrityPlugin
                 if (!traceFound)
                     settingsData.Add("trace=1");
 
-                LogMessage("Adding productSerialKey entry to OpenChrom settings file at " + fiSettingsFile.FullName);
+                LogMessage("Adding productSerialKey entry to OpenChrom settings file at " + settingsFile.FullName);
 
                 // Actually update the file
-                using (var writer = new StreamWriter(new FileStream(fiSettingsFile.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+                using (var writer = new StreamWriter(new FileStream(settingsFile.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
                 {
                     foreach (var dataLine in settingsData)
                         writer.WriteLine(dataLine);
