@@ -1406,7 +1406,12 @@ namespace DatasetInfoPlugin
                 // This is not always a critical error; log it as a warning
                 LogWarning(errorMsg);
             }
-            else
+            else if (message.StartsWith("Call to .OpenRawFile failed for:"))
+            {
+                mMsg = "Error running MSFileInfoScanner: Call to .OpenRawFile failed";
+                LogError(errorMsg);
+
+            } else
             {
                 mErrOccurred = true;
 
