@@ -16,7 +16,8 @@ namespace CaptureTaskManager
         // FTICR data, including instrument 3T_FTICR, 7T_FTICR, 9T_FTICR, 11T_FTICR, 11T_FTICR_B, and 12T_FTICR
         public const string RAW_DATA_TYPE_ZIPPED_S_FOLDERS = "zipped_s_folders";
 
-        // Micromass QTOF data
+        // Waters QTOF data (Micromass)
+        // Waters Synapt data
         public const string RAW_DATA_TYPE_DOT_RAW_FOLDER = "dot_raw_folder";
 
         // Finnigan ion trap/LTQ-FT data
@@ -86,18 +87,41 @@ namespace CaptureTaskManager
             UIMF = 2,
             mzXML = 3,
             mzML = 4,
-            AgilentDFolder = 5, // Agilent ion trap data, Agilent TOF data
+            /// <summary>
+            /// Agilent ion trap data, Agilent TOF data
+            /// </summary>
+            AgilentDFolder = 5,
             AgilentQStarWiffFile = 6,
-            MicromassRawFolder = 7, // Micromass QTOF data
+            /// <summary>
+            /// Waters Synapt
+            /// </summary>
+            WatersRawFolder = 7,
+            /// <summary>
+            /// FTICR data, including instrument 3T_FTICR, 7T_FTICR, 9T_FTICR, 11T_FTICR, 11T_FTICR_B, and 12T_FTICR
+            /// </summary>
             ZippedSFolders = 8,
-            // FTICR data, including instrument 3T_FTICR, 7T_FTICR, 9T_FTICR, 11T_FTICR, 11T_FTICR_B, and 12T_FTICR
+            /// <summary>
+            /// .D folder is the analysis.baf file
+            /// There is also .m subfolder that has a apexAcquisition.method file
+            /// </summary>
             BrukerFTFolder = 9,
-            // .D folder is the analysis.baf file; there is also .m subfolder that has a apexAcquisition.method file
-            BrukerMALDISpot = 10, // has a .EMF file and a single sub-folder that has an acqu file and fid file
+            /// <summary>
+            /// Has a .EMF file and a single sub-folder that has an acqu file and fid file
+            /// </summary>
+            BrukerMALDISpot = 10,
+            /// <summary>
+            /// Directory with .jpg files and .D subdirectories
+            /// </summary>
             BrukerMALDIImaging = 11,
-            // Series of zipped subfolders, with names like 0_R00X329.zip; subfolders inside the .Zip files have fid files
+            /// <summary>
+            /// Series of zipped subdirectories, with names like 0_R00X329.zip; subdirectories inside the .Zip files have fid files
+            /// </summary>
             BrukerTOFBaf = 12,
-            // Used by Maxis01; Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
+            /// <summary>
+            /// Used by Maxis01; Inside the .D folder is the analysis.baf file
+            /// There is also .m subfolder that has a microTOFQMaxAcquisition.method file
+            /// There is not a ser or fid file
+            /// </summary>
             SciexWiffFile = 13,
             IlluminaFolder = 14
         }
@@ -173,7 +197,7 @@ namespace CaptureTaskManager
                 case RAW_DATA_TYPE_ZIPPED_S_FOLDERS:
                     return eRawDataType.ZippedSFolders;
                 case RAW_DATA_TYPE_DOT_RAW_FOLDER:
-                    return eRawDataType.MicromassRawFolder;
+                    return eRawDataType.WatersRawFolder;
                 case RAW_DATA_TYPE_DOT_RAW_FILES:
                     return eRawDataType.ThermoRawFile;
                 case RAW_DATA_TYPE_DOT_WIFF_FILES:
@@ -209,7 +233,7 @@ namespace CaptureTaskManager
                     return RAW_DATA_TYPE_DOT_D_FOLDERS;
                 case eRawDataType.ZippedSFolders:
                     return RAW_DATA_TYPE_ZIPPED_S_FOLDERS;
-                case eRawDataType.MicromassRawFolder:
+                case eRawDataType.WatersRawFolder:
                     return RAW_DATA_TYPE_DOT_RAW_FOLDER;
                 case eRawDataType.ThermoRawFile:
                     return RAW_DATA_TYPE_DOT_RAW_FILES;
