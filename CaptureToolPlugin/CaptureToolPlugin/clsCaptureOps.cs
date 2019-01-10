@@ -26,19 +26,33 @@ namespace CaptureToolPlugin
         #region "Enums"
         public enum RawDSTypes
         {
-            // Unknown type
+            /// <summary>
+            /// Unknown type
+            /// </summary>
             None,
-            // Instrument file
+            /// <summary>
+            /// Instrument file
+            /// </summary>
             File,
-            // Instrument directory without an extension
+            /// <summary>
+            /// Instrument directory without an extension
+            /// </summary>
             DirectoryNoExt,
-            // Instrument directory with an extension, like .D
+            /// <summary>
+            /// Instrument directory with an extension, like .D or .Raw
+            /// </summary>
             DirectoryExt,
-            // Bruker imaging data
+            /// <summary>
+            /// Bruker imaging data
+            /// </summary>
             BrukerImaging,
-            // Bruker spot data
+            /// <summary>
+            /// Bruker spot data
+            /// </summary>
             BrukerSpot,
-            // Mix of file types
+            /// <summary>
+            /// Mix of file types
+            /// </summary>
             MultiFile
         }
 
@@ -852,6 +866,8 @@ namespace CaptureToolPlugin
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging:
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging_V2:
                 case clsInstrumentClassInfo.eInstrumentClass.IMS_Agilent_TOF:
+                case clsInstrumentClassInfo.eInstrumentClass.Micromass_QTOF:
+                case clsInstrumentClassInfo.eInstrumentClass.Waters_IMS:
                     // Preferentially capture dataset directories
                     // If a directory is not found, will instead look for a dataset file
                     lookForDatasetFile = false;

@@ -152,7 +152,8 @@ namespace CaptureTaskManager
             PrepHPLC = 21,                  // PrepHPLC1, PrepHPLC2
             BrukerMALDI_Imaging_V2 = 22,    // 12T_FTICR_Imaging, 15T_FTICR_Imaging
             Illumina_Sequencer = 23,        // External_Illumina
-            GC_QExactive = 24               // GCQE01
+            GC_QExactive = 24,              // GCQE01
+            Waters_IMS = 25                 // SynaptG2_01
         }
 
         #endregion
