@@ -384,8 +384,7 @@ namespace DatasetInfoPlugin
                 if (mMsFileScanner.ErrorCode == iMSFileInfoScanner.eMSFileScannerErrorCodes.MS2MzMinValidationWarning)
                 {
                     var warningMsg = mMsFileScanner.GetErrorMessage();
-                    retData.EvalMsg = AppendToComment(retData.EvalMsg,
-                                                     "MS2MzMinValidationWarning: " + warningMsg);
+                    retData.EvalMsg = AppendToComment(retData.EvalMsg, "MS2MzMinValidationWarning: " + warningMsg);
                 }
 
                 if (successProcessing && !skipPlots)
