@@ -181,8 +181,8 @@ namespace DatasetInfoPlugin
             UnregisterEventHandler(mMsFileScanner, BaseLogger.LogLevels.ERROR);
             UnregisterEventHandler(mMsFileScanner, BaseLogger.LogLevels.WARN);
 
-            mMsFileScanner.ErrorEvent += mMsFileScanner_ErrorEvent;
-            mMsFileScanner.WarningEvent += mMsFileScanner_WarningEvent;
+            mMsFileScanner.ErrorEvent += MsFileScanner_ErrorEvent;
+            mMsFileScanner.WarningEvent += MsFileScanner_WarningEvent;
 
             // Monitor progress reported by MSFileInfoScanner
             mMsFileScanner.ProgressUpdate += ProgressUpdateHandler;
@@ -1391,7 +1391,7 @@ namespace DatasetInfoPlugin
         /// </summary>
         /// <param name="message">Error message</param>
         /// <param name="ex"></param>
-        void mMsFileScanner_ErrorEvent(string message, Exception ex)
+        void MsFileScanner_ErrorEvent(string message, Exception ex)
         {
             var errorMsg = "Error running MSFileInfoScanner: " + message;
 
@@ -1440,7 +1440,7 @@ namespace DatasetInfoPlugin
         /// Handles a warning event from MS file scanner
         /// </summary>
         /// <param name="message"></param>
-        void mMsFileScanner_WarningEvent(string message)
+        void MsFileScanner_WarningEvent(string message)
         {
             if (message.StartsWith("Unable to load data for scan"))
             {
