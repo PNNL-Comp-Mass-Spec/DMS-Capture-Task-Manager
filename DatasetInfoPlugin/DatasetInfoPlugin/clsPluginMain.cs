@@ -369,6 +369,21 @@ namespace DatasetInfoPlugin
                     successProcessing = false;
                 }
 
+                if (mMsFileScanner.ErrorCode == iMSFileInfoScanner.eMSFileScannerErrorCodes.ThermoRawFileReaderError)
+                {
+                    // Call to .OpenRawFile failed
+                    mMsg = "Error running MSFileInfoScanner: Call to .OpenRawFile failed";
+                    LogError(mMsg);
+                    successProcessing = false;
+                }
+                else if (mMsFileScanner.ErrorCode == iMSFileInfoScanner.eMSFileScannerErrorCodes.DatasetHasNoSpectra)
+                {
+                    // Dataset has no spectra
+                    mMsg = "Error running MSFileInfoScanner: Dataset has no spectra (ScanCount = 0)";
+                    LogError(mMsg);
+                    successProcessing = false;
+                }
+
                 if (fileCopiedLocally)
                 {
                     mFileTools.DeleteFileWithRetry(new FileInfo(pathToProcess), 2, out _);
@@ -1405,12 +1420,7 @@ namespace DatasetInfoPlugin
                 // This is not always a critical error; log it as a warning
                 LogWarning(errorMsg);
             }
-            else if (message.StartsWith("Call to .OpenRawFile failed for:"))
-            {
-                mMsg = "Error running MSFileInfoScanner: Call to .OpenRawFile failed";
-                LogError(errorMsg);
-
-            } else
+            else
             {
                 mErrOccurred = true;
 
