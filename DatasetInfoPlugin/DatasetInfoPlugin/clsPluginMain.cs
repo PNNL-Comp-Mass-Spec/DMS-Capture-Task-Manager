@@ -422,7 +422,9 @@ namespace DatasetInfoPlugin
                 // Either a non-zero error code was returned, or an error event was received
 
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+                // ReSharper disable HeuristicUnreachableCode
                 if (brukerDotDBaf && IGNORE_BRUKER_BAF_ERRORS)
+#pragma warning disable 162
                 {
                     // 12T_FTICR_B datasets (with .D directories and analysis.baf and/or fid files) sometimes work with MSFileInfoScanner, and sometimes don't
                     // The problem is that ProteoWizard doesn't support certain forms of these datasets
@@ -437,6 +439,8 @@ namespace DatasetInfoPlugin
                     return retData;
 
                 }
+#pragma warning restore 162
+                // ReSharper restore HeuristicUnreachableCode
 
                 if (primaryFileOrDirectoryProcessed)
                 {
@@ -635,6 +639,7 @@ namespace DatasetInfoPlugin
                 var indexHtmlFilePath = Path.Combine(outputPathBase, "index.html");
                 using (var htmlWriter = new StreamWriter(new FileStream(indexHtmlFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
+                    // ReSharper disable once StringLiteralTypo
                     htmlWriter.WriteLine("<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 3.2//EN\">");
                     htmlWriter.WriteLine("<html>");
                     htmlWriter.WriteLine("<head>");
@@ -744,6 +749,7 @@ namespace DatasetInfoPlugin
                     htmlWriter.WriteLine("    <tr>");
                     htmlWriter.WriteLine("      <td>&nbsp;</td>");
                     htmlWriter.WriteLine("      <td align=\"right\">Combined Stats:</td>");
+                    // ReSharper disable once StringLiteralTypo
                     htmlWriter.WriteLine("      <td valign=\"middle\">");
                     htmlWriter.WriteLine("        <table border=\"1\">");
                     htmlWriter.WriteLine("          <tr><th>Scan Type</th><th>Scan Count</th><th>Scan Filter Text</th></tr>");
