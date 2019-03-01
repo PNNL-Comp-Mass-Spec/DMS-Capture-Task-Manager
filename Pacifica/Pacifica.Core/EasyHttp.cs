@@ -1143,7 +1143,8 @@ namespace Pacifica.Core
 
             contentLength += TAR_BLOCK_SIZE_BYTES;
 
-            var dctDirectoryEntries = new SortedSet<string>();
+            // This list keeps track of directory entries that have been added to the .tar file
+            var directoryEntriesStored = new SortedSet<string>();
 
             // Add the files to be archived
             foreach (var fileToArchive in fileListObject)
@@ -1156,7 +1157,7 @@ namespace Pacifica.Core
                     if (sourceFile.Directory == null)
                         throw new DirectoryNotFoundException("Cannot access the parent folder for the source file: " + fileToArchive.Value.RelativeDestinationFullPath);
 
-                    if (!dctDirectoryEntries.Contains(sourceFile.Directory.FullName))
+                    if (!directoryEntriesStored.Contains(sourceFile.Directory.FullName))
                     {
                         var dirPathInArchive = fileToArchive.Value.RelativeDestinationDirectory.TrimEnd('/') + "/";
                         addonBytes = AddTarFileContentLength(dirPathInArchive, 0, out headerBlocks);
@@ -1171,7 +1172,7 @@ namespace Pacifica.Core
 
                         contentLength += addonBytes;
 
-                        dctDirectoryEntries.Add(sourceFile.Directory.FullName);
+                        directoryEntriesStored.Add(sourceFile.Directory.FullName);
                     }
                 }
 
