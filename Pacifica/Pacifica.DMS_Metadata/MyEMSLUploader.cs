@@ -13,7 +13,6 @@ namespace Pacifica.DMS_Metadata
 
         public const string CRITICAL_UPLOAD_ERROR = "Critical Error";
 
-        private DMSMetadataObject mMetadataContainer;
         private readonly Upload mUploadWorker;
 
         private readonly Dictionary<string, string> mMgrParams;
@@ -86,7 +85,7 @@ namespace Pacifica.DMS_Metadata
         /// <summary>
         /// DMS Metadata container
         /// </summary>
-        public DMSMetadataObject MetadataContainer => mMetadataContainer;
+        public DMSMetadataObject MetadataContainer { get; private set; }
 
         /// <summary>
         /// Status URI
@@ -192,19 +191,19 @@ namespace Pacifica.DMS_Metadata
             var ignoreMyEMSLFileTrackingError = GetParam("IgnoreMyEMSLFileTrackingError", false);
 
             // Instantiate the metadata object
-            mMetadataContainer = new DMSMetadataObject(config, mManagerName, jobNumber, mFileTools)
+            MetadataContainer = new DMSMetadataObject(config, mManagerName, jobNumber, mFileTools)
             {
                 TraceMode = TraceMode,
                 IgnoreMyEMSLFileTrackingError = ignoreMyEMSLFileTrackingError
             };
 
             // Attach the events
-            RegisterEvents(mMetadataContainer);
+            RegisterEvents(MetadataContainer);
 
             // Also process Progress Updates using _mdContainer_ProgressEvent, which triggers event StatusUpdate
-            mMetadataContainer.ProgressUpdate += _mdContainer_ProgressEvent;
+            MetadataContainer.ProgressUpdate += _mdContainer_ProgressEvent;
 
-            mMetadataContainer.UseTestInstance = UseTestInstance;
+            MetadataContainer.UseTestInstance = UseTestInstance;
 
             var certificateFilePath = EasyHttp.ResolveCertFile(mPacificaConfig, "SetupMetadataAndUpload", out var errorMessage);
 
@@ -217,7 +216,7 @@ namespace Pacifica.DMS_Metadata
             {
 
                 // Look for files to upload, compute a Sha-1 hash for each, and compare those hashes to existing files in MyEMSL
-                var success = mMetadataContainer.SetupMetadata(mTaskParams, mMgrParams, out var criticalError, out var criticalErrorMessage);
+                var success = MetadataContainer.SetupMetadata(mTaskParams, mMgrParams, out var criticalError, out var criticalErrorMessage);
 
                 if (!success)
                 {
@@ -233,21 +232,21 @@ namespace Pacifica.DMS_Metadata
             catch (Exception ex)
             {
                 OnWarningEvent("Exception calling MetadataContainer.SetupMetadata: " + ex.Message);
-                mMetadataContainer.DeleteLockFiles();
+                MetadataContainer.DeleteLockFiles();
                 throw;
             }
 
             // Send the metadata object to the calling procedure (in case it wants to log it)
-            ReportMetadataDefined("StartUpload", mMetadataContainer.MetadataObjectJSON);
+            ReportMetadataDefined("StartUpload", MetadataContainer.MetadataObjectJSON);
 
-            mPacificaConfig.LocalTempDirectory = Utilities.GetDictionaryValue(mMgrParams, "workdir", string.Empty);
-            FileCountUpdated = mMetadataContainer.TotalFileCountUpdated;
-            FileCountNew = mMetadataContainer.TotalFileCountNew;
-            Bytes = mMetadataContainer.TotalFileSizeToUpload;
+            mPacificaConfig.LocalTempDirectory = Utilities.GetDictionaryValue(mMgrParams, "WorkDir", string.Empty);
+            FileCountUpdated = MetadataContainer.TotalFileCountUpdated;
+            FileCountNew = MetadataContainer.TotalFileCountNew;
+            Bytes = MetadataContainer.TotalFileSizeToUpload;
 
-            EUSInfo = mMetadataContainer.EUSInfo;
+            EUSInfo = MetadataContainer.EUSInfo;
 
-            var fileList = Utilities.GetFileListFromMetadataObject(mMetadataContainer.MetadataObject);
+            var fileList = Utilities.GetFileListFromMetadataObject(MetadataContainer.MetadataObject);
             if (fileList.Count == 0)
             {
                 OnDebugEvent("File list is empty in StartUpload; nothing to do");
@@ -257,22 +256,22 @@ namespace Pacifica.DMS_Metadata
                 return true;
             }
 
-            mMetadataContainer.CreateLockFiles();
+            MetadataContainer.CreateLockFiles();
 
             bool uploadSuccess;
 
             try
             {
-                uploadSuccess = mUploadWorker.StartUpload(mMetadataContainer.MetadataObject, debugMode, out statusURL);
+                uploadSuccess = mUploadWorker.StartUpload(MetadataContainer.MetadataObject, debugMode, out statusURL);
             }
             catch (Exception ex)
             {
                 OnWarningEvent("Exception calling UploadWorker.StartUpload: " + ex.Message);
-                mMetadataContainer.DeleteLockFiles();
+                MetadataContainer.DeleteLockFiles();
                 throw;
             }
 
-            mMetadataContainer.DeleteLockFiles();
+            MetadataContainer.DeleteLockFiles();
 
             if (!string.IsNullOrEmpty(statusURL))
                 StatusURI = statusURL;
@@ -359,7 +358,7 @@ namespace Pacifica.DMS_Metadata
             {
                 // Multiplying by 0.25 because we're assuming 25% of the time is required for mMetadataContainer to compute the Sha-1 hashes of files to be uploaded while 75% of the time is required to create and upload the .tar file
                 var percentCompleteOverall = 0 + percentComplete * 0.25;
-                StatusUpdate(this, new StatusEventArgs(percentCompleteOverall, 0, mMetadataContainer.TotalFileSizeToUpload, progressMessage));
+                StatusUpdate(this, new StatusEventArgs(percentCompleteOverall, 0, MetadataContainer.TotalFileSizeToUpload, progressMessage));
             }
 
         }
