@@ -1083,30 +1083,30 @@ namespace Pacifica.Core
             if (pathInArchive.EndsWith("/"))
             {
                 // Directory entry
-                longPath = (pathInArchive.Length >= 100);
+                longPath = (pathInArchive.Length > 100);
             }
             else
             {
                 // File entry
-                longPath = (pathInArchive.Length >= 100);
+                longPath = (pathInArchive.Length > 100);
             }
 
             // Header block for current file
             headerBlocks = 1;
-            contentLength += TAR_BLOCK_SIZE_BYTES;
 
             if (longPath)
             {
                 // SharpZipLib will add two extra 512 byte blocks since this file has an extra long file path
-                //  (if the path is over 512 chars then SharpZipLib will add 3 blocks, etc.)
+                //  (if the path is over 512 chars, SharpZipLib will add 3 blocks, etc.)
                 //
                 // The first block will have filename "././@LongLink" and placeholder metadata (file date, file size, etc.)
                 // The next block will have the actual long filename
-                var extraBlocks = (int)(Math.Ceiling(pathInArchive.Length / 512.0));
+                // The third block is the standard file info block
+                var extraBlocks = (int)(Math.Ceiling(pathInArchive.Length / 512.0)) + 1;
                 headerBlocks += extraBlocks;
-                contentLength += TAR_BLOCK_SIZE_BYTES + TAR_BLOCK_SIZE_BYTES * extraBlocks;
             }
 
+            contentLength += TAR_BLOCK_SIZE_BYTES * headerBlocks;
             // File contents
             long fileBlocks = (int)Math.Ceiling(fileSizeBytes / (double)TAR_BLOCK_SIZE_BYTES);
             contentLength += fileBlocks * TAR_BLOCK_SIZE_BYTES;
