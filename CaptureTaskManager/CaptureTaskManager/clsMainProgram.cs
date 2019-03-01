@@ -354,6 +354,9 @@ namespace CaptureTaskManager
 
             LogTools.CreateFileLogger(logFileNameBase, mDebugLevel);
 
+            // Give the file logger a chance to zip old log files by year
+            FileLogger.ArchiveOldLogFilesNow();
+
             var logCnStr = mMgrSettings.GetParam("ConnectionString");
 
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
