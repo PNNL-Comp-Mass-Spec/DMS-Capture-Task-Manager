@@ -7,6 +7,7 @@ using ICSharpCode.SharpZipLib.Tar;
 using PRISM;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -49,6 +50,7 @@ namespace Pacifica.Core
         /// <summary>
         /// Metadata file name
         /// </summary>
+        // ReSharper disable once IdentifierTypo
         public const string MYEMSL_METADATA_FILE_NAME = "metadata.txt";
 
         #endregion
@@ -1107,6 +1109,7 @@ namespace Pacifica.Core
             }
 
             contentLength += TAR_BLOCK_SIZE_BYTES * headerBlocks;
+
             // File contents
             long fileBlocks = (int)Math.Ceiling(fileSizeBytes / (double)TAR_BLOCK_SIZE_BYTES);
             contentLength += fileBlocks * TAR_BLOCK_SIZE_BYTES;
@@ -1120,26 +1123,43 @@ namespace Pacifica.Core
 
             var debugging = (debugMode != eDebugMode.DebugDisabled);
 
+            StreamWriter tarMetadataFile;
+
             if (debugging)
             {
+                tarMetadataFile = new StreamWriter(new FileStream(@"C:\CTM_Workdir\TarMetadata.txt", FileMode.Create, FileAccess.Write, FileShare.Read))
+                {
+                    AutoFlush = true
+                };
+
+                Console.WriteLine();
+
                 // Note that "HB" stands for HeaderBlocks
-                ConsoleMsgUtils.ShowDebug("FileSize".PadRight(12) + "addonBytes".PadRight(12) + "StartOffset".PadRight(12) + "HB".PadRight(3) + "FilePath");
+                DisplayTarFileSizeDetails(tarMetadataFile, string.Format(
+                                              "FileSize".PadRight(12) + "addonBytes".PadRight(12) +
+                                              "StartOffset".PadRight(12) + "HB".PadRight(3) + "FilePath"));
+            }
+            else
+            {
+                tarMetadataFile = null;
             }
 
             // Add the metadata file
             var addonBytes = AddTarFileContentLength(MYEMSL_METADATA_FILE_NAME, metadataFile.Length);
 
             if (debugging)
-                ConsoleMsgUtils.ShowDebug(metadataFile.Length.ToString().PadRight(12) + addonBytes.ToString().PadRight(12) + contentLength.ToString().PadRight(12) + "1".PadRight(3) +
-                                          "metadata.txt");
+                DisplayTarFileSizeDetails(tarMetadataFile, string.Format(
+                                              metadataFile.Length.ToString().PadRight(12) + addonBytes.ToString().PadRight(12) +
+                                              contentLength.ToString().PadRight(12) + "1".PadRight(3) + "metadata.txt"));
 
             contentLength += addonBytes;
 
             // Add the data/ directory
 
             if (debugging)
-                ConsoleMsgUtils.ShowDebug("0".PadRight(12) + TAR_BLOCK_SIZE_BYTES.ToString().PadRight(12) + contentLength.ToString().PadRight(12) + "1".PadRight(3) +
-                                          "data/");
+                DisplayTarFileSizeDetails(tarMetadataFile, string.Format(
+                                              "0".PadRight(12) + TAR_BLOCK_SIZE_BYTES.ToString().PadRight(12) +
+                                              contentLength.ToString().PadRight(12) + "1".PadRight(3) + "data/"));
 
             contentLength += TAR_BLOCK_SIZE_BYTES;
 
@@ -1163,12 +1183,12 @@ namespace Pacifica.Core
                         addonBytes = AddTarFileContentLength(dirPathInArchive, 0, out headerBlocks);
 
                         if (debugging)
-                            ConsoleMsgUtils.ShowDebug(
-                                "0".PadRight(12) +
+                            DisplayTarFileSizeDetails(tarMetadataFile, string.Format(
+                               "0".PadRight(12) +
                                 addonBytes.ToString().PadRight(12) +
                                 contentLength.ToString().PadRight(12) +
                                 headerBlocks.ToString().PadRight(3) +
-                                FileTools.CompactPathString(dirPathInArchive, 75));
+                                FileTools.CompactPathString(dirPathInArchive, 150)));
 
                         contentLength += addonBytes;
 
@@ -1185,12 +1205,12 @@ namespace Pacifica.Core
                 addonBytes = AddTarFileContentLength(pathInArchive, fileToArchive.Value.FileSizeInBytes, out headerBlocks);
 
                 if (debugging)
-                    ConsoleMsgUtils.ShowDebug(
-                        fileToArchive.Value.FileSizeInBytes.ToString().PadRight(12) +
+                    DisplayTarFileSizeDetails(tarMetadataFile, string.Format(
+                       fileToArchive.Value.FileSizeInBytes.ToString().PadRight(12) +
                         addonBytes.ToString().PadRight(12) +
                         contentLength.ToString().PadRight(12) +
                         headerBlocks.ToString().PadRight(3) +
-                        FileTools.CompactPathString(fileToArchive.Value.RelativeDestinationFullPath, 100));
+                        FileTools.CompactPathString(fileToArchive.Value.RelativeDestinationFullPath, 150)));
 
                 contentLength += addonBytes;
 
@@ -1201,10 +1221,11 @@ namespace Pacifica.Core
             {
                 if (debugging)
                 {
-                    ConsoleMsgUtils.ShowDebug("0".PadRight(12) + TAR_BLOCK_SIZE_BYTES.ToString().PadRight(12) +
+                    DisplayTarFileSizeDetails(tarMetadataFile,
+                                              string.Format("0".PadRight(12) + TAR_BLOCK_SIZE_BYTES.ToString().PadRight(12) +
                                               contentLength.ToString().PadRight(12) +
                                               "0".PadRight(3) +
-                                              "512 block at end of .tar");
+                                              "512 block at end of .tar"));
                 }
 
                 contentLength += TAR_BLOCK_SIZE_BYTES;
@@ -1216,16 +1237,46 @@ namespace Pacifica.Core
             var finalPaddingLength = (recordCount * TarBuffer.DefaultRecordSize) - contentLength;
 
             if (debugging)
-                ConsoleMsgUtils.ShowDebug("0".PadRight(12) + finalPaddingLength.ToString().PadRight(12) + contentLength.ToString().PadRight(12) + "0".PadRight(3) +
-                                          "Padding at end (to make multiple of " + TarBuffer.DefaultRecordSize + ")");
+                DisplayTarFileSizeDetails(tarMetadataFile, string.Format(
+                                              "0".PadRight(12) + finalPaddingLength.ToString().PadRight(12) +
+                                              contentLength.ToString().PadRight(12) + "0".PadRight(3) +
+                                              "Padding at end (to make multiple of " + TarBuffer.DefaultRecordSize + ")"));
 
             contentLength = recordCount * TarBuffer.DefaultRecordSize;
 
             if (debugging)
-                ConsoleMsgUtils.ShowDebug("0".PadRight(12) + "0".PadRight(12) + contentLength.ToString().PadRight(12) + "0".PadRight(3) +
-                                          "End of file");
+            {
+                DisplayTarFileSizeDetails(tarMetadataFile, string.Format(
+                                              "0".PadRight(12) + "0".PadRight(12) +
+                                              contentLength.ToString().PadRight(12) + "0".PadRight(3) +
+                                              "End of file"));
+
+                tarMetadataFile.Close();
+            }
 
             return contentLength;
+        }
+
+        private static void DisplayTarFileSizeDetails(TextWriter tarMetadataFile, string metadataLine)
+        {
+            var columnMatcher = new Regex(@"^(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(.+)", RegexOptions.Compiled);
+
+            var metadataColumns = columnMatcher.Match(metadataLine);
+            if (metadataColumns.Success)
+            {
+                tarMetadataFile?.WriteLine("{0}\t{1}\t{2}\t{3}\t{4}",
+                                           metadataColumns.Groups[1],
+                                           metadataColumns.Groups[2],
+                                           metadataColumns.Groups[3],
+                                           metadataColumns.Groups[4],
+                                           metadataColumns.Groups[5]);
+            }
+            else
+            {
+                tarMetadataFile?.WriteLine(metadataLine);
+            }
+
+            ConsoleMsgUtils.ShowDebug(metadataLine, "  ", 0);
         }
 
         private static void AppendFolderToTar(TarOutputStream tarOutputStream, FileSystemInfo sourceFolder, string pathInArchive, ref long bytesWritten)
