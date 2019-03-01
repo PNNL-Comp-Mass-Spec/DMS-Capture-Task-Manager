@@ -1011,7 +1011,7 @@ namespace Pacifica.Core
             // Close the tar file memory stream (to flush the buffers)
             tarOutputStream.IsStreamOwner = false;
             tarOutputStream.Close();
-            bytesWritten += TAR_BLOCK_SIZE_BYTES;
+            bytesWritten += TAR_BLOCK_SIZE_BYTES + TAR_BLOCK_SIZE_BYTES;
 
             RaiseStatusUpdate(100, bytesWritten, contentLength, string.Empty);
 
@@ -1195,12 +1195,19 @@ namespace Pacifica.Core
 
             }
 
-            // Append one empty block (appended by SharpZipLib at the end of the .tar file
-            if (debugging)
-                ConsoleMsgUtils.ShowDebug("0".PadRight(12) + TAR_BLOCK_SIZE_BYTES.ToString().PadRight(12) + contentLength.ToString().PadRight(12) + "0".PadRight(3) +
-                                          "512 block at end of .tar");
+            // Append two empty blocks (appended by SharpZipLib at the end of the .tar file)
+            for (var i = 1; i <= 2; i++)
+            {
+                if (debugging)
+                {
+                    ConsoleMsgUtils.ShowDebug("0".PadRight(12) + TAR_BLOCK_SIZE_BYTES.ToString().PadRight(12) +
+                                              contentLength.ToString().PadRight(12) +
+                                              "0".PadRight(3) +
+                                              "512 block at end of .tar");
+                }
 
-            contentLength += TAR_BLOCK_SIZE_BYTES;
+                contentLength += TAR_BLOCK_SIZE_BYTES;
+            }
 
             // Round up contentLength to the nearest 10240 bytes
             // Note that recordCount is a long to prevent overflow errors when computing finalPaddingLength
