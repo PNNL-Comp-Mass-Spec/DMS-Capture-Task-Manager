@@ -241,6 +241,9 @@ namespace Pacifica.Core
 
         public static string ObjectToJson(IList metadataList)
         {
+            if (metadataList == null)
+                return string.Empty;
+
             var jso = new JsonArray(metadataList);
             return jso.ToString();
         }
