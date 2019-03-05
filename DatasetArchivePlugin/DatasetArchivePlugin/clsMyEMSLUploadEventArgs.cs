@@ -15,22 +15,22 @@ namespace DatasetArchivePlugin
         public readonly bool UsedTestInstance;
 
         public MyEMSLUploadEventArgs(
-            int iFileCountNew,
-            int iFileCountUpdated,
-            long iBytes,
-            double dUploadTimeSeconds,
-            string sStatusURI,
+            int fileCountNew,
+            int fileCountUpdated,
+            long bytes,
+            double uploadTimeSeconds,
+            string statusURI,
             Upload.EUSInfo eusInfo,
-            int iErrorCode,
+            int errorCode,
             bool usedTestInstance)
         {
-            FileCountNew = iFileCountNew;
-            FileCountUpdated = iFileCountUpdated;
-            BytesUploaded = iBytes;
-            UploadTimeSeconds = dUploadTimeSeconds;
-            StatusURI = sStatusURI;
+            FileCountNew = fileCountNew;
+            FileCountUpdated = fileCountUpdated;
+            BytesUploaded = bytes;
+            UploadTimeSeconds = uploadTimeSeconds;
+            StatusURI = statusURI;
             EUSInfo = eusInfo;
-            ErrorCode = iErrorCode;
+            ErrorCode = errorCode;
             UsedTestInstance = usedTestInstance;
         }
     }

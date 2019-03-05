@@ -424,7 +424,7 @@ namespace DatasetArchivePlugin
                     myEMSLUploader.FileCountNew, myEMSLUploader.FileCountUpdated,
                     myEMSLUploader.Bytes, elapsedTime.TotalSeconds,
                     statusURL, myEMSLUploader.EUSInfo,
-                    iErrorCode: 0, usedTestInstance: useTestInstance);
+                    errorCode: 0, usedTestInstance: useTestInstance);
 
                 OnMyEMSLUploadComplete(e);
 
