@@ -134,7 +134,7 @@ xcopy debug\Pacifica.Core.pdb F:\Documents\Projects\DataMining\DMS_Programs\Mage
 xcopy debug\Pacifica.Core.dll F:\Documents\Projects\JohnSandoval\APE_DLL\lib /D /Y
 xcopy debug\Pacifica.Core.dll F:\Documents\Projects\JohnSandoval\APE_GUI\lib /D /Y
 
-
 xcopy ..\..\Pacifica.DMS_Metadata\bin\Debug\Pacifica.DMS_Metadata.dll F:\Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\CaptureTaskManager\CaptureTaskManager\bin\Debug /D /Y
+xcopy ..\..\Pacifica.DMS_Metadata\bin\Debug\Pacifica.Upload.dll       F:\Documents\Projects\DataMining\DMS_Managers\Capture_Task_Manager\CaptureTaskManager\CaptureTaskManager\bin\Debug /D /Y
 
 pause
