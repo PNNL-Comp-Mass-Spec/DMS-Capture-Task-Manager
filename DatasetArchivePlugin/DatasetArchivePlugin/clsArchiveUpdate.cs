@@ -8,6 +8,7 @@
 using System;
 using CaptureTaskManager;
 using PRISM;
+using Uploader = Pacifica.Upload;
 
 namespace DatasetArchivePlugin
 {
@@ -20,9 +21,9 @@ namespace DatasetArchivePlugin
         #region "Class variables"
 
         // Obsolete: "No longer used"
-        // string mArchiveSharePath = string.Empty;                // The dataset folder path in the archive, for example: \\aurora.emsl.pnl.gov\dmsarch\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25
-        // string mResultsFolderPathArchive = string.Empty;        // The target path to copy the data to, for example:    \\aurora.emsl.pnl.gov\dmsarch\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25\SIC201304300029_Auto938684
-        // string mResultsFolderPathServer = string.Empty;     // The source path of the dataset folder (or dataset job results folder) to archive, for example: \\proto-7\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25\SIC201304300029_Auto938684
+        // string mArchiveSharePath = string.Empty;             // The dataset folder path in the archive, for example: \\aurora.emsl.pnl.gov\dmsarch\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25
+        // string mResultsFolderPathArchive = string.Empty;     // The target path to copy the data to, for example:    \\aurora.emsl.pnl.gov\dmsarch\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25\SIC201304300029_Auto938684
+        // string mResultsFolderPathServer = string.Empty;      // The source path of the dataset folder (or dataset job results folder) to archive, for example: \\proto-7\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25\SIC201304300029_Auto938684
 
         #endregion
 
@@ -67,15 +68,15 @@ namespace DatasetArchivePlugin
             var recurse = mTaskParams.GetParam("MyEMSLRecurse", true);
 
             // Set this to .CreateTarLocal to create the .tar file locally and thus not upload the data to MyEMSL
-            var debugMode = Pacifica.Core.EasyHttp.eDebugMode.DebugDisabled;
+            var debugMode = Uploader.TarStreamUploader.UploadDebugMode.DebugDisabled;
 
             if (mTaskParams.GetParam("DebugTestTar", false))
-                debugMode = Pacifica.Core.EasyHttp.eDebugMode.CreateTarLocal;
+                debugMode = Uploader.TarStreamUploader.UploadDebugMode.CreateTarLocal;
             else
                 if (mTaskParams.GetParam("MyEMSLOffline", false))
-                debugMode = Pacifica.Core.EasyHttp.eDebugMode.MyEMSLOfflineMode;
+                debugMode = Uploader.TarStreamUploader.UploadDebugMode.MyEMSLOfflineMode;
 
-            if (debugMode != Pacifica.Core.EasyHttp.eDebugMode.DebugDisabled)
+            if (debugMode != Uploader.TarStreamUploader.UploadDebugMode.DebugDisabled)
                 OnStatusEvent("Calling UploadToMyEMSLWithRetry with debugMode=" + debugMode);
 
             const bool PUSH_TO_TEST_SERVER = false;

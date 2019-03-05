@@ -70,6 +70,12 @@
     <Compile Include="clsPluginMain.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Pacifica\Pacifica.Upload\Pacifica.Upload.csproj">
+      <Project>{4e0a4851-eb71-491c-8027-4af7b6a830bb}</Project>
+      <Name>Pacifica.Upload</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\DeployedFiles" /Y /I

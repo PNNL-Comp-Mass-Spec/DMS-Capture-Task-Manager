@@ -100,6 +100,10 @@
       <Project>{EDACD83A-AA92-4481-BB69-A28C67A6C7F9}</Project>
       <Name>Pacifica.DMS_Metadata</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\Pacifica\Pacifica.Upload\Pacifica.Upload.csproj">
+      <Project>{4e0a4851-eb71-491c-8027-4af7b6a830bb}</Project>
+      <Name>Pacifica.Upload</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

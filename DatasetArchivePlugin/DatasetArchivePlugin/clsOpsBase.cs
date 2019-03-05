@@ -13,9 +13,10 @@ using System.Threading;
 using CaptureTaskManager;
 using Pacifica.Core;
 using Pacifica.DMS_Metadata;
+using Pacifica.Upload;
 using PRISM;
-using System.IO;
 using PRISM.Logging;
+using System.IO;
 
 namespace DatasetArchivePlugin
 {
@@ -254,7 +255,7 @@ namespace DatasetArchivePlugin
         protected bool UploadToMyEMSLWithRetry(
             int maxAttempts,
             bool recurse,
-            EasyHttp.eDebugMode debugMode,
+            TarStreamUploader.UploadDebugMode debugMode,
             bool useTestInstance,
             out bool allowRetry,
             out string criticalErrorMessage)
@@ -280,7 +281,7 @@ namespace DatasetArchivePlugin
                 if (!allowRetry)
                     break;
 
-                if (debugMode != EasyHttp.eDebugMode.DebugDisabled)
+                if (debugMode != TarStreamUploader.UploadDebugMode.DebugDisabled)
                     break;
 
                 if (!success && attempts < maxAttempts)
@@ -294,7 +295,7 @@ namespace DatasetArchivePlugin
 
             if (!success)
             {
-                if (debugMode != EasyHttp.eDebugMode.DebugDisabled)
+                if (debugMode != TarStreamUploader.UploadDebugMode.DebugDisabled)
                     WarningMsg = "Debug mode was enabled; thus, .tar file was created locally and not uploaded to MyEMSL";
                 else
                     WarningMsg = AppendToString(WarningMsg, "UploadToMyEMSL reports False");
@@ -318,7 +319,12 @@ namespace DatasetArchivePlugin
         /// <param name="allowRetry">Output: whether the upload should be retried if it failed</param>
         /// <param name="criticalErrorMessage">Output: critical error message</param>
         /// <returns>True if success, false if an error</returns>
-        private bool UploadToMyEMSL(bool recurse, EasyHttp.eDebugMode debugMode, bool useTestInstance, out bool allowRetry, out string criticalErrorMessage)
+        private bool UploadToMyEMSL(
+            bool recurse,
+            TarStreamUploader.UploadDebugMode debugMode,
+            bool useTestInstance,
+            out bool allowRetry,
+            out string criticalErrorMessage)
         {
             var startTime = DateTime.UtcNow;
 
@@ -402,7 +408,7 @@ namespace DatasetArchivePlugin
 
                 OnStatusEvent(statusMessage);
 
-                if (debugMode != EasyHttp.eDebugMode.DebugDisabled)
+                if (debugMode != TarStreamUploader.UploadDebugMode.DebugDisabled)
                     return false;
 
                 statusMessage = "myEMSL statusURI => " + myEMSLUploader.StatusURI;
@@ -650,7 +656,7 @@ namespace DatasetArchivePlugin
                     verb = "hashing files";
                     filename = GetFilenameFromStatus(e.StatusMessage);
                 }
-                else if (e.StatusMessage.StartsWith(EasyHttp.UPLOADING_FILES))
+                else if (e.StatusMessage.StartsWith(TarStreamUploader.UPLOADING_FILES))
                 {
                     verb = "uploading files";
                     filename = GetFilenameFromStatus(e.StatusMessage);

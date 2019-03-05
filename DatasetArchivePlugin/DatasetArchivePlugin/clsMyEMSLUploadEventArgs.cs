@@ -1,5 +1,5 @@
 ﻿using System;
-using Pacifica.Core;
+using Pacifica.Upload;
 
 namespace DatasetArchivePlugin
 {
