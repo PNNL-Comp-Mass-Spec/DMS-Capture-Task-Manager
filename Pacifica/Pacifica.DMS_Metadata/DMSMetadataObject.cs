@@ -55,15 +55,8 @@ namespace Pacifica.DMS_Metadata
         public const string HASHING_FILES = "Hashing files";
 
         /// <summary>
-        /// Object that tracks the upload details, including the files to upload
+        /// List of remote files that were found using CacheInfo files
         /// </summary>
-        /// <remarks>
-        /// The information in this dictionary is translated to JSON;
-        /// Keys are key names; values are either strings or dictionary objects or even a list of dictionary objects
-        /// </remarks>
-        private List<Dictionary<string, object>> mMetadataObject;
-
-        // List of remote files that were found using CacheInfo files
         private readonly List<string> mRemoteCacheInfoFilesToRetrieve;
 
         // Keys in this dictionary are lock directory share paths (for example \\proto-6\DMS_LockFiles)
@@ -110,7 +103,11 @@ namespace Pacifica.DMS_Metadata
         /// <summary>
         /// Object that tracks the upload details, including the files to upload
         /// </summary>
-        public List<Dictionary<string, object>> MetadataObject => mMetadataObject;
+        /// <remarks>
+        /// The information in this dictionary is translated to JSON;
+        /// Keys are key names; values are either strings or dictionary objects or even a list of dictionary objects
+        /// </remarks>
+        public List<Dictionary<string, object>> MetadataObject { get; private set; }
 
         /// <summary>
         /// Subdirectory names that were skipped during a DatasetArchive task because we're pushing more than 15 GB of data
@@ -145,7 +142,7 @@ namespace Pacifica.DMS_Metadata
         /// <summary>
         /// Retrieve the metadata JSON as a string
         /// </summary>
-        public string MetadataObjectJSON => Utilities.ObjectToJson(mMetadataObject);
+        public string MetadataObjectJSON => Utilities.ObjectToJson(MetadataObject);
 
         #endregion
 
@@ -234,11 +231,11 @@ namespace Pacifica.DMS_Metadata
             if (criticalError)
                 return false;
 
-            mMetadataObject = Upload.CreatePacificaMetadataObject(uploadMetadata, unmatchedFiles, out var eusInfo);
+            MetadataObject = Uploader.Upload.CreatePacificaMetadataObject(uploadMetadata, unmatchedFiles, out var eusInfo);
 
             if (unmatchedFiles.Count > 0)
             {
-                var jsonMetadata = Utilities.ObjectToJson(mMetadataObject);
+                var jsonMetadata = Utilities.ObjectToJson(MetadataObject);
                 if (!CheckMetadataValidity(jsonMetadata, out var policyError))
                 {
                     if (policyError)
