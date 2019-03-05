@@ -60,6 +60,10 @@
     <Reference Include="Pacifica.DMS_Metadata">
       <HintPath>..\DeployedFiles\Pacifica.DMS_Metadata.dll</HintPath>
     </Reference>
+    <Reference Include="Pacifica.Upload, Version=1.0.7002.31671, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\DeployedFiles\Pacifica.Upload.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
@@ -69,12 +73,6 @@
     <Compile Include="clsHashInfo.cs" />
     <Compile Include="clsPluginMain.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Pacifica\Pacifica.Upload\Pacifica.Upload.csproj">
-      <Project>{4e0a4851-eb71-491c-8027-4af7b6a830bb}</Project>
-      <Name>Pacifica.Upload</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
