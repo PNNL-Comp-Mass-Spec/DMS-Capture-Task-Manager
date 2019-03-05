@@ -59,8 +59,10 @@ namespace Pacifica.DMS_Metadata
         /// </summary>
         private readonly List<string> mRemoteCacheInfoFilesToRetrieve;
 
-        // Keys in this dictionary are lock directory share paths (for example \\proto-6\DMS_LockFiles)
-        // Values are the corresponding lock file info object
+        /// <summary>
+        /// Keys in this dictionary are lock directory share paths (for example \\proto-6\DMS_LockFiles)
+        /// Values are the corresponding lock file info object
+        /// </summary>
         private readonly Dictionary<string, FileInfo> mRemoteCacheInfoLockFiles;
 
         private readonly FileTools mFileTools;
@@ -521,7 +523,7 @@ namespace Pacifica.DMS_Metadata
             // Get the file names that we can ignore
             var filesToIgnore = GetFilesToIgnore();
 
-            var fracCompleted = 0f;
+            var fractionCompleted = 0f;
 
             // Determine the amount of data to be pushed
             long totalFileSize = 0;
@@ -578,9 +580,11 @@ namespace Pacifica.DMS_Metadata
                 runningFileSize += dataFile.Length;
 
                 if (totalFileSize > 0)
-                    fracCompleted = runningFileSize / (float)totalFileSize;
+                {
+                    fractionCompleted = runningFileSize / (float)totalFileSize;
+                }
 
-                ReportProgress(HASHING_FILES + ": " + dataFile.Name, fracCompleted * 100);
+                ReportProgress(HASHING_FILES + ": " + dataFile.Name, fractionCompleted * 100);
 
                 // This constructor will auto-compute the Sha-1 hash value for the file
                 var fio = new FileInfoObject(dataFile.FullName, baseDSPath);
@@ -602,7 +606,7 @@ namespace Pacifica.DMS_Metadata
 
                 if (TraceMode)
                 {
-                    OnDebugEvent(string.Format("{0}, {1:F1}% complete: {2}", HASHING_FILES, fracCompleted * 100, dataFile.Name));
+                    OnDebugEvent(string.Format("{0}, {1:F1}% complete: {2}", HASHING_FILES, fractionCompleted * 100, dataFile.Name));
                 }
 
             }
@@ -1004,7 +1008,10 @@ namespace Pacifica.DMS_Metadata
 
             // Example metadata URL:
             // https://metadata.my.emsl.pnl.gov/fileinfo/files_for_keyvalue/omics.dms.dataset_id/265031
+
+            // ReSharper disable StringLiteralTypo
             var metadataURL = mPacificaConfig.MetadataServerUri + "/fileinfo/files_for_keyvalue/omics.dms.dataset_id/" + datasetID;
+            // ReSharper restore StringLiteralTypo
 
             // Note that querying by dataset name only works for datasets ingested after July 1, 2017, i.e.
             // https://metadata.my.emsl.pnl.gov/fileinfo/files_for_keyvalue/omics.dms.dataset_name/QC_pp_MCF-7_17_01_B_25JUN17_Frodo_REP-17-06-02
