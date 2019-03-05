@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Pacifica.Core;
 using PRISM;
 
-namespace Pacifica.Core
+namespace Pacifica.Upload
 {
     /// <summary>
     /// MyEMSL Upload metadata class
@@ -198,7 +199,7 @@ namespace Pacifica.Core
 
             // Note that EasyHttp is a static class with a static event
             // Be careful about instantiating this class (Upload) multiple times
-            EasyHttp.StatusUpdate += EasyHttp_StatusUpdate;
+            EasyHttp.StatusUpdate += Pacifica_StatusUpdate;
 
             EasyHttp.MyEMSLOffline += EasyHttp_MyEMSLOffline;
 
@@ -222,7 +223,7 @@ namespace Pacifica.Core
             MyEMSLOffline?.Invoke(this, e);
         }
 
-        void EasyHttp_StatusUpdate(object sender, StatusEventArgs e)
+        void Pacifica_StatusUpdate(object sender, StatusEventArgs e)
         {
             StatusUpdate?.Invoke(this, e);
         }
@@ -246,7 +247,7 @@ namespace Pacifica.Core
         // ReSharper disable once UnusedMember.Global
         public bool StartUpload(List<Dictionary<string, object>> metadataObject, out string statusURI)
         {
-            const EasyHttp.eDebugMode debugMode = EasyHttp.eDebugMode.DebugDisabled;
+            const TarStreamUploader.UploadDebugMode debugMode = TarStreamUploader.UploadDebugMode.DebugDisabled;
 
             return StartUpload(metadataObject, debugMode, out statusURI);
         }
@@ -263,7 +264,7 @@ namespace Pacifica.Core
         /// <returns>True if successfully uploaded, false if an error</returns>
         public bool StartUpload(
             List<Dictionary<string, object>> metadataObject,
-            EasyHttp.eDebugMode debugMode,
+            TarStreamUploader.UploadDebugMode debugMode,
             out string statusURI)
         {
 
@@ -332,7 +333,7 @@ namespace Pacifica.Core
             var location = "upload";
             var serverUri = "https://ServerIsOffline/dummy_page?test";
 
-            if (debugMode == EasyHttp.eDebugMode.MyEMSLOfflineMode)
+            if (debugMode == TarStreamUploader.UploadDebugMode.MyEMSLOfflineMode)
             {
                 OnDebugEvent("StartUpload is creating the .tar file locally");
             }
@@ -347,10 +348,15 @@ namespace Pacifica.Core
                 OnDebugEvent("StartUpload is sending file to " + storageUrl);
             }
 
-            var responseData = EasyHttp.SendFileListToIngester(
+            var streamUploader = new TarStreamUploader();
+            // Note that EasyHttp is a static class with a static event
+            // Be careful about instantiating this class (Upload) multiple times
+            streamUploader.StatusUpdate += Pacifica_StatusUpdate;
+
+            var responseData = streamUploader.SendFileListToIngester(
                 mPacificaConfig, location, serverUri, fileListObject, metadataFile.FullName, debugMode);
 
-            if (debugMode != EasyHttp.eDebugMode.DebugDisabled)
+            if (debugMode != TarStreamUploader.UploadDebugMode.DebugDisabled)
             {
                 // A .tar file was created locally; it was not sent to the server
                 return false;
@@ -612,7 +618,7 @@ namespace Pacifica.Core
             // Append the files
             foreach (var file in filesToUpload)
             {
-                // The subdir path must be "data/" or of the form "data/SubDirectory"
+                // The subdirectory path must be "data/" or of the form "data/SubDirectory"
                 // "data/" is required for files at the root dataset level because the root of the tar file
                 // has a metadata.txt file and we would have a conflict if the dataset folder root
                 // also had a file named metadata.txt
@@ -623,23 +629,24 @@ namespace Pacifica.Core
                 // while files in subdirectories should have a SubDir that does _not_ end in a forward slash
                 // It is likely that this discrepancy has been fixed in the backend python code on the ingest server
 
-                string subdirString;
+                string subDirString;
 
                 if (string.IsNullOrWhiteSpace(file.RelativeDestinationDirectory))
-                    subdirString = "data/";
+                    subDirString = "data/";
                 else
-                    subdirString = "data/" + file.RelativeDestinationDirectory.Trim('/');
+                    subDirString = "data/" + file.RelativeDestinationDirectory.Trim('/');
 
-                if (subdirString.Contains("//"))
+                if (subDirString.Contains("//"))
                 {
-                    throw new Exception("File path should not have two forward slashes: " + subdirString);
+                    throw new Exception("File path should not have two forward slashes: " + subDirString);
                 }
 
                 metadataObject.Add(new Dictionary<string, object> {
                     { "destinationTable", "Files" },
                     { "name", file.FileName },
+                    // ReSharper disable once StringLiteralTypo
                     { "absolutelocalpath", file.AbsoluteLocalPath},
-                    { "subdir", subdirString },
+                    { "subdir", subDirString },
                     { "size", file.FileSizeInBytes.ToString() },
                     { "hashsum", file.Sha1HashHex },
                     { "mimetype", "application/octet-stream" },

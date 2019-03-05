@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Pacifica.Core;
+using Uploader = Pacifica.Upload;
 using PRISM;
 using Utilities = Pacifica.Core.Utilities;
 
@@ -13,7 +14,7 @@ namespace Pacifica.DMS_Metadata
 
         public const string CRITICAL_UPLOAD_ERROR = "Critical Error";
 
-        private readonly Upload mUploadWorker;
+        private readonly Uploader.Upload mUploadWorker;
 
         private readonly Dictionary<string, string> mMgrParams;
         private readonly Dictionary<string, string> mTaskParams;
@@ -58,7 +59,7 @@ namespace Pacifica.DMS_Metadata
         /// <summary>
         /// EUS Info
         /// </summary>
-        public Upload.EUSInfo EUSInfo
+        public Uploader.Upload.EUSInfo EUSInfo
         {
             get;
             private set;
@@ -137,7 +138,7 @@ namespace Pacifica.DMS_Metadata
 
             CriticalErrorMessage = string.Empty;
 
-            EUSInfo = new Upload.EUSInfo();
+            EUSInfo = new Uploader.Upload.EUSInfo();
             EUSInfo.Clear();
 
             mMgrParams = mgrParams;
@@ -162,7 +163,7 @@ namespace Pacifica.DMS_Metadata
             if (string.IsNullOrEmpty(jobNumber))
                 throw new InvalidDataException("Job parameters do not have Job defined; unable to continue");
 
-            mUploadWorker = new Upload(config, transferFolderPath, jobNumber);
+            mUploadWorker = new Uploader.Upload(config, transferFolderPath, jobNumber);
             RegisterEvents(mUploadWorker);
 
             // Attach the events
@@ -183,7 +184,7 @@ namespace Pacifica.DMS_Metadata
         /// </param>
         /// <param name="statusURL">Output: status URL</param>
         /// <returns>True if success, false if an error</returns>
-        public bool SetupMetadataAndUpload(Configuration config, EasyHttp.eDebugMode debugMode, out string statusURL)
+        public bool SetupMetadataAndUpload(Configuration config, Uploader.TarStreamUploader.UploadDebugMode debugMode, out string statusURL)
         {
 
             var jobNumber = GetParam("Job", 0);

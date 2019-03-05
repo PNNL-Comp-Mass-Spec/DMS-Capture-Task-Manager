@@ -6,7 +6,7 @@ namespace Pacifica.Core
     /// <summary>
     /// Tracks the response code and response text returned by a call to EasyHttp.Send
     /// </summary>
-    class WebResponseData
+    public class WebResponseData
     {
         /// <summary>
         /// Set to true when an exception was caught

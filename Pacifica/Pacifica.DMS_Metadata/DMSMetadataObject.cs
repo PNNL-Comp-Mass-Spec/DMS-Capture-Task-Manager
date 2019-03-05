@@ -5,6 +5,7 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using Pacifica.Core;
+using Uploader = Pacifica.Upload;
 using PRISM;
 using Jayrock.Json.Conversion;
 using Utilities = Pacifica.Core.Utilities;
@@ -88,7 +89,7 @@ namespace Pacifica.DMS_Metadata
         /// <summary>
         /// EUS Info
         /// </summary>
-        public Upload.EUSInfo EUSInfo { get; private set; }
+        public Uploader.Upload.EUSInfo EUSInfo { get; private set; }
 
         /// <summary>
         /// Job number (in the DMS_Capture database)
@@ -250,7 +251,7 @@ namespace Pacifica.DMS_Metadata
                 }
             }
 
-            var metadataDescription = Upload.GetMetadataObjectDescription(mMetadataObject);
+            var metadataDescription = Uploader.Upload.GetMetadataObjectDescription(MetadataObject);
             OnDebugEvent(metadataDescription);
 
             EUSInfo = eusInfo;
@@ -261,7 +262,7 @@ namespace Pacifica.DMS_Metadata
         private bool GetSupplementalDMSMetadata(
             string dmsConnectionString,
             string datasetID,
-            Upload.UploadMetadata uploadMetadata,
+            Uploader.Upload.UploadMetadata uploadMetadata,
             int retryCount = 3)
         {
 
@@ -626,7 +627,7 @@ namespace Pacifica.DMS_Metadata
         private List<FileInfoObject> CompareDatasetContentsWithMyEMSLMetadata(
             string captureDbConnectionString,
             IEnumerable<FileInfoObject> candidateFilesToUpload,
-            Upload.UploadMetadata uploadMetadata,
+            Uploader.Upload.UploadMetadata uploadMetadata,
             out bool criticalError,
             out string criticalErrorMessage)
         {
@@ -829,10 +830,10 @@ namespace Pacifica.DMS_Metadata
         public List<FileInfoObject> FindDatasetFilesToArchive(
             Dictionary<string, string> taskParams,
             Dictionary<string, string> mgrParams,
-            out Upload.UploadMetadata uploadMetadata)
+            out Uploader.Upload.UploadMetadata uploadMetadata)
         {
 
-            uploadMetadata = new Upload.UploadMetadata();
+            uploadMetadata = new Uploader.Upload.UploadMetadata();
             uploadMetadata.Clear();
 
             // Translate values from task/mgr params into usable variables

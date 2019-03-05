@@ -50,7 +50,7 @@ namespace Pacifica.Core
 
         internal const string CLIENT_CERT_FILENAME = "svc-dms-cert_2018.pfx";
         public const string CLIENT_CERT_FILEPATH = @"C:\client_certs\" + CLIENT_CERT_FILENAME;
-        internal const string CLIENT_CERT_PASSWORD = "";
+        public const string CLIENT_CERT_PASSWORD = "";
 
         /// <summary>
         /// Local temp directory
