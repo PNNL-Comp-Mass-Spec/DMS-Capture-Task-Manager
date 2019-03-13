@@ -349,8 +349,6 @@ namespace Pacifica.Upload
             }
 
             var streamUploader = new TarStreamUploader();
-            // Note that EasyHttp is a static class with a static event
-            // Be careful about instantiating this class (Upload) multiple times
             streamUploader.StatusUpdate += Pacifica_StatusUpdate;
 
             var responseData = streamUploader.SendFileListToIngester(
