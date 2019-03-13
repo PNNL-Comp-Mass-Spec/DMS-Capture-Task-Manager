@@ -41,10 +41,10 @@ namespace DatasetIntegrityPlugin
         private const float UIMF_FILE_MIN_SIZE_KB = 5;
         private const float UIMF_FILE_SMALL_SIZE_KB = 50;
         private const float TIMS_UIMF_FILE_MIN_SIZE_KB = 5;
-        private const float AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB = 5;
-        private const float AGILENT_MSSCAN_BIN_FILE_SMALL_SIZE_KB = 50;
-        private const float AGILENT_MSPEAK_BIN_FILE_MIN_SIZE_KB = 50;
-        private const float AGILENT_MSPEAK_BIN_FILE_SMALL_SIZE_KB = 500;
+        private const float AGILENT_MS_SCAN_BIN_FILE_MIN_SIZE_KB = 5;
+        private const float AGILENT_MS_SCAN_BIN_FILE_SMALL_SIZE_KB = 50;
+        private const float AGILENT_MS_PEAK_BIN_FILE_MIN_SIZE_KB = 50;
+        private const float AGILENT_MS_PEAK_BIN_FILE_SMALL_SIZE_KB = 500;
         private const float AGILENT_DATA_MS_FILE_MIN_SIZE_KB = 75;
 
         // MALDI imaging file
@@ -1030,37 +1030,37 @@ namespace DatasetIntegrityPlugin
             return false;
         }
 
-        private void ReportFileSizeTooLarge(string sDataFileDescription, string sFilePath, float fActualSizeKB, float fMaxSizeKB)
+        private void ReportFileSizeTooLarge(string dataFileDescription, string filePath, float actualSizeKB, float maxSizeKB)
         {
-            var sMaxSize = FileSizeToString(fMaxSizeKB);
+            var maxSizeText = FileSizeToString(maxSizeKB);
 
             // Data file may be corrupt
-            var msg = sDataFileDescription + " file may be corrupt. Actual file size is " +
-                      FileSizeToString(fActualSizeKB) + "; " +
-                      "max allowable size is " + sMaxSize + "; see " + sFilePath;
+            var msg = dataFileDescription + " file may be corrupt. Actual file size is " +
+                      FileSizeToString(actualSizeKB) + "; " +
+                      "max allowable size is " + maxSizeText + "; see " + filePath;
 
             // Data file size is more than
-            mRetData.EvalMsg = sDataFileDescription + " file size is more than " + sMaxSize;
+            mRetData.EvalMsg = dataFileDescription + " file size is more than " + maxSizeText;
 
             LogError(msg);
         }
 
-        private void ReportFileSizeTooSmall(string sDataFileDescription, string sFilePath, float fActualSizeKB, float fMinSizeKB)
+        private void ReportFileSizeTooSmall(string dataFileDescription, string filePath, float actualSizeKB, float minSizeKB)
         {
-            // Example messages:
-            // Data file size is less than 100 KB
-            // ser file size is less than 16 KB
+            // Example messages for mRetData.EvalMsg
+            // Data file size is 75 KB; minimum allowed size 100 KB
+            // ser file size is 8 KB; minimum allowed size 16 KB
             // ser file is 0 bytes
 
-            var sMinSize = FileSizeToString(fMinSizeKB);
+            var minSizeText = FileSizeToString(minSizeKB);
 
             // Data file may be corrupt
-            var msg = sDataFileDescription + " file may be corrupt. Actual file size is " +
-                      FileSizeToString(fActualSizeKB) + "; " +
-                      "min allowable size is " + sMinSize + "; see " + sFilePath;
+            var msg = dataFileDescription + " file may be corrupt. Actual file size is " +
+                      FileSizeToString(actualSizeKB) + "; " +
+                      "min allowable size is " + minSizeText + "; see " + filePath;
 
-            if (Math.Abs(fActualSizeKB) < 0.0001)
-                mRetData.EvalMsg = sDataFileDescription + " file is 0 bytes";
+            if (Math.Abs(actualSizeKB) < 0.0001)
+                mRetData.EvalMsg = dataFileDescription + " file is 0 bytes";
             else
                 mRetData.EvalMsg = sDataFileDescription + " file size is less than " + sMinSize;
 
@@ -1093,7 +1093,7 @@ namespace DatasetIntegrityPlugin
             }
 
             // Look for Data.MS file in the .D directory
-            var lstInstrumentData = dotDDirectories[0].GetFiles("DATA.MS");
+            var instrumentData = dotDDirectories[0].GetFiles("DATA.MS");
             if (dotDDirectories[0].GetFiles("DATA.MS").Length == 0)
             {
                 mRetData.EvalMsg = "Invalid dataset: DATA.MS file not found in the .D directory";
@@ -1102,10 +1102,10 @@ namespace DatasetIntegrityPlugin
             }
 
             // Verify size of the DATA.MS file
-            var dataFileSizeKB = GetFileSize(lstInstrumentData.First());
+            var dataFileSizeKB = GetFileSize(instrumentData.First());
             if (dataFileSizeKB <= AGILENT_DATA_MS_FILE_MIN_SIZE_KB)
             {
-                ReportFileSizeTooSmall("DATA.MS", lstInstrumentData.First().FullName, dataFileSizeKB, AGILENT_DATA_MS_FILE_MIN_SIZE_KB);
+                ReportFileSizeTooSmall("DATA.MS", instrumentData.First().FullName, dataFileSizeKB, AGILENT_DATA_MS_FILE_MIN_SIZE_KB);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -1156,8 +1156,8 @@ namespace DatasetIntegrityPlugin
 
             // The AcqData directory should contain one or more .Bin files, for example MSScan.bin, MSPeak.bin, and MSProfile.bin
             // Verify that the MSScan.bin file exists
-            var lstMSScan = acqDataDirectories[0].GetFiles("MSScan.bin").ToList();
-            if (lstMSScan.Count == 0)
+            var msScanFile = acqDataDirectories[0].GetFiles("MSScan.bin").ToList();
+            if (msScanFile.Count == 0)
             {
                 mRetData.EvalMsg = "Invalid dataset: MSScan.bin file not found in the AcqData directory";
                 LogError(mRetData.EvalMsg);
@@ -1174,20 +1174,20 @@ namespace DatasetIntegrityPlugin
             }
 
             // Verify size of the MSScan.bin file
-            var msScanBinFileSizeKB = GetFileSize(lstMSScan.First());
-            if (msScanBinFileSizeKB <= AGILENT_MSSCAN_BIN_FILE_SMALL_SIZE_KB)
+            var msScanBinFileSizeKB = GetFileSize(msScanFile.First());
+            if (msScanBinFileSizeKB <= AGILENT_MS_SCAN_BIN_FILE_SMALL_SIZE_KB)
             {
                 // Allow a small MSScan.bin file if the MSPeak.bin file is also small
-                var msPeakBinFileSizeKB = GetFileSize(lstMSPeak.First());
-                if (msPeakBinFileSizeKB <= AGILENT_MSPEAK_BIN_FILE_MIN_SIZE_KB)
+                var msPeakBinFileSizeKB = GetFileSize(msDataFile);
+                if (msPeakBinFileSizeKB <= AGILENT_MS_PEAK_BIN_FILE_MIN_SIZE_KB)
                 {
-                    ReportFileSizeTooSmall("MSPeak.bin", lstMSPeak.First().FullName, msPeakBinFileSizeKB, AGILENT_MSPEAK_BIN_FILE_MIN_SIZE_KB);
+                    ReportFileSizeTooSmall(msDataFile.Name, msDataFile.FullName, msPeakBinFileSizeKB, AGILENT_MS_PEAK_BIN_FILE_MIN_SIZE_KB);
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (msScanBinFileSizeKB <= AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB)
+                if (msScanBinFileSizeKB <= AGILENT_MS_SCAN_BIN_FILE_MIN_SIZE_KB)
                 {
-                    ReportFileSizeTooSmall("MSScan.bin", lstMSScan.First().FullName, msScanBinFileSizeKB, AGILENT_MSSCAN_BIN_FILE_MIN_SIZE_KB);
+                    ReportFileSizeTooSmall("MSScan.bin", msScanFile.First().FullName, msScanBinFileSizeKB, AGILENT_MS_SCAN_BIN_FILE_MIN_SIZE_KB);
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
             }
@@ -1204,8 +1204,8 @@ namespace DatasetIntegrityPlugin
             }
 
             // The AcqData directory should contain file MSTS.xml
-            var lstMSTS = acqDataDirectories[0].GetFiles("MSTS.xml").ToList();
-            if (lstMSTS.Count == 0)
+            var mstsFiles = acqDataDirectories[0].GetFiles("MSTS.xml").ToList();
+            if (mstsFiles.Count == 0)
             {
                 mRetData.EvalMsg = "Invalid dataset: MSTS.xml file not found in the AcqData directory";
                 LogError(mRetData.EvalMsg);
@@ -1360,14 +1360,14 @@ namespace DatasetIntegrityPlugin
             if (!File.Exists(dataFileNamePath))
             {
                 // File not found; look for alternate extensions
-                var lstAlternateExtensions = new List<string>();
-                var bAlternateFound = false;
+                var alternateExtensions = new List<string>();
+                var alternateFound = false;
 
-                lstAlternateExtensions.Add("mgf");
-                lstAlternateExtensions.Add("mzXML");
-                lstAlternateExtensions.Add("mzML");
+                alternateExtensions.Add("mgf");
+                alternateExtensions.Add("mzXML");
+                alternateExtensions.Add("mzML");
 
-                foreach (var altExtension in lstAlternateExtensions)
+                foreach (var altExtension in alternateExtensions)
                 {
                     var dataFileNamePathAlt = Path.ChangeExtension(dataFileNamePath, altExtension);
                     if (File.Exists(dataFileNamePathAlt))
@@ -1377,13 +1377,13 @@ namespace DatasetIntegrityPlugin
                         minFileSizeKB = 25;
                         maxFileSizeMB = RAW_FILE_MAX_SIZE_MB_ORBITRAP;
                         dataFileNamePath = dataFileNamePathAlt;
-                        bAlternateFound = true;
+                        alternateFound = true;
                         openRawFileIfTooSmall = false;
                         break;
                     }
                 }
 
-                if (!bAlternateFound)
+                if (!alternateFound)
                 {
                     mRetData.EvalMsg = "Data file " + dataFileNamePath + " not found";
                     LogError(mRetData.EvalMsg);
@@ -1531,8 +1531,8 @@ namespace DatasetIntegrityPlugin
             }
 
             // Verify analysis.baf file exists
-            var lstBafFile = dotDDirectories[0].GetFiles("analysis.baf").ToList();
-            if (lstBafFile.Count == 0)
+            var bafFile = dotDDirectories[0].GetFiles("analysis.baf").ToList();
+            if (bafFile.Count == 0)
             {
                 mRetData.EvalMsg = "Invalid dataset: analysis.baf file not found";
                 LogError(mRetData.EvalMsg);
@@ -1540,10 +1540,10 @@ namespace DatasetIntegrityPlugin
             }
 
             // Verify size of the analysis.baf file
-            var dataFileSizeKB = GetFileSize(lstBafFile.First());
+            var dataFileSizeKB = GetFileSize(bafFile.First());
             if (dataFileSizeKB <= BAF_FILE_MIN_SIZE_KB)
             {
-                ReportFileSizeTooSmall("Analysis.baf", lstBafFile.First().FullName, dataFileSizeKB, BAF_FILE_MIN_SIZE_KB);
+                ReportFileSizeTooSmall("Analysis.baf", bafFile.First().FullName, dataFileSizeKB, BAF_FILE_MIN_SIZE_KB);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -1574,8 +1574,8 @@ namespace DatasetIntegrityPlugin
             }
 
             // Determine if at least one .method file exists
-            var lstMethodFiles = methodDirectories.First().GetFiles("*.method").ToList();
-            if (lstMethodFiles.Count == 0)
+            var methodFiles = methodDirectories.First().GetFiles("*.method").ToList();
+            if (methodFiles.Count == 0)
             {
                 mRetData.EvalMsg = "Invalid dataset: No .method files found";
                 LogError(mRetData.EvalMsg);
@@ -1703,8 +1703,8 @@ namespace DatasetIntegrityPlugin
             }
 
             // Possibly verify that the analysis.baf file exists
-            var lstBafFile = dotDDirectories[0].GetFiles("analysis.baf").ToList();
-            var fileExists = lstBafFile.Count > 0;
+            var bafFile = dotDDirectories[0].GetFiles("analysis.baf").ToList();
+            var fileExists = bafFile.Count > 0;
 
             if (!fileExists && requireBAFFile)
             {
@@ -1716,10 +1716,10 @@ namespace DatasetIntegrityPlugin
             if (fileExists)
             {
                 // Verify size of the analysis.baf file
-                dataFileSizeKB = GetFileSize(lstBafFile.First());
+                dataFileSizeKB = GetFileSize(bafFile.First());
                 if (dataFileSizeKB <= BAF_FILE_MIN_SIZE_KB)
                 {
-                    ReportFileSizeTooSmall("Analysis.baf", lstBafFile.First().FullName, dataFileSizeKB, BAF_FILE_MIN_SIZE_KB);
+                    ReportFileSizeTooSmall("Analysis.baf", bafFile.First().FullName, dataFileSizeKB, BAF_FILE_MIN_SIZE_KB);
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
                 bafFileSizeKB = dataFileSizeKB;
@@ -1771,17 +1771,17 @@ namespace DatasetIntegrityPlugin
 
             // Verify ser file (if it exists)
             // For 15T imaging directories, only checking the ser file in the first .D directory
-            var lstSerFile = dotDDirectories[0].GetFiles("ser").ToList();
-            if (lstSerFile.Count > 0)
+            var serFile = dotDDirectories[0].GetFiles("ser").ToList();
+            if (serFile.Count > 0)
             {
                 // ser file found; verify its size
-                dataFileSizeKB = GetFileSize(lstSerFile.First());
+                dataFileSizeKB = GetFileSize(serFile.First());
                 if (dataFileSizeKB <= SER_FILE_MIN_SIZE_KB)
                 {
                     // If on the 15T and the ser file is small but the .mcf file is not empty, then this is OK
                     if (!(instrumentName == "15T_FTICR" && mcfFileSizeMax > 0))
                     {
-                        ReportFileSizeTooSmall("ser", lstSerFile.First().FullName, dataFileSizeKB, SER_FILE_MIN_SIZE_KB);
+                        ReportFileSizeTooSmall("ser", serFile.First().FullName, dataFileSizeKB, SER_FILE_MIN_SIZE_KB);
                         return EnumCloseOutType.CLOSEOUT_FAILED;
                     }
                 }
@@ -1796,14 +1796,14 @@ namespace DatasetIntegrityPlugin
                 }
 
                 // Check to see if a fid file exists instead of a ser file
-                var lstFidFile = dotDDirectories[0].GetFiles("fid").ToList();
-                if (lstFidFile.Count > 0)
+                var fidFile = dotDDirectories[0].GetFiles("fid").ToList();
+                if (fidFile.Count > 0)
                 {
                     // fid file found; verify size
-                    dataFileSizeKB = GetFileSize(lstFidFile.First());
+                    dataFileSizeKB = GetFileSize(fidFile.First());
                     if (dataFileSizeKB <= FID_FILE_MIN_SIZE_KB)
                     {
-                        ReportFileSizeTooSmall("fid", lstFidFile.First().FullName, dataFileSizeKB, FID_FILE_MIN_SIZE_KB);
+                        ReportFileSizeTooSmall("fid", fidFile.First().FullName, dataFileSizeKB, FID_FILE_MIN_SIZE_KB);
                         return EnumCloseOutType.CLOSEOUT_FAILED;
                     }
                 }
@@ -1938,18 +1938,18 @@ namespace DatasetIntegrityPlugin
                 //  0_E10
                 //  0_N4
 
-                var reMaldiSpotDirectory = new Regex(@"^\d_[A-Z]\d+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                var maldiSpotDirMatcher = new Regex(@"^\d_[A-Z]\d+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-                foreach (var subDirectory in subDirectories)
+                foreach (var subdirectory in subDirectories)
                 {
-                    LogDebug("Test directory " + subDirectory + " against RegEx " + reMaldiSpotDirectory);
+                    LogDebug("Test directory " + subdirectory + " against RegEx " + maldiSpotDirMatcher);
 
-                    var subDirectoryName = Path.GetFileName(subDirectory);
-                    if (subDirectoryName != null && !reMaldiSpotDirectory.IsMatch(subDirectoryName, 0))
+                    var subdirectoryName = Path.GetFileName(subdirectory);
+                    if (subdirectoryName != null && !maldiSpotDirMatcher.IsMatch(subdirectoryName, 0))
                     {
                         mRetData.EvalMsg = string.Format("Dataset directory contains multiple subdirectories, " +
                                                          "but directory {0} does not match the expected pattern ({1}); see {2}",
-                                                         subDirectoryName, reMaldiSpotDirectory, datasetDirectoryPath);
+                                                         subdirectoryName, maldiSpotDirMatcher, datasetDirectoryPath);
                         LogError(mRetData.EvalMsg);
                         return EnumCloseOutType.CLOSEOUT_FAILED;
                     }
@@ -2328,7 +2328,7 @@ namespace DatasetIntegrityPlugin
 
             LogDebug("Determining tool version info");
 
-            var strToolVersionInfo = string.Empty;
+            var toolVersionInfo = string.Empty;
             var appDirectoryPath = clsUtilities.GetAppDirectoryPath();
 
             if (string.IsNullOrEmpty(appDirectoryPath))
@@ -2338,34 +2338,34 @@ namespace DatasetIntegrityPlugin
             }
 
             // Lookup the version of the Capture tool plugin
-            var strPluginPath = Path.Combine(appDirectoryPath, "DatasetIntegrityPlugin.dll");
-            var bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strPluginPath);
-            if (!bSuccess)
+            var pluginPath = Path.Combine(appDirectoryPath, "DatasetIntegrityPlugin.dll");
+            var success = StoreToolVersionInfoOneFile(ref toolVersionInfo, pluginPath);
+            if (!success)
                 return false;
 
             // Lookup the version of SQLite
-            var strSQLitePath = Path.Combine(appDirectoryPath, "System.Data.SQLite.dll");
-            bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strSQLitePath);
-            if (!bSuccess)
+            var sqLitePath = Path.Combine(appDirectoryPath, "System.Data.SQLite.dll");
+            success = StoreToolVersionInfoOneFile(ref toolVersionInfo, sqLitePath);
+            if (!success)
                 return false;
 
             // Lookup the version of the UIMFLibrary
-            var strUIMFLibraryPath = Path.Combine(appDirectoryPath, "UIMFLibrary.dll");
-            bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strUIMFLibraryPath);
-            if (!bSuccess)
+            var uimfLibraryPath = Path.Combine(appDirectoryPath, "UIMFLibrary.dll");
+            success = StoreToolVersionInfoOneFile(ref toolVersionInfo, uimfLibraryPath);
+            if (!success)
                 return false;
 
             if (!string.IsNullOrWhiteSpace(agilentToUimfConverterPath))
             {
-                bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, agilentToUimfConverterPath);
-                if (!bSuccess)
+                success = StoreToolVersionInfoOneFile(ref toolVersionInfo, agilentToUimfConverterPath);
+                if (!success)
                     return false;
             }
 
             // Store path to CaptureToolPlugin.dll in toolFiles
             var toolFiles = new List<FileInfo>
             {
-                new FileInfo(strPluginPath)
+                new FileInfo(pluginPath)
             };
 
             if (!string.IsNullOrWhiteSpace(openChromProgPath))
@@ -2375,7 +2375,7 @@ namespace DatasetIntegrityPlugin
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, false);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, false);
             }
             catch (Exception ex)
             {

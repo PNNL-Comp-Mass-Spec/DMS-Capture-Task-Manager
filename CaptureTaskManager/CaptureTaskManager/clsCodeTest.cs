@@ -11,7 +11,7 @@ namespace CaptureTaskManager
         {
             Console.WriteLine(@"Code test mode");
 
-            var lstCredentials = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+            var credentials = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
 
             var sharePath = @"\\15T_FTICR.bionet\ProteomicsData";
 
@@ -19,12 +19,12 @@ namespace CaptureTaskManager
             if (sharePath.EndsWith(@"\"))
                 sharePath = sharePath.Substring(0, sharePath.Length - 1);
 
-            lstCredentials.Add("ftms", "PasswordHere");
-            lstCredentials.Add("lcmsoperator", "PasswordHere");
+            credentials.Add("ftms", "PasswordHere");
+            credentials.Add("lcmsoperator", "PasswordHere");
 
             try
             {
-                using (var enumCurrent = lstCredentials.GetEnumerator())
+                using (var enumCurrent = credentials.GetEnumerator())
                 {
 
                     while (enumCurrent.MoveNext())
@@ -34,18 +34,18 @@ namespace CaptureTaskManager
 
                         Console.WriteLine(@"Credentials created for " + enumCurrent.Current.Key);
 
-                        var cnBionet = new NetworkConnection(sharePath, accessCredentials);
+                        var bionetConnection = new NetworkConnection(sharePath, accessCredentials);
 
                         Console.WriteLine(@"Connected to share");
 
-                        var diDirectory = new System.IO.DirectoryInfo(sharePath);
+                        var shareDirectory = new System.IO.DirectoryInfo(sharePath);
 
-                        Console.WriteLine(@"Instantiated DirectoryInfo object: " + diDirectory.FullName);
+                        Console.WriteLine(@"Instantiated DirectoryInfo object: " + shareDirectory.FullName);
 
                         var iteration = 0;
-                        foreach (var fiFile in diDirectory.GetFiles())
+                        foreach (var remoteFile in shareDirectory.GetFiles())
                         {
-                            Console.WriteLine(@"File: " + fiFile.Name + @" size " + fiFile.Length + @" bytes");
+                            Console.WriteLine(@"File: " + remoteFile.Name + @" size " + remoteFile.Length + @" bytes");
                             ++iteration;
 
                             if (iteration > 20)
@@ -55,10 +55,10 @@ namespace CaptureTaskManager
                         Console.WriteLine(@"Files Done");
 
                         iteration = 0;
-                        foreach (var diFolder in diDirectory.GetDirectories())
+                        foreach (var subdirectory in shareDirectory.GetDirectories())
                         {
-                            Console.WriteLine(@"Folder: " + diFolder.Name + @" modified " +
-                                              diFolder.LastWriteTime.ToString(CultureInfo.InvariantCulture));
+                            Console.WriteLine(@"Folder: " + subdirectory.Name + @" modified " +
+                                              subdirectory.LastWriteTime.ToString(CultureInfo.InvariantCulture));
                             ++iteration;
 
                             if (iteration > 20)
@@ -68,7 +68,7 @@ namespace CaptureTaskManager
                         Console.WriteLine(@"Folders Done");
 
                         // Disconnect network connection
-                        cnBionet.Dispose();
+                        bionetConnection.Dispose();
                     }
                 }
             }

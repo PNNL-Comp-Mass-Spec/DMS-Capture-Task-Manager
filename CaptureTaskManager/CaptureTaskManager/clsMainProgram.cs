@@ -707,7 +707,7 @@ namespace CaptureTaskManager
         {
             var taskCount = 1;
 
-            var dtLastConfigDBUpdate = DateTime.UtcNow;
+            var lastConfigDBUpdate = DateTime.UtcNow;
 
             mRunning = true;
 
@@ -738,7 +738,7 @@ namespace CaptureTaskManager
 
                     // Reload the manager control DB settings in case they have changed
                     // However, only reload every 2 minutes
-                    if (!ReloadManagerSettings(ref dtLastConfigDBUpdate, 2))
+                    if (!ReloadManagerSettings(ref lastConfigDBUpdate, 2))
                     {
                         // Error updating manager settings
                         mLoopExitCode = LoopExitCode.UpdateRequired;
@@ -1012,57 +1012,57 @@ namespace CaptureTaskManager
         protected void RemoveOldTempFiles()
         {
             // Remove .tmp and .zip files over 12 hours old in the Windows Temp folder
-            const int iAgedTempFilesHours = 12;
-            var sTempFolderPath = Path.GetTempPath();
-            RemoveOldTempFiles(iAgedTempFilesHours, sTempFolderPath);
+            const int agedTempFilesHours = 12;
+            var tempFolderPath = Path.GetTempPath();
+            RemoveOldTempFiles(agedTempFilesHours, tempFolderPath);
         }
 
-        protected void RemoveOldTempFiles(int iAgedTempFilesHours, string sTempFolderPath)
+        protected void RemoveOldTempFiles(int agedTempFilesHours, string tempFolderPath)
         {
-            // This list tracks the file specs to search for in folder sTempFolderPath
-            var lstSearchSpecs = new List<string>
+            // This list tracks the file specs to search for in folder tempFolderPath
+            var searchSpecs = new List<string>
             {
                 "*.tmp",
                 "*.zip"
             };
 
-            RemoveOldTempFiles(iAgedTempFilesHours, sTempFolderPath, lstSearchSpecs);
+            RemoveOldTempFiles(agedTempFilesHours, tempFolderPath, searchSpecs);
         }
 
         /// <summary>
         /// Look for and remove files
         /// </summary>
-        /// <param name="iAgedTempFilesHours">Files more than this many hours old will be deleted</param>
-        /// <param name="sTempFolderPath">Path to the folder to look for and delete old files</param>
-        /// <param name="lstSearchSpecs">File specs to search for in folder sTempFolderPath, e.g. "*.txt"</param>
-        protected void RemoveOldTempFiles(int iAgedTempFilesHours, string sTempFolderPath, List<string> lstSearchSpecs)
+        /// <param name="agedTempFilesHours">Files more than this many hours old will be deleted</param>
+        /// <param name="tempFolderPath">Path to the folder to look for and delete old files</param>
+        /// <param name="searchSpecs">File specs to search for in folder tempFolderPath, e.g. "*.txt"</param>
+        protected void RemoveOldTempFiles(int agedTempFilesHours, string tempFolderPath, List<string> searchSpecs)
         {
             try
             {
-                var iTotalDeleted = 0;
+                var totalDeleted = 0;
 
-                if (iAgedTempFilesHours < 2)
-                    iAgedTempFilesHours = 2;
+                if (agedTempFilesHours < 2)
+                    agedTempFilesHours = 2;
 
-                var diFolder = new DirectoryInfo(sTempFolderPath);
+                var diFolder = new DirectoryInfo(tempFolderPath);
                 if (!diFolder.Exists)
                 {
-                    LogWarning("Folder not found: " + sTempFolderPath);
+                    LogWarning("Folder not found: " + tempFolderPath);
                     return;
                 }
 
-                // Process each entry in lstSearchSpecs
-                foreach (var sSpec in lstSearchSpecs)
+                // Process each entry in searchSpecs
+                foreach (var spec in searchSpecs)
                 {
-                    var iDeleteCount = 0;
-                    foreach (var fiFile in diFolder.GetFiles(sSpec))
+                    var deleteCount = 0;
+                    foreach (var fiFile in diFolder.GetFiles(spec))
                     {
                         try
                         {
-                            if (DateTime.UtcNow.Subtract(fiFile.LastWriteTimeUtc).TotalHours > iAgedTempFilesHours)
+                            if (DateTime.UtcNow.Subtract(fiFile.LastWriteTimeUtc).TotalHours > agedTempFilesHours)
                             {
                                 fiFile.Delete();
-                                iDeleteCount += 1;
+                                deleteCount += 1;
                             }
                         }
                         catch
@@ -1071,16 +1071,16 @@ namespace CaptureTaskManager
                         }
                     }
 
-                    iTotalDeleted += iDeleteCount;
+                    totalDeleted += deleteCount;
                 }
 
-                if (iTotalDeleted > 0)
+                if (totalDeleted > 0)
                 {
-                    var msg = "Deleted " + iTotalDeleted + " temp file";
-                    if (iTotalDeleted > 1)
+                    var msg = "Deleted " + totalDeleted + " temp file";
+                    if (totalDeleted > 1)
                         msg += "s";
 
-                    msg += " over " + iAgedTempFilesHours + " hours old in folder " + sTempFolderPath;
+                    msg += " over " + agedTempFilesHours + " hours old in folder " + tempFolderPath;
                     LogMessage(msg);
                 }
             }
@@ -1253,17 +1253,17 @@ namespace CaptureTaskManager
         /// Reloads the manager settings from the manager control database
         /// if at least minutesBetweenUpdates minutes have elapsed since the last update
         /// </summary>
-        /// <param name="dtLastConfigDBUpdate"></param>
+        /// <param name="lastConfigDBUpdate"></param>
         /// <param name="minutesBetweenUpdates"></param>
         /// <returns></returns>
-        private bool ReloadManagerSettings(ref DateTime dtLastConfigDBUpdate, double minutesBetweenUpdates)
+        private bool ReloadManagerSettings(ref DateTime lastConfigDBUpdate, double minutesBetweenUpdates)
         {
-            if (!(DateTime.UtcNow.Subtract(dtLastConfigDBUpdate).TotalMinutes >= minutesBetweenUpdates))
+            if (!(DateTime.UtcNow.Subtract(lastConfigDBUpdate).TotalMinutes >= minutesBetweenUpdates))
             {
                 return true;
             }
 
-            dtLastConfigDBUpdate = DateTime.UtcNow;
+            lastConfigDBUpdate = DateTime.UtcNow;
 
             try
             {

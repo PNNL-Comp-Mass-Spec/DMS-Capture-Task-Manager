@@ -216,7 +216,7 @@ namespace CaptureTaskManager
         {
             // Returns True if no problems; otherwise, returns false
 
-            var lstValidParameters = new List<string> {
+            var validParameters = new List<string> {
                 "T",
                 "Test",
                 "Trace",
@@ -227,10 +227,10 @@ namespace CaptureTaskManager
             try
             {
                 // Make sure no invalid parameters are present
-                if (commandLineParser.InvalidParametersPresent(lstValidParameters))
+                if (commandLineParser.InvalidParametersPresent(validParameters))
                 {
                     ShowErrorMessage("Invalid command line parameters",
-                                     (from item in commandLineParser.InvalidParameters(lstValidParameters) select "/" + item).ToList());
+                                     (from item in commandLineParser.InvalidParameters(validParameters) select "/" + item).ToList());
 
                     return false;
                 }
