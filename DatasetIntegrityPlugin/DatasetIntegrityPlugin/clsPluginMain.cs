@@ -1072,7 +1072,9 @@ namespace DatasetIntegrityPlugin
             if (Math.Abs(actualSizeKB) < 0.0001)
                 mRetData.EvalMsg = dataFileDescription + " file is 0 bytes";
             else
-                mRetData.EvalMsg = sDataFileDescription + " file size is less than " + sMinSize;
+                mRetData.EvalMsg = dataFileDescription + " file size is " +
+                                   FileSizeToString(actualSizeKB) + "; " +
+                                   "minimum allowed size " + minSizeText;
 
             LogError(msg);
         }
@@ -1219,12 +1221,17 @@ namespace DatasetIntegrityPlugin
             else
             {
                 // The MSScan.bin file is over 50 KB
-                // Require that MSPeak.bin be over 500 KB
-                var msPeakBinFileSizeKB = GetFileSize(lstMSPeak.First());
-                if (msPeakBinFileSizeKB <= AGILENT_MSPEAK_BIN_FILE_SMALL_SIZE_KB)
+                // The MSPeak.bin file should be over 500 KB
+                var msPeakBinFileSizeKB = GetFileSize(msDataFile);
+                if (msPeakBinFileSizeKB <= AGILENT_MS_PEAK_BIN_FILE_SMALL_SIZE_KB)
                 {
-                    ReportFileSizeTooSmall("MSPeak.bin", lstMSPeak.First().FullName, msPeakBinFileSizeKB, AGILENT_MSPEAK_BIN_FILE_SMALL_SIZE_KB);
-                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                    if (msPeakBinFileSizeKB <= AGILENT_MS_PEAK_BIN_FILE_MIN_SIZE_KB)
+                    {
+                        ReportFileSizeTooSmall(msDataFile.Name, msDataFile.FullName, msPeakBinFileSizeKB, AGILENT_MS_PEAK_BIN_FILE_MIN_SIZE_KB);
+                        return EnumCloseOutType.CLOSEOUT_FAILED;
+                    }
+
+                    WarnFileSizeTooSmall(msDataFile.Name, msDataFile.FullName, msPeakBinFileSizeKB, AGILENT_MS_PEAK_BIN_FILE_SMALL_SIZE_KB);
                 }
             }
 
@@ -2303,6 +2310,28 @@ namespace DatasetIntegrityPlugin
             }
 
             return true;
+        }
+
+        private void WarnFileSizeTooSmall(string dataFileDescription, string filePath, float actualSizeKB, float smallSizeThresholdKB)
+        {
+            // Example messages for mRetData.EvalMsg
+            // MSPeak.bin file size is 259 KB; typically it is at least 500 KB
+
+            var thresholdText = FileSizeToString(smallSizeThresholdKB);
+
+            // Data file may be corrupt
+            var msg = dataFileDescription + " file may be corrupt. Actual file size is " +
+                      FileSizeToString(actualSizeKB) + "; " +
+                      "typically the file is at least " + thresholdText + "; see " + filePath;
+
+            if (Math.Abs(actualSizeKB) < 0.0001)
+                mRetData.EvalMsg = dataFileDescription + " file is 0 bytes";
+            else
+                mRetData.EvalMsg = dataFileDescription + " file size is " +
+                                   FileSizeToString(actualSizeKB) + "; " +
+                                   "typically the file is at least " + thresholdText;
+
+            LogWarning(msg);
         }
 
         /// <summary>
