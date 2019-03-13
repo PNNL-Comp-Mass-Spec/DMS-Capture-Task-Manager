@@ -264,11 +264,12 @@ namespace DatasetIntegrityPlugin
                             mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                         }
                     }
-
                     break;
+
                 case clsInstrumentClassInfo.eInstrumentClass.Agilent_TOF_V2:
                     mRetData.CloseoutType = TestAgilentTOFv2Directory(datasetDirectory);
                     break;
+
                 case clsInstrumentClassInfo.eInstrumentClass.Illumina_Sequencer:
                     mRetData.CloseoutType = TestIlluminaSequencerDirectory(datasetDirectory);
                     break;
@@ -316,6 +317,8 @@ namespace DatasetIntegrityPlugin
                     return false;
                 }
 
+                // ReSharper disable CommentTypo
+
                 // Construct the command line arguments to run the OpenChrom
 
                 // Syntax:
@@ -323,8 +326,12 @@ namespace DatasetIntegrityPlugin
                 //
                 // Optional: -nosplash
 
+                // ReSharper restore CommentTypo
+
+                // ReSharper disable once StringLiteralTypo
                 var cmdStr = "-cli -batchfile " + batchJobFilePath;
                 var consoleOutputFilePath = Path.Combine(mWorkDir, "OpenChrom_ConsoleOutput_" + mgrName + ".txt");
+
 
                 var cmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
                 {
@@ -586,6 +593,7 @@ namespace DatasetIntegrityPlugin
                 {
                     "IMSFrame.bin",
                     "MSPeak.bin",
+                    // ReSharper disable once StringLiteralTypo
                     "MSPeriodicActuals.bin",
                     "MSProfile.bin",
                     "MSScan.bin"
@@ -700,6 +708,8 @@ namespace DatasetIntegrityPlugin
 
                 sbXML.Append(@"<!--Write each processed chromatogram to the given output formats.-->");
                 sbXML.Append(@"<OutputEntries>");
+
+                // ReSharper disable once StringLiteralTypo
                 sbXML.Append(@"<OutputEntry converterId=""net.openchrom.msd.converter.supplier.cdf"">");
                 sbXML.Append(@"<![CDATA[" + mWorkDir + "]]>");
                 sbXML.Append(@"</OutputEntry>");
