@@ -1174,13 +1174,28 @@ namespace DatasetIntegrityPlugin
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
-            // Make sure the MSPeak.bin file exists
-            var lstMSPeak = acqDataDirectories[0].GetFiles("MSPeak.bin").ToList();
-            if (lstMSPeak.Count == 0)
+            FileInfo msDataFile;
+
+            // Make sure the MSPeak.bin exists
+            var msPeakFile = acqDataDirectories[0].GetFiles("MSPeak.bin").ToList();
+            if (msPeakFile.Count == 0)
             {
-                mRetData.EvalMsg = "Invalid dataset: MSPeak.bin file not found in the AcqData directory";
-                LogError(mRetData.EvalMsg);
-                return EnumCloseOutType.CLOSEOUT_FAILED;
+                // Some Agilent_QQQ_04 datasets have MSProfile.bin but do not have MSPeak.bin
+                // Check for this
+                var msProfileFile = acqDataDirectories[0].GetFiles("MSProfile.bin").ToList();
+
+                if (msProfileFile.Count == 0)
+                {
+                    mRetData.EvalMsg = "Invalid dataset: MSPeak.bin or MSProfile.bin file not found in the AcqData directory";
+                    LogError(mRetData.EvalMsg);
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+
+                msDataFile = msProfileFile.First();
+            }
+            else
+            {
+                msDataFile = msPeakFile.First();
             }
 
             // Verify size of the MSScan.bin file
