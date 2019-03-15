@@ -218,23 +218,60 @@ namespace CaptureToolPlugin
 
             var processedFiles = new SortedSet<string>();
 
-            foreach (var datasetFile in candidateFiles)
+            foreach (var datasetFileOrDirectory in candidateFiles)
             {
-                if (processedFiles.Contains(datasetFile.FullName))
+                if (processedFiles.Contains(datasetFileOrDirectory.FullName))
                     continue;
 
-                processedFiles.Add(datasetFile.FullName);
+                processedFiles.Add(datasetFileOrDirectory.FullName);
 
-                var updatedFileName = AutoFixFilename(datasetName, datasetFile.Name, mFilenameAutoFixes);
+                var updatedName = AutoFixFilename(datasetName, datasetFileOrDirectory.Name, mFilenameAutoFixes);
 
-                if (string.Equals(datasetFile.Name, updatedFileName, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(datasetFileOrDirectory.Name, updatedName, StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
 
-                LogMessage("Renaming '" + datasetFile.Name + "' to '" + updatedFileName + "' to remove invalid characters");
+                LogMessage("Renaming '" + datasetFileOrDirectory.Name + "' to '" + updatedName + "' to remove invalid characters");
 
-                File.Move(datasetFile.FullName, Path.Combine(datasetDirectory.FullName, updatedFileName));
+                var sourceFilePath = datasetFileOrDirectory.FullName;
+                string targetFilePath;
+
+                if (datasetFileOrDirectory is FileInfo datasetFile && datasetFile.Directory != null)
+                {
+                    targetFilePath = Path.Combine(datasetFile.Directory.FullName, updatedName);
+                }
+                else if (datasetFileOrDirectory is DirectoryInfo datasetSubdirectory && datasetSubdirectory.Parent != null)
+                {
+                    targetFilePath = Path.Combine(datasetSubdirectory.Parent.FullName, updatedName);
+                }
+                else
+                {
+                    // Fail safe code; this shouldn't typically be reached
+                    LogWarning(string.Format(
+                                   "Unable to determine the parent directory of {0} in AutoFixFilesWithInvalidChars",
+                                   datasetFileOrDirectory.FullName));
+
+                    targetFilePath = Path.Combine(datasetDirectory.FullName, updatedName);
+                }
+
+                try
+                {
+                    if (mTraceMode)
+                    {
+                        clsToolRunnerBase.ShowTraceMessage(
+                            string.Format("Moving {0} to {1}", sourceFilePath, targetFilePath));
+                    }
+
+
+                    File.Move(sourceFilePath, targetFilePath);
+                }
+                catch (Exception ex)
+                {
+                    LogError("Error renaming file", ex);
+                    LogMessage(string.Format("Source: {0}; Target:{1}", sourceFilePath, targetFilePath));
+                }
+
             }
         }
 
@@ -749,6 +786,7 @@ namespace CaptureToolPlugin
                 {
                     if (mTraceMode)
                         clsToolRunnerBase.ShowTraceMessage("File size did not change");
+
                     return true;
                 }
 
