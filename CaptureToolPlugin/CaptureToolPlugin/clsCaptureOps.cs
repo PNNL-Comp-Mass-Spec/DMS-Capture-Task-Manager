@@ -1561,7 +1561,7 @@ namespace CaptureToolPlugin
                         break;
 
                     case RawDSTypes.DirectoryNoExt:
-                        CaptureFolderNoExt(out msg, ref retData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath,
+                        CaptureDirectoryNoExt(out msg, ref retData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath,
                                            copyWithResume, instrumentClass);
                         break;
 
@@ -2123,7 +2123,7 @@ namespace CaptureToolPlugin
                 return;
             }
 
-            // Copy the source folder to the dataset directory
+            // Copy the source directory to the dataset directory
             try
             {
                 // Copy the dataset directory
@@ -2145,7 +2145,7 @@ namespace CaptureToolPlugin
 
                 if (success)
                 {
-                    msg = "Copied folder " + sourceDirectory.FullName + " to " + targetDirectory.FullName + GetConnectionDescription();
+                    msg = "Copied directory " + sourceDirectoryToUse.FullName + " to " + targetDirectory.FullName + GetConnectionDescription();
                     LogMessage(msg);
 
                     AutoFixFilesWithInvalidChars(datasetInfo.DatasetName, targetDirectory);
@@ -2433,7 +2433,7 @@ namespace CaptureToolPlugin
         /// <param name="datasetDirectoryPath">Destination directory; datasetInfo.FileOrFolderName will not be appended to this (contrast with CaptureDirectoryExt)</param>
         /// <param name="copyWithResume">True if using copy with resume</param>
         /// <param name="instrumentClass">Instrument class</param>
-        private void CaptureFolderNoExt(
+        private void CaptureDirectoryNoExt(
             out string msg,
             ref clsToolReturnData retData,
             clsDatasetInfo datasetInfo,
@@ -3389,6 +3389,7 @@ namespace CaptureToolPlugin
                     {
                         if (sourceType == RawDSTypes.DirectoryNoExt)
                         {
+                            // ReSharper disable once CommentTypo
                             // Datasets from LAESI-HMS datasets will have a folder named after the dataset, and inside that folder will be a single .raw file
                             // Confirm that this is the case
 
