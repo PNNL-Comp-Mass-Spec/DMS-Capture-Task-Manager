@@ -2125,20 +2125,108 @@ namespace CaptureToolPlugin
             // Copy the source directory to the dataset directory
             try
             {
+                DirectoryInfo sourceDirectoryToUse;
+                string extraDirectoryToCreate;
+
+                // Check for a subdirectory below the source directory with the same extension as the source directory
+                // For example, \\Server.bionet\ProteomicsData\Dataset2_20Aug18.d\Dataset2_20Aug18.d
+                // or           \\Server.bionet\ProteomicsData\SDI_42___l_a_MRM_CE10_5a.d\SDI_42  _l_a_MRM_CE10_5a.d
+
+                var matchSpec = "*" + sourceDirectory.Extension;
+                if (mTraceMode)
+                {
+                    clsToolRunnerBase.ShowTraceMessage(
+                        string.Format("Looking for directories matching {0} at {1}",
+                                      matchSpec, sourceDirectory.FullName));
+                }
+
+                var subdirectories = sourceDirectory.GetDirectories(matchSpec);
+                if (subdirectories.Length > 1)
+                {
+                    LogWarning(string.Format(
+                                   "Source directory has multiple subdirectories with extension {0}; see {1}",
+                                   sourceDirectory.Extension, sourceDirectory.FullName));
+
+                    sourceDirectoryToUse = sourceDirectory;
+                    extraDirectoryToCreate = string.Empty;
+                }
+                else if (subdirectories.Length == 1)
+                {
+
+                    // If the letters and numbers (but not symbols) in the subdirectory name match the letters and numbers
+                    // in the source directory name to a tolerance of 0.75, silently use the subdirectory as the source
+
+                    // Otherwise, use the subdirectory, but log a warning and create an empty directory on the storage server
+                    // with the same name as the subdirectory
+
+                    sourceDirectoryToUse = subdirectories.First();
+
+                    var similarityScore = PRISM.DataUtils.StringSimilarityTool.CompareStrings(sourceDirectory.Name, sourceDirectoryToUse.Name);
+
+                    const float SIMILARITY_SCORE_THRESHOLD = 0.75f;
+
+                    if (similarityScore >= SIMILARITY_SCORE_THRESHOLD)
+                    {
+                        var logMessage = string.Format("Copying files from {0} instead of the parent directory; name similarity score: {1:F2}",
+                                                       sourceDirectoryToUse.FullName, similarityScore);
+                        if (mTraceMode)
+                            clsToolRunnerBase.ShowTraceMessage(logMessage);
+
+                        LogDebug(logMessage);
+
+                        extraDirectoryToCreate = string.Empty;
+                    }
+                    else
+                    {
+                        LogWarning(string.Format(
+                                       "Copying files from {0} instead of the parent directory; name similarity score: {1:F2}. " +
+                                       "Will create an empty directory named {2} on the storage server since the similarity score is less than {3}",
+                                       sourceDirectoryToUse.FullName, similarityScore,
+                                       sourceDirectoryToUse.Name, SIMILARITY_SCORE_THRESHOLD));
+
+                        extraDirectoryToCreate = sourceDirectoryToUse.Name;
+                    }
+
+                }
+                else
+                {
+                    sourceDirectoryToUse = sourceDirectory;
+                    extraDirectoryToCreate = string.Empty;
+                }
+
+                if (mTraceMode)
+                {
+                    Console.WriteLine();
+                    clsToolRunnerBase.ShowTraceMessage(
+                        string.Format("Copying from\n{0} to\n{1}", sourceDirectoryToUse.FullName, targetDirectory.FullName));
+
+                    var waitTimeSeconds = 10;
+                    Console.WriteLine();
+                    ConsoleMsgUtils.ShowDebug(string.Format("Pausing for {0} seconds since TraceMode is enabled; review the directory paths", waitTimeSeconds));
+
+                    var waitTimeEnd = DateTime.UtcNow.AddSeconds(waitTimeSeconds);
+
+                    while (waitTimeEnd > DateTime.UtcNow)
+                    {
+                        ProgRunner.SleepMilliseconds(1000);
+                        Console.Write(".");
+                    }
+                }
+
                 // Copy the dataset directory
                 // Resume copying files that are already present in the target
 
                 if (copyWithResume)
                 {
                     const bool recurse = true;
-                    success = CopyDirectoryWithResume(sourceDirectory.FullName, targetDirectory.FullName, recurse, ref retData, filesToSkip);
+                    success = CopyDirectoryWithResume(sourceDirectoryToUse.FullName, targetDirectory.FullName, recurse, ref retData, filesToSkip);
                 }
                 else
                 {
                     if (filesToSkip == null)
-                        mFileTools.CopyDirectory(sourceDirectory.FullName, targetDirectory.FullName);
+                        mFileTools.CopyDirectory(sourceDirectoryToUse.FullName, targetDirectory.FullName);
                     else
-                        mFileTools.CopyDirectory(sourceDirectory.FullName, targetDirectory.FullName, filesToSkip.ToList());
+                        mFileTools.CopyDirectory(sourceDirectoryToUse.FullName, targetDirectory.FullName, filesToSkip.ToList());
                     success = true;
                 }
 
@@ -2155,6 +2243,19 @@ namespace CaptureToolPlugin
                     {
                         LogDebug("Removing the system flag from " + targetDirectory.FullName);
                         targetDirectory.Attributes = targetDirectory.Attributes & ~FileAttributes.System;
+                    }
+
+                    if (!string.IsNullOrEmpty(extraDirectoryToCreate))
+                    {
+                        var extraDirectory = new DirectoryInfo(Path.Combine(targetDirectory.FullName, extraDirectoryToCreate));
+
+                        if (mTraceMode)
+                            clsToolRunnerBase.ShowTraceMessage("Creating empty directory at " + extraDirectory.FullName);
+
+                        if (!extraDirectory.Exists)
+                        {
+                            extraDirectory.Create();
+                        }
                     }
 
                 }
