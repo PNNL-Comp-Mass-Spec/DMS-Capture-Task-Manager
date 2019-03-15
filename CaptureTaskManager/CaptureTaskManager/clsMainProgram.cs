@@ -646,7 +646,7 @@ namespace CaptureTaskManager
                 if (messageCacheFile.Exists)
                 {
                     cachedMessages = LoadCachedLogMessages(messageCacheFile);
-                    Thread.Sleep(150);
+                    ProgRunner.SleepMilliseconds(150);
                 }
                 else
                 {

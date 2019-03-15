@@ -15,7 +15,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using PRISM;
 using PRISM.Logging;
 
@@ -99,7 +98,7 @@ namespace CaptureTaskManager
             if (mShowVersionOnly)
             {
                 DisplayVersion();
-                Thread.Sleep(500);
+                ProgRunner.SleepMilliseconds(500);
                 return 0;
             }
 
@@ -304,7 +303,7 @@ namespace CaptureTaskManager
                                   "You may obtain a copy of the License at https://opensource.org/licenses/BSD-2-Clause");
                 Console.WriteLine();
 
-                Thread.Sleep(1500);
+                ProgRunner.SleepMilliseconds(1500);
             }
             catch (Exception ex)
             {

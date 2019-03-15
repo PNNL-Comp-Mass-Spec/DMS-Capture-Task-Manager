@@ -894,7 +894,7 @@ namespace CaptureTaskManager
                     return false;
                 }
 
-                Thread.Sleep(100);
+                ProgRunner.SleepMilliseconds(100);
 
                 success = ReadVersionInfoFile(dllFilePath, versionInfoFilePath, out var strVersion);
 
@@ -903,7 +903,7 @@ namespace CaptureTaskManager
                 {
                     if (File.Exists(versionInfoFilePath))
                     {
-                        Thread.Sleep(100);
+                        ProgRunner.SleepMilliseconds(100);
                         File.Delete(versionInfoFilePath);
                     }
                 }

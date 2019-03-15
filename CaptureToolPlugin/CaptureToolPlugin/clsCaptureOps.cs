@@ -12,7 +12,6 @@ using CaptureTaskManager;
 using PRISM;
 using System.IO;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace CaptureToolPlugin
@@ -828,7 +827,7 @@ namespace CaptureToolPlugin
 
             while (DateTime.UtcNow < verificationEndTime)
             {
-                Thread.Sleep(500);
+                ProgRunner.SleepMilliseconds(500);
 
                 if (DateTime.UtcNow <= nextStatusTime)
                     continue;
