@@ -2148,6 +2148,15 @@ namespace CaptureToolPlugin
                     LogMessage(msg);
 
                     AutoFixFilesWithInvalidChars(datasetInfo.DatasetName, targetDirectory);
+
+                    // Make sure the target directory does not have the System attribute set
+                    // Agilent instruments enable the System attribute for .D directories, and this makes it harder to manage things on the storage server
+                    if ((targetDirectory.Attributes & FileAttributes.System) == FileAttributes.System)
+                    {
+                        LogDebug("Removing the system flag from " + targetDirectory.FullName);
+                        targetDirectory.Attributes = targetDirectory.Attributes & ~FileAttributes.System;
+                    }
+
                 }
                 else
                 {

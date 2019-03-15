@@ -288,9 +288,9 @@ namespace CaptureTaskManager
                     }
                     catch (Exception)
                     {
-                        // Make sure the readonly bit is not set
+                        // Make sure the readonly and system attributes are not set
                         // The manager will try to delete the file the next time is starts
-                        fiFile.Attributes = fiFile.Attributes & (~FileAttributes.ReadOnly);
+                        fiFile.Attributes = fiFile.Attributes & ~FileAttributes.ReadOnly & ~FileAttributes.System;
                     }
                 }
             }
