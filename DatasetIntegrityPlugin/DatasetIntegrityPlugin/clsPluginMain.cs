@@ -1583,7 +1583,7 @@ namespace DatasetIntegrityPlugin
             var methodDirectories = dotDDirectories[0].GetDirectories("*.m").ToList();
             if (methodDirectories.Count < 1)
             {
-                mRetData.EvalMsg = "Invalid dataset: No .M directories found";
+                mRetData.EvalMsg = "Invalid dataset: No .m directories found";
                 LogError(mRetData.EvalMsg);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
@@ -1870,7 +1870,14 @@ namespace DatasetIntegrityPlugin
             var methodDirectories = dotDDirectories[0].GetDirectories("*.m").ToList();
             if (methodDirectories.Count < 1)
             {
-                mRetData.EvalMsg = "Invalid dataset: No .M directories found";
+                if (string.Equals(instrumentName, "15T_FTICR", StringComparison.OrdinalIgnoreCase))
+                {
+                    // 15T datasets acquired in March 2019 have an analysis.baf file but no .m directories
+                    LogWarning("Dataset does not have a method directory below the .d directory; this is allowed on the 15T");
+                    return EnumCloseOutType.CLOSEOUT_SUCCESS;
+                }
+
+                mRetData.EvalMsg = "Invalid dataset: No .m directories found";
                 LogError(mRetData.EvalMsg);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
