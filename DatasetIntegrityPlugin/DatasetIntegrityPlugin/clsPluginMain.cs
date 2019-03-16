@@ -105,7 +105,7 @@ namespace DatasetIntegrityPlugin
             };
 
             var convertAgilentDotDToUIMF = instrumentNamesToConvert.Any(
-                instrument => instrumentName.StartsWith(instrument, StringComparison.InvariantCultureIgnoreCase));
+                instrument => instrumentName.StartsWith(instrument, StringComparison.OrdinalIgnoreCase));
 
             if (convertAgilentDotDToUIMF)
             {
@@ -761,7 +761,7 @@ namespace DatasetIntegrityPlugin
                 DirectoryInfo newDirectory;
                 DirectoryInfo oldDirectory;
 
-                if (directoryList[0].Name.ToLower().StartsWith("x_"))
+                if (directoryList[0].Name.StartsWith("x_", StringComparison.OrdinalIgnoreCase))
                 {
                     newDirectory = directoryList[1];
                     oldDirectory = directoryList[0];
@@ -881,7 +881,7 @@ namespace DatasetIntegrityPlugin
             foreach (var instrumentFile in datasetDirectory.GetFiles(fileSpec))
             {
                 if (matchDatasetName &&
-                    !Path.GetFileNameWithoutExtension(instrumentFile.Name).ToLower().StartsWith(mDataset.ToLower()))
+                    !Path.GetFileNameWithoutExtension(instrumentFile.Name).StartsWith(mDataset, StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
@@ -950,15 +950,15 @@ namespace DatasetIntegrityPlugin
                                 exceptionText = "; " + dataLine;
                             }
                         }
-                        else if (dataLine.StartsWith("Error:"))
+                        else if (dataLine.StartsWith("Error:", StringComparison.OrdinalIgnoreCase))
                         {
                             LogError("AgilentToUIMFConverter error: " + dataLine);
                         }
-                        else if (dataLine.StartsWith("Exception in"))
+                        else if (dataLine.StartsWith("Exception in", StringComparison.OrdinalIgnoreCase))
                         {
                             LogError("AgilentToUIMFConverter error: " + dataLine);
                         }
-                        else if (dataLine.StartsWith("Unhandled Exception"))
+                        else if (dataLine.StartsWith("Unhandled Exception", StringComparison.OrdinalIgnoreCase))
                         {
                             LogError("AgilentToUIMFConverter error: " + dataLine);
                             unhandledException = true;
@@ -1811,7 +1811,7 @@ namespace DatasetIntegrityPlugin
                 if (dataFileSizeKB <= SER_FILE_MIN_SIZE_KB)
                 {
                     // If on the 15T and the ser file is small but the .mcf file is not empty, then this is OK
-                    if (!(instrumentName == "15T_FTICR" && mcfFileSizeMax > 0))
+                    if (!(string.Equals(instrumentName, "15T_FTICR", StringComparison.OrdinalIgnoreCase) && mcfFileSizeMax > 0))
                     {
                         ReportFileSizeTooSmall("ser", serFile.First().FullName, dataFileSizeKB, SER_FILE_MIN_SIZE_KB);
                         return EnumCloseOutType.CLOSEOUT_FAILED;
@@ -1843,7 +1843,7 @@ namespace DatasetIntegrityPlugin
                 {
                     // No ser or fid file found
                     // Ignore this error if on the 15T
-                    if (instrumentName != "15T_FTICR")
+                    if (!string.Equals(instrumentName, "15T_FTICR", StringComparison.OrdinalIgnoreCase))
                     {
                         mRetData.EvalMsg = "Invalid dataset: No ser or fid file found";
                         if (bafFileSizeKB > 0 && bafFileSizeKB < 100)
@@ -2110,7 +2110,7 @@ namespace DatasetIntegrityPlugin
             var dataFileSizeKB = GetFileSize(dataFileNamePath);
 
             // Check min size
-            if (instrumentName.ToLower().StartsWith("TIMS_Maxis".ToLower()))
+            if (instrumentName.StartsWith("TIMS_Maxis", StringComparison.OrdinalIgnoreCase))
             {
                 if (dataFileSizeKB < TIMS_UIMF_FILE_MIN_SIZE_KB)
                 {
@@ -2255,7 +2255,7 @@ namespace DatasetIntegrityPlugin
                     var quadPressure = frameParams.GetValueDouble(FrameParamKeyType.QuadrupolePressure);
                     var ionFunnelTrap = frameParams.GetValueDouble(FrameParamKeyType.IonFunnelTrapPressure);
 
-                    if (instrumentName.ToLower().StartsWith("ims05"))
+                    if (instrumentName.StartsWith("IMS05", StringComparison.OrdinalIgnoreCase))
                     {
                         // As of September 2014, IMS05 does not have a high pressure ion funnel
                         // In order for the logic checks to work, we will override the HighPressureFunnelPressure value listed using RearIonFunnelPressure
@@ -2498,7 +2498,7 @@ namespace DatasetIntegrityPlugin
                         }
                         else
                         {
-                            if (dataLine.StartsWith("trace"))
+                            if (dataLine.StartsWith("trace", StringComparison.OrdinalIgnoreCase))
                                 traceFound = true;
 
                             settingsData.Add(dataLine);
