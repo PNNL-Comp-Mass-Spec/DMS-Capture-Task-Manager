@@ -1151,13 +1151,13 @@ namespace DatasetQualityPlugin
 
                 // Create a batch file to run the command
                 // Capture the console output (including output to the error stream) via redirection symbols:
-                //    strExePath CmdStr > ConsoleOutputFile.txt 2>&1
+                //    exePath arguments > ConsoleOutputFile.txt 2>&1
 
                 const string batchFileName = "Run_Quameter.bat";
 
-                // Update the Exe path to point to the RunProgram batch file; update CmdStr to be empty
+                // Update the Exe path to point to the RunProgram batch file; update arguments to be empty
                 var exePath = Path.Combine(mWorkDir, batchFileName);
-                var cmdStr = string.Empty;
+                var arguments = string.Empty;
 
                 const string consoleOutputFileName = QUAMETER_CONSOLE_OUTPUT_FILE;
 
@@ -1189,7 +1189,7 @@ namespace DatasetQualityPlugin
                 mStatusUpdateIntervalMinutes = 5;
 
                 const int maxRuntimeSeconds = MAX_QUAMETER_RUNTIME_MINUTES * 60;
-                var success = cmdRunner.RunProgram(exePath, cmdStr, "Quameter", true, maxRuntimeSeconds);
+                var success = cmdRunner.RunProgram(exePath, arguments, "Quameter", true, maxRuntimeSeconds);
 
                 // Parse the console output file one more time to check for errors
                 ParseConsoleOutputFile();

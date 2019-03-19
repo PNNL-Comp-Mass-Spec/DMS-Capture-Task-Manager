@@ -1315,12 +1315,12 @@ namespace ImsDemuxPlugin
                 // Construct the command line arguments
 
                 // Input file
-                var cmdStr = clsConversion.PossiblyQuotePath(inputFilePath);
+                var arguments = clsConversion.PossiblyQuotePath(inputFilePath);
 
                 if (string.Compare(fiInputFile.DirectoryName, fiOutputFile.DirectoryName, StringComparison.OrdinalIgnoreCase) != 0)
                 {
-                    // Output folder
-                    cmdStr += " /O:" + clsConversion.PossiblyQuotePath(fiOutputFile.DirectoryName);
+                    // Output directory
+                    arguments += " /O:" + clsConversion.PossiblyQuotePath(fiOutputFile.DirectoryName);
                 }
 
                 if (demuxOptions.CalibrateOnly)
@@ -1328,10 +1328,10 @@ namespace ImsDemuxPlugin
                     // Calibrating
                     mCalibrating = true;
 
-                    cmdStr += " /CalibrateOnly";
+                    arguments += " /CalibrateOnly";
 
                     // Instruct tool to look for calibration table names in other similarly named .UIMF files if not found in the primary .UIMF file
-                    cmdStr += " /CX";
+                    arguments += " /CX";
                 }
                 else
                 {
@@ -1339,48 +1339,48 @@ namespace ImsDemuxPlugin
                     mCalibrating = false;
 
                     // Output file name
-                    cmdStr += " /N:" + clsConversion.PossiblyQuotePath(fiOutputFile.Name);
+                    arguments += " /N:" + clsConversion.PossiblyQuotePath(fiOutputFile.Name);
 
                     if (demuxOptions.NumBitsForEncoding > 1)
-                        cmdStr += " /Bits:" + demuxOptions.NumBitsForEncoding;
+                        arguments += " /Bits:" + demuxOptions.NumBitsForEncoding;
 
                     /*
                     if (demuxOptions.StartFrame > 0)
-                        cmdStr += " /First:" + demuxOptions.StartFrame;
+                        arguments += " /First:" + demuxOptions.StartFrame;
 
                     if (demuxOptions.EndFrame > 0)
-                        cmdStr += " /Last:" + demuxOptions.EndFrame;
+                        arguments += " /Last:" + demuxOptions.EndFrame;
                     */
 
-                    cmdStr += " /FramesToSum:" + demuxOptions.FramesToSum;
+                    arguments += " /FramesToSum:" + demuxOptions.FramesToSum;
 
                     if (demuxOptions.ResumeDemultiplexing)
                     {
-                        cmdStr += " /Resume";
+                        arguments += " /Resume";
                     }
 
                     /*
                     if (demuxOptions.NumCores > 0)
                     {
-                        cmdStr += " /Cores:" + demuxOptions.NumCores;
+                        arguments += " /Cores:" + demuxOptions.NumCores;
                     }
                     */
 
                     if (!demuxOptions.AutoCalibrate)
                     {
-                        cmdStr += " /SkipCalibration";
+                        arguments += " /SkipCalibration";
                     }
 
                     if (!string.IsNullOrEmpty(demuxOptions.CheckpointTargetFolder))
                     {
-                        cmdStr += " /CheckPointFolder:" + clsConversion.PossiblyQuotePath(demuxOptions.CheckpointTargetFolder);
+                        arguments += " /CheckPointFolder:" + clsConversion.PossiblyQuotePath(demuxOptions.CheckpointTargetFolder);
                     }
 
                 }
 
                 mUimfDemultiplexerConsoleOutputFilePath = Path.Combine(mWorkDir, "UIMFDemultiplexer_ConsoleOutput.txt");
 
-                OnStatusEvent(mUimfDemultiplexerPath + " " + cmdStr);
+                OnStatusEvent(mUimfDemultiplexerPath + " " + arguments);
                 var cmdRunner = new clsRunDosProgram(mWorkDir);
                 mDemuxStartTime = DateTime.UtcNow;
                 mLastProgressUpdateTime = DateTime.UtcNow;
@@ -1404,7 +1404,7 @@ namespace ImsDemuxPlugin
                     cmdRunner.ConsoleOutputFilePath = mUimfDemultiplexerConsoleOutputFilePath;
                 }
 
-                var success = cmdRunner.RunProgram(mUimfDemultiplexerPath, cmdStr, "UIMFDemultiplexer", true, maxRuntimeMinutes * 60);
+                var success = cmdRunner.RunProgram(mUimfDemultiplexerPath, arguments, "UIMFDemultiplexer", true, maxRuntimeMinutes * 60);
 
                 if (!mCalibrating)
                     ParseConsoleOutputFileDemux();

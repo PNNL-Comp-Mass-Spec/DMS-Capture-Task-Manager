@@ -329,7 +329,7 @@ namespace DatasetIntegrityPlugin
                 // ReSharper restore CommentTypo
 
                 // ReSharper disable once StringLiteralTypo
-                var cmdStr = "-cli -batchfile " + batchJobFilePath;
+                var arguments = "-cli -batchfile " + batchJobFilePath;
                 var consoleOutputFilePath = Path.Combine(mWorkDir, "OpenChrom_ConsoleOutput_" + mgrName + ".txt");
 
 
@@ -350,11 +350,11 @@ namespace DatasetIntegrityPlugin
                 mLastStatusUpdate = DateTime.UtcNow;
                 mStatusUpdateIntervalMinutes = 5;
 
-                var msg = "Converting .D directory to .CDF: " + exePath + " " + cmdStr;
+                var msg = "Converting .D directory to .CDF: " + exePath + " " + arguments;
                 LogMessage(msg);
 
                 const int maxRuntimeSeconds = MAX_AGILENT_TO_CDF_RUNTIME_MINUTES * 60;
-                success = cmdRunner.RunProgram(exePath, cmdStr, "OpenChrom", true, maxRuntimeSeconds);
+                success = cmdRunner.RunProgram(exePath, arguments, "OpenChrom", true, maxRuntimeSeconds);
 
                 // Delete the locally cached .D directory
                 try
@@ -466,7 +466,7 @@ namespace DatasetIntegrityPlugin
                 // Syntax:
                 // AgilentToUIMFConverter.exe [Agilent .d directory] [Directory to insert file (optional)]
 
-                var cmdStr = clsConversion.PossiblyQuotePath(dotDDirectoryPathLocal) + " " + clsConversion.PossiblyQuotePath(mWorkDir);
+                var arguments = clsConversion.PossiblyQuotePath(dotDDirectoryPathLocal) + " " + clsConversion.PossiblyQuotePath(mWorkDir);
                 mConsoleOutputFilePath = Path.Combine(mWorkDir, "AgilentToUIMF_ConsoleOutput_" + mgrName + ".txt");
 
                 var cmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
@@ -486,11 +486,11 @@ namespace DatasetIntegrityPlugin
                 mLastStatusUpdate = DateTime.UtcNow;
                 mStatusUpdateIntervalMinutes = 5;
 
-                var msg = "Converting .D directory to .UIMF: " + exePath + " " + cmdStr;
+                var msg = "Converting .D directory to .UIMF: " + exePath + " " + arguments;
                 LogMessage(msg);
 
                 const int maxRuntimeSeconds = MAX_AGILENT_TO_UIMF_RUNTIME_MINUTES * 60;
-                success = cmdRunner.RunProgram(exePath, cmdStr, "AgilentToUIMFConverter", true, maxRuntimeSeconds);
+                success = cmdRunner.RunProgram(exePath, arguments, "AgilentToUIMFConverter", true, maxRuntimeSeconds);
 
                 // Parse the console output file one more time to check for errors
                 ParseConsoleOutputFile();
