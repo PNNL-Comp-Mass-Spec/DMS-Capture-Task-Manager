@@ -5,12 +5,12 @@
 // Created 10/08/2009
 //*********************************************************************************************************
 
+using CaptureTaskManager;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.IO;
-using CaptureTaskManager;
 
 namespace DatasetArchivePlugin
 {

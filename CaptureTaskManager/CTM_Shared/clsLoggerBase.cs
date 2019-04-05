@@ -1,6 +1,6 @@
 ﻿
-using System;
 using PRISM.Logging;
+using System;
 
 namespace CaptureTaskManager
 {

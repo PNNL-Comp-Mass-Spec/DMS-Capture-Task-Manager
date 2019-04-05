@@ -1,3 +1,6 @@
+using Jayrock.Json;
+using Jayrock.Json.Conversion;
+using PRISM;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -7,9 +10,6 @@ using System.Net.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
-using Jayrock.Json;
-using Jayrock.Json.Conversion;
-using PRISM;
 
 namespace Pacifica.Core
 {

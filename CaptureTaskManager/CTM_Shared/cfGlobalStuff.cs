@@ -1,9 +1,9 @@
-﻿using System;
+﻿using PRISM;
+using PRISM.Logging;
+using System;
 using System.Data;
 using System.Data.SqlClient;
 using System.IO;
-using PRISM;
-using PRISM.Logging;
 
 // ReSharper disable UnusedMember.Global
 namespace CaptureTaskManager

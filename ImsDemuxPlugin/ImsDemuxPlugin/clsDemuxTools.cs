@@ -5,14 +5,14 @@
 // Created 03/07/2011
 //*********************************************************************************************************
 
+using CaptureTaskManager;
+using PRISM;
+using PRISM.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using CaptureTaskManager;
-using PRISM;
-using PRISM.Logging;
 using UIMFLibrary;
 
 namespace ImsDemuxPlugin

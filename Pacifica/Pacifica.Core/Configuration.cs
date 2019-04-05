@@ -1,8 +1,8 @@
+using PRISM;
 using System;
 using System.IO;
 using System.Net;
 using System.Reflection;
-using PRISM;
 
 namespace Pacifica.Core
 {

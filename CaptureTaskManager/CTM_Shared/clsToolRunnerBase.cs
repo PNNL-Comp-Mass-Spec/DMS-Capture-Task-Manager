@@ -5,6 +5,9 @@
 // Created 09/25/2009
 //*********************************************************************************************************
 
+using Pacifica.Core;
+using PRISM;
+using PRISM.Logging;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -13,9 +16,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Threading;
-using Pacifica.Core;
-using PRISM;
-using PRISM.Logging;
 
 namespace CaptureTaskManager
 {

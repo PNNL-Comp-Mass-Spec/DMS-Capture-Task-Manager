@@ -5,12 +5,12 @@
 // Created 11/17/2009
 //*********************************************************************************************************
 
+using CaptureTaskManager;
+using PRISM;
 using System;
 using System.Collections.Generic;
-using CaptureTaskManager;
 using System.IO;
 using System.Linq;
-using PRISM;
 
 namespace SrcFileRenamePlugin
 {

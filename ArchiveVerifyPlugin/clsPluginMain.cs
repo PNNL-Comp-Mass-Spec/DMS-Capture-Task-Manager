@@ -1,12 +1,12 @@
-﻿using System;
-using System.Globalization;
-using CaptureTaskManager;
+﻿using CaptureTaskManager;
+using Jayrock.Json.Conversion;
 using Pacifica.Core;
 using Pacifica.DMS_Metadata;
+using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Globalization;
 using System.IO;
-using Jayrock.Json.Conversion;
+using System.Linq;
 
 namespace ArchiveVerifyPlugin
 {

@@ -5,6 +5,8 @@
 // Created 10/02/2009
 //*********************************************************************************************************
 
+using CaptureTaskManager;
+using PRISM;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -13,8 +15,6 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
-using CaptureTaskManager;
-using PRISM;
 using ThermoRawFileReader;
 using UIMFLibrary;
 

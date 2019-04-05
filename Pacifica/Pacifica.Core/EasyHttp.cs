@@ -1,8 +1,8 @@
-﻿using System;
+﻿using PRISM;
+using System;
 using System.ComponentModel;
 using System.IO;
 using System.Net;
-using PRISM;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;

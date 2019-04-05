@@ -1,6 +1,6 @@
+using PRISM;
 using System;
 using System.IO;
-using PRISM;
 
 namespace CaptureTaskManager
 {

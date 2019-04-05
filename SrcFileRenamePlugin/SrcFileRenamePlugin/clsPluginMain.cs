@@ -5,8 +5,8 @@
 // Created 11/17/2009
 //*********************************************************************************************************
 
-using System;
 using CaptureTaskManager;
+using System;
 
 namespace SrcFileRenamePlugin
 {

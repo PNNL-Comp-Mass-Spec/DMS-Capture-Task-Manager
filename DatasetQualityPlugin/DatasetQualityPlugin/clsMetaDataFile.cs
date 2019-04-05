@@ -5,11 +5,11 @@
 // Created 10/29/2009
 //*********************************************************************************************************
 
-using System;
 using CaptureTaskManager;
-using System.Xml;
-using System.IO;
 using PRISM.Logging;
+using System;
+using System.IO;
+using System.Xml;
 
 namespace DatasetQualityPlugin
 {

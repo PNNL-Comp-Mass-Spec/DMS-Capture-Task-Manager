@@ -5,18 +5,18 @@
 // Created 10/20/2009
 //*********************************************************************************************************
 
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Data.SqlClient;
-using System.Threading;
 using CaptureTaskManager;
 using Pacifica.Core;
 using Pacifica.DMS_Metadata;
 using Pacifica.Upload;
 using PRISM;
 using PRISM.Logging;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
 using System.IO;
+using System.Threading;
 
 namespace DatasetArchivePlugin
 {

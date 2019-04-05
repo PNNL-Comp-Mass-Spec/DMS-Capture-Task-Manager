@@ -5,12 +5,12 @@
 // Created 06/26/2009
 //*********************************************************************************************************
 
-using System;
-using System.Collections.Generic;
 using Apache.NMS;
 using Apache.NMS.ActiveMQ;
 using Apache.NMS.ActiveMQ.Commands;
 using PRISM.AppSettings;
+using System;
+using System.Collections.Generic;
 
 namespace CaptureTaskManager
 {

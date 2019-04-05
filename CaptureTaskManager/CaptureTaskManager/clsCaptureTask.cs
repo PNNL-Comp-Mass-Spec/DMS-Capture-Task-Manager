@@ -5,11 +5,11 @@
 // Created 09/15/2009
 //*********************************************************************************************************
 
-using System;
-using System.Data.SqlClient;
-using System.Data;
-using System.Reflection;
 using PRISM;
+using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Reflection;
 
 namespace CaptureTaskManager
 {

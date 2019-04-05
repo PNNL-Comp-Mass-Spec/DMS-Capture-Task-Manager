@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Net;
 using System.ComponentModel;
+using System.Net;
 using System.Runtime.InteropServices;
 
 // ReSharper disable once CommentTypo

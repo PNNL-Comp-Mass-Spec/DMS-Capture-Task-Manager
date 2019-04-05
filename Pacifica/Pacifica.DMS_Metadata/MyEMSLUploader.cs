@@ -1,9 +1,9 @@
+using Pacifica.Core;
+using PRISM;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Pacifica.Core;
 using Uploader = Pacifica.Upload;
-using PRISM;
 using Utilities = Pacifica.Core.Utilities;
 
 namespace Pacifica.DMS_Metadata

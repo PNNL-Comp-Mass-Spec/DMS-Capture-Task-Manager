@@ -1,9 +1,9 @@
-﻿using System;
+﻿using Jayrock.Json.Conversion;
+using PRISM;
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Text.RegularExpressions;
-using Jayrock.Json.Conversion;
-using PRISM;
 
 namespace Pacifica.Core
 {
