@@ -224,7 +224,6 @@ namespace ArchiveStatusCheckPlugin
                 {
                     var ingestSuccess = GetMyEMSLIngestStatus(
                         mJob, statusChecker, statusInfo.StatusURI,
-                        statusInfo.EUS_InstrumentID, statusInfo.EUS_ProposalID, statusInfo.EUS_UploaderID,
                         mRetData, out _, out var currentTask, out var percentComplete);
 
                     var ingestStepsCompleted = statusChecker.DetermineIngestStepsCompleted(currentTask, percentComplete, statusInfo.IngestStepsCompletedOld);

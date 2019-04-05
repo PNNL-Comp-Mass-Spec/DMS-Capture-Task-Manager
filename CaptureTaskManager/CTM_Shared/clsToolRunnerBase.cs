@@ -339,9 +339,6 @@ namespace CaptureTaskManager
         /// <param name="job"></param>
         /// <param name="statusChecker"></param>
         /// <param name="statusURI"></param>
-        /// <param name="eusInstrumentID"></param>
-        /// <param name="eusProposalID"></param>
-        /// <param name="eusUploaderID"></param>
         /// <param name="retData"></param>
         /// <param name="serverResponse">Server response (dictionary representation of JSON)</param>
         /// <param name="currentTask">Output: current task</param>
@@ -353,9 +350,6 @@ namespace CaptureTaskManager
             int job,
             MyEMSLStatusCheck statusChecker,
             string statusURI,
-            int eusInstrumentID,
-            string eusProposalID,
-            int eusUploaderID,
             clsToolReturnData retData,
             out Dictionary<string, object> serverResponse,
             out string currentTask,

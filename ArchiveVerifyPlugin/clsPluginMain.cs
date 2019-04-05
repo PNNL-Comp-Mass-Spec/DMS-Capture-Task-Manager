@@ -160,10 +160,6 @@ namespace ArchiveVerifyPlugin
 
             var statusURI = mTaskParams.GetParam("MyEMSL_Status_URI", string.Empty);
 
-            var eusInstrumentID = mTaskParams.GetParam("EUS_InstrumentID", 0);
-            var eusProposalID = mTaskParams.GetParam("EUS_ProposalID", string.Empty);
-            var eusUploaderID = mTaskParams.GetParam("EUS_UploaderID", 0);
-
             if (string.IsNullOrEmpty(statusURI))
             {
                 const string msg = "MyEMSL_Status_URI is empty; cannot verify upload status";
@@ -189,7 +185,6 @@ namespace ArchiveVerifyPlugin
 
                 var ingestSuccess = GetMyEMSLIngestStatus(
                     mJob, statusChecker, statusURI,
-                    eusInstrumentID, eusProposalID, eusUploaderID,
                     mRetData, out _, out var currentTask, out var percentComplete);
 
                 // Examine the current task and percent complete to determine the number of ingest steps completed
