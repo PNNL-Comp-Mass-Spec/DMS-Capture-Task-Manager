@@ -928,7 +928,7 @@ namespace CaptureTaskManager
                 mStatusTimer.Enabled = false;
 
                 eTaskCloseout = toolResult.CloseoutType;
-                string sCloseoutMessage;
+                string closeoutMessage;
 
                 switch (eTaskCloseout)
                 {
@@ -936,11 +936,11 @@ namespace CaptureTaskManager
                         LogError(mMgrName + ": Failure running tool " + mStepTool + ", job " + mJob + ", Dataset " + mDataset);
 
                         if (!string.IsNullOrEmpty(toolResult.CloseoutMsg))
-                            sCloseoutMessage = toolResult.CloseoutMsg;
+                            closeoutMessage = toolResult.CloseoutMsg;
                         else
-                            sCloseoutMessage = "Failure running tool " + mStepTool;
+                            closeoutMessage = "Failure running tool " + mStepTool;
 
-                        mTask.CloseTask(eTaskCloseout, sCloseoutMessage, toolResult.EvalCode, toolResult.EvalMsg);
+                        mTask.CloseTask(eTaskCloseout, closeoutMessage, toolResult.EvalCode, toolResult.EvalMsg);
                         break;
 
                     case EnumCloseOutType.CLOSEOUT_NOT_READY:
@@ -956,12 +956,12 @@ namespace CaptureTaskManager
 
                         LogWarning(msg);
 
-                        sCloseoutMessage = "Dataset not ready";
+                        closeoutMessage = "Dataset not ready";
 
                         if (!string.IsNullOrEmpty(toolResult.CloseoutMsg))
-                            sCloseoutMessage += ": " + toolResult.CloseoutMsg;
+                            closeoutMessage += ": " + toolResult.CloseoutMsg;
 
-                        mTask.CloseTask(eTaskCloseout, sCloseoutMessage, toolResult.EvalCode, toolResult.EvalMsg);
+                        mTask.CloseTask(eTaskCloseout, closeoutMessage, toolResult.EvalCode, toolResult.EvalMsg);
                         break;
 
                     case EnumCloseOutType.CLOSEOUT_SUCCESS:
@@ -975,9 +975,12 @@ namespace CaptureTaskManager
                               + ", job " + mJob + ", Dataset " + mDataset
                               + "; CloseOut = NeedToAbortProcessing");
 
-                        sCloseoutMessage = "Error: NeedToAbortProcessing";
+                        if (!string.IsNullOrEmpty(toolResult.CloseoutMsg))
+                            closeoutMessage = toolResult.CloseoutMsg;
+                        else
+                            closeoutMessage = "Error: NeedToAbortProcessing";
 
-                        mTask.CloseTask(eTaskCloseout, sCloseoutMessage, toolResult.EvalCode, toolResult.EvalMsg);
+                        mTask.CloseTask(eTaskCloseout, closeoutMessage, toolResult.EvalCode, toolResult.EvalMsg);
                         break;
 
                     default:
