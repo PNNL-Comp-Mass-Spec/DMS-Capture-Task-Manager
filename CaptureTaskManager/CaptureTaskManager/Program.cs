@@ -171,7 +171,7 @@ namespace CaptureTaskManager
             Console.WriteLine();
             Console.WriteLine("DMS Capture Task Manager");
             Console.WriteLine("Version " + GetAppVersion(PROGRAM_DATE));
-            Console.WriteLine("Host    " + Environment.MachineName);
+            Console.WriteLine("Host    " + System.Net.Dns.GetHostName());
             Console.WriteLine("User    " + Environment.UserName);
             Console.WriteLine();
 

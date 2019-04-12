@@ -75,7 +75,7 @@ namespace CaptureTaskManager
         {
             mMgrParams = mgrParams;
 
-            ManagerName = mMgrParams.GetParam("MgrName", Environment.MachineName + "_Undefined-Manager");
+            ManagerName = mMgrParams.GetParam("MgrName", System.Net.Dns.GetHostName() + "_Undefined-Manager");
 
             // Gigasax.DMS_Capture
             mConnStr = mMgrParams.GetParam("ConnectionString");

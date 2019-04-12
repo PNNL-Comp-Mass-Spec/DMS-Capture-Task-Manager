@@ -1446,7 +1446,7 @@ namespace CaptureTaskManager
                     errMsg = "Error validating dataset storage free drive space: " + datasetStoragePath +
                              " (GetDiskFreeSpace returned false)";
 
-                    if (Environment.MachineName.StartsWith("monroe", StringComparison.OrdinalIgnoreCase))
+                    if (System.Net.Dns.GetHostName().StartsWith("monroe", StringComparison.OrdinalIgnoreCase))
                     {
                         Console.WriteLine(@"Warning: " + errMsg);
                         return true;

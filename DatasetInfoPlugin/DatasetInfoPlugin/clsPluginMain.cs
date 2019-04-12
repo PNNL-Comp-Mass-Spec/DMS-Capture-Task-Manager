@@ -283,7 +283,7 @@ namespace DatasetInfoPlugin
             }
 
             bool useLocalOutputDirectory;
-            if (Environment.MachineName.StartsWith("monroe", StringComparison.OrdinalIgnoreCase) &&
+            if (System.Net.Dns.GetHostName().StartsWith("monroe", StringComparison.OrdinalIgnoreCase) &&
                 !Environment.UserName.StartsWith("svc", StringComparison.OrdinalIgnoreCase))
             {
                 useLocalOutputDirectory = true;
