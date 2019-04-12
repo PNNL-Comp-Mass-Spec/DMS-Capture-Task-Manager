@@ -983,6 +983,20 @@ namespace CaptureTaskManager
                     default:
                         throw new Exception("Unrecognized enum in PerformTask: " + eTaskCloseout);
                 }
+
+                if (toolResult.CloseoutMsg.Contains(clsToolRunnerBase.EXCEPTION_CREATING_OUTPUT_DIRECTORY))
+                {
+                    if (eTaskCloseout != EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING ||
+                        System.Net.Dns.GetHostName().StartsWith("monroe", StringComparison.OrdinalIgnoreCase))
+                    {
+                        LogWarning("Exiting the main loop since this user cannot write to the output directory");
+                        eTaskCloseout = EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING;
+
+                        ConsoleMsgUtils.SleepSeconds(3);
+                    }
+
+                }
+
             }
             catch (Exception ex)
             {

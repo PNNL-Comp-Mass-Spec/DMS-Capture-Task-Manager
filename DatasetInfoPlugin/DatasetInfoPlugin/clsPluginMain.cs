@@ -273,11 +273,11 @@ namespace DatasetInfoPlugin
                 }
                 catch (Exception ex)
                 {
-                    var msg = "clsPluginMain.RunMsFileInfoScanner: Exception creating output directory " + outputPathBase;
+                    var msg = string.Format("clsPluginMain.RunMsFileInfoScanner: {0} {1}", EXCEPTION_CREATING_OUTPUT_DIRECTORY, outputPathBase);
                     LogError(msg, ex);
 
-                    retData.CloseoutMsg = "Exception creating output directory " + outputPathBase;
-                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    retData.CloseoutMsg = EXCEPTION_CREATING_OUTPUT_DIRECTORY + " " + outputPathBase;
+                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING;
                     return retData;
                 }
             }

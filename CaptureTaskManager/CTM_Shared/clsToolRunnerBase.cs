@@ -28,7 +28,10 @@ namespace CaptureTaskManager
 
         #region "Constants"
 
+        public const string EXCEPTION_CREATING_OUTPUT_DIRECTORY = "Exception creating output directory";
+
         private const string SP_NAME_SET_TASK_TOOL_VERSION = "SetStepTaskToolVersion";
+
         private const string DATE_TIME_FORMAT = "yyyy-MM-dd hh:mm:ss tt";
 
         #endregion
