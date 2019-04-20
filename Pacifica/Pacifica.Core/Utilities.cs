@@ -105,7 +105,7 @@ namespace Pacifica.Core
         /// <param name="valueIfMissingOrNull">Value to return if the dictionary value is missing or null</param>
         /// <returns>Value for the given key, or valueIfMissingOrNull if the value is missing or null</returns>
         // ReSharper disable once UnusedMember.Global
-        public static bool GetDictionaryValue(IReadOnlyDictionary<string, string> dictionary, string keyName, bool valueIfMissingOrNull)
+        public static bool GetDictionaryValue(IDictionary<string, string> dictionary, string keyName, bool valueIfMissingOrNull)
         {
             var valueText = GetDictionaryValue(dictionary, keyName, valueIfMissingOrNull.ToString());
 
@@ -123,7 +123,7 @@ namespace Pacifica.Core
         /// <param name="valueIfMissingOrNull">Integer to return if the dictionary value is missing or null</param>
         /// <returns>Value for the given key, or valueIfMissingOrNull if the value is missing or null</returns>
         // ReSharper disable once UnusedMember.Global
-        public static int GetDictionaryValue(IReadOnlyDictionary<string, string> dictionary, string keyName, int valueIfMissingOrNull)
+        public static int GetDictionaryValue(IDictionary<string, string> dictionary, string keyName, int valueIfMissingOrNull)
         {
             var valueText = GetDictionaryValue(dictionary, keyName, valueIfMissingOrNull.ToString());
 
@@ -140,7 +140,7 @@ namespace Pacifica.Core
         /// <param name="keyName">Key name</param>
         /// <param name="valueIfMissingOrNull">Value to return if the dictionary value is missing or null</param>
         /// <returns>Value for the given key, or valueIfMissingOrNull if the value is missing or null</returns>
-        public static string GetDictionaryValue(IReadOnlyDictionary<string, string> dictionary, string keyName, string valueIfMissingOrNull)
+        public static string GetDictionaryValue(IDictionary<string, string> dictionary, string keyName, string valueIfMissingOrNull)
         {
 
             if (dictionary.TryGetValue(keyName, out var value))
@@ -159,7 +159,7 @@ namespace Pacifica.Core
         /// <param name="valueIfMissingOrNull">Int-64 value to return if the dictionary value is missing or null</param>
         /// <returns>Value for the given key, or valueIfMissingOrNull if the value is missing or null</returns>
         // ReSharper disable once UnusedMember.Global
-        public static long GetDictionaryValue(IReadOnlyDictionary<string, object> dictionary, string keyName, long valueIfMissingOrNull)
+        public static long GetDictionaryValue(IDictionary<string, object> dictionary, string keyName, long valueIfMissingOrNull)
         {
             if (!dictionary.TryGetValue(keyName, out var itemValue))
                 return valueIfMissingOrNull;
@@ -181,7 +181,7 @@ namespace Pacifica.Core
         /// <param name="keyName">Key name</param>
         /// <param name="valueIfMissingOrNull">Value to return if the dictionary value is missing or null</param>
         /// <returns>Value for the given key, or valueIfMissingOrNull if the value is missing or null</returns>
-        public static string GetDictionaryValue(IReadOnlyDictionary<string, object> dictionary, string keyName, string valueIfMissingOrNull = "")
+        public static string GetDictionaryValue(IDictionary<string, object> dictionary, string keyName, string valueIfMissingOrNull = "")
         {
             if (!dictionary.TryGetValue(keyName, out var itemValue))
                 return valueIfMissingOrNull;

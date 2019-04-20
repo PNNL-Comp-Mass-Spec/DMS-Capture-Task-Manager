@@ -39,14 +39,15 @@
     <PackageReference Include="jayrock-json">
       <Version>0.9.16530.1</Version>
     </PackageReference>
-    <PackageReference Include="PRISM-Library">
-      <Version>2.5.17</Version>
-    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Pacifica.Core, Version=2.0.6303.33627, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\DeployedFiles\Pacifica.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="PRISM, Version=2.5.17.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\RefLib\NET_4\PRISM.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

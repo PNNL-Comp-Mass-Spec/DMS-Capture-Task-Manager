@@ -734,7 +734,7 @@ namespace Pacifica.Upload
 
         }
 
-        private static bool GetDictionaryValue(IReadOnlyDictionary<string, object> eusInfoMapObject, string keyName, out string matchedValue)
+        private static bool GetDictionaryValue(IDictionary<string, object> eusInfoMapObject, string keyName, out string matchedValue)
         {
             if (eusInfoMapObject.TryGetValue(keyName, out var value))
             {
