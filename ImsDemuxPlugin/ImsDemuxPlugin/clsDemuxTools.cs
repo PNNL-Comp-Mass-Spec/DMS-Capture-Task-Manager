@@ -132,7 +132,7 @@ namespace ImsDemuxPlugin
 
                 // Locate data file on storage server
                 // Don't copy it locally yet
-                var uimfFilePath = GetRemoteUIMFFilePath(ref retData);
+                var uimfFilePath = GetRemoteUIMFFilePath(retData);
                 if (string.IsNullOrEmpty(uimfFilePath))
                 {
                     if (retData != null && retData.CloseoutType != EnumCloseOutType.CLOSEOUT_FAILED)
@@ -271,7 +271,7 @@ namespace ImsDemuxPlugin
 
         }
 
-        private string GetRemoteUIMFFilePath(ref clsToolReturnData retData)
+        private string GetRemoteUIMFFilePath(clsToolReturnData retData)
         {
 
             try
@@ -322,7 +322,7 @@ namespace ImsDemuxPlugin
 
             // Locate data file on storage server
             // Don't copy it locally; just work with it over the network
-            var uimfFilePath = GetRemoteUIMFFilePath(ref retData);
+            var uimfFilePath = GetRemoteUIMFFilePath(retData);
             if (string.IsNullOrEmpty(uimfFilePath))
             {
                 if (retData != null && retData.CloseoutType != EnumCloseOutType.CLOSEOUT_FAILED)
@@ -506,7 +506,7 @@ namespace ImsDemuxPlugin
             {
                 // Locate data file on storage server
                 // Don't copy it locally; just work with it over the network
-                var uimfFilePath = GetRemoteUIMFFilePath(ref retData);
+                var uimfFilePath = GetRemoteUIMFFilePath(retData);
                 if (string.IsNullOrEmpty(uimfFilePath))
                 {
                     if (retData != null && retData.CloseoutType != EnumCloseOutType.CLOSEOUT_FAILED)
@@ -597,8 +597,6 @@ namespace ImsDemuxPlugin
             var msg = "Performing demultiplexing, job " + jobNum + ", dataset " + mDataset;
             OnStatusEvent(msg);
 
-            var retData = new clsToolReturnData();
-
             var postProcessingError = false;
 
             // Default to summing 5 LC frames if this parameter is not defined
@@ -612,7 +610,7 @@ namespace ImsDemuxPlugin
 
             // Copy the UIMF file from the storage server to the working directory
 
-            retData = CopyUIMFToWorkDir(uimfFileName, retData, out var uimfRemoteEncodedFileNamePath, out var uimfLocalEncodedFileNamePath);
+            var retData = CopyUIMFToWorkDir(uimfFileName, new clsToolReturnData(), out var uimfRemoteEncodedFileNamePath, out var uimfLocalEncodedFileNamePath);
             if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
                 return retData;
 
