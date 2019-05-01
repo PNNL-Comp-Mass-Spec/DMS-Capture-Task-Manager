@@ -351,12 +351,13 @@ namespace CaptureToolPlugin
         }
 
         /// <summary>
-        /// Renames each file and subdirectory at directoryPath to start with x_
+        /// Finds files and/or subdirectories at datasetDirectoryPath that need to be renamed to start with x_
         /// </summary>
         /// <param name="datasetDirectoryPath">Dataset directory path</param>
+        /// <param name="pendingRenames">Files and/or directories to rename</param>
         /// <returns></returns>
         /// <remarks>Does not rename LCMethod*.xml files</remarks>
-        private bool MarkSupersededFiles(string directoryPath)
+        private bool FindSupersededFiles(string datasetDirectoryPath, IDictionary<FileSystemInfo, string> pendingRenames)
         {
 
             try
@@ -365,8 +366,6 @@ namespace CaptureToolPlugin
 
                 if (!datasetDirectory.Exists)
                     return true;
-
-                var itemCountRenamed = 0;
 
                 var foundFiles = datasetDirectory.GetFiles();
                 var filesToSkip = datasetDirectory.GetFiles("LCMethod*.xml");
@@ -389,29 +388,12 @@ namespace CaptureToolPlugin
                     }
 
                     var newFilePath = Path.Combine(datasetDirectory.FullName, "x_" + fileToRename.Name);
-
-                    if (File.Exists(newFilePath))
-                    {
-                        // Target exists; delete it
-                        LogMessage(string.Format("Addition of x_ to {0} will replace an existing file; deleting {1}",
-                                                 fileToRename.FullName, Path.GetFileName(newFilePath)));
-                        File.Delete(newFilePath);
-                    }
-
-                    fileToRename.MoveTo(newFilePath);
-                    itemCountRenamed++;
-                }
-
-                if (itemCountRenamed > 0)
-                {
-                    LogMessage(string.Format("Renamed {0} superseded file(s) at {1} to start with x_",
-                                             itemCountRenamed, datasetDirectory.FullName));
+                    pendingRenames.Add(fileToRename, newFilePath);
                 }
 
                 // Rename any superseded subdirectories
                 var targetSubdirectories = datasetDirectory.GetDirectories();
 
-                itemCountRenamed = 0;
                 foreach (var subdirectoryToRename in targetSubdirectories)
                 {
                     if (subdirectoryToRename.Name.StartsWith("x_") && targetSubdirectories.Length == 1)
@@ -421,31 +403,106 @@ namespace CaptureToolPlugin
                     }
 
                     var newSubDirPath = Path.Combine(datasetDirectory.FullName, "x_" + subdirectoryToRename.Name);
-
-                    if (Directory.Exists(newSubDirPath))
-                    {
-                        // Target exists; delete it
-                        LogMessage(string.Format("Addition of x_ to {0} will replace an existing subdirectory; deleting {1}",
-                                                 subdirectoryToRename.FullName, Path.GetFileName(newSubDirPath)));
-                        Directory.Delete(newSubDirPath, true);
-                    }
-
-                    subdirectoryToRename.MoveTo(newSubDirPath);
-                    itemCountRenamed++;
+                    pendingRenames.Add(subdirectoryToRename, newSubDirPath);
                 }
 
-                if (itemCountRenamed > 0)
+                if (pendingRenames.Count == 1)
                 {
-                    LogMessage(string.Format("Renamed {0} superseded subdirectory(s) at {1} to start with x_",
-                                             itemCountRenamed, datasetDirectory.FullName));
+                    switch (pendingRenames.Keys.First())
+                    {
+                        case FileInfo fileToRename:
+                            LogMessage(string.Format("Found 1 file to prepend with x_, {0}", fileToRename.Name));
+                            break;
+                        case DirectoryInfo directoryToRename:
+                            LogMessage(string.Format("Found 1 directory to prepend with x_, {0}", directoryToRename.Name));
+                            break;
+                    }
+                }
+                else if (pendingRenames.Count > 1)
+                {
+                    LogMessage(string.Format("Found {0} files/directories to prepend with x_", pendingRenames));
                 }
 
                 return true;
             }
             catch (Exception ex)
             {
-                mErrorMessage = "Exception renaming files/directories to start with x_";
-                var msg = mErrorMessage + " at " + directoryPath;
+                mErrorMessage = "Exception finding files/directories to rename with x_";
+                var msg = mErrorMessage + " at " + datasetDirectoryPath;
+                LogError(msg, true);
+                LogError("Stack trace", ex);
+                return false;
+            }
+
+        }
+
+        /// <summary>
+        /// Renames files and subdirectories in pendingRenames to start with x_
+        /// </summary>
+        /// <param name="datasetDirectoryPath"></param>
+        /// <param name="pendingRenames">Files and/or directories to rename</param>
+        /// <returns></returns>
+        private bool MarkSupersededFiles(string datasetDirectoryPath, IReadOnlyDictionary<FileSystemInfo, string> pendingRenames)
+        {
+            try
+            {
+                var filesRenamed = 0;
+                var directoriesRenamed = 0;
+
+                foreach (var fileOrDirectoryToRename in pendingRenames)
+                {
+                    switch (fileOrDirectoryToRename.Key)
+                    {
+                        case FileInfo fileToRename:
+                            {
+                                var newFilePath = fileOrDirectoryToRename.Value;
+                                if (File.Exists(newFilePath))
+                                {
+                                    // Target exists; delete it
+                                    LogMessage(string.Format("Addition of x_ to {0} will replace an existing file; deleting {1}",
+                                                             fileToRename.FullName, Path.GetFileName(newFilePath)));
+                                    File.Delete(newFilePath);
+                                }
+                                fileToRename.MoveTo(newFilePath);
+                                filesRenamed++;
+                                break;
+                            }
+                        case DirectoryInfo directoryToRename:
+                            {
+                                var newDirectoryPath = fileOrDirectoryToRename.Value;
+                                if (Directory.Exists(newDirectoryPath))
+                                {
+                                    // Target exists; delete it
+                                    LogMessage(string.Format("Addition of x_ to {0} will replace an existing subdirectory; deleting {1}",
+                                                             directoryToRename.FullName, Path.GetFileName(newDirectoryPath)));
+                                    Directory.Delete(newDirectoryPath, true);
+                                }
+                                directoryToRename.MoveTo(newDirectoryPath);
+                                directoriesRenamed++;
+                                break;
+                            }
+                    }
+                }
+
+                if (filesRenamed > 0)
+                {
+                    LogMessage(string.Format("Renamed {0} superseded file(s) at {1} to start with x_",
+                                             filesRenamed, datasetDirectoryPath));
+                }
+
+                if (directoriesRenamed > 0)
+                {
+                    LogMessage(string.Format("Renamed {0} superseded subdirectory(s) at {1} to start with x_",
+                                             directoriesRenamed, datasetDirectoryPath));
+                }
+
+                return true;
+
+            }
+            catch (Exception ex)
+            {
+                mErrorMessage = "Exception renaming files/directories to rename with x_";
+                var msg = mErrorMessage + " at " + datasetDirectoryPath;
                 LogError(msg, true);
                 LogError("Stack trace", ex);
                 return false;
@@ -526,6 +583,7 @@ namespace CaptureToolPlugin
         /// <param name="maxNonInstrumentDirCountToAllowResume">
         /// Maximum number of non-instrument subdirectories that can exist in the dataset directory if we are going to allow CopyWithResume to be used</param>
         /// <param name="retData">Return data</param>
+        /// <param name="pendingRenames">Files and/or directories to rename</param>
         /// <returns>TRUE for success, FALSE for failure</returns>
         /// <remarks>
         /// If both maxFileCountToAllowResume and maxInstrumentDirCountToAllowResume are zero,
@@ -537,7 +595,8 @@ namespace CaptureToolPlugin
             int maxFileCountToAllowResume,
             int maxInstrumentDirCountToAllowResume,
             int maxNonInstrumentDirCountToAllowResume,
-            ref clsToolReturnData retData)
+            clsToolReturnData retData,
+            IDictionary<FileSystemInfo, string> pendingRenames)
         {
             var switchResult = false;
 
@@ -586,7 +645,7 @@ namespace CaptureToolPlugin
                                     // Do not rename the directory or file; leave as-is and we'll resume the copy
                                     switchResult = true;
                                 else
-                                    switchResult = MarkSupersededFiles(datasetDirectoryPath);
+                                    switchResult = FindSupersededFiles(datasetDirectoryPath, pendingRenames);
                             }
                             else
                             {
@@ -1360,6 +1419,8 @@ namespace CaptureToolPlugin
                 }
             }
 
+            var pendingRenames = new Dictionary<FileSystemInfo, string>();
+
             // Verify that dataset directory path doesn't already exist or is empty
             // Example: \\proto-9\VOrbiETD02\2011_2\PTO_Na_iTRAQ_2_17May11_Owl_11-05-09
             if (ValidateDirectoryPath(datasetDirectoryPath))
@@ -1550,6 +1611,20 @@ namespace CaptureToolPlugin
             }
             else
             {
+                // Now that the source has been verified, perform any pending renames
+                var renameSuccess = MarkSupersededFiles(datasetDirectoryPath, pendingRenames);
+                if (!renameSuccess)
+                {
+                    if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
+                        retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+
+                    if (string.IsNullOrEmpty(retData.CloseoutMsg))
+                    {
+                        retData.CloseoutMsg = "MarkSupersededFiles returned false";
+                    }
+                    return false;
+                }
+
                 // Perform copy based on source type
                 switch (sourceType)
                 {
