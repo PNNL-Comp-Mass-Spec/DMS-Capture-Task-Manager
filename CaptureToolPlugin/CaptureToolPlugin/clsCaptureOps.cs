@@ -353,7 +353,7 @@ namespace CaptureToolPlugin
         /// <summary>
         /// Renames each file and subdirectory at directoryPath to start with x_
         /// </summary>
-        /// <param name="directoryPath"></param>
+        /// <param name="datasetDirectoryPath">Dataset directory path</param>
         /// <returns></returns>
         /// <remarks>Does not rename LCMethod*.xml files</remarks>
         private bool MarkSupersededFiles(string directoryPath)
@@ -361,7 +361,7 @@ namespace CaptureToolPlugin
 
             try
             {
-                var datasetDirectory = new DirectoryInfo(directoryPath);
+                var datasetDirectory = new DirectoryInfo(datasetDirectoryPath);
 
                 if (!datasetDirectory.Exists)
                     return true;
