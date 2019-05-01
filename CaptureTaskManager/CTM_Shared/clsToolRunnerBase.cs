@@ -246,7 +246,7 @@ namespace CaptureTaskManager
         /// <returns></returns>
         public static bool CleanWorkDir(string workDir, float holdoffSeconds, out string failureMessage)
         {
-            var strCurrentSubfolder = string.Empty;
+            var currentSubDirectory = string.Empty;
 
             failureMessage = string.Empty;
 
@@ -272,28 +272,28 @@ namespace CaptureTaskManager
                 Thread.Sleep(holdoffMilliseconds);
             }
 
-            var diWorkFolder = new DirectoryInfo(workDir);
+            var workingDirectory = new DirectoryInfo(workDir);
 
             // Delete the files
             try
             {
-                if (!diWorkFolder.Exists)
+                if (!workingDirectory.Exists)
                 {
                     failureMessage = "Working directory does not exist";
                     return false;
                 }
 
-                foreach (var fiFile in diWorkFolder.GetFiles())
+                foreach (var fileToDelete in workingDirectory.GetFiles())
                 {
                     try
                     {
-                        fiFile.Delete();
+                        fileToDelete.Delete();
                     }
                     catch (Exception)
                     {
                         // Make sure the readonly and system attributes are not set
                         // The manager will try to delete the file the next time is starts
-                        fiFile.Attributes = fiFile.Attributes & ~FileAttributes.ReadOnly & ~FileAttributes.System;
+                        fileToDelete.Attributes = fileToDelete.Attributes & ~FileAttributes.ReadOnly & ~FileAttributes.System;
                     }
                 }
             }
@@ -307,14 +307,15 @@ namespace CaptureTaskManager
             // Delete the sub directories
             try
             {
-                foreach (var diSubDirectory in diWorkFolder.GetDirectories())
+                foreach (var subDirectory in workingDirectory.GetDirectories())
                 {
-                    diSubDirectory.Delete(true);
+                    currentSubDirectory = subDirectory.FullName;
+                    subDirectory.Delete(true);
                 }
             }
             catch (Exception ex)
             {
-                failureMessage = "Error deleting subfolder " + strCurrentSubfolder;
+                failureMessage = "Error deleting subdirectory " + currentSubDirectory;
                 LogError(failureMessage + " in working directory", ex);
                 return false;
             }
@@ -427,15 +428,15 @@ namespace CaptureTaskManager
             mFileTools.WaitingForLockQueue += FileTools_WaitingForLockQueue;
         }
 
-        private bool IsLockQueueLogMessageNeeded(ref DateTime dtLockQueueWaitTimeStart, ref DateTime dtLastLockQueueWaitTimeLog)
+        private bool IsLockQueueLogMessageNeeded(ref DateTime lockQueueWaitTimeStart, ref DateTime lastLockQueueWaitTimeLog)
         {
 
             int waitTimeLogIntervalSeconds;
 
-            if (dtLockQueueWaitTimeStart == DateTime.MinValue)
-                dtLockQueueWaitTimeStart = DateTime.UtcNow;
+            if (lockQueueWaitTimeStart == DateTime.MinValue)
+                lockQueueWaitTimeStart = DateTime.UtcNow;
 
-            var waitTimeMinutes = DateTime.UtcNow.Subtract(dtLockQueueWaitTimeStart).TotalMinutes;
+            var waitTimeMinutes = DateTime.UtcNow.Subtract(lockQueueWaitTimeStart).TotalMinutes;
 
             if (waitTimeMinutes >= 30)
             {
@@ -454,7 +455,7 @@ namespace CaptureTaskManager
                 waitTimeLogIntervalSeconds = 30;
             }
 
-            if (DateTime.UtcNow.Subtract(dtLastLockQueueWaitTimeLog).TotalSeconds >= waitTimeLogIntervalSeconds)
+            if (DateTime.UtcNow.Subtract(lastLockQueueWaitTimeLog).TotalSeconds >= waitTimeLogIntervalSeconds)
             {
                 return true;
             }
@@ -466,27 +467,27 @@ namespace CaptureTaskManager
         /// Extracts the contents of the Version= line in a Tool Version Info file
         /// </summary>
         /// <param name="dllFilePath"></param>
-        /// <param name="strVersionInfoFilePath"></param>
-        /// <param name="strVersion"></param>
+        /// <param name="versionInfoFilePath"></param>
+        /// <param name="version"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        private bool ReadVersionInfoFile(string dllFilePath, string strVersionInfoFilePath, out string strVersion)
+        private bool ReadVersionInfoFile(string dllFilePath, string versionInfoFilePath, out string version)
         {
-            // Open strVersionInfoFilePath and read the Version= line
+            // Open versionInfoFilePath and read the Version= line
 
-            strVersion = string.Empty;
+            version = string.Empty;
 
             try
             {
-                if (!File.Exists(strVersionInfoFilePath))
+                if (!File.Exists(versionInfoFilePath))
                 {
-                    LogError("Version Info File not found: " + strVersionInfoFilePath);
+                    LogError("Version Info File not found: " + versionInfoFilePath);
                     return false;
                 }
 
                 var success = false;
 
-                using (var reader = new StreamReader(new FileStream(strVersionInfoFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(versionInfoFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     while (!reader.EndOfStream)
                     {
@@ -516,8 +517,8 @@ namespace CaptureTaskManager
                             case "path":
                                 break;
                             case "version":
-                                strVersion = string.Copy(value);
-                                if (string.IsNullOrWhiteSpace(strVersion))
+                                version = string.Copy(value);
+                                if (string.IsNullOrWhiteSpace(version))
                                 {
                                     LogError("Empty version line in Version Info file for " +
                                              Path.GetFileName(dllFilePath));
@@ -559,27 +560,27 @@ namespace CaptureTaskManager
         /// <summary>
         /// Creates a Tool Version Info file
         /// </summary>
-        /// <param name="strFolderPath"></param>
+        /// <param name="directoryPath"></param>
         /// <param name="toolVersionInfo"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        private void SaveToolVersionInfoFile(string strFolderPath, string toolVersionInfo)
+        private void SaveToolVersionInfoFile(string directoryPath, string toolVersionInfo)
         {
             try
             {
-                var strToolVersionFilePath = Path.Combine(strFolderPath, "Tool_Version_Info_" + mTaskParams.GetParam("StepTool") + ".txt");
+                var toolVersionFilePath = Path.Combine(directoryPath, "Tool_Version_Info_" + mTaskParams.GetParam("StepTool") + ".txt");
 
-                using (var swToolVersionFile = new StreamWriter(new FileStream(strToolVersionFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+                using (var toolVersionWriter = new StreamWriter(new FileStream(toolVersionFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
                 {
-                    swToolVersionFile.WriteLine("Date: " + DateTime.Now.ToString(DATE_TIME_FORMAT));
-                    swToolVersionFile.WriteLine("Dataset: " + mDataset);
-                    swToolVersionFile.WriteLine("Job: " + mJob);
-                    swToolVersionFile.WriteLine("Step: " + mTaskParams.GetParam("Step"));
-                    swToolVersionFile.WriteLine("Tool: " + mTaskParams.GetParam("StepTool"));
-                    swToolVersionFile.WriteLine("ToolVersionInfo:");
+                    toolVersionWriter.WriteLine("Date: " + DateTime.Now.ToString(DATE_TIME_FORMAT));
+                    toolVersionWriter.WriteLine("Dataset: " + mDataset);
+                    toolVersionWriter.WriteLine("Job: " + mJob);
+                    toolVersionWriter.WriteLine("Step: " + mTaskParams.GetParam("Step"));
+                    toolVersionWriter.WriteLine("Tool: " + mTaskParams.GetParam("StepTool"));
+                    toolVersionWriter.WriteLine("ToolVersionInfo:");
 
-                    swToolVersionFile.WriteLine(toolVersionInfo.Replace("; ", Environment.NewLine));
-                    swToolVersionFile.Close();
+                    toolVersionWriter.WriteLine(toolVersionInfo.Replace("; ", Environment.NewLine));
+                    toolVersionWriter.Close();
                 }
             }
             catch (Exception ex)
@@ -603,7 +604,7 @@ namespace CaptureTaskManager
             IReadOnlyList<FileInfo> toolFiles,
             bool saveToolVersionTextFile)
         {
-            var strExeInfo = string.Empty;
+            var exeInfo = string.Empty;
             string toolVersionInfoCombined;
 
             if (string.IsNullOrWhiteSpace(mWorkDir))
@@ -619,12 +620,12 @@ namespace CaptureTaskManager
                     {
                         if (toolFile.Exists)
                         {
-                            strExeInfo = AppendToComment(strExeInfo,
+                            exeInfo = AppendToComment(exeInfo,
                                                          toolFile.Name + ": " +
                                                          toolFile.LastWriteTime.ToString(DATE_TIME_FORMAT));
 
                             var writeToLog = mDebugLevel >= 5;
-                            LogDebug("EXE Info: " + strExeInfo, writeToLog);
+                            LogDebug("EXE Info: " + exeInfo, writeToLog);
                         }
                         else
                         {
@@ -639,13 +640,13 @@ namespace CaptureTaskManager
             }
 
             // Append the .Exe info to toolVersionInfo
-            if (string.IsNullOrEmpty(strExeInfo))
+            if (string.IsNullOrEmpty(exeInfo))
             {
                 toolVersionInfoCombined = string.Copy(toolVersionInfo);
             }
             else
             {
-                toolVersionInfoCombined = AppendToComment(toolVersionInfo, strExeInfo);
+                toolVersionInfoCombined = AppendToComment(toolVersionInfo, exeInfo);
             }
 
             if (saveToolVersionTextFile)
@@ -704,18 +705,18 @@ namespace CaptureTaskManager
 
             try
             {
-                var fiFile = new FileInfo(dllFilePath);
+                var dllFile = new FileInfo(dllFilePath);
 
-                if (!fiFile.Exists)
+                if (!dllFile.Exists)
                 {
                     LogWarning("File not found by StoreToolVersionInfoOneFile: " + dllFilePath);
                     return false;
                 }
 
-                var oAssemblyName = Assembly.LoadFrom(fiFile.FullName).GetName();
+                var oAssemblyName = Assembly.LoadFrom(dllFile.FullName).GetName();
 
-                var strNameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version;
-                toolVersionInfo = AppendToComment(toolVersionInfo, strNameAndVersion);
+                var nameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version;
+                toolVersionInfo = AppendToComment(toolVersionInfo, nameAndVersion);
 
                 return true;
             }
@@ -761,9 +762,9 @@ namespace CaptureTaskManager
         {
             try
             {
-                var ioFileInfo = new FileInfo(dllFilePath);
+                var dllFile = new FileInfo(dllFilePath);
 
-                if (!ioFileInfo.Exists)
+                if (!dllFile.Exists)
                 {
                     LogWarning("File not found by StoreToolVersionInfoViaSystemDiagnostics: " + dllFilePath);
                     return false;
@@ -771,35 +772,35 @@ namespace CaptureTaskManager
 
                 var oFileVersionInfo = FileVersionInfo.GetVersionInfo(dllFilePath);
 
-                var strName = oFileVersionInfo.FileDescription;
-                if (string.IsNullOrEmpty(strName))
+                var name = oFileVersionInfo.FileDescription;
+                if (string.IsNullOrEmpty(name))
                 {
-                    strName = oFileVersionInfo.InternalName;
+                    name = oFileVersionInfo.InternalName;
                 }
 
-                if (string.IsNullOrEmpty(strName))
+                if (string.IsNullOrEmpty(name))
                 {
-                    strName = oFileVersionInfo.FileName;
+                    name = oFileVersionInfo.FileName;
                 }
 
-                if (string.IsNullOrEmpty(strName))
+                if (string.IsNullOrEmpty(name))
                 {
-                    strName = ioFileInfo.Name;
+                    name = dllFile.Name;
                 }
 
-                var strVersion = oFileVersionInfo.FileVersion;
-                if (string.IsNullOrEmpty(strVersion))
+                var version = oFileVersionInfo.FileVersion;
+                if (string.IsNullOrEmpty(version))
                 {
-                    strVersion = oFileVersionInfo.ProductVersion;
+                    version = oFileVersionInfo.ProductVersion;
                 }
 
-                if (string.IsNullOrEmpty(strVersion))
+                if (string.IsNullOrEmpty(version))
                 {
-                    strVersion = "??";
+                    version = "??";
                 }
 
-                var strNameAndVersion = strName + ", Version=" + strVersion;
-                toolVersionInfo = AppendToComment(toolVersionInfo, strNameAndVersion);
+                var nameAndVersion = name + ", Version=" + version;
+                toolVersionInfo = AppendToComment(toolVersionInfo, nameAndVersion);
 
                 return true;
             }
@@ -848,29 +849,29 @@ namespace CaptureTaskManager
         {
             try
             {
-                var strAppPath = Path.Combine(clsUtilities.GetAppDirectoryPath(), versionInspectorExeName);
+                var versionInspectorAppPath = Path.Combine(clsUtilities.GetAppDirectoryPath(), versionInspectorExeName);
 
-                var fiDLLFile = new FileInfo(dllFilePath);
+                var dllFile = new FileInfo(dllFilePath);
 
-                if (!fiDLLFile.Exists)
+                if (!dllFile.Exists)
                 {
                     LogError("File not found by StoreToolVersionInfoOneFileUseExe: " + dllFilePath);
                     return false;
                 }
 
-                if (!File.Exists(strAppPath))
+                if (!File.Exists(versionInspectorAppPath))
                 {
-                    LogError("DLLVersionInspector not found by StoreToolVersionInfoOneFileUseExe: " + strAppPath);
+                    LogError("DLLVersionInspector not found by StoreToolVersionInfoOneFileUseExe: " + versionInspectorAppPath);
                     return false;
                 }
 
                 // Call DLLVersionInspector.exe to determine the tool version
 
                 var versionInfoFilePath = Path.Combine(mWorkDir,
-                                                       Path.GetFileNameWithoutExtension(fiDLLFile.Name) +
+                                                       Path.GetFileNameWithoutExtension(dllFile.Name) +
                                                        "_VersionInfo.txt");
 
-                var strArgs = clsConversion.PossiblyQuotePath(fiDLLFile.FullName) + " /O:" +
+                var args = clsConversion.PossiblyQuotePath(dllFile.FullName) + " /O:" +
                               clsConversion.PossiblyQuotePath(versionInfoFilePath);
 
                 var progRunner = new clsRunDosProgram(clsUtilities.GetAppDirectoryPath(), mDebugLevel)
@@ -884,7 +885,7 @@ namespace CaptureTaskManager
 
                 RegisterEvents(progRunner);
 
-                var success = progRunner.RunProgram(strAppPath, strArgs, "DLLVersionInspector", false);
+                var success = progRunner.RunProgram(versionInspectorAppPath, args, "DLLVersionInspector", false);
 
                 if (!success)
                 {
@@ -893,7 +894,7 @@ namespace CaptureTaskManager
 
                 ProgRunner.SleepMilliseconds(100);
 
-                success = ReadVersionInfoFile(dllFilePath, versionInfoFilePath, out var strVersion);
+                success = ReadVersionInfoFile(dllFilePath, versionInfoFilePath, out var version);
 
                 // Delete the version info file
                 try
@@ -909,12 +910,12 @@ namespace CaptureTaskManager
                     // Ignore errors here
                 }
 
-                if (!success || string.IsNullOrWhiteSpace(strVersion))
+                if (!success || string.IsNullOrWhiteSpace(version))
                 {
                     return false;
                 }
 
-                toolVersionInfo = AppendToComment(toolVersionInfo, strVersion);
+                toolVersionInfo = AppendToComment(toolVersionInfo, version);
 
                 return true;
             }
