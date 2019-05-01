@@ -33,7 +33,8 @@ namespace CaptureToolPlugin
 
             // Perform base class operations, if any
             var retData = base.RunTool();
-            if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED) return retData;
+            if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
+                return retData;
 
             // Store the version info in the database
             if (!StoreToolVersionInfo())
@@ -66,7 +67,7 @@ namespace CaptureToolPlugin
             {
                 LogDebug("clsPluginMain.RunTool(): Starting capture operation");
 
-                var success = capOpTool.DoOperation(mTaskParams, ref retData);
+                var success = capOpTool.DoOperation(mTaskParams, retData);
 
                 if (!success && !string.IsNullOrWhiteSpace(retData.CloseoutMsg) && mTraceMode)
                     ShowTraceMessage(retData.CloseoutMsg);
