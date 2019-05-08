@@ -457,7 +457,7 @@ namespace Pacifica.Core
         {
             if (ErrorEvent == null)
             {
-                ConsoleMsgUtils.ShowError(message, ex, false, false);
+                ConsoleMsgUtils.ShowErrorCustom(message, ex, false, false);
             }
             ErrorEvent?.Invoke(message, ex);
         }

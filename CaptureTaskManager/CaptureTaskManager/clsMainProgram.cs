@@ -317,7 +317,7 @@ namespace CaptureTaskManager
                 }
                 catch (Exception ex)
                 {
-                    ConsoleMsgUtils.ShowError("Exception instantiating clsCaptureTaskMgrSettings: " + ex.Message);
+                    ConsoleMsgUtils.ShowError("Exception instantiating clsCaptureTaskMgrSettings", ex);
                     ConsoleMsgUtils.SleepSeconds(0.5);
                     return false;
                 }
@@ -332,7 +332,7 @@ namespace CaptureTaskManager
                 }
                 else
                 {
-                    ConsoleMsgUtils.ShowError("Exception loading settings from CaptureTaskManager.exe.config: " + ex.Message);
+                    ConsoleMsgUtils.ShowError("Exception loading settings from CaptureTaskManager.exe.config", ex);
                     ConsoleMsgUtils.SleepSeconds(0.5);
                 }
 

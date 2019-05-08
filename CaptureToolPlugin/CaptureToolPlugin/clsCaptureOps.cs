@@ -2283,7 +2283,7 @@ namespace CaptureToolPlugin
 
                     var waitTimeSeconds = 10;
                     Console.WriteLine();
-                    ConsoleMsgUtils.ShowDebug(string.Format("Pausing for {0} seconds since TraceMode is enabled; review the directory paths", waitTimeSeconds));
+                    ConsoleMsgUtils.ShowDebug("Pausing for {0} seconds since TraceMode is enabled; review the directory paths", waitTimeSeconds);
 
                     var waitTimeEnd = DateTime.UtcNow.AddSeconds(waitTimeSeconds);
 

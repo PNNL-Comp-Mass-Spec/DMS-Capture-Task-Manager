@@ -307,7 +307,7 @@ namespace Pacifica.Upload
                 tarMetadataFile?.WriteLine(metadataLine);
             }
 
-            ConsoleMsgUtils.ShowDebug(metadataLine, "  ", 0);
+            ConsoleMsgUtils.ShowDebugCustom(metadataLine, emptyLinesBeforeMessage: 0);
         }
         /// <summary>
         /// Report a status update
