@@ -974,15 +974,53 @@ namespace CaptureToolPlugin
                     break;
             }
 
-            for (var iteration = 1; iteration <= 2; iteration++)
+            var expectingDatasetFile = lookForDatasetFile;
+
+            // If lookForDatasetFile is true, the following logic is followed:
+            // When i is 1, search for remote files
+            // When i is 2, search for remote files, but replace spaces with underscores
+            // When i is 3, search for remote directories
+            // When i is 4, search for remote directories, but replace spaces with underscores
+
+            // If lookForDatasetFile is false, we first look for directories
+
+            for (var i = 1; i <= 4; i++)
             {
+                if (i == 3)
+                {
+                    // Switch from files to directories (or vice versa)
+                    lookForDatasetFile = !lookForDatasetFile;
+                }
+
+                var replaceInvalidCharacters = i % 2 == 0;
+
                 if (lookForDatasetFile)
                 {
-                    // Get all files with a specified name
-                    var foundFiles = sourceDirectory.GetFiles(datasetName + ".*");
-                    if (foundFiles.Length > 0)
+                    // Get all files that match the dataset name
+                    var foundFiles = new List<FileInfo>();
+
+                    if (replaceInvalidCharacters)
                     {
-                        datasetInfo.FileOrDirectoryName = datasetName;
+                        foreach (var candidateItem in sourceDirectory.GetFiles("*"))
+                        {
+                            var updatedName = ReplaceInvalidChars(Path.GetFileNameWithoutExtension(candidateItem.Name));
+
+                            if (updatedName.Equals(datasetName, StringComparison.OrdinalIgnoreCase))
+                            {
+                                foundFiles.Add(candidateItem);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        foreach (var remoteFile in sourceDirectory.GetFiles(datasetName + ".*"))
+                        {
+                            foundFiles.Add(remoteFile);
+                        }
+                    }
+
+                    if (foundFiles.Count > 0)
+                    {
                         datasetInfo.FileList = foundFiles;
 
                         if (datasetInfo.FileCount == 1)
@@ -992,11 +1030,12 @@ namespace CaptureToolPlugin
                         }
                         else
                         {
+                            datasetInfo.FileOrDirectoryName = datasetName;
                             datasetInfo.DatasetType = RawDSTypes.MultiFile;
                             var fileNames = foundFiles.Select(file => file.Name).ToList();
                             LogWarning(string.Format(
                                 "Dataset name matched multiple files for iteration {0} in directory {1}: {2}",
-                                iteration,
+                                i,
                                 sourceDirectory.FullName,
                                 string.Join(", ", fileNames.Take(5))));
                         }
@@ -1006,23 +1045,31 @@ namespace CaptureToolPlugin
                 }
                 else
                 {
-                    // Check for a directory with the dataset name
-                    var subDirectories = sourceDirectory.GetDirectories();
-                    foreach (var subDirectory in subDirectories)
+                    // Get all directories that match the dataset name
+                    var subdirectories = sourceDirectory.GetDirectories();
+                    foreach (var subdirectory in subdirectories)
                     {
-                        // Using Path.GetFileNameWithoutExtension on directories may seem sketchy, but it works.
-                        // This is done because the Path class methods that deal with directories ignore the possibility
-                        // that there might be an extension. Path treats both file and directory paths equally
-                        var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(subDirectory.Name);
-                        if (!string.Equals(fileNameWithoutExtension, datasetName, StringComparison.CurrentCultureIgnoreCase))
+                        var directoryNameWithoutExtension = Path.GetFileNameWithoutExtension(subdirectory.Name);
+                        string directoryNameToCheck;
+
+                        if (replaceInvalidCharacters)
+                        {
+                            directoryNameToCheck = ReplaceInvalidChars(directoryNameWithoutExtension);
+                        }
+                        else
+                        {
+                            directoryNameToCheck = directoryNameWithoutExtension;
+                        }
+
+                        if (!string.Equals(directoryNameToCheck, datasetName, StringComparison.OrdinalIgnoreCase))
                         {
                             continue;
                         }
 
-                        if (string.IsNullOrEmpty(Path.GetExtension(subDirectory.Name)))
+                        if (string.IsNullOrEmpty(Path.GetExtension(subdirectory.Name)))
                         {
                             // Found a directory that has no extension
-                            datasetInfo.FileOrDirectoryName = Path.GetFileName(subDirectory.Name);
+                            datasetInfo.FileOrDirectoryName = subdirectory.Name;
 
                             // Check the instrument class to determine the appropriate return type
                             switch (instrumentClass)
@@ -1041,28 +1088,27 @@ namespace CaptureToolPlugin
                         else
                         {
                             // Directory name has an extension
-                            datasetInfo.FileOrDirectoryName = Path.GetFileName(subDirectory.Name);
+                            datasetInfo.FileOrDirectoryName = subdirectory.Name;
                             datasetInfo.DatasetType = RawDSTypes.DirectoryExt;
                         }
 
-                        if (iteration > 1)
+                        if (expectingDatasetFile)
                         {
                             LogMessage(string.Format(
                                            "Dataset name did not match a file, but it did match directory {0}, dataset type is {1}",
                                            datasetInfo.FileOrDirectoryName,
                                            datasetInfo.DatasetType));
                         }
+
                         return datasetInfo;
                     }
                 }
 
-                lookForDatasetFile = !lookForDatasetFile;
             }
 
             // If we got to here, the raw dataset wasn't found (either as a file or a directory), so there was a problem
             datasetInfo.DatasetType = RawDSTypes.None;
             return datasetInfo;
-
         }
 
         /// <summary>
@@ -1725,13 +1771,15 @@ namespace CaptureToolPlugin
             string datasetDirectoryPath,
             bool copyWithResume)
         {
-            // Dataset found, and it's multiple files
+            // Dataset found, and it has multiple files
             // Each has the same name but a different extension
 
-            var sourceDirectory = new DirectoryInfo(Path.Combine(sourceDirectoryPath));
-            var foundFiles = sourceDirectory.GetFiles(datasetInfo.FileOrDirectoryName + ".*").ToList();
+            var fileNames = new List<string>();
 
-            var fileNames = foundFiles.Select(file => file.Name).ToList();
+            foreach (var remoteFile in datasetInfo.FileList)
+            {
+                fileNames.Add(remoteFile.Name);
+            }
 
             CaptureOneOrMoreFiles(out msg, retData, datasetInfo.DatasetName,
                 fileNames, sourceDirectoryPath, datasetDirectoryPath, copyWithResume);
@@ -3440,6 +3488,23 @@ namespace CaptureToolPlugin
                 if (mTraceMode)
                     clsToolRunnerBase.ShowTraceMessage(mErrorMessage);
             }
+        }
+
+        /// <summary>
+        /// Replace invalid characters with substitutes
+        /// </summary>
+        /// <param name="searchText"></param>
+        /// <returns></returns>
+        private string ReplaceInvalidChars(string searchText)
+        {
+            var updatedText = string.Copy(searchText);
+
+            foreach (var item in mFilenameAutoFixes)
+            {
+                updatedText = updatedText.Replace(item.Key.ToString(), item.Value);
+            }
+
+            return updatedText;
         }
 
         /// <summary>
