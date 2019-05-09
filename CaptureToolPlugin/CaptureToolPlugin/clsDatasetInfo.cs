@@ -5,6 +5,7 @@
 // Created 12/03/2010
 //*********************************************************************************************************
 
+using System.Collections.Generic;
 using System.IO;
 
 namespace CaptureToolPlugin
@@ -21,9 +22,9 @@ namespace CaptureToolPlugin
 
         public string FileOrDirectoryName { get; set; }
 
-        public FileInfo[] FileList { get; set; }
+        public List<FileInfo> FileList { get; set; }
 
-        public int FileCount => FileList?.Length ?? 0;
+        public int FileCount => FileList?.Count ?? 0;
 
         /// <summary>
         /// Constructor
