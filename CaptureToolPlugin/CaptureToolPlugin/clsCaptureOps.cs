@@ -1534,11 +1534,7 @@ namespace CaptureToolPlugin
             // If Source_Folder_Name is non-blank, use it. Otherwise use dataset name
             var sourceFolderName = taskParams.GetParam("Source_Folder_Name");
 
-            if (string.IsNullOrWhiteSpace(sourceFolderName))
-            {
-                sourceFolderName = datasetName;
-            }
-            else
+            if (!string.IsNullOrWhiteSpace(sourceFolderName))
             {
                 // Confirm that the source folder name has no invalid characters
                 if (NameHasInvalidCharacter(sourceFolderName, "Job param Source_Folder_Name", true, retData))
@@ -1548,10 +1544,12 @@ namespace CaptureToolPlugin
             // Now that we've had a chance to connect to the share, possibly append a subdirectory to the source path
             if (!string.IsNullOrWhiteSpace(captureSubfolder))
             {
+                var sourceFolderOrDatasetName = string.IsNullOrWhiteSpace(sourceFolderName) ? datasetName : sourceFolderName;
+
                 // However, if the subdirectory name matches the dataset name, this was probably an error on the operator's part
                 // and we likely do not want to use the subfolder name
-                if (captureSubfolder.EndsWith(Path.DirectorySeparatorChar + sourceFolderName, StringComparison.OrdinalIgnoreCase) ||
-                    captureSubfolder.Equals(sourceFolderName, StringComparison.OrdinalIgnoreCase))
+                if (captureSubfolder.EndsWith(Path.DirectorySeparatorChar + sourceFolderOrDatasetName, StringComparison.OrdinalIgnoreCase) ||
+                    captureSubfolder.Equals(sourceFolderOrDatasetName, StringComparison.OrdinalIgnoreCase))
                 {
                     var candidateDirectoryPath = Path.Combine(sourceDirectoryPath, captureSubfolder);
 
@@ -1564,20 +1562,20 @@ namespace CaptureToolPlugin
                     }
                     else
                     {
-                        if (captureSubfolder.Equals(sourceFolderName, StringComparison.OrdinalIgnoreCase))
+                        if (captureSubfolder.Equals(sourceFolderOrDatasetName, StringComparison.OrdinalIgnoreCase))
                         {
                             LogWarning(string.Format(
                                 "Dataset Capture_Subfolder is the dataset name; leaving the capture path as {0} " +
-                                "so that the entire dataset directory will be copied", sourceFolderName));
+                                "so that the entire dataset directory will be copied", sourceFolderOrDatasetName));
                         }
                         else
                         {
-                            if (candidateDirectoryPath.EndsWith(Path.DirectorySeparatorChar + sourceFolderName, StringComparison.OrdinalIgnoreCase))
+                            if (candidateDirectoryPath.EndsWith(Path.DirectorySeparatorChar + sourceFolderOrDatasetName, StringComparison.OrdinalIgnoreCase))
                             {
-                                var candidateDirectoryPathTrimmed = candidateDirectoryPath.Substring(0, candidateDirectoryPath.Length - sourceFolderName.Length - 1);
+                                var candidateDirectoryPathTrimmed = candidateDirectoryPath.Substring(0, candidateDirectoryPath.Length - sourceFolderOrDatasetName.Length - 1);
                                 LogMessage(string.Format(
                                     "Appending captureSubfolder to sourceDirectoryPath, but removing SourceFolderName, giving: {0} (removed {1})",
-                                    candidateDirectoryPathTrimmed, sourceFolderName));
+                                    candidateDirectoryPathTrimmed, sourceFolderOrDatasetName));
 
                                 sourceDirectoryPath = candidateDirectoryPathTrimmed;
                             }
