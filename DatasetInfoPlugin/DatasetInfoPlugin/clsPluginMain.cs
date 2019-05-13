@@ -998,16 +998,16 @@ namespace DatasetInfoPlugin
         /// </remarks>
         private List<string> GetDataFileOrDirectoryName(
             string inputDirectory,
-            out bool bSkipPlots,
+            out bool skipPlots,
             out clsInstrumentClassInfo.eRawDataType rawDataType,
             out clsInstrumentClassInfo.eInstrumentClass instrumentClass,
-            out bool bBrukerDotDBaf)
+            out bool brukerDotDBaf)
         {
             bool isFile;
 
-            bSkipPlots = false;
+            skipPlots = false;
             rawDataType = clsInstrumentClassInfo.eRawDataType.Unknown;
-            bBrukerDotDBaf = false;
+            brukerDotDBaf = false;
 
             // Determine the Instrument Class and RawDataType
             var instClassName = mTaskParams.GetParam("Instrument_Class");
@@ -1029,7 +1029,7 @@ namespace DatasetInfoPlugin
                 return new List<string> { UNKNOWN_FILE_TYPE };
             }
 
-            var diDatasetDirectory = new DirectoryInfo(inputDirectory);
+            var datasetDirectory = new DirectoryInfo(inputDirectory);
             string fileOrDirectoryName;
 
             // Get the expected file name based on the dataset type
@@ -1065,11 +1065,11 @@ namespace DatasetInfoPlugin
                     else
                     {
                         fileOrDirectoryName = Path.Combine(mDataset + clsInstrumentClassInfo.DOT_D_EXTENSION, "analysis.baf");
-                        bBrukerDotDBaf = true;
+                        brukerDotDBaf = true;
                     }
 
-                    if (!File.Exists(Path.Combine(diDatasetDirectory.FullName, fileOrDirectoryName)))
-                        fileOrDirectoryName = CheckForBrukerImagingZipFiles(diDatasetDirectory);
+                    if (!File.Exists(Path.Combine(datasetDirectory.FullName, fileOrDirectoryName)))
+                        fileOrDirectoryName = CheckForBrukerImagingZipFiles(datasetDirectory);
 
                     break;
 
@@ -1102,8 +1102,8 @@ namespace DatasetInfoPlugin
                     // bruker_maldi_imaging: 12T_FTICR_Imaging, 15T_FTICR_Imaging, and BrukerTOF_Imaging_01
                     // Find the name of the first zip file
 
-                    fileOrDirectoryName = CheckForBrukerImagingZipFiles(diDatasetDirectory);
-                    bSkipPlots = true;
+                    fileOrDirectoryName = CheckForBrukerImagingZipFiles(datasetDirectory);
+                    skipPlots = true;
                     isFile = true;
 
                     if (string.IsNullOrEmpty(fileOrDirectoryName))
@@ -1119,6 +1119,7 @@ namespace DatasetInfoPlugin
                     fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
                     isFile = false;
                     break;
+
                 case clsInstrumentClassInfo.eRawDataType.IlluminaFolder:
                     // fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_TXT_GZ_EXTENSION;
                     // isFile = true;
@@ -1138,7 +1139,7 @@ namespace DatasetInfoPlugin
             }
 
             // Test to verify the file (or directory) exists
-            var fileOrDirectoryPath = Path.Combine(diDatasetDirectory.FullName, fileOrDirectoryName);
+            var fileOrDirectoryPath = Path.Combine(datasetDirectory.FullName, fileOrDirectoryName);
 
             if (isFile)
             {
@@ -1152,7 +1153,7 @@ namespace DatasetInfoPlugin
 
                 // File not found; check for alternative files or directories
                 // This function also looks for .D directories
-                var fileOrDirectoryNames = LookForAlternateFileOrDirectory(diDatasetDirectory, fileOrDirectoryName);
+                var fileOrDirectoryNames = LookForAlternateFileOrDirectory(datasetDirectory, fileOrDirectoryName);
 
                 if (fileOrDirectoryNames.Count > 0)
                     return fileOrDirectoryNames;
@@ -1175,7 +1176,7 @@ namespace DatasetInfoPlugin
 
                 // Look for other .D directories
                 var fileOrDirectoryNames = new List<string> { fileOrDirectoryName };
-                FindDotDDirectories(diDatasetDirectory, fileOrDirectoryNames);
+                FindDotDDirectories(datasetDirectory, fileOrDirectoryNames);
 
                 return fileOrDirectoryNames;
             }
