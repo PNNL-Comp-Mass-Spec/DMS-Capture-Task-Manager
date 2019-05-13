@@ -3644,6 +3644,7 @@ namespace CaptureToolPlugin
                 case clsInstrumentClassInfo.eInstrumentClass.LTQ_FT:
                 case clsInstrumentClassInfo.eInstrumentClass.Thermo_Exactive:
                 case clsInstrumentClassInfo.eInstrumentClass.Triple_Quad:
+                case clsInstrumentClassInfo.eInstrumentClass.Shimadzu_GC:
                     if (sourceType != RawDSTypes.File)
                     {
                         if (sourceType == RawDSTypes.DirectoryNoExt)

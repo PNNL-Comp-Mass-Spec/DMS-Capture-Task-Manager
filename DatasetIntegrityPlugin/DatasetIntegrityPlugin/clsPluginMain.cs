@@ -46,6 +46,7 @@ namespace DatasetIntegrityPlugin
         private const float AGILENT_MS_PEAK_BIN_FILE_MIN_SIZE_KB = 50;
         private const float AGILENT_MS_PEAK_BIN_FILE_SMALL_SIZE_KB = 500;
         private const float AGILENT_DATA_MS_FILE_MIN_SIZE_KB = 75;
+        private const float SHIMADZU_QGD_FILE_MIN_SIZE_KB = 50;
 
         // MALDI imaging file
         // Prior to May 2014, used a minimum of 4 KB
@@ -274,6 +275,11 @@ namespace DatasetIntegrityPlugin
                     mRetData.CloseoutType = TestIlluminaSequencerDirectory(datasetDirectory);
                     break;
 
+                case clsInstrumentClassInfo.eInstrumentClass.Shimadzu_GC:
+                    dataFileNamePath = Path.Combine(datasetDirectory, mDataset + clsInstrumentClassInfo.DOT_QGD_EXTENSION);
+                    mRetData.CloseoutType = TestShimadzuQGDFile(dataFileNamePath);
+                    break;
+
                 default:
                     msg = "No integrity test available for instrument class " + instClassName;
                     LogWarning(msg);
@@ -331,7 +337,6 @@ namespace DatasetIntegrityPlugin
                 // ReSharper disable once StringLiteralTypo
                 var arguments = "-cli -batchfile " + batchJobFilePath;
                 var consoleOutputFilePath = Path.Combine(mWorkDir, "OpenChrom_ConsoleOutput_" + mgrName + ".txt");
-
 
                 var cmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
                 {
@@ -2160,6 +2165,35 @@ namespace DatasetIntegrityPlugin
             // Verify that the pressure columns are in the correct order
             if (!ValidatePressureInfo(dataFileNamePath, instrumentName))
             {
+                return EnumCloseOutType.CLOSEOUT_FAILED;
+            }
+
+            // If we got to here, everything was OK
+            return EnumCloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        /// <summary>
+        /// Tests the integrity of a Shimadzu GC-MS dataset
+        /// </summary>
+        /// <param name="dataFileNamePath">Fully qualified path to dataset file</param>
+        /// <returns>Enum indicating success or failure</returns>
+        private EnumCloseOutType TestShimadzuQGDFile(string dataFileNamePath)
+        {
+            // Verify file exists in storage directory
+            if (!File.Exists(dataFileNamePath))
+            {
+                mRetData.EvalMsg = "Data file " + dataFileNamePath + " not found";
+                LogError(mRetData.EvalMsg);
+                return EnumCloseOutType.CLOSEOUT_FAILED;
+            }
+
+            // Get size of data file
+            var dataFileSizeKB = GetFileSize(dataFileNamePath);
+
+            // Check min size
+            if (dataFileSizeKB < SHIMADZU_QGD_FILE_MIN_SIZE_KB)
+            {
+                ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSizeKB, SHIMADZU_QGD_FILE_MIN_SIZE_KB);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 

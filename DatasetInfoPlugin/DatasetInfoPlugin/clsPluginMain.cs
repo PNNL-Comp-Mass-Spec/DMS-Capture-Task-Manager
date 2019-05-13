@@ -1126,12 +1126,21 @@ namespace DatasetInfoPlugin
                     LogMessage("Skipping MSFileInfoScanner since Illumina RNASeq dataset");
                     return new List<string> { INVALID_FILE_TYPE };
 
+                case clsInstrumentClassInfo.eRawDataType.ShimadzuQGDFile:
+                    // 	Shimadzu_GC_MS_01
+                    fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_QGD_EXTENSION;
+                    skipPlots = true;
+                    isFile = true;
+                    break;
+
                 default:
                     // Other instruments; do not process them with MSFileInfoScanner
 
                     // Excluded instruments include:
                     // dot_wiff_files (AgilentQStarWiffFile): AgTOF02
                     // bruker_maldi_spot (BrukerMALDISpot): BrukerTOF_01
+                    // dot_qgd_files (Shimadzu_GC): Shimadzu_GC_MS_01
+
                     mMsg = "Data type " + rawDataType + " not recognized";
                     LogWarning("clsPluginMain.GetDataFileOrDirectoryName: " + mMsg);
                     return new List<string> { INVALID_FILE_TYPE };
