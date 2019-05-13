@@ -38,6 +38,9 @@ namespace CaptureTaskManager
         // mzML
         public const string RAW_DATA_TYPE_DOT_MZML_FILES = "dot_mzml_files";
 
+        // Shimadzu GC data
+        public const string RAW_DATA_TYPE_DOT_QGD_FILES = "dot_qgd_files";
+
         // 12T datasets acquired prior to 7/16/2010 use a Bruker data station and have an analysis.baf file, 0.ser folder, and a XMASS_Method.m subfolder with file apexAcquisition.method
         // Datasets will have an instrument name of 12T_FTICR and raw_data_type of "zipped_s_folders"
 
@@ -75,6 +78,7 @@ namespace CaptureTaskManager
         public const string DOT_MGF_EXTENSION = ".mgf";
         public const string DOT_CDF_EXTENSION = ".cdf";
         public const string DOT_TXT_GZ_EXTENSION = ".txt.gz";
+        public const string DOT_QGD_EXTENSION = ".qgd";
 
         #endregion
 
@@ -83,14 +87,29 @@ namespace CaptureTaskManager
         public enum eRawDataType
         {
             Unknown = 0,
+            /// <summary>
+            /// Thermo .raw file
+            /// </summary>
             ThermoRawFile = 1,
+            /// <summary>
+            /// SQLite database used by PNNL IMS instruments
+            /// </summary>
             UIMF = 2,
+            /// <summary>
+            /// XML file, older format
+            /// </summary>
             mzXML = 3,
+            /// <summary>
+            /// XML file, newer format
+            /// </summary>
             mzML = 4,
             /// <summary>
             /// Agilent ion trap data, Agilent TOF data
             /// </summary>
             AgilentDFolder = 5,
+            /// <summary>
+            /// QStar .wiff file
+            /// </summary>
             AgilentQStarWiffFile = 6,
             /// <summary>
             /// Waters Synapt
@@ -123,7 +142,14 @@ namespace CaptureTaskManager
             /// There is not a ser or fid file
             /// </summary>
             SciexWiffFile = 13,
-            IlluminaFolder = 14
+            /// <summary>
+            /// Illumina sequencing data
+            /// </summary>
+            IlluminaFolder = 14,
+            /// <summary>
+            /// Shimadzu GC file with extension .qgd
+            /// </summary>
+            ShimadzuQGDFile = 15
         }
 
         public enum eInstrumentClass
@@ -153,7 +179,8 @@ namespace CaptureTaskManager
             BrukerMALDI_Imaging_V2 = 22,    // 12T_FTICR_Imaging, 15T_FTICR_Imaging
             Illumina_Sequencer = 23,        // External_Illumina
             GC_QExactive = 24,              // GCQE01
-            Waters_IMS = 25                 // SynaptG2_01
+            Waters_IMS = 25,                // SynaptG2_01
+            Shimadzu_GC = 26                // Shimadzu_GC_MS_01
         }
 
         #endregion
@@ -221,6 +248,8 @@ namespace CaptureTaskManager
                     return eRawDataType.BrukerTOFBaf;
                 case RAW_DATA_TYPE_ILLUMINA_FOLDER:
                     return eRawDataType.IlluminaFolder;
+                case RAW_DATA_TYPE_DOT_QGD_FILES:
+                    return eRawDataType.ShimadzuQGDFile;
                 default:
                     return eRawDataType.Unknown;
             }
