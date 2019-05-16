@@ -255,6 +255,13 @@ namespace DatasetInfoPlugin
                 return retData;
             }
 
+            if (mTaskParams.GetParam("SkipPlots", false))
+            {
+                // To add parameter SkipPlots for job 123456, use:
+                // Exec AddUpdateJobParameter 123456, 'JobParameters', 'SkipPlots', 'true'
+                skipPlots = true;
+            }
+
             if (skipPlots)
             {
                 // Do not create any plots
