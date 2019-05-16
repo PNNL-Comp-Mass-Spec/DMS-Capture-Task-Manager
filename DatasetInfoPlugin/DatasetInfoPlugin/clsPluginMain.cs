@@ -1141,6 +1141,13 @@ namespace DatasetInfoPlugin
                     isFile = true;
                     break;
 
+                case clsInstrumentClassInfo.eRawDataType.WatersRawFolder:
+                    // 	SynaptG2_01
+                    fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION;
+                    skipPlots = false;
+                    isFile = false;
+                    break;
+
                 default:
                     // Other instruments; do not process them with MSFileInfoScanner
 
