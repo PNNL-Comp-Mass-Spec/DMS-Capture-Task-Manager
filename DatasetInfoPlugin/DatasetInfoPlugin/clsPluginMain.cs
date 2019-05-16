@@ -370,7 +370,16 @@ namespace DatasetInfoPlugin
                     currentOutputDirectory = localOutputDir;
                 }
 
-                var successProcessing = mMsFileScanner.ProcessMSFileOrDirectory(pathToProcess, currentOutputDirectory);
+                bool successProcessing;
+                try
+                {
+                    successProcessing = mMsFileScanner.ProcessMSFileOrDirectory(pathToProcess, currentOutputDirectory);
+                }
+                catch (Exception ex)
+                {
+                    LogError("Error running MSFileInfoScanner", ex);
+                    successProcessing = false;
+                }
 
                 if (mErrOccurred)
                 {
