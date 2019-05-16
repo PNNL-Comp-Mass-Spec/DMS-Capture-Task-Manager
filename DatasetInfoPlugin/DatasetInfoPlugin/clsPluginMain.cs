@@ -274,11 +274,20 @@ namespace DatasetInfoPlugin
                 catch (Exception ex)
                 {
                     var msg = string.Format("clsPluginMain.RunMsFileInfoScanner: {0} {1}", EXCEPTION_CREATING_OUTPUT_DIRECTORY, outputPathBase);
-                    LogError(msg, ex);
 
-                    retData.CloseoutMsg = EXCEPTION_CREATING_OUTPUT_DIRECTORY + " " + outputPathBase;
-                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING;
-                    return retData;
+                    if (System.Net.Dns.GetHostName().StartsWith("monroe", StringComparison.OrdinalIgnoreCase) &&
+                        !Environment.UserName.StartsWith("svc", StringComparison.OrdinalIgnoreCase))
+                    {
+                        LogWarning(msg + ": " + ex.Message);
+                    }
+                    else
+                    {
+                        LogError(msg, ex);
+
+                        retData.CloseoutMsg = EXCEPTION_CREATING_OUTPUT_DIRECTORY + " " + outputPathBase;
+                        retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING;
+                        return retData;
+                    }
                 }
             }
 
@@ -356,9 +365,8 @@ namespace DatasetInfoPlugin
                 {
                     // Override the output directory
                     var localOutputDir = Path.Combine(mWorkDir, Path.GetFileName(currentOutputDirectory));
-                    ConsoleMsgUtils.ShowDebug(string.Format(
-                                                  "Overriding MSFileInfoScanner output directory from {0}\n  to {1}",
-                                                  currentOutputDirectory, localOutputDir));
+                    ConsoleMsgUtils.ShowDebug("Overriding MSFileInfoScanner output directory from {0}\n  to {1}",
+                                              currentOutputDirectory, localOutputDir);
                     currentOutputDirectory = localOutputDir;
                 }
 
