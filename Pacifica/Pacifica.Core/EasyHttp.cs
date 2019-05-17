@@ -878,7 +878,7 @@ namespace Pacifica.Core
         /// <returns>Path to the file if found, otherwise an empty string</returns>
         public static string ResolveCertFile(Configuration config, string callingMethod, out string errorMessage)
         {
-            var certificateFilePath = config.ResolveClientCertFile();
+            var certificateFilePath = config.ClientCertFilePath;
 
             if (!string.IsNullOrWhiteSpace(certificateFilePath))
             {
@@ -889,7 +889,7 @@ namespace Pacifica.Core
             // Example message:
             // Authentication failure in InitializeRequest; MyEMSL certificate file not found in the current directory or at C:\client_certs\svc-dms.pfx
             errorMessage = "Authentication failure in " + callingMethod + "; " +
-                           "MyEMSL certificate file not found in the current directory or at " + Configuration.CLIENT_CERT_FILEPATH;
+                           "MyEMSL certificate file not found in the current directory or in " + Configuration.CLIENT_CERT_DIRECTORY;
 
             return string.Empty;
         }
