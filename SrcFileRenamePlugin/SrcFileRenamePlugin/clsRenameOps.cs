@@ -21,16 +21,19 @@ namespace SrcFileRenamePlugin
     {
 
         #region "Class variables"
-        protected IMgrParams mMgrParams;
-        protected string mMsg = "";
-        protected bool mUseBioNet;
-        protected string mUserName = "";
-        protected string mPwd = "";
-        protected ShareConnector mShareConnector;
-        protected bool mConnected;
+
+        private readonly IMgrParams mMgrParams;
+        private string mMsg = "";
+        private readonly bool mUseBioNet;
+        private readonly string mUserName = "";
+        private readonly string mPwd = "";
+        private ShareConnector mShareConnector;
+        private bool mConnected;
+
+        private readonly DatasetFileSearchTool mDatasetFileSearchTool;
+
         #endregion
 
-        #region "Constructors"
         /// <summary>
         /// Constructor
         /// </summary>
@@ -219,7 +222,7 @@ namespace SrcFileRenamePlugin
             // Construct a list of dataset names to check for
             // The first thing we check for is the official dataset name
             // We next check for various things that operators rename the datasets to
-            var lstFileNamesToCheck = new List<string>
+            var fileNamesToCheck = new List<string>
             {
                 dataset,
                 dataset + "-bad",
@@ -253,27 +256,27 @@ namespace SrcFileRenamePlugin
                 "x_" + dataset + "-bad"
             };
 
-            var bLoggedDatasetNotFound = false;
+            var loggedDatasetNotFound = false;
             var countRenamed = 0;
 
-            foreach (var sDatasetNameBase in lstFileNamesToCheck)
+            foreach (var datasetNameBase in fileNamesToCheck)
             {
-                if (string.IsNullOrEmpty(sDatasetNameBase))
+                if (string.IsNullOrEmpty(datasetNameBase))
                 {
                     continue;
                 }
 
-                bool bAlreadyRenamed;
-                if (!dataset.StartsWith("x_") && sDatasetNameBase.StartsWith("x_"))
-                    bAlreadyRenamed = true;
+                bool alreadyRenamed;
+                if (!dataset.StartsWith("x_") && datasetNameBase.StartsWith("x_"))
+                    alreadyRenamed = true;
                 else
-                    bAlreadyRenamed = false;
+                    alreadyRenamed = false;
 
                 // Get a list of files containing the dataset name
-                var matchedFiles = GetMatchingFileNames(sourceDirectory, sDatasetNameBase);
+                var matchedFiles = GetMatchingFiles(sourceDirectory, datasetNameBase);
 
                 // Get a list of directories containing the dataset name
-                var matchedDirectories = GetMatchingDirectoryNames(sourceDirectory, sDatasetNameBase);
+                var matchedDirectories = GetMatchingDirectories(sourceDirectory, datasetNameBase);
 
                 // If no files or directories found, return error
                 if (matchedFiles.Count + matchedDirectories.Count == 0)
@@ -289,9 +292,9 @@ namespace SrcFileRenamePlugin
                     continue;
                 }
 
-                if (bAlreadyRenamed)
+                if (alreadyRenamed)
                 {
-                    var msg = "Skipping dataset " + dataset + " since data file and/or directory already renamed to " + sDatasetNameBase;
+                    var msg = "Skipping dataset " + dataset + " since data file and/or directory already renamed to " + datasetNameBase;
                     OnStatusEvent(msg);
                     countRenamed++;
                     break;
@@ -300,7 +303,7 @@ namespace SrcFileRenamePlugin
                 // Rename any files found
                 foreach (var fileToRename in matchedFiles)
                 {
-                    if (RenameInstFile(fileToRename, out errorMessage))
+                    if (RenameInstrumentFile(fileToRename, out errorMessage))
                     {
                         countRenamed++;
                         continue;
@@ -330,10 +333,10 @@ namespace SrcFileRenamePlugin
         /// <summary>
         /// Prefixes specified file name with "x_"
         /// </summary>
-        /// <param name="fiFile">File to be renamed</param>
+        /// <param name="instrumentFile">File to be renamed</param>
         /// <param name="errorMessage">Output: error message</param>
         /// <returns>TRUE for success, FALSE for failure</returns>
-        private bool RenameInstFile(FileInfo fiFile, out string errorMessage)
+        private bool RenameInstrumentFile(FileInfo instrumentFile, out string errorMessage)
         {
             // Rename dataset file on instrument
             var newPath = "??";
@@ -341,18 +344,18 @@ namespace SrcFileRenamePlugin
 
             try
             {
-                if (!fiFile.Exists || fiFile.DirectoryName == null)
+                if (!instrumentFile.Exists || instrumentFile.DirectoryName == null)
                     return true;
 
-                newPath = Path.Combine(fiFile.DirectoryName, "x_" + fiFile.Name);
-                fiFile.MoveTo(newPath);
-                mMsg = "Renamed file to " + fiFile.FullName;
+                newPath = Path.Combine(instrumentFile.DirectoryName, "x_" + instrumentFile.Name);
+                instrumentFile.MoveTo(newPath);
+                mMsg = "Renamed file to " + instrumentFile.FullName;
                 OnStatusEvent(mMsg);
                 return true;
             }
             catch (Exception ex)
             {
-                mMsg = "Error renaming file '" + fiFile.FullName + "' to '" + newPath + "'";
+                mMsg = "Error renaming file '" + instrumentFile.FullName + "' to '" + newPath + "'";
                 OnErrorEvent(mMsg, ex);
 
                 if (ex.Message.Contains("Access to the path") && ex.Message.Contains("is denied"))
@@ -420,7 +423,7 @@ namespace SrcFileRenamePlugin
         /// <param name="sourceDirectory">Directory to search</param>
         /// <param name="datasetName">Dataset name to match</param>
         /// <returns>Array of file paths</returns>
-        private List<FileInfo> GetMatchingFileNames(DirectoryInfo sourceDirectory, string datasetName)
+        private List<FileInfo> GetMatchingFiles(DirectoryInfo sourceDirectory, string datasetName)
         {
             return sourceDirectory.GetFiles(datasetName + ".*").ToList();
         }
@@ -431,7 +434,7 @@ namespace SrcFileRenamePlugin
         /// <param name="sourceDirectory">Directory to search</param>
         /// <param name="datasetName">Dataset name to match</param>
         /// <returns>Array of folder paths</returns>
-        private List<DirectoryInfo> GetMatchingDirectoryNames(DirectoryInfo sourceDirectory, string datasetName)
+        private List<DirectoryInfo> GetMatchingDirectories(DirectoryInfo sourceDirectory, string datasetName)
         {
             return sourceDirectory.GetDirectories(datasetName + ".*").ToList();
         }
