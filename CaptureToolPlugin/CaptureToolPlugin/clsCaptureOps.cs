@@ -1484,7 +1484,7 @@ namespace CaptureToolPlugin
         private void CaptureFile(
             out string msg,
             clsToolReturnData retData,
-            clsDatasetInfo datasetInfo,
+            DatasetInfo datasetInfo,
             string sourceDirectoryPath,
             string datasetDirectoryPath,
             bool copyWithResume)
@@ -1512,7 +1512,7 @@ namespace CaptureToolPlugin
         private void CaptureMultiFile(
             out string msg,
             clsToolReturnData retData,
-            clsDatasetInfo datasetInfo,
+            DatasetInfo datasetInfo,
             string sourceDirectoryPath,
             string datasetDirectoryPath,
             bool copyWithResume)
@@ -1889,7 +1889,7 @@ namespace CaptureToolPlugin
         private void CaptureDirectoryExt(
             out string msg,
             clsToolReturnData retData,
-            clsDatasetInfo datasetInfo,
+            DatasetInfo datasetInfo,
             string sourceDirectoryPath,
             string datasetDirectoryPath,
             bool copyWithResume,
@@ -2350,7 +2350,7 @@ namespace CaptureToolPlugin
         /// <returns></returns>
         private bool FindFilesToSkip(
             DirectoryInfo sourceDirectory,
-            clsDatasetInfo datasetInfo,
+            DatasetInfo datasetInfo,
             Dictionary<string, string> searchSpecList,
             clsToolReturnData retData,
             out SortedSet<string> filesToSkip)
@@ -2420,7 +2420,7 @@ namespace CaptureToolPlugin
         private void CaptureDirectoryNoExt(
             out string msg,
             clsToolReturnData retData,
-            clsDatasetInfo datasetInfo,
+            DatasetInfo datasetInfo,
             string sourceDirectoryPath,
             string datasetDirectoryPath,
             bool copyWithResume,
@@ -2610,7 +2610,7 @@ namespace CaptureToolPlugin
         private void CaptureBrukerImaging(
             out string msg,
             clsToolReturnData retData,
-            clsDatasetInfo datasetInfo,
+            DatasetInfo datasetInfo,
             string sourceDirectoryPath,
             string datasetDirectoryPath,
             bool copyWithResume)
@@ -2741,7 +2741,7 @@ namespace CaptureToolPlugin
         private void CaptureBrukerSpot(
             out string msg,
             clsToolReturnData retData,
-            clsDatasetInfo datasetInfo,
+            DatasetInfo datasetInfo,
             string sourceDirectoryPath,
             string datasetDirectoryPath)
         {
@@ -3297,9 +3297,9 @@ namespace CaptureToolPlugin
         private bool ValidateWithInstrumentClass(
             string dataset,
             string sourceDirectoryPath,
-            RawDSTypes sourceType,
+            DatasetInfo.RawDSTypes sourceType,
             clsInstrumentClassInfo.eInstrumentClass instrumentClass,
-            clsDatasetInfo datasetInfo,
+            DatasetInfo datasetInfo,
             clsToolReturnData retData)
         {
             string entityDescription;
@@ -3308,20 +3308,20 @@ namespace CaptureToolPlugin
 
             switch (sourceType)
             {
-                case RawDSTypes.File:
+                case DatasetInfo.RawDSTypes.File:
                     entityDescription = "a file";
                     break;
-                case RawDSTypes.DirectoryNoExt:
+                case DatasetInfo.RawDSTypes.DirectoryNoExt:
                     entityDescription = "a directory";
                     break;
-                case RawDSTypes.DirectoryExt:
+                case DatasetInfo.RawDSTypes.DirectoryExt:
                     entityDescription = "a directory";
                     break;
-                case RawDSTypes.BrukerImaging:
-                case RawDSTypes.BrukerSpot:
+                case DatasetInfo.RawDSTypes.BrukerImaging:
+                case DatasetInfo.RawDSTypes.BrukerSpot:
                     entityDescription = "a directory";
                     break;
-                case RawDSTypes.MultiFile:
+                case DatasetInfo.RawDSTypes.MultiFile:
                     entityDescription = "multiple files";
                     break;
                 default:
@@ -3339,9 +3339,9 @@ namespace CaptureToolPlugin
                 case clsInstrumentClassInfo.eInstrumentClass.Thermo_Exactive:
                 case clsInstrumentClassInfo.eInstrumentClass.Triple_Quad:
                 case clsInstrumentClassInfo.eInstrumentClass.Shimadzu_GC:
-                    if (sourceType != RawDSTypes.File)
+                    if (sourceType != DatasetInfo.RawDSTypes.File)
                     {
-                        if (sourceType == RawDSTypes.DirectoryNoExt)
+                        if (sourceType == DatasetInfo.RawDSTypes.DirectoryNoExt)
                         {
                             // ReSharper disable once CommentTypo
                             // Datasets from LAESI-HMS datasets will have a directory named after the dataset, and inside that directory will be a single .raw file
@@ -3369,7 +3369,7 @@ namespace CaptureToolPlugin
                             break;
                         }
 
-                        if (sourceType == RawDSTypes.MultiFile)
+                        if (sourceType == DatasetInfo.RawDSTypes.MultiFile)
                         {
                             var sourceDirectory = new DirectoryInfo(Path.Combine(sourceDirectoryPath));
                             var foundFiles = sourceDirectory.GetFiles(datasetInfo.FileOrDirectoryName + ".*").ToList();
@@ -3411,7 +3411,7 @@ namespace CaptureToolPlugin
                     break;
 
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging_V2:
-                    if (sourceType != RawDSTypes.DirectoryNoExt)
+                    if (sourceType != DatasetInfo.RawDSTypes.DirectoryNoExt)
                     {
                         // Dataset name matched a file; must be a directory with the dataset name, and inside the directory is a .D directory (and typically some jpg files)
                         retData.CloseoutMsg = "Dataset name matched " + entityDescription + "; must be a directory with the dataset name, and inside the directory is a .D directory (and typically some jpg files)";
@@ -3425,7 +3425,7 @@ namespace CaptureToolPlugin
                 case clsInstrumentClassInfo.eInstrumentClass.Agilent_TOF_V2:
                 case clsInstrumentClassInfo.eInstrumentClass.PrepHPLC:
 
-                    if (sourceType != RawDSTypes.DirectoryExt)
+                    if (sourceType != DatasetInfo.RawDSTypes.DirectoryExt)
                     {
                         // Dataset name matched a file; must be a .d directory
                         retData.CloseoutMsg = "Dataset name matched " + entityDescription + "; must be a .d directory";
@@ -3435,7 +3435,7 @@ namespace CaptureToolPlugin
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging:
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Spot:
 
-                    if (sourceType != RawDSTypes.DirectoryNoExt)
+                    if (sourceType != DatasetInfo.RawDSTypes.DirectoryNoExt)
                     {
                         // Dataset name matched a file; must be a directory with the dataset name
                         retData.CloseoutMsg = "Dataset name matched " + entityDescription + "; must be a directory with the dataset name";
@@ -3443,7 +3443,7 @@ namespace CaptureToolPlugin
                     break;
 
                 case clsInstrumentClassInfo.eInstrumentClass.Sciex_TripleTOF:
-                    if (sourceType != RawDSTypes.File)
+                    if (sourceType != DatasetInfo.RawDSTypes.File)
                     {
                         // Dataset name matched a directory; must be a file
                         // Dataset name matched multiple files; must be a file
@@ -3452,10 +3452,10 @@ namespace CaptureToolPlugin
                     break;
 
                 case clsInstrumentClassInfo.eInstrumentClass.IMS_Agilent_TOF:
-                    if (sourceType != RawDSTypes.File)
+                    if (sourceType != DatasetInfo.RawDSTypes.File)
                     {
 
-                        if (sourceType == RawDSTypes.DirectoryExt)
+                        if (sourceType == DatasetInfo.RawDSTypes.DirectoryExt)
                         {
                             // IMS08_AgQTOF05 collects data as .D directories, which the capture pipeline will then convert to a .uimf file
                             // Make sure the matched directory is a .d file
@@ -3463,7 +3463,7 @@ namespace CaptureToolPlugin
                                 break;
                         }
 
-                        if (sourceType == RawDSTypes.DirectoryNoExt)
+                        if (sourceType == DatasetInfo.RawDSTypes.DirectoryNoExt)
                         {
                             // IMS04_AgTOF05 and similar instruments collect data into a directory named after the dataset
                             // The directory contains a .UIMF file plus several related files
@@ -3493,9 +3493,9 @@ namespace CaptureToolPlugin
                             break;
                         }
 
-                        if (sourceType != RawDSTypes.DirectoryExt &&
-                            sourceType != RawDSTypes.DirectoryNoExt &&
-                            sourceType != RawDSTypes.MultiFile)
+                        if (sourceType != DatasetInfo.RawDSTypes.DirectoryExt &&
+                            sourceType != DatasetInfo.RawDSTypes.DirectoryNoExt &&
+                            sourceType != DatasetInfo.RawDSTypes.MultiFile)
                         {
                             LogWarning("sourceType was not DirectoryExt, DirectoryNoExt, or MultiFile; this is unexpected: " + sourceType);
                         }

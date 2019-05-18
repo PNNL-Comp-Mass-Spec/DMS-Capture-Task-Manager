@@ -8,32 +8,87 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace CaptureToolPlugin
+namespace CaptureTaskManager
 {
     /// <summary>
-    /// Holds info for a dataset to be captured
+    /// Holds info for a dataset
     /// </summary>
-    class clsDatasetInfo
+    /// <remarks>
+    /// Used by the Capture plugin for finding datasets to capture
+    /// Used by the Source File Rename plugin for finding dataset files or directories to rename
+    /// </remarks>
+    public class DatasetInfo
     {
+        public enum RawDSTypes
+        {
+            /// <summary>
+            /// Unknown type
+            /// </summary>
+            None,
 
+            /// <summary>
+            /// Instrument file
+            /// </summary>
+            File,
+
+            /// <summary>
+            /// Instrument directory without an extension
+            /// </summary>
+            DirectoryNoExt,
+
+            /// <summary>
+            /// Instrument directory with an extension, like .D or .Raw
+            /// </summary>
+            DirectoryExt,
+
+            /// <summary>
+            /// Bruker imaging data
+            /// </summary>
+            BrukerImaging,
+
+            /// <summary>
+            /// Bruker spot data
+            /// </summary>
+            BrukerSpot,
+
+            /// <summary>
+            /// Mix of file types
+            /// </summary>
+            MultiFile
+        }
+
+        /// <summary>
+        /// Dataset name
+        /// </summary>
         public string DatasetName { get; set; }
 
-        public clsCaptureOps.RawDSTypes DatasetType { get; set; }
+        /// <summary>
+        /// Dataset type
+        /// </summary>
+        public RawDSTypes DatasetType { get; set; }
 
+        /// <summary>
+        /// File or directory name
+        /// </summary>
         public string FileOrDirectoryName { get; set; }
 
+        /// <summary>
+        /// Dataset files
+        /// </summary>
         public List<FileInfo> FileList { get; set; }
 
+        /// <summary>
+        /// Number of files in FileList
+        /// </summary>
         public int FileCount => FileList?.Count ?? 0;
 
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="datasetName"></param>
-        public clsDatasetInfo(string datasetName)
+        public DatasetInfo(string datasetName)
         {
             DatasetName = datasetName;
         }
-
     }
 }
