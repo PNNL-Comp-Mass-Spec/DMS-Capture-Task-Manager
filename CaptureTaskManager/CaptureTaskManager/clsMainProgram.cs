@@ -1521,36 +1521,11 @@ namespace CaptureTaskManager
 
         #region "EventNotifier events"
 
-        private void RegisterEvents(EventNotifier oProcessingClass, bool writeDebugEventsToLog = true)
+        private new void RegisterEvents(EventNotifier processingClass, bool writeDebugEventsToLog = true)
         {
-            if (writeDebugEventsToLog)
-            {
-                oProcessingClass.DebugEvent += DebugEventHandler;
-            }
-            else
-            {
-                oProcessingClass.DebugEvent += DebugEventHandlerConsoleOnly;
-            }
+            base.RegisterEvents(processingClass, writeDebugEventsToLog);
 
-            oProcessingClass.StatusEvent += StatusEventHandler;
-            oProcessingClass.ErrorEvent += ErrorEventHandler;
-            oProcessingClass.WarningEvent += WarningEventHandler;
-            oProcessingClass.ProgressUpdate += ProgressUpdateHandler;
-        }
-
-        private void DebugEventHandlerConsoleOnly(string statusMessage)
-        {
-            LogDebug(statusMessage, writeToLog: false);
-        }
-
-        private void DebugEventHandler(string statusMessage)
-        {
-            LogDebug(statusMessage);
-        }
-
-        private void StatusEventHandler(string statusMessage)
-        {
-            LogMessage(statusMessage);
+            processingClass.ProgressUpdate += ProgressUpdateHandler;
         }
 
         private void CriticalErrorEvent(string message, Exception ex)
@@ -1558,21 +1533,12 @@ namespace CaptureTaskManager
             LogError(message, true);
         }
 
-        private void ErrorEventHandler(string errorMessage, Exception ex)
-        {
-            LogError(errorMessage, ex);
-        }
-
-        private void WarningEventHandler(string warningMessage)
-        {
-            LogWarning(warningMessage);
-        }
-
         private void ProgressUpdateHandler(string progressMessage, float percentComplete)
         {
             mStatusFile.CurrentOperation = progressMessage;
             mStatusFile.UpdateAndWrite(percentComplete);
         }
+
         #endregion
 
         #region "Event handlers"
