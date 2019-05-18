@@ -3237,48 +3237,6 @@ namespace CaptureToolPlugin
         }
 
         /// <summary>
-        /// Verifies specified directory path exists
-        /// </summary>
-        /// <param name="directoryPath">Directory path to test</param>
-        /// <returns>TRUE if directory was found</returns>
-        private bool ValidateDirectoryPath(string directoryPath)
-        {
-            var dirExists = Directory.Exists(directoryPath);
-            return dirExists;
-        }
-
-        #endregion
-
-        #region "Event handlers"
-
-        private void OnCopyingFile(string filename)
-        {
-            LogDebug("Copying file " + filename);
-        }
-
-        private void OnResumingFileCopy(string filename)
-        {
-            LogMessage("Resuming copy of file " + filename);
-        }
-
-        private void OnFileCopyProgress(string filename, float percentComplete)
-        {
-
-            if (DateTime.Now.Subtract(mLastProgressUpdate).TotalSeconds >= 20 || percentComplete >= 100 && filename == mLastProgressFileName)
-            {
-                if ((mLastProgressFileName == filename) && (Math.Abs(mLastProgressPercent - percentComplete) < float.Epsilon))
-                    // Don't re-display this progress
-                    return;
-
-                mLastProgressUpdate = DateTime.Now;
-                mLastProgressFileName = filename;
-                mLastProgressPercent = percentComplete;
-                LogMessage("  copying " + Path.GetFileName(filename) + ": " + percentComplete.ToString("0.0") + "% complete");
-            }
-
-        }
-
-        /// <summary>
         /// Report some stats on the given directory, including the number of files and the largest file
         /// </summary>
         /// <param name="directoryPath"></param>
@@ -3313,6 +3271,17 @@ namespace CaptureToolPlugin
                 LogError("Error in ReportDirectoryStats", ex);
                 return "Error: " + ex.Message;
             }
+        }
+
+        /// <summary>
+        /// Verifies specified directory path exists
+        /// </summary>
+        /// <param name="directoryPath">Directory path to test</param>
+        /// <returns>TRUE if directory was found</returns>
+        private bool ValidateDirectoryPath(string directoryPath)
+        {
+            var dirExists = Directory.Exists(directoryPath);
+            return dirExists;
         }
 
         /// <summary>
@@ -3546,6 +3515,37 @@ namespace CaptureToolPlugin
             LogError(retData.CloseoutMsg + ": " + dataset, true);
 
             return false;
+        }
+
+        #endregion
+
+        #region "Event handlers"
+
+        private void OnCopyingFile(string filename)
+        {
+            LogDebug("Copying file " + filename);
+        }
+
+        private void OnResumingFileCopy(string filename)
+        {
+            LogMessage("Resuming copy of file " + filename);
+        }
+
+        private void OnFileCopyProgress(string filename, float percentComplete)
+        {
+
+            if (DateTime.Now.Subtract(mLastProgressUpdate).TotalSeconds >= 20 || percentComplete >= 100 && filename == mLastProgressFileName)
+            {
+                if ((mLastProgressFileName == filename) && (Math.Abs(mLastProgressPercent - percentComplete) < float.Epsilon))
+                    // Don't re-display this progress
+                    return;
+
+                mLastProgressUpdate = DateTime.Now;
+                mLastProgressFileName = filename;
+                mLastProgressPercent = percentComplete;
+                LogMessage("  copying " + Path.GetFileName(filename) + ": " + percentComplete.ToString("0.0") + "% complete");
+            }
+
         }
 
         #endregion
