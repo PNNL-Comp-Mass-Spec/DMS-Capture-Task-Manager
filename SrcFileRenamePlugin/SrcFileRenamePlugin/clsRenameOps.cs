@@ -56,8 +56,11 @@ namespace SrcFileRenamePlugin
                     mUserName = Environment.MachineName + @"\" + mUserName;
                 }
             }
+
+            mDatasetFileSearchTool = new DatasetFileSearchTool();
+            RegisterEvents(mDatasetFileSearchTool);
+
         }
-        #endregion
 
         #region "Methods"
 
@@ -81,6 +84,7 @@ namespace SrcFileRenamePlugin
             var legacyCaptureSubfolder = taskParams.GetParam("Capture_Subfolder");
             var captureSubdirectory = taskParams.GetParam("Capture_Subdirectory", legacyCaptureSubfolder);
 
+            var instrumentFileHash = taskParams.GetParam("Instrument_File_Hash");
 
             var pwd = clsUtilities.DecodePassword(mPwd);
 
@@ -206,7 +210,7 @@ namespace SrcFileRenamePlugin
                 if (string.IsNullOrEmpty(errorMessage))
                     errorMessage = "Data file and/or directory not found on the instrument; cannot rename";
 
-                msg = "Dataset " + datasetName + ":" + errorMessage;
+                msg = "Dataset " + datasetName + ": " + errorMessage;
                 OnErrorEvent(msg);
 
                 return EnumCloseOutType.CLOSEOUT_FAILED;
@@ -215,7 +219,15 @@ namespace SrcFileRenamePlugin
             return EnumCloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private int FindFilesToRename(string dataset, DirectoryInfo sourceDirectory, out string errorMessage)
+        /// <summary>
+        /// Look for files to rename
+        /// </summary>
+        /// <param name="dataset">Dataset name</param>
+        /// <param name="sourceDirectory">Directory to search</param>
+        /// <param name="instrumentFileHash">SHA-1 hash of the primary instrument file (ignored for directories)</param>
+        /// <param name="errorMessage">Output: error message</param>
+        /// <returns></returns>
+        private int FindFilesToRename(string dataset, DirectoryInfo sourceDirectory, string instrumentFileHash, out string errorMessage)
         {
             errorMessage = string.Empty;
 
@@ -282,14 +294,42 @@ namespace SrcFileRenamePlugin
                 if (matchedFiles.Count + matchedDirectories.Count == 0)
                 {
                     // No file or directory found
-                    // Log a message for the first item checked in lstFileNamesToCheck
-                    if (!bLoggedDatasetNotFound)
+                    // Try looking for matching files with a space in the name
+                    // If a match to a single file is found, and if the SHA-1 sum matches the value in DMS, rename it
+                    var matchedFiles2 = mDatasetFileSearchTool.FindDatasetFile(sourceDirectory.FullName, dataset);
+
+                    if (matchedFiles2.FileCount == 1)
                     {
-                        var msg = "Dataset " + dataset + ": data file and/or directory not found using " + sDatasetNameBase + ".*";
-                        OnWarningEvent(msg);
-                        bLoggedDatasetNotFound = true;
+                        var candidateFile = matchedFiles2.FileList.First();
+
+                        // Compute the SHA-1 hash
+                        var sha1Hash = Pacifica.Core.Utilities.GenerateSha1Hash(candidateFile.FullName);
+
+                        if (sha1Hash.Equals(instrumentFileHash))
+                        {
+                            OnStatusEvent(string.Format("Hashes match for {0}: {1}", candidateFile.FullName, instrumentFileHash));
+                            matchedFiles.Add(candidateFile);
+                        }
+                        else
+                        {
+                            OnWarningEvent(string.Format(
+                                               "Hashes do not match for {0}: {1} on instrument vs. {2} on storage server",
+                                               candidateFile.FullName, sha1Hash, instrumentFileHash
+                                               ));
+                        }
                     }
-                    continue;
+                    else
+                    {
+                        // Log a message for the first item checked in fileNamesToCheck
+                        if (!loggedDatasetNotFound)
+                        {
+                            var msg = "Dataset " + dataset + ": data file and/or directory not found using " + datasetNameBase + ".*";
+                            OnWarningEvent(msg);
+                            loggedDatasetNotFound = true;
+                        }
+
+                        continue;
+                    }
                 }
 
                 if (alreadyRenamed)
