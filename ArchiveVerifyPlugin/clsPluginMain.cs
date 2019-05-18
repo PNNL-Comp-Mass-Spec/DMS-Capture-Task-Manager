@@ -287,7 +287,7 @@ namespace ArchiveVerifyPlugin
 
                         mTotalMismatchCount += mismatchCountToMetadata;
 
-                        var matchStats = "Sha-1 mismatch between local files in metadata.txt file and MyEMSL; " +
+                        var matchStats = "SHA-1 mismatch between local files in metadata.txt file and MyEMSL; " +
                                          "MatchCount=" + matchCountToMetadata + ", " +
                                          "MismatchCount=" + mismatchCountToMetadata;
 
@@ -302,7 +302,7 @@ namespace ArchiveVerifyPlugin
 
                 // Metadata file was missing or empty; compare to local files on disk
 
-                // Look for files that should have been uploaded, compute a Sha-1 hash for each, and compare those hashes to existing files in MyEMSL
+                // Look for files that should have been uploaded, compute a SHA-1 hash for each, and compare those hashes to existing files in MyEMSL
 
                 var ignoreMyEMSLFileTrackingError = mTaskParams.GetParam("IgnoreMyEMSLFileTrackingError", false);
 
@@ -331,12 +331,12 @@ namespace ArchiveVerifyPlugin
 
                     mTotalMismatchCount += 1;
 
-                    mRetData.CloseoutMsg = "Local files were not found for this dataset; unable to compare Sha-1 hashes to MyEMSL values";
+                    mRetData.CloseoutMsg = "Local files were not found for this dataset; unable to compare SHA-1 hashes to MyEMSL values";
                     LogError(" ... " + mRetData.CloseoutMsg);
                     return false;
                 }
 
-                // Keys are relative file paths (Windows slashes); values are the Sha-1 hash values
+                // Keys are relative file paths (Windows slashes); values are the SHA-1 hash values
                 var dctFilePathHashMap = new Dictionary<string, string>();
 
                 foreach (var datasetFile in lstDatasetFilesLocal)
@@ -393,7 +393,7 @@ namespace ArchiveVerifyPlugin
         /// <param name="archivedFiles">Files in MyEMSL</param>
         /// <param name="matchCount"></param>
         /// <param name="mismatchCount"></param>
-        /// <param name="dctFilePathHashMap">Local files; keys are relative file paths (Windows slashes); values are the Sha-1 hash values</param>
+        /// <param name="dctFilePathHashMap">Local files; keys are relative file paths (Windows slashes); values are the SHA-1 hash values</param>
         /// <param name="transactionIdStats">Keys are transaction IDs, values are the number of files for each transaction ID</param>
         private void CompareArchiveFilesToList(
             IReadOnlyCollection<MyEMSLReader.ArchivedFileInfo> archivedFiles,
@@ -537,7 +537,7 @@ namespace ArchiveVerifyPlugin
             var filesToIgnore = DMSMetadataObject.GetFilesToIgnore();
 
             // This dictionary tracks files on the local disk
-            // Keys are relative file paths (Windows slashes); values are the Sha-1 hash values
+            // Keys are relative file paths (Windows slashes); values are the SHA-1 hash values
             var dctFilePathHashMap = new Dictionary<string, string>();
 
             foreach (var metadataFile in dctMetadataFiles)
@@ -598,12 +598,12 @@ namespace ArchiveVerifyPlugin
             catch (Exception ex)
             {
                 // Don't treat this as a fatal error
-                LogError("Error copying Sha-1 hash results file from hash results folder to backup folder", ex);
+                LogError("Error copying SHA-1 hash results file from hash results folder to backup folder", ex);
             }
         }
 
         /// <summary>
-        /// Create a new Sha-1 hash results file
+        /// Create a new SHA-1 hash results file
         /// </summary>
         /// <param name="hashResultsFile"></param>
         /// <param name="archivedFiles"></param>
@@ -655,7 +655,7 @@ namespace ArchiveVerifyPlugin
             }
             catch (Exception ex)
             {
-                LogError("Exception creating new Sha-1 hash results file in CreateHashResultsFile", ex);
+                LogError("Exception creating new SHA-1 hash results file in CreateHashResultsFile", ex);
                 return false;
             }
 
@@ -664,7 +664,7 @@ namespace ArchiveVerifyPlugin
         }
 
         /// <summary>
-        /// Create or update the Sha-1 hash results file
+        /// Create or update the SHA-1 hash results file
         /// </summary>
         /// <param name="archivedFiles"></param>
         /// <returns></returns>
@@ -831,7 +831,7 @@ namespace ArchiveVerifyPlugin
             if (lstPathInfo.Count > 1)
                 hashInfo.MyEMSLFileID = lstPathInfo[1];
 
-            // Files should only be listed once in the Sha-1 hash results file
+            // Files should only be listed once in the SHA-1 hash results file
             // But, just in case there is a duplicate, we'll check for that
             // Results files could have duplicate entries if a file was copied to the archive via FTP and was stored via MyEMSL
             if (lstHashResults.TryGetValue(archiveFilePath, out var hashInfoCached))

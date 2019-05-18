@@ -7,7 +7,7 @@ namespace ArchiveVerifyPlugin
         private string mMyEMSLFileID;
 
         /// <summary>
-        /// MD5 or Sha-1 Hash
+        /// MD5 or SHA-1 Hash
         /// </summary>
         public string HashCode
         {

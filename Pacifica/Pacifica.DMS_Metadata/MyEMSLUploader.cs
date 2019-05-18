@@ -174,7 +174,7 @@ namespace Pacifica.DMS_Metadata
         }
 
         /// <summary>
-        /// Look for files to upload, compute a Sha-1 hash for each, compare those hashes to existing files in MyEMSL,
+        /// Look for files to upload, compute a SHA-1 hash for each, compare those hashes to existing files in MyEMSL,
         /// and upload new/changed files
         /// </summary>
         /// <param name="config"></param>
@@ -216,7 +216,7 @@ namespace Pacifica.DMS_Metadata
             try
             {
 
-                // Look for files to upload, compute a Sha-1 hash for each, and compare those hashes to existing files in MyEMSL
+                // Look for files to upload, compute a SHA-1 hash for each, and compare those hashes to existing files in MyEMSL
                 var success = MetadataContainer.SetupMetadata(mTaskParams, mMgrParams, out var criticalError, out var criticalErrorMessage);
 
                 if (!success)
@@ -342,7 +342,7 @@ namespace Pacifica.DMS_Metadata
         {
             if (StatusUpdate != null)
             {
-                // Multiplying by 0.25 because we're assuming 25% of the time is required for mMetadataContainer to compute the Sha-1 hashes of files to be uploaded while 75% of the time is required to create and upload the .tar file
+                // Multiplying by 0.25 because we're assuming 25% of the time is required for mMetadataContainer to compute the SHA-1 hashes of files to be uploaded while 75% of the time is required to create and upload the .tar file
                 var percentCompleteOverall = 25 + e.PercentCompleted * 0.75;
                 StatusUpdate(this, new StatusEventArgs(percentCompleteOverall, e.TotalBytesSent, e.TotalBytesToSend, e.StatusMessage));
             }
@@ -357,7 +357,7 @@ namespace Pacifica.DMS_Metadata
         {
             if (StatusUpdate != null)
             {
-                // Multiplying by 0.25 because we're assuming 25% of the time is required for mMetadataContainer to compute the Sha-1 hashes of files to be uploaded while 75% of the time is required to create and upload the .tar file
+                // Multiplying by 0.25 because we're assuming 25% of the time is required for mMetadataContainer to compute the SHA-1 hashes of files to be uploaded while 75% of the time is required to create and upload the .tar file
                 var percentCompleteOverall = 0 + percentComplete * 0.25;
                 StatusUpdate(this, new StatusEventArgs(percentCompleteOverall, 0, MetadataContainer.TotalFileSizeToUpload, progressMessage));
             }

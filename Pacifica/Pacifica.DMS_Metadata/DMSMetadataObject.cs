@@ -468,7 +468,7 @@ namespace Pacifica.DMS_Metadata
 
             var relativeDestinationDirectory = FileInfoObject.GenerateRelativePath(cacheInfoFile.Directory.FullName, baseDSPath);
 
-            // This constructor will auto-compute the Sha-1 hash value for the file
+            // This constructor will auto-compute the SHA-1 hash value for the file
             var fio = new FileInfoObject(remoteFile.FullName, relativeDestinationDirectory, sha1Hash: string.Empty);
             fileCollection.Add(fio);
 
@@ -586,7 +586,7 @@ namespace Pacifica.DMS_Metadata
 
                 ReportProgress(HASHING_FILES + ": " + dataFile.Name, fractionCompleted * 100);
 
-                // This constructor will auto-compute the Sha-1 hash value for the file
+                // This constructor will auto-compute the SHA-1 hash value for the file
                 var fio = new FileInfoObject(dataFile.FullName, baseDSPath);
                 fileCollection.Add(fio);
 
@@ -814,7 +814,7 @@ namespace Pacifica.DMS_Metadata
         /// Return true if fileVersions has a file with the given hash
         /// </summary>
         /// <param name="fileVersions">List of files in MyEMSL</param>
-        /// <param name="fileHash">Sha-1 hash to find</param>
+        /// <param name="fileHash">SHA-1 hash to find</param>
         /// <returns>True if a match is found, otherwise false</returns>
         private bool FileHashExists(IEnumerable<MyEMSLFileInfo> fileVersions, string fileHash)
         {
@@ -926,7 +926,7 @@ namespace Pacifica.DMS_Metadata
             var recurse = Utilities.GetDictionaryValue(taskParams, MyEMSLUploader.RECURSIVE_UPLOAD, true);
 
             // Grab file information from this dataset directory
-            // This process will also compute the Sha-1 hash value for each file
+            // This process will also compute the SHA-1 hash value for each file
             var datasetFilesToArchive = CollectFileInformation(archiveMode, sourceDirectoryPath, baseDSPath, recurse);
 
             return datasetFilesToArchive;
@@ -1073,7 +1073,7 @@ namespace Pacifica.DMS_Metadata
 
                 if (remoteFiles.TryGetValue(relativeFilePath, out var fileVersions))
                 {
-                    // Make sure that fileVersions doesn't already have a version of this file with this specific Sha-1 hash
+                    // Make sure that fileVersions doesn't already have a version of this file with this specific SHA-1 hash
                     // This can happen if the same subdirectory is pushed into MyEMSL twice, and the file modification times have changed
                     // but the file contents have not changed
 
