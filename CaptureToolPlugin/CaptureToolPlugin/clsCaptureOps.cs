@@ -1065,7 +1065,11 @@ namespace CaptureToolPlugin
             var jobNum = taskParams.GetParam("Job", 0);
             var sourceVol = taskParams.GetParam("Source_Vol");                      // Example: \\exact04.bionet\
             var sourcePath = taskParams.GetParam("Source_Path");                    // Example: ProteomicsData\
-            var captureSubfolder = taskParams.GetParam("Capture_Subfolder");        // Typically an empty string, but could be a partial path like: "CapDev" or "Smith\2014"
+
+            // Capture_Subdirectory is typically an empty string, but could be a partial path like: "CapDev" or "Smith\2014"
+            var legacyCaptureSubfolder = taskParams.GetParam("Capture_Subfolder");
+            var captureSubdirectory = taskParams.GetParam("Capture_Subdirectory", legacyCaptureSubfolder);
+
             var storageVol = taskParams.GetParam("Storage_Vol");                    // Example: E:\
             var storagePath = taskParams.GetParam("Storage_Path");                  // Example: Exact04\2012_1\
             var storageVolExternal = taskParams.GetParam("Storage_Vol_External");   // Example: \\proto-5\
@@ -1286,30 +1290,30 @@ namespace CaptureToolPlugin
             }
 
             // Now that we've had a chance to connect to the share, possibly append a subdirectory to the source path
-            if (!string.IsNullOrWhiteSpace(captureSubfolder))
+            if (!string.IsNullOrWhiteSpace(captureSubdirectory))
             {
                 var sourceFolderOrDatasetName = string.IsNullOrWhiteSpace(sourceFolderName) ? datasetName : sourceFolderName;
 
                 // However, if the subdirectory name matches the dataset name, this was probably an error on the operator's part
                 // and we likely do not want to use the subfolder name
-                if (captureSubfolder.EndsWith(Path.DirectorySeparatorChar + sourceFolderOrDatasetName, StringComparison.OrdinalIgnoreCase) ||
-                    captureSubfolder.Equals(sourceFolderOrDatasetName, StringComparison.OrdinalIgnoreCase))
+                if (captureSubdirectory.EndsWith(Path.DirectorySeparatorChar + sourceFolderOrDatasetName, StringComparison.OrdinalIgnoreCase) ||
+                    captureSubdirectory.Equals(sourceFolderOrDatasetName, StringComparison.OrdinalIgnoreCase))
                 {
-                    var candidateDirectoryPath = Path.Combine(sourceDirectoryPath, captureSubfolder);
+                    var candidateDirectoryPath = Path.Combine(sourceDirectoryPath, captureSubdirectory);
 
                     if (!Directory.Exists(candidateDirectoryPath))
                     {
                         // Leave sourceDirectoryPath unchanged
-                        // Dataset Capture_Subfolder ends with the dataset name. Gracefully ignoring because this appears to be a data entry error; directory not found:
-                        LogWarning("Dataset Capture_Subfolder ends with the dataset name. Gracefully ignoring " +
+                        // Dataset Capture_Directory ends with the dataset name. Gracefully ignoring because this appears to be a data entry error; directory not found:
+                        LogWarning("Dataset Capture_Subdirectory ends with the dataset name. Gracefully ignoring " +
                                    "because this appears to be a data entry error; directory not found: " + candidateDirectoryPath, true);
                     }
                     else
                     {
-                        if (captureSubfolder.Equals(sourceFolderOrDatasetName, StringComparison.OrdinalIgnoreCase))
+                        if (captureSubdirectory.Equals(sourceFolderOrDatasetName, StringComparison.OrdinalIgnoreCase))
                         {
                             LogWarning(string.Format(
-                                "Dataset Capture_Subfolder is the dataset name; leaving the capture path as {0} " +
+                                "Dataset Capture_Subdirectory is the dataset name; leaving the capture path as {0} " +
                                 "so that the entire dataset directory will be copied", sourceFolderOrDatasetName));
                         }
                         else
@@ -1318,14 +1322,14 @@ namespace CaptureToolPlugin
                             {
                                 var candidateDirectoryPathTrimmed = candidateDirectoryPath.Substring(0, candidateDirectoryPath.Length - sourceFolderOrDatasetName.Length - 1);
                                 LogMessage(string.Format(
-                                    "Appending captureSubfolder to sourceDirectoryPath, but removing SourceFolderName, giving: {0} (removed {1})",
+                                    "Appending captureSubdirectory to sourceDirectoryPath, but removing SourceFolderName, giving: {0} (removed {1})",
                                     candidateDirectoryPathTrimmed, sourceFolderOrDatasetName));
 
                                 sourceDirectoryPath = candidateDirectoryPathTrimmed;
                             }
                             else
                             {
-                                LogMessage("Appending captureSubfolder to sourceDirectoryPath, giving: " + candidateDirectoryPath);
+                                LogMessage("Appending captureSubdirectory to sourceDirectoryPath, giving: " + candidateDirectoryPath);
                                 sourceDirectoryPath = candidateDirectoryPath;
                             }
 
@@ -1335,11 +1339,11 @@ namespace CaptureToolPlugin
                 }
                 else
                 {
-                    sourceDirectoryPath = Path.Combine(sourceDirectoryPath, captureSubfolder);
+                    sourceDirectoryPath = Path.Combine(sourceDirectoryPath, captureSubdirectory);
                 }
 
                 // Confirm that the source directory has no invalid characters
-                if (NameHasInvalidCharacter(sourceDirectoryPath, "Source directory path with captureSubfolder optionally added", false, retData))
+                if (NameHasInvalidCharacter(sourceDirectoryPath, "Source directory path with captureSubdirectory optionally added", false, retData))
                     return false;
 
             }

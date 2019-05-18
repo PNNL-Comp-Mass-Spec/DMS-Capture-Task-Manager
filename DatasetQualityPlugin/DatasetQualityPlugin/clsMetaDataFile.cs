@@ -80,9 +80,11 @@ namespace DatasetQualityPlugin
             }
 
             // Write the string to the output file
-            var svrPath = Path.Combine(taskParams.GetParam("Storage_Vol_External"), taskParams.GetParam("Storage_Path"));
-            var dsPath = Path.Combine(svrPath, taskParams.GetParam("Folder"));
-            var metaFileNamePath = Path.Combine(dsPath, META_FILE_NAME);
+            var remoteSharePath = Path.Combine(taskParams.GetParam("Storage_Vol_External"), taskParams.GetParam("Storage_Path"));
+            var datasetDirectory = taskParams.GetParam(taskParams.HasParam("Directory") ? "Directory" : "Folder");
+
+            var datasetDirectoryPath = Path.Combine(remoteSharePath, datasetDirectory);
+            var metaFileNamePath = Path.Combine(datasetDirectoryPath, META_FILE_NAME);
             try
             {
                 File.WriteAllText(metaFileNamePath, xmlText);

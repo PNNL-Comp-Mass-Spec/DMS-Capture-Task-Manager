@@ -108,7 +108,9 @@ namespace ImsDemuxPlugin
 
             // Locate data file on storage server
             var svrPath = Path.Combine(mTaskParams.GetParam("Storage_Vol_External"), mTaskParams.GetParam("Storage_Path"));
-            var dsPath = Path.Combine(svrPath, mTaskParams.GetParam("Folder"));
+            var datasetDirectory = mTaskParams.GetParam(mTaskParams.HasParam("Directory") ? "Directory" : "Folder");
+
+            var dsPath = Path.Combine(svrPath, datasetDirectory);
 
             // Use this name first to test if demux has already been performed once
             var uimfFileName = mDataset + "_encoded.uimf";
@@ -448,7 +450,9 @@ namespace ImsDemuxPlugin
             var bSuccess = true;
 
             var svrPath = Path.Combine(mTaskParams.GetParam("Storage_Vol_External"), mTaskParams.GetParam("Storage_Path"));
-            var sDatasetFolderPathRemote = Path.Combine(svrPath, mTaskParams.GetParam("Folder"));
+            var datasetDirectory = mTaskParams.GetParam(mTaskParams.HasParam("Directory") ? "Directory" : "Folder");
+
+            var sDatasetFolderPathRemote = Path.Combine(svrPath, datasetDirectory);
 
             // Copy file fileName from sourceDirPath to the dataset folder
             var sSourceFilePath = Path.Combine(sourceDirPath, fileName);

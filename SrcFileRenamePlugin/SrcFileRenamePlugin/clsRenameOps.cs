@@ -67,14 +67,17 @@ namespace SrcFileRenamePlugin
         public EnumCloseOutType DoOperation(ITaskParams taskParams, out string errorMessage)
         {
             var datasetName = taskParams.GetParam("Dataset");
+
             // Example: \\exact04.bionet\
             var sourceVol = taskParams.GetParam("Source_Vol");
 
             // Example: ProteomicsData\
             var sourcePath = taskParams.GetParam("Source_Path");
 
-            // Typically an empty string, but could be a partial path like: "CapDev" or "Smith\2014"
-            var captureSubDirectory = taskParams.GetParam("Capture_Subfolder");
+            // Capture_Subdirectory is typically an empty string, but could be a partial path like: "CapDev" or "Smith\2014"
+            var legacyCaptureSubfolder = taskParams.GetParam("Capture_Subfolder");
+            var captureSubdirectory = taskParams.GetParam("Capture_Subdirectory", legacyCaptureSubfolder);
+
 
             var pwd = clsUtilities.DecodePassword(mPwd);
 
@@ -135,34 +138,34 @@ namespace SrcFileRenamePlugin
             }
 
             // Now that we've had a chance to connect to the share, possibly append a subdirectory to the source path
-            if (!string.IsNullOrWhiteSpace(captureSubDirectory))
+            if (!string.IsNullOrWhiteSpace(captureSubdirectory))
             {
 
                 // However, if the subdirectory name matches the dataset name, this was probably an error on the operator's part
                 // and we likely do not want to use the subdirectory name
-                if (captureSubDirectory.EndsWith(Path.DirectorySeparatorChar + sourceDirectoryName, StringComparison.OrdinalIgnoreCase) ||
-                    captureSubDirectory.Equals(sourceDirectoryName, StringComparison.OrdinalIgnoreCase))
+                if (captureSubdirectory.EndsWith(Path.DirectorySeparatorChar + sourceDirectoryName, StringComparison.OrdinalIgnoreCase) ||
+                    captureSubdirectory.Equals(sourceDirectoryName, StringComparison.OrdinalIgnoreCase))
                 {
-                    var candidateDirectoryPath = Path.Combine(sourceDirectoryPath, captureSubDirectory);
+                    var candidateDirectoryPath = Path.Combine(sourceDirectoryPath, captureSubdirectory);
 
                     if (!Directory.Exists(candidateDirectoryPath))
                     {
                         // Leave sourceDirectoryPath unchanged
-                        // Dataset Capture_Subfolder ends with the dataset name. Gracefully ignoring because this appears to be a data entry error; directory not found:
-                        OnWarningEvent("Dataset Capture_Subfolder ends with the dataset name. Gracefully ignoring " +
+                        // Dataset Capture_Subdirectory ends with the dataset name. Gracefully ignoring because this appears to be a data entry error; directory not found:
+                        OnWarningEvent("Dataset Capture_Subdirectory ends with the dataset name. Gracefully ignoring " +
                                        "because this appears to be a data entry error; directory not found: " + candidateDirectoryPath);
                     }
                     else
                     {
-                        if (captureSubDirectory.Equals(sourceDirectoryName, StringComparison.OrdinalIgnoreCase))
+                        if (captureSubdirectory.Equals(sourceDirectoryName, StringComparison.OrdinalIgnoreCase))
                         {
                             OnWarningEvent(string.Format(
-                                           "Dataset Capture_Subfolder is the dataset name; leaving the capture path as {0} " +
+                                           "Dataset Capture_Subdirectory is the dataset name; leaving the capture path as {0} " +
                                            "so that the entire dataset directory will be copied", sourceDirectoryPath));
                         }
                         else
                         {
-                            OnStatusEvent("Appending captureSubDirectory to sourceDirectoryPath, giving: " + candidateDirectoryPath);
+                            OnStatusEvent("Appending captureSubdirectory to sourceDirectoryPath, giving: " + candidateDirectoryPath);
                             sourceDirectoryPath = candidateDirectoryPath;
                         }
                     }
@@ -170,7 +173,7 @@ namespace SrcFileRenamePlugin
                 }
                 else
                 {
-                    sourceDirectoryPath = Path.Combine(sourceDirectoryPath, captureSubDirectory);
+                    sourceDirectoryPath = Path.Combine(sourceDirectoryPath, captureSubdirectory);
                 }
 
             }
@@ -180,7 +183,7 @@ namespace SrcFileRenamePlugin
 
             if (sourceDirectory.Exists)
             {
-                countRenamed = FindFilesToRename(datasetName, sourceDirectory, out errorMessage);
+                countRenamed = FindFilesToRename(datasetName, sourceDirectory, instrumentFileHash, out errorMessage);
             }
             else
             {

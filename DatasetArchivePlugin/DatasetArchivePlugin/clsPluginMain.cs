@@ -183,7 +183,8 @@ namespace DatasetArchivePlugin
 
                 spCmd.Parameters.Add("@DatasetID", SqlDbType.Int).Value = mTaskParams.GetParam("Dataset_ID", 0);
 
-                spCmd.Parameters.Add("@Subfolder", SqlDbType.VarChar, 128).Value = mTaskParams.GetParam("OutputFolderName", string.Empty);
+                var subDir = mTaskParams.GetParam("OutputDirectoryName", mTaskParams.GetParam("OutputFolderName"));
+                spCmd.Parameters.Add("@Subfolder", SqlDbType.VarChar, 128).Value = subDir;
 
                 spCmd.Parameters.Add("@FileCountNew", SqlDbType.Int).Value = fileCountNew;
 

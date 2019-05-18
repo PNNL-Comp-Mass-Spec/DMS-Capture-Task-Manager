@@ -150,20 +150,22 @@ namespace Pacifica.DMS_Metadata
             mFileTools = fileTools;
 
             var transferFolderPath = Utilities.GetDictionaryValue(mTaskParams, "TransferFolderPath", string.Empty);
-            if (string.IsNullOrEmpty(transferFolderPath))
-                throw new InvalidDataException("Job parameters do not have TransferFolderPath defined; unable to continue");
+
+            var transferDirectoryPathBase = Utilities.GetDictionaryValue(mTaskParams, "TransferDirectoryPath", transferFolderPath);
+            if (string.IsNullOrEmpty(transferDirectoryPathBase))
+                throw new InvalidDataException("Job parameters do not have TransferDirectoryPath defined; unable to continue");
 
             var datasetName = Utilities.GetDictionaryValue(mTaskParams, "Dataset", string.Empty);
-            if (string.IsNullOrEmpty(transferFolderPath))
+            if (string.IsNullOrEmpty(transferDirectoryPathBase))
                 throw new InvalidDataException("Job parameters do not have Dataset defined; unable to continue");
 
-            transferFolderPath = Path.Combine(transferFolderPath, datasetName);
+            var transferDirectoryPath = Path.Combine(transferDirectoryPathBase, datasetName);
 
             var jobNumber = Utilities.GetDictionaryValue(mTaskParams, "Job", string.Empty);
             if (string.IsNullOrEmpty(jobNumber))
                 throw new InvalidDataException("Job parameters do not have Job defined; unable to continue");
 
-            mUploadWorker = new Uploader.Upload(config, transferFolderPath, jobNumber);
+            mUploadWorker = new Uploader.Upload(config, transferDirectoryPath, jobNumber);
             RegisterEvents(mUploadWorker);
 
             // Attach the events
