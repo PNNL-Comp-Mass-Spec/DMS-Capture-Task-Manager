@@ -160,7 +160,7 @@ namespace Pacifica.DMS_Metadata
             mPacificaConfig = config;
 
             mRemoteCacheInfoFilesToRetrieve = new List<string>();
-            mRemoteCacheInfoLockFiles = new Dictionary<string, FileInfo>(StringComparer.CurrentCultureIgnoreCase);
+            mRemoteCacheInfoLockFiles = new Dictionary<string, FileInfo>(StringComparer.OrdinalIgnoreCase);
 
             if (string.IsNullOrWhiteSpace(managerName))
                 managerName = "DMSMetadataObject";

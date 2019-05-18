@@ -621,7 +621,7 @@ namespace ArchiveVerifyPlugin
             try
             {
 
-                var lstHashResults = new Dictionary<string, clsHashInfo>(StringComparer.CurrentCultureIgnoreCase);
+                var lstHashResults = new Dictionary<string, clsHashInfo>(StringComparer.OrdinalIgnoreCase);
 
                 foreach (var archivedFile in archivedFiles)
                 {
@@ -864,7 +864,7 @@ namespace ArchiveVerifyPlugin
         {
             bool success;
 
-            var lstHashResults = new Dictionary<string, clsHashInfo>(StringComparer.CurrentCultureIgnoreCase);
+            var lstHashResults = new Dictionary<string, clsHashInfo>(StringComparer.OrdinalIgnoreCase);
 
             // Read the file and cache the results in memory
             using (var srHashResultsFile = new StreamReader(new FileStream(hashResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))

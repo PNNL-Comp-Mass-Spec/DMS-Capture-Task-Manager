@@ -42,7 +42,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Job parameters
         /// </summary>
-        protected readonly Dictionary<string, string> mJobParams = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+        protected readonly Dictionary<string, string> mJobParams = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// Stored procedure executor
