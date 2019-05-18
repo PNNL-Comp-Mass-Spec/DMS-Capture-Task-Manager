@@ -104,9 +104,11 @@ namespace DatasetArchivePlugin
                 if (!copySuccess)
                     return false;
 
+                var subDirName = mTaskParams.GetParam("OutputDirectoryName", mTaskParams.GetParam("OutputFolderName"));
+
                 // Finished with this update task
-                statusMessage = "Completed push to MyEMSL, dataset " + mDatasetName + ", Folder " +
-                                mTaskParams.GetParam("OutputFolderName") + ", job " + mTaskParams.GetParam("Job");
+                statusMessage = string.Format("Completed push to MyEMSL, dataset {0}, directory {1}, job {2}", 
+                                              mDatasetName, subDirName, mTaskParams.GetParam("Job"));
                 OnDebugEvent(statusMessage);
             }
 

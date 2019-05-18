@@ -201,8 +201,11 @@ namespace DatasetQualityPlugin
             if (!instrumentDataFile.Exists)
             {
                 // File has likely been purged from the storage server
+
+                var datasetDirectory = mTaskParams.GetParam(mTaskParams.HasParam("Directory") ? "Directory" : "Folder");
+
                 // Look in the Aurora archive (aurora.emsl.pnl.gov) using samba; was previously a2.emsl.pnl.gov
-                var dataFilePathArchive = Path.Combine(mTaskParams.GetParam("Archive_Network_Share_Path"), mTaskParams.GetParam("Folder"), instrumentDataFile.Name);
+                var dataFilePathArchive = Path.Combine(mTaskParams.GetParam("Archive_Network_Share_Path"), datasetDirectory, instrumentDataFile.Name);
 
                 var fiDataFileInArchive = new FileInfo(dataFilePathArchive);
                 if (fiDataFileInArchive.Exists)

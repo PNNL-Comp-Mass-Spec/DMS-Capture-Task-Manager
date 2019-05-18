@@ -1440,7 +1440,9 @@ namespace ImsDemuxPlugin
             mWorkDir = mgrParams.GetParam("workdir");
 
             var svrPath = Path.Combine(taskParams.GetParam("Storage_Vol_External"), taskParams.GetParam("Storage_Path"));
-            mDatasetFolderPathRemote = Path.Combine(svrPath, taskParams.GetParam("Folder"));
+            var datasetDirectory = taskParams.GetParam(taskParams.HasParam("Directory") ? "Directory" : "Folder");
+
+            mDatasetFolderPathRemote = Path.Combine(svrPath, datasetDirectory);
 
         }
 

@@ -849,7 +849,9 @@ namespace Pacifica.DMS_Metadata
                 driveLocation = Utilities.GetDictionaryValue(taskParams, "Storage_Vol", string.Empty);
 
             // Construct the dataset directory path
-            var datasetDirectory = Utilities.GetDictionaryValue(taskParams, "Folder", string.Empty);
+            var legacyFolderParam = Utilities.GetDictionaryValue(taskParams, "Folder", string.Empty);
+            var datasetDirectory = Utilities.GetDictionaryValue(taskParams, "Directory", legacyFolderParam);
+
             var sourceDirectoryBase = Path.Combine(Utilities.GetDictionaryValue(taskParams, "Storage_Path", string.Empty), datasetDirectory);
             var sourceDirectoryPath = Path.Combine(driveLocation, sourceDirectoryBase);
 
@@ -868,7 +870,8 @@ namespace Pacifica.DMS_Metadata
 
             if (archiveMode == ArchiveModes.update)
             {
-                uploadMetadata.SubFolder = Utilities.GetDictionaryValue(taskParams, "OutputFolderName", string.Empty);
+                var legacyOutputFolderParam = Utilities.GetDictionaryValue(taskParams, "OutputFolderName", string.Empty);
+                uploadMetadata.SubFolder = Utilities.GetDictionaryValue(taskParams, "OutputDirectoryName", legacyOutputFolderParam);
 
                 if (string.IsNullOrWhiteSpace(uploadMetadata.SubFolder))
                 {
@@ -898,7 +901,12 @@ namespace Pacifica.DMS_Metadata
                     {
                         // Case mis-match; update uploadMetadata and taskParams
                         uploadMetadata.SubFolder = matchingDirectory.Name;
-                        taskParams["OutputFolderName"] = matchingDirectory.Name;
+
+                        if (taskParams.ContainsKey("OutputFolderName"))
+                            taskParams["OutputFolderName"] = matchingDirectory.Name;
+
+                        if (taskParams.ContainsKey("OutputDirectoryName"))
+                            taskParams["OutputDirectoryName"] = matchingDirectory.Name;
                     }
 
                     sourceDirectoryPath = matchingDirectory.FullName;

@@ -154,7 +154,10 @@ namespace DatasetArchivePlugin
             }
 
             // Path to dataset on storage server
-            mDSNamePath = Path.Combine(Path.Combine(baseStoragePath, mTaskParams.GetParam("Storage_Path")), mTaskParams.GetParam("Folder"));
+            var storagePath = mTaskParams.GetParam("Storage_Path");
+            var datasetDirectory = mTaskParams.GetParam(mTaskParams.HasParam("Directory") ? "Directory" : "Folder");
+
+            mDSNamePath = Path.Combine(Path.Combine(baseStoragePath, storagePath, datasetDirectory));
 
             // Verify dataset is in specified location
             if (!VerifyDSPresent(mDSNamePath))
@@ -197,18 +200,18 @@ namespace DatasetArchivePlugin
                 };
 
                 spCmd.Parameters.Add("@Return", SqlDbType.Int).Direction = ParameterDirection.ReturnValue;
-                spCmd.Parameters.Add("@DatasetName", SqlDbType.VarChar, 128).Value = mDatasetName;
-                var resultsFolderParam = spCmd.Parameters.Add("@ResultsFolderName", SqlDbType.VarChar, 128);
-                spCmd.Parameters.Add("@AllowBlankResultsFolder", SqlDbType.TinyInt).Value = 0;
-                spCmd.Parameters.Add("@PushDatasetToMyEMSL", SqlDbType.TinyInt).Value = 1;
-                spCmd.Parameters.Add("@PushDatasetRecursive", SqlDbType.TinyInt).Value = 1;
+                spCmd.Parameters.Add("@datasetName", SqlDbType.VarChar, 128).Value = mDatasetName;
+                var resultsDirectoryParam = spCmd.Parameters.Add("@resultsDirectoryName", SqlDbType.VarChar, 128);
+                spCmd.Parameters.Add("@allowBlankResultsDirectory", SqlDbType.TinyInt).Value = 0;
+                spCmd.Parameters.Add("@pushDatasetToMyEMSL", SqlDbType.TinyInt).Value = 1;
+                spCmd.Parameters.Add("@pushDatasetRecursive", SqlDbType.TinyInt).Value = 1;
                 spCmd.Parameters.Add("@infoOnly", SqlDbType.TinyInt).Value = 0;
                 spCmd.Parameters.Add("@message", SqlDbType.VarChar, 512).Direction = ParameterDirection.Output;
 
                 var successCount = 0;
                 foreach (var subdirectoryName in subdirectoryNames)
                 {
-                    resultsFolderParam.Value = subdirectoryName;
+                    resultsDirectoryParam.Value = subdirectoryName;
 
                     var datasetAndDirectory = string.Format("dataset {0}, subdirectory {1}", mDatasetName, subdirectoryName);
 

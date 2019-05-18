@@ -200,12 +200,14 @@ namespace DatasetInfoPlugin
             var retData = new clsToolReturnData();
 
             // Always use client perspective for the source directory (allows MSFileInfoScanner to run from any CTM)
-            var sourceDirectory = mTaskParams.GetParam("Storage_Vol_External");
+            var remoteSharePath = mTaskParams.GetParam("Storage_Vol_External");
 
             // Set up the rest of the paths
-            sourceDirectory = Path.Combine(sourceDirectory, mTaskParams.GetParam("Storage_Path"));
-            sourceDirectory = Path.Combine(sourceDirectory, mTaskParams.GetParam("Folder"));
-            var outputPathBase = Path.Combine(sourceDirectory, "QC");
+            var sourceDirectoryBase = Path.Combine(remoteSharePath, mTaskParams.GetParam("Storage_Path"));
+            var datasetDirectory = mTaskParams.GetParam(mTaskParams.HasParam("Directory") ? "Directory" : "Folder");
+
+            var datasetDirectoryPath = Path.Combine(sourceDirectoryBase, datasetDirectory);
+            var outputPathBase = Path.Combine(datasetDirectoryPath, "QC");
 
             // Set up the params for the MS file scanner
             mMsFileScanner.DSInfoDBPostingEnabled = false;
@@ -227,7 +229,7 @@ namespace DatasetInfoPlugin
             mMsFileScanner.PlotWithPython = true;
 
             // Get the input file name
-            var fileOrDirectoryNames = GetDataFileOrDirectoryName(sourceDirectory, out var skipPlots, out var rawDataType, out var instrumentClass, out var brukerDotDBaf);
+            var fileOrDirectoryNames = GetDataFileOrDirectoryName(datasetDirectoryPath, out var skipPlots, out var rawDataType, out var instrumentClass, out var brukerDotDBaf);
 
             if (fileOrDirectoryNames.Count > 0 && fileOrDirectoryNames.First() == UNKNOWN_FILE_TYPE)
             {
@@ -324,7 +326,7 @@ namespace DatasetInfoPlugin
             {
                 mFailedScanCount = 0;
 
-                var remoteFileOrDirectoryPath = Path.Combine(sourceDirectory, datasetFileOrDirectory);
+                var remoteFileOrDirectoryPath = Path.Combine(datasetDirectoryPath, datasetFileOrDirectory);
 
                 string pathToProcess;
                 bool fileCopiedLocally;

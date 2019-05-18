@@ -244,8 +244,8 @@ namespace ArchiveVerifyPlugin
             try
             {
 
-                var transferFolderPathBase = mTaskParams.GetParam("TransferFolderPath", string.Empty);
-                if (!ParameterDefined("TransferFolderPath", transferFolderPathBase))
+                var transferDirectoryPathBase = mTaskParams.GetParam("TransferDirectoryPath", mTaskParams.GetParam("TransferFolderPath"));
+                if (!ParameterDefined("TransferDirectoryPath", transferDirectoryPathBase))
                     return false;
 
                 if (string.IsNullOrEmpty(mDataset))
@@ -255,13 +255,13 @@ namespace ArchiveVerifyPlugin
                     return false;
                 }
 
-                var transferFolderPath = Path.Combine(transferFolderPathBase, mDataset);
+                var transferDirectoryPath = Path.Combine(transferDirectoryPathBase, mDataset);
 
                 var jobNumber = mTaskParams.GetParam("Job", string.Empty);
                 if (!ParameterDefined("Job", jobNumber))
                     return false;
 
-                var fiMetadataFile = new FileInfo(Path.Combine(transferFolderPath, Utilities.GetMetadataFilenameForJob(jobNumber)));
+                var fiMetadataFile = new FileInfo(Path.Combine(transferDirectoryPath, Utilities.GetMetadataFilenameForJob(jobNumber)));
 
                 if (fiMetadataFile.Exists)
                 {
@@ -950,7 +950,7 @@ namespace ArchiveVerifyPlugin
                     return false;
                 }
 
-                var subDir = mTaskParams.GetParam("OutputFolderName", string.Empty);
+                var subDir = mTaskParams.GetParam("OutputDirectoryName", mTaskParams.GetParam("OutputFolderName"));
 
                 // Find files tracked by MyEMSL for this dataset
                 var remoteFiles = reader.FindFilesByDatasetID(mDatasetID, subDir);
