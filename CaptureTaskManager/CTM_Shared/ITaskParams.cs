@@ -6,6 +6,7 @@
 //*********************************************************************************************************
 
 // ReSharper disable UnusedMember.Global
+
 namespace CaptureTaskManager
 {
     /// <summary>
@@ -27,6 +28,8 @@ namespace CaptureTaskManager
         bool GetParam(string name, bool valueIfMissing);
         float GetParam(string name, float valueIfMissing);
         int GetParam(string name, int valueIfMissing);
+
+        bool HasParam(string name);
 
         bool AddAdditionalParameter(string paramName, string paramValue);
         void SetParam(string keyName, string value);
