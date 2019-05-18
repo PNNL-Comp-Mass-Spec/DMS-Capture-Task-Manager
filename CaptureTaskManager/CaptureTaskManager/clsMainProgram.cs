@@ -367,8 +367,19 @@ namespace CaptureTaskManager
             var logFile = new FileInfo(relativeLogFilePath);
             ShowTrace("Initializing log file " + PathUtils.CompactPathString(logFile.FullName, 60));
 
-            var appVersion = Assembly.GetEntryAssembly().GetName().Version;
-            var startupMsg = "=== Started Capture Task Manager V" + appVersion + " ===== ";
+            var entryAssembly = Assembly.GetEntryAssembly();
+            string startupMsg;
+
+            if (entryAssembly == null)
+            {
+                startupMsg = "=== Started Capture Task Manager (unknown version) ===== ";
+            }
+            else
+            {
+                var appVersion = entryAssembly.GetName().Version;
+                startupMsg = "=== Started Capture Task Manager V" + appVersion + " ===== ";
+            }
+
             LogMessage(startupMsg);
 
             var configFileName = mMgrSettings.GetParam("ConfigFileName");
