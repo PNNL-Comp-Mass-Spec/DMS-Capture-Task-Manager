@@ -454,7 +454,7 @@ namespace Pacifica.Core
 
             foreach (var domainName in trustedDomains)
             {
-                if (domainToValidate.IndexOf(domainName, StringComparison.CurrentCultureIgnoreCase) >= 0)
+                if (domainToValidate.IndexOf(domainName, StringComparison.OrdinalIgnoreCase) >= 0)
                     return true;
             }
 

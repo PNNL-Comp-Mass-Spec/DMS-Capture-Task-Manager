@@ -589,7 +589,7 @@ namespace DatasetIntegrityPlugin
                 // Older datasets may have had their larger files purged, which will cause the AgilentToUIMFConverter to fail
 
                 var binFiles = dotDDirectoryPathRemote.GetFiles("*.bin", SearchOption.AllDirectories).ToList();
-                var fileNames = new SortedSet<string>(StringComparer.CurrentCultureIgnoreCase);
+                var fileNames = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
                 foreach (var file in binFiles)
                     fileNames.Add(file.Name);
@@ -1030,14 +1030,14 @@ namespace DatasetIntegrityPlugin
                 return false;
             }
 
-            if (methodDirectories[0].Name.IndexOf("_neg", 0, StringComparison.CurrentCultureIgnoreCase) >= 0 &&
-                methodDirectories[1].Name.IndexOf("_pos", 0, StringComparison.CurrentCultureIgnoreCase) >= 0)
+            if (methodDirectories[0].Name.IndexOf("_neg", 0, StringComparison.OrdinalIgnoreCase) >= 0 &&
+                methodDirectories[1].Name.IndexOf("_pos", 0, StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 return true;
             }
 
-            if (methodDirectories[1].Name.IndexOf("_neg", 0, StringComparison.CurrentCultureIgnoreCase) >= 0 &&
-                methodDirectories[0].Name.IndexOf("_pos", 0, StringComparison.CurrentCultureIgnoreCase) >= 0)
+            if (methodDirectories[1].Name.IndexOf("_neg", 0, StringComparison.OrdinalIgnoreCase) >= 0 &&
+                methodDirectories[0].Name.IndexOf("_pos", 0, StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 return true;
             }
@@ -2531,7 +2531,7 @@ namespace DatasetIntegrityPlugin
                         if (string.IsNullOrEmpty(dataLine))
                             continue;
 
-                        if (string.Equals(dataLine.Trim(), "productTrialKey=true", StringComparison.CurrentCultureIgnoreCase))
+                        if (string.Equals(dataLine.Trim(), "productTrialKey=true", StringComparison.OrdinalIgnoreCase))
                         {
                             settingsData.Add("productSerialKey=wlkXZsvC-miP6A2KH-DgAuTix2");
                             settingsData.Add("productTrialKey=false");

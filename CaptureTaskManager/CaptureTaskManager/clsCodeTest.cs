@@ -11,7 +11,7 @@ namespace CaptureTaskManager
         {
             Console.WriteLine(@"Code test mode");
 
-            var credentials = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+            var credentials = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             var sharePath = @"\\15T_FTICR.bionet\ProteomicsData";
 
