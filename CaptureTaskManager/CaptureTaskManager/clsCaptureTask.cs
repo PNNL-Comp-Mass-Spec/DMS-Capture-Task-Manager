@@ -136,6 +136,16 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
+        /// Check for the existence of a job task parameter
+        /// </summary>
+        /// <param name="name">Parameter name</param>
+        /// <returns>True if the parameter is defined, false if not</returns>
+        public bool HasParam(string name)
+        {
+            return mJobParams.ContainsKey(name);
+        }
+
+        /// <summary>
         /// Adds (or updates) a parameter
         /// </summary>
         /// <param name="paramName">Name of parameter</param>
