@@ -23,37 +23,6 @@ namespace CaptureToolPlugin
     {
 
         #region "Enums"
-        public enum RawDSTypes
-        {
-            /// <summary>
-            /// Unknown type
-            /// </summary>
-            None,
-            /// <summary>
-            /// Instrument file
-            /// </summary>
-            File,
-            /// <summary>
-            /// Instrument directory without an extension
-            /// </summary>
-            DirectoryNoExt,
-            /// <summary>
-            /// Instrument directory with an extension, like .D or .Raw
-            /// </summary>
-            DirectoryExt,
-            /// <summary>
-            /// Bruker imaging data
-            /// </summary>
-            BrukerImaging,
-            /// <summary>
-            /// Bruker spot data
-            /// </summary>
-            BrukerSpot,
-            /// <summary>
-            /// Mix of file types
-            /// </summary>
-            MultiFile
-        }
 
         private enum DatasetDirectoryState
         {
@@ -102,6 +71,7 @@ namespace CaptureToolPlugin
         private NetworkConnection mShareConnectorDotNET;
         private ConnectionType mConnectionType = ConnectionType.NotConnected;
 
+        private readonly DatasetFileSearchTool mDatasetFileSearchTool;
         private readonly FileTools mFileTools;
 
         DateTime mLastProgressUpdate = DateTime.Now;
@@ -111,11 +81,6 @@ namespace CaptureToolPlugin
         private bool mFileCopyEventsWired;
 
         string mErrorMessage = string.Empty;
-
-        /// <summary>
-        /// List of characters that should be automatically replaced if doing so makes the filename match the dataset name
-        /// </summary>
-        private readonly Dictionary<char, string> mFilenameAutoFixes;
 
         #endregion
 
@@ -176,10 +141,8 @@ namespace CaptureToolPlugin
                 mFileTools.ResumingFileCopy += OnResumingFileCopy;
             }
 
-            mFilenameAutoFixes = new Dictionary<char, string> {
-                { ' ', "_"},
-                { '%', "pct"},
-                { '.', "pt"}};
+            mDatasetFileSearchTool = new DatasetFileSearchTool();
+            RegisterEvents(mDatasetFileSearchTool);
         }
 
         #endregion
@@ -197,7 +160,7 @@ namespace CaptureToolPlugin
             var candidateFiles = new List<FileSystemInfo>();
 
             // Find items matching "* *" and "*%*" and "*.*"
-            foreach (var item in mFilenameAutoFixes)
+            foreach (var item in mDatasetFileSearchTool.FilenameAutoFixes)
             {
                 if (item.Key == '.')
                 {
@@ -224,7 +187,7 @@ namespace CaptureToolPlugin
 
                 processedFiles.Add(datasetFileOrDirectory.FullName);
 
-                var updatedName = AutoFixFilename(datasetName, datasetFileOrDirectory.Name, mFilenameAutoFixes);
+                var updatedName = mDatasetFileSearchTool.AutoFixFilename(datasetName, datasetFileOrDirectory.Name);
 
                 if (string.Equals(datasetFileOrDirectory.Name, updatedName, StringComparison.OrdinalIgnoreCase))
                 {
@@ -272,42 +235,6 @@ namespace CaptureToolPlugin
                 }
 
             }
-        }
-
-        /// <summary>
-        /// If the filename contains any of the characters in charsToFind, replace the character with the given replacement string
-        /// Next compare to datasetName.  If a match, return the updated filename, otherwise return the original filename
-        /// </summary>
-        /// <param name="datasetName">Dataset name</param>
-        /// <param name="fileName">File name</param>
-        /// <param name="charsToFind">Keys are characters to find; values are the replacement text</param>
-        /// <returns>Optimal filename to use</returns>
-        /// <remarks>When searching for a period, only the base filename is examined</remarks>
-        private string AutoFixFilename(string datasetName, string fileName, Dictionary<char, string> charsToFind)
-        {
-            var matchFound = charsToFind.Keys.Any(item => fileName.IndexOf(item) >= 0);
-            if (!matchFound)
-                return fileName;
-
-            var fileExtension = Path.GetExtension(fileName);
-            var updatedFileName = string.Copy(fileName);
-
-            foreach (var item in charsToFind)
-            {
-                var baseName = Path.GetFileNameWithoutExtension(updatedFileName);
-
-                if (baseName.IndexOf(item.Key) < 0)
-                    continue;
-
-                updatedFileName = baseName.Replace(item.Key.ToString(), item.Value) + fileExtension;
-            }
-
-            if (string.Equals(Path.GetFileNameWithoutExtension(updatedFileName), datasetName, StringComparison.OrdinalIgnoreCase))
-            {
-                return updatedFileName;
-            }
-
-            return fileName;
         }
 
         /// <summary>
@@ -934,189 +861,6 @@ namespace CaptureToolPlugin
         }
 
         /// <summary>
-        /// Determines if raw dataset exists as a single file, directory with same name as dataset,
-        /// or directory with dataset name + extension.
-        /// </summary>
-        /// <param name="sourceDirectoryPath">Full path to source directory on the instrument</param>
-        /// <param name="datasetName">Dataset name</param>
-        /// <param name="instrumentClass">Instrument class for dataset to be located</param>
-        /// <returns>clsDatasetInfo object containing info on found dataset</returns>
-        private clsDatasetInfo GetRawDSType(
-            string sourceDirectoryPath,
-            string datasetName,
-            clsInstrumentClassInfo.eInstrumentClass instrumentClass)
-        {
-
-            bool lookForDatasetFile;
-
-            var datasetInfo = new clsDatasetInfo(datasetName);
-
-            var sourceDirectory = new DirectoryInfo(sourceDirectoryPath);
-
-            // Verify that the source directory exists on the instrument
-            if (!sourceDirectory.Exists)
-            {
-                LogError("Source directory not found: [" + sourceDirectory.FullName + "]");
-
-                datasetInfo.DatasetType = RawDSTypes.None;
-                return datasetInfo;
-            }
-
-            switch (instrumentClass)
-            {
-                case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging:
-                case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging_V2:
-                case clsInstrumentClassInfo.eInstrumentClass.IMS_Agilent_TOF:
-                case clsInstrumentClassInfo.eInstrumentClass.Micromass_QTOF:
-                case clsInstrumentClassInfo.eInstrumentClass.Waters_IMS:
-                    // Preferentially capture dataset directories
-                    // If a directory is not found, will instead look for a dataset file
-                    lookForDatasetFile = false;
-                    break;
-                default:
-                    // First look for a file with name datasetName, if not found, look for a directory
-                    lookForDatasetFile = true;
-                    break;
-            }
-
-            var expectingDatasetFile = lookForDatasetFile;
-
-            // If lookForDatasetFile is true, the following logic is followed:
-            // When i is 1, search for remote files
-            // When i is 2, search for remote files, but replace spaces with underscores
-            // When i is 3, search for remote directories
-            // When i is 4, search for remote directories, but replace spaces with underscores
-
-            // If lookForDatasetFile is false, we first look for directories
-
-            for (var i = 1; i <= 4; i++)
-            {
-                if (i == 3)
-                {
-                    // Switch from files to directories (or vice versa)
-                    lookForDatasetFile = !lookForDatasetFile;
-                }
-
-                var replaceInvalidCharacters = i % 2 == 0;
-
-                if (lookForDatasetFile)
-                {
-                    // Get all files that match the dataset name
-                    var foundFiles = new List<FileInfo>();
-
-                    if (replaceInvalidCharacters)
-                    {
-                        foreach (var candidateItem in sourceDirectory.GetFiles("*"))
-                        {
-                            var updatedName = ReplaceInvalidChars(Path.GetFileNameWithoutExtension(candidateItem.Name));
-
-                            if (updatedName.Equals(datasetName, StringComparison.OrdinalIgnoreCase))
-                            {
-                                foundFiles.Add(candidateItem);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        foreach (var remoteFile in sourceDirectory.GetFiles(datasetName + ".*"))
-                        {
-                            foundFiles.Add(remoteFile);
-                        }
-                    }
-
-                    if (foundFiles.Count > 0)
-                    {
-                        datasetInfo.FileList = foundFiles;
-
-                        if (datasetInfo.FileCount == 1)
-                        {
-                            datasetInfo.FileOrDirectoryName = datasetInfo.FileList[0].Name;
-                            datasetInfo.DatasetType = RawDSTypes.File;
-                        }
-                        else
-                        {
-                            datasetInfo.FileOrDirectoryName = datasetName;
-                            datasetInfo.DatasetType = RawDSTypes.MultiFile;
-                            var fileNames = foundFiles.Select(file => file.Name).ToList();
-                            LogWarning(string.Format(
-                                "Dataset name matched multiple files for iteration {0} in directory {1}: {2}",
-                                i,
-                                sourceDirectory.FullName,
-                                string.Join(", ", fileNames.Take(5))));
-                        }
-
-                        return datasetInfo;
-                    }
-                }
-                else
-                {
-                    // Get all directories that match the dataset name
-                    var subdirectories = sourceDirectory.GetDirectories();
-                    foreach (var subdirectory in subdirectories)
-                    {
-                        var directoryNameWithoutExtension = Path.GetFileNameWithoutExtension(subdirectory.Name);
-                        string directoryNameToCheck;
-
-                        if (replaceInvalidCharacters)
-                        {
-                            directoryNameToCheck = ReplaceInvalidChars(directoryNameWithoutExtension);
-                        }
-                        else
-                        {
-                            directoryNameToCheck = directoryNameWithoutExtension;
-                        }
-
-                        if (!string.Equals(directoryNameToCheck, datasetName, StringComparison.OrdinalIgnoreCase))
-                        {
-                            continue;
-                        }
-
-                        if (string.IsNullOrEmpty(Path.GetExtension(subdirectory.Name)))
-                        {
-                            // Found a directory that has no extension
-                            datasetInfo.FileOrDirectoryName = subdirectory.Name;
-
-                            // Check the instrument class to determine the appropriate return type
-                            switch (instrumentClass)
-                            {
-                                case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging:
-                                    datasetInfo.DatasetType = RawDSTypes.BrukerImaging;
-                                    break;
-                                case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Spot:
-                                    datasetInfo.DatasetType = RawDSTypes.BrukerSpot;
-                                    break;
-                                default:
-                                    datasetInfo.DatasetType = RawDSTypes.DirectoryNoExt;
-                                    break;
-                            }
-                        }
-                        else
-                        {
-                            // Directory name has an extension
-                            datasetInfo.FileOrDirectoryName = subdirectory.Name;
-                            datasetInfo.DatasetType = RawDSTypes.DirectoryExt;
-                        }
-
-                        if (expectingDatasetFile)
-                        {
-                            LogMessage(string.Format(
-                                           "Dataset name did not match a file, but it did match directory {0}, dataset type is {1}",
-                                           datasetInfo.FileOrDirectoryName,
-                                           datasetInfo.DatasetType));
-                        }
-
-                        return datasetInfo;
-                    }
-                }
-
-            }
-
-            // If we got to here, the raw dataset wasn't found (either as a file or a directory), so there was a problem
-            datasetInfo.DatasetType = RawDSTypes.None;
-            return datasetInfo;
-        }
-
-        /// <summary>
         /// Connect to a BioNet share using either mShareConnectorPRISM or mShareConnectorDotNET
         /// </summary>
         /// <param name="userName">Username</param>
@@ -1600,7 +1344,7 @@ namespace CaptureToolPlugin
 
             }
 
-            var datasetInfo = GetRawDSType(sourceDirectoryPath, datasetName, instrumentClass);
+            var datasetInfo = mDatasetFileSearchTool.FindDatasetFileOrDirectory(sourceDirectoryPath, datasetName, instrumentClass);
             var sourceType = datasetInfo.DatasetType;
 
             if (!string.Equals(datasetInfo.DatasetName, datasetName))
@@ -1617,7 +1361,7 @@ namespace CaptureToolPlugin
             retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
             bool sourceIsValid;
 
-            if (sourceType == RawDSTypes.None)
+            if (sourceType == DatasetInfo.RawDSTypes.None)
             {
                 // No dataset file or directory found
 
@@ -1676,29 +1420,29 @@ namespace CaptureToolPlugin
                 // Perform copy based on source type
                 switch (sourceType)
                 {
-                    case RawDSTypes.File:
+                    case DatasetInfo.RawDSTypes.File:
                         CaptureFile(out msg, retData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath, copyWithResume);
                         break;
 
-                    case RawDSTypes.MultiFile:
+                    case DatasetInfo.RawDSTypes.MultiFile:
                         CaptureMultiFile(out msg, retData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath, copyWithResume);
                         break;
 
-                    case RawDSTypes.DirectoryExt:
+                    case DatasetInfo.RawDSTypes.DirectoryExt:
                         CaptureDirectoryExt(out msg, retData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath, copyWithResume, instrumentClass, instName);
                         break;
 
-                    case RawDSTypes.DirectoryNoExt:
+                    case DatasetInfo.RawDSTypes.DirectoryNoExt:
                         CaptureDirectoryNoExt(out msg, retData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath,
                                            copyWithResume, instrumentClass);
                         break;
 
-                    case RawDSTypes.BrukerImaging:
+                    case DatasetInfo.RawDSTypes.BrukerImaging:
                         CaptureBrukerImaging(out msg, retData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath,
                                              copyWithResume);
                         break;
 
-                    case RawDSTypes.BrukerSpot:
+                    case DatasetInfo.RawDSTypes.BrukerSpot:
                         CaptureBrukerSpot(out msg, retData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath);
                         break;
 
@@ -1887,7 +1631,7 @@ namespace CaptureToolPlugin
                     var sourceFilePath = Path.Combine(sourceDirectoryPath, fileName);
                     var sourceFileName = Path.GetFileName(sourceFilePath);
 
-                    var targetFileName = AutoFixFilename(datasetName, fileName, mFilenameAutoFixes);
+                    var targetFileName = mDatasetFileSearchTool.AutoFixFilename(datasetName, fileName);
                     var targetFilePath = Path.Combine(datasetDirectoryPath, targetFileName);
 
                     if (!string.Equals(sourceFileName, targetFileName, StringComparison.OrdinalIgnoreCase))
@@ -3490,23 +3234,6 @@ namespace CaptureToolPlugin
                 if (mTraceMode)
                     clsToolRunnerBase.ShowTraceMessage(mErrorMessage);
             }
-        }
-
-        /// <summary>
-        /// Replace invalid characters with substitutes
-        /// </summary>
-        /// <param name="searchText"></param>
-        /// <returns></returns>
-        private string ReplaceInvalidChars(string searchText)
-        {
-            var updatedText = string.Copy(searchText);
-
-            foreach (var item in mFilenameAutoFixes)
-            {
-                updatedText = updatedText.Replace(item.Key.ToString(), item.Value);
-            }
-
-            return updatedText;
         }
 
         /// <summary>
