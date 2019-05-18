@@ -19,7 +19,7 @@ namespace Pacifica.DMS_Metadata
         public long FileID { get; }
 
         /// <summary>
-        /// File hash (typically Sha-1)
+        /// File hash (typically SHA-1)
         /// </summary>
         public string HashSum { get; }
 
