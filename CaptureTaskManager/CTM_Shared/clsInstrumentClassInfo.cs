@@ -4,7 +4,7 @@
 namespace CaptureTaskManager
 {
     // Used in the DatasetIntegrityPlugin and elsewhere
-    public class clsInstrumentClassInfo
+    public static class clsInstrumentClassInfo
     {
         #region "Raw Data Type Constants"
 

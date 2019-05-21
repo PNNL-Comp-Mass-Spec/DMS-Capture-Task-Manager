@@ -14,7 +14,7 @@ namespace CaptureTaskManager
 {
     public sealed class NetworkConnection : IDisposable
     {
-        readonly string _networkName;
+        private readonly string _networkName;
 
         public NetworkConnection(string networkName,
                                  NetworkCredential credentials)
