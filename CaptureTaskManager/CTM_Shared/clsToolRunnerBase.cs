@@ -991,7 +991,6 @@ namespace CaptureTaskManager
 
         #endregion
 
-
         #region "Event Handlers"
 
         private void FileTools_LockQueueTimedOut(string sourceFilePath, string targetFilePath, double waitTimeMinutes)

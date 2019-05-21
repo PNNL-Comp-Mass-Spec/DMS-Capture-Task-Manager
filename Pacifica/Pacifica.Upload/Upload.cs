@@ -597,7 +597,6 @@ namespace Pacifica.Upload
             }
             else if (uploadMetadata.DataPackageID > 0)
             {
-
                 AppendKVMetadata(metadataObject, "omics.dms.instrument", uploadMetadata.DMSInstrumentName);
 
                 AppendKVMetadata(metadataObject, "omics.dms.instrument_id", eusInfo.EUSInstrumentID);
