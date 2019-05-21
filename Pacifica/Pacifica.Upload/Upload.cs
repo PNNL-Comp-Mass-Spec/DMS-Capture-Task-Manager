@@ -51,6 +51,7 @@ namespace Pacifica.Upload
             /// <summary>
             /// EUS proposal number
             /// </summary>
+            /// <remarks>As of May 2019, these are now referred to as projects, not proposals</remarks>
             public string EUSProposalID;
 
             /// <summary>
@@ -482,7 +483,7 @@ namespace Pacifica.Upload
         private static void AppendTransactionMetadata(ICollection<Dictionary<string, object>> metadataObject, string columnName, string value)
         {
             // Example destination table names:
-            //  Transactions.proposal
+            //  Transactions.project
             //  Transactions.submitter
             metadataObject.Add(new Dictionary<string, object> {
                 { "destinationTable", "Transactions." + columnName },
@@ -610,7 +611,7 @@ namespace Pacifica.Upload
 
             // Append the required metadata
             AppendTransactionMetadata(metadataObject, "instrument", eusInfo.EUSInstrumentID);
-            AppendTransactionMetadata(metadataObject, "proposal", eusInfo.EUSProposalID);
+            AppendTransactionMetadata(metadataObject, "project", eusInfo.EUSProposalID);
             AppendTransactionMetadata(metadataObject, "submitter", eusInfo.EUSUploaderID);
 
             // Append the files
@@ -680,7 +681,7 @@ namespace Pacifica.Upload
 
             var transactionValueLookup = new Dictionary<string, string>
             {
-                {"Transactions.proposal", "EUS_Proposal_ID"},
+                {"Transactions.project", "EUS_Proposal_ID"},
                 {"Transactions.submitter", "EUS_User_ID"},
                 {"Transactions.instrument", "EUS_Instrument_ID"}
             };
