@@ -15,7 +15,7 @@ namespace CaptureTaskManager
     /// <summary>
     /// Base class for handling task-related data
     /// </summary>
-    abstract class clsDbTask : clsLoggerBase
+    internal abstract class clsDbTask : clsLoggerBase
     {
 
         #region "Constants"
@@ -281,7 +281,7 @@ namespace CaptureTaskManager
 
         #region "Event handlers"
 
-        void CaptureTaskDBProcedureExecutor_DBErrorEvent(string message, Exception ex)
+        private void CaptureTaskDBProcedureExecutor_DBErrorEvent(string message, Exception ex)
         {
             var logToDb = message.Contains("permission was denied");
 
