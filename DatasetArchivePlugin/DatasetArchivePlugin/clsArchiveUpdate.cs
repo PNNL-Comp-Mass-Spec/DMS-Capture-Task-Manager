@@ -72,8 +72,7 @@ namespace DatasetArchivePlugin
 
             if (mTaskParams.GetParam("DebugTestTar", false))
                 debugMode = Uploader.TarStreamUploader.UploadDebugMode.CreateTarLocal;
-            else
-                if (mTaskParams.GetParam("MyEMSLOffline", false))
+            else if (mTaskParams.GetParam("MyEMSLOffline", false))
                 debugMode = Uploader.TarStreamUploader.UploadDebugMode.MyEMSLOfflineMode;
 
             if (debugMode != Uploader.TarStreamUploader.UploadDebugMode.DebugDisabled)
@@ -107,7 +106,7 @@ namespace DatasetArchivePlugin
                 var subDirName = mTaskParams.GetParam("OutputDirectoryName", mTaskParams.GetParam("OutputFolderName"));
 
                 // Finished with this update task
-                statusMessage = string.Format("Completed push to MyEMSL, dataset {0}, directory {1}, job {2}", 
+                statusMessage = string.Format("Completed push to MyEMSL, dataset {0}, directory {1}, job {2}",
                                               mDatasetName, subDirName, mTaskParams.GetParam("Job"));
                 OnDebugEvent(statusMessage);
             }
