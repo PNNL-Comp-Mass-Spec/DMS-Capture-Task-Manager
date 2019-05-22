@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26403.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28917.181
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CaptureTaskManager_Debug", "CaptureTaskManager\CaptureTaskManager_Debug.csproj", "{93485E0E-3A78-4118-B36B-BA71334752AF}"
 EndProject
@@ -52,6 +52,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SrcFileRenamePlugin", "..\S
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pacifica.DMS_Metadata", "..\Pacifica\Pacifica.DMS_Metadata\Pacifica.DMS_Metadata.csproj", "{EDACD83A-AA92-4481-BB69-A28C67A6C7F9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pacifica.Upload", "..\Pacifica\Pacifica.Upload\Pacifica.Upload.csproj", "{4E0A4851-EB71-491C-8027-4AF7B6A830BB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -106,6 +108,10 @@ Global
 		{EDACD83A-AA92-4481-BB69-A28C67A6C7F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EDACD83A-AA92-4481-BB69-A28C67A6C7F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EDACD83A-AA92-4481-BB69-A28C67A6C7F9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4E0A4851-EB71-491C-8027-4AF7B6A830BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4E0A4851-EB71-491C-8027-4AF7B6A830BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4E0A4851-EB71-491C-8027-4AF7B6A830BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4E0A4851-EB71-491C-8027-4AF7B6A830BB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
