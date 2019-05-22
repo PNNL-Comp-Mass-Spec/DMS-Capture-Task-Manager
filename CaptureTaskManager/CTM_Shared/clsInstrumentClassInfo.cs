@@ -20,7 +20,7 @@ namespace CaptureTaskManager
         // Waters Synapt data
         public const string RAW_DATA_TYPE_DOT_RAW_FOLDER = "dot_raw_folder";
 
-        // Finnigan ion trap/LTQ-FT data
+        // Thermo ion trap/LTQ-FT data
         public const string RAW_DATA_TYPE_DOT_RAW_FILES = "dot_raw_files";
 
         // Agilent/QSTAR TOF data
