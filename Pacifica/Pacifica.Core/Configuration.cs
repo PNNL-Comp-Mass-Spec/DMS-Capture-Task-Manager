@@ -24,6 +24,7 @@ namespace Pacifica.Core
         /// <summary>
         /// Cart Server host name on the production server
         /// </summary>
+        [Obsolete("Old cart mechanism")]
         public const string DEFAULT_CART_SERVER_HOST_NAME = "cart.my.emsl.pnl.gov";
 
         /// <summary>
@@ -95,11 +96,13 @@ namespace Pacifica.Core
         /// <summary>
         /// Server for downloading files via a cart
         /// </summary>
+        [Obsolete("Old cart mechanism")]
         public string CartServerHostName { get; set; }
 
         /// <summary>
         /// Cart download server, default https://cart.my.emsl.pnl.gov
         /// </summary>
+        [Obsolete("Old cart mechanism")]
         public string CartServerUri => Scheme + CartServerHostName;
 
         /// <summary>
@@ -162,7 +165,10 @@ namespace Pacifica.Core
 
             UseSecureDataTransfer = true;
 
+#pragma warning disable 618
             CartServerHostName = DEFAULT_CART_SERVER_HOST_NAME;
+#pragma warning restore 618
+
             FileServerHostName = DEFAULT_FILE_SERVER_HOST_NAME;
             IngestServerHostName = DEFAULT_INGEST_HOST_NAME;
             PolicyServerHostName = DEFAULT_POLICY_SERVER_HOST_NAME;
