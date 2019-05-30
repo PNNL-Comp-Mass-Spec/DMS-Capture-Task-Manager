@@ -67,7 +67,6 @@ namespace ArchiveVerifyPlugin
             {
                 // Examine the MyEMSL ingest status page
                 success = CheckUploadStatus(out statusNum, out ingestStepsCompleted, out fatalError);
-
             }
             catch (Exception ex)
             {
@@ -167,13 +166,17 @@ namespace ArchiveVerifyPlugin
 
         }
 
+        /// <summary>
+        /// Examine the upload status
+        /// If not complete, this manager will return completionCode CLOSEOUT_NOT_READY (2)
+        /// which will tell the DMS_Capture DB to reset the task to state 2 and bump up the Next_Try value by 30 minutes
+        /// </summary>
+        /// <param name="statusNum"></param>
+        /// <param name="ingestStepsCompleted"></param>
+        /// <param name="fatalError"></param>
+        /// <returns></returns>
         private bool CheckUploadStatus(out int statusNum, out byte ingestStepsCompleted, out bool fatalError)
         {
-
-            // Examine the upload status
-            // If not complete, this manager will return completionCode CLOSEOUT_NOT_READY=2
-            // which will tell the DMS_Capture DB to reset the task to state 2 and bump up the Next_Try value by 30 minutes
-
             var statusURI = mTaskParams.GetParam("MyEMSL_Status_URI", string.Empty);
 
             if (string.IsNullOrEmpty(statusURI))
