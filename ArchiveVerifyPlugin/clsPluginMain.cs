@@ -115,6 +115,23 @@ namespace ArchiveVerifyPlugin
             else if (statusNum > 0)
             {
                 UpdateIngestStepsCompletedOneTask(statusNum, ingestStepsCompleted, 0, fatalError);
+                if (fatalError)
+                {
+                    if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
+                    {
+                        mRetData.CloseoutMsg = "UpdateIngestStepsCompletedOneTask reports a fatal error";
+                        mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    }
+                }
+                else
+                {
+                    mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
+                }
+            }
+            else
+            {
+                mRetData.CloseoutMsg = "StatusNum is zero";
+                mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
             if (success)
@@ -125,7 +142,6 @@ namespace ArchiveVerifyPlugin
 
                 // Note that stored procedure SetStepTaskComplete will update MyEMSL State values if mRetData.EvalCode = 5
                 mRetData.EvalCode = EnumEvalCode.EVAL_CODE_VERIFIED_IN_MYEMSL;
-
             }
             else
             {

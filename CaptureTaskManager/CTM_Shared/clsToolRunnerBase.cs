@@ -368,6 +368,7 @@ namespace CaptureTaskManager
 
             if (lookupError)
             {
+                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 retData.CloseoutMsg = errorMessage;
                 LogError(errorMessage + ", job " + job);
 
@@ -376,6 +377,7 @@ namespace CaptureTaskManager
 
             if (serverResponse.Keys.Count == 0)
             {
+                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 retData.CloseoutMsg = "Empty JSON server response";
                 LogError(retData.CloseoutMsg + ", job " + job);
                 return false;
