@@ -1126,7 +1126,7 @@ namespace DatasetIntegrityPlugin
 
             // Verify size of the DATA.MS file
             var dataFileSizeKB = GetFileSize(instrumentData.First());
-            if (dataFileSizeKB <= AGILENT_DATA_MS_FILE_MIN_SIZE_KB)
+            if (dataFileSizeKB < AGILENT_DATA_MS_FILE_MIN_SIZE_KB)
             {
                 ReportFileSizeTooSmall("DATA.MS", instrumentData.First().FullName, dataFileSizeKB, AGILENT_DATA_MS_FILE_MIN_SIZE_KB);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
@@ -1213,17 +1213,17 @@ namespace DatasetIntegrityPlugin
 
             // Verify size of the MSScan.bin file
             var msScanBinFileSizeKB = GetFileSize(msScanFile.First());
-            if (msScanBinFileSizeKB <= AGILENT_MS_SCAN_BIN_FILE_SMALL_SIZE_KB)
+            if (msScanBinFileSizeKB < AGILENT_MS_SCAN_BIN_FILE_SMALL_SIZE_KB)
             {
                 // Allow a small MSScan.bin file if the MSPeak.bin file is also small
                 var msPeakBinFileSizeKB = GetFileSize(msDataFile);
-                if (msPeakBinFileSizeKB <= AGILENT_MS_PEAK_BIN_FILE_MIN_SIZE_KB)
+                if (msPeakBinFileSizeKB < AGILENT_MS_PEAK_BIN_FILE_MIN_SIZE_KB)
                 {
                     ReportFileSizeTooSmall(msDataFile.Name, msDataFile.FullName, msPeakBinFileSizeKB, AGILENT_MS_PEAK_BIN_FILE_MIN_SIZE_KB);
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (msScanBinFileSizeKB <= AGILENT_MS_SCAN_BIN_FILE_MIN_SIZE_KB)
+                if (msScanBinFileSizeKB < AGILENT_MS_SCAN_BIN_FILE_MIN_SIZE_KB)
                 {
                     ReportFileSizeTooSmall("MSScan.bin", msScanFile.First().FullName, msScanBinFileSizeKB, AGILENT_MS_SCAN_BIN_FILE_MIN_SIZE_KB);
                     return EnumCloseOutType.CLOSEOUT_FAILED;
@@ -1234,9 +1234,9 @@ namespace DatasetIntegrityPlugin
                 // The MSScan.bin file is over 50 KB
                 // The MSPeak.bin file should be over 500 KB
                 var msPeakBinFileSizeKB = GetFileSize(msDataFile);
-                if (msPeakBinFileSizeKB <= AGILENT_MS_PEAK_BIN_FILE_SMALL_SIZE_KB)
+                if (msPeakBinFileSizeKB < AGILENT_MS_PEAK_BIN_FILE_SMALL_SIZE_KB)
                 {
-                    if (msPeakBinFileSizeKB <= AGILENT_MS_PEAK_BIN_FILE_MIN_SIZE_KB)
+                    if (msPeakBinFileSizeKB < AGILENT_MS_PEAK_BIN_FILE_MIN_SIZE_KB)
                     {
                         ReportFileSizeTooSmall(msDataFile.Name, msDataFile.FullName, msPeakBinFileSizeKB, AGILENT_MS_PEAK_BIN_FILE_MIN_SIZE_KB);
                         return EnumCloseOutType.CLOSEOUT_FAILED;
@@ -1537,7 +1537,7 @@ namespace DatasetIntegrityPlugin
 
             // Verify the size of the ser file
             dataFileSizeKB = GetFileSize(Path.Combine(serDirectoryPath, "ser"));
-            if (dataFileSizeKB <= 100)
+            if (dataFileSizeKB < 100)
             {
                 mRetData.EvalMsg = "Invalid dataset: ser file too small";
                 LogError(mRetData.EvalMsg);
@@ -1798,7 +1798,7 @@ namespace DatasetIntegrityPlugin
             {
                 // Verify size of the analysis.baf file
                 dataFileSizeKB = GetFileSize(bafFile.First());
-                if (dataFileSizeKB <= BAF_FILE_MIN_SIZE_KB)
+                if (dataFileSizeKB < BAF_FILE_MIN_SIZE_KB)
                 {
                     ReportFileSizeTooSmall("Analysis.baf", bafFile.First().FullName, dataFileSizeKB, BAF_FILE_MIN_SIZE_KB);
                     return EnumCloseOutType.CLOSEOUT_FAILED;
@@ -1843,7 +1843,7 @@ namespace DatasetIntegrityPlugin
                 else
                     minSizeKB = MCF_FILE_MIN_SIZE_KB;
 
-                if (dataFileSizeKB <= minSizeKB)
+                if (dataFileSizeKB < minSizeKB)
                 {
                     ReportFileSizeTooSmall(".MCF", mctFileName, dataFileSizeKB, minSizeKB);
                     return EnumCloseOutType.CLOSEOUT_FAILED;
@@ -1857,7 +1857,7 @@ namespace DatasetIntegrityPlugin
             {
                 // ser file found; verify its size
                 dataFileSizeKB = GetFileSize(serFile.First());
-                if (dataFileSizeKB <= SER_FILE_MIN_SIZE_KB)
+                if (dataFileSizeKB < SER_FILE_MIN_SIZE_KB)
                 {
                     // If on the 15T and the ser file is small but the .mcf file is not empty, then this is OK
                     if (!(string.Equals(instrumentName, "15T_FTICR", StringComparison.OrdinalIgnoreCase) && mcfFileSizeMax > 0))
@@ -1882,7 +1882,7 @@ namespace DatasetIntegrityPlugin
                 {
                     // fid file found; verify size
                     dataFileSizeKB = GetFileSize(fidFile.First());
-                    if (dataFileSizeKB <= FID_FILE_MIN_SIZE_KB)
+                    if (dataFileSizeKB < FID_FILE_MIN_SIZE_KB)
                     {
                         ReportFileSizeTooSmall("fid", fidFile.First().FullName, dataFileSizeKB, FID_FILE_MIN_SIZE_KB);
                         return EnumCloseOutType.CLOSEOUT_FAILED;
@@ -1959,7 +1959,7 @@ namespace DatasetIntegrityPlugin
             }
 
             dataFileSizeKB = GetFileSize(apexAcqMethod.First());
-            if (dataFileSizeKB <= ACQ_METHOD_FILE_MIN_SIZE_KB)
+            if (dataFileSizeKB < ACQ_METHOD_FILE_MIN_SIZE_KB)
             {
                 ReportFileSizeTooSmall("apexAcquisition.method", apexAcqMethod.First().FullName, dataFileSizeKB, ACQ_METHOD_FILE_MIN_SIZE_KB);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
