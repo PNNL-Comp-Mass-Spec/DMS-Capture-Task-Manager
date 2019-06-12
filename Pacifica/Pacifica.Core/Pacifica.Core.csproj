@@ -76,6 +76,8 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
+xcopy "$(TargetDir)Pacifica.Core.pdb" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
+
 xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
 xcopy "$(TargetDir)*.*" "$(ProjectDir)..\..\CaptureTaskManager\CaptureTaskManager\bin\Debug" /D /Y /I</PostBuildEvent>
   </PropertyGroup>
