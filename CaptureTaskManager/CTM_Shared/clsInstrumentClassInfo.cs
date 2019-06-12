@@ -41,26 +41,26 @@ namespace CaptureTaskManager
         // Shimadzu GC data
         public const string RAW_DATA_TYPE_DOT_QGD_FILES = "dot_qgd_files";
 
-        // 12T datasets acquired prior to 7/16/2010 use a Bruker data station and have an analysis.baf file, 0.ser folder, and a XMASS_Method.m subfolder with file apexAcquisition.method
+        // 12T datasets acquired prior to 7/16/2010 use a Bruker data station and have an analysis.baf file, 0.ser directory, and a XMASS_Method.m subdirectory with file apexAcquisition.method
         // Datasets will have an instrument name of 12T_FTICR and raw_data_type of "zipped_s_folders"
 
-        // 12T datasets acquired after 9/1/2010 use the Agilent data station, and thus have a .D folder
+        // 12T datasets acquired after 9/1/2010 use the Agilent data station, and thus have a .D directory
         // Datasets will have an instrument name of 12T_FTICR_B and raw_data_type of "bruker_ft"
         // 15T datasets also have raw_data_type "bruker_ft"
-        // Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a apexAcquisition.method file
+        // Inside the .D directory is the analysis.baf file; there is also .m subdirectory that has a apexAcquisition.method file
         public const string RAW_DATA_TYPE_BRUKER_FT_FOLDER = "bruker_ft";
 
         // The following is used by BrukerTOF_01 (e.g. Bruker TOF_TOF)
-        // Folder has a .EMF file and a single sub-folder that has an acqu file and fid file
+        // Directory has a .EMF file and a single subdirectory that has an acqu file and fid file
         public const string RAW_DATA_TYPE_BRUKER_MALDI_SPOT = "bruker_maldi_spot";
 
         // The following is used by instruments 9T_FTICR_Imaging and BrukerTOF_Imaging_01
-        // Series of zipped subfolders, with names like 0_R00X329.zip; subfolders inside the .Zip files have fid files
+        // Series of zipped subdirectories, with names like 0_R00X329.zip; subdirectories inside the .Zip files have fid files
         public const string RAW_DATA_TYPE_BRUKER_MALDI_IMAGING = "bruker_maldi_imaging";
 
         // The following is used by instrument Maxis_01
-        // Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
-        public const string RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER = "bruker_tof_baf";
+        // Inside the .D directory is the analysis.baf file; there is also .m subdirectory that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
+        public const string RAW_DATA_TYPE_BRUKER_TOF_BAF_DIRECTORY = "bruker_tof_baf";
 
         // The following is used by Bruker timsTOF instruments
         // Inside the .D directory is the analysis.tdf file; there is also .m subdirectory that has a microTOFQImpacTemAcquisition.method file; there is not a ser or fid file
@@ -133,13 +133,13 @@ namespace CaptureTaskManager
             ZippedSFolders = 8,
 
             /// <summary>
-            /// .D folder is the analysis.baf file
-            /// There is also .m subfolder that has a apexAcquisition.method file
+            /// .D directory has a analysis.baf file
+            /// There is also .m subdirectory that has a apexAcquisition.method file
             /// </summary>
             BrukerFTFolder = 9,
 
             /// <summary>
-            /// Has a .EMF file and a single sub-folder that has an acqu file and fid file
+            /// Has a .EMF file and a single subdirectory that has an acqu file and fid file
             /// </summary>
             BrukerMALDISpot = 10,
 
@@ -154,8 +154,8 @@ namespace CaptureTaskManager
             BrukerTOFBaf = 12,
 
             /// <summary>
-            /// Used by Maxis01; Inside the .D folder is the analysis.baf file
-            /// There is also .m subfolder that has a microTOFQMaxAcquisition.method file
+            /// Used by Maxis01; Inside the .D directory is the analysis.baf file
+            /// There is also .m subdirectory that has a microTOFQMaxAcquisition.method file
             /// There is not a ser or fid file
             /// </summary>
             SciexWiffFile = 13,
@@ -192,7 +192,7 @@ namespace CaptureTaskManager
             BrukerMALDI_Imaging = 11,       // 9T_FTICR_Imaging                     (last used in 2012)
             BrukerMALDI_Spot = 12,          // BrukerTOF_01
             BrukerTOF_BAF = 13,             // Maxis_01
-            Data_Folders = 14,              // Folders of data
+            Data_Folders = 14,              // Directories of data
             Finnigan_FTICR = 15,            // 3T_FTICR, 7T_FTICR, 11T_FTICR        (last used in 2007)
             IMS_Agilent_TOF = 16,           // IMS02_AgTOF06, IMS04_AgTOF05, IMS05_AgQTOF04, IMS07_AgTOF04
             Micromass_QTOF = 17,            // QTOF_MM1, External_Waters_TOF
@@ -269,7 +269,7 @@ namespace CaptureTaskManager
                     return eRawDataType.BrukerMALDISpot;
                 case RAW_DATA_TYPE_BRUKER_MALDI_IMAGING:
                     return eRawDataType.BrukerMALDIImaging;
-                case RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER:
+                case RAW_DATA_TYPE_BRUKER_TOF_BAF_DIRECTORY:
                     return eRawDataType.BrukerTOFBaf;
                 case RAW_DATA_TYPE_BRUKER_TOF_TDF_DIRECTORY:
                     return eRawDataType.BrukerTOFTdf;
@@ -311,7 +311,7 @@ namespace CaptureTaskManager
                 case eRawDataType.BrukerMALDIImaging:
                     return RAW_DATA_TYPE_BRUKER_MALDI_IMAGING;
                 case eRawDataType.BrukerTOFBaf:
-                    return RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER;
+                    return RAW_DATA_TYPE_BRUKER_TOF_BAF_DIRECTORY;
                 case eRawDataType.BrukerTOFTdf:
                     return RAW_DATA_TYPE_BRUKER_TOF_TDF_DIRECTORY;
                 case eRawDataType.IlluminaFolder:
