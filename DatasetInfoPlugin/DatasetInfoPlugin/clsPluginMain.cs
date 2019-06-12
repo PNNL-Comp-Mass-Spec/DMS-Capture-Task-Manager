@@ -37,6 +37,17 @@ namespace DatasetInfoPlugin
 
         #endregion
 
+        #region "Enums"
+
+        private enum QCPlottingModes
+        {
+            NoPlots = 0,          // Use this if SkipPlots is enabled
+            BpiAndTicOnly = 1,
+            AllPlots = 2
+        }
+
+        #endregion
+
         #region "Class-wide variables"
 
         iMSFileInfoScanner mMsFileScanner;
@@ -229,7 +240,7 @@ namespace DatasetInfoPlugin
             mMsFileScanner.PlotWithPython = true;
 
             // Get the input file name
-            var fileOrDirectoryNames = GetDataFileOrDirectoryName(datasetDirectoryPath, out var skipPlots, out var rawDataType, out var instrumentClass, out var brukerDotDBaf);
+            var fileOrDirectoryNames = GetDataFileOrDirectoryName(datasetDirectoryPath, out var qcPlotMode, out var rawDataType, out var instrumentClass, out var brukerDotDBaf);
 
             if (fileOrDirectoryNames.Count > 0 && fileOrDirectoryNames.First() == UNKNOWN_FILE_TYPE)
             {
@@ -261,14 +272,21 @@ namespace DatasetInfoPlugin
             {
                 // To add parameter SkipPlots for job 123456, use:
                 // Exec AddUpdateJobParameter 123456, 'JobParameters', 'SkipPlots', 'true'
-                skipPlots = true;
+                qcPlotMode = QCPlottingModes.NoPlots;
             }
 
-            if (skipPlots)
+            switch (qcPlotMode)
             {
-                // Do not create any plots
-                mMsFileScanner.SaveTICAndBPIPlots = false;
-                mMsFileScanner.SaveLCMS2DPlots = false;
+                case QCPlottingModes.NoPlots:
+                    // Do not create any plots
+                    mMsFileScanner.SaveTICAndBPIPlots = false;
+                    mMsFileScanner.SaveLCMS2DPlots = false;
+                    break;
+                case QCPlottingModes.BpiAndTicOnly:
+                    // Only create the BPI and TIC plots
+                    mMsFileScanner.SaveTICAndBPIPlots = true;
+                    mMsFileScanner.SaveLCMS2DPlots = false;
+                    break;
             }
 
             // Make the output directory
@@ -428,7 +446,7 @@ namespace DatasetInfoPlugin
                     retData.EvalMsg = AppendToComment(retData.EvalMsg, "MS2MzMinValidationWarning: " + warningMsg);
                 }
 
-                if (successProcessing && !skipPlots)
+                if (successProcessing && qcPlotMode == QCPlottingModes.AllPlots)
                 {
                     var validQcGraphics = ValidateQCGraphics(currentOutputDirectory, primaryFileOrDirectoryProcessed, retData);
                     if (retData.CloseoutType != EnumCloseOutType.CLOSEOUT_SUCCESS)
@@ -1024,16 +1042,16 @@ namespace DatasetInfoPlugin
         /// </remarks>
         private List<string> GetDataFileOrDirectoryName(
             string inputDirectory,
-            out bool bSkipPlots,
+            out QCPlottingModes qcPlotMode,
             out clsInstrumentClassInfo.eRawDataType rawDataType,
             out clsInstrumentClassInfo.eInstrumentClass instrumentClass,
-            out bool bBrukerDotDBaf)
+            out bool brukerDotDBaf)
         {
             bool isFile;
 
-            bSkipPlots = false;
+            qcPlotMode = QCPlottingModes.AllPlots;
             rawDataType = clsInstrumentClassInfo.eRawDataType.Unknown;
-            bBrukerDotDBaf = false;
+            brukerDotDBaf = false;
 
             // Determine the Instrument Class and RawDataType
             var instClassName = mTaskParams.GetParam("Instrument_Class");
@@ -1055,7 +1073,7 @@ namespace DatasetInfoPlugin
                 return new List<string> { UNKNOWN_FILE_TYPE };
             }
 
-            var diDatasetDirectory = new DirectoryInfo(inputDirectory);
+            var datasetDirectory = new DirectoryInfo(inputDirectory);
             string fileOrDirectoryName;
 
             // Get the expected file name based on the dataset type
@@ -1091,11 +1109,11 @@ namespace DatasetInfoPlugin
                     else
                     {
                         fileOrDirectoryName = Path.Combine(mDataset + clsInstrumentClassInfo.DOT_D_EXTENSION, "analysis.baf");
-                        bBrukerDotDBaf = true;
+                        brukerDotDBaf = true;
                     }
 
-                    if (!File.Exists(Path.Combine(diDatasetDirectory.FullName, fileOrDirectoryName)))
-                        fileOrDirectoryName = CheckForBrukerImagingZipFiles(diDatasetDirectory);
+                    if (!File.Exists(Path.Combine(datasetDirectory.FullName, fileOrDirectoryName)))
+                        fileOrDirectoryName = CheckForBrukerImagingZipFiles(datasetDirectory);
 
                     break;
 
@@ -1128,8 +1146,8 @@ namespace DatasetInfoPlugin
                     // bruker_maldi_imaging: 12T_FTICR_Imaging, 15T_FTICR_Imaging, and BrukerTOF_Imaging_01
                     // Find the name of the first zip file
 
-                    fileOrDirectoryName = CheckForBrukerImagingZipFiles(diDatasetDirectory);
-                    bSkipPlots = true;
+                    fileOrDirectoryName = CheckForBrukerImagingZipFiles(datasetDirectory);
+                    qcPlotMode = QCPlottingModes.NoPlots;
                     isFile = true;
 
                     if (string.IsNullOrEmpty(fileOrDirectoryName))
@@ -1142,10 +1160,16 @@ namespace DatasetInfoPlugin
                     break;
 
                 case clsInstrumentClassInfo.eRawDataType.BrukerTOFBaf:
-                case clsInstrumentClassInfo.eRawDataType.BrukerTOFTdf:
                     fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
                     isFile = false;
                     break;
+
+                case clsInstrumentClassInfo.eRawDataType.BrukerTOFTdf:
+                    fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
+                    qcPlotMode = QCPlottingModes.BpiAndTicOnly;
+                    isFile = false;
+                    break;
+
                 case clsInstrumentClassInfo.eRawDataType.IlluminaFolder:
                     // fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_TXT_GZ_EXTENSION;
                     // isFile = true;
@@ -1156,14 +1180,13 @@ namespace DatasetInfoPlugin
                 case clsInstrumentClassInfo.eRawDataType.ShimadzuQGDFile:
                     // 	Shimadzu_GC_MS_01
                     fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_QGD_EXTENSION;
-                    skipPlots = true;
+                    qcPlotMode = QCPlottingModes.NoPlots;
                     isFile = true;
                     break;
 
                 case clsInstrumentClassInfo.eRawDataType.WatersRawFolder:
                     // 	SynaptG2_01
                     fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION;
-                    skipPlots = false;
                     isFile = false;
                     break;
 
@@ -1181,7 +1204,7 @@ namespace DatasetInfoPlugin
             }
 
             // Test to verify the file (or directory) exists
-            var fileOrDirectoryPath = Path.Combine(diDatasetDirectory.FullName, fileOrDirectoryName);
+            var fileOrDirectoryPath = Path.Combine(datasetDirectory.FullName, fileOrDirectoryName);
 
             if (isFile)
             {
@@ -1195,7 +1218,7 @@ namespace DatasetInfoPlugin
 
                 // File not found; check for alternative files or directories
                 // This function also looks for .D directories
-                var fileOrDirectoryNames = LookForAlternateFileOrDirectory(diDatasetDirectory, fileOrDirectoryName);
+                var fileOrDirectoryNames = LookForAlternateFileOrDirectory(datasetDirectory, fileOrDirectoryName);
 
                 if (fileOrDirectoryNames.Count > 0)
                     return fileOrDirectoryNames;
@@ -1218,7 +1241,7 @@ namespace DatasetInfoPlugin
 
                 // Look for other .D directories
                 var fileOrDirectoryNames = new List<string> { fileOrDirectoryName };
-                FindDotDDirectories(diDatasetDirectory, fileOrDirectoryNames);
+                FindDotDDirectories(datasetDirectory, fileOrDirectoryNames);
 
                 return fileOrDirectoryNames;
             }
