@@ -1142,6 +1142,7 @@ namespace DatasetInfoPlugin
                     break;
 
                 case clsInstrumentClassInfo.eRawDataType.BrukerTOFBaf:
+                case clsInstrumentClassInfo.eRawDataType.BrukerTOFTdf:
                     fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
                     isFile = false;
                     break;

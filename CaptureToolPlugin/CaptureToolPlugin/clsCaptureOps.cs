@@ -3425,6 +3425,7 @@ namespace CaptureToolPlugin
                 case clsInstrumentClassInfo.eInstrumentClass.Bruker_Amazon_Ion_Trap:
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerFT_BAF:
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerTOF_BAF:
+                case clsInstrumentClassInfo.eInstrumentClass.BrukerTOF_TDF:
                 case clsInstrumentClassInfo.eInstrumentClass.Agilent_Ion_Trap:
                 case clsInstrumentClassInfo.eInstrumentClass.Agilent_TOF_V2:
                 case clsInstrumentClassInfo.eInstrumentClass.PrepHPLC:
