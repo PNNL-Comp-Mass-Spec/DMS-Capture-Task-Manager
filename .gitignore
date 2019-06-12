@@ -29,3 +29,9 @@ DeployedFiles/*/*.dll
 DeployedFiles/*.pdb
 DeployedFiles/*.exe
 DeployedFiles/*.lnk
+
+/DeployedFiles/ThermoFisher.CommonCore.BackgroundSubtraction.xml
+/DeployedFiles/ThermoFisher.CommonCore.Data.xml
+/DeployedFiles/ThermoFisher.CommonCore.MassPrecisionEstimator.xml
+/DeployedFiles/ThermoFisher.CommonCore.RawFileReader.xml
+/DeployedFiles/ThermoRawFileReader.dll.config
