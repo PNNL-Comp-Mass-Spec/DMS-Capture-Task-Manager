@@ -33,6 +33,8 @@ namespace DatasetIntegrityPlugin
         private const float RAW_FILE_MAX_SIZE_MB_LTQ = 2048;
         private const float RAW_FILE_MAX_SIZE_MB_ORBITRAP = 100000;
         private const float BAF_FILE_MIN_SIZE_KB = 16;
+        private const float TDF_FILE_MIN_SIZE_KB = 50;
+        private const float TDF_BIN_FILE_MIN_SIZE_KB = 50;
         private const float SER_FILE_MIN_SIZE_KB = 16;
         private const float FID_FILE_MIN_SIZE_KB = 16;
         private const float ACQ_METHOD_FILE_MIN_SIZE_KB = 5;
@@ -240,6 +242,10 @@ namespace DatasetIntegrityPlugin
 
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerTOF_BAF:
                     mRetData.CloseoutType = TestBrukerTof_BafDirectory(datasetDirectory, instrumentName);
+                    break;
+
+                case clsInstrumentClassInfo.eInstrumentClass.BrukerTOF_TDF:
+                    mRetData.CloseoutType = TestBrukerTof_TdfDirectory(datasetDirectory, instrumentName);
                     break;
 
                 case clsInstrumentClassInfo.eInstrumentClass.Sciex_QTrap:
@@ -1550,6 +1556,38 @@ namespace DatasetIntegrityPlugin
         /// <returns>Enum indicating test result</returns>
         private EnumCloseOutType TestBrukerTof_BafDirectory(string datasetDirectoryPath, string instrumentName)
         {
+            var requiredFiles = new Dictionary<string, float> {
+                { "analysis.baf", BAF_FILE_MIN_SIZE_KB}
+            };
+
+            return TestBrukerTof_Directory(datasetDirectoryPath, instrumentName, requiredFiles);
+        }
+
+        /// <summary>
+        /// Tests a BrukerTOF_TDF directory for integrity
+        /// </summary>
+        /// <param name="datasetDirectoryPath">Fully qualified path to the dataset directory</param>
+        /// <param name="instrumentName"></param>
+        /// <returns>Enum indicating test result</returns>
+        private EnumCloseOutType TestBrukerTof_TdfDirectory(string datasetDirectoryPath, string instrumentName)
+        {
+            var requiredFiles = new Dictionary<string, float> {
+                { "analysis.tdf", TDF_FILE_MIN_SIZE_KB},
+                { "analysis.tdf_bin", TDF_BIN_FILE_MIN_SIZE_KB}
+            };
+
+            return TestBrukerTof_Directory(datasetDirectoryPath, instrumentName, requiredFiles);
+        }
+
+        /// <summary>
+        /// Tests a BrukerTOF_TDF directory for integrity
+        /// </summary>
+        /// <param name="datasetDirectoryPath">Fully qualified path to the dataset directory</param>
+        /// <param name="instrumentName"></param>
+        /// <param name="requiredInstrumentFiles">Dictionary listing the required file(s); keys are filename and values are minimum size in KB</param>
+        /// <returns>Enum indicating test result</returns>
+        private EnumCloseOutType TestBrukerTof_Directory(string datasetDirectoryPath, string instrumentName, Dictionary<string, float> requiredInstrumentFiles)
+        {
             // Verify only one .D directory in the dataset
             var datasetDirectory = new DirectoryInfo(datasetDirectoryPath);
             var dotDDirectories = datasetDirectory.GetDirectories("*.D").ToList();
@@ -1567,21 +1605,27 @@ namespace DatasetIntegrityPlugin
                     return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
-            // Verify analysis.baf file exists
-            var bafFile = dotDDirectories[0].GetFiles("analysis.baf").ToList();
-            if (bafFile.Count == 0)
+            // Verify that the files in requiredInstrumentFiles exist
+            foreach (var requiredFile in requiredInstrumentFiles)
             {
-                mRetData.EvalMsg = "Invalid dataset: analysis.baf file not found";
-                LogError(mRetData.EvalMsg);
-                return EnumCloseOutType.CLOSEOUT_FAILED;
-            }
+                var requiredFileName = requiredFile.Key;
+                var minimumFileSizeKB = requiredFile.Value;
 
-            // Verify size of the analysis.baf file
-            var dataFileSizeKB = GetFileSize(bafFile.First());
-            if (dataFileSizeKB <= BAF_FILE_MIN_SIZE_KB)
-            {
-                ReportFileSizeTooSmall("Analysis.baf", bafFile.First().FullName, dataFileSizeKB, BAF_FILE_MIN_SIZE_KB);
-                return EnumCloseOutType.CLOSEOUT_FAILED;
+                var foundFiles = dotDDirectories[0].GetFiles(requiredFileName).ToList();
+                if (foundFiles.Count == 0)
+                {
+                    mRetData.EvalMsg = string.Format("Invalid dataset: {0} file not found", requiredFileName);
+                    LogError(mRetData.EvalMsg);
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // Verify size of the instrument file
+                var dataFileSizeKB = GetFileSize(foundFiles.First());
+                if (dataFileSizeKB < minimumFileSizeKB)
+                {
+                    ReportFileSizeTooSmall(requiredFileName, foundFiles.First().FullName, dataFileSizeKB, minimumFileSizeKB);
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
             }
 
             // Check to see if at least one .M directory exists

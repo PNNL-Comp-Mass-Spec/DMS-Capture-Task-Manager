@@ -62,6 +62,10 @@ namespace CaptureTaskManager
         // Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
         public const string RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER = "bruker_tof_baf";
 
+        // The following is used by Bruker timsTOF instruments
+        // Inside the .D directory is the analysis.tdf file; there is also .m subdirectory that has a microTOFQImpacTemAcquisition.method file; there is not a ser or fid file
+        public const string RAW_DATA_TYPE_BRUKER_TOF_TDF_DIRECTORY = "bruker_tof_tdf";
+
         // The following is used by instrument External_Illumina
         public const string RAW_DATA_TYPE_ILLUMINA_FOLDER = "illumina_folder";
 
@@ -164,7 +168,12 @@ namespace CaptureTaskManager
             /// <summary>
             /// Shimadzu GC file with extension .qgd
             /// </summary>
-            ShimadzuQGDFile = 15
+            ShimadzuQGDFile = 15,
+
+            /// <summary>
+            /// Used by Bruker timsTOF; Instead the .D directory is the analysis.tdf file
+            /// </summary>
+            BrukerTOFTdf = 16
         }
 
         public enum eInstrumentClass
@@ -195,7 +204,8 @@ namespace CaptureTaskManager
             Illumina_Sequencer = 23,        // External_Illumina
             GC_QExactive = 24,              // GCQE01
             Waters_IMS = 25,                // SynaptG2_01
-            Shimadzu_GC = 26                // Shimadzu_GC_MS_01
+            Shimadzu_GC = 26,               // Shimadzu_GC_MS_01
+            BrukerTOF_TDF = 27              // Bruker_timsTOF
         }
 
         #endregion
@@ -261,6 +271,8 @@ namespace CaptureTaskManager
                     return eRawDataType.BrukerMALDIImaging;
                 case RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER:
                     return eRawDataType.BrukerTOFBaf;
+                case RAW_DATA_TYPE_BRUKER_TOF_TDF_DIRECTORY:
+                    return eRawDataType.BrukerTOFTdf;
                 case RAW_DATA_TYPE_ILLUMINA_FOLDER:
                     return eRawDataType.IlluminaFolder;
                 case RAW_DATA_TYPE_DOT_QGD_FILES:
@@ -300,6 +312,8 @@ namespace CaptureTaskManager
                     return RAW_DATA_TYPE_BRUKER_MALDI_IMAGING;
                 case eRawDataType.BrukerTOFBaf:
                     return RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER;
+                case eRawDataType.BrukerTOFTdf:
+                    return RAW_DATA_TYPE_BRUKER_TOF_TDF_DIRECTORY;
                 case eRawDataType.IlluminaFolder:
                     return RAW_DATA_TYPE_ILLUMINA_FOLDER;
                 default:
