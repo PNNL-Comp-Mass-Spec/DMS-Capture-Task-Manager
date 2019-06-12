@@ -37,6 +37,17 @@ namespace DatasetInfoPlugin
 
         #endregion
 
+        #region "Enums"
+
+        private enum QCPlottingModes
+        {
+            NoPlots = 0,          // Use this if SkipPlots is enabled
+            BpiAndTicOnly = 1,
+            AllPlots = 2
+        }
+
+        #endregion
+
         #region "Class-wide variables"
 
         iMSFileInfoScanner mMsFileScanner;
@@ -229,7 +240,7 @@ namespace DatasetInfoPlugin
             mMsFileScanner.PlotWithPython = true;
 
             // Get the input file name
-            var fileOrDirectoryNames = GetDataFileOrDirectoryName(datasetDirectoryPath, out var skipPlots, out var rawDataType, out var instrumentClass, out var brukerDotDBaf);
+            var fileOrDirectoryNames = GetDataFileOrDirectoryName(datasetDirectoryPath, out var qcPlotMode, out var rawDataType, out var instrumentClass, out var brukerDotDBaf);
 
             if (fileOrDirectoryNames.Count > 0 && fileOrDirectoryNames.First() == UNKNOWN_FILE_TYPE)
             {
@@ -261,14 +272,21 @@ namespace DatasetInfoPlugin
             {
                 // To add parameter SkipPlots for job 123456, use:
                 // Exec AddUpdateJobParameter 123456, 'JobParameters', 'SkipPlots', 'true'
-                skipPlots = true;
+                qcPlotMode = QCPlottingModes.NoPlots;
             }
 
-            if (skipPlots)
+            switch (qcPlotMode)
             {
-                // Do not create any plots
-                mMsFileScanner.SaveTICAndBPIPlots = false;
-                mMsFileScanner.SaveLCMS2DPlots = false;
+                case QCPlottingModes.NoPlots:
+                    // Do not create any plots
+                    mMsFileScanner.SaveTICAndBPIPlots = false;
+                    mMsFileScanner.SaveLCMS2DPlots = false;
+                    break;
+                case QCPlottingModes.BpiAndTicOnly:
+                    // Only create the BPI and TIC plots
+                    mMsFileScanner.SaveTICAndBPIPlots = true;
+                    mMsFileScanner.SaveLCMS2DPlots = false;
+                    break;
             }
 
             // Make the output directory
@@ -428,7 +446,7 @@ namespace DatasetInfoPlugin
                     retData.EvalMsg = AppendToComment(retData.EvalMsg, "MS2MzMinValidationWarning: " + warningMsg);
                 }
 
-                if (successProcessing && !skipPlots)
+                if (successProcessing && qcPlotMode == QCPlottingModes.AllPlots)
                 {
                     var validQcGraphics = ValidateQCGraphics(currentOutputDirectory, primaryFileOrDirectoryProcessed, retData);
                     if (retData.CloseoutType != EnumCloseOutType.CLOSEOUT_SUCCESS)
@@ -1024,14 +1042,14 @@ namespace DatasetInfoPlugin
         /// </remarks>
         private List<string> GetDataFileOrDirectoryName(
             string inputDirectory,
-            out bool skipPlots,
+            out QCPlottingModes qcPlotMode,
             out clsInstrumentClassInfo.eRawDataType rawDataType,
             out clsInstrumentClassInfo.eInstrumentClass instrumentClass,
             out bool brukerDotDBaf)
         {
             bool isFile;
 
-            skipPlots = false;
+            qcPlotMode = QCPlottingModes.AllPlots;
             rawDataType = clsInstrumentClassInfo.eRawDataType.Unknown;
             brukerDotDBaf = false;
 
@@ -1129,7 +1147,7 @@ namespace DatasetInfoPlugin
                     // Find the name of the first zip file
 
                     fileOrDirectoryName = CheckForBrukerImagingZipFiles(datasetDirectory);
-                    skipPlots = true;
+                    qcPlotMode = QCPlottingModes.NoPlots;
                     isFile = true;
 
                     if (string.IsNullOrEmpty(fileOrDirectoryName))
@@ -1142,8 +1160,13 @@ namespace DatasetInfoPlugin
                     break;
 
                 case clsInstrumentClassInfo.eRawDataType.BrukerTOFBaf:
+                    fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
+                    isFile = false;
+                    break;
+
                 case clsInstrumentClassInfo.eRawDataType.BrukerTOFTdf:
                     fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
+                    qcPlotMode = QCPlottingModes.BpiAndTicOnly;
                     isFile = false;
                     break;
 
@@ -1157,14 +1180,13 @@ namespace DatasetInfoPlugin
                 case clsInstrumentClassInfo.eRawDataType.ShimadzuQGDFile:
                     // 	Shimadzu_GC_MS_01
                     fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_QGD_EXTENSION;
-                    skipPlots = true;
+                    qcPlotMode = QCPlottingModes.NoPlots;
                     isFile = true;
                     break;
 
                 case clsInstrumentClassInfo.eRawDataType.WatersRawFolder:
                     // 	SynaptG2_01
                     fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION;
-                    skipPlots = false;
                     isFile = false;
                     break;
 
