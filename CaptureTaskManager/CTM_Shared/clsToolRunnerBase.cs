@@ -246,10 +246,8 @@ namespace CaptureTaskManager
         /// <returns></returns>
         public static bool CleanWorkDir(string workDir, float holdoffSeconds, out string failureMessage)
         {
-            var currentSubDirectory = string.Empty;
 
             failureMessage = string.Empty;
-
 
             if (holdoffSeconds > 0)
             {
@@ -283,14 +281,16 @@ namespace CaptureTaskManager
                     return false;
                 }
 
-                foreach (var fileToDelete in workingDirectory.GetFiles())
+                foreach (var fileToDelete in workingDirectory.GetFiles("*", SearchOption.AllDirectories))
                 {
                     try
                     {
                         fileToDelete.Delete();
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
+                        ShowTraceMessage(string.Format("Error deleting file {0}: {1}", fileToDelete.FullName, ex.Message));
+
                         // Make sure the readonly and system attributes are not set
                         // The manager will try to delete the file the next time is starts
                         fileToDelete.Attributes = fileToDelete.Attributes & ~FileAttributes.ReadOnly & ~FileAttributes.System;
@@ -304,19 +304,29 @@ namespace CaptureTaskManager
                 return false;
             }
 
-            // Delete the sub directories
+            // Delete the subdirectories
             try
             {
                 foreach (var subDirectory in workingDirectory.GetDirectories())
                 {
-                    currentSubDirectory = subDirectory.FullName;
-                    subDirectory.Delete(true);
+                    try
+                    {
+                        subDirectory.Delete(true);
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowTraceMessage(string.Format("Error deleting subdirectory {0}: {1}", subDirectory.FullName, ex.Message));
+
+                        // Make sure the readonly and system attributes are not set
+                        // The manager will try to delete the file the next time is starts
+                        subDirectory.Attributes = subDirectory.Attributes & ~FileAttributes.ReadOnly & ~FileAttributes.System;
+                    }
                 }
             }
             catch (Exception ex)
             {
-                failureMessage = "Error deleting subdirectory " + currentSubDirectory;
-                LogError(failureMessage + " in working directory", ex);
+                failureMessage = "Error deleting subdirectories in the working directory";
+                LogError("clsGlobal.ClearWorkDir(), " + failureMessage, ex);
                 return false;
             }
 
