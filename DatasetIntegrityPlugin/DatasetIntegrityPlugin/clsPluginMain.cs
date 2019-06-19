@@ -225,7 +225,7 @@ namespace DatasetIntegrityPlugin
                     mRetData.CloseoutType = TestIMSAgilentTOF(dataFileNamePath, instrumentName);
                     break;
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerFT_BAF:
-                    mRetData.CloseoutType = TestBrukerFT_Directory(datasetDirectory, requireBAFFile: true, requireMCFFile: false, requireSerFile: false, instrumentClass: instrumentClass, instrumentName: instrumentName);
+                    mRetData.CloseoutType = TestBrukerFT_Directory(datasetDirectory, requireBafOrSerFile: true, requireMCFFile: false, requireSerFile: false, instrumentClass: instrumentClass, instrumentName: instrumentName);
                     break;
 
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging:
@@ -234,7 +234,7 @@ namespace DatasetIntegrityPlugin
                     break;
 
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging_V2:
-                    mRetData.CloseoutType = TestBrukerFT_Directory(datasetDirectory, requireBAFFile: false, requireMCFFile: false, requireSerFile: true, instrumentClass: instrumentClass, instrumentName: instrumentName);
+                    mRetData.CloseoutType = TestBrukerFT_Directory(datasetDirectory, requireBafOrSerFile: false, requireMCFFile: false, requireSerFile: true, instrumentClass: instrumentClass, instrumentName: instrumentName);
                     break;
 
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Spot:
@@ -1676,7 +1676,7 @@ namespace DatasetIntegrityPlugin
         /// Tests a BrukerFT directory for integrity
         /// </summary>
         /// <param name="datasetDirectoryPath">Fully qualified path to the dataset directory</param>
-        /// <param name="requireBAFFile">Set to True to require that the analysis.baf file be present</param>
+        /// <param name="requireBafOrSerFile">Set to True to require that the analysis.baf or ser file be present</param>
         /// <param name="requireMCFFile">Set to True to require that the .mcf file be present</param>
         /// <param name="requireSerFile">Set to True to require that the ser file be present</param>
         /// <param name="instrumentClass"></param>
@@ -1684,7 +1684,7 @@ namespace DatasetIntegrityPlugin
         /// <returns>Enum indicating test result</returns>
         private EnumCloseOutType TestBrukerFT_Directory(
             string datasetDirectoryPath,
-            bool requireBAFFile,
+            bool requireBafOrSerFile,
             bool requireMCFFile,
             bool requireSerFile,
             clsInstrumentClassInfo.eInstrumentClass instrumentClass,
@@ -1790,16 +1790,9 @@ namespace DatasetIntegrityPlugin
 
             // Possibly verify that the analysis.baf file exists
             var bafFile = dotDDirectories[0].GetFiles("analysis.baf").ToList();
-            var fileExists = bafFile.Count > 0;
+            var bafFileExists = bafFile.Count > 0;
 
-            if (!fileExists && requireBAFFile)
-            {
-                mRetData.EvalMsg = "Invalid dataset: analysis.baf file not found";
-                LogError(mRetData.EvalMsg);
-                return EnumCloseOutType.CLOSEOUT_FAILED;
-            }
-
-            if (fileExists)
+            if (bafFileExists)
             {
                 // Verify size of the analysis.baf file
                 dataFileSizeKB = GetFileSize(bafFile.First());
@@ -1816,7 +1809,7 @@ namespace DatasetIntegrityPlugin
 
             var mctFileName = string.Empty;
             dataFileSizeKB = 0;
-            fileExists = false;
+            var mcfFileExists = false;
             long mcfFileSizeMax = 0;
 
             foreach (var mcfFile in dotDDirectories[0].GetFiles("*.mcf"))
@@ -1825,21 +1818,21 @@ namespace DatasetIntegrityPlugin
                 {
                     dataFileSizeKB = mcfFile.Length / (1024F);
                     mctFileName = mcfFile.Name;
-                    fileExists = true;
+                    mcfFileExists = true;
                 }
 
                 if (mcfFile.Length > mcfFileSizeMax)
                     mcfFileSizeMax = mcfFile.Length;
             }
 
-            if (!fileExists && requireMCFFile)
+            if (!mcfFileExists && requireMCFFile)
             {
                 mRetData.EvalMsg = "Invalid dataset: .mcf file not found";
                 LogError(mRetData.EvalMsg);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (fileExists)
+            if (mcfFileExists)
             {
                 // Verify size of the largest .mcf file
                 float minSizeKB;
@@ -1858,7 +1851,9 @@ namespace DatasetIntegrityPlugin
             // Verify ser file (if it exists)
             // For 15T imaging directories, only checking the ser file in the first .D directory
             var serFile = dotDDirectories[0].GetFiles("ser").ToList();
-            if (serFile.Count > 0)
+            var serFileExists = serFile.Count > 0;
+
+            if (serFileExists)
             {
                 // ser file found; verify its size
                 dataFileSizeKB = GetFileSize(serFile.First());
@@ -1908,6 +1903,13 @@ namespace DatasetIntegrityPlugin
                         return EnumCloseOutType.CLOSEOUT_FAILED;
                     }
                 }
+            }
+
+            if (requireBafOrSerFile && !bafFileExists && !serFileExists)
+            {
+                mRetData.EvalMsg = "Invalid dataset: dataset does not have an analysis.baf file or ser file";
+                LogError(mRetData.EvalMsg);
+                return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
             if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging_V2)
