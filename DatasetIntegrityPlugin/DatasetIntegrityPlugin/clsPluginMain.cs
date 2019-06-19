@@ -49,6 +49,7 @@ namespace DatasetIntegrityPlugin
         private const float AGILENT_MS_PEAK_BIN_FILE_SMALL_SIZE_KB = 500;
         private const float AGILENT_DATA_MS_FILE_MIN_SIZE_KB = 75;
         private const float SHIMADZU_QGD_FILE_MIN_SIZE_KB = 50;
+        private const float WATERS_FUNC_DAT_FILE_MIN_SIZE_KB = 50;
 
         // MALDI imaging file
         // Prior to May 2014, used a minimum of 4 KB
@@ -284,6 +285,10 @@ namespace DatasetIntegrityPlugin
                 case clsInstrumentClassInfo.eInstrumentClass.Shimadzu_GC:
                     dataFileNamePath = Path.Combine(datasetDirectory, mDataset + clsInstrumentClassInfo.DOT_QGD_EXTENSION);
                     mRetData.CloseoutType = TestShimadzuQGDFile(dataFileNamePath);
+                    break;
+
+                case clsInstrumentClassInfo.eInstrumentClass.Waters_IMS:
+                    mRetData.CloseoutType = TestWatersDotRawDirectory(datasetDirectory);
                     break;
 
                 default:
@@ -2240,6 +2245,98 @@ namespace DatasetIntegrityPlugin
                 ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSizeKB, SHIMADZU_QGD_FILE_MIN_SIZE_KB);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
+
+            // If we got to here, everything was OK
+            return EnumCloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        /// <summary>
+        /// Tests the integrity of a Waters .raw directory
+        /// </summary>
+        /// <param name="datasetDirectoryPath"></param>
+        /// <returns></returns>
+        private EnumCloseOutType TestWatersDotRawDirectory(string datasetDirectoryPath)
+        {
+            // There should be one .raw directory in the dataset
+            var datasetDirectory = new DirectoryInfo(datasetDirectoryPath);
+            var dotRawDirectories = datasetDirectory.GetDirectories("*.raw").ToList();
+
+            if (dotRawDirectories.Count < 1)
+            {
+                mRetData.EvalMsg = "Invalid dataset: No .raw directories found";
+                LogError(mRetData.EvalMsg);
+                return EnumCloseOutType.CLOSEOUT_FAILED;
+            }
+
+            if (dotRawDirectories.Count == 1)
+            {
+                var baseName = Path.GetFileNameWithoutExtension(dotRawDirectories[0].Name);
+                if (!string.Equals(mDataset, baseName, StringComparison.OrdinalIgnoreCase))
+                {
+                    mRetData.EvalMsg = string.Format(
+                        "Invalid dataset: directory name {0} does not match the dataset name",
+                        dotRawDirectories[0].Name);
+
+                    LogError(mRetData.EvalMsg);
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+            }
+
+            if (dotRawDirectories.Count > 1)
+            {
+                mRetData.EvalMsg = "Invalid dataset: Multiple .raw directories found";
+                LogError(mRetData.EvalMsg);
+                return EnumCloseOutType.CLOSEOUT_FAILED;
+            }
+
+            // Verify that at least one _FUNC000.DAT file exists
+            var datFiles = dotRawDirectories[0].GetFiles("_FUNC*.DAT").ToList();
+            var fileExists = datFiles.Count > 0;
+
+            if (!fileExists)
+            {
+                mRetData.EvalMsg = "Invalid dataset: _FUNC001.DAT file not found";
+                LogError(mRetData.EvalMsg);
+                return EnumCloseOutType.CLOSEOUT_FAILED;
+            }
+
+            // Verify size of the .dat file
+            var firstDatFile = datFiles.First();
+
+            var dataFileSizeKB = GetFileSize(firstDatFile);
+            if (dataFileSizeKB < WATERS_FUNC_DAT_FILE_MIN_SIZE_KB)
+            {
+                ReportFileSizeTooSmall(firstDatFile.Name, firstDatFile.FullName, dataFileSizeKB, WATERS_FUNC_DAT_FILE_MIN_SIZE_KB);
+                return EnumCloseOutType.CLOSEOUT_FAILED;
+            }
+
+            // Verify that each .dat files has a .idx file
+            foreach (var datFile in datFiles)
+            {
+                var indexFile = new FileInfo(Path.ChangeExtension(datFile.FullName, "IDX"));
+
+                if (!indexFile.Exists)
+                {
+                    mRetData.EvalMsg = string.Format("Invalid dataset: {0} file not found", indexFile.Name);
+                    LogError(mRetData.EvalMsg);
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+            }
+
+            // ReSharper disable CommentTypo
+            // Verify that the _FUNCTNS.INF exists
+            // ReSharper restore CommentTypo
+
+            var infFile = new FileInfo(Path.Combine(dotRawDirectories[0].FullName, "_FUNCTNS.INF"));
+
+            if (!infFile.Exists)
+            {
+                // ReSharper disable once StringLiteralTypo
+                mRetData.EvalMsg = "Invalid dataset: _FUNCTNS.INF file not found";
+                LogError(mRetData.EvalMsg);
+                return EnumCloseOutType.CLOSEOUT_FAILED;
+            }
+
 
             // If we got to here, everything was OK
             return EnumCloseOutType.CLOSEOUT_SUCCESS;
