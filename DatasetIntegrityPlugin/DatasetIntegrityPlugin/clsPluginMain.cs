@@ -49,7 +49,8 @@ namespace DatasetIntegrityPlugin
         private const float AGILENT_MS_PEAK_BIN_FILE_SMALL_SIZE_KB = 500;
         private const float AGILENT_DATA_MS_FILE_MIN_SIZE_KB = 75;
         private const float SHIMADZU_QGD_FILE_MIN_SIZE_KB = 50;
-        private const float WATERS_FUNC_DAT_FILE_MIN_SIZE_KB = 50;
+        private const float WATERS_FUNC_DAT_FILE_MIN_SIZE_KB = 10;
+        private const float WATERS_FUNC_IND_FILE_MIN_SIZE_KB = 25;
 
         // MALDI imaging file
         // Prior to May 2014, used a minimum of 4 KB
@@ -874,6 +875,19 @@ namespace DatasetIntegrityPlugin
             var exeName = mMgrParams.GetParam("AgilentToUIMFProgLoc");
             var exePath = Path.Combine(exeName, "AgilentToUimfConverter.exe");
             return exePath;
+        }
+
+        private float GetLargestFileSizeKB(IEnumerable<FileInfo> filesToCheck)
+        {
+            var largestSizeKB = 0.0f;
+            foreach (var file in filesToCheck)
+            {
+                var fileSizeKB = GetFileSize(file);
+                if (fileSizeKB > largestSizeKB)
+                    largestSizeKB = fileSizeKB;
+            }
+
+            return largestSizeKB;
         }
 
         private string GetOpenChromProgPath()
@@ -2291,8 +2305,10 @@ namespace DatasetIntegrityPlugin
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
-            // Verify that at least one _FUNC000.DAT file exists
+            // Verify that at least one _FUNC000.DAT or _FUNC001.DAT file exists
             var datFiles = dotRawDirectories[0].GetFiles("_FUNC*.DAT").ToList();
+            var indFiles = dotRawDirectories[0].GetFiles("_FUNC*.ind").ToList();
+
             var fileExists = datFiles.Count > 0;
 
             if (!fileExists)
@@ -2302,13 +2318,21 @@ namespace DatasetIntegrityPlugin
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
-            // Verify size of the .dat file
-            var firstDatFile = datFiles.First();
+            // Verify the size of the .dat file(s)
+            var largestDatFileKB = GetLargestFileSizeKB(datFiles);
 
-            var dataFileSizeKB = GetFileSize(firstDatFile);
-            if (dataFileSizeKB < WATERS_FUNC_DAT_FILE_MIN_SIZE_KB)
+            if (largestDatFileKB < WATERS_FUNC_DAT_FILE_MIN_SIZE_KB)
             {
-                ReportFileSizeTooSmall(firstDatFile.Name, firstDatFile.FullName, dataFileSizeKB, WATERS_FUNC_DAT_FILE_MIN_SIZE_KB);
+                ReportFileSizeTooSmall(datFiles.First().Name, datFiles.First().FullName, largestDatFileKB, WATERS_FUNC_DAT_FILE_MIN_SIZE_KB);
+                return EnumCloseOutType.CLOSEOUT_FAILED;
+            }
+
+            // Verify the size of the .idx file(s)
+            var largestIndFileKB = GetLargestFileSizeKB(indFiles);
+
+            if (largestIndFileKB < WATERS_FUNC_IND_FILE_MIN_SIZE_KB)
+            {
+                ReportFileSizeTooSmall(indFiles.First().Name, indFiles.First().FullName, largestDatFileKB, WATERS_FUNC_IND_FILE_MIN_SIZE_KB);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
