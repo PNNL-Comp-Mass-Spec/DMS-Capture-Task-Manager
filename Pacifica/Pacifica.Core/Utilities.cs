@@ -77,6 +77,7 @@ namespace Pacifica.Core
         public static string GenerateSha1Hash(string filePath)
         {
             byte[] fileHash;
+
             var fi = new FileInfo(filePath);
 
             if (!fi.Exists)
@@ -396,7 +397,7 @@ namespace Pacifica.Core
                 else
                 {
                     ConsoleMsgUtils.ShowWarning(
-                        "Unsupported JsonArrayList type {0}; will not be stored in the dictionary returned by JsonArrayToDictionaryList", 
+                        "Unsupported JsonArrayList type {0}; will not be stored in the dictionary returned by JsonArrayToDictionaryList",
                         value.GetType().Name);
                 }
             }
