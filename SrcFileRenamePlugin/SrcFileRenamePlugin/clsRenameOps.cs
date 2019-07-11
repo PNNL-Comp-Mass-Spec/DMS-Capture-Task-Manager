@@ -57,7 +57,7 @@ namespace SrcFileRenamePlugin
                 }
             }
 
-            mDatasetFileSearchTool = new DatasetFileSearchTool();
+            mDatasetFileSearchTool = new DatasetFileSearchTool(false);
             RegisterEvents(mDatasetFileSearchTool);
 
         }
