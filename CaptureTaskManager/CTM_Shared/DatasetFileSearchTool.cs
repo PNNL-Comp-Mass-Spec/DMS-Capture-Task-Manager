@@ -11,6 +11,8 @@ namespace CaptureTaskManager
     public class DatasetFileSearchTool : EventNotifier
     {
 
+        private readonly bool mTraceMode;
+
         /// <summary>
         /// List of characters that should be automatically replaced if doing so makes the filename match the dataset name
         /// </summary>
@@ -19,12 +21,14 @@ namespace CaptureTaskManager
         /// <summary>
         /// Constructor
         /// </summary>
-        public DatasetFileSearchTool()
+        public DatasetFileSearchTool(bool traceMode)
         {
             FilenameAutoFixes = new Dictionary<char, string> {
                 { ' ', "_"},
                 { '%', "pct"},
                 { '.', "pt"}};
+
+            mTraceMode = traceMode;
         }
 
         /// <summary>
@@ -225,6 +229,12 @@ namespace CaptureTaskManager
                     // Get all files that match the dataset name
                     var foundFiles = new List<FileInfo>();
 
+                    if (mTraceMode)
+                    {
+                        clsToolRunnerBase.ShowTraceMessage(
+                            string.Format("Looking for a dataset file, replaceInvalidCharacters is {0}", replaceInvalidCharacters));
+                    }
+
                     if (replaceInvalidCharacters)
                     {
                         foreach (var candidateItem in sourceDirectory.GetFiles("*"))
@@ -266,12 +276,26 @@ namespace CaptureTaskManager
                                 string.Join(", ", fileNames.Take(5))));
                         }
 
+                        if (mTraceMode)
+                        {
+                            clsToolRunnerBase.ShowTraceMessage(
+                                string.Format("Matched file {0}; DatasetType = {1}",
+                                              datasetInfo.FileOrDirectoryName, datasetInfo.DatasetType.ToString()));
+                        }
+
                         matchedDirectory = false;
                         return datasetInfo;
                     }
                 }
                 else
                 {
+                    if (mTraceMode)
+                    {
+
+                        clsToolRunnerBase.ShowTraceMessage(
+                            string.Format("Looking for a dataset directory, replaceInvalidCharacters is {0}", replaceInvalidCharacters));
+                    }
+
                     // Get all directories that match the dataset name
                     var subdirectories = sourceDirectory.GetDirectories();
                     foreach (var subdirectory in subdirectories)
@@ -304,6 +328,13 @@ namespace CaptureTaskManager
                             // Directory name has an extension
                             datasetInfo.FileOrDirectoryName = subdirectory.Name;
                             datasetInfo.DatasetType = DatasetInfo.RawDSTypes.DirectoryExt;
+                        }
+
+                        if (mTraceMode)
+                        {
+                            clsToolRunnerBase.ShowTraceMessage(
+                                string.Format("Matched directory {0}; DatasetType = {1}",
+                                              datasetInfo.FileOrDirectoryName, datasetInfo.DatasetType.ToString()));
                         }
 
                         if (checkForFilesFirst)

@@ -141,7 +141,7 @@ namespace CaptureToolPlugin
                 mFileTools.ResumingFileCopy += OnResumingFileCopy;
             }
 
-            mDatasetFileSearchTool = new DatasetFileSearchTool();
+            mDatasetFileSearchTool = new DatasetFileSearchTool(mTraceMode);
             RegisterEvents(mDatasetFileSearchTool);
         }
 
