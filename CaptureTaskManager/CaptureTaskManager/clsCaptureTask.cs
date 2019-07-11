@@ -70,9 +70,9 @@ namespace CaptureTaskManager
         /// <returns>Parameter value if found, otherwise empty string</returns>
         public string GetParam(string name, string valueIfMissing)
         {
-            if (mJobParams.TryGetValue(name, out var ItemValue))
+            if (mJobParams.TryGetValue(name, out var itemValue))
             {
-                return ItemValue ?? string.Empty;
+                return itemValue ?? string.Empty;
             }
 
             return valueIfMissing ?? string.Empty;
