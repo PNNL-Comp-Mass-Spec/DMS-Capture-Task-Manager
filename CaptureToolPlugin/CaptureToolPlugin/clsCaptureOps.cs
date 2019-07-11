@@ -2900,8 +2900,8 @@ namespace CaptureToolPlugin
                     if (success)
                     {
                         var msg = "  directory copy complete; CountCopied = " + fileCountNewlyCopied + "; " +
-                              "CountSkipped = " + fileCountSkipped + "; " +
-                              "CountResumed = " + fileCountResumed;
+                                  "CountSkipped = " + fileCountSkipped + "; " +
+                                  "CountResumed = " + fileCountResumed;
                         LogDebug(msg);
                     }
                     else
@@ -2944,7 +2944,6 @@ namespace CaptureToolPlugin
                     }
 
                     HandleCopyException(retData, ex);
-
                 }
             }
 
