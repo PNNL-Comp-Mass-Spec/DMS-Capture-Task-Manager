@@ -1595,7 +1595,7 @@ namespace DatasetIntegrityPlugin
                 { "analysis.tdf_bin", TDF_BIN_FILE_MIN_SIZE_KB}
             };
 
-            return TestBrukerTof_Directory(datasetDirectoryPath, instrumentName, requiredFiles);
+            return TestBrukerTof_Directory(datasetDirectoryPath, instrumentName, requiredFiles, false);
         }
 
         /// <summary>
@@ -1604,8 +1604,13 @@ namespace DatasetIntegrityPlugin
         /// <param name="datasetDirectoryPath">Fully qualified path to the dataset directory</param>
         /// <param name="instrumentName"></param>
         /// <param name="requiredInstrumentFiles">Dictionary listing the required file(s); keys are filename and values are minimum size in KB</param>
+        /// <param name="requireMethodDirectory">When true, a subdirectory ending in .m must exist</param>
         /// <returns>Enum indicating test result</returns>
-        private EnumCloseOutType TestBrukerTof_Directory(string datasetDirectoryPath, string instrumentName, Dictionary<string, float> requiredInstrumentFiles)
+        private EnumCloseOutType TestBrukerTof_Directory(
+            string datasetDirectoryPath,
+            string instrumentName,
+            Dictionary<string, float> requiredInstrumentFiles,
+            bool requireMethodDirectory = true)
         {
             // Verify only one .D directory in the dataset
             var datasetDirectory = new DirectoryInfo(datasetDirectoryPath);
@@ -1651,6 +1656,12 @@ namespace DatasetIntegrityPlugin
             var methodDirectories = dotDDirectories[0].GetDirectories("*.m").ToList();
             if (methodDirectories.Count < 1)
             {
+                if (!requireMethodDirectory)
+                {
+                    // .m directory does not exist; no further checks need to be performed
+                    return EnumCloseOutType.CLOSEOUT_SUCCESS;
+                }
+
                 mRetData.EvalMsg = "Invalid dataset: No .m directories found";
                 LogError(mRetData.EvalMsg);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
