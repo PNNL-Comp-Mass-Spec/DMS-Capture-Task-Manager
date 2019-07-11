@@ -112,7 +112,7 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="name">Parameter name</param>
         /// <param name="valueIfMissing">Value to return if the parameter does not exist</param>
-        /// <returns>Parameter value if found, otherwise empty string</returns>
+        /// <returns>Parameter value if found, otherwise valueIfMissing</returns>
         public float GetParam(string name, float valueIfMissing)
         {
             if (mJobParams.TryGetValue(name, out var valueText))
@@ -131,7 +131,7 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="name">Parameter name</param>
         /// <param name="valueIfMissing">Value to return if the parameter does not exist</param>
-        /// <returns>Parameter value if found, otherwise empty string</returns>
+        /// <returns>Parameter value if found, valueIfMissing</returns>
         public int GetParam(string name, int valueIfMissing)
         {
             if (mJobParams.TryGetValue(name, out var valueText))
