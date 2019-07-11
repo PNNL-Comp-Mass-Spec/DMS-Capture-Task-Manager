@@ -809,6 +809,8 @@ namespace CaptureToolPlugin
 
             if (mTraceMode)
             {
+                // Monitoring file DatasetName.raw for 30 seconds
+                // Monitoring directory DatasetName.d for 30 seconds
                 clsToolRunnerBase.ShowTraceMessage(
                     string.Format("Monitoring {0} for {1} seconds", fileOrDirectoryName, sleepIntervalSeconds));
             }
@@ -2080,7 +2082,7 @@ namespace CaptureToolPlugin
                     clsToolRunnerBase.ShowTraceMessage(
                         string.Format("Copying from\n{0} to\n{1}", sourceDirectoryToUse.FullName, targetDirectory.FullName));
 
-                    var waitTimeSeconds = 10;
+                    var waitTimeSeconds = 5;
                     Console.WriteLine();
                     ConsoleMsgUtils.ShowDebug(string.Format("Pausing for {0} seconds since TraceMode is enabled; review the directory paths", waitTimeSeconds));
 
@@ -2317,24 +2319,24 @@ namespace CaptureToolPlugin
 
                 foreach (var candidateFile in candidateFiles)
                 {
-                    if (candidateFile.Length == 0)
-                    {
-                        if (fileNamesToDelete.Contains(candidateFile.Name))
-                        {
-                            // Delete this zero-byte file
-                            candidateFile.Delete();
-                            fileCountDeleted++;
-                            if (string.IsNullOrEmpty(deletedFileList))
-                                deletedFileList = candidateFile.Name;
-                            else
-                                deletedFileList += ", " + candidateFile.Name;
-                        }
-                    }
+                    if (candidateFile.Length > 0)
+                        continue;
+
+                    if (!fileNamesToDelete.Contains(candidateFile.Name))
+                        continue;
+
+                    // Delete this zero-byte file
+                    candidateFile.Delete();
+                    fileCountDeleted++;
+                    if (string.IsNullOrEmpty(deletedFileList))
+                        deletedFileList = candidateFile.Name;
+                    else
+                        deletedFileList += ", " + candidateFile.Name;
                 }
 
                 if (fileCountDeleted > 0)
                 {
-                    LogError("Deleted " + fileCountDeleted + " zero byte files in the dataset directory: " + deletedFileList);
+                    LogWarning("Deleted " + fileCountDeleted + " zero byte files in the dataset directory: " + deletedFileList);
                 }
             }
             catch (Exception ex)
