@@ -139,6 +139,8 @@ namespace CaptureToolPlugin
                 mFileTools.CopyingFile += OnCopyingFile;
                 mFileTools.FileCopyProgress += OnFileCopyProgress;
                 mFileTools.ResumingFileCopy += OnResumingFileCopy;
+                mFileTools.ErrorEvent += ErrorEventHandler;
+                mFileTools.WarningEvent += WarningEventHandler;
             }
 
             mDatasetFileSearchTool = new DatasetFileSearchTool(mTraceMode);
@@ -224,7 +226,6 @@ namespace CaptureToolPlugin
                         clsToolRunnerBase.ShowTraceMessage(
                             string.Format("Moving {0} to {1}", sourceFilePath, targetFilePath));
                     }
-
 
                     File.Move(sourceFilePath, targetFilePath);
                 }
