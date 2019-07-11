@@ -2912,6 +2912,27 @@ namespace CaptureToolPlugin
                     }
 
                 }
+                catch (UnauthorizedAccessException ex)
+                {
+                    string msg;
+                    if (string.IsNullOrWhiteSpace(mFileTools.CurrentSourceFile))
+                        msg = "Access denied while copying directory: ";
+                    else
+                        msg = "Access denied while copying " + mFileTools.CurrentSourceFile + ": ";
+
+                    mErrorMessage = string.Copy(msg);
+
+                    if (ex.Message.Length <= 350)
+                        msg += ex.Message;
+                    else
+                        msg += ex.Message.Substring(0, 350);
+
+                    LogError(msg);
+
+                    doCopy = false;
+
+                    HandleCopyException(retData, ex);
+                }
                 catch (Exception ex)
                 {
                     string msg;
