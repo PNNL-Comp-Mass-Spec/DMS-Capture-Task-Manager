@@ -997,6 +997,19 @@ namespace DatasetQualityPlugin
                         LogError(mRetData.CloseoutMsg);
                     }
 
+                    if (mTaskParams.HasParam("IgnoreQuameterErrors"))
+                    {
+                        var ignoreQuameterErrors = mTaskParams.GetParam("IgnoreQuameterErrors", false);
+                        if (ignoreQuameterErrors)
+                        {
+                            mRetData.CloseoutMsg = "Quameter failed; ignoring because job parameter IgnoreQuameterErrors is True";
+                            LogWarning(mRetData.CloseoutMsg);
+                            mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+                            mRetData.EvalCode = EnumEvalCode.EVAL_CODE_SKIPPED;
+                            return true;
+                        }
+                    }
+
                     mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     return false;
                 }
