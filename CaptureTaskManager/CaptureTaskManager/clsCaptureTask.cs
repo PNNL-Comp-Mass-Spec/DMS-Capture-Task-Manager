@@ -79,19 +79,29 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Gets a job task parameter
+        /// Gets a boolean job task parameter
         /// </summary>
         /// <param name="name">Parameter name</param>
         /// <param name="valueIfMissing">Value to return if the parameter does not exist</param>
-        /// <returns>Parameter value if found, otherwise empty string</returns>
+        /// <returns>
+        /// True if the parameter value is "true" or is a non-zero integer
+        /// False if the parameter value is "false" or is zero
+        /// Otherwise returns valueIfMissing
+        /// </returns>
         public bool GetParam(string name, bool valueIfMissing)
         {
-            if (mJobParams.TryGetValue(name, out var valueText))
-            {
-                if (bool.TryParse(valueText, out var value))
-                    return value;
-
+            if (!mJobParams.TryGetValue(name, out var valueText))
                 return valueIfMissing;
+
+            if (string.IsNullOrWhiteSpace(valueText))
+                return valueIfMissing;
+
+            if (bool.TryParse(valueText, out var value))
+                return value;
+
+            if (int.TryParse(valueText, out var integerValue))
+            {
+                return integerValue != 0;
             }
 
             return valueIfMissing;
