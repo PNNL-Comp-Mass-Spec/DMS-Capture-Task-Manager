@@ -470,12 +470,10 @@ namespace DatasetArchivePlugin
 
                 if (ex.Message.Contains(DMSMetadataObject.UNDEFINED_EUS_OPERATOR_ID))
                 {
-                    if (ex.Message.Contains(DMSMetadataObject.UNDEFINED_EUS_OPERATOR_ID))
-
-                        mErrMsg += "; operator not defined in EUS. " +
-                                    "Have " + operatorUsername + " login to " + DMSMetadataObject.EUS_PORTAL_URL + " " +
-                                    "then wait for T_EUS_Users to update, " +
-                                    "then update job parameters using SP UpdateParametersForJob";
+                    mErrMsg += "; operator not defined in EUS. " +
+                                "Have " + operatorUsername + " login to " + DMSMetadataObject.EUS_PORTAL_URL + " " +
+                                "then wait for T_EUS_Users to update, " +
+                                "then update job parameters using SP UpdateParametersForJob";
 
                     // Do not retry the upload; it will fail again due to the same error
                     allowRetry = false;
