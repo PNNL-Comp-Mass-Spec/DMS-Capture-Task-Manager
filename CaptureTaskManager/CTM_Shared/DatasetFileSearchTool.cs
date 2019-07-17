@@ -255,99 +255,97 @@ namespace CaptureTaskManager
                         }
                     }
 
-                    if (foundFiles.Count > 0)
+                    if (foundFiles.Count <= 0)
+                        continue;
+
+                    datasetInfo.FileList = foundFiles;
+
+                    if (datasetInfo.FileCount == 1)
                     {
-                        datasetInfo.FileList = foundFiles;
-
-                        if (datasetInfo.FileCount == 1)
-                        {
-                            datasetInfo.FileOrDirectoryName = datasetInfo.FileList[0].Name;
-                            datasetInfo.DatasetType = DatasetInfo.RawDSTypes.File;
-                        }
-                        else
-                        {
-                            datasetInfo.FileOrDirectoryName = datasetName;
-                            datasetInfo.DatasetType = DatasetInfo.RawDSTypes.MultiFile;
-                            var fileNames = foundFiles.Select(file => file.Name).ToList();
-                            OnWarningEvent(string.Format(
-                                "Dataset name matched multiple files for iteration {0} in directory {1}: {2}",
-                                i,
-                                sourceDirectory.FullName,
-                                string.Join(", ", fileNames.Take(5))));
-                        }
-
-                        if (mTraceMode)
-                        {
-                            clsToolRunnerBase.ShowTraceMessage(
-                                string.Format("Matched file {0}; DatasetType = {1}",
-                                              datasetInfo.FileOrDirectoryName, datasetInfo.DatasetType.ToString()));
-                        }
-
-                        matchedDirectory = false;
-                        return datasetInfo;
+                        datasetInfo.FileOrDirectoryName = datasetInfo.FileList[0].Name;
+                        datasetInfo.DatasetType = DatasetInfo.RawDSTypes.File;
                     }
-                }
-                else
-                {
+                    else
+                    {
+                        datasetInfo.FileOrDirectoryName = datasetName;
+                        datasetInfo.DatasetType = DatasetInfo.RawDSTypes.MultiFile;
+                        var fileNames = foundFiles.Select(file => file.Name).ToList();
+                        OnWarningEvent(string.Format(
+                                           "Dataset name matched multiple files for iteration {0} in directory {1}: {2}",
+                                           i,
+                                           sourceDirectory.FullName,
+                                           string.Join(", ", fileNames.Take(5))));
+                    }
+
                     if (mTraceMode)
                     {
-
                         clsToolRunnerBase.ShowTraceMessage(
-                            string.Format("Looking for a dataset directory, replaceInvalidCharacters is {0}", replaceInvalidCharacters));
+                            string.Format("Matched file {0}; DatasetType = {1}",
+                                          datasetInfo.FileOrDirectoryName, datasetInfo.DatasetType.ToString()));
                     }
 
-                    // Get all directories that match the dataset name
-                    var subdirectories = sourceDirectory.GetDirectories();
-                    foreach (var subdirectory in subdirectories)
+                    matchedDirectory = false;
+                    return datasetInfo;
+                }
+
+                if (mTraceMode)
+                {
+
+                    clsToolRunnerBase.ShowTraceMessage(
+                        string.Format("Looking for a dataset directory, replaceInvalidCharacters is {0}", replaceInvalidCharacters));
+                }
+
+                // Get all directories that match the dataset name
+                var subdirectories = sourceDirectory.GetDirectories();
+                foreach (var subdirectory in subdirectories)
+                {
+                    var directoryNameWithoutExtension = Path.GetFileNameWithoutExtension(subdirectory.Name);
+                    string directoryNameToCheck;
+
+                    if (replaceInvalidCharacters)
                     {
-                        var directoryNameWithoutExtension = Path.GetFileNameWithoutExtension(subdirectory.Name);
-                        string directoryNameToCheck;
-
-                        if (replaceInvalidCharacters)
-                        {
-                            directoryNameToCheck = ReplaceInvalidChars(directoryNameWithoutExtension);
-                        }
-                        else
-                        {
-                            directoryNameToCheck = directoryNameWithoutExtension;
-                        }
-
-                        if (!string.Equals(directoryNameToCheck, datasetName, StringComparison.OrdinalIgnoreCase))
-                        {
-                            continue;
-                        }
-
-                        if (string.IsNullOrEmpty(Path.GetExtension(subdirectory.Name)))
-                        {
-                            // Found a directory that has no extension
-                            datasetInfo.FileOrDirectoryName = subdirectory.Name;
-                            datasetInfo.DatasetType = DatasetInfo.RawDSTypes.DirectoryNoExt;
-                        }
-                        else
-                        {
-                            // Directory name has an extension
-                            datasetInfo.FileOrDirectoryName = subdirectory.Name;
-                            datasetInfo.DatasetType = DatasetInfo.RawDSTypes.DirectoryExt;
-                        }
-
-                        if (mTraceMode)
-                        {
-                            clsToolRunnerBase.ShowTraceMessage(
-                                string.Format("Matched directory {0}; DatasetType = {1}",
-                                              datasetInfo.FileOrDirectoryName, datasetInfo.DatasetType.ToString()));
-                        }
-
-                        if (checkForFilesFirst)
-                        {
-                            OnStatusEvent(string.Format(
-                                           "Dataset name did not match a file, but it did match directory {0}, dataset type is {1}",
-                                           datasetInfo.FileOrDirectoryName,
-                                           datasetInfo.DatasetType));
-                        }
-
-                        matchedDirectory = true;
-                        return datasetInfo;
+                        directoryNameToCheck = ReplaceInvalidChars(directoryNameWithoutExtension);
                     }
+                    else
+                    {
+                        directoryNameToCheck = directoryNameWithoutExtension;
+                    }
+
+                    if (!string.Equals(directoryNameToCheck, datasetName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    if (string.IsNullOrEmpty(Path.GetExtension(subdirectory.Name)))
+                    {
+                        // Found a directory that has no extension
+                        datasetInfo.FileOrDirectoryName = subdirectory.Name;
+                        datasetInfo.DatasetType = DatasetInfo.RawDSTypes.DirectoryNoExt;
+                    }
+                    else
+                    {
+                        // Directory name has an extension
+                        datasetInfo.FileOrDirectoryName = subdirectory.Name;
+                        datasetInfo.DatasetType = DatasetInfo.RawDSTypes.DirectoryExt;
+                    }
+
+                    if (mTraceMode)
+                    {
+                        clsToolRunnerBase.ShowTraceMessage(
+                            string.Format("Matched directory {0}; DatasetType = {1}",
+                                          datasetInfo.FileOrDirectoryName, datasetInfo.DatasetType.ToString()));
+                    }
+
+                    if (checkForFilesFirst)
+                    {
+                        OnStatusEvent(string.Format(
+                                          "Dataset name did not match a file, but it did match directory {0}, dataset type is {1}",
+                                          datasetInfo.FileOrDirectoryName,
+                                          datasetInfo.DatasetType));
+                    }
+
+                    matchedDirectory = true;
+                    return datasetInfo;
                 }
 
             }
