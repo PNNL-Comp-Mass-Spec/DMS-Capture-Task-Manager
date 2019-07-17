@@ -174,12 +174,12 @@ namespace DatasetArchivePlugin
 
         }
 
-        private string AppendToString(string text, string append)
+        private string AppendToString(string text, string append, string delimiter = "; ")
         {
             if (string.IsNullOrEmpty(text))
                 text = string.Empty;
             else
-                text += "; ";
+                text += delimiter ?? "; ";
 
             return text + append;
         }
