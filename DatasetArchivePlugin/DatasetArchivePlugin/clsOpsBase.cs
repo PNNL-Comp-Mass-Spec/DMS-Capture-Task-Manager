@@ -299,9 +299,13 @@ namespace DatasetArchivePlugin
             if (!success)
             {
                 if (debugMode != TarStreamUploader.UploadDebugMode.DebugDisabled)
+                {
                     WarningMsg = "Debug mode was enabled; thus, .tar file was created locally and not uploaded to MyEMSL";
+                }
                 else
+                {
                     WarningMsg = AppendToString(WarningMsg, "UploadToMyEMSL reports False");
+                }
             }
 
             if (success && !mMyEmslUploadSuccess)
@@ -462,6 +466,24 @@ namespace DatasetArchivePlugin
                 return true;
 
             }
+            catch (DirectoryNotFoundException ex)
+            {
+                if (ex.Message.Contains(DMSMetadataObject.SOURCE_DIRECTORY_NOT_FOUND))
+                {
+                    mErrMsg = AppendToString(mErrMsg, DMSMetadataObject.SOURCE_DIRECTORY_NOT_FOUND, ": ");
+                }
+                else
+                {
+                    mErrMsg = AppendToString(mErrMsg, ex.Message, ": ");
+                }
+
+                // Do not retry the upload; it will fail again due to the same error
+                allowRetry = false;
+                LogOperationFailed(mDatasetName, mErrMsg, true);
+
+                HandleUploadException(ex, myEMSLUploader, startTime, useTestInstance);
+                return false;
+            }
             catch (Exception ex)
             {
                 const string errorMessage = "Exception uploading to MyEMSL";
@@ -478,14 +500,6 @@ namespace DatasetArchivePlugin
                     // Do not retry the upload; it will fail again due to the same error
                     allowRetry = false;
                     LogOperationFailed(mDatasetName, ex.Message, true);
-                }
-                else if (ex.Message.Contains(DMSMetadataObject.SOURCE_DIRECTORY_NOT_FOUND))
-                {
-                    mErrMsg += ": " + DMSMetadataObject.SOURCE_DIRECTORY_NOT_FOUND;
-
-                    // Do not retry the upload; it will fail again due to the same error
-                    allowRetry = false;
-                    LogOperationFailed(mDatasetName, mErrMsg, true);
                 }
                 else if (ex.Message.Contains(DMSMetadataObject.TOO_MANY_FILES_TO_ARCHIVE))
                 {
@@ -508,44 +522,7 @@ namespace DatasetArchivePlugin
                     LogOperationFailed(mDatasetName);
                 }
 
-                // Raise an event with the stats, though only if errorCode is non-zero or FileCountNew or FileCountUpdated are positive
-
-                var errorCode = ex.Message.GetHashCode();
-                if (errorCode == 0)
-                    errorCode = 1;
-
-                var elapsedTime = DateTime.UtcNow.Subtract(startTime);
-
-                if (myEMSLUploader == null)
-                {
-                    if (errorCode == 0)
-                        return false;
-
-                    var eusInfo = new Upload.EUSInfo();
-                    eusInfo.Clear();
-
-                    var emptyArgs = new MyEMSLUploadEventArgs(
-                        0, 0,
-                        0, elapsedTime.TotalSeconds,
-                        string.Empty, eusInfo,
-                        errorCode, useTestInstance);
-
-                    OnMyEMSLUploadComplete(emptyArgs);
-                    return false;
-                }
-
-                // Exit this method (skipping the call to MyEMSLUploadEventArgs) if the error code is 0 and no files were added or updated
-                if (errorCode == 0 && myEMSLUploader.FileCountNew == 0 && myEMSLUploader.FileCountUpdated == 0)
-                    return false;
-
-                var uploadArgs = new MyEMSLUploadEventArgs(
-                    myEMSLUploader.FileCountNew, myEMSLUploader.FileCountUpdated,
-                    myEMSLUploader.Bytes, elapsedTime.TotalSeconds,
-                    myEMSLUploader.StatusURI, myEMSLUploader.EUSInfo,
-                    errorCode, useTestInstance);
-
-                OnMyEMSLUploadComplete(uploadArgs);
-
+                HandleUploadException(ex, myEMSLUploader, startTime, useTestInstance);
                 return false;
             }
             finally
@@ -584,6 +561,54 @@ namespace DatasetArchivePlugin
                 return statusMessage.Substring(colonIndex + 1).Trim();
 
             return string.Empty;
+        }
+
+        /// <summary>
+        /// Perform several tasks after the MyEMSL Uploader raises an exception
+        /// </summary>
+        /// <param name="ex"></param>
+        /// <param name="myEMSLUploader"></param>
+        /// <param name="startTime"></param>
+        /// <param name="useTestInstance"></param>
+        private void HandleUploadException(Exception ex, MyEMSLUploader myEMSLUploader, DateTime startTime, bool useTestInstance)
+        {
+            // Raise an event with the stats, though only if errorCode is non-zero or FileCountNew or FileCountUpdated are positive
+
+            var errorCode = ex.Message.GetHashCode();
+            if (errorCode == 0)
+                errorCode = 1;
+
+            var elapsedTime = DateTime.UtcNow.Subtract(startTime);
+
+            if (myEMSLUploader == null)
+            {
+                if (errorCode == 0)
+                    return;
+
+                var eusInfo = new Upload.EUSInfo();
+                eusInfo.Clear();
+
+                var emptyArgs = new MyEMSLUploadEventArgs(
+                    0, 0,
+                    0, elapsedTime.TotalSeconds,
+                    string.Empty, eusInfo,
+                    errorCode, useTestInstance);
+
+                OnMyEMSLUploadComplete(emptyArgs);
+                return;
+            }
+
+            // Exit this method (skipping the call to OnMyEMSLUploadComplete) if the error code is 0 and no files were added or updated
+            if (errorCode == 0 && myEMSLUploader.FileCountNew == 0 && myEMSLUploader.FileCountUpdated == 0)
+                return;
+
+            var uploadArgs = new MyEMSLUploadEventArgs(
+                myEMSLUploader.FileCountNew, myEMSLUploader.FileCountUpdated,
+                myEMSLUploader.Bytes, elapsedTime.TotalSeconds,
+                myEMSLUploader.StatusURI, myEMSLUploader.EUSInfo,
+                errorCode, useTestInstance);
+
+            OnMyEMSLUploadComplete(uploadArgs);
         }
 
         /// <summary>
