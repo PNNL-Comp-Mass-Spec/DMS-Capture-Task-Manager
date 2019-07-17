@@ -105,6 +105,7 @@
   -->
   <PropertyGroup>
     <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\..\DeployedFiles" /Y
+xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\..\DeployedFiles" /Y
 xcopy "$(TargetDir)IMSDemultiplexer*.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
 xcopy "$(TargetDir)MathNet*.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
 xcopy "$(TargetDir)*UIMF*.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
