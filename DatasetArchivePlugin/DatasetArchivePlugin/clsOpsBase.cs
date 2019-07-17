@@ -162,9 +162,8 @@ namespace DatasetArchivePlugin
             // Verify dataset is in specified location
             if (!VerifyDSPresent(mDSNamePath))
             {
-                var errorMessage = "Dataset folder " + mDSNamePath + " not found";
-                mErrMsg = string.Copy(errorMessage);
-                OnErrorEvent(errorMessage);
+                mErrMsg = "Dataset folder " + mDSNamePath + " not found";
+                OnErrorEvent(mErrMsg);
                 LogOperationFailed(mDatasetName, string.Empty, true);
                 return false;
             }
