@@ -88,10 +88,7 @@ namespace SrcFileRenamePlugin
 
             var pwd = clsUtilities.DecodePassword(mPwd);
 
-            var msg = "Started clsRenameOps.DoOperation()";
-            OnDebugEvent(msg);
-
-            errorMessage = string.Empty;
+            OnDebugEvent("Started clsRenameOps.DoOperation()");
 
             // Set up paths
 
@@ -101,8 +98,7 @@ namespace SrcFileRenamePlugin
             // Connect to Bionet if necessary
             if (mUseBioNet)
             {
-                msg = "Bionet connection required for " + sourceVol;
-                OnDebugEvent(msg);
+                OnDebugEvent("Bionet connection required for " + sourceVol);
 
                 mShareConnector = new ShareConnector(mUserName, pwd)
                 {
@@ -111,20 +107,19 @@ namespace SrcFileRenamePlugin
 
                 if (mShareConnector.Connect())
                 {
-                    msg = "Connected to Bionet";
-                    OnDebugEvent(msg);
+                    OnDebugEvent("Connected to Bionet");
                     mConnected = true;
                 }
                 else
                 {
-                    msg = "Error " + mShareConnector.ErrorMessage + " connecting to " + sourceDirectoryPath + " as user " + mUserName + " using 'secfso'";
+                    var msg = "Error " + mShareConnector.ErrorMessage + " connecting to " + sourceDirectoryPath + " as user " + mUserName + " using 'secfso'";
 
                     if (mShareConnector.ErrorMessage == "1326")
-                        msg += "; you likely need to change the Capture_Method from secfso to fso";
-                    if (mShareConnector.ErrorMessage == "53")
-                        msg += "; the password may need to be reset";
-
-                    OnErrorEvent(msg);
+                        OnErrorEvent(msg + "; you likely need to change the Capture_Method from secfso to fso");
+                    else if (mShareConnector.ErrorMessage == "53")
+                        OnErrorEvent(msg + "; the password may need to be reset");
+                    else
+                        OnErrorEvent(msg);
 
                     errorMessage = "Error connecting to " + sourceDirectoryPath + " as user " + mUserName + " using 'secfso'";
                     return EnumCloseOutType.CLOSEOUT_FAILED;
@@ -132,8 +127,7 @@ namespace SrcFileRenamePlugin
             }
             else
             {
-                msg = "Bionet connection not required for " + sourceVol;
-                OnDebugEvent(msg);
+                OnDebugEvent("Bionet connection not required for " + sourceVol);
             }
 
             // If Source_Folder_Name is non-blank, use it. Otherwise use dataset name
@@ -141,12 +135,18 @@ namespace SrcFileRenamePlugin
 
             if (string.IsNullOrWhiteSpace(sourceDirectoryName))
             {
+                OnDebugEvent("Source_Folder_Name is empty; will use the dataset name: " + datasetName);
                 sourceDirectoryName = datasetName;
+            }
+            else
+            {
+                OnDebugEvent("Source_Folder_Name: " + sourceDirectoryName);
             }
 
             // Now that we've had a chance to connect to the share, possibly append a subdirectory to the source path
             if (!string.IsNullOrWhiteSpace(captureSubdirectory))
             {
+                OnDebugEvent("Capture_Subdirectory: " + captureSubdirectory);
 
                 // However, if the subdirectory name matches the dataset name, this was probably an error on the operator's part
                 // and we likely do not want to use the subdirectory name
@@ -185,17 +185,19 @@ namespace SrcFileRenamePlugin
 
             }
 
+            OnDebugEvent("Source directory path: " + sourceDirectoryPath);
             var sourceDirectory = new DirectoryInfo(sourceDirectoryPath);
             int countRenamed;
 
             if (sourceDirectory.Exists)
             {
+                OnDebugEvent("Find files in the source directory");
+
                 countRenamed = FindFilesToRename(datasetName, sourceDirectory, instrumentFileHash, out errorMessage);
             }
             else
             {
-                msg = "Instrument directory not found for dataset " + datasetName + ": " + sourceDirectoryPath;
-                OnErrorEvent(msg);
+                OnErrorEvent("Instrument directory not found for dataset " + datasetName + ": " + sourceDirectoryPath);
 
                 errorMessage = "Remote directory not found: " + sourceDirectoryPath;
                 return EnumCloseOutType.CLOSEOUT_FAILED;
@@ -210,8 +212,7 @@ namespace SrcFileRenamePlugin
                 if (string.IsNullOrEmpty(errorMessage))
                     errorMessage = "Data file and/or directory not found on the instrument; cannot rename";
 
-                msg = "Dataset " + datasetName + ": " + errorMessage;
-                OnErrorEvent(msg);
+                OnErrorEvent("Dataset " + datasetName + ": " + errorMessage);
 
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
