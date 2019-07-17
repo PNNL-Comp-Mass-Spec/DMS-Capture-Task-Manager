@@ -103,7 +103,15 @@ namespace CaptureTaskManager
             // Matched a directory, but this method is used to match files
             datasetInfo.DatasetType = DatasetInfo.RawDSTypes.None;
             datasetInfo.FileOrDirectoryName = string.Empty;
-            datasetInfo.FileList.Clear();
+
+            if (datasetInfo.FileList == null)
+            {
+                OnDebugEvent("datasetInfo.FileList is null in FindDatasetFile; this should not be possible");
+            }
+            else
+            {
+                datasetInfo.FileList.Clear();
+            }
 
             return datasetInfo;
         }
@@ -258,7 +266,7 @@ namespace CaptureTaskManager
                     if (foundFiles.Count <= 0)
                         continue;
 
-                    datasetInfo.FileList = foundFiles;
+                    datasetInfo.FileList.AddRange(foundFiles);
 
                     if (datasetInfo.FileCount == 1)
                     {

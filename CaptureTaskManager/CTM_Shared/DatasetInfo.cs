@@ -75,7 +75,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Dataset files
         /// </summary>
-        public List<FileInfo> FileList { get; set; }
+        public List<FileInfo> FileList { get; }
 
         /// <summary>
         /// Number of files in FileList
@@ -89,6 +89,7 @@ namespace CaptureTaskManager
         public DatasetInfo(string datasetName)
         {
             DatasetName = datasetName;
+            FileList = new List<FileInfo>();
         }
     }
 }
