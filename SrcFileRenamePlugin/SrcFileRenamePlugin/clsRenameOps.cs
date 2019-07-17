@@ -223,12 +223,12 @@ namespace SrcFileRenamePlugin
         /// <summary>
         /// Look for files to rename
         /// </summary>
-        /// <param name="dataset">Dataset name</param>
+        /// <param name="datasetName">Dataset name</param>
         /// <param name="sourceDirectory">Directory to search</param>
         /// <param name="instrumentFileHash">SHA-1 hash of the primary instrument file (ignored for directories)</param>
         /// <param name="errorMessage">Output: error message</param>
         /// <returns></returns>
-        private int FindFilesToRename(string dataset, DirectoryInfo sourceDirectory, string instrumentFileHash, out string errorMessage)
+        private int FindFilesToRename(string datasetName, DirectoryInfo sourceDirectory, string instrumentFileHash, out string errorMessage)
         {
             errorMessage = string.Empty;
 
@@ -237,36 +237,36 @@ namespace SrcFileRenamePlugin
             // We next check for various things that operators rename the datasets to
             var fileNamesToCheck = new List<string>
             {
-                dataset,
-                dataset + "-bad",
-                dataset + "_bad",
-                dataset + "-corrupt",
-                dataset + "_corrupt",
-                dataset + "-corrupted",
-                dataset + "_corrupted",
+                datasetName,
+                datasetName + "-bad",
+                datasetName + "_bad",
+                datasetName + "-corrupt",
+                datasetName + "_corrupt",
+                datasetName + "-corrupted",
+                datasetName + "_corrupted",
                 // ReSharper disable StringLiteralTypo
-                dataset + "-chromooff",
-                dataset + "-flatline",
-                dataset + "-LCFroze",
-                dataset + "-mixer",
-                dataset + "-NoN2",
-                dataset + "-plugged",
-                dataset + "-pluggedSPE",
-                dataset + "-plunger",
-                dataset + "-pumpOFF",
-                dataset + "-slow",
-                dataset + "-wrongLCmethod",
-                dataset + "-air",
-                dataset + "-badQC",
-                dataset + "-corrupt",
-                dataset + "-corrupted",
-                dataset + "-plug",
-                dataset + "-plugsplit",
-                dataset + "-rotor",
-                dataset + "-slowsplit",
+                datasetName + "-chromooff",
+                datasetName + "-flatline",
+                datasetName + "-LCFroze",
+                datasetName + "-mixer",
+                datasetName + "-NoN2",
+                datasetName + "-plugged",
+                datasetName + "-pluggedSPE",
+                datasetName + "-plunger",
+                datasetName + "-pumpOFF",
+                datasetName + "-slow",
+                datasetName + "-wrongLCmethod",
+                datasetName + "-air",
+                datasetName + "-badQC",
+                datasetName + "-corrupt",
+                datasetName + "-corrupted",
+                datasetName + "-plug",
+                datasetName + "-plugsplit",
+                datasetName + "-rotor",
+                datasetName + "-slowsplit",
                 // ReSharper restore StringLiteralTypo
-                "x_" + dataset,
-                "x_" + dataset + "-bad"
+                "x_" + datasetName,
+                "x_" + datasetName + "-bad"
             };
 
             var loggedDatasetNotFound = false;
@@ -280,7 +280,7 @@ namespace SrcFileRenamePlugin
                 }
 
                 bool alreadyRenamed;
-                if (!dataset.StartsWith("x_") && datasetNameBase.StartsWith("x_"))
+                if (!datasetName.StartsWith("x_") && datasetNameBase.StartsWith("x_"))
                     alreadyRenamed = true;
                 else
                     alreadyRenamed = false;
@@ -291,17 +291,21 @@ namespace SrcFileRenamePlugin
                 // Get a list of directories containing the dataset name
                 var matchedDirectories = GetMatchingDirectories(sourceDirectory, datasetNameBase);
 
-                // If no files or directories found, return error
                 if (matchedFiles.Count + matchedDirectories.Count == 0)
                 {
                     // No file or directory found
                     // Try looking for matching files with a space in the name
                     // If a match to a single file is found, and if the SHA-1 sum matches the value in DMS, rename it
-                    var matchedFiles2 = mDatasetFileSearchTool.FindDatasetFile(sourceDirectory.FullName, dataset);
+
+                    // Uncomment to see every name checked
+                    // OnDebugEvent(string.Format("Looking for {0} in {1}", datasetNameBase, sourceDirectory.FullName));
+
+                    var matchedFiles2 = mDatasetFileSearchTool.FindDatasetFile(sourceDirectory.FullName, datasetNameBase);
 
                     if (matchedFiles2.FileCount == 1)
                     {
                         var candidateFile = matchedFiles2.FileList.First();
+                        OnDebugEvent("Match found: " + candidateFile.FullName);
 
                         // Compute the SHA-1 hash
                         var sha1Hash = Pacifica.Core.Utilities.GenerateSha1Hash(candidateFile.FullName);
@@ -324,7 +328,7 @@ namespace SrcFileRenamePlugin
                         // Log a message for the first item checked in fileNamesToCheck
                         if (!loggedDatasetNotFound)
                         {
-                            var msg = "Dataset " + dataset + ": data file and/or directory not found using " + datasetNameBase + ".*";
+                            var msg = "Dataset " + datasetNameBase + ": data file and/or directory not found using " + datasetNameBase + ".*";
                             OnWarningEvent(msg);
                             loggedDatasetNotFound = true;
                         }
@@ -335,7 +339,7 @@ namespace SrcFileRenamePlugin
 
                 if (alreadyRenamed)
                 {
-                    var msg = "Skipping dataset " + dataset + " since data file and/or directory already renamed to " + datasetNameBase;
+                    var msg = "Skipping dataset " + datasetNameBase + " since data file and/or directory already renamed to " + datasetNameBase;
                     OnStatusEvent(msg);
                     countRenamed++;
                     break;
