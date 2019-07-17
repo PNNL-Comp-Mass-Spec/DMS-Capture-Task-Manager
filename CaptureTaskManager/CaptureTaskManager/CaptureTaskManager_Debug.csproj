@@ -171,7 +171,7 @@ rem xcopy "$(ProjectDir)..\..\RefLib\x86\SQLite.Interop.dll" "$(TargetDir)x86" /
 rem xcopy "$(ProjectDir)..\..\RefLib\x64\SQLite.Interop.dll" "$(TargetDir)x64" /D /Y
 
 xcopy "$(TargetPath)" "$(ProjectDir)..\..\DeployedFiles" /D /Y
-xcopy "$(TargetDir)CaptureTaskManager.pdb" "$(ProjectDir)..\..\DeployedFiles" /D /Y
+xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\..\DeployedFiles" /D /Y
 
 xcopy "$(TargetDir)app.manifest" "$(ProjectDir)..\..\DeployedFiles" /D /Y
 xcopy "$(TargetDir)*.config" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I

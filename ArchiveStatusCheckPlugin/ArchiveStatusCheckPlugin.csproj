@@ -62,6 +62,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\DeployedFiles" /Y /I
+xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\DeployedFiles" /Y
 xcopy "$(TargetDir)*.*" "$(ProjectDir)..\CaptureTaskManager\CaptureTaskManager\bin\Debug" /D /Y /I
 xcopy "$(TargetDir)*.dll" "$(ProjectDir)..\DeployedFiles" /D /Y /I
 </PostBuildEvent>
