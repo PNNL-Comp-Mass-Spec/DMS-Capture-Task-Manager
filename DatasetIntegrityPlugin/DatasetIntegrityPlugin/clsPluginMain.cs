@@ -293,9 +293,8 @@ namespace DatasetIntegrityPlugin
                     break;
 
                 default:
-                    msg = "No integrity test available for instrument class " + instClassName;
-                    LogWarning(msg);
-                    mRetData.EvalMsg = msg;
+                    mRetData.EvalMsg = "No integrity test available for instrument class " + instClassName;
+                    LogWarning(mRetData.EvalMsg);
                     mRetData.EvalCode = EnumEvalCode.EVAL_CODE_NOT_EVALUATED;
                     mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
                     break;
