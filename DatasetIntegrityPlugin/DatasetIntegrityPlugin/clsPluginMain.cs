@@ -2338,16 +2338,24 @@ namespace DatasetIntegrityPlugin
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
-            // Verify the size of the .idx file(s)
-            var largestIndFileKB = GetLargestFileSizeKB(indFiles);
-
-            if (largestIndFileKB < WATERS_FUNC_IND_FILE_MIN_SIZE_KB)
+            if (indFiles.Count == 0)
             {
-                ReportFileSizeTooSmall(indFiles.First().Name, indFiles.First().FullName, largestDatFileKB, WATERS_FUNC_IND_FILE_MIN_SIZE_KB);
-                return EnumCloseOutType.CLOSEOUT_FAILED;
+                mRetData.EvalMsg = "Possibly corrupt dataset; no _FUNC*.ind files";
+                LogWarning(mRetData.EvalMsg);
+            }
+            else
+            {
+                // Verify the size of the .ind file(s)
+                var largestIndFileKB = GetLargestFileSizeKB(indFiles);
+
+                if (largestIndFileKB < WATERS_FUNC_IND_FILE_MIN_SIZE_KB)
+                {
+                    ReportFileSizeTooSmall(indFiles.First().Name, indFiles.First().FullName, largestDatFileKB, WATERS_FUNC_IND_FILE_MIN_SIZE_KB);
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
             }
 
-            // Verify that each .dat files has a .idx file
+            // Verify that each .dat file has a .idx file
             foreach (var datFile in datFiles)
             {
                 var indexFile = new FileInfo(Path.ChangeExtension(datFile.FullName, "IDX"));
@@ -2369,11 +2377,11 @@ namespace DatasetIntegrityPlugin
             if (!infFile.Exists)
             {
                 // ReSharper disable once StringLiteralTypo
-                mRetData.EvalMsg = "Invalid dataset: _FUNCTNS.INF file not found";
-                LogError(mRetData.EvalMsg);
+                var errorMessage = "Invalid dataset: _FUNCTNS.INF file not found";
+                LogError(errorMessage);
+                mRetData.EvalMsg = AppendToComment(mRetData.EvalMsg, errorMessage);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
-
 
             // If we got to here, everything was OK
             return EnumCloseOutType.CLOSEOUT_SUCCESS;
