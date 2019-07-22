@@ -32,10 +32,16 @@ namespace DatasetQualityPlugin
         private const string QUAMETER_IDFREE_METRICS_FILE = "Quameter_IDFree.tsv";
         private const string QUAMETER_CONSOLE_OUTPUT_FILE = "Quameter_Console_Output.txt";
 
+        private const string FATAL_SPLINE_ERROR = "SPLINE_PCHIP_SET - Fatal error";
+        private const string X_ARRAY_NOT_INCREASING = "X array not strictly increasing";
+
         #endregion
 
         #region "Class-wide variables"
+
         clsToolReturnData mRetData = new clsToolReturnData();
+
+        private bool mFatalSplineError;
 
         private DateTime mProcessingStartTime;
 
@@ -287,7 +293,7 @@ namespace DatasetQualityPlugin
         /// <param name="lstResults"></param>
         /// <param name="sXMLResults"></param>
         /// <returns></returns>
-        private bool ConvertResultsToXML(List<KeyValuePair<string, string>> lstResults, out string sXMLResults)
+        private bool ConvertResultsToXML(IEnumerable<KeyValuePair<string, string>> lstResults, out string sXMLResults)
         {
 
             // XML will look like:
@@ -669,6 +675,8 @@ namespace DatasetQualityPlugin
                         if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
+                        var trimmedLine = dataLine.Trim();
+
                         var metadataProgressMatched = UpdateProgress(dataLine, reMetadataProgress, ref metadataPercentComplete);
                         var peaksProgressMatched = UpdateProgress(dataLine, rePeaksProgress, ref peaksPercentComplete);
                         var precursorProgressMatched = UpdateProgress(dataLine, rePrecursorProgress, ref precursorPercentComplete);
@@ -682,23 +690,34 @@ namespace DatasetQualityPlugin
                         {
                             if (string.IsNullOrEmpty(exceptionText))
                             {
-                                exceptionText = string.Copy(dataLine);
+                                exceptionText = string.Copy(trimmedLine);
                             }
                             else
                             {
-                                exceptionText = "; " + dataLine;
+                                exceptionText = "; " + trimmedLine;
                             }
 
                         }
-                        else if (dataLine.StartsWith("Error:"))
+                        else if (trimmedLine.StartsWith("Error:"))
                         {
-                            LogError("Quameter error: " + dataLine);
+                            LogError("Quameter error: " + trimmedLine);
 
                         }
-                        else if (dataLine.StartsWith("Unhandled Exception"))
+                        else if (trimmedLine.StartsWith("Unhandled Exception"))
                         {
-                            LogError("Quameter error: " + dataLine);
+                            LogError("Quameter error: " + trimmedLine);
                             unhandledException = true;
+                        }
+                        else if (trimmedLine.StartsWith(FATAL_SPLINE_ERROR))
+                        {
+                            mFatalSplineError = true;
+                        }
+                        else if (trimmedLine.StartsWith(X_ARRAY_NOT_INCREASING))
+                        {
+                            if (mFatalSplineError)
+                                LogError(string.Format("Quameter error: {0}; {1}", FATAL_SPLINE_ERROR, trimmedLine));
+                            else
+                                LogError("Quameter error: " + trimmedLine);
                         }
                     }
                 }
@@ -1150,6 +1169,8 @@ namespace DatasetQualityPlugin
         {
             try
             {
+                mFatalSplineError = false;
+
                 // Construct the command line arguments
                 // Always use "cpus 1" since it guarantees that the metrics will always be written out in the same order
 
@@ -1214,6 +1235,14 @@ namespace DatasetQualityPlugin
 
                 if (!success)
                 {
+                    if (mFatalSplineError)
+                    {
+                        mRetData.CloseoutMsg = "Error running Quameter";
+                        mRetData.EvalMsg = "Spline error; " + X_ARRAY_NOT_INCREASING;
+                        LogWarning(mRetData.CloseoutMsg);
+                        return true;
+                    }
+
                     if (ignoreQuameterFailure)
                     {
                         mRetData.CloseoutMsg = "Quameter failed; ignoring because instrument " + instrumentName;
