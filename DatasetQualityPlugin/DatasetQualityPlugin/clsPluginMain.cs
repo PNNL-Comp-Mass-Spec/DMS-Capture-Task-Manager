@@ -1237,7 +1237,7 @@ namespace DatasetQualityPlugin
                 {
                     if (mFatalSplineError)
                     {
-                        mRetData.CloseoutMsg = "Error running Quameter";
+                        mRetData.CloseoutMsg = "Quameter failed; ignoring because a spline data validation error";
                         mRetData.EvalMsg = "Spline error; " + X_ARRAY_NOT_INCREASING;
                         LogWarning(mRetData.CloseoutMsg);
                         return true;
