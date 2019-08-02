@@ -438,6 +438,7 @@ namespace CaptureTaskManager
             mFileTools.LockQueueTimedOut += FileTools_LockQueueTimedOut;
             mFileTools.LockQueueWaitComplete += FileTools_LockQueueWaitComplete;
             mFileTools.WaitingForLockQueue += FileTools_WaitingForLockQueue;
+            mFileTools.WaitingForLockQueueNotifyLockFilePaths += FileTools_WaitingForLockQueueNotifyLockFilePaths;
         }
 
         private bool IsLockQueueLogMessageNeeded(ref DateTime lockQueueWaitTimeStart, ref DateTime lastLockQueueWaitTimeLog)
@@ -700,7 +701,7 @@ namespace CaptureTaskManager
         /// <param name="emptyLinesBeforeMessage"></param>
         public static void ShowTraceMessage(string message, bool includeDate = false, int emptyLinesBeforeMessage = 1)
         {
-            BaseLogger.ShowTraceMessage(message, includeDate, "  " , emptyLinesBeforeMessage);
+            BaseLogger.ShowTraceMessage(message, includeDate, "  ", emptyLinesBeforeMessage);
         }
 
         /// <summary>
@@ -1038,17 +1039,27 @@ namespace CaptureTaskManager
 
         private void FileTools_WaitingForLockQueue(string sourceFilePath, string targetFilePath, int backlogSourceMB, int backlogTargetMB)
         {
-            if (IsLockQueueLogMessageNeeded(ref mLockQueueWaitTimeStart, ref mLastLockQueueWaitTimeLog))
+            if (!IsLockQueueLogMessageNeeded(ref mLockQueueWaitTimeStart, ref mLastLockQueueWaitTimeLog))
+                return;
+
+            mLastLockQueueWaitTimeLog = DateTime.UtcNow;
+            LogMessage(string.Format(
+                         "Waiting for lockfile queue to fall below threshold; " +
+                         "SourceBacklog={0:N0} MB, TargetBacklog={1:N0} MB, " +
+                         "Source={2}, Target={3}",
+                         backlogSourceMB, backlogTargetMB, sourceFilePath, targetFilePath));
+        }
+
+        private void FileTools_WaitingForLockQueueNotifyLockFilePaths(string sourceLockFilePath, string targetLockFilePath, string adminBypassMessage)
+        {
+            if (string.IsNullOrWhiteSpace(adminBypassMessage))
             {
-                mLastLockQueueWaitTimeLog = DateTime.UtcNow;
-                var msg = "Waiting for lockfile queue to fall below threshold; " +
-                          "SourceBacklog=" + backlogSourceMB + " MB, " +
-                          "TargetBacklog=" + backlogTargetMB + " MB, " +
-                          "Source=" + sourceFilePath + ", " +
-                          "Target=" + targetFilePath;
-                LogMessage(msg);
+                LogMessage(string.Format("Waiting for lockfile queue to fall below threshold; see lock file(s) at {0} and {1}",
+                                         sourceLockFilePath ?? "(n/a)", targetLockFilePath ?? "(n/a)"));
+                return;
             }
 
+            LogMessage(adminBypassMessage);
         }
 
         #endregion
