@@ -191,12 +191,25 @@ namespace Pacifica.DMS_Metadata
 
             var jobNumber = GetParam("Job", 0);
 
+            var ignoreMaxFileLimit = false;
+            if (mTaskParams.TryGetValue("IgnoreMaxFileLimit", out var ignoreMaxFileLimitSetting))
+            {
+                if (int.TryParse(ignoreMaxFileLimitSetting, out var value))
+                {
+                    ignoreMaxFileLimit = value > 0;
+                } else if (bool.TryParse(ignoreMaxFileLimitSetting, out var boolValue))
+                {
+                    ignoreMaxFileLimit = boolValue;
+                }
+            }
+
             var ignoreMyEMSLFileTrackingError = GetParam("IgnoreMyEMSLFileTrackingError", false);
 
             // Instantiate the metadata object
             MetadataContainer = new DMSMetadataObject(config, mManagerName, jobNumber, mFileTools)
             {
                 TraceMode = TraceMode,
+                IgnoreMaxFileLimit = ignoreMaxFileLimit,
                 IgnoreMyEMSLFileTrackingError = ignoreMyEMSLFileTrackingError
             };
 

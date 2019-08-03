@@ -504,6 +504,11 @@ namespace DatasetArchivePlugin
                 {
                     mErrMsg += ": " + DMSMetadataObject.TOO_MANY_FILES_TO_ARCHIVE;
 
+                    var jobNumber = mTaskParams.GetParam("Job", 0);
+
+                    mErrMsg += string.Format(
+                        " (to ignore this error, use Exec AddUpdateJobParameter {0}, 'StepParameters', 'IgnoreMaxFileLimit', '1')", jobNumber);
+
                     // Do not retry the upload; it will fail again due to the same error
                     allowRetry = false;
                     LogOperationFailed(mDatasetName, mErrMsg, true);

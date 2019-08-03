@@ -93,6 +93,11 @@ namespace Pacifica.DMS_Metadata
         public int JobNumber { get; }
 
         /// <summary>
+        /// When true, allow over 500 files to be pushed to MyEMSL
+        /// </summary>
+        public bool IgnoreMaxFileLimit { get; set; }
+
+        /// <summary>
         /// when True, allow the ingest step to proceed, even if MyEMSL is tracking fewer files than expected for a given dataset
         /// </summary>
         public bool IgnoreMyEMSLFileTrackingError { get; set; }
@@ -516,8 +521,15 @@ namespace Pacifica.DMS_Metadata
 
             if (fileList.Count >= MAX_FILES_TO_ARCHIVE)
             {
-                throw new ArgumentOutOfRangeException(
-                    TOO_MANY_FILES_TO_ARCHIVE + "; files must be zipped before upload to MyEMSL (CollectFileInformation)");
+                if (IgnoreMaxFileLimit)
+                {
+                    OnWarningEvent(string.Format("Uploading a large number of files to the archive: {0}", fileList.Count));
+                }
+                else
+                {
+                    throw new ArgumentOutOfRangeException(
+                        TOO_MANY_FILES_TO_ARCHIVE + "; files must be zipped before upload to MyEMSL (CollectFileInformation)");
+                }
             }
 
             // Get the file names that we can ignore
