@@ -10,8 +10,9 @@ namespace CaptureTaskManager
     /// </summary>
     public class clsRunDosProgram : EventNotifier
     {
+        #region "Constants and Module variables"
 
-        #region "Module variables"
+        public const string RUN_PROGRAM_STATUS_LINE = "RunProgram";
 
         /// <summary>
         /// Monitor interval, in milliseconds
@@ -374,7 +375,7 @@ namespace CaptureTaskManager
             mProgRunner.ConsoleOutputEvent += ProgRunner_ConsoleOutputEvent;
             mProgRunner.ProgChanged += ProgRunner_ProgChanged;
 
-            OnStatusEvent("RunProgram " + mProgRunner.Program + " " + mProgRunner.Arguments);
+            OnStatusEvent(RUN_PROGRAM_STATUS_LINE + " " + mProgRunner.Program + " " + mProgRunner.Arguments);
 
             mAbortProgramPostLogEntry = true;
             ProgramAborted = false;
