@@ -608,7 +608,7 @@ namespace DatasetIntegrityPlugin
                 var requiredFiles = new List<string>
                 {
                     "IMSFrame.bin",
-                    "MSPeak.bin",
+                    // Not required: "MSPeak.bin",
                     // ReSharper disable once StringLiteralTypo
                     "MSPeriodicActuals.bin",
                     "MSProfile.bin",
@@ -1195,7 +1195,7 @@ namespace DatasetIntegrityPlugin
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
-            // The AcqData directory should contain one or more .Bin files, for example MSScan.bin, MSPeak.bin, and MSProfile.bin
+            // The AcqData directory should contain one or more .Bin files, for example MSScan.bin and MSProfile.bin
             // Verify that the MSScan.bin file exists
             var msScanFile = acqDataDirectories[0].GetFiles("MSScan.bin").ToList();
             if (msScanFile.Count == 0)
