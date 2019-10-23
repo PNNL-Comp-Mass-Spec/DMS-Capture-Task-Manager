@@ -45,7 +45,7 @@ namespace DatasetIntegrityPlugin
         private const float TIMS_UIMF_FILE_MIN_SIZE_KB = 5;
         private const float AGILENT_MS_SCAN_BIN_FILE_MIN_SIZE_KB = 5;
         private const float AGILENT_MS_SCAN_BIN_FILE_SMALL_SIZE_KB = 50;
-        private const float AGILENT_MS_PEAK_BIN_FILE_MIN_SIZE_KB = 50;
+        private const float AGILENT_MS_PEAK_BIN_FILE_MIN_SIZE_KB = 35;
         private const float AGILENT_MS_PEAK_BIN_FILE_SMALL_SIZE_KB = 500;
         private const float AGILENT_DATA_MS_FILE_MIN_SIZE_KB = 75;
         private const float SHIMADZU_QGD_FILE_MIN_SIZE_KB = 50;
