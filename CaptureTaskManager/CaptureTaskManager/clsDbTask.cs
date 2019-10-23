@@ -186,7 +186,29 @@ namespace CaptureTaskManager
                     var paramName = dataRow[0];
                     var paramValue = dataRow[1];
 
-                    if (!string.IsNullOrWhiteSpace(paramName))
+                    if (string.IsNullOrWhiteSpace(paramName))
+                        continue;
+
+                    if (mJobParams.ContainsKey(paramName))
+                    {
+                        var existingValue = mJobParams[paramName];
+
+                        if (string.Equals(existingValue, paramValue))
+                        {
+                            LogDebug(string.Format(
+                                           "Skipping duplicate task parameter named {0}: the new value matches the existing value of '{1}'",
+                                           paramName, existingValue));
+                        }
+                        else
+                        {
+                            LogError(string.Format(
+                                           "Duplicate task parameters have the same name ({0}), but conflicting values: existing value is '{1}' vs. new value of '{2}'",
+                                           paramName, existingValue, paramValue));
+                            return false;
+                        }
+
+                    }
+                    else
                     {
                         mJobParams.Add(paramName, paramValue);
                     }
