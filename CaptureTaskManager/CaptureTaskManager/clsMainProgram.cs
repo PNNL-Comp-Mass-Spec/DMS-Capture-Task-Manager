@@ -817,6 +817,18 @@ namespace CaptureTaskManager
 
                         case EnumRequestTaskResult.ResultError:
                             // Problem with task request; Errors are logged by request method
+
+                            // Close the task if the job number and step number are known
+                            var job = mTask.GetParam("Job", 0);
+                            var step = mTask.GetParam("Step", -1);
+
+                            if (job > 0 && step >= 0)
+                            {
+                                mTask.CloseTask(EnumCloseOutType.CLOSEOUT_FAILED,
+                                                "Error retrieving or parsing job parameters",
+                                                EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY);
+                            }
+
                             mTaskRequestErrorCount++;
                             break;
 
