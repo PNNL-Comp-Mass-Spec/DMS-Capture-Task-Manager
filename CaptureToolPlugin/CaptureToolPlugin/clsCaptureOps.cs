@@ -2433,6 +2433,7 @@ namespace CaptureToolPlugin
             bool copyWithResume,
             clsInstrumentClassInfo.eInstrumentClass instrumentClass)
         {
+            // List of file names to skip (not full paths)
             var filesToSkip = new SortedSet<string>();
 
             bool success;
@@ -2507,6 +2508,21 @@ namespace CaptureToolPlugin
                     filesToSkip.Add(fragProfileFile.Name);
                 }
 
+            }
+
+            if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.FT_Booster_Data)
+            {
+                // Skip Thermo .Raw files
+                foreach (var thermoRawFile in sourceDirectory.GetFiles("*.raw", SearchOption.AllDirectories))
+                {
+                    filesToSkip.Add(thermoRawFile.Name);
+                }
+
+                // Skip chunk .bin files
+                foreach (var thermoRawFile in sourceDirectory.GetFiles("chunk*.bin", SearchOption.AllDirectories))
+                {
+                    filesToSkip.Add(thermoRawFile.Name);
+                }
             }
 
             if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Sciex_QTrap)
@@ -3462,6 +3478,7 @@ namespace CaptureToolPlugin
 
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging:
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Spot:
+                case clsInstrumentClassInfo.eInstrumentClass.FT_Booster_Data:
 
                     if (sourceType != DatasetInfo.RawDSTypes.DirectoryNoExt)
                     {

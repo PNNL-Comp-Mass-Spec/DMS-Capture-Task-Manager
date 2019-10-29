@@ -205,7 +205,8 @@ namespace CaptureTaskManager
             GC_QExactive = 24,              // GCQE01
             Waters_IMS = 25,                // SynaptG2_01
             Shimadzu_GC = 26,               // Shimadzu_GC_MS_01
-            BrukerTOF_TDF = 27              // Bruker_timsTOF
+            BrukerTOF_TDF = 27,             // Bruker_timsTOF
+            FT_Booster_Data = 28            // 21T_Booster
         }
 
         #endregion
