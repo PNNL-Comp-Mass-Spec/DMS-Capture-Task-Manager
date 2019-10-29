@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.329
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29418.71
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CaptureToolPlugin", "CaptureToolPlugin\CaptureToolPlugin.csproj", "{1B2E1580-C202-4991-A2E9-E2F1A54FA73D}"
 EndProject
@@ -13,8 +13,8 @@ Global
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{1B2E1580-C202-4991-A2E9-E2F1A54FA73D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1B2E1580-C202-4991-A2E9-E2F1A54FA73D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1B2E1580-C202-4991-A2E9-E2F1A54FA73D}.Release|Any CPU.ActiveCfg = Release|x86
-		{1B2E1580-C202-4991-A2E9-E2F1A54FA73D}.Release|Any CPU.Build.0 = Release|x86
+		{1B2E1580-C202-4991-A2E9-E2F1A54FA73D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1B2E1580-C202-4991-A2E9-E2F1A54FA73D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
