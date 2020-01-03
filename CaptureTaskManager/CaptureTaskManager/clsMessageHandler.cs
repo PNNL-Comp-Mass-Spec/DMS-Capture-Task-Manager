@@ -157,7 +157,7 @@ namespace CaptureTaskManager
             }
             catch (Exception ex)
             {
-                LogError("Exception while initializing message sessions", ex);
+                LogWarning("Exception while initializing message sessions: " + ex.Message);
                 DestroyConnection();
                 return false;
             }
