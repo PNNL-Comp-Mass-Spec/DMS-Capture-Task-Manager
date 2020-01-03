@@ -90,7 +90,7 @@ namespace CaptureTaskManager
             {
                 try
                 {
-                    IConnectionFactory connectionFactory = new ConnectionFactory(mBrokerUri);
+                    IConnectionFactory connectionFactory = new ConnectionFactory(mBrokerUri, mMgrSettings.ManagerName);
                     mConnection = connectionFactory.CreateConnection();
                     mConnection.RequestTimeout = new TimeSpan(0, 0, timeoutSeconds);
                     mConnection.Start();
