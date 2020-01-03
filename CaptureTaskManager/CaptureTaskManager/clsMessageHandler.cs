@@ -197,11 +197,17 @@ namespace CaptureTaskManager
         /// </summary>
         protected void DestroyConnection()
         {
-            if (mHasConnection)
+            try
             {
-                mConnection.Dispose();
-                mHasConnection = false;
-                LogDebug("Message connection closed");
+                if (mHasConnection)
+                {
+                    mConnection?.Close();
+                    mHasConnection = false;
+                }
+            }
+            catch (Exception)
+            {
+                // Ignore errors here
             }
         }
 
