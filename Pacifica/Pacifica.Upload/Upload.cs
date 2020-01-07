@@ -19,7 +19,7 @@ namespace Pacifica.Upload
         public const int DEFAULT_EUS_OPERATOR_ID = 43428;
 
         /// <summary>
-        /// EUS Proposal ID to use when the proposal ID is unknown
+        /// EUS Project ID to use when the project ID is unknown
         /// </summary>
         /// <remarks>
         /// Proposal ID 17797 is "Development of High Throughput Proteomics Production Operations"
@@ -49,10 +49,10 @@ namespace Pacifica.Upload
             public int EUSInstrumentID;
 
             /// <summary>
-            /// EUS proposal number
+            /// EUS project number
             /// </summary>
             /// <remarks>As of May 2019, these are now referred to as projects, not proposals</remarks>
-            public string EUSProposalID;
+            public string EUSProjectID;
 
             /// <summary>
             /// EUS ID of the instrument operator (for datasets) or the data package owner (for Data Packages)
@@ -63,13 +63,13 @@ namespace Pacifica.Upload
             public void Clear()
             {
                 EUSInstrumentID = 0;
-                EUSProposalID = string.Empty;
+                EUSProjectID = string.Empty;
                 EUSUploaderID = 0;
             }
 
             public override string ToString()
             {
-                return "EUSInstrumentID " + EUSInstrumentID + ", Uploader " + EUSUploaderID + ", Proposal " + EUSProposalID;
+                return "EUSInstrumentID " + EUSInstrumentID + ", Uploader " + EUSUploaderID + ", Project " + EUSProjectID;
             }
         }
 
@@ -84,7 +84,7 @@ namespace Pacifica.Upload
             public string CampaignName;
             public int CampaignID;
             public int EUSInstrumentID;         // Originally only used by datasets. Used by Data Packages starting in July 2017 since required by policy
-            public string EUSProposalID;        // Originally only used by datasets. Used by Data Packages starting in October 2016 since required by policy
+            public string EUSProjectID;         // Originally only used by datasets. Used by Data Packages starting in October 2016 since required by policy
             public string ExperimentName;
             public int ExperimentID;
             public string OrganismName;
@@ -117,7 +117,7 @@ namespace Pacifica.Upload
                 CampaignName = string.Empty;
                 CampaignID = 0;
                 EUSInstrumentID = 0;
-                EUSProposalID = string.Empty;
+                EUSProjectID = string.Empty;
                 ExperimentName = string.Empty;
                 ExperimentID = 0;
                 OrganismName = string.Empty;
@@ -496,7 +496,7 @@ namespace Pacifica.Upload
         /// </summary>
         /// <param name="uploadMetadata">Upload metadata</param>
         /// <param name="filesToUpload">Files to upload</param>
-        /// <param name="eusInfo">Output parameter: EUS instrument ID, proposal ID, and uploader ID</param>
+        /// <param name="eusInfo">Output parameter: EUS instrument ID, project ID, and uploader ID</param>
         /// <returns>
         /// Dictionary of the information to translate to JSON;
         /// Keys are key names; values are either strings or dictionary objects or even a list of dictionary objects
@@ -534,15 +534,15 @@ namespace Pacifica.Upload
 
             // Now that EUS instrument ID is defined, store it and lookup other EUS info
             eusInfo.EUSInstrumentID = GetEUSInstrumentID(uploadMetadata.EUSInstrumentID, UNKNOWN_INSTRUMENT_EUS_INSTRUMENT_ID);
-            eusInfo.EUSProposalID = GetEUSProposalID(uploadMetadata.EUSProposalID, DEFAULT_EUS_PROPOSAL_ID);
+            eusInfo.EUSProjectID = GetEUSProjectID(uploadMetadata.EUSProjectID, DEFAULT_EUS_PROJECT_ID);
             eusInfo.EUSUploaderID = GetEUSSubmitterID(uploadMetadata.EUSOperatorID, DEFAULT_EUS_OPERATOR_ID);
 
-            // Possibly override EUSProposal ID
-            if (eusInfo.EUSProposalID.StartsWith("EPR"))
+            // Possibly override EUSProject ID
+            if (eusInfo.EUSProjectID.StartsWith("EPR"))
             {
-                PRISM.Logging.LogTools.LogWarning(string.Format("Overriding proposal {0} with {1} for dataset {2}", eusInfo.EUSProposalID,
-                                                                DEFAULT_EUS_PROPOSAL_ID, uploadMetadata.DatasetName));
-                eusInfo.EUSProposalID = DEFAULT_EUS_PROPOSAL_ID;
+                PRISM.Logging.LogTools.LogWarning(string.Format("Overriding project {0} with {1} for dataset {2}", eusInfo.EUSProjectID,
+                                                                DEFAULT_EUS_PROJECT_ID, uploadMetadata.DatasetName));
+                eusInfo.EUSProjectID = DEFAULT_EUS_PROJECT_ID;
             }
 
             // Fill out Transaction Key/Value pairs
@@ -610,7 +610,7 @@ namespace Pacifica.Upload
 
             // Append the required metadata
             AppendTransactionMetadata(metadataObject, "instrument", eusInfo.EUSInstrumentID);
-            AppendTransactionMetadata(metadataObject, "project", eusInfo.EUSProposalID);
+            AppendTransactionMetadata(metadataObject, "project", eusInfo.EUSProjectID);
             AppendTransactionMetadata(metadataObject, "submitter", eusInfo.EUSUploaderID);
 
             // Append the files
@@ -758,9 +758,16 @@ namespace Pacifica.Upload
             return eusInstrumentId <= 0 ? instrumentIdIfUnknown : eusInstrumentId;
         }
 
-        private static string GetEUSProposalID(string eusProposalId, string eusProposalIdIfUnknown)
+        /// <summary>
+        /// Validate the EUS project ID, or use the default
+        /// </summary>
+        /// <param name="eusProjectId"></param>
+        /// <param name="eusProjectIdIfUnknown"></param>
+        /// <returns></returns>
+        /// <remarks>This is a string because the project ID may contain suffix letters</remarks>
+        private static string GetEUSProjectID(string eusProjectId, string eusProjectIdIfUnknown)
         {
-            return string.IsNullOrWhiteSpace(eusProposalId) ? eusProposalIdIfUnknown : eusProposalId;
+            return string.IsNullOrWhiteSpace(eusProjectId) ? eusProjectIdIfUnknown : eusProjectId;
         }
 
         private static int GetEUSSubmitterID(int eusOperatorId, int eusOperatorIdIfUnknown)

@@ -146,7 +146,7 @@ namespace DatasetArchivePlugin
         /// <param name="uploadTimeSeconds"></param>
         /// <param name="statusURI"></param>
         /// <param name="eusInstrumentID">EUS Instrument ID</param>
-        /// <param name="eusProposalID">EUS Proposal number (usually an integer but sometimes includes letters, for example 8491a)</param>
+        /// <param name="eusProjectID">EUS Project number (usually an integer but sometimes includes letters, for example 8491a)</param>
         /// <param name="eusUploaderID">EUS user ID of the instrument operator</param>
         /// <param name="errorCode"></param>
         /// <param name="usedTestInstance"></param>
@@ -158,7 +158,7 @@ namespace DatasetArchivePlugin
             double uploadTimeSeconds,
             string statusURI,
             int eusInstrumentID,
-            string eusProposalID,
+            string eusProjectID,
             int eusUploaderID,
             int errorCode,
             bool usedTestInstance)
@@ -208,7 +208,7 @@ namespace DatasetArchivePlugin
 
                 spCmd.Parameters.Add("@EUSInstrumentID", SqlDbType.Int).Value = eusInstrumentID;
 
-                spCmd.Parameters.Add("@EUSProposalID", SqlDbType.VarChar, 10).Value = eusProposalID;
+                spCmd.Parameters.Add("@EUSProposalID", SqlDbType.VarChar, 10).Value = eusProjectID;
 
                 spCmd.Parameters.Add("@EUSUploaderID", SqlDbType.Int).Value = eusUploaderID;
 
@@ -277,7 +277,7 @@ namespace DatasetArchivePlugin
             StoreMyEMSLUploadStats(
                 e.FileCountNew, e.FileCountUpdated,
                 e.BytesUploaded, e.UploadTimeSeconds, e.StatusURI,
-                e.EUSInfo.EUSInstrumentID, e.EUSInfo.EUSProposalID, e.EUSInfo.EUSUploaderID,
+                e.EUSInfo.EUSInstrumentID, e.EUSInfo.EUSProjectID, e.EUSInfo.EUSUploaderID,
                 e.ErrorCode, e.UsedTestInstance);
         }
 

@@ -36,9 +36,9 @@ namespace ArchiveStatusCheckPlugin
         public int EUS_InstrumentID { get; set; }
 
         /// <summary>
-        /// EUS Proposal ID, e.g. 46206
+        /// EUS Project ID, e.g. 46206
         /// </summary>
-        public string EUS_ProposalID { get; set; }
+        public string EUS_ProjectID { get; set; }
 
         /// <summary>
         /// EUS Uploader ID (typically instrument operator), e.g. 41133
@@ -63,7 +63,7 @@ namespace ArchiveStatusCheckPlugin
             IngestStepsCompletedNew = 0;
 
             EUS_InstrumentID = 0;
-            EUS_ProposalID = string.Empty;
+            EUS_ProjectID = string.Empty;
             EUS_UploaderID = 0;
 
         }

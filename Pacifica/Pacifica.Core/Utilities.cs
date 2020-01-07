@@ -285,7 +285,7 @@ namespace Pacifica.Core
                                 break;
 
                             case "proposals":
-                                // EUS Proposals are usually integers, but not always
+                                // EUS Projects (aka proposals) are usually integers, but not always
                                 // Thus, store as strings
                                 settingsDictionary.Add(key, JsonArrayToStringList(tmpJsa));
                                 break;

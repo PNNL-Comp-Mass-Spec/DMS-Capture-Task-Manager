@@ -248,7 +248,7 @@ namespace Pacifica.DMS_Metadata
                     if (policyError)
                     {
                         criticalError = true;
-                        criticalErrorMessage = "Policy validation error, e.g. invalid EUS proposal";
+                        criticalErrorMessage = "Policy validation error, e.g. invalid EUS Project ID";
                     }
 
                     return false;
@@ -926,7 +926,7 @@ namespace Pacifica.DMS_Metadata
             }
 
             uploadMetadata.EUSInstrumentID = Utilities.GetDictionaryValue(taskParams, "EUS_Instrument_ID", 0);
-            uploadMetadata.EUSProposalID = Utilities.GetDictionaryValue(taskParams, "EUS_Proposal_ID", string.Empty);
+            uploadMetadata.EUSProjectID = Utilities.GetDictionaryValue(taskParams, "EUS_Proposal_ID", string.Empty);
 
             var operatorUsername = Utilities.GetDictionaryValue(taskParams, "Operator_PRN", "Unknown_Operator");
             uploadMetadata.EUSOperatorID = Utilities.GetDictionaryValue(taskParams, "EUS_Operator_ID", 0);

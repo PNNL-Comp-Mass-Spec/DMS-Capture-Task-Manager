@@ -455,7 +455,7 @@ namespace ArchiveStatusCheckPlugin
                             var ingestStepsCompleted = (byte)reader.GetValue(3);
 
                             var eusInstrumentID = clsConversion.GetDbValue(reader, 4, 0);
-                            var eusProposalID = clsConversion.GetDbValue(reader, 5, string.Empty);
+                            var eusProjectID = clsConversion.GetDbValue(reader, 5, string.Empty);
                             var eusUploaderID = clsConversion.GetDbValue(reader, 6, 0);
                             var errorCode = clsConversion.GetDbValue(reader, 7, 0);
 
@@ -468,7 +468,7 @@ namespace ArchiveStatusCheckPlugin
                             statusInfo.Subfolder = subFolder;
                             statusInfo.IngestStepsCompletedOld = ingestStepsCompleted;
                             statusInfo.EUS_InstrumentID = eusInstrumentID;
-                            statusInfo.EUS_ProposalID = eusProposalID;
+                            statusInfo.EUS_ProjectID = eusProjectID;
                             statusInfo.EUS_UploaderID = eusUploaderID;
                             statusInfo.ExistingErrorCode = errorCode;
 
