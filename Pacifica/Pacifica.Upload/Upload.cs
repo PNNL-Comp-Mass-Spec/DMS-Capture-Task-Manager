@@ -22,10 +22,10 @@ namespace Pacifica.Upload
         /// EUS Project ID to use when the project ID is unknown
         /// </summary>
         /// <remarks>
-        /// Proposal ID 17797 is "Development of High Throughput Proteomics Production Operations"
-        /// It is a string because it may contain suffix letters
+        /// We originally used Project 17797: "Development of High Throughput Proteomics Production Operations"
+        /// We switched to Project 51287 in January 2020
         /// </remarks>
-        public const string DEFAULT_EUS_PROPOSAL_ID = "17797";
+        public const string DEFAULT_EUS_PROJECT_ID = "51287";
 
         /// <summary>
         /// EUS Instrument ID to use when the EUS Instrument ID is unknown
