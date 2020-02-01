@@ -84,17 +84,25 @@ namespace DatasetQualityPlugin
             var datasetDirectory = taskParams.GetParam(taskParams.HasParam("Directory") ? "Directory" : "Folder");
 
             var datasetDirectoryPath = Path.Combine(remoteSharePath, datasetDirectory);
-            var metaFileNamePath = Path.Combine(datasetDirectoryPath, META_FILE_NAME);
+            var metadataFile = new FileInfo(Path.Combine(datasetDirectoryPath, META_FILE_NAME));
+
             try
             {
-                File.WriteAllText(metaFileNamePath, xmlText);
+                if (metadataFile.Exists)
+                {
+                    LogTools.LogMessage("Replacing metadata file at " + metadataFile.FullName);
+                    metadataFile.Delete();
+                }
+
+                File.WriteAllText(metadataFile.FullName, xmlText);
+
                 var msg = "Metadata file created for dataset " + taskParams.GetParam("Dataset");
                 LogTools.LogDebug(msg);
                 return true;
             }
             catch (Exception ex)
             {
-                var msg = "Exception creating metadata file for dataset " + taskParams.GetParam("Dataset");
+                var msg = "Exception creating metadata file at " + metadataFile.FullName;
                 LogTools.LogError(msg, ex);
                 return false;
             }

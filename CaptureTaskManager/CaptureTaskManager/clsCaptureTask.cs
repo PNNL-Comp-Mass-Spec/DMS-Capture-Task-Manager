@@ -234,28 +234,45 @@ namespace CaptureTaskManager
 
             try
             {
-                var spCmd = new SqlCommand(SP_NAME_REQUEST_TASK)
+                var cmd = new SqlCommand(SP_NAME_REQUEST_TASK)
                 {
                     CommandType = CommandType.StoredProcedure
                 };
 
-                spCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-                spCmd.Parameters.Add(new SqlParameter("@processorName", SqlDbType.VarChar, 128)).Value = ManagerName;
-                spCmd.Parameters.Add(new SqlParameter("@jobNumber", SqlDbType.Int)).Direction = ParameterDirection.Output;
-                spCmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
-                spCmd.Parameters.Add(new SqlParameter("@infoOnly", SqlDbType.TinyInt)).Value = 0;
-                spCmd.Parameters.Add(new SqlParameter("@ManagerVersion", SqlDbType.VarChar, 128)).Value = appVersion;
-                spCmd.Parameters.Add(new SqlParameter("@JobCountToPreview", SqlDbType.Int)).Value = 10;
+                cmd.Parameters.Add(new SqlParameter("@processorName", SqlDbType.VarChar, 128)).Value = ManagerName;
+                cmd.Parameters.Add(new SqlParameter("@jobNumber", SqlDbType.Int)).Direction = ParameterDirection.Output;
+                cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
+                cmd.Parameters.Add(new SqlParameter("@infoOnly", SqlDbType.TinyInt)).Value = 0;
+                cmd.Parameters.Add(new SqlParameter("@ManagerVersion", SqlDbType.VarChar, 128)).Value = appVersion;
+                cmd.Parameters.Add(new SqlParameter("@JobCountToPreview", SqlDbType.Int)).Value = 10;
+                cmd.Parameters.Add(new SqlParameter("@returnCode", SqlDbType.VarChar, 64)).Direction = ParameterDirection.Output;
 
                 LogDebug("clsCaptureTask.RequestTaskDetailed(), connection string: " + mConnStr);
 
                 if (mDebugLevel >= 5 || TraceMode)
                 {
-                    PrintCommandParams(spCmd);
+                    PrintCommandParams(cmd);
                 }
 
                 // Execute the SP
-                var resCode = mCaptureTaskDBProcedureExecutor.ExecuteSP(spCmd, out var results);
+                var resCode = mCaptureTaskDBProcedureExecutor.ExecuteSP(cmd, out var results);
+
+                var returnCode = cmd.Parameters["@returnCode"].Value.ToString();
+
+                if (!string.IsNullOrWhiteSpace(returnCode))
+                {
+
+                    if (int.TryParse(returnCode, out var returnCodeValue) && returnCodeValue == RET_VAL_TASK_NOT_AVAILABLE)
+                    {
+                        // No jobs found
+                        return EnumRequestTaskResult.NoTaskFound;
+                    }
+
+                    // The return code was not an empty string, which indicates an error
+                    LogError("clsCaptureTask.RequestTaskDetailed(), SP execution has return code " + returnCode +
+                             "; Msg text = " + (string)cmd.Parameters["@message"].Value);
+                    return EnumRequestTaskResult.ResultError;
+                }
 
                 switch (resCode)
                 {
@@ -274,10 +291,7 @@ namespace CaptureTaskManager
                             outcome = EnumRequestTaskResult.ResultError;
                         }
                         break;
-                    case RET_VAL_TASK_NOT_AVAILABLE:
-                        // No jobs found
-                        outcome = EnumRequestTaskResult.NoTaskFound;
-                        break;
+
                     case ExecuteDatabaseSP.RET_VAL_EXCESSIVE_RETRIES:
                         // Too many retries
                         outcome = EnumRequestTaskResult.TooManyRetries;
@@ -289,7 +303,7 @@ namespace CaptureTaskManager
                     default:
                         // There was an SP error
                         LogError("clsCaptureTask.RequestTaskDetailed(), SP execution error " + resCode +
-                            "; Msg text = " + (string)spCmd.Parameters["@message"].Value);
+                            "; Msg text = " + (string)cmd.Parameters["@message"].Value);
                         outcome = EnumRequestTaskResult.ResultError;
                         break;
                 }
@@ -300,6 +314,7 @@ namespace CaptureTaskManager
                 LogError("Stack trace: " + StackTraceFormatter.GetExceptionStackTrace(ex));
                 outcome = EnumRequestTaskResult.ResultError;
             }
+
             return outcome;
         }
 
@@ -360,25 +375,34 @@ namespace CaptureTaskManager
         private void ReportManagerIdle()
         {
             // Setup for execution of the stored procedure
-            var spCmd = new SqlCommand(SP_NAME_REPORT_IDLE)
+            var cmd = new SqlCommand(SP_NAME_REPORT_IDLE)
             {
                 CommandType = CommandType.StoredProcedure
             };
 
-            spCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-            spCmd.Parameters.Add(new SqlParameter("@managerName", SqlDbType.VarChar, 128)).Value = ManagerName;
-            spCmd.Parameters.Add(new SqlParameter("@infoOnly", SqlDbType.TinyInt)).Value = 0;
-            spCmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
+            cmd.Parameters.Add(new SqlParameter("@managerName", SqlDbType.VarChar, 128)).Value = ManagerName;
+            cmd.Parameters.Add(new SqlParameter("@infoOnly", SqlDbType.TinyInt)).Value = 0;
+            cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
+            cmd.Parameters.Add(new SqlParameter("@returnCode", SqlDbType.VarChar, 64)).Direction = ParameterDirection.Output;
 
             // Execute the Stored Procedure (retry the call up to 3 times)
-            var returnCode = mCaptureTaskDBProcedureExecutor.ExecuteSP(spCmd, 3);
+            var resCode = mCaptureTaskDBProcedureExecutor.ExecuteSP(cmd, 3);
 
-            if (returnCode == 0)
+            var returnCode = cmd.Parameters["@returnCode"].Value.ToString();
+
+            if (resCode == 0 && string.IsNullOrWhiteSpace(returnCode))
             {
                 return;
             }
 
-            LogError("Error " + returnCode + " calling " + spCmd.CommandText);
+            if (resCode != 0)
+            {
+                LogError("Error " + resCode + " calling stored procedure " + SP_NAME_REPORT_IDLE);
+                return;
+            }
+
+            LogError("Stored procedure " + SP_NAME_REPORT_IDLE + " reported return code " + returnCode);
+
         }
 
         /// <summary>
@@ -391,53 +415,57 @@ namespace CaptureTaskManager
         /// <returns>TRUE for success; FALSE for failure</returns>
         private bool SetCaptureTaskComplete(int compCode, string compMsg, int evalCode, string evalMsg)
         {
-            bool outcome;
 
             try
             {
                 // Setup for execution of the stored procedure
-                var spCmd = new SqlCommand(SP_NAME_SET_COMPLETE)
+                var cmd = new SqlCommand(SP_NAME_SET_COMPLETE)
                 {
                     CommandType = CommandType.StoredProcedure
                 };
 
-                spCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-                spCmd.Parameters.Add(new SqlParameter("@job", SqlDbType.Int)).Value = int.Parse(mJobParams["Job"]);
-                spCmd.Parameters.Add(new SqlParameter("@step", SqlDbType.Int)).Value = int.Parse(mJobParams["Step"]);
-                spCmd.Parameters.Add(new SqlParameter("@completionCode", SqlDbType.Int)).Value = compCode;
-                spCmd.Parameters.Add(new SqlParameter("@completionMessage", SqlDbType.VarChar, 512)).Value = compMsg.Trim('\r', '\n');
-                spCmd.Parameters.Add(new SqlParameter("@evaluationCode", SqlDbType.Int)).Value = evalCode;
-                spCmd.Parameters.Add(new SqlParameter("@evaluationMessage", SqlDbType.VarChar, 256)).Value = evalMsg.Trim('\r', '\n');
-                spCmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
+                cmd.Parameters.Add(new SqlParameter("@job", SqlDbType.Int)).Value = int.Parse(mJobParams["Job"]);
+                cmd.Parameters.Add(new SqlParameter("@step", SqlDbType.Int)).Value = int.Parse(mJobParams["Step"]);
+                cmd.Parameters.Add(new SqlParameter("@completionCode", SqlDbType.Int)).Value = compCode;
+                cmd.Parameters.Add(new SqlParameter("@completionMessage", SqlDbType.VarChar, 512)).Value = compMsg.Trim('\r', '\n');
+                cmd.Parameters.Add(new SqlParameter("@evaluationCode", SqlDbType.Int)).Value = evalCode;
+                cmd.Parameters.Add(new SqlParameter("@evaluationMessage", SqlDbType.VarChar, 256)).Value = evalMsg.Trim('\r', '\n');
+                cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
+                cmd.Parameters.Add(new SqlParameter("@returnCode", SqlDbType.VarChar, 64)).Direction = ParameterDirection.Output;
 
                 LogDebug("Calling stored procedure " + SP_NAME_SET_COMPLETE);
 
                 if (mDebugLevel >= 5)
                 {
-                    PrintCommandParams(spCmd);
+                    PrintCommandParams(cmd);
                 }
 
                 // Execute the SP
-                var resCode = mCaptureTaskDBProcedureExecutor.ExecuteSP(spCmd);
+                var resCode = mCaptureTaskDBProcedureExecutor.ExecuteSP(cmd);
 
-                if (resCode == 0)
+                var returnCode = cmd.Parameters["@returnCode"].Value.ToString();
+
+                if (resCode == 0 && string.IsNullOrWhiteSpace(returnCode))
                 {
-                    outcome = true;
+                    return true;
                 }
-                else
+
+                if (resCode != 0)
                 {
-                    LogError("Error " + resCode + " setting transfer task complete; " +
-                             "Message = " + (string)spCmd.Parameters["@message"].Value);
-                    outcome = false;
+                    LogError("Error " + resCode + " setting capture task complete");
+                    return false;
                 }
+
+                LogError("Stored procedure " + SP_NAME_SET_COMPLETE + " reported return code " + returnCode);
+                return false;
+
             }
             catch (Exception ex)
             {
                 LogError("Exception calling stored procedure " + SP_NAME_SET_COMPLETE, ex);
-                outcome = false;
+                return false;
             }
 
-            return outcome;
         }
 
         #endregion

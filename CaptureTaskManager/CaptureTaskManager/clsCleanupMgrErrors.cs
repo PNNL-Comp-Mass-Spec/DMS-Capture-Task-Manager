@@ -205,7 +205,6 @@ namespace CaptureTaskManager
                     Connection = myConnection
                 };
 
-                spCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
                 spCmd.Parameters.Add(new SqlParameter("@ManagerName", SqlDbType.VarChar, 128)).Value = mManagerName;
                 spCmd.Parameters.Add(new SqlParameter("@State", SqlDbType.Int)).Value = eMgrCleanupActionCode;
                 spCmd.Parameters.Add(new SqlParameter("@FailureMsg", SqlDbType.VarChar, 512)).Value = failureMessage;

@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Data.SQLite;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
@@ -668,28 +669,33 @@ namespace CaptureTaskManager
             }
 
             // Setup for execution of the stored procedure
-            var spCmd = new SqlCommand(SP_NAME_SET_TASK_TOOL_VERSION)
+            var cmd = new SqlCommand(SP_NAME_SET_TASK_TOOL_VERSION)
             {
                 CommandType = CommandType.StoredProcedure
             };
 
-            spCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-
-            spCmd.Parameters.Add(new SqlParameter("@job", SqlDbType.Int)).Value = mTaskParams.GetParam("Job", 0);
-
-            spCmd.Parameters.Add(new SqlParameter("@step", SqlDbType.Int)).Value = mTaskParams.GetParam("Step", 0);
-
-            spCmd.Parameters.Add(new SqlParameter("@ToolVersionInfo", SqlDbType.VarChar, 900)).Value = toolVersionInfoCombined;
+            cmd.Parameters.Add(new SqlParameter("@job", SqlDbType.Int)).Value = mTaskParams.GetParam("Job", 0);
+            cmd.Parameters.Add(new SqlParameter("@step", SqlDbType.Int)).Value = mTaskParams.GetParam("Step", 0);
+            cmd.Parameters.Add(new SqlParameter("@toolVersionInfo", SqlDbType.VarChar, 900)).Value = toolVersionInfoCombined;
+            cmd.Parameters.Add(new SqlParameter("@returnCode", SqlDbType.VarChar, 64)).Direction = ParameterDirection.Output;
 
             // Execute the SP (retry the call up to 4 times)
-            var resCode = mCaptureDbProcedureExecutor.ExecuteSP(spCmd, 4);
+            var resCode = mCaptureDbProcedureExecutor.ExecuteSP(cmd, 4);
 
-            if (resCode == 0)
+            var returnCode = cmd.Parameters["@returnCode"].Value.ToString();
+
+            if (resCode == 0 && string.IsNullOrWhiteSpace(returnCode))
             {
                 return true;
             }
 
-            LogError("Error " + resCode + " storing tool version for current processing step");
+            if (resCode != 0)
+            {
+                LogError("Error " + resCode + " storing tool version for current processing step");
+                return false;
+            }
+
+            LogError("Stored procedure " + SP_NAME_SET_TASK_TOOL_VERSION + " reported return code " + returnCode + ", job " + mJob);
             return false;
         }
 
@@ -970,28 +976,30 @@ namespace CaptureTaskManager
                 transactionId = statusNum;
             }
 
-            var spCmd = new SqlCommand(SP_NAME)
+            var cmd = new SqlCommand(SP_NAME)
             {
                 CommandType = CommandType.StoredProcedure
             };
 
-            spCmd.Parameters.Add("@Return", SqlDbType.Int).Direction = ParameterDirection.ReturnValue;
-
-            spCmd.Parameters.Add("@datasetID", SqlDbType.Int).Value = mDatasetID;
-
-            spCmd.Parameters.Add("@statusNum", SqlDbType.Int).Value = statusNum;
-
-            spCmd.Parameters.Add("@ingestStepsCompleted", SqlDbType.TinyInt).Value = ingestStepsCompleted;
-
-            spCmd.Parameters.Add("@fatalError", SqlDbType.TinyInt).Value = fatalError ? 1 : 0;
-
             // Note that if transactionId is 0, the stored procedure will leave TransactionID unchanged in table T_MyEMSL_Uploads
-            spCmd.Parameters.Add("@transactionId", SqlDbType.Int).Value = transactionId;
 
-            spCmd.Parameters.Add("@message", SqlDbType.VarChar, 512).Direction = ParameterDirection.Output;
+            cmd.Parameters.Add("@datasetID", SqlDbType.Int).Value = mDatasetID;
+            cmd.Parameters.Add("@statusNum", SqlDbType.Int).Value = statusNum;
+            cmd.Parameters.Add("@ingestStepsCompleted", SqlDbType.TinyInt).Value = ingestStepsCompleted;
+            cmd.Parameters.Add("@fatalError", SqlDbType.TinyInt).Value = fatalError ? 1 : 0;
+            cmd.Parameters.Add("@transactionId", SqlDbType.Int).Value = transactionId;
+            cmd.Parameters.Add("@message", SqlDbType.VarChar, 512).Direction = ParameterDirection.Output;
+            cmd.Parameters.Add(new SqlParameter("@returnCode", SqlDbType.VarChar, 64)).Direction = ParameterDirection.Output;
 
             mCaptureDbProcedureExecutor.TimeoutSeconds = 20;
-            var resCode = mCaptureDbProcedureExecutor.ExecuteSP(spCmd, 2);
+            var resCode = mCaptureDbProcedureExecutor.ExecuteSP(cmd, 2);
+
+            var returnCode = cmd.Parameters["@returnCode"].Value.ToString();
+
+            if (resCode == 0 && string.IsNullOrWhiteSpace(returnCode))
+            {
+                return true;
+            }
 
             if (resCode != 0)
             {
@@ -999,7 +1007,9 @@ namespace CaptureTaskManager
                 return false;
             }
 
-            return true;
+            LogError("Stored procedure " + SP_NAME + " reported return code " + returnCode + ", job " + mJob);
+            return false;
+
         }
 
         #endregion
