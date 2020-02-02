@@ -683,8 +683,9 @@ namespace CaptureTaskManager
             var resCode = mCaptureDbProcedureExecutor.ExecuteSP(cmd, 4);
 
             var returnCode = cmd.Parameters["@returnCode"].Value.ToString();
+            var returnCodeValue = clsConversion.GetReturnCodeValue(returnCode);
 
-            if (resCode == 0 && string.IsNullOrWhiteSpace(returnCode))
+            if (resCode == 0 && returnCodeValue == 0)
             {
                 return true;
             }
@@ -995,8 +996,9 @@ namespace CaptureTaskManager
             var resCode = mCaptureDbProcedureExecutor.ExecuteSP(cmd, 2);
 
             var returnCode = cmd.Parameters["@returnCode"].Value.ToString();
+            var returnCodeValue = clsConversion.GetReturnCodeValue(returnCode);
 
-            if (resCode == 0 && string.IsNullOrWhiteSpace(returnCode))
+            if (resCode == 0 && returnCodeValue == 0)
             {
                 return true;
             }
