@@ -35,3 +35,4 @@ DeployedFiles/*.lnk
 /DeployedFiles/ThermoFisher.CommonCore.MassPrecisionEstimator.xml
 /DeployedFiles/ThermoFisher.CommonCore.RawFileReader.xml
 /DeployedFiles/ThermoRawFileReader.dll.config
+**/.vs/
