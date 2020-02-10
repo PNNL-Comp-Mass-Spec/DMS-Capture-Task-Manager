@@ -15,6 +15,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using PRISM.AppSettings;
 
 namespace DatasetInfoPlugin
 {
@@ -1014,7 +1015,11 @@ namespace DatasetInfoPlugin
         /// <param name="fileOrDirectoryNames">List to append .D directories to (calling function must initialize)</param>
         private void FindDotDDirectories(DirectoryInfo diDatasetDirectory, ICollection<string> fileOrDirectoryNames)
         {
-            var diDotDDirectories = diDatasetDirectory.GetDirectories("*.d");
+            var looseMatchDotD = mTaskParams.GetParam("LooseMatchDotD", false);
+
+            var searchOption = looseMatchDotD ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+
+            var diDotDDirectories = diDatasetDirectory.GetDirectories("*.d", searchOption);
             if (diDotDDirectories.Length <= 0)
                 return;
 
@@ -1099,7 +1104,7 @@ namespace DatasetInfoPlugin
                     // 12T_FTICR_B, 15T_FTICR, 9T_FTICR_B
                     // Also, Bruker_FT_IonTrap01, which is Bruker_Amazon_Ion_Trap
                     // 12T_FTICR_Imaging and 15T_FTICR_Imaging datasets with instrument class BrukerMALDI_Imaging_V2 will also have bruker_ft format;
-                    // however, instead of an analysis.baf file, they might have a .mcf file
+                    // however, instead of an analysis.baf file, they might have a .mcf file and a ser file
 
                     isFile = true;
                     if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Bruker_Amazon_Ion_Trap)
@@ -1231,7 +1236,18 @@ namespace DatasetInfoPlugin
 
                 mMsg = "clsPluginMain.GetDataFileOrDirectoryName: File " + fileOrDirectoryPath + " not found";
                 LogError(mMsg);
+
                 mMsg = "File " + fileOrDirectoryPath + " not found";
+
+                if (brukerDotDBaf && datasetDirectory.GetDirectories("*.D", SearchOption.AllDirectories).Length > 0)
+                {
+                    mMsg = string.Format(
+                        "analysis.baf not found in the expected .D directory; to include all .D subdirectories, use " +
+                        "Exec AddUpdateJobParameter {0}, 'StepParameters', 'LooseMatchDotD', 'true'",
+                        mJob);
+
+                    LogWarning(mMsg);
+                }
 
                 return new List<string>();
             }
@@ -1284,9 +1300,9 @@ namespace DatasetInfoPlugin
         {
 
             // File not found; look for alternate extensions
-            var lstAlternateExtensions = new List<string> { "mgf", "mzXML", "mzML" };
+            var alternateExtensions = new List<string> { "mgf", "mzXML", "mzML" };
 
-            foreach (var altExtension in lstAlternateExtensions)
+            foreach (var altExtension in alternateExtensions)
             {
                 var dataFileNamePathAlt = Path.ChangeExtension(initialFileOrDirectoryName, altExtension);
                 if (File.Exists(dataFileNamePathAlt))
