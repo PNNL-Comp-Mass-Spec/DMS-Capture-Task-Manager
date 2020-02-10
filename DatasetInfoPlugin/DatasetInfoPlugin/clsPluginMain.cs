@@ -1113,7 +1113,13 @@ namespace DatasetInfoPlugin
                     }
 
                     if (!File.Exists(Path.Combine(datasetDirectory.FullName, fileOrDirectoryName)))
-                        fileOrDirectoryName = CheckForBrukerImagingZipFiles(datasetDirectory);
+                    {
+                        var zipFileName = CheckForBrukerImagingZipFiles(datasetDirectory);
+                        if (!string.IsNullOrWhiteSpace(String.Empty))
+                        {
+                            fileOrDirectoryName = zipFileName;
+                        }
+                    }
 
                     break;
 
