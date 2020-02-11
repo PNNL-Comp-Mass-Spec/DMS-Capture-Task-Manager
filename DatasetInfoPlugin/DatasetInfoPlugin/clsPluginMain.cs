@@ -240,10 +240,15 @@ namespace DatasetInfoPlugin
             mMsFileScanner.CheckCentroidingStatus = true;
             mMsFileScanner.PlotWithPython = true;
 
-            // Get the input file name
-            var fileOrDirectoryNames = GetDataFileOrDirectoryName(datasetDirectoryPath, out var qcPlotMode, out var rawDataType, out var instrumentClass, out var brukerDotDBaf);
+            // Get the input file or directory name (or names)
+            var fileOrDirectoryRelativePaths = GetDataFileOrDirectoryName(
+                datasetDirectoryPath,
+                out var qcPlotMode,
+                out var rawDataType,
+                out var instrumentClass,
+                out var brukerDotDBaf);
 
-            if (fileOrDirectoryNames.Count > 0 && fileOrDirectoryNames.First() == UNKNOWN_FILE_TYPE)
+            if (fileOrDirectoryRelativePaths.Count > 0 && fileOrDirectoryRelativePaths.First() == UNKNOWN_FILE_TYPE)
             {
                 // Raw_Data_Type not recognized
                 retData.CloseoutMsg = mMsg;
@@ -251,7 +256,7 @@ namespace DatasetInfoPlugin
                 return retData;
             }
 
-            if (fileOrDirectoryNames.Count > 0 && fileOrDirectoryNames.First() == INVALID_FILE_TYPE)
+            if (fileOrDirectoryRelativePaths.Count > 0 && fileOrDirectoryRelativePaths.First() == INVALID_FILE_TYPE)
             {
                 // DS quality test not implemented for this file type
                 retData.CloseoutMsg = string.Empty;
@@ -261,7 +266,7 @@ namespace DatasetInfoPlugin
                 return retData;
             }
 
-            if (fileOrDirectoryNames.Count == 0 || string.IsNullOrEmpty(fileOrDirectoryNames.First()))
+            if (fileOrDirectoryRelativePaths.Count == 0 || string.IsNullOrEmpty(fileOrDirectoryRelativePaths.First()))
             {
                 // There was a problem with getting the file name; Details reported by called method
                 retData.CloseoutMsg = mMsg;
@@ -341,7 +346,7 @@ namespace DatasetInfoPlugin
             var primaryFileOrDirectoryProcessed = false;
             var nextSubdirectorySuffix = 1;
 
-            foreach (var datasetFileOrDirectory in fileOrDirectoryNames)
+            foreach (var datasetFileOrDirectory in fileOrDirectoryRelativePaths)
             {
                 mFailedScanCount = 0;
 
@@ -379,7 +384,7 @@ namespace DatasetInfoPlugin
                 }
 
                 var currentOutputDirectory = ConstructOutputDirectoryPath(
-                    outputPathBase, datasetFileOrDirectory, fileOrDirectoryNames.Count,
+                    outputPathBase, datasetFileOrDirectory, fileOrDirectoryRelativePaths.Count,
                     outputDirectoryNames, ref nextSubdirectorySuffix);
 
                 if (string.IsNullOrWhiteSpace(currentOutputDirectory))
@@ -536,7 +541,7 @@ namespace DatasetInfoPlugin
                     LogWarning(string.Format("Unable to load data for {0} spectra", mFailedScanCount));
                 }
 
-            } // foreach file in fileOrDirectoryNames
+            } // foreach file in fileOrDirectoryRelativePaths
 
             // Merge the dataset info defined in cachedDatasetInfoXML
             // If cachedDatasetInfoXml contains just one item, simply return it
@@ -860,11 +865,11 @@ namespace DatasetInfoPlugin
         /// <summary>
         /// Looks for a zip file matching "0_R*X*.zip"
         /// </summary>
-        /// <param name="diDatasetDirectory">Dataset directory</param>
+        /// <param name="datasetDirectory">Dataset directory</param>
         /// <returns>Returns the file name if found, otherwise an empty string</returns>
-        private string CheckForBrukerImagingZipFiles(DirectoryInfo diDatasetDirectory)
+        private string CheckForBrukerImagingZipFiles(DirectoryInfo datasetDirectory)
         {
-            var fiFiles = diDatasetDirectory.GetFiles("0_R*X*.zip");
+            var fiFiles = datasetDirectory.GetFiles("0_R*X*.zip");
 
             if (fiFiles.Length > 0)
             {
@@ -1008,18 +1013,18 @@ namespace DatasetInfoPlugin
         }
 
         /// <summary>
-        /// Look for .D directories below diDatasetDirectory
+        /// Look for .D directories below datasetDirectory
         /// Add them to list fileOrDirectoryNames
         /// </summary>
-        /// <param name="diDatasetDirectory">Dataset directory to examine</param>
-        /// <param name="fileOrDirectoryNames">List to append .D directories to (calling function must initialize)</param>
-        private void FindDotDDirectories(DirectoryInfo diDatasetDirectory, ICollection<string> fileOrDirectoryNames)
+        /// <param name="datasetDirectory">Dataset directory to examine</param>
+        /// <param name="fileOrDirectoryRelativePaths">List to append .D directories to (calling function must initialize)</param>
+        private void FindDotDDirectories(DirectoryInfo datasetDirectory, ICollection<string> fileOrDirectoryRelativePaths)
         {
             var looseMatchDotD = mTaskParams.GetParam("LooseMatchDotD", false);
 
             var searchOption = looseMatchDotD ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
 
-            var diDotDDirectories = diDatasetDirectory.GetDirectories("*.d", searchOption);
+            var diDotDDirectories = datasetDirectory.GetDirectories("*.d", searchOption);
             if (diDotDDirectories.Length <= 0)
                 return;
 
@@ -1229,10 +1234,10 @@ namespace DatasetInfoPlugin
 
                 // File not found; check for alternative files or directories
                 // This function also looks for .D directories
-                var fileOrDirectoryNames = LookForAlternateFileOrDirectory(datasetDirectory, fileOrDirectoryName);
+                var fileOrDirectoryRelativePaths = LookForAlternateFileOrDirectory(datasetDirectory, fileOrDirectoryName);
 
-                if (fileOrDirectoryNames.Count > 0)
-                    return fileOrDirectoryNames;
+                if (fileOrDirectoryRelativePaths.Count > 0)
+                    return fileOrDirectoryRelativePaths;
 
                 mMsg = "clsPluginMain.GetDataFileOrDirectoryName: File " + fileOrDirectoryPath + " not found";
                 LogError(mMsg);
@@ -1262,10 +1267,10 @@ namespace DatasetInfoPlugin
                 }
 
                 // Look for other .D directories
-                var fileOrDirectoryNames = new List<string> { fileOrDirectoryName };
-                FindDotDDirectories(datasetDirectory, fileOrDirectoryNames);
+                var fileOrDirectoryRelativePaths = new List<string> { fileOrDirectoryName };
+                FindDotDDirectories(datasetDirectory, fileOrDirectoryRelativePaths);
 
-                return fileOrDirectoryNames;
+                return fileOrDirectoryRelativePaths;
             }
 
             mMsg = "clsPluginMain.GetDataFileOrDirectoryName; directory not found: " + fileOrDirectoryPath;
@@ -1293,10 +1298,10 @@ namespace DatasetInfoPlugin
         /// A dataset file was not found
         /// Look for alternate dataset files, or look for .D directories
         /// </summary>
-        /// <param name="diDatasetDirectory"></param>
+        /// <param name="datasetDirectory"></param>
         /// <param name="initialFileOrDirectoryName"></param>
         /// <returns></returns>
-        private List<string> LookForAlternateFileOrDirectory(DirectoryInfo diDatasetDirectory, string initialFileOrDirectoryName)
+        private List<string> LookForAlternateFileOrDirectory(DirectoryInfo datasetDirectory, string initialFileOrDirectoryName)
         {
 
             // File not found; look for alternate extensions
@@ -1314,7 +1319,7 @@ namespace DatasetInfoPlugin
             }
 
             // Look for dataset directories
-            var primaryDotDDirectory = new DirectoryInfo(Path.Combine(diDatasetDirectory.FullName, mDataset + clsInstrumentClassInfo.DOT_D_EXTENSION));
+            var primaryDotDDirectory = new DirectoryInfo(Path.Combine(datasetDirectory.FullName, mDataset + clsInstrumentClassInfo.DOT_D_EXTENSION));
 
             var fileOrDirectoryNames = new List<string>();
 
@@ -1330,7 +1335,7 @@ namespace DatasetInfoPlugin
 
             // With instrument class BrukerMALDI_Imaging_V2 (e.g. 15T_FTICR_Imaging) we allow multiple .D directories to be captured
             // Look for additional directories now
-            FindDotDDirectories(diDatasetDirectory, fileOrDirectoryNames);
+            FindDotDDirectories(datasetDirectory, fileOrDirectoryNames);
 
             return fileOrDirectoryNames;
 
