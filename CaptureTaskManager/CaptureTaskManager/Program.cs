@@ -14,9 +14,7 @@
 using PRISM;
 using PRISM.Logging;
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+using System.Threading;
 
 namespace CaptureTaskManager
 {
@@ -27,9 +25,7 @@ namespace CaptureTaskManager
     {
         private const string PROGRAM_DATE = "February 10, 2020";
 
-        private static bool mCodeTestMode;
         private static bool mTraceMode;
-        private static bool mShowVersionOnly;
 
         #region "Methods"
 
@@ -39,14 +35,9 @@ namespace CaptureTaskManager
         /// <returns>0 if no error; error code if an error</returns>
         /// <remarks>The STAThread attribute is required for OxyPlot functionality</remarks>
         [STAThread]
-        static int Main()
+        static int Main(string[] args)
         {
-
-            var commandLineParser = new clsParseCommandLine();
-
-            mCodeTestMode = false;
             mTraceMode = false;
-            mShowVersionOnly = false;
 
             var osVersionInfo = new OSVersionInfo();
 
@@ -58,44 +49,35 @@ namespace CaptureTaskManager
                 clsUtilities.EnableOfflineMode(true);
             }
 
-            bool validArgs;
+            var exeName = System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
 
-            // Look for /T or /Test on the command line
-            // If present, this means "code test mode" is enabled
-            if (commandLineParser.ParseCommandLine())
+            var cmdLineParser = new CommandLineParser<CommandLineOptions>(exeName, GetAppVersion(PROGRAM_DATE))
             {
-                validArgs = SetOptionsUsingCommandLineParameters(commandLineParser);
-            }
-            else
-            {
-                if (commandLineParser.NoParameters)
-                {
-                    validArgs = true;
-                }
-                else
-                {
-                    if (commandLineParser.NeedToShowHelp)
-                    {
-                        ShowProgramHelp();
-                    }
-                    else
-                    {
-                        ConsoleMsgUtils.ShowWarning("Error parsing the command line arguments");
-                        clsParseCommandLine.PauseAtConsole(750);
-                    }
-                    return -1;
-                }
-            }
+                ProgramInfo = "This program processes DMS datasets for PRISM. " +
+                              "Normal operation is to run the program without any command line switches.",
+                ContactInfo =
+                    "Program written by Dave Clark and Matthew Monroe for the Department of Energy (PNNL, Richland, WA)" +
+                    Environment.NewLine +
+                    "E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov" + Environment.NewLine +
+                    "Website: https://omics.pnl.gov/ or https://panomics.pnnl.gov/" + Environment.NewLine + Environment.NewLine +
+                    "Licensed under the 2-Clause BSD License; you may not use this file except in compliance with the License.  " +
+                    "You may obtain a copy of the License at https://opensource.org/licenses/BSD-2-Clause"
+            };
 
-            if (commandLineParser.NeedToShowHelp || !validArgs)
+            var parsed = cmdLineParser.ParseArgs(args, false);
+            var options = parsed.ParsedResults;
+            if (args.Length > 0 && !parsed.Success)
             {
-                ShowProgramHelp();
+                // Delay for 1500 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
+                Thread.Sleep(1500);
                 return -1;
             }
 
+            mTraceMode = options.TraceMode;
+
             ShowTrace("Command line arguments parsed");
 
-            if (mShowVersionOnly)
+            if (options.ShowVersionOnly)
             {
                 DisplayVersion();
                 ProgRunner.SleepMilliseconds(500);
@@ -103,7 +85,7 @@ namespace CaptureTaskManager
             }
 
             // Note: CodeTestMode is enabled using command line switch /T
-            if (mCodeTestMode)
+            if (options.CodeTestMode)
             {
                 try
                 {
@@ -124,7 +106,6 @@ namespace CaptureTaskManager
 
                 clsParseCommandLine.PauseAtConsole(500);
                 return 0;
-
             }
 
             // Initiate automated analysis
@@ -180,7 +161,6 @@ namespace CaptureTaskManager
 
         private static void DisplayOSVersion()
         {
-
             try
             {
                 // For this to work properly on Windows 10, you must add a app.manifest file
@@ -211,104 +191,9 @@ namespace CaptureTaskManager
             return PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppVersion(programDate);
         }
 
-        private static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine commandLineParser)
-        {
-            // Returns True if no problems; otherwise, returns false
-
-            var validParameters = new List<string> {
-                "T",
-                "Test",
-                "Trace",
-                "Verbose",
-                "Version"
-            };
-
-            try
-            {
-                // Make sure no invalid parameters are present
-                if (commandLineParser.InvalidParametersPresent(validParameters))
-                {
-                    ShowErrorMessage("Invalid command line parameters",
-                                     (from item in commandLineParser.InvalidParameters(validParameters) select "/" + item).ToList());
-
-                    return false;
-                }
-
-                // Query commandLineParser to see if various parameters are present
-                if (commandLineParser.IsParameterPresent("T"))
-                    mCodeTestMode = true;
-
-                if (commandLineParser.IsParameterPresent("Test"))
-                    mCodeTestMode = true;
-
-                if (commandLineParser.IsParameterPresent("Trace"))
-                    mTraceMode = true;
-
-                if (commandLineParser.IsParameterPresent("Verbose"))
-                    mTraceMode = true;
-
-                if (commandLineParser.IsParameterPresent("Version"))
-                    mShowVersionOnly = true;
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                ShowErrorMessage("Error parsing the command line parameters", ex);
-                return false;
-            }
-        }
-
         private static void ShowErrorMessage(string message, Exception ex = null)
         {
             ConsoleMsgUtils.ShowError(message, ex);
-        }
-
-        private static void ShowErrorMessage(string title, IEnumerable<string> errorMessages)
-        {
-            ConsoleMsgUtils.ShowErrors(title, errorMessages);
-        }
-
-        private static void ShowProgramHelp()
-        {
-            try
-            {
-                var exeName = Path.GetFileName(PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppPath());
-
-                Console.WriteLine("This program processes DMS datasets for PRISM. " +
-                                  "Normal operation is to run the program without any command line switches.");
-                Console.WriteLine();
-                Console.WriteLine("Program syntax:" + Environment.NewLine +
-                                  exeName + " [/T] [/Test] [/Trace] [/Version]");
-                Console.WriteLine();
-
-                Console.WriteLine();
-                Console.WriteLine("Use /T or /Test to start the program in code test mode.");
-                Console.WriteLine();
-                Console.WriteLine("Use /Trace or /Verbose to enable trace mode");
-                Console.WriteLine();
-                Console.WriteLine("Use /Version to see the program version and OS version");
-                Console.WriteLine();
-                Console.WriteLine("Program written by Dave Clark and Matthew Monroe for the Department of Energy (PNNL, Richland, WA)");
-                Console.WriteLine();
-
-                Console.WriteLine("Version: " + GetAppVersion(PROGRAM_DATE));
-                Console.WriteLine();
-
-                Console.WriteLine("E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov");
-                Console.WriteLine("Website: https://omics.pnl.gov/ or https://panomics.pnnl.gov/");
-                Console.WriteLine();
-
-                Console.WriteLine("Licensed under the 2-Clause BSD License; you may not use this file except in compliance with the License. " +
-                                  "You may obtain a copy of the License at https://opensource.org/licenses/BSD-2-Clause");
-                Console.WriteLine();
-
-                ProgRunner.SleepMilliseconds(1500);
-            }
-            catch (Exception ex)
-            {
-                ConsoleMsgUtils.ShowWarning("Error displaying the program syntax: " + ex.Message);
-            }
         }
 
         private static void ShowTrace(string message)
