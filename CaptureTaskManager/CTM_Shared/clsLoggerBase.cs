@@ -70,7 +70,7 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="processingClass"></param>
         /// <param name="writeDebugEventsToLog"></param>
-        protected void RegisterEvents(EventNotifier processingClass, bool writeDebugEventsToLog = true)
+        protected void RegisterEvents(IEventNotifier processingClass, bool writeDebugEventsToLog = true)
         {
             if (writeDebugEventsToLog)
             {

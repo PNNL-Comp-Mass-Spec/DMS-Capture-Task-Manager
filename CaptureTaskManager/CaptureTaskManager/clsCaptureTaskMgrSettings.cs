@@ -5,11 +5,11 @@
 // Created 09/10/2009
 //*********************************************************************************************************
 
-using PRISM.AppSettings;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using PRISMDatabaseUtils;
+using PRISMDatabaseUtils.AppSettings;
 
 namespace CaptureTaskManager
 {
@@ -21,7 +21,7 @@ namespace CaptureTaskManager
     /// should be loaded or manager set to inactive. If manager active, retrieves remainder of settings
     /// from manager control database.
     /// </remarks>
-    public class clsCaptureTaskMgrSettings : MgrSettings, IMgrParams
+    public class clsCaptureTaskMgrSettings : MgrSettingsDB, IMgrParams
     {
 
         #region "Constants"
@@ -69,17 +69,13 @@ namespace CaptureTaskManager
 
                 ShowTrace("AckManagerUpdateRequired using " + connectionString);
 
-                var conn = new SqlConnection(connectionString);
-                conn.Open();
+                var dbTools = DbToolsFactory.GetDBTools(connectionString);
 
                 // Set up the command object prior to SP execution
-                var cmd = new SqlCommand(SP_NAME_ACK_MANAGER_UPDATE, conn)
-                {
-                    CommandType = CommandType.StoredProcedure
-                };
+                var cmd = dbTools.CreateCommand(SP_NAME_ACK_MANAGER_UPDATE, CommandType.StoredProcedure);
 
-                cmd.Parameters.Add(new SqlParameter("@managerName", SqlDbType.VarChar, 128)).Value = ManagerName;
-                cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
+                dbTools.AddParameter(cmd, "@managerName", SqlType.VarChar, 128, ManagerName);
+                dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, direction: ParameterDirection.Output);
 
                 // Execute the SP
                 cmd.ExecuteNonQuery();

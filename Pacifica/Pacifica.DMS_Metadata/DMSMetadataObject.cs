@@ -4,10 +4,10 @@ using PRISM;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Net;
+using PRISMDatabaseUtils;
 using Uploader = Pacifica.Upload;
 using Utilities = Pacifica.Core.Utilities;
 
@@ -272,108 +272,54 @@ namespace Pacifica.DMS_Metadata
 
             var queryString = "SELECT * FROM V_MyEMSL_Supplemental_Metadata WHERE [omics.dms.dataset_id] = " + datasetID;
 
-            while (retryCount >= 0)
+            var dbTools = DbToolsFactory.GetDBTools(dmsConnectionString);
+            dbTools.ErrorEvent += (message, exception) => OnErrorEvent(message, exception);
+            var success = dbTools.GetQueryResultsDataTable(queryString, out var table, retryCount: (short) retryCount, retryDelaySeconds: 5);
+
+            foreach (DataRow row in table.Rows)
             {
-                try
-                {
+                uploadMetadata.CampaignID = row["omics.dms.campaign_id"].CastDBVal(0);
+                uploadMetadata.CampaignName = row["omics.dms.campaign_name"].CastDBVal(string.Empty);
+                uploadMetadata.ExperimentID = row["omics.dms.experiment_id"].CastDBVal(0);
+                uploadMetadata.ExperimentName = row["omics.dms.experiment_name"].CastDBVal(string.Empty);
+                uploadMetadata.OrganismName = row["organism_name"].CastDBVal(string.Empty);
+                uploadMetadata.NCBITaxonomyID = row["ncbi_taxonomy_id"].CastDBVal(0);
+                uploadMetadata.OrganismID = row["omics.dms.organism_id"].CastDBVal(0);
+                uploadMetadata.AcquisitionTime = row["omics.dms.acquisition_time"].CastDBVal(string.Empty);
+                uploadMetadata.AcquisitionLengthMin = row["omics.dms.acquisition_length_min"].CastDBVal(0);
+                uploadMetadata.NumberOfScans = row["omics.dms.number_of_scans"].CastDBVal(0);
+                uploadMetadata.SeparationType = row["omics.dms.separation_type"].CastDBVal(string.Empty);
+                uploadMetadata.DatasetType = row["omics.dms.dataset_type"].CastDBVal(string.Empty);
+                uploadMetadata.RequestedRunID = row["omics.dms.requested_run_id"].CastDBVal(0);
+            }
 
-                    using (var connection = new SqlConnection(dmsConnectionString))
-                    {
-                        var command = new SqlCommand(queryString, connection);
-                        connection.Open();
+            if (success)
+            {
+                uploadMetadata.UserOfRecordList = GetRequestedRunUsers(dbTools, uploadMetadata.RequestedRunID);
+            }
 
-                        using (var reader = command.ExecuteReader())
-                        {
-
-                            if (reader.HasRows && reader.Read())
-                            {
-                                uploadMetadata.CampaignID = GetDbValue(reader, "omics.dms.campaign_id", 0);
-                                uploadMetadata.CampaignName = GetDbValue(reader, "omics.dms.campaign_name", string.Empty);
-                                uploadMetadata.ExperimentID = GetDbValue(reader, "omics.dms.experiment_id", 0);
-                                uploadMetadata.ExperimentName = GetDbValue(reader, "omics.dms.experiment_name", string.Empty);
-                                uploadMetadata.OrganismName = GetDbValue(reader, "organism_name", string.Empty);
-                                uploadMetadata.NCBITaxonomyID = GetDbValue(reader, "ncbi_taxonomy_id", 0);
-                                uploadMetadata.OrganismID = GetDbValue(reader, "omics.dms.organism_id", 0);
-                                uploadMetadata.AcquisitionTime = GetDbValue(reader, "omics.dms.acquisition_time", string.Empty);
-                                uploadMetadata.AcquisitionLengthMin = GetDbValue(reader, "omics.dms.acquisition_length_min", 0);
-                                uploadMetadata.NumberOfScans = GetDbValue(reader, "omics.dms.number_of_scans", 0);
-                                uploadMetadata.SeparationType = GetDbValue(reader, "omics.dms.separation_type", string.Empty);
-                                uploadMetadata.DatasetType = GetDbValue(reader, "omics.dms.dataset_type", string.Empty);
-                                uploadMetadata.RequestedRunID = GetDbValue(reader, "omics.dms.requested_run_id", 0);
-                            }
-
-                        }
-
-                        uploadMetadata.UserOfRecordList = GetRequestedRunUsers(connection, uploadMetadata.RequestedRunID);
-
-                    }
-
-                    return true;
-                }
-                catch (Exception ex)
-                {
-                    retryCount -= 1;
-                    var msg = string.Format("Exception retrieving supplemental DMS metadata for Dataset ID {0}: {1}; " +
-                                            "ConnectionString: {2}, RetryCount = {3}",
-                                            datasetID, ex.Message, dmsConnectionString, retryCount);
-
-                    OnErrorEvent(msg, ex);
-
-                    // Delay for 5 seconds before trying again
-                    if (retryCount >= 0)
-                        System.Threading.Thread.Sleep(5000);
-                }
-
-            } // while
-
-            return false;
+            return success;
         }
 
-        private List<int> GetRequestedRunUsers(SqlConnection connection, int requestedRunID, int retryCount = 3)
+        private List<int> GetRequestedRunUsers(IDBTools dbTools, int requestedRunID, int retryCount = 3)
         {
             var queryString = "SELECT EUS_Person_ID FROM V_Requested_Run_EUS_Users_Export WHERE Request_ID = " + requestedRunID;
 
-            while (retryCount >= 0)
+            var success = dbTools.GetQueryResultsDataTable(queryString, out var table, retryCount: (short)retryCount, retryDelaySeconds: 5);
+
+            var personList = new List<int>();
+
+            foreach (DataRow row in table.Rows)
             {
-                try
+                var personId = row["EUS_Person_ID"].CastDBVal(-1);
+                if (personId > -1)
                 {
-
-                    var command = new SqlCommand(queryString, connection);
-                    using (var reader = command.ExecuteReader())
-                    {
-                        if (!reader.HasRows)
-                            return new List<int>();
-
-                        var personList = new List<int>();
-
-                        while (reader.Read())
-                        {
-                            var personId = GetDbValue(reader, "EUS_Person_ID", 0, out var isNull);
-                            if (!isNull)
-                                personList.Add(personId);
-                        }
-
-                        return personList;
-                    }
-
+                    personList.Add(personId);
                 }
-                catch (Exception ex)
-                {
-                    retryCount -= 1;
-                    var msg = string.Format("Exception retrieving requested run users for Requested Run ID {0}: {1}; " +
-                                            "ConnectionString: {2}, RetryCount = {3}",
-                                            requestedRunID, ex.Message, connection.ConnectionString, retryCount);
+            }
 
-                    OnErrorEvent(msg);
+            return personList;
 
-                    // Delay for 5 seconds before trying again
-                    if (retryCount >= 0)
-                        System.Threading.Thread.Sleep(5000);
-                }
-
-            } // while
-
-            return new List<int>();
         }
 
         private bool CheckMetadataValidity(string jsonMetadata, out bool policyError)
@@ -969,46 +915,16 @@ namespace Pacifica.DMS_Metadata
                       " Ingest_Steps_Completed >= 7)",
                 datasetID);
 
-            while (retryCount >= 0)
+            var dbTools = DbToolsFactory.GetDBTools(connectionString);
+            dbTools.ErrorEvent += OnErrorEvent;
+
+            var success = dbTools.GetQueryScalar(queryString, out var result, retryCount: (short) retryCount, retryDelaySeconds: 5);
+            if (!success)
             {
-                try
-                {
+                return -1;
+            }
 
-                    using (var connection = new SqlConnection(connectionString))
-                    {
-                        var command = new SqlCommand(queryString, connection);
-                        connection.Open();
-
-                        using (var reader = command.ExecuteReader())
-                        {
-                            if (reader.HasRows && reader.Read())
-                            {
-                                var filesForDatasetInMyEMSL = GetDbValue(reader, "Files", 0);
-                                return filesForDatasetInMyEMSL;
-                            }
-
-                        }
-                    }
-
-                    return 0;
-                }
-                catch (Exception ex)
-                {
-                    retryCount -= 1;
-                    var msg = string.Format("Exception looking up expected file count in MyEMSL for Dataset ID {0}: {1}; " +
-                                            "ConnectionString: {2}, RetryCount = {3}",
-                                            datasetID, ex.Message, connectionString, retryCount);
-
-                    OnErrorEvent(msg, ex);
-
-                    // Delay for 5 seconds before trying again
-                    if (retryCount >= 0)
-                        System.Threading.Thread.Sleep(5000);
-                }
-
-            } // while
-
-            return -1;
+            return result.CastDBVal(0);
         }
 
         /// <summary>

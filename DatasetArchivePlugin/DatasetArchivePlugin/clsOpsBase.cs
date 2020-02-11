@@ -14,9 +14,9 @@ using PRISM.Logging;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.IO;
 using System.Threading;
+using PRISMDatabaseUtils;
 
 namespace DatasetArchivePlugin
 {
@@ -56,7 +56,7 @@ namespace DatasetArchivePlugin
 
         private readonly string mArchiveOrUpdate;
 
-        private readonly ExecuteDatabaseSP mCaptureDbProcedureExecutor;
+        private readonly IDBTools mCaptureDbProcedureExecutor;
 
         protected string mDatasetName = string.Empty;
 
@@ -122,7 +122,7 @@ namespace DatasetArchivePlugin
 
             // This connection string points to the DMS_Capture database
             var connectionString = mMgrParams.GetParam("ConnectionString");
-            mCaptureDbProcedureExecutor = new ExecuteDatabaseSP(connectionString);
+            mCaptureDbProcedureExecutor = DbToolsFactory.GetDBTools(connectionString);
 
             RegisterEvents(mCaptureDbProcedureExecutor);
 
@@ -191,21 +191,18 @@ namespace DatasetArchivePlugin
 
             try
             {
-
                 // Setup for execution of the stored procedure
-                var spCmd = new SqlCommand(SP_NAME_MAKE_NEW_ARCHIVE_UPDATE_JOB)
-                {
-                    CommandType = CommandType.StoredProcedure
-                };
+                var dbTools = mCaptureDbProcedureExecutor;
+                var cmd = dbTools.CreateCommand(SP_NAME_MAKE_NEW_ARCHIVE_UPDATE_JOB, CommandType.StoredProcedure);
 
-                spCmd.Parameters.Add("@Return", SqlDbType.Int).Direction = ParameterDirection.ReturnValue;
-                spCmd.Parameters.Add("@datasetName", SqlDbType.VarChar, 128).Value = mDatasetName;
-                var resultsDirectoryParam = spCmd.Parameters.Add("@resultsDirectoryName", SqlDbType.VarChar, 128);
-                spCmd.Parameters.Add("@allowBlankResultsDirectory", SqlDbType.TinyInt).Value = 0;
-                spCmd.Parameters.Add("@pushDatasetToMyEMSL", SqlDbType.TinyInt).Value = 1;
-                spCmd.Parameters.Add("@pushDatasetRecursive", SqlDbType.TinyInt).Value = 1;
-                spCmd.Parameters.Add("@infoOnly", SqlDbType.TinyInt).Value = 0;
-                spCmd.Parameters.Add("@message", SqlDbType.VarChar, 512).Direction = ParameterDirection.Output;
+                dbTools.AddParameter(cmd, "@Return", SqlType.Int, direction: ParameterDirection.ReturnValue);
+                dbTools.AddParameter(cmd, "@datasetName", SqlType.VarChar, 128, mDatasetName);
+                var resultsDirectoryParam = dbTools.AddParameter(cmd, "@resultsDirectoryName", SqlType.VarChar, 128);
+                dbTools.AddTypedParameter(cmd, "@allowBlankResultsDirectory", SqlType.TinyInt, value: 0);
+                dbTools.AddTypedParameter(cmd, "@pushDatasetToMyEMSL", SqlType.TinyInt, value: 1);
+                dbTools.AddTypedParameter(cmd, "@pushDatasetRecursive", SqlType.TinyInt, value: 1);
+                dbTools.AddTypedParameter(cmd, "@infoOnly", SqlType.TinyInt, value: 0);
+                dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, direction: ParameterDirection.Output);
 
                 var successCount = 0;
                 foreach (var subdirectoryName in subdirectoryNames)
@@ -217,7 +214,7 @@ namespace DatasetArchivePlugin
                     LogTools.LogMessage("Creating archive update job for " + datasetAndDirectory);
 
                     // Execute the SP (retry the call up to 4 times)
-                    var resCode = mCaptureDbProcedureExecutor.ExecuteSP(spCmd, 4);
+                    var resCode = mCaptureDbProcedureExecutor.ExecuteSP(cmd, 4);
 
                     if (resCode == 0)
                     {

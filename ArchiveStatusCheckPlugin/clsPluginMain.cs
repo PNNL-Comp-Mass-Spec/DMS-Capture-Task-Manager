@@ -3,8 +3,8 @@ using Pacifica.Core;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.Linq;
+using PRISMDatabaseUtils;
 
 namespace ArchiveStatusCheckPlugin
 {
@@ -423,76 +423,44 @@ namespace ArchiveStatusCheckPlugin
             // This Connection String points to the DMS_Capture database
             var connectionString = mMgrParams.GetParam("ConnectionString");
 
-            while (retryCount >= 0)
+            var dbTools = DbToolsFactory.GetDBTools(connectionString);
+            dbTools.ErrorEvent += LogError;
+
+            var success = dbTools.GetQueryResultsDataTable(sql, out var table, retryCount: (short) retryCount, retryDelaySeconds: 5);
+
+            // Expected fields:
+            // StatusNum, Status_URI, Subfolder, Ingest_Steps_Completed, EUS_InstrumentID, EUS_ProposalID, EUS_UploaderID, ErrorCode
+            foreach (DataRow row in table.Rows)
             {
-                try
+                var statusNum = row[0].CastDBVal<int>();
+
+                var uri = row[1].CastDBVal(string.Empty);
+                if (string.IsNullOrEmpty(uri))
                 {
-                    using (var cnDB = new SqlConnection(connectionString))
-                    {
-                        cnDB.Open();
-
-                        var cmd = new SqlCommand(sql, cnDB);
-                        var reader = cmd.ExecuteReader();
-
-                        // Expected fields:
-                        // StatusNum, Status_URI, Subfolder, Ingest_Steps_Completed, EUS_InstrumentID, EUS_ProposalID, EUS_UploaderID, ErrorCode
-                        while (reader.Read())
-                        {
-                            var statusNum = reader.GetInt32(0);
-
-                            if (Convert.IsDBNull(reader.GetValue(1)))
-                            {
-                                continue;
-                            }
-
-                            var uri = (string)reader.GetValue(1);
-                            if (string.IsNullOrEmpty(uri))
-                            {
-                                continue;
-                            }
-
-                            var subFolder = (string)reader.GetValue(2);
-                            var ingestStepsCompleted = (byte)reader.GetValue(3);
-
-                            var eusInstrumentID = clsConversion.GetDbValue(reader, 4, 0);
-                            var eusProjectID = clsConversion.GetDbValue(reader, 5, string.Empty);
-                            var eusUploaderID = clsConversion.GetDbValue(reader, 6, 0);
-                            var errorCode = clsConversion.GetDbValue(reader, 7, 0);
-
-                            if (!dctStatusData.TryGetValue(statusNum, out var statusInfo))
-                            {
-                                statusInfo = new clsIngestStatusInfo(statusNum, uri);
-                                dctStatusData.Add(statusNum, statusInfo);
-                            }
-
-                            statusInfo.Subfolder = subFolder;
-                            statusInfo.IngestStepsCompletedOld = ingestStepsCompleted;
-                            statusInfo.EUS_InstrumentID = eusInstrumentID;
-                            statusInfo.EUS_ProjectID = eusProjectID;
-                            statusInfo.EUS_UploaderID = eusUploaderID;
-                            statusInfo.ExistingErrorCode = errorCode;
-
-                        }
-                    }
-                    return;
-
-                }
-                catch (Exception ex)
-                {
-                    retryCount -= 1;
-
-                    var msg = string.Format("GetStatusURIs; Exception querying database for job {0}: {1}; " +
-                                            "ConnectionString: {2}, RetryCount = {3}",
-                                            mJob, ex.Message, connectionString, retryCount);
-                    LogError(msg);
-
-                    // Delay for 5 seconds before trying again
-                    if (retryCount >= 0)
-                        System.Threading.Thread.Sleep(5000);
+                    continue;
                 }
 
-            } // while
+                var subFolder = row[2].CastDBVal<string>();
+                var ingestStepsCompleted = row[3].CastDBVal<byte>();
 
+                var eusInstrumentID = row[4].CastDBVal(0);
+                var eusProjectID = row[5].CastDBVal(string.Empty);
+                var eusUploaderID = row[6].CastDBVal(0);
+                var errorCode = row[7].CastDBVal(0);
+
+                if (!dctStatusData.TryGetValue(statusNum, out var statusInfo))
+                {
+                    statusInfo = new clsIngestStatusInfo(statusNum, uri);
+                    dctStatusData.Add(statusNum, statusInfo);
+                }
+
+                statusInfo.Subfolder = subFolder;
+                statusInfo.IngestStepsCompletedOld = ingestStepsCompleted;
+                statusInfo.EUS_InstrumentID = eusInstrumentID;
+                statusInfo.EUS_ProjectID = eusProjectID;
+                statusInfo.EUS_UploaderID = eusUploaderID;
+                statusInfo.ExistingErrorCode = errorCode;
+            }
         }
 
         /// <summary>
@@ -548,18 +516,16 @@ namespace ArchiveStatusCheckPlugin
 
                 var ingestStepsCompleted = GetMaxIngestStepCompleted(lstStatusNumsToIgnore, dctStatusData);
 
-                var spCmd = new SqlCommand(SP_NAME)
-                {
-                    CommandType = CommandType.StoredProcedure
-                };
+                var dbTools = mCaptureDbProcedureExecutor;
+                var cmd = dbTools.CreateCommand(SP_NAME, CommandType.StoredProcedure);
 
-                spCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-                spCmd.Parameters.Add("@DatasetID", SqlDbType.Int).Value = mDatasetID;
-                spCmd.Parameters.Add("@statusNumList", SqlDbType.VarChar, 1024).Value = statusNums;
-                spCmd.Parameters.Add("@ingestStepsCompleted", SqlDbType.TinyInt).Value = ingestStepsCompleted;
-                spCmd.Parameters.Add("@message", SqlDbType.VarChar, 512).Direction = ParameterDirection.Output;
+                dbTools.AddParameter(cmd, "@Return", SqlType.Int, direction: ParameterDirection.ReturnValue);
+                dbTools.AddParameter(cmd, "@DatasetID", SqlType.Int, value: mDatasetID);
+                dbTools.AddParameter(cmd, "@statusNumList", SqlType.VarChar, 1024, statusNums);
+                dbTools.AddParameter(cmd, "@ingestStepsCompleted", SqlType.TinyInt, value: ingestStepsCompleted);
+                dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, direction: ParameterDirection.Output);
 
-                var resCode = mCaptureDbProcedureExecutor.ExecuteSP(spCmd, 2);
+                var resCode = mCaptureDbProcedureExecutor.ExecuteSP(cmd, 2);
 
                 if (resCode == 0)
                     return;
@@ -590,19 +556,17 @@ namespace ArchiveStatusCheckPlugin
 
                 var ingestStepsCompleted = GetMaxIngestStepCompleted(verifiedStatusNums, dctStatusData);
 
-                var spCmd = new SqlCommand(SP_NAME)
-                {
-                    CommandType = CommandType.StoredProcedure
-                };
+                var dbTools = mCaptureDbProcedureExecutor;
+                var cmd = dbTools.CreateCommand(SP_NAME, CommandType.StoredProcedure);
 
-                spCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-                spCmd.Parameters.Add("@datasetID", SqlDbType.Int).Value = mDatasetID;
-                spCmd.Parameters.Add("@StatusNumList", SqlDbType.VarChar, 1024).Value = statusNums;
-                spCmd.Parameters.Add("@statusURIList", SqlDbType.VarChar, 4000).Value = statusURIs;
-                spCmd.Parameters.Add("@ingestStepsCompleted", SqlDbType.TinyInt).Value = ingestStepsCompleted;
-                spCmd.Parameters.Add("@message", SqlDbType.VarChar, 512).Direction = ParameterDirection.Output;
+                dbTools.AddParameter(cmd, "@Return", SqlType.Int, direction: ParameterDirection.ReturnValue);
+                dbTools.AddParameter(cmd, "@datasetID", SqlType.Int, value: mDatasetID);
+                dbTools.AddParameter(cmd, "@StatusNumList", SqlType.VarChar, 1024, statusNums);
+                dbTools.AddParameter(cmd, "@statusURIList", SqlType.VarChar, 4000, statusURIs);
+                dbTools.AddParameter(cmd, "@ingestStepsCompleted", SqlType.TinyInt, value: ingestStepsCompleted);
+                dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, direction: ParameterDirection.Output);
 
-                var resCode = mCaptureDbProcedureExecutor.ExecuteSP(spCmd, 2);
+                var resCode = mCaptureDbProcedureExecutor.ExecuteSP(cmd, 2);
 
                 if (resCode == 0)
                     return;

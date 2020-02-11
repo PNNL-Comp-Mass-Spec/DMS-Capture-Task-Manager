@@ -2,8 +2,8 @@
 using PRISM.Logging;
 using System;
 using System.Data;
-using System.Data.SqlClient;
 using System.IO;
+using PRISMDatabaseUtils;
 
 // ReSharper disable UnusedMember.Global
 namespace CaptureTaskManager
@@ -145,68 +145,6 @@ namespace CaptureTaskManager
                 return fValue;
 
             return fValue;
-        }
-
-        /// <summary>
-        /// Get the value for a field, using valueIfNull if the field is null
-        /// </summary>
-        /// <param name="reader">Reader</param>
-        /// <param name="fieldIndex">Field index (0-based)</param>
-        /// <param name="valueIfNull">Integer to return if null</param>
-        /// <returns>Integer</returns>
-        public static int GetDbValue(SqlDataReader reader, int fieldIndex, int valueIfNull)
-        {
-            if (Convert.IsDBNull(reader.GetValue(fieldIndex)))
-                return valueIfNull;
-
-            return (int)reader.GetValue(fieldIndex);
-        }
-
-        /// <summary>
-        /// Get the value for a field, using valueIfNull if the field is null
-        /// </summary>
-        /// <param name="reader">Reader</param>
-        /// <param name="fieldIndex">Field index (0-based)</param>
-        /// <param name="valueIfNull">String to return if null</param>
-        /// <returns>String</returns>
-        public static string GetDbValue(SqlDataReader reader, int fieldIndex, string valueIfNull)
-        {
-            if (Convert.IsDBNull(reader.GetValue(fieldIndex)))
-                return valueIfNull;
-
-            // Use .ToString() and not a string cast to allow for DateTime fields to convert to strings
-            return reader.GetValue(fieldIndex).ToString();
-        }
-
-        /// <summary>
-        /// Get the value for a field, using valueIfNull if the field is null
-        /// </summary>
-        /// <param name="reader">Reader</param>
-        /// <param name="fieldName">Field name</param>
-        /// <param name="valueIfNull">Integer to return if null</param>
-        /// <returns>Integer</returns>
-        public static int GetDbValue(SqlDataReader reader, string fieldName, int valueIfNull)
-        {
-            if (Convert.IsDBNull(reader[fieldName]))
-                return valueIfNull;
-
-            return (int)reader[fieldName];
-        }
-
-        /// <summary>
-        /// Get the value for a field, using valueIfNull if the field is null
-        /// </summary>
-        /// <param name="reader">Reader</param>
-        /// <param name="fieldName">Field name</param>
-        /// <param name="valueIfNull">String to return if null</param>
-        /// <returns>String</returns>
-        public static string GetDbValue(SqlDataReader reader, string fieldName, string valueIfNull)
-        {
-            if (Convert.IsDBNull(reader[fieldName]))
-                return valueIfNull;
-
-            // Use .ToString() and not a string cast to allow for DateTime fields to convert to strings
-            return reader[fieldName].ToString();
         }
 
         /// <summary>
@@ -397,14 +335,8 @@ namespace CaptureTaskManager
             string sqlStr, string connectionString, string callingFunction,
             short retryCount, out DataTable dtResults, int timeoutSeconds)
         {
-
-            var cmd = new SqlCommand(sqlStr)
-            {
-                CommandType = CommandType.Text
-            };
-
-            return GetDataTableByCmd(cmd, connectionString, callingFunction, retryCount, out dtResults, timeoutSeconds);
-
+            var dbTools = DbToolsFactory.GetDBTools(connectionString, timeoutSeconds);
+            return dbTools.GetQueryResultsDataTable(sqlStr, out dtResults, callingFunction, retryCount, timeoutSeconds);
         }
 
         /// <summary>
@@ -418,8 +350,9 @@ namespace CaptureTaskManager
         /// <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
+        [Obsolete("Use PRISMDatabaseUtils.DbToolsFactory.GetDBTools(...).GetQueryDataTable(...)", true)]
         public static bool GetDataTableByCmd(
-            SqlCommand cmd,
+            System.Data.SqlClient.SqlCommand cmd,
             string connectionString,
             string callingFunction,
             short retryCount,
@@ -450,13 +383,13 @@ namespace CaptureTaskManager
             {
                 try
                 {
-                    using (var cn = new SqlConnection(connectionString))
+                    using (var cn = new System.Data.SqlClient.SqlConnection(connectionString))
                     {
 
                         cmd.Connection = cn;
                         cmd.CommandTimeout = timeoutSeconds;
 
-                        using (var da = new SqlDataAdapter(cmd))
+                        using (var da = new System.Data.SqlClient.SqlDataAdapter(cmd))
                         {
                             using (var ds = new DataSet())
                             {

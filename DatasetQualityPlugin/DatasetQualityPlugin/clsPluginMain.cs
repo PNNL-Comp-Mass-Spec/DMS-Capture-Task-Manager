@@ -9,11 +9,11 @@ using CaptureTaskManager;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
+using PRISMDatabaseUtils;
 
 namespace DatasetQualityPlugin
 {
@@ -854,20 +854,16 @@ namespace DatasetQualityPlugin
                 }
 
                 // Call stored procedure StoreQuameterResults in the DMS_Capture database
+                var dbTools = mCaptureDbProcedureExecutor;
+                var cmd = dbTools.CreateCommand(STORE_QUAMETER_RESULTS_SP_NAME, CommandType.StoredProcedure);
 
-                var spCmd = new SqlCommand
-                {
-                    CommandType = CommandType.StoredProcedure,
-                    CommandText = STORE_QUAMETER_RESULTS_SP_NAME
-                };
+                dbTools.AddParameter(cmd, "@Return", SqlType.Int, direction: ParameterDirection.ReturnValue);
+                dbTools.AddParameter(cmd, "@DatasetID", SqlType.Int, value: intDatasetID);
+                dbTools.AddParameter(cmd, "@ResultsXML", SqlType.Xml, value: sXMLResultsClean);
 
-                spCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-                spCmd.Parameters.Add(new SqlParameter("@DatasetID", SqlDbType.Int)).Value = intDatasetID;
-                spCmd.Parameters.Add(new SqlParameter("@ResultsXML", SqlDbType.Xml)).Value = sXMLResultsClean;
+                var resultCode = dbTools.ExecuteSP(cmd, MAX_RETRY_COUNT, SEC_BETWEEN_RETRIES);
 
-                var resultCode = mCaptureDbProcedureExecutor.ExecuteSP(spCmd, MAX_RETRY_COUNT, SEC_BETWEEN_RETRIES);
-
-                if (resultCode == PRISM.ExecuteDatabaseSP.RET_VAL_OK)
+                if (resultCode == DbUtilsConstants.RET_VAL_OK)
                 {
                     // No errors
                     blnSuccess = true;
@@ -897,10 +893,8 @@ namespace DatasetQualityPlugin
             bool ignoreQuameterFailure,
             string instrumentName)
         {
-
             try
             {
-
                 // Copy the appropriate config file to the working directory
                 string configFileNameSource;
 
@@ -1032,7 +1026,6 @@ namespace DatasetQualityPlugin
                     mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     return false;
                 }
-
             }
             catch (Exception ex)
             {
@@ -1047,7 +1040,6 @@ namespace DatasetQualityPlugin
 
         private bool QuameterCanProcessDataset(int datasetID, string datasetName, string datasetFolderPath, ref string skipReason)
         {
-
             var sql =
                 " SELECT SUM(Scan_Count) AS Scans, " +
                        " SUM(CASE WHEN Scan_Type IN ('HMS', 'MS', 'Zoom-MS') THEN Scan_Count ELSE 0 END) AS MS_Scans" +
@@ -1059,20 +1051,15 @@ namespace DatasetQualityPlugin
             var scanCount = 0;
             var scanCountMS = 0;
 
-            using (var cnDB = new SqlConnection(sConnectionString))
+            var dbTools = DbToolsFactory.GetDBTools(sConnectionString);
+            if (dbTools.GetQueryResultsDataTable(sql, out var table))
             {
-                cnDB.Open();
-
-                var spCmd = new SqlCommand(sql, cnDB);
-                var reader = spCmd.ExecuteReader();
-
-                if (reader.Read())
+                foreach (DataRow row in table.Rows)
                 {
-                    if (!reader.IsDBNull(0))
-                        scanCount = reader.GetInt32(0);
-
-                    if (!reader.IsDBNull(1))
-                        scanCountMS = reader.GetInt32(1);
+                    scanCount = row[0].CastDBVal(0);
+                    scanCountMS = row[1].CastDBVal(0);
+                    // We should only have one row, but break just in case there are more.
+                    break;
                 }
             }
 
@@ -1082,7 +1069,6 @@ namespace DatasetQualityPlugin
                 // Look for the _DatasetInfo.xml file in the QC folder below the dataset folder
 
                 ParseDatasetInfoFile(datasetFolderPath, datasetName, out scanCount, out scanCountMS);
-
             }
 
             if (scanCount > 0)
@@ -1099,7 +1085,6 @@ namespace DatasetQualityPlugin
             // The DatasetInfo.xml file was not found
             // We don't know if Quameter can process the dataset or not, so we'll err on the side of "Sure, let's give it a try"
             return true;
-
         }
 
         /// <summary>
@@ -1110,7 +1095,6 @@ namespace DatasetQualityPlugin
         /// <remarks></remarks>
         private bool ReadAndStoreQuameterResults(string ResultsFilePath)
         {
-
             var blnSuccess = false;
 
             try

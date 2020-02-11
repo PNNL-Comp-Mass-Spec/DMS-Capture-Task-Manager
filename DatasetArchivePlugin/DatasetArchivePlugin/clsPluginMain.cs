@@ -9,8 +9,8 @@ using CaptureTaskManager;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.IO;
+using PRISMDatabaseUtils;
 
 namespace DatasetArchivePlugin
 {
@@ -163,40 +163,17 @@ namespace DatasetArchivePlugin
             int errorCode,
             bool usedTestInstance)
         {
-
             mSubmittedToMyEMSL = true;
 
             mMyEMSLAlreadyUpToDate = (errorCode == 0 && fileCountNew == 0 && fileCountUpdated == 0);
 
             try
             {
-
                 // Setup for execution of the stored procedure
-                var spCmd = new SqlCommand(SP_NAME_STORE_MYEMSL_STATS)
-                {
-                    CommandType = CommandType.StoredProcedure
-                };
-
-                spCmd.Parameters.Add("@Return", SqlDbType.Int).Direction = ParameterDirection.ReturnValue;
-
-                spCmd.Parameters.Add("@Job", SqlDbType.Int).Value = mTaskParams.GetParam("Job", 0);
-
-                spCmd.Parameters.Add("@DatasetID", SqlDbType.Int).Value = mTaskParams.GetParam("Dataset_ID", 0);
+                var dbTools = mCaptureDbProcedureExecutor;
+                var cmd = dbTools.CreateCommand(SP_NAME_STORE_MYEMSL_STATS, CommandType.StoredProcedure);
 
                 var subDir = mTaskParams.GetParam("OutputDirectoryName", mTaskParams.GetParam("OutputFolderName"));
-                spCmd.Parameters.Add("@Subfolder", SqlDbType.VarChar, 128).Value = subDir;
-
-                spCmd.Parameters.Add("@FileCountNew", SqlDbType.Int).Value = fileCountNew;
-
-                spCmd.Parameters.Add("@FileCountUpdated", SqlDbType.Int).Value = fileCountUpdated;
-
-                spCmd.Parameters.Add("@Bytes", SqlDbType.BigInt).Value = bytes;
-
-                spCmd.Parameters.Add("@UploadTimeSeconds", SqlDbType.Real).Value = (float)uploadTimeSeconds;
-
-                spCmd.Parameters.Add("@StatusURI", SqlDbType.VarChar, 255).Value = statusURI;
-
-                spCmd.Parameters.Add("@ErrorCode", SqlDbType.Int).Value = errorCode;
 
                 byte testInstanceFlag;
                 if (usedTestInstance)
@@ -204,16 +181,23 @@ namespace DatasetArchivePlugin
                 else
                     testInstanceFlag = 0;
 
-                spCmd.Parameters.Add("@UsedTestInstance", SqlDbType.TinyInt).Value = testInstanceFlag;
-
-                spCmd.Parameters.Add("@EUSInstrumentID", SqlDbType.Int).Value = eusInstrumentID;
-
-                spCmd.Parameters.Add("@EUSProposalID", SqlDbType.VarChar, 10).Value = eusProjectID;
-
-                spCmd.Parameters.Add("@EUSUploaderID", SqlDbType.Int).Value = eusUploaderID;
+                dbTools.AddParameter(cmd, "@Return", SqlType.Int, direction: ParameterDirection.ReturnValue);
+                dbTools.AddParameter(cmd, "@Job", SqlType.Int, value: mTaskParams.GetParam("Job", 0));
+                dbTools.AddParameter(cmd, "@DatasetID", SqlType.Int, value: mTaskParams.GetParam("Dataset_ID", 0));
+                dbTools.AddParameter(cmd, "@Subfolder", SqlType.VarChar, 128, subDir);
+                dbTools.AddParameter(cmd, "@FileCountNew", SqlType.Int, value: fileCountNew);
+                dbTools.AddParameter(cmd, "@FileCountUpdated", SqlType.Int, value: fileCountUpdated);
+                dbTools.AddParameter(cmd, "@Bytes", SqlType.BigInt, value: bytes);
+                dbTools.AddParameter(cmd, "@UploadTimeSeconds", SqlType.Real, value: (float)uploadTimeSeconds);
+                dbTools.AddParameter(cmd, "@StatusURI", SqlType.VarChar, 255, statusURI);
+                dbTools.AddParameter(cmd, "@ErrorCode", SqlType.Int, value: errorCode);
+                dbTools.AddParameter(cmd, "@UsedTestInstance", SqlType.TinyInt, value: testInstanceFlag);
+                dbTools.AddParameter(cmd, "@EUSInstrumentID", SqlType.Int, value: eusInstrumentID);
+                dbTools.AddParameter(cmd, "@EUSProposalID", SqlType.VarChar, 10, eusProjectID);
+                dbTools.AddParameter(cmd, "@EUSUploaderID", SqlType.Int, value: eusUploaderID);
 
                 // Execute the SP (retry the call up to 4 times)
-                var resCode = mCaptureDbProcedureExecutor.ExecuteSP(spCmd, 4);
+                var resCode = dbTools.ExecuteSP(cmd, 4);
 
                 if (resCode == 0)
                 {

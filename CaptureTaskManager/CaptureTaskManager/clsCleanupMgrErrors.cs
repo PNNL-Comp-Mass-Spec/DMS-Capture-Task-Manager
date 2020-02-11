@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Data;
-using System.Data.SqlClient;
+using PRISMDatabaseUtils;
 
 namespace CaptureTaskManager
 {
@@ -195,23 +195,17 @@ namespace CaptureTaskManager
                 if (failureMessage == null)
                     failureMessage = string.Empty;
 
-                var myConnection = new SqlConnection(mMgrConfigDBConnectionString);
-                myConnection.Open();
+                var dbTools = DbToolsFactory.GetDBTools(mMgrConfigDBConnectionString);
 
-                var spCmd = new SqlCommand
-                {
-                    CommandType = CommandType.StoredProcedure,
-                    CommandText = SP_NAME_REPORT_MGR_CLEANUP,
-                    Connection = myConnection
-                };
+                var cmd = dbTools.CreateCommand(SP_NAME_REPORT_MGR_CLEANUP, CommandType.StoredProcedure);
 
-                spCmd.Parameters.Add(new SqlParameter("@ManagerName", SqlDbType.VarChar, 128)).Value = mManagerName;
-                spCmd.Parameters.Add(new SqlParameter("@State", SqlDbType.Int)).Value = eMgrCleanupActionCode;
-                spCmd.Parameters.Add(new SqlParameter("@FailureMsg", SqlDbType.VarChar, 512)).Value = failureMessage;
-                spCmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
+                dbTools.AddParameter(cmd, "@ManagerName", SqlType.VarChar, 128, mManagerName);
+                dbTools.AddParameter(cmd, "@State", SqlType.Int, value: eMgrCleanupActionCode);
+                dbTools.AddParameter(cmd, "@FailureMsg", SqlType.VarChar, 512, failureMessage);
+                dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, direction: ParameterDirection.Output);
 
                 // Execute the SP
-                spCmd.ExecuteNonQuery();
+                dbTools.ExecuteSP(cmd);
             }
             catch (Exception ex)
             {

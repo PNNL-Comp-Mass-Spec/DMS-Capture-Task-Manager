@@ -11,12 +11,12 @@ using PRISM.Logging;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.Data.SQLite;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Threading;
+using PRISMDatabaseUtils;
 
 namespace CaptureTaskManager
 {
@@ -48,7 +48,7 @@ namespace CaptureTaskManager
         // Used by CTM plugins
         protected FileTools mFileTools;
 
-        protected ExecuteDatabaseSP mCaptureDbProcedureExecutor;
+        protected IDBTools mCaptureDbProcedureExecutor;
 
         protected DateTime mLastConfigDbUpdate = DateTime.UtcNow;
         protected int mMinutesBetweenConfigDbUpdates = 10;
@@ -136,7 +136,7 @@ namespace CaptureTaskManager
 
             // This connection string points to the DMS_Capture database
             var connectionString = mMgrParams.GetParam("ConnectionString");
-            mCaptureDbProcedureExecutor = new ExecuteDatabaseSP(connectionString);
+            mCaptureDbProcedureExecutor = DbToolsFactory.GetDBTools(connectionString);
 
             RegisterEvents(mCaptureDbProcedureExecutor);
 
@@ -669,15 +669,13 @@ namespace CaptureTaskManager
             }
 
             // Setup for execution of the stored procedure
-            var cmd = new SqlCommand(SP_NAME_SET_TASK_TOOL_VERSION)
-            {
-                CommandType = CommandType.StoredProcedure
-            };
+            var dbTools = mCaptureDbProcedureExecutor;
+            var cmd = dbTools.CreateCommand(SP_NAME_SET_TASK_TOOL_VERSION, CommandType.StoredProcedure);
 
-            cmd.Parameters.Add(new SqlParameter("@job", SqlDbType.Int)).Value = mTaskParams.GetParam("Job", 0);
-            cmd.Parameters.Add(new SqlParameter("@step", SqlDbType.Int)).Value = mTaskParams.GetParam("Step", 0);
-            cmd.Parameters.Add(new SqlParameter("@toolVersionInfo", SqlDbType.VarChar, 900)).Value = toolVersionInfoCombined;
-            cmd.Parameters.Add(new SqlParameter("@returnCode", SqlDbType.VarChar, 64)).Direction = ParameterDirection.Output;
+            dbTools.AddTypedParameter(cmd, "@job", SqlType.Int, value: mTaskParams.GetParam("Job", 0));
+            dbTools.AddTypedParameter(cmd, "@step", SqlType.Int, value: mTaskParams.GetParam("Step", 0));
+            dbTools.AddParameter(cmd, "@toolVersionInfo", SqlType.VarChar, 900, toolVersionInfoCombined);
+            dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, direction: ParameterDirection.Output);
 
             // Execute the SP (retry the call up to 4 times)
             var resCode = mCaptureDbProcedureExecutor.ExecuteSP(cmd, 4);
@@ -977,20 +975,18 @@ namespace CaptureTaskManager
                 transactionId = statusNum;
             }
 
-            var cmd = new SqlCommand(SP_NAME)
-            {
-                CommandType = CommandType.StoredProcedure
-            };
+            var dbTools = mCaptureDbProcedureExecutor;
+            var cmd = dbTools.CreateCommand(SP_NAME, CommandType.StoredProcedure);
 
             // Note that if transactionId is 0, the stored procedure will leave TransactionID unchanged in table T_MyEMSL_Uploads
 
-            cmd.Parameters.Add("@datasetID", SqlDbType.Int).Value = mDatasetID;
-            cmd.Parameters.Add("@statusNum", SqlDbType.Int).Value = statusNum;
-            cmd.Parameters.Add("@ingestStepsCompleted", SqlDbType.TinyInt).Value = ingestStepsCompleted;
-            cmd.Parameters.Add("@fatalError", SqlDbType.TinyInt).Value = fatalError ? 1 : 0;
-            cmd.Parameters.Add("@transactionId", SqlDbType.Int).Value = transactionId;
-            cmd.Parameters.Add("@message", SqlDbType.VarChar, 512).Direction = ParameterDirection.Output;
-            cmd.Parameters.Add(new SqlParameter("@returnCode", SqlDbType.VarChar, 64)).Direction = ParameterDirection.Output;
+            dbTools.AddTypedParameter(cmd, "@datasetID", SqlType.Int, value: mDatasetID);
+            dbTools.AddTypedParameter(cmd, "@statusNum", SqlType.Int, value: statusNum);
+            dbTools.AddTypedParameter(cmd, "@ingestStepsCompleted", SqlType.TinyInt, value: ingestStepsCompleted);
+            dbTools.AddTypedParameter(cmd, "@fatalError", SqlType.TinyInt, value: fatalError ? 1 : 0);
+            dbTools.AddTypedParameter(cmd, "@transactionId", SqlType.Int, value: transactionId);
+            dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, direction: ParameterDirection.Output);
+            dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, direction: ParameterDirection.Output);
 
             mCaptureDbProcedureExecutor.TimeoutSeconds = 20;
             var resCode = mCaptureDbProcedureExecutor.ExecuteSP(cmd, 2);
