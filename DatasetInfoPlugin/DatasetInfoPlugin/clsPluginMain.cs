@@ -1031,9 +1031,22 @@ namespace DatasetInfoPlugin
             foreach (var dotDDirectory in diDotDDirectories)
             {
                 var mcfFileExists = LookForMcfFileInDotDDirectory(dotDDirectory, out var dotDDirectoryName);
-                if (mcfFileExists && !fileOrDirectoryNames.Contains(dotDDirectoryName))
+                if (!mcfFileExists)
+                    continue;
+
+                string relativeDirectoryPath;
+                if (looseMatchDotD)
                 {
-                    fileOrDirectoryNames.Add(dotDDirectoryName);
+                    relativeDirectoryPath = dotDDirectory.FullName.Substring(datasetDirectory.FullName.Length + 1);
+                }
+                else
+                {
+                    relativeDirectoryPath = dotDDirectory.Name;
+                }
+
+                if (!fileOrDirectoryRelativePaths.Contains(relativeDirectoryPath))
+                {
+                    fileOrDirectoryRelativePaths.Add(relativeDirectoryPath);
                 }
             }
 
