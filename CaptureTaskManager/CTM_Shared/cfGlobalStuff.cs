@@ -3,6 +3,7 @@ using PRISM.Logging;
 using System;
 using System.Data;
 using System.IO;
+using System.Runtime.CompilerServices;
 using PRISMDatabaseUtils;
 
 // ReSharper disable UnusedMember.Global
@@ -306,18 +307,15 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="sqlStr">Sql query</param>
         /// <param name="connectionString">Connection string</param>
-        /// <param name="callingFunction">Name of the calling function</param>
         /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
         /// <param name="dtResults">DataTable (Output Parameter)</param>
+        /// <param name="callingFunction">Name of the calling function</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>Uses a timeout of 30 seconds</remarks>
-        public static bool GetDataTableByQuery(string sqlStr, string connectionString, string callingFunction, short retryCount, out DataTable dtResults)
+        public static bool GetDataTableByQuery(string sqlStr, string connectionString, short retryCount, out DataTable dtResults, [CallerMemberName] string callingFunction = "")
         {
-
             const int timeoutSeconds = 30;
-
-            return GetDataTableByQuery(sqlStr, connectionString, callingFunction, retryCount, out dtResults, timeoutSeconds);
-
+            return GetDataTableByQuery(sqlStr, connectionString, retryCount, out dtResults, timeoutSeconds, callingFunction);
         }
 
         /// <summary>
@@ -325,15 +323,14 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="sqlStr">Sql query</param>
         /// <param name="connectionString">Connection string</param>
-        /// <param name="callingFunction">Name of the calling function</param>
         /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
         /// <param name="dtResults">DataTable (Output Parameter)</param>
         /// <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
+        /// <param name="callingFunction">Name of the calling function</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
         public static bool GetDataTableByQuery(
-            string sqlStr, string connectionString, string callingFunction,
-            short retryCount, out DataTable dtResults, int timeoutSeconds)
+            string sqlStr, string connectionString, short retryCount, out DataTable dtResults, int timeoutSeconds, [CallerMemberName] string callingFunction = "")
         {
             var dbTools = DbToolsFactory.GetDBTools(connectionString, timeoutSeconds);
             return dbTools.GetQueryResultsDataTable(sqlStr, out dtResults, retryCount, timeoutSeconds, callingFunction: callingFunction);
@@ -344,20 +341,20 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="cmd">SqlCommand var (query or stored procedure)</param>
         /// <param name="connectionString">Connection string</param>
-        /// <param name="callingFunction">Name of the calling function</param>
         /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
         /// <param name="dtResults">DataTable (Output Parameter)</param>
         /// <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
+        /// <param name="callingFunction">Name of the calling function</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
         [Obsolete("Use PRISMDatabaseUtils.DbToolsFactory.GetDBTools(...).GetQueryDataTable(...)", true)]
         public static bool GetDataTableByCmd(
             System.Data.SqlClient.SqlCommand cmd,
             string connectionString,
-            string callingFunction,
             short retryCount,
             out DataTable dtResults,
-            int timeoutSeconds)
+            int timeoutSeconds,
+            [CallerMemberName] string callingFunction = "")
         {
 
             if (cmd == null)
@@ -450,19 +447,9 @@ namespace CaptureTaskManager
         /// This function was added to debug remote share access issues
         /// The folder was accessible from some classes but not accessible from others
         /// </summary>
-        /// <param name="callingFunction"></param>
-        public static void VerifyFolder(string callingFunction)
-        {
-            VerifyFolder(callingFunction, @"\\Proto-2.emsl.pnl.gov\External_Orbitrap_Xfer\");
-        }
-
-        /// <summary>
-        /// This function was added to debug remote share access issues
-        /// The folder was accessible from some classes but not accessible from others
-        /// </summary>
-        /// <param name="callingFunction"></param>
         /// <param name="pathToCheck"></param>
-        public static void VerifyFolder(string callingFunction, string pathToCheck)
+        /// <param name="callingFunction"></param>
+        public static void VerifyFolder(string pathToCheck = @"\\Proto-2.emsl.pnl.gov\External_Orbitrap_Xfer\", [CallerMemberName] string callingFunction = "")
         {
             try
             {
