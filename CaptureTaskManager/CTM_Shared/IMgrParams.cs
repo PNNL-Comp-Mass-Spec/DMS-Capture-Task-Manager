@@ -72,7 +72,7 @@ namespace CaptureTaskManager
         /// Retrieves the manager and global settings from various databases
         /// </summary>
         /// <returns></returns>
-        bool LoadMgrSettingsFromDB(bool logConnectionErrors = true, short retryCount = 3);
+        bool LoadMgrSettingsFromDB(bool logConnectionErrors = true, int retryCount = 3);
 
         #endregion
     }

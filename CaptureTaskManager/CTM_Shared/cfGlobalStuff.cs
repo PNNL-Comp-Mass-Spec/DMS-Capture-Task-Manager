@@ -336,7 +336,7 @@ namespace CaptureTaskManager
             short retryCount, out DataTable dtResults, int timeoutSeconds)
         {
             var dbTools = DbToolsFactory.GetDBTools(connectionString, timeoutSeconds);
-            return dbTools.GetQueryResultsDataTable(sqlStr, out dtResults, callingFunction, retryCount, timeoutSeconds);
+            return dbTools.GetQueryResultsDataTable(sqlStr, out dtResults, retryCount, timeoutSeconds, callingFunction: callingFunction);
         }
 
         /// <summary>

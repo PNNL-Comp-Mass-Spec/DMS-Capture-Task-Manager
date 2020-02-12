@@ -426,7 +426,7 @@ namespace ArchiveStatusCheckPlugin
             var dbTools = DbToolsFactory.GetDBTools(connectionString);
             dbTools.ErrorEvent += LogError;
 
-            var success = dbTools.GetQueryResultsDataTable(sql, out var table, retryCount: (short) retryCount, retryDelaySeconds: 5);
+            var success = dbTools.GetQueryResultsDataTable(sql, out var table, retryCount, 5);
 
             // Expected fields:
             // StatusNum, Status_URI, Subfolder, Ingest_Steps_Completed, EUS_InstrumentID, EUS_ProposalID, EUS_UploaderID, ErrorCode
