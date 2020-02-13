@@ -239,11 +239,11 @@ namespace CaptureTaskManager
 
                 dbTools.AddParameter(cmd, "@processorName", SqlType.VarChar, 128, ManagerName);
                 dbTools.AddParameter(cmd, "@jobNumber", SqlType.Int, direction: ParameterDirection.Output);
-                dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, direction: ParameterDirection.Output);
+                var messageParam = dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, direction: ParameterDirection.Output);
                 dbTools.AddTypedParameter(cmd, "@infoOnly", SqlType.TinyInt, value: 0);
                 dbTools.AddParameter(cmd, "@ManagerVersion", SqlType.VarChar, 128, appVersion);
                 dbTools.AddTypedParameter(cmd, "@JobCountToPreview", SqlType.Int, value: 10);
-                dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, direction: ParameterDirection.Output);
+                var returnParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, direction: ParameterDirection.Output);
 
                 LogDebug("clsCaptureTask.RequestTaskDetailed(), connection string: " + mConnStr);
 
@@ -255,7 +255,7 @@ namespace CaptureTaskManager
                 // Execute the SP
                 var resCode = mCaptureTaskDBProcedureExecutor.ExecuteSPData(cmd, out var results);
 
-                var returnCode = cmd.Parameters["@returnCode"].Value.ToString();
+                var returnCode = returnParam.Value.ToString();
                 var returnCodeValue = clsConversion.GetReturnCodeValue(returnCode);
 
                 if (returnCodeValue != 0)
@@ -269,7 +269,7 @@ namespace CaptureTaskManager
 
                     // The return code was not an empty string, which indicates an error
                     LogError("clsCaptureTask.RequestTaskDetailed(), SP execution has return code " + returnCode +
-                             "; Msg text = " + (string)cmd.Parameters["@message"].Value);
+                             "; Msg text = " + (string)messageParam.Value);
                     return EnumRequestTaskResult.ResultError;
                 }
 
@@ -302,7 +302,7 @@ namespace CaptureTaskManager
                     default:
                         // There was an SP error
                         LogError("clsCaptureTask.RequestTaskDetailed(), SP execution error " + resCode +
-                            "; Msg text = " + (string)cmd.Parameters["@message"].Value);
+                            "; Msg text = " + (string)messageParam.Value);
                         outcome = EnumRequestTaskResult.ResultError;
                         break;
                 }
@@ -380,12 +380,12 @@ namespace CaptureTaskManager
             dbTools.AddParameter(cmd, "@managerName", SqlType.VarChar, 128, ManagerName);
             dbTools.AddParameter(cmd, "@infoOnly", SqlType.TinyInt, value: 0);
             dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, direction: ParameterDirection.Output);
-            dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, direction: ParameterDirection.Output);
+            var returnParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, direction: ParameterDirection.Output);
 
             // Execute the Stored Procedure (retry the call up to 3 times)
             var resCode = mCaptureTaskDBProcedureExecutor.ExecuteSP(cmd, 3);
 
-            var returnCode = cmd.Parameters["@returnCode"].Value.ToString();
+            var returnCode = returnParam.Value.ToString();
             var returnCodeValue = clsConversion.GetReturnCodeValue(returnCode);
 
             if (resCode == 0 && returnCodeValue == 0)
@@ -425,7 +425,7 @@ namespace CaptureTaskManager
                 dbTools.AddTypedParameter(cmd, "@evaluationCode", SqlType.Int, value: evalCode);
                 dbTools.AddParameter(cmd, "@evaluationMessage", SqlType.VarChar, 256, evalMsg.Trim('\r', '\n'));
                 dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, direction: ParameterDirection.Output);
-                dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, direction: ParameterDirection.Output);
+                var returnParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, direction: ParameterDirection.Output);
 
                 LogDebug("Calling stored procedure " + SP_NAME_SET_COMPLETE);
 
@@ -437,7 +437,7 @@ namespace CaptureTaskManager
                 // Execute the SP
                 var resCode = mCaptureTaskDBProcedureExecutor.ExecuteSP(cmd);
 
-                var returnCode = cmd.Parameters["@returnCode"].Value.ToString();
+                var returnCode = returnParam.Value.ToString();
                 var returnCodeValue = clsConversion.GetReturnCodeValue(returnCode);
 
                 if (resCode == 0 && returnCodeValue == 0)
