@@ -273,7 +273,8 @@ namespace Pacifica.DMS_Metadata
             var queryString = "SELECT * FROM V_MyEMSL_Supplemental_Metadata WHERE [omics.dms.dataset_id] = " + datasetID;
 
             var dbTools = DbToolsFactory.GetDBTools(dmsConnectionString);
-            dbTools.ErrorEvent += (message, exception) => OnErrorEvent(message, exception);
+            RegisterEvents(dbTools);
+
             var success = dbTools.GetQueryResultsDataTable(queryString, out var table, retryCount, 5);
 
             foreach (DataRow row in table.Rows)
@@ -916,7 +917,7 @@ namespace Pacifica.DMS_Metadata
                 datasetID);
 
             var dbTools = DbToolsFactory.GetDBTools(connectionString);
-            dbTools.ErrorEvent += OnErrorEvent;
+            RegisterEvents(dbTools);
 
             var success = dbTools.GetQueryScalar(queryString, out var result, retryCount, 5);
             if (!success)

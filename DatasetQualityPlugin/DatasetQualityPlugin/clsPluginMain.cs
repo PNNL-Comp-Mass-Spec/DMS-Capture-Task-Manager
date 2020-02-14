@@ -1052,6 +1052,8 @@ namespace DatasetQualityPlugin
             var scanCountMS = 0;
 
             var dbTools = DbToolsFactory.GetDBTools(sConnectionString);
+            RegisterEvents(dbTools);
+
             if (dbTools.GetQueryResultsDataTable(sql, out var table))
             {
                 foreach (DataRow row in table.Rows)

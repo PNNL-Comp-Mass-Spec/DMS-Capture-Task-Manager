@@ -196,6 +196,7 @@ namespace CaptureTaskManager
                     failureMessage = string.Empty;
 
                 var dbTools = DbToolsFactory.GetDBTools(mMgrConfigDBConnectionString);
+                RegisterEvents(dbTools);
 
                 var cmd = dbTools.CreateCommand(SP_NAME_REPORT_MGR_CLEANUP, CommandType.StoredProcedure);
 

@@ -81,7 +81,9 @@ namespace CaptureTaskManager
             mConnStr = mMgrParams.GetParam("ConnectionString");
 
             mCaptureTaskDBProcedureExecutor = PRISMDatabaseUtils.DbToolsFactory.GetDBTools(mConnStr);
+            RegisterEvents(mCaptureTaskDBProcedureExecutor);
 
+            UnregisterEventHandler((EventNotifier)mCaptureTaskDBProcedureExecutor, BaseLogger.LogLevels.ERROR);
             mCaptureTaskDBProcedureExecutor.ErrorEvent += CaptureTaskDBProcedureExecutor_DBErrorEvent;
 
             // Cache the log level

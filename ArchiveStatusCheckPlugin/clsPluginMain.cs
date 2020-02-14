@@ -424,7 +424,7 @@ namespace ArchiveStatusCheckPlugin
             var connectionString = mMgrParams.GetParam("ConnectionString");
 
             var dbTools = DbToolsFactory.GetDBTools(connectionString);
-            dbTools.ErrorEvent += LogError;
+            RegisterEvents(dbTools);
 
             var success = dbTools.GetQueryResultsDataTable(sql, out var table, retryCount, 5);
 
