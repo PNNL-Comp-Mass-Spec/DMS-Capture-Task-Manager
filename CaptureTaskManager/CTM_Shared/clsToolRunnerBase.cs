@@ -675,7 +675,7 @@ namespace CaptureTaskManager
             dbTools.AddTypedParameter(cmd, "@job", SqlType.Int, value: mTaskParams.GetParam("Job", 0));
             dbTools.AddTypedParameter(cmd, "@step", SqlType.Int, value: mTaskParams.GetParam("Step", 0));
             dbTools.AddParameter(cmd, "@toolVersionInfo", SqlType.VarChar, 900, toolVersionInfoCombined);
-            var returnParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, direction: ParameterDirection.Output);
+            var returnParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.Output);
 
             // Execute the SP (retry the call up to 4 times)
             var resCode = mCaptureDbProcedureExecutor.ExecuteSP(cmd, 4);
@@ -985,8 +985,8 @@ namespace CaptureTaskManager
             dbTools.AddTypedParameter(cmd, "@ingestStepsCompleted", SqlType.TinyInt, value: ingestStepsCompleted);
             dbTools.AddTypedParameter(cmd, "@fatalError", SqlType.TinyInt, value: fatalError ? 1 : 0);
             dbTools.AddTypedParameter(cmd, "@transactionId", SqlType.Int, value: transactionId);
-            dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, direction: ParameterDirection.Output);
-            var returnParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, direction: ParameterDirection.Output);
+            dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.Output);
+            var returnParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.Output);
 
             mCaptureDbProcedureExecutor.TimeoutSeconds = 20;
             var resCode = mCaptureDbProcedureExecutor.ExecuteSP(cmd, 2);

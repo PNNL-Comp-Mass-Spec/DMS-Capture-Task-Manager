@@ -857,9 +857,9 @@ namespace DatasetQualityPlugin
                 var dbTools = mCaptureDbProcedureExecutor;
                 var cmd = dbTools.CreateCommand(STORE_QUAMETER_RESULTS_SP_NAME, CommandType.StoredProcedure);
 
-                dbTools.AddParameter(cmd, "@Return", SqlType.Int, direction: ParameterDirection.ReturnValue);
-                dbTools.AddParameter(cmd, "@DatasetID", SqlType.Int, value: intDatasetID);
-                dbTools.AddParameter(cmd, "@ResultsXML", SqlType.Xml, value: sXMLResultsClean);
+                dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+                dbTools.AddParameter(cmd, "@DatasetID", SqlType.Int).Value = intDatasetID;
+                dbTools.AddParameter(cmd, "@ResultsXML", SqlType.Xml).Value = sXMLResultsClean;
 
                 var resultCode = dbTools.ExecuteSP(cmd, MAX_RETRY_COUNT, SEC_BETWEEN_RETRIES);
 

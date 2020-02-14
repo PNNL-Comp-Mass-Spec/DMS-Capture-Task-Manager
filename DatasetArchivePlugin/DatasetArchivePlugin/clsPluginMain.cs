@@ -181,20 +181,20 @@ namespace DatasetArchivePlugin
                 else
                     testInstanceFlag = 0;
 
-                dbTools.AddParameter(cmd, "@Return", SqlType.Int, direction: ParameterDirection.ReturnValue);
-                dbTools.AddParameter(cmd, "@Job", SqlType.Int, value: mTaskParams.GetParam("Job", 0));
-                dbTools.AddParameter(cmd, "@DatasetID", SqlType.Int, value: mTaskParams.GetParam("Dataset_ID", 0));
+                dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+                dbTools.AddParameter(cmd, "@Job", SqlType.Int).Value = mTaskParams.GetParam("Job", 0);
+                dbTools.AddParameter(cmd, "@DatasetID", SqlType.Int).Value = mTaskParams.GetParam("Dataset_ID", 0);
                 dbTools.AddParameter(cmd, "@Subfolder", SqlType.VarChar, 128, subDir);
-                dbTools.AddParameter(cmd, "@FileCountNew", SqlType.Int, value: fileCountNew);
-                dbTools.AddParameter(cmd, "@FileCountUpdated", SqlType.Int, value: fileCountUpdated);
-                dbTools.AddParameter(cmd, "@Bytes", SqlType.BigInt, value: bytes);
-                dbTools.AddParameter(cmd, "@UploadTimeSeconds", SqlType.Real, value: (float)uploadTimeSeconds);
+                dbTools.AddParameter(cmd, "@FileCountNew", SqlType.Int).Value = fileCountNew;
+                dbTools.AddParameter(cmd, "@FileCountUpdated", SqlType.Int).Value = fileCountUpdated;
+                dbTools.AddParameter(cmd, "@Bytes", SqlType.BigInt).Value = bytes;
+                dbTools.AddParameter(cmd, "@UploadTimeSeconds", SqlType.Real).Value = (float)uploadTimeSeconds;
                 dbTools.AddParameter(cmd, "@StatusURI", SqlType.VarChar, 255, statusURI);
-                dbTools.AddParameter(cmd, "@ErrorCode", SqlType.Int, value: errorCode);
-                dbTools.AddParameter(cmd, "@UsedTestInstance", SqlType.TinyInt, value: testInstanceFlag);
-                dbTools.AddParameter(cmd, "@EUSInstrumentID", SqlType.Int, value: eusInstrumentID);
+                dbTools.AddParameter(cmd, "@ErrorCode", SqlType.Int).Value = errorCode;
+                dbTools.AddParameter(cmd, "@UsedTestInstance", SqlType.TinyInt).Value = testInstanceFlag;
+                dbTools.AddParameter(cmd, "@EUSInstrumentID", SqlType.Int).Value = eusInstrumentID;
                 dbTools.AddParameter(cmd, "@EUSProposalID", SqlType.VarChar, 10, eusProjectID);
-                dbTools.AddParameter(cmd, "@EUSUploaderID", SqlType.Int, value: eusUploaderID);
+                dbTools.AddParameter(cmd, "@EUSUploaderID", SqlType.Int).Value = eusUploaderID;
 
                 // Execute the SP (retry the call up to 4 times)
                 var resCode = dbTools.ExecuteSP(cmd, 4);

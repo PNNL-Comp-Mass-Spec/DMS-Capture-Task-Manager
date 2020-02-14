@@ -75,7 +75,7 @@ namespace CaptureTaskManager
                 var cmd = dbTools.CreateCommand(SP_NAME_ACK_MANAGER_UPDATE, CommandType.StoredProcedure);
 
                 dbTools.AddParameter(cmd, "@managerName", SqlType.VarChar, 128, ManagerName);
-                dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, direction: ParameterDirection.Output);
+                dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.Output);
 
                 // Execute the SP
                 cmd.ExecuteNonQuery();

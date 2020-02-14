@@ -195,14 +195,14 @@ namespace DatasetArchivePlugin
                 var dbTools = mCaptureDbProcedureExecutor;
                 var cmd = dbTools.CreateCommand(SP_NAME_MAKE_NEW_ARCHIVE_UPDATE_JOB, CommandType.StoredProcedure);
 
-                dbTools.AddParameter(cmd, "@Return", SqlType.Int, direction: ParameterDirection.ReturnValue);
+                dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
                 dbTools.AddParameter(cmd, "@datasetName", SqlType.VarChar, 128, mDatasetName);
                 var resultsDirectoryParam = dbTools.AddParameter(cmd, "@resultsDirectoryName", SqlType.VarChar, 128);
                 dbTools.AddTypedParameter(cmd, "@allowBlankResultsDirectory", SqlType.TinyInt, value: 0);
                 dbTools.AddTypedParameter(cmd, "@pushDatasetToMyEMSL", SqlType.TinyInt, value: 1);
                 dbTools.AddTypedParameter(cmd, "@pushDatasetRecursive", SqlType.TinyInt, value: 1);
                 dbTools.AddTypedParameter(cmd, "@infoOnly", SqlType.TinyInt, value: 0);
-                dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, direction: ParameterDirection.Output);
+                dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.Output);
 
                 var successCount = 0;
                 foreach (var subdirectoryName in subdirectoryNames)
