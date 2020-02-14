@@ -136,8 +136,8 @@ namespace CaptureTaskManager
 
             // This connection string points to the DMS_Capture database
             var connectionString = mMgrParams.GetParam("ConnectionString");
-            mCaptureDbProcedureExecutor = DbToolsFactory.GetDBTools(connectionString);
 
+            mCaptureDbProcedureExecutor = DbToolsFactory.GetDBTools(connectionString, debugMode: mTraceMode);
             RegisterEvents(mCaptureDbProcedureExecutor);
 
             mWorkDir = mMgrParams.GetParam("WorkDir");

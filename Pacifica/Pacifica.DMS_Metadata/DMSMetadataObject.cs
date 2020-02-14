@@ -272,7 +272,7 @@ namespace Pacifica.DMS_Metadata
 
             var queryString = "SELECT * FROM V_MyEMSL_Supplemental_Metadata WHERE [omics.dms.dataset_id] = " + datasetID;
 
-            var dbTools = DbToolsFactory.GetDBTools(dmsConnectionString);
+            var dbTools = DbToolsFactory.GetDBTools(dmsConnectionString, debugMode: TraceMode);
             RegisterEvents(dbTools);
 
             var success = dbTools.GetQueryResultsDataTable(queryString, out var table, retryCount, 5);
@@ -916,7 +916,7 @@ namespace Pacifica.DMS_Metadata
                       " Ingest_Steps_Completed >= 7)",
                 datasetID);
 
-            var dbTools = DbToolsFactory.GetDBTools(connectionString);
+            var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: TraceMode);
             RegisterEvents(dbTools);
 
             var success = dbTools.GetQueryScalar(queryString, out var result, retryCount, 5);

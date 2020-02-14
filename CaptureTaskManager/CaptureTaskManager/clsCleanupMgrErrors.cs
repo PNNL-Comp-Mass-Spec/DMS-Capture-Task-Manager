@@ -64,7 +64,10 @@ namespace CaptureTaskManager
 
         private readonly IStatusFile mStatusFile;
 
+        private readonly bool mTraceMode;
+
         private readonly string mWorkingDirPath;
+
         #endregion
 
         /// <summary>
@@ -74,10 +77,13 @@ namespace CaptureTaskManager
         /// <param name="managerName"></param>
         /// <param name="workingDirPath"></param>
         /// <param name="statusFile"></param>
-        public clsCleanupMgrErrors(string mgrConfigDBConnectionString,
-                                   string managerName,
-                                   string workingDirPath,
-                                   IStatusFile statusFile)
+        /// <param name="traceMode"></param>
+        public clsCleanupMgrErrors(
+            string mgrConfigDBConnectionString,
+            string managerName,
+            string workingDirPath,
+            IStatusFile statusFile,
+            bool traceMode)
         {
             if (string.IsNullOrEmpty(mgrConfigDBConnectionString))
                 throw new Exception("Manager config DB connection string is not defined");
@@ -88,9 +94,9 @@ namespace CaptureTaskManager
             mMgrConfigDBConnectionString = string.Copy(mgrConfigDBConnectionString);
             mManagerName = string.Copy(managerName);
 
-            mWorkingDirPath = workingDirPath;
-
             mStatusFile = statusFile;
+            mTraceMode = traceMode;
+            mWorkingDirPath = workingDirPath;
 
             mInitialized = true;
         }
@@ -195,7 +201,7 @@ namespace CaptureTaskManager
                 if (failureMessage == null)
                     failureMessage = string.Empty;
 
-                var dbTools = DbToolsFactory.GetDBTools(mMgrConfigDBConnectionString);
+                var dbTools = DbToolsFactory.GetDBTools(mMgrConfigDBConnectionString, debugMode: mTraceMode);
                 RegisterEvents(dbTools);
 
                 var cmd = dbTools.CreateCommand(SP_NAME_REPORT_MGR_CLEANUP, CommandType.StoredProcedure);

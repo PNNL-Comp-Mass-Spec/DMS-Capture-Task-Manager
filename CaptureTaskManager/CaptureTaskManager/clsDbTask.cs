@@ -8,6 +8,8 @@
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
+using PRISM;
+using PRISM.Logging;
 
 // ReSharper disable UnusedMember.Global
 namespace CaptureTaskManager
@@ -74,13 +76,14 @@ namespace CaptureTaskManager
         protected clsDbTask(IMgrParams mgrParams)
         {
             mMgrParams = mgrParams;
+            var traceMode = mMgrParams.TraceMode;
 
             ManagerName = mMgrParams.GetParam("MgrName", System.Net.Dns.GetHostName() + "_Undefined-Manager");
 
             // Gigasax.DMS_Capture
             mConnStr = mMgrParams.GetParam("ConnectionString");
 
-            mCaptureTaskDBProcedureExecutor = PRISMDatabaseUtils.DbToolsFactory.GetDBTools(mConnStr);
+            mCaptureTaskDBProcedureExecutor = PRISMDatabaseUtils.DbToolsFactory.GetDBTools(mConnStr, debugMode: traceMode);
             RegisterEvents(mCaptureTaskDBProcedureExecutor);
 
             UnregisterEventHandler((EventNotifier)mCaptureTaskDBProcedureExecutor, BaseLogger.LogLevels.ERROR);
@@ -307,7 +310,8 @@ namespace CaptureTaskManager
 
         private void CaptureTaskDBProcedureExecutor_DBErrorEvent(string message, Exception ex)
         {
-            var logToDb = message.Contains("permission was denied");
+            var logToDb = message.IndexOf("permission was denied", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                          message.IndexOf("permission denied", StringComparison.OrdinalIgnoreCase) >= 0;
 
             if (logToDb)
                 LogError(message, logToDb:true);

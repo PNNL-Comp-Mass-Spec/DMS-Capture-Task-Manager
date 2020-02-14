@@ -24,6 +24,8 @@ namespace CaptureTaskManager
         // ReSharper disable once UnusedMember.Global
         Dictionary<string, string> MgrParams { get; }
 
+        bool TraceMode { get; }
+
         #endregion
 
         #region "Methods"

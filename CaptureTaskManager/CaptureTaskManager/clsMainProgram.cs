@@ -1234,11 +1234,14 @@ namespace CaptureTaskManager
             string errorMessage;
             try
             {
+                var connectionString = mMgrSettings.GetParam(MgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING);
+
                 var cleanupMgrErrors = new clsCleanupMgrErrors(
-                    mMgrSettings.GetParam(MgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING),
+                    connectionString,
                     mMgrName,
                     mMgrSettings.GetParam("WorkDir"),
-                    mStatusFile);
+                    mStatusFile,
+                    TraceMode);
 
                 var cleanupSuccess = cleanupMgrErrors.AutoCleanupManagerErrors(cleanupMode);
 
@@ -1544,7 +1547,7 @@ namespace CaptureTaskManager
 
         #region "EventNotifier events"
 
-        private new void RegisterEvents(EventNotifier processingClass, bool writeDebugEventsToLog = true)
+        private new void RegisterEvents(IEventNotifier processingClass, bool writeDebugEventsToLog = true)
         {
             base.RegisterEvents(processingClass, writeDebugEventsToLog);
 
