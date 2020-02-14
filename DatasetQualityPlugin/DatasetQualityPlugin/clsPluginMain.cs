@@ -1046,12 +1046,12 @@ namespace DatasetQualityPlugin
                 " FROM S_DMS_V_Dataset_Scans " +
                 " WHERE (Dataset_ID = " + datasetID + ") ";
 
-            var sConnectionString = mMgrParams.GetParam("ConnectionString");
+            var connectionString = mMgrParams.GetParam("ConnectionString");
 
             var scanCount = 0;
             var scanCountMS = 0;
 
-            var dbTools = DbToolsFactory.GetDBTools(sConnectionString);
+            var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: mTraceMode);
             RegisterEvents(dbTools);
 
             if (dbTools.GetQueryResultsDataTable(sql, out var table))
