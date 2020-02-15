@@ -312,7 +312,7 @@ namespace CaptureTaskManager
         /// <param name="callingFunction">Name of the calling function</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>Uses a timeout of 30 seconds</remarks>
-        [Obsolete("Use PRISMDatabaseUtils.DbToolsFactory.GetDBTools(...).GetQueryDataTable(...)", true)]
+        [Obsolete("Use PRISMDatabaseUtils.DbToolsFactory.GetDBTools(...).GetQueryResultsDataTable(...)", true)]
         public static bool GetDataTableByQuery(string sqlStr, string connectionString, short retryCount, out DataTable dtResults, [CallerMemberName] string callingFunction = "")
         {
             const int timeoutSeconds = 30;
@@ -330,7 +330,7 @@ namespace CaptureTaskManager
         /// <param name="callingFunction">Name of the calling function</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
-        [Obsolete("Use PRISMDatabaseUtils.DbToolsFactory.GetDBTools(...).GetQueryDataTable(...)", true)]
+        [Obsolete("Use PRISMDatabaseUtils.DbToolsFactory.GetDBTools(...).GetQueryResultsDataTable(...)", true)]
         public static bool GetDataTableByQuery(
             string sqlStr, string connectionString, short retryCount, out DataTable dtResults, int timeoutSeconds, [CallerMemberName] string callingFunction = "")
         {
