@@ -80,9 +80,9 @@ xcopy debug\Pacifica.Core.dll F:\Documents\Projects\DataMining\DMS_Managers\MyEM
 xcopy debug\Pacifica.Core.pdb F:\Documents\Projects\DataMining\DMS_Managers\MyEMSL_Reader\Lib /D /Y
 xcopy debug\Pacifica.Core.dll F:\Documents\Projects\DataMining\DMS_Managers\MyEMSL_Reader\MyEMSLDownloader\bin\Debug /D /Y
 
-xcopy debug\Pacifica.Core.dll F:\Documents\Projects\DataMining\DMS_Managers\Space_Manager\DMS_Space_Manager\bin\Debug /D /Y
-xcopy debug\Pacifica.Core.dll F:\Documents\Projects\DataMining\DMS_Managers\Space_Manager\DMS_Space_Manager\bin\Release /D /Y
-xcopy debug\Pacifica.Core.dll F:\Documents\Projects\DataMining\DMS_Managers\Space_Manager\DMS_Space_Manager\RefLib /D /Y
+xcopy debug\Pacifica.Core.dll F:\Documents\Projects\DataMining\DMS_Managers\DMS_Space_Manager\DMS_Space_Manager\bin\Debug /D /Y
+xcopy debug\Pacifica.Core.dll F:\Documents\Projects\DataMining\DMS_Managers\DMS_Space_Manager\DMS_Space_Manager\bin\Release /D /Y
+xcopy debug\Pacifica.Core.dll F:\Documents\Projects\DataMining\DMS_Managers\DMS_Space_Manager\DMS_Space_Manager\RefLib /D /Y
 
 xcopy debug\Pacifica.Core.dll F:\Documents\Projects\DataMining\DMS_Programs\DMS_InstDirScanner\DMS_InstDirScanner\Lib /D /Y
 xcopy debug\Pacifica.Core.dll F:\Documents\Projects\DataMining\DMS_Programs\DMS_InstDirScanner\DMS_InstDirScanner\bin\Debug /D /Y
