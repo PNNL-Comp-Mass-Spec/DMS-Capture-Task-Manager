@@ -1535,6 +1535,28 @@ namespace DatasetInfoPlugin
             {
                 mErrOccurred = true;
 
+                // Limit the logging of messages similar to:
+
+                if (message.StartsWith("Unable to load data for scan"))
+                {
+                    mErrorCountLoadDataForScan++;
+                    if (mErrorCountLoadDataForScan > 25 && mErrorCountLoadDataForScan % 1000 != 0)
+                    {
+                        ConsoleMsgUtils.ShowWarning("Error running MSFileInfoScanner: " + message);
+                        return;
+                    }
+
+                }
+                else if (message.StartsWith("Unknown format for Scan Filter"))
+                {
+                    mErrorCountUnknownScanFilterFormat++;
+                    if (mErrorCountUnknownScanFilterFormat > 25 && mErrorCountUnknownScanFilterFormat % 1000 != 0)
+                    {
+                        ConsoleMsgUtils.ShowWarning("Error running MSFileInfoScanner: " + message);
+                        return;
+                    }
+                }
+
                 // Message often contains long paths; check for this and shorten them.
                 // For example, switch
                 // from: \\proto-6\LTQ_Orb_1\2015_4\QC_Shew_pep_Online_Dig_v12_c0pt5_05_10-08-13\QC_Shew_pep_Online_Dig_v12_c0pt5_05_10-08-13.raw
