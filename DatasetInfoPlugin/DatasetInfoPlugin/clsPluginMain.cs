@@ -52,9 +52,13 @@ namespace DatasetInfoPlugin
 
         iMSFileInfoScanner mMsFileScanner;
 
-        string mMsg;
+        private string mMsg;
 
-        bool mErrOccurred;
+        private bool mErrOccurred;
+
+        private int mErrorCountLoadDataForScan;
+
+        private int mErrorCountUnknownScanFilterFormat;
 
         private int mFailedScanCount;
 
@@ -236,6 +240,7 @@ namespace DatasetInfoPlugin
             var sampleLabelling = mTaskParams.GetParam("Meta_Experiment_sample_labelling", "");
             ConfigureMinimumMzValidation(mMsFileScanner, sampleLabelling);
 
+            mMsFileScanner.DatasetIDOverride = mDatasetID;
             mMsFileScanner.CheckCentroidingStatus = true;
             mMsFileScanner.PlotWithPython = true;
 
@@ -287,6 +292,7 @@ namespace DatasetInfoPlugin
                     mMsFileScanner.SaveTICAndBPIPlots = false;
                     mMsFileScanner.SaveLCMS2DPlots = false;
                     break;
+
                 case QCPlottingModes.BpiAndTicOnly:
                     // Only create the BPI and TIC plots
                     mMsFileScanner.SaveTICAndBPIPlots = true;
@@ -403,8 +409,18 @@ namespace DatasetInfoPlugin
                 }
 
                 bool successProcessing;
+                mErrorCountLoadDataForScan = 0;
+                mErrorCountUnknownScanFilterFormat = 0;
+
                 try
                 {
+                    var equivalentCommandLineArguments = GetEquivalentCommandLineArgs(mMsFileScanner, pathToProcess);
+
+                    LogMessage(string.Format(
+                        "Processing with MSFileInfoScanner.dll; equivalent executable call: " +
+                        "MSFileInfoScanner.exe {0}",
+                        equivalentCommandLineArguments));
+
                     successProcessing = mMsFileScanner.ProcessMSFileOrDirectory(pathToProcess, currentOutputDirectory);
                 }
                 catch (Exception ex)
@@ -1030,7 +1046,7 @@ namespace DatasetInfoPlugin
             // Look for a .mcf file in each of the .D directories
             foreach (var dotDDirectory in diDotDDirectories)
             {
-                var mcfFileExists = LookForMcfFileInDotDDirectory(dotDDirectory, out var dotDDirectoryName);
+                var mcfFileExists = LookForMcfFileInDotDDirectory(dotDDirectory, out _);
                 if (!mcfFileExists)
                     continue;
 
@@ -1291,6 +1307,53 @@ namespace DatasetInfoPlugin
 
             return new List<string>();
 
+        }
+
+        /// <summary>
+        /// Convert the options defined in msFileScanner to the
+        /// equivalent list of command line arguments that could be sent to MSFileInfoScanner.exe
+        /// </summary>
+        /// <param name="msFileScanner"></param>
+        /// <param name="datasetFileName"></param>
+        /// <returns></returns>
+        private string GetEquivalentCommandLineArgs(iMSFileInfoScanner msFileScanner, string datasetFileName)
+        {
+            var argumentList = new List<string>();
+
+            if (!msFileScanner.SaveTICAndBPIPlots)
+                argumentList.Add("/NoTIC");
+
+            if (msFileScanner.SaveLCMS2DPlots)
+                argumentList.Add("/LC");
+
+            if (msFileScanner.CreateDatasetInfoFile)
+                argumentList.Add("/DI");
+
+            if (msFileScanner.CheckCentroidingStatus)
+                argumentList.Add("/CC");
+
+            if (msFileScanner.PlotWithPython)
+                argumentList.Add("/Python");
+
+            if (msFileScanner.CheckCentroidingStatus)
+                argumentList.Add("/SS");
+
+            if (msFileScanner.ComputeOverallQualityScores)
+                argumentList.Add("/QS");
+
+            if (msFileScanner.MS2MzMin > 0)
+                argumentList.Add(string.Format("/MS2MzMin:{0:F1}", msFileScanner.MS2MzMin));
+
+            if (msFileScanner.ScanStart > 0)
+                argumentList.Add("/ScanStart:" + msFileScanner.ScanStart);
+
+            if (msFileScanner.ScanEnd > 0)
+                argumentList.Add("/ScanEnd:" + msFileScanner.ScanEnd);
+
+            if (msFileScanner.ShowDebugInfo)
+                argumentList.Add("/Debug");
+
+            return datasetFileName + " " + string.Join(" ", argumentList);
         }
 
         /// <summary>
