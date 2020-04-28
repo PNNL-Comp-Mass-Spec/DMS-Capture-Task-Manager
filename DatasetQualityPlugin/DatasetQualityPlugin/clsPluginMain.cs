@@ -859,7 +859,7 @@ namespace DatasetQualityPlugin
 
                 dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
                 dbTools.AddParameter(cmd, "@DatasetID", SqlType.Int).Value = intDatasetID;
-                dbTools.AddParameter(cmd, "@ResultsXML", SqlType.Xml).Value = sXMLResultsClean;
+                dbTools.AddParameter(cmd, "@ResultsXML", SqlType.XML).Value = sXMLResultsClean;
 
                 var resultCode = dbTools.ExecuteSP(cmd, MAX_RETRY_COUNT, SEC_BETWEEN_RETRIES);
 
