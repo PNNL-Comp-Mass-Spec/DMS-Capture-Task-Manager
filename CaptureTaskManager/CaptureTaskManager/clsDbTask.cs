@@ -147,7 +147,7 @@ namespace CaptureTaskManager
             if (inpCmd.Parameters.Count < 1)
                 return;
 
-            var msg = "";
+            var msg = string.Empty;
 
             foreach (DbParameter myParam in inpCmd.Parameters)
             {
@@ -229,10 +229,10 @@ namespace CaptureTaskManager
 
         private string DbCStr(object InpObj)
         {
-            // If input object is DbNull, returns "", otherwise returns String representation of object
+            // If input object is DbNull, returns string.Empty, otherwise returns String representation of object
             if (InpObj == null || ReferenceEquals(InpObj, DBNull.Value))
             {
-                return "";
+                return string.Empty;
             }
 
             return InpObj.ToString();

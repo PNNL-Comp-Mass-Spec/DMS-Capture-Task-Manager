@@ -162,7 +162,7 @@ namespace CaptureTaskManager
         // ReSharper disable once UnusedMember.Global
         protected bool UpdateMgrSettings()
         {
-            var bSuccess = true;
+            var success = true;
 
             if (mMinutesBetweenConfigDbUpdates < 1)
                 mMinutesBetweenConfigDbUpdates = 1;
@@ -178,7 +178,7 @@ namespace CaptureTaskManager
                     // Error retrieving settings from the manager control DB
                     LogWarning("Error calling mMgrSettings.LoadMgrSettingsFromDB to update manager settings");
 
-                    bSuccess = false;
+                    success = false;
                 }
                 else
                 {
@@ -188,7 +188,7 @@ namespace CaptureTaskManager
                 }
             }
 
-            return bSuccess;
+            return success;
         }
 
 

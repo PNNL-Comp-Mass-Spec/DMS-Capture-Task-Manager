@@ -169,31 +169,31 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Surround a path with double quotes if it contains spaces
+        /// Surround a file (or directory) path with double quotes if it contains spaces
         /// </summary>
-        /// <param name="strPath"></param>
+        /// <param name="filePath"></param>
         /// <returns></returns>
-        public static string PossiblyQuotePath(string strPath)
+        public static string PossiblyQuotePath(string filePath)
         {
-            if (string.IsNullOrEmpty(strPath))
+            if (string.IsNullOrEmpty(filePath))
             {
                 return string.Empty;
             }
 
-            if (strPath.Contains(" "))
+            if (filePath.Contains(" "))
             {
-                if (!strPath.StartsWith("\""))
+                if (!filePath.StartsWith("\""))
                 {
-                    strPath = "\"" + strPath;
+                    filePath = "\"" + filePath;
                 }
 
-                if (!strPath.EndsWith("\""))
+                if (!filePath.EndsWith("\""))
                 {
-                    strPath += "\"";
+                    filePath += "\"";
                 }
             }
 
-            return strPath;
+            return filePath;
         }
     }
 

@@ -81,8 +81,8 @@ namespace CaptureTaskManager
         public static IToolRunner GetToolRunner(string toolName)
         {
             var xPath = "//ToolRunners/ToolRunner[@Tool='" + toolName.ToLower() + "']";
-            var className = "";
-            var assemblyName = "";
+            var className = string.Empty;
+            var assemblyName = string.Empty;
             IToolRunner myToolRunner = null;
 
             if (GetPluginInfo(xPath, ref className, ref assemblyName))
@@ -127,7 +127,7 @@ namespace CaptureTaskManager
         private static bool GetPluginInfo(string xPath, ref string className, ref string assemblyName)
         {
             var doc = new XmlDocument();
-            var strPluginInfo = string.Empty;
+            var pluginInfo = string.Empty;
 
             try
             {
@@ -135,7 +135,7 @@ namespace CaptureTaskManager
                 if (className == null) className = string.Empty;
                 if (assemblyName == null) assemblyName = string.Empty;
 
-                strPluginInfo = "XPath=\"" + xPath + "\"; className=\"" + className + "\"; assemblyName=" + assemblyName + "\"";
+                pluginInfo = "XPath=\"" + xPath + "\"; className=\"" + className + "\"; assemblyName=" + assemblyName + "\"";
 
                 // Read the tool runner info file
                 doc.Load(GetPluginInfoFilePath(FileName));
@@ -161,13 +161,13 @@ namespace CaptureTaskManager
                 }
                 else
                 {
-                    throw new Exception("Could not resolve tool name; " + strPluginInfo);
+                    throw new Exception("Could not resolve tool name; " + pluginInfo);
                 }
                 return true;
             }
             catch (Exception ex)
             {
-                ErrMsg = "Error in GetPluginInfo: " + ex.Message + "; " + strPluginInfo;
+                ErrMsg = "Error in GetPluginInfo: " + ex.Message + "; " + pluginInfo;
                 return false;
             }
         }

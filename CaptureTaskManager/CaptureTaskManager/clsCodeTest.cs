@@ -30,7 +30,7 @@ namespace CaptureTaskManager
                     while (enumCurrent.MoveNext())
                     {
                         var accessCredentials = new System.Net.NetworkCredential(enumCurrent.Current.Key,
-                                                                                 enumCurrent.Current.Value, "");
+                                                                                 enumCurrent.Current.Value, string.Empty);
 
                         Console.WriteLine(@"Credentials created for " + enumCurrent.Current.Key);
 

@@ -447,7 +447,7 @@ namespace ImsDemuxPlugin
         {
 
             string msg;
-            var bSuccess = true;
+            var success = true;
 
             var svrPath = Path.Combine(mTaskParams.GetParam("Storage_Vol_External"), mTaskParams.GetParam("Storage_Path"));
             var datasetDirectory = mTaskParams.GetParam(mTaskParams.HasParam("Directory") ? "Directory" : "Folder");
@@ -474,11 +474,11 @@ namespace ImsDemuxPlugin
                 {
                     msg = "Error copying " + fileName + " to storage server";
                     LogError(msg);
-                    bSuccess = false;
+                    success = false;
                 }
             }
 
-            return bSuccess;
+            return success;
 
         }
 
@@ -506,7 +506,7 @@ namespace ImsDemuxPlugin
         protected bool StoreToolVersionInfo()
         {
 
-            var strToolVersionInfo = string.Empty;
+            var toolVersionInfo = string.Empty;
 
             var uimfDemultiplexerProgLoc = GetUimfDemultiplexerPath();
             if (string.IsNullOrEmpty(uimfDemultiplexerProgLoc))
@@ -520,36 +520,36 @@ namespace ImsDemuxPlugin
                 return false;
 
             // Lookup the version of UIMFDemultiplexer_Console
-            var bSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, fiUimfDemultiplexer.FullName);
-            if (!bSuccess)
+            var success = StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, fiUimfDemultiplexer.FullName);
+            if (!success)
                 return false;
 
             // Lookup the version of the IMSDemultiplexer (in the UIMFDemultiplexer folder)
-            var strDemultiplexerPath = Path.Combine(fiUimfDemultiplexer.DirectoryName, "IMSDemultiplexer.dll");
-            bSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, strDemultiplexerPath);
-            if (!bSuccess)
+            var demultiplexerPath = Path.Combine(fiUimfDemultiplexer.DirectoryName, "IMSDemultiplexer.dll");
+            success = StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, demultiplexerPath);
+            if (!success)
                 return false;
 
-            var strAutoCalibrateUIMFPath = Path.Combine(fiUimfDemultiplexer.DirectoryName, "AutoCalibrateUIMF.dll");
-            bSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, strAutoCalibrateUIMFPath);
-            if (!bSuccess)
+            var autoCalibrateUIMFPath = Path.Combine(fiUimfDemultiplexer.DirectoryName, "AutoCalibrateUIMF.dll");
+            success = StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, autoCalibrateUIMFPath);
+            if (!success)
                 return false;
 
-            var strUIMFLibrary = Path.Combine(fiUimfDemultiplexer.DirectoryName, "UIMFLibrary.dll");
-            bSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, strUIMFLibrary);
-            if (!bSuccess)
+            var uimfLibraryPath = Path.Combine(fiUimfDemultiplexer.DirectoryName, "UIMFLibrary.dll");
+            success = StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, uimfLibraryPath);
+            if (!success)
                 return false;
 
             // Store path to the demultiplexer DLL in toolFiles
             var toolFiles = new System.Collections.Generic.List<FileInfo>
             {
-                new FileInfo(strDemultiplexerPath)
+                new FileInfo(demultiplexerPath)
             };
 
             try
             {
                 const bool bSaveToolVersionTextFile = false;
-                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, bSaveToolVersionTextFile);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, bSaveToolVersionTextFile);
             }
             catch (Exception ex)
             {

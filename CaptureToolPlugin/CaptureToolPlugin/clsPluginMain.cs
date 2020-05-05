@@ -135,7 +135,7 @@ namespace CaptureToolPlugin
 
             LogDebug("Determining tool version info");
 
-            var strToolVersionInfo = string.Empty;
+            var toolVersionInfo = string.Empty;
             var appDirectory = clsUtilities.GetAppDirectoryPath();
 
             if (string.IsNullOrWhiteSpace(appDirectory))
@@ -145,17 +145,17 @@ namespace CaptureToolPlugin
             }
 
             // Lookup the version of the Capture tool plugin
-            var strPluginPath = Path.Combine(appDirectory, "CaptureToolPlugin.dll");
-            var bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strPluginPath);
-            if (!bSuccess)
+            var pluginPath = Path.Combine(appDirectory, "CaptureToolPlugin.dll");
+            var success = StoreToolVersionInfoOneFile(ref toolVersionInfo, pluginPath);
+            if (!success)
             {
                 return false;
             }
 
             // Lookup the version of the Capture task manager
-            var strCTMPath = Path.Combine(appDirectory, "CaptureTaskManager.exe");
-            bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strCTMPath);
-            if (!bSuccess)
+            var ctmPath = Path.Combine(appDirectory, "CaptureTaskManager.exe");
+            success = StoreToolVersionInfoOneFile(ref toolVersionInfo, ctmPath);
+            if (!success)
             {
                 return false;
             }
@@ -163,12 +163,12 @@ namespace CaptureToolPlugin
             // Store path to CaptureToolPlugin.dll in toolFiles
             var toolFiles = new List<FileInfo>
                 {
-                    new FileInfo(strPluginPath)
+                    new FileInfo(pluginPath)
                 };
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, false);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, false);
             }
             catch (Exception ex)
             {

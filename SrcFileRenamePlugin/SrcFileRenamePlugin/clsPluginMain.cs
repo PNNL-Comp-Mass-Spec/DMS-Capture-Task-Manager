@@ -111,7 +111,7 @@ namespace SrcFileRenamePlugin
         {
             LogDebug("Determining tool version info");
 
-            var strToolVersionInfo = string.Empty;
+            var toolVersionInfo = string.Empty;
             var appDirectory = clsUtilities.GetAppDirectoryPath();
 
             if (string.IsNullOrWhiteSpace(appDirectory))
@@ -121,25 +121,25 @@ namespace SrcFileRenamePlugin
             }
 
             // Lookup the version of the Source File Rename plugin
-            var strPluginPath = System.IO.Path.Combine(appDirectory, "SrcFileRenamePlugin.dll");
-            var bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strPluginPath);
-            if (!bSuccess)
+            var pluginPath = System.IO.Path.Combine(appDirectory, "SrcFileRenamePlugin.dll");
+            var success = StoreToolVersionInfoOneFile(ref toolVersionInfo, pluginPath);
+            if (!success)
                 return false;
 
             // Lookup the version of the Capture task manager
-            var strCTMPath = System.IO.Path.Combine(appDirectory, "CaptureTaskManager.exe");
-            bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strCTMPath);
-            if (!bSuccess)
+            var ctmPath = System.IO.Path.Combine(appDirectory, "CaptureTaskManager.exe");
+            success = StoreToolVersionInfoOneFile(ref toolVersionInfo, ctmPath);
+            if (!success)
                 return false;
 
             // Store path to SrcFileRenamePlugin.dll in toolFiles
             var toolFiles = new System.Collections.Generic.List<System.IO.FileInfo> {
-                new System.IO.FileInfo(strPluginPath)
+                new System.IO.FileInfo(pluginPath)
             };
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, false);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, false);
             }
             catch (Exception ex)
             {

@@ -23,10 +23,10 @@ namespace SrcFileRenamePlugin
         #region "Class variables"
 
         private readonly IMgrParams mMgrParams;
-        private string mMsg = "";
+        private string mMsg = string.Empty;
         private readonly bool mUseBioNet;
-        private readonly string mUserName = "";
-        private readonly string mPwd = "";
+        private readonly string mUserName = string.Empty;
+        private readonly string mPwd = string.Empty;
         private ShareConnector mShareConnector;
         private bool mConnected;
 

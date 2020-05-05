@@ -60,12 +60,12 @@ namespace CaptureToolPlugin
         /// <summary>
         /// Username for connecting to bionet
         /// </summary>
-        private readonly string mUserName = "";
+        private readonly string mUserName = string.Empty;
 
         /// <summary>
         /// Encoded password for the bionet user
         /// </summary>
-        private readonly string mPassword = "";
+        private readonly string mPassword = string.Empty;
 
         private ShareConnector mShareConnectorPRISM;
         private NetworkConnection mShareConnectorDotNET;

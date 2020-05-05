@@ -234,13 +234,13 @@ namespace CaptureTaskManager
         public bool DeleteStatusFlagFile()
         {
             // Returns True if job request control flag file exists
-            var strFlagFilePath = FlagFilePath;
+            var flagFilePath = FlagFilePath;
 
             try
             {
-                if (File.Exists(strFlagFilePath))
+                if (File.Exists(flagFilePath))
                 {
-                    File.Delete(strFlagFilePath);
+                    File.Delete(flagFilePath);
                 }
 
                 return true;
@@ -292,9 +292,9 @@ namespace CaptureTaskManager
         /// <returns>True if job request control flag file exists</returns>
         public bool DetectStatusFlagFile()
         {
-            var strFlagFilePath = FlagFilePath;
+            var flagFilePath = FlagFilePath;
 
-            return File.Exists(strFlagFilePath);
+            return File.Exists(flagFilePath);
         }
 
         /// <summary>

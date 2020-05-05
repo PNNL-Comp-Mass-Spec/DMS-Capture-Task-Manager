@@ -56,7 +56,7 @@ namespace DatasetQualityPlugin
                     if (taskParam.StartsWith("Meta_"))
                     {
                         // This parameter is metadata, so write it out
-                        var tmpStr = taskParam.Replace("Meta_", "");
+                        var tmpStr = taskParam.Replace("Meta_", string.Empty);
                         xWriter.WriteElementString(tmpStr, taskParams.GetParam(taskParam));
                     }
                 }

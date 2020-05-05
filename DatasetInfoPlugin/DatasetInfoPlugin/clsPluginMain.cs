@@ -237,7 +237,7 @@ namespace DatasetInfoPlugin
             mMsFileScanner.LCMS2DPlotMinIntensity = mTaskParams.GetParam("LCMS2DPlotMinIntensity", (float)0);
             mMsFileScanner.LCMS2DOverviewPlotDivisor = mTaskParams.GetParam("LCMS2DOverviewPlotDivisor", clsLCMSDataPlotterOptions.DEFAULT_LCMS2D_OVERVIEW_PLOT_DIVISOR);
 
-            var sampleLabelling = mTaskParams.GetParam("Meta_Experiment_sample_labelling", "");
+            var sampleLabelling = mTaskParams.GetParam("Meta_Experiment_sample_labelling", string.Empty);
             ConfigureMinimumMzValidation(mMsFileScanner, sampleLabelling);
 
             mMsFileScanner.DatasetIDOverride = mDatasetID;
@@ -840,9 +840,9 @@ namespace DatasetInfoPlugin
                     htmlWriter.WriteLine("      <td align=\"center\">DMS <a href=\"http://dms2.pnl.gov/dataset/show/" + mDataset + "\">Dataset Detail Report</a></td>");
                     htmlWriter.WriteLine("      <td align=\"center\"><a href=\"" + combinedDatasetInfoFilename + "\">Dataset Info XML file</a></td>");
                     htmlWriter.WriteLine("    </tr>");
-                    htmlWriter.WriteLine("");
+                    htmlWriter.WriteLine();
                     htmlWriter.WriteLine("  </table>");
-                    htmlWriter.WriteLine("");
+                    htmlWriter.WriteLine();
                     htmlWriter.WriteLine("</body>");
                     htmlWriter.WriteLine("</html>");
                     htmlWriter.WriteLine();
@@ -918,7 +918,7 @@ namespace DatasetInfoPlugin
                 // If it does, instruct the MSFileInfoScanner to validate that all of the MS/MS spectra
                 // have a scan range that starts below the minimum reporter ion m/z
 
-                var reporterIonMzMinText = mTaskParams.GetParam("Meta_Experiment_labelling_reporter_mz_min", "");
+                var reporterIonMzMinText = mTaskParams.GetParam("Meta_Experiment_labelling_reporter_mz_min", string.Empty);
                 if (!string.IsNullOrEmpty(reporterIonMzMinText))
                 {
                     if (float.TryParse(reporterIonMzMinText, out var reporterIonMzMin))
@@ -1461,23 +1461,23 @@ namespace DatasetInfoPlugin
 
             // Lookup the version of the dataset info plugin
             var pluginPath = Path.Combine(appDirectory, "DatasetInfoPlugin.dll");
-            var bSuccess = StoreToolVersionInfoOneFile(ref toolVersionInfo, pluginPath);
-            if (!bSuccess)
+            var success = StoreToolVersionInfoOneFile(ref toolVersionInfo, pluginPath);
+            if (!success)
                 return false;
 
             // Lookup the version of the MSFileInfoScanner DLL
             var msFileInfoScannerDLLPath = GetMSFileInfoScannerDLLPath();
             if (!string.IsNullOrEmpty(msFileInfoScannerDLLPath))
             {
-                bSuccess = StoreToolVersionInfoOneFile(ref toolVersionInfo, msFileInfoScannerDLLPath);
-                if (!bSuccess)
+                success = StoreToolVersionInfoOneFile(ref toolVersionInfo, msFileInfoScannerDLLPath);
+                if (!success)
                     return false;
             }
 
             // Lookup the version of the UIMFLibrary DLL
             var uimfLibraryPath = Path.Combine(appDirectory, "UIMFLibrary.dll");
-            bSuccess = StoreToolVersionInfoOneFile(ref toolVersionInfo, uimfLibraryPath);
-            if (!bSuccess)
+            success = StoreToolVersionInfoOneFile(ref toolVersionInfo, uimfLibraryPath);
+            if (!success)
                 return false;
 
             // Store path to CaptureToolPlugin.dll and MSFileInfoScanner.dll in toolFiles

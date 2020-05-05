@@ -188,7 +188,7 @@ namespace CaptureTaskManager
         {
             if (value == null)
             {
-                value = "";
+                value = string.Empty;
             }
             mJobParams[keyName] = value;
         }
@@ -323,7 +323,7 @@ namespace CaptureTaskManager
         /// <param name="taskResult">Enum representing task state</param>
         public override void CloseTask(EnumCloseOutType taskResult)
         {
-            CloseTask(taskResult, "", EnumEvalCode.EVAL_CODE_SUCCESS, "");
+            CloseTask(taskResult, string.Empty, EnumEvalCode.EVAL_CODE_SUCCESS, string.Empty);
         }
 
         /// <summary>
@@ -333,7 +333,7 @@ namespace CaptureTaskManager
         /// <param name="closeoutMsg">Message related to task closeout</param>
         public override void CloseTask(EnumCloseOutType taskResult, string closeoutMsg)
         {
-            CloseTask(taskResult, closeoutMsg, EnumEvalCode.EVAL_CODE_SUCCESS, "");
+            CloseTask(taskResult, closeoutMsg, EnumEvalCode.EVAL_CODE_SUCCESS, string.Empty);
         }
 
         /// <summary>
@@ -344,7 +344,7 @@ namespace CaptureTaskManager
         /// <param name="evalCode">Enum representing evaluation results</param>
         public override void CloseTask(EnumCloseOutType taskResult, string closeoutMsg, EnumEvalCode evalCode)
         {
-            CloseTask(taskResult, closeoutMsg, evalCode, "");
+            CloseTask(taskResult, closeoutMsg, evalCode, string.Empty);
         }
 
         /// <summary>

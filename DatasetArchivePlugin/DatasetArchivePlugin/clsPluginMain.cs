@@ -224,7 +224,7 @@ namespace DatasetArchivePlugin
 
             LogDebug("Determining tool version info");
 
-            var strToolVersionInfo = string.Empty;
+            var toolVersionInfo = string.Empty;
             var appDirectory = clsUtilities.GetAppDirectoryPath();
 
             if (string.IsNullOrWhiteSpace(appDirectory))
@@ -234,20 +234,20 @@ namespace DatasetArchivePlugin
             }
 
             // Lookup the version of the Dataset Archive plugin
-            var strPluginPath = Path.Combine(appDirectory, "DatasetArchivePlugin.dll");
-            var bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strPluginPath);
-            if (!bSuccess)
+            var pluginPath = Path.Combine(appDirectory, "DatasetArchivePlugin.dll");
+            var success = StoreToolVersionInfoOneFile(ref toolVersionInfo, pluginPath);
+            if (!success)
                 return false;
 
             // Store path to DatasetArchivePlugin.dll in toolFiles
             var toolFiles = new List<FileInfo>
             {
-                new FileInfo(strPluginPath)
+                new FileInfo(pluginPath)
             };
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, false);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, false);
             }
             catch (Exception ex)
             {

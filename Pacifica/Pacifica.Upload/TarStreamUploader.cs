@@ -227,7 +227,7 @@ namespace Pacifica.Upload
                     }
                 }
 
-                var pathInArchive = "";
+                var pathInArchive = string.Empty;
                 if (!string.IsNullOrWhiteSpace(fileToArchive.Value.RelativeDestinationDirectory))
                     pathInArchive += fileToArchive.Value.RelativeDestinationDirectory.TrimEnd('/') + '/';
 

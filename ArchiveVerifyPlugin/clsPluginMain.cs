@@ -200,7 +200,7 @@ namespace ArchiveVerifyPlugin
             try
             {
 
-                mRetData.CloseoutMsg = "";
+                mRetData.CloseoutMsg = string.Empty;
 
                 var ingestSuccess = GetMyEMSLIngestStatus(
                     mJob, statusChecker, statusURI,
@@ -1049,7 +1049,7 @@ namespace ArchiveVerifyPlugin
                 string targetFilePath;
                 if (useTempFile)
                 {
-                    // Create a new Hash results file that we'll use to replace strHashResultsFileMaster
+                    // Create a new Hash results file that we'll use to replace hashResultsFilePath
                     targetFilePath = hashResultsFilePath + ".new";
                 }
                 else

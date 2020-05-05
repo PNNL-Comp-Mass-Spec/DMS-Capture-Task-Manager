@@ -237,9 +237,9 @@ namespace DatasetQualityPlugin
                 return false;
             }
 
-            var bSuccess = ProcessThermoRawFile(dataFilePathRemote, instrumentClass, fiQuameter, ignoreQuameterFailure, instrumentName);
+            var success = ProcessThermoRawFile(dataFilePathRemote, instrumentClass, fiQuameter, ignoreQuameterFailure, instrumentName);
 
-            if (bSuccess)
+            if (success)
             {
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
             }
@@ -248,14 +248,14 @@ namespace DatasetQualityPlugin
                 // Quameter failed
                 // Copy the Quameter log file to the Dataset QC folder
                 // We only save the log file if an error occurs since it typically doesn't contain any useful information
-                bSuccess = CopyFilesToDatasetFolder(datasetFolder);
+                success = CopyFilesToDatasetFolder(datasetFolder);
 
                 if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
                     mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 
             }
 
-            return bSuccess;
+            return success;
 
         }
 
@@ -789,7 +789,7 @@ namespace DatasetQualityPlugin
                             {
                                 if (dataLine.IndexOf("-1.#IND", StringComparison.Ordinal) > 0)
                                 {
-                                    dataLine = dataLine.Replace("-1.#IND", "");
+                                    dataLine = dataLine.Replace("-1.#IND", string.Empty);
                                     replaceOriginal = true;
                                 }
                                 correctedFileWriter.WriteLine(dataLine);
@@ -1320,7 +1320,7 @@ namespace DatasetQualityPlugin
 
             LogDebug("Determining tool version info");
 
-            var strToolVersionInfo = string.Empty;
+            var toolVersionInfo = string.Empty;
             var appDirectory = clsUtilities.GetAppDirectoryPath();
 
             if (string.IsNullOrWhiteSpace(appDirectory))
@@ -1330,15 +1330,15 @@ namespace DatasetQualityPlugin
             }
 
             // Lookup the version of the dataset quality plugin
-            var sPluginPath = Path.Combine(appDirectory, "DatasetQualityPlugin.dll");
-            var bSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, sPluginPath);
-            if (!bSuccess)
+            var pluginPath = Path.Combine(appDirectory, "DatasetQualityPlugin.dll");
+            var success = StoreToolVersionInfoOneFile(ref toolVersionInfo, pluginPath);
+            if (!success)
                 return false;
 
             // Store path to CaptureToolPlugin.dll in toolFiles
             var toolFiles = new List<FileInfo>
             {
-                new FileInfo(sPluginPath)
+                new FileInfo(pluginPath)
             };
 
             if (storeQuameterVersion)
@@ -1349,7 +1349,7 @@ namespace DatasetQualityPlugin
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, false);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, false);
             }
             catch (Exception ex)
             {

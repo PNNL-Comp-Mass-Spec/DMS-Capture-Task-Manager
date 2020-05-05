@@ -691,7 +691,7 @@ namespace DatasetArchivePlugin
                 else
                 {
                     verb = "processing";
-                    filename = "";
+                    filename = string.Empty;
                 }
 
                 // Example log message:
