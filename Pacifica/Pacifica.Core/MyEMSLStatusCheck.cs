@@ -269,7 +269,7 @@ namespace Pacifica.Core
                                 else
                                 {
                                     // Add the regex to remove unnecessary text that makes some downstream evaluation harder (like checks in stored procedures)
-                                    var regex = new Regex(@"Traceback\(most recent call last\):\s+File", RegexOptions.IgnoreCase);
+                                    var regex = new Regex(@"Traceback \(most recent call last\):\s+File", RegexOptions.IgnoreCase);
                                     var exceptionClean = regex.Replace(exception, "in file");
                                     errorMessage += "; exception " + exceptionClean.Substring(0, 75) + " ...";
                                 }
