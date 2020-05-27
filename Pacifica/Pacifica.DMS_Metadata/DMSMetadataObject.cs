@@ -608,6 +608,17 @@ namespace Pacifica.DMS_Metadata
             // A given remote file could have multiple hash values if multiple versions of the file have been uploaded
             var remoteFiles = GetDatasetFilesInMyEMSL(datasetID);
 
+            if (remoteFiles == null)
+            {
+                criticalErrorMessage = string.Format(
+                    "Aborting upload since GetDatasetFilesInMyEMSL returned null, implying {0} did not return a valid response",
+                    mPacificaConfig.MetadataServerUri);
+
+                OnWarningEvent(criticalErrorMessage);
+                criticalError = true;
+                return new List<FileInfoObject>();
+            }
+
             // Make sure that the number of files reported by MyEMSL for this dataset agrees with what we expect
             var expectedRemoteFileCount = GetDatasetFileCountExpectedInMyEMSL(captureDbConnectionString, datasetID);
 
@@ -933,7 +944,10 @@ namespace Pacifica.DMS_Metadata
         /// </summary>
         /// <param name="datasetID">Dataset ID</param>
         /// <param name="subDirFilter">Optional subdirectory (subfolder) to filter on</param>
-        /// <returns>Dictionary of files in MyEMSL; keys are relative file paths (Unix style paths) and values are file details</returns>
+        /// <returns>
+        /// Dictionary of files in MyEMSL; keys are relative file paths (Unix style paths) and values are file details
+        /// Returns null if MyEMSL does not return a valid response
+        /// </returns>
         public Dictionary<string, List<MyEMSLFileInfo>> GetDatasetFilesInMyEMSL(int datasetID, string subDirFilter = "")
         {
             const int DUPLICATE_HASH_MESSAGES_TO_LOG = 5;
@@ -964,13 +978,13 @@ namespace Pacifica.DMS_Metadata
             if (string.IsNullOrEmpty(fileInfoListJSON))
             {
                 OnErrorEvent("Empty MyEMSL response in GetDatasetFilesInMyEMSL");
-                return new Dictionary<string, List<MyEMSLFileInfo>>();
+                return null;
             }
 
             if (EasyHttp.IsResponseError(fileInfoListJSON))
             {
                 OnErrorEvent("Error response in GetDatasetFilesInMyEMSL: " + fileInfoListJSON);
-                return new Dictionary<string, List<MyEMSLFileInfo>>();
+                return null;
             }
 
             if (TraceMode)
@@ -979,8 +993,21 @@ namespace Pacifica.DMS_Metadata
                 OnDebugEvent("Response received, convert to a dictionary: " + fileInfoListJSON.Substring(0, previewLength));
             }
 
+            if (fileInfoListJSON.StartsWith("(no response,"))
+            {
+                OnDebugEvent(string.Format(
+                    "JsonConvert.Import did not return a valid response for {0}", metadataURL));
+                return null;
+            }
+
             // Convert the response to a dictionary
-            var jsa = (Jayrock.Json.JsonArray)JsonConvert.Import(fileInfoListJSON);
+            if (!(JsonConvert.Import(fileInfoListJSON) is Jayrock.Json.JsonArray jsa))
+            {
+                OnWarningEvent(string.Format(
+                    "JsonConvert.Import did not return a JsonArray object; data returned from {0} is likely not JSON", metadataURL));
+                return null;
+            }
+
             var remoteFileInfoList = Utilities.JsonArrayToDictionaryList(jsa);
 
             // Keys in this dictionary are relative file paths (Unix style paths); values are file info details
