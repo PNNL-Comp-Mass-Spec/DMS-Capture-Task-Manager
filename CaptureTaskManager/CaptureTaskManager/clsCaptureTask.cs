@@ -206,15 +206,18 @@ namespace CaptureTaskManager
                 case EnumRequestTaskResult.TaskFound:
                     mTaskWasAssigned = true;
                     break;
+
                 case EnumRequestTaskResult.NoTaskFound:
                     mTaskWasAssigned = false;
                     break;
+
                 case EnumRequestTaskResult.TooManyRetries:
                 case EnumRequestTaskResult.Deadlock:
                     // Make sure the database didn't actually assign a job to this manager
                     ReportManagerIdle();
                     mTaskWasAssigned = false;
                     break;
+
                 default:
                     mTaskWasAssigned = false;
                     break;
