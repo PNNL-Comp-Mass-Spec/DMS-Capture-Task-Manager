@@ -230,7 +230,7 @@ namespace CaptureTaskManager
         private EnumRequestTaskResult RequestTaskDetailed()
         {
             EnumRequestTaskResult outcome;
-            var appVersion = Assembly.GetEntryAssembly().GetName().Version.ToString();
+            var appVersion = Assembly.GetEntryAssembly()?.GetName().Version.ToString();
 
             try
             {
@@ -241,7 +241,7 @@ namespace CaptureTaskManager
                 dbTools.AddParameter(cmd, "@jobNumber", SqlType.Int, ParameterDirection.Output);
                 var messageParam = dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.Output);
                 dbTools.AddTypedParameter(cmd, "@infoOnly", SqlType.TinyInt, value: 0);
-                dbTools.AddParameter(cmd, "@ManagerVersion", SqlType.VarChar, 128, appVersion);
+                dbTools.AddParameter(cmd, "@ManagerVersion", SqlType.VarChar, 128, appVersion ?? "(unknown version)");
                 dbTools.AddTypedParameter(cmd, "@JobCountToPreview", SqlType.Int, value: 10);
                 var returnParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.Output);
 
