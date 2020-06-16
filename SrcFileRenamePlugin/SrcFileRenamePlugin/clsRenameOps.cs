@@ -22,7 +22,6 @@ namespace SrcFileRenamePlugin
 
         #region "Class variables"
 
-        private readonly IMgrParams mMgrParams;
         private string mMsg = string.Empty;
         private readonly bool mUseBioNet;
         private readonly string mUserName = string.Empty;
@@ -41,14 +40,12 @@ namespace SrcFileRenamePlugin
         /// <param name="useBioNet">Flag to indicate if source instrument is on Bionet</param>
         public clsRenameOps(IMgrParams mgrParams, bool useBioNet)
         {
-            mMgrParams = mgrParams;
-
             // Setup for BioNet use, if applicable
             mUseBioNet = useBioNet;
             if (mUseBioNet)
             {
-                mUserName = mMgrParams.GetParam("BionetUser");
-                mPwd = mMgrParams.GetParam("BionetPwd");
+                mUserName = mgrParams.GetParam("BionetUser");
+                mPwd = mgrParams.GetParam("BionetPwd");
 
                 if (!mUserName.Contains(@"\"))
                 {
