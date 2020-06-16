@@ -381,33 +381,47 @@ namespace CaptureToolPlugin
                     switch (fileOrDirectoryToRename.Key)
                     {
                         case FileInfo fileToRename:
+                            var newFilePath = fileOrDirectoryToRename.Value;
+                            if (string.IsNullOrWhiteSpace(newFilePath))
                             {
-                                var newFilePath = fileOrDirectoryToRename.Value;
-                                if (File.Exists(newFilePath))
-                                {
-                                    // Target exists; delete it
-                                    LogMessage(string.Format("Addition of x_ to {0} will replace an existing file; deleting {1}",
-                                                             fileToRename.FullName, Path.GetFileName(newFilePath)));
-                                    File.Delete(newFilePath);
-                                }
-                                fileToRename.MoveTo(newFilePath);
-                                filesRenamed++;
-                                break;
+                                LogWarning(string.Format(
+                                    "New name not defined in pendingRenames for {0}; cannot mark file as superseded",
+                                    fileToRename.FullName));
+                                continue;
                             }
+
+                            if (File.Exists(newFilePath))
+                            {
+                                // Target exists; delete it
+                                LogMessage(string.Format("Addition of x_ to {0} will replace an existing file; deleting {1}",
+                                                         fileToRename.FullName, Path.GetFileName(newFilePath)));
+                                File.Delete(newFilePath);
+                            }
+                            fileToRename.MoveTo(newFilePath);
+                            filesRenamed++;
+                            continue;
+
                         case DirectoryInfo directoryToRename:
+                            var newDirectoryPath = fileOrDirectoryToRename.Value;
+                            if (string.IsNullOrWhiteSpace(newDirectoryPath))
                             {
-                                var newDirectoryPath = fileOrDirectoryToRename.Value;
-                                if (Directory.Exists(newDirectoryPath))
-                                {
-                                    // Target exists; delete it
-                                    LogMessage(string.Format("Addition of x_ to {0} will replace an existing subdirectory; deleting {1}",
-                                                             directoryToRename.FullName, Path.GetFileName(newDirectoryPath)));
-                                    Directory.Delete(newDirectoryPath, true);
-                                }
-                                directoryToRename.MoveTo(newDirectoryPath);
-                                directoriesRenamed++;
-                                break;
+                                LogWarning(string.Format(
+                                    "New name not defined in pendingRenames for {0}; cannot mark directory as superseded",
+                                    directoryToRename.FullName));
+                                continue;
                             }
+
+                            if (Directory.Exists(newDirectoryPath))
+                            {
+                                // Target exists; delete it
+                                LogMessage(string.Format(
+                                    "Addition of x_ to {0} will replace an existing subdirectory; deleting {1}",
+                                    directoryToRename.FullName, Path.GetFileName(newDirectoryPath)));
+                                Directory.Delete(newDirectoryPath, true);
+                            }
+                            directoryToRename.MoveTo(newDirectoryPath);
+                            directoriesRenamed++;
+                            continue;
                     }
                 }
 
