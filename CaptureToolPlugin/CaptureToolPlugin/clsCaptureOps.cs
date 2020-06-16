@@ -537,10 +537,12 @@ namespace CaptureToolPlugin
                     // Directory is empty; all is good
                     switchResult = true;
                     break;
+
                 case DatasetDirectoryState.Error:
                     // There was an error attempting to determine the dataset directory contents
                     // (Error reporting was handled by call to IsDatasetDirectoryEmpty above)
                     break;
+
                 case DatasetDirectoryState.NotEmpty:
                     var directoryExistsAction = mMgrParams.GetParam("DSFolderExistsAction");
 
@@ -607,6 +609,7 @@ namespace CaptureToolPlugin
                                 switchResult = false;
                             }
                             break;
+
                         case "rename":
                             // Attempt to rename dataset directory
                             // (If the rename fails, it should have been logged via a previous call to RenameDatasetDirectory)
@@ -615,6 +618,7 @@ namespace CaptureToolPlugin
                                 switchResult = true;
                             }
                             break;
+
                         case "fail":
                             // Fail the capture task
                             retData.CloseoutMsg = "Dataset directory already exists";
@@ -622,6 +626,7 @@ namespace CaptureToolPlugin
 
                             LogError(directoryExists, true);
                             break;
+
                         default:
                             // An invalid value for directoryExistsAction was specified
 
@@ -630,8 +635,10 @@ namespace CaptureToolPlugin
 
                             LogError(invalidAction, true);
                             break;
+
                     }   // directoryExistsAction selection
                     break;
+
                 default:
                     throw new Exception("Unrecognized enum value in PerformDSExistsActions: " + directoryState);
             }

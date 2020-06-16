@@ -110,7 +110,7 @@ namespace DatasetArchivePlugin
 
             // DebugLevel of 4 means Info level (normal) logging; 5 for Debug level (verbose) logging
             mDebugLevel = mMgrParams.GetParam("DebugLevel", 4);
-            
+
             TraceMode = mMgrParams.GetParam("TraceMode", false);
 
             if (mTaskParams.GetParam("StepTool") == "DatasetArchive")
@@ -583,6 +583,7 @@ namespace DatasetArchivePlugin
 
             if (myEMSLUploader == null)
             {
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                 if (errorCode == 0)
                     return;
 
@@ -600,6 +601,7 @@ namespace DatasetArchivePlugin
             }
 
             // Exit this method (skipping the call to OnMyEMSLUploadComplete) if the error code is 0 and no files were added or updated
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (errorCode == 0 && myEMSLUploader.FileCountNew == 0 && myEMSLUploader.FileCountUpdated == 0)
                 return;
 
