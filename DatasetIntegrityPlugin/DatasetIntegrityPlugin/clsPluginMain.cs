@@ -2349,7 +2349,7 @@ namespace DatasetIntegrityPlugin
 
                 if (largestIndFileKB < WATERS_FUNC_IND_FILE_MIN_SIZE_KB)
                 {
-                    ReportFileSizeTooSmall(indFiles.First().Name, indFiles.First().FullName, largestDatFileKB, WATERS_FUNC_IND_FILE_MIN_SIZE_KB);
+                    ReportFileSizeTooSmall(indFiles.First().Name, indFiles.First().FullName, largestIndFileKB, WATERS_FUNC_IND_FILE_MIN_SIZE_KB);
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
             }
