@@ -50,7 +50,7 @@ namespace DatasetIntegrityPlugin
         private const float AGILENT_DATA_MS_FILE_MIN_SIZE_KB = 75;
         private const float SHIMADZU_QGD_FILE_MIN_SIZE_KB = 50;
         private const float WATERS_FUNC_DAT_FILE_MIN_SIZE_KB = 10;
-        private const float WATERS_FUNC_IND_FILE_MIN_SIZE_KB = 25;
+        private const float WATERS_FUNC_IND_FILE_MIN_SIZE_KB = 15;
 
         // MALDI imaging file
         // Prior to May 2014, used a minimum of 4 KB
@@ -2317,7 +2317,6 @@ namespace DatasetIntegrityPlugin
 
             // Verify that at least one _FUNC000.DAT or _FUNC001.DAT file exists
             var datFiles = dotRawDirectories[0].GetFiles("_FUNC*.DAT").ToList();
-            var indFiles = dotRawDirectories[0].GetFiles("_FUNC*.ind").ToList();
 
             var fileExists = datFiles.Count > 0;
 
@@ -2336,6 +2335,9 @@ namespace DatasetIntegrityPlugin
                 ReportFileSizeTooSmall(datFiles.First().Name, datFiles.First().FullName, largestDatFileKB, WATERS_FUNC_DAT_FILE_MIN_SIZE_KB);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
+
+            // Look for the _func001.ind file (or similar)
+            var indFiles = dotRawDirectories[0].GetFiles("_FUNC*.ind").ToList();
 
             if (indFiles.Count == 0)
             {
