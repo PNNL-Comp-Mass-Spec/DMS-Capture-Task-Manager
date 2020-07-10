@@ -199,7 +199,7 @@ namespace Pacifica.Core
         {
             const string CERTIFICATE_FILE_MASK = "*.pfx";
 
-            var certificateFileMatcher = new Regex(@"svc-dms-cert_(?<Year>\d+).pfx", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+            var certificateFileMatcher = new Regex(@"svc-dms-cert_(?<Year>\d+).pfx", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             try
             {
