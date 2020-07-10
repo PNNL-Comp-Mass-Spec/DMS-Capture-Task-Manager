@@ -10,6 +10,8 @@ using System.Net.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Pacifica.Core
 {
@@ -432,8 +434,14 @@ namespace Pacifica.Core
         /// <param name="cert"></param>
         /// <param name="chain"></param>
         /// <param name="policyErrors"></param>
+        /// <param name="errorMessage"></param>
         /// <returns>True if the server is trusted</returns>
-        public static bool ValidateRemoteCertificate(object sender, X509Certificate cert, X509Chain chain, SslPolicyErrors policyErrors)
+        public static bool ValidateRemoteCertificate(
+            object sender,
+            X509Certificate cert,
+            X509Chain chain,
+            SslPolicyErrors policyErrors,
+            out string errorMessage)
         {
             var trustedDomains = new List<string>
             {
@@ -442,22 +450,44 @@ namespace Pacifica.Core
                 "pnl.gov"
             };
 
-            var reExtractCN = new System.Text.RegularExpressions.Regex("CN=([^ ,]+),");
-            var reMatch = reExtractCN.Match(cert.Subject);
+            var cnMatcher = new Regex("CN=([^ ,]+),", RegexOptions.IgnoreCase);
+            var cnMatch = cnMatcher.Match(cert.Subject);
             string domainToValidate;
 
-            if (reMatch.Success)
-                domainToValidate = reMatch.Groups[1].ToString();
+            if (cnMatch.Success)
+            {
+                domainToValidate = cnMatch.Groups[1].ToString();
+            }
             else
+            {
+                ConsoleMsgUtils.ShowWarning("Subject line of the certificate did not contain 'CN=domain'; this is unexpected");
+                ConsoleMsgUtils.ShowWarning("Will use the full subject: " + cert.Subject);
                 domainToValidate = cert.Subject;
+            }
 
             // ConsoleMsgUtils.ShowDebug("Checking " + domainToValidate + " against trusted domains");
 
             foreach (var domainName in trustedDomains)
             {
-                if (domainToValidate.IndexOf(domainName, StringComparison.OrdinalIgnoreCase) >= 0)
-                    return true;
+                if (domainToValidate.IndexOf(domainName, StringComparison.OrdinalIgnoreCase) < 0)
+                    continue;
+
+                errorMessage = string.Empty;
+                return true;
             }
+
+            var message = new StringBuilder();
+            message.Append("The domain name associated with the certificate is not trusted: " + domainToValidate);
+            ConsoleMsgUtils.ShowWarning(message.ToString());
+
+            Console.WriteLine("Trusted domains, as defined in ValidateRemoteCertificate:");
+            foreach (var domainName in trustedDomains)
+            {
+                Console.WriteLine("  " + domainName);
+            }
+
+            message.Append("; trusted domains: " + string.Join(", ", trustedDomains));
+            errorMessage = message.ToString();
 
             return false;
         }

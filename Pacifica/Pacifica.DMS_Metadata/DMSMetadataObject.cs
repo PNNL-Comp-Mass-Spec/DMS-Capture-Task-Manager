@@ -7,6 +7,8 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
 using PRISMDatabaseUtils;
 using Uploader = Pacifica.Upload;
 using Utilities = Pacifica.Core.Utilities;
@@ -201,7 +203,7 @@ namespace Pacifica.DMS_Metadata
 
             // Instead, only allow certain domains, as defined by ValidateRemoteCertificate
             if (ServicePointManager.ServerCertificateValidationCallback == null)
-                ServicePointManager.ServerCertificateValidationCallback += Utilities.ValidateRemoteCertificate;
+                ServicePointManager.ServerCertificateValidationCallback += ValidateRemoteCertificate;
 
             DatasetName = Utilities.GetDictionaryValue(taskParams, "Dataset", "Unknown_Dataset");
 
@@ -1146,6 +1148,16 @@ namespace Pacifica.DMS_Metadata
             var certificateFilePath = EasyHttp.ResolveCertFile(mPacificaConfig, callingMethod, out var errorMessage);
 
             if (!string.IsNullOrWhiteSpace(certificateFilePath))
+                return true;
+
+            OnErrorEvent(errorMessage);
+            return false;
+        }
+
+        private bool ValidateRemoteCertificate(object sender, X509Certificate cert, X509Chain chain, SslPolicyErrors policyErrors)
+        {
+            var success = Utilities.ValidateRemoteCertificate(sender, cert, chain, policyErrors, out var errorMessage);
+            if (success)
                 return true;
 
             OnErrorEvent(errorMessage);

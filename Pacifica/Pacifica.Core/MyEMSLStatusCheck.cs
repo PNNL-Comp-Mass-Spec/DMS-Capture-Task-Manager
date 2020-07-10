@@ -3,6 +3,8 @@ using PRISM;
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
 
 namespace Pacifica.Core
@@ -167,7 +169,7 @@ namespace Pacifica.Core
             // The following Callback allows us to access the MyEMSL server even if the certificate is expired or untrusted
             // For more info, see comments in Upload.StartUpload()
             if (ServicePointManager.ServerCertificateValidationCallback == null)
-                ServicePointManager.ServerCertificateValidationCallback += Utilities.ValidateRemoteCertificate;
+                ServicePointManager.ServerCertificateValidationCallback += ValidateRemoteCertificate;
 
             OnStatusEvent("Contacting " + statusURI);
             var startTime = DateTime.UtcNow;
@@ -375,6 +377,16 @@ namespace Pacifica.Core
             var certificateFilePath = EasyHttp.ResolveCertFile(mPacificaConfig, callingMethod, out errorMessage);
 
             if (!string.IsNullOrWhiteSpace(certificateFilePath))
+                return true;
+
+            OnErrorEvent(errorMessage);
+            return false;
+        }
+
+        private bool ValidateRemoteCertificate(object sender, X509Certificate cert, X509Chain chain, SslPolicyErrors policyErrors)
+        {
+            var success = Utilities.ValidateRemoteCertificate(sender, cert, chain, policyErrors, out var errorMessage);
+            if (success)
                 return true;
 
             OnErrorEvent(errorMessage);
