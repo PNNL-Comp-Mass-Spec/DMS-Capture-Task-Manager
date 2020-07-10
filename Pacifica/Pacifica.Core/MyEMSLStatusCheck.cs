@@ -312,7 +312,7 @@ namespace Pacifica.Core
             // Check for a match to a URI of the form
             // https://ingestdms.my.emsl.pnl.gov/get_state?job_id=1302995
 
-            var statusNumMatcher = new Regex(@"job_id=(\d+)");
+            var statusNumMatcher = new Regex(@"job_id=(\d+)", RegexOptions.IgnoreCase);
 
             var match = statusNumMatcher.Match(statusURI);
             if (match.Success)

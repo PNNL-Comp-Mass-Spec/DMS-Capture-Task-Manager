@@ -9,6 +9,7 @@ using CaptureTaskManager;
 using System;
 using System.Data.SQLite;
 using System.IO;
+using System.Text.RegularExpressions;
 using UIMFLibrary;
 
 namespace ImsDemuxPlugin
@@ -416,12 +417,12 @@ namespace ImsDemuxPlugin
                             if (message.StartsWith("New calibration coefficients"))
                             {
                                 // Extract out the coefficients
-                                var reCoefficients = new System.Text.RegularExpressions.Regex("slope = ([0-9.+-]+), intercept = ([0-9.+-]+)");
-                                var reMatch = reCoefficients.Match(message);
-                                if (reMatch.Success)
+                                var coefficientsMatcher = new Regex("slope = ([0-9.+-]+), intercept = ([0-9.+-]+)", RegexOptions.IgnoreCase);
+                                var match = coefficientsMatcher.Match(message);
+                                if (match.Success)
                                 {
-                                    double.TryParse(reMatch.Groups[1].Value, out calibrationSlope);
-                                    double.TryParse(reMatch.Groups[2].Value, out calibrationIntercept);
+                                    double.TryParse(match.Groups[1].Value, out calibrationSlope);
+                                    double.TryParse(match.Groups[2].Value, out calibrationIntercept);
                                 }
                             }
                             else if (message.StartsWith("Manually applied calibration coefficients"))

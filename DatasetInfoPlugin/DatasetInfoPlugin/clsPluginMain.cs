@@ -698,7 +698,7 @@ namespace DatasetInfoPlugin
 
             try
             {
-                var pngMatcher = new Regex(@"""(?<Filename>[^""]+\.png)""");
+                var pngMatcher = new Regex(@"""(?<Filename>[^""]+\.png)""", RegexOptions.IgnoreCase);
 
                 // Create an index.html file that shows all of the plots in the subdirectories
                 var indexHtmlFilePath = Path.Combine(outputPathBase, "index.html");
