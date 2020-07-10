@@ -1626,11 +1626,12 @@ namespace DatasetInfoPlugin
                 // to:   QC_Shew_pep_Online_Dig_v12_c0pt5_05_10-08-13.raw
 
                 // Match text of the form         \\server\share\directory<anything>DatasetName.Extension
-                var reDatasetFile = new Regex(@"\\\\[^\\]+\\[^\\]+\\[^\\]+.+(" + mDataset + @"\.[a-z0-9]+)");
+                // or                             C:\directory<anything>DatasetName.Extension
+                var filenameMatcher = new Regex(@"([a-z]:|\\\\[^\\]+\\[^\\]+)\\[^\\]+.+(" + mDataset + @"\.[a-z0-9]+)", RegexOptions.IgnoreCase);
 
-                if (reDatasetFile.IsMatch(message))
+                if (filenameMatcher.IsMatch(message))
                 {
-                    mMsg = "Error running MSFileInfoScanner: " + reDatasetFile.Replace(message, "$1");
+                    mMsg = "Error running MSFileInfoScanner: " + filenameMatcher.Replace(message, "$2");
                 }
                 else
                 {
