@@ -61,7 +61,7 @@ namespace ImsDemuxPlugin
                 return UimfQueryResults.Error;
             }
 
-            var reBitValue = new Regex(@"^(\d)bit", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var bitValueMatcher = new Regex(@"^(\d)bit", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             var imfProfileFieldAlwaysBlank = true;
 
             // Evaluate results. If any of the frames has a filename containing "bit", de-multiplexing is required
@@ -79,14 +79,14 @@ namespace ImsDemuxPlugin
                 // Get the file name, and check to see if it starts with 3bit (or 4bit or 5bit etc.)
                 var multiplexFilename = Path.GetFileName(encodingSequence).ToLower();
 
-                var reMatch = reBitValue.Match(multiplexFilename);
-                if (!reMatch.Success)
+                var filenameMatch = bitValueMatcher.Match(multiplexFilename);
+                if (!filenameMatch.Success)
                     continue;
 
                 // Multiplex Filename contains "bit", so de-multiplexing is required
                 deMuxRequired = true;
 
-                byte.TryParse(reMatch.Groups[1].Value, out numBitsForEncoding);
+                byte.TryParse(filenameMatch.Groups[1].Value, out numBitsForEncoding);
 
                 // No need to check additional rows; we assume the same multiplexing is used throughout the dataset
                 break;
@@ -99,17 +99,17 @@ namespace ImsDemuxPlugin
                 //   BSA_65min_0pt5uL_1pt5ms_4bit_0001
                 //   BSA_65min_0pt5uL_1pt5ms_4bit
 
-                reBitValue = new Regex(@"(_(\d)bit_|_(\d)bit$)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                var bitValueMatcher2 = new Regex(@"(_(\d)bit_|_(\d)bit$)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
                 var fileName = Path.GetFileNameWithoutExtension(uimfFilePath);
                 if (fileName != null)
                 {
-                    var reMatch = reBitValue.Match(fileName);
-                    if (reMatch.Success)
+                    var filenameMatch = bitValueMatcher2.Match(fileName);
+                    if (filenameMatch.Success)
                     {
                         // Filename contains "bit", so de-multiplexing is required
                         deMuxRequired = true;
-                        byte.TryParse(reMatch.Groups[2].Value, out numBitsForEncoding);
+                        byte.TryParse(filenameMatch.Groups[2].Value, out numBitsForEncoding);
                     }
                 }
             }

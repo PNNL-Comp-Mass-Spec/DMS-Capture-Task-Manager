@@ -1147,9 +1147,9 @@ namespace ImsDemuxPlugin
 
             // ReSharper restore CommentTypo
 
-            var rePercentComplete = new Regex(@"Processing: (\d+)%", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-            var reTotalFrames = new Regex(@"frames to demultiplex: (\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-            var reCurrentFrame = new Regex(@"Demultiplexing frame (\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var percentCompleteMatcher = new Regex(@"Processing: (\d+)%", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var totalFramesMatcher = new Regex(@"frames to demultiplex: (\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var currentFrameMatcher = new Regex(@"Demultiplexing frame (\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             var totalFrameCount = 0;
             var framesProcessed = 0;
@@ -1196,30 +1196,30 @@ namespace ImsDemuxPlugin
                             // Compare the line against the various Regex specs
 
                             // % complete (integer values only)
-                            var oMatch = rePercentComplete.Match(dataLine);
+                            var percentCompleteMatch = percentCompleteMatcher.Match(dataLine);
 
-                            if (oMatch.Success)
+                            if (percentCompleteMatch.Success)
                             {
-                                if (short.TryParse(oMatch.Groups[1].Value, out var percentComplete))
+                                if (short.TryParse(percentCompleteMatch.Groups[1].Value, out var percentComplete))
                                 {
                                     mDemuxProgressPercentComplete = percentComplete;
                                 }
                             }
 
                             // Total frames
-                            oMatch = reTotalFrames.Match(dataLine);
+                            var totalFramesMatch = totalFramesMatcher.Match(dataLine);
 
-                            if (oMatch.Success)
+                            if (totalFramesMatch.Success)
                             {
-                                int.TryParse(oMatch.Groups[1].Value, out totalFrameCount);
+                                int.TryParse(totalFramesMatch.Groups[1].Value, out totalFrameCount);
                             }
 
                             // Current frame processed
-                            oMatch = reCurrentFrame.Match(dataLine);
+                            var currentFrameMatch = currentFrameMatcher.Match(dataLine);
 
-                            if (oMatch.Success)
+                            if (currentFrameMatch.Success)
                             {
-                                int.TryParse(oMatch.Groups[1].Value, out framesProcessed);
+                                int.TryParse(currentFrameMatch.Groups[1].Value, out framesProcessed);
                             }
                         }
 

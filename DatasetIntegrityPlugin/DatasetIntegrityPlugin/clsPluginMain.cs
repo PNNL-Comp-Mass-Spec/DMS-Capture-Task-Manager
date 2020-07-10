@@ -939,7 +939,7 @@ namespace DatasetIntegrityPlugin
             var exceptionText = string.Empty;
             float percentComplete = 0;
 
-            var reProgressMatcher = new Regex(@"Converting frame (?<FramesProcessed>\d+) / (?<TotalFrames>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var progressMatcher = new Regex(@"Converting frame (?<FramesProcessed>\d+) / (?<TotalFrames>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             try
             {
@@ -960,7 +960,7 @@ namespace DatasetIntegrityPlugin
                             continue;
                         }
 
-                        var match = reProgressMatcher.Match(dataLine);
+                        var match = progressMatcher.Match(dataLine);
                         if (match.Success)
                         {
                             var framesProcessed = int.Parse(match.Groups["FramesProcessed"].Value);

@@ -1781,7 +1781,7 @@ namespace CaptureToolPlugin
 
                 // This regex is used to match files with names like:
                 // Cheetah_01.04.2012_08.46.17_Dataset_P28_D01_2629_192_3Jan12_Cheetah_11-09-32.lcmethod
-                var reLCMethodFile = new Regex(@".+\d+\.\d+\.\d+_\d+\.\d+\.\d+_.+\.lcmethod");
+                var methodFileMatcher = new Regex(@".+\d+\.\d+\.\d+_\d+\.\d+\.\d+_.+\.lcmethod", RegexOptions.IgnoreCase);
                 var lstMethodFiles = new List<FileInfo>();
 
                 // Define the file match spec
@@ -1803,7 +1803,7 @@ namespace CaptureToolPlugin
                                 {
                                     // First iteration
                                     // Check each file against the RegEx
-                                    if (reLCMethodFile.IsMatch(methodFile.Name))
+                                    if (methodFileMatcher.IsMatch(methodFile.Name))
                                     {
                                         // Match found
                                         lstMethodFiles.Add(methodFile);
@@ -2827,16 +2827,16 @@ namespace CaptureToolPlugin
                 //  0_N4
 
                 const string MALDI_SPOT_DIRECTORY_REGEX = @"^\d_[A-Z]\d+$";
-                var reMaldiSpotDirectory = new Regex(MALDI_SPOT_DIRECTORY_REGEX, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                var maldiSpotDirectoryMatcher = new Regex(MALDI_SPOT_DIRECTORY_REGEX, RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
                 foreach (var directory in dataDirectories)
                 {
-                    LogDebug("Test directory " + directory + " against RegEx " + reMaldiSpotDirectory);
+                    LogDebug("Test directory " + directory + " against RegEx " + maldiSpotDirectoryMatcher);
 
-                    if (!reMaldiSpotDirectory.IsMatch(directory.Name, 0))
+                    if (!maldiSpotDirectoryMatcher.IsMatch(directory.Name, 0))
                     {
                         retData.CloseoutMsg = "Dataset directory contains multiple subdirectories, but directory " + directory.Name + " does not match the expected pattern";
-                        msg = retData.CloseoutMsg + " (" + reMaldiSpotDirectory + "); see " + sourceDirectory.FullName;
+                        msg = retData.CloseoutMsg + " (" + maldiSpotDirectoryMatcher + "); see " + sourceDirectory.FullName;
                         LogError(msg);
                         retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                         return;

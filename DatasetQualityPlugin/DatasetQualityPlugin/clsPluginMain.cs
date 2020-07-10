@@ -625,9 +625,9 @@ namespace DatasetQualityPlugin
             float peaksPercentComplete = 0;
             float precursorPercentComplete = 0;
 
-            var reMetadataProgress = new Regex(@"Reading metadata: (?<ScansRead>\d+)/(?<TotalScans>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-            var rePeaksProgress = new Regex(@"Reading peaks: (?<ScansRead>\d+)/(?<TotalScans>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-            var rePrecursorProgress = new Regex(@"Finding precursor peaks: (?<ScansRead>\d+)/(?<TotalScans>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var metadataProgressMatcher = new Regex(@"Reading metadata: (?<ScansRead>\d+)/(?<TotalScans>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var peaksProgressMatcher = new Regex(@"Reading peaks: (?<ScansRead>\d+)/(?<TotalScans>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var precursorProgressMatcher = new Regex(@"Finding precursor peaks: (?<ScansRead>\d+)/(?<TotalScans>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             // ReSharper disable CommentTypo
 
@@ -677,9 +677,9 @@ namespace DatasetQualityPlugin
 
                         var trimmedLine = dataLine.Trim();
 
-                        var metadataProgressMatched = UpdateProgress(dataLine, reMetadataProgress, ref metadataPercentComplete);
-                        var peaksProgressMatched = UpdateProgress(dataLine, rePeaksProgress, ref peaksPercentComplete);
-                        var precursorProgressMatched = UpdateProgress(dataLine, rePrecursorProgress, ref precursorPercentComplete);
+                        var metadataProgressMatched = UpdateProgress(dataLine, metadataProgressMatcher, ref metadataPercentComplete);
+                        var peaksProgressMatched = UpdateProgress(dataLine, peaksProgressMatcher, ref peaksPercentComplete);
+                        var precursorProgressMatched = UpdateProgress(dataLine, precursorProgressMatcher, ref precursorPercentComplete);
 
                         if (metadataProgressMatched || peaksProgressMatched || precursorProgressMatched)
                         {

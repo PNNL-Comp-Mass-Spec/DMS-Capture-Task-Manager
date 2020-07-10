@@ -1415,9 +1415,9 @@ namespace CaptureTaskManager
                     }
                 }
 
-                var matcher = new Regex(settingName + ".+?<value>(?<ConnString>.+?)</value>", RegexOptions.IgnoreCase);
+                var connectionStringMatcher = new Regex(settingName + ".+?<value>(?<ConnString>.+?)</value>", RegexOptions.IgnoreCase);
 
-                var match = matcher.Match(configXml.ToString());
+                var match = connectionStringMatcher.Match(configXml.ToString());
 
                 if (match.Success)
                     return match.Groups["ConnString"].Value;

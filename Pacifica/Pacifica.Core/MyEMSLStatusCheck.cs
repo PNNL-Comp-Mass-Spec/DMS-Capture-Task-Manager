@@ -268,9 +268,9 @@ namespace Pacifica.Core
                                     errorMessage += "; exception " + exception;
                                 else
                                 {
-                                    // Add the regex to remove unnecessary text that makes some downstream evaluation harder (like checks in stored procedures)
-                                    var regex = new Regex(@"Traceback \(most recent call last\):\s+File", RegexOptions.IgnoreCase);
-                                    var exceptionClean = regex.Replace(exception, "in file");
+                                    // Use a regex to remove unnecessary text that makes some downstream evaluation harder (like checks in stored procedures)
+                                    var exceptionUpdater = new Regex(@"Traceback \(most recent call last\):\s+File", RegexOptions.IgnoreCase);
+                                    var exceptionClean = exceptionUpdater.Replace(exception, "in file");
                                     errorMessage += "; exception " + exceptionClean.Substring(0, 75) + " ...";
                                 }
                             }
@@ -327,8 +327,9 @@ namespace Pacifica.Core
 
             // Check for a match to a URI of the form
             // https://a4.my.emsl.pnl.gov/myemsl/cgi-bin/status/2381528/xml
-            var reLegacyStatusNum = new Regex(@"(\d+)/xml", RegexOptions.IgnoreCase);
-            var legacyMatch = reLegacyStatusNum.Match(statusURI);
+            var legacyStatusNumMatcher = new Regex(@"(\d+)/xml", RegexOptions.IgnoreCase);
+
+            var legacyMatch = legacyStatusNumMatcher.Match(statusURI);
             if (!legacyMatch.Success)
                 throw new Exception("Could not find Status ID in StatusURI: " + statusURI);
 
