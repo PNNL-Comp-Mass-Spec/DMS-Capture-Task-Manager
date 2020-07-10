@@ -445,6 +445,7 @@ namespace Pacifica.Core
         {
             var trustedDomains = new List<string>
             {
+                "my.emsl.pnnl.gov",
                 "my.emsl.pnl.gov",
                 "emsl.pnl.gov",
                 "pnl.gov"
