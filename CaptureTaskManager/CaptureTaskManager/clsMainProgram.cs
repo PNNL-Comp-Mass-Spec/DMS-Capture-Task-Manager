@@ -16,6 +16,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+using PRISMDatabaseUtils;
 
 namespace CaptureTaskManager
 {
@@ -300,6 +301,9 @@ namespace CaptureTaskManager
                         RegisterEvents(settingsClass);
                         settingsClass.CriticalErrorEvent += CriticalErrorEvent;
                     }
+
+                    Console.WriteLine();
+                    mMgrSettings.ValidatePgPass(configFileSettings);
 
                     var success = mMgrSettings.LoadSettings(configFileSettings);
                     if (!success)
