@@ -21,7 +21,7 @@ xcopy debug\Pacifica.Core.dll F:\Documents\Projects\DataMining\DMS_Managers\Anal
 xcopy debug\Pacifica.Core.dll F:\Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_LCMSFeatureFinder_Plugin\bin /D /Y
 xcopy debug\Pacifica.Core.dll F:\Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_LipidMapSearch_Plugin\bin /D /Y
 xcopy debug\Pacifica.Core.dll F:\Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_Mage_PlugIn\bin\Debug /D /Y
-xcopy debug\Pacifica.Core.dll F:\Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_Masic_Plugin\bin /D /Y
+xcopy debug\Pacifica.Core.dll F:\Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_Masic_Plugin\bin\Debug /D /Y
 xcopy debug\Pacifica.Core.dll F:\Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_MODa_PlugIn\bin\Debug /D /Y
 xcopy debug\Pacifica.Core.dll F:\Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_MSAlign_Histone_Plugin\bin\Debug /D /Y
 xcopy debug\Pacifica.Core.dll F:\Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\Plugins\AM_MSAlign_Plugin\bin /D /Y
