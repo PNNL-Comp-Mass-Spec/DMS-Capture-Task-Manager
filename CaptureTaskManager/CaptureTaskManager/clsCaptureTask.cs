@@ -258,7 +258,7 @@ namespace CaptureTaskManager
                 // Execute the SP
                 var resCode = mCaptureTaskDBProcedureExecutor.ExecuteSPData(cmd, out var results);
 
-                var returnCode = returnParam.Value.ToString();
+                var returnCode = dbTools.GetString(returnParam.Value);
                 var returnCodeValue = clsConversion.GetReturnCodeValue(returnCode);
 
                 if (returnCodeValue != 0)
@@ -388,7 +388,7 @@ namespace CaptureTaskManager
             // Execute the Stored Procedure (retry the call up to 3 times)
             var resCode = mCaptureTaskDBProcedureExecutor.ExecuteSP(cmd, 3);
 
-            var returnCode = returnParam.Value.ToString();
+            var returnCode = dbTools.GetString(returnParam.Value);
             var returnCodeValue = clsConversion.GetReturnCodeValue(returnCode);
 
             if (resCode == 0 && returnCodeValue == 0)
@@ -440,7 +440,7 @@ namespace CaptureTaskManager
                 // Execute the SP
                 var resCode = mCaptureTaskDBProcedureExecutor.ExecuteSP(cmd);
 
-                var returnCode = returnParam.Value.ToString();
+                var returnCode = dbTools.GetString(returnParam.Value);
                 var returnCodeValue = clsConversion.GetReturnCodeValue(returnCode);
 
                 if (resCode == 0 && returnCodeValue == 0)

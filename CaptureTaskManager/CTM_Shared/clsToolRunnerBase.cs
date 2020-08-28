@@ -679,7 +679,7 @@ namespace CaptureTaskManager
             // Execute the SP (retry the call up to 4 times)
             var resCode = mCaptureDbProcedureExecutor.ExecuteSP(cmd, 4);
 
-            var returnCode = returnParam.Value.ToString();
+            var returnCode = dbTools.GetString(returnParam.Value);
             var returnCodeValue = clsConversion.GetReturnCodeValue(returnCode);
 
             if (resCode == 0 && returnCodeValue == 0)
@@ -990,7 +990,7 @@ namespace CaptureTaskManager
             mCaptureDbProcedureExecutor.TimeoutSeconds = 20;
             var resCode = mCaptureDbProcedureExecutor.ExecuteSP(cmd, 2);
 
-            var returnCode = returnParam.Value.ToString();
+            var returnCode = dbTools.GetString(returnParam.Value);
             var returnCodeValue = clsConversion.GetReturnCodeValue(returnCode);
 
             if (resCode == 0 && returnCodeValue == 0)
