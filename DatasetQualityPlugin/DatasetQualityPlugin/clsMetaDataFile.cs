@@ -51,6 +51,7 @@ namespace DatasetQualityPlugin
                 // These parameters are included in the table returned by stored procedure RequestStepTask
                 // That procedure calls procedure GetJobStepParams to get the parameters
                 // Additionally, if the step tool is 'DatasetInfo' or 'DatasetQuality', GetJobStepParams calls GetMetadataForDataset
+                // which adds several items, including Meta_Dataset_Number (which is actually dataset name) and Meta_Dataset_ID
                 foreach (var taskParam in taskParams.TaskDictionary.Keys)
                 {
                     if (taskParam.StartsWith("Meta_"))
