@@ -445,45 +445,6 @@ namespace ImsDemuxPlugin
 
         }
 
-        protected bool CopyFileToStorageServer(string sourceDirPath, string fileName)
-        {
-
-            string msg;
-            var success = true;
-
-            var svrPath = Path.Combine(mTaskParams.GetParam("Storage_Vol_External"), mTaskParams.GetParam("Storage_Path"));
-            var datasetDirectory = mTaskParams.GetParam(mTaskParams.HasParam("Directory") ? "Directory" : "Folder");
-
-            var sDatasetFolderPathRemote = Path.Combine(svrPath, datasetDirectory);
-
-            // Copy file fileName from sourceDirPath to the dataset folder
-            var sSourceFilePath = Path.Combine(sourceDirPath, fileName);
-            var sTargetFilePath = Path.Combine(sDatasetFolderPathRemote, fileName);
-
-            if (!File.Exists(sSourceFilePath))
-            {
-                msg = "File not found: " + sSourceFilePath;
-                LogError(msg);
-            }
-            else
-            {
-                const int retryCount = 3;
-                const bool backupDestFileBeforeCopy = false;
-
-                ResetTimestampForQueueWaitTimeLogging();
-
-                if (!clsDemuxTools.CopyFileWithRetry(sSourceFilePath, sTargetFilePath, true, retryCount, backupDestFileBeforeCopy, mMgrName, mFileTools))
-                {
-                    msg = "Error copying " + fileName + " to storage server";
-                    LogError(msg);
-                    success = false;
-                }
-            }
-
-            return success;
-
-        }
-
         /// <summary>
         /// Construct the full path to UIMFDemultiplexer_Console.exe
         /// </summary>
