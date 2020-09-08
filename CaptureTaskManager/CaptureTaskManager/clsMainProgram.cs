@@ -1303,7 +1303,7 @@ namespace CaptureTaskManager
         /// <returns></returns>
         private bool ReloadManagerSettings(ref DateTime lastConfigDBUpdate, double minutesBetweenUpdates)
         {
-            if (!(DateTime.UtcNow.Subtract(lastConfigDBUpdate).TotalMinutes >= minutesBetweenUpdates))
+            if (DateTime.UtcNow.Subtract(lastConfigDBUpdate).TotalMinutes < minutesBetweenUpdates)
             {
                 return true;
             }

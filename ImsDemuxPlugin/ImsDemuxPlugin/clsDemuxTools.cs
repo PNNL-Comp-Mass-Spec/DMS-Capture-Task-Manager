@@ -1572,7 +1572,7 @@ namespace ImsDemuxPlugin
 
         void CmdRunner_LoopWaiting()
         {
-            if (!(DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds >= 30))
+            if (DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds < 30)
                 return;
 
             mLastProgressUpdateTime = DateTime.UtcNow;
