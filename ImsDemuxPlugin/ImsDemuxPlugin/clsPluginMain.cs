@@ -72,9 +72,9 @@ namespace ImsDemuxPlugin
             mDemultiplexingPerformed = false;
 
             // Perform base class operations, if any
-            var retData = base.RunTool();
-            if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
-                return retData;
+            var returnData = base.RunTool();
+            if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
+                return returnData;
 
             // Initialize the config DB update interval
             mLastConfigDbUpdate = DateTime.UtcNow;
@@ -84,9 +84,9 @@ namespace ImsDemuxPlugin
             if (!StoreToolVersionInfo())
             {
                 LogError("Aborting since StoreToolVersionInfo returned false");
-                retData.CloseoutMsg = "Error determining version of IMSDemultiplexer";
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                return retData;
+                returnData.CloseoutMsg = "Error determining version of IMSDemultiplexer";
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                return returnData;
             }
 
             // Determine whether or not calibration should be performed
@@ -148,14 +148,14 @@ namespace ImsDemuxPlugin
                               "'; will not attempt to re-demultiplex the _encoded.uimf file.  If you want to re-demultiplex the _encoded.uimf file, you should rename the CalibrationLog.txt file";
                         LogError(msg);
 
-                        retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                        retData.CloseoutMsg = "Error calibrating UIMF file; see " + clsDemuxTools.CALIBRATION_LOG_FILE;
-                        retData.EvalMsg =
+                        returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                        returnData.CloseoutMsg = "Error calibrating UIMF file; see " + clsDemuxTools.CALIBRATION_LOG_FILE;
+                        returnData.EvalMsg =
                             "De-multiplexed but Calibration failed.  If you want to re-demultiplex the _encoded.uimf file, you should rename the CalibrationLog.txt file";
 
                         msg = "Completed clsPluginMain.RunTool()";
                         LogDebug(msg);
-                        return retData;
+                        return returnData;
                     }
                 }
             }
@@ -173,12 +173,12 @@ namespace ImsDemuxPlugin
                         msg = "Exception deleting 0-byte uimf_encoded file";
                         LogError(msg, ex);
 
-                        retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                        retData.CloseoutMsg = msg;
+                        returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                        returnData.CloseoutMsg = msg;
 
                         msg = "Completed clsPluginMain.RunTool()";
                         LogDebug(msg);
-                        return retData;
+                        return returnData;
                     }
                 }
 
@@ -189,12 +189,12 @@ namespace ImsDemuxPlugin
                     msg = "UIMF file not found: " + uimfFileName;
                     LogError(msg);
 
-                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                    retData.CloseoutMsg = msg;
+                    returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    returnData.CloseoutMsg = msg;
 
                     msg = "Completed clsPluginMain.RunTool()";
                     LogDebug(msg);
-                    return retData;
+                    return returnData;
                 }
             }
 
@@ -211,7 +211,7 @@ namespace ImsDemuxPlugin
                 // De-multiplexing not required, but we should still attempt calibration (if enabled)
                 msg = "No demultiplexing required for dataset " + mDataset;
                 LogMessage(msg);
-                retData.EvalMsg = "Non-Multiplexed";
+                returnData.EvalMsg = "Non-Multiplexed";
                 needToDemultiplex = false;
             }
             else if (queryResult == clsSQLiteTools.UimfQueryResults.Error)
@@ -219,26 +219,26 @@ namespace ImsDemuxPlugin
                 // There was a problem determining the UIMF file status. Set state and exit
                 msg = "Problem determining UIMF file status for dataset " + mDataset;
 
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                retData.CloseoutMsg = msg;
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                returnData.CloseoutMsg = msg;
 
                 msg = "Completed clsPluginMain.RunTool()";
                 LogDebug(msg);
-                return retData;
+                return returnData;
             }
 
             if (needToDemultiplex)
             {
                 // De-multiplexing is needed
-                retData = mDemuxTools.PerformDemux(mMgrParams, mTaskParams, uimfFileName, numBitsForEncoding);
+                returnData = mDemuxTools.PerformDemux(mMgrParams, mTaskParams, uimfFileName, numBitsForEncoding);
 
                 if (mDemuxTools.OutOfMemoryException)
                 {
-                    if (retData.CloseoutType != EnumCloseOutType.CLOSEOUT_FAILED)
+                    if (returnData.CloseoutType != EnumCloseOutType.CLOSEOUT_FAILED)
                     {
-                        retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                        if (string.IsNullOrEmpty(retData.CloseoutMsg))
-                            retData.CloseoutMsg = "Out of memory";
+                        returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                        if (string.IsNullOrEmpty(returnData.CloseoutMsg))
+                            returnData.CloseoutMsg = "Out of memory";
                     }
 
                     mNeedToAbortProcessing = true;
@@ -247,9 +247,9 @@ namespace ImsDemuxPlugin
                 mDemultiplexingPerformed = true;
             }
 
-            if (retData.CloseoutType != EnumCloseOutType.CLOSEOUT_SUCCESS)
+            if (returnData.CloseoutType != EnumCloseOutType.CLOSEOUT_SUCCESS)
             {
-                return retData;
+                return returnData;
             }
 
             // Demultiplexing succeeded (or skipped)
@@ -264,9 +264,9 @@ namespace ImsDemuxPlugin
                     msg = "UIMF File not found (skipped demultiplexing): " + uimfFilePath;
 
                 LogError(msg);
-                retData.CloseoutMsg = msg;
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                return retData;
+                returnData.CloseoutMsg = msg;
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                return returnData;
             }
 
             // October 2013: Disabled the addition of bin-centric tables since datasets currently being acquired on the IMS platform will not have IQ run on them
@@ -289,7 +289,7 @@ namespace ImsDemuxPlugin
                 {
                     // Add the bin-centric tables if not yet present
                     LogMessage("Adding bin-centric tables to " + fiUIMF.Name + fileSizeText);
-                    retData = mDemuxTools.AddBinCentricTablesIfMissing(mMgrParams, mTaskParams, retData);
+                    returnData = mDemuxTools.AddBinCentricTablesIfMissing(mMgrParams, mTaskParams, returnData);
 
                     fiUIMF.Refresh();
                     var fileSizeGBEnd = fiUIMF.Length / 1024.0 / 1024.0 / 1024.0;
@@ -303,21 +303,21 @@ namespace ImsDemuxPlugin
 #pragma warning restore 162
             }
 
-            if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
+            if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
             {
 
                 if (calibrationMode == CalibrationMode.AutoCalibration)
-                    retData = mDemuxTools.PerformCalibration(mMgrParams, mTaskParams, retData);
+                    returnData = mDemuxTools.PerformCalibration(mMgrParams, mTaskParams, returnData);
                 else if (calibrationMode == CalibrationMode.ManualCalibration)
                 {
-                    retData = mDemuxTools.PerformManualCalibration(mMgrParams, mTaskParams, retData, calibrationSlope, calibrationIntercept);
+                    returnData = mDemuxTools.PerformManualCalibration(mMgrParams, mTaskParams, returnData, calibrationSlope, calibrationIntercept);
                 }
             }
 
             msg = "Completed clsPluginMain.RunTool()";
             LogDebug(msg);
 
-            return retData;
+            return returnData;
         }
 
         /// <summary>

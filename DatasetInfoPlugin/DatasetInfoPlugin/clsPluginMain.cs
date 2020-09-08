@@ -86,28 +86,28 @@ namespace DatasetInfoPlugin
             LogDebug(msg);
 
             // Perform base class operations, if any
-            var retData = base.RunTool();
-            if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
-                return retData;
+            var returnData = base.RunTool();
+            if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
+                return returnData;
 
             // Store the version info in the database
             if (!StoreToolVersionInfo())
             {
                 LogError("Aborting since StoreToolVersionInfo returned false");
-                retData.CloseoutMsg = "Error determining tool version info";
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                return retData;
+                returnData.CloseoutMsg = "Error determining tool version info";
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                return returnData;
             }
 
             msg = "Running DatasetInfo on dataset '" + mDataset + "'";
             LogMessage(msg);
 
-            retData = RunMsFileInfoScanner();
+            returnData = RunMsFileInfoScanner();
 
             msg = "Completed clsPluginMain.RunTool()";
             LogDebug(msg);
 
-            return retData;
+            return returnData;
         }
 
         private iMSFileInfoScanner LoadMSFileInfoScanner(string msFileInfoScannerDLLPath)
@@ -213,7 +213,7 @@ namespace DatasetInfoPlugin
         /// <returns></returns>
         private clsToolReturnData RunMsFileInfoScanner()
         {
-            var retData = new clsToolReturnData();
+            var returnData = new clsToolReturnData();
 
             // Always use client perspective for the source directory (allows MSFileInfoScanner to run from any CTM)
             var remoteSharePath = mTaskParams.GetParam("Storage_Vol_External");
@@ -256,27 +256,27 @@ namespace DatasetInfoPlugin
             if (fileOrDirectoryRelativePaths.Count > 0 && fileOrDirectoryRelativePaths.First() == UNKNOWN_FILE_TYPE)
             {
                 // Raw_Data_Type not recognized
-                retData.CloseoutMsg = mMsg;
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                return retData;
+                returnData.CloseoutMsg = mMsg;
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                return returnData;
             }
 
             if (fileOrDirectoryRelativePaths.Count > 0 && fileOrDirectoryRelativePaths.First() == INVALID_FILE_TYPE)
             {
                 // DS quality test not implemented for this file type
-                retData.CloseoutMsg = string.Empty;
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
-                retData.EvalMsg = "Dataset info test not implemented for data type " + clsInstrumentClassInfo.GetRawDataTypeName(rawDataType) + ", instrument class " + clsInstrumentClassInfo.GetInstrumentClassName(instrumentClass);
-                retData.EvalCode = EnumEvalCode.EVAL_CODE_NOT_EVALUATED;
-                return retData;
+                returnData.CloseoutMsg = string.Empty;
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+                returnData.EvalMsg = "Dataset info test not implemented for data type " + clsInstrumentClassInfo.GetRawDataTypeName(rawDataType) + ", instrument class " + clsInstrumentClassInfo.GetInstrumentClassName(instrumentClass);
+                returnData.EvalCode = EnumEvalCode.EVAL_CODE_NOT_EVALUATED;
+                return returnData;
             }
 
             if (fileOrDirectoryRelativePaths.Count == 0 || string.IsNullOrEmpty(fileOrDirectoryRelativePaths.First()))
             {
                 // There was a problem with getting the file name; Details reported by called method
-                retData.CloseoutMsg = mMsg;
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                return retData;
+                returnData.CloseoutMsg = mMsg;
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                return returnData;
             }
 
             if (mTaskParams.GetParam("SkipPlots", false))
@@ -323,9 +323,9 @@ namespace DatasetInfoPlugin
                     {
                         LogError(msg, ex);
 
-                        retData.CloseoutMsg = EXCEPTION_CREATING_OUTPUT_DIRECTORY + " " + outputPathBase;
-                        retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING;
-                        return retData;
+                        returnData.CloseoutMsg = EXCEPTION_CREATING_OUTPUT_DIRECTORY + " " + outputPathBase;
+                        returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING;
+                        return returnData;
                     }
                 }
             }
@@ -375,9 +375,9 @@ namespace DatasetInfoPlugin
 
                     if (!fileCopied)
                     {
-                        retData.CloseoutMsg = "Error copying instrument data file to local working directory";
-                        retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                        return retData;
+                        returnData.CloseoutMsg = "Error copying instrument data file to local working directory";
+                        returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                        return returnData;
                     }
 
                     pathToProcess = localFilePath;
@@ -395,9 +395,9 @@ namespace DatasetInfoPlugin
 
                 if (string.IsNullOrWhiteSpace(currentOutputDirectory))
                 {
-                    retData.CloseoutMsg = "ConstructOutputDirectoryPath returned an empty string; cannot process this dataset";
-                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                    return retData;
+                    returnData.CloseoutMsg = "ConstructOutputDirectoryPath returned an empty string; cannot process this dataset";
+                    returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    return returnData;
                 }
 
                 if (useLocalOutputDirectory)
@@ -465,14 +465,14 @@ namespace DatasetInfoPlugin
                 if (mMsFileScanner.ErrorCode == iMSFileInfoScanner.eMSFileScannerErrorCodes.MS2MzMinValidationWarning)
                 {
                     var warningMsg = mMsFileScanner.GetErrorMessage();
-                    retData.EvalMsg = AppendToComment(retData.EvalMsg, "MS2MzMinValidationWarning: " + warningMsg);
+                    returnData.EvalMsg = AppendToComment(returnData.EvalMsg, "MS2MzMinValidationWarning: " + warningMsg);
                 }
 
                 if (successProcessing && qcPlotMode == QCPlottingModes.AllPlots)
                 {
-                    var validQcGraphics = ValidateQCGraphics(currentOutputDirectory, primaryFileOrDirectoryProcessed, retData);
-                    if (retData.CloseoutType != EnumCloseOutType.CLOSEOUT_SUCCESS)
-                        return retData;
+                    var validQcGraphics = ValidateQCGraphics(currentOutputDirectory, primaryFileOrDirectoryProcessed, returnData);
+                    if (returnData.CloseoutType != EnumCloseOutType.CLOSEOUT_SUCCESS)
+                        return returnData;
 
                     if (!validQcGraphics)
                         continue;
@@ -496,13 +496,13 @@ namespace DatasetInfoPlugin
                     // The problem is that ProteoWizard doesn't support certain forms of these datasets
                     // In particular, small datasets (lasting just a few seconds) don't work
 
-                    retData.CloseoutMsg = string.Empty;
-                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
-                    retData.EvalMsg = "MSFileInfoScanner error for data type " +
+                    returnData.CloseoutMsg = string.Empty;
+                    returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+                    returnData.EvalMsg = "MSFileInfoScanner error for data type " +
                                      clsInstrumentClassInfo.GetRawDataTypeName(rawDataType) + ", instrument class " +
                                      clsInstrumentClassInfo.GetInstrumentClassName(instrumentClass);
-                    retData.EvalCode = EnumEvalCode.EVAL_CODE_NOT_EVALUATED;
-                    return retData;
+                    returnData.EvalCode = EnumEvalCode.EVAL_CODE_NOT_EVALUATED;
+                    return returnData;
 
                 }
 #pragma warning restore 162
@@ -512,7 +512,7 @@ namespace DatasetInfoPlugin
                 {
                     // MSFileInfoScanner already processed the primary file or directory
                     // Mention this failure in the EvalMsg but still return success
-                    retData.EvalMsg = AppendToComment(retData.EvalMsg,
+                    returnData.EvalMsg = AppendToComment(returnData.EvalMsg,
                                                      "ProcessMSFileOrFolder returned false for " + datasetFileOrDirectory);
                 }
                 else
@@ -521,13 +521,13 @@ namespace DatasetInfoPlugin
                     {
                         mMsg = "ProcessMSFileOrFolder returned false. Message = " +
                                 mMsFileScanner.GetErrorMessage() +
-                                " retData code = " + (int)mMsFileScanner.ErrorCode;
+                                " returnData code = " + (int)mMsFileScanner.ErrorCode;
                     }
 
                     LogError(mMsg);
 
-                    retData.CloseoutMsg = mMsg;
-                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    returnData.CloseoutMsg = mMsg;
+                    returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 
                     if (!string.IsNullOrWhiteSpace(mMsFileScanner.DatasetInfoXML))
                     {
@@ -540,7 +540,7 @@ namespace DatasetInfoPlugin
                             "To ignore this error, use Exec AddUpdateJobParameter {0}, 'JobParameters', 'SkipMinimumMzValidation', 'true'",
                             mJob);
 
-                        retData.CloseoutMsg = AppendToComment(retData.CloseoutMsg, jobParamNote);
+                        returnData.CloseoutMsg = AppendToComment(returnData.CloseoutMsg, jobParamNote);
                     }
 
                     if (cachedDatasetInfoXML.Count > 0)
@@ -549,7 +549,7 @@ namespace DatasetInfoPlugin
                         break;
                     }
 
-                    return retData;
+                    return returnData;
                 }
 
                 if (mFailedScanCount > 10)
@@ -562,46 +562,46 @@ namespace DatasetInfoPlugin
             // Merge the dataset info defined in cachedDatasetInfoXML
             // If cachedDatasetInfoXml contains just one item, simply return it
             var datasetXmlMerger = new clsDatasetInfoXmlMerger();
-            var dsInfoXML = CombineDatasetInfoXML(datasetXmlMerger, cachedDatasetInfoXML);
+            var datasetInfoXML = CombineDatasetInfoXML(datasetXmlMerger, cachedDatasetInfoXML);
 
             if (cachedDatasetInfoXML.Count > 1)
             {
-                ProcessMultiDatasetInfoScannerResults(outputPathBase, datasetXmlMerger, dsInfoXML, outputDirectoryNames);
+                ProcessMultiDatasetInfoScannerResults(outputPathBase, datasetXmlMerger, datasetInfoXML, outputDirectoryNames);
             }
 
             // Check for dataset acq time gap warnings
             // If any are found, CloseoutMsg is updated
-            AcqTimeWarningsReported(datasetXmlMerger, retData);
+            AcqTimeWarningsReported(datasetXmlMerger, returnData);
 
-            // Call SP CacheDatasetInfoXML to store dsInfoXML in table T_Dataset_Info_XML
-            var success = PostDatasetInfoXml(dsInfoXML, out var errorMessage);
+            // Call SP CacheDatasetInfoXML to store datasetInfoXML in table T_Dataset_Info_XML
+            var success = PostDatasetInfoXml(datasetInfoXML, out var errorMessage);
             if (!success)
             {
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                retData.CloseoutMsg = AppendToComment(retData.CloseoutMsg, errorMessage);
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                returnData.CloseoutMsg = AppendToComment(returnData.CloseoutMsg, errorMessage);
             }
 
-            if (!useLocalOutputDirectory || retData.CloseoutType != EnumCloseOutType.CLOSEOUT_SUCCESS)
-                return retData;
+            if (!useLocalOutputDirectory || returnData.CloseoutType != EnumCloseOutType.CLOSEOUT_SUCCESS)
+                return returnData;
 
             // Set this to failed since we stored the QC graphics in the local working directory instead of on the storage server
-            retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-            retData.CloseoutMsg = AppendToComment(retData.CloseoutMsg,
+            returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+            returnData.CloseoutMsg = AppendToComment(returnData.CloseoutMsg,
                                                   "QC graphics were saved locally for debugging purposes; " +
                                                   "need to run this job step with a manager that has write access to the storage server");
 
-            return retData;
+            return returnData;
 
         }
 
         /// <summary>
         /// Examine datasetXmlMerger.AcqTimeWarnings
-        /// If non-empty, summarize the errors and update retData
+        /// If non-empty, summarize the errors and update returnData
         /// </summary>
         /// <param name="datasetXmlMerger"></param>
-        /// <param name="retData"></param>
+        /// <param name="returnData"></param>
         /// <returns>True if warnings exist, otherwise false</returns>
-        private void AcqTimeWarningsReported(clsDatasetInfoXmlMerger datasetXmlMerger, clsToolReturnData retData)
+        private void AcqTimeWarningsReported(clsDatasetInfoXmlMerger datasetXmlMerger, clsToolReturnData returnData)
         {
             if (datasetXmlMerger.AcqTimeWarnings.Count == 0)
             {
@@ -619,11 +619,11 @@ namespace DatasetInfoPlugin
 
             LogError(mMsg);
 
-            retData.CloseoutMsg = AppendToComment(retData.CloseoutMsg, "Large gap between acq times: " + datasetXmlMerger.AcqTimeWarnings.FirstOrDefault());
-            retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+            returnData.CloseoutMsg = AppendToComment(returnData.CloseoutMsg, "Large gap between acq times: " + datasetXmlMerger.AcqTimeWarnings.FirstOrDefault());
+            returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
         }
 
-        private bool PostDatasetInfoXml(string dsInfoXML, out string errorMessage)
+        private bool PostDatasetInfoXml(string datasetInfoXML, out string errorMessage)
         {
             var iPostCount = 0;
             var connectionString = mMgrParams.GetParam("ConnectionString");
@@ -635,7 +635,7 @@ namespace DatasetInfoPlugin
             while (iPostCount <= 2)
             {
                 successPosting = mMsFileScanner.PostDatasetInfoUseDatasetID(
-                    iDatasetID, dsInfoXML, connectionString, MS_FILE_SCANNER_DS_INFO_SP);
+                    iDatasetID, datasetInfoXML, connectionString, MS_FILE_SCANNER_DS_INFO_SP);
 
                 if (successPosting)
                     break;
@@ -657,7 +657,7 @@ namespace DatasetInfoPlugin
             {
                 errorCode = mMsFileScanner.ErrorCode;
                 mMsg = "Error posting dataset info XML. Message = " +
-                        mMsFileScanner.GetErrorMessage() + " retData code = " + (int)mMsFileScanner.ErrorCode;
+                        mMsFileScanner.GetErrorMessage() + " returnData code = " + (int)mMsFileScanner.ErrorCode;
                 LogError(mMsg);
             }
 
@@ -676,7 +676,7 @@ namespace DatasetInfoPlugin
         private void ProcessMultiDatasetInfoScannerResults(
             string outputPathBase,
             clsDatasetInfoXmlMerger datasetXmlMerger,
-            string dsInfoXML,
+            string datasetInfoXML,
             IEnumerable<string> outputDirectoryNames)
         {
 
@@ -688,7 +688,7 @@ namespace DatasetInfoPlugin
                 var combinedXmlFilePath = Path.Combine(outputPathBase, combinedDatasetInfoFilename);
                 using (var xmlWriter = new StreamWriter(new FileStream(combinedXmlFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    xmlWriter.WriteLine(dsInfoXML);
+                    xmlWriter.WriteLine(datasetInfoXML);
                 }
             }
             catch (Exception ex)
@@ -1502,7 +1502,7 @@ namespace DatasetInfoPlugin
 
         }
 
-        private bool ValidateQCGraphics(string currentOutputDirectory, bool primaryFileOrDirectoryProcessed, clsToolReturnData retData)
+        private bool ValidateQCGraphics(string currentOutputDirectory, bool primaryFileOrDirectoryProcessed, clsToolReturnData returnData)
         {
             // Make sure at least one of the PNG files created by MSFileInfoScanner is over 10 KB in size
             var outputDirectory = new DirectoryInfo(currentOutputDirectory);
@@ -1513,13 +1513,13 @@ namespace DatasetInfoPlugin
                 if (primaryFileOrDirectoryProcessed)
                 {
                     LogWarning(errMsg);
-                    retData.EvalMsg = AppendToComment(retData.EvalMsg, errMsg);
+                    returnData.EvalMsg = AppendToComment(returnData.EvalMsg, errMsg);
                     return false;
                 }
 
                 LogError(errMsg);
-                retData.CloseoutMsg = errMsg;
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                returnData.CloseoutMsg = errMsg;
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return false;
             }
 
@@ -1531,13 +1531,13 @@ namespace DatasetInfoPlugin
                 if (primaryFileOrDirectoryProcessed)
                 {
                     LogWarning(errMsg);
-                    retData.EvalMsg = AppendToComment(retData.EvalMsg, errMsg);
+                    returnData.EvalMsg = AppendToComment(returnData.EvalMsg, errMsg);
                     return false;
                 }
 
                 LogError(errMsg);
-                retData.CloseoutMsg = errMsg;
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                returnData.CloseoutMsg = errMsg;
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return false;
             }
 
@@ -1561,13 +1561,13 @@ namespace DatasetInfoPlugin
             if (primaryFileOrDirectoryProcessed)
             {
                 LogWarning(errMsg2);
-                retData.EvalMsg = AppendToComment(retData.EvalMsg, errMsg2);
+                returnData.EvalMsg = AppendToComment(returnData.EvalMsg, errMsg2);
                 return false;
             }
 
             LogError(errMsg2);
-            retData.CloseoutMsg = errMsg2;
-            retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+            returnData.CloseoutMsg = errMsg2;
+            returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
             return false;
 
         }

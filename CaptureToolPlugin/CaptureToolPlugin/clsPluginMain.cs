@@ -28,21 +28,21 @@ namespace CaptureToolPlugin
         {
             LogDebug("Starting CaptureToolPlugin.clsPluginMain.RunTool()");
 
-            // Note that retData.CloseoutMsg will be stored in the Completion_Message field of the database
-            // Similarly, retData.EvalMsg will be stored in the Evaluation_Message field of the database
+            // Note that returnData.CloseoutMsg will be stored in the Completion_Message field of the database
+            // Similarly, returnData.EvalMsg will be stored in the Evaluation_Message field of the database
 
             // Perform base class operations, if any
-            var retData = base.RunTool();
-            if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
-                return retData;
+            var returnData = base.RunTool();
+            if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
+                return returnData;
 
             // Store the version info in the database
             if (!StoreToolVersionInfo())
             {
                 LogError("Aborting since StoreToolVersionInfo returned false");
-                retData.CloseoutMsg = "Error determining tool version info";
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                return retData;
+                returnData.CloseoutMsg = "Error determining tool version info";
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                return returnData;
             }
 
             LogMessage( "Capturing dataset '" + mDataset + "'");
@@ -67,16 +67,16 @@ namespace CaptureToolPlugin
             {
                 LogDebug("clsPluginMain.RunTool(): Starting capture operation");
 
-                var success = capOpTool.DoOperation(mTaskParams, retData);
+                var success = capOpTool.DoOperation(mTaskParams, returnData);
 
-                if (!success && !string.IsNullOrWhiteSpace(retData.CloseoutMsg) && mTraceMode)
-                    ShowTraceMessage(retData.CloseoutMsg);
+                if (!success && !string.IsNullOrWhiteSpace(returnData.CloseoutMsg) && mTraceMode)
+                    ShowTraceMessage(returnData.CloseoutMsg);
 
                 if (capOpTool.NeedToAbortProcessing)
                 {
                     mNeedToAbortProcessing = true;
-                    if (retData.CloseoutType != EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING)
-                        retData.CloseoutType = EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING;
+                    if (returnData.CloseoutType != EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING)
+                        returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING;
                 }
 
                 LogDebug("clsPluginMain.RunTool(): Completed capture operation");
@@ -90,15 +90,15 @@ namespace CaptureToolPlugin
                     msg += ", Logon failure: unknown user name or bad password";
                     LogError(msg);
                     // Set the EvalCode to 3 so that capture can be retried
-                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                    retData.EvalCode = EnumEvalCode.EVAL_CODE_NETWORK_ERROR_RETRY_CAPTURE;
-                    retData.CloseoutMsg = msg;
+                    returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    returnData.EvalCode = EnumEvalCode.EVAL_CODE_NETWORK_ERROR_RETRY_CAPTURE;
+                    returnData.CloseoutMsg = msg;
                 }
                 else
                 {
                     LogError(msg, ex);
-                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                    retData.CloseoutMsg = msg;
+                    returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    returnData.CloseoutMsg = msg;
                 }
 
             }
@@ -107,7 +107,7 @@ namespace CaptureToolPlugin
 
             LogDebug("Completed clsPluginMain.RunTool()");
 
-            return retData;
+            return returnData;
 
         }
 

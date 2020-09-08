@@ -113,11 +113,11 @@ namespace CaptureTaskManager
         public virtual clsToolReturnData RunTool()
         {
             // Does nothing at present, so return success
-            var retData = new clsToolReturnData
+            var returnData = new clsToolReturnData
             {
                 CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS
             };
-            return retData;
+            return returnData;
         }
 
         /// <summary>
@@ -354,7 +354,7 @@ namespace CaptureTaskManager
         /// <param name="job"></param>
         /// <param name="statusChecker"></param>
         /// <param name="statusURI"></param>
-        /// <param name="retData"></param>
+        /// <param name="returnData"></param>
         /// <param name="serverResponse">Server response (dictionary representation of JSON)</param>
         /// <param name="currentTask">Output: current task</param>
         /// <param name="percentComplete">Output: ingest process percent complete (value between 0 and 100)</param>
@@ -365,7 +365,7 @@ namespace CaptureTaskManager
             int job,
             MyEMSLStatusCheck statusChecker,
             string statusURI,
-            clsToolReturnData retData,
+            clsToolReturnData returnData,
             out Dictionary<string, object> serverResponse,
             out string currentTask,
             out int percentComplete)
@@ -379,8 +379,8 @@ namespace CaptureTaskManager
 
             if (lookupError)
             {
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                retData.CloseoutMsg = errorMessage;
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                returnData.CloseoutMsg = errorMessage;
                 LogError(errorMessage + ", job " + job);
 
                 return false;
@@ -388,9 +388,9 @@ namespace CaptureTaskManager
 
             if (serverResponse.Keys.Count == 0)
             {
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                retData.CloseoutMsg = "Empty JSON server response";
-                LogError(retData.CloseoutMsg + ", job " + job);
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                returnData.CloseoutMsg = "Empty JSON server response";
+                LogError(returnData.CloseoutMsg + ", job " + job);
                 return false;
             }
 
@@ -400,13 +400,13 @@ namespace CaptureTaskManager
                     !string.IsNullOrWhiteSpace(errorMessage))
                 {
                     // Error should have already been logged during the call to GetIngestStatus
-                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     if (string.IsNullOrWhiteSpace(errorMessage))
-                        retData.CloseoutMsg = "Ingest failed; unknown reason";
+                        returnData.CloseoutMsg = "Ingest failed; unknown reason";
                     else
-                        retData.CloseoutMsg = errorMessage;
+                        returnData.CloseoutMsg = errorMessage;
 
-                    retData.EvalCode = EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY;
+                    returnData.EvalCode = EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY;
                     return false;
                 }
 
@@ -415,8 +415,8 @@ namespace CaptureTaskManager
 
             // State parameter was not present
 
-            retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-            retData.CloseoutMsg = "State parameter not found in ingest status; see " + statusURI;
+            returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+            returnData.CloseoutMsg = "State parameter not found in ingest status; see " + statusURI;
 
             return false;
         }

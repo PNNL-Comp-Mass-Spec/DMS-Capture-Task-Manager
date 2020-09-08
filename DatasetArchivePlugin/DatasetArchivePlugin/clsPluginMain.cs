@@ -48,17 +48,17 @@ namespace DatasetArchivePlugin
             LogDebug(msg);
 
             // Perform base class operations, if any
-            var retData = base.RunTool();
-            if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
-                return retData;
+            var returnData = base.RunTool();
+            if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
+                return returnData;
 
             // Store the version info in the database
             if (!StoreToolVersionInfo())
             {
                 LogError("Aborting since StoreToolVersionInfo returned false");
-                retData.CloseoutMsg = "Error determining tool version info";
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                return retData;
+                returnData.CloseoutMsg = "Error determining tool version info";
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                return returnData;
             }
 
             ResetTimestampForQueueWaitTimeLogging();
@@ -84,30 +84,30 @@ namespace DatasetArchivePlugin
             LogMessage(msg);
             if (archOpTool.PerformTask())
             {
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
             }
             else
             {
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                retData.CloseoutMsg = archOpTool.ErrMsg;
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                returnData.CloseoutMsg = archOpTool.ErrMsg;
 
                 if (archOpTool.FailureDoNotRetry)
-                    retData.EvalCode = EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY;
+                    returnData.EvalCode = EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY;
 
             }
 
             if (!string.IsNullOrEmpty(archOpTool.WarningMsg))
-                retData.EvalMsg = archOpTool.WarningMsg;
+                returnData.EvalMsg = archOpTool.WarningMsg;
 
-            if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
+            if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
             {
                 if (mSubmittedToMyEMSL)
                 {
-                    // Note that stored procedure SetStepTaskComplete will update MyEMSL State values if retData.EvalCode is 4 or 7
+                    // Note that stored procedure SetStepTaskComplete will update MyEMSL State values if returnData.EvalCode is 4 or 7
                     if (mMyEMSLAlreadyUpToDate)
-                        retData.EvalCode = EnumEvalCode.EVAL_CODE_MYEMSL_IS_ALREADY_UP_TO_DATE;
+                        returnData.EvalCode = EnumEvalCode.EVAL_CODE_MYEMSL_IS_ALREADY_UP_TO_DATE;
                     else
-                        retData.EvalCode = EnumEvalCode.EVAL_CODE_SUBMITTED_TO_MYEMSL;
+                        returnData.EvalCode = EnumEvalCode.EVAL_CODE_SUBMITTED_TO_MYEMSL;
                 }
             }
 
@@ -117,7 +117,7 @@ namespace DatasetArchivePlugin
             msg = "Completed clsPluginMain.RunTool()";
             LogDebug(msg);
 
-            return retData;
+            return returnData;
         }
 
         /// <summary>

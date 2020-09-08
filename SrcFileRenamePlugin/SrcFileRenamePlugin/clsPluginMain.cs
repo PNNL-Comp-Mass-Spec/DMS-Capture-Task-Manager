@@ -28,17 +28,17 @@ namespace SrcFileRenamePlugin
             LogDebug(msg);
 
             // Perform base class operations, if any
-            var retData = base.RunTool();
-            if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
-                return retData;
+            var returnData = base.RunTool();
+            if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
+                return returnData;
 
             // Store the version info in the database
             if (!StoreToolVersionInfo())
             {
                 LogError("Aborting since StoreToolVersionInfo returned false");
-                retData.CloseoutMsg = "Error determining tool version info";
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                return retData;
+                returnData.CloseoutMsg = "Error determining tool version info";
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                return returnData;
             }
 
             msg = "Renaming dataset '" + mDataset + "'";
@@ -65,10 +65,10 @@ namespace SrcFileRenamePlugin
                 msg = "clsPluginMain.RunTool(): Starting rename operation";
                 LogDebug(msg);
 
-                retData.CloseoutType = renameOpTool.DoOperation(mTaskParams, out var errorMessage);
+                returnData.CloseoutType = renameOpTool.DoOperation(mTaskParams, out var errorMessage);
 
-                if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
-                    retData.CloseoutMsg = errorMessage;
+                if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
+                    returnData.CloseoutMsg = errorMessage;
 
                 msg = "clsPluginMain.RunTool(): Completed rename operation";
                 LogDebug(msg);
@@ -77,13 +77,13 @@ namespace SrcFileRenamePlugin
             {
                 msg = "clsPluginMain.RunTool(): Exception during rename operation (useBionet=" + useBionet + ")";
                 LogError(msg, ex);
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
             msg = "Completed clsPluginMain.RunTool()";
             LogDebug(msg);
 
-            return retData;
+            return returnData;
         }
 
         /// <summary>

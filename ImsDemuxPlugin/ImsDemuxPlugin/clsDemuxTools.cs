@@ -124,7 +124,7 @@ namespace ImsDemuxPlugin
 
         #region "Methods"
 
-        public clsToolReturnData AddBinCentricTablesIfMissing(IMgrParams mgrParams, ITaskParams taskParams, clsToolReturnData retData)
+        public clsToolReturnData AddBinCentricTablesIfMissing(IMgrParams mgrParams, ITaskParams taskParams, clsToolReturnData returnData)
         {
             try
             {
@@ -133,12 +133,12 @@ namespace ImsDemuxPlugin
 
                 // Locate data file on storage server
                 // Don't copy it locally yet
-                var uimfFilePath = GetRemoteUIMFFilePath(retData);
+                var uimfFilePath = GetRemoteUIMFFilePath(returnData);
                 if (string.IsNullOrEmpty(uimfFilePath))
                 {
-                    if (retData != null && retData.CloseoutType != EnumCloseOutType.CLOSEOUT_FAILED)
-                        retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                    return retData;
+                    if (returnData != null && returnData.CloseoutType != EnumCloseOutType.CLOSEOUT_FAILED)
+                        returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    return returnData;
                 }
 
                 using (var uimfReader = new DataReader(uimfFilePath))
@@ -147,8 +147,8 @@ namespace ImsDemuxPlugin
 
                     if (hasBinCentricData)
                     {
-                        retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
-                        return retData;
+                        returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+                        return returnData;
                     }
                 }
 
@@ -158,9 +158,9 @@ namespace ImsDemuxPlugin
                 // Copy the UIMF file from the storage server to the working directory
                 var uimfFileName = mDataset + ".uimf";
 
-                retData = CopyUIMFToWorkDir(uimfFileName, retData, out _, out var uimfLocalFileNamePath);
-                if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
-                    return retData;
+                returnData = CopyUIMFToWorkDir(uimfFileName, returnData, out _, out var uimfLocalFileNamePath);
+                if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
+                    return returnData;
 
                 // Add the bin-centric tables
                 using (var uimfReader = new DataReader(uimfLocalFileNamePath))
@@ -210,15 +210,15 @@ namespace ImsDemuxPlugin
 
                     if (!hasBinCentricData)
                     {
-                        retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, "Bin-centric tables were not added to the UIMF file");
-                        retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                        returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, "Bin-centric tables were not added to the UIMF file");
+                        returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     }
                 }
 
                 // Copy the result files to the storage server
-                if (!CopyUIMFFileToStorageServer(retData, uimfLocalFileNamePath, "bin-centric UIMF"))
+                if (!CopyUIMFFileToStorageServer(returnData, uimfLocalFileNamePath, "bin-centric UIMF"))
                 {
-                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 }
 
                 try
@@ -232,25 +232,25 @@ namespace ImsDemuxPlugin
                     // Ignore errors here
                 }
 
-                return retData;
+                return returnData;
 
             }
             catch (Exception ex)
             {
                 const string msg = "Exception adding the bin-centric tables to the UIMF file";
                 OnErrorEvent(msg, ex);
-                if (retData == null)
-                    retData = new clsToolReturnData();
-                retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, msg);
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                return retData;
+                if (returnData == null)
+                    returnData = new clsToolReturnData();
+                returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, msg);
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                return returnData;
             }
 
         }
 
         private clsToolReturnData CopyUIMFToWorkDir(
             string uimfFileName,
-            clsToolReturnData retData,
+            clsToolReturnData returnData,
             out string uimfRemoteFileNamePath,
             out string uimfLocalFileNamePath)
         {
@@ -263,16 +263,16 @@ namespace ImsDemuxPlugin
             const int retryCount = 0;
             if (!CopyFileWithRetry(uimfRemoteFileNamePath, uimfLocalFileNamePath, false, retryCount))
             {
-                retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, "Error copying UIMF file to working directory");
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                return retData;
+                returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, "Error copying UIMF file to working directory");
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                return returnData;
             }
 
-            return retData;
+            return returnData;
 
         }
 
-        private string GetRemoteUIMFFilePath(clsToolReturnData retData)
+        private string GetRemoteUIMFFilePath(clsToolReturnData returnData)
         {
 
             try
@@ -286,16 +286,16 @@ namespace ImsDemuxPlugin
 
                 var msg = "UIMF file not found on storage server, unable to calibrate: " + uimfFilePath;
                 OnErrorEvent(msg);
-                retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, "UIMF file not found on storage server, unable to calibrate");
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, "UIMF file not found on storage server, unable to calibrate");
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return string.Empty;
             }
             catch (Exception ex)
             {
                 const string msg = "Exception finding UIMF file to calibrate";
                 OnErrorEvent(msg, ex);
-                retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, "Exception while calibrating UIMF file");
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, "Exception while calibrating UIMF file");
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return string.Empty;
             }
 
@@ -306,9 +306,9 @@ namespace ImsDemuxPlugin
         /// </summary>
         /// <param name="mgrParams"></param>
         /// <param name="taskParams"></param>
-        /// <param name="retData"></param>
+        /// <param name="returnData"></param>
         /// <returns></returns>
-        public clsToolReturnData PerformCalibration(IMgrParams mgrParams, ITaskParams taskParams, clsToolReturnData retData)
+        public clsToolReturnData PerformCalibration(IMgrParams mgrParams, ITaskParams taskParams, clsToolReturnData returnData)
         {
             mLoggedConsoleOutputErrors.Clear();
             UpdateDatasetInfo(mgrParams, taskParams);
@@ -323,12 +323,12 @@ namespace ImsDemuxPlugin
 
             // Locate data file on storage server
             // Don't copy it locally; just work with it over the network
-            var uimfFilePath = GetRemoteUIMFFilePath(retData);
+            var uimfFilePath = GetRemoteUIMFFilePath(returnData);
             if (string.IsNullOrEmpty(uimfFilePath))
             {
-                if (retData != null && retData.CloseoutType != EnumCloseOutType.CLOSEOUT_FAILED)
-                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                return retData;
+                if (returnData != null && returnData.CloseoutType != EnumCloseOutType.CLOSEOUT_FAILED)
+                    returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                return returnData;
             }
 
             try
@@ -356,13 +356,13 @@ namespace ImsDemuxPlugin
             {
                 msg = "Exception determining whether instrument should be calibrated";
                 OnErrorEvent(msg, ex);
-                retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, "Exception while calibrating UIMF file");
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                return retData;
+                returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, "Exception while calibrating UIMF file");
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                return returnData;
             }
 
             if (!autoCalibrate)
-                return retData;
+                return returnData;
 
             try
             {
@@ -413,13 +413,13 @@ namespace ImsDemuxPlugin
             {
                 msg = "Exception checking for calibration frames";
                 OnErrorEvent(msg, ex);
-                retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, "Exception while calibrating UIMF file");
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                return retData;
+                returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, "Exception while calibrating UIMF file");
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                return returnData;
             }
 
             if (!autoCalibrate)
-                return retData;
+                return returnData;
 
             // Perform calibration operation
             OnDebugEvent("Calling UIMFDemultiplexer to calibrate");
@@ -433,7 +433,7 @@ namespace ImsDemuxPlugin
                     if (string.IsNullOrEmpty(errorMessage))
                         errorMessage = "Error calibrating UIMF file";
 
-                    retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, errorMessage);
+                    returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, errorMessage);
                     calibrationFailed = true;
                 }
             }
@@ -441,7 +441,7 @@ namespace ImsDemuxPlugin
             {
                 msg = "Exception calling CalibrateFile for dataset " + mDataset;
                 OnErrorEvent(msg, ex);
-                retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, "Exception while calibrating UIMF file");
+                returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, "Exception while calibrating UIMF file");
                 calibrationFailed = true;
             }
 
@@ -449,7 +449,7 @@ namespace ImsDemuxPlugin
             {
                 try
                 {
-                    if (!ValidateUIMFCalibrated(uimfFilePath, retData))
+                    if (!ValidateUIMFCalibrated(uimfFilePath, returnData))
                     {
                         // Calibration failed
                         calibrationFailed = true;
@@ -459,9 +459,9 @@ namespace ImsDemuxPlugin
                 {
                     msg = "Exception validating calibrated .UIMF file";
                     OnErrorEvent(msg, ex);
-                    retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, "Exception while calibrating UIMF file");
-                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                    return retData;
+                    returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, "Exception while calibrating UIMF file");
+                    returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    return returnData;
                 }
 
             }
@@ -469,23 +469,23 @@ namespace ImsDemuxPlugin
             if (!uimfFilePath.StartsWith(@"\\"))
             {
                 // Copy the CalibrationLog.txt file to the storage server (even if calibration failed)
-                CopyCalibrationLogToStorageServer(retData);
+                CopyCalibrationLogToStorageServer(returnData);
             }
 
             // Update the return data
             if (calibrationFailed)
             {
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                retData.EvalMsg = AppendToString(retData.EvalMsg, " but Calibration failed", "");
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                returnData.EvalMsg = AppendToString(returnData.EvalMsg, " but Calibration failed", "");
             }
             else
             {
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
 
-                retData.EvalMsg = AppendToString(retData.EvalMsg, " and calibrated", "");
+                returnData.EvalMsg = AppendToString(returnData.EvalMsg, " and calibrated", "");
             }
 
-            return retData;
+            return returnData;
 
         }
 
@@ -494,11 +494,11 @@ namespace ImsDemuxPlugin
         /// </summary>
         /// <param name="mgrParams"></param>
         /// <param name="taskParams"></param>
-        /// <param name="retData"></param>
+        /// <param name="returnData"></param>
         /// <param name="calibrationSlope"></param>
         /// <param name="calibrationIntercept"></param>
         /// <returns></returns>
-        public clsToolReturnData PerformManualCalibration(IMgrParams mgrParams, ITaskParams taskParams, clsToolReturnData retData, double calibrationSlope, double calibrationIntercept)
+        public clsToolReturnData PerformManualCalibration(IMgrParams mgrParams, ITaskParams taskParams, clsToolReturnData returnData, double calibrationSlope, double calibrationIntercept)
         {
             mLoggedConsoleOutputErrors.Clear();
             UpdateDatasetInfo(mgrParams, taskParams);
@@ -507,12 +507,12 @@ namespace ImsDemuxPlugin
             {
                 // Locate data file on storage server
                 // Don't copy it locally; just work with it over the network
-                var uimfFilePath = GetRemoteUIMFFilePath(retData);
+                var uimfFilePath = GetRemoteUIMFFilePath(returnData);
                 if (string.IsNullOrEmpty(uimfFilePath))
                 {
-                    if (retData != null && retData.CloseoutType != EnumCloseOutType.CLOSEOUT_FAILED)
-                        retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                    return retData;
+                    if (returnData != null && returnData.CloseoutType != EnumCloseOutType.CLOSEOUT_FAILED)
+                        returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    return returnData;
                 }
 
                 double currentSlope;
@@ -567,14 +567,14 @@ namespace ImsDemuxPlugin
             {
                 var msg = "Exception in PerformManualCalibration for dataset " + mDataset;
                 OnErrorEvent(msg, ex);
-                if (retData == null)
-                    retData = new clsToolReturnData();
-                retData.CloseoutMsg = "Error manually calibrating UIMF file";
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                return retData;
+                if (returnData == null)
+                    returnData = new clsToolReturnData();
+                returnData.CloseoutMsg = "Error manually calibrating UIMF file";
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                return returnData;
             }
 
-            return retData;
+            return returnData;
         }
 
         /// <summary>
@@ -611,9 +611,9 @@ namespace ImsDemuxPlugin
 
             // Copy the UIMF file from the storage server to the working directory
 
-            var retData = CopyUIMFToWorkDir(uimfFileName, new clsToolReturnData(), out var uimfRemoteEncodedFileNamePath, out var uimfLocalEncodedFileNamePath);
-            if (retData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
-                return retData;
+            var returnData = CopyUIMFToWorkDir(uimfFileName, new clsToolReturnData(), out var uimfRemoteEncodedFileNamePath, out var uimfLocalEncodedFileNamePath);
+            if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
+                return returnData;
 
             // Look for a _decoded.uimf.tmp file on the storage server
             // Copy it local if present
@@ -656,18 +656,18 @@ namespace ImsDemuxPlugin
                     if (string.IsNullOrEmpty(errorMessage))
                         errorMessage = "Error demultiplexing UIMF file";
 
-                    retData.CloseoutMsg = errorMessage;
-                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                    return retData;
+                    returnData.CloseoutMsg = errorMessage;
+                    returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    return returnData;
                 }
             }
             catch (Exception ex)
             {
                 msg = "Exception calling DemultiplexFile for dataset " + mDataset;
                 OnErrorEvent(msg, ex);
-                retData.CloseoutMsg = "Error demultiplexing UIMF file";
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                return retData;
+                returnData.CloseoutMsg = "Error demultiplexing UIMF file";
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                return returnData;
             }
 
             // Look for the demultiplexed .UIMF file
@@ -675,17 +675,17 @@ namespace ImsDemuxPlugin
 
             if (!File.Exists(localUimfDecodedFilePath))
             {
-                retData.CloseoutMsg = "Decoded UIMF file not found";
-                OnErrorEvent(retData.CloseoutMsg + ": " + localUimfDecodedFilePath);
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                return retData;
+                returnData.CloseoutMsg = "Decoded UIMF file not found";
+                OnErrorEvent(returnData.CloseoutMsg + ": " + localUimfDecodedFilePath);
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                return returnData;
             }
 
-            if (!ValidateUIMFDemultiplexed(localUimfDecodedFilePath, retData))
+            if (!ValidateUIMFDemultiplexed(localUimfDecodedFilePath, returnData))
             {
-                if (string.IsNullOrEmpty(retData.CloseoutMsg))
-                    retData.CloseoutMsg = "ValidateUIMFDemultiplexed returned false";
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                if (string.IsNullOrEmpty(returnData.CloseoutMsg))
+                    returnData.CloseoutMsg = "ValidateUIMFDemultiplexed returned false";
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 postProcessingError = true;
             }
 
@@ -701,8 +701,8 @@ namespace ImsDemuxPlugin
                 {
                     if (!RenameFile(uimfRemoteEncodedFileNamePath, Path.Combine(mDatasetFolderPathRemote, mDataset + "_encoded.uimf")))
                     {
-                        retData.CloseoutMsg = "Error renaming encoded UIMF file on storage server";
-                        retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                        returnData.CloseoutMsg = "Error renaming encoded UIMF file on storage server";
+                        returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                         postProcessingError = true;
                     }
                 }
@@ -735,7 +735,7 @@ namespace ImsDemuxPlugin
             if (!postProcessingError)
             {
                 // Copy the result files to the storage server
-                if (!CopyUIMFFileToStorageServer(retData, localUimfDecodedFilePath, "demultiplexed UIMF"))
+                if (!CopyUIMFFileToStorageServer(returnData, localUimfDecodedFilePath, "demultiplexed UIMF"))
                 {
                     postProcessingError = true;
                 }
@@ -759,7 +759,7 @@ namespace ImsDemuxPlugin
                 var oFailedResultsCopier = new clsFailedResultsCopier(mgrParams, taskParams);
                 oFailedResultsCopier.CopyFailedResultsToArchiveFolder(mWorkDir);
 
-                return retData;
+                return returnData;
             }
 
             // Delete local UIMF file(s)
@@ -778,13 +778,13 @@ namespace ImsDemuxPlugin
             }
 
             // Update the return data
-            retData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
-            retData.EvalMsg = "De-multiplexed";
+            returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+            returnData.EvalMsg = "De-multiplexed";
 
             if (demuxOptions.ResumeDemultiplexing)
-                retData.EvalMsg += " (resumed at frame " + resumeStartFrame + ")";
+                returnData.EvalMsg += " (resumed at frame " + resumeStartFrame + ")";
 
-            return retData;
+            return returnData;
 
         }
 
@@ -868,11 +868,11 @@ namespace ImsDemuxPlugin
         /// <summary>
         /// Copies the result files to the storage server
         /// </summary>
-        /// <param name="retData"></param>
+        /// <param name="returnData"></param>
         /// <param name="localUimfDecodedFilePath"></param>
         /// <param name="fileDescription"></param>
         /// <returns>True if success; otherwise false</returns>
-        private bool CopyUIMFFileToStorageServer(clsToolReturnData retData, string localUimfDecodedFilePath, string fileDescription)
+        private bool CopyUIMFFileToStorageServer(clsToolReturnData returnData, string localUimfDecodedFilePath, string fileDescription)
         {
             var success = true;
 
@@ -882,8 +882,8 @@ namespace ImsDemuxPlugin
             const int retryCount = 3;
             if (!CopyFileWithRetry(localUimfDecodedFilePath, Path.Combine(mDatasetFolderPathRemote, mDataset + ".uimf"), true, retryCount))
             {
-                retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, "Error copying " + fileDescription + " file to storage server");
-                retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, "Error copying " + fileDescription + " file to storage server");
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 success = false;
             }
 
@@ -893,9 +893,9 @@ namespace ImsDemuxPlugin
         /// <summary>
         /// Copies the result files to the storage server
         /// </summary>
-        /// <param name="retData"></param>
+        /// <param name="returnData"></param>
         /// <returns>True if success; otherwise false</returns>
-        private void CopyCalibrationLogToStorageServer(clsToolReturnData retData)
+        private void CopyCalibrationLogToStorageServer(clsToolReturnData returnData)
         {
             string msg;
 
@@ -926,8 +926,8 @@ namespace ImsDemuxPlugin
                 const bool backupDestFileBeforeCopy = true;
                 if (!CopyFileWithRetry(calibrationLogFilePath, targetFilePath, true, retryCount, backupDestFileBeforeCopy))
                 {
-                    retData.CloseoutMsg = "Error copying CalibrationLog.txt file to storage server";
-                    retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    returnData.CloseoutMsg = "Error copying CalibrationLog.txt file to storage server";
+                    returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 }
             }
 
@@ -1451,9 +1451,9 @@ namespace ImsDemuxPlugin
         /// Examines the Log_Entries table to make sure the .UIMF file was demultiplexed
         /// </summary>
         /// <param name="localUimfDecodedFilePath"></param>
-        /// <param name="retData"></param>
+        /// <param name="returnData"></param>
         /// <returns>True if it was demultiplexed, otherwise false</returns>
-        private bool ValidateUIMFDemultiplexed(string localUimfDecodedFilePath, clsToolReturnData retData)
+        private bool ValidateUIMFDemultiplexed(string localUimfDecodedFilePath, clsToolReturnData returnData)
         {
             bool uimfDemultiplexed;
             string msg;
@@ -1465,8 +1465,8 @@ namespace ImsDemuxPlugin
 
             if (dtDemultiplexingFinished == DateTime.MinValue)
             {
-                retData.CloseoutMsg = "Demultiplexing finished message not found in Log_Entries table";
-                msg = retData.CloseoutMsg + " in " + localUimfDecodedFilePath;
+                returnData.CloseoutMsg = "Demultiplexing finished message not found in Log_Entries table";
+                msg = returnData.CloseoutMsg + " in " + localUimfDecodedFilePath;
                 if (!string.IsNullOrEmpty(logEntryAccessorMsg))
                     msg += "; " + logEntryAccessorMsg;
 
@@ -1483,8 +1483,8 @@ namespace ImsDemuxPlugin
                 }
                 else
                 {
-                    retData.CloseoutMsg = "Demultiplexing finished message in Log_Entries table is more than 5 minutes old";
-                    msg = retData.CloseoutMsg + ": " + dtDemultiplexingFinished + "; assuming this is a demultiplexing failure";
+                    returnData.CloseoutMsg = "Demultiplexing finished message in Log_Entries table is more than 5 minutes old";
+                    msg = returnData.CloseoutMsg + ": " + dtDemultiplexingFinished + "; assuming this is a demultiplexing failure";
                     if (!string.IsNullOrEmpty(logEntryAccessorMsg))
                         msg += "; " + logEntryAccessorMsg;
 
@@ -1500,9 +1500,9 @@ namespace ImsDemuxPlugin
         /// Examines the Log_Entries table to make sure the .UIMF file was calibrated
         /// </summary>
         /// <param name="localUimfDecodedFilePath"></param>
-        /// <param name="retData"></param>
+        /// <param name="returnData"></param>
         /// <returns>True if it was calibrated, otherwise false</returns>
-        private bool ValidateUIMFCalibrated(string localUimfDecodedFilePath, clsToolReturnData retData)
+        private bool ValidateUIMFCalibrated(string localUimfDecodedFilePath, clsToolReturnData returnData)
         {
             bool uimfCalibrated;
             string msg;
@@ -1520,7 +1520,7 @@ namespace ImsDemuxPlugin
                     msg += "; " + logEntryAccessorMsg;
 
                 OnErrorEvent(msg);
-                retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, logMessage);
+                returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, logMessage);
                 uimfCalibrated = false;
             }
             else
@@ -1539,7 +1539,7 @@ namespace ImsDemuxPlugin
                         msg += "; " + logEntryAccessorMsg;
 
                     OnErrorEvent(msg);
-                    retData.CloseoutMsg = AppendToString(retData.CloseoutMsg, logMessage);
+                    returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, logMessage);
                     uimfCalibrated = false;
                 }
             }
