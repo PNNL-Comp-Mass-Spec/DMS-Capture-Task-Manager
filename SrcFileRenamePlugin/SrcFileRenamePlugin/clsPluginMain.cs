@@ -16,6 +16,7 @@ namespace SrcFileRenamePlugin
     // ReSharper disable once UnusedMember.Global
     public class clsPluginMain : clsToolRunnerBase
     {
+        // Ignore Spelling: Bionet, secfso
 
         #region "Methods"
         /// <summary>

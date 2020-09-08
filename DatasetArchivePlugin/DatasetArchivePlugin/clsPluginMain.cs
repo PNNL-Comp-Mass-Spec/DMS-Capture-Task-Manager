@@ -26,7 +26,7 @@ namespace DatasetArchivePlugin
         protected const string SP_NAME_STORE_MYEMSL_STATS = "StoreMyEMSLUploadStats";
         #endregion
 
-        #region "Classwide Variables"
+        #region "Class wide Variables"
 
         private bool mSubmittedToMyEMSL;
         private bool mMyEMSLAlreadyUpToDate;

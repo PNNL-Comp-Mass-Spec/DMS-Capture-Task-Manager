@@ -18,6 +18,7 @@ namespace CaptureToolPlugin
     // ReSharper disable once UnusedMember.Global
     public class clsPluginMain : clsToolRunnerBase
     {
+        // Ignore Spelling: Bionet, secfso, Logon
 
         #region "Methods"
         /// <summary>
