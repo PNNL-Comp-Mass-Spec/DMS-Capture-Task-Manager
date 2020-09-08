@@ -204,7 +204,7 @@ namespace Pacifica.Core
                 if (item.TryGetValue("destinationTable", out var destTable))
                 {
                     var t = (string)destTable;
-                    if (t.ToLower() == "files")
+                    if (string.Equals(t, "files", StringComparison.OrdinalIgnoreCase))
                     {
                         fileList.Add(new FileInfoObject(
                             (string)item["absolutelocalpath"],

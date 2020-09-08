@@ -349,7 +349,7 @@ namespace Pacifica.DMS_Metadata
                     jsonMetadata,
                     EasyHttp.HttpMethod.Post, 100, "application/json");
 
-                if ((int)responseStatusCode == 200 && response.ToLower().Contains("success"))
+                if ((int)responseStatusCode == 200 && response.IndexOf("success", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     if (TraceMode)
                         OnDebugEvent("Response received " + response);

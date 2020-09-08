@@ -25,6 +25,7 @@ namespace DatasetArchivePlugin
     /// </summary>
     abstract class clsOpsBase : EventNotifier
     {
+        // Ignore Spelling: MyEMSLUploader, Unsubscribe
 
         #region "Constants"
 
@@ -144,7 +145,7 @@ namespace DatasetArchivePlugin
 
             // Set client/server perspective & setup paths
             string baseStoragePath;
-            if (mMgrParams.GetParam("perspective").ToLower() == "client")
+            if (string.Equals(mMgrParams.GetParam("perspective"), "client", StringComparison.OrdinalIgnoreCase))
             {
                 baseStoragePath = mTaskParams.GetParam("Storage_Vol_External");
             }

@@ -112,7 +112,7 @@ namespace CaptureToolPlugin
             //   True means MgrParam "perspective" =  "client" which means we will use paths like \\proto-5\Exact04\2012_1
             //   False means MgrParam "perspective" = "server" which means we use paths like E:\Exact04\2012_1
             var tmpParam = mMgrParams.GetParam("perspective");
-            mClientServer = tmpParam.ToLower() == "client";
+            mClientServer = string.Equals(tmpParam, "client", StringComparison.OrdinalIgnoreCase);
 
             // Setup for Bionet use, if applicable
             mUseBioNet = useBioNet;
@@ -1128,7 +1128,7 @@ namespace CaptureToolPlugin
             // Determine whether the connector class should be used to connect to Bionet
             // This is defined by manager parameter ShareConnectorType
             // Default in October 2014 is PRISM
-            if (shareConnectorType.ToLower() == "dotnet")
+            if (string.Equals(shareConnectorType, "dotnet", StringComparison.OrdinalIgnoreCase))
                 connectionType = ConnectionType.DotNET;
             else
                 connectionType = ConnectionType.Prism;
@@ -1166,7 +1166,7 @@ namespace CaptureToolPlugin
                 // Look for job parameter Storage_Server_Name in storageVolExternal
                 // If mClientServer=false but storageVolExternal does not contain Storage_Server_Name then auto-switch mClientServer to true
 
-                if (!storageVolExternal.ToLower().Contains(computerName.ToLower()))
+                if (storageVolExternal.IndexOf(computerName, StringComparison.OrdinalIgnoreCase) < 0)
                 {
                     var autoEnableFlag = "AutoEnableClientServer_for_" + computerName;
                     var autoEnabledParamValue = mMgrParams.GetParam(autoEnableFlag, string.Empty);
@@ -1947,7 +1947,7 @@ namespace CaptureToolPlugin
 
             var brukerDotDDirectory = false;
 
-            if (datasetInfo.FileOrDirectoryName.ToLower().EndsWith(".d"))
+            if (datasetInfo.FileOrDirectoryName.EndsWith(".d", StringComparison.OrdinalIgnoreCase))
             {
                 // Bruker .D directory (common for the 12T and 15T)
                 // Look for journal files, which we can never copy because they are always locked
@@ -3526,7 +3526,7 @@ namespace CaptureToolPlugin
                         {
                             // IMS08_AgQTOF05 collects data as .D directories, which the capture pipeline will then convert to a .uimf file
                             // Make sure the matched directory is a .d file
-                            if (datasetInfo.FileOrDirectoryName.ToLower().EndsWith(".d"))
+                            if (datasetInfo.FileOrDirectoryName.EndsWith(".d", StringComparison.OrdinalIgnoreCase))
                                 break;
                         }
 

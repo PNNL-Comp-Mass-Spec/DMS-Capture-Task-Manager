@@ -641,7 +641,7 @@ namespace DatasetInfoPlugin
                     break;
 
                 // If the error message contains the text "timeout expired" then try again, up to 2 times
-                if (!mMsg.ToLower().Contains("timeout expired"))
+                if (mMsg.IndexOf("timeout expired", StringComparison.OrdinalIgnoreCase) < 0)
                     break;
 
                 System.Threading.Thread.Sleep(1500);
@@ -1289,7 +1289,7 @@ namespace DatasetInfoPlugin
             // Expecting to match a directory
             if (Directory.Exists(fileOrDirectoryPath))
             {
-                if (Path.GetExtension(fileOrDirectoryName).ToUpper() != ".D")
+                if (!string.Equals(Path.GetExtension(fileOrDirectoryName), ".D", StringComparison.OrdinalIgnoreCase))
                 {
                     // Directory exists, and it does not end in .D
                     return new List<string> { fileOrDirectoryName };

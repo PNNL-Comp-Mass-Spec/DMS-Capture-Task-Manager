@@ -572,7 +572,7 @@ namespace DatasetQualityPlugin
                 // Store the results by stepping through the arrays
                 // Skip the first two items provided they are "filename" and "StartTimeStamp")
                 var indexStart = 0;
-                if (headerNames[indexStart].ToLower() == "filename")
+                if (string.Equals(headerNames[indexStart], "filename", StringComparison.OrdinalIgnoreCase))
                 {
                     indexStart++;
 
@@ -929,7 +929,7 @@ namespace DatasetQualityPlugin
                 var configFilePathSource = Path.Combine(fiQuameter.DirectoryName, configFileNameSource);
                 var configFilePathTarget = Path.Combine(mWorkDir, configFileNameSource);
 
-                if (!File.Exists(configFilePathSource) && fiQuameter.DirectoryName.ToLower().EndsWith("x64"))
+                if (!File.Exists(configFilePathSource) && fiQuameter.DirectoryName.EndsWith("x64", StringComparison.OrdinalIgnoreCase))
                 {
                     // Using the 64-bit version of quameter
                     // Look for the .cfg file up one directory

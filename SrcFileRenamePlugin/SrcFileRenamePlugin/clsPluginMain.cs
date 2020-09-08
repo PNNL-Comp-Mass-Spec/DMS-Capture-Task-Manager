@@ -47,7 +47,7 @@ namespace SrcFileRenamePlugin
             // Determine if instrument is on Bionet
             var capMethod = mTaskParams.GetParam("Method");
             bool useBionet;
-            if (capMethod.ToLower() == "secfso")
+            if (string.Equals(capMethod, "secfso", StringComparison.OrdinalIgnoreCase))
             {
                 useBionet = true;
             }
