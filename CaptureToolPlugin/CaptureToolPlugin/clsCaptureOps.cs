@@ -1088,16 +1088,16 @@ namespace CaptureToolPlugin
         {
             var datasetName = taskParams.GetParam("Dataset");
             var jobNum = taskParams.GetParam("Job", 0);
-            var sourceVol = taskParams.GetParam("Source_Vol");                      // Example: \\exact04.bionet\
-            var sourcePath = taskParams.GetParam("Source_Path");                    // Example: ProteomicsData\
+            var sourceVol = taskParams.GetParam("Source_Vol").Trim();                      // Example: \\exact04.bionet\
+            var sourcePath = taskParams.GetParam("Source_Path").Trim();                    // Example: ProteomicsData\
 
             // Capture_Subdirectory is typically an empty string, but could be a partial path like: "CapDev" or "Smith\2014"
-            var legacyCaptureSubfolder = taskParams.GetParam("Capture_Subfolder");
+            var legacyCaptureSubfolder = taskParams.GetParam("Capture_Subfolder").Trim();
             var captureSubdirectory = taskParams.GetParam("Capture_Subdirectory", legacyCaptureSubfolder);
 
-            var storageVol = taskParams.GetParam("Storage_Vol");                    // Example: E:\
-            var storagePath = taskParams.GetParam("Storage_Path");                  // Example: Exact04\2012_1\
-            var storageVolExternal = taskParams.GetParam("Storage_Vol_External");   // Example: \\proto-5\
+            var storageVol = taskParams.GetParam("Storage_Vol").Trim();                    // Example: E:\
+            var storagePath = taskParams.GetParam("Storage_Path").Trim();                  // Example: Exact04\2012_1\
+            var storageVolExternal = taskParams.GetParam("Storage_Vol_External").Trim();   // Example: \\proto-5\
 
             var instClassName = taskParams.GetParam("Instrument_Class");                   // Examples: Finnigan_Ion_Trap, LTQ_FT, Triple_Quad, IMS_Agilent_TOF, Agilent_Ion_Trap
             var instrumentClass = clsInstrumentClassInfo.GetInstrumentClass(instClassName);    // Enum of instrument class type
@@ -1186,21 +1186,48 @@ namespace CaptureToolPlugin
             if (mClientServer)
             {
                 // Example: \\proto-5\
+                if (!ValidateStoragePath(storageVolExternal, "Parameter Storage_Vol_External", @"\\proto-5", retData))
+                    return false;
+
                 tempVol = storageVolExternal;
             }
             else
             {
                 // Example: E:\
+                if (!ValidateStoragePath(storageVol, "Parameter Storage_Vol", @"E:\", retData))
+                    return false;
+
                 tempVol = storageVol;
             }
 
             // Set up paths
+
+            if (!ValidateStoragePath(storagePath, "Parameter Storage_Path", @"Lumos01\2020_3", retData))
+                return false;
+
+            // Validate that storagePath includes both an instrument name and subdirectory name
+            // Furthermore, the instrument name should match the current instrument add exceptions in the future if this becomes required)
+            var storagePathParts = storagePath.Split(Path.DirectorySeparatorChar).ToList();
+            if (storagePathParts.Count > 1)
+            {
+                if (!ValidateStoragePathInstrument(instrumentName, storagePath, storagePathParts, retData))
+                    return false;
+            }
+            else
+            {
+                var storagePathPartsAlt = storagePath.Split(Path.AltDirectorySeparatorChar).ToList();
+                if (!ValidateStoragePathInstrument(instrumentName, storagePath, storagePathPartsAlt, retData))
+                    return false;
+            }
 
             // Directory on storage server where dataset directory goes
             var storageDirectoryPath = Path.Combine(tempVol, storagePath);
 
             // Confirm that the storage share has no invalid characters
             if (NameHasInvalidCharacter(storageDirectoryPath, "Storage share path", false, retData))
+                return false;
+
+            if (!ValidateStoragePath(storageDirectoryPath, "Path.Combine(tempVol, storagePath)", @"\\proto-8\Eclipse01\2020_3\", retData))
                 return false;
 
             string datasetDirectoryPath;
@@ -3347,6 +3374,56 @@ namespace CaptureToolPlugin
         {
             var dirExists = Directory.Exists(directoryPath);
             return dirExists;
+        }
+
+        /// <summary>
+        /// Validates that the specified storage path is not an empty string or \ or /
+        /// </summary>
+        /// <param name="storagePathRoot"></param>
+        /// <param name="rootPathDescription"></param>
+        /// <param name="exampleRootPath"></param>
+        /// <param name="retData"></param>
+        /// <returns>True if valid, otherwise false</returns>
+        private bool ValidateStoragePath(string storagePathRoot, string rootPathDescription, string exampleRootPath, clsToolReturnData retData)
+        {
+            if (!string.IsNullOrWhiteSpace(storagePathRoot) && !storagePathRoot.Equals("\\") && !storagePathRoot.Equals(" /"))
+                return true;
+
+            retData.CloseoutMsg = string.Format(
+                "{0} is invalid ({1}); it should be {2} or similar",
+                rootPathDescription, storagePathRoot, exampleRootPath);
+
+            LogError(retData.CloseoutMsg);
+            retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+            return false;
+        }
+
+        /// <summary>
+        /// Verifies that the storage path starts with the instrument name and has two or more directories
+        /// </summary>
+        /// <param name="instrumentName"></param>
+        /// <param name="storagePath"></param>
+        /// <param name="storagePathParts"></param>
+        /// <param name="retData"></param>
+        /// <returns>True if valid, otherwise false</returns>
+        private bool ValidateStoragePathInstrument(
+            string instrumentName,
+            string storagePath,
+            IReadOnlyCollection<string> storagePathParts,
+            clsToolReturnData retData)
+        {
+            if (storagePathParts.Count >= 2 && storagePathParts.First().Equals(instrumentName))
+                return true;
+
+            var exampleStoragePath = Path.Combine(instrumentName, "2020_3");
+
+            retData.CloseoutMsg = string.Format(
+                "Parameter Storage_Path is invalid ({0}); it must start with the instrument name and should thus be {1} or similar",
+                storagePath, exampleStoragePath);
+
+            LogError(retData.CloseoutMsg);
+            retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+            return false;
         }
 
         /// <summary>
