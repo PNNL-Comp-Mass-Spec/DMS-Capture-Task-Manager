@@ -27,7 +27,7 @@ namespace CaptureTaskManager
 
         #endregion
 
-        #region "Class variables"
+        #region "Class wide variables"
 
         protected readonly IMgrParams mMgrParams;
 
@@ -102,6 +102,7 @@ namespace CaptureTaskManager
         /// Requests a capture pipeline task
         /// </summary>
         /// <returns>RequestTaskResult enum specifying call result</returns>
+        // ReSharper disable once UnusedMemberInSuper.Global
         public abstract EnumRequestTaskResult RequestTask();
 
         /// <summary>
@@ -115,6 +116,7 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="taskResult">Enum representing task state</param>
         /// <param name="closeoutMsg">Message related to task closeout</param>
+        // ReSharper disable once UnusedMemberInSuper.Global
         public abstract void CloseTask(EnumCloseOutType taskResult, string closeoutMsg);
 
         /// <summary>
@@ -123,6 +125,7 @@ namespace CaptureTaskManager
         /// <param name="taskResult">Enum representing task state</param>
         /// <param name="closeoutMsg">Message related to task closeout</param>
         /// <param name="evalCode">Enum representing evaluation results</param>
+        // ReSharper disable once UnusedMemberInSuper.Global
         public abstract void CloseTask(EnumCloseOutType taskResult, string closeoutMsg, EnumEvalCode evalCode);
 
         /// <summary>
@@ -132,6 +135,7 @@ namespace CaptureTaskManager
         /// <param name="closeoutMsg">Message related to task closeout</param>
         /// <param name="evalCode">Enum representing evaluation results</param>
         /// <param name="evalMsg">Message related to evaluation results</param>
+        // ReSharper disable once UnusedMemberInSuper.Global
         public abstract void CloseTask(EnumCloseOutType taskResult, string closeoutMsg, EnumEvalCode evalCode, string evalMsg);
 
         /// <summary>

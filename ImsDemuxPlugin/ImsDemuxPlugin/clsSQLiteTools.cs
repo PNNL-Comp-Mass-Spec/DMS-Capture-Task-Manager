@@ -18,6 +18,7 @@ namespace ImsDemuxPlugin
     /// </summary>
     public class clsSQLiteTools : EventNotifier
     {
+        // Ignore Spelling: demultiplexing, demux
 
         public enum UimfQueryResults
         {
@@ -29,7 +30,7 @@ namespace ImsDemuxPlugin
         /// <summary>
         /// Evaluates the UIMF file to determine if it is multiplexed or not
         /// </summary>
-        /// <param name="uimfFilePath">Full path to uimf file</param>
+        /// <param name="uimfFilePath">Full path to UIMF file</param>
         /// <param name="numBitsForEncoding">Number of bits used for encoding; 0 if not multiplexed</param>
         /// <returns>Enum indicating test results</returns>
         public UimfQueryResults GetUimfMuxStatus(string uimfFilePath, out byte numBitsForEncoding)
@@ -64,7 +65,7 @@ namespace ImsDemuxPlugin
             var bitValueMatcher = new Regex(@"^(\d)bit", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             var imfProfileFieldAlwaysBlank = true;
 
-            // Evaluate results. If any of the frames has a filename containing "bit", de-multiplexing is required
+            // Evaluate results. If any of the frames has a filename containing "bit", demultiplexing is required
             // In addition, parse the "bit" value to determine numBitsForEncoding
             var deMuxRequired = false;
             foreach (var encodingSequence in encodingSequenceList)
@@ -83,7 +84,7 @@ namespace ImsDemuxPlugin
                 if (!filenameMatch.Success)
                     continue;
 
-                // Multiplex Filename contains "bit", so de-multiplexing is required
+                // Multiplex Filename contains "bit", so demultiplexing is required
                 deMuxRequired = true;
 
                 byte.TryParse(filenameMatch.Groups[1].Value, out numBitsForEncoding);
@@ -107,7 +108,7 @@ namespace ImsDemuxPlugin
                     var filenameMatch = bitValueMatcher2.Match(fileName);
                     if (filenameMatch.Success)
                     {
-                        // Filename contains "bit", so de-multiplexing is required
+                        // Filename contains "bit", so demultiplexing is required
                         deMuxRequired = true;
                         byte.TryParse(filenameMatch.Groups[2].Value, out numBitsForEncoding);
                     }

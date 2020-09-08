@@ -159,7 +159,7 @@ namespace Pacifica.Core
 
         /// <summary>
         /// Converts a windows path of the form \\proto-7\VOrbi05\2013_2\QC_Shew_13_02_500ng_15May13_Lynx_12-12-04\metadata.xml
-        /// to the unix form proto-7/VOrbi05/2013_2/QC_Shew_13_02_500ng_15May13_Lynx_12-12-04/metadata.xml
+        /// to the Linux form proto-7/VOrbi05/2013_2/QC_Shew_13_02_500ng_15May13_Lynx_12-12-04/metadata.xml
         /// </summary>
         /// <param name="path">Unix-style path</param>
         /// <returns></returns>

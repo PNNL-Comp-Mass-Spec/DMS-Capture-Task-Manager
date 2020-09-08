@@ -40,7 +40,7 @@ namespace DatasetArchivePlugin
 
         #endregion
 
-        #region "Class variables"
+        #region "Class wide variables"
 
         private readonly IMgrParams mMgrParams;
         protected readonly ITaskParams mTaskParams;
@@ -168,7 +168,7 @@ namespace DatasetArchivePlugin
                 return false;
             }
 
-            // Got to here, everything's OK, so let let the derived class take over
+            // Got to here, everything's OK, so let the derived class take over
             return true;
 
         }

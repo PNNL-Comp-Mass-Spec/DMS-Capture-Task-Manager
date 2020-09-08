@@ -25,6 +25,7 @@ namespace CaptureTaskManager
     /// <remarks>Used in CaptureTaskManager.clsMainProgram</remarks>
     public class clsToolRunnerBase : clsLoggerBase, IToolRunner
     {
+        // Ignore Spelling: yyyy-MM-dd hh:mm:ss tt, Lockfile
 
         #region "Constants"
 
@@ -36,7 +37,7 @@ namespace CaptureTaskManager
 
         #endregion
 
-        #region "Class variables"
+        #region "Class wide variables"
 
         protected IMgrParams mMgrParams;
         protected ITaskParams mTaskParams;
@@ -291,7 +292,7 @@ namespace CaptureTaskManager
                     {
                         ShowTraceMessage(string.Format("Error deleting file {0}: {1}", fileToDelete.FullName, ex.Message));
 
-                        // Make sure the readonly and system attributes are not set
+                        // Make sure the ReadOnly and System attributes are not set
                         // The manager will try to delete the file the next time is starts
                         fileToDelete.Attributes = fileToDelete.Attributes & ~FileAttributes.ReadOnly & ~FileAttributes.System;
                     }
@@ -317,7 +318,7 @@ namespace CaptureTaskManager
                     {
                         ShowTraceMessage(string.Format("Error deleting subdirectory {0}: {1}", subDirectory.FullName, ex.Message));
 
-                        // Make sure the readonly and system attributes are not set
+                        // Make sure the ReadOnly and System attributes are not set
                         // The manager will try to delete the file the next time is starts
                         subDirectory.Attributes = subDirectory.Attributes & ~FileAttributes.ReadOnly & ~FileAttributes.System;
                     }

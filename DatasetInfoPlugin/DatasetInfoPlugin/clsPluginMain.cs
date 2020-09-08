@@ -24,6 +24,7 @@ namespace DatasetInfoPlugin
     // ReSharper disable once UnusedMember.Global
     public class clsPluginMain : clsToolRunnerBase
     {
+        // Ignore Spelling: labelling, fid, acq, png, prepend, href, html, maldi, ser, Shimadzu, Illumina, Synapt, wiff, qgd, mgf, online
 
         #region "Constants"
 
@@ -556,7 +557,7 @@ namespace DatasetInfoPlugin
                     LogWarning(string.Format("Unable to load data for {0} spectra", mFailedScanCount));
                 }
 
-            } // foreach file in fileOrDirectoryRelativePaths
+            } // for each file in fileOrDirectoryRelativePaths
 
             // Merge the dataset info defined in cachedDatasetInfoXML
             // If cachedDatasetInfoXml contains just one item, simply return it
@@ -583,7 +584,7 @@ namespace DatasetInfoPlugin
             if (!useLocalOutputDirectory || retData.CloseoutType != EnumCloseOutType.CLOSEOUT_SUCCESS)
                 return retData;
 
-            // Set this to failed since we stored the QC graphics in the local work dir instead of on the storage server
+            // Set this to failed since we stored the QC graphics in the local working directory instead of on the storage server
             retData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
             retData.CloseoutMsg = AppendToComment(retData.CloseoutMsg,
                                                   "QC graphics were saved locally for debugging purposes; " +
@@ -1073,7 +1074,7 @@ namespace DatasetInfoPlugin
         /// Most datasets only have a single dataset file or directory, but FTICR_Imaging datasets
         /// can have multiple .D directories below a parent directory
         /// </summary>
-        /// <returns>List of data file file or directory names; empty list if not found</returns>
+        /// <returns>List of data file or directory names; empty list if not found</returns>
         /// <remarks>
         /// Returns UNKNOWN_FILE_TYPE for instrument types that are not recognized.
         /// Returns INVALID_FILE_TYPE for instruments for which we do not run MSFileInfoScanner

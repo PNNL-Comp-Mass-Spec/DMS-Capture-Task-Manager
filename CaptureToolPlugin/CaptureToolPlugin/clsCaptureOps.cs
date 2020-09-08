@@ -21,6 +21,7 @@ namespace CaptureToolPlugin
     /// </summary>
     public class clsCaptureOps : clsLoggerBase
     {
+        // Ignore Spelling: Username, bionet, Pwd, prepend, Unsubscribe, fso, secfso, Subfolder, dotnet, lcMethod, mcf, idx, ser, jpg
 
         #region "Enums"
 
@@ -39,7 +40,7 @@ namespace CaptureToolPlugin
         }
         #endregion
 
-        #region "Classwide variables"
+        #region "Class wide variables"
 
         private readonly IMgrParams mMgrParams;
 
@@ -113,7 +114,7 @@ namespace CaptureToolPlugin
             var tmpParam = mMgrParams.GetParam("perspective");
             mClientServer = tmpParam.ToLower() == "client";
 
-            // Setup for BioNet use, if applicable
+            // Setup for Bionet use, if applicable
             mUseBioNet = useBioNet;
             if (mUseBioNet)
             {
@@ -885,7 +886,7 @@ namespace CaptureToolPlugin
         }
 
         /// <summary>
-        /// Connect to a BioNet share using either mShareConnectorPRISM or mShareConnectorDotNET
+        /// Connect to a Bionet share using either mShareConnectorPRISM or mShareConnectorDotNET
         /// </summary>
         /// <param name="userName">Username</param>
         /// <param name="pwd">Password</param>
@@ -1779,7 +1780,7 @@ namespace CaptureToolPlugin
                         break;
                 }
 
-                // This regex is used to match files with names like:
+                // This RegEx is used to match files with names like:
                 // Cheetah_01.04.2012_08.46.17_Dataset_P28_D01_2629_192_3Jan12_Cheetah_11-09-32.lcmethod
                 var methodFileMatcher = new Regex(@".+\d+\.\d+\.\d+_\d+\.\d+\.\d+_.+\.lcmethod", RegexOptions.IgnoreCase);
                 var lstMethodFiles = new List<FileInfo>();
@@ -3078,7 +3079,7 @@ namespace CaptureToolPlugin
         {
             try
             {
-                // Regex to match lines of the form:
+                // RegEx to match lines of the form:
                 // 0, 0, 0, 0, 0
                 var zeroLineMatcher = new Regex("^[0, ]+$", RegexOptions.Compiled);
 
@@ -3341,7 +3342,7 @@ namespace CaptureToolPlugin
         /// Verifies specified directory path exists
         /// </summary>
         /// <param name="directoryPath">Directory path to test</param>
-        /// <returns>TRUE if directory was found</returns>
+        /// <returns>True if directory was found, otherwise false</returns>
         private bool ValidateDirectoryPath(string directoryPath)
         {
             var dirExists = Directory.Exists(directoryPath);
@@ -3357,7 +3358,7 @@ namespace CaptureToolPlugin
         /// <param name="instrumentClass">Instrument class</param>
         /// <param name="datasetInfo"></param>
         /// <param name="retData"></param>
-        /// <returns>True if the file or directory is appropriate for the instrument class</returns>
+        /// <returns>True if the file or directory is appropriate for the instrument class, otherwise false</returns>
         private bool ValidateWithInstrumentClass(
             string dataset,
             string sourceDirectoryPath,

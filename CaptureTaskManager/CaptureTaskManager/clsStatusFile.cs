@@ -19,6 +19,7 @@ namespace CaptureTaskManager
     /// </summary>
     public class clsStatusFile : EventNotifier, IStatusFile
     {
+        // Ignore Spelling: yyyy-MM-dd, hh:mm:ss tt
 
         #region "Constants"
 
@@ -26,7 +27,7 @@ namespace CaptureTaskManager
 
         #endregion
 
-        #region "Class variables"
+        #region "Class wide variables"
 
         private DateTime mLastFileWriteTime;
 

@@ -13,10 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
-using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
-using PRISMDatabaseUtils;
 
 namespace CaptureTaskManager
 {
@@ -25,6 +22,7 @@ namespace CaptureTaskManager
     /// </summary>
     public class clsMainProgram : clsLoggerBase
     {
+        // Ignore Spelling: yyyy-MM-dd hh:mm:ss tt, Unsubscribe
 
         #region "Enums"
 
@@ -57,7 +55,7 @@ namespace CaptureTaskManager
 
         #endregion
 
-        #region "Class variables"
+        #region "Class wide variables"
 
         private clsCaptureTaskMgrSettings mMgrSettings;
 
@@ -733,7 +731,7 @@ namespace CaptureTaskManager
             {
                 try
                 {
-                    // Verify that an error hasn't left the the system in an odd state
+                    // Verify that an error hasn't left the system in an odd state
                     if (StatusFlagFileError(clearWorkDirectory))
                     {
                         mLoopExitCode = LoopExitCode.FlagFile;

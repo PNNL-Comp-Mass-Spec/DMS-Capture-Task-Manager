@@ -15,8 +15,9 @@ using System.Text.RegularExpressions;
 
 namespace Pacifica.Core
 {
-    public class Utilities
+    public static class Utilities
     {
+        // Ignore Spelling: absolutelocalpath, subdir, hashsum, Json
 
         /// <summary>
         /// Decode a password

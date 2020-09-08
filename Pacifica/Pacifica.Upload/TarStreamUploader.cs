@@ -13,6 +13,8 @@ namespace Pacifica.Upload
 {
     public class TarStreamUploader
     {
+        // Ignore Spelling: Ingester, Workdir, addon
+
         #region "Constants"
 
         /// <summary>

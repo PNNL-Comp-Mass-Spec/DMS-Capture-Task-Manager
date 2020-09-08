@@ -27,7 +27,7 @@ namespace CaptureTaskManager
     class clsMessageHandler : clsLoggerBase, IDisposable
     {
 
-        #region "Class variables"
+        #region "Class wide variables"
 
         private string mBrokerUri;
 

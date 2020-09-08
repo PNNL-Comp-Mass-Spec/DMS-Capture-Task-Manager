@@ -30,6 +30,7 @@ namespace ImsDemuxPlugin
     // ReSharper disable once UnusedMember.Global
     public class clsPluginMain : clsToolRunnerBase
     {
+        // Ignore Spelling: Demultiplexer, demux, demultiplexing, demultiplexed, uimf, desc
 
         #region "Constants"
 
@@ -208,7 +209,7 @@ namespace ImsDemuxPlugin
             if (queryResult == clsSQLiteTools.UimfQueryResults.NonMultiplexed)
             {
                 // De-multiplexing not required, but we should still attempt calibration (if enabled)
-                msg = "No de-multiplexing required for dataset " + mDataset;
+                msg = "No demultiplexing required for dataset " + mDataset;
                 LogMessage(msg);
                 retData.EvalMsg = "Non-Multiplexed";
                 needToDemultiplex = false;
@@ -399,7 +400,7 @@ namespace ImsDemuxPlugin
                     return false;
                 }
 
-                // Note: providing true for parseViaFramework as a workaround for reading SqLite files located on a remote UNC share or in readonly folders
+                // Note: providing true for parseViaFramework as a workaround for reading SqLite files located on a remote UNC share or in ReadOnly folders
                 var connectionString = "Data Source = " + decodedUimfFilePath + "; Version=3; DateTimeFormat=Ticks;";
                 using (var cnUIMF = new SQLiteConnection(connectionString, true))
                 {

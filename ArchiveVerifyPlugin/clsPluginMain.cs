@@ -16,6 +16,7 @@ namespace ArchiveVerifyPlugin
     // ReSharper disable once UnusedMember.Global
     public class clsPluginMain : clsToolRunnerBase
     {
+        // Ignore Spelling: hashsum, subdir, Pacifica, myemsl, dmsarch, Frodo, Methow, keyvalue
 
         #region "Constants and Enums"
         private const string HASH_RESULTS_FILE_PREFIX = "results.";
@@ -699,7 +700,7 @@ namespace ArchiveVerifyPlugin
                 if (!ParameterDefined("Instrument_Name", datasetInstrument))
                     return false;
 
-                // Calculate the "year_quarter" code used for subfolders within an instrument folder
+                // Calculate the "year_quarter" code used for subdirectories within an instrument folder
                 // This value is based on the date the dataset was created in DMS
                 var datasetYearQuarter = DMSMetadataObject.GetDatasetYearQuarter(mTaskParams.TaskDictionary);
 

@@ -18,6 +18,8 @@ namespace Pacifica.Core
     /// </remarks>
     public class MyEMSLStatusCheck : EventNotifier
     {
+        // Ignore Spelling: hashsum, mimetype, mam Frodo, ArgC, CysAlk, hashtype, subdir, mtime, ctime, ok
+
         private readonly Configuration mPacificaConfig;
 
         /// <summary>
@@ -270,7 +272,7 @@ namespace Pacifica.Core
                                     errorMessage += "; exception " + exception;
                                 else
                                 {
-                                    // Use a regex to remove unnecessary text that makes some downstream evaluation harder (like checks in stored procedures)
+                                    // Use a RegEx to remove unnecessary text that makes some downstream evaluation harder (like checks in stored procedures)
                                     var exceptionUpdater = new Regex(@"Traceback \(most recent call last\):\s+File", RegexOptions.IgnoreCase);
                                     var exceptionClean = exceptionUpdater.Replace(exception, "in file");
                                     errorMessage += "; exception " + exceptionClean.Substring(0, 75) + " ...";
@@ -358,7 +360,7 @@ namespace Pacifica.Core
             // 3. Processing       .tar file being processed
             // 4. Verified         .tar file contents validated
             // 5. Stored           .tar file contents copied to Aurora
-            // 6. Available        Available in Elastic Search
+            // 6. Available        Visible via Elastic Search
             // 7. Archived         Data copied to tape
 
             var stepsCompleted = (byte)(Math.Round(7 * (percentComplete / 100.0)));

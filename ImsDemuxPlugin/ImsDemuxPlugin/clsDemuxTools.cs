@@ -22,6 +22,7 @@ namespace ImsDemuxPlugin
     /// </summary>
     public class clsDemuxTools : EventNotifier
     {
+        // Ignore Spelling: demultiplexed, demultiplexes, demultiplexing, demultiplexer, demux, ims_tof, Methow, calibrants, workdir, cmd
 
         #region "Constants"
         public const string CALIBRATION_LOG_FILE = "CalibrationLog.txt";
@@ -164,7 +165,7 @@ namespace ImsDemuxPlugin
                 // Add the bin-centric tables
                 using (var uimfReader = new DataReader(uimfLocalFileNamePath))
                 {
-                    // Note: providing true for parseViaFramework as a workaround for reading SqLite files located on a remote UNC share or in readonly folders
+                    // Note: providing true for parseViaFramework as a workaround for reading SqLite files located on a remote UNC share or in ReadOnly folders
                     var connectionString = "Data Source = " + uimfLocalFileNamePath;
                     using (var dbConnection = new System.Data.SQLite.SQLiteConnection(connectionString, true))
                     {
@@ -257,7 +258,7 @@ namespace ImsDemuxPlugin
             uimfRemoteFileNamePath = Path.Combine(mDatasetFolderPathRemote, uimfFileName);
             uimfLocalFileNamePath = Path.Combine(mWorkDir, mDataset + ".uimf");
 
-            // Copy uimf file to working directory
+            // Copy the UIMF file to working directory
             OnDebugEvent("Copying file from storage server");
             const int retryCount = 0;
             if (!CopyFileWithRetry(uimfRemoteFileNamePath, uimfLocalFileNamePath, false, retryCount))
@@ -690,12 +691,12 @@ namespace ImsDemuxPlugin
 
             if (!postProcessingError)
             {
-                // Rename uimf file on storage server
-                msg = "Renaming uimf file on storage server";
+                // Rename UIMF file on storage server
+                msg = "Renaming UIMF file on storage server";
                 OnDebugEvent(msg);
 
                 // If this is a re-run, the encoded file has already been renamed
-                // This is determined by looking for "_encoded" in uimf file name
+                // This is determined by looking for "_encoded" in the UIMF file name
                 if (!uimfFileName.Contains("_encoded"))
                 {
                     if (!RenameFile(uimfRemoteEncodedFileNamePath, Path.Combine(mDatasetFolderPathRemote, mDataset + "_encoded.uimf")))
@@ -734,7 +735,7 @@ namespace ImsDemuxPlugin
             if (!postProcessingError)
             {
                 // Copy the result files to the storage server
-                if (!CopyUIMFFileToStorageServer(retData, localUimfDecodedFilePath, "de-multiplexed UIMF"))
+                if (!CopyUIMFFileToStorageServer(retData, localUimfDecodedFilePath, "demultiplexed UIMF"))
                 {
                     postProcessingError = true;
                 }
@@ -761,7 +762,7 @@ namespace ImsDemuxPlugin
                 return retData;
             }
 
-            // Delete local uimf file(s)
+            // Delete local UIMF file(s)
             msg = "Cleaning up working directory";
             OnDebugEvent(msg);
             try
@@ -1193,7 +1194,7 @@ namespace ImsDemuxPlugin
                         }
                         else
                         {
-                            // Compare the line against the various Regex specs
+                            // Compare the line against the various RegEx specs
 
                             // % complete (integer values only)
                             var percentCompleteMatch = percentCompleteMatcher.Match(dataLine);

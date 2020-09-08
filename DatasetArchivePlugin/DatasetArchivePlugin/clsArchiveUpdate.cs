@@ -17,8 +17,9 @@ namespace DatasetArchivePlugin
     /// </summary>
     class clsArchiveUpdate : clsOpsBase
     {
+        // Ignore Spelling: dmsarch
 
-        #region "Class variables"
+        #region "Class wide variables"
 
         // Obsolete: "No longer used"
         // string mArchiveSharePath = string.Empty;             // The dataset folder path in the archive, for example: \\aurora.emsl.pnl.gov\dmsarch\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25

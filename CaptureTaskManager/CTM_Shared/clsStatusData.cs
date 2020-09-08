@@ -18,7 +18,7 @@ namespace CaptureTaskManager
     public static class clsStatusData
     {
 
-        #region "Class variables"
+        #region "Class wide variables"
 
         private static string mMostRecentLogMessage;
 

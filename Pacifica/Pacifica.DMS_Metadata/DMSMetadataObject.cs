@@ -17,6 +17,8 @@ namespace Pacifica.DMS_Metadata
 {
     public class DMSMetadataObject : EventNotifier
     {
+        // Ignore Spelling: Json, ssl, ncbi, subfolder, mtime, ctime, fileinfo, keyvalue, hashsum, subdir, hashtype
+
         /// <summary>
         /// If a dataset archive task involves more 15 GB of data, only archive the root directory and the QC directory
         /// Use property SkippedDatasetArchiveSubdirectories to view the skipped subdirectory names
@@ -851,7 +853,7 @@ namespace Pacifica.DMS_Metadata
                 }
                 else
                 {
-                    // Subfolder is defined; make sure it has the same capitalization as the one on disk
+                    // Subdirectory is defined; make sure it has the same capitalization as the one on disk
                     var sourceDirectory = new DirectoryInfo(sourceDirectoryPath);
                     if (!sourceDirectory.Exists)
                     {

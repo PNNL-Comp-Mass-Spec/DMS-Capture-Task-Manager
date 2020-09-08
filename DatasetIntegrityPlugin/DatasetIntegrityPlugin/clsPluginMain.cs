@@ -26,6 +26,7 @@ namespace DatasetIntegrityPlugin
     // ReSharper disable once UnusedMember.Global
     public class clsPluginMain : clsToolRunnerBase
     {
+        // Ignore Spelling: chrom, cli, batchfile, nosplash, Acq, utf, pos, ser, mgf, acqus, fid, idx, fticr, Shimadzu, uimf, cmd, wlkXZsvC-miP6A2KH-DgAuTix2
 
         #region "Constants"
         private const float RAW_FILE_MIN_SIZE_KB = 50;
@@ -1277,7 +1278,7 @@ namespace DatasetIntegrityPlugin
             var methodDirectories = acqDataDirectories[0].GetDirectories("*.m").ToList();
             if (methodDirectories.Count < 1)
             {
-                mRetData.EvalMsg = "Invalid dataset: No .m directories found found in the AcqData directory";
+                mRetData.EvalMsg = "Invalid dataset: No .m directories found in the AcqData directory";
                 LogError(mRetData.EvalMsg);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }

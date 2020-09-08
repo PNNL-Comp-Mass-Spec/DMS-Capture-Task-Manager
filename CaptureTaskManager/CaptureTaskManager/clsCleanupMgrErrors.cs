@@ -146,7 +146,7 @@ namespace CaptureTaskManager
             // Call SP ReportManagerErrorCleanup @ActionCode=1
             ReportManagerErrorCleanup(eCleanupActionCodeConstants.Start);
 
-            // Delete all folders and subfolders in work folder
+            // Delete all folders and subdirectories in the working directory
             var success = clsToolRunnerBase.CleanWorkDir(mWorkingDirPath, 1, out var failureMessage);
 
             if (!success)

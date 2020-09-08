@@ -20,7 +20,9 @@ namespace SrcFileRenamePlugin
     class clsRenameOps : EventNotifier
     {
 
-        #region "Class variables"
+        // Ignore Spelling: Bionet, Pwd, prepend, Username, Subfolder, secfso, fso, chromooff, flatline, LCmethod, plugsplit, slowsplit
+
+        #region "Class wide variables"
 
         private string mMsg = string.Empty;
         private readonly bool mUseBioNet;
@@ -40,7 +42,7 @@ namespace SrcFileRenamePlugin
         /// <param name="useBioNet">Flag to indicate if source instrument is on Bionet</param>
         public clsRenameOps(IMgrParams mgrParams, bool useBioNet)
         {
-            // Setup for BioNet use, if applicable
+            // Setup for Bionet use, if applicable
             mUseBioNet = useBioNet;
             if (mUseBioNet)
             {
