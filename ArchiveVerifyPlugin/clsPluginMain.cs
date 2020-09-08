@@ -803,13 +803,13 @@ namespace ArchiveVerifyPlugin
 
         /// <summary>
         /// Parse out the hash and file path from dataLine
-        /// Updates lstHashResults (or adds a new entry)
+        /// Updates hashResults (or adds a new entry)
         /// </summary>
         /// <param name="dataLine"></param>
-        /// <param name="lstHashResults">Dictionary where keys are unix file paths and values are clsHashInfo, tracking the Hash value and MyEMSL File ID</param>
-        /// <returns>True if lstHashResults is updated, false if unchanged</returns>
+        /// <param name="hashResults">Dictionary where keys are Linux file paths and values are clsHashInfo, tracking the Hash value and MyEMSL File ID</param>
+        /// <returns>True if hashResults is updated, false if unchanged</returns>
         /// <remarks></remarks>
-        private void ParseAndStoreHashInfo(string dataLine, ref Dictionary<string, clsHashInfo> lstHashResults)
+        private void ParseAndStoreHashInfo(string dataLine, ref Dictionary<string, clsHashInfo> hashResults)
         {
             // Data Line Format
             //
@@ -854,7 +854,7 @@ namespace ArchiveVerifyPlugin
             // Files should only be listed once in the SHA-1 hash results file
             // But, just in case there is a duplicate, we'll check for that
             // Results files could have duplicate entries if a file was copied to the archive via FTP and was stored via MyEMSL
-            if (lstHashResults.TryGetValue(archiveFilePath, out var hashInfoCached))
+            if (hashResults.TryGetValue(archiveFilePath, out var hashInfoCached))
             {
                 if (hashInfo.IsMatch(hashInfoCached))
                 {
@@ -867,12 +867,12 @@ namespace ArchiveVerifyPlugin
                     // Do not update the dictionary
                     return;
 
-                lstHashResults[archiveFilePath] = hashInfo;
+                hashResults[archiveFilePath] = hashInfo;
                 return;
             }
 
             // Append a new entry to the cached info
-            lstHashResults.Add(archiveFilePath, hashInfo);
+            hashResults.Add(archiveFilePath, hashInfo);
 
         }
 
@@ -898,7 +898,7 @@ namespace ArchiveVerifyPlugin
 
             var saveMergedFile = false;
 
-            // Merge the results in archivedFiles with lstHashResults
+            // Merge the results in archivedFiles with hashResults
             foreach (var archivedFile in archivedFiles)
             {
                 if (string.IsNullOrEmpty(archivedFile.Instrument))

@@ -1099,11 +1099,11 @@ namespace CaptureToolPlugin
             var storagePath = taskParams.GetParam("Storage_Path");                  // Example: Exact04\2012_1\
             var storageVolExternal = taskParams.GetParam("Storage_Vol_External");   // Example: \\proto-5\
 
-            var instClassName = taskParams.GetParam("Instrument_Class");            // Examples: Finnigan_Ion_Trap, LTQ_FT, Triple_Quad, IMS_Agilent_TOF, Agilent_Ion_Trap
-            var instrumentClass = clsInstrumentClassInfo.GetInstrumentClass(instClassName);     // Enum of instrument class type
-            var instName = taskParams.GetParam("Instrument_Name");                  // Instrument name
+            var instClassName = taskParams.GetParam("Instrument_Class");                   // Examples: Finnigan_Ion_Trap, LTQ_FT, Triple_Quad, IMS_Agilent_TOF, Agilent_Ion_Trap
+            var instrumentClass = clsInstrumentClassInfo.GetInstrumentClass(instClassName);    // Enum of instrument class type
+            var instrumentName = taskParams.GetParam("Instrument_Name");                         // Instrument name
 
-            var shareConnectorType = mMgrParams.GetParam("ShareConnectorType");        // Can be PRISM or DotNET (but has been PRISM since 2012)
+            var shareConnectorType = mMgrParams.GetParam("ShareConnectorType");         // Can be PRISM or DotNET (but has been PRISM since 2012)
             var computerName = Environment.MachineName;
 
             ConnectionType connectionType;
@@ -1458,7 +1458,7 @@ namespace CaptureToolPlugin
                         break;
 
                     case DatasetInfo.RawDSTypes.DirectoryExt:
-                        CaptureDirectoryExt(out msg, retData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath, copyWithResume, instrumentClass, instName);
+                        CaptureDirectoryExt(out msg, retData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath, copyWithResume, instrumentClass, instrumentName);
                         break;
 
                     case DatasetInfo.RawDSTypes.DirectoryNoExt:
@@ -1914,7 +1914,7 @@ namespace CaptureToolPlugin
         /// <param name="datasetDirectoryPath">Destination directory (on storage server); datasetInfo.FileOrDirectoryName will be appended to this</param>
         /// <param name="copyWithResume">True if using copy with resume</param>
         /// <param name="instrumentClass">Instrument class</param>
-        /// <param name="instName">Instrument name</param>
+        /// <param name="instrumentName">Instrument name</param>
         private void CaptureDirectoryExt(
             out string msg,
             clsToolReturnData retData,
@@ -1923,7 +1923,7 @@ namespace CaptureToolPlugin
             string datasetDirectoryPath,
             bool copyWithResume,
             clsInstrumentClassInfo.eInstrumentClass instrumentClass,
-            string instName)
+            string instrumentName)
         {
 
             SortedSet<string> filesToSkip = null;
@@ -1959,7 +1959,7 @@ namespace CaptureToolPlugin
                     {"*.mcf_idx-journal", "journal file"}
                 };
 
-                if (string.Equals(instName, "12T_FTICR_B", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(instrumentName, "12T_FTICR_B", StringComparison.OrdinalIgnoreCase))
                 {
                     // Add various mcf and mcf_idx files
                     // Specifically list those that have _1 or _2 etc. because we _do_ want to copy Storage.mcf_idx files
