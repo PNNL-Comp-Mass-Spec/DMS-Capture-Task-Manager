@@ -6,6 +6,8 @@ namespace CaptureTaskManager
     // Used in the DatasetIntegrityPlugin and elsewhere
     public static class clsInstrumentClassInfo
     {
+        // Ignore Spelling: Synapt, wiff, uimf, Shimadzu, qgd, acqu, fid, maldi, tof, baf, ser, tims, tdf, Illumina
+
         #region "Raw Data Type Constants"
 
         // Note: All of the RAW_DATA_TYPE constants need to be all lowercase
@@ -195,7 +197,7 @@ namespace CaptureTaskManager
             Data_Folders = 14,              // Directories of data
             Finnigan_FTICR = 15,            // 3T_FTICR, 7T_FTICR, 11T_FTICR        (last used in 2007)
             IMS_Agilent_TOF = 16,           // IMS02_AgTOF06, IMS04_AgTOF05, IMS05_AgQTOF04, IMS07_AgTOF04
-            Micromass_QTOF = 17,            // QTOF_MM1, External_Waters_TOF
+            Waters_TOF = 17,                // QTOF_MM1, External_Waters_TOF
             QStar_QTOF = 18,                // QTOF_1322                            (last used in 2003)
             Sciex_QTrap = 19,               // QTrap01
             Sciex_TripleTOF = 20,           // WashU_TripleTOF5600                  (last used in 2012)

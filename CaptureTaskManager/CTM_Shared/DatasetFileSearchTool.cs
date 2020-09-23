@@ -140,7 +140,7 @@ namespace CaptureTaskManager
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging:
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging_V2:
                 case clsInstrumentClassInfo.eInstrumentClass.IMS_Agilent_TOF:
-                case clsInstrumentClassInfo.eInstrumentClass.Micromass_QTOF:
+                case clsInstrumentClassInfo.eInstrumentClass.Waters_TOF:
                 case clsInstrumentClassInfo.eInstrumentClass.Waters_IMS:
                     // Preferentially capture dataset directories
                     // If a directory is not found, will instead look for a dataset file
