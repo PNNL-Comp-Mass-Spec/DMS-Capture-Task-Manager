@@ -23,6 +23,7 @@ namespace CaptureTaskManager
     /// </remarks>
     public class clsCaptureTaskMgrSettings : MgrSettingsDB, IMgrParams
     {
+        // Ignore Spelling: Utils, Ack, Seqs
 
         #region "Constants"
 
@@ -92,7 +93,14 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="configFileSettings">Manager settings loaded from file AppName.exe.config</param>
         /// <returns>True if successful; False on error</returns>
-        /// <remarks></remarks>
+        /// <remarks>
+        /// Settings are read by method LoadMgrSettingsFromDBWork in PRISMDatabaseUtils\AppSettings\MgrSettingsDB.cs
+        /// using the query
+        ///   SELECT ParameterName, ParameterValue FROM V_Mgr_Params WHERE ManagerName = 'MgrName';
+        /// If one of the manager settings is named 'MgrSettingGroupName', LoadMgrSettingsFromDBWork will be called again to load the group settings,
+        /// which are then stored with
+        ///   StoreParameters(mgrGroupSettingsFromDB, mgrSettingsGroup, skipExistingParameters: true);
+        /// </remarks>
         public bool LoadSettings(Dictionary<string, string> configFileSettings)
         {
             var success = LoadSettings(configFileSettings, true);

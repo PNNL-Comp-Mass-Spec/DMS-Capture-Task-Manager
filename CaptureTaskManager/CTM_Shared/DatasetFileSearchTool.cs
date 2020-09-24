@@ -197,7 +197,6 @@ namespace CaptureTaskManager
             bool checkForFilesFirst,
             out bool matchedDirectory)
         {
-
             var datasetInfo = new DatasetInfo(datasetName);
 
             var sourceDirectory = new DirectoryInfo(sourceDirectoryPath);

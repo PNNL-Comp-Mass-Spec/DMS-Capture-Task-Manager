@@ -315,7 +315,6 @@ namespace CaptureTaskManager
                     }
 
                     ShowTrace("Initialized MgrParams");
-
                 }
                 catch (Exception ex)
                 {
@@ -323,8 +322,6 @@ namespace CaptureTaskManager
                     ConsoleMsgUtils.SleepSeconds(0.5);
                     return false;
                 }
-
-
             }
             catch (Exception ex)
             {

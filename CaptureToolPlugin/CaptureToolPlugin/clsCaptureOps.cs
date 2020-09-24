@@ -1489,13 +1489,11 @@ namespace CaptureToolPlugin
                         break;
 
                     case DatasetInfo.RawDSTypes.DirectoryNoExt:
-                        CaptureDirectoryNoExt(out msg, returnData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath,
-                                           copyWithResume, instrumentClass);
+                        CaptureDirectoryNoExt(out msg, returnData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath, copyWithResume, instrumentClass);
                         break;
 
                     case DatasetInfo.RawDSTypes.BrukerImaging:
-                        CaptureBrukerImaging(out msg, returnData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath,
-                                             copyWithResume);
+                        CaptureBrukerImaging(out msg, returnData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath, copyWithResume);
                         break;
 
                     case DatasetInfo.RawDSTypes.BrukerSpot:
@@ -1545,7 +1543,6 @@ namespace CaptureToolPlugin
             string datasetDirectoryPath,
             bool copyWithResume)
         {
-
             var fileNames = new List<string>
             {
                 datasetInfo.FileOrDirectoryName
@@ -1553,7 +1550,6 @@ namespace CaptureToolPlugin
 
             CaptureOneOrMoreFiles(out msg, returnData, datasetInfo.DatasetName,
                 fileNames, sourceDirectoryPath, datasetDirectoryPath, copyWithResume);
-
         }
 
         /// <summary>
@@ -1608,7 +1604,6 @@ namespace CaptureToolPlugin
             string datasetDirectoryPath,
             bool copyWithResume)
         {
-
             msg = string.Empty;
             var validFiles = new List<string>();
             var errorMessages = new List<string>();
@@ -1738,7 +1733,6 @@ namespace CaptureToolPlugin
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
             else
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-
         }
 
         /// <summary>
@@ -3431,7 +3425,6 @@ namespace CaptureToolPlugin
         /// </summary>
         /// <param name="dataset"></param>
         /// <param name="sourceDirectoryPath"></param>
-        /// <param name="sourceType"></param>
         /// <param name="instrumentClass">Instrument class</param>
         /// <param name="datasetInfo"></param>
         /// <param name="returnData"></param>
@@ -3498,15 +3491,16 @@ namespace CaptureToolPlugin
                             {
                                 // Dataset name matched a directory with multiple .raw files; there must be only one .raw file
                                 returnData.CloseoutMsg = "Dataset name matched " + entityDescription +
-                                                      " with multiple .raw files; there must be only one .raw file";
+                                                         " with multiple .raw files; there must be only one .raw file";
 
                                 var fileNames = foundFiles.Select(file => file.Name).ToList();
                                 LogWarning("Multiple .raw files found in directory " + sourceDirectory.FullName + ": " + string.Join(", ", fileNames.Take(5)));
-
                             }
                             else
+                            {
                                 // Dataset name matched a directory but it does not have a .raw file
                                 returnData.CloseoutMsg = "Dataset name matched " + entityDescription + " but it does not have a .raw file";
+                            }
 
                             break;
                         }
@@ -3548,7 +3542,6 @@ namespace CaptureToolPlugin
 
                         // Dataset name matched multiple files; must be a .raw file
                         returnData.CloseoutMsg = "Dataset name matched " + entityDescription + "; must be a .raw file";
-
                     }
                     break;
 
@@ -3638,6 +3631,7 @@ namespace CaptureToolPlugin
                         }
 
                         if (sourceType != DatasetInfo.RawDSTypes.DirectoryExt &&
+                            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                             sourceType != DatasetInfo.RawDSTypes.DirectoryNoExt &&
                             sourceType != DatasetInfo.RawDSTypes.MultiFile)
                         {
