@@ -172,7 +172,9 @@ namespace Pacifica.DMS_Metadata
             mRemoteCacheInfoLockFiles = new Dictionary<string, FileInfo>(StringComparer.OrdinalIgnoreCase);
 
             if (string.IsNullOrWhiteSpace(managerName))
+            {
                 managerName = "DMSMetadataObject";
+            }
 
             ManagerName = managerName;
 
@@ -204,7 +206,9 @@ namespace Pacifica.DMS_Metadata
 
             // Instead, only allow certain domains, as defined by ValidateRemoteCertificate
             if (ServicePointManager.ServerCertificateValidationCallback == null)
+            {
                 ServicePointManager.ServerCertificateValidationCallback += ValidateRemoteCertificate;
+            }
 
             DatasetName = Utilities.GetDictionaryValue(taskParams, "Dataset", "Unknown_Dataset");
 
@@ -239,7 +243,9 @@ namespace Pacifica.DMS_Metadata
                 out criticalErrorMessage);
 
             if (criticalError)
+            {
                 return false;
+            }
 
             MetadataObject = Uploader.Upload.CreatePacificaMetadataObject(uploadMetadata, unmatchedFiles, out var eusInfo);
 
@@ -336,7 +342,9 @@ namespace Pacifica.DMS_Metadata
                 }
 
                 if (TraceMode)
+                {
                     OnDebugEvent("Contacting " + policyURL);
+                }
 
                 var response = EasyHttp.SendViaThreadStart(
                     mPacificaConfig, policyURL, null,
@@ -347,7 +355,9 @@ namespace Pacifica.DMS_Metadata
                 if ((int)responseStatusCode == 200 && response.IndexOf("success", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     if (TraceMode)
+                    {
                         OnDebugEvent("Response received " + response);
+                    }
 
                     policyError = false;
                     return true;
@@ -365,9 +375,13 @@ namespace Pacifica.DMS_Metadata
                 }
 
                 if (jsonMetadata.Length < 1255)
+                {
                     OnDebugEvent(jsonMetadata);
+                }
                 else
+                {
                     OnDebugEvent(jsonMetadata.Substring(0, 1250) + " ...");
+                }
 
                 return false;
             }
@@ -530,7 +544,9 @@ namespace Pacifica.DMS_Metadata
             foreach (var dataFile in fileList)
             {
                 if (filesToIgnore.Contains(dataFile.Name))
+                {
                     continue;
+                }
 
                 runningFileSize += dataFile.Length;
 
@@ -552,8 +568,10 @@ namespace Pacifica.DMS_Metadata
 
                     var success = AddUsingCacheInfoFile(dataFile, fileCollection, baseDSPath, out var remoteFilePath);
                     if (!success)
+                    {
                         throw new Exception(
                             string.Format("Error reported by AddUsingCacheInfoFile for {0} (CollectFileInformation)", dataFile.FullName));
+                    }
 
                     mRemoteCacheInfoFilesToRetrieve.Add(remoteFilePath);
                 }
@@ -592,7 +610,9 @@ namespace Pacifica.DMS_Metadata
             var currentTask = "Looking for existing files in MyEMSL for DatasetID " + uploadMetadata.DatasetID;
 
             if (!string.IsNullOrWhiteSpace(uploadMetadata.SubFolder))
+            {
                 currentTask += ", subdirectory " + uploadMetadata.SubFolder;
+            }
 
             OnStatusEvent(currentTask);
 
@@ -626,15 +646,25 @@ namespace Pacifica.DMS_Metadata
 
             double matchTolerance;
             if (expectedRemoteFileCount < 10)
+            {
                 matchTolerance = 0.7;
+            }
             else if (expectedRemoteFileCount < 20)
+            {
                 matchTolerance = 0.6;
+            }
             else if (expectedRemoteFileCount < 40)
+            {
                 matchTolerance = 0.5;
+            }
             else if (expectedRemoteFileCount < 80)
+            {
                 matchTolerance = 0.4;
+            }
             else
+            {
                 matchTolerance = 0.25;
+            }
 
             if (expectedRemoteFileCount > 0 &&
                 remoteFiles.Count < expectedRemoteFileCount * matchTolerance)
@@ -706,7 +736,9 @@ namespace Pacifica.DMS_Metadata
             const int MAX_LOCKFILE_WAIT_TIME_MINUTES = 20;
 
             if (mRemoteCacheInfoFilesToRetrieve.Count == 0)
+            {
                 return;
+            }
 
             mRemoteCacheInfoLockFiles.Clear();
 
@@ -717,10 +749,14 @@ namespace Pacifica.DMS_Metadata
                 var lockDirectoryPathSource = mFileTools.GetLockDirectory(sourceFile);
 
                 if (string.IsNullOrWhiteSpace(lockDirectoryPathSource))
+                {
                     continue;
+                }
 
                 if (mRemoteCacheInfoLockFiles.ContainsKey(lockDirectoryPathSource))
+                {
                     continue;
+                }
 
                 var sourceFileSizeMB = sourceFile.Length / 1024.0 / 1024.0;
                 if (sourceFileSizeMB < FileTools.LOCKFILE_MINIMUM_SOURCE_FILE_SIZE_MB)
@@ -752,14 +788,18 @@ namespace Pacifica.DMS_Metadata
         public void DeleteLockFiles()
         {
             if (mRemoteCacheInfoLockFiles.Count == 0)
+            {
                 return;
+            }
 
             foreach (var remoteLockFile in mRemoteCacheInfoLockFiles)
             {
                 try
                 {
                     if (remoteLockFile.Value.Exists)
+                    {
                         remoteLockFile.Value.Delete();
+                    }
                 }
                 // ReSharper disable once EmptyGeneralCatchClause
                 catch (Exception)
@@ -802,9 +842,13 @@ namespace Pacifica.DMS_Metadata
             // Determine the drive location based on perspective
             // (client perspective means running on a Proto storage server; server perspective means running on another computer)
             if (perspective == "client")
+            {
                 driveLocation = Utilities.GetDictionaryValue(taskParams, "Storage_Vol_External", string.Empty);
+            }
             else
+            {
                 driveLocation = Utilities.GetDictionaryValue(taskParams, "Storage_Vol", string.Empty);
+            }
 
             // Construct the dataset directory path
             var legacyFolderParam = Utilities.GetDictionaryValue(taskParams, "Folder", string.Empty);
@@ -822,9 +866,13 @@ namespace Pacifica.DMS_Metadata
 
             ArchiveModes archiveMode;
             if (Utilities.GetDictionaryValue(taskParams, "StepTool", string.Empty).Equals("DatasetArchive", StringComparison.OrdinalIgnoreCase))
+            {
                 archiveMode = ArchiveModes.archive;
+            }
             else
+            {
                 archiveMode = ArchiveModes.update;
+            }
 
             if (archiveMode == ArchiveModes.update)
             {
@@ -861,10 +909,14 @@ namespace Pacifica.DMS_Metadata
                         uploadMetadata.SubFolder = matchingDirectory.Name;
 
                         if (taskParams.ContainsKey("OutputFolderName"))
+                        {
                             taskParams["OutputFolderName"] = matchingDirectory.Name;
+                        }
 
                         if (taskParams.ContainsKey("OutputDirectoryName"))
+                        {
                             taskParams["OutputDirectoryName"] = matchingDirectory.Name;
+                        }
                     }
 
                     sourceDirectoryPath = matchingDirectory.FullName;
@@ -958,7 +1010,9 @@ namespace Pacifica.DMS_Metadata
             // vs. https://metadata.my.emsl.pnl.gov/fileinfo/files_for_keyvalue/omics.dms.dataset_id/595858
 
             if (TraceMode)
+            {
                 OnDebugEvent("Contacting " + metadataURL);
+            }
 
             // Retrieve a list of files already in MyEMSL for this dataset
             var fileInfoListJSON = EasyHttp.SendViaThreadStart(mPacificaConfig, metadataURL, out _);
@@ -1017,7 +1071,9 @@ namespace Pacifica.DMS_Metadata
                 if (!string.IsNullOrWhiteSpace(subDirFilter))
                 {
                     if (!string.Equals(subDirFilter, fileSubDir, StringComparison.OrdinalIgnoreCase))
+                    {
                         continue;
+                    }
                 }
 
                 // Unix style path
@@ -1133,7 +1189,9 @@ namespace Pacifica.DMS_Metadata
             var certificateFilePath = EasyHttp.ResolveCertFile(mPacificaConfig, callingMethod, out var errorMessage);
 
             if (!string.IsNullOrWhiteSpace(certificateFilePath))
+            {
                 return true;
+            }
 
             OnErrorEvent(errorMessage);
             return false;
@@ -1143,7 +1201,9 @@ namespace Pacifica.DMS_Metadata
         {
             var success = Utilities.ValidateRemoteCertificate(sender, cert, chain, policyErrors, out var errorMessage);
             if (success)
+            {
                 return true;
+            }
 
             OnErrorEvent(errorMessage);
             return false;

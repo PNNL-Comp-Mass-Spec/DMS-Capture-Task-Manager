@@ -106,7 +106,9 @@ namespace Pacifica.Upload
 
             // Override the name
             if (!pathInArchive.EndsWith("/"))
+            {
                 pathInArchive += "/";
+            }
 
             tarEntry.Name = pathInArchive;
             tarOutputStream.PutNextEntry(tarEntry);
@@ -178,18 +180,22 @@ namespace Pacifica.Upload
             var addonBytes = AddTarFileContentLength(EasyHttp.MYEMSL_METADATA_FILE_NAME, metadataFile.Length);
 
             if (debugging)
+            {
                 DisplayTarFileSizeDetails(tarMetadataFile, string.Format(
                                               metadataFile.Length.ToString().PadRight(12) + addonBytes.ToString().PadRight(12) +
                                               contentLength.ToString().PadRight(12) + "1".PadRight(3) + "metadata.txt"));
+            }
 
             contentLength += addonBytes;
 
             // Add the data/ directory
 
             if (debugging)
+            {
                 DisplayTarFileSizeDetails(tarMetadataFile, string.Format(
                                               "0".PadRight(12) + TAR_BLOCK_SIZE_BYTES.ToString().PadRight(12) +
                                               contentLength.ToString().PadRight(12) + "1".PadRight(3) + "data/"));
+            }
 
             contentLength += TAR_BLOCK_SIZE_BYTES;
 
@@ -205,7 +211,9 @@ namespace Pacifica.Upload
                 if (!string.IsNullOrEmpty(fileToArchive.Value.RelativeDestinationDirectory))
                 {
                     if (sourceFile.Directory == null)
+                    {
                         throw new DirectoryNotFoundException("Cannot access the parent folder for the source file: " + fileToArchive.Value.RelativeDestinationFullPath);
+                    }
 
                     if (!directoryEntriesStored.Contains(sourceFile.Directory.FullName))
                     {
@@ -213,12 +221,14 @@ namespace Pacifica.Upload
                         addonBytes = AddTarFileContentLength(dirPathInArchive, 0, out headerBlocks);
 
                         if (debugging)
+                        {
                             DisplayTarFileSizeDetails(tarMetadataFile, string.Format(
                                "0".PadRight(12) +
                                 addonBytes.ToString().PadRight(12) +
                                 contentLength.ToString().PadRight(12) +
                                 headerBlocks.ToString().PadRight(3) +
                                 FileTools.CompactPathString(dirPathInArchive, 150)));
+                        }
 
                         contentLength += addonBytes;
 
@@ -228,19 +238,23 @@ namespace Pacifica.Upload
 
                 var pathInArchive = string.Empty;
                 if (!string.IsNullOrWhiteSpace(fileToArchive.Value.RelativeDestinationDirectory))
+                {
                     pathInArchive += fileToArchive.Value.RelativeDestinationDirectory.TrimEnd('/') + '/';
+                }
 
                 pathInArchive += fileToArchive.Value.FileName;
 
                 addonBytes = AddTarFileContentLength(pathInArchive, fileToArchive.Value.FileSizeInBytes, out headerBlocks);
 
                 if (debugging)
+                {
                     DisplayTarFileSizeDetails(tarMetadataFile, string.Format(
                        fileToArchive.Value.FileSizeInBytes.ToString().PadRight(12) +
                         addonBytes.ToString().PadRight(12) +
                         contentLength.ToString().PadRight(12) +
                         headerBlocks.ToString().PadRight(3) +
                         FileTools.CompactPathString(fileToArchive.Value.RelativeDestinationFullPath, 150)));
+                }
 
                 contentLength += addonBytes;
             }
@@ -266,10 +280,12 @@ namespace Pacifica.Upload
             var finalPaddingLength = (recordCount * TarBuffer.DefaultRecordSize) - contentLength;
 
             if (debugging)
+            {
                 DisplayTarFileSizeDetails(tarMetadataFile, string.Format(
                                               "0".PadRight(12) + finalPaddingLength.ToString().PadRight(12) +
                                               contentLength.ToString().PadRight(12) + "0".PadRight(3) +
                                               "Padding at end (to make multiple of " + TarBuffer.DefaultRecordSize + ")"));
+            }
 
             contentLength = recordCount * TarBuffer.DefaultRecordSize;
 
@@ -393,9 +409,13 @@ namespace Pacifica.Upload
             Stream requestStream;
 
             if (writeToDisk)
+            {
                 requestStream = new FileStream(@"C:\CTM_Workdir\TestFile3.tar", FileMode.Create, FileAccess.Write, FileShare.Read);
+            }
             else
+            {
                 requestStream = webRequest.GetRequestStream();
+            }
 
             // Use SharpZipLib to create the tar file on-the-fly and directly push into the request stream
             // This way, the .tar file is never actually created on a local hard drive
@@ -413,7 +433,9 @@ namespace Pacifica.Upload
             var tempFolder = Utilities.GetTempDirectory(config);
             var dummyDataFolder = new DirectoryInfo(Path.Combine(tempFolder.FullName, "data"));
             if (!dummyDataFolder.Exists)
+            {
                 dummyDataFolder.Create();
+            }
 
             AppendDirectoryToTar(tarOutputStream, dummyDataFolder, "data", ref bytesWritten);
 
@@ -426,7 +448,9 @@ namespace Pacifica.Upload
                 if (!string.IsNullOrEmpty(fileToArchive.Value.RelativeDestinationDirectory))
                 {
                     if (sourceFile.Directory == null)
+                    {
                         throw new DirectoryNotFoundException("Cannot access the parent folder for the source file: " + fileToArchive.Value.RelativeDestinationFullPath);
+                    }
 
                     if (!dctDirectoryEntries.Contains(sourceFile.Directory.FullName))
                     {
@@ -465,7 +489,9 @@ namespace Pacifica.Upload
             RaiseStatusUpdate(100, contentLength, contentLength, string.Empty);
 
             if (writeToDisk)
+            {
                 return string.Empty;
+            }
 
             var responseData = string.Empty;
 

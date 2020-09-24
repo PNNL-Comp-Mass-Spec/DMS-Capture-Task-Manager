@@ -95,7 +95,9 @@ namespace DatasetIntegrityPlugin
             // Perform base class operations, if any
             mRetData = base.RunTool();
             if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
+            {
                 return mRetData;
+            }
 
             var instrumentName = mTaskParams.GetParam("Instrument_Name");
             var instClassName = mTaskParams.GetParam("Instrument_Class");
@@ -187,9 +189,14 @@ namespace DatasetIntegrityPlugin
                 case clsInstrumentClassInfo.eInstrumentClass.LTQ_FT:
                     dataFileNamePath = Path.Combine(datasetDirectory, mDataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
                     if (instrumentName.StartsWith("21T", StringComparison.OrdinalIgnoreCase))
+                    {
                         mRetData.CloseoutType = Test21TRawFile(dataFileNamePath);
+                    }
                     else
+                    {
                         mRetData.CloseoutType = TestLTQ_FTFile(dataFileNamePath);
+                    }
+
                     break;
 
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerFTMS:
@@ -322,7 +329,9 @@ namespace DatasetIntegrityPlugin
 
                 var success = CopyDotDDirectoryToLocal(mFileTools, datasetDirectoryPath, dotDDirectoryName, dotDDirectoryPathLocal, false);
                 if (!success)
+                {
                     return false;
+                }
 
                 // Create the BatchJob.obj file
                 // This is an XML file with the information required by OpenChrom to create CDF file from the .D directory
@@ -414,7 +423,9 @@ namespace DatasetIntegrityPlugin
 
                 // Delete the console output file
                 if (File.Exists(consoleOutputFilePath))
+                {
                     DeleteFileIgnoreErrors(consoleOutputFilePath);
+                }
             }
             catch (Exception ex)
             {
@@ -436,7 +447,9 @@ namespace DatasetIntegrityPlugin
 
                 var success = CopyDotDDirectoryToLocal(mFileTools, datasetDirectoryPath, dotDDirectoryName, dotDDirectoryPathLocal, true);
                 if (!success)
+                {
                     return false;
+                }
 
                 // Examine the .d directory to look for an AcqData subdirectory
                 // If it does not have one, it might have a .d subdirectory that itself has an AcqData directory
@@ -598,7 +611,9 @@ namespace DatasetIntegrityPlugin
                 var fileNames = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
                 foreach (var file in binFiles)
+                {
                     fileNames.Add(file.Name);
+                }
 
                 var requiredFiles = new List<string>
                 {
@@ -615,10 +630,14 @@ namespace DatasetIntegrityPlugin
 
                 var errorMessage = string.Empty;
                 if (missingFiles.Count == 1)
+                {
                     errorMessage = "Cannot convert .D to .UIMF; missing file " + missingFiles.First();
+                }
 
                 if (missingFiles.Count > 1)
+                {
                     errorMessage = "Cannot convert .D to .UIMF; missing files " + string.Join(", ", missingFiles);
+                }
 
                 if (errorMessage.Length > 0)
                 {
@@ -852,10 +871,14 @@ namespace DatasetIntegrityPlugin
             var fileSizeMB = fileSizeKB / 1024.0;
 
             if (fileSizeGB > 1)
+            {
                 return fileSizeGB.ToString("#0.0") + " GB";
+            }
 
             if (fileSizeMB > 1)
+            {
                 return fileSizeMB.ToString("#0.0") + " MB";
+            }
 
             return fileSizeKB.ToString("#0") + " KB";
         }
@@ -874,7 +897,9 @@ namespace DatasetIntegrityPlugin
             {
                 var fileSizeKB = GetFileSize(file);
                 if (fileSizeKB > largestSizeKB)
+                {
                     largestSizeKB = fileSizeKB;
+                }
             }
 
             return largestSizeKB;
@@ -918,9 +943,13 @@ namespace DatasetIntegrityPlugin
                 }
 
                 if (copyFile)
+                {
                     instrumentFile.CopyTo(newPath, true);
+                }
                 else
+                {
                     instrumentFile.MoveTo(newPath);
+                }
             }
         }
 
@@ -1010,7 +1039,9 @@ namespace DatasetIntegrityPlugin
             var invalidDataset = true;
 
             if (directoryList.Count == 1)
+            {
                 return true;
+            }
 
             if (directoryList.Count == 2)
             {
@@ -1087,11 +1118,15 @@ namespace DatasetIntegrityPlugin
                       "min allowable size is " + minSizeText + "; see " + filePath;
 
             if (Math.Abs(actualSizeKB) < 0.0001)
+            {
                 mRetData.EvalMsg = dataFileDescription + " file is 0 bytes";
+            }
             else
+            {
                 mRetData.EvalMsg = dataFileDescription + " file size is " +
                                    FileSizeToString(actualSizeKB) + "; " +
                                    "minimum allowed size " + minSizeText;
+            }
 
             LogError(msg);
         }
@@ -1117,7 +1152,9 @@ namespace DatasetIntegrityPlugin
             if (dotDDirectories.Count > 1)
             {
                 if (!PossiblyRenameSupersededDirectory(dotDDirectories, clsInstrumentClassInfo.DOT_D_EXTENSION))
+                {
                     return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
             }
 
             // Look for Data.MS file in the .D directory
@@ -1162,7 +1199,9 @@ namespace DatasetIntegrityPlugin
             if (dotDDirectories.Count > 1)
             {
                 if (!PossiblyRenameSupersededDirectory(dotDDirectories, clsInstrumentClassInfo.DOT_D_EXTENSION))
+                {
                     return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
             }
 
             // Look for the AcqData directory below the .D directory
@@ -1605,7 +1644,9 @@ namespace DatasetIntegrityPlugin
             if (dotDDirectories.Count > 1)
             {
                 if (!PossiblyRenameSupersededDirectory(dotDDirectories, clsInstrumentClassInfo.DOT_D_EXTENSION))
+                {
                     return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
             }
 
             // Verify that the files in requiredInstrumentFiles exist
@@ -1739,10 +1780,14 @@ namespace DatasetIntegrityPlugin
                         var bafFiles = dotDDirectory.GetFiles("*.baf", SearchOption.TopDirectoryOnly).Length;
 
                         if (serFiles > 0)
+                        {
                             serFound = true;
+                        }
 
                         if (fidFiles > 0)
+                        {
                             fidFound = true;
+                        }
 
                         if (serFiles == 0 && fidFiles == 0 && bafFiles == 0)
                         {
@@ -1774,20 +1819,28 @@ namespace DatasetIntegrityPlugin
                     foreach (var dotDDirectory in dotDDirectories)
                     {
                         if (dotDDirectory.GetFiles("ser", SearchOption.TopDirectoryOnly).Length == 1)
-                            serCount += 1;
+                        {
+                            serCount++;
+                        }
 
                         if (dotDDirectory.GetFiles("analysis.baf", SearchOption.TopDirectoryOnly).Length == 1)
-                            bafCount += 1;
+                        {
+                            bafCount++;
+                        }
                     }
 
                     if (bafCount == 1 && serCount == 1)
+                    {
                         allowMultipleDirectories = true;
+                    }
                 }
 
                 if (!allowMultipleDirectories)
                 {
                     if (!PossiblyRenameSupersededDirectory(dotDDirectories, clsInstrumentClassInfo.DOT_D_EXTENSION))
+                    {
                         return EnumCloseOutType.CLOSEOUT_FAILED;
+                    }
                 }
             }
 
@@ -1819,13 +1872,15 @@ namespace DatasetIntegrityPlugin
             {
                 if (mcfFile.Length > dataFileSizeKB * 1024)
                 {
-                    dataFileSizeKB = mcfFile.Length / (1024F);
+                    dataFileSizeKB = mcfFile.Length / 1024F;
                     mctFileName = mcfFile.Name;
                     mcfFileExists = true;
                 }
 
                 if (mcfFile.Length > mcfFileSizeMax)
+                {
                     mcfFileSizeMax = mcfFile.Length;
+                }
             }
 
             if (!mcfFileExists && requireMCFFile)
@@ -1840,9 +1895,13 @@ namespace DatasetIntegrityPlugin
                 // Verify size of the largest .mcf file
                 float minSizeKB;
                 if (string.Equals(mctFileName, "Storage.mcf_idx", StringComparison.OrdinalIgnoreCase))
+                {
                     minSizeKB = 4;
+                }
                 else
+                {
                     minSizeKB = MCF_FILE_MIN_SIZE_KB;
+                }
 
                 if (dataFileSizeKB < minSizeKB)
                 {
@@ -2095,7 +2154,9 @@ namespace DatasetIntegrityPlugin
                         {
                             var newBytes = reader.Read(buffer, 0, BYTES_PER_READ);
                             if (newBytes <= 0)
+                            {
                                 break;
+                            }
 
                             bytesRead += newBytes;
                         }
@@ -2378,7 +2439,7 @@ namespace DatasetIntegrityPlugin
                 {
                     var frameList = uimfReader.GetMasterFrameList();
 
-                    if (frameList.Count <= 0)
+                    if (frameList.Count == 0)
                     {
                         uimfStatusMessage = "appears corrupt (no frame info)";
                         return false;
@@ -2457,7 +2518,9 @@ namespace DatasetIntegrityPlugin
                         // As of September 2014, IMS05 does not have a high pressure ion funnel
                         // In order for the logic checks to work, we will override the HighPressureFunnelPressure value listed using RearIonFunnelPressure
                         if (highPressureFunnel < rearIonFunnel)
+                        {
                             highPressureFunnel = rearIonFunnel;
+                        }
                     }
 
                     var pressureColumnsArePresent = (quadPressure > 0 &&
@@ -2499,7 +2562,9 @@ namespace DatasetIntegrityPlugin
                     }
 
                     if (frameNumber % 100 == 0)
+                    {
                         LogDebug("Validated frame " + frameNumber);
+                    }
                 }
             }
 
@@ -2519,11 +2584,15 @@ namespace DatasetIntegrityPlugin
                       "typically the file is at least " + thresholdText + "; see " + filePath;
 
             if (Math.Abs(actualSizeKB) < 0.0001)
+            {
                 mRetData.EvalMsg = dataFileDescription + " file is 0 bytes";
+            }
             else
+            {
                 mRetData.EvalMsg = dataFileDescription + " file size is " +
                                    FileSizeToString(actualSizeKB) + "; " +
                                    "typically the file is at least " + thresholdText;
+            }
 
             LogWarning(msg);
         }
@@ -2588,25 +2657,33 @@ namespace DatasetIntegrityPlugin
             var pluginPath = Path.Combine(appDirectoryPath, "DatasetIntegrityPlugin.dll");
             var success = StoreToolVersionInfoOneFile(ref toolVersionInfo, pluginPath);
             if (!success)
+            {
                 return false;
+            }
 
             // Lookup the version of SQLite
             var sqLitePath = Path.Combine(appDirectoryPath, "System.Data.SQLite.dll");
             success = StoreToolVersionInfoOneFile(ref toolVersionInfo, sqLitePath);
             if (!success)
+            {
                 return false;
+            }
 
             // Lookup the version of the UIMFLibrary
             var uimfLibraryPath = Path.Combine(appDirectoryPath, "UIMFLibrary.dll");
             success = StoreToolVersionInfoOneFile(ref toolVersionInfo, uimfLibraryPath);
             if (!success)
+            {
                 return false;
+            }
 
             if (!string.IsNullOrWhiteSpace(agilentToUimfConverterPath))
             {
                 success = StoreToolVersionInfoOneFile(ref toolVersionInfo, agilentToUimfConverterPath);
                 if (!success)
+                {
                     return false;
+                }
             }
 
             // Store path to CaptureToolPlugin.dll in toolFiles
@@ -2680,7 +2757,9 @@ namespace DatasetIntegrityPlugin
                         var dataLine = reader.ReadLine();
 
                         if (string.IsNullOrEmpty(dataLine))
+                        {
                             continue;
+                        }
 
                         if (string.Equals(dataLine.Trim(), "productTrialKey=true", StringComparison.OrdinalIgnoreCase))
                         {
@@ -2691,7 +2770,9 @@ namespace DatasetIntegrityPlugin
                         else
                         {
                             if (dataLine.StartsWith("trace", StringComparison.OrdinalIgnoreCase))
+                            {
                                 traceFound = true;
+                            }
 
                             settingsData.Add(dataLine);
                         }
@@ -2701,7 +2782,9 @@ namespace DatasetIntegrityPlugin
                 if (!settingsFileUpdateRequired)
                 {
                     if (mDebugLevel >= 2)
+                    {
                         LogDebug("OpenChrom settings file is up to date at " + settingsFile.FullName);
+                    }
 
                     return true;
                 }
@@ -2711,7 +2794,9 @@ namespace DatasetIntegrityPlugin
 
                 // Possibly add the trace= line
                 if (!traceFound)
+                {
                     settingsData.Add("trace=1");
+                }
 
                 LogMessage("Adding productSerialKey entry to OpenChrom settings file at " + settingsFile.FullName);
 
@@ -2719,7 +2804,9 @@ namespace DatasetIntegrityPlugin
                 using (var writer = new StreamWriter(new FileStream(settingsFile.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
                 {
                     foreach (var dataLine in settingsData)
+                    {
                         writer.WriteLine(dataLine);
+                    }
                 }
 
                 return true;
@@ -2773,7 +2860,7 @@ namespace DatasetIntegrityPlugin
                 // Increment mStatusUpdateIntervalMinutes by 1 minute every time the status is logged, up to a maximum of 30 minutes
                 if (mStatusUpdateIntervalMinutes < 30)
                 {
-                    mStatusUpdateIntervalMinutes += 1;
+                    mStatusUpdateIntervalMinutes++;
                 }
             }
         }

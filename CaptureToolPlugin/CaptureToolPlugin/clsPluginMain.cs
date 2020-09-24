@@ -35,7 +35,9 @@ namespace CaptureToolPlugin
             // Perform base class operations, if any
             var returnData = base.RunTool();
             if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
+            {
                 return returnData;
+            }
 
             // Store the version info in the database
             if (!StoreToolVersionInfo())
@@ -71,13 +73,17 @@ namespace CaptureToolPlugin
                 var success = capOpTool.DoOperation(mTaskParams, returnData);
 
                 if (!success && !string.IsNullOrWhiteSpace(returnData.CloseoutMsg) && mTraceMode)
+                {
                     ShowTraceMessage(returnData.CloseoutMsg);
+                }
 
                 if (capOpTool.NeedToAbortProcessing)
                 {
                     mNeedToAbortProcessing = true;
                     if (returnData.CloseoutType != EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING)
+                    {
                         returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING;
+                    }
                 }
 
                 LogDebug("clsPluginMain.RunTool(): Completed capture operation");

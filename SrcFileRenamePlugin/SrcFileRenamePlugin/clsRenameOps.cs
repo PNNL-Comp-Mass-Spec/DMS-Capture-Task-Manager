@@ -112,11 +112,17 @@ namespace SrcFileRenamePlugin
                     var msg = "Error " + mShareConnector.ErrorMessage + " connecting to " + sourceDirectoryPath + " as user " + mUserName + " using 'secfso'";
 
                     if (mShareConnector.ErrorMessage == "1326")
+                    {
                         OnErrorEvent(msg + "; you likely need to change the Capture_Method from secfso to fso");
+                    }
                     else if (mShareConnector.ErrorMessage == "53")
+                    {
                         OnErrorEvent(msg + "; the password may need to be reset");
+                    }
                     else
+                    {
                         OnErrorEvent(msg);
+                    }
 
                     errorMessage = "Error connecting to " + sourceDirectoryPath + " as user " + mUserName + " using 'secfso'";
                     return EnumCloseOutType.CLOSEOUT_FAILED;
@@ -200,12 +206,16 @@ namespace SrcFileRenamePlugin
 
             // Close connection, if open
             if (mConnected)
+            {
                 DisconnectShare(ref mShareConnector);
+            }
 
             if (countRenamed == 0)
             {
                 if (string.IsNullOrEmpty(errorMessage))
+                {
                     errorMessage = "Data file and/or directory not found on the instrument; cannot rename";
+                }
 
                 OnErrorEvent("Dataset " + datasetName + ": " + errorMessage);
 
@@ -276,9 +286,13 @@ namespace SrcFileRenamePlugin
 
                 bool alreadyRenamed;
                 if (!datasetName.StartsWith("x_") && datasetNameBase.StartsWith("x_"))
+                {
                     alreadyRenamed = true;
+                }
                 else
+                {
                     alreadyRenamed = false;
+                }
 
                 // Get a list of files containing the dataset name
                 var matchedFiles = GetMatchingFiles(sourceDirectory, datasetNameBase);
@@ -385,7 +399,9 @@ namespace SrcFileRenamePlugin
             try
             {
                 if (!instrumentFile.Exists || instrumentFile.DirectoryName == null)
+                {
                     return true;
+                }
 
                 newPath = Path.Combine(instrumentFile.DirectoryName, "x_" + instrumentFile.Name);
                 instrumentFile.MoveTo(newPath);
@@ -399,9 +415,13 @@ namespace SrcFileRenamePlugin
                 OnErrorEvent(mMsg, ex);
 
                 if (ex.Message.Contains("Access to the path") && ex.Message.Contains("is denied"))
+                {
                     errorMessage = "Error renaming file: access is denied";
+                }
                 else
+                {
                     errorMessage = "Error renaming file: " + ex.GetType();
+                }
 
                 return false;
             }
@@ -422,7 +442,9 @@ namespace SrcFileRenamePlugin
             try
             {
                 if (!instrumentDirectory.Exists || instrumentDirectory.Parent == null)
+                {
                     return true;
+                }
 
                 newPath = Path.Combine(instrumentDirectory.Parent.FullName, "x_" + instrumentDirectory.Name);
                 instrumentDirectory.MoveTo(newPath);
@@ -436,9 +458,13 @@ namespace SrcFileRenamePlugin
                 OnErrorEvent(mMsg, ex);
 
                 if (ex.Message.Contains("Access to the path") && ex.Message.Contains("is denied"))
+                {
                     errorMessage = "Error renaming directory: access is denied";
+                }
                 else
+                {
                     errorMessage = "Error renaming directory: " + ex.GetType();
+                }
 
                 return false;
             }

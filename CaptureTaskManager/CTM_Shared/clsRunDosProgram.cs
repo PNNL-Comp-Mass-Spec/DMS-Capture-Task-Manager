@@ -167,7 +167,10 @@ namespace CaptureTaskManager
             set
             {
                 if (value < 250)
+                {
                     value = 250;
+                }
+
                 mMonitorInterval = value;
             }
         }
@@ -336,7 +339,9 @@ namespace CaptureTaskManager
         {
             // Require a minimum monitoring interval of 250 milliseconds
             if (mMonitorInterval < 250)
+            {
                 mMonitorInterval = 250;
+            }
 
             if (maxRuntimeSeconds > 0 && maxRuntimeSeconds < 15)
             {
@@ -409,7 +414,9 @@ namespace CaptureTaskManager
                     }
 
                     if (!ProgramAborted)
+                    {
                         continue;
+                    }
 
                     if (mAbortProgramPostLogEntry && !abortLogged)
                     {

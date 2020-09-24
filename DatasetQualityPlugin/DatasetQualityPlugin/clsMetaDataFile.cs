@@ -16,7 +16,7 @@ namespace DatasetQualityPlugin
     /// <summary>
     /// Creates a metadata file in the dataset folder
     /// </summary>
-    public class clsMetaDataFile
+    public static class clsMetaDataFile
     {
         #region "Constants"
 

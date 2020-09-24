@@ -103,10 +103,14 @@ namespace CaptureTaskManager
         public static bool CBoolSafe(string value, bool defaultValue)
         {
             if (string.IsNullOrEmpty(value))
+            {
                 return defaultValue;
+            }
 
             if (bool.TryParse(value, out var blnValue))
+            {
                 return blnValue;
+            }
 
             return defaultValue;
         }
@@ -120,10 +124,14 @@ namespace CaptureTaskManager
         public static int CIntSafe(string value, int defaultValue)
         {
             if (string.IsNullOrEmpty(value))
+            {
                 return defaultValue;
+            }
 
             if (int.TryParse(value, out var intValue))
+            {
                 return intValue;
+            }
 
             return defaultValue;
         }
@@ -139,10 +147,14 @@ namespace CaptureTaskManager
             var fValue = defaultValue;
 
             if (string.IsNullOrEmpty(value))
+            {
                 return fValue;
+            }
 
             if (float.TryParse(value, out fValue))
+            {
                 return fValue;
+            }
 
             return fValue;
         }
@@ -159,10 +171,14 @@ namespace CaptureTaskManager
         public static int GetReturnCodeValue(string returnCode)
         {
             if (string.IsNullOrWhiteSpace(returnCode))
+            {
                 return 0;
+            }
 
             if (int.TryParse(returnCode, out var returnCodeValue))
+            {
                 return returnCodeValue;
+            }
 
             return -1;
         }
@@ -219,7 +235,9 @@ namespace CaptureTaskManager
         public static string GetExceptionStackTrace(Exception ex, bool useMultiLine)
         {
             if (useMultiLine)
+            {
                 return StackTraceFormatter.GetExceptionStackTraceMultiLine(ex);
+            }
 
             return StackTraceFormatter.GetExceptionStackTrace(ex);
         }
@@ -281,9 +299,13 @@ namespace CaptureTaskManager
             LogTools.OfflineMode = true;
 
             if (runningLinux)
+            {
                 Console.WriteLine("Offline mode enabled globally (running Linux)");
+            }
             else
+            {
                 Console.WriteLine("Offline mode enabled globally");
+            }
         }
 
         /// <summary>
@@ -293,7 +315,9 @@ namespace CaptureTaskManager
         public static string GetAppDirectoryPath()
         {
             if (mAppDirectoryPath != null)
+            {
                 return mAppDirectoryPath;
+            }
 
             mAppDirectoryPath = PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppDirectoryPath();
 
@@ -357,7 +381,9 @@ namespace CaptureTaskManager
             [CallerMemberName] string callingFunction = "")
         {
             if (cmd == null)
+            {
                 throw new ArgumentException("command is undefined", nameof(cmd));
+            }
 
             if (string.IsNullOrEmpty(connectionString))
             {
@@ -365,11 +391,19 @@ namespace CaptureTaskManager
             }
 
             if (string.IsNullOrEmpty(callingFunction))
+            {
                 callingFunction = "UnknownCaller";
+            }
+
             if (retryCount < 1)
+            {
                 retryCount = 1;
+            }
+
             if (timeoutSeconds < 5)
+            {
                 timeoutSeconds = 5;
+            }
 
             // When data retrieval fails, delay for 5 seconds on the first try
             // Double the delay time for each subsequent attempt, up to a maximum of 90 seconds between attempts
@@ -399,7 +433,7 @@ namespace CaptureTaskManager
                 {
                     string msg;
 
-                    retryCount -= 1;
+                    retryCount--;
                     if (cmd.CommandType == CommandType.StoredProcedure)
                     {
                         msg = callingFunction + "; Exception running stored procedure " + cmd.CommandText;
@@ -424,7 +458,9 @@ namespace CaptureTaskManager
                     LogTools.LogError(msg);
 
                     if (retryCount <= 0)
+                    {
                         break;
+                    }
 
                     ProgRunner.SleepMilliseconds(retryDelaySeconds * 1000);
 
@@ -454,9 +490,13 @@ namespace CaptureTaskManager
                 string msg;
 
                 if (diSourceFolder.Exists)
+                {
                     msg = "Folder exists [" + pathToCheck + "]; called from " + callingFunction;
+                }
                 else
+                {
                     msg = "Folder not found [" + pathToCheck + "]; called from " + callingFunction;
+                }
 
                 LogTools.LogMessage(msg);
             }

@@ -90,13 +90,19 @@ namespace CaptureTaskManager
         public bool GetParam(string name, bool valueIfMissing)
         {
             if (!mJobParams.TryGetValue(name, out var valueText))
+            {
                 return valueIfMissing;
+            }
 
             if (string.IsNullOrWhiteSpace(valueText))
+            {
                 return valueIfMissing;
+            }
 
             if (bool.TryParse(valueText, out var value))
+            {
                 return value;
+            }
 
             if (int.TryParse(valueText, out var integerValue))
             {
@@ -117,7 +123,9 @@ namespace CaptureTaskManager
             if (mJobParams.TryGetValue(name, out var valueText))
             {
                 if (float.TryParse(valueText, out var value))
+                {
                     return value;
+                }
 
                 return valueIfMissing;
             }
@@ -136,7 +144,9 @@ namespace CaptureTaskManager
             if (mJobParams.TryGetValue(name, out var valueText))
             {
                 if (int.TryParse(valueText, out var value))
+                {
                     return value;
+                }
 
                 return valueIfMissing;
             }
@@ -164,11 +174,8 @@ namespace CaptureTaskManager
         {
             try
             {
-                if (mJobParams.ContainsKey(paramName))
-                    mJobParams[paramName] = paramValue;
-                else
-                    mJobParams.Add(paramName, paramValue);
-
+                // Add/update the value
+                mJobParams[paramName] = paramValue;
                 return true;
             }
             catch (Exception ex)

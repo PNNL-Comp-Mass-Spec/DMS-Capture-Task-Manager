@@ -74,7 +74,9 @@ namespace ImsDemuxPlugin
             // Perform base class operations, if any
             var returnData = base.RunTool();
             if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
+            {
                 return returnData;
+            }
 
             // Initialize the config DB update interval
             mLastConfigDbUpdate = DateTime.UtcNow;
@@ -104,9 +106,13 @@ namespace ImsDemuxPlugin
             double calibrationIntercept = 0;
 
             if (mTaskParams.GetParam("PerformCalibration", true))
+            {
                 calibrationMode = CalibrationMode.AutoCalibration;
+            }
             else
+            {
                 calibrationMode = CalibrationMode.NoCalibration;
+            }
 
             // Locate data file on storage server
             var svrPath = Path.Combine(mTaskParams.GetParam("Storage_Vol_External"), mTaskParams.GetParam("Storage_Path"));
@@ -238,7 +244,9 @@ namespace ImsDemuxPlugin
                     {
                         returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                         if (string.IsNullOrEmpty(returnData.CloseoutMsg))
+                        {
                             returnData.CloseoutMsg = "Out of memory";
+                        }
                     }
 
                     mNeedToAbortProcessing = true;
@@ -259,9 +267,13 @@ namespace ImsDemuxPlugin
             if (!fiUIMF.Exists)
             {
                 if (needToDemultiplex)
+                {
                     msg = "UIMF File not found after demultiplexing: " + uimfFilePath;
+                }
                 else
+                {
                     msg = "UIMF File not found (skipped demultiplexing): " + uimfFilePath;
+                }
 
                 LogError(msg);
                 returnData.CloseoutMsg = msg;
@@ -295,10 +307,12 @@ namespace ImsDemuxPlugin
                     var fileSizeGBEnd = fiUIMF.Length / 1024.0 / 1024.0 / 1024.0;
                     double foldIncrease = 0;
                     if (fileSizeGBStart > 0)
+                    {
                         foldIncrease = fileSizeGBEnd / fileSizeGBStart;
+                    }
 
                     LogMessage("UIMF file size increased from " + fileSizeGBStart.ToString("0.00") + " GB to " + fileSizeGBEnd.ToString("0.00") +
-                               " GB, a " + foldIncrease.ToString("0.0" + " fold increase"));
+                               " GB, a " + foldIncrease.ToString("0.0") + " fold increase");
                 }
 #pragma warning restore 162
             }
@@ -306,7 +320,9 @@ namespace ImsDemuxPlugin
             if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
             {
                 if (calibrationMode == CalibrationMode.AutoCalibration)
+                {
                     returnData = mDemuxTools.PerformCalibration(mMgrParams, mTaskParams, returnData);
+                }
                 else if (calibrationMode == CalibrationMode.ManualCalibration)
                 {
                     returnData = mDemuxTools.PerformManualCalibration(mMgrParams, mTaskParams, returnData, calibrationSlope, calibrationIntercept);
@@ -354,7 +370,9 @@ namespace ImsDemuxPlugin
             var calibrationLogPath = Path.Combine(dsPath, clsDemuxTools.CALIBRATION_LOG_FILE);
 
             if (!File.Exists(calibrationLogPath))
+            {
                 return false;
+            }
 
             var calibrationError = false;
 
@@ -365,13 +383,19 @@ namespace ImsDemuxPlugin
                     var dataLine = reader.ReadLine();
 
                     if (string.IsNullOrWhiteSpace(dataLine))
+                    {
                         continue;
+                    }
 
                     if (dataLine.Contains(COULD_NOT_OBTAIN_GOOD_CALIBRATION))
+                    {
                         calibrationError = true;
+                    }
                     else
+                    {
                         // Only count this as a calibration error if the last non-blank line of the file contains the error message
                         calibrationError = false;
+                    }
                 }
             }
 
@@ -469,35 +493,47 @@ namespace ImsDemuxPlugin
 
             var uimfDemultiplexerProgLoc = GetUimfDemultiplexerPath();
             if (string.IsNullOrEmpty(uimfDemultiplexerProgLoc))
+            {
                 return false;
+            }
 
             var fiUimfDemultiplexer = new FileInfo(uimfDemultiplexerProgLoc);
 
             LogDebug("Determining tool version info");
 
             if (fiUimfDemultiplexer.DirectoryName == null)
+            {
                 return false;
+            }
 
             // Lookup the version of UIMFDemultiplexer_Console
             var success = StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, fiUimfDemultiplexer.FullName);
             if (!success)
+            {
                 return false;
+            }
 
             // Lookup the version of the IMSDemultiplexer (in the UIMFDemultiplexer folder)
             var demultiplexerPath = Path.Combine(fiUimfDemultiplexer.DirectoryName, "IMSDemultiplexer.dll");
             success = StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, demultiplexerPath);
             if (!success)
+            {
                 return false;
+            }
 
             var autoCalibrateUIMFPath = Path.Combine(fiUimfDemultiplexer.DirectoryName, "AutoCalibrateUIMF.dll");
             success = StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, autoCalibrateUIMFPath);
             if (!success)
+            {
                 return false;
+            }
 
             var uimfLibraryPath = Path.Combine(fiUimfDemultiplexer.DirectoryName, "UIMFLibrary.dll");
             success = StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, uimfLibraryPath);
             if (!success)
+            {
                 return false;
+            }
 
             // Store path to the demultiplexer DLL in toolFiles
             var toolFiles = new System.Collections.Generic.List<FileInfo>
@@ -554,7 +590,9 @@ namespace ImsDemuxPlugin
                 progressOverall = 90 + newProgress * 0.10f;
             }
             else
+            {
                 progressOverall = newProgress;
+            }
 
             mStatusTools.UpdateAndWrite(progressOverall);
 

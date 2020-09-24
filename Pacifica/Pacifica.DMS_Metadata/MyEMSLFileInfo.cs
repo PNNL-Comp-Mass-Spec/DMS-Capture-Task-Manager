@@ -108,7 +108,9 @@ namespace Pacifica.DMS_Metadata
                 var fullPath = string.Empty;
 
                 if (!string.IsNullOrWhiteSpace(Dataset))
+                {
                     fullPath = Path.Combine(fullPath, Dataset);
+                }
 
                 return Path.Combine(fullPath, RelativePathWindows).Replace("/", @"\");
             }
@@ -141,13 +143,19 @@ namespace Pacifica.DMS_Metadata
             {
                 var fullPath = string.Empty;
                 if (!string.IsNullOrWhiteSpace(Instrument))
+                {
                     fullPath = Path.Combine(fullPath, Instrument);
+                }
 
                 if (!string.IsNullOrWhiteSpace(DatasetYearQuarter))
+                {
                     fullPath = Path.Combine(fullPath, DatasetYearQuarter);
+                }
 
                 if (!string.IsNullOrWhiteSpace(Dataset))
+                {
                     fullPath = Path.Combine(fullPath, Dataset);
+                }
 
                 return Path.Combine(fullPath, RelativePathWindows).Replace("/", @"\");
             }
@@ -162,7 +170,9 @@ namespace Pacifica.DMS_Metadata
             get
             {
                 if (string.IsNullOrWhiteSpace(SubDir))
+                {
                     return Filename;
+                }
 
                 return Path.Combine(SubDir, Filename).Replace("/", @"\");
             }
@@ -199,19 +209,25 @@ namespace Pacifica.DMS_Metadata
             if (!string.IsNullOrWhiteSpace(createdInMyEMSL))
             {
                 if (DateTime.TryParse(createdInMyEMSL, out var creationTime))
+                {
                     Created = creationTime;
+                }
             }
 
             if (!string.IsNullOrWhiteSpace(updatedInMyEMSL))
             {
                 if (DateTime.TryParse(updatedInMyEMSL, out var updateTime))
+                {
                     Updated = updateTime;
+                }
             }
 
             if (!string.IsNullOrWhiteSpace(deletedInMyEMSL))
             {
                 if (DateTime.TryParse(deletedInMyEMSL, out var deletionTime))
+                {
                     Deleted = deletionTime;
+                }
             }
         }
 
@@ -225,13 +241,17 @@ namespace Pacifica.DMS_Metadata
             if (!string.IsNullOrWhiteSpace(creationTimeText))
             {
                 if (DateTime.TryParse(creationTimeText, out var creationTime))
+                {
                     FileCreationTime = creationTime;
+                }
             }
 
             if (!string.IsNullOrWhiteSpace(lastWriteTimeText))
             {
                 if (DateTime.TryParse(lastWriteTimeText, out var lastWriteTime))
+                {
                     FileLastWriteTime = lastWriteTime;
+                }
             }
         }
 

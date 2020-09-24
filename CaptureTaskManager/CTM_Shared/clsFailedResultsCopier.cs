@@ -42,13 +42,17 @@ namespace CaptureTaskManager
 
                 // Make sure the failed results folder exists
                 if (!diFailedResultsFolder.Exists)
+                {
                     diFailedResultsFolder.Create();
+                }
 
                 // Define the target folder name to be Dataset_Job_Step
 
                 var targetFolderPath = mTaskParams.GetParam("Dataset");
                 if (string.IsNullOrEmpty(targetFolderPath))
+                {
                     targetFolderPath = "Unknown_Dataset";
+                }
 
                 targetFolderPath += "_Job" + mTaskParams.GetParam("Job") + "_Step" + mTaskParams.GetParam("Step");
 
@@ -81,7 +85,9 @@ namespace CaptureTaskManager
 
                     // Create the target folder
                     if (!targetFolder.Exists)
+                    {
                         targetFolder.Create();
+                    }
 
                     // Actually copy files from the source folder to the target folder
                     LogMessage("Copying data files to failed results archive: " + resultsFolderPath);
@@ -101,9 +107,13 @@ namespace CaptureTaskManager
                     }
 
                     if (errorCount == 0)
+                    {
                         LogMessage("Copy complete");
+                    }
                     else
+                    {
                         LogWarning("Copy complete; ErrorCount = " + errorCount);
+                    }
                 }
             }
             catch (Exception ex)
@@ -120,7 +130,7 @@ namespace CaptureTaskManager
                 swArchivedFolderInfoFile.WriteLine("Date\t" + DateTime.Now);
                 swArchivedFolderInfoFile.WriteLine("ResultsFolderName\t" + resultsFolderName);
                 swArchivedFolderInfoFile.WriteLine("Manager\t" + mMgrParams.GetParam("MgrName"));
-                if ((mTaskParams != null))
+                if (mTaskParams != null)
                 {
                     swArchivedFolderInfoFile.WriteLine("Job\t" + mTaskParams.GetParam("Job"));
                     swArchivedFolderInfoFile.WriteLine("Step\t" + mTaskParams.GetParam("Step"));

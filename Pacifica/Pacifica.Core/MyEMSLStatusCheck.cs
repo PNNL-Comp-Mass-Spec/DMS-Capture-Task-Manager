@@ -113,7 +113,9 @@ namespace Pacifica.Core
             var fileListJSON = EasyHttp.Send(mPacificaConfig, metadataURL, out var responseStatusCode);
 
             if (responseStatusCode.ToString() != "200")
+            {
                 return false;
+            }
 
             // ReSharper disable CommentTypo
 
@@ -132,7 +134,9 @@ namespace Pacifica.Core
             {
                 var fileHash = Utilities.GetDictionaryValue(fileObj, "hashsum");
                 if (string.Equals(fileHash, fileSHA1HashSum))
+                {
                     return true;
+                }
             }
 
             return false;
@@ -169,7 +173,9 @@ namespace Pacifica.Core
             // The following Callback allows us to access the MyEMSL server even if the certificate is expired or untrusted
             // For more info, see comments in Upload.StartUpload()
             if (ServicePointManager.ServerCertificateValidationCallback == null)
+            {
                 ServicePointManager.ServerCertificateValidationCallback += ValidateRemoteCertificate;
+            }
 
             OnStatusEvent("Contacting " + statusURI);
             var startTime = DateTime.UtcNow;
@@ -266,7 +272,9 @@ namespace Pacifica.Core
                             {
                                 // Unrecognized exception; include the first 75 characters
                                 if (exception.Length < 80)
+                                {
                                     errorMessage += "; exception " + exception;
+                                }
                                 else
                                 {
                                     // Use a RegEx to remove unnecessary text that makes some downstream evaluation harder (like checks in stored procedures)
@@ -321,7 +329,9 @@ namespace Pacifica.Core
                 var statusNum = int.Parse(match.Groups[1].Value);
 
                 if (statusNum <= 0)
+                {
                     throw new Exception("Status ID is 0 in StatusURI: " + statusURI);
+                }
 
                 return statusNum;
             }
@@ -332,12 +342,16 @@ namespace Pacifica.Core
 
             var legacyMatch = legacyStatusNumMatcher.Match(statusURI);
             if (!legacyMatch.Success)
+            {
                 throw new Exception("Could not find Status ID in StatusURI: " + statusURI);
+            }
 
             var legacyStatusNum = int.Parse(legacyMatch.Groups[1].Value);
 
             if (legacyStatusNum <= 0)
+            {
                 throw new Exception("Status ID is 0 in StatusURI: " + statusURI);
+            }
 
             return legacyStatusNum;
         }
@@ -376,7 +390,9 @@ namespace Pacifica.Core
             var certificateFilePath = EasyHttp.ResolveCertFile(mPacificaConfig, callingMethod, out errorMessage);
 
             if (!string.IsNullOrWhiteSpace(certificateFilePath))
+            {
                 return true;
+            }
 
             OnErrorEvent(errorMessage);
             return false;
@@ -386,7 +402,9 @@ namespace Pacifica.Core
         {
             var success = Utilities.ValidateRemoteCertificate(sender, cert, chain, policyErrors, out var errorMessage);
             if (success)
+            {
                 return true;
+            }
 
             OnErrorEvent(errorMessage);
             return false;

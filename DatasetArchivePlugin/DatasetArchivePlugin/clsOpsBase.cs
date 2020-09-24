@@ -176,9 +176,13 @@ namespace DatasetArchivePlugin
         private string AppendToString(string text, string append, string delimiter = "; ")
         {
             if (string.IsNullOrEmpty(text))
+            {
                 text = string.Empty;
+            }
             else
+            {
                 text += delimiter ?? "; ";
+            }
 
             return text + append;
         }
@@ -219,7 +223,7 @@ namespace DatasetArchivePlugin
                     if (resCode == 0)
                     {
                         LogTools.LogDebug("Job successfully created");
-                        successCount += 1;
+                        successCount++;
                     }
                     else
                     {
@@ -266,21 +270,27 @@ namespace DatasetArchivePlugin
             criticalErrorMessage = string.Empty;
 
             if (maxAttempts < 1)
+            {
                 maxAttempts = 1;
+            }
 
             while (!success && attempts < maxAttempts)
             {
-                attempts += 1;
+                attempts++;
 
                 Console.WriteLine("Uploading files for " + mDatasetName + " to MyEMSL; attempt=" + attempts);
 
                 success = UploadToMyEMSL(recurse, debugMode, useTestInstance, out allowRetry, out criticalErrorMessage);
 
                 if (!allowRetry)
+                {
                     break;
+                }
 
                 if (debugMode != TarStreamUploader.UploadDebugMode.DebugDisabled)
+                {
                     break;
+                }
 
                 if (!success && attempts < maxAttempts)
                 {
@@ -304,7 +314,9 @@ namespace DatasetArchivePlugin
             }
 
             if (success && !mMyEmslUploadSuccess)
+            {
                 WarningMsg = AppendToString(WarningMsg, "UploadToMyEMSL reports True but mMyEmslUploadSuccess is False");
+            }
 
             return success && mMyEmslUploadSuccess;
         }
@@ -411,7 +423,9 @@ namespace DatasetArchivePlugin
                 OnStatusEvent(statusMessage);
 
                 if (debugMode != TarStreamUploader.UploadDebugMode.DebugDisabled)
+                {
                     return false;
+                }
 
                 statusMessage = "myEMSL statusURI => " + myEMSLUploader.StatusURI;
 
@@ -423,7 +437,9 @@ namespace DatasetArchivePlugin
                 }
 
                 if (myEMSLUploader.FileCountNew + myEMSLUploader.FileCountUpdated > 0 || !string.IsNullOrEmpty(statusURL))
+                {
                     OnStatusEvent(statusMessage);
+                }
 
                 // Raise an event with the stats
                 // This will cause clsPluginMain to call StoreMyEMSLUploadStats to store the results in the database (Table T_MyEmsl_Uploads)
@@ -439,11 +455,15 @@ namespace DatasetArchivePlugin
                 mStatusTools.UpdateAndWrite(100);
 
                 if (!success)
+                {
                     return false;
+                }
 
                 var skippedSubdirectories = myEMSLUploader.MetadataContainer.SkippedDatasetArchiveSubdirectories;
                 if (skippedSubdirectories.Count == 0)
+                {
                     return true;
+                }
 
                 if (!mMyEmslUploadSuccess)
                 {
@@ -556,7 +576,9 @@ namespace DatasetArchivePlugin
         {
             var colonIndex = statusMessage.IndexOf(':');
             if (colonIndex >= 0)
+            {
                 return statusMessage.Substring(colonIndex + 1).Trim();
+            }
 
             return string.Empty;
         }
@@ -574,7 +596,9 @@ namespace DatasetArchivePlugin
 
             var errorCode = ex.Message.GetHashCode();
             if (errorCode == 0)
+            {
                 errorCode = 1;
+            }
 
             var elapsedTime = DateTime.UtcNow.Subtract(startTime);
 
@@ -582,7 +606,9 @@ namespace DatasetArchivePlugin
             {
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                 if (errorCode == 0)
+                {
                     return;
+                }
 
                 var eusInfo = new Upload.EUSInfo();
                 eusInfo.Clear();
@@ -600,7 +626,9 @@ namespace DatasetArchivePlugin
             // Exit this method (skipping the call to OnMyEMSLUploadComplete) if the error code is 0 and no files were added or updated
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (errorCode == 0 && myEMSLUploader.FileCountNew == 0 && myEMSLUploader.FileCountUpdated == 0)
+            {
                 return;
+            }
 
             var uploadArgs = new MyEMSLUploadEventArgs(
                 myEMSLUploader.FileCountNew, myEMSLUploader.FileCountUpdated,
@@ -621,12 +649,18 @@ namespace DatasetArchivePlugin
         {
             var msg = mArchiveOrUpdate + "failed, dataset " + dsName;
             if (!string.IsNullOrEmpty(reason))
+            {
                 msg += "; " + reason;
+            }
 
             if (logToDB)
+            {
                 LogTools.LogError(msg, null, true);
+            }
             else
+            {
                 OnErrorEvent(msg);
+            }
         }
 
         /// <summary>
@@ -700,14 +734,22 @@ namespace DatasetArchivePlugin
                 string msg;
 
                 if (e.TotalBytesToSend > 0)
+                {
                     msg = msgBase + " for " + (e.TotalBytesToSend / 1024.0).ToString("#,##0") + " KB";
+                }
                 else
+                {
                     msg = msgBase;
+                }
 
                 if (string.IsNullOrEmpty(filename))
+                {
                     LogStatusMessageSkipDuplicate(msg);
+                }
                 else
+                {
                     LogStatusMessageSkipDuplicate(msg + "; " + filename);
+                }
             }
 
             if (DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds >= 3 && e.PercentCompleted > 0)
@@ -724,9 +766,13 @@ namespace DatasetArchivePlugin
             // Note that e.ServerResponse will simply have the StatusURL if the upload succeeded
             // If a problem occurred, e.ServerResponse will either have the full server response, or may even be blank
             if (string.IsNullOrEmpty(e.ServerResponse))
+            {
                 msg += ": empty server response";
+            }
             else
+            {
                 msg += ": " + e.ServerResponse;
+            }
 
             OnDebugEvent(msg);
             mMyEmslUploadSuccess = true;

@@ -56,7 +56,9 @@ namespace CaptureTaskManager
         {
             var matchFound = charsToFind.Keys.Any(item => fileName.IndexOf(item) >= 0);
             if (!matchFound)
+            {
                 return fileName;
+            }
 
             var fileExtension = Path.GetExtension(fileName);
             var updatedFileName = string.Copy(fileName);
@@ -66,7 +68,9 @@ namespace CaptureTaskManager
                 var baseName = Path.GetFileNameWithoutExtension(updatedFileName);
 
                 if (baseName.IndexOf(item.Key) < 0)
+                {
                     continue;
+                }
 
                 updatedFileName = baseName.Replace(item.Key.ToString(), item.Value) + fileExtension;
             }
@@ -97,7 +101,9 @@ namespace CaptureTaskManager
             var datasetInfo = FindDatasetFileOrDirectory(sourceDirectoryPath, datasetName, checkForFilesFirst, out var matchedDirectory);
 
             if (!matchedDirectory)
+            {
                 return datasetInfo;
+            }
 
             // Matched a directory, but this method is used to match files
             datasetInfo.DatasetType = DatasetInfo.RawDSTypes.None;
@@ -261,8 +267,10 @@ namespace CaptureTaskManager
                         }
                     }
 
-                    if (foundFiles.Count <= 0)
+                    if (foundFiles.Count == 0)
+                    {
                         continue;
+                    }
 
                     datasetInfo.FileList.AddRange(foundFiles);
 

@@ -51,12 +51,18 @@ namespace ArchiveVerifyPlugin
         {
             string description;
             if (string.IsNullOrEmpty(HashCode))
+            {
                 description = "#No Hash#";
+            }
             else
+            {
                 description = HashCode;
+            }
 
             if (!string.IsNullOrEmpty(MyEMSLFileID))
+            {
                 description += ", ID=" + MyEMSLFileID;
+            }
 
             return description;
         }

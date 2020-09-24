@@ -71,7 +71,9 @@ namespace DatasetQualityPlugin
             // Perform base class operations, if any
             mRetData = base.RunTool();
             if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
+            {
                 return mRetData;
+            }
 
             msg = "Creating dataset info for dataset '" + mDataset + "'";
             LogDebug(msg);
@@ -99,7 +101,9 @@ namespace DatasetQualityPlugin
             ClearWorkDir();
 
             if (!success)
+            {
                 return mRetData;
+            }
 
             msg = "Completed clsPluginMain.RunTool()";
             LogDebug(msg);
@@ -164,7 +168,9 @@ namespace DatasetQualityPlugin
             }
 
             if (!string.IsNullOrEmpty(dataFilePathRemote))
+            {
                 runQuameter = true;
+            }
 
             // Store the version info in the database
             // Store the Quameter version if dataFileNamePath is not empty
@@ -248,7 +254,9 @@ namespace DatasetQualityPlugin
                 success = CopyFilesToDatasetFolder(datasetFolder);
 
                 if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
+                {
                     mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                }
             }
 
             return success;
@@ -348,7 +356,9 @@ namespace DatasetQualityPlugin
                 }
 
                 if (!CopyFileToServer(QUAMETER_CONSOLE_OUTPUT_FILE, mWorkDir, diDatasetQCFolder.FullName))
+                {
                     return false;
+                }
 
                 // Uncomment the following to copy the Metrics file to the server
                 //if (!CopyFileToServer(QUAMETER_IDFREE_METRICS_FILE, mWorkDir, diDatasetQCFolder.FullName)) return false;
@@ -470,7 +480,10 @@ namespace DatasetQualityPlugin
             var sQuameterFolder = mMgrParams.GetParam("QuameterProgLoc", string.Empty);
 
             if (string.IsNullOrEmpty(sQuameterFolder))
+            {
                 return string.Empty;
+            }
+
             return Path.Combine(sQuameterFolder, "Quameter.exe");
         }
 
@@ -587,9 +600,13 @@ namespace DatasetQualityPlugin
 
                         string sDataItem;
                         if (string.IsNullOrWhiteSpace(dataValues[index]))
+                        {
                             sDataItem = string.Empty;
+                        }
                         else
+                        {
                             sDataItem = string.Copy(dataValues[index]).Trim();
+                        }
 
                         lstResults.Add(new KeyValuePair<string, string>(sHeaderName, sDataItem));
                     }
@@ -645,7 +662,9 @@ namespace DatasetQualityPlugin
             try
             {
                 if (!File.Exists(mConsoleOutputFilePath))
+                {
                     return;
+                }
 
                 using (var reader = new StreamReader(new FileStream(mConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
@@ -654,7 +673,9 @@ namespace DatasetQualityPlugin
                         var dataLine = reader.ReadLine();
 
                         if (string.IsNullOrWhiteSpace(dataLine))
+                        {
                             continue;
+                        }
 
                         var trimmedLine = dataLine.Trim();
 
@@ -694,9 +715,13 @@ namespace DatasetQualityPlugin
                         else if (trimmedLine.StartsWith(X_ARRAY_NOT_INCREASING))
                         {
                             if (mFatalSplineError)
+                            {
                                 LogError(string.Format("Quameter error: {0}; {1}", FATAL_SPLINE_ERROR, trimmedLine));
+                            }
                             else
+                            {
                                 LogError("Quameter error: " + trimmedLine);
+                            }
                         }
                     }
                 }
@@ -724,14 +749,18 @@ namespace DatasetQualityPlugin
             scanCountMS = 0;
 
             if (!datasetInfoFile.Exists)
+            {
                 return;
+            }
 
             using (var reader = new XmlTextReader(new FileStream(datasetInfoFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Write)))
             {
                 while (reader.Read())
                 {
                     if (reader.NodeType != XmlNodeType.Element)
+                    {
                         continue;
+                    }
 
                     switch (reader.Name)
                     {
@@ -1299,7 +1328,9 @@ namespace DatasetQualityPlugin
             var pluginPath = Path.Combine(appDirectory, "DatasetQualityPlugin.dll");
             var success = StoreToolVersionInfoOneFile(ref toolVersionInfo, pluginPath);
             if (!success)
+            {
                 return false;
+            }
 
             // Store path to CaptureToolPlugin.dll in toolFiles
             var toolFiles = new List<FileInfo>
@@ -1337,7 +1368,9 @@ namespace DatasetQualityPlugin
             var match = progressMatcher.Match(dataLine);
 
             if (!match.Success)
+            {
                 return false;
+            }
 
             var scansRead = int.Parse(match.Groups["ScansRead"].Value);
             var totalScans = int.Parse(match.Groups["TotalScans"].Value);

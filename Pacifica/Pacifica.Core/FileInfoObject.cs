@@ -23,12 +23,16 @@ namespace Pacifica.Core
                 mRelativeDestinationDirectory = GenerateRelativePath(File.Directory.FullName, baseDSPath);
 
                 if (!string.IsNullOrWhiteSpace(mRelativeDestinationDirectory) && Path.IsPathRooted(mRelativeDestinationDirectory))
+                {
                     throw new ArgumentException(
                         "The relative destination directory returned from GenerateRelativePath is rooted; it must be relative: " +
                         mRelativeDestinationDirectory + " for " + absoluteLocalFullPath);
+                }
             }
             else
+            {
                 mRelativeDestinationDirectory = string.Empty;
+            }
 
             Sha1HashHex = Utilities.GenerateSha1Hash(AbsoluteLocalPath);
         }
@@ -45,18 +49,26 @@ namespace Pacifica.Core
             File = new FileInfo(AbsoluteLocalPath);
 
             if (string.IsNullOrWhiteSpace(relativeDestinationDirectory))
+            {
                 relativeDestinationDirectory = string.Empty;
+            }
 
             mRelativeDestinationDirectory = relativeDestinationDirectory;
 
             if (!string.IsNullOrWhiteSpace(mRelativeDestinationDirectory) && Path.IsPathRooted(mRelativeDestinationDirectory))
+            {
                 throw new ArgumentException("Relative Destination Directory cannot be rooted; it must be relative: " +
                                             mRelativeDestinationDirectory + " for " + absoluteLocalFullPath);
+            }
 
             if (!string.IsNullOrWhiteSpace(sha1Hash) && sha1Hash.Length == 40)
+            {
                 Sha1HashHex = sha1Hash;
+            }
             else
+            {
                 Sha1HashHex = Utilities.GenerateSha1Hash(AbsoluteLocalPath);
+            }
         }
 
         #endregion
@@ -171,7 +183,9 @@ namespace Pacifica.Core
         public override string ToString()
         {
             if (string.IsNullOrWhiteSpace(Sha1HashHex))
+            {
                 return AbsoluteLocalPath;
+            }
 
             return Sha1HashHex.Substring(0, 8) + ": " + AbsoluteLocalPath;
         }
@@ -183,7 +197,9 @@ namespace Pacifica.Core
         public static string GenerateRelativePath(string absoluteLocalPath, string basePath)
         {
             if (absoluteLocalPath.StartsWith(basePath, StringComparison.OrdinalIgnoreCase))
+            {
                 return absoluteLocalPath.Substring(basePath.Length).TrimStart('/', '\\');
+            }
 
             throw new InvalidDataException("Cannot generate relative path in GenerateRelativePath since local path (" + absoluteLocalPath + ") does not contain base path (" + basePath + ")");
         }

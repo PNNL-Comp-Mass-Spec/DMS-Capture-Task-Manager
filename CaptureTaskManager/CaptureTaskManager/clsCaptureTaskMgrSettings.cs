@@ -61,9 +61,13 @@ namespace CaptureTaskManager
                 if (string.IsNullOrWhiteSpace(connectionString))
                 {
                     if (clsUtilities.OfflineMode)
+                    {
                         OnDebugEvent("Skipping call to " + SP_NAME_ACK_MANAGER_UPDATE + " since offline");
+                    }
                     else
+                    {
                         OnDebugEvent("Skipping call to " + SP_NAME_ACK_MANAGER_UPDATE + " since the Manager Control connection string is empty");
+                    }
 
                     return;
                 }

@@ -50,7 +50,9 @@ namespace ImsDemuxPlugin
                     var encodingSequence = frameParams.GetValue(FrameParamKeyType.MultiplexingEncodingSequence, string.Empty) ?? string.Empty;
 
                     if (!encodingSequenceList.Contains(encodingSequence))
+                    {
                         encodingSequenceList.Add(encodingSequence);
+                    }
                 }
             }
 
@@ -71,7 +73,9 @@ namespace ImsDemuxPlugin
             {
                 // Empty string means demux not required
                 if (string.IsNullOrWhiteSpace(encodingSequence))
+                {
                     continue;
+                }
 
                 imfProfileFieldAlwaysBlank = false;
 
@@ -80,7 +84,9 @@ namespace ImsDemuxPlugin
 
                 var filenameMatch = bitValueMatcher.Match(multiplexFilename);
                 if (!filenameMatch.Success)
+                {
                     continue;
+                }
 
                 // Multiplex Filename contains "bit", so demultiplexing is required
                 deMuxRequired = true;

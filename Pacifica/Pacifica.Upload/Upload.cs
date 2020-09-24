@@ -138,7 +138,9 @@ namespace Pacifica.Upload
             public override string ToString()
             {
                 if (DatasetID == 0 && DataPackageID > 0)
+                {
                     return "Data package " + DataPackageID;
+                }
 
                 return "Dataset " + DatasetID + ", on instrument " + DMSInstrumentName + ": " + DatasetName;
             }
@@ -311,8 +313,10 @@ namespace Pacifica.Upload
                 if (!string.IsNullOrWhiteSpace(TransferFolderPath))
                 {
                     var targetFile = new FileInfo(Path.Combine(TransferFolderPath, Utilities.GetMetadataFilenameForJob(JobNumber)));
-                    if (targetFile.Directory != null && !targetFile.Directory.Exists)
+                    if (targetFile.Directory?.Exists == false)
+                    {
                         targetFile.Directory.Create();
+                    }
 
                     metadataFile.CopyTo(targetFile.FullName, true);
                 }
@@ -626,9 +630,13 @@ namespace Pacifica.Upload
                 string subDirString;
 
                 if (string.IsNullOrWhiteSpace(file.RelativeDestinationDirectory))
+                {
                     subDirString = "data/";
+                }
                 else
+                {
                     subDirString = "data/" + file.RelativeDestinationDirectory.Trim('/');
+                }
 
                 if (subDirString.Contains("//"))
                 {
@@ -684,40 +692,59 @@ namespace Pacifica.Upload
             foreach (var item in metadataObject)
             {
                 if (!GetDictionaryValue(item, "destinationTable", out var tableName))
+                {
                     continue;
+                }
 
                 switch (tableName)
                 {
                     case "TransactionKeyValue":
                     {
-                        if (!GetDictionaryValue(item, "key", out var keyName)) continue;
-                        if (!GetDictionaryValue(item, "value", out var keyValue)) continue;
-                        if (!GetDictionaryValue(kvLookup, keyName, out var valueDescription)) continue;
+                        if (!GetDictionaryValue(item, "key", out var keyName))
+                            {
+                                continue;
+                            }
 
-                        metadataList.Add(valueDescription + "=" + keyValue);
+                            if (!GetDictionaryValue(item, "value", out var keyValue))
+                            {
+                                continue;
+                            }
+
+                            if (!GetDictionaryValue(kvLookup, keyName, out var valueDescription))
+                            {
+                                continue;
+                            }
+
+                            metadataList.Add(valueDescription + "=" + keyValue);
                         matchedKeys.Add(valueDescription);
                         break;
                     }
                     case "Files":
                         if (item.TryGetValue("size", out _))
                         {
-                            fileCount += 1;
+                            fileCount++;
                         }
                         break;
                     default:
                     {
-                        if (!transactionValueLookup.TryGetValue(tableName, out var valueDescription)) continue;
+                        if (!transactionValueLookup.TryGetValue(tableName, out var valueDescription))
+                            {
+                                continue;
+                            }
 
-                        if (matchedKeys.Contains(valueDescription))
+                            if (matchedKeys.Contains(valueDescription))
                         {
                             // This item has already been added (typically EUS_Instrument_ID)
                             continue;
                         }
 
                         // Include the value for this item in the description
-                        if (!GetDictionaryValue(item, "value", out var keyValue)) continue;
+                        if (!GetDictionaryValue(item, "value", out var keyValue))
+                            {
+                                continue;
+                            }
 
-                        metadataList.Add(valueDescription + "=" + keyValue);
+                            metadataList.Add(valueDescription + "=" + keyValue);
                         matchedKeys.Add(valueDescription);
                         break;
                     }
@@ -733,7 +760,9 @@ namespace Pacifica.Upload
             {
                 matchedValue = value as string;
                 if (matchedValue != null)
+                {
                     return true;
+                }
             }
 
             matchedValue = string.Empty;
@@ -774,7 +803,9 @@ namespace Pacifica.Upload
         {
             ErrorMessage = errorMessage;
             if (ex != null && !ErrorMessage.Contains(ex.Message))
+            {
                 ErrorMessage += ": " + ex.Message;
+            }
 
             OnErrorEvent(errorMessage, ex);
         }

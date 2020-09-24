@@ -12,6 +12,8 @@ namespace Pacifica.Core
 {
     public class EasyHttp
     {
+        // Ignore Spelling: Ingester, json, www, Pacifica
+
         #region "Constants"
 
         /// <summary>
@@ -163,7 +165,9 @@ namespace Pacifica.Core
                     {
                         int bytesRead;
                         while ((bytesRead = responseStream.Read(buffer, 0, buffer.Length)) != 0)
+                        {
                             outFile.Write(buffer, 0, bytesRead);
+                        }
                     }
                 }
                 else
@@ -254,19 +258,26 @@ namespace Pacifica.Core
         private static string GetTrimmedResponseData(Stream responseStream, int maxLines = 20)
         {
             if (responseStream == null)
+            {
                 return string.Empty;
+            }
 
             var responseData = new StringBuilder();
             if (maxLines < 1)
-                maxLines = 1;
-
-            using (var sr = new StreamReader(responseStream))
             {
-                var linesRead = 0;
-                while (!sr.EndOfStream && linesRead < maxLines)
+                maxLines = 1;
+            }
+
+            using (var reader = new StreamReader(responseStream))
+            {
+                for (var linesRead = 0; linesRead < maxLines; linesRead++)
                 {
-                    responseData.AppendLine(sr.ReadLine());
-                    linesRead++;
+                    if (reader.EndOfStream)
+                    {
+                        break;
+                    }
+
+                    responseData.AppendLine(reader.ReadLine());
                 }
             }
 
@@ -334,7 +345,9 @@ namespace Pacifica.Core
             }
 
             if (string.IsNullOrWhiteSpace(responseData.ResponseText))
+            {
                 throw new Exception("Empty response for " + url + ": " + ex.Message, ex);
+            }
 
             throw new Exception("Response from " + url + ": " + responseData.ResponseText, ex);
         }
@@ -363,11 +376,15 @@ namespace Pacifica.Core
             }
 
             if (timeoutSeconds < 3)
+            {
                 timeoutSeconds = 3;
+            }
 
             var maxTimeoutHoursInt = (int)(maxTimeoutHours * 60 * 60);
             if (timeoutSeconds > maxTimeoutHoursInt)
+            {
                 timeoutSeconds = maxTimeoutHoursInt;
+            }
 
             var urlContactInfo = new UrlContactInfo(config, url, cookies, timeoutSeconds: timeoutSeconds, loginCredentials: loginCredentials);
 
@@ -686,7 +703,9 @@ namespace Pacifica.Core
             try
             {
                 if (timeoutSeconds < 5)
+                {
                     timeoutSeconds = 5;
+                }
 
                 mUrlContactInfo = new UrlContactInfo(
                     config, url, cookies, postData, method,
@@ -711,7 +730,9 @@ namespace Pacifica.Core
                     }
 
                     if (DateTime.UtcNow.Subtract(startTime).TotalSeconds < timeoutSeconds + 5)
+                    {
                         continue;
+                    }
 
                     var abortThread = new Thread(AbortThreadedSendNow);
                     abortThread.Start();
@@ -741,12 +762,18 @@ namespace Pacifica.Core
                     mUrlContactInfo.ResponseData.ResponseText = REQUEST_EXCEPTION_RESPONSE;
 
                     if (mUrlContactInfo.ResponseData.ResponseStatusCode != HttpStatusCode.PreconditionFailed)
+                    {
                         mUrlContactInfo.ResponseData.ResponseStatusCode = HttpStatusCode.BadRequest;
+                    }
 
                     if (string.IsNullOrWhiteSpace(mUrlContactInfo.ResponseData.ExceptionMessage))
+                    {
                         responseTextToReturn = mUrlContactInfo.ResponseData.ResponseText;
+                    }
                     else
+                    {
                         responseTextToReturn = mUrlContactInfo.ResponseData.ResponseText + "; " + mUrlContactInfo.ResponseData.ExceptionMessage;
+                    }
                 }
                 else
                 {
@@ -843,7 +870,7 @@ namespace Pacifica.Core
         }
 
         /// <summary>
-        /// Start a thread to contact the url
+        /// Start a thread to contact the URL
         /// </summary>
         private static void StartThreadedSend()
         {

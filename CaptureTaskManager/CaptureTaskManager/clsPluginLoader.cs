@@ -130,9 +130,20 @@ namespace CaptureTaskManager
 
             try
             {
-                if (xPath == null) xPath = string.Empty;
-                if (className == null) className = string.Empty;
-                if (assemblyName == null) assemblyName = string.Empty;
+                if (xPath == null)
+                {
+                    xPath = string.Empty;
+                }
+
+                if (className == null)
+                {
+                    className = string.Empty;
+                }
+
+                if (assemblyName == null)
+                {
+                    assemblyName = string.Empty;
+                }
 
                 pluginInfo = "XPath=\"" + xPath + "\"; className=\"" + className + "\"; assemblyName=" + assemblyName + "\"";
 
@@ -150,7 +161,7 @@ namespace CaptureTaskManager
                 var nodeList = root.SelectNodes(xPath);
 
                 // Make sure exactly 1 element found and retrieve its information
-                if (nodeList != null && nodeList.Count == 1)
+                if (nodeList?.Count == 1)
                 {
                     foreach (XmlElement el in nodeList)
                     {
@@ -180,7 +191,9 @@ namespace CaptureTaskManager
         {
             var fi = new FileInfo(PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppPath());
             if (fi.DirectoryName == null)
+            {
                 throw new DirectoryNotFoundException("Could not determine parent folder path for the exe");
+            }
 
             return Path.Combine(fi.DirectoryName, PluginInfoFileName);
         }

@@ -8,7 +8,7 @@ namespace CaptureTaskManager
     {
         public void TestConnection()
         {
-            Console.WriteLine(@"Code test mode");
+            Console.WriteLine("Code test mode");
 
             var credentials = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
@@ -16,7 +16,9 @@ namespace CaptureTaskManager
 
             // Make sure sharePath does not end in a back slash
             if (sharePath.EndsWith(@"\"))
+            {
                 sharePath = sharePath.Substring(0, sharePath.Length - 1);
+            }
 
             credentials.Add("ftms", "PasswordHere");
             credentials.Add("lcmsoperator", "PasswordHere");
@@ -30,40 +32,44 @@ namespace CaptureTaskManager
                         var accessCredentials = new System.Net.NetworkCredential(enumCurrent.Current.Key,
                                                                                  enumCurrent.Current.Value, string.Empty);
 
-                        Console.WriteLine(@"Credentials created for " + enumCurrent.Current.Key);
+                        Console.WriteLine("Credentials created for " + enumCurrent.Current.Key);
 
                         var bionetConnection = new NetworkConnection(sharePath, accessCredentials);
 
-                        Console.WriteLine(@"Connected to share");
+                        Console.WriteLine("Connected to share");
 
                         var shareDirectory = new System.IO.DirectoryInfo(sharePath);
 
-                        Console.WriteLine(@"Instantiated DirectoryInfo object: " + shareDirectory.FullName);
+                        Console.WriteLine("Instantiated DirectoryInfo object: " + shareDirectory.FullName);
 
                         var iteration = 0;
                         foreach (var remoteFile in shareDirectory.GetFiles())
                         {
-                            Console.WriteLine(@"File: " + remoteFile.Name + @" size " + remoteFile.Length + @" bytes");
+                            Console.WriteLine("File: " + remoteFile.Name + " size " + remoteFile.Length + " bytes");
                             ++iteration;
 
                             if (iteration > 20)
+                            {
                                 break;
+                            }
                         }
 
-                        Console.WriteLine(@"Files Done");
+                        Console.WriteLine("Files Done");
 
                         iteration = 0;
                         foreach (var subdirectory in shareDirectory.GetDirectories())
                         {
-                            Console.WriteLine(@"Folder: " + subdirectory.Name + @" modified " +
+                            Console.WriteLine("Folder: " + subdirectory.Name + " modified " +
                                               subdirectory.LastWriteTime.ToString(CultureInfo.InvariantCulture));
                             ++iteration;
 
                             if (iteration > 20)
+                            {
                                 break;
+                            }
                         }
 
-                        Console.WriteLine(@"Folders Done");
+                        Console.WriteLine("Folders Done");
 
                         // Disconnect network connection
                         bionetConnection.Dispose();
@@ -72,7 +78,7 @@ namespace CaptureTaskManager
             }
             catch (Exception ex)
             {
-                Console.WriteLine(@"Exception: " + ex.Message);
+                Console.WriteLine("Exception: " + ex.Message);
             }
         }
     }

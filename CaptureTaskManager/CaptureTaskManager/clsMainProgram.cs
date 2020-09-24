@@ -486,7 +486,9 @@ namespace CaptureTaskManager
                     {
                         var dataLine = reader.ReadLine();
                         if (string.IsNullOrWhiteSpace(dataLine))
+                        {
                             continue;
+                        }
 
                         if (dataLine.Contains("RecentJob: "))
                         {
@@ -558,11 +560,13 @@ namespace CaptureTaskManager
                 while (!reader.EndOfStream)
                 {
                     var dataLine = reader.ReadLine();
-                    lineCount += 1;
+                    lineCount++;
 
                     // Assume that the first line is the header line, which we'll skip
                     if (lineCount == 1 || string.IsNullOrWhiteSpace(dataLine))
+                    {
                         continue;
+                    }
 
                     var lineParts = dataLine.Split(new[] { '\t' }, 2);
 
@@ -576,7 +580,9 @@ namespace CaptureTaskManager
                         if (cachedMessages.TryGetValue(message, out var cachedTimeStamp))
                         {
                             if (timeStamp > cachedTimeStamp)
+                            {
                                 cachedMessages[message] = timeStamp;
+                            }
                         }
                         else
                         {
@@ -956,9 +962,13 @@ namespace CaptureTaskManager
                         LogError(mMgrName + ": Failure running tool " + mStepTool + ", job " + mJob + ", Dataset " + mDataset);
 
                         if (!string.IsNullOrEmpty(toolResult.CloseoutMsg))
+                        {
                             closeoutMessage = toolResult.CloseoutMsg;
+                        }
                         else
+                        {
                             closeoutMessage = "Failure running tool " + mStepTool;
+                        }
 
                         mTask.CloseTask(eTaskCloseout, closeoutMessage, toolResult.EvalCode, toolResult.EvalMsg);
                         break;
@@ -979,7 +989,9 @@ namespace CaptureTaskManager
                         closeoutMessage = "Dataset not ready";
 
                         if (!string.IsNullOrEmpty(toolResult.CloseoutMsg))
+                        {
                             closeoutMessage += ": " + toolResult.CloseoutMsg;
+                        }
 
                         mTask.CloseTask(eTaskCloseout, closeoutMessage, toolResult.EvalCode, toolResult.EvalMsg);
                         break;
@@ -996,9 +1008,13 @@ namespace CaptureTaskManager
                               + "; CloseOut = NeedToAbortProcessing");
 
                         if (!string.IsNullOrEmpty(toolResult.CloseoutMsg))
+                        {
                             closeoutMessage = toolResult.CloseoutMsg;
+                        }
                         else
+                        {
                             closeoutMessage = "Error: NeedToAbortProcessing";
+                        }
 
                         mTask.CloseTask(eTaskCloseout, closeoutMessage, toolResult.EvalCode, toolResult.EvalMsg);
                         break;
@@ -1077,7 +1093,9 @@ namespace CaptureTaskManager
                 var totalDeleted = 0;
 
                 if (agedTempFilesHours < 2)
+                {
                     agedTempFilesHours = 2;
+                }
 
                 var diFolder = new DirectoryInfo(tempFolderPath);
                 if (!diFolder.Exists)
@@ -1097,7 +1115,7 @@ namespace CaptureTaskManager
                             if (DateTime.UtcNow.Subtract(fiFile.LastWriteTimeUtc).TotalHours > agedTempFilesHours)
                             {
                                 fiFile.Delete();
-                                deleteCount += 1;
+                                deleteCount++;
                             }
                         }
                         catch
@@ -1113,7 +1131,9 @@ namespace CaptureTaskManager
                 {
                     var msg = "Deleted " + totalDeleted + " temp file";
                     if (totalDeleted > 1)
+                    {
                         msg += "s";
+                    }
 
                     msg += " over " + agedTempFilesHours + " hours old in folder " + tempFolderPath;
                     LogMessage(msg);
@@ -1180,7 +1200,9 @@ namespace CaptureTaskManager
         private void ShowTrace(string message, int emptyLinesBeforeMessage= 1)
         {
             if (TraceMode)
+            {
                 ShowTraceMessage(message, emptyLinesBeforeMessage);
+            }
         }
 
         /// <summary>
@@ -1249,9 +1271,13 @@ namespace CaptureTaskManager
 
                 var flagFile = new FileInfo(mStatusFile.FlagFilePath);
                 if (flagFile.Directory == null)
+                {
                     errorMessage = "Flag file exists in the manager folder";
+                }
                 else
+                {
                     errorMessage = "Flag file exists in folder " + flagFile.Directory.Name;
+                }
             }
             catch (Exception ex)
             {
@@ -1309,7 +1335,9 @@ namespace CaptureTaskManager
                 var configFileSettings = LoadMgrSettingsFromFile();
 
                 if (configFileSettings == null)
+                {
                     return false;
+                }
 
                 LogDebug("Updating manager settings using Manager Control database");
 
@@ -1348,7 +1376,9 @@ namespace CaptureTaskManager
             // In other words, if storagePath = "VOrbiETD03\2011_4" change it to just "VOrbiETD03"
             var slashLoc = storagePath.IndexOf(Path.DirectorySeparatorChar);
             if (slashLoc > 0)
+            {
                 storagePath = storagePath.Substring(0, slashLoc);
+            }
 
             // Always use the UNC path defined by Storage_Vol_External when checking drive free space
             // Example path is: \\Proto-7\
@@ -1377,7 +1407,9 @@ namespace CaptureTaskManager
         private string GetXmlConfigFileSetting(string settingName)
         {
             if (string.IsNullOrWhiteSpace(settingName))
+            {
                 throw new ArgumentException("Setting name cannot be blank", nameof(settingName));
+            }
 
             var configFilePaths = new List<string>();
 
@@ -1394,7 +1426,9 @@ namespace CaptureTaskManager
 
             var valueFound = mgrSettings.GetXmlConfigFileSetting(configFilePaths, settingName, out var settingValue);
             if (valueFound)
+            {
                 return settingValue;
+            }
 
             return string.Empty;
         }
@@ -1496,7 +1530,9 @@ namespace CaptureTaskManager
             foreach (var alternateWorkDir in alternateWorkDirs)
             {
                 if (!Directory.Exists(alternateWorkDir))
+                {
                     continue;
+                }
 
                 // Auto-update the working directory
                 mMgrSettings.SetParam("WorkDir", alternateWorkDir);
@@ -1546,7 +1582,9 @@ namespace CaptureTaskManager
         void OnStatusMonitorUpdateReceived(string msg)
         {
             if (mMsgQueueInitSuccess)
+            {
                 mMsgHandler.SendMessage(msg);
+            }
         }
 
         /// <summary>

@@ -165,7 +165,9 @@ namespace CaptureTaskManager
             var success = true;
 
             if (mMinutesBetweenConfigDbUpdates < 1)
+            {
                 mMinutesBetweenConfigDbUpdates = 1;
+            }
 
             if (DateTime.UtcNow.Subtract(mLastConfigDbUpdate).TotalMinutes >= mMinutesBetweenConfigDbUpdates)
             {
@@ -254,9 +256,14 @@ namespace CaptureTaskManager
                 {
                     holdoffMilliseconds = Convert.ToInt32(holdoffSeconds * 1000);
                     if (holdoffMilliseconds < 100)
+                    {
                         holdoffMilliseconds = 100;
+                    }
+
                     if (holdoffMilliseconds > 300000)
+                    {
                         holdoffMilliseconds = 300000;
+                    }
                 }
                 catch (Exception)
                 {
@@ -399,9 +406,13 @@ namespace CaptureTaskManager
                     // Error should have already been logged during the call to GetIngestStatus
                     returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     if (string.IsNullOrWhiteSpace(errorMessage))
+                    {
                         returnData.CloseoutMsg = "Ingest failed; unknown reason";
+                    }
                     else
+                    {
                         returnData.CloseoutMsg = errorMessage;
+                    }
 
                     returnData.EvalCode = EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY;
                     return false;
@@ -444,7 +455,9 @@ namespace CaptureTaskManager
             int waitTimeLogIntervalSeconds;
 
             if (lockQueueWaitTimeStart == DateTime.MinValue)
+            {
                 lockQueueWaitTimeStart = DateTime.UtcNow;
+            }
 
             var waitTimeMinutes = DateTime.UtcNow.Subtract(lockQueueWaitTimeStart).TotalMinutes;
 
@@ -503,7 +516,9 @@ namespace CaptureTaskManager
                     {
                         var dataLine = reader.ReadLine();
                         if (string.IsNullOrWhiteSpace(dataLine))
+                        {
                             continue;
+                        }
 
                         var equalsIndex = dataLine.IndexOf('=');
 
@@ -1030,7 +1045,9 @@ namespace CaptureTaskManager
                 message.StartsWith("File to copy is") && message.Contains("will use CopyFileEx for"))
             {
                 if (mTraceMode)
+                {
                     ConsoleMsgUtils.ShowDebug(message);
+                }
 
                 return;
             }
@@ -1041,7 +1058,9 @@ namespace CaptureTaskManager
         private void FileTools_WaitingForLockQueue(string sourceFilePath, string targetFilePath, int backlogSourceMB, int backlogTargetMB)
         {
             if (!IsLockQueueLogMessageNeeded(ref mLockQueueWaitTimeStart, ref mLastLockQueueWaitTimeLog))
+            {
                 return;
+            }
 
             mLastLockQueueWaitTimeLog = DateTime.UtcNow;
             LogMessage(string.Format(

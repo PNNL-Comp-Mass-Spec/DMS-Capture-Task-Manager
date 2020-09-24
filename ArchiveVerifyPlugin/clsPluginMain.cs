@@ -44,7 +44,9 @@ namespace ArchiveVerifyPlugin
             // Perform base class operations, if any
             mRetData = base.RunTool();
             if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
+            {
                 return mRetData;
+            }
 
             // Do not call StoreToolVersionInfo to store the version info in the database
             // Not required since the ArchiveVerify plugin uses components whose version was
@@ -261,7 +263,9 @@ namespace ArchiveVerifyPlugin
             {
                 var transferDirectoryPathBase = mTaskParams.GetParam("TransferDirectoryPath", mTaskParams.GetParam("TransferFolderPath"));
                 if (!ParameterDefined("TransferDirectoryPath", transferDirectoryPathBase))
+                {
                     return false;
+                }
 
                 if (string.IsNullOrEmpty(mDataset))
                 {
@@ -274,7 +278,9 @@ namespace ArchiveVerifyPlugin
 
                 var jobNumber = mTaskParams.GetParam("Job", string.Empty);
                 if (!ParameterDefined("Job", jobNumber))
+                {
                     return false;
+                }
 
                 var fiMetadataFile = new FileInfo(Path.Combine(transferDirectoryPath, Utilities.GetMetadataFilenameForJob(jobNumber)));
 
@@ -298,7 +304,9 @@ namespace ArchiveVerifyPlugin
                     if (mismatchCountToMetadata > 0)
                     {
                         if (mTotalMismatchCount == 0)
+                        {
                             LogError("MyEmsl verification errors for dataset " + mDataset + ", job " + mJob);
+                        }
 
                         mTotalMismatchCount += mismatchCountToMetadata;
 
@@ -342,9 +350,11 @@ namespace ArchiveVerifyPlugin
                 if (lstDatasetFilesLocal.Count == 0)
                 {
                     if (mTotalMismatchCount == 0)
+                    {
                         LogError("MyEmsl verification errors for dataset " + mDataset + ", job " + mJob);
+                    }
 
-                    mTotalMismatchCount += 1;
+                    mTotalMismatchCount++;
 
                     mRetData.CloseoutMsg = "Local files were not found for this dataset; unable to compare SHA-1 hashes to MyEMSL values";
                     LogError(" ... " + mRetData.CloseoutMsg);
@@ -380,7 +390,9 @@ namespace ArchiveVerifyPlugin
                 if (mismatchCountToDisk > 0)
                 {
                     if (mTotalMismatchCount == 0)
+                    {
                         LogError("MyEmsl verification errors for dataset " + mDataset + ", job " + mJob);
+                    }
 
                     mTotalMismatchCount += mismatchCountToDisk;
 
@@ -426,11 +438,13 @@ namespace ArchiveVerifyPlugin
                 if (lstMatchingArchivedFiles.Count == 0)
                 {
                     if (mTotalMismatchCount == 0)
+                    {
                         LogError("MyEmsl verification errors for dataset " + mDataset + ", job " + mJob);
+                    }
 
-                    mTotalMismatchCount += 1;
+                    mTotalMismatchCount++;
 
-                    mismatchCount += 1;
+                    mismatchCount++;
 
                     var msg = " ... file " + metadataFile.Key + " not found in MyEMSL (CompareArchiveFilesToList)";
                     LogError(msg);
@@ -458,7 +472,9 @@ namespace ArchiveVerifyPlugin
                     else
                     {
                         if (mTotalMismatchCount == 0)
+                        {
                             LogError("MyEmsl verification errors for dataset " + mDataset + ", job " + mJob);
+                        }
 
                         mTotalMismatchCount++;
 
@@ -505,9 +521,11 @@ namespace ArchiveVerifyPlugin
             if (string.IsNullOrEmpty(metadataJson))
             {
                 if (mTotalMismatchCount == 0)
+                {
                     LogError("MyEmsl verification errors for dataset " + mDataset + ", job " + mJob);
+                }
 
-                mTotalMismatchCount += 1;
+                mTotalMismatchCount++;
 
                 LogError(" ... metadata file is empty: " + fiMetadataFile.FullName);
                 return;
@@ -536,9 +554,11 @@ namespace ArchiveVerifyPlugin
             if (dctMetadataFiles.Count == 0)
             {
                 if (mTotalMismatchCount == 0)
+                {
                     LogError("MyEmsl verification errors for dataset " + mDataset + ", job " + mJob);
+                }
 
-                mTotalMismatchCount += 1;
+                mTotalMismatchCount++;
 
                 LogError(" ... metadata file JSON does not contain any entries where the DestinationTable is Files: " + fiMetadataFile.FullName);
                 return;
@@ -558,7 +578,9 @@ namespace ArchiveVerifyPlugin
                 var fileName = Utilities.GetDictionaryValue(metadataFile, "name");
 
                 if (filesToIgnore.Contains(fileName))
+                {
                     continue;
+                }
 
                 // DestinationDirectory will likely be "data" or start with "data/"
                 // For the reason why, see method CreatePacificaMetadataObject in Pacifica.Core.Upload
@@ -566,11 +588,17 @@ namespace ArchiveVerifyPlugin
                 string destDirectoryWindows;
 
                 if (destinationDirectory.StartsWith("data/"))
+                {
                     destDirectoryWindows = destinationDirectory.Substring(5).Replace('/', Path.DirectorySeparatorChar);
+                }
                 else if (destinationDirectory.Equals("data", StringComparison.OrdinalIgnoreCase))
+                {
                     destDirectoryWindows = string.Empty;
+                }
                 else
+                {
                     destDirectoryWindows = destinationDirectory.Replace('/', Path.DirectorySeparatorChar);
+                }
 
                 var relativeFilePathWindows = Path.Combine(destDirectoryWindows, fileName);
 
@@ -600,7 +628,9 @@ namespace ArchiveVerifyPlugin
                 if (fiBackupHashResultsFile.Directory != null)
                 {
                     if (!fiBackupHashResultsFile.Directory.Exists)
+                    {
                         fiBackupHashResultsFile.Directory.Create();
+                    }
 
                     // Copy the file
                     hashResultsFile.CopyTo(fiBackupHashResultsFile.FullName, true);
@@ -653,7 +683,9 @@ namespace ArchiveVerifyPlugin
                 {
                     // Create the target folders if necessary
                     if (!hashResultsFile.Directory.Exists)
+                    {
                         hashResultsFile.Directory.Create();
+                    }
 
                     success = WriteHashResultsFile(lstHashResults, hashResultsFile.FullName, useTempFile: false);
                 }
@@ -685,7 +717,9 @@ namespace ArchiveVerifyPlugin
             {
                 var datasetInstrument = mTaskParams.GetParam("Instrument_Name");
                 if (!ParameterDefined("Instrument_Name", datasetInstrument))
+                {
                     return false;
+                }
 
                 // Calculate the "year_quarter" code used for subdirectories within an instrument folder
                 // This value is based on the date the dataset was created in DMS
@@ -729,11 +763,15 @@ namespace ArchiveVerifyPlugin
 
                 // Delete the metadata file in the transfer folder
                 if (fiMetadataFile.Exists)
+                {
                     fiMetadataFile.Delete();
+                }
 
                 // Delete the transfer folder if it is empty
-                if (diParentFolder != null && diParentFolder.GetFileSystemInfos("*", SearchOption.AllDirectories).Length == 0)
+                if (diParentFolder?.GetFileSystemInfos("*", SearchOption.AllDirectories).Length == 0)
+                {
                     diParentFolder.Delete();
+                }
             }
             catch (Exception ex)
             {
@@ -833,7 +871,9 @@ namespace ArchiveVerifyPlugin
             var archiveFilePath = lstPathInfo[0];
 
             if (lstPathInfo.Count > 1)
+            {
                 hashInfo.MyEMSLFileID = lstPathInfo[1];
+            }
 
             // Files should only be listed once in the SHA-1 hash results file
             // But, just in case there is a duplicate, we'll check for that
@@ -848,8 +888,10 @@ namespace ArchiveVerifyPlugin
 
                 // Preferentially use the newer value, unless the older value has a MyEMSL file ID but the newer one does not
                 if (string.IsNullOrEmpty(hashInfo.MyEMSLFileID) && !string.IsNullOrEmpty(hashInfoCached.MyEMSLFileID))
+                {
                     // Do not update the dictionary
                     return;
+                }
 
                 hashResults[archiveFilePath] = hashInfo;
                 return;
@@ -885,10 +927,14 @@ namespace ArchiveVerifyPlugin
             foreach (var archivedFile in archivedFiles)
             {
                 if (string.IsNullOrEmpty(archivedFile.Instrument))
+                {
                     archivedFile.Instrument = datasetInstrument;
+                }
 
                 if (string.IsNullOrEmpty(archivedFile.DatasetYearQuarter))
+                {
                     archivedFile.DatasetYearQuarter = datasetYearQuarter;
+                }
 
                 var archivedFilePath = "/myemsl/svc-dms/" + archivedFile.PathWithInstrumentAndDatasetUnix;
 
@@ -913,15 +959,12 @@ namespace ArchiveVerifyPlugin
                 }
             }
 
-            if (saveMergedFile)
+            if (!saveMergedFile)
             {
-                success = WriteHashResultsFile(lstHashResults, hashResultsFilePath, useTempFile: true);
-            }
-            else
-            {
-                success = true;
+                return true;
             }
 
+            success = WriteHashResultsFile(lstHashResults, hashResultsFilePath, useTempFile: true);
             return success;
         }
 
@@ -959,13 +1002,17 @@ namespace ArchiveVerifyPlugin
                 if (remoteFiles.Count == 0)
                 {
                     if (mTotalMismatchCount == 0)
+                    {
                         LogError("MyEmsl verification error for dataset " + mDataset + ", job " + mJob);
+                    }
 
-                    mTotalMismatchCount += 1;
+                    mTotalMismatchCount++;
 
                     var msg = "MyEMSL status lookup did not report any files for Dataset_ID " + mDatasetID;
                     if (!string.IsNullOrEmpty(subDir))
+                    {
                         msg += " and subdirectory " + subDir;
+                    }
 
                     mRetData.CloseoutMsg = msg;
                     mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
@@ -1004,12 +1051,16 @@ namespace ArchiveVerifyPlugin
                 var compareSuccess = CompareArchiveFilesToExpectedFiles(filteredFiles, out metadataFilePath, out transactionId);
 
                 if (!compareSuccess)
+                {
                     return false;
+                }
 
                 var hashFileUpdateSuccess = CreateOrUpdateHashResultsFile(filteredFiles);
 
                 if (!hashFileUpdateSuccess)
+                {
                     mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
+                }
 
                 return hashFileUpdateSuccess;
             }
@@ -1046,7 +1097,9 @@ namespace ArchiveVerifyPlugin
                     {
                         var dataLine = item.Value.HashCode + " " + item.Key;
                         if (!string.IsNullOrEmpty(item.Value.MyEMSLFileID))
+                        {
                             dataLine += "\t" + item.Value.MyEMSLFileID;
+                        }
 
                         swHashResultsFile.WriteLine(dataLine);
                     }

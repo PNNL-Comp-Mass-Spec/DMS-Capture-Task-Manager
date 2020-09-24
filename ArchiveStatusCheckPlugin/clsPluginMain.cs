@@ -34,7 +34,9 @@ namespace ArchiveStatusCheckPlugin
             // Perform base class operations, if any
             mRetData = base.RunTool();
             if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
+            {
                 return mRetData;
+            }
 
             if (mDebugLevel >= 5)
             {
@@ -77,7 +79,9 @@ namespace ArchiveStatusCheckPlugin
                 // Return completionCode CLOSEOUT_NOT_READY=2
                 // which will tell the DMS_Capture DB to reset the task to state 2 and bump up the Next_Try value by 60 minutes
                 if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
+                {
                     mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
+                }
             }
 
             msg = "Completed clsPluginMain.RunTool()";
@@ -165,7 +169,9 @@ namespace ArchiveStatusCheckPlugin
                     if (dctStatusData.TryGetValue(statusNum, out var statusInfo))
                     {
                         if (statusInfo.IngestStepsCompletedNew > statusInfo.IngestStepsCompletedOld)
+                        {
                             statusNumsToUpdate.Add(statusNum);
+                        }
                     }
                 }
 
@@ -180,10 +186,14 @@ namespace ArchiveStatusCheckPlugin
                 msg = "MyEMSL archive status not yet verified; see " + firstUnverified;
             }
             else
+            {
                 msg = "MyEMSL archive status partially verified (success count = " + dctVerifiedURIs.Count + ", unverified count = " + dctUnverifiedURIs.Count + "); first not verified: " + firstUnverified;
+            }
 
             if (mRetData.EvalCode != EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY || string.IsNullOrEmpty(mRetData.CloseoutMsg))
+            {
                 mRetData.CloseoutMsg = msg;
+            }
 
             LogDebug(msg);
             return true;
@@ -281,7 +291,9 @@ namespace ArchiveStatusCheckPlugin
                 var unverifiedStatusNum = unverifiedEntry.Key;
 
                 if (!dctStatusData.TryGetValue(unverifiedStatusNum, out var unverifiedStatusInfo))
+                {
                     continue;
+                }
 
                 var unverifiedSubfolder = unverifiedStatusInfo.Subfolder;
 
@@ -294,7 +306,9 @@ namespace ArchiveStatusCheckPlugin
                                               select item.Key).ToList();
 
                 if (lstIdenticalStatusNums.Count == 0)
+                {
                     continue;
+                }
 
                 // Check if any of the identical entries has been successfully verified
                 foreach (var identicalStatusNum in lstIdenticalStatusNums)
@@ -476,7 +490,9 @@ namespace ArchiveStatusCheckPlugin
                         statusInfo.IngestStepsCompletedNew);
 
                     if (!success)
+                    {
                         spError = true;
+                    }
                 }
 
                 if (spError)
@@ -513,7 +529,9 @@ namespace ArchiveStatusCheckPlugin
                 var resCode = mCaptureDbProcedureExecutor.ExecuteSP(cmd, 2);
 
                 if (resCode == 0)
+                {
                     return;
+                }
 
                 var msg = "Error " + resCode + " calling stored procedure " + SP_NAME + ", job " + mJob;
                 LogError(msg);
@@ -553,7 +571,9 @@ namespace ArchiveStatusCheckPlugin
                 var resCode = mCaptureDbProcedureExecutor.ExecuteSP(cmd, 2);
 
                 if (resCode == 0)
+                {
                     return;
+                }
 
                 var msg = "Error " + resCode + " calling stored procedure " + SP_NAME + ", job " + mJob;
                 LogError(msg);

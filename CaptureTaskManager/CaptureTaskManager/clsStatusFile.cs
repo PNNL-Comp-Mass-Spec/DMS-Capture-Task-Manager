@@ -272,8 +272,10 @@ namespace CaptureTaskManager
         {
             var statusFileDirectory = Path.GetDirectoryName(FileNamePath);
 
-            if (statusFileDirectory == null)
+            if (string.IsNullOrWhiteSpace(statusFileDirectory))
+            {
                 return ".";
+            }
 
             return statusFileDirectory;
         }
@@ -425,12 +427,16 @@ namespace CaptureTaskManager
             const int MIN_FILE_WRITE_INTERVAL_SECONDS = 2;
 
             if (DateTime.UtcNow.Subtract(mLastFileWriteTime).TotalSeconds < MIN_FILE_WRITE_INTERVAL_SECONDS)
+            {
                 return;
+            }
 
             // We will write out the Status XML to a temporary file, then rename the temp file to the primary file
 
             if (FileNamePath == null)
+            {
                 return;
+            }
 
             var tempStatusFilePath = Path.Combine(GetStatusFileDirectory(), Path.GetFileNameWithoutExtension(FileNamePath) + "_Temp.xml");
 
@@ -492,7 +498,7 @@ namespace CaptureTaskManager
             catch (Exception ex)
             {
                 // Increment the error counter
-                mWritingErrorCountSaved += 1;
+                mWritingErrorCountSaved++;
 
                 if (mWritingErrorCountSaved >= WRITE_FAILURE_LOG_THRESHOLD)
                 {

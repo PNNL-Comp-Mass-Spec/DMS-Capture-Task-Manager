@@ -145,10 +145,14 @@ namespace CaptureTaskManager
         {
             // Verify there really are command parameters
             if (inpCmd == null)
+            {
                 return;
+            }
 
             if (inpCmd.Parameters.Count < 1)
+            {
                 return;
+            }
 
             var msg = string.Empty;
 
@@ -189,13 +193,17 @@ namespace CaptureTaskManager
                 foreach (var dataRow in parameters)
                 {
                     if (dataRow.Count < 2)
+                    {
                         continue;
+                    }
 
                     var paramName = dataRow[0];
                     var paramValue = dataRow[1];
 
                     if (string.IsNullOrWhiteSpace(paramName))
+                    {
                         continue;
+                    }
 
                     if (mJobParams.ContainsKey(paramName))
                     {
@@ -316,9 +324,13 @@ namespace CaptureTaskManager
                           message.IndexOf("permission denied", StringComparison.OrdinalIgnoreCase) >= 0;
 
             if (logToDb)
+            {
                 LogError(message, logToDb:true);
+            }
             else
+            {
                 LogError(message, ex);
+            }
         }
 
         #endregion

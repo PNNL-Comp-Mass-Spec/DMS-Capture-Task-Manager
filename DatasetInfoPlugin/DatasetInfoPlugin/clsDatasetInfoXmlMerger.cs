@@ -143,7 +143,9 @@ namespace DatasetInfoPlugin
                 var currentDatasetName = ParseDatasetInfoXml(cachedInfoXml, ScanTypes, ref acqInfo, ref ticInfo, datasetAcqTimes);
 
                 if (string.IsNullOrWhiteSpace(datasetName) && !string.IsNullOrWhiteSpace(currentDatasetName))
+                {
                     datasetName = currentDatasetName;
+                }
             }
 
             // Make sure none of the datasets has a start time more than 120 minutes after the previous datasets end time
@@ -238,7 +240,9 @@ namespace DatasetInfoPlugin
 
             var elutionTimeMax = GetXmlValue(xmlDoc, "DatasetInfo/AcquisitionInfo/Elution_Time_Max", 0.0);
             if (elutionTimeMax > acqInfo.Elution_Time_Max)
+            {
                 acqInfo.Elution_Time_Max = elutionTimeMax;
+            }
 
             acqInfo.AcqTimeMinutes += GetXmlValue(xmlDoc, "DatasetInfo/AcquisitionInfo/AcqTimeMinutes", 0.0);
 
@@ -251,17 +255,25 @@ namespace DatasetInfoPlugin
             {
                 startTimeValid = true;
                 if (acqInfo.StartTime == DateTime.MinValue)
+                {
                     acqInfo.StartTime = startTime;
+                }
                 else if (startTime < acqInfo.StartTime)
+                {
                     acqInfo.StartTime = startTime;
+                }
             }
 
             if (DateTime.TryParse(endTimeText, out var endTime))
             {
                 if (acqInfo.EndTime == DateTime.MinValue)
+                {
                     acqInfo.EndTime = endTime;
+                }
                 else if (endTime > acqInfo.EndTime)
+                {
                     acqInfo.EndTime = endTime;
+                }
 
                 if (startTimeValid && !datasetAcqTimes.ContainsKey(datasetName))
                 {
@@ -429,10 +441,14 @@ namespace DatasetInfoPlugin
         private double UpdateAverage(int oldOverallCount, double oldOverallAverage, int newCount, double newAverage)
         {
             if (oldOverallCount == 0)
+            {
                 return newAverage;
+            }
 
             if (newCount == 0)
+            {
                 return oldOverallAverage;
+            }
 
             var oldCountTimesAverage = oldOverallCount * oldOverallAverage;
             var newCountTimesAverage = newCount * newAverage;
@@ -447,7 +463,9 @@ namespace DatasetInfoPlugin
             var match = xmlDoc.SelectSingleNode(xPath);
 
             if (match == null)
+            {
                 return defaultValue;
+            }
 
             return match.InnerText;
         }
@@ -457,7 +475,9 @@ namespace DatasetInfoPlugin
             var match = GetXmlValue(xmlDoc, xPath, defaultValue.ToString());
 
             if (int.TryParse(match, out var value))
+            {
                 return value;
+            }
 
             return defaultValue;
         }
@@ -467,7 +487,9 @@ namespace DatasetInfoPlugin
             var match = GetXmlValue(xmlDoc, xPath, defaultValue.ToString(CultureInfo.InvariantCulture));
 
             if (long.TryParse(match, out var value))
+            {
                 return value;
+            }
 
             return defaultValue;
         }
@@ -477,7 +499,9 @@ namespace DatasetInfoPlugin
             var match = GetXmlValue(xmlDoc, xPath, defaultValue.ToString(CultureInfo.InvariantCulture));
 
             if (double.TryParse(match, out var value))
+            {
                 return value;
+            }
 
             return defaultValue;
         }

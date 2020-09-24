@@ -49,9 +49,13 @@ namespace Pacifica.Core
             for (var index = 0; index < pwdBytes.Count; index++)
             {
                 if (index % 2 == modTest)
-                    pwdBytes[index] += 1;
+                {
+                    pwdBytes[index]++;
+                }
                 else
-                    pwdBytes[index] -= 1;
+                {
+                    pwdBytes[index]--;
+                }
 
                 pwdCharsAdj.Add((char)pwdBytes[index]);
             }
@@ -83,7 +87,9 @@ namespace Pacifica.Core
             var fi = new FileInfo(filePath);
 
             if (!fi.Exists)
+            {
                 throw new FileNotFoundException("File not found in GenerateSha1Hash: " + filePath);
+            }
 
             if (_hashProvider == null)
             {
@@ -113,7 +119,9 @@ namespace Pacifica.Core
             var valueText = GetDictionaryValue(dictionary, keyName, valueIfMissingOrNull.ToString());
 
             if (bool.TryParse(valueText, out var value))
+            {
                 return value;
+            }
 
             return valueIfMissingOrNull;
         }
@@ -131,7 +139,9 @@ namespace Pacifica.Core
             var valueText = GetDictionaryValue(dictionary, keyName, valueIfMissingOrNull.ToString());
 
             if (int.TryParse(valueText, out var value))
+            {
                 return value;
+            }
 
             return valueIfMissingOrNull;
         }
@@ -164,13 +174,17 @@ namespace Pacifica.Core
         public static long GetDictionaryValue(IReadOnlyDictionary<string, object> dictionary, string keyName, long valueIfMissingOrNull)
         {
             if (!dictionary.TryGetValue(keyName, out var itemValue))
+            {
                 return valueIfMissingOrNull;
+            }
 
             if (itemValue != null)
             {
                 var itemValueString = itemValue.ToString();
                 if (long.TryParse(itemValueString, out var itemValueNumber))
+                {
                     return itemValueNumber;
+                }
             }
 
             return valueIfMissingOrNull;
@@ -186,10 +200,14 @@ namespace Pacifica.Core
         public static string GetDictionaryValue(IReadOnlyDictionary<string, object> dictionary, string keyName, string valueIfMissingOrNull = "")
         {
             if (!dictionary.TryGetValue(keyName, out var itemValue))
+            {
                 return valueIfMissingOrNull;
+            }
 
             if (itemValue is string itemValueString)
+            {
                 return itemValueString;
+            }
 
             return valueIfMissingOrNull;
         }
@@ -218,16 +236,12 @@ namespace Pacifica.Core
 
         public static DirectoryInfo GetTempDirectory(Configuration config)
         {
-            DirectoryInfo di;
             if (!string.IsNullOrEmpty(config.LocalTempDirectory))
             {
-                di = new DirectoryInfo(config.LocalTempDirectory);
+                return new DirectoryInfo(config.LocalTempDirectory);
             }
-            else
-            {
-                di = new DirectoryInfo(Path.GetTempPath());
-            }
-            return di;
+
+            return new DirectoryInfo(Path.GetTempPath());
         }
 
         public static string ToHexString(byte[] buffer)
@@ -244,7 +258,9 @@ namespace Pacifica.Core
         public static string ObjectToJson(IList metadataList)
         {
             if (metadataList == null)
+            {
                 return string.Empty;
+            }
 
             var jso = new JsonArray(metadataList);
             return jso.ToString();
@@ -308,9 +324,13 @@ namespace Pacifica.Core
                                         var typeName = nextValue.GetType().Name;
 
                                         if (typeName == "String" || typeName == "JsonNumber")
+                                        {
                                             settingsDictionary.Add(key, JsonArrayToStringList(tmpJsa));
+                                        }
                                         else
+                                        {
                                             settingsDictionary.Add(key, JsonArrayToDictionaryList(tmpJsa));
+                                        }
                                     }
                                 }
                                 break;
@@ -361,9 +381,13 @@ namespace Pacifica.Core
             foreach (var jsonItem in jsonStrings)
             {
                 if (int.TryParse(jsonItem, out var value))
+                {
                     parsedIntegers.Add(value);
+                }
                 else
+                {
                     throw new InvalidCastException("JsonArrayToIntList cannot convert item '" + value + "' to an integer");
+                }
             }
 
             return parsedIntegers;
@@ -407,7 +431,9 @@ namespace Pacifica.Core
         public static string GetMetadataFilenameForJob(string jobNumber)
         {
             if (string.IsNullOrWhiteSpace(jobNumber))
+            {
                 return "MyEMSL_metadata_CaptureJob_000000.txt";
+            }
 
             return "MyEMSL_metadata_CaptureJob_" + jobNumber + ".txt";
         }
@@ -469,7 +495,9 @@ namespace Pacifica.Core
             foreach (var domainName in trustedDomains)
             {
                 if (domainToValidate.IndexOf(domainName, StringComparison.OrdinalIgnoreCase) < 0)
+                {
                     continue;
+                }
 
                 errorMessage = string.Empty;
                 return true;

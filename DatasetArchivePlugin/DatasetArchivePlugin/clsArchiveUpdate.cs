@@ -52,7 +52,9 @@ namespace DatasetArchivePlugin
         {
             // Perform base class operations
             if (!base.PerformTask())
+            {
                 return false;
+            }
 
             var statusMessage = "Updating dataset " + mDatasetName + ", job " + mTaskParams.GetParam("Job");
             OnDebugEvent(statusMessage);
@@ -71,12 +73,18 @@ namespace DatasetArchivePlugin
             var debugMode = Uploader.TarStreamUploader.UploadDebugMode.DebugDisabled;
 
             if (mTaskParams.GetParam("DebugTestTar", false))
+            {
                 debugMode = Uploader.TarStreamUploader.UploadDebugMode.CreateTarLocal;
+            }
             else if (mTaskParams.GetParam("MyEMSLOffline", false))
+            {
                 debugMode = Uploader.TarStreamUploader.UploadDebugMode.MyEMSLOfflineMode;
+            }
 
             if (debugMode != Uploader.TarStreamUploader.UploadDebugMode.DebugDisabled)
+            {
                 OnStatusEvent("Calling UploadToMyEMSLWithRetry with debugMode=" + debugMode);
+            }
 
             const bool PUSH_TO_TEST_SERVER = false;
 
@@ -95,13 +103,19 @@ namespace DatasetArchivePlugin
                                                           out allowRetry, out criticalErrorMessage);
 
                 if (!string.IsNullOrWhiteSpace(criticalErrorMessage))
+                {
                     mErrMsg = criticalErrorMessage;
+                }
 
                 if (!allowRetry)
+                {
                     FailureDoNotRetry = true;
+                }
 
                 if (!copySuccess)
+                {
                     return false;
+                }
 
                 var subDirName = mTaskParams.GetParam("OutputDirectoryName", mTaskParams.GetParam("OutputFolderName"));
 
@@ -113,7 +127,9 @@ namespace DatasetArchivePlugin
 
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (!PUSH_TO_TEST_SERVER)
+            {
                 return true;
+            }
 
             // Possibly also upload the dataset to the MyEMSL test instance
 #pragma warning disable 162
@@ -130,7 +146,7 @@ namespace DatasetArchivePlugin
             var rand = new Random();
             var randomNumber = rand.Next(0, 100);
 
-            if (randomNumber > PERCENT_DATA_TO_SEND_TO_TEST & !debugTestInstanceOnly)
+            if (randomNumber > PERCENT_DATA_TO_SEND_TO_TEST && !debugTestInstanceOnly)
             {
                 // Do not send this dataset to the test server
                 return true;
@@ -145,7 +161,9 @@ namespace DatasetArchivePlugin
                                                           out allowRetry, out criticalErrorMessage);
 
             if (!string.IsNullOrWhiteSpace(criticalErrorMessage))
+            {
                 mErrMsg = criticalErrorMessage;
+            }
 
             if (!testCopySuccess)
             {

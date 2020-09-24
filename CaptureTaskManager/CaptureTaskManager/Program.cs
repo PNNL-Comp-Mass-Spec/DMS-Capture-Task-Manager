@@ -200,7 +200,9 @@ namespace CaptureTaskManager
         private static void ShowTrace(string message)
         {
             if (mTraceMode)
+            {
                 clsMainProgram.ShowTraceMessage(message);
+            }
         }
 
         #endregion

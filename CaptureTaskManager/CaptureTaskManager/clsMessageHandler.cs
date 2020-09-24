@@ -26,11 +26,7 @@ namespace CaptureTaskManager
     /// </summary>
     class clsMessageHandler : clsLoggerBase, IDisposable
     {
-        #region "Class wide variables"
-
-        private string mBrokerUri;
-
-        private string mStatusTopicName;       // Used for status output
+#region "Class wide variables"
         private MgrSettings mMgrSettings;
 
         private IConnection mConnection;
@@ -49,17 +45,9 @@ namespace CaptureTaskManager
             set => mMgrSettings = value;
         }
 
-        public string BrokerUri
-        {
-            get => mBrokerUri;
-            set => mBrokerUri = value;
-        }
+        public string BrokerUri { get; set; }
 
-        public string StatusTopicName
-        {
-            get => mStatusTopicName;
-            set => mStatusTopicName = value;
-        }
+        public string StatusTopicName { get; set; }
 
         #endregion
 
@@ -73,15 +61,21 @@ namespace CaptureTaskManager
         protected void CreateConnection(int retryCount = 2, int timeoutSeconds = 15)
         {
             if (mHasConnection)
+            {
                 return;
+            }
 
             if (retryCount < 0)
+            {
                 retryCount = 0;
+            }
 
             var retriesRemaining = retryCount;
 
             if (timeoutSeconds < 5)
+            {
                 timeoutSeconds = 5;
+            }
 
             var errorList = new List<string>();
 
@@ -89,7 +83,7 @@ namespace CaptureTaskManager
             {
                 try
                 {
-                    IConnectionFactory connectionFactory = new ConnectionFactory(mBrokerUri, mMgrSettings.ManagerName);
+                    IConnectionFactory connectionFactory = new ConnectionFactory(BrokerUri, mMgrSettings.ManagerName);
                     mConnection = connectionFactory.CreateConnection();
                     mConnection.RequestTimeout = new TimeSpan(0, 0, timeoutSeconds);
                     mConnection.Start();
@@ -106,20 +100,24 @@ namespace CaptureTaskManager
                 {
                     // Connection failed
                     if (!errorList.Contains(ex.Message))
+                    {
                         errorList.Add(ex.Message);
+                    }
 
                     // Sleep for 3 seconds
                     System.Threading.Thread.Sleep(3000);
                 }
 
-                retriesRemaining -= 1;
+                retriesRemaining--;
             }
 
             // If we get here, we never could connect to the message broker
 
             var msg = "Exception creating broker connection";
             if (retryCount > 0)
+            {
                 msg += " after " + (retryCount + 1) + " attempts";
+            }
 
             msg += ": " + string.Join("; ", errorList);
 
@@ -135,12 +133,16 @@ namespace CaptureTaskManager
             try
             {
                 if (!mHasConnection)
+                {
                     CreateConnection();
+                }
 
                 if (!mHasConnection)
+                {
                     return false;
+                }
 
-                if (string.IsNullOrWhiteSpace(mStatusTopicName))
+                if (string.IsNullOrWhiteSpace(StatusTopicName))
                 {
                     LogWarning("Status topic queue name is undefined");
                 }
@@ -148,7 +150,7 @@ namespace CaptureTaskManager
                 {
                     // topic for the capture tool manager to send status information over
                     mStatusSession = mConnection.CreateSession();
-                    mStatusSender = mStatusSession.CreateProducer(new ActiveMQTopic(mStatusTopicName));
+                    mStatusSender = mStatusSession.CreateProducer(new ActiveMQTopic(StatusTopicName));
                     LogDebug("Status sender established");
                 }
 
@@ -216,7 +218,9 @@ namespace CaptureTaskManager
         public void Dispose()
         {
             if (mIsDisposed)
+            {
                 return;
+            }
 
             DestroyConnection();
             mIsDisposed = true;

@@ -86,10 +86,14 @@ namespace CaptureTaskManager
             bool traceMode)
         {
             if (string.IsNullOrEmpty(mgrConfigDBConnectionString))
+            {
                 throw new Exception("Manager config DB connection string is not defined");
+            }
 
             if (string.IsNullOrEmpty(managerName))
+            {
                 throw new Exception("Manager name is not defined");
+            }
 
             mMgrConfigDBConnectionString = string.Copy(mgrConfigDBConnectionString);
             mManagerName = string.Copy(managerName);
@@ -136,10 +140,14 @@ namespace CaptureTaskManager
         public bool AutoCleanupManagerErrors(eCleanupModeConstants eManagerErrorCleanupMode)
         {
             if (!mInitialized)
+            {
                 return false;
+            }
 
             if (eManagerErrorCleanupMode == eCleanupModeConstants.Disabled)
+            {
                 return false;
+            }
 
             LogMessage("Attempting to automatically clean the work directory");
 
@@ -152,7 +160,9 @@ namespace CaptureTaskManager
             if (!success)
             {
                 if (string.IsNullOrEmpty(failureMessage))
+                {
                     failureMessage = "unable to clear work directory";
+                }
             }
             else
             {
@@ -189,9 +199,13 @@ namespace CaptureTaskManager
             if (string.IsNullOrWhiteSpace(mMgrConfigDBConnectionString))
             {
                 if (clsUtilities.OfflineMode)
+                {
                     LogDebug("Skipping call to " + SP_NAME_REPORT_MGR_CLEANUP + " since offline");
+                }
                 else
+                {
                     LogError("Skipping call to " + SP_NAME_REPORT_MGR_CLEANUP + " since the Manager Control connection string is empty");
+                }
 
                 return;
             }
@@ -199,7 +213,9 @@ namespace CaptureTaskManager
             try
             {
                 if (failureMessage == null)
+                {
                     failureMessage = string.Empty;
+                }
 
                 var dbTools = DbToolsFactory.GetDBTools(mMgrConfigDBConnectionString, debugMode: mTraceMode);
                 RegisterEvents(dbTools);

@@ -49,7 +49,9 @@ namespace DatasetArchivePlugin
             // Perform base class operations, if any
             var returnData = base.RunTool();
             if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
+            {
                 return returnData;
+            }
 
             // Store the version info in the database
             if (!StoreToolVersionInfo())
@@ -91,11 +93,15 @@ namespace DatasetArchivePlugin
                 returnData.CloseoutMsg = archOpTool.ErrMsg;
 
                 if (archOpTool.FailureDoNotRetry)
+                {
                     returnData.EvalCode = EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY;
+                }
             }
 
             if (!string.IsNullOrEmpty(archOpTool.WarningMsg))
+            {
                 returnData.EvalMsg = archOpTool.WarningMsg;
+            }
 
             if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
             {
@@ -103,9 +109,13 @@ namespace DatasetArchivePlugin
                 {
                     // Note that stored procedure SetStepTaskComplete will update MyEMSL State values if returnData.EvalCode is 4 or 7
                     if (mMyEMSLAlreadyUpToDate)
+                    {
                         returnData.EvalCode = EnumEvalCode.EVAL_CODE_MYEMSL_IS_ALREADY_UP_TO_DATE;
+                    }
                     else
+                    {
                         returnData.EvalCode = EnumEvalCode.EVAL_CODE_SUBMITTED_TO_MYEMSL;
+                    }
                 }
             }
 
@@ -175,9 +185,13 @@ namespace DatasetArchivePlugin
 
                 byte testInstanceFlag;
                 if (usedTestInstance)
+                {
                     testInstanceFlag = 1;
+                }
                 else
+                {
                     testInstanceFlag = 0;
+                }
 
                 dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
                 dbTools.AddParameter(cmd, "@Job", SqlType.Int).Value = mTaskParams.GetParam("Job", 0);
@@ -233,7 +247,9 @@ namespace DatasetArchivePlugin
             var pluginPath = Path.Combine(appDirectory, "DatasetArchivePlugin.dll");
             var success = StoreToolVersionInfoOneFile(ref toolVersionInfo, pluginPath);
             if (!success)
+            {
                 return false;
+            }
 
             // Store path to DatasetArchivePlugin.dll in toolFiles
             var toolFiles = new List<FileInfo>

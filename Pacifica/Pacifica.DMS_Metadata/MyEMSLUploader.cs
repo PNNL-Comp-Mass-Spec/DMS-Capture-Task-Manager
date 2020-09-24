@@ -50,7 +50,9 @@ namespace Pacifica.DMS_Metadata
             get
             {
                 if (mUploadWorker == null)
+                {
                     return string.Empty;
+                }
 
                 return mUploadWorker.ErrorMessage;
             }
@@ -145,7 +147,9 @@ namespace Pacifica.DMS_Metadata
             mTaskParams = taskParams;
 
             if (!mMgrParams.TryGetValue("MgrName", out mManagerName))
+            {
                 mManagerName = "MyEMSLUploader_" + Environment.MachineName;
+            }
 
             mFileTools = fileTools;
 
@@ -153,17 +157,23 @@ namespace Pacifica.DMS_Metadata
 
             var transferDirectoryPathBase = Utilities.GetDictionaryValue(mTaskParams, "TransferDirectoryPath", transferFolderPath);
             if (string.IsNullOrEmpty(transferDirectoryPathBase))
+            {
                 throw new InvalidDataException("Job parameters do not have TransferDirectoryPath defined; unable to continue");
+            }
 
             var datasetName = Utilities.GetDictionaryValue(mTaskParams, "Dataset", string.Empty);
             if (string.IsNullOrEmpty(transferDirectoryPathBase))
+            {
                 throw new InvalidDataException("Job parameters do not have Dataset defined; unable to continue");
+            }
 
             var transferDirectoryPath = Path.Combine(transferDirectoryPathBase, datasetName);
 
             var jobNumber = Utilities.GetDictionaryValue(mTaskParams, "Job", string.Empty);
             if (string.IsNullOrEmpty(jobNumber))
+            {
                 throw new InvalidDataException("Job parameters do not have Job defined; unable to continue");
+            }
 
             mUploadWorker = new Uploader.Upload(config, transferDirectoryPath, jobNumber);
             RegisterEvents(mUploadWorker);
@@ -234,7 +244,9 @@ namespace Pacifica.DMS_Metadata
                 if (!success)
                 {
                     if (criticalError)
+                    {
                         CriticalErrorMessage = criticalErrorMessage;
+                    }
 
                     statusURL = criticalError ? CRITICAL_UPLOAD_ERROR : string.Empty;
 
@@ -286,7 +298,9 @@ namespace Pacifica.DMS_Metadata
             MetadataContainer.DeleteLockFiles();
 
             if (!string.IsNullOrEmpty(statusURL))
+            {
                 StatusURI = statusURL;
+            }
 
             return uploadSuccess;
         }
@@ -302,7 +316,9 @@ namespace Pacifica.DMS_Metadata
             if (mTaskParams.TryGetValue(name, out var valueText))
             {
                 if (bool.TryParse(valueText, out var value))
+                {
                     return value;
+                }
 
                 return valueIfMissing;
             }
@@ -321,7 +337,9 @@ namespace Pacifica.DMS_Metadata
             if (mTaskParams.TryGetValue(name, out var valueText))
             {
                 if (int.TryParse(valueText, out var value))
+                {
                     return value;
+                }
 
                 return valueIfMissing;
             }

@@ -88,7 +88,9 @@ namespace DatasetInfoPlugin
             // Perform base class operations, if any
             var returnData = base.RunTool();
             if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
+            {
                 return returnData;
+            }
 
             // Store the version info in the database
             if (!StoreToolVersionInfo())
@@ -177,7 +179,9 @@ namespace DatasetInfoPlugin
 
             var msFileInfoScannerDLLPath = GetMSFileInfoScannerDLLPath();
             if (string.IsNullOrEmpty(msFileInfoScannerDLLPath))
+            {
                 throw new NotSupportedException("Manager parameter 'MSFileInfoScannerDir' is not defined");
+            }
 
             if (!File.Exists(msFileInfoScannerDLLPath))
             {
@@ -472,10 +476,14 @@ namespace DatasetInfoPlugin
                 {
                     var validQcGraphics = ValidateQCGraphics(currentOutputDirectory, primaryFileOrDirectoryProcessed, returnData);
                     if (returnData.CloseoutType != EnumCloseOutType.CLOSEOUT_SUCCESS)
+                    {
                         return returnData;
+                    }
 
                     if (!validQcGraphics)
+                    {
                         continue;
+                    }
                 }
 
                 if (successProcessing)
@@ -580,7 +588,9 @@ namespace DatasetInfoPlugin
             }
 
             if (!useLocalOutputDirectory || returnData.CloseoutType != EnumCloseOutType.CLOSEOUT_SUCCESS)
+            {
                 return returnData;
+            }
 
             // Set this to failed since we stored the QC graphics in the local working directory instead of on the storage server
             returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -635,14 +645,18 @@ namespace DatasetInfoPlugin
                     iDatasetID, datasetInfoXML, connectionString, MS_FILE_SCANNER_DS_INFO_SP);
 
                 if (successPosting)
+                {
                     break;
+                }
 
                 // If the error message contains the text "timeout expired" then try again, up to 2 times
                 if (mMsg.IndexOf("timeout expired", StringComparison.OrdinalIgnoreCase) < 0)
+                {
                     break;
+                }
 
                 System.Threading.Thread.Sleep(1500);
-                iPostCount += 1;
+                iPostCount++;
             }
 
             iMSFileInfoScanner.eMSFileScannerErrorCodes errorCode;
@@ -718,7 +732,9 @@ namespace DatasetInfoPlugin
                         var subdirectoryInfo = new DirectoryInfo(Path.Combine(outputPathBase, subdirectoryName));
                         var htmlFiles = subdirectoryInfo.GetFiles("index.html");
                         if (htmlFiles.Length == 0)
+                        {
                             continue;
+                        }
 
                         using (var htmlReader = new StreamReader(new FileStream(htmlFiles[0].FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                         {
@@ -731,7 +747,9 @@ namespace DatasetInfoPlugin
                             {
                                 var dataLine = htmlReader.ReadLine();
                                 if (string.IsNullOrWhiteSpace(dataLine))
+                                {
                                     continue;
+                                }
 
                                 var lineTrimmed = dataLine.Trim();
 
@@ -921,7 +939,9 @@ namespace DatasetInfoPlugin
             }
 
             if (msFileInfoScanner.MS2MzMin > 0)
+            {
                 return;
+            }
 
             // People sometimes forget to define the sample label for the experiment, but put iTRAQ or TMT in the dataset name
             // Check for this
@@ -1028,15 +1048,19 @@ namespace DatasetInfoPlugin
             var searchOption = looseMatchDotD ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
 
             var diDotDDirectories = datasetDirectory.GetDirectories("*.d", searchOption);
-            if (diDotDDirectories.Length <= 0)
+            if (diDotDDirectories.Length == 0)
+            {
                 return;
+            }
 
             // Look for a .mcf file in each of the .D directories
             foreach (var dotDDirectory in diDotDDirectories)
             {
                 var mcfFileExists = LookForMcfFileInDotDDirectory(dotDDirectory, out _);
                 if (!mcfFileExists)
+                {
                     continue;
+                }
 
                 string relativeDirectoryPath;
                 if (looseMatchDotD)
@@ -1252,7 +1276,9 @@ namespace DatasetInfoPlugin
                 var fileOrDirectoryRelativePaths = LookForAlternateFileOrDirectory(datasetDirectory, fileOrDirectoryName);
 
                 if (fileOrDirectoryRelativePaths.Count > 0)
+                {
                     return fileOrDirectoryRelativePaths;
+                }
 
                 mMsg = "clsPluginMain.GetDataFileOrDirectoryName: File " + fileOrDirectoryPath + " not found";
                 LogError(mMsg);
@@ -1307,37 +1333,59 @@ namespace DatasetInfoPlugin
             var argumentList = new List<string>();
 
             if (!msFileScanner.SaveTICAndBPIPlots)
+            {
                 argumentList.Add("/NoTIC");
+            }
 
             if (msFileScanner.SaveLCMS2DPlots)
+            {
                 argumentList.Add("/LC");
+            }
 
             if (msFileScanner.CreateDatasetInfoFile)
+            {
                 argumentList.Add("/DI");
+            }
 
             if (msFileScanner.CheckCentroidingStatus)
+            {
                 argumentList.Add("/CC");
+            }
 
             if (msFileScanner.PlotWithPython)
+            {
                 argumentList.Add("/Python");
+            }
 
             if (msFileScanner.CheckCentroidingStatus)
+            {
                 argumentList.Add("/SS");
+            }
 
             if (msFileScanner.ComputeOverallQualityScores)
+            {
                 argumentList.Add("/QS");
+            }
 
             if (msFileScanner.MS2MzMin > 0)
+            {
                 argumentList.Add(string.Format("/MS2MzMin:{0:F1}", msFileScanner.MS2MzMin));
+            }
 
             if (msFileScanner.ScanStart > 0)
+            {
                 argumentList.Add("/ScanStart:" + msFileScanner.ScanStart);
+            }
 
             if (msFileScanner.ScanEnd > 0)
+            {
                 argumentList.Add("/ScanEnd:" + msFileScanner.ScanEnd);
+            }
 
             if (msFileScanner.ShowDebugInfo)
+            {
                 argumentList.Add("/Debug");
+            }
 
             return datasetFileName + " " + string.Join(" ", argumentList);
         }
@@ -1350,7 +1398,9 @@ namespace DatasetInfoPlugin
         {
             var msFileInfoScannerDir = mMgrParams.GetParam("MSFileInfoScannerDir", string.Empty);
             if (string.IsNullOrEmpty(msFileInfoScannerDir))
+            {
                 return string.Empty;
+            }
 
             return Path.Combine(msFileInfoScannerDir, "MSFileInfoScanner.dll");
         }
@@ -1445,7 +1495,9 @@ namespace DatasetInfoPlugin
             var pluginPath = Path.Combine(appDirectory, "DatasetInfoPlugin.dll");
             var success = StoreToolVersionInfoOneFile(ref toolVersionInfo, pluginPath);
             if (!success)
+            {
                 return false;
+            }
 
             // Lookup the version of the MSFileInfoScanner DLL
             var msFileInfoScannerDLLPath = GetMSFileInfoScannerDLLPath();
@@ -1453,14 +1505,18 @@ namespace DatasetInfoPlugin
             {
                 success = StoreToolVersionInfoOneFile(ref toolVersionInfo, msFileInfoScannerDLLPath);
                 if (!success)
+                {
                     return false;
+                }
             }
 
             // Lookup the version of the UIMFLibrary DLL
             var uimfLibraryPath = Path.Combine(appDirectory, "UIMFLibrary.dll");
             success = StoreToolVersionInfoOneFile(ref toolVersionInfo, uimfLibraryPath);
             if (!success)
+            {
                 return false;
+            }
 
             // Store path to CaptureToolPlugin.dll and MSFileInfoScanner.dll in toolFiles
             var toolFiles = new List<FileInfo>
@@ -1469,7 +1525,9 @@ namespace DatasetInfoPlugin
             };
 
             if (!string.IsNullOrEmpty(msFileInfoScannerDLLPath))
+            {
                 toolFiles.Add(new FileInfo(msFileInfoScannerDLLPath));
+            }
 
             try
             {
@@ -1534,7 +1592,9 @@ namespace DatasetInfoPlugin
             }
 
             if (validGraphics)
+            {
                 return true;
+            }
 
             var errMsg2 = string.Format("All {0} PNG files created by MSFileInfoScanner are less than {1} KB and likely blank graphics", pngFiles.Length, minimumGraphicsSizeKB);
 
@@ -1652,7 +1712,9 @@ namespace DatasetInfoPlugin
         private void ProgressUpdateHandler(string progressMessage, float percentComplete)
         {
             if (DateTime.UtcNow.Subtract(mLastProgressUpdate).TotalSeconds < 30)
+            {
                 return;
+            }
 
             mLastProgressUpdate = DateTime.UtcNow;
 
@@ -1667,7 +1729,7 @@ namespace DatasetInfoPlugin
                 // Increment mStatusUpdateIntervalMinutes by 1 minute every time the status is logged, up to a maximum of 30 minutes
                 if (mStatusUpdateIntervalMinutes < 30)
                 {
-                    mStatusUpdateIntervalMinutes += 1;
+                    mStatusUpdateIntervalMinutes++;
                 }
             }
         }

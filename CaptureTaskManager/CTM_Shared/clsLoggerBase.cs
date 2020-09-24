@@ -126,9 +126,13 @@ namespace CaptureTaskManager
         {
             if (statusMessage.StartsWith(clsRunDosProgram.RUN_PROGRAM_STATUS_LINE) &&
                 statusMessage.Contains("DLLVersionInspector"))
+            {
                 LogDebug(statusMessage, writeToLog: false);
+            }
             else
+            {
                 LogMessage(statusMessage);
+            }
         }
 
         protected void ErrorEventHandler(string errorMessage, Exception ex)

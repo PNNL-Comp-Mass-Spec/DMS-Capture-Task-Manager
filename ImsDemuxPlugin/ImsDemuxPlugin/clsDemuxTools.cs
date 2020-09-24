@@ -137,7 +137,10 @@ namespace ImsDemuxPlugin
                 if (string.IsNullOrEmpty(uimfFilePath))
                 {
                     if (returnData != null && returnData.CloseoutType != EnumCloseOutType.CLOSEOUT_FAILED)
+                    {
                         returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    }
+
                     return returnData;
                 }
 
@@ -160,7 +163,9 @@ namespace ImsDemuxPlugin
 
                 returnData = CopyUIMFToWorkDir(uimfFileName, returnData, out _, out var uimfLocalFileNamePath);
                 if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
+                {
                     return returnData;
+                }
 
                 // Add the bin-centric tables
                 using (var uimfReader = new DataReader(uimfLocalFileNamePath))
@@ -239,7 +244,10 @@ namespace ImsDemuxPlugin
                 const string msg = "Exception adding the bin-centric tables to the UIMF file";
                 OnErrorEvent(msg, ex);
                 if (returnData == null)
+                {
                     returnData = new clsToolReturnData();
+                }
+
                 returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, msg);
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return returnData;
@@ -278,7 +286,9 @@ namespace ImsDemuxPlugin
                 var uimfFilePath = Path.Combine(mDatasetFolderPathRemote, mDataset + ".uimf");
 
                 if (File.Exists(uimfFilePath))
+                {
                     return uimfFilePath;
+                }
 
                 var msg = "UIMF file not found on storage server, unable to calibrate: " + uimfFilePath;
                 OnErrorEvent(msg);
@@ -322,7 +332,10 @@ namespace ImsDemuxPlugin
             if (string.IsNullOrEmpty(uimfFilePath))
             {
                 if (returnData != null && returnData.CloseoutType != EnumCloseOutType.CLOSEOUT_FAILED)
+                {
                     returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+
                 return returnData;
             }
 
@@ -355,7 +368,9 @@ namespace ImsDemuxPlugin
             }
 
             if (!autoCalibrate)
+            {
                 return returnData;
+            }
 
             try
             {
@@ -368,12 +383,16 @@ namespace ImsDemuxPlugin
                     if (frameList.Count < 5)
                     {
                         if (frameList.Count == 0)
+                        {
                             msg = "Skipping calibration since .UIMF file has no frames";
+                        }
                         else
                         {
                             msg = "Skipping calibration since .UIMF file only has " + frameList.Count + " frame";
                             if (frameList.Count != 1)
+                            {
                                 msg += "s";
+                            }
                         }
 
                         OnStatusEvent(msg);
@@ -409,7 +428,9 @@ namespace ImsDemuxPlugin
             }
 
             if (!autoCalibrate)
+            {
                 return returnData;
+            }
 
             // Perform calibration operation
             OnDebugEvent("Calling UIMFDemultiplexer to calibrate");
@@ -421,7 +442,9 @@ namespace ImsDemuxPlugin
                 if (!CalibrateFile(uimfFilePath, mDataset, out var errorMessage))
                 {
                     if (string.IsNullOrEmpty(errorMessage))
+                    {
                         errorMessage = "Error calibrating UIMF file";
+                    }
 
                     returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, errorMessage);
                     calibrationFailed = true;
@@ -499,7 +522,10 @@ namespace ImsDemuxPlugin
                 if (string.IsNullOrEmpty(uimfFilePath))
                 {
                     if (returnData != null && returnData.CloseoutType != EnumCloseOutType.CLOSEOUT_FAILED)
+                    {
                         returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    }
+
                     return returnData;
                 }
 
@@ -554,7 +580,10 @@ namespace ImsDemuxPlugin
                 var msg = "Exception in PerformManualCalibration for dataset " + mDataset;
                 OnErrorEvent(msg, ex);
                 if (returnData == null)
+                {
                     returnData = new clsToolReturnData();
+                }
+
                 returnData.CloseoutMsg = "Error manually calibrating UIMF file";
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return returnData;
@@ -590,7 +619,9 @@ namespace ImsDemuxPlugin
             var framesToSum = taskParams.GetParam("DemuxFramesToSum", 5);
 
             if (framesToSum > 1)
+            {
                 OnStatusEvent("Will sum " + framesToSum + " LC Frames when demultiplexing");
+            }
 
             // Make sure the working directory is empty
             clsToolRunnerBase.CleanWorkDir(mWorkDir);
@@ -599,7 +630,9 @@ namespace ImsDemuxPlugin
 
             var returnData = CopyUIMFToWorkDir(uimfFileName, new clsToolReturnData(), out var uimfRemoteEncodedFileNamePath, out var uimfLocalEncodedFileNamePath);
             if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
+            {
                 return returnData;
+            }
 
             // Look for a _decoded.uimf.tmp file on the storage server
             // Copy it local if present
@@ -640,7 +673,9 @@ namespace ImsDemuxPlugin
                 if (!DemultiplexFile(uimfLocalEncodedFileNamePath, mDataset, demuxOptions, out resumeStartFrame, out var errorMessage))
                 {
                     if (string.IsNullOrEmpty(errorMessage))
+                    {
                         errorMessage = "Error demultiplexing UIMF file";
+                    }
 
                     returnData.CloseoutMsg = errorMessage;
                     returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -670,7 +705,10 @@ namespace ImsDemuxPlugin
             if (!ValidateUIMFDemultiplexed(localUimfDecodedFilePath, returnData))
             {
                 if (string.IsNullOrEmpty(returnData.CloseoutMsg))
+                {
                     returnData.CloseoutMsg = "ValidateUIMFDemultiplexed returned false";
+                }
+
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 postProcessingError = true;
             }
@@ -707,7 +745,9 @@ namespace ImsDemuxPlugin
                         var checkpointTargetPath = Path.Combine(mDatasetFolderPathRemote, tmpUIMFFileName);
 
                         if (File.Exists(checkpointTargetPath))
+                        {
                             File.Delete(checkpointTargetPath);
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -766,7 +806,9 @@ namespace ImsDemuxPlugin
             returnData.EvalMsg = "De-multiplexed";
 
             if (demuxOptions.ResumeDemultiplexing)
+            {
                 returnData.EvalMsg += " (resumed at frame " + resumeStartFrame + ")";
+            }
 
             return returnData;
         }
@@ -809,7 +851,9 @@ namespace ImsDemuxPlugin
             var retryingCopy = false;
 
             if (retryCount < 0)
+            {
                 retryCount = 0;
+            }
 
             if (backupDestFileBeforeCopy)
             {
@@ -838,7 +882,7 @@ namespace ImsDemuxPlugin
                     LogTools.LogError(msg, ex);
 
                     System.Threading.Thread.Sleep(2000);
-                    retryCount -= 1;
+                    retryCount--;
                     retryingCopy = true;
                 }
             }
@@ -921,7 +965,9 @@ namespace ImsDemuxPlugin
         public static string AppendToString(string currentText, string newText, string separator)
         {
             if (string.IsNullOrEmpty(currentText))
+            {
                 return newText;
+            }
 
             return currentText + separator + newText;
         }
@@ -1038,7 +1084,9 @@ namespace ImsDemuxPlugin
                             errorMessage = "Error looking up max demultiplexed frame number from the Log_Entries table";
                             msg = errorMessage + " in " + tempUIMFFilePath;
                             if (!string.IsNullOrEmpty(logEntryAccessorMsg))
+                            {
                                 msg += "; " + logEntryAccessorMsg;
+                            }
 
                             OnErrorEvent(msg);
 
@@ -1066,10 +1114,14 @@ namespace ImsDemuxPlugin
                 }
 
                 if (string.IsNullOrEmpty(errorMessage))
+                {
                     errorMessage = "Unknown error";
+                }
 
                 if (OutOfMemoryException)
+                {
                     errorMessage = "OutOfMemory exception was thrown";
+                }
 
                 if (string.IsNullOrEmpty(errorMessage) && mLoggedConsoleOutputErrors.Count > 0)
                 {
@@ -1135,7 +1187,9 @@ namespace ImsDemuxPlugin
             try
             {
                 if (string.IsNullOrEmpty(mUimfDemultiplexerConsoleOutputFilePath))
+                {
                     return;
+                }
 
                 using (var reader = new StreamReader(new FileStream(mUimfDemultiplexerConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
@@ -1144,7 +1198,9 @@ namespace ImsDemuxPlugin
                         var dataLine = reader.ReadLine();
 
                         if (string.IsNullOrWhiteSpace(dataLine))
+                        {
                             continue;
+                        }
 
                         if (dataLine.StartsWith("Error in") ||
                             dataLine.StartsWith("Error:") ||
@@ -1157,7 +1213,9 @@ namespace ImsDemuxPlugin
                             }
 
                             if (dataLine.Contains("OutOfMemoryException"))
+                            {
                                 OutOfMemoryException = true;
+                            }
                         }
                         else if (dataLine.StartsWith("Warning:"))
                         {
@@ -1206,7 +1264,9 @@ namespace ImsDemuxPlugin
                     var percentCompleteFractional = framesProcessed / (float)totalFrameCount * 100;
 
                     if (percentCompleteFractional > mDemuxProgressPercentComplete)
+                    {
                         mDemuxProgressPercentComplete = percentCompleteFractional;
+                    }
                 }
             }
             catch (Exception ex)
@@ -1287,7 +1347,7 @@ namespace ImsDemuxPlugin
                 // Input file
                 var arguments = clsConversion.PossiblyQuotePath(inputFilePath);
 
-                if (string.Compare(fiInputFile.DirectoryName, fiOutputFile.DirectoryName, StringComparison.OrdinalIgnoreCase) != 0)
+                if (!string.Equals(fiInputFile.DirectoryName, fiOutputFile.DirectoryName, StringComparison.OrdinalIgnoreCase))
                 {
                     // Output directory
                     arguments += " /O:" + clsConversion.PossiblyQuotePath(fiOutputFile.DirectoryName);
@@ -1312,7 +1372,9 @@ namespace ImsDemuxPlugin
                     arguments += " /N:" + clsConversion.PossiblyQuotePath(fiOutputFile.Name);
 
                     if (demuxOptions.NumBitsForEncoding > 1)
+                    {
                         arguments += " /Bits:" + demuxOptions.NumBitsForEncoding;
+                    }
 
                     /*
                     if (demuxOptions.StartFrame > 0)
@@ -1376,10 +1438,14 @@ namespace ImsDemuxPlugin
                 var success = cmdRunner.RunProgram(mUimfDemultiplexerPath, arguments, "UIMFDemultiplexer", true, maxRuntimeMinutes * 60);
 
                 if (!mCalibrating)
+                {
                     ParseConsoleOutputFileDemux();
+                }
 
                 if (success)
+                {
                     return true;
+                }
 
                 errorMessage = "Error running UIMF Demultiplexer";
                 OnErrorEvent(errorMessage);
@@ -1435,7 +1501,9 @@ namespace ImsDemuxPlugin
                 returnData.CloseoutMsg = "Demultiplexing finished message not found in Log_Entries table";
                 msg = returnData.CloseoutMsg + " in " + localUimfDecodedFilePath;
                 if (!string.IsNullOrEmpty(logEntryAccessorMsg))
+                {
                     msg += "; " + logEntryAccessorMsg;
+                }
 
                 OnErrorEvent(msg);
                 uimfDemultiplexed = false;
@@ -1453,7 +1521,9 @@ namespace ImsDemuxPlugin
                     returnData.CloseoutMsg = "Demultiplexing finished message in Log_Entries table is more than 5 minutes old";
                     msg = returnData.CloseoutMsg + ": " + dtDemultiplexingFinished + "; assuming this is a demultiplexing failure";
                     if (!string.IsNullOrEmpty(logEntryAccessorMsg))
+                    {
                         msg += "; " + logEntryAccessorMsg;
+                    }
 
                     OnErrorEvent(msg);
                     uimfDemultiplexed = false;
@@ -1484,7 +1554,9 @@ namespace ImsDemuxPlugin
                 const string logMessage = "Applied calibration message not found in Log_Entries table";
                 msg = logMessage + " in " + localUimfDecodedFilePath;
                 if (!string.IsNullOrEmpty(logEntryAccessorMsg))
+                {
                     msg += "; " + logEntryAccessorMsg;
+                }
 
                 OnErrorEvent(msg);
                 returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, logMessage);
@@ -1503,7 +1575,9 @@ namespace ImsDemuxPlugin
                     const string logMessage = "Applied calibration message in Log_Entries table is more than 5 minutes old";
                     msg = logMessage + ": " + dtCalibrationApplied + "; assuming this is a calibration failure";
                     if (!string.IsNullOrEmpty(logEntryAccessorMsg))
+                    {
                         msg += "; " + logEntryAccessorMsg;
+                    }
 
                     OnErrorEvent(msg);
                     returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, logMessage);
@@ -1540,7 +1614,9 @@ namespace ImsDemuxPlugin
         void CmdRunner_LoopWaiting()
         {
             if (DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds < 30)
+            {
                 return;
+            }
 
             mLastProgressUpdateTime = DateTime.UtcNow;
 
@@ -1571,7 +1647,9 @@ namespace ImsDemuxPlugin
         void binCentricTableCreator_ProgressEvent(object sender, ProgressEventArgs e)
         {
             if (DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds < mProgressUpdateIntervalSeconds)
+            {
                 return;
+            }
 
             if (DateTime.UtcNow.Subtract(mBinCentricStartTime).TotalMinutes > 5 && mProgressUpdateIntervalSeconds < 15)
             {
@@ -1596,7 +1674,9 @@ namespace ImsDemuxPlugin
         void binCentricTableCreator_MessageEvent(object sender, MessageEventArgs e)
         {
             if (DateTime.UtcNow.Subtract(mLastProgressMessageTime).TotalSeconds < 30)
+            {
                 return;
+            }
 
             OnStatusEvent(e.Message);
 
