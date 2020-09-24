@@ -1697,6 +1697,12 @@ namespace CaptureToolPlugin
                     }
                     else
                     {
+                        if (!File.Exists(sourceFilePath)) 
+                        {
+                            msg = "source file not found at " + sourceFilePath;
+                            LogError("  " + msg + GetConnectionDescription());
+                            break;
+                        }
                         File.Copy(sourceFilePath, targetFilePath);
                         success = true;
                     }
@@ -1707,13 +1713,15 @@ namespace CaptureToolPlugin
                     }
                     else
                     {
-                        LogError("  file copy failed for " + sourceFilePath + " to " + targetFilePath + GetConnectionDescription());
+                        msg = "file copy failed for " + sourceFilePath + " to " + targetFilePath;
+                        LogError("  " + msg + GetConnectionDescription());
                     }
                 }
             }
             catch (Exception ex)
             {
-                LogError("Copy exception for dataset " + datasetName + GetConnectionDescription(), ex);
+                msg = "Copy exception for dataset " + datasetName;
+                LogError(msg + GetConnectionDescription(), ex);
 
                 HandleCopyException(returnData, ex);
                 return;
