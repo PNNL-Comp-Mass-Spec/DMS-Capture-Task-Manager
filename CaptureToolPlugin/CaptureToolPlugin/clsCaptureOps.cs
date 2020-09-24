@@ -1401,7 +1401,6 @@ namespace CaptureToolPlugin
             }
 
             var datasetInfo = mDatasetFileSearchTool.FindDatasetFileOrDirectory(sourceDirectoryPath, datasetName, instrumentClass);
-            var sourceType = datasetInfo.DatasetType;
 
             if (!string.Equals(datasetInfo.DatasetName, datasetName))
             {
@@ -1417,7 +1416,7 @@ namespace CaptureToolPlugin
             returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
             bool sourceIsValid;
 
-            if (sourceType == DatasetInfo.RawDSTypes.None)
+            if (datasetInfo.DatasetType == DatasetInfo.RawDSTypes.None)
             {
                 // No dataset file or directory found
 
@@ -1448,14 +1447,14 @@ namespace CaptureToolPlugin
             }
             else
             {
-                sourceIsValid = ValidateWithInstrumentClass(datasetName, sourceDirectoryPath, sourceType, instrumentClass, datasetInfo, returnData);
+                sourceIsValid = ValidateWithInstrumentClass(datasetName, sourceDirectoryPath, instrumentClass, datasetInfo, returnData);
             }
 
             string msg;
 
             if (!sourceIsValid)
             {
-                msg = "Dataset type (" + sourceType + ") is not valid for the instrument class (" + instrumentClass + ")";
+                msg = "Dataset type (" + datasetInfo.DatasetType + ") is not valid for the instrument class (" + instrumentClass + ")";
             }
             else
             {
@@ -1474,7 +1473,7 @@ namespace CaptureToolPlugin
                 }
 
                 // Perform copy based on source type
-                switch (sourceType)
+                switch (datasetInfo.DatasetType)
                 {
                     case DatasetInfo.RawDSTypes.File:
                         CaptureFile(out msg, returnData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath, copyWithResume);
@@ -1501,7 +1500,7 @@ namespace CaptureToolPlugin
                         break;
 
                     default:
-                        msg = "Invalid dataset type found: " + sourceType;
+                        msg = "Invalid dataset type found: " + datasetInfo.DatasetType;
                         returnData.CloseoutMsg = msg;
                         LogError(returnData.CloseoutMsg, true);
                         DisconnectShareIfRequired();
@@ -3426,13 +3425,16 @@ namespace CaptureToolPlugin
         /// <param name="dataset"></param>
         /// <param name="sourceDirectoryPath"></param>
         /// <param name="instrumentClass">Instrument class</param>
-        /// <param name="datasetInfo"></param>
+        /// <param name="datasetInfo">Dataset info</param>
         /// <param name="returnData"></param>
         /// <returns>True if the file or directory is appropriate for the instrument class, otherwise false</returns>
+        /// <remarks>
+        /// This method will update datasetInfo.DatasetType if it is MultiFile and we matched two files, where one of the files is a .sld file.  
+        /// It will also remove the .sld file from datasetInfo.FileList
+        /// </remarks>
         private bool ValidateWithInstrumentClass(
             string dataset,
             string sourceDirectoryPath,
-            DatasetInfo.RawDSTypes sourceType,
             clsInstrumentClassInfo.eInstrumentClass instrumentClass,
             DatasetInfo datasetInfo,
             clsToolReturnData returnData)
@@ -3441,7 +3443,7 @@ namespace CaptureToolPlugin
 
             returnData.CloseoutMsg = string.Empty;
 
-            switch (sourceType)
+            switch (datasetInfo.DatasetType)
             {
                 case DatasetInfo.RawDSTypes.File:
                     entityDescription = "a file";
@@ -3474,9 +3476,9 @@ namespace CaptureToolPlugin
                 case clsInstrumentClassInfo.eInstrumentClass.Thermo_Exactive:
                 case clsInstrumentClassInfo.eInstrumentClass.Triple_Quad:
                 case clsInstrumentClassInfo.eInstrumentClass.Shimadzu_GC:
-                    if (sourceType != DatasetInfo.RawDSTypes.File)
+                    if (datasetInfo.DatasetType != DatasetInfo.RawDSTypes.File)
                     {
-                        if (sourceType == DatasetInfo.RawDSTypes.DirectoryNoExt)
+                        if (datasetInfo.DatasetType == DatasetInfo.RawDSTypes.DirectoryNoExt)
                         {
                             // ReSharper disable once CommentTypo
                             // Datasets from LAESI-HMS datasets will have a directory named after the dataset, and inside that directory will be a single .raw file
@@ -3505,7 +3507,7 @@ namespace CaptureToolPlugin
                             break;
                         }
 
-                        if (sourceType == DatasetInfo.RawDSTypes.MultiFile)
+                        if (datasetInfo.DatasetType == DatasetInfo.RawDSTypes.MultiFile)
                         {
                             var sourceDirectory = new DirectoryInfo(Path.Combine(sourceDirectoryPath));
                             var foundFiles = sourceDirectory.GetFiles(datasetInfo.FileOrDirectoryName + ".*").ToList();
@@ -3514,8 +3516,11 @@ namespace CaptureToolPlugin
                                 // On the 21T each .raw file can have a corresponding .tsv file
                                 // Allow for this during capture
 
+                                // Also, on Thermo instruments, there might be a sequence file (extension .sld) with the same name as the .raw file; ignore it
+
                                 var rawFound = false;
                                 var tsvFound = false;
+                                var sldFound = false;
 
                                 foreach (var file in foundFiles)
                                 {
@@ -3524,11 +3529,26 @@ namespace CaptureToolPlugin
 
                                     if (string.Equals(Path.GetExtension(file.Name), ".tsv", StringComparison.OrdinalIgnoreCase))
                                         tsvFound = true;
+
+                                    if (string.Equals(Path.GetExtension(file.Name), ".sld", StringComparison.OrdinalIgnoreCase))
+                                        sldFound = true;
                                 }
 
                                 if (rawFound && tsvFound)
                                 {
                                     LogMessage("Capturing a .raw file with a corresponding .tsv file");
+                                    break;
+                                }
+
+                                if (rawFound && sldFound)
+                                {
+                                    LogMessage("Ignoring sequence file " + datasetInfo.FileOrDirectoryName + ".sld");
+
+                                    datasetInfo.DatasetType = DatasetInfo.RawDSTypes.File;
+                                    datasetInfo.FileOrDirectoryName = datasetInfo.DatasetName + ".raw";
+
+                                    datasetInfo.FileList.Clear();
+                                    datasetInfo.FileList.Add(new FileInfo(Path.Combine(sourceDirectoryPath, datasetInfo.FileOrDirectoryName)));
                                     break;
                                 }
                             }
@@ -3546,7 +3566,7 @@ namespace CaptureToolPlugin
                     break;
 
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging_V2:
-                    if (sourceType != DatasetInfo.RawDSTypes.DirectoryNoExt)
+                    if (datasetInfo.DatasetType != DatasetInfo.RawDSTypes.DirectoryNoExt)
                     {
                         // Dataset name matched a file; must be a directory with the dataset name, and inside the directory is a .D directory (and typically some jpg files)
                         returnData.CloseoutMsg = "Dataset name matched " + entityDescription + "; must be a directory with the dataset name, and inside the directory is a .D directory (and typically some jpg files)";
@@ -3561,7 +3581,7 @@ namespace CaptureToolPlugin
                 case clsInstrumentClassInfo.eInstrumentClass.Agilent_TOF_V2:
                 case clsInstrumentClassInfo.eInstrumentClass.PrepHPLC:
 
-                    if (sourceType != DatasetInfo.RawDSTypes.DirectoryExt)
+                    if (datasetInfo.DatasetType != DatasetInfo.RawDSTypes.DirectoryExt)
                     {
                         // Dataset name matched a file; must be a .d directory
                         returnData.CloseoutMsg = "Dataset name matched " + entityDescription + "; must be a .d directory";
@@ -3572,7 +3592,7 @@ namespace CaptureToolPlugin
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Spot:
                 case clsInstrumentClassInfo.eInstrumentClass.FT_Booster_Data:
 
-                    if (sourceType != DatasetInfo.RawDSTypes.DirectoryNoExt)
+                    if (datasetInfo.DatasetType != DatasetInfo.RawDSTypes.DirectoryNoExt)
                     {
                         // Dataset name matched a file; must be a directory with the dataset name
                         returnData.CloseoutMsg = "Dataset name matched " + entityDescription + "; must be a directory with the dataset name";
@@ -3580,7 +3600,7 @@ namespace CaptureToolPlugin
                     break;
 
                 case clsInstrumentClassInfo.eInstrumentClass.Sciex_TripleTOF:
-                    if (sourceType != DatasetInfo.RawDSTypes.File)
+                    if (datasetInfo.DatasetType != DatasetInfo.RawDSTypes.File)
                     {
                         // Dataset name matched a directory; must be a file
                         // Dataset name matched multiple files; must be a file
@@ -3589,10 +3609,10 @@ namespace CaptureToolPlugin
                     break;
 
                 case clsInstrumentClassInfo.eInstrumentClass.IMS_Agilent_TOF:
-                    if (sourceType != DatasetInfo.RawDSTypes.File)
+                    if (datasetInfo.DatasetType != DatasetInfo.RawDSTypes.File)
                     {
 
-                        if (sourceType == DatasetInfo.RawDSTypes.DirectoryExt)
+                        if (datasetInfo.DatasetType == DatasetInfo.RawDSTypes.DirectoryExt)
                         {
                             // IMS08_AgQTOF05 collects data as .D directories, which the capture pipeline will then convert to a .uimf file
                             // Make sure the matched directory is a .d file
@@ -3600,7 +3620,7 @@ namespace CaptureToolPlugin
                                 break;
                         }
 
-                        if (sourceType == DatasetInfo.RawDSTypes.DirectoryNoExt)
+                        if (datasetInfo.DatasetType == DatasetInfo.RawDSTypes.DirectoryNoExt)
                         {
                             // IMS04_AgTOF05 and similar instruments collect data into a directory named after the dataset
                             // The directory contains a .UIMF file plus several related files
@@ -3630,12 +3650,12 @@ namespace CaptureToolPlugin
                             break;
                         }
 
-                        if (sourceType != DatasetInfo.RawDSTypes.DirectoryExt &&
+                        if (datasetInfo.DatasetType != DatasetInfo.RawDSTypes.DirectoryExt &&
                             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-                            sourceType != DatasetInfo.RawDSTypes.DirectoryNoExt &&
-                            sourceType != DatasetInfo.RawDSTypes.MultiFile)
+                            datasetInfo.DatasetType != DatasetInfo.RawDSTypes.DirectoryNoExt &&
+                            datasetInfo.DatasetType != DatasetInfo.RawDSTypes.MultiFile)
                         {
-                            LogWarning("sourceType was not DirectoryExt, DirectoryNoExt, or MultiFile; this is unexpected: " + sourceType);
+                            LogWarning("datasetInfo.DatasetType was not DirectoryExt, DirectoryNoExt, or MultiFile; this is unexpected: " + datasetInfo.DatasetType);
                         }
 
                         // Dataset name matched multiple files; must be a .uimf file, .d directory, or directory with a single .uimf file
