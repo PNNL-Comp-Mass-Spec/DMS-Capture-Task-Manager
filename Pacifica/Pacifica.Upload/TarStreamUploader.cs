@@ -62,7 +62,6 @@ namespace Pacifica.Upload
 
         private long AddTarFileContentLength(string pathInArchive, long fileSizeBytes, out int headerBlocks)
         {
-
             long contentLength = 0;
             bool longPath;
 
@@ -112,7 +111,6 @@ namespace Pacifica.Upload
             tarEntry.Name = pathInArchive;
             tarOutputStream.PutNextEntry(tarEntry);
             bytesWritten += AddTarFileContentLength(pathInArchive, 0);
-
         }
 
         private void AppendFileToTar(TarOutputStream tarOutputStream, FileInfo sourceFile, string destFilenameInTar, ref long bytesWritten)
@@ -145,7 +143,6 @@ namespace Pacifica.Upload
                 }
 
                 bytesWritten += AddTarFileContentLength(destFilenameInTar, sourceFile.Length);
-
             }
             tarOutputStream.CloseEntry();
         }
@@ -246,7 +243,6 @@ namespace Pacifica.Upload
                         FileTools.CompactPathString(fileToArchive.Value.RelativeDestinationFullPath, 150)));
 
                 contentLength += addonBytes;
-
             }
 
             // Append two empty blocks (appended by SharpZipLib at the end of the .tar file)
@@ -342,7 +338,6 @@ namespace Pacifica.Upload
             string metadataFilePath,
             UploadDebugMode debugMode = UploadDebugMode.DebugDisabled)
         {
-
             var certificateFilePath = EasyHttp.ResolveCertFile(config, "SendFileListToIngester", out var errorMessage);
 
             if (string.IsNullOrWhiteSpace(certificateFilePath))
@@ -498,7 +493,6 @@ namespace Pacifica.Upload
             }
 
             return responseData;
-
         }
     }
 }

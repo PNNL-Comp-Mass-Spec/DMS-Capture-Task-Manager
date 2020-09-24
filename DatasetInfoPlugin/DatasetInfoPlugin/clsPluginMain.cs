@@ -503,7 +503,6 @@ namespace DatasetInfoPlugin
                                      clsInstrumentClassInfo.GetInstrumentClassName(instrumentClass);
                     returnData.EvalCode = EnumEvalCode.EVAL_CODE_NOT_EVALUATED;
                     return returnData;
-
                 }
 #pragma warning restore 162
                 // ReSharper restore HeuristicUnreachableCode
@@ -556,7 +555,6 @@ namespace DatasetInfoPlugin
                 {
                     LogWarning(string.Format("Unable to load data for {0} spectra", mFailedScanCount));
                 }
-
             } // for each file in fileOrDirectoryRelativePaths
 
             // Merge the dataset info defined in cachedDatasetInfoXML
@@ -591,7 +589,6 @@ namespace DatasetInfoPlugin
                                                   "need to run this job step with a manager that has write access to the storage server");
 
             return returnData;
-
         }
 
         /// <summary>
@@ -679,7 +676,6 @@ namespace DatasetInfoPlugin
             string datasetInfoXML,
             IEnumerable<string> outputDirectoryNames)
         {
-
             var combinedDatasetInfoFilename = mDataset + "_Combined_DatasetInfo.xml";
 
             try
@@ -796,16 +792,13 @@ namespace DatasetInfoPlugin
                                     {
                                         htmlToAppend.Add(dataLine);
                                     }
-
                                 }
                                 else if (dataLine.Trim().StartsWith("<table>"))
                                 {
                                     processingTable = true;
                                 }
-
                             }
                         }
-
                     }
 
                     // Add the combined stats
@@ -854,7 +847,6 @@ namespace DatasetInfoPlugin
                 var msg = "Exception creating the combined _DatasetInfo.xml file for " + mDataset + ": " + ex.Message;
                 LogError(msg, ex);
             }
-
         }
 
         /// <summary>
@@ -866,7 +858,6 @@ namespace DatasetInfoPlugin
         /// <returns>Merged DatasetInfo XML</returns>
         private string CombineDatasetInfoXML(clsDatasetInfoXmlMerger datasetXmlMerger, List<string> cachedDatasetInfoXml)
         {
-
             if (cachedDatasetInfoXml.Count == 1)
             {
                 return cachedDatasetInfoXml.First();
@@ -875,7 +866,6 @@ namespace DatasetInfoPlugin
             var combinedXML = datasetXmlMerger.CombineDatasetInfoXML(mDataset, cachedDatasetInfoXml);
 
             return combinedXML;
-
         }
 
         /// <summary>
@@ -903,7 +893,6 @@ namespace DatasetInfoPlugin
         /// <param name="sampleLabelling"></param>
         private void ConfigureMinimumMzValidation(iMSFileInfoScanner msFileInfoScanner, string sampleLabelling)
         {
-
             mMsFileScanner.MS2MzMin = 0;
 
             if (mTaskParams.GetParam("SkipMinimumMzValidation", false))
@@ -914,7 +903,6 @@ namespace DatasetInfoPlugin
 
             if (!string.IsNullOrEmpty(sampleLabelling))
             {
-
                 // Check whether this label has a reporter ion minimum m/z value defined
                 // If it does, instruct the MSFileInfoScanner to validate that all of the MS/MS spectra
                 // have a scan range that starts below the minimum reporter ion m/z
@@ -990,7 +978,6 @@ namespace DatasetInfoPlugin
             ICollection<string> outputDirectoryNames,
             ref int nextSubdirectorySuffix)
         {
-
             string currentOutputDirectory;
 
             if (totalDatasetFilesOrDirectories > 1)
@@ -1066,7 +1053,6 @@ namespace DatasetInfoPlugin
                     fileOrDirectoryRelativePaths.Add(relativeDirectoryPath);
                 }
             }
-
         }
 
         /// <summary>
@@ -1307,7 +1293,6 @@ namespace DatasetInfoPlugin
             mMsg = "Directory not found: " + fileOrDirectoryPath;
 
             return new List<string>();
-
         }
 
         /// <summary>
@@ -1379,7 +1364,6 @@ namespace DatasetInfoPlugin
         /// <returns></returns>
         private List<string> LookForAlternateFileOrDirectory(DirectoryInfo datasetDirectory, string initialFileOrDirectoryName)
         {
-
             // File not found; look for alternate extensions
             var alternateExtensions = new List<string> { "mgf", "mzXML", "mzML" };
 
@@ -1414,7 +1398,6 @@ namespace DatasetInfoPlugin
             FindDotDDirectories(datasetDirectory, fileOrDirectoryNames);
 
             return fileOrDirectoryNames;
-
         }
 
         /// <summary>
@@ -1425,7 +1408,6 @@ namespace DatasetInfoPlugin
         /// <returns>True if a .mcf file is found</returns>
         private bool LookForMcfFileInDotDDirectory(DirectoryInfo dotDDirectory, out string dotDDirectoryName)
         {
-
             long mcfFileSizeBytes = 0;
             dotDDirectoryName = string.Empty;
 
@@ -1448,7 +1430,6 @@ namespace DatasetInfoPlugin
         /// <remarks></remarks>
         private bool StoreToolVersionInfo()
         {
-
             LogDebug("Determining tool version info");
 
             var toolVersionInfo = string.Empty;
@@ -1499,7 +1480,6 @@ namespace DatasetInfoPlugin
                 LogError("Exception calling SetStepTaskToolVersion: " + ex.Message, ex);
                 return false;
             }
-
         }
 
         private bool ValidateQCGraphics(string currentOutputDirectory, bool primaryFileOrDirectoryProcessed, clsToolReturnData returnData)
@@ -1569,7 +1549,6 @@ namespace DatasetInfoPlugin
             returnData.CloseoutMsg = errMsg2;
             returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
             return false;
-
         }
 
         #endregion
@@ -1609,7 +1588,6 @@ namespace DatasetInfoPlugin
                         ConsoleMsgUtils.ShowWarning("Error running MSFileInfoScanner: " + message);
                         return;
                     }
-
                 }
                 else if (message.StartsWith("Unknown format for Scan Filter"))
                 {
@@ -1641,7 +1619,6 @@ namespace DatasetInfoPlugin
 
                 LogError(errorMsg);
             }
-
         }
 
         /// <summary>
@@ -1670,7 +1647,6 @@ namespace DatasetInfoPlugin
             {
                 LogWarning(message);
             }
-
         }
 
         private void ProgressUpdateHandler(string progressMessage, float percentComplete)
@@ -1681,7 +1657,6 @@ namespace DatasetInfoPlugin
             mLastProgressUpdate = DateTime.UtcNow;
 
             mStatusTools.UpdateAndWrite(EnumTaskStatusDetail.Running_Tool, percentComplete);
-
 
             if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalMinutes >= mStatusUpdateIntervalMinutes)
             {
@@ -1699,5 +1674,4 @@ namespace DatasetInfoPlugin
 
         #endregion
     }
-
 }

@@ -428,12 +428,10 @@ namespace CaptureTaskManager
                     }
 
                     mProgRunner.StopMonitoringProgram(kill: true);
-
                 } // end while
 
                 mStopTime = DateTime.UtcNow;
                 mIsRunning = false;
-
             }
             catch (Exception ex)
             {
@@ -486,5 +484,4 @@ namespace CaptureTaskManager
             // This event is ignored by this class
         }
     }
-
 }

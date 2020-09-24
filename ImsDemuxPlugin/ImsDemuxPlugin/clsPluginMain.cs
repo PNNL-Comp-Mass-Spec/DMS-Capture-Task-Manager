@@ -305,7 +305,6 @@ namespace ImsDemuxPlugin
 
             if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
             {
-
                 if (calibrationMode == CalibrationMode.AutoCalibration)
                     returnData = mDemuxTools.PerformCalibration(mMgrParams, mTaskParams, returnData);
                 else if (calibrationMode == CalibrationMode.ManualCalibration)
@@ -361,7 +360,6 @@ namespace ImsDemuxPlugin
 
             using (var reader = new StreamReader(new FileStream(calibrationLogPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
             {
-
                 while (!reader.EndOfStream)
                 {
                     var dataLine = reader.ReadLine();
@@ -442,7 +440,6 @@ namespace ImsDemuxPlugin
 
                 return manuallyCalibrated;
             }
-
         }
 
         /// <summary>
@@ -468,7 +465,6 @@ namespace ImsDemuxPlugin
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
-
             var toolVersionInfo = string.Empty;
 
             var uimfDemultiplexerProgLoc = GetUimfDemultiplexerPath();
@@ -519,7 +515,6 @@ namespace ImsDemuxPlugin
                 LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
-
         }
 
         #endregion
@@ -532,7 +527,6 @@ namespace ImsDemuxPlugin
         /// <param name="newProgress">Current progress (value between 0 and 100)</param>
         void clsDemuxTools_DemuxProgress(float newProgress)
         {
-
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (ADD_BIN_CENTRIC_TABLES)
             {

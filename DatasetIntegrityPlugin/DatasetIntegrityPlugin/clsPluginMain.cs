@@ -261,7 +261,6 @@ namespace DatasetIntegrityPlugin
 
                     if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
                     {
-
                         // Convert the .D directory to a .CDF file
                         if (!ConvertAgilentDotDDirectoryToCDF(datasetDirectory, openChromProgPath))
                         {
@@ -311,7 +310,6 @@ namespace DatasetIntegrityPlugin
         {
             try
             {
-
                 // Make sure the CDF plugin is installed and that the SerialKey is defined
                 if (!ValidateCDFPlugin())
                 {
@@ -417,7 +415,6 @@ namespace DatasetIntegrityPlugin
                 // Delete the console output file
                 if (File.Exists(consoleOutputFilePath))
                     DeleteFileIgnoreErrors(consoleOutputFilePath);
-
             }
             catch (Exception ex)
             {
@@ -433,7 +430,6 @@ namespace DatasetIntegrityPlugin
         {
             try
             {
-
                 var mgrName = mMgrParams.GetParam("MgrName", "CTM");
                 var dotDDirectoryName = mDataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
                 var dotDDirectoryPathLocal = Path.Combine(mWorkDir, dotDDirectoryName);
@@ -562,7 +558,6 @@ namespace DatasetIntegrityPlugin
                         LogDebug(string.Format("Renaming {0} to {1}", sourceUimf.FullName, Path.GetFileName(targetUimfPath)));
                         sourceUimf.MoveTo(targetUimfPath);
                     }
-
                 }
 
                 // Copy the .UIMF file to the dataset directory
@@ -574,7 +569,6 @@ namespace DatasetIntegrityPlugin
 
                 // Delete the console output file
                 DeleteFileIgnoreErrors(mConsoleOutputFilePath);
-
             }
             catch (Exception ex)
             {
@@ -660,7 +654,6 @@ namespace DatasetIntegrityPlugin
 
         private bool CopyUIMFToDatasetDirectory(FileTools fileTools, string datasetDirectoryPath)
         {
-
             var uimfFile = new FileInfo(Path.Combine(mWorkDir, mDataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION));
 
             if (!uimfFile.Exists)
@@ -744,7 +737,6 @@ namespace DatasetIntegrityPlugin
                 }
 
                 return jobFilePath;
-
             }
             catch (Exception ex)
             {
@@ -835,7 +827,6 @@ namespace DatasetIntegrityPlugin
                     }
 
                     return directoryIsSuperseded;
-
                 }
 
                 msg = "Directory " + oldDirectory.FullName + " is not a superseded directory for " + newDirectory.FullName;
@@ -848,7 +839,6 @@ namespace DatasetIntegrityPlugin
                 LogError(msg);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -951,7 +941,6 @@ namespace DatasetIntegrityPlugin
 
                 using (var reader = new StreamReader(new FileStream(mConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
@@ -1002,13 +991,11 @@ namespace DatasetIntegrityPlugin
                 }
 
                 mStatusTools.UpdateAndWrite(EnumTaskStatusDetail.Running_Tool, percentComplete);
-
             }
             catch (Exception ex)
             {
                 LogError("Exception in ParseConsoleOutputFile: " + ex.Message);
             }
-
         }
 
         /// <summary>
@@ -1116,7 +1103,6 @@ namespace DatasetIntegrityPlugin
         /// <returns>Enum indicating test result</returns>
         private EnumCloseOutType TestAgilentIonTrapDirectory(string datasetDirectoryPath)
         {
-
             // Verify only one .D directory in dataset
             var datasetDirectory = new DirectoryInfo(datasetDirectoryPath);
             var dotDDirectories = datasetDirectory.GetDirectories("*.D").ToList();
@@ -1153,7 +1139,6 @@ namespace DatasetIntegrityPlugin
 
             // If we got to here, everything is OK
             return EnumCloseOutType.CLOSEOUT_SUCCESS;
-
         }
 
         /// <summary>
@@ -1463,7 +1448,6 @@ namespace DatasetIntegrityPlugin
 
                 if (openRawFileIfTooSmall)
                 {
-
                     try
                     {
                         using (var reader = new XRawFileIO(dataFileNamePath))
@@ -1474,24 +1458,20 @@ namespace DatasetIntegrityPlugin
 
                             if (scanCount > 0)
                             {
-
                                 var dataCount = reader.GetScanData2D(1, out _);
 
                                 if (dataCount > 0)
                                 {
                                     validFile = true;
                                 }
-
                             }
                         }
-
                     }
                     catch (Exception ex)
                     {
                         LogError("Exception opening .Raw file: " + ex.Message);
                         validFile = false;
                     }
-
                 }
 
                 if (!validFile)
@@ -1499,7 +1479,6 @@ namespace DatasetIntegrityPlugin
                     ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSizeKB, minFileSizeKB);
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
-
             }
 
             // Check max size
@@ -1810,7 +1789,6 @@ namespace DatasetIntegrityPlugin
                     if (!PossiblyRenameSupersededDirectory(dotDDirectories, clsInstrumentClassInfo.DOT_D_EXTENSION))
                         return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
-
             }
 
             // Possibly verify that the analysis.baf file exists
@@ -1999,7 +1977,6 @@ namespace DatasetIntegrityPlugin
 
             // If we got to here, everything is OK
             return EnumCloseOutType.CLOSEOUT_SUCCESS;
-
         }
 
         /// <summary>
@@ -2030,7 +2007,6 @@ namespace DatasetIntegrityPlugin
         /// <returns>Enum indicating success or failure</returns>
         private EnumCloseOutType TestBrukerMaldiSpotDirectory(string datasetDirectoryPath)
         {
-
             // Verify the dataset directory doesn't contain any .zip files
             var zipFiles = Directory.GetFiles(datasetDirectoryPath, "*.zip");
             if (zipFiles.Length > 0)
@@ -2095,7 +2071,6 @@ namespace DatasetIntegrityPlugin
 
             try
             {
-
                 var sourceFile = new FileInfo(gzipFilePath);
                 if (!sourceFile.Exists)
                 {
@@ -2124,7 +2099,6 @@ namespace DatasetIntegrityPlugin
 
                             bytesRead += newBytes;
                         }
-
                     }
 
                     LogMessage(string.Format("Read {0:N1} KB from {1}", bytesRead / 1024.0, sourceFile.Name));
@@ -2138,7 +2112,6 @@ namespace DatasetIntegrityPlugin
                 errorMessage = ex.Message;
                 return false;
             }
-
         }
 
         private EnumCloseOutType TestIlluminaSequencerDirectory(string datasetDirectoryPath)
@@ -2177,7 +2150,6 @@ namespace DatasetIntegrityPlugin
             {
                 mRetData.EvalMsg = string.Format(errorMessage);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
-
             }
 
             // If we got to here, everything was OK
@@ -2226,7 +2198,6 @@ namespace DatasetIntegrityPlugin
                         mRetData.EvalMsg = string.Format("Data file size is less than {0:F0} KB; it {1}", UIMF_FILE_SMALL_SIZE_KB, uimfStatusMessage);
                         return EnumCloseOutType.CLOSEOUT_FAILED;
                     }
-
                 }
                 else
                 {
@@ -2405,7 +2376,6 @@ namespace DatasetIntegrityPlugin
                 // Open the .UIMF file and read the first scan of the first frame
                 using (var uimfReader = new DataReader(uimfFilePath))
                 {
-
                     var frameList = uimfReader.GetMasterFrameList();
 
                     if (frameList.Count <= 0)
@@ -2422,7 +2392,6 @@ namespace DatasetIntegrityPlugin
 
                         foreach (var scanNum in frameScans)
                         {
-
                             var dataCount = uimfReader.GetSpectrum(
                                 frameNumber, frameType, scanNum.Scan,
                                 out _, out _);
@@ -2456,7 +2425,6 @@ namespace DatasetIntegrityPlugin
         /// <returns>True if the pressure values are correct; false if the columns have swapped data</returns>
         private bool ValidatePressureInfo(string dataFileNamePath, string instrumentName)
         {
-
             // Example of correct pressures:
             //   HighPressureFunnelPressure  IonFunnelTrapPressure  RearIonFunnelPressure  QuadrupolePressure
             //   8.33844                     3.87086                3.92628                0.23302
@@ -2522,7 +2490,6 @@ namespace DatasetIntegrityPlugin
                             }
                             else
                             {
-
                                 LogError(mRetData.EvalMsg, true);
 
                                 uimfReader.Dispose();
@@ -2533,9 +2500,7 @@ namespace DatasetIntegrityPlugin
 
                     if (frameNumber % 100 == 0)
                         LogDebug("Validated frame " + frameNumber);
-
                 }
-
             }
 
             return true;
@@ -2608,7 +2573,6 @@ namespace DatasetIntegrityPlugin
         /// <remarks></remarks>
         private bool StoreToolVersionInfo(string agilentToUimfConverterPath, string openChromProgPath)
         {
-
             LogDebug("Determining tool version info");
 
             var toolVersionInfo = string.Empty;
@@ -2665,7 +2629,6 @@ namespace DatasetIntegrityPlugin
                 LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
-
         }
 
         private bool ValidateCDFPlugin()
@@ -2732,7 +2695,6 @@ namespace DatasetIntegrityPlugin
 
                             settingsData.Add(dataLine);
                         }
-
                     }
                 }
 
@@ -2768,7 +2730,6 @@ namespace DatasetIntegrityPlugin
                 LogError(mRetData.CloseoutMsg + ": " + ex.Message);
                 return false;
             }
-
         }
 
         #endregion
@@ -2815,7 +2776,6 @@ namespace DatasetIntegrityPlugin
                     mStatusUpdateIntervalMinutes += 1;
                 }
             }
-
         }
 
         #endregion

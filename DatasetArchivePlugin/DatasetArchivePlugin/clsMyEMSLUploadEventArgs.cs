@@ -36,5 +36,4 @@ namespace DatasetArchivePlugin
     }
 
     public delegate void MyEMSLUploadEventHandler(object sender, MyEMSLUploadEventArgs e);
-
 }

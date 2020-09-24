@@ -17,7 +17,6 @@ namespace CaptureTaskManager
     /// </summary>
     public class clsPluginLoader : clsLoggerBase
     {
-
         #region "Properties"
 
         public static string FileName { get; set; } = "plugin_info.xml";

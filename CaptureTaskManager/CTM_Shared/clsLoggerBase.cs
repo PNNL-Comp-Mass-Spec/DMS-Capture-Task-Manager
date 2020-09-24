@@ -5,10 +5,8 @@ using PRISM;
 
 namespace CaptureTaskManager
 {
-
     public abstract class clsLoggerBase
     {
-
         /// <summary>
         /// Show a status message at the console and optionally include in the log file, tagging it as a debug message
         /// </summary>
@@ -145,5 +143,4 @@ namespace CaptureTaskManager
 
         #endregion
     }
-
 }

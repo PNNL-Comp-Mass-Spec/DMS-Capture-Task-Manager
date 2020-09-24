@@ -21,7 +21,6 @@ namespace DatasetArchivePlugin
     // ReSharper disable once UnusedMember.Global
     public class clsPluginMain : clsToolRunnerBase
     {
-
         #region "Constants"
         protected const string SP_NAME_STORE_MYEMSL_STATS = "StoreMyEMSLUploadStats";
         #endregion
@@ -93,7 +92,6 @@ namespace DatasetArchivePlugin
 
                 if (archOpTool.FailureDoNotRetry)
                     returnData.EvalCode = EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY;
-
             }
 
             if (!string.IsNullOrEmpty(archOpTool.WarningMsg))
@@ -212,7 +210,6 @@ namespace DatasetArchivePlugin
                 LogError("Exception storing the MyEMSL upload stats: " + ex.Message);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -221,7 +218,6 @@ namespace DatasetArchivePlugin
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
-
             LogDebug("Determining tool version info");
 
             var toolVersionInfo = string.Empty;

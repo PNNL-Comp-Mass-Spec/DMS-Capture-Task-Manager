@@ -101,7 +101,6 @@ namespace CaptureToolPlugin
                     returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     returnData.CloseoutMsg = msg;
                 }
-
             }
 
             capOpTool.DetachEvents();
@@ -109,7 +108,6 @@ namespace CaptureToolPlugin
             LogDebug("Completed clsPluginMain.RunTool()");
 
             return returnData;
-
         }
 
         /// <summary>
@@ -133,7 +131,6 @@ namespace CaptureToolPlugin
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
-
             LogDebug("Determining tool version info");
 
             var toolVersionInfo = string.Empty;

@@ -330,7 +330,6 @@ namespace CaptureTaskManager
                 // Send the XML text to a message queue
                 LogStatusToMessageQueue(xmlText);
             }
-
         }
 
         private string GenerateStatusXML(
@@ -419,7 +418,6 @@ namespace CaptureTaskManager
 
                 return xmlText;
             }
-
         }
 
         private void WriteStatusFileToDisk(string xmlText)
@@ -451,7 +449,6 @@ namespace CaptureTaskManager
                     // Log a warning that the file copy failed
                     OnWarningEvent("Unable to copy temporary status file to the final status file (" + Path.GetFileName(tempStatusFilePath) +
                                    " to " + Path.GetFileName(FileNamePath) + "):" + ex.Message);
-
                 }
 
                 try
@@ -464,7 +461,6 @@ namespace CaptureTaskManager
                     // Log a warning that the file delete failed
                     OnWarningEvent("Unable to delete temporary status file (" + Path.GetFileName(tempStatusFilePath) + "): " + ex.Message);
                 }
-
             }
             else
             {
@@ -492,7 +488,6 @@ namespace CaptureTaskManager
                 mWritingErrorCountSaved = 0;
 
                 success = true;
-
             }
             catch (Exception ex)
             {
@@ -513,7 +508,6 @@ namespace CaptureTaskManager
             }
 
             return success;
-
         }
 
         /// <summary>
@@ -525,7 +519,6 @@ namespace CaptureTaskManager
         {
             Progress = percentComplete;
             WriteStatusFile();
-
         }
 
         /// <summary>

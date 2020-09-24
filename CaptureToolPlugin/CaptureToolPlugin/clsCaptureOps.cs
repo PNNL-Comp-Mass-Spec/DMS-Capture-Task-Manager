@@ -235,7 +235,6 @@ namespace CaptureToolPlugin
                     LogError("Error renaming file", ex);
                     LogMessage(string.Format("Source: {0}; Target:{1}", sourceFilePath, targetFilePath));
                 }
-
             }
         }
 
@@ -244,7 +243,6 @@ namespace CaptureToolPlugin
         /// </summary>
         public void DetachEvents()
         {
-
             if (mFileCopyEventsWired && mFileTools != null)
             {
                 mFileCopyEventsWired = false;
@@ -268,14 +266,12 @@ namespace CaptureToolPlugin
 
                 if (!targetDirectory.Exists)
                     targetDirectory.Create();
-
             }
             catch (Exception ex)
             {
                 mErrorMessage = "Exception creating directory " + directoryPath;
                 LogError(mErrorMessage, ex);
             }
-
         }
 
         /// <summary>
@@ -287,7 +283,6 @@ namespace CaptureToolPlugin
         /// <remarks>Does not rename LCMethod*.xml files</remarks>
         private bool FindSupersededFiles(string datasetDirectoryPath, IDictionary<FileSystemInfo, string> pendingRenames)
         {
-
             try
             {
                 var datasetDirectory = new DirectoryInfo(datasetDirectoryPath);
@@ -361,7 +356,6 @@ namespace CaptureToolPlugin
                 LogError("Stack trace", ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -439,7 +433,6 @@ namespace CaptureToolPlugin
                 }
 
                 return true;
-
             }
             catch (Exception ex)
             {
@@ -449,7 +442,6 @@ namespace CaptureToolPlugin
                 LogError("Stack trace", ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -470,7 +462,6 @@ namespace CaptureToolPlugin
             out int instrumentDataDirCount,
             out int nonInstrumentDataDirCount)
         {
-
             fileCount = 0;
             instrumentDataDirCount = 0;
             nonInstrumentDataDirCount = 0;
@@ -508,7 +499,6 @@ namespace CaptureToolPlugin
 
             // If we got to here, the directory is empty
             return DatasetDirectoryState.Empty;
-
         }
 
         /// <summary>
@@ -650,7 +640,6 @@ namespace CaptureToolPlugin
 
                             LogError(invalidAction, true);
                             break;
-
                     }   // directoryExistsAction selection
                     break;
 
@@ -659,7 +648,6 @@ namespace CaptureToolPlugin
             }
 
             return switchResult;
-
         }
 
         /// <summary>
@@ -707,10 +695,8 @@ namespace CaptureToolPlugin
         /// <returns>TRUE if directory size hasn't changed; FALSE otherwise</returns>
         private bool VerifyConstantDirectorySize(DirectoryInfo targetDirectory, clsToolReturnData returnData)
         {
-
             try
             {
-
                 var sleepIntervalSeconds = GetSleepIntervalForDirectory(targetDirectory);
 
                 // Sleep interval should be between 1 second and 15 minutes (900 seconds)
@@ -719,7 +705,6 @@ namespace CaptureToolPlugin
 
                 if (sleepIntervalSeconds < 1)
                     sleepIntervalSeconds = 1;
-
 
                 // Get the initial size of the directory
                 var initialDirectorySize = mFileTools.GetDirectorySize(targetDirectory.FullName);
@@ -736,7 +721,6 @@ namespace CaptureToolPlugin
                 LogMessage("Directory size changed from " + initialDirectorySize + " bytes to " + finalDirectorySize + " bytes: " + targetDirectory.FullName);
 
                 return false;
-
             }
             catch (Exception ex)
             {
@@ -757,7 +741,6 @@ namespace CaptureToolPlugin
                 HandleCopyException(returnData, ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -771,7 +754,6 @@ namespace CaptureToolPlugin
         {
             try
             {
-
                 // Sleep interval should be between 1 second and 15 minutes (900 seconds)
                 if (sleepIntervalSeconds > 900)
                     sleepIntervalSeconds = 900;
@@ -806,7 +788,6 @@ namespace CaptureToolPlugin
                 LogMessage("File size changed from " + initialFileSize + " bytes to " + finalFileSize + " bytes: " + filePath);
 
                 return false;
-
             }
             catch (Exception ex)
             {
@@ -817,7 +798,6 @@ namespace CaptureToolPlugin
                 HandleCopyException(returnData, ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -855,7 +835,6 @@ namespace CaptureToolPlugin
                         string.Format("{0:0} seconds remaining", verificationEndTime.Subtract(DateTime.UtcNow).TotalSeconds));
                 }
             }
-
         }
 
         /// <summary>
@@ -916,7 +895,6 @@ namespace CaptureToolPlugin
             }
 
             return success;
-
         }
 
         /// <summary>
@@ -1018,7 +996,6 @@ namespace CaptureToolPlugin
 
                 closeoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
                 return true;
-
             }
             catch (Exception ex)
             {
@@ -1033,9 +1010,7 @@ namespace CaptureToolPlugin
 
                 mConnectionType = ConnectionType.NotConnected;
                 return false;
-
             }
-
         }
 
         /// <summary>
@@ -1060,7 +1035,6 @@ namespace CaptureToolPlugin
 
             LogDebug("Bionet disconnected");
             mConnectionType = ConnectionType.NotConnected;
-
         }
 
         /// <summary>
@@ -1075,7 +1049,6 @@ namespace CaptureToolPlugin
 
             LogDebug("Bionet disconnected");
             mConnectionType = ConnectionType.NotConnected;
-
         }
 
         /// <summary>
@@ -1384,10 +1357,8 @@ namespace CaptureToolPlugin
                                 LogMessage("Appending captureSubdirectory to sourceDirectoryPath, giving: " + candidateDirectoryPath);
                                 sourceDirectoryPath = candidateDirectoryPath;
                             }
-
                         }
                     }
-
                 }
                 else
                 {
@@ -1397,7 +1368,6 @@ namespace CaptureToolPlugin
                 // Confirm that the source directory has no invalid characters
                 if (NameHasInvalidCharacter(sourceDirectoryPath, "Source directory path with captureSubdirectory optionally added", false, returnData))
                     return false;
-
             }
 
             var datasetInfo = mDatasetFileSearchTool.FindDatasetFileOrDirectory(sourceDirectoryPath, datasetName, instrumentClass);
@@ -1580,7 +1550,6 @@ namespace CaptureToolPlugin
 
             CaptureOneOrMoreFiles(out msg, returnData, datasetInfo.DatasetName,
                 fileNames, sourceDirectoryPath, datasetDirectoryPath, copyWithResume);
-
         }
 
         /// <summary>
@@ -1624,7 +1593,6 @@ namespace CaptureToolPlugin
                 {
                     errorMessages.Add(retDataValidateConstant.CloseoutMsg);
                 }
-
             });
 
             if (validFiles.Count < fileNames.Count)
@@ -1675,7 +1643,6 @@ namespace CaptureToolPlugin
             // replace with the default replacement string if doing so will match the dataset name
             try
             {
-
                 foreach (var fileName in fileNames)
                 {
                     var sourceFilePath = Path.Combine(sourceDirectoryPath, fileName);
@@ -1697,7 +1664,7 @@ namespace CaptureToolPlugin
                     }
                     else
                     {
-                        if (!File.Exists(sourceFilePath)) 
+                        if (!File.Exists(sourceFilePath))
                         {
                             msg = "source file not found at " + sourceFilePath;
                             LogError("  " + msg + GetConnectionDescription());
@@ -1818,7 +1785,6 @@ namespace CaptureToolPlugin
 
                 for (var iteration = 1; iteration <= 2; iteration++)
                 {
-
                     foreach (var directoryName in directoryNamesToSearch)
                     {
                         var sourceSubdirectory = new DirectoryInfo(Path.Combine(sourceDirectory.FullName, directoryName));
@@ -1848,9 +1814,7 @@ namespace CaptureToolPlugin
 
                         if (lstMethodFiles.Count > 0)
                             break;
-
                     }
-
                 }
 
                 if (lstMethodFiles.Count == 0)
@@ -1873,7 +1837,6 @@ namespace CaptureToolPlugin
                     {
                         LogWarning("Exception copying LCMethod file " + fiFile.FullName + ": " + ex.Message);
                     }
-
                 }
 
                 // If the file was found in a dataset directory, rename the source directory to start with x_
@@ -1909,7 +1872,6 @@ namespace CaptureToolPlugin
                         LogWarning("Exception renaming source LCMethods directory for " + datasetName + ": " + ex.Message);
                     }
                 }
-
             }
             catch (Exception ex)
             {
@@ -1953,7 +1915,6 @@ namespace CaptureToolPlugin
             clsInstrumentClassInfo.eInstrumentClass instrumentClass,
             string instrumentName)
         {
-
             SortedSet<string> filesToSkip = null;
 
             bool success;
@@ -2012,7 +1973,6 @@ namespace CaptureToolPlugin
                     // Note: error has already been logged and DisconnectShareIfRequired() has already been called
                     return;
                 }
-
             }
 
             returnData.CloseoutMsg = string.Empty;
@@ -2084,7 +2044,6 @@ namespace CaptureToolPlugin
                 }
                 else if (subdirectories.Length == 1)
                 {
-
                     // If the letters and numbers (but not symbols) in the subdirectory name match the letters and numbers
                     // in the source directory name to a tolerance of 0.75, silently use the subdirectory as the source
 
@@ -2118,7 +2077,6 @@ namespace CaptureToolPlugin
 
                         extraDirectoryToCreate = sourceDirectoryToUse.Name;
                     }
-
                 }
                 else
                 {
@@ -2189,7 +2147,6 @@ namespace CaptureToolPlugin
                             extraDirectory.Create();
                         }
                     }
-
                 }
                 else
                 {
@@ -2224,7 +2181,6 @@ namespace CaptureToolPlugin
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
             else
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-
         }
 
         /// <summary>
@@ -2393,7 +2349,6 @@ namespace CaptureToolPlugin
             {
                 LogError("Error in DeleteZeroByteBrukerFiles", ex);
             }
-
         }
 
         /// <summary>
@@ -2412,7 +2367,6 @@ namespace CaptureToolPlugin
             clsToolReturnData returnData,
             out SortedSet<string> filesToSkip)
         {
-
             filesToSkip = new SortedSet<string>();
 
             try
@@ -2447,7 +2401,6 @@ namespace CaptureToolPlugin
                 }
 
                 return true;
-
             }
             catch (Exception ex)
             {
@@ -2461,7 +2414,6 @@ namespace CaptureToolPlugin
                 HandleCopyException(returnData, ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -2557,7 +2509,6 @@ namespace CaptureToolPlugin
                 {
                     filesToSkip.Add(fragProfileFile.Name);
                 }
-
             }
 
             if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.FT_Booster_Data)
@@ -2621,7 +2572,6 @@ namespace CaptureToolPlugin
             // Copy the dataset directory to the storage server
             try
             {
-
                 if (copyWithResume)
                 {
                     const bool recurse = true;
@@ -2668,7 +2618,6 @@ namespace CaptureToolPlugin
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
             else
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-
         }
 
         /// <summary>
@@ -2688,7 +2637,6 @@ namespace CaptureToolPlugin
             string datasetDirectoryPath,
             bool copyWithResume)
         {
-
             bool success;
 
             // First, verify the directory size is constant (indicates acquisition is actually finished)
@@ -2756,7 +2704,6 @@ namespace CaptureToolPlugin
                 }
                 else
                 {
-
                     var foundFiles = Directory.GetFiles(sourceDirectory.FullName);
 
                     foreach (var fileToCopy in foundFiles)
@@ -2800,7 +2747,6 @@ namespace CaptureToolPlugin
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
             else
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-
         }
 
         /// <summary>
@@ -2818,7 +2764,6 @@ namespace CaptureToolPlugin
             string sourceDirectoryPath,
             string datasetDirectoryPath)
         {
-
             // Verify that the directory size is constant (indicates acquisition is actually finished)
             var sourceDirectory = new DirectoryInfo(Path.Combine(sourceDirectoryPath, datasetInfo.FileOrDirectoryName));
             var targetDirectory = new DirectoryInfo(datasetDirectoryPath);
@@ -2870,7 +2815,6 @@ namespace CaptureToolPlugin
                         returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                         return;
                     }
-
                 }
             }
 
@@ -2978,7 +2922,6 @@ namespace CaptureToolPlugin
                         var msg = "  directory copy failed for " + sourceDirectoryPath + " to " + targetDirectoryPath + GetConnectionDescription();
                         LogError(msg);
                     }
-
                 }
                 catch (UnauthorizedAccessException ex)
                 {
@@ -3045,7 +2988,6 @@ namespace CaptureToolPlugin
             }
 
             return success;
-
         }
 
         /// <summary>
@@ -3078,7 +3020,6 @@ namespace CaptureToolPlugin
                             safeToDelete = false;
                             break;
                         }
-
                     }
 
                     if (!safeToDelete)
@@ -3132,7 +3073,6 @@ namespace CaptureToolPlugin
                         LogMessage("Skipping capture of default fragmentation profile file, " + fragProfileFile.FullName);
                         return true;
                     }
-
                 }
 
                 return false;
@@ -3142,7 +3082,6 @@ namespace CaptureToolPlugin
                 LogError("Exception examining the Fragmentation_Profile.txt file", ex);
             }
             return false;
-
         }
 
         /// <summary>
@@ -3200,7 +3139,6 @@ namespace CaptureToolPlugin
             var sleepTimeSeconds = scalingMultiplier * (maximumTimeSeconds - minimumTimeSeconds) + minimumTimeSeconds;
 
             return (int)Math.Round(sleepTimeSeconds);
-
         }
 
         /// <summary>
@@ -3320,7 +3258,6 @@ namespace CaptureToolPlugin
         /// <param name="returnData"></param>
         private void PossiblyStoreErrorMessage(clsToolReturnData returnData)
         {
-
             if (!string.IsNullOrWhiteSpace(mErrorMessage) && string.IsNullOrWhiteSpace(returnData.CloseoutMsg))
             {
                 returnData.CloseoutMsg = mErrorMessage;
@@ -3357,7 +3294,6 @@ namespace CaptureToolPlugin
 
                 return string.Format("{0} files, {1:F1} KB total, largest file is {2}",
                                      filesInDirectory.Length, totalSizeKB, largestFileInfo.Value);
-
             }
             catch (Exception ex)
             {
@@ -3437,7 +3373,7 @@ namespace CaptureToolPlugin
         /// <param name="returnData"></param>
         /// <returns>True if the file or directory is appropriate for the instrument class, otherwise false</returns>
         /// <remarks>
-        /// This method will update datasetInfo.DatasetType if it is MultiFile and we matched two files, where one of the files is a .sld file.  
+        /// This method will update datasetInfo.DatasetType if it is MultiFile and we matched two files, where one of the files is a .sld file.
         /// It will also remove the .sld file from datasetInfo.FileList
         /// </remarks>
         private bool ValidateWithInstrumentClass(
@@ -3565,7 +3501,6 @@ namespace CaptureToolPlugin
                             LogWarning(
                                 "Dataset name matched multiple files in directory " + sourceDirectory.FullName + ": " +
                                 string.Join(", ", fileNames.Take(5)));
-
                         }
 
                         // Dataset name matched multiple files; must be a .raw file
@@ -3619,7 +3554,6 @@ namespace CaptureToolPlugin
                 case clsInstrumentClassInfo.eInstrumentClass.IMS_Agilent_TOF:
                     if (datasetInfo.DatasetType != DatasetInfo.RawDSTypes.File)
                     {
-
                         if (datasetInfo.DatasetType == DatasetInfo.RawDSTypes.DirectoryExt)
                         {
                             // IMS08_AgQTOF05 collects data as .D directories, which the capture pipeline will then convert to a .uimf file
@@ -3699,7 +3633,6 @@ namespace CaptureToolPlugin
 
         private void OnFileCopyProgress(string filename, float percentComplete)
         {
-
             if (DateTime.Now.Subtract(mLastProgressUpdate).TotalSeconds >= 20 || percentComplete >= 100 && filename == mLastProgressFileName)
             {
                 if ((mLastProgressFileName == filename) && (Math.Abs(mLastProgressPercent - percentComplete) < float.Epsilon))
@@ -3711,11 +3644,9 @@ namespace CaptureToolPlugin
                 mLastProgressPercent = percentComplete;
                 LogMessage("  copying " + Path.GetFileName(filename) + ": " + percentComplete.ToString("0.0") + "% complete");
             }
-
         }
 
         #endregion
 
     }
-
 }

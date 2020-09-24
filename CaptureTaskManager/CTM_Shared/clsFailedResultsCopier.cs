@@ -135,7 +135,6 @@ namespace CaptureTaskManager
 
         private void DeleteOldFailedResultsFolders(DirectoryInfo failedResultsFolder)
         {
-
             // Determine the folder archive time by reading the modification times on the ResultsFolderInfo_ files
             foreach (var resultFile in failedResultsFolder.GetFiles(FAILED_RESULTS_FOLDER_INFO_TEXT + "*"))
             {

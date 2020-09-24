@@ -54,7 +54,6 @@ namespace Pacifica.Core
         // ReSharper disable once UnusedMember.Global
         public byte DetermineIngestStepsCompleted(string currentTask, int percentComplete, byte ingestStepsCompletedOld)
         {
-
             byte ingestStepsCompleted;
             if (percentComplete > 0)
             {
@@ -157,7 +156,6 @@ namespace Pacifica.Core
             out bool lookupError,
             out string errorMessage)
         {
-
             lookupError = false;
 
             if (!ValidateCertFile("GetIngestStatus", out errorMessage))
@@ -233,7 +231,6 @@ namespace Pacifica.Core
                 {
                     percentComplete = 0;
                 }
-
 
                 switch (state)
                 {
@@ -395,11 +392,9 @@ namespace Pacifica.Core
             return false;
         }
 
-
         private void EasyHttp_MyEMSLOffline(object sender, MessageEventArgs e)
         {
             OnWarningEvent("MyEMSL is offline; unable to retrieve data: " + e.Message);
         }
-
     }
 }

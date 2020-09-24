@@ -23,7 +23,6 @@ namespace Pacifica.Core
 
     public class StatusEventArgs : EventArgs
     {
-
         /// <summary>
         /// Value between 0 and 100
         /// </summary>
@@ -72,5 +71,4 @@ namespace Pacifica.Core
             ServerResponse = serverResponse;
         }
     }
-
 }

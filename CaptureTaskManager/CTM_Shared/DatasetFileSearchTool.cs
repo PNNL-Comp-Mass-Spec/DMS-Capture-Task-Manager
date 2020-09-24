@@ -10,7 +10,6 @@ namespace CaptureTaskManager
 {
     public class DatasetFileSearchTool : EventNotifier
     {
-
         private readonly bool mTraceMode;
 
         /// <summary>
@@ -297,7 +296,6 @@ namespace CaptureTaskManager
 
                 if (mTraceMode)
                 {
-
                     clsToolRunnerBase.ShowTraceMessage(
                         string.Format("Looking for a dataset directory, replaceInvalidCharacters is {0}", replaceInvalidCharacters));
                 }
@@ -354,7 +352,6 @@ namespace CaptureTaskManager
                     matchedDirectory = true;
                     return datasetInfo;
                 }
-
             }
 
             // If we got to here, the raw dataset wasn't found (either as a file or a directory), so there was a problem
@@ -379,6 +376,5 @@ namespace CaptureTaskManager
 
             return updatedText;
         }
-
     }
 }

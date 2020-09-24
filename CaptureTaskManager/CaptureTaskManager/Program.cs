@@ -96,7 +96,6 @@ namespace CaptureTaskManager
                     var testHarness = new clsCodeTest();
 
                     testHarness.TestConnection();
-
                 }
                 catch (Exception ex)
                 {

@@ -9,7 +9,6 @@ using PRISMDatabaseUtils;
 // ReSharper disable UnusedMember.Global
 namespace CaptureTaskManager
 {
-
     #region "Enums"
 
     /// <summary>
@@ -228,7 +227,6 @@ namespace CaptureTaskManager
 
     public static class clsUtilities
     {
-
         #region Properties
 
         /// <summary>
@@ -358,7 +356,6 @@ namespace CaptureTaskManager
             int timeoutSeconds,
             [CallerMemberName] string callingFunction = "")
         {
-
             if (cmd == null)
                 throw new ArgumentException("command is undefined", nameof(cmd));
 
@@ -384,7 +381,6 @@ namespace CaptureTaskManager
                 {
                     using (var cn = new System.Data.SqlClient.SqlConnection(connectionString))
                     {
-
                         cmd.Connection = cn;
                         cmd.CommandTimeout = timeoutSeconds;
 
@@ -442,7 +438,6 @@ namespace CaptureTaskManager
 
             dtResults = null;
             return false;
-
         }
 
         /// <summary>

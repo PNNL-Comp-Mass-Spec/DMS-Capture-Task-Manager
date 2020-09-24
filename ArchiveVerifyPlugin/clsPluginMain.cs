@@ -83,7 +83,6 @@ namespace ArchiveVerifyPlugin
 
             if (success)
             {
-
                 // Confirm that the files are visible in the metadata search results (using metadataObject.GetDatasetFilesInMyEMSL)
                 // If data is found, CreateOrUpdateHashResultsFile will also be called
                 success = VisibleInMetadata(out var metadataFilePath, out var transactionID);
@@ -164,7 +163,6 @@ namespace ArchiveVerifyPlugin
             LogDebug("Completed clsPluginMain.RunTool");
 
             return mRetData;
-
         }
 
         /// <summary>
@@ -200,7 +198,6 @@ namespace ArchiveVerifyPlugin
 
             try
             {
-
                 mRetData.CloseoutMsg = string.Empty;
 
                 var ingestSuccess = GetMyEMSLIngestStatus(
@@ -217,7 +214,6 @@ namespace ArchiveVerifyPlugin
                 statusNum = MyEMSLStatusCheck.GetStatusNumFromURI(statusURI);
 
                 return ingestSuccess;
-
             }
             catch (Exception ex)
             {
@@ -263,7 +259,6 @@ namespace ArchiveVerifyPlugin
 
             try
             {
-
                 var transferDirectoryPathBase = mTaskParams.GetParam("TransferDirectoryPath", mTaskParams.GetParam("TransferFolderPath"));
                 if (!ParameterDefined("TransferDirectoryPath", transferDirectoryPathBase))
                     return false;
@@ -397,14 +392,12 @@ namespace ArchiveVerifyPlugin
                 }
 
                 return false;
-
             }
             catch (Exception ex)
             {
                 LogError("Exception in CompareArchiveFilesToExpectedFiles", ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -455,7 +448,6 @@ namespace ArchiveVerifyPlugin
                             if (transactionIdStats.TryGetValue(archiveFileVersion.TransactionID, out var fileCount))
                             {
                                 transactionIdStats[archiveFileVersion.TransactionID] = fileCount + 1;
-
                             }
                             else
                             {
@@ -476,7 +468,6 @@ namespace ArchiveVerifyPlugin
                         LogError(msg);
 
                         mismatchCount++;
-
                     }
                 }
             }
@@ -640,7 +631,6 @@ namespace ArchiveVerifyPlugin
 
             try
             {
-
                 var lstHashResults = new Dictionary<string, clsHashInfo>(StringComparer.OrdinalIgnoreCase);
 
                 foreach (var archivedFile in archivedFiles)
@@ -680,7 +670,6 @@ namespace ArchiveVerifyPlugin
             }
 
             return success;
-
         }
 
         /// <summary>
@@ -690,12 +679,10 @@ namespace ArchiveVerifyPlugin
         /// <returns></returns>
         private bool CreateOrUpdateHashResultsFile(IEnumerable<MyEMSLReader.ArchivedFileInfo> archivedFiles)
         {
-
             bool success;
 
             try
             {
-
                 var datasetInstrument = mTaskParams.GetParam("Instrument_Name");
                 if (!ParameterDefined("Instrument_Name", datasetInstrument))
                     return false;
@@ -723,7 +710,6 @@ namespace ArchiveVerifyPlugin
                 {
                     CopyHashResultsFileToBackupFolder(datasetInstrument, datasetYearQuarter, hashResultsFile);
                 }
-
             }
             catch (Exception ex)
             {
@@ -732,7 +718,6 @@ namespace ArchiveVerifyPlugin
             }
 
             return success;
-
         }
 
         private void DeleteMetadataFile(string metadataFilePath)
@@ -749,7 +734,6 @@ namespace ArchiveVerifyPlugin
                 // Delete the transfer folder if it is empty
                 if (diParentFolder != null && diParentFolder.GetFileSystemInfos("*", SearchOption.AllDirectories).Length == 0)
                     diParentFolder.Delete();
-
             }
             catch (Exception ex)
             {
@@ -873,7 +857,6 @@ namespace ArchiveVerifyPlugin
 
             // Append a new entry to the cached info
             hashResults.Add(archiveFilePath, hashInfo);
-
         }
 
         private bool UpdateHashResultsFile(
@@ -928,7 +911,6 @@ namespace ArchiveVerifyPlugin
                     lstHashResults.Add(archivedFilePath, hashInfo);
                     saveMergedFile = true;
                 }
-
             }
 
             if (saveMergedFile)
@@ -1030,7 +1012,6 @@ namespace ArchiveVerifyPlugin
                     mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
 
                 return hashFileUpdateSuccess;
-
             }
             catch (Exception ex)
             {
@@ -1038,7 +1019,6 @@ namespace ArchiveVerifyPlugin
                 transactionId = 0;
                 return false;
             }
-
         }
 
         private bool WriteHashResultsFile(Dictionary<string, clsHashInfo> lstHashResults, string hashResultsFilePath, bool useTempFile)
@@ -1085,18 +1065,15 @@ namespace ArchiveVerifyPlugin
                 }
 
                 return true;
-
             }
             catch (Exception ex)
             {
                 LogError("Exception in WriteHashResultsFile while " + currentStep, ex);
                 return false;
             }
-
         }
 
         #endregion
 
     }
-
 }

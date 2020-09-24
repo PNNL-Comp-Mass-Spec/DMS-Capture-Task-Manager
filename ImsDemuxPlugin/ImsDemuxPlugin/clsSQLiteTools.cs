@@ -51,7 +51,6 @@ namespace ImsDemuxPlugin
 
                     if (!encodingSequenceList.Contains(encodingSequence))
                         encodingSequenceList.Add(encodingSequence);
-
                 }
             }
 
@@ -70,7 +69,6 @@ namespace ImsDemuxPlugin
             var deMuxRequired = false;
             foreach (var encodingSequence in encodingSequenceList)
             {
-
                 // Empty string means demux not required
                 if (string.IsNullOrWhiteSpace(encodingSequence))
                     continue;
@@ -123,6 +121,5 @@ namespace ImsDemuxPlugin
 
             return UimfQueryResults.NonMultiplexed;
         }
-
     }
 }

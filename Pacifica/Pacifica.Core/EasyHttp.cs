@@ -165,7 +165,6 @@ namespace Pacifica.Core
                         while ((bytesRead = responseStream.Read(buffer, 0, buffer.Length)) != 0)
                             outFile.Write(buffer, 0, bytesRead);
                     }
-
                 }
                 else
                 {
@@ -239,7 +238,6 @@ namespace Pacifica.Core
                 responseStatusCode = response.StatusCode;
 
                 return response.Headers;
-
             }
             catch (WebException ex)
             {
@@ -299,12 +297,10 @@ namespace Pacifica.Core
                 responseStatusCode = responseData.ResponseStatusCode;
                 throw;
             }
-
         }
 
         protected static void HandleWebException(WebException ex, string url, WebResponseData responseData)
         {
-
             responseData.RegisterException(ex);
 
             if (ex.Response != null)
@@ -361,7 +357,6 @@ namespace Pacifica.Core
             NetworkCredential loginCredentials,
             double maxTimeoutHours = 24)
         {
-
             if (cookies == null)
             {
                 cookies = new CookieContainer();
@@ -619,7 +614,6 @@ namespace Pacifica.Core
             bool sendStringInHeader = false,
             NetworkCredential loginCredentials = null)
         {
-
             var urlContactInfo = new UrlContactInfo(
                 config, url, cookies, postData, method,
                 timeoutSeconds, contentType, sendStringInHeader, loginCredentials);
@@ -689,7 +683,6 @@ namespace Pacifica.Core
             bool sendStringInHeader = false,
             NetworkCredential loginCredentials = null)
         {
-
             try
             {
                 if (timeoutSeconds < 5)
@@ -765,14 +758,12 @@ namespace Pacifica.Core
                 responseStatusCode = mUrlContactInfo.ResponseData.ResponseStatusCode;
 
                 return responseTextToReturn;
-
             }
             catch (Exception ex)
             {
                 mUrlContactInfo.ResponseData.ResponseStatusCode = HttpStatusCode.BadRequest;
                 throw new Exception("Caught exception while trying to start a thread to contact " + url, ex);
             }
-
         }
 
         /// <summary>
@@ -849,7 +840,6 @@ namespace Pacifica.Core
                     }
                 }
             }
-
         }
 
         /// <summary>
@@ -866,7 +856,6 @@ namespace Pacifica.Core
                 mUrlContactInfo.ResponseData.RegisterException(ex);
                 OnErrorEvent(ex.Message, ex);
             }
-
         }
 
         /// <summary>

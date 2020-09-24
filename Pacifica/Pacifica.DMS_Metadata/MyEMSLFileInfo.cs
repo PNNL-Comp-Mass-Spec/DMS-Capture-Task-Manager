@@ -186,7 +186,6 @@ namespace Pacifica.DMS_Metadata
 
             Instrument = string.Empty;
             DatasetYearQuarter = string.Empty;
-
         }
 
         /// <summary>

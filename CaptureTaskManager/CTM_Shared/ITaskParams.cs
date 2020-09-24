@@ -14,7 +14,6 @@ namespace CaptureTaskManager
     /// </summary>
     public interface ITaskParams
     {
-
         #region "Properties"
 
         System.Collections.Generic.Dictionary<string, string> TaskDictionary { get; }

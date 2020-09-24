@@ -18,7 +18,6 @@ namespace DatasetQualityPlugin
     /// </summary>
     public class clsMetaDataFile
     {
-
         #region "Constants"
 
         private const string META_FILE_NAME = "metadata.xml";

@@ -18,7 +18,6 @@ namespace CaptureTaskManager
     /// </summary>
     class clsCaptureTask : clsDbTask, ITaskParams
     {
-
         #region "Constants"
 
         private const string SP_NAME_SET_COMPLETE = "SetStepTaskComplete";
@@ -263,7 +262,6 @@ namespace CaptureTaskManager
 
                 if (returnCodeValue != 0)
                 {
-
                     if (returnCodeValue == RET_VAL_TASK_NOT_AVAILABLE)
                     {
                         // No jobs found
@@ -456,14 +454,12 @@ namespace CaptureTaskManager
 
                 LogError("Stored procedure " + SP_NAME_SET_COMPLETE + " reported return code " + returnCode);
                 return false;
-
             }
             catch (Exception ex)
             {
                 LogError("Exception calling stored procedure " + SP_NAME_SET_COMPLETE, ex);
                 return false;
             }
-
         }
 
         #endregion

@@ -19,7 +19,6 @@ namespace SrcFileRenamePlugin
     /// </summary>
     class clsRenameOps : EventNotifier
     {
-
         // Ignore Spelling: Bionet, Pwd, prepend, Username, Subfolder, secfso, fso, chromooff, flatline, LCmethod, plugsplit, slowsplit
 
         #region "Class wide variables"
@@ -58,7 +57,6 @@ namespace SrcFileRenamePlugin
 
             mDatasetFileSearchTool = new DatasetFileSearchTool(false);
             RegisterEvents(mDatasetFileSearchTool);
-
         }
 
         #region "Methods"
@@ -175,13 +173,11 @@ namespace SrcFileRenamePlugin
                             sourceDirectoryPath = candidateDirectoryPath;
                         }
                     }
-
                 }
                 else
                 {
                     sourceDirectoryPath = Path.Combine(sourceDirectoryPath, captureSubdirectory);
                 }
-
             }
 
             OnDebugEvent("Source directory path: " + sourceDirectoryPath);

@@ -6,7 +6,6 @@ namespace CaptureTaskManager
 {
     class clsCodeTest
     {
-
         public void TestConnection()
         {
             Console.WriteLine(@"Code test mode");
@@ -26,7 +25,6 @@ namespace CaptureTaskManager
             {
                 using (var enumCurrent = credentials.GetEnumerator())
                 {
-
                     while (enumCurrent.MoveNext())
                     {
                         var accessCredentials = new System.Net.NetworkCredential(enumCurrent.Current.Key,
@@ -77,6 +75,5 @@ namespace CaptureTaskManager
                 Console.WriteLine(@"Exception: " + ex.Message);
             }
         }
-
     }
 }

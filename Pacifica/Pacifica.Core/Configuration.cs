@@ -281,7 +281,6 @@ namespace Pacifica.Core
                 ConsoleMsgUtils.ShowWarning("Exception looking for the newest MyEMSL .pfx certificate file: " + ex.Message);
                 return string.Empty;
             }
-
         }
 
         /// <summary>
@@ -327,6 +326,5 @@ namespace Pacifica.Core
                 MetadataServerHostName = DEFAULT_METADATA_SERVER_HOST_NAME;
             }
         }
-
     }
 }

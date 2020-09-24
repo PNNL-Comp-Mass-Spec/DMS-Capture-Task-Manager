@@ -147,7 +147,6 @@ namespace SrcFileRenamePlugin
                 LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
-
         }
 
         #endregion

@@ -171,7 +171,6 @@ namespace DatasetArchivePlugin
 
             // Got to here, everything's OK, so let the derived class take over
             return true;
-
         }
 
         private string AppendToString(string text, string append, string delimiter = "; ")
@@ -239,7 +238,6 @@ namespace DatasetArchivePlugin
             {
                 LogTools.LogError(failureMsg, ex, true);
             }
-
         }
 
         /// <summary>
@@ -461,7 +459,6 @@ namespace DatasetArchivePlugin
                 CreateArchiveUpdateJobsForDataset(myEMSLUploader.MetadataContainer.SkippedDatasetArchiveSubdirectories);
 
                 return true;
-
             }
             catch (DirectoryNotFoundException ex)
             {
@@ -548,7 +545,6 @@ namespace DatasetArchivePlugin
                     myEMSLUploader.MetadataDefinedEvent -= myEMSLUploader_MetadataDefinedEvent;
                 }
             }
-
         }
 
         /// <summary>
@@ -674,7 +670,6 @@ namespace DatasetArchivePlugin
 
         void myEMSLUploader_StatusUpdate(object sender, StatusEventArgs e)
         {
-
             if (DateTime.UtcNow.Subtract(mLastStatusUpdateTime).TotalSeconds >= 60 && e.PercentCompleted > 0)
             {
                 mLastStatusUpdateTime = DateTime.UtcNow;
@@ -713,7 +708,6 @@ namespace DatasetArchivePlugin
                     LogStatusMessageSkipDuplicate(msg);
                 else
                     LogStatusMessageSkipDuplicate(msg + "; " + filename);
-
             }
 
             if (DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds >= 3 && e.PercentCompleted > 0)
@@ -721,7 +715,6 @@ namespace DatasetArchivePlugin
                 mLastProgressUpdateTime = DateTime.UtcNow;
                 mStatusTools.UpdateAndWrite((float)e.PercentCompleted);
             }
-
         }
 
         void myEMSLUploader_UploadCompleted(object sender, UploadCompletedEventArgs e)
@@ -746,5 +739,4 @@ namespace DatasetArchivePlugin
         #endregion
 
     }
-
 }

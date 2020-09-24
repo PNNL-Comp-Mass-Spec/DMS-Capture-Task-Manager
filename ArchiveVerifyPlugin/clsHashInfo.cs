@@ -60,6 +60,5 @@ namespace ArchiveVerifyPlugin
 
             return description;
         }
-
     }
 }

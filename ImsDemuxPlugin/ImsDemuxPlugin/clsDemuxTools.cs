@@ -233,7 +233,6 @@ namespace ImsDemuxPlugin
                 }
 
                 return returnData;
-
             }
             catch (Exception ex)
             {
@@ -245,7 +244,6 @@ namespace ImsDemuxPlugin
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return returnData;
             }
-
         }
 
         private clsToolReturnData CopyUIMFToWorkDir(
@@ -269,12 +267,10 @@ namespace ImsDemuxPlugin
             }
 
             return returnData;
-
         }
 
         private string GetRemoteUIMFFilePath(clsToolReturnData returnData)
         {
-
             try
             {
                 // Locate data file on storage server
@@ -298,7 +294,6 @@ namespace ImsDemuxPlugin
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return string.Empty;
             }
-
         }
 
         /// <summary>
@@ -333,7 +328,6 @@ namespace ImsDemuxPlugin
 
             try
             {
-
                 // Lookup the instrument name
                 var instrumentName = taskParams.GetParam("Instrument_Name");
 
@@ -350,7 +344,6 @@ namespace ImsDemuxPlugin
                         autoCalibrate = true;
                         break;
                 }
-
             }
             catch (Exception ex)
             {
@@ -366,12 +359,10 @@ namespace ImsDemuxPlugin
 
             try
             {
-
                 // Count the number of frames
                 // If fewer than 5 frames, don't calibrate
                 using (var uimfReader = new DataReader(uimfFilePath))
                 {
-
                     var frameList = uimfReader.GetMasterFrameList();
 
                     if (frameList.Count < 5)
@@ -404,7 +395,6 @@ namespace ImsDemuxPlugin
                                 OnWarningEvent(msg);
                                 autoCalibrate = false;
                             }
-
                         }
                     }
                 }
@@ -463,7 +453,6 @@ namespace ImsDemuxPlugin
                     returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     return returnData;
                 }
-
             }
 
             if (!uimfFilePath.StartsWith(@"\\"))
@@ -486,7 +475,6 @@ namespace ImsDemuxPlugin
             }
 
             return returnData;
-
         }
 
         /// <summary>
@@ -546,7 +534,6 @@ namespace ImsDemuxPlugin
 
                 using (var writer = new DataWriter(uimfFilePath, false))
                 {
-
                     writer.UpdateAllCalibrationCoefficients(calibrationSlope, calibrationIntercept, false, true);
 
                     var logMessage = "Manually applied calibration coefficients to all frames using user-specified calibration coefficients";
@@ -561,7 +548,6 @@ namespace ImsDemuxPlugin
 
                     writer.PostLogEntry("Normal", logMessage, UIMF_CALIBRATION_UPDATER_NAME);
                 }
-
             }
             catch (Exception ex)
             {
@@ -728,7 +714,6 @@ namespace ImsDemuxPlugin
                         msg = "Error deleting .uimf.tmp CheckPoint file: " + ex.Message;
                         OnErrorEvent(msg);
                     }
-
                 }
             }
 
@@ -739,7 +724,6 @@ namespace ImsDemuxPlugin
                 {
                     postProcessingError = true;
                 }
-
             }
 
             if (postProcessingError)
@@ -785,7 +769,6 @@ namespace ImsDemuxPlugin
                 returnData.EvalMsg += " (resumed at frame " + resumeStartFrame + ")";
 
             return returnData;
-
         }
 
         /// <summary>
@@ -862,7 +845,6 @@ namespace ImsDemuxPlugin
 
             // If we get here, we were not able to successfully copy the file
             return false;
-
         }
 
         /// <summary>
@@ -916,7 +898,6 @@ namespace ImsDemuxPlugin
                     msg += "; in addition, could not find " + CALIBRATION_LOG_FILE + " at " + mDatasetFolderPathRemote;
                     OnErrorEvent(msg);
                 }
-
             }
             else
             {
@@ -930,7 +911,6 @@ namespace ImsDemuxPlugin
                     returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 }
             }
-
         }
 
         public static string AppendToString(string currentText, string newText)
@@ -989,7 +969,6 @@ namespace ImsDemuxPlugin
 
                 OnErrorEvent(errorMessage);
                 return false;
-
             }
             catch (Exception ex)
             {
@@ -997,7 +976,6 @@ namespace ImsDemuxPlugin
                 OnErrorEvent(errorMessage + " " + datasetName, ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -1107,7 +1085,6 @@ namespace ImsDemuxPlugin
                 OnErrorEvent(msg, ex);
                 return false;
             }
-
         }
 
         private void OnCopyFileWithRetry(string sourceFilePath, string targetFilePath)
@@ -1162,7 +1139,6 @@ namespace ImsDemuxPlugin
 
                 using (var reader = new StreamReader(new FileStream(mUimfDemultiplexerConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
@@ -1182,7 +1158,6 @@ namespace ImsDemuxPlugin
 
                             if (dataLine.Contains("OutOfMemoryException"))
                                 OutOfMemoryException = true;
-
                         }
                         else if (dataLine.StartsWith("Warning:"))
                         {
@@ -1223,7 +1198,6 @@ namespace ImsDemuxPlugin
                                 int.TryParse(currentFrameMatch.Groups[1].Value, out framesProcessed);
                             }
                         }
-
                     }
                 }
 
@@ -1234,7 +1208,6 @@ namespace ImsDemuxPlugin
                     if (percentCompleteFractional > mDemuxProgressPercentComplete)
                         mDemuxProgressPercentComplete = percentCompleteFractional;
                 }
-
             }
             catch (Exception ex)
             {
@@ -1243,9 +1216,7 @@ namespace ImsDemuxPlugin
                     OnErrorEvent("Exception in ParseConsoleOutputFileDemux", ex);
                     mLoggedConsoleOutputErrors.Add(ex.Message);
                 }
-
             }
-
         }
 
         /// <summary>
@@ -1374,7 +1345,6 @@ namespace ImsDemuxPlugin
                     {
                         arguments += " /CheckPointFolder:" + clsConversion.PossiblyQuotePath(demuxOptions.CheckpointTargetFolder);
                     }
-
                 }
 
                 mUimfDemultiplexerConsoleOutputFilePath = Path.Combine(mWorkDir, "UIMFDemultiplexer_ConsoleOutput.txt");
@@ -1424,7 +1394,6 @@ namespace ImsDemuxPlugin
                 }
 
                 return false;
-
             }
             catch (Exception ex)
             {
@@ -1432,7 +1401,6 @@ namespace ImsDemuxPlugin
                 OnErrorEvent(errorMessage, ex);
                 return false;
             }
-
         }
 
         private void UpdateDatasetInfo(IMgrParams mgrParams, ITaskParams taskParams)
@@ -1444,7 +1412,6 @@ namespace ImsDemuxPlugin
             var datasetDirectory = taskParams.GetParam(taskParams.HasParam("Directory") ? "Directory" : "Folder");
 
             mDatasetFolderPathRemote = Path.Combine(svrPath, datasetDirectory);
-
         }
 
         /// <summary>

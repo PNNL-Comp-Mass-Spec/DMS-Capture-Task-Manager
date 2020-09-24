@@ -65,7 +65,6 @@ namespace ArchiveStatusCheckPlugin
             EUS_InstrumentID = 0;
             EUS_ProjectID = string.Empty;
             EUS_UploaderID = 0;
-
         }
 
         public override string ToString()

@@ -12,7 +12,6 @@ namespace CaptureTaskManager
     /// </summary>
     public class clsToolReturnData
     {
-
         #region "Properties"
 
         public EnumCloseOutType CloseoutType { get; set; }

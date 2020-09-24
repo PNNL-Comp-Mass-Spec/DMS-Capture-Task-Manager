@@ -199,7 +199,6 @@ namespace Pacifica.DMS_Metadata
             out bool criticalError,
             out string criticalErrorMessage)
         {
-
             // Could use this to ignore all certificates (not wise)
             // System.Net.ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;
 
@@ -264,7 +263,6 @@ namespace Pacifica.DMS_Metadata
 
             EUSInfo = eusInfo;
             return true;
-
         }
 
         private bool GetSupplementalDMSMetadata(
@@ -273,7 +271,6 @@ namespace Pacifica.DMS_Metadata
             Uploader.Upload.UploadMetadata uploadMetadata,
             int retryCount = 3)
         {
-
             var queryString = "SELECT * FROM V_MyEMSL_Supplemental_Metadata WHERE [omics.dms.dataset_id] = " + datasetID;
 
             var dbTools = DbToolsFactory.GetDBTools(dmsConnectionString, debugMode: TraceMode);
@@ -324,7 +321,6 @@ namespace Pacifica.DMS_Metadata
             }
 
             return personList;
-
         }
 
         private bool CheckMetadataValidity(string jsonMetadata, out bool policyError)
@@ -333,7 +329,6 @@ namespace Pacifica.DMS_Metadata
 
             try
             {
-
                 if (!ValidateCertFile("CheckMetadataValidity"))
                 {
                     policyError = false;
@@ -382,7 +377,6 @@ namespace Pacifica.DMS_Metadata
                 policyError = false;
                 return false;
             }
-
         }
 
         private bool AddUsingCacheInfoFile(
@@ -391,7 +385,6 @@ namespace Pacifica.DMS_Metadata
             string baseDSPath,
             out string remoteFilePath)
         {
-
             remoteFilePath = string.Empty;
 
             using (var infoFileReader = new StreamReader(new FileStream(cacheInfoFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
@@ -429,7 +422,6 @@ namespace Pacifica.DMS_Metadata
             fileCollection.Add(fio);
 
             return true;
-
         }
 
         /// <summary>
@@ -564,14 +556,12 @@ namespace Pacifica.DMS_Metadata
                             string.Format("Error reported by AddUsingCacheInfoFile for {0} (CollectFileInformation)", dataFile.FullName));
 
                     mRemoteCacheInfoFilesToRetrieve.Add(remoteFilePath);
-
                 }
 
                 if (TraceMode)
                 {
                     OnDebugEvent(string.Format("{0}, {1:F1}% complete: {2}", HASHING_FILES, fractionCompleted * 100, dataFile.Name));
                 }
-
             }
 
             ReportProgress(100);
@@ -709,7 +699,6 @@ namespace Pacifica.DMS_Metadata
             criticalErrorMessage = string.Empty;
             criticalError = false;
             return missingFiles;
-
         }
 
         public void CreateLockFiles()
@@ -757,13 +746,11 @@ namespace Pacifica.DMS_Metadata
                 mRemoteCacheInfoLockFiles.Add(lockDirectoryPathSource, new FileInfo(lockFilePathSource));
 
                 mFileTools.WaitForLockFileQueue(lockFileTimestamp, lockDirectorySource, sourceFile, MAX_LOCKFILE_WAIT_TIME_MINUTES);
-
             }
         }
 
         public void DeleteLockFiles()
         {
-
             if (mRemoteCacheInfoLockFiles.Count == 0)
                 return;
 
@@ -779,9 +766,7 @@ namespace Pacifica.DMS_Metadata
                 {
                     // Ignore errors here
                 }
-
             }
-
         }
 
         /// <summary>
@@ -807,7 +792,6 @@ namespace Pacifica.DMS_Metadata
             Dictionary<string, string> mgrParams,
             out Uploader.Upload.UploadMetadata uploadMetadata)
         {
-
             uploadMetadata = new Uploader.Upload.UploadMetadata();
             uploadMetadata.Clear();
 
@@ -1094,7 +1078,6 @@ namespace Pacifica.DMS_Metadata
                 remoteFileInfo.UpdateSourceFileTimes(creationTime, lastWriteTime);
 
                 fileVersions.Add(remoteFileInfo);
-
             }
 
             if (duplicateHashCount > DUPLICATE_HASH_MESSAGES_TO_LOG)
@@ -1242,5 +1225,4 @@ namespace Pacifica.DMS_Metadata
         #endregion
 
     }
-
 }

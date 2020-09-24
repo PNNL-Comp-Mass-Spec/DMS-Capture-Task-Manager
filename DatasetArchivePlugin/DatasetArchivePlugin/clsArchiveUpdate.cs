@@ -50,7 +50,6 @@ namespace DatasetArchivePlugin
         /// <returns>TRUE for success, FALSE for failure</returns>
         public override bool PerformTask()
         {
-
             // Perform base class operations
             if (!base.PerformTask())
                 return false;

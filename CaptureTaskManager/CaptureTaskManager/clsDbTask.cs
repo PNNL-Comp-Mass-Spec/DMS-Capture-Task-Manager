@@ -19,7 +19,6 @@ namespace CaptureTaskManager
     /// </summary>
     internal abstract class clsDbTask : clsLoggerBase
     {
-
         #region "Constants"
 
         protected const int RET_VAL_OK = 0;
@@ -215,7 +214,6 @@ namespace CaptureTaskManager
                                            paramName, existingValue, paramValue));
                             return false;
                         }
-
                     }
                     else
                     {

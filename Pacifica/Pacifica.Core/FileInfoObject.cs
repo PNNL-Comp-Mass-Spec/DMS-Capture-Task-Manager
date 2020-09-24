@@ -31,7 +31,6 @@ namespace Pacifica.Core
                 mRelativeDestinationDirectory = string.Empty;
 
             Sha1HashHex = Utilities.GenerateSha1Hash(AbsoluteLocalPath);
-
         }
 
         /// <summary>

@@ -14,7 +14,6 @@ namespace ArchiveStatusCheckPlugin
     // ReSharper disable once UnusedMember.Global
     public class clsPluginMain : clsToolRunnerBase
     {
-
         #region "Class-wide variables"
 
         clsToolReturnData mRetData = new clsToolReturnData();
@@ -71,7 +70,6 @@ namespace ArchiveStatusCheckPlugin
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
 
                 mRetData.EvalCode = EnumEvalCode.EVAL_CODE_SUCCESS;
-
             }
             else
             {
@@ -86,12 +84,10 @@ namespace ArchiveStatusCheckPlugin
             LogDebug(msg);
 
             return mRetData;
-
         }
 
         private bool CheckArchiveStatus()
         {
-
             // Examine the upload status for any uploads for this dataset, filtering on job number to ignore jobs created after this job
             // First obtain a list of status URIs to check
 
@@ -177,7 +173,6 @@ namespace ArchiveStatusCheckPlugin
                 {
                     UpdateIngestStepsCompletedInDB(statusNumsToUpdate, dctStatusData);
                 }
-
             }
 
             if (dctVerifiedURIs.Count == 0)
@@ -242,7 +237,6 @@ namespace ArchiveStatusCheckPlugin
                     dctVerifiedURIs.Add(statusNum, statusInfo.StatusURI);
                     LogDebug("Successful MyEMSL upload for job " + mJob + ", status num " + statusNum + ": " + statusInfo.StatusURI);
                     continue;
-
                 }
                 catch (Exception ex)
                 {
@@ -264,7 +258,6 @@ namespace ArchiveStatusCheckPlugin
                 }
 
                 exceptionCount = 0;
-
             }
         }
 
@@ -312,7 +305,6 @@ namespace ArchiveStatusCheckPlugin
                         break;
                     }
                 }
-
             }
 
             if (lstStatusNumsToIgnore.Count > 0)
@@ -328,9 +320,7 @@ namespace ArchiveStatusCheckPlugin
                     dctUnverifiedURIs.Remove(statusNumToRemove);
                     dctStatusData.Remove(statusNumToRemove);
                 }
-
             }
-
         }
 
         /// <summary>
@@ -401,7 +391,6 @@ namespace ArchiveStatusCheckPlugin
                        " ORDER BY Entry_ID";
 
                 GetStatusURIsAndSubfolders(sql, dctStatusData, retryCount);
-
             }
             catch (Exception ex)
             {
@@ -477,7 +466,6 @@ namespace ArchiveStatusCheckPlugin
 
                 foreach (var statusNum in statusNumsToUpdate)
                 {
-
                     if (!dctStatusData.TryGetValue(statusNum, out var statusInfo))
                     {
                         continue;
@@ -489,21 +477,18 @@ namespace ArchiveStatusCheckPlugin
 
                     if (!success)
                         spError = true;
-
                 }
 
                 if (spError)
                 {
                     // One or more calls to the stored procedure failed
                 }
-
             }
             catch (Exception ex)
             {
                 var msg = "Exception calling stored procedure SetMyEMSLUploadSupersededIfFailed, job " + mJob;
                 LogError(msg, ex);
             }
-
         }
 
         private void UpdateSupersededURIs(IReadOnlyCollection<int> lstStatusNumsToIgnore, IReadOnlyDictionary<int, clsIngestStatusInfo> dctStatusData)
@@ -538,7 +523,6 @@ namespace ArchiveStatusCheckPlugin
                 var msg = "Exception calling stored procedure " + SP_NAME + ", job " + mJob;
                 LogError(msg, ex);
             }
-
         }
 
         private void UpdateVerifiedURIs(Dictionary<int, string> dctVerifiedURIs, IReadOnlyDictionary<int, clsIngestStatusInfo> dctStatusData)
@@ -579,11 +563,9 @@ namespace ArchiveStatusCheckPlugin
                 var msg = "Exception calling stored procedure " + SP_NAME + ", job " + mJob;
                 LogError(msg, ex);
             }
-
         }
 
         #endregion
 
     }
-
 }

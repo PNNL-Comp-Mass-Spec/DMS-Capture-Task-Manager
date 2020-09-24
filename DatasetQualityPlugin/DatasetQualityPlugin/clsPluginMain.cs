@@ -63,7 +63,6 @@ namespace DatasetQualityPlugin
         /// <returns>Enum indicating success or failure</returns>
         public override clsToolReturnData RunTool()
         {
-
             // Note that Debug messages are logged if mDebugLevel == 5
 
             var msg = "Starting DatasetQualityPlugin.clsPluginMain.RunTool()";
@@ -106,7 +105,6 @@ namespace DatasetQualityPlugin
             LogDebug(msg);
 
             return mRetData;
-
         }
 
         /// <summary>
@@ -116,7 +114,6 @@ namespace DatasetQualityPlugin
         /// <remarks>At present we only process Thermo .Raw files. Furthermore, if the file only contains MS/MS spectra, then it cannot be processed with Quameter</remarks>
         private bool ConditionallyRunQuameter()
         {
-
             // Set up the file paths
             var storageVolExt = mTaskParams.GetParam("Storage_Vol_External");
             var storagePath = mTaskParams.GetParam("Storage_Path");
@@ -229,7 +226,6 @@ namespace DatasetQualityPlugin
                     LogError(msg);
                     mRetData.CloseoutMsg = "Dataset file not found on storage server or in the archive";
                 }
-
             }
 
             if (string.IsNullOrEmpty(dataFilePathRemote))
@@ -253,16 +249,13 @@ namespace DatasetQualityPlugin
 
                 if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
                     mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-
             }
 
             return success;
-
         }
 
         private void ClearWorkDir()
         {
-
             try
             {
                 var diWorkDir = new DirectoryInfo(mWorkDir);
@@ -278,14 +271,12 @@ namespace DatasetQualityPlugin
                 {
                     DeleteFileIgnoreErrors(fiFile.FullName);
                 }
-
             }
             // ReSharper disable once EmptyGeneralCatchClause
             catch
             {
                 // Ignore errors here
             }
-
         }
 
         /// <summary>
@@ -296,7 +287,6 @@ namespace DatasetQualityPlugin
         /// <returns></returns>
         private bool ConvertResultsToXML(IEnumerable<KeyValuePair<string, string>> lstResults, out string sXMLResults)
         {
-
             // XML will look like:
 
             // <?xml version="1.0" encoding="utf-8" standalone="yes"?>
@@ -335,7 +325,6 @@ namespace DatasetQualityPlugin
                 sbXML.Append("</Quameter_Results>");
 
                 sXMLResults = sbXML.ToString();
-
             }
             catch (Exception ex)
             {
@@ -345,12 +334,10 @@ namespace DatasetQualityPlugin
             }
 
             return true;
-
         }
 
         private bool CopyFilesToDatasetFolder(string datasetFolder)
         {
-
             try
             {
                 var diDatasetQCFolder = new DirectoryInfo(Path.Combine(datasetFolder, "QC"));
@@ -471,7 +458,6 @@ namespace DatasetQualityPlugin
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return false;
             }
-
         }
 
         /// <summary>
@@ -480,7 +466,6 @@ namespace DatasetQualityPlugin
         /// <returns></returns>
         private string GetQuameterPath()
         {
-
             // Typically C:\DMS_Programs\Quameter\x64\
             var sQuameterFolder = mMgrParams.GetParam("QuameterProgLoc", string.Empty);
 
@@ -497,7 +482,6 @@ namespace DatasetQualityPlugin
         /// <remarks></remarks>
         private List<KeyValuePair<string, string>> LoadQuameterResults(string ResultsFilePath)
         {
-
             // The Quameter results file has two rows, a header row and a data row
             // Filename StartTimeStamp   XIC-WideFrac   XIC-FWHM-Q1   XIC-FWHM-Q2   XIC-FWHM-Q3   XIC-Height-Q2   etc.
             // QC_Shew_12_02_Run-06_4Sep12_Roc_12-03-30.RAW   2012-09-04T20:33:29Z   0.35347   20.7009   22.3192   24.794   etc.
@@ -609,13 +593,10 @@ namespace DatasetQualityPlugin
 
                         lstResults.Add(new KeyValuePair<string, string>(sHeaderName, sDataItem));
                     }
-
                 }
-
             }
 
             return lstResults;
-
         }
 
         private void ParseConsoleOutputFile()
@@ -668,7 +649,6 @@ namespace DatasetQualityPlugin
 
                 using (var reader = new StreamReader(new FileStream(mConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
@@ -697,12 +677,10 @@ namespace DatasetQualityPlugin
                             {
                                 exceptionText = "; " + trimmedLine;
                             }
-
                         }
                         else if (trimmedLine.StartsWith("Error:"))
                         {
                             LogError("Quameter error: " + trimmedLine);
-
                         }
                         else if (trimmedLine.StartsWith("Unhandled Exception"))
                         {
@@ -736,7 +714,6 @@ namespace DatasetQualityPlugin
             {
                 LogError("Exception in ParseConsoleOutputFile: " + ex.Message);
             }
-
         }
 
         private void ParseDatasetInfoFile(string datasetFolderPath, string datasetName, out int scanCount, out int scanCountMS)
@@ -767,7 +744,6 @@ namespace DatasetQualityPlugin
                     }
                 }
             }
-
         }
 
         private void PostProcessMetricsFile(string metricsOutputFileName)
@@ -815,20 +791,16 @@ namespace DatasetQualityPlugin
             {
                 throw new Exception("Error in PostProcessMetricsFile: " + ex.Message, ex);
             }
-
         }
 
         private bool PostQuameterResultsToDB(string sXMLResults)
         {
-
             // Note that mDatasetID gets populated by runTool
             return PostQuameterResultsToDB(mDatasetID, sXMLResults);
-
         }
 
         public bool PostQuameterResultsToDB(int intDatasetID, string sXMLResults)
         {
-
             const int MAX_RETRY_COUNT = 3;
             const int SEC_BETWEEN_RETRIES = 20;
 
@@ -875,7 +847,6 @@ namespace DatasetQualityPlugin
                     LogError(mRetData.CloseoutMsg);
                     blnSuccess = false;
                 }
-
             }
             catch (Exception ex)
             {
@@ -1004,7 +975,6 @@ namespace DatasetQualityPlugin
 
                 if (!success)
                 {
-
                     if (string.IsNullOrEmpty(mRetData.CloseoutMsg))
                     {
                         mRetData.CloseoutMsg = "Unknown error running Quameter";
@@ -1111,7 +1081,6 @@ namespace DatasetQualityPlugin
                         mRetData.CloseoutMsg = "No Quameter results were found";
                         LogError(mRetData.CloseoutMsg + ": lstResults.Count == 0");
                     }
-
                 }
                 else
                 {
@@ -1132,7 +1101,6 @@ namespace DatasetQualityPlugin
                             }
                         }
                     }
-
                 }
             }
             catch (Exception ex)
@@ -1143,7 +1111,6 @@ namespace DatasetQualityPlugin
             }
 
             return blnSuccess;
-
         }
 
         private bool RunQuameter(
@@ -1290,7 +1257,6 @@ namespace DatasetQualityPlugin
             }
 
             return true;
-
         }
 
         /// <summary>
@@ -1318,7 +1284,6 @@ namespace DatasetQualityPlugin
         /// <remarks></remarks>
         private bool StoreToolVersionInfo(bool storeQuameterVersion)
         {
-
             LogDebug("Determining tool version info");
 
             var toolVersionInfo = string.Empty;
@@ -1357,7 +1322,6 @@ namespace DatasetQualityPlugin
                 LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -1380,7 +1344,6 @@ namespace DatasetQualityPlugin
 
             percentComplete = scansRead / (float)totalScans * 100;
             return true;
-
         }
 
         #endregion
@@ -1444,11 +1407,9 @@ namespace DatasetQualityPlugin
                     mStatusUpdateIntervalMinutes += 5;
                 }
             }
-
         }
 
         #endregion
 
     }
-
 }

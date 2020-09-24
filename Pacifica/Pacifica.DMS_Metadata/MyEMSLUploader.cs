@@ -172,7 +172,6 @@ namespace Pacifica.DMS_Metadata
             mUploadWorker.MyEMSLOffline += myEmslUploadOnMyEmslOffline;
             mUploadWorker.StatusUpdate += myEMSLUpload_StatusUpdate;
             mUploadWorker.UploadCompleted += myEMSLUpload_UploadCompleted;
-
         }
 
         /// <summary>
@@ -188,7 +187,6 @@ namespace Pacifica.DMS_Metadata
         /// <returns>True if success, false if an error</returns>
         public bool SetupMetadataAndUpload(Configuration config, Uploader.TarStreamUploader.UploadDebugMode debugMode, out string statusURL)
         {
-
             var jobNumber = GetParam("Job", 0);
 
             var ignoreMaxFileLimit = false;
@@ -230,7 +228,6 @@ namespace Pacifica.DMS_Metadata
 
             try
             {
-
                 // Look for files to upload, compute a SHA-1 hash for each, and compare those hashes to existing files in MyEMSL
                 var success = MetadataContainer.SetupMetadata(mTaskParams, mMgrParams, out var criticalError, out var criticalErrorMessage);
 
@@ -243,7 +240,6 @@ namespace Pacifica.DMS_Metadata
 
                     return false;
                 }
-
             }
             catch (Exception ex)
             {
@@ -376,7 +372,6 @@ namespace Pacifica.DMS_Metadata
                 var percentCompleteOverall = 0 + percentComplete * 0.25;
                 StatusUpdate(this, new StatusEventArgs(percentCompleteOverall, 0, MetadataContainer.TotalFileSizeToUpload, progressMessage));
             }
-
         }
 
         #endregion

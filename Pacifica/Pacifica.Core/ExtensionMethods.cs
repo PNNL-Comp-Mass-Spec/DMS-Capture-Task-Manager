@@ -72,6 +72,5 @@ namespace Pacifica.Core
                 return (T)formatter.Deserialize(stream);
             }
         }
-
     }
 }

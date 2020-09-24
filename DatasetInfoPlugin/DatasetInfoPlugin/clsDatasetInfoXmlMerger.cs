@@ -47,7 +47,6 @@ namespace DatasetInfoPlugin
                 CentroidScanCountMS2 = 0;
                 CentroidMS1ScansClassifiedAsProfile = 0;
                 CentroidMS2ScansClassifiedAsProfile = 0;
-
             }
         }
 
@@ -331,7 +330,6 @@ namespace DatasetInfoPlugin
             var memoryStream = new MemoryStream();
             using (var xWriter = XmlWriter.Create(memoryStream, xmlSettings))
             {
-
                 xWriter.WriteStartDocument(true);
 
                 // Write the beginning of the "Root" element.
@@ -442,7 +440,6 @@ namespace DatasetInfoPlugin
             var newOverallAverage = (oldCountTimesAverage + newCountTimesAverage) / (oldOverallCount + newCount);
 
             return newOverallAverage;
-
         }
 
         private string GetXmlValue(XmlNode xmlDoc, string xPath, string defaultValue)
@@ -484,6 +481,5 @@ namespace DatasetInfoPlugin
 
             return defaultValue;
         }
-
     }
 }

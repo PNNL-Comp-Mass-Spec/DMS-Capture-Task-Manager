@@ -133,7 +133,6 @@ namespace Pacifica.Upload
                 RequestedRunID = 0;
                 UserOfRecordList = new List<int>();
                 EUSOperatorID = DEFAULT_EUS_OPERATOR_ID;
-
             }
 
             public override string ToString()
@@ -197,7 +196,6 @@ namespace Pacifica.Upload
         /// <remarks>The metadata.txt file will be copied to the transfer folder</remarks>
         public Upload(Configuration config, string transferFolderPath, string jobNumber)
         {
-
             mPacificaConfig = config;
 
             // Note that EasyHttp is a static class with a static event
@@ -270,7 +268,6 @@ namespace Pacifica.Upload
             TarStreamUploader.UploadDebugMode debugMode,
             out string statusURI)
         {
-
             statusURI = string.Empty;
             ErrorMessage = string.Empty;
 
@@ -319,7 +316,6 @@ namespace Pacifica.Upload
 
                     metadataFile.CopyTo(targetFile.FullName, true);
                 }
-
             }
             catch
             {
@@ -365,7 +361,6 @@ namespace Pacifica.Upload
 
             try
             {
-
                 var responseJSON = Utilities.JsonToObject(responseData);
 
                 var transactionID = Convert.ToInt32(responseJSON["job_id"].ToString());
@@ -435,7 +430,6 @@ namespace Pacifica.Upload
                 {
                     OnError("Unrecognized ingest state: " + statusJSON["state"]);
                 }
-
             }
             catch (Exception ex)
             {
@@ -657,7 +651,6 @@ namespace Pacifica.Upload
             }
 
             return metadataObject;
-
         }
 
         /// <summary>
@@ -668,7 +661,6 @@ namespace Pacifica.Upload
         // ReSharper disable once UnusedMember.Global
         public static string GetMetadataObjectDescription(List<Dictionary<string, object>> metadataObject)
         {
-
             var metadataList = new List<string>();
             var fileCount = 0;
 
@@ -733,7 +725,6 @@ namespace Pacifica.Upload
             }
 
             return string.Join("; ", metadataList) + "; FileCount=" + fileCount;
-
         }
 
         private static bool GetDictionaryValue(IReadOnlyDictionary<string, object> eusInfoMapObject, string keyName, out string matchedValue)
@@ -786,10 +777,8 @@ namespace Pacifica.Upload
                 ErrorMessage += ": " + ex.Message;
 
             OnErrorEvent(errorMessage, ex);
-
         }
 
         #endregion
     }
-
 }

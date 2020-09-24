@@ -583,7 +583,6 @@ namespace CaptureTaskManager
                             cachedMessages.Add(message, timeStamp);
                         }
                     }
-
                 }
             }
 
@@ -706,7 +705,6 @@ namespace CaptureTaskManager
             {
                 clsStatusData.AddErrorMessage(timeStamp + "; " + message + "; " + logLevel);
             }
-
         }
 
         /// <summary>
@@ -1019,9 +1017,7 @@ namespace CaptureTaskManager
 
                         ConsoleMsgUtils.SleepSeconds(3);
                     }
-
                 }
-
             }
             catch (Exception ex)
             {
@@ -1135,7 +1131,6 @@ namespace CaptureTaskManager
         /// <returns></returns>
         private bool SetToolRunnerObject(string stepToolName)
         {
-
             // Load the tool runner
             mCapTool = clsPluginLoader.GetToolRunner(stepToolName);
             if (mCapTool == null)
@@ -1288,7 +1283,6 @@ namespace CaptureTaskManager
             {
                 LogError("Could not convert manager parameter debugLevel to enum BaseLogger.LogLevels", ex);
             }
-
         }
 
         /// <summary>

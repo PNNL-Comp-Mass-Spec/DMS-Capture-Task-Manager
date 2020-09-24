@@ -73,7 +73,6 @@ namespace Pacifica.Core
             {
                 // Ignore errors here
             }
-
         }
 
         private static SHA1Managed _hashProvider;
@@ -146,7 +145,6 @@ namespace Pacifica.Core
         /// <returns>Value for the given key, or valueIfMissingOrNull if the value is missing or null</returns>
         public static string GetDictionaryValue(IReadOnlyDictionary<string, string> dictionary, string keyName, string valueIfMissingOrNull)
         {
-
             if (dictionary.TryGetValue(keyName, out var value))
             {
                 return value ?? valueIfMissingOrNull;
@@ -322,7 +320,6 @@ namespace Pacifica.Core
                     {
                         ConsoleMsgUtils.ShowWarning("Error in parsing a JsonArray in JsonObjectToDictionary:" + ex.Message);
                     }
-
                 }
                 else
                 {
@@ -493,6 +490,5 @@ namespace Pacifica.Core
 
             return false;
         }
-
     }
 }

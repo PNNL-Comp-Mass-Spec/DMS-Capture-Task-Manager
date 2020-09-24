@@ -191,7 +191,6 @@ namespace CaptureTaskManager
             return success;
         }
 
-
         /// <summary>
         /// Appends a string to a job comment string
         /// </summary>
@@ -201,7 +200,6 @@ namespace CaptureTaskManager
         /// <remarks></remarks>
         protected static string AppendToComment(string baseComment, string addnlComment)
         {
-
             if (string.IsNullOrWhiteSpace(baseComment))
             {
                 return addnlComment.Trim();
@@ -247,7 +245,6 @@ namespace CaptureTaskManager
         /// <returns></returns>
         public static bool CleanWorkDir(string workDir, float holdoffSeconds, out string failureMessage)
         {
-
             failureMessage = string.Empty;
 
             if (holdoffSeconds > 0)
@@ -444,7 +441,6 @@ namespace CaptureTaskManager
 
         private bool IsLockQueueLogMessageNeeded(ref DateTime lockQueueWaitTimeStart, ref DateTime lastLockQueueWaitTimeLog)
         {
-
             int waitTimeLogIntervalSeconds;
 
             if (lockQueueWaitTimeStart == DateTime.MinValue)
@@ -561,7 +557,6 @@ namespace CaptureTaskManager
             }
         }
 
-
         /// <summary>
         /// Reset the timestamp for logging that we are waiting for a lock file queue to decrease
         /// </summary>
@@ -601,7 +596,6 @@ namespace CaptureTaskManager
             {
                 LogError("Exception saving tool version info: " + ex.Message);
             }
-
         }
 
         /// <summary>
@@ -1007,7 +1001,6 @@ namespace CaptureTaskManager
 
             LogError("Stored procedure " + SP_NAME + " reported return code " + returnCode + ", job " + mJob);
             return false;
-
         }
 
         #endregion

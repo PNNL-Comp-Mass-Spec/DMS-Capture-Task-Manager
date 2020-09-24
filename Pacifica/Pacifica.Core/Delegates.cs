@@ -5,5 +5,4 @@
     public delegate void StatusUpdateEventHandler(object sender, StatusEventArgs e);
 
     public delegate void UploadCompletedEventHandler(object sender, UploadCompletedEventArgs e);
-
 }

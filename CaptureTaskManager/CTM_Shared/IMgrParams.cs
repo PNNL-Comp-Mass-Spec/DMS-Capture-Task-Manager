@@ -14,7 +14,6 @@ namespace CaptureTaskManager
     /// </summary>
     public interface IMgrParams
     {
-
         #region "Properties"
         /// <summary>
         /// Error message
