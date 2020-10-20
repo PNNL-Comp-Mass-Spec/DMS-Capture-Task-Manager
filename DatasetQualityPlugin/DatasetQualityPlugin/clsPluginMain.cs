@@ -1099,6 +1099,13 @@ namespace DatasetQualityPlugin
                     return false;
                 }
 
+                if (scanTypes.Count == 1 && scanTypes[0].Equals("SIM ms", StringComparison.OrdinalIgnoreCase))
+                {
+                    // The dataset only has SIM scans; Quameter does not support that
+                    skipReason = "dataset only has SIM scans";
+                    return false;
+                }
+
                 return true;
             }
 
