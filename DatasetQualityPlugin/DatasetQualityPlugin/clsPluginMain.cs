@@ -156,12 +156,13 @@ namespace DatasetQualityPlugin
                     {
                         dataFilePathRemote = string.Empty;
                     }
-
                     break;
+
                 case clsInstrumentClassInfo.eInstrumentClass.Triple_Quad:
                     // Quameter crashes on TSQ files; skip them
                     dataFilePathRemote = string.Empty;
                     break;
+
                 default:
                     dataFilePathRemote = string.Empty;
                     break;
@@ -741,17 +742,21 @@ namespace DatasetQualityPlugin
             }
         }
 
-        private void ParseDatasetInfoFile(string datasetFolderPath, string datasetName, out int scanCount, out int scanCountMS)
+        private void ParseDatasetInfoFile(string datasetFolderPath, string datasetName, List<string> scanTypes, out int scanCount, out int scanCountMS)
         {
             var datasetInfoFile = new FileInfo(Path.Combine(datasetFolderPath, "QC", datasetName + "_DatasetInfo.xml"));
 
             scanCount = 0;
             scanCountMS = 0;
+            scanTypes.Clear();
 
             if (!datasetInfoFile.Exists)
             {
+                LogWarning("DatasetInfo.xml file not found at " + datasetInfoFile.FullName);
                 return;
             }
+
+            LogDebug("Reading scan counts from " + datasetInfoFile.FullName);
 
             using (var reader = new XmlTextReader(new FileStream(datasetInfoFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Write)))
             {
@@ -769,6 +774,11 @@ namespace DatasetQualityPlugin
                             break;
                         case "ScanCountMS":
                             scanCountMS = reader.ReadElementContentAsInt();
+                            break;
+
+                        case "ScanType":
+                            var scanType = reader.ReadElementContentAsString();
+                            scanTypes.Add(scanType);
                             break;
                     }
                 }
@@ -1041,8 +1051,7 @@ namespace DatasetQualityPlugin
         private bool QuameterCanProcessDataset(int datasetID, string datasetName, string datasetFolderPath, ref string skipReason)
         {
             var sql =
-                " SELECT SUM(Scan_Count) AS Scans, " +
-                       " SUM(CASE WHEN Scan_Type IN ('HMS', 'MS', 'Zoom-MS') THEN Scan_Count ELSE 0 END) AS MS_Scans" +
+                " SELECT Scan_Type, Scan_Count" +
                 " FROM S_DMS_V_Dataset_Scans " +
                 " WHERE (Dataset_ID = " + datasetID + ") ";
 
@@ -1050,6 +1059,7 @@ namespace DatasetQualityPlugin
 
             var scanCount = 0;
             var scanCountMS = 0;
+            var scanTypes = new List<string>();
 
             var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: mTraceMode);
             RegisterEvents(dbTools);
@@ -1058,10 +1068,18 @@ namespace DatasetQualityPlugin
             {
                 foreach (DataRow row in table.Rows)
                 {
-                    scanCount = row[0].CastDBVal(0);
-                    scanCountMS = row[1].CastDBVal(0);
-                    // We should only have one row, but break just in case there are more.
-                    break;
+                    var scanType = row[0].CastDBVal(string.Empty);
+                    var scanCountForType = row[1].CastDBVal(0);
+
+                    scanTypes.Add(scanType);
+                    scanCount += scanCountForType;
+
+                    if (scanType.Equals("HMS", StringComparison.OrdinalIgnoreCase) ||
+                        scanType.Equals("MS", StringComparison.OrdinalIgnoreCase) ||
+                        scanType.Equals("Zoom-MS", StringComparison.OrdinalIgnoreCase))
+                    {
+                        scanCountMS += scanCountForType;
+                    }
                 }
             }
 
@@ -1070,7 +1088,7 @@ namespace DatasetQualityPlugin
                 // Scan stats data is not yet in DMS
                 // Look for the _DatasetInfo.xml file in the QC folder below the dataset folder
 
-                ParseDatasetInfoFile(datasetFolderPath, datasetName, out scanCount, out scanCountMS);
+                ParseDatasetInfoFile(datasetFolderPath, datasetName, scanTypes, out scanCount, out scanCountMS);
             }
 
             if (scanCount > 0)
