@@ -2408,17 +2408,17 @@ namespace DatasetIntegrityPlugin
 
             var infFile = new FileInfo(Path.Combine(dotRawDirectories[0].FullName, "_FUNCTNS.INF"));
 
-            if (!infFile.Exists)
+            if (infFile.Exists)
             {
-                // ReSharper disable once StringLiteralTypo
-                var errorMessage = "Invalid dataset: _FUNCTNS.INF file not found";
-                LogError(errorMessage);
-                mRetData.EvalMsg = AppendToComment(mRetData.EvalMsg, errorMessage);
-                return EnumCloseOutType.CLOSEOUT_FAILED;
+                return EnumCloseOutType.CLOSEOUT_SUCCESS;
             }
 
-            // If we got to here, everything was OK
-            return EnumCloseOutType.CLOSEOUT_SUCCESS;
+            // ReSharper disable once StringLiteralTypo
+            const string errorMessage = "Invalid dataset: _FUNCTNS.INF file not found";
+            LogError(errorMessage);
+            mRetData.EvalMsg = AppendToComment(mRetData.EvalMsg, errorMessage);
+
+            return EnumCloseOutType.CLOSEOUT_FAILED;
         }
 
         /// <summary>

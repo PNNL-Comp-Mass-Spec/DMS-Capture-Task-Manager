@@ -3835,19 +3835,23 @@ namespace CaptureToolPlugin
 
         private void OnFileCopyProgress(string filename, float percentComplete)
         {
-            if (DateTime.Now.Subtract(mLastProgressUpdate).TotalSeconds >= 20 || percentComplete >= 100 && filename == mLastProgressFileName)
-            {
-                if ((mLastProgressFileName == filename) && (Math.Abs(mLastProgressPercent - percentComplete) < float.Epsilon))
-                {
-                    // Don't re-display this progress
-                    return;
-                }
+            var showProgress = DateTime.Now.Subtract(mLastProgressUpdate).TotalSeconds >= 20 ||
+                               percentComplete >= 100 && filename == mLastProgressFileName;
 
-                mLastProgressUpdate = DateTime.Now;
-                mLastProgressFileName = filename;
-                mLastProgressPercent = percentComplete;
-                LogMessage("  copying " + Path.GetFileName(filename) + ": " + percentComplete.ToString("0.0") + "% complete");
+            if (!showProgress)
+                return;
+
+            if (mLastProgressFileName == filename && Math.Abs(mLastProgressPercent - percentComplete) < float.Epsilon)
+            {
+                // Don't re-display this progress
+                return;
             }
+
+            mLastProgressUpdate = DateTime.Now;
+            mLastProgressFileName = filename;
+            mLastProgressPercent = percentComplete;
+
+            LogMessage(string.Format("  copying {0}: {1:0.0}% complete", Path.GetFileName(filename), percentComplete));
         }
 
         #endregion
