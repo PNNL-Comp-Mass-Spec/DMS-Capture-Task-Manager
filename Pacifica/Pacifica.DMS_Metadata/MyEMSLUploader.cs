@@ -179,9 +179,9 @@ namespace Pacifica.DMS_Metadata
             RegisterEvents(mUploadWorker);
 
             // Attach the events
-            mUploadWorker.MyEMSLOffline += myEmslUploadOnMyEmslOffline;
-            mUploadWorker.StatusUpdate += myEMSLUpload_StatusUpdate;
-            mUploadWorker.UploadCompleted += myEMSLUpload_UploadCompleted;
+            mUploadWorker.MyEMSLOffline += MyEmslUploadOnMyEmslOffline;
+            mUploadWorker.StatusUpdate += MyEMSLUpload_StatusUpdate;
+            mUploadWorker.UploadCompleted += MyEMSLUpload_UploadCompleted;
         }
 
         /// <summary>
@@ -224,8 +224,8 @@ namespace Pacifica.DMS_Metadata
             // Attach the events
             RegisterEvents(MetadataContainer);
 
-            // Also process Progress Updates using _mdContainer_ProgressEvent, which triggers event StatusUpdate
-            MetadataContainer.ProgressUpdate += _mdContainer_ProgressEvent;
+            // Also process Progress Updates using Container_ProgressEvent, which triggers event StatusUpdate
+            MetadataContainer.ProgressUpdate += Container_ProgressEvent;
 
             MetadataContainer.UseTestInstance = UseTestInstance;
 
@@ -349,11 +349,11 @@ namespace Pacifica.DMS_Metadata
 
         #region "Events and Event Handlers"
 
-        public event MessageEventHandler MetadataDefinedEvent;
+        public event EventHandler<MessageEventArgs> MetadataDefinedEvent;
 
-        public event StatusUpdateEventHandler StatusUpdate;
+        public event EventHandler<StatusEventArgs> StatusUpdate;
 
-        public event UploadCompletedEventHandler UploadCompleted;
+        public event EventHandler<UploadCompletedEventArgs> UploadCompleted;
 
         private void ReportMetadataDefined(string callingFunction, string metadataJSON)
         {
@@ -362,12 +362,12 @@ namespace Pacifica.DMS_Metadata
             MetadataDefinedEvent?.Invoke(this, e);
         }
 
-        private void myEmslUploadOnMyEmslOffline(object sender, MessageEventArgs e)
+        private void MyEmslUploadOnMyEmslOffline(object sender, MessageEventArgs e)
         {
             OnWarningEvent("MyEMSL is offline; unable to retrieve data or upload files: " + e.Message);
         }
 
-        void myEMSLUpload_StatusUpdate(object sender, StatusEventArgs e)
+        private void MyEMSLUpload_StatusUpdate(object sender, StatusEventArgs e)
         {
             if (StatusUpdate != null)
             {
@@ -377,12 +377,12 @@ namespace Pacifica.DMS_Metadata
             }
         }
 
-        void myEMSLUpload_UploadCompleted(object sender, UploadCompletedEventArgs e)
+        private void MyEMSLUpload_UploadCompleted(object sender, UploadCompletedEventArgs e)
         {
             UploadCompleted?.Invoke(this, e);
         }
 
-        void _mdContainer_ProgressEvent(string progressMessage, float percentComplete)
+        private void Container_ProgressEvent(string progressMessage, float percentComplete)
         {
             if (StatusUpdate != null)
             {

@@ -187,8 +187,8 @@ namespace ImsDemuxPlugin
                         var binCentricTableCreator = new BinCentricTableCreation();
 
                         // Attach the events
-                        binCentricTableCreator.OnProgress += binCentricTableCreator_ProgressEvent;
-                        binCentricTableCreator.Message += binCentricTableCreator_MessageEvent;
+                        binCentricTableCreator.OnProgress += BinCentricTableCreator_ProgressEvent;
+                        binCentricTableCreator.Message += BinCentricTableCreator_MessageEvent;
 
                         mBinCentricStartTime = DateTime.UtcNow;
                         mProgressUpdateIntervalSeconds = 5;
@@ -1645,7 +1645,7 @@ namespace ImsDemuxPlugin
             }
         }
 
-        void binCentricTableCreator_ProgressEvent(object sender, ProgressEventArgs e)
+        private void BinCentricTableCreator_ProgressEvent(object sender, ProgressEventArgs e)
         {
             if (DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds < mProgressUpdateIntervalSeconds)
             {
@@ -1672,7 +1672,7 @@ namespace ImsDemuxPlugin
             mLastProgressUpdateTime = DateTime.UtcNow;
         }
 
-        void binCentricTableCreator_MessageEvent(object sender, MessageEventArgs e)
+        private void BinCentricTableCreator_MessageEvent(object sender, MessageEventArgs e)
         {
             if (DateTime.UtcNow.Subtract(mLastProgressMessageTime).TotalSeconds < 30)
             {

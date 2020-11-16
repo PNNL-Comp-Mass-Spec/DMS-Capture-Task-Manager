@@ -182,7 +182,7 @@ namespace Pacifica.DMS_Metadata
 
             mFileTools = fileTools;
 
-            mFileTools.WaitingForLockQueue += mFileTools_WaitingForLockQueue;
+            mFileTools.WaitingForLockQueue += FileTools_WaitingForLockQueue;
 
             SkippedDatasetArchiveSubdirectories = new List<string>();
         }
@@ -1211,7 +1211,7 @@ namespace Pacifica.DMS_Metadata
 
         #region "Event Functions"
 
-        void mFileTools_WaitingForLockQueue(string sourceFilePath, string targetFilePath, int MBBacklogSource, int MBBacklogTarget)
+        private void FileTools_WaitingForLockQueue(string sourceFilePath, string targetFilePath, int MBBacklogSource, int MBBacklogTarget)
         {
             ConsoleMsgUtils.ShowDebug("  mFileTools_WaitingForLockQueue for " + sourceFilePath);
         }
