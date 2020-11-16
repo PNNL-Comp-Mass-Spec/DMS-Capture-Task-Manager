@@ -217,9 +217,9 @@ namespace Pacifica.Upload
 
         #region Events and Handlers
 
-        public event MessageEventHandler MyEMSLOffline;
-        public event UploadCompletedEventHandler UploadCompleted;
-        public event StatusUpdateEventHandler StatusUpdate;
+        public event EventHandler<MessageEventArgs> MyEMSLOffline;
+        public event EventHandler<UploadCompletedEventArgs> UploadCompleted;
+        public event EventHandler<StatusEventArgs> StatusUpdate;
 
         private void EasyHttp_MyEMSLOffline(object sender, MessageEventArgs e)
         {

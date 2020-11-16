@@ -677,7 +677,7 @@ namespace DatasetArchivePlugin
 
         #region "Event Delegates and Classes"
 
-        public event MyEMSLUploadEventHandler MyEMSLUploadComplete;
+        public event EventHandler<MyEMSLUploadEventArgs> MyEMSLUploadComplete;
 
         #endregion
 

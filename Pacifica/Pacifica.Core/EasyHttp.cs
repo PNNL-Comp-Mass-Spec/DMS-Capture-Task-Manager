@@ -83,12 +83,12 @@ namespace Pacifica.Core
         /// System.Net.WebException: Unable to connect to the remote server
         /// System.Net.Sockets.SocketException: A connection attempt failed because the connected party did not properly respond after a period of time
         /// </summary>
-        public static event MessageEventHandler MyEMSLOffline;
+        public static event EventHandler<MessageEventArgs> MyEMSLOffline;
 
         /// <summary>
         /// This event is used by SendFileListToIngester to report upload status
         /// </summary>
-        public static event StatusUpdateEventHandler StatusUpdate;
+        public static event EventHandler<StatusEventArgs> StatusUpdate;
 
         /// <summary>
         /// Error event

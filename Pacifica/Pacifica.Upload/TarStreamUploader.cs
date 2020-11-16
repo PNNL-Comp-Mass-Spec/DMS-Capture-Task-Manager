@@ -51,7 +51,7 @@ namespace Pacifica.Upload
         /// <summary>
         /// This event is used by SendFileListToIngester to report upload status
         /// </summary>
-        public event StatusUpdateEventHandler StatusUpdate;
+        public event EventHandler<StatusEventArgs> StatusUpdate;
 
         #endregion
 
