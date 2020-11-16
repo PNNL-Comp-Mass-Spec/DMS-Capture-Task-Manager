@@ -28,9 +28,12 @@ namespace CaptureTaskManager
             try
             {
                 // Example path: D:\CTM_FailedResults
-                failedResultsFolderPath = mMgrParams.GetParam("FailedResultsFolderPath");
 
-                if (string.IsNullOrEmpty(failedResultsFolderPath))
+                failedResultsDirectoryPath = mMgrParams.GetParam(mMgrParams.HasParam("FailedResultsDirectoryPath") ?
+                                                                     "FailedResultsDirectoryPath" :
+                                                                     "FailedResultsFolderPath");
+
+                failedResultsDirectoryPath = mMgrParams.GetParam("FailedResultsDirectoryPath");
 
                 if (string.IsNullOrEmpty(failedResultsDirectoryPath))
                 {
