@@ -28,9 +28,8 @@ namespace DatasetQualityPlugin
         /// <summary>
         /// Creates an XML metadata file for a dataset
         /// </summary>
-        /// <param name="mgrParams">Manager parameters</param>
         /// <param name="taskParams">Task parameters</param>
-        public static bool CreateMetadataFile(IMgrParams mgrParams, ITaskParams taskParams)
+        public static bool CreateMetadataFile(ITaskParams taskParams)
         {
             string xmlText;
 

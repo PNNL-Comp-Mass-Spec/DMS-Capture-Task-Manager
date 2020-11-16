@@ -41,7 +41,6 @@ namespace ImsDemuxPlugin
 
         #region "Module variables"
 
-        private readonly string mManagerName;
         private string mDataset;
         private string mDatasetDirectoryPathRemote = string.Empty;
         private readonly FileTools mFileTools;
@@ -110,14 +109,12 @@ namespace ImsDemuxPlugin
         /// Constructor
         /// </summary>
         /// <param name="uimDemultiplexerPath"></param>
-        /// <param name="managerName"></param>
         /// <param name="fileTools"></param>
-        public clsDemuxTools(string uimDemultiplexerPath, string managerName, FileTools fileTools)
+        public clsDemuxTools(string uimDemultiplexerPath, FileTools fileTools)
         {
             mProgressUpdateIntervalSeconds = 5;
 
             mUimfDemultiplexerPath = uimDemultiplexerPath;
-            mManagerName = managerName;
             mFileTools = fileTools;
 
             mLoggedConsoleOutputErrors = new List<string>();
@@ -826,7 +823,7 @@ namespace ImsDemuxPlugin
         private bool CopyFileWithRetry(string sourceFilePath, string targetFilePath, bool overWrite, int retryCount, bool backupDestFileBeforeCopy = false)
         {
             OnCopyFileWithRetry(sourceFilePath, targetFilePath);
-            return CopyFileWithRetry(sourceFilePath, targetFilePath, overWrite, retryCount, backupDestFileBeforeCopy, mManagerName, mFileTools);
+            return CopyFileWithRetry(sourceFilePath, targetFilePath, overWrite, retryCount, backupDestFileBeforeCopy, mFileTools);
         }
 
         /// <summary>
@@ -837,7 +834,6 @@ namespace ImsDemuxPlugin
         /// <param name="overWrite">True to overWrite existing files</param>
         /// <param name="retryCount">Number of attempts</param>
         /// <param name="backupDestFileBeforeCopy">If True and if the target file exists, renames the target file to have _Old1 before the extension</param>
-        /// <param name="managerName">Manager name</param>
         /// <param name="fileTools">Instance of FileTools</param>
         /// <returns>True if success, false if an error</returns>
         public static bool CopyFileWithRetry(
@@ -846,7 +842,6 @@ namespace ImsDemuxPlugin
             bool overWrite,
             int retryCount,
             bool backupDestFileBeforeCopy,
-            string managerName,
             FileTools fileTools)
         {
             var retryingCopy = false;

@@ -356,7 +356,7 @@ namespace ImsDemuxPlugin
 
             ResetTimestampForQueueWaitTimeLogging();
 
-            mDemuxTools = new clsDemuxTools(uimfDemultiplexerProgLoc, mMgrName, mFileTools);
+            mDemuxTools = new clsDemuxTools(uimfDemultiplexerProgLoc, mFileTools);
             RegisterEvents(mDemuxTools);
 
             // Add a handler to catch progress events

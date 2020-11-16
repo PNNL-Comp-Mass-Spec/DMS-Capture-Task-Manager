@@ -78,7 +78,7 @@ namespace DatasetQualityPlugin
             msg = "Creating dataset info for dataset '" + mDataset + "'";
             LogDebug(msg);
 
-            if (clsMetaDataFile.CreateMetadataFile(mMgrParams, mTaskParams))
+            if (clsMetaDataFile.CreateMetadataFile(mTaskParams))
             {
                 // Everything was good
                 msg = "Metadata file created for dataset " + mDataset;
