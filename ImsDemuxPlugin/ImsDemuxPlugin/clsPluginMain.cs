@@ -122,8 +122,8 @@ namespace ImsDemuxPlugin
 
             // Use this name first to test if demux has already been performed once
             var uimfFileName = mDataset + "_encoded.uimf";
-            var fiUIMFFile = new FileInfo(Path.Combine(dsPath, uimfFileName));
-            if (fiUIMFFile.Exists && (fiUIMFFile.Length != 0))
+            var existingUimfFile = new FileInfo(Path.Combine(dsPath, uimfFileName));
+            if (existingUimfFile.Exists && (existingUimfFile.Length != 0))
             {
                 // The _encoded.uimf file will be used for demultiplexing
 
@@ -139,9 +139,9 @@ namespace ImsDemuxPlugin
 
                 if (calibrationError)
                 {
-                    var fiDecodedUIMFFile = new FileInfo(Path.Combine(dsPath, mDataset + ".uimf"));
+                    var decodedUIMFFile = new FileInfo(Path.Combine(dsPath, mDataset + ".uimf"));
 
-                    var manuallyCalibrated = CheckForManualCalibration(fiDecodedUIMFFile.FullName, out calibrationSlope, out calibrationIntercept);
+                    var manuallyCalibrated = CheckForManualCalibration(decodedUIMFFile.FullName, out calibrationSlope, out calibrationIntercept);
 
                     if (manuallyCalibrated)
                     {
@@ -168,11 +168,11 @@ namespace ImsDemuxPlugin
             else
             {
                 // Was the file zero bytes? If so, delete it
-                if (fiUIMFFile.Exists && (fiUIMFFile.Length == 0))
+                if (existingUimfFile.Exists && existingUimfFile.Length == 0)
                 {
                     try
                     {
-                        fiUIMFFile.Delete();
+                        existingUimfFile.Delete();
                     }
                     catch (Exception ex)
                     {
@@ -208,10 +208,10 @@ namespace ImsDemuxPlugin
             var uimfFilePath = Path.Combine(dsPath, uimfFileName);
             var needToDemultiplex = true;
 
-            var oSQLiteTools = new clsSQLiteTools();
-            RegisterEvents(oSQLiteTools);
+            var sqLiteTools = new clsSQLiteTools();
+            RegisterEvents(sqLiteTools);
 
-            var queryResult = oSQLiteTools.GetUimfMuxStatus(uimfFilePath, out var numBitsForEncoding);
+            var queryResult = sqLiteTools.GetUimfMuxStatus(uimfFilePath, out var numBitsForEncoding);
             if (queryResult == clsSQLiteTools.UimfQueryResults.NonMultiplexed)
             {
                 // De-multiplexing not required, but we should still attempt calibration (if enabled)
@@ -263,8 +263,8 @@ namespace ImsDemuxPlugin
             // Demultiplexing succeeded (or skipped)
 
             // Lookup the current .uimf file size
-            var fiUIMF = new FileInfo(uimfFilePath);
-            if (!fiUIMF.Exists)
+            var uimfFile = new FileInfo(uimfFilePath);
+            if (!uimfFile.Exists)
             {
                 if (needToDemultiplex)
                 {
@@ -290,21 +290,21 @@ namespace ImsDemuxPlugin
             if (ADD_BIN_CENTRIC_TABLES)
 #pragma warning disable 162
             {
-                var fileSizeGBStart = fiUIMF.Length / 1024.0 / 1024.0 / 1024.0;
+                var fileSizeGBStart = uimfFile.Length / 1024.0 / 1024.0 / 1024.0;
                 var fileSizeText = " (" + Math.Round(fileSizeGBStart, 0).ToString("0") + " GB)";
 
                 if (fileSizeGBStart > 2)
                 {
-                    LogMessage("Not adding bin-centric tables to " + fiUIMF.Name + " since over 2 GB in size" + fileSizeText);
+                    LogMessage("Not adding bin-centric tables to " + uimfFile.Name + " since over 2 GB in size" + fileSizeText);
                 }
                 else
                 {
                     // Add the bin-centric tables if not yet present
-                    LogMessage("Adding bin-centric tables to " + fiUIMF.Name + fileSizeText);
+                    LogMessage("Adding bin-centric tables to " + uimfFile.Name + fileSizeText);
                     returnData = mDemuxTools.AddBinCentricTablesIfMissing(mMgrParams, mTaskParams, returnData);
 
-                    fiUIMF.Refresh();
-                    var fileSizeGBEnd = fiUIMF.Length / 1024.0 / 1024.0 / 1024.0;
+                    uimfFile.Refresh();
+                    var fileSizeGBEnd = uimfFile.Length / 1024.0 / 1024.0 / 1024.0;
                     double foldIncrease = 0;
                     if (fileSizeGBStart > 0)
                     {
@@ -497,38 +497,38 @@ namespace ImsDemuxPlugin
                 return false;
             }
 
-            var fiUimfDemultiplexer = new FileInfo(uimfDemultiplexerProgLoc);
+            var uimfDemultiplexer = new FileInfo(uimfDemultiplexerProgLoc);
 
             LogDebug("Determining tool version info");
 
-            if (fiUimfDemultiplexer.DirectoryName == null)
+            if (uimfDemultiplexer.DirectoryName == null)
             {
                 return false;
             }
 
             // Lookup the version of UIMFDemultiplexer_Console
-            var success = StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, fiUimfDemultiplexer.FullName);
+            var success = StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, uimfDemultiplexer.FullName);
             if (!success)
             {
                 return false;
             }
 
             // Lookup the version of the IMSDemultiplexer (in the UIMFDemultiplexer folder)
-            var demultiplexerPath = Path.Combine(fiUimfDemultiplexer.DirectoryName, "IMSDemultiplexer.dll");
+            var demultiplexerPath = Path.Combine(uimfDemultiplexer.DirectoryName, "IMSDemultiplexer.dll");
             success = StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, demultiplexerPath);
             if (!success)
             {
                 return false;
             }
 
-            var autoCalibrateUIMFPath = Path.Combine(fiUimfDemultiplexer.DirectoryName, "AutoCalibrateUIMF.dll");
+            var autoCalibrateUIMFPath = Path.Combine(uimfDemultiplexer.DirectoryName, "AutoCalibrateUIMF.dll");
             success = StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, autoCalibrateUIMFPath);
             if (!success)
             {
                 return false;
             }
 
-            var uimfLibraryPath = Path.Combine(fiUimfDemultiplexer.DirectoryName, "UIMFLibrary.dll");
+            var uimfLibraryPath = Path.Combine(uimfDemultiplexer.DirectoryName, "UIMFLibrary.dll");
             success = StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, uimfLibraryPath);
             if (!success)
             {
@@ -543,8 +543,8 @@ namespace ImsDemuxPlugin
 
             try
             {
-                const bool bSaveToolVersionTextFile = false;
-                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, bSaveToolVersionTextFile);
+                const bool saveToolVersionTextFile = false;
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, saveToolVersionTextFile);
             }
             catch (Exception ex)
             {

@@ -217,7 +217,7 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Creates status flag file in same folder as .exe
+        /// Creates status flag file in same directory as .exe
         /// </summary>
         public void CreateStatusFlagFile()
         {
@@ -265,7 +265,7 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Get the folder path for the status file tracked by FileNamePath
+        /// Get the directory path for the status file tracked by FileNamePath
         /// </summary>
         /// <returns></returns>
         private string GetStatusFileDirectory()
@@ -412,10 +412,10 @@ namespace CaptureTaskManager
 
                 // Now use a StreamReader to copy the XML text to a string variable
                 memStream.Seek(0, SeekOrigin.Begin);
-                var srMemoryStreamReader = new StreamReader(memStream);
-                var xmlText = srMemoryStreamReader.ReadToEnd();
+                var memoryStreamReader = new StreamReader(memStream);
+                var xmlText = memoryStreamReader.ReadToEnd();
 
-                srMemoryStreamReader.Close();
+                memoryStreamReader.Close();
                 memStream.Close();
 
                 return xmlText;

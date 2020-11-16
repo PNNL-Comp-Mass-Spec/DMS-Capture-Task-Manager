@@ -107,9 +107,9 @@ namespace CaptureTaskManager
                 return defaultValue;
             }
 
-            if (bool.TryParse(value, out var blnValue))
+            if (bool.TryParse(value, out var parsedValue))
             {
-                return blnValue;
+                return parsedValue;
             }
 
             return defaultValue;
@@ -128,9 +128,9 @@ namespace CaptureTaskManager
                 return defaultValue;
             }
 
-            if (int.TryParse(value, out var intValue))
+            if (int.TryParse(value, out var parsedValue))
             {
-                return intValue;
+                return parsedValue;
             }
 
             return defaultValue;
@@ -325,39 +325,39 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Runs the specified Sql query
+        /// Runs the specified SQL query
         /// </summary>
-        /// <param name="sqlStr">Sql query</param>
+        /// <param name="sqlStr">SQL query</param>
         /// <param name="connectionString">Connection string</param>
         /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
-        /// <param name="dtResults">DataTable (Output Parameter)</param>
+        /// <param name="resultsTable">DataTable (Output Parameter)</param>
         /// <param name="callingFunction">Name of the calling function</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>Uses a timeout of 30 seconds</remarks>
         [Obsolete("Use PRISMDatabaseUtils.DbToolsFactory.GetDBTools(...).GetQueryResultsDataTable(...)", true)]
-        public static bool GetDataTableByQuery(string sqlStr, string connectionString, short retryCount, out DataTable dtResults, [CallerMemberName] string callingFunction = "")
+        public static bool GetDataTableByQuery(string sqlStr, string connectionString, short retryCount, out DataTable resultsTable, [CallerMemberName] string callingFunction = "")
         {
             const int timeoutSeconds = 30;
-            return GetDataTableByQuery(sqlStr, connectionString, retryCount, out dtResults, timeoutSeconds, callingFunction);
+            return GetDataTableByQuery(sqlStr, connectionString, retryCount, out resultsTable, timeoutSeconds, callingFunction);
         }
 
         /// <summary>
-        /// Runs the specified Sql query
+        /// Runs the specified SQL query
         /// </summary>
-        /// <param name="sqlStr">Sql query</param>
+        /// <param name="sqlStr">SQL query</param>
         /// <param name="connectionString">Connection string</param>
         /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
-        /// <param name="dtResults">DataTable (Output Parameter)</param>
+        /// <param name="resultsTable">DataTable (Output Parameter)</param>
         /// <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
         /// <param name="callingFunction">Name of the calling function</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
         [Obsolete("Use PRISMDatabaseUtils.DbToolsFactory.GetDBTools(...).GetQueryResultsDataTable(...)", true)]
         public static bool GetDataTableByQuery(
-            string sqlStr, string connectionString, short retryCount, out DataTable dtResults, int timeoutSeconds, [CallerMemberName] string callingFunction = "")
+            string sqlStr, string connectionString, short retryCount, out DataTable resultsTable, int timeoutSeconds, [CallerMemberName] string callingFunction = "")
         {
             var dbTools = DbToolsFactory.GetDBTools(connectionString, timeoutSeconds);
-            return dbTools.GetQueryResultsDataTable(sqlStr, out dtResults, retryCount, timeoutSeconds, callingFunction: callingFunction);
+            return dbTools.GetQueryResultsDataTable(sqlStr, out resultsTable, retryCount, timeoutSeconds, callingFunction: callingFunction);
         }
 
         /// <summary>
@@ -366,7 +366,7 @@ namespace CaptureTaskManager
         /// <param name="cmd">SqlCommand var (query or stored procedure)</param>
         /// <param name="connectionString">Connection string</param>
         /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
-        /// <param name="dtResults">DataTable (Output Parameter)</param>
+        /// <param name="resultsTable">DataTable (Output Parameter)</param>
         /// <param name="timeoutSeconds">Query timeout (in seconds); minimum is 5 seconds; suggested value is 30 seconds</param>
         /// <param name="callingFunction">Name of the calling function</param>
         /// <returns>True if success, false if an error</returns>
@@ -376,7 +376,7 @@ namespace CaptureTaskManager
             System.Data.SqlClient.SqlCommand cmd,
             string connectionString,
             short retryCount,
-            out DataTable dtResults,
+            out DataTable resultsTable,
             int timeoutSeconds,
             [CallerMemberName] string callingFunction = "")
         {
@@ -423,7 +423,7 @@ namespace CaptureTaskManager
                             using (var ds = new DataSet())
                             {
                                 da.Fill(ds);
-                                dtResults = ds.Tables[0];
+                                resultsTable = ds.Tables[0];
                             }
                         }
                     }
@@ -472,7 +472,7 @@ namespace CaptureTaskManager
                 }
             }
 
-            dtResults = null;
+            resultsTable = null;
             return false;
         }
 
@@ -486,16 +486,16 @@ namespace CaptureTaskManager
         {
             try
             {
-                var diSourceFolder = new DirectoryInfo(pathToCheck);
+                var directoryInfo = new DirectoryInfo(pathToCheck);
                 string msg;
 
-                if (diSourceFolder.Exists)
+                if (directoryInfo.Exists)
                 {
-                    msg = "Folder exists [" + pathToCheck + "]; called from " + callingFunction;
+                    msg = "Directory exists [" + pathToCheck + "]; called from " + callingFunction;
                 }
                 else
                 {
-                    msg = "Folder not found [" + pathToCheck + "]; called from " + callingFunction;
+                    msg = "Directory not found [" + pathToCheck + "]; called from " + callingFunction;
                 }
 
                 LogTools.LogMessage(msg);

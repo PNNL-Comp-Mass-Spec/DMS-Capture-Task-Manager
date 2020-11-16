@@ -1151,7 +1151,7 @@ namespace CaptureToolPlugin
                 connectionType = ConnectionType.Prism;
             }
 
-            // Determine whether or not we will use Copy with Resume
+            // Determine whether or not we will use Copy with Resume for all files for this dataset
             // This determines whether or not we add x_ to an existing file or directory,
             // and determines whether we use CopyDirectory or CopyDirectoryWithResume/CopyFileWithResume
             var copyWithResume = false;
@@ -1867,7 +1867,7 @@ namespace CaptureToolPlugin
                 // This RegEx is used to match files with names like:
                 // Cheetah_01.04.2012_08.46.17_Dataset_P28_D01_2629_192_3Jan12_Cheetah_11-09-32.lcmethod
                 var methodFileMatcher = new Regex(@".+\d+\.\d+\.\d+_\d+\.\d+\.\d+_.+\.lcmethod", RegexOptions.IgnoreCase);
-                var lstMethodFiles = new List<FileInfo>();
+                var methodFiles = new List<FileInfo>();
 
                 // Define the file match spec
                 var lcMethodSearchSpec = "*_" + datasetName + ".lcmethod";
@@ -1890,25 +1890,25 @@ namespace CaptureToolPlugin
                                     if (methodFileMatcher.IsMatch(methodFile.Name))
                                     {
                                         // Match found
-                                        lstMethodFiles.Add(methodFile);
+                                        methodFiles.Add(methodFile);
                                     }
                                 }
                                 else
                                 {
                                     // Second iteration; accept any match
-                                    lstMethodFiles.Add(methodFile);
+                                    methodFiles.Add(methodFile);
                                 }
                             }
                         }
 
-                        if (lstMethodFiles.Count > 0)
+                        if (methodFiles.Count > 0)
                         {
                             break;
                         }
                     }
                 }
 
-                if (lstMethodFiles.Count == 0)
+                if (methodFiles.Count == 0)
                 {
                     // LCMethod file not found; exit function
                     return true;
@@ -1917,21 +1917,21 @@ namespace CaptureToolPlugin
                 // LCMethod file found
                 // Copy to the dataset directory
 
-                foreach (var fiFile in lstMethodFiles)
+                foreach (var methodFile in methodFiles)
                 {
                     try
                     {
-                        var targetFilePath = Path.Combine(datasetDirectoryPath, fiFile.Name);
-                        fiFile.CopyTo(targetFilePath, true);
+                        var targetFilePath = Path.Combine(datasetDirectoryPath, methodFile.Name);
+                        methodFile.CopyTo(targetFilePath, true);
                     }
                     catch (Exception ex)
                     {
-                        LogWarning("Exception copying LCMethod file " + fiFile.FullName + ": " + ex.Message);
+                        LogWarning("Exception copying LCMethod file " + methodFile.FullName + ": " + ex.Message);
                     }
                 }
 
                 // If the file was found in a dataset directory, rename the source directory to start with x_
-                var firstFileDirectory = lstMethodFiles[0].Directory;
+                var firstFileDirectory = methodFiles[0].Directory;
 
                 if (firstFileDirectory != null && string.Equals(firstFileDirectory.Name, datasetName, StringComparison.OrdinalIgnoreCase))
                 {
@@ -1942,12 +1942,12 @@ namespace CaptureToolPlugin
                         if (Directory.Exists(renamedSourceDirectory))
                         {
                             // x_ directory already exists; move the files
-                            foreach (var fiFile in lstMethodFiles)
+                            foreach (var methodFile in methodFiles)
                             {
-                                var targetFilePath = Path.Combine(renamedSourceDirectory, fiFile.Name);
+                                var targetFilePath = Path.Combine(renamedSourceDirectory, methodFile.Name);
 
-                                fiFile.CopyTo(targetFilePath, true);
-                                fiFile.Delete();
+                                methodFile.CopyTo(targetFilePath, true);
+                                methodFile.Delete();
                             }
                             sourceDirectory.Delete(false);
                         }
@@ -1975,8 +1975,8 @@ namespace CaptureToolPlugin
                 return success;
             }
 
-            var dtCurrentTime = DateTime.Now;
-            if (dtCurrentTime.Hour == 18 || dtCurrentTime.Hour == 19 || Environment.MachineName.StartsWith("monroe", StringComparison.OrdinalIgnoreCase))
+            var currentTime = DateTime.Now;
+            if (currentTime.Hour == 18 || currentTime.Hour == 19 || Environment.MachineName.StartsWith("monroe", StringComparison.OrdinalIgnoreCase))
             {
                 // Time is between 6 pm and 7:59 pm
                 // Check for directories at METHOD_FOLDER_BASE_PATH that start with x_ and have .lcmethod files that are all at least 14 days old
@@ -3038,7 +3038,7 @@ namespace CaptureToolPlugin
                     break;
                 }
 
-                var dtCopyStart = DateTime.UtcNow;
+                var copyStart = DateTime.UtcNow;
 
                 try
                 {
@@ -3125,7 +3125,7 @@ namespace CaptureToolPlugin
                     {
                         // Exception occurred during the middle of a buffered copy
                         // If at least 10 seconds have elapsed, auto-retry the copy again
-                        var elapsedTime = DateTime.UtcNow.Subtract(dtCopyStart).TotalSeconds;
+                        var elapsedTime = DateTime.UtcNow.Subtract(copyStart).TotalSeconds;
                         if (elapsedTime >= 10)
                         {
                             doCopy = true;
@@ -3251,11 +3251,11 @@ namespace CaptureToolPlugin
         /// <summary>
         /// Return the current quarter for a given date (based on the month)
         /// </summary>
-        /// <param name="dtDate"></param>
+        /// <param name="date"></param>
         /// <returns></returns>
-        private int GetQuarter(DateTime dtDate)
+        private int GetQuarter(DateTime date)
         {
-            switch (dtDate.Month)
+            switch (date.Month)
             {
                 case 1:
                 case 2:
@@ -3320,14 +3320,14 @@ namespace CaptureToolPlugin
 
             try
             {
-                var fiSourceFile = new FileInfo(sourceFilePath);
+                var sourceFile = new FileInfo(sourceFilePath);
 
-                if (!fiSourceFile.Exists)
+                if (!sourceFile.Exists)
                 {
                     return MINIMUM_TIME_SECONDS;
                 }
 
-                var fileAgeDays = DateTime.UtcNow.Subtract(fiSourceFile.LastWriteTimeUtc).TotalDays;
+                var fileAgeDays = DateTime.UtcNow.Subtract(sourceFile.LastWriteTimeUtc).TotalDays;
 
                 return GetSleepInterval(fileAgeDays, MINIMUM_TIME_SECONDS);
             }

@@ -199,9 +199,9 @@ namespace DatasetQualityPlugin
                                         instrumentName.StartsWith("21T", StringComparison.OrdinalIgnoreCase);
 
             var quameterExePath = GetQuameterPath();
-            var fiQuameter = new FileInfo(quameterExePath);
+            var quameterProgram = new FileInfo(quameterExePath);
 
-            if (!fiQuameter.Exists)
+            if (!quameterProgram.Exists)
             {
                 mRetData.CloseoutMsg = "Quameter not found at " + quameterExePath;
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -218,8 +218,8 @@ namespace DatasetQualityPlugin
                 // Look in the Aurora archive (aurora.emsl.pnl.gov) using samba; was previously a2.emsl.pnl.gov
                 var dataFilePathArchive = Path.Combine(mTaskParams.GetParam("Archive_Network_Share_Path"), datasetDirectory, instrumentDataFile.Name);
 
-                var fiDataFileInArchive = new FileInfo(dataFilePathArchive);
-                if (fiDataFileInArchive.Exists)
+                var archiveFile = new FileInfo(dataFilePathArchive);
+                if (archiveFile.Exists)
                 {
                     // Update dataFilePathRemote using the archive file path
                     msg = "Dataset file not found on storage server (" + dataFilePathRemote + "), but was found in the archive at " + dataFilePathArchive;
@@ -241,7 +241,7 @@ namespace DatasetQualityPlugin
                 return false;
             }
 
-            var success = ProcessThermoRawFile(dataFilePathRemote, instrumentClass, fiQuameter, ignoreQuameterFailure, instrumentName);
+            var success = ProcessThermoRawFile(dataFilePathRemote, instrumentClass, quameterProgram, ignoreQuameterFailure, instrumentName);
 
             if (success)
             {
@@ -267,18 +267,18 @@ namespace DatasetQualityPlugin
         {
             try
             {
-                var diWorkDir = new DirectoryInfo(mWorkDir);
+                var workDir = new DirectoryInfo(mWorkDir);
 
                 // Delete any files that start with the dataset name
-                foreach (var fiFile in diWorkDir.GetFiles(mDataset + "*.*"))
+                foreach (var file in workDir.GetFiles(mDataset + "*.*"))
                 {
-                    DeleteFileIgnoreErrors(fiFile.FullName);
+                    DeleteFileIgnoreErrors(file.FullName);
                 }
 
                 // Delete any files that contain Quameter
-                foreach (var fiFile in diWorkDir.GetFiles("*Quameter*.*"))
+                foreach (var file in workDir.GetFiles("*Quameter*.*"))
                 {
-                    DeleteFileIgnoreErrors(fiFile.FullName);
+                    DeleteFileIgnoreErrors(file.FullName);
                 }
             }
             // ReSharper disable once EmptyGeneralCatchClause
@@ -291,10 +291,10 @@ namespace DatasetQualityPlugin
         /// <summary>
         /// Convert the Quameter results to XML
         /// </summary>
-        /// <param name="lstResults"></param>
-        /// <param name="sXMLResults"></param>
+        /// <param name="results"></param>
+        /// <param name="xmlResults"></param>
         /// <returns></returns>
-        private bool ConvertResultsToXML(IEnumerable<KeyValuePair<string, string>> lstResults, out string sXMLResults)
+        private bool ConvertResultsToXML(IEnumerable<KeyValuePair<string, string>> results, out string xmlResults)
         {
             // XML will look like:
 
@@ -312,28 +312,28 @@ namespace DatasetQualityPlugin
             //   </Measurements>
             // </Quameter_Results>
 
-            var sbXML = new StringBuilder();
-            sXMLResults = string.Empty;
+            var xmlText = new StringBuilder();
+            xmlResults = string.Empty;
 
             try
             {
-                sbXML.Append("<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\"?>");
-                sbXML.Append("<Quameter_Results>");
+                xmlText.Append("<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\"?>");
+                xmlText.Append("<Quameter_Results>");
 
-                sbXML.Append("<Dataset>" + mDataset + "</Dataset>");
-                sbXML.Append("<Job>" + mJob + "</Job>");
+                xmlText.Append("<Dataset>" + mDataset + "</Dataset>");
+                xmlText.Append("<Job>" + mJob + "</Job>");
 
-                sbXML.Append("<Measurements>");
+                xmlText.Append("<Measurements>");
 
-                foreach (var kvResult in lstResults)
+                foreach (var result in results)
                 {
-                    sbXML.Append("<Measurement Name=\"" + kvResult.Key + "\">" + kvResult.Value + "</Measurement>");
+                    xmlText.Append("<Measurement Name=\"" + result.Key + "\">" + result.Value + "</Measurement>");
                 }
 
-                sbXML.Append("</Measurements>");
-                sbXML.Append("</Quameter_Results>");
+                xmlText.Append("</Measurements>");
+                xmlText.Append("</Quameter_Results>");
 
-                sXMLResults = sbXML.ToString();
+                xmlResults = xmlText.ToString();
             }
             catch (Exception ex)
             {
@@ -345,24 +345,24 @@ namespace DatasetQualityPlugin
             return true;
         }
 
-        private bool CopyFilesToDatasetFolder(string datasetFolder)
+        private bool CopyFilesToDatasetFolder(string datasetDirectoryPath)
         {
             try
             {
-                var diDatasetQCFolder = new DirectoryInfo(Path.Combine(datasetFolder, "QC"));
+                var datasetQCDirectory= new DirectoryInfo(Path.Combine(datasetDirectoryPath, "QC"));
 
-                if (!diDatasetQCFolder.Exists)
+                if (!datasetQCDirectory.Exists)
                 {
-                    diDatasetQCFolder.Create();
+                    datasetQCDirectory.Create();
                 }
 
-                if (!CopyFileToServer(QUAMETER_CONSOLE_OUTPUT_FILE, mWorkDir, diDatasetQCFolder.FullName))
+                if (!CopyFileToServer(QUAMETER_CONSOLE_OUTPUT_FILE, mWorkDir, datasetQCDirectory.FullName))
                 {
                     return false;
                 }
 
                 // Uncomment the following to copy the Metrics file to the server
-                //if (!CopyFileToServer(QUAMETER_IDFREE_METRICS_FILE, mWorkDir, diDatasetQCFolder.FullName)) return false;
+                //if (!CopyFileToServer(QUAMETER_IDFREE_METRICS_FILE, mWorkDir, datasetQCDirectory.FullName)) return false;
 
             }
             catch (Exception ex)
@@ -501,13 +501,13 @@ namespace DatasetQualityPlugin
             // QC_Shew_12_02_Run-06_4Sep12_Roc_12-03-30.RAW   2012-09-04T20:33:29Z   0.35347   20.7009   22.3192   24.794   etc.
 
             // The measurements are returned via this list
-            var lstResults = new List<KeyValuePair<string, string>>();
+            var results = new List<KeyValuePair<string, string>>();
 
             if (!File.Exists(ResultsFilePath))
             {
                 mRetData.CloseoutMsg = "Quameter Results file not found";
                 LogWarning(mRetData.CloseoutMsg + ": " + ResultsFilePath);
-                return lstResults;
+                return results;
             }
 
             if (mDebugLevel >= 5)
@@ -532,7 +532,7 @@ namespace DatasetQualityPlugin
                 {
                     mRetData.CloseoutMsg = "Quameter Results file is empty (no header line)";
                     LogWarning(mRetData.CloseoutMsg);
-                    return lstResults;
+                    return results;
                 }
 
                 // Parse the headers
@@ -553,7 +553,7 @@ namespace DatasetQualityPlugin
                 {
                     mRetData.CloseoutMsg = "Quameter Results file is empty (headers, but no data)";
                     LogWarning(mRetData.CloseoutMsg);
-                    return lstResults;
+                    return results;
                 }
 
                 // Parse the data
@@ -564,7 +564,7 @@ namespace DatasetQualityPlugin
                     // More headers than data values
                     mRetData.CloseoutMsg = "Quameter Results file data line (" + dataValues.Length + " items) does not match the header line (" + headerNames.Length + " items)";
                     LogWarning(mRetData.CloseoutMsg);
-                    return lstResults;
+                    return results;
                 }
 
                 // Store the results by stepping through the arrays
@@ -609,12 +609,12 @@ namespace DatasetQualityPlugin
                             sDataItem = string.Copy(dataValues[index]).Trim();
                         }
 
-                        lstResults.Add(new KeyValuePair<string, string>(sHeaderName, sDataItem));
+                        results.Add(new KeyValuePair<string, string>(sHeaderName, sDataItem));
                     }
                 }
             }
 
-            return lstResults;
+            return results;
         }
 
         private void ParseConsoleOutputFile()
@@ -832,37 +832,35 @@ namespace DatasetQualityPlugin
             }
         }
 
-        private bool PostQuameterResultsToDB(string sXMLResults)
+        private bool PostQuameterResultsToDB(string xmlResults)
         {
             // Note that mDatasetID gets populated by runTool
-            return PostQuameterResultsToDB(mDatasetID, sXMLResults);
+            return PostQuameterResultsToDB(mDatasetID, xmlResults);
         }
 
-        public bool PostQuameterResultsToDB(int intDatasetID, string sXMLResults)
+        public bool PostQuameterResultsToDB(int datasetID, string xmlResults)
         {
             const int MAX_RETRY_COUNT = 3;
             const int SEC_BETWEEN_RETRIES = 20;
 
-            bool blnSuccess;
-
             try
             {
                 var writeLog = mDebugLevel >= 5;
-                LogDebug("Posting Quameter Results to the database (using Dataset ID " + intDatasetID + ")", writeLog);
+                LogDebug("Posting Quameter Results to the database (using Dataset ID " + datasetID + ")", writeLog);
 
-                // We need to remove the encoding line from sXMLResults before posting to the DB
+                // We need to remove the encoding line from xmlResults before posting to the DB
                 // This line will look like this:
                 //   <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 
-                var intStartIndex = sXMLResults.IndexOf("?>", StringComparison.Ordinal);
-                string sXMLResultsClean;
-                if (intStartIndex > 0)
+                var startIndex = xmlResults.IndexOf("?>", StringComparison.Ordinal);
+                string xmlResultsClean;
+                if (startIndex > 0)
                 {
-                    sXMLResultsClean = sXMLResults.Substring(intStartIndex + 2).Trim();
+                    xmlResultsClean = xmlResults.Substring(startIndex + 2).Trim();
                 }
                 else
                 {
-                    sXMLResultsClean = sXMLResults;
+                    xmlResultsClean = xmlResults;
                 }
 
                 // Call stored procedure StoreQuameterResults in the DMS_Capture database
@@ -870,37 +868,33 @@ namespace DatasetQualityPlugin
                 var cmd = dbTools.CreateCommand(STORE_QUAMETER_RESULTS_SP_NAME, CommandType.StoredProcedure);
 
                 dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
-                dbTools.AddParameter(cmd, "@DatasetID", SqlType.Int).Value = intDatasetID;
-                dbTools.AddParameter(cmd, "@ResultsXML", SqlType.XML).Value = sXMLResultsClean;
+                dbTools.AddParameter(cmd, "@DatasetID", SqlType.Int).Value = datasetID;
+                dbTools.AddParameter(cmd, "@ResultsXML", SqlType.XML).Value = xmlResultsClean;
 
                 var resultCode = dbTools.ExecuteSP(cmd, MAX_RETRY_COUNT, SEC_BETWEEN_RETRIES);
 
                 if (resultCode == DbUtilsConstants.RET_VAL_OK)
                 {
                     // No errors
-                    blnSuccess = true;
+                    return true;
                 }
-                else
-                {
-                    mRetData.CloseoutMsg = "Error storing Quameter Results in database, " + STORE_QUAMETER_RESULTS_SP_NAME + " returned " + resultCode;
-                    LogError(mRetData.CloseoutMsg);
-                    blnSuccess = false;
-                }
+
+                mRetData.CloseoutMsg = "Error storing Quameter Results in database, " + STORE_QUAMETER_RESULTS_SP_NAME + " returned " + resultCode;
+                LogError(mRetData.CloseoutMsg);
+                return false;
             }
             catch (Exception ex)
             {
                 mRetData.CloseoutMsg = "Exception storing Quameter Results in database";
                 LogError(mRetData.CloseoutMsg, ex);
-                blnSuccess = false;
+                return false;
             }
-
-            return blnSuccess;
         }
 
         private bool ProcessThermoRawFile(
             string dataFilePathRemote,
             clsInstrumentClassInfo.eInstrumentClass instrumentClass,
-            FileInfo fiQuameter,
+            FileInfo quameterProgram,
             bool ignoreQuameterFailure,
             string instrumentName)
         {
@@ -930,20 +924,20 @@ namespace DatasetQualityPlugin
                         break;
                 }
 
-                if (fiQuameter.DirectoryName == null)
+                if (quameterProgram.DirectoryName == null)
                 {
-                    LogError("Unable to determine the parent directory path for " + fiQuameter.FullName);
+                    LogError("Unable to determine the parent directory path for " + quameterProgram.FullName);
                     return false;
                 }
 
-                var configFilePathSource = Path.Combine(fiQuameter.DirectoryName, configFileNameSource);
+                var configFilePathSource = Path.Combine(quameterProgram.DirectoryName, configFileNameSource);
                 var configFilePathTarget = Path.Combine(mWorkDir, configFileNameSource);
 
-                if (!File.Exists(configFilePathSource) && fiQuameter.DirectoryName.EndsWith("x64", StringComparison.OrdinalIgnoreCase))
+                if (!File.Exists(configFilePathSource) && quameterProgram.DirectoryName.EndsWith("x64", StringComparison.OrdinalIgnoreCase))
                 {
                     // Using the 64-bit version of quameter
                     // Look for the .cfg file up one directory
-                    var parentFolder = fiQuameter.Directory?.Parent;
+                    var parentFolder = quameterProgram.Directory?.Parent;
                     if (parentFolder != null)
                     {
                         configFilePathSource = Path.Combine(parentFolder.FullName, configFileNameSource);
@@ -1008,9 +1002,9 @@ namespace DatasetQualityPlugin
 
                 // Run Quameter
                 mRetData.CloseoutMsg = string.Empty;
-                var success = RunQuameter(fiQuameter, Path.GetFileName(dataFilePathLocal),
-                                           QUAMETER_IDFREE_METRICS_FILE, ignoreQuameterFailure,
-                                           instrumentName, configFilePathTarget);
+                var success = RunQuameter(quameterProgram, Path.GetFileName(dataFilePathLocal),
+                                          QUAMETER_IDFREE_METRICS_FILE, ignoreQuameterFailure,
+                                          instrumentName, configFilePathTarget);
 
                 if (!success)
                 {
@@ -1122,53 +1116,55 @@ namespace DatasetQualityPlugin
         /// <remarks></remarks>
         private bool ReadAndStoreQuameterResults(string ResultsFilePath)
         {
-            var blnSuccess = false;
-
             try
             {
-                var lstResults = LoadQuameterResults(ResultsFilePath);
+                var results = LoadQuameterResults(ResultsFilePath);
 
-                if (lstResults.Count == 0)
+                if (results.Count == 0)
                 {
                     if (string.IsNullOrEmpty(mRetData.CloseoutMsg))
                     {
                         mRetData.CloseoutMsg = "No Quameter results were found";
-                        LogError(mRetData.CloseoutMsg + ": lstResults.Count == 0");
+                        LogError(mRetData.CloseoutMsg + ": results.Count == 0");
                     }
+
+                    return false;
                 }
-                else
+
+                // Convert the results to XML format
+
+                var success = ConvertResultsToXML(results, out var xmlResults);
+
+                if (!success)
                 {
-                    // Convert the results to XML format
-
-                    blnSuccess = ConvertResultsToXML(lstResults, out var sXMLResults);
-
-                    if (blnSuccess)
-                    {
-                        // Store the results in the database
-                        blnSuccess = PostQuameterResultsToDB(sXMLResults);
-
-                        if (!blnSuccess)
-                        {
-                            if (string.IsNullOrEmpty(mRetData.CloseoutMsg))
-                            {
-                                mRetData.CloseoutMsg = "Unknown error posting quameter results to the database";
-                            }
-                        }
-                    }
+                    return false;
                 }
+
+                // Store the results in the database
+                var postSuccess = PostQuameterResultsToDB(xmlResults);
+
+                if (postSuccess)
+                {
+                    return true;
+                }
+
+                if (string.IsNullOrEmpty(mRetData.CloseoutMsg))
+                {
+                    mRetData.CloseoutMsg = "Unknown error posting quameter results to the database";
+                }
+
+                return false;
             }
             catch (Exception ex)
             {
                 mRetData.CloseoutMsg = "Exception parsing Quameter results";
                 LogError("Exception parsing Quameter results and posting to the database", ex);
-                blnSuccess = false;
+                return false;
             }
-
-            return blnSuccess;
         }
 
         private bool RunQuameter(
-            FileSystemInfo fiQuameter,
+            FileSystemInfo quameterProgram,
             string dataFileName,
             string metricsOutputFileName,
             bool ignoreQuameterFailure,
@@ -1209,7 +1205,7 @@ namespace DatasetQualityPlugin
                 // Create the batch file
                 using (var batchFileWriter = new StreamWriter(new FileStream(exePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    var batchCommand = fiQuameter.FullName + " " + quameterArgs + " > " + consoleOutputFileName + " 2>&1";
+                    var batchCommand = quameterProgram.FullName + " " + quameterArgs + " > " + consoleOutputFileName + " 2>&1";
 
                     LogMessage("Creating " + batchFileName + " with: " + batchCommand);
                     batchFileWriter.WriteLine(batchCommand);

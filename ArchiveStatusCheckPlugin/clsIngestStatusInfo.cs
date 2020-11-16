@@ -15,10 +15,10 @@ namespace ArchiveStatusCheckPlugin
         public string StatusURI { get; set; }
 
         /// <summary>
-        /// Subfolder name
+        /// Subdirectory name
         /// </summary>
         /// <remarks>If empty, all files below the dataset are uploaded</remarks>
-        public string Subfolder { get; set; }
+        public string Subdirectory { get; set; }
 
         /// <summary>
         /// Number of ingest steps completed, before the most recent check
@@ -57,7 +57,7 @@ namespace ArchiveStatusCheckPlugin
         {
             StatusNum = statusNum;
             StatusURI = statusURI;
-            Subfolder = string.Empty;
+            Subdirectory = string.Empty;
 
             IngestStepsCompletedOld = 0;
             IngestStepsCompletedNew = 0;

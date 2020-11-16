@@ -514,7 +514,7 @@ namespace CaptureTaskManager
             var worker = new Thread(InitializeMessageQueueWork);
             worker.Start();
 
-            var dtWaitStart = DateTime.UtcNow;
+            var waitStart = DateTime.UtcNow;
 
             // Wait a maximum of 60 seconds
             if (!worker.Join(MAX_WAIT_TIME_SECONDS * 1000))
@@ -525,7 +525,7 @@ namespace CaptureTaskManager
                 return;
             }
 
-            var elapsedTime = DateTime.UtcNow.Subtract(dtWaitStart).TotalSeconds;
+            var elapsedTime = DateTime.UtcNow.Subtract(waitStart).TotalSeconds;
 
             if (elapsedTime > 25)
             {
@@ -1084,9 +1084,9 @@ namespace CaptureTaskManager
         /// Look for and remove files
         /// </summary>
         /// <param name="agedTempFilesHours">Files more than this many hours old will be deleted</param>
-        /// <param name="tempFolderPath">Path to the folder to look for and delete old files</param>
-        /// <param name="searchSpecs">File specs to search for in folder tempFolderPath, e.g. "*.txt"</param>
-        protected void RemoveOldTempFiles(int agedTempFilesHours, string tempFolderPath, List<string> searchSpecs)
+        /// <param name="tempDirectoryPath">Path to the folder to look for and delete old files</param>
+        /// <param name="searchSpecs">File specs to search for in folder tempDirectoryPath, e.g. "*.txt"</param>
+        protected void RemoveOldTempFiles(int agedTempFilesHours, string tempDirectoryPath, List<string> searchSpecs)
         {
             try
             {
@@ -1097,10 +1097,10 @@ namespace CaptureTaskManager
                     agedTempFilesHours = 2;
                 }
 
-                var diFolder = new DirectoryInfo(tempFolderPath);
-                if (!diFolder.Exists)
+                var tempDirectory = new DirectoryInfo(tempDirectoryPath);
+                if (!tempDirectory.Exists)
                 {
-                    LogWarning("Folder not found: " + tempFolderPath);
+                    LogWarning("Directory not found: " + tempDirectoryPath);
                     return;
                 }
 
@@ -1108,13 +1108,13 @@ namespace CaptureTaskManager
                 foreach (var spec in searchSpecs)
                 {
                     var deleteCount = 0;
-                    foreach (var fiFile in diFolder.GetFiles(spec))
+                    foreach (var file in tempDirectory.GetFiles(spec))
                     {
                         try
                         {
-                            if (DateTime.UtcNow.Subtract(fiFile.LastWriteTimeUtc).TotalHours > agedTempFilesHours)
+                            if (DateTime.UtcNow.Subtract(file.LastWriteTimeUtc).TotalHours > agedTempFilesHours)
                             {
-                                fiFile.Delete();
+                                file.Delete();
                                 deleteCount++;
                             }
                         }
@@ -1135,7 +1135,7 @@ namespace CaptureTaskManager
                         msg += "s";
                     }
 
-                    msg += " over " + agedTempFilesHours + " hours old in folder " + tempFolderPath;
+                    msg += " over " + agedTempFilesHours + " hours old in directory " + tempDirectoryPath;
                     LogMessage(msg);
                 }
             }

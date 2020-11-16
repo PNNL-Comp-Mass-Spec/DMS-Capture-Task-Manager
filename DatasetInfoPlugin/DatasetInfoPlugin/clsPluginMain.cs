@@ -893,11 +893,11 @@ namespace DatasetInfoPlugin
         /// <returns>Returns the file name if found, otherwise an empty string</returns>
         private string CheckForBrukerImagingZipFiles(DirectoryInfo datasetDirectory)
         {
-            var fiFiles = datasetDirectory.GetFiles("0_R*X*.zip");
+            var zipFiles = datasetDirectory.GetFiles("0_R*X*.zip");
 
-            if (fiFiles.Length > 0)
+            if (zipFiles.Length > 0)
             {
-                return fiFiles[0].Name;
+                return zipFiles[0].Name;
             }
 
             return string.Empty;
@@ -1047,14 +1047,14 @@ namespace DatasetInfoPlugin
 
             var searchOption = looseMatchDotD ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
 
-            var diDotDDirectories = datasetDirectory.GetDirectories("*.d", searchOption);
-            if (diDotDDirectories.Length == 0)
+            var dotDDirectories = datasetDirectory.GetDirectories("*.d", searchOption);
+            if (dotDDirectories.Length == 0)
             {
                 return;
             }
 
             // Look for a .mcf file in each of the .D directories
-            foreach (var dotDDirectory in diDotDDirectories)
+            foreach (var dotDDirectory in dotDDirectories)
             {
                 var mcfFileExists = LookForMcfFileInDotDDirectory(dotDDirectory, out _);
                 if (!mcfFileExists)

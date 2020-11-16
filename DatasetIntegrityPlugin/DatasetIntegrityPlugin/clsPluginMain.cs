@@ -721,38 +721,38 @@ namespace DatasetIntegrityPlugin
         {
             try
             {
-                var sbXML = new StringBuilder();
+                var xml = new StringBuilder();
 
-                sbXML.Append(@"<?xml version=""1.0"" encoding=""utf-8""?>");
-                sbXML.Append(@"<BatchProcessJob>");
-                sbXML.Append(@"<Header></Header>");
+                xml.Append(@"<?xml version=""1.0"" encoding=""utf-8""?>");
+                xml.Append(@"<BatchProcessJob>");
+                xml.Append(@"<Header></Header>");
 
-                sbXML.Append(@"<!--Load the following chromatograms.-->");
-                sbXML.Append(@"<InputEntries><InputEntry>");
-                sbXML.Append(@"<![CDATA[" + dotDDirectoryPathLocal + "]]>");
-                sbXML.Append(@"</InputEntry></InputEntries>");
+                xml.Append(@"<!--Load the following chromatograms.-->");
+                xml.Append(@"<InputEntries><InputEntry>");
+                xml.Append(@"<![CDATA[" + dotDDirectoryPathLocal + "]]>");
+                xml.Append(@"</InputEntry></InputEntries>");
 
-                sbXML.Append(@"<!--Process each chromatogram with the listed methods.-->");
-                sbXML.Append(@"<ProcessEntries></ProcessEntries>");
+                xml.Append(@"<!--Process each chromatogram with the listed methods.-->");
+                xml.Append(@"<ProcessEntries></ProcessEntries>");
 
-                sbXML.Append(@"<!--Write each processed chromatogram to the given output formats.-->");
-                sbXML.Append(@"<OutputEntries>");
+                xml.Append(@"<!--Write each processed chromatogram to the given output formats.-->");
+                xml.Append(@"<OutputEntries>");
 
                 // ReSharper disable once StringLiteralTypo
-                sbXML.Append(@"<OutputEntry converterId=""net.openchrom.msd.converter.supplier.cdf"">");
-                sbXML.Append(@"<![CDATA[" + mWorkDir + "]]>");
-                sbXML.Append(@"</OutputEntry>");
-                sbXML.Append(@"</OutputEntries>");
+                xml.Append(@"<OutputEntry converterId=""net.openchrom.msd.converter.supplier.cdf"">");
+                xml.Append(@"<![CDATA[" + mWorkDir + "]]>");
+                xml.Append(@"</OutputEntry>");
+                xml.Append(@"</OutputEntries>");
 
-                sbXML.Append(@"<!--Process each chromatogram with the listed report suppliers.-->");
-                sbXML.Append(@"<ReportEntries></ReportEntries>");
-                sbXML.Append(@"</BatchProcessJob>");
+                xml.Append(@"<!--Process each chromatogram with the listed report suppliers.-->");
+                xml.Append(@"<ReportEntries></ReportEntries>");
+                xml.Append(@"</BatchProcessJob>");
 
                 var jobFilePath = Path.Combine(mWorkDir, "CDFBatchJob.obj");
 
                 using (var writer = new StreamWriter(new FileStream(jobFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    writer.WriteLine(sbXML);
+                    writer.WriteLine(xml);
                 }
 
                 return jobFilePath;
@@ -2502,9 +2502,9 @@ namespace DatasetIntegrityPlugin
             // Open the file with the UIMFReader
             using (var uimfReader = new DataReader(dataFileNamePath))
             {
-                var dctMasterFrameList = uimfReader.GetMasterFrameList();
+                var masterFrameList = uimfReader.GetMasterFrameList();
 
-                foreach (var frameNumber in dctMasterFrameList.Keys)
+                foreach (var frameNumber in masterFrameList.Keys)
                 {
                     var frameParams = uimfReader.GetFrameParams(frameNumber);
 
@@ -2632,8 +2632,7 @@ namespace DatasetIntegrityPlugin
         /// <returns>File size in KB</returns>
         private float GetFileSize(FileInfo dataFile)
         {
-            var fileLengthKB = dataFile.Length / 1024F;
-            return fileLengthKB;
+            return dataFile.Length / 1024F;
         }
 
         /// <summary>

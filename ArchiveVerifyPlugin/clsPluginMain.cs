@@ -282,15 +282,15 @@ namespace ArchiveVerifyPlugin
                     return false;
                 }
 
-                var fiMetadataFile = new FileInfo(Path.Combine(transferDirectoryPath, Utilities.GetMetadataFilenameForJob(jobNumber)));
+                var metadataFile = new FileInfo(Path.Combine(transferDirectoryPath, Utilities.GetMetadataFilenameForJob(jobNumber)));
 
-                if (fiMetadataFile.Exists)
+                if (metadataFile.Exists)
                 {
-                    metadataFilePath = fiMetadataFile.FullName;
+                    metadataFilePath = metadataFile.FullName;
 
                     CompareToMetadataFile(
                         archivedFiles,
-                        fiMetadataFile,
+                        metadataFile,
                         out var matchCountToMetadata,
                         out var mismatchCountToMetadata,
                         out transactionId);
@@ -342,12 +342,12 @@ namespace ArchiveVerifyPlugin
                 // Attach the events
                 RegisterEvents(metadataObject);
 
-                var lstDatasetFilesLocal = metadataObject.FindDatasetFilesToArchive(
+                var datasetFilesLocal = metadataObject.FindDatasetFilesToArchive(
                     mTaskParams.TaskDictionary,
                     mMgrParams.MgrParams,
                     out _);
 
-                if (lstDatasetFilesLocal.Count == 0)
+                if (datasetFilesLocal.Count == 0)
                 {
                     if (mTotalMismatchCount == 0)
                     {
@@ -362,12 +362,12 @@ namespace ArchiveVerifyPlugin
                 }
 
                 // Keys are relative file paths (Windows slashes); values are the SHA-1 hash values
-                var dctFilePathHashMap = new Dictionary<string, string>();
+                var filePathHashMap = new Dictionary<string, string>();
 
-                foreach (var datasetFile in lstDatasetFilesLocal)
+                foreach (var datasetFile in datasetFilesLocal)
                 {
                     var relativeFilePathWindows = datasetFile.RelativeDestinationFullPath.Replace("/", @"\");
-                    dctFilePathHashMap.Add(relativeFilePathWindows, datasetFile.Sha1HashHex);
+                    filePathHashMap.Add(relativeFilePathWindows, datasetFile.Sha1HashHex);
                 }
 
                 var transactionIdStats = new Dictionary<long, int>();
@@ -376,7 +376,7 @@ namespace ArchiveVerifyPlugin
                     archivedFiles,
                     out var matchCountToDisk,
                     out var mismatchCountToDisk,
-                    dctFilePathHashMap,
+                    filePathHashMap,
                     transactionIdStats);
 
                 transactionId = GetBestTransactionId(transactionIdStats);
@@ -418,24 +418,24 @@ namespace ArchiveVerifyPlugin
         /// <param name="archivedFiles">Files in MyEMSL</param>
         /// <param name="matchCount"></param>
         /// <param name="mismatchCount"></param>
-        /// <param name="dctFilePathHashMap">Local files; keys are relative file paths (Windows slashes); values are the SHA-1 hash values</param>
+        /// <param name="filePathHashMap">Local files; keys are relative file paths (Windows slashes); values are the SHA-1 hash values</param>
         /// <param name="transactionIdStats">Keys are transaction IDs, values are the number of files for each transaction ID</param>
         private void CompareArchiveFilesToList(
             IReadOnlyCollection<MyEMSLReader.ArchivedFileInfo> archivedFiles,
             out int matchCount,
             out int mismatchCount,
-            IReadOnlyDictionary<string, string> dctFilePathHashMap,
+            IReadOnlyDictionary<string, string> filePathHashMap,
             IDictionary<long, int> transactionIdStats)
         {
             matchCount = 0;
             mismatchCount = 0;
 
-            // Make sure each of the files in dctFilePathHashMap is present in archivedFiles
-            foreach (var metadataFile in dctFilePathHashMap)
+            // Make sure each of the files in filePathHashMap is present in archivedFiles
+            foreach (var metadataFile in filePathHashMap)
             {
-                var lstMatchingArchivedFiles = (from item in archivedFiles where item.RelativePathWindows == metadataFile.Key select item).ToList();
+                var matchingArchivedFiles = (from item in archivedFiles where item.RelativePathWindows == metadataFile.Key select item).ToList();
 
-                if (lstMatchingArchivedFiles.Count == 0)
+                if (matchingArchivedFiles.Count == 0)
                 {
                     if (mTotalMismatchCount == 0)
                     {
@@ -451,13 +451,13 @@ namespace ArchiveVerifyPlugin
                 }
                 else
                 {
-                    var archiveFile = lstMatchingArchivedFiles.First();
+                    var archiveFile = matchingArchivedFiles.First();
 
                     if (archiveFile.Hash == metadataFile.Value)
                     {
                         matchCount++;
 
-                        foreach (var archiveFileVersion in lstMatchingArchivedFiles)
+                        foreach (var archiveFileVersion in matchingArchivedFiles)
                         {
                             if (transactionIdStats.TryGetValue(archiveFileVersion.TransactionID, out var fileCount))
                             {
@@ -493,13 +493,13 @@ namespace ArchiveVerifyPlugin
         /// Compare the files that MyEMSL is tracking for this dataset to the files in the metadata file
         /// </summary>
         /// <param name="archivedFiles">Files in MyEMSL</param>
-        /// <param name="fiMetadataFile"></param>
+        /// <param name="metadataFileInfo"></param>
         /// <param name="matchCount"></param>
         /// <param name="mismatchCount"></param>
         /// <param name="transactionId">The TransactionID used by the majority of the matching files</param>
         private void CompareToMetadataFile(
             IReadOnlyCollection<MyEMSLReader.ArchivedFileInfo> archivedFiles,
-            FileSystemInfo fiMetadataFile,
+            FileSystemInfo metadataFileInfo,
             out int matchCount,
             out int mismatchCount,
             out long transactionId)
@@ -513,9 +513,9 @@ namespace ArchiveVerifyPlugin
             // Parse the contents of the file
             string metadataJson;
 
-            using (var srMetadataFile = new StreamReader(new FileStream(fiMetadataFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+            using (var metadataFileReader = new StreamReader(new FileStream(metadataFileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
             {
-                metadataJson = srMetadataFile.ReadToEnd();
+                metadataJson = metadataFileReader.ReadToEnd();
             }
 
             if (string.IsNullOrEmpty(metadataJson))
@@ -527,7 +527,7 @@ namespace ArchiveVerifyPlugin
 
                 mTotalMismatchCount++;
 
-                LogError(" ... metadata file is empty: " + fiMetadataFile.FullName);
+                LogError(" ... metadata file is empty: " + metadataFileInfo.FullName);
                 return;
             }
 
@@ -537,7 +537,7 @@ namespace ArchiveVerifyPlugin
             var metadataInfo = Utilities.JsonArrayToDictionaryList(jsa);
 
             // This dictionary tracks files that were previously pushed to MyEMSL
-            var dctMetadataFiles = new List<Dictionary<string, object>>();
+            var metadataFiles = new List<Dictionary<string, object>>();
 
             foreach (var item in metadataInfo)
             {
@@ -546,12 +546,12 @@ namespace ArchiveVerifyPlugin
                     var destinationTableName = destinationTable as string;
                     if (string.Equals(destinationTableName, "Files", StringComparison.OrdinalIgnoreCase))
                     {
-                        dctMetadataFiles.Add(item);
+                        metadataFiles.Add(item);
                     }
                 }
             }
 
-            if (dctMetadataFiles.Count == 0)
+            if (metadataFiles.Count == 0)
             {
                 if (mTotalMismatchCount == 0)
                 {
@@ -560,7 +560,7 @@ namespace ArchiveVerifyPlugin
 
                 mTotalMismatchCount++;
 
-                LogError(" ... metadata file JSON does not contain any entries where the DestinationTable is Files: " + fiMetadataFile.FullName);
+                LogError(" ... metadata file JSON does not contain any entries where the DestinationTable is Files: " + metadataFileInfo.FullName);
                 return;
             }
 
@@ -569,9 +569,9 @@ namespace ArchiveVerifyPlugin
 
             // This dictionary tracks files on the local disk
             // Keys are relative file paths (Windows slashes); values are the SHA-1 hash values
-            var dctFilePathHashMap = new Dictionary<string, string>();
+            var filePathHashMap = new Dictionary<string, string>();
 
-            foreach (var metadataFile in dctMetadataFiles)
+            foreach (var metadataFile in metadataFiles)
             {
                 var sha1Hash = Utilities.GetDictionaryValue(metadataFile, "hashsum");
                 var destinationDirectory = Utilities.GetDictionaryValue(metadataFile, "subdir");
@@ -602,14 +602,14 @@ namespace ArchiveVerifyPlugin
 
                 var relativeFilePathWindows = Path.Combine(destDirectoryWindows, fileName);
 
-                dctFilePathHashMap.Add(relativeFilePathWindows, sha1Hash);
+                filePathHashMap.Add(relativeFilePathWindows, sha1Hash);
             }
 
             CompareArchiveFilesToList(
                 archivedFiles,
                 out matchCount,
                 out mismatchCount,
-                dctFilePathHashMap,
+                filePathHashMap,
                 transactionIdStats);
 
             transactionId = GetBestTransactionId(transactionIdStats);
@@ -622,18 +622,18 @@ namespace ArchiveVerifyPlugin
             {
                 var hashResultsFolderPathBackup = GetHashResultsFilePath(DEFAULT_HASH_RESULTS_BACKUP_FOLDER_PATH, mDataset, datasetInstrument, datasetYearQuarter);
 
-                var fiBackupHashResultsFile = new FileInfo(hashResultsFolderPathBackup);
+                var backupHashResultsFile = new FileInfo(hashResultsFolderPathBackup);
 
                 // Create the target folders if necessary
-                if (fiBackupHashResultsFile.Directory != null)
+                if (backupHashResultsFile.Directory != null)
                 {
-                    if (!fiBackupHashResultsFile.Directory.Exists)
+                    if (!backupHashResultsFile.Directory.Exists)
                     {
-                        fiBackupHashResultsFile.Directory.Create();
+                        backupHashResultsFile.Directory.Create();
                     }
 
                     // Copy the file
-                    hashResultsFile.CopyTo(fiBackupHashResultsFile.FullName, true);
+                    hashResultsFile.CopyTo(backupHashResultsFile.FullName, true);
                 }
             }
             catch (Exception ex)
@@ -661,7 +661,7 @@ namespace ArchiveVerifyPlugin
 
             try
             {
-                var lstHashResults = new Dictionary<string, clsHashInfo>(StringComparer.OrdinalIgnoreCase);
+                var hashResults = new Dictionary<string, clsHashInfo>(StringComparer.OrdinalIgnoreCase);
 
                 foreach (var archivedFile in archivedFiles)
                 {
@@ -676,7 +676,7 @@ namespace ArchiveVerifyPlugin
                         MyEMSLFileID = archivedFile.FileID.ToString(CultureInfo.InvariantCulture)
                     };
 
-                    lstHashResults.Add(archivedFilePath, hashInfo);
+                    hashResults.Add(archivedFilePath, hashInfo);
                 }
 
                 if (hashResultsFile.Directory != null)
@@ -687,7 +687,7 @@ namespace ArchiveVerifyPlugin
                         hashResultsFile.Directory.Create();
                     }
 
-                    success = WriteHashResultsFile(lstHashResults, hashResultsFile.FullName, useTempFile: false);
+                    success = WriteHashResultsFile(hashResults, hashResultsFile.FullName, useTempFile: false);
                 }
                 else
                 {
@@ -758,25 +758,25 @@ namespace ArchiveVerifyPlugin
         {
             try
             {
-                var fiMetadataFile = new FileInfo(metadataFilePath);
-                var diParentFolder = fiMetadataFile.Directory;
+                var metadataFile = new FileInfo(metadataFilePath);
+                var parentDirectory = metadataFile.Directory;
 
                 // Delete the metadata file in the transfer folder
-                if (fiMetadataFile.Exists)
+                if (metadataFile.Exists)
                 {
-                    fiMetadataFile.Delete();
+                    metadataFile.Delete();
                 }
 
-                // Delete the transfer folder if it is empty
-                if (diParentFolder?.GetFileSystemInfos("*", SearchOption.AllDirectories).Length == 0)
+                // Delete the transfer directory if it is empty
+                if (parentDirectory?.GetFileSystemInfos("*", SearchOption.AllDirectories).Length == 0)
                 {
-                    diParentFolder.Delete();
+                    parentDirectory.Delete();
                 }
             }
             catch (Exception ex)
             {
                 // Don't treat this as a fatal error
-                LogError("Error deleting metadata file in transfer folder: " + ex.Message);
+                LogError("Error deleting metadata file in transfer directory: " + ex.Message);
             }
         }
 
@@ -856,23 +856,23 @@ namespace ArchiveVerifyPlugin
 
             var hashInfo = new clsHashInfo();
 
-            var lstValues = dataLine.Split(new[] { ' ' }, 2).ToList();
+            var values = dataLine.Split(new[] { ' ' }, 2).ToList();
 
-            if (lstValues.Count < 2)
+            if (values.Count < 2)
             {
                 // Line doesn't contain two strings separated by a space
                 return;
             }
 
-            hashInfo.HashCode = lstValues[0];
+            hashInfo.HashCode = values[0];
 
-            var lstPathInfo = lstValues[1].Split('\t').ToList();
+            var pathInfo = values[1].Split('\t').ToList();
 
-            var archiveFilePath = lstPathInfo[0];
+            var archiveFilePath = pathInfo[0];
 
-            if (lstPathInfo.Count > 1)
+            if (pathInfo.Count > 1)
             {
-                hashInfo.MyEMSLFileID = lstPathInfo[1];
+                hashInfo.MyEMSLFileID = pathInfo[1];
             }
 
             // Files should only be listed once in the SHA-1 hash results file
@@ -907,17 +907,15 @@ namespace ArchiveVerifyPlugin
             string datasetInstrument,
             string datasetYearQuarter)
         {
-            bool success;
-
-            var lstHashResults = new Dictionary<string, clsHashInfo>(StringComparer.OrdinalIgnoreCase);
+            var hashResults = new Dictionary<string, clsHashInfo>(StringComparer.OrdinalIgnoreCase);
 
             // Read the file and cache the results in memory
-            using (var srHashResultsFile = new StreamReader(new FileStream(hashResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+            using (var resultsFileReader = new StreamReader(new FileStream(hashResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
             {
-                while (!srHashResultsFile.EndOfStream)
+                while (!resultsFileReader.EndOfStream)
                 {
-                    var dataLine = srHashResultsFile.ReadLine();
-                    ParseAndStoreHashInfo(dataLine, ref lstHashResults);
+                    var dataLine = resultsFileReader.ReadLine();
+                    ParseAndStoreHashInfo(dataLine, ref hashResults);
                 }
             }
 
@@ -944,17 +942,17 @@ namespace ArchiveVerifyPlugin
                     MyEMSLFileID = archivedFile.FileID.ToString(CultureInfo.InvariantCulture)
                 };
 
-                if (lstHashResults.TryGetValue(archivedFilePath, out var hashInfoCached))
+                if (hashResults.TryGetValue(archivedFilePath, out var hashInfoCached))
                 {
                     if (!hashInfo.IsMatch(hashInfoCached))
                     {
-                        lstHashResults[archivedFilePath] = hashInfo;
+                        hashResults[archivedFilePath] = hashInfo;
                         saveMergedFile = true;
                     }
                 }
                 else
                 {
-                    lstHashResults.Add(archivedFilePath, hashInfo);
+                    hashResults.Add(archivedFilePath, hashInfo);
                     saveMergedFile = true;
                 }
             }
@@ -964,7 +962,7 @@ namespace ArchiveVerifyPlugin
                 return true;
             }
 
-            success = WriteHashResultsFile(lstHashResults, hashResultsFilePath, useTempFile: true);
+            var success = WriteHashResultsFile(hashResults, hashResultsFilePath, useTempFile: true);
             return success;
         }
 
@@ -1072,7 +1070,7 @@ namespace ArchiveVerifyPlugin
             }
         }
 
-        private bool WriteHashResultsFile(Dictionary<string, clsHashInfo> lstHashResults, string hashResultsFilePath, bool useTempFile)
+        private bool WriteHashResultsFile(Dictionary<string, clsHashInfo> hashResults, string hashResultsFilePath, bool useTempFile)
         {
             var currentStep = "initializing";
 
@@ -1091,9 +1089,9 @@ namespace ArchiveVerifyPlugin
 
                 currentStep = "creating " + targetFilePath;
 
-                using (var swHashResultsFile = new StreamWriter(new FileStream(targetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var hashResultsWriter = new StreamWriter(new FileStream(targetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    foreach (var item in lstHashResults)
+                    foreach (var item in hashResults)
                     {
                         var dataLine = item.Value.HashCode + " " + item.Key;
                         if (!string.IsNullOrEmpty(item.Value.MyEMSLFileID))
@@ -1101,7 +1099,7 @@ namespace ArchiveVerifyPlugin
                             dataLine += "\t" + item.Value.MyEMSLFileID;
                         }
 
-                        swHashResultsFile.WriteLine(dataLine);
+                        hashResultsWriter.WriteLine(dataLine);
                     }
                 }
 

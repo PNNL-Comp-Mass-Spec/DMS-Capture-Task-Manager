@@ -423,7 +423,7 @@ namespace Pacifica.Upload
 
             var tarOutputStream = new TarOutputStream(requestStream);
 
-            var dctDirectoryEntries = new SortedSet<string>();
+            var directoryEntries = new SortedSet<string>();
 
             // Add the metadata.txt file
             AppendFileToTar(tarOutputStream, metadataFile, EasyHttp.MYEMSL_METADATA_FILE_NAME, ref bytesWritten);
@@ -452,12 +452,12 @@ namespace Pacifica.Upload
                         throw new DirectoryNotFoundException("Cannot access the parent folder for the source file: " + fileToArchive.Value.RelativeDestinationFullPath);
                     }
 
-                    if (!dctDirectoryEntries.Contains(sourceFile.Directory.FullName))
+                    if (!directoryEntries.Contains(sourceFile.Directory.FullName))
                     {
                         // Make a directory entry
                         AppendDirectoryToTar(tarOutputStream, sourceFile.Directory, fileToArchive.Value.RelativeDestinationDirectory, ref bytesWritten);
 
-                        dctDirectoryEntries.Add(sourceFile.Directory.FullName);
+                        directoryEntries.Add(sourceFile.Directory.FullName);
                     }
                 }
 

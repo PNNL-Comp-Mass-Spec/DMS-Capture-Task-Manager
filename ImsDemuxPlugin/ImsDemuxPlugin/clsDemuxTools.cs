@@ -43,7 +43,7 @@ namespace ImsDemuxPlugin
 
         private readonly string mManagerName;
         private string mDataset;
-        private string mDatasetFolderPathRemote = string.Empty;
+        private string mDatasetDirectoryPathRemote = string.Empty;
         private readonly FileTools mFileTools;
         private string mWorkDir;
 
@@ -83,7 +83,8 @@ namespace ImsDemuxPlugin
 
             // public int NumCores;
             public bool AutoCalibrate;
-            public string CheckpointTargetFolder;
+
+            public string CheckpointTargetDirectory;
         }
 
         #endregion
@@ -170,7 +171,7 @@ namespace ImsDemuxPlugin
                 // Add the bin-centric tables
                 using (var uimfReader = new DataReader(uimfLocalFileNamePath))
                 {
-                    // Note: providing true for parseViaFramework as a workaround for reading SqLite files located on a remote UNC share or in ReadOnly folders
+                    // Note: providing true for parseViaFramework as a workaround for reading SqLite files located on a remote UNC share or in ReadOnly directories
                     var connectionString = "Data Source = " + uimfLocalFileNamePath;
                     using (var dbConnection = new System.Data.SQLite.SQLiteConnection(connectionString, true))
                     {
@@ -261,7 +262,7 @@ namespace ImsDemuxPlugin
             out string uimfLocalFileNamePath)
         {
             // Locate data file on storage server
-            uimfRemoteFileNamePath = Path.Combine(mDatasetFolderPathRemote, uimfFileName);
+            uimfRemoteFileNamePath = Path.Combine(mDatasetDirectoryPathRemote, uimfFileName);
             uimfLocalFileNamePath = Path.Combine(mWorkDir, mDataset + ".uimf");
 
             // Copy the UIMF file to working directory
@@ -283,7 +284,7 @@ namespace ImsDemuxPlugin
             {
                 // Locate data file on storage server
                 // Don't copy it locally; just work with it over the network
-                var uimfFilePath = Path.Combine(mDatasetFolderPathRemote, mDataset + ".uimf");
+                var uimfFilePath = Path.Combine(mDatasetDirectoryPathRemote, mDataset + ".uimf");
 
                 if (File.Exists(uimfFilePath))
                 {
@@ -637,7 +638,7 @@ namespace ImsDemuxPlugin
             // Look for a _decoded.uimf.tmp file on the storage server
             // Copy it local if present
             var tmpUIMFFileName = mDataset + DECODED_UIMF_SUFFIX + ".tmp";
-            var tmpUIMFRemoteFileNamePath = Path.Combine(mDatasetFolderPathRemote, tmpUIMFFileName);
+            var tmpUIMFRemoteFileNamePath = Path.Combine(mDatasetDirectoryPathRemote, tmpUIMFFileName);
             var tmpUIMFLocalFileNamePath = Path.Combine(mWorkDir, tmpUIMFFileName);
 
             var demuxOptions = new udtDemuxOptionsType
@@ -661,7 +662,7 @@ namespace ImsDemuxPlugin
                 }
                 else
                 {
-                    OnStatusEvent("Error copying .tmp decoded file from " + tmpUIMFRemoteFileNamePath + " to work folder; unable to resume demultiplexing");
+                    OnStatusEvent("Error copying .tmp decoded file from " + tmpUIMFRemoteFileNamePath + " to work directory; unable to resume demultiplexing");
                 }
             }
 
@@ -723,7 +724,7 @@ namespace ImsDemuxPlugin
                 // This is determined by looking for "_encoded" in the UIMF file name
                 if (!uimfFileName.Contains("_encoded"))
                 {
-                    if (!RenameFile(uimfRemoteEncodedFileNamePath, Path.Combine(mDatasetFolderPathRemote, mDataset + "_encoded.uimf")))
+                    if (!RenameFile(uimfRemoteEncodedFileNamePath, Path.Combine(mDatasetDirectoryPathRemote, mDataset + "_encoded.uimf")))
                     {
                         returnData.CloseoutMsg = "Error renaming encoded UIMF file on storage server";
                         returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -735,14 +736,14 @@ namespace ImsDemuxPlugin
             if (!postProcessingError)
             {
                 // Delete CheckPoint file from storage server (if it exists)
-                if (!string.IsNullOrEmpty(mDatasetFolderPathRemote))
+                if (!string.IsNullOrEmpty(mDatasetDirectoryPathRemote))
                 {
                     msg = "Deleting .uimf.tmp CheckPoint file from storage server";
                     OnDebugEvent(msg);
 
                     try
                     {
-                        var checkpointTargetPath = Path.Combine(mDatasetFolderPathRemote, tmpUIMFFileName);
+                        var checkpointTargetPath = Path.Combine(mDatasetDirectoryPathRemote, tmpUIMFFileName);
 
                         if (File.Exists(checkpointTargetPath))
                         {
@@ -780,8 +781,8 @@ namespace ImsDemuxPlugin
                 }
 
                 // Try to save the demultiplexed .UIMF file (and any other files in the work directory)
-                var oFailedResultsCopier = new clsFailedResultsCopier(mgrParams, taskParams);
-                oFailedResultsCopier.CopyFailedResultsToArchiveFolder(mWorkDir);
+                var failedResultsCopier = new clsFailedResultsCopier(mgrParams, taskParams);
+                failedResultsCopier.CopyFailedResultsToArchiveDirectory(mWorkDir);
 
                 return returnData;
             }
@@ -906,7 +907,7 @@ namespace ImsDemuxPlugin
             var msg = "Copying " + fileDescription + " file to storage server";
             OnDebugEvent(msg);
             const int retryCount = 3;
-            if (!CopyFileWithRetry(localUimfDecodedFilePath, Path.Combine(mDatasetFolderPathRemote, mDataset + ".uimf"), true, retryCount))
+            if (!CopyFileWithRetry(localUimfDecodedFilePath, Path.Combine(mDatasetDirectoryPathRemote, mDataset + ".uimf"), true, retryCount))
             {
                 returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, "Error copying " + fileDescription + " file to storage server");
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -927,19 +928,19 @@ namespace ImsDemuxPlugin
 
             // Copy file CalibrationLog.txt to the storage server (if it exists)
             var calibrationLogFilePath = Path.Combine(mWorkDir, CALIBRATION_LOG_FILE);
-            var targetFilePath = Path.Combine(mDatasetFolderPathRemote, CALIBRATION_LOG_FILE);
+            var targetFilePath = Path.Combine(mDatasetDirectoryPathRemote, CALIBRATION_LOG_FILE);
 
             if (!File.Exists(calibrationLogFilePath))
             {
                 msg = "CalibrationLog.txt not found at " + mWorkDir;
                 if (File.Exists(targetFilePath))
                 {
-                    msg += "; this is OK since " + CALIBRATION_LOG_FILE + " exists at " + mDatasetFolderPathRemote;
+                    msg += "; this is OK since " + CALIBRATION_LOG_FILE + " exists at " + mDatasetDirectoryPathRemote;
                     OnDebugEvent(msg);
                 }
                 else
                 {
-                    msg += "; in addition, could not find " + CALIBRATION_LOG_FILE + " at " + mDatasetFolderPathRemote;
+                    msg += "; in addition, could not find " + CALIBRATION_LOG_FILE + " at " + mDatasetDirectoryPathRemote;
                     OnErrorEvent(msg);
                 }
             }
@@ -990,7 +991,7 @@ namespace ImsDemuxPlugin
                 var demuxOptions = new udtDemuxOptionsType
                 {
                     ResumeDemultiplexing = false,
-                    CheckpointTargetFolder = string.Empty,
+                    CheckpointTargetDirectory = string.Empty,
                     CalibrateOnly = true
                 };
 
@@ -1046,16 +1047,16 @@ namespace ImsDemuxPlugin
 
             var uimfLogEntryAccessor = new UIMFDemultiplexer.clsUIMFLogEntryAccessor();
 
-            var fi = new FileInfo(inputFilePath);
-            var folderName = fi.DirectoryName;
+            var inputFile = new FileInfo(inputFilePath);
+            var directoryName = inputFile.DirectoryName;
 
-            if (string.IsNullOrEmpty(folderName))
+            if (string.IsNullOrEmpty(directoryName))
             {
-                errorMessage = "Could not determine the parent folder for " + inputFilePath;
+                errorMessage = "Could not determine the parent directory for " + inputFilePath;
                 OnErrorEvent(errorMessage);
                 return false;
             }
-            var outputFilePath = Path.Combine(folderName, datasetName + DECODED_UIMF_SUFFIX);
+            var outputFilePath = Path.Combine(directoryName, datasetName + DECODED_UIMF_SUFFIX);
 
             try
             {
@@ -1101,7 +1102,7 @@ namespace ImsDemuxPlugin
                 }
 
                 // Enable checkpoint file creation
-                demuxOptions.CheckpointTargetFolder = mDatasetFolderPathRemote;
+                demuxOptions.CheckpointTargetDirectory = mDatasetDirectoryPathRemote;
 
                 var success = RunUIMFDemultiplexer(inputFilePath, outputFilePath, demuxOptions, MAX_DEMUX_RUNTIME_MINUTES, out errorMessage);
 
@@ -1151,7 +1152,7 @@ namespace ImsDemuxPlugin
             // Example Console output:
             //
             // Demultiplexing PlasmaND_2pt5ng_0pt005fmol_Frac05_9Sep14_Methow_14-06-13_encoded.uimf
-            //  in folder F:\My Documents\Projects\DataMining\UIMFDemultiplexer\UIMFDemultiplexer_Console\bin
+            //  in directory F:\My Documents\Projects\DataMining\UIMFDemultiplexer\UIMFDemultiplexer_Console\bin
             // Auto-switching instrument from IMS4 to QTOF
             //
             // Cloning .UIMF file
@@ -1339,18 +1340,18 @@ namespace ImsDemuxPlugin
 
             try
             {
-                var fiInputFile = new FileInfo(inputFilePath);
-                var fiOutputFile = new FileInfo(outputFilePath);
+                var inputFile = new FileInfo(inputFilePath);
+                var outputFile = new FileInfo(outputFilePath);
 
                 // Construct the command line arguments
 
                 // Input file
                 var arguments = clsConversion.PossiblyQuotePath(inputFilePath);
 
-                if (!string.Equals(fiInputFile.DirectoryName, fiOutputFile.DirectoryName, StringComparison.OrdinalIgnoreCase))
+                if (!string.Equals(inputFile.DirectoryName, outputFile.DirectoryName, StringComparison.OrdinalIgnoreCase))
                 {
                     // Output directory
-                    arguments += " /O:" + clsConversion.PossiblyQuotePath(fiOutputFile.DirectoryName);
+                    arguments += " /O:" + clsConversion.PossiblyQuotePath(outputFile.DirectoryName);
                 }
 
                 if (demuxOptions.CalibrateOnly)
@@ -1369,7 +1370,7 @@ namespace ImsDemuxPlugin
                     mCalibrating = false;
 
                     // Output file name
-                    arguments += " /N:" + clsConversion.PossiblyQuotePath(fiOutputFile.Name);
+                    arguments += " /N:" + clsConversion.PossiblyQuotePath(outputFile.Name);
 
                     if (demuxOptions.NumBitsForEncoding > 1)
                     {
@@ -1403,9 +1404,9 @@ namespace ImsDemuxPlugin
                         arguments += " /SkipCalibration";
                     }
 
-                    if (!string.IsNullOrEmpty(demuxOptions.CheckpointTargetFolder))
+                    if (!string.IsNullOrEmpty(demuxOptions.CheckpointTargetDirectory))
                     {
-                        arguments += " /CheckPointFolder:" + clsConversion.PossiblyQuotePath(demuxOptions.CheckpointTargetFolder);
+                        arguments += " /CheckPointDirectory:" + clsConversion.PossiblyQuotePath(demuxOptions.CheckpointTargetDirectory);
                     }
                 }
 
@@ -1477,7 +1478,7 @@ namespace ImsDemuxPlugin
             var svrPath = Path.Combine(taskParams.GetParam("Storage_Vol_External"), taskParams.GetParam("Storage_Path"));
             var datasetDirectory = taskParams.GetParam(taskParams.HasParam("Directory") ? "Directory" : "Folder");
 
-            mDatasetFolderPathRemote = Path.Combine(svrPath, datasetDirectory);
+            mDatasetDirectoryPathRemote = Path.Combine(svrPath, datasetDirectory);
         }
 
         /// <summary>
@@ -1494,9 +1495,9 @@ namespace ImsDemuxPlugin
             // Make sure the Log_Entries table contains entry "Finished demultiplexing" (with today's date)
             var uimfLogEntryAccessor = new UIMFDemultiplexer.clsUIMFLogEntryAccessor();
 
-            var dtDemultiplexingFinished = uimfLogEntryAccessor.GetDemultiplexingFinishDate(localUimfDecodedFilePath, out var logEntryAccessorMsg);
+            var demultiplexingFinished= uimfLogEntryAccessor.GetDemultiplexingFinishDate(localUimfDecodedFilePath, out var logEntryAccessorMsg);
 
-            if (dtDemultiplexingFinished == DateTime.MinValue)
+            if (demultiplexingFinished == DateTime.MinValue)
             {
                 returnData.CloseoutMsg = "Demultiplexing finished message not found in Log_Entries table";
                 msg = returnData.CloseoutMsg + " in " + localUimfDecodedFilePath;
@@ -1510,16 +1511,16 @@ namespace ImsDemuxPlugin
             }
             else
             {
-                if (DateTime.Now.Subtract(dtDemultiplexingFinished).TotalMinutes < 5)
+                if (DateTime.Now.Subtract(demultiplexingFinished).TotalMinutes < 5)
                 {
-                    msg = "Demultiplexing finished message in Log_Entries table has date " + dtDemultiplexingFinished;
+                    msg = "Demultiplexing finished message in Log_Entries table has date " + demultiplexingFinished;
                     OnDebugEvent(msg);
                     uimfDemultiplexed = true;
                 }
                 else
                 {
                     returnData.CloseoutMsg = "Demultiplexing finished message in Log_Entries table is more than 5 minutes old";
-                    msg = returnData.CloseoutMsg + ": " + dtDemultiplexingFinished + "; assuming this is a demultiplexing failure";
+                    msg = returnData.CloseoutMsg + ": " + demultiplexingFinished + "; assuming this is a demultiplexing failure";
                     if (!string.IsNullOrEmpty(logEntryAccessorMsg))
                     {
                         msg += "; " + logEntryAccessorMsg;
@@ -1547,9 +1548,9 @@ namespace ImsDemuxPlugin
             // Make sure the Log_Entries table contains entry "Applied calibration coefficients to all frames" (with today's date)
             var uimfLogEntryAccessor = new UIMFDemultiplexer.clsUIMFLogEntryAccessor();
 
-            var dtCalibrationApplied = uimfLogEntryAccessor.GetCalibrationFinishDate(localUimfDecodedFilePath, out var logEntryAccessorMsg);
+            var calibrationApplied = uimfLogEntryAccessor.GetCalibrationFinishDate(localUimfDecodedFilePath, out var logEntryAccessorMsg);
 
-            if (dtCalibrationApplied == DateTime.MinValue)
+            if (calibrationApplied == DateTime.MinValue)
             {
                 const string logMessage = "Applied calibration message not found in Log_Entries table";
                 msg = logMessage + " in " + localUimfDecodedFilePath;
@@ -1564,16 +1565,16 @@ namespace ImsDemuxPlugin
             }
             else
             {
-                if (DateTime.Now.Subtract(dtCalibrationApplied).TotalMinutes < 5)
+                if (DateTime.Now.Subtract(calibrationApplied).TotalMinutes < 5)
                 {
-                    msg = "Applied calibration message in Log_Entries table has date " + dtCalibrationApplied;
+                    msg = "Applied calibration message in Log_Entries table has date " + calibrationApplied;
                     OnDebugEvent(msg);
                     uimfCalibrated = true;
                 }
                 else
                 {
                     const string logMessage = "Applied calibration message in Log_Entries table is more than 5 minutes old";
-                    msg = logMessage + ": " + dtCalibrationApplied + "; assuming this is a calibration failure";
+                    msg = logMessage + ": " + calibrationApplied + "; assuming this is a calibration failure";
                     if (!string.IsNullOrEmpty(logEntryAccessorMsg))
                     {
                         msg += "; " + logEntryAccessorMsg;

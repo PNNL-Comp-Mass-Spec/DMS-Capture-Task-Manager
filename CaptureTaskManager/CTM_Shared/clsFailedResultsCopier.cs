@@ -21,9 +21,9 @@ namespace CaptureTaskManager
         }
 
         // ReSharper disable once UnusedMember.Global
-        public void CopyFailedResultsToArchiveFolder(string resultsFolderPath)
+        public void CopyFailedResultsToArchiveDirectory(string resultsDirectoryPath)
         {
-            var failedResultsFolderPath = string.Empty;
+            var failedResultsDirectoryPath = string.Empty;
 
             try
             {
@@ -31,77 +31,84 @@ namespace CaptureTaskManager
                 failedResultsFolderPath = mMgrParams.GetParam("FailedResultsFolderPath");
 
                 if (string.IsNullOrEmpty(failedResultsFolderPath))
+
+                if (string.IsNullOrEmpty(failedResultsDirectoryPath))
                 {
-                    // Failed results folder path is not defined; don't try to copy the results anywhere
-                    LogWarning("FailedResultsFolderPath is not defined for this manager; cannot copy results");
+                    failedResultsDirectoryPath = mMgrParams.GetParam("FailedResultsFolderPath");
+                }
+
+                if (string.IsNullOrEmpty(failedResultsDirectoryPath))
+                {
+                    // Failed results folder directory is not defined; don't try to copy the results anywhere
+                    LogWarning("FailedResultsDirectoryPath or FailedResultsFolderPath not defined for this manager; cannot copy results");
                     return;
                 }
 
-                var diSourceFolder = new DirectoryInfo(resultsFolderPath);
-                var diFailedResultsFolder = new DirectoryInfo(failedResultsFolderPath);
+                var sourceDirectory = new DirectoryInfo(resultsDirectoryPath);
+                var failedResultsDirectory = new DirectoryInfo(failedResultsDirectoryPath);
 
                 // Make sure the failed results folder exists
-                if (!diFailedResultsFolder.Exists)
+                if (!failedResultsDirectory.Exists)
                 {
-                    diFailedResultsFolder.Create();
+                    failedResultsDirectory.Create();
                 }
 
                 // Define the target folder name to be Dataset_Job_Step
 
-                var targetFolderPath = mTaskParams.GetParam("Dataset");
-                if (string.IsNullOrEmpty(targetFolderPath))
+                var targetDirectoryPath = mTaskParams.GetParam("Dataset");
+                if (string.IsNullOrEmpty(targetDirectoryPath))
                 {
-                    targetFolderPath = "Unknown_Dataset";
+                    targetDirectoryPath = "Unknown_Dataset";
                 }
 
-                targetFolderPath += "_Job" + mTaskParams.GetParam("Job") + "_Step" + mTaskParams.GetParam("Step");
+                targetDirectoryPath += "_Job" + mTaskParams.GetParam("Job") + "_Step" + mTaskParams.GetParam("Step");
 
-                targetFolderPath = Path.Combine(diFailedResultsFolder.FullName, targetFolderPath);
-                var targetFolder = new DirectoryInfo(targetFolderPath);
+                targetDirectoryPath = Path.Combine(failedResultsDirectory.FullName, targetDirectoryPath);
+                var targetDirectory = new DirectoryInfo(targetDirectoryPath);
 
-                var folderInfoFilePath = string.Empty;
+                var infoFilePath = string.Empty;
 
                 // Create an info file that describes the saved results
                 try
                 {
-                    folderInfoFilePath = Path.Combine(diFailedResultsFolder.FullName,
-                                                         FAILED_RESULTS_FOLDER_INFO_TEXT + targetFolder.Name + ".txt");
-                    CreateInfoFile(folderInfoFilePath, targetFolder.Name);
+                    infoFilePath = Path.Combine(failedResultsDirectory.FullName,
+                                                         FAILED_RESULTS_FOLDER_INFO_TEXT + targetDirectory.Name + ".txt");
+                    CreateInfoFile(infoFilePath, targetDirectory.Name);
                 }
                 catch (Exception ex)
                 {
-                    LogError("Error creating the results folder info file '" + folderInfoFilePath + "'", ex);
+                    LogError("Error creating the results folder info file '" + infoFilePath + "'", ex);
                 }
 
                 // Make sure the source folder exists
-                if (!diSourceFolder.Exists)
+                if (!sourceDirectory.Exists)
                 {
-                    LogError("Source folder not found; cannot copy results: " + resultsFolderPath);
+                    LogError("Source folder not found; cannot copy results: " + resultsDirectoryPath);
                 }
                 else
                 {
                     // Look for failed results folders that were archived over FAILED_RESULTS_FOLDER_RETAIN_DAYS days ago
-                    DeleteOldFailedResultsFolders(diFailedResultsFolder);
+                    DeleteOldFailedResultsDirectories(failedResultsDirectory);
 
                     // Create the target folder
-                    if (!targetFolder.Exists)
+                    if (!targetDirectory.Exists)
                     {
-                        targetFolder.Create();
+                        targetDirectory.Create();
                     }
 
                     // Actually copy files from the source folder to the target folder
-                    LogMessage("Copying data files to failed results archive: " + resultsFolderPath);
+                    LogMessage("Copying data files to failed results archive: " + resultsDirectoryPath);
 
                     var errorCount = 0;
-                    foreach (var fiFileInfo in diSourceFolder.GetFiles())
+                    foreach (var sourceFile in sourceDirectory.GetFiles())
                     {
                         try
                         {
-                            fiFileInfo.CopyTo(Path.Combine(targetFolder.FullName, fiFileInfo.Name), true);
+                            sourceFile.CopyTo(Path.Combine(targetDirectory.FullName, sourceFile.Name), true);
                         }
                         catch (Exception ex2)
                         {
-                            LogError("Error copying file from " + resultsFolderPath + " to " + failedResultsFolderPath, ex2);
+                            LogError("Error copying file from " + resultsDirectoryPath + " to " + failedResultsDirectoryPath, ex2);
                             errorCount++;
                         }
                     }
@@ -118,35 +125,32 @@ namespace CaptureTaskManager
             }
             catch (Exception ex)
             {
-                LogError("Error copying results from " + resultsFolderPath + " to " + failedResultsFolderPath, ex);
+                LogError("Error copying results from " + resultsDirectoryPath + " to " + failedResultsDirectoryPath, ex);
             }
         }
 
         private void CreateInfoFile(string folderInfoFilePath, string resultsFolderName)
         {
-            var swArchivedFolderInfoFile = new StreamWriter(new FileStream(folderInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
-
+            using (var infoFileWriter = new StreamWriter(new FileStream(folderInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
             {
-                swArchivedFolderInfoFile.WriteLine("Date\t" + DateTime.Now);
-                swArchivedFolderInfoFile.WriteLine("ResultsFolderName\t" + resultsFolderName);
-                swArchivedFolderInfoFile.WriteLine("Manager\t" + mMgrParams.GetParam("MgrName"));
+                infoFileWriter.WriteLine("Date\t" + DateTime.Now);
+                infoFileWriter.WriteLine("ResultsFolderName\t" + resultsFolderName);
+                infoFileWriter.WriteLine("Manager\t" + mMgrParams.GetParam("MgrName"));
                 if (mTaskParams != null)
                 {
-                    swArchivedFolderInfoFile.WriteLine("Job\t" + mTaskParams.GetParam("Job"));
-                    swArchivedFolderInfoFile.WriteLine("Step\t" + mTaskParams.GetParam("Step"));
-                    swArchivedFolderInfoFile.WriteLine("StepTool\t" + mTaskParams.GetParam("StepTool"));
-                    swArchivedFolderInfoFile.WriteLine("Dataset\t" + mTaskParams.GetParam("Dataset"));
+                    infoFileWriter.WriteLine("Job\t" + mTaskParams.GetParam("Job"));
+                    infoFileWriter.WriteLine("Step\t" + mTaskParams.GetParam("Step"));
+                    infoFileWriter.WriteLine("StepTool\t" + mTaskParams.GetParam("StepTool"));
+                    infoFileWriter.WriteLine("Dataset\t" + mTaskParams.GetParam("Dataset"));
                 }
-                swArchivedFolderInfoFile.WriteLine("Date\t" + DateTime.Now);
+                infoFileWriter.WriteLine("Date\t" + DateTime.Now);
             }
-
-            swArchivedFolderInfoFile.Close();
         }
 
-        private void DeleteOldFailedResultsFolders(DirectoryInfo failedResultsFolder)
+        private void DeleteOldFailedResultsDirectories(DirectoryInfo failedResultsDirectory)
         {
             // Determine the folder archive time by reading the modification times on the ResultsFolderInfo_ files
-            foreach (var resultFile in failedResultsFolder.GetFiles(FAILED_RESULTS_FOLDER_INFO_TEXT + "*"))
+            foreach (var resultFile in failedResultsDirectory.GetFiles(FAILED_RESULTS_FOLDER_INFO_TEXT + "*"))
             {
                 if (DateTime.UtcNow.Subtract(resultFile.LastWriteTimeUtc).TotalDays <= FAILED_RESULTS_FOLDER_RETAIN_DAYS)
                 {
@@ -157,7 +161,7 @@ namespace CaptureTaskManager
 
                 try
                 {
-                    var oldResultsFolderName = Path.GetFileNameWithoutExtension(resultFile.Name).Substring(FAILED_RESULTS_FOLDER_INFO_TEXT.Length);
+                    var oldResultsDirectoryName = Path.GetFileNameWithoutExtension(resultFile.Name).Substring(FAILED_RESULTS_FOLDER_INFO_TEXT.Length);
 
                     if (resultFile.DirectoryName == null)
                     {
@@ -165,13 +169,13 @@ namespace CaptureTaskManager
                         continue;
                     }
 
-                    var diOldResultsFolder = new DirectoryInfo(Path.Combine(resultFile.DirectoryName, oldResultsFolderName));
+                    var oldResultsDirectory = new DirectoryInfo(Path.Combine(resultFile.DirectoryName, oldResultsDirectoryName));
 
-                    if (diOldResultsFolder.Exists)
+                    if (oldResultsDirectory.Exists)
                     {
-                        LogMessage("Deleting old failed results folder: " + diOldResultsFolder.FullName);
+                        LogMessage("Deleting old failed results directory: " + oldResultsDirectory.FullName);
 
-                        diOldResultsFolder.Delete(true);
+                        oldResultsDirectory.Delete(true);
                     }
 
                     var targetFilePath = string.Empty;

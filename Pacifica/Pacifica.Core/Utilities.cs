@@ -401,17 +401,17 @@ namespace Pacifica.Core
                 var value = jsa.Pop();
                 if (value.GetType().Name == "JsonNumber")
                 {
-                    var dctValue = new Dictionary<string, object> {
+                    var parsedValue = new Dictionary<string, object> {
                         { value.ToString(), string.Empty}
                     };
-                    parsedItems.Add(dctValue);
+                    parsedItems.Add(parsedValue);
                 }
                 else if (value.GetType().Name == "String")
                 {
-                    var dctValue = new Dictionary<string, object> {
+                    var parsedValue = new Dictionary<string, object> {
                         { value.ToString(), string.Empty}
                     };
-                    parsedItems.Add(dctValue);
+                    parsedItems.Add(parsedValue);
                 }
                 else if (value.GetType().Name == "JsonObject")
                 {
