@@ -498,7 +498,6 @@ namespace DatasetInfoPlugin
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                 // ReSharper disable HeuristicUnreachableCode
                 if (brukerDotDBaf && IGNORE_BRUKER_BAF_ERRORS)
-#pragma warning disable 162
                 {
                     // 12T_FTICR_B datasets (with .D directories and analysis.baf and/or fid files) sometimes work with MSFileInfoScanner, and sometimes don't
                     // The problem is that ProteoWizard doesn't support certain forms of these datasets
@@ -512,7 +511,6 @@ namespace DatasetInfoPlugin
                     returnData.EvalCode = EnumEvalCode.EVAL_CODE_NOT_EVALUATED;
                     return returnData;
                 }
-#pragma warning restore 162
                 // ReSharper restore HeuristicUnreachableCode
 
                 if (primaryFileOrDirectoryProcessed)

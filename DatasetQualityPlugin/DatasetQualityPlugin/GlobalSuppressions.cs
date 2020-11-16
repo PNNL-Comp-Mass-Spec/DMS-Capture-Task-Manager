@@ -5,5 +5,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable name", Scope = "type", Target = "~T:DatasetQualityPlugin.clsMetaDataFile")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable name", Scope = "type", Target = "~T:DatasetQualityPlugin.clsPluginMain")]
 [assembly: SuppressMessage("Performance", "RCS1197:Optimize StringBuilder.Append/AppendLine call.", Justification = "Optimization not necessary", Scope = "module")]
 [assembly: SuppressMessage("Readability", "RCS1123:Add parentheses when necessary.", Justification = "Parentheses not required", Scope = "member", Target = "~M:DatasetQualityPlugin.clsPluginMain.ParseConsoleOutputFile")]

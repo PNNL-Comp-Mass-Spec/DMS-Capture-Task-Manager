@@ -920,6 +920,7 @@ namespace CaptureToolPlugin
         {
             bool success;
 
+            // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
             if (connectionType == ConnectionType.DotNET)
             {
                 success = ConnectToShare(userName, pwd, directorySharePath, out mShareConnectorDotNET, out closeoutType, out evalCode);

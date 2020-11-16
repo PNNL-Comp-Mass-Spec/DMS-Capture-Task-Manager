@@ -8,6 +8,8 @@ namespace CaptureTaskManager
     {
         public void TestConnection()
         {
+            // Ignore Spelling: ftms, lcmsoperator
+
             Console.WriteLine("Code test mode");
 
             var credentials = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);

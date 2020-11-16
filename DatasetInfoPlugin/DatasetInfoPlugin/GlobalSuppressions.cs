@@ -6,6 +6,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "<Pending>", Scope = "type", Target = "~T:DatasetInfoPlugin.clsPluginMain")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable name", Scope = "type", Target = "~T:DatasetInfoPlugin.clsPluginMain")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable name", Scope = "type", Target = "~T:DatasetInfoPlugin.clsDatasetInfoXmlMerger")]
 [assembly: SuppressMessage("Usage", "RCS1246:Use element access.", Justification = "Prefer to use .First()", Scope = "module")]
 [assembly: SuppressMessage("Readability", "RCS1123:Add parentheses when necessary.", Justification = "Parentheses not required", Scope = "member", Target = "~M:DatasetInfoPlugin.clsPluginMain.MsFileScanner_WarningEvent(System.String)")]
