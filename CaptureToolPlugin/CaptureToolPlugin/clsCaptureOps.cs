@@ -297,13 +297,16 @@ namespace CaptureToolPlugin
                 }
 
                 var foundFiles = datasetDirectory.GetFiles();
-                var filesToSkip = datasetDirectory.GetFiles("LCMethod*.xml");
+                var filesToSkip = datasetDirectory.GetFiles("LCMethod*.xml").ToList();
+
+                // Also skip files with extensions .#FilePart# or .#FilePartInfo#
+                filesToSkip.AddRange(datasetDirectory.GetFiles("*.#FilePart*#"));
 
                 // Rename superseded files (but skip LCMethod files)
                 foreach (var fileToRename in foundFiles)
                 {
                     // Rename the file, but only if it is not in filesToSkip
-                    var skipFile = filesToSkip.Any(fiFileToSkip => fiFileToSkip.FullName == fileToRename.FullName);
+                    var skipFile = filesToSkip.Any(fileToSkip => fileToSkip.FullName == fileToRename.FullName);
 
                     if (fileToRename.Name.StartsWith("x_") && foundFiles.Length == 1)
                     {
