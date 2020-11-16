@@ -23,7 +23,12 @@ namespace CaptureToolPlugin
     {
         // Ignore Spelling: Username, bionet, Pwd, prepend, Unsubscribe, fso, secfso, Subfolder, dotnet, lcMethod, mcf, idx, ser, jpg
 
-        #region "Enums"
+        #region "Constants and Enums"
+
+        /// <summary>
+        /// Use copy with resume for files over 500 MB in size
+        /// </summary>
+        private const int COPY_WITH_RESUME_THRESHOLD_BYTES = 500 * 1024 * 1024;
 
         private enum DatasetDirectoryState
         {
@@ -1740,20 +1745,20 @@ namespace CaptureToolPlugin
                         LogMessage("Renaming '" + sourceFileName + "' to '" + targetFileName + "' to remove spaces");
                     }
 
-                    if (copyWithResume)
+                    var sourceFile = new FileInfo(sourceFilePath);
+                    if (!File.Exists(sourceFilePath))
                     {
-                        var fiSourceFile = new FileInfo(sourceFilePath);
+                        msg = "source file not found at " + sourceFilePath;
+                        LogError("  " + msg + GetConnectionDescription());
+                        break;
+                    }
 
-                        success = mFileTools.CopyFileWithResume(fiSourceFile, targetFilePath, out _);
+                    if (copyWithResume || sourceFile.Length > COPY_WITH_RESUME_THRESHOLD_BYTES)
+                    {
+                        success = mFileTools.CopyFileWithResume(sourceFile, targetFilePath, out _);
                     }
                     else
                     {
-                        if (!File.Exists(sourceFilePath))
-                        {
-                            msg = "source file not found at " + sourceFilePath;
-                            LogError("  " + msg + GetConnectionDescription());
-                            break;
-                        }
                         File.Copy(sourceFilePath, targetFilePath);
                         success = true;
                     }
