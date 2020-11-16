@@ -60,6 +60,8 @@ namespace CaptureTaskManager
         /// <returns>Value for specified parameter; valueIfMissing if not found</returns>
         int GetParam(string itemKey, int valueIfMissing);
 
+        bool HasParam(string name);
+
         /// <summary>
         /// Sets a parameter in the parameters string dictionary
         /// </summary>

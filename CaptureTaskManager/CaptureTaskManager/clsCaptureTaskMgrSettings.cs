@@ -93,6 +93,16 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
+        /// Check for the existence of a job task parameter
+        /// </summary>
+        /// <param name="name">Parameter name</param>
+        /// <returns>True if the parameter is defined, false if not</returns>
+        public bool HasParam(string name)
+        {
+            return MgrParams.ContainsKey(name);
+        }
+
+        /// <summary>
         /// Updates manager settings, then loads settings from the database
         /// </summary>
         /// <param name="configFileSettings">Manager settings loaded from file AppName.exe.config</param>
