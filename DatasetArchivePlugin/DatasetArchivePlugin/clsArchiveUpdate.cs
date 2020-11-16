@@ -88,7 +88,7 @@ namespace DatasetArchivePlugin
 
             const bool PUSH_TO_TEST_SERVER = false;
 
-            var debugTestInstanceOnly = PUSH_TO_TEST_SERVER;
+            const bool debugTestInstanceOnly = PUSH_TO_TEST_SERVER;
 
             bool allowRetry;
             string criticalErrorMessage;

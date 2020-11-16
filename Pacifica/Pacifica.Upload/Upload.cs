@@ -333,7 +333,8 @@ namespace Pacifica.Upload
                 return true;
             }
 
-            var location = "upload";
+            const string location = "upload";
+
             var serverUri = "https://ServerIsOffline/dummy_page?test";
 
             if (debugMode == TarStreamUploader.UploadDebugMode.MyEMSLOfflineMode)

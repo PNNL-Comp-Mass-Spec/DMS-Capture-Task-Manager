@@ -334,16 +334,8 @@ namespace DatasetInfoPlugin
                 }
             }
 
-            bool useLocalOutputDirectory;
-            if (System.Net.Dns.GetHostName().StartsWith("monroe", StringComparison.OrdinalIgnoreCase) &&
-                !Environment.UserName.StartsWith("svc", StringComparison.OrdinalIgnoreCase))
-            {
-                useLocalOutputDirectory = true;
-            }
-            else
-            {
-                useLocalOutputDirectory = false;
-            }
+            var useLocalOutputDirectory = System.Net.Dns.GetHostName().StartsWith("monroe", StringComparison.OrdinalIgnoreCase) &&
+                                          !Environment.UserName.StartsWith("svc", StringComparison.OrdinalIgnoreCase);
 
             // Call the file scanner DLL
             // Typically only call it once, but for Bruker datasets with multiple .D directories, we'll call it once for each .D directory
@@ -1563,7 +1555,7 @@ namespace DatasetInfoPlugin
 
             if (pngFiles.Length == 0)
             {
-                var errMsg = "No PNG files were created";
+                const string errMsg = "No PNG files were created";
                 if (primaryFileOrDirectoryProcessed)
                 {
                     LogWarning(errMsg);
@@ -1577,7 +1569,7 @@ namespace DatasetInfoPlugin
                 return false;
             }
 
-            var minimumGraphicsSizeKB = 10;
+            const int minimumGraphicsSizeKB = 10;
 
             var validGraphics = false;
             foreach (var pngFile in pngFiles)
@@ -1618,7 +1610,7 @@ namespace DatasetInfoPlugin
         /// </summary>
         /// <param name="message">Error message</param>
         /// <param name="ex"></param>
-        void MsFileScanner_ErrorEvent(string message, Exception ex)
+        private void MsFileScanner_ErrorEvent(string message, Exception ex)
         {
             var errorMsg = "Error running MSFileInfoScanner: " + message;
 

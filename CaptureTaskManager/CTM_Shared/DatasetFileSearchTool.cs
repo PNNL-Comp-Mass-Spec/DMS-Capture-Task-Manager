@@ -283,7 +283,7 @@ namespace CaptureTaskManager
                     {
                         datasetInfo.FileOrDirectoryName = datasetName;
                         datasetInfo.DatasetType = DatasetInfo.RawDSTypes.MultiFile;
-                        var fileNames = foundFiles.Select(file => file.Name).ToList();
+                        var fileNames = foundFiles.ConvertAll(file => file.Name);
                         OnWarningEvent(string.Format(
                                            "Dataset name matched multiple files for iteration {0} in directory {1}: {2}",
                                            i,

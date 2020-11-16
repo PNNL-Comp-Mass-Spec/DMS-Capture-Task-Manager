@@ -313,7 +313,7 @@ namespace Pacifica.DMS_Metadata
         {
             var queryString = "SELECT EUS_Person_ID FROM V_Requested_Run_EUS_Users_Export WHERE Request_ID = " + requestedRunID;
 
-            var success = dbTools.GetQueryResultsDataTable(queryString, out var table, retryCount, 5);
+            dbTools.GetQueryResultsDataTable(queryString, out var table, retryCount, 5);
 
             var personList = new List<int>();
 

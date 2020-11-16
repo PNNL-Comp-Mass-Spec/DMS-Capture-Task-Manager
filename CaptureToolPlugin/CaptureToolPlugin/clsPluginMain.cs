@@ -52,15 +52,7 @@ namespace CaptureToolPlugin
 
             // Determine if instrument is on Bionet
             var capMethod = mTaskParams.GetParam("Method");
-            bool useBionet;
-            if (string.Equals(capMethod, "secfso", StringComparison.OrdinalIgnoreCase))
-            {
-                useBionet = true;
-            }
-            else
-            {
-                useBionet = false;
-            }
+            var useBionet = string.Equals(capMethod, "secfso", StringComparison.OrdinalIgnoreCase);
 
             ResetTimestampForQueueWaitTimeLogging();
 

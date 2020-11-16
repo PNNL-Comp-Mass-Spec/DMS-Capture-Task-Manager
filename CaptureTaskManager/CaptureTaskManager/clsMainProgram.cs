@@ -926,7 +926,7 @@ namespace CaptureTaskManager
                 // Create the tool runner object
                 if (!SetToolRunnerObject(mStepTool))
                 {
-                    var errMsg = "Unable to SetToolRunnerObject";
+                    const string errMsg = "Unable to SetToolRunnerObject";
                     LogError(mMgrName + ": " + errMsg + ", job " + mJob + ", Dataset " + mDataset, true);
 
                     mTask.CloseTask(EnumCloseOutType.CLOSEOUT_FAILED, errMsg);
@@ -1382,11 +1382,9 @@ namespace CaptureTaskManager
 
             // Always use the UNC path defined by Storage_Vol_External when checking drive free space
             // Example path is: \\Proto-7\
-            var datasetStoragePathBase = mTask.GetParam("Storage_Vol_External");
+            var storageVolume = mTask.GetParam("Storage_Vol_External");
 
-            datasetStoragePathBase = Path.Combine(datasetStoragePathBase, storagePath);
-
-            return datasetStoragePathBase;
+            return Path.Combine(storageVolume, storagePath);
         }
 
         /// <summary>
@@ -1491,7 +1489,7 @@ namespace CaptureTaskManager
 
                     if (System.Net.Dns.GetHostName().StartsWith("monroe", StringComparison.OrdinalIgnoreCase))
                     {
-                        Console.WriteLine(@"Warning: " + errMsg);
+                        Console.WriteLine("Warning: " + errMsg);
                         return true;
                     }
 

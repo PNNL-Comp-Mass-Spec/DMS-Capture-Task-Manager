@@ -478,12 +478,7 @@ namespace CaptureTaskManager
                 waitTimeLogIntervalSeconds = 30;
             }
 
-            if (DateTime.UtcNow.Subtract(lastLockQueueWaitTimeLog).TotalSeconds >= waitTimeLogIntervalSeconds)
-            {
-                return true;
-            }
-
-            return false;
+            return DateTime.UtcNow.Subtract(lastLockQueueWaitTimeLog).TotalSeconds >= waitTimeLogIntervalSeconds;
         }
 
         /// <summary>

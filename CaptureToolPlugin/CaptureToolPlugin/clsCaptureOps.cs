@@ -2198,7 +2198,7 @@ namespace CaptureToolPlugin
                     clsToolRunnerBase.ShowTraceMessage(
                         string.Format("Copying from\n{0} to\n{1}", sourceDirectoryToUse.FullName, targetDirectory.FullName));
 
-                    var waitTimeSeconds = 5;
+                    const int waitTimeSeconds = 5;
                     Console.WriteLine();
                     ConsoleMsgUtils.ShowDebug("Pausing for {0} seconds since TraceMode is enabled; review the directory paths", waitTimeSeconds);
 
@@ -3632,7 +3632,7 @@ namespace CaptureToolPlugin
                                 returnData.CloseoutMsg = "Dataset name matched " + entityDescription +
                                                          " with multiple .raw files; there must be only one .raw file";
 
-                                var fileNames = foundFiles.Select(file => file.Name).ToList();
+                                var fileNames = foundFiles.ConvertAll(file => file.Name);
                                 LogWarning("Multiple .raw files found in directory " + sourceDirectory.FullName + ": " + string.Join(", ", fileNames.Take(5)));
                             }
                             else
@@ -3696,7 +3696,7 @@ namespace CaptureToolPlugin
                                 }
                             }
 
-                            var fileNames = foundFiles.Select(file => file.Name).ToList();
+                            var fileNames = foundFiles.ConvertAll(file => file.Name);
                             LogWarning(
                                 "Dataset name matched multiple files in directory " + sourceDirectory.FullName + ": " +
                                 string.Join(", ", fileNames.Take(5)));
@@ -3782,7 +3782,7 @@ namespace CaptureToolPlugin
                                 returnData.CloseoutMsg = "Dataset name matched " + entityDescription +
                                                       " with multiple .uimf files; there must be only one .uimf file";
 
-                                var fileNames = foundFiles.Select(file => file.Name).ToList();
+                                var fileNames = foundFiles.ConvertAll(file => file.Name);
                                 LogWarning("Multiple .uimf files found in directory " + sourceDirectory.FullName + ": " + string.Join(", ", fileNames).Take(5));
                             }
                             else

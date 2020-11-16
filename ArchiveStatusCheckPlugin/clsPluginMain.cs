@@ -323,7 +323,7 @@ namespace ArchiveStatusCheckPlugin
                 }
             }
 
-            if (statusNumsToIgnore.Count <= 0)
+            if (statusNumsToIgnore.Count == 0)
                 return;
 
             // Found some URIs that we can ignore
@@ -431,7 +431,7 @@ namespace ArchiveStatusCheckPlugin
             var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: mMgrParams.TraceMode);
             RegisterEvents(dbTools);
 
-            var success = dbTools.GetQueryResultsDataTable(sql, out var table, retryCount, 5);
+            dbTools.GetQueryResultsDataTable(sql, out var table, retryCount, 5);
 
             // Expected fields:
             // StatusNum, Status_URI, subdirectory, Ingest_Steps_Completed, EUS_InstrumentID, EUS_ProposalID, EUS_UploaderID, ErrorCode

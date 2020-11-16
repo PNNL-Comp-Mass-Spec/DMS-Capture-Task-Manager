@@ -284,15 +284,7 @@ namespace SrcFileRenamePlugin
                     continue;
                 }
 
-                bool alreadyRenamed;
-                if (!datasetName.StartsWith("x_") && datasetNameBase.StartsWith("x_"))
-                {
-                    alreadyRenamed = true;
-                }
-                else
-                {
-                    alreadyRenamed = false;
-                }
+                var alreadyRenamed = !datasetName.StartsWith("x_") && datasetNameBase.StartsWith("x_");
 
                 // Get a list of files containing the dataset name
                 var matchedFiles = GetMatchingFiles(sourceDirectory, datasetNameBase);
