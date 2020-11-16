@@ -51,7 +51,7 @@ namespace DatasetInfoPlugin
 
         #region "Class-wide variables"
 
-        iMSFileInfoScanner mMsFileScanner;
+        private iMSFileInfoScanner mMsFileScanner;
 
         private string mMsg;
 
@@ -1685,7 +1685,7 @@ namespace DatasetInfoPlugin
         /// Handles a warning event from MS file scanner
         /// </summary>
         /// <param name="message"></param>
-        void MsFileScanner_WarningEvent(string message)
+        private void MsFileScanner_WarningEvent(string message)
         {
             if (message.StartsWith("Unable to load data for scan"))
             {

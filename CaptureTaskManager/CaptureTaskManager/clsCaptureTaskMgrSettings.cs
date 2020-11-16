@@ -27,7 +27,7 @@ namespace CaptureTaskManager
 
         #region "Constants"
 
-        const string SP_NAME_ACK_MANAGER_UPDATE = "AckManagerUpdateRequired";
+        private const string SP_NAME_ACK_MANAGER_UPDATE = "AckManagerUpdateRequired";
 
         /// <summary>
         /// Connection string to DMS5

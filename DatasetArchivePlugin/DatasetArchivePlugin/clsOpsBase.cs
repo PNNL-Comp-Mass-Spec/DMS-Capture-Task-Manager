@@ -23,7 +23,7 @@ namespace DatasetArchivePlugin
     /// <summary>
     /// Base class for archive and archive update operations classes.
     /// </summary>
-    abstract class clsOpsBase : EventNotifier
+    internal abstract class clsOpsBase : EventNotifier
     {
         // Ignore Spelling: MyEMSLUploader, Unsubscribe
 
@@ -683,7 +683,7 @@ namespace DatasetArchivePlugin
 
         #region "Event Handlers"
 
-        void LogStatusMessageSkipDuplicate(string message)
+        private void LogStatusMessageSkipDuplicate(string message)
         {
             if (!string.Equals(message, mMostRecentLogMessage) || DateTime.UtcNow.Subtract(mMostRecentLogTime).TotalSeconds >= 60)
             {
@@ -693,7 +693,7 @@ namespace DatasetArchivePlugin
             }
         }
 
-        void myEMSLUploader_MetadataDefinedEvent(object sender, MessageEventArgs e)
+        private void myEMSLUploader_MetadataDefinedEvent(object sender, MessageEventArgs e)
         {
             if (mDebugLevel >= 5)
             {
@@ -702,7 +702,7 @@ namespace DatasetArchivePlugin
             }
         }
 
-        void myEMSLUploader_StatusUpdate(object sender, StatusEventArgs e)
+        private void myEMSLUploader_StatusUpdate(object sender, StatusEventArgs e)
         {
             if (DateTime.UtcNow.Subtract(mLastStatusUpdateTime).TotalSeconds >= 60 && e.PercentCompleted > 0)
             {
@@ -759,7 +759,7 @@ namespace DatasetArchivePlugin
             }
         }
 
-        void myEMSLUploader_UploadCompleted(object sender, UploadCompletedEventArgs e)
+        private void myEMSLUploader_UploadCompleted(object sender, UploadCompletedEventArgs e)
         {
             var msg = "  ... MyEmsl upload task complete";
 

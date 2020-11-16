@@ -21,7 +21,7 @@ namespace CaptureTaskManager
     /// <summary>
     /// Application entry class
     /// </summary>
-    static class Program
+    internal static class Program
     {
         // Ignore Spelling: OxyPlot
 
@@ -37,7 +37,7 @@ namespace CaptureTaskManager
         /// <returns>0 if no error; error code if an error</returns>
         /// <remarks>The STAThread attribute is required for OxyPlot functionality</remarks>
         [STAThread]
-        static int Main(string[] args)
+        private static int Main(string[] args)
         {
             mTraceMode = false;
 

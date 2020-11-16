@@ -24,7 +24,7 @@ namespace CaptureTaskManager
     /// <summary>
     /// Handles sending and receiving of control and status messages
     /// </summary>
-    class clsMessageHandler : clsLoggerBase, IDisposable
+    internal class clsMessageHandler : clsLoggerBase, IDisposable
     {
 #region "Class wide variables"
         private MgrSettings mMgrSettings;

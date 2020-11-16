@@ -18,7 +18,7 @@ namespace ArchiveStatusCheckPlugin
 
         #region "Class-wide variables"
 
-        clsToolReturnData mRetData = new clsToolReturnData();
+        private clsToolReturnData mRetData = new clsToolReturnData();
 
         #endregion
 

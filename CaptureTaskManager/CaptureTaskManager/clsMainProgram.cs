@@ -1579,7 +1579,7 @@ namespace CaptureTaskManager
             mFileWatcher.EnableRaisingEvents = false;
         }
 
-        void OnStatusMonitorUpdateReceived(string msg)
+        private void OnStatusMonitorUpdateReceived(string msg)
         {
             if (mMsgQueueInitSuccess)
             {
@@ -1592,7 +1592,7 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        void StatusTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        private void StatusTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
             mStatusFile.WriteStatusFile();
         }

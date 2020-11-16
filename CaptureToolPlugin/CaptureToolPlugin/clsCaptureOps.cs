@@ -80,13 +80,13 @@ namespace CaptureToolPlugin
         private readonly DatasetFileSearchTool mDatasetFileSearchTool;
         private readonly FileTools mFileTools;
 
-        DateTime mLastProgressUpdate = DateTime.Now;
+        private DateTime mLastProgressUpdate = DateTime.Now;
 
-        string mLastProgressFileName = string.Empty;
-        float mLastProgressPercent = -1;
+        private string mLastProgressFileName = string.Empty;
+        private float mLastProgressPercent = -1;
         private bool mFileCopyEventsWired;
 
-        string mErrorMessage = string.Empty;
+        private string mErrorMessage = string.Empty;
 
         #endregion
 

@@ -40,7 +40,7 @@ namespace DatasetQualityPlugin
 
         #region "Class-wide variables"
 
-        clsToolReturnData mRetData = new clsToolReturnData();
+        private clsToolReturnData mRetData = new clsToolReturnData();
 
         private bool mFatalSplineError;
 
@@ -1363,12 +1363,12 @@ namespace DatasetQualityPlugin
             }
         }
 
-        void CmdRunner_Timeout()
+        private void CmdRunner_Timeout()
         {
             LogError("CmdRunner timeout reported");
         }
 
-        void CmdRunner_LoopWaiting()
+        private void CmdRunner_LoopWaiting()
         {
             if (DateTime.UtcNow.Subtract(mLastProgressUpdate).TotalSeconds >= 30)
             {

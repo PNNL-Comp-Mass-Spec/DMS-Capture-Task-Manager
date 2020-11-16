@@ -561,7 +561,7 @@ namespace ImsDemuxPlugin
         /// Reports progress from demux dll
         /// </summary>
         /// <param name="newProgress">Current progress (value between 0 and 100)</param>
-        void clsDemuxTools_DemuxProgress(float newProgress)
+        private void clsDemuxTools_DemuxProgress(float newProgress)
         {
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (ADD_BIN_CENTRIC_TABLES)
@@ -580,7 +580,7 @@ namespace ImsDemuxPlugin
         /// Reports progress for the addition of bin-centric tables
         /// </summary>
         /// <param name="newProgress">Current progress (value between 0 and 100)</param>
-        void clsDemuxTools_BinCentricTableProgress(float newProgress)
+        private void clsDemuxTools_BinCentricTableProgress(float newProgress)
         {
             float progressOverall;
 

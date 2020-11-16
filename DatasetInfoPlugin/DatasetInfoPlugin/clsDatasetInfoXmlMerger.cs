@@ -9,7 +9,7 @@ using System.Xml;
 
 namespace DatasetInfoPlugin
 {
-    class clsDatasetInfoXmlMerger
+    internal class clsDatasetInfoXmlMerger
     {
         private const int DATASET_GAP_THRESHOLD_HOURS = 24;
 

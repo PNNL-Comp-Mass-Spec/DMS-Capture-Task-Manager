@@ -26,7 +26,7 @@ namespace ArchiveVerifyPlugin
         #endregion
 
         #region "Class-wide variables"
-        clsToolReturnData mRetData = new clsToolReturnData();
+        private clsToolReturnData mRetData = new clsToolReturnData();
 
         private int mTotalMismatchCount;
 

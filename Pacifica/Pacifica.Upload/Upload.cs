@@ -226,7 +226,7 @@ namespace Pacifica.Upload
             MyEMSLOffline?.Invoke(this, e);
         }
 
-        void Pacifica_StatusUpdate(object sender, StatusEventArgs e)
+        private void Pacifica_StatusUpdate(object sender, StatusEventArgs e)
         {
             StatusUpdate?.Invoke(this, e);
         }

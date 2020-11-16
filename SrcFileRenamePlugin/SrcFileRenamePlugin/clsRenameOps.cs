@@ -17,7 +17,7 @@ namespace SrcFileRenamePlugin
     /// <summary>
     /// Class for performing rename operations
     /// </summary>
-    class clsRenameOps : EventNotifier
+    internal class clsRenameOps : EventNotifier
     {
         // Ignore Spelling: Bionet, Pwd, prepend, Username, Subfolder, secfso, fso, chromooff, flatline, LCmethod, plugsplit, slowsplit
 

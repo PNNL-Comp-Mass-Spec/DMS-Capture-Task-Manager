@@ -15,7 +15,7 @@ namespace DatasetArchivePlugin
     /// <summary>
     /// Used for both dataset archive and archive update
     /// </summary>
-    class clsArchiveUpdate : clsOpsBase
+    internal class clsArchiveUpdate : clsOpsBase
     {
         // Ignore Spelling: dmsarch
 

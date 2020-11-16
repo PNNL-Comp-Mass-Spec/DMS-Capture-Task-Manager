@@ -1607,12 +1607,12 @@ namespace ImsDemuxPlugin
             }
         }
 
-        void CmdRunner_Timeout()
+        private void CmdRunner_Timeout()
         {
             OnErrorEvent("CmdRunner timeout reported");
         }
 
-        void CmdRunner_LoopWaiting()
+        private void CmdRunner_LoopWaiting()
         {
             if (DateTime.UtcNow.Subtract(mLastProgressUpdateTime).TotalSeconds < 30)
             {

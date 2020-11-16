@@ -16,7 +16,7 @@ namespace CaptureTaskManager
     /// <summary>
     /// Contacts the database to retrieve a task or mark a task as complete (or failed)
     /// </summary>
-    class clsCaptureTask : clsDbTask, ITaskParams
+    internal class clsCaptureTask : clsDbTask, ITaskParams
     {
         #region "Constants"
 
