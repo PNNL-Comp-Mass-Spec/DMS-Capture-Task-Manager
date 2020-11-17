@@ -10,6 +10,8 @@ namespace Pacifica.DMS_Metadata
 {
     public class MyEMSLUploader : EventNotifier
     {
+        // Ignore Spelling: Uploader, Pacifica
+
         public const string RECURSIVE_UPLOAD = "MyEMSL_Recurse";
 
         public const string CRITICAL_UPLOAD_ERROR = "Critical Error";

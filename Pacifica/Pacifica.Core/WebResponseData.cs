@@ -20,7 +20,7 @@ namespace Pacifica.Core
         public string ExceptionMessage { get; private set; }
 
         /// <summary>
-        /// Stacktrace for the exception
+        /// Stack trace for the exception
         /// </summary>
         public string ExceptionStackTrace { get; private set; }
 

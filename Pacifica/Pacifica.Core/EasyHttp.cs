@@ -12,7 +12,7 @@ namespace Pacifica.Core
 {
     public class EasyHttp
     {
-        // Ignore Spelling: Ingester, json, www, Pacifica
+        // Ignore Spelling: Ingester, json, www, Pacifica, urlencoded
 
         #region "Constants"
 

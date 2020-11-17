@@ -199,7 +199,7 @@ namespace Pacifica.DMS_Metadata
         }
 
         /// <summary>
-        /// Update times the file ws created, updated, and optionally deleted in MyEMSL
+        /// Update times the file was created, updated, and optionally deleted in MyEMSL
         /// </summary>
         /// <param name="createdInMyEMSL"></param>
         /// <param name="updatedInMyEMSL"></param>
