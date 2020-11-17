@@ -14,6 +14,8 @@ using System.Diagnostics.CodeAnalysis;
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable name", Scope = "type", Target = "~T:CaptureTaskManager.clsLoggerBase")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable name", Scope = "type", Target = "~T:CaptureTaskManager.clsRunDosProgram")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable name", Scope = "type", Target = "~T:CaptureTaskManager.clsToolRunnerBase")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable name", Scope = "type", Target = "~T:CaptureTaskManager.clsToolReturnData")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable name", Scope = "type", Target = "~T:CaptureTaskManager.clsStatusData")]
 [assembly: SuppressMessage("Design", "RCS1075:Avoid empty catch clause that catches System.Exception.", Justification = "It is safe to ignore a deletion failure here", Scope = "member", Target = "~M:CaptureTaskManager.clsToolRunnerBase.StoreToolVersionInfoOneFileUseExe(System.String@,System.String,System.String)~System.Boolean")]
 [assembly: SuppressMessage("Readability", "RCS1123:Add parentheses when necessary.", Justification = "Parentheses not required", Scope = "member", Target = "~M:CaptureTaskManager.clsRunDosProgram.RunProgram(System.String,System.String,System.String,System.Boolean,System.Int32)~System.Boolean")]
 [assembly: SuppressMessage("Readability", "RCS1123:Add parentheses when necessary.", Justification = "Parentheses not required", Scope = "member", Target = "~M:CaptureTaskManager.clsToolRunnerBase.FileTools_StatusEvent(System.String)")]
