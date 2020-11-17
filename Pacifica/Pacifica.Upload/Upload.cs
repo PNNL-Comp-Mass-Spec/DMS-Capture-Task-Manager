@@ -700,8 +700,8 @@ namespace Pacifica.Upload
                 switch (tableName)
                 {
                     case "TransactionKeyValue":
-                    {
-                        if (!GetDictionaryValue(item, "key", out var keyName))
+                        {
+                            if (!GetDictionaryValue(item, "key", out var keyName))
                             {
                                 continue;
                             }
@@ -717,9 +717,9 @@ namespace Pacifica.Upload
                             }
 
                             metadataList.Add(valueDescription + "=" + keyValue);
-                        matchedKeys.Add(valueDescription);
-                        break;
-                    }
+                            matchedKeys.Add(valueDescription);
+                            break;
+                        }
                     case "Files":
                         if (item.TryGetValue("size", out _))
                         {
@@ -727,28 +727,28 @@ namespace Pacifica.Upload
                         }
                         break;
                     default:
-                    {
-                        if (!transactionValueLookup.TryGetValue(tableName, out var valueDescription))
+                        {
+                            if (!transactionValueLookup.TryGetValue(tableName, out var valueDescription))
                             {
                                 continue;
                             }
 
                             if (matchedKeys.Contains(valueDescription))
-                        {
-                            // This item has already been added (typically EUS_Instrument_ID)
-                            continue;
-                        }
+                            {
+                                // This item has already been added (typically EUS_Instrument_ID)
+                                continue;
+                            }
 
-                        // Include the value for this item in the description
-                        if (!GetDictionaryValue(item, "value", out var keyValue))
+                            // Include the value for this item in the description
+                            if (!GetDictionaryValue(item, "value", out var keyValue))
                             {
                                 continue;
                             }
 
                             metadataList.Add(valueDescription + "=" + keyValue);
-                        matchedKeys.Add(valueDescription);
-                        break;
-                    }
+                            matchedKeys.Add(valueDescription);
+                            break;
+                        }
                 }
             }
 
