@@ -1756,7 +1756,10 @@ namespace CaptureToolPlugin
 
                     if (copyWithResume || sourceFile.Length > COPY_WITH_RESUME_THRESHOLD_BYTES)
                     {
-                        success = mFileTools.CopyFileWithResume(sourceFile, targetFilePath, out _);
+                        // Copy the file using 1 MB chunks, thus allowing for resuming
+                        // In addition, allow the file to be copied even if another program has it open for writing
+                        // (as is often the case with instrument acquisition software, even after data acquisition is complete)
+                        success = mFileTools.CopyFileWithResume(sourceFile, targetFilePath, out _, true);
                     }
                     else
                     {
