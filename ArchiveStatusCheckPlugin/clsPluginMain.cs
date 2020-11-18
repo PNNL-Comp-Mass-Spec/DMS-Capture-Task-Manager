@@ -369,9 +369,9 @@ namespace ArchiveStatusCheckPlugin
             // MyEMSLVerify will not have this parameter
             var statusURI = mTaskParams.GetParam("MyEMSL_Status_URI", string.Empty);
 
-            // Note that GetStatusURIsAndSubdirectories requires that the column order be StatusNum, Status_URI, subdirectory, Ingest_Steps_Completed, EUS_InstrumentID, EUS_ProposalID, EUS_UploaderID, ErrorCode
+            // Note that GetStatusURIsAndSubdirectories requires that the column order be StatusNum, Status_URI, Subfolder, Ingest_Steps_Completed, EUS_InstrumentID, EUS_ProposalID, EUS_UploaderID, ErrorCode
             var sql =
-                " SELECT StatusNum, Status_URI, subdirectory, " +
+                " SELECT StatusNum, Status_URI, Subfolder, " +
                        " IsNull(Ingest_Steps_Completed, 0) AS Ingest_Steps_Completed, " +
                        " EUS_InstrumentID, EUS_ProposalID, EUS_UploaderID, ErrorCode" +
                 " FROM V_MyEMSL_Uploads " +
@@ -434,7 +434,7 @@ namespace ArchiveStatusCheckPlugin
             dbTools.GetQueryResultsDataTable(sql, out var table, retryCount, 5);
 
             // Expected fields:
-            // StatusNum, Status_URI, subdirectory, Ingest_Steps_Completed, EUS_InstrumentID, EUS_ProposalID, EUS_UploaderID, ErrorCode
+            // StatusNum, Status_URI, Subfolder, Ingest_Steps_Completed, EUS_InstrumentID, EUS_ProposalID, EUS_UploaderID, ErrorCode
             foreach (DataRow row in table.Rows)
             {
                 var statusNum = row[0].CastDBVal<int>();
