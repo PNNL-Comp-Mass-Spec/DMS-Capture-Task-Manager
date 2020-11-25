@@ -114,7 +114,7 @@ namespace DatasetInfoPlugin
 
         private iMSFileInfoScanner LoadMSFileInfoScanner(string msFileInfoScannerDLLPath)
         {
-            const string MsDataFileReaderClass = "MSFileInfoScanner.clsMSFileInfoScanner";
+            const string MsDataFileReaderClass = "MSFileInfoScanner.MSFileInfoScanner";
 
             iMSFileInfoScanner msFileInfoScanner = null;
             string msg;
