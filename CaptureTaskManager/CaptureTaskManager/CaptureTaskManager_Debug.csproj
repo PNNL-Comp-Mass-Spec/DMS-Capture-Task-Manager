@@ -43,7 +43,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MSFileInfoScannerInterfaces, Version=1.0.5618.27052, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="MSFileInfoScannerInterfaces">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\RefLib\MSFileInfoScannerInterfaces.dll</HintPath>
     </Reference>
