@@ -230,24 +230,24 @@ namespace DatasetInfoPlugin
             var outputPathBase = Path.Combine(datasetDirectoryPath, "QC");
 
             // Set up the params for the MS file scanner
-            mMsFileScanner.DSInfoDBPostingEnabled = false;
-            mMsFileScanner.SaveTICAndBPIPlots = mTaskParams.GetParam("SaveTICAndBPIPlots", true);
-            mMsFileScanner.SaveLCMS2DPlots = mTaskParams.GetParam("SaveLCMS2DPlots", true);
-            mMsFileScanner.ComputeOverallQualityScores = mTaskParams.GetParam("ComputeOverallQualityScores", false);
-            mMsFileScanner.CreateDatasetInfoFile = mTaskParams.GetParam("CreateDatasetInfoFile", true);
+            mMsFileScanner.Options.PostResultsToDMS = false;
+            mMsFileScanner.Options.SaveTICAndBPIPlots = mTaskParams.GetParam("SaveTICAndBPIPlots", true);
+            mMsFileScanner.Options.SaveLCMS2DPlots = mTaskParams.GetParam("SaveLCMS2DPlots", true);
+            mMsFileScanner.Options.ComputeOverallQualityScores = mTaskParams.GetParam("ComputeOverallQualityScores", false);
+            mMsFileScanner.Options.CreateDatasetInfoFile = mTaskParams.GetParam("CreateDatasetInfoFile", true);
 
-            mMsFileScanner.LCMS2DPlotMZResolution = mTaskParams.GetParam("LCMS2DPlotMZResolution", clsLCMSDataPlotterOptions.DEFAULT_MZ_RESOLUTION);
-            mMsFileScanner.LCMS2DPlotMaxPointsToPlot = mTaskParams.GetParam("LCMS2DPlotMaxPointsToPlot", clsLCMSDataPlotterOptions.DEFAULT_MAX_POINTS_TO_PLOT);
-            mMsFileScanner.LCMS2DPlotMinPointsPerSpectrum = mTaskParams.GetParam("LCMS2DPlotMinPointsPerSpectrum", clsLCMSDataPlotterOptions.DEFAULT_MIN_POINTS_PER_SPECTRUM);
-            mMsFileScanner.LCMS2DPlotMinIntensity = mTaskParams.GetParam("LCMS2DPlotMinIntensity", (float)0);
-            mMsFileScanner.LCMS2DOverviewPlotDivisor = mTaskParams.GetParam("LCMS2DOverviewPlotDivisor", clsLCMSDataPlotterOptions.DEFAULT_LCMS2D_OVERVIEW_PLOT_DIVISOR);
+            mMsFileScanner.LCMS2DPlotOptions.MZResolution = mTaskParams.GetParam("LCMS2DPlotMZResolution", LCMSDataPlotterOptions.DEFAULT_MZ_RESOLUTION);
+            mMsFileScanner.LCMS2DPlotOptions.MaxPointsToPlot = mTaskParams.GetParam("LCMS2DPlotMaxPointsToPlot", LCMSDataPlotterOptions.DEFAULT_MAX_POINTS_TO_PLOT);
+            mMsFileScanner.LCMS2DPlotOptions.MinPointsPerSpectrum = mTaskParams.GetParam("LCMS2DPlotMinPointsPerSpectrum", LCMSDataPlotterOptions.DEFAULT_MIN_POINTS_PER_SPECTRUM);
+            mMsFileScanner.LCMS2DPlotOptions.MinIntensity = mTaskParams.GetParam("LCMS2DPlotMinIntensity", (float)0);
+            mMsFileScanner.LCMS2DPlotOptions.LCMS2DOverviewPlotDivisor = mTaskParams.GetParam("LCMS2DOverviewPlotDivisor", LCMSDataPlotterOptions.DEFAULT_LCMS2D_OVERVIEW_PLOT_DIVISOR);
 
             var sampleLabelling = mTaskParams.GetParam("Meta_Experiment_sample_labelling", string.Empty);
             ConfigureMinimumMzValidation(mMsFileScanner, sampleLabelling);
 
-            mMsFileScanner.DatasetIDOverride = mDatasetID;
-            mMsFileScanner.CheckCentroidingStatus = true;
-            mMsFileScanner.PlotWithPython = true;
+            mMsFileScanner.Options.DatasetID = mDatasetID;
+            mMsFileScanner.Options.CheckCentroidingStatus = true;
+            mMsFileScanner.Options.PlotWithPython = true;
 
             // Get the input file or directory name (or names)
             var fileOrDirectoryRelativePaths = GetDataFileOrDirectoryName(
@@ -294,14 +294,14 @@ namespace DatasetInfoPlugin
             {
                 case QCPlottingModes.NoPlots:
                     // Do not create any plots
-                    mMsFileScanner.SaveTICAndBPIPlots = false;
-                    mMsFileScanner.SaveLCMS2DPlots = false;
+                    mMsFileScanner.Options.SaveTICAndBPIPlots = false;
+                    mMsFileScanner.Options.SaveLCMS2DPlots = false;
                     break;
 
                 case QCPlottingModes.BpiAndTicOnly:
                     // Only create the BPI and TIC plots
-                    mMsFileScanner.SaveTICAndBPIPlots = true;
-                    mMsFileScanner.SaveLCMS2DPlots = false;
+                    mMsFileScanner.Options.SaveTICAndBPIPlots = true;
+                    mMsFileScanner.Options.SaveLCMS2DPlots = false;
                     break;
             }
 
@@ -431,14 +431,14 @@ namespace DatasetInfoPlugin
                     successProcessing = false;
                 }
 
-                if (mMsFileScanner.ErrorCode == iMSFileInfoScanner.eMSFileScannerErrorCodes.ThermoRawFileReaderError)
+                if (mMsFileScanner.ErrorCode == iMSFileInfoScanner.MSFileScannerErrorCodes.ThermoRawFileReaderError)
                 {
                     // Call to .OpenRawFile failed
                     mMsg = "Error running MSFileInfoScanner: Call to .OpenRawFile failed";
                     LogError(mMsg);
                     successProcessing = false;
                 }
-                else if (mMsFileScanner.ErrorCode == iMSFileInfoScanner.eMSFileScannerErrorCodes.DatasetHasNoSpectra)
+                else if (mMsFileScanner.ErrorCode == iMSFileInfoScanner.MSFileScannerErrorCodes.DatasetHasNoSpectra)
                 {
                     // Dataset has no spectra
                     mMsg = "Error running MSFileInfoScanner: Dataset has no spectra (ScanCount = 0)";
@@ -451,14 +451,14 @@ namespace DatasetInfoPlugin
                     mFileTools.DeleteFileWithRetry(new FileInfo(pathToProcess), 2, out _);
                 }
 
-                var mzMinValidationError = mMsFileScanner.ErrorCode == iMSFileInfoScanner.eMSFileScannerErrorCodes.MS2MzMinValidationError;
+                var mzMinValidationError = mMsFileScanner.ErrorCode == iMSFileInfoScanner.MSFileScannerErrorCodes.MS2MzMinValidationError;
                 if (mzMinValidationError)
                 {
                     mMsg = mMsFileScanner.GetErrorMessage();
                     successProcessing = false;
                 }
 
-                if (mMsFileScanner.ErrorCode == iMSFileInfoScanner.eMSFileScannerErrorCodes.MS2MzMinValidationWarning)
+                if (mMsFileScanner.ErrorCode == iMSFileInfoScanner.MSFileScannerErrorCodes.MS2MzMinValidationWarning)
                 {
                     var warningMsg = mMsFileScanner.GetErrorMessage();
                     returnData.EvalMsg = AppendToComment(returnData.EvalMsg, "MS2MzMinValidationWarning: " + warningMsg);
@@ -649,10 +649,10 @@ namespace DatasetInfoPlugin
                 iPostCount++;
             }
 
-            iMSFileInfoScanner.eMSFileScannerErrorCodes errorCode;
+            iMSFileInfoScanner.MSFileScannerErrorCodes errorCode;
             if (successPosting)
             {
-                errorCode = iMSFileInfoScanner.eMSFileScannerErrorCodes.NoError;
+                errorCode = iMSFileInfoScanner.MSFileScannerErrorCodes.NoError;
             }
             else
             {
@@ -662,7 +662,7 @@ namespace DatasetInfoPlugin
                 LogError(mMsg);
             }
 
-            if (errorCode == iMSFileInfoScanner.eMSFileScannerErrorCodes.NoError)
+            if (errorCode == iMSFileInfoScanner.MSFileScannerErrorCodes.NoError)
             {
                 // Everything went wonderfully
                 errorMessage = string.Empty;
@@ -901,7 +901,7 @@ namespace DatasetInfoPlugin
         /// <param name="sampleLabelling"></param>
         private void ConfigureMinimumMzValidation(iMSFileInfoScanner msFileInfoScanner, string sampleLabelling)
         {
-            mMsFileScanner.MS2MzMin = 0;
+            mMsFileScanner.Options.MS2MzMin = 0;
 
             if (mTaskParams.GetParam("SkipMinimumMzValidation", false))
             {
@@ -920,15 +920,15 @@ namespace DatasetInfoPlugin
                 {
                     if (float.TryParse(reporterIonMzMinText, out var reporterIonMzMin))
                     {
-                        msFileInfoScanner.MS2MzMin = (int)Math.Floor(reporterIonMzMin);
+                        msFileInfoScanner.Options.MS2MzMin = (int)Math.Floor(reporterIonMzMin);
                         LogMessage(string.Format(
                                        "Verifying that MS/MS spectra have minimum m/z values below {0:N0} since the experiment labelling is {1}",
-                                       msFileInfoScanner.MS2MzMin, sampleLabelling));
+                                       msFileInfoScanner.Options.MS2MzMin, sampleLabelling));
                     }
                 }
             }
 
-            if (msFileInfoScanner.MS2MzMin > 0)
+            if (msFileInfoScanner.Options.MS2MzMin > 0)
             {
                 return;
             }
@@ -953,19 +953,19 @@ namespace DatasetInfoPlugin
             var iTRAQMatch = iTRAQMatcher.Match(mDataset);
             if (iTRAQMatch.Success)
             {
-                msFileInfoScanner.MS2MzMin = 113;
+                msFileInfoScanner.Options.MS2MzMin = 113;
                 LogMessage(string.Format(
                                "Verifying that MS/MS spectra have minimum m/z values below {0:N0} since the dataset name contains {1}",
-                               msFileInfoScanner.MS2MzMin, iTRAQMatch.Value));
+                               msFileInfoScanner.Options.MS2MzMin, iTRAQMatch.Value));
             }
 
             var tmtMatch = tmtMatcher.Match(mDataset);
             if (tmtMatch.Success)
             {
-                msFileInfoScanner.MS2MzMin = 126;
+                msFileInfoScanner.Options.MS2MzMin = 126;
                 LogMessage(string.Format(
                                "Verifying that MS/MS spectra have minimum m/z values below {0:N0} since the dataset name contains {1}",
-                               msFileInfoScanner.MS2MzMin, tmtMatch.Value));
+                               msFileInfoScanner.Options.MS2MzMin, tmtMatch.Value));
             }
         }
 
@@ -1322,57 +1322,57 @@ namespace DatasetInfoPlugin
         {
             var argumentList = new List<string>();
 
-            if (!msFileScanner.SaveTICAndBPIPlots)
+            if (!msFileScanner.Options.SaveTICAndBPIPlots)
             {
                 argumentList.Add("/NoTIC");
             }
 
-            if (msFileScanner.SaveLCMS2DPlots)
+            if (msFileScanner.Options.SaveLCMS2DPlots)
             {
                 argumentList.Add("/LC");
             }
 
-            if (msFileScanner.CreateDatasetInfoFile)
+            if (msFileScanner.Options.CreateDatasetInfoFile)
             {
                 argumentList.Add("/DI");
             }
 
-            if (msFileScanner.CheckCentroidingStatus)
+            if (msFileScanner.Options.CheckCentroidingStatus)
             {
                 argumentList.Add("/CC");
             }
 
-            if (msFileScanner.PlotWithPython)
+            if (msFileScanner.Options.PlotWithPython)
             {
                 argumentList.Add("/Python");
             }
 
-            if (msFileScanner.CheckCentroidingStatus)
+            if (msFileScanner.Options.CheckCentroidingStatus)
             {
                 argumentList.Add("/SS");
             }
 
-            if (msFileScanner.ComputeOverallQualityScores)
+            if (msFileScanner.Options.ComputeOverallQualityScores)
             {
                 argumentList.Add("/QS");
             }
 
-            if (msFileScanner.MS2MzMin > 0)
+            if (msFileScanner.Options.MS2MzMin > 0)
             {
-                argumentList.Add(string.Format("/MS2MzMin:{0:F1}", msFileScanner.MS2MzMin));
+                argumentList.Add(string.Format("/MS2MzMin:{0:F1}", msFileScanner.Options.MS2MzMin));
             }
 
-            if (msFileScanner.ScanStart > 0)
+            if (msFileScanner.Options.ScanStart > 0)
             {
-                argumentList.Add("/ScanStart:" + msFileScanner.ScanStart);
+                argumentList.Add("/ScanStart:" + msFileScanner.Options.ScanStart);
             }
 
-            if (msFileScanner.ScanEnd > 0)
+            if (msFileScanner.Options.ScanEnd > 0)
             {
-                argumentList.Add("/ScanEnd:" + msFileScanner.ScanEnd);
+                argumentList.Add("/ScanEnd:" + msFileScanner.Options.ScanEnd);
             }
 
-            if (msFileScanner.ShowDebugInfo)
+            if (msFileScanner.Options.ShowDebugInfo)
             {
                 argumentList.Add("/Debug");
             }
