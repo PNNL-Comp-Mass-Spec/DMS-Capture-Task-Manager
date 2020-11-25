@@ -135,6 +135,12 @@ namespace DatasetInfoPlugin
                         msg = "Loaded MSFileInfoScanner from " + msFileInfoScannerDLLPath;
                         LogMessage(msg);
                     }
+                    else
+                    {
+                        LogError(string.Format(
+                            "LoadObject was unable to load class {0} from {1}; it returned null",
+                            MsDataFileReaderClass, msFileInfoScannerDLLPath));
+                    }
                 }
             }
             catch (Exception ex)
