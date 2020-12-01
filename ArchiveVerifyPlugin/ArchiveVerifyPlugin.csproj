@@ -55,14 +55,13 @@
       <HintPath>..\RefLib\MyEMSLReader.dll</HintPath>
     </Reference>
     <Reference Include="Pacifica.Core">
-      <HintPath>..\DeployedFiles\Pacifica.Core.dll</HintPath>
+      <HintPath>..\RefLib\Pacifica.Core.dll</HintPath>
     </Reference>
     <Reference Include="Pacifica.DMS_Metadata">
-      <HintPath>..\DeployedFiles\Pacifica.DMS_Metadata.dll</HintPath>
+      <HintPath>..\RefLib\Pacifica.DMS_Metadata.dll</HintPath>
     </Reference>
-    <Reference Include="Pacifica.Upload, Version=1.0.7002.31671, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\DeployedFiles\Pacifica.Upload.dll</HintPath>
+    <Reference Include="Pacifica.Upload">
+      <HintPath>..\RefLib\Pacifica.Upload.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

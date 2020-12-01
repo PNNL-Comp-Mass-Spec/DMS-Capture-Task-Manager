@@ -39,6 +39,9 @@
     <Reference Include="MSFileInfoScannerInterfaces">
       <HintPath>..\..\RefLib\MSFileInfoScannerInterfaces.dll</HintPath>
     </Reference>
+    <Reference Include="Pacifica.Core">
+      <HintPath>..\..\RefLib\Pacifica.Core.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
@@ -85,12 +88,6 @@
     <PackageReference Include="UIMFLibrary">
       <Version>3.7.3</Version>
     </PackageReference>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\Pacifica\Pacifica.Core\Pacifica.Core.csproj">
-      <Project>{46d080da-392c-4f7c-b2f7-683695b1c029}</Project>
-      <Name>Pacifica.Core</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

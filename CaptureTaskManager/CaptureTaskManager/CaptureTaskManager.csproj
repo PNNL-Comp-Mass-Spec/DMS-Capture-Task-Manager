@@ -40,9 +40,12 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Pacifica.Core">
+      <HintPath>..\..\RefLib\Pacifica.Core.dll</HintPath>
+    </Reference>
     <Reference Include="Pacifica.DMS_Metadata, Version=1.0.6303.32068, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\DeployedFiles\Pacifica.DMS_Metadata.dll</HintPath>
+      <HintPath>..\..\RefLib\Pacifica.DMS_Metadata.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
@@ -132,10 +135,6 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Pacifica\Pacifica.Core\Pacifica.Core.csproj">
-      <Project>{46d080da-392c-4f7c-b2f7-683695b1c029}</Project>
-      <Name>Pacifica.Core</Name>
-    </ProjectReference>
     <ProjectReference Include="..\CTM_Shared\CTM_Shared.csproj">
       <Project>{7d07f054-0d29-45dd-9b22-71d0768bc3c3}</Project>
       <Name>CTM_Shared</Name>
