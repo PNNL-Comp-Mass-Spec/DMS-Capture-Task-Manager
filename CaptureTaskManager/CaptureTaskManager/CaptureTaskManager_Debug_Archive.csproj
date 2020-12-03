@@ -152,7 +152,22 @@
   </Target>
   -->
   <PropertyGroup>
-    <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\..\DeployedFiles" /D /Y
+    <PostBuildEvent>xcopy "$(ProjectDir)..\..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.Core.dll" "$(ProjectDir)..\..\RefLib" /D /Y
+xcopy "$(ProjectDir)..\..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.Core.pdb" "$(ProjectDir)..\..\RefLib" /D /Y
+xcopy "$(ProjectDir)..\..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.Core.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y
+xcopy "$(ProjectDir)..\..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.Core.pdb" "$(ProjectDir)..\..\DeployedFiles" /D /Y
+
+xcopy "$(ProjectDir)..\..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.DMS_Metadata.dll" "$(ProjectDir)..\..\RefLib" /D /Y
+xcopy "$(ProjectDir)..\..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.DMS_Metadata.pdb" "$(ProjectDir)..\..\RefLib" /D /Y
+xcopy "$(ProjectDir)..\..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.DMS_Metadata.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y
+xcopy "$(ProjectDir)..\..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.DMS_Metadata.pdb" "$(ProjectDir)..\..\DeployedFiles" /D /Y
+
+xcopy "$(ProjectDir)..\..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.Upload.dll" "$(ProjectDir)..\..\RefLib" /D /Y
+xcopy "$(ProjectDir)..\..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.Upload.pdb" "$(ProjectDir)..\..\RefLib" /D /Y
+xcopy "$(ProjectDir)..\..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.Upload.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y
+xcopy "$(ProjectDir)..\..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.Upload.pdb" "$(ProjectDir)..\..\DeployedFiles" /D /Y
+
+xcopy "$(TargetPath)" "$(ProjectDir)..\..\DeployedFiles" /D /Y
 xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\..\DeployedFiles" /D /Y
 xcopy "$(TargetDir)*.config" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
 xcopy "$(TargetDir)Apache.NMS.ActiveMQ.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y
