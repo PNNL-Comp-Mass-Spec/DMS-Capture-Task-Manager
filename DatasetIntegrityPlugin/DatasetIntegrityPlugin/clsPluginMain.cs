@@ -109,7 +109,9 @@ namespace DatasetIntegrityPlugin
             // Check whether we need to convert from a .D directory to a .UIMF file
             var instrumentNamesToConvert = new List<string> {
                 "IMS08",
-                "IMS09"
+                "IMS09",
+                "IMS10",
+                "IMS11"
             };
 
             var convertAgilentDotDToUIMF = instrumentNamesToConvert.Any(
