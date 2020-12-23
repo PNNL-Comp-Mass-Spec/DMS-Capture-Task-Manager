@@ -246,7 +246,7 @@ namespace DatasetInfoPlugin
             mMsFileScanner.LCMS2DPlotOptions.MaxPointsToPlot = mTaskParams.GetParam("LCMS2DPlotMaxPointsToPlot", LCMSDataPlotterOptions.DEFAULT_MAX_POINTS_TO_PLOT);
             mMsFileScanner.LCMS2DPlotOptions.MinPointsPerSpectrum = mTaskParams.GetParam("LCMS2DPlotMinPointsPerSpectrum", LCMSDataPlotterOptions.DEFAULT_MIN_POINTS_PER_SPECTRUM);
             mMsFileScanner.LCMS2DPlotOptions.MinIntensity = mTaskParams.GetParam("LCMS2DPlotMinIntensity", (float)0);
-            mMsFileScanner.LCMS2DPlotOptions.LCMS2DOverviewPlotDivisor = mTaskParams.GetParam("LCMS2DOverviewPlotDivisor", LCMSDataPlotterOptions.DEFAULT_LCMS2D_OVERVIEW_PLOT_DIVISOR);
+            mMsFileScanner.LCMS2DPlotOptions.OverviewPlotDivisor = mTaskParams.GetParam("LCMS2DOverviewPlotDivisor", LCMSDataPlotterOptions.DEFAULT_LCMS2D_OVERVIEW_PLOT_DIVISOR);
 
             var sampleLabelling = mTaskParams.GetParam("Meta_Experiment_sample_labelling", string.Empty);
             ConfigureMinimumMzValidation(mMsFileScanner, sampleLabelling);
