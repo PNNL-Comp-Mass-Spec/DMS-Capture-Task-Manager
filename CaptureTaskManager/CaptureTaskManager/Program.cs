@@ -25,7 +25,7 @@ namespace CaptureTaskManager
     {
         // Ignore Spelling: OxyPlot
 
-        private const string PROGRAM_DATE = "December 2, 2020";
+        private const string PROGRAM_DATE = "December 29, 2020";
 
         private static bool mTraceMode;
 
@@ -185,8 +185,6 @@ namespace CaptureTaskManager
         /// Returns the .NET assembly version followed by the program date
         /// </summary>
         /// <param name="programDate"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private static string GetAppVersion(string programDate)
         {
             return PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppVersion(programDate);
