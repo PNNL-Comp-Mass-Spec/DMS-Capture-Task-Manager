@@ -2646,7 +2646,7 @@ namespace CaptureToolPlugin
                 return;
             }
 
-            if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.IMS_Agilent_TOF)
+            if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.IMS_Agilent_TOF_UIMF)
             {
                 // Possibly skip the Fragmentation_Profile.txt file
                 var fragProfileFile = new FileInfo(Path.Combine(sourceDirectory.FullName, "Fragmentation_Profile.txt"));
@@ -3753,7 +3753,8 @@ namespace CaptureToolPlugin
                     }
                     break;
 
-                case clsInstrumentClassInfo.eInstrumentClass.IMS_Agilent_TOF:
+                case clsInstrumentClassInfo.eInstrumentClass.IMS_Agilent_TOF_UIMF:
+                case clsInstrumentClassInfo.eInstrumentClass.IMS_Agilent_TOF_DotD:
                     if (datasetInfo.DatasetType != DatasetInfo.RawDSTypes.File)
                     {
                         if (datasetInfo.DatasetType == DatasetInfo.RawDSTypes.DirectoryExt)
@@ -3799,7 +3800,6 @@ namespace CaptureToolPlugin
                         }
 
                         if (datasetInfo.DatasetType != DatasetInfo.RawDSTypes.DirectoryExt &&
-                            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                             datasetInfo.DatasetType != DatasetInfo.RawDSTypes.DirectoryNoExt &&
                             datasetInfo.DatasetType != DatasetInfo.RawDSTypes.MultiFile)
                         {
