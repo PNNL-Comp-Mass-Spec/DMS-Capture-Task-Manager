@@ -106,42 +106,36 @@ namespace DatasetIntegrityPlugin
             var agilentToUimfConverterPath = string.Empty;
             var openChromProgPath = string.Empty;
 
-            // Check whether we need to convert from a .D directory to a .UIMF file
-            var instrumentNamesToConvert = new List<string> {
-                "IMS08",
-                "IMS09",
-                "IMS10",
-                "IMS11"
-            };
-
-            var convertAgilentDotDToUIMF = instrumentNamesToConvert.Any(
-                instrument => instrumentName.StartsWith(instrument, StringComparison.OrdinalIgnoreCase));
-
-            if (convertAgilentDotDToUIMF)
+            // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
+            switch (instrumentClass)
             {
-                agilentToUimfConverterPath = GetAgilentToUIMFProgPath();
+                case clsInstrumentClassInfo.eInstrumentClass.IMS_Agilent_TOF_DotD:
+                    // We will convert the .D directory to a .UIMF file
+                    agilentToUimfConverterPath = GetAgilentToUIMFProgPath();
 
-                if (!File.Exists(agilentToUimfConverterPath))
-                {
-                    mRetData.CloseoutMsg = "AgilentToUIMFConverter not found at " + agilentToUimfConverterPath;
-                    LogError(mRetData.CloseoutMsg);
-                    mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                    return mRetData;
-                }
-            }
+                    if (!File.Exists(agilentToUimfConverterPath))
+                    {
+                        mRetData.CloseoutMsg = "AgilentToUIMFConverter not found at " + agilentToUimfConverterPath;
+                        LogError(mRetData.CloseoutMsg);
+                        mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                        return mRetData;
+                    }
 
-            // Check whether we need to convert from a .D directory to a .CDF file
-            if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Agilent_Ion_Trap)
-            {
-                openChromProgPath = GetOpenChromProgPath();
+                    break;
 
-                if (!File.Exists(openChromProgPath))
-                {
-                    mRetData.CloseoutMsg = "OpenChrom not found at " + openChromProgPath;
-                    LogError(mRetData.CloseoutMsg);
-                    mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                    return mRetData;
-                }
+                case clsInstrumentClassInfo.eInstrumentClass.Agilent_Ion_Trap:
+                    // We will convert the .D directory to a .CDF file
+                    openChromProgPath = GetOpenChromProgPath();
+
+                    if (!File.Exists(openChromProgPath))
+                    {
+                        mRetData.CloseoutMsg = "OpenChrom not found at " + openChromProgPath;
+                        LogError(mRetData.CloseoutMsg);
+                        mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                        return mRetData;
+                    }
+
+                    break;
             }
 
             // Store the version info in the database
@@ -215,26 +209,29 @@ namespace DatasetIntegrityPlugin
                     mRetData.CloseoutType = TestTripleQuadFile(dataFileNamePath);
                     break;
 
-                case clsInstrumentClassInfo.eInstrumentClass.IMS_Agilent_TOF:
-                    if (convertAgilentDotDToUIMF)
-                    {
-                        // Need to first convert the .d directory to a .UIMF file
-                        if (!ConvertAgilentDotDDirectoryToUIMF(datasetDirectory, agilentToUimfConverterPath))
-                        {
-                            if (string.IsNullOrEmpty(mRetData.CloseoutMsg))
-                            {
-                                mRetData.CloseoutMsg = "Unknown error converting the Agilent .D directory to a .UIMF file";
-                                LogError(mRetData.CloseoutMsg);
-                            }
+                case clsInstrumentClassInfo.eInstrumentClass.IMS_Agilent_TOF_UIMF:
+                    dataFileNamePath = Path.Combine(datasetDirectory, mDataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION);
+                    mRetData.CloseoutType = TestIMSAgilentTOF(dataFileNamePath, instrumentName);
+                    break;
 
-                            mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                            break;
+                case clsInstrumentClassInfo.eInstrumentClass.IMS_Agilent_TOF_DotD:
+                    // Need to first convert the .d directory to a .UIMF file
+                    if (!ConvertAgilentDotDDirectoryToUIMF(datasetDirectory, agilentToUimfConverterPath))
+                    {
+                        if (string.IsNullOrEmpty(mRetData.CloseoutMsg))
+                        {
+                            mRetData.CloseoutMsg = "Unknown error converting the Agilent .D directory to a .UIMF file";
+                            LogError(mRetData.CloseoutMsg);
                         }
+
+                        mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                        break;
                     }
 
                     dataFileNamePath = Path.Combine(datasetDirectory, mDataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION);
                     mRetData.CloseoutType = TestIMSAgilentTOF(dataFileNamePath, instrumentName);
                     break;
+
                 case clsInstrumentClassInfo.eInstrumentClass.BrukerFT_BAF:
                     mRetData.CloseoutType = TestBrukerFT_Directory(datasetDirectory, requireBafOrSerFile: true, requireMCFFile: false, requireSerFile: false, instrumentClass: instrumentClass, instrumentName: instrumentName);
                     break;

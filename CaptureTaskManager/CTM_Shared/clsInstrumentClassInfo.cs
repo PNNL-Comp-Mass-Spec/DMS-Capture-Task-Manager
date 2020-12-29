@@ -31,7 +31,7 @@ namespace CaptureTaskManager
         // Sciex QTrap data
         public const string RAW_DATA_TYPE_SCIEX_WIFF_FILES = "sciex_wiff_files";
 
-        // IMS_UIMF (IMS_Agilent_TOF in DMS)
+        // IMS_UIMF (IMS_Agilent_TOF_UIMF and IMS_Agilent_TOF_DotD in DMS)
         public const string RAW_DATA_TYPE_DOT_UIMF_FILES = "dot_uimf_files";
 
         // mzXML
@@ -196,7 +196,7 @@ namespace CaptureTaskManager
             BrukerTOF_BAF = 13,             // Maxis_01
             Data_Folders = 14,              // Directories of data
             Finnigan_FTICR = 15,            // 3T_FTICR, 7T_FTICR, 11T_FTICR        (last used in 2007)
-            IMS_Agilent_TOF = 16,           // IMS02_AgTOF06, IMS04_AgTOF05, IMS05_AgQTOF04, IMS07_AgTOF04
+            IMS_Agilent_TOF_UIMF = 16,      // Data is acquired natively as UIMF files: IMS02_AgTOF06, IMS04_AgTOF05, IMS05_AgQTOF04, IMS07_AgTOF04
             Waters_TOF = 17,                // QTOF_MM1, External_Waters_TOF
             QStar_QTOF = 18,                // QTOF_1322                            (last used in 2003)
             Sciex_QTrap = 19,               // QTrap01
@@ -208,7 +208,8 @@ namespace CaptureTaskManager
             Waters_IMS = 25,                // SynaptG2_01
             Shimadzu_GC = 26,               // Shimadzu_GC_MS_01
             BrukerTOF_TDF = 27,             // Bruker_timsTOF
-            FT_Booster_Data = 28            // 21T_Booster
+            FT_Booster_Data = 28,           // 21T_Booster
+            IMS_Agilent_TOF_DotD = 29       // Data is acquired natively as .D directories: IMS08, IMS09, IMS10, IMS11
         }
 
         #endregion
