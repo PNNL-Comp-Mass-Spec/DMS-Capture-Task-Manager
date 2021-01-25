@@ -1,0 +1,772 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Pacifica.Core</name>
+    </assembly>
+    <members>
+        <member name="P:Pacifica.Core.MessageEventArgs.CallingFunction">
+            <summary>
+            Calling function
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.MessageEventArgs.Message">
+            <summary>
+            Message
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.StatusEventArgs.PercentCompleted">
+            <summary>
+            Value between 0 and 100
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.StatusEventArgs.TotalBytesSent">
+            <summary>
+            Total bytes that have been sent
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.StatusEventArgs.TotalBytesToSend">
+            <summary>
+            Total bytes to send
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.StatusEventArgs.StatusMessage">
+            <summary>
+            Status message
+            </summary>
+        </member>
+        <member name="M:Pacifica.Core.StatusEventArgs.#ctor(System.Double,System.Int64,System.Int64,System.String)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="percentCompleted">Percent complete, value between 0 and 100</param>
+            <param name="totalBytesSent">Total bytes sent</param>
+            <param name="totalBytesToSend">Total bytes to send</param>
+            <param name="statusMessage">Status message</param>
+        </member>
+        <member name="P:Pacifica.Core.UploadCompletedEventArgs.ServerResponse">
+            <summary>
+            Server response
+            </summary>
+        </member>
+        <member name="T:Pacifica.Core.MyEMSLStatusCheck">
+            <summary>
+            Examine the status of a given ingest job
+            </summary>
+            <remarks>
+            First call GetIngestStatus then call IngestStepCompleted.
+            This allows for just one web request, but the ability to examine the status of multiple steps
+            </remarks>
+        </member>
+        <member name="P:Pacifica.Core.MyEMSLStatusCheck.ErrorMessage">
+            <summary>
+            Error message
+            </summary>
+        </member>
+        <member name="M:Pacifica.Core.MyEMSLStatusCheck.#ctor">
+            <summary>
+            Constructor
+            </summary>
+        </member>
+        <member name="M:Pacifica.Core.MyEMSLStatusCheck.DetermineIngestStepsCompleted(System.String,System.Int32,System.Byte)">
+            <summary>
+            Examine the task name and percent complete to determine the number of ingest steps that have been completed
+            </summary>
+            <param name="currentTask"></param>
+            <param name="percentComplete">percent complete; typically meaningless (either 0 or 100)</param>
+            <param name="ingestStepsCompletedOld"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Pacifica.Core.MyEMSLStatusCheck.DoesFileExistInMyEMSL(Pacifica.Core.FileInfoObject)">
+            <summary>
+            Check whether a file exists in MyEMSL
+            </summary>
+            <param name="fileInfo">File info object</param>
+            <returns>True if found, otherwise false</returns>
+            <remarks>Searches using Sha1HashHex, so could match a file in a different location than the specific path tracked by fileInfo</remarks>
+        </member>
+        <member name="M:Pacifica.Core.MyEMSLStatusCheck.GetIngestStatus(System.String,System.String@,System.Int32@,System.Boolean@,System.String@)">
+            <summary>
+            Obtain the status returned by the given MyEMSL status page
+            </summary>
+            <param name="statusURI">
+            URI to examine, e.g. https://ingestdms.my.emsl.pnl.gov/get_state?job_id=1300782
+            </param>
+            <param name="currentTask">Current task</param>
+            <param name="percentComplete">Output: ingest process percent complete (value between 0 and 100)</param>
+            <param name="lookupError">Output: true if an error occurs</param>
+            <param name="errorMessage">Output: error message if lookupError is true</param>
+            <returns>Status dictionary (empty dictionary if an error)</returns>
+        </member>
+        <member name="M:Pacifica.Core.MyEMSLStatusCheck.GetStatusNumFromURI(System.String)">
+            <summary>
+            Extract the StatusNum (StatusID) from a status URI
+            </summary>
+            <param name="statusURI"></param>
+            <returns>The status number, or 0 if an error</returns>
+        </member>
+        <member name="M:Pacifica.Core.MyEMSLStatusCheck.IngestStepCompletionCount(System.Int32)">
+            <summary>
+            Percent complete (value between 0 and 100)
+            </summary>
+            <param name="percentComplete"></param>
+            <returns>Number of steps completed</returns>
+            <remarks>Reports 7 when percentComplete is 100</remarks>
+        </member>
+        <member name="M:Pacifica.Core.MyEMSLStatusCheck.ValidateCertFile(System.String,System.String@)">
+            <summary>
+            Validate that the MyEMSL certificate file exists
+            </summary>
+            <param name="callingMethod">Calling method</param>
+            <param name="errorMessage">Output: error message</param>
+            <returns>True if the cert file is found, otherwise false</returns>
+        </member>
+        <member name="F:Pacifica.Core.Configuration.DEFAULT_POLICY_SERVER_HOST_NAME">
+            <summary>
+            Policy Server host name on the production server
+            </summary>
+        </member>
+        <member name="F:Pacifica.Core.Configuration.TEST_POLICY_SERVER_HOST_NAME">
+            <summary>
+            Policy Server host name for testing
+            </summary>
+        </member>
+        <member name="F:Pacifica.Core.Configuration.DEFAULT_FILE_SERVER_HOST_NAME">
+            <summary>
+            File Server host name on the production server
+            </summary>
+        </member>
+        <member name="F:Pacifica.Core.Configuration.DEFAULT_METADATA_SERVER_HOST_NAME">
+            <summary>
+            Metadata Server host name on the production server
+            </summary>
+        </member>
+        <member name="F:Pacifica.Core.Configuration.TEST_METADATA_SERVER_HOST_NAME">
+            <summary>
+            Metadata Server host name for testing
+            </summary>
+        </member>
+        <member name="F:Pacifica.Core.Configuration.DEFAULT_INGEST_HOST_NAME">
+            <summary>
+            Ingest host name on the production server
+            </summary>
+        </member>
+        <member name="F:Pacifica.Core.Configuration.TEST_INGEST_HOST_NAME">
+            <summary>
+            Ingest host name on the test server
+            </summary>
+        </member>
+        <member name="F:Pacifica.Core.Configuration.CLIENT_CERT_DIRECTORY">
+            <summary>
+            Windows directory with the MyEMSL client certificate file
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.Configuration.LocalTempDirectory">
+            <summary>
+            Local temp directory
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.Configuration.UseSecureDataTransfer">
+            <summary>
+            If true, use https; otherwise use http
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.Configuration.Scheme">
+            <summary>
+            Returns either https:// or http://
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.Configuration.ClientCertFilePath">
+            <summary>
+            Path to the MyEMSL certificate file, e.g. svc-dms-cert_2019.pfx
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.Configuration.FileServerHostName">
+            <summary>
+            Server for retrieving files one file at a time
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.Configuration.FileServerUri">
+            <summary>
+            File download server, default https://files.my.emsl.pnl.gov
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.Configuration.IngestServerHostName">
+            <summary>
+            Ingest server name
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.Configuration.IngestServerUri">
+            <summary>
+            Ingest server, default https://ingest.my.emsl.pnl.gov
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.Configuration.PolicyServerHostName">
+            <summary>
+            Policy server name
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.Configuration.PolicyServerUri">
+            <summary>
+            Policy server, default https://policy.my.emsl.pnl.gov
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.Configuration.MetadataServerHostName">
+            <summary>
+            Metadata server name
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.Configuration.MetadataServerUri">
+            <summary>
+            Metadata server, default https://metadata.my.emsl.pnl.gov
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.Configuration.HttpProxyUrl">
+            <summary>
+            Proxy server, default empty string
+            </summary>
+            <remarks>Ignored if an empty string</remarks>
+        </member>
+        <member name="M:Pacifica.Core.Configuration.#ctor">
+            <summary>
+            Constructor
+            </summary>
+        </member>
+        <member name="M:Pacifica.Core.Configuration.FindNewestClientCertFile">
+            <summary>
+            Look for the newest client certificate file (e.g., svc-dms.pfx)
+            </summary>
+            <returns>Path to the file if found, otherwise an empty string</returns>
+            <remarks>First checks the directory with the executing assembly, then checks C:\client_certs\</remarks>
+        </member>
+        <member name="M:Pacifica.Core.Configuration.SetProxy(System.Net.HttpWebRequest)">
+            <summary>
+            Associate the proxy server (if defined) with the WebRequest
+            </summary>
+            <param name="oWebRequest"></param>
+        </member>
+        <member name="P:Pacifica.Core.Configuration.UseTestInstance">
+            <summary>
+            When true, upload to ingestdmsdev.my.emsl.pnl.gov instead of ingestdms.my.emsl.pnl.gov
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.UrlContactInfo.Config">
+            <summary>
+            Configuration options
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.UrlContactInfo.Url">
+            <summary>
+            URL
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.UrlContactInfo.Cookies">
+            <summary>
+            Cookies
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.UrlContactInfo.ResponseData">
+            <summary>
+            Tracks response text and response code
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.UrlContactInfo.PostData">
+            <summary>
+            Data to post (when method is HttpMethod.Post)
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.UrlContactInfo.Method">
+            <summary>
+            Get, Post, or Put
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.UrlContactInfo.TimeoutSeconds">
+            <summary>
+            Timeout, in seconds
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.UrlContactInfo.ContentType">
+            <summary>
+            Form/post content-type
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.UrlContactInfo.SendStringInHeader">
+            <summary>
+            If True, and the method is Get, include postData in the header
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.UrlContactInfo.LoginCredentials">
+            <summary>
+            Login credentials
+            </summary>
+        </member>
+        <member name="M:Pacifica.Core.UrlContactInfo.#ctor(Pacifica.Core.Configuration,System.String,System.Net.CookieContainer,System.String,Pacifica.Core.EasyHttp.HttpMethod,System.Int32,System.String,System.Boolean,System.Net.NetworkCredential)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="config">Configuration options</param>
+            <param name="url">URL</param>
+            <param name="cookies">Cookies</param>
+            <param name="postData">Data to post (when method is HttpMethod.Post)</param>
+            <param name="method">Get, Post, or Put</param>
+            <param name="timeoutSeconds">Timeout, in seconds</param>
+            <param name="contentType">Form/post content-type</param>
+            <param name="sendStringInHeader">If True, and the method is Get, include postData in the header</param>
+            <param name="loginCredentials">Login credentials</param>
+        </member>
+        <member name="T:Pacifica.Core.WebResponseData">
+            <summary>
+            Tracks the response code and response text returned by a call to EasyHttp.Send
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.WebResponseData.ExceptionCaught">
+            <summary>
+            Set to true when an exception was caught
+            </summary>
+            <remarks>For details, see exceptionMessage and ExceptionStackTrace</remarks>
+        </member>
+        <member name="P:Pacifica.Core.WebResponseData.ExceptionMessage">
+            <summary>
+            Exception message
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.WebResponseData.ExceptionStackTrace">
+            <summary>
+            Stack trace for the exception
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.WebResponseData.ResponseStatusCode">
+            <summary>
+            Response code
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.WebResponseData.ResponseText">
+            <summary>
+            Response text
+            </summary>
+        </member>
+        <member name="M:Pacifica.Core.WebResponseData.#ctor">
+            <summary>
+            Constructor
+            </summary>
+        </member>
+        <member name="M:Pacifica.Core.WebResponseData.ResetExceptionInfo">
+            <summary>
+            Clear cached exception info
+            </summary>
+        </member>
+        <member name="M:Pacifica.Core.WebResponseData.RegisterException(System.Exception)">
+            <summary>
+            Store information on a new exception
+            </summary>
+            <param name="ex"></param>
+        </member>
+        <member name="F:Pacifica.Core.EasyHttp.REQUEST_ABORTED_RESPONSE">
+            <summary>
+            Response to return when the thread used to send a request aborts
+            </summary>
+        </member>
+        <member name="F:Pacifica.Core.EasyHttp.REQUEST_EXCEPTION_RESPONSE">
+            <summary>
+            Response to return when the thread used to send a request catches an exception
+            </summary>
+        </member>
+        <member name="F:Pacifica.Core.EasyHttp.REQUEST_PRECONDITION_FAILED_RESPONSE">
+            <summary>
+            Response to return the Policy server reports Precondition Failed
+            </summary>
+        </member>
+        <member name="F:Pacifica.Core.EasyHttp.REQUEST_TIMEOUT_RESPONSE">
+            <summary>
+            Response to return when a request times out
+            </summary>
+        </member>
+        <member name="F:Pacifica.Core.EasyHttp.MYEMSL_METADATA_FILE_NAME">
+            <summary>
+            Metadata file name
+            </summary>
+        </member>
+        <member name="T:Pacifica.Core.EasyHttp.HttpMethod">
+            <summary>
+            An enumeration of standard HTTP methods.
+            </summary>
+            <remarks>
+            Use ExtensionMethods.GetDescription
+            to pull the description value out of this type.
+            </remarks>
+        </member>
+        <member name="E:Pacifica.Core.EasyHttp.MyEMSLOffline">
+            <summary>
+            This event is raised if we are unable to connect to MyEMSL, leading to events
+            System.Net.WebException: Unable to connect to the remote server
+            System.Net.Sockets.SocketException: A connection attempt failed because the connected party did not properly respond after a period of time
+            </summary>
+        </member>
+        <member name="E:Pacifica.Core.EasyHttp.StatusUpdate">
+            <summary>
+            This event is used by SendFileListToIngester to report upload status
+            </summary>
+        </member>
+        <member name="E:Pacifica.Core.EasyHttp.ErrorEvent">
+            <summary>
+            Error event
+            </summary>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.AbortThreadedSendNow">
+            <summary>
+            Abort thread mThreadedSend
+            </summary>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.GetFile(Pacifica.Core.Configuration,System.String,System.Net.CookieContainer,System.Net.HttpStatusCode@,System.String,System.Int32,System.Net.NetworkCredential)">
+            <summary>
+            Retrieve a file
+            </summary>
+            <param name="config">Configuration options</param>
+            <param name="url">URL</param>
+            <param name="cookies">Cookies</param>
+            <param name="responseStatusCode">Response status code</param>
+            <param name="downloadFilePath">Local file path to save the file as</param>
+            <param name="timeoutSeconds">Timeout, in seconds</param>
+            <param name="loginCredentials">Login credentials</param>
+            <returns>True if success, false if an error</returns>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.GetHeaders(Pacifica.Core.Configuration,System.String,System.Net.HttpStatusCode@,System.Int32)">
+            <summary>
+            Get the headers for a URL
+            </summary>
+            <param name="config">Configuration options</param>
+            <param name="url">URL</param>
+            <param name="responseStatusCode">Response status code</param>
+            <param name="timeoutSeconds">Timeout, in seconds</param>
+            <returns>Headers</returns>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.GetHeaders(Pacifica.Core.Configuration,System.String,System.Net.CookieContainer,System.Net.HttpStatusCode@,System.Int32,System.Net.NetworkCredential)">
+            <summary>
+            Get the headers for a URL
+            </summary>
+            <param name="config">Configuration options</param>
+            <param name="url">URL</param>
+            <param name="cookies">Cookies</param>
+            <param name="responseStatusCode"></param>
+            <param name="timeoutSeconds">Timeout, in seconds</param>
+            <param name="loginCredentials">Login credentials</param>
+            <returns>Headers</returns>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.InitializeRequest(Pacifica.Core.Configuration,System.String,System.Net.CookieContainer@,System.Int32@,System.Net.NetworkCredential,System.Double)">
+            <summary>
+            Initialize a request
+            </summary>
+            <param name="config">Configuration options</param>
+            <param name="url">URL</param>
+            <param name="cookies">Cookies</param>
+            <param name="timeoutSeconds">Timeout, in seconds</param>
+            <param name="loginCredentials">Login credentials</param>
+            <param name="maxTimeoutHours"></param>
+            <returns>Web request</returns>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.InitializeRequest(Pacifica.Core.UrlContactInfo)">
+            <summary>
+            Initialize a request
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.IsResponseError(System.String)">
+            <summary>
+            Return True if responseText is one of the custom responses that this class uses to report errors (timeout, abort, or exception)
+            </summary>
+            <param name="responseText"></param>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.OnErrorEvent(System.String,System.Exception)">
+            <summary>
+            Report an error
+            </summary>
+            <param name="message"></param>
+            <param name="ex">Exception (allowed to be nothing)</param>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.RaiseStatusUpdate(System.Double,System.Int64,System.Int64,System.String)">
+            <summary>
+            Report a status update
+            </summary>
+            <param name="percentCompleted">Value between 0 and 100</param>
+            <param name="totalBytesSent">Total bytes to send</param>
+            <param name="totalBytesToSend">Total bytes sent</param>
+            <param name="statusMessage">Status message</param>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.Send(Pacifica.Core.Configuration,System.String,System.Net.HttpStatusCode@,System.Int32)">
+            <summary>
+            Get or post data to a URL
+            </summary>
+            <param name="config">Configuration options</param>
+            <param name="url">URL</param>
+            <param name="responseStatusCode">Response status code</param>
+            <param name="timeoutSeconds">Timeout, in seconds</param>
+            <returns>Response data</returns>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.Send(Pacifica.Core.Configuration,System.String,System.Net.CookieContainer,System.Net.HttpStatusCode@,System.Int32)">
+            <summary>
+            Get or post data to a URL
+            </summary>
+            <param name="config">Configuration options</param>
+            <param name="url">URL</param>
+            <param name="cookies">Cookies</param>
+            <param name="responseStatusCode">Response status code</param>
+            <param name="timeoutSeconds">Timeout, in seconds</param>
+            <returns>Response data</returns>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.Send(Pacifica.Core.Configuration,System.String,System.Net.HttpStatusCode@,System.String,Pacifica.Core.EasyHttp.HttpMethod,System.Int32)">
+            <summary>
+            Get or post data to a URL
+            </summary>
+            <param name="config">Configuration options</param>
+            <param name="url">URL</param>
+            <param name="responseStatusCode">Response status code</param>
+            <param name="postData">Data to post (when method is HttpMethod.Post)</param>
+            <param name="method">Get, Post, or Put</param>
+            <param name="timeoutSeconds">Timeout, in seconds</param>
+            <returns>Response data</returns>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.Send(Pacifica.Core.Configuration,System.String,System.Net.HttpStatusCode@,System.String,Pacifica.Core.EasyHttp.HttpMethod,System.Int32,System.String,System.Boolean,System.Net.NetworkCredential)">
+            <summary>
+            Get or post data to a URL
+            </summary>
+            <param name="config">Configuration options</param>
+            <param name="url">URL</param>
+            <param name="responseStatusCode">Response status code</param>
+            <param name="postData">Data to post (when method is HttpMethod.Post)</param>
+            <param name="method">Get, Post, or Put</param>
+            <param name="timeoutSeconds">Timeout, in seconds</param>
+            <param name="contentType">Form/post content-type</param>
+            <param name="sendStringInHeader">If True, and the method is Get, include postData in the header</param>
+            <param name="loginCredentials">Login credentials</param>
+            <returns>Response data</returns>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.Send(Pacifica.Core.Configuration,System.String,System.Net.CookieContainer,System.Net.HttpStatusCode@,System.String,Pacifica.Core.EasyHttp.HttpMethod,System.Int32,System.Net.NetworkCredential)">
+            <summary>
+            Get or post data to a URL
+            </summary>
+            <param name="config">Configuration options</param>
+            <param name="url">URL</param>
+            <param name="cookies">Cookies</param>
+            <param name="responseStatusCode">Response status code</param>
+            <param name="postData">Data to post (when method is HttpMethod.Post)</param>
+            <param name="method">Get, Post, or Put</param>
+            <param name="timeoutSeconds">Timeout, in seconds</param>
+            <param name="loginCredentials">Login credentials</param>
+            <returns>Response data</returns>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.Send(Pacifica.Core.Configuration,System.String,System.Net.CookieContainer,System.Net.HttpStatusCode@,System.String,Pacifica.Core.EasyHttp.HttpMethod,System.Int32,System.String,System.Boolean,System.Net.NetworkCredential)">
+            <summary>
+            Get or post data to a URL
+            </summary>
+            <param name="config">Configuration options</param>
+            <param name="url">URL</param>
+            <param name="cookies">Cookies</param>
+            <param name="responseStatusCode">Response status code</param>
+            <param name="postData">Data to post (when method is HttpMethod.Post)</param>
+            <param name="method">Get, Post, or Put</param>
+            <param name="timeoutSeconds">Timeout, in seconds</param>
+            <param name="contentType">Form/post content-type</param>
+            <param name="sendStringInHeader">If True, and the method is Get, include postData in the header</param>
+            <param name="loginCredentials">Login credentials</param>
+            <returns>Response data</returns>
+            <remarks>Uses the Task Parallel Library (TPL)</remarks>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.SendViaThreadStart(Pacifica.Core.Configuration,System.String,System.Net.HttpStatusCode@,System.Int32)">
+            <summary>
+            Get or post data to a URL
+            </summary>
+            <param name="config">Configuration options</param>
+            <param name="url">URL</param>
+            <param name="responseStatusCode">Response status code</param>
+            <param name="timeoutSeconds">Timeout, in seconds</param>
+            <returns>Response data</returns>
+            <remarks>Uses ThreadStart instead of TPL</remarks>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.SendViaThreadStart(Pacifica.Core.Configuration,System.String,System.Net.CookieContainer,System.Net.HttpStatusCode@,System.String,Pacifica.Core.EasyHttp.HttpMethod,System.Int32,System.String,System.Boolean,System.Net.NetworkCredential)">
+            <summary>
+            Get or post data to a URL
+            </summary>
+            <param name="config">Configuration options</param>
+            <param name="url">URL</param>
+            <param name="cookies">Cookies</param>
+            <param name="responseStatusCode">Response status code</param>
+            <param name="postData">Data to post (when method is HttpMethod.Post)</param>
+            <param name="method">Get, Post, or Put</param>
+            <param name="timeoutSeconds">Timeout, in seconds</param>
+            <param name="contentType">Form/post content-type</param>
+            <param name="sendStringInHeader">If True, and the method is Get, include postData in the header</param>
+            <param name="loginCredentials">Login credentials</param>
+            <returns>Response data</returns>
+            <remarks>Uses ThreadStart instead of TPL</remarks>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.Send(Pacifica.Core.UrlContactInfo)">
+            <summary>
+            Get or post data to a URL
+            </summary>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.StartThreadedSend">
+            <summary>
+            Start a thread to contact the URL
+            </summary>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.ResolveCertFile(Pacifica.Core.Configuration,System.String,System.String@)">
+            <summary>
+            Determine the path to the MyEMSL Certificate file
+            </summary>
+            <param name="config">Pacifica Config</param>
+            <param name="callingMethod">Calling method</param>
+            <param name="errorMessage">Output: error message</param>
+            <returns>Path to the file if found, otherwise an empty string</returns>
+        </member>
+        <member name="M:Pacifica.Core.Utilities.DecodePassword(System.String)">
+            <summary>
+            Decode a password
+            </summary>
+            <param name="encodedPwd">Encoded password</param>
+            <returns>Clear text password</returns>
+        </member>
+        <member name="M:Pacifica.Core.Utilities.EncryptDecrypt(System.String,System.Boolean)">
+            <summary>
+            Encode or decode a password
+            </summary>
+            <param name="password">Password</param>
+            <param name="encrypt">True to encode the password; false to decode the password</param>
+            <returns>Encoded password</returns>
+        </member>
+        <member name="M:Pacifica.Core.Utilities.DeleteFileIgnoreErrors(System.IO.FileInfo)">
+            <summary>
+            Try to delete the file; ignore any errors
+            </summary>
+            <param name="fileToDelete"></param>
+        </member>
+        <member name="M:Pacifica.Core.Utilities.GetDictionaryValue(System.Collections.Generic.IReadOnlyDictionary{System.String,System.String},System.String,System.Boolean)">
+            <summary>
+            Lookup the value associated with the given key in the dictionary
+            </summary>
+            <param name="dictionary">Dictionary</param>
+            <param name="keyName">Key name</param>
+            <param name="valueIfMissingOrNull">Value to return if the dictionary value is missing or null</param>
+            <returns>Value for the given key, or valueIfMissingOrNull if the value is missing or null</returns>
+        </member>
+        <member name="M:Pacifica.Core.Utilities.GetDictionaryValue(System.Collections.Generic.IReadOnlyDictionary{System.String,System.String},System.String,System.Int32)">
+            <summary>
+            Lookup the integer value associated with the given key in the dictionary
+            </summary>
+            <param name="dictionary">Dictionary</param>
+            <param name="keyName">Key name</param>
+            <param name="valueIfMissingOrNull">Integer to return if the dictionary value is missing or null</param>
+            <returns>Value for the given key, or valueIfMissingOrNull if the value is missing or null</returns>
+        </member>
+        <member name="M:Pacifica.Core.Utilities.GetDictionaryValue(System.Collections.Generic.IReadOnlyDictionary{System.String,System.String},System.String,System.String)">
+            <summary>
+            Lookup the value associated with the given key in the dictionary
+            </summary>
+            <param name="dictionary">Dictionary</param>
+            <param name="keyName">Key name</param>
+            <param name="valueIfMissingOrNull">Value to return if the dictionary value is missing or null</param>
+            <returns>Value for the given key, or valueIfMissingOrNull if the value is missing or null</returns>
+        </member>
+        <member name="M:Pacifica.Core.Utilities.GetDictionaryValue(System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object},System.String,System.Int64)">
+            <summary>
+            Lookup the integer value associated with the given key in the dictionary
+            </summary>
+            <param name="dictionary">Dictionary</param>
+            <param name="keyName">Key name</param>
+            <param name="valueIfMissingOrNull">Int-64 value to return if the dictionary value is missing or null</param>
+            <returns>Value for the given key, or valueIfMissingOrNull if the value is missing or null</returns>
+        </member>
+        <member name="M:Pacifica.Core.Utilities.GetDictionaryValue(System.Collections.Generic.IReadOnlyDictionary{System.String,System.Object},System.String,System.String)">
+            <summary>
+            Lookup the value associated with the given key in the dictionary
+            </summary>
+            <param name="dictionary">Dictionary</param>
+            <param name="keyName">Key name</param>
+            <param name="valueIfMissingOrNull">Value to return if the dictionary value is missing or null</param>
+            <returns>Value for the given key, or valueIfMissingOrNull if the value is missing or null</returns>
+        </member>
+        <member name="M:Pacifica.Core.Utilities.ValidateRemoteCertificate(System.Security.Cryptography.X509Certificates.X509Certificate,System.String@)">
+            <summary>
+            Callback used to validate the certificate in an SSL conversation
+            </summary>
+            <param name="cert"></param>
+            <param name="errorMessage"></param>
+            <returns>True if the server is trusted</returns>
+        </member>
+        <member name="M:Pacifica.Core.ExtensionMethods.GetDescription``1(System.Object)">
+            <summary>
+            Determine the Description attribute of a given enum value
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="enumerationValue"></param>
+            <returns>Description attribute, or simply enum.ToString</returns>
+        </member>
+        <member name="M:Pacifica.Core.FileInfoObject.#ctor(System.String,System.String)">
+            <summary>
+            Instantiate a new FileInfoObject, including computing the SHA-1 hash of the file
+            </summary>
+            <param name="absoluteLocalFullPath">Full path to the local file</param>
+            <param name="baseDSPath">Base dataset folder path</param>
+        </member>
+        <member name="M:Pacifica.Core.FileInfoObject.#ctor(System.String,System.String,System.String)">
+            <summary>
+            Instantiate a new FileInfoObject; auto-computes the SHA-1 hash if sha1Hash is blank or is not exactly 40 characters long
+            </summary>
+            <param name="absoluteLocalFullPath">Full path to the local file</param>
+            <param name="relativeDestinationDirectory">Folder in archive in which to store the file; empty string means to store in the dataset folder</param>
+            <param name="sha1Hash">SHA-1 hash for the file; if blank, the hash will be auto-computed</param>
+        </member>
+        <member name="P:Pacifica.Core.FileInfoObject.AbsoluteLocalPath">
+            <summary>
+            Full path to the local file
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.FileInfoObject.RelativeDestinationDirectory">
+            <summary>
+            Relative destination directory, with Unix-style slashes
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.FileInfoObject.RelativeDestinationFullPath">
+            <summary>
+             Relative destination path, with Unix-style slashes
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.FileInfoObject.DestinationFileName">
+            <summary>
+            Optional alternate name to use for the file
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.FileInfoObject.FileName">
+            <summary>
+            Filename
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.FileInfoObject.Sha1HashHex">
+            <summary>
+            SHA-1 hash of the file
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.FileInfoObject.FileSizeInBytes">
+            <summary>
+            File size, in bytes
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.FileInfoObject.CreationTime">
+            <summary>
+            File creation time
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.FileInfoObject.LastWriteTime">
+            <summary>
+            File last write time
+            </summary>
+        </member>
+        <member name="M:Pacifica.Core.FileInfoObject.ConvertWindowsPathToUnix(System.String)">
+            <summary>
+            Converts a windows path of the form \\proto-7\VOrbi05\2013_2\QC_Shew_13_02_500ng_15May13_Lynx_12-12-04\metadata.xml
+            to the Linux form proto-7/VOrbi05/2013_2/QC_Shew_13_02_500ng_15May13_Lynx_12-12-04/metadata.xml
+            </summary>
+            <param name="path">Unix-style path</param>
+            <returns></returns>
+            <remarks>Removes any leading slashes</remarks>
+        </member>
+    </members>
+</doc>

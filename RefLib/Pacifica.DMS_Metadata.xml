@@ -1,0 +1,465 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Pacifica.DMS_Metadata</name>
+    </assembly>
+    <members>
+        <member name="F:Pacifica.DMS_Metadata.DMSMetadataObject.LARGE_DATASET_ARCHIVE_THRESHOLD_GB">
+            <summary>
+            If a dataset archive task involves more 15 GB of data, only archive the root directory and the QC directory
+            Use property SkippedDatasetArchiveSubdirectories to view the skipped subdirectory names
+            </summary>
+        </member>
+        <member name="F:Pacifica.DMS_Metadata.DMSMetadataObject.MAX_FILES_TO_ARCHIVE">
+            <summary>
+            Maximum number of files to archive
+            </summary>
+            <remarks>
+            If uploading an entire dataset directory and all of its subdirectories via a DatasetArchive operation,
+              this value applies to all files in the dataset directory (and subdirectories)
+            If uploading just one dataset subdirectory via an ArchiveUpdate operation,
+              this value applies to all files in that subdirectory
+            </remarks>
+        </member>
+        <member name="F:Pacifica.DMS_Metadata.DMSMetadataObject.SOURCE_DIRECTORY_NOT_FOUND">
+            <summary>
+            Error message thrown when the dataset directory is not found
+            </summary>
+        </member>
+        <member name="F:Pacifica.DMS_Metadata.DMSMetadataObject.TOO_MANY_FILES_TO_ARCHIVE">
+            <summary>
+            Error message thrown when the dataset directory has too many files to archive
+            </summary>
+        </member>
+        <member name="F:Pacifica.DMS_Metadata.DMSMetadataObject.UNDEFINED_EUS_OPERATOR_ID">
+            <summary>
+            Error message thrown when the dataset instrument operator does not have an EUS person ID
+            </summary>
+        </member>
+        <member name="F:Pacifica.DMS_Metadata.DMSMetadataObject.EUS_PORTAL_URL">
+            <summary>
+            URL of the EUS website
+            </summary>
+        </member>
+        <member name="F:Pacifica.DMS_Metadata.DMSMetadataObject.mRemoteCacheInfoFilesToRetrieve">
+            <summary>
+            List of remote files that were found using CacheInfo files
+            </summary>
+        </member>
+        <member name="F:Pacifica.DMS_Metadata.DMSMetadataObject.mRemoteCacheInfoLockFiles">
+            <summary>
+            Keys in this dictionary are lock directory share paths (for example \\proto-6\DMS_LockFiles)
+            Values are the corresponding lock file info object
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.DMSMetadataObject.DatasetName">
+            <summary>
+            Dataset name
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.DMSMetadataObject.EUSInfo">
+            <summary>
+            EUS Info
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.DMSMetadataObject.JobNumber">
+            <summary>
+            Job number (in the DMS_Capture database)
+            </summary>
+            <remarks>0 if no job number</remarks>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.DMSMetadataObject.IgnoreMaxFileLimit">
+            <summary>
+            When true, allow over 500 files to be pushed to MyEMSL
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.DMSMetadataObject.IgnoreMyEMSLFileTrackingError">
+            <summary>
+            when True, allow the ingest step to proceed, even if MyEMSL is tracking fewer files than expected for a given dataset
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.DMSMetadataObject.ManagerName">
+            <summary>
+            Manager name
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.DMSMetadataObject.MetadataObject">
+            <summary>
+            Object that tracks the upload details, including the files to upload
+            </summary>
+            <remarks>
+            The information in this dictionary is translated to JSON;
+            Keys are key names; values are either strings or dictionary objects or even a list of dictionary objects
+            </remarks>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.DMSMetadataObject.SkippedDatasetArchiveSubdirectories">
+            <summary>
+            Subdirectory names that were skipped during a DatasetArchive task because we're pushing more than 15 GB of data
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.DMSMetadataObject.TotalFileSizeToUpload">
+            <summary>
+            Number of bytes to upload
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.DMSMetadataObject.TotalFileCountNew">
+            <summary>
+            Number of new files pushed to MyEMSL
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.DMSMetadataObject.TotalFileCountUpdated">
+            <summary>
+            Number of files updated in MyEMSL
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.DMSMetadataObject.TraceMode">
+            <summary>
+            True to enable trace mode
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.DMSMetadataObject.UseTestInstance">
+            <summary>
+            True to use the Test instance
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.DMSMetadataObject.MetadataObjectJSON">
+            <summary>
+            Retrieve the metadata JSON as a string
+            </summary>
+        </member>
+        <member name="M:Pacifica.DMS_Metadata.DMSMetadataObject.#ctor(Pacifica.Core.Configuration,System.String,System.Int32,PRISM.FileTools)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="config"></param>
+            <param name="managerName"></param>
+            <param name="jobNumber"></param>
+            <param name="fileTools"></param>
+        </member>
+        <member name="M:Pacifica.DMS_Metadata.DMSMetadataObject.SetupMetadata(System.Collections.Generic.Dictionary{System.String,System.String},System.Collections.Generic.Dictionary{System.String,System.String},System.Boolean@,System.String@)">
+            <summary>
+            Construct the metadata that will be included with the ingested data
+            </summary>
+            <param name="taskParams"></param>
+            <param name="mgrParams"></param>
+            <param name="criticalError">Output: set to true if the job should be failed</param>
+            <param name="criticalErrorMessage">Output: explanation of the critical error</param>
+            <returns>True if success, otherwise false</returns>
+        </member>
+        <member name="M:Pacifica.DMS_Metadata.DMSMetadataObject.BytesToGB(System.Int64)">
+            <summary>
+            Convert a file size in bytes to gigabytes
+            </summary>
+            <param name="sizeBytes"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Pacifica.DMS_Metadata.DMSMetadataObject.CollectFileInformation(Pacifica.DMS_Metadata.DMSMetadataObject.ArchiveModes,System.String,System.String,System.Boolean)">
+            <summary>
+            Find all of the files in the path to be archived
+            </summary>
+            <param name="archiveMode">Archive for the initial archive of a dataset, or update for updating a specific subdirectory</param>
+            <param name="pathToBeArchived">Directory path to be archived</param>
+            <param name="baseDSPath">Base dataset directory path</param>
+            <param name="recurse">True to find files in all subdirectories</param>
+            <returns>List of files to be archived</returns>
+        </member>
+        <member name="M:Pacifica.DMS_Metadata.DMSMetadataObject.CompareDatasetContentsWithMyEMSLMetadata(System.String,System.Collections.Generic.IEnumerable{Pacifica.Core.FileInfoObject},Pacifica.Upload.Upload.UploadMetadata,System.Boolean@,System.String@)">
+            <summary>
+            Query server for files and hash codes
+            </summary>
+            <param name="captureDbConnectionString">DMS_Capture connection string</param>
+            <param name="candidateFilesToUpload">List of local files</param>
+            <param name="uploadMetadata">Upload metadata</param>
+            <param name="criticalError">Output: set to true if the job should be failed</param>
+            <param name="criticalErrorMessage">Output: explanation of the critical error</param>
+            <returns>List of files that need to be uploaded</returns>
+        </member>
+        <member name="M:Pacifica.DMS_Metadata.DMSMetadataObject.FileHashExists(System.Collections.Generic.IEnumerable{Pacifica.DMS_Metadata.MyEMSLFileInfo},System.String)">
+            <summary>
+            Return true if fileVersions has a file with the given hash
+            </summary>
+            <param name="fileVersions">List of files in MyEMSL</param>
+            <param name="fileHash">SHA-1 hash to find</param>
+            <returns>True if a match is found, otherwise false</returns>
+        </member>
+        <member name="M:Pacifica.DMS_Metadata.DMSMetadataObject.FindDatasetFilesToArchive(System.Collections.Generic.Dictionary{System.String,System.String},System.Collections.Generic.Dictionary{System.String,System.String},Pacifica.Upload.Upload.UploadMetadata@)">
+            <summary>
+            Find new or updated files to archive
+            </summary>
+            <param name="taskParams"></param>
+            <param name="mgrParams"></param>
+            <param name="uploadMetadata"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Pacifica.DMS_Metadata.DMSMetadataObject.GetDatasetFileCountExpectedInMyEMSL(System.String,System.Int32,System.Int32)">
+            <summary>
+            Query the DMS_Capture database to determine the number of files that MyEMSL should be tracking for this dataset
+            </summary>
+            <param name="connectionString"></param>
+            <param name="datasetID"></param>
+            <param name="retryCount">Number of times to try again if the data cannot be retrieved</param>
+            <returns>Number of files that should be in MyEMSL for this dataset; -1 if an error</returns>
+        </member>
+        <member name="M:Pacifica.DMS_Metadata.DMSMetadataObject.GetDatasetFilesInMyEMSL(System.Int32,System.String)">
+            <summary>
+            Find files in MyEMSL associated with the given dataset ID
+            </summary>
+            <param name="datasetID">Dataset ID</param>
+            <param name="subDirFilter">Optional subdirectory (subfolder) to filter on</param>
+            <returns>
+            Dictionary of files in MyEMSL; keys are relative file paths (Unix style paths) and values are file details
+            Returns null if MyEMSL does not return a valid response
+            </returns>
+        </member>
+        <member name="M:Pacifica.DMS_Metadata.DMSMetadataObject.GetFilesToIgnore">
+            <summary>
+            Get a list of file names that we can ignore when transferring data to MyEMSL or comparing files on disk to files in MyEMSL
+            </summary>
+            <returns>SortedSet of strings (case insensitive)</returns>
+        </member>
+        <member name="M:Pacifica.DMS_Metadata.DMSMetadataObject.ValidateCertFile(System.String)">
+            <summary>
+            Validate that the MyEMSL certificate file exists
+            </summary>
+            <param name="callingMethod">Calling method</param>
+            <returns>True if the cert file is found, otherwise false</returns>
+        </member>
+        <member name="T:Pacifica.DMS_Metadata.MyEMSLFileInfo">
+            <summary>
+            Metadata for files in MyEMSL
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.MyEMSLFileInfo.Filename">
+            <summary>
+            Filename
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.MyEMSLFileInfo.FileID">
+            <summary>
+            File ID in MyEMSL
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.MyEMSLFileInfo.HashSum">
+            <summary>
+            File hash (typically SHA-1)
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.MyEMSLFileInfo.HashType">
+            <summary>
+            Hash type
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.MyEMSLFileInfo.Created">
+            <summary>
+            Time created in MyEMSL
+            </summary>
+            <remarks>Use UpdateRemoteFileTimes to update this value</remarks>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.MyEMSLFileInfo.Updated">
+            <summary>
+            Time updated in MyEMSL (typically identical to Created)
+            </summary>
+            <remarks>Use UpdateRemoteFileTimes to update this value</remarks>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.MyEMSLFileInfo.Deleted">
+            <summary>
+            Time deleted in MyEMSL; null if not deleted
+            </summary>
+            <remarks>Use UpdateRemoteFileTimes to update this value</remarks>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.MyEMSLFileInfo.FileCreationTime">
+            <summary>
+            Original file creation time (on the host system prior to MyEMSL ingest)
+            </summary>
+            <remarks>Use UpdateSourceFileTimes to update this value</remarks>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.MyEMSLFileInfo.FileLastWriteTime">
+            <summary>
+            Last modification time (on the host system prior to MyEMSL ingest)
+            </summary>
+            <remarks>Use UpdateSourceFileTimes to update this value</remarks>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.MyEMSLFileInfo.Size">
+            <summary>
+            File size, in bytes
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.MyEMSLFileInfo.SubDir">
+            <summary>
+            Subdirectory (subfolder) below the dataset folder
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.MyEMSLFileInfo.TransactionId">
+            <summary>
+            Transaction ID
+            </summary>
+            <remarks>All files uploaded in a given batch will have the same transaction ID</remarks>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.MyEMSLFileInfo.Dataset">
+            <summary>
+            Dataset Name
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.MyEMSLFileInfo.DatasetID">
+            <summary>
+            DatasetID
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.MyEMSLFileInfo.Instrument">
+            <summary>
+            Instrument name for this file
+            </summary>
+            <remarks>Will be blank for data package files</remarks>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.MyEMSLFileInfo.DatasetYearQuarter">
+            <summary>
+            Dataset year-quarter string, for example 2013_3
+            </summary>
+            <remarks>Will be blank for data package files</remarks>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.MyEMSLFileInfo.PathWithDataset">
+            <summary>
+            Relative path to the file, including the dataset name
+            </summary>
+            <remarks>Uses Windows-style slashes</remarks>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.MyEMSLFileInfo.PathWithDatasetUnix">
+            <summary>
+            Relative path to the file, including the dataset name
+            </summary>
+            <remarks>Uses Unix-style slashes</remarks>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.MyEMSLFileInfo.PathWithInstrumentAndDatasetUnix">
+            <summary>
+            Relative path to the file, including the instrument, year_quarter, and dataset
+            </summary>
+            <remarks>Uses Unix-style slashes</remarks>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.MyEMSLFileInfo.PathWithInstrumentAndDatasetWindows">
+            <summary>
+            Relative path to the file, including the instrument, year_quarter, and dataset
+            </summary>
+            <remarks>
+            Uses Windows-style slashes.
+            Note that instrument IMS_TOF_4 was renamed to IMS04_AgTOF05 in 2013, and thus
+            there are datasets with files associated with both instruments in MyEMSL</remarks>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.MyEMSLFileInfo.RelativePathWindows">
+            <summary>
+            Path to the file, relative to the dataset folder
+            </summary>
+            <remarks>Uses Windows-style slashes</remarks>
+        </member>
+        <member name="M:Pacifica.DMS_Metadata.MyEMSLFileInfo.#ctor(System.String,System.Int64,System.String)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="fileName"></param>
+            <param name="fileId"></param>
+            <param name="hashSum"></param>
+        </member>
+        <member name="M:Pacifica.DMS_Metadata.MyEMSLFileInfo.UpdateRemoteFileTimes(System.String,System.String,System.String)">
+            <summary>
+            Update times the file was created, updated, and optionally deleted in MyEMSL
+            </summary>
+            <param name="createdInMyEMSL"></param>
+            <param name="updatedInMyEMSL"></param>
+            <param name="deletedInMyEMSL"></param>
+        </member>
+        <member name="M:Pacifica.DMS_Metadata.MyEMSLFileInfo.UpdateSourceFileTimes(System.String,System.String)">
+            <summary>
+            Update file creation and modification times using the string values reported by MyEMSL
+            </summary>
+            <param name="creationTimeText"></param>
+            <param name="lastWriteTimeText"></param>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.MyEMSLUploader.Bytes">
+            <summary>
+            Number of bytes uploaded
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.MyEMSLUploader.CriticalErrorMessage">
+            <summary>
+            Critical error message, as reported by SetupMetadata in DMSMetadataObject
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.MyEMSLUploader.ErrorMessage">
+            <summary>
+            Error message from the MyEMSLUploader
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.MyEMSLUploader.EUSInfo">
+            <summary>
+            EUS Info
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.MyEMSLUploader.FileCountNew">
+            <summary>
+            New files that were added
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.MyEMSLUploader.FileCountUpdated">
+            <summary>
+            Existing files that were updated
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.MyEMSLUploader.MetadataContainer">
+            <summary>
+            DMS Metadata container
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.MyEMSLUploader.StatusURI">
+            <summary>
+            Status URI
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.MyEMSLUploader.TraceMode">
+            <summary>
+            True to enable trace mode
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMS_Metadata.MyEMSLUploader.UseTestInstance">
+            <summary>
+            True to use the test instance
+            </summary>
+        </member>
+        <member name="M:Pacifica.DMS_Metadata.MyEMSLUploader.#ctor(Pacifica.Core.Configuration,System.Collections.Generic.Dictionary{System.String,System.String},System.Collections.Generic.Dictionary{System.String,System.String},PRISM.FileTools)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="config">Pacifica configuration</param>
+            <param name="mgrParams"></param>
+            <param name="taskParams"></param>
+            <param name="fileTools"></param>
+        </member>
+        <member name="M:Pacifica.DMS_Metadata.MyEMSLUploader.SetupMetadataAndUpload(Pacifica.Core.Configuration,Pacifica.Upload.TarStreamUploader.UploadDebugMode,System.String@)">
+            <summary>
+            Look for files to upload, compute a SHA-1 hash for each, compare those hashes to existing files in MyEMSL,
+            and upload new/changed files
+            </summary>
+            <param name="config"></param>
+            <param name="debugMode">
+            Set to eDebugMode.CreateTarLocal to authenticate with MyEMSL, then create a .tar file locally instead of actually uploading it
+            Set to eDebugMode.MyEMSLOfflineMode to create the .tar file locally without contacting MyEMSL
+            </param>
+            <param name="statusURL">Output: status URL</param>
+            <returns>True if success, false if an error</returns>
+        </member>
+        <member name="M:Pacifica.DMS_Metadata.MyEMSLUploader.GetParam(System.String,System.Boolean)">
+            <summary>
+            Gets a job parameter
+            </summary>
+            <param name="name">Parameter name</param>
+            <param name="valueIfMissing">Value to return if the parameter does not exist</param>
+            <returns>Parameter value if found, otherwise empty string</returns>
+        </member>
+        <member name="M:Pacifica.DMS_Metadata.MyEMSLUploader.GetParam(System.String,System.Int32)">
+            <summary>
+            Gets a job parameter
+            </summary>
+            <param name="name">Parameter name</param>
+            <param name="valueIfMissing">Value to return if the parameter does not exist</param>
+            <returns>Parameter value if found, otherwise empty string</returns>
+        </member>
+    </members>
+</doc>

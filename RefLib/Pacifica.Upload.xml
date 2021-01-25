@@ -1,0 +1,204 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Pacifica.Upload</name>
+    </assembly>
+    <members>
+        <member name="F:Pacifica.Upload.TarStreamUploader.TAR_BLOCK_SIZE_BYTES">
+            <summary>
+            Block size for tar files
+            </summary>
+        </member>
+        <member name="F:Pacifica.Upload.TarStreamUploader.UPLOADING_FILES">
+            <summary>
+            Used to report status
+            </summary>
+        </member>
+        <member name="T:Pacifica.Upload.TarStreamUploader.UploadDebugMode">
+            <summary>
+            Debug options
+            </summary>
+        </member>
+        <member name="E:Pacifica.Upload.TarStreamUploader.StatusUpdate">
+            <summary>
+            This event is used by SendFileListToIngester to report upload status
+            </summary>
+        </member>
+        <member name="M:Pacifica.Upload.TarStreamUploader.RaiseStatusUpdate(System.Double,System.Int64,System.Int64,System.String)">
+            <summary>
+            Report a status update
+            </summary>
+            <param name="percentCompleted">Value between 0 and 100</param>
+            <param name="totalBytesSent">Total bytes to send</param>
+            <param name="totalBytesToSend">Total bytes sent</param>
+            <param name="statusMessage">Status message</param>
+        </member>
+        <member name="M:Pacifica.Upload.TarStreamUploader.SendFileListToIngester(Pacifica.Core.Configuration,System.String,System.String,System.Collections.Generic.SortedDictionary{System.String,Pacifica.Core.FileInfoObject},System.String,Pacifica.Upload.TarStreamUploader.UploadDebugMode)">
+            <summary>
+            Upload a file via POST
+            </summary>
+            <param name="config"></param>
+            <param name="location"></param>
+            <param name="serverBaseAddress"></param>
+            <param name="fileListObject"></param>
+            <param name="metadataFilePath"></param>
+            <param name="debugMode"></param>
+            <returns></returns>
+        </member>
+        <member name="T:Pacifica.Upload.Upload">
+            <summary>
+            MyEMSL Upload metadata class
+            </summary>
+        </member>
+        <member name="F:Pacifica.Upload.Upload.DEFAULT_EUS_OPERATOR_ID">
+            <summary>
+            EUS Operator ID to use when operator ID is unknown
+            </summary>
+            <remarks>43428 is "Monroe, Matthew"</remarks>
+        </member>
+        <member name="F:Pacifica.Upload.Upload.DEFAULT_EUS_PROJECT_ID">
+            <summary>
+            EUS Project ID to use when the project ID is unknown
+            </summary>
+            <remarks>
+            We originally used Project 17797: "Development of High Throughput Proteomics Production Operations"
+            We switched to Project 51287 in January 2020
+            </remarks>
+        </member>
+        <member name="F:Pacifica.Upload.Upload.UNKNOWN_INSTRUMENT_EUS_INSTRUMENT_ID">
+            <summary>
+            EUS Instrument ID to use when the EUS Instrument ID is unknown
+            </summary>
+            <remarks>34127 is VOrbiETD04</remarks>
+        </member>
+        <member name="F:Pacifica.Upload.Upload.UNKNOWN_INSTRUMENT_NAME">
+            <summary>
+            DMS Instrument Name corresponding to EUS Instrument ID 34127
+            </summary>
+        </member>
+        <member name="F:Pacifica.Upload.Upload.EUSInfo.EUSInstrumentID">
+            <summary>
+            EUS instrument ID
+            </summary>
+        </member>
+        <member name="F:Pacifica.Upload.Upload.EUSInfo.EUSProjectID">
+            <summary>
+            EUS project number
+            </summary>
+            <remarks>As of May 2019, these are now referred to as projects, not proposals</remarks>
+        </member>
+        <member name="F:Pacifica.Upload.Upload.EUSInfo.EUSUploaderID">
+            <summary>
+            EUS ID of the instrument operator (for datasets) or the data package owner (for Data Packages)
+            </summary>
+            <remarks>Aka EUSSubmitterId</remarks>
+        </member>
+        <member name="F:Pacifica.Upload.Upload.UploadMetadata.EUSOperatorID">
+            <summary>
+            Instrument Operator EUS ID for datasets
+            Data Package Owner for data packages
+            </summary>
+            <remarks>DEFAULT_EUS_OPERATOR_ID if unknown</remarks>
+        </member>
+        <member name="P:Pacifica.Upload.Upload.ErrorMessage">
+            <summary>
+            Error message
+            </summary>
+        </member>
+        <member name="P:Pacifica.Upload.Upload.TransferFolderPath">
+            <summary>
+            The metadata.txt file will be copied to the Transfer Folder if the folder path is not empty
+            Example: \\proto-4\DMS3_Xfer\QC_Shew_16_01_125ng_CID-STD_newCol-1_5Apr17_Frodo_16-11-08
+            </summary>
+        </member>
+        <member name="P:Pacifica.Upload.Upload.JobNumber">
+            <summary>
+            Capture Task DB job number for the DatasetArchive or ArchiveUpdate Job
+            </summary>
+            <remarks>
+            The metadata.txt file name will include the JobNumber text in the name, for example MyEMSL_metadata_CaptureJob_12345.txt
+            For DataPackages we store DataPackageId in JobNumber</remarks>
+        </member>
+        <member name="P:Pacifica.Upload.Upload.UseTestInstance">
+            <summary>
+            When true, upload to ingestdmsdev.my.emsl.pnl.gov instead of ingestdms.my.emsl.pnl.gov
+            </summary>
+        </member>
+        <member name="M:Pacifica.Upload.Upload.#ctor(Pacifica.Core.Configuration)">
+            <summary>
+            Constructor (TransferFolderPath and JobNumber will be empty)
+            </summary>
+            <param name="config">Pacifica configuration</param>
+            <remarks>This constructor is used by the DataPackage Archive Manager</remarks>
+        </member>
+        <member name="M:Pacifica.Upload.Upload.#ctor(Pacifica.Core.Configuration,System.String,System.String)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="config">Pacifica config</param>
+            <param name="transferFolderPath">
+            Transfer folder path for this dataset,
+            for example \\proto-4\DMS3_Xfer\IFT001_Pool_17_B_10x_27Aug13_Tiger_13-07-36
+            </param>
+            <param name="jobNumber">DMS Data Capture job number</param>
+            <remarks>The metadata.txt file will be copied to the transfer folder</remarks>
+        </member>
+        <member name="M:Pacifica.Upload.Upload.StartUpload(System.Collections.Generic.List{System.Collections.Generic.Dictionary{System.String,System.Object}},System.String@)">
+            <summary>
+            Update the files and data tracked by metadataObject to MyEMSL
+            </summary>
+            <param name="metadataObject"></param>
+            <param name="statusURI">Status URL</param>
+            <returns>True if successfully uploaded, false if an error</returns>
+            <remarks>This method is used by the DataPackage Archive Manager</remarks>
+        </member>
+        <member name="M:Pacifica.Upload.Upload.StartUpload(System.Collections.Generic.List{System.Collections.Generic.Dictionary{System.String,System.Object}},Pacifica.Upload.TarStreamUploader.UploadDebugMode,System.String@)">
+            <summary>
+            Update the files and data tracked by metadataObject to MyEMSL
+            </summary>
+            <param name="metadataObject"></param>
+            <param name="debugMode">
+            Set to eDebugMode.CreateTarLocal to authenticate with MyEMSL, then create a .tar file locally instead of actually uploading it
+            Set to eDebugMode.MyEMSLOfflineMode to create the .tar file locally without contacting MyEMSL
+            </param>
+            <param name="statusURI">Status URL</param>
+            <returns>True if successfully uploaded, false if an error</returns>
+        </member>
+        <member name="M:Pacifica.Upload.Upload.CreatePacificaMetadataObject(Pacifica.Upload.Upload.UploadMetadata,System.Collections.Generic.List{Pacifica.Core.FileInfoObject},Pacifica.Upload.Upload.EUSInfo@)">
+            <summary>
+            Create the metadata object with the upload details, including the files to upload
+            </summary>
+            <param name="uploadMetadata">Upload metadata</param>
+            <param name="filesToUpload">Files to upload</param>
+            <param name="eusInfo">Output parameter: EUS instrument ID, project ID, and uploader ID</param>
+            <returns>
+            Dictionary of the information to translate to JSON;
+            Keys are key names; values are either strings or dictionary objects or even a list of dictionary objects
+            </returns>
+        </member>
+        <member name="M:Pacifica.Upload.Upload.GetMetadataObjectDescription(System.Collections.Generic.List{System.Collections.Generic.Dictionary{System.String,System.Object}})">
+            <summary>
+            Return a string description of the EUS info encoded by metadataObject
+            </summary>
+            <param name="metadataObject"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Pacifica.Upload.Upload.GetEUSInstrumentID(System.Int32,System.Int32)">
+            <summary>
+            Return the EUS instrument ID, falling back to instrumentIdIfUnknown if eusInstrumentId is empty
+            </summary>
+            <param name="eusInstrumentId"></param>
+            <param name="instrumentIdIfUnknown"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Pacifica.Upload.Upload.GetEUSProjectID(System.String,System.String)">
+            <summary>
+            Validate the EUS project ID, or use the default
+            </summary>
+            <param name="eusProjectId"></param>
+            <param name="eusProjectIdIfUnknown"></param>
+            <returns></returns>
+            <remarks>This is a string because the project ID may contain suffix letters</remarks>
+        </member>
+    </members>
+</doc>
