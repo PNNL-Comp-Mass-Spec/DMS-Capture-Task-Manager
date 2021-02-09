@@ -40,16 +40,14 @@ namespace CaptureTaskManager
         private static int Main(string[] args)
         {
             mTraceMode = false;
-
-            var osVersionInfo = new OSVersionInfo();
-
-            var osVersion = osVersionInfo.GetOSVersion();
-            if (osVersion.IndexOf("windows", StringComparison.OrdinalIgnoreCase) < 0)
             {
-                // Running on Linux
-                // Auto-enable offline mode
-                clsUtilities.EnableOfflineMode(true);
             }
+                if (SystemInfo.IsLinux)
+                {
+                    // Running on Linux
+                    // Auto-enable offline mode
+                    clsUtilities.EnableOfflineMode(true);
+                }
 
             var exeName = System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
 
