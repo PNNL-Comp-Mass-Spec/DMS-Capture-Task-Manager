@@ -25,7 +25,7 @@ namespace CaptureTaskManager
     {
         // Ignore Spelling: OxyPlot
 
-        private const string PROGRAM_DATE = "January 7, 2021";
+        private const string PROGRAM_DATE = "February 8, 2021";
 
         private static bool mTraceMode;
 
@@ -40,8 +40,8 @@ namespace CaptureTaskManager
         private static int Main(string[] args)
         {
             mTraceMode = false;
+            try
             {
-            }
                 if (SystemInfo.IsLinux)
                 {
                     // Running on Linux
@@ -49,62 +49,71 @@ namespace CaptureTaskManager
                     clsUtilities.EnableOfflineMode(true);
                 }
 
-            var exeName = System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
+                var exeName = System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
 
-            var cmdLineParser = new CommandLineParser<CommandLineOptions>(exeName, GetAppVersion(PROGRAM_DATE))
-            {
-                ProgramInfo = "This program processes DMS datasets for PRISM. " +
-                              "Normal operation is to run the program without any command line switches.",
-                ContactInfo =
-                    "Program written by Dave Clark and Matthew Monroe for the Department of Energy (PNNL, Richland, WA)" +
-                    Environment.NewLine +
-                    "E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov" + Environment.NewLine +
-                    "Website: https://omics.pnl.gov/ or https://panomics.pnnl.gov/" + Environment.NewLine + Environment.NewLine +
-                    "Licensed under the 2-Clause BSD License; you may not use this file except in compliance with the License.  " +
-                    "You may obtain a copy of the License at https://opensource.org/licenses/BSD-2-Clause"
-            };
-
-            var parsed = cmdLineParser.ParseArgs(args, false);
-            var options = parsed.ParsedResults;
-            if (args.Length > 0 && !parsed.Success)
-            {
-                // Delay for 1500 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
-                Thread.Sleep(1500);
-                return -1;
-            }
-
-            mTraceMode = options.TraceMode;
-
-            ShowTrace("Command line arguments parsed");
-
-            if (options.ShowVersionOnly)
-            {
-                DisplayVersion();
-                ProgRunner.SleepMilliseconds(500);
-                return 0;
-            }
-
-            // Note: CodeTestMode is enabled using command line switch /T
-            if (options.CodeTestMode)
-            {
-                try
+                var cmdLineParser = new CommandLineParser<CommandLineOptions>(exeName, GetAppVersion(PROGRAM_DATE))
                 {
-                    ShowTrace("Code test mode enabled");
+                    ProgramInfo = "This program processes DMS datasets for PRISM. " +
+                                  "Normal operation is to run the program without any command line switches.",
+                    ContactInfo =
+                        "Program written by Dave Clark and Matthew Monroe for the Department of Energy (PNNL, Richland, WA)" +
+                        Environment.NewLine +
+                        "E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov" + Environment.NewLine +
+                        "Website: https://omics.pnl.gov/ or https://panomics.pnnl.gov/" + Environment.NewLine + Environment.NewLine +
+                        "Licensed under the 2-Clause BSD License; you may not use this file except in compliance with the License.  " +
+                        "You may obtain a copy of the License at https://opensource.org/licenses/BSD-2-Clause"
+                };
 
-                    var testHarness = new clsCodeTest();
-
-                    testHarness.TestConnection();
-                }
-                catch (Exception ex)
+                var parsed = cmdLineParser.ParseArgs(args, false);
+                var options = parsed.ParsedResults;
+                if (args.Length > 0 && !parsed.Success)
                 {
-                    ShowErrorMessage("Exception calling clsCodeTest", ex);
+                    // Delay for 1500 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
+                    Thread.Sleep(1500);
                     return -1;
                 }
 
-                ShowTrace("Exiting application");
+                mTraceMode = options.TraceMode;
 
-                clsParseCommandLine.PauseAtConsole(500);
-                return 0;
+                ShowTrace("Command line arguments parsed");
+
+                if (options.ShowVersionOnly)
+                {
+                    DisplayVersion();
+                    ProgRunner.SleepMilliseconds(500);
+                    return 0;
+                }
+
+                // Note: CodeTestMode is enabled using command line switch /T
+                if (options.CodeTestMode)
+                {
+                    try
+                    {
+                        ShowTrace("Code test mode enabled");
+
+                        var testHarness = new clsCodeTest();
+
+                        testHarness.TestConnection();
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowErrorMessage("Exception calling clsCodeTest", ex);
+                        return -1;
+                    }
+
+                    ShowTrace("Exiting application");
+
+                    clsParseCommandLine.PauseAtConsole(500);
+                    return 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogTools.LogError("Critical exception starting application", ex);
+                clsParseCommandLine.PauseAtConsole(1500);
+                FileLogger.FlushPendingMessages();
+                return 1;
+
             }
 
             // Initiate automated analysis
@@ -134,7 +143,7 @@ namespace CaptureTaskManager
                 catch (Exception ex)
                 {
                     // Report any exceptions not handled at a lower level to the console
-                    LogTools.LogError("Critical exception starting application", ex);
+                    LogTools.LogError("Critical exception in processing loop", ex);
                     clsParseCommandLine.PauseAtConsole(1500);
                     FileLogger.FlushPendingMessages();
                     return 1;
