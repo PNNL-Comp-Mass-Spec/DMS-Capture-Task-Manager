@@ -221,11 +221,11 @@ namespace CaptureTaskManager
         /// </summary>
         public void CreateStatusFlagFile()
         {
-            var TestFileFi = new FileInfo(FlagFilePath);
-            using (var sw = TestFileFi.AppendText())
-            {
-                sw.WriteLine(DateTime.Now.ToString(CultureInfo.InvariantCulture));
-            }
+            var testFile = new FileInfo(FlagFilePath);
+
+            using var writer = testFile.AppendText();
+
+            writer.WriteLine(DateTime.Now.ToString(CultureInfo.InvariantCulture));
         }
 
         /// <summary>
@@ -351,75 +351,74 @@ namespace CaptureTaskManager
 
             // Create a new memory stream in which to write the XML
             var memStream = new MemoryStream();
-            using (var xWriter = new XmlTextWriter(memStream, System.Text.Encoding.UTF8))
+
+            using var writer = new XmlTextWriter(memStream, System.Text.Encoding.UTF8) {
+                Formatting = Formatting.Indented, Indentation = 2
+            };
+
+            // Create the XML document in memory
+            writer.WriteStartDocument(true);
+            writer.WriteComment("Capture task manager status");
+
+            // Root level element
+            writer.WriteStartElement("Root");
+            writer.WriteStartElement("Manager");
+            writer.WriteElementString("MgrName", status.MgrName);
+            writer.WriteElementString("MgrStatus", status.ConvertMgrStatusToString(status.MgrStatus));
+
+            writer.WriteComment("Local status log time: " + lastUpdate.ToLocalTime().ToString(LOCAL_TIME_FORMAT));
+            writer.WriteComment("Local last start time: " + status.TaskStartTime.ToLocalTime().ToString(LOCAL_TIME_FORMAT));
+
+            // Write out times in the format 2017-07-06T23:23:14.337Z
+            writer.WriteElementString("LastUpdate", lastUpdate.ToUniversalTime().ToString(ISO_8601_DATE));
+
+            writer.WriteElementString("LastStartTime", status.TaskStartTime.ToUniversalTime().ToString(ISO_8601_DATE));
+
+            writer.WriteElementString("CPUUtilization", cpuUtilization.ToString("##0.0"));
+            writer.WriteElementString("FreeMemoryMB", freeMemoryMB.ToString("##0.0"));
+            writer.WriteElementString("ProcessID", processId.ToString());
+            writer.WriteStartElement("RecentErrorMessages");
+
+            foreach (var errMsg in clsStatusData.ErrorQueue)
             {
-                xWriter.Formatting = Formatting.Indented;
-                xWriter.Indentation = 2;
-
-                // Create the XML document in memory
-                xWriter.WriteStartDocument(true);
-                xWriter.WriteComment("Capture task manager status");
-
-                // Root level element
-                xWriter.WriteStartElement("Root");
-                xWriter.WriteStartElement("Manager");
-                xWriter.WriteElementString("MgrName", status.MgrName);
-                xWriter.WriteElementString("MgrStatus", status.ConvertMgrStatusToString(status.MgrStatus));
-
-                xWriter.WriteComment("Local status log time: " + lastUpdate.ToLocalTime().ToString(LOCAL_TIME_FORMAT));
-                xWriter.WriteComment("Local last start time: " + status.TaskStartTime.ToLocalTime().ToString(LOCAL_TIME_FORMAT));
-
-                // Write out times in the format 2017-07-06T23:23:14.337Z
-                xWriter.WriteElementString("LastUpdate", lastUpdate.ToUniversalTime().ToString(ISO_8601_DATE));
-
-                xWriter.WriteElementString("LastStartTime", status.TaskStartTime.ToUniversalTime().ToString(ISO_8601_DATE));
-
-                xWriter.WriteElementString("CPUUtilization", cpuUtilization.ToString("##0.0"));
-                xWriter.WriteElementString("FreeMemoryMB", freeMemoryMB.ToString("##0.0"));
-                xWriter.WriteElementString("ProcessID", processId.ToString());
-                xWriter.WriteStartElement("RecentErrorMessages");
-
-                foreach (var errMsg in clsStatusData.ErrorQueue)
-                {
-                    xWriter.WriteElementString("ErrMsg", errMsg);
-                }
-
-                xWriter.WriteEndElement(); // RecentErrorMessages
-                xWriter.WriteEndElement(); // Manager
-
-                xWriter.WriteStartElement("Task");
-                xWriter.WriteElementString("Tool", status.Tool);
-                xWriter.WriteElementString("Status", status.ConvertTaskStatusToString(status.TaskStatus));
-                xWriter.WriteElementString("Duration", runTimeHours.ToString("0.00"));
-                xWriter.WriteElementString("DurationMinutes", (runTimeHours * 60).ToString("0.0"));
-                xWriter.WriteElementString("Progress", status.Progress.ToString("##0.00"));
-                xWriter.WriteElementString("CurrentOperation", status.CurrentOperation);
-
-                xWriter.WriteStartElement("TaskDetails");
-                xWriter.WriteElementString("Status", status.ConvertTaskStatusDetailToString(status.TaskStatusDetail));
-                xWriter.WriteElementString("Job", status.JobNumber.ToString());
-                xWriter.WriteElementString("Step", status.JobStep.ToString());
-                xWriter.WriteElementString("Dataset", status.Dataset);
-                xWriter.WriteElementString("MostRecentLogMessage", clsStatusData.MostRecentLogMessage);
-                xWriter.WriteElementString("MostRecentJobInfo", status.MostRecentJobInfo);
-                xWriter.WriteEndElement(); // TaskDetails
-                xWriter.WriteEndElement(); // Task
-                xWriter.WriteEndElement(); // Root
-
-                // Close out the XML document (but do not close XWriter yet)
-                xWriter.WriteEndDocument();
-                xWriter.Flush();
-
-                // Now use a StreamReader to copy the XML text to a string variable
-                memStream.Seek(0, SeekOrigin.Begin);
-                var memoryStreamReader = new StreamReader(memStream);
-                var xmlText = memoryStreamReader.ReadToEnd();
-
-                memoryStreamReader.Close();
-                memStream.Close();
-
-                return xmlText;
+                writer.WriteElementString("ErrMsg", errMsg);
             }
+
+            writer.WriteEndElement(); // RecentErrorMessages
+            writer.WriteEndElement(); // Manager
+
+            writer.WriteStartElement("Task");
+            writer.WriteElementString("Tool", status.Tool);
+            writer.WriteElementString("Status", status.ConvertTaskStatusToString(status.TaskStatus));
+            writer.WriteElementString("Duration", runTimeHours.ToString("0.00"));
+            writer.WriteElementString("DurationMinutes", (runTimeHours * 60).ToString("0.0"));
+            writer.WriteElementString("Progress", status.Progress.ToString("##0.00"));
+            writer.WriteElementString("CurrentOperation", status.CurrentOperation);
+
+            writer.WriteStartElement("TaskDetails");
+            writer.WriteElementString("Status", status.ConvertTaskStatusDetailToString(status.TaskStatusDetail));
+            writer.WriteElementString("Job", status.JobNumber.ToString());
+            writer.WriteElementString("Step", status.JobStep.ToString());
+            writer.WriteElementString("Dataset", status.Dataset);
+            writer.WriteElementString("MostRecentLogMessage", clsStatusData.MostRecentLogMessage);
+            writer.WriteElementString("MostRecentJobInfo", status.MostRecentJobInfo);
+            writer.WriteEndElement(); // TaskDetails
+            writer.WriteEndElement(); // Task
+            writer.WriteEndElement(); // Root
+
+            // Close out the XML document (but do not close writer yet)
+            writer.WriteEndDocument();
+            writer.Flush();
+
+            // Now use a StreamReader to copy the XML text to a string variable
+            memStream.Seek(0, SeekOrigin.Begin);
+            var memoryStreamReader = new StreamReader(memStream);
+            var xmlText = memoryStreamReader.ReadToEnd();
+
+            memoryStreamReader.Close();
+            memStream.Close();
+
+            return xmlText;
         }
 
         private void WriteStatusFileToDisk(string xmlText)

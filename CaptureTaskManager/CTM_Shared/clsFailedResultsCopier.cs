@@ -134,20 +134,21 @@ namespace CaptureTaskManager
 
         private void CreateInfoFile(string folderInfoFilePath, string resultsFolderName)
         {
-            using (var infoFileWriter = new StreamWriter(new FileStream(folderInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+            using var infoFileWriter = new StreamWriter(new FileStream(folderInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+            infoFileWriter.WriteLine("Date\t" + DateTime.Now);
+            infoFileWriter.WriteLine("ResultsFolderName\t" + resultsFolderName);
+            infoFileWriter.WriteLine("Manager\t" + mMgrParams.GetParam("MgrName"));
+
+            if (mTaskParams != null)
             {
-                infoFileWriter.WriteLine("Date\t" + DateTime.Now);
-                infoFileWriter.WriteLine("ResultsFolderName\t" + resultsFolderName);
-                infoFileWriter.WriteLine("Manager\t" + mMgrParams.GetParam("MgrName"));
-                if (mTaskParams != null)
-                {
-                    infoFileWriter.WriteLine("Job\t" + mTaskParams.GetParam("Job"));
-                    infoFileWriter.WriteLine("Step\t" + mTaskParams.GetParam("Step"));
-                    infoFileWriter.WriteLine("StepTool\t" + mTaskParams.GetParam("StepTool"));
-                    infoFileWriter.WriteLine("Dataset\t" + mTaskParams.GetParam("Dataset"));
-                }
-                infoFileWriter.WriteLine("Date\t" + DateTime.Now);
+                infoFileWriter.WriteLine("Job\t" + mTaskParams.GetParam("Job"));
+                infoFileWriter.WriteLine("Step\t" + mTaskParams.GetParam("Step"));
+                infoFileWriter.WriteLine("StepTool\t" + mTaskParams.GetParam("StepTool"));
+                infoFileWriter.WriteLine("Dataset\t" + mTaskParams.GetParam("Dataset"));
             }
+
+            infoFileWriter.WriteLine("Date\t" + DateTime.Now);
         }
 
         private void DeleteOldFailedResultsDirectories(DirectoryInfo failedResultsDirectory)

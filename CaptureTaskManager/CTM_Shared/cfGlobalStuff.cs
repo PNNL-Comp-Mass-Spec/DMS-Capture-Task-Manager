@@ -413,20 +413,17 @@ namespace CaptureTaskManager
             {
                 try
                 {
-                    using (var cn = new System.Data.SqlClient.SqlConnection(connectionString))
-                    {
-                        cmd.Connection = cn;
-                        cmd.CommandTimeout = timeoutSeconds;
+                    using var cn = new System.Data.SqlClient.SqlConnection(connectionString);
 
-                        using (var da = new System.Data.SqlClient.SqlDataAdapter(cmd))
-                        {
-                            using (var ds = new DataSet())
-                            {
-                                da.Fill(ds);
-                                resultsTable = ds.Tables[0];
-                            }
-                        }
-                    }
+                    cmd.Connection = cn;
+                    cmd.CommandTimeout = timeoutSeconds;
+
+                    using var da = new System.Data.SqlClient.SqlDataAdapter(cmd);
+                    using var ds = new DataSet();
+
+                    da.Fill(ds);
+                    resultsTable = ds.Tables[0];
+
                     return true;
                 }
                 catch (Exception ex)

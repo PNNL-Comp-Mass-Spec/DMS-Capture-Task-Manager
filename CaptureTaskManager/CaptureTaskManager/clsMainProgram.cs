@@ -480,22 +480,21 @@ namespace CaptureTaskManager
             try
             {
                 // Read the History.txt file
-                using (var reader = new StreamReader(new FileStream(historyFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                {
-                    while (!reader.EndOfStream)
-                    {
-                        var dataLine = reader.ReadLine();
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                        {
-                            continue;
-                        }
+                using var reader = new StreamReader(new FileStream(historyFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
-                        if (dataLine.Contains("RecentJob: "))
-                        {
-                            var tmpStr = dataLine.Replace("RecentJob: ", string.Empty);
-                            mStatusFile.MostRecentJobInfo = tmpStr;
-                            break;
-                        }
+                while (!reader.EndOfStream)
+                {
+                    var dataLine = reader.ReadLine();
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                    {
+                        continue;
+                    }
+
+                    if (dataLine.Contains("RecentJob: "))
+                    {
+                        var tmpStr = dataLine.Replace("RecentJob: ", string.Empty);
+                        mStatusFile.MostRecentJobInfo = tmpStr;
+                        break;
                     }
                 }
             }
@@ -685,13 +684,13 @@ namespace CaptureTaskManager
                 LogError(errorMessage, true);
 
                 // Update the message cache file
-                using (var writer = new StreamWriter(new FileStream(messageCacheFile.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+                using var writer = new StreamWriter(new FileStream(messageCacheFile.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite));
+
+                writer.WriteLine("{0}\t{1}", "TimeStamp", "Message");
+
+                foreach (var message in cachedMessages)
                 {
-                    writer.WriteLine("{0}\t{1}", "TimeStamp", "Message");
-                    foreach (var message in cachedMessages)
-                    {
-                        writer.WriteLine("{0}\t{1}", message.Value.ToString(DATE_TIME_FORMAT), message.Key);
-                    }
+                    writer.WriteLine("{0}\t{1}", message.Value.ToString(DATE_TIME_FORMAT), message.Key);
                 }
             }
             catch (Exception ex)
@@ -874,10 +873,9 @@ namespace CaptureTaskManager
             {
                 var historyFile = Path.Combine(mMgrSettings.GetParam("ApplicationPath"), "History.txt");
 
-                using (var sw = new StreamWriter(historyFile, false))
-                {
-                    sw.WriteLine("RecentJob: " + mStatusFile.MostRecentJobInfo);
-                }
+                using var writer = new StreamWriter(historyFile, false);
+
+                writer.WriteLine("RecentJob: " + mStatusFile.MostRecentJobInfo);
             }
             catch (Exception ex)
             {

@@ -581,26 +581,23 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="directoryPath"></param>
         /// <param name="toolVersionInfo"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
         private void SaveToolVersionInfoFile(string directoryPath, string toolVersionInfo)
         {
             try
             {
                 var toolVersionFilePath = Path.Combine(directoryPath, "Tool_Version_Info_" + mTaskParams.GetParam("StepTool") + ".txt");
 
-                using (var toolVersionWriter = new StreamWriter(new FileStream(toolVersionFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
-                {
-                    toolVersionWriter.WriteLine("Date: " + DateTime.Now.ToString(DATE_TIME_FORMAT));
-                    toolVersionWriter.WriteLine("Dataset: " + mDataset);
-                    toolVersionWriter.WriteLine("Job: " + mJob);
-                    toolVersionWriter.WriteLine("Step: " + mTaskParams.GetParam("Step"));
-                    toolVersionWriter.WriteLine("Tool: " + mTaskParams.GetParam("StepTool"));
-                    toolVersionWriter.WriteLine("ToolVersionInfo:");
+                using var toolVersionWriter = new StreamWriter(new FileStream(toolVersionFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite));
 
-                    toolVersionWriter.WriteLine(toolVersionInfo.Replace("; ", Environment.NewLine));
-                    toolVersionWriter.Close();
-                }
+                toolVersionWriter.WriteLine("Date: " + DateTime.Now.ToString(DATE_TIME_FORMAT));
+                toolVersionWriter.WriteLine("Dataset: " + mDataset);
+                toolVersionWriter.WriteLine("Job: " + mJob);
+                toolVersionWriter.WriteLine("Step: " + mTaskParams.GetParam("Step"));
+                toolVersionWriter.WriteLine("Tool: " + mTaskParams.GetParam("StepTool"));
+                toolVersionWriter.WriteLine("ToolVersionInfo:");
+
+                toolVersionWriter.WriteLine(toolVersionInfo.Replace("; ", Environment.NewLine));
+                toolVersionWriter.Close();
             }
             catch (Exception ex)
             {
