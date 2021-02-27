@@ -13,7 +13,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Options for auto-removing files from the working directory when the manager starts
         /// </summary>
-        public enum eCleanupModeConstants
+        public enum CleanupModeConstants
         {
             /// <summary>
             /// Never auto-remove files from the working directory
@@ -35,7 +35,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Cleanup status codes for stored procedure ReportManagerErrorCleanup
         /// </summary>
-        public enum eCleanupActionCodeConstants
+        public enum CleanupActionCodeConstants
         {
             /// <summary>
             /// Starting
@@ -117,15 +117,15 @@ namespace CaptureTaskManager
         // ReSharper disable once UnusedMember.Global
         public bool AutoCleanupManagerErrors(int managerErrorCleanupMode)
         {
-            eCleanupModeConstants cleanupMode;
+            CleanupModeConstants cleanupMode;
 
-            if (Enum.IsDefined(typeof(eCleanupModeConstants), managerErrorCleanupMode))
+            if (Enum.IsDefined(typeof(CleanupModeConstants), managerErrorCleanupMode))
             {
-                cleanupMode = (eCleanupModeConstants)managerErrorCleanupMode;
+                cleanupMode = (CleanupModeConstants)managerErrorCleanupMode;
             }
             else
             {
-                cleanupMode = eCleanupModeConstants.Disabled;
+                cleanupMode = CleanupModeConstants.Disabled;
             }
 
             return AutoCleanupManagerErrors(cleanupMode);
@@ -135,16 +135,16 @@ namespace CaptureTaskManager
         /// Remove all files in the working directory
         /// Also calls stored procedure ReportManagerErrorCleanup at the start and finish of the cleanup
         /// </summary>
-        /// <param name="eManagerErrorCleanupMode"></param>
+        /// <param name="managerErrorCleanupMode"></param>
         /// <returns>True if success, false if an error</returns>
-        public bool AutoCleanupManagerErrors(eCleanupModeConstants eManagerErrorCleanupMode)
+        public bool AutoCleanupManagerErrors(CleanupModeConstants managerErrorCleanupMode)
         {
             if (!mInitialized)
             {
                 return false;
             }
 
-            if (eManagerErrorCleanupMode == eCleanupModeConstants.Disabled)
+            if (managerErrorCleanupMode == CleanupModeConstants.Disabled)
             {
                 return false;
             }
@@ -152,7 +152,7 @@ namespace CaptureTaskManager
             LogMessage("Attempting to automatically clean the work directory");
 
             // Call SP ReportManagerErrorCleanup @ActionCode=1
-            ReportManagerErrorCleanup(eCleanupActionCodeConstants.Start);
+            ReportManagerErrorCleanup(CleanupActionCodeConstants.Start);
 
             // Delete all folders and subdirectories in the working directory
             var success = clsToolRunnerBase.CleanWorkDir(mWorkingDirPath, 1, out var failureMessage);
@@ -179,22 +179,22 @@ namespace CaptureTaskManager
 
             if (success)
             {
-                ReportManagerErrorCleanup(eCleanupActionCodeConstants.Success);
+                ReportManagerErrorCleanup(CleanupActionCodeConstants.Success);
             }
             else
             {
-                ReportManagerErrorCleanup(eCleanupActionCodeConstants.Fail, failureMessage);
+                ReportManagerErrorCleanup(CleanupActionCodeConstants.Fail, failureMessage);
             }
 
             return success;
         }
 
-        private void ReportManagerErrorCleanup(eCleanupActionCodeConstants eMgrCleanupActionCode)
+        private void ReportManagerErrorCleanup(CleanupActionCodeConstants managerCleanupActionCode)
         {
-            ReportManagerErrorCleanup(eMgrCleanupActionCode, string.Empty);
+            ReportManagerErrorCleanup(managerCleanupActionCode, string.Empty);
         }
 
-        private void ReportManagerErrorCleanup(eCleanupActionCodeConstants eMgrCleanupActionCode, string failureMessage)
+        private void ReportManagerErrorCleanup(CleanupActionCodeConstants managerCleanupActionCode, string failureMessage)
         {
             if (string.IsNullOrWhiteSpace(mMgrConfigDBConnectionString))
             {
@@ -223,7 +223,7 @@ namespace CaptureTaskManager
                 var cmd = dbTools.CreateCommand(SP_NAME_REPORT_MGR_CLEANUP, CommandType.StoredProcedure);
 
                 dbTools.AddParameter(cmd, "@ManagerName", SqlType.VarChar, 128, mManagerName);
-                dbTools.AddParameter(cmd, "@State", SqlType.Int).Value = eMgrCleanupActionCode;
+                dbTools.AddParameter(cmd, "@State", SqlType.Int).Value = managerCleanupActionCode;
                 dbTools.AddParameter(cmd, "@FailureMsg", SqlType.VarChar, 512, failureMessage);
                 dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.Output);
 

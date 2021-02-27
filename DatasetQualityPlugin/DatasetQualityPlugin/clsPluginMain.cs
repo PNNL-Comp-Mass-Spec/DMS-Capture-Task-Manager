@@ -131,7 +131,7 @@ namespace DatasetQualityPlugin
             LogDebug(msg);
 
             var instrumentClass = clsInstrumentClassInfo.GetInstrumentClass(instClassName);
-            if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Unknown)
+            if (instrumentClass == clsInstrumentClassInfo.InstrumentClass.Unknown)
             {
                 msg = "Instrument class not recognized: " + instClassName;
                 LogError(msg);
@@ -145,10 +145,10 @@ namespace DatasetQualityPlugin
 
             switch (instrumentClass)
             {
-                case clsInstrumentClassInfo.eInstrumentClass.Finnigan_Ion_Trap:
-                case clsInstrumentClassInfo.eInstrumentClass.GC_QExactive:
-                case clsInstrumentClassInfo.eInstrumentClass.LTQ_FT:
-                case clsInstrumentClassInfo.eInstrumentClass.Thermo_Exactive:
+                case clsInstrumentClassInfo.InstrumentClass.Finnigan_Ion_Trap:
+                case clsInstrumentClassInfo.InstrumentClass.GC_QExactive:
+                case clsInstrumentClassInfo.InstrumentClass.LTQ_FT:
+                case clsInstrumentClassInfo.InstrumentClass.Thermo_Exactive:
                     dataFilePathRemote = Path.Combine(datasetFolder, mDataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
 
                     // Confirm that the file has MS1 spectra (since Quameter requires that they be present)
@@ -158,7 +158,7 @@ namespace DatasetQualityPlugin
                     }
                     break;
 
-                case clsInstrumentClassInfo.eInstrumentClass.Triple_Quad:
+                case clsInstrumentClassInfo.InstrumentClass.Triple_Quad:
                     // Quameter crashes on TSQ files; skip them
                     dataFilePathRemote = string.Empty;
                     break;
@@ -817,7 +817,7 @@ namespace DatasetQualityPlugin
 
         private bool ProcessThermoRawFile(
             string dataFilePathRemote,
-            clsInstrumentClassInfo.eInstrumentClass instrumentClass,
+            clsInstrumentClassInfo.InstrumentClass instrumentClass,
             FileInfo quameterProgram,
             bool ignoreQuameterFailure,
             string instrumentName)
@@ -829,15 +829,15 @@ namespace DatasetQualityPlugin
 
                 switch (instrumentClass)
                 {
-                    case clsInstrumentClassInfo.eInstrumentClass.Finnigan_Ion_Trap:
+                    case clsInstrumentClassInfo.InstrumentClass.Finnigan_Ion_Trap:
                         // Assume low-res precursor spectra
                         configFileNameSource = "quameter_ltq.cfg";
                         break;
 
-                    case clsInstrumentClassInfo.eInstrumentClass.GC_QExactive:
-                    case clsInstrumentClassInfo.eInstrumentClass.LTQ_FT:
-                    case clsInstrumentClassInfo.eInstrumentClass.Thermo_Exactive:
-                    case clsInstrumentClassInfo.eInstrumentClass.Triple_Quad:
+                    case clsInstrumentClassInfo.InstrumentClass.GC_QExactive:
+                    case clsInstrumentClassInfo.InstrumentClass.LTQ_FT:
+                    case clsInstrumentClassInfo.InstrumentClass.Thermo_Exactive:
+                    case clsInstrumentClassInfo.InstrumentClass.Triple_Quad:
                         // Assume high-res precursor spectra
                         configFileNameSource = "quameter_orbitrap.cfg";
                         break;

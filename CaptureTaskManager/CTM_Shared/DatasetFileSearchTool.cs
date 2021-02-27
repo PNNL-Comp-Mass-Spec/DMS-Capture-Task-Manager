@@ -136,18 +136,18 @@ namespace CaptureTaskManager
         public DatasetInfo FindDatasetFileOrDirectory(
             string sourceDirectoryPath,
             string datasetName,
-            clsInstrumentClassInfo.eInstrumentClass instrumentClass)
+            clsInstrumentClassInfo.InstrumentClass instrumentClass)
         {
             bool checkForFilesFirst;
 
             switch (instrumentClass)
             {
-                case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging:
-                case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging_V2:
-                case clsInstrumentClassInfo.eInstrumentClass.IMS_Agilent_TOF_UIMF:
-                case clsInstrumentClassInfo.eInstrumentClass.IMS_Agilent_TOF_DotD:
-                case clsInstrumentClassInfo.eInstrumentClass.Waters_TOF:
-                case clsInstrumentClassInfo.eInstrumentClass.Waters_IMS:
+                case clsInstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging:
+                case clsInstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging_V2:
+                case clsInstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_UIMF:
+                case clsInstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_DotD:
+                case clsInstrumentClassInfo.InstrumentClass.Waters_TOF:
+                case clsInstrumentClassInfo.InstrumentClass.Waters_IMS:
                     // Preferentially capture dataset directories
                     // If a directory is not found, will instead look for a dataset file
                     checkForFilesFirst = false;
@@ -170,11 +170,11 @@ namespace CaptureTaskManager
             // ReSharper disable once SwitchStatementMissingSomeCases
             switch (instrumentClass)
             {
-                case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging:
+                case clsInstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging:
                     datasetInfo.DatasetType = DatasetInfo.RawDSTypes.BrukerImaging;
                     break;
 
-                case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Spot:
+                case clsInstrumentClassInfo.InstrumentClass.BrukerMALDI_Spot:
                     datasetInfo.DatasetType = DatasetInfo.RawDSTypes.BrukerSpot;
                     break;
             }

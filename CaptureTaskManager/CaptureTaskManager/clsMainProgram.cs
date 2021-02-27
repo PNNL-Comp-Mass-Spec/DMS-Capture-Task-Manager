@@ -127,14 +127,14 @@ namespace CaptureTaskManager
         /// <summary>
         /// Evaluates the LoopExitCode to determine whether or not manager can request another task
         /// </summary>
-        /// <param name="eLoopExitCode"></param>
+        /// <param name="loopExitCode"></param>
         /// <returns>True if OK to request another task</returns>
-        private bool EvaluateLoopExitCode(LoopExitCode eLoopExitCode)
+        private bool EvaluateLoopExitCode(LoopExitCode loopExitCode)
         {
             var restartOK = true;
 
             // Determine cause of loop exit and respond accordingly
-            switch (eLoopExitCode)
+            switch (loopExitCode)
             {
                 case LoopExitCode.ConfigChanged:
                     // Reload the manager config
@@ -235,7 +235,7 @@ namespace CaptureTaskManager
                     break;
 
                 default:
-                    throw new Exception("Unrecognized enum in EvaluateLoopExitCode: " + eLoopExitCode);
+                    throw new Exception("Unrecognized enum in EvaluateLoopExitCode: " + loopExitCode);
             }
 
             return restartOK;
@@ -837,7 +837,7 @@ namespace CaptureTaskManager
 
                             ShowTrace("Task found for " + mMgrName);
 
-                            PerformTask(out var eTaskCloseout);
+                            PerformTask(out var taskResult);
 
                             // Increment and test the task counter
                             taskCount++;
@@ -847,7 +847,7 @@ namespace CaptureTaskManager
                                 mLoopExitCode = LoopExitCode.ExceededMaxTaskCount;
                             }
 
-                            if (eTaskCloseout == EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING)
+                            if (taskResult == EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING)
                             {
                                 mRunning = false;
                                 mLoopExitCode = LoopExitCode.NeedToAbortProcessing;
@@ -892,9 +892,9 @@ namespace CaptureTaskManager
             return restartOK;
         }
 
-        private void PerformTask(out EnumCloseOutType eTaskCloseout)
+        private void PerformTask(out EnumCloseOutType taskResult)
         {
-            eTaskCloseout = EnumCloseOutType.CLOSEOUT_NOT_READY;
+            taskResult = EnumCloseOutType.CLOSEOUT_NOT_READY;
 
             try
             {
@@ -950,10 +950,10 @@ namespace CaptureTaskManager
                 var toolResult = mCapTool.RunTool();
                 mStatusTimer.Enabled = false;
 
-                eTaskCloseout = toolResult.CloseoutType;
+                taskResult = toolResult.CloseoutType;
                 string closeoutMessage;
 
-                switch (eTaskCloseout)
+                switch (taskResult)
                 {
                     case EnumCloseOutType.CLOSEOUT_FAILED:
                         LogError(mMgrName + ": Failure running tool " + mStepTool + ", job " + mJob + ", Dataset " + mDataset);
@@ -967,7 +967,7 @@ namespace CaptureTaskManager
                             closeoutMessage = "Failure running tool " + mStepTool;
                         }
 
-                        mTask.CloseTask(eTaskCloseout, closeoutMessage, toolResult.EvalCode, toolResult.EvalMsg);
+                        mTask.CloseTask(taskResult, closeoutMessage, toolResult.EvalCode, toolResult.EvalMsg);
                         break;
 
                     case EnumCloseOutType.CLOSEOUT_NOT_READY:
@@ -990,13 +990,13 @@ namespace CaptureTaskManager
                             closeoutMessage += ": " + toolResult.CloseoutMsg;
                         }
 
-                        mTask.CloseTask(eTaskCloseout, closeoutMessage, toolResult.EvalCode, toolResult.EvalMsg);
+                        mTask.CloseTask(taskResult, closeoutMessage, toolResult.EvalCode, toolResult.EvalMsg);
                         break;
 
                     case EnumCloseOutType.CLOSEOUT_SUCCESS:
                         LogDebug(mMgrName + ": Step complete, tool " + mStepTool + ", job " + mJob + ", Dataset " + mDataset);
 
-                        mTask.CloseTask(eTaskCloseout, toolResult.CloseoutMsg, toolResult.EvalCode, toolResult.EvalMsg);
+                        mTask.CloseTask(taskResult, toolResult.CloseoutMsg, toolResult.EvalCode, toolResult.EvalMsg);
                         break;
 
                     case EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING:
@@ -1013,20 +1013,20 @@ namespace CaptureTaskManager
                             closeoutMessage = "Error: NeedToAbortProcessing";
                         }
 
-                        mTask.CloseTask(eTaskCloseout, closeoutMessage, toolResult.EvalCode, toolResult.EvalMsg);
+                        mTask.CloseTask(taskResult, closeoutMessage, toolResult.EvalCode, toolResult.EvalMsg);
                         break;
 
                     default:
-                        throw new Exception("Unrecognized enum in PerformTask: " + eTaskCloseout);
+                        throw new Exception("Unrecognized enum in PerformTask: " + taskResult);
                 }
 
                 if (toolResult.CloseoutMsg.Contains(clsToolRunnerBase.EXCEPTION_CREATING_OUTPUT_DIRECTORY))
                 {
-                    if (eTaskCloseout != EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING ||
+                    if (taskResult != EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING ||
                         System.Net.Dns.GetHostName().StartsWith("monroe", StringComparison.OrdinalIgnoreCase))
                     {
                         LogWarning("Exiting the main loop since this user cannot write to the output directory");
-                        eTaskCloseout = EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING;
+                        taskResult = EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING;
 
                         ConsoleMsgUtils.SleepSeconds(3);
                     }
@@ -1162,7 +1162,7 @@ namespace CaptureTaskManager
             {
 #if MyEMSL_OFFLINE
     // When this Conditional Compilation Constant is defined, the DatasetArchive plugin will set debugMode
-    // to Pacifica.Core.EasyHttp.eDebugMode.MyEMSLOfflineMode when calling UploadToMyEMSLWithRetry()
+    // to Pacifica.Core.EasyHttp.DebugMode.MyEMSLOfflineMode when calling UploadToMyEMSLWithRetry()
     // This in turn results in writeToDisk becoming True in SendFileListToDavAsTar
     mTask.AddAdditionalParameter("MyEMSLOffline", "true");
     LogMessage("Adding job parameter MyEMSLOffline=true");
@@ -1219,22 +1219,22 @@ namespace CaptureTaskManager
         private bool StatusFlagFileError(bool clearWorkDirectory)
         {
             var cleanupModeVal = mMgrSettings.GetParam("ManagerErrorCleanupMode", 0);
-            clsCleanupMgrErrors.eCleanupModeConstants cleanupMode;
+            clsCleanupMgrErrors.CleanupModeConstants cleanupMode;
 
-            if (Enum.IsDefined(typeof(clsCleanupMgrErrors.eCleanupModeConstants), cleanupModeVal))
+            if (Enum.IsDefined(typeof(clsCleanupMgrErrors.CleanupModeConstants), cleanupModeVal))
             {
-                cleanupMode = (clsCleanupMgrErrors.eCleanupModeConstants)cleanupModeVal;
+                cleanupMode = (clsCleanupMgrErrors.CleanupModeConstants)cleanupModeVal;
             }
             else
             {
-                cleanupMode = clsCleanupMgrErrors.eCleanupModeConstants.Disabled;
+                cleanupMode = clsCleanupMgrErrors.CleanupModeConstants.Disabled;
             }
 
             if (!mStatusFile.DetectStatusFlagFile())
             {
                 // No flag file
 
-                if (clearWorkDirectory && cleanupMode == clsCleanupMgrErrors.eCleanupModeConstants.CleanupAlways)
+                if (clearWorkDirectory && cleanupMode == clsCleanupMgrErrors.CleanupModeConstants.CleanupAlways)
                 {
                     // Delete all files and subdirectories in the working directory (but ignore errors)
                     var workingDir = mMgrSettings.GetParam("WorkDir");

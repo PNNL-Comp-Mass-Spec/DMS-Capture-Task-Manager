@@ -1087,14 +1087,14 @@ namespace DatasetInfoPlugin
         private List<string> GetDataFileOrDirectoryName(
             string inputDirectory,
             out QCPlottingModes qcPlotMode,
-            out clsInstrumentClassInfo.eRawDataType rawDataType,
-            out clsInstrumentClassInfo.eInstrumentClass instrumentClass,
+            out clsInstrumentClassInfo.RawDataType rawDataType,
+            out clsInstrumentClassInfo.InstrumentClass instrumentClass,
             out bool brukerDotDBaf)
         {
             bool isFile;
 
             qcPlotMode = QCPlottingModes.AllPlots;
-            rawDataType = clsInstrumentClassInfo.eRawDataType.Unknown;
+            rawDataType = clsInstrumentClassInfo.RawDataType.Unknown;
             brukerDotDBaf = false;
 
             // Determine the Instrument Class and RawDataType
@@ -1102,7 +1102,7 @@ namespace DatasetInfoPlugin
             var rawDataTypeName = mTaskParams.GetParam("RawDataType", "UnknownRawDataType");
 
             instrumentClass = clsInstrumentClassInfo.GetInstrumentClass(instClassName);
-            if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Unknown)
+            if (instrumentClass == clsInstrumentClassInfo.InstrumentClass.Unknown)
             {
                 mMsg = "Instrument class not recognized: " + instClassName;
                 LogError(mMsg);
@@ -1110,7 +1110,7 @@ namespace DatasetInfoPlugin
             }
 
             rawDataType = clsInstrumentClassInfo.GetRawDataType(rawDataTypeName);
-            if (rawDataType == clsInstrumentClassInfo.eRawDataType.Unknown)
+            if (rawDataType == clsInstrumentClassInfo.RawDataType.Unknown)
             {
                 mMsg = "RawDataType not recognized: " + rawDataTypeName;
                 LogError(mMsg);
@@ -1123,7 +1123,7 @@ namespace DatasetInfoPlugin
             // Get the expected file name based on the dataset type
             switch (rawDataType)
             {
-                case clsInstrumentClassInfo.eRawDataType.ThermoRawFile:
+                case clsInstrumentClassInfo.RawDataType.ThermoRawFile:
                     // LTQ_2, LTQ_4, etc.
                     // LTQ_Orb_1, LTQ_Orb_2, etc.
                     // VOrbiETD01, VOrbiETD02, etc.
@@ -1133,20 +1133,20 @@ namespace DatasetInfoPlugin
                     isFile = true;
                     break;
 
-                case clsInstrumentClassInfo.eRawDataType.ZippedSFolders:
+                case clsInstrumentClassInfo.RawDataType.ZippedSFolders:
                     // 9T_FTICR, 11T_FTICR_B, and 12T_FTICR
                     fileOrDirectoryName = "analysis.baf";
                     isFile = true;
                     break;
 
-                case clsInstrumentClassInfo.eRawDataType.BrukerFTFolder:
+                case clsInstrumentClassInfo.RawDataType.BrukerFTFolder:
                     // 12T_FTICR_B, 15T_FTICR, 9T_FTICR_B
                     // Also, Bruker_FT_IonTrap01, which is Bruker_Amazon_Ion_Trap
                     // 12T_FTICR_Imaging and 15T_FTICR_Imaging datasets with instrument class BrukerMALDI_Imaging_V2 will also have bruker_ft format;
                     // however, instead of an analysis.baf file, they might have a .mcf file and a ser file
 
                     isFile = true;
-                    if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Bruker_Amazon_Ion_Trap)
+                    if (instrumentClass == clsInstrumentClassInfo.InstrumentClass.Bruker_Amazon_Ion_Trap)
                     {
                         fileOrDirectoryName = Path.Combine(mDataset + clsInstrumentClassInfo.DOT_D_EXTENSION, "analysis.yep");
                     }
@@ -1167,24 +1167,24 @@ namespace DatasetInfoPlugin
 
                     break;
 
-                case clsInstrumentClassInfo.eRawDataType.UIMF:
+                case clsInstrumentClassInfo.RawDataType.UIMF:
                     // IMS_TOF_2, IMS_TOF_3, IMS_TOF_4, IMS_TOF_5, IMS_TOF_6, etc.
                     fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION;
                     isFile = true;
                     break;
 
-                case clsInstrumentClassInfo.eRawDataType.SciexWiffFile:
+                case clsInstrumentClassInfo.RawDataType.SciexWiffFile:
                     // QTrap01
                     fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_WIFF_EXTENSION;
                     isFile = true;
                     break;
 
-                case clsInstrumentClassInfo.eRawDataType.AgilentDFolder:
+                case clsInstrumentClassInfo.RawDataType.AgilentDFolder:
                     // Agilent_GC_MS_01, AgQTOF03, AgQTOF04, PrepHPLC1
                     fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
                     isFile = false;
 
-                    if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.PrepHPLC)
+                    if (instrumentClass == clsInstrumentClassInfo.InstrumentClass.PrepHPLC)
                     {
                         LogMessage("Skipping MSFileInfoScanner since PrepHPLC dataset");
                         return new List<string> { INVALID_FILE_TYPE };
@@ -1192,7 +1192,7 @@ namespace DatasetInfoPlugin
 
                     break;
 
-                case clsInstrumentClassInfo.eRawDataType.BrukerMALDIImaging:
+                case clsInstrumentClassInfo.RawDataType.BrukerMALDIImaging:
                     // bruker_maldi_imaging: 12T_FTICR_Imaging, 15T_FTICR_Imaging, and BrukerTOF_Imaging_01
                     // Find the name of the first zip file
 
@@ -1209,32 +1209,32 @@ namespace DatasetInfoPlugin
 
                     break;
 
-                case clsInstrumentClassInfo.eRawDataType.BrukerTOFBaf:
+                case clsInstrumentClassInfo.RawDataType.BrukerTOFBaf:
                     fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
                     isFile = false;
                     break;
 
-                case clsInstrumentClassInfo.eRawDataType.BrukerTOFTdf:
+                case clsInstrumentClassInfo.RawDataType.BrukerTOFTdf:
                     fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
                     qcPlotMode = QCPlottingModes.BpiAndTicOnly;
                     isFile = false;
                     break;
 
-                case clsInstrumentClassInfo.eRawDataType.IlluminaFolder:
+                case clsInstrumentClassInfo.RawDataType.IlluminaFolder:
                     // fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_TXT_GZ_EXTENSION;
                     // isFile = true;
 
                     LogMessage("Skipping MSFileInfoScanner since Illumina RNASeq dataset");
                     return new List<string> { INVALID_FILE_TYPE };
 
-                case clsInstrumentClassInfo.eRawDataType.ShimadzuQGDFile:
+                case clsInstrumentClassInfo.RawDataType.ShimadzuQGDFile:
                     // 	Shimadzu_GC_MS_01
                     fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_QGD_EXTENSION;
                     qcPlotMode = QCPlottingModes.NoPlots;
                     isFile = true;
                     break;
 
-                case clsInstrumentClassInfo.eRawDataType.WatersRawFolder:
+                case clsInstrumentClassInfo.RawDataType.WatersRawFolder:
                     // 	SynaptG2_01
                     fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION;
                     isFile = false;

@@ -1166,11 +1166,11 @@ namespace CaptureToolPlugin
             var copyWithResume = false;
             switch (instrumentClass)
             {
-                case clsInstrumentClassInfo.eInstrumentClass.BrukerFT_BAF:
+                case clsInstrumentClassInfo.InstrumentClass.BrukerFT_BAF:
                     copyWithResume = true;
                     break;
-                case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging:
-                case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging_V2:
+                case clsInstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging:
+                case clsInstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging_V2:
                     copyWithResume = true;
                     maxFileCountToAllowResume = 20;
                     maxInstrumentDirCountToAllowResume = 20;
@@ -2017,7 +2017,7 @@ namespace CaptureToolPlugin
             string sourceDirectoryPath,
             string datasetDirectoryPath,
             bool copyWithResume,
-            clsInstrumentClassInfo.eInstrumentClass instrumentClass,
+            clsInstrumentClassInfo.InstrumentClass instrumentClass,
             string instrumentName)
         {
             SortedSet<string> filesToSkip = null;
@@ -2034,7 +2034,7 @@ namespace CaptureToolPlugin
                 return;
             }
 
-            if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Agilent_Ion_Trap)
+            if (instrumentClass == clsInstrumentClassInfo.InstrumentClass.Agilent_Ion_Trap)
             {
                 // Confirm that a DATA.MS file exists
                 if (IsIncompleteAgilentIonTrap(sourceDirectory.FullName, out msg, returnData))
@@ -2571,7 +2571,7 @@ namespace CaptureToolPlugin
             string sourceDirectoryPath,
             string datasetDirectoryPath,
             bool copyWithResume,
-            clsInstrumentClassInfo.eInstrumentClass instrumentClass)
+            clsInstrumentClassInfo.InstrumentClass instrumentClass)
         {
             // List of file names to skip (not full paths)
             var filesToSkip = new SortedSet<string>();
@@ -2619,7 +2619,7 @@ namespace CaptureToolPlugin
                     }
                 }
 
-                if (!allowMultipleDirectories && instrumentClass == clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging_V2)
+                if (!allowMultipleDirectories && instrumentClass == clsInstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging_V2)
                 {
                     // Effective July 2016, we allow Bruker Imaging datasets to have multiple .D subdirectories
                     // They typically each have their own ser file
@@ -2646,7 +2646,7 @@ namespace CaptureToolPlugin
                 return;
             }
 
-            if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.IMS_Agilent_TOF_UIMF)
+            if (instrumentClass == clsInstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_UIMF)
             {
                 // Possibly skip the Fragmentation_Profile.txt file
                 var fragProfileFile = new FileInfo(Path.Combine(sourceDirectory.FullName, "Fragmentation_Profile.txt"));
@@ -2657,7 +2657,7 @@ namespace CaptureToolPlugin
                 }
             }
 
-            if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.FT_Booster_Data)
+            if (instrumentClass == clsInstrumentClassInfo.InstrumentClass.FT_Booster_Data)
             {
                 // Skip Thermo .Raw files
                 foreach (var thermoRawFile in sourceDirectory.GetFiles("*.raw", SearchOption.AllDirectories))
@@ -2672,7 +2672,7 @@ namespace CaptureToolPlugin
                 }
             }
 
-            if (instrumentClass == clsInstrumentClassInfo.eInstrumentClass.Sciex_QTrap)
+            if (instrumentClass == clsInstrumentClassInfo.InstrumentClass.Sciex_QTrap)
             {
                 // Make sure that it doesn't have more than 2 subdirectories (it typically won't have any, but we'll allow 2)
                 if (sourceDirectory.GetDirectories("*", SearchOption.TopDirectoryOnly).Length > 2)
@@ -3572,7 +3572,7 @@ namespace CaptureToolPlugin
         private bool ValidateWithInstrumentClass(
             string dataset,
             string sourceDirectoryPath,
-            clsInstrumentClassInfo.eInstrumentClass instrumentClass,
+            clsInstrumentClassInfo.InstrumentClass instrumentClass,
             DatasetInfo datasetInfo,
             clsToolReturnData returnData)
         {
@@ -3607,12 +3607,12 @@ namespace CaptureToolPlugin
             // See table T_Instrument_Class for allowed types
             switch (instrumentClass)
             {
-                case clsInstrumentClassInfo.eInstrumentClass.Finnigan_Ion_Trap:
-                case clsInstrumentClassInfo.eInstrumentClass.GC_QExactive:
-                case clsInstrumentClassInfo.eInstrumentClass.LTQ_FT:
-                case clsInstrumentClassInfo.eInstrumentClass.Thermo_Exactive:
-                case clsInstrumentClassInfo.eInstrumentClass.Triple_Quad:
-                case clsInstrumentClassInfo.eInstrumentClass.Shimadzu_GC:
+                case clsInstrumentClassInfo.InstrumentClass.Finnigan_Ion_Trap:
+                case clsInstrumentClassInfo.InstrumentClass.GC_QExactive:
+                case clsInstrumentClassInfo.InstrumentClass.LTQ_FT:
+                case clsInstrumentClassInfo.InstrumentClass.Thermo_Exactive:
+                case clsInstrumentClassInfo.InstrumentClass.Triple_Quad:
+                case clsInstrumentClassInfo.InstrumentClass.Shimadzu_GC:
                     if (datasetInfo.DatasetType != DatasetInfo.RawDSTypes.File)
                     {
                         if (datasetInfo.DatasetType == DatasetInfo.RawDSTypes.DirectoryNoExt)
@@ -3709,7 +3709,7 @@ namespace CaptureToolPlugin
                     }
                     break;
 
-                case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging_V2:
+                case clsInstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging_V2:
                     if (datasetInfo.DatasetType != DatasetInfo.RawDSTypes.DirectoryNoExt)
                     {
                         // Dataset name matched a file; must be a directory with the dataset name, and inside the directory is a .D directory (and typically some jpg files)
@@ -3717,13 +3717,13 @@ namespace CaptureToolPlugin
                     }
                     break;
 
-                case clsInstrumentClassInfo.eInstrumentClass.Bruker_Amazon_Ion_Trap:
-                case clsInstrumentClassInfo.eInstrumentClass.BrukerFT_BAF:
-                case clsInstrumentClassInfo.eInstrumentClass.BrukerTOF_BAF:
-                case clsInstrumentClassInfo.eInstrumentClass.BrukerTOF_TDF:
-                case clsInstrumentClassInfo.eInstrumentClass.Agilent_Ion_Trap:
-                case clsInstrumentClassInfo.eInstrumentClass.Agilent_TOF_V2:
-                case clsInstrumentClassInfo.eInstrumentClass.PrepHPLC:
+                case clsInstrumentClassInfo.InstrumentClass.Bruker_Amazon_Ion_Trap:
+                case clsInstrumentClassInfo.InstrumentClass.BrukerFT_BAF:
+                case clsInstrumentClassInfo.InstrumentClass.BrukerTOF_BAF:
+                case clsInstrumentClassInfo.InstrumentClass.BrukerTOF_TDF:
+                case clsInstrumentClassInfo.InstrumentClass.Agilent_Ion_Trap:
+                case clsInstrumentClassInfo.InstrumentClass.Agilent_TOF_V2:
+                case clsInstrumentClassInfo.InstrumentClass.PrepHPLC:
 
                     if (datasetInfo.DatasetType != DatasetInfo.RawDSTypes.DirectoryExt)
                     {
@@ -3732,9 +3732,9 @@ namespace CaptureToolPlugin
                     }
                     break;
 
-                case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Imaging:
-                case clsInstrumentClassInfo.eInstrumentClass.BrukerMALDI_Spot:
-                case clsInstrumentClassInfo.eInstrumentClass.FT_Booster_Data:
+                case clsInstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging:
+                case clsInstrumentClassInfo.InstrumentClass.BrukerMALDI_Spot:
+                case clsInstrumentClassInfo.InstrumentClass.FT_Booster_Data:
 
                     if (datasetInfo.DatasetType != DatasetInfo.RawDSTypes.DirectoryNoExt)
                     {
@@ -3743,7 +3743,7 @@ namespace CaptureToolPlugin
                     }
                     break;
 
-                case clsInstrumentClassInfo.eInstrumentClass.Sciex_TripleTOF:
+                case clsInstrumentClassInfo.InstrumentClass.Sciex_TripleTOF:
                     if (datasetInfo.DatasetType != DatasetInfo.RawDSTypes.File)
                     {
                         // Dataset name matched a directory; must be a file
@@ -3752,8 +3752,8 @@ namespace CaptureToolPlugin
                     }
                     break;
 
-                case clsInstrumentClassInfo.eInstrumentClass.IMS_Agilent_TOF_UIMF:
-                case clsInstrumentClassInfo.eInstrumentClass.IMS_Agilent_TOF_DotD:
+                case clsInstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_UIMF:
+                case clsInstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_DotD:
                     if (datasetInfo.DatasetType != DatasetInfo.RawDSTypes.File)
                     {
                         if (datasetInfo.DatasetType == DatasetInfo.RawDSTypes.DirectoryExt)
