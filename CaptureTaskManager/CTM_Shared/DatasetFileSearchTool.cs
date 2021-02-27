@@ -140,6 +140,7 @@ namespace CaptureTaskManager
         {
             bool checkForFilesFirst;
 
+            // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
             switch (instrumentClass)
             {
                 case clsInstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging:
@@ -152,6 +153,7 @@ namespace CaptureTaskManager
                     // If a directory is not found, will instead look for a dataset file
                     checkForFilesFirst = false;
                     break;
+
                 default:
                     // First look for a file with name datasetName, if not found, look for a directory
                     checkForFilesFirst = true;
