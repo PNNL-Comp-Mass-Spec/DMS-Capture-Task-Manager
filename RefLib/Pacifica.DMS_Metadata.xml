@@ -4,6 +4,11 @@
         <name>Pacifica.DMS_Metadata</name>
     </assembly>
     <members>
+        <member name="T:Pacifica.DMS_Metadata.DMSMetadataObject">
+            <summary>
+            DMS metadata object
+            </summary>
+        </member>
         <member name="F:Pacifica.DMS_Metadata.DMSMetadataObject.LARGE_DATASET_ARCHIVE_THRESHOLD_GB">
             <summary>
             If a dataset archive task involves more 15 GB of data, only archive the root directory and the QC directory
@@ -41,6 +46,11 @@
             URL of the EUS website
             </summary>
         </member>
+        <member name="F:Pacifica.DMS_Metadata.DMSMetadataObject.HASHING_FILES">
+            <summary>
+            Text to show when reporting progress
+            </summary>
+        </member>
         <member name="F:Pacifica.DMS_Metadata.DMSMetadataObject.mRemoteCacheInfoFilesToRetrieve">
             <summary>
             List of remote files that were found using CacheInfo files
@@ -50,6 +60,21 @@
             <summary>
             Keys in this dictionary are lock directory share paths (for example \\proto-6\DMS_LockFiles)
             Values are the corresponding lock file info object
+            </summary>
+        </member>
+        <member name="T:Pacifica.DMS_Metadata.DMSMetadataObject.ArchiveModes">
+            <summary>
+            Archive modes
+            </summary>
+        </member>
+        <member name="F:Pacifica.DMS_Metadata.DMSMetadataObject.ArchiveModes.archive">
+            <summary>
+            Archive files (initial push of a dataset's files into MyEMSL)
+            </summary>
+        </member>
+        <member name="F:Pacifica.DMS_Metadata.DMSMetadataObject.ArchiveModes.update">
+            <summary>
+            Add/update a dataset's files
             </summary>
         </member>
         <member name="P:Pacifica.DMS_Metadata.DMSMetadataObject.DatasetName">
@@ -151,7 +176,6 @@
             Convert a file size in bytes to gigabytes
             </summary>
             <param name="sizeBytes"></param>
-            <returns></returns>
         </member>
         <member name="M:Pacifica.DMS_Metadata.DMSMetadataObject.CollectFileInformation(Pacifica.DMS_Metadata.DMSMetadataObject.ArchiveModes,System.String,System.String,System.Boolean)">
             <summary>
@@ -174,6 +198,16 @@
             <param name="criticalErrorMessage">Output: explanation of the critical error</param>
             <returns>List of files that need to be uploaded</returns>
         </member>
+        <member name="M:Pacifica.DMS_Metadata.DMSMetadataObject.CreateLockFiles">
+            <summary>
+            Create lock files for the files in mRemoteCacheInfoFilesToRetrieve
+            </summary>
+        </member>
+        <member name="M:Pacifica.DMS_Metadata.DMSMetadataObject.DeleteLockFiles">
+            <summary>
+            Delete lock files tracked by mRemoteCacheInfoLockFiles
+            </summary>
+        </member>
         <member name="M:Pacifica.DMS_Metadata.DMSMetadataObject.FileHashExists(System.Collections.Generic.IEnumerable{Pacifica.DMS_Metadata.MyEMSLFileInfo},System.String)">
             <summary>
             Return true if fileVersions has a file with the given hash
@@ -189,7 +223,6 @@
             <param name="taskParams"></param>
             <param name="mgrParams"></param>
             <param name="uploadMetadata"></param>
-            <returns></returns>
         </member>
         <member name="M:Pacifica.DMS_Metadata.DMSMetadataObject.GetDatasetFileCountExpectedInMyEMSL(System.String,System.Int32,System.Int32)">
             <summary>
@@ -210,6 +243,13 @@
             Dictionary of files in MyEMSL; keys are relative file paths (Unix style paths) and values are file details
             Returns null if MyEMSL does not return a valid response
             </returns>
+        </member>
+        <member name="M:Pacifica.DMS_Metadata.DMSMetadataObject.GetDatasetYearQuarter(System.Collections.Generic.Dictionary{System.String,System.String})">
+            <summary>
+            Get the dataset date-code text, e.g. 2040_4
+            </summary>
+            <param name="taskParams"></param>
+            <returns>Year_Quarter</returns>
         </member>
         <member name="M:Pacifica.DMS_Metadata.DMSMetadataObject.GetFilesToIgnore">
             <summary>
@@ -373,6 +413,26 @@
             <param name="creationTimeText"></param>
             <param name="lastWriteTimeText"></param>
         </member>
+        <member name="M:Pacifica.DMS_Metadata.MyEMSLFileInfo.ToString">
+            <summary>
+            Return the relative file path
+            </summary>
+        </member>
+        <member name="T:Pacifica.DMS_Metadata.MyEMSLUploader">
+            <summary>
+            MyEMSL uploader
+            </summary>
+        </member>
+        <member name="F:Pacifica.DMS_Metadata.MyEMSLUploader.RECURSIVE_UPLOAD">
+            <summary>
+            Recursive upload dictionary key
+            </summary>
+        </member>
+        <member name="F:Pacifica.DMS_Metadata.MyEMSLUploader.CRITICAL_UPLOAD_ERROR">
+            <summary>
+            Critical error text
+            </summary>
+        </member>
         <member name="P:Pacifica.DMS_Metadata.MyEMSLUploader.Bytes">
             <summary>
             Number of bytes uploaded
@@ -460,6 +520,21 @@
             <param name="name">Parameter name</param>
             <param name="valueIfMissing">Value to return if the parameter does not exist</param>
             <returns>Parameter value if found, otherwise empty string</returns>
+        </member>
+        <member name="E:Pacifica.DMS_Metadata.MyEMSLUploader.MetadataDefinedEvent">
+            <summary>
+            Metadata defined event
+            </summary>
+        </member>
+        <member name="E:Pacifica.DMS_Metadata.MyEMSLUploader.StatusUpdate">
+            <summary>
+            Status update event
+            </summary>
+        </member>
+        <member name="E:Pacifica.DMS_Metadata.MyEMSLUploader.UploadCompleted">
+            <summary>
+            Upload complete event
+            </summary>
         </member>
     </members>
 </doc>

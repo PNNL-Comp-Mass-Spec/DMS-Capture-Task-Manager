@@ -4,6 +4,16 @@
         <name>MyEMSLReader</name>
     </assembly>
     <members>
+        <member name="T:MyEMSLReader.ArchivedFileInfo">
+            <summary>
+            Archived file info
+            </summary>
+        </member>
+        <member name="F:MyEMSLReader.ArchivedFileInfo.SHA1">
+            <summary>
+            SHA-1
+            </summary>
+        </member>
         <member name="P:MyEMSLReader.ArchivedFileInfo.Dataset">
             <summary>
             Dataset name for this file
@@ -57,9 +67,9 @@
         </member>
         <member name="P:MyEMSLReader.ArchivedFileInfo.Hash">
             <summary>
-            Sha-1 or MD5 hash
+            SHA-1 or MD5 hash
             </summary>
-            <remarks>Typically a Sha-1 hash</remarks>
+            <remarks>Typically a SHA-1 hash</remarks>
         </member>
         <member name="P:MyEMSLReader.ArchivedFileInfo.HashType">
             <summary>
@@ -113,7 +123,7 @@
         </member>
         <member name="P:MyEMSLReader.ArchivedFileInfo.Sha1Hash">
             <summary>
-            Sha-1 hash, provided Hashtype is "sha1" or empty
+            SHA-1 hash, provided HashType is "sha1" or empty
             </summary>
         </member>
         <member name="P:MyEMSLReader.ArchivedFileInfo.SubDirPath">
@@ -184,6 +194,11 @@
             <param name="creationTime"></param>
             <param name="lastWriteTime"></param>
         </member>
+        <member name="M:MyEMSLReader.ArchivedFileInfo.ToString">
+            <summary>
+            Return the relative file path
+            </summary>
+        </member>
         <member name="T:MyEMSLReader.DataPackageListInfo">
             <summary>
             Tracks the file info for multiple data packages (by dataset ID)
@@ -217,6 +232,17 @@
             <param name="dataPackageID">Data Package ID</param>
             <param name="subDir">Subdirectory name to filter on</param>
         </member>
+        <member name="M:MyEMSLReader.DataPackageListInfo.Clear">
+            <summary>
+            Clear stored data
+            </summary>
+        </member>
+        <member name="M:MyEMSLReader.DataPackageListInfo.ContainsDataPackage(System.Int32)">
+            <summary>
+            Return true if DataPackagesAndSubDirs contains the data package ID
+            </summary>
+            <param name="dataPackageID"></param>
+        </member>
         <member name="M:MyEMSLReader.DataPackageListInfo.FindFiles(System.String,System.String,System.Int32)">
             <summary>
             Looks for the given file, returning any matches as a list (searches this directory and subdirectories)
@@ -245,9 +271,14 @@
             </summary>
             <returns>True if successful, false if an error</returns>
         </member>
+        <member name="T:MyEMSLReader.DatasetDirectoryOrFileInfo">
+            <summary>
+            Dataset directory or file info
+            </summary>
+        </member>
         <member name="P:MyEMSLReader.DatasetDirectoryOrFileInfo.CacheDateUTC">
             <summary>
-            The UTC datetime that the info was cached in memory
+            The UTC timestamp that the info was cached in memory
             </summary>
         </member>
         <member name="P:MyEMSLReader.DatasetDirectoryOrFileInfo.FileID">
@@ -273,6 +304,11 @@
             <param name="fileID"></param>
             <param name="isDirectory"></param>
             <param name="fileInfo"></param>
+        </member>
+        <member name="M:MyEMSLReader.DatasetDirectoryOrFileInfo.ToString">
+            <summary>
+            Return the MyEMSL file ID
+            </summary>
         </member>
         <member name="T:MyEMSLReader.DatasetListInfoByID">
             <summary>
@@ -307,6 +343,17 @@
             <param name="datasetID">Dataset ID</param>
             <param name="subDir">Subdirectory name to filter on</param>
         </member>
+        <member name="M:MyEMSLReader.DatasetListInfoByID.Clear">
+            <summary>
+            Clear DatasetsAndSubDirs and set mCacheIsStale to true
+            </summary>
+        </member>
+        <member name="M:MyEMSLReader.DatasetListInfoByID.ContainsDataset(System.Int32)">
+            <summary>
+            Return true if DatasetsAndSubDirs has the given dataset
+            </summary>
+            <param name="datasetID"></param>
+        </member>
         <member name="M:MyEMSLReader.DatasetListInfoByID.RefreshInfo">
             <summary>
             Contact the metadata server to find the files associated with datasets added via AddDataset
@@ -318,6 +365,41 @@
             Tracks the file info for one or more datasets or data packages
             </summary>
         </member>
+        <member name="F:MyEMSLReader.DatasetInfoBase.MYEMSL_FILE_ID_TAG">
+            <summary>
+            MyEMSL ID flag
+            </summary>
+        </member>
+        <member name="F:MyEMSLReader.DatasetInfoBase.mErrorMessages">
+            <summary>
+            Error messages
+            </summary>
+        </member>
+        <member name="F:MyEMSLReader.DatasetInfoBase.mArchivedFiles">
+            <summary>
+            List of files in MyEMSL
+            </summary>
+        </member>
+        <member name="F:MyEMSLReader.DatasetInfoBase.mCacheDate">
+            <summary>
+            Timestamp when metadata was retrieved
+            </summary>
+        </member>
+        <member name="F:MyEMSLReader.DatasetInfoBase.mCacheIsStale">
+            <summary>
+            True if the cached metadata is out of date
+            </summary>
+        </member>
+        <member name="F:MyEMSLReader.DatasetInfoBase.mReader">
+            <summary>
+            MyEMSL Reader
+            </summary>
+        </member>
+        <member name="F:MyEMSLReader.DatasetInfoBase.mDownloadQueue">
+            <summary>
+            Tracks information on files to download
+            </summary>
+        </member>
         <member name="F:MyEMSLReader.DatasetInfoBase.mDownloadedFiles">
             <summary>
             The most recently downloaded files; keys are the full paths to the downloaded file, values are extended file info
@@ -327,16 +409,12 @@
             <summary>
             The most recently downloaded files; keys are the full paths to the downloaded file, values are extended file info
             </summary>
-            <value></value>
-            <returns></returns>
             <remarks>Keys are the full paths to the downloaded file, values are extended file info</remarks>
         </member>
         <member name="P:MyEMSLReader.DatasetInfoBase.ErrorMessages">
             <summary>
             List of error messages
             </summary>
-            <value></value>
-            <returns></returns>
             <remarks>The messages are cleared by when these functions are called: ProcessDownloadQueue and RefreshInfo</remarks>
             ReSharper disable once UnusedMember.Global
         </member>
@@ -344,12 +422,15 @@
             <summary>
             MyEMSL IDs of files queued to be downloaded
             </summary>
-            <value></value>
-            <returns></returns>
             <remarks>Keys are MyEMSL File IDs, values are struct FileDownloadInfo</remarks>
             ReSharper disable once UnusedMember.Global
         </member>
         <member name="P:MyEMSLReader.DatasetInfoBase.ThrowErrors">
+            <summary>
+            When true, raise a DebugEvent prior to contacting the metadata server
+            </summary>
+        </member>
+        <member name="P:MyEMSLReader.DatasetInfoBase.ReportMetadataURLs">
             <summary>
             When true, raise a DebugEvent prior to contacting the metadata server
             </summary>
@@ -363,6 +444,11 @@
             <summary>
             When False use https://my.emsl.pnl.gov/myemsl/elasticsearch/simple_items
             When True use  https://test0.my.emsl.pnl.gov/myemsl/search/simple/index.shtml
+            </summary>
+        </member>
+        <member name="M:MyEMSLReader.DatasetInfoBase.#ctor">
+            <summary>
+            Base dataset info
             </summary>
         </member>
         <member name="M:MyEMSLReader.DatasetInfoBase.AddFileToDownloadQueue(MyEMSLReader.ArchivedFileInfo)">
@@ -432,7 +518,6 @@
             </summary>
             <param name="filePath">Path to parse, for example QC_Shew_13-04_pt1_1_1_31Jul13_Cheetah_13-07-01.raw@MyEMSLID_84327</param>
             <returns>MyEMSL File ID if successfully parsed, 0 if not present or a problem</returns>
-            <remarks></remarks>
             ReSharper disable once UnusedMember.Global
         </member>
         <member name="M:MyEMSLReader.DatasetInfoBase.ExtractMyEMSLFileID(System.String,System.String@)">
@@ -442,7 +527,6 @@
             <param name="filePath">Path to parse, for example QC_Shew_13-04_pt1_1_1_31Jul13_Cheetah_13-07-01.raw@MyEMSLID_84327</param>
             <param name="newFilePath">Path with the MyEMSL FileID tag removed, for example QC_Shew_13-04_pt1_1_1_31Jul13_Cheetah_13-07-01.raw</param>
             <returns>MyEMSL File ID if successfully parsed, 0 if not present or a problem</returns>
-            <remarks></remarks>
         </member>
         <member name="M:MyEMSLReader.DatasetInfoBase.FindFiles(System.String)">
             <summary>
@@ -450,7 +534,6 @@
             </summary>
             <param name="fileName">File name to find; can contain a wildcard, e.g. *.zip</param>
             <returns>List of matching files</returns>
-            <remarks></remarks>
         </member>
         <member name="M:MyEMSLReader.DatasetInfoBase.FindFiles(System.String,System.String)">
             <summary>
@@ -529,7 +612,6 @@
             <param name="directoryName">Directory name to find; can contain a wildcard, e.g. SIC*</param>
             <param name="datasetName">Dataset name filter</param>
             <returns>List of matching directories</returns>
-            <remarks></remarks>
         </member>
         <member name="M:MyEMSLReader.DatasetInfoBase.ProcessDownloadQueue(System.String,MyEMSLReader.Downloader.DownloadLayout)">
             <summary>
@@ -551,7 +633,16 @@
             Refresh the cached file info if over 5 minutes have elapsed
             </summary>
             <returns>True if success, false if an error</returns>
-            <remarks></remarks>
+        </member>
+        <member name="E:MyEMSLReader.DatasetInfoBase.FileDownloadedEvent">
+            <summary>
+            File downloaded event
+            </summary>
+        </member>
+        <member name="E:MyEMSLReader.DatasetInfoBase.MyEMSLOffline">
+            <summary>
+            MyEMSL Offline event
+            </summary>
         </member>
         <member name="T:MyEMSLReader.DatasetListInfo">
             <summary>
@@ -588,6 +679,17 @@
             <param name="subDir">Subdirectory name to filter on (exact match; cannot contain wildcards)</param>
             /// <remarks>Call RefreshInfo to retrieve the MyEMSL-tracked files for the added datasets</remarks>
         </member>
+        <member name="M:MyEMSLReader.DatasetListInfo.Clear">
+            <summary>
+            Clear cached metadata
+            </summary>
+        </member>
+        <member name="M:MyEMSLReader.DatasetListInfo.ContainsDataset(System.String)">
+            <summary>
+            Return true if DatasetsAndSubDirs contains the given dataset
+            </summary>
+            <param name="datasetName"></param>
+        </member>
         <member name="M:MyEMSLReader.DatasetListInfo.RefreshInfo">
             <summary>
             Contact the metadata server to find the files associated with datasets added via AddDataset
@@ -600,6 +702,54 @@
             Use the Reader class to find files and determine File IDs
             </summary>
             <remarks>Written by Matthew Monroe for PNNL in August 2013</remarks>
+        </member>
+        <member name="T:MyEMSLReader.Downloader.DownloadLayout">
+            <summary>
+            Download layout
+            </summary>
+        </member>
+        <member name="F:MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories">
+            <summary>
+            Flat, no subdirectories
+            </summary>
+        </member>
+        <member name="F:MyEMSLReader.Downloader.DownloadLayout.SingleDataset">
+            <summary>
+            Single dataset
+            </summary>
+        </member>
+        <member name="F:MyEMSLReader.Downloader.DownloadLayout.DatasetNameAndSubdirectories">
+            <summary>
+            Separate datasets, each in their own subdirectory
+            </summary>
+        </member>
+        <member name="F:MyEMSLReader.Downloader.DownloadLayout.InstrumentYearQuarterDataset">
+            <summary>
+            Separate datasets, arranged by Year_Quarter\DatasetName
+            </summary>
+        </member>
+        <member name="T:MyEMSLReader.Downloader.Overwrite">
+            <summary>
+            File overwrite behavior
+            </summary>
+        </member>
+        <member name="F:MyEMSLReader.Downloader.Overwrite.IfChanged">
+            <summary>
+            Only overwrite if the downloaded file is different
+            </summary>
+            <remarks>
+            This mode will compute a SHA-1 hash of the target file and only overwrite the target if the hash values differ
+            </remarks>
+        </member>
+        <member name="F:MyEMSLReader.Downloader.Overwrite.Always">
+            <summary>
+            Always overwrite
+            </summary>
+        </member>
+        <member name="F:MyEMSLReader.Downloader.Overwrite.Never">
+            <summary>
+            Never overwrite
+            </summary>
         </member>
         <member name="P:MyEMSLReader.Downloader.DownloadedFiles">
             <summary>
@@ -621,6 +771,11 @@
             <summary>
             When False use https://metadata.my.emsl.pnl.gov/fileinfo/files_for_keyvalue/omics.dms.dataset_id/12345
             When True use  https://metadatadev.my.emsl.pnl.gov/fileinfo/files_for_keyvalue/omics.dms.dataset_id/12345
+            </summary>
+        </member>
+        <member name="M:MyEMSLReader.Downloader.#ctor">
+            <summary>
+            Constructor
             </summary>
         </member>
         <member name="M:MyEMSLReader.Downloader.DownloadFiles(System.Collections.Generic.Dictionary{System.Int64,MyEMSLReader.ArchivedFileInfo},System.String,MyEMSLReader.Downloader.DownloadLayout)">
@@ -662,7 +817,6 @@
             <param name="downloadDirectory"></param>
             <param name="directoryLayout"></param>
             <param name="bytesDownloaded"></param>
-            <returns></returns>
         </member>
         <member name="M:MyEMSLReader.Downloader.IsDownloadRequired(MyEMSLReader.ArchivedFileInfo,System.IO.FileSystemInfo,System.Boolean)">
             <summary>
@@ -671,7 +825,41 @@
             <param name="archiveFile"></param>
             <param name="targetFile"></param>
             <param name="reportMessage"></param>
-            <returns></returns>
+        </member>
+        <member name="M:MyEMSLReader.Downloader.ResetStatus">
+            <summary>
+            Reset the percent complete and clear the list of downloaded files
+            </summary>
+        </member>
+        <member name="T:MyEMSLReader.DownloadQueue">
+            <summary>
+            Download queue
+            </summary>
+        </member>
+        <member name="T:MyEMSLReader.DownloadQueue.FileDownloadInfo">
+            <summary>
+            File download info
+            </summary>
+        </member>
+        <member name="F:MyEMSLReader.DownloadQueue.FileDownloadInfo.FileInfo">
+            <summary>
+            Archived file info
+            </summary>
+        </member>
+        <member name="F:MyEMSLReader.DownloadQueue.FileDownloadInfo.UnzipRequired">
+            <summary>
+            True if the file should be unzipped after downloading
+            </summary>
+        </member>
+        <member name="F:MyEMSLReader.DownloadQueue.FileDownloadInfo.DestFilePath">
+            <summary>
+            Destination file path
+            </summary>
+        </member>
+        <member name="E:MyEMSLReader.DownloadQueue.FileDownloadedEvent">
+            <summary>
+            File downloaded event
+            </summary>
         </member>
         <member name="P:MyEMSLReader.DownloadQueue.FilesToDownload">
             <summary>
@@ -681,6 +869,11 @@
         <member name="P:MyEMSLReader.DownloadQueue.DownloadedFiles">
             <summary>
             Keys are the full paths to the downloaded file, values are extended file info
+            </summary>
+        </member>
+        <member name="P:MyEMSLReader.DownloadQueue.ThrowErrors">
+            <summary>
+            When true, raise a DebugEvent prior to contacting the metadata server
             </summary>
         </member>
         <member name="P:MyEMSLReader.DownloadQueue.UseTestInstance">
@@ -693,7 +886,6 @@
             <summary>
             Constructor
             </summary>
-            <remarks></remarks>
         </member>
         <member name="M:MyEMSLReader.DownloadQueue.AddFileToDownloadQueue(MyEMSLReader.ArchivedFileInfo)">
             <summary>
@@ -741,9 +933,62 @@
             <returns>True if success, false if an error</returns>
             <remarks>Returns False if the download queue is empty</remarks>
         </member>
+        <member name="T:MyEMSLReader.FileDownloadedEventArgs">
+            <summary>
+            File downloaded event arguments
+            </summary>
+        </member>
+        <member name="F:MyEMSLReader.FileDownloadedEventArgs.DownloadDirectoryPath">
+            <summary>
+            Download directory path
+            </summary>
+        </member>
+        <member name="F:MyEMSLReader.FileDownloadedEventArgs.ArchivedFile">
+            <summary>
+            Archived file info
+            </summary>
+        </member>
+        <member name="F:MyEMSLReader.FileDownloadedEventArgs.UnzipRequired">
+            <summary>
+            True if the file needs to unzipped after downloading
+            </summary>
+        </member>
+        <member name="M:MyEMSLReader.FileDownloadedEventArgs.#ctor(System.String,MyEMSLReader.ArchivedFileInfo,System.Boolean)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="downloadDirectoryPath"></param>
+            <param name="archivedFile"></param>
+            <param name="unzipRequired"></param>
+        </member>
+        <member name="T:MyEMSLReader.MyEMSLBase">
+            <summary>
+            Base class for the Downloader and Reader classes
+            </summary>
+        </member>
+        <member name="P:MyEMSLReader.MyEMSLBase.ThrowErrors">
+            <summary>
+            When true, raise a DebugEvent prior to contacting the metadata server
+            </summary>
+        </member>
+        <member name="F:MyEMSLReader.MyEMSLBase.mPacificaConfig">
+            <summary>
+            Pacifica configuration
+            </summary>
+        </member>
+        <member name="P:MyEMSLReader.MyEMSLBase.ErrorMessage">
+            <summary>
+            Error message
+            </summary>
+        </member>
         <member name="M:MyEMSLReader.MyEMSLBase.#ctor">
             <summary>
             Constructor
+            </summary>
+        </member>
+        <member name="M:MyEMSLReader.MyEMSLBase.GarbageCollectNow">
+            <summary>
+            Garbage collect now
             </summary>
         </member>
         <member name="M:MyEMSLReader.MyEMSLBase.GarbageCollectNow(System.Int32)">
@@ -772,12 +1017,52 @@
             <param name="isNull">True if the value is null</param>
             <returns>String</returns>
         </member>
+        <member name="M:MyEMSLReader.MyEMSLBase.GetSingleItemSortedSetDictionary(System.String,System.String)">
+            <summary>
+            Create a SortedSet dictionary for a single dataset and its subdirectory
+            </summary>
+            <param name="datasetNameOrID"></param>
+            <param name="subDir"></param>
+        </member>
+        <member name="M:MyEMSLReader.MyEMSLBase.IncreaseTimeout(System.Int32)">
+            <summary>
+            Compute a longer timeout to use, first by doubling, but later by multiplying by 1.5
+            </summary>
+            <param name="timeoutSeconds"></param>
+        </member>
         <member name="M:MyEMSLReader.MyEMSLBase.CertificateFileExists(System.String@)">
             <summary>
             Verify that svc-dms.pfx exists either in the same directory as Pacifica.core.dll or at C:\client_certs\
             </summary>
             <param name="errorMessage">Output: error message, indicating the paths that were checked</param>
             <returns>True if the file is found, otherwise false</returns>
+        </member>
+        <member name="M:MyEMSLReader.MyEMSLBase.ReadDictionaryValue(System.Collections.Generic.Dictionary{System.String,System.Object},System.String,System.String)">
+            <summary>
+            Read the value for the given key in the dictionary
+            </summary>
+            <param name="dataDictionary"></param>
+            <param name="keyName"></param>
+            <param name="valueIfMissing"></param>
+            <returns>The value if found, or valueIfMissing</returns>
+        </member>
+        <member name="M:MyEMSLReader.MyEMSLBase.ReadDictionaryValue(System.Collections.Generic.Dictionary{System.String,System.Object},System.String,System.Boolean)">
+            <summary>
+            Read the value for the given key in the dictionary
+            </summary>
+            <param name="dataDictionary"></param>
+            <param name="keyName"></param>
+            <param name="valueIfMissing"></param>
+            <returns>The value if found, or valueIfMissing</returns>
+        </member>
+        <member name="M:MyEMSLReader.MyEMSLBase.ReadDictionaryValue(System.Collections.Generic.Dictionary{System.String,System.Object},System.String,System.Int64)">
+            <summary>
+            Read the value for the given key in the dictionary
+            </summary>
+            <param name="dataDictionary"></param>
+            <param name="keyName"></param>
+            <param name="valueIfMissing"></param>
+            <returns>The value if found, or valueIfMissing</returns>
         </member>
         <member name="M:MyEMSLReader.MyEMSLBase.ReportError(System.String)">
             <summary>
@@ -800,6 +1085,53 @@
             <param name="ex">Exception</param>
             <param name="allowThrowErrors">True to throw errors as an exception if ThrowErrors is true</param>
         </member>
+        <member name="M:MyEMSLReader.MyEMSLBase.ReportMessage(System.String)">
+            <summary>
+            Raise event StatusEvent if the message is not empty
+            </summary>
+            <param name="message"></param>
+        </member>
+        <member name="M:MyEMSLReader.MyEMSLBase.ReportWarning(System.String)">
+            <summary>
+            Raise event WarningEvent
+            </summary>
+            <param name="message"></param>
+        </member>
+        <member name="M:MyEMSLReader.MyEMSLBase.ResetStatus">
+            <summary>
+            Clear the error message
+            </summary>
+        </member>
+        <member name="M:MyEMSLReader.MyEMSLBase.RetrieveDictionaryListByKey(System.Collections.Generic.Dictionary{System.String,System.Object},System.String)">
+            <summary>
+            Look for the given key in the results dictionary
+            </summary>
+            <param name="results"></param>
+            <param name="keyName"></param>
+            <returns>List Dictionary of string, object if found, or empty dictionary list if not found or an error occurs</returns>
+        </member>
+        <member name="M:MyEMSLReader.MyEMSLBase.RetrieveDictionaryObjectByKey(System.Collections.Generic.Dictionary{System.String,System.Object},System.String)">
+            <summary>
+            Look for the given key in the results dictionary
+            </summary>
+            <param name="results"></param>
+            <param name="keyName"></param>
+            <returns>(Dictionary of string, object if found, or empty dictionary if not found or an error occurs</returns>
+        </member>
+        <member name="M:MyEMSLReader.MyEMSLBase.SendHTTPRequestWithRetry(System.String,System.Net.CookieContainer,System.String,Pacifica.Core.EasyHttp.HttpMethod,System.Int32,System.Boolean,System.String@,System.Exception@)">
+            <summary>
+            Send the HTTP request, retrying if an error
+            </summary>
+            <param name="URL"></param>
+            <param name="cookieJar"></param>
+            <param name="postData"></param>
+            <param name="postMethod"></param>
+            <param name="maxAttempts"></param>
+            <param name="allowEmptyResponseData"></param>
+            <param name="responseData"></param>
+            <param name="mostRecentException"></param>
+            <returns>True if success, false if an error</returns>
+        </member>
         <member name="M:MyEMSLReader.MyEMSLBase.ValidateCertFile(System.String)">
             <summary>
             Validate that the MyEMSL certificate file exists
@@ -807,9 +1139,31 @@
             <param name="callingMethod">Calling method</param>
             <returns>True if the cert file is found, otherwise false</returns>
         </member>
+        <member name="E:MyEMSLReader.MyEMSLBase.MyEMSLOffline">
+            <summary>
+            MyEMSL offline event
+            </summary>
+        </member>
+        <member name="M:MyEMSLReader.MyEMSLBase.EasyHttp_MyEMSLOffline(System.Object,Pacifica.Core.MessageEventArgs)">
+            <summary>
+            Raise event MyEMSLOffline
+            </summary>
+            <param name="sender"></param>
+            <param name="e"></param>
+        </member>
         <member name="T:MyEMSLReader.DatasetInfo">
             <summary>
             Tracks the dataset info for a single dataset (by dataset name)
+            </summary>
+        </member>
+        <member name="P:MyEMSLReader.DatasetInfo.DatasetID">
+            <summary>
+            Dataset ID
+            </summary>
+        </member>
+        <member name="P:MyEMSLReader.DatasetInfo.DatasetName">
+            <summary>
+            Dataset name
             </summary>
         </member>
         <member name="M:MyEMSLReader.DatasetInfo.#ctor(System.String)">
@@ -817,7 +1171,6 @@
             Constructor
             </summary>
             <param name="datasetName"></param>
-            <remarks></remarks>
         </member>
         <member name="M:MyEMSLReader.DatasetInfo.AddFileToDownloadQueue(System.Int64)">
             <summary>
@@ -864,12 +1217,22 @@
             </summary>
             <remarks>Written by Matthew Monroe for PNNL in 2013.</remarks>
         </member>
+        <member name="P:MyEMSLReader.Reader.DMSConnectionString">
+            <summary>
+            DMS Connection string
+            </summary>
+        </member>
         <member name="P:MyEMSLReader.Reader.IncludeAllRevisions">
             <summary>
             When True, will include all revisions of files that were imported to MyEMSL multiple times
             When False, only reports the newest version of a file
             </summary>
             <remarks>Default is False</remarks>
+        </member>
+        <member name="P:MyEMSLReader.Reader.LastSearchFileCountReturned">
+            <summary>
+            File count returned by the most recent search
+            </summary>
         </member>
         <member name="P:MyEMSLReader.Reader.MaxFileCount">
             <summary>
@@ -892,6 +1255,11 @@
             When False use https://my.emsl.pnl.gov/myemsl/elasticsearch/simple_items
             When True use  https://test0.my.emsl.pnl.gov/myemsl/search/simple/index.shtml
             or if UseItemSearch=True use https://dev1.my.emsl.pnl.gov/myemsl/status/index.php/api/item_search
+            </summary>
+        </member>
+        <member name="M:MyEMSLReader.Reader.#ctor">
+            <summary>
+            Constructor
             </summary>
         </member>
         <member name="M:MyEMSLReader.Reader.FindFilesByDataPackageID(System.Int32)">
@@ -1122,6 +1490,11 @@
              If the keys in datasetsAndSubDirLists start with DATASET_ID_TAG then they are Dataset IDs and not dataset names
              If the keys in datasetsAndSubDirLists start with DATA_PKG_ID_TAG then they are Data Package IDs and not dataset names
              </remarks>
+        </member>
+        <member name="M:MyEMSLReader.Reader.ResetStatus">
+            <summary>
+            Clear the error message tracked by the base class
+            </summary>
         </member>
         <member name="M:MyEMSLReader.Reader.RunItemSearchQuery(PRISMDatabaseUtils.IDBTools,System.String,System.String,System.Int32)">
             <summary>

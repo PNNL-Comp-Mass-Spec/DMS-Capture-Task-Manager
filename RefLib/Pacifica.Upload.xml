@@ -4,6 +4,11 @@
         <name>Pacifica.Upload</name>
     </assembly>
     <members>
+        <member name="T:Pacifica.Upload.TarStreamUploader">
+            <summary>
+            .tar stream uploader
+            </summary>
+        </member>
         <member name="F:Pacifica.Upload.TarStreamUploader.TAR_BLOCK_SIZE_BYTES">
             <summary>
             Block size for tar files
@@ -17,6 +22,21 @@
         <member name="T:Pacifica.Upload.TarStreamUploader.UploadDebugMode">
             <summary>
             Debug options
+            </summary>
+        </member>
+        <member name="F:Pacifica.Upload.TarStreamUploader.UploadDebugMode.DebugDisabled">
+            <summary>
+            Debugging is disabled
+            </summary>
+        </member>
+        <member name="F:Pacifica.Upload.TarStreamUploader.UploadDebugMode.CreateTarLocal">
+            <summary>
+            Authenticate with MyEMSL, but create a local .tar file
+            </summary>
+        </member>
+        <member name="F:Pacifica.Upload.TarStreamUploader.UploadDebugMode.MyEMSLOfflineMode">
+            <summary>
+            Do not contact MyEMSL; create a local .tar file
             </summary>
         </member>
         <member name="E:Pacifica.Upload.TarStreamUploader.StatusUpdate">
@@ -43,7 +63,7 @@
             <param name="fileListObject"></param>
             <param name="metadataFilePath"></param>
             <param name="debugMode"></param>
-            <returns></returns>
+            <returns>Web response data</returns>
         </member>
         <member name="T:Pacifica.Upload.Upload">
             <summary>
@@ -76,6 +96,11 @@
             DMS Instrument Name corresponding to EUS Instrument ID 34127
             </summary>
         </member>
+        <member name="T:Pacifica.Upload.Upload.EUSInfo">
+            <summary>
+            EUS info
+            </summary>
+        </member>
         <member name="F:Pacifica.Upload.Upload.EUSInfo.EUSInstrumentID">
             <summary>
             EUS instrument ID
@@ -93,12 +118,165 @@
             </summary>
             <remarks>Aka EUSSubmitterId</remarks>
         </member>
+        <member name="M:Pacifica.Upload.Upload.EUSInfo.Clear">
+            <summary>
+            Clear stored EUS info
+            </summary>
+        </member>
+        <member name="M:Pacifica.Upload.Upload.EUSInfo.ToString">
+            <summary>
+            Return EUS instrument ID, uploader ID, and project ID
+            </summary>
+        </member>
+        <member name="T:Pacifica.Upload.Upload.UploadMetadata">
+            <summary>
+            Upload metadata
+            </summary>
+        </member>
+        <member name="F:Pacifica.Upload.Upload.UploadMetadata.DatasetID">
+            <summary>
+            Dataset ID
+            </summary>
+            <remarks>
+            0 for data packages
+            </remarks>
+        </member>
+        <member name="F:Pacifica.Upload.Upload.UploadMetadata.DataPackageID">
+            <summary>
+            Data package ID
+            </summary>
+        </member>
+        <member name="F:Pacifica.Upload.Upload.UploadMetadata.SubFolder">
+            <summary>
+            Subdirectory
+            </summary>
+        </member>
+        <member name="F:Pacifica.Upload.Upload.UploadMetadata.DatasetName">
+            <summary>
+            Dataset name
+            </summary>
+            <remarks>
+            Only used for datasets; not data packages
+            </remarks>
+        </member>
+        <member name="F:Pacifica.Upload.Upload.UploadMetadata.DateCodeString">
+            <summary>
+            Date code string
+            </summary>
+            <remarks>
+            Only used for datasets; not data packages
+            </remarks>
+        </member>
+        <member name="F:Pacifica.Upload.Upload.UploadMetadata.DMSInstrumentName">
+            <summary>
+            DMS instrument name
+            </summary>
+            <remarks>
+            Originally only used by datasets. Used by Data Packages starting in July 2017 since required by policy
+            </remarks>
+        </member>
+        <member name="F:Pacifica.Upload.Upload.UploadMetadata.CampaignName">
+            <summary>
+            Campaign name
+            </summary>
+        </member>
+        <member name="F:Pacifica.Upload.Upload.UploadMetadata.CampaignID">
+            <summary>
+            Campaign ID
+            </summary>
+        </member>
+        <member name="F:Pacifica.Upload.Upload.UploadMetadata.EUSInstrumentID">
+            <summary>
+            EUS instrument ID
+            </summary>
+            <remarks>
+            Originally only used by datasets. Used by Data Packages starting in July 2017 since required by policy
+            </remarks>
+        </member>
+        <member name="F:Pacifica.Upload.Upload.UploadMetadata.EUSProjectID">
+            <summary>
+            EUS project ID
+            </summary>
+            <remarks>
+            Originally only used by datasets. Used by Data Packages starting in October 2016 since required by policy
+            </remarks>
+        </member>
+        <member name="F:Pacifica.Upload.Upload.UploadMetadata.ExperimentName">
+            <summary>
+            Experiment name
+            </summary>
+        </member>
+        <member name="F:Pacifica.Upload.Upload.UploadMetadata.ExperimentID">
+            <summary>
+            Experiment ID
+            </summary>
+        </member>
+        <member name="F:Pacifica.Upload.Upload.UploadMetadata.OrganismName">
+            <summary>
+            Organism name
+            </summary>
+        </member>
+        <member name="F:Pacifica.Upload.Upload.UploadMetadata.OrganismID">
+            <summary>
+            Organism ID
+            </summary>
+        </member>
+        <member name="F:Pacifica.Upload.Upload.UploadMetadata.NCBITaxonomyID">
+            <summary>
+            NCBI taxonomy ID
+            </summary>
+        </member>
+        <member name="F:Pacifica.Upload.Upload.UploadMetadata.AcquisitionTime">
+            <summary>
+            Acquisition time
+            </summary>
+        </member>
+        <member name="F:Pacifica.Upload.Upload.UploadMetadata.AcquisitionLengthMin">
+            <summary>
+            Acquisition length, in minutes
+            </summary>
+        </member>
+        <member name="F:Pacifica.Upload.Upload.UploadMetadata.NumberOfScans">
+            <summary>
+            Number of scans
+            </summary>
+        </member>
+        <member name="F:Pacifica.Upload.Upload.UploadMetadata.SeparationType">
+            <summary>
+            Separation type
+            </summary>
+        </member>
+        <member name="F:Pacifica.Upload.Upload.UploadMetadata.DatasetType">
+            <summary>
+            Dataset type
+            </summary>
+        </member>
+        <member name="F:Pacifica.Upload.Upload.UploadMetadata.RequestedRunID">
+            <summary>
+            Requested run ID
+            </summary>
+        </member>
+        <member name="F:Pacifica.Upload.Upload.UploadMetadata.UserOfRecordList">
+            <summary>
+            User list
+            </summary>
+        </member>
         <member name="F:Pacifica.Upload.Upload.UploadMetadata.EUSOperatorID">
             <summary>
             Instrument Operator EUS ID for datasets
             Data Package Owner for data packages
             </summary>
             <remarks>DEFAULT_EUS_OPERATOR_ID if unknown</remarks>
+        </member>
+        <member name="M:Pacifica.Upload.Upload.UploadMetadata.Clear">
+            <summary>
+            Clear stored metadata
+            </summary>
+        </member>
+        <member name="M:Pacifica.Upload.Upload.UploadMetadata.ToString">
+            <summary>
+            Return the dataset ID if available, otherwise data package ID
+            </summary>
         </member>
         <member name="P:Pacifica.Upload.Upload.ErrorMessage">
             <summary>
@@ -143,6 +321,21 @@
             <param name="jobNumber">DMS Data Capture job number</param>
             <remarks>The metadata.txt file will be copied to the transfer folder</remarks>
         </member>
+        <member name="E:Pacifica.Upload.Upload.MyEMSLOffline">
+            <summary>
+            MyEMSL Offline event
+            </summary>
+        </member>
+        <member name="E:Pacifica.Upload.Upload.UploadCompleted">
+            <summary>
+            Upload completed event
+            </summary>
+        </member>
+        <member name="E:Pacifica.Upload.Upload.StatusUpdate">
+            <summary>
+            Status updated event
+            </summary>
+        </member>
         <member name="M:Pacifica.Upload.Upload.StartUpload(System.Collections.Generic.List{System.Collections.Generic.Dictionary{System.String,System.Object}},System.String@)">
             <summary>
             Update the files and data tracked by metadataObject to MyEMSL
@@ -181,7 +374,6 @@
             Return a string description of the EUS info encoded by metadataObject
             </summary>
             <param name="metadataObject"></param>
-            <returns></returns>
         </member>
         <member name="M:Pacifica.Upload.Upload.GetEUSInstrumentID(System.Int32,System.Int32)">
             <summary>
@@ -189,7 +381,6 @@
             </summary>
             <param name="eusInstrumentId"></param>
             <param name="instrumentIdIfUnknown"></param>
-            <returns></returns>
         </member>
         <member name="M:Pacifica.Upload.Upload.GetEUSProjectID(System.String,System.String)">
             <summary>
@@ -197,7 +388,6 @@
             </summary>
             <param name="eusProjectId"></param>
             <param name="eusProjectIdIfUnknown"></param>
-            <returns></returns>
             <remarks>This is a string because the project ID may contain suffix letters</remarks>
         </member>
     </members>
