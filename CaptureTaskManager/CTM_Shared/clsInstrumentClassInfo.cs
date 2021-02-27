@@ -247,82 +247,49 @@ namespace CaptureTaskManager
                 return RawDataType.Unknown;
             }
 
-            switch (sRawDataTypeName.ToLower())
+            return rawDataTypeName.ToLower() switch
             {
-                case RAW_DATA_TYPE_DOT_D_FOLDERS:
-                    return RawDataType.AgilentDFolder;
-                case RAW_DATA_TYPE_ZIPPED_S_FOLDERS:
-                    return RawDataType.ZippedSFolders;
-                case RAW_DATA_TYPE_DOT_RAW_FOLDER:
-                    return RawDataType.WatersRawFolder;
-                case RAW_DATA_TYPE_DOT_RAW_FILES:
-                    return RawDataType.ThermoRawFile;
-                case RAW_DATA_TYPE_DOT_WIFF_FILES:
-                    return RawDataType.AgilentQStarWiffFile;
-                case RAW_DATA_TYPE_SCIEX_WIFF_FILES:
-                    return RawDataType.SciexWiffFile;
-                case RAW_DATA_TYPE_DOT_UIMF_FILES:
-                    return RawDataType.UIMF;
-                case RAW_DATA_TYPE_DOT_MZXML_FILES:
-                    return RawDataType.mzXML;
-                case RAW_DATA_TYPE_DOT_MZML_FILES:
-                    return RawDataType.mzML;
-                case RAW_DATA_TYPE_BRUKER_FT_FOLDER:
-                    return RawDataType.BrukerFTFolder;
-                case RAW_DATA_TYPE_BRUKER_MALDI_SPOT:
-                    return RawDataType.BrukerMALDISpot;
-                case RAW_DATA_TYPE_BRUKER_MALDI_IMAGING:
-                    return RawDataType.BrukerMALDIImaging;
-                case RAW_DATA_TYPE_BRUKER_TOF_BAF_DIRECTORY:
-                    return RawDataType.BrukerTOFBaf;
-                case RAW_DATA_TYPE_BRUKER_TOF_TDF_DIRECTORY:
-                    return RawDataType.BrukerTOFTdf;
-                case RAW_DATA_TYPE_ILLUMINA_FOLDER:
-                    return RawDataType.IlluminaFolder;
-                case RAW_DATA_TYPE_DOT_QGD_FILES:
-                    return RawDataType.ShimadzuQGDFile;
-                default:
-                    return RawDataType.Unknown;
-            }
+                RAW_DATA_TYPE_DOT_D_FOLDERS => RawDataType.AgilentDFolder,
+                RAW_DATA_TYPE_ZIPPED_S_FOLDERS => RawDataType.ZippedSFolders,
+                RAW_DATA_TYPE_DOT_RAW_FOLDER => RawDataType.WatersRawFolder,
+                RAW_DATA_TYPE_DOT_RAW_FILES => RawDataType.ThermoRawFile,
+                RAW_DATA_TYPE_DOT_WIFF_FILES => RawDataType.AgilentQStarWiffFile,
+                RAW_DATA_TYPE_SCIEX_WIFF_FILES => RawDataType.SciexWiffFile,
+                RAW_DATA_TYPE_DOT_UIMF_FILES => RawDataType.UIMF,
+                RAW_DATA_TYPE_DOT_MZXML_FILES => RawDataType.mzXML,
+                RAW_DATA_TYPE_DOT_MZML_FILES => RawDataType.mzML,
+                RAW_DATA_TYPE_BRUKER_FT_FOLDER => RawDataType.BrukerFTFolder,
+                RAW_DATA_TYPE_BRUKER_MALDI_SPOT => RawDataType.BrukerMALDISpot,
+                RAW_DATA_TYPE_BRUKER_MALDI_IMAGING => RawDataType.BrukerMALDIImaging,
+                RAW_DATA_TYPE_BRUKER_TOF_BAF_DIRECTORY => RawDataType.BrukerTOFBaf,
+                RAW_DATA_TYPE_BRUKER_TOF_TDF_DIRECTORY => RawDataType.BrukerTOFTdf,
+                RAW_DATA_TYPE_ILLUMINA_FOLDER => RawDataType.IlluminaFolder,
+                RAW_DATA_TYPE_DOT_QGD_FILES => RawDataType.ShimadzuQGDFile,
+                _ => RawDataType.Unknown
+            };
         }
 
         public static string GetRawDataTypeName(RawDataType rawDataType)
         {
-            switch (rawDataType)
+            return rawDataType switch
             {
-                case RawDataType.AgilentDFolder:
-                    return RAW_DATA_TYPE_DOT_D_FOLDERS;
-                case RawDataType.ZippedSFolders:
-                    return RAW_DATA_TYPE_ZIPPED_S_FOLDERS;
-                case RawDataType.WatersRawFolder:
-                    return RAW_DATA_TYPE_DOT_RAW_FOLDER;
-                case RawDataType.ThermoRawFile:
-                    return RAW_DATA_TYPE_DOT_RAW_FILES;
-                case RawDataType.AgilentQStarWiffFile:
-                    return RAW_DATA_TYPE_DOT_WIFF_FILES;
-                case RawDataType.SciexWiffFile:
-                    return RAW_DATA_TYPE_SCIEX_WIFF_FILES;
-                case RawDataType.UIMF:
-                    return RAW_DATA_TYPE_DOT_UIMF_FILES;
-                case RawDataType.mzXML:
-                    return RAW_DATA_TYPE_DOT_MZXML_FILES;
-                case RawDataType.mzML:
-                    return RAW_DATA_TYPE_DOT_MZML_FILES;
-                case RawDataType.BrukerFTFolder:
-                    return RAW_DATA_TYPE_BRUKER_FT_FOLDER;
-                case RawDataType.BrukerMALDISpot:
-                    return RAW_DATA_TYPE_BRUKER_MALDI_SPOT;
-                case RawDataType.BrukerMALDIImaging:
-                    return RAW_DATA_TYPE_BRUKER_MALDI_IMAGING;
-                case RawDataType.BrukerTOFBaf:
-                    return RAW_DATA_TYPE_BRUKER_TOF_BAF_DIRECTORY;
-                case RawDataType.BrukerTOFTdf:
-                    return RAW_DATA_TYPE_BRUKER_TOF_TDF_DIRECTORY;
-                case RawDataType.IlluminaFolder:
-                    return RAW_DATA_TYPE_ILLUMINA_FOLDER;
-                default:
-                    return "Unknown";
-            }
+                RawDataType.AgilentDFolder => RAW_DATA_TYPE_DOT_D_FOLDERS,
+                RawDataType.ZippedSFolders => RAW_DATA_TYPE_ZIPPED_S_FOLDERS,
+                RawDataType.WatersRawFolder => RAW_DATA_TYPE_DOT_RAW_FOLDER,
+                RawDataType.ThermoRawFile => RAW_DATA_TYPE_DOT_RAW_FILES,
+                RawDataType.AgilentQStarWiffFile => RAW_DATA_TYPE_DOT_WIFF_FILES,
+                RawDataType.SciexWiffFile => RAW_DATA_TYPE_SCIEX_WIFF_FILES,
+                RawDataType.UIMF => RAW_DATA_TYPE_DOT_UIMF_FILES,
+                RawDataType.mzXML => RAW_DATA_TYPE_DOT_MZXML_FILES,
+                RawDataType.mzML => RAW_DATA_TYPE_DOT_MZML_FILES,
+                RawDataType.BrukerFTFolder => RAW_DATA_TYPE_BRUKER_FT_FOLDER,
+                RawDataType.BrukerMALDISpot => RAW_DATA_TYPE_BRUKER_MALDI_SPOT,
+                RawDataType.BrukerMALDIImaging => RAW_DATA_TYPE_BRUKER_MALDI_IMAGING,
+                RawDataType.BrukerTOFBaf => RAW_DATA_TYPE_BRUKER_TOF_BAF_DIRECTORY,
+                RawDataType.BrukerTOFTdf => RAW_DATA_TYPE_BRUKER_TOF_TDF_DIRECTORY,
+                RawDataType.IlluminaFolder => RAW_DATA_TYPE_ILLUMINA_FOLDER,
+                _ => "Unknown"
+            };
         }
     }
 }

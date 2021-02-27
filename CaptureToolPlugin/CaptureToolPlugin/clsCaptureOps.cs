@@ -884,20 +884,15 @@ namespace CaptureToolPlugin
         /// <summary>
         /// Returns a string that describes the username and connection method currently active
         /// </summary>
-        /// <returns></returns>
         private string GetConnectionDescription()
         {
-            switch (mConnectionType)
+            return mConnectionType switch
             {
-                case ConnectionType.NotConnected:
-                    return " as user " + Environment.UserName + " using fso";
-                case ConnectionType.DotNET:
-                    return " as user " + mUserName + " using CaptureTaskManager.NetworkConnection";
-                case ConnectionType.Prism:
-                    return " as user " + mUserName + " using PRISM.ShareConnector";
-                default:
-                    return " via unknown connection mode";
-            }
+                ConnectionType.NotConnected => " as user " + Environment.UserName + " using fso",
+                ConnectionType.DotNET => " as user " + mUserName + " using CaptureTaskManager.NetworkConnection",
+                ConnectionType.Prism => " as user " + mUserName + " using PRISM.ShareConnector",
+                _ => " via unknown connection mode"
+            };
         }
 
         /// <summary>
@@ -3580,28 +3575,16 @@ namespace CaptureToolPlugin
 
             returnData.CloseoutMsg = string.Empty;
 
-            switch (datasetInfo.DatasetType)
+            entityDescription = datasetInfo.DatasetType switch
             {
-                case DatasetInfo.RawDSTypes.File:
-                    entityDescription = "a file";
-                    break;
-                case DatasetInfo.RawDSTypes.DirectoryNoExt:
-                    entityDescription = "a directory";
-                    break;
-                case DatasetInfo.RawDSTypes.DirectoryExt:
-                    entityDescription = "a directory";
-                    break;
-                case DatasetInfo.RawDSTypes.BrukerImaging:
-                case DatasetInfo.RawDSTypes.BrukerSpot:
-                    entityDescription = "a directory";
-                    break;
-                case DatasetInfo.RawDSTypes.MultiFile:
-                    entityDescription = "multiple files";
-                    break;
-                default:
-                    entityDescription = "an unknown entity";
-                    break;
-            }
+                DatasetInfo.RawDSTypes.File => "a file",
+                DatasetInfo.RawDSTypes.DirectoryNoExt => "a directory",
+                DatasetInfo.RawDSTypes.DirectoryExt => "a directory",
+                DatasetInfo.RawDSTypes.BrukerImaging => "a directory",
+                DatasetInfo.RawDSTypes.BrukerSpot => "a directory",
+                DatasetInfo.RawDSTypes.MultiFile => "multiple files",
+                _ => "an unknown entity"
+            };
 
             // Make sure we are capturing the correct entity type (file or directory) based on instrumentClass
             // See table T_Instrument_Class for allowed types
