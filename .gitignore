@@ -36,3 +36,4 @@ DeployedFiles/*.lnk
 /DeployedFiles/ThermoFisher.CommonCore.RawFileReader.xml
 /DeployedFiles/ThermoRawFileReader.dll.config
 **/.vs/
+/RefLib/PRISM.dll
