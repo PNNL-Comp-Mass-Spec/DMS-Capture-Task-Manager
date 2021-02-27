@@ -66,7 +66,7 @@ namespace DatasetIntegrityPlugin
 
         #region "Class-wide variables"
 
-        private clsToolReturnData mRetData = new clsToolReturnData();
+        private clsToolReturnData mRetData = new();
 
         private DateTime mProcessingStartTime;
 
