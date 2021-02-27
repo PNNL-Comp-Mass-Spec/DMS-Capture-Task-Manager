@@ -240,9 +240,9 @@ namespace CaptureTaskManager
             return instrumentClass.ToString();
         }
 
-        public static RawDataType GetRawDataType(string sRawDataTypeName)
+        public static RawDataType GetRawDataType(string rawDataTypeName)
         {
-            if (string.IsNullOrEmpty(sRawDataTypeName))
+            if (string.IsNullOrEmpty(rawDataTypeName))
             {
                 return RawDataType.Unknown;
             }
