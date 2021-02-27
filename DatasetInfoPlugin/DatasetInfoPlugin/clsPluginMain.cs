@@ -692,10 +692,10 @@ namespace DatasetInfoPlugin
             {
                 // Write the combined XML to disk
                 var combinedXmlFilePath = Path.Combine(outputPathBase, combinedDatasetInfoFilename);
-                using (var xmlWriter = new StreamWriter(new FileStream(combinedXmlFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                {
-                    xmlWriter.WriteLine(datasetInfoXML);
-                }
+
+                using var xmlWriter = new StreamWriter(new FileStream(combinedXmlFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                xmlWriter.WriteLine(datasetInfoXML);
             }
             catch (Exception ex)
             {
@@ -709,152 +709,151 @@ namespace DatasetInfoPlugin
 
                 // Create an index.html file that shows all of the plots in the subdirectories
                 var indexHtmlFilePath = Path.Combine(outputPathBase, "index.html");
-                using (var htmlWriter = new StreamWriter(new FileStream(indexHtmlFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                {
-                    // ReSharper disable once StringLiteralTypo
-                    htmlWriter.WriteLine("<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 3.2//EN\">");
-                    htmlWriter.WriteLine("<html>");
-                    htmlWriter.WriteLine("<head>");
-                    htmlWriter.WriteLine("  <title>" + mDataset + "</title>");
-                    htmlWriter.WriteLine("</head>");
-                    htmlWriter.WriteLine();
-                    htmlWriter.WriteLine("<body>");
-                    htmlWriter.WriteLine("  <h2>" + mDataset + "</h2>");
-                    htmlWriter.WriteLine();
-                    htmlWriter.WriteLine("  <table>");
 
-                    foreach (var subdirectoryName in outputDirectoryNames)
+                using var htmlWriter = new StreamWriter(new FileStream(indexHtmlFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                // ReSharper disable once StringLiteralTypo
+                htmlWriter.WriteLine("<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 3.2//EN\">");
+                htmlWriter.WriteLine("<html>");
+                htmlWriter.WriteLine("<head>");
+                htmlWriter.WriteLine("  <title>" + mDataset + "</title>");
+                htmlWriter.WriteLine("</head>");
+                htmlWriter.WriteLine();
+                htmlWriter.WriteLine("<body>");
+                htmlWriter.WriteLine("  <h2>" + mDataset + "</h2>");
+                htmlWriter.WriteLine();
+                htmlWriter.WriteLine("  <table>");
+
+                foreach (var subdirectoryName in outputDirectoryNames)
+                {
+                    var subdirectoryInfo = new DirectoryInfo(Path.Combine(outputPathBase, subdirectoryName));
+                    var htmlFiles = subdirectoryInfo.GetFiles("index.html");
+                    if (htmlFiles.Length == 0)
                     {
-                        var subdirectoryInfo = new DirectoryInfo(Path.Combine(outputPathBase, subdirectoryName));
-                        var htmlFiles = subdirectoryInfo.GetFiles("index.html");
-                        if (htmlFiles.Length == 0)
+                        continue;
+                    }
+
+                    using var htmlReader = new StreamReader(new FileStream(htmlFiles[0].FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                    var processingTable = false;
+                    var htmlToAppend = new List<string>();
+                    var htmlHasImageInfo = false;
+                    var rowDepth = 0;
+
+                    while (!htmlReader.EndOfStream)
+                    {
+                        var dataLine = htmlReader.ReadLine();
+                        if (string.IsNullOrWhiteSpace(dataLine))
                         {
                             continue;
                         }
 
-                        using (var htmlReader = new StreamReader(new FileStream(htmlFiles[0].FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                        var lineTrimmed = dataLine.Trim();
+
+                        if (processingTable)
                         {
-                            var processingTable = false;
-                            var htmlToAppend = new List<string>();
-                            var htmlHasImageInfo = false;
-                            var rowDepth = 0;
+                            var rowAdded = false;
 
-                            while (!htmlReader.EndOfStream)
+                            // Look for png files
+                            if (pngMatcher.IsMatch(dataLine))
                             {
-                                var dataLine = htmlReader.ReadLine();
-                                if (string.IsNullOrWhiteSpace(dataLine))
+                                // Match found; prepend the subdirectory name
+                                dataLine = pngMatcher.Replace(dataLine, '"' + subdirectoryInfo.Name + "/${Filename}" + '"');
+                                htmlHasImageInfo = true;
+                            }
+
+                            if (lineTrimmed.StartsWith("<tr>"))
+                            {
+                                // Start of a table row
+                                rowDepth++;
+
+                                htmlToAppend.Add(dataLine);
+                                rowAdded = true;
+                            }
+
+                            if (lineTrimmed.EndsWith("</tr>"))
+                            {
+                                // End of a table row
+                                if (!rowAdded)
                                 {
-                                    continue;
+                                    htmlToAppend.Add(dataLine);
+                                    rowAdded = true;
                                 }
+                                rowDepth--;
 
-                                var lineTrimmed = dataLine.Trim();
-
-                                if (processingTable)
+                                if (rowDepth == 0 && htmlToAppend.Count > 0)
                                 {
-                                    var rowAdded = false;
-
-                                    // Look for png files
-                                    if (pngMatcher.IsMatch(dataLine))
+                                    if (htmlHasImageInfo)
                                     {
-                                        // Match found; prepend the subdirectory name
-                                        dataLine = pngMatcher.Replace(dataLine, '"' + subdirectoryInfo.Name + "/${Filename}" + '"');
-                                        htmlHasImageInfo = true;
-                                    }
-
-                                    if (lineTrimmed.StartsWith("<tr>"))
-                                    {
-                                        // Start of a table row
-                                        rowDepth++;
-
-                                        htmlToAppend.Add(dataLine);
-                                        rowAdded = true;
-                                    }
-
-                                    if (lineTrimmed.EndsWith("</tr>"))
-                                    {
-                                        // End of a table row
-                                        if (!rowAdded)
+                                        // Write this set of rows out to the new index.html file
+                                        foreach (var outRow in htmlToAppend)
                                         {
-                                            htmlToAppend.Add(dataLine);
-                                            rowAdded = true;
-                                        }
-                                        rowDepth--;
-
-                                        if (rowDepth == 0 && htmlToAppend.Count > 0)
-                                        {
-                                            if (htmlHasImageInfo)
-                                            {
-                                                // Write this set of rows out to the new index.html file
-                                                foreach (var outRow in htmlToAppend)
-                                                {
-                                                    htmlWriter.WriteLine(outRow);
-                                                }
-                                            }
-                                            htmlToAppend.Clear();
-                                            htmlHasImageInfo = false;
+                                            htmlWriter.WriteLine(outRow);
                                         }
                                     }
-
-                                    if (rowDepth == 0 && lineTrimmed.StartsWith("</table>"))
-                                    {
-                                        // Done processing the main table
-                                        // Stop parsing this file
-                                        break;
-                                    }
-
-                                    if (!rowAdded)
-                                    {
-                                        htmlToAppend.Add(dataLine);
-                                    }
-                                }
-                                else if (dataLine.Trim().StartsWith("<table>"))
-                                {
-                                    processingTable = true;
+                                    htmlToAppend.Clear();
+                                    htmlHasImageInfo = false;
                                 }
                             }
+
+                            if (rowDepth == 0 && lineTrimmed.StartsWith("</table>"))
+                            {
+                                // Done processing the main table
+                                // Stop parsing this file
+                                break;
+                            }
+
+                            if (!rowAdded)
+                            {
+                                htmlToAppend.Add(dataLine);
+                            }
+                        }
+                        else if (dataLine.Trim().StartsWith("<table>"))
+                        {
+                            processingTable = true;
                         }
                     }
-
-                    // Add the combined stats
-                    htmlWriter.WriteLine("    <tr>");
-                    htmlWriter.WriteLine("        <td colspan=\"3\"><hr/></td>");
-                    htmlWriter.WriteLine("    </tr>");
-                    htmlWriter.WriteLine("    <tr>");
-                    htmlWriter.WriteLine("      <td>&nbsp;</td>");
-                    htmlWriter.WriteLine("      <td align=\"right\">Combined Stats:</td>");
-                    // ReSharper disable once StringLiteralTypo
-                    htmlWriter.WriteLine("      <td valign=\"middle\">");
-                    htmlWriter.WriteLine("        <table border=\"1\">");
-                    htmlWriter.WriteLine("          <tr><th>Scan Type</th><th>Scan Count</th><th>Scan Filter Text</th></tr>");
-
-                    foreach (var item in datasetXmlMerger.ScanTypes)
-                    {
-                        var scanTypeName = item.Key.Key;
-                        var scanCount = item.Value;
-
-                        htmlWriter.WriteLine("          <tr><td>" + scanTypeName + "</td><td align=\"center\">" + scanCount + "</td><td></td></tr>");
-                    }
-
-                    htmlWriter.WriteLine("        </table>");
-                    htmlWriter.WriteLine("      </td>");
-                    htmlWriter.WriteLine("    </tr>");
-                    htmlWriter.WriteLine("    <tr>");
-                    htmlWriter.WriteLine("        <td colspan=\"3\"><hr/></td>");
-                    htmlWriter.WriteLine("    </tr>");
-
-                    // Add a link to the Dataset detail report
-                    htmlWriter.WriteLine("    <tr>");
-                    htmlWriter.WriteLine("      <td>&nbsp;</td>");
-                    htmlWriter.WriteLine("      <td align=\"center\">DMS <a href=\"http://dms2.pnl.gov/dataset/show/" + mDataset + "\">Dataset Detail Report</a></td>");
-                    htmlWriter.WriteLine("      <td align=\"center\"><a href=\"" + combinedDatasetInfoFilename + "\">Dataset Info XML file</a></td>");
-                    htmlWriter.WriteLine("    </tr>");
-                    htmlWriter.WriteLine();
-                    htmlWriter.WriteLine("  </table>");
-                    htmlWriter.WriteLine();
-                    htmlWriter.WriteLine("</body>");
-                    htmlWriter.WriteLine("</html>");
-                    htmlWriter.WriteLine();
                 }
+
+                // Add the combined stats
+                htmlWriter.WriteLine("    <tr>");
+                htmlWriter.WriteLine("        <td colspan=\"3\"><hr/></td>");
+                htmlWriter.WriteLine("    </tr>");
+                htmlWriter.WriteLine("    <tr>");
+                htmlWriter.WriteLine("      <td>&nbsp;</td>");
+                htmlWriter.WriteLine("      <td align=\"right\">Combined Stats:</td>");
+                // ReSharper disable once StringLiteralTypo
+                htmlWriter.WriteLine("      <td valign=\"middle\">");
+                htmlWriter.WriteLine("        <table border=\"1\">");
+                htmlWriter.WriteLine("          <tr><th>Scan Type</th><th>Scan Count</th><th>Scan Filter Text</th></tr>");
+
+                foreach (var item in datasetXmlMerger.ScanTypes)
+                {
+                    var scanTypeName = item.Key.Key;
+                    var scanCount = item.Value;
+
+                    htmlWriter.WriteLine("          <tr><td>" + scanTypeName + "</td><td align=\"center\">" + scanCount + "</td><td></td></tr>");
+                }
+
+                htmlWriter.WriteLine("        </table>");
+                htmlWriter.WriteLine("      </td>");
+                htmlWriter.WriteLine("    </tr>");
+                htmlWriter.WriteLine("    <tr>");
+                htmlWriter.WriteLine("        <td colspan=\"3\"><hr/></td>");
+                htmlWriter.WriteLine("    </tr>");
+
+                // Add a link to the Dataset detail report
+                htmlWriter.WriteLine("    <tr>");
+                htmlWriter.WriteLine("      <td>&nbsp;</td>");
+                htmlWriter.WriteLine("      <td align=\"center\">DMS <a href=\"http://dms2.pnl.gov/dataset/show/" + mDataset + "\">Dataset Detail Report</a></td>");
+                htmlWriter.WriteLine("      <td align=\"center\"><a href=\"" + combinedDatasetInfoFilename + "\">Dataset Info XML file</a></td>");
+                htmlWriter.WriteLine("    </tr>");
+                htmlWriter.WriteLine();
+                htmlWriter.WriteLine("  </table>");
+                htmlWriter.WriteLine();
+                htmlWriter.WriteLine("</body>");
+                htmlWriter.WriteLine("</html>");
+                htmlWriter.WriteLine();
             }
             catch (Exception ex)
             {

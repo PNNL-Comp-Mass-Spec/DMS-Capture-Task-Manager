@@ -505,56 +505,55 @@ namespace CaptureTaskManager
 
                 var success = false;
 
-                using (var reader = new StreamReader(new FileStream(versionInfoFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(versionInfoFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+                    if (string.IsNullOrWhiteSpace(dataLine))
                     {
-                        var dataLine = reader.ReadLine();
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                        {
-                            continue;
-                        }
+                        continue;
+                    }
 
-                        var equalsIndex = dataLine.IndexOf('=');
+                    var equalsIndex = dataLine.IndexOf('=');
 
-                        if (equalsIndex <= 0)
-                        {
-                            continue;
-                        }
+                    if (equalsIndex <= 0)
+                    {
+                        continue;
+                    }
 
-                        var keyName = dataLine.Substring(0, equalsIndex);
-                        var value = string.Empty;
+                    var keyName = dataLine.Substring(0, equalsIndex);
+                    var value = string.Empty;
 
-                        if (equalsIndex < dataLine.Length)
-                        {
-                            value = dataLine.Substring(equalsIndex + 1);
-                        }
+                    if (equalsIndex < dataLine.Length)
+                    {
+                        value = dataLine.Substring(equalsIndex + 1);
+                    }
 
-                        switch (keyName.ToLower())
-                        {
-                            case "filename":
-                                break;
-                            case "path":
-                                break;
-                            case "version":
-                                version = string.Copy(value);
-                                if (string.IsNullOrWhiteSpace(version))
-                                {
-                                    LogError("Empty version line in Version Info file for " +
-                                             Path.GetFileName(dllFilePath));
-                                    success = false;
-                                }
-                                else
-                                {
-                                    success = true;
-                                }
-                                break;
-                            case "error":
-                                LogError("Error reported by DLLVersionInspector for " +
-                                         Path.GetFileName(dllFilePath) + ": " + value);
+                    switch (keyName.ToLower())
+                    {
+                        case "filename":
+                            break;
+                        case "path":
+                            break;
+                        case "version":
+                            version = string.Copy(value);
+                            if (string.IsNullOrWhiteSpace(version))
+                            {
+                                LogError("Empty version line in Version Info file for " +
+                                         Path.GetFileName(dllFilePath));
                                 success = false;
-                                break;
-                        }
+                            }
+                            else
+                            {
+                                success = true;
+                            }
+                            break;
+                        case "error":
+                            LogError("Error reported by DLLVersionInspector for " +
+                                     Path.GetFileName(dllFilePath) + ": " + value);
+                            success = false;
+                            break;
                     }
                 }
 

@@ -170,40 +170,40 @@ namespace ImsDemuxPlugin
                 {
                     // Note: providing true for parseViaFramework as a workaround for reading SqLite files located on a remote UNC share or in ReadOnly directories
                     var connectionString = "Data Source = " + uimfLocalFileNamePath;
-                    using (var dbConnection = new System.Data.SQLite.SQLiteConnection(connectionString, true))
+
+                    using var dbConnection = new System.Data.SQLite.SQLiteConnection(connectionString, true);
+
+                    dbConnection.Open();
+
+                    // Start a transaction
+                    using (var dbCommand = dbConnection.CreateCommand())
                     {
-                        dbConnection.Open();
-
-                        // Start a transaction
-                        using (var dbCommand = dbConnection.CreateCommand())
-                        {
-                            dbCommand.CommandText = "PRAGMA synchronous=0;BEGIN TRANSACTION;";
-                            dbCommand.ExecuteNonQuery();
-                        }
-
-                        var binCentricTableCreator = new BinCentricTableCreation();
-
-                        // Attach the events
-                        binCentricTableCreator.OnProgress += BinCentricTableCreator_ProgressEvent;
-                        binCentricTableCreator.Message += BinCentricTableCreator_MessageEvent;
-
-                        mBinCentricStartTime = DateTime.UtcNow;
-                        mProgressUpdateIntervalSeconds = 5;
-
-                        mLastProgressUpdateTime = DateTime.UtcNow;
-                        mLastProgressMessageTime = DateTime.UtcNow;
-
-                        binCentricTableCreator.CreateBinCentricTable(dbConnection, uimfReader, mWorkDir);
-
-                        // Finalize the transaction
-                        using (var dbCommand = dbConnection.CreateCommand())
-                        {
-                            dbCommand.CommandText = "END TRANSACTION;PRAGMA synchronous=1;";
-                            dbCommand.ExecuteNonQuery();
-                        }
-
-                        dbConnection.Close();
+                        dbCommand.CommandText = "PRAGMA synchronous=0;BEGIN TRANSACTION;";
+                        dbCommand.ExecuteNonQuery();
                     }
+
+                    var binCentricTableCreator = new BinCentricTableCreation();
+
+                    // Attach the events
+                    binCentricTableCreator.OnProgress += BinCentricTableCreator_ProgressEvent;
+                    binCentricTableCreator.Message += BinCentricTableCreator_MessageEvent;
+
+                    mBinCentricStartTime = DateTime.UtcNow;
+                    mProgressUpdateIntervalSeconds = 5;
+
+                    mLastProgressUpdateTime = DateTime.UtcNow;
+                    mLastProgressMessageTime = DateTime.UtcNow;
+
+                    binCentricTableCreator.CreateBinCentricTable(dbConnection, uimfReader, mWorkDir);
+
+                    // Finalize the transaction
+                    using (var dbCommand = dbConnection.CreateCommand())
+                    {
+                        dbCommand.CommandText = "END TRANSACTION;PRAGMA synchronous=1;";
+                        dbCommand.ExecuteNonQuery();
+                    }
+
+                    dbConnection.Close();
                 }
 
                 // Confirm that the bin-centric tables were truly added
@@ -374,44 +374,44 @@ namespace ImsDemuxPlugin
             {
                 // Count the number of frames
                 // If fewer than 5 frames, don't calibrate
-                using (var uimfReader = new DataReader(uimfFilePath))
+
+                using var uimfReader = new DataReader(uimfFilePath);
+
+                var frameList = uimfReader.GetMasterFrameList();
+
+                if (frameList.Count < 5)
                 {
-                    var frameList = uimfReader.GetMasterFrameList();
-
-                    if (frameList.Count < 5)
+                    if (frameList.Count == 0)
                     {
-                        if (frameList.Count == 0)
-                        {
-                            msg = "Skipping calibration since .UIMF file has no frames";
-                        }
-                        else
-                        {
-                            msg = "Skipping calibration since .UIMF file only has " + frameList.Count + " frame";
-                            if (frameList.Count != 1)
-                            {
-                                msg += "s";
-                            }
-                        }
-
-                        OnStatusEvent(msg);
-                        autoCalibrate = false;
+                        msg = "Skipping calibration since .UIMF file has no frames";
                     }
                     else
                     {
-                        // Look for the presence of calibration frames or calibration tables
-                        // If neither exists, we cannot perform calibration
-                        var calibrationDataExists = frameList.Any(item => item.Value == UIMFData.FrameType.Calibration);
-
-                        if (!calibrationDataExists)
+                        msg = "Skipping calibration since .UIMF file only has " + frameList.Count + " frame";
+                        if (frameList.Count != 1)
                         {
-                            // No calibration frames were found
-                            var calibrationTables = uimfReader.GetCalibrationTableNames();
-                            if (calibrationTables.Count == 0)
-                            {
-                                msg = "Skipping calibration since .UIMF file does not contain any calibration frames or calibration tables";
-                                OnWarningEvent(msg);
-                                autoCalibrate = false;
-                            }
+                            msg += "s";
+                        }
+                    }
+
+                    OnStatusEvent(msg);
+                    autoCalibrate = false;
+                }
+                else
+                {
+                    // Look for the presence of calibration frames or calibration tables
+                    // If neither exists, we cannot perform calibration
+                    var calibrationDataExists = frameList.Any(item => item.Value == UIMFData.FrameType.Calibration);
+
+                    if (!calibrationDataExists)
+                    {
+                        // No calibration frames were found
+                        var calibrationTables = uimfReader.GetCalibrationTableNames();
+                        if (calibrationTables.Count == 0)
+                        {
+                            msg = "Skipping calibration since .UIMF file does not contain any calibration frames or calibration tables";
+                            OnWarningEvent(msg);
+                            autoCalibrate = false;
                         }
                     }
                 }
@@ -556,22 +556,21 @@ namespace ImsDemuxPlugin
                     }
                 }
 
-                using (var writer = new DataWriter(uimfFilePath, false))
-                {
-                    writer.UpdateAllCalibrationCoefficients(calibrationSlope, calibrationIntercept, false, true);
+                using var writer = new DataWriter(uimfFilePath, false);
 
-                    var logMessage = "Manually applied calibration coefficients to all frames using user-specified calibration coefficients";
-                    writer.PostLogEntry("Normal", logMessage, UIMF_CALIBRATION_UPDATER_NAME);
+                writer.UpdateAllCalibrationCoefficients(calibrationSlope, calibrationIntercept, false, true);
 
-                    logMessage = "Old calibration coefficients: slope = " + currentSlope + ", intercept = " + currentIntercept;
-                    writer.PostLogEntry("Normal", logMessage, UIMF_CALIBRATION_UPDATER_NAME);
+                var logMessage = "Manually applied calibration coefficients to all frames using user-specified calibration coefficients";
+                writer.PostLogEntry("Normal", logMessage, UIMF_CALIBRATION_UPDATER_NAME);
 
-                    logMessage = string.Format(
-                        "New calibration coefficients: slope = {0:0.0000000}, intercept = {1:0.0000000}",
-                        calibrationSlope, calibrationIntercept);
+                logMessage = "Old calibration coefficients: slope = " + currentSlope + ", intercept = " + currentIntercept;
+                writer.PostLogEntry("Normal", logMessage, UIMF_CALIBRATION_UPDATER_NAME);
 
-                    writer.PostLogEntry("Normal", logMessage, UIMF_CALIBRATION_UPDATER_NAME);
-                }
+                logMessage = string.Format(
+                    "New calibration coefficients: slope = {0:0.0000000}, intercept = {1:0.0000000}",
+                    calibrationSlope, calibrationIntercept);
+
+                writer.PostLogEntry("Normal", logMessage, UIMF_CALIBRATION_UPDATER_NAME);
             }
             catch (Exception ex)
             {
@@ -1187,82 +1186,81 @@ namespace ImsDemuxPlugin
                     return;
                 }
 
-                using (var reader = new StreamReader(new FileStream(mUimfDemultiplexerConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(mUimfDemultiplexerConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+
+                    if (string.IsNullOrWhiteSpace(dataLine))
                     {
-                        var dataLine = reader.ReadLine();
+                        continue;
+                    }
 
-                        if (string.IsNullOrWhiteSpace(dataLine))
+                    if (dataLine.StartsWith("Error in") ||
+                        dataLine.StartsWith("Error:") ||
+                        dataLine.StartsWith("Exception"))
+                    {
+                        if (!mLoggedConsoleOutputErrors.Contains(dataLine))
                         {
-                            continue;
+                            OnErrorEvent(dataLine);
+                            mLoggedConsoleOutputErrors.Add(dataLine);
                         }
 
-                        if (dataLine.StartsWith("Error in") ||
-                            dataLine.StartsWith("Error:") ||
-                            dataLine.StartsWith("Exception"))
+                        if (dataLine.Contains("OutOfMemoryException"))
                         {
-                            if (!mLoggedConsoleOutputErrors.Contains(dataLine))
-                            {
-                                OnErrorEvent(dataLine);
-                                mLoggedConsoleOutputErrors.Add(dataLine);
-                            }
+                            OutOfMemoryException = true;
+                        }
+                    }
+                    else if (dataLine.StartsWith("Warning:"))
+                    {
+                        if (!mLoggedConsoleOutputErrors.Contains(dataLine))
+                        {
+                            OnWarningEvent(dataLine);
+                            mLoggedConsoleOutputErrors.Add(dataLine);
+                        }
+                    }
+                    else
+                    {
+                        // Compare the line against the various RegEx specs
 
-                            if (dataLine.Contains("OutOfMemoryException"))
+                        // % complete (integer values only)
+                        var percentCompleteMatch = percentCompleteMatcher.Match(dataLine);
+
+                        if (percentCompleteMatch.Success)
+                        {
+                            if (short.TryParse(percentCompleteMatch.Groups[1].Value, out var percentComplete))
                             {
-                                OutOfMemoryException = true;
+                                mDemuxProgressPercentComplete = percentComplete;
                             }
                         }
-                        else if (dataLine.StartsWith("Warning:"))
+
+                        // Total frames
+                        var totalFramesMatch = totalFramesMatcher.Match(dataLine);
+
+                        if (totalFramesMatch.Success)
                         {
-                            if (!mLoggedConsoleOutputErrors.Contains(dataLine))
-                            {
-                                OnWarningEvent(dataLine);
-                                mLoggedConsoleOutputErrors.Add(dataLine);
-                            }
+                            int.TryParse(totalFramesMatch.Groups[1].Value, out totalFrameCount);
                         }
-                        else
+
+                        // Current frame processed
+                        var currentFrameMatch = currentFrameMatcher.Match(dataLine);
+
+                        if (currentFrameMatch.Success)
                         {
-                            // Compare the line against the various RegEx specs
-
-                            // % complete (integer values only)
-                            var percentCompleteMatch = percentCompleteMatcher.Match(dataLine);
-
-                            if (percentCompleteMatch.Success)
-                            {
-                                if (short.TryParse(percentCompleteMatch.Groups[1].Value, out var percentComplete))
-                                {
-                                    mDemuxProgressPercentComplete = percentComplete;
-                                }
-                            }
-
-                            // Total frames
-                            var totalFramesMatch = totalFramesMatcher.Match(dataLine);
-
-                            if (totalFramesMatch.Success)
-                            {
-                                int.TryParse(totalFramesMatch.Groups[1].Value, out totalFrameCount);
-                            }
-
-                            // Current frame processed
-                            var currentFrameMatch = currentFrameMatcher.Match(dataLine);
-
-                            if (currentFrameMatch.Success)
-                            {
-                                int.TryParse(currentFrameMatch.Groups[1].Value, out framesProcessed);
-                            }
+                            int.TryParse(currentFrameMatch.Groups[1].Value, out framesProcessed);
                         }
                     }
                 }
 
-                if (totalFrameCount > 0)
-                {
-                    var percentCompleteFractional = framesProcessed / (float)totalFrameCount * 100;
+                if (totalFrameCount <= 0)
+                    return;
 
-                    if (percentCompleteFractional > mDemuxProgressPercentComplete)
-                    {
-                        mDemuxProgressPercentComplete = percentCompleteFractional;
-                    }
+                var percentCompleteFractional = framesProcessed / (float)totalFrameCount * 100;
+
+                if (percentCompleteFractional > mDemuxProgressPercentComplete)
+                {
+                    mDemuxProgressPercentComplete = percentCompleteFractional;
                 }
             }
             catch (Exception ex)

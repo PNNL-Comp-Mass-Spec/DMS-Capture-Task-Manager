@@ -35,15 +35,15 @@ namespace DatasetQualityPlugin
 
             // Create a memory stream to write the metadata document to
             var memStream = new MemoryStream();
-            using (var xWriter = new XmlTextWriter(memStream, System.Text.Encoding.UTF8))
+            using (var writer = new XmlTextWriter(memStream, System.Text.Encoding.UTF8))
             {
-                xWriter.Formatting = Formatting.Indented;
-                xWriter.Indentation = 2;
+                writer.Formatting = Formatting.Indented;
+                writer.Indentation = 2;
 
                 // Create the document
-                xWriter.WriteStartDocument(true);
+                writer.WriteStartDocument(true);
                 // Root level element
-                xWriter.WriteStartElement("Root");
+                writer.WriteStartElement("Root");
 
                 // Loop through the task parameters, selecting only the ones beginning with "Meta_"
                 // These parameters are included in the table returned by stored procedure RequestStepTask
@@ -56,15 +56,15 @@ namespace DatasetQualityPlugin
                     {
                         // This parameter is metadata, so write it out
                         var tmpStr = taskParam.Replace("Meta_", string.Empty);
-                        xWriter.WriteElementString(tmpStr, taskParams.GetParam(taskParam));
+                        writer.WriteElementString(tmpStr, taskParams.GetParam(taskParam));
                     }
                 }
 
-                xWriter.WriteEndElement();  // Close root element
+                writer.WriteEndElement();  // Close root element
 
                 // Close the document, but don't close the writer
-                xWriter.WriteEndDocument();
-                xWriter.Flush();
+                writer.WriteEndDocument();
+                writer.Flush();
 
                 // Use a StreamReader to copy the XML text to a string variable
                 memStream.Seek(0, SeekOrigin.Begin);
@@ -75,7 +75,7 @@ namespace DatasetQualityPlugin
                 memStream.Close();
 
                 // Since the document is now a string, we can get rid of the XMLWriter
-                xWriter.Close();
+                writer.Close();
             }
 
             // Write the string to the output file

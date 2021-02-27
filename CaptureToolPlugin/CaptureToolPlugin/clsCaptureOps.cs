@@ -3226,29 +3226,28 @@ namespace CaptureToolPlugin
                 // 0, 0, 0, 0, 0
                 var zeroLineMatcher = new Regex("^[0, ]+$", RegexOptions.Compiled);
 
-                using (var reader = new StreamReader(new FileStream(fragProfileFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(fragProfileFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                var dataLineCount = 0;
+                var lineAllZeroes = false;
+
+                while (!reader.EndOfStream)
                 {
-                    var dataLineCount = 0;
-                    var lineAllZeroes = false;
-
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+                    if (string.IsNullOrWhiteSpace(dataLine))
                     {
-                        var dataLine = reader.ReadLine();
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                        {
-                            continue;
-                        }
-
-                        dataLineCount++;
-
-                        lineAllZeroes = zeroLineMatcher.IsMatch(dataLine);
+                        continue;
                     }
 
-                    if (dataLineCount == 1 && lineAllZeroes)
-                    {
-                        LogMessage("Skipping capture of default fragmentation profile file, " + fragProfileFile.FullName);
-                        return true;
-                    }
+                    dataLineCount++;
+
+                    lineAllZeroes = zeroLineMatcher.IsMatch(dataLine);
+                }
+
+                if (dataLineCount == 1 && lineAllZeroes)
+                {
+                    LogMessage("Skipping capture of default fragmentation profile file, " + fragProfileFile.FullName);
+                    return true;
                 }
 
                 return false;

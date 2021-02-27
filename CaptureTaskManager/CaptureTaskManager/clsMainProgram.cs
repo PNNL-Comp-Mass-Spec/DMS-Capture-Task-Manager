@@ -553,40 +553,39 @@ namespace CaptureTaskManager
         {
             var cachedMessages = new Dictionary<string, DateTime>();
 
-            using (var reader = new StreamReader(new FileStream(messageCacheFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+            using var reader = new StreamReader(new FileStream(messageCacheFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+            var lineCount = 0;
+            while (!reader.EndOfStream)
             {
-                var lineCount = 0;
-                while (!reader.EndOfStream)
+                var dataLine = reader.ReadLine();
+                lineCount++;
+
+                // Assume that the first line is the header line, which we'll skip
+                if (lineCount == 1 || string.IsNullOrWhiteSpace(dataLine))
                 {
-                    var dataLine = reader.ReadLine();
-                    lineCount++;
+                    continue;
+                }
 
-                    // Assume that the first line is the header line, which we'll skip
-                    if (lineCount == 1 || string.IsNullOrWhiteSpace(dataLine))
+                var lineParts = dataLine.Split(new[] { '\t' }, 2);
+
+                var timeStampText = lineParts[0];
+                var message = lineParts[1];
+
+                if (DateTime.TryParse(timeStampText, out var timeStamp))
+                {
+                    // Valid message; store it
+
+                    if (cachedMessages.TryGetValue(message, out var cachedTimeStamp))
                     {
-                        continue;
+                        if (timeStamp > cachedTimeStamp)
+                        {
+                            cachedMessages[message] = timeStamp;
+                        }
                     }
-
-                    var lineParts = dataLine.Split(new[] { '\t' }, 2);
-
-                    var timeStampText = lineParts[0];
-                    var message = lineParts[1];
-
-                    if (DateTime.TryParse(timeStampText, out var timeStamp))
+                    else
                     {
-                        // Valid message; store it
-
-                        if (cachedMessages.TryGetValue(message, out var cachedTimeStamp))
-                        {
-                            if (timeStamp > cachedTimeStamp)
-                            {
-                                cachedMessages[message] = timeStamp;
-                            }
-                        }
-                        else
-                        {
-                            cachedMessages.Add(message, timeStamp);
-                        }
+                        cachedMessages.Add(message, timeStamp);
                     }
                 }
             }

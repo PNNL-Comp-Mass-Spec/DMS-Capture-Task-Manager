@@ -443,102 +443,101 @@ namespace DatasetQualityPlugin
                 LogDebug("Parsing Quameter Results file " + ResultsFilePath);
             }
 
-            using (var reader = new StreamReader(new FileStream(ResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+            using var reader = new StreamReader(new FileStream(ResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+            string headerLine;
+            if (!reader.EndOfStream)
             {
-                string headerLine;
-                if (!reader.EndOfStream)
-                {
-                    // Read the header line
-                    headerLine = reader.ReadLine();
-                }
-                else
-                {
-                    headerLine = string.Empty;
-                }
+                // Read the header line
+                headerLine = reader.ReadLine();
+            }
+            else
+            {
+                headerLine = string.Empty;
+            }
 
-                if (string.IsNullOrWhiteSpace(headerLine))
-                {
-                    mRetData.CloseoutMsg = "Quameter Results file is empty (no header line)";
-                    LogWarning(mRetData.CloseoutMsg);
-                    return results;
-                }
+            if (string.IsNullOrWhiteSpace(headerLine))
+            {
+                mRetData.CloseoutMsg = "Quameter Results file is empty (no header line)";
+                LogWarning(mRetData.CloseoutMsg);
+                return results;
+            }
 
-                // Parse the headers
-                var headerNames = headerLine.Split('\t');
+            // Parse the headers
+            var headerNames = headerLine.Split('\t');
 
-                string dataLine;
-                if (!reader.EndOfStream)
-                {
-                    // Read the data line
-                    dataLine = reader.ReadLine();
-                }
-                else
-                {
-                    dataLine = string.Empty;
-                }
+            string dataLine;
+            if (!reader.EndOfStream)
+            {
+                // Read the data line
+                dataLine = reader.ReadLine();
+            }
+            else
+            {
+                dataLine = string.Empty;
+            }
 
-                if (string.IsNullOrWhiteSpace(dataLine))
-                {
-                    mRetData.CloseoutMsg = "Quameter Results file is empty (headers, but no data)";
-                    LogWarning(mRetData.CloseoutMsg);
-                    return results;
-                }
+            if (string.IsNullOrWhiteSpace(dataLine))
+            {
+                mRetData.CloseoutMsg = "Quameter Results file is empty (headers, but no data)";
+                LogWarning(mRetData.CloseoutMsg);
+                return results;
+            }
 
-                // Parse the data
-                var dataValues = dataLine.Split('\t');
+            // Parse the data
+            var dataValues = dataLine.Split('\t');
 
-                if (headerNames.Length > dataValues.Length)
-                {
-                    // More headers than data values
-                    mRetData.CloseoutMsg = "Quameter Results file data line (" + dataValues.Length + " items) does not match the header line (" + headerNames.Length + " items)";
-                    LogWarning(mRetData.CloseoutMsg);
-                    return results;
-                }
+            if (headerNames.Length > dataValues.Length)
+            {
+                // More headers than data values
+                mRetData.CloseoutMsg = "Quameter Results file data line (" + dataValues.Length + " items) does not match the header line (" + headerNames.Length + " items)";
+                LogWarning(mRetData.CloseoutMsg);
+                return results;
+            }
 
-                // Store the results by stepping through the arrays
-                // Skip the first two items provided they are "filename" and "StartTimeStamp")
-                var indexStart = 0;
-                if (string.Equals(headerNames[indexStart], "filename", StringComparison.OrdinalIgnoreCase))
+            // Store the results by stepping through the arrays
+            // Skip the first two items provided they are "filename" and "StartTimeStamp")
+            var indexStart = 0;
+            if (string.Equals(headerNames[indexStart], "filename", StringComparison.OrdinalIgnoreCase))
+            {
+                indexStart++;
+
+                if (headerNames[indexStart].Equals("StartTimestamp", StringComparison.OrdinalIgnoreCase))
                 {
                     indexStart++;
-
-                    if (headerNames[indexStart].Equals("StartTimestamp", StringComparison.OrdinalIgnoreCase))
-                    {
-                        indexStart++;
-                    }
-                    else
-                    {
-                        LogWarning("The second column in the Quameter metrics file is not StartTimeStamp; this is unexpected");
-                    }
                 }
                 else
                 {
-                    LogWarning("The first column in the Quameter metrics file is not Filename; this is unexpected");
+                    LogWarning("The second column in the Quameter metrics file is not StartTimeStamp; this is unexpected");
                 }
+            }
+            else
+            {
+                LogWarning("The first column in the Quameter metrics file is not Filename; this is unexpected");
+            }
 
-                for (var index = indexStart; index < headerNames.Length; index++)
+            for (var index = indexStart; index < headerNames.Length; index++)
+            {
+                if (string.IsNullOrWhiteSpace(headerNames[index]))
                 {
-                    if (string.IsNullOrWhiteSpace(headerNames[index]))
+                    LogWarning("Column " + (index + 1) + " in the Quameter metrics file is empty; this is unexpected");
+                }
+                else
+                {
+                    // Replace dashes with underscores in the metric names
+                    var sHeaderName = headerNames[index].Trim().Replace("-", "_");
+
+                    string sDataItem;
+                    if (string.IsNullOrWhiteSpace(dataValues[index]))
                     {
-                        LogWarning("Column " + (index + 1) + " in the Quameter metrics file is empty; this is unexpected");
+                        sDataItem = string.Empty;
                     }
                     else
                     {
-                        // Replace dashes with underscores in the metric names
-                        var sHeaderName = headerNames[index].Trim().Replace("-", "_");
-
-                        string sDataItem;
-                        if (string.IsNullOrWhiteSpace(dataValues[index]))
-                        {
-                            sDataItem = string.Empty;
-                        }
-                        else
-                        {
-                            sDataItem = string.Copy(dataValues[index]).Trim();
-                        }
-
-                        results.Add(new KeyValuePair<string, string>(sHeaderName, sDataItem));
+                        sDataItem = string.Copy(dataValues[index]).Trim();
                     }
+
+                    results.Add(new KeyValuePair<string, string>(sHeaderName, sDataItem));
                 }
             }
 
@@ -595,62 +594,61 @@ namespace DatasetQualityPlugin
                     return;
                 }
 
-                using (var reader = new StreamReader(new FileStream(mConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(mConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+
+                    if (string.IsNullOrWhiteSpace(dataLine))
                     {
-                        var dataLine = reader.ReadLine();
+                        continue;
+                    }
 
-                        if (string.IsNullOrWhiteSpace(dataLine))
+                    var trimmedLine = dataLine.Trim();
+
+                    var metadataProgressMatched = UpdateProgress(dataLine, metadataProgressMatcher, ref metadataPercentComplete);
+                    var peaksProgressMatched = UpdateProgress(dataLine, peaksProgressMatcher, ref peaksPercentComplete);
+                    var precursorProgressMatched = UpdateProgress(dataLine, precursorProgressMatcher, ref precursorPercentComplete);
+
+                    if (metadataProgressMatched || peaksProgressMatched || precursorProgressMatched)
+                    {
+                        continue;
+                    }
+
+                    if (unhandledException)
+                    {
+                        if (string.IsNullOrEmpty(exceptionText))
                         {
-                            continue;
+                            exceptionText = string.Copy(trimmedLine);
                         }
-
-                        var trimmedLine = dataLine.Trim();
-
-                        var metadataProgressMatched = UpdateProgress(dataLine, metadataProgressMatcher, ref metadataPercentComplete);
-                        var peaksProgressMatched = UpdateProgress(dataLine, peaksProgressMatcher, ref peaksPercentComplete);
-                        var precursorProgressMatched = UpdateProgress(dataLine, precursorProgressMatcher, ref precursorPercentComplete);
-
-                        if (metadataProgressMatched || peaksProgressMatched || precursorProgressMatched)
+                        else
                         {
-                            continue;
+                            exceptionText = "; " + trimmedLine;
                         }
-
-                        if (unhandledException)
+                    }
+                    else if (trimmedLine.StartsWith("Error:"))
+                    {
+                        LogError("Quameter error: " + trimmedLine);
+                    }
+                    else if (trimmedLine.StartsWith("Unhandled Exception"))
+                    {
+                        LogError("Quameter error: " + trimmedLine);
+                        unhandledException = true;
+                    }
+                    else if (trimmedLine.StartsWith(FATAL_SPLINE_ERROR))
+                    {
+                        mFatalSplineError = true;
+                    }
+                    else if (trimmedLine.StartsWith(X_ARRAY_NOT_INCREASING))
+                    {
+                        if (mFatalSplineError)
                         {
-                            if (string.IsNullOrEmpty(exceptionText))
-                            {
-                                exceptionText = string.Copy(trimmedLine);
-                            }
-                            else
-                            {
-                                exceptionText = "; " + trimmedLine;
-                            }
+                            LogError(string.Format("Quameter error: {0}; {1}", FATAL_SPLINE_ERROR, trimmedLine));
                         }
-                        else if (trimmedLine.StartsWith("Error:"))
+                        else
                         {
                             LogError("Quameter error: " + trimmedLine);
-                        }
-                        else if (trimmedLine.StartsWith("Unhandled Exception"))
-                        {
-                            LogError("Quameter error: " + trimmedLine);
-                            unhandledException = true;
-                        }
-                        else if (trimmedLine.StartsWith(FATAL_SPLINE_ERROR))
-                        {
-                            mFatalSplineError = true;
-                        }
-                        else if (trimmedLine.StartsWith(X_ARRAY_NOT_INCREASING))
-                        {
-                            if (mFatalSplineError)
-                            {
-                                LogError(string.Format("Quameter error: {0}; {1}", FATAL_SPLINE_ERROR, trimmedLine));
-                            }
-                            else
-                            {
-                                LogError("Quameter error: " + trimmedLine);
-                            }
                         }
                     }
                 }
@@ -686,29 +684,28 @@ namespace DatasetQualityPlugin
 
             LogDebug("Reading scan counts from " + datasetInfoFile.FullName);
 
-            using (var reader = new XmlTextReader(new FileStream(datasetInfoFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Write)))
+            using var reader = new XmlTextReader(new FileStream(datasetInfoFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Write));
+
+            while (reader.Read())
             {
-                while (reader.Read())
+                if (reader.NodeType != XmlNodeType.Element)
                 {
-                    if (reader.NodeType != XmlNodeType.Element)
-                    {
-                        continue;
-                    }
+                    continue;
+                }
 
-                    switch (reader.Name)
-                    {
-                        case "ScanCount":
-                            scanCount = reader.ReadElementContentAsInt();
-                            break;
-                        case "ScanCountMS":
-                            scanCountMS = reader.ReadElementContentAsInt();
-                            break;
+                switch (reader.Name)
+                {
+                    case "ScanCount":
+                        scanCount = reader.ReadElementContentAsInt();
+                        break;
+                    case "ScanCountMS":
+                        scanCountMS = reader.ReadElementContentAsInt();
+                        break;
 
-                        case "ScanType":
-                            var scanType = reader.ReadElementContentAsString();
-                            scanTypes.Add(scanType);
-                            break;
-                    }
+                    case "ScanType":
+                        var scanType = reader.ReadElementContentAsString();
+                        scanTypes.Add(scanType);
+                        break;
                 }
             }
         }
@@ -723,25 +720,24 @@ namespace DatasetQualityPlugin
 
                 using (var correctedFileWriter = new StreamWriter(new FileStream(correctedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    using (var metricsReader = new StreamReader(new FileStream(metricsOutputFileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                    {
-                        while (!metricsReader.EndOfStream)
-                        {
-                            var dataLine = metricsReader.ReadLine();
+                    using var metricsReader = new StreamReader(new FileStream(metricsOutputFileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
-                            if (!string.IsNullOrEmpty(dataLine))
+                    while (!metricsReader.EndOfStream)
+                    {
+                        var dataLine = metricsReader.ReadLine();
+
+                        if (!string.IsNullOrEmpty(dataLine))
+                        {
+                            if (dataLine.IndexOf("-1.#IND", StringComparison.Ordinal) > 0)
                             {
-                                if (dataLine.IndexOf("-1.#IND", StringComparison.Ordinal) > 0)
-                                {
-                                    dataLine = dataLine.Replace("-1.#IND", string.Empty);
-                                    replaceOriginal = true;
-                                }
-                                correctedFileWriter.WriteLine(dataLine);
+                                dataLine = dataLine.Replace("-1.#IND", string.Empty);
+                                replaceOriginal = true;
                             }
-                            else
-                            {
-                                correctedFileWriter.WriteLine();
-                            }
+                            correctedFileWriter.WriteLine(dataLine);
+                        }
+                        else
+                        {
+                            correctedFileWriter.WriteLine();
                         }
                     }
                 }

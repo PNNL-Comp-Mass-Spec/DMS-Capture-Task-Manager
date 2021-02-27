@@ -749,10 +749,9 @@ namespace DatasetIntegrityPlugin
 
                 var jobFilePath = Path.Combine(mWorkDir, "CDFBatchJob.obj");
 
-                using (var writer = new StreamWriter(new FileStream(jobFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                {
-                    writer.WriteLine(xml);
-                }
+                using var writer = new StreamWriter(new FileStream(jobFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                writer.WriteLine(xml);
 
                 return jobFilePath;
             }
@@ -967,49 +966,48 @@ namespace DatasetIntegrityPlugin
                     return;
                 }
 
-                using (var reader = new StreamReader(new FileStream(mConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(mConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+
+                    if (string.IsNullOrEmpty(dataLine))
                     {
-                        var dataLine = reader.ReadLine();
+                        continue;
+                    }
 
-                        if (string.IsNullOrEmpty(dataLine))
-                        {
-                            continue;
-                        }
+                    var match = progressMatcher.Match(dataLine);
+                    if (match.Success)
+                    {
+                        var framesProcessed = int.Parse(match.Groups["FramesProcessed"].Value);
+                        var totalFrames = int.Parse(match.Groups["TotalFrames"].Value);
 
-                        var match = progressMatcher.Match(dataLine);
-                        if (match.Success)
+                        percentComplete = framesProcessed / (float)totalFrames * 100;
+                    }
+                    else if (unhandledException)
+                    {
+                        if (string.IsNullOrEmpty(exceptionText))
                         {
-                            var framesProcessed = int.Parse(match.Groups["FramesProcessed"].Value);
-                            var totalFrames = int.Parse(match.Groups["TotalFrames"].Value);
-
-                            percentComplete = framesProcessed / (float)totalFrames * 100;
+                            exceptionText = string.Copy(dataLine);
                         }
-                        else if (unhandledException)
+                        else
                         {
-                            if (string.IsNullOrEmpty(exceptionText))
-                            {
-                                exceptionText = string.Copy(dataLine);
-                            }
-                            else
-                            {
-                                exceptionText = "; " + dataLine;
-                            }
+                            exceptionText = "; " + dataLine;
                         }
-                        else if (dataLine.StartsWith("Error:", StringComparison.OrdinalIgnoreCase))
-                        {
-                            LogError("AgilentToUIMFConverter error: " + dataLine);
-                        }
-                        else if (dataLine.StartsWith("Exception in", StringComparison.OrdinalIgnoreCase))
-                        {
-                            LogError("AgilentToUIMFConverter error: " + dataLine);
-                        }
-                        else if (dataLine.StartsWith("Unhandled Exception", StringComparison.OrdinalIgnoreCase))
-                        {
-                            LogError("AgilentToUIMFConverter error: " + dataLine);
-                            unhandledException = true;
-                        }
+                    }
+                    else if (dataLine.StartsWith("Error:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        LogError("AgilentToUIMFConverter error: " + dataLine);
+                    }
+                    else if (dataLine.StartsWith("Exception in", StringComparison.OrdinalIgnoreCase))
+                    {
+                        LogError("AgilentToUIMFConverter error: " + dataLine);
+                    }
+                    else if (dataLine.StartsWith("Unhandled Exception", StringComparison.OrdinalIgnoreCase))
+                    {
+                        LogError("AgilentToUIMFConverter error: " + dataLine);
+                        unhandledException = true;
                     }
                 }
 
@@ -1488,20 +1486,19 @@ namespace DatasetIntegrityPlugin
                 {
                     try
                     {
-                        using (var reader = new XRawFileIO(dataFileNamePath))
+                        using var reader = new XRawFileIO(dataFileNamePath);
+
+                        RegisterEvents(reader);
+
+                        var scanCount = reader.GetNumScans();
+
+                        if (scanCount > 0)
                         {
-                            RegisterEvents(reader);
+                            var dataCount = reader.GetScanData2D(1, out _);
 
-                            var scanCount = reader.GetNumScans();
-
-                            if (scanCount > 0)
+                            if (dataCount > 0)
                             {
-                                var dataCount = reader.GetScanData2D(1, out _);
-
-                                if (dataCount > 0)
-                                {
-                                    validFile = true;
-                                }
+                                validFile = true;
                             }
                         }
                     }
@@ -2136,33 +2133,30 @@ namespace DatasetIntegrityPlugin
                     return false;
                 }
 
-                using (var inFile = new FileStream(sourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                using var inFile = new FileStream(sourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                using var reader = new GZipStream(inFile, CompressionMode.Decompress);
+
+                if (!reader.CanRead)
                 {
-                    using (var reader = new GZipStream(inFile, CompressionMode.Decompress))
+                    errorMessage = "File is not readable";
+                    return false;
+                }
+
+                var buffer = new byte[BYTES_PER_READ];
+
+                // Copy the decompression stream into the output file.
+                while (reader.CanRead)
+                {
+                    var newBytes = reader.Read(buffer, 0, BYTES_PER_READ);
+                    if (newBytes <= 0)
                     {
-                        if (!reader.CanRead)
-                        {
-                            errorMessage = "File is not readable";
-                            return false;
-                        }
-
-                        var buffer = new byte[BYTES_PER_READ];
-
-                        // Copy the decompression stream into the output file.
-                        while (reader.CanRead)
-                        {
-                            var newBytes = reader.Read(buffer, 0, BYTES_PER_READ);
-                            if (newBytes <= 0)
-                            {
-                                break;
-                            }
-
-                            bytesRead += newBytes;
-                        }
+                        break;
                     }
 
-                    LogMessage(string.Format("Read {0:N1} KB from {1}", bytesRead / 1024.0, sourceFile.Name));
+                    bytesRead += newBytes;
                 }
+
+                LogMessage(string.Format("Read {0:N1} KB from {1}", bytesRead / 1024.0, sourceFile.Name));
 
                 return true;
             }
@@ -2434,34 +2428,33 @@ namespace DatasetIntegrityPlugin
                 LogDebug("Opening UIMF file to look for valid data");
 
                 // Open the .UIMF file and read the first scan of the first frame
-                using (var uimfReader = new DataReader(uimfFilePath))
+                using var uimfReader = new DataReader(uimfFilePath);
+
+                var frameList = uimfReader.GetMasterFrameList();
+
+                if (frameList.Count == 0)
                 {
-                    var frameList = uimfReader.GetMasterFrameList();
+                    uimfStatusMessage = "appears corrupt (no frame info)";
+                    return false;
+                }
 
-                    if (frameList.Count == 0)
+                foreach (var frameEntry in frameList)
+                {
+                    var frameNumber = frameEntry.Key;
+                    var frameType = frameEntry.Value;
+                    var frameScans = uimfReader.GetFrameScans(frameEntry.Key);
+
+                    foreach (var scanNum in frameScans)
                     {
-                        uimfStatusMessage = "appears corrupt (no frame info)";
-                        return false;
-                    }
+                        var dataCount = uimfReader.GetSpectrum(
+                            frameNumber, frameType, scanNum.Scan,
+                            out _, out _);
 
-                    foreach (var frameEntry in frameList)
-                    {
-                        var frameNumber = frameEntry.Key;
-                        var frameType = frameEntry.Value;
-                        var frameScans = uimfReader.GetFrameScans(frameEntry.Key);
-
-                        foreach (var scanNum in frameScans)
+                        if (dataCount > 0)
                         {
-                            var dataCount = uimfReader.GetSpectrum(
-                                frameNumber, frameType, scanNum.Scan,
-                                out _, out _);
-
-                            if (dataCount > 0)
-                            {
-                                // Valid data has been found
-                                uimfStatusMessage = string.Empty;
-                                return true;
-                            }
+                            // Valid data has been found
+                            uimfStatusMessage = string.Empty;
+                            return true;
                         }
                     }
                 }
@@ -2499,71 +2492,70 @@ namespace DatasetIntegrityPlugin
             var loggedPressureErrorWarning = false;
 
             // Open the file with the UIMFReader
-            using (var uimfReader = new DataReader(dataFileNamePath))
+            using var uimfReader = new DataReader(dataFileNamePath);
+
+            var masterFrameList = uimfReader.GetMasterFrameList();
+
+            foreach (var frameNumber in masterFrameList.Keys)
             {
-                var masterFrameList = uimfReader.GetMasterFrameList();
+                var frameParams = uimfReader.GetFrameParams(frameNumber);
 
-                foreach (var frameNumber in masterFrameList.Keys)
+                var highPressureFunnel = frameParams.GetValueDouble(FrameParamKeyType.HighPressureFunnelPressure);
+                var rearIonFunnel = frameParams.GetValueDouble(FrameParamKeyType.RearIonFunnelPressure);
+                var quadPressure = frameParams.GetValueDouble(FrameParamKeyType.QuadrupolePressure);
+                var ionFunnelTrap = frameParams.GetValueDouble(FrameParamKeyType.IonFunnelTrapPressure);
+
+                if (instrumentName.StartsWith("IMS05", StringComparison.OrdinalIgnoreCase))
                 {
-                    var frameParams = uimfReader.GetFrameParams(frameNumber);
-
-                    var highPressureFunnel = frameParams.GetValueDouble(FrameParamKeyType.HighPressureFunnelPressure);
-                    var rearIonFunnel = frameParams.GetValueDouble(FrameParamKeyType.RearIonFunnelPressure);
-                    var quadPressure = frameParams.GetValueDouble(FrameParamKeyType.QuadrupolePressure);
-                    var ionFunnelTrap = frameParams.GetValueDouble(FrameParamKeyType.IonFunnelTrapPressure);
-
-                    if (instrumentName.StartsWith("IMS05", StringComparison.OrdinalIgnoreCase))
+                    // As of September 2014, IMS05 does not have a high pressure ion funnel
+                    // In order for the logic checks to work, we will override the HighPressureFunnelPressure value listed using RearIonFunnelPressure
+                    if (highPressureFunnel < rearIonFunnel)
                     {
-                        // As of September 2014, IMS05 does not have a high pressure ion funnel
-                        // In order for the logic checks to work, we will override the HighPressureFunnelPressure value listed using RearIonFunnelPressure
-                        if (highPressureFunnel < rearIonFunnel)
-                        {
-                            highPressureFunnel = rearIonFunnel;
-                        }
+                        highPressureFunnel = rearIonFunnel;
                     }
+                }
 
-                    var pressureColumnsArePresent = (quadPressure > 0 &&
-                                                     rearIonFunnel > 0 &&
-                                                     highPressureFunnel > 0 &&
-                                                     ionFunnelTrap > 0);
+                var pressureColumnsArePresent = (quadPressure > 0 &&
+                                                 rearIonFunnel > 0 &&
+                                                 highPressureFunnel > 0 &&
+                                                 ionFunnelTrap > 0);
 
-                    if (pressureColumnsArePresent)
+                if (pressureColumnsArePresent)
+                {
+                    // Example pressure values:
+                    // HighPressureFunnelPressure = 4.077
+                    // RearIonFunnelPressure = 4.048
+                    // QuadrupolePressure = 0.262
+
+                    // Multiplying the comparison pressure by 1.1 to give a 10% buffer in case the two pressure values are similar
+                    var pressuresAreInCorrectOrder = (quadPressure < rearIonFunnel * 1.1 &&
+                                                      rearIonFunnel < highPressureFunnel * 1.1);
+
+                    if (!pressuresAreInCorrectOrder)
                     {
-                        // Example pressure values:
-                        // HighPressureFunnelPressure = 4.077
-                        // RearIonFunnelPressure = 4.048
-                        // QuadrupolePressure = 0.262
+                        mRetData.EvalMsg = "Invalid pressure info in the Frame_Parameters table for frame " + frameNumber + ", dataset " + mDataset + "; QuadrupolePressure should be less than the RearIonFunnelPressure and the RearIonFunnelPressure should be less than the HighPressureFunnelPressure";
 
-                        // Multiplying the comparison pressure by 1.1 to give a 10% buffer in case the two pressure values are similar
-                        var pressuresAreInCorrectOrder = (quadPressure < rearIonFunnel * 1.1 &&
-                                                          rearIonFunnel < highPressureFunnel * 1.1);
-
-                        if (!pressuresAreInCorrectOrder)
+                        if (ignorePressureErrors)
                         {
-                            mRetData.EvalMsg = "Invalid pressure info in the Frame_Parameters table for frame " + frameNumber + ", dataset " + mDataset + "; QuadrupolePressure should be less than the RearIonFunnelPressure and the RearIonFunnelPressure should be less than the HighPressureFunnelPressure";
-
-                            if (ignorePressureErrors)
+                            if (!loggedPressureErrorWarning)
                             {
-                                if (!loggedPressureErrorWarning)
-                                {
-                                    loggedPressureErrorWarning = true;
-                                    LogError(mRetData.EvalMsg, true);
-                                }
-                            }
-                            else
-                            {
+                                loggedPressureErrorWarning = true;
                                 LogError(mRetData.EvalMsg, true);
-
-                                uimfReader.Dispose();
-                                return false;
                             }
                         }
-                    }
+                        else
+                        {
+                            LogError(mRetData.EvalMsg, true);
 
-                    if (frameNumber % 100 == 0)
-                    {
-                        LogDebug("Validated frame " + frameNumber);
+                            uimfReader.Dispose();
+                            return false;
+                        }
                     }
+                }
+
+                if (frameNumber % 100 == 0)
+                {
+                    LogDebug("Validated frame " + frameNumber);
                 }
             }
 
@@ -2732,14 +2724,13 @@ namespace DatasetIntegrityPlugin
 
                     LogMessage("Creating OpenChrom settings file at " + settingsFile.FullName);
 
-                    using (var writer = settingsFile.CreateText())
-                    {
-                        writer.WriteLine("eclipse.preferences.version=1");
-                        writer.WriteLine("productSerialKey=wlkXZsvC-miP6A2KH-DgAuTix2");
-                        writer.WriteLine("productTrialKey=false");
-                        writer.WriteLine("productTrialStartDateKey=1439335966145");
-                        writer.WriteLine("trace=1");
-                    }
+                    using var writer = settingsFile.CreateText();
+
+                    writer.WriteLine("eclipse.preferences.version=1");
+                    writer.WriteLine("productSerialKey=wlkXZsvC-miP6A2KH-DgAuTix2");
+                    writer.WriteLine("productTrialKey=false");
+                    writer.WriteLine("productTrialStartDateKey=1439335966145");
+                    writer.WriteLine("trace=1");
 
                     return true;
                 }

@@ -376,26 +376,25 @@ namespace ImsDemuxPlugin
 
             var calibrationError = false;
 
-            using (var reader = new StreamReader(new FileStream(calibrationLogPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+            using var reader = new StreamReader(new FileStream(calibrationLogPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+            while (!reader.EndOfStream)
             {
-                while (!reader.EndOfStream)
+                var dataLine = reader.ReadLine();
+
+                if (string.IsNullOrWhiteSpace(dataLine))
                 {
-                    var dataLine = reader.ReadLine();
+                    continue;
+                }
 
-                    if (string.IsNullOrWhiteSpace(dataLine))
-                    {
-                        continue;
-                    }
-
-                    if (dataLine.Contains(COULD_NOT_OBTAIN_GOOD_CALIBRATION))
-                    {
-                        calibrationError = true;
-                    }
-                    else
-                    {
-                        // Only count this as a calibration error if the last non-blank line of the file contains the error message
-                        calibrationError = false;
-                    }
+                if (dataLine.Contains(COULD_NOT_OBTAIN_GOOD_CALIBRATION))
+                {
+                    calibrationError = true;
+                }
+                else
+                {
+                    // Only count this as a calibration error if the last non-blank line of the file contains the error message
+                    calibrationError = false;
                 }
             }
 
@@ -413,57 +412,57 @@ namespace ImsDemuxPlugin
                 return false;
             }
 
-            using (var uimfReader = new DataReader(decodedUimfFilePath))
+            using var uimfReader = new DataReader(decodedUimfFilePath);
+
+            var manuallyCalibrated = false;
+
+            if (!uimfReader.TableExists("Log_Entries"))
             {
-                var manuallyCalibrated = false;
+                return false;
+            }
 
-                if (!uimfReader.TableExists("Log_Entries"))
+            // Note: providing true for parseViaFramework as a workaround for reading SqLite files located on a remote UNC share or in ReadOnly folders
+            var connectionString = "Data Source = " + decodedUimfFilePath + "; Version=3; DateTimeFormat=Ticks;";
+
+            using (var cnUIMF = new SQLiteConnection(connectionString, true))
+            {
+                cnUIMF.Open();
+                var cmdLogEntries = cnUIMF.CreateCommand();
+
+                cmdLogEntries.CommandText = "SELECT Message FROM Log_Entries where Posted_By = '" +
+                                            clsDemuxTools.UIMF_CALIBRATION_UPDATER_NAME +
+                                            "' order by Entry_ID desc";
+
+                using var logEntriesReader = cmdLogEntries.ExecuteReader();
+
+                while (logEntriesReader.Read())
                 {
-                    return false;
-                }
-
-                // Note: providing true for parseViaFramework as a workaround for reading SqLite files located on a remote UNC share or in ReadOnly folders
-                var connectionString = "Data Source = " + decodedUimfFilePath + "; Version=3; DateTimeFormat=Ticks;";
-                using (var cnUIMF = new SQLiteConnection(connectionString, true))
-                {
-                    cnUIMF.Open();
-                    var cmdLogEntries = cnUIMF.CreateCommand();
-
-                    cmdLogEntries.CommandText = "SELECT Message FROM Log_Entries where Posted_By = '" +
-                                                clsDemuxTools.UIMF_CALIBRATION_UPDATER_NAME +
-                                                "' order by Entry_ID desc";
-                    using (var logEntriesReader = cmdLogEntries.ExecuteReader())
+                    var message = logEntriesReader.GetString(0);
+                    if (message.StartsWith("New calibration coefficients"))
                     {
-                        while (logEntriesReader.Read())
+                        // Extract out the coefficients
+                        var coefficientsMatcher = new Regex("slope = ([0-9.+-]+), intercept = ([0-9.+-]+)", RegexOptions.IgnoreCase);
+                        var match = coefficientsMatcher.Match(message);
+                        if (match.Success)
                         {
-                            var message = logEntriesReader.GetString(0);
-                            if (message.StartsWith("New calibration coefficients"))
-                            {
-                                // Extract out the coefficients
-                                var coefficientsMatcher = new Regex("slope = ([0-9.+-]+), intercept = ([0-9.+-]+)", RegexOptions.IgnoreCase);
-                                var match = coefficientsMatcher.Match(message);
-                                if (match.Success)
-                                {
-                                    double.TryParse(match.Groups[1].Value, out calibrationSlope);
-                                    double.TryParse(match.Groups[2].Value, out calibrationIntercept);
-                                }
-                            }
-                            else if (message.StartsWith("Manually applied calibration coefficients"))
-                            {
-                                manuallyCalibrated = true;
-                            }
+                            double.TryParse(match.Groups[1].Value, out calibrationSlope);
+                            double.TryParse(match.Groups[2].Value, out calibrationIntercept);
                         }
                     }
+                    else if (message.StartsWith("Manually applied calibration coefficients"))
+                    {
+                        manuallyCalibrated = true;
+                    }
                 }
-
-                if (manuallyCalibrated && Math.Abs(calibrationSlope) < double.Epsilon)
-                {
-                    LogError("Found message 'Manually applied calibration coefficients' but could not determine slope or intercept manually applied");
-                    manuallyCalibrated = false;
-                }
-
-                return manuallyCalibrated;
             }
+
+            if (manuallyCalibrated && Math.Abs(calibrationSlope) < double.Epsilon)
+            {
+                LogError("Found message 'Manually applied calibration coefficients' but could not determine slope or intercept manually applied");
+                manuallyCalibrated = false;
+            }
+
+            return manuallyCalibrated;
         }
 
         /// <summary>
