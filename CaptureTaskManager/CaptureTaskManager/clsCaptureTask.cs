@@ -233,8 +233,12 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Detailed step request
+        /// Contact the database to request a job step be assigned
         /// </summary>
+        /// <remarks>
+        /// Certain scripts will only assign jobs to managers that are on the same server as a dataset
+        /// This is controlled by column Machine in table T_Local_Processors
+        /// </remarks>
         /// <returns>RequestTaskResult enum</returns>
         private EnumRequestTaskResult RequestTaskDetailed()
         {

@@ -25,7 +25,7 @@ namespace CaptureTaskManager
     {
         // Ignore Spelling: OxyPlot
 
-        private const string PROGRAM_DATE = "February 10, 2021";
+        private const string PROGRAM_DATE = "February 26, 2021";
 
         private static bool mTraceMode;
 
@@ -113,7 +113,6 @@ namespace CaptureTaskManager
                 clsParseCommandLine.PauseAtConsole(1500);
                 FileLogger.FlushPendingMessages();
                 return 1;
-
             }
 
             // Initiate automated analysis
