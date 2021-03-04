@@ -1,7 +1,4 @@
-﻿using PRISM;
-using System;
-
-// ReSharper disable UnusedMember.Global
+﻿// ReSharper disable UnusedMember.Global
 namespace CaptureTaskManager
 {
     #region "Enums"
@@ -76,35 +73,4 @@ namespace CaptureTaskManager
     public delegate void StatusMonitorUpdateReceived(string msg);
 
     #endregion
-
-    public static class clsErrors
-    {
-        /// <summary>
-        /// Parses the .StackTrace text of the given exception to return a compact description of the current stack
-        /// </summary>
-        /// <param name="ex"></param>
-        /// <returns>String similar to "Stack trace: clsCodeTest.Test-:-clsCodeTest.TestException-:-clsCodeTest.InnerTestException in clsCodeTest.vb:line 86"</returns>
-        /// <remarks></remarks>
-        public static string GetExceptionStackTrace(Exception ex)
-        {
-            return GetExceptionStackTrace(ex, false);
-        }
-
-        /// <summary>
-        /// Parses the .StackTrace text of the given exception to return a compact description of the current stack
-        /// </summary>
-        /// <param name="ex"></param>
-        /// <param name="useMultiLine">>When true, format the stack trace using newline characters instead of -:-</param>
-        /// <returns>String similar to "Stack trace: clsCodeTest.Test-:-clsCodeTest.TestException-:-clsCodeTest.InnerTestException in clsCodeTest.vb:line 86"</returns>
-        /// <remarks></remarks>
-        public static string GetExceptionStackTrace(Exception ex, bool useMultiLine)
-        {
-            if (useMultiLine)
-            {
-                return StackTraceFormatter.GetExceptionStackTraceMultiLine(ex);
-            }
-
-            return StackTraceFormatter.GetExceptionStackTrace(ex);
-        }
-    }
 }
