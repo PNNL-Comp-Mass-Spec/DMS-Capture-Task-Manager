@@ -74,7 +74,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DatasetArchivePlugin\DatasetArchivePlugin\DatasetArchivePlugin.csproj">
+    <ProjectReference Include="..\DatasetArchivePlugin\DatasetArchivePlugin.csproj">
       <Project>{FC0E683A-38BE-494C-93F1-65747197DCD7}</Project>
       <Name>DatasetArchivePlugin</Name>
     </ProjectReference>
