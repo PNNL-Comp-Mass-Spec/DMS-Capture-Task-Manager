@@ -54,6 +54,7 @@
     <Compile Include="clsStatusData.cs" />
     <Compile Include="clsToolReturnData.cs" />
     <Compile Include="clsToolRunnerBase.cs" />
+    <Compile Include="clsUtilities.cs" />
     <Compile Include="DatasetFileSearchTool.cs" />
     <Compile Include="DatasetInfo.cs" />
     <Compile Include="GlobalSuppressions.cs" />
