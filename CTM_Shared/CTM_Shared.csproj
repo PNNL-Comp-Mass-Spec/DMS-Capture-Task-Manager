@@ -38,10 +38,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="MSFileInfoScannerInterfaces">
-      <HintPath>..\..\RefLib\MSFileInfoScannerInterfaces.dll</HintPath>
+      <HintPath>..\RefLib\MSFileInfoScannerInterfaces.dll</HintPath>
     </Reference>
     <Reference Include="Pacifica.Core">
-      <HintPath>..\..\RefLib\Pacifica.Core.dll</HintPath>
+      <HintPath>..\RefLib\Pacifica.Core.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -92,14 +92,14 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\..\DeployedFiles" /Y /I
-xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\..\DeployedFiles" /Y
+    <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\DeployedFiles" /Y /I
+xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\DeployedFiles" /Y
 
-xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\..\DeployedFiles" /Y /d
-xcopy "$(TargetDir)PRISMWin.dll" "$(ProjectDir)..\..\DeployedFiles" /Y /d
-xcopy "$(TargetDir)ICSharpCode.SharpZipLib.dll" "$(ProjectDir)..\..\DeployedFiles" /Y /d
-xcopy "$(TargetDir)UIMFLibrary.dll" "$(ProjectDir)..\..\DeployedFiles" /Y /d
-xcopy "$(TargetDir)System.Data.SQLite.dll" "$(ProjectDir)..\..\DeployedFiles" /Y /d
+xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\DeployedFiles" /Y /d
+xcopy "$(TargetDir)PRISMWin.dll" "$(ProjectDir)..\DeployedFiles" /Y /d
+xcopy "$(TargetDir)ICSharpCode.SharpZipLib.dll" "$(ProjectDir)..\DeployedFiles" /Y /d
+xcopy "$(TargetDir)UIMFLibrary.dll" "$(ProjectDir)..\DeployedFiles" /Y /d
+xcopy "$(TargetDir)System.Data.SQLite.dll" "$(ProjectDir)..\DeployedFiles" /Y /d
 
 </PostBuildEvent>
   </PropertyGroup>

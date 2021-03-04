@@ -5,11 +5,11 @@
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{E99901C3-ABF3-4061-BF19-F290EEF65935}</ProjectGuid>
+    <ProjectGuid>{4C1F0E64-B3F7-4826-98D5-95EC14146F95}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>DatasetQualityPlugin</RootNamespace>
-    <AssemblyName>DatasetQualityPlugin</AssemblyName>
+    <RootNamespace>DatasetInfoPlugin</RootNamespace>
+    <AssemblyName>DatasetInfoPlugin</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <FileUpgradeFlags>
@@ -41,17 +41,19 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="PRISM-DatabaseUtils">
-      <Version>1.1.7</Version>
-    </PackageReference>
     <PackageReference Include="PRISM-Library">
       <Version>2.6.25</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="CTM_Shared, Version=1.2.4643.27917, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\DeployedFiles\CTM_Shared.dll</HintPath>
+    <Reference Include="CTM_Shared">
+      <HintPath>..\DeployedFiles\CTM_Shared.dll</HintPath>
+    </Reference>
+    <Reference Include="MSFileInfoScannerInterfaces">
+      <HintPath>..\RefLib\MSFileInfoScannerInterfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="PNNLOmics">
+      <HintPath>..\RefLib\PNNLOmics.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
@@ -65,24 +67,9 @@
     </Reference>
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="ThermoFisher.CommonCore.BackgroundSubtraction">
-      <HintPath>..\..\RefLib\ThermoFisher.CommonCore.BackgroundSubtraction.dll</HintPath>
-    </Reference>
-    <Reference Include="ThermoFisher.CommonCore.Data">
-      <HintPath>..\..\RefLib\ThermoFisher.CommonCore.Data.dll</HintPath>
-    </Reference>
-    <Reference Include="ThermoFisher.CommonCore.MassPrecisionEstimator">
-      <HintPath>..\..\RefLib\ThermoFisher.CommonCore.MassPrecisionEstimator.dll</HintPath>
-    </Reference>
-    <Reference Include="ThermoFisher.CommonCore.RawFileReader">
-      <HintPath>..\..\RefLib\ThermoFisher.CommonCore.RawFileReader.dll</HintPath>
-    </Reference>
-    <Reference Include="ThermoRawFileReader">
-      <HintPath>..\..\RefLib\ThermoRawFileReader.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsMetaDataFile.cs" />
+    <Compile Include="clsDatasetInfoXmlMerger.cs" />
     <Compile Include="clsPluginMain.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -96,10 +83,10 @@
   </Target>
   -->
   <PropertyGroup>
-    <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\..\DeployedFiles" /Y /I
-xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\..\DeployedFiles" /Y
-xcopy "$(TargetDir)*.*" "$(ProjectDir)..\..\CaptureTaskManager\CaptureTaskManager\bin\Debug" /D /Y /I
-xcopy "$(TargetDir)*.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
+    <PostBuildEvent>xcopy "$(TargetDir)MSFileInfoScannerInterfaces.dll" "$(ProjectDir)..\DeployedFiles" /D /Y /I
+xcopy "$(TargetPath)" "$(ProjectDir)..\DeployedFiles" /Y /I
+xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\DeployedFiles" /Y
+xcopy "$(TargetDir)*.*" "$(ProjectDir)..\CaptureTaskManager\bin\Debug" /D /Y /I
 </PostBuildEvent>
   </PropertyGroup>
 </Project>

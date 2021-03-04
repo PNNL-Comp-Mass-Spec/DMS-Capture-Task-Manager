@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30717.126
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DatasetArchivePlugin", "DatasetArchivePlugin\DatasetArchivePlugin.csproj", "{FC0E683A-38BE-494C-93F1-65747197DCD7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DatasetArchivePlugin", "DatasetArchivePlugin.csproj", "{FC0E683A-38BE-494C-93F1-65747197DCD7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

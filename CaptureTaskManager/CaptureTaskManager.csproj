@@ -5,7 +5,7 @@
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{93485E0E-3A78-4118-B36B-BA71334752AF}</ProjectGuid>
+    <ProjectGuid>{D33569C6-2077-4502-AFD1-49F077F3F55F}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>CaptureTaskManager</RootNamespace>
@@ -18,7 +18,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;DartFTPMissing; PLUGIN_DEBUG_MODE_ENABLED</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;DartFTPMissing</DefineConstants>
     <DebugType>full</DebugType>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <UseVSHostingProcess>false</UseVSHostingProcess>
@@ -30,7 +30,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;DartFTPMissing; PLUGIN_DEBUG_MODE_ENABLED</DefineConstants>
+    <DefineConstants>TRACE;DartFTPMissing</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -40,13 +40,13 @@
     <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
-  <PropertyGroup>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
-  </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MSFileInfoScannerInterfaces">
+    <Reference Include="Pacifica.Core">
+      <HintPath>..\RefLib\Pacifica.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Pacifica.DMS_Metadata, Version=1.0.6303.32068, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\RefLib\MSFileInfoScannerInterfaces.dll</HintPath>
+      <HintPath>..\RefLib\Pacifica.DMS_Metadata.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
@@ -63,26 +63,6 @@
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
-    <Reference Include="ThermoFisher.CommonCore.BackgroundSubtraction, Version=1.0.0.0, Culture=neutral, PublicKeyToken=1aef06afb5abd953, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\RefLib\ThermoFisher.CommonCore.BackgroundSubtraction.dll</HintPath>
-    </Reference>
-    <Reference Include="ThermoFisher.CommonCore.Data, Version=1.0.0.0, Culture=neutral, PublicKeyToken=1aef06afb5abd953, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\RefLib\ThermoFisher.CommonCore.Data.dll</HintPath>
-    </Reference>
-    <Reference Include="ThermoFisher.CommonCore.MassPrecisionEstimator, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\RefLib\ThermoFisher.CommonCore.MassPrecisionEstimator.dll</HintPath>
-    </Reference>
-    <Reference Include="ThermoFisher.CommonCore.RawFileReader, Version=1.0.0.0, Culture=neutral, PublicKeyToken=1aef06afb5abd953, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\RefLib\ThermoFisher.CommonCore.RawFileReader.dll</HintPath>
-    </Reference>
-    <Reference Include="ThermoRawFileReader, Version=3.0.6943.24169, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\RefLib\ThermoRawFileReader.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="clsCaptureTask.cs" />
@@ -108,9 +88,8 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
-    <None Include="app.config" />
-    <None Include="app.manifest">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <None Include="app.config">
+      <SubType>Designer</SubType>
     </None>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -125,14 +104,7 @@
   <ItemGroup>
     <Content Include="plugin_info.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <SubType>Designer</SubType>
     </Content>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\CTM_Shared\CTM_Shared.csproj">
-      <Project>{7D07F054-0D29-45DD-9B22-71D0768BC3C3}</Project>
-      <Name>CTM_Shared</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Apache.NMS.ActiveMQ">
@@ -153,12 +125,21 @@
     <PackageReference Include="PRISMWin-Library">
       <Version>1.0.14</Version>
     </PackageReference>
+    <PackageReference Include="SharpZipLib">
+      <Version>1.2.0</Version>
+    </PackageReference>
     <PackageReference Include="System.Data.SQLite.Core">
       <Version>1.0.111</Version>
     </PackageReference>
     <PackageReference Include="UIMFLibrary">
       <Version>3.7.4</Version>
     </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CTM_Shared\CTM_Shared.csproj">
+      <Project>{7d07f054-0d29-45dd-9b22-71d0768bc3c3}</Project>
+      <Name>CTM_Shared</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
@@ -169,29 +150,15 @@
   </Target>
   -->
   <PropertyGroup>
-    <PostBuildEvent>if exist "$(TargetDir)SQLite.Interop.dll" (del "$(TargetDir)SQLite.Interop.dll")
-rem if not exist "$(TargetDir)x86" mkdir "$(TargetDir)x86"
-rem if not exist "$(TargetDir)x64" mkdir "$(TargetDir)x64"
-rem xcopy "$(ProjectDir)..\..\RefLib\x86\SQLite.Interop.dll" "$(TargetDir)x86" /D /Y
-rem xcopy "$(ProjectDir)..\..\RefLib\x64\SQLite.Interop.dll" "$(TargetDir)x64" /D /Y
-
-xcopy "$(TargetPath)" "$(ProjectDir)..\..\DeployedFiles" /D /Y
-xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\..\DeployedFiles" /D /Y
-
-xcopy "$(TargetDir)app.manifest" "$(ProjectDir)..\..\DeployedFiles" /D /Y
-xcopy "$(TargetDir)*.config" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
-xcopy "$(TargetDir)Apache.NMS.ActiveMQ.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y
-xcopy "$(TargetDir)Apache.NMS.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y
-xcopy "$(TargetDir)ICSharpCode.SharpZipLib.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y
-xcopy "$(TargetDir)Jayrock.Json.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y
-xcopy "$(TargetDir)MathNet.Numerics.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y
-xcopy "$(TargetDir)PNNLOmics.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y
-xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y
-xcopy "$(TargetDir)plugin_info.xml" "$(ProjectDir)..\..\DeployedFiles" /D /Y
-xcopy "$(ProjectDir)..\..\RefLib\PNNLOmics.dll" "$(TargetDir)" /D /Y</PostBuildEvent>
-  </PropertyGroup>
-  <PropertyGroup>
-    <PreBuildEvent>
-    </PreBuildEvent>
+    <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\DeployedFiles" /D /Y /I
+xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\DeployedFiles" /D /Y
+xcopy "$(TargetDir)*.config" "$(ProjectDir)..\DeployedFiles" /D /Y /I
+xcopy "$(TargetDir)Apache.NMS.ActiveMQ.dll" "$(ProjectDir)..\DeployedFiles" /D /Y /I
+xcopy "$(TargetDir)Apache.NMS.dll" "$(ProjectDir)..\DeployedFiles" /D /Y /I
+xcopy "$(TargetDir)Jayrock.Json.dll" "$(ProjectDir)..\DeployedFiles" /D /Y /I
+rem xcopy "$(TargetDir)MessageLogger.dll" "$(ProjectDir)..\DeployedFiles" /D /Y /I
+xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\DeployedFiles" /D /Y /I
+xcopy "$(TargetDir)plugin_info.xml" "$(ProjectDir)..\DeployedFiles" /D /Y /I
+</PostBuildEvent>
   </PropertyGroup>
 </Project>

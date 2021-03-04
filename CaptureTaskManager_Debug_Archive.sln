@@ -7,18 +7,18 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CaptureTaskManager_Debug_Ar
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CTM_Shared", "CTM_Shared\CTM_Shared.csproj", "{7D07F054-0D29-45DD-9B22-71D0768BC3C3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DatasetArchivePlugin", "..\DatasetArchivePlugin\DatasetArchivePlugin\DatasetArchivePlugin.csproj", "{FC0E683A-38BE-494C-93F1-65747197DCD7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DatasetArchivePlugin", "DatasetArchivePlugin\DatasetArchivePlugin.csproj", "{FC0E683A-38BE-494C-93F1-65747197DCD7}"
 EndProject
 
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pacifica.Core", "..\..\MyEMSL_Reader\Pacifica\Pacifica.Core\Pacifica.Core.csproj", "{46D080DA-392C-4F7C-B2F7-683695B1C029}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pacifica.Core", "..\MyEMSL_Reader\Pacifica\Pacifica.Core\Pacifica.Core.csproj", "{46D080DA-392C-4F7C-B2F7-683695B1C029}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pacifica.DMS_Metadata", "..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\Pacifica.DMS_Metadata.csproj", "{EDACD83A-AA92-4481-BB69-A28C67A6C7F9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pacifica.DMS_Metadata", "..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\Pacifica.DMS_Metadata.csproj", "{EDACD83A-AA92-4481-BB69-A28C67A6C7F9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArchiveVerifyPlugin", "..\ArchiveVerifyPlugin\ArchiveVerifyPlugin.csproj", "{2016D3F6-9AF1-45D8-A0B2-49202D5376D5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArchiveVerifyPlugin", "ArchiveVerifyPlugin\ArchiveVerifyPlugin.csproj", "{2016D3F6-9AF1-45D8-A0B2-49202D5376D5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArchiveStatusCheckPlugin", "..\ArchiveStatusCheckPlugin\ArchiveStatusCheckPlugin.csproj", "{D63AD810-5835-49D6-B14F-334E6EA2CB40}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArchiveStatusCheckPlugin", "ArchiveStatusCheckPlugin\ArchiveStatusCheckPlugin.csproj", "{D63AD810-5835-49D6-B14F-334E6EA2CB40}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pacifica.Upload", "..\..\MyEMSL_Reader\Pacifica\Pacifica.Upload\Pacifica.Upload.csproj", "{4E0A4851-EB71-491C-8027-4AF7B6A830BB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pacifica.Upload", "..\MyEMSL_Reader\Pacifica\Pacifica.Upload\Pacifica.Upload.csproj", "{4E0A4851-EB71-491C-8027-4AF7B6A830BB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

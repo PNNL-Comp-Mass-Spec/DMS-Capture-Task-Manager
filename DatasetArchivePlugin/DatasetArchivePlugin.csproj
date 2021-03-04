@@ -5,18 +5,17 @@
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{D630AA92-126B-46B9-BC68-3FF277445ACE}</ProjectGuid>
+    <ProjectGuid>{FC0E683A-38BE-494C-93F1-65747197DCD7}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SrcFileRenamePlugin</RootNamespace>
-    <AssemblyName>SrcFileRenamePlugin</AssemblyName>
+    <RootNamespace>DatasetArchivePlugin</RootNamespace>
+    <AssemblyName>DatasetArchivePlugin</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
     <OldToolsVersion>3.5</OldToolsVersion>
     <UpgradeBackupLocation />
-    <TargetFrameworkProfile />
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -32,12 +31,13 @@
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
+    <TargetFrameworkProfile />
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;DartFTPMissing</DefineConstants>
     <DebugType>full</DebugType>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <UseVSHostingProcess>false</UseVSHostingProcess>
@@ -47,7 +47,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>TRACE;DartFTPMissing</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -56,21 +56,34 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="jayrock-json">
+      <Version>0.9.16530.1</Version>
+    </PackageReference>
+    <PackageReference Include="PRISM-DatabaseUtils">
+      <Version>1.1.7</Version>
+    </PackageReference>
     <PackageReference Include="PRISM-Library">
       <Version>2.6.25</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="CTM_Shared">
-      <HintPath>..\..\DeployedFiles\CTM_Shared.dll</HintPath>
+      <HintPath>..\DeployedFiles\CTM_Shared.dll</HintPath>
     </Reference>
     <Reference Include="Pacifica.Core">
-      <HintPath>..\..\RefLib\Pacifica.Core.dll</HintPath>
+      <HintPath>..\RefLib\Pacifica.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Pacifica.DMS_Metadata">
+      <HintPath>..\RefLib\Pacifica.DMS_Metadata.dll</HintPath>
+    </Reference>
+    <Reference Include="Pacifica.Upload">
+      <HintPath>..\RefLib\Pacifica.Upload.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
@@ -81,8 +94,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="clsArchiveUpdate.cs" />
+    <Compile Include="clsMyEMSLUploadEventArgs.cs" />
+    <Compile Include="clsOpsBase.cs" />
     <Compile Include="clsPluginMain.cs" />
-    <Compile Include="clsRenameOps.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -95,9 +110,12 @@
   </Target>
   -->
   <PropertyGroup>
-    <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\..\DeployedFiles" /Y /I
-xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\..\DeployedFiles" /Y
-xcopy "$(TargetDir)*.*" "$(ProjectDir)..\..\CaptureTaskManager\CaptureTaskManager\bin\Debug" /D /Y /I
-</PostBuildEvent>
+    <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\DeployedFiles" /Y /I
+xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\DeployedFiles" /Y
+rem xcopy "$(TargetDir)Dart.PowerTCP.Ftp.dll" "$(ProjectDir)..\DeployedFiles" /D /Y /I
+xcopy "$(TargetDir)Pacifica*.dll" "$(ProjectDir)..\DeployedFiles" /D /Y /I
+xcopy "$(TargetDir)Pacifica*.pdb" "$(ProjectDir)..\DeployedFiles" /D /Y /I
+xcopy "$(TargetDir)DatasetArchivePlugin.pdb" "$(ProjectDir)..\DeployedFiles" /D /Y /I
+xcopy "$(TargetDir)*.*" "$(ProjectDir)..\CaptureTaskManager\bin\Debug" /D /Y /I</PostBuildEvent>
   </PropertyGroup>
 </Project>

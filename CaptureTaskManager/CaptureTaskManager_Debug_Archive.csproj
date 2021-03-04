@@ -98,15 +98,15 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\DatasetArchivePlugin\DatasetArchivePlugin\DatasetArchivePlugin.csproj">
+    <ProjectReference Include="..\DatasetArchivePlugin\DatasetArchivePlugin\DatasetArchivePlugin.csproj">
       <Project>{FC0E683A-38BE-494C-93F1-65747197DCD7}</Project>
       <Name>DatasetArchivePlugin</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\..\MyEMSL_Reader\Pacifica\Pacifica.Core\Pacifica.Core.csproj">
+    <ProjectReference Include="..\..\MyEMSL_Reader\Pacifica\Pacifica.Core\Pacifica.Core.csproj">
       <Project>{46D080DA-392C-4F7C-B2F7-683695B1C029}</Project>
       <Name>Pacifica.Core</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\Pacifica.DMS_Metadata.csproj">
+    <ProjectReference Include="..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\Pacifica.DMS_Metadata.csproj">
       <Project>{EDACD83A-AA92-4481-BB69-A28C67A6C7F9}</Project>
       <Name>Pacifica.DMS_Metadata</Name>
     </ProjectReference>
@@ -153,32 +153,32 @@
   </Target>
   -->
   <PropertyGroup>
-    <PostBuildEvent>xcopy "$(ProjectDir)..\..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.Core.dll" "$(ProjectDir)..\..\RefLib" /D /Y
-xcopy "$(ProjectDir)..\..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.Core.pdb" "$(ProjectDir)..\..\RefLib" /D /Y
-xcopy "$(ProjectDir)..\..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.Core.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y
-xcopy "$(ProjectDir)..\..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.Core.pdb" "$(ProjectDir)..\..\DeployedFiles" /D /Y
+    <PostBuildEvent>xcopy "$(ProjectDir)..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.Core.dll" "$(ProjectDir)..\RefLib" /D /Y
+xcopy "$(ProjectDir)..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.Core.pdb" "$(ProjectDir)..\RefLib" /D /Y
+xcopy "$(ProjectDir)..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.Core.dll" "$(ProjectDir)..\DeployedFiles" /D /Y
+xcopy "$(ProjectDir)..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.Core.pdb" "$(ProjectDir)..\DeployedFiles" /D /Y
 
-xcopy "$(ProjectDir)..\..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.DMS_Metadata.dll" "$(ProjectDir)..\..\RefLib" /D /Y
-xcopy "$(ProjectDir)..\..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.DMS_Metadata.pdb" "$(ProjectDir)..\..\RefLib" /D /Y
-xcopy "$(ProjectDir)..\..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.DMS_Metadata.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y
-xcopy "$(ProjectDir)..\..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.DMS_Metadata.pdb" "$(ProjectDir)..\..\DeployedFiles" /D /Y
+xcopy "$(ProjectDir)..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.DMS_Metadata.dll" "$(ProjectDir)..\RefLib" /D /Y
+xcopy "$(ProjectDir)..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.DMS_Metadata.pdb" "$(ProjectDir)..\RefLib" /D /Y
+xcopy "$(ProjectDir)..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.DMS_Metadata.dll" "$(ProjectDir)..\DeployedFiles" /D /Y
+xcopy "$(ProjectDir)..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.DMS_Metadata.pdb" "$(ProjectDir)..\DeployedFiles" /D /Y
 
-xcopy "$(ProjectDir)..\..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.Upload.dll" "$(ProjectDir)..\..\RefLib" /D /Y
-xcopy "$(ProjectDir)..\..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.Upload.pdb" "$(ProjectDir)..\..\RefLib" /D /Y
-xcopy "$(ProjectDir)..\..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.Upload.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y
-xcopy "$(ProjectDir)..\..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.Upload.pdb" "$(ProjectDir)..\..\DeployedFiles" /D /Y
+xcopy "$(ProjectDir)..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.Upload.dll" "$(ProjectDir)..\RefLib" /D /Y
+xcopy "$(ProjectDir)..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.Upload.pdb" "$(ProjectDir)..\RefLib" /D /Y
+xcopy "$(ProjectDir)..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.Upload.dll" "$(ProjectDir)..\DeployedFiles" /D /Y
+xcopy "$(ProjectDir)..\..\MyEMSL_Reader\Pacifica\Pacifica.DMS_Metadata\bin\Debug\Pacifica.Upload.pdb" "$(ProjectDir)..\DeployedFiles" /D /Y
 
-xcopy "$(TargetPath)" "$(ProjectDir)..\..\DeployedFiles" /D /Y
-xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\..\DeployedFiles" /D /Y
-xcopy "$(TargetDir)*.config" "$(ProjectDir)..\..\DeployedFiles" /D /Y /I
-xcopy "$(TargetDir)Apache.NMS.ActiveMQ.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y
-xcopy "$(TargetDir)Apache.NMS.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y
-xcopy "$(TargetDir)Jayrock.Json.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y
-xcopy "$(TargetDir)ICSharpCode.SharpZipLib.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y
-xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y
-xcopy "$(TargetDir)plugin_info.xml" "$(ProjectDir)..\..\DeployedFiles" /D /Y 
-xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y
-xcopy "$(TargetDir)PRISMWin.dll" "$(ProjectDir)..\..\DeployedFiles" /D /Y
+xcopy "$(TargetPath)" "$(ProjectDir)..\DeployedFiles" /D /Y
+xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\DeployedFiles" /D /Y
+xcopy "$(TargetDir)*.config" "$(ProjectDir)..\DeployedFiles" /D /Y /I
+xcopy "$(TargetDir)Apache.NMS.ActiveMQ.dll" "$(ProjectDir)..\DeployedFiles" /D /Y
+xcopy "$(TargetDir)Apache.NMS.dll" "$(ProjectDir)..\DeployedFiles" /D /Y
+xcopy "$(TargetDir)Jayrock.Json.dll" "$(ProjectDir)..\DeployedFiles" /D /Y
+xcopy "$(TargetDir)ICSharpCode.SharpZipLib.dll" "$(ProjectDir)..\DeployedFiles" /D /Y
+xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\DeployedFiles" /D /Y
+xcopy "$(TargetDir)plugin_info.xml" "$(ProjectDir)..\DeployedFiles" /D /Y 
+xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\DeployedFiles" /D /Y
+xcopy "$(TargetDir)PRISMWin.dll" "$(ProjectDir)..\DeployedFiles" /D /Y
 </PostBuildEvent>
   </PropertyGroup>
 </Project>

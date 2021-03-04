@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.28803.202
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DatasetInfoPlugin", "DatasetInfoPlugin\DatasetInfoPlugin.csproj", "{4C1F0E64-B3F7-4826-98D5-95EC14146F95}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DatasetInfoPlugin", "DatasetInfoPlugin.csproj", "{4C1F0E64-B3F7-4826-98D5-95EC14146F95}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
