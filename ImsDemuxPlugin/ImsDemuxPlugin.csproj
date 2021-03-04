@@ -60,11 +60,11 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsDemuxTools.cs" />
-    <Compile Include="clsPluginMain.cs" />
-    <Compile Include="clsSQLiteTools.cs" />
+    <Compile Include="DemuxTools.cs" />
     <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="PluginMain.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SQLiteTools.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

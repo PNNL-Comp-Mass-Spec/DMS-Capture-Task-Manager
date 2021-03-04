@@ -53,9 +53,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsIngestStatusInfo.cs" />
-    <Compile Include="clsPluginMain.cs" />
     <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="IngestStatusInfo.cs" />
+    <Compile Include="PluginMain.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

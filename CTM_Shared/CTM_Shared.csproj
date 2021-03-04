@@ -45,25 +45,25 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="cfGlobalStuff.cs" />
-    <Compile Include="clsConversion.cs" />
-    <Compile Include="clsErrors.cs" />
-    <Compile Include="clsLoggerBase.cs" />
-    <Compile Include="clsFailedResultsCopier.cs" />
-    <Compile Include="clsInstrumentClassInfo.cs" />
-    <Compile Include="clsNetworkConnection.cs" />
-    <Compile Include="clsRunDosProgram.cs" />
-    <Compile Include="clsStatusData.cs" />
-    <Compile Include="clsToolReturnData.cs" />
-    <Compile Include="clsToolRunnerBase.cs" />
-    <Compile Include="clsUtilities.cs" />
+    <Compile Include="GlobalStuff.cs" />
+    <Compile Include="Conversion.cs" />
     <Compile Include="DatasetFileSearchTool.cs" />
     <Compile Include="DatasetInfo.cs" />
+    <Compile Include="Errors.cs" />
+    <Compile Include="FailedResultsCopier.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="IMgrParams.cs" />
+    <Compile Include="InstrumentClassInfo.cs" />
     <Compile Include="IStatusFile.cs" />
     <Compile Include="ITaskParams.cs" />
     <Compile Include="IToolRunner.cs" />
+    <Compile Include="LoggerBase.cs" />
+    <Compile Include="NetworkConnection.cs" />
+    <Compile Include="RunDosProgram.cs" />
+    <Compile Include="StatusData.cs" />
+    <Compile Include="ToolReturnData.cs" />
+    <Compile Include="ToolRunnerBase.cs" />
+    <Compile Include="Utilities.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

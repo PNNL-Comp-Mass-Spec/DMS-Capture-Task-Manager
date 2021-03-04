@@ -62,11 +62,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsArchiveUpdate.cs" />
-    <Compile Include="clsMyEMSLUploadEventArgs.cs" />
-    <Compile Include="clsOpsBase.cs" />
-    <Compile Include="clsPluginMain.cs" />
+    <Compile Include="ArchiveUpdate.cs" />
     <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="MyEMSLUploadEventArgs.cs" />
+    <Compile Include="OpsBase.cs" />
+    <Compile Include="PluginMain.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

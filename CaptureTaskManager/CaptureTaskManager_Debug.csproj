@@ -65,19 +65,21 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="clsCaptureTask.cs" />
-    <Compile Include="clsCaptureTaskMgrSettings.cs" />
-    <Compile Include="clsCleanupMgrErrors.cs" />
-    <Compile Include="clsCodeTest.cs" />
-    <Compile Include="clsDbTask.cs" />
-    <Compile Include="clsMainProgram.cs" />
-    <Compile Include="clsMessageHandler.cs" />
-    <Compile Include="clsPluginLoader.cs" />
-    <Compile Include="clsStatusFile.cs" />
+    <Compile Include="CaptureTask.cs" />
+    <Compile Include="CaptureTaskMgrSettings.cs" />
+    <Compile Include="CleanupMgrErrors.cs" />
+    <Compile Include="CodeTest.cs" />
     <Compile Include="CommandLineOptions.cs" />
+    <Compile Include="DbTask.cs" />
     <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="MainProgram.cs" />
+    <Compile Include="MessageHandler.cs" />
+    <Compile Include="PluginLoader.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="StatusFile.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <None Include="App.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
