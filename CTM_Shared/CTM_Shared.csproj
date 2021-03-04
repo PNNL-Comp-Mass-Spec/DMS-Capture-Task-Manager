@@ -46,6 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="cfGlobalStuff.cs" />
+    <Compile Include="clsConversion.cs" />
     <Compile Include="clsLoggerBase.cs" />
     <Compile Include="clsFailedResultsCopier.cs" />
     <Compile Include="clsInstrumentClassInfo.cs" />
