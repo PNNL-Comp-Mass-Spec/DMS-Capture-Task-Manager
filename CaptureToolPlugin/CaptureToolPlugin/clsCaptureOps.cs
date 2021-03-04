@@ -357,7 +357,7 @@ namespace CaptureToolPlugin
                 }
                 else if (pendingRenames.Count > 1)
                 {
-                    LogMessage(string.Format("Found {0} files/directories to prepend with x_", pendingRenames));
+                    LogMessage(string.Format("Found {0} files/directories to prepend with x_", pendingRenames.Count));
                 }
 
                 return true;
