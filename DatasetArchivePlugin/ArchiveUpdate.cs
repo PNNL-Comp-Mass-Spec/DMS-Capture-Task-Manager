@@ -15,7 +15,7 @@ namespace DatasetArchivePlugin
     /// <summary>
     /// Used for both dataset archive and archive update
     /// </summary>
-    internal class clsArchiveUpdate : clsOpsBase
+    internal class ArchiveUpdate : OpsBase
     {
         // Ignore Spelling: dmsarch
 
@@ -37,7 +37,7 @@ namespace DatasetArchivePlugin
         /// <param name="taskParams">Task parameters</param>
         /// <param name="statusTools">Status Tools</param>
         /// <param name="fileTools">Instance of FileTools</param>
-        public clsArchiveUpdate(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools, FileTools fileTools)
+        public ArchiveUpdate(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools, FileTools fileTools)
             : base(mgrParams, taskParams, statusTools, fileTools)
         {
         }

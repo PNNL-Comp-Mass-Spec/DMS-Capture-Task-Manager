@@ -20,7 +20,7 @@ namespace CaptureTaskManager
     /// <summary>
     /// Capture Task Manager main program execution loop
     /// </summary>
-    public class clsMainProgram : clsLoggerBase
+    public class MainProgram : LoggerBase
     {
         // Ignore Spelling: yyyy-MM-dd hh:mm:ss tt, Unsubscribe
 
@@ -57,19 +57,19 @@ namespace CaptureTaskManager
 
         #region "Class wide variables"
 
-        private clsCaptureTaskMgrSettings mMgrSettings;
+        private CaptureTaskMgrSettings mMgrSettings;
 
         private readonly string mMgrExeName;
         private readonly string mMgrDirectoryPath;
 
-        private clsCaptureTask mTask;
+        private CaptureTask mTask;
         private FileSystemWatcher mFileWatcher;
         private IToolRunner mCapTool;
         private bool mConfigChanged;
         private int mTaskRequestErrorCount;
         private IStatusFile mStatusFile;
 
-        private clsMessageHandler mMsgHandler;
+        private MessageHandler mMsgHandler;
         private bool mMsgQueueInitSuccess;
 
         private LoopExitCode mLoopExitCode;
@@ -111,7 +111,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Constructor
         /// </summary>
-        public clsMainProgram(bool traceMode)
+        public MainProgram(bool traceMode)
         {
             TraceMode = traceMode;
 
@@ -288,7 +288,7 @@ namespace CaptureTaskManager
 
                 try
                 {
-                    mMgrSettings = new clsCaptureTaskMgrSettings(TraceMode);
+                    mMgrSettings = new CaptureTaskMgrSettings(TraceMode);
 
                     // Load settings from config file CaptureTaskManager.exe.config
                     var configFileSettings = LoadMgrSettingsFromFile();
@@ -318,7 +318,7 @@ namespace CaptureTaskManager
                 }
                 catch (Exception ex)
                 {
-                    ConsoleMsgUtils.ShowError("Exception instantiating clsCaptureTaskMgrSettings", ex);
+                    ConsoleMsgUtils.ShowError("Exception instantiating CaptureTaskMgrSettings", ex);
                     ConsoleMsgUtils.SleepSeconds(0.5);
                     return false;
                 }
@@ -419,7 +419,7 @@ namespace CaptureTaskManager
 
             // Setup the message queue
             mMsgQueueInitSuccess = false;
-            mMsgHandler = new clsMessageHandler
+            mMsgHandler = new MessageHandler
             {
                 BrokerUri = mMgrSettings.GetParam("MessageQueueURI"),
                 StatusTopicName = mMgrSettings.GetParam("MessageQueueTopicMgrStatus"),    // Typically "Manager.Status"
@@ -431,7 +431,7 @@ namespace CaptureTaskManager
             InitializeMessageQueue();
 
             // Set up the tool for getting tasks
-            mTask = new clsCaptureTask(mMgrSettings)
+            mTask = new CaptureTask(mMgrSettings)
             {
                 TraceMode = TraceMode
             };
@@ -444,7 +444,7 @@ namespace CaptureTaskManager
             }
 
             var statusFileNameLoc = Path.Combine(mMgrDirectoryPath, "Status.xml");
-            mStatusFile = new clsStatusFile(statusFileNameLoc)
+            mStatusFile = new StatusFile(statusFileNameLoc)
             {
                 MgrName = mMgrName,
                 MgrStatus = EnumMgrStatus.Running
@@ -632,9 +632,9 @@ namespace CaptureTaskManager
 
             // Default connection string for logging errors to the database
             // Will get updated later when manager settings are loaded from the manager control database
-            if (!mgrSettings.ContainsKey(clsCaptureTaskMgrSettings.MGR_PARAM_DEFAULT_DMS_CONN_STRING))
+            if (!mgrSettings.ContainsKey(CaptureTaskMgrSettings.MGR_PARAM_DEFAULT_DMS_CONN_STRING))
             {
-                mgrSettings.Add(clsCaptureTaskMgrSettings.MGR_PARAM_DEFAULT_DMS_CONN_STRING, Properties.Settings.Default.DefaultDMSConnString);
+                mgrSettings.Add(CaptureTaskMgrSettings.MGR_PARAM_DEFAULT_DMS_CONN_STRING, Properties.Settings.Default.DefaultDMSConnString);
             }
 
             if (TraceMode)
@@ -654,7 +654,7 @@ namespace CaptureTaskManager
             {
                 Dictionary<string, DateTime> cachedMessages;
 
-                var messageCacheFile = new FileInfo(Path.Combine(clsUtilities.GetAppDirectoryPath(), PERIODIC_LOG_FILE));
+                var messageCacheFile = new FileInfo(Path.Combine(CTMUtilities.GetAppDirectoryPath(), PERIODIC_LOG_FILE));
 
                 if (messageCacheFile.Exists)
                 {
@@ -703,11 +703,11 @@ namespace CaptureTaskManager
             var timeStamp = DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss");
 
             // Update the status file data
-            clsStatusData.MostRecentLogMessage = timeStamp + "; " + message + "; " + logLevel;
+            StatusData.MostRecentLogMessage = timeStamp + "; " + message + "; " + logLevel;
 
             if (logLevel <= BaseLogger.LogLevels.ERROR)
             {
-                clsStatusData.AddErrorMessage(timeStamp + "; " + message + "; " + logLevel);
+                StatusData.AddErrorMessage(timeStamp + "; " + message + "; " + logLevel);
             }
         }
 
@@ -1020,7 +1020,7 @@ namespace CaptureTaskManager
                         throw new Exception("Unrecognized enum in PerformTask: " + taskResult);
                 }
 
-                if (toolResult.CloseoutMsg.Contains(clsToolRunnerBase.EXCEPTION_CREATING_OUTPUT_DIRECTORY))
+                if (toolResult.CloseoutMsg.Contains(ToolRunnerBase.EXCEPTION_CREATING_OUTPUT_DIRECTORY))
                 {
                     if (taskResult != EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING ||
                         System.Net.Dns.GetHostName().StartsWith("monroe", StringComparison.OrdinalIgnoreCase))
@@ -1149,10 +1149,10 @@ namespace CaptureTaskManager
         private bool SetToolRunnerObject(string stepToolName)
         {
             // Load the tool runner
-            mCapTool = clsPluginLoader.GetToolRunner(stepToolName);
+            mCapTool = PluginLoader.GetToolRunner(stepToolName);
             if (mCapTool == null)
             {
-                LogError("Unable to load tool runner for StepTool " + stepToolName + ": " + clsPluginLoader.ErrMsg);
+                LogError("Unable to load tool runner for StepTool " + stepToolName + ": " + PluginLoader.ErrMsg);
                 return false;
             }
 
@@ -1209,7 +1209,7 @@ namespace CaptureTaskManager
         /// <param name="emptyLinesBeforeMessage"></param>
         public static void ShowTraceMessage(string message, int emptyLinesBeforeMessage = 1)
         {
-            clsToolRunnerBase.ShowTraceMessage(message, false, emptyLinesBeforeMessage);
+            ToolRunnerBase.ShowTraceMessage(message, false, emptyLinesBeforeMessage);
         }
 
         /// <summary>
@@ -1219,26 +1219,26 @@ namespace CaptureTaskManager
         private bool StatusFlagFileError(bool clearWorkDirectory)
         {
             var cleanupModeVal = mMgrSettings.GetParam("ManagerErrorCleanupMode", 0);
-            clsCleanupMgrErrors.CleanupModeConstants cleanupMode;
+            CleanupMgrErrors.CleanupModeConstants cleanupMode;
 
-            if (Enum.IsDefined(typeof(clsCleanupMgrErrors.CleanupModeConstants), cleanupModeVal))
+            if (Enum.IsDefined(typeof(CleanupMgrErrors.CleanupModeConstants), cleanupModeVal))
             {
-                cleanupMode = (clsCleanupMgrErrors.CleanupModeConstants)cleanupModeVal;
+                cleanupMode = (CleanupMgrErrors.CleanupModeConstants)cleanupModeVal;
             }
             else
             {
-                cleanupMode = clsCleanupMgrErrors.CleanupModeConstants.Disabled;
+                cleanupMode = CleanupMgrErrors.CleanupModeConstants.Disabled;
             }
 
             if (!mStatusFile.DetectStatusFlagFile())
             {
                 // No flag file
 
-                if (clearWorkDirectory && cleanupMode == clsCleanupMgrErrors.CleanupModeConstants.CleanupAlways)
+                if (clearWorkDirectory && cleanupMode == CleanupMgrErrors.CleanupModeConstants.CleanupAlways)
                 {
                     // Delete all files and subdirectories in the working directory (but ignore errors)
                     var workingDir = mMgrSettings.GetParam("WorkDir");
-                    clsToolRunnerBase.CleanWorkDir(workingDir, 1, out _);
+                    ToolRunnerBase.CleanWorkDir(workingDir, 1, out _);
                 }
 
                 return false;
@@ -1249,7 +1249,7 @@ namespace CaptureTaskManager
             {
                 var connectionString = mMgrSettings.GetParam(MgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING);
 
-                var cleanupMgrErrors = new clsCleanupMgrErrors(
+                var cleanupMgrErrors = new CleanupMgrErrors(
                     connectionString,
                     mMgrName,
                     mMgrSettings.GetParam("WorkDir"),
@@ -1390,7 +1390,7 @@ namespace CaptureTaskManager
         /// <returns></returns>
         private string GetXmlConfigDefaultConnectionString()
         {
-            return GetXmlConfigFileSetting(clsCaptureTaskMgrSettings.MGR_PARAM_DEFAULT_DMS_CONN_STRING);
+            return GetXmlConfigFileSetting(CaptureTaskMgrSettings.MGR_PARAM_DEFAULT_DMS_CONN_STRING);
         }
 
         /// <summary>
@@ -1466,7 +1466,7 @@ namespace CaptureTaskManager
 
                 if (success)
                 {
-                    var freeSpaceGB = clsUtilities.BytesToGB(totalNumberOfFreeBytes);
+                    var freeSpaceGB = CTMUtilities.BytesToGB(totalNumberOfFreeBytes);
 
                     if (freeSpaceGB < DEFAULT_DATASET_STORAGE_MIN_FREE_SPACE_GB)
                     {
@@ -1568,7 +1568,7 @@ namespace CaptureTaskManager
 
         private void FileWatcherChanged(object sender, FileSystemEventArgs e)
         {
-            LogDebug("clsMainProgram.FileWatcherChanged event received");
+            LogDebug("MainProgram.FileWatcherChanged event received");
 
             mConfigChanged = true;
             mFileWatcher.EnableRaisingEvents = false;

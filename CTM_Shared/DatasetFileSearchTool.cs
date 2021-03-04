@@ -136,19 +136,19 @@ namespace CaptureTaskManager
         public DatasetInfo FindDatasetFileOrDirectory(
             string sourceDirectoryPath,
             string datasetName,
-            clsInstrumentClassInfo.InstrumentClass instrumentClass)
+            InstrumentClassInfo.InstrumentClass instrumentClass)
         {
             bool checkForFilesFirst;
 
             // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
             switch (instrumentClass)
             {
-                case clsInstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging:
-                case clsInstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging_V2:
-                case clsInstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_UIMF:
-                case clsInstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_DotD:
-                case clsInstrumentClassInfo.InstrumentClass.Waters_TOF:
-                case clsInstrumentClassInfo.InstrumentClass.Waters_IMS:
+                case InstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging:
+                case InstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging_V2:
+                case InstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_UIMF:
+                case InstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_DotD:
+                case InstrumentClassInfo.InstrumentClass.Waters_TOF:
+                case InstrumentClassInfo.InstrumentClass.Waters_IMS:
                     // Preferentially capture dataset directories
                     // If a directory is not found, will instead look for a dataset file
                     checkForFilesFirst = false;
@@ -172,11 +172,11 @@ namespace CaptureTaskManager
             // ReSharper disable once SwitchStatementMissingSomeCases
             switch (instrumentClass)
             {
-                case clsInstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging:
+                case InstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging:
                     datasetInfo.DatasetType = DatasetInfo.RawDSTypes.BrukerImaging;
                     break;
 
-                case clsInstrumentClassInfo.InstrumentClass.BrukerMALDI_Spot:
+                case InstrumentClassInfo.InstrumentClass.BrukerMALDI_Spot:
                     datasetInfo.DatasetType = DatasetInfo.RawDSTypes.BrukerSpot;
                     break;
             }
@@ -246,7 +246,7 @@ namespace CaptureTaskManager
 
                     if (mTraceMode)
                     {
-                        clsToolRunnerBase.ShowTraceMessage(
+                        ToolRunnerBase.ShowTraceMessage(
                             string.Format("Looking for a dataset file, replaceInvalidCharacters is {0}", replaceInvalidCharacters));
                     }
 
@@ -296,7 +296,7 @@ namespace CaptureTaskManager
 
                     if (mTraceMode)
                     {
-                        clsToolRunnerBase.ShowTraceMessage(
+                        ToolRunnerBase.ShowTraceMessage(
                             string.Format("Matched file {0}; DatasetType = {1}",
                                           datasetInfo.FileOrDirectoryName, datasetInfo.DatasetType.ToString()));
                     }
@@ -307,7 +307,7 @@ namespace CaptureTaskManager
 
                 if (mTraceMode)
                 {
-                    clsToolRunnerBase.ShowTraceMessage(
+                    ToolRunnerBase.ShowTraceMessage(
                         string.Format("Looking for a dataset directory, replaceInvalidCharacters is {0}", replaceInvalidCharacters));
                 }
 
@@ -347,7 +347,7 @@ namespace CaptureTaskManager
 
                     if (mTraceMode)
                     {
-                        clsToolRunnerBase.ShowTraceMessage(
+                        ToolRunnerBase.ShowTraceMessage(
                             string.Format("Matched directory {0}; DatasetType = {1}",
                                           datasetInfo.FileOrDirectoryName, datasetInfo.DatasetType.ToString()));
                     }

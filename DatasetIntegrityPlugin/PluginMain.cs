@@ -24,7 +24,7 @@ namespace DatasetIntegrityPlugin
     /// Dataset Integrity plugin
     /// </summary>
     // ReSharper disable once UnusedMember.Global
-    public class clsPluginMain : clsToolRunnerBase
+    public class PluginMain : ToolRunnerBase
     {
         // Ignore Spelling: chrom, cli, batchfile, nosplash, Acq, utf, pos, ser, mgf, acqus, fid, idx, fticr, Shimadzu, uimf, cmd, wlkXZsvC-miP6A2KH-DgAuTix2
 
@@ -66,7 +66,7 @@ namespace DatasetIntegrityPlugin
 
         #region "Class-wide variables"
 
-        private clsToolReturnData mRetData = new();
+        private ToolReturnData mRetData = new();
 
         private DateTime mProcessingStartTime;
 
@@ -85,11 +85,11 @@ namespace DatasetIntegrityPlugin
         /// Runs the dataset integrity step tool
         /// </summary>
         /// <returns>Enum indicating success or failure</returns>
-        public override clsToolReturnData RunTool()
+        public override ToolReturnData RunTool()
         {
             // Note that Debug messages are logged if mDebugLevel == 5
 
-            var msg = "Starting DatasetIntegrityPlugin.clsPluginMain.RunTool()";
+            var msg = "Starting DatasetIntegrityPlugin.PluginMain.RunTool()";
             LogDebug(msg);
 
             // Perform base class operations, if any
@@ -101,7 +101,7 @@ namespace DatasetIntegrityPlugin
 
             var instrumentName = mTaskParams.GetParam("Instrument_Name");
             var instClassName = mTaskParams.GetParam("Instrument_Class");
-            var instrumentClass = clsInstrumentClassInfo.GetInstrumentClass(instClassName);
+            var instrumentClass = InstrumentClassInfo.GetInstrumentClass(instClassName);
 
             var agilentToUimfConverterPath = string.Empty;
             var openChromProgPath = string.Empty;
@@ -109,7 +109,7 @@ namespace DatasetIntegrityPlugin
             // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
             switch (instrumentClass)
             {
-                case clsInstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_DotD:
+                case InstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_DotD:
                     // We will convert the .D directory to a .UIMF file
                     agilentToUimfConverterPath = GetAgilentToUIMFProgPath();
 
@@ -123,7 +123,7 @@ namespace DatasetIntegrityPlugin
 
                     break;
 
-                case clsInstrumentClassInfo.InstrumentClass.Agilent_Ion_Trap:
+                case InstrumentClassInfo.InstrumentClass.Agilent_Ion_Trap:
                     // We will convert the .D directory to a .CDF file
                     openChromProgPath = GetOpenChromProgPath();
 
@@ -161,7 +161,7 @@ namespace DatasetIntegrityPlugin
             msg = "Instrument class: " + instClassName;
             LogDebug(msg);
 
-            if (instrumentClass == clsInstrumentClassInfo.InstrumentClass.Unknown)
+            if (instrumentClass == InstrumentClassInfo.InstrumentClass.Unknown)
             {
                 msg = "Instrument class not recognized: " + instClassName;
                 LogError(msg);
@@ -172,18 +172,18 @@ namespace DatasetIntegrityPlugin
 
             switch (instrumentClass)
             {
-                case clsInstrumentClassInfo.InstrumentClass.Finnigan_Ion_Trap:
-                    dataFileNamePath = Path.Combine(datasetDirectory, mDataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
+                case InstrumentClassInfo.InstrumentClass.Finnigan_Ion_Trap:
+                    dataFileNamePath = Path.Combine(datasetDirectory, mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION);
                     mRetData.CloseoutType = TestFinniganIonTrapFile(dataFileNamePath);
                     break;
 
-                case clsInstrumentClassInfo.InstrumentClass.GC_QExactive:
-                    dataFileNamePath = Path.Combine(datasetDirectory, mDataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
+                case InstrumentClassInfo.InstrumentClass.GC_QExactive:
+                    dataFileNamePath = Path.Combine(datasetDirectory, mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION);
                     mRetData.CloseoutType = TestGQExactiveFile(dataFileNamePath);
                     break;
 
-                case clsInstrumentClassInfo.InstrumentClass.LTQ_FT:
-                    dataFileNamePath = Path.Combine(datasetDirectory, mDataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
+                case InstrumentClassInfo.InstrumentClass.LTQ_FT:
+                    dataFileNamePath = Path.Combine(datasetDirectory, mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION);
                     if (instrumentName.StartsWith("21T", StringComparison.OrdinalIgnoreCase))
                     {
                         mRetData.CloseoutType = Test21TRawFile(dataFileNamePath);
@@ -195,26 +195,26 @@ namespace DatasetIntegrityPlugin
 
                     break;
 
-                case clsInstrumentClassInfo.InstrumentClass.BrukerFTMS:
+                case InstrumentClassInfo.InstrumentClass.BrukerFTMS:
                     mRetData.CloseoutType = TestBrukerDirectory(datasetDirectory);
                     break;
 
-                case clsInstrumentClassInfo.InstrumentClass.Thermo_Exactive:
-                    dataFileNamePath = Path.Combine(datasetDirectory, mDataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
+                case InstrumentClassInfo.InstrumentClass.Thermo_Exactive:
+                    dataFileNamePath = Path.Combine(datasetDirectory, mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION);
                     mRetData.CloseoutType = TestThermoExactiveFile(dataFileNamePath);
                     break;
 
-                case clsInstrumentClassInfo.InstrumentClass.Triple_Quad:
-                    dataFileNamePath = Path.Combine(datasetDirectory, mDataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
+                case InstrumentClassInfo.InstrumentClass.Triple_Quad:
+                    dataFileNamePath = Path.Combine(datasetDirectory, mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION);
                     mRetData.CloseoutType = TestTripleQuadFile(dataFileNamePath);
                     break;
 
-                case clsInstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_UIMF:
-                    dataFileNamePath = Path.Combine(datasetDirectory, mDataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION);
+                case InstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_UIMF:
+                    dataFileNamePath = Path.Combine(datasetDirectory, mDataset + InstrumentClassInfo.DOT_UIMF_EXTENSION);
                     mRetData.CloseoutType = TestIMSAgilentTOF(dataFileNamePath, instrumentName);
                     break;
 
-                case clsInstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_DotD:
+                case InstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_DotD:
                     // Need to first convert the .d directory to a .UIMF file
                     if (!ConvertAgilentDotDDirectoryToUIMF(datasetDirectory, agilentToUimfConverterPath))
                     {
@@ -228,40 +228,40 @@ namespace DatasetIntegrityPlugin
                         break;
                     }
 
-                    dataFileNamePath = Path.Combine(datasetDirectory, mDataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION);
+                    dataFileNamePath = Path.Combine(datasetDirectory, mDataset + InstrumentClassInfo.DOT_UIMF_EXTENSION);
                     mRetData.CloseoutType = TestIMSAgilentTOF(dataFileNamePath, instrumentName);
                     break;
 
-                case clsInstrumentClassInfo.InstrumentClass.BrukerFT_BAF:
+                case InstrumentClassInfo.InstrumentClass.BrukerFT_BAF:
                     mRetData.CloseoutType = TestBrukerFT_Directory(datasetDirectory, requireBafOrSerFile: true, requireMCFFile: false, requireSerFile: false, instrumentClass: instrumentClass, instrumentName: instrumentName);
                     break;
 
-                case clsInstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging:
+                case InstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging:
                     // Note: Datasets from this instrument were last used in 2012
                     mRetData.CloseoutType = TestBrukerMaldiImagingDirectory(datasetDirectory);
                     break;
 
-                case clsInstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging_V2:
+                case InstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging_V2:
                     mRetData.CloseoutType = TestBrukerFT_Directory(datasetDirectory, requireBafOrSerFile: false, requireMCFFile: false, requireSerFile: true, instrumentClass: instrumentClass, instrumentName: instrumentName);
                     break;
 
-                case clsInstrumentClassInfo.InstrumentClass.BrukerMALDI_Spot:
+                case InstrumentClassInfo.InstrumentClass.BrukerMALDI_Spot:
                     mRetData.CloseoutType = TestBrukerMaldiSpotDirectory(datasetDirectory);
                     break;
 
-                case clsInstrumentClassInfo.InstrumentClass.BrukerTOF_BAF:
+                case InstrumentClassInfo.InstrumentClass.BrukerTOF_BAF:
                     mRetData.CloseoutType = TestBrukerTof_BafDirectory(datasetDirectory, instrumentName);
                     break;
 
-                case clsInstrumentClassInfo.InstrumentClass.BrukerTOF_TDF:
+                case InstrumentClassInfo.InstrumentClass.BrukerTOF_TDF:
                     mRetData.CloseoutType = TestBrukerTof_TdfDirectory(datasetDirectory, instrumentName);
                     break;
 
-                case clsInstrumentClassInfo.InstrumentClass.Sciex_QTrap:
+                case InstrumentClassInfo.InstrumentClass.Sciex_QTrap:
                     mRetData.CloseoutType = TestSciexQTrapFile(datasetDirectory, mDataset);
                     break;
 
-                case clsInstrumentClassInfo.InstrumentClass.Agilent_Ion_Trap:
+                case InstrumentClassInfo.InstrumentClass.Agilent_Ion_Trap:
                     // .D directory with a DATA.MS file
                     mRetData.CloseoutType = TestAgilentIonTrapDirectory(datasetDirectory);
 
@@ -281,20 +281,20 @@ namespace DatasetIntegrityPlugin
                     }
                     break;
 
-                case clsInstrumentClassInfo.InstrumentClass.Agilent_TOF_V2:
+                case InstrumentClassInfo.InstrumentClass.Agilent_TOF_V2:
                     mRetData.CloseoutType = TestAgilentTOFv2Directory(datasetDirectory);
                     break;
 
-                case clsInstrumentClassInfo.InstrumentClass.Illumina_Sequencer:
+                case InstrumentClassInfo.InstrumentClass.Illumina_Sequencer:
                     mRetData.CloseoutType = TestIlluminaSequencerDirectory(datasetDirectory);
                     break;
 
-                case clsInstrumentClassInfo.InstrumentClass.Shimadzu_GC:
-                    dataFileNamePath = Path.Combine(datasetDirectory, mDataset + clsInstrumentClassInfo.DOT_QGD_EXTENSION);
+                case InstrumentClassInfo.InstrumentClass.Shimadzu_GC:
+                    dataFileNamePath = Path.Combine(datasetDirectory, mDataset + InstrumentClassInfo.DOT_QGD_EXTENSION);
                     mRetData.CloseoutType = TestShimadzuQGDFile(dataFileNamePath);
                     break;
 
-                case clsInstrumentClassInfo.InstrumentClass.Waters_IMS:
+                case InstrumentClassInfo.InstrumentClass.Waters_IMS:
                     mRetData.CloseoutType = TestWatersDotRawDirectory(datasetDirectory);
                     break;
 
@@ -306,7 +306,7 @@ namespace DatasetIntegrityPlugin
                     break;
             }
 
-            msg = "Completed clsPluginMain.RunTool()";
+            msg = "Completed PluginMain.RunTool()";
             LogDebug(msg);
 
             return mRetData;
@@ -323,7 +323,7 @@ namespace DatasetIntegrityPlugin
                 }
 
                 var mgrName = mMgrParams.GetParam("MgrName", "CTM");
-                var dotDDirectoryName = mDataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
+                var dotDDirectoryName = mDataset + InstrumentClassInfo.DOT_D_EXTENSION;
                 var dotDDirectoryPathLocal = Path.Combine(mWorkDir, dotDDirectoryName);
 
                 var success = CopyDotDDirectoryToLocal(mFileTools, datasetDirectoryPath, dotDDirectoryName, dotDDirectoryPathLocal, false);
@@ -356,7 +356,7 @@ namespace DatasetIntegrityPlugin
                 var arguments = "-cli -batchfile " + batchJobFilePath;
                 var consoleOutputFilePath = Path.Combine(mWorkDir, "OpenChrom_ConsoleOutput_" + mgrName + ".txt");
 
-                var cmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
+                var cmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
                 {
                     CreateNoWindow = false,
                     EchoOutputToConsole = false,
@@ -441,7 +441,7 @@ namespace DatasetIntegrityPlugin
             try
             {
                 var mgrName = mMgrParams.GetParam("MgrName", "CTM");
-                var dotDDirectoryName = mDataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
+                var dotDDirectoryName = mDataset + InstrumentClassInfo.DOT_D_EXTENSION;
                 var dotDDirectoryPathLocal = Path.Combine(mWorkDir, dotDDirectoryName);
 
                 var success = CopyDotDDirectoryToLocal(mFileTools, datasetDirectoryPath, dotDDirectoryName, dotDDirectoryPathLocal, true);
@@ -461,7 +461,7 @@ namespace DatasetIntegrityPlugin
                 if (acqDataDir.Length == 0)
                 {
                     // Use *.d to look for .d subdirectories
-                    var dotDDirectoryAlt = dotDDirectory.GetDirectories("*" + clsInstrumentClassInfo.DOT_D_EXTENSION);
+                    var dotDDirectoryAlt = dotDDirectory.GetDirectories("*" + InstrumentClassInfo.DOT_D_EXTENSION);
 
                     if (dotDDirectoryAlt.Length > 0)
                     {
@@ -491,10 +491,10 @@ namespace DatasetIntegrityPlugin
                 // Syntax:
                 // AgilentToUIMFConverter.exe [Agilent .d directory] [Directory to insert file (optional)]
 
-                var arguments = clsConversion.PossiblyQuotePath(dotDDirectoryPathLocal) + " " + clsConversion.PossiblyQuotePath(mWorkDir);
+                var arguments = Conversion.PossiblyQuotePath(dotDDirectoryPathLocal) + " " + Conversion.PossiblyQuotePath(mWorkDir);
                 mConsoleOutputFilePath = Path.Combine(mWorkDir, "AgilentToUIMF_ConsoleOutput_" + mgrName + ".txt");
 
-                var cmdRunner = new clsRunDosProgram(mWorkDir, mDebugLevel)
+                var cmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
                 {
                     CreateNoWindow = false,
                     EchoOutputToConsole = false,
@@ -554,9 +554,9 @@ namespace DatasetIntegrityPlugin
                 if (altDirFound)
                 {
                     // We need to rename the .uimf file since we processed a .d directory inside a .d directory
-                    var sourceUimfName = Path.ChangeExtension(Path.GetFileName(dotDDirectoryPathLocal), clsInstrumentClassInfo.DOT_UIMF_EXTENSION);
+                    var sourceUimfName = Path.ChangeExtension(Path.GetFileName(dotDDirectoryPathLocal), InstrumentClassInfo.DOT_UIMF_EXTENSION);
                     var sourceUimf = new FileInfo(Path.Combine(mWorkDir, sourceUimfName));
-                    var targetUimfPath = Path.Combine(mWorkDir, mDataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION);
+                    var targetUimfPath = Path.Combine(mWorkDir, mDataset + InstrumentClassInfo.DOT_UIMF_EXTENSION);
 
                     if (!string.Equals(sourceUimf.FullName, targetUimfPath, StringComparison.OrdinalIgnoreCase))
                     {
@@ -672,7 +672,7 @@ namespace DatasetIntegrityPlugin
 
         private bool CopyUIMFToDatasetDirectory(FileTools fileTools, string datasetDirectoryPath)
         {
-            var uimfFile = new FileInfo(Path.Combine(mWorkDir, mDataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION));
+            var uimfFile = new FileInfo(Path.Combine(mWorkDir, mDataset + InstrumentClassInfo.DOT_UIMF_EXTENSION));
 
             if (!uimfFile.Exists)
             {
@@ -1148,7 +1148,7 @@ namespace DatasetIntegrityPlugin
 
             if (dotDDirectories.Count > 1)
             {
-                if (!PossiblyRenameSupersededDirectory(dotDDirectories, clsInstrumentClassInfo.DOT_D_EXTENSION))
+                if (!PossiblyRenameSupersededDirectory(dotDDirectories, InstrumentClassInfo.DOT_D_EXTENSION))
                 {
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
@@ -1195,7 +1195,7 @@ namespace DatasetIntegrityPlugin
 
             if (dotDDirectories.Count > 1)
             {
-                if (!PossiblyRenameSupersededDirectory(dotDDirectories, clsInstrumentClassInfo.DOT_D_EXTENSION))
+                if (!PossiblyRenameSupersededDirectory(dotDDirectories, InstrumentClassInfo.DOT_D_EXTENSION))
                 {
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
@@ -1324,7 +1324,7 @@ namespace DatasetIntegrityPlugin
         private EnumCloseOutType TestSciexQTrapFile(string dataFileNamePath, string datasetName)
         {
             // Verify .wiff file exists in storage directory
-            var tempFileNamePath = Path.Combine(dataFileNamePath, datasetName + clsInstrumentClassInfo.DOT_WIFF_EXTENSION);
+            var tempFileNamePath = Path.Combine(dataFileNamePath, datasetName + InstrumentClassInfo.DOT_WIFF_EXTENSION);
             if (!File.Exists(tempFileNamePath))
             {
                 mRetData.EvalMsg = "Data file " + tempFileNamePath + " not found";
@@ -1639,7 +1639,7 @@ namespace DatasetIntegrityPlugin
 
             if (dotDDirectories.Count > 1)
             {
-                if (!PossiblyRenameSupersededDirectory(dotDDirectories, clsInstrumentClassInfo.DOT_D_EXTENSION))
+                if (!PossiblyRenameSupersededDirectory(dotDDirectories, InstrumentClassInfo.DOT_D_EXTENSION))
                 {
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
@@ -1728,7 +1728,7 @@ namespace DatasetIntegrityPlugin
             bool requireBafOrSerFile,
             bool requireMCFFile,
             bool requireSerFile,
-            clsInstrumentClassInfo.InstrumentClass instrumentClass,
+            InstrumentClassInfo.InstrumentClass instrumentClass,
             string instrumentName)
         {
             float dataFileSizeKB;
@@ -1763,7 +1763,7 @@ namespace DatasetIntegrityPlugin
             {
                 var allowMultipleDirectories = false;
 
-                if (instrumentClass == clsInstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging_V2)
+                if (instrumentClass == InstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging_V2)
                 {
                     var serFound = false;
                     var fidFound = false;
@@ -1833,7 +1833,7 @@ namespace DatasetIntegrityPlugin
 
                 if (!allowMultipleDirectories)
                 {
-                    if (!PossiblyRenameSupersededDirectory(dotDDirectories, clsInstrumentClassInfo.DOT_D_EXTENSION))
+                    if (!PossiblyRenameSupersededDirectory(dotDDirectories, InstrumentClassInfo.DOT_D_EXTENSION))
                     {
                         return EnumCloseOutType.CLOSEOUT_FAILED;
                     }
@@ -1970,7 +1970,7 @@ namespace DatasetIntegrityPlugin
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (instrumentClass == clsInstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging_V2)
+            if (instrumentClass == InstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging_V2)
             {
                 // Look for any files in the first .D directory that match Dataset.mis or Dataset.jpg
                 // If found, copy them up one directory
@@ -2170,7 +2170,7 @@ namespace DatasetIntegrityPlugin
 
         private EnumCloseOutType TestIlluminaSequencerDirectory(string datasetDirectoryPath)
         {
-            var dataFileNamePath = Path.Combine(datasetDirectoryPath, mDataset + clsInstrumentClassInfo.DOT_TXT_GZ_EXTENSION);
+            var dataFileNamePath = Path.Combine(datasetDirectoryPath, mDataset + InstrumentClassInfo.DOT_TXT_GZ_EXTENSION);
 
             // Verify file exists in storage directory
             if (!File.Exists(dataFileNamePath))
@@ -2596,12 +2596,12 @@ namespace DatasetIntegrityPlugin
         /// <param name="statusTools">Tools for status reporting</param>
         public override void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
         {
-            var msg = "Starting clsPluginMain.Setup()";
+            var msg = "Starting PluginMain.Setup()";
             LogDebug(msg);
 
             base.Setup(mgrParams, taskParams, statusTools);
 
-            msg = "Completed clsPluginMain.Setup()";
+            msg = "Completed PluginMain.Setup()";
             LogDebug(msg);
         }
 
@@ -2635,7 +2635,7 @@ namespace DatasetIntegrityPlugin
             LogDebug("Determining tool version info");
 
             var toolVersionInfo = string.Empty;
-            var appDirectoryPath = clsUtilities.GetAppDirectoryPath();
+            var appDirectoryPath = CTMUtilities.GetAppDirectoryPath();
 
             if (string.IsNullOrEmpty(appDirectoryPath))
             {
@@ -2812,7 +2812,7 @@ namespace DatasetIntegrityPlugin
 
         #region "Event handlers"
 
-        private void AttachCmdRunnerEvents(clsRunDosProgram cmdRunner)
+        private void AttachCmdRunnerEvents(RunDosProgram cmdRunner)
         {
             try
             {

@@ -5,7 +5,7 @@ using PRISM;
 
 namespace CaptureTaskManager
 {
-    public abstract class clsLoggerBase
+    public abstract class LoggerBase
     {
         /// <summary>
         /// Show a status message at the console and optionally include in the log file, tagging it as a debug message
@@ -124,7 +124,7 @@ namespace CaptureTaskManager
 
         protected void StatusEventHandler(string statusMessage)
         {
-            if (statusMessage.StartsWith(clsRunDosProgram.RUN_PROGRAM_STATUS_LINE) &&
+            if (statusMessage.StartsWith(RunDosProgram.RUN_PROGRAM_STATUS_LINE) &&
                 statusMessage.Contains("DLLVersionInspector"))
             {
                 LogDebug(statusMessage, writeToLog: false);

@@ -16,7 +16,7 @@ namespace ImsDemuxPlugin
     /// <summary>
     /// Tools for querying SQLite database (UIMF file, in this case)
     /// </summary>
-    public class clsSQLiteTools : EventNotifier
+    public class SQLiteTools : EventNotifier
     {
         // Ignore Spelling: demultiplexing, demux
 

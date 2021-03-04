@@ -14,7 +14,7 @@ namespace ArchiveVerifyPlugin
     /// Archive verify plugin
     /// </summary>
     // ReSharper disable once UnusedMember.Global
-    public class clsPluginMain : clsToolRunnerBase
+    public class PluginMain : ToolRunnerBase
     {
         // Ignore Spelling: hashsum, subdir, Pacifica, myemsl, dmsarch, Frodo, Methow, keyvalue
 
@@ -26,7 +26,7 @@ namespace ArchiveVerifyPlugin
         #endregion
 
         #region "Class-wide variables"
-        private clsToolReturnData mRetData = new clsToolReturnData();
+        private ToolReturnData mRetData = new ToolReturnData();
 
         private int mTotalMismatchCount;
 
@@ -37,9 +37,9 @@ namespace ArchiveVerifyPlugin
         /// Runs the Archive Verify step tool
         /// </summary>
         /// <returns>Class with completionCode, completionMessage, evaluationCode, and evaluationMessage</returns>
-        public override clsToolReturnData RunTool()
+        public override ToolReturnData RunTool()
         {
-            LogDebug("Starting ArchiveVerifyPlugin.clsPluginMain.RunTool");
+            LogDebug("Starting ArchiveVerifyPlugin.PluginMain.RunTool");
 
             // Perform base class operations, if any
             mRetData = base.RunTool();
@@ -162,7 +162,7 @@ namespace ArchiveVerifyPlugin
                 }
             }
 
-            LogDebug("Completed clsPluginMain.RunTool");
+            LogDebug("Completed PluginMain.RunTool");
 
             return mRetData;
         }
@@ -661,7 +661,7 @@ namespace ArchiveVerifyPlugin
 
             try
             {
-                var hashResults = new Dictionary<string, clsHashInfo>(StringComparer.OrdinalIgnoreCase);
+                var hashResults = new Dictionary<string, HashInfo>(StringComparer.OrdinalIgnoreCase);
 
                 foreach (var archivedFile in archivedFiles)
                 {
@@ -670,7 +670,7 @@ namespace ArchiveVerifyPlugin
 
                     var archivedFilePath = "/myemsl/svc-dms/" + archivedFile.PathWithInstrumentAndDatasetUnix;
 
-                    var hashInfo = new clsHashInfo
+                    var hashInfo = new HashInfo
                     {
                         HashCode = archivedFile.Hash,
                         MyEMSLFileID = archivedFile.FileID.ToString(CultureInfo.InvariantCulture)
@@ -828,10 +828,10 @@ namespace ArchiveVerifyPlugin
         /// Updates hashResults (or adds a new entry)
         /// </summary>
         /// <param name="dataLine"></param>
-        /// <param name="hashResults">Dictionary where keys are Linux file paths and values are clsHashInfo, tracking the Hash value and MyEMSL File ID</param>
+        /// <param name="hashResults">Dictionary where keys are Linux file paths and values are HashInfo, tracking the Hash value and MyEMSL File ID</param>
         /// <returns>True if hashResults is updated, false if unchanged</returns>
         /// <remarks></remarks>
-        private void ParseAndStoreHashInfo(string dataLine, ref Dictionary<string, clsHashInfo> hashResults)
+        private void ParseAndStoreHashInfo(string dataLine, ref Dictionary<string, HashInfo> hashResults)
         {
             // Data Line Format
             //
@@ -854,7 +854,7 @@ namespace ArchiveVerifyPlugin
             //    796d99bcc6f1824dfe1c36cc9a61636dd1b07625 /myemsl/svc-dms/SW_TEST_LCQ/2006_1/SWT_LCQData_300/SIC201309041722_Auto976603/Default_2008-08-22.xml 915636
             //    70976fbd7088b27a711de4ce6309fbb3739d05f9 /myemsl/svc-dms/SW_TEST_LCQ/2006_1/SWT_LCQData_300/SIC201309041722_Auto976603/SWT_LCQData_300_TIC_Scan.tic   915648
 
-            var hashInfo = new clsHashInfo();
+            var hashInfo = new HashInfo();
 
             var values = dataLine.Split(new[] { ' ' }, 2).ToList();
 
@@ -907,7 +907,7 @@ namespace ArchiveVerifyPlugin
             string datasetInstrument,
             string datasetYearQuarter)
         {
-            var hashResults = new Dictionary<string, clsHashInfo>(StringComparer.OrdinalIgnoreCase);
+            var hashResults = new Dictionary<string, HashInfo>(StringComparer.OrdinalIgnoreCase);
 
             // Read the file and cache the results in memory
             using (var resultsFileReader = new StreamReader(new FileStream(hashResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
@@ -936,7 +936,7 @@ namespace ArchiveVerifyPlugin
 
                 var archivedFilePath = "/myemsl/svc-dms/" + archivedFile.PathWithInstrumentAndDatasetUnix;
 
-                var hashInfo = new clsHashInfo
+                var hashInfo = new HashInfo
                 {
                     HashCode = archivedFile.Hash,
                     MyEMSLFileID = archivedFile.FileID.ToString(CultureInfo.InvariantCulture)
@@ -1070,7 +1070,7 @@ namespace ArchiveVerifyPlugin
             }
         }
 
-        private bool WriteHashResultsFile(Dictionary<string, clsHashInfo> hashResults, string hashResultsFilePath, bool useTempFile)
+        private bool WriteHashResultsFile(Dictionary<string, HashInfo> hashResults, string hashResultsFilePath, bool useTempFile)
         {
             var currentStep = "initializing";
 

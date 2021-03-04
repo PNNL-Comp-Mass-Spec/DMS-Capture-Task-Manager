@@ -17,7 +17,7 @@ namespace CaptureTaskManager
     /// <summary>
     /// Base class for handling task-related data
     /// </summary>
-    internal abstract class clsDbTask : clsLoggerBase
+    internal abstract class DbTask : LoggerBase
     {
         #region "Constants"
 
@@ -72,7 +72,7 @@ namespace CaptureTaskManager
         /// Constructor
         /// </summary>
         /// <param name="mgrParams"></param>
-        protected clsDbTask(IMgrParams mgrParams)
+        protected DbTask(IMgrParams mgrParams)
         {
             mMgrParams = mgrParams;
             var traceMode = mMgrParams.TraceMode;
@@ -175,14 +175,14 @@ namespace CaptureTaskManager
             // Verify valid parameters
             if (parameters == null)
             {
-                LogError("clsDbTask.FillParamDict(): parameters is null");
+                LogError("DbTask.FillParamDict(): parameters is null");
                 return false;
             }
 
             // Verify at least one row present
             if (parameters.Count < 1)
             {
-                LogError("clsDbTask.FillParamDict(): No parameters returned by request SP");
+                LogError("DbTask.FillParamDict(): No parameters returned by request SP");
                 return false;
             }
 
@@ -232,7 +232,7 @@ namespace CaptureTaskManager
             }
             catch (Exception ex)
             {
-                LogError("clsDbTask.FillParamDict(): Exception reading task parameters", ex);
+                LogError("DbTask.FillParamDict(): Exception reading task parameters", ex);
                 return false;
             }
         }

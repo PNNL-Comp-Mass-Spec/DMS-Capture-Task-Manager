@@ -23,7 +23,7 @@ namespace DatasetArchivePlugin
     /// <summary>
     /// Base class for archive and archive update operations classes.
     /// </summary>
-    internal abstract class clsOpsBase : EventNotifier
+    internal abstract class OpsBase : EventNotifier
     {
         // Ignore Spelling: MyEMSLUploader, Unsubscribe
 
@@ -102,7 +102,7 @@ namespace DatasetArchivePlugin
         /// <param name="taskParams"></param>
         /// <param name="statusTools"></param>
         /// <param name="fileTools"></param>
-        protected clsOpsBase(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools, FileTools fileTools)
+        protected OpsBase(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools, FileTools fileTools)
         {
             mMgrParams = mgrParams;
             mTaskParams = taskParams;
@@ -406,7 +406,7 @@ namespace DatasetArchivePlugin
                 if (!success)
                 {
                     statusMessage += " (success=false)";
-                    if (clsUtilities.BytesToGB(myEMSLUploader.MetadataContainer.TotalFileSizeToUpload) > LARGE_DATASET_THRESHOLD_GB_NO_RETRY)
+                    if (CTMUtilities.BytesToGB(myEMSLUploader.MetadataContainer.TotalFileSizeToUpload) > LARGE_DATASET_THRESHOLD_GB_NO_RETRY)
                     {
                         mErrMsg = LARGE_DATASET_UPLOAD_ERROR;
 
@@ -442,7 +442,7 @@ namespace DatasetArchivePlugin
                 }
 
                 // Raise an event with the stats
-                // This will cause clsPluginMain to call StoreMyEMSLUploadStats to store the results in the database (Table T_MyEmsl_Uploads)
+                // This will cause PluginMain to call StoreMyEMSLUploadStats to store the results in the database (Table T_MyEmsl_Uploads)
                 // If an error occurs while storing to the database, the status URI will be listed in the manager's local log file
                 var e = new MyEMSLUploadEventArgs(
                     myEMSLUploader.FileCountNew, myEMSLUploader.FileCountUpdated,
@@ -528,7 +528,7 @@ namespace DatasetArchivePlugin
                     allowRetry = false;
                     LogOperationFailed(mDatasetName, mErrMsg, true);
                 }
-                else if (clsUtilities.BytesToGB(myEMSLUploader.MetadataContainer.TotalFileSizeToUpload) > LARGE_DATASET_THRESHOLD_GB_NO_RETRY)
+                else if (CTMUtilities.BytesToGB(myEMSLUploader.MetadataContainer.TotalFileSizeToUpload) > LARGE_DATASET_THRESHOLD_GB_NO_RETRY)
                 {
                     mErrMsg += ": " + LARGE_DATASET_UPLOAD_ERROR;
 

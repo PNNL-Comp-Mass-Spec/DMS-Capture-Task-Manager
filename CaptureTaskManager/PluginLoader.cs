@@ -15,7 +15,7 @@ namespace CaptureTaskManager
     /// <summary>
     /// Handles creation of plugin objects
     /// </summary>
-    public class clsPluginLoader : clsLoggerBase
+    public class PluginLoader : LoggerBase
     {
         #region "Properties"
 
@@ -38,28 +38,28 @@ namespace CaptureTaskManager
 
             switch (className)
             {
-                //case "ImsDemuxPlugin.clsPluginMain":
-                //    myToolRunner = (IToolRunner)new ImsDemuxPlugin.clsPluginMain();
+                //case "ImsDemuxPlugin.PluginMain":
+                //    myToolRunner = (IToolRunner)new ImsDemuxPlugin.PluginMain();
                 //    break;
 
-                //case "DatasetArchivePlugin.clsPluginMain":
-                //    myToolRunner = (IToolRunner)new DatasetArchivePlugin.clsPluginMain();
+                //case "DatasetArchivePlugin.PluginMain":
+                //    myToolRunner = (IToolRunner)new DatasetArchivePlugin.PluginMain();
                 //    break;
 
-                //case "ArchiveStatusCheckPlugin.clsPluginMain":
-                //    myToolRunner = (IToolRunner)new ArchiveStatusCheckPlugin.clsPluginMain();
+                //case "ArchiveStatusCheckPlugin.PluginMain":
+                //    myToolRunner = (IToolRunner)new ArchiveStatusCheckPlugin.PluginMain();
                 //    break;
 
-                //case "ArchiveVerifyPlugin.clsPluginMain":
-                //    myToolRunner = (IToolRunner)new ArchiveVerifyPlugin.clsPluginMain();
+                //case "ArchiveVerifyPlugin.PluginMain":
+                //    myToolRunner = (IToolRunner)new ArchiveVerifyPlugin.PluginMain();
                 //    break;
 
-                //case "DatasetIntegrityPlugin.clsPluginMain":
-                //    myToolRunner = (IToolRunner)new DatasetIntegrityPlugin.clsPluginMain();
+                //case "DatasetIntegrityPlugin.PluginMain":
+                //    myToolRunner = (IToolRunner)new DatasetIntegrityPlugin.PluginMain();
                 //    break;
 
-                //case "DatasetInfoPlugin.clsPluginMain":
-                //    myToolRunner = (IToolRunner)new DatasetInfoPlugin.clsPluginMain();
+                //case "DatasetInfoPlugin.PluginMain":
+                //    myToolRunner = (IToolRunner)new DatasetInfoPlugin.PluginMain();
                 //    break;
 
                 // ReSharper disable once RedundantEmptySwitchSection
@@ -216,7 +216,7 @@ namespace CaptureTaskManager
             }
             catch (Exception ex)
             {
-                ErrMsg = "clsPluginLoader.LoadObject(), exception: " + ex.Message;
+                ErrMsg = "PluginLoader.LoadObject(), exception: " + ex.Message;
             }
             return obj;
         }

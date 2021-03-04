@@ -21,7 +21,7 @@ namespace CaptureTaskManager
     /// should be loaded or manager set to inactive. If manager active, retrieves remainder of settings
     /// from manager control database.
     /// </remarks>
-    public class clsCaptureTaskMgrSettings : MgrSettingsDB, IMgrParams
+    public class CaptureTaskMgrSettings : MgrSettingsDB, IMgrParams
     {
         // Ignore Spelling: Utils, Ack, Seqs
 
@@ -43,7 +43,7 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="traceMode"></param>
         /// <remarks></remarks>
-        public clsCaptureTaskMgrSettings(bool traceMode)
+        public CaptureTaskMgrSettings(bool traceMode)
         {
             TraceMode = traceMode;
         }
@@ -60,7 +60,7 @@ namespace CaptureTaskManager
 
                 if (string.IsNullOrWhiteSpace(connectionString))
                 {
-                    if (clsUtilities.OfflineMode)
+                    if (CTMUtilities.OfflineMode)
                     {
                         OnDebugEvent("Skipping call to " + SP_NAME_ACK_MANAGER_UPDATE + " since offline");
                     }

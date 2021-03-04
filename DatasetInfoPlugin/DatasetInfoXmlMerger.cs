@@ -9,7 +9,7 @@ using System.Xml;
 
 namespace DatasetInfoPlugin
 {
-    internal class clsDatasetInfoXmlMerger
+    internal class DatasetInfoXmlMerger
     {
         private const int DATASET_GAP_THRESHOLD_HOURS = 24;
 
@@ -104,7 +104,7 @@ namespace DatasetInfoPlugin
         /// <summary>
         /// Constructor
         /// </summary>
-        public clsDatasetInfoXmlMerger()
+        public DatasetInfoXmlMerger()
         {
             AcqTimeWarnings = new List<string>();
             ScanTypes = new Dictionary<KeyValuePair<string, string>, int>();

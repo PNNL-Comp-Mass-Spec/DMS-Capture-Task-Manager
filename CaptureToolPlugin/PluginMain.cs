@@ -16,7 +16,7 @@ namespace CaptureToolPlugin
     /// Dataset capture plugin
     /// </summary>
     // ReSharper disable once UnusedMember.Global
-    public class clsPluginMain : clsToolRunnerBase
+    public class PluginMain : ToolRunnerBase
     {
         // Ignore Spelling: Bionet, secfso, Logon
 
@@ -24,10 +24,10 @@ namespace CaptureToolPlugin
         /// <summary>
         /// Runs the capture step tool
         /// </summary>
-        /// <returns>clsToolReturnData object containing tool operation results</returns>
-        public override clsToolReturnData RunTool()
+        /// <returns>ToolReturnData object containing tool operation results</returns>
+        public override ToolReturnData RunTool()
         {
-            LogDebug("Starting CaptureToolPlugin.clsPluginMain.RunTool()");
+            LogDebug("Starting CaptureToolPlugin.PluginMain.RunTool()");
 
             // Note that returnData.CloseoutMsg will be stored in the Completion_Message field of the database
             // Similarly, returnData.EvalMsg will be stored in the Evaluation_Message field of the database
@@ -57,10 +57,10 @@ namespace CaptureToolPlugin
             ResetTimestampForQueueWaitTimeLogging();
 
             // Create the object that will perform capture operation
-            var capOpTool = new clsCaptureOps(mMgrParams, mFileTools, useBionet, mTraceMode);
+            var capOpTool = new CaptureOps(mMgrParams, mFileTools, useBionet, mTraceMode);
             try
             {
-                LogDebug("clsPluginMain.RunTool(): Starting capture operation");
+                LogDebug("PluginMain.RunTool(): Starting capture operation");
 
                 var success = capOpTool.DoOperation(mTaskParams, returnData);
 
@@ -78,11 +78,11 @@ namespace CaptureToolPlugin
                     }
                 }
 
-                LogDebug("clsPluginMain.RunTool(): Completed capture operation");
+                LogDebug("PluginMain.RunTool(): Completed capture operation");
             }
             catch (Exception ex)
             {
-                var msg = "clsPluginMain.RunTool(): Exception during capture operation (useBionet=" + useBionet + ")";
+                var msg = "PluginMain.RunTool(): Exception during capture operation (useBionet=" + useBionet + ")";
                 if (ex.Message.Contains("unknown user name or bad password"))
                 {
                     // This error randomly occurs; no need to log a full stack trace
@@ -103,7 +103,7 @@ namespace CaptureToolPlugin
 
             capOpTool.DetachEvents();
 
-            LogDebug("Completed clsPluginMain.RunTool()");
+            LogDebug("Completed PluginMain.RunTool()");
 
             return returnData;
         }
@@ -116,11 +116,11 @@ namespace CaptureToolPlugin
         /// <param name="statusTools">Tools for status reporting</param>
         public override void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
         {
-            LogDebug("Starting clsPluginMain.Setup()");
+            LogDebug("Starting PluginMain.Setup()");
 
             base.Setup(mgrParams, taskParams, statusTools);
 
-            LogDebug("Completed clsPluginMain.Setup()");
+            LogDebug("Completed PluginMain.Setup()");
         }
 
         /// <summary>
@@ -132,7 +132,7 @@ namespace CaptureToolPlugin
             LogDebug("Determining tool version info");
 
             var toolVersionInfo = string.Empty;
-            var appDirectory = clsUtilities.GetAppDirectoryPath();
+            var appDirectory = CTMUtilities.GetAppDirectoryPath();
 
             if (string.IsNullOrWhiteSpace(appDirectory))
             {

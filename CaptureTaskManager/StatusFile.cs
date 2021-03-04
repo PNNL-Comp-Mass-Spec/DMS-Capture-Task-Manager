@@ -17,7 +17,7 @@ namespace CaptureTaskManager
     /// <summary>
     /// Handles status file updates
     /// </summary>
-    public class clsStatusFile : EventNotifier, IStatusFile
+    public class StatusFile : EventNotifier, IStatusFile
     {
         // Ignore Spelling: yyyy-MM-dd, hh:mm:ss tt
 
@@ -135,7 +135,7 @@ namespace CaptureTaskManager
         /// Constructor
         /// </summary>
         /// <param name="statusFilePath">Full path to status file</param>
-        public clsStatusFile(string statusFilePath)
+        public StatusFile(string statusFilePath)
         {
             FileNamePath = statusFilePath;
             TaskStartTime = DateTime.UtcNow;
@@ -335,7 +335,7 @@ namespace CaptureTaskManager
         }
 
         private string GenerateStatusXML(
-            clsStatusFile status,
+            StatusFile status,
             DateTime lastUpdate,
             int processId,
             int cpuUtilization,
@@ -379,7 +379,7 @@ namespace CaptureTaskManager
             writer.WriteElementString("ProcessID", processId.ToString());
             writer.WriteStartElement("RecentErrorMessages");
 
-            foreach (var errMsg in clsStatusData.ErrorQueue)
+            foreach (var errMsg in StatusData.ErrorQueue)
             {
                 writer.WriteElementString("ErrMsg", errMsg);
             }
@@ -400,7 +400,7 @@ namespace CaptureTaskManager
             writer.WriteElementString("Job", status.JobNumber.ToString());
             writer.WriteElementString("Step", status.JobStep.ToString());
             writer.WriteElementString("Dataset", status.Dataset);
-            writer.WriteElementString("MostRecentLogMessage", clsStatusData.MostRecentLogMessage);
+            writer.WriteElementString("MostRecentLogMessage", StatusData.MostRecentLogMessage);
             writer.WriteElementString("MostRecentJobInfo", status.MostRecentJobInfo);
             writer.WriteEndElement(); // TaskDetails
             writer.WriteEndElement(); // Task

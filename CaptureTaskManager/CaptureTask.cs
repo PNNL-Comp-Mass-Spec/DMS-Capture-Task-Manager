@@ -16,7 +16,7 @@ namespace CaptureTaskManager
     /// <summary>
     /// Contacts the database to retrieve a task or mark a task as complete (or failed)
     /// </summary>
-    internal class clsCaptureTask : clsDbTask, ITaskParams
+    internal class CaptureTask : DbTask, ITaskParams
     {
         #region "Constants"
 
@@ -41,7 +41,7 @@ namespace CaptureTaskManager
         /// Class constructor
         /// </summary>
         /// <param name="mgrParams">Manager params for use by class</param>
-        public clsCaptureTask(IMgrParams mgrParams)
+        public CaptureTask(IMgrParams mgrParams)
             : base(mgrParams)
         {
             mJobParams.Clear();
@@ -258,7 +258,7 @@ namespace CaptureTaskManager
                 dbTools.AddTypedParameter(cmd, "@JobCountToPreview", SqlType.Int, value: 10);
                 var returnParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.Output);
 
-                LogDebug("clsCaptureTask.RequestTaskDetailed(), connection string: " + mConnStr);
+                LogDebug("CaptureTask.RequestTaskDetailed(), connection string: " + mConnStr);
 
                 if (mDebugLevel >= 5 || TraceMode)
                 {
@@ -269,7 +269,7 @@ namespace CaptureTaskManager
                 var resCode = mCaptureTaskDBProcedureExecutor.ExecuteSPData(cmd, out var results);
 
                 var returnCode = dbTools.GetString(returnParam.Value);
-                var returnCodeValue = clsConversion.GetReturnCodeValue(returnCode);
+                var returnCodeValue = Conversion.GetReturnCodeValue(returnCode);
 
                 if (returnCodeValue != 0)
                 {
@@ -280,7 +280,7 @@ namespace CaptureTaskManager
                     }
 
                     // The return code was not an empty string, which indicates an error
-                    LogError("clsCaptureTask.RequestTaskDetailed(), SP execution has return code " + returnCode +
+                    LogError("CaptureTask.RequestTaskDetailed(), SP execution has return code " + returnCode +
                              "; Msg text = " + (string)messageParam.Value);
                     return EnumRequestTaskResult.ResultError;
                 }
@@ -313,7 +313,7 @@ namespace CaptureTaskManager
                         break;
                     default:
                         // There was an SP error
-                        LogError("clsCaptureTask.RequestTaskDetailed(), SP execution error " + resCode +
+                        LogError("CaptureTask.RequestTaskDetailed(), SP execution error " + resCode +
                             "; Msg text = " + (string)messageParam.Value);
                         outcome = EnumRequestTaskResult.ResultError;
                         break;
@@ -398,7 +398,7 @@ namespace CaptureTaskManager
             var resCode = mCaptureTaskDBProcedureExecutor.ExecuteSP(cmd, 3);
 
             var returnCode = dbTools.GetString(returnParam.Value);
-            var returnCodeValue = clsConversion.GetReturnCodeValue(returnCode);
+            var returnCodeValue = Conversion.GetReturnCodeValue(returnCode);
 
             if (resCode == 0 && returnCodeValue == 0)
             {
@@ -450,7 +450,7 @@ namespace CaptureTaskManager
                 var resCode = mCaptureTaskDBProcedureExecutor.ExecuteSP(cmd);
 
                 var returnCode = dbTools.GetString(returnParam.Value);
-                var returnCodeValue = clsConversion.GetReturnCodeValue(returnCode);
+                var returnCodeValue = Conversion.GetReturnCodeValue(returnCode);
 
                 if (resCode == 0 && returnCodeValue == 0)
                 {

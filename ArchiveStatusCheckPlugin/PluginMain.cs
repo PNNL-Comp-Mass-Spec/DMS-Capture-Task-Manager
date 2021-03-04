@@ -12,13 +12,13 @@ namespace ArchiveStatusCheckPlugin
     /// Archive status check plugin
     /// </summary>
     // ReSharper disable once UnusedMember.Global
-    public class clsPluginMain : clsToolRunnerBase
+    public class PluginMain : ToolRunnerBase
     {
         // Ignore Spelling: UploaderID, StatusNums
 
         #region "Class-wide variables"
 
-        private clsToolReturnData mRetData = new clsToolReturnData();
+        private ToolReturnData mRetData = new ToolReturnData();
 
         #endregion
 
@@ -28,9 +28,9 @@ namespace ArchiveStatusCheckPlugin
         /// Runs the Archive Status Check step tool
         /// </summary>
         /// <returns>Class with completionCode, completionMessage, evaluationCode, and evaluationMessage</returns>
-        public override clsToolReturnData RunTool()
+        public override ToolReturnData RunTool()
         {
-            var msg = "Starting ArchiveStatusCheckPlugin.clsPluginMain.RunTool()";
+            var msg = "Starting ArchiveStatusCheckPlugin.PluginMain.RunTool()";
             LogDebug(msg);
 
             // Perform base class operations, if any
@@ -86,7 +86,7 @@ namespace ArchiveStatusCheckPlugin
                 }
             }
 
-            msg = "Completed clsPluginMain.RunTool()";
+            msg = "Completed PluginMain.RunTool()";
             LogDebug(msg);
 
             return mRetData;
@@ -97,7 +97,7 @@ namespace ArchiveStatusCheckPlugin
             // Examine the upload status for any uploads for this dataset, filtering on job number to ignore jobs created after this job
             // First obtain a list of status URIs to check
 
-            // Keys in statusData are StatusNum integers, values are instances of class clsIngestStatusInfo
+            // Keys in statusData are StatusNum integers, values are instances of class IngestStatusInfo
             var statusData = GetStatusURIs();
 
             string msg;
@@ -211,7 +211,7 @@ namespace ArchiveStatusCheckPlugin
         /// <param name="criticalErrors"></param>
         private void CheckStatusURIs(
             MyEMSLStatusCheck statusChecker,
-            Dictionary<int, clsIngestStatusInfo> statusData,
+            Dictionary<int, IngestStatusInfo> statusData,
             out Dictionary<int, string> unverifiedURIs,
             out Dictionary<int, string> verifiedURIs,
             out Dictionary<int, string> criticalErrors)
@@ -284,7 +284,7 @@ namespace ArchiveStatusCheckPlugin
         private void CompareUnverifiedAndVerifiedURIs(
             IDictionary<int, string> unverifiedURIs,
             IReadOnlyDictionary<int, string> verifiedURIs,
-            Dictionary<int, clsIngestStatusInfo> statusData)
+            Dictionary<int, IngestStatusInfo> statusData)
         {
             var statusNumsToIgnore = new List<int>();
 
@@ -345,7 +345,7 @@ namespace ArchiveStatusCheckPlugin
         /// <param name="statusNums"></param>
         /// <param name="statusData"></param>
         /// <returns></returns>
-        private byte GetMaxIngestStepCompleted(IEnumerable<int> statusNums, IReadOnlyDictionary<int, clsIngestStatusInfo> statusData)
+        private byte GetMaxIngestStepCompleted(IEnumerable<int> statusNums, IReadOnlyDictionary<int, IngestStatusInfo> statusData)
         {
             byte ingestStepsCompleted = 0;
             foreach (var statusNum in statusNums)
@@ -359,10 +359,10 @@ namespace ArchiveStatusCheckPlugin
             return ingestStepsCompleted;
         }
 
-        private Dictionary<int, clsIngestStatusInfo> GetStatusURIs(int retryCount = 2)
+        private Dictionary<int, IngestStatusInfo> GetStatusURIs(int retryCount = 2)
         {
             // Keys in this dictionary are StatusNum integers
-            var statusData = new Dictionary<int, clsIngestStatusInfo>();
+            var statusData = new Dictionary<int, IngestStatusInfo>();
 
             // First look for a specific Status_URI for this job
             // Only DatasetArchive or ArchiveUpdate jobs will have this job parameter
@@ -381,7 +381,7 @@ namespace ArchiveStatusCheckPlugin
             {
                 var statusNum = MyEMSLStatusCheck.GetStatusNumFromURI(statusURI);
 
-                statusData.Add(statusNum, new clsIngestStatusInfo(statusNum, statusURI));
+                statusData.Add(statusNum, new IngestStatusInfo(statusNum, statusURI));
 
                 sql += " AND StatusNum = " + statusNum +
                        " ORDER BY Entry_ID";
@@ -393,7 +393,7 @@ namespace ArchiveStatusCheckPlugin
                 {
                     // The verification of this step has already been manually skipped (an admin set the ErrorCode to -1 or 101)
                     // Return an empty dictionary
-                    return new Dictionary<int, clsIngestStatusInfo>();
+                    return new Dictionary<int, IngestStatusInfo>();
                 }
 
                 return statusData;
@@ -423,7 +423,7 @@ namespace ArchiveStatusCheckPlugin
         /// <param name="sql"></param>
         /// <param name="statusData"></param>
         /// <param name="retryCount"></param>
-        private void GetStatusURIsAndSubdirectories(string sql, IDictionary<int, clsIngestStatusInfo> statusData, int retryCount = 2)
+        private void GetStatusURIsAndSubdirectories(string sql, IDictionary<int, IngestStatusInfo> statusData, int retryCount = 2)
         {
             // This Connection String points to the DMS_Capture database
             var connectionString = mMgrParams.GetParam("ConnectionString");
@@ -455,7 +455,7 @@ namespace ArchiveStatusCheckPlugin
 
                 if (!statusData.TryGetValue(statusNum, out var statusInfo))
                 {
-                    statusInfo = new clsIngestStatusInfo(statusNum, uri);
+                    statusInfo = new IngestStatusInfo(statusNum, uri);
                     statusData.Add(statusNum, statusInfo);
                 }
 
@@ -474,7 +474,7 @@ namespace ArchiveStatusCheckPlugin
         /// <param name="statusNumsToUpdate"></param>
         /// <param name="statusData"></param>
         /// <returns></returns>
-        private void UpdateIngestStepsCompletedInDB(IEnumerable<int> statusNumsToUpdate, IReadOnlyDictionary<int, clsIngestStatusInfo> statusData)
+        private void UpdateIngestStepsCompletedInDB(IEnumerable<int> statusNumsToUpdate, IReadOnlyDictionary<int, IngestStatusInfo> statusData)
         {
             try
             {
@@ -509,7 +509,7 @@ namespace ArchiveStatusCheckPlugin
             }
         }
 
-        private void UpdateSupersededURIs(IReadOnlyCollection<int> statusNumsToIgnore, IReadOnlyDictionary<int, clsIngestStatusInfo> statusData)
+        private void UpdateSupersededURIs(IReadOnlyCollection<int> statusNumsToIgnore, IReadOnlyDictionary<int, IngestStatusInfo> statusData)
         {
             const string SP_NAME = "SetMyEMSLUploadSupersededIfFailed";
 
@@ -545,7 +545,7 @@ namespace ArchiveStatusCheckPlugin
             }
         }
 
-        private void UpdateVerifiedURIs(Dictionary<int, string> verifiedURIs, IReadOnlyDictionary<int, clsIngestStatusInfo> statusData)
+        private void UpdateVerifiedURIs(Dictionary<int, string> verifiedURIs, IReadOnlyDictionary<int, IngestStatusInfo> statusData)
         {
             const string SP_NAME = "SetMyEMSLUploadVerified";
 

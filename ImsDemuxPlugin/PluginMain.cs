@@ -28,7 +28,7 @@ namespace ImsDemuxPlugin
     /// IMS Demultiplexer plugin
     /// </summary>
     // ReSharper disable once UnusedMember.Global
-    public class clsPluginMain : clsToolRunnerBase
+    public class PluginMain : ToolRunnerBase
     {
         // Ignore Spelling: Demultiplexer, demux, demultiplexing, demultiplexed, uimf, desc
 
@@ -54,7 +54,7 @@ namespace ImsDemuxPlugin
 
         #region "Module variables"
 
-        private clsDemuxTools mDemuxTools;
+        private DemuxTools mDemuxTools;
         private bool mDemultiplexingPerformed;
 
         #endregion
@@ -65,9 +65,9 @@ namespace ImsDemuxPlugin
         /// Runs the IMS demux step tool
         /// </summary>
         /// <returns>Enum indicating success or failure</returns>
-        public override clsToolReturnData RunTool()
+        public override ToolReturnData RunTool()
         {
-            var msg = "Starting ImsDemuxPlugin.clsPluginMain.RunTool()";
+            var msg = "Starting ImsDemuxPlugin.PluginMain.RunTool()";
             LogDebug(msg);
             mDemultiplexingPerformed = false;
 
@@ -155,11 +155,11 @@ namespace ImsDemuxPlugin
                         LogError(msg);
 
                         returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                        returnData.CloseoutMsg = "Error calibrating UIMF file; see " + clsDemuxTools.CALIBRATION_LOG_FILE;
+                        returnData.CloseoutMsg = "Error calibrating UIMF file; see " + DemuxTools.CALIBRATION_LOG_FILE;
                         returnData.EvalMsg =
                             "De-multiplexed but Calibration failed.  If you want to re-demultiplex the _encoded.uimf file, you should rename the CalibrationLog.txt file";
 
-                        msg = "Completed clsPluginMain.RunTool()";
+                        msg = "Completed PluginMain.RunTool()";
                         LogDebug(msg);
                         return returnData;
                     }
@@ -182,7 +182,7 @@ namespace ImsDemuxPlugin
                         returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                         returnData.CloseoutMsg = msg;
 
-                        msg = "Completed clsPluginMain.RunTool()";
+                        msg = "Completed PluginMain.RunTool()";
                         LogDebug(msg);
                         return returnData;
                     }
@@ -198,7 +198,7 @@ namespace ImsDemuxPlugin
                     returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     returnData.CloseoutMsg = msg;
 
-                    msg = "Completed clsPluginMain.RunTool()";
+                    msg = "Completed PluginMain.RunTool()";
                     LogDebug(msg);
                     return returnData;
                 }
@@ -208,11 +208,11 @@ namespace ImsDemuxPlugin
             var uimfFilePath = Path.Combine(dsPath, uimfFileName);
             var needToDemultiplex = true;
 
-            var sqLiteTools = new clsSQLiteTools();
+            var sqLiteTools = new SQLiteTools();
             RegisterEvents(sqLiteTools);
 
             var queryResult = sqLiteTools.GetUimfMuxStatus(uimfFilePath, out var numBitsForEncoding);
-            if (queryResult == clsSQLiteTools.UimfQueryResults.NonMultiplexed)
+            if (queryResult == SQLiteTools.UimfQueryResults.NonMultiplexed)
             {
                 // De-multiplexing not required, but we should still attempt calibration (if enabled)
                 msg = "No demultiplexing required for dataset " + mDataset;
@@ -220,7 +220,7 @@ namespace ImsDemuxPlugin
                 returnData.EvalMsg = "Non-Multiplexed";
                 needToDemultiplex = false;
             }
-            else if (queryResult == clsSQLiteTools.UimfQueryResults.Error)
+            else if (queryResult == SQLiteTools.UimfQueryResults.Error)
             {
                 // There was a problem determining the UIMF file status. Set state and exit
                 msg = "Problem determining UIMF file status for dataset " + mDataset;
@@ -228,7 +228,7 @@ namespace ImsDemuxPlugin
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 returnData.CloseoutMsg = msg;
 
-                msg = "Completed clsPluginMain.RunTool()";
+                msg = "Completed PluginMain.RunTool()";
                 LogDebug(msg);
                 return returnData;
             }
@@ -329,7 +329,7 @@ namespace ImsDemuxPlugin
                 }
             }
 
-            msg = "Completed clsPluginMain.RunTool()";
+            msg = "Completed PluginMain.RunTool()";
             LogDebug(msg);
 
             return returnData;
@@ -343,12 +343,12 @@ namespace ImsDemuxPlugin
         /// <param name="statusTools">Tools for status reporting</param>
         public override void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
         {
-            var msg = "Starting clsPluginMain.Setup()";
+            var msg = "Starting PluginMain.Setup()";
             LogDebug(msg);
 
             base.Setup(mgrParams, taskParams, statusTools);
 
-            msg = "Completed clsPluginMain.Setup()";
+            msg = "Completed PluginMain.Setup()";
             LogDebug(msg);
 
             // Determine the path to UIMFDemultiplexer_Console.exe
@@ -356,18 +356,18 @@ namespace ImsDemuxPlugin
 
             ResetTimestampForQueueWaitTimeLogging();
 
-            mDemuxTools = new clsDemuxTools(uimfDemultiplexerProgLoc, mFileTools);
+            mDemuxTools = new DemuxTools(uimfDemultiplexerProgLoc, mFileTools);
             RegisterEvents(mDemuxTools);
 
             // Add a handler to catch progress events
-            mDemuxTools.DemuxProgress += clsDemuxTools_DemuxProgress;
-            mDemuxTools.BinCentricTableProgress += clsDemuxTools_BinCentricTableProgress;
-            mDemuxTools.CopyFileWithRetryEvent += clsDemuxTools_CopyFileWithRetryEvent;
+            mDemuxTools.DemuxProgress += DemuxTools_DemuxProgress;
+            mDemuxTools.BinCentricTableProgress += DemuxTools_BinCentricTableProgress;
+            mDemuxTools.CopyFileWithRetryEvent += DemuxTools_CopyFileWithRetryEvent;
         }
 
         protected bool CheckForCalibrationError(string dsPath)
         {
-            var calibrationLogPath = Path.Combine(dsPath, clsDemuxTools.CALIBRATION_LOG_FILE);
+            var calibrationLogPath = Path.Combine(dsPath, DemuxTools.CALIBRATION_LOG_FILE);
 
             if (!File.Exists(calibrationLogPath))
             {
@@ -430,7 +430,7 @@ namespace ImsDemuxPlugin
                 var cmdLogEntries = cnUIMF.CreateCommand();
 
                 cmdLogEntries.CommandText = "SELECT Message FROM Log_Entries where Posted_By = '" +
-                                            clsDemuxTools.UIMF_CALIBRATION_UPDATER_NAME +
+                                            DemuxTools.UIMF_CALIBRATION_UPDATER_NAME +
                                             "' order by Entry_ID desc";
 
                 using var logEntriesReader = cmdLogEntries.ExecuteReader();
@@ -560,7 +560,7 @@ namespace ImsDemuxPlugin
         /// Reports progress from demux dll
         /// </summary>
         /// <param name="newProgress">Current progress (value between 0 and 100)</param>
-        private void clsDemuxTools_DemuxProgress(float newProgress)
+        private void DemuxTools_DemuxProgress(float newProgress)
         {
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (ADD_BIN_CENTRIC_TABLES)
@@ -579,7 +579,7 @@ namespace ImsDemuxPlugin
         /// Reports progress for the addition of bin-centric tables
         /// </summary>
         /// <param name="newProgress">Current progress (value between 0 and 100)</param>
-        private void clsDemuxTools_BinCentricTableProgress(float newProgress)
+        private void DemuxTools_BinCentricTableProgress(float newProgress)
         {
             float progressOverall;
 
@@ -599,7 +599,7 @@ namespace ImsDemuxPlugin
             UpdateMgrSettings();
         }
 
-        private void clsDemuxTools_CopyFileWithRetryEvent(string message)
+        private void DemuxTools_CopyFileWithRetryEvent(string message)
         {
             ResetTimestampForQueueWaitTimeLogging();
         }

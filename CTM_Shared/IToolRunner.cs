@@ -16,7 +16,7 @@ namespace CaptureTaskManager
 
         void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools);
 
-        clsToolReturnData RunTool();
+        ToolReturnData RunTool();
 
         #endregion
     }

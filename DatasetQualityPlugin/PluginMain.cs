@@ -21,7 +21,7 @@ namespace DatasetQualityPlugin
     /// Dataset quality plugin
     /// </summary>
     // ReSharper disable once UnusedMember.Global
-    public class clsPluginMain : clsToolRunnerBase
+    public class PluginMain : ToolRunnerBase
     {
         // Ignore Spelling: Quameter, utf, frac, Roc, idfree, monoisotope, Filepath, cpus, cfg, cmd
 
@@ -40,7 +40,7 @@ namespace DatasetQualityPlugin
 
         #region "Class-wide variables"
 
-        private clsToolReturnData mRetData = new clsToolReturnData();
+        private ToolReturnData mRetData = new ToolReturnData();
 
         private bool mFatalSplineError;
 
@@ -61,11 +61,11 @@ namespace DatasetQualityPlugin
         /// Runs the dataset info step tool
         /// </summary>
         /// <returns>Enum indicating success or failure</returns>
-        public override clsToolReturnData RunTool()
+        public override ToolReturnData RunTool()
         {
             // Note that Debug messages are logged if mDebugLevel == 5
 
-            var msg = "Starting DatasetQualityPlugin.clsPluginMain.RunTool()";
+            var msg = "Starting DatasetQualityPlugin.PluginMain.RunTool()";
             LogDebug(msg);
 
             // Perform base class operations, if any
@@ -78,7 +78,7 @@ namespace DatasetQualityPlugin
             msg = "Creating dataset info for dataset '" + mDataset + "'";
             LogDebug(msg);
 
-            if (clsMetaDataFile.CreateMetadataFile(mTaskParams))
+            if (MetaDataFile.CreateMetadataFile(mTaskParams))
             {
                 // Everything was good
                 msg = "Metadata file created for dataset " + mDataset;
@@ -105,7 +105,7 @@ namespace DatasetQualityPlugin
                 return mRetData;
             }
 
-            msg = "Completed clsPluginMain.RunTool()";
+            msg = "Completed PluginMain.RunTool()";
             LogDebug(msg);
 
             return mRetData;
@@ -130,8 +130,8 @@ namespace DatasetQualityPlugin
             var msg = "Instrument class: " + instClassName;
             LogDebug(msg);
 
-            var instrumentClass = clsInstrumentClassInfo.GetInstrumentClass(instClassName);
-            if (instrumentClass == clsInstrumentClassInfo.InstrumentClass.Unknown)
+            var instrumentClass = InstrumentClassInfo.GetInstrumentClass(instClassName);
+            if (instrumentClass == InstrumentClassInfo.InstrumentClass.Unknown)
             {
                 msg = "Instrument class not recognized: " + instClassName;
                 LogError(msg);
@@ -145,11 +145,11 @@ namespace DatasetQualityPlugin
 
             switch (instrumentClass)
             {
-                case clsInstrumentClassInfo.InstrumentClass.Finnigan_Ion_Trap:
-                case clsInstrumentClassInfo.InstrumentClass.GC_QExactive:
-                case clsInstrumentClassInfo.InstrumentClass.LTQ_FT:
-                case clsInstrumentClassInfo.InstrumentClass.Thermo_Exactive:
-                    dataFilePathRemote = Path.Combine(datasetFolder, mDataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION);
+                case InstrumentClassInfo.InstrumentClass.Finnigan_Ion_Trap:
+                case InstrumentClassInfo.InstrumentClass.GC_QExactive:
+                case InstrumentClassInfo.InstrumentClass.LTQ_FT:
+                case InstrumentClassInfo.InstrumentClass.Thermo_Exactive:
+                    dataFilePathRemote = Path.Combine(datasetFolder, mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION);
 
                     // Confirm that the file has MS1 spectra (since Quameter requires that they be present)
                     if (!QuameterCanProcessDataset(mDatasetID, mDataset, datasetFolder, ref skipReason))
@@ -158,7 +158,7 @@ namespace DatasetQualityPlugin
                     }
                     break;
 
-                case clsInstrumentClassInfo.InstrumentClass.Triple_Quad:
+                case InstrumentClassInfo.InstrumentClass.Triple_Quad:
                     // Quameter crashes on TSQ files; skip them
                     dataFilePathRemote = string.Empty;
                     break;
@@ -817,7 +817,7 @@ namespace DatasetQualityPlugin
 
         private bool ProcessThermoRawFile(
             string dataFilePathRemote,
-            clsInstrumentClassInfo.InstrumentClass instrumentClass,
+            InstrumentClassInfo.InstrumentClass instrumentClass,
             FileInfo quameterProgram,
             bool ignoreQuameterFailure,
             string instrumentName)
@@ -829,15 +829,15 @@ namespace DatasetQualityPlugin
 
                 switch (instrumentClass)
                 {
-                    case clsInstrumentClassInfo.InstrumentClass.Finnigan_Ion_Trap:
+                    case InstrumentClassInfo.InstrumentClass.Finnigan_Ion_Trap:
                         // Assume low-res precursor spectra
                         configFileNameSource = "quameter_ltq.cfg";
                         break;
 
-                    case clsInstrumentClassInfo.InstrumentClass.GC_QExactive:
-                    case clsInstrumentClassInfo.InstrumentClass.LTQ_FT:
-                    case clsInstrumentClassInfo.InstrumentClass.Thermo_Exactive:
-                    case clsInstrumentClassInfo.InstrumentClass.Triple_Quad:
+                    case InstrumentClassInfo.InstrumentClass.GC_QExactive:
+                    case InstrumentClassInfo.InstrumentClass.LTQ_FT:
+                    case InstrumentClassInfo.InstrumentClass.Thermo_Exactive:
+                    case InstrumentClassInfo.InstrumentClass.Triple_Quad:
                         // Assume high-res precursor spectra
                         configFileNameSource = "quameter_orbitrap.cfg";
                         break;
@@ -1107,10 +1107,10 @@ namespace DatasetQualityPlugin
 
                 var quameterArgs = new StringBuilder();
 
-                quameterArgs.Append(clsConversion.PossiblyQuotePath(dataFileName));
+                quameterArgs.Append(Conversion.PossiblyQuotePath(dataFileName));
                 quameterArgs.Append(" -MetricsType idfree");
-                quameterArgs.Append(" -cfg " + clsConversion.PossiblyQuotePath(configFilePath));
-                quameterArgs.Append(" -OutputFilepath " + clsConversion.PossiblyQuotePath(metricsOutputFileName));
+                quameterArgs.Append(" -cfg " + Conversion.PossiblyQuotePath(configFilePath));
+                quameterArgs.Append(" -OutputFilepath " + Conversion.PossiblyQuotePath(metricsOutputFileName));
                 quameterArgs.Append(" -cpus 1");
                 quameterArgs.Append(" -dump");
 
@@ -1137,7 +1137,7 @@ namespace DatasetQualityPlugin
 
                 mConsoleOutputFilePath = Path.Combine(mWorkDir, consoleOutputFileName);
 
-                var cmdRunner = new clsRunDosProgram(mWorkDir)
+                var cmdRunner = new RunDosProgram(mWorkDir)
                 {
                     CreateNoWindow = false,
                     EchoOutputToConsole = false,
@@ -1241,14 +1241,14 @@ namespace DatasetQualityPlugin
         /// <param name="statusTools">Tools for status reporting</param>
         public override void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
         {
-            var msg = "Starting clsPluginMain.Setup()";
+            var msg = "Starting PluginMain.Setup()";
 
             // This message is logged if mDebugLevel == 5
             LogDebug(msg);
 
             base.Setup(mgrParams, taskParams, statusTools);
 
-            msg = "Completed clsPluginMain.Setup()";
+            msg = "Completed PluginMain.Setup()";
             LogDebug(msg);
         }
 
@@ -1261,7 +1261,7 @@ namespace DatasetQualityPlugin
             LogDebug("Determining tool version info");
 
             var toolVersionInfo = string.Empty;
-            var appDirectory = clsUtilities.GetAppDirectoryPath();
+            var appDirectory = CTMUtilities.GetAppDirectoryPath();
 
             if (string.IsNullOrWhiteSpace(appDirectory))
             {
@@ -1328,7 +1328,7 @@ namespace DatasetQualityPlugin
 
         #region "Event handlers"
 
-        private void AttachCmdRunnerEvents(clsRunDosProgram cmdRunner)
+        private void AttachCmdRunnerEvents(RunDosProgram cmdRunner)
         {
             try
             {
@@ -1342,7 +1342,7 @@ namespace DatasetQualityPlugin
             }
         }
 
-        private void DetachCmdRunnerEvents(clsRunDosProgram cmdRunner)
+        private void DetachCmdRunnerEvents(RunDosProgram cmdRunner)
         {
             try
             {

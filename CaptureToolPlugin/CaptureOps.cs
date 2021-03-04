@@ -19,7 +19,7 @@ namespace CaptureToolPlugin
     /// <summary>
     /// Dataset capture plugin
     /// </summary>
-    public class clsCaptureOps : clsLoggerBase
+    public class CaptureOps : LoggerBase
     {
         // Ignore Spelling: Username, bionet, Pwd, prepend, Unsubscribe, fso, secfso, Subfolder, dotnet, lcMethod, mcf, idx, ser, jpg
 
@@ -108,7 +108,7 @@ namespace CaptureToolPlugin
         /// <param name="fileTools">Instance of FileTools</param>
         /// <param name="useBioNet">Flag to indicate if source instrument is on Bionet</param>
         /// <param name="traceMode">When true, show debug messages at the console</param>
-        public clsCaptureOps(IMgrParams mgrParams, FileTools fileTools, bool useBioNet, bool traceMode)
+        public CaptureOps(IMgrParams mgrParams, FileTools fileTools, bool useBioNet, bool traceMode)
         {
             mMgrParams = mgrParams;
             mTraceMode = traceMode;
@@ -231,7 +231,7 @@ namespace CaptureToolPlugin
                 {
                     if (mTraceMode)
                     {
-                        clsToolRunnerBase.ShowTraceMessage(
+                        ToolRunnerBase.ShowTraceMessage(
                             string.Format("Moving {0} to {1}", sourceFilePath, targetFilePath));
                     }
 
@@ -545,7 +545,7 @@ namespace CaptureToolPlugin
             int maxFileCountToAllowResume,
             int maxInstrumentDirCountToAllowResume,
             int maxNonInstrumentDirCountToAllowResume,
-            clsToolReturnData returnData,
+            ToolReturnData returnData,
             IDictionary<FileSystemInfo, string> pendingRenames)
         {
             var switchResult = false;
@@ -723,7 +723,7 @@ namespace CaptureToolPlugin
         /// <param name="targetDirectory">Directory to examine</param>
         /// <param name="returnData">Output: return data</param>
         /// <returns>TRUE if directory size hasn't changed; FALSE otherwise</returns>
-        private bool VerifyConstantDirectorySize(DirectoryInfo targetDirectory, clsToolReturnData returnData)
+        private bool VerifyConstantDirectorySize(DirectoryInfo targetDirectory, ToolReturnData returnData)
         {
             try
             {
@@ -786,7 +786,7 @@ namespace CaptureToolPlugin
         /// <param name="sleepIntervalSeconds">Interval for checking (seconds)</param>
         /// <param name="returnData">Output: return data</param>
         /// <returns>TRUE if file size hasn't changed during SleepInt; FALSE otherwise</returns>
-        private bool VerifyConstantFileSize(string filePath, int sleepIntervalSeconds, clsToolReturnData returnData)
+        private bool VerifyConstantFileSize(string filePath, int sleepIntervalSeconds, ToolReturnData returnData)
         {
             try
             {
@@ -821,7 +821,7 @@ namespace CaptureToolPlugin
                 {
                     if (mTraceMode)
                     {
-                        clsToolRunnerBase.ShowTraceMessage("File size did not change");
+                        ToolRunnerBase.ShowTraceMessage("File size did not change");
                     }
 
                     return true;
@@ -855,7 +855,7 @@ namespace CaptureToolPlugin
             {
                 // Monitoring file DatasetName.raw for 30 seconds
                 // Monitoring directory DatasetName.d for 30 seconds
-                clsToolRunnerBase.ShowTraceMessage(
+                ToolRunnerBase.ShowTraceMessage(
                     string.Format("Monitoring {0} for {1} seconds", fileOrDirectoryName, sleepIntervalSeconds));
             }
 
@@ -875,7 +875,7 @@ namespace CaptureToolPlugin
                 nextStatusTime = nextStatusTime.AddSeconds(STATUS_MESSAGE_INTERVAL);
                 if (mTraceMode)
                 {
-                    clsToolRunnerBase.ShowTraceMessage(
+                    ToolRunnerBase.ShowTraceMessage(
                         string.Format("{0:0} seconds remaining", verificationEndTime.Subtract(DateTime.UtcNow).TotalSeconds));
                 }
             }
@@ -1041,7 +1041,7 @@ namespace CaptureToolPlugin
                 mErrorMessage = "Error connecting to " + directorySharePath + " as user " + userName + " (using NetworkConnection class)";
                 LogError(mErrorMessage, ex);
 
-                var returnData = new clsToolReturnData();
+                var returnData = new ToolReturnData();
                 HandleCopyException(returnData, ex);
 
                 closeoutType = returnData.CloseoutType;
@@ -1100,7 +1100,7 @@ namespace CaptureToolPlugin
         /// <param name="taskParams">Enum indicating status of task</param>
         /// <param name="returnData">Return data class; update CloseoutMsg or EvalMsg with text to store in T_Job_Step_Params</param>
         /// <returns>True if success or false if an error.  returnData includes addition details on errors</returns>
-        public bool DoOperation(ITaskParams taskParams, clsToolReturnData returnData)
+        public bool DoOperation(ITaskParams taskParams, ToolReturnData returnData)
         {
             var datasetName = taskParams.GetParam("Dataset");
             var jobNum = taskParams.GetParam("Job", 0);
@@ -1116,7 +1116,7 @@ namespace CaptureToolPlugin
             var storageVolExternal = taskParams.GetParam("Storage_Vol_External").Trim();   // Example: \\proto-5\
 
             var instClassName = taskParams.GetParam("Instrument_Class");                   // Examples: Finnigan_Ion_Trap, LTQ_FT, Triple_Quad, IMS_Agilent_TOF, Agilent_Ion_Trap
-            var instrumentClass = clsInstrumentClassInfo.GetInstrumentClass(instClassName);    // Enum of instrument class type
+            var instrumentClass = InstrumentClassInfo.GetInstrumentClass(instClassName);    // Enum of instrument class type
             var instrumentName = taskParams.GetParam("Instrument_Name");                         // Instrument name
 
             var shareConnectorType = mMgrParams.GetParam("ShareConnectorType");         // Can be PRISM or DotNET (but has been PRISM since 2012)
@@ -1161,11 +1161,11 @@ namespace CaptureToolPlugin
             var copyWithResume = false;
             switch (instrumentClass)
             {
-                case clsInstrumentClassInfo.InstrumentClass.BrukerFT_BAF:
+                case InstrumentClassInfo.InstrumentClass.BrukerFT_BAF:
                     copyWithResume = true;
                     break;
-                case clsInstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging:
-                case clsInstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging_V2:
+                case InstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging:
+                case InstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging_V2:
                     copyWithResume = true;
                     maxFileCountToAllowResume = 20;
                     maxInstrumentDirCountToAllowResume = 20;
@@ -1173,11 +1173,11 @@ namespace CaptureToolPlugin
                     break;
             }
 
-            var pwd = clsUtilities.DecodePassword(mPassword);
+            var pwd = CTMUtilities.DecodePassword(mPassword);
 
             string tempVol;
 
-            LogDebug("Started clsCaptureOps.DoOperation()");
+            LogDebug("Started CaptureOps.DoOperation()");
 
             // Setup Destination directory based on client/server switch, mClientServer
             // True means MgrParam "perspective" =  "client" which means we will use paths like \\proto-5\Exact04\2012_1
@@ -1591,7 +1591,7 @@ namespace CaptureToolPlugin
         /// <param name="copyWithResume">True if using copy with resume</param>
         private void CaptureFile(
             out string msg,
-            clsToolReturnData returnData,
+            ToolReturnData returnData,
             DatasetInfo datasetInfo,
             string sourceDirectoryPath,
             string datasetDirectoryPath,
@@ -1617,7 +1617,7 @@ namespace CaptureToolPlugin
         /// <param name="copyWithResume">True if using copy with resume</param>
         private void CaptureMultiFile(
             out string msg,
-            clsToolReturnData returnData,
+            ToolReturnData returnData,
             DatasetInfo datasetInfo,
             string sourceDirectoryPath,
             string datasetDirectoryPath,
@@ -1650,7 +1650,7 @@ namespace CaptureToolPlugin
         /// <param name="copyWithResume">True if using copy with resume</param>
         private void CaptureOneOrMoreFiles(
             out string msg,
-            clsToolReturnData returnData,
+            ToolReturnData returnData,
             string datasetName,
             ICollection<string> fileNames,
             string sourceDirectoryPath,
@@ -1666,7 +1666,7 @@ namespace CaptureToolPlugin
                 // First, verify constant file size (indicates acquisition is actually finished)
                 var sourceFilePath = Path.Combine(sourceDirectoryPath, fileName);
 
-                var retDataValidateConstant = new clsToolReturnData();
+                var retDataValidateConstant = new ToolReturnData();
 
                 var sleepIntervalSeconds = GetSleepIntervalForFile(sourceFilePath);
 
@@ -2007,12 +2007,12 @@ namespace CaptureToolPlugin
         /// <param name="instrumentName">Instrument name</param>
         private void CaptureDirectoryExt(
             out string msg,
-            clsToolReturnData returnData,
+            ToolReturnData returnData,
             DatasetInfo datasetInfo,
             string sourceDirectoryPath,
             string datasetDirectoryPath,
             bool copyWithResume,
-            clsInstrumentClassInfo.InstrumentClass instrumentClass,
+            InstrumentClassInfo.InstrumentClass instrumentClass,
             string instrumentName)
         {
             SortedSet<string> filesToSkip = null;
@@ -2029,7 +2029,7 @@ namespace CaptureToolPlugin
                 return;
             }
 
-            if (instrumentClass == clsInstrumentClassInfo.InstrumentClass.Agilent_Ion_Trap)
+            if (instrumentClass == InstrumentClassInfo.InstrumentClass.Agilent_Ion_Trap)
             {
                 // Confirm that a DATA.MS file exists
                 if (IsIncompleteAgilentIonTrap(sourceDirectory.FullName, out msg, returnData))
@@ -2131,7 +2131,7 @@ namespace CaptureToolPlugin
                 var matchSpec = "*" + sourceDirectory.Extension;
                 if (mTraceMode)
                 {
-                    clsToolRunnerBase.ShowTraceMessage(
+                    ToolRunnerBase.ShowTraceMessage(
                         string.Format("Looking for directories matching {0} at {1}",
                                       matchSpec, sourceDirectory.FullName));
                 }
@@ -2166,7 +2166,7 @@ namespace CaptureToolPlugin
                                                        sourceDirectoryToUse.FullName, similarityScore);
                         if (mTraceMode)
                         {
-                            clsToolRunnerBase.ShowTraceMessage(logMessage);
+                            ToolRunnerBase.ShowTraceMessage(logMessage);
                         }
 
                         LogDebug(logMessage);
@@ -2193,7 +2193,7 @@ namespace CaptureToolPlugin
                 if (mTraceMode)
                 {
                     Console.WriteLine();
-                    clsToolRunnerBase.ShowTraceMessage(
+                    ToolRunnerBase.ShowTraceMessage(
                         string.Format("Copying from\n{0} to\n{1}", sourceDirectoryToUse.FullName, targetDirectory.FullName));
 
                     const int waitTimeSeconds = 5;
@@ -2252,7 +2252,7 @@ namespace CaptureToolPlugin
 
                         if (mTraceMode)
                         {
-                            clsToolRunnerBase.ShowTraceMessage("Creating empty directory at " + extraDirectory.FullName);
+                            ToolRunnerBase.ShowTraceMessage("Creating empty directory at " + extraDirectory.FullName);
                         }
 
                         if (!extraDirectory.Exists)
@@ -2310,7 +2310,7 @@ namespace CaptureToolPlugin
         private bool IsIncompleteAgilentIonTrap(
             string directoryPath,
             out string msg,
-            clsToolReturnData returnData)
+            ToolReturnData returnData)
         {
             msg = string.Empty;
 
@@ -2369,7 +2369,7 @@ namespace CaptureToolPlugin
         private bool IsIncompleteUimfFound(
             string directoryPath,
             out string msg,
-            clsToolReturnData returnData)
+            ToolReturnData returnData)
         {
             msg = string.Empty;
 
@@ -2491,7 +2491,7 @@ namespace CaptureToolPlugin
             DirectoryInfo sourceDirectory,
             DatasetInfo datasetInfo,
             Dictionary<string, string> searchSpecList,
-            clsToolReturnData returnData,
+            ToolReturnData returnData,
             out SortedSet<string> filesToSkip)
         {
             filesToSkip = new SortedSet<string>();
@@ -2561,12 +2561,12 @@ namespace CaptureToolPlugin
         /// <param name="instrumentClass">Instrument class</param>
         private void CaptureDirectoryNoExt(
             out string msg,
-            clsToolReturnData returnData,
+            ToolReturnData returnData,
             DatasetInfo datasetInfo,
             string sourceDirectoryPath,
             string datasetDirectoryPath,
             bool copyWithResume,
-            clsInstrumentClassInfo.InstrumentClass instrumentClass)
+            InstrumentClassInfo.InstrumentClass instrumentClass)
         {
             // List of file names to skip (not full paths)
             var filesToSkip = new SortedSet<string>();
@@ -2614,7 +2614,7 @@ namespace CaptureToolPlugin
                     }
                 }
 
-                if (!allowMultipleDirectories && instrumentClass == clsInstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging_V2)
+                if (!allowMultipleDirectories && instrumentClass == InstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging_V2)
                 {
                     // Effective July 2016, we allow Bruker Imaging datasets to have multiple .D subdirectories
                     // They typically each have their own ser file
@@ -2641,7 +2641,7 @@ namespace CaptureToolPlugin
                 return;
             }
 
-            if (instrumentClass == clsInstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_UIMF)
+            if (instrumentClass == InstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_UIMF)
             {
                 // Possibly skip the Fragmentation_Profile.txt file
                 var fragProfileFile = new FileInfo(Path.Combine(sourceDirectory.FullName, "Fragmentation_Profile.txt"));
@@ -2652,7 +2652,7 @@ namespace CaptureToolPlugin
                 }
             }
 
-            if (instrumentClass == clsInstrumentClassInfo.InstrumentClass.FT_Booster_Data)
+            if (instrumentClass == InstrumentClassInfo.InstrumentClass.FT_Booster_Data)
             {
                 // Skip Thermo .Raw files
                 foreach (var thermoRawFile in sourceDirectory.GetFiles("*.raw", SearchOption.AllDirectories))
@@ -2667,7 +2667,7 @@ namespace CaptureToolPlugin
                 }
             }
 
-            if (instrumentClass == clsInstrumentClassInfo.InstrumentClass.Sciex_QTrap)
+            if (instrumentClass == InstrumentClassInfo.InstrumentClass.Sciex_QTrap)
             {
                 // Make sure that it doesn't have more than 2 subdirectories (it typically won't have any, but we'll allow 2)
                 if (sourceDirectory.GetDirectories("*", SearchOption.TopDirectoryOnly).Length > 2)
@@ -2776,7 +2776,7 @@ namespace CaptureToolPlugin
         /// <param name="copyWithResume">True if using copy with resume</param>
         private void CaptureBrukerImaging(
             out string msg,
-            clsToolReturnData returnData,
+            ToolReturnData returnData,
             DatasetInfo datasetInfo,
             string sourceDirectoryPath,
             string datasetDirectoryPath,
@@ -2908,7 +2908,7 @@ namespace CaptureToolPlugin
         /// <param name="datasetDirectoryPath">Destination directory; datasetInfo.FileOrDirectoryName will not be appended to this (contrast with CaptureDirectoryExt)</param>
         private void CaptureBrukerSpot(
             out string msg,
-            clsToolReturnData returnData,
+            ToolReturnData returnData,
             DatasetInfo datasetInfo,
             string sourceDirectoryPath,
             string datasetDirectoryPath)
@@ -3012,7 +3012,7 @@ namespace CaptureToolPlugin
             string sourceDirectoryPath,
             string targetDirectoryPath,
             bool recurse,
-            clsToolReturnData returnData)
+            ToolReturnData returnData)
         {
             return CopyDirectoryWithResume(sourceDirectoryPath, targetDirectoryPath, recurse, returnData, new SortedSet<string>());
         }
@@ -3021,7 +3021,7 @@ namespace CaptureToolPlugin
             string sourceDirectoryPath,
             string targetDirectoryPath,
             bool recurse,
-            clsToolReturnData returnData,
+            ToolReturnData returnData,
             SortedSet<string> filesToSkip)
         {
             const FileTools.FileOverwriteMode overwriteMode = FileTools.FileOverwriteMode.OverWriteIfDateOrLengthDiffer;
@@ -3381,7 +3381,7 @@ namespace CaptureToolPlugin
             }
         }
 
-        private void HandleCopyException(clsToolReturnData returnData, Exception ex)
+        private void HandleCopyException(ToolReturnData returnData, Exception ex)
         {
             if (ex.Message.Contains("An unexpected network error occurred") ||
                 ex.Message.Contains("Multiple connections") ||
@@ -3416,7 +3416,7 @@ namespace CaptureToolPlugin
         /// <param name="isFile">True for a file; false for a path</param>
         /// <param name="returnData">Return data object</param>
         /// <returns>True if an error; false if no problems</returns>
-        private static bool NameHasInvalidCharacter(string fileOrPath, string itemDescription, bool isFile, clsToolReturnData returnData)
+        private static bool NameHasInvalidCharacter(string fileOrPath, string itemDescription, bool isFile, ToolReturnData returnData)
         {
             var invalidCharIndex = fileOrPath.IndexOfAny(isFile ? Path.GetInvalidFileNameChars() : Path.GetInvalidPathChars());
 
@@ -3436,14 +3436,14 @@ namespace CaptureToolPlugin
         /// Store mErrorMessage in returnData.CloseoutMsg if an error exists yet returnData.CloseoutMsg is empty
         /// </summary>
         /// <param name="returnData"></param>
-        private void PossiblyStoreErrorMessage(clsToolReturnData returnData)
+        private void PossiblyStoreErrorMessage(ToolReturnData returnData)
         {
             if (!string.IsNullOrWhiteSpace(mErrorMessage) && string.IsNullOrWhiteSpace(returnData.CloseoutMsg))
             {
                 returnData.CloseoutMsg = mErrorMessage;
                 if (mTraceMode)
                 {
-                    clsToolRunnerBase.ShowTraceMessage(mErrorMessage);
+                    ToolRunnerBase.ShowTraceMessage(mErrorMessage);
                 }
             }
         }
@@ -3505,7 +3505,7 @@ namespace CaptureToolPlugin
         /// <param name="exampleRootPath"></param>
         /// <param name="returnData"></param>
         /// <returns>True if valid, otherwise false</returns>
-        private bool ValidateStoragePath(string storagePathRoot, string rootPathDescription, string exampleRootPath, clsToolReturnData returnData)
+        private bool ValidateStoragePath(string storagePathRoot, string rootPathDescription, string exampleRootPath, ToolReturnData returnData)
         {
             if (!string.IsNullOrWhiteSpace(storagePathRoot) && !storagePathRoot.Equals("\\") && !storagePathRoot.Equals(" /"))
             {
@@ -3533,7 +3533,7 @@ namespace CaptureToolPlugin
             string instrumentName,
             string storagePath,
             IReadOnlyCollection<string> storagePathParts,
-            clsToolReturnData returnData)
+            ToolReturnData returnData)
         {
             if (storagePathParts.Count >= 2 && storagePathParts.First().Equals(instrumentName))
             {
@@ -3567,9 +3567,9 @@ namespace CaptureToolPlugin
         private bool ValidateWithInstrumentClass(
             string dataset,
             string sourceDirectoryPath,
-            clsInstrumentClassInfo.InstrumentClass instrumentClass,
+            InstrumentClassInfo.InstrumentClass instrumentClass,
             DatasetInfo datasetInfo,
-            clsToolReturnData returnData)
+            ToolReturnData returnData)
         {
             string entityDescription;
 
@@ -3590,12 +3590,12 @@ namespace CaptureToolPlugin
             // See table T_Instrument_Class for allowed types
             switch (instrumentClass)
             {
-                case clsInstrumentClassInfo.InstrumentClass.Finnigan_Ion_Trap:
-                case clsInstrumentClassInfo.InstrumentClass.GC_QExactive:
-                case clsInstrumentClassInfo.InstrumentClass.LTQ_FT:
-                case clsInstrumentClassInfo.InstrumentClass.Thermo_Exactive:
-                case clsInstrumentClassInfo.InstrumentClass.Triple_Quad:
-                case clsInstrumentClassInfo.InstrumentClass.Shimadzu_GC:
+                case InstrumentClassInfo.InstrumentClass.Finnigan_Ion_Trap:
+                case InstrumentClassInfo.InstrumentClass.GC_QExactive:
+                case InstrumentClassInfo.InstrumentClass.LTQ_FT:
+                case InstrumentClassInfo.InstrumentClass.Thermo_Exactive:
+                case InstrumentClassInfo.InstrumentClass.Triple_Quad:
+                case InstrumentClassInfo.InstrumentClass.Shimadzu_GC:
                     if (datasetInfo.DatasetType != DatasetInfo.RawDSTypes.File)
                     {
                         if (datasetInfo.DatasetType == DatasetInfo.RawDSTypes.DirectoryNoExt)
@@ -3692,7 +3692,7 @@ namespace CaptureToolPlugin
                     }
                     break;
 
-                case clsInstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging_V2:
+                case InstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging_V2:
                     if (datasetInfo.DatasetType != DatasetInfo.RawDSTypes.DirectoryNoExt)
                     {
                         // Dataset name matched a file; must be a directory with the dataset name, and inside the directory is a .D directory (and typically some jpg files)
@@ -3700,13 +3700,13 @@ namespace CaptureToolPlugin
                     }
                     break;
 
-                case clsInstrumentClassInfo.InstrumentClass.Bruker_Amazon_Ion_Trap:
-                case clsInstrumentClassInfo.InstrumentClass.BrukerFT_BAF:
-                case clsInstrumentClassInfo.InstrumentClass.BrukerTOF_BAF:
-                case clsInstrumentClassInfo.InstrumentClass.BrukerTOF_TDF:
-                case clsInstrumentClassInfo.InstrumentClass.Agilent_Ion_Trap:
-                case clsInstrumentClassInfo.InstrumentClass.Agilent_TOF_V2:
-                case clsInstrumentClassInfo.InstrumentClass.PrepHPLC:
+                case InstrumentClassInfo.InstrumentClass.Bruker_Amazon_Ion_Trap:
+                case InstrumentClassInfo.InstrumentClass.BrukerFT_BAF:
+                case InstrumentClassInfo.InstrumentClass.BrukerTOF_BAF:
+                case InstrumentClassInfo.InstrumentClass.BrukerTOF_TDF:
+                case InstrumentClassInfo.InstrumentClass.Agilent_Ion_Trap:
+                case InstrumentClassInfo.InstrumentClass.Agilent_TOF_V2:
+                case InstrumentClassInfo.InstrumentClass.PrepHPLC:
 
                     if (datasetInfo.DatasetType != DatasetInfo.RawDSTypes.DirectoryExt)
                     {
@@ -3715,9 +3715,9 @@ namespace CaptureToolPlugin
                     }
                     break;
 
-                case clsInstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging:
-                case clsInstrumentClassInfo.InstrumentClass.BrukerMALDI_Spot:
-                case clsInstrumentClassInfo.InstrumentClass.FT_Booster_Data:
+                case InstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging:
+                case InstrumentClassInfo.InstrumentClass.BrukerMALDI_Spot:
+                case InstrumentClassInfo.InstrumentClass.FT_Booster_Data:
 
                     if (datasetInfo.DatasetType != DatasetInfo.RawDSTypes.DirectoryNoExt)
                     {
@@ -3726,7 +3726,7 @@ namespace CaptureToolPlugin
                     }
                     break;
 
-                case clsInstrumentClassInfo.InstrumentClass.Sciex_TripleTOF:
+                case InstrumentClassInfo.InstrumentClass.Sciex_TripleTOF:
                     if (datasetInfo.DatasetType != DatasetInfo.RawDSTypes.File)
                     {
                         // Dataset name matched a directory; must be a file
@@ -3735,8 +3735,8 @@ namespace CaptureToolPlugin
                     }
                     break;
 
-                case clsInstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_UIMF:
-                case clsInstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_DotD:
+                case InstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_UIMF:
+                case InstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_DotD:
                     if (datasetInfo.DatasetType != DatasetInfo.RawDSTypes.File)
                     {
                         if (datasetInfo.DatasetType == DatasetInfo.RawDSTypes.DirectoryExt)

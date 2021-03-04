@@ -46,7 +46,7 @@ namespace CaptureTaskManager
                 {
                     // Running on Linux
                     // Auto-enable offline mode
-                    clsUtilities.EnableOfflineMode(true);
+                    CTMUtilities.EnableOfflineMode(true);
                 }
 
                 var exeName = System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
@@ -91,13 +91,13 @@ namespace CaptureTaskManager
                     {
                         ShowTrace("Code test mode enabled");
 
-                        var testHarness = new clsCodeTest();
+                        var testHarness = new CodeTest();
 
                         testHarness.TestConnection();
                     }
                     catch (Exception ex)
                     {
-                        ShowErrorMessage("Exception calling clsCodeTest", ex);
+                        ShowErrorMessage("Exception calling CodeTest", ex);
                         return -1;
                     }
 
@@ -122,12 +122,12 @@ namespace CaptureTaskManager
                 try
                 {
                     // if (mTraceMode)
-                    //    clsUtilities.VerifyFolder("Program.Main");
+                    //    Utilities.VerifyFolder("Program.Main");
 
-                    ShowTrace("Instantiating clsMainProgram");
+                    ShowTrace("Instantiating MainProgram");
 
                     // Initialize the main execution class
-                    var mainProcess = new clsMainProgram(mTraceMode);
+                    var mainProcess = new MainProgram(mTraceMode);
                     var mgrInitSuccess = mainProcess.InitMgr();
                     if (!mgrInitSuccess)
                     {
@@ -205,7 +205,7 @@ namespace CaptureTaskManager
         {
             if (mTraceMode)
             {
-                clsMainProgram.ShowTraceMessage(message);
+                MainProgram.ShowTraceMessage(message);
             }
         }
 

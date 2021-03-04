@@ -22,8 +22,8 @@ namespace CaptureTaskManager
     /// <summary>
     /// Base class for capture step tool plugins
     /// </summary>
-    /// <remarks>Used in CaptureTaskManager.clsMainProgram</remarks>
-    public class clsToolRunnerBase : clsLoggerBase, IToolRunner
+    /// <remarks>Used in CaptureTaskManager.MainProgram</remarks>
+    public class ToolRunnerBase : LoggerBase, IToolRunner
     {
         // Ignore Spelling: yyyy-MM-dd hh:mm:ss tt, Lockfile
 
@@ -97,7 +97,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Constructor
         /// </summary>
-        protected clsToolRunnerBase()
+        protected ToolRunnerBase()
         {
             // Does nothing; see the Setup method for constructor-like behavior
         }
@@ -110,10 +110,10 @@ namespace CaptureTaskManager
         /// Runs the plugin tool. Implements IToolRunner.RunTool method
         /// </summary>
         /// <returns>Enum indicating success or failure</returns>
-        public virtual clsToolReturnData RunTool()
+        public virtual ToolReturnData RunTool()
         {
             // Does nothing at present, so return success
-            var returnData = new clsToolReturnData
+            var returnData = new ToolReturnData
             {
                 CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS
             };
@@ -305,7 +305,7 @@ namespace CaptureTaskManager
             catch (Exception ex)
             {
                 failureMessage = "Error deleting files in working directory";
-                LogError("clsGlobal.ClearWorkDir(), " + failureMessage + " " + workDir, ex);
+                LogError("ToolRunnerBase.CleanWorkDir(), " + failureMessage + " " + workDir, ex);
                 return false;
             }
 
@@ -331,7 +331,7 @@ namespace CaptureTaskManager
             catch (Exception ex)
             {
                 failureMessage = "Error deleting subdirectories in the working directory";
-                LogError("clsGlobal.ClearWorkDir(), " + failureMessage, ex);
+                LogError("ToolRunnerBase.CleanWorkDir(), " + failureMessage, ex);
                 return false;
             }
 
@@ -369,7 +369,7 @@ namespace CaptureTaskManager
             int job,
             MyEMSLStatusCheck statusChecker,
             string statusURI,
-            clsToolReturnData returnData,
+            ToolReturnData returnData,
             out Dictionary<string, object> serverResponse,
             out string currentTask,
             out int percentComplete)
@@ -681,7 +681,7 @@ namespace CaptureTaskManager
             var resCode = mCaptureDbProcedureExecutor.ExecuteSP(cmd, 4);
 
             var returnCode = dbTools.GetString(returnParam.Value);
-            var returnCodeValue = clsConversion.GetReturnCodeValue(returnCode);
+            var returnCodeValue = Conversion.GetReturnCodeValue(returnCode);
 
             if (resCode == 0 && returnCodeValue == 0)
             {
@@ -867,7 +867,7 @@ namespace CaptureTaskManager
         {
             try
             {
-                var versionInspectorAppPath = Path.Combine(clsUtilities.GetAppDirectoryPath(), versionInspectorExeName);
+                var versionInspectorAppPath = Path.Combine(CTMUtilities.GetAppDirectoryPath(), versionInspectorExeName);
 
                 var dllFile = new FileInfo(dllFilePath);
 
@@ -889,10 +889,10 @@ namespace CaptureTaskManager
                                                        Path.GetFileNameWithoutExtension(dllFile.Name) +
                                                        "_VersionInfo.txt");
 
-                var args = clsConversion.PossiblyQuotePath(dllFile.FullName) + " /O:" +
-                              clsConversion.PossiblyQuotePath(versionInfoFilePath);
+                var args = Conversion.PossiblyQuotePath(dllFile.FullName) + " /O:" +
+                              Conversion.PossiblyQuotePath(versionInfoFilePath);
 
-                var progRunner = new clsRunDosProgram(clsUtilities.GetAppDirectoryPath(), mDebugLevel)
+                var progRunner = new RunDosProgram(CTMUtilities.GetAppDirectoryPath(), mDebugLevel)
                 {
                     CacheStandardOutput = false,
                     CreateNoWindow = true,
@@ -992,7 +992,7 @@ namespace CaptureTaskManager
             var resCode = mCaptureDbProcedureExecutor.ExecuteSP(cmd, 2);
 
             var returnCode = dbTools.GetString(returnParam.Value);
-            var returnCodeValue = clsConversion.GetReturnCodeValue(returnCode);
+            var returnCodeValue = Conversion.GetReturnCodeValue(returnCode);
 
             if (resCode == 0 && returnCodeValue == 0)
             {

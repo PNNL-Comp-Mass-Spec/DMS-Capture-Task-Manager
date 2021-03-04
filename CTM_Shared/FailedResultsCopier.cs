@@ -3,9 +3,9 @@ using System.IO;
 
 namespace CaptureTaskManager
 {
-    // Used by ImsDemuxPlugin.clsDemuxTools
+    // Used by ImsDemuxPlugin.DemuxTools
     // ReSharper disable once UnusedMember.Global
-    public class clsFailedResultsCopier : clsLoggerBase
+    public class FailedResultsCopier : LoggerBase
     {
         protected const string FAILED_RESULTS_FOLDER_INFO_TEXT = "FailedResultsFolderInfo_";
         protected const int FAILED_RESULTS_FOLDER_RETAIN_DAYS = 31;
@@ -14,7 +14,7 @@ namespace CaptureTaskManager
         protected readonly ITaskParams mTaskParams;
 
         // Constructor
-        public clsFailedResultsCopier(IMgrParams mgrParams, ITaskParams taskParams)
+        public FailedResultsCopier(IMgrParams mgrParams, ITaskParams taskParams)
         {
             mMgrParams = mgrParams;
             mTaskParams = taskParams;

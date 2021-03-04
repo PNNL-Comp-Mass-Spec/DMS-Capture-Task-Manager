@@ -10,7 +10,7 @@ namespace CaptureTaskManager
     /// <summary>
     /// Holds data to be returned from step tool operations
     /// </summary>
-    public class clsToolReturnData
+    public class ToolReturnData
     {
         #region "Properties"
 
@@ -27,7 +27,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Constructor
         /// </summary>
-        public clsToolReturnData()
+        public ToolReturnData()
         {
             CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
             CloseoutMsg = string.Empty;

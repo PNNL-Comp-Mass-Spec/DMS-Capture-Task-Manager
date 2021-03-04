@@ -47,6 +47,7 @@
   <ItemGroup>
     <Compile Include="GlobalStuff.cs" />
     <Compile Include="Conversion.cs" />
+    <Compile Include="CTMUtilities.cs" />
     <Compile Include="DatasetFileSearchTool.cs" />
     <Compile Include="DatasetInfo.cs" />
     <Compile Include="Errors.cs" />
@@ -63,7 +64,6 @@
     <Compile Include="StatusData.cs" />
     <Compile Include="ToolReturnData.cs" />
     <Compile Include="ToolRunnerBase.cs" />
-    <Compile Include="Utilities.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

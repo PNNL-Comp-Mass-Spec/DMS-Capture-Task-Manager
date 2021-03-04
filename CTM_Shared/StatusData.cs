@@ -15,7 +15,7 @@ namespace CaptureTaskManager
     /// <remarks>
     /// Static class to avoid adding an instance of the status file class to the log tools class
     /// </remarks>
-    public static class clsStatusData
+    public static class StatusData
     {
         #region "Class wide variables"
 

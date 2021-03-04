@@ -3,57 +3,57 @@
 	<ToolRunners>
 		<ToolRunner
 			Tool="datasetcapture"
-			Class="CaptureToolPlugin.clsPluginMain"
+			Class="CaptureToolPlugin.PluginMain"
 			AssemblyFile="CaptureToolPlugin.dll"
 		/>
 		<ToolRunner
 			Tool="datasetinfo"
-			Class="DatasetInfoPlugin.clsPluginMain"
+			Class="DatasetInfoPlugin.PluginMain"
 			AssemblyFile="DatasetInfoPlugin.dll"
 		/>
 		<ToolRunner
 			Tool="datasetintegrity"
-			Class="DatasetIntegrityPlugin.clsPluginMain"
+			Class="DatasetIntegrityPlugin.PluginMain"
 			AssemblyFile="DatasetIntegrityPlugin.dll"
 		/>
 		<ToolRunner
 			Tool="datasetquality"
-			Class="DatasetQualityPlugin.clsPluginMain"
+			Class="DatasetQualityPlugin.PluginMain"
 			AssemblyFile="DatasetQualityPlugin.dll"
 		/>
 		<ToolRunner
 			Tool="datasetarchive"
-			Class="DatasetArchivePlugin.clsPluginMain"
+			Class="DatasetArchivePlugin.PluginMain"
 			AssemblyFile="DatasetArchivePlugin.dll"
 		/>
 		<ToolRunner
 			Tool="archiveupdate"
-			Class="DatasetArchivePlugin.clsPluginMain"
+			Class="DatasetArchivePlugin.PluginMain"
 			AssemblyFile="DatasetArchivePlugin.dll"
 		/>
 	    <ToolRunner
 				Tool="archiveupdatetest"
-				Class="DatasetArchivePlugin.clsPluginMain"
+				Class="DatasetArchivePlugin.PluginMain"
 				AssemblyFile="DatasetArchivePlugin.dll"
 		/>
 	    <ToolRunner
 				Tool="archiveverify"
-				Class="ArchiveVerifyPlugin.clsPluginMain"
+				Class="ArchiveVerifyPlugin.PluginMain"
 				AssemblyFile="ArchiveVerifyPlugin.dll"
 		/>
 	    <ToolRunner
 			Tool="sourcefilerename"
-			Class="SrcFileRenamePlugin.clsPluginMain"
+			Class="SrcFileRenamePlugin.PluginMain"
 			AssemblyFile="SrcFileRenamePlugin.dll"
 		/>
 		<ToolRunner
 			Tool="imsdemultiplex"
-			Class="ImsDemuxPlugin.clsPluginMain"
+			Class="ImsDemuxPlugin.PluginMain"
 			AssemblyFile="ImsDemuxPlugin.dll"
 		/>
 		<ToolRunner
 			Tool="archivestatuscheck"
-			Class="ArchiveStatusCheckPlugin.clsPluginMain"
+			Class="ArchiveStatusCheckPlugin.PluginMain"
 			AssemblyFile="ArchiveStatusCheckPlugin.dll"
 		/>
 	</ToolRunners>

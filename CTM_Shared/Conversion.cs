@@ -1,7 +1,7 @@
 ﻿// ReSharper disable UnusedMember.Global
 namespace CaptureTaskManager
 {
-    public static class clsConversion
+    public static class Conversion
     {
         /// <summary>
         /// Convert string to bool; default false if an error

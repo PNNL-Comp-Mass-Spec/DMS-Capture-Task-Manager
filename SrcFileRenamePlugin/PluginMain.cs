@@ -14,7 +14,7 @@ namespace SrcFileRenamePlugin
     /// Source file rename plugin
     /// </summary>
     // ReSharper disable once UnusedMember.Global
-    public class clsPluginMain : clsToolRunnerBase
+    public class PluginMain : ToolRunnerBase
     {
         // Ignore Spelling: Bionet, secfso
 
@@ -22,10 +22,10 @@ namespace SrcFileRenamePlugin
         /// <summary>
         /// Runs the source file rename tool
         /// </summary>
-        /// <returns>clsToolReturnData object containing tool operation results</returns>
-        public override clsToolReturnData RunTool()
+        /// <returns>ToolReturnData object containing tool operation results</returns>
+        public override ToolReturnData RunTool()
         {
-            var msg = "Starting SrcFileRenamePlugin.clsPluginMain.RunTool()";
+            var msg = "Starting SrcFileRenamePlugin.PluginMain.RunTool()";
             LogDebug(msg);
 
             // Perform base class operations, if any
@@ -52,12 +52,12 @@ namespace SrcFileRenamePlugin
             var useBionet = string.Equals(capMethod, "secfso", StringComparison.OrdinalIgnoreCase);
 
             // Create the object that will perform capture operation
-            var renameOpTool = new clsRenameOps(mMgrParams, useBionet);
+            var renameOpTool = new RenameOps(mMgrParams, useBionet);
             RegisterEvents(renameOpTool);
 
             try
             {
-                msg = "clsPluginMain.RunTool(): Starting rename operation";
+                msg = "PluginMain.RunTool(): Starting rename operation";
                 LogDebug(msg);
 
                 returnData.CloseoutType = renameOpTool.DoOperation(mTaskParams, out var errorMessage);
@@ -67,17 +67,17 @@ namespace SrcFileRenamePlugin
                     returnData.CloseoutMsg = errorMessage;
                 }
 
-                msg = "clsPluginMain.RunTool(): Completed rename operation";
+                msg = "PluginMain.RunTool(): Completed rename operation";
                 LogDebug(msg);
             }
             catch (Exception ex)
             {
-                msg = "clsPluginMain.RunTool(): Exception during rename operation (useBionet=" + useBionet + ")";
+                msg = "PluginMain.RunTool(): Exception during rename operation (useBionet=" + useBionet + ")";
                 LogError(msg, ex);
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
-            msg = "Completed clsPluginMain.RunTool()";
+            msg = "Completed PluginMain.RunTool()";
             LogDebug(msg);
 
             return returnData;
@@ -91,12 +91,12 @@ namespace SrcFileRenamePlugin
         /// <param name="statusTools">Tools for status reporting</param>
         public override void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
         {
-            var msg = "Starting clsPluginMain.Setup()";
+            var msg = "Starting PluginMain.Setup()";
             LogDebug(msg);
 
             base.Setup(mgrParams, taskParams, statusTools);
 
-            msg = "Completed clsPluginMain.Setup()";
+            msg = "Completed PluginMain.Setup()";
             LogDebug(msg);
         }
 
@@ -109,7 +109,7 @@ namespace SrcFileRenamePlugin
             LogDebug("Determining tool version info");
 
             var toolVersionInfo = string.Empty;
-            var appDirectory = clsUtilities.GetAppDirectoryPath();
+            var appDirectory = CTMUtilities.GetAppDirectoryPath();
 
             if (string.IsNullOrWhiteSpace(appDirectory))
             {

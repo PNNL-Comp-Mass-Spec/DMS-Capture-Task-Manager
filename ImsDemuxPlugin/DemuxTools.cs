@@ -20,7 +20,7 @@ namespace ImsDemuxPlugin
     /// <summary>
     /// This class demultiplexes a .UIMF file using the UIMFDemultiplexer
     /// </summary>
-    public class clsDemuxTools : EventNotifier
+    public class DemuxTools : EventNotifier
     {
         // Ignore Spelling: demultiplexed, demultiplexes, demultiplexing, demultiplexer, demux, ims_tof, Methow, calibrants, workdir, cmd
 
@@ -90,7 +90,7 @@ namespace ImsDemuxPlugin
 
         #region "Events"
 
-        // Events used for communication back to clsPluginMain, where the logging and status updates are handled
+        // Events used for communication back to PluginMain, where the logging and status updates are handled
 
         public event DelDemuxProgressHandler DemuxProgress;
         public event DelDemuxProgressHandler BinCentricTableProgress;
@@ -110,7 +110,7 @@ namespace ImsDemuxPlugin
         /// </summary>
         /// <param name="uimDemultiplexerPath"></param>
         /// <param name="fileTools"></param>
-        public clsDemuxTools(string uimDemultiplexerPath, FileTools fileTools)
+        public DemuxTools(string uimDemultiplexerPath, FileTools fileTools)
         {
             mProgressUpdateIntervalSeconds = 5;
 
@@ -122,7 +122,7 @@ namespace ImsDemuxPlugin
 
         #region "Methods"
 
-        public clsToolReturnData AddBinCentricTablesIfMissing(IMgrParams mgrParams, ITaskParams taskParams, clsToolReturnData returnData)
+        public ToolReturnData AddBinCentricTablesIfMissing(IMgrParams mgrParams, ITaskParams taskParams, ToolReturnData returnData)
         {
             try
             {
@@ -154,7 +154,7 @@ namespace ImsDemuxPlugin
                 }
 
                 // Make sure the working directory is empty
-                clsToolRunnerBase.CleanWorkDir(mWorkDir);
+                ToolRunnerBase.CleanWorkDir(mWorkDir);
 
                 // Copy the UIMF file from the storage server to the working directory
                 var uimfFileName = mDataset + ".uimf";
@@ -243,7 +243,7 @@ namespace ImsDemuxPlugin
                 OnErrorEvent(msg, ex);
                 if (returnData == null)
                 {
-                    returnData = new clsToolReturnData();
+                    returnData = new ToolReturnData();
                 }
 
                 returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, msg);
@@ -252,9 +252,9 @@ namespace ImsDemuxPlugin
             }
         }
 
-        private clsToolReturnData CopyUIMFToWorkDir(
+        private ToolReturnData CopyUIMFToWorkDir(
             string uimfFileName,
-            clsToolReturnData returnData,
+            ToolReturnData returnData,
             out string uimfRemoteFileNamePath,
             out string uimfLocalFileNamePath)
         {
@@ -275,7 +275,7 @@ namespace ImsDemuxPlugin
             return returnData;
         }
 
-        private string GetRemoteUIMFFilePath(clsToolReturnData returnData)
+        private string GetRemoteUIMFFilePath(ToolReturnData returnData)
         {
             try
             {
@@ -311,7 +311,7 @@ namespace ImsDemuxPlugin
         /// <param name="taskParams"></param>
         /// <param name="returnData"></param>
         /// <returns></returns>
-        public clsToolReturnData PerformCalibration(IMgrParams mgrParams, ITaskParams taskParams, clsToolReturnData returnData)
+        public ToolReturnData PerformCalibration(IMgrParams mgrParams, ITaskParams taskParams, ToolReturnData returnData)
         {
             mLoggedConsoleOutputErrors.Clear();
             UpdateDatasetInfo(mgrParams, taskParams);
@@ -322,7 +322,7 @@ namespace ImsDemuxPlugin
             bool autoCalibrate;
 
             // Make sure the working directory is empty
-            clsToolRunnerBase.CleanWorkDir(mWorkDir);
+            ToolRunnerBase.CleanWorkDir(mWorkDir);
 
             // Locate data file on storage server
             // Don't copy it locally; just work with it over the network
@@ -507,7 +507,7 @@ namespace ImsDemuxPlugin
         /// <param name="calibrationSlope"></param>
         /// <param name="calibrationIntercept"></param>
         /// <returns></returns>
-        public clsToolReturnData PerformManualCalibration(IMgrParams mgrParams, ITaskParams taskParams, clsToolReturnData returnData, double calibrationSlope, double calibrationIntercept)
+        public ToolReturnData PerformManualCalibration(IMgrParams mgrParams, ITaskParams taskParams, ToolReturnData returnData, double calibrationSlope, double calibrationIntercept)
         {
             mLoggedConsoleOutputErrors.Clear();
             UpdateDatasetInfo(mgrParams, taskParams);
@@ -578,7 +578,7 @@ namespace ImsDemuxPlugin
                 OnErrorEvent(msg, ex);
                 if (returnData == null)
                 {
-                    returnData = new clsToolReturnData();
+                    returnData = new ToolReturnData();
                 }
 
                 returnData.CloseoutMsg = "Error manually calibrating UIMF file";
@@ -597,7 +597,7 @@ namespace ImsDemuxPlugin
         /// <param name="uimfFileName">Name of the .uimf file</param>
         /// <param name="numBitsForEncoding">Number of bits used to encode the file (traditionally 4 bit)</param>
         /// <returns>Enum indicating task success or failure</returns>
-        public clsToolReturnData PerformDemux(
+        public ToolReturnData PerformDemux(
             IMgrParams mgrParams,
             ITaskParams taskParams,
             string uimfFileName,
@@ -621,11 +621,11 @@ namespace ImsDemuxPlugin
             }
 
             // Make sure the working directory is empty
-            clsToolRunnerBase.CleanWorkDir(mWorkDir);
+            ToolRunnerBase.CleanWorkDir(mWorkDir);
 
             // Copy the UIMF file from the storage server to the working directory
 
-            var returnData = CopyUIMFToWorkDir(uimfFileName, new clsToolReturnData(), out var uimfRemoteEncodedFileNamePath, out var uimfLocalEncodedFileNamePath);
+            var returnData = CopyUIMFToWorkDir(uimfFileName, new ToolReturnData(), out var uimfRemoteEncodedFileNamePath, out var uimfLocalEncodedFileNamePath);
             if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
             {
                 return returnData;
@@ -777,7 +777,7 @@ namespace ImsDemuxPlugin
                 }
 
                 // Try to save the demultiplexed .UIMF file (and any other files in the work directory)
-                var failedResultsCopier = new clsFailedResultsCopier(mgrParams, taskParams);
+                var failedResultsCopier = new FailedResultsCopier(mgrParams, taskParams);
                 failedResultsCopier.CopyFailedResultsToArchiveDirectory(mWorkDir);
 
                 return returnData;
@@ -893,7 +893,7 @@ namespace ImsDemuxPlugin
         /// <param name="localUimfDecodedFilePath"></param>
         /// <param name="fileDescription"></param>
         /// <returns>True if success; otherwise false</returns>
-        private bool CopyUIMFFileToStorageServer(clsToolReturnData returnData, string localUimfDecodedFilePath, string fileDescription)
+        private bool CopyUIMFFileToStorageServer(ToolReturnData returnData, string localUimfDecodedFilePath, string fileDescription)
         {
             var success = true;
 
@@ -916,7 +916,7 @@ namespace ImsDemuxPlugin
         /// </summary>
         /// <param name="returnData"></param>
         /// <returns>True if success; otherwise false</returns>
-        private void CopyCalibrationLogToStorageServer(clsToolReturnData returnData)
+        private void CopyCalibrationLogToStorageServer(ToolReturnData returnData)
         {
             string msg;
 
@@ -1339,12 +1339,12 @@ namespace ImsDemuxPlugin
                 // Construct the command line arguments
 
                 // Input file
-                var arguments = clsConversion.PossiblyQuotePath(inputFilePath);
+                var arguments = Conversion.PossiblyQuotePath(inputFilePath);
 
                 if (!string.Equals(inputFile.DirectoryName, outputFile.DirectoryName, StringComparison.OrdinalIgnoreCase))
                 {
                     // Output directory
-                    arguments += " /O:" + clsConversion.PossiblyQuotePath(outputFile.DirectoryName);
+                    arguments += " /O:" + Conversion.PossiblyQuotePath(outputFile.DirectoryName);
                 }
 
                 if (demuxOptions.CalibrateOnly)
@@ -1363,7 +1363,7 @@ namespace ImsDemuxPlugin
                     mCalibrating = false;
 
                     // Output file name
-                    arguments += " /N:" + clsConversion.PossiblyQuotePath(outputFile.Name);
+                    arguments += " /N:" + Conversion.PossiblyQuotePath(outputFile.Name);
 
                     if (demuxOptions.NumBitsForEncoding > 1)
                     {
@@ -1399,14 +1399,14 @@ namespace ImsDemuxPlugin
 
                     if (!string.IsNullOrEmpty(demuxOptions.CheckpointTargetDirectory))
                     {
-                        arguments += " /CheckPointDirectory:" + clsConversion.PossiblyQuotePath(demuxOptions.CheckpointTargetDirectory);
+                        arguments += " /CheckPointDirectory:" + Conversion.PossiblyQuotePath(demuxOptions.CheckpointTargetDirectory);
                     }
                 }
 
                 mUimfDemultiplexerConsoleOutputFilePath = Path.Combine(mWorkDir, "UIMFDemultiplexer_ConsoleOutput.txt");
 
                 OnStatusEvent(mUimfDemultiplexerPath + " " + arguments);
-                var cmdRunner = new clsRunDosProgram(mWorkDir);
+                var cmdRunner = new RunDosProgram(mWorkDir);
                 mDemuxStartTime = DateTime.UtcNow;
                 mLastProgressUpdateTime = DateTime.UtcNow;
                 mLastProgressMessageTime = DateTime.UtcNow;
@@ -1480,7 +1480,7 @@ namespace ImsDemuxPlugin
         /// <param name="localUimfDecodedFilePath"></param>
         /// <param name="returnData"></param>
         /// <returns>True if it was demultiplexed, otherwise false</returns>
-        private bool ValidateUIMFDemultiplexed(string localUimfDecodedFilePath, clsToolReturnData returnData)
+        private bool ValidateUIMFDemultiplexed(string localUimfDecodedFilePath, ToolReturnData returnData)
         {
             bool uimfDemultiplexed;
             string msg;
@@ -1533,7 +1533,7 @@ namespace ImsDemuxPlugin
         /// <param name="localUimfDecodedFilePath"></param>
         /// <param name="returnData"></param>
         /// <returns>True if it was calibrated, otherwise false</returns>
-        private bool ValidateUIMFCalibrated(string localUimfDecodedFilePath, clsToolReturnData returnData)
+        private bool ValidateUIMFCalibrated(string localUimfDecodedFilePath, ToolReturnData returnData)
         {
             bool uimfCalibrated;
             string msg;
@@ -1586,7 +1586,7 @@ namespace ImsDemuxPlugin
 
         #region "Event handlers"
 
-        private void AttachCmdRunnerEvents(clsRunDosProgram cmdRunner)
+        private void AttachCmdRunnerEvents(RunDosProgram cmdRunner)
         {
             try
             {

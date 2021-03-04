@@ -19,7 +19,7 @@ namespace DatasetArchivePlugin
     /// </summary>
     /// <remarks>Also used for archive update</remarks>
     // ReSharper disable once UnusedMember.Global
-    public class clsPluginMain : clsToolRunnerBase
+    public class PluginMain : ToolRunnerBase
     {
         #region "Constants"
         protected const string SP_NAME_STORE_MYEMSL_STATS = "StoreMyEMSLUploadStats";
@@ -37,13 +37,13 @@ namespace DatasetArchivePlugin
         /// Runs the archive and archive update step tools
         /// </summary>
         /// <returns>Enum indicating success or failure</returns>
-        public override clsToolReturnData RunTool()
+        public override ToolReturnData RunTool()
         {
             string archiveOpDescription;
             mSubmittedToMyEMSL = false;
             mMyEMSLAlreadyUpToDate = false;
 
-            var msg = "Starting DatasetArchivePlugin.clsPluginMain.RunTool()";
+            var msg = "Starting DatasetArchivePlugin.PluginMain.RunTool()";
             LogDebug(msg);
 
             // Perform base class operations, if any
@@ -64,8 +64,8 @@ namespace DatasetArchivePlugin
 
             ResetTimestampForQueueWaitTimeLogging();
 
-            // Always use clsArchiveUpdate for both archiving new datasets and updating existing datasets
-            clsOpsBase archOpTool = new clsArchiveUpdate(mMgrParams, mTaskParams, mStatusTools, mFileTools);
+            // Always use ArchiveUpdate for both archiving new datasets and updating existing datasets
+            OpsBase archOpTool = new ArchiveUpdate(mMgrParams, mTaskParams, mStatusTools, mFileTools);
             RegisterEvents(archOpTool);
 
             if (mTaskParams.GetParam("StepTool").Equals("DatasetArchive", StringComparison.OrdinalIgnoreCase))
@@ -122,7 +122,7 @@ namespace DatasetArchivePlugin
             msg = "Completed " + archiveOpDescription + ", job " + mJob;
             LogMessage(msg);
 
-            msg = "Completed clsPluginMain.RunTool()";
+            msg = "Completed PluginMain.RunTool()";
             LogDebug(msg);
 
             return returnData;
@@ -136,12 +136,12 @@ namespace DatasetArchivePlugin
         /// <param name="statusTools">Tools for status reporting</param>
         public override void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
         {
-            var msg = "Starting clsPluginMain.Setup()";
+            var msg = "Starting PluginMain.Setup()";
             LogDebug(msg);
 
             base.Setup(mgrParams, taskParams, statusTools);
 
-            msg = "Completed clsPluginMain.Setup()";
+            msg = "Completed PluginMain.Setup()";
             LogDebug(msg);
         }
 
@@ -235,7 +235,7 @@ namespace DatasetArchivePlugin
             LogDebug("Determining tool version info");
 
             var toolVersionInfo = string.Empty;
-            var appDirectory = clsUtilities.GetAppDirectoryPath();
+            var appDirectory = CTMUtilities.GetAppDirectoryPath();
 
             if (string.IsNullOrWhiteSpace(appDirectory))
             {

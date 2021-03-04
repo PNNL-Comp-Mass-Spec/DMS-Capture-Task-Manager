@@ -17,7 +17,7 @@ namespace SrcFileRenamePlugin
     /// <summary>
     /// Class for performing rename operations
     /// </summary>
-    internal class clsRenameOps : EventNotifier
+    internal class RenameOps : EventNotifier
     {
         // Ignore Spelling: Bionet, Pwd, prepend, Username, Subfolder, secfso, fso, chromooff, flatline, LCmethod, plugsplit, slowsplit
 
@@ -39,7 +39,7 @@ namespace SrcFileRenamePlugin
         /// </summary>
         /// <param name="mgrParams">Parameters for manager operation</param>
         /// <param name="useBioNet">Flag to indicate if source instrument is on Bionet</param>
-        public clsRenameOps(IMgrParams mgrParams, bool useBioNet)
+        public RenameOps(IMgrParams mgrParams, bool useBioNet)
         {
             // Setup for Bionet use, if applicable
             mUseBioNet = useBioNet;
@@ -83,9 +83,9 @@ namespace SrcFileRenamePlugin
 
             var instrumentFileHash = taskParams.GetParam("Instrument_File_Hash");
 
-            var pwd = clsUtilities.DecodePassword(mPwd);
+            var pwd = CTMUtilities.DecodePassword(mPwd);
 
-            OnDebugEvent("Started clsRenameOps.DoOperation()");
+            OnDebugEvent("Started RenameOps.DoOperation()");
 
             // Set up paths
 

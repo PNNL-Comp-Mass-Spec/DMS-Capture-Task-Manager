@@ -4,7 +4,7 @@ using PRISMDatabaseUtils;
 
 namespace CaptureTaskManager
 {
-    public class clsCleanupMgrErrors : clsLoggerBase
+    public class CleanupMgrErrors : LoggerBase
     {
         #region "Constants"
 
@@ -78,7 +78,7 @@ namespace CaptureTaskManager
         /// <param name="workingDirPath"></param>
         /// <param name="statusFile"></param>
         /// <param name="traceMode"></param>
-        public clsCleanupMgrErrors(
+        public CleanupMgrErrors(
             string mgrConfigDBConnectionString,
             string managerName,
             string workingDirPath,
@@ -155,7 +155,7 @@ namespace CaptureTaskManager
             ReportManagerErrorCleanup(CleanupActionCodeConstants.Start);
 
             // Delete all folders and subdirectories in the working directory
-            var success = clsToolRunnerBase.CleanWorkDir(mWorkingDirPath, 1, out var failureMessage);
+            var success = ToolRunnerBase.CleanWorkDir(mWorkingDirPath, 1, out var failureMessage);
 
             if (!success)
             {
@@ -170,7 +170,7 @@ namespace CaptureTaskManager
                 success = mStatusFile.DeleteStatusFlagFile();
                 if (!success)
                 {
-                    failureMessage = "error deleting " + clsStatusFile.FLAG_FILE_NAME;
+                    failureMessage = "error deleting " + StatusFile.FLAG_FILE_NAME;
                 }
             }
 
@@ -198,7 +198,7 @@ namespace CaptureTaskManager
         {
             if (string.IsNullOrWhiteSpace(mMgrConfigDBConnectionString))
             {
-                if (clsUtilities.OfflineMode)
+                if (CTMUtilities.OfflineMode)
                 {
                     LogDebug("Skipping call to " + SP_NAME_REPORT_MGR_CLEANUP + " since offline");
                 }

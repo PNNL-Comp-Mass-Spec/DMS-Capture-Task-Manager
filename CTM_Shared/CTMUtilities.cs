@@ -9,7 +9,8 @@ using PRISMDatabaseUtils;
 // ReSharper disable UnusedMember.Global
 namespace CaptureTaskManager
 {
-    public static class clsUtilities
+    // ReSharper disable once InconsistentNaming
+    public static class CTMUtilities
     {
         #region Properties
 

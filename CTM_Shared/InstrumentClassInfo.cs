@@ -4,7 +4,7 @@
 namespace CaptureTaskManager
 {
     // Used in the DatasetIntegrityPlugin and elsewhere
-    public static class clsInstrumentClassInfo
+    public static class InstrumentClassInfo
     {
         // Ignore Spelling: Synapt, wiff, uimf, Shimadzu, qgd, acqu, fid, maldi, tof, baf, ser, tims, tdf, Illumina
 

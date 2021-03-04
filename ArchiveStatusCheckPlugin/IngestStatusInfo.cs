@@ -1,7 +1,7 @@
 ﻿
 namespace ArchiveStatusCheckPlugin
 {
-    public class clsIngestStatusInfo
+    public class IngestStatusInfo
     {
         /// <summary>
         /// Status Number, e.g. 3257122
@@ -53,7 +53,7 @@ namespace ArchiveStatusCheckPlugin
         /// <summary>
         /// Constructor that takes statusNum and statusURI
         /// </summary>
-        public clsIngestStatusInfo(int statusNum, string statusURI)
+        public IngestStatusInfo(int statusNum, string statusURI)
         {
             StatusNum = statusNum;
             StatusURI = statusURI;

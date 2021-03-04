@@ -22,7 +22,7 @@ namespace DatasetInfoPlugin
     /// Dataset Info plugin: generates QC graphics using MSFileInfoScanner
     /// </summary>
     // ReSharper disable once UnusedMember.Global
-    public class clsPluginMain : clsToolRunnerBase
+    public class PluginMain : ToolRunnerBase
     {
         // Ignore Spelling: labelling, fid, acq, png, prepend, href, html, maldi, ser, Shimadzu, Illumina, Synapt, wiff, qgd, mgf, online
 
@@ -78,11 +78,11 @@ namespace DatasetInfoPlugin
         /// Runs the dataset info step tool
         /// </summary>
         /// <returns>Enum indicating success or failure</returns>
-        public override clsToolReturnData RunTool()
+        public override ToolReturnData RunTool()
         {
             // Note that Debug messages are logged if mDebugLevel == 5
 
-            var msg = "Starting DatasetInfoPlugin.clsPluginMain.RunTool()";
+            var msg = "Starting DatasetInfoPlugin.PluginMain.RunTool()";
             LogDebug(msg);
 
             // Perform base class operations, if any
@@ -106,7 +106,7 @@ namespace DatasetInfoPlugin
 
             returnData = RunMsFileInfoScanner();
 
-            msg = "Completed clsPluginMain.RunTool()";
+            msg = "Completed PluginMain.RunTool()";
             LogDebug(msg);
 
             return returnData;
@@ -178,7 +178,7 @@ namespace DatasetInfoPlugin
         /// <param name="statusTools">Tools for status reporting</param>
         public override void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
         {
-            var msg = "Starting clsPluginMain.Setup()";
+            var msg = "Starting PluginMain.Setup()";
             LogDebug(msg);
 
             base.Setup(mgrParams, taskParams, statusTools);
@@ -213,7 +213,7 @@ namespace DatasetInfoPlugin
             // Monitor progress reported by MSFileInfoScanner
             mMsFileScanner.ProgressUpdate += ProgressUpdateHandler;
 
-            msg = "Completed clsPluginMain.Setup()";
+            msg = "Completed PluginMain.Setup()";
             LogDebug(msg);
         }
 
@@ -221,9 +221,9 @@ namespace DatasetInfoPlugin
         /// Runs the MS_File_Info_Scanner tool
         /// </summary>
         /// <returns></returns>
-        private clsToolReturnData RunMsFileInfoScanner()
+        private ToolReturnData RunMsFileInfoScanner()
         {
-            var returnData = new clsToolReturnData();
+            var returnData = new ToolReturnData();
 
             // Always use client perspective for the source directory (allows MSFileInfoScanner to run from any CTM)
             var remoteSharePath = mTaskParams.GetParam("Storage_Vol_External");
@@ -276,7 +276,7 @@ namespace DatasetInfoPlugin
                 // DS quality test not implemented for this file type
                 returnData.CloseoutMsg = string.Empty;
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
-                returnData.EvalMsg = "Dataset info test not implemented for data type " + clsInstrumentClassInfo.GetRawDataTypeName(rawDataType) + ", instrument class " + clsInstrumentClassInfo.GetInstrumentClassName(instrumentClass);
+                returnData.EvalMsg = "Dataset info test not implemented for data type " + InstrumentClassInfo.GetRawDataTypeName(rawDataType) + ", instrument class " + InstrumentClassInfo.GetInstrumentClassName(instrumentClass);
                 returnData.EvalCode = EnumEvalCode.EVAL_CODE_NOT_EVALUATED;
                 return returnData;
             }
@@ -317,12 +317,12 @@ namespace DatasetInfoPlugin
                 try
                 {
                     Directory.CreateDirectory(outputPathBase);
-                    var msg = "clsPluginMain.RunMsFileInfoScanner: Created output directory " + outputPathBase;
+                    var msg = "PluginMain.RunMsFileInfoScanner: Created output directory " + outputPathBase;
                     LogDebug(msg);
                 }
                 catch (Exception ex)
                 {
-                    var msg = string.Format("clsPluginMain.RunMsFileInfoScanner: {0} {1}", EXCEPTION_CREATING_OUTPUT_DIRECTORY, outputPathBase);
+                    var msg = string.Format("PluginMain.RunMsFileInfoScanner: {0} {1}", EXCEPTION_CREATING_OUTPUT_DIRECTORY, outputPathBase);
 
                     if (System.Net.Dns.GetHostName().StartsWith("monroe", StringComparison.OrdinalIgnoreCase) &&
                         !Environment.UserName.StartsWith("svc", StringComparison.OrdinalIgnoreCase))
@@ -364,7 +364,7 @@ namespace DatasetInfoPlugin
                 bool fileCopiedLocally;
 
                 var datasetFile = new FileInfo(remoteFileOrDirectoryPath);
-                if (datasetFile.Exists && string.Equals(datasetFile.Extension, clsInstrumentClassInfo.DOT_RAW_EXTENSION,
+                if (datasetFile.Exists && string.Equals(datasetFile.Extension, InstrumentClassInfo.DOT_RAW_EXTENSION,
                                                         StringComparison.OrdinalIgnoreCase))
                 {
                     LogMessage("Copying instrument file to local disk: " + datasetFile.FullName, false, false);
@@ -504,8 +504,8 @@ namespace DatasetInfoPlugin
                     returnData.CloseoutMsg = string.Empty;
                     returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
                     returnData.EvalMsg = "MSFileInfoScanner error for data type " +
-                                     clsInstrumentClassInfo.GetRawDataTypeName(rawDataType) + ", instrument class " +
-                                     clsInstrumentClassInfo.GetInstrumentClassName(instrumentClass);
+                                     InstrumentClassInfo.GetRawDataTypeName(rawDataType) + ", instrument class " +
+                                     InstrumentClassInfo.GetInstrumentClassName(instrumentClass);
                     returnData.EvalCode = EnumEvalCode.EVAL_CODE_NOT_EVALUATED;
                     return returnData;
                 }
@@ -563,7 +563,7 @@ namespace DatasetInfoPlugin
 
             // Merge the dataset info defined in cachedDatasetInfoXML
             // If cachedDatasetInfoXml contains just one item, simply return it
-            var datasetXmlMerger = new clsDatasetInfoXmlMerger();
+            var datasetXmlMerger = new DatasetInfoXmlMerger();
             var datasetInfoXML = CombineDatasetInfoXML(datasetXmlMerger, cachedDatasetInfoXML);
 
             if (cachedDatasetInfoXML.Count > 1)
@@ -604,7 +604,7 @@ namespace DatasetInfoPlugin
         /// <param name="datasetXmlMerger"></param>
         /// <param name="returnData"></param>
         /// <returns>True if warnings exist, otherwise false</returns>
-        private void AcqTimeWarningsReported(clsDatasetInfoXmlMerger datasetXmlMerger, clsToolReturnData returnData)
+        private void AcqTimeWarningsReported(DatasetInfoXmlMerger datasetXmlMerger, ToolReturnData returnData)
         {
             if (datasetXmlMerger.AcqTimeWarnings.Count == 0)
             {
@@ -682,7 +682,7 @@ namespace DatasetInfoPlugin
 
         private void ProcessMultiDatasetInfoScannerResults(
             string outputPathBase,
-            clsDatasetInfoXmlMerger datasetXmlMerger,
+            DatasetInfoXmlMerger datasetXmlMerger,
             string datasetInfoXML,
             IEnumerable<string> outputDirectoryNames)
         {
@@ -869,7 +869,7 @@ namespace DatasetInfoPlugin
         /// <param name="datasetXmlMerger">DatasetInfo XML Merger</param>
         /// <param name="cachedDatasetInfoXml">List of cached DatasetInfo XML</param>
         /// <returns>Merged DatasetInfo XML</returns>
-        private string CombineDatasetInfoXML(clsDatasetInfoXmlMerger datasetXmlMerger, List<string> cachedDatasetInfoXml)
+        private string CombineDatasetInfoXML(DatasetInfoXmlMerger datasetXmlMerger, List<string> cachedDatasetInfoXml)
         {
             if (cachedDatasetInfoXml.Count == 1)
             {
@@ -1087,30 +1087,30 @@ namespace DatasetInfoPlugin
         private List<string> GetDataFileOrDirectoryName(
             string inputDirectory,
             out QCPlottingModes qcPlotMode,
-            out clsInstrumentClassInfo.RawDataType rawDataType,
-            out clsInstrumentClassInfo.InstrumentClass instrumentClass,
+            out InstrumentClassInfo.RawDataType rawDataType,
+            out InstrumentClassInfo.InstrumentClass instrumentClass,
             out bool brukerDotDBaf)
         {
             bool isFile;
 
             qcPlotMode = QCPlottingModes.AllPlots;
-            rawDataType = clsInstrumentClassInfo.RawDataType.Unknown;
+            rawDataType = InstrumentClassInfo.RawDataType.Unknown;
             brukerDotDBaf = false;
 
             // Determine the Instrument Class and RawDataType
             var instClassName = mTaskParams.GetParam("Instrument_Class");
             var rawDataTypeName = mTaskParams.GetParam("RawDataType", "UnknownRawDataType");
 
-            instrumentClass = clsInstrumentClassInfo.GetInstrumentClass(instClassName);
-            if (instrumentClass == clsInstrumentClassInfo.InstrumentClass.Unknown)
+            instrumentClass = InstrumentClassInfo.GetInstrumentClass(instClassName);
+            if (instrumentClass == InstrumentClassInfo.InstrumentClass.Unknown)
             {
                 mMsg = "Instrument class not recognized: " + instClassName;
                 LogError(mMsg);
                 return new List<string> { UNKNOWN_FILE_TYPE };
             }
 
-            rawDataType = clsInstrumentClassInfo.GetRawDataType(rawDataTypeName);
-            if (rawDataType == clsInstrumentClassInfo.RawDataType.Unknown)
+            rawDataType = InstrumentClassInfo.GetRawDataType(rawDataTypeName);
+            if (rawDataType == InstrumentClassInfo.RawDataType.Unknown)
             {
                 mMsg = "RawDataType not recognized: " + rawDataTypeName;
                 LogError(mMsg);
@@ -1123,36 +1123,36 @@ namespace DatasetInfoPlugin
             // Get the expected file name based on the dataset type
             switch (rawDataType)
             {
-                case clsInstrumentClassInfo.RawDataType.ThermoRawFile:
+                case InstrumentClassInfo.RawDataType.ThermoRawFile:
                     // LTQ_2, LTQ_4, etc.
                     // LTQ_Orb_1, LTQ_Orb_2, etc.
                     // VOrbiETD01, VOrbiETD02, etc.
                     // TSQ_3
                     // Thermo_GC_MS_01
-                    fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION;
+                    fileOrDirectoryName = mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION;
                     isFile = true;
                     break;
 
-                case clsInstrumentClassInfo.RawDataType.ZippedSFolders:
+                case InstrumentClassInfo.RawDataType.ZippedSFolders:
                     // 9T_FTICR, 11T_FTICR_B, and 12T_FTICR
                     fileOrDirectoryName = "analysis.baf";
                     isFile = true;
                     break;
 
-                case clsInstrumentClassInfo.RawDataType.BrukerFTFolder:
+                case InstrumentClassInfo.RawDataType.BrukerFTFolder:
                     // 12T_FTICR_B, 15T_FTICR, 9T_FTICR_B
                     // Also, Bruker_FT_IonTrap01, which is Bruker_Amazon_Ion_Trap
                     // 12T_FTICR_Imaging and 15T_FTICR_Imaging datasets with instrument class BrukerMALDI_Imaging_V2 will also have bruker_ft format;
                     // however, instead of an analysis.baf file, they might have a .mcf file and a ser file
 
                     isFile = true;
-                    if (instrumentClass == clsInstrumentClassInfo.InstrumentClass.Bruker_Amazon_Ion_Trap)
+                    if (instrumentClass == InstrumentClassInfo.InstrumentClass.Bruker_Amazon_Ion_Trap)
                     {
-                        fileOrDirectoryName = Path.Combine(mDataset + clsInstrumentClassInfo.DOT_D_EXTENSION, "analysis.yep");
+                        fileOrDirectoryName = Path.Combine(mDataset + InstrumentClassInfo.DOT_D_EXTENSION, "analysis.yep");
                     }
                     else
                     {
-                        fileOrDirectoryName = Path.Combine(mDataset + clsInstrumentClassInfo.DOT_D_EXTENSION, "analysis.baf");
+                        fileOrDirectoryName = Path.Combine(mDataset + InstrumentClassInfo.DOT_D_EXTENSION, "analysis.baf");
                         brukerDotDBaf = true;
                     }
 
@@ -1167,24 +1167,24 @@ namespace DatasetInfoPlugin
 
                     break;
 
-                case clsInstrumentClassInfo.RawDataType.UIMF:
+                case InstrumentClassInfo.RawDataType.UIMF:
                     // IMS_TOF_2, IMS_TOF_3, IMS_TOF_4, IMS_TOF_5, IMS_TOF_6, etc.
-                    fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_UIMF_EXTENSION;
+                    fileOrDirectoryName = mDataset + InstrumentClassInfo.DOT_UIMF_EXTENSION;
                     isFile = true;
                     break;
 
-                case clsInstrumentClassInfo.RawDataType.SciexWiffFile:
+                case InstrumentClassInfo.RawDataType.SciexWiffFile:
                     // QTrap01
-                    fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_WIFF_EXTENSION;
+                    fileOrDirectoryName = mDataset + InstrumentClassInfo.DOT_WIFF_EXTENSION;
                     isFile = true;
                     break;
 
-                case clsInstrumentClassInfo.RawDataType.AgilentDFolder:
+                case InstrumentClassInfo.RawDataType.AgilentDFolder:
                     // Agilent_GC_MS_01, AgQTOF03, AgQTOF04, PrepHPLC1
-                    fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
+                    fileOrDirectoryName = mDataset + InstrumentClassInfo.DOT_D_EXTENSION;
                     isFile = false;
 
-                    if (instrumentClass == clsInstrumentClassInfo.InstrumentClass.PrepHPLC)
+                    if (instrumentClass == InstrumentClassInfo.InstrumentClass.PrepHPLC)
                     {
                         LogMessage("Skipping MSFileInfoScanner since PrepHPLC dataset");
                         return new List<string> { INVALID_FILE_TYPE };
@@ -1192,7 +1192,7 @@ namespace DatasetInfoPlugin
 
                     break;
 
-                case clsInstrumentClassInfo.RawDataType.BrukerMALDIImaging:
+                case InstrumentClassInfo.RawDataType.BrukerMALDIImaging:
                     // bruker_maldi_imaging: 12T_FTICR_Imaging, 15T_FTICR_Imaging, and BrukerTOF_Imaging_01
                     // Find the name of the first zip file
 
@@ -1203,40 +1203,40 @@ namespace DatasetInfoPlugin
                     if (string.IsNullOrEmpty(fileOrDirectoryName))
                     {
                         mMsg = "Did not find any 0_R*.zip files in the dataset directory";
-                        LogWarning("clsPluginMain.GetDataFileOrDirectoryName: " + mMsg);
+                        LogWarning("PluginMain.GetDataFileOrDirectoryName: " + mMsg);
                         return new List<string> { INVALID_FILE_TYPE };
                     }
 
                     break;
 
-                case clsInstrumentClassInfo.RawDataType.BrukerTOFBaf:
-                    fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
+                case InstrumentClassInfo.RawDataType.BrukerTOFBaf:
+                    fileOrDirectoryName = mDataset + InstrumentClassInfo.DOT_D_EXTENSION;
                     isFile = false;
                     break;
 
-                case clsInstrumentClassInfo.RawDataType.BrukerTOFTdf:
-                    fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_D_EXTENSION;
+                case InstrumentClassInfo.RawDataType.BrukerTOFTdf:
+                    fileOrDirectoryName = mDataset + InstrumentClassInfo.DOT_D_EXTENSION;
                     qcPlotMode = QCPlottingModes.BpiAndTicOnly;
                     isFile = false;
                     break;
 
-                case clsInstrumentClassInfo.RawDataType.IlluminaFolder:
-                    // fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_TXT_GZ_EXTENSION;
+                case InstrumentClassInfo.RawDataType.IlluminaFolder:
+                    // fileOrDirectoryName = mDataset + InstrumentClassInfo.DOT_TXT_GZ_EXTENSION;
                     // isFile = true;
 
                     LogMessage("Skipping MSFileInfoScanner since Illumina RNASeq dataset");
                     return new List<string> { INVALID_FILE_TYPE };
 
-                case clsInstrumentClassInfo.RawDataType.ShimadzuQGDFile:
+                case InstrumentClassInfo.RawDataType.ShimadzuQGDFile:
                     // 	Shimadzu_GC_MS_01
-                    fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_QGD_EXTENSION;
+                    fileOrDirectoryName = mDataset + InstrumentClassInfo.DOT_QGD_EXTENSION;
                     qcPlotMode = QCPlottingModes.NoPlots;
                     isFile = true;
                     break;
 
-                case clsInstrumentClassInfo.RawDataType.WatersRawFolder:
+                case InstrumentClassInfo.RawDataType.WatersRawFolder:
                     // 	SynaptG2_01
-                    fileOrDirectoryName = mDataset + clsInstrumentClassInfo.DOT_RAW_EXTENSION;
+                    fileOrDirectoryName = mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION;
                     isFile = false;
                     break;
 
@@ -1249,7 +1249,7 @@ namespace DatasetInfoPlugin
                     // dot_qgd_files (Shimadzu_GC): Shimadzu_GC_MS_01
 
                     mMsg = "Data type " + rawDataType + " not recognized";
-                    LogWarning("clsPluginMain.GetDataFileOrDirectoryName: " + mMsg);
+                    LogWarning("PluginMain.GetDataFileOrDirectoryName: " + mMsg);
                     return new List<string> { INVALID_FILE_TYPE };
             }
 
@@ -1275,7 +1275,7 @@ namespace DatasetInfoPlugin
                     return fileOrDirectoryRelativePaths;
                 }
 
-                mMsg = "clsPluginMain.GetDataFileOrDirectoryName: File " + fileOrDirectoryPath + " not found";
+                mMsg = "PluginMain.GetDataFileOrDirectoryName: File " + fileOrDirectoryPath + " not found";
                 LogError(mMsg);
 
                 mMsg = "File " + fileOrDirectoryPath + " not found";
@@ -1309,7 +1309,7 @@ namespace DatasetInfoPlugin
                 return fileOrDirectoryRelativePaths;
             }
 
-            mMsg = "clsPluginMain.GetDataFileOrDirectoryName; directory not found: " + fileOrDirectoryPath;
+            mMsg = "PluginMain.GetDataFileOrDirectoryName; directory not found: " + fileOrDirectoryPath;
             LogError(mMsg);
             mMsg = "Directory not found: " + fileOrDirectoryPath;
 
@@ -1424,7 +1424,7 @@ namespace DatasetInfoPlugin
             }
 
             // Look for dataset directories
-            var primaryDotDDirectory = new DirectoryInfo(Path.Combine(datasetDirectory.FullName, mDataset + clsInstrumentClassInfo.DOT_D_EXTENSION));
+            var primaryDotDDirectory = new DirectoryInfo(Path.Combine(datasetDirectory.FullName, mDataset + InstrumentClassInfo.DOT_D_EXTENSION));
 
             var fileOrDirectoryNames = new List<string>();
 
@@ -1478,7 +1478,7 @@ namespace DatasetInfoPlugin
             LogDebug("Determining tool version info");
 
             var toolVersionInfo = string.Empty;
-            var appDirectory = clsUtilities.GetAppDirectoryPath();
+            var appDirectory = CTMUtilities.GetAppDirectoryPath();
 
             if (string.IsNullOrWhiteSpace(appDirectory))
             {
@@ -1535,7 +1535,7 @@ namespace DatasetInfoPlugin
             }
         }
 
-        private bool ValidateQCGraphics(string currentOutputDirectory, bool primaryFileOrDirectoryProcessed, clsToolReturnData returnData)
+        private bool ValidateQCGraphics(string currentOutputDirectory, bool primaryFileOrDirectoryProcessed, ToolReturnData returnData)
         {
             // Make sure at least one of the PNG files created by MSFileInfoScanner is over 10 KB in size
             var outputDirectory = new DirectoryInfo(currentOutputDirectory);

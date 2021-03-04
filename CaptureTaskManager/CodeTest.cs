@@ -4,7 +4,7 @@ using System.Globalization;
 
 namespace CaptureTaskManager
 {
-    internal class clsCodeTest
+    internal class CodeTest
     {
         public void TestConnection()
         {
