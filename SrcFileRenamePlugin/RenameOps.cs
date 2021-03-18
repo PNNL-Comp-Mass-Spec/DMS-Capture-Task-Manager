@@ -32,6 +32,8 @@ namespace SrcFileRenamePlugin
 
         private readonly DatasetFileSearchTool mDatasetFileSearchTool;
 
+        private readonly FileTools mFileTools;
+
         #endregion
 
         /// <summary>
@@ -39,7 +41,8 @@ namespace SrcFileRenamePlugin
         /// </summary>
         /// <param name="mgrParams">Parameters for manager operation</param>
         /// <param name="useBioNet">Flag to indicate if source instrument is on Bionet</param>
-        public RenameOps(IMgrParams mgrParams, bool useBioNet)
+        /// <param name="fileTools"></param>
+        public RenameOps(IMgrParams mgrParams, bool useBioNet, FileTools fileTools)
         {
             // Setup for Bionet use, if applicable
             mUseBioNet = useBioNet;
@@ -57,6 +60,8 @@ namespace SrcFileRenamePlugin
 
             mDatasetFileSearchTool = new DatasetFileSearchTool(false);
             RegisterEvents(mDatasetFileSearchTool);
+
+            mFileTools = fileTools;
         }
 
         #region "Methods"
@@ -232,7 +237,7 @@ namespace SrcFileRenamePlugin
         /// <param name="sourceDirectory">Directory to search</param>
         /// <param name="instrumentFileHash">SHA-1 hash of the primary instrument file (ignored for directories)</param>
         /// <param name="errorMessage">Output: error message</param>
-        /// <returns></returns>
+        /// <returns>Number of renamed files</returns>
         private int FindFilesToRename(string datasetName, DirectoryInfo sourceDirectory, string instrumentFileHash, out string errorMessage)
         {
             errorMessage = string.Empty;
@@ -309,7 +314,7 @@ namespace SrcFileRenamePlugin
                         OnDebugEvent("Match found: " + candidateFile.FullName);
 
                         // Compute the SHA-1 hash
-                        var sha1Hash = Pacifica.Core.Utilities.GenerateSha1Hash(candidateFile.FullName);
+                        var sha1Hash = Pacifica.Core.Utilities.GenerateSha1Hash(candidateFile, mFileTools);
 
                         if (sha1Hash.Equals(instrumentFileHash))
                         {

@@ -52,7 +52,7 @@ namespace SrcFileRenamePlugin
             var useBionet = string.Equals(capMethod, "secfso", StringComparison.OrdinalIgnoreCase);
 
             // Create the object that will perform capture operation
-            var renameOpTool = new RenameOps(mMgrParams, useBionet);
+            var renameOpTool = new RenameOps(mMgrParams, useBionet, mFileTools);
             RegisterEvents(renameOpTool);
 
             try
