@@ -818,7 +818,7 @@
             <param name="directoryLayout"></param>
             <param name="bytesDownloaded"></param>
         </member>
-        <member name="M:MyEMSLReader.Downloader.IsDownloadRequired(MyEMSLReader.ArchivedFileInfo,System.IO.FileSystemInfo,System.Boolean)">
+        <member name="M:MyEMSLReader.Downloader.IsDownloadRequired(MyEMSLReader.ArchivedFileInfo,System.IO.FileInfo,System.Boolean)">
             <summary>
             Determines whether or not a file should be downloaded
             </summary>
