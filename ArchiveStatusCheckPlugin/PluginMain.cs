@@ -18,7 +18,7 @@ namespace ArchiveStatusCheckPlugin
 
         #region "Class-wide variables"
 
-        private ToolReturnData mRetData = new ToolReturnData();
+        private ToolReturnData mRetData = new();
 
         #endregion
 
