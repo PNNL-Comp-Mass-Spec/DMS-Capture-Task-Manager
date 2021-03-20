@@ -103,14 +103,14 @@ namespace CaptureTaskManager
 
                     ShowTrace("Exiting application");
 
-                    clsParseCommandLine.PauseAtConsole(500);
+                    ConsoleMsgUtils.PauseAtConsole(500);
                     return 0;
                 }
             }
             catch (Exception ex)
             {
                 LogTools.LogError("Critical exception starting application", ex);
-                clsParseCommandLine.PauseAtConsole(1500);
+                ConsoleMsgUtils.PauseAtConsole(1500);
                 FileLogger.FlushPendingMessages();
                 return 1;
             }
@@ -143,7 +143,7 @@ namespace CaptureTaskManager
                 {
                     // Report any exceptions not handled at a lower level to the console
                     LogTools.LogError("Critical exception in processing loop", ex);
-                    clsParseCommandLine.PauseAtConsole(1500);
+                    ConsoleMsgUtils.PauseAtConsole(1500);
                     FileLogger.FlushPendingMessages();
                     return 1;
                 }
