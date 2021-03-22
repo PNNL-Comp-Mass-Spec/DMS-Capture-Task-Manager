@@ -314,7 +314,7 @@ namespace SrcFileRenamePlugin
                         OnDebugEvent("Match found: " + candidateFile.FullName);
 
                         // Compute the SHA-1 hash
-                        var sha1Hash = Pacifica.Core.Utilities.GenerateSha1Hash(candidateFile, mFileTools);
+                        var sha1Hash = Pacifica.Core.Utilities.GenerateSha1Hash(candidateFile);
 
                         if (sha1Hash.Equals(instrumentFileHash))
                         {
