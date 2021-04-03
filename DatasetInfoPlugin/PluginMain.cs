@@ -249,7 +249,8 @@ namespace DatasetInfoPlugin
             mMsFileScanner.LCMS2DPlotOptions.OverviewPlotDivisor = mTaskParams.GetParam("LCMS2DOverviewPlotDivisor", LCMSDataPlotterOptions.DEFAULT_LCMS2D_OVERVIEW_PLOT_DIVISOR);
 
             var sampleLabelling = mTaskParams.GetParam("Meta_Experiment_sample_labelling", string.Empty);
-            ConfigureMinimumMzValidation(mMsFileScanner, sampleLabelling);
+            var experimentName = mTaskParams.GetParam("Meta_Experiment_Num", string.Empty);
+            ConfigureMinimumMzValidation(mMsFileScanner, experimentName, sampleLabelling);
 
             mMsFileScanner.Options.DatasetID = mDatasetID;
             mMsFileScanner.Options.CheckCentroidingStatus = true;
@@ -903,8 +904,9 @@ namespace DatasetInfoPlugin
         /// If it doesn't, or if it is Unknown or None, examine the dataset name
         /// </summary>
         /// <param name="msFileInfoScanner"></param>
+        /// <param name="experimentName"></param>
         /// <param name="sampleLabelling"></param>
-        private void ConfigureMinimumMzValidation(iMSFileInfoScanner msFileInfoScanner, string sampleLabelling)
+        private void ConfigureMinimumMzValidation(iMSFileInfoScanner msFileInfoScanner, string experimentName, string sampleLabelling)
         {
             mMsFileScanner.Options.MS2MzMin = 0;
 
@@ -927,8 +929,8 @@ namespace DatasetInfoPlugin
                     {
                         msFileInfoScanner.Options.MS2MzMin = (int)Math.Floor(reporterIonMzMin);
                         LogMessage(string.Format(
-                                       "Verifying that MS/MS spectra have minimum m/z values below {0:N0} since the experiment labelling is {1}",
-                                       msFileInfoScanner.Options.MS2MzMin, sampleLabelling));
+                                       "Verifying that MS/MS spectra have minimum m/z values below {0:N0} since experiment {1} has {2} labelling",
+                                       msFileInfoScanner.Options.MS2MzMin, experimentName, sampleLabelling));
                     }
                 }
             }
