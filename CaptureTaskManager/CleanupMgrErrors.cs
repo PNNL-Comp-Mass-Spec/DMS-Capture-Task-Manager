@@ -95,8 +95,8 @@ namespace CaptureTaskManager
                 throw new Exception("Manager name is not defined");
             }
 
-            mMgrConfigDBConnectionString = string.Copy(mgrConfigDBConnectionString);
-            mManagerName = string.Copy(managerName);
+            mMgrConfigDBConnectionString = mgrConfigDBConnectionString;
+            mManagerName = managerName;
 
             mStatusFile = statusFile;
             mTraceMode = traceMode;

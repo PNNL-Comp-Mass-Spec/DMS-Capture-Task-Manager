@@ -1014,7 +1014,7 @@ namespace DatasetInfoPlugin
                 }
                 else
                 {
-                    var subdirectoryToUse = string.Copy(subDirectory);
+                    var subdirectoryToUse = subDirectory;
                     while (outputDirectoryNames.Contains(subdirectoryToUse))
                     {
                         subdirectoryToUse = subDirectory + "_" + nextSubdirectorySuffix;

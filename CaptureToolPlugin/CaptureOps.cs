@@ -965,7 +965,7 @@ namespace CaptureToolPlugin
 
             mErrorMessage = "Error " + myConn.ErrorMessage + " connecting to " + shareDirectoryPath + " as user " + userName + " using 'secfso'";
 
-            var msg = string.Copy(mErrorMessage);
+            var msg = mErrorMessage;
 
             if (myConn.ErrorMessage == "1326")
             {
@@ -3084,7 +3084,7 @@ namespace CaptureToolPlugin
                         msg = "Access denied while copying " + mFileTools.CurrentSourceFile + ": ";
                     }
 
-                    mErrorMessage = string.Copy(msg);
+                    mErrorMessage = msg;
 
                     if (ex.Message.Length <= 350)
                     {
@@ -3113,7 +3113,7 @@ namespace CaptureToolPlugin
                         msg = "Error while copying " + mFileTools.CurrentSourceFile + ": ";
                     }
 
-                    mErrorMessage = string.Copy(msg);
+                    mErrorMessage = msg;
 
                     if (ex.Message.Length <= 350)
                     {

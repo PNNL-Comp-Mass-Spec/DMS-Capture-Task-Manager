@@ -537,7 +537,7 @@ namespace CaptureTaskManager
                         case "path":
                             break;
                         case "version":
-                            version = string.Copy(value);
+                            version = value;
                             if (string.IsNullOrWhiteSpace(version))
                             {
                                 LogError("Empty version line in Version Info file for " +
@@ -656,7 +656,7 @@ namespace CaptureTaskManager
             // Append the .Exe info to toolVersionInfo
             if (string.IsNullOrEmpty(exeInfo))
             {
-                toolVersionInfoCombined = string.Copy(toolVersionInfo);
+                toolVersionInfoCombined = toolVersionInfo;
             }
             else
             {

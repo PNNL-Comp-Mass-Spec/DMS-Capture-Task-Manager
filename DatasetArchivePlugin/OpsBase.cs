@@ -501,7 +501,7 @@ namespace DatasetArchivePlugin
             catch (Exception ex)
             {
                 const string errorMessage = "Exception uploading to MyEMSL";
-                mErrMsg = string.Copy(errorMessage);
+                mErrMsg = errorMessage;
                 OnErrorEvent(errorMessage, ex);
 
                 if (ex.Message.Contains(DMSMetadataObject.UNDEFINED_EUS_OPERATOR_ID))
@@ -687,7 +687,7 @@ namespace DatasetArchivePlugin
         {
             if (!string.Equals(message, mMostRecentLogMessage) || DateTime.UtcNow.Subtract(mMostRecentLogTime).TotalSeconds >= 60)
             {
-                mMostRecentLogMessage = string.Copy(message);
+                mMostRecentLogMessage = message;
                 mMostRecentLogTime = DateTime.UtcNow;
                 OnStatusEvent(message);
             }

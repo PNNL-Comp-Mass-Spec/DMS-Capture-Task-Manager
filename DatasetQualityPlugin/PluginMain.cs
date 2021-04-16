@@ -186,7 +186,7 @@ namespace DatasetQualityPlugin
             if (!runQuameter)
             {
                 msg = "Skipped Quameter since " + skipReason;
-                mRetData.EvalMsg = string.Copy(msg);
+                mRetData.EvalMsg = msg;
                 LogMessage(msg);
                 return true;
             }
@@ -525,19 +525,19 @@ namespace DatasetQualityPlugin
                 else
                 {
                     // Replace dashes with underscores in the metric names
-                    var sHeaderName = headerNames[index].Trim().Replace("-", "_");
+                    var headerName = headerNames[index].Trim().Replace("-", "_");
 
-                    string sDataItem;
+                    string dataItem;
                     if (string.IsNullOrWhiteSpace(dataValues[index]))
                     {
-                        sDataItem = string.Empty;
+                        dataItem = string.Empty;
                     }
                     else
                     {
-                        sDataItem = string.Copy(dataValues[index]).Trim();
+                        dataItem = dataValues[index].Trim();
                     }
 
-                    results.Add(new KeyValuePair<string, string>(sHeaderName, sDataItem));
+                    results.Add(new KeyValuePair<string, string>(headerName, dataItem));
                 }
             }
 
@@ -620,7 +620,7 @@ namespace DatasetQualityPlugin
                     {
                         if (string.IsNullOrEmpty(exceptionText))
                         {
-                            exceptionText = string.Copy(trimmedLine);
+                            exceptionText = trimmedLine;
                         }
                         else
                         {

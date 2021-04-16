@@ -989,7 +989,7 @@ namespace DatasetIntegrityPlugin
                     {
                         if (string.IsNullOrEmpty(exceptionText))
                         {
-                            exceptionText = string.Copy(dataLine);
+                            exceptionText = dataLine;
                         }
                         else
                         {

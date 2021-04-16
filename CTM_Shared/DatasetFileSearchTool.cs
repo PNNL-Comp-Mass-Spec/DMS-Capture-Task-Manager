@@ -61,7 +61,7 @@ namespace CaptureTaskManager
             }
 
             var fileExtension = Path.GetExtension(fileName);
-            var updatedFileName = string.Copy(fileName);
+            var updatedFileName = fileName;
 
             foreach (var item in charsToFind)
             {
@@ -378,7 +378,7 @@ namespace CaptureTaskManager
         /// <returns></returns>
         private string ReplaceInvalidChars(string searchText)
         {
-            var updatedText = string.Copy(searchText);
+            var updatedText = searchText;
 
             foreach (var item in FilenameAutoFixes)
             {
