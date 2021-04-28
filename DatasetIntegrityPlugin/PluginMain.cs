@@ -1953,7 +1953,7 @@ namespace DatasetIntegrityPlugin
                     if (!string.Equals(instrumentName, "15T_FTICR", StringComparison.OrdinalIgnoreCase))
                     {
                         mRetData.EvalMsg = "Invalid dataset: No ser or fid file found";
-                        if (bafFileSizeKB > 0 && bafFileSizeKB < 100)
+                        if (bafFileSizeKB is > 0 and < 100)
                         {
                             mRetData.EvalMsg += "; additionally, the analysis.baf file is quite small";
                         }
@@ -2679,7 +2679,7 @@ namespace DatasetIntegrityPlugin
             // Store path to CaptureToolPlugin.dll in toolFiles
             var toolFiles = new List<FileInfo>
             {
-                new FileInfo(pluginPath)
+                new(pluginPath)
             };
 
             if (!string.IsNullOrWhiteSpace(openChromProgPath))
