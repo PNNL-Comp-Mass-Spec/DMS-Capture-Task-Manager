@@ -184,6 +184,8 @@ namespace DatasetIntegrityPlugin
 
                 case InstrumentClassInfo.InstrumentClass.LTQ_FT:
                     dataFileNamePath = Path.Combine(datasetDirectory, mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION);
+
+                    // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
                     if (instrumentName.StartsWith("21T", StringComparison.OrdinalIgnoreCase))
                     {
                         mRetData.CloseoutType = Test21TRawFile(dataFileNamePath);
