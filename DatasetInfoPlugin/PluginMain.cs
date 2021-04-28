@@ -1518,7 +1518,7 @@ namespace DatasetInfoPlugin
             // Store path to CaptureToolPlugin.dll and MSFileInfoScanner.dll in toolFiles
             var toolFiles = new List<FileInfo>
             {
-                new FileInfo(pluginPath)
+                new(pluginPath)
             };
 
             if (!string.IsNullOrEmpty(msFileInfoScannerDLLPath))

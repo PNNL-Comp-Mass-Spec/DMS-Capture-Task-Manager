@@ -192,10 +192,7 @@ namespace CaptureTaskManager
         /// <param name="value">Parameter value</param>
         public void SetParam(string keyName, string value)
         {
-            if (value == null)
-            {
-                value = string.Empty;
-            }
+            value ??= string.Empty;
             mJobParams[keyName] = value;
         }
 

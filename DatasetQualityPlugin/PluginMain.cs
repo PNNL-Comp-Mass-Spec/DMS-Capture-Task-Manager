@@ -1280,7 +1280,7 @@ namespace DatasetQualityPlugin
             // Store path to CaptureToolPlugin.dll in toolFiles
             var toolFiles = new List<FileInfo>
             {
-                new FileInfo(pluginPath)
+                new(pluginPath)
             };
 
             if (storeQuameterVersion)

@@ -130,20 +130,10 @@ namespace CaptureTaskManager
 
             try
             {
-                if (xPath == null)
-                {
-                    xPath = string.Empty;
-                }
-
-                if (className == null)
-                {
-                    className = string.Empty;
-                }
-
-                if (assemblyName == null)
-                {
-                    assemblyName = string.Empty;
-                }
+                // Update to string.Empty if null
+                xPath ??= string.Empty;
+                className ??= string.Empty;
+                assemblyName ??= string.Empty;
 
                 pluginInfo = "XPath=\"" + xPath + "\"; className=\"" + className + "\"; assemblyName=" + assemblyName + "\"";
 
