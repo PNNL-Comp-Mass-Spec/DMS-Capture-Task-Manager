@@ -111,7 +111,7 @@ namespace DatasetIntegrityPlugin
             switch (instrumentClass)
             {
                 case InstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_DotD:
-                    // We will convert the .D directory to a .UIMF file
+                    // We will convert the .d directory to a .UIMF file
                     agilentToUimfConverterPath = GetAgilentToUIMFProgPath();
 
                     if (!File.Exists(agilentToUimfConverterPath))
@@ -125,7 +125,7 @@ namespace DatasetIntegrityPlugin
                     break;
 
                 case InstrumentClassInfo.InstrumentClass.Agilent_Ion_Trap:
-                    // We will convert the .D directory to a .CDF file
+                    // We will convert the .d directory to a .CDF file
                     openChromProgPath = GetOpenChromProgPath();
 
                     if (!File.Exists(openChromProgPath))
@@ -223,7 +223,7 @@ namespace DatasetIntegrityPlugin
                     {
                         if (string.IsNullOrEmpty(mRetData.CloseoutMsg))
                         {
-                            mRetData.CloseoutMsg = "Unknown error converting the Agilent .D directory to a .UIMF file";
+                            mRetData.CloseoutMsg = "Unknown error converting the Agilent .d directory to a .UIMF file";
                             LogError(mRetData.CloseoutMsg);
                         }
 
@@ -265,17 +265,17 @@ namespace DatasetIntegrityPlugin
                     break;
 
                 case InstrumentClassInfo.InstrumentClass.Agilent_Ion_Trap:
-                    // .D directory with a DATA.MS file
+                    // .d directory with a DATA.MS file
                     mRetData.CloseoutType = TestAgilentIonTrapDirectory(datasetDirectory);
 
                     if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
                     {
-                        // Convert the .D directory to a .CDF file
+                        // Convert the .d directory to a .CDF file
                         if (!ConvertAgilentDotDDirectoryToCDF(datasetDirectory, openChromProgPath))
                         {
                             if (string.IsNullOrEmpty(mRetData.CloseoutMsg))
                             {
-                                mRetData.CloseoutMsg = "Unknown error converting the Agilent .D directory to a .CDF file";
+                                mRetData.CloseoutMsg = "Unknown error converting the Agilent .d directory to a .CDF file";
                                 LogError(mRetData.CloseoutMsg);
                             }
 
@@ -336,7 +336,7 @@ namespace DatasetIntegrityPlugin
                 }
 
                 // Create the BatchJob.obj file
-                // This is an XML file with the information required by OpenChrom to create CDF file from the .D directory
+                // This is an XML file with the information required by OpenChrom to create CDF file from the .d directory
 
                 var batchJobFilePath = CreateOpenChromCDFJobFile(dotDDirectoryPathLocal);
                 if (string.IsNullOrEmpty(batchJobFilePath))
@@ -376,13 +376,13 @@ namespace DatasetIntegrityPlugin
                 mLastStatusUpdate = DateTime.UtcNow;
                 mStatusUpdateIntervalMinutes = 5;
 
-                var msg = "Converting .D directory to .CDF: " + exePath + " " + arguments;
+                var msg = "Converting .d directory to .CDF: " + exePath + " " + arguments;
                 LogMessage(msg);
 
                 const int maxRuntimeSeconds = MAX_AGILENT_TO_CDF_RUNTIME_MINUTES * 60;
                 success = cmdRunner.RunProgram(exePath, arguments, "OpenChrom", true, maxRuntimeSeconds);
 
-                // Delete the locally cached .D directory
+                // Delete the locally cached .d directory
                 try
                 {
                     ProgRunner.GarbageCollectNow();
@@ -391,7 +391,7 @@ namespace DatasetIntegrityPlugin
                 catch (Exception ex)
                 {
                     // Do not treat this as a fatal error
-                    LogWarning("Exception deleting locally cached .D directory (" + dotDDirectoryPathLocal + "): " + ex.Message);
+                    LogWarning("Exception deleting locally cached .d directory (" + dotDDirectoryPathLocal + "): " + ex.Message);
                 }
 
                 if (!success)
@@ -431,7 +431,7 @@ namespace DatasetIntegrityPlugin
             }
             catch (Exception ex)
             {
-                mRetData.CloseoutMsg = "Exception converting .D directory to a CDF file";
+                mRetData.CloseoutMsg = "Exception converting .d directory to a CDF file";
                 LogError(mRetData.CloseoutMsg + ": " + ex.Message);
                 return false;
             }
@@ -514,7 +514,7 @@ namespace DatasetIntegrityPlugin
                 mLastStatusUpdate = DateTime.UtcNow;
                 mStatusUpdateIntervalMinutes = 5;
 
-                var msg = "Converting .D directory to .UIMF: " + exePath + " " + arguments;
+                var msg = "Converting .d directory to .UIMF: " + exePath + " " + arguments;
                 LogMessage(msg);
 
                 const int maxRuntimeSeconds = MAX_AGILENT_TO_UIMF_RUNTIME_MINUTES * 60;
@@ -523,7 +523,7 @@ namespace DatasetIntegrityPlugin
                 // Parse the console output file one more time to check for errors
                 ParseConsoleOutputFile();
 
-                // Delete the locally cached .D directory
+                // Delete the locally cached .d directory
                 try
                 {
                     ProgRunner.GarbageCollectNow();
@@ -532,7 +532,7 @@ namespace DatasetIntegrityPlugin
                 catch (Exception ex)
                 {
                     // Do not treat this as a fatal error
-                    LogWarning("Exception deleting locally cached .D directory (" + dotDDirectoryPathLocal + "): " + ex.Message);
+                    LogWarning("Exception deleting locally cached .d directory (" + dotDDirectoryPathLocal + "): " + ex.Message);
                 }
 
                 if (!success)
@@ -587,7 +587,7 @@ namespace DatasetIntegrityPlugin
             }
             catch (Exception ex)
             {
-                mRetData.CloseoutMsg = "Exception converting .D directory to a UIMF file";
+                mRetData.CloseoutMsg = "Exception converting .d directory to a UIMF file";
                 LogError(mRetData.CloseoutMsg + ": " + ex.Message);
                 return false;
             }
@@ -606,7 +606,7 @@ namespace DatasetIntegrityPlugin
 
             if (requireIMSFiles)
             {
-                // Make sure the .D directory has the required files
+                // Make sure the .d directory has the required files
                 // Older datasets may have had their larger files purged, which will cause the AgilentToUIMFConverter to fail
 
                 var binFiles = dotDDirectoryPathRemote.GetFiles("*.bin", SearchOption.AllDirectories).ToList();
@@ -633,12 +633,12 @@ namespace DatasetIntegrityPlugin
                 var errorMessage = string.Empty;
                 if (missingFiles.Count == 1)
                 {
-                    errorMessage = "Cannot convert .D to .UIMF; missing file " + missingFiles.First();
+                    errorMessage = "Cannot convert .d to .UIMF; missing file " + missingFiles.First();
                 }
 
                 if (missingFiles.Count > 1)
                 {
-                    errorMessage = "Cannot convert .D to .UIMF; missing files " + string.Join(", ", missingFiles);
+                    errorMessage = "Cannot convert .d to .UIMF; missing files " + string.Join(", ", missingFiles);
                 }
 
                 if (errorMessage.Length > 0)
@@ -1138,13 +1138,13 @@ namespace DatasetIntegrityPlugin
         /// <returns>Enum indicating test result</returns>
         private EnumCloseOutType TestAgilentIonTrapDirectory(string datasetDirectoryPath)
         {
-            // Verify only one .D directory in dataset
+            // Verify only one .d directory in dataset
             var datasetDirectory = new DirectoryInfo(datasetDirectoryPath);
-            var dotDDirectories = datasetDirectory.GetDirectories("*.D").ToList();
+            var dotDDirectories = datasetDirectory.GetDirectories("*.d").ToList();
 
             if (dotDDirectories.Count < 1)
             {
-                mRetData.EvalMsg = "Invalid dataset: No .D directories found";
+                mRetData.EvalMsg = "Invalid dataset: No .d directories found";
                 LogError(mRetData.EvalMsg);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
@@ -1157,11 +1157,11 @@ namespace DatasetIntegrityPlugin
                 }
             }
 
-            // Look for Data.MS file in the .D directory
+            // Look for Data.MS file in the .d directory
             var instrumentData = dotDDirectories[0].GetFiles("DATA.MS");
             if (dotDDirectories[0].GetFiles("DATA.MS").Length == 0)
             {
-                mRetData.EvalMsg = "Invalid dataset: DATA.MS file not found in the .D directory";
+                mRetData.EvalMsg = "Invalid dataset: DATA.MS file not found in the .d directory";
                 LogError(mRetData.EvalMsg);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
@@ -1185,13 +1185,13 @@ namespace DatasetIntegrityPlugin
         /// <returns>Enum indicating test result</returns>
         private EnumCloseOutType TestAgilentTOFv2Directory(string datasetDirectoryPath)
         {
-            // Verify only one .D directory in dataset
+            // Verify only one .d directory in dataset
             var datasetDirectory = new DirectoryInfo(datasetDirectoryPath);
-            var dotDDirectories = datasetDirectory.GetDirectories("*.D").ToList();
+            var dotDDirectories = datasetDirectory.GetDirectories("*.d").ToList();
 
             if (dotDDirectories.Count < 1)
             {
-                mRetData.EvalMsg = "Invalid dataset: No .D directories found";
+                mRetData.EvalMsg = "Invalid dataset: No .d directories found";
                 LogError(mRetData.EvalMsg);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
@@ -1204,18 +1204,18 @@ namespace DatasetIntegrityPlugin
                 }
             }
 
-            // Look for the AcqData directory below the .D directory
+            // Look for the AcqData directory below the .d directory
             var acqDataDirectories = dotDDirectories[0].GetDirectories("AcqData").ToList();
             if (acqDataDirectories.Count < 1)
             {
-                mRetData.EvalMsg = "Invalid dataset: .D directory does not contain an AcqData subdirectory";
+                mRetData.EvalMsg = "Invalid dataset: .d directory does not contain an AcqData subdirectory";
                 LogError(mRetData.EvalMsg);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
             if (acqDataDirectories.Count > 1)
             {
-                mRetData.EvalMsg = "Invalid dataset: multiple AcqData directories found in .D directory";
+                mRetData.EvalMsg = "Invalid dataset: multiple AcqData directories found in .d directory";
                 LogError(mRetData.EvalMsg);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
@@ -1629,13 +1629,13 @@ namespace DatasetIntegrityPlugin
             Dictionary<string, float> requiredInstrumentFiles,
             bool requireMethodDirectory = true)
         {
-            // Verify only one .D directory in the dataset
+            // Verify only one .d directory in the dataset
             var datasetDirectory = new DirectoryInfo(datasetDirectoryPath);
-            var dotDDirectories = datasetDirectory.GetDirectories("*.D").ToList();
+            var dotDDirectories = datasetDirectory.GetDirectories("*.d").ToList();
 
             if (dotDDirectories.Count < 1)
             {
-                mRetData.EvalMsg = "Invalid dataset: No .D directories found";
+                mRetData.EvalMsg = "Invalid dataset: No .d directories found";
                 LogError(mRetData.EvalMsg);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
@@ -1737,14 +1737,14 @@ namespace DatasetIntegrityPlugin
             float dataFileSizeKB;
             float bafFileSizeKB = 0;
 
-            // If there is only one .D directory in the dataset, the directory name should match the dataset name
+            // If there is only one .d directory in the dataset, the directory name should match the dataset name
             // Otherwise, if multiple directories, make sure each has a ser file
             var datasetDirectory = new DirectoryInfo(datasetDirectoryPath);
-            var dotDDirectories = datasetDirectory.GetDirectories("*.D").ToList();
+            var dotDDirectories = datasetDirectory.GetDirectories("*.d").ToList();
 
             if (dotDDirectories.Count < 1)
             {
-                mRetData.EvalMsg = "Invalid dataset: No .D directories found";
+                mRetData.EvalMsg = "Invalid dataset: No .d directories found";
                 LogError(mRetData.EvalMsg);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
@@ -1771,7 +1771,7 @@ namespace DatasetIntegrityPlugin
                     var serFound = false;
                     var fidFound = false;
 
-                    // Each .D directory should have a ser file, fid file, or .baf file
+                    // Each .d directory should have a ser file, fid file, or .baf file
                     foreach (var dotDDirectory in dotDDirectories)
                     {
                         var serFiles = dotDDirectory.GetFiles("ser", SearchOption.TopDirectoryOnly).Length;
@@ -1802,7 +1802,7 @@ namespace DatasetIntegrityPlugin
                         // If we get here, none of the directories had a ser or fid file
                         // Based on logic in the above for loop, then must have had a .baf file
 
-                        mRetData.EvalMsg = "Invalid dataset: none of the .D directories had a ser or fid file, but instead had .baf files; instrument class should likely be BrukerFT_BAF or BrukerTOF_BAF";
+                        mRetData.EvalMsg = "Invalid dataset: none of the .d directories had a ser or fid file, but instead had .baf files; instrument class should likely be BrukerFT_BAF or BrukerTOF_BAF";
                         LogError(mRetData.EvalMsg);
                         return EnumCloseOutType.CLOSEOUT_FAILED;
                     }
@@ -1910,7 +1910,7 @@ namespace DatasetIntegrityPlugin
             }
 
             // Verify ser file (if it exists)
-            // For 15T imaging directories, only checking the ser file in the first .D directory
+            // For 15T imaging directories, only checking the ser file in the first .d directory
             var serFile = dotDDirectories[0].GetFiles("ser").ToList();
             var serFileExists = serFile.Count > 0;
 
@@ -1929,7 +1929,7 @@ namespace DatasetIntegrityPlugin
                 }
             }
             else
-            {   // ser file not found in the first .D directory
+            {   // ser file not found in the first .d directory
                 if (requireSerFile)
                 {
                     mRetData.EvalMsg = "Invalid dataset: ser file not found in " + dotDDirectories[0].Name;
@@ -1975,7 +1975,7 @@ namespace DatasetIntegrityPlugin
 
             if (instrumentClass == InstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging_V2)
             {
-                // Look for any files in the first .D directory that match Dataset.mis or Dataset.jpg
+                // Look for any files in the first .d directory that match Dataset.mis or Dataset.jpg
                 // If found, copy them up one directory
 
                 MoveOrCopyUpOneLevel(dotDDirectories[0], "*.mis", matchDatasetName: true, copyFile: true);
