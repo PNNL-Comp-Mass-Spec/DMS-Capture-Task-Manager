@@ -3571,11 +3571,9 @@ namespace CaptureToolPlugin
             DatasetInfo datasetInfo,
             ToolReturnData returnData)
         {
-            string entityDescription;
-
             returnData.CloseoutMsg = string.Empty;
 
-            entityDescription = datasetInfo.DatasetType switch
+            var entityDescription = datasetInfo.DatasetType switch
             {
                 DatasetInfo.RawDSTypes.File => "a file",
                 DatasetInfo.RawDSTypes.DirectoryNoExt => "a directory",

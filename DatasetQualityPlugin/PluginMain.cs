@@ -668,7 +668,7 @@ namespace DatasetQualityPlugin
             }
         }
 
-        private void ParseDatasetInfoFile(string datasetFolderPath, string datasetName, List<string> scanTypes, out int scanCount, out int scanCountMS)
+        private void ParseDatasetInfoFile(string datasetFolderPath, string datasetName, ICollection<string> scanTypes, out int scanCount, out int scanCountMS)
         {
             var datasetInfoFile = new FileInfo(Path.Combine(datasetFolderPath, "QC", datasetName + "_DatasetInfo.xml"));
 
