@@ -24,7 +24,8 @@ namespace DatasetInfoPlugin
     // ReSharper disable once UnusedMember.Global
     public class PluginMain : ToolRunnerBase
     {
-        // Ignore Spelling: labelling, fid, acq, png, prepend, href, html, maldi, ser, Shimadzu, Illumina, Synapt, wiff, qgd, mgf, online
+        // Ignore Spelling: acq, Bruker, fid, href, html, Illumina, labelling, maldi, mgf
+        // Ignore Spelling: online, png, prepend, qgd, ser, Shimadzu, svc, Synapt, wiff
 
         #region "Constants"
 

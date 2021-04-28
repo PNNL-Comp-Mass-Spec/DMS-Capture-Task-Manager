@@ -23,7 +23,7 @@ namespace DatasetQualityPlugin
     // ReSharper disable once UnusedMember.Global
     public class PluginMain : ToolRunnerBase
     {
-        // Ignore Spelling: Quameter, utf, frac, Roc, idfree, monoisotope, Filepath, cpus, cfg, cmd
+        // Ignore Spelling: Quameter, utf, frac, Lumos, orbi, Roc, idfree, monoisotope, Filepath, cpus, cfg, cmd
 
         #region "Constants and Enums"
 

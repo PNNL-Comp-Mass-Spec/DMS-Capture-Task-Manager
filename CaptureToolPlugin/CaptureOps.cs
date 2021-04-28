@@ -21,7 +21,7 @@ namespace CaptureToolPlugin
     /// </summary>
     public class CaptureOps : LoggerBase
     {
-        // Ignore Spelling: Username, bionet, Pwd, prepend, Unsubscribe, fso, secfso, Subfolder, dotnet, lcMethod, mcf, idx, ser, jpg
+        // Ignore Spelling: bionet, Bruker, dotnet, fso, idx, jpg, lcMethod, mcf, na, prepend, Pwd, secfso, ser, Subfolder, Unsubscribe, Username
 
         #region "Constants and Enums"
 
@@ -209,6 +209,7 @@ namespace CaptureToolPlugin
                 var sourceFilePath = datasetFileOrDirectory.FullName;
                 string targetFilePath;
 
+                // ReSharper disable MergeIntoPattern
                 if (datasetFileOrDirectory is FileInfo datasetFile && datasetFile.Directory != null)
                 {
                     targetFilePath = Path.Combine(datasetFile.Directory.FullName, updatedName);
@@ -226,6 +227,7 @@ namespace CaptureToolPlugin
 
                     targetFilePath = Path.Combine(datasetDirectory.FullName, updatedName);
                 }
+                // ReSharper restore MergeIntoPattern
 
                 try
                 {

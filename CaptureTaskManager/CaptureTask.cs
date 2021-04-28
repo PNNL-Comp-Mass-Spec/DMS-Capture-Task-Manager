@@ -199,7 +199,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Wrapper for requesting a task from the database
         /// </summary>
-        /// <returns>num indicating if task was found</returns>
+        /// <returns>Enum indicating if task was found</returns>
         public override EnumRequestTaskResult RequestTask()
         {
             var retVal = RequestTaskDetailed();
@@ -278,7 +278,7 @@ namespace CaptureTaskManager
 
                     // The return code was not an empty string, which indicates an error
                     LogError("CaptureTask.RequestTaskDetailed(), SP execution has return code " + returnCode +
-                             "; Msg text = " + (string)messageParam.Value);
+                             "; Message text = " + (string)messageParam.Value);
                     return EnumRequestTaskResult.ResultError;
                 }
 
@@ -311,7 +311,7 @@ namespace CaptureTaskManager
                     default:
                         // There was an SP error
                         LogError("CaptureTask.RequestTaskDetailed(), SP execution error " + resCode +
-                            "; Msg text = " + (string)messageParam.Value);
+                            "; Message text = " + (string)messageParam.Value);
                         outcome = EnumRequestTaskResult.ResultError;
                         break;
                 }

@@ -19,7 +19,11 @@ namespace SrcFileRenamePlugin
     /// </summary>
     internal class RenameOps : EventNotifier
     {
+        // ReSharper disable CommentTypo
+
         // Ignore Spelling: Bionet, Pwd, prepend, Username, Subfolder, secfso, fso, chromooff, flatline, LCmethod, plugsplit, slowsplit
+
+        // ReSharper restore CommentTypo
 
         #region "Class wide variables"
 

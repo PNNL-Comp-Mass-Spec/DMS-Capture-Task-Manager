@@ -19,7 +19,7 @@ namespace CaptureTaskManager
     /// </summary>
     public class StatusFile : EventNotifier, IStatusFile
     {
-        // Ignore Spelling: yyyy-MM-dd, hh:mm:ss tt
+        // Ignore Spelling: yyyy-MM-dd, hh:mm:ss tt, tcp
 
         #region "Constants"
 
@@ -180,6 +180,8 @@ namespace CaptureTaskManager
             Tool = string.Empty;
 
             // Only clear the recent job info if the variable is null
+
+            // ReSharper disable once ConvertIfStatementToNullCoalescingAssignment
             if (MostRecentJobInfo == null)
             {
                 MostRecentJobInfo = string.Empty;
