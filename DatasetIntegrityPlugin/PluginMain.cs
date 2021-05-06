@@ -1839,7 +1839,6 @@ namespace DatasetIntegrityPlugin
                     else
                     {
                         mRetData.EvalMsg = "Dataset has two .d directories, but did not find a ser file in one and an analysis.baf file in the other; treating this as an error";
-
                     }
                     LogMessage(mRetData.EvalMsg);
                 }
