@@ -118,7 +118,7 @@
       <Version>1.1.8</Version>
     </PackageReference>
     <PackageReference Include="PRISM-Library">
-      <Version>2.6.27</Version>
+      <Version>2.6.28</Version>
     </PackageReference>
     <PackageReference Include="PRISMWin-Library">
       <Version>1.0.15</Version>
@@ -127,7 +127,7 @@
       <Version>1.0.111</Version>
     </PackageReference>
     <PackageReference Include="UIMFLibrary">
-      <Version>3.7.4</Version>
+      <Version>3.7.5</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
