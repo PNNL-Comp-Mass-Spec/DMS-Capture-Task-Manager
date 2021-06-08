@@ -74,7 +74,6 @@
             <param name="currentTask"></param>
             <param name="percentComplete">percent complete; typically meaningless (either 0 or 100)</param>
             <param name="ingestStepsCompletedOld"></param>
-            <returns></returns>
         </member>
         <member name="M:Pacifica.Core.MyEMSLStatusCheck.DoesFileExistInMyEMSL(Pacifica.Core.FileInfoObject)">
             <summary>
@@ -153,6 +152,11 @@
         <member name="F:Pacifica.Core.Configuration.TEST_INGEST_HOST_NAME">
             <summary>
             Ingest host name on the test server
+            </summary>
+        </member>
+        <member name="F:Pacifica.Core.Configuration.DMS_CLIENT_CERT_DIRECTORY">
+            <summary>
+            Windows directory (for DMS) with the MyEMSL client certificate file
             </summary>
         </member>
         <member name="F:Pacifica.Core.Configuration.CLIENT_CERT_DIRECTORY">
@@ -236,7 +240,7 @@
             Look for the newest client certificate file (e.g., svc-dms.pfx)
             </summary>
             <returns>Path to the file if found, otherwise an empty string</returns>
-            <remarks>First checks the directory with the executing assembly, then checks C:\client_certs\</remarks>
+            <remarks>First checks the directory with the executing assembly, then C:\DMS_Programs\client_certs, then C:\client_certs\</remarks>
         </member>
         <member name="M:Pacifica.Core.Configuration.SetProxy(System.Net.HttpWebRequest)">
             <summary>
@@ -467,7 +471,6 @@
             <summary>
             Initialize a request
             </summary>
-            <returns></returns>
         </member>
         <member name="M:Pacifica.Core.EasyHttp.IsResponseError(System.String)">
             <summary>
@@ -617,6 +620,16 @@
             <param name="errorMessage">Output: error message</param>
             <returns>Path to the file if found, otherwise an empty string</returns>
         </member>
+        <member name="M:Pacifica.Core.EasyHttp.ResolveCertFile(Pacifica.Core.Configuration,System.String,System.String@,System.String@)">
+            <summary>
+            Determine the path to the MyEMSL Certificate file
+            </summary>
+            <param name="config">Pacifica Config</param>
+            <param name="callingMethod">Calling method</param>
+            <param name="errorMessage">Output: error message</param>
+            <param name="errorMessageDetailed">Output: error message, including calling method</param>
+            <returns>Path to the file if found, otherwise an empty string</returns>
+        </member>
         <member name="M:Pacifica.Core.Utilities.DecodePassword(System.String)">
             <summary>
             Decode a password
@@ -683,6 +696,13 @@
             <param name="valueIfMissingOrNull">Value to return if the dictionary value is missing or null</param>
             <returns>Value for the given key, or valueIfMissingOrNull if the value is missing or null</returns>
         </member>
+        <member name="M:Pacifica.Core.Utilities.PossiblyConvertToLongPath(System.String)">
+            <summary>
+            Return the path as-is if less than 260 characters in length
+            Otherwise, convert to a long path
+            </summary>
+            <param name="path"></param>
+        </member>
         <member name="M:Pacifica.Core.Utilities.ValidateRemoteCertificate(System.Security.Cryptography.X509Certificates.X509Certificate,System.String@)">
             <summary>
             Callback used to validate the certificate in an SSL conversation
@@ -701,18 +721,36 @@
         </member>
         <member name="M:Pacifica.Core.FileInfoObject.#ctor(System.String,System.String)">
             <summary>
-            Instantiate a new FileInfoObject, including computing the SHA-1 hash of the file
+            Constructor and takes a file path
             </summary>
-            <param name="absoluteLocalFullPath">Full path to the local file</param>
+            <param name="filePath">Full path to the local file</param>
             <param name="baseDSPath">Base dataset folder path</param>
+            <remarks>
+            Instantiate a new FileInfoObject, including computing the SHA-1 hash of the file
+            </remarks>
         </member>
-        <member name="M:Pacifica.Core.FileInfoObject.#ctor(System.String,System.String,System.String)">
+        <member name="M:Pacifica.Core.FileInfoObject.#ctor(System.IO.FileInfo,System.String)">
+            <summary>
+            Constructor that takes a FileInfo object
+            </summary>
+            <param name="fileToAdd">File info</param>
+            <param name="baseDSPath">Base dataset folder path</param>
+            <remarks>
+            Instantiate a new FileInfoObject, including computing the SHA-1 hash of the file
+            </remarks>
+        </member>
+        <member name="M:Pacifica.Core.FileInfoObject.#ctor(System.IO.FileInfo,System.String,System.String)">
             <summary>
             Instantiate a new FileInfoObject; auto-computes the SHA-1 hash if sha1Hash is blank or is not exactly 40 characters long
             </summary>
-            <param name="absoluteLocalFullPath">Full path to the local file</param>
+            <param name="fileToAdd">File info</param>
             <param name="relativeDestinationDirectory">Folder in archive in which to store the file; empty string means to store in the dataset folder</param>
             <param name="sha1Hash">SHA-1 hash for the file; if blank, the hash will be auto-computed</param>
+        </member>
+        <member name="P:Pacifica.Core.FileInfoObject.File">
+            <summary>
+            File info
+            </summary>
         </member>
         <member name="P:Pacifica.Core.FileInfoObject.AbsoluteLocalPath">
             <summary>
@@ -765,8 +803,12 @@
             to the Linux form proto-7/VOrbi05/2013_2/QC_Shew_13_02_500ng_15May13_Lynx_12-12-04/metadata.xml
             </summary>
             <param name="path">Unix-style path</param>
-            <returns></returns>
             <remarks>Removes any leading slashes</remarks>
+        </member>
+        <member name="M:Pacifica.Core.FileInfoObject.ToString">
+            <summary>
+            Return the SHA-1 hash
+            </summary>
         </member>
     </members>
 </doc>

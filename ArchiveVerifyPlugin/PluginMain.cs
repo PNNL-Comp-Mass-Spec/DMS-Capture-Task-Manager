@@ -984,7 +984,7 @@ namespace ArchiveVerifyPlugin
 
                 if (!reader.CertificateFileExists(out var errorMessage))
                 {
-                    // MyEMSL certificate file not found in the current directory or at C:\client_certs\
+                    // MyEMSL certificate file not found in the current directory, at C:\DMS_Programs\client_certs, or at C:\client_certs\
                     mRetData.CloseoutMsg = errorMessage;
                     mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
 
