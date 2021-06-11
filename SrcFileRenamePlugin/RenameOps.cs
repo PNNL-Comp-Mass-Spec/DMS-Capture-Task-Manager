@@ -36,8 +36,6 @@ namespace SrcFileRenamePlugin
 
         private readonly DatasetFileSearchTool mDatasetFileSearchTool;
 
-        private readonly FileTools mFileTools;
-
         #endregion
 
         /// <summary>
@@ -64,8 +62,6 @@ namespace SrcFileRenamePlugin
 
             mDatasetFileSearchTool = new DatasetFileSearchTool(false);
             RegisterEvents(mDatasetFileSearchTool);
-
-            mFileTools = fileTools;
         }
 
         #region "Methods"
