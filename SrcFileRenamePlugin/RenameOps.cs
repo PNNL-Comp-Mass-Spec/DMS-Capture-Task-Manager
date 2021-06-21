@@ -43,8 +43,7 @@ namespace SrcFileRenamePlugin
         /// </summary>
         /// <param name="mgrParams">Parameters for manager operation</param>
         /// <param name="useBioNet">Flag to indicate if source instrument is on Bionet</param>
-        /// <param name="fileTools"></param>
-        public RenameOps(IMgrParams mgrParams, bool useBioNet, FileTools fileTools)
+        public RenameOps(IMgrParams mgrParams, bool useBioNet)
         {
             // Setup for Bionet use, if applicable
             mUseBioNet = useBioNet;
