@@ -214,19 +214,19 @@ namespace SrcFileRenamePlugin
                 DisconnectShare(ref mShareConnector);
             }
 
-            if (countRenamed == 0)
+            if (countRenamed > 0)
             {
-                if (string.IsNullOrEmpty(errorMessage))
-                {
-                    errorMessage = "Data file and/or directory not found on the instrument; cannot rename";
-                }
-
-                OnErrorEvent("Dataset " + datasetName + ": " + errorMessage);
-
-                return EnumCloseOutType.CLOSEOUT_FAILED;
+                return EnumCloseOutType.CLOSEOUT_SUCCESS;
             }
 
-            return EnumCloseOutType.CLOSEOUT_SUCCESS;
+            if (string.IsNullOrEmpty(errorMessage))
+            {
+                errorMessage = "Data file and/or directory not found on the instrument; cannot rename";
+            }
+
+            OnErrorEvent("Dataset " + datasetName + ": " + errorMessage);
+
+            return EnumCloseOutType.CLOSEOUT_FAILED;
         }
 
         /// <summary>
