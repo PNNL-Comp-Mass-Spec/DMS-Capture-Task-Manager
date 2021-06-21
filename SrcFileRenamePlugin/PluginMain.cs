@@ -44,7 +44,7 @@ namespace SrcFileRenamePlugin
                 return returnData;
             }
 
-            msg = "Renaming dataset '" + mDataset + "'";
+            msg = "Renaming dataset " + mDataset;
             LogMessage(msg);
 
             // Determine if instrument is on Bionet

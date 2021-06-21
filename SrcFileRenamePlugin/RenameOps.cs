@@ -408,7 +408,7 @@ namespace SrcFileRenamePlugin
             }
             catch (Exception ex)
             {
-                mMsg = "Error renaming file '" + instrumentFile.FullName + "' to '" + newPath + "'";
+                mMsg = "Error renaming file " + datasetFileToRename.FullName + " to " + newPath;
                 OnErrorEvent(mMsg, ex);
 
                 if (ex.Message.Contains("Access to the path") && ex.Message.Contains("is denied"))
@@ -451,7 +451,7 @@ namespace SrcFileRenamePlugin
             }
             catch (Exception ex)
             {
-                mMsg = "Error renaming directory '" + instrumentDirectory.FullName + "' to '" + newPath + "'";
+                mMsg = "Error renaming directory " + instrumentDirectory.FullName + " to " + newPath;
                 OnErrorEvent(mMsg, ex);
 
                 if (ex.Message.Contains("Access to the path") && ex.Message.Contains("is denied"))

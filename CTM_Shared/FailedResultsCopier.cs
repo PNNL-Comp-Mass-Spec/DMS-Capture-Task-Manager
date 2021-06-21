@@ -80,20 +80,20 @@ namespace CaptureTaskManager
                 }
                 catch (Exception ex)
                 {
-                    LogError("Error creating the results folder info file '" + infoFilePath + "'", ex);
+                    LogError("Error creating the results folder info file: " + infoFilePath, ex);
                 }
 
                 // Make sure the source folder exists
                 if (!sourceDirectory.Exists)
                 {
-                    LogError("Source folder not found; cannot copy results: " + resultsDirectoryPath);
+                    LogError("Source directory not found; cannot copy results: " + resultsDirectoryPath);
                 }
                 else
                 {
                     // Look for failed results folders that were archived over FAILED_RESULTS_FOLDER_RETAIN_DAYS days ago
                     DeleteOldFailedResultsDirectories(failedResultsDirectory);
 
-                    // Create the target folder
+                    // Create the target directory
                     if (!targetDirectory.Exists)
                     {
                         targetDirectory.Create();
