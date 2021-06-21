@@ -400,14 +400,24 @@ namespace SrcFileRenamePlugin
                 }
 
                 newPath = Path.Combine(instrumentFile.DirectoryName, "x_" + instrumentFile.Name);
-                instrumentFile.MoveTo(newPath);
+                var newInstrumentFile = new FileInfo(newPath);
+
+                if (newInstrumentFile.Exists)
+                {
+                    mMsg = "Error renaming file " + instrumentFile.Name + "; new filename already exists: " + newInstrumentFile.FullName;
+                    errorMessage = mMsg;
+                    OnErrorEvent(mMsg);
+                    return false;
+                }
+
+                instrumentFile.MoveTo(newInstrumentFile.FullName);
                 mMsg = "Renamed file to " + instrumentFile.FullName;
                 OnStatusEvent(mMsg);
                 return true;
             }
             catch (Exception ex)
             {
-                mMsg = "Error renaming file " + datasetFileToRename.FullName + " to " + newPath;
+                mMsg = "Error renaming file " + instrumentFile.FullName + " to " + newPath;
                 OnErrorEvent(mMsg, ex);
 
                 if (ex.Message.Contains("Access to the path") && ex.Message.Contains("is denied"))
@@ -443,7 +453,17 @@ namespace SrcFileRenamePlugin
                 }
 
                 newPath = Path.Combine(instrumentDirectory.Parent.FullName, "x_" + instrumentDirectory.Name);
-                instrumentDirectory.MoveTo(newPath);
+                var newInstrumentDirectory = new DirectoryInfo(newPath);
+
+                if (newInstrumentDirectory.Exists)
+                {
+                    mMsg = "Error renaming directory " + newInstrumentDirectory.Name + "; new directory already exists: " + newInstrumentDirectory.FullName;
+                    errorMessage = mMsg;
+                    OnErrorEvent(mMsg);
+                    return false;
+                }
+
+                instrumentDirectory.MoveTo(newInstrumentDirectory.FullName);
                 mMsg = "Renamed directory to " + instrumentDirectory.FullName;
                 OnStatusEvent(mMsg);
                 return true;
