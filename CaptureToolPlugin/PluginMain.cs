@@ -159,7 +159,7 @@ namespace CaptureToolPlugin
             // Store path to CaptureToolPlugin.dll in toolFiles
             var toolFiles = new List<FileInfo>
                 {
-                    new FileInfo(pluginPath)
+                    new(pluginPath)
                 };
 
             try

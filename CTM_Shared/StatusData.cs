@@ -42,7 +42,7 @@ namespace CaptureTaskManager
             }
         }
 
-        public static Queue<string> ErrorQueue { get; } = new Queue<string>();
+        public static Queue<string> ErrorQueue { get; } = new();
 
         #endregion
 

@@ -254,7 +254,7 @@ namespace DatasetArchivePlugin
             // Store path to DatasetArchivePlugin.dll in toolFiles
             var toolFiles = new List<FileInfo>
             {
-                new FileInfo(pluginPath)
+                new(pluginPath)
             };
 
             try

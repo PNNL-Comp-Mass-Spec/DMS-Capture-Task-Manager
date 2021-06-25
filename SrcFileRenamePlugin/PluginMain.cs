@@ -134,8 +134,9 @@ namespace SrcFileRenamePlugin
             }
 
             // Store path to SrcFileRenamePlugin.dll in toolFiles
-            var toolFiles = new System.Collections.Generic.List<System.IO.FileInfo> {
-                new System.IO.FileInfo(pluginPath)
+            var toolFiles = new System.Collections.Generic.List<System.IO.FileInfo>
+            {
+                new(pluginPath)
             };
 
             try

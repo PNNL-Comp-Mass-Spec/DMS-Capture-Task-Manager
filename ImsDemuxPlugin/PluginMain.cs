@@ -537,7 +537,7 @@ namespace ImsDemuxPlugin
             // Store path to the demultiplexer DLL in toolFiles
             var toolFiles = new System.Collections.Generic.List<FileInfo>
             {
-                new FileInfo(demultiplexerPath)
+                new(demultiplexerPath)
             };
 
             try
