@@ -15,6 +15,8 @@ namespace CaptureTaskManager
     /// </summary>
     public interface IStatusFile
     {
+        // Ignore Spelling: tcp
+
         #region "Events"
 
         event StatusMonitorUpdateReceived MonitorUpdateRequired;

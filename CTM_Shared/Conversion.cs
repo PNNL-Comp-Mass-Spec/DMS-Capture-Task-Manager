@@ -4,7 +4,7 @@ namespace CaptureTaskManager
     public static class Conversion
     {
         /// <summary>
-        /// Convert string to bool; default false if an error
+        /// Convert string to boolean; default false if an error
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>

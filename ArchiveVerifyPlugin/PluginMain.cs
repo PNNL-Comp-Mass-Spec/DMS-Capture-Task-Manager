@@ -16,7 +16,7 @@ namespace ArchiveVerifyPlugin
     // ReSharper disable once UnusedMember.Global
     public class PluginMain : ToolRunnerBase
     {
-        // Ignore Spelling: hashsum, subdir, Pacifica, myemsl, dmsarch, Frodo, Methow, keyvalue
+        // Ignore Spelling: dmsarch, Frodo, hashsum, keyvalue, Methow, myemsl, Pacifica, subdir, svc-dms
 
         #region "Constants and Enums"
         private const string HASH_RESULTS_FILE_PREFIX = "results.";

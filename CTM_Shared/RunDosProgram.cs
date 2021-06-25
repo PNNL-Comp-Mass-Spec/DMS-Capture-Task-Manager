@@ -108,7 +108,7 @@ namespace CaptureTaskManager
 
         /// <summary>
         /// When true then will cache the text the external program writes to the console
-        /// Can retrieve using the CachedConsoleOutput readonly property
+        /// Can retrieve using the CachedConsoleOutput read-only property
         /// Will also fire event ConsoleOutputEvent as new text is written to the console
         /// </summary>
         /// <remarks>If this is true, no window will be shown, even if CreateNoWindow=False</remarks>

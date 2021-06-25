@@ -557,7 +557,7 @@ namespace ImsDemuxPlugin
         #region "Event handlers"
 
         /// <summary>
-        /// Reports progress from demux dll
+        /// Reports progress from demux DLL
         /// </summary>
         /// <param name="newProgress">Current progress (value between 0 and 100)</param>
         private void DemuxTools_DemuxProgress(float newProgress)

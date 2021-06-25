@@ -14,7 +14,7 @@ namespace ArchiveStatusCheckPlugin
     // ReSharper disable once UnusedMember.Global
     public class PluginMain : ToolRunnerBase
     {
-        // Ignore Spelling: UploaderID, StatusNums
+        // Ignore Spelling: num, subfolder, StatusNums, UploaderID
 
         #region "Class-wide variables"
 

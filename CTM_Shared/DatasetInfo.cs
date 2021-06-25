@@ -19,6 +19,8 @@ namespace CaptureTaskManager
     /// </remarks>
     public class DatasetInfo
     {
+        // Ignore Spelling: Bruker
+
         public enum RawDSTypes
         {
             /// <summary>

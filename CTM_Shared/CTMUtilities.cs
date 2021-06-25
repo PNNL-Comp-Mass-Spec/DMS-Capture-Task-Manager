@@ -128,7 +128,7 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Runs the stored procedure or database query defined by "cmd"
+        /// Runs the specified stored procedure or database query
         /// </summary>
         /// <param name="cmd">SqlCommand var (query or stored procedure)</param>
         /// <param name="connectionString">Connection string</param>

@@ -6,7 +6,8 @@ namespace CaptureTaskManager
     // Used in the DatasetIntegrityPlugin and elsewhere
     public static class InstrumentClassInfo
     {
-        // Ignore Spelling: Synapt, wiff, uimf, Shimadzu, qgd, acqu, fid, maldi, tof, baf, ser, tims, tdf, Illumina
+        // Ignore Spelling: Bruker, Illumina, Micromass, Sciex, Shimadzu, Synapt
+        // Ignore Spelling: acqu, baf, fid, maldi, qgd, ser, tdf, tims, tof, uimf, wiff
 
         #region "Raw Data Type Constants"
 
@@ -224,7 +225,7 @@ namespace CaptureTaskManager
             var instrumentClass = InstrumentClass.Unknown;
             try
             {
-                // Convert the instrument class name text to the num name using case-insensitive conversion
+                // Convert the instrument class name text to the enum name using case-insensitive conversion
                 instrumentClass = (InstrumentClass)Enum.Parse(typeof(InstrumentClass), sInstrumentClassName, true);
             }
             catch
