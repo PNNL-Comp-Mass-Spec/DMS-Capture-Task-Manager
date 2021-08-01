@@ -26,7 +26,11 @@ namespace DatasetIntegrityPlugin
     // ReSharper disable once UnusedMember.Global
     public class PluginMain : ToolRunnerBase
     {
+        // ReSharper disable CommentTypo
+
         // Ignore Spelling: chrom, cli, batchfile, nosplash, Acq, utf, pos, ser, mgf, acqus, fid, idx, fticr, uimf, cmd, wlkXZsvC-miP6A2KH-DgAuTix2
+        // ReSharper restore CommentTypo
+
         // Ignore Spelling: Agilent, Bruker, Orbitrap, Sciex, Shimadzu
 
         #region "Constants"

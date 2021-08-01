@@ -20,7 +20,6 @@ namespace CaptureToolPlugin
     {
         // Ignore Spelling: Bionet, secfso, Logon
 
-        #region "Methods"
         /// <summary>
         /// Runs the capture step tool
         /// </summary>
@@ -172,7 +171,5 @@ namespace CaptureToolPlugin
                 return false;
             }
         }
-
-        #endregion
     }
 }

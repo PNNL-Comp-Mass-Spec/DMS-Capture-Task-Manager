@@ -1118,10 +1118,10 @@ namespace CaptureToolPlugin
             var storageVolExternal = taskParams.GetParam("Storage_Vol_External").Trim();   // Example: \\proto-5\
 
             var instClassName = taskParams.GetParam("Instrument_Class");                   // Examples: Finnigan_Ion_Trap, LTQ_FT, Triple_Quad, IMS_Agilent_TOF, Agilent_Ion_Trap
-            var instrumentClass = InstrumentClassInfo.GetInstrumentClass(instClassName);    // Enum of instrument class type
-            var instrumentName = taskParams.GetParam("Instrument_Name");                         // Instrument name
+            var instrumentClass = InstrumentClassInfo.GetInstrumentClass(instClassName);             // Enum of instrument class type
+            var instrumentName = taskParams.GetParam("Instrument_Name");                   // Instrument name
 
-            var shareConnectorType = mMgrParams.GetParam("ShareConnectorType");         // Can be PRISM or DotNET (but has been PRISM since 2012)
+            var shareConnectorType = mMgrParams.GetParam("ShareConnectorType");          // Can be PRISM or DotNET (but has been PRISM since 2012)
             var computerName = Environment.MachineName;
 
             ConnectionType connectionType;
