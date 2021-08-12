@@ -129,7 +129,7 @@ namespace CaptureToolPlugin
                 if (!mUserName.Contains(@"\"))
                 {
                     // Prepend this computer's name to the username
-                    mUserName = Environment.MachineName + @"\" + mUserName;
+                    mUserName = System.Net.Dns.GetHostName() + @"\" + mUserName;
                 }
             }
 
@@ -1122,7 +1122,7 @@ namespace CaptureToolPlugin
             var instrumentName = taskParams.GetParam("Instrument_Name");                   // Instrument name
 
             var shareConnectorType = mMgrParams.GetParam("ShareConnectorType");          // Can be PRISM or DotNET (but has been PRISM since 2012)
-            var computerName = Environment.MachineName;
+            var computerName = System.Net.Dns.GetHostName();
 
             ConnectionType connectionType;
 

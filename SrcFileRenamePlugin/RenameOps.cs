@@ -55,7 +55,7 @@ namespace SrcFileRenamePlugin
                 if (!mUserName.Contains(@"\"))
                 {
                     // Prepend this computer's name to the username
-                    mUserName = Environment.MachineName + @"\" + mUserName;
+                    mUserName = System.Net.Dns.GetHostName() + @"\" + mUserName;
                 }
             }
 
