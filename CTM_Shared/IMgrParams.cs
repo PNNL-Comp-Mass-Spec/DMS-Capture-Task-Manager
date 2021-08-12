@@ -14,20 +14,23 @@ namespace CaptureTaskManager
     /// </summary>
     public interface IMgrParams
     {
-        #region "Properties"
         /// <summary>
         /// Error message
         /// </summary>
         string ErrMsg { get; }
 
+        /// <summary>
+        /// Manager name
+        /// </summary>
+        string ManagerName { get; }
+
+        /// <summary>
+        /// Dictionary of manager parameters
+        /// </summary>
         // ReSharper disable once UnusedMember.Global
         Dictionary<string, string> MgrParams { get; }
 
         bool TraceMode { get; }
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Gets a parameter from the manager parameters dictionary
@@ -67,16 +70,12 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="itemKey">Key name for the item</param>
         /// <param name="itemValue">Value to assign to the key</param>
-        /// <remarks></remarks>
         // ReSharper disable once UnusedMember.Global
         void SetParam(string itemKey, string itemValue);
 
         /// <summary>
         /// Retrieves the manager and global settings from various databases
         /// </summary>
-        /// <returns></returns>
         bool LoadMgrSettingsFromDB(bool logConnectionErrors = true, int retryCount = 3);
-
-        #endregion
     }
 }
