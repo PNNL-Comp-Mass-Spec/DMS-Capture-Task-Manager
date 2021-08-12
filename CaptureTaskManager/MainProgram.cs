@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Threading;
+using PRISMDatabaseUtils;
 
 namespace CaptureTaskManager
 {
@@ -272,10 +273,14 @@ namespace CaptureTaskManager
                 defaultDmsConnectionString = dmsConnectionStringFromConfig;
             }
 
-            ShowTrace("Instantiate a DbLogger using " + defaultDmsConnectionString);
+            var applicationDirectory = new DirectoryInfo(mMgrDirectoryPath);
+
+            var dbLoggerConnectionString = DbToolsFactory.AddApplicationNameToConnectionString(defaultDmsConnectionString, applicationDirectory.Name);
+
+            ShowTrace("Instantiate a DbLogger using " + dbLoggerConnectionString);
 
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-            LogTools.CreateDbLogger(defaultDmsConnectionString, "CaptureTaskMan: " + hostName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
+            LogTools.CreateDbLogger(dbLoggerConnectionString, "CaptureTaskMan: " + hostName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
 
             LogTools.MessageLogged += MessageLoggedHandler;
 
@@ -358,8 +363,10 @@ namespace CaptureTaskManager
 
             var logCnStr = mMgrSettings.GetParam("ConnectionString");
 
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(logCnStr, mMgrName);
+
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-            LogTools.CreateDbLogger(logCnStr, "CaptureTaskMan: " + mMgrName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
+            LogTools.CreateDbLogger(connectionStringToUse, "CaptureTaskMan: " + mMgrName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
 
             // Make the initial log entry
             var relativeLogFilePath = LogTools.CurrentLogFilePath;
@@ -1250,8 +1257,10 @@ namespace CaptureTaskManager
             {
                 var connectionString = mMgrSettings.GetParam(MgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING);
 
+                var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, mMgrName);
+
                 var cleanupMgrErrors = new CleanupMgrErrors(
-                    connectionString,
+                    connectionStringToUse,
                     mMgrName,
                     mMgrSettings.GetParam("WorkDir"),
                     mStatusFile,

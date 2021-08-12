@@ -72,9 +72,11 @@ namespace CaptureTaskManager
                     return;
                 }
 
-                ShowTrace("AckManagerUpdateRequired using " + connectionString);
+                var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, ManagerName);
 
-                var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: TraceMode);
+                ShowTrace("AckManagerUpdateRequired using " + connectionStringToUse);
+
+                var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
                 RegisterEvents(dbTools);
 
                 // Set up the command object prior to SP execution

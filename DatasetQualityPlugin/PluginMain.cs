@@ -975,11 +975,13 @@ namespace DatasetQualityPlugin
 
             var connectionString = mMgrParams.GetParam("ConnectionString");
 
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, mMgrName);
+
             var scanCount = 0;
             var scanCountMS = 0;
             var scanTypes = new List<string>();
 
-            var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: mTraceMode);
+            var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: mTraceMode);
             RegisterEvents(dbTools);
 
             if (dbTools.GetQueryResultsDataTable(sql, out var table))

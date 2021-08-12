@@ -58,6 +58,7 @@ namespace CaptureTaskManager
         #region "Class wide Variables"
 
         private readonly bool mInitialized;
+
         private readonly string mMgrConfigDBConnectionString;
 
         private readonly string mManagerName;
@@ -95,7 +96,7 @@ namespace CaptureTaskManager
                 throw new Exception("Manager name is not defined");
             }
 
-            mMgrConfigDBConnectionString = mgrConfigDBConnectionString;
+            mMgrConfigDBConnectionString = DbToolsFactory.AddApplicationNameToConnectionString(mgrConfigDBConnectionString, managerName);
             mManagerName = managerName;
 
             mStatusFile = statusFile;

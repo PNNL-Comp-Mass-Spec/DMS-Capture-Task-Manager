@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Data.Common;
 using PRISM;
 using PRISM.Logging;
+using PRISMDatabaseUtils;
 
 // ReSharper disable UnusedMember.Global
 namespace CaptureTaskManager
@@ -80,9 +81,11 @@ namespace CaptureTaskManager
             ManagerName = mMgrParams.GetParam("MgrName", System.Net.Dns.GetHostName() + "_Undefined-Manager");
 
             // Gigasax.DMS_Capture
-            mConnStr = mMgrParams.GetParam("ConnectionString");
+            var connectionString = mMgrParams.GetParam("ConnectionString");
 
-            mCaptureTaskDBProcedureExecutor = PRISMDatabaseUtils.DbToolsFactory.GetDBTools(mConnStr, debugMode: traceMode);
+            mConnStr = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, ManagerName);
+
+            mCaptureTaskDBProcedureExecutor = DbToolsFactory.GetDBTools(mConnStr, debugMode: traceMode);
             RegisterEvents(mCaptureTaskDBProcedureExecutor);
 
             UnregisterEventHandler((EventNotifier)mCaptureTaskDBProcedureExecutor, BaseLogger.LogLevels.ERROR);
