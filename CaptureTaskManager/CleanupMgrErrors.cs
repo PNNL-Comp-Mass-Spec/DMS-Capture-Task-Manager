@@ -213,10 +213,7 @@ namespace CaptureTaskManager
 
             try
             {
-                if (failureMessage == null)
-                {
-                    failureMessage = string.Empty;
-                }
+                failureMessage ??= string.Empty;
 
                 var dbTools = DbToolsFactory.GetDBTools(mMgrConfigDBConnectionString, debugMode: mTraceMode);
                 RegisterEvents(dbTools);
