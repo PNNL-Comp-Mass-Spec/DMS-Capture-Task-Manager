@@ -1985,7 +1985,7 @@ namespace CaptureToolPlugin
             }
 
             var currentTime = DateTime.Now;
-            if (currentTime.Hour == 18 || currentTime.Hour == 19 || Environment.MachineName.StartsWith("monroe", StringComparison.OrdinalIgnoreCase))
+            if (currentTime.Hour is 18 or 19 || System.Net.Dns.GetHostName().StartsWith("WE43320", StringComparison.OrdinalIgnoreCase))
             {
                 // Time is between 6 pm and 7:59 pm
                 // Check for directories at METHOD_FOLDER_BASE_PATH that start with x_ and have .lcmethod files that are all at least 14 days old
