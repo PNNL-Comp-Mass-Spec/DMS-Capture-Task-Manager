@@ -96,6 +96,7 @@ xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\DeployedFiles" /Y
 
 xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\DeployedFiles" /Y /d
 xcopy "$(TargetDir)PRISMWin.dll" "$(ProjectDir)..\DeployedFiles" /Y /d
+xcopy "$(TargetDir)PRISMDatabaseUtils.dll" "$(ProjectDir)..\DeployedFiles" /Y /d
 xcopy "$(TargetDir)ICSharpCode.SharpZipLib.dll" "$(ProjectDir)..\DeployedFiles" /Y /d
 xcopy "$(TargetDir)UIMFLibrary.dll" "$(ProjectDir)..\DeployedFiles" /Y /d
 xcopy "$(TargetDir)System.Data.SQLite.dll" "$(ProjectDir)..\DeployedFiles" /Y /d
