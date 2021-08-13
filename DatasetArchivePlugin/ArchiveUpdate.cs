@@ -19,16 +19,10 @@ namespace DatasetArchivePlugin
     {
         // Ignore Spelling: dmsarch
 
-        #region "Class wide variables"
-
         // Obsolete: "No longer used"
         // string mArchiveSharePath = string.Empty;             // The dataset folder path in the archive, for example: \\aurora.emsl.pnl.gov\dmsarch\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25
         // string mResultsFolderPathArchive = string.Empty;     // The target path to copy the data to, for example:    \\aurora.emsl.pnl.gov\dmsarch\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25\SIC201304300029_Auto938684
         // string mResultsFolderPathServer = string.Empty;      // The source path of the dataset folder (or dataset job results folder) to archive, for example: \\proto-7\VOrbiETD03\2013_2\QC_Shew_13_02_C_29Apr13_Cougar_13-03-25\SIC201304300029_Auto938684
-
-        #endregion
-
-        #region "Constructors"
 
         /// <summary>
         /// Constructor
@@ -41,9 +35,7 @@ namespace DatasetArchivePlugin
             : base(mgrParams, taskParams, statusTools, fileTools)
         {
         }
-        #endregion
 
-        #region "Methods"
         /// <summary>
         /// Performs a dataset archive or archive update task
         /// </summary>
@@ -179,8 +171,5 @@ namespace DatasetArchivePlugin
 #pragma warning restore 162
 
         }
-
-        #endregion
-
     }
 }

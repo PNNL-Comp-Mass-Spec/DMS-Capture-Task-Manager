@@ -27,17 +27,11 @@ namespace CaptureTaskManager
     {
         // Ignore Spelling: yyyy-MM-dd hh:mm:ss tt, Lockfile
 
-        #region "Constants"
-
         public const string EXCEPTION_CREATING_OUTPUT_DIRECTORY = "Exception creating output directory";
 
         private const string SP_NAME_SET_TASK_TOOL_VERSION = "SetStepTaskToolVersion";
 
         private const string DATE_TIME_FORMAT = "yyyy-MM-dd hh:mm:ss tt";
-
-        #endregion
-
-        #region "Class wide variables"
 
         protected IMgrParams mMgrParams;
         protected ITaskParams mTaskParams;
@@ -78,22 +72,6 @@ namespace CaptureTaskManager
 
         private DateTime mLockQueueWaitTimeStart = DateTime.UtcNow;
 
-        #endregion
-
-        #region "Delegates"
-
-        #endregion
-
-        #region "Events"
-
-        #endregion
-
-        #region "Properties"
-
-        #endregion
-
-        #region "Constructor"
-
         /// <summary>
         /// Constructor
         /// </summary>
@@ -101,10 +79,6 @@ namespace CaptureTaskManager
         {
             // Does nothing; see the Setup method for constructor-like behavior
         }
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs the plugin tool. Implements IToolRunner.RunTool method
@@ -1011,10 +985,6 @@ namespace CaptureTaskManager
             return false;
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         private void FileTools_LockQueueTimedOut(string sourceFilePath, string targetFilePath, double waitTimeMinutes)
         {
             var msg = "Lockfile queue timed out after " + waitTimeMinutes.ToString("0") + " minutes; Source=" + sourceFilePath + ", Target=" + targetFilePath;
@@ -1074,8 +1044,5 @@ namespace CaptureTaskManager
 
             LogMessage(adminBypassMessage);
         }
-
-        #endregion
-
     }
 }

@@ -17,15 +17,9 @@ namespace CaptureTaskManager
     /// </summary>
     public class PluginLoader : LoggerBase
     {
-        #region "Properties"
-
         public static string FileName { get; set; } = "plugin_info.xml";
 
         public static string ErrMsg { get; set; }
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Set the following to True if debugging
@@ -210,7 +204,5 @@ namespace CaptureTaskManager
             }
             return obj;
         }
-
-        #endregion
     }
 }

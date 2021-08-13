@@ -25,18 +25,12 @@ namespace CaptureTaskManager
     {
         // Ignore Spelling: Utils, Ack, Seqs
 
-        #region "Constants"
-
         private const string SP_NAME_ACK_MANAGER_UPDATE = "AckManagerUpdateRequired";
 
         /// <summary>
         /// Connection string to DMS5
         /// </summary>
         public const string MGR_PARAM_DEFAULT_DMS_CONN_STRING = "DefaultDMSConnString";
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Constructor
@@ -122,7 +116,5 @@ namespace CaptureTaskManager
             var success = LoadSettings(configFileSettings, true);
             return success;
         }
-
-        #endregion
     }
 }

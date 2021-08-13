@@ -21,18 +21,10 @@ namespace DatasetArchivePlugin
     // ReSharper disable once UnusedMember.Global
     public class PluginMain : ToolRunnerBase
     {
-        #region "Constants"
         protected const string SP_NAME_STORE_MYEMSL_STATS = "StoreMyEMSLUploadStats";
-        #endregion
-
-        #region "Class wide Variables"
 
         private bool mSubmittedToMyEMSL;
         private bool mMyEMSLAlreadyUpToDate;
-
-        #endregion
-
-        #region "Methods"
         /// <summary>
         /// Runs the archive and archive update step tools
         /// </summary>
@@ -276,7 +268,5 @@ namespace DatasetArchivePlugin
                 e.EUSInfo.EUSInstrumentID, e.EUSInfo.EUSProjectID, e.EUSInfo.EUSUploaderID,
                 e.ErrorCode, e.UsedTestInstance);
         }
-
-        #endregion
     }
 }

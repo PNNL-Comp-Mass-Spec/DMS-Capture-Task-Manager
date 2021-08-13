@@ -12,12 +12,8 @@ namespace CaptureTaskManager
     /// </summary>
     public interface IToolRunner
     {
-        #region "Methods"
-
         void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools);
 
         ToolReturnData RunTool();
-
-        #endregion
     }
 }

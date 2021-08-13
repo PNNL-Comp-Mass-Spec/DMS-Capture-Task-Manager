@@ -20,14 +20,8 @@ namespace CaptureTaskManager
     /// </summary>
     internal abstract class DbTask : LoggerBase
     {
-        #region "Constants"
-
         protected const int RET_VAL_OK = 0;
         protected const int RET_VAL_TASK_NOT_AVAILABLE = 53000;
-
-        #endregion
-
-        #region "Class wide variables"
 
         protected readonly IMgrParams mMgrParams;
 
@@ -51,10 +45,6 @@ namespace CaptureTaskManager
         /// </summary>
         protected readonly PRISMDatabaseUtils.IDBTools mCaptureTaskDBProcedureExecutor;
 
-        #endregion
-
-        #region "Properties"
-
         /// <summary>
         /// Manager name
         /// </summary>
@@ -64,10 +54,6 @@ namespace CaptureTaskManager
         /// Job parameters
         /// </summary>
         public Dictionary<string, string> TaskDictionary => mJobParams;
-
-        #endregion
-
-        #region "Constructor"
 
         /// <summary>
         /// Constructor
@@ -95,10 +81,6 @@ namespace CaptureTaskManager
             // 4 means Info level (normal) logging; 5 for Debug level (verbose) logging
             mDebugLevel = mgrParams.GetParam("DebugLevel", 4);
         }
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Requests a capture pipeline task
@@ -317,10 +299,6 @@ namespace CaptureTaskManager
             return (short)InpObj;
         }
 
-        #endregion
-
-        #region "Event handlers"
-
         private void CaptureTaskDBProcedureExecutor_DBErrorEvent(string message, Exception ex)
         {
             var logToDb = message.IndexOf("permission was denied", StringComparison.OrdinalIgnoreCase) >= 0 ||
@@ -335,7 +313,5 @@ namespace CaptureTaskManager
                 LogError(message, ex);
             }
         }
-
-        #endregion
     }
 }

@@ -25,8 +25,6 @@ namespace DatasetQualityPlugin
     {
         // Ignore Spelling: Quameter, utf, frac, Lumos, orbi, Roc, idfree, monoisotope, Filepath, cpus, cfg, cmd
 
-        #region "Constants and Enums"
-
         private const int MAX_QUAMETER_RUNTIME_MINUTES = 150;
 
         private const string STORE_QUAMETER_RESULTS_SP_NAME = "StoreQuameterResults";
@@ -35,10 +33,6 @@ namespace DatasetQualityPlugin
 
         private const string FATAL_SPLINE_ERROR = "SPLINE_PCHIP_SET - Fatal error";
         private const string X_ARRAY_NOT_INCREASING = "X array not strictly increasing";
-
-        #endregion
-
-        #region "Class-wide variables"
 
         private ToolReturnData mRetData = new();
 
@@ -53,10 +47,6 @@ namespace DatasetQualityPlugin
         private DateTime mLastStatusUpdate;
 
         private int mStatusUpdateIntervalMinutes;
-
-        #endregion
-
-        #region "Methods"
         /// <summary>
         /// Runs the dataset info step tool
         /// </summary>
@@ -1326,10 +1316,6 @@ namespace DatasetQualityPlugin
             return true;
         }
 
-        #endregion
-
-        #region "Event handlers"
-
         private void AttachCmdRunnerEvents(RunDosProgram cmdRunner)
         {
             try
@@ -1388,8 +1374,5 @@ namespace DatasetQualityPlugin
                 }
             }
         }
-
-        #endregion
-
     }
 }

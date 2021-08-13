@@ -17,13 +17,7 @@ namespace CaptureTaskManager
     /// </remarks>
     public static class StatusData
     {
-        #region "Class wide variables"
-
         private static string mMostRecentLogMessage;
-
-        #endregion
-
-        #region "Properties"
 
         public static string MostRecentLogMessage
         {
@@ -44,10 +38,6 @@ namespace CaptureTaskManager
 
         public static Queue<string> ErrorQueue { get; } = new();
 
-        #endregion
-
-        #region "Methods"
-
         public static void AddErrorMessage(string ErrMsg)
         {
             // Add the most recent error message
@@ -59,7 +49,5 @@ namespace CaptureTaskManager
                 ErrorQueue.Dequeue();
             }
         }
-
-        #endregion
     }
 }

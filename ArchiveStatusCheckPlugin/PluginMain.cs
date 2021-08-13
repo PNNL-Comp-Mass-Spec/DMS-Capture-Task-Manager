@@ -16,13 +16,7 @@ namespace ArchiveStatusCheckPlugin
     {
         // Ignore Spelling: num, subfolder, StatusNums, UploaderID
 
-        #region "Class-wide variables"
-
         private ToolReturnData mRetData = new();
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs the Archive Status Check step tool
@@ -588,8 +582,5 @@ namespace ArchiveStatusCheckPlugin
                 LogError(msg, ex);
             }
         }
-
-        #endregion
-
     }
 }

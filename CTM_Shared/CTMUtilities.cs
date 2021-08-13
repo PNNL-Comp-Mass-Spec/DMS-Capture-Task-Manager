@@ -12,8 +12,6 @@ namespace CaptureTaskManager
     // ReSharper disable once InconsistentNaming
     public static class CTMUtilities
     {
-        #region Properties
-
         /// <summary>
         /// When true, we are running on Linux and thus should not access any Windows features
         /// </summary>
@@ -25,13 +23,7 @@ namespace CaptureTaskManager
         /// </summary>
         public static bool OfflineMode { get; private set; }
 
-        #endregion
-
-        #region "Module variables"
-
         private static string mAppDirectoryPath;
-
-        #endregion
 
         /// <summary>
         /// Convert a file size in bytes to gigabytes

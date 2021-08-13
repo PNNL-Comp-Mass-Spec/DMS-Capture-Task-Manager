@@ -25,8 +25,6 @@ namespace CaptureTaskManager
     {
         // Ignore Spelling: yyyy-MM-dd hh:mm:ss tt, Unsubscribe
 
-        #region "Enums"
-
         private enum LoopExitCode
         {
             NoTaskFound,
@@ -42,10 +40,6 @@ namespace CaptureTaskManager
             NeedToAbortProcessing
         }
 
-        #endregion
-
-        #region "Constants"
-
         private const int MAX_ERROR_COUNT = 4;
 
         private const string DATE_TIME_FORMAT = "yyyy-MM-dd hh:mm:ss tt";
@@ -53,10 +47,6 @@ namespace CaptureTaskManager
         private const string DEFAULT_BASE_LOGFILE_NAME = @"Logs\CapTaskMan";
 
         private const bool ENABLE_LOGGER_TRACE_MODE = false;
-
-        #endregion
-
-        #region "Class wide variables"
 
         private CaptureTaskMgrSettings mMgrSettings;
 
@@ -88,26 +78,10 @@ namespace CaptureTaskManager
         private bool mRunning;
         private System.Timers.Timer mStatusTimer;
 
-        #endregion
-
-        #region "Delegates"
-
-        #endregion
-
-        #region "Events"
-
-        #endregion
-
-        #region "Properties"
-
         /// <summary>
         /// When true, show additional messages at the console
         /// </summary>
         public bool TraceMode { get; set; }
-
-        #endregion
-
-        #region "Constructors"
 
         /// <summary>
         /// Constructor
@@ -120,10 +94,6 @@ namespace CaptureTaskManager
             mMgrExeName = exeInfo.Name;
             mMgrDirectoryPath = exeInfo.DirectoryName;
         }
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Evaluates the LoopExitCode to determine whether or not manager can request another task
@@ -1550,10 +1520,6 @@ namespace CaptureTaskManager
             return false;
         }
 
-        #endregion
-
-        #region "EventNotifier events"
-
         private new void RegisterEvents(IEventNotifier processingClass, bool writeDebugEventsToLog = true)
         {
             base.RegisterEvents(processingClass, writeDebugEventsToLog);
@@ -1571,10 +1537,6 @@ namespace CaptureTaskManager
             mStatusFile.CurrentOperation = progressMessage;
             mStatusFile.UpdateAndWrite(percentComplete);
         }
-
-        #endregion
-
-        #region "Event handlers"
 
         private void FileWatcherChanged(object sender, FileSystemEventArgs e)
         {
@@ -1601,7 +1563,5 @@ namespace CaptureTaskManager
         {
             mStatusFile.WriteStatusFile();
         }
-
-        #endregion
     }
 }

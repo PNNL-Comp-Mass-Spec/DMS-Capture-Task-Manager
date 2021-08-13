@@ -23,8 +23,6 @@ namespace CaptureToolPlugin
     {
         // Ignore Spelling: bionet, Bruker, dotnet, fso, idx, jpg, lcMethod, mcf, na, prepend, Pwd, secfso, ser, Subfolder, Unsubscribe, Username
 
-        #region "Constants and Enums"
-
         /// <summary>
         /// Use copy with resume for files over 500 MB in size
         /// </summary>
@@ -43,9 +41,6 @@ namespace CaptureToolPlugin
             Prism,
             DotNET
         }
-        #endregion
-
-        #region "Class wide variables"
 
         private readonly IMgrParams mMgrParams;
 
@@ -88,18 +83,10 @@ namespace CaptureToolPlugin
 
         private string mErrorMessage = string.Empty;
 
-        #endregion
-
-        #region "Properties"
-
         /// <summary>
         /// Set to true if an error occurs connecting to the source computer
         /// </summary>
         public bool NeedToAbortProcessing { get; private set; }
-
-        #endregion
-
-        #region "Constructor"
 
         /// <summary>
         /// Constructor
@@ -152,10 +139,6 @@ namespace CaptureToolPlugin
             mDatasetFileSearchTool = new DatasetFileSearchTool(mTraceMode);
             RegisterEvents(mDatasetFileSearchTool);
         }
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Look for files in the dataset directory with spaces in the name
@@ -3805,10 +3788,6 @@ namespace CaptureToolPlugin
             return false;
         }
 
-        #endregion
-
-        #region "Event handlers"
-
         private void OnCopyingFile(string filename)
         {
             LogDebug("Copying file " + filename);
@@ -3839,8 +3818,5 @@ namespace CaptureToolPlugin
 
             LogMessage(string.Format("  copying {0}: {1:0.0}% complete", Path.GetFileName(filename), percentComplete));
         }
-
-        #endregion
-
     }
 }

@@ -17,8 +17,6 @@ namespace SrcFileRenamePlugin
     public class PluginMain : ToolRunnerBase
     {
         // Ignore Spelling: Bionet, secfso
-
-        #region "Methods"
         /// <summary>
         /// Runs the source file rename tool
         /// </summary>
@@ -149,7 +147,5 @@ namespace SrcFileRenamePlugin
                 return false;
             }
         }
-
-        #endregion
     }
 }

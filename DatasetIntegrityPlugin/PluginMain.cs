@@ -32,8 +32,6 @@ namespace DatasetIntegrityPlugin
         // ReSharper restore CommentTypo
 
         // Ignore Spelling: Agilent, Bruker, Orbitrap, Sciex, Shimadzu
-
-        #region "Constants"
         private const float RAW_FILE_MIN_SIZE_KB = 50;
         private const float RAW_FILE_MIN_SIZE_KB_21T = 30;
         private const float RAW_FILE_MAX_SIZE_MB_LTQ = 2048;
@@ -67,10 +65,6 @@ namespace DatasetIntegrityPlugin
         private const int MAX_AGILENT_TO_UIMF_RUNTIME_MINUTES = 180;
         private const int MAX_AGILENT_TO_CDF_RUNTIME_MINUTES = 10;
 
-        #endregion
-
-        #region "Class-wide variables"
-
         private ToolReturnData mRetData = new();
 
         private DateTime mProcessingStartTime;
@@ -82,10 +76,6 @@ namespace DatasetIntegrityPlugin
         private DateTime mLastStatusUpdate;
 
         private int mStatusUpdateIntervalMinutes;
-
-        #endregion
-
-        #region "Methods"
         /// <summary>
         /// Runs the dataset integrity step tool
         /// </summary>
@@ -2824,10 +2814,6 @@ namespace DatasetIntegrityPlugin
             }
         }
 
-        #endregion
-
-        #region "Event handlers"
-
         private void AttachCmdRunnerEvents(RunDosProgram cmdRunner)
         {
             try
@@ -2869,8 +2855,5 @@ namespace DatasetIntegrityPlugin
                 }
             }
         }
-
-        #endregion
-
     }
 }

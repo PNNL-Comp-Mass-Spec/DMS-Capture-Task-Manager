@@ -21,21 +21,11 @@ namespace CaptureTaskManager
     {
         // Ignore Spelling: yyyy-MM-dd, hh:mm:ss tt, tcp
 
-        #region "Constants"
-
         public const string FLAG_FILE_NAME = "flagFile.txt";
-
-        #endregion
-
-        #region "Class wide variables"
 
         private DateTime mLastFileWriteTime;
 
         private int mWritingErrorCountSaved;
-
-        #endregion
-
-        #region "Properties"
 
         /// <summary>
         /// Status file path
@@ -126,10 +116,6 @@ namespace CaptureTaskManager
         /// When true, the status XML is being sent to the manager status message queue
         /// </summary>
         public bool LogToMsgQueue { get; private set; }
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Constructor
@@ -612,13 +598,6 @@ namespace CaptureTaskManager
             return (float)DateTime.UtcNow.Subtract(TaskStartTime).TotalHours;
         }
 
-        #endregion
-
-        #region "Events"
-
         public event StatusMonitorUpdateReceived MonitorUpdateRequired;
-
-        #endregion
-
     }
 }

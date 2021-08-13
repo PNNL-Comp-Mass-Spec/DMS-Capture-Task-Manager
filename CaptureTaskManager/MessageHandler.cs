@@ -26,7 +26,6 @@ namespace CaptureTaskManager
     /// </summary>
     internal class MessageHandler : LoggerBase, IDisposable
     {
-#region "Class wide variables"
         private MgrSettings mMgrSettings;
 
         private IConnection mConnection;
@@ -36,10 +35,6 @@ namespace CaptureTaskManager
         private bool mIsDisposed;
         private bool mHasConnection;
 
-        #endregion
-
-        #region "Properties"
-
         public MgrSettings MgrSettings
         {
             set => mMgrSettings = value;
@@ -48,10 +43,6 @@ namespace CaptureTaskManager
         public string BrokerUri { get; set; }
 
         public string StatusTopicName { get; set; }
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Create set of NMS connection objects necessary to talk to the ActiveMQ broker
@@ -191,10 +182,6 @@ namespace CaptureTaskManager
             }
         }
 
-        #endregion
-
-        #region "Cleanup"
-
         /// <summary>
         /// Cleans up a connection after error or when closing
         /// </summary>
@@ -227,7 +214,5 @@ namespace CaptureTaskManager
             DestroyConnection();
             mIsDisposed = true;
         }
-
-        #endregion
     }
 }

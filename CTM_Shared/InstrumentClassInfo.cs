@@ -9,8 +9,6 @@ namespace CaptureTaskManager
         // Ignore Spelling: Bruker, Illumina, Micromass, Sciex, Shimadzu, Synapt
         // Ignore Spelling: acqu, baf, fid, maldi, qgd, ser, tdf, tims, tof, uimf, wiff
 
-        #region "Raw Data Type Constants"
-
         // Note: All of the RAW_DATA_TYPE constants need to be all lowercase
 
         // Agilent ion trap data, Agilent TOF data
@@ -72,10 +70,6 @@ namespace CaptureTaskManager
         // The following is used by instrument External_Illumina
         public const string RAW_DATA_TYPE_ILLUMINA_FOLDER = "illumina_folder";
 
-        #endregion
-
-        #region "File Extension Constants"
-
         public const string DOT_WIFF_EXTENSION = ".wiff";
         public const string DOT_D_EXTENSION = ".d";
         public const string DOT_RAW_EXTENSION = ".raw";
@@ -86,10 +80,6 @@ namespace CaptureTaskManager
         public const string DOT_CDF_EXTENSION = ".cdf";
         public const string DOT_TXT_GZ_EXTENSION = ".txt.gz";
         public const string DOT_QGD_EXTENSION = ".qgd";
-
-        #endregion
-
-        #region "Enums"
 
         public enum RawDataType
         {
@@ -212,8 +202,6 @@ namespace CaptureTaskManager
             FT_Booster_Data = 28,           // 21T_Booster
             IMS_Agilent_TOF_DotD = 29       // Data is acquired natively as .D directories: IMS08, IMS09, IMS10, IMS11
         }
-
-        #endregion
 
         public static InstrumentClass GetInstrumentClass(string sInstrumentClassName)
         {

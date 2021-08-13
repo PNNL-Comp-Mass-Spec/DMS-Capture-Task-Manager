@@ -12,8 +12,6 @@ namespace CaptureTaskManager
     /// </summary>
     public class ToolReturnData
     {
-        #region "Properties"
-
         public EnumCloseOutType CloseoutType { get; set; }
 
         public string CloseoutMsg { get; set; }
@@ -21,8 +19,6 @@ namespace CaptureTaskManager
         public EnumEvalCode EvalCode { get; set; }
 
         public string EvalMsg { get; set; }
-
-        #endregion
 
         /// <summary>
         /// Constructor

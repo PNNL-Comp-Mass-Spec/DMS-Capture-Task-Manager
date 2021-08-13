@@ -6,8 +6,6 @@ namespace CaptureTaskManager
 {
     public class CleanupMgrErrors : LoggerBase
     {
-        #region "Constants"
-
         private const string SP_NAME_REPORT_MGR_CLEANUP = "ReportManagerErrorCleanup";
 
         /// <summary>
@@ -53,10 +51,6 @@ namespace CaptureTaskManager
             Fail = 3
         }
 
-        #endregion
-
-        #region "Class wide Variables"
-
         private readonly bool mInitialized;
 
         private readonly string mMgrConfigDBConnectionString;
@@ -68,8 +62,6 @@ namespace CaptureTaskManager
         private readonly bool mTraceMode;
 
         private readonly string mWorkingDirPath;
-
-        #endregion
 
         /// <summary>
         /// Constructor

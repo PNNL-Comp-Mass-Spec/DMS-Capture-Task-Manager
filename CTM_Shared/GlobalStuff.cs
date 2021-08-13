@@ -1,8 +1,6 @@
 ﻿// ReSharper disable UnusedMember.Global
 namespace CaptureTaskManager
 {
-    #region "Enums"
-
     /// <summary>
     /// Manager status
     /// </summary>
@@ -66,11 +64,5 @@ namespace CaptureTaskManager
         Deadlock = 4
     }
 
-    #endregion
-
-    #region "Delegates"
-
     public delegate void StatusMonitorUpdateReceived(string msg);
-
-    #endregion
 }

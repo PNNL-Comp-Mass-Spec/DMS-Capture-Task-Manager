@@ -14,15 +14,11 @@ using UIMFLibrary;
 
 namespace ImsDemuxPlugin
 {
-    #region "Delegates"
-
     /// <summary>
     /// Progress event delegate
     /// </summary>
     /// <param name="newProgress">Value between 0 and 100</param>
     public delegate void DelDemuxProgressHandler(float newProgress);
-
-    #endregion
 
     /// <summary>
     /// IMS Demultiplexer plugin
@@ -32,16 +28,10 @@ namespace ImsDemuxPlugin
     {
         // Ignore Spelling: Demultiplexer, demux, demultiplexing, demultiplexed, uimf, desc
 
-        #region "Constants"
-
         public const int MANAGER_UPDATE_INTERVAL_MINUTES = 10;
         private const string COULD_NOT_OBTAIN_GOOD_CALIBRATION = "Could not obtain a good calibration";
 
         private const bool ADD_BIN_CENTRIC_TABLES = false;
-
-        #endregion
-
-        #region "Enums"
 
         protected enum CalibrationMode
         {
@@ -50,16 +40,8 @@ namespace ImsDemuxPlugin
             AutoCalibration
         }
 
-        #endregion
-
-        #region "Module variables"
-
         private DemuxTools mDemuxTools;
         private bool mDemultiplexingPerformed;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs the IMS demux step tool
@@ -552,10 +534,6 @@ namespace ImsDemuxPlugin
             }
         }
 
-        #endregion
-
-        #region "Event handlers"
-
         /// <summary>
         /// Reports progress from demux DLL
         /// </summary>
@@ -603,7 +581,5 @@ namespace ImsDemuxPlugin
         {
             ResetTimestampForQueueWaitTimeLogging();
         }
-
-        #endregion
     }
 }

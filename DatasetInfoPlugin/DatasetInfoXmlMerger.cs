@@ -12,8 +12,6 @@ namespace DatasetInfoPlugin
     internal class DatasetInfoXmlMerger
     {
         private const int DATASET_GAP_THRESHOLD_HOURS = 24;
-
-        #region "Structures"
         private struct udtAcquisitionInfo
         {
             public int ScanCount;
@@ -81,10 +79,6 @@ namespace DatasetInfoPlugin
             public DateTime EndTime;
         }
 
-        #endregion
-
-        #region "Properties"
-
         /// <summary>
         /// List of warnings about datasets that start more than 120 minutes after the previous dataset
         /// </summary>
@@ -94,12 +88,6 @@ namespace DatasetInfoPlugin
         /// The keys in this dictionary are KeyValuePairs of [ScanType,ScanFilterText] while the values are the scan count
         /// </summary>
         public Dictionary<KeyValuePair<string, string>, int> ScanTypes { get; }
-
-        #endregion
-
-        #region "Member Variables"
-
-        #endregion
 
         /// <summary>
         /// Constructor

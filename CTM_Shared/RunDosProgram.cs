@@ -10,8 +10,6 @@ namespace CaptureTaskManager
     /// </summary>
     public class RunDosProgram : EventNotifier
     {
-        #region "Constants and Module variables"
-
         public const string RUN_PROGRAM_STATUS_LINE = "RunProgram";
 
         /// <summary>
@@ -29,10 +27,6 @@ namespace CaptureTaskManager
         private DateTime mStopTime;
 
         private bool mIsRunning;
-
-        #endregion
-
-        #region "Events"
 
         /// <summary>
         /// Class is waiting until next time it's due to check status of called program (good time for external processing)
@@ -67,10 +61,6 @@ namespace CaptureTaskManager
         /// Delegate for TimeoutEventHandler
         /// </summary>
         public delegate void TimeoutEventHandler();
-
-        #endregion
-
-        #region "Properties"
 
         /// <summary>
         /// Text written to the Console by the external program (including carriage returns)
@@ -247,10 +237,6 @@ namespace CaptureTaskManager
         /// If this is true, no window will be shown, even if CreateNoWindow=False
         /// </remarks>
         public bool WriteConsoleOutputToFile { get; set; } = false;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Constructor
@@ -468,8 +454,6 @@ namespace CaptureTaskManager
 
             return !ProgramAborted;
         }
-
-        #endregion
 
         private void ProgRunner_ConsoleErrorEvent(string newText)
         {

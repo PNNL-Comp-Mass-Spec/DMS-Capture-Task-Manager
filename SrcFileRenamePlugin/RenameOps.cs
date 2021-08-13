@@ -25,8 +25,6 @@ namespace SrcFileRenamePlugin
 
         // ReSharper restore CommentTypo
 
-        #region "Class wide variables"
-
         private string mMsg = string.Empty;
         private readonly bool mUseBioNet;
         private readonly string mUserName = string.Empty;
@@ -35,8 +33,6 @@ namespace SrcFileRenamePlugin
         private bool mConnected;
 
         private readonly DatasetFileSearchTool mDatasetFileSearchTool;
-
-        #endregion
 
         /// <summary>
         /// Constructor
@@ -62,8 +58,6 @@ namespace SrcFileRenamePlugin
             mDatasetFileSearchTool = new DatasetFileSearchTool(false);
             RegisterEvents(mDatasetFileSearchTool);
         }
-
-        #region "Methods"
 
         /// <summary>
         /// Perform a single rename operation
@@ -520,7 +514,5 @@ namespace SrcFileRenamePlugin
         {
             return sourceDirectory.GetDirectories(datasetName + ".*").ToList();
         }
-
-        #endregion
     }
 }

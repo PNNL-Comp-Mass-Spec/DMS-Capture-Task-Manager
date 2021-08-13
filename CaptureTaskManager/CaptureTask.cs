@@ -18,24 +18,14 @@ namespace CaptureTaskManager
     /// </summary>
     internal class CaptureTask : DbTask, ITaskParams
     {
-        #region "Constants"
-
         private const string SP_NAME_SET_COMPLETE = "SetStepTaskComplete";
         private const string SP_NAME_REPORT_IDLE = "ReportManagerIdle";
         private const string SP_NAME_REQUEST_TASK = "RequestStepTask";
-
-        #endregion
-
-        #region "Properties"
 
         /// <summary>
         /// When true, show additional messages at the console
         /// </summary>
         public bool TraceMode { get; set; }
-
-        #endregion
-
-        #region "Constructor"
 
         /// <summary>
         /// Class constructor
@@ -46,10 +36,6 @@ namespace CaptureTaskManager
         {
             mJobParams.Clear();
         }
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Gets a job task parameter
@@ -469,7 +455,5 @@ namespace CaptureTaskManager
                 return false;
             }
         }
-
-        #endregion
     }
 }

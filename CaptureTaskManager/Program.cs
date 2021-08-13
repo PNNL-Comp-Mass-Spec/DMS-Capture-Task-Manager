@@ -29,8 +29,6 @@ namespace CaptureTaskManager
 
         private static bool mTraceMode;
 
-        #region "Methods"
-
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
@@ -209,7 +207,5 @@ namespace CaptureTaskManager
                 MainProgram.ShowTraceMessage(message);
             }
         }
-
-        #endregion
     }
 }

@@ -27,8 +27,6 @@ namespace DatasetArchivePlugin
     {
         // Ignore Spelling: MyEMSLUploader, Unsubscribe
 
-        #region "Constants"
-
         private const string ARCHIVE = "Archive ";
 
         private const string UPDATE = "Archive update ";
@@ -38,10 +36,6 @@ namespace DatasetArchivePlugin
         private const string LARGE_DATASET_UPLOAD_ERROR = "Failure uploading a large amount of data; manual reset required";
 
         private const string SP_NAME_MAKE_NEW_ARCHIVE_UPDATE_JOB = "MakeNewArchiveUpdateJob";
-
-        #endregion
-
-        #region "Class wide variables"
 
         private readonly IMgrParams mMgrParams;
         protected readonly ITaskParams mTaskParams;
@@ -67,10 +61,6 @@ namespace DatasetArchivePlugin
         private string mMostRecentLogMessage = string.Empty;
         protected DateTime mMostRecentLogTime = DateTime.UtcNow;
 
-        #endregion
-
-        #region "Properties"
-
         /// <summary>
         /// Implements IArchiveOps.ErrMsg
         /// </summary>
@@ -90,10 +80,6 @@ namespace DatasetArchivePlugin
         /// Warning message
         /// </summary>
         public string WarningMsg { get; private set; } = string.Empty;
-
-        #endregion
-
-        #region "Constructor"
 
         /// <summary>
         /// Constructor
@@ -131,10 +117,6 @@ namespace DatasetArchivePlugin
             mCaptureDbProcedureExecutor = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
             RegisterEvents(mCaptureDbProcedureExecutor);
         }
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Sets up to perform an archive or update task (Implements IArchiveOps.PerformTask)
@@ -675,15 +657,7 @@ namespace DatasetArchivePlugin
             return Directory.Exists(dsNamePath);
         }
 
-        #endregion
-
-        #region "Event Delegates and Classes"
-
         public event EventHandler<MyEMSLUploadEventArgs> MyEMSLUploadComplete;
-
-        #endregion
-
-        #region "Event Handlers"
 
         private void LogStatusMessageSkipDuplicate(string message)
         {
@@ -784,7 +758,5 @@ namespace DatasetArchivePlugin
         {
             MyEMSLUploadComplete?.Invoke(this, e);
         }
-        #endregion
-
     }
 }

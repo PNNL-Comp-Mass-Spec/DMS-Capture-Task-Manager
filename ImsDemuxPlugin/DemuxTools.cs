@@ -23,8 +23,6 @@ namespace ImsDemuxPlugin
     public class DemuxTools : EventNotifier
     {
         // Ignore Spelling: demultiplexed, demultiplexes, demultiplexing, demultiplexer, demux, ims_tof, Methow, calibrants, workdir, cmd
-
-        #region "Constants"
         public const string CALIBRATION_LOG_FILE = "CalibrationLog.txt";
 
         private const string DECODED_UIMF_SUFFIX = "_decoded.uimf";
@@ -36,10 +34,6 @@ namespace ImsDemuxPlugin
         private const int MAX_CALIBRATION_RUNTIME_MINUTES = 5;
 
         public const string UIMF_CALIBRATION_UPDATER_NAME = "UIMF Calibration Updater";
-
-        #endregion
-
-        #region "Module variables"
 
         private string mDataset;
         private string mDatasetDirectoryPathRemote = string.Empty;
@@ -86,10 +80,6 @@ namespace ImsDemuxPlugin
             public string CheckpointTargetDirectory;
         }
 
-        #endregion
-
-        #region "Events"
-
         // Events used for communication back to PluginMain, where the logging and status updates are handled
 
         public event DelDemuxProgressHandler DemuxProgress;
@@ -97,13 +87,7 @@ namespace ImsDemuxPlugin
 
         public event StatusEventEventHandler CopyFileWithRetryEvent;
 
-        #endregion
-
-        #region "Properties"
-
         public bool OutOfMemoryException { get; private set; }
-
-        #endregion
 
         /// <summary>
         /// Constructor
@@ -119,8 +103,6 @@ namespace ImsDemuxPlugin
 
             mLoggedConsoleOutputErrors = new List<string>();
         }
-
-        #region "Methods"
 
         public ToolReturnData AddBinCentricTablesIfMissing(IMgrParams mgrParams, ITaskParams taskParams, ToolReturnData returnData)
         {
@@ -1582,10 +1564,6 @@ namespace ImsDemuxPlugin
             return uimfCalibrated;
         }
 
-        #endregion
-
-        #region "Event handlers"
-
         private void AttachCmdRunnerEvents(RunDosProgram cmdRunner)
         {
             try
@@ -1676,8 +1654,5 @@ namespace ImsDemuxPlugin
 
             mLastProgressMessageTime = DateTime.UtcNow;
         }
-
-        #endregion
-
     }
 }

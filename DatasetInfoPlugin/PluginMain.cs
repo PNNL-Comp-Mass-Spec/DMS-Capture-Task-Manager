@@ -27,8 +27,6 @@ namespace DatasetInfoPlugin
         // Ignore Spelling: acq, Bruker, fid, href, html, Illumina, labelling, maldi, mgf
         // Ignore Spelling: online, png, prepend, qgd, ser, Shimadzu, svc, Synapt, wiff
 
-        #region "Constants"
-
         private const string MS_FILE_SCANNER_DS_INFO_SP = "CacheDatasetInfoXML";
 
         private const string UNKNOWN_FILE_TYPE = "Unknown File Type";
@@ -37,20 +35,12 @@ namespace DatasetInfoPlugin
 
         private const bool IGNORE_BRUKER_BAF_ERRORS = false;
 
-        #endregion
-
-        #region "Enums"
-
         private enum QCPlottingModes
         {
             NoPlots = 0,          // Use this if SkipPlots is enabled
             BpiAndTicOnly = 1,
             AllPlots = 2
         }
-
-        #endregion
-
-        #region "Class-wide variables"
 
         private iMSFileInfoScanner mMsFileScanner;
 
@@ -71,10 +61,6 @@ namespace DatasetInfoPlugin
         private DateTime mLastStatusUpdate;
 
         private int mStatusUpdateIntervalMinutes;
-
-        #endregion
-
-        #region "Methods"
         /// <summary>
         /// Runs the dataset info step tool
         /// </summary>
@@ -1609,10 +1595,6 @@ namespace DatasetInfoPlugin
             return false;
         }
 
-        #endregion
-
-        #region "Event handlers"
-
         /// <summary>
         /// Handles an error event from MS file scanner
         /// </summary>
@@ -1731,7 +1713,5 @@ namespace DatasetInfoPlugin
                 }
             }
         }
-
-        #endregion
     }
 }

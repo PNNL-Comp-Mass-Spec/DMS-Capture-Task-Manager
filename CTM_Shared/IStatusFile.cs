@@ -17,13 +17,7 @@ namespace CaptureTaskManager
     {
         // Ignore Spelling: tcp
 
-        #region "Events"
-
         event StatusMonitorUpdateReceived MonitorUpdateRequired;
-
-        #endregion
-
-        #region "Properties"
 
         /// <summary>
         /// Status file path
@@ -116,10 +110,6 @@ namespace CaptureTaskManager
         /// </summary>
         bool LogToMsgQueue { get; }
 
-        #endregion
-
-        #region "Methods"
-
         void ClearCachedInfo();
 
         void ConfigureMessageQueueLogging(bool logStatusToMessageQueue, string msgQueueURI, string messageQueueTopicMgrStatus);
@@ -156,7 +146,5 @@ namespace CaptureTaskManager
         /// </summary>
         /// <remarks></remarks>
         void WriteStatusFile();
-
-        #endregion
     }
 }

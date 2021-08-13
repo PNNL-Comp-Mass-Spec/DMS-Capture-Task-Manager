@@ -17,22 +17,12 @@ namespace ArchiveVerifyPlugin
     public class PluginMain : ToolRunnerBase
     {
         // Ignore Spelling: dmsarch, Frodo, hashsum, keyvalue, Methow, myemsl, Pacifica, subdir, svc-dms
-
-        #region "Constants and Enums"
         private const string HASH_RESULTS_FILE_PREFIX = "results.";
         private const string DEFAULT_HASH_RESULTS_FOLDER_PATH = @"\\proto-7\MD5Results";
         private const string DEFAULT_HASH_RESULTS_BACKUP_FOLDER_PATH = @"\\proto-5\MD5ResultsBackup";
-
-        #endregion
-
-        #region "Class-wide variables"
         private ToolReturnData mRetData = new();
 
         private int mTotalMismatchCount;
-
-        #endregion
-
-        #region "Methods"
         /// <summary>
         /// Runs the Archive Verify step tool
         /// </summary>
@@ -1123,8 +1113,5 @@ namespace ArchiveVerifyPlugin
                 return false;
             }
         }
-
-        #endregion
-
     }
 }

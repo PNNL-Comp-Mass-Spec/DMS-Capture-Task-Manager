@@ -18,13 +18,7 @@ namespace DatasetQualityPlugin
     /// </summary>
     public static class MetaDataFile
     {
-        #region "Constants"
-
         private const string META_FILE_NAME = "metadata.xml";
-
-        #endregion
-
-        #region "Methods"
         /// <summary>
         /// Creates an XML metadata file for a dataset
         /// </summary>
@@ -106,6 +100,5 @@ namespace DatasetQualityPlugin
                 return false;
             }
         }
-        #endregion
     }
 }

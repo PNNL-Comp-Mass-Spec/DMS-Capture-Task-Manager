@@ -59,8 +59,6 @@ namespace CaptureTaskManager
             LogTools.LogWarning(warningMessage, logToDb);
         }
 
-        #region "EventNotifier events"
-
         /// <summary>
         /// Register event handlers
         /// However, does not subscribe to .ProgressUpdate
@@ -144,7 +142,5 @@ namespace CaptureTaskManager
         {
             LogWarning(warningMessage);
         }
-
-        #endregion
     }
 }

@@ -14,13 +14,7 @@ namespace CaptureTaskManager
     /// </summary>
     public interface ITaskParams
     {
-        #region "Properties"
-
         System.Collections.Generic.Dictionary<string, string> TaskDictionary { get; }
-
-        #endregion
-
-        #region "Methods"
 
         string GetParam(string name);
         string GetParam(string name, string valueIfMissing);
@@ -32,7 +26,5 @@ namespace CaptureTaskManager
 
         bool AddAdditionalParameter(string paramName, string paramValue);
         void SetParam(string keyName, string value);
-
-        #endregion
     }
 }
