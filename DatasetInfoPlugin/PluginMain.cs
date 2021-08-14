@@ -15,6 +15,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using PRISMDatabaseUtils;
 
 namespace DatasetInfoPlugin
 {
@@ -616,17 +617,21 @@ namespace DatasetInfoPlugin
 
         private bool PostDatasetInfoXml(string datasetInfoXML, out string errorMessage)
         {
-            var iPostCount = 0;
+            var postCount = 0;
             var connectionString = mMgrParams.GetParam("ConnectionString");
 
-            var iDatasetID = mTaskParams.GetParam("Dataset_ID", 0);
+            var applicationName = string.Format("{0}_DatasetInfo", mMgrParams.ManagerName);
+
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
+            
+            var datasetID = mTaskParams.GetParam("Dataset_ID", 0);
 
             var successPosting = false;
 
-            while (iPostCount <= 2)
+            while (postCount <= 2)
             {
                 successPosting = mMsFileScanner.PostDatasetInfoUseDatasetID(
-                    iDatasetID, datasetInfoXML, connectionString, MS_FILE_SCANNER_DS_INFO_SP);
+                    datasetID, datasetInfoXML, connectionStringToUse, MS_FILE_SCANNER_DS_INFO_SP);
 
                 if (successPosting)
                 {
@@ -640,7 +645,7 @@ namespace DatasetInfoPlugin
                 }
 
                 System.Threading.Thread.Sleep(1500);
-                iPostCount++;
+                postCount++;
             }
 
             iMSFileInfoScanner.MSFileScannerErrorCodes errorCode;

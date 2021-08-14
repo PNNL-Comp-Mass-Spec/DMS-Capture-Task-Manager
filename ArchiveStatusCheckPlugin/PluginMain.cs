@@ -422,7 +422,9 @@ namespace ArchiveStatusCheckPlugin
             // This Connection String points to the DMS_Capture database
             var connectionString = mMgrParams.GetParam("ConnectionString");
 
-            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, mMgrName);
+            var applicationName = string.Format("{0}_ArchiveStatus", mMgrParams.ManagerName);
+
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
 
             var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: mMgrParams.TraceMode);
             RegisterEvents(dbTools);

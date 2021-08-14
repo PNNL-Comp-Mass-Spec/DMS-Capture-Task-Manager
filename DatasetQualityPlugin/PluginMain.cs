@@ -965,7 +965,9 @@ namespace DatasetQualityPlugin
 
             var connectionString = mMgrParams.GetParam("ConnectionString");
 
-            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, mMgrName);
+            var applicationName = string.Format("{0}_DatasetQuality", mMgrParams.ManagerName);
+
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
 
             var scanCount = 0;
             var scanCountMS = 0;

@@ -112,7 +112,9 @@ namespace DatasetArchivePlugin
             // This connection string points to the DMS_Capture database
             var connectionString = mMgrParams.GetParam("ConnectionString");
 
-            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, mMgrParams.ManagerName);
+            var applicationName = string.Format("{0}_DatasetArchive", mMgrParams.ManagerName);
+
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
 
             mCaptureDbProcedureExecutor = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
             RegisterEvents(mCaptureDbProcedureExecutor);
