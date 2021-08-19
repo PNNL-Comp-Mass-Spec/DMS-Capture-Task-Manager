@@ -283,7 +283,7 @@ namespace DatasetQualityPlugin
         /// </summary>
         /// <param name="results"></param>
         /// <param name="xmlResults"></param>
-        /// <returns></returns>
+        /// <returns>True if successful, false if an error</returns>
         private bool ConvertResultsToXML(IEnumerable<KeyValuePair<string, string>> results, out string xmlResults)
         {
             // XML will look like:
@@ -392,7 +392,6 @@ namespace DatasetQualityPlugin
         /// <summary>
         /// Construct the full path to Quameter.exe
         /// </summary>
-        /// <returns></returns>
         private string GetQuameterPath()
         {
             // Typically C:\DMS_Programs\Quameter\x64\
@@ -410,8 +409,7 @@ namespace DatasetQualityPlugin
         /// Extract the results from the Quameter results file
         /// </summary>
         /// <param name="ResultsFilePath"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
+        /// <returns>List of key=value pairs</returns>
         private List<KeyValuePair<string, string>> LoadQuameterResults(string ResultsFilePath)
         {
             // The Quameter results file has two rows, a header row and a data row
@@ -1030,8 +1028,7 @@ namespace DatasetQualityPlugin
         /// Read the Quameter results files, convert to XML, and post to DMS
         /// </summary>
         /// <param name="ResultsFilePath">Path to the Quameter results file</param>
-        /// <returns></returns>
-        /// <remarks></remarks>
+        /// <returns>True if successful, false if an error</returns>
         private bool ReadAndStoreQuameterResults(string ResultsFilePath)
         {
             try
@@ -1249,7 +1246,6 @@ namespace DatasetQualityPlugin
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         private bool StoreToolVersionInfo(bool storeQuameterVersion)
         {
             LogDebug("Determining tool version info");
@@ -1301,7 +1297,7 @@ namespace DatasetQualityPlugin
         /// <param name="dataLine"></param>
         /// <param name="progressMatcher"></param>
         /// <param name="percentComplete"></param>
-        /// <returns></returns>
+        /// <returns>True if progress was updated, false if the data line is not in the expected form</returns>
         private bool UpdateProgress(string dataLine, Regex progressMatcher, ref float percentComplete)
         {
             var match = progressMatcher.Match(dataLine);

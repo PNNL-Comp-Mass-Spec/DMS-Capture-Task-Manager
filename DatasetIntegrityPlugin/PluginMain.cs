@@ -859,7 +859,6 @@ namespace DatasetIntegrityPlugin
         /// Convert a file size in kilobytes to a string form with units KB, MB or GB
         /// </summary>
         /// <param name="fileSizeKB"></param>
-        /// <returns></returns>
         private string FileSizeToString(float fileSizeKB)
         {
             var fileSizeGB = fileSizeKB / 1024.0 / 1024.0;
@@ -1433,7 +1432,6 @@ namespace DatasetIntegrityPlugin
         /// When true, if the file is less than minFileSizeKB, we try to open it with the ThermoRawFileReader
         /// If we can successfully open the file and get the first scan's data, then we declare the file to be valid
         /// </param>
-        /// <returns></returns>
         private EnumCloseOutType TestThermoRawFile(string dataFileNamePath, float minFileSizeKB, float maxFileSizeMB, bool openRawFileIfTooSmall)
         {
             // Verify file exists in storage directory
@@ -1528,7 +1526,6 @@ namespace DatasetIntegrityPlugin
         /// Tests a Bruker directory for integrity
         /// </summary>
         /// <param name="datasetDirectoryPath">Fully qualified path to the dataset directory</param>
-        /// <returns></returns>
         private EnumCloseOutType TestBrukerDirectory(string datasetDirectoryPath)
         {
             // Verify that directory 0.ser exists
@@ -2312,7 +2309,6 @@ namespace DatasetIntegrityPlugin
         /// Tests the integrity of a Waters .raw directory
         /// </summary>
         /// <param name="datasetDirectoryPath"></param>
-        /// <returns></returns>
         private EnumCloseOutType TestWatersDotRawDirectory(string datasetDirectoryPath)
         {
             // There should be one .raw directory in the dataset
@@ -2635,7 +2631,6 @@ namespace DatasetIntegrityPlugin
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         private bool StoreToolVersionInfo(string agilentToUimfConverterPath, string openChromProgPath)
         {
             LogDebug("Determining tool version info");

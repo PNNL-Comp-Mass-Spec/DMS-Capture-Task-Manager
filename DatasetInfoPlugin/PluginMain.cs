@@ -208,7 +208,6 @@ namespace DatasetInfoPlugin
         /// <summary>
         /// Runs the MS_File_Info_Scanner tool
         /// </summary>
-        /// <returns></returns>
         private ToolReturnData RunMsFileInfoScanner()
         {
             var returnData = new ToolReturnData();
@@ -623,7 +622,7 @@ namespace DatasetInfoPlugin
             var applicationName = string.Format("{0}_DatasetInfo", mMgrParams.ManagerName);
 
             var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
-            
+
             var datasetID = mTaskParams.GetParam("Dataset_ID", 0);
 
             var successPosting = false;
@@ -1316,7 +1315,6 @@ namespace DatasetInfoPlugin
         /// </summary>
         /// <param name="msFileScanner"></param>
         /// <param name="datasetFileName"></param>
-        /// <returns></returns>
         private string GetEquivalentCommandLineArgs(iMSFileInfoScanner msFileScanner, string datasetFileName)
         {
             var argumentList = new List<string>();
@@ -1382,7 +1380,6 @@ namespace DatasetInfoPlugin
         /// <summary>
         /// Construct the full path to the MSFileInfoScanner.DLL
         /// </summary>
-        /// <returns></returns>
         private string GetMSFileInfoScannerDLLPath()
         {
             var msFileInfoScannerDir = mMgrParams.GetParam("MSFileInfoScannerDir", string.Empty);
@@ -1400,10 +1397,10 @@ namespace DatasetInfoPlugin
         /// </summary>
         /// <param name="datasetDirectory"></param>
         /// <param name="initialFileOrDirectoryName"></param>
-        /// <returns></returns>
+        /// <returns>List of alternative files or directories that were found</returns>
         private List<string> LookForAlternateFileOrDirectory(DirectoryInfo datasetDirectory, string initialFileOrDirectoryName)
         {
-            // File not found; look for alternate extensions
+            // Alternate extensions to find
             var alternateExtensions = new List<string> { "mgf", "mzXML", "mzML" };
 
             foreach (var altExtension in alternateExtensions)
@@ -1466,7 +1463,6 @@ namespace DatasetInfoPlugin
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         private bool StoreToolVersionInfo()
         {
             LogDebug("Determining tool version info");

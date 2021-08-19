@@ -106,7 +106,7 @@ namespace CaptureTaskManager
         /// 1 = Cleanup once
         /// 2 = Cleanup always
         /// </param>
-        /// <returns></returns>
+        /// <returns>True if success, false if an error</returns>
         // ReSharper disable once UnusedMember.Global
         public bool AutoCleanupManagerErrors(int managerErrorCleanupMode)
         {

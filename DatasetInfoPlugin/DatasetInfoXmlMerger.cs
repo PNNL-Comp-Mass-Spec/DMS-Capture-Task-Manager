@@ -424,7 +424,7 @@ namespace DatasetInfoPlugin
         /// <param name="oldOverallAverage"></param>
         /// <param name="newCount"></param>
         /// <param name="newAverage"></param>
-        /// <returns></returns>
+        /// <returns>Updated average value</returns>
         private double UpdateAverage(int oldOverallCount, double oldOverallAverage, int newCount, double newAverage)
         {
             if (oldOverallCount == 0)

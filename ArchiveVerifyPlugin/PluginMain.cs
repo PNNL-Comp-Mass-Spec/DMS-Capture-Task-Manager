@@ -164,8 +164,8 @@ namespace ArchiveVerifyPlugin
         /// </summary>
         /// <param name="statusNum"></param>
         /// <param name="ingestStepsCompleted"></param>
-        /// <param name="fatalError"></param>
-        /// <returns></returns>
+        /// <param name="fatalError">Output: true if the CloseoutType is Failed or the EvalCode is DoNotRetry</param>
+        /// <returns>True if the ingest process is complete, otherwise false</returns>
         private bool CheckUploadStatus(out int statusNum, out byte ingestStepsCompleted, out bool fatalError)
         {
             var statusURI = mTaskParams.GetParam("MyEMSL_Status_URI", string.Empty);
@@ -640,7 +640,7 @@ namespace ArchiveVerifyPlugin
         /// <param name="archivedFiles"></param>
         /// <param name="datasetInstrument"></param>
         /// <param name="datasetYearQuarter"></param>
-        /// <returns></returns>
+        /// <returns>True if successful, false if an error</returns>
         private bool CreateHashResultsFile(
             FileInfo hashResultsFile,
             IEnumerable<MyEMSLReader.ArchivedFileInfo> archivedFiles,
@@ -698,7 +698,7 @@ namespace ArchiveVerifyPlugin
         /// Create or update the SHA-1 hash results file
         /// </summary>
         /// <param name="archivedFiles"></param>
-        /// <returns></returns>
+        /// <returns>True if successful, false if an error</returns>
         private bool CreateOrUpdateHashResultsFile(IEnumerable<MyEMSLReader.ArchivedFileInfo> archivedFiles)
         {
             bool success;
@@ -774,7 +774,7 @@ namespace ArchiveVerifyPlugin
         /// Find the transactionId that has the highest value (i.e. the one used by the majority of the files)
         /// </summary>
         /// <param name="transactionIdStats">Dictionary where keys are transactionIds and values are the number of files that had the given transactionId</param>
-        /// <returns></returns>
+        /// <returns>Transaction ID</returns>
         private long GetBestTransactionId(Dictionary<long, int> transactionIdStats)
         {
             if (transactionIdStats.Count == 0)
@@ -820,7 +820,6 @@ namespace ArchiveVerifyPlugin
         /// <param name="dataLine"></param>
         /// <param name="hashResults">Dictionary where keys are Linux file paths and values are HashInfo, tracking the Hash value and MyEMSL File ID</param>
         /// <returns>True if hashResults is updated, false if unchanged</returns>
-        /// <remarks></remarks>
         private void ParseAndStoreHashInfo(string dataLine, ref Dictionary<string, HashInfo> hashResults)
         {
             // Data Line Format

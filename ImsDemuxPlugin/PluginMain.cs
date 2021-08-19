@@ -450,7 +450,6 @@ namespace ImsDemuxPlugin
         /// <summary>
         /// Construct the full path to UIMFDemultiplexer_Console.exe
         /// </summary>
-        /// <returns></returns>
         protected string GetUimfDemultiplexerPath()
         {
             var uimfDemuxFolder = mMgrParams.GetParam("UimfDemultiplexerProgLoc", string.Empty);
@@ -467,7 +466,6 @@ namespace ImsDemuxPlugin
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
             var toolVersionInfo = string.Empty;

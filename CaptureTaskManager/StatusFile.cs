@@ -137,7 +137,6 @@ namespace CaptureTaskManager
         /// <param name="logStatusToMessageQueue"></param>
         /// <param name="msgQueueURI"></param>
         /// <param name="messageQueueTopicMgrStatus"></param>
-        /// <remarks></remarks>
         public void ConfigureMessageQueueLogging(bool logStatusToMessageQueue, string msgQueueURI, string messageQueueTopicMgrStatus)
         {
             LogToMsgQueue = logStatusToMessageQueue;
@@ -148,7 +147,6 @@ namespace CaptureTaskManager
         /// <summary>
         /// Returns the directory path that contains the program .exe
         /// </summary>
-        /// <returns></returns>
         private string AppDirectoryPath()
         {
             return PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppDirectoryPath();
@@ -219,7 +217,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Deletes the status flag file
         /// </summary>
-        /// <returns></returns>
+        /// <returns>True if successful, false if an error</returns>
         public bool DeleteStatusFlagFile()
         {
             // Returns True if job request control flag file exists
@@ -244,8 +242,6 @@ namespace CaptureTaskManager
         /// <summary>
         /// Return the ProcessID of the Analysis manager
         /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public int GetProcessID()
         {
             var processID = Process.GetCurrentProcess().Id;
@@ -255,7 +251,6 @@ namespace CaptureTaskManager
         /// <summary>
         /// Get the directory path for the status file tracked by FileNamePath
         /// </summary>
-        /// <returns></returns>
         private string GetStatusFileDirectory()
         {
             var statusFileDirectory = Path.GetDirectoryName(FileNamePath);
@@ -592,7 +587,6 @@ namespace CaptureTaskManager
         /// Total time the job has been running
         /// </summary>
         /// <returns>Number of hours manager has been processing job</returns>
-        /// <remarks></remarks>
         private float GetRunTime()
         {
             return (float)DateTime.UtcNow.Subtract(TaskStartTime).TotalHours;

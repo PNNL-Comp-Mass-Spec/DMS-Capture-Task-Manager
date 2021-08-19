@@ -175,7 +175,6 @@ namespace CaptureTaskManager
         /// <param name="baseComment">Initial comment</param>
         /// <param name="addnlComment">Comment to be appended</param>
         /// <returns>String containing both comments</returns>
-        /// <remarks></remarks>
         protected static string AppendToComment(string baseComment, string addnlComment)
         {
             if (string.IsNullOrWhiteSpace(baseComment))
@@ -203,7 +202,7 @@ namespace CaptureTaskManager
         /// Delete files in the working directory
         /// </summary>
         /// <param name="workDir">Working directory path</param>
-        /// <returns></returns>
+        /// <returns>True if successful, false if an error</returns>
         // ReSharper disable once UnusedMember.Global
         public static bool CleanWorkDir(string workDir)
         {
@@ -220,7 +219,7 @@ namespace CaptureTaskManager
         /// Time to wait after garbage collection before deleting files.
         /// Set to 0 (or a negative number) to skip garbage collection</param>
         /// <param name="failureMessage">Output: failure message</param>
-        /// <returns></returns>
+        /// <returns>True if successful, false if an error</returns>
         public static bool CleanWorkDir(string workDir, float holdoffSeconds, out string failureMessage)
         {
             failureMessage = string.Empty;
@@ -463,8 +462,7 @@ namespace CaptureTaskManager
         /// <param name="dllFilePath"></param>
         /// <param name="versionInfoFilePath"></param>
         /// <param name="version"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
+        /// <returns>True if successful, false if an error</returns>
         private bool ReadVersionInfoFile(string dllFilePath, string versionInfoFilePath, out string version)
         {
             // Open versionInfoFilePath and read the Version= line
@@ -751,7 +749,6 @@ namespace CaptureTaskManager
         /// <param name="toolVersionInfo">Version info string to append the version info to</param>
         /// <param name="dllFilePath">Path to the DLL</param>
         /// <returns>True if success; false if an error</returns>
-        /// <remarks></remarks>
         private bool StoreToolVersionInfoViaSystemDiagnostics(ref string toolVersionInfo, string dllFilePath)
         {
             try
@@ -811,7 +808,6 @@ namespace CaptureTaskManager
         /// <param name="toolVersionInfo"></param>
         /// <param name="dllFilePath"></param>
         /// <returns>True if success; false if an error</returns>
-        /// <remarks></remarks>
         protected bool StoreToolVersionInfoOneFile32Bit(ref string toolVersionInfo, string dllFilePath)
         {
             return StoreToolVersionInfoOneFileUseExe(ref toolVersionInfo, dllFilePath, "DLLVersionInspector_x86.exe");
@@ -837,7 +833,6 @@ namespace CaptureTaskManager
         /// <param name="dllFilePath"></param>
         /// <param name="versionInspectorExeName">DLLVersionInspector_x86.exe or DLLVersionInspector_x64.exe</param>
         /// <returns>True if success; false if an error</returns>
-        /// <remarks></remarks>
         protected bool StoreToolVersionInfoOneFileUseExe(ref string toolVersionInfo, string dllFilePath,
                                                          string versionInspectorExeName)
         {

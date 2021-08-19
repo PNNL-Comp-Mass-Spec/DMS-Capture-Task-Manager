@@ -36,7 +36,6 @@ namespace CaptureTaskManager
         /// Constructor
         /// </summary>
         /// <param name="traceMode"></param>
-        /// <remarks></remarks>
         public CaptureTaskMgrSettings(bool traceMode)
         {
             TraceMode = traceMode;

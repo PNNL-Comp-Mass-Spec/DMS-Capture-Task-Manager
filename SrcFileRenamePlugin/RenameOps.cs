@@ -64,7 +64,6 @@ namespace SrcFileRenamePlugin
         /// </summary>
         /// <param name="taskParams">Enum indicating status of task</param>
         /// <param name="errorMessage">Output: error message</param>
-        /// <returns></returns>
         public EnumCloseOutType DoOperation(ITaskParams taskParams, out string errorMessage)
         {
             var datasetName = taskParams.GetParam("Dataset");

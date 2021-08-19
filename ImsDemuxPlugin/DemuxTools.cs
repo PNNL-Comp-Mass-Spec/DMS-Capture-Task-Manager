@@ -292,7 +292,6 @@ namespace ImsDemuxPlugin
         /// <param name="mgrParams"></param>
         /// <param name="taskParams"></param>
         /// <param name="returnData"></param>
-        /// <returns></returns>
         public ToolReturnData PerformCalibration(IMgrParams mgrParams, ITaskParams taskParams, ToolReturnData returnData)
         {
             mLoggedConsoleOutputErrors.Clear();
@@ -488,7 +487,6 @@ namespace ImsDemuxPlugin
         /// <param name="returnData"></param>
         /// <param name="calibrationSlope"></param>
         /// <param name="calibrationIntercept"></param>
-        /// <returns></returns>
         public ToolReturnData PerformManualCalibration(IMgrParams mgrParams, ITaskParams taskParams, ToolReturnData returnData, double calibrationSlope, double calibrationIntercept)
         {
             mLoggedConsoleOutputErrors.Clear();
@@ -1260,7 +1258,7 @@ namespace ImsDemuxPlugin
         /// </summary>
         /// <param name="sourceFilePath">Original file path</param>
         /// <param name="newFilePath">New file path</param>
-        /// <returns></returns>
+        /// <returns>True if successful, false if an error</returns>
         private bool RenameFile(string sourceFilePath, string newFilePath)
         {
             try
@@ -1303,7 +1301,7 @@ namespace ImsDemuxPlugin
         /// <param name="demuxOptions"></param>
         /// <param name="maxRuntimeMinutes"></param>
         /// <param name="errorMessage">Output: Error message</param>
-        /// <returns></returns>
+        /// <returns>True if successful, false if an error</returns>
         private bool RunUIMFDemultiplexer(
             string inputFilePath,
             string outputFilePath,

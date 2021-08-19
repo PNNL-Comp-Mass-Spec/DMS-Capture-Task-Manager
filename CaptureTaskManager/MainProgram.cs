@@ -1123,7 +1123,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Sets the tool runner object for this job
         /// </summary>
-        /// <returns></returns>
+        /// <returns>True if successful, false if an error</returns>
         private bool SetToolRunnerObject(string stepToolName)
         {
             // Load the tool runner
@@ -1294,7 +1294,7 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="lastConfigDBUpdate"></param>
         /// <param name="minutesBetweenUpdates"></param>
-        /// <returns></returns>
+        /// <returns>True if successful, false if an error</returns>
         private bool ReloadManagerSettings(ref DateTime lastConfigDBUpdate, double minutesBetweenUpdates)
         {
             if (DateTime.UtcNow.Subtract(lastConfigDBUpdate).TotalMinutes < minutesBetweenUpdates)
@@ -1367,7 +1367,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Extract the value DefaultDMSConnString from CaptureTaskManager.exe.config
         /// </summary>
-        /// <returns></returns>
+        /// <returns>DMS connection string</returns>
         private string GetXmlConfigDefaultConnectionString()
         {
             return GetXmlConfigFileSetting(CaptureTaskMgrSettings.MGR_PARAM_DEFAULT_DMS_CONN_STRING);

@@ -273,8 +273,8 @@ namespace CaptureToolPlugin
         /// </summary>
         /// <param name="datasetDirectoryPath">Dataset directory path</param>
         /// <param name="pendingRenames">Files and/or directories to rename</param>
-        /// <returns></returns>
         /// <remarks>Does not rename LCMethod*.xml files</remarks>
+        /// <returns>True if successful, false if an error</returns>
         private bool FindSupersededFiles(string datasetDirectoryPath, IDictionary<FileSystemInfo, string> pendingRenames)
         {
             try
@@ -362,7 +362,7 @@ namespace CaptureToolPlugin
         /// </summary>
         /// <param name="datasetDirectoryPath"></param>
         /// <param name="pendingRenames">Files and/or directories to rename</param>
-        /// <returns></returns>
+        /// <returns>True if successful, false if an error</returns>
         private bool MarkSupersededFiles(string datasetDirectoryPath, IReadOnlyDictionary<FileSystemInfo, string> pendingRenames)
         {
             try
@@ -2471,7 +2471,7 @@ namespace CaptureToolPlugin
         /// <param name="searchSpecList">Dictionary where keys are file specs to pass to .GetFiles() and values are the description of each key</param>
         /// <param name="returnData"></param>
         /// <param name="filesToSkip">Output: List of file names to skip</param>
-        /// <returns></returns>
+        /// <returns>True if successful, false if an error</returns>
         private bool FindFilesToSkip(
             DirectoryInfo sourceDirectory,
             DatasetInfo datasetInfo,
@@ -3243,7 +3243,7 @@ namespace CaptureToolPlugin
         /// Return the current quarter for a given date (based on the month)
         /// </summary>
         /// <param name="date"></param>
-        /// <returns></returns>
+        /// <returns>Quarter of the year</returns>
         private int GetQuarter(DateTime date)
         {
             switch (date.Month)

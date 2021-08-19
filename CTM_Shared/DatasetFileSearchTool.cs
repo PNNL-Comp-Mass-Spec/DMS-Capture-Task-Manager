@@ -375,7 +375,7 @@ namespace CaptureTaskManager
         /// Replace invalid characters with substitutes
         /// </summary>
         /// <param name="searchText"></param>
-        /// <returns></returns>
+        /// <returns>Updated text</returns>
         private string ReplaceInvalidChars(string searchText)
         {
             var updatedText = searchText;

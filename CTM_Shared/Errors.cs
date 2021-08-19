@@ -11,7 +11,6 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="ex"></param>
         /// <returns>String similar to "Stack trace: CodeTest.Test-:-CodeTest.TestException-:-CodeTest.InnerTestException in CodeTest.cs:line 86"</returns>
-        /// <remarks></remarks>
         public static string GetExceptionStackTrace(Exception ex)
         {
             return GetExceptionStackTrace(ex, false);
@@ -23,7 +22,6 @@ namespace CaptureTaskManager
         /// <param name="ex"></param>
         /// <param name="useMultiLine">>When true, format the stack trace using newline characters instead of -:-</param>
         /// <returns>String similar to "Stack trace: CodeTest.Test-:-CodeTest.TestException-:-CodeTest.InnerTestException in CodeTest.cs:line 86"</returns>
-        /// <remarks></remarks>
         public static string GetExceptionStackTrace(Exception ex, bool useMultiLine)
         {
             if (useMultiLine)

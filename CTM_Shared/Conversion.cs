@@ -7,7 +7,6 @@ namespace CaptureTaskManager
         /// Convert string to boolean; default false if an error
         /// </summary>
         /// <param name="value"></param>
-        /// <returns></returns>
         public static bool CBoolSafe(string value)
         {
             return CBoolSafe(value, false);
@@ -18,7 +17,6 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="value"></param>
         /// <param name="defaultValue"></param>
-        /// <returns></returns>
         public static bool CBoolSafe(string value, bool defaultValue)
         {
             if (string.IsNullOrEmpty(value))
@@ -39,7 +37,6 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="value"></param>
         /// <param name="defaultValue"></param>
-        /// <returns></returns>
         public static int CIntSafe(string value, int defaultValue)
         {
             if (string.IsNullOrEmpty(value))
@@ -60,7 +57,6 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="value"></param>
         /// <param name="defaultValue"></param>
-        /// <returns></returns>
         public static float CSngSafe(string value, float defaultValue)
         {
             var fValue = defaultValue;
@@ -106,7 +102,6 @@ namespace CaptureTaskManager
         /// Surround a file (or directory) path with double quotes if it contains spaces
         /// </summary>
         /// <param name="filePath"></param>
-        /// <returns></returns>
         public static string PossiblyQuotePath(string filePath)
         {
             if (string.IsNullOrEmpty(filePath))
