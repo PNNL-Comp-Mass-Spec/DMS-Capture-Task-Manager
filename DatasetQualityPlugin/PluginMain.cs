@@ -324,6 +324,8 @@ namespace DatasetQualityPlugin
                 xmlText.Append("</Quameter_Results>");
 
                 xmlResults = xmlText.ToString();
+
+                return true;
             }
             catch (Exception ex)
             {
@@ -331,8 +333,6 @@ namespace DatasetQualityPlugin
                 LogError(mRetData.CloseoutMsg + ": " + ex.Message);
                 return false;
             }
-
-            return true;
         }
 
         private bool CopyFilesToDatasetFolder(string datasetDirectoryPath)

@@ -647,8 +647,6 @@ namespace ArchiveVerifyPlugin
             string datasetInstrument,
             string datasetYearQuarter)
         {
-            bool success;
-
             try
             {
                 var hashResults = new Dictionary<string, HashInfo>(StringComparer.OrdinalIgnoreCase);
@@ -677,21 +675,17 @@ namespace ArchiveVerifyPlugin
                         hashResultsFile.Directory.Create();
                     }
 
-                    success = WriteHashResultsFile(hashResults, hashResultsFile.FullName, useTempFile: false);
+                    return WriteHashResultsFile(hashResults, hashResultsFile.FullName, useTempFile: false);
                 }
-                else
-                {
-                    LogError("Parent directory is null for " + hashResultsFile.FullName);
-                    success = false;
-                }
+
+                LogError("Parent directory is null for " + hashResultsFile.FullName);
+                return false;
             }
             catch (Exception ex)
             {
                 LogError("Exception creating new SHA-1 hash results file in CreateHashResultsFile", ex);
                 return false;
             }
-
-            return success;
         }
 
         /// <summary>
@@ -701,8 +695,6 @@ namespace ArchiveVerifyPlugin
         /// <returns>True if successful, false if an error</returns>
         private bool CreateOrUpdateHashResultsFile(IEnumerable<MyEMSLReader.ArchivedFileInfo> archivedFiles)
         {
-            bool success;
-
             try
             {
                 var datasetInstrument = mTaskParams.GetParam("Instrument_Name");
@@ -719,6 +711,8 @@ namespace ArchiveVerifyPlugin
 
                 var hashResultsFile = new FileInfo(hashResultsFilePath);
 
+                bool success;
+
                 if (!hashResultsFile.Exists)
                 {
                     // Target file doesn't exist; nothing to merge
@@ -734,14 +728,14 @@ namespace ArchiveVerifyPlugin
                 {
                     CopyHashResultsFileToBackupFolder(datasetInstrument, datasetYearQuarter, hashResultsFile);
                 }
+
+                return success;
             }
             catch (Exception ex)
             {
                 LogError("Exception in CreateHashResultsFile", ex);
                 return false;
             }
-
-            return success;
         }
 
         private void DeleteMetadataFile(string metadataFilePath)
