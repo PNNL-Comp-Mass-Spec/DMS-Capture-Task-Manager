@@ -45,6 +45,7 @@
             <summary>
             URL of the EUS website
             </summary>
+            <remarks>Previously https://eusi.emsl.pnnl.gov/Portal/</remarks>
         </member>
         <member name="F:Pacifica.DMS_Metadata.DMSMetadataObject.HASHING_FILES">
             <summary>

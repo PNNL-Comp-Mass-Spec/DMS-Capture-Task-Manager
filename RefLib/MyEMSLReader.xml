@@ -247,23 +247,23 @@
             <summary>
             Looks for the given file, returning any matches as a list (searches this directory and subdirectories)
             </summary>
+            <remarks>subdirectoryName can contain a partial path, for example 2013_09_10_DPB_Unwashed_Media_25um.d\2013_09_10_In_1sec_1MW.m</remarks>
             <param name="fileName">File name to find; can contain a wildcard, e.g. *.zip</param>
             <param name="subdirectoryName">Subdirectory in which the file must reside; can contain a wildcard, e.g. SIC*</param>
             <param name="dataPackageID">Data Package ID filter</param>
             <returns>List of matching files</returns>
-            <remarks>subdirectoryName can contain a partial path, for example 2013_09_10_DPB_Unwashed_Media_25um.d\2013_09_10_In_1sec_1MW.m</remarks>
         </member>
         <member name="M:MyEMSLReader.DataPackageListInfo.FindFiles(System.String,System.String,System.Int32,System.Boolean,System.Boolean)">
             <summary>
             Looks for the given file, returning any matches as a list
             </summary>
+            <remarks>subdirectoryName can contain a partial path, for example 2013_09_10_DPB_Unwashed_Media_25um.d\2013_09_10_In_1sec_1MW.m</remarks>
             <param name="fileName">File name to find; can contain a wildcard, e.g. *.zip</param>
             <param name="subdirectoryName">Subdirectory in which the file must reside; can contain a wildcard, e.g. SIC*</param>
             <param name="dataPackageID">Data Package ID filter</param>
             <param name="recurse">True to search all subdirectories; false to only search the root directory (or only subdirectoryName)</param>
             <param name="fileSplit">Set to True if fileName contains a list of file names (or file specs) separated by a semicolon</param>
             <returns>List of matching files</returns>
-            <remarks>subdirectoryName can contain a partial path, for example 2013_09_10_DPB_Unwashed_Media_25um.d\2013_09_10_In_1sec_1MW.m</remarks>
         </member>
         <member name="M:MyEMSLReader.DataPackageListInfo.RefreshInfo">
             <summary>
@@ -471,24 +471,24 @@
             <summary>
             Queue a file to be downloaded
             </summary>
+            <remarks>fileInfo can be null if unzipRequired is false</remarks>
             <param name="myEMSLFileID">MyEMSL File ID</param>
             <param name="fileInfo">Archive File Info</param>
             <param name="unzipRequired">
             True if the file will need to be unzipped after the download
             (this DLL will not unzip the file; it will simply include this in event FileDownloadedEventArgs)
             </param>
-            <remarks>fileInfo can be null if unzipRequired is false</remarks>
         </member>
         <member name="M:MyEMSLReader.DatasetInfoBase.AddFileToDownloadQueue(System.Int64,MyEMSLReader.ArchivedFileInfo,System.Boolean,System.String)">
             <summary>
             Queue a file to be downloaded
             </summary>
+            <remarks>fileInfo can be null if unzipRequired is false</remarks>
+            ReSharper disable once UnusedMember.Global
             <param name="myEMSLFileID">MyEMSL File ID</param>
             <param name="fileInfo">Archive File Info</param>
             <param name="unzipRequired">True if the file will need to be unzipped after the download (this DLL will not unzip the file; it will simply include this in event FileDownloadedEventArgs)</param>
             <param name="destFilePath">Explicit destination file path</param>
-            <remarks>fileInfo can be null if unzipRequired is false</remarks>
-            ReSharper disable once UnusedMember.Global
         </member>
         <member name="M:MyEMSLReader.DatasetInfoBase.AppendMyEMSLFileID(System.String,System.Int64)">
             <summary>
@@ -539,37 +539,38 @@
             <summary>
             Looks for the given file in all datasets added using AddDataset(), returning any matches as a list
             </summary>
+            <remarks>subdirectoryName can contain a partial path, for example 2013_09_10_DPB_Unwashed_Media_25um.d\2013_09_10_In_1sec_1MW.m</remarks>
             <param name="fileName">File name to find; can contain a wildcard, e.g. *.zip</param>
             <param name="subdirectoryName">Subdirectory in which the file must reside; can contain a wildcard, e.g. SIC*</param>
             <returns>List of matching files</returns>
-            <remarks>subdirectoryName can contain a partial path, for example 2013_09_10_DPB_Unwashed_Media_25um.d\2013_09_10_In_1sec_1MW.m</remarks>
         </member>
         <member name="M:MyEMSLReader.DatasetInfoBase.FindFiles(System.String,System.String,System.Boolean,System.Boolean)">
             <summary>
             Looks for the given file, returning any matches as a list
             </summary>
+            <remarks>subdirectoryName can contain a partial path, for example 2013_09_10_DPB_Unwashed_Media_25um.d\2013_09_10_In_1sec_1MW.m</remarks>
             <param name="fileName">File name to find; can contain a wildcard, e.g. *.zip</param>
             <param name="subdirectoryName">Subdirectory in which the file must reside; can contain a wildcard, e.g. SIC*</param>
             <param name="recurse">True to search all subdirectories; false to only search the root directory (or only subdirectoryName)</param>
             <param name="fileSplit">Set to True if fileName contains a list of file names (or file specs) separated by a semicolon</param>
             <returns>List of matching files</returns>
-            <remarks>subdirectoryName can contain a partial path, for example 2013_09_10_DPB_Unwashed_Media_25um.d\2013_09_10_In_1sec_1MW.m</remarks>
         </member>
         <member name="M:MyEMSLReader.DatasetInfoBase.FindFiles(System.String,System.String,System.String)">
             <summary>
             Looks for the given file, returning any matches as a list
             </summary>
+            <remarks>subdirectoryName can contain a partial path, for example 2013_09_10_DPB_Unwashed_Media_25um.d\2013_09_10_In_1sec_1MW.m</remarks>
+            ReSharper disable once UnusedMember.Global
             <param name="fileName">File name to find; can contain a wildcard, e.g. *.zip</param>
             <param name="subdirectoryName">Subdirectory in which the file must reside; can contain a wildcard, e.g. SIC*</param>
             <param name="datasetName">Dataset name filter</param>
             <returns>List of matching files</returns>
-            <remarks>subdirectoryName can contain a partial path, for example 2013_09_10_DPB_Unwashed_Media_25um.d\2013_09_10_In_1sec_1MW.m</remarks>
-            ReSharper disable once UnusedMember.Global
         </member>
         <member name="M:MyEMSLReader.DatasetInfoBase.FindFiles(System.String,System.String,System.String,System.Boolean,System.Boolean)">
             <summary>
             Looks for the given file, returning any matches as a list
             </summary>
+            <remarks>subdirectoryName can contain a partial path, for example 2013_09_10_DPB_Unwashed_Media_25um.d\2013_09_10_In_1sec_1MW.m</remarks>
             <param name="fileName">
             File name to find; can contain a wildcard, e.g. *.zip
             Separate multiple values using a vertical bar, e.g. analysis.baf|ser
@@ -579,12 +580,12 @@
             <param name="recurse">True to search all subdirectories; false to only search the root directory (or only subdirectoryName)</param>
             <param name="fileSplit">Set to True if fileName contains a list of file names (or file specs) separated by a semicolon</param>
             <returns>List of matching files</returns>
-            <remarks>subdirectoryName can contain a partial path, for example 2013_09_10_DPB_Unwashed_Media_25um.d\2013_09_10_In_1sec_1MW.m</remarks>
         </member>
         <member name="M:MyEMSLReader.DatasetInfoBase.FindFiles(System.String,System.String,System.String,System.Int32,System.Boolean,System.Boolean)">
             <summary>
             Looks for the given file, returning any matches as a list
             </summary>
+            <remarks>subdirectoryName can contain a partial path, for example 2013_09_10_DPB_Unwashed_Media_25um.d\2013_09_10_In_1sec_1MW.m</remarks>
             <param name="fileName">
             File name to find; can contain a wildcard, e.g. *.zip
             Separate multiple values using a vertical bar, e.g. analysis.baf|ser
@@ -595,7 +596,6 @@
             <param name="recurse">True to search all subdirectories; false to only search the root directory (or only subdirectoryName)</param>
             <param name="fileSplit">Set to True if fileName contains a list of file names (or file specs) separated by a semicolon</param>
             <returns>List of matching files</returns>
-            <remarks>subdirectoryName can contain a partial path, for example 2013_09_10_DPB_Unwashed_Media_25um.d\2013_09_10_In_1sec_1MW.m</remarks>
         </member>
         <member name="M:MyEMSLReader.DatasetInfoBase.FindDirectories(System.String)">
             <summary>
@@ -617,10 +617,10 @@
             <summary>
             Retrieve queued files from MyEMSL
             </summary>
+            <remarks>Returns False if the download queue is empty</remarks>
             <param name="downloadDirectoryPath">Target directory path (ignored for files defined in destFilePathOverride)</param>
             <param name="directoryLayout">Directory Layout (ignored for files defined in destFilePathOverride)</param>
             <returns>True if success, false if an error</returns>
-            <remarks>Returns False if the download queue is empty</remarks>
         </member>
         <member name="M:MyEMSLReader.DatasetInfoBase.RefreshInfo">
             <summary>
@@ -668,16 +668,16 @@
             <summary>
             Add a dataset name to search for in MyEMSL
             </summary>
-            <param name="datasetName">Dataset Name</param>
             <remarks>Call RefreshInfo to retrieve the MyEMSL-tracked files for the added datasets</remarks>
+            <param name="datasetName">Dataset Name</param>
         </member>
         <member name="M:MyEMSLReader.DatasetListInfo.AddDataset(System.String,System.String)">
             <summary>
             Add a dataset name to search for in MyEMSL
             </summary>
+            <remarks>Call RefreshInfo to retrieve the MyEMSL-tracked files for the added datasets</remarks>
             <param name="datasetName">Dataset Name</param>
             <param name="subDir">Subdirectory name to filter on (exact match; cannot contain wildcards)</param>
-            /// <remarks>Call RefreshInfo to retrieve the MyEMSL-tracked files for the added datasets</remarks>
         </member>
         <member name="M:MyEMSLReader.DatasetListInfo.Clear">
             <summary>
@@ -791,11 +791,11 @@
             <summary>
             Download files in filesToDownload
             </summary>
+            <remarks>destFilePathOverride is not required and can be empty; it can also have values for just some of the files in filesToDownload</remarks>
             <param name="filesToDownload">MyEMSL Files to download; keys are MyEMSL File IDs and values are ArchivedFileInfo objects</param>
             <param name="destFilePathOverride">Dictionary where keys are FileIDs and values are the explicit destination path to use</param>
             <param name="downloadDirectoryPath">Target directory path (ignored for files defined in destFilePathOverride)</param>
             <param name="directoryLayout">Directory Layout (ignored for files defined in destFilePathOverride)</param>
-            <remarks>destFilePathOverride is not required and can be empty; it can also have values for just some of the files in filesToDownload</remarks>
             <returns>True if success, false if an error</returns>
         </member>
         <member name="M:MyEMSLReader.Downloader.AddLongPathCode(System.String)">
@@ -803,9 +803,9 @@
             Possibly add a special prefix to work with files whose paths are more than 255 characters long
             See https://msdn.microsoft.com/en-us/library/aa365247(v=vs.85).aspx#maxpath
             </summary>
+            <remarks>This only works if the path is rooted</remarks>
             <param name="fileOrDirectoryPath"></param>
             <returns>Updated path</returns>
-            <remarks>This only works if the path is rooted</remarks>
         </member>
         <member name="M:MyEMSLReader.Downloader.DownloadFilesDirectly(System.Collections.Generic.IReadOnlyDictionary{System.Int64,MyEMSLReader.ArchivedFileInfo},System.Net.CookieContainer,System.Collections.Generic.IReadOnlyDictionary{System.Int64,System.String},System.IO.FileSystemInfo,MyEMSLReader.Downloader.DownloadLayout,System.Int64@)">
             <summary>
@@ -904,20 +904,20 @@
             <summary>
             Queue a file to be downloaded
             </summary>
+            <remarks>fileInfo can be null if unzipRequired is false</remarks>
             <param name="myEMSLFileID">MyEMSL File ID</param>
             <param name="fileInfo">Archive File Info</param>
             <param name="unzipRequired">True if the file will need to be unzipped after the download (this DLL will not unzip the file; it will simply include this in event FileDownloadedEventArgs)</param>
-            <remarks>fileInfo can be null if unzipRequired is false</remarks>
         </member>
         <member name="M:MyEMSLReader.DownloadQueue.AddFileToDownloadQueue(System.Int64,MyEMSLReader.ArchivedFileInfo,System.Boolean,System.String)">
             <summary>
             Queue a file to be downloaded
             </summary>
+            <remarks>fileInfo can be null if unzipRequired is false</remarks>
             <param name="myEMSLFileID">MyEMSL File ID</param>
             <param name="fileInfo">Archive File Info</param>
             <param name="unzipRequired">True if the file will need to be unzipped after the download (this DLL will not unzip the file; it will simply include this in event FileDownloadedEventArgs)</param>
             <param name="destFilePath">Explicit destination file path</param>
-            <remarks>fileInfo can be null if unzipRequired is false</remarks>
         </member>
         <member name="M:MyEMSLReader.DownloadQueue.Clear">
             <summary>
@@ -928,10 +928,10 @@
             <summary>
             Retrieve queued files from MyEMSL
             </summary>
+            <remarks>Returns False if the download queue is empty</remarks>
             <param name="downloadDirectoryPath">Target directory path (ignored for files defined in destFilePathOverride)</param>
             <param name="directoryLayout">Directory Layout (ignored for files defined in destFilePathOverride)</param>
             <returns>True if success, false if an error</returns>
-            <remarks>Returns False if the download queue is empty</remarks>
         </member>
         <member name="T:MyEMSLReader.FileDownloadedEventArgs">
             <summary>
@@ -1205,8 +1205,8 @@
             <summary>
             Update the dataset name associated with this instance
             </summary>
-            <param name="datasetName"></param>
             <remarks>Use RefreshInfo to find the files tracked by MyEMSL for this dataset</remarks>
+            <param name="datasetName"></param>
         </member>
         <member name="T:MyEMSLReader.Reader">
             <summary>
@@ -1468,6 +1468,10 @@
              <summary>
              Searches for files associated with one or more datasets
              </summary>
+             <remarks>
+             If the keys in datasetsAndSubDirLists start with DATASET_ID_TAG then they are Dataset IDs and not dataset names
+             If the keys in datasetsAndSubDirLists start with DATA_PKG_ID_TAG then they are Data Package IDs and not dataset names
+             </remarks>
              <param name="datasetsAndSubDirs">
              Keys are dataset names (or DATASET_ID_TAG and DatasetID or DATA_PKG_ID_TAG and DataPkgID),
              Values are a list of subdirectory names to filter on for the given dataset
@@ -1486,10 +1490,6 @@
               (it cannot be blank, but it could be "dummy" or "unknown" or "0", etc.)
              </param>
              <returns>Files that were found</returns>
-             <remarks>
-             If the keys in datasetsAndSubDirLists start with DATASET_ID_TAG then they are Dataset IDs and not dataset names
-             If the keys in datasetsAndSubDirLists start with DATA_PKG_ID_TAG then they are Data Package IDs and not dataset names
-             </remarks>
         </member>
         <member name="M:MyEMSLReader.Reader.ResetStatus">
             <summary>
@@ -1500,12 +1500,12 @@
             <summary>
             Call the Item Search service to find the matching items
             </summary>
+            <remarks>A given remote file could have multiple hash values if multiple versions of the file have been uploaded</remarks>
             <param name="dbTools">Key to search on</param>
             <param name="searchKey">Key to search on</param>
             <param name="searchValue">Value to match</param>
             <param name="timeoutSeconds">Max time (in seconds) to wait for the item search query to finish</param>
             <returns>Dictionary where keys are relative file paths (Windows style paths); values are file info details</returns>
-            <remarks>A given remote file could have multiple hash values if multiple versions of the file have been uploaded</remarks>
         </member>
         <member name="M:MyEMSLReader.Reader.ValidateDatasetInfoDictionary(System.Collections.Generic.Dictionary{System.String,System.Collections.Generic.SortedSet{System.String}})">
             <summary>
