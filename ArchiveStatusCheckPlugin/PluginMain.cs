@@ -1,4 +1,4 @@
-using CaptureTaskManager;
+﻿using CaptureTaskManager;
 using Pacifica.Core;
 using System;
 using System.Collections.Generic;
@@ -271,10 +271,10 @@ namespace ArchiveStatusCheckPlugin
         /// Step through the unverified URIs to see if the same subdirectory was subsequently successfully uploaded
         /// (could be a blank subdirectory, meaning the instrument data and all jobs)
         /// </summary>
+        /// <remarks>Will remove superseded (yet unverified) entries from unverifiedURIs and statusData</remarks>
         /// <param name="unverifiedURIs">Unverified URIs</param>
         /// <param name="verifiedURIs">Verified URIs</param>
         /// <param name="statusData">Status Info for each StatusNum</param>
-        /// <remarks>Will remove superseded (yet unverified) entries from unverifiedURIs and statusData</remarks>
         private void CompareUnverifiedAndVerifiedURIs(
             IDictionary<int, string> unverifiedURIs,
             IReadOnlyDictionary<int, string> verifiedURIs,

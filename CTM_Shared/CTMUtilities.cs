@@ -47,8 +47,8 @@ namespace CaptureTaskManager
         /// <summary>
         /// Enable offline mode
         /// </summary>
-        /// <param name="runningLinux">Set to True if running Linux</param>
         /// <remarks>When offline, does not contact any databases or remote shares</remarks>
+        /// <param name="runningLinux">Set to True if running Linux</param>
         public static void EnableOfflineMode(bool runningLinux = true)
         {
             OfflineMode = true;

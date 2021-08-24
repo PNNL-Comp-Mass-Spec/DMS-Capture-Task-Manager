@@ -330,6 +330,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Lookup the MyEMSL ingest status for the current job
         /// </summary>
+        /// <remarks>This function is used by the ArchiveStatusCheck plugin and the ArchiveVerify plugin </remarks>
         /// <param name="job"></param>
         /// <param name="statusChecker"></param>
         /// <param name="statusURI"></param>
@@ -338,7 +339,6 @@ namespace CaptureTaskManager
         /// <param name="currentTask">Output: current task</param>
         /// <param name="percentComplete">Output: ingest process percent complete (value between 0 and 100)</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>This function is used by the ArchiveStatusCheck plugin and the ArchiveVerify plugin </remarks>
         // ReSharper disable once UnusedMember.Global
         protected bool GetMyEMSLIngestStatus(
             int job,
@@ -581,11 +581,11 @@ namespace CaptureTaskManager
         /// <summary>
         /// Communicates with database to record the tool version(s) for the current step task
         /// </summary>
+        /// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
         /// <param name="toolVersionInfo">Version info (maximum length is 900 characters)</param>
         /// <param name="toolFiles">FileSystemInfo list of program files related to the step tool</param>
         /// <param name="saveToolVersionTextFile">If true, creates a text file with the tool version information</param>
         /// <returns>True for success, False for failure</returns>
-        /// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
         // ReSharper disable once UnusedMember.Global
         protected bool SetStepTaskToolVersion(
             string toolVersionInfo,
@@ -686,10 +686,10 @@ namespace CaptureTaskManager
         /// <summary>
         /// Determines the version info for a DLL using reflection
         /// </summary>
+        /// <remarks>Used by CTM plugins</remarks>
         /// <param name="toolVersionInfo">Version info string to append the version info to</param>
         /// <param name="dllFilePath">Path to the DLL</param>
         /// <returns>True if success; false if an error</returns>
-        /// <remarks>Used by CTM plugins</remarks>
         // ReSharper disable once UnusedMember.Global
         protected virtual bool StoreToolVersionInfoOneFile(ref string toolVersionInfo, string dllFilePath)
         {
@@ -816,10 +816,10 @@ namespace CaptureTaskManager
         /// <summary>
         /// Uses the DLLVersionInspector to determine the version of a 64-bit .NET DLL or .Exe
         /// </summary>
+        /// <remarks>Used by CTM plugins</remarks>
         /// <param name="toolVersionInfo"></param>
         /// <param name="dllFilePath"></param>
         /// <returns>True if success; false if an error</returns>
-        /// <remarks>Used by CTM plugins</remarks>
         // ReSharper disable once UnusedMember.Global
         protected bool StoreToolVersionInfoOneFile64Bit(ref string toolVersionInfo, string dllFilePath)
         {
@@ -920,6 +920,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Updates the value for Ingest_Steps_Completed in table T_MyEMSL_Uploads for the given upload task
         /// </summary>
+        /// <remarks>This function is used by the ArchiveStatusCheck plugin and the ArchiveVerify plugin </remarks>
         /// <param name="statusNum">MyEMSL Status number</param>
         /// <param name="ingestStepsCompleted">Number of completed ingest steps</param>
         /// <param name="transactionId">
@@ -929,7 +930,6 @@ namespace CaptureTaskManager
         /// </param>
         /// <param name="fatalError">True if ingest failed with a fatal error and thus the ErrorCode should be updated in T_MyEMSL_Uploads</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>This function is used by the ArchiveStatusCheck plugin and the ArchiveVerify plugin </remarks>
         // ReSharper disable once UnusedMember.Global
         protected bool UpdateIngestStepsCompletedOneTask(
             int statusNum,

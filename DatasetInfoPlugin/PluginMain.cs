@@ -1072,11 +1072,11 @@ namespace DatasetInfoPlugin
         /// Most datasets only have a single dataset file or directory, but FTICR_Imaging datasets
         /// can have multiple .D directories below a parent directory
         /// </summary>
-        /// <returns>List of data file or directory names; empty list if not found</returns>
         /// <remarks>
         /// Returns UNKNOWN_FILE_TYPE for instrument types that are not recognized.
         /// Returns INVALID_FILE_TYPE for instruments for which we do not run MSFileInfoScanner
         /// </remarks>
+        /// <returns>List of data file or directory names; empty list if not found</returns>
         private List<string> GetDataFileOrDirectoryName(
             string inputDirectory,
             out QCPlottingModes qcPlotMode,

@@ -1,4 +1,4 @@
-using PRISM;
+﻿using PRISM;
 using System;
 using System.IO;
 
@@ -276,11 +276,11 @@ namespace CaptureTaskManager
         /// <summary>
         /// Runs a program and waits for it to exit
         /// </summary>
+        /// <remarks>Ignores the result code reported by the program</remarks>
         /// <param name="executablePath">The path to the program to run</param>
         /// <param name="arguments">The arguments to pass to the program, for example /N=35</param>
         /// <param name="progName">The name of the program to use for the Window title</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>Ignores the result code reported by the program</remarks>
         // ReSharper disable once UnusedMember.Global
         public bool RunProgram(string executablePath, string arguments, string progName)
         {
@@ -291,12 +291,12 @@ namespace CaptureTaskManager
         /// <summary>
         /// Runs a program and waits for it to exit
         /// </summary>
+        /// <remarks>Ignores the result code reported by the program</remarks>
         /// <param name="executablePath">The path to the program to run</param>
         /// <param name="arguments">The arguments to pass to the program, for example: /N=35</param>
         /// <param name="progName">The name of the program to use for the Window title</param>
         /// <param name="useResCode">Whether or not to use the result code to determine success or failure of program execution</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>Ignores the result code reported by the program</remarks>
         public bool RunProgram(string executablePath, string arguments, string progName, bool useResCode)
         {
             const int maxRuntimeSeconds = 0;
@@ -306,13 +306,13 @@ namespace CaptureTaskManager
         /// <summary>
         /// Runs a program and waits for it to exit
         /// </summary>
+        /// <remarks>maxRuntimeSeconds will be increased to 15 seconds if it is between 1 and 14 seconds</remarks>
         /// <param name="executablePath">The path to the program to run</param>
         /// <param name="arguments">The arguments to pass to the program, for example /N=35</param>
         /// <param name="progName">The name of the program to use for the Window title</param>
         /// <param name="useResCode">If true, returns False if the ProgRunner ExitCode is non-zero</param>
         /// <param name="maxRuntimeSeconds">If a positive number, program execution will be aborted if the runtime exceeds maxRuntimeSeconds</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>maxRuntimeSeconds will be increased to 15 seconds if it is between 1 and 14 seconds</remarks>
         public bool RunProgram(string executablePath, string arguments, string progName, bool useResCode, int maxRuntimeSeconds)
         {
             // Require a minimum monitoring interval of 250 milliseconds

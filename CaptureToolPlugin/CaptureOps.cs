@@ -271,9 +271,9 @@ namespace CaptureToolPlugin
         /// <summary>
         /// Finds files and/or subdirectories at datasetDirectoryPath that need to be renamed to start with x_
         /// </summary>
+        /// <remarks>Does not rename LCMethod*.xml files</remarks>
         /// <param name="datasetDirectoryPath">Dataset directory path</param>
         /// <param name="pendingRenames">Files and/or directories to rename</param>
-        /// <remarks>Does not rename LCMethod*.xml files</remarks>
         /// <returns>True if successful, false if an error</returns>
         private bool FindSupersededFiles(string datasetDirectoryPath, IDictionary<FileSystemInfo, string> pendingRenames)
         {
@@ -507,6 +507,10 @@ namespace CaptureToolPlugin
         /// <summary>
         /// Performs action specified by DSFolderExistsAction manager parameter if a dataset directory already exists
         /// </summary>
+        /// <remarks>
+        /// If both maxFileCountToAllowResume and maxInstrumentDirCountToAllowResume are zero,
+        /// will require that a minimum number of subdirectories or files be present to allow for CopyToResume to be used
+        /// </remarks>
         /// <param name="datasetDirectoryPath">Full path to the dataset directory</param>
         /// <param name="copyWithResume">True when we will be using Copy with Resume to capture this instrument's data</param>
         /// <param name="maxFileCountToAllowResume">
@@ -520,10 +524,6 @@ namespace CaptureToolPlugin
         /// <param name="returnData">Return data</param>
         /// <param name="pendingRenames">Files and/or directories to rename</param>
         /// <returns>TRUE for success, FALSE for failure</returns>
-        /// <remarks>
-        /// If both maxFileCountToAllowResume and maxInstrumentDirCountToAllowResume are zero,
-        /// will require that a minimum number of subdirectories or files be present to allow for CopyToResume to be used
-        /// </remarks>
         private bool PerformDSExistsActions(
             string datasetDirectoryPath,
             bool copyWithResume,
@@ -1790,10 +1790,10 @@ namespace CaptureToolPlugin
         /// Looks for the LCMethod file for this dataset
         /// Copies this file to the dataset directory
         /// </summary>
+        /// <remarks>Returns true if the .lcmethod file is not found</remarks>
         /// <param name="datasetName"></param>
         /// <param name="datasetDirectoryPath"></param>
         /// <returns>True if file found and copied; false if an error</returns>
-        /// <remarks>Returns true if the .lcmethod file is not found</remarks>
         private bool CaptureLCMethodFile(string datasetName, string datasetDirectoryPath)
         {
             const string DEFAULT_METHOD_FOLDER_BASE_PATH = @"\\proto-5\BionetXfer\Run_Complete_Trigger\MethodFiles";
@@ -3539,16 +3539,16 @@ namespace CaptureToolPlugin
         /// <summary>
         /// Make sure that we matched a file for instruments that save data as a file, or a directory for instruments that save data to a directory
         /// </summary>
+        /// <remarks>
+        /// This method will update datasetInfo.DatasetType if it is MultiFile and we matched two files, where one of the files is a .sld file.
+        /// It will also remove the .sld file from datasetInfo.FileList
+        /// </remarks>
         /// <param name="dataset"></param>
         /// <param name="sourceDirectoryPath"></param>
         /// <param name="instrumentClass">Instrument class</param>
         /// <param name="datasetInfo">Dataset info</param>
         /// <param name="returnData"></param>
         /// <returns>True if the file or directory is appropriate for the instrument class, otherwise false</returns>
-        /// <remarks>
-        /// This method will update datasetInfo.DatasetType if it is MultiFile and we matched two files, where one of the files is a .sld file.
-        /// It will also remove the .sld file from datasetInfo.FileList
-        /// </remarks>
         private bool ValidateWithInstrumentClass(
             string dataset,
             string sourceDirectoryPath,

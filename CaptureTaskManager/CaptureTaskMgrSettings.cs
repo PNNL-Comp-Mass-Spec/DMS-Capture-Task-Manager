@@ -100,8 +100,6 @@ namespace CaptureTaskManager
         /// <summary>
         /// Updates manager settings, then loads settings from the database
         /// </summary>
-        /// <param name="configFileSettings">Manager settings loaded from file AppName.exe.config</param>
-        /// <returns>True if successful; False on error</returns>
         /// <remarks>
         /// Settings are read by method LoadMgrSettingsFromDBWork in PRISMDatabaseUtils\AppSettings\MgrSettingsDB.cs
         /// using the query
@@ -110,6 +108,8 @@ namespace CaptureTaskManager
         /// which are then stored with
         ///   StoreParameters(mgrGroupSettingsFromDB, mgrSettingsGroup, skipExistingParameters: true);
         /// </remarks>
+        /// <param name="configFileSettings">Manager settings loaded from file AppName.exe.config</param>
+        /// <returns>True if successful; False on error</returns>
         public bool LoadSettings(Dictionary<string, string> configFileSettings)
         {
             var success = LoadSettings(configFileSettings, true);

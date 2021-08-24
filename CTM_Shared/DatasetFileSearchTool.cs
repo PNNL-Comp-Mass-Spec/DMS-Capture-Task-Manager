@@ -34,10 +34,10 @@ namespace CaptureTaskManager
         /// If the filename contains any of the characters in mFilenameAutoFixes, replace the character with the given replacement string
         /// Next compare to datasetName.  If a match, return the updated filename, otherwise return the original filename
         /// </summary>
+        /// <remarks>When searching for a period, only the base filename is examined</remarks>
         /// <param name="datasetName">Dataset name</param>
         /// <param name="fileName">File name</param>
         /// <returns>Optimal filename to use</returns>
-        /// <remarks>When searching for a period, only the base filename is examined</remarks>
         public string AutoFixFilename(string datasetName, string fileName)
         {
             return AutoFixFilename(datasetName, fileName, FilenameAutoFixes);
@@ -47,11 +47,11 @@ namespace CaptureTaskManager
         /// If the filename contains any of the characters in charsToFind, replace the character with the given replacement string
         /// Next compare to datasetName.  If a match, return the updated filename, otherwise return the original filename
         /// </summary>
+        /// <remarks>When searching for a period, only the base filename is examined</remarks>
         /// <param name="datasetName">Dataset name</param>
         /// <param name="fileName">File name</param>
         /// <param name="charsToFind">Keys are characters to find; values are the replacement text</param>
         /// <returns>Optimal filename to use</returns>
-        /// <remarks>When searching for a period, only the base filename is examined</remarks>
         public string AutoFixFilename(string datasetName, string fileName, IReadOnlyDictionary<char, string> charsToFind)
         {
             var matchFound = charsToFind.Keys.Any(item => fileName.IndexOf(item) >= 0);
@@ -86,13 +86,13 @@ namespace CaptureTaskManager
         /// <summary>
         /// Looks for the dataset file in the source directory
         /// </summary>
-        /// <param name="sourceDirectoryPath">Full path to the directory to search</param>
-        /// <param name="datasetName">Dataset name</param>
-        /// <returns>DatasetInfo object containing info on found dataset file</returns>
         /// <remarks>
         /// First looks for an exact match to a file or directory
         /// If no match, replaces spaces with underscores before comparing file and directory names to the dataset name
         /// </remarks>
+        /// <param name="sourceDirectoryPath">Full path to the directory to search</param>
+        /// <param name="datasetName">Dataset name</param>
+        /// <returns>DatasetInfo object containing info on found dataset file</returns>
         public DatasetInfo FindDatasetFile(
             string sourceDirectoryPath,
             string datasetName)
@@ -125,14 +125,14 @@ namespace CaptureTaskManager
         /// Determines if the dataset exists as a single file, a directory with same name as dataset,
         /// or a directory with dataset name and an extension
         /// </summary>
-        /// <param name="sourceDirectoryPath">Full path to source directory on the instrument</param>
-        /// <param name="datasetName">Dataset name</param>
-        /// <param name="instrumentClass">Instrument class for dataset to be located</param>
-        /// <returns>DatasetInfo object containing info on found dataset file or directory</returns>
         /// <remarks>
         /// First looks for an exact match to a file or directory
         /// If no match, replaces spaces with underscores before comparing file and directory names to the dataset name
         /// </remarks>
+        /// <param name="sourceDirectoryPath">Full path to source directory on the instrument</param>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="instrumentClass">Instrument class for dataset to be located</param>
+        /// <returns>DatasetInfo object containing info on found dataset file or directory</returns>
         public DatasetInfo FindDatasetFileOrDirectory(
             string sourceDirectoryPath,
             string datasetName,
@@ -188,6 +188,10 @@ namespace CaptureTaskManager
         /// Determines if the dataset exists as a single file, a directory with same name as dataset,
         /// or a directory with dataset name and an extension
         /// </summary>
+        /// <remarks>
+        /// First looks for an exact match to a file or directory
+        /// If no match, replaces spaces with underscores before comparing file and directory names to the dataset name
+        /// </remarks>
         /// <param name="sourceDirectoryPath">Full path to the directory to search</param>
         /// <param name="datasetName">Dataset name</param>
         /// <param name="checkForFilesFirst">
@@ -195,10 +199,6 @@ namespace CaptureTaskManager
         /// </param>
         /// <param name="matchedDirectory">Output: true if we matched a directory</param>
         /// <returns>DatasetInfo object containing info on found dataset file or directory</returns>
-        /// <remarks>
-        /// First looks for an exact match to a file or directory
-        /// If no match, replaces spaces with underscores before comparing file and directory names to the dataset name
-        /// </remarks>
         public DatasetInfo FindDatasetFileOrDirectory(
             string sourceDirectoryPath,
             string datasetName,

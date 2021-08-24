@@ -32,8 +32,8 @@ namespace CaptureTaskManager
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
-        /// <returns>0 if no error; error code if an error</returns>
         /// <remarks>The STAThread attribute is required for OxyPlot functionality</remarks>
+        /// <returns>0 if no error; error code if an error</returns>
         [STAThread]
         private static int Main(string[] args)
         {
