@@ -138,7 +138,6 @@ namespace CaptureTaskManager
         /// <summary>
         /// Maximum amount of time (seconds) that the program will be allowed to run; 0 if allowed to run indefinitely
         /// </summary>
-        /// <value></value>
         public int MaxRuntimeSeconds { get; private set; }
 
         /// <summary>
