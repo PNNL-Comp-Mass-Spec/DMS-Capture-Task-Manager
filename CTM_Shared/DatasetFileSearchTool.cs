@@ -397,7 +397,7 @@ namespace CaptureTaskManager
         /// <returns>True if the paths were updated, otherwise false</returns>
         public bool VerifyRelativeSourcePath(string sourceVol, ref string sourcePath, ref string captureSubdirectory)
         {
-            if (!captureSubdirectory.TrimStart('\\').StartsWith("..") || !sourceVol.StartsWith("\\\\"))
+            if (!captureSubdirectory.TrimStart('\\').StartsWith("..") || !sourceVol.StartsWith(@"\\"))
             {
                 // Update not required
                 return false;
