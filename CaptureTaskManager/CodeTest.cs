@@ -1,14 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 
 namespace CaptureTaskManager
 {
     internal class CodeTest
     {
+        /// <summary>
+        /// Test connecting to a computer on bionet
+        /// </summary>
         public void TestConnection()
         {
-            // Ignore Spelling: ftms, lcmsoperator
+            // Ignore Spelling: bionet, ftms, lcmsoperator
 
             Console.WriteLine("Code test mode");
 
@@ -78,6 +82,40 @@ namespace CaptureTaskManager
             {
                 Console.WriteLine("Exception: " + ex.Message);
             }
+        }
+
+        /// <summary>
+        /// Test using VerifyRelativeSourcePath to update path variables
+        /// </summary>
+        public void TestFixSourcePath()
+        {
+            var searchTool = new DatasetFileSearchTool(true);
+
+            const string sourceVol = @"\\lumos01.bionet\";
+            var sourcePath = @"ProteomicsData\";
+            var captureSubdirectory = @"..\ProteomicsData2";
+
+            var originalPath = Path.Combine(sourceVol, sourcePath, captureSubdirectory);
+
+            var pathVariablesUpdated = searchTool.VerifyRelativeSourcePath(sourceVol, ref sourcePath, ref captureSubdirectory);
+
+            var updatedPath = Path.Combine(sourceVol, sourcePath, captureSubdirectory);
+
+            Console.WriteLine();
+            if (pathVariablesUpdated)
+            {
+                Console.WriteLine("Path updated");
+            }
+            else
+            {
+                Console.WriteLine("Path not updated");
+            }
+
+            Console.WriteLine();
+            Console.WriteLine("Old: " + originalPath);
+            Console.WriteLine("New: " + updatedPath);
+
+            Console.WriteLine();
         }
     }
 }

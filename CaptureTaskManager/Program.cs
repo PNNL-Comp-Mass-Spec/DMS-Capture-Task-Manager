@@ -91,7 +91,9 @@ namespace CaptureTaskManager
 
                         var testHarness = new CodeTest();
 
-                        testHarness.TestConnection();
+                        // testHarness.TestConnection();
+
+                        testHarness.TestFixSourcePath();
                     }
                     catch (Exception ex)
                     {
