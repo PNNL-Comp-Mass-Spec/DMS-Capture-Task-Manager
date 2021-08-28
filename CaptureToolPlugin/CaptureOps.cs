@@ -1324,6 +1324,52 @@ namespace CaptureToolPlugin
                 }
             }
 
+            // If "captureSubdirectory" starts with "..\", then we may be dealing with an alternate share name
+            // Perform the appropriate manipulation so it will work.
+            if (captureSubdirectory.TrimStart('\\').StartsWith("..") && sourceVol.StartsWith("\\\\"))
+            {
+                LogDebug($"Path Share Fix: '{sourceVol}' '{sourcePath}' '{captureSubdirectory}'");
+
+                var sourcePathParts = sourcePath.Trim('\\', '.').Split('\\');
+                if (sourcePathParts.Length == 1)
+                {
+                    var captureSubWork = captureSubdirectory.TrimStart('\\', '.');
+                    sourcePath = captureSubWork.Split('\\')[0];
+                    captureSubdirectory = captureSubWork.Substring(sourcePath.Length).TrimStart('\\');
+                }
+                else
+                {
+                    var sourceParts = sourcePathParts.ToList();
+                    var captureSubParts = captureSubdirectory.Trim('\\').Split('\\');
+                    var firstCaptureSub = "";
+                    foreach (var part in captureSubParts)
+                    {
+                        if (part == ".." && sourceParts.Count > 0)
+                        {
+                            sourceParts.RemoveAt(sourceParts.Count - 1);
+                        }
+                        else
+                        {
+                            firstCaptureSub = part;
+                            break;
+                        }
+                    }
+
+                    if (sourceParts.Count == 0)
+                    {
+                        sourcePath = firstCaptureSub;
+                        captureSubdirectory = captureSubdirectory.TrimStart('\\', '.').Substring(sourcePath.Length).TrimStart('\\');
+                    }
+                    else
+                    {
+                        sourcePath = Path.Combine(sourceParts.ToArray());
+                        captureSubdirectory = captureSubdirectory.TrimStart('\\', '.');
+                    }
+                }
+
+                LogDebug($"Path Share Fixed: '{sourceVol}' '{sourcePath}' '{captureSubdirectory}'");
+            }
+
             // Construct the path to the dataset on the instrument
             // Determine if source dataset exists, and if it is a file or a directory
             var sourceDirectoryPath = Path.Combine(sourceVol, sourcePath);
