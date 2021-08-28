@@ -391,6 +391,22 @@ namespace CaptureTaskManager
         /// <summary>
         /// If captureSubdirectory starts with "..", possibly update sourcePath and captureSubdirectory to account for an alternate share name
         /// </summary>
+        /// <remarks>
+        /// <para>On Lumos01, C:\ProteomicsData is shared as ProteomicsData2</para>
+        /// <para>
+        /// The trigger file created by Buzzard will have:
+        /// sourceVol = "\\lumos01.bionet\", sourcePath = "ProteomicsData\", and captureSubdirectory = "..\ProteomicsData2"
+        /// </para>
+        /// <para>
+        /// Combining those gives "\\lumos01.bionet\ProteomicsData\..\ProteomicsData2"
+        /// </para>
+        /// <para>
+        /// This method updates the variables to instead have sourcePath = "ProteomicsData2", and captureSubdirectory = ""
+        /// </para>
+        /// <para>
+        /// Combining those gives "\\lumos01.bionet\ProteomicsData2"
+        /// </para>
+        /// </remarks>
         /// <param name="sourceVol"></param>
         /// <param name="sourcePath"></param>
         /// <param name="captureSubdirectory"></param>
@@ -403,7 +419,7 @@ namespace CaptureTaskManager
                 return false;
             }
 
-            OnStatusEvent($"Updating Path Share From: '{sourceVol}' '{sourcePath}' '{captureSubdirectory}'");
+            OnStatusEvent($"Updating Share Path, Old: '{sourceVol}' '{sourcePath}' '{captureSubdirectory}'");
 
             var sourcePathParts = sourcePath.Trim('\\', '.').Split('\\');
             if (sourcePathParts.Length == 1)
@@ -412,7 +428,7 @@ namespace CaptureTaskManager
                 sourcePath = captureSubWork.Split('\\')[0];
                 captureSubdirectory = captureSubWork.Substring(sourcePath.Length).TrimStart('\\');
 
-                OnStatusEvent($"Updated  Path Share To:   '{sourceVol}' '{sourcePath}' '{captureSubdirectory}'");
+                OnStatusEvent($"Updating Share Path, New: '{sourceVol}' '{sourcePath}' '{captureSubdirectory}'");
                 return true;
             }
 
@@ -444,7 +460,7 @@ namespace CaptureTaskManager
                 captureSubdirectory = captureSubdirectory.TrimStart('\\', '.');
             }
 
-            OnStatusEvent($"Updated  Path Share To:   '{sourceVol}' '{sourcePath}' '{captureSubdirectory}'");
+            OnStatusEvent($"Updating Share Path, New: '{sourceVol}' '{sourcePath}' '{captureSubdirectory}'");
             return true;
         }
     }
