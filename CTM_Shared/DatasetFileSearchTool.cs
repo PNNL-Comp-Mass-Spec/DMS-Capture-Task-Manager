@@ -403,7 +403,7 @@ namespace CaptureTaskManager
                 return false;
             }
 
-            OnDebugEvent($"Updating Path Share From: '{sourceVol}' '{sourcePath}' '{captureSubdirectory}'");
+            OnStatusEvent($"Updating Path Share From: '{sourceVol}' '{sourcePath}' '{captureSubdirectory}'");
 
             var sourcePathParts = sourcePath.Trim('\\', '.').Split('\\');
             if (sourcePathParts.Length == 1)
@@ -412,7 +412,7 @@ namespace CaptureTaskManager
                 sourcePath = captureSubWork.Split('\\')[0];
                 captureSubdirectory = captureSubWork.Substring(sourcePath.Length).TrimStart('\\');
 
-                OnDebugEvent($"Updated  Path Share To:   '{sourceVol}' '{sourcePath}' '{captureSubdirectory}'");
+                OnStatusEvent($"Updated  Path Share To:   '{sourceVol}' '{sourcePath}' '{captureSubdirectory}'");
                 return true;
             }
 
@@ -443,7 +443,7 @@ namespace CaptureTaskManager
                 captureSubdirectory = captureSubdirectory.TrimStart('\\', '.');
             }
 
-            OnDebugEvent($"Updated  Path Share To:   '{sourceVol}' '{sourcePath}' '{captureSubdirectory}'");
+            OnStatusEvent($"Updated  Path Share To:   '{sourceVol}' '{sourcePath}' '{captureSubdirectory}'");
             return true;
         }
     }
