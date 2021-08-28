@@ -467,13 +467,13 @@ namespace ImsDemuxPlugin
             if (calibrationFailed)
             {
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                returnData.EvalMsg = AppendToString(returnData.EvalMsg, " but Calibration failed", "");
+                returnData.EvalMsg = AppendToString(returnData.EvalMsg, " but Calibration failed", string.Empty);
             }
             else
             {
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
 
-                returnData.EvalMsg = AppendToString(returnData.EvalMsg, " and calibrated", "");
+                returnData.EvalMsg = AppendToString(returnData.EvalMsg, " and calibrated", string.Empty);
             }
 
             return returnData;

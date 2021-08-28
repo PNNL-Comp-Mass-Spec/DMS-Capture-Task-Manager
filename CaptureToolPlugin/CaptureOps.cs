@@ -3452,7 +3452,7 @@ namespace CaptureToolPlugin
 
                 var filesInDirectory = targetDirectory.GetFiles();
                 float totalSizeKB = 0;
-                var largestFileInfo = new KeyValuePair<long, string>(0, "");
+                var largestFileInfo = new KeyValuePair<long, string>(0, string.Empty);
 
                 foreach (var file in filesInDirectory)
                 {

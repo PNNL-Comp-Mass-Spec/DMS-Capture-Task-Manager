@@ -182,7 +182,7 @@ namespace DatasetInfoPlugin
                 xmlDoc.Load(reader);
             }
 
-            var datasetName = GetXmlValue(xmlDoc, "DatasetInfo/Dataset", "");
+            var datasetName = GetXmlValue(xmlDoc, "DatasetInfo/Dataset", string.Empty);
 
             var scanTypeNodes = xmlDoc.SelectNodes("DatasetInfo/ScanTypes/ScanType");
             if (scanTypeNodes != null)
@@ -234,8 +234,8 @@ namespace DatasetInfoPlugin
 
             acqInfo.AcqTimeMinutes += GetXmlValue(xmlDoc, "DatasetInfo/AcquisitionInfo/AcqTimeMinutes", 0.0);
 
-            var startTimeText = GetXmlValue(xmlDoc, "DatasetInfo/AcquisitionInfo/StartTime", "");
-            var endTimeText = GetXmlValue(xmlDoc, "DatasetInfo/AcquisitionInfo/EndTime", "");
+            var startTimeText = GetXmlValue(xmlDoc, "DatasetInfo/AcquisitionInfo/StartTime", string.Empty);
+            var endTimeText = GetXmlValue(xmlDoc, "DatasetInfo/AcquisitionInfo/EndTime", string.Empty);
 
             var startTimeValid = false;
 

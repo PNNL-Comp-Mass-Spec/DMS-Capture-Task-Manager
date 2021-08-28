@@ -418,7 +418,8 @@ namespace CaptureTaskManager
 
             var sourceParts = sourcePathParts.ToList();
             var captureSubParts = captureSubdirectory.Trim('\\').Split('\\');
-            var firstCaptureSub = "";
+            var firstCaptureSub = string.Empty;
+
             foreach (var part in captureSubParts)
             {
                 if (part == ".." && sourceParts.Count > 0)
