@@ -387,5 +387,64 @@ namespace CaptureTaskManager
 
             return updatedText;
         }
+
+        /// <summary>
+        /// If captureSubdirectory starts with "..", possibly update sourcePath and captureSubdirectory to account for an alternate share name
+        /// </summary>
+        /// <param name="sourceVol"></param>
+        /// <param name="sourcePath"></param>
+        /// <param name="captureSubdirectory"></param>
+        /// <returns>True if the paths were updated, otherwise false</returns>
+        public bool VerifyRelativeSourcePath(string sourceVol, ref string sourcePath, ref string captureSubdirectory)
+        {
+            if (!captureSubdirectory.TrimStart('\\').StartsWith("..") || !sourceVol.StartsWith("\\\\"))
+            {
+                // Update not required
+                return false;
+            }
+
+            OnDebugEvent($"Updating Path Share From: '{sourceVol}' '{sourcePath}' '{captureSubdirectory}'");
+
+            var sourcePathParts = sourcePath.Trim('\\', '.').Split('\\');
+            if (sourcePathParts.Length == 1)
+            {
+                var captureSubWork = captureSubdirectory.TrimStart('\\', '.');
+                sourcePath = captureSubWork.Split('\\')[0];
+                captureSubdirectory = captureSubWork.Substring(sourcePath.Length).TrimStart('\\');
+
+                OnDebugEvent($"Updated  Path Share To:   '{sourceVol}' '{sourcePath}' '{captureSubdirectory}'");
+                return true;
+            }
+
+            var sourceParts = sourcePathParts.ToList();
+            var captureSubParts = captureSubdirectory.Trim('\\').Split('\\');
+            var firstCaptureSub = "";
+            foreach (var part in captureSubParts)
+            {
+                if (part == ".." && sourceParts.Count > 0)
+                {
+                    sourceParts.RemoveAt(sourceParts.Count - 1);
+                }
+                else
+                {
+                    firstCaptureSub = part;
+                    break;
+                }
+            }
+
+            if (sourceParts.Count == 0)
+            {
+                sourcePath = firstCaptureSub;
+                captureSubdirectory = captureSubdirectory.TrimStart('\\', '.').Substring(sourcePath.Length).TrimStart('\\');
+            }
+            else
+            {
+                sourcePath = Path.Combine(sourceParts.ToArray());
+                captureSubdirectory = captureSubdirectory.TrimStart('\\', '.');
+            }
+
+            OnDebugEvent($"Updated  Path Share To:   '{sourceVol}' '{sourcePath}' '{captureSubdirectory}'");
+            return true;
+        }
     }
 }
