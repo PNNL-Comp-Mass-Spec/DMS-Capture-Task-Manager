@@ -386,7 +386,8 @@ namespace CaptureTaskManager
                 !hostName.StartsWith("EMSLPub", StringComparison.OrdinalIgnoreCase) &&
                 !hostName.StartsWith("monroe", StringComparison.OrdinalIgnoreCase) &&
                 !hostName.StartsWith("WE31383", StringComparison.OrdinalIgnoreCase) &&
-                !hostName.StartsWith("WE27676", StringComparison.OrdinalIgnoreCase))
+                !hostName.StartsWith("WE27676", StringComparison.OrdinalIgnoreCase) &&
+                !hostName.StartsWith("WE43320", StringComparison.OrdinalIgnoreCase))
             {
                 if (!mMgrName.StartsWith(hostName, StringComparison.OrdinalIgnoreCase))
                 {
