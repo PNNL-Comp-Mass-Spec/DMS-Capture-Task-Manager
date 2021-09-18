@@ -215,7 +215,11 @@ namespace CaptureTaskManager
                 dbTools.AddParameter(cmd, "@ManagerName", SqlType.VarChar, 128, mManagerName);
                 dbTools.AddParameter(cmd, "@State", SqlType.Int).Value = managerCleanupActionCode;
                 dbTools.AddParameter(cmd, "@FailureMsg", SqlType.VarChar, 512, failureMessage);
-                dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.Output);
+
+                dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512,
+                    dbTools.DbServerType == DbServerTypes.PostgreSQL
+                        ? ParameterDirection.InputOutput
+                        : ParameterDirection.Output);
 
                 // Execute the SP
                 dbTools.ExecuteSP(cmd);
