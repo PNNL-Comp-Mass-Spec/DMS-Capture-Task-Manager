@@ -603,7 +603,7 @@ namespace DatasetIntegrityPlugin
                 // Make sure the .d directory has the required files
                 // Older datasets may have had their larger files purged, which will cause the AgilentToUIMFConverter to fail
 
-                var binFiles = dotDDirectoryPathRemote.GetFiles("*.bin", SearchOption.AllDirectories).ToList();
+                var binFiles = PathUtils.FindFilesWildcard(dotDDirectoryPathRemote, "*.bin", true).ToList();
                 var fileNames = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
                 foreach (var file in binFiles)
@@ -805,7 +805,7 @@ namespace DatasetIntegrityPlugin
 
                     var directoryIsSuperseded = true;
 
-                    var supersededFiles = oldDirectory.GetFiles("*", SearchOption.AllDirectories);
+                    var supersededFiles = PathUtils.FindFilesWildcard(oldDirectory, "*", true);
 
                     foreach (var supersededFile in supersededFiles)
                     {
@@ -917,7 +917,7 @@ namespace DatasetIntegrityPlugin
         /// <param name="copyFile">True to copy the file, false to move it</param>
         private void MoveOrCopyUpOneLevel(DirectoryInfo datasetDirectory, string fileSpec, bool matchDatasetName, bool copyFile)
         {
-            foreach (var instrumentFile in datasetDirectory.GetFiles(fileSpec))
+            foreach (var instrumentFile in PathUtils.FindFilesWildcard(datasetDirectory, fileSpec))
             {
                 if (matchDatasetName &&
                     !Path.GetFileNameWithoutExtension(instrumentFile.Name).StartsWith(mDataset, StringComparison.OrdinalIgnoreCase))
@@ -1151,8 +1151,8 @@ namespace DatasetIntegrityPlugin
             }
 
             // Look for Data.MS file in the .d directory
-            var instrumentData = dotDDirectories[0].GetFiles("DATA.MS");
-            if (dotDDirectories[0].GetFiles("DATA.MS").Length == 0)
+            var instrumentData = PathUtils.FindFilesWildcard(dotDDirectories[0], "DATA.MS");
+            if (PathUtils.FindFilesWildcard(dotDDirectories[0], "DATA.MS").Count == 0)
             {
                 mRetData.EvalMsg = "Invalid dataset: DATA.MS file not found in the .d directory";
                 LogError(mRetData.EvalMsg);
@@ -1215,7 +1215,7 @@ namespace DatasetIntegrityPlugin
 
             // The AcqData directory should contain one or more .Bin files, for example MSScan.bin and MSProfile.bin
             // Verify that the MSScan.bin file exists
-            var msScanFile = acqDataDirectories[0].GetFiles("MSScan.bin").ToList();
+            var msScanFile = PathUtils.FindFilesWildcard(acqDataDirectories[0], "MSScan.bin").ToList();
             if (msScanFile.Count == 0)
             {
                 mRetData.EvalMsg = "Invalid dataset: MSScan.bin file not found in the AcqData directory";
@@ -1226,12 +1226,12 @@ namespace DatasetIntegrityPlugin
             FileInfo msDataFile;
 
             // Make sure the MSPeak.bin exists
-            var msPeakFile = acqDataDirectories[0].GetFiles("MSPeak.bin").ToList();
+            var msPeakFile = PathUtils.FindFilesWildcard(acqDataDirectories[0], "MSPeak.bin").ToList();
             if (msPeakFile.Count == 0)
             {
                 // Some Agilent_QQQ_04 datasets have MSProfile.bin but do not have MSPeak.bin
                 // Check for this
-                var msProfileFile = acqDataDirectories[0].GetFiles("MSProfile.bin").ToList();
+                var msProfileFile = PathUtils.FindFilesWildcard(acqDataDirectories[0], "MSProfile.bin").ToList();
 
                 if (msProfileFile.Count == 0)
                 {
@@ -1283,7 +1283,7 @@ namespace DatasetIntegrityPlugin
             }
 
             // The AcqData directory should contain file MSTS.xml
-            var mstsFiles = acqDataDirectories[0].GetFiles("MSTS.xml").ToList();
+            var mstsFiles = PathUtils.FindFilesWildcard(acqDataDirectories[0], "MSTS.xml").ToList();
             if (mstsFiles.Count == 0)
             {
                 mRetData.EvalMsg = "Invalid dataset: MSTS.xml file not found in the AcqData directory";
@@ -1645,7 +1645,7 @@ namespace DatasetIntegrityPlugin
                 var requiredFileName = requiredFile.Key;
                 var minimumFileSizeKB = requiredFile.Value;
 
-                var foundFiles = dotDDirectories[0].GetFiles(requiredFileName).ToList();
+                var foundFiles = PathUtils.FindFilesWildcard(dotDDirectories[0], requiredFileName).ToList();
                 if (foundFiles.Count == 0)
                 {
                     mRetData.EvalMsg = string.Format("Invalid dataset: {0} file not found", requiredFileName);
@@ -1695,7 +1695,7 @@ namespace DatasetIntegrityPlugin
             }
 
             // Determine if at least one .method file exists
-            var methodFiles = methodDirectories.First().GetFiles("*.method").ToList();
+            var methodFiles = PathUtils.FindFilesWildcard(methodDirectories.First(), "*.method").ToList();
             if (methodFiles.Count == 0)
             {
                 mRetData.EvalMsg = "Invalid dataset: No .method files found";
@@ -1763,11 +1763,12 @@ namespace DatasetIntegrityPlugin
                     var fidFound = false;
 
                     // Each .d directory should have a ser file, fid file, or .baf file
+                    // Look for them using FindFilesWildcard() since file paths could exceed 255 characters, which results in exceptions when using directory.FindFiles()
                     foreach (var dotDDirectory in dotDDirectories)
                     {
-                        var serFiles = dotDDirectory.GetFiles("ser", SearchOption.TopDirectoryOnly).Length;
-                        var fidFiles = dotDDirectory.GetFiles("fid", SearchOption.TopDirectoryOnly).Length;
-                        var bafFiles = dotDDirectory.GetFiles("*.baf", SearchOption.TopDirectoryOnly).Length;
+                        var serFiles = PathUtils.FindFilesWildcard(dotDDirectory, "ser").Count;
+                        var fidFiles = PathUtils.FindFilesWildcard(dotDDirectory,"fid").Count;
+                        var bafFiles = PathUtils.FindFilesWildcard(dotDDirectory, "*.baf").Count;
 
                         if (serFiles > 0)
                         {
@@ -1811,12 +1812,12 @@ namespace DatasetIntegrityPlugin
                     var bafCount = 0;
                     foreach (var dotDDirectory in dotDDirectories)
                     {
-                        if (dotDDirectory.GetFiles("ser", SearchOption.TopDirectoryOnly).Length == 1)
+                        if (PathUtils.FindFilesWildcard(dotDDirectory, "ser").Count == 1)
                         {
                             serCount++;
                         }
 
-                        if (dotDDirectory.GetFiles("analysis.baf", SearchOption.TopDirectoryOnly).Length == 1)
+                        if (PathUtils.FindFilesWildcard(dotDDirectory, "analysis.baf").Count == 1)
                         {
                             bafCount++;
                         }
@@ -1844,7 +1845,7 @@ namespace DatasetIntegrityPlugin
             }
 
             // Possibly verify that the analysis.baf file exists
-            var bafFile = dotDDirectories[0].GetFiles("analysis.baf").ToList();
+            var bafFile = PathUtils.FindFilesWildcard(dotDDirectories[0], "analysis.baf").ToList();
             var bafFileExists = bafFile.Count > 0;
 
             if (bafFileExists)
@@ -1867,7 +1868,7 @@ namespace DatasetIntegrityPlugin
             var mcfFileExists = false;
             long mcfFileSizeMax = 0;
 
-            foreach (var mcfFile in dotDDirectories[0].GetFiles("*.mcf"))
+            foreach (var mcfFile in PathUtils.FindFilesWildcard(dotDDirectories[0], "*.mcf"))
             {
                 if (mcfFile.Length > dataFileSizeKB * 1024)
                 {
@@ -1911,7 +1912,7 @@ namespace DatasetIntegrityPlugin
 
             // Verify ser file (if it exists)
             // For 15T imaging directories, only checking the ser file in the first .d directory
-            var serFile = dotDDirectories[0].GetFiles("ser").ToList();
+            var serFile = PathUtils.FindFilesWildcard(dotDDirectories[0], "ser").ToList();
             var serFileExists = serFile.Count > 0;
 
             if (serFileExists)
@@ -1938,7 +1939,7 @@ namespace DatasetIntegrityPlugin
                 }
 
                 // Check to see if a fid file exists instead of a ser file
-                var fidFile = dotDDirectories[0].GetFiles("fid").ToList();
+                var fidFile = PathUtils.FindFilesWildcard(dotDDirectories[0], "fid").ToList();
                 if (fidFile.Count > 0)
                 {
                     // fid file found; verify size
@@ -2018,7 +2019,7 @@ namespace DatasetIntegrityPlugin
             }
 
             // Determine if apexAcquisition.method file exists and meets minimum size requirements
-            var apexAcqMethod = methodDirectories.First().GetFiles("apexAcquisition.method").ToList();
+            var apexAcqMethod = PathUtils.FindFilesWildcard(methodDirectories.First(), "apexAcquisition.method").ToList();
             if (apexAcqMethod.Count == 0)
             {
                 mRetData.EvalMsg = "Invalid dataset: apexAcquisition.method file not found";
@@ -2046,8 +2047,10 @@ namespace DatasetIntegrityPlugin
         private EnumCloseOutType TestBrukerMaldiImagingDirectory(string datasetDirectoryPath)
         {
             // Verify at least one zip file exists in dataset directory
-            var fileList = Directory.GetFiles(datasetDirectoryPath, "*.zip");
-            if (fileList.Length < 1)
+            var datasetDirectory = new DirectoryInfo(datasetDirectoryPath);
+
+            var fileList = PathUtils.FindFilesWildcard(datasetDirectory, "*.zip");
+            if (fileList.Count < 1)
             {
                 mRetData.EvalMsg = "Invalid dataset: No zip files found";
                 LogError(mRetData.EvalMsg);
@@ -2066,8 +2069,10 @@ namespace DatasetIntegrityPlugin
         private EnumCloseOutType TestBrukerMaldiSpotDirectory(string datasetDirectoryPath)
         {
             // Verify the dataset directory doesn't contain any .zip files
-            var zipFiles = Directory.GetFiles(datasetDirectoryPath, "*.zip");
-            if (zipFiles.Length > 0)
+            var datasetDirectory = new DirectoryInfo(datasetDirectoryPath);
+
+            var zipFiles = PathUtils.FindFilesWildcard(datasetDirectory, "*.zip");
+            if (zipFiles.Count > 0)
             {
                 mRetData.EvalMsg = "Zip files found in dataset directory " + datasetDirectoryPath;
                 LogError(mRetData.EvalMsg);
@@ -2344,7 +2349,7 @@ namespace DatasetIntegrityPlugin
             }
 
             // Verify that at least one _FUNC000.DAT or _FUNC001.DAT file exists
-            var datFiles = dotRawDirectories[0].GetFiles("_FUNC*.DAT").ToList();
+            var datFiles = PathUtils.FindFilesWildcard(dotRawDirectories[0], "_FUNC*.DAT").ToList();
 
             var fileExists = datFiles.Count > 0;
 
@@ -2365,7 +2370,7 @@ namespace DatasetIntegrityPlugin
             }
 
             // Look for the _func001.ind file (or similar)
-            var indFiles = dotRawDirectories[0].GetFiles("_FUNC*.ind").ToList();
+            var indFiles = PathUtils.FindFilesWildcard(dotRawDirectories[0], "_FUNC*.ind").ToList();
 
             if (indFiles.Count == 0)
             {
