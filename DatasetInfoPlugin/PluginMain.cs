@@ -47,7 +47,7 @@ namespace DatasetInfoPlugin
 
         private string mMsg;
 
-        private bool mErrOccurred;
+        private bool mErrorOccurred;
 
         private int mErrorCountLoadDataForScan;
 
@@ -335,7 +335,7 @@ namespace DatasetInfoPlugin
             // Call the file scanner DLL
             // Typically only call it once, but for Bruker datasets with multiple .D directories, we'll call it once for each .D directory
 
-            mErrOccurred = false;
+            mErrorOccurred = false;
             mMsg = string.Empty;
 
             var cachedDatasetInfoXML = new List<string>();
@@ -421,7 +421,7 @@ namespace DatasetInfoPlugin
                     successProcessing = false;
                 }
 
-                if (mErrOccurred)
+                if (mErrorOccurred)
                 {
                     successProcessing = false;
                 }
@@ -1618,7 +1618,7 @@ namespace DatasetInfoPlugin
             }
             else
             {
-                mErrOccurred = true;
+                mErrorOccurred = true;
 
                 // Limit the logging of messages similar to:
 
