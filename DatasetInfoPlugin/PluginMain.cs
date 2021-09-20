@@ -312,7 +312,7 @@ namespace DatasetInfoPlugin
                 {
                     var msg = string.Format("PluginMain.RunMsFileInfoScanner: {0} {1}", EXCEPTION_CREATING_OUTPUT_DIRECTORY, outputPathBase);
 
-                    if (System.Net.Dns.GetHostName().StartsWith("monroe", StringComparison.OrdinalIgnoreCase) &&
+                    if (System.Net.Dns.GetHostName().StartsWith("WE43320", StringComparison.OrdinalIgnoreCase) &&
                         !Environment.UserName.StartsWith("svc", StringComparison.OrdinalIgnoreCase))
                     {
                         LogWarning(msg + ": " + ex.Message);
@@ -328,8 +328,9 @@ namespace DatasetInfoPlugin
                 }
             }
 
-            var useLocalOutputDirectory = System.Net.Dns.GetHostName().StartsWith("monroe", StringComparison.OrdinalIgnoreCase) &&
-                                          !Environment.UserName.StartsWith("svc", StringComparison.OrdinalIgnoreCase);
+            var useLocalOutputDirectory =
+                System.Net.Dns.GetHostName().StartsWith("WE43320", StringComparison.OrdinalIgnoreCase) &&
+                !Environment.UserName.StartsWith("svc", StringComparison.OrdinalIgnoreCase);
 
             // Call the file scanner DLL
             // Typically only call it once, but for Bruker datasets with multiple .D directories, we'll call it once for each .D directory

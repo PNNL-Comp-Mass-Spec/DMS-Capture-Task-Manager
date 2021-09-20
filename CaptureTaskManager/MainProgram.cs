@@ -1002,7 +1002,7 @@ namespace CaptureTaskManager
                 if (toolResult.CloseoutMsg.Contains(ToolRunnerBase.EXCEPTION_CREATING_OUTPUT_DIRECTORY))
                 {
                     if (taskResult != EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING ||
-                        System.Net.Dns.GetHostName().StartsWith("monroe", StringComparison.OrdinalIgnoreCase))
+                        System.Net.Dns.GetHostName().StartsWith("WE43320", StringComparison.OrdinalIgnoreCase))
                     {
                         LogWarning("Exiting the main loop since this user cannot write to the output directory");
                         taskResult = EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING;
@@ -1465,7 +1465,7 @@ namespace CaptureTaskManager
                     errMsg = "Error validating dataset storage free drive space: " + datasetStoragePath +
                              " (GetDiskFreeSpace returned false)";
 
-                    if (System.Net.Dns.GetHostName().StartsWith("monroe", StringComparison.OrdinalIgnoreCase))
+                    if (System.Net.Dns.GetHostName().StartsWith("WE43320", StringComparison.OrdinalIgnoreCase))
                     {
                         Console.WriteLine("Warning: " + errMsg);
                         return true;
