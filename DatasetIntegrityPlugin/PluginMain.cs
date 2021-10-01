@@ -53,7 +53,7 @@ namespace DatasetIntegrityPlugin
         private const float AGILENT_MS_PEAK_BIN_FILE_SMALL_SIZE_KB = 500;
         private const float AGILENT_DATA_MS_FILE_MIN_SIZE_KB = 75;
         private const float SHIMADZU_QGD_FILE_MIN_SIZE_KB = 50;
-        private const float WATERS_FUNC_DAT_FILE_MIN_SIZE_KB = 5;
+        private const float WATERS_FUNC_DAT_FILE_MIN_SIZE_KB = 2;
         private const float WATERS_FUNC_IND_FILE_MIN_SIZE_KB = 10;
 
         // MALDI imaging file
@@ -627,6 +627,8 @@ namespace DatasetIntegrityPlugin
                 var errorMessage = string.Empty;
                 if (missingFiles.Count == 1)
                 {
+                    // This can happen if this is a QTOF only dataset (no IMS spectra)
+                    // That leads to the message: Cannot convert .d to .UIMF; missing file IMSFrame.bin
                     errorMessage = "Cannot convert .d to .UIMF; missing file " + missingFiles.First();
                 }
 
