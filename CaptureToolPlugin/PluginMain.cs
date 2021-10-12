@@ -125,7 +125,7 @@ namespace CaptureToolPlugin
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        protected bool StoreToolVersionInfo()
+        private bool StoreToolVersionInfo()
         {
             LogDebug("Determining tool version info");
 

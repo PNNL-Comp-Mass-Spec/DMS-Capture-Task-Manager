@@ -33,7 +33,7 @@ namespace ImsDemuxPlugin
 
         private const bool ADD_BIN_CENTRIC_TABLES = false;
 
-        protected enum CalibrationMode
+        private enum CalibrationMode
         {
             NoCalibration,
             ManualCalibration,
@@ -383,7 +383,7 @@ namespace ImsDemuxPlugin
             return calibrationError;
         }
 
-        protected bool CheckForManualCalibration(string decodedUimfFilePath, out double calibrationSlope, out double calibrationIntercept)
+        private bool CheckForManualCalibration(string decodedUimfFilePath, out double calibrationSlope, out double calibrationIntercept)
         {
             calibrationSlope = 0;
             calibrationIntercept = 0;
@@ -450,7 +450,7 @@ namespace ImsDemuxPlugin
         /// <summary>
         /// Construct the full path to UIMFDemultiplexer_Console.exe
         /// </summary>
-        protected string GetUimfDemultiplexerPath()
+        private string GetUimfDemultiplexerPath()
         {
             var uimfDemuxFolder = mMgrParams.GetParam("UimfDemultiplexerProgLoc", string.Empty);
 
@@ -466,7 +466,7 @@ namespace ImsDemuxPlugin
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        protected bool StoreToolVersionInfo()
+        private bool StoreToolVersionInfo()
         {
             var toolVersionInfo = string.Empty;
 

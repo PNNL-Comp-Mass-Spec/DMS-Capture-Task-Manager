@@ -21,7 +21,7 @@ namespace DatasetArchivePlugin
     // ReSharper disable once UnusedMember.Global
     public class PluginMain : ToolRunnerBase
     {
-        protected const string SP_NAME_STORE_MYEMSL_STATS = "StoreMyEMSLUploadStats";
+        private const string SP_NAME_STORE_MYEMSL_STATS = "StoreMyEMSLUploadStats";
 
         private bool mSubmittedToMyEMSL;
         private bool mMyEMSLAlreadyUpToDate;
@@ -151,7 +151,7 @@ namespace DatasetArchivePlugin
         /// <param name="errorCode"></param>
         /// <param name="usedTestInstance"></param>
         /// <returns>True for success, False for failure</returns>
-        protected bool StoreMyEMSLUploadStats(
+        private void StoreMyEMSLUploadStats(
             int fileCountNew,
             int fileCountUpdated,
             long bytes,
@@ -205,23 +205,21 @@ namespace DatasetArchivePlugin
 
                 if (resCode == 0)
                 {
-                    return true;
+                    return;
                 }
 
                 LogError("Error " + resCode + " storing MyEMSL Upload Stats");
-                return false;
             }
             catch (Exception ex)
             {
                 LogError("Exception storing the MyEMSL upload stats: " + ex.Message);
-                return false;
             }
         }
 
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        protected bool StoreToolVersionInfo()
+        private bool StoreToolVersionInfo()
         {
             LogDebug("Determining tool version info");
 
