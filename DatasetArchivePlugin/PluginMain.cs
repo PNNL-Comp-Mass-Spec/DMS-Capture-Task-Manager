@@ -175,15 +175,7 @@ namespace DatasetArchivePlugin
 
                 var subDir = mTaskParams.GetParam("OutputDirectoryName", mTaskParams.GetParam("OutputFolderName"));
 
-                byte testInstanceFlag;
-                if (usedTestInstance)
-                {
-                    testInstanceFlag = 1;
-                }
-                else
-                {
-                    testInstanceFlag = 0;
-                }
+                var testInstanceFlag = usedTestInstance ? (byte)1 : (byte)0;
 
                 dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
                 dbTools.AddParameter(cmd, "@Job", SqlType.Int).Value = mTaskParams.GetParam("Job", 0);
