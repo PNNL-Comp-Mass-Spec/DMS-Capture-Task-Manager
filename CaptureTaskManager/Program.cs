@@ -2,7 +2,7 @@
 // Written by Dave Clark and Matthew Monroe for the Department of Energy (PNNL, Richland, WA) in 2009
 //
 // E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov
-// Website: https://omics.pnl.gov/ or https://www.pnnl.gov/sysbio/ or https://panomics.pnnl.gov/
+// Website: https://github.com/PNNL-Comp-Mass-Spec/ or https://panomics.pnnl.gov/ or https://www.pnnl.gov/integrative-omics
 // -------------------------------------------------------------------------------
 //
 // Licensed under the 2-Clause BSD License; you may not use this file except
@@ -25,7 +25,7 @@ namespace CaptureTaskManager
     {
         // Ignore Spelling: OxyPlot
 
-        private const string PROGRAM_DATE = "September 18, 2021";
+        private const string PROGRAM_DATE = "October 11, 2021";
 
         private static bool mTraceMode;
 
@@ -57,7 +57,7 @@ namespace CaptureTaskManager
                         "Program written by Dave Clark and Matthew Monroe for the Department of Energy (PNNL, Richland, WA)" +
                         Environment.NewLine +
                         "E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov" + Environment.NewLine +
-                        "Website: https://omics.pnl.gov/ or https://panomics.pnnl.gov/" + Environment.NewLine + Environment.NewLine +
+                        "Website: https://github.com/PNNL-Comp-Mass-Spec/ or https://panomics.pnnl.gov/ or https://www.pnnl.gov/integrative-omics" + Environment.NewLine + Environment.NewLine +
                         "Licensed under the 2-Clause BSD License; you may not use this file except in compliance with the License.  " +
                         "You may obtain a copy of the License at https://opensource.org/licenses/BSD-2-Clause"
                 };
