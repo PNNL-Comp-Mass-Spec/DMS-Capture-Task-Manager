@@ -141,8 +141,6 @@ namespace ImsDemuxPlugin
                         returnData.EvalMsg =
                             "De-multiplexed but Calibration failed.  If you want to re-demultiplex the _encoded.uimf file, you should rename the CalibrationLog.txt file";
 
-                        msg = "Completed PluginMain.RunTool()";
-                        LogDebug(msg);
                         return returnData;
                     }
                 }
@@ -164,8 +162,6 @@ namespace ImsDemuxPlugin
                         returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                         returnData.CloseoutMsg = msg;
 
-                        msg = "Completed PluginMain.RunTool()";
-                        LogDebug(msg);
                         return returnData;
                     }
                 }
@@ -179,9 +175,6 @@ namespace ImsDemuxPlugin
 
                     returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     returnData.CloseoutMsg = msg;
-
-                    msg = "Completed PluginMain.RunTool()";
-                    LogDebug(msg);
                     return returnData;
                 }
             }
@@ -206,12 +199,11 @@ namespace ImsDemuxPlugin
             {
                 // There was a problem determining the UIMF file status. Set state and exit
                 msg = "Problem determining UIMF file status for dataset " + mDataset;
+                LogMessage(msg);
 
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 returnData.CloseoutMsg = msg;
 
-                msg = "Completed PluginMain.RunTool()";
-                LogDebug(msg);
                 return returnData;
             }
 
