@@ -135,11 +135,14 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>if exist "$(TargetDir)SQLite.Interop.dll" (del "$(TargetDir)SQLite.Interop.dll")
+    <PostBuildEvent>
+if exist "$(TargetDir)SQLite.Interop.dll" (del "$(TargetDir)SQLite.Interop.dll")
 rem if not exist "$(TargetDir)x86" mkdir "$(TargetDir)x86"
 rem if not exist "$(TargetDir)x64" mkdir "$(TargetDir)x64"
 rem xcopy "$(ProjectDir)..\RefLib\x86\SQLite.Interop.dll" "$(TargetDir)x86" /D /Y
 rem xcopy "$(ProjectDir)..\RefLib\x64\SQLite.Interop.dll" "$(TargetDir)x64" /D /Y
+
+xcopy "$(ProjectDir)..\RefLib\DLLVersionInspector*.exe" "$(TargetDir)" /D /Y
 
 xcopy "$(TargetPath)" "$(ProjectDir)..\DeployedFiles" /D /Y
 xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\DeployedFiles" /D /Y
