@@ -7,9 +7,12 @@
 
 using CaptureTaskManager;
 using System;
+using System.Collections.Generic;
 using System.Data.SQLite;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
+using PRISM;
 using UIMFLibrary;
 
 namespace ImsDemuxPlugin
@@ -170,6 +173,34 @@ namespace ImsDemuxPlugin
                 uimfFileName = mDataset + ".uimf";
                 if (!File.Exists(Path.Combine(datasetDirectoryPath, uimfFileName)))
                 {
+                    // IMS08_AgQTOF05 datasets acquired in QTOF only mode do not have .UIMF files; check for this
+
+                    var dotDDirectoryName = mDataset + InstrumentClassInfo.DOT_D_EXTENSION;
+                    var dotDDirectoryPath = Path.Combine(datasetDirectoryPath, dotDDirectoryName);
+                    var dotDDirectory = new DirectoryInfo(dotDDirectoryPath);
+
+                    if (!dotDDirectory.Exists)
+                    {
+                        msg = "Dataset .d directory not found: " + dotDDirectory.FullName;
+                        LogError(msg);
+
+                        returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                        returnData.CloseoutMsg = msg;
+                        return returnData;
+                    }
+
+                    if (!IsAgilentIMSDataset(dotDDirectory))
+                    {
+                        msg = "Skipped demultiplexing since not an IMS dataset (no .UIMF file or IMS files)";
+                        LogMessage(msg);
+
+                        returnData.EvalCode = EnumEvalCode.EVAL_CODE_SKIPPED;
+                        returnData.EvalMsg = msg;
+
+                        returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+                        return returnData;
+                    }
+
                     msg = "UIMF file not found: " + uimfFileName;
                     LogError(msg);
 

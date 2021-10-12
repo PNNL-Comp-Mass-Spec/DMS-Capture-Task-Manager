@@ -62,6 +62,7 @@ namespace DatasetInfoPlugin
         private DateTime mLastStatusUpdate;
 
         private int mStatusUpdateIntervalMinutes;
+
         /// <summary>
         /// Runs the dataset info step tool
         /// </summary>
@@ -1153,7 +1154,7 @@ namespace DatasetInfoPlugin
                     if (!File.Exists(Path.Combine(datasetDirectory.FullName, fileOrDirectoryName)))
                     {
                         var zipFileName = CheckForBrukerImagingZipFiles(datasetDirectory);
-                        if (!string.IsNullOrWhiteSpace(String.Empty))
+                        if (!string.IsNullOrWhiteSpace(string.Empty))
                         {
                             fileOrDirectoryName = zipFileName;
                         }
@@ -1162,9 +1163,18 @@ namespace DatasetInfoPlugin
                     break;
 
                 case InstrumentClassInfo.RawDataType.UIMF:
-                    // IMS_TOF_2, IMS_TOF_3, IMS_TOF_4, IMS_TOF_5, IMS_TOF_6, etc.
-                    fileOrDirectoryName = mDataset + InstrumentClassInfo.DOT_UIMF_EXTENSION;
-                    isFile = true;
+                    // IMS09_AgQToF06, IMS10_AgQTOF07
+                    if (IsAgilentIMSDataset(datasetDirectory))
+                    {
+                        fileOrDirectoryName = mDataset + InstrumentClassInfo.DOT_UIMF_EXTENSION;
+                        isFile = true;
+                    }
+                    else
+                    {
+                        fileOrDirectoryName = mDataset + InstrumentClassInfo.DOT_D_EXTENSION;
+                        isFile = false;
+                    }
+
                     break;
 
                 case InstrumentClassInfo.RawDataType.SciexWiffFile:

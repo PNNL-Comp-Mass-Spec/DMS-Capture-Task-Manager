@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Threading;
 using PRISMDatabaseUtils;
@@ -423,6 +424,42 @@ namespace CaptureTaskManager
             mFileTools.LockQueueWaitComplete += FileTools_LockQueueWaitComplete;
             mFileTools.WaitingForLockQueue += FileTools_WaitingForLockQueue;
             mFileTools.WaitingForLockQueueNotifyLockFilePaths += FileTools_WaitingForLockQueueNotifyLockFilePaths;
+        }
+
+        /// <summary>
+        /// This method looks for files in the .d directory that indicate that IMS data was acquired
+        /// </summary>
+        /// <remarks>
+        /// Searches for the expected files in both the dataset directory and in all of its subdirectories
+        /// </remarks>
+        /// <param name="datasetDirectory">Dataset directory (typically the .d directory)</param>
+        /// <returns>True if the IMS files are found, otherwise false</returns>
+        protected bool IsAgilentIMSDataset(DirectoryInfo datasetDirectory)
+        {
+            if (!datasetDirectory.Exists)
+                return false;
+
+            var filesToFind = new List<string>
+            {
+                // ReSharper disable StringLiteralTypo
+                "IMSFrame.bin",
+                "IMSFrame.xsd",
+                "IMSFrameMeth.xml"
+                // ReSharper restore StringLiteralTypo
+            };
+
+            var foundFilePaths = new List<string>();
+
+            foreach (var fileToFind in filesToFind)
+            {
+                var foundFiles = datasetDirectory.GetFiles(fileToFind, SearchOption.AllDirectories).ToList();
+                if (foundFiles.Count == 0)
+                    continue;
+
+                foundFilePaths.Add(foundFiles[0].FullName);
+            }
+
+            return foundFilePaths.Count == filesToFind.Count;
         }
 
         private bool IsLockQueueLogMessageNeeded(ref DateTime lockQueueWaitTimeStart, ref DateTime lastLockQueueWaitTimeLog)

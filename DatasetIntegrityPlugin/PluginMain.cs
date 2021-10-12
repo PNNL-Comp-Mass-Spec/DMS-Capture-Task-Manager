@@ -213,8 +213,14 @@ namespace DatasetIntegrityPlugin
 
                 case InstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_DotD:
                     // Need to first convert the .d directory to a .UIMF file
-                    if (!ConvertAgilentDotDDirectoryToUIMF(datasetDirectory, agilentToUimfConverterPath))
+                    if (!ConvertAgilentDotDDirectoryToUIMF(datasetDirectory, agilentToUimfConverterPath, out var skipCreateUIMF))
                     {
+                        if (skipCreateUIMF)
+                        {
+                            mRetData.CloseoutType = TestAgilentTOFv2Directory(datasetDirectory, false);
+                            break;
+                        }
+
                         if (string.IsNullOrEmpty(mRetData.CloseoutMsg))
                         {
                             mRetData.CloseoutMsg = "Unknown error converting the Agilent .d directory to a .UIMF file";
@@ -323,7 +329,7 @@ namespace DatasetIntegrityPlugin
                 var dotDDirectoryName = mDataset + InstrumentClassInfo.DOT_D_EXTENSION;
                 var dotDDirectoryPathLocal = Path.Combine(mWorkDir, dotDDirectoryName);
 
-                var success = CopyDotDDirectoryToLocal(mFileTools, datasetDirectoryPath, dotDDirectoryName, dotDDirectoryPathLocal, false);
+                var success = CopyDotDDirectoryToLocal(mFileTools, datasetDirectoryPath, dotDDirectoryName, dotDDirectoryPathLocal, false, out _);
                 if (!success)
                 {
                     return false;
@@ -433,7 +439,7 @@ namespace DatasetIntegrityPlugin
             return true;
         }
 
-        private bool ConvertAgilentDotDDirectoryToUIMF(string datasetDirectoryPath, string exePath)
+        private bool ConvertAgilentDotDDirectoryToUIMF(string datasetDirectoryPath, string exePath, out bool skipCreateUIMF)
         {
             try
             {
@@ -441,7 +447,7 @@ namespace DatasetIntegrityPlugin
                 var dotDDirectoryName = mDataset + InstrumentClassInfo.DOT_D_EXTENSION;
                 var dotDDirectoryPathLocal = Path.Combine(mWorkDir, dotDDirectoryName);
 
-                var success = CopyDotDDirectoryToLocal(mFileTools, datasetDirectoryPath, dotDDirectoryName, dotDDirectoryPathLocal, true);
+                var success = CopyDotDDirectoryToLocal(mFileTools, datasetDirectoryPath, dotDDirectoryName, dotDDirectoryPathLocal, true, out skipCreateUIMF);
                 if (!success)
                 {
                     return false;
@@ -583,18 +589,30 @@ namespace DatasetIntegrityPlugin
             {
                 mRetData.CloseoutMsg = "Exception converting .d directory to a UIMF file";
                 LogError(mRetData.CloseoutMsg + ": " + ex.Message);
+                skipCreateUIMF = false;
                 return false;
             }
 
             return true;
         }
 
+        /// <summary>
+        /// Copy the dataset's .d directory to the local computer
+        /// </summary>
+        /// <param name="fileTools">Instance of FileTools</param>
+        /// <param name="datasetDirectoryPath">Source directory parent</param>
+        /// <param name="dotDDirectoryName">Source directory name</param>
+        /// <param name="dotDDirectoryPathLocal">Target directory</param>
+        /// <param name="requireIMSFiles">If true, require that IMS files be present</param>
+        /// <param name="skipCreateUIMF">Output: set to true if this .d directory does not have any IMS files</param>
+        /// <returns>True if the .d directory was copied, otherwise false</returns>
         private bool CopyDotDDirectoryToLocal(
             FileTools fileTools,
             string datasetDirectoryPath,
             string dotDDirectoryName,
             string dotDDirectoryPathLocal,
-            bool requireIMSFiles)
+            bool requireIMSFiles,
+            out bool skipCreateUIMF)
         {
             var dotDDirectoryPathRemote = new DirectoryInfo(Path.Combine(datasetDirectoryPath, dotDDirectoryName));
 
@@ -604,6 +622,7 @@ namespace DatasetIntegrityPlugin
                 // Older datasets may have had their larger files purged, which will cause the AgilentToUIMFConverter to fail
 
                 var binFiles = PathUtils.FindFilesWildcard(dotDDirectoryPathRemote, "*.bin", true).ToList();
+
                 var fileNames = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
                 foreach (var file in binFiles)
@@ -611,9 +630,18 @@ namespace DatasetIntegrityPlugin
                     fileNames.Add(file.Name);
                 }
 
+                // Agilent datasets can optionally be acquired in QTOF only mode, in which case the expected IMS files will not be present
+                // Check for this
+
+                if (!IsAgilentIMSDataset(dotDDirectoryPathRemote))
+                {
+                    mRetData.EvalMsg = "Skipping conversion from .d to .UIMF since not an IMS dataset";
+                    skipCreateUIMF = true;
+                    return false;
+                }
+
                 var requiredFiles = new List<string>
                 {
-                    "IMSFrame.bin",
                     // Not required: "MSPeak.bin",
                     // ReSharper disable once StringLiteralTypo
                     "MSPeriodicActuals.bin",
@@ -627,8 +655,6 @@ namespace DatasetIntegrityPlugin
                 var errorMessage = string.Empty;
                 if (missingFiles.Count == 1)
                 {
-                    // This can happen if this is a QTOF only dataset (no IMS spectra)
-                    // That leads to the message: Cannot convert .d to .UIMF; missing file IMSFrame.bin
                     errorMessage = "Cannot convert .d to .UIMF; missing file " + missingFiles.First();
                 }
 
@@ -641,6 +667,7 @@ namespace DatasetIntegrityPlugin
                 {
                     mRetData.CloseoutMsg = errorMessage;
                     LogError(mRetData.CloseoutMsg);
+                    skipCreateUIMF = true;
                     return false;
                 }
             }
@@ -651,6 +678,7 @@ namespace DatasetIntegrityPlugin
             ResetTimestampForQueueWaitTimeLogging();
             fileTools.CopyDirectory(dotDDirectoryPathRemote.FullName, dotDDirectoryPathLocal, true);
 
+            skipCreateUIMF = false;
             return true;
         }
 
@@ -1177,8 +1205,9 @@ namespace DatasetIntegrityPlugin
         /// Tests a Agilent_TOF_V2 directory for integrity
         /// </summary>
         /// <param name="datasetDirectoryPath">Fully qualified path to the dataset directory</param>
+        /// <param name="requireMethodDirectory">When true, require that a .m subdirectory exists</param>
         /// <returns>Enum indicating test result</returns>
-        private EnumCloseOutType TestAgilentTOFv2Directory(string datasetDirectoryPath)
+        private EnumCloseOutType TestAgilentTOFv2Directory(string datasetDirectoryPath, bool requireMethodDirectory = true)
         {
             // Verify only one .d directory in dataset
             var datasetDirectory = new DirectoryInfo(datasetDirectoryPath);
@@ -1232,6 +1261,8 @@ namespace DatasetIntegrityPlugin
             if (msPeakFile.Count == 0)
             {
                 // Some Agilent_QQQ_04 datasets have MSProfile.bin but do not have MSPeak.bin
+                // This is also true for IMS08_AgQTOF05 acquired in QTOF only mode
+
                 // Check for this
                 var msProfileFile = PathUtils.FindFilesWildcard(acqDataDirectories[0], "MSProfile.bin").ToList();
 
@@ -1297,6 +1328,9 @@ namespace DatasetIntegrityPlugin
             var methodDirectories = acqDataDirectories[0].GetDirectories("*.m").ToList();
             if (methodDirectories.Count < 1)
             {
+                if (!requireMethodDirectory)
+                    return EnumCloseOutType.CLOSEOUT_SUCCESS;
+
                 mRetData.EvalMsg = "Invalid dataset: No .m directories found in the AcqData directory";
                 LogError(mRetData.EvalMsg);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
@@ -1769,7 +1803,7 @@ namespace DatasetIntegrityPlugin
                     foreach (var dotDDirectory in dotDDirectories)
                     {
                         var serFiles = PathUtils.FindFilesWildcard(dotDDirectory, "ser").Count;
-                        var fidFiles = PathUtils.FindFilesWildcard(dotDDirectory,"fid").Count;
+                        var fidFiles = PathUtils.FindFilesWildcard(dotDDirectory, "fid").Count;
                         var bafFiles = PathUtils.FindFilesWildcard(dotDDirectory, "*.baf").Count;
 
                         if (serFiles > 0)
