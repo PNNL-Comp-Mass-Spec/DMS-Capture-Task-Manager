@@ -100,11 +100,11 @@ namespace ImsDemuxPlugin
             var svrPath = Path.Combine(mTaskParams.GetParam("Storage_Vol_External"), mTaskParams.GetParam("Storage_Path"));
             var datasetDirectory = mTaskParams.GetParam(mTaskParams.HasParam("Directory") ? "Directory" : "Folder");
 
-            var dsPath = Path.Combine(svrPath, datasetDirectory);
+            var datasetDirectoryPath = Path.Combine(svrPath, datasetDirectory);
 
             // Use this name first to test if demux has already been performed once
             var uimfFileName = mDataset + "_encoded.uimf";
-            var existingUimfFile = new FileInfo(Path.Combine(dsPath, uimfFileName));
+            var existingUimfFile = new FileInfo(Path.Combine(datasetDirectoryPath, uimfFileName));
             if (existingUimfFile.Exists && (existingUimfFile.Length != 0))
             {
                 // The _encoded.uimf file will be used for demultiplexing
@@ -117,11 +117,11 @@ namespace ImsDemuxPlugin
                 // If manual calibration values are not found, we want to fail out the job immediately,
                 //   since demultiplexing succeeded, but calibration failed, and manual calibration was not performed
 
-                var calibrationError = CheckForCalibrationError(dsPath);
+                var calibrationError = CheckForCalibrationError(datasetDirectoryPath);
 
                 if (calibrationError)
                 {
-                    var decodedUIMFFile = new FileInfo(Path.Combine(dsPath, mDataset + ".uimf"));
+                    var decodedUIMFFile = new FileInfo(Path.Combine(datasetDirectoryPath, mDataset + ".uimf"));
 
                     var manuallyCalibrated = CheckForManualCalibration(decodedUIMFFile.FullName, out calibrationSlope, out calibrationIntercept);
 
@@ -172,7 +172,7 @@ namespace ImsDemuxPlugin
 
                 // If we got to here, _encoded uimf file doesn't exist. So, use the other uimf file
                 uimfFileName = mDataset + ".uimf";
-                if (!File.Exists(Path.Combine(dsPath, uimfFileName)))
+                if (!File.Exists(Path.Combine(datasetDirectoryPath, uimfFileName)))
                 {
                     msg = "UIMF file not found: " + uimfFileName;
                     LogError(msg);
@@ -187,7 +187,7 @@ namespace ImsDemuxPlugin
             }
 
             // Query to determine if demux is needed.
-            var uimfFilePath = Path.Combine(dsPath, uimfFileName);
+            var uimfFilePath = Path.Combine(datasetDirectoryPath, uimfFileName);
             var needToDemultiplex = true;
 
             var sqLiteTools = new SQLiteTools();
@@ -347,9 +347,9 @@ namespace ImsDemuxPlugin
             mDemuxTools.CopyFileWithRetryEvent += DemuxTools_CopyFileWithRetryEvent;
         }
 
-        protected bool CheckForCalibrationError(string dsPath)
+        private bool CheckForCalibrationError(string datasetDirectoryPath)
         {
-            var calibrationLogPath = Path.Combine(dsPath, DemuxTools.CALIBRATION_LOG_FILE);
+            var calibrationLogPath = Path.Combine(datasetDirectoryPath, DemuxTools.CALIBRATION_LOG_FILE);
 
             if (!File.Exists(calibrationLogPath))
             {
