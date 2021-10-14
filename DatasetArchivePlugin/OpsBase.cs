@@ -381,6 +381,23 @@ namespace DatasetArchivePlugin
 
                 criticalErrorMessage = myEMSLUploader.CriticalErrorMessage;
 
+                if (!success)
+                {
+                    if (string.IsNullOrEmpty(criticalErrorMessage))
+                        OnWarningEvent("SetupMetadata returned false (myEMSLUploader.CriticalErrorMessage is empty)");
+                    else
+                        OnWarningEvent("SetupMetadata returned false: " + criticalErrorMessage);
+                }
+
+                if (success || string.IsNullOrEmpty(criticalErrorMessage))
+                {
+                    OnStatusEvent(string.Format(
+                        "EUS metadata: Instrument ID {0}, Project ID {1}, Uploader ID {2}",
+                        myEMSLUploader.EUSInfo.EUSInstrumentID,
+                        myEMSLUploader.EUSInfo.EUSProjectID,
+                        myEMSLUploader.EUSInfo.EUSUploaderID));
+                }
+
                 if (!string.IsNullOrWhiteSpace(criticalErrorMessage) || string.Equals(statusURL, MyEMSLUploader.CRITICAL_UPLOAD_ERROR))
                 {
                     allowRetry = false;
