@@ -1112,6 +1112,12 @@ namespace DatasetInfoPlugin
                 return new List<string> { UNKNOWN_FILE_TYPE };
             }
 
+            if (instrumentClass == InstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_DotD)
+            {
+                // Operate directly on the .D file instead of the UIMF
+                rawDataType = InstrumentClassInfo.RawDataType.AgilentDFolder;
+            }
+
             var datasetDirectory = new DirectoryInfo(inputDirectory);
             string fileOrDirectoryName;
 
