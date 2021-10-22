@@ -62,7 +62,6 @@ namespace DatasetIntegrityPlugin
         private const float MCF_FILE_MIN_SIZE_KB = 0.1F;
         private const float ILLUMINA_TXT_GZ_FILE_MIN_SIZE_KB = 500;
         private const float ILLUMINA_TXT_GZ_FILE_SMALL_SIZE_KB = 1000;
-        private const int MAX_AGILENT_TO_UIMF_RUNTIME_MINUTES = 180;
         private const int MAX_AGILENT_TO_CDF_RUNTIME_MINUTES = 10;
 
         private ToolReturnData mRetData = new();
@@ -98,26 +97,11 @@ namespace DatasetIntegrityPlugin
             var instClassName = mTaskParams.GetParam("Instrument_Class");
             var instrumentClass = InstrumentClassInfo.GetInstrumentClass(instClassName);
 
-            var agilentToUimfConverterPath = string.Empty;
             var openChromProgPath = string.Empty;
 
             // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
             switch (instrumentClass)
             {
-                case InstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_DotD:
-                    // We will convert the .d directory to a .UIMF file
-                    agilentToUimfConverterPath = GetAgilentToUIMFProgPath();
-
-                    if (!File.Exists(agilentToUimfConverterPath))
-                    {
-                        mRetData.CloseoutMsg = "AgilentToUIMFConverter not found at " + agilentToUimfConverterPath;
-                        LogError(mRetData.CloseoutMsg);
-                        mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                        return mRetData;
-                    }
-
-                    break;
-
                 case InstrumentClassInfo.InstrumentClass.Agilent_Ion_Trap:
                     // We will convert the .d directory to a .CDF file
                     openChromProgPath = GetOpenChromProgPath();
@@ -134,7 +118,7 @@ namespace DatasetIntegrityPlugin
             }
 
             // Store the version info in the database
-            if (!StoreToolVersionInfo(agilentToUimfConverterPath, openChromProgPath))
+            if (!StoreToolVersionInfo(openChromProgPath))
             {
                 LogError("Aborting since StoreToolVersionInfo returned false");
                 mRetData.CloseoutMsg = "Error determining tool version info";
@@ -212,27 +196,7 @@ namespace DatasetIntegrityPlugin
                     break;
 
                 case InstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_DotD:
-                    // Need to first convert the .d directory to a .UIMF file
-                    if (!ConvertAgilentDotDDirectoryToUIMF(datasetDirectory, agilentToUimfConverterPath, out var skipCreateUIMF))
-                    {
-                        if (skipCreateUIMF)
-                        {
-                            mRetData.CloseoutType = TestAgilentTOFv2Directory(datasetDirectory, false);
-                            break;
-                        }
-
-                        if (string.IsNullOrEmpty(mRetData.CloseoutMsg))
-                        {
-                            mRetData.CloseoutMsg = "Unknown error converting the Agilent .d directory to a .UIMF file";
-                            LogError(mRetData.CloseoutMsg);
-                        }
-
-                        mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                        break;
-                    }
-
-                    dataFileNamePath = Path.Combine(datasetDirectory, mDataset + InstrumentClassInfo.DOT_UIMF_EXTENSION);
-                    mRetData.CloseoutType = TestIMSAgilentTOF(dataFileNamePath, instrumentName);
+                    mRetData.CloseoutType = TestAgilentTOFv2Directory(datasetDirectory, false);
                     break;
 
                 case InstrumentClassInfo.InstrumentClass.BrukerFT_BAF:
@@ -439,163 +403,6 @@ namespace DatasetIntegrityPlugin
             return true;
         }
 
-        private bool ConvertAgilentDotDDirectoryToUIMF(string datasetDirectoryPath, string exePath, out bool skipCreateUIMF)
-        {
-            try
-            {
-                var mgrName = mMgrParams.GetParam("MgrName", "CTM");
-                var dotDDirectoryName = mDataset + InstrumentClassInfo.DOT_D_EXTENSION;
-                var dotDDirectoryPathLocal = Path.Combine(mWorkDir, dotDDirectoryName);
-
-                var success = CopyDotDDirectoryToLocal(mFileTools, datasetDirectoryPath, dotDDirectoryName, dotDDirectoryPathLocal, true, out skipCreateUIMF);
-                if (!success)
-                {
-                    return false;
-                }
-
-                // Examine the .d directory to look for an AcqData subdirectory
-                // If it does not have one, it might have a .d subdirectory that itself has an AcqData directory
-                // For example, 001_14Sep18_RapidFire.d\sequence1.d\AcqData
-
-                var dotDDirectory = new DirectoryInfo(dotDDirectoryPathLocal);
-                var acqDataDir = dotDDirectory.GetDirectories("AcqData");
-                var altDirFound = false;
-
-                if (acqDataDir.Length == 0)
-                {
-                    // Use *.d to look for .d subdirectories
-                    var dotDDirectoryAlt = dotDDirectory.GetDirectories("*" + InstrumentClassInfo.DOT_D_EXTENSION);
-
-                    if (dotDDirectoryAlt.Length > 0)
-                    {
-                        foreach (var altDir in dotDDirectoryAlt)
-                        {
-                            var acqDataDirAlt = altDir.GetDirectories("AcqData");
-                            if (acqDataDirAlt.Length > 0)
-                            {
-                                dotDDirectoryPathLocal = altDir.FullName;
-                                altDirFound = true;
-                                LogMessage("Using the .d directory below the primary .d subdirectory: " + altDir.FullName);
-                                break;
-                            }
-                        }
-                    }
-
-                    if (!altDirFound)
-                    {
-                        mRetData.CloseoutMsg = ".D directory does not have an AcqData subdirectory";
-                        LogError(mRetData.CloseoutMsg);
-                        return false;
-                    }
-                }
-
-                // Construct the command line arguments to run the AgilentToUIMFConverter
-
-                // Syntax:
-                // AgilentToUIMFConverter.exe [Agilent .d directory] [Directory to insert file (optional)]
-
-                var arguments = Conversion.PossiblyQuotePath(dotDDirectoryPathLocal) + " " + Conversion.PossiblyQuotePath(mWorkDir);
-                mConsoleOutputFilePath = Path.Combine(mWorkDir, "AgilentToUIMF_ConsoleOutput_" + mgrName + ".txt");
-
-                var cmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
-                {
-                    CreateNoWindow = false,
-                    EchoOutputToConsole = false,
-                    CacheStandardOutput = false,
-                    WriteConsoleOutputToFile = true,
-                    ConsoleOutputFilePath = mConsoleOutputFilePath
-                };
-
-                // This will also call RegisterEvents
-                AttachCmdRunnerEvents(cmdRunner);
-
-                mProcessingStartTime = DateTime.UtcNow;
-                mLastProgressUpdate = DateTime.UtcNow;
-                mLastStatusUpdate = DateTime.UtcNow;
-                mStatusUpdateIntervalMinutes = 5;
-
-                var msg = "Converting .d directory to .UIMF: " + exePath + " " + arguments;
-                LogMessage(msg);
-
-                const int maxRuntimeSeconds = MAX_AGILENT_TO_UIMF_RUNTIME_MINUTES * 60;
-                success = cmdRunner.RunProgram(exePath, arguments, "AgilentToUIMFConverter", true, maxRuntimeSeconds);
-
-                // Parse the console output file one more time to check for errors
-                ParseConsoleOutputFile();
-
-                // Delete the locally cached .d directory
-                try
-                {
-                    ProgRunner.GarbageCollectNow();
-                    mFileTools.DeleteDirectory(dotDDirectoryPathLocal, ignoreErrors: true);
-                }
-                catch (Exception ex)
-                {
-                    // Do not treat this as a fatal error
-                    LogWarning("Exception deleting locally cached .d directory (" + dotDDirectoryPathLocal + "): " + ex.Message);
-                }
-
-                if (!success)
-                {
-                    mRetData.CloseoutMsg = "Error running the AgilentToUIMFConverter";
-                    LogError(mRetData.CloseoutMsg);
-
-                    if (cmdRunner.ExitCode != 0)
-                    {
-                        LogWarning("AgilentToUIMFConverter returned a non-zero exit code: " + cmdRunner.ExitCode);
-                    }
-                    else
-                    {
-                        LogWarning("Call to AgilentToUIMFConverter failed (but exit code is 0)");
-                    }
-
-                    return false;
-                }
-
-                Thread.Sleep(100);
-
-                if (altDirFound)
-                {
-                    // We need to rename the .uimf file since we processed a .d directory inside a .d directory
-                    var sourceUimfName = Path.ChangeExtension(Path.GetFileName(dotDDirectoryPathLocal), InstrumentClassInfo.DOT_UIMF_EXTENSION);
-                    var sourceUimf = new FileInfo(Path.Combine(mWorkDir, sourceUimfName));
-                    var targetUimfPath = Path.Combine(mWorkDir, mDataset + InstrumentClassInfo.DOT_UIMF_EXTENSION);
-
-                    if (!string.Equals(sourceUimf.FullName, targetUimfPath, StringComparison.OrdinalIgnoreCase))
-                    {
-                        if (!sourceUimf.Exists)
-                        {
-                            mRetData.CloseoutMsg = "AgilentToUIMFConverter did not create a .UIMF file named " + sourceUimf.Name;
-                            LogError(mRetData.CloseoutMsg + ": " + sourceUimf.FullName);
-                            return false;
-                        }
-
-                        LogDebug(string.Format("Renaming {0} to {1}", sourceUimf.FullName, Path.GetFileName(targetUimfPath)));
-                        sourceUimf.MoveTo(targetUimfPath);
-                    }
-                }
-
-                // Copy the .UIMF file to the dataset directory
-                success = CopyUIMFToDatasetDirectory(mFileTools, datasetDirectoryPath);
-                if (!success)
-                {
-                    return false;
-                }
-
-                // Delete the console output file
-                DeleteFileIgnoreErrors(mConsoleOutputFilePath);
-            }
-            catch (Exception ex)
-            {
-                mRetData.CloseoutMsg = "Exception converting .d directory to a UIMF file";
-                LogError(mRetData.CloseoutMsg + ": " + ex.Message);
-                skipCreateUIMF = false;
-                return false;
-            }
-
-            return true;
-        }
-
         /// <summary>
         /// Copy the dataset's .d directory to the local computer
         /// </summary>
@@ -694,21 +501,6 @@ namespace DatasetIntegrityPlugin
             }
 
             var success = CopyFileToDatasetDirectory(fileTools, cdfFile, datasetDirectoryPath);
-            return success;
-        }
-
-        private bool CopyUIMFToDatasetDirectory(FileTools fileTools, string datasetDirectoryPath)
-        {
-            var uimfFile = new FileInfo(Path.Combine(mWorkDir, mDataset + InstrumentClassInfo.DOT_UIMF_EXTENSION));
-
-            if (!uimfFile.Exists)
-            {
-                mRetData.CloseoutMsg = "AgilentToUIMFConverter did not create a .UIMF file named " + uimfFile.Name;
-                LogError(mRetData.CloseoutMsg + ": " + uimfFile.FullName);
-                return false;
-            }
-
-            var success = CopyFileToDatasetDirectory(fileTools, uimfFile, datasetDirectoryPath);
             return success;
         }
 
@@ -905,13 +697,6 @@ namespace DatasetIntegrityPlugin
             }
 
             return fileSizeKB.ToString("#0") + " KB";
-        }
-
-        private string GetAgilentToUIMFProgPath()
-        {
-            var exeName = mMgrParams.GetParam("AgilentToUIMFProgLoc");
-            var exePath = Path.Combine(exeName, "AgilentToUimfConverter.exe");
-            return exePath;
         }
 
         private float GetLargestFileSizeKB(IEnumerable<FileInfo> filesToCheck)
@@ -1242,6 +1027,31 @@ namespace DatasetIntegrityPlugin
                 mRetData.EvalMsg = "Invalid dataset: multiple AcqData directories found in .d directory";
                 LogError(mRetData.EvalMsg);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
+            }
+
+            // The AcqData directory should contain one or more .Bin files, for example MSScan.bin and MSProfile.bin
+            // Verify that the MSScan.bin file exists
+            var imsFiles = PathUtils.FindFilesWildcard(acqDataDirectories[0], "IMSFrame*").ToList();
+            if (imsFiles.Count > 0)
+            {
+                var requiredFiles = new List<string>
+                {
+                    // ReSharper disable StringLiteralTypo
+                    "IMSFrame.bin",
+                    "IMSFrame.xsd",
+                    "IMSFrameMeth.xml"
+                    // ReSharper restore StringLiteralTypo
+                };
+
+                foreach (var requiredFile in requiredFiles)
+                {
+                    if (!imsFiles.Any(x => x.Name.Equals(requiredFile, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        mRetData.EvalMsg = $"Invalid dataset: Missing required {requiredFile} file in the AcqData directory for IMS, but file contains IMSFrame* file(s)";
+                        LogError(mRetData.EvalMsg);
+                        return EnumCloseOutType.CLOSEOUT_FAILED;
+                    }
+                }
             }
 
             // The AcqData directory should contain one or more .Bin files, for example MSScan.bin and MSProfile.bin
@@ -2672,7 +2482,7 @@ namespace DatasetIntegrityPlugin
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        private bool StoreToolVersionInfo(string agilentToUimfConverterPath, string openChromProgPath)
+        private bool StoreToolVersionInfo(string openChromProgPath)
         {
             LogDebug("Determining tool version info");
 
@@ -2707,15 +2517,6 @@ namespace DatasetIntegrityPlugin
             if (!success)
             {
                 return false;
-            }
-
-            if (!string.IsNullOrWhiteSpace(agilentToUimfConverterPath))
-            {
-                success = StoreToolVersionInfoOneFile(ref toolVersionInfo, agilentToUimfConverterPath);
-                if (!success)
-                {
-                    return false;
-                }
             }
 
             // Store path to CaptureToolPlugin.dll in toolFiles

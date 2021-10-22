@@ -60,6 +60,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AgilentToUimfConversion.cs" />
     <Compile Include="DemuxTools.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="MultiplexingStatus.cs" />
