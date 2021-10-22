@@ -46,6 +46,10 @@ namespace ImsDemuxPlugin
         private DemuxTools mDemuxTools;
         private bool mDemultiplexingPerformed;
 
+        private ToolReturnData mRetData = new();
+        private string mUimfFilePath;
+        private bool mNeedToDemultiplex;
+
         /// <summary>
         /// Runs the IMS demux step tool
         /// </summary>
@@ -57,23 +61,78 @@ namespace ImsDemuxPlugin
             mDemultiplexingPerformed = false;
 
             // Perform base class operations, if any
-            var returnData = base.RunTool();
-            if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
+            mRetData = base.RunTool();
+            if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
             {
-                return returnData;
+                return mRetData;
             }
 
             // Initialize the config DB update interval
             mLastConfigDbUpdate = DateTime.UtcNow;
             mMinutesBetweenConfigDbUpdates = MANAGER_UPDATE_INTERVAL_MINUTES;
 
+            RunToolUIMF();
+
+            if (mRetData.CloseoutType != EnumCloseOutType.CLOSEOUT_SUCCESS || mRetData.EvalCode == EnumEvalCode.EVAL_CODE_SKIPPED)
+            {
+                return mRetData;
+            }
+
+            // Demultiplexing succeeded (or skipped)
+
+            // October 2013: Disabled the addition of bin-centric tables since datasets currently being acquired on the IMS platform will not have IQ run on them
+            // March 2015: Re-enabled automatic addition of bin-centric tables
+            // May 22, 2015: Now adding bin-centric tables only if the original .UIMF file is less than 2 GB in size
+            // October 12, 2017: Again disabled the addition of bin-centric tables since they can greatly increase .UIMF file size and because usage of the bin-centric tables is low
+
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+            if (ADD_BIN_CENTRIC_TABLES)
+#pragma warning disable 162
+            {
+                // Lookup the current .uimf file size
+                var uimfFile = new FileInfo(mUimfFilePath);
+                var fileSizeGBStart = uimfFile.Length / 1024.0 / 1024.0 / 1024.0;
+                var fileSizeText = " (" + Math.Round(fileSizeGBStart, 0).ToString("0") + " GB)";
+
+                if (fileSizeGBStart > 2)
+                {
+                    LogMessage("Not adding bin-centric tables to " + uimfFile.Name + " since over 2 GB in size" + fileSizeText);
+                }
+                else
+                {
+                    // Add the bin-centric tables if not yet present
+                    LogMessage("Adding bin-centric tables to " + uimfFile.Name + fileSizeText);
+                    mRetData = mDemuxTools.AddBinCentricTablesIfMissing(mMgrParams, mTaskParams, mRetData);
+
+                    uimfFile.Refresh();
+                    var fileSizeGBEnd = uimfFile.Length / 1024.0 / 1024.0 / 1024.0;
+                    double foldIncrease = 0;
+                    if (fileSizeGBStart > 0)
+                    {
+                        foldIncrease = fileSizeGBEnd / fileSizeGBStart;
+                    }
+
+                    LogMessage("UIMF file size increased from " + fileSizeGBStart.ToString("0.00") + " GB to " + fileSizeGBEnd.ToString("0.00") +
+                               " GB, a " + foldIncrease.ToString("0.0") + " fold increase");
+                }
+#pragma warning restore 162
+            }
+
+            msg = "Completed PluginMain.RunTool()";
+            LogDebug(msg);
+
+            return mRetData;
+        }
+
+        private ToolReturnData RunToolUIMF()
+        {
             // Store the version info in the database
             if (!StoreToolVersionInfo())
             {
                 LogError("Aborting since StoreToolVersionInfo returned false");
-                returnData.CloseoutMsg = "Error determining version of IMSDemultiplexer";
-                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                return returnData;
+                mRetData.CloseoutMsg = "Error determining version of IMSDemultiplexer";
+                mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                return mRetData;
             }
 
             // Determine whether or not calibration should be performed
@@ -135,16 +194,16 @@ namespace ImsDemuxPlugin
                     }
                     else
                     {
-                        msg = "CalibrationLog.txt file ends with '" + COULD_NOT_OBTAIN_GOOD_CALIBRATION +
+                        var msg = "CalibrationLog.txt file ends with '" + COULD_NOT_OBTAIN_GOOD_CALIBRATION +
                               "'; will not attempt to re-demultiplex the _encoded.uimf file.  If you want to re-demultiplex the _encoded.uimf file, you should rename the CalibrationLog.txt file";
                         LogError(msg);
 
-                        returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                        returnData.CloseoutMsg = "Error calibrating UIMF file; see " + DemuxTools.CALIBRATION_LOG_FILE;
-                        returnData.EvalMsg =
+                        mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                        mRetData.CloseoutMsg = "Error calibrating UIMF file; see " + DemuxTools.CALIBRATION_LOG_FILE;
+                        mRetData.EvalMsg =
                             "De-multiplexed but Calibration failed.  If you want to re-demultiplex the _encoded.uimf file, you should rename the CalibrationLog.txt file";
 
-                        return returnData;
+                        return mRetData;
                     }
                 }
             }
@@ -159,13 +218,13 @@ namespace ImsDemuxPlugin
                     }
                     catch (Exception ex)
                     {
-                        msg = "Exception deleting 0-byte uimf_encoded file";
+                        var msg = "Exception deleting 0-byte uimf_encoded file";
                         LogError(msg, ex);
 
-                        returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                        returnData.CloseoutMsg = msg;
+                        mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                        mRetData.CloseoutMsg = msg;
 
-                        return returnData;
+                        return mRetData;
                     }
                 }
 
@@ -178,15 +237,16 @@ namespace ImsDemuxPlugin
                     var dotDDirectoryName = mDataset + InstrumentClassInfo.DOT_D_EXTENSION;
                     var dotDDirectoryPath = Path.Combine(datasetDirectoryPath, dotDDirectoryName);
                     var dotDDirectory = new DirectoryInfo(dotDDirectoryPath);
+                    string msg;
 
                     if (!dotDDirectory.Exists)
                     {
                         msg = "Dataset .d directory not found: " + dotDDirectory.FullName;
                         LogError(msg);
 
-                        returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                        returnData.CloseoutMsg = msg;
-                        return returnData;
+                        mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                        mRetData.CloseoutMsg = msg;
+                        return mRetData;
                     }
 
                     if (!IsAgilentIMSDataset(dotDDirectory))
@@ -194,63 +254,63 @@ namespace ImsDemuxPlugin
                         msg = "Skipped demultiplexing since not an IMS dataset (no .UIMF file or IMS files)";
                         LogMessage(msg);
 
-                        returnData.EvalCode = EnumEvalCode.EVAL_CODE_SKIPPED;
-                        returnData.EvalMsg = msg;
+                        mRetData.EvalCode = EnumEvalCode.EVAL_CODE_SKIPPED;
+                        mRetData.EvalMsg = msg;
 
-                        returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
-                        return returnData;
+                        mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+                        return mRetData;
                     }
 
                     msg = "UIMF file not found: " + uimfFileName;
                     LogError(msg);
 
-                    returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                    returnData.CloseoutMsg = msg;
-                    return returnData;
+                    mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    mRetData.CloseoutMsg = msg;
+                    return mRetData;
                 }
             }
 
             // Query to determine if demux is needed.
-            var uimfFilePath = Path.Combine(datasetDirectoryPath, uimfFileName);
-            var needToDemultiplex = true;
+            mUimfFilePath = Path.Combine(datasetDirectoryPath, uimfFileName);
+            mNeedToDemultiplex = true;
 
             var sqLiteTools = new SQLiteTools();
             RegisterEvents(sqLiteTools);
 
-            var queryResult = sqLiteTools.GetUimfMuxStatus(uimfFilePath, out var numBitsForEncoding);
+            var queryResult = sqLiteTools.GetUimfMuxStatus(mUimfFilePath, out var numBitsForEncoding);
             if (queryResult == MultiplexingStatus.NonMultiplexed)
             {
                 // De-multiplexing not required, but we should still attempt calibration (if enabled)
-                msg = "No demultiplexing required for dataset " + mDataset;
+                var msg = "No demultiplexing required for dataset " + mDataset;
                 LogMessage(msg);
-                returnData.EvalMsg = "Non-Multiplexed";
-                needToDemultiplex = false;
+                mRetData.EvalMsg = "Non-Multiplexed";
+                mNeedToDemultiplex = false;
             }
             else if (queryResult == MultiplexingStatus.Error)
             {
                 // There was a problem determining the UIMF file status. Set state and exit
-                msg = "Problem determining UIMF file status for dataset " + mDataset;
+                var msg = "Problem determining UIMF file status for dataset " + mDataset;
                 LogMessage(msg);
 
-                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                returnData.CloseoutMsg = msg;
+                mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                mRetData.CloseoutMsg = msg;
 
-                return returnData;
+                return mRetData;
             }
 
-            if (needToDemultiplex)
+            if (mNeedToDemultiplex)
             {
                 // De-multiplexing is needed
-                returnData = mDemuxTools.PerformDemux(mMgrParams, mTaskParams, uimfFileName, numBitsForEncoding);
+                mRetData = mDemuxTools.PerformDemux(mMgrParams, mTaskParams, uimfFileName, numBitsForEncoding);
 
                 if (mDemuxTools.OutOfMemoryException)
                 {
-                    if (returnData.CloseoutType != EnumCloseOutType.CLOSEOUT_FAILED)
+                    if (mRetData.CloseoutType != EnumCloseOutType.CLOSEOUT_FAILED)
                     {
-                        returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                        if (string.IsNullOrEmpty(returnData.CloseoutMsg))
+                        mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                        if (string.IsNullOrEmpty(mRetData.CloseoutMsg))
                         {
-                            returnData.CloseoutMsg = "Out of memory";
+                            mRetData.CloseoutMsg = "Out of memory";
                         }
                     }
 
@@ -260,84 +320,44 @@ namespace ImsDemuxPlugin
                 mDemultiplexingPerformed = true;
             }
 
-            if (returnData.CloseoutType != EnumCloseOutType.CLOSEOUT_SUCCESS)
+            if (mRetData.CloseoutType != EnumCloseOutType.CLOSEOUT_SUCCESS)
             {
-                return returnData;
+                return mRetData;
             }
 
-            // Demultiplexing succeeded (or skipped)
-
             // Lookup the current .uimf file size
-            var uimfFile = new FileInfo(uimfFilePath);
+            var uimfFile = new FileInfo(mUimfFilePath);
             if (!uimfFile.Exists)
             {
-                if (needToDemultiplex)
+                string msg;
+                if (mNeedToDemultiplex)
                 {
-                    msg = "UIMF File not found after demultiplexing: " + uimfFilePath;
+                    msg = "UIMF File not found after demultiplexing: " + mUimfFilePath;
                 }
                 else
                 {
-                    msg = "UIMF File not found (skipped demultiplexing): " + uimfFilePath;
+                    msg = "UIMF File not found (skipped demultiplexing): " + mUimfFilePath;
                 }
 
                 LogError(msg);
-                returnData.CloseoutMsg = msg;
-                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                return returnData;
+                mRetData.CloseoutMsg = msg;
+                mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                return mRetData;
             }
 
-            // October 2013: Disabled the addition of bin-centric tables since datasets currently being acquired on the IMS platform will not have IQ run on them
-            // March 2015: Re-enabled automatic addition of bin-centric tables
-            // May 22, 2015: Now adding bin-centric tables only if the original .UIMF file is less than 2 GB in size
-            // October 12, 2017: Again disabled the addition of bin-centric tables since they can greatly increase .UIMF file size and because usage of the bin-centric tables is low
-
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-            if (ADD_BIN_CENTRIC_TABLES)
-#pragma warning disable 162
-            {
-                var fileSizeGBStart = uimfFile.Length / 1024.0 / 1024.0 / 1024.0;
-                var fileSizeText = " (" + Math.Round(fileSizeGBStart, 0).ToString("0") + " GB)";
-
-                if (fileSizeGBStart > 2)
-                {
-                    LogMessage("Not adding bin-centric tables to " + uimfFile.Name + " since over 2 GB in size" + fileSizeText);
-                }
-                else
-                {
-                    // Add the bin-centric tables if not yet present
-                    LogMessage("Adding bin-centric tables to " + uimfFile.Name + fileSizeText);
-                    returnData = mDemuxTools.AddBinCentricTablesIfMissing(mMgrParams, mTaskParams, returnData);
-
-                    uimfFile.Refresh();
-                    var fileSizeGBEnd = uimfFile.Length / 1024.0 / 1024.0 / 1024.0;
-                    double foldIncrease = 0;
-                    if (fileSizeGBStart > 0)
-                    {
-                        foldIncrease = fileSizeGBEnd / fileSizeGBStart;
-                    }
-
-                    LogMessage("UIMF file size increased from " + fileSizeGBStart.ToString("0.00") + " GB to " + fileSizeGBEnd.ToString("0.00") +
-                               " GB, a " + foldIncrease.ToString("0.0") + " fold increase");
-                }
-#pragma warning restore 162
-            }
-
-            if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
+            if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
             {
                 if (calibrationMode == CalibrationMode.AutoCalibration)
                 {
-                    returnData = mDemuxTools.PerformCalibration(mMgrParams, mTaskParams, returnData);
+                    mRetData = mDemuxTools.PerformCalibration(mMgrParams, mTaskParams, mRetData);
                 }
                 else if (calibrationMode == CalibrationMode.ManualCalibration)
                 {
-                    returnData = mDemuxTools.PerformManualCalibration(mMgrParams, mTaskParams, returnData, calibrationSlope, calibrationIntercept);
+                    mRetData = mDemuxTools.PerformManualCalibration(mMgrParams, mTaskParams, mRetData, calibrationSlope, calibrationIntercept);
                 }
             }
 
-            msg = "Completed PluginMain.RunTool()";
-            LogDebug(msg);
-
-            return returnData;
+            return mRetData;
         }
 
         /// <summary>
