@@ -218,7 +218,7 @@ namespace ImsDemuxPlugin
             RegisterEvents(sqLiteTools);
 
             var queryResult = sqLiteTools.GetUimfMuxStatus(uimfFilePath, out var numBitsForEncoding);
-            if (queryResult == SQLiteTools.UimfQueryResults.NonMultiplexed)
+            if (queryResult == MultiplexingStatus.NonMultiplexed)
             {
                 // De-multiplexing not required, but we should still attempt calibration (if enabled)
                 msg = "No demultiplexing required for dataset " + mDataset;
@@ -226,7 +226,7 @@ namespace ImsDemuxPlugin
                 returnData.EvalMsg = "Non-Multiplexed";
                 needToDemultiplex = false;
             }
-            else if (queryResult == SQLiteTools.UimfQueryResults.Error)
+            else if (queryResult == MultiplexingStatus.Error)
             {
                 // There was a problem determining the UIMF file status. Set state and exit
                 msg = "Problem determining UIMF file status for dataset " + mDataset;

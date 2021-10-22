@@ -20,12 +20,7 @@ namespace ImsDemuxPlugin
     {
         // Ignore Spelling: demultiplexing, demux
 
-        public enum UimfQueryResults
-        {
-            NonMultiplexed,
-            Multiplexed,
-            Error
-        }
+        // TODO: Update for newer version UIMF files, with the mux sequence stored directly in MultiplexingEncodingSequence.
 
         /// <summary>
         /// Evaluates the UIMF file to determine if it is multiplexed or not
@@ -33,7 +28,7 @@ namespace ImsDemuxPlugin
         /// <param name="uimfFilePath">Full path to UIMF file</param>
         /// <param name="numBitsForEncoding">Number of bits used for encoding; 0 if not multiplexed</param>
         /// <returns>Enum indicating test results</returns>
-        public UimfQueryResults GetUimfMuxStatus(string uimfFilePath, out byte numBitsForEncoding)
+        public MultiplexingStatus GetUimfMuxStatus(string uimfFilePath, out byte numBitsForEncoding)
         {
             numBitsForEncoding = 0;
 
@@ -60,7 +55,7 @@ namespace ImsDemuxPlugin
             if (encodingSequenceList.Count < 1)
             {
                 OnErrorEvent("UIMF file has no frames: " + uimfFilePath);
-                return UimfQueryResults.Error;
+                return MultiplexingStatus.Error;
             }
 
             var bitValueMatcher = new Regex(@"^(\d)bit", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -122,10 +117,10 @@ namespace ImsDemuxPlugin
             // Return results
             if (deMuxRequired)
             {
-                return UimfQueryResults.Multiplexed;
+                return MultiplexingStatus.Multiplexed;
             }
 
-            return UimfQueryResults.NonMultiplexed;
+            return MultiplexingStatus.NonMultiplexed;
         }
     }
 }

@@ -17,6 +17,7 @@ using UIMFLibrary;
 
 namespace ImsDemuxPlugin
 {
+    // TODO: Update for newer version UIMF files, with the mux sequence stored directly in MultiplexingEncodingSequence.
     /// <summary>
     /// This class demultiplexes a .UIMF file using the UIMFDemultiplexer
     /// </summary>
@@ -92,13 +93,13 @@ namespace ImsDemuxPlugin
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="uimDemultiplexerPath"></param>
+        /// <param name="uimfDemultiplexerPath"></param>
         /// <param name="fileTools"></param>
-        public DemuxTools(string uimDemultiplexerPath, FileTools fileTools)
+        public DemuxTools(string uimfDemultiplexerPath, FileTools fileTools)
         {
             mProgressUpdateIntervalSeconds = 5;
 
-            mUimfDemultiplexerPath = uimDemultiplexerPath;
+            mUimfDemultiplexerPath = uimfDemultiplexerPath;
             mFileTools = fileTools;
 
             mLoggedConsoleOutputErrors = new List<string>();
