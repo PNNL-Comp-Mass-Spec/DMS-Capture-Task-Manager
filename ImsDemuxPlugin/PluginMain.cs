@@ -44,6 +44,7 @@ namespace ImsDemuxPlugin
         }
 
         private DemuxTools mDemuxTools;
+        private AgilentDemuxTools mAgDemuxTools;
         private bool mDemultiplexingPerformed;
 
         private ToolReturnData mRetData = new();
@@ -71,7 +72,17 @@ namespace ImsDemuxPlugin
             mLastConfigDbUpdate = DateTime.UtcNow;
             mMinutesBetweenConfigDbUpdates = MANAGER_UPDATE_INTERVAL_MINUTES;
 
-            RunToolUIMF();
+            var instClassName = mTaskParams.GetParam("Instrument_Class");
+            var instrumentClass = InstrumentClassInfo.GetInstrumentClass(instClassName);
+
+            if (instrumentClass == InstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_DotD)
+            {
+                RunToolAgilentDotD();
+            }
+            else
+            {
+                RunToolUIMF();
+            }
 
             if (mRetData.CloseoutType != EnumCloseOutType.CLOSEOUT_SUCCESS || mRetData.EvalCode == EnumEvalCode.EVAL_CODE_SKIPPED)
             {
@@ -360,6 +371,185 @@ namespace ImsDemuxPlugin
             return mRetData;
         }
 
+        private ToolReturnData RunToolAgilentDotD()
+        {
+            var agilentToUimf = new AgilentToUimfConversion(ResetTimestampForQueueWaitTimeLogging);
+            RegisterEvents(agilentToUimf);
+            agilentToUimf.ProgressUpdate += AgilentToUimf_ConvertProgress;
+
+            if (agilentToUimf.InFailureState)
+            {
+                mRetData.CloseoutMsg = agilentToUimf.ErrorMessage;
+                LogError(agilentToUimf.ErrorMessage);
+                mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                return mRetData;
+            }
+
+            // Store the version info in the database
+            if (!StoreToolVersionInfoAgilent(agilentToUimf.GetToolDllPaths()))
+            {
+                LogError("Aborting since StoreToolVersionInfo returned false");
+                mRetData.CloseoutMsg = "Error determining version of PNNL-PreProcessor";
+                mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                return mRetData;
+            }
+
+            // Locate data file on storage server
+            var svrPath = Path.Combine(mTaskParams.GetParam("Storage_Vol_External"), mTaskParams.GetParam("Storage_Path"));
+            var datasetDirectory = mTaskParams.GetParam(mTaskParams.HasParam("Directory") ? "Directory" : "Folder");
+
+            var datasetDirectoryPath = Path.Combine(svrPath, datasetDirectory);
+
+            // IMS08_AgQTOF05 datasets acquired in QTOF only mode do not have .UIMF files; check for this
+
+            var dotDDirectoryName = mDataset + InstrumentClassInfo.DOT_D_EXTENSION;
+            var dotDDirectoryPath = Path.Combine(datasetDirectoryPath, dotDDirectoryName);
+            var dotDDirectory = new DirectoryInfo(dotDDirectoryPath);
+
+            if (!dotDDirectory.Exists)
+            {
+                var msg = "Dataset .d directory not found: " + dotDDirectory.FullName;
+                LogError(msg);
+
+                mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                mRetData.CloseoutMsg = msg;
+                return mRetData;
+            }
+
+            if (!IsAgilentIMSDataset(dotDDirectory))
+            {
+                var msg = "Skipped since not an IMS dataset (no .UIMF file or IMS files)";
+                LogMessage(msg);
+
+                mRetData.EvalCode = EnumEvalCode.EVAL_CODE_SKIPPED;
+                mRetData.EvalMsg = msg;
+
+                mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+                return mRetData;
+            }
+
+            var dotDTools = new AgilentDotDTools();
+            RegisterEvents(dotDTools);
+
+            // Use this name first to test if demux has already been performed once
+            var dotDDirName = mDataset + AgilentDemuxTools.ENCODED_dotD_SUFFIX;
+            var existingDotDDir = new DirectoryInfo(Path.Combine(datasetDirectoryPath, dotDDirName));
+            if (existingDotDDir.Exists && IsAgilentIMSDataset(existingDotDDir) && dotDTools.GetDotDMuxStatus(existingDotDDir.FullName, out _) == MultiplexingStatus.Multiplexed)
+            {
+                // The _muxed.d file will be used for demultiplexing
+            }
+            else
+            {
+                // Does the existing file have necessary files? If not, delete it
+                if (existingDotDDir.Exists)
+                {
+                    try
+                    {
+                        mFileTools.DeleteDirectory(existingDotDDir.FullName);
+                    }
+                    catch (Exception ex)
+                    {
+                        var msg = "Exception deleting incomplete Agilent .D IMS _muxed.d directory";
+                        LogError(msg, ex);
+
+                        mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                        mRetData.CloseoutMsg = msg;
+
+                        return mRetData;
+                    }
+                }
+
+                // If we got to here, _muxed.d file doesn't exist. So, use the other .d file
+                dotDDirName = mDataset + ".d";
+            }
+
+            // Query to determine if demux is needed.
+            var dotDDirPath = Path.Combine(datasetDirectoryPath, dotDDirName);
+            mNeedToDemultiplex = true;
+
+            var queryResult = dotDTools.GetDotDMuxStatus(dotDDirPath, out var muxSequence);
+            if (queryResult == MultiplexingStatus.NonMultiplexed)
+            {
+                // De-multiplexing not required, but we should still attempt calibration (if enabled)
+                var msg = "No demultiplexing required for dataset " + mDataset;
+                LogMessage(msg);
+                mRetData.EvalMsg = "Non-Multiplexed";
+                mNeedToDemultiplex = false;
+            }
+            else if (queryResult == MultiplexingStatus.Error)
+            {
+                // There was a problem determining the Agilent IMS .D file status. Set state and exit
+                var msg = "Problem determining Agilent IMS .D file status for dataset " + mDataset;
+                LogMessage(msg);
+
+                mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                mRetData.CloseoutMsg = msg;
+
+                return mRetData;
+            }
+
+            var doNotDeleteLocalOutput = true;
+
+            if (mNeedToDemultiplex)
+            {
+                // De-multiplexing is needed
+                mRetData = mAgDemuxTools.PerformDemux(mMgrParams, mTaskParams, dotDDirName, doNotDeleteLocalOutput);
+
+                if (mAgDemuxTools.OutOfMemoryException)
+                {
+                    if (mRetData.CloseoutType != EnumCloseOutType.CLOSEOUT_FAILED)
+                    {
+                        mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                        if (string.IsNullOrEmpty(mRetData.CloseoutMsg))
+                        {
+                            mRetData.CloseoutMsg = "Out of memory";
+                        }
+                    }
+
+                    mNeedToAbortProcessing = true;
+                }
+
+                mDemultiplexingPerformed = true;
+            }
+
+            if (mRetData.CloseoutType != EnumCloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return mRetData;
+            }
+
+            // Convert to UIMF
+            agilentToUimf.RunConvert(mRetData, mMgrParams, mTaskParams, mFileTools);
+
+            if (!agilentToUimf.RunConvert(mRetData, mMgrParams, mTaskParams, mFileTools))
+            {
+                return mRetData;
+            }
+
+            mUimfFilePath = Path.Combine(datasetDirectoryPath, mDataset + ".uimf");
+
+            // Lookup the current .uimf file size
+            var uimfFile = new FileInfo(mUimfFilePath);
+            if (!uimfFile.Exists)
+            {
+                string msg;
+                if (mNeedToDemultiplex)
+                {
+                    msg = "UIMF File not found after demultiplexing: " + mUimfFilePath;
+                }
+                else
+                {
+                    msg = "UIMF File not found (skipped demultiplexing): " + mUimfFilePath;
+                }
+
+                LogError(msg);
+                mRetData.CloseoutMsg = msg;
+                mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                return mRetData;
+            }
+
+            return mRetData;
+        }
+
         /// <summary>
         /// Initializes the demux tool
         /// </summary>
@@ -388,6 +578,16 @@ namespace ImsDemuxPlugin
             mDemuxTools.DemuxProgress += DemuxTools_DemuxProgress;
             mDemuxTools.BinCentricTableProgress += DemuxTools_BinCentricTableProgress;
             mDemuxTools.CopyFileWithRetryEvent += DemuxTools_CopyFileWithRetryEvent;
+
+            // Determine the path to PNNL-PreProcessor.exe
+            var preprocessorProgLoc = GetPNNLPreProcessorPath();
+
+            mAgDemuxTools = new AgilentDemuxTools(preprocessorProgLoc, mFileTools);
+            RegisterEvents(mAgDemuxTools);
+
+            // Add a handler to catch progress events
+            mAgDemuxTools.DemuxProgress += DemuxTools_DemuxProgress;
+            mAgDemuxTools.CopyFileWithRetryEvent += DemuxTools_CopyFileWithRetryEvent;
         }
 
         private bool CheckForCalibrationError(string datasetDirectoryPath)
@@ -507,6 +707,22 @@ namespace ImsDemuxPlugin
         }
 
         /// <summary>
+        /// Construct the full path to PNNL-Preprocessor.exe
+        /// </summary>
+        private string GetPNNLPreProcessorPath()
+        {
+            var preprocessorFolder = mMgrParams.GetParam("PNNLPreProcessorProgLoc", string.Empty);
+
+            if (string.IsNullOrEmpty(preprocessorFolder))
+            {
+                LogError("Manager parameter PNNLPreProcessorProgLoc not defined");
+                return string.Empty;
+            }
+
+            return Path.Combine(preprocessorFolder, "PNNL-PreProcessor.exe");
+        }
+
+        /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
         private bool StoreToolVersionInfo()
@@ -576,6 +792,103 @@ namespace ImsDemuxPlugin
         }
 
         /// <summary>
+        /// Stores the tool version info in the database
+        /// </summary>
+        private bool StoreToolVersionInfoAgilent(List<string> additionalPaths)
+        {
+            LogDebug("Determining tool version info");
+
+            var toolVersionInfo = string.Empty;
+
+            var appDirectoryPath = CTMUtilities.GetAppDirectoryPath();
+
+            if (string.IsNullOrEmpty(appDirectoryPath))
+            {
+                LogError("GetAppDirectoryPath returned an empty directory path to StoreToolVersionInfoAgilent for the ImsDemux plugin");
+                return false;
+            }
+
+            // Lookup the version of the Capture tool plugin
+            var pluginPath = Path.Combine(appDirectoryPath, "ImsDemuxPlugin.dll");
+            var success = StoreToolVersionInfoOneFile(ref toolVersionInfo, pluginPath);
+            if (!success)
+            {
+                return false;
+            }
+
+            var preprocessorProgLoc = GetPNNLPreProcessorPath();
+            if (string.IsNullOrEmpty(preprocessorProgLoc))
+            {
+                return false;
+            }
+
+            var preprocessor = new FileInfo(preprocessorProgLoc);
+
+            if (preprocessor.DirectoryName == null)
+            {
+                return false;
+            }
+
+            // Lookup the version of UIMFDemultiplexer_Console
+            success = StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, preprocessor.FullName);
+            if (!success)
+            {
+                return false;
+            }
+
+            // Lookup the version of the IMSDemultiplexer (in the PNNL-PreProcessor folder)
+            var demultiplexerPath = Path.Combine(preprocessor.DirectoryName, "IMSDemultiplexer.dll");
+            success = StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, demultiplexerPath);
+            if (!success)
+            {
+                return false;
+            }
+
+            // Lookup the version of SQLite
+            var sqLitePath = Path.Combine(appDirectoryPath, "System.Data.SQLite.dll");
+            success = StoreToolVersionInfoOneFile(ref toolVersionInfo, sqLitePath);
+            if (!success)
+            {
+                return false;
+            }
+
+            //var uimfLibraryPath = Path.Combine(preprocessor.DirectoryName, "UIMFLibrary.dll");
+            var uimfLibraryPath = Path.Combine(appDirectoryPath, "UIMFLibrary.dll");
+            success = StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, uimfLibraryPath);
+            if (!success)
+            {
+                return false;
+            }
+
+            foreach (var path in additionalPaths)
+            {
+                success = StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, path);
+                if (!success)
+                {
+                    return false;
+                }
+            }
+
+            // Store path to the demultiplexer DLL in toolFiles
+            var toolFiles = new List<FileInfo>
+            {
+                new(preprocessorProgLoc),
+                new(demultiplexerPath)
+            };
+
+            try
+            {
+                const bool saveToolVersionTextFile = false;
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, saveToolVersionTextFile);
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Reports progress from demux DLL
         /// </summary>
         /// <param name="newProgress">Current progress (value between 0 and 100)</param>
@@ -592,6 +905,11 @@ namespace ImsDemuxPlugin
 
             // Update the manager settings every MANAGER_UPDATE_INTERVAL_MINUTES
             UpdateMgrSettings();
+        }
+
+        private void AgilentToUimf_ConvertProgress(string progressMessage, float percentComplete)
+        {
+            // TODO: Currently disabled, should be made functional.
         }
 
         /// <summary>
