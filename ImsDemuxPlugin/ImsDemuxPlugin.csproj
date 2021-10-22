@@ -60,6 +60,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AgilentDemuxTools.cs" />
+    <Compile Include="AgilentDotDTools.cs" />
     <Compile Include="AgilentToUimfConversion.cs" />
     <Compile Include="DemuxTools.cs" />
     <Compile Include="GlobalSuppressions.cs" />
