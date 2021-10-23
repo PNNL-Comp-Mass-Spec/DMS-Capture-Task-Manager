@@ -57,8 +57,8 @@ namespace ImsDemuxPlugin
         /// <returns>Enum indicating success or failure</returns>
         public override ToolReturnData RunTool()
         {
-            var msg = "Starting ImsDemuxPlugin.PluginMain.RunTool()";
-            LogDebug(msg);
+            LogDebug("Starting ImsDemuxPlugin.PluginMain.RunTool()");
+
             mDemultiplexingPerformed = false;
 
             // Perform base class operations, if any
@@ -129,8 +129,7 @@ namespace ImsDemuxPlugin
 #pragma warning restore 162
             }
 
-            msg = "Completed PluginMain.RunTool()";
-            LogDebug(msg);
+            LogDebug("Completed PluginMain.RunTool()");
 
             return mRetData;
         }
@@ -205,9 +204,9 @@ namespace ImsDemuxPlugin
                     }
                     else
                     {
-                        var msg = "CalibrationLog.txt file ends with '" + COULD_NOT_OBTAIN_GOOD_CALIBRATION +
-                              "'; will not attempt to re-demultiplex the _encoded.uimf file.  If you want to re-demultiplex the _encoded.uimf file, you should rename the CalibrationLog.txt file";
-                        LogError(msg);
+                        LogError("CalibrationLog.txt file ends with '" + COULD_NOT_OBTAIN_GOOD_CALIBRATION + "'; " +
+                                 "will not attempt to re-demultiplex the _encoded.uimf file. " +
+                                 "If you want to re-demultiplex the _encoded.uimf file, you should rename the CalibrationLog.txt file");
 
                         mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                         mRetData.CloseoutMsg = "Error calibrating UIMF file; see " + DemuxTools.CALIBRATION_LOG_FILE;
