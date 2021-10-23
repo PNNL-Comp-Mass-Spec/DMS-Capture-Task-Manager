@@ -1520,7 +1520,7 @@ namespace CaptureToolPlugin
                         break;
 
                     case DatasetInfo.RawDSTypes.DirectoryExt:
-                        CaptureDirectoryExt(out msg, returnData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath, copyWithResume, instrumentClass, instrumentName);
+                        CaptureDirectoryExt(out msg, returnData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath, copyWithResume, instrumentClass, instrumentName, taskParams);
                         break;
 
                     case DatasetInfo.RawDSTypes.DirectoryNoExt:
@@ -1992,6 +1992,7 @@ namespace CaptureToolPlugin
         /// <param name="copyWithResume">True if using copy with resume</param>
         /// <param name="instrumentClass">Instrument class</param>
         /// <param name="instrumentName">Instrument name</param>
+        /// <param name="taskParams">Task parameters</param>
         private void CaptureDirectoryExt(
             out string msg,
             ToolReturnData returnData,
@@ -2000,7 +2001,9 @@ namespace CaptureToolPlugin
             string datasetDirectoryPath,
             bool copyWithResume,
             InstrumentClassInfo.InstrumentClass instrumentClass,
-            string instrumentName)
+            string instrumentName,
+            ITaskParams taskParams
+        )
         {
             SortedSet<string> filesToSkip = null;
 
@@ -2019,7 +2022,7 @@ namespace CaptureToolPlugin
             if (instrumentClass == InstrumentClassInfo.InstrumentClass.Agilent_Ion_Trap)
             {
                 // Confirm that a DATA.MS file exists
-                if (IsIncompleteAgilentIonTrap(sourceDirectory.FullName, out msg, returnData))
+                if (IsIncompleteAgilentIonTrap(taskParams, sourceDirectory.FullName, out msg, returnData))
                 {
                     return;
                 }
@@ -2290,11 +2293,13 @@ namespace CaptureToolPlugin
         /// <summary>
         /// Look for an incomplete Agilent Ion Trap .D directory
         /// </summary>
+        /// <param name="taskParams"></param>
         /// <param name="directoryPath"></param>
         /// <param name="msg"></param>
         /// <param name="returnData"></param>
         /// <returns>True if incomplete</returns>
         private bool IsIncompleteAgilentIonTrap(
+            ITaskParams taskParams,
             string directoryPath,
             out string msg,
             ToolReturnData returnData)
@@ -2320,11 +2325,27 @@ namespace CaptureToolPlugin
                     }
                 }
 
+                var allowIncompleteDataset =  taskParams.GetParam("AllowIncompleteDataset", false);
+
                 if (!string.IsNullOrEmpty(sourceDirectoryErrorMessage))
                 {
-                    returnData.CloseoutMsg = sourceDirectoryErrorMessage;
                     msg = returnData.CloseoutMsg + " at " + directoryPath;
+
+                    if (allowIncompleteDataset)
+                    {
+                        returnData.EvalMsg = sourceDirectoryErrorMessage;
+                        LogWarning(msg);
+
+                        return false;
+                    }
+
+                    var job = taskParams.GetParam("Job", 0);
+
+                    var jobParameterHint = string.Format("Exec AddUpdateJobParameter {0}, 'JobParameters', 'AllowIncompleteDataset', 'true'", job);
+
+                    returnData.CloseoutMsg = sourceDirectoryErrorMessage + "; to ignore this error, use " + jobParameterHint;
                     LogError(msg);
+
                     DisconnectShareIfRequired();
                     returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     return true;
