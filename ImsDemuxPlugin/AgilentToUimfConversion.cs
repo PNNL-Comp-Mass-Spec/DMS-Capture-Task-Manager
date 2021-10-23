@@ -117,7 +117,8 @@ namespace ImsDemuxPlugin
         private void UpdateDatasetInfo(IMgrParams mgrParams, ITaskParams taskParams)
         {
             mDataset = taskParams.GetParam("Dataset");
-            mWorkDir = mgrParams.GetParam("workdir");
+            mWorkDir = mgrParams.GetParam("WorkDir");
+
             mDebugLevel = (short)mMgrParams.GetParam("DebugLevel", 4);
 
             // Set up the file paths
