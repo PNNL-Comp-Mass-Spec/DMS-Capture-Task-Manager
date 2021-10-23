@@ -29,6 +29,7 @@ namespace DatasetIntegrityPlugin
         // ReSharper disable CommentTypo
 
         // Ignore Spelling: chrom, cli, batchfile, nosplash, Acq, utf, pos, ser, mgf, acqus, fid, idx, fticr, uimf, cmd, wlkXZsvC-miP6A2KH-DgAuTix2
+
         // ReSharper restore CommentTypo
 
         // Ignore Spelling: Agilent, Bruker, Orbitrap, Sciex, Shimadzu
@@ -994,7 +995,7 @@ namespace DatasetIntegrityPlugin
         /// <returns>Enum indicating test result</returns>
         private EnumCloseOutType TestAgilentTOFv2Directory(string datasetDirectoryPath, bool requireMethodDirectory = true)
         {
-            // Verify only one .d directory in dataset
+            // Look for the .d directory (there is sometimes more than one)
             var datasetDirectory = new DirectoryInfo(datasetDirectoryPath);
             var dotDDirectories = datasetDirectory.GetDirectories("*.d").ToList();
 
@@ -1013,7 +1014,7 @@ namespace DatasetIntegrityPlugin
                 }
             }
 
-            // Look for the AcqData directory below the .d directory
+            // Look for the AcqData directory below the first .d directory
             var acqDataDirectories = dotDDirectories[0].GetDirectories("AcqData").ToList();
             if (acqDataDirectories.Count < 1)
             {
@@ -1029,9 +1030,9 @@ namespace DatasetIntegrityPlugin
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
-            // The AcqData directory should contain one or more .Bin files, for example MSScan.bin and MSProfile.bin
-            // Verify that the MSScan.bin file exists
+            // If the AcqData directory has at least one IMS file, require that the three required files are present
             var imsFiles = PathUtils.FindFilesWildcard(acqDataDirectories[0], "IMSFrame*").ToList();
+
             if (imsFiles.Count > 0)
             {
                 var requiredFiles = new List<string>
@@ -1047,7 +1048,9 @@ namespace DatasetIntegrityPlugin
                 {
                     if (!imsFiles.Any(x => x.Name.Equals(requiredFile, StringComparison.OrdinalIgnoreCase)))
                     {
-                        mRetData.EvalMsg = $"Invalid dataset: Missing required {requiredFile} file in the AcqData directory for IMS, but file contains IMSFrame* file(s)";
+                        mRetData.EvalMsg = string.Format(
+                            "Invalid dataset: file {0} is missing in the AcqData directory", requiredFile);
+
                         LogError(mRetData.EvalMsg);
                         return EnumCloseOutType.CLOSEOUT_FAILED;
                     }
@@ -1055,8 +1058,10 @@ namespace DatasetIntegrityPlugin
             }
 
             // The AcqData directory should contain one or more .Bin files, for example MSScan.bin and MSProfile.bin
-            // Verify that the MSScan.bin file exists
+
+            //  Make sure the MSScan.bin file exists
             var msScanFile = PathUtils.FindFilesWildcard(acqDataDirectories[0], "MSScan.bin").ToList();
+
             if (msScanFile.Count == 0)
             {
                 mRetData.EvalMsg = "Invalid dataset: MSScan.bin file not found in the AcqData directory";
