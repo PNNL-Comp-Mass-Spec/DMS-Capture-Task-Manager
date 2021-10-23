@@ -268,34 +268,34 @@ namespace ImsDemuxPlugin
         /// <summary>
         /// Copies a file, allowing for retries
         /// </summary>
-        /// <param name="sourceFilePath">Source file</param>
-        /// <param name="targetFilePath">Destination file</param>
+        /// <param name="sourceDirectoryPath">Source directory</param>
+        /// <param name="targetDirectoryPath">Destination directory</param>
         /// <param name="overWrite">True to overWrite existing files</param>
         /// <param name="retryCount">Number of attempts</param>
-        /// <param name="backupDestFileBeforeCopy">If True and if the target file exists, renames the target file to have _Old1 before the extension</param>
+        /// <param name="backupDestDirectoryBeforeCopy">If True and if the target directory exists, renames the target directory to have _Old1 before the extension</param>
         /// <returns>True if success, false if an error</returns>
-        private bool CopyDirectoryWithRetry(string sourceFilePath, string targetFilePath, bool overWrite, int retryCount, bool backupDestFileBeforeCopy = false)
+        private bool CopyDirectoryWithRetry(string sourceDirectoryPath, string targetDirectoryPath, bool overWrite, int retryCount, bool backupDestDirectoryBeforeCopy = false)
         {
-            OnCopyFileWithRetry(sourceFilePath, targetFilePath);
-            return CopyDirectoryWithRetry(sourceFilePath, targetFilePath, overWrite, retryCount, backupDestFileBeforeCopy, mFileTools);
+            OnCopyFileWithRetry(sourceDirectoryPath, targetDirectoryPath);
+            return CopyDirectoryWithRetry(sourceDirectoryPath, targetDirectoryPath, overWrite, retryCount, backupDestDirectoryBeforeCopy, mFileTools);
         }
 
         /// <summary>
         /// Copies a file, allowing for retries
         /// </summary>
-        /// <param name="sourceFilePath">Source file</param>
-        /// <param name="targetFilePath">Destination file</param>
+        /// <param name="sourceDirectoryPath">Source directory</param>
+        /// <param name="targetDirectoryPath">Destination directory</param>
         /// <param name="overWrite">True to overWrite existing files</param>
         /// <param name="retryCount">Number of attempts</param>
-        /// <param name="backupDestFileBeforeCopy">If True and if the target file exists, renames the target file to have _Old1 before the extension</param>
+        /// <param name="backupDestDirectoryBeforeCopy">If True and if the target directory exists, renames the target directory to have _Old1 before the extension</param>
         /// <param name="fileTools">Instance of FileTools</param>
         /// <returns>True if success, false if an error</returns>
         public static bool CopyDirectoryWithRetry(
-            string sourceFilePath,
-            string targetFilePath,
+            string sourceDirectoryPath,
+            string targetDirectoryPath,
             bool overWrite,
             int retryCount,
-            bool backupDestFileBeforeCopy,
+            bool backupDestDirectoryBeforeCopy,
             FileTools fileTools)
         {
             var retryingCopy = false;
@@ -305,9 +305,9 @@ namespace ImsDemuxPlugin
                 retryCount = 0;
             }
 
-            if (backupDestFileBeforeCopy)
+            if (backupDestDirectoryBeforeCopy)
             {
-                FileTools.BackupFileBeforeCopy(targetFilePath);
+                FileTools.BackupFileBeforeCopy(targetDirectoryPath);
             }
 
             while (retryCount >= 0)
@@ -323,13 +323,13 @@ namespace ImsDemuxPlugin
 
                     // The parent method should call OnCopyFileWithRetry() or ResetTimestampForQueueWaitTimeLogging() prior to calling this method
 
-                    return fileTools.CopyDirectoryWithResume(sourceFilePath, targetFilePath, true,
+                    return fileTools.CopyDirectoryWithResume(sourceDirectoryPath, targetDirectoryPath, true,
                         (overWrite ? FileTools.FileOverwriteMode.AlwaysOverwrite : FileTools.FileOverwriteMode.DoNotOverwrite),
                         new List<string>());
                 }
                 catch (Exception ex)
                 {
-                    msg = "Exception copying file " + sourceFilePath + " to " + targetFilePath + ": " + ex.Message;
+                    msg = "Exception copying directory " + sourceDirectoryPath + " to " + targetDirectoryPath + ": " + ex.Message;
                     LogTools.LogError(msg, ex);
 
                     System.Threading.Thread.Sleep(2000);
