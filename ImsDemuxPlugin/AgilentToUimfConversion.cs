@@ -551,27 +551,27 @@ namespace ImsDemuxPlugin
             LogError(msg);
         }
 
-        private EnumCloseOutType TestIMSAgilentTOF(string dataFileNamePath)
+        private EnumCloseOutType TestIMSAgilentTOF(string uimfFilePath)
         {
             // Verify file exists in storage directory
-            if (!File.Exists(dataFileNamePath))
+            if (!File.Exists(uimfFilePath))
             {
-                mRetData.EvalMsg = "Data file " + dataFileNamePath + " not found";
+                mRetData.EvalMsg = "Data file " + uimfFilePath + " not found";
                 LogError(mRetData.EvalMsg);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
             // Get size of data file
-            var dataFileSizeKB = GetFileSize(dataFileNamePath);
+            var dataFileSizeKB = GetFileSize(uimfFilePath);
 
             // Check min size
             if (dataFileSizeKB < UIMF_FILE_MIN_SIZE_KB)
             {
-                ReportFileSizeTooSmall("Data", dataFileNamePath, dataFileSizeKB, UIMF_FILE_MIN_SIZE_KB);
+                ReportFileSizeTooSmall("Data", uimfFilePath, dataFileSizeKB, UIMF_FILE_MIN_SIZE_KB);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
-            var validFile = UimfFileHasData(dataFileNamePath, out var uimfStatusMessage);
+            var validFile = UimfFileHasData(uimfFilePath, out var uimfStatusMessage);
 
             if (dataFileSizeKB < UIMF_FILE_SMALL_SIZE_KB)
             {

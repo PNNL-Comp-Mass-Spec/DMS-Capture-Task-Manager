@@ -572,39 +572,37 @@ namespace ImsDemuxPlugin
         }
 
         /// <summary>
-        /// Renames a file
+        /// Renames a directory
         /// </summary>
-        /// <param name="sourceFilePath">Original file path</param>
-        /// <param name="newFilePath">New file path</param>
+        /// <param name="sourcePath">Original directory path</param>
+        /// <param name="targetPath">New directory path</param>
         /// <returns>True if successful, false if an error</returns>
-        private bool RenameDirectory(string sourceFilePath, string newFilePath)
+        private bool RenameDirectory(string sourcePath, string targetPath)
         {
             try
             {
-                var di = new DirectoryInfo(sourceFilePath);
-                di.MoveTo(newFilePath);
+                var sourceDirectory = new DirectoryInfo(sourcePath);
+                sourceDirectory.MoveTo(targetPath);
                 return true;
             }
             catch (Exception ex)
             {
-                var msg = "Exception renaming file " + sourceFilePath + " to " + Path.GetFileName(newFilePath) + ": " + ex.Message;
-                OnErrorEvent(msg);
+                OnErrorEvent("Exception renaming directory " + sourcePath + " to " + Path.GetFileName(targetPath) + ": " + ex.Message);
 
-                // Garbage collect, then try again to rename the file
+                // Garbage collect, then try again to rename the directory
                 System.Threading.Thread.Sleep(250);
                 ProgRunner.GarbageCollectNow();
                 System.Threading.Thread.Sleep(250);
 
                 try
                 {
-                    var di = new DirectoryInfo(sourceFilePath);
-                    di.MoveTo(newFilePath);
+                    var sourceDirectory = new DirectoryInfo(sourcePath);
+                    sourceDirectory.MoveTo(targetPath);
                     return true;
                 }
                 catch (Exception ex2)
                 {
-                    msg = "Rename failed despite garbage collection call: " + ex2.Message;
-                    OnErrorEvent(msg);
+                    OnErrorEvent("Rename failed despite garbage collection call: " + ex2.Message);
                 }
 
                 return false;
