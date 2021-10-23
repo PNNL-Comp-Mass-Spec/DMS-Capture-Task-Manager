@@ -431,7 +431,10 @@ namespace ImsDemuxPlugin
             // Use this name first to test if demux has already been performed once
             var dotDDirName = mDataset + AgilentDemuxTools.ENCODED_dotD_SUFFIX;
             var existingDotDDir = new DirectoryInfo(Path.Combine(datasetDirectoryPath, dotDDirName));
-            if (existingDotDDir.Exists && IsAgilentIMSDataset(existingDotDDir) && dotDTools.GetDotDMuxStatus(existingDotDDir.FullName, out _) == MultiplexingStatus.Multiplexed)
+
+            if (existingDotDDir.Exists &&
+                IsAgilentIMSDataset(existingDotDDir) &&
+                dotDTools.GetDotDMuxStatus(existingDotDDir.FullName, out _) == MultiplexingStatus.Multiplexed)
             {
                 // The _muxed.d file will be used for demultiplexing
             }
@@ -464,7 +467,7 @@ namespace ImsDemuxPlugin
             var dotDDirPath = Path.Combine(datasetDirectoryPath, dotDDirName);
             mNeedToDemultiplex = true;
 
-            var queryResult = dotDTools.GetDotDMuxStatus(dotDDirPath, out var muxSequence);
+            var queryResult = dotDTools.GetDotDMuxStatus(dotDDirPath, out _);
             if (queryResult == MultiplexingStatus.NonMultiplexed)
             {
                 // De-multiplexing not required, but we should still attempt calibration (if enabled)
@@ -485,12 +488,10 @@ namespace ImsDemuxPlugin
                 return;
             }
 
-            var doNotDeleteLocalOutput = true;
-
             if (mNeedToDemultiplex)
             {
                 // De-multiplexing is needed
-                mRetData = mAgDemuxTools.PerformDemux(mMgrParams, mTaskParams, dotDDirName, doNotDeleteLocalOutput);
+                mRetData = mAgDemuxTools.PerformDemux(mMgrParams, mTaskParams, dotDDirName, keepLocalOutput: true);
 
                 if (mAgDemuxTools.OutOfMemoryException)
                 {
@@ -766,7 +767,7 @@ namespace ImsDemuxPlugin
             }
 
             // Store path to the demultiplexer DLL in toolFiles
-            var toolFiles = new System.Collections.Generic.List<FileInfo>
+            var toolFiles = new List<FileInfo>
             {
                 new(demultiplexerPath)
             };
