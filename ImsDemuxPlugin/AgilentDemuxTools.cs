@@ -770,7 +770,7 @@ namespace ImsDemuxPlugin
 
         private DateTime GetDemultiplexingFinishedFromLog(string dotDPath, out string message)
         {
-            message = "";
+            message = string.Empty;
 
             const string logSubPath = @"AcqData\PNNL-PreProcessorLog.txt";
             var logPath = Path.Combine(dotDPath, logSubPath);

@@ -21,7 +21,7 @@ namespace ImsDemuxPlugin
         /// <returns>Enum indicating test results</returns>
         public MultiplexingStatus GetDotDMuxStatus(string dotDFilePath, out string muxSequence)
         {
-            muxSequence = "";
+            muxSequence = string.Empty;
 
             // Parse IMSFrameMeth.xml.
             var methodInfo = ImsFrameMethMuxInfo(dotDFilePath);
