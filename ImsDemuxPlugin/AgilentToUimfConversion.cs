@@ -14,10 +14,10 @@ namespace ImsDemuxPlugin
     {
         // ReSharper disable CommentTypo
 
-        // Ignore Spelling: Acq, uimf, cmd
+        // Ignore Spelling: Acq, Agilentcmd, demultiplexed, demux, uimf
+
         // ReSharper restore CommentTypo
 
-        // Ignore Spelling: Agilent
         private const float UIMF_FILE_MIN_SIZE_KB = 5;
         private const float UIMF_FILE_SMALL_SIZE_KB = 50;
 
