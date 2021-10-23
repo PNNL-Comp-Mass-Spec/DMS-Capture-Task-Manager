@@ -781,35 +781,34 @@ namespace ImsDemuxPlugin
                 return DateTime.MinValue;
             }
 
-            using (var fs = new FileStream(logPath, FileMode.Open, FileAccess.ReadWrite))
-            using (var sr = new StreamReader(fs))
+            using var fs = new FileStream(logPath, FileMode.Open, FileAccess.ReadWrite);
+            using var sr = new StreamReader(fs);
+
+            var lastDate = DateTime.MinValue;
+            var foundFinish = false;
+            string line;
+
+            while ((line = sr.ReadLine()) != null)
             {
-                var lastDate = DateTime.MinValue;
-                var foundFinish = false;
-                string line;
-
-                while ((line = sr.ReadLine()) != null)
+                if (line.StartsWith("---") && DateTime.TryParse(line.Trim(' ', '-'), out var time))
                 {
-                    if (line.StartsWith("---") && DateTime.TryParse(line.Trim(' ', '-'), out var time))
-                    {
-                        lastDate = time;
-                        foundFinish = false;
-                    }
-
-                    if (line.Equals("Demultiplexing finished!", StringComparison.OrdinalIgnoreCase))
-                    {
-                        foundFinish = true;
-                    }
+                    lastDate = time;
+                    foundFinish = false;
                 }
 
-                if (foundFinish)
+                if (line.Equals("Demultiplexing finished!", StringComparison.OrdinalIgnoreCase))
                 {
-                    return lastDate;
+                    foundFinish = true;
                 }
-
-                message = "Did not find message 'Demultiplexing finished!'";
-                return DateTime.MinValue;
             }
+
+            if (foundFinish)
+            {
+                return lastDate;
+            }
+
+            message = "Did not find message 'Demultiplexing finished!'";
+            return DateTime.MinValue;
         }
 
         private void AttachCmdRunnerEvents(RunDosProgram cmdRunner)
