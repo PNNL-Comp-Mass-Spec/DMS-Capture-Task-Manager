@@ -43,12 +43,12 @@ namespace ImsDemuxPlugin
         private string mWorkDir;
         private FileTools mFileTools;
         private short mDebugLevel = 4;
-        private string mAgilentToUimfConverterPath;
+        private readonly string mAgilentToUimfConverterPath;
         private string mDatasetDirectoryPathRemote;
         private readonly Action mlockQueueResetTimestamp;
 
-        public string ErrorMessage { get; private set; }
-        public bool InFailureState { get; private set; }
+        public string ErrorMessage { get; }
+        public bool InFailureState { get; }
 
         public AgilentToUimfConversion(IMgrParams mgrParams, ITaskParams taskParams, Action lockQueueResetTimestamp)
         {
