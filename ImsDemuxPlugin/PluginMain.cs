@@ -371,7 +371,7 @@ namespace ImsDemuxPlugin
 
         private void RunToolAgilentDotD()
         {
-            var agilentToUimf = new AgilentToUimfConversion(ResetTimestampForQueueWaitTimeLogging);
+            var agilentToUimf = new AgilentToUimfConversion(mMgrParams, mTaskParams, ResetTimestampForQueueWaitTimeLogging);
             RegisterEvents(agilentToUimf);
             agilentToUimf.ProgressUpdate += AgilentToUimf_ConvertProgress;
 
@@ -516,9 +516,7 @@ namespace ImsDemuxPlugin
             }
 
             // Convert to UIMF
-            agilentToUimf.RunConvert(mRetData, mMgrParams, mTaskParams, mFileTools);
-
-            if (!agilentToUimf.RunConvert(mRetData, mMgrParams, mTaskParams, mFileTools))
+            if (!agilentToUimf.RunConvert(mRetData,mFileTools))
             {
                 return;
             }

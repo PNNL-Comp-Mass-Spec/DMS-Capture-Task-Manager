@@ -36,9 +36,9 @@ namespace ImsDemuxPlugin
 
         private int mStatusUpdateIntervalMinutes;
 
+        private readonly IMgrParams mMgrParams;
+        private readonly ITaskParams mTaskParams;
 
-        private IMgrParams mMgrParams;
-        private ITaskParams mTaskParams;
         private string mDataset;
         private string mWorkDir;
         private FileTools mFileTools;
@@ -50,8 +50,13 @@ namespace ImsDemuxPlugin
         public string ErrorMessage { get; private set; }
         public bool InFailureState { get; private set; }
 
-        public AgilentToUimfConversion(Action lockQueueResetTimestamp)
+        public AgilentToUimfConversion(IMgrParams mgrParams, ITaskParams taskParams, Action lockQueueResetTimestamp)
         {
+            mMgrParams = mgrParams;
+            mTaskParams = taskParams;
+
+            UpdateDatasetInfo(mgrParams, taskParams);
+
             mlockQueueResetTimestamp = lockQueueResetTimestamp;
             if (mlockQueueResetTimestamp == null)
             {
@@ -69,16 +74,12 @@ namespace ImsDemuxPlugin
         }
 
         /// <summary>
-        /// Runs the dataset integrity step tool
+        /// Convert an Agilent .D dataset to a .uimf file
         /// </summary>
-        /// <returns>Bool indicating success or failure</returns>
-        public bool RunConvert(ToolReturnData returnData, IMgrParams mgrParams, ITaskParams taskParams, FileTools fileTools)
+        /// <returns>True if successful, false if an error</returns>
+        public bool RunConvert(ToolReturnData returnData, FileTools fileTools)
         {
-            UpdateDatasetInfo(mgrParams, taskParams);
-
             mRetData = returnData;
-            mTaskParams = taskParams;
-            mMgrParams = mgrParams;
             mFileTools = fileTools;
 
             var instClassName = mTaskParams.GetParam("Instrument_Class");
