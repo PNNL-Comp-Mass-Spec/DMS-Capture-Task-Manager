@@ -321,7 +321,7 @@ namespace DatasetIntegrityPlugin
 
                 // ReSharper disable once StringLiteralTypo
                 var arguments = "-cli -batchfile " + batchJobFilePath;
-                var consoleOutputFilePath = Path.Combine(mWorkDir, "OpenChrom_ConsoleOutput_" + mgrName + ".txt");
+                mConsoleOutputFilePath = Path.Combine(mWorkDir, "OpenChrom_ConsoleOutput_" + mgrName + ".txt");
 
                 var cmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
                 {
@@ -329,7 +329,7 @@ namespace DatasetIntegrityPlugin
                     EchoOutputToConsole = false,
                     CacheStandardOutput = false,
                     WriteConsoleOutputToFile = false,    // OpenChrom does not produce any console output; so no point in creating it
-                    ConsoleOutputFilePath = consoleOutputFilePath
+                    ConsoleOutputFilePath = mConsoleOutputFilePath
                 };
 
                 // This will also call RegisterEvents
@@ -388,9 +388,9 @@ namespace DatasetIntegrityPlugin
                 DeleteFileIgnoreErrors(batchJobFilePath);
 
                 // Delete the console output file
-                if (File.Exists(consoleOutputFilePath))
+                if (File.Exists(mConsoleOutputFilePath))
                 {
-                    DeleteFileIgnoreErrors(consoleOutputFilePath);
+                    DeleteFileIgnoreErrors(mConsoleOutputFilePath);
                 }
             }
             catch (Exception ex)
