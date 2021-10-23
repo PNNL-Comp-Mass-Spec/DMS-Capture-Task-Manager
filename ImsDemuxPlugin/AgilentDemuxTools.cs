@@ -243,17 +243,39 @@ namespace ImsDemuxPlugin
             msg = "Cleaning up working directory";
             OnDebugEvent(msg);
 
+            for (var i = 0; i < 3; i++)
+            {
+                // Retry if failed, since next step can depend on this file being deleted
+                try
+                {
+                    RemoveReadOnlyFlag(dotDLocalEncodedFileNamePath, true);
+                    mFileTools.DeleteDirectory(dotDLocalEncodedFileNamePath);
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    // Error deleting files; don't treat this as a fatal error
+                    msg = "Exception deleting working directory file(s): " + ex.Message;
+                    OnErrorEvent(msg);
+                    if (i < 2)
+                    {
+                        System.Threading.Thread.Sleep(3000);
+                    }
+                }
+            }
+
             try
             {
-                if (!keepLocalOutput)
+                if (keepLocalOutput)
+                {
+                    // renamed the output file
+                    Directory.Move(localDotDDecodedFilePath, dotDLocalEncodedFileNamePath);
+                }
+                else
                 {
                     RemoveReadOnlyFlag(localDotDDecodedFilePath, true);
-
                     mFileTools.DeleteDirectory(localDotDDecodedFilePath);
                 }
-
-                RemoveReadOnlyFlag(dotDLocalEncodedFileNamePath, true);
-                mFileTools.DeleteDirectory(dotDLocalEncodedFileNamePath);
             }
             catch (Exception ex)
             {
