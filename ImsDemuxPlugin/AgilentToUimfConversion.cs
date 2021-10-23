@@ -446,8 +446,7 @@ namespace ImsDemuxPlugin
         private string GetAgilentToUIMFProgPath()
         {
             var exeName = mMgrParams.GetParam("AgilentToUIMFProgLoc");
-            var exePath = Path.Combine(exeName, "AgilentToUimfConverter.exe");
-            return exePath;
+            return Path.Combine(exeName, "AgilentToUimfConverter.exe");
         }
 
         private void ParseConsoleOutputFile()
