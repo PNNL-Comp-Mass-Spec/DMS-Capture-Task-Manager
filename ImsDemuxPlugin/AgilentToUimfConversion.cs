@@ -10,7 +10,6 @@ using UIMFLibrary;
 
 namespace ImsDemuxPlugin
 {
-    // TODO: Integrate this as a post-demux/non-demux step!
     public class AgilentToUimfConversion : EventNotifier
     {
         // ReSharper disable CommentTypo
@@ -58,6 +57,8 @@ namespace ImsDemuxPlugin
             UpdateDatasetInfo(mgrParams, taskParams);
 
             mlockQueueResetTimestamp = lockQueueResetTimestamp;
+
+            // ReSharper disable once ConvertIfStatementToNullCoalescingExpression
             if (mlockQueueResetTimestamp == null)
             {
                 // safe to call

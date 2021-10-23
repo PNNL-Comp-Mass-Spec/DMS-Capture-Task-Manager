@@ -23,7 +23,7 @@ namespace ImsDemuxPlugin
         {
             muxSequence = string.Empty;
 
-            // Parse IMSFrameMeth.xml.
+            // Parse IMSFrameMeth.xml
             var methodInfo = ImsFrameMethMuxInfo(dotDFilePath);
 
             if (methodInfo == null || methodInfo.Count == 0)
@@ -69,7 +69,7 @@ namespace ImsDemuxPlugin
         /// <returns>True if demultiplexed, false if not or error</returns>
         public bool GetDotDIsDemultiplexed(string dotDFilePath)
         {
-            // Parse IMSFrameMeth.xml.
+            // Parse IMSFrameMeth.xml
             var methodInfo = ImsFrameMethMuxInfo(dotDFilePath);
 
             if (methodInfo == null || methodInfo.Count == 0)
@@ -116,7 +116,7 @@ namespace ImsDemuxPlugin
 
             var methodInfo = new List<(int ImsMuxProcessing, string ImsMuxSequence)>();
 
-            // Parse IMSFrameMeth.xml.
+            // Parse IMSFrameMeth.xml
             try
             {
                 var document = new XmlDocument();
