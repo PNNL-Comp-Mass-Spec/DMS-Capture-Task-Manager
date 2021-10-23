@@ -135,7 +135,7 @@ namespace ImsDemuxPlugin
             return mRetData;
         }
 
-        private ToolReturnData RunToolUIMF()
+        private void RunToolUIMF()
         {
             // Store the version info in the database
             if (!StoreToolVersionInfo())
@@ -143,7 +143,7 @@ namespace ImsDemuxPlugin
                 LogError("Aborting since StoreToolVersionInfo returned false");
                 mRetData.CloseoutMsg = "Error determining version of IMSDemultiplexer";
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                return mRetData;
+                return;
             }
 
             // Determine whether or not calibration should be performed
@@ -214,7 +214,7 @@ namespace ImsDemuxPlugin
                         mRetData.EvalMsg =
                             "De-multiplexed but Calibration failed.  If you want to re-demultiplex the _encoded.uimf file, you should rename the CalibrationLog.txt file";
 
-                        return mRetData;
+                        return;
                     }
                 }
             }
@@ -235,7 +235,7 @@ namespace ImsDemuxPlugin
                         mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                         mRetData.CloseoutMsg = msg;
 
-                        return mRetData;
+                        return;
                     }
                 }
 
@@ -257,7 +257,7 @@ namespace ImsDemuxPlugin
 
                         mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                         mRetData.CloseoutMsg = msg;
-                        return mRetData;
+                        return;
                     }
 
                     if (!IsAgilentIMSDataset(dotDDirectory))
@@ -269,7 +269,7 @@ namespace ImsDemuxPlugin
                         mRetData.EvalMsg = msg;
 
                         mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
-                        return mRetData;
+                        return;
                     }
 
                     msg = "UIMF file not found: " + uimfFileName;
@@ -277,7 +277,7 @@ namespace ImsDemuxPlugin
 
                     mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     mRetData.CloseoutMsg = msg;
-                    return mRetData;
+                    return;
                 }
             }
 
@@ -306,7 +306,7 @@ namespace ImsDemuxPlugin
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 mRetData.CloseoutMsg = msg;
 
-                return mRetData;
+                return;
             }
 
             if (mNeedToDemultiplex)
@@ -333,7 +333,7 @@ namespace ImsDemuxPlugin
 
             if (mRetData.CloseoutType != EnumCloseOutType.CLOSEOUT_SUCCESS)
             {
-                return mRetData;
+                return;
             }
 
             // Lookup the current .uimf file size
@@ -353,7 +353,7 @@ namespace ImsDemuxPlugin
                 LogError(msg);
                 mRetData.CloseoutMsg = msg;
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                return mRetData;
+                return;
             }
 
             if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
@@ -367,11 +367,9 @@ namespace ImsDemuxPlugin
                     mRetData = mDemuxTools.PerformManualCalibration(mMgrParams, mTaskParams, mRetData, calibrationSlope, calibrationIntercept);
                 }
             }
-
-            return mRetData;
         }
 
-        private ToolReturnData RunToolAgilentDotD()
+        private void RunToolAgilentDotD()
         {
             var agilentToUimf = new AgilentToUimfConversion(ResetTimestampForQueueWaitTimeLogging);
             RegisterEvents(agilentToUimf);
@@ -382,7 +380,7 @@ namespace ImsDemuxPlugin
                 mRetData.CloseoutMsg = agilentToUimf.ErrorMessage;
                 LogError(agilentToUimf.ErrorMessage);
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                return mRetData;
+                return;
             }
 
             // Store the version info in the database
@@ -391,7 +389,7 @@ namespace ImsDemuxPlugin
                 LogError("Aborting since StoreToolVersionInfo returned false");
                 mRetData.CloseoutMsg = "Error determining version of PNNL-PreProcessor";
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                return mRetData;
+                return;
             }
 
             // Locate data file on storage server
@@ -413,7 +411,7 @@ namespace ImsDemuxPlugin
 
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 mRetData.CloseoutMsg = msg;
-                return mRetData;
+                return;
             }
 
             if (!IsAgilentIMSDataset(dotDDirectory))
@@ -425,7 +423,7 @@ namespace ImsDemuxPlugin
                 mRetData.EvalMsg = msg;
 
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
-                return mRetData;
+                return;
             }
 
             var dotDTools = new AgilentDotDTools();
@@ -455,7 +453,7 @@ namespace ImsDemuxPlugin
                         mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                         mRetData.CloseoutMsg = msg;
 
-                        return mRetData;
+                        return;
                     }
                 }
 
@@ -485,7 +483,7 @@ namespace ImsDemuxPlugin
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 mRetData.CloseoutMsg = msg;
 
-                return mRetData;
+                return;
             }
 
             var doNotDeleteLocalOutput = true;
@@ -514,7 +512,7 @@ namespace ImsDemuxPlugin
 
             if (mRetData.CloseoutType != EnumCloseOutType.CLOSEOUT_SUCCESS)
             {
-                return mRetData;
+                return;
             }
 
             // Convert to UIMF
@@ -522,7 +520,7 @@ namespace ImsDemuxPlugin
 
             if (!agilentToUimf.RunConvert(mRetData, mMgrParams, mTaskParams, mFileTools))
             {
-                return mRetData;
+                return;
             }
 
             mUimfFilePath = Path.Combine(datasetDirectoryPath, mDataset + ".uimf");
@@ -544,10 +542,7 @@ namespace ImsDemuxPlugin
                 LogError(msg);
                 mRetData.CloseoutMsg = msg;
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                return mRetData;
             }
-
-            return mRetData;
         }
 
         /// <summary>
