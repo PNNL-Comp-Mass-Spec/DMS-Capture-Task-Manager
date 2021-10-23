@@ -526,8 +526,8 @@ namespace ImsDemuxPlugin
         {
             // Example messages for mRetData.EvalMsg
             // Data file size is 75 KB; minimum allowed size 100 KB
-            // ser file size is 8 KB; minimum allowed size 16 KB
-            // ser file is 0 bytes
+            // Data file size is 8 KB; minimum allowed size 16 KB
+            // Data file is 0 bytes
 
             var minSizeText = FileSizeToString(minSizeKB);
 
@@ -592,7 +592,7 @@ namespace ImsDemuxPlugin
                 }
             }
 
-            // If we got to here, everything was OK
+            // If we get here, everything is OK
             return EnumCloseOutType.CLOSEOUT_SUCCESS;
         }
 
