@@ -242,13 +242,17 @@ namespace ImsDemuxPlugin
             // Delete local .D directories and file(s)
             msg = "Cleaning up working directory";
             OnDebugEvent(msg);
+
             try
             {
                 if (!keepLocalOutput)
                 {
+                    RemoveReadOnlyFlag(localDotDDecodedFilePath, true);
+
                     mFileTools.DeleteDirectory(localDotDDecodedFilePath);
                 }
 
+                RemoveReadOnlyFlag(dotDLocalEncodedFileNamePath, true);
                 mFileTools.DeleteDirectory(dotDLocalEncodedFileNamePath);
             }
             catch (Exception ex)
@@ -351,20 +355,32 @@ namespace ImsDemuxPlugin
         /// <returns>True if success; otherwise false</returns>
         private bool CopyDotDFileToStorageServer(ToolReturnData returnData, string localDotDDecodedFilePath, string fileDescription)
         {
-            var success = true;
-
             // Copy the demultiplexed file to the storage server, renaming as DatasetName.d in the process
             var msg = "Copying " + fileDescription + " file to storage server";
             OnDebugEvent(msg);
-            const int retryCount = 3;
-            if (!CopyDirectoryWithRetry(localDotDDecodedFilePath, Path.Combine(mDatasetDirectoryPathRemote, mDataset + ".d"), true, retryCount))
+
+            var targetDirectoryPath = Path.Combine(mDatasetDirectoryPathRemote, mDataset + ".d");
+
+            // Assure that files in the target directory are all writable
+            var success = RemoveReadOnlyFlag(targetDirectoryPath, true);
+
+            if (!success)
             {
-                returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, "Error copying " + fileDescription + " file to storage server");
+                returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, "Error clearing the ReadOnly attribute for files at " + targetDirectoryPath);
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                success = false;
+                return false;
             }
 
-            return success;
+            const int retryCount = 3;
+
+            if (CopyDirectoryWithRetry(localDotDDecodedFilePath, targetDirectoryPath, true, retryCount))
+            {
+                return true;
+            }
+
+            returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, "Error copying " + fileDescription + " file to storage server");
+            returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+            return false;
         }
 
         public static string AppendToString(string currentText, string newText)
@@ -568,6 +584,39 @@ namespace ImsDemuxPlugin
                     OnErrorEvent("Exception in ParseConsoleOutputFileDemux", ex);
                     mLoggedConsoleOutputErrors.Add(ex.Message);
                 }
+            }
+        }
+
+        private bool RemoveReadOnlyFlag(string targetDirectoryPath, bool recurse)
+        {
+            try
+            {
+                var targetDirectory = new DirectoryInfo(targetDirectoryPath);
+                if (!targetDirectory.Exists)
+                {
+                    // Treat this as success
+                    return true;
+                }
+
+                var searchOption = recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+
+                foreach (var item in targetDirectory.GetFileSystemInfos("*.*", searchOption))
+                {
+                    if ((item.Attributes & FileAttributes.ReadOnly) != FileAttributes.ReadOnly)
+                    {
+                        continue;
+                    }
+
+                    OnDebugEvent("Removing the ReadOnly attribute from " + item.FullName);
+                    item.Attributes &= ~FileAttributes.ReadOnly;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Exception in RemoveReadOnlyFlag", ex);
+                return false;
             }
         }
 

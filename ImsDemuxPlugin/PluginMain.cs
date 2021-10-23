@@ -516,7 +516,7 @@ namespace ImsDemuxPlugin
             }
 
             // Convert to UIMF
-            if (!agilentToUimf.RunConvert(mRetData,mFileTools))
+            if (!agilentToUimf.RunConvert(mRetData, mFileTools))
             {
                 return;
             }
