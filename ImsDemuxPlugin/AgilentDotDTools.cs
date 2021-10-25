@@ -121,15 +121,20 @@ namespace ImsDemuxPlugin
             {
                 var document = new XmlDocument();
                 document.Load(imsFrameMethPath);
+
                 var manager = new XmlNamespaceManager(document.NameTable);
                 manager.AddNamespace("xs", "http://www.w3.org/2001/XMLSchema");
-                var query = "/FrameMethods/FrameMethod";
-                var nodeList = document.SelectNodes(query, manager);
+
+                const string FRAME_METHOD_NODE = "/FrameMethods/FrameMethod";
+
+                var nodeList = document.SelectNodes(FRAME_METHOD_NODE, manager);
 
                 if (nodeList == null)
                 {
-                    OnErrorEvent(string.Format("Agilent .D file, error parsing IMSFrameMeth.xml - node {0} not found in {1}",
-                        "/FrameMethods/FrameMethod", imsFrameMethSubPath));
+                    OnErrorEvent(string.Format(
+                        "Agilent .D file, error parsing IMSFrameMeth.xml - node {0} not found in {1}",
+                        FRAME_METHOD_NODE, imsFrameMethSubPath));
+
                     return methodInfo;
                 }
 
