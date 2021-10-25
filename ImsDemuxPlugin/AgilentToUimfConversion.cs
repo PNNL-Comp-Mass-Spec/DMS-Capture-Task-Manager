@@ -92,7 +92,7 @@ namespace ImsDemuxPlugin
                 return false;
             }
 
-            LogMessage("Performing Agilent .D to .UIMF conversion, dataset " + mDataset);
+            OnStatusEvent("Performing Agilent .D to .UIMF conversion, dataset " + mDataset);
 
             // Need to first convert the .d directory to a .UIMF file
             if (!ConvertAgilentDotDDirectoryToUIMF(mDatasetDirectoryPathRemote, mAgilentToUimfConverterPath, out _))
@@ -100,7 +100,7 @@ namespace ImsDemuxPlugin
                 if (string.IsNullOrEmpty(mRetData.CloseoutMsg))
                 {
                     mRetData.CloseoutMsg = "Unknown error converting the Agilent .d directory to a .UIMF file";
-                    LogError(mRetData.CloseoutMsg);
+                    OnErrorEvent(mRetData.CloseoutMsg);
                 }
 
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -171,7 +171,7 @@ namespace ImsDemuxPlugin
                             {
                                 dotDDirectoryPathLocal = altDir.FullName;
                                 altDirFound = true;
-                                LogMessage("Using the .d directory below the primary .d subdirectory: " + altDir.FullName);
+                                OnStatusEvent("Using the .d directory below the primary .d subdirectory: " + altDir.FullName);
                                 break;
                             }
                         }
@@ -180,7 +180,7 @@ namespace ImsDemuxPlugin
                     if (!altDirFound)
                     {
                         mRetData.CloseoutMsg = ".D directory does not have an AcqData subdirectory";
-                        LogError(mRetData.CloseoutMsg);
+                        OnErrorEvent(mRetData.CloseoutMsg);
                         return false;
                     }
                 }
@@ -210,7 +210,7 @@ namespace ImsDemuxPlugin
                 mLastStatusUpdate = DateTime.UtcNow;
                 mStatusUpdateIntervalMinutes = 5;
 
-                LogMessage(string.Format("Converting .d directory to .UIMF: {0} {1}", exePath, arguments));
+                OnStatusEvent(string.Format("Converting .d directory to .UIMF: {0} {1}", exePath, arguments));
 
                 const int maxRuntimeSeconds = MAX_AGILENT_TO_UIMF_RUNTIME_MINUTES * 60;
                 success = cmdRunner.RunProgram(exePath, arguments, "AgilentToUIMFConverter", true, maxRuntimeSeconds);
@@ -227,21 +227,21 @@ namespace ImsDemuxPlugin
                 catch (Exception ex)
                 {
                     // Do not treat this as a fatal error
-                    LogWarning("Exception deleting locally cached .d directory (" + dotDDirectoryPathLocal + "): " + ex.Message);
+                    OnWarningEvent("Exception deleting locally cached .d directory (" + dotDDirectoryPathLocal + "): " + ex.Message);
                 }
 
                 if (!success)
                 {
                     mRetData.CloseoutMsg = "Error running the AgilentToUIMFConverter";
-                    LogError(mRetData.CloseoutMsg);
+                    OnErrorEvent(mRetData.CloseoutMsg);
 
                     if (cmdRunner.ExitCode != 0)
                     {
-                        LogWarning("AgilentToUIMFConverter returned a non-zero exit code: " + cmdRunner.ExitCode);
+                        OnWarningEvent("AgilentToUIMFConverter returned a non-zero exit code: " + cmdRunner.ExitCode);
                     }
                     else
                     {
-                        LogWarning("Call to AgilentToUIMFConverter failed (but exit code is 0)");
+                        OnWarningEvent("Call to AgilentToUIMFConverter failed (but exit code is 0)");
                     }
 
                     return false;
@@ -261,11 +261,11 @@ namespace ImsDemuxPlugin
                         if (!sourceUimf.Exists)
                         {
                             mRetData.CloseoutMsg = "AgilentToUIMFConverter did not create a .UIMF file named " + sourceUimf.Name;
-                            LogError(mRetData.CloseoutMsg + ": " + sourceUimf.FullName);
+                            OnErrorEvent(mRetData.CloseoutMsg + ": " + sourceUimf.FullName);
                             return false;
                         }
 
-                        LogDebug(string.Format("Renaming {0} to {1}", sourceUimf.FullName, Path.GetFileName(targetUimfPath)));
+                        OnDebugEvent(string.Format("Renaming {0} to {1}", sourceUimf.FullName, Path.GetFileName(targetUimfPath)));
                         sourceUimf.MoveTo(targetUimfPath);
                     }
                 }
@@ -290,7 +290,7 @@ namespace ImsDemuxPlugin
             catch (Exception ex)
             {
                 mRetData.CloseoutMsg = "Exception converting .d directory to a UIMF file";
-                LogError(mRetData.CloseoutMsg + ": " + ex.Message);
+                OnErrorEvent(mRetData.CloseoutMsg + ": " + ex.Message);
                 skipCreateUIMF = false;
                 return false;
             }
@@ -359,7 +359,7 @@ namespace ImsDemuxPlugin
                 if (errorMessage.Length > 0)
                 {
                     mRetData.CloseoutMsg = errorMessage;
-                    LogError(mRetData.CloseoutMsg);
+                    OnErrorEvent(mRetData.CloseoutMsg);
                     skipCreateUIMF = true;
                     return false;
                 }
@@ -382,7 +382,7 @@ namespace ImsDemuxPlugin
             if (!uimfFile.Exists)
             {
                 mRetData.CloseoutMsg = "AgilentToUIMFConverter did not create a .UIMF file named " + uimfFile.Name;
-                LogError(mRetData.CloseoutMsg + ": " + uimfFile.FullName);
+                OnErrorEvent(mRetData.CloseoutMsg + ": " + uimfFile.FullName);
                 return false;
             }
 
@@ -394,7 +394,7 @@ namespace ImsDemuxPlugin
         {
             if (mDebugLevel >= 4)
             {
-                LogDebug("Copying " + dataFile.Extension + " file to the dataset directory");
+                OnDebugEvent("Copying " + dataFile.Extension + " file to the dataset directory");
             }
 
             mlockQueueResetTimestamp();
@@ -404,7 +404,7 @@ namespace ImsDemuxPlugin
 
             if (mDebugLevel >= 4)
             {
-                LogDebug("Copy complete");
+                OnDebugEvent("Copy complete");
             }
 
             try
@@ -415,7 +415,7 @@ namespace ImsDemuxPlugin
             catch (Exception ex)
             {
                 // Do not treat this as a fatal error
-                LogWarning("Exception deleting local copy of the new .UIMF file " + dataFile.FullName + ": " + ex.Message);
+                OnWarningEvent("Exception deleting local copy of the new .UIMF file " + dataFile.FullName + ": " + ex.Message);
             }
 
             return true;
@@ -496,29 +496,29 @@ namespace ImsDemuxPlugin
                     }
                     else if (dataLine.StartsWith("Error:", StringComparison.OrdinalIgnoreCase))
                     {
-                        LogError("AgilentToUIMFConverter error: " + dataLine);
+                        OnErrorEvent("AgilentToUIMFConverter error: " + dataLine);
                     }
                     else if (dataLine.StartsWith("Exception in", StringComparison.OrdinalIgnoreCase))
                     {
-                        LogError("AgilentToUIMFConverter error: " + dataLine);
+                        OnErrorEvent("AgilentToUIMFConverter error: " + dataLine);
                     }
                     else if (dataLine.StartsWith("Unhandled Exception", StringComparison.OrdinalIgnoreCase))
                     {
-                        LogError("AgilentToUIMFConverter error: " + dataLine);
+                        OnErrorEvent("AgilentToUIMFConverter error: " + dataLine);
                         unhandledException = true;
                     }
                 }
 
                 if (!string.IsNullOrEmpty(exceptionText))
                 {
-                    LogError(exceptionText);
+                    OnErrorEvent(exceptionText);
                 }
 
                 OnProgressUpdate("Converting to UIMF", percentComplete);
             }
             catch (Exception ex)
             {
-                LogError("Exception in ParseConsoleOutputFile: " + ex.Message);
+                OnErrorEvent("Exception in ParseConsoleOutputFile: " + ex.Message);
             }
         }
 
@@ -544,7 +544,7 @@ namespace ImsDemuxPlugin
                     dataFileDescription, FileSizeToString(actualSizeKB), minSizeText);
             }
 
-            LogError(string.Format(
+            OnErrorEvent(string.Format(
                 "{0} file may be corrupt. Actual file size is {1}; min allowable size is {2}; see {3}",
                 dataFileDescription,
                 FileSizeToString(actualSizeKB),
@@ -558,7 +558,7 @@ namespace ImsDemuxPlugin
             if (!File.Exists(uimfFilePath))
             {
                 mRetData.EvalMsg = "Data file " + uimfFilePath + " not found";
-                LogError(mRetData.EvalMsg);
+                OnErrorEvent(mRetData.EvalMsg);
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -609,7 +609,7 @@ namespace ImsDemuxPlugin
         {
             try
             {
-                LogDebug("Opening UIMF file to look for valid data");
+                OnDebugEvent("Opening UIMF file to look for valid data");
 
                 // Open the .UIMF file and read the first scan of the first frame
                 using var uimfReader = new DataReader(uimfFilePath);
@@ -648,7 +648,7 @@ namespace ImsDemuxPlugin
             }
             catch (Exception ex)
             {
-                LogError("Exception in UimfFileHasData: " + ex.Message);
+                OnErrorEvent("Exception in UimfFileHasData: " + ex.Message);
                 uimfStatusMessage = "appears corrupt (exception reading data)";
                 return false;
             }
@@ -706,7 +706,7 @@ namespace ImsDemuxPlugin
 
         private void CmdRunner_Timeout()
         {
-            LogError("cmdRunner timeout reported");
+            OnErrorEvent("cmdRunner timeout reported");
         }
 
         private void CmdRunner_LoopWaiting()
@@ -721,7 +721,7 @@ namespace ImsDemuxPlugin
             if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalMinutes >= mStatusUpdateIntervalMinutes)
             {
                 mLastStatusUpdate = DateTime.UtcNow;
-                LogMessage(string.Format("AgilentToUIMFConverter running; {0:F1} minutes elapsed",
+                OnStatusEvent(string.Format("AgilentToUIMFConverter running; {0:F1} minutes elapsed",
                                          DateTime.UtcNow.Subtract(mProcessingStartTime).TotalMinutes));
 
                 // Increment mStatusUpdateIntervalMinutes by 1 minute every time the status is logged, up to a maximum of 30 minutes
@@ -730,26 +730,6 @@ namespace ImsDemuxPlugin
                     mStatusUpdateIntervalMinutes++;
                 }
             }
-        }
-
-        private void LogError(string error)
-        {
-            OnErrorEvent(error);
-        }
-
-        private void LogMessage(string message)
-        {
-            OnStatusEvent(message);
-        }
-
-        private void LogWarning(string warning)
-        {
-            OnWarningEvent(warning);
-        }
-
-        private void LogDebug(string message)
-        {
-            OnDebugEvent(message);
         }
     }
 }
