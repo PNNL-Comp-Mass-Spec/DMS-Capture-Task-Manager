@@ -16,6 +16,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using JetBrains.Annotations;
 using PRISMDatabaseUtils;
 
 namespace CaptureTaskManager
@@ -718,6 +719,17 @@ namespace CaptureTaskManager
         public static void ShowTraceMessage(string message, bool includeDate = false, int emptyLinesBeforeMessage = 1)
         {
             BaseLogger.ShowTraceMessage(message, includeDate, "  ", emptyLinesBeforeMessage);
+        }
+
+        /// <summary>
+        /// Display a timestamp and message at the console
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="args"></param>
+        [StringFormatMethod("format")]
+        public static void ShowTraceMessage(string format, params object[] args)
+        {
+            ShowTraceMessage(string.Format(format, args));
         }
 
         /// <summary>

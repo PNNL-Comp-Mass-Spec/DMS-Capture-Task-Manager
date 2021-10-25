@@ -1,6 +1,7 @@
 ﻿
 using PRISM.Logging;
 using System;
+using JetBrains.Annotations;
 using PRISM;
 
 namespace CaptureTaskManager
@@ -17,6 +18,17 @@ namespace CaptureTaskManager
         {
             LogTools.LogDebug(statusMessage, writeToLog);
         }
+        /// <summary>
+        /// Show a status message at the console and optionally include in the log file, tagging it as a debug message
+        /// </summary>
+        /// <remarks>The message is shown in dark gray in the console.</remarks>
+        /// <param name="format">Status message format string</param>
+        /// <param name="args">string format arguments</param>
+        [StringFormatMethod("format")]
+        protected static void LogDebug(string format, params object[] args)
+        {
+            LogDebug(string.Format(format, args));
+        }
 
         /// <summary>
         /// Log an error message
@@ -29,6 +41,17 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
+        /// Log an error message
+        /// </summary>
+        /// <param name="format">Error message format string</param>
+        /// <param name="args">string format arguments</param>
+        [StringFormatMethod("format")]
+        protected static void LogError(string format, params object[] args)
+        {
+            LogError(string.Format(format, args));
+        }
+
+        /// <summary>
         /// Log an error message and exception
         /// </summary>
         /// <param name="errorMessage">Error message (do not include ex.message)</param>
@@ -36,6 +59,18 @@ namespace CaptureTaskManager
         protected static void LogError(string errorMessage, Exception ex)
         {
             LogTools.LogError(errorMessage, ex);
+        }
+
+        /// <summary>
+        /// Log an error message and exception
+        /// </summary>
+        /// <param name="ex">Exception to log</param>
+        /// <param name="format">Error message format string (do not include ex.message)</param>
+        /// <param name="args">string format arguments</param>
+        [StringFormatMethod("format")]
+        protected static void LogError(Exception ex, string format, params object[] args)
+        {
+            LogError(string.Format(format, args), ex);
         }
 
         /// <summary>
@@ -50,6 +85,17 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
+        /// Show a status message at the console and optionally include in the log file
+        /// </summary>
+        /// <param name="format">Status message format string</param>
+        /// <param name="args">string format arguments</param>
+        [StringFormatMethod("format")]
+        public static void LogMessage(string format, params object[] args)
+        {
+            LogMessage(string.Format(format, args));
+        }
+
+        /// <summary>
         /// Log a warning message
         /// </summary>
         /// <param name="warningMessage">Warning message</param>
@@ -57,6 +103,17 @@ namespace CaptureTaskManager
         protected static void LogWarning(string warningMessage, bool logToDb = false)
         {
             LogTools.LogWarning(warningMessage, logToDb);
+        }
+
+        /// <summary>
+        /// Log a warning message
+        /// </summary>
+        /// <param name="format">Warning message format string</param>
+        /// <param name="args">string format arguments</param>
+        [StringFormatMethod("format")]
+        protected static void LogWarning(string format, params object[] args)
+        {
+            LogWarning(string.Format(format, args));
         }
 
         /// <summary>
