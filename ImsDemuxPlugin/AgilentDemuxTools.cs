@@ -344,7 +344,7 @@ namespace ImsDemuxPlugin
                     // The parent method should call OnCopyFileWithRetry() or ResetTimestampForQueueWaitTimeLogging() prior to calling this method
 
                     return fileTools.CopyDirectoryWithResume(sourceDirectoryPath, targetDirectoryPath, true,
-                        (overWrite ? FileTools.FileOverwriteMode.AlwaysOverwrite : FileTools.FileOverwriteMode.DoNotOverwrite),
+                        overWrite ? FileTools.FileOverwriteMode.AlwaysOverwrite : FileTools.FileOverwriteMode.DoNotOverwrite,
                         new List<string>());
                 }
                 catch (Exception ex)
