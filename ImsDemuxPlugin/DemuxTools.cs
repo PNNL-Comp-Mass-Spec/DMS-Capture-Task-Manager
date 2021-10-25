@@ -227,10 +227,7 @@ namespace ImsDemuxPlugin
             {
                 const string msg = "Exception adding the bin-centric tables to the UIMF file";
                 OnErrorEvent(msg, ex);
-                if (returnData == null)
-                {
-                    returnData = new ToolReturnData();
-                }
+                returnData ??= new ToolReturnData();
 
                 returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, msg);
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
