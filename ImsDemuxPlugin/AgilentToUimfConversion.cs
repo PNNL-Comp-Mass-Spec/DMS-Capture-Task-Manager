@@ -95,7 +95,7 @@ namespace ImsDemuxPlugin
             LogMessage("Performing Agilent .D to .UIMF conversion, dataset " + mDataset);
 
             // Need to first convert the .d directory to a .UIMF file
-            if (!ConvertAgilentDotDDirectoryToUIMF(mDatasetDirectoryPathRemote, mAgilentToUimfConverterPath, out var skipCreateUIMF))
+            if (!ConvertAgilentDotDDirectoryToUIMF(mDatasetDirectoryPathRemote, mAgilentToUimfConverterPath, out _))
             {
                 if (string.IsNullOrEmpty(mRetData.CloseoutMsg))
                 {
