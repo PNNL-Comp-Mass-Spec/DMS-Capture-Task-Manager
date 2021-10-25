@@ -18,12 +18,15 @@ using UIMFLibrary;
 namespace ImsDemuxPlugin
 {
     // TODO: Update for newer version UIMF files, with the mux sequence stored directly in MultiplexingEncodingSequence.
+
     /// <summary>
     /// This class demultiplexes a .UIMF file using the UIMFDemultiplexer
     /// </summary>
     public class DemuxTools : EventNotifier
     {
-        // Ignore Spelling: demultiplexed, demultiplexes, demultiplexing, demultiplexer, demux, ims_tof, Methow, calibrants, workdir, cmd
+        // Ignore Spelling: calibrants, cmd, demultiplexed, demultiplexer, demultiplexes, demultiplexing, demux
+        // Ignore Spelling: ims_tof, Methow, mux, workdir
+
         public const string CALIBRATION_LOG_FILE = "CalibrationLog.txt";
 
         private const string DECODED_UIMF_SUFFIX = "_decoded.uimf";
@@ -850,7 +853,7 @@ namespace ImsDemuxPlugin
         }
 
         /// <summary>
-        /// Copies the result files to the storage server
+        /// Copy the demultiplexed file to the storage server, renaming as DatasetName.uimf in the process
         /// </summary>
         /// <param name="returnData"></param>
         /// <param name="localUimfDecodedFilePath"></param>
