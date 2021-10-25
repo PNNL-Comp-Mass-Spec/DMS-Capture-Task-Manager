@@ -84,8 +84,7 @@ namespace DatasetIntegrityPlugin
         {
             // Note that Debug messages are logged if mDebugLevel == 5
 
-            var msg = "Starting DatasetIntegrityPlugin.PluginMain.RunTool()";
-            LogDebug(msg);
+            LogDebug("Starting DatasetIntegrityPlugin.PluginMain.RunTool()");
 
             // Perform base class operations, if any
             mRetData = base.RunTool();
@@ -127,8 +126,7 @@ namespace DatasetIntegrityPlugin
                 return mRetData;
             }
 
-            msg = "Performing integrity test, dataset '" + mDataset + "'";
-            LogMessage(msg);
+            LogMessage("Performing integrity test, dataset " + mDataset);
 
             // Set up the file paths
             var storageVolExt = mTaskParams.GetParam("Storage_Vol_External");
@@ -138,15 +136,13 @@ namespace DatasetIntegrityPlugin
 
             // Select which tests will be performed based on instrument class
 
-            msg = "Instrument class: " + instClassName;
-            LogDebug(msg);
+            LogDebug("Instrument class: " + instClassName);
 
             if (instrumentClass == InstrumentClassInfo.InstrumentClass.Unknown)
             {
-                msg = "Instrument class not recognized: " + instClassName;
-                LogError(msg);
-                mRetData.CloseoutMsg = msg;
+                mRetData.CloseoutMsg = "Instrument class not recognized: " + instClassName;
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                LogError(mRetData.CloseoutMsg);
                 return mRetData;
             }
 
@@ -274,8 +270,7 @@ namespace DatasetIntegrityPlugin
                     break;
             }
 
-            msg = "Completed PluginMain.RunTool()";
-            LogDebug(msg);
+            LogDebug("Completed PluginMain.RunTool()");
 
             return mRetData;
         }
@@ -341,8 +336,7 @@ namespace DatasetIntegrityPlugin
                 mLastStatusUpdate = DateTime.UtcNow;
                 mStatusUpdateIntervalMinutes = 5;
 
-                var msg = "Converting .d directory to .CDF: " + exePath + " " + arguments;
-                LogMessage(msg);
+                LogMessage(string.Format("Converting .d directory to .CDF: {0} {1}", exePath, arguments));
 
                 const int maxRuntimeSeconds = MAX_AGILENT_TO_CDF_RUNTIME_MINUTES * 60;
                 success = cmdRunner.RunProgram(exePath, arguments, "OpenChrom", true, maxRuntimeSeconds);
@@ -901,43 +895,50 @@ namespace DatasetIntegrityPlugin
         {
             var maxSizeText = FileSizeToString(maxSizeKB);
 
-            // Data file may be corrupt
-            var msg = dataFileDescription + " file may be corrupt. Actual file size is " +
-                      FileSizeToString(actualSizeKB) + "; " +
-                      "max allowable size is " + maxSizeText + "; see " + filePath;
+            // File too large, data file may be corrupt
 
-            // Data file size is more than
+            mRetData.EvalMsg = string.Format(
+                "{0} file size is {1}; maximum allowed size is {2}",
+                dataFileDescription, FileSizeToString(actualSizeKB), maxSizeText);
+
             mRetData.EvalMsg = dataFileDescription + " file size is more than " + maxSizeText;
 
-            LogError(msg);
+            LogError(string.Format(
+                "{0} file may be corrupt. Actual file size is {1}; max allowable size is {2}; see {3}",
+                dataFileDescription,
+                FileSizeToString(actualSizeKB),
+                maxSizeText,
+                filePath));
         }
 
         private void ReportFileSizeTooSmall(string dataFileDescription, string filePath, float actualSizeKB, float minSizeKB)
         {
-            // Example messages for mRetData.EvalMsg
-            // Data file size is 75 KB; minimum allowed size 100 KB
-            // ser file size is 8 KB; minimum allowed size 16 KB
-            // ser file is 0 bytes
-
             var minSizeText = FileSizeToString(minSizeKB);
 
-            // Data file may be corrupt
-            var msg = dataFileDescription + " file may be corrupt. Actual file size is " +
-                      FileSizeToString(actualSizeKB) + "; " +
-                      "min allowable size is " + minSizeText + "; see " + filePath;
+            // File too small, data file may be corrupt
+
+            // Example messages for mRetData.EvalMsg:
+            //   Data file size is 75 KB; minimum allowed size is 100 KB
+            //   ser file size is 8 KB; minimum allowed size is 16 KB
+            //   ser file is 0 bytes
 
             if (Math.Abs(actualSizeKB) < 0.0001)
             {
-                mRetData.EvalMsg = dataFileDescription + " file is 0 bytes";
+                mRetData.EvalMsg = string.Format("{0} file is 0 bytes", dataFileDescription);
             }
             else
             {
-                mRetData.EvalMsg = dataFileDescription + " file size is " +
-                                   FileSizeToString(actualSizeKB) + "; " +
-                                   "minimum allowed size " + minSizeText;
+                mRetData.EvalMsg = string.Format(
+                    "{0} file size is {1}; minimum allowed size is {2}",
+                    dataFileDescription, FileSizeToString(actualSizeKB), minSizeText);
             }
 
-            LogError(msg);
+            LogError(string.Format(
+                "{0} file may be corrupt. Actual file size is {1}; min allowable size is {2}; see {3}",
+                dataFileDescription,
+                FileSizeToString(actualSizeKB),
+                minSizeText,
+                filePath));
         }
 
         /// <summary>
@@ -2422,28 +2423,30 @@ namespace DatasetIntegrityPlugin
 
         private void WarnFileSizeTooSmall(string dataFileDescription, string filePath, float actualSizeKB, float smallSizeThresholdKB)
         {
-            // Example messages for mRetData.EvalMsg
-            // MSPeak.bin file size is 259 KB; typically it is at least 500 KB
-
             var thresholdText = FileSizeToString(smallSizeThresholdKB);
 
             // Data file may be corrupt
-            var msg = dataFileDescription + " file may be corrupt. Actual file size is " +
-                      FileSizeToString(actualSizeKB) + "; " +
-                      "typically the file is at least " + thresholdText + "; see " + filePath;
+
+            // Example message for mRetData.EvalMsg:
+            //   MSPeak.bin file size is 259 KB; typically it is at least 500 KB
 
             if (Math.Abs(actualSizeKB) < 0.0001)
             {
-                mRetData.EvalMsg = dataFileDescription + " file is 0 bytes";
+                mRetData.EvalMsg = string.Format("{0} file is 0 bytes", dataFileDescription);
             }
             else
             {
-                mRetData.EvalMsg = dataFileDescription + " file size is " +
-                                   FileSizeToString(actualSizeKB) + "; " +
-                                   "typically the file is at least " + thresholdText;
+                mRetData.EvalMsg = string.Format(
+                    "{0} file size is {1}; typically the file is at least {2}",
+                    dataFileDescription, FileSizeToString(actualSizeKB), thresholdText);
             }
 
-            LogWarning(msg);
+            LogWarning(string.Format(
+                "{0} file may be corrupt. Actual file size is {1}; typically the file is at least {2}; see {3}",
+                dataFileDescription,
+                FileSizeToString(actualSizeKB),
+                thresholdText,
+                filePath));
         }
 
         /// <summary>
@@ -2454,13 +2457,11 @@ namespace DatasetIntegrityPlugin
         /// <param name="statusTools">Tools for status reporting</param>
         public override void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
         {
-            var msg = "Starting PluginMain.Setup()";
-            LogDebug(msg);
+            LogDebug("Starting PluginMain.Setup()");
 
             base.Setup(mgrParams, taskParams, statusTools);
 
-            msg = "Completed PluginMain.Setup()";
-            LogDebug(msg);
+            LogDebug("Completed PluginMain.Setup()");
         }
 
         /// <summary>

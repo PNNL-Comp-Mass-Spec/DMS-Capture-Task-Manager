@@ -305,8 +305,7 @@ namespace CaptureTaskManager
             }
             catch (Exception ex)
             {
-                var msg = "Error generating status info: " + ex.Message;
-                OnWarningEvent(msg);
+                OnWarningEvent("Error generating status info: " + ex.Message);
                 xmlText = string.Empty;
             }
 
@@ -488,8 +487,7 @@ namespace CaptureTaskManager
                     // Post an entry to the log, only when writingErrorCountSaved is 5, 10, 20, 30, etc.
                     if (mWritingErrorCountSaved == WRITE_FAILURE_LOG_THRESHOLD || mWritingErrorCountSaved % 10 == 0)
                     {
-                        var msg = "Error writing status file " + Path.GetFileName(statusFilePath) + ": " + ex.Message;
-                        OnWarningEvent(msg);
+                        OnWarningEvent("Error writing status file " + Path.GetFileName(statusFilePath) + ": " + ex.Message);
                     }
                 }
                 success = false;

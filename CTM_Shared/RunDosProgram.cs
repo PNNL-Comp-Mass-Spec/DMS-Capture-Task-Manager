@@ -419,8 +419,7 @@ namespace CaptureTaskManager
             }
             catch (Exception ex)
             {
-                var msg = "Exception running external program " + executablePath;
-                OnErrorEvent(msg, ex);
+                OnErrorEvent("Exception running external program " + executablePath, ex);
                 mProgRunner = null;
 
                 mStopTime = DateTime.UtcNow;
@@ -437,8 +436,7 @@ namespace CaptureTaskManager
             {
                 if (ProgramAborted && mAbortProgramPostLogEntry || !ProgramAborted)
                 {
-                    var msg = "  ProgRunner.ExitCode = " + ExitCode + " for Program = " + executablePath;
-                    OnErrorEvent(msg);
+                    OnErrorEvent("  ProgRunner.ExitCode = " + ExitCode + " for Program = " + executablePath);
                 }
                 return false;
             }

@@ -8,6 +8,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
+using System.Text;
 using PRISM;
 using PRISM.Logging;
 using PRISMDatabaseUtils;
@@ -139,11 +140,12 @@ namespace CaptureTaskManager
                 return;
             }
 
-            var msg = string.Empty;
+            var msg = new StringBuilder();
 
             foreach (DbParameter myParam in inpCmd.Parameters)
             {
-                msg += Environment.NewLine + string.Format("  Name= {0,-20}, Value= {1}", myParam.ParameterName, DbCStr(myParam.Value));
+                msg.AppendLine();
+                msg.AppendFormat("  Name= {0,-20}, Value= {1}", myParam.ParameterName, DbCStr(myParam.Value));
             }
 
             var writeToLog = mDebugLevel >= 5;

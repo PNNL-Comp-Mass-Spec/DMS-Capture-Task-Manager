@@ -35,8 +35,7 @@ namespace DatasetArchivePlugin
             mSubmittedToMyEMSL = false;
             mMyEMSLAlreadyUpToDate = false;
 
-            var msg = "Starting DatasetArchivePlugin.PluginMain.RunTool()";
-            LogDebug(msg);
+            LogDebug("Starting DatasetArchivePlugin.PluginMain.RunTool()");
 
             // Perform base class operations, if any
             var returnData = base.RunTool();
@@ -72,9 +71,7 @@ namespace DatasetArchivePlugin
             // Attach the MyEMSL Upload event handler
             archOpTool.MyEMSLUploadComplete += MyEMSLUploadCompleteHandler;
 
-            msg = "Starting " + archiveOpDescription + ", job " + mJob + ", dataset " + mDataset;
-
-            LogMessage(msg);
+            LogMessage(string.Format("Starting {0}, job {1}, dataset {2}", archiveOpDescription, mJob, mDataset));
             if (archOpTool.PerformTask())
             {
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
@@ -95,27 +92,22 @@ namespace DatasetArchivePlugin
                 returnData.EvalMsg = archOpTool.WarningMsg;
             }
 
-            if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
+            if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS && mSubmittedToMyEMSL)
             {
-                if (mSubmittedToMyEMSL)
+                // Note that stored procedure SetStepTaskComplete will update MyEMSL State values if returnData.EvalCode is 4 or 7
+                if (mMyEMSLAlreadyUpToDate)
                 {
-                    // Note that stored procedure SetStepTaskComplete will update MyEMSL State values if returnData.EvalCode is 4 or 7
-                    if (mMyEMSLAlreadyUpToDate)
-                    {
-                        returnData.EvalCode = EnumEvalCode.EVAL_CODE_MYEMSL_IS_ALREADY_UP_TO_DATE;
-                    }
-                    else
-                    {
-                        returnData.EvalCode = EnumEvalCode.EVAL_CODE_SUBMITTED_TO_MYEMSL;
-                    }
+                    returnData.EvalCode = EnumEvalCode.EVAL_CODE_MYEMSL_IS_ALREADY_UP_TO_DATE;
+                }
+                else
+                {
+                    returnData.EvalCode = EnumEvalCode.EVAL_CODE_SUBMITTED_TO_MYEMSL;
                 }
             }
 
-            msg = "Completed " + archiveOpDescription + ", job " + mJob;
-            LogMessage(msg);
+            LogMessage(string.Format("Completed {0}, job {1}", archiveOpDescription, mJob));
 
-            msg = "Completed PluginMain.RunTool()";
-            LogDebug(msg);
+            LogDebug("Completed PluginMain.RunTool()");
 
             return returnData;
         }
@@ -128,13 +120,11 @@ namespace DatasetArchivePlugin
         /// <param name="statusTools">Tools for status reporting</param>
         public override void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
         {
-            var msg = "Starting PluginMain.Setup()";
-            LogDebug(msg);
+            LogDebug("Starting PluginMain.Setup()");
 
             base.Setup(mgrParams, taskParams, statusTools);
 
-            msg = "Completed PluginMain.Setup()";
-            LogDebug(msg);
+            LogDebug("Completed PluginMain.Setup()");
         }
 
         /// <summary>

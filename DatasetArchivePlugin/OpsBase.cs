@@ -27,9 +27,9 @@ namespace DatasetArchivePlugin
     {
         // Ignore Spelling: MyEMSLUploader, Unsubscribe
 
-        private const string ARCHIVE = "Archive ";
+        private const string ARCHIVE = "Archive";
 
-        private const string UPDATE = "Archive update ";
+        private const string UPDATE = "Archive update";
 
         private const int LARGE_DATASET_THRESHOLD_GB_NO_RETRY = 15;
 
@@ -470,10 +470,11 @@ namespace DatasetArchivePlugin
 
                 if (!mMyEmslUploadSuccess)
                 {
-                    var msg = "SetupMetadataAndUpload reported true for dataset " + mDatasetName +
-                              " but mMyEmslUploadSuccess is false; need to create ArchiveUpdate tasks for subdirectories " +
-                              string.Join(", ", skippedSubdirectories);
-                    LogTools.LogError(msg, null, true);
+                    LogTools.LogError(string.Format(
+                        "SetupMetadataAndUpload reported true for dataset {0} but mMyEmslUploadSuccess is false; " +
+                        "need to create ArchiveUpdate tasks for subdirectories {1}",
+                        mDatasetName, string.Join(", ", skippedSubdirectories)), 
+                        null, true);
 
                     // Return true since the primary archive task succeeded
                     return true;
@@ -650,11 +651,8 @@ namespace DatasetArchivePlugin
         /// <param name="logToDB">True to log to the database and a local file; false for local file only</param>
         private void LogOperationFailed(string dsName, string reason = "", bool logToDB = false)
         {
-            var msg = mArchiveOrUpdate + "failed, dataset " + dsName;
-            if (!string.IsNullOrEmpty(reason))
-            {
-                msg += "; " + reason;
-            }
+            var msg = string.Format("{0} failed, dataset {1}{2}",
+                mArchiveOrUpdate, dsName, string.IsNullOrEmpty(reason) ? string.Empty : "; " + reason);
 
             if (logToDB)
             {
@@ -724,7 +722,7 @@ namespace DatasetArchivePlugin
                 // Example log message:
                 // ... uploading files, 97.3% complete for 35,540 KB; QC_Shew_16-01_1_20Jul17_Merry_17-05-03_dta.zip
 
-                var msgBase = "  ... " + verb + ", " + e.PercentCompleted.ToString("0.0") + "% complete";
+                var msgBase = string.Format(" ... {0}, {1:0.0}% complete", verb, e.PercentCompleted);
 
                 string msg;
 
@@ -756,20 +754,13 @@ namespace DatasetArchivePlugin
 
         private void myEMSLUploader_UploadCompleted(object sender, UploadCompletedEventArgs e)
         {
-            var msg = "  ... MyEmsl upload task complete";
-
             // Note that e.ServerResponse will simply have the StatusURL if the upload succeeded
             // If a problem occurred, e.ServerResponse will either have the full server response, or may even be blank
-            if (string.IsNullOrEmpty(e.ServerResponse))
-            {
-                msg += ": empty server response";
-            }
-            else
-            {
-                msg += ": " + e.ServerResponse;
-            }
 
-            OnDebugEvent(msg);
+            OnDebugEvent(string.Format(
+                "  ... MyEmsl upload task complete: {0}",
+                string.IsNullOrEmpty(e.ServerResponse) ? "empty server response" : e.ServerResponse));
+
             mMyEmslUploadSuccess = true;
         }
 

@@ -108,7 +108,9 @@ namespace SrcFileRenamePlugin
                 }
                 else
                 {
-                    var msg = "Error " + mShareConnector.ErrorMessage + " connecting to " + sourceDirectoryPath + " as user " + mUserName + " using 'secfso'";
+                    var msg = string.Format(
+                        "Error {0} connecting to {1} as user {2} using 'secfso'",
+                        mShareConnector.ErrorMessage, sourceDirectoryPath, mUserName);
 
                     if (mShareConnector.ErrorMessage == "1326")
                     {
@@ -123,7 +125,8 @@ namespace SrcFileRenamePlugin
                         OnErrorEvent(msg);
                     }
 
-                    errorMessage = "Error connecting to " + sourceDirectoryPath + " as user " + mUserName + " using 'secfso'";
+                    errorMessage = string.Format("Error connecting to {0} as user {1} using 'secfso'", sourceDirectoryPath, mUserName);
+
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
             }
@@ -318,9 +321,8 @@ namespace SrcFileRenamePlugin
                         else
                         {
                             OnWarningEvent(string.Format(
-                                               "Hashes do not match for {0}: {1} on instrument vs. {2} on storage server",
-                                               candidateFile.FullName, sha1Hash, instrumentFileHash
-                                               ));
+                                "Hashes do not match for {0}: {1} on instrument vs. {2} on storage server",
+                                candidateFile.FullName, sha1Hash, instrumentFileHash));
                         }
                     }
                     else
@@ -328,8 +330,10 @@ namespace SrcFileRenamePlugin
                         // Log a message for the first item checked in fileNamesToCheck
                         if (!loggedDatasetNotFound)
                         {
-                            var msg = "Dataset " + datasetNameBase + ": data file and/or directory not found using " + datasetNameBase + ".*";
-                            OnWarningEvent(msg);
+                            OnWarningEvent(string.Format(
+                                "Dataset {0}: data file and/or directory not found using {1}.*",
+                                datasetNameBase, datasetNameBase));
+
                             loggedDatasetNotFound = true;
                         }
 
@@ -339,8 +343,10 @@ namespace SrcFileRenamePlugin
 
                 if (alreadyRenamed)
                 {
-                    var msg = "Skipping dataset " + datasetNameBase + " since data file and/or directory already renamed to " + datasetNameBase;
-                    OnStatusEvent(msg);
+                    OnStatusEvent(string.Format(
+                        "Skipping dataset {0} since data file and/or directory already renamed to {1}",
+                        datasetNameBase, datasetNameBase));
+
                     countRenamed++;
                     break;
                 }

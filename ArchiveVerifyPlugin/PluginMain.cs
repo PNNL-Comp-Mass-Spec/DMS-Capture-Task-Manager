@@ -436,8 +436,7 @@ namespace ArchiveVerifyPlugin
 
                     mismatchCount++;
 
-                    var msg = " ... file " + metadataFile.Key + " not found in MyEMSL (CompareArchiveFilesToList)";
-                    LogError(msg);
+                    LogError(string.Format(" ... file {0} not found in MyEMSL (CompareArchiveFilesToList)", metadataFile.Key));
                 }
                 else
                 {
@@ -468,10 +467,9 @@ namespace ArchiveVerifyPlugin
 
                         mTotalMismatchCount++;
 
-                        var msg = " ... file mismatch for " + archiveFile.RelativePathWindows +
-                                  "; MyEMSL reports " + archiveFile.Hash + " but expecting " + metadataFile.Value;
-
-                        LogError(msg);
+                        LogError(string.Format(
+                            " ... file mismatch for {0}; MyEMSL reports {1} but expecting {2}",
+                            archiveFile.RelativePathWindows, archiveFile.Hash, metadataFile.Value));
 
                         mismatchCount++;
                     }
@@ -989,16 +987,14 @@ namespace ArchiveVerifyPlugin
 
                     mTotalMismatchCount++;
 
-                    var msg = "MyEMSL status lookup did not report any files for Dataset_ID " + mDatasetID;
-                    if (!string.IsNullOrEmpty(subDir))
-                    {
-                        msg += " and subdirectory " + subDir;
-                    }
+                    mRetData.CloseoutMsg = string.Format(
+                        "MyEMSL status lookup did not report any files for Dataset_ID {0}{1}",
+                        mDatasetID,
+                        string.IsNullOrEmpty(subDir) ? string.Empty : " and subdirectory " + subDir);
 
-                    mRetData.CloseoutMsg = msg;
                     mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
 
-                    LogWarning(" ... " + msg);
+                    LogWarning(" ... " + mRetData.CloseoutMsg);
                     transactionId = 0;
                     return false;
                 }

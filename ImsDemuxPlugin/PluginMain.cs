@@ -226,12 +226,10 @@ namespace ImsDemuxPlugin
                     }
                     catch (Exception ex)
                     {
-                        var msg = "Exception deleting 0-byte uimf_encoded file";
-                        LogError(msg, ex);
-
+                        mRetData.CloseoutMsg = "Exception deleting 0-byte uimf_encoded file";
                         mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                        mRetData.CloseoutMsg = msg;
 
+                        LogError(mRetData.CloseoutMsg, ex);
                         return;
                     }
                 }
@@ -289,19 +287,16 @@ namespace ImsDemuxPlugin
             if (queryResult == MultiplexingStatus.NonMultiplexed)
             {
                 // De-multiplexing not required, but we should still attempt calibration (if enabled)
-                var msg = "No demultiplexing required for dataset " + mDataset;
-                LogMessage(msg);
+                LogMessage("No demultiplexing required for dataset " + mDataset);
                 mRetData.EvalMsg = "Non-Multiplexed";
                 mNeedToDemultiplex = false;
             }
             else if (queryResult == MultiplexingStatus.Error)
             {
                 // There was a problem determining the UIMF file status. Set state and exit
-                var msg = "Problem determining UIMF file status for dataset " + mDataset;
-                LogMessage(msg);
-
+                mRetData.CloseoutMsg = "Problem determining UIMF file status for dataset " + mDataset;
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                mRetData.CloseoutMsg = msg;
+                LogMessage(mRetData.CloseoutMsg);
 
                 return;
             }
@@ -403,23 +398,21 @@ namespace ImsDemuxPlugin
 
             if (!dotDDirectory.Exists)
             {
-                var msg = "Dataset .d directory not found: " + dotDDirectory.FullName;
-                LogError(msg);
-
+                mRetData.CloseoutMsg = "Dataset .d directory not found: " + dotDDirectory.FullName;
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                mRetData.CloseoutMsg = msg;
+                LogError(mRetData.CloseoutMsg);
+
                 return;
             }
 
             if (!IsAgilentIMSDataset(dotDDirectory))
             {
-                var msg = "Skipped since not an IMS dataset (no .UIMF file or IMS files)";
-                LogMessage(msg);
-
                 mRetData.EvalCode = EnumEvalCode.EVAL_CODE_SKIPPED;
-                mRetData.EvalMsg = msg;
+                mRetData.EvalMsg = "Skipped since not an IMS dataset (no .UIMF file or IMS files)";
 
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+
+                LogMessage(mRetData.EvalMsg);
                 return;
             }
 
@@ -447,11 +440,9 @@ namespace ImsDemuxPlugin
                     }
                     catch (Exception ex)
                     {
-                        var msg = "Exception deleting incomplete Agilent .D IMS _muxed.d directory";
-                        LogError(msg, ex);
-
+                        mRetData.CloseoutMsg = "Exception deleting incomplete Agilent .D IMS _muxed.d directory";
                         mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                        mRetData.CloseoutMsg = msg;
+                        LogError(mRetData.CloseoutMsg, ex);
 
                         return;
                     }
@@ -466,22 +457,20 @@ namespace ImsDemuxPlugin
             mNeedToDemultiplex = true;
 
             var queryResult = dotDTools.GetDotDMuxStatus(dotDDirPath, out _);
+
             if (queryResult == MultiplexingStatus.NonMultiplexed)
             {
                 // De-multiplexing not required, but we should still attempt calibration (if enabled)
-                var msg = "No demultiplexing required for dataset " + mDataset;
-                LogMessage(msg);
+                LogMessage("No demultiplexing required for dataset " + mDataset);
                 mRetData.EvalMsg = "Non-Multiplexed";
                 mNeedToDemultiplex = false;
             }
             else if (queryResult == MultiplexingStatus.Error)
             {
                 // There was a problem determining the Agilent IMS .D file status. Set state and exit
-                var msg = "Problem determining Agilent IMS .D file status for dataset " + mDataset;
-                LogMessage(msg);
-
+                mRetData.CloseoutMsg = "Problem determining Agilent IMS .D file status for dataset " + mDataset;
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                mRetData.CloseoutMsg = msg;
+                LogMessage(mRetData.CloseoutMsg);
 
                 return;
             }
@@ -549,13 +538,11 @@ namespace ImsDemuxPlugin
         /// <param name="statusTools">Tools for status reporting</param>
         public override void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
         {
-            var msg = "Starting PluginMain.Setup()";
-            LogDebug(msg);
+            LogDebug("Starting PluginMain.Setup()");
 
             base.Setup(mgrParams, taskParams, statusTools);
 
-            msg = "Completed PluginMain.Setup()";
-            LogDebug(msg);
+            LogDebug("Completed PluginMain.Setup()");
 
             // Determine the path to UIMFDemultiplexer_Console.exe
             var uimfDemultiplexerProgLoc = GetUimfDemultiplexerPath();

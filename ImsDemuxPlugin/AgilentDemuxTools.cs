@@ -109,8 +109,7 @@ namespace ImsDemuxPlugin
             UpdateDatasetInfo(mgrParams, taskParams);
 
             var jobNum = taskParams.GetParam("Job");
-            var msg = "Performing demultiplexing, job " + jobNum + ", dataset " + mDataset;
-            OnStatusEvent(msg);
+            OnStatusEvent(string.Format("Performing demultiplexing, job {0}, dataset {1}", jobNum, mDataset));
 
             var postProcessingError = false;
 
@@ -162,8 +161,7 @@ namespace ImsDemuxPlugin
             }
             catch (Exception ex)
             {
-                msg = "Exception calling DemultiplexFile for dataset " + mDataset;
-                OnErrorEvent(msg, ex);
+                OnErrorEvent("Exception calling DemultiplexFile for dataset " + mDataset, ex);
                 returnData.CloseoutMsg = "Error demultiplexing Agilent IMS .D file";
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return returnData;
@@ -194,8 +192,7 @@ namespace ImsDemuxPlugin
             if (!postProcessingError)
             {
                 // Rename Agilent IMS .D file on storage server
-                msg = "Renaming Agilent IMS .D file on storage server";
-                OnDebugEvent(msg);
+                OnDebugEvent("Renaming Agilent IMS .D file on storage server");
 
                 // If this is a re-run, the encoded file has already been renamed
                 // This is determined by looking for "_encoded" in the UIMF file name
@@ -240,8 +237,7 @@ namespace ImsDemuxPlugin
             }
 
             // Delete local .D directories and file(s)
-            msg = "Cleaning up working directory";
-            OnDebugEvent(msg);
+            OnDebugEvent("Cleaning up working directory");
 
             for (var i = 0; i < 3; i++)
             {
@@ -255,8 +251,7 @@ namespace ImsDemuxPlugin
                 catch (Exception ex)
                 {
                     // Error deleting files; don't treat this as a fatal error
-                    msg = "Exception deleting working directory file(s): " + ex.Message;
-                    OnErrorEvent(msg);
+                    OnErrorEvent("Exception deleting working directory file(s): " + ex.Message);
                     if (i < 2)
                     {
                         System.Threading.Thread.Sleep(3000);
@@ -280,8 +275,7 @@ namespace ImsDemuxPlugin
             catch (Exception ex)
             {
                 // Error deleting files; don't treat this as a fatal error
-                msg = "Exception deleting working directory file(s): " + ex.Message;
-                OnErrorEvent(msg);
+                OnErrorEvent("Exception deleting working directory file(s): " + ex.Message);
             }
 
             // Update the return data
@@ -378,8 +372,7 @@ namespace ImsDemuxPlugin
         private bool CopyDotDFileToStorageServer(ToolReturnData returnData, string localDotDDecodedFilePath, string fileDescription)
         {
             // Copy the demultiplexed file to the storage server, renaming as DatasetName.d in the process
-            var msg = "Copying " + fileDescription + " file to storage server";
-            OnDebugEvent(msg);
+            OnDebugEvent("Copying " + fileDescription + " file to storage server");
 
             var targetDirectoryPath = Path.Combine(mDatasetDirectoryPathRemote, mDataset + ".d");
 

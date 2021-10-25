@@ -89,14 +89,12 @@ namespace DatasetQualityPlugin
 
                 File.WriteAllText(metadataFile.FullName, xmlText);
 
-                var msg = "Metadata file created for dataset " + taskParams.GetParam("Dataset");
-                LogTools.LogDebug(msg);
+                LogTools.LogDebug("Metadata file created for dataset " + taskParams.GetParam("Dataset"));
                 return true;
             }
             catch (Exception ex)
             {
-                var msg = "Exception creating metadata file at " + metadataFile.FullName;
-                LogTools.LogError(msg, ex);
+                LogTools.LogError("Exception creating metadata file at " + metadataFile.FullName, ex);
                 return false;
             }
         }

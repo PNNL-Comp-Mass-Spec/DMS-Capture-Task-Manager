@@ -55,8 +55,7 @@ namespace DatasetQualityPlugin
         {
             // Note that Debug messages are logged if mDebugLevel == 5
 
-            var msg = "Starting DatasetQualityPlugin.PluginMain.RunTool()";
-            LogDebug(msg);
+            LogDebug("Starting DatasetQualityPlugin.PluginMain.RunTool()");
 
             // Perform base class operations, if any
             mRetData = base.RunTool();
@@ -65,25 +64,22 @@ namespace DatasetQualityPlugin
                 return mRetData;
             }
 
-            msg = "Creating dataset info for dataset '" + mDataset + "'";
-            LogDebug(msg);
+            LogDebug("Creating dataset info for dataset " + mDataset);
 
             if (MetaDataFile.CreateMetadataFile(mTaskParams))
             {
                 // Everything was good
-                msg = "Metadata file created for dataset " + mDataset;
-                LogMessage(msg);
+                LogMessage("Metadata file created for dataset " + mDataset);
 
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
             }
             else
             {
                 // There was a problem
-                msg = "Problem creating metadata file for dataset " + mDataset + ". See local log for details";
-                LogError(msg, true);
                 mRetData.EvalCode = EnumEvalCode.EVAL_CODE_FAILED;
-                mRetData.EvalMsg = msg;
+                mRetData.EvalMsg = string.Format("Problem creating metadata file for dataset {0}; see local log for details", mDataset);
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                LogError(mRetData.EvalMsg, true);
             }
 
             var success = ConditionallyRunQuameter();
@@ -95,8 +91,7 @@ namespace DatasetQualityPlugin
                 return mRetData;
             }
 
-            msg = "Completed PluginMain.RunTool()";
-            LogDebug(msg);
+            LogDebug("Completed PluginMain.RunTool()");
 
             return mRetData;
         }
@@ -117,16 +112,14 @@ namespace DatasetQualityPlugin
 
             var instClassName = mTaskParams.GetParam("Instrument_Class");
 
-            var msg = "Instrument class: " + instClassName;
-            LogDebug(msg);
+            LogDebug("Instrument class: " + instClassName);
 
             var instrumentClass = InstrumentClassInfo.GetInstrumentClass(instClassName);
             if (instrumentClass == InstrumentClassInfo.InstrumentClass.Unknown)
             {
-                msg = "Instrument class not recognized: " + instClassName;
-                LogError(msg);
-                mRetData.CloseoutMsg = msg;
+                mRetData.CloseoutMsg = "Instrument class not recognized: " + instClassName;
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                LogError(mRetData.CloseoutMsg);
                 return false;
             }
 
@@ -175,9 +168,8 @@ namespace DatasetQualityPlugin
 
             if (!runQuameter)
             {
-                msg = "Skipped Quameter since " + skipReason;
-                mRetData.EvalMsg = msg;
-                LogMessage(msg);
+                mRetData.EvalMsg = "Skipped Quameter since " + skipReason;
+                LogMessage(mRetData.EvalMsg);
                 return true;
             }
 
@@ -212,15 +204,19 @@ namespace DatasetQualityPlugin
                 if (archiveFile.Exists)
                 {
                     // Update dataFilePathRemote using the archive file path
-                    msg = "Dataset file not found on storage server (" + dataFilePathRemote + "), but was found in the archive at " + dataFilePathArchive;
-                    LogMessage(msg);
+                    LogMessage(string.Format(
+                        "Dataset file not found on storage server ({0}), but was found in the archive at {1}",
+                        dataFilePathRemote, dataFilePathArchive));
+
                     dataFilePathRemote = dataFilePathArchive;
                 }
                 else
                 {
                     dataFilePathRemote = string.Empty;
-                    msg = "Dataset file not found on storage server (" + dataFilePathRemote + ") or in the archive (" + dataFilePathRemote + ")";
-                    LogError(msg);
+                    LogError(string.Format(
+                        "Dataset file not found on storage server ({0}) or in the archive ({1})",
+                        dataFilePathRemote, dataFilePathRemote));
+
                     mRetData.CloseoutMsg = "Dataset file not found on storage server or in the archive";
                 }
             }
@@ -1232,15 +1228,12 @@ namespace DatasetQualityPlugin
         /// <param name="statusTools">Tools for status reporting</param>
         public override void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
         {
-            var msg = "Starting PluginMain.Setup()";
-
             // This message is logged if mDebugLevel == 5
-            LogDebug(msg);
+            LogDebug("Starting PluginMain.Setup()");
 
             base.Setup(mgrParams, taskParams, statusTools);
 
-            msg = "Completed PluginMain.Setup()";
-            LogDebug(msg);
+            LogDebug("Completed PluginMain.Setup()");
         }
 
         /// <summary>

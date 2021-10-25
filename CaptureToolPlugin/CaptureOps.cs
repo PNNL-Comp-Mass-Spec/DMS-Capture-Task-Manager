@@ -350,8 +350,7 @@ namespace CaptureToolPlugin
             catch (Exception ex)
             {
                 mErrorMessage = "Exception finding files/directories to rename with x_";
-                var msg = mErrorMessage + " at " + datasetDirectoryPath;
-                LogError(msg, true);
+                LogError(mErrorMessage + " in " + datasetDirectoryPath, true);
                 LogError("Stack trace", ex);
                 return false;
             }
@@ -436,8 +435,7 @@ namespace CaptureToolPlugin
             catch (Exception ex)
             {
                 mErrorMessage = "Exception renaming files/directories to rename with x_";
-                var msg = mErrorMessage + " at " + datasetDirectoryPath;
-                LogError(msg, true);
+                LogError(mErrorMessage + " in " + datasetDirectoryPath, true);
                 LogError("Stack trace", ex);
                 return false;
             }
@@ -494,8 +492,7 @@ namespace CaptureToolPlugin
                 // Something really bad happened
                 mErrorMessage = "Error checking for empty dataset directory";
 
-                var msg = mErrorMessage + ": " + directoryPath;
-                LogError(msg, true);
+                LogError(mErrorMessage + ": " + directoryPath, true);
                 LogError("Stack trace", ex);
                 return DatasetDirectoryState.Error;
             }
@@ -603,8 +600,7 @@ namespace CaptureToolPlugin
                                 {
                                     // Fail the capture task
                                     returnData.CloseoutMsg = "Dataset directory already exists and has multiple files or subdirectories";
-                                    var msg = returnData.CloseoutMsg + ": " + datasetDirectoryPath;
-                                    LogError(msg, true);
+                                    LogError(returnData.CloseoutMsg + ": " + datasetDirectoryPath, true);
                                 }
                             }
 
@@ -620,8 +616,7 @@ namespace CaptureToolPlugin
                             catch (Exception ex)
                             {
                                 returnData.CloseoutMsg = "Dataset directory already exists and cannot be deleted";
-                                var msg = returnData.CloseoutMsg + ": " + datasetDirectoryPath;
-                                LogError(msg, true);
+                                LogError(returnData.CloseoutMsg + ": " + datasetDirectoryPath, true);
                                 LogError("Stack trace", ex);
 
                                 switchResult = false;
@@ -688,8 +683,7 @@ namespace CaptureToolPlugin
                     return false;
                 }
 
-                var msg = "Added x_ to directory " + directoryPath;
-                LogMessage(msg);
+                LogMessage("Added x_ to directory " + directoryPath);
 
                 return true;
             }
@@ -755,9 +749,8 @@ namespace CaptureToolPlugin
                 }
 
                 returnData.CloseoutMsg = "Exception validating constant directory size";
-                var msg = returnData.CloseoutMsg + ": " + targetDirectory.FullName;
 
-                LogError(msg, ex);
+                LogError(returnData.CloseoutMsg + ": " + targetDirectory.FullName, ex);
 
                 HandleCopyException(returnData, ex);
                 return false;
@@ -819,8 +812,7 @@ namespace CaptureToolPlugin
             catch (Exception ex)
             {
                 returnData.CloseoutMsg = "Exception validating constant file size";
-                var msg = returnData.CloseoutMsg + ": " + filePath;
-                LogError(msg, ex);
+                LogError(returnData.CloseoutMsg + ": " + filePath, ex);
 
                 HandleCopyException(returnData, ex);
                 return false;
@@ -2546,8 +2538,7 @@ namespace CaptureToolPlugin
             catch (Exception ex)
             {
                 returnData.CloseoutMsg = "Exception getting list of files to skip";
-                var msg = returnData.CloseoutMsg + " for dataset " + datasetInfo.DatasetName;
-                LogError(msg, true);
+                LogError(returnData.CloseoutMsg + " for dataset " + datasetInfo.DatasetName, true);
                 LogError("Stack trace", ex);
 
                 DisconnectShareIfRequired();
@@ -3044,11 +3035,9 @@ namespace CaptureToolPlugin
                 if (DateTime.UtcNow.Subtract(directoryCopyStartTime).TotalHours > MAX_RETRY_TIME_HOURS)
                 {
                     success = false;
-                    var msg = string.Format("Aborting CopyDirectoryWithResume since over {0} hours has elapsed",
-                                            MAX_RETRY_TIME_HOURS);
                     returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     returnData.EvalCode = EnumEvalCode.EVAL_CODE_FAILED;
-                    returnData.CloseoutMsg = msg;
+                    returnData.CloseoutMsg = string.Format("Aborting CopyDirectoryWithResume since over {0} hours has elapsed", MAX_RETRY_TIME_HOURS);
                     LogError(returnData.CloseoutMsg);
                     break;
                 }
@@ -3069,15 +3058,15 @@ namespace CaptureToolPlugin
 
                     if (success)
                     {
-                        var msg = "  directory copy complete; CountCopied = " + fileCountNewlyCopied + "; " +
-                                  "CountSkipped = " + fileCountSkipped + "; " +
-                                  "CountResumed = " + fileCountResumed;
-                        LogDebug(msg);
+                        LogDebug(string.Format(
+                            "  directory copy complete; CountCopied = {0}; CountSkipped = {1}; CountResumed = {2}",
+                            fileCountNewlyCopied, fileCountSkipped, fileCountResumed));
                     }
                     else
                     {
-                        var msg = "  directory copy failed for " + sourceDirectoryPath + " to " + targetDirectoryPath + GetConnectionDescription();
-                        LogError(msg);
+                        LogError(string.Format(
+                            "  directory copy failed copying {0} to {1}{2}",
+                            sourceDirectoryPath, targetDirectoryPath, GetConnectionDescription()));
                     }
                 }
                 catch (UnauthorizedAccessException ex)

@@ -81,22 +81,24 @@ namespace CaptureToolPlugin
             }
             catch (Exception ex)
             {
-                var msg = "PluginMain.RunTool(): Exception during capture operation (useBionet=" + useBionet + ")";
+                var msg = string.Format("PluginMain.RunTool(): Exception during capture operation (useBionet={0})", useBionet);
+
                 if (ex.Message.Contains("unknown user name or bad password"))
                 {
                     // This error randomly occurs; no need to log a full stack trace
-                    msg += ", Logon failure: unknown user name or bad password";
-                    LogError(msg);
-                    // Set the EvalCode to 3 so that capture can be retried
+                    returnData.CloseoutMsg = msg + ", Logon failure: unknown user name or bad password";
                     returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+
+                    LogError(returnData.CloseoutMsg);
+
+                    // Set the EvalCode to 3 so that capture can be retried
                     returnData.EvalCode = EnumEvalCode.EVAL_CODE_NETWORK_ERROR_RETRY_CAPTURE;
-                    returnData.CloseoutMsg = msg;
                 }
                 else
                 {
-                    LogError(msg, ex);
-                    returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     returnData.CloseoutMsg = msg;
+                    returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    LogError(msg, ex);
                 }
             }
 

@@ -1019,16 +1019,18 @@ namespace CaptureTaskManager
 
         private void FileTools_LockQueueTimedOut(string sourceFilePath, string targetFilePath, double waitTimeMinutes)
         {
-            var msg = "Lockfile queue timed out after " + waitTimeMinutes.ToString("0") + " minutes; Source=" + sourceFilePath + ", Target=" + targetFilePath;
-            LogWarning(msg);
+            LogWarning(string.Format(
+                "Lockfile queue timed out after {0:F0} minutes; Source={1}, Target={2}",
+                waitTimeMinutes, sourceFilePath, targetFilePath));
         }
 
         private void FileTools_LockQueueWaitComplete(string sourceFilePath, string targetFilePath, double waitTimeMinutes)
         {
             if (waitTimeMinutes >= 1)
             {
-                var msg = "Exited lockfile queue after " + waitTimeMinutes.ToString("0") + " minutes; will now copy file";
-                LogMessage(msg);
+                LogMessage(string.Format(
+                    "Exited lockfile queue after {0:F0} minutes; will now copy file",
+                    waitTimeMinutes));
             }
         }
 

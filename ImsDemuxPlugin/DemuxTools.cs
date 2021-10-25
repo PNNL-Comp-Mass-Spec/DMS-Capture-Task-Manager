@@ -271,16 +271,14 @@ namespace ImsDemuxPlugin
                     return uimfFilePath;
                 }
 
-                var msg = "UIMF file not found on storage server, unable to calibrate: " + uimfFilePath;
-                OnErrorEvent(msg);
+                OnErrorEvent("UIMF file not found on storage server, unable to calibrate: " + uimfFilePath);
                 returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, "UIMF file not found on storage server, unable to calibrate");
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return string.Empty;
             }
             catch (Exception ex)
             {
-                const string msg = "Exception finding UIMF file to calibrate";
-                OnErrorEvent(msg, ex);
+                OnErrorEvent("Exception finding UIMF file to calibrate", ex);
                 returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, "Exception while calibrating UIMF file");
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return string.Empty;
@@ -298,8 +296,7 @@ namespace ImsDemuxPlugin
             mLoggedConsoleOutputErrors.Clear();
             UpdateDatasetInfo(mgrParams, taskParams);
 
-            var msg = "Calibrating dataset " + mDataset;
-            OnDebugEvent(msg);
+            OnDebugEvent("Calibrating dataset " + mDataset);
 
             bool autoCalibrate;
 
@@ -329,8 +326,7 @@ namespace ImsDemuxPlugin
                     case "ims_tof_1":
                     case "ims_tof_2":
                     case "ims_tof_3":
-                        msg = "Skipping calibration since instrument is " + instrumentName;
-                        OnStatusEvent(msg);
+                        OnStatusEvent("Skipping calibration since instrument is " + instrumentName);
                         autoCalibrate = false;
                         break;
                     default:
@@ -340,8 +336,7 @@ namespace ImsDemuxPlugin
             }
             catch (Exception ex)
             {
-                msg = "Exception determining whether instrument should be calibrated";
-                OnErrorEvent(msg, ex);
+                OnErrorEvent("Exception determining whether instrument should be calibrated", ex);
                 returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, "Exception while calibrating UIMF file");
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return returnData;
@@ -363,17 +358,17 @@ namespace ImsDemuxPlugin
 
                 if (frameList.Count < 5)
                 {
+                    string msg;
+
                     if (frameList.Count == 0)
                     {
                         msg = "Skipping calibration since .UIMF file has no frames";
                     }
                     else
                     {
-                        msg = "Skipping calibration since .UIMF file only has " + frameList.Count + " frame";
-                        if (frameList.Count != 1)
-                        {
-                            msg += "s";
-                        }
+                        msg = string.Format(
+                            "Skipping calibration since .UIMF file only has {0} frame{1}",
+                            frameList.Count, frameList.Count == 1 ? string.Empty : "s");
                     }
 
                     OnStatusEvent(msg);
@@ -391,8 +386,7 @@ namespace ImsDemuxPlugin
                         var calibrationTables = uimfReader.GetCalibrationTableNames();
                         if (calibrationTables.Count == 0)
                         {
-                            msg = "Skipping calibration since .UIMF file does not contain any calibration frames or calibration tables";
-                            OnWarningEvent(msg);
+                            OnWarningEvent("Skipping calibration since .UIMF file does not contain any calibration frames or calibration tables");
                             autoCalibrate = false;
                         }
                     }
@@ -400,8 +394,7 @@ namespace ImsDemuxPlugin
             }
             catch (Exception ex)
             {
-                msg = "Exception checking for calibration frames";
-                OnErrorEvent(msg, ex);
+                OnErrorEvent("Exception checking for calibration frames", ex);
                 returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, "Exception while calibrating UIMF file");
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return returnData;
@@ -432,8 +425,7 @@ namespace ImsDemuxPlugin
             }
             catch (Exception ex)
             {
-                msg = "Exception calling CalibrateFile for dataset " + mDataset;
-                OnErrorEvent(msg, ex);
+                OnErrorEvent("Exception calling CalibrateFile for dataset " + mDataset, ex);
                 returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, "Exception while calibrating UIMF file");
                 calibrationFailed = true;
             }
@@ -450,8 +442,7 @@ namespace ImsDemuxPlugin
                 }
                 catch (Exception ex)
                 {
-                    msg = "Exception validating calibrated .UIMF file";
-                    OnErrorEvent(msg, ex);
+                    OnErrorEvent("Exception validating calibrated .UIMF file", ex);
                     returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, "Exception while calibrating UIMF file");
                     returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     return returnData;
@@ -526,8 +517,9 @@ namespace ImsDemuxPlugin
 
                         if (Math.Abs(currentSlope) < double.Epsilon)
                         {
-                            var msg = $"Existing CalibrationSlope is 0 in PerformManualCalibration for frame {firstFrame}; this is unexpected";
-                            OnWarningEvent(msg);
+                            OnWarningEvent(string.Format(
+                                "Existing CalibrationSlope is 0 in PerformManualCalibration for frame {0}; this is unexpected",
+                                firstFrame));
                         }
                     }
                     else
@@ -555,12 +547,8 @@ namespace ImsDemuxPlugin
             }
             catch (Exception ex)
             {
-                var msg = "Exception in PerformManualCalibration for dataset " + mDataset;
-                OnErrorEvent(msg, ex);
-                if (returnData == null)
-                {
-                    returnData = new ToolReturnData();
-                }
+                OnErrorEvent("Exception in PerformManualCalibration for dataset " + mDataset, ex);
+                returnData ??= new ToolReturnData();
 
                 returnData.CloseoutMsg = "Error manually calibrating UIMF file";
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -588,8 +576,7 @@ namespace ImsDemuxPlugin
             UpdateDatasetInfo(mgrParams, taskParams);
 
             var jobNum = taskParams.GetParam("Job");
-            var msg = "Performing demultiplexing, job " + jobNum + ", dataset " + mDataset;
-            OnStatusEvent(msg);
+            OnStatusEvent(string.Format("Performing demultiplexing, job {0}, dataset {1}", jobNum, mDataset));
 
             var postProcessingError = false;
 
@@ -662,8 +649,7 @@ namespace ImsDemuxPlugin
             }
             catch (Exception ex)
             {
-                msg = "Exception calling DemultiplexFile for dataset " + mDataset;
-                OnErrorEvent(msg, ex);
+                OnErrorEvent("Exception calling DemultiplexFile for dataset " + mDataset, ex);
                 returnData.CloseoutMsg = "Error demultiplexing UIMF file";
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return returnData;
@@ -694,8 +680,7 @@ namespace ImsDemuxPlugin
             if (!postProcessingError)
             {
                 // Rename UIMF file on storage server
-                msg = "Renaming UIMF file on storage server";
-                OnDebugEvent(msg);
+                OnDebugEvent("Renaming UIMF file on storage server");
 
                 // If this is a re-run, the encoded file has already been renamed
                 // This is determined by looking for "_encoded" in the UIMF file name
@@ -715,8 +700,7 @@ namespace ImsDemuxPlugin
                 // Delete CheckPoint file from storage server (if it exists)
                 if (!string.IsNullOrEmpty(mDatasetDirectoryPathRemote))
                 {
-                    msg = "Deleting .uimf.tmp CheckPoint file from storage server";
-                    OnDebugEvent(msg);
+                    OnDebugEvent("Deleting .uimf.tmp CheckPoint file from storage server");
 
                     try
                     {
@@ -729,8 +713,7 @@ namespace ImsDemuxPlugin
                     }
                     catch (Exception ex)
                     {
-                        msg = "Error deleting .uimf.tmp CheckPoint file: " + ex.Message;
-                        OnErrorEvent(msg);
+                        OnErrorEvent("Error deleting .uimf.tmp CheckPoint file", ex);
                     }
                 }
             }
@@ -765,8 +748,8 @@ namespace ImsDemuxPlugin
             }
 
             // Delete local UIMF file(s)
-            msg = "Cleaning up working directory";
-            OnDebugEvent(msg);
+            OnDebugEvent("Cleaning up working directory");
+
             try
             {
                 File.Delete(localUimfDecodedFilePath);
@@ -775,8 +758,7 @@ namespace ImsDemuxPlugin
             catch (Exception ex)
             {
                 // Error deleting files; don't treat this as a fatal error
-                msg = "Exception deleting working directory file(s): " + ex.Message;
-                OnErrorEvent(msg);
+                OnErrorEvent("Exception deleting working directory file(s)", ex);
             }
 
             // Update the return data
@@ -878,9 +860,8 @@ namespace ImsDemuxPlugin
         {
             var success = true;
 
-            // Copy the demultiplexed file to the storage server, renaming as DatasetName.uimf in the process
-            var msg = "Copying " + fileDescription + " file to storage server";
-            OnDebugEvent(msg);
+            OnDebugEvent(string.Format("Copying {0} file to storage server", fileDescription));
+
             const int retryCount = 3;
             if (!CopyFileWithRetry(localUimfDecodedFilePath, Path.Combine(mDatasetDirectoryPathRemote, mDataset + ".uimf"), true, retryCount))
             {
@@ -959,8 +940,7 @@ namespace ImsDemuxPlugin
         {
             try
             {
-                var msg = "Starting calibration, dataset " + datasetName;
-                OnStatusEvent(msg);
+                OnStatusEvent("Starting calibration, dataset " + datasetName);
 
                 // Set the options
                 var demuxOptions = new udtDemuxOptionsType
@@ -975,8 +955,7 @@ namespace ImsDemuxPlugin
                 // Confirm that things have succeeded
                 if (success && mLoggedConsoleOutputErrors.Count == 0)
                 {
-                    msg = "Calibration complete, dataset " + datasetName;
-                    OnStatusEvent(msg);
+                    OnStatusEvent("Calibration complete, dataset " + datasetName);
                     return true;
                 }
 
@@ -1270,8 +1249,9 @@ namespace ImsDemuxPlugin
             }
             catch (Exception ex)
             {
-                var msg = "Exception renaming file " + sourceFilePath + " to " + Path.GetFileName(newFilePath) + ": " + ex.Message;
-                OnErrorEvent(msg);
+                OnErrorEvent(string.Format(
+                    "Exception renaming file {0} to {1}: {2}",
+                    sourceFilePath, Path.GetFileName(newFilePath), ex.Message));
 
                 // Garbage collect, then try again to rename the file
                 System.Threading.Thread.Sleep(250);
@@ -1286,8 +1266,7 @@ namespace ImsDemuxPlugin
                 }
                 catch (Exception ex2)
                 {
-                    msg = "Rename failed despite garbage collection call: " + ex2.Message;
-                    OnErrorEvent(msg);
+                    OnErrorEvent("Rename failed despite garbage collection call: " + ex2.Message);
                 }
 
                 return false;

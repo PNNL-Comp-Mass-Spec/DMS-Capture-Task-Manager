@@ -92,8 +92,7 @@ namespace ImsDemuxPlugin
                 return false;
             }
 
-            var msg = "Performing Agilent .D to .UIMF conversion, dataset '" + mDataset + "'";
-            LogMessage(msg);
+            LogMessage("Performing Agilent .D to .UIMF conversion, dataset " + mDataset);
 
             // Need to first convert the .d directory to a .UIMF file
             if (!ConvertAgilentDotDDirectoryToUIMF(mDatasetDirectoryPathRemote, mAgilentToUimfConverterPath, out var skipCreateUIMF))
@@ -211,8 +210,7 @@ namespace ImsDemuxPlugin
                 mLastStatusUpdate = DateTime.UtcNow;
                 mStatusUpdateIntervalMinutes = 5;
 
-                var msg = "Converting .d directory to .UIMF: " + exePath + " " + arguments;
-                LogMessage(msg);
+                LogMessage(string.Format("Converting .d directory to .UIMF: {0} {1}", exePath, arguments));
 
                 const int maxRuntimeSeconds = MAX_AGILENT_TO_UIMF_RUNTIME_MINUTES * 60;
                 success = cmdRunner.RunProgram(exePath, arguments, "AgilentToUIMFConverter", true, maxRuntimeSeconds);
@@ -526,30 +524,32 @@ namespace ImsDemuxPlugin
 
         private void ReportFileSizeTooSmall(string dataFileDescription, string filePath, float actualSizeKB, float minSizeKB)
         {
-            // Example messages for mRetData.EvalMsg
-            // Data file size is 75 KB; minimum allowed size 100 KB
-            // Data file size is 8 KB; minimum allowed size 16 KB
-            // Data file is 0 bytes
-
             var minSizeText = FileSizeToString(minSizeKB);
 
-            // Data file may be corrupt
-            var msg = dataFileDescription + " file may be corrupt. Actual file size is " +
-                      FileSizeToString(actualSizeKB) + "; " +
-                      "min allowable size is " + minSizeText + "; see " + filePath;
+            // File too small, data file may be corrupt
+
+            // Example messages for mRetData.EvalMsg
+            //   Data file size is 75 KB; minimum allowed size 100 KB
+            //   Data file size is 8 KB; minimum allowed size 16 KB
+            //   Data file is 0 bytes
 
             if (Math.Abs(actualSizeKB) < 0.0001)
             {
-                mRetData.EvalMsg = dataFileDescription + " file is 0 bytes";
+                mRetData.EvalMsg = string.Format("{0} file is 0 bytes", dataFileDescription);
             }
             else
             {
-                mRetData.EvalMsg = dataFileDescription + " file size is " +
-                                   FileSizeToString(actualSizeKB) + "; " +
-                                   "minimum allowed size " + minSizeText;
+                mRetData.EvalMsg = string.Format(
+                    "{0} file size is {1}; minimum allowed size is {2}",
+                    dataFileDescription, FileSizeToString(actualSizeKB), minSizeText);
             }
 
-            LogError(msg);
+            LogError(string.Format(
+                "{0} file may be corrupt. Actual file size is {1}; min allowable size is {2}; see {3}",
+                dataFileDescription,
+                FileSizeToString(actualSizeKB),
+                minSizeText,
+                filePath));
         }
 
         private EnumCloseOutType TestIMSAgilentTOF(string uimfFilePath)

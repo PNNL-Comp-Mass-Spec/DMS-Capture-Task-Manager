@@ -71,8 +71,7 @@ namespace DatasetInfoPlugin
         {
             // Note that Debug messages are logged if mDebugLevel == 5
 
-            var msg = "Starting DatasetInfoPlugin.PluginMain.RunTool()";
-            LogDebug(msg);
+            LogDebug("Starting DatasetInfoPlugin.PluginMain.RunTool()");
 
             // Perform base class operations, if any
             var returnData = base.RunTool();
@@ -90,13 +89,11 @@ namespace DatasetInfoPlugin
                 return returnData;
             }
 
-            msg = "Running DatasetInfo on dataset '" + mDataset + "'";
-            LogMessage(msg);
+            LogMessage("Running DatasetInfo on dataset " + mDataset);
 
             returnData = RunMsFileInfoScanner();
 
-            msg = "Completed PluginMain.RunTool()";
-            LogDebug(msg);
+            LogDebug("Completed PluginMain.RunTool()");
 
             return returnData;
         }
@@ -143,20 +140,18 @@ namespace DatasetInfoPlugin
 
         private object LoadObject(string className, string dllFilePath)
         {
-            object obj = null;
             try
             {
                 // Dynamically load the specified class from dllFilePath
                 var assembly = Assembly.LoadFrom(dllFilePath);
                 var dllType = assembly.GetType(className, false, true);
-                obj = Activator.CreateInstance(dllType);
+                return Activator.CreateInstance(dllType);
             }
             catch (Exception ex)
             {
-                var msg = "Exception loading DLL " + dllFilePath + ": " + ex.Message;
-                LogError(msg, ex);
+                LogError(string.Format("Exception loading DLL {0}: {1}", dllFilePath, ex.Message), ex);
+                return null;
             }
-            return obj;
         }
 
         /// <summary>
@@ -167,8 +162,7 @@ namespace DatasetInfoPlugin
         /// <param name="statusTools">Tools for status reporting</param>
         public override void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
         {
-            var msg = "Starting PluginMain.Setup()";
-            LogDebug(msg);
+            LogDebug("Starting PluginMain.Setup()");
 
             base.Setup(mgrParams, taskParams, statusTools);
 
@@ -202,8 +196,7 @@ namespace DatasetInfoPlugin
             // Monitor progress reported by MSFileInfoScanner
             mMsFileScanner.ProgressUpdate += ProgressUpdateHandler;
 
-            msg = "Completed PluginMain.Setup()";
-            LogDebug(msg);
+            LogDebug("Completed PluginMain.Setup()");
         }
 
         /// <summary>
@@ -306,8 +299,7 @@ namespace DatasetInfoPlugin
                 try
                 {
                     Directory.CreateDirectory(outputPathBase);
-                    var msg = "PluginMain.RunMsFileInfoScanner: Created output directory " + outputPathBase;
-                    LogDebug(msg);
+                    LogDebug("PluginMain.RunMsFileInfoScanner: Created output directory " + outputPathBase);
                 }
                 catch (Exception ex)
                 {
@@ -693,8 +685,7 @@ namespace DatasetInfoPlugin
             }
             catch (Exception ex)
             {
-                var msg = "Exception creating the combined _DatasetInfo.xml file for " + mDataset + ": " + ex.Message;
-                LogError(msg, ex);
+                LogError("Exception creating the combined _DatasetInfo.xml file for " + mDataset, ex);
             }
 
             try
@@ -851,8 +842,7 @@ namespace DatasetInfoPlugin
             }
             catch (Exception ex)
             {
-                var msg = "Exception creating the combined _DatasetInfo.xml file for " + mDataset + ": " + ex.Message;
-                LogError(msg, ex);
+                LogError("Exception creating the combined _DatasetInfo.xml file for " + mDataset, ex);
             }
         }
 

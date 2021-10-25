@@ -23,8 +23,7 @@ namespace SrcFileRenamePlugin
         /// <returns>ToolReturnData object containing tool operation results</returns>
         public override ToolReturnData RunTool()
         {
-            var msg = "Starting SrcFileRenamePlugin.PluginMain.RunTool()";
-            LogDebug(msg);
+            LogDebug("Starting SrcFileRenamePlugin.PluginMain.RunTool()");
 
             // Perform base class operations, if any
             var returnData = base.RunTool();
@@ -42,8 +41,7 @@ namespace SrcFileRenamePlugin
                 return returnData;
             }
 
-            msg = "Renaming dataset " + mDataset;
-            LogMessage(msg);
+            LogMessage("Renaming dataset " + mDataset);
 
             // Determine if instrument is on Bionet
             var capMethod = mTaskParams.GetParam("Method");
@@ -55,8 +53,7 @@ namespace SrcFileRenamePlugin
 
             try
             {
-                msg = "PluginMain.RunTool(): Starting rename operation";
-                LogDebug(msg);
+                LogDebug("PluginMain.RunTool(): Starting rename operation");
 
                 returnData.CloseoutType = renameOpTool.DoOperation(mTaskParams, out var errorMessage);
 
@@ -65,18 +62,17 @@ namespace SrcFileRenamePlugin
                     returnData.CloseoutMsg = errorMessage;
                 }
 
-                msg = "PluginMain.RunTool(): Completed rename operation";
-                LogDebug(msg);
+                LogDebug("PluginMain.RunTool(): Completed rename operation");
             }
             catch (Exception ex)
             {
-                msg = "PluginMain.RunTool(): Exception during rename operation (useBionet=" + useBionet + ")";
-                LogError(msg, ex);
+                LogError(string.Format(
+                    "PluginMain.RunTool(): Exception during rename operation (useBionet={0})", useBionet), ex);
+
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
-            msg = "Completed PluginMain.RunTool()";
-            LogDebug(msg);
+            LogDebug("Completed PluginMain.RunTool()");
 
             return returnData;
         }
@@ -89,13 +85,11 @@ namespace SrcFileRenamePlugin
         /// <param name="statusTools">Tools for status reporting</param>
         public override void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
         {
-            var msg = "Starting PluginMain.Setup()";
-            LogDebug(msg);
+            LogDebug("Starting PluginMain.Setup()");
 
             base.Setup(mgrParams, taskParams, statusTools);
 
-            msg = "Completed PluginMain.Setup()";
-            LogDebug(msg);
+            LogDebug("Completed PluginMain.Setup()");
         }
 
         /// <summary>
