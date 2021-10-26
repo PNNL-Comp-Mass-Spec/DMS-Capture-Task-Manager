@@ -123,9 +123,8 @@ namespace DatasetInfoPlugin
                     }
                     else
                     {
-                        LogError(string.Format(
-                            "LoadObject was unable to load class {0} from {1}; it returned null",
-                            MsDataFileReaderClass, msFileInfoScannerDLLPath));
+                        LogError("LoadObject was unable to load class {0} from {1}; it returned null",
+                            MsDataFileReaderClass, msFileInfoScannerDLLPath);
                     }
                 }
             }
@@ -149,7 +148,7 @@ namespace DatasetInfoPlugin
             }
             catch (Exception ex)
             {
-                LogError(string.Format("Exception loading DLL {0}: {1}", dllFilePath, ex.Message), ex);
+                LogError(ex, "Exception loading DLL {0}: {1}", dllFilePath, ex.Message);
                 return null;
             }
         }
@@ -401,10 +400,9 @@ namespace DatasetInfoPlugin
                 {
                     var equivalentCommandLineArguments = GetEquivalentCommandLineArgs(mMsFileScanner, pathToProcess);
 
-                    LogMessage(string.Format(
-                        "Processing with MSFileInfoScanner.dll; equivalent executable call: " +
-                        "MSFileInfoScanner.exe {0}",
-                        equivalentCommandLineArguments));
+                    LogMessage("Processing with MSFileInfoScanner.dll; equivalent executable call: " +
+                               "MSFileInfoScanner.exe {0}",
+                        equivalentCommandLineArguments);
 
                     successProcessing = mMsFileScanner.ProcessMSFileOrDirectory(pathToProcess, currentOutputDirectory);
                 }
@@ -539,7 +537,7 @@ namespace DatasetInfoPlugin
 
                 if (mFailedScanCount > 10)
                 {
-                    LogWarning(string.Format("Unable to load data for {0} spectra", mFailedScanCount));
+                    LogWarning("Unable to load data for {0} spectra", mFailedScanCount);
                 }
             } // for each file in fileOrDirectoryRelativePaths
 
@@ -911,9 +909,8 @@ namespace DatasetInfoPlugin
                     if (float.TryParse(reporterIonMzMinText, out var reporterIonMzMin))
                     {
                         msFileInfoScanner.Options.MS2MzMin = (int)Math.Floor(reporterIonMzMin);
-                        LogMessage(string.Format(
-                                       "Verifying that MS/MS spectra have minimum m/z values below {0:N0} since experiment {1} has {2} labelling",
-                                       msFileInfoScanner.Options.MS2MzMin, experimentName, sampleLabelling));
+                        LogMessage("Verifying that MS/MS spectra have minimum m/z values below {0:N0} since experiment {1} has {2} labelling",
+                            msFileInfoScanner.Options.MS2MzMin, experimentName, sampleLabelling);
                     }
                 }
             }
@@ -944,18 +941,16 @@ namespace DatasetInfoPlugin
             if (iTRAQMatch.Success)
             {
                 msFileInfoScanner.Options.MS2MzMin = 113;
-                LogMessage(string.Format(
-                               "Verifying that MS/MS spectra have minimum m/z values below {0:N0} since the dataset name contains {1}",
-                               msFileInfoScanner.Options.MS2MzMin, iTRAQMatch.Value));
+                LogMessage("Verifying that MS/MS spectra have minimum m/z values below {0:N0} since the dataset name contains {1}",
+                    msFileInfoScanner.Options.MS2MzMin, iTRAQMatch.Value);
             }
 
             var tmtMatch = tmtMatcher.Match(mDataset);
             if (tmtMatch.Success)
             {
                 msFileInfoScanner.Options.MS2MzMin = 126;
-                LogMessage(string.Format(
-                               "Verifying that MS/MS spectra have minimum m/z values below {0:N0} since the dataset name contains {1}",
-                               msFileInfoScanner.Options.MS2MzMin, tmtMatch.Value));
+                LogMessage("Verifying that MS/MS spectra have minimum m/z values below {0:N0} since the dataset name contains {1}",
+                    msFileInfoScanner.Options.MS2MzMin, tmtMatch.Value);
             }
         }
 
@@ -1688,7 +1683,7 @@ namespace DatasetInfoPlugin
                     mFailedScanCount < 1000 && mFailedScanCount % 250 == 0 ||
                     mFailedScanCount % 500 == 0)
                 {
-                    LogWarning(string.Format("Unable to load data for {0} spectra", mFailedScanCount));
+                    LogWarning("Unable to load data for {0} spectra", mFailedScanCount);
                 }
             }
             else
@@ -1711,8 +1706,8 @@ namespace DatasetInfoPlugin
             if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalMinutes >= mStatusUpdateIntervalMinutes)
             {
                 mLastStatusUpdate = DateTime.UtcNow;
-                LogMessage(string.Format("MSFileInfoScanner running; {0:F1} minutes elapsed",
-                                         DateTime.UtcNow.Subtract(mProcessingStartTime).TotalMinutes));
+                LogMessage("MSFileInfoScanner running; {0:F1} minutes elapsed",
+                    DateTime.UtcNow.Subtract(mProcessingStartTime).TotalMinutes);
 
                 // Increment mStatusUpdateIntervalMinutes by 1 minute every time the status is logged, up to a maximum of 30 minutes
                 if (mStatusUpdateIntervalMinutes < 30)

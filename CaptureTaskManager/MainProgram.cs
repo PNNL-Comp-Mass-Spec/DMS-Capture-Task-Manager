@@ -1105,9 +1105,8 @@ namespace CaptureTaskManager
 
                 if (totalDeleted > 0)
                 {
-                    LogMessage(string.Format(
-                        "Deleted {0} temp file{1} over {2} hours old in directory {3}",
-                        totalDeleted, totalDeleted > 1 ? "s" : string.Empty, agedTempFilesHours, tempDirectoryPath));
+                    LogMessage("Deleted {0} temp file{1} over {2} hours old in directory {3}",
+                        totalDeleted, totalDeleted > 1 ? "s" : string.Empty, agedTempFilesHours, tempDirectoryPath);
                 }
             }
             catch (Exception ex)

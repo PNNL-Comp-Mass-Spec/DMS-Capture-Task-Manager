@@ -336,7 +336,7 @@ namespace DatasetIntegrityPlugin
                 mLastStatusUpdate = DateTime.UtcNow;
                 mStatusUpdateIntervalMinutes = 5;
 
-                LogMessage(string.Format("Converting .d directory to .CDF: {0} {1}", exePath, arguments));
+                LogMessage("Converting .d directory to .CDF: {0} {1}", exePath, arguments);
 
                 const int maxRuntimeSeconds = MAX_AGILENT_TO_CDF_RUNTIME_MINUTES * 60;
                 success = cmdRunner.RunProgram(exePath, arguments, "OpenChrom", true, maxRuntimeSeconds);
@@ -903,12 +903,11 @@ namespace DatasetIntegrityPlugin
 
             mRetData.EvalMsg = dataFileDescription + " file size is more than " + maxSizeText;
 
-            LogError(string.Format(
-                "{0} file may be corrupt. Actual file size is {1}; max allowable size is {2}; see {3}",
+            LogError("{0} file may be corrupt. Actual file size is {1}; max allowable size is {2}; see {3}",
                 dataFileDescription,
                 FileSizeToString(actualSizeKB),
                 maxSizeText,
-                filePath));
+                filePath);
         }
 
         private void ReportFileSizeTooSmall(string dataFileDescription, string filePath, float actualSizeKB, float minSizeKB)
@@ -933,12 +932,11 @@ namespace DatasetIntegrityPlugin
                     dataFileDescription, FileSizeToString(actualSizeKB), minSizeText);
             }
 
-            LogError(string.Format(
-                "{0} file may be corrupt. Actual file size is {1}; min allowable size is {2}; see {3}",
+            LogError("{0} file may be corrupt. Actual file size is {1}; min allowable size is {2}; see {3}",
                 dataFileDescription,
                 FileSizeToString(actualSizeKB),
                 minSizeText,
-                filePath));
+                filePath);
         }
 
         /// <summary>
@@ -2016,7 +2014,7 @@ namespace DatasetIntegrityPlugin
                     bytesRead += newBytes;
                 }
 
-                LogMessage(string.Format("Read {0:N1} KB from {1}", bytesRead / 1024.0, sourceFile.Name));
+                LogMessage("Read {0:N1} KB from {1}", bytesRead / 1024.0, sourceFile.Name);
 
                 return true;
             }
@@ -2441,12 +2439,11 @@ namespace DatasetIntegrityPlugin
                     dataFileDescription, FileSizeToString(actualSizeKB), thresholdText);
             }
 
-            LogWarning(string.Format(
-                "{0} file may be corrupt. Actual file size is {1}; typically the file is at least {2}; see {3}",
+            LogWarning("{0} file may be corrupt. Actual file size is {1}; typically the file is at least {2}; see {3}",
                 dataFileDescription,
                 FileSizeToString(actualSizeKB),
                 thresholdText,
-                filePath));
+                filePath);
         }
 
         /// <summary>
@@ -2688,8 +2685,8 @@ namespace DatasetIntegrityPlugin
             if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalMinutes >= mStatusUpdateIntervalMinutes)
             {
                 mLastStatusUpdate = DateTime.UtcNow;
-                LogMessage(string.Format("AgilentToUIMFConverter running; {0:F1} minutes elapsed",
-                                         DateTime.UtcNow.Subtract(mProcessingStartTime).TotalMinutes));
+                LogMessage("AgilentToUIMFConverter running; {0:F1} minutes elapsed",
+                    DateTime.UtcNow.Subtract(mProcessingStartTime).TotalMinutes);
 
                 // Increment mStatusUpdateIntervalMinutes by 1 minute every time the status is logged, up to a maximum of 30 minutes
                 if (mStatusUpdateIntervalMinutes < 30)

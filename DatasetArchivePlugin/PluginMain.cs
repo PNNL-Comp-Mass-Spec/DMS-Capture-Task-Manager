@@ -71,7 +71,7 @@ namespace DatasetArchivePlugin
             // Attach the MyEMSL Upload event handler
             archOpTool.MyEMSLUploadComplete += MyEMSLUploadCompleteHandler;
 
-            LogMessage(string.Format("Starting {0}, job {1}, dataset {2}", archiveOpDescription, mJob, mDataset));
+            LogMessage("Starting {0}, job {1}, dataset {2}", archiveOpDescription, mJob, mDataset);
             if (archOpTool.PerformTask())
             {
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
@@ -105,7 +105,7 @@ namespace DatasetArchivePlugin
                 }
             }
 
-            LogMessage(string.Format("Completed {0}, job {1}", archiveOpDescription, mJob));
+            LogMessage("Completed {0}, job {1}", archiveOpDescription, mJob);
 
             LogDebug("Completed PluginMain.RunTool()");
 

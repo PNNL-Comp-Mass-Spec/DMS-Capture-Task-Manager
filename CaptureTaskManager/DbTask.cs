@@ -198,15 +198,13 @@ namespace CaptureTaskManager
 
                         if (string.Equals(existingValue, paramValue))
                         {
-                            LogDebug(string.Format(
-                                           "Skipping duplicate task parameter named {0}: the new value matches the existing value of '{1}'",
-                                           paramName, existingValue));
+                            LogDebug("Skipping duplicate task parameter named {0}: the new value matches the existing value of '{1}'",
+                                paramName, existingValue);
                         }
                         else
                         {
-                            LogError(string.Format(
-                                           "Duplicate task parameters have the same name ({0}), but conflicting values: existing value is '{1}' vs. new value of '{2}'",
-                                           paramName, existingValue, paramValue));
+                            LogError("Duplicate task parameters have the same name ({0}), but conflicting values: existing value is '{1}' vs. new value of '{2}'",
+                                paramName, existingValue, paramValue);
                             return false;
                         }
                     }

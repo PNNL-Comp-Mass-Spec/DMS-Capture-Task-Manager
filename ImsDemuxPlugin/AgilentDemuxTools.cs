@@ -109,7 +109,7 @@ namespace ImsDemuxPlugin
             UpdateDatasetInfo(mgrParams, taskParams);
 
             var jobNum = taskParams.GetParam("Job");
-            OnStatusEvent(string.Format("Performing demultiplexing, job {0}, dataset {1}", jobNum, mDataset));
+            OnStatusEvent("Performing demultiplexing, job {0}, dataset {1}", jobNum, mDataset);
 
             var postProcessingError = false;
 
@@ -910,11 +910,10 @@ namespace ImsDemuxPlugin
             if (DateTime.UtcNow.Subtract(mLastProgressMessageTime).TotalSeconds >= 300)
             {
                 mLastProgressMessageTime = DateTime.UtcNow;
-                OnDebugEvent(string.Format(
-                    "{0} running; {1:F1} minutes elapsed, {2:F1}% complete",
+                OnDebugEvent("{0} running; {1:F1} minutes elapsed, {2:F1}% complete",
                     "UIMFDemultiplexer",
                     DateTime.UtcNow.Subtract(mDemuxStartTime).TotalMinutes,
-                    mDemuxProgressPercentComplete));
+                    mDemuxProgressPercentComplete);
             }
         }
     }

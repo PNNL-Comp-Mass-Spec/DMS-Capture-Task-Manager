@@ -210,7 +210,7 @@ namespace ImsDemuxPlugin
                 mLastStatusUpdate = DateTime.UtcNow;
                 mStatusUpdateIntervalMinutes = 5;
 
-                OnStatusEvent(string.Format("Converting .d directory to .UIMF: {0} {1}", exePath, arguments));
+                OnStatusEvent("Converting .d directory to .UIMF: {0} {1}", exePath, arguments);
 
                 const int maxRuntimeSeconds = MAX_AGILENT_TO_UIMF_RUNTIME_MINUTES * 60;
                 success = cmdRunner.RunProgram(exePath, arguments, "AgilentToUIMFConverter", true, maxRuntimeSeconds);
@@ -265,7 +265,7 @@ namespace ImsDemuxPlugin
                             return false;
                         }
 
-                        OnDebugEvent(string.Format("Renaming {0} to {1}", sourceUimf.FullName, Path.GetFileName(targetUimfPath)));
+                        OnDebugEvent("Renaming {0} to {1}", sourceUimf.FullName, Path.GetFileName(targetUimfPath));
                         sourceUimf.MoveTo(targetUimfPath);
                     }
                 }
@@ -544,12 +544,11 @@ namespace ImsDemuxPlugin
                     dataFileDescription, FileSizeToString(actualSizeKB), minSizeText);
             }
 
-            OnErrorEvent(string.Format(
-                "{0} file may be corrupt. Actual file size is {1}; min allowable size is {2}; see {3}",
+            OnErrorEvent("{0} file may be corrupt. Actual file size is {1}; min allowable size is {2}; see {3}",
                 dataFileDescription,
                 FileSizeToString(actualSizeKB),
                 minSizeText,
-                filePath));
+                filePath);
         }
 
         private EnumCloseOutType TestIMSAgilentTOF(string uimfFilePath)
@@ -721,8 +720,8 @@ namespace ImsDemuxPlugin
             if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalMinutes >= mStatusUpdateIntervalMinutes)
             {
                 mLastStatusUpdate = DateTime.UtcNow;
-                OnStatusEvent(string.Format("AgilentToUIMFConverter running; {0:F1} minutes elapsed",
-                                         DateTime.UtcNow.Subtract(mProcessingStartTime).TotalMinutes));
+                OnStatusEvent("AgilentToUIMFConverter running; {0:F1} minutes elapsed",
+                    DateTime.UtcNow.Subtract(mProcessingStartTime).TotalMinutes);
 
                 // Increment mStatusUpdateIntervalMinutes by 1 minute every time the status is logged, up to a maximum of 30 minutes
                 if (mStatusUpdateIntervalMinutes < 30)

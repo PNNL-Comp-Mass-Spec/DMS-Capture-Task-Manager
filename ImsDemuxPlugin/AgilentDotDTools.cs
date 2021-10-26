@@ -131,9 +131,8 @@ namespace ImsDemuxPlugin
 
                 if (nodeList == null)
                 {
-                    OnErrorEvent(string.Format(
-                        "Agilent .D file, error parsing IMSFrameMeth.xml - node {0} not found in {1}",
-                        FRAME_METHOD_NODE, imsFrameMethSubPath));
+                    OnErrorEvent("Agilent .D file, error parsing IMSFrameMeth.xml - node {0} not found in {1}",
+                        FRAME_METHOD_NODE, imsFrameMethSubPath);
 
                     return methodInfo;
                 }

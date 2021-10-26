@@ -204,18 +204,16 @@ namespace DatasetQualityPlugin
                 if (archiveFile.Exists)
                 {
                     // Update dataFilePathRemote using the archive file path
-                    LogMessage(string.Format(
-                        "Dataset file not found on storage server ({0}), but was found in the archive at {1}",
-                        dataFilePathRemote, dataFilePathArchive));
+                    LogMessage("Dataset file not found on storage server ({0}), but was found in the archive at {1}",
+                        dataFilePathRemote, dataFilePathArchive);
 
                     dataFilePathRemote = dataFilePathArchive;
                 }
                 else
                 {
                     dataFilePathRemote = string.Empty;
-                    LogError(string.Format(
-                        "Dataset file not found on storage server ({0}) or in the archive ({1})",
-                        dataFilePathRemote, dataFilePathRemote));
+                    LogError("Dataset file not found on storage server ({0}) or in the archive ({1})",
+                        dataFilePathRemote, dataFilePathRemote);
 
                     mRetData.CloseoutMsg = "Dataset file not found on storage server or in the archive";
                 }
@@ -628,7 +626,7 @@ namespace DatasetQualityPlugin
                     {
                         if (mFatalSplineError)
                         {
-                            LogError(string.Format("Quameter error: {0}; {1}", FATAL_SPLINE_ERROR, trimmedLine));
+                            LogError("Quameter error: {0}; {1}", FATAL_SPLINE_ERROR, trimmedLine);
                         }
                         else
                         {
@@ -1355,8 +1353,8 @@ namespace DatasetQualityPlugin
             if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalMinutes >= mStatusUpdateIntervalMinutes)
             {
                 mLastStatusUpdate = DateTime.UtcNow;
-                LogMessage(string.Format("Quameter running; {0:F1} minutes elapsed",
-                                         DateTime.UtcNow.Subtract(mProcessingStartTime).TotalMinutes));
+                LogMessage("Quameter running; {0:F1} minutes elapsed",
+                    DateTime.UtcNow.Subtract(mProcessingStartTime).TotalMinutes);
 
                 // Increment mStatusUpdateIntervalMinutes by 5 minutes every time the status is logged, up to a maximum of 30
                 if (mStatusUpdateIntervalMinutes < 30)

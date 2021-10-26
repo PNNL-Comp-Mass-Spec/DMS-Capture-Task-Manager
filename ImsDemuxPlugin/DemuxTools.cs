@@ -517,9 +517,8 @@ namespace ImsDemuxPlugin
 
                         if (Math.Abs(currentSlope) < double.Epsilon)
                         {
-                            OnWarningEvent(string.Format(
-                                "Existing CalibrationSlope is 0 in PerformManualCalibration for frame {0}; this is unexpected",
-                                firstFrame));
+                            OnWarningEvent("Existing CalibrationSlope is 0 in PerformManualCalibration for frame {0}; this is unexpected",
+                                firstFrame);
                         }
                     }
                     else
@@ -576,7 +575,7 @@ namespace ImsDemuxPlugin
             UpdateDatasetInfo(mgrParams, taskParams);
 
             var jobNum = taskParams.GetParam("Job");
-            OnStatusEvent(string.Format("Performing demultiplexing, job {0}, dataset {1}", jobNum, mDataset));
+            OnStatusEvent("Performing demultiplexing, job {0}, dataset {1}", jobNum, mDataset);
 
             var postProcessingError = false;
 
@@ -860,7 +859,7 @@ namespace ImsDemuxPlugin
         {
             var success = true;
 
-            OnDebugEvent(string.Format("Copying {0} file to storage server", fileDescription));
+            OnDebugEvent("Copying {0} file to storage server", fileDescription);
 
             const int retryCount = 3;
             if (!CopyFileWithRetry(localUimfDecodedFilePath, Path.Combine(mDatasetDirectoryPathRemote, mDataset + ".uimf"), true, retryCount))
@@ -1249,9 +1248,8 @@ namespace ImsDemuxPlugin
             }
             catch (Exception ex)
             {
-                OnErrorEvent(string.Format(
-                    "Exception renaming file {0} to {1}: {2}",
-                    sourceFilePath, Path.GetFileName(newFilePath), ex.Message));
+                OnErrorEvent("Exception renaming file {0} to {1}: {2}",
+                    sourceFilePath, Path.GetFileName(newFilePath), ex.Message);
 
                 // Garbage collect, then try again to rename the file
                 System.Threading.Thread.Sleep(250);
@@ -1587,10 +1585,10 @@ namespace ImsDemuxPlugin
             if (DateTime.UtcNow.Subtract(mLastProgressMessageTime).TotalSeconds >= 300)
             {
                 mLastProgressMessageTime = DateTime.UtcNow;
-                OnDebugEvent(string.Format("{0} running; {1:F1} minutes elapsed, {2:F1}% complete",
-                                           toolName,
-                                           DateTime.UtcNow.Subtract(mDemuxStartTime).TotalMinutes,
-                                           mDemuxProgressPercentComplete));
+                OnDebugEvent("{0} running; {1:F1} minutes elapsed, {2:F1}% complete",
+                    toolName,
+                    DateTime.UtcNow.Subtract(mDemuxStartTime).TotalMinutes,
+                    mDemuxProgressPercentComplete);
             }
         }
 

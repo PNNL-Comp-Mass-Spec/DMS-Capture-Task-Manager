@@ -271,7 +271,7 @@ namespace CaptureTaskManager
                     }
                     catch (Exception ex)
                     {
-                        ShowTraceMessage(string.Format("Error deleting file {0}: {1}", fileToDelete.FullName, ex.Message));
+                        ShowTraceMessage("Error deleting file {0}: {1}", fileToDelete.FullName, ex.Message);
 
                         // Make sure the ReadOnly and System attributes are not set
                         // The manager will try to delete the file the next time is starts
@@ -297,7 +297,7 @@ namespace CaptureTaskManager
                     }
                     catch (Exception ex)
                     {
-                        ShowTraceMessage(string.Format("Error deleting subdirectory {0}: {1}", subDirectory.FullName, ex.Message));
+                        ShowTraceMessage("Error deleting subdirectory {0}: {1}", subDirectory.FullName, ex.Message);
 
                         // Make sure the ReadOnly and System attributes are not set
                         // The manager will try to delete the file the next time is starts
@@ -1031,18 +1031,15 @@ namespace CaptureTaskManager
 
         private void FileTools_LockQueueTimedOut(string sourceFilePath, string targetFilePath, double waitTimeMinutes)
         {
-            LogWarning(string.Format(
-                "Lockfile queue timed out after {0:F0} minutes; Source={1}, Target={2}",
-                waitTimeMinutes, sourceFilePath, targetFilePath));
+            LogWarning("Lockfile queue timed out after {0:F0} minutes; Source={1}, Target={2}",
+                waitTimeMinutes, sourceFilePath, targetFilePath);
         }
 
         private void FileTools_LockQueueWaitComplete(string sourceFilePath, string targetFilePath, double waitTimeMinutes)
         {
             if (waitTimeMinutes >= 1)
             {
-                LogMessage(string.Format(
-                    "Exited lockfile queue after {0:F0} minutes; will now copy file",
-                    waitTimeMinutes));
+                LogMessage("Exited lockfile queue after {0:F0} minutes; will now copy file", waitTimeMinutes);
             }
         }
 
@@ -1072,19 +1069,18 @@ namespace CaptureTaskManager
             }
 
             mLastLockQueueWaitTimeLog = DateTime.UtcNow;
-            LogMessage(string.Format(
-                         "Waiting for lockfile queue to fall below threshold; " +
-                         "SourceBacklog={0:N0} MB, TargetBacklog={1:N0} MB, " +
-                         "Source={2}, Target={3}",
-                         backlogSourceMB, backlogTargetMB, sourceFilePath, targetFilePath));
+            LogMessage("Waiting for lockfile queue to fall below threshold; " +
+                       "SourceBacklog={0:N0} MB, TargetBacklog={1:N0} MB, " +
+                       "Source={2}, Target={3}",
+                backlogSourceMB, backlogTargetMB, sourceFilePath, targetFilePath);
         }
 
         private void FileTools_WaitingForLockQueueNotifyLockFilePaths(string sourceLockFilePath, string targetLockFilePath, string adminBypassMessage)
         {
             if (string.IsNullOrWhiteSpace(adminBypassMessage))
             {
-                LogMessage(string.Format("Waiting for lockfile queue to fall below threshold; see lock file(s) at {0} and {1}",
-                                         sourceLockFilePath ?? "(n/a)", targetLockFilePath ?? "(n/a)"));
+                LogMessage("Waiting for lockfile queue to fall below threshold; see lock file(s) at {0} and {1}",
+                    sourceLockFilePath ?? "(n/a)", targetLockFilePath ?? "(n/a)");
                 return;
             }
 

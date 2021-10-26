@@ -83,7 +83,7 @@ namespace CaptureTaskManager
 
                     var username = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
 
-                    LogDebug(string.Format("Connected to broker as user {0}", username));
+                    LogDebug("Connected to broker as user {0}", username);
 
                     return;
                 }
@@ -104,10 +104,9 @@ namespace CaptureTaskManager
 
             // If we get here, we never could connect to the message broker
 
-            LogError(string.Format(
-                "Exception creating broker connection{0}: {1}",
+            LogError("Exception creating broker connection{0}: {1}",
                 retryCount > 0 ? " after " + (retryCount + 1) + " attempts" : string.Empty,
-                string.Join("; ", errorList)));
+                string.Join("; ", errorList));
         }
 
         /// <summary>

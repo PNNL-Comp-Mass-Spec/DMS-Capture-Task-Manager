@@ -287,18 +287,14 @@ namespace CaptureTaskManager
                         datasetInfo.FileOrDirectoryName = datasetName;
                         datasetInfo.DatasetType = DatasetInfo.RawDSTypes.MultiFile;
                         var fileNames = foundFiles.ConvertAll(file => file.Name);
-                        OnWarningEvent(string.Format(
-                                           "Dataset name matched multiple files for iteration {0} in directory {1}: {2}",
-                                           i,
-                                           sourceDirectory.FullName,
-                                           string.Join(", ", fileNames.Take(5))));
+                        OnWarningEvent("Dataset name matched multiple files for iteration {0} in directory {1}: {2}",
+                            i, sourceDirectory.FullName, string.Join(", ", fileNames.Take(5)));
                     }
 
                     if (mTraceMode)
                     {
-                        ToolRunnerBase.ShowTraceMessage(
-                            string.Format("Matched file {0}; DatasetType = {1}",
-                                          datasetInfo.FileOrDirectoryName, datasetInfo.DatasetType.ToString()));
+                        ToolRunnerBase.ShowTraceMessage("Matched file {0}; DatasetType = {1}",
+                            datasetInfo.FileOrDirectoryName, datasetInfo.DatasetType.ToString());
                     }
 
                     matchedDirectory = false;
@@ -347,17 +343,14 @@ namespace CaptureTaskManager
 
                     if (mTraceMode)
                     {
-                        ToolRunnerBase.ShowTraceMessage(
-                            string.Format("Matched directory {0}; DatasetType = {1}",
-                                          datasetInfo.FileOrDirectoryName, datasetInfo.DatasetType.ToString()));
+                        ToolRunnerBase.ShowTraceMessage("Matched directory {0}; DatasetType = {1}",
+                            datasetInfo.FileOrDirectoryName, datasetInfo.DatasetType.ToString());
                     }
 
                     if (checkForFilesFirst)
                     {
-                        OnStatusEvent(string.Format(
-                                          "Dataset name did not match a file, but it did match directory {0}, dataset type is {1}",
-                                          datasetInfo.FileOrDirectoryName,
-                                          datasetInfo.DatasetType));
+                        OnStatusEvent("Dataset name did not match a file, but it did match directory {0}, dataset type is {1}",
+                            datasetInfo.FileOrDirectoryName, datasetInfo.DatasetType);
                     }
 
                     matchedDirectory = true;

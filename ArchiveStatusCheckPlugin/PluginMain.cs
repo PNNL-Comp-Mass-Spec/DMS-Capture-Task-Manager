@@ -401,7 +401,7 @@ namespace ArchiveStatusCheckPlugin
             }
             catch (Exception ex)
             {
-                LogError(string.Format("Exception connecting to database for job {0}: {1}", mJob, ex.Message));
+                LogError("Exception connecting to database for job {0}: {1}", mJob, ex.Message);
             }
 
             return statusData;
@@ -527,11 +527,11 @@ namespace ArchiveStatusCheckPlugin
                     return;
                 }
 
-                LogError(string.Format("Error {0} calling stored procedure {1}, job {2}", resCode, SP_NAME, mJob));
+                LogError("Error {0} calling stored procedure {1}, job {2}", resCode, SP_NAME, mJob);
             }
             catch (Exception ex)
             {
-                LogError(string.Format("Exception calling stored procedure {0}, job {1}", SP_NAME, mJob), ex);
+                LogError(ex, "Exception calling stored procedure {0}, job {1}", SP_NAME, mJob);
             }
         }
 
@@ -567,11 +567,11 @@ namespace ArchiveStatusCheckPlugin
                     return;
                 }
 
-                LogError(string.Format("Error {0} calling stored procedure {1}, job {2}", resCode, SP_NAME, mJob));
+                LogError("Error {0} calling stored procedure {1}, job {2}", resCode, SP_NAME, mJob);
             }
             catch (Exception ex)
             {
-                LogError(string.Format("Exception calling stored procedure {0}, job {1}", SP_NAME, mJob), ex);
+                LogError(ex, "Exception calling stored procedure {0}, job {1}", SP_NAME, mJob);
             }
         }
     }

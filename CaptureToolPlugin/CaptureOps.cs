@@ -204,9 +204,8 @@ namespace CaptureToolPlugin
                 else
                 {
                     // Fail safe code; this shouldn't typically be reached
-                    LogWarning(string.Format(
-                                   "Unable to determine the parent directory of {0} in AutoFixFilesWithInvalidChars",
-                                   datasetFileOrDirectory.FullName));
+                    LogWarning("Unable to determine the parent directory of {0} in AutoFixFilesWithInvalidChars",
+                        datasetFileOrDirectory.FullName);
 
                     targetFilePath = Path.Combine(datasetDirectory.FullName, updatedName);
                 }
@@ -216,8 +215,7 @@ namespace CaptureToolPlugin
                 {
                     if (mTraceMode)
                     {
-                        ToolRunnerBase.ShowTraceMessage(
-                            string.Format("Moving {0} to {1}", sourceFilePath, targetFilePath));
+                        ToolRunnerBase.ShowTraceMessage("Moving {0} to {1}", sourceFilePath, targetFilePath);
                     }
 
                     File.Move(sourceFilePath, targetFilePath);
@@ -225,7 +223,7 @@ namespace CaptureToolPlugin
                 catch (Exception ex)
                 {
                     LogError("Error renaming file", ex);
-                    LogMessage(string.Format("Source: {0}; Target:{1}", sourceFilePath, targetFilePath));
+                    LogMessage("Source: {0}; Target:{1}", sourceFilePath, targetFilePath);
                 }
             }
         }
@@ -333,16 +331,16 @@ namespace CaptureToolPlugin
                     switch (pendingRenames.Keys.First())
                     {
                         case FileInfo fileToRename:
-                            LogMessage(string.Format("Found 1 file to prepend with x_, {0}", fileToRename.Name));
+                            LogMessage("Found 1 file to prepend with x_, {0}", fileToRename.Name);
                             break;
                         case DirectoryInfo directoryToRename:
-                            LogMessage(string.Format("Found 1 directory to prepend with x_, {0}", directoryToRename.Name));
+                            LogMessage("Found 1 directory to prepend with x_, {0}", directoryToRename.Name);
                             break;
                     }
                 }
                 else if (pendingRenames.Count > 1)
                 {
-                    LogMessage(string.Format("Found {0} files/directories to prepend with x_", pendingRenames.Count));
+                    LogMessage("Found {0} files/directories to prepend with x_", pendingRenames.Count);
                 }
 
                 return true;
@@ -377,17 +375,16 @@ namespace CaptureToolPlugin
                             var newFilePath = fileOrDirectoryToRename.Value;
                             if (string.IsNullOrWhiteSpace(newFilePath))
                             {
-                                LogWarning(string.Format(
-                                    "New name not defined in pendingRenames for {0}; cannot mark file as superseded",
-                                    fileToRename.FullName));
+                                LogWarning("New name not defined in pendingRenames for {0}; cannot mark file as superseded",
+                                    fileToRename.FullName);
                                 continue;
                             }
 
                             if (File.Exists(newFilePath))
                             {
                                 // Target exists; delete it
-                                LogMessage(string.Format("Addition of x_ to {0} will replace an existing file; deleting {1}",
-                                                         fileToRename.FullName, Path.GetFileName(newFilePath)));
+                                LogMessage("Addition of x_ to {0} will replace an existing file; deleting {1}",
+                                    fileToRename.FullName, Path.GetFileName(newFilePath));
                                 File.Delete(newFilePath);
                             }
                             fileToRename.MoveTo(newFilePath);
@@ -398,18 +395,16 @@ namespace CaptureToolPlugin
                             var newDirectoryPath = fileOrDirectoryToRename.Value;
                             if (string.IsNullOrWhiteSpace(newDirectoryPath))
                             {
-                                LogWarning(string.Format(
-                                    "New name not defined in pendingRenames for {0}; cannot mark directory as superseded",
-                                    directoryToRename.FullName));
+                                LogWarning("New name not defined in pendingRenames for {0}; cannot mark directory as superseded",
+                                    directoryToRename.FullName);
                                 continue;
                             }
 
                             if (Directory.Exists(newDirectoryPath))
                             {
                                 // Target exists; delete it
-                                LogMessage(string.Format(
-                                    "Addition of x_ to {0} will replace an existing subdirectory; deleting {1}",
-                                    directoryToRename.FullName, Path.GetFileName(newDirectoryPath)));
+                                LogMessage("Addition of x_ to {0} will replace an existing subdirectory; deleting {1}",
+                                    directoryToRename.FullName, Path.GetFileName(newDirectoryPath));
                                 Directory.Delete(newDirectoryPath, true);
                             }
                             directoryToRename.MoveTo(newDirectoryPath);
@@ -420,14 +415,14 @@ namespace CaptureToolPlugin
 
                 if (filesRenamed > 0)
                 {
-                    LogMessage(string.Format("Renamed {0} superseded file(s) at {1} to start with x_",
-                                             filesRenamed, datasetDirectoryPath));
+                    LogMessage("Renamed {0} superseded file(s) at {1} to start with x_",
+                        filesRenamed, datasetDirectoryPath);
                 }
 
                 if (directoriesRenamed > 0)
                 {
-                    LogMessage(string.Format("Renamed {0} superseded subdirectory(s) at {1} to start with x_",
-                                             directoriesRenamed, datasetDirectoryPath));
+                    LogMessage("Renamed {0} superseded subdirectory(s) at {1} to start with x_",
+                        directoriesRenamed, datasetDirectoryPath);
                 }
 
                 return true;
@@ -832,8 +827,7 @@ namespace CaptureToolPlugin
             {
                 // Monitoring file DatasetName.raw for 30 seconds
                 // Monitoring directory DatasetName.d for 30 seconds
-                ToolRunnerBase.ShowTraceMessage(
-                    string.Format("Monitoring {0} for {1} seconds", fileOrDirectoryName, sleepIntervalSeconds));
+                ToolRunnerBase.ShowTraceMessage("Monitoring {0} for {1} seconds", fileOrDirectoryName, sleepIntervalSeconds);
             }
 
             // Wait for specified sleep interval
@@ -852,8 +846,7 @@ namespace CaptureToolPlugin
                 nextStatusTime = nextStatusTime.AddSeconds(STATUS_MESSAGE_INTERVAL);
                 if (mTraceMode)
                 {
-                    ToolRunnerBase.ShowTraceMessage(
-                        string.Format("{0:0} seconds remaining", verificationEndTime.Subtract(DateTime.UtcNow).TotalSeconds));
+                    ToolRunnerBase.ShowTraceMessage("{0:0} seconds remaining", verificationEndTime.Subtract(DateTime.UtcNow).TotalSeconds);
                 }
             }
         }
@@ -1391,18 +1384,16 @@ namespace CaptureToolPlugin
                     {
                         if (captureSubdirectory.Equals(sourceFolderOrDatasetName, StringComparison.OrdinalIgnoreCase))
                         {
-                            LogWarning(string.Format(
-                                "Dataset Capture_Subdirectory is the dataset name; leaving the capture path as {0} " +
-                                "so that the entire dataset directory will be copied", sourceFolderOrDatasetName));
+                            LogWarning("Dataset Capture_Subdirectory is the dataset name; leaving the capture path as {0} " +
+                                       "so that the entire dataset directory will be copied", sourceFolderOrDatasetName);
                         }
                         else
                         {
                             if (candidateDirectoryPath.EndsWith(Path.DirectorySeparatorChar + sourceFolderOrDatasetName, StringComparison.OrdinalIgnoreCase))
                             {
                                 var candidateDirectoryPathTrimmed = candidateDirectoryPath.Substring(0, candidateDirectoryPath.Length - sourceFolderOrDatasetName.Length - 1);
-                                LogMessage(string.Format(
-                                    "Appending captureSubdirectory to sourceDirectoryPath, but removing SourceFolderName, giving: {0} (removed {1})",
-                                    candidateDirectoryPathTrimmed, sourceFolderOrDatasetName));
+                                LogMessage("Appending captureSubdirectory to sourceDirectoryPath, but removing SourceFolderName, giving: {0} (removed {1})",
+                                    candidateDirectoryPathTrimmed, sourceFolderOrDatasetName);
 
                                 sourceDirectoryPath = candidateDirectoryPathTrimmed;
                             }
@@ -1430,10 +1421,8 @@ namespace CaptureToolPlugin
 
             if (!string.Equals(datasetInfo.DatasetName, datasetName))
             {
-                LogWarning(string.Format(
-                    "DatasetName in the datasetInfo object is {0}; changing to {1}",
-                    datasetInfo.DatasetName,
-                    datasetName));
+                LogWarning("DatasetName in the datasetInfo object is {0}; changing to {1}",
+                    datasetInfo.DatasetName, datasetName);
 
                 datasetInfo.DatasetName = datasetName;
             }
@@ -2113,17 +2102,15 @@ namespace CaptureToolPlugin
                 var matchSpec = "*" + sourceDirectory.Extension;
                 if (mTraceMode)
                 {
-                    ToolRunnerBase.ShowTraceMessage(
-                        string.Format("Looking for directories matching {0} at {1}",
-                                      matchSpec, sourceDirectory.FullName));
+                    ToolRunnerBase.ShowTraceMessage("Looking for directories matching {0} at {1}",
+                        matchSpec, sourceDirectory.FullName);
                 }
 
                 var subdirectories = sourceDirectory.GetDirectories(matchSpec);
                 if (subdirectories.Length > 1)
                 {
-                    LogWarning(string.Format(
-                                   "Source directory has multiple subdirectories with extension {0}; see {1}",
-                                   sourceDirectory.Extension, sourceDirectory.FullName));
+                    LogWarning("Source directory has multiple subdirectories with extension {0}; see {1}",
+                        sourceDirectory.Extension, sourceDirectory.FullName);
 
                     sourceDirectoryToUse = sourceDirectory;
                     extraDirectoryToCreate = string.Empty;
@@ -2157,11 +2144,10 @@ namespace CaptureToolPlugin
                     }
                     else
                     {
-                        LogWarning(string.Format(
-                                       "Copying files from {0} instead of the parent directory; name similarity score: {1:F2}. " +
-                                       "Will create an empty directory named {2} on the storage server since the similarity score is less than {3}",
-                                       sourceDirectoryToUse.FullName, similarityScore,
-                                       sourceDirectoryToUse.Name, SIMILARITY_SCORE_THRESHOLD));
+                        LogWarning("Copying files from {0} instead of the parent directory; name similarity score: {1:F2}. " +
+                                   "Will create an empty directory named {2} on the storage server since the similarity score is less than {3}",
+                            sourceDirectoryToUse.FullName, similarityScore,
+                            sourceDirectoryToUse.Name, SIMILARITY_SCORE_THRESHOLD);
 
                         extraDirectoryToCreate = sourceDirectoryToUse.Name;
                     }
@@ -2175,8 +2161,7 @@ namespace CaptureToolPlugin
                 if (mTraceMode)
                 {
                     Console.WriteLine();
-                    ToolRunnerBase.ShowTraceMessage(
-                        string.Format("Copying from\n{0} to\n{1}", sourceDirectoryToUse.FullName, targetDirectory.FullName));
+                    ToolRunnerBase.ShowTraceMessage("Copying from\n{0} to\n{1}", sourceDirectoryToUse.FullName, targetDirectory.FullName);
 
                     const int waitTimeSeconds = 5;
                     Console.WriteLine();
@@ -3058,15 +3043,13 @@ namespace CaptureToolPlugin
 
                     if (success)
                     {
-                        LogDebug(string.Format(
-                            "  directory copy complete; CountCopied = {0}; CountSkipped = {1}; CountResumed = {2}",
-                            fileCountNewlyCopied, fileCountSkipped, fileCountResumed));
+                        LogDebug("  directory copy complete; CountCopied = {0}; CountSkipped = {1}; CountResumed = {2}",
+                            fileCountNewlyCopied, fileCountSkipped, fileCountResumed);
                     }
                     else
                     {
-                        LogError(string.Format(
-                            "  directory copy failed copying {0} to {1}{2}",
-                            sourceDirectoryPath, targetDirectoryPath, GetConnectionDescription()));
+                        LogError("  directory copy failed copying {0} to {1}{2}",
+                            sourceDirectoryPath, targetDirectoryPath, GetConnectionDescription());
                     }
                 }
                 catch (UnauthorizedAccessException ex)
@@ -3828,7 +3811,7 @@ namespace CaptureToolPlugin
             mLastProgressFileName = filename;
             mLastProgressPercent = percentComplete;
 
-            LogMessage(string.Format("  copying {0}: {1:0.0}% complete", Path.GetFileName(filename), percentComplete));
+            LogMessage("  copying {0}: {1:0.0}% complete", Path.GetFileName(filename), percentComplete);
         }
     }
 }

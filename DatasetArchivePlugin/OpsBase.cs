@@ -213,9 +213,8 @@ namespace DatasetArchivePlugin
                     }
                     else
                     {
-                        LogTools.LogWarning(string.Format(
-                                                "Unable to create archive update job for {0}; stored procedure returned resultCode {1}",
-                                                datasetAndDirectory, resCode));
+                        LogTools.LogWarning("Unable to create archive update job for {0}; stored procedure returned resultCode {1}",
+                            datasetAndDirectory, resCode);
                     }
                 }
 
@@ -391,11 +390,10 @@ namespace DatasetArchivePlugin
 
                 if (success || string.IsNullOrEmpty(criticalErrorMessage))
                 {
-                    OnStatusEvent(string.Format(
-                        "EUS metadata: Instrument ID {0}, Project ID {1}, Uploader ID {2}",
+                    OnStatusEvent("EUS metadata: Instrument ID {0}, Project ID {1}, Uploader ID {2}",
                         myEMSLUploader.EUSInfo.EUSInstrumentID,
                         myEMSLUploader.EUSInfo.EUSProjectID,
-                        myEMSLUploader.EUSInfo.EUSUploaderID));
+                        myEMSLUploader.EUSInfo.EUSUploaderID);
                 }
 
                 if (!string.IsNullOrWhiteSpace(criticalErrorMessage) || string.Equals(statusURL, MyEMSLUploader.CRITICAL_UPLOAD_ERROR))
@@ -473,7 +471,7 @@ namespace DatasetArchivePlugin
                     LogTools.LogError(string.Format(
                         "SetupMetadataAndUpload reported true for dataset {0} but mMyEmslUploadSuccess is false; " +
                         "need to create ArchiveUpdate tasks for subdirectories {1}",
-                        mDatasetName, string.Join(", ", skippedSubdirectories)), 
+                        mDatasetName, string.Join(", ", skippedSubdirectories)),
                         null, true);
 
                     // Return true since the primary archive task succeeded
@@ -757,9 +755,8 @@ namespace DatasetArchivePlugin
             // Note that e.ServerResponse will simply have the StatusURL if the upload succeeded
             // If a problem occurred, e.ServerResponse will either have the full server response, or may even be blank
 
-            OnDebugEvent(string.Format(
-                "  ... MyEmsl upload task complete: {0}",
-                string.IsNullOrEmpty(e.ServerResponse) ? "empty server response" : e.ServerResponse));
+            OnDebugEvent("  ... MyEmsl upload task complete: {0}",
+                string.IsNullOrEmpty(e.ServerResponse) ? "empty server response" : e.ServerResponse);
 
             mMyEmslUploadSuccess = true;
         }

@@ -171,9 +171,8 @@ namespace SrcFileRenamePlugin
                     {
                         if (captureSubdirectory.Equals(sourceDirectoryName, StringComparison.OrdinalIgnoreCase))
                         {
-                            OnWarningEvent(string.Format(
-                                           "Dataset Capture_Subdirectory is the dataset name; leaving the capture path as {0} " +
-                                           "so that the entire dataset directory will be copied", sourceDirectoryPath));
+                            OnWarningEvent("Dataset Capture_Subdirectory is the dataset name; leaving the capture path as {0} " +
+                                           "so that the entire dataset directory will be copied", sourceDirectoryPath);
                         }
                         else
                         {
@@ -315,14 +314,13 @@ namespace SrcFileRenamePlugin
 
                         if (sha1Hash.Equals(instrumentFileHash))
                         {
-                            OnStatusEvent(string.Format("Hashes match for {0}: {1}", candidateFile.FullName, instrumentFileHash));
+                            OnStatusEvent("Hashes match for {0}: {1}", candidateFile.FullName, instrumentFileHash);
                             matchedFiles.Add(candidateFile);
                         }
                         else
                         {
-                            OnWarningEvent(string.Format(
-                                "Hashes do not match for {0}: {1} on instrument vs. {2} on storage server",
-                                candidateFile.FullName, sha1Hash, instrumentFileHash));
+                            OnWarningEvent("Hashes do not match for {0}: {1} on instrument vs. {2} on storage server",
+                                candidateFile.FullName, sha1Hash, instrumentFileHash);
                         }
                     }
                     else
@@ -330,9 +328,8 @@ namespace SrcFileRenamePlugin
                         // Log a message for the first item checked in fileNamesToCheck
                         if (!loggedDatasetNotFound)
                         {
-                            OnWarningEvent(string.Format(
-                                "Dataset {0}: data file and/or directory not found using {1}.*",
-                                datasetNameBase, datasetNameBase));
+                            OnWarningEvent("Dataset {0}: data file and/or directory not found using {1}.*",
+                                datasetNameBase, datasetNameBase);
 
                             loggedDatasetNotFound = true;
                         }
@@ -343,9 +340,8 @@ namespace SrcFileRenamePlugin
 
                 if (alreadyRenamed)
                 {
-                    OnStatusEvent(string.Format(
-                        "Skipping dataset {0} since data file and/or directory already renamed to {1}",
-                        datasetNameBase, datasetNameBase));
+                    OnStatusEvent("Skipping dataset {0} since data file and/or directory already renamed to {1}",
+                        datasetNameBase, datasetNameBase);
 
                     countRenamed++;
                     break;

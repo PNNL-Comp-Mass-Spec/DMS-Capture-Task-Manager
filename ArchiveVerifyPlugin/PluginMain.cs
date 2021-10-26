@@ -436,7 +436,7 @@ namespace ArchiveVerifyPlugin
 
                     mismatchCount++;
 
-                    LogError(string.Format(" ... file {0} not found in MyEMSL (CompareArchiveFilesToList)", metadataFile.Key));
+                    LogError(" ... file {0} not found in MyEMSL (CompareArchiveFilesToList)", metadataFile.Key);
                 }
                 else
                 {
@@ -467,9 +467,8 @@ namespace ArchiveVerifyPlugin
 
                         mTotalMismatchCount++;
 
-                        LogError(string.Format(
-                            " ... file mismatch for {0}; MyEMSL reports {1} but expecting {2}",
-                            archiveFile.RelativePathWindows, archiveFile.Hash, metadataFile.Value));
+                        LogError(" ... file mismatch for {0}; MyEMSL reports {1} but expecting {2}",
+                            archiveFile.RelativePathWindows, archiveFile.Hash, metadataFile.Value);
 
                         mismatchCount++;
                     }
