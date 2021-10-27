@@ -14,12 +14,13 @@ namespace DatasetInfoPlugin
         // Ignore Spelling: yyyy-MM-dd hh:mm:ss tt
 
         private const int DATASET_GAP_THRESHOLD_HOURS = 24;
-        private struct udtAcquisitionInfo
+
+        private struct AcquisitionInfo
         {
             public int ScanCount;
             public int ScanCountMS;
             public int ScanCountMSn;
-            public double Elution_Time_Max;
+            public double ElutionTimeMax;
             public double AcqTimeMinutes;
             public DateTime StartTime;
             public DateTime EndTime;
@@ -36,7 +37,7 @@ namespace DatasetInfoPlugin
                 ScanCount = 0;
                 ScanCountMS = 0;
                 ScanCountMSn = 0;
-                Elution_Time_Max = 0;
+                ElutionTimeMax = 0;
                 AcqTimeMinutes = 0;
                 StartTime = DateTime.MinValue;
                 EndTime = DateTime.MinValue;
@@ -50,7 +51,7 @@ namespace DatasetInfoPlugin
             }
         }
 
-        private struct udtTicInfo
+        private struct TicInfo
         {
             public double TIC_Max_MS;
             public double TIC_Max_MSn;
@@ -74,7 +75,7 @@ namespace DatasetInfoPlugin
             }
         }
 
-        private struct udtDatasetAcqTimeInfo
+        private struct DatasetAcqTimeInfo
         {
             public string Dataset;
             public DateTime StartTime;
@@ -118,14 +119,14 @@ namespace DatasetInfoPlugin
             // Keys in this dictionary are KeyValuePairs of [ScanType,ScanFilterText] while the values are the scan count
             ScanTypes.Clear();
 
-            var acqInfo = new udtAcquisitionInfo();
+            var acqInfo = new AcquisitionInfo();
             acqInfo.Clear();
 
-            var ticInfo = new udtTicInfo();
+            var ticInfo = new TicInfo();
             ticInfo.Clear();
 
             // Keys in this dictionary are dataset names; values track the StartTime and EndTime for the dataset
-            var datasetAcqTimes = new Dictionary<string, udtDatasetAcqTimeInfo>();
+            var datasetAcqTimes = new Dictionary<string, DatasetAcqTimeInfo>();
 
             // Parse each block of cached XML
             foreach (var cachedInfoXml in cachedDatasetInfoXml)
@@ -172,9 +173,9 @@ namespace DatasetInfoPlugin
         private string ParseDatasetInfoXml(
             string cachedInfoXml,
             IDictionary<KeyValuePair<string, string>, int> scanTypes,
-            ref udtAcquisitionInfo acqInfo,
-            ref udtTicInfo ticInfo,
-            IDictionary<string, udtDatasetAcqTimeInfo> datasetAcqTimes)
+            ref AcquisitionInfo acqInfo,
+            ref TicInfo ticInfo,
+            IDictionary<string, DatasetAcqTimeInfo> datasetAcqTimes)
 
         {
             var xmlDoc = new XmlDocument();
@@ -229,9 +230,9 @@ namespace DatasetInfoPlugin
             acqInfo.ScanCountMSn += currentEntryScanCountMSn;
 
             var elutionTimeMax = GetXmlValue(xmlDoc, "DatasetInfo/AcquisitionInfo/Elution_Time_Max", 0.0);
-            if (elutionTimeMax > acqInfo.Elution_Time_Max)
+            if (elutionTimeMax > acqInfo.ElutionTimeMax)
             {
-                acqInfo.Elution_Time_Max = elutionTimeMax;
+                acqInfo.ElutionTimeMax = elutionTimeMax;
             }
 
             acqInfo.AcqTimeMinutes += GetXmlValue(xmlDoc, "DatasetInfo/AcquisitionInfo/AcqTimeMinutes", 0.0);
@@ -267,7 +268,7 @@ namespace DatasetInfoPlugin
 
                 if (startTimeValid && !datasetAcqTimes.ContainsKey(datasetName))
                 {
-                    var acqTimeInfo = new udtDatasetAcqTimeInfo
+                    var acqTimeInfo = new DatasetAcqTimeInfo
                     {
                         Dataset = datasetName,
                         StartTime = startTime,
@@ -318,8 +319,8 @@ namespace DatasetInfoPlugin
         private string CreateDatasetInfoXML(
             string datasetName,
             Dictionary<KeyValuePair<string, string>, int> scanTypes,
-            udtAcquisitionInfo acqInfo,
-            udtTicInfo ticInfo)
+            AcquisitionInfo acqInfo,
+            TicInfo ticInfo)
         {
             var xmlSettings = new XmlWriterSettings
             {
@@ -362,7 +363,7 @@ namespace DatasetInfoPlugin
 
             xWriter.WriteElementString("ScanCountMS", acqInfo.ScanCountMS.ToString());
             xWriter.WriteElementString("ScanCountMSn", acqInfo.ScanCountMSn.ToString());
-            xWriter.WriteElementString("Elution_Time_Max", acqInfo.Elution_Time_Max.ToString("0.00"));
+            xWriter.WriteElementString("Elution_Time_Max", acqInfo.ElutionTimeMax.ToString("0.00"));
 
             xWriter.WriteElementString("AcqTimeMinutes", acqInfo.AcqTimeMinutes.ToString("0.00"));
             xWriter.WriteElementString("StartTime", acqInfo.StartTime.ToString("yyyy-MM-dd hh:mm:ss tt"));
