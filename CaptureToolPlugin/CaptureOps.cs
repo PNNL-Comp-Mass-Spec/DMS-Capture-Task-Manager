@@ -949,7 +949,7 @@ namespace CaptureToolPlugin
 
             LogError(msg);
 
-            if (myConn.ErrorMessage == "1219" || myConn.ErrorMessage == "1203" || myConn.ErrorMessage == "53" || myConn.ErrorMessage == "64")
+            if (myConn.ErrorMessage is "1219" or "1203" or "53" or "64")
             {
                 // Likely had error "An unexpected network error occurred" while copying a file for a previous dataset
                 // Need to completely exit the capture task manager
@@ -3107,8 +3107,7 @@ namespace CaptureToolPlugin
                     LogError(msg);
 
                     doCopy = false;
-                    if (mFileTools.CurrentCopyStatus == FileTools.CopyStatus.BufferedCopy ||
-                        mFileTools.CurrentCopyStatus == FileTools.CopyStatus.BufferedCopyResume)
+                    if (mFileTools.CurrentCopyStatus is FileTools.CopyStatus.BufferedCopy or FileTools.CopyStatus.BufferedCopyResume)
                     {
                         // Exception occurred during the middle of a buffered copy
                         // If at least 10 seconds have elapsed, auto-retry the copy again

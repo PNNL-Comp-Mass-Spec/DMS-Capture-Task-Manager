@@ -951,7 +951,7 @@ namespace CaptureTaskManager
 
                     case EnumCloseOutType.CLOSEOUT_NOT_READY:
                         string msg;
-                        if (mStepTool == "ArchiveVerify" || mStepTool == "ArchiveStatusCheck")
+                        if (mStepTool is "ArchiveVerify" or "ArchiveStatusCheck")
                         {
                             msg = "Dataset not ready, tool " + mStepTool + ", job " + mJob + ": " + toolResult.CloseoutMsg;
                         }

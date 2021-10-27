@@ -320,7 +320,7 @@ namespace CaptureTaskManager
                 mMonitorInterval = 250;
             }
 
-            if (maxRuntimeSeconds > 0 && maxRuntimeSeconds < 15)
+            if (maxRuntimeSeconds is > 0 and < 15)
             {
                 maxRuntimeSeconds = 15;
             }
