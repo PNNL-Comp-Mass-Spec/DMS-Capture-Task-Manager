@@ -60,7 +60,7 @@ namespace ImsDemuxPlugin
 
         private readonly List<string> mLoggedConsoleOutputErrors;
 
-        private struct udtDemuxOptionsType
+        private struct DemuxOptionsType
         {
             public int FramesToSum;
             public bool CalibrateOnly;
@@ -604,7 +604,7 @@ namespace ImsDemuxPlugin
             var tmpUIMFRemoteFileNamePath = Path.Combine(mDatasetDirectoryPathRemote, tmpUIMFFileName);
             var tmpUIMFLocalFileNamePath = Path.Combine(mWorkDir, tmpUIMFFileName);
 
-            var demuxOptions = new udtDemuxOptionsType
+            var demuxOptions = new DemuxOptionsType
             {
                 AutoCalibrate = false,
                 FramesToSum = framesToSum,
@@ -942,7 +942,7 @@ namespace ImsDemuxPlugin
                 OnStatusEvent("Starting calibration, dataset " + datasetName);
 
                 // Set the options
-                var demuxOptions = new udtDemuxOptionsType
+                var demuxOptions = new DemuxOptionsType
                 {
                     ResumeDemultiplexing = false,
                     CheckpointTargetDirectory = string.Empty,
@@ -990,7 +990,7 @@ namespace ImsDemuxPlugin
         private bool DemultiplexFile(
             string inputFilePath,
             string datasetName,
-            udtDemuxOptionsType demuxOptions,
+            DemuxOptionsType demuxOptions,
             out int resumeStartFrame,
             out string errorMessage)
         {
@@ -1283,7 +1283,7 @@ namespace ImsDemuxPlugin
         private bool RunUIMFDemultiplexer(
             string inputFilePath,
             string outputFilePath,
-            udtDemuxOptionsType demuxOptions,
+            DemuxOptionsType demuxOptions,
             int maxRuntimeMinutes,
             out string errorMessage)
         {
