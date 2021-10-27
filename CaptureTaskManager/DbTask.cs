@@ -222,81 +222,81 @@ namespace CaptureTaskManager
             }
         }
 
-        private string DbCStr(object InpObj)
+        private string DbCStr(object paramValue)
         {
             // If input object is DbNull, returns string.Empty, otherwise returns String representation of object
-            if (InpObj == null || ReferenceEquals(InpObj, DBNull.Value))
+            if (paramValue == null || ReferenceEquals(paramValue, DBNull.Value))
             {
                 return string.Empty;
             }
 
-            return InpObj.ToString();
+            return paramValue.ToString();
         }
 
-        protected float DbCSng(object InpObj)
+        protected float DbCSng(object paramValue)
         {
             // If input object is DbNull, returns 0.0, otherwise returns Single representation of object
-            if (ReferenceEquals(InpObj, DBNull.Value))
+            if (ReferenceEquals(paramValue, DBNull.Value))
             {
                 return 0.0F;
             }
 
-            return (float)InpObj;
+            return (float)paramValue;
         }
 
-        protected double DbCDbl(object InpObj)
+        protected double DbCDbl(object paramValue)
         {
             // If input object is DbNull, returns 0.0, otherwise returns Double representation of object
-            if (ReferenceEquals(InpObj, DBNull.Value))
+            if (ReferenceEquals(paramValue, DBNull.Value))
             {
                 return 0.0;
             }
 
-            return (double)InpObj;
+            return (double)paramValue;
         }
 
-        protected int DbCInt(object InpObj)
+        protected int DbCInt(object paramValue)
         {
             // If input object is DbNull, returns 0, otherwise returns Integer representation of object
-            if (ReferenceEquals(InpObj, DBNull.Value))
+            if (ReferenceEquals(paramValue, DBNull.Value))
             {
                 return 0;
             }
 
-            return (int)InpObj;
+            return (int)paramValue;
         }
 
-        protected long DbCLng(object InpObj)
+        protected long DbCLng(object paramValue)
         {
             // If input object is DbNull, returns 0, otherwise returns Integer representation of object
-            if (ReferenceEquals(InpObj, DBNull.Value))
+            if (ReferenceEquals(paramValue, DBNull.Value))
             {
                 return 0;
             }
 
-            return (long)InpObj;
+            return (long)paramValue;
         }
 
-        protected decimal DbCDec(object InpObj)
+        protected decimal DbCDec(object paramValue)
         {
             // If input object is DbNull, returns 0, otherwise returns Decimal representation of object
-            if (ReferenceEquals(InpObj, DBNull.Value))
+            if (ReferenceEquals(paramValue, DBNull.Value))
             {
                 return 0;
             }
 
-            return (decimal)InpObj;
+            return (decimal)paramValue;
         }
 
-        protected short DbCShort(object InpObj)
+        protected short DbCShort(object paramValue)
         {
             // If input object is DbNull, returns 0, otherwise returns Short representation of object
-            if (ReferenceEquals(InpObj, DBNull.Value))
+            if (ReferenceEquals(paramValue, DBNull.Value))
             {
                 return 0;
             }
 
-            return (short)InpObj;
+            return (short)paramValue;
         }
 
         private void CaptureTaskDBProcedureExecutor_DBErrorEvent(string message, Exception ex)
