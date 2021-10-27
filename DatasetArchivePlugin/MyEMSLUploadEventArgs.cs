@@ -34,6 +34,4 @@ namespace DatasetArchivePlugin
             UsedTestInstance = usedTestInstance;
         }
     }
-
-    public delegate void MyEMSLUploadEventHandler(object sender, MyEMSLUploadEventArgs e);
 }

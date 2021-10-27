@@ -20,16 +20,6 @@ namespace CaptureTaskManager
         event StatusMonitorUpdateReceived MonitorUpdateRequired;
 
         /// <summary>
-        /// Status file path
-        /// </summary>
-        string FileNamePath { get; set; }
-
-        /// <summary>
-        /// Manager name
-        /// </summary>
-        string MgrName { get; set; }
-
-        /// <summary>
         /// Manager status
         /// </summary>
         EnumMgrStatus MgrStatus { get; set; }
@@ -55,11 +45,6 @@ namespace CaptureTaskManager
         DateTime TaskStartTime { get; set; }
 
         /// <summary>
-        /// Progress (value between 0 and 100)
-        /// </summary>
-        float Progress { get; set; }
-
-        /// <summary>
         /// Current task
         /// </summary>
         string CurrentOperation { get; set; }
@@ -75,11 +60,6 @@ namespace CaptureTaskManager
         int JobNumber { get; set; }
 
         /// <summary>
-        /// Step number
-        /// </summary>
-        int JobStep { get; set; }
-
-        /// <summary>
         /// Dataset name
         /// </summary>
         string Dataset { get; set; }
@@ -93,21 +73,6 @@ namespace CaptureTaskManager
         /// Flag file path
         /// </summary>
         string FlagFilePath { get; }
-
-        /// <summary>
-        /// URI for the manager status message queue, e.g. tcp://Proto-7.pnl.gov:61616
-        /// </summary>
-        string MessageQueueURI { get; }
-
-        /// <summary>
-        /// Topic name for the manager status message queue
-        /// </summary>
-        string MessageQueueTopic { get; }
-
-        /// <summary>
-        /// When true, the status XML is being sent to the manager status message queue
-        /// </summary>
-        bool LogToMsgQueue { get; }
 
         void ClearCachedInfo();
 

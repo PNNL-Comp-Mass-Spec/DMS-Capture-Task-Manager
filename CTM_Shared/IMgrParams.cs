@@ -15,11 +15,6 @@ namespace CaptureTaskManager
     public interface IMgrParams
     {
         /// <summary>
-        /// Error message
-        /// </summary>
-        string ErrMsg { get; }
-
-        /// <summary>
         /// Manager name
         /// </summary>
         string ManagerName { get; }
