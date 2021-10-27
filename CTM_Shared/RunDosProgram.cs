@@ -398,15 +398,10 @@ namespace CaptureTaskManager
                     if (mAbortProgramPostLogEntry && !abortLogged)
                     {
                         abortLogged = true;
-                        string msg;
-                        if (runtimeExceeded)
-                        {
-                            msg = "  Aborting ProgRunner for " + progName + " since " + MaxRuntimeSeconds + " seconds has elapsed";
-                        }
-                        else
-                        {
-                            msg = "  Aborting ProgRunner for " + progName + " since AbortProgramNow() was called";
-                        }
+
+                        var msg = runtimeExceeded
+                            ? string.Format("  Aborting ProgRunner for {0} since {1} seconds has elapsed", progName, MaxRuntimeSeconds)
+                            : string.Format("  Aborting ProgRunner for {0} since AbortProgramNow() was called", progName);
 
                         OnErrorEvent(msg);
                     }

@@ -722,16 +722,9 @@ namespace DatasetArchivePlugin
 
                 var msgBase = string.Format(" ... {0}, {1:0.0}% complete", verb, e.PercentCompleted);
 
-                string msg;
-
-                if (e.TotalBytesToSend > 0)
-                {
-                    msg = msgBase + " for " + (e.TotalBytesToSend / 1024.0).ToString("#,##0") + " KB";
-                }
-                else
-                {
-                    msg = msgBase;
-                }
+                var msg = e.TotalBytesToSend > 0
+                    ? string.Format("{0} for {1:#,##0} KB", msgBase, e.TotalBytesToSend / 1024.0)
+                    : msgBase;
 
                 if (string.IsNullOrEmpty(filename))
                 {
