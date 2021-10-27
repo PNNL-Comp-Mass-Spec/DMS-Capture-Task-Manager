@@ -44,7 +44,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Stored procedure executor
         /// </summary>
-        protected readonly PRISMDatabaseUtils.IDBTools mCaptureTaskDBProcedureExecutor;
+        protected readonly IDBTools mCaptureTaskDBProcedureExecutor;
 
         /// <summary>
         /// Manager name

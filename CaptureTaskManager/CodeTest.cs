@@ -1,4 +1,4 @@
-﻿using System;
+﻿ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -42,7 +42,7 @@ namespace CaptureTaskManager
 
                     Console.WriteLine("Connected to share");
 
-                    var shareDirectory = new System.IO.DirectoryInfo(sharePath);
+                    var shareDirectory = new DirectoryInfo(sharePath);
 
                     Console.WriteLine("Instantiated DirectoryInfo object: " + shareDirectory.FullName);
 
