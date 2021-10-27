@@ -158,7 +158,7 @@ namespace ImsDemuxPlugin
 
                     if (methodMuxProcessing > 0)
                     {
-                        methodInfo.Add(new(methodMuxProcessing, methodMuxSequence));
+                        methodInfo.Add(new ValueTuple<int, string>(methodMuxProcessing, methodMuxSequence));
                     }
                 }
             }
