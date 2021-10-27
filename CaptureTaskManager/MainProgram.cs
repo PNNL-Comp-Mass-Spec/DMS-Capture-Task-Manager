@@ -842,7 +842,7 @@ namespace CaptureTaskManager
                 {
                     LogError("Error in PerformMainLoop", ex);
                 }
-            } // End while
+            }
 
             mRunning = false;
 

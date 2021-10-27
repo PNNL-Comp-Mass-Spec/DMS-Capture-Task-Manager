@@ -407,7 +407,7 @@ namespace CaptureTaskManager
                     }
 
                     mProgRunner.StopMonitoringProgram(kill: true);
-                } // end while
+                }
 
                 mStopTime = DateTime.UtcNow;
                 mIsRunning = false;
