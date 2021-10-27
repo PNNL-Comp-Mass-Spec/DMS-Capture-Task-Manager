@@ -10,6 +10,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Test connecting to a computer on bionet
         /// </summary>
+        // ReSharper disable once UnusedMember.Global
         public void TestConnection()
         {
             // Ignore Spelling: bionet, ftms, lcmsoperator

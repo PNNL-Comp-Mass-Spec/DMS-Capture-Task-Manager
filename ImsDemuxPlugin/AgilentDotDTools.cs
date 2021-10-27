@@ -67,6 +67,7 @@ namespace ImsDemuxPlugin
         /// </summary>
         /// <param name="dotDFilePath">Full path to Agilent .D file</param>
         /// <returns>True if demultiplexed, false if not or error</returns>
+        // ReSharper disable once UnusedMember.Global
         public bool GetDotDIsDemultiplexed(string dotDFilePath)
         {
             // Parse IMSFrameMeth.xml

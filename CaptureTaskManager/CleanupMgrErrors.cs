@@ -22,6 +22,7 @@ namespace CaptureTaskManager
             /// Auto-remove files from the working directory once
             /// </summary>
             [Obsolete("Not used by this manager")]
+            // ReSharper disable once UnusedMember.Global
             CleanupOnce = 1,
 
             /// <summary>
