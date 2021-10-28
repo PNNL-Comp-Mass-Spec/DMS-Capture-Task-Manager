@@ -471,6 +471,11 @@ namespace DatasetInfoPlugin
                     continue;
                 }
 
+                if (mErrorCountLoadDataForScan > 0)
+                {
+                    returnData.EvalMsg = AppendToComment(returnData.EvalMsg, "Corrupt spectra found; inspect QC plots to decide if errors can be ignored");
+                }
+
                 // Either a non-zero error code was returned, or an error event was received
 
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
