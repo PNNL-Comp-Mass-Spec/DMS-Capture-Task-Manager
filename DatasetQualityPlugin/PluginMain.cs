@@ -166,6 +166,17 @@ namespace DatasetQualityPlugin
                 return false;
             }
 
+            if (runQuameter)
+            {
+                // Examine the DatasetInfo.xml file created by MSFileInfoScanner
+                // If the dataset has any SIM spectra, skip Quameter
+                if (DatasetHasSIMScans(datasetDirectoryPath))
+                {
+                    runQuameter = false;
+                    skipReason = "the dataset has SIM scans";
+                }
+            }
+
             if (!runQuameter)
             {
                 mRetData.EvalMsg = "Skipped Quameter since " + skipReason;
@@ -381,6 +392,62 @@ namespace DatasetQualityPlugin
             }
 
             return true;
+        }
+
+        // ReSharper disable once InconsistentNaming
+        private bool DatasetHasSIMScans(string datasetDirectoryPath)
+        {
+            try
+            {
+                // Look for the _DatasetInfo.xml file in the dataset's QC directory
+                var qcDirectory = new DirectoryInfo(Path.Combine(datasetDirectoryPath, "QC"));
+
+                if (!qcDirectory.Exists)
+                {
+                    LogWarning("QC Directory not found; cannot check for SIM scans: {0}", qcDirectory.FullName);
+                    return false;
+                }
+
+                var datasetInfoFile = new FileInfo(Path.Combine(qcDirectory.FullName, mDataset + "_DatasetInfo.xml"));
+
+                if (!datasetInfoFile.Exists)
+                {
+                    LogWarning("DatasetInfo file not found; cannot check for SIM scans: {0}", datasetInfoFile.FullName);
+                    return false;
+                }
+
+                // Open the file and look for the ScanType nodes
+                var xmlDoc = new XmlDocument();
+
+                using var reader = new StreamReader(new FileStream(datasetInfoFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                xmlDoc.Load(reader);
+
+                var scanTypeNodes = xmlDoc.SelectNodes("DatasetInfo/ScanTypes/ScanType");
+
+                if (scanTypeNodes == null)
+                {
+                    return false;
+                }
+
+                foreach (XmlNode node in scanTypeNodes)
+                {
+                    if (!node.InnerText.StartsWith("SIM "))
+                    {
+                        continue;
+                    }
+
+                    LogDebug("Dataset has SIM scans, type: {0}", node.Value);
+                    return true;
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in DatasetHasSIMScans" + ex.Message, ex);
+                return false;
+            }
         }
 
         /// <summary>
