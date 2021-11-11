@@ -5,16 +5,16 @@
 // Created 09/10/2009
 //*********************************************************************************************************
 
-using PRISM;
-using PRISM.AppSettings;
-using PRISM.Logging;
-using PRISMWin;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Threading;
+using PRISM;
+using PRISM.AppSettings;
+using PRISM.Logging;
 using PRISMDatabaseUtils;
+using PRISMWin;
 
 namespace CaptureTaskManager
 {

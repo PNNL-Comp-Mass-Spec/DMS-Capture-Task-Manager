@@ -1,10 +1,10 @@
-﻿using CaptureTaskManager;
-using Pacifica.Core;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
+using CaptureTaskManager;
+using Pacifica.Core;
 using PRISMDatabaseUtils;
 
 namespace ArchiveStatusCheckPlugin

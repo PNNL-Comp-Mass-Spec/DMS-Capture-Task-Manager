@@ -5,9 +5,9 @@
 // Created 10/20/2009
 //*********************************************************************************************************
 
+using System;
 using CaptureTaskManager;
 using PRISM;
-using System;
 using Uploader = Pacifica.Upload;
 
 namespace DatasetArchivePlugin

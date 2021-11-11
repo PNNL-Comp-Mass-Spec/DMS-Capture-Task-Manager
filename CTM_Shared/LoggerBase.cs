@@ -1,8 +1,7 @@
-﻿
-using PRISM.Logging;
-using System;
+﻿using System;
 using JetBrains.Annotations;
 using PRISM;
+using PRISM.Logging;
 
 namespace CaptureTaskManager
 {

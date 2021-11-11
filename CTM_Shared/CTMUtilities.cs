@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Data;
 using System.IO;
 using System.Runtime.CompilerServices;
-using PRISM;
+using Pacifica.Core;
+using PRISM.FileProcessor;
 using PRISM.Logging;
-using PRISMDatabaseUtils;
 
 // ReSharper disable UnusedMember.Global
 namespace CaptureTaskManager
@@ -58,7 +57,7 @@ namespace CaptureTaskManager
         /// <returns>Clear text password</returns>
         public static string DecodePassword(string encodedPwd)
         {
-            return Pacifica.Core.Utilities.DecodePassword(encodedPwd);
+            return Utilities.DecodePassword(encodedPwd);
         }
 
         /// <summary>
@@ -94,7 +93,7 @@ namespace CaptureTaskManager
                 return mAppDirectoryPath;
             }
 
-            mAppDirectoryPath = PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppDirectoryPath();
+            mAppDirectoryPath = ProcessFilesOrDirectoriesBase.GetAppDirectoryPath();
 
             return mAppDirectoryPath;
         }

@@ -5,12 +5,12 @@
 // Created 09/10/2009
 //*********************************************************************************************************
 
-using PRISM;
 using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Xml;
+using PRISM;
 
 namespace CaptureTaskManager
 {

@@ -5,10 +5,10 @@
 // Created 09/25/2009
 //*********************************************************************************************************
 
-using CaptureTaskManager;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using CaptureTaskManager;
 
 namespace CaptureToolPlugin
 {

@@ -5,10 +5,10 @@
 // Created 09/15/2009
 //*********************************************************************************************************
 
-using PRISM;
 using System;
 using System.Data;
 using System.Reflection;
+using PRISM;
 using PRISMDatabaseUtils;
 
 namespace CaptureTaskManager

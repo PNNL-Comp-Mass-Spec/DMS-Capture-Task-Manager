@@ -5,11 +5,11 @@
 // Created 10/08/2009
 //*********************************************************************************************************
 
-using CaptureTaskManager;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
+using CaptureTaskManager;
 using PRISMDatabaseUtils;
 
 namespace DatasetArchivePlugin

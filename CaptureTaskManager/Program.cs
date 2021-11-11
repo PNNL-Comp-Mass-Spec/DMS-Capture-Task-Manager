@@ -11,10 +11,10 @@
 //
 // Copyright 2018 Battelle Memorial Institute
 
-using PRISM;
-using PRISM.Logging;
 using System;
 using System.Threading;
+using PRISM;
+using PRISM.Logging;
 
 namespace CaptureTaskManager
 {

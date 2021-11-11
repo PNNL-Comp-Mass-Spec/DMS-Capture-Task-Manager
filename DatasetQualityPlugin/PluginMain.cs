@@ -5,7 +5,6 @@
 // Created 10/02/2009
 //*********************************************************************************************************
 
-using CaptureTaskManager;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -13,6 +12,8 @@ using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
+using CaptureTaskManager;
+using JetBrains.Annotations;
 using PRISMDatabaseUtils;
 
 namespace DatasetQualityPlugin

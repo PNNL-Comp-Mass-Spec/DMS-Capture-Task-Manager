@@ -5,16 +5,16 @@
 // Created 10/06/2009
 //*********************************************************************************************************
 
-using CaptureTaskManager;
-using MSFileInfoScannerInterfaces;
-using PRISM;
-using PRISM.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using CaptureTaskManager;
+using MSFileInfoScannerInterfaces;
+using PRISM;
+using PRISM.Logging;
 using PRISMDatabaseUtils;
 
 namespace DatasetInfoPlugin

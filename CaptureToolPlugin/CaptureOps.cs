@@ -5,14 +5,14 @@
 // Created 09/25/2009
 //*********************************************************************************************************
 
-using CaptureTaskManager;
-using PRISM;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using CaptureTaskManager;
+using PRISM;
 
 namespace CaptureToolPlugin
 {
