@@ -159,20 +159,6 @@ namespace DatasetArchivePlugin
             return true;
         }
 
-        private string AppendToString(string text, string append, string delimiter = "; ")
-        {
-            if (string.IsNullOrEmpty(text))
-            {
-                text = string.Empty;
-            }
-            else
-            {
-                text += delimiter ?? "; ";
-            }
-
-            return text + append;
-        }
-
         private void CreateArchiveUpdateJobsForDataset(IReadOnlyCollection<string> subdirectoryNames)
         {
             var failureMsg = "Error creating archive update tasks for dataset " + mDatasetName + "; " +
@@ -294,13 +280,13 @@ namespace DatasetArchivePlugin
                 }
                 else
                 {
-                    WarningMsg = AppendToString(WarningMsg, "UploadToMyEMSL reports False");
+                    WarningMsg = CTMUtilities.AppendToString(WarningMsg, "UploadToMyEMSL reports False");
                 }
             }
 
             if (success && !mMyEmslUploadSuccess)
             {
-                WarningMsg = AppendToString(WarningMsg, "UploadToMyEMSL reports True but mMyEmslUploadSuccess is False");
+                WarningMsg = CTMUtilities.AppendToString(WarningMsg, "UploadToMyEMSL reports True but mMyEmslUploadSuccess is False");
             }
 
             return success && mMyEmslUploadSuccess;
@@ -486,11 +472,11 @@ namespace DatasetArchivePlugin
             {
                 if (ex.Message.Contains(DMSMetadataObject.SOURCE_DIRECTORY_NOT_FOUND))
                 {
-                    mErrMsg = AppendToString(mErrMsg, DMSMetadataObject.SOURCE_DIRECTORY_NOT_FOUND, ": ");
+                    mErrMsg = CTMUtilities.AppendToString(mErrMsg, DMSMetadataObject.SOURCE_DIRECTORY_NOT_FOUND, ": ");
                 }
                 else
                 {
-                    mErrMsg = AppendToString(mErrMsg, ex.Message, ": ");
+                    mErrMsg = CTMUtilities.AppendToString(mErrMsg, ex.Message, ": ");
                 }
 
                 // Do not retry the upload; it will fail again due to the same error

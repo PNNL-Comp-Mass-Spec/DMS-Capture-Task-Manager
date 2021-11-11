@@ -199,7 +199,7 @@ namespace ImsDemuxPlugin
 
                     if (!hasBinCentricData)
                     {
-                        returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, "Bin-centric tables were not added to the UIMF file");
+                        returnData.CloseoutMsg = CTMUtilities.AppendToString(returnData.CloseoutMsg, "Bin-centric tables were not added to the UIMF file");
                         returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     }
                 }
@@ -229,7 +229,7 @@ namespace ImsDemuxPlugin
                 OnErrorEvent(msg, ex);
                 returnData ??= new ToolReturnData();
 
-                returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, msg);
+                returnData.CloseoutMsg = CTMUtilities.AppendToString(returnData.CloseoutMsg, msg);
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return returnData;
             }
@@ -250,7 +250,7 @@ namespace ImsDemuxPlugin
             const int retryCount = 0;
             if (!CopyFileWithRetry(uimfRemoteFileNamePath, uimfLocalFileNamePath, false, retryCount))
             {
-                returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, "Error copying UIMF file to working directory");
+                returnData.CloseoutMsg = CTMUtilities.AppendToString(returnData.CloseoutMsg, "Error copying UIMF file to working directory");
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return returnData;
             }
@@ -272,14 +272,14 @@ namespace ImsDemuxPlugin
                 }
 
                 OnErrorEvent("UIMF file not found on storage server, unable to calibrate: " + uimfFilePath);
-                returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, "UIMF file not found on storage server, unable to calibrate");
+                returnData.CloseoutMsg = CTMUtilities.AppendToString(returnData.CloseoutMsg, "UIMF file not found on storage server, unable to calibrate");
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return string.Empty;
             }
             catch (Exception ex)
             {
                 OnErrorEvent("Exception finding UIMF file to calibrate", ex);
-                returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, "Exception while calibrating UIMF file");
+                returnData.CloseoutMsg = CTMUtilities.AppendToString(returnData.CloseoutMsg, "Exception while calibrating UIMF file");
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return string.Empty;
             }
@@ -337,7 +337,7 @@ namespace ImsDemuxPlugin
             catch (Exception ex)
             {
                 OnErrorEvent("Exception determining whether instrument should be calibrated", ex);
-                returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, "Exception while calibrating UIMF file");
+                returnData.CloseoutMsg = CTMUtilities.AppendToString(returnData.CloseoutMsg, "Exception while calibrating UIMF file");
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return returnData;
             }
@@ -395,7 +395,7 @@ namespace ImsDemuxPlugin
             catch (Exception ex)
             {
                 OnErrorEvent("Exception checking for calibration frames", ex);
-                returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, "Exception while calibrating UIMF file");
+                returnData.CloseoutMsg = CTMUtilities.AppendToString(returnData.CloseoutMsg, "Exception while calibrating UIMF file");
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return returnData;
             }
@@ -419,14 +419,14 @@ namespace ImsDemuxPlugin
                         errorMessage = "Error calibrating UIMF file";
                     }
 
-                    returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, errorMessage);
+                    returnData.CloseoutMsg = CTMUtilities.AppendToString(returnData.CloseoutMsg, errorMessage);
                     calibrationFailed = true;
                 }
             }
             catch (Exception ex)
             {
                 OnErrorEvent("Exception calling CalibrateFile for dataset " + mDataset, ex);
-                returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, "Exception while calibrating UIMF file");
+                returnData.CloseoutMsg = CTMUtilities.AppendToString(returnData.CloseoutMsg, "Exception while calibrating UIMF file");
                 calibrationFailed = true;
             }
 
@@ -443,7 +443,7 @@ namespace ImsDemuxPlugin
                 catch (Exception ex)
                 {
                     OnErrorEvent("Exception validating calibrated .UIMF file", ex);
-                    returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, "Exception while calibrating UIMF file");
+                    returnData.CloseoutMsg = CTMUtilities.AppendToString(returnData.CloseoutMsg, "Exception while calibrating UIMF file");
                     returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     return returnData;
                 }
@@ -459,13 +459,13 @@ namespace ImsDemuxPlugin
             if (calibrationFailed)
             {
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                returnData.EvalMsg = AppendToString(returnData.EvalMsg, " but Calibration failed", string.Empty);
+                returnData.EvalMsg = CTMUtilities.AppendToString(returnData.EvalMsg, " but Calibration failed", string.Empty);
             }
             else
             {
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
 
-                returnData.EvalMsg = AppendToString(returnData.EvalMsg, " and calibrated", string.Empty);
+                returnData.EvalMsg = CTMUtilities.AppendToString(returnData.EvalMsg, " and calibrated", string.Empty);
             }
 
             return returnData;
@@ -864,7 +864,7 @@ namespace ImsDemuxPlugin
             const int retryCount = 3;
             if (!CopyFileWithRetry(localUimfDecodedFilePath, Path.Combine(mDatasetDirectoryPathRemote, mDataset + ".uimf"), true, retryCount))
             {
-                returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, "Error copying " + fileDescription + " file to storage server");
+                returnData.CloseoutMsg = CTMUtilities.AppendToString(returnData.CloseoutMsg, "Error copying " + fileDescription + " file to storage server");
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 success = false;
             }
@@ -911,21 +911,6 @@ namespace ImsDemuxPlugin
                     returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 }
             }
-        }
-
-        public static string AppendToString(string currentText, string newText)
-        {
-            return AppendToString(currentText, newText, "; ");
-        }
-
-        public static string AppendToString(string currentText, string newText, string separator)
-        {
-            if (string.IsNullOrEmpty(currentText))
-            {
-                return newText;
-            }
-
-            return currentText + separator + newText;
         }
 
         /// <summary>
@@ -1511,7 +1496,7 @@ namespace ImsDemuxPlugin
                 }
 
                 OnErrorEvent(msg);
-                returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, logMessage);
+                returnData.CloseoutMsg = CTMUtilities.AppendToString(returnData.CloseoutMsg, logMessage);
                 uimfCalibrated = false;
             }
             else
@@ -1532,7 +1517,7 @@ namespace ImsDemuxPlugin
                     }
 
                     OnErrorEvent(msg);
-                    returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, logMessage);
+                    returnData.CloseoutMsg = CTMUtilities.AppendToString(returnData.CloseoutMsg, logMessage);
                     uimfCalibrated = false;
                 }
             }

@@ -83,7 +83,7 @@ namespace ImsDemuxPlugin
             const int retryCount = 0;
             if (!CopyDirectoryWithRetry(dotDRemoteFileNamePath, dotDLocalFileNamePath, false, retryCount))
             {
-                returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, "Error copying Agilent IMS .D file to working directory");
+                returnData.CloseoutMsg = CTMUtilities.AppendToString(returnData.CloseoutMsg, "Error copying Agilent IMS .D file to working directory");
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return returnData;
             }
@@ -381,7 +381,7 @@ namespace ImsDemuxPlugin
 
             if (!success)
             {
-                returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, "Error clearing the ReadOnly attribute for files at " + targetDirectoryPath);
+                returnData.CloseoutMsg = CTMUtilities.AppendToString(returnData.CloseoutMsg, "Error clearing the ReadOnly attribute for files at " + targetDirectoryPath);
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return false;
             }
@@ -393,24 +393,9 @@ namespace ImsDemuxPlugin
                 return true;
             }
 
-            returnData.CloseoutMsg = AppendToString(returnData.CloseoutMsg, "Error copying " + fileDescription + " file to storage server");
+            returnData.CloseoutMsg = CTMUtilities.AppendToString(returnData.CloseoutMsg, "Error copying " + fileDescription + " file to storage server");
             returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
             return false;
-        }
-
-        public static string AppendToString(string currentText, string newText)
-        {
-            return AppendToString(currentText, newText, "; ");
-        }
-
-        public static string AppendToString(string currentText, string newText, string separator)
-        {
-            if (string.IsNullOrEmpty(currentText))
-            {
-                return newText;
-            }
-
-            return currentText + separator + newText;
         }
 
         /// <summary>

@@ -26,6 +26,23 @@ namespace CaptureTaskManager
         private static string mAppDirectoryPath;
 
         /// <summary>
+        /// Append additionalText to currentText
+        /// </summary>
+        /// <param name="currentText"></param>
+        /// <param name="additionalText"></param>
+        /// <param name="delimiter"></param>
+        /// <returns>Combined text</returns>
+        public static string AppendToString(string currentText, string additionalText, string delimiter = "; ")
+        {
+            if (string.IsNullOrEmpty(currentText))
+            {
+                return additionalText;
+            }
+
+            return currentText + delimiter + additionalText;
+        }
+
+        /// <summary>
         /// Convert a file size in bytes to gigabytes
         /// </summary>
         /// <param name="sizeBytes"></param>
