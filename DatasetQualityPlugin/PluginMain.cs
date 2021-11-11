@@ -106,7 +106,7 @@ namespace DatasetQualityPlugin
             // Set up the file paths
             var storageVolExt = mTaskParams.GetParam("Storage_Vol_External");
             var storagePath = mTaskParams.GetParam("Storage_Path");
-            var datasetFolder = Path.Combine(storageVolExt, Path.Combine(storagePath, mDataset));
+            var datasetDirectoryPath = Path.Combine(storageVolExt, Path.Combine(storagePath, mDataset));
             string dataFilePathRemote;
             var runQuameter = false;
 
@@ -132,10 +132,10 @@ namespace DatasetQualityPlugin
                 case InstrumentClassInfo.InstrumentClass.GC_QExactive:
                 case InstrumentClassInfo.InstrumentClass.LTQ_FT:
                 case InstrumentClassInfo.InstrumentClass.Thermo_Exactive:
-                    dataFilePathRemote = Path.Combine(datasetFolder, mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION);
+                    dataFilePathRemote = Path.Combine(datasetDirectoryPath, mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION);
 
                     // Confirm that the file has MS1 spectra (since Quameter requires that they be present)
-                    if (!QuameterCanProcessDataset(mDatasetID, mDataset, datasetFolder, ref skipReason))
+                    if (!QuameterCanProcessDataset(mDatasetID, mDataset, datasetDirectoryPath, ref skipReason))
                     {
                         dataFilePathRemote = string.Empty;
                     }
@@ -195,10 +195,10 @@ namespace DatasetQualityPlugin
             {
                 // File has likely been purged from the storage server
 
-                var datasetDirectory = mTaskParams.GetParam(mTaskParams.HasParam("Directory") ? "Directory" : "Folder");
+                var datasetDirectoryName = mTaskParams.GetParam(mTaskParams.HasParam("Directory") ? "Directory" : "Folder");
 
                 // Look in the Aurora archive (aurora.emsl.pnl.gov) using samba; was previously a2.emsl.pnl.gov
-                var dataFilePathArchive = Path.Combine(mTaskParams.GetParam("Archive_Network_Share_Path"), datasetDirectory, instrumentDataFile.Name);
+                var dataFilePathArchive = Path.Combine(mTaskParams.GetParam("Archive_Network_Share_Path"), datasetDirectoryName, instrumentDataFile.Name);
 
                 var archiveFile = new FileInfo(dataFilePathArchive);
                 if (archiveFile.Exists)
@@ -236,7 +236,7 @@ namespace DatasetQualityPlugin
                 // Quameter failed
                 // Copy the Quameter log file to the Dataset QC folder
                 // We only save the log file if an error occurs since it typically doesn't contain any useful information
-                success = CopyFilesToDatasetFolder(datasetFolder);
+                success = CopyFilesToDatasetDirectory(datasetDirectoryPath);
 
                 if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
                 {
@@ -329,7 +329,7 @@ namespace DatasetQualityPlugin
             }
         }
 
-        private bool CopyFilesToDatasetFolder(string datasetDirectoryPath)
+        private bool CopyFilesToDatasetDirectory(string datasetDirectoryPath)
         {
             try
             {
@@ -650,9 +650,9 @@ namespace DatasetQualityPlugin
             }
         }
 
-        private void ParseDatasetInfoFile(string datasetFolderPath, string datasetName, ICollection<string> scanTypes, out int scanCount, out int scanCountMS)
+        private void ParseDatasetInfoFile(string datasetDirectoryPath, string datasetName, ICollection<string> scanTypes, out int scanCount, out int scanCountMS)
         {
-            var datasetInfoFile = new FileInfo(Path.Combine(datasetFolderPath, "QC", datasetName + "_DatasetInfo.xml"));
+            var datasetInfoFile = new FileInfo(Path.Combine(datasetDirectoryPath, "QC", datasetName + "_DatasetInfo.xml"));
 
             scanCount = 0;
             scanCountMS = 0;
@@ -948,7 +948,7 @@ namespace DatasetQualityPlugin
             return true;
         }
 
-        private bool QuameterCanProcessDataset(int datasetID, string datasetName, string datasetFolderPath, ref string skipReason)
+        private bool QuameterCanProcessDataset(int datasetID, string datasetName, string datasetDirectoryPath, ref string skipReason)
         {
             var sql =
                 " SELECT Scan_Type, Scan_Count" +
@@ -992,7 +992,7 @@ namespace DatasetQualityPlugin
                 // Scan stats data is not yet in DMS
                 // Look for the _DatasetInfo.xml file in the QC folder below the dataset folder
 
-                ParseDatasetInfoFile(datasetFolderPath, datasetName, scanTypes, out scanCount, out scanCountMS);
+                ParseDatasetInfoFile(datasetDirectoryPath, datasetName, scanTypes, out scanCount, out scanCountMS);
             }
 
             if (scanCount > 0)
