@@ -98,6 +98,20 @@ namespace DatasetQualityPlugin
         }
 
         /// <summary>
+        /// Log a warning, then append to mRetData.EvalMsg
+        /// </summary>
+        /// <param name="format">Warning message format string</param>
+        /// <param name="args">String format arguments</param>
+        [StringFormatMethod("format")]
+        private void AddWarningToEvalMessage(string format, params object[] args)
+        {
+            var warningMessage = string.Format(format, args);
+            LogWarning(warningMessage);
+
+            mRetData.EvalMsg = CTMUtilities.AppendToString(mRetData.EvalMsg, warningMessage);
+        }
+
+        /// <summary>
         /// Determine whether or not we will run Quameter
         /// </summary>
         /// <remarks>At present we only process Thermo .Raw files. Furthermore, if the file only contains MS/MS spectra, then it cannot be processed with Quameter</remarks>
@@ -405,7 +419,7 @@ namespace DatasetQualityPlugin
 
                 if (!qcDirectory.Exists)
                 {
-                    LogWarning("QC Directory not found; cannot check for SIM scans: {0}", qcDirectory.FullName);
+                    AddWarningToEvalMessage("QC Directory not found; cannot check for SIM scans: {0}", qcDirectory.FullName);
                     return false;
                 }
 
@@ -413,7 +427,7 @@ namespace DatasetQualityPlugin
 
                 if (!datasetInfoFile.Exists)
                 {
-                    LogWarning("DatasetInfo file not found; cannot check for SIM scans: {0}", datasetInfoFile.FullName);
+                    AddWarningToEvalMessage("DatasetInfo file not found; cannot check for SIM scans: {0}", datasetInfoFile.FullName);
                     return false;
                 }
 
@@ -428,6 +442,7 @@ namespace DatasetQualityPlugin
 
                 if (scanTypeNodes == null)
                 {
+                    AddWarningToEvalMessage("DatasetInfo file does not have any ScanType nodes; cannot check for SIM scans: {0}", datasetInfoFile.FullName);
                     return false;
                 }
 
@@ -570,7 +585,7 @@ namespace DatasetQualityPlugin
             {
                 if (string.IsNullOrWhiteSpace(headerNames[index]))
                 {
-                    LogWarning("Column " + (index + 1) + " in the Quameter metrics file is empty; this is unexpected");
+                    LogWarning("Column {0} in the Quameter metrics file is empty; this is unexpected", index + 1);
                 }
                 else
                 {
