@@ -25,7 +25,7 @@ namespace CaptureTaskManager
     {
         // Ignore Spelling: OxyPlot
 
-        private const string PROGRAM_DATE = "November 10, 2021";
+        private const string PROGRAM_DATE = "November 11, 2021";
 
         private static bool mTraceMode;
 
@@ -49,23 +49,27 @@ namespace CaptureTaskManager
 
                 var exeName = System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
 
-                var cmdLineParser = new CommandLineParser<CommandLineOptions>(exeName, GetAppVersion(PROGRAM_DATE))
+                var parser = new CommandLineParser<CommandLineOptions>(exeName, GetAppVersion(PROGRAM_DATE))
                 {
                     ProgramInfo = "This program processes DMS datasets for PRISM. " +
                                   "Normal operation is to run the program without any command line switches.",
-                    ContactInfo =
-                        "Program written by Dave Clark and Matthew Monroe for the Department of Energy (PNNL, Richland, WA)" +
-                        Environment.NewLine +
-                        "E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov" + Environment.NewLine +
-                        "Website: https://github.com/PNNL-Comp-Mass-Spec/ or https://panomics.pnnl.gov/ or https://www.pnnl.gov/integrative-omics" + Environment.NewLine + Environment.NewLine +
-                        "Licensed under the 2-Clause BSD License; you may not use this file except in compliance with the License.  " +
-                        "You may obtain a copy of the License at https://opensource.org/licenses/BSD-2-Clause"
+                    ContactInfo = "Program written by Dave Clark and Matthew Monroe for the Department of Energy (PNNL, Richland, WA)" + Environment.NewLine +
+                                  "E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov" + Environment.NewLine +
+                                  "Website: https://github.com/PNNL-Comp-Mass-Spec/ or https://panomics.pnnl.gov/ or https://www.pnnl.gov/integrative-omics" + Environment.NewLine + Environment.NewLine +
+                                  "Licensed under the 2-Clause BSD License; you may not use this file except in compliance with the License.  " +
+                                  "You may obtain a copy of the License at https://opensource.org/licenses/BSD-2-Clause"
                 };
 
-                var parsed = cmdLineParser.ParseArgs(args, false);
-                var options = parsed.ParsedResults;
-                if (args.Length > 0 && !parsed.Success)
+                var result = parser.ParseArgs(args, false);
+                var options = result.ParsedResults;
+
+                if (args.Length > 0 && !result.Success)
                 {
+                    if (parser.CreateParamFileProvided)
+                    {
+                        return 0;
+                    }
+
                     // Delay for 1500 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
                     Thread.Sleep(1500);
                     return -1;
