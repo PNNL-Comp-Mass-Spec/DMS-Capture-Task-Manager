@@ -586,14 +586,14 @@ namespace DatasetIntegrityPlugin
         /// <returns>True if this is a superseded directory and it is safe to delete</returns>
         private bool DetectSupersededDirectory(IReadOnlyList<DirectoryInfo> directoryList, bool deleteIfSuperseded)
         {
-            string msg;
-
             try
             {
                 if (directoryList.Count != 2)
                 {
-                    msg = "directoryList passed into DetectSupersededDirectory does not contain 2 directories; cannot check for a superseded directory";
-                    LogDebug(msg);
+                    LogDebug(
+                        "directoryList passed into DetectSupersededDirectory does not contain 2 directories; " +
+                        "cannot check for a superseded directory");
+
                     return false;
                 }
 
@@ -616,8 +616,9 @@ namespace DatasetIntegrityPlugin
                     // Yes, we have a case of a likely superseded directory
                     // Examine oldDirectory
 
-                    msg = "Comparing files in superseded directory (" + oldDirectory.FullName + ") to newer directory (" + newDirectory.FullName + ")";
-                    LogMessage(msg);
+                    LogMessage(
+                        "Comparing files in superseded directory ({0}) to newer directory ({1})",
+                        oldDirectory.FullName, newDirectory.FullName);
 
                     var directoryIsSuperseded = true;
 
@@ -628,8 +629,7 @@ namespace DatasetIntegrityPlugin
 
                         if (!newFile.Exists)
                         {
-                            msg = "File not found in newer directory: " + newFile.FullName;
-                            LogMessage(msg);
+                            LogMessage("File not found in newer directory: " + newFile.FullName);
 
                             directoryIsSuperseded = false;
                             break;
@@ -637,8 +637,7 @@ namespace DatasetIntegrityPlugin
 
                         if (newFile.Length < supersededFile.Length)
                         {
-                            msg = "Newer file is smaller than version in superseded directory: " + newFile.FullName;
-                            LogMessage(msg);
+                            LogMessage("Newer file is smaller than version in superseded directory: " + newFile.FullName);
 
                             directoryIsSuperseded = false;
                             break;
@@ -648,8 +647,7 @@ namespace DatasetIntegrityPlugin
                     if (directoryIsSuperseded && deleteIfSuperseded)
                     {
                         // Delete oldDirectory
-                        msg = "Deleting superseded directory: " + oldDirectory.FullName;
-                        LogMessage(msg);
+                        LogMessage("Deleting superseded directory: " + oldDirectory.FullName);
 
                         oldDirectory.Delete(true);
                     }
@@ -657,14 +655,12 @@ namespace DatasetIntegrityPlugin
                     return directoryIsSuperseded;
                 }
 
-                msg = "Directory " + oldDirectory.FullName + " is not a superseded directory for " + newDirectory.FullName;
-                LogMessage(msg);
+                LogMessage("Directory {0} is not a superseded directory for {1}", oldDirectory.FullName, newDirectory.FullName);
                 return false;
             }
             catch (Exception ex)
             {
-                msg = "Error in DetectSupersededDirectory: " + ex.Message;
-                LogError(msg);
+                LogError("Error in DetectSupersededDirectory: " + ex.Message, ex);
                 return false;
             }
         }
