@@ -257,7 +257,12 @@ namespace DatasetInfoPlugin
                 // DS quality test not implemented for this file type
                 returnData.CloseoutMsg = string.Empty;
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
-                returnData.EvalMsg = "Dataset info test not implemented for data type " + InstrumentClassInfo.GetRawDataTypeName(rawDataType) + ", instrument class " + InstrumentClassInfo.GetInstrumentClassName(instrumentClass);
+                returnData.EvalMsg = AppendToComment(
+                    returnData.EvalMsg,
+                    string.Format(
+                        "Dataset info test not implemented for data type {0}, instrument class {1}",
+                        rawDataTypeName, instClass));
+
                 returnData.EvalCode = EnumEvalCode.EVAL_CODE_NOT_EVALUATED;
                 return returnData;
             }
@@ -473,7 +478,8 @@ namespace DatasetInfoPlugin
 
                 if (mErrorCountLoadDataForScan > 0)
                 {
-                    returnData.EvalMsg = AppendToComment(returnData.EvalMsg, "Corrupt spectra found; inspect QC plots to decide if errors can be ignored");
+                    returnData.EvalMsg = AppendToComment(
+                        returnData.EvalMsg, "Corrupt spectra found; inspect QC plots to decide if errors can be ignored");
                 }
 
                 // Either a non-zero error code was returned, or an error event was received
@@ -488,9 +494,9 @@ namespace DatasetInfoPlugin
 
                     returnData.CloseoutMsg = string.Empty;
                     returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
-                    returnData.EvalMsg = "MSFileInfoScanner error for data type " +
-                                     InstrumentClassInfo.GetRawDataTypeName(rawDataType) + ", instrument class " +
-                                     InstrumentClassInfo.GetInstrumentClassName(instrumentClass);
+                    returnData.EvalMsg = AppendToComment(
+                        returnData.EvalMsg,
+                        string.Format("MSFileInfoScanner error for data type {0}, instrument class {1}", rawDataTypeName, instClass));
                     returnData.EvalCode = EnumEvalCode.EVAL_CODE_NOT_EVALUATED;
                     return returnData;
                 }
@@ -500,8 +506,9 @@ namespace DatasetInfoPlugin
                 {
                     // MSFileInfoScanner already processed the primary file or directory
                     // Mention this failure in the EvalMsg but still return success
-                    returnData.EvalMsg = AppendToComment(returnData.EvalMsg,
-                                                     "ProcessMSFileOrFolder returned false for " + datasetFileOrDirectory);
+                    returnData.EvalMsg = AppendToComment(
+                        returnData.EvalMsg,
+                        "ProcessMSFileOrFolder returned false for " + datasetFileOrDirectory);
                 }
                 else
                 {
