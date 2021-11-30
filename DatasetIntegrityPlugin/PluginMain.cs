@@ -1787,16 +1787,16 @@ namespace DatasetIntegrityPlugin
             }
 
             // Possibly verify that the analysis.baf file exists
-            var bafFile = PathUtils.FindFilesWildcard(dotDDirectories[0], "analysis.baf").ToList();
-            var bafFileExists = bafFile.Count > 0;
+            var bafFilesFirstDotD = PathUtils.FindFilesWildcard(dotDDirectories[0], "analysis.baf").ToList();
+            var bafFileExists = bafFilesFirstDotD.Count > 0;
 
             if (bafFileExists)
             {
                 // Verify size of the analysis.baf file
-                dataFileSizeKB = GetFileSize(bafFile.First());
+                dataFileSizeKB = GetFileSize(bafFilesFirstDotD.First());
                 if (dataFileSizeKB < BAF_FILE_MIN_SIZE_KB)
                 {
-                    ReportFileSizeTooSmall("Analysis.baf", bafFile.First().FullName, dataFileSizeKB, BAF_FILE_MIN_SIZE_KB);
+                    ReportFileSizeTooSmall("Analysis.baf", bafFilesFirstDotD.First().FullName, dataFileSizeKB, BAF_FILE_MIN_SIZE_KB);
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
                 bafFileSizeKB = dataFileSizeKB;
