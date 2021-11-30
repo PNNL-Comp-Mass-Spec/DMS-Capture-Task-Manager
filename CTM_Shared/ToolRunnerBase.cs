@@ -89,11 +89,10 @@ namespace CaptureTaskManager
         public virtual ToolReturnData RunTool()
         {
             // Does nothing at present, so return success
-            var returnData = new ToolReturnData
+            return new ToolReturnData
             {
                 CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS
             };
-            return returnData;
         }
 
         /// <summary>

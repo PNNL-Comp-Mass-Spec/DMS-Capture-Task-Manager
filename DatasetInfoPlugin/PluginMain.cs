@@ -863,9 +863,7 @@ namespace DatasetInfoPlugin
                 return cachedDatasetInfoXml.First();
             }
 
-            var combinedXML = datasetXmlMerger.CombineDatasetInfoXML(mDataset, cachedDatasetInfoXml);
-
-            return combinedXML;
+            return datasetXmlMerger.CombineDatasetInfoXML(mDataset, cachedDatasetInfoXml);
         }
 
         /// <summary>

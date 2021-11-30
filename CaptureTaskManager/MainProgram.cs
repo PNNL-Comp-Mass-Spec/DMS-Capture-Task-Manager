@@ -471,8 +471,7 @@ namespace CaptureTaskManager
 
                     if (dataLine.Contains("RecentJob: "))
                     {
-                        var tmpStr = dataLine.Replace("RecentJob: ", string.Empty);
-                        mStatusFile.MostRecentJobInfo = tmpStr;
+                        mStatusFile.MostRecentJobInfo = dataLine.Replace("RecentJob: ", string.Empty);
                         break;
                     }
                 }

@@ -386,8 +386,7 @@ namespace ImsDemuxPlugin
                 return false;
             }
 
-            var success = CopyFileToDatasetDirectory(fileTools, uimfFile, datasetDirectoryPath);
-            return success;
+            return CopyFileToDatasetDirectory(fileTools, uimfFile, datasetDirectoryPath);
         }
 
         private bool CopyFileToDatasetDirectory(FileTools fileTools, FileSystemInfo dataFile, string datasetDirectoryPath)

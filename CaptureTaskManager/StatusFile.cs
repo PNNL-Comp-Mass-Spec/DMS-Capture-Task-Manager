@@ -244,8 +244,7 @@ namespace CaptureTaskManager
         /// </summary>
         public int GetProcessID()
         {
-            var processID = Process.GetCurrentProcess().Id;
-            return processID;
+            return Process.GetCurrentProcess().Id;
         }
 
         /// <summary>

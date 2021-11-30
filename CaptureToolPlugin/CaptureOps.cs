@@ -2425,9 +2425,7 @@ namespace CaptureToolPlugin
                     return;
                 }
 
-                var candidateFiles = targetDirectory.GetFiles("*", SearchOption.AllDirectories).ToList();
-
-                foreach (var candidateFile in candidateFiles)
+                foreach (var candidateFile in targetDirectory.GetFiles("*", SearchOption.AllDirectories).ToList())
                 {
                     if (candidateFile.Length > 0)
                     {
@@ -2833,9 +2831,7 @@ namespace CaptureToolPlugin
                 }
                 else
                 {
-                    var foundFiles = Directory.GetFiles(sourceDirectory.FullName);
-
-                    foreach (var fileToCopy in foundFiles)
+                    foreach (var fileToCopy in Directory.GetFiles(sourceDirectory.FullName))
                     {
                         var fi = new FileInfo(fileToCopy);
                         fi.CopyTo(Path.Combine(targetDirectory.FullName, fi.Name));
@@ -3151,9 +3147,7 @@ namespace CaptureToolPlugin
                     return;
                 }
 
-                var subdirectories = lcMethodsDirectory.GetDirectories("x_*");
-
-                foreach (var subdirectory in subdirectories)
+                foreach (var subdirectory in lcMethodsDirectory.GetDirectories("x_*"))
                 {
                     var safeToDelete = true;
 
@@ -3472,8 +3466,7 @@ namespace CaptureToolPlugin
         /// <returns>True if directory was found, otherwise false</returns>
         private bool ValidateDirectoryPath(string directoryPath)
         {
-            var dirExists = Directory.Exists(directoryPath);
-            return dirExists;
+            return Directory.Exists(directoryPath);
         }
 
         /// <summary>

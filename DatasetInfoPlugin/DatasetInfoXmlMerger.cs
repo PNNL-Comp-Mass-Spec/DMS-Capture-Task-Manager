@@ -414,9 +414,7 @@ namespace DatasetInfoPlugin
             memoryStream.Seek(0, SeekOrigin.Begin);
 
             var memoryStreamReader = new StreamReader(memoryStream);
-            var combinedXml = memoryStreamReader.ReadToEnd();
-
-            return combinedXml;
+            return memoryStreamReader.ReadToEnd();
         }
 
         /// <summary>

@@ -495,8 +495,7 @@ namespace DatasetIntegrityPlugin
                 return false;
             }
 
-            var success = CopyFileToDatasetDirectory(fileTools, cdfFile, datasetDirectoryPath);
-            return success;
+            return CopyFileToDatasetDirectory(fileTools, cdfFile, datasetDirectoryPath);
         }
 
         private bool CopyFileToDatasetDirectory(FileTools fileTools, FileSystemInfo dataFile, string datasetDirectoryPath)
@@ -733,8 +732,9 @@ namespace DatasetIntegrityPlugin
         private string GetOpenChromProgPath()
         {
             var exeName = mMgrParams.GetParam("OpenChromProgLoc");
-            var exePath = Path.Combine(exeName, "openchrom.exe");
-            return exePath;
+            return Path.Combine(exeName, "openchrom.exe");
+        }
+
         }
 
         /// <summary>

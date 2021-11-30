@@ -112,8 +112,7 @@ namespace CaptureTaskManager
         /// <returns>True if successful; False on error</returns>
         public bool LoadSettings(Dictionary<string, string> configFileSettings)
         {
-            var success = LoadSettings(configFileSettings, true);
-            return success;
+            return LoadSettings(configFileSettings, true);
         }
     }
 }

@@ -308,8 +308,7 @@ namespace CaptureTaskManager
                 }
 
                 // Get all directories that match the dataset name
-                var subdirectories = sourceDirectory.GetDirectories();
-                foreach (var subdirectory in subdirectories)
+                foreach (var subdirectory in sourceDirectory.GetDirectories())
                 {
                     var directoryNameWithoutExtension = Path.GetFileNameWithoutExtension(subdirectory.Name);
                     string directoryNameToCheck;

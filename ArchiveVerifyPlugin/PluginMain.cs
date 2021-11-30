@@ -942,8 +942,7 @@ namespace ArchiveVerifyPlugin
                 return true;
             }
 
-            var success = WriteHashResultsFile(hashResults, hashResultsFilePath, useTempFile: true);
-            return success;
+            return WriteHashResultsFile(hashResults, hashResultsFilePath, useTempFile: true);
         }
 
         private bool VisibleInMetadata(out string metadataFilePath, out long transactionId)
