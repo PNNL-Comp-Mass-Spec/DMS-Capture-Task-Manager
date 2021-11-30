@@ -29,7 +29,8 @@ namespace DatasetIntegrityPlugin
     {
         // ReSharper disable CommentTypo
 
-        // Ignore Spelling: chrom, cli, batchfile, nosplash, Acq, utf, pos, ser, mgf, acqus, fid, idx, fticr, uimf, cmd, wlkXZsvC-miP6A2KH-DgAuTix2
+        // Ignore Spelling: Acq, acqus, batchfile, chrom, cli, cmd, fid, fticr, idx, mgf,
+        // Ignore Spelling: nosplash, paramlist, pos, ser, uimf, utf, wlkXZsvC-miP6A2KH-DgAuTix2
 
         // ReSharper restore CommentTypo
 
