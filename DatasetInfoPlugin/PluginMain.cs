@@ -181,7 +181,7 @@ namespace DatasetInfoPlugin
             mLastStatusUpdate = DateTime.UtcNow;
             mStatusUpdateIntervalMinutes = 5;
 
-            // Initialize the MSFileScanner class
+            // Initialize the MSFileInfoScanner
             mMsFileScanner = LoadMSFileInfoScanner(msFileInfoScannerDLLPath);
             RegisterEvents(mMsFileScanner);
 
@@ -252,9 +252,12 @@ namespace DatasetInfoPlugin
                 return returnData;
             }
 
+            var rawDataTypeName = InstrumentClassInfo.GetRawDataTypeName(rawDataType);
+            var instClass = InstrumentClassInfo.GetInstrumentClassName(instrumentClass);
+
             if (fileOrDirectoryRelativePaths.Count > 0 && fileOrDirectoryRelativePaths.First() == INVALID_FILE_TYPE)
             {
-                // DS quality test not implemented for this file type
+                // DS Info not implemented for this file type
                 returnData.CloseoutMsg = string.Empty;
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
                 returnData.EvalMsg = AppendToComment(
@@ -432,9 +435,40 @@ namespace DatasetInfoPlugin
                 else if (mMsFileScanner.ErrorCode == iMSFileInfoScanner.MSFileScannerErrorCodes.DatasetHasNoSpectra)
                 {
                     // Dataset has no spectra
-                    mMsg = "Error running MSFileInfoScanner: Dataset has no spectra (ScanCount = 0)";
-                    LogError(mMsg);
-                    successProcessing = false;
+                    // If the instrument class is BrukerFT_BAF and the dataset has an analysis.baf file but no ser or fid file, treat this as a warning
+
+                    bool logWarning;
+
+                    if (successProcessing && instrumentClass == InstrumentClassInfo.InstrumentClass.BrukerFT_BAF)
+                    {
+                        var directoryToSearch = new DirectoryInfo(datasetDirectoryPath);
+
+                        var serFiles = PathUtils.FindFilesWildcard(directoryToSearch, "ser", true).Count;
+                        var fidFiles = PathUtils.FindFilesWildcard(directoryToSearch, "fid", true).Count;
+
+                        logWarning = serFiles == 0 && fidFiles == 0;
+                    }
+                    else
+                    {
+                        logWarning = false;
+                    }
+
+                    if (logWarning)
+                    {
+                        returnData.EvalMsg = AppendToComment(
+                            returnData.EvalMsg,
+                            "Dataset has no spectra; file format not supported by MSFileInfoScanner");
+
+                        LogWarning(returnData.EvalMsg);
+
+                        qcPlotMode = QCPlottingModes.NoPlots;
+                    }
+                    else
+                    {
+                        mMsg = "Error running MSFileInfoScanner: Dataset has no spectra (ScanCount = 0)";
+                        LogError(mMsg);
+                        successProcessing = false;
+                    }
                 }
 
                 if (fileCopiedLocally)
