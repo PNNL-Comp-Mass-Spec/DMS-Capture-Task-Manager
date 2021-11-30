@@ -391,7 +391,7 @@ namespace DatasetIntegrityPlugin
             catch (Exception ex)
             {
                 mRetData.CloseoutMsg = "Exception converting .d directory to a CDF file";
-                LogError(mRetData.CloseoutMsg + ": " + ex.Message);
+                LogError(mRetData.CloseoutMsg + ": " + ex.Message, ex);
                 return false;
             }
 
@@ -571,7 +571,7 @@ namespace DatasetIntegrityPlugin
             catch (Exception ex)
             {
                 mRetData.CloseoutMsg = ".D to CDF conversion failed; error in CreateOpenChromCDFJobFile";
-                LogError("Error in CreateOpenChromCDFJobFile: " + ex.Message);
+                LogError("Error in CreateOpenChromCDFJobFile: " + ex.Message, ex);
                 return string.Empty;
             }
         }
@@ -841,7 +841,7 @@ namespace DatasetIntegrityPlugin
             }
             catch (Exception ex)
             {
-                LogError("Exception in ParseConsoleOutputFile: " + ex.Message);
+                LogError("Exception in ParseConsoleOutputFile: " + ex.Message, ex);
             }
         }
 
@@ -1026,7 +1026,7 @@ namespace DatasetIntegrityPlugin
             }
             catch (Exception ex)
             {
-                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message, ex);
                 return false;
             }
         }
@@ -1441,7 +1441,7 @@ namespace DatasetIntegrityPlugin
                     }
                     catch (Exception ex)
                     {
-                        LogError("Exception opening .Raw file: " + ex.Message);
+                        LogError("Exception opening .Raw file: " + ex.Message, ex);
                         validFile = false;
                     }
                 }
@@ -2413,7 +2413,7 @@ namespace DatasetIntegrityPlugin
             }
             catch (Exception ex)
             {
-                LogError("Exception in UimfFileHasData: " + ex.Message);
+                LogError("Exception in UimfFileHasData: " + ex.Message, ex);
                 uimfStatusMessage = "appears corrupt (exception reading data)";
                 return false;
             }
@@ -2643,7 +2643,7 @@ namespace DatasetIntegrityPlugin
             catch (Exception ex)
             {
                 mRetData.CloseoutMsg = "Exception validating the OpenChrom CDF plugin";
-                LogError(mRetData.CloseoutMsg + ": " + ex.Message);
+                LogError(mRetData.CloseoutMsg + ": " + ex.Message, ex);
                 return false;
             }
         }
