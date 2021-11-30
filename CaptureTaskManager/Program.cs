@@ -25,7 +25,7 @@ namespace CaptureTaskManager
     {
         // Ignore Spelling: OxyPlot
 
-        private const string PROGRAM_DATE = "November 11, 2021";
+        private const string PROGRAM_DATE = "November 30, 2021";
 
         private static bool mTraceMode;
 
@@ -44,7 +44,7 @@ namespace CaptureTaskManager
                 {
                     // Running on Linux
                     // Auto-enable offline mode
-                    CTMUtilities.EnableOfflineMode(true);
+                    CTMUtilities.EnableOfflineMode();
                 }
 
                 var exeName = System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
