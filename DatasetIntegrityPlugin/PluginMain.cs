@@ -13,6 +13,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Xml;
 using CaptureTaskManager;
 using PRISM;
 using ThermoRawFileReader;
@@ -729,6 +730,41 @@ namespace DatasetIntegrityPlugin
             return Path.Combine(exeName, "openchrom.exe");
         }
 
+        private string LookupBrukerMethodParamValue(FileSystemInfo methodFile, string paramName)
+        {
+            try
+            {
+                var xmlDoc = new XmlDocument();
+
+                using var reader = new StreamReader(new FileStream(methodFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+                xmlDoc.Load(reader);
+
+                // Find the param node with attribute name equal to paramName
+                var paramNodes = xmlDoc.SelectNodes(string.Format(
+                    "/method/paramlist/param[@name='{0}']", paramName));
+
+                if (paramNodes == null || paramNodes.Count == 0)
+                {
+                    LogWarning("Bruker method file does not have parameter '{0}': {1}", paramName, methodFile.FullName);
+                    return string.Empty;
+                }
+
+                var valueNodes = paramNodes[0].SelectNodes("value");
+
+                // ReSharper disable once InvertIf
+                if (valueNodes == null || valueNodes.Count == 0)
+                {
+                    LogWarning("Parameter '{0}' in Bruker method file does not have a value node: {1}", paramName, methodFile.FullName);
+                    return string.Empty;
+                }
+
+                return valueNodes[0].InnerText;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in LookupBrukerMethodParamValue: " + ex.Message, ex);
+                return string.Empty;
+            }
         }
 
         /// <summary>
@@ -1734,7 +1770,10 @@ namespace DatasetIntegrityPlugin
                     if (!(serFound || fidFound))
                     {
                         // If we get here, none of the directories had a ser or fid file
-                        // Based on logic in the above for loop, then must have had a .baf file
+                        // Based on logic in the above for loop, one did have a .baf file
+
+                        // This is allowed for class BrukerFT_BAF if the apexAcquisition.method file has SaveFid=0 (see below),
+                        // but it is not allowed for instrument class BrukerMALDI_Imaging_V2
 
                         mRetData.EvalMsg = "Invalid dataset: none of the .d directories had a ser or fid file, but instead had .baf files; instrument class should likely be BrukerFT_BAF or BrukerTOF_BAF";
                         LogError(mRetData.EvalMsg);
@@ -1895,8 +1934,39 @@ namespace DatasetIntegrityPlugin
                 else
                 {
                     // No ser or fid file found
-                    // Ignore this error if on the 15T
-                    if (!string.Equals(instrumentName, "15T_FTICR", StringComparison.OrdinalIgnoreCase))
+                    // This is allowed if the apexAcquisition.method file has <param name="SaveFid"><value>0</value></param>
+
+                    var methodFiles = new List<FileInfo>();
+
+                    foreach (var dotDDirectory in dotDDirectories)
+                    {
+                        methodFiles.AddRange(PathUtils.FindFilesWildcard(dotDDirectory, "apexAcquisition.method", true));
+                    }
+
+                    var saveFidFiles = false;
+                    foreach (var methodFile in methodFiles)
+                    {
+                        var paramValue = LookupBrukerMethodParamValue(methodFile, "SaveFid");
+                        if (!int.TryParse(paramValue, out var saveFid))
+                        {
+                            mRetData.EvalMsg = string.Format(
+                                "Invalid value '{0}' for parameter SaveFid in method file {1}",
+                                paramValue, PathUtils.CompactPathString(methodFile.FullName, 90));
+
+                            LogError(mRetData.EvalMsg);
+                            return EnumCloseOutType.CLOSEOUT_FAILED;
+                        }
+
+                        if (saveFid == 0)
+                        {
+                            continue;
+                        }
+
+                        saveFidFiles = true;
+                        break;
+                    }
+
+                    if (methodFiles.Count == 0 || saveFidFiles)
                     {
                         mRetData.EvalMsg = "Invalid dataset: No ser or fid file found";
                         if (bafFileSizeKB is > 0 and < 100)
