@@ -621,9 +621,7 @@ namespace DatasetIntegrityPlugin
 
                     var directoryIsSuperseded = true;
 
-                    var supersededFiles = PathUtils.FindFilesWildcard(oldDirectory, "*", true);
-
-                    foreach (var supersededFile in supersededFiles)
+                    foreach (var supersededFile in PathUtils.FindFilesWildcard(oldDirectory, "*", true))
                     {
                         var newFilePath = supersededFile.FullName.Replace(oldDirectory.FullName, newDirectory.FullName);
                         var newFile = new FileInfo(newFilePath);
