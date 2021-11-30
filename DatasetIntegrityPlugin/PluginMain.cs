@@ -694,6 +694,27 @@ namespace DatasetIntegrityPlugin
             return fileSizeKB.ToString("#0") + " KB";
         }
 
+        /// <summary>
+        /// Gets the length of a single file in KB
+        /// </summary>
+        /// <param name="fileNamePath">Fully qualified path to input file</param>
+        /// <returns>File size in KB</returns>
+        private float GetFileSize(string fileNamePath)
+        {
+            var dataFile = new FileInfo(fileNamePath);
+            return GetFileSize(dataFile);
+        }
+
+        /// <summary>
+        /// Gets the length of a single file in KB
+        /// </summary>
+        /// <param name="dataFile">File info object</param>
+        /// <returns>File size in KB</returns>
+        private float GetFileSize(FileInfo dataFile)
+        {
+            return dataFile.Length / 1024F;
+        }
+
         private float GetLargestFileSizeKB(IEnumerable<FileInfo> filesToCheck)
         {
             var largestSizeKB = 0.0f;
@@ -937,6 +958,83 @@ namespace DatasetIntegrityPlugin
                 FileSizeToString(actualSizeKB),
                 minSizeText,
                 filePath);
+        }
+
+        /// <summary>
+        /// Initializes the dataset integrity tool
+        /// </summary>
+        /// <param name="mgrParams">Parameters for manager operation</param>
+        /// <param name="taskParams">Parameters for the assigned task</param>
+        /// <param name="statusTools">Tools for status reporting</param>
+        public override void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
+        {
+            LogDebug("Starting PluginMain.Setup()");
+
+            base.Setup(mgrParams, taskParams, statusTools);
+
+            LogDebug("Completed PluginMain.Setup()");
+        }
+
+        /// <summary>
+        /// Stores the tool version info in the database
+        /// </summary>
+        private bool StoreToolVersionInfo(string openChromProgPath)
+        {
+            LogDebug("Determining tool version info");
+
+            var toolVersionInfo = string.Empty;
+            var appDirectoryPath = CTMUtilities.GetAppDirectoryPath();
+
+            if (string.IsNullOrEmpty(appDirectoryPath))
+            {
+                LogError("GetAppDirectoryPath returned an empty directory path to StoreToolVersionInfo for the Dataset Integrity plugin");
+                return false;
+            }
+
+            // Lookup the version of the Capture tool plugin
+            var pluginPath = Path.Combine(appDirectoryPath, "DatasetIntegrityPlugin.dll");
+            var success = StoreToolVersionInfoOneFile(ref toolVersionInfo, pluginPath);
+            if (!success)
+            {
+                return false;
+            }
+
+            // Lookup the version of SQLite
+            var sqLitePath = Path.Combine(appDirectoryPath, "System.Data.SQLite.dll");
+            success = StoreToolVersionInfoOneFile(ref toolVersionInfo, sqLitePath);
+            if (!success)
+            {
+                return false;
+            }
+
+            // Lookup the version of the UIMFLibrary
+            var uimfLibraryPath = Path.Combine(appDirectoryPath, "UIMFLibrary.dll");
+            success = StoreToolVersionInfoOneFile(ref toolVersionInfo, uimfLibraryPath);
+            if (!success)
+            {
+                return false;
+            }
+
+            // Store path to CaptureToolPlugin.dll in toolFiles
+            var toolFiles = new List<FileInfo>
+            {
+                new(pluginPath)
+            };
+
+            if (!string.IsNullOrWhiteSpace(openChromProgPath))
+            {
+                toolFiles.Add(new FileInfo(openChromProgPath));
+            }
+
+            try
+            {
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, false);
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
+                return false;
+            }
         }
 
         /// <summary>
@@ -2444,104 +2542,6 @@ namespace DatasetIntegrityPlugin
                 FileSizeToString(actualSizeKB),
                 thresholdText,
                 filePath);
-        }
-
-        /// <summary>
-        /// Initializes the dataset integrity tool
-        /// </summary>
-        /// <param name="mgrParams">Parameters for manager operation</param>
-        /// <param name="taskParams">Parameters for the assigned task</param>
-        /// <param name="statusTools">Tools for status reporting</param>
-        public override void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
-        {
-            LogDebug("Starting PluginMain.Setup()");
-
-            base.Setup(mgrParams, taskParams, statusTools);
-
-            LogDebug("Completed PluginMain.Setup()");
-        }
-
-        /// <summary>
-        /// Gets the length of a single file in KB
-        /// </summary>
-        /// <param name="fileNamePath">Fully qualified path to input file</param>
-        /// <returns>File size in KB</returns>
-        private float GetFileSize(string fileNamePath)
-        {
-            var dataFile = new FileInfo(fileNamePath);
-            return GetFileSize(dataFile);
-        }
-
-        /// <summary>
-        /// Gets the length of a single file in KB
-        /// </summary>
-        /// <param name="dataFile">File info object</param>
-        /// <returns>File size in KB</returns>
-        private float GetFileSize(FileInfo dataFile)
-        {
-            return dataFile.Length / 1024F;
-        }
-
-        /// <summary>
-        /// Stores the tool version info in the database
-        /// </summary>
-        private bool StoreToolVersionInfo(string openChromProgPath)
-        {
-            LogDebug("Determining tool version info");
-
-            var toolVersionInfo = string.Empty;
-            var appDirectoryPath = CTMUtilities.GetAppDirectoryPath();
-
-            if (string.IsNullOrEmpty(appDirectoryPath))
-            {
-                LogError("GetAppDirectoryPath returned an empty directory path to StoreToolVersionInfo for the Dataset Integrity plugin");
-                return false;
-            }
-
-            // Lookup the version of the Capture tool plugin
-            var pluginPath = Path.Combine(appDirectoryPath, "DatasetIntegrityPlugin.dll");
-            var success = StoreToolVersionInfoOneFile(ref toolVersionInfo, pluginPath);
-            if (!success)
-            {
-                return false;
-            }
-
-            // Lookup the version of SQLite
-            var sqLitePath = Path.Combine(appDirectoryPath, "System.Data.SQLite.dll");
-            success = StoreToolVersionInfoOneFile(ref toolVersionInfo, sqLitePath);
-            if (!success)
-            {
-                return false;
-            }
-
-            // Lookup the version of the UIMFLibrary
-            var uimfLibraryPath = Path.Combine(appDirectoryPath, "UIMFLibrary.dll");
-            success = StoreToolVersionInfoOneFile(ref toolVersionInfo, uimfLibraryPath);
-            if (!success)
-            {
-                return false;
-            }
-
-            // Store path to CaptureToolPlugin.dll in toolFiles
-            var toolFiles = new List<FileInfo>
-            {
-                new(pluginPath)
-            };
-
-            if (!string.IsNullOrWhiteSpace(openChromProgPath))
-            {
-                toolFiles.Add(new FileInfo(openChromProgPath));
-            }
-
-            try
-            {
-                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, false);
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
-                return false;
-            }
         }
 
         private bool ValidateCDFPlugin()
