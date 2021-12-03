@@ -24,7 +24,9 @@ namespace DatasetArchivePlugin
         private const string SP_NAME_STORE_MYEMSL_STATS = "StoreMyEMSLUploadStats";
 
         private bool mSubmittedToMyEMSL;
+
         private bool mMyEMSLAlreadyUpToDate;
+
         /// <summary>
         /// Runs the archive and archive update step tools
         /// </summary>
@@ -137,7 +139,7 @@ namespace DatasetArchivePlugin
         /// <param name="statusURI"></param>
         /// <param name="eusInstrumentID">EUS Instrument ID</param>
         /// <param name="eusProjectID">EUS Project number (usually an integer but sometimes includes letters, for example 8491a)</param>
-        /// <param name="eusUploaderID">EUS user ID of the instrument operator</param>
+        /// <param name="eusUploaderID">EUS user ID of the instrument operator (aka the submitter)</param>
         /// <param name="errorCode"></param>
         /// <param name="usedTestInstance"></param>
         /// <returns>True for success, False for failure</returns>

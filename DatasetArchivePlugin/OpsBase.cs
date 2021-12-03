@@ -314,6 +314,7 @@ namespace DatasetArchivePlugin
             var startTime = DateTime.UtcNow;
 
             MyEMSLUploader myEMSLUploader = null;
+
             var operatorUsername = "??";
 
             allowRetry = true;
