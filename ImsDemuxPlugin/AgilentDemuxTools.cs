@@ -122,7 +122,7 @@ namespace ImsDemuxPlugin
             }
 
             // Default to 62% (5 of 8) minimum pulse coverage if this parameter is not defined
-            var minPulseCoverage = taskParams.GetParam("DemuxFramesToSum", 62);
+            var minPulseCoverage = taskParams.GetParam("DemuxMinPulseCoverage", 62);
             OnStatusEvent("Will use " + minPulseCoverage + "% minimum pulse coverage when demultiplexing");
 
             // Make sure the working directory is empty
