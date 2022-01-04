@@ -109,7 +109,7 @@
       <Version>1.1.13</Version>
     </PackageReference>
     <PackageReference Include="PRISM-Library">
-      <Version>2.6.42</Version>
+      <Version>2.6.43</Version>
     </PackageReference>
     <PackageReference Include="PRISMWin-Library">
       <Version>1.0.16</Version>
@@ -150,10 +150,12 @@ xcopy "$(TargetDir)*.config" "$(ProjectDir)..\DeployedFiles" /D /Y /I
 xcopy "$(TargetDir)Apache.NMS.ActiveMQ.dll" "$(ProjectDir)..\DeployedFiles" /D /Y
 xcopy "$(TargetDir)Apache.NMS.dll" "$(ProjectDir)..\DeployedFiles" /D /Y
 xcopy "$(TargetDir)Jayrock.Json.dll" "$(ProjectDir)..\DeployedFiles" /D /Y
-xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\DeployedFiles" /D /Y
-xcopy "$(TargetDir)plugin_info.xml" "$(ProjectDir)..\DeployedFiles" /D /Y 
+xcopy "$(TargetDir)MathNet.Numerics.dll" "$(ProjectDir)..\DeployedFiles" /D /Y
+xcopy "$(TargetDir)PNNLOmics.dll" "$(ProjectDir)..\DeployedFiles" /D /Y
 xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\DeployedFiles" /D /Y
 xcopy "$(TargetDir)PRISMWin.dll" "$(ProjectDir)..\DeployedFiles" /D /Y
+xcopy "$(TargetDir)plugin_info.xml" "$(ProjectDir)..\DeployedFiles" /D /Y
+xcopy "$(ProjectDir)..\RefLib\PNNLOmics.dll" "$(TargetDir)" /D /Y
 </PostBuildEvent>
   </PropertyGroup>
 </Project>
