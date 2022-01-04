@@ -120,6 +120,9 @@
     <PackageReference Include="System.Data.SQLite.Core">
       <Version>1.0.111</Version>
     </PackageReference>
+    <PackageReference Include="ThermoRawFileReader">
+      <Version>4.1.23</Version>
+    </PackageReference>
     <PackageReference Include="UIMFLibrary">
       <Version>3.7.7</Version>
     </PackageReference>
