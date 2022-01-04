@@ -128,7 +128,7 @@ namespace ImsDemuxPlugin
             // Make sure the working directory is empty
             ToolRunnerBase.CleanWorkDir(mWorkDir);
 
-            // Copy the UIMF file from the storage server to the working directory
+            // Copy the .D directory from the storage server to the working directory
 
             var returnData = CopyDotDToWorkDir(dotDFileName, new ToolReturnData(), out var dotDRemoteEncodedFileNamePath, out var dotDLocalEncodedFileNamePath);
             if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
@@ -774,7 +774,6 @@ namespace ImsDemuxPlugin
         /// <returns>True if it was demultiplexed, otherwise false</returns>
         private bool ValidateDotDDemultiplexed(string localDotDDecodedFilePath, ToolReturnData returnData)
         {
-            bool dotDDemultiplexed;
             string msg;
 
             // Make sure the Preprocessor log contains entry "Demultiplexing finished!" (with today's date)
@@ -790,31 +789,25 @@ namespace ImsDemuxPlugin
                 }
 
                 OnErrorEvent(msg);
-                dotDDemultiplexed = false;
+                return false;
             }
-            else
+
+            if (DateTime.Now.Subtract(demultiplexingFinished).TotalMinutes < 5)
             {
-                if (DateTime.Now.Subtract(demultiplexingFinished).TotalMinutes < 5)
-                {
-                    msg = "Demultiplexing finished message in PNNL-PreProcessorLog.txt file has date " + demultiplexingFinished;
-                    OnDebugEvent(msg);
-                    dotDDemultiplexed = true;
-                }
-                else
-                {
-                    returnData.CloseoutMsg = "Demultiplexing finished message in PNNL-PreProcessorLog.txt file is more than 5 minutes old";
-                    msg = returnData.CloseoutMsg + ": " + demultiplexingFinished + "; assuming this is a demultiplexing failure";
-                    if (!string.IsNullOrEmpty(message))
-                    {
-                        msg += "; " + message;
-                    }
-
-                    OnErrorEvent(msg);
-                    dotDDemultiplexed = false;
-                }
+                msg = "Demultiplexing finished message in PNNL-PreProcessorLog.txt file has date " + demultiplexingFinished;
+                OnDebugEvent(msg);
+                return true;
             }
 
-            return dotDDemultiplexed;
+            returnData.CloseoutMsg = "Demultiplexing finished message in PNNL-PreProcessorLog.txt file is more than 15 minutes old";
+            msg = returnData.CloseoutMsg + ": " + demultiplexingFinished + "; assuming this is a demultiplexing failure";
+            if (!string.IsNullOrEmpty(message))
+            {
+                msg += "; " + message;
+            }
+
+            OnErrorEvent(msg);
+            return false;
         }
 
         private DateTime GetDemultiplexingFinishedFromLog(string dotDPath, out string message)
