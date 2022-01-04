@@ -52,8 +52,9 @@ namespace DatasetIntegrityPlugin
         private const float TIMS_UIMF_FILE_MIN_SIZE_KB = 5;
         private const float AGILENT_MS_SCAN_BIN_FILE_MIN_SIZE_KB = 5;
         private const float AGILENT_MS_SCAN_BIN_FILE_SMALL_SIZE_KB = 50;
-        private const float AGILENT_MS_PEAK_BIN_FILE_MIN_SIZE_KB = 20;
+        private const float AGILENT_MS_PEAK_BIN_FILE_MIN_SIZE_KB = 12;
         private const float AGILENT_MS_PEAK_BIN_FILE_SMALL_SIZE_KB = 500;
+        private const float AGILENT_MS_PROFILE_BIN_FILE_SMALL_SIZE_KB = 500;
         private const float AGILENT_DATA_MS_FILE_MIN_SIZE_KB = 75;
         private const float SHIMADZU_QGD_FILE_MIN_SIZE_KB = 50;
         private const float WATERS_FUNC_DAT_FILE_MIN_SIZE_KB = 2;
@@ -707,6 +708,9 @@ namespace DatasetIntegrityPlugin
         /// <returns>File size in KB</returns>
         private float GetFileSize(FileInfo dataFile)
         {
+            if (dataFile == null)
+                return 0;
+
             return dataFile.Length / 1024F;
         }
 
@@ -1198,29 +1202,32 @@ namespace DatasetIntegrityPlugin
             }
 
             FileInfo msDataFile;
+            FileInfo msProfileFile;
 
             // Make sure the MSPeak.bin exists
-            var msPeakFile = PathUtils.FindFilesWildcard(acqDataDirectories[0], "MSPeak.bin").ToList();
-            if (msPeakFile.Count == 0)
+            var msPeakFiles = PathUtils.FindFilesWildcard(acqDataDirectories[0], "MSPeak.bin").ToList();
+            var msProfileFiles = PathUtils.FindFilesWildcard(acqDataDirectories[0], "MSProfile.bin").ToList();
+
+            if (msPeakFiles.Count == 0)
             {
                 // Some Agilent_QQQ_04 datasets have MSProfile.bin but do not have MSPeak.bin
                 // This is also true for IMS08_AgQTOF05 acquired in QTOF only mode
 
                 // Check for this
-                var msProfileFile = PathUtils.FindFilesWildcard(acqDataDirectories[0], "MSProfile.bin").ToList();
-
-                if (msProfileFile.Count == 0)
+                if (msProfileFiles.Count == 0)
                 {
                     mRetData.EvalMsg = "Invalid dataset: MSPeak.bin or MSProfile.bin file not found in the AcqData directory";
                     LogError(mRetData.EvalMsg);
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
 
-                msDataFile = msProfileFile.First();
+                msDataFile = msProfileFiles.First();
+                msProfileFile = msProfileFiles.First();
             }
             else
             {
-                msDataFile = msPeakFile.First();
+                msDataFile = msPeakFiles.First();
+                msProfileFile = msProfileFiles.FirstOrDefault();
             }
 
             // Verify size of the MSScan.bin file
@@ -1244,9 +1251,11 @@ namespace DatasetIntegrityPlugin
             else
             {
                 // The MSScan.bin file is over 50 KB
-                // The MSPeak.bin file should be over 500 KB
+                // Either the MSPeak.bin file should be over 500 KB or the MSProfile.bin file should be over 500 KB
                 var msPeakBinFileSizeKB = GetFileSize(msDataFile);
-                if (msPeakBinFileSizeKB < AGILENT_MS_PEAK_BIN_FILE_SMALL_SIZE_KB)
+                var msProfileBinFileSizeKB = GetFileSize(msProfileFile);
+
+                if (msPeakBinFileSizeKB < AGILENT_MS_PEAK_BIN_FILE_SMALL_SIZE_KB && msProfileBinFileSizeKB < AGILENT_MS_PROFILE_BIN_FILE_SMALL_SIZE_KB)
                 {
                     if (msPeakBinFileSizeKB < AGILENT_MS_PEAK_BIN_FILE_MIN_SIZE_KB)
                     {
@@ -1254,7 +1263,15 @@ namespace DatasetIntegrityPlugin
                         return EnumCloseOutType.CLOSEOUT_FAILED;
                     }
 
-                    WarnFileSizeTooSmall(msDataFile.Name, msDataFile.FullName, msPeakBinFileSizeKB, AGILENT_MS_PEAK_BIN_FILE_SMALL_SIZE_KB);
+                    if (msPeakBinFileSizeKB < AGILENT_MS_PEAK_BIN_FILE_SMALL_SIZE_KB)
+                    {
+                        WarnFileSizeTooSmall(msDataFile.Name, msDataFile.FullName, msPeakBinFileSizeKB, AGILENT_MS_PEAK_BIN_FILE_SMALL_SIZE_KB);
+                    }
+
+                    if (msProfileFile != null && msProfileBinFileSizeKB < AGILENT_MS_PROFILE_BIN_FILE_SMALL_SIZE_KB)
+                    {
+                        WarnFileSizeTooSmall(msProfileFile.Name, msProfileFile.FullName, msProfileBinFileSizeKB, AGILENT_MS_PROFILE_BIN_FILE_SMALL_SIZE_KB);
+                    }
                 }
             }
 
