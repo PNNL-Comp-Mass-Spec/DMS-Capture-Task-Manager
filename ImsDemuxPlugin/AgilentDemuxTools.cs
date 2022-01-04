@@ -835,20 +835,40 @@ namespace ImsDemuxPlugin
 
             var lastDate = DateTime.MinValue;
             var foundFinish = false;
+            var foundEndTime = false;
+            var linesAfterFinish = false;
             string line;
 
             while ((line = sr.ReadLine()) != null)
             {
+                linesAfterFinish = true;
+
+                // Processing start time
                 if (line.StartsWith("---") && DateTime.TryParse(line.Trim(' ', '-'), out var time))
                 {
                     lastDate = time;
                     foundFinish = false;
+                    foundEndTime = false;
+                }
+
+                // Processing end time
+                if (line.StartsWith("End time:") && DateTime.TryParse(line.Replace("End time:", "").Trim(' ', '-'), out var endTime))
+                {
+                    lastDate = endTime;
+                    foundFinish = false;
+                    foundEndTime = true;
                 }
 
                 if (line.Equals("Demultiplexing finished!", StringComparison.OrdinalIgnoreCase))
                 {
                     foundFinish = true;
+                    linesAfterFinish = false;
                 }
+            }
+
+            if (!linesAfterFinish && !foundEndTime)
+            {
+                lastDate = new FileInfo(logPath).LastWriteTime;
             }
 
             if (foundFinish)
