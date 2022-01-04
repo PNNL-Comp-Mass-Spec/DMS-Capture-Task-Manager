@@ -698,7 +698,7 @@ namespace ImsDemuxPlugin
                 // NOTE: PNNL-PreProcessor does not allow setting the output file path.
                 //arguments += " /N:" + Conversion.PossiblyQuotePath(outputFile.Name);
 
-                arguments += " -demux " + demuxOptions.FramesToSum;
+                arguments += " -demux";
                 arguments += " -demuxMA " + demuxOptions.FramesToSum;
                 arguments += " -demuxSignal " + demuxOptions.MinimumPulseCoverage;
                 arguments += " -overwrite ";
