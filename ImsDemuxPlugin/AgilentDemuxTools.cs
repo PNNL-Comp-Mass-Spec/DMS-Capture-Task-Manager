@@ -792,14 +792,14 @@ namespace ImsDemuxPlugin
                 return false;
             }
 
-            if (DateTime.Now.Subtract(demultiplexingFinished).TotalMinutes < 5)
+            if (DateTime.Now.Subtract(demultiplexingFinished).TotalMinutes < 10)
             {
                 msg = "Demultiplexing finished message in PNNL-PreProcessorLog.txt file has date " + demultiplexingFinished;
-                OnDebugEvent(msg);
+                OnStatusEvent(msg);
                 return true;
             }
 
-            returnData.CloseoutMsg = "Demultiplexing finished message in PNNL-PreProcessorLog.txt file is more than 15 minutes old";
+            returnData.CloseoutMsg = "Demultiplexing finished message in PNNL-PreProcessorLog.txt file is more than 10 minutes old";
             msg = returnData.CloseoutMsg + ": " + demultiplexingFinished + "; assuming this is a demultiplexing failure";
             if (!string.IsNullOrEmpty(message))
             {
