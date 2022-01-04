@@ -25,7 +25,7 @@ namespace CaptureTaskManager
     {
         // Ignore Spelling: OxyPlot
 
-        private const string PROGRAM_DATE = "November 30, 2021";
+        private const string PROGRAM_DATE = "January 4, 2022";
 
         private static bool mTraceMode;
 
