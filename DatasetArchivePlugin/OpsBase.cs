@@ -525,6 +525,13 @@ namespace DatasetArchivePlugin
                     allowRetry = false;
                     LogOperationFailed(mDatasetName, mErrMsg, true);
                 }
+                else if (ex.Message.IndexOf("Bytes to be written to the stream exceed the Content-Length bytes size specified", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    // This has been observed as an intermittent error
+                    // Do not immediately retry the upload; it will fail again due to the same error and may lock up the capture task manager
+                    allowRetry = false;
+                    LogOperationFailed(mDatasetName, ex.Message, true);
+                }
                 else
                 {
                     LogOperationFailed(mDatasetName);
