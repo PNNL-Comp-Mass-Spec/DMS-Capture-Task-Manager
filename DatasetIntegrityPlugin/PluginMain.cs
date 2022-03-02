@@ -58,7 +58,7 @@ namespace DatasetIntegrityPlugin
         private const float AGILENT_DATA_MS_FILE_MIN_SIZE_KB = 75;
         private const float SHIMADZU_QGD_FILE_MIN_SIZE_KB = 50;
         private const float WATERS_FUNC_DAT_FILE_MIN_SIZE_KB = 2;
-        private const float WATERS_FUNC_IND_FILE_MIN_SIZE_KB = 10;
+        private const float WATERS_FUNC_IND_FILE_MIN_SIZE_KB = 5;
 
         // MALDI imaging file
         // Prior to May 2014, used a minimum of 4 KB
