@@ -6,7 +6,7 @@ namespace CaptureTaskManager
 {
     public class CleanupMgrErrors : LoggerBase
     {
-        private const string SP_NAME_REPORT_MGR_CLEANUP = "ReportManagerErrorCleanup";
+        private const string SP_NAME_REPORT_MGR_CLEANUP = "report_manager_error_cleanup";
 
         /// <summary>
         /// Options for auto-removing files from the working directory when the manager starts
@@ -32,7 +32,7 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Cleanup status codes for stored procedure ReportManagerErrorCleanup
+        /// Cleanup status codes for stored procedure report_manager_error_cleanup
         /// </summary>
         public enum CleanupActionCodeConstants
         {
@@ -127,7 +127,7 @@ namespace CaptureTaskManager
 
         /// <summary>
         /// Remove all files in the working directory
-        /// Also calls stored procedure ReportManagerErrorCleanup at the start and finish of the cleanup
+        /// Also calls stored procedure report_manager_error_cleanup at the start and finish of the cleanup
         /// </summary>
         /// <param name="managerErrorCleanupMode"></param>
         /// <returns>True if success, false if an error</returns>
@@ -145,7 +145,7 @@ namespace CaptureTaskManager
 
             LogMessage("Attempting to automatically clean the work directory");
 
-            // Call SP ReportManagerErrorCleanup @ActionCode=1
+            // Call SP report_manager_error_cleanup with @ActionCode=1
             ReportManagerErrorCleanup(CleanupActionCodeConstants.Start);
 
             // Delete all folders and subdirectories in the working directory
@@ -168,8 +168,8 @@ namespace CaptureTaskManager
                 }
             }
 
-            // If successful, call SP with ReportManagerErrorCleanup @ActionCode=2
-            // Otherwise call SP ReportManagerErrorCleanup with @ActionCode=3
+            // If successful, call SP report_manager_error_cleanup with @ActionCode=2
+            // Otherwise call SP report_manager_error_cleanup with @ActionCode=3
 
             if (success)
             {

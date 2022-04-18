@@ -25,7 +25,7 @@ namespace CaptureTaskManager
     {
         // Ignore Spelling: Utils, Ack, Seqs
 
-        private const string SP_NAME_ACK_MANAGER_UPDATE = "AckManagerUpdateRequired";
+        private const string SP_NAME_ACK_MANAGER_UPDATE = "ack_manager_update_required";
 
         /// <summary>
         /// Connection string to DMS5
@@ -42,7 +42,7 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Calls stored procedure AckManagerUpdateRequired to acknowledge that the manager has exited so that an update can be applied
+        /// Calls stored procedure ack_manager_update_required to acknowledge that the manager has exited so that an update can be applied
         /// </summary>
         public void AckManagerUpdateRequired()
         {
