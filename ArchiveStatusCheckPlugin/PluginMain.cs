@@ -290,10 +290,10 @@ namespace ArchiveStatusCheckPlugin
                 // Find StatusNums that had the same subdirectory
                 // Note: cannot require that identical matches have a larger StatusNum because sometimes
                 // extremely large status values (like 1168231360) are assigned to failed uploads
-                var identicalStatusNums = (from item in statusData
-                                           where item.Key != unverifiedStatusNum &&
-                                                 item.Value.Subdirectory == unverifiedSubfolder
-                                           select item.Key).ToList();
+                var identicalStatusNums = (
+                    from item in statusData
+                    where item.Key != unverifiedStatusNum && item.Value.Subdirectory == unverifiedSubfolder
+                    select item.Key).ToList();
 
                 if (identicalStatusNums.Count == 0)
                 {
@@ -303,11 +303,11 @@ namespace ArchiveStatusCheckPlugin
                 // Check if any of the identical entries has been successfully verified
                 foreach (var identicalStatusNum in identicalStatusNums)
                 {
-                    if (verifiedURIs.ContainsKey(identicalStatusNum))
-                    {
-                        statusNumsToIgnore.Add(unverifiedStatusNum);
-                        break;
-                    }
+                    if (!verifiedURIs.ContainsKey(identicalStatusNum))
+                        continue;
+
+                    statusNumsToIgnore.Add(unverifiedStatusNum);
+                    break;
                 }
             }
 
@@ -357,7 +357,9 @@ namespace ArchiveStatusCheckPlugin
             // MyEMSLVerify will not have this parameter
             var statusURI = mTaskParams.GetParam("MyEMSL_Status_URI", string.Empty);
 
-            // Note that GetStatusURIsAndSubdirectories requires that the column order be StatusNum, Status_URI, Subfolder, Ingest_Steps_Completed, EUS_InstrumentID, EUS_ProposalID, EUS_UploaderID, ErrorCode
+            // Note that GetStatusURIsAndSubdirectories requires that the column order be
+            // StatusNum, Status_URI, Subfolder, Ingest_Steps_Completed, EUS_InstrumentID, EUS_ProposalID, EUS_UploaderID, ErrorCode
+
             var sql = new StringBuilder();
             sql.AppendFormat(
                 " SELECT StatusNum, Status_URI, Subfolder, " +
