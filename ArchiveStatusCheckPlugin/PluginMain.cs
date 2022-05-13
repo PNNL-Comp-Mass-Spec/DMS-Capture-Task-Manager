@@ -223,9 +223,7 @@ namespace ArchiveStatusCheckPlugin
                         mJob, statusChecker, statusInfo.StatusURI,
                         mRetData, out _, out var currentTask, out var percentComplete);
 
-                    var ingestStepsCompleted = statusChecker.DetermineIngestStepsCompleted(currentTask, percentComplete, statusInfo.IngestStepsCompletedOld);
-
-                    statusInfo.IngestStepsCompletedNew = ingestStepsCompleted;
+                    statusInfo.IngestStepsCompletedNew = statusChecker.DetermineIngestStepsCompleted(currentTask, percentComplete, statusInfo.IngestStepsCompletedOld);
 
                     if (!ingestSuccess)
                     {
