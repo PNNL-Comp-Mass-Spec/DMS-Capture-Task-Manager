@@ -272,6 +272,19 @@ namespace ArchiveVerifyPlugin
                     return false;
                 }
 
+                var ignoreMyEMSLFileTrackingError = mTaskParams.GetParam("IgnoreMyEMSLFileTrackingError", false);
+
+                var config = new Configuration();
+
+                var metadataObject = new DMSMetadataObject(config, mMgrName, mJob, mFileTools)
+                {
+                    TraceMode = mTraceMode,
+                    IgnoreMyEMSLFileTrackingError = ignoreMyEMSLFileTrackingError
+                };
+
+                // Attach the events
+                RegisterEvents(metadataObject);
+
                 var metadataFile = new FileInfo(Path.Combine(transferDirectoryPath, Utilities.GetMetadataFilenameForJob(jobNumber)));
 
                 if (metadataFile.Exists)
@@ -279,6 +292,7 @@ namespace ArchiveVerifyPlugin
                     metadataFilePath = metadataFile.FullName;
 
                     CompareToMetadataFile(
+                        metadataObject,
                         archivedFiles,
                         metadataFile,
                         out var matchCountToMetadata,
@@ -317,20 +331,7 @@ namespace ArchiveVerifyPlugin
 
                 // Look for files that should have been uploaded, compute a SHA-1 hash for each, and compare those hashes to existing files in MyEMSL
 
-                var ignoreMyEMSLFileTrackingError = mTaskParams.GetParam("IgnoreMyEMSLFileTrackingError", false);
-
-                var config = new Configuration();
-
                 ResetTimestampForQueueWaitTimeLogging();
-
-                var metadataObject = new DMSMetadataObject(config, mMgrName, mJob, mFileTools)
-                {
-                    TraceMode = mTraceMode,
-                    IgnoreMyEMSLFileTrackingError = ignoreMyEMSLFileTrackingError
-                };
-
-                // Attach the events
-                RegisterEvents(metadataObject);
 
                 var datasetFilesLocal = metadataObject.FindDatasetFilesToArchive(
                     mTaskParams.TaskDictionary,
@@ -479,12 +480,14 @@ namespace ArchiveVerifyPlugin
         /// <summary>
         /// Compare the files that MyEMSL is tracking for this dataset to the files in the metadata file
         /// </summary>
+        /// <param name="metadataObject"></param>
         /// <param name="archivedFiles">Files in MyEMSL</param>
         /// <param name="metadataFileInfo"></param>
         /// <param name="matchCount"></param>
         /// <param name="mismatchCount"></param>
         /// <param name="transactionId">The TransactionID used by the majority of the matching files</param>
         private void CompareToMetadataFile(
+            DMSMetadataObject metadataObject,
             IReadOnlyCollection<MyEMSLReader.ArchivedFileInfo> archivedFiles,
             FileSystemInfo metadataFileInfo,
             out int matchCount,
@@ -551,9 +554,6 @@ namespace ArchiveVerifyPlugin
                 return;
             }
 
-            // Get the list of files that we can ignore
-            var filesToIgnore = DMSMetadataObject.GetFilesToIgnore();
-
             // This dictionary tracks files on the local disk
             // Keys are relative file paths (Windows slashes); values are the SHA-1 hash values
             var filePathHashMap = new Dictionary<string, string>();
@@ -563,8 +563,9 @@ namespace ArchiveVerifyPlugin
                 var sha1Hash = Utilities.GetDictionaryValue(metadataFile, "hashsum");
                 var destinationDirectory = Utilities.GetDictionaryValue(metadataFile, "subdir");
                 var fileName = Utilities.GetDictionaryValue(metadataFile, "name");
+                var fileSizeBytes = Utilities.GetDictionaryValue(metadataFile, "size", 0);
 
-                if (filesToIgnore.Contains(fileName))
+                if (metadataObject.IgnoreFile(fileName, fileSizeBytes, false))
                 {
                     continue;
                 }
