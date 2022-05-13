@@ -998,40 +998,20 @@ namespace ArchiveVerifyPlugin
                     return false;
                 }
 
-                // Make sure the entries in archivedFiles only correspond to this dataset
-                // We performed the search using DatasetID, but if a dataset is renamed in DMS, multiple datasets could have the same DatasetID
-                // Dataset renames are rare, but do happen (e.g. Dataset ID 382287 renamed from TB_UR_07_14Jul14_Methow_13-10-13 to TB_UR_08_14Jul14_Methow_13-10-14)
-
-                // Unfortunately, starting in June 2017, the results reported by
-                // files_for_keyvalue/omics.dms.dataset_id do not include dataset name
+                // When retrieving the list of files in MyEMSL we used DatasetID
+                // If a dataset is renamed in DMS, multiple datasets could have the same DatasetID
+                // Prior to June 2017, we made sure that the entries in archivedFiles only correspond to this dataset
+                // Starting in June 2017, the results reported by files_for_keyvalue/omics.dms.dataset_id do not include dataset name
                 // Thus, this validation cannot be performed.
 
-                var filteredFiles = new List<MyEMSLReader.ArchivedFileInfo>();
-
-                foreach (var archiveFile in remoteFiles)
-                {
-                    filteredFiles.Add(archiveFile);
-
-                    //if (string.Equals(fileVersion.Dataset, mDataset, StringComparison.OrdinalIgnoreCase))
-                    //{
-                    //    filteredFiles.Add(fileVersion);
-                    //}
-                    //else
-                    //{
-                    //    LogMessage(
-                    //        "Query for dataset ID " + mDatasetID + " yielded match to " + fileVersion.PathWithDataset +
-                    //        " - skipping since wrong dataset", true);
-                    //}
-                }
-
-                var compareSuccess = CompareArchiveFilesToExpectedFiles(filteredFiles, out metadataFilePath, out transactionId);
+                var compareSuccess = CompareArchiveFilesToExpectedFiles(remoteFiles, out metadataFilePath, out transactionId);
 
                 if (!compareSuccess)
                 {
                     return false;
                 }
 
-                var hashFileUpdateSuccess = CreateOrUpdateHashResultsFile(filteredFiles);
+                var hashFileUpdateSuccess = CreateOrUpdateHashResultsFile(remoteFiles);
 
                 if (!hashFileUpdateSuccess)
                 {
