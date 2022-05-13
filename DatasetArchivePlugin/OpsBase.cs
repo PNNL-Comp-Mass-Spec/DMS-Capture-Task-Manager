@@ -350,6 +350,8 @@ namespace DatasetArchivePlugin
 
                 myEMSLUploader.MetadataDefinedEvent += myEMSLUploader_MetadataDefinedEvent;
 
+                myEMSLUploader.ZeroByteFileEvent += myEMSLUploader_ZeroByteFileEvent;
+
                 mTaskParams.AddAdditionalParameter(MyEMSLUploader.RECURSIVE_UPLOAD, recurse.ToString());
 
                 // Cache the operator name; used in the exception handler below
@@ -562,6 +564,7 @@ namespace DatasetArchivePlugin
                     myEMSLUploader.UploadCompleted -= myEMSLUploader_UploadCompleted;
 
                     myEMSLUploader.MetadataDefinedEvent -= myEMSLUploader_MetadataDefinedEvent;
+                    myEMSLUploader.ZeroByteFileEvent -= myEMSLUploader_ZeroByteFileEvent;
                 }
             }
         }
@@ -749,6 +752,20 @@ namespace DatasetArchivePlugin
                 string.IsNullOrEmpty(e.ServerResponse) ? "empty server response" : e.ServerResponse);
 
             mMyEmslUploadSuccess = true;
+        }
+
+        private void myEMSLUploader_ZeroByteFileEvent(FileInfo dataFile, string message)
+        {
+            const string ZERO_BYTE_FILE_FOUND = "Zero byte file found";
+
+            OnWarningEvent(message);
+
+            if (WarningMsg.Contains(ZERO_BYTE_FILE_FOUND))
+                return;
+
+            var warningMessage = string.Format("{0} and skipped: {1}", ZERO_BYTE_FILE_FOUND, dataFile.Name);
+
+            WarningMsg = CTMUtilities.AppendToString(WarningMsg, warningMessage);
         }
 
         private void OnMyEMSLUploadComplete(MyEMSLUploadEventArgs e)
