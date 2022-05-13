@@ -264,10 +264,7 @@ namespace CaptureTaskManager
                     }
                     else
                     {
-                        foreach (var remoteFile in sourceDirectory.GetFiles(datasetName + ".*"))
-                        {
-                            foundFiles.Add(remoteFile);
-                        }
+                        foundFiles.AddRange(sourceDirectory.GetFiles(datasetName + ".*"));
                     }
 
                     if (foundFiles.Count == 0)
