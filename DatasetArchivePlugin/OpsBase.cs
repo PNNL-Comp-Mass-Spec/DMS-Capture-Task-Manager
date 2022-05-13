@@ -276,17 +276,20 @@ namespace DatasetArchivePlugin
             {
                 if (debugMode != TarStreamUploader.UploadDebugMode.DebugDisabled)
                 {
-                    WarningMsg = "Debug mode was enabled; thus, .tar file was created locally and not uploaded to MyEMSL";
+                    WarningMsg = CTMUtilities.AppendToString(WarningMsg,
+                        "Debug mode was enabled; thus, .tar file was created locally and not uploaded to MyEMSL");
                 }
                 else
                 {
-                    WarningMsg = CTMUtilities.AppendToString(WarningMsg, "UploadToMyEMSL reports False");
+                    WarningMsg = CTMUtilities.AppendToString(WarningMsg,
+                        "UploadToMyEMSL reports False");
                 }
             }
 
             if (success && !mMyEmslUploadSuccess)
             {
-                WarningMsg = CTMUtilities.AppendToString(WarningMsg, "UploadToMyEMSL reports True but mMyEmslUploadSuccess is False");
+                WarningMsg = CTMUtilities.AppendToString(WarningMsg,
+                    "UploadToMyEMSL reports True but mMyEmslUploadSuccess is False");
             }
 
             return success && mMyEmslUploadSuccess;
