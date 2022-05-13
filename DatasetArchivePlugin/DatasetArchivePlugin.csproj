@@ -73,7 +73,6 @@
   <PropertyGroup>
     <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\DeployedFiles" /Y /I
 xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\DeployedFiles" /Y
-rem xcopy "$(TargetDir)Dart.PowerTCP.Ftp.dll" "$(ProjectDir)..\DeployedFiles" /D /Y /I
 xcopy "$(TargetDir)Pacifica*.dll" "$(ProjectDir)..\DeployedFiles" /D /Y /I
 xcopy "$(TargetDir)Pacifica*.pdb" "$(ProjectDir)..\DeployedFiles" /D /Y /I
 xcopy "$(TargetDir)DatasetArchivePlugin.pdb" "$(ProjectDir)..\DeployedFiles" /D /Y /I
