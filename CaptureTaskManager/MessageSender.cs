@@ -1,14 +1,14 @@
-﻿using Apache.NMS;
-using PRISM;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using Apache.NMS;
+using PRISM;
 
 namespace CaptureTaskManager
 {
     /// <summary>
     /// Sends messages to ActiveMQ message broker using NMS client library
     /// </summary>
-    internal class MessageSender : LoggerBase, IDisposable
+    internal class MessageSender : EventNotifier, IDisposable
     {
         private readonly string mBrokerUri;
 
@@ -200,16 +200,7 @@ namespace CaptureTaskManager
             }
         }
 
-        public event ErrorEventEventHandler ErrorEvent;
-        public delegate void ErrorEventEventHandler(string message, Exception ex);
 
-        /// <summary>
-        /// Report an error
-        /// </summary>
-        /// <param name="message"></param>
-        protected void OnErrorEvent(string message)
-        {
-            ErrorEvent?.Invoke(message, null);
         }
     }
 }

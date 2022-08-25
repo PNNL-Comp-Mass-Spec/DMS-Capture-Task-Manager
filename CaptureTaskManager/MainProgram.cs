@@ -396,6 +396,7 @@ namespace CaptureTaskManager
             // Setup the message queue
             mMessageSender = new MessageSender(brokerUri, topicName, mMgrSettings.ManagerName);
 
+            RegisterEvents(mMessageSender);
 
             // Initialize the message queue
             // Start this in a separate thread so that we can abort the initialization if necessary
