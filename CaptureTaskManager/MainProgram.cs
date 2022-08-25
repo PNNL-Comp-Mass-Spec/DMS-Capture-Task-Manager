@@ -60,8 +60,7 @@ namespace CaptureTaskManager
         private int mTaskRequestErrorCount;
         private IStatusFile mStatusFile;
 
-        private MessageHandler mMsgHandler;
-        private bool mMsgQueueInitSuccess;
+        private MessageSender mMsgHandler;
 
         private LoopExitCode mLoopExitCode;
 
@@ -111,11 +110,6 @@ namespace CaptureTaskManager
                     // Reload the manager config
                     LogMessage("Reloading configuration and restarting manager");
 
-                    // Unsubscribe message handler events and close the message handler
-                    if (mMsgQueueInitSuccess)
-                    {
-                        mMsgHandler.Dispose();
-                    }
                     break;
 
                 case LoopExitCode.DisabledMC:
@@ -397,13 +391,10 @@ namespace CaptureTaskManager
             }
 
             // Setup the message queue
-            mMsgQueueInitSuccess = false;
-            mMsgHandler = new MessageHandler
-            {
-                BrokerUri = mMgrSettings.GetParam("MessageQueueURI"),
-                StatusTopicName = mMgrSettings.GetParam("MessageQueueTopicMgrStatus"),    // Typically "Manager.Status"
-                MgrSettings = mMgrSettings
-            };
+            mMsgHandler = new MessageSender(
+                mMgrSettings.GetParam("MessageQueueURI"),
+                mMgrSettings.GetParam("MessageQueueTopicMgrStatus"), // Typically "Manager.Status"
+                mMgrSettings.ManagerName);
 
             // Initialize the message queue
             // Start this in a separate thread so that we can abort the initialization if necessary
@@ -497,7 +488,6 @@ namespace CaptureTaskManager
             if (!worker.Join(MAX_WAIT_TIME_SECONDS * 1000))
             {
                 worker.Abort();
-                mMsgQueueInitSuccess = false;
                 LogWarning("Unable to initialize the message queue (timeout after " + MAX_WAIT_TIME_SECONDS + " seconds)");
                 return;
             }
@@ -512,17 +502,15 @@ namespace CaptureTaskManager
 
         private void InitializeMessageQueueWork()
         {
-            if (!mMsgHandler.Init())
+            if (!mMsgHandler.CreateConnection())
             {
                 // Most error messages provided by .Init method, but debug message is here for program tracking
                 LogDebug("Message handler init error");
-                mMsgQueueInitSuccess = false;
                 ShowTrace("mMsgQueueInitSuccess = false: Message handler init error");
             }
             else
             {
                 LogDebug("Message handler initialized");
-                mMsgQueueInitSuccess = true;
                 ShowTrace("mMsgQueueInitSuccess = true");
             }
         }
@@ -866,6 +854,9 @@ namespace CaptureTaskManager
             {
                 LogDebug("===== Closing Capture Task Manager =====", writeToLog: false);
             }
+
+            // Unsubscribe message handler events and close the message handler
+            mMsgHandler.Dispose();
 
             return restartOK;
         }
@@ -1542,10 +1533,7 @@ namespace CaptureTaskManager
 
         private void OnStatusMonitorUpdateReceived(string msg)
         {
-            if (mMsgQueueInitSuccess)
-            {
-                mMsgHandler.SendMessage(msg);
-            }
+            mMsgHandler.SendMessage(msg);
         }
 
         /// <summary>

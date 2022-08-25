@@ -54,7 +54,7 @@
     <Compile Include="DbTask.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="MainProgram.cs" />
-    <Compile Include="MessageHandler.cs" />
+    <Compile Include="MessageSender.cs" />
     <Compile Include="PluginLoader.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
