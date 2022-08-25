@@ -159,10 +159,9 @@ namespace CaptureTaskManager
             // Example formatted message:
             // Exception creating broker connection after 3 attempts: Error connecting to proto-7.pnl.gov:61616
 
-            OnErrorEvent(string.Format(
-                "Exception creating broker connection{0}: {1}",
-                retryCount == 0 ? string.Empty : " after " + (retryCount + 1) + " attempts",
-                string.Join("; ", errorList)));
+            var attemptDescription = retryCount == 0 ? string.Empty : " after " + (retryCount + 1) + " attempts";
+
+            OnErrorEvent("Exception creating broker connection{0}: {1}", attemptDescription, string.Join("; ", errorList));
 
             BrokerConnectionFailures++;
             return false;
