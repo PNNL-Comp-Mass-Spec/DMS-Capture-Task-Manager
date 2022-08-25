@@ -165,11 +165,7 @@ namespace CaptureTaskManager
 
             // Only clear the recent job info if the variable is null
 
-            // ReSharper disable once ConvertIfStatementToNullCoalescingAssignment
-            if (MostRecentJobInfo == null)
-            {
-                MostRecentJobInfo = string.Empty;
-            }
+            MostRecentJobInfo ??= string.Empty;
         }
 
         /// <summary>
