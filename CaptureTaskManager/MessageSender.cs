@@ -168,15 +168,15 @@ namespace CaptureTaskManager
             return false;
         }
 
-        public void DestroyConnection()
+        private void DestroyConnection()
         {
             try
             {
-                if (mHasConnection)
-                {
-                    mConnection?.Close();
-                    mHasConnection = false;
-                }
+                if (!mHasConnection)
+                    return;
+
+                mConnection?.Close();
+                mHasConnection = false;
             }
             catch (Exception)
             {
@@ -186,21 +186,19 @@ namespace CaptureTaskManager
 
         public void Dispose()
         {
-            if (!mIsDisposed)
+            if (mIsDisposed)
+                return;
+
+            mIsDisposed = true;
+
+            try
             {
-                mIsDisposed = true;
-                try
-                {
-                    DestroyConnection();
-                }
-                catch (Exception)
-                {
-                    // Ignore errors here
-                }
+                DestroyConnection();
             }
-        }
-
-
+            catch (Exception)
+            {
+                // Ignore errors here
+            }
         }
     }
 }
