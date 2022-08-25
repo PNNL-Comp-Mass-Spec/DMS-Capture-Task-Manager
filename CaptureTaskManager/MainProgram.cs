@@ -60,7 +60,7 @@ namespace CaptureTaskManager
         private int mTaskRequestErrorCount;
         private IStatusFile mStatusFile;
 
-        private MessageSender mMsgHandler;
+        private MessageSender mMessageSender;
 
         private LoopExitCode mLoopExitCode;
 
@@ -390,11 +390,12 @@ namespace CaptureTaskManager
                 }
             }
 
+            var brokerUri = mMgrSettings.GetParam("MessageQueueURI");
+            var topicName = mMgrSettings.GetParam("MessageQueueTopicMgrStatus");    // Typically "Manager.CapTask"
+
             // Setup the message queue
-            mMsgHandler = new MessageSender(
-                mMgrSettings.GetParam("MessageQueueURI"),
-                mMgrSettings.GetParam("MessageQueueTopicMgrStatus"), // Typically "Manager.Status"
-                mMgrSettings.ManagerName);
+            mMessageSender = new MessageSender(brokerUri, topicName, mMgrSettings.ManagerName);
+
 
             // Initialize the message queue
             // Start this in a separate thread so that we can abort the initialization if necessary
@@ -502,7 +503,7 @@ namespace CaptureTaskManager
 
         private void InitializeMessageQueueWork()
         {
-            if (!mMsgHandler.CreateConnection())
+            if (!mMessageSender.CreateConnection())
             {
                 // Most error messages provided by .Init method, but debug message is here for program tracking
                 LogDebug("Message handler init error");
@@ -856,7 +857,7 @@ namespace CaptureTaskManager
             }
 
             // Unsubscribe message handler events and close the message handler
-            mMsgHandler.Dispose();
+            mMessageSender.Dispose();
 
             return restartOK;
         }
@@ -1533,7 +1534,7 @@ namespace CaptureTaskManager
 
         private void OnStatusMonitorUpdateReceived(string msg)
         {
-            mMsgHandler.SendMessage(msg);
+            mMessageSender.SendMessage(msg);
         }
 
         /// <summary>
