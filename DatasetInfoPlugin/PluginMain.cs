@@ -565,9 +565,19 @@ namespace DatasetInfoPlugin
 
                     if (mzMinValidationError)
                     {
-                        var jobParamNote = string.Format(
-                            "To ignore this error, use Exec AddUpdateJobParameter {0}, 'JobParameters', 'SkipMinimumMzValidation', 'true'",
-                            mJob);
+                        string jobParamNote;
+
+                        if (mDataset.Contains("SRM_TMT"))
+                        {
+                            jobParamNote = "Ignoring m/z validation error since an SRM TMT dataset";
+                            returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+                        }
+                        else
+                        {
+                            jobParamNote = string.Format(
+                                "To ignore this error, use Exec AddUpdateJobParameter {0}, 'JobParameters', 'SkipMinimumMzValidation', 'true'",
+                                mJob);
+                        }
 
                         returnData.CloseoutMsg = AppendToComment(returnData.CloseoutMsg, jobParamNote);
                     }
