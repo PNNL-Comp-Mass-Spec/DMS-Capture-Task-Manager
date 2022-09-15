@@ -505,6 +505,7 @@ namespace ImsDemuxPlugin
                 if (existingRemoteDotDir.Exists && mAgDemuxTools.ValidateDotDDemultiplexed(existingRemoteDotDir.FullName, retData, true))
                 {
                     LogMessage("Skipping demultiplexing since the dataset directory already has {0} and {1} is already demultiplexed", remoteDotDirName, existingRemoteDotDir.Name);
+                    mRetData.EvalMsg = "De-multiplexed (existing .D found)";
                     mNeedToDemultiplex = false;
                 }
             }
