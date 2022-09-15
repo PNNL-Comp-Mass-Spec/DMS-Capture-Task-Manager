@@ -329,9 +329,9 @@ namespace CaptureTaskManager
             // Create a new memory stream in which to write the XML
             var memStream = new MemoryStream();
 
-            using var writer = new XmlTextWriter(memStream, System.Text.Encoding.UTF8) 
+            using var writer = new XmlTextWriter(memStream, System.Text.Encoding.UTF8)
             {
-                Formatting = Formatting.Indented, 
+                Formatting = Formatting.Indented,
                 Indentation = 2
             };
 
@@ -435,7 +435,6 @@ namespace CaptureTaskManager
                         Path.GetFileName(tempStatusFilePath),
                         Path.GetFileName(FileNamePath),
                         ex.Message);
-
                 }
 
                 try

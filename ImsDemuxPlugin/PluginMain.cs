@@ -24,6 +24,7 @@ namespace ImsDemuxPlugin
     /// <summary>
     /// IMS Demultiplexer plugin
     /// </summary>
+    /// <remarks>Corresponds to the ImsDeMultiplex step tool</remarks>
     // ReSharper disable once UnusedMember.Global
     public class PluginMain : ToolRunnerBase
     {
@@ -75,10 +76,12 @@ namespace ImsDemuxPlugin
 
             if (instrumentClass == InstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_DotD)
             {
+                // Data is acquired natively as .D directories: IMS08, IMS09, IMS10, IMS11
                 RunToolAgilentDotD();
             }
             else
             {
+                // Data is acquired as a .uimf file
                 RunToolUIMF();
             }
 
@@ -127,11 +130,14 @@ namespace ImsDemuxPlugin
 #pragma warning restore 162
             }
 
-            LogDebug("Completed PluginMain.RunTool()");
+            LogDebug("Completed ImsDemuxPlugin.PluginMain.RunTool()");
 
             return mRetData;
         }
 
+        /// <summary>
+        /// Look for the dataset's UIMF file and demultiplex, if necessary
+        /// </summary>
         private void RunToolUIMF()
         {
             // Store the version info in the database
@@ -174,8 +180,10 @@ namespace ImsDemuxPlugin
 
             // Use this name first to test if demux has already been performed once
             var uimfFileName = mDataset + "_encoded.uimf";
+
             var existingUimfFile = new FileInfo(Path.Combine(datasetDirectoryPath, uimfFileName));
-            if (existingUimfFile.Exists && (existingUimfFile.Length != 0))
+
+            if (existingUimfFile.Exists && existingUimfFile.Length != 0)
             {
                 // The _encoded.uimf file will be used for demultiplexing
 
@@ -236,6 +244,7 @@ namespace ImsDemuxPlugin
 
                 // If we got to here, _encoded uimf file doesn't exist. So, use the other uimf file
                 uimfFileName = mDataset + ".uimf";
+
                 if (!File.Exists(Path.Combine(datasetDirectoryPath, uimfFileName)))
                 {
                     // IMS08_AgQTOF05 datasets acquired in QTOF only mode do not have .UIMF files; check for this
@@ -284,6 +293,7 @@ namespace ImsDemuxPlugin
             RegisterEvents(sqLiteTools);
 
             var queryResult = sqLiteTools.GetUimfMuxStatus(mUimfFilePath, out var numBitsForEncoding);
+
             if (queryResult == MultiplexingStatus.NonMultiplexed)
             {
                 // De-multiplexing not required, but we should still attempt calibration (if enabled)
@@ -330,6 +340,7 @@ namespace ImsDemuxPlugin
 
             // Lookup the current .uimf file size
             var uimfFile = new FileInfo(mUimfFilePath);
+
             if (!uimfFile.Exists)
             {
                 string msg;
@@ -378,7 +389,7 @@ namespace ImsDemuxPlugin
             // Store the version info in the database
             if (!StoreToolVersionInfoAgilent(agilentToUimf.GetToolDllPaths()))
             {
-                LogError("Aborting since StoreToolVersionInfo returned false");
+                LogError("Aborting since StoreToolVersionInfoAgilent returned false");
                 mRetData.CloseoutMsg = "Error determining version of PNNL-PreProcessor";
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return;
@@ -538,18 +549,18 @@ namespace ImsDemuxPlugin
         /// <param name="statusTools">Tools for status reporting</param>
         public override void Setup(IMgrParams mgrParams, ITaskParams taskParams, IStatusFile statusTools)
         {
-            LogDebug("Starting PluginMain.Setup()");
+            LogDebug("Starting ImsDemuxPlugin.PluginMain.Setup()");
 
             base.Setup(mgrParams, taskParams, statusTools);
 
-            LogDebug("Completed PluginMain.Setup()");
+            LogDebug("Completed ImsDemuxPlugin.PluginMain.Setup()");
 
             // Determine the path to UIMFDemultiplexer_Console.exe
-            var uimfDemultiplexerProgLoc = GetUimfDemultiplexerPath();
+            var uimfDemultiplexerExePath = GetUimfDemultiplexerPath();
 
             ResetTimestampForQueueWaitTimeLogging();
 
-            mDemuxTools = new DemuxTools(uimfDemultiplexerProgLoc, mFileTools);
+            mDemuxTools = new DemuxTools(uimfDemultiplexerExePath, mFileTools);
             RegisterEvents(mDemuxTools);
 
             // Add a handler to catch progress events
@@ -557,10 +568,10 @@ namespace ImsDemuxPlugin
             mDemuxTools.BinCentricTableProgress += DemuxTools_BinCentricTableProgress;
             mDemuxTools.CopyFileWithRetryEvent += DemuxTools_CopyFileWithRetryEvent;
 
-            // Determine the path to PNNL-PreProcessor.exe
-            var preprocessorProgLoc = GetPNNLPreProcessorPath();
+            // Determine the full path to PNNL-PreProcessor.exe
+            var preprocessorExePath = GetPNNLPreProcessorPath();
 
-            mAgDemuxTools = new AgilentDemuxTools(preprocessorProgLoc, mFileTools);
+            mAgDemuxTools = new AgilentDemuxTools(preprocessorExePath, mFileTools);
             RegisterEvents(mAgDemuxTools);
 
             // Add a handler to catch progress events
@@ -807,14 +818,14 @@ namespace ImsDemuxPlugin
                 return false;
             }
 
-            // Lookup the version of UIMFDemultiplexer_Console
+            // Lookup the version of PNNL-Preprocessor.exe
             success = StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, preprocessor.FullName);
             if (!success)
             {
                 return false;
             }
 
-            // Lookup the version of the IMSDemultiplexer (in the PNNL-PreProcessor folder)
+            // Lookup the version of the IMSDemultiplexer (in the PNNL-PreProcessor directory)
             var demultiplexerPath = Path.Combine(preprocessor.DirectoryName, "IMSDemultiplexer.dll");
             success = StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, demultiplexerPath);
             if (!success)

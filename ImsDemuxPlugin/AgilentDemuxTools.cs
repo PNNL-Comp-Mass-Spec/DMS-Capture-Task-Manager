@@ -10,7 +10,7 @@ using PRISM.Logging;
 namespace ImsDemuxPlugin
 {
     /// <summary>
-    /// This class demultiplexes a .D file using the PNNL-PreProcessor
+    /// This class demultiplexes a .D directory using the PNNL-PreProcessor
     /// </summary>
     public class AgilentDemuxTools : EventNotifier
     {
@@ -26,7 +26,14 @@ namespace ImsDemuxPlugin
         private readonly FileTools mFileTools;
         private string mWorkDir;
 
+        /// <summary>
+        /// Full path to PNNL-Preprocessor.exe
+        /// </summary>
         private readonly string mPNNLPreProcessorPath;
+
+        /// <summary>
+        /// PNNL preprocessor console output file
+        /// </summary>
         private string mPNNLPreProcessorConsoleOutputFilePath;
 
         private DateTime mLastProgressUpdateTime;
@@ -58,7 +65,7 @@ namespace ImsDemuxPlugin
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="pnnlPreProcessorPath"></param>
+        /// <param name="pnnlPreProcessorPath">Full path to PNNL-Preprocessor.exe</param>
         /// <param name="fileTools"></param>
         public AgilentDemuxTools(string pnnlPreProcessorPath, FileTools fileTools)
         {
@@ -92,7 +99,7 @@ namespace ImsDemuxPlugin
         }
 
         /// <summary>
-        /// Performs demultiplexing of IMS data files
+        /// Performs demultiplexing of IMS .D directories
         /// </summary>
         /// <param name="mgrParams">Parameters for manager operation</param>
         /// <param name="taskParams">Parameters for the assigned task</param>
@@ -167,7 +174,7 @@ namespace ImsDemuxPlugin
                 return returnData;
             }
 
-            // Look for the demultiplexed .D directory
+            // Look for the demultiplexed .D directory (name ends with .d.deMP.d)
             var localDotDDecodedFilePath = Path.Combine(mWorkDir, mDataset + DECODED_dotD_SUFFIX);
 
             if (!Directory.Exists(localDotDDecodedFilePath))
@@ -191,8 +198,8 @@ namespace ImsDemuxPlugin
 
             if (!postProcessingError)
             {
-                // Rename Agilent IMS .D file on storage server
-                OnDebugEvent("Renaming Agilent IMS .D file on storage server");
+                // Rename Agilent IMS .D directory on storage server; replaces ".d" with "_muxed.d"
+                OnDebugEvent("Renaming Agilent IMS .D directory on storage server");
 
                 // If this is a re-run, the encoded file has already been renamed
                 // This is determined by looking for "_encoded" in the UIMF file name
@@ -200,7 +207,7 @@ namespace ImsDemuxPlugin
                 {
                     if (!RenameDirectory(dotDRemoteEncodedFileNamePath, Path.Combine(mDatasetDirectoryPathRemote, mDataset + ENCODED_dotD_SUFFIX)))
                     {
-                        returnData.CloseoutMsg = "Error renaming encoded Agilent IMS .D file on storage server";
+                        returnData.CloseoutMsg = "Error renaming encoded Agilent IMS .D directory on storage server";
                         returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                         postProcessingError = true;
                     }
@@ -220,16 +227,16 @@ namespace ImsDemuxPlugin
             {
                 try
                 {
-                    // Delete the multiplexed Agilent IMS .D file (no point in saving it)
+                    // Delete the multiplexed Agilent IMS .D directory (no point in saving it); its name ends with .d.deMP.d
                     mFileTools.DeleteDirectory(dotDLocalEncodedFileNamePath);
                 }
                 // ReSharper disable once EmptyGeneralCatchClause
                 catch
                 {
-                    // Ignore errors deleting the multiplexed Agilent IMS .D file
+                    // Ignore errors deleting the multiplexed Agilent IMS .D directory (from the local working directory)
                 }
 
-                // Try to save the demultiplexed Agilent IMS .D file (and any other files in the work directory)
+                // Try to save the demultiplexed Agilent IMS .D directory (and any other files in the working directory)
                 var failedResultsCopier = new FailedResultsCopier(mgrParams, taskParams);
                 failedResultsCopier.CopyFailedResultsToArchiveDirectory(mWorkDir);
 
@@ -767,9 +774,9 @@ namespace ImsDemuxPlugin
         }
 
         /// <summary>
-        /// Examines the Log_Entries table to make sure the .UIMF file was demultiplexed
+        /// Examines the Log_Entries table to make sure the .D directory was demultiplexed
         /// </summary>
-        /// <param name="localDotDDecodedFilePath"></param>
+        /// <param name="localDotDDecodedFilePath">Local decoded directory path (name ends with .d.deMP.d)</param>
         /// <param name="returnData"></param>
         /// <returns>True if it was demultiplexed, otherwise false</returns>
         private bool ValidateDotDDemultiplexed(string localDotDDecodedFilePath, ToolReturnData returnData)

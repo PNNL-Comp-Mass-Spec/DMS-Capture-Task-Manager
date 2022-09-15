@@ -75,7 +75,7 @@ namespace ImsDemuxPlugin
         }
 
         /// <summary>
-        /// Convert an Agilent .D dataset to a .uimf file
+        /// Convert an Agilent .D directory to a .uimf file
         /// </summary>
         /// <returns>True if successful, false if an error</returns>
         public bool RunConvert(ToolReturnData returnData, FileTools fileTools)
@@ -85,9 +85,10 @@ namespace ImsDemuxPlugin
 
             var instClassName = mTaskParams.GetParam("Instrument_Class");
             var instrumentClass = InstrumentClassInfo.GetInstrumentClass(instClassName);
+
             if (instrumentClass != InstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_DotD)
             {
-                mRetData.CloseoutMsg = "Can only convert Agilent IMS .D files to .UIMF";
+                mRetData.CloseoutMsg = "AgilentToUimfConversion can only convert Agilent IMS .D directories to .UIMF";
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return false;
             }
@@ -303,8 +304,8 @@ namespace ImsDemuxPlugin
         /// </summary>
         /// <param name="fileTools">Instance of FileTools</param>
         /// <param name="datasetDirectoryPath">Source directory parent</param>
-        /// <param name="dotDDirectoryName">Source directory name</param>
-        /// <param name="dotDDirectoryPathLocal">Target directory</param>
+        /// <param name="dotDDirectoryName">Source directory name (name only, not full path)</param>
+        /// <param name="dotDDirectoryPathLocal">Target directory (full path of the .D directory)</param>
         /// <param name="requireIMSFiles">If true, require that IMS files be present</param>
         /// <param name="skipCreateUIMF">Output: set to true if this .d directory does not have any IMS files</param>
         /// <returns>True if the .d directory was copied, otherwise false</returns>

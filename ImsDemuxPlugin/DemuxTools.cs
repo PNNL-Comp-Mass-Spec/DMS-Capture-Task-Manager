@@ -108,6 +108,13 @@ namespace ImsDemuxPlugin
             mLoggedConsoleOutputErrors = new List<string>();
         }
 
+        /// <summary>
+        /// Add bin-centric tables if missing
+        /// </summary>
+        /// <param name="mgrParams"></param>
+        /// <param name="taskParams"></param>
+        /// <param name="returnData"></param>
+        /// <returns>Updated version of returnData</returns>
         public ToolReturnData AddBinCentricTablesIfMissing(IMgrParams mgrParams, ITaskParams taskParams, ToolReturnData returnData)
         {
             try
@@ -1431,7 +1438,7 @@ namespace ImsDemuxPlugin
             // Make sure the Log_Entries table contains entry "Finished demultiplexing" (with today's date)
             var uimfLogEntryAccessor = new UIMFDemultiplexer.clsUIMFLogEntryAccessor();
 
-            var demultiplexingFinished= uimfLogEntryAccessor.GetDemultiplexingFinishDate(localUimfDecodedFilePath, out var logEntryAccessorMsg);
+            var demultiplexingFinished = uimfLogEntryAccessor.GetDemultiplexingFinishDate(localUimfDecodedFilePath, out var logEntryAccessorMsg);
 
             if (demultiplexingFinished == DateTime.MinValue)
             {

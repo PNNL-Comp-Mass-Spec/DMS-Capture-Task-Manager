@@ -14,9 +14,9 @@ namespace ImsDemuxPlugin
         // Ignore Spelling: demultiplexed, demultiplexing, demux, xs
 
         /// <summary>
-        /// Evaluates the Agilent .D file to determine if it is multiplexed or not
+        /// Evaluates the Agilent .D directory to determine if it is multiplexed or not
         /// </summary>
-        /// <param name="dotDFilePath">Full path to Agilent .D file</param>
+        /// <param name="dotDFilePath">Full path to Agilent .D directory</param>
         /// <param name="muxSequence">multiplexing encoding sequence; empty if not multiplexed</param>
         /// <returns>Enum indicating test results</returns>
         public MultiplexingStatus GetDotDMuxStatus(string dotDFilePath, out string muxSequence)
@@ -63,9 +63,9 @@ namespace ImsDemuxPlugin
         }
 
         /// <summary>
-        /// Evaluates the Agilent .D file to determine if it is already demultiplexed
+        /// Evaluates the Agilent .D directory to determine if it is already demultiplexed
         /// </summary>
-        /// <param name="dotDFilePath">Full path to Agilent .D file</param>
+        /// <param name="dotDFilePath">Full path to Agilent .D directory</param>
         /// <returns>True if demultiplexed, false if not or error</returns>
         // ReSharper disable once UnusedMember.Global
         public bool GetDotDIsDemultiplexed(string dotDFilePath)
@@ -111,7 +111,7 @@ namespace ImsDemuxPlugin
 
             if (!File.Exists(imsFrameMethPath))
             {
-                OnErrorEvent("Agilent .D file, IMSFrameMeth.xml does not exist: " + imsFrameMethSubPath);
+                OnErrorEvent("In the Agilent .D directory, IMSFrameMeth.xml does not exist: " + imsFrameMethSubPath);
                 return null;
             }
 
@@ -132,7 +132,7 @@ namespace ImsDemuxPlugin
 
                 if (nodeList == null)
                 {
-                    OnErrorEvent("Agilent .D file, error parsing IMSFrameMeth.xml - node {0} not found in {1}",
+                    OnErrorEvent("Agilent .D directory, error parsing IMSFrameMeth.xml - node {0} not found in {1}",
                         FRAME_METHOD_NODE, imsFrameMethSubPath);
 
                     return methodInfo;
@@ -164,13 +164,13 @@ namespace ImsDemuxPlugin
             }
             catch (Exception)
             {
-                OnErrorEvent("Agilent .D file, error parsing IMSFrameMeth.xml: " + imsFrameMethSubPath);
+                OnErrorEvent("Agilent .D directory, error parsing IMSFrameMeth.xml: " + imsFrameMethSubPath);
                 return null;
             }
 
             if (methodInfo.Count == 0)
             {
-                OnErrorEvent("Agilent .D file, error parsing IMSFrameMeth.xml - no ImsMuxProcessing entries: " + imsFrameMethSubPath);
+                OnErrorEvent("Agilent .D directory, error parsing IMSFrameMeth.xml - no ImsMuxProcessing entries: " + imsFrameMethSubPath);
             }
 
             return methodInfo;

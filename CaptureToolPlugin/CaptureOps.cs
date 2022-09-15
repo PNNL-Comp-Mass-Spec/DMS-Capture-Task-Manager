@@ -1074,22 +1074,22 @@ namespace CaptureToolPlugin
         {
             var datasetName = taskParams.GetParam("Dataset");
             var jobNum = taskParams.GetParam("Job", 0);
-            var sourceVol = taskParams.GetParam("Source_Vol").Trim();                      // Example: \\exact04.bionet\
-            var sourcePath = taskParams.GetParam("Source_Path").Trim();                    // Example: ProteomicsData\
+            var sourceVol = taskParams.GetParam("Source_Vol").Trim();                       // Example: \\exact04.bionet\
+            var sourcePath = taskParams.GetParam("Source_Path").Trim();                     // Example: ProteomicsData\
 
             // Capture_Subdirectory is typically an empty string, but could be a partial path like: "CapDev" or "Smith\2014"
             var legacyCaptureSubfolder = taskParams.GetParam("Capture_Subfolder").Trim();
             var captureSubdirectory = taskParams.GetParam("Capture_Subdirectory", legacyCaptureSubfolder);
 
-            var storageVol = taskParams.GetParam("Storage_Vol").Trim();                    // Example: E:\
-            var storagePath = taskParams.GetParam("Storage_Path").Trim();                  // Example: Exact04\2012_1\
-            var storageVolExternal = taskParams.GetParam("Storage_Vol_External").Trim();   // Example: \\proto-5\
+            var storageVol = taskParams.GetParam("Storage_Vol").Trim();                     // Example: E:\
+            var storagePath = taskParams.GetParam("Storage_Path").Trim();                   // Example: Exact04\2012_1\
+            var storageVolExternal = taskParams.GetParam("Storage_Vol_External").Trim();    // Example: \\proto-5\
 
-            var instClassName = taskParams.GetParam("Instrument_Class");                   // Examples: Finnigan_Ion_Trap, LTQ_FT, Triple_Quad, IMS_Agilent_TOF, Agilent_Ion_Trap
-            var instrumentClass = InstrumentClassInfo.GetInstrumentClass(instClassName);             // Enum of instrument class type
-            var instrumentName = taskParams.GetParam("Instrument_Name");                   // Instrument name
+            var instClassName = taskParams.GetParam("Instrument_Class");                    // Examples: Finnigan_Ion_Trap, LTQ_FT, Triple_Quad, IMS_Agilent_TOF, Agilent_Ion_Trap
+            var instrumentClass = InstrumentClassInfo.GetInstrumentClass(instClassName);    // Enum of instrument class type
+            var instrumentName = taskParams.GetParam("Instrument_Name");                    // Instrument name
 
-            var shareConnectorType = mMgrParams.GetParam("ShareConnectorType");          // Can be PRISM or DotNET (but has been PRISM since 2012)
+            var shareConnectorType = mMgrParams.GetParam("ShareConnectorType");             // Can be PRISM or DotNET (but has been PRISM since 2012)
             var computerName = System.Net.Dns.GetHostName();
 
             ConnectionType connectionType;

@@ -904,12 +904,12 @@ namespace CaptureTaskManager
 
                 // Call DLLVersionInspector.exe to determine the tool version
 
-                var versionInfoFilePath = Path.Combine(mWorkDir,
-                                                       Path.GetFileNameWithoutExtension(dllFile.Name) +
-                                                       "_VersionInfo.txt");
+                var versionInfoFilePath = Path.Combine(
+                    mWorkDir,
+                    Path.GetFileNameWithoutExtension(dllFile.Name) + "_VersionInfo.txt");
 
                 var args = Conversion.PossiblyQuotePath(dllFile.FullName) + " /O:" +
-                              Conversion.PossiblyQuotePath(versionInfoFilePath);
+                           Conversion.PossiblyQuotePath(versionInfoFilePath);
 
                 var progRunner = new RunDosProgram(CTMUtilities.GetAppDirectoryPath(), mDebugLevel)
                 {
