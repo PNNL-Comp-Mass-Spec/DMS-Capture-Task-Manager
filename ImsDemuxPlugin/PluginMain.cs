@@ -532,32 +532,9 @@ namespace ImsDemuxPlugin
                 return;
             }
 
-            // Convert to UIMF
-            if (!agilentToUimf.RunConvert(mRetData, mFileTools))
-            {
-                return;
-            }
+            // Convert to .uimf and/or .mza
 
-            mUimfFilePath = Path.Combine(datasetDirectoryPath, mDataset + ".uimf");
-
-            // Lookup the current .uimf file size
-            var uimfFile = new FileInfo(mUimfFilePath);
-            if (!uimfFile.Exists)
-            {
-                string msg;
-                if (mNeedToDemultiplex)
-                {
-                    msg = "UIMF File not found after demultiplexing: " + mUimfFilePath;
-                }
-                else
-                {
-                    msg = "UIMF File not found (skipped demultiplexing): " + mUimfFilePath;
-                }
-
-                LogError(msg);
-                mRetData.CloseoutMsg = msg;
-                mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-            }
+            ConvertAgilentToUimfOrMza(datasetDirectoryInfo, remoteDotDDirectory, agilentToUimf);
         }
 
         /// <summary>
@@ -699,9 +676,52 @@ namespace ImsDemuxPlugin
         }
 
         /// <summary>
-        /// Construct the full path to UIMFDemultiplexer_Console.exe
+        /// Convert an Agilent .D directory to .uimf and/or .mza
         /// </summary>
-        private string GetUimfDemultiplexerPath()
+        /// <param name="datasetDirectory">Dataset directory path</param>
+        /// <param name="remoteDotDDirectory">Remote .D directory path (subdirectory of the dataset directory)</param>
+        /// <param name="agilentToUimf">Instance of AgilentToUimfConversion</param>
+        private void ConvertAgilentToUimfOrMza(FileSystemInfo datasetDirectory, FileSystemInfo remoteDotDDirectory, AgilentToUimfConversion agilentToUimf)
+        {
+            mUimfFilePath = Path.Combine(datasetDirectory.FullName, mDataset + ".uimf");
+            var uimfFile = new FileInfo(mUimfFilePath);
+
+            var convertToUimf = true;
+
+            // Check for existing files
+
+            if (uimfFile.Exists && uimfFile.Length > 0)
+            {
+                LogMessage("Existing .uimf file found (size {0}); will not re-create it: {1}",
+                    PRISM.FileTools.BytesToHumanReadable(uimfFile.Length),
+                    PRISM.PathUtils.CompactPathString(uimfFile.FullName, 150));
+
+                convertToUimf = false;
+            }
+
+
+            if (convertToUimf && agilentToUimf.RunConvert(mRetData, mFileTools))
+            {
+                uimfFile.Refresh();
+
+                if (!uimfFile.Exists)
+                {
+                    string msg;
+                    if (mNeedToDemultiplex)
+                    {
+                        msg = "UIMF File not found after demultiplexing: " + mUimfFilePath;
+                    }
+                    else
+                    {
+                        msg = "UIMF File not found (skipped demultiplexing): " + mUimfFilePath;
+                    }
+
+                    LogError(msg);
+                    mRetData.CloseoutMsg = msg;
+                    mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+            }
+
         {
             var uimfDemuxFolder = mMgrParams.GetParam("UimfDemultiplexerProgLoc", string.Empty);
 
