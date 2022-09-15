@@ -314,7 +314,7 @@ namespace ImsDemuxPlugin
             if (mNeedToDemultiplex)
             {
                 // De-multiplexing is needed
-                mRetData = mDemuxTools.PerformDemux(mMgrParams, mTaskParams, uimfFileName, numBitsForEncoding);
+                mDemuxTools.PerformDemux(mMgrParams, mTaskParams, mRetData, uimfFileName, numBitsForEncoding);
 
                 if (mDemuxTools.OutOfMemoryException)
                 {
@@ -718,13 +718,13 @@ namespace ImsDemuxPlugin
         {
             var toolVersionInfo = string.Empty;
 
-            var uimfDemultiplexerProgLoc = GetUimfDemultiplexerPath();
-            if (string.IsNullOrEmpty(uimfDemultiplexerProgLoc))
+            var uimfDemultiplexerExePath = GetUimfDemultiplexerPath();
+            if (string.IsNullOrEmpty(uimfDemultiplexerExePath))
             {
                 return false;
             }
 
-            var uimfDemultiplexer = new FileInfo(uimfDemultiplexerProgLoc);
+            var uimfDemultiplexer = new FileInfo(uimfDemultiplexerExePath);
 
             LogDebug("Determining tool version info");
 
@@ -805,13 +805,14 @@ namespace ImsDemuxPlugin
                 return false;
             }
 
-            var preprocessorProgLoc = GetPNNLPreProcessorPath();
-            if (string.IsNullOrEmpty(preprocessorProgLoc))
+            // Determine the full path to PNNL-PreProcessor.exe
+            var preprocessorExePath = GetPNNLPreProcessorPath();
+            if (string.IsNullOrEmpty(preprocessorExePath))
             {
                 return false;
             }
 
-            var preprocessor = new FileInfo(preprocessorProgLoc);
+            var preprocessor = new FileInfo(preprocessorExePath);
 
             if (preprocessor.DirectoryName == null)
             {

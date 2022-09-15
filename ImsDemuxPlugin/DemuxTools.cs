@@ -569,13 +569,14 @@ namespace ImsDemuxPlugin
         /// </summary>
         /// <param name="mgrParams">Parameters for manager operation</param>
         /// <param name="taskParams">Parameters for the assigned task</param>
+        /// <param name="returnData">Instance of ToolReturnData</param>
         /// <param name="uimfFileName">Name of the .uimf file</param>
         /// <param name="numBitsForEncoding">Number of bits used to encode the file (traditionally 4 bit)</param>
-        /// <returns>Enum indicating task success or failure</returns>
-        public ToolReturnData PerformDemux(
+        public void PerformDemux(
             IMgrParams mgrParams,
             ITaskParams taskParams,
-            string uimfFileName,
+            ToolReturnData returnData,
+        string uimfFileName,
             byte numBitsForEncoding)
         {
             mLoggedConsoleOutputErrors.Clear();
@@ -599,10 +600,10 @@ namespace ImsDemuxPlugin
 
             // Copy the UIMF file from the storage server to the working directory
 
-            var returnData = CopyUIMFToWorkDir(uimfFileName, new ToolReturnData(), out var uimfRemoteEncodedFileNamePath, out var uimfLocalEncodedFileNamePath);
+            CopyUIMFToWorkDir(uimfFileName, returnData, out var uimfRemoteEncodedFileNamePath, out var uimfLocalEncodedFileNamePath);
             if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
             {
-                return returnData;
+                return;
             }
 
             // Look for a _decoded.uimf.tmp file on the storage server
@@ -650,7 +651,7 @@ namespace ImsDemuxPlugin
 
                     returnData.CloseoutMsg = errorMessage;
                     returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                    return returnData;
+                    return;
                 }
             }
             catch (Exception ex)
@@ -658,7 +659,7 @@ namespace ImsDemuxPlugin
                 OnErrorEvent("Exception calling DemultiplexFile for dataset " + mDataset, ex);
                 returnData.CloseoutMsg = "Error demultiplexing UIMF file";
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                return returnData;
+                return;
             }
 
             // Look for the demultiplexed .UIMF file
@@ -669,7 +670,7 @@ namespace ImsDemuxPlugin
                 returnData.CloseoutMsg = "Decoded UIMF file not found";
                 OnErrorEvent(returnData.CloseoutMsg + ": " + localUimfDecodedFilePath);
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                return returnData;
+                return;
             }
 
             if (!ValidateUIMFDemultiplexed(localUimfDecodedFilePath, returnData))
@@ -750,7 +751,7 @@ namespace ImsDemuxPlugin
                 var failedResultsCopier = new FailedResultsCopier(mgrParams, taskParams);
                 failedResultsCopier.CopyFailedResultsToArchiveDirectory(mWorkDir);
 
-                return returnData;
+                return;
             }
 
             // Delete local UIMF file(s)
@@ -775,8 +776,6 @@ namespace ImsDemuxPlugin
             {
                 returnData.EvalMsg += " (resumed at frame " + resumeStartFrame + ")";
             }
-
-            return returnData;
         }
 
         /// <summary>

@@ -203,9 +203,9 @@ namespace CaptureTaskManager
             IMS_Agilent_TOF_DotD = 29       // Data is acquired natively as .D directories: IMS08, IMS09, IMS10, IMS11
         }
 
-        public static InstrumentClass GetInstrumentClass(string sInstrumentClassName)
+        public static InstrumentClass GetInstrumentClass(string instrumentClassName)
         {
-            if (string.IsNullOrEmpty(sInstrumentClassName))
+            if (string.IsNullOrEmpty(instrumentClassName))
             {
                 return InstrumentClass.Unknown;
             }
@@ -214,7 +214,7 @@ namespace CaptureTaskManager
             try
             {
                 // Convert the instrument class name text to the enum name using case-insensitive conversion
-                instrumentClass = (InstrumentClass)Enum.Parse(typeof(InstrumentClass), sInstrumentClassName, true);
+                instrumentClass = (InstrumentClass)Enum.Parse(typeof(InstrumentClass), instrumentClassName, true);
             }
             catch
             {

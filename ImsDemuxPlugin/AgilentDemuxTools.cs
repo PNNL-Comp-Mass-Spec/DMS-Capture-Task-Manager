@@ -75,14 +75,14 @@ namespace ImsDemuxPlugin
             mLoggedConsoleOutputErrors = new List<string>();
         }
 
-        private ToolReturnData CopyDotDToWorkDir(
-            string dotDFileName,
+        private void CopyDotDToWorkDir(
+            string remoteDotDirName,
             ToolReturnData returnData,
             out string dotDRemoteFileNamePath,
             out string dotDLocalFileNamePath)
         {
             // Locate data file on storage server
-            dotDRemoteFileNamePath = Path.Combine(mDatasetDirectoryPathRemote, dotDFileName);
+            dotDRemoteFileNamePath = Path.Combine(mDatasetDirectoryPathRemote, remoteDotDirName);
             dotDLocalFileNamePath = Path.Combine(mWorkDir, mDataset + ".d");
 
             // Copy the UIMF file to working directory
@@ -90,12 +90,9 @@ namespace ImsDemuxPlugin
             const int retryCount = 0;
             if (!CopyDirectoryWithRetry(dotDRemoteFileNamePath, dotDLocalFileNamePath, false, retryCount))
             {
-                returnData.CloseoutMsg = CTMUtilities.AppendToString(returnData.CloseoutMsg, "Error copying Agilent IMS .D file to working directory");
+                returnData.CloseoutMsg = CTMUtilities.AppendToString(returnData.CloseoutMsg, "Error copying Agilent IMS .D directory to working directory");
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                return returnData;
             }
-
-            return returnData;
         }
 
         /// <summary>
@@ -103,13 +100,14 @@ namespace ImsDemuxPlugin
         /// </summary>
         /// <param name="mgrParams">Parameters for manager operation</param>
         /// <param name="taskParams">Parameters for the assigned task</param>
-        /// <param name="dotDFileName">Name of the Agilent IMS .D file</param>
-        /// <param name="keepLocalOutput">If true, do not delete the local output Agilent IMS .D file</param>
-        /// <returns>Enum indicating task success or failure</returns>
-        public ToolReturnData PerformDemux(
+        /// <param name="returnData">Instance of ToolReturnData</param>
+        /// <param name="remoteDotDirName">Name of the Agilent IMS .D directory</param>
+        /// <param name="keepLocalOutput">If true, do not delete the local output Agilent IMS .D directory (name ends with .d.deMP.d)</param>
+        public void PerformDemux(
             IMgrParams mgrParams,
             ITaskParams taskParams,
-            string dotDFileName,
+            ToolReturnData returnData,
+            string remoteDotDirName,
             bool keepLocalOutput = false)
         {
             mLoggedConsoleOutputErrors.Clear();
@@ -137,10 +135,10 @@ namespace ImsDemuxPlugin
 
             // Copy the .D directory from the storage server to the working directory
 
-            var returnData = CopyDotDToWorkDir(dotDFileName, new ToolReturnData(), out var dotDRemoteEncodedFileNamePath, out var dotDLocalEncodedFileNamePath);
+            CopyDotDToWorkDir(remoteDotDirName, returnData, out var dotDRemoteEncodedFileNamePath, out var dotDLocalEncodedFileNamePath);
             if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
             {
-                return returnData;
+                return;
             }
 
             var demuxOptions = new PreprocessorOptions
@@ -158,20 +156,20 @@ namespace ImsDemuxPlugin
                 {
                     if (string.IsNullOrEmpty(errorMessage))
                     {
-                        errorMessage = "Error demultiplexing Agilent IMS .D file";
+                        errorMessage = "Error demultiplexing Agilent IMS .D directory";
                     }
 
                     returnData.CloseoutMsg = errorMessage;
                     returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                    return returnData;
+                    return;
                 }
             }
             catch (Exception ex)
             {
                 OnErrorEvent("Exception calling DemultiplexFile for dataset " + mDataset, ex);
-                returnData.CloseoutMsg = "Error demultiplexing Agilent IMS .D file";
+                returnData.CloseoutMsg = "Error demultiplexing Agilent IMS .D directory";
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                return returnData;
+                return;
             }
 
             // Look for the demultiplexed .D directory (name ends with .d.deMP.d)
@@ -179,10 +177,10 @@ namespace ImsDemuxPlugin
 
             if (!Directory.Exists(localDotDDecodedFilePath))
             {
-                returnData.CloseoutMsg = "Decoded Agilent IMS .D file not found";
+                returnData.CloseoutMsg = "Decoded Agilent IMS .D directory not found";
                 OnErrorEvent(returnData.CloseoutMsg + ": " + localDotDDecodedFilePath);
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                return returnData;
+                return;
             }
 
             if (!ValidateDotDDemultiplexed(localDotDDecodedFilePath, returnData))
@@ -201,9 +199,9 @@ namespace ImsDemuxPlugin
                 // Rename Agilent IMS .D directory on storage server; replaces ".d" with "_muxed.d"
                 OnDebugEvent("Renaming Agilent IMS .D directory on storage server");
 
-                // If this is a re-run, the encoded file has already been renamed
-                // This is determined by looking for "_encoded" in the UIMF file name
-                if (!dotDFileName.Contains(ENCODED_dotD_SUFFIX))
+                // If this is a re-run, the encoded directory has already been renamed
+                // This is determined by looking for "_muxed.d" in the directory name
+                if (!remoteDotDirName.Contains(ENCODED_dotD_SUFFIX))
                 {
                     if (!RenameDirectory(dotDRemoteEncodedFileNamePath, Path.Combine(mDatasetDirectoryPathRemote, mDataset + ENCODED_dotD_SUFFIX)))
                     {
@@ -217,7 +215,9 @@ namespace ImsDemuxPlugin
             if (!postProcessingError)
             {
                 // Copy the result files to the storage server
-                if (!CopyDotDFileToStorageServer(returnData, localDotDDecodedFilePath, "demultiplexed Agilent IMS .D"))
+                // Copies local directory DatasetName.d.deMP.d
+                // to remote directory    Dataset.d
+                if (!CopyDotDDirectoryToStorageServer(returnData, localDotDDecodedFilePath, "demultiplexed Agilent IMS .D"))
                 {
                     postProcessingError = true;
                 }
@@ -240,7 +240,7 @@ namespace ImsDemuxPlugin
                 var failedResultsCopier = new FailedResultsCopier(mgrParams, taskParams);
                 failedResultsCopier.CopyFailedResultsToArchiveDirectory(mWorkDir);
 
-                return returnData;
+                return;
             }
 
             // Delete local .D directories and file(s)
@@ -288,8 +288,6 @@ namespace ImsDemuxPlugin
             // Update the return data
             returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
             returnData.EvalMsg = "De-multiplexed";
-
-            return returnData;
         }
 
         /// <summary>
@@ -376,7 +374,7 @@ namespace ImsDemuxPlugin
         /// <param name="localDotDDecodedFilePath"></param>
         /// <param name="fileDescription"></param>
         /// <returns>True if success; otherwise false</returns>
-        private bool CopyDotDFileToStorageServer(ToolReturnData returnData, string localDotDDecodedFilePath, string fileDescription)
+        private bool CopyDotDDirectoryToStorageServer(ToolReturnData returnData, string localDotDDecodedFilePath, string fileDescription)
         {
             // Copy the demultiplexed file to the storage server, renaming as DatasetName.d in the process
             OnDebugEvent("Copying " + fileDescription + " file to storage server");

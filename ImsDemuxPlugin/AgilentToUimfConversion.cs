@@ -96,7 +96,7 @@ namespace ImsDemuxPlugin
             OnStatusEvent("Performing Agilent .D to .UIMF conversion, dataset " + mDataset);
 
             // Need to first convert the .d directory to a .UIMF file
-            if (!ConvertAgilentDotDDirectoryToUIMF(mDatasetDirectoryPathRemote, mAgilentToUimfConverterPath, out _))
+            if (!ConvertAgilentDotDDirectoryToUIMF(mDatasetDirectoryPathRemote, mAgilentToUimfConverterPath))
             {
                 if (string.IsNullOrEmpty(mRetData.CloseoutMsg))
                 {
@@ -129,26 +129,25 @@ namespace ImsDemuxPlugin
             mDatasetDirectoryPathRemote = Path.Combine(svrPath, datasetDirectory);
         }
 
-        private bool ConvertAgilentDotDDirectoryToUIMF(string datasetDirectoryPath, string exePath, out bool skipCreateUIMF)
+        private bool ConvertAgilentDotDDirectoryToUIMF(string datasetDirectoryPath, string exePath)
         {
             try
             {
                 var mgrName = mMgrParams.GetParam("MgrName", "CTM");
-                var dotDDirectoryName = mDataset + InstrumentClassInfo.DOT_D_EXTENSION;
-                var dotDDirectoryPathLocal = Path.Combine(mWorkDir, dotDDirectoryName);
-                var success = false;
 
-                skipCreateUIMF = false;
+                var dotDDirectoryLocal = PluginMain.GetDotDDirectory(mWorkDir, mDataset);
 
                 // Check if it already exists locally first; if demultiplexed then the file should already be in the working directory
-                if (!Directory.Exists(dotDDirectoryPathLocal))
+                if (!dotDDirectoryLocal.Exists)
                 {
-                    success = CopyDotDDirectoryToLocal(mFileTools, datasetDirectoryPath, dotDDirectoryName, dotDDirectoryPathLocal, true, out skipCreateUIMF);
-                    if (!success)
+                    var directoryCopiedFromRemote = CopyDotDDirectoryToLocal(mFileTools, datasetDirectoryPath, dotDDirectoryLocal.Name, dotDDirectoryLocal.FullName, true, mRetData);
+                    if (!directoryCopiedFromRemote)
                     {
                         return false;
                     }
                 }
+
+                var dotDDirectoryPathLocal = dotDDirectoryLocal.FullName;
 
                 // Examine the .d directory to look for an AcqData subdirectory
                 // If it does not have one, it might have a .d subdirectory that itself has an AcqData directory
@@ -214,7 +213,7 @@ namespace ImsDemuxPlugin
                 OnStatusEvent("Converting .d directory to .UIMF: {0} {1}", exePath, arguments);
 
                 const int maxRuntimeSeconds = MAX_AGILENT_TO_UIMF_RUNTIME_MINUTES * 60;
-                success = cmdRunner.RunProgram(exePath, arguments, "AgilentToUIMFConverter", true, maxRuntimeSeconds);
+                var success = cmdRunner.RunProgram(exePath, arguments, "AgilentToUIMFConverter", true, maxRuntimeSeconds);
 
                 // Parse the console output file one more time to check for errors
                 ParseConsoleOutputFile();
@@ -272,8 +271,8 @@ namespace ImsDemuxPlugin
                 }
 
                 // Copy the .UIMF file to the dataset directory
-                success = CopyUIMFToDatasetDirectory(mFileTools, datasetDirectoryPath);
-                if (!success)
+                var directoryCopiedToRemote = CopyUIMFToDatasetDirectory(mFileTools, datasetDirectoryPath);
+                if (!directoryCopiedToRemote)
                 {
                     return false;
                 }
@@ -292,7 +291,6 @@ namespace ImsDemuxPlugin
             {
                 mRetData.CloseoutMsg = "Exception converting .d directory to a UIMF file";
                 OnErrorEvent(mRetData.CloseoutMsg + ": " + ex.Message);
-                skipCreateUIMF = false;
                 return false;
             }
 
@@ -307,15 +305,15 @@ namespace ImsDemuxPlugin
         /// <param name="dotDDirectoryName">Source directory name (name only, not full path)</param>
         /// <param name="dotDDirectoryPathLocal">Target directory (full path of the .D directory)</param>
         /// <param name="requireIMSFiles">If true, require that IMS files be present</param>
-        /// <param name="skipCreateUIMF">Output: set to true if this .d directory does not have any IMS files</param>
+        /// <param name="returnData">Instance of ToolReturnData</param>
         /// <returns>True if the .d directory was copied, otherwise false</returns>
-        private bool CopyDotDDirectoryToLocal(
+        public bool CopyDotDDirectoryToLocal(
             FileTools fileTools,
             string datasetDirectoryPath,
             string dotDDirectoryName,
             string dotDDirectoryPathLocal,
             bool requireIMSFiles,
-            out bool skipCreateUIMF)
+            ToolReturnData returnData)
         {
             var dotDDirectoryPathRemote = new DirectoryInfo(Path.Combine(datasetDirectoryPath, dotDDirectoryName));
 
@@ -359,9 +357,8 @@ namespace ImsDemuxPlugin
 
                 if (errorMessage.Length > 0)
                 {
-                    mRetData.CloseoutMsg = errorMessage;
-                    OnErrorEvent(mRetData.CloseoutMsg);
-                    skipCreateUIMF = true;
+                    returnData.CloseoutMsg = errorMessage;
+                    OnErrorEvent(returnData.CloseoutMsg);
                     return false;
                 }
             }
@@ -372,7 +369,6 @@ namespace ImsDemuxPlugin
             mlockQueueResetTimestamp();
             fileTools.CopyDirectory(dotDDirectoryPathRemote.FullName, dotDDirectoryPathLocal, true);
 
-            skipCreateUIMF = false;
             return true;
         }
 
