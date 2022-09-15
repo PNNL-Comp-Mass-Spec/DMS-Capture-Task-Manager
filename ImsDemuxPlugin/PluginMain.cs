@@ -43,7 +43,11 @@ namespace ImsDemuxPlugin
         }
 
         private DemuxTools mDemuxTools;
+
         private AgilentDemuxTools mAgDemuxTools;
+
+        private AgilentMzaTools mMzaTools;
+
         private bool mDemultiplexingPerformed;
 
         private ToolReturnData mRetData = new();
@@ -98,7 +102,7 @@ namespace ImsDemuxPlugin
             // October 12, 2017: Again disabled the addition of bin-centric tables since they can greatly increase .UIMF file size and because usage of the bin-centric tables is low
 
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-            if (ADD_BIN_CENTRIC_TABLES)
+            if (ADD_BIN_CENTRIC_TABLES && !string.IsNullOrWhiteSpace(mUimfFilePath))
 #pragma warning disable 162
             {
                 // Lookup the current .uimf file size
@@ -573,6 +577,12 @@ namespace ImsDemuxPlugin
             // Add a handler to catch progress events
             mAgDemuxTools.DemuxProgress += DemuxTools_DemuxProgress;
             mAgDemuxTools.CopyFileWithRetryEvent += DemuxTools_CopyFileWithRetryEvent;
+
+            // Determine the full path to mza.exe
+            var mzaExePath = GetMzaConverterPath();
+
+            mMzaTools = new AgilentMzaTools(mzaExePath);
+            RegisterEvents(mMzaTools);
         }
 
         private bool CheckForCalibrationError(string datasetDirectoryPath)
@@ -686,7 +696,28 @@ namespace ImsDemuxPlugin
             mUimfFilePath = Path.Combine(datasetDirectory.FullName, mDataset + ".uimf");
             var uimfFile = new FileInfo(mUimfFilePath);
 
+            var mzaFile = new FileInfo(Path.Combine(datasetDirectory.FullName, mDataset + ".mza"));
+
+            var convertToMza = false;
             var convertToUimf = true;
+
+            // Examine the instrument name to determine if we should create .mza files
+
+            var instrumentName = mTaskParams.GetParam("Instrument_Name");
+
+            if (instrumentName.StartsWith("IMS09"))
+            {
+                LogMessage("Processing a dataset from {0}: will create a .mza file instead of a .uimf file", instrumentName);
+                convertToMza = true;
+                convertToUimf = false;
+            }
+
+            // Look for task parameter ConvertToMZA
+            if (mTaskParams.GetParam("ConvertToMZA", false))
+            {
+                LogMessage("Task parameter ConvertToMZA is true; will create a .mza file");
+                convertToMza = true;
+            }
 
             // Check for existing files
 
@@ -699,6 +730,14 @@ namespace ImsDemuxPlugin
                 convertToUimf = false;
             }
 
+            if (mzaFile.Exists && mzaFile.Length > 0)
+            {
+                LogMessage("Existing .mza file found (size {0}); will not re-create it: {1}",
+                    PRISM.FileTools.BytesToHumanReadable(mzaFile.Length),
+                    PRISM.PathUtils.CompactPathString(mzaFile.FullName, 150));
+
+                convertToMza = false;
+            }
 
             if (convertToUimf && agilentToUimf.RunConvert(mRetData, mFileTools))
             {
@@ -722,16 +761,105 @@ namespace ImsDemuxPlugin
                 }
             }
 
-        {
-            var uimfDemuxFolder = mMgrParams.GetParam("UimfDemultiplexerProgLoc", string.Empty);
-
-            if (string.IsNullOrEmpty(uimfDemuxFolder))
+            // ReSharper disable once InvertIf
+            if (convertToMza && ConvertAgilentToMza(agilentToUimf, datasetDirectory, remoteDotDDirectory))
             {
-                LogError("Manager parameter UimfDemultiplexerProgLoc not defined");
+                mzaFile.Refresh();
+
+                // ReSharper disable once InvertIf
+                if (!mzaFile.Exists)
+                {
+                    mRetData.CloseoutMsg = ".mza file not found in the dataset directory after calling ConvertAgilentToMza()";
+                    mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    LogError(mRetData.CloseoutMsg);
+                }
+            }
+        }
+
+        private bool ConvertAgilentToMza(AgilentToUimfConversion agilentToUimf, FileSystemInfo datasetDirectory, FileSystemInfo remoteDotDDirectory)
+        {
+            try
+            {
+                var localDotDDirectory = GetDotDDirectory(mWorkDir, mDataset);
+
+                if (!localDotDDirectory.Exists)
+                {
+                    var directoryCopiedFromRemote = agilentToUimf.CopyDotDDirectoryToLocal(
+                        mFileTools, datasetDirectory.FullName, remoteDotDDirectory.Name, localDotDDirectory.FullName, true, mRetData);
+
+                    if (!directoryCopiedFromRemote)
+                    {
+                        return false;
+                    }
+                }
+
+                mMzaTools.ConvertDataset(mWorkDir, mRetData, localDotDDirectory);
+
+                if (mRetData.CloseoutType != EnumCloseOutType.CLOSEOUT_SUCCESS)
+                    return false;
+
+                // Copy the .mza file to the remote dataset directory
+                var mzaFile = new FileInfo(Path.Combine(mWorkDir, string.Format("{0}.mza", mDataset)));
+
+                if (!mzaFile.Exists)
+                {
+                    mRetData.CloseoutMsg = ".mza file not found after calling mMzaTools.ConvertDataset()";
+                    mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    LogError(mRetData.CloseoutMsg);
+                    return false;
+                }
+
+                var targetFilePath = Path.Combine(datasetDirectory.FullName, mzaFile.Name);
+
+                mFileTools.CopyFile(mzaFile.FullName, targetFilePath, true);
+
+                var remoteFile = new FileInfo(targetFilePath);
+
+                if (remoteFile.Exists)
+                    return true;
+
+                mRetData.CloseoutMsg = ".mza file was not copied to the dataset directory by mFileTools.CopyFile";
+                mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                LogError(mRetData.CloseoutMsg);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                mRetData.CloseoutMsg = "Exception converting .D to .mza";
+                mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+
+                LogError(mRetData.CloseoutMsg, ex);
+
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Construct the full path to the .D directory inside the given parent directory
+        /// </summary>
+        /// <param name="parentDirectoryPath">Either the dataset directory path or the local working directory path</param>
+        /// <param name="datasetName">Dataset name</param>
+        /// <returns>DirectoryInfo instance for the .D directory</returns>
+        public static DirectoryInfo GetDotDDirectory(string parentDirectoryPath, string datasetName)
+        {
+            var dotDDirectoryName = datasetName + InstrumentClassInfo.DOT_D_EXTENSION;
+            return new DirectoryInfo(Path.Combine(parentDirectoryPath, dotDDirectoryName));
+        }
+
+        /// <summary>
+        /// Construct the full path to mza.exe
+        /// </summary>
+        private string GetMzaConverterPath()
+        {
+            var mzaProgramDirectory = mMgrParams.GetParam("MzaProgLoc", string.Empty);
+
+            if (string.IsNullOrEmpty(mzaProgramDirectory))
+            {
+                LogError("Manager parameter MzaProgLoc is not defined");
                 return string.Empty;
             }
 
-            return Path.Combine(uimfDemuxFolder, "UIMFDemultiplexer_Console.exe");
+            return Path.Combine(mzaProgramDirectory, "mza.exe");
         }
 
         /// <summary>
@@ -739,20 +867,39 @@ namespace ImsDemuxPlugin
         /// </summary>
         private string GetPNNLPreProcessorPath()
         {
-            var preprocessorFolder = mMgrParams.GetParam("PNNLPreProcessorProgLoc", string.Empty);
+            var preprocessorDirectory = mMgrParams.GetParam("PNNLPreProcessorProgLoc", string.Empty);
 
-            if (string.IsNullOrEmpty(preprocessorFolder))
+            if (string.IsNullOrEmpty(preprocessorDirectory))
             {
-                LogError("Manager parameter PNNLPreProcessorProgLoc not defined");
+                LogError("Manager parameter PNNLPreProcessorProgLoc is not defined");
                 return string.Empty;
             }
 
-            return Path.Combine(preprocessorFolder, "PNNL-PreProcessor.exe");
+            return Path.Combine(preprocessorDirectory, "PNNL-PreProcessor.exe");
+        }
+
+        /// <summary>
+        /// Construct the full path to UIMFDemultiplexer_Console.exe
+        /// </summary>
+        private string GetUimfDemultiplexerPath()
+        {
+            var uimfDemuxDirectory = mMgrParams.GetParam("UimfDemultiplexerProgLoc", string.Empty);
+
+            if (string.IsNullOrEmpty(uimfDemuxDirectory))
+            {
+                LogError("Manager parameter UimfDemultiplexerProgLoc is not defined");
+                return string.Empty;
+            }
+
+            return Path.Combine(uimfDemuxDirectory, "UIMFDemultiplexer_Console.exe");
         }
 
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
+        /// <remarks>
+        /// This is used when processing with UIMFDemultiplexer_Console.exe
+        /// </remarks>
         private bool StoreToolVersionInfo()
         {
             var toolVersionInfo = string.Empty;
@@ -848,6 +995,7 @@ namespace ImsDemuxPlugin
             var preprocessorExePath = GetPNNLPreProcessorPath();
             if (string.IsNullOrEmpty(preprocessorExePath))
             {
+                mRetData.CloseoutMsg = "Manager parameter PNNLPreProcessorProgLoc is not defined";
                 return false;
             }
 
@@ -855,6 +1003,7 @@ namespace ImsDemuxPlugin
 
             if (preprocessor.DirectoryName == null)
             {
+                mRetData.CloseoutMsg = "Unable to determine the parent directory of the preprocessor";
                 return false;
             }
 
@@ -862,6 +1011,7 @@ namespace ImsDemuxPlugin
             success = StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, preprocessor.FullName);
             if (!success)
             {
+                mRetData.CloseoutMsg = "Error storing tool version info for " + preprocessor.FullName;
                 return false;
             }
 
@@ -870,6 +1020,7 @@ namespace ImsDemuxPlugin
             success = StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, demultiplexerPath);
             if (!success)
             {
+                mRetData.CloseoutMsg = "Error storing tool version info for " + demultiplexerPath;
                 return false;
             }
 
@@ -878,6 +1029,7 @@ namespace ImsDemuxPlugin
             success = StoreToolVersionInfoOneFile(ref toolVersionInfo, sqLitePath);
             if (!success)
             {
+                mRetData.CloseoutMsg = "Error storing tool version info for " + sqLitePath;
                 return false;
             }
 
@@ -886,6 +1038,7 @@ namespace ImsDemuxPlugin
             success = StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, uimfLibraryPath);
             if (!success)
             {
+                mRetData.CloseoutMsg = "Error storing tool version info for " + uimfLibraryPath;
                 return false;
             }
 
@@ -894,15 +1047,25 @@ namespace ImsDemuxPlugin
                 success = StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, path);
                 if (!success)
                 {
+                    mRetData.CloseoutMsg = "Error storing tool version info for " + path;
                     return false;
                 }
             }
 
-            // Store path to the demultiplexer DLL in toolFiles
+            // Determine the full path to mza.exe
+            var mzaExePath = GetMzaConverterPath();
+            if (string.IsNullOrEmpty(mzaExePath))
+            {
+                mRetData.CloseoutMsg = "Manager parameter MzaProgLoc is not defined";
+                return false;
+            }
+
+            // Store path executable and DLL paths
             var toolFiles = new List<FileInfo>
             {
-                new(preprocessorProgLoc),
-                new(demultiplexerPath)
+                new(preprocessorExePath),
+                new(demultiplexerPath),
+                new(mzaExePath)
             };
 
             try

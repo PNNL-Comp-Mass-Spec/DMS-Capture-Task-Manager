@@ -683,6 +683,13 @@ namespace ImsDemuxPlugin
 
             try
             {
+                if (string.IsNullOrWhiteSpace(mPNNLPreProcessorPath))
+                {
+                    errorMessage = "Field mPNNLPreProcessorPath is undefined";
+                    OnErrorEvent(errorMessage);
+                    return false;
+                }
+
                 var inputFile = new FileInfo(inputFilePath);
                 var outputFile = new FileInfo(outputFilePath);
 
@@ -776,12 +783,13 @@ namespace ImsDemuxPlugin
         /// </summary>
         /// <param name="localDotDDecodedFilePath">Local decoded directory path (name ends with .d.deMP.d)</param>
         /// <param name="returnData"></param>
+        /// <param name="ignoreDemultiplexingDate">When false, require that the "Demultiplexing finished!" message was logged within the last 10 minutes</param>
         /// <returns>True if it was demultiplexed, otherwise false</returns>
-        private bool ValidateDotDDemultiplexed(string localDotDDecodedFilePath, ToolReturnData returnData)
+        public bool ValidateDotDDemultiplexed(string localDotDDecodedFilePath, ToolReturnData returnData, bool ignoreDemultiplexingDate = false)
         {
             string msg;
 
-            // Make sure the Preprocessor log contains entry "Demultiplexing finished!" (with today's date)
+            // Make sure the Preprocessor log contains entry "Demultiplexing finished!" (optionally with a timestamp within the last 10 minutes)
             var demultiplexingFinished = GetDemultiplexingFinishedFromLog(localDotDDecodedFilePath, out var message);
 
             if (demultiplexingFinished == DateTime.MinValue)
@@ -797,7 +805,7 @@ namespace ImsDemuxPlugin
                 return false;
             }
 
-            if (DateTime.Now.Subtract(demultiplexingFinished).TotalMinutes < 10)
+            if (DateTime.Now.Subtract(demultiplexingFinished).TotalMinutes < 10 || ignoreDemultiplexingDate)
             {
                 msg = "Demultiplexing finished message in PNNL-PreProcessorLog.txt file has date " + demultiplexingFinished;
                 OnStatusEvent(msg);
@@ -828,13 +836,14 @@ namespace ImsDemuxPlugin
                 return DateTime.MinValue;
             }
 
-            using var fs = new FileStream(logPath, FileMode.Open, FileAccess.ReadWrite);
-            using var sr = new StreamReader(fs);
+            using var sr = new StreamReader(new FileStream(logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
             var lastDate = DateTime.MinValue;
             var foundFinish = false;
             var foundEndTime = false;
             var linesAfterFinish = false;
+
+            // ReSharper disable once MoveVariableDeclarationInsideLoopCondition
             string line;
 
             while ((line = sr.ReadLine()) != null)
@@ -914,7 +923,7 @@ namespace ImsDemuxPlugin
             {
                 mLastProgressMessageTime = DateTime.UtcNow;
                 OnDebugEvent("{0} running; {1:F1} minutes elapsed, {2:F1}% complete",
-                    "UIMFDemultiplexer",
+                    "PNNL-Preprocessor",
                     DateTime.UtcNow.Subtract(mDemuxStartTime).TotalMinutes,
                     mDemuxProgressPercentComplete);
             }

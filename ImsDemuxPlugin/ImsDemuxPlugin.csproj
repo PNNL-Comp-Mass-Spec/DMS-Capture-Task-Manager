@@ -62,6 +62,7 @@
   <ItemGroup>
     <Compile Include="AgilentDemuxTools.cs" />
     <Compile Include="AgilentDotDTools.cs" />
+    <Compile Include="AgilentMzaTools.cs" />
     <Compile Include="AgilentToUimfConversion.cs" />
     <Compile Include="DemuxTools.cs" />
     <Compile Include="GlobalSuppressions.cs" />

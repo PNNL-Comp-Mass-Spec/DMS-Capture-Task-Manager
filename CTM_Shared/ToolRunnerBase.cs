@@ -51,7 +51,7 @@ namespace CaptureTaskManager
 
         // Used by CTM plugins
         // ReSharper disable once UnusedMember.Global
-        protected bool mNeedToAbortProcessing = false;
+        protected bool mNeedToAbortProcessing;
 
         protected string mWorkDir;
 
