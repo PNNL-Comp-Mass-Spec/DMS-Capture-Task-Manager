@@ -397,26 +397,24 @@ namespace ImsDemuxPlugin
 
             // Locate data file on storage server
             var svrPath = Path.Combine(mTaskParams.GetParam("Storage_Vol_External"), mTaskParams.GetParam("Storage_Path"));
-            var datasetDirectory = mTaskParams.GetParam(mTaskParams.HasParam("Directory") ? "Directory" : "Folder");
+            var datasetDirectoryName = mTaskParams.GetParam(mTaskParams.HasParam("Directory") ? "Directory" : "Folder");
 
-            var datasetDirectoryPath = Path.Combine(svrPath, datasetDirectory);
+            var datasetDirectoryInfo = new DirectoryInfo(Path.Combine(svrPath, datasetDirectoryName));
 
             // IMS08_AgQTOF05 datasets acquired in QTOF only mode do not have .UIMF files; check for this
 
-            var dotDDirectoryName = mDataset + InstrumentClassInfo.DOT_D_EXTENSION;
-            var dotDDirectoryPath = Path.Combine(datasetDirectoryPath, dotDDirectoryName);
-            var dotDDirectory = new DirectoryInfo(dotDDirectoryPath);
+            var remoteDotDDirectory = GetDotDDirectory(datasetDirectoryInfo.FullName, mDataset);
 
-            if (!dotDDirectory.Exists)
+            if (!remoteDotDDirectory.Exists)
             {
-                mRetData.CloseoutMsg = "Dataset .d directory not found: " + dotDDirectory.FullName;
+                mRetData.CloseoutMsg = "Dataset .d directory not found: " + remoteDotDDirectory.FullName;
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 LogError(mRetData.CloseoutMsg);
 
                 return;
             }
 
-            if (!IsAgilentIMSDataset(dotDDirectory))
+            if (!IsAgilentIMSDataset(remoteDotDDirectory))
             {
                 mRetData.EvalCode = EnumEvalCode.EVAL_CODE_SKIPPED;
                 mRetData.EvalMsg = "Skipped since not an IMS dataset (no .UIMF file or IMS files)";
@@ -431,23 +429,28 @@ namespace ImsDemuxPlugin
             RegisterEvents(dotDTools);
 
             // Use this name first to test if demux has already been performed once
-            var dotDDirName = mDataset + AgilentDemuxTools.ENCODED_dotD_SUFFIX;
-            var existingDotDDir = new DirectoryInfo(Path.Combine(datasetDirectoryPath, dotDDirName));
+            var multiplexedDotDDirName = mDataset + AgilentDemuxTools.ENCODED_dotD_SUFFIX;
+            var existingRemoteMultiplexedDir = new DirectoryInfo(Path.Combine(datasetDirectoryInfo.FullName, multiplexedDotDDirName));
 
-            if (existingDotDDir.Exists &&
-                IsAgilentIMSDataset(existingDotDDir) &&
-                dotDTools.GetDotDMuxStatus(existingDotDDir.FullName, out _) == MultiplexingStatus.Multiplexed)
+            string remoteDotDirName;
+
+            if (existingRemoteMultiplexedDir.Exists &&
+                IsAgilentIMSDataset(existingRemoteMultiplexedDir) &&
+                dotDTools.GetDotDMuxStatus(existingRemoteMultiplexedDir.FullName, out _) == MultiplexingStatus.Multiplexed)
             {
-                // The _muxed.d file will be used for demultiplexing
+                // The _muxed.d directory will be used for demultiplexing
+                LogMessage("Found existing multiplexed .D directory: " + existingRemoteMultiplexedDir.FullName);
+                remoteDotDirName = multiplexedDotDDirName;
             }
             else
             {
-                // Does the existing file have necessary files? If not, delete it
-                if (existingDotDDir.Exists)
+                if (existingRemoteMultiplexedDir.Exists)
                 {
+                    // The existing multiplexed .D directory is incomplete; delete it
+
                     try
                     {
-                        mFileTools.DeleteDirectory(existingDotDDir.FullName);
+                        mFileTools.DeleteDirectory(existingRemoteMultiplexedDir.FullName);
                     }
                     catch (Exception ex)
                     {
@@ -459,37 +462,53 @@ namespace ImsDemuxPlugin
                     }
                 }
 
-                // If we got to here, _muxed.d file doesn't exist. So, use the other .d file
-                dotDDirName = mDataset + ".d";
+                // If we got to here, the _muxed.d directory doesn't exist (or it was corrupt)
+                // Thus, use the DatasetName.d directory
+                remoteDotDirName = mDataset + ".d";
             }
 
             // Query to determine if demux is needed.
-            var dotDDirPath = Path.Combine(datasetDirectoryPath, dotDDirName);
+            var remoteDotDirPath = Path.Combine(datasetDirectoryInfo.FullName, remoteDotDirName);
             mNeedToDemultiplex = true;
 
-            var queryResult = dotDTools.GetDotDMuxStatus(dotDDirPath, out _);
+            var queryResult = dotDTools.GetDotDMuxStatus(remoteDotDirPath, out _);
 
             if (queryResult == MultiplexingStatus.NonMultiplexed)
             {
-                // De-multiplexing not required, but we should still attempt calibration (if enabled)
+                // De-multiplexing not required
                 LogMessage("No demultiplexing required for dataset " + mDataset);
                 mRetData.EvalMsg = "Non-Multiplexed";
                 mNeedToDemultiplex = false;
             }
             else if (queryResult == MultiplexingStatus.Error)
             {
-                // There was a problem determining the Agilent IMS .D file status. Set state and exit
-                mRetData.CloseoutMsg = "Problem determining Agilent IMS .D file status for dataset " + mDataset;
+                // There was a problem determining the Agilent IMS .D directory status. Set state and exit
+                mRetData.CloseoutMsg = "Problem determining Agilent IMS .D directory status for dataset " + mDataset;
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 LogMessage(mRetData.CloseoutMsg);
 
                 return;
             }
 
+            if (mNeedToDemultiplex && remoteDotDirPath.EndsWith(AgilentDemuxTools.ENCODED_dotD_SUFFIX))
+            {
+                // If the dataset directory already has a valid .d directory, skip demultiplexing
+
+                var existingRemoteDotDir = new DirectoryInfo(Path.Combine(datasetDirectoryInfo.FullName, mDataset + ".d"));
+
+                var retData = new ToolReturnData();
+
+                if (existingRemoteDotDir.Exists && mAgDemuxTools.ValidateDotDDemultiplexed(existingRemoteDotDir.FullName, retData, true))
+                {
+                    LogMessage("Skipping demultiplexing since the dataset directory already has {0} and {1} is already demultiplexed", remoteDotDirName, existingRemoteDotDir.Name);
+                    mNeedToDemultiplex = false;
+                }
+            }
+
             if (mNeedToDemultiplex)
             {
                 // De-multiplexing is needed
-                mRetData = mAgDemuxTools.PerformDemux(mMgrParams, mTaskParams, dotDDirName, keepLocalOutput: true);
+                mAgDemuxTools.PerformDemux(mMgrParams, mTaskParams, mRetData, remoteDotDirName, keepLocalOutput: true);
 
                 if (mAgDemuxTools.OutOfMemoryException)
                 {
