@@ -67,7 +67,7 @@ namespace ImsDemuxPlugin
                 // Construct the command line arguments
 
                 // Input file
-                var arguments = string.Format(" -file {0} -intensityThreshold 20", Conversion.PossiblyQuotePath(dotDDirectory.FullName));
+                var arguments = string.Format("-file {0} -intensityThreshold 20", Conversion.PossiblyQuotePath(dotDDirectory.FullName));
 
                 mConsoleOutputFilePath = Path.Combine(workingDirectory.FullName, "Mza_ConsoleOutput.txt");
 
