@@ -256,7 +256,7 @@ namespace CaptureTaskManager
 
                 if (returnCodeValue != 0)
                 {
-                    if (returnCodeValue == RET_VAL_TASK_NOT_AVAILABLE)
+                    if (returnCodeValue is RET_VAL_TASK_NOT_AVAILABLE or RET_VAL_TASK_NOT_AVAILABLE_ALT)
                     {
                         // No jobs found
                         return EnumRequestTaskResult.NoTaskFound;

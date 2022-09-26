@@ -22,7 +22,19 @@ namespace CaptureTaskManager
     internal abstract class DbTask : LoggerBase
     {
         protected const int RET_VAL_OK = 0;
+
+        /// <summary>
+        /// Return value for RequestStepTask on SQL Server
+        /// </summary>
         protected const int RET_VAL_TASK_NOT_AVAILABLE = 53000;
+
+        /// <summary>
+        /// Return code for request_step_task on PostgreSQL
+        /// </summary>
+        /// <remarks>
+        /// The actual return code is 'U5301' but Conversion.GetReturnCodeValue() converts this to integer 5301
+        /// </remarks>
+        protected const int RET_VAL_TASK_NOT_AVAILABLE_ALT = 5301;
 
         protected readonly IMgrParams mMgrParams;
 
