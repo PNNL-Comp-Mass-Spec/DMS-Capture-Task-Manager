@@ -1,8 +1,15 @@
 ﻿// ReSharper disable UnusedMember.Global
+using System.Text.RegularExpressions;
+
 namespace CaptureTaskManager
 {
     public static class Conversion
     {
+        /// <summary>
+        /// Looks for strings that end with an integer
+        /// </summary>
+        private static readonly Regex mReturnCodeMatcher = new(@"(?<Number>\d+)\s*$", RegexOptions.Compiled);
+
         /// <summary>
         /// Convert string to boolean; default false if an error
         /// </summary>
@@ -80,20 +87,21 @@ namespace CaptureTaskManager
         /// <param name="returnCode"></param>
         /// <returns>
         /// If returnCode is blank or '0', returns 0
-        /// If returnCode is an integer, returns the integer
+        /// If returnCode is an integer or if it ends with an integer, returns the integer
         /// Otherwise, returns -1
         /// </returns>
         public static int GetReturnCodeValue(string returnCode)
         {
             if (string.IsNullOrWhiteSpace(returnCode))
-            {
                 return 0;
-            }
 
             if (int.TryParse(returnCode, out var returnCodeValue))
-            {
                 return returnCodeValue;
-            }
+
+            var match = mReturnCodeMatcher.Match(returnCode);
+
+            if (match.Success)
+                return int.Parse(match.Groups["Number"].Value);
 
             return -1;
         }
