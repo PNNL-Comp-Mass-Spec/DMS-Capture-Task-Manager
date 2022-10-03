@@ -777,6 +777,7 @@ namespace CaptureTaskManager
 
                     // Attempt to get a capture task
                     var taskReturn = mTask.RequestTask();
+
                     switch (taskReturn)
                     {
                         case EnumRequestTaskResult.NoTaskFound:
