@@ -1211,13 +1211,13 @@ namespace DatasetInfoPlugin
                     // IMS09_AgQToF06, IMS10_AgQTOF07
                     if (IsAgilentIMSDataset(datasetDirectory))
                     {
-                        fileOrDirectoryName = mDataset + InstrumentClassInfo.DOT_UIMF_EXTENSION;
-                        isFile = true;
+                        fileOrDirectoryName = mDataset + InstrumentClassInfo.DOT_D_EXTENSION;
+                        isFile = false;
                     }
                     else
                     {
-                        fileOrDirectoryName = mDataset + InstrumentClassInfo.DOT_D_EXTENSION;
-                        isFile = false;
+                        fileOrDirectoryName = mDataset + InstrumentClassInfo.DOT_UIMF_EXTENSION;
+                        isFile = true;
                     }
 
                     break;
