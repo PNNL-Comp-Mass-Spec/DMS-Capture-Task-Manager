@@ -1208,14 +1208,15 @@ namespace DatasetInfoPlugin
                     break;
 
                 case InstrumentClassInfo.RawDataType.UIMF:
-                    // IMS09_AgQToF06, IMS10_AgQTOF07
                     if (IsAgilentIMSDataset(datasetDirectory))
                     {
+                        // IMS08_AcQTOF05, IMS09_AgQToF06, IMS11_AgQTOF08
                         fileOrDirectoryName = mDataset + InstrumentClassInfo.DOT_D_EXTENSION;
                         isFile = false;
                     }
                     else
                     {
+                        // IMS05 (retired), SLIM TOF/QTOF instruments
                         fileOrDirectoryName = mDataset + InstrumentClassInfo.DOT_UIMF_EXTENSION;
                         isFile = true;
                     }
