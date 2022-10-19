@@ -35,7 +35,7 @@ namespace DatasetIntegrityPlugin
         // ReSharper restore CommentTypo
 
         // Ignore Spelling: Agilent, Bruker, Orbitrap, Sciex, Shimadzu
-        private const float RAW_FILE_MIN_SIZE_KB = 40;
+        private const float RAW_FILE_MIN_SIZE_KB = 30;
         private const float RAW_FILE_MIN_SIZE_KB_21T = 30;
         private const float RAW_FILE_MAX_SIZE_MB_LTQ = 2048;
         private const float RAW_FILE_MAX_SIZE_MB_ORBITRAP = 150000;
