@@ -158,12 +158,10 @@ namespace ArchiveStatusCheckPlugin
                 var statusNumsToUpdate = new List<int>();
                 foreach (var statusNum in unverifiedURIs.Keys)
                 {
-                    if (statusData.TryGetValue(statusNum, out var statusInfo))
+                    if (statusData.TryGetValue(statusNum, out var statusInfo) &&
+                        statusInfo.IngestStepsCompletedNew > statusInfo.IngestStepsCompletedOld)
                     {
-                        if (statusInfo.IngestStepsCompletedNew > statusInfo.IngestStepsCompletedOld)
-                        {
-                            statusNumsToUpdate.Add(statusNum);
-                        }
+                        statusNumsToUpdate.Add(statusNum);
                     }
                 }
 
