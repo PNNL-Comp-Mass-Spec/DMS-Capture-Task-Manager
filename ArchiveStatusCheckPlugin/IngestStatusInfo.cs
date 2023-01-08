@@ -51,7 +51,7 @@ namespace ArchiveStatusCheckPlugin
         public int ExistingErrorCode { get; set; }
 
         /// <summary>
-        /// Constructor that takes statusNum and statusURI
+        /// Constructor that takes Status_Num and Status_URI
         /// </summary>
         public IngestStatusInfo(int statusNum, string statusURI)
         {

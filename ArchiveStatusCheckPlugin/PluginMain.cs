@@ -15,7 +15,7 @@ namespace ArchiveStatusCheckPlugin
     // ReSharper disable once UnusedMember.Global
     public class PluginMain : ToolRunnerBase
     {
-        // Ignore Spelling: num, subfolder, StatusNums, UploaderID
+        // Ignore Spelling: num, subfolder, Status_Nums, UploaderID
 
         private ToolReturnData mRetData = new();
 
@@ -87,7 +87,7 @@ namespace ArchiveStatusCheckPlugin
             // Examine the upload status for any uploads for this dataset, filtering on job number to ignore jobs created after this job
             // First obtain a list of status URIs to check
 
-            // Keys in statusData are StatusNum integers, values are instances of class IngestStatusInfo
+            // Keys in statusData are Status_Num integers, values are instances of class IngestStatusInfo
             var statusData = GetStatusURIs();
 
             string msg;
@@ -107,8 +107,8 @@ namespace ArchiveStatusCheckPlugin
             RegisterEvents(statusChecker);
 
             // Check the status of each of the URIs
-            // Keys in unverifiedURIs and verifiedURIs are StatusNum; values are StatusURI strings
-            // Keys in criticalErrors are StatusNum; values are critical error messages
+            // Keys in unverifiedURIs and verifiedURIs are Status_Num; values are Status_URI strings
+            // Keys in criticalErrors are Status_Num; values are critical error messages
 
             CheckStatusURIs(statusChecker, statusData,
                 out var unverifiedURIs, out var verifiedURIs, out var criticalErrors);
@@ -154,8 +154,9 @@ namespace ArchiveStatusCheckPlugin
             {
                 firstUnverified = unverifiedURIs.First().Value;
 
-                // Update Ingest_Steps_Completed in the database for StatusNums that now have more steps completed than tracked by the database
+                // Update Ingest_Steps_Completed in the database for Status_Nums that now have more steps completed than tracked by the database
                 var statusNumsToUpdate = new List<int>();
+
                 foreach (var statusNum in unverifiedURIs.Keys)
                 {
                     if (statusData.TryGetValue(statusNum, out var statusInfo) &&
@@ -266,7 +267,7 @@ namespace ArchiveStatusCheckPlugin
         /// <remarks>Will remove superseded (yet unverified) entries from unverifiedURIs and statusData</remarks>
         /// <param name="unverifiedURIs">Unverified URIs</param>
         /// <param name="verifiedURIs">Verified URIs</param>
-        /// <param name="statusData">Status Info for each StatusNum</param>
+        /// <param name="statusData">Status Info for each Status_Num</param>
         private void CompareUnverifiedAndVerifiedURIs(
             IDictionary<int, string> unverifiedURIs,
             IReadOnlyDictionary<int, string> verifiedURIs,
@@ -285,8 +286,8 @@ namespace ArchiveStatusCheckPlugin
 
                 var unverifiedSubfolder = unverifiedStatusInfo.Subdirectory;
 
-                // Find StatusNums that had the same subdirectory
-                // Note: cannot require that identical matches have a larger StatusNum because sometimes
+                // Find Status_Nums that had the same subdirectory
+                // Note: cannot require that identical matches have a larger Status_Num because sometimes
                 // extremely large status values (like 1168231360) are assigned to failed uploads
                 var identicalStatusNums = (
                     from item in statusData
@@ -347,7 +348,7 @@ namespace ArchiveStatusCheckPlugin
 
         private Dictionary<int, IngestStatusInfo> GetStatusURIs(int retryCount = 2)
         {
-            // Keys in this dictionary are StatusNum integers
+            // Keys in this dictionary are Status_Num integers
             var statusData = new Dictionary<int, IngestStatusInfo>();
 
             // First look for a specific Status_URI for this job
@@ -356,13 +357,13 @@ namespace ArchiveStatusCheckPlugin
             var statusURI = mTaskParams.GetParam("MyEMSL_Status_URI", string.Empty);
 
             // Note that GetStatusURIsAndSubdirectories requires that the column order be
-            // StatusNum, Status_URI, Subfolder, Ingest_Steps_Completed, EUS_InstrumentID, EUS_ProposalID, EUS_UploaderID, ErrorCode
+            // Status_Num, Status_URI, Subfolder, Ingest_Steps_Completed, EUS_Instrument_ID, EUS_Proposal_ID, EUS_Uploader_ID, Error_Code
 
             var sql = new StringBuilder();
             sql.AppendFormat(
-                " SELECT StatusNum, Status_URI, Subfolder, " +
+                " SELECT Status_Num, Status_URI, Subfolder, " +
                        " IsNull(Ingest_Steps_Completed, 0) AS Ingest_Steps_Completed, " +
-                       " EUS_InstrumentID, EUS_ProposalID, EUS_UploaderID, ErrorCode" +
+                       " EUS_Instrument_ID, EUS_Proposal_ID, EUS_Uploader_ID, Error_Code" +
                 " FROM V_MyEMSL_Uploads " +
                 " WHERE Dataset_ID = {0}", mDatasetID);
 
@@ -372,7 +373,7 @@ namespace ArchiveStatusCheckPlugin
 
                 statusData.Add(statusNum, new IngestStatusInfo(statusNum, statusURI));
 
-                sql.AppendFormat(" AND StatusNum = {0} ORDER BY Entry_ID", statusNum);
+                sql.AppendFormat(" AND Status_Num = {0} ORDER BY Entry_ID", statusNum);
 
                 GetStatusURIsAndSubdirectories(sql.ToString(), statusData, retryCount);
 
@@ -391,8 +392,8 @@ namespace ArchiveStatusCheckPlugin
             {
                 sql.AppendFormat(
                     " AND Job <= {0}"  +
-                    " AND ISNULL(StatusNum, 0) > 0 " +
-                    " AND ErrorCode NOT IN (-1, 101)" +
+                    " AND ISNULL(Status_Num, 0) > 0 " +
+                    " AND Error_Code NOT IN (-1, 101)" +
                     " ORDER BY Entry_ID", mJob);
 
                 GetStatusURIsAndSubdirectories(sql.ToString(), statusData, retryCount);
@@ -426,7 +427,7 @@ namespace ArchiveStatusCheckPlugin
             dbTools.GetQueryResultsDataTable(sql, out var table, retryCount, 5);
 
             // Expected fields:
-            // StatusNum, Status_URI, Subfolder, Ingest_Steps_Completed, EUS_InstrumentID, EUS_ProposalID, EUS_UploaderID, ErrorCode
+            // Status_Num, Status_URI, Subfolder, Ingest_Steps_Completed, EUS_Instrument_ID, EUS_Proposal_ID, EUS_Uploader_ID, Error_Code
             foreach (DataRow row in table.Rows)
             {
                 var statusNum = row[0].CastDBVal<int>();
