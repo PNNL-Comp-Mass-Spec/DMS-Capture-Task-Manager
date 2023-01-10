@@ -361,11 +361,11 @@ namespace ArchiveStatusCheckPlugin
 
             var sql = new StringBuilder();
             sql.AppendFormat(
-                " SELECT Status_Num, Status_URI, Subfolder, " +
-                       " IsNull(Ingest_Steps_Completed, 0) AS Ingest_Steps_Completed, " +
-                       " EUS_Instrument_ID, EUS_Proposal_ID, EUS_Uploader_ID, Error_Code" +
+                " SELECT status_num, status_uri, subfolder, " +
+                       " Coalesce(ingest_steps_completed, 0) AS ingest_steps_completed, " +
+                       " eus_instrument_id, eus_proposal_id, eus_uploader_id, error_code" +
                 " FROM V_MyEMSL_Uploads " +
-                " WHERE Dataset_ID = {0}", mDatasetID);
+                " WHERE dataset_id = {0}", mDatasetID);
 
             if (!string.IsNullOrEmpty(statusURI))
             {
@@ -373,7 +373,7 @@ namespace ArchiveStatusCheckPlugin
 
                 statusData.Add(statusNum, new IngestStatusInfo(statusNum, statusURI));
 
-                sql.AppendFormat(" AND Status_Num = {0} ORDER BY Entry_ID", statusNum);
+                sql.AppendFormat(" AND status_num = {0} ORDER BY entry_id", statusNum);
 
                 GetStatusURIsAndSubdirectories(sql.ToString(), statusData, retryCount);
 
@@ -391,10 +391,10 @@ namespace ArchiveStatusCheckPlugin
             try
             {
                 sql.AppendFormat(
-                    " AND Job <= {0}"  +
-                    " AND ISNULL(Status_Num, 0) > 0 " +
-                    " AND Error_Code NOT IN (-1, 101)" +
-                    " ORDER BY Entry_ID", mJob);
+                    " AND job <= {0}"  +
+                    " AND Coalesce(status_num, 0) > 0 " +
+                    " AND error_code NOT IN (-1, 101)" +
+                    " ORDER BY entry_id", mJob);
 
                 GetStatusURIsAndSubdirectories(sql.ToString(), statusData, retryCount);
             }
