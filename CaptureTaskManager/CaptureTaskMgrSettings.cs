@@ -103,7 +103,7 @@ namespace CaptureTaskManager
         /// <remarks>
         /// Settings are read by method LoadMgrSettingsFromDBWork in PRISMDatabaseUtils\AppSettings\MgrSettingsDB.cs
         /// using the query
-        ///   SELECT ParameterName, ParameterValue FROM V_Mgr_Params WHERE ManagerName = 'MgrName';
+        ///   SELECT Parameter_Name, Parameter_Value FROM V_Mgr_Params WHERE Manager_Name = 'MgrName';
         /// If one of the manager settings is named 'MgrSettingGroupName', LoadMgrSettingsFromDBWork will be called again to load the group settings,
         /// which are then stored with
         ///   StoreParameters(mgrGroupSettingsFromDB, mgrSettingsGroup, skipExistingParameters: true);
