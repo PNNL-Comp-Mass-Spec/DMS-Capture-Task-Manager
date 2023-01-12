@@ -1034,10 +1034,11 @@ namespace DatasetQualityPlugin
         private bool QuameterCanProcessDataset(int datasetID, string datasetName, string datasetDirectoryPath, ref string skipReason)
         {
             var sql =
-                " SELECT Scan_Type, Scan_Count" +
-                " FROM S_DMS_V_Dataset_Scans " +
-                " WHERE (Dataset_ID = " + datasetID + ") ";
+                " SELECT scan_type, scan_count" +
+                " FROM v_dms_dataset_scans " +
+                " WHERE dataset_id = " + datasetID;
 
+            // This connection string points to the DMS_Capture database
             var connectionString = mMgrParams.GetParam("ConnectionString");
 
             var applicationName = string.Format("{0}_DatasetQuality", mMgrParams.ManagerName);

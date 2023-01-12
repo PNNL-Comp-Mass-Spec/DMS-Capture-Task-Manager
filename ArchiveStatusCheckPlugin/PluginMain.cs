@@ -414,7 +414,7 @@ namespace ArchiveStatusCheckPlugin
         /// <param name="retryCount"></param>
         private void GetStatusURIsAndSubdirectories(string sql, IDictionary<int, IngestStatusInfo> statusData, int retryCount = 2)
         {
-            // This Connection String points to the DMS_Capture database
+            // This connection string points to the DMS_Capture database
             var connectionString = mMgrParams.GetParam("ConnectionString");
 
             var applicationName = string.Format("{0}_ArchiveStatus", mMgrParams.ManagerName);

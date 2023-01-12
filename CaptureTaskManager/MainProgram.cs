@@ -325,6 +325,7 @@ namespace CaptureTaskManager
             // Give the file logger a chance to zip old log files by year
             FileLogger.ArchiveOldLogFilesNow();
 
+            // Gigasax.DMS_Capture
             var logCnStr = mMgrSettings.GetParam("ConnectionString");
 
             var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(logCnStr, mMgrName);

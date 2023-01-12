@@ -665,6 +665,8 @@ namespace DatasetInfoPlugin
         private bool PostDatasetInfoXml(string datasetInfoXML, out string errorMessage)
         {
             var postCount = 0;
+
+            // This connection string points to the DMS_Capture database
             var connectionString = mMgrParams.GetParam("ConnectionString");
 
             var applicationName = string.Format("{0}_DatasetInfo", mMgrParams.ManagerName);
