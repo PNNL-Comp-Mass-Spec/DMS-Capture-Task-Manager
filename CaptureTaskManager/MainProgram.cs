@@ -89,7 +89,7 @@ namespace CaptureTaskManager
         {
             TraceMode = traceMode;
 
-            var exeInfo = new FileInfo(PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppPath());
+            var exeInfo = new FileInfo(AppUtils.GetAppPath());
             mMgrExeName = exeInfo.Name;
             mMgrDirectoryPath = exeInfo.DirectoryName;
         }
@@ -628,7 +628,7 @@ namespace CaptureTaskManager
                 if (messageCacheFile.Exists)
                 {
                     cachedMessages = LoadCachedLogMessages(messageCacheFile);
-                    ProgRunner.SleepMilliseconds(150);
+                    AppUtils.SleepMilliseconds(150);
                 }
                 else
                 {

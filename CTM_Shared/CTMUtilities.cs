@@ -2,7 +2,6 @@
 using System.IO;
 using System.Runtime.CompilerServices;
 using Pacifica.Core;
-using PRISM.FileProcessor;
 using PRISM.Logging;
 
 // ReSharper disable UnusedMember.Global
@@ -93,7 +92,7 @@ namespace CaptureTaskManager
                 return mAppDirectoryPath;
             }
 
-            mAppDirectoryPath = ProcessFilesOrDirectoriesBase.GetAppDirectoryPath();
+            mAppDirectoryPath = PRISM.AppUtils.GetAppDirectoryPath();
 
             return mAppDirectoryPath;
         }

@@ -247,7 +247,7 @@ namespace CaptureTaskManager
                 }
 
                 // Try to ensure there are no open objects with file handles
-                ProgRunner.GarbageCollectNow();
+                AppUtils.GarbageCollectNow();
                 Thread.Sleep(holdoffMilliseconds);
             }
 
@@ -929,7 +929,7 @@ namespace CaptureTaskManager
                     return false;
                 }
 
-                ProgRunner.SleepMilliseconds(100);
+                AppUtils.SleepMilliseconds(100);
 
                 success = ReadVersionInfoFile(dllFilePath, versionInfoFilePath, out var version);
 
@@ -938,7 +938,7 @@ namespace CaptureTaskManager
                 {
                     if (File.Exists(versionInfoFilePath))
                     {
-                        ProgRunner.SleepMilliseconds(100);
+                        AppUtils.SleepMilliseconds(100);
                         File.Delete(versionInfoFilePath);
                     }
                 }

@@ -1244,7 +1244,7 @@ namespace ImsDemuxPlugin
 
                 // Garbage collect, then try again to rename the file
                 System.Threading.Thread.Sleep(250);
-                ProgRunner.GarbageCollectNow();
+                AppUtils.GarbageCollectNow();
                 System.Threading.Thread.Sleep(250);
 
                 try

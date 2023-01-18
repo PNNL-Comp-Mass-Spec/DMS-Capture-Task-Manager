@@ -149,7 +149,7 @@ namespace CaptureTaskManager
         /// </summary>
         private string AppDirectoryPath()
         {
-            return PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppDirectoryPath();
+            return AppUtils.GetAppDirectoryPath();
         }
 
         /// <summary>

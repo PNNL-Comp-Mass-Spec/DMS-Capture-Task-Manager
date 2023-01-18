@@ -221,7 +221,7 @@ namespace ImsDemuxPlugin
                 // Delete the locally cached .d directory
                 try
                 {
-                    ProgRunner.GarbageCollectNow();
+                    AppUtils.GarbageCollectNow();
                     mFileTools.DeleteDirectory(dotDDirectoryPathLocal, ignoreErrors: true);
                 }
                 catch (Exception ex)

@@ -378,7 +378,7 @@ namespace CaptureTaskManager
                 while (mProgRunner.State != ProgRunner.States.NotMonitoring)
                 {
                     OnLoopWaiting();
-                    ProgRunner.SleepMilliseconds(mMonitorInterval);
+                    AppUtils.SleepMilliseconds(mMonitorInterval);
 
                     if (MaxRuntimeSeconds > 0)
                     {

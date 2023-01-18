@@ -82,7 +82,7 @@ namespace CaptureTaskManager
                 if (options.ShowVersionOnly)
                 {
                     DisplayVersion();
-                    ProgRunner.SleepMilliseconds(500);
+                    AppUtils.SleepMilliseconds(500);
                     return 0;
                 }
 
@@ -198,7 +198,7 @@ namespace CaptureTaskManager
         /// <param name="programDate"></param>
         private static string GetAppVersion(string programDate)
         {
-            return PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppVersion(programDate);
+            return AppUtils.GetAppVersion(programDate);
         }
 
         private static void ShowErrorMessage(string message, Exception ex = null)

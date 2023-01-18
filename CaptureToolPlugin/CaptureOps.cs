@@ -836,7 +836,7 @@ namespace CaptureToolPlugin
 
             while (DateTime.UtcNow < verificationEndTime)
             {
-                ProgRunner.SleepMilliseconds(500);
+                AppUtils.SleepMilliseconds(500);
 
                 if (DateTime.UtcNow <= nextStatusTime)
                 {
@@ -1044,7 +1044,7 @@ namespace CaptureToolPlugin
         private void DisconnectShare(ref ShareConnector myConn)
         {
             myConn.Disconnect();
-            ProgRunner.GarbageCollectNow();
+            AppUtils.GarbageCollectNow();
 
             LogDebug("Bionet disconnected");
             mConnectionType = ConnectionType.NotConnected;
@@ -1058,7 +1058,7 @@ namespace CaptureToolPlugin
         {
             myConn.Dispose();
             myConn = null;
-            ProgRunner.GarbageCollectNow();
+            AppUtils.GarbageCollectNow();
 
             LogDebug("Bionet disconnected");
             mConnectionType = ConnectionType.NotConnected;
@@ -2171,7 +2171,7 @@ namespace CaptureToolPlugin
 
                     while (waitTimeEnd > DateTime.UtcNow)
                     {
-                        ProgRunner.SleepMilliseconds(1000);
+                        AppUtils.SleepMilliseconds(1000);
                         Console.Write(".");
                     }
                 }
