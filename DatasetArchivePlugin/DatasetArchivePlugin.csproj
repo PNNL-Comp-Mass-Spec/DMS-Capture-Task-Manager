@@ -33,8 +33,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="jayrock-json">
-      <Version>0.9.16530.1</Version>
+    <PackageReference Include="Newtonsoft.Json">
+      <Version>13.0.2</Version>
     </PackageReference>
     <PackageReference Include="PRISM-DatabaseUtils">
       <Version>1.3.6</Version>
@@ -47,14 +47,8 @@
     <Reference Include="CTM_Shared">
       <HintPath>..\DeployedFiles\CTM_Shared.dll</HintPath>
     </Reference>
-    <Reference Include="Pacifica.Core">
-      <HintPath>..\RefLib\Pacifica.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="Pacifica.DMS_Metadata">
-      <HintPath>..\RefLib\Pacifica.DMS_Metadata.dll</HintPath>
-    </Reference>
-    <Reference Include="Pacifica.Upload">
-      <HintPath>..\RefLib\Pacifica.Upload.dll</HintPath>
+    <Reference Include="Pacifica">
+      <HintPath>..\RefLib\Pacifica.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

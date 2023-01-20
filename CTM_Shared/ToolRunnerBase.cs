@@ -15,6 +15,7 @@ using System.Reflection;
 using System.Threading;
 using JetBrains.Annotations;
 using Pacifica.Core;
+using Pacifica.Json;
 using PRISM;
 using PRISM.Logging;
 using PRISMDatabaseUtils;
@@ -346,7 +347,7 @@ namespace CaptureTaskManager
             MyEMSLStatusCheck statusChecker,
             string statusURI,
             ToolReturnData returnData,
-            out Dictionary<string, object> serverResponse,
+            out MyEMSLTaskStatus serverResponse,
             out string currentTask,
             out int percentComplete)
         {
@@ -366,43 +367,34 @@ namespace CaptureTaskManager
                 return false;
             }
 
-            if (serverResponse.Keys.Count == 0)
+            if (!serverResponse.Valid)
             {
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                returnData.CloseoutMsg = "Empty JSON server response";
+                returnData.CloseoutMsg = "Empty JSON server response, or invalid data; see " + statusURI;
                 LogError(returnData.CloseoutMsg + ", job " + job);
                 return false;
             }
 
-            if (serverResponse.TryGetValue("state", out var ingestState))
+            var ingestState = serverResponse.State;
+            if (string.Equals(ingestState, "failed", StringComparison.OrdinalIgnoreCase) ||
+                !string.IsNullOrWhiteSpace(errorMessage))
             {
-                if (string.Equals((string)ingestState, "failed", StringComparison.OrdinalIgnoreCase) ||
-                    !string.IsNullOrWhiteSpace(errorMessage))
+                // Error should have already been logged during the call to GetIngestStatus
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                if (string.IsNullOrWhiteSpace(errorMessage))
                 {
-                    // Error should have already been logged during the call to GetIngestStatus
-                    returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                    if (string.IsNullOrWhiteSpace(errorMessage))
-                    {
-                        returnData.CloseoutMsg = "Ingest failed; unknown reason";
-                    }
-                    else
-                    {
-                        returnData.CloseoutMsg = errorMessage;
-                    }
-
-                    returnData.EvalCode = EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY;
-                    return false;
+                    returnData.CloseoutMsg = "Ingest failed; unknown reason";
+                }
+                else
+                {
+                    returnData.CloseoutMsg = errorMessage;
                 }
 
-                return true;
+                returnData.EvalCode = EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY;
+                return false;
             }
 
-            // State parameter was not present
-
-            returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-            returnData.CloseoutMsg = "State parameter not found in ingest status; see " + statusURI;
-
-            return false;
+            return true;
         }
 
         /// <summary>

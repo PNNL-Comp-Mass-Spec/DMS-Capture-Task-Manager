@@ -187,6 +187,13 @@
             <param name="instrument">Instrument name</param>
             <param name="datasetYearQuarter">Dataset year quarter, e.g. 2013_3</param>
         </member>
+        <member name="M:MyEMSLReader.ArchivedFileInfo.#ctor(System.String,Pacifica.Json.MyEMSLFileInfo)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="dataset">Dataset name</param>
+            <param name="fileData">File metadata read from MyEMSL</param>
+        </member>
         <member name="M:MyEMSLReader.ArchivedFileInfo.UpdateSourceFileTimes(System.String,System.String)">
             <summary>
             Update file creation and modification times using the string values reported by MyEMSL
@@ -424,6 +431,13 @@
             </summary>
             <remarks>Keys are MyEMSL File IDs, values are struct FileDownloadInfo</remarks>
             ReSharper disable once UnusedMember.Global
+        </member>
+        <member name="P:MyEMSLReader.DatasetInfoBase.IncludeAllRevisions">
+            <summary>
+            When True, include all revisions of files that were imported to MyEMSL multiple times
+            When False, only reports the newest version of a file
+            </summary>
+            <remarks>Default is False</remarks>
         </member>
         <member name="P:MyEMSLReader.DatasetInfoBase.ThrowErrors">
             <summary>
@@ -756,6 +770,13 @@
             The most recently downloaded files.  Keys are the full path to the downloaded file; values are extended file info
             </summary>
         </member>
+        <member name="P:MyEMSLReader.Downloader.IncludeAllRevisions">
+            <summary>
+            When True, if downloading multiple versions of the same file, include the FileID in the filename
+            When False, if downloading multiple versions of the same file, will only keep one of the versions (order is not defined)
+            </summary>
+            <remarks>Default is False</remarks>
+        </member>
         <member name="P:MyEMSLReader.Downloader.OverwriteMode">
             <summary>
             Overwrite mode (IfChanged, Always, or Never)
@@ -870,6 +891,13 @@
             <summary>
             Keys are the full paths to the downloaded file, values are extended file info
             </summary>
+        </member>
+        <member name="P:MyEMSLReader.DownloadQueue.IncludeAllRevisions">
+            <summary>
+            When True, if downloading multiple versions of the same file, include the FileID in the filename
+            When False, if downloading multiple versions of the same file, will only keep one of the versions (order is not defined)
+            </summary>
+            <remarks>Default is False</remarks>
         </member>
         <member name="P:MyEMSLReader.DownloadQueue.ThrowErrors">
             <summary>
@@ -1224,7 +1252,7 @@
         </member>
         <member name="P:MyEMSLReader.Reader.IncludeAllRevisions">
             <summary>
-            When True, will include all revisions of files that were imported to MyEMSL multiple times
+            When True, include all revisions of files that were imported to MyEMSL multiple times
             When False, only reports the newest version of a file
             </summary>
             <remarks>Default is False</remarks>

@@ -36,8 +36,8 @@
     <Reference Include="MSFileInfoScannerInterfaces">
       <HintPath>..\RefLib\MSFileInfoScannerInterfaces.dll</HintPath>
     </Reference>
-    <Reference Include="Pacifica.Core">
-      <HintPath>..\RefLib\Pacifica.Core.dll</HintPath>
+    <Reference Include="Pacifica">
+      <HintPath>..\RefLib\Pacifica.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -67,8 +67,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="jayrock-json">
-      <Version>0.9.16530.1</Version>
+    <PackageReference Include="Newtonsoft.Json">
+      <Version>13.0.2</Version>
     </PackageReference>
     <PackageReference Include="PRISM-DatabaseUtils">
       <Version>1.3.6</Version>

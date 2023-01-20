@@ -7,8 +7,8 @@
 
 using System;
 using CaptureTaskManager;
+using Pacifica.DataUpload;
 using PRISM;
-using Uploader = Pacifica.Upload;
 
 namespace DatasetArchivePlugin
 {
@@ -62,18 +62,18 @@ namespace DatasetArchivePlugin
             var recurse = mTaskParams.GetParam("MyEMSLRecurse", true);
 
             // Set this to .CreateTarLocal to create the .tar file locally and thus not upload the data to MyEMSL
-            var debugMode = Uploader.TarStreamUploader.UploadDebugMode.DebugDisabled;
+            var debugMode = TarStreamUploader.UploadDebugMode.DebugDisabled;
 
             if (mTaskParams.GetParam("DebugTestTar", false))
             {
-                debugMode = Uploader.TarStreamUploader.UploadDebugMode.CreateTarLocal;
+                debugMode = TarStreamUploader.UploadDebugMode.CreateTarLocal;
             }
             else if (mTaskParams.GetParam("MyEMSLOffline", false))
             {
-                debugMode = Uploader.TarStreamUploader.UploadDebugMode.MyEMSLOfflineMode;
+                debugMode = TarStreamUploader.UploadDebugMode.MyEMSLOfflineMode;
             }
 
-            if (debugMode != Uploader.TarStreamUploader.UploadDebugMode.DebugDisabled)
+            if (debugMode != TarStreamUploader.UploadDebugMode.DebugDisabled)
             {
                 OnStatusEvent("Calling UploadToMyEMSLWithRetry with debugMode=" + debugMode);
             }

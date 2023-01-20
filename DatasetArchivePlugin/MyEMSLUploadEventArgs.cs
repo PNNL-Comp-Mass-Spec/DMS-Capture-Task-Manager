@@ -1,4 +1,4 @@
-﻿using Pacifica.Upload;
+﻿using Pacifica.DataUpload;
 using System;
 
 namespace DatasetArchivePlugin

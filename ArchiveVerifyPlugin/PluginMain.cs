@@ -1,7 +1,7 @@
 ﻿using CaptureTaskManager;
-using Jayrock.Json.Conversion;
 using Pacifica.Core;
-using Pacifica.DMS_Metadata;
+using Pacifica.DMSDataUpload;
+using Pacifica.Json;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -521,25 +521,11 @@ namespace ArchiveVerifyPlugin
                 return;
             }
 
-            var jsa = (Jayrock.Json.JsonArray)JsonConvert.Import(metadataJson);
-
             // metadataInfo is a list of Dictionaries
-            var metadataInfo = Utilities.JsonArrayToDictionaryList(jsa);
+            var metadataInfo = JsonTools.JsonToUploadMetadata(metadataJson, metadataFileInfo.FullName, "PluginMain.CompareToMetadataFile", out _);
 
-            // This dictionary tracks files that were previously pushed to MyEMSL
-            var metadataFiles = new List<Dictionary<string, object>>();
-
-            foreach (var item in metadataInfo)
-            {
-                if (item.TryGetValue("destinationTable", out var destinationTable))
-                {
-                    var destinationTableName = destinationTable as string;
-                    if (string.Equals(destinationTableName, "Files", StringComparison.OrdinalIgnoreCase))
-                    {
-                        metadataFiles.Add(item);
-                    }
-                }
-            }
+            // This list tracks files that were previously pushed to MyEMSL
+            var metadataFiles = metadataInfo.Where(x => x.Valid && x is UploadMetadataFile).Cast<UploadMetadataFile>().ToList();
 
             if (metadataFiles.Count == 0)
             {
@@ -560,10 +546,10 @@ namespace ArchiveVerifyPlugin
 
             foreach (var metadataFile in metadataFiles)
             {
-                var sha1Hash = Utilities.GetDictionaryValue(metadataFile, "hashsum");
-                var destinationDirectory = Utilities.GetDictionaryValue(metadataFile, "subdir");
-                var fileName = Utilities.GetDictionaryValue(metadataFile, "name");
-                var fileSizeBytes = Utilities.GetDictionaryValue(metadataFile, "size", 0);
+                var sha1Hash = metadataFile.HashSum;
+                var destinationDirectory = metadataFile.SubDir;
+                var fileName = metadataFile.Name;
+                var fileSizeBytes = int.TryParse(metadataFile.Size, out var size) ? size : 0;
 
                 if (metadataObject.IgnoreFile(fileName, fileSizeBytes, false))
                 {
