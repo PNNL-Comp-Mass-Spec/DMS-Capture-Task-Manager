@@ -364,7 +364,7 @@ namespace ArchiveStatusCheckPlugin
                 " SELECT status_num, status_uri, subfolder, " +
                        " Coalesce(ingest_steps_completed, 0) AS ingest_steps_completed, " +
                        " eus_instrument_id, eus_proposal_id, eus_uploader_id, error_code" +
-                " FROM V_MyEMSL_Uploads " +
+                " FROM " + mMgrParams.DMSCaptureSchema + "V_MyEMSL_Uploads " +
                 " WHERE dataset_id = {0}", mDatasetID);
 
             if (!string.IsNullOrEmpty(statusURI))

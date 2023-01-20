@@ -1035,7 +1035,7 @@ namespace DatasetQualityPlugin
         {
             var sql =
                 " SELECT scan_type, scan_count" +
-                " FROM v_dms_dataset_scans " +
+                " FROM " + mMgrParams.DMSCaptureSchema + "v_dms_dataset_scans " +
                 " WHERE dataset_id = " + datasetID;
 
             // This connection string points to the DMS_Capture database

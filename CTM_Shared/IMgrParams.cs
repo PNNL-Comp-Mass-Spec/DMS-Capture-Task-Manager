@@ -6,6 +6,7 @@
 //*********************************************************************************************************
 
 using System.Collections.Generic;
+using PRISM.AppSettings;
 
 namespace CaptureTaskManager
 {
@@ -24,6 +25,17 @@ namespace CaptureTaskManager
         /// </summary>
         // ReSharper disable once UnusedMember.Global
         Dictionary<string, string> MgrParams { get; }
+
+        /// <summary>
+        /// Dictionary of database schema prefix parameters
+        /// </summary>
+        // ReSharper disable once UnusedMember.Global
+        IReadOnlyDictionary<MgrSettings.SchemaPrefix, string> SchemaPrefixes { get; }
+
+        /// <summary>
+        /// Schema prefix for the DMS Capture database
+        /// </summary>
+        string DMSCaptureSchema { get; }
 
         bool TraceMode { get; }
 
