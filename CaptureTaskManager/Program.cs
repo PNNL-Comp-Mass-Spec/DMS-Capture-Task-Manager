@@ -25,7 +25,12 @@ namespace CaptureTaskManager
     {
         // Ignore Spelling: OxyPlot
 
-        private const string PROGRAM_DATE = "January 11, 2023";
+        private static readonly string ProgramDate;
+
+        static Program()
+        {
+            ProgramDate = ThisAssembly.GitCommitDate.ToString("MMMM dd, yyyy");
+        }
 
         private static bool mTraceMode;
 
@@ -49,7 +54,7 @@ namespace CaptureTaskManager
 
                 var exeName = System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
 
-                var parser = new CommandLineParser<CommandLineOptions>(exeName, GetAppVersion(PROGRAM_DATE))
+                var parser = new CommandLineParser<CommandLineOptions>(exeName, GetAppVersion(ProgramDate))
                 {
                     ProgramInfo = "This program processes DMS datasets for PRISM. " +
                                   "Normal operation is to run the program without any command line switches.",
@@ -163,7 +168,7 @@ namespace CaptureTaskManager
         {
             Console.WriteLine();
             Console.WriteLine("DMS Capture Task Manager");
-            Console.WriteLine("Version " + GetAppVersion(PROGRAM_DATE));
+            Console.WriteLine("Version " + GetAppVersion(ProgramDate));
             Console.WriteLine("Host    " + System.Net.Dns.GetHostName());
             Console.WriteLine("User    " + Environment.UserName);
             Console.WriteLine();

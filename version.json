@@ -1,0 +1,22 @@
+{ // Monolithic/shared versioning config file
+  "$schema": "https://raw.githubusercontent.com/dotnet/Nerdbank.GitVersioning/main/src/NerdBank.GitVersioning/version.schema.json",
+  "version": "1.4",
+  "assemblyVersion": {
+    "precision": "build"
+  },
+  "pathFilters": [
+    ":/", // Consider all committed file changes in the repo root folder for version increases
+    ":^/README.md", // Exclude changes to README.md
+    ":^/RevisionHistory.txt", // Exclude changes to RevisionHistory.txt
+    ":^/Disclaimer.txt", // Exclude changes to Disclaimer.txt
+    ":^/License.txt", // Exclude changes to License.txt
+    ":^/CaptureTaskManager.sln.DotSettings", // Exclude changes to CaptureTaskManager.sln.DotSettings
+    ":^/CaptureTaskManager_AllPlugins.sln.DotSettings", // Exclude changes to CaptureTaskManager_AllPlugins.sln.DotSettings
+    ":^/CaptureTaskManager_Debug.sln.DotSettings", // Exclude changes to CaptureTaskManager_Debug.sln.DotSettings
+    ":^/CaptureTaskManager_Debug_Archive.sln.DotSettings", // Exclude changes to CaptureTaskManager_Debug_Archive.sln.DotSettings
+    ":^/.gitignore" // Exclude changes to .gitignore
+  ],
+  "publicReleaseRefSpec": [
+    "^refs/heads/master$" // we release out of master
+  ]
+}
