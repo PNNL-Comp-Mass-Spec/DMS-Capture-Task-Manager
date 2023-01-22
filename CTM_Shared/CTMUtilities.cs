@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.CompilerServices;
-using Pacifica.Core;
+using PRISM;
 using PRISM.Logging;
 
 // ReSharper disable UnusedMember.Global
@@ -56,7 +56,7 @@ namespace CaptureTaskManager
         /// <returns>Clear text password</returns>
         public static string DecodePassword(string encodedPwd)
         {
-            return Utilities.DecodePassword(encodedPwd);
+            return AppUtils.DecodeShiftCipher(encodedPwd);
         }
 
         /// <summary>

@@ -687,21 +687,6 @@
             <param name="sendStringInHeader">If True, and the method is Get, include postData in the header</param>
             <param name="loginCredentials">Login credentials</param>
         </member>
-        <member name="M:Pacifica.Core.Utilities.DecodePassword(System.String)">
-            <summary>
-            Decode a password
-            </summary>
-            <param name="encodedPwd">Encoded password</param>
-            <returns>Clear text password</returns>
-        </member>
-        <member name="M:Pacifica.Core.Utilities.EncryptDecrypt(System.String,System.Boolean)">
-            <summary>
-            Encode or decode a password
-            </summary>
-            <param name="password">Password</param>
-            <param name="encrypt">True to encode the password; false to decode the password</param>
-            <returns>Encoded password</returns>
-        </member>
         <member name="M:Pacifica.Core.Utilities.DeleteFileIgnoreErrors(System.IO.FileInfo)">
             <summary>
             Try to delete the file; ignore any errors
