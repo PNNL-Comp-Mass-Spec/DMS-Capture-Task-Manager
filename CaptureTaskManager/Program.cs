@@ -29,7 +29,7 @@ namespace CaptureTaskManager
 
         static Program()
         {
-            ProgramDate = ThisAssembly.GitCommitDate.ToString("MMMM dd, yyyy");
+            ProgramDate = ThisAssembly.GitCommitDate.ToLocalTime().ToString("MMMM dd, yyyy");
         }
 
         private static bool mTraceMode;
