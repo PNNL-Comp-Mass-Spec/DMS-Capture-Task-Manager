@@ -355,7 +355,7 @@ namespace DatasetArchivePlugin
                 mTaskParams.AddAdditionalParameter(MyEMSLUploader.RECURSIVE_UPLOAD, recurse.ToString());
 
                 // Cache the operator name; used in the exception handler below
-                operatorUsername = mTaskParams.GetParam("Operator_PRN", "Unknown_Operator");
+                operatorUsername = mTaskParams.GetParam("Operator_Username", "Unknown_Operator");
 
                 config.UseTestInstance = useTestInstance;
 
