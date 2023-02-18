@@ -24,7 +24,7 @@ namespace CaptureTaskManager
         protected const int RET_VAL_OK = 0;
 
         /// <summary>
-        /// Return value for RequestStepTask on SQL Server
+        /// Return value for request_step_task on SQL Server
         /// </summary>
         protected const int RET_VAL_TASK_NOT_AVAILABLE = 53000;
 
@@ -167,7 +167,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Fill string dictionary with parameter values
         /// </summary>
-        /// <param name="parameters">Result table from call to RequestStepTask</param>
+        /// <param name="parameters">Result table from call to request_step_task</param>
         /// <returns>True if successful, false if an error</returns>
         protected virtual bool FillParamDict(List<List<string>> parameters)
         {

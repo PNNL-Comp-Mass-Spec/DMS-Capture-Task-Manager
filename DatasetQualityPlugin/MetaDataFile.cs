@@ -40,10 +40,10 @@ namespace DatasetQualityPlugin
                 writer.WriteStartElement("Root");
 
                 // Loop through the task parameters, selecting only the ones beginning with "Meta_"
-                // These parameters are included in the table returned by stored procedure RequestStepTask
-                // That procedure calls procedure GetJobStepParams to get the parameters
-                // Additionally, if the step tool is 'DatasetInfo' or 'DatasetQuality', GetJobStepParams calls GetMetadataForDataset
-                // which adds several items, including Meta_Dataset_Number (which is actually dataset name) and Meta_Dataset_ID
+                // These parameters are included in the table returned by stored procedure request_step_task
+                // That procedure calls procedure get_job_step_params to get the parameters
+                // Additionally, if the step tool is 'DatasetInfo' or 'DatasetQuality', get_job_step_params calls get_metadata_for_dataset
+                // which adds several items, including Meta_Dataset_Name and Meta_Dataset_ID
                 foreach (var taskParam in taskParams.TaskDictionary.Keys)
                 {
                     if (taskParam.StartsWith("Meta_"))

@@ -28,7 +28,7 @@ namespace DatasetQualityPlugin
 
         private const int MAX_QUAMETER_RUNTIME_MINUTES = 150;
 
-        private const string STORE_QUAMETER_RESULTS_SP_NAME = "StoreQuameterResults";
+        private const string STORE_QUAMETER_RESULTS_SP_NAME = "store_quameter_results";
         private const string QUAMETER_IDFREE_METRICS_FILE = "Quameter_IDFree.tsv";
         private const string QUAMETER_CONSOLE_OUTPUT_FILE = "Quameter_Console_Output.txt";
 
@@ -852,7 +852,7 @@ namespace DatasetQualityPlugin
                     xmlResultsClean = xmlResults;
                 }
 
-                // Call stored procedure StoreQuameterResults in the DMS_Capture database
+                // Call stored procedure store_quameter_results in the DMS_Capture database
                 var dbTools = mCaptureDbProcedureExecutor;
                 var cmd = dbTools.CreateCommand(STORE_QUAMETER_RESULTS_SP_NAME, CommandType.StoredProcedure);
 

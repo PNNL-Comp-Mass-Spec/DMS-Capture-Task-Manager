@@ -18,9 +18,9 @@ namespace CaptureTaskManager
     /// </summary>
     internal class CaptureTask : DbTask, ITaskParams
     {
-        private const string SP_NAME_SET_COMPLETE = "SetStepTaskComplete";
-        private const string SP_NAME_REPORT_IDLE = "ReportManagerIdle";
-        private const string SP_NAME_REQUEST_TASK = "RequestStepTask";
+        private const string SP_NAME_SET_COMPLETE = "set_step_task_complete";
+        private const string SP_NAME_REPORT_IDLE = "report_manager_idle";
+        private const string SP_NAME_REQUEST_TASK = "request_step_task";
 
         /// <summary>
         /// When true, show additional messages at the console
@@ -363,7 +363,7 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Call stored procedure ReportManagerIdle to make sure that
+        /// Call stored procedure report_manager_idle to make sure that
         /// the database didn't actually assign a job to this manager
         /// </summary>
         private void ReportManagerIdle()

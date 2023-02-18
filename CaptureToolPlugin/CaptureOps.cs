@@ -2318,7 +2318,7 @@ namespace CaptureToolPlugin
 
                     var job = taskParams.GetParam("Job", 0);
 
-                    var jobParameterHint = string.Format("Exec AddUpdateJobParameter {0}, 'JobParameters', 'AllowIncompleteDataset', 'true'", job);
+                    var jobParameterHint = string.Format("Exec add_update_job_parameter {0}, 'JobParameters', 'AllowIncompleteDataset', 'true'", job);
 
                     returnData.CloseoutMsg = sourceDirectoryErrorMessage + "; to ignore this error, use " + jobParameterHint;
                     LogError(msg);

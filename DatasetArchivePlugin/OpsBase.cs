@@ -35,7 +35,7 @@ namespace DatasetArchivePlugin
 
         private const string LARGE_DATASET_UPLOAD_ERROR = "Failure uploading a large amount of data; manual reset required";
 
-        private const string SP_NAME_MAKE_NEW_ARCHIVE_UPDATE_JOB = "MakeNewArchiveUpdateJob";
+        private const string SP_NAME_MAKE_NEW_ARCHIVE_UPDATE_JOB = "make_new_archive_update_job";
 
         private readonly IMgrParams mMgrParams;
         protected readonly ITaskParams mTaskParams;
@@ -503,7 +503,7 @@ namespace DatasetArchivePlugin
                     mErrMsg += "; operator not defined in EUS. " +
                                 "Have " + operatorUsername + " login to " + DMSMetadataObject.EUS_PORTAL_URL + " " +
                                 "then wait for T_EUS_Users to update, " +
-                                "then update job parameters using SP UpdateParametersForJob";
+                                "then update job parameters using SP update_parameters_for_job";
 
                     // Do not retry the upload; it will fail again due to the same error
                     allowRetry = false;
@@ -516,7 +516,7 @@ namespace DatasetArchivePlugin
                     var jobNumber = mTaskParams.GetParam("Job", 0);
 
                     mErrMsg += string.Format(
-                        " (to ignore this error, use Exec AddUpdateJobParameter {0}, 'StepParameters', 'IgnoreMaxFileLimit', '1')", jobNumber);
+                        " (to ignore this error, use Exec add_update_job_parameter {0}, 'StepParameters', 'IgnoreMaxFileLimit', '1')", jobNumber);
 
                     // Do not retry the upload; it will fail again due to the same error
                     allowRetry = false;

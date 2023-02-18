@@ -28,7 +28,7 @@ namespace DatasetInfoPlugin
         // Ignore Spelling: acq, Bruker, fid, href, html, Illumina, labelling, maldi, mgf
         // Ignore Spelling: online, png, prepend, qgd, ser, Shimadzu, svc, Synapt, wiff
 
-        private const string MS_FILE_SCANNER_DS_INFO_SP = "CacheDatasetInfoXML";
+        private const string MS_FILE_SCANNER_DS_INFO_SP = "cache_dataset_info_xml";
 
         private const string UNKNOWN_FILE_TYPE = "Unknown File Type";
 
@@ -281,7 +281,7 @@ namespace DatasetInfoPlugin
             if (mTaskParams.GetParam("SkipPlots", false))
             {
                 // To add parameter SkipPlots for job 123456, use:
-                // Exec AddUpdateJobParameter 123456, 'JobParameters', 'SkipPlots', 'true'
+                // Exec add_update_job_parameter 123456, 'JobParameters', 'SkipPlots', 'true'
                 qcPlotMode = QCPlottingModes.NoPlots;
             }
 
@@ -575,7 +575,7 @@ namespace DatasetInfoPlugin
                         else
                         {
                             jobParamNote = string.Format(
-                                "To ignore this error, use Exec AddUpdateJobParameter {0}, 'JobParameters', 'SkipMinimumMzValidation', 'true'",
+                                "To ignore this error, use Exec add_update_job_parameter {0}, 'JobParameters', 'SkipMinimumMzValidation', 'true'",
                                 mJob);
                         }
 
@@ -611,7 +611,7 @@ namespace DatasetInfoPlugin
             // If any are found, CloseoutMsg is updated
             AcqTimeWarningsReported(datasetXmlMerger, returnData);
 
-            // Call SP CacheDatasetInfoXML to store datasetInfoXML in table T_Dataset_Info_XML
+            // Call SP cache_dataset_info_xml to store datasetInfoXML in table T_Dataset_Info_XML
             var success = PostDatasetInfoXml(datasetInfoXML, out var errorMessage);
             if (!success)
             {
@@ -1336,7 +1336,7 @@ namespace DatasetInfoPlugin
                 {
                     mMsg = string.Format(
                         "analysis.baf not found in the expected .D directory; to include all .D subdirectories, use " +
-                        "Exec AddUpdateJobParameter {0}, 'StepParameters', 'LooseMatchDotD', 'true'",
+                        "Exec add_update_job_parameter {0}, 'StepParameters', 'LooseMatchDotD', 'true'",
                         mJob);
 
                     LogWarning(mMsg);

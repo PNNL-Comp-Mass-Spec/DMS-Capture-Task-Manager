@@ -32,7 +32,7 @@ namespace CaptureTaskManager
 
         public const string EXCEPTION_CREATING_OUTPUT_DIRECTORY = "Exception creating output directory";
 
-        private const string SP_NAME_SET_TASK_TOOL_VERSION = "SetStepTaskToolVersion";
+        private const string SP_NAME_SET_TASK_TOOL_VERSION = "set_step_task_tool_version";
 
         private const string DATE_TIME_FORMAT = "yyyy-MM-dd hh:mm:ss tt";
 
@@ -977,7 +977,7 @@ namespace CaptureTaskManager
             long transactionId = 0,
             bool fatalError = false)
         {
-            const string SP_NAME = "UpdateMyEMSLUploadIngestStats";
+            const string SP_NAME = "update_myemsl_upload_ingest_stats";
 
             if (transactionId > 0 && transactionId != statusNum)
             {

@@ -496,13 +496,13 @@ namespace ArchiveStatusCheckPlugin
             }
             catch (Exception ex)
             {
-                LogError("Exception calling stored procedure SetMyEMSLUploadSupersededIfFailed, job " + mJob, ex);
+                LogError("Exception calling stored procedure set_myemsl_upload_superseded_if_failed, job " + mJob, ex);
             }
         }
 
         private void UpdateSupersededURIs(IReadOnlyCollection<int> statusNumsToIgnore, IReadOnlyDictionary<int, IngestStatusInfo> statusData)
         {
-            const string SP_NAME = "SetMyEMSLUploadSupersededIfFailed";
+            const string SP_NAME = "set_myemsl_upload_superseded_if_failed";
 
             try
             {
@@ -536,7 +536,7 @@ namespace ArchiveStatusCheckPlugin
 
         private void UpdateVerifiedURIs(Dictionary<int, string> verifiedURIs, IReadOnlyDictionary<int, IngestStatusInfo> statusData)
         {
-            const string SP_NAME = "SetMyEMSLUploadVerified";
+            const string SP_NAME = "set_myemsl_upload_verified";
 
             try
             {
