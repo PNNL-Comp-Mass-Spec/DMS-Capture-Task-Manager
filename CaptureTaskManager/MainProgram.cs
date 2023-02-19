@@ -832,6 +832,11 @@ namespace CaptureTaskManager
                 catch (Exception ex)
                 {
                     LogError("Error in PerformMainLoop", ex);
+
+                    // Increment the error count and exit out of the loop
+                    mTaskRequestErrorCount++;
+
+                    mRunning = false;
                 }
             }
 
