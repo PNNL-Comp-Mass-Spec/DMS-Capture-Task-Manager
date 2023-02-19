@@ -304,7 +304,7 @@ namespace CaptureTaskManager
             }
             catch (Exception ex)
             {
-                LogError("Exception requesting analysis job", ex);
+                LogError("Exception requesting task job", ex);
                 LogError("Stack trace: " + StackTraceFormatter.GetExceptionStackTrace(ex));
                 outcome = EnumRequestTaskResult.ResultError;
             }
@@ -364,7 +364,7 @@ namespace CaptureTaskManager
 
         /// <summary>
         /// Call stored procedure report_manager_idle to make sure that
-        /// the database didn't actually assign a job to this manager
+        /// the database didn't actually assign a task job to this manager
         /// </summary>
         private void ReportManagerIdle()
         {
