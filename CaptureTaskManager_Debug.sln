@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.28803.156
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33424.131
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CaptureTaskManager_Debug", "CaptureTaskManager\CaptureTaskManager_Debug.csproj", "{93485E0E-3A78-4118-B36B-BA71334752AF}"
 EndProject
@@ -26,6 +26,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {C2E94877-CB78-4419-8882-75D52446E1C8}
+		SolutionGuid = {FED3A266-3C13-4201-9F00-EB48C16E8564}
 	EndGlobalSection
 EndGlobal
