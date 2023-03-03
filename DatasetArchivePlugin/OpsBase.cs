@@ -130,15 +130,10 @@ namespace DatasetArchivePlugin
             mDatasetName = mTaskParams.GetParam("Dataset");
 
             // Set client/server perspective & setup paths
-            string baseStoragePath;
-            if (string.Equals(mMgrParams.GetParam("perspective"), "client", StringComparison.OrdinalIgnoreCase))
-            {
-                baseStoragePath = mTaskParams.GetParam("Storage_Vol_External");
-            }
-            else
-            {
-                baseStoragePath = mTaskParams.GetParam("Storage_Vol");
-            }
+            var baseStoragePath =
+                mTaskParams.GetParam(string.Equals(mMgrParams.GetParam("perspective"), "client", StringComparison.OrdinalIgnoreCase)
+                ? "Storage_Vol_External"
+                : "Storage_Vol");
 
             // Path to dataset on storage server
             var storagePath = mTaskParams.GetParam("Storage_Path");
@@ -296,18 +291,13 @@ namespace DatasetArchivePlugin
                 }
             }
 
+            // ReSharper disable once ConvertIfStatementToSwitchStatement
             if (!success)
             {
-                if (debugMode != TarStreamUploader.UploadDebugMode.DebugDisabled)
-                {
-                    WarningMsg = CTMUtilities.AppendToString(WarningMsg,
-                        "Debug mode was enabled; thus, .tar file was created locally and not uploaded to MyEMSL");
-                }
-                else
-                {
-                    WarningMsg = CTMUtilities.AppendToString(WarningMsg,
-                        "UploadToMyEMSL reports False");
-                }
+                WarningMsg =
+                    CTMUtilities.AppendToString(WarningMsg, debugMode != TarStreamUploader.UploadDebugMode.DebugDisabled
+                    ? "Debug mode was enabled; thus, .tar file was created locally and not uploaded to MyEMSL"
+                    : "UploadToMyEMSL reports False");
             }
 
             if (success && !mMyEmslUploadSuccess)
