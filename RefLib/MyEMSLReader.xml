@@ -884,7 +884,7 @@
         </member>
         <member name="P:MyEMSLReader.DownloadQueue.FilesToDownload">
             <summary>
-            Keys are MyEMSL File IDs, values are struct FileDownloadInfo
+            Keys are MyEMSL File IDs, values are instances of FileDownloadInfo
             </summary>
         </member>
         <member name="P:MyEMSLReader.DownloadQueue.DownloadedFiles">
