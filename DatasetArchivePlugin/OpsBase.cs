@@ -146,6 +146,30 @@ namespace DatasetArchivePlugin
 
             mDSNamePath = Path.Combine(Path.Combine(baseStoragePath, storagePath, datasetDirectory));
 
+            if (string.IsNullOrWhiteSpace(mDSNamePath))
+            {
+                mErrMsg = "Dataset folder path in mDSNamePath is empty";
+
+                if (string.IsNullOrWhiteSpace(baseStoragePath))
+                {
+                    mErrMsg = CTMUtilities.AppendToString(mErrMsg, "baseStoragePath is empty");
+                }
+
+                if (string.IsNullOrWhiteSpace(storagePath))
+                {
+                    mErrMsg = CTMUtilities.AppendToString(mErrMsg, "storagePath is empty");
+                }
+
+                if (string.IsNullOrWhiteSpace(datasetDirectory))
+                {
+                    mErrMsg = CTMUtilities.AppendToString(mErrMsg, "datasetDirectory is empty");
+                }
+
+                OnErrorEvent(mErrMsg);
+                LogOperationFailed(mDatasetName, string.Empty, true);
+                return false;
+            }
+
             // Verify dataset is in specified location
             if (!VerifyDSPresent(mDSNamePath))
             {
