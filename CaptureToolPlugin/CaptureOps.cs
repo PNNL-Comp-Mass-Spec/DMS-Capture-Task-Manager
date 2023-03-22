@@ -1068,7 +1068,7 @@ namespace CaptureToolPlugin
         /// Perform a single capture operation
         /// </summary>
         /// <param name="taskParams">Enum indicating status of task</param>
-        /// <param name="returnData">Return data class; update CloseoutMsg or EvalMsg with text to store in T_Job_Step_Params</param>
+        /// <param name="returnData">Return data class; update CloseoutMsg or EvalMsg with text to store in T_Task_Step_Params</param>
         /// <returns>True if success or false if an error.  returnData includes addition details on errors</returns>
         public bool DoOperation(ITaskParams taskParams, ToolReturnData returnData)
         {
