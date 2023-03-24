@@ -28,13 +28,15 @@ namespace DatasetInfoPlugin
         // Ignore Spelling: acq, Bruker, fid, href, html, Illumina, labelling, maldi, mgf
         // Ignore Spelling: online, png, prepend, qgd, ser, Shimadzu, svc, Synapt, wiff
 
-        private const string MS_FILE_SCANNER_DS_INFO_SP = "cache_dataset_info_xml";
+        private const string BRUKER_MCF_FILE_EXTENSION = ".mcf";
 
-        private const string UNKNOWN_FILE_TYPE = "Unknown File Type";
+        private const bool IGNORE_BRUKER_BAF_ERRORS = false;
 
         private const string INVALID_FILE_TYPE = "Invalid File Type";
 
-        private const bool IGNORE_BRUKER_BAF_ERRORS = false;
+        private const string MS_FILE_SCANNER_DS_INFO_SP = "cache_dataset_info_xml";
+
+        private const string UNKNOWN_FILE_TYPE = "Unknown File Type";
 
         private enum QCPlottingModes
         {
@@ -1503,20 +1505,30 @@ namespace DatasetInfoPlugin
         /// <returns>True if a .mcf file is found</returns>
         private bool LookForMcfFileInDotDDirectory(DirectoryInfo dotDDirectory, out string dotDDirectoryName)
         {
-            long mcfFileSizeBytes = 0;
-            dotDDirectoryName = string.Empty;
+            var mcfFilesWithExtras = dotDDirectory.GetFiles("*" + BRUKER_MCF_FILE_EXTENSION);
 
-            foreach (var mcfFile in dotDDirectory.GetFiles("*.mcf"))
+            // The "*.mcf" sent to .GetFiles() matches both .mcf and .mcf_idx files
+            // Filter the list to only include the .mcf files
+            var mcfFiles = (from item in mcfFilesWithExtras
+                            where item.Extension.Equals(BRUKER_MCF_FILE_EXTENSION, StringComparison.OrdinalIgnoreCase)
+                            select item).ToList();
+
+            if (mcfFiles.Count > 0)
             {
-                // Return the .mcf file that is the largest
-                if (mcfFile.Length > mcfFileSizeBytes)
+                // Find the largest .mcf file (not .mcf_idx file)
+                var largestMcf = (from item in mcfFiles
+                                  orderby item.Length descending
+                                  select item).First();
+
+                if (largestMcf.Length > 0)
                 {
-                    mcfFileSizeBytes = mcfFile.Length;
                     dotDDirectoryName = dotDDirectory.Name;
+                    return true;
                 }
             }
 
-            return mcfFileSizeBytes > 0;
+            dotDDirectoryName = string.Empty;
+            return false;
         }
 
         /// <summary>
