@@ -82,10 +82,38 @@ namespace DatasetInfoPlugin
             public DateTime EndTime;
         }
 
+        public struct InstrumentFileInfo
+        {
+            /// <summary>
+            /// Filename
+            /// </summary>
+            public string Filename;
+
+            /// <summary>
+            /// Hash of the file contents
+            /// </summary>
+            public string Hash;
+
+            /// <summary>
+            /// Hash type (typically SHA-1)
+            /// </summary>
+            public string HashType;
+
+            /// <summary>
+            /// File size, in bytes
+            /// </summary>
+            public long FileSize;
+        }
+
         /// <summary>
         /// List of warnings about datasets that start more than 120 minutes after the previous dataset
         /// </summary>
         public List<string> AcqTimeWarnings { get; }
+
+        /// <summary>
+        /// List of instruments files that MSFileInfoScanner computed a SHA-1 hash of the file contents
+        /// </summary>
+        public List<InstrumentFileInfo> InstrumentFiles { get; }
 
         /// <summary>
         /// The keys in this dictionary are KeyValuePairs of [ScanType,ScanFilterText] while the values are the scan count
@@ -98,6 +126,7 @@ namespace DatasetInfoPlugin
         public DatasetInfoXmlMerger()
         {
             AcqTimeWarnings = new List<string>();
+            InstrumentFiles = new List<InstrumentFileInfo>();
             ScanTypes = new Dictionary<KeyValuePair<string, string>, int>();
         }
 
@@ -131,7 +160,7 @@ namespace DatasetInfoPlugin
             // Parse each block of cached XML
             foreach (var cachedInfoXml in cachedDatasetInfoXml)
             {
-                var currentDatasetName = ParseDatasetInfoXml(cachedInfoXml, ScanTypes, ref acqInfo, ref ticInfo, datasetAcqTimes);
+                var currentDatasetName = ParseDatasetInfoXml(cachedInfoXml, ref acqInfo, ref ticInfo, datasetAcqTimes);
 
                 if (string.IsNullOrWhiteSpace(datasetName) && !string.IsNullOrWhiteSpace(currentDatasetName))
                 {
@@ -165,14 +194,12 @@ namespace DatasetInfoPlugin
         /// Parse the XML to populate scanTypes, acqInfo, and ticInfo
         /// </summary>
         /// <param name="cachedInfoXml">XML to parse</param>
-        /// <param name="scanTypes">Scan type stats. Keys in this dictionary are KeyValuePairs of [ScanType,ScanFilterText] while the values are the scan count</param>
         /// <param name="acqInfo">Merged acquisition info</param>
         /// <param name="ticInfo">Merged TIC info</param>
         /// <param name="datasetAcqTimes">Tracks the start and end time for each dataset</param>
         /// <returns>Dataset name</returns>
         private string ParseDatasetInfoXml(
             string cachedInfoXml,
-            IDictionary<KeyValuePair<string, string>, int> scanTypes,
             ref AcquisitionInfo acqInfo,
             ref TicInfo ticInfo,
             IDictionary<string, DatasetAcqTimeInfo> datasetAcqTimes)
@@ -188,6 +215,7 @@ namespace DatasetInfoPlugin
             var datasetName = GetXmlValue(xmlDoc, "DatasetInfo/Dataset", string.Empty);
 
             var scanTypeNodes = xmlDoc.SelectNodes("DatasetInfo/ScanTypes/ScanType");
+
             if (scanTypeNodes != null)
             {
                 foreach (XmlNode node in scanTypeNodes)
@@ -208,13 +236,13 @@ namespace DatasetInfoPlugin
                         scanTypeScanCount = 0;
                     }
 
-                    if (!scanTypes.TryGetValue(scanTypeKey, out var scanCountTotal))
+                    if (!ScanTypes.TryGetValue(scanTypeKey, out var scanCountTotal))
                     {
-                        scanTypes.Add(scanTypeKey, scanTypeScanCount);
+                        ScanTypes.Add(scanTypeKey, scanTypeScanCount);
                     }
                     else
                     {
-                        scanTypes[scanTypeKey] = scanCountTotal + scanTypeScanCount;
+                        ScanTypes[scanTypeKey] = scanCountTotal + scanTypeScanCount;
                     }
                 }
             }
@@ -292,6 +320,37 @@ namespace DatasetInfoPlugin
             acqInfo.CentroidMS2ScansClassifiedAsProfile += GetXmlValue(xmlDoc,
                                                                        "DatasetInfo/AcquisitionInfo/CentroidMS2ScansClassifiedAsProfile", 0);
 
+            var instrumentFileNodes = xmlDoc.SelectNodes("DatasetInfo/AcquisitionInfo/InstrumentFiles/InstrumentFile");
+
+            if (instrumentFileNodes != null)
+            {
+                foreach (XmlNode node in instrumentFileNodes)
+                {
+                    var fileInfo = new InstrumentFileInfo
+                    {
+                        Filename = node.InnerText
+                    };
+
+                    if (node.Attributes != null)
+                    {
+                        fileInfo.Hash = node.Attributes["Hash"].Value;
+                        fileInfo.HashType = node.Attributes["HashType"].Value;
+                        var fileSizeText = node.Attributes["Size"].Value;
+
+                        long.TryParse(fileSizeText, out var fileSize);
+                        fileInfo.FileSize = fileSize;
+                    }
+                    else
+                    {
+                        fileInfo.Hash = string.Empty;
+                        fileInfo.HashType = string.Empty;
+                        fileInfo.FileSize = 0;
+                    }
+
+                    InstrumentFiles.Add(fileInfo);
+                }
+            }
+
             ticInfo.TIC_Max_MS = Math.Max(ticInfo.TIC_Max_MS, GetXmlValue(xmlDoc, "DatasetInfo/TICInfo/TIC_Max_MS", 0.0));
             ticInfo.TIC_Max_MSn = Math.Max(ticInfo.TIC_Max_MSn, GetXmlValue(xmlDoc, "DatasetInfo/TICInfo/TIC_Max_MSn", 0.0));
             ticInfo.BPI_Max_MS = Math.Max(ticInfo.BPI_Max_MS, GetXmlValue(xmlDoc, "DatasetInfo/TICInfo/BPI_Max_MS", 0.0));
@@ -318,7 +377,6 @@ namespace DatasetInfoPlugin
 
         private string CreateDatasetInfoXML(
             string datasetName,
-            Dictionary<KeyValuePair<string, string>, int> scanTypes,
             AcquisitionInfo acqInfo,
             TicInfo ticInfo)
         {
@@ -342,7 +400,7 @@ namespace DatasetInfoPlugin
 
             xWriter.WriteStartElement("ScanTypes");
 
-            foreach (var scanType in scanTypes)
+            foreach (var scanType in ScanTypes)
             {
                 var scanTypeName = scanType.Key.Key;
                 var scanFilterText = scanType.Key.Value;
@@ -388,6 +446,23 @@ namespace DatasetInfoPlugin
                     xWriter.WriteElementString("CentroidMS2ScansClassifiedAsProfile",
                         acqInfo.CentroidMS2ScansClassifiedAsProfile.ToString());
                 }
+            }
+
+            if (InstrumentFiles.Count > 0)
+            {
+                xWriter.WriteStartElement("InstrumentFiles");
+
+                foreach (var instrumentFile in InstrumentFiles)
+                {
+                    xWriter.WriteStartElement("InstrumentFile");
+                    xWriter.WriteAttributeString("Hash", instrumentFile.Hash);
+                    xWriter.WriteAttributeString("HashType", instrumentFile.HashType);
+                    xWriter.WriteAttributeString("Size", instrumentFile.FileSize.ToString());
+                    xWriter.WriteString(instrumentFile.Filename);
+                    xWriter.WriteEndElement(); // InstrumentFile EndElement
+                }
+
+                xWriter.WriteEndElement(); // InstrumentFiles EndElement
             }
 
             xWriter.WriteEndElement(); // AcquisitionInfo EndElement
