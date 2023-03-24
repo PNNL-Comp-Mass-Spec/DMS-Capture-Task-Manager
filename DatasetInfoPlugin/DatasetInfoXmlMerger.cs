@@ -168,13 +168,14 @@ namespace DatasetInfoPlugin
                 }
             }
 
-            // Make sure none of the datasets has a start time more than 120 minutes after the previous datasets end time
+            // Make sure none of the datasets has a start time more than 120 minutes after the previous dataset's end time
             // If it does, the operator likely lumped together unrelated datasets, and therefore the overall dataset stats will be wrong
             var sortedDsAcqTimes = (from item in datasetAcqTimes orderby item.Value.StartTime select item.Value).ToList();
 
             for (var i = 1; i < sortedDsAcqTimes.Count; i++)
             {
                 var spanHours = sortedDsAcqTimes[i].StartTime.Subtract(sortedDsAcqTimes[i - 1].EndTime).TotalHours;
+
                 if (spanHours > DATASET_GAP_THRESHOLD_HOURS)
                 {
                     var warningMsg = string.Format("Dataset {0} starts {1:F1} hours after {2}; the datasets appear unrelated",

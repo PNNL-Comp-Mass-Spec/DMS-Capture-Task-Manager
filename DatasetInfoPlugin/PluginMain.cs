@@ -238,6 +238,14 @@ namespace DatasetInfoPlugin
             mMsFileScanner.Options.CheckCentroidingStatus = true;
             mMsFileScanner.Options.PlotWithPython = true;
 
+            // Debugging aids:
+
+            // Uncomment to disable SHA-1 hashing of instrument files
+            // mMsFileScanner.Options.DisableInstrumentHash = true;
+
+            // Uncomment to skip creating plots
+            // mTaskParams.SetParam("SkipPlots", "true");
+
             // Get the input file or directory name (or names)
             var fileOrDirectoryRelativePaths = GetDataFileOrDirectoryName(
                 datasetDirectoryPath,
@@ -335,7 +343,7 @@ namespace DatasetInfoPlugin
                 !Environment.UserName.StartsWith("svc", StringComparison.OrdinalIgnoreCase);
 
             // Call the file scanner DLL
-            // Typically only call it once, but for Bruker datasets with multiple .D directories, we'll call it once for each .D directory
+            // Typically only call it once, but for Bruker datasets with multiple .d directories, we'll call it once for each .d directory
 
             mErrorOccurred = false;
             mMsg = string.Empty;
@@ -479,6 +487,7 @@ namespace DatasetInfoPlugin
                 }
 
                 var mzMinValidationError = mMsFileScanner.ErrorCode == iMSFileInfoScanner.MSFileScannerErrorCodes.MS2MzMinValidationError;
+
                 if (mzMinValidationError)
                 {
                     mMsg = mMsFileScanner.GetErrorMessage();
@@ -524,7 +533,7 @@ namespace DatasetInfoPlugin
                 // ReSharper disable HeuristicUnreachableCode
                 if (brukerDotDBaf && IGNORE_BRUKER_BAF_ERRORS)
                 {
-                    // 12T_FTICR_B datasets (with .D directories and analysis.baf and/or fid files) sometimes work with MSFileInfoScanner, and sometimes don't
+                    // 12T_FTICR_B datasets (with .d directories and analysis.baf and/or fid files) sometimes work with MSFileInfoScanner, and sometimes don't
                     // The problem is that ProteoWizard doesn't support certain forms of these datasets
                     // In particular, small datasets (lasting just a few seconds) don't work
 
@@ -1069,11 +1078,11 @@ namespace DatasetInfoPlugin
         }
 
         /// <summary>
-        /// Look for .D directories below datasetDirectory
+        /// Look for .d directories below datasetDirectory
         /// Add them to list fileOrDirectoryNames
         /// </summary>
         /// <param name="datasetDirectory">Dataset directory to examine</param>
-        /// <param name="fileOrDirectoryRelativePaths">List to append .D directories to (calling function must initialize)</param>
+        /// <param name="fileOrDirectoryRelativePaths">List to append .d directories to (calling function must initialize)</param>
         private void FindDotDDirectories(DirectoryInfo datasetDirectory, ICollection<string> fileOrDirectoryRelativePaths)
         {
             var looseMatchDotD = mTaskParams.GetParam("LooseMatchDotD", false);
@@ -1081,15 +1090,17 @@ namespace DatasetInfoPlugin
             var searchOption = looseMatchDotD ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
 
             var dotDDirectories = datasetDirectory.GetDirectories("*.d", searchOption);
+
             if (dotDDirectories.Length == 0)
             {
                 return;
             }
 
-            // Look for a .mcf file in each of the .D directories
+            // Look for a .mcf file in each of the .d directories
             foreach (var dotDDirectory in dotDDirectories)
             {
                 var mcfFileExists = LookForMcfFileInDotDDirectory(dotDDirectory, out _);
+
                 if (!mcfFileExists)
                 {
                     continue;
@@ -1115,7 +1126,7 @@ namespace DatasetInfoPlugin
         /// <summary>
         /// Returns the file or directory name list for the specified dataset based on dataset type
         /// Most datasets only have a single dataset file or directory, but FTICR_Imaging datasets
-        /// can have multiple .D directories below a parent directory
+        /// can have multiple .d directories below a parent directory
         /// </summary>
         /// <remarks>
         /// Returns UNKNOWN_FILE_TYPE for instrument types that are not recognized.
@@ -1148,6 +1159,7 @@ namespace DatasetInfoPlugin
             }
 
             rawDataType = InstrumentClassInfo.GetRawDataType(rawDataTypeName);
+
             if (rawDataType == InstrumentClassInfo.RawDataType.Unknown)
             {
                 mMsg = "RawDataType not recognized: " + rawDataTypeName;
@@ -1316,12 +1328,12 @@ namespace DatasetInfoPlugin
                 if (File.Exists(fileOrDirectoryPath))
                 {
                     // File exists
-                    // Even if it is in a .D directory, we will only examine this file
+                    // Even if it is in a .d directory, we will only examine this file
                     return new List<string> { fileOrDirectoryName };
                 }
 
                 // File not found; check for alternative files or directories
-                // This function also looks for .D directories
+                // This function also looks for .d directories
                 var fileOrDirectoryRelativePaths = LookForAlternateFileOrDirectory(datasetDirectory, fileOrDirectoryName);
 
                 if (fileOrDirectoryRelativePaths.Count > 0)
@@ -1337,7 +1349,7 @@ namespace DatasetInfoPlugin
                 if (brukerDotDBaf && datasetDirectory.GetDirectories("*.D", SearchOption.AllDirectories).Length > 0)
                 {
                     mMsg = string.Format(
-                        "analysis.baf not found in the expected .D directory; to include all .D subdirectories, use " +
+                        "analysis.baf not found in the expected .d directory; to include all .D subdirectories, use " +
                         "Exec add_update_job_parameter {0}, 'StepParameters', 'LooseMatchDotD', 'true'",
                         mJob);
 
@@ -1356,7 +1368,7 @@ namespace DatasetInfoPlugin
                     return new List<string> { fileOrDirectoryName };
                 }
 
-                // Look for other .D directories
+                // Look for other .d directories
                 var fileOrDirectoryRelativePaths = new List<string> { fileOrDirectoryName };
                 FindDotDDirectories(datasetDirectory, fileOrDirectoryRelativePaths);
 
@@ -1454,7 +1466,7 @@ namespace DatasetInfoPlugin
 
         /// <summary>
         /// A dataset file was not found
-        /// Look for alternate dataset files, or look for .D directories
+        /// Look for alternate dataset files, or look for .d directories
         /// </summary>
         /// <param name="datasetDirectory"></param>
         /// <param name="initialFileOrDirectoryName"></param>
@@ -1467,6 +1479,7 @@ namespace DatasetInfoPlugin
             foreach (var altExtension in alternateExtensions)
             {
                 var dataFileNamePathAlt = Path.ChangeExtension(initialFileOrDirectoryName, altExtension);
+
                 if (File.Exists(dataFileNamePathAlt))
                 {
                     mMsg = "Data file not found, but ." + altExtension + " file exists";
@@ -1482,15 +1495,16 @@ namespace DatasetInfoPlugin
 
             if (primaryDotDDirectory.Exists)
             {
-                // Look for a .mcf file in the .D directory
+                // Look for a .mcf file in the .d directory
                 var mcfFileExists = LookForMcfFileInDotDDirectory(primaryDotDDirectory, out var dotDDirectoryName);
+
                 if (mcfFileExists)
                 {
                     fileOrDirectoryNames.Add(dotDDirectoryName);
                 }
             }
 
-            // With instrument class BrukerMALDI_Imaging_V2 (e.g. 15T_FTICR_Imaging) we allow multiple .D directories to be captured
+            // With instrument class BrukerMALDI_Imaging_V2 (e.g. 15T_FTICR_Imaging) we allow multiple .d directories to be captured
             // Look for additional directories now
             FindDotDDirectories(datasetDirectory, fileOrDirectoryNames);
 
@@ -1498,10 +1512,10 @@ namespace DatasetInfoPlugin
         }
 
         /// <summary>
-        /// Look for any .mcf file in a Bruker .D directory
+        /// Look for any .mcf file in a Bruker .d directory
         /// </summary>
         /// <param name="dotDDirectory"></param>
-        /// <param name="dotDDirectoryName">Output: name of the .D directory</param>
+        /// <param name="dotDDirectoryName">Output: name of the .d directory</param>
         /// <returns>True if a .mcf file is found</returns>
         private bool LookForMcfFileInDotDDirectory(DirectoryInfo dotDDirectory, out string dotDDirectoryName)
         {
@@ -1600,6 +1614,7 @@ namespace DatasetInfoPlugin
         {
             // Make sure at least one of the PNG files created by MSFileInfoScanner is over 10 KB in size
             var outputDirectory = new DirectoryInfo(currentOutputDirectory);
+
             if (!outputDirectory.Exists)
             {
                 var errMsg = "Output directory not found: " + currentOutputDirectory;
@@ -1638,6 +1653,7 @@ namespace DatasetInfoPlugin
             const int minimumGraphicsSizeKB = 10;
 
             var validGraphics = false;
+
             foreach (var pngFile in pngFiles)
             {
                 if (pngFile.Length >= 1024 * minimumGraphicsSizeKB)

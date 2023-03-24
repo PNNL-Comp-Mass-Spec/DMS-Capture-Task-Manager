@@ -925,7 +925,9 @@ namespace CaptureTaskManager
 
                 // Run the tool plugin
                 mStatusTimer.Enabled = true;
+
                 var toolResult = mCapTool.RunTool();
+
                 mStatusTimer.Enabled = false;
 
                 taskResult = toolResult.CloseoutType;
