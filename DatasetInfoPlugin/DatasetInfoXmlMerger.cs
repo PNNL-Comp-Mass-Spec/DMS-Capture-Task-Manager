@@ -185,10 +185,7 @@ namespace DatasetInfoPlugin
             }
 
             // Create the combined XML
-            var combinedXml = CreateDatasetInfoXML(datasetName, ScanTypes, acqInfo, ticInfo);
-
-            // Return the XML as text
-            return combinedXml;
+            return CreateDatasetInfoXML(datasetName, acqInfo, ticInfo);
         }
 
         /// <summary>
