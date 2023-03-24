@@ -254,7 +254,9 @@ namespace DatasetInfoPlugin
                 out var instrumentClass,
                 out var brukerDotDBaf);
 
-            if (fileOrDirectoryRelativePaths.Count > 0 && fileOrDirectoryRelativePaths.First() == UNKNOWN_FILE_TYPE)
+            var totalDatasetFilesOrDirectories = fileOrDirectoryRelativePaths.Count;
+
+            if (totalDatasetFilesOrDirectories > 0 && fileOrDirectoryRelativePaths.First() == UNKNOWN_FILE_TYPE)
             {
                 // Raw_Data_Type not recognized
                 returnData.CloseoutMsg = mMsg;
@@ -265,7 +267,7 @@ namespace DatasetInfoPlugin
             var rawDataTypeName = InstrumentClassInfo.GetRawDataTypeName(rawDataType);
             var instClass = InstrumentClassInfo.GetInstrumentClassName(instrumentClass);
 
-            if (fileOrDirectoryRelativePaths.Count > 0 && fileOrDirectoryRelativePaths.First() == INVALID_FILE_TYPE)
+            if (totalDatasetFilesOrDirectories > 0 && fileOrDirectoryRelativePaths.First() == INVALID_FILE_TYPE)
             {
                 // DS Info not implemented for this file type
                 returnData.CloseoutMsg = string.Empty;
@@ -280,7 +282,7 @@ namespace DatasetInfoPlugin
                 return returnData;
             }
 
-            if (fileOrDirectoryRelativePaths.Count == 0 || string.IsNullOrEmpty(fileOrDirectoryRelativePaths.First()))
+            if (totalDatasetFilesOrDirectories == 0 || string.IsNullOrEmpty(fileOrDirectoryRelativePaths.First()))
             {
                 // There was a problem with getting the file name; Details reported by called method
                 returnData.CloseoutMsg = mMsg;
@@ -345,17 +347,23 @@ namespace DatasetInfoPlugin
             // Call the file scanner DLL
             // Typically only call it once, but for Bruker datasets with multiple .d directories, we'll call it once for each .d directory
 
-            mErrorOccurred = false;
             mMsg = string.Empty;
 
             var cachedDatasetInfoXML = new List<string>();
             var outputDirectoryNames = new List<string>();
             var primaryFileOrDirectoryProcessed = false;
+
             var nextSubdirectorySuffix = 1;
+            var currentItemNumber = 0;
+            var successCount = 0;
 
             foreach (var datasetFileOrDirectory in fileOrDirectoryRelativePaths)
             {
                 mFailedScanCount = 0;
+                currentItemNumber++;
+
+                // Reset this for each input file or directory
+                mErrorOccurred = false;
 
                 var remoteFileOrDirectoryPath = Path.Combine(datasetDirectoryPath, datasetFileOrDirectory);
 
@@ -363,8 +371,7 @@ namespace DatasetInfoPlugin
                 bool fileCopiedLocally;
 
                 var datasetFile = new FileInfo(remoteFileOrDirectoryPath);
-                if (datasetFile.Exists && string.Equals(datasetFile.Extension, InstrumentClassInfo.DOT_RAW_EXTENSION,
-                                                        StringComparison.OrdinalIgnoreCase))
+                if (datasetFile.Exists && datasetFile.Extension.Equals(InstrumentClassInfo.DOT_RAW_EXTENSION, StringComparison.OrdinalIgnoreCase))
                 {
                     LogMessage("Copying instrument file to local disk: " + datasetFile.FullName, false, false);
 
@@ -391,7 +398,7 @@ namespace DatasetInfoPlugin
                 }
 
                 var currentOutputDirectory = ConstructOutputDirectoryPath(
-                    outputPathBase, datasetFileOrDirectory, fileOrDirectoryRelativePaths.Count,
+                    outputPathBase, datasetFileOrDirectory, totalDatasetFilesOrDirectories,
                     outputDirectoryNames, ref nextSubdirectorySuffix);
 
                 if (string.IsNullOrWhiteSpace(currentOutputDirectory))
@@ -500,24 +507,35 @@ namespace DatasetInfoPlugin
                     returnData.EvalMsg = AppendToComment(returnData.EvalMsg, "MS2MzMinValidationWarning: " + warningMsg);
                 }
 
+                bool validQcGraphics;
+
                 if (successProcessing && qcPlotMode == QCPlottingModes.AllPlots)
                 {
-                    var validQcGraphics = ValidateQCGraphics(currentOutputDirectory, primaryFileOrDirectoryProcessed, returnData);
+                    validQcGraphics = ValidateQCGraphics(currentOutputDirectory, primaryFileOrDirectoryProcessed, returnData);
+
                     if (returnData.CloseoutType != EnumCloseOutType.CLOSEOUT_SUCCESS)
                     {
-                        return returnData;
-                    }
+                        if (totalDatasetFilesOrDirectories == 1 || currentItemNumber == totalDatasetFilesOrDirectories)
+                        {
+                            return returnData;
+                        }
 
-                    if (!validQcGraphics)
-                    {
                         continue;
                     }
+                }
+                else
+                {
+                    validQcGraphics = true;
                 }
 
                 if (successProcessing)
                 {
                     cachedDatasetInfoXML.Add(mMsFileScanner.DatasetInfoXML);
                     primaryFileOrDirectoryProcessed = true;
+
+                    if (validQcGraphics)
+                        successCount++;
+
                     continue;
                 }
 
@@ -547,7 +565,7 @@ namespace DatasetInfoPlugin
                 }
                 // ReSharper restore HeuristicUnreachableCode
 
-                if (primaryFileOrDirectoryProcessed)
+                if (primaryFileOrDirectoryProcessed || totalDatasetFilesOrDirectories > 1 && currentItemNumber < totalDatasetFilesOrDirectories)
                 {
                     // MSFileInfoScanner already processed the primary file or directory
                     // Mention this failure in the EvalMsg but still return success
@@ -611,7 +629,8 @@ namespace DatasetInfoPlugin
             // Merge the dataset info defined in cachedDatasetInfoXML
             // If cachedDatasetInfoXml contains just one item, simply return it
             var datasetXmlMerger = new DatasetInfoXmlMerger();
-            var datasetInfoXML = CombineDatasetInfoXML(datasetXmlMerger, cachedDatasetInfoXML);
+
+            var datasetInfoXML = CombineDatasetInfoXML(datasetXmlMerger, cachedDatasetInfoXML, totalDatasetFilesOrDirectories);
 
             if (cachedDatasetInfoXML.Count > 1)
             {
@@ -622,12 +641,39 @@ namespace DatasetInfoPlugin
             // If any are found, CloseoutMsg is updated
             AcqTimeWarningsReported(datasetXmlMerger, returnData);
 
-            // Call SP cache_dataset_info_xml to store datasetInfoXML in table T_Dataset_Info_XML
-            var success = PostDatasetInfoXml(datasetInfoXML, out var errorMessage);
+            bool success;
+            string errorMessage;
+
+            if (string.IsNullOrWhiteSpace(datasetInfoXML))
+            {
+                success = false;
+                errorMessage = "Dataset info XML is an empty string";
+            }
+            else
+            {
+                // Call SP cache_dataset_info_xml to store datasetInfoXML in table T_Dataset_Info_XML
+                success = PostDatasetInfoXml(datasetInfoXML, out errorMessage);
+            }
+
             if (!success)
             {
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 returnData.CloseoutMsg = AppendToComment(returnData.CloseoutMsg, errorMessage);
+            }
+
+            if (successCount == 0 && returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
+            {
+                if (string.IsNullOrEmpty(mMsg))
+                {
+                    mMsg = "ProcessMSFileOrFolder returned false. Message = " +
+                           mMsFileScanner.GetErrorMessage() +
+                           " returnData code = " + (int)mMsFileScanner.ErrorCode;
+                }
+
+                LogError(mMsg);
+
+                returnData.CloseoutMsg = mMsg;
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
             if (!useLocalOutputDirectory || returnData.CloseoutType != EnumCloseOutType.CLOSEOUT_SUCCESS)
@@ -752,7 +798,31 @@ namespace DatasetInfoPlugin
             }
             catch (Exception ex)
             {
-                LogError("Exception creating the combined _DatasetInfo.xml file for " + mDataset, ex);
+                var msg = "Exception creating the combined _DatasetInfo.xml file for " + mDataset;
+
+                if (System.Net.Dns.GetHostName().StartsWith("WE43320", StringComparison.OrdinalIgnoreCase) &&
+                    !Environment.UserName.StartsWith("svc", StringComparison.OrdinalIgnoreCase))
+                {
+                    LogWarning(msg + ": " + ex.Message);
+
+                    var localFilePath = Path.Combine(mWorkDir, combinedDatasetInfoFilename);
+
+                    try
+                    {
+                        using var xmlWriter = new StreamWriter(new FileStream(localFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                        xmlWriter.WriteLine(datasetInfoXML);
+                    }
+                    catch (Exception ex2)
+                    {
+                        var msg2 = "Exception creating the combined _DatasetInfo.xml file in directory " + mWorkDir;
+                        LogWarning(msg2 + ": " + ex2.Message);
+                    }
+
+                    return;
+                }
+
+                LogError(msg, ex);
             }
 
             try
@@ -919,15 +989,23 @@ namespace DatasetInfoPlugin
         /// </summary>
         /// <param name="datasetXmlMerger">DatasetInfo XML Merger</param>
         /// <param name="cachedDatasetInfoXml">List of cached DatasetInfo XML</param>
+        /// <param name="totalDatasetFilesOrDirectories">Total number of dataset files or input directories</param>
         /// <returns>Merged DatasetInfo XML</returns>
-        private string CombineDatasetInfoXML(DatasetInfoXmlMerger datasetXmlMerger, List<string> cachedDatasetInfoXml)
+        private string CombineDatasetInfoXML(
+            DatasetInfoXmlMerger datasetXmlMerger,
+            List<string> cachedDatasetInfoXml,
+            int totalDatasetFilesOrDirectories)
         {
-            if (cachedDatasetInfoXml.Count == 1)
+            // ReSharper disable once ConvertIfStatementToSwitchStatement
+            if (cachedDatasetInfoXml.Count == 0)
+                return string.Empty;
+
+            if (cachedDatasetInfoXml.Count == 1 && totalDatasetFilesOrDirectories <= 1)
             {
                 return cachedDatasetInfoXml.First();
             }
 
-            return datasetXmlMerger.CombineDatasetInfoXML(mDataset, cachedDatasetInfoXml);
+            return datasetXmlMerger.CombineDatasetInfoXML(mDataset, cachedDatasetInfoXml, totalDatasetFilesOrDirectories);
         }
 
         /// <summary>

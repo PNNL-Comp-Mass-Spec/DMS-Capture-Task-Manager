@@ -135,12 +135,23 @@ namespace DatasetInfoPlugin
         /// </summary>
         /// <param name="datasetName">Dataset Name override</param>
         /// <param name="cachedDatasetInfoXml">List of cached DatasetInfo XML</param>
+        /// <param name="datasetFileOrDirectoryCount">Total number of dataset files or input directories</param>
         /// <returns>Merged DatasetInfo XML</returns>
-        public string CombineDatasetInfoXML(string datasetName, List<string> cachedDatasetInfoXml)
+        public string CombineDatasetInfoXML(
+            string datasetName,
+            List<string> cachedDatasetInfoXml,
+            int datasetFileOrDirectoryCount = 1)
         {
             AcqTimeWarnings.Clear();
 
-            if (cachedDatasetInfoXml.Count == 1)
+            // ReSharper disable once ConvertIfStatementToSwitchStatement
+            if (cachedDatasetInfoXml.Count == 0)
+                return string.Empty;
+
+            // If datasetFileOrDirectoryCount is greater than one but cachedDatasetInfoXml only has one item,
+            // we still need to call ParseDatasetInfoXml() and CreateDatasetInfoXML() to make sure the dataset name is correct
+
+            if (cachedDatasetInfoXml.Count == 1 && datasetFileOrDirectoryCount <= 1)
             {
                 return cachedDatasetInfoXml.First();
             }
