@@ -1106,15 +1106,9 @@ namespace DatasetInfoPlugin
                     continue;
                 }
 
-                string relativeDirectoryPath;
-                if (looseMatchDotD)
-                {
-                    relativeDirectoryPath = dotDDirectory.FullName.Substring(datasetDirectory.FullName.Length + 1);
-                }
-                else
-                {
-                    relativeDirectoryPath = dotDDirectory.Name;
-                }
+                var relativeDirectoryPath = looseMatchDotD
+                    ? dotDDirectory.FullName.Substring(datasetDirectory.FullName.Length + 1)
+                    : dotDDirectory.Name;
 
                 if (!fileOrDirectoryRelativePaths.Contains(relativeDirectoryPath))
                 {
@@ -1473,10 +1467,9 @@ namespace DatasetInfoPlugin
         /// <returns>List of alternative files or directories that were found</returns>
         private List<string> LookForAlternateFileOrDirectory(DirectoryInfo datasetDirectory, string initialFileOrDirectoryName)
         {
-            // Alternate extensions to find
-            var alternateExtensions = new List<string> { "mgf", "mzXML", "mzML" };
+            // Look for .mgf, .mzXML, and .mzML
 
-            foreach (var altExtension in alternateExtensions)
+            foreach (var altExtension in new List<string> { "mgf", "mzXML", "mzML" })
             {
                 var dataFileNamePathAlt = Path.ChangeExtension(initialFileOrDirectoryName, altExtension);
 
