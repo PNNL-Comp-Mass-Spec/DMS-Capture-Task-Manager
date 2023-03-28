@@ -237,12 +237,12 @@ namespace ArchiveVerifyPlugin
         /// Compare the files in archivedFiles to the files in the metadata.txt file
         /// If metadata.txt file is missing, compare to files actually on disk
         /// </summary>
-        /// <param name="archivedFiles"></param>
+        /// <param name="remoteFiles"></param>
         /// <param name="metadataFilePath"></param>
         /// <param name="transactionId">The TransactionID used by the majority of the matching files</param>
         /// <returns>True if all of the files match, false if a mismatch or an error</returns>
         private bool CompareArchiveFilesToExpectedFiles(
-            IReadOnlyCollection<MyEMSLReader.ArchivedFileInfo> archivedFiles,
+            IReadOnlyCollection<MyEMSLReader.ArchivedFileInfo> remoteFiles,
             out string metadataFilePath,
             out long transactionId)
         {
@@ -293,7 +293,7 @@ namespace ArchiveVerifyPlugin
 
                     CompareToMetadataFile(
                         metadataObject,
-                        archivedFiles,
+                        remoteFiles,
                         metadataFile,
                         out var matchCountToMetadata,
                         out var mismatchCountToMetadata,
@@ -364,7 +364,7 @@ namespace ArchiveVerifyPlugin
                 var transactionIdStats = new Dictionary<long, int>();
 
                 CompareArchiveFilesToList(
-                    archivedFiles,
+                    remoteFiles,
                     out var matchCountToDisk,
                     out var mismatchCountToDisk,
                     filePathHashMap,
@@ -406,13 +406,13 @@ namespace ArchiveVerifyPlugin
         /// <summary>
         /// Compare local files to files in MyEMSL
         /// </summary>
-        /// <param name="archivedFiles">Files in MyEMSL</param>
+        /// <param name="remoteFiles">Files in MyEMSL</param>
         /// <param name="matchCount"></param>
         /// <param name="mismatchCount"></param>
         /// <param name="filePathHashMap">Local files; keys are relative file paths (Windows slashes); values are the SHA-1 hash values</param>
         /// <param name="transactionIdStats">Keys are transaction IDs, values are the number of files for each transaction ID</param>
         private void CompareArchiveFilesToList(
-            IReadOnlyCollection<MyEMSLReader.ArchivedFileInfo> archivedFiles,
+            IReadOnlyCollection<MyEMSLReader.ArchivedFileInfo> remoteFiles,
             out int matchCount,
             out int mismatchCount,
             IReadOnlyDictionary<string, string> filePathHashMap,
@@ -424,9 +424,9 @@ namespace ArchiveVerifyPlugin
             // Make sure each of the files in filePathHashMap is present in archivedFiles
             foreach (var metadataFile in filePathHashMap)
             {
-                var matchingArchivedFiles = (from item in archivedFiles where item.RelativePathWindows == metadataFile.Key select item).ToList();
+                var remoteFileCandidates = (from item in remoteFiles where item.RelativePathWindows == metadataFile.Key select item).ToList();
 
-                if (matchingArchivedFiles.Count == 0)
+                if (remoteFileCandidates.Count == 0)
                 {
                     if (mTotalMismatchCount == 0)
                     {
@@ -441,21 +441,23 @@ namespace ArchiveVerifyPlugin
                 }
                 else
                 {
-                    var archiveFile = matchingArchivedFiles.First();
+                    var matchingRemoteFiles = (from item in remoteFileCandidates
+                                               where item.Hash == metadataFile.Value
+                                               select item).ToList();
 
-                    if (archiveFile.Hash == metadataFile.Value)
+                    if (matchingRemoteFiles.Count > 0)
                     {
                         matchCount++;
 
-                        foreach (var archiveFileVersion in matchingArchivedFiles)
+                        foreach (var remoteFileVersion in matchingRemoteFiles)
                         {
-                            if (transactionIdStats.TryGetValue(archiveFileVersion.TransactionID, out var fileCount))
+                            if (transactionIdStats.TryGetValue(remoteFileVersion.TransactionID, out var fileCount))
                             {
-                                transactionIdStats[archiveFileVersion.TransactionID] = fileCount + 1;
+                                transactionIdStats[remoteFileVersion.TransactionID] = fileCount + 1;
                             }
                             else
                             {
-                                transactionIdStats.Add(archiveFileVersion.TransactionID, 1);
+                                transactionIdStats.Add(remoteFileVersion.TransactionID, 1);
                             }
                         }
                     }
@@ -468,8 +470,10 @@ namespace ArchiveVerifyPlugin
 
                         mTotalMismatchCount++;
 
+                        var remoteFile = remoteFileCandidates.First();
+
                         LogError(" ... file mismatch for {0}; MyEMSL reports {1} but expecting {2}",
-                            archiveFile.RelativePathWindows, archiveFile.Hash, metadataFile.Value);
+                            remoteFile.RelativePathWindows, remoteFile.Hash, metadataFile.Value);
 
                         mismatchCount++;
                     }
@@ -481,14 +485,14 @@ namespace ArchiveVerifyPlugin
         /// Compare the files that MyEMSL is tracking for this dataset to the files in the metadata file
         /// </summary>
         /// <param name="metadataObject"></param>
-        /// <param name="archivedFiles">Files in MyEMSL</param>
+        /// <param name="remoteFiles">Files in MyEMSL</param>
         /// <param name="metadataFileInfo"></param>
         /// <param name="matchCount"></param>
         /// <param name="mismatchCount"></param>
         /// <param name="transactionId">The TransactionID used by the majority of the matching files</param>
         private void CompareToMetadataFile(
             DMSMetadataObject metadataObject,
-            IReadOnlyCollection<MyEMSLReader.ArchivedFileInfo> archivedFiles,
+            IReadOnlyCollection<MyEMSLReader.ArchivedFileInfo> remoteFiles,
             FileSystemInfo metadataFileInfo,
             out int matchCount,
             out int mismatchCount,
@@ -580,7 +584,7 @@ namespace ArchiveVerifyPlugin
             }
 
             CompareArchiveFilesToList(
-                archivedFiles,
+                remoteFiles,
                 out matchCount,
                 out mismatchCount,
                 filePathHashMap,
@@ -940,7 +944,7 @@ namespace ArchiveVerifyPlugin
             {
                 var reader = new MyEMSLReader.Reader
                 {
-                    IncludeAllRevisions = false,
+                    IncludeAllRevisions = true,
                     ReportMetadataURLs = mTraceMode || mDebugLevel >= 5,
                     TraceMode = mTraceMode,
                     UseTestInstance = false,
@@ -963,6 +967,7 @@ namespace ArchiveVerifyPlugin
 
                 // Find files tracked by MyEMSL for this dataset
                 var remoteFiles = reader.FindFilesByDatasetID(mDatasetID, subDir);
+
                 if (remoteFiles.Count == 0)
                 {
                     if (mTotalMismatchCount == 0)
