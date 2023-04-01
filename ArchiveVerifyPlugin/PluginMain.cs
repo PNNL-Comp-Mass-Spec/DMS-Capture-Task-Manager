@@ -41,7 +41,7 @@ namespace ArchiveVerifyPlugin
             // Do not call StoreToolVersionInfo to store the version info in the database
             // Not required since the ArchiveVerify plugin uses components whose version was
             // already logged by the DatasetArchive plugin, and we don't need to make the
-            // additional database call to set_step_task_tool_version
+            // additional database call to set_ctm_step_task_tool_version
 
             var writeToLog = mDebugLevel >= 4;
             LogDebug("Verifying files in MyEMSL for dataset '" + mDataset + "'", writeToLog);
@@ -131,7 +131,7 @@ namespace ArchiveVerifyPlugin
                 LogMessage("MyEMSL verification successful for job " + mJob + ", dataset " + mDataset);
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
 
-                // Note that stored procedure set_step_task_complete will update MyEMSL State values if mRetData.EvalCode = 5
+                // Note that stored procedure set_ctm_step_task_complete will update MyEMSL State values if mRetData.EvalCode = 5
                 mRetData.EvalCode = EnumEvalCode.EVAL_CODE_VERIFIED_IN_MYEMSL;
             }
             else

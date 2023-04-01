@@ -24,12 +24,12 @@ namespace CaptureTaskManager
         protected const int RET_VAL_OK = 0;
 
         /// <summary>
-        /// Return value for request_step_task on SQL Server
+        /// Return value for request_ctm_step_task on SQL Server
         /// </summary>
         protected const int RET_VAL_TASK_NOT_AVAILABLE = 53000;
 
         /// <summary>
-        /// Return code for request_step_task on PostgreSQL
+        /// Return code for request_ctm_step_task on PostgreSQL
         /// </summary>
         /// <remarks>
         /// The actual return code is 'U5301' but Conversion.GetReturnCodeValue() converts this to integer 5301
@@ -167,7 +167,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Fill string dictionary with parameter values
         /// </summary>
-        /// <param name="parameters">Result table from call to request_step_task</param>
+        /// <param name="parameters">Result table from call to request_ctm_step_task</param>
         /// <returns>True if successful, false if an error</returns>
         protected virtual bool FillParamDict(List<List<string>> parameters)
         {

@@ -96,7 +96,7 @@ namespace DatasetArchivePlugin
 
             if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS && mSubmittedToMyEMSL)
             {
-                // Note that stored procedure set_step_task_complete will update MyEMSL State values if returnData.EvalCode is 4 or 7
+                // Note that stored procedure set_ctm_step_task_complete will update MyEMSL State values if returnData.EvalCode is 4 or 7
                 if (mMyEMSLAlreadyUpToDate)
                 {
                     returnData.EvalCode = EnumEvalCode.EVAL_CODE_MYEMSL_IS_ALREADY_UP_TO_DATE;
