@@ -35,7 +35,7 @@ namespace DatasetArchivePlugin
 
         private const string LARGE_DATASET_UPLOAD_ERROR = "Failure uploading a large amount of data; manual reset required";
 
-        private const string SP_NAME_MAKE_NEW_ARCHIVE_UPDATE_JOB = "make_new_archive_update_task";
+        private const string SP_NAME_MAKE_NEW_ARCHIVE_UPDATE_TASK = "make_new_archive_update_task";
 
         private readonly IMgrParams mMgrParams;
         protected readonly ITaskParams mTaskParams;
@@ -188,7 +188,7 @@ namespace DatasetArchivePlugin
             {
                 // Setup for execution of the stored procedure
                 var dbTools = mCaptureDbProcedureExecutor;
-                var cmd = dbTools.CreateCommand(SP_NAME_MAKE_NEW_ARCHIVE_UPDATE_JOB, CommandType.StoredProcedure);
+                var cmd = dbTools.CreateCommand(SP_NAME_MAKE_NEW_ARCHIVE_UPDATE_TASK, CommandType.StoredProcedure);
 
                 dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
                 dbTools.AddParameter(cmd, "@datasetName", SqlType.VarChar, 128, mDatasetName);
