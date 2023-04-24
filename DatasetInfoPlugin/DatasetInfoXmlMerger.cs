@@ -20,6 +20,7 @@ namespace DatasetInfoPlugin
             public int ScanCount;
             public int ScanCountMS;
             public int ScanCountMSn;
+            public int ScanCountDIA;
             public double ElutionTimeMax;
             public double AcqTimeMinutes;
             public DateTime StartTime;
@@ -37,6 +38,7 @@ namespace DatasetInfoPlugin
                 ScanCount = 0;
                 ScanCountMS = 0;
                 ScanCountMSn = 0;
+                ScanCountDIA = 0;
                 ElutionTimeMax = 0;
                 AcqTimeMinutes = 0;
                 StartTime = DateTime.MinValue;
@@ -263,8 +265,11 @@ namespace DatasetInfoPlugin
 
             var currentEntryScanCountMS = GetXmlValue(xmlDoc, "DatasetInfo/AcquisitionInfo/ScanCountMS", 0);
             var currentEntryScanCountMSn = GetXmlValue(xmlDoc, "DatasetInfo/AcquisitionInfo/ScanCountMSn", 0);
+            var currentEntryScanCountDIA = GetXmlValue(xmlDoc, "DatasetInfo/AcquisitionInfo/ScanCountDIA", 0);
+
             acqInfo.ScanCountMS += currentEntryScanCountMS;
             acqInfo.ScanCountMSn += currentEntryScanCountMSn;
+            acqInfo.ScanCountDIA += currentEntryScanCountDIA;
 
             var elutionTimeMax = GetXmlValue(xmlDoc, "DatasetInfo/AcquisitionInfo/Elution_Time_Max", 0.0);
             if (elutionTimeMax > acqInfo.ElutionTimeMax)
@@ -324,10 +329,11 @@ namespace DatasetInfoPlugin
             acqInfo.CentroidScanCountMS1 += GetXmlValue(xmlDoc, "DatasetInfo/AcquisitionInfo/CentroidScanCountMS1", 0);
             acqInfo.CentroidScanCountMS2 += GetXmlValue(xmlDoc, "DatasetInfo/AcquisitionInfo/CentroidScanCountMS2", 0);
 
-            acqInfo.CentroidMS1ScansClassifiedAsProfile += GetXmlValue(xmlDoc,
-                                                                       "DatasetInfo/AcquisitionInfo/CentroidMS1ScansClassifiedAsProfile", 0);
-            acqInfo.CentroidMS2ScansClassifiedAsProfile += GetXmlValue(xmlDoc,
-                                                                       "DatasetInfo/AcquisitionInfo/CentroidMS2ScansClassifiedAsProfile", 0);
+            acqInfo.CentroidMS1ScansClassifiedAsProfile +=
+                GetXmlValue(xmlDoc,"DatasetInfo/AcquisitionInfo/CentroidMS1ScansClassifiedAsProfile", 0);
+
+            acqInfo.CentroidMS2ScansClassifiedAsProfile +=
+                GetXmlValue(xmlDoc,"DatasetInfo/AcquisitionInfo/CentroidMS2ScansClassifiedAsProfile", 0);
 
             var instrumentFileNodes = xmlDoc.SelectNodes("DatasetInfo/AcquisitionInfo/InstrumentFiles/InstrumentFile");
 
@@ -430,8 +436,9 @@ namespace DatasetInfoPlugin
 
             xWriter.WriteElementString("ScanCountMS", acqInfo.ScanCountMS.ToString());
             xWriter.WriteElementString("ScanCountMSn", acqInfo.ScanCountMSn.ToString());
-            xWriter.WriteElementString("Elution_Time_Max", acqInfo.ElutionTimeMax.ToString("0.00"));
+            xWriter.WriteElementString("ScanCountDIA", acqInfo.ScanCountDIA.ToString());
 
+            xWriter.WriteElementString("Elution_Time_Max", acqInfo.ElutionTimeMax.ToString("0.00"));
             xWriter.WriteElementString("AcqTimeMinutes", acqInfo.AcqTimeMinutes.ToString("0.00"));
             xWriter.WriteElementString("StartTime", acqInfo.StartTime.ToString("yyyy-MM-dd hh:mm:ss tt"));
             xWriter.WriteElementString("EndTime", acqInfo.EndTime.ToString("yyyy-MM-dd hh:mm:ss tt"));
