@@ -839,6 +839,30 @@ namespace DatasetInfoPlugin
                 htmlWriter.WriteLine("<html>");
                 htmlWriter.WriteLine("<head>");
                 htmlWriter.WriteLine("  <title>" + mDataset + "</title>");
+                htmlWriter.WriteLine("  <style>");
+                htmlWriter.WriteLine("     table.DataTable {");
+                htmlWriter.WriteLine("       margin: 10px 5px 5px 5px;");
+                htmlWriter.WriteLine("       border: 1px solid black;");
+                htmlWriter.WriteLine("       border-collapse: collapse;");
+                htmlWriter.WriteLine("     }");
+                htmlWriter.WriteLine();
+                htmlWriter.WriteLine("     th.DataHead {");
+                htmlWriter.WriteLine("       border: 1px solid black;");
+                htmlWriter.WriteLine("       padding: 2px 4px 2px 2px; ");
+                htmlWriter.WriteLine("       text-align: left;");
+                htmlWriter.WriteLine("     }");
+                htmlWriter.WriteLine();
+                htmlWriter.WriteLine("     td.DataCell {");
+                htmlWriter.WriteLine("       border: 1px solid black;");
+                htmlWriter.WriteLine("       padding: 2px 4px 2px 4px;");
+                htmlWriter.WriteLine("     }");
+                htmlWriter.WriteLine();
+                htmlWriter.WriteLine("     td.DataCentered {");
+                htmlWriter.WriteLine("       border: 1px solid black;");
+                htmlWriter.WriteLine("       padding: 2px 4px 2px 4px;");
+                htmlWriter.WriteLine("       text-align: center;");
+                htmlWriter.WriteLine("     }");
+                htmlWriter.WriteLine("  </style>");
                 htmlWriter.WriteLine("</head>");
                 htmlWriter.WriteLine();
                 htmlWriter.WriteLine("<body>");
@@ -946,15 +970,15 @@ namespace DatasetInfoPlugin
                 htmlWriter.WriteLine("      <td align=\"right\">Combined Stats:</td>");
                 // ReSharper disable once StringLiteralTypo
                 htmlWriter.WriteLine("      <td valign=\"middle\">");
-                htmlWriter.WriteLine("        <table border=\"1\">");
-                htmlWriter.WriteLine("          <tr><th>Scan Type</th><th>Scan Count</th><th>Scan Filter Text</th></tr>");
+                htmlWriter.WriteLine("        <table class=\"DataTable\">");
+                htmlWriter.WriteLine("          <tr><th class=\"DataHead\">Scan Type</th><th class=\"DataHead\">Scan Count</th><th class=\"DataHead\">Scan Filter Text</th></tr>");
 
                 foreach (var item in datasetXmlMerger.ScanTypes)
                 {
                     var scanTypeName = item.Key.Key;
                     var scanCount = item.Value;
 
-                    htmlWriter.WriteLine("          <tr><td>" + scanTypeName + "</td><td align=\"center\">" + scanCount + "</td><td></td></tr>");
+                    htmlWriter.WriteLine("          <tr><td class=\"DataCell\">" + scanTypeName + "</td><td class=\"DataCentered\">" + scanCount + "</td><td class=\"DataCell\"</td></tr>");
                 }
 
                 htmlWriter.WriteLine("        </table>");
