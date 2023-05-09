@@ -690,7 +690,7 @@ namespace CaptureTaskManager
                 return true;
             }
 
-            if (resCode != 0)
+            if (resCode != 0 && returnCode == 0)
             {
                 LogError("ExecuteSP() reported result code {0} storing tool version for current processing step, job {1}", resCode, mJob);
                 return false;
@@ -1010,7 +1010,7 @@ namespace CaptureTaskManager
                 return true;
             }
 
-            if (resCode != 0)
+            if (resCode != 0 && returnCode == 0)
             {
                 LogError("ExecuteSP() reported result code {0} calling stored procedure {1}, job {2}", resCode, SP_NAME, mJob);
                 return false;

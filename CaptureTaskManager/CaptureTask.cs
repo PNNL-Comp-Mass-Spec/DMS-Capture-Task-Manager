@@ -394,7 +394,7 @@ namespace CaptureTaskManager
                 return;
             }
 
-            if (resCode != 0)
+            if (resCode != 0 && returnCode == 0)
             {
                 LogError("Error " + resCode + " calling stored procedure " + SP_NAME_REPORT_IDLE);
                 return;
@@ -447,7 +447,7 @@ namespace CaptureTaskManager
                     return true;
                 }
 
-                if (resCode != 0)
+                if (resCode != 0 && returnCode == 0)
                 {
                     LogError("ExecuteSP() reported result code {0} setting capture task complete, job {1}", resCode, job);
                     return false;
