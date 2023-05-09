@@ -857,8 +857,8 @@ namespace DatasetQualityPlugin
                 var cmd = dbTools.CreateCommand(STORE_QUAMETER_RESULTS_SP_NAME, CommandType.StoredProcedure);
 
                 dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
-                dbTools.AddParameter(cmd, "@DatasetID", SqlType.Int).Value = datasetID;
-                dbTools.AddParameter(cmd, "@ResultsXML", SqlType.XML).Value = xmlResultsClean;
+                dbTools.AddParameter(cmd, "@datasetID", SqlType.Int).Value = datasetID;
+                dbTools.AddParameter(cmd, "@resultsXML", SqlType.XML).Value = xmlResultsClean;
 
                 var resultCode = dbTools.ExecuteSP(cmd, MAX_RETRY_COUNT, SEC_BETWEEN_RETRIES);
 

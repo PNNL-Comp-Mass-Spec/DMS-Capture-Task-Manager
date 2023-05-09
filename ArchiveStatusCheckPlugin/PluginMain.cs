@@ -514,7 +514,7 @@ namespace ArchiveStatusCheckPlugin
                 var cmd = dbTools.CreateCommand(SP_NAME, CommandType.StoredProcedure);
 
                 dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
-                dbTools.AddParameter(cmd, "@DatasetID", SqlType.Int).Value = mDatasetID;
+                dbTools.AddParameter(cmd, "@datasetID", SqlType.Int).Value = mDatasetID;
                 dbTools.AddParameter(cmd, "@statusNumList", SqlType.VarChar, 1024, statusNums);
                 dbTools.AddParameter(cmd, "@ingestStepsCompleted", SqlType.TinyInt).Value = ingestStepsCompleted;
                 dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
@@ -554,7 +554,7 @@ namespace ArchiveStatusCheckPlugin
 
                 dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
                 dbTools.AddParameter(cmd, "@datasetID", SqlType.Int).Value = mDatasetID;
-                dbTools.AddParameter(cmd, "@StatusNumList", SqlType.VarChar, 1024, statusNums);
+                dbTools.AddParameter(cmd, "@statusNumList", SqlType.VarChar, 1024, statusNums);
                 dbTools.AddParameter(cmd, "@statusURIList", SqlType.VarChar, 4000, statusURIs);
                 dbTools.AddParameter(cmd, "@ingestStepsCompleted", SqlType.TinyInt).Value = ingestStepsCompleted;
                 dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);

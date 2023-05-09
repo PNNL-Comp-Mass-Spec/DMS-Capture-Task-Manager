@@ -213,9 +213,9 @@ namespace CaptureTaskManager
 
                 var cmd = dbTools.CreateCommand(SP_NAME_REPORT_MGR_CLEANUP, CommandType.StoredProcedure);
 
-                dbTools.AddParameter(cmd, "@ManagerName", SqlType.VarChar, 128, mManagerName);
-                dbTools.AddParameter(cmd, "@State", SqlType.Int).Value = managerCleanupActionCode;
-                dbTools.AddParameter(cmd, "@FailureMsg", SqlType.VarChar, 512, failureMessage);
+                dbTools.AddParameter(cmd, "@managerName", SqlType.VarChar, 128, mManagerName);
+                dbTools.AddParameter(cmd, "@state", SqlType.Int).Value = managerCleanupActionCode;
+                dbTools.AddParameter(cmd, "@failureMsg", SqlType.VarChar, 512, failureMessage);
                 dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
 
                 // Execute the SP

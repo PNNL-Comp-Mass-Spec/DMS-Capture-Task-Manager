@@ -237,8 +237,8 @@ namespace CaptureTaskManager
                 dbTools.AddParameter(cmd, "@jobNumber", SqlType.Int, ParameterDirection.InputOutput);
                 var messageParam = dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
                 dbTools.AddTypedParameter(cmd, "@infoOnly", SqlType.TinyInt, value: 0);
-                dbTools.AddParameter(cmd, "@ManagerVersion", SqlType.VarChar, 128, appVersion ?? "(unknown version)");
-                dbTools.AddTypedParameter(cmd, "@JobCountToPreview", SqlType.Int, value: 10);
+                dbTools.AddParameter(cmd, "@managerVersion", SqlType.VarChar, 128, appVersion ?? "(unknown version)");
+                dbTools.AddTypedParameter(cmd, "@jobCountToPreview", SqlType.Int, value: 10);
                 var returnParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.InputOutput);
 
                 LogDebug("CaptureTask.RequestTaskDetailed(), connection string: " + mConnStr);
