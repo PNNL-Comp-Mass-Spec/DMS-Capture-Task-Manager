@@ -197,7 +197,7 @@ namespace DatasetArchivePlugin
                     return;
                 }
 
-                LogError("Error storing MyEMSL Upload Stats, return code " + (string)returnParam.Value);
+                LogError("Error storing MyEMSL Upload Stats, return code " + returnParam.Value.CastDBVal<string>());
             }
             catch (Exception ex)
             {

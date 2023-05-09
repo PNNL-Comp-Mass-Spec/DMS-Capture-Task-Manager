@@ -697,7 +697,7 @@ namespace CaptureTaskManager
             }
 
             LogError("Stored procedure {0} reported return code {1}, job {2}",
-                SP_NAME_SET_TASK_TOOL_VERSION, (string)returnCodeParam.Value, mJob);
+                SP_NAME_SET_TASK_TOOL_VERSION, returnCodeParam.Value.CastDBVal<string>(), mJob);
 
             return false;
         }
@@ -1017,7 +1017,7 @@ namespace CaptureTaskManager
             }
 
             LogError("Stored procedure {0} reported return code {1}, job {2}",
-                SP_NAME, (string)returnCodeParam.Value, mJob);
+                SP_NAME, returnCodeParam.Value.CastDBVal<string>(), mJob);
 
             return false;
         }

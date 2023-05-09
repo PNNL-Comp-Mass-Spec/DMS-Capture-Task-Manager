@@ -261,11 +261,12 @@ namespace CaptureTaskManager
                         return EnumRequestTaskResult.NoTaskFound;
                     }
 
-                    var message = string.IsNullOrWhiteSpace((string)messageParam.Value) ? "Unknown error" : (string)messageParam.Value;
+                    var outputMessage = messageParam.Value.CastDBVal<string>();
+                    var message = string.IsNullOrWhiteSpace(outputMessage) ? "Unknown error" : outputMessage;
 
                     // The return code was not an empty string, which indicates an error
                     LogError("CaptureTask.RequestTaskDetailed(), SP execution has return code {0}; Message text: {1}",
-                        (string)returnCodeParam.Value,
+                        returnCodeParam.Value.CastDBVal<string>(),
                         message);
 
                     return EnumRequestTaskResult.ResultError;
@@ -302,7 +303,8 @@ namespace CaptureTaskManager
 
                     default:
                         // There was an SP error
-                        var message = string.IsNullOrWhiteSpace((string)messageParam.Value) ? "Unknown error" : (string)messageParam.Value;
+                        var outputMessage = messageParam.Value.CastDBVal<string>();
+                        var message = string.IsNullOrWhiteSpace(outputMessage) ? "Unknown error" : outputMessage;
 
                         LogError("CaptureTask.RequestTaskDetailed(), ExecuteSPData returned {0}; message: {1} ", resCode, message);
                         outcome = EnumRequestTaskResult.ResultError;
@@ -396,11 +398,11 @@ namespace CaptureTaskManager
 
             if (resCode != 0 && returnCode == 0)
             {
-                LogError("Error " + resCode + " calling stored procedure " + SP_NAME_REPORT_IDLE);
+                LogError("ExecuteSP() reported result code {0} calling {1}", resCode, SP_NAME_REPORT_IDLE);
                 return;
             }
 
-            LogError("Stored procedure " + SP_NAME_REPORT_IDLE + " reported return code " + returnCode);
+            LogError("Stored procedure {0} reported return code {1}", SP_NAME_REPORT_IDLE, returnCode);
         }
 
         /// <summary>
@@ -454,7 +456,7 @@ namespace CaptureTaskManager
                 }
 
                 LogError("Stored procedure {0} reported return code {1}, job {2}",
-                    SP_NAME_SET_COMPLETE, (string)returnCodeParam.Value, job);
+                    SP_NAME_SET_COMPLETE, returnCodeParam.Value.CastDBVal<string>(), job);
 
                 return false;
             }

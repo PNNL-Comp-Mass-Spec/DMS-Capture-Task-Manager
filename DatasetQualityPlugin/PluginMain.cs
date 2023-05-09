@@ -875,7 +875,7 @@ namespace DatasetQualityPlugin
 
                 mRetData.CloseoutMsg = string.Format(
                     "Error storing Quameter Results in database, {0} returned {1}",
-                    STORE_QUAMETER_RESULTS_SP_NAME, (string)returnParam.Value);
+                    STORE_QUAMETER_RESULTS_SP_NAME, returnParam.Value.CastDBVal<string>());
 
                 LogError(mRetData.CloseoutMsg);
                 return false;

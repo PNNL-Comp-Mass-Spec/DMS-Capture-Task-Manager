@@ -223,11 +223,12 @@ namespace DatasetArchivePlugin
                     }
                     else
                     {
-                        var message = string.IsNullOrWhiteSpace((string)messageParam.Value) ? "Unknown error" : (string)messageParam.Value;
+                        var outputMessage = messageParam.Value.CastDBVal<string>();
+                        var message = string.IsNullOrWhiteSpace(outputMessage) ? "Unknown error" : outputMessage;
 
                         LogTools.LogWarning(
                             "Unable to create archive update job for {0}; stored procedure returned resultCode {1}; message: {2}",
-                            datasetAndDirectory, (string)returnParam.Value, message);
+                            datasetAndDirectory, returnParam.Value.CastDBVal<string>(), message);
                     }
                 }
 

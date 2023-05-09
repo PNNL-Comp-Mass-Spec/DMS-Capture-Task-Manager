@@ -531,11 +531,12 @@ namespace ArchiveStatusCheckPlugin
                     return;
                 }
 
-                var message = string.IsNullOrWhiteSpace((string)messageParam.Value) ? "Unknown error" : (string)messageParam.Value;
+                var outputMessage = messageParam.Value.CastDBVal<string>();
+                var message = string.IsNullOrWhiteSpace(outputMessage) ? "Unknown error" : outputMessage;
 
                 LogError(
                     "Error {0} calling stored procedure {1}, job {2}: {3}",
-                    (string)returnParam.Value, SP_NAME, mJob, message);
+                    returnParam.Value.CastDBVal<string>(), SP_NAME, mJob, message);
             }
             catch (Exception ex)
             {
@@ -580,11 +581,12 @@ namespace ArchiveStatusCheckPlugin
                     return;
                 }
 
-                var message = string.IsNullOrWhiteSpace((string)messageParam.Value) ? "Unknown error" : (string)messageParam.Value;
+                var outputMessage = messageParam.Value.CastDBVal<string>();
+                var message = string.IsNullOrWhiteSpace(outputMessage) ? "Unknown error" : outputMessage;
 
                 LogError(
                     "Error {0} calling stored procedure {1}, job {2}: {3}",
-                    (string)returnParam.Value, SP_NAME, mJob, message);
+                    returnParam.Value.CastDBVal<string>(), SP_NAME, mJob, message);
             }
             catch (Exception ex)
             {
