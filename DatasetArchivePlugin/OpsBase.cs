@@ -200,7 +200,7 @@ namespace DatasetArchivePlugin
                 dbTools.AddTypedParameter(cmd, "@pushDatasetToMyEMSL", SqlType.TinyInt, value: 1);
                 dbTools.AddTypedParameter(cmd, "@pushDatasetRecursive", SqlType.TinyInt, value: 1);
                 dbTools.AddTypedParameter(cmd, "@infoOnly", SqlType.TinyInt, value: 0);
-                dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
+                var messageParam = dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
 
                 var successCount = 0;
                 foreach (var subdirectoryName in subdirectoryNames)
@@ -223,8 +223,11 @@ namespace DatasetArchivePlugin
                     }
                     else
                     {
-                        LogTools.LogWarning("Unable to create archive update job for {0}; stored procedure returned resultCode {1}",
-                            datasetAndDirectory, (string)returnParam.Value);
+                        var message = string.IsNullOrWhiteSpace((string)messageParam.Value) ? "Unknown error" : (string)messageParam.Value;
+
+                        LogTools.LogWarning(
+                            "Unable to create archive update job for {0}; stored procedure returned resultCode {1}; message: {2}",
+                            datasetAndDirectory, (string)returnParam.Value, message);
                     }
                 }
 

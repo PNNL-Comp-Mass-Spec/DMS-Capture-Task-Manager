@@ -261,10 +261,12 @@ namespace CaptureTaskManager
                         return EnumRequestTaskResult.NoTaskFound;
                     }
 
+                    var message = string.IsNullOrWhiteSpace((string)messageParam.Value) ? "Unknown error" : (string)messageParam.Value;
+
                     // The return code was not an empty string, which indicates an error
                     LogError("CaptureTask.RequestTaskDetailed(), SP execution has return code {0}; Message text: {1}",
                         (string)returnCodeParam.Value,
-                        (string)messageParam.Value);
+                        message);
 
                     return EnumRequestTaskResult.ResultError;
                 }
@@ -300,7 +302,9 @@ namespace CaptureTaskManager
 
                     default:
                         // There was an SP error
-                        LogError("CaptureTask.RequestTaskDetailed(), ExecuteSPData returned {0}; message: {1} ", resCode, (string)messageParam.Value);
+                        var message = string.IsNullOrWhiteSpace((string)messageParam.Value) ? "Unknown error" : (string)messageParam.Value;
+
+                        LogError("CaptureTask.RequestTaskDetailed(), ExecuteSPData returned {0}; message: {1} ", resCode, message);
                         outcome = EnumRequestTaskResult.ResultError;
                         break;
                 }

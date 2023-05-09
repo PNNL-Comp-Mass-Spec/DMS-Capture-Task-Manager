@@ -520,7 +520,7 @@ namespace ArchiveStatusCheckPlugin
                 dbTools.AddParameter(cmd, "@datasetID", SqlType.Int).Value = mDatasetID;
                 dbTools.AddParameter(cmd, "@statusNumList", SqlType.VarChar, 1024, statusNums);
                 dbTools.AddParameter(cmd, "@ingestStepsCompleted", SqlType.TinyInt).Value = ingestStepsCompleted;
-                dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
+                var messageParam = dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
 
                 mCaptureDbProcedureExecutor.ExecuteSP(cmd, 2);
 
@@ -531,7 +531,11 @@ namespace ArchiveStatusCheckPlugin
                     return;
                 }
 
-                LogError("Error calling stored procedure {0}, job {1}: {2}", SP_NAME, mJob, (string)returnParam.Value);
+                var message = string.IsNullOrWhiteSpace((string)messageParam.Value) ? "Unknown error" : (string)messageParam.Value;
+
+                LogError(
+                    "Error {0} calling stored procedure {1}, job {2}: {3}",
+                    (string)returnParam.Value, SP_NAME, mJob, message);
             }
             catch (Exception ex)
             {
@@ -558,14 +562,14 @@ namespace ArchiveStatusCheckPlugin
                 var cmd = dbTools.CreateCommand(SP_NAME, CommandType.StoredProcedure);
 
                 // Define parameter for procedure's return value
-                // If querying a Postgres DB, mPipelineDBProcedureExecutor will auto-change "@return" to "_returnCode"
+                // If querying a Postgres DB, dbTools will auto-change "@return" to "_returnCode"
                 var returnParam = dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
 
                 dbTools.AddParameter(cmd, "@datasetID", SqlType.Int).Value = mDatasetID;
                 dbTools.AddParameter(cmd, "@statusNumList", SqlType.VarChar, 1024, statusNums);
                 dbTools.AddParameter(cmd, "@statusURIList", SqlType.VarChar, 4000, statusURIs);
                 dbTools.AddParameter(cmd, "@ingestStepsCompleted", SqlType.TinyInt).Value = ingestStepsCompleted;
-                dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
+                var messageParam = dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
 
                 mCaptureDbProcedureExecutor.ExecuteSP(cmd, 2);
 
@@ -576,7 +580,11 @@ namespace ArchiveStatusCheckPlugin
                     return;
                 }
 
-                LogError("Error calling stored procedure {0}, job {1}: {2}", SP_NAME, mJob, (string)returnParam.Value);
+                var message = string.IsNullOrWhiteSpace((string)messageParam.Value) ? "Unknown error" : (string)messageParam.Value;
+
+                LogError(
+                    "Error {0} calling stored procedure {1}, job {2}: {3}",
+                    (string)returnParam.Value, SP_NAME, mJob, message);
             }
             catch (Exception ex)
             {
