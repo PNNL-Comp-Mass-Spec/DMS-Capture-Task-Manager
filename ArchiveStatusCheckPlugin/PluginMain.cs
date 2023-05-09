@@ -514,7 +514,7 @@ namespace ArchiveStatusCheckPlugin
                 var cmd = dbTools.CreateCommand(SP_NAME, CommandType.StoredProcedure);
 
                 // Define parameter for procedure's return value
-                // If querying a Postgres DB, mPipelineDBProcedureExecutor will auto-change "@return" to "_returnCode"
+                // If querying a Postgres DB, dbTools will auto-change "@return" to "_returnCode"
                 var returnParam = dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
 
                 dbTools.AddParameter(cmd, "@datasetID", SqlType.Int).Value = mDatasetID;

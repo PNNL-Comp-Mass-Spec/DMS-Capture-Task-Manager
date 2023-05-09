@@ -170,7 +170,7 @@ namespace DatasetArchivePlugin
                 var testInstanceFlag = usedTestInstance ? (byte)1 : (byte)0;
 
                 // Define parameter for procedure's return value
-                // If querying a Postgres DB, mPipelineDBProcedureExecutor will auto-change "@return" to "_returnCode"
+                // If querying a Postgres DB, dbTools will auto-change "@return" to "_returnCode"
                 var returnParam = dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
 
                 dbTools.AddParameter(cmd, "@job", SqlType.Int).Value = mTaskParams.GetParam("Job", 0);
