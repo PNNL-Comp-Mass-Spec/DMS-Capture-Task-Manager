@@ -1,7 +1,4 @@
-﻿// ReSharper disable UnusedMember.Global
-using System.Text.RegularExpressions;
-
-namespace CaptureTaskManager
+﻿namespace CaptureTaskManager
 {
     public static class Conversion
     {
@@ -26,12 +23,9 @@ namespace CaptureTaskManager
                 return defaultValue;
             }
 
-            if (bool.TryParse(value, out var parsedValue))
-            {
-                return parsedValue;
-            }
-
-            return defaultValue;
+            return bool.TryParse(value, out var parsedValue)
+                ? parsedValue
+                : defaultValue;
         }
 
         /// <summary>
@@ -46,12 +40,9 @@ namespace CaptureTaskManager
                 return defaultValue;
             }
 
-            if (int.TryParse(value, out var parsedValue))
-            {
-                return parsedValue;
-            }
-
-            return defaultValue;
+            return int.TryParse(value, out var parsedValue)
+                ? parsedValue
+                : defaultValue;
         }
 
         /// <summary>
@@ -61,20 +52,14 @@ namespace CaptureTaskManager
         /// <param name="defaultValue"></param>
         public static float CSngSafe(string value, float defaultValue)
         {
-            var fValue = defaultValue;
-
             if (string.IsNullOrEmpty(value))
             {
-                return fValue;
+                return defaultValue;
             }
 
-            if (float.TryParse(value, out fValue))
-            {
-                return fValue;
-            }
-
-            return fValue;
-        }
+            return float.TryParse(value, out var parsedValue)
+                ? parsedValue
+                : defaultValue;
         }
 
         /// <summary>
