@@ -678,26 +678,27 @@ namespace CaptureTaskManager
             dbTools.AddTypedParameter(cmd, "@job", SqlType.Int, value: mTaskParams.GetParam("Job", 0));
             dbTools.AddTypedParameter(cmd, "@step", SqlType.Int, value: mTaskParams.GetParam("Step", 0));
             dbTools.AddParameter(cmd, "@toolVersionInfo", SqlType.VarChar, 900, toolVersionInfoCombined);
-            var returnParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.InputOutput);
+            var returnCodeParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.InputOutput);
 
             // Execute the SP (retry the call up to 4 times)
             var resCode = mCaptureDbProcedureExecutor.ExecuteSP(cmd, 4);
 
-            var returnCode = dbTools.GetString(returnParam.Value);
-            var returnCodeValue = Conversion.GetReturnCodeValue(returnCode);
+            var returnCode = DBToolsBase.GetReturnCode(returnCodeParam);
 
-            if (resCode == 0 && returnCodeValue == 0)
+            if (resCode == 0 && returnCode == 0)
             {
                 return true;
             }
 
             if (resCode != 0)
             {
-                LogError("Error " + resCode + " storing tool version for current processing step");
+                LogError("ExecuteSP() reported result code {0} storing tool version for current processing step, job {1}", resCode, mJob);
                 return false;
             }
 
-            LogError("Stored procedure " + SP_NAME_SET_TASK_TOOL_VERSION + " reported return code " + returnCode + ", job " + mJob);
+            LogError("Stored procedure {0} reported return code {1}, job {2}",
+                SP_NAME_SET_TASK_TOOL_VERSION, (string)returnCodeParam.Value, mJob);
+
             return false;
         }
 
@@ -997,26 +998,27 @@ namespace CaptureTaskManager
             dbTools.AddTypedParameter(cmd, "@fatalError", SqlType.TinyInt, value: fatalError ? 1 : 0);
             dbTools.AddTypedParameter(cmd, "@transactionId", SqlType.Int, value: transactionId);
             dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
-            var returnParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.InputOutput);
+            var returnCodeParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.InputOutput);
 
             mCaptureDbProcedureExecutor.TimeoutSeconds = 20;
             var resCode = mCaptureDbProcedureExecutor.ExecuteSP(cmd, 2);
 
-            var returnCode = dbTools.GetString(returnParam.Value);
-            var returnCodeValue = Conversion.GetReturnCodeValue(returnCode);
+            var returnCode = DBToolsBase.GetReturnCode(returnCodeParam);
 
-            if (resCode == 0 && returnCodeValue == 0)
+            if (resCode == 0 && returnCode == 0)
             {
                 return true;
             }
 
             if (resCode != 0)
             {
-                LogError("Error " + resCode + " calling stored procedure " + SP_NAME + ", job " + mJob);
+                LogError("ExecuteSP() reported result code {0} calling stored procedure {1}, job {2}", resCode, SP_NAME, mJob);
                 return false;
             }
 
-            LogError("Stored procedure " + SP_NAME + " reported return code " + returnCode + ", job " + mJob);
+            LogError("Stored procedure {0} reported return code {1}, job {2}",
+                SP_NAME, (string)returnCodeParam.Value, mJob);
+
             return false;
         }
 

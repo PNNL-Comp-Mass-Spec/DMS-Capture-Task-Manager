@@ -169,7 +169,10 @@ namespace DatasetArchivePlugin
 
                 var testInstanceFlag = usedTestInstance ? (byte)1 : (byte)0;
 
-                dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+                // Define parameter for procedure's return value
+                // If querying a Postgres DB, mPipelineDBProcedureExecutor will auto-change "@return" to "_returnCode"
+                var returnParam = dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+
                 dbTools.AddParameter(cmd, "@job", SqlType.Int).Value = mTaskParams.GetParam("Job", 0);
                 dbTools.AddParameter(cmd, "@datasetID", SqlType.Int).Value = mTaskParams.GetParam("Dataset_ID", 0);
                 dbTools.AddParameter(cmd, "@subfolder", SqlType.VarChar, 128, subDir);
@@ -185,14 +188,16 @@ namespace DatasetArchivePlugin
                 dbTools.AddParameter(cmd, "@eusUploaderID", SqlType.Int).Value = eusUploaderID;
 
                 // Execute the SP (retry the call up to 4 times)
-                var resCode = dbTools.ExecuteSP(cmd, 4);
+                dbTools.ExecuteSP(cmd, 4);
 
-                if (resCode == 0)
+                var returnCode = DBToolsBase.GetReturnCode(returnParam);
+
+                if (returnCode == 0)
                 {
                     return;
                 }
 
-                LogError("Error " + resCode + " storing MyEMSL Upload Stats");
+                LogError("Error storing MyEMSL Upload Stats, return code " + (string)returnParam.Value);
             }
             catch (Exception ex)
             {

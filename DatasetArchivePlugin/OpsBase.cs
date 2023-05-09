@@ -190,7 +190,10 @@ namespace DatasetArchivePlugin
                 var dbTools = mCaptureDbProcedureExecutor;
                 var cmd = dbTools.CreateCommand(SP_NAME_MAKE_NEW_ARCHIVE_UPDATE_TASK, CommandType.StoredProcedure);
 
-                dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+                // Define parameter for procedure's return value
+                // If querying a Postgres DB, mPipelineDBProcedureExecutor will auto-change "@return" to "_returnCode"
+                var returnParam = dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+
                 dbTools.AddParameter(cmd, "@datasetName", SqlType.VarChar, 128, mDatasetName);
                 var resultsDirectoryParam = dbTools.AddParameter(cmd, "@resultsDirectoryName", SqlType.VarChar, 128);
                 dbTools.AddTypedParameter(cmd, "@allowBlankResultsDirectory", SqlType.TinyInt, value: 0);
@@ -209,9 +212,11 @@ namespace DatasetArchivePlugin
                     LogTools.LogMessage("Creating archive update job for " + datasetAndDirectory);
 
                     // Execute the SP (retry the call up to 4 times)
-                    var resCode = mCaptureDbProcedureExecutor.ExecuteSP(cmd, 4);
+                    mCaptureDbProcedureExecutor.ExecuteSP(cmd, 4);
 
-                    if (resCode == 0)
+                    var returnCode = DBToolsBase.GetReturnCode(returnParam);
+
+                    if (returnCode == 0)
                     {
                         LogTools.LogDebug("Job successfully created");
                         successCount++;
@@ -219,7 +224,7 @@ namespace DatasetArchivePlugin
                     else
                     {
                         LogTools.LogWarning("Unable to create archive update job for {0}; stored procedure returned resultCode {1}",
-                            datasetAndDirectory, resCode);
+                            datasetAndDirectory, (string)returnParam.Value);
                     }
                 }
 

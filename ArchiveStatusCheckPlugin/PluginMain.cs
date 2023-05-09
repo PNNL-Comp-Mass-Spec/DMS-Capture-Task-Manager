@@ -513,20 +513,25 @@ namespace ArchiveStatusCheckPlugin
                 var dbTools = mCaptureDbProcedureExecutor;
                 var cmd = dbTools.CreateCommand(SP_NAME, CommandType.StoredProcedure);
 
-                dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+                // Define parameter for procedure's return value
+                // If querying a Postgres DB, mPipelineDBProcedureExecutor will auto-change "@return" to "_returnCode"
+                var returnParam = dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+
                 dbTools.AddParameter(cmd, "@datasetID", SqlType.Int).Value = mDatasetID;
                 dbTools.AddParameter(cmd, "@statusNumList", SqlType.VarChar, 1024, statusNums);
                 dbTools.AddParameter(cmd, "@ingestStepsCompleted", SqlType.TinyInt).Value = ingestStepsCompleted;
                 dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
 
-                var resCode = mCaptureDbProcedureExecutor.ExecuteSP(cmd, 2);
+                mCaptureDbProcedureExecutor.ExecuteSP(cmd, 2);
 
-                if (resCode == 0)
+                var returnCode = DBToolsBase.GetReturnCode(returnParam);
+
+                if (returnCode == 0)
                 {
                     return;
                 }
 
-                LogError("Error {0} calling stored procedure {1}, job {2}", resCode, SP_NAME, mJob);
+                LogError("Error calling stored procedure {0}, job {1}: {2}", SP_NAME, mJob, (string)returnParam.Value);
             }
             catch (Exception ex)
             {
@@ -552,21 +557,26 @@ namespace ArchiveStatusCheckPlugin
                 var dbTools = mCaptureDbProcedureExecutor;
                 var cmd = dbTools.CreateCommand(SP_NAME, CommandType.StoredProcedure);
 
-                dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+                // Define parameter for procedure's return value
+                // If querying a Postgres DB, mPipelineDBProcedureExecutor will auto-change "@return" to "_returnCode"
+                var returnParam = dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+
                 dbTools.AddParameter(cmd, "@datasetID", SqlType.Int).Value = mDatasetID;
                 dbTools.AddParameter(cmd, "@statusNumList", SqlType.VarChar, 1024, statusNums);
                 dbTools.AddParameter(cmd, "@statusURIList", SqlType.VarChar, 4000, statusURIs);
                 dbTools.AddParameter(cmd, "@ingestStepsCompleted", SqlType.TinyInt).Value = ingestStepsCompleted;
                 dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
 
-                var resCode = mCaptureDbProcedureExecutor.ExecuteSP(cmd, 2);
+                mCaptureDbProcedureExecutor.ExecuteSP(cmd, 2);
 
-                if (resCode == 0)
+                var returnCode = DBToolsBase.GetReturnCode(returnParam);
+
+                if (returnCode == 0)
                 {
                     return;
                 }
 
-                LogError("Error {0} calling stored procedure {1}, job {2}", resCode, SP_NAME, mJob);
+                LogError("Error calling stored procedure {0}, job {1}: {2}", SP_NAME, mJob, (string)returnParam.Value);
             }
             catch (Exception ex)
             {

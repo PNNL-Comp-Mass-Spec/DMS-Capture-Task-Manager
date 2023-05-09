@@ -856,19 +856,27 @@ namespace DatasetQualityPlugin
                 var dbTools = mCaptureDbProcedureExecutor;
                 var cmd = dbTools.CreateCommand(STORE_QUAMETER_RESULTS_SP_NAME, CommandType.StoredProcedure);
 
-                dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+                // Define parameter for procedure's return value
+                // If querying a Postgres DB, mPipelineDBProcedureExecutor will auto-change "@return" to "_returnCode"
+                var returnParam = dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+
                 dbTools.AddParameter(cmd, "@datasetID", SqlType.Int).Value = datasetID;
                 dbTools.AddParameter(cmd, "@resultsXML", SqlType.XML).Value = xmlResultsClean;
 
-                var resultCode = dbTools.ExecuteSP(cmd, MAX_RETRY_COUNT, SEC_BETWEEN_RETRIES);
+                dbTools.ExecuteSP(cmd, MAX_RETRY_COUNT, SEC_BETWEEN_RETRIES);
 
-                if (resultCode == DbUtilsConstants.RET_VAL_OK)
+                var returnCode = DBToolsBase.GetReturnCode(returnParam);
+
+                if (returnCode == DbUtilsConstants.RET_VAL_OK)
                 {
                     // No errors
                     return true;
                 }
 
-                mRetData.CloseoutMsg = "Error storing Quameter Results in database, " + STORE_QUAMETER_RESULTS_SP_NAME + " returned " + resultCode;
+                mRetData.CloseoutMsg = string.Format(
+                    "Error storing Quameter Results in database, {0} returned {1}",
+                    STORE_QUAMETER_RESULTS_SP_NAME, (string)returnParam.Value);
+
                 LogError(mRetData.CloseoutMsg);
                 return false;
             }

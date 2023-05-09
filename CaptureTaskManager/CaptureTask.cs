@@ -239,7 +239,7 @@ namespace CaptureTaskManager
                 dbTools.AddTypedParameter(cmd, "@infoOnly", SqlType.TinyInt, value: 0);
                 dbTools.AddParameter(cmd, "@managerVersion", SqlType.VarChar, 128, appVersion ?? "(unknown version)");
                 dbTools.AddTypedParameter(cmd, "@jobCountToPreview", SqlType.Int, value: 10);
-                var returnParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.InputOutput);
+                var returnCodeParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.InputOutput);
 
                 LogDebug("CaptureTask.RequestTaskDetailed(), connection string: " + mConnStr);
 
@@ -251,20 +251,21 @@ namespace CaptureTaskManager
                 // Execute the SP
                 var resCode = mCaptureTaskDBProcedureExecutor.ExecuteSPData(cmd, out var results);
 
-                var returnCode = dbTools.GetString(returnParam.Value);
-                var returnCodeValue = Conversion.GetReturnCodeValue(returnCode);
+                var returnCode = DBToolsBase.GetReturnCode(returnCodeParam);
 
-                if (returnCodeValue != 0)
+                if (returnCode != 0)
                 {
-                    if (returnCodeValue is RET_VAL_TASK_NOT_AVAILABLE or RET_VAL_TASK_NOT_AVAILABLE_ALT)
+                    if (returnCode is RET_VAL_TASK_NOT_AVAILABLE or RET_VAL_TASK_NOT_AVAILABLE_ALT)
                     {
                         // No jobs found
                         return EnumRequestTaskResult.NoTaskFound;
                     }
 
                     // The return code was not an empty string, which indicates an error
-                    LogError("CaptureTask.RequestTaskDetailed(), SP execution has return code " + returnCode +
-                             "; Message text = " + (string)messageParam.Value);
+                    LogError("CaptureTask.RequestTaskDetailed(), SP execution has return code {0}; Message text: {1}",
+                        (string)returnCodeParam.Value,
+                        (string)messageParam.Value);
+
                     return EnumRequestTaskResult.ResultError;
                 }
 
@@ -275,6 +276,7 @@ namespace CaptureTaskManager
 
                         // Step task was found; get the data for it
                         var paramSuccess = FillParamDict(results);
+
                         if (paramSuccess)
                         {
                             outcome = EnumRequestTaskResult.TaskFound;
@@ -290,14 +292,15 @@ namespace CaptureTaskManager
                         // Too many retries
                         outcome = EnumRequestTaskResult.TooManyRetries;
                         break;
+
                     case DbUtilsConstants.RET_VAL_DEADLOCK:
                         // Transaction was deadlocked on lock resources with another process and has been chosen as the deadlock victim
                         outcome = EnumRequestTaskResult.Deadlock;
                         break;
+
                     default:
                         // There was an SP error
-                        LogError("CaptureTask.RequestTaskDetailed(), SP execution error " + resCode +
-                            "; Message text = " + (string)messageParam.Value);
+                        LogError("CaptureTask.RequestTaskDetailed(), ExecuteSPData returned {0}; message: {1} ", resCode, (string)messageParam.Value);
                         outcome = EnumRequestTaskResult.ResultError;
                         break;
                 }
@@ -375,15 +378,14 @@ namespace CaptureTaskManager
             dbTools.AddParameter(cmd, "@managerName", SqlType.VarChar, 128, ManagerName);
             dbTools.AddParameter(cmd, "@infoOnly", SqlType.TinyInt).Value = 0;
             dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
-            var returnParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.InputOutput);
+            var returnCodeParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.InputOutput);
 
             // Execute the Stored Procedure (retry the call up to 3 times)
             var resCode = mCaptureTaskDBProcedureExecutor.ExecuteSP(cmd, 3);
 
-            var returnCode = dbTools.GetString(returnParam.Value);
-            var returnCodeValue = Conversion.GetReturnCodeValue(returnCode);
+            var returnCode = DBToolsBase.GetReturnCode(returnCodeParam);
 
-            if (resCode == 0 && returnCodeValue == 0)
+            if (resCode == 0 && returnCode == 0)
             {
                 return;
             }
@@ -413,14 +415,16 @@ namespace CaptureTaskManager
                 var dbTools = mCaptureTaskDBProcedureExecutor;
                 var cmd = dbTools.CreateCommand(SP_NAME_SET_COMPLETE, CommandType.StoredProcedure);
 
-                dbTools.AddTypedParameter(cmd, "@job", SqlType.Int, value: int.Parse(mJobParams["Job"]));
+                var job = int.Parse(mJobParams["Job"]);
+
+                dbTools.AddTypedParameter(cmd, "@job", SqlType.Int, value: job);
                 dbTools.AddTypedParameter(cmd, "@step", SqlType.Int, value: int.Parse(mJobParams["Step"]));
                 dbTools.AddTypedParameter(cmd, "@completionCode", SqlType.Int, value: compCode);
                 dbTools.AddParameter(cmd, "@completionMessage", SqlType.VarChar, 512, compMsg.Trim('\r', '\n'));
                 dbTools.AddTypedParameter(cmd, "@evaluationCode", SqlType.Int, value: evalCode);
                 dbTools.AddParameter(cmd, "@evaluationMessage", SqlType.VarChar, 256, evalMsg.Trim('\r', '\n'));
                 dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
-                var returnParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.InputOutput);
+                var returnCodeParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.InputOutput);
 
                 LogDebug("Calling stored procedure " + SP_NAME_SET_COMPLETE);
 
@@ -432,21 +436,22 @@ namespace CaptureTaskManager
                 // Execute the SP
                 var resCode = mCaptureTaskDBProcedureExecutor.ExecuteSP(cmd);
 
-                var returnCode = dbTools.GetString(returnParam.Value);
-                var returnCodeValue = Conversion.GetReturnCodeValue(returnCode);
+                var returnCode = DBToolsBase.GetReturnCode(returnCodeParam);
 
-                if (resCode == 0 && returnCodeValue == 0)
+                if (resCode == 0 && returnCode == 0)
                 {
                     return true;
                 }
 
                 if (resCode != 0)
                 {
-                    LogError("Error " + resCode + " setting capture task complete");
+                    LogError("ExecuteSP() reported result code {0} setting capture task complete, job {1}", resCode, job);
                     return false;
                 }
 
-                LogError("Stored procedure " + SP_NAME_SET_COMPLETE + " reported return code " + returnCode);
+                LogError("Stored procedure {0} reported return code {1}, job {2}",
+                    SP_NAME_SET_COMPLETE, (string)returnCodeParam.Value, job);
+
                 return false;
             }
             catch (Exception ex)
