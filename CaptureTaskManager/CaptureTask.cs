@@ -228,8 +228,24 @@ namespace CaptureTaskManager
             EnumRequestTaskResult outcome;
             var appVersion = Assembly.GetEntryAssembly()?.GetName().Version.ToString();
 
+            /*
+             * Uncomment if required:
+
+            // Get client/server perspective
+            //   0 means MgrParam "perspective" is "client" which means we will use paths like \\proto-5\Exact04\2012_1
+            //   1 means MgrParam "perspective" is "server" which means we use paths like E:\Exact04\2012_1
+            var tmpParam = mMgrParams.GetParam("perspective");
+
+            var serverPerspectiveEnabled = string.Equals(tmpParam, "server", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
+
+            */
+
             try
             {
+                // Call request_ctm_step_task to look for an available step task
+                // If a task is available, the procedure will return the task parameters as a result set
+                // On Postgres, the procedure returns the parameters using a RefCursor, but ExecuteSPData auto-converts that to a result set
+
                 var dbTools = mCaptureTaskDBProcedureExecutor;
                 var cmd = dbTools.CreateCommand(SP_NAME_REQUEST_TASK, CommandType.StoredProcedure);
 
@@ -239,6 +255,10 @@ namespace CaptureTaskManager
                 dbTools.AddTypedParameter(cmd, "@infoOnly", SqlType.TinyInt, value: 0);
                 dbTools.AddParameter(cmd, "@managerVersion", SqlType.VarChar, 128, appVersion ?? "(unknown version)");
                 dbTools.AddTypedParameter(cmd, "@jobCountToPreview", SqlType.Int, value: 10);
+
+                // Uncomment if required (this class never assigned a value to this parameter, though the procedure supports limiting assigned capture jobs if manager parameter "perspective" is "server")
+                // dbTools.AddTypedParameter(cmd, "@serverPerspectiveEnabled", SqlType.TinyInt, value: serverPerspectiveEnabled);
+
                 var returnCodeParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.InputOutput);
 
                 LogDebug("CaptureTask.RequestTaskDetailed(), connection string: " + mConnStr);
