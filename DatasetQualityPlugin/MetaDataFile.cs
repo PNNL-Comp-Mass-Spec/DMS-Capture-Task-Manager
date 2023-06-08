@@ -41,8 +41,8 @@ namespace DatasetQualityPlugin
 
                 // Loop through the task parameters, selecting only the ones beginning with "Meta_"
                 // These parameters are included in the table returned by stored procedure request_ctm_step_task
-                // That procedure calls procedure get_task_step_params to get the parameters
-                // Additionally, if the step tool is 'DatasetInfo' or 'DatasetQuality', get_task_step_params calls get_metadata_for_dataset
+                // That procedure queries procedure (or function) get_task_step_params to get the parameters
+                // Additionally, if the step tool is 'DatasetInfo' or 'DatasetQuality', get_task_step_params uses get_metadata_for_dataset,
                 // which adds several items, including Meta_Dataset_Name and Meta_Dataset_ID
                 foreach (var taskParam in taskParams.TaskDictionary.Keys)
                 {
