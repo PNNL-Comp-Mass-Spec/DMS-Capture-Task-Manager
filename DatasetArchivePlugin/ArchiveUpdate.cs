@@ -59,7 +59,9 @@ namespace DatasetArchivePlugin
 
             const int iMaxMyEMSLUploadAttempts = 2;
 
-            var recurse = mTaskParams.GetParam("MyEMSLRecurse", true);
+            // Prior to the use of MyEMSL, the option to recurse subdirectories was determined using task parameter "MyEMSLRecurse", which is now obsolete
+
+            const bool recurse = true;
 
             // Set this to .CreateTarLocal to create the .tar file locally and thus not upload the data to MyEMSL
             var debugMode = TarStreamUploader.UploadDebugMode.DebugDisabled;
