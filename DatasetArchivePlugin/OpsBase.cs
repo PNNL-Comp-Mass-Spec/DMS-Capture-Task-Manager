@@ -188,6 +188,9 @@ namespace DatasetArchivePlugin
             {
                 // Setup for execution of the stored procedure
                 var dbTools = mCaptureDbProcedureExecutor;
+
+                var dbServerType = DbToolsFactory.GetServerTypeFromConnectionString(dbTools.ConnectStr);
+
                 var cmd = dbTools.CreateCommand(SP_NAME_MAKE_NEW_ARCHIVE_UPDATE_TASK, CommandType.StoredProcedure);
 
                 // Define parameter for procedure's return value
@@ -196,10 +199,18 @@ namespace DatasetArchivePlugin
 
                 dbTools.AddParameter(cmd, "@datasetName", SqlType.VarChar, 128, mDatasetName);
                 var resultsDirectoryParam = dbTools.AddParameter(cmd, "@resultsDirectoryName", SqlType.VarChar, 128);
-                dbTools.AddTypedParameter(cmd, "@allowBlankResultsDirectory", SqlType.TinyInt, value: 0);
-                dbTools.AddTypedParameter(cmd, "@pushDatasetToMyEMSL", SqlType.TinyInt, value: 1);
-                dbTools.AddTypedParameter(cmd, "@pushDatasetRecursive", SqlType.TinyInt, value: 1);
-                dbTools.AddTypedParameter(cmd, "@infoOnly", SqlType.TinyInt, value: 0);
+
+                if (dbServerType == DbServerTypes.PostgreSQL)
+                {
+                    dbTools.AddTypedParameter(cmd, "@allowBlankResultsDirectory", SqlType.Boolean, value: false);
+                    dbTools.AddTypedParameter(cmd, "@infoOnly", SqlType.Boolean, value: false);
+                }
+                else
+                {
+                    dbTools.AddTypedParameter(cmd, "@allowBlankResultsDirectory", SqlType.TinyInt, value: 0);
+                    dbTools.AddTypedParameter(cmd, "@infoOnly", SqlType.TinyInt, value: 0);
+                }
+
                 var messageParam = dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
 
                 var successCount = 0;
