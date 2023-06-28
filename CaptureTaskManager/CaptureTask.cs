@@ -298,7 +298,7 @@ namespace CaptureTaskManager
                         // No errors found in SP call, so see if any step tasks were found
 
                         // Step task was found; get the data for it
-                        var paramSuccess = FillParamDict(results);
+                        var paramSuccess = FillParamDictionary(results);
 
                         if (paramSuccess)
                         {

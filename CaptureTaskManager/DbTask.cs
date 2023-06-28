@@ -169,19 +169,19 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="parameters">Result table from call to request_ctm_step_task</param>
         /// <returns>True if successful, false if an error</returns>
-        protected virtual bool FillParamDict(List<List<string>> parameters)
+        protected virtual bool FillParamDictionary(List<List<string>> parameters)
         {
             // Verify valid parameters
             if (parameters == null)
             {
-                LogError("DbTask.FillParamDict(): parameters is null");
+                LogError("DbTask.FillParamDictionary(): parameters is null");
                 return false;
             }
 
             // Verify at least one row present
             if (parameters.Count < 1)
             {
-                LogError("DbTask.FillParamDict(): No parameters returned by request SP");
+                LogError("DbTask.FillParamDictionary(): No parameters returned by request SP");
                 return false;
             }
 
@@ -229,7 +229,7 @@ namespace CaptureTaskManager
             }
             catch (Exception ex)
             {
-                LogError("DbTask.FillParamDict(): Exception reading task parameters", ex);
+                LogError("DbTask.FillParamDictionary(): Exception reading task parameters", ex);
                 return false;
             }
         }
@@ -245,7 +245,7 @@ namespace CaptureTaskManager
             return paramValue.ToString();
         }
 
-        protected float DbCSng(object paramValue)
+        protected float DbCFloat(object paramValue)
         {
             // If input object is DbNull, returns 0.0, otherwise returns Single representation of object
             if (ReferenceEquals(paramValue, DBNull.Value))

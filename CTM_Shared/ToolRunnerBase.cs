@@ -28,7 +28,7 @@ namespace CaptureTaskManager
     /// <remarks>Used in CaptureTaskManager.MainProgram</remarks>
     public class ToolRunnerBase : LoggerBase, IToolRunner
     {
-        // Ignore Spelling: yyyy-MM-dd hh:mm:ss tt, Lockfile
+        // Ignore Spelling: addnl, holdoff, yyyy-MM-dd hh:mm:ss tt, Lockfile
 
         public const string EXCEPTION_CREATING_OUTPUT_DIRECTORY = "Exception creating output directory";
 
