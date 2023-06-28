@@ -46,23 +46,6 @@
         }
 
         /// <summary>
-        /// Convert a string value to a float
-        /// </summary>
-        /// <param name="value"></param>
-        /// <param name="defaultValue"></param>
-        public static float CSngSafe(string value, float defaultValue)
-        {
-            if (string.IsNullOrEmpty(value))
-            {
-                return defaultValue;
-            }
-
-            return float.TryParse(value, out var parsedValue)
-                ? parsedValue
-                : defaultValue;
-        }
-
-        /// <summary>
         /// Surround a file (or directory) path with double quotes if it contains spaces
         /// </summary>
         /// <param name="filePath"></param>
