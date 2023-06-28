@@ -11,7 +11,7 @@ namespace ImsDemuxPlugin
     /// </summary>
     public class AgilentDotDTools : EventNotifier
     {
-        // Ignore Spelling: demultiplexed, demultiplexing, demux, xs
+        // Ignore Spelling: demultiplexed, demultiplexing, demux, ims, mUX, xs
 
         /// <summary>
         /// Evaluates the Agilent .D directory to determine if it is multiplexed or not

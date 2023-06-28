@@ -10,6 +10,8 @@ namespace CaptureTaskManager
     /// </summary>
     public class RunDosProgram : EventNotifier
     {
+        // Ignore Spelling: prog
+
         public const string RUN_PROGRAM_STATUS_LINE = "RunProgram";
 
         /// <summary>

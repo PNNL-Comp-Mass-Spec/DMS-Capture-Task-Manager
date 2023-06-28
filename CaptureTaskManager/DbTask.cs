@@ -21,6 +21,8 @@ namespace CaptureTaskManager
     /// </summary>
     internal abstract class DbTask : LoggerBase
     {
+        // Ignore Spelling: Ret
+
         protected const int RET_VAL_OK = 0;
 
         /// <summary>

@@ -14,7 +14,7 @@ namespace ImsDemuxPlugin
     {
         // ReSharper disable CommentTypo
 
-        // Ignore Spelling: Acq, Agilentcmd, demultiplexed, demux, uimf
+        // Ignore Spelling: Acq, Agilentcmd, demultiplexed, demux, IMS, uimf
 
         // ReSharper restore CommentTypo
 

@@ -24,8 +24,8 @@ namespace ImsDemuxPlugin
     /// </summary>
     public class DemuxTools : EventNotifier
     {
-        // Ignore Spelling: calibrants, cmd, demultiplexed, demultiplexer, demultiplexes, demultiplexing, demux
-        // Ignore Spelling: ims_tof, Methow, mux, workdir
+        // Ignore Spelling: calibrants, cmd, demultiplexed, demultiplexer, demultiplexes, demultiplexing, demux, dest
+        // Ignore Spelling: ims, ims_tof, Methow, mux, UIMF, workdir
 
         public const string CALIBRATION_LOG_FILE = "CalibrationLog.txt";
 

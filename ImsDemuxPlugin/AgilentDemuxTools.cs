@@ -14,7 +14,8 @@ namespace ImsDemuxPlugin
     /// </summary>
     public class AgilentDemuxTools : EventNotifier
     {
-        // Ignore Spelling: demultiplexed, demultiplexes, demultiplexing, demultiplexer, demux, ims_tof, workdir, cmd
+        // Ignore Spelling: cmd, demultiplexed, demultiplexer, demultiplexes, demultiplexing, demux, dest, IMS, ims_tof, PNNL, workdir
+
         private const string DECODED_dotD_SUFFIX = ".d.deMP.d";
         public const string ENCODED_dotD_SUFFIX = "_muxed.d";
 

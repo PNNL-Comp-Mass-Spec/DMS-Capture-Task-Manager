@@ -11,7 +11,7 @@ namespace DatasetInfoPlugin
 {
     internal class DatasetInfoXmlMerger
     {
-        // Ignore Spelling: yyyy-MM-dd hh:mm:ss tt
+        // Ignore Spelling: acq, yyyy-MM-dd hh:mm:ss tt
 
         private const int DATASET_GAP_THRESHOLD_HOURS = 24;
 

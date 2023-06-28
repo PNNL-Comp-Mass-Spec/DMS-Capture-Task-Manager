@@ -21,7 +21,7 @@ namespace SrcFileRenamePlugin
     {
         // ReSharper disable CommentTypo
 
-        // Ignore Spelling: Bionet, Pwd, prepend, Username, Subfolder, secfso, fso, chromooff, flatline, LCmethod, plugsplit, slowsplit
+        // Ignore Spelling: Bio, Bionet, Pwd, prepend, Username, Subfolder, secfso, fso, chromooff, flatline, LCmethod, plugsplit, slowsplit
 
         // ReSharper restore CommentTypo
 

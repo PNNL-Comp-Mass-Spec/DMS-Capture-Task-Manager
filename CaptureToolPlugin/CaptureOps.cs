@@ -21,7 +21,7 @@ namespace CaptureToolPlugin
     /// </summary>
     public class CaptureOps : LoggerBase
     {
-        // Ignore Spelling: bionet, Bruker, dotnet, fso, idx, jpg, lcMethod, mcf, na, prepend, Pwd, secfso, ser, Subfolder, Unsubscribe, Username
+        // Ignore Spelling: bio, bionet, Bruker, dotnet, fso, idx, jpg, lcMethod, mcf, na, prepend, Pwd, secfso, ser, Subfolder, Unsubscribe, Username
 
         /// <summary>
         /// Use copy with resume for files over 500 MB in size

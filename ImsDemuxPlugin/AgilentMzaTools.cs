@@ -11,6 +11,8 @@ namespace ImsDemuxPlugin
     /// </summary>
     public class AgilentMzaTools : EventNotifier
     {
+        // Ignore Spelling: Demux, IMS, MZA
+
         // Set the max runtime at 12 hours
         private const int MAX_RUNTIME_MINUTES = 12 * 60;
 

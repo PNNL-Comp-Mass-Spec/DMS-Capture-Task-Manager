@@ -5,6 +5,8 @@ namespace DatasetArchivePlugin
 {
     public class MyEMSLUploadEventArgs : EventArgs
     {
+        // Ignore Spelling: EUS
+
         public readonly int FileCountNew;
         public readonly int FileCountUpdated;
         public readonly long BytesUploaded;

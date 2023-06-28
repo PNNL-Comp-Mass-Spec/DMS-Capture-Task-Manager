@@ -23,7 +23,7 @@ namespace CaptureTaskManager
     /// </remarks>
     public class CaptureTaskMgrSettings : MgrSettingsDB, IMgrParams
     {
-        // Ignore Spelling: Utils, Ack, Seqs
+        // Ignore Spelling: Ack, DMS, Seqs, Utils
 
         private const string SP_NAME_ACK_MANAGER_UPDATE = "ack_manager_update_required";
 

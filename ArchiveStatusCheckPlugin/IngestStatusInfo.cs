@@ -3,6 +3,8 @@ namespace ArchiveStatusCheckPlugin
 {
     public class IngestStatusInfo
     {
+        // Ignore Spelling: EUS
+
         /// <summary>
         /// Status Number, e.g. 3257122
         /// </summary>

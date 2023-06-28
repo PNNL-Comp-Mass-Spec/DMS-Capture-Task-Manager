@@ -10,6 +10,8 @@ namespace CaptureTaskManager
     // ReSharper disable once InconsistentNaming
     public static class CTMUtilities
     {
+        // Ignore Spelling: App
+
         /// <summary>
         /// When true, we are running on Linux and thus should not access any Windows features
         /// </summary>
