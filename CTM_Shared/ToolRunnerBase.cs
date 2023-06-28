@@ -376,6 +376,7 @@ namespace CaptureTaskManager
             }
 
             var ingestState = serverResponse.State;
+
             if (string.Equals(ingestState, "failed", StringComparison.OrdinalIgnoreCase) ||
                 !string.IsNullOrWhiteSpace(errorMessage))
             {
@@ -969,7 +970,7 @@ namespace CaptureTaskManager
         /// Prior to July 2017, TransactionID was the transactionID used by the majority of the verified files
         /// Starting in July 2017, StatusNum and TransactionID are identical
         /// </param>
-        /// <param name="fatalError">True if ingest failed with a fatal error and thus the ErrorCode should be updated in T_MyEMSL_Uploads</param>
+        /// <param name="fatalError">True if ingest failed with a fatal error and thus the error code should be updated in T_MyEMSL_Uploads</param>
         /// <returns>True if success, false if an error</returns>
         // ReSharper disable once UnusedMember.Global
         protected bool UpdateIngestStepsCompletedOneTask(
@@ -988,6 +989,9 @@ namespace CaptureTaskManager
             }
 
             var dbTools = mCaptureDbProcedureExecutor;
+
+            var dbServerType = DbToolsFactory.GetServerTypeFromConnectionString(dbTools.ConnectStr);
+
             var cmd = dbTools.CreateCommand(SP_NAME, CommandType.StoredProcedure);
 
             // Note that if transactionId is 0, the stored procedure will leave TransactionID unchanged in table T_MyEMSL_Uploads
@@ -995,7 +999,16 @@ namespace CaptureTaskManager
             dbTools.AddTypedParameter(cmd, "@datasetID", SqlType.Int, value: mDatasetID);
             dbTools.AddTypedParameter(cmd, "@statusNum", SqlType.Int, value: statusNum);
             dbTools.AddTypedParameter(cmd, "@ingestStepsCompleted", SqlType.TinyInt, value: ingestStepsCompleted);
-            dbTools.AddTypedParameter(cmd, "@fatalError", SqlType.TinyInt, value: fatalError ? 1 : 0);
+
+            if (dbServerType == DbServerTypes.PostgreSQL)
+            {
+                dbTools.AddTypedParameter(cmd, "@fatalError", SqlType.Boolean, value: fatalError);
+            }
+            else
+            {
+                dbTools.AddTypedParameter(cmd, "@fatalError", SqlType.TinyInt, value: fatalError ? 1 : 0);
+            }
+
             dbTools.AddTypedParameter(cmd, "@transactionId", SqlType.Int, value: transactionId);
             dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
             var returnCodeParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.InputOutput);
