@@ -138,23 +138,23 @@ namespace CaptureTaskManager
         /// <summary>
         /// Debugging routine for printing SP calling params
         /// </summary>
-        /// <param name="inpCmd">SQL command object containing params</param>
-        protected virtual void PrintCommandParams(DbCommand inpCmd)
+        /// <param name="cmd">SQL command object containing params</param>
+        protected virtual void PrintCommandParams(DbCommand cmd)
         {
             // Verify there really are command parameters
-            if (inpCmd == null)
+            if (cmd == null)
             {
                 return;
             }
 
-            if (inpCmd.Parameters.Count < 1)
+            if (cmd.Parameters.Count < 1)
             {
                 return;
             }
 
             var msg = new StringBuilder();
 
-            foreach (DbParameter myParam in inpCmd.Parameters)
+            foreach (DbParameter myParam in cmd.Parameters)
             {
                 msg.AppendLine();
                 msg.AppendFormat("  Name= {0,-20}, Value= {1}", myParam.ParameterName, DbCStr(myParam.Value));

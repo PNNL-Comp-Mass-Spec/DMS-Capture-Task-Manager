@@ -52,11 +52,11 @@ namespace CaptureTaskManager
         /// <summary>
         /// Decode a password
         /// </summary>
-        /// <param name="encodedPwd">Encoded password</param>
+        /// <param name="encodedPassword">Encoded password</param>
         /// <returns>Clear text password</returns>
-        public static string DecodePassword(string encodedPwd)
+        public static string DecodePassword(string encodedPassword)
         {
-            return AppUtils.DecodeShiftCipher(encodedPwd);
+            return AppUtils.DecodeShiftCipher(encodedPassword);
         }
 
         /// <summary>
