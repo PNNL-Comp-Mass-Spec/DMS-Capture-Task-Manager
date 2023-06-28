@@ -377,25 +377,25 @@ namespace CaptureTaskManager
 
             var ingestState = serverResponse.State;
 
-            if (string.Equals(ingestState, "failed", StringComparison.OrdinalIgnoreCase) ||
-                !string.IsNullOrWhiteSpace(errorMessage))
+            if (!string.Equals(ingestState, "failed", StringComparison.OrdinalIgnoreCase) &&
+                string.IsNullOrWhiteSpace(errorMessage))
             {
-                // Error should have already been logged during the call to GetIngestStatus
-                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                if (string.IsNullOrWhiteSpace(errorMessage))
-                {
-                    returnData.CloseoutMsg = "Ingest failed; unknown reason";
-                }
-                else
-                {
-                    returnData.CloseoutMsg = errorMessage;
-                }
-
-                returnData.EvalCode = EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY;
-                return false;
+                return true;
             }
 
-            return true;
+            // Error should have already been logged during the call to GetIngestStatus
+            returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+            if (string.IsNullOrWhiteSpace(errorMessage))
+            {
+                returnData.CloseoutMsg = "Ingest failed; unknown reason";
+            }
+            else
+            {
+                returnData.CloseoutMsg = errorMessage;
+            }
+
+            returnData.EvalCode = EnumEvalCode.EVAL_CODE_FAILURE_DO_NOT_RETRY;
+            return false;
         }
 
         /// <summary>
