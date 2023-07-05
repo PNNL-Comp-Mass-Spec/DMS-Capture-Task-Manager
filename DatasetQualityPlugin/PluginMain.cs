@@ -150,8 +150,9 @@ namespace DatasetQualityPlugin
                     dataFilePathRemote = Path.Combine(datasetDirectoryPath, mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION);
 
                     // Confirm that the file has MS1 spectra (since Quameter requires that they be present)
-                    if (!QuameterCanProcessDataset(mDatasetID, mDataset, datasetDirectoryPath, ref skipReason))
+                    if (!QuameterCanProcessDataset(mDatasetID, mDataset, datasetDirectoryPath, out var rawFileSkipReason))
                     {
+                        skipReason = rawFileSkipReason;
                         dataFilePathRemote = string.Empty;
                     }
                     break;
@@ -1085,7 +1086,15 @@ namespace DatasetQualityPlugin
             return true;
         }
 
-        private bool QuameterCanProcessDataset(int datasetID, string datasetName, string datasetDirectoryPath, ref string skipReason)
+        /// <summary>
+        /// Determine whether a Thermo .raw file can be processed by Quameter
+        /// </summary>
+        /// <param name="datasetID">Dataset ID</param>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="datasetDirectoryPath">Dataset directory path</param>
+        /// <param name="skipReason"></param>
+        /// <returns>True if the file can be processed, otherwise false</returns>
+        private bool QuameterCanProcessDataset(int datasetID, string datasetName, string datasetDirectoryPath, out string skipReason)
         {
 
             {
@@ -1101,25 +1110,29 @@ namespace DatasetQualityPlugin
                 ParseDatasetInfoFile(datasetDirectoryPath, datasetName, scanTypes, out scanCount, out scanCountMS);
             }
 
+            if (scanCount <= 0)
             {
-                if (scanCountMS == 0)
-                {
-                    skipReason = "dataset does not have any HMS or MS spectra";
-                    return false;
-                }
-
-                if (scanTypes.Count == 1 && scanTypes[0].Equals("SIM ms", StringComparison.OrdinalIgnoreCase))
-                {
-                    // The dataset only has SIM scans; Quameter does not support that
-                    skipReason = "dataset only has SIM scans";
-                    return false;
-                }
-
+                // The DatasetInfo.xml file was not found
+                // We don't know if Quameter can process the dataset or not, so we'll err on the side of "Sure, let's give it a try"
+                skipReason = string.Empty;
                 return true;
             }
 
-            // The DatasetInfo.xml file was not found
-            // We don't know if Quameter can process the dataset or not, so we'll err on the side of "Sure, let's give it a try"
+            if (scanCountMS == 0)
+            {
+                skipReason = "dataset does not have any HMS or MS spectra";
+                return false;
+            }
+
+            // ReSharper disable once InvertIf
+            if (scanTypes.Count == 1 && scanTypes[0].Equals("SIM ms", StringComparison.OrdinalIgnoreCase))
+            {
+                // The dataset only has SIM scans; Quameter does not support that
+                skipReason = "dataset only has SIM scans";
+                return false;
+            }
+
+            skipReason = string.Empty;
             return true;
         }
 
