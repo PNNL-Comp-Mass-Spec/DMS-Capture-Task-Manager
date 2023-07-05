@@ -325,7 +325,10 @@ namespace CaptureTaskManager
             // Give the file logger a chance to zip old log files by year
             FileLogger.ArchiveOldLogFilesNow();
 
-            // Gigasax.DMS_Capture
+            // Store the connection string that points to the DMS5 database
+            mMgrSettings.SetParam("DMSConnectionString", defaultDmsConnectionString);
+
+            // This connection string points to the DMS_Capture database
             var logCnStr = mMgrSettings.GetParam("ConnectionString");
 
             var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(logCnStr, mMgrName);
