@@ -472,6 +472,33 @@ namespace DatasetQualityPlugin
             }
         }
 
+        private string GetDatasetInstrumentGroup()
+        {
+            // This connection string points to the DMS5 database
+            var connectionString = mMgrParams.GetParam("DMSConnectionString");
+
+            var applicationName = string.Format("{0}_DatasetQuality", mMgrParams.ManagerName);
+
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
+
+            var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: mTraceMode);
+            RegisterEvents(dbTools);
+
+            var instrumentName = mTaskParams.GetParam("Instrument_Name");
+
+            var sql =
+                " SELECT instrument_group" +
+                " FROM V_Instrument_List_Export" +
+                " WHERE name = '" + instrumentName + "'";
+
+            if (dbTools.GetQueryResults(sql, out var results) && results.Count > 0)
+            {
+                return results[0][0];
+            }
+
+            return string.Empty;
+        }
+
         private void GetDatasetScanCountsFromDB(int datasetID, out int scanCount, out int scanCountMS, out List<string> scanTypes)
         {
             // This connection string points to the DMS_Capture database
@@ -1096,8 +1123,12 @@ namespace DatasetQualityPlugin
         /// <returns>True if the file can be processed, otherwise false</returns>
         private bool QuameterCanProcessDataset(int datasetID, string datasetName, string datasetDirectoryPath, out string skipReason)
         {
+            var instrumentGroup = GetDatasetInstrumentGroup();
 
+            if (instrumentGroup.EndsWith("Imaging", StringComparison.OrdinalIgnoreCase))
             {
+                skipReason = "not compatible with imaging datasets";
+                return false;
             }
 
             GetDatasetScanCountsFromDB(datasetID, out var scanCount, out var scanCountMS, out var scanTypes);
