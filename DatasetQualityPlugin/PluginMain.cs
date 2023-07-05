@@ -471,6 +471,47 @@ namespace DatasetQualityPlugin
             }
         }
 
+        private void GetDatasetScanCountsFromDB(int datasetID, out int scanCount, out int scanCountMS, out List<string> scanTypes)
+        {
+            // This connection string points to the DMS_Capture database
+            var connectionString = mMgrParams.GetParam("ConnectionString");
+
+            var applicationName = string.Format("{0}_DatasetQuality", mMgrParams.ManagerName);
+
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
+
+            var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: mTraceMode);
+            RegisterEvents(dbTools);
+
+            var sql =
+                " SELECT scan_type, scan_count" +
+                " FROM " + mMgrParams.DMSCaptureSchema + "v_dms_dataset_scans " +
+                " WHERE dataset_id = " + datasetID;
+
+            scanCount = 0;
+            scanCountMS = 0;
+            scanTypes = new List<string>();
+
+            if (!dbTools.GetQueryResultsDataTable(sql, out var table))
+                return;
+
+            foreach (DataRow row in table.Rows)
+            {
+                var scanType = row[0].CastDBVal(string.Empty);
+                var scanCountForType = row[1].CastDBVal(0);
+
+                scanTypes.Add(scanType);
+                scanCount += scanCountForType;
+
+                if (scanType.Equals("HMS", StringComparison.OrdinalIgnoreCase) ||
+                    scanType.Equals("MS", StringComparison.OrdinalIgnoreCase) ||
+                    scanType.Equals("Zoom-MS", StringComparison.OrdinalIgnoreCase))
+                {
+                    scanCountMS += scanCountForType;
+                }
+            }
+        }
+
         /// <summary>
         /// Construct the full path to Quameter.exe
         /// </summary>
@@ -1046,43 +1087,11 @@ namespace DatasetQualityPlugin
 
         private bool QuameterCanProcessDataset(int datasetID, string datasetName, string datasetDirectoryPath, ref string skipReason)
         {
-            var sql =
-                " SELECT scan_type, scan_count" +
-                " FROM " + mMgrParams.DMSCaptureSchema + "v_dms_dataset_scans " +
-                " WHERE dataset_id = " + datasetID;
 
-            // This connection string points to the DMS_Capture database
-            var connectionString = mMgrParams.GetParam("ConnectionString");
-
-            var applicationName = string.Format("{0}_DatasetQuality", mMgrParams.ManagerName);
-
-            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
-
-            var scanCount = 0;
-            var scanCountMS = 0;
-            var scanTypes = new List<string>();
-
-            var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: mTraceMode);
-            RegisterEvents(dbTools);
-
-            if (dbTools.GetQueryResultsDataTable(sql, out var table))
             {
-                foreach (DataRow row in table.Rows)
-                {
-                    var scanType = row[0].CastDBVal(string.Empty);
-                    var scanCountForType = row[1].CastDBVal(0);
-
-                    scanTypes.Add(scanType);
-                    scanCount += scanCountForType;
-
-                    if (scanType.Equals("HMS", StringComparison.OrdinalIgnoreCase) ||
-                        scanType.Equals("MS", StringComparison.OrdinalIgnoreCase) ||
-                        scanType.Equals("Zoom-MS", StringComparison.OrdinalIgnoreCase))
-                    {
-                        scanCountMS += scanCountForType;
-                    }
-                }
             }
+
+            GetDatasetScanCountsFromDB(datasetID, out var scanCount, out var scanCountMS, out var scanTypes);
 
             if (scanCount == 0)
             {
@@ -1092,7 +1101,6 @@ namespace DatasetQualityPlugin
                 ParseDatasetInfoFile(datasetDirectoryPath, datasetName, scanTypes, out scanCount, out scanCountMS);
             }
 
-            if (scanCount > 0)
             {
                 if (scanCountMS == 0)
                 {
