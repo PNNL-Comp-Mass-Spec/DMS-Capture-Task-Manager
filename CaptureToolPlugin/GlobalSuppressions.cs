@@ -6,7 +6,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-[assembly: SuppressMessage("Readability", "RCS1123:Add parentheses when necessary.", Justification = "Parentheses not required", Scope = "member", Target = "~M:CaptureToolPlugin.CaptureOps.GetSleepInterval(System.Double,System.Int32)~System.Int32")]
+[assembly: SuppressMessage("Readability", "RCS1123:Add parentheses when necessary.", Justification = "Parentheses not required", Scope = "member", Target = "~M:CaptureToolPlugin.CaptureBase.GetSleepInterval(System.Double,System.Int32)~System.Int32")]
 [assembly: SuppressMessage("Readability", "RCS1123:Add parentheses when necessary.", Justification = "Parentheses not required", Scope = "member", Target = "~M:CaptureToolPlugin.CaptureOps.OnFileCopyProgress(System.String,System.Single)")]
 [assembly: SuppressMessage("Readability", "RCS1123:Add parentheses when necessary.", Justification = "Parentheses not required", Scope = "member", Target = "~M:CaptureToolPlugin.CaptureOps.PerformDSExistsActions(System.String,System.Boolean,System.Int32,System.Int32,System.Int32,CaptureTaskManager.ToolReturnData,System.Collections.Generic.IDictionary{System.IO.FileSystemInfo,System.String})~System.Boolean")]
 [assembly: SuppressMessage("Simplification", "RCS1179:Unnecessary assignment.", Justification = "Leave as-is for readability", Scope = "member", Target = "~M:CaptureToolPlugin.ShareConnection.ConnectToShare(System.String,System.String,System.String,CaptureToolPlugin.CaptureOps.ConnectionType,CaptureTaskManager.EnumCloseOutType@,CaptureTaskManager.EnumEvalCode@)~System.Boolean")]
