@@ -68,6 +68,8 @@ namespace CaptureToolPlugin
         /// </summary>
         private readonly string mPassword = string.Empty;
 
+        private readonly SharedState mToolState = new SharedState();
+
         private ShareConnector mShareConnectorPRISM;
         private NetworkConnection mShareConnectorDotNET;
         private ConnectionType mConnectionType = ConnectionType.NotConnected;
@@ -81,12 +83,10 @@ namespace CaptureToolPlugin
         private float mLastProgressPercent = -1;
         private bool mFileCopyEventsWired;
 
-        private string mErrorMessage = string.Empty;
-
         /// <summary>
         /// Set to true if an error occurs connecting to the source computer
         /// </summary>
-        public bool NeedToAbortProcessing { get; private set; }
+        public bool NeedToAbortProcessing => mToolState.NeedToAbortProcessing;
 
         /// <summary>
         /// Constructor
@@ -261,8 +261,8 @@ namespace CaptureToolPlugin
             }
             catch (Exception ex)
             {
-                mErrorMessage = "Exception creating directory " + directoryPath;
-                LogError(mErrorMessage, ex);
+                mToolState.ErrorMessage = "Exception creating directory " + directoryPath;
+                LogError(mToolState.ErrorMessage, ex);
             }
         }
 
@@ -347,8 +347,8 @@ namespace CaptureToolPlugin
             }
             catch (Exception ex)
             {
-                mErrorMessage = "Exception finding files/directories to rename with x_";
-                LogError(mErrorMessage + " in " + datasetDirectoryPath, true);
+                mToolState.ErrorMessage = "Exception finding files/directories to rename with x_";
+                LogError(mToolState.ErrorMessage + " in " + datasetDirectoryPath, true);
                 LogError("Stack trace", ex);
                 return false;
             }
@@ -429,8 +429,8 @@ namespace CaptureToolPlugin
             }
             catch (Exception ex)
             {
-                mErrorMessage = "Exception renaming files/directories to rename with x_";
-                LogError(mErrorMessage + " in " + datasetDirectoryPath, true);
+                mToolState.ErrorMessage = "Exception renaming files/directories to rename with x_";
+                LogError(mToolState.ErrorMessage + " in " + datasetDirectoryPath, true);
                 LogError("Stack trace", ex);
                 return false;
             }
@@ -485,9 +485,9 @@ namespace CaptureToolPlugin
             catch (Exception ex)
             {
                 // Something really bad happened
-                mErrorMessage = "Error checking for empty dataset directory";
+                mToolState.ErrorMessage = "Error checking for empty dataset directory";
 
-                LogError(mErrorMessage + ": " + directoryPath, true);
+                LogError(mToolState.ErrorMessage + ": " + directoryPath, true);
                 LogError("Stack trace", ex);
                 return DatasetDirectoryState.Error;
             }
@@ -673,8 +673,8 @@ namespace CaptureToolPlugin
 
                 if (Directory.Exists(newDirectoryPath))
                 {
-                    mErrorMessage = "Cannot add x_ to directory; the target already exists: " + newDirectoryPath;
-                    LogError(mErrorMessage);
+                    mToolState.ErrorMessage = "Cannot add x_ to directory; the target already exists: " + newDirectoryPath;
+                    LogError(mToolState.ErrorMessage);
                     return false;
                 }
 
@@ -684,8 +684,8 @@ namespace CaptureToolPlugin
             }
             catch (Exception ex)
             {
-                mErrorMessage = "Error adding x_ to directory " + directoryPath;
-                LogError(mErrorMessage, ex);
+                mToolState.ErrorMessage = "Error adding x_ to directory " + directoryPath;
+                LogError(mToolState.ErrorMessage, ex);
                 return false;
             }
         }
@@ -737,7 +737,7 @@ namespace CaptureToolPlugin
                 if (ex is IOException && (ex.Message.Contains("user name") || ex.Message.Contains("password")))
                 {
                     // Note that this will call LogError and update returnData.CloseoutMsg
-                    HandleCopyException(returnData, ex);
+                    mToolState.HandleCopyException(returnData, ex);
 
                     LogWarning("Source directory path: " + targetDirectory.FullName);
                     return false;
@@ -747,7 +747,7 @@ namespace CaptureToolPlugin
 
                 LogError(returnData.CloseoutMsg + ": " + targetDirectory.FullName, ex);
 
-                HandleCopyException(returnData, ex);
+                mToolState.HandleCopyException(returnData, ex);
                 return false;
             }
         }
@@ -809,7 +809,7 @@ namespace CaptureToolPlugin
                 returnData.CloseoutMsg = "Exception validating constant file size";
                 LogError(returnData.CloseoutMsg + ": " + filePath, ex);
 
-                HandleCopyException(returnData, ex);
+                mToolState.HandleCopyException(returnData, ex);
                 return false;
             }
         }
@@ -933,9 +933,9 @@ namespace CaptureToolPlugin
                 return true;
             }
 
-            mErrorMessage = "Error " + myConn.ErrorMessage + " connecting to " + shareDirectoryPath + " as user " + userName + " using 'secfso'";
+            mToolState.ErrorMessage = "Error " + myConn.ErrorMessage + " connecting to " + shareDirectoryPath + " as user " + userName + " using 'secfso'";
 
-            var msg = mErrorMessage;
+            var msg = mToolState.ErrorMessage;
 
             if (myConn.ErrorMessage == "1326")
             {
@@ -953,7 +953,7 @@ namespace CaptureToolPlugin
             {
                 // Likely had error "An unexpected network error occurred" while copying a file for a previous dataset
                 // Need to completely exit the capture task manager
-                NeedToAbortProcessing = true;
+                mToolState.SetAbortProcessing();
                 closeoutType = EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING;
                 evalCode = EnumEvalCode.EVAL_CODE_NETWORK_ERROR_RETRY_CAPTURE;
             }
@@ -1008,11 +1008,11 @@ namespace CaptureToolPlugin
             }
             catch (Exception ex)
             {
-                mErrorMessage = "Error connecting to " + directorySharePath + " as user " + userName + " (using NetworkConnection class)";
-                LogError(mErrorMessage, ex);
+                mToolState.ErrorMessage = "Error connecting to " + directorySharePath + " as user " + userName + " (using NetworkConnection class)";
+                LogError(mToolState.ErrorMessage, ex);
 
                 var returnData = new ToolReturnData();
-                HandleCopyException(returnData, ex);
+                mToolState.HandleCopyException(returnData, ex);
 
                 closeoutType = returnData.CloseoutType;
                 evalCode = returnData.EvalCode;
@@ -1685,7 +1685,7 @@ namespace CaptureToolPlugin
 
                 DisconnectShareIfRequired();
 
-                HandleCopyException(returnData, ex);
+                mToolState.HandleCopyException(returnData, ex);
                 return;
             }
 
@@ -1746,7 +1746,7 @@ namespace CaptureToolPlugin
                 msg = "Copy exception for dataset " + datasetName;
                 LogError(msg + GetConnectionDescription(), ex);
 
-                HandleCopyException(returnData, ex);
+                mToolState.HandleCopyException(returnData, ex);
                 return;
             }
             finally
@@ -2085,7 +2085,7 @@ namespace CaptureToolPlugin
 
                 DisconnectShareIfRequired();
 
-                HandleCopyException(returnData, ex);
+                mToolState.HandleCopyException(returnData, ex);
                 return;
             }
 
@@ -2240,7 +2240,7 @@ namespace CaptureToolPlugin
 
                 DisconnectShareIfRequired();
 
-                HandleCopyException(returnData, ex);
+                mToolState.HandleCopyException(returnData, ex);
                 return;
             }
 
@@ -2337,7 +2337,7 @@ namespace CaptureToolPlugin
 
                 DisconnectShareIfRequired();
 
-                HandleCopyException(returnData, ex);
+                mToolState.HandleCopyException(returnData, ex);
                 return true;
             }
 
@@ -2399,7 +2399,7 @@ namespace CaptureToolPlugin
 
                 DisconnectShareIfRequired();
 
-                HandleCopyException(returnData, ex);
+                mToolState.HandleCopyException(returnData, ex);
                 return true;
             }
 
@@ -2526,7 +2526,7 @@ namespace CaptureToolPlugin
 
                 DisconnectShareIfRequired();
 
-                HandleCopyException(returnData, ex);
+                mToolState.HandleCopyException(returnData, ex);
                 return false;
             }
         }
@@ -2724,7 +2724,7 @@ namespace CaptureToolPlugin
                 LogError(msg, true);
                 LogError("Stack trace", ex);
 
-                HandleCopyException(returnData, ex);
+                mToolState.HandleCopyException(returnData, ex);
                 return;
             }
             finally
@@ -2817,7 +2817,7 @@ namespace CaptureToolPlugin
 
                 DisconnectShareIfRequired();
 
-                HandleCopyException(returnData, ex);
+                mToolState.HandleCopyException(returnData, ex);
                 return;
             }
 
@@ -2860,7 +2860,7 @@ namespace CaptureToolPlugin
 
                 DisconnectShareIfRequired();
 
-                HandleCopyException(returnData, ex);
+                mToolState.HandleCopyException(returnData, ex);
                 return;
             }
             finally
@@ -2980,7 +2980,7 @@ namespace CaptureToolPlugin
                 LogError(msg, true);
                 LogError("Stack trace", ex);
 
-                HandleCopyException(returnData, ex);
+                mToolState.HandleCopyException(returnData, ex);
             }
             finally
             {
@@ -3028,7 +3028,7 @@ namespace CaptureToolPlugin
                 try
                 {
                     // Clear any previous errors
-                    mErrorMessage = string.Empty;
+                    mToolState.ErrorMessage = string.Empty;
 
                     success = mFileTools.CopyDirectoryWithResume(
                         sourceDirectoryPath, targetDirectoryPath,
@@ -3060,7 +3060,7 @@ namespace CaptureToolPlugin
                         msg = "Access denied while copying " + mFileTools.CurrentSourceFile + ": ";
                     }
 
-                    mErrorMessage = msg;
+                    mToolState.ErrorMessage = msg;
 
                     if (ex.Message.Length <= 350)
                     {
@@ -3075,7 +3075,7 @@ namespace CaptureToolPlugin
 
                     doCopy = false;
 
-                    HandleCopyException(returnData, ex);
+                    mToolState.HandleCopyException(returnData, ex);
                 }
                 catch (Exception ex)
                 {
@@ -3089,7 +3089,7 @@ namespace CaptureToolPlugin
                         msg = "Error while copying " + mFileTools.CurrentSourceFile + ": ";
                     }
 
-                    mErrorMessage = msg;
+                    mToolState.ErrorMessage = msg;
 
                     if (ex.Message.Length <= 350)
                     {
@@ -3116,13 +3116,13 @@ namespace CaptureToolPlugin
                         }
                     }
 
-                    HandleCopyException(returnData, ex);
+                    mToolState.HandleCopyException(returnData, ex);
                 }
             }
 
             if (success)
             {
-                // CloseoutType may have been set to CLOSEOUT_FAILED by HandleCopyException; reset it to CLOSEOUT_SUCCESS
+                // CloseoutType may have been set to CLOSEOUT_FAILED by mToolState.HandleCopyException; reset it to CLOSEOUT_SUCCESS
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
                 returnData.EvalCode = EnumEvalCode.EVAL_CODE_SUCCESS;
             }
@@ -3354,33 +3354,6 @@ namespace CaptureToolPlugin
             }
         }
 
-        private void HandleCopyException(ToolReturnData returnData, Exception ex)
-        {
-            if (ex.Message.Contains("An unexpected network error occurred") ||
-                ex.Message.Contains("Multiple connections") ||
-                ex.Message.Contains("specified network name is no longer available"))
-            {
-                // Need to completely exit the capture task manager
-                NeedToAbortProcessing = true;
-                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING;
-                returnData.EvalCode = EnumEvalCode.EVAL_CODE_NETWORK_ERROR_RETRY_CAPTURE;
-            }
-            else if (ex.Message.Contains("unknown user name or bad password") || ex.Message.Contains("user name or password"))
-            {
-                // This error randomly occurs; no need to log a full stack trace
-                returnData.CloseoutMsg = "Authentication failure: " + ex.Message.Trim('\r', '\n');
-                LogError(returnData.CloseoutMsg);
-
-                // Set the EvalCode to 3 so that capture can be retried
-                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                returnData.EvalCode = EnumEvalCode.EVAL_CODE_NETWORK_ERROR_RETRY_CAPTURE;
-            }
-            else
-            {
-                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-            }
-        }
-
         /// <summary>
         /// Return true if the file or path has any invalid characters
         /// </summary>
@@ -3406,17 +3379,17 @@ namespace CaptureToolPlugin
         }
 
         /// <summary>
-        /// Store mErrorMessage in returnData.CloseoutMsg if an error exists yet returnData.CloseoutMsg is empty
+        /// Store mToolState.ErrorMessage in returnData.CloseoutMsg if an error exists yet returnData.CloseoutMsg is empty
         /// </summary>
         /// <param name="returnData"></param>
         private void PossiblyStoreErrorMessage(ToolReturnData returnData)
         {
-            if (!string.IsNullOrWhiteSpace(mErrorMessage) && string.IsNullOrWhiteSpace(returnData.CloseoutMsg))
+            if (!string.IsNullOrWhiteSpace(mToolState.ErrorMessage) && string.IsNullOrWhiteSpace(returnData.CloseoutMsg))
             {
-                returnData.CloseoutMsg = mErrorMessage;
+                returnData.CloseoutMsg = mToolState.ErrorMessage;
                 if (mTraceMode)
                 {
-                    ToolRunnerBase.ShowTraceMessage(mErrorMessage);
+                    ToolRunnerBase.ShowTraceMessage(mToolState.ErrorMessage);
                 }
             }
         }
