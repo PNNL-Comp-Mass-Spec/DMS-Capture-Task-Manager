@@ -972,41 +972,44 @@ namespace CaptureToolPlugin
                 }
 
                 var initData = new CaptureInitData(mToolState, mMgrParams, mFileTools, mShareConnection, mTraceMode);
-                CaptureBase capture = new CaptureBase(initData);
+                //CaptureBase capture = null;
 
                 // Perform copy based on source type
                 switch (datasetInfo.DatasetType)
                 {
                     case DatasetInfo.RawDSTypes.File:
-                        capture.CaptureFile(out msg, returnData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath, copyWithResume);
+                        var captureF1 = new CaptureFileBase(initData);
+                        captureF1.CaptureFile(out msg, returnData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath, copyWithResume);
                         break;
 
                     case DatasetInfo.RawDSTypes.MultiFile:
-                        capture.CaptureMultiFile(out msg, returnData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath, copyWithResume);
+                        var captureF2 = new CaptureFileBase(initData);
+                        captureF2.CaptureMultiFile(out msg, returnData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath, copyWithResume);
                         break;
 
                     case DatasetInfo.RawDSTypes.DirectoryExt:
-                        capture.CaptureDirectoryExt(out msg, returnData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath, copyWithResume, instrumentClass, instrumentName, taskParams);
+                        var captureD1 = new CaptureDirectoryBase(initData);
+                        captureD1.CaptureDirectoryExt(out msg, returnData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath, copyWithResume, instrumentClass, instrumentName, taskParams);
                         break;
 
                     case DatasetInfo.RawDSTypes.DirectoryNoExt:
-                        capture.CaptureDirectoryNoExt(out msg, returnData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath, copyWithResume, instrumentClass);
+                        var captureD2 = new CaptureDirectoryBase(initData);
+                        captureD2.CaptureDirectoryNoExt(out msg, returnData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath, copyWithResume, instrumentClass);
                         break;
 
                     case DatasetInfo.RawDSTypes.BrukerImaging:
-                        capture.CaptureBrukerImaging(out msg, returnData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath, copyWithResume);
+                        var captureD3 = new CaptureDirectoryBase(initData);
+                        captureD3.CaptureBrukerImaging(out msg, returnData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath, copyWithResume);
                         break;
 
                     case DatasetInfo.RawDSTypes.BrukerSpot:
-                        capture.CaptureBrukerSpot(out msg, returnData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath);
+                        var captureD4 = new CaptureDirectoryBase(initData);
+                        captureD4.CaptureBrukerSpot(out msg, returnData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath);
                         break;
 
                     default:
-                        msg = "Invalid dataset type found: " + datasetInfo.DatasetType;
-                        returnData.CloseoutMsg = msg;
-                        LogError(returnData.CloseoutMsg, true);
-                        mShareConnection.DisconnectShareIfRequired();
-                        returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                        var captureU = new CaptureUnknown(initData);
+                        captureU.CaptureFail(out msg, returnData, datasetInfo);
                         break;
                 }
             }

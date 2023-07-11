@@ -44,7 +44,10 @@
   <ItemGroup>
     <Compile Include="CaptureOps.cs" />
     <Compile Include="DataCapture\CaptureBase.cs" />
+    <Compile Include="DataCapture\CaptureDirectoryBase.cs" />
+    <Compile Include="DataCapture\CaptureFileBase.cs" />
     <Compile Include="DataCapture\CaptureInitData.cs" />
+    <Compile Include="DataCapture\CaptureUnknown.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="LCDataCapture.cs" />
     <Compile Include="PluginMain.cs" />
