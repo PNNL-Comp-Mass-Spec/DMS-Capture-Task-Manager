@@ -21,6 +21,22 @@ namespace CaptureToolPlugin.DataCapture
         public DirectoryNoExtCapture(CaptureInitData data) : base(data)
         { }
 
+        /// <inheritdoc />
+        public override void Capture(
+            out string msg,
+            ToolReturnData returnData,
+            DatasetInfo datasetInfo,
+            string sourceDirectoryPath,
+            string datasetDirectoryPath,
+            bool copyWithResume,
+            InstrumentClassInfo.InstrumentClass instrumentClass,
+            string instrumentName,
+            ITaskParams taskParams
+        )
+        {
+            CaptureDirectoryNoExt(out msg, returnData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath, copyWithResume, instrumentClass);
+        }
+
         /// <summary>
         /// Capture a directory with no extension on the name (the directory name is nearly always the dataset name)
         /// </summary>
@@ -31,7 +47,7 @@ namespace CaptureToolPlugin.DataCapture
         /// <param name="datasetDirectoryPath">Destination directory; datasetInfo.FileOrDirectoryName will not be appended to this (contrast with CaptureDirectoryExt)</param>
         /// <param name="copyWithResume">True if using copy with resume</param>
         /// <param name="instrumentClass">Instrument class</param>
-        public void CaptureDirectoryNoExt(
+        private void CaptureDirectoryNoExt(
             out string msg,
             ToolReturnData returnData,
             DatasetInfo datasetInfo,

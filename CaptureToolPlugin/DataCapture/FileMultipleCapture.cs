@@ -15,6 +15,22 @@ namespace CaptureToolPlugin.DataCapture
         public FileMultipleCapture(CaptureInitData data) : base(data)
         { }
 
+        /// <inheritdoc />
+        public override void Capture(
+            out string msg,
+            ToolReturnData returnData,
+            DatasetInfo datasetInfo,
+            string sourceDirectoryPath,
+            string datasetDirectoryPath,
+            bool copyWithResume,
+            InstrumentClassInfo.InstrumentClass instrumentClass,
+            string instrumentName,
+            ITaskParams taskParams
+        )
+        {
+            CaptureMultiFile(out msg, returnData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath, copyWithResume);
+        }
+
         /// <summary>
         /// Capture multiple files, each with the same name but a different extension
         /// </summary>
@@ -24,7 +40,7 @@ namespace CaptureToolPlugin.DataCapture
         /// <param name="sourceDirectoryPath">Source directory (on instrument)</param>
         /// <param name="datasetDirectoryPath">Destination directory</param>
         /// <param name="copyWithResume">True if using copy with resume</param>
-        public void CaptureMultiFile(
+        private void CaptureMultiFile(
             out string msg,
             ToolReturnData returnData,
             DatasetInfo datasetInfo,

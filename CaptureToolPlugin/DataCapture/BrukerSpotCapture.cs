@@ -20,6 +20,22 @@ namespace CaptureToolPlugin.DataCapture
         public BrukerSpotCapture(CaptureInitData data) : base(data)
         { }
 
+        /// <inheritdoc />
+        public override void Capture(
+            out string msg,
+            ToolReturnData returnData,
+            DatasetInfo datasetInfo,
+            string sourceDirectoryPath,
+            string datasetDirectoryPath,
+            bool copyWithResume,
+            InstrumentClassInfo.InstrumentClass instrumentClass,
+            string instrumentName,
+            ITaskParams taskParams
+        )
+        {
+            CaptureBrukerSpot(out msg, returnData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath);
+        }
+
         /// <summary>
         /// Capture a directory from a Bruker_Spot instrument
         /// </summary>
@@ -28,7 +44,7 @@ namespace CaptureToolPlugin.DataCapture
         /// <param name="datasetInfo">Dataset info</param>
         /// <param name="sourceDirectoryPath">Source directory (on instrument); datasetInfo.FileOrDirectoryName will be appended to this</param>
         /// <param name="datasetDirectoryPath">Destination directory; datasetInfo.FileOrDirectoryName will not be appended to this (contrast with CaptureDirectoryExt)</param>
-        public void CaptureBrukerSpot(
+        private void CaptureBrukerSpot(
             out string msg,
             ToolReturnData returnData,
             DatasetInfo datasetInfo,

@@ -15,6 +15,22 @@ namespace CaptureToolPlugin.DataCapture
         public FileSingleCapture(CaptureInitData data) : base(data)
         { }
 
+        /// <inheritdoc />
+        public override void Capture(
+            out string msg,
+            ToolReturnData returnData,
+            DatasetInfo datasetInfo,
+            string sourceDirectoryPath,
+            string datasetDirectoryPath,
+            bool copyWithResume,
+            InstrumentClassInfo.InstrumentClass instrumentClass,
+            string instrumentName,
+            ITaskParams taskParams
+        )
+        {
+            CaptureFile(out msg, returnData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath, copyWithResume);
+        }
+
         /// <summary>
         /// Capture a single file
         /// </summary>
@@ -24,7 +40,7 @@ namespace CaptureToolPlugin.DataCapture
         /// <param name="sourceDirectoryPath">Source directory (on instrument)</param>
         /// <param name="datasetDirectoryPath">Destination directory</param>
         /// <param name="copyWithResume">True if using copy with resume</param>
-        public void CaptureFile(
+        private void CaptureFile(
             out string msg,
             ToolReturnData returnData,
             DatasetInfo datasetInfo,

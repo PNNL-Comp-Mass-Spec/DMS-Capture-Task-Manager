@@ -50,29 +50,29 @@ namespace CaptureToolPlugin.DataCapture
             RegisterEvents(mDatasetFileSearchTool);
         }
 
-        ///// <summary>
-        ///// Capture a dataset directory that has an extension like .D or .Raw
-        ///// </summary>
-        ///// <param name="msg">Output: error message</param>
-        ///// <param name="returnData">Input/output: Return data</param>
-        ///// <param name="datasetInfo">Dataset info</param>
-        ///// <param name="sourceDirectoryPath">Source directory (on instrument); datasetInfo.FileOrDirectoryName will be appended to this</param>
-        ///// <param name="datasetDirectoryPath">Destination directory (on storage server); datasetInfo.FileOrDirectoryName will be appended to this</param>
-        ///// <param name="copyWithResume">True if using copy with resume</param>
-        ///// <param name="instrumentClass">Instrument class</param>
-        ///// <param name="instrumentName">Instrument name</param>
-        ///// <param name="taskParams">Task parameters</param>
-        //public abstract void Capture(
-        //    out string msg,
-        //    ToolReturnData returnData,
-        //    DatasetInfo datasetInfo,
-        //    string sourceDirectoryPath,
-        //    string datasetDirectoryPath,
-        //    bool copyWithResume,
-        //    InstrumentClassInfo.InstrumentClass instrumentClass,
-        //    string instrumentName,
-        //    ITaskParams taskParams
-        //);
+        /// <summary>
+        /// Capture a dataset directory that has an extension like .D or .Raw
+        /// </summary>
+        /// <param name="msg">Output: error message</param>
+        /// <param name="returnData">Input/output: Return data</param>
+        /// <param name="datasetInfo">Dataset info</param>
+        /// <param name="sourceDirectoryPath">Source directory (on instrument); datasetInfo.FileOrDirectoryName will be appended to this</param>
+        /// <param name="datasetDirectoryPath">Destination directory (on storage server); datasetInfo.FileOrDirectoryName will be appended to this</param>
+        /// <param name="copyWithResume">True if using copy with resume</param>
+        /// <param name="instrumentClass">Instrument class</param>
+        /// <param name="instrumentName">Instrument name</param>
+        /// <param name="taskParams">Task parameters</param>
+        public abstract void Capture(
+            out string msg,
+            ToolReturnData returnData,
+            DatasetInfo datasetInfo,
+            string sourceDirectoryPath,
+            string datasetDirectoryPath,
+            bool copyWithResume,
+            InstrumentClassInfo.InstrumentClass instrumentClass,
+            string instrumentName,
+            ITaskParams taskParams
+        );
 
         /// <summary>
         /// Creates specified directory; if the directory already exists, returns true

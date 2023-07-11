@@ -21,6 +21,22 @@ namespace CaptureToolPlugin.DataCapture
         public DirectoryExtCapture(CaptureInitData data) : base(data)
         { }
 
+        /// <inheritdoc />
+        public override void Capture(
+            out string msg,
+            ToolReturnData returnData,
+            DatasetInfo datasetInfo,
+            string sourceDirectoryPath,
+            string datasetDirectoryPath,
+            bool copyWithResume,
+            InstrumentClassInfo.InstrumentClass instrumentClass,
+            string instrumentName,
+            ITaskParams taskParams
+        )
+        {
+            CaptureDirectoryExt(out msg, returnData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath, copyWithResume, instrumentClass, instrumentName, taskParams);
+        }
+
         /// <summary>
         /// Capture a dataset directory that has an extension like .D or .Raw
         /// </summary>
@@ -33,7 +49,7 @@ namespace CaptureToolPlugin.DataCapture
         /// <param name="instrumentClass">Instrument class</param>
         /// <param name="instrumentName">Instrument name</param>
         /// <param name="taskParams">Task parameters</param>
-        public void CaptureDirectoryExt(
+        private void CaptureDirectoryExt(
             out string msg,
             ToolReturnData returnData,
             DatasetInfo datasetInfo,

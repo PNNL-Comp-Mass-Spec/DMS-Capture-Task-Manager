@@ -14,25 +14,17 @@ namespace CaptureToolPlugin.DataCapture
         public UnknownCapture(CaptureInitData data) : base(data)
         { }
 
-        ///// <inheritdoc />
-        //public override void Capture(
-        //    out string msg,
-        //    ToolReturnData returnData,
-        //    DatasetInfo datasetInfo,
-        //    string sourceDirectoryPath,
-        //    string datasetDirectoryPath,
-        //    bool copyWithResume,
-        //    InstrumentClassInfo.InstrumentClass instrumentClass,
-        //    string instrumentName,
-        //    ITaskParams taskParams
-        //)
-        //{
-        //}
-
-        public void CaptureFail(
+        /// <inheritdoc />
+        public override void Capture(
             out string msg,
             ToolReturnData returnData,
-            DatasetInfo datasetInfo
+            DatasetInfo datasetInfo,
+            string sourceDirectoryPath,
+            string datasetDirectoryPath,
+            bool copyWithResume,
+            InstrumentClassInfo.InstrumentClass instrumentClass,
+            string instrumentName,
+            ITaskParams taskParams
         )
         {
             msg = "Invalid dataset type found: " + datasetInfo.DatasetType;
