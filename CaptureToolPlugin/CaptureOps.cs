@@ -978,37 +978,37 @@ namespace CaptureToolPlugin
                 switch (datasetInfo.DatasetType)
                 {
                     case DatasetInfo.RawDSTypes.File:
-                        var captureF1 = new CaptureFileBase(initData);
+                        var captureF1 = new FileSingleCapture(initData);
                         captureF1.CaptureFile(out msg, returnData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath, copyWithResume);
                         break;
 
                     case DatasetInfo.RawDSTypes.MultiFile:
-                        var captureF2 = new CaptureFileBase(initData);
+                        var captureF2 = new FileMultipleCapture(initData);
                         captureF2.CaptureMultiFile(out msg, returnData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath, copyWithResume);
                         break;
 
                     case DatasetInfo.RawDSTypes.DirectoryExt:
-                        var captureD1 = new CaptureDirectoryBase(initData);
+                        var captureD1 = new DirectoryExtCapture(initData);
                         captureD1.CaptureDirectoryExt(out msg, returnData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath, copyWithResume, instrumentClass, instrumentName, taskParams);
                         break;
 
                     case DatasetInfo.RawDSTypes.DirectoryNoExt:
-                        var captureD2 = new CaptureDirectoryBase(initData);
+                        var captureD2 = new DirectoryNoExtCapture(initData);
                         captureD2.CaptureDirectoryNoExt(out msg, returnData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath, copyWithResume, instrumentClass);
                         break;
 
                     case DatasetInfo.RawDSTypes.BrukerImaging:
-                        var captureD3 = new CaptureDirectoryBase(initData);
+                        var captureD3 = new BrukerImagingCapture(initData);
                         captureD3.CaptureBrukerImaging(out msg, returnData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath, copyWithResume);
                         break;
 
                     case DatasetInfo.RawDSTypes.BrukerSpot:
-                        var captureD4 = new CaptureDirectoryBase(initData);
+                        var captureD4 = new BrukerSpotCapture(initData);
                         captureD4.CaptureBrukerSpot(out msg, returnData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath);
                         break;
 
                     default:
-                        var captureU = new CaptureUnknown(initData);
+                        var captureU = new UnknownCapture(initData);
                         captureU.CaptureFail(out msg, returnData, datasetInfo);
                         break;
                 }

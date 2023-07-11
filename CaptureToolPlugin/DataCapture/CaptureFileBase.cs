@@ -7,73 +7,16 @@ using CaptureTaskManager;
 namespace CaptureToolPlugin.DataCapture
 {
     /// <summary>
-    /// Class for capturing non-directory-based dataset files
+    /// Abstract class for capturing non-directory-based dataset files
     /// </summary>
-    internal class CaptureFileBase : CaptureBase
+    internal abstract class CaptureFileBase : CaptureBase
     {
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="data">Initialization data object</param>
-        public CaptureFileBase(CaptureInitData data) : base(data)
+        protected CaptureFileBase(CaptureInitData data) : base(data)
         { }
-
-        /// <summary>
-        /// Capture a single file
-        /// </summary>
-        /// <param name="msg">Output: error message</param>
-        /// <param name="returnData">Input/output: Return data</param>
-        /// <param name="datasetInfo">Dataset info</param>
-        /// <param name="sourceDirectoryPath">Source directory (on instrument)</param>
-        /// <param name="datasetDirectoryPath">Destination directory</param>
-        /// <param name="copyWithResume">True if using copy with resume</param>
-        public void CaptureFile(
-            out string msg,
-            ToolReturnData returnData,
-            DatasetInfo datasetInfo,
-            string sourceDirectoryPath,
-            string datasetDirectoryPath,
-            bool copyWithResume)
-        {
-            var fileNames = new List<string>
-            {
-                datasetInfo.FileOrDirectoryName
-            };
-
-            CaptureOneOrMoreFiles(out msg, returnData, datasetInfo.DatasetName,
-                fileNames, sourceDirectoryPath, datasetDirectoryPath, copyWithResume);
-        }
-
-        /// <summary>
-        /// Capture multiple files, each with the same name but a different extension
-        /// </summary>
-        /// <param name="msg">Output: error message</param>
-        /// <param name="returnData">Input/output: Return data</param>
-        /// <param name="datasetInfo">Dataset info</param>
-        /// <param name="sourceDirectoryPath">Source directory (on instrument)</param>
-        /// <param name="datasetDirectoryPath">Destination directory</param>
-        /// <param name="copyWithResume">True if using copy with resume</param>
-        public void CaptureMultiFile(
-            out string msg,
-            ToolReturnData returnData,
-            DatasetInfo datasetInfo,
-            string sourceDirectoryPath,
-            string datasetDirectoryPath,
-            bool copyWithResume)
-        {
-            // Dataset found, and it has multiple files
-            // Each has the same name but a different extension
-
-            var fileNames = new List<string>();
-
-            foreach (var remoteFile in datasetInfo.FileList)
-            {
-                fileNames.Add(remoteFile.Name);
-            }
-
-            CaptureOneOrMoreFiles(out msg, returnData, datasetInfo.DatasetName,
-                fileNames, sourceDirectoryPath, datasetDirectoryPath, copyWithResume);
-        }
 
         /// <summary>
         /// Dataset found, and it's either a single file or multiple files with the same name but different extensions
@@ -86,7 +29,7 @@ namespace CaptureToolPlugin.DataCapture
         /// <param name="sourceDirectoryPath">Source directory (on instrument)</param>
         /// <param name="datasetDirectoryPath">Destination directory</param>
         /// <param name="copyWithResume">True if using copy with resume</param>
-        private void CaptureOneOrMoreFiles(
+        protected void CaptureOneOrMoreFiles(
             out string msg,
             ToolReturnData returnData,
             string datasetName,

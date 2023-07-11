@@ -5,13 +5,13 @@ namespace CaptureToolPlugin.DataCapture
     /// <summary>
     /// Implementation for unknown, automatic failure data types.
     /// </summary>
-    internal class CaptureUnknown : CaptureBase
+    internal class UnknownCapture : CaptureBase
     {
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="data">Initialization data object</param>
-        public CaptureUnknown(CaptureInitData data) : base(data)
+        public UnknownCapture(CaptureInitData data) : base(data)
         { }
 
         ///// <inheritdoc />
