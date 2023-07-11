@@ -46,6 +46,7 @@
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="PluginMain.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ShareConnection.cs" />
     <Compile Include="SharedState.cs" />
   </ItemGroup>
   <ItemGroup>

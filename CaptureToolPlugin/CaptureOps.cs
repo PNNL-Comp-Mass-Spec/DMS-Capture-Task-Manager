@@ -35,13 +35,6 @@ namespace CaptureToolPlugin
             Error
         }
 
-        private enum ConnectionType
-        {
-            NotConnected,
-            Prism,
-            DotNET
-        }
-
         private readonly IMgrParams mMgrParams;
 
         private readonly int mSleepInterval;
@@ -69,10 +62,7 @@ namespace CaptureToolPlugin
         private readonly string mPassword = string.Empty;
 
         private readonly SharedState mToolState = new SharedState();
-
-        private ShareConnector mShareConnectorPRISM;
-        private NetworkConnection mShareConnectorDotNET;
-        private ConnectionType mConnectionType = ConnectionType.NotConnected;
+        private readonly ShareConnection mShareConnection;
 
         private readonly DatasetFileSearchTool mDatasetFileSearchTool;
         private readonly FileTools mFileTools;
@@ -119,6 +109,8 @@ namespace CaptureToolPlugin
                     mUserName = System.Net.Dns.GetHostName() + @"\" + mUserName;
                 }
             }
+
+            mShareConnection = new ShareConnection(mToolState, mgrParams, useBioNet);
 
             // Sleep interval for "is dataset complete" testing
             mSleepInterval = mMgrParams.GetParam("SleepInterval", 30);
@@ -852,219 +844,6 @@ namespace CaptureToolPlugin
         }
 
         /// <summary>
-        /// Returns a string that describes the username and connection method currently active
-        /// </summary>
-        private string GetConnectionDescription()
-        {
-            return mConnectionType switch
-            {
-                ConnectionType.NotConnected => " as user " + Environment.UserName + " using fso",
-                ConnectionType.DotNET => " as user " + mUserName + " using CaptureTaskManager.NetworkConnection",
-                ConnectionType.Prism => " as user " + mUserName + " using PRISM.ShareConnector",
-                _ => " via unknown connection mode"
-            };
-        }
-
-        /// <summary>
-        /// Connect to a Bionet share using either mShareConnectorPRISM or mShareConnectorDotNET
-        /// </summary>
-        /// <param name="userName">Username</param>
-        /// <param name="pwd">Password</param>
-        /// <param name="directorySharePath">Share path</param>
-        /// <param name="connectionType">Connection type enum (ConnectionType.DotNET or ConnectionType.Prism)</param>
-        /// <param name="closeoutType">Closeout code (output)</param>
-        /// <param name="evalCode"></param>
-        /// <returns>True if success, false if an error</returns>
-        private bool ConnectToShare(
-            string userName,
-            string pwd,
-            string directorySharePath,
-            ConnectionType connectionType,
-            out EnumCloseOutType closeoutType,
-            out EnumEvalCode evalCode)
-        {
-            bool success;
-
-            // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
-            if (connectionType == ConnectionType.DotNET)
-            {
-                success = ConnectToShare(userName, pwd, directorySharePath, out mShareConnectorDotNET, out closeoutType, out evalCode);
-            }
-            else
-            {
-                // Assume Prism Connector
-                success = ConnectToShare(userName, pwd, directorySharePath, out mShareConnectorPRISM, out closeoutType, out evalCode);
-            }
-
-            return success;
-        }
-
-        /// <summary>
-        /// Connect to a remote share using a specific username and password
-        /// Uses class PRISM.ShareConnector
-        /// </summary>
-        /// <param name="userName">Username</param>
-        /// <param name="pwd">Password</param>
-        /// <param name="shareDirectoryPath">Share path</param>
-        /// <param name="myConn">Connection object (output)</param>
-        /// <param name="closeoutType">Closeout code (output)</param>
-        /// <param name="evalCode"></param>
-        /// <returns>True if success, false if an error</returns>
-        private bool ConnectToShare(
-            string userName,
-            string pwd,
-            string shareDirectoryPath,
-            out ShareConnector myConn,
-            out EnumCloseOutType closeoutType,
-            out EnumEvalCode evalCode)
-        {
-            closeoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
-            evalCode = EnumEvalCode.EVAL_CODE_SUCCESS;
-
-            myConn = new ShareConnector(userName, pwd)
-            {
-                Share = shareDirectoryPath
-            };
-
-            if (myConn.Connect())
-            {
-                LogDebug("Connected to Bionet (" + shareDirectoryPath + ") as user " + userName + " using PRISM.ShareConnector");
-                mConnectionType = ConnectionType.Prism;
-                return true;
-            }
-
-            mToolState.ErrorMessage = "Error " + myConn.ErrorMessage + " connecting to " + shareDirectoryPath + " as user " + userName + " using 'secfso'";
-
-            var msg = mToolState.ErrorMessage;
-
-            if (myConn.ErrorMessage == "1326")
-            {
-                msg += "; you likely need to change the Capture_Method from secfso to fso";
-            }
-
-            if (myConn.ErrorMessage == "53")
-            {
-                msg += "; the password may need to be reset";
-            }
-
-            LogError(msg);
-
-            if (myConn.ErrorMessage is "1219" or "1203" or "53" or "64")
-            {
-                // Likely had error "An unexpected network error occurred" while copying a file for a previous dataset
-                // Need to completely exit the capture task manager
-                mToolState.SetAbortProcessing();
-                closeoutType = EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING;
-                evalCode = EnumEvalCode.EVAL_CODE_NETWORK_ERROR_RETRY_CAPTURE;
-            }
-            else
-            {
-                closeoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-            }
-
-            mConnectionType = ConnectionType.NotConnected;
-            return false;
-        }
-
-        /// <summary>
-        /// Connect to a remote share using a specific username and password
-        /// Uses class CaptureTaskManager.NetworkConnection
-        /// </summary>
-        /// <param name="userName">Username</param>
-        /// <param name="pwd">Password</param>
-        /// <param name="directorySharePath">Remote share path</param>
-        /// <param name="myConn">Connection object (output)</param>
-        /// <param name="closeoutType">Closeout code (output)</param>
-        /// <param name="evalCode"></param>
-        /// <returns>True if success, false if an error</returns>
-        private bool ConnectToShare(
-            string userName,
-            string pwd,
-            string directorySharePath,
-            out NetworkConnection myConn,
-            out EnumCloseOutType closeoutType,
-            out EnumEvalCode evalCode)
-        {
-            evalCode = EnumEvalCode.EVAL_CODE_SUCCESS;
-            myConn = null;
-
-            try
-            {
-                // Make sure directorySharePath does not end in a backslash
-                if (directorySharePath.EndsWith(@"\"))
-                {
-                    directorySharePath = directorySharePath.Substring(0, directorySharePath.Length - 1);
-                }
-
-                var accessCredentials = new System.Net.NetworkCredential(userName, pwd, "");
-
-                myConn = new NetworkConnection(directorySharePath, accessCredentials);
-
-                LogDebug("Connected to Bionet (" + directorySharePath + ") as user " + userName + " using CaptureTaskManager.NetworkConnection");
-                mConnectionType = ConnectionType.DotNET;
-
-                closeoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
-                return true;
-            }
-            catch (Exception ex)
-            {
-                mToolState.ErrorMessage = "Error connecting to " + directorySharePath + " as user " + userName + " (using NetworkConnection class)";
-                LogError(mToolState.ErrorMessage, ex);
-
-                var returnData = new ToolReturnData();
-                mToolState.HandleCopyException(returnData, ex);
-
-                closeoutType = returnData.CloseoutType;
-                evalCode = returnData.EvalCode;
-
-                mConnectionType = ConnectionType.NotConnected;
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Disconnect from a bionet share if required
-        /// </summary>
-        private void DisconnectShareIfRequired()
-        {
-            if (mConnectionType == ConnectionType.Prism)
-            {
-                DisconnectShare(ref mShareConnectorPRISM);
-            }
-            else if (mConnectionType == ConnectionType.DotNET)
-            {
-                DisconnectShare(ref mShareConnectorDotNET);
-            }
-        }
-
-        /// <summary>
-        /// Disconnects a Bionet shared drive
-        /// </summary>
-        /// <param name="myConn">Connection object (class PRISM.ShareConnector) for shared drive</param>
-        private void DisconnectShare(ref ShareConnector myConn)
-        {
-            myConn.Disconnect();
-            AppUtils.GarbageCollectNow();
-
-            LogDebug("Bionet disconnected");
-            mConnectionType = ConnectionType.NotConnected;
-        }
-
-        /// <summary>
-        /// Disconnects a Bionet shared drive
-        /// </summary>
-        /// <param name="myConn">Connection object (class CaptureTaskManager.NetworkConnection) for shared drive</param>
-        private void DisconnectShare(ref NetworkConnection myConn)
-        {
-            myConn.Dispose();
-            myConn = null;
-            AppUtils.GarbageCollectNow();
-
-            LogDebug("Bionet disconnected");
-            mConnectionType = ConnectionType.NotConnected;
-        }
-
-        /// <summary>
         /// Perform a single capture operation
         /// </summary>
         /// <param name="taskParams">Enum indicating status of task</param>
@@ -1089,10 +868,7 @@ namespace CaptureToolPlugin
             var instrumentClass = InstrumentClassInfo.GetInstrumentClass(instClassName);    // Enum of instrument class type
             var instrumentName = taskParams.GetParam("Instrument_Name");                    // Instrument name
 
-            var shareConnectorType = mMgrParams.GetParam("ShareConnectorType");             // Can be PRISM or DotNET (but has been PRISM since 2012)
             var computerName = System.Net.Dns.GetHostName();
-
-            ConnectionType connectionType;
 
             var maxFileCountToAllowResume = 0;
             var maxInstrumentDirCountToAllowResume = 0;
@@ -1111,18 +887,6 @@ namespace CaptureToolPlugin
             if (NameHasInvalidCharacter(datasetName, "Dataset name", true, returnData))
             {
                 return false;
-            }
-
-            // Determine whether the connector class should be used to connect to Bionet
-            // This is defined by manager parameter ShareConnectorType
-            // Default in October 2014 is PRISM
-            if (string.Equals(shareConnectorType, "dotnet", StringComparison.OrdinalIgnoreCase))
-            {
-                connectionType = ConnectionType.DotNET;
-            }
-            else
-            {
-                connectionType = ConnectionType.Prism;
             }
 
             // Determine whether or not we will use Copy with Resume for all files for this dataset
@@ -1326,7 +1090,7 @@ namespace CaptureToolPlugin
             {
                 LogDebug("Bionet connection required for " + sourceVol);
 
-                if (!ConnectToShare(mUserName, pwd, sourceDirectoryPath, connectionType, out var closeoutType, out var evalCode))
+                if (!mShareConnection.ConnectToShare(mUserName, pwd, sourceDirectoryPath, out var closeoutType, out var evalCode))
                 {
                     returnData.CloseoutType = closeoutType;
                     returnData.EvalCode = evalCode;
@@ -1520,7 +1284,7 @@ namespace CaptureToolPlugin
                         msg = "Invalid dataset type found: " + datasetInfo.DatasetType;
                         returnData.CloseoutMsg = msg;
                         LogError(returnData.CloseoutMsg, true);
-                        DisconnectShareIfRequired();
+                        mShareConnection.DisconnectShareIfRequired();
                         returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                         break;
                 }
@@ -1651,7 +1415,7 @@ namespace CaptureToolPlugin
             if (validFiles.Count < fileNames.Count)
             {
                 LogWarning("Dataset '" + datasetName + "' not ready; source file's size changed (or authentication error)");
-                DisconnectShareIfRequired();
+                mShareConnection.DisconnectShareIfRequired();
                 if (errorMessages.Count > 0)
                 {
                     returnData.CloseoutMsg = errorMessages[0];
@@ -1683,7 +1447,7 @@ namespace CaptureToolPlugin
                 LogError(msg, true);
                 LogError("Stack trace", ex);
 
-                DisconnectShareIfRequired();
+                mShareConnection.DisconnectShareIfRequired();
 
                 mToolState.HandleCopyException(returnData, ex);
                 return;
@@ -1713,7 +1477,7 @@ namespace CaptureToolPlugin
                     if (!File.Exists(sourceFilePath))
                     {
                         msg = "source file not found at " + sourceFilePath;
-                        LogError("  " + msg + GetConnectionDescription());
+                        LogError("  " + msg + mShareConnection.GetConnectionDescription());
                         break;
                     }
 
@@ -1732,26 +1496,26 @@ namespace CaptureToolPlugin
 
                     if (success)
                     {
-                        LogMessage("  copied file " + sourceFilePath + " to " + targetFilePath + GetConnectionDescription());
+                        LogMessage("  copied file " + sourceFilePath + " to " + targetFilePath + mShareConnection.GetConnectionDescription());
                     }
                     else
                     {
                         msg = "file copy failed for " + sourceFilePath + " to " + targetFilePath;
-                        LogError("  " + msg + GetConnectionDescription());
+                        LogError("  " + msg + mShareConnection.GetConnectionDescription());
                     }
                 }
             }
             catch (Exception ex)
             {
                 msg = "Copy exception for dataset " + datasetName;
-                LogError(msg + GetConnectionDescription(), ex);
+                LogError(msg + mShareConnection.GetConnectionDescription(), ex);
 
                 mToolState.HandleCopyException(returnData, ex);
                 return;
             }
             finally
             {
-                DisconnectShareIfRequired();
+                mShareConnection.DisconnectShareIfRequired();
             }
 
             if (success)
@@ -2045,7 +1809,7 @@ namespace CaptureToolPlugin
                 {
                     msg = "Error looking for journal files to skip";
                     returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                    // Note: error has already been logged and DisconnectShareIfRequired() has already been called
+                    // Note: error has already been logged and mShareConnection.DisconnectShareIfRequired() has already been called
                     return;
                 }
             }
@@ -2056,7 +1820,7 @@ namespace CaptureToolPlugin
             {
                 msg = "Dataset '" + datasetInfo.DatasetName + "' not ready";
                 LogWarning(msg);
-                DisconnectShareIfRequired();
+                mShareConnection.DisconnectShareIfRequired();
 
                 if (string.IsNullOrWhiteSpace(returnData.CloseoutMsg))
                 {
@@ -2083,7 +1847,7 @@ namespace CaptureToolPlugin
                 LogError(msg, true);
                 LogError("Stack trace", ex);
 
-                DisconnectShareIfRequired();
+                mShareConnection.DisconnectShareIfRequired();
 
                 mToolState.HandleCopyException(returnData, ex);
                 return;
@@ -2200,7 +1964,7 @@ namespace CaptureToolPlugin
 
                 if (success)
                 {
-                    msg = "Copied directory " + sourceDirectoryToUse.FullName + " to " + targetDirectory.FullName + GetConnectionDescription();
+                    msg = "Copied directory " + sourceDirectoryToUse.FullName + " to " + targetDirectory.FullName + mShareConnection.GetConnectionDescription();
                     LogMessage(msg);
 
                     AutoFixFilesWithInvalidChars(datasetInfo.DatasetName, targetDirectory);
@@ -2235,16 +1999,16 @@ namespace CaptureToolPlugin
             }
             catch (Exception ex)
             {
-                msg = "Copy exception for dataset " + datasetInfo.DatasetName + GetConnectionDescription();
+                msg = "Copy exception for dataset " + datasetInfo.DatasetName + mShareConnection.GetConnectionDescription();
                 LogError(msg, ex);
 
-                DisconnectShareIfRequired();
+                mShareConnection.DisconnectShareIfRequired();
 
                 mToolState.HandleCopyException(returnData, ex);
                 return;
             }
 
-            DisconnectShareIfRequired();
+            mShareConnection.DisconnectShareIfRequired();
 
             if (success)
             {
@@ -2323,7 +2087,7 @@ namespace CaptureToolPlugin
                     returnData.CloseoutMsg = sourceDirectoryErrorMessage + "; to ignore this error, use " + jobParameterHint;
                     LogError(msg);
 
-                    DisconnectShareIfRequired();
+                    mShareConnection.DisconnectShareIfRequired();
                     returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     return true;
                 }
@@ -2335,7 +2099,7 @@ namespace CaptureToolPlugin
                 LogError(msg, true);
                 LogError("Stack trace", ex);
 
-                DisconnectShareIfRequired();
+                mShareConnection.DisconnectShareIfRequired();
 
                 mToolState.HandleCopyException(returnData, ex);
                 return true;
@@ -2385,7 +2149,7 @@ namespace CaptureToolPlugin
                     msg = returnData.CloseoutMsg + " at " + directoryPath;
                     LogError(msg);
 
-                    DisconnectShareIfRequired();
+                    mShareConnection.DisconnectShareIfRequired();
                     returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     return true;
                 }
@@ -2397,7 +2161,7 @@ namespace CaptureToolPlugin
                 LogError(msg, true);
                 LogError("Stack trace", ex);
 
-                DisconnectShareIfRequired();
+                mShareConnection.DisconnectShareIfRequired();
 
                 mToolState.HandleCopyException(returnData, ex);
                 return true;
@@ -2524,7 +2288,7 @@ namespace CaptureToolPlugin
                 LogError(returnData.CloseoutMsg + " for dataset " + datasetInfo.DatasetName, true);
                 LogError("Stack trace", ex);
 
-                DisconnectShareIfRequired();
+                mShareConnection.DisconnectShareIfRequired();
 
                 mToolState.HandleCopyException(returnData, ex);
                 return false;
@@ -2677,7 +2441,7 @@ namespace CaptureToolPlugin
             {
                 msg = "Dataset '" + datasetInfo.DatasetName + "' not ready";
                 LogWarning(msg);
-                DisconnectShareIfRequired();
+                mShareConnection.DisconnectShareIfRequired();
 
                 if (string.IsNullOrWhiteSpace(returnData.CloseoutMsg))
                 {
@@ -2708,7 +2472,7 @@ namespace CaptureToolPlugin
 
                 if (success)
                 {
-                    msg = "Copied directory " + sourceDirectory.FullName + " to " + targetDirectory.FullName + GetConnectionDescription();
+                    msg = "Copied directory " + sourceDirectory.FullName + " to " + targetDirectory.FullName + mShareConnection.GetConnectionDescription();
                     LogMessage(msg);
 
                     AutoFixFilesWithInvalidChars(datasetInfo.DatasetName, targetDirectory);
@@ -2720,7 +2484,7 @@ namespace CaptureToolPlugin
             }
             catch (Exception ex)
             {
-                msg = "Exception copying dataset directory " + sourceDirectory.FullName + GetConnectionDescription();
+                msg = "Exception copying dataset directory " + sourceDirectory.FullName + mShareConnection.GetConnectionDescription();
                 LogError(msg, true);
                 LogError("Stack trace", ex);
 
@@ -2729,7 +2493,7 @@ namespace CaptureToolPlugin
             }
             finally
             {
-                DisconnectShareIfRequired();
+                mShareConnection.DisconnectShareIfRequired();
             }
 
             if (success)
@@ -2778,7 +2542,7 @@ namespace CaptureToolPlugin
                 returnData.CloseoutMsg = "No zip files found in dataset directory";
                 msg = returnData.CloseoutMsg + " at " + sourceDirectory.FullName;
                 LogError(msg);
-                DisconnectShareIfRequired();
+                mShareConnection.DisconnectShareIfRequired();
 
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                 return;
@@ -2788,7 +2552,7 @@ namespace CaptureToolPlugin
             {
                 msg = "Dataset '" + datasetInfo.DatasetName + "' not ready";
                 LogWarning(msg);
-                DisconnectShareIfRequired();
+                mShareConnection.DisconnectShareIfRequired();
 
                 if (string.IsNullOrWhiteSpace(returnData.CloseoutMsg))
                 {
@@ -2815,7 +2579,7 @@ namespace CaptureToolPlugin
                 LogError(msg, true);
                 LogError("Stack trace", ex);
 
-                DisconnectShareIfRequired();
+                mShareConnection.DisconnectShareIfRequired();
 
                 mToolState.HandleCopyException(returnData, ex);
                 return;
@@ -2841,7 +2605,7 @@ namespace CaptureToolPlugin
 
                 if (success)
                 {
-                    msg = "Copied files in directory " + sourceDirectory.FullName + " to " + targetDirectory.FullName + GetConnectionDescription();
+                    msg = "Copied files in directory " + sourceDirectory.FullName + " to " + targetDirectory.FullName + mShareConnection.GetConnectionDescription();
                     LogMessage(msg);
 
                     AutoFixFilesWithInvalidChars(datasetInfo.DatasetName, targetDirectory);
@@ -2854,18 +2618,18 @@ namespace CaptureToolPlugin
             catch (Exception ex)
             {
                 returnData.CloseoutMsg = "Exception copying files from dataset directory";
-                msg = returnData.CloseoutMsg + " " + sourceDirectory.FullName + GetConnectionDescription();
+                msg = returnData.CloseoutMsg + " " + sourceDirectory.FullName + mShareConnection.GetConnectionDescription();
                 LogError(msg, true);
                 LogError("Stack trace", ex);
 
-                DisconnectShareIfRequired();
+                mShareConnection.DisconnectShareIfRequired();
 
                 mToolState.HandleCopyException(returnData, ex);
                 return;
             }
             finally
             {
-                DisconnectShareIfRequired();
+                mShareConnection.DisconnectShareIfRequired();
             }
 
             if (success)
@@ -2951,7 +2715,7 @@ namespace CaptureToolPlugin
             {
                 msg = "Dataset '" + datasetInfo.DatasetName + "' not ready";
                 LogWarning(msg);
-                DisconnectShareIfRequired();
+                mShareConnection.DisconnectShareIfRequired();
 
                 if (string.IsNullOrWhiteSpace(returnData.CloseoutMsg))
                 {
@@ -2970,13 +2734,13 @@ namespace CaptureToolPlugin
             try
             {
                 mFileTools.CopyDirectory(sourceDirectory.FullName, targetDirectory.FullName);
-                msg = "Copied directory " + sourceDirectory.FullName + " to " + targetDirectory.FullName + GetConnectionDescription();
+                msg = "Copied directory " + sourceDirectory.FullName + " to " + targetDirectory.FullName + mShareConnection.GetConnectionDescription();
                 LogMessage(msg);
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
             }
             catch (Exception ex)
             {
-                msg = "Exception copying dataset directory " + sourceDirectory.FullName + GetConnectionDescription();
+                msg = "Exception copying dataset directory " + sourceDirectory.FullName + mShareConnection.GetConnectionDescription();
                 LogError(msg, true);
                 LogError("Stack trace", ex);
 
@@ -2984,7 +2748,7 @@ namespace CaptureToolPlugin
             }
             finally
             {
-                DisconnectShareIfRequired();
+                mShareConnection.DisconnectShareIfRequired();
             }
         }
 
@@ -3045,7 +2809,7 @@ namespace CaptureToolPlugin
                     else
                     {
                         LogError("  directory copy failed copying {0} to {1}{2}",
-                            sourceDirectoryPath, targetDirectoryPath, GetConnectionDescription());
+                            sourceDirectoryPath, targetDirectoryPath, mShareConnection.GetConnectionDescription());
                     }
                 }
                 catch (UnauthorizedAccessException ex)
