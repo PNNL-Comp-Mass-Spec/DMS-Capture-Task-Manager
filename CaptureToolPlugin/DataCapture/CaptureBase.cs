@@ -69,7 +69,7 @@ namespace CaptureToolPlugin.DataCapture
             string sourceDirectoryPath,
             string datasetDirectoryPath,
             bool copyWithResume,
-            InstrumentClassInfo.InstrumentClass instrumentClass,
+            InstrumentClass instrumentClass,
             string instrumentName,
             ITaskParams taskParams
         );

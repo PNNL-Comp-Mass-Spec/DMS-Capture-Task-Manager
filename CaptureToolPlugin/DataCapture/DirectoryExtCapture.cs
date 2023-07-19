@@ -29,7 +29,7 @@ namespace CaptureToolPlugin.DataCapture
             string sourceDirectoryPath,
             string datasetDirectoryPath,
             bool copyWithResume,
-            InstrumentClassInfo.InstrumentClass instrumentClass,
+            InstrumentClass instrumentClass,
             string instrumentName,
             ITaskParams taskParams
         )
@@ -56,7 +56,7 @@ namespace CaptureToolPlugin.DataCapture
             string sourceDirectoryPath,
             string datasetDirectoryPath,
             bool copyWithResume,
-            InstrumentClassInfo.InstrumentClass instrumentClass,
+            InstrumentClass instrumentClass,
             string instrumentName,
             ITaskParams taskParams
         )
@@ -75,7 +75,7 @@ namespace CaptureToolPlugin.DataCapture
                 return;
             }
 
-            if (instrumentClass == InstrumentClassInfo.InstrumentClass.Agilent_Ion_Trap)
+            if (instrumentClass == InstrumentClass.Agilent_Ion_Trap)
             {
                 // Confirm that a DATA.MS file exists
                 if (IsIncompleteAgilentIonTrap(taskParams, sourceDirectory.FullName, out msg, returnData))

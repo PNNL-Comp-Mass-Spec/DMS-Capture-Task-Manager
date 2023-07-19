@@ -86,7 +86,7 @@ namespace ImsDemuxPlugin
             var instClassName = mTaskParams.GetParam("Instrument_Class");
             var instrumentClass = InstrumentClassInfo.GetInstrumentClass(instClassName);
 
-            if (instrumentClass != InstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_DotD)
+            if (instrumentClass != InstrumentClass.IMS_Agilent_TOF_DotD)
             {
                 mRetData.CloseoutMsg = "AgilentToUimfConversion can only convert Agilent IMS .D directories to .UIMF";
                 mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;

@@ -45,6 +45,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DataFormat.cs" />
     <Compile Include="GlobalStuff.cs" />
     <Compile Include="Conversion.cs" />
     <Compile Include="CTMUtilities.cs" />
@@ -54,6 +55,7 @@
     <Compile Include="FailedResultsCopier.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="IMgrParams.cs" />
+    <Compile Include="InstrumentClass.cs" />
     <Compile Include="InstrumentClassInfo.cs" />
     <Compile Include="IStatusFile.cs" />
     <Compile Include="ITaskParams.cs" />

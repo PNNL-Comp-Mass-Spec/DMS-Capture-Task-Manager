@@ -106,7 +106,7 @@ namespace CaptureTaskManager
             }
 
             // Matched a directory, but this method is used to match files
-            datasetInfo.DatasetType = DatasetInfo.RawDSTypes.None;
+            datasetInfo.DatasetType = InstrumentFileLayout.None;
             datasetInfo.FileOrDirectoryName = string.Empty;
 
             if (datasetInfo.FileList == null)
@@ -136,19 +136,19 @@ namespace CaptureTaskManager
         public DatasetInfo FindDatasetFileOrDirectory(
             string sourceDirectoryPath,
             string datasetName,
-            InstrumentClassInfo.InstrumentClass instrumentClass)
+            InstrumentClass instrumentClass)
         {
             bool checkForFilesFirst;
 
             // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
             switch (instrumentClass)
             {
-                case InstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging:
-                case InstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging_V2:
-                case InstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_UIMF:
-                case InstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_DotD:
-                case InstrumentClassInfo.InstrumentClass.Waters_TOF:
-                case InstrumentClassInfo.InstrumentClass.Waters_IMS:
+                case InstrumentClass.BrukerMALDI_Imaging:
+                case InstrumentClass.BrukerMALDI_Imaging_V2:
+                case InstrumentClass.IMS_Agilent_TOF_UIMF:
+                case InstrumentClass.IMS_Agilent_TOF_DotD:
+                case InstrumentClass.Waters_TOF:
+                case InstrumentClass.Waters_IMS:
                     // Preferentially capture dataset directories
                     // If a directory is not found, will instead look for a dataset file
                     checkForFilesFirst = false;
@@ -172,12 +172,12 @@ namespace CaptureTaskManager
             // ReSharper disable once SwitchStatementMissingSomeCases
             switch (instrumentClass)
             {
-                case InstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging:
-                    datasetInfo.DatasetType = DatasetInfo.RawDSTypes.BrukerImaging;
+                case InstrumentClass.BrukerMALDI_Imaging:
+                    datasetInfo.DatasetType = InstrumentFileLayout.BrukerImaging;
                     break;
 
-                case InstrumentClassInfo.InstrumentClass.BrukerMALDI_Spot:
-                    datasetInfo.DatasetType = DatasetInfo.RawDSTypes.BrukerSpot;
+                case InstrumentClass.BrukerMALDI_Spot:
+                    datasetInfo.DatasetType = InstrumentFileLayout.BrukerSpot;
                     break;
             }
 
@@ -214,7 +214,7 @@ namespace CaptureTaskManager
             {
                 OnErrorEvent("Source directory not found: [" + sourceDirectory.FullName + "]");
 
-                datasetInfo.DatasetType = DatasetInfo.RawDSTypes.None;
+                datasetInfo.DatasetType = InstrumentFileLayout.None;
                 matchedDirectory = false;
                 return datasetInfo;
             }
@@ -277,12 +277,12 @@ namespace CaptureTaskManager
                     if (datasetInfo.FileCount == 1)
                     {
                         datasetInfo.FileOrDirectoryName = datasetInfo.FileList[0].Name;
-                        datasetInfo.DatasetType = DatasetInfo.RawDSTypes.File;
+                        datasetInfo.DatasetType = InstrumentFileLayout.File;
                     }
                     else
                     {
                         datasetInfo.FileOrDirectoryName = datasetName;
-                        datasetInfo.DatasetType = DatasetInfo.RawDSTypes.MultiFile;
+                        datasetInfo.DatasetType = InstrumentFileLayout.MultiFile;
                         var fileNames = foundFiles.ConvertAll(file => file.Name);
                         OnWarningEvent("Dataset name matched multiple files for iteration {0} in directory {1}: {2}",
                             i, sourceDirectory.FullName, string.Join(", ", fileNames.Take(5)));
@@ -328,13 +328,13 @@ namespace CaptureTaskManager
                     {
                         // Found a directory that has no extension
                         datasetInfo.FileOrDirectoryName = subdirectory.Name;
-                        datasetInfo.DatasetType = DatasetInfo.RawDSTypes.DirectoryNoExt;
+                        datasetInfo.DatasetType = InstrumentFileLayout.DirectoryNoExt;
                     }
                     else
                     {
                         // Directory name has an extension
                         datasetInfo.FileOrDirectoryName = subdirectory.Name;
-                        datasetInfo.DatasetType = DatasetInfo.RawDSTypes.DirectoryExt;
+                        datasetInfo.DatasetType = InstrumentFileLayout.DirectoryExt;
                     }
 
                     if (mTraceMode)
@@ -355,7 +355,7 @@ namespace CaptureTaskManager
             }
 
             // If we got to here, the raw dataset wasn't found (either as a file or a directory), so there was a problem
-            datasetInfo.DatasetType = DatasetInfo.RawDSTypes.None;
+            datasetInfo.DatasetType = InstrumentFileLayout.None;
             matchedDirectory = true;
             return datasetInfo;
         }

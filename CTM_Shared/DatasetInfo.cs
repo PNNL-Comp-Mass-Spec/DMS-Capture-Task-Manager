@@ -19,46 +19,6 @@ namespace CaptureTaskManager
     /// </remarks>
     public class DatasetInfo
     {
-        // Ignore Spelling: Bruker
-
-        public enum RawDSTypes
-        {
-            /// <summary>
-            /// Unknown type
-            /// </summary>
-            None,
-
-            /// <summary>
-            /// Instrument file
-            /// </summary>
-            File,
-
-            /// <summary>
-            /// Instrument directory without an extension
-            /// </summary>
-            DirectoryNoExt,
-
-            /// <summary>
-            /// Instrument directory with an extension, like .D or .Raw
-            /// </summary>
-            DirectoryExt,
-
-            /// <summary>
-            /// Bruker imaging data
-            /// </summary>
-            BrukerImaging,
-
-            /// <summary>
-            /// Bruker spot data
-            /// </summary>
-            BrukerSpot,
-
-            /// <summary>
-            /// Mix of file types
-            /// </summary>
-            MultiFile
-        }
-
         /// <summary>
         /// Dataset name
         /// </summary>
@@ -67,7 +27,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Dataset type
         /// </summary>
-        public RawDSTypes DatasetType { get; set; }
+        public InstrumentFileLayout DatasetType { get; set; }
 
         /// <summary>
         /// File or directory name
@@ -93,5 +53,45 @@ namespace CaptureTaskManager
             DatasetName = datasetName;
             FileList = new List<FileInfo>();
         }
+    }
+
+    public enum InstrumentFileLayout
+    {
+        // Ignore Spelling: Bruker
+
+        /// <summary>
+        /// Unknown type
+        /// </summary>
+        None,
+
+        /// <summary>
+        /// Instrument file
+        /// </summary>
+        File,
+
+        /// <summary>
+        /// Instrument directory without an extension
+        /// </summary>
+        DirectoryNoExt,
+
+        /// <summary>
+        /// Instrument directory with an extension, like .D or .Raw
+        /// </summary>
+        DirectoryExt,
+
+        /// <summary>
+        /// Bruker imaging data
+        /// </summary>
+        BrukerImaging,
+
+        /// <summary>
+        /// Bruker spot data
+        /// </summary>
+        BrukerSpot,
+
+        /// <summary>
+        /// Mix of file types
+        /// </summary>
+        MultiFile
     }
 }

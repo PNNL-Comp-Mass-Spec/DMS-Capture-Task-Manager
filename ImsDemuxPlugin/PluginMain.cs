@@ -78,7 +78,7 @@ namespace ImsDemuxPlugin
             var instClassName = mTaskParams.GetParam("Instrument_Class");
             var instrumentClass = InstrumentClassInfo.GetInstrumentClass(instClassName);
 
-            if (instrumentClass == InstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_DotD)
+            if (instrumentClass == InstrumentClass.IMS_Agilent_TOF_DotD)
             {
                 // Data is acquired natively as .D directories: IMS08, IMS09, IMS10, IMS11
                 RunToolAgilentDotD();

@@ -456,7 +456,7 @@ namespace DatasetInfoPlugin
 
                     bool logWarning;
 
-                    if (successProcessing && instrumentClass == InstrumentClassInfo.InstrumentClass.BrukerFT_BAF)
+                    if (successProcessing && instrumentClass == InstrumentClass.BrukerFT_BAF)
                     {
                         var directoryToSearch = new DirectoryInfo(datasetDirectoryPath);
 
@@ -1232,14 +1232,14 @@ namespace DatasetInfoPlugin
         private List<string> GetDataFileOrDirectoryName(
             string inputDirectory,
             out QCPlottingModes qcPlotMode,
-            out InstrumentClassInfo.RawDataType rawDataType,
-            out InstrumentClassInfo.InstrumentClass instrumentClass,
+            out DataFormat rawDataType,
+            out InstrumentClass instrumentClass,
             out bool brukerDotDBaf)
         {
             bool isFile;
 
             qcPlotMode = QCPlottingModes.AllPlots;
-            rawDataType = InstrumentClassInfo.RawDataType.Unknown;
+            rawDataType = DataFormat.Unknown;
             brukerDotDBaf = false;
 
             // Determine the Instrument Class and RawDataType
@@ -1247,7 +1247,7 @@ namespace DatasetInfoPlugin
             var rawDataTypeName = mTaskParams.GetParam("RawDataType", "UnknownRawDataType");
 
             instrumentClass = InstrumentClassInfo.GetInstrumentClass(instClassName);
-            if (instrumentClass == InstrumentClassInfo.InstrumentClass.Unknown)
+            if (instrumentClass == InstrumentClass.Unknown)
             {
                 mMsg = "Instrument class not recognized: " + instClassName;
                 LogError(mMsg);
@@ -1256,17 +1256,17 @@ namespace DatasetInfoPlugin
 
             rawDataType = InstrumentClassInfo.GetRawDataType(rawDataTypeName);
 
-            if (rawDataType == InstrumentClassInfo.RawDataType.Unknown)
+            if (rawDataType == DataFormat.Unknown)
             {
                 mMsg = "RawDataType not recognized: " + rawDataTypeName;
                 LogError(mMsg);
                 return new List<string> { UNKNOWN_FILE_TYPE };
             }
 
-            if (instrumentClass == InstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_DotD)
+            if (instrumentClass == InstrumentClass.IMS_Agilent_TOF_DotD)
             {
                 // Operate directly on the .D file instead of the UIMF
-                rawDataType = InstrumentClassInfo.RawDataType.AgilentDFolder;
+                rawDataType = DataFormat.AgilentDFolder;
             }
 
             var datasetDirectory = new DirectoryInfo(inputDirectory);
@@ -1275,7 +1275,7 @@ namespace DatasetInfoPlugin
             // Get the expected file name based on the dataset type
             switch (rawDataType)
             {
-                case InstrumentClassInfo.RawDataType.ThermoRawFile:
+                case DataFormat.ThermoRawFile:
                     // LTQ_2, LTQ_4, etc.
                     // LTQ_Orb_1, LTQ_Orb_2, etc.
                     // VOrbiETD01, VOrbiETD02, etc.
@@ -1285,20 +1285,20 @@ namespace DatasetInfoPlugin
                     isFile = true;
                     break;
 
-                case InstrumentClassInfo.RawDataType.ZippedSFolders:
+                case DataFormat.ZippedSFolders:
                     // 9T_FTICR, 11T_FTICR_B, and 12T_FTICR
                     fileOrDirectoryName = "analysis.baf";
                     isFile = true;
                     break;
 
-                case InstrumentClassInfo.RawDataType.BrukerFTFolder:
+                case DataFormat.BrukerFTFolder:
                     // 12T_FTICR_B, 15T_FTICR, 9T_FTICR_B
                     // Also, Bruker_FT_IonTrap01, which is Bruker_Amazon_Ion_Trap
                     // 12T_FTICR_Imaging and 15T_FTICR_Imaging datasets with instrument class BrukerMALDI_Imaging_V2 will also have bruker_ft format;
                     // however, instead of an analysis.baf file, they might have a .mcf file and a ser file
 
                     isFile = true;
-                    if (instrumentClass == InstrumentClassInfo.InstrumentClass.Bruker_Amazon_Ion_Trap)
+                    if (instrumentClass == InstrumentClass.Bruker_Amazon_Ion_Trap)
                     {
                         fileOrDirectoryName = Path.Combine(mDataset + InstrumentClassInfo.DOT_D_EXTENSION, "analysis.yep");
                     }
@@ -1319,7 +1319,7 @@ namespace DatasetInfoPlugin
 
                     break;
 
-                case InstrumentClassInfo.RawDataType.UIMF:
+                case DataFormat.UIMF:
                     if (IsAgilentIMSDataset(datasetDirectory))
                     {
                         // IMS08_AcQTOF05, IMS09_AgQToF06, IMS11_AgQTOF08
@@ -1335,18 +1335,18 @@ namespace DatasetInfoPlugin
 
                     break;
 
-                case InstrumentClassInfo.RawDataType.SciexWiffFile:
+                case DataFormat.SciexWiffFile:
                     // QTrap01
                     fileOrDirectoryName = mDataset + InstrumentClassInfo.DOT_WIFF_EXTENSION;
                     isFile = true;
                     break;
 
-                case InstrumentClassInfo.RawDataType.AgilentDFolder:
+                case DataFormat.AgilentDFolder:
                     // Agilent_GC_MS_01, AgQTOF03, AgQTOF04, PrepHPLC1
                     fileOrDirectoryName = mDataset + InstrumentClassInfo.DOT_D_EXTENSION;
                     isFile = false;
 
-                    if (instrumentClass == InstrumentClassInfo.InstrumentClass.PrepHPLC)
+                    if (instrumentClass == InstrumentClass.PrepHPLC)
                     {
                         LogMessage("Skipping MSFileInfoScanner since PrepHPLC dataset");
                         return new List<string> { INVALID_FILE_TYPE };
@@ -1354,7 +1354,7 @@ namespace DatasetInfoPlugin
 
                     break;
 
-                case InstrumentClassInfo.RawDataType.BrukerMALDIImaging:
+                case DataFormat.BrukerMALDIImaging:
                     // bruker_maldi_imaging: 12T_FTICR_Imaging, 15T_FTICR_Imaging, and BrukerTOF_Imaging_01
                     // Find the name of the first zip file
 
@@ -1371,32 +1371,32 @@ namespace DatasetInfoPlugin
 
                     break;
 
-                case InstrumentClassInfo.RawDataType.BrukerTOFBaf:
+                case DataFormat.BrukerTOFBaf:
                     fileOrDirectoryName = mDataset + InstrumentClassInfo.DOT_D_EXTENSION;
                     isFile = false;
                     break;
 
-                case InstrumentClassInfo.RawDataType.BrukerTOFTdf:
+                case DataFormat.BrukerTOFTdf:
                     fileOrDirectoryName = mDataset + InstrumentClassInfo.DOT_D_EXTENSION;
                     qcPlotMode = QCPlottingModes.BpiAndTicOnly;
                     isFile = false;
                     break;
 
-                case InstrumentClassInfo.RawDataType.IlluminaFolder:
+                case DataFormat.IlluminaFolder:
                     // fileOrDirectoryName = mDataset + InstrumentClassInfo.DOT_TXT_GZ_EXTENSION;
                     // isFile = true;
 
                     LogMessage("Skipping MSFileInfoScanner since Illumina RNASeq dataset");
                     return new List<string> { INVALID_FILE_TYPE };
 
-                case InstrumentClassInfo.RawDataType.ShimadzuQGDFile:
+                case DataFormat.ShimadzuQGDFile:
                     // 	Shimadzu_GC_MS_01
                     fileOrDirectoryName = mDataset + InstrumentClassInfo.DOT_QGD_EXTENSION;
                     qcPlotMode = QCPlottingModes.NoPlots;
                     isFile = true;
                     break;
 
-                case InstrumentClassInfo.RawDataType.WatersRawFolder:
+                case DataFormat.WatersRawFolder:
                     // 	SynaptG2_01
                     fileOrDirectoryName = mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION;
                     isFile = false;

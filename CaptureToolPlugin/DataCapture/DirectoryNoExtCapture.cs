@@ -29,7 +29,7 @@ namespace CaptureToolPlugin.DataCapture
             string sourceDirectoryPath,
             string datasetDirectoryPath,
             bool copyWithResume,
-            InstrumentClassInfo.InstrumentClass instrumentClass,
+            InstrumentClass instrumentClass,
             string instrumentName,
             ITaskParams taskParams
         )
@@ -54,7 +54,7 @@ namespace CaptureToolPlugin.DataCapture
             string sourceDirectoryPath,
             string datasetDirectoryPath,
             bool copyWithResume,
-            InstrumentClassInfo.InstrumentClass instrumentClass)
+            InstrumentClass instrumentClass)
         {
             // List of file names to skip (not full paths)
             var filesToSkip = new SortedSet<string>();
@@ -102,7 +102,7 @@ namespace CaptureToolPlugin.DataCapture
                     }
                 }
 
-                if (!allowMultipleDirectories && instrumentClass == InstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging_V2)
+                if (!allowMultipleDirectories && instrumentClass == InstrumentClass.BrukerMALDI_Imaging_V2)
                 {
                     // Effective July 2016, we allow Bruker Imaging datasets to have multiple .D subdirectories
                     // They typically each have their own ser file
@@ -129,7 +129,7 @@ namespace CaptureToolPlugin.DataCapture
                 return;
             }
 
-            if (instrumentClass == InstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_UIMF)
+            if (instrumentClass == InstrumentClass.IMS_Agilent_TOF_UIMF)
             {
                 // Possibly skip the Fragmentation_Profile.txt file
                 var fragProfileFile = new FileInfo(Path.Combine(sourceDirectory.FullName, "Fragmentation_Profile.txt"));
@@ -140,7 +140,7 @@ namespace CaptureToolPlugin.DataCapture
                 }
             }
 
-            if (instrumentClass == InstrumentClassInfo.InstrumentClass.FT_Booster_Data)
+            if (instrumentClass == InstrumentClass.FT_Booster_Data)
             {
                 // Skip Thermo .Raw files
                 foreach (var thermoRawFile in sourceDirectory.GetFiles("*.raw", SearchOption.AllDirectories))
@@ -155,7 +155,7 @@ namespace CaptureToolPlugin.DataCapture
                 }
             }
 
-            if (instrumentClass == InstrumentClassInfo.InstrumentClass.Sciex_QTrap)
+            if (instrumentClass == InstrumentClass.Sciex_QTrap)
             {
                 // Make sure that it doesn't have more than 2 subdirectories (it typically won't have any, but we'll allow 2)
                 if (sourceDirectory.GetDirectories("*", SearchOption.TopDirectoryOnly).Length > 2)

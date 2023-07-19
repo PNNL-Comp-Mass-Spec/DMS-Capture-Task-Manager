@@ -613,11 +613,11 @@ namespace CaptureToolPlugin
             var copyWithResume = false;
             switch (instrumentClass)
             {
-                case InstrumentClassInfo.InstrumentClass.BrukerFT_BAF:
+                case InstrumentClass.BrukerFT_BAF:
                     copyWithResume = true;
                     break;
-                case InstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging:
-                case InstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging_V2:
+                case InstrumentClass.BrukerMALDI_Imaging:
+                case InstrumentClass.BrukerMALDI_Imaging_V2:
                     copyWithResume = true;
                     maxFileCountToAllowResume = 20;
                     maxInstrumentDirCountToAllowResume = 20;
@@ -913,7 +913,7 @@ namespace CaptureToolPlugin
             returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
             bool sourceIsValid;
 
-            if (datasetInfo.DatasetType == DatasetInfo.RawDSTypes.None)
+            if (datasetInfo.DatasetType == InstrumentFileLayout.None)
             {
                 // No dataset file or directory found
 
@@ -972,45 +972,23 @@ namespace CaptureToolPlugin
                 }
 
                 var initData = new CaptureInitData(mToolState, mMgrParams, mFileTools, mShareConnection, mTraceMode);
-                CaptureBase capture = null;
 
                 // Perform copy based on source type
-                switch (datasetInfo.DatasetType)
+                CaptureBase capture = datasetInfo.DatasetType switch
                 {
-                    case DatasetInfo.RawDSTypes.File:
-                        capture = new FileSingleCapture(initData);
-                        break;
-
-                    case DatasetInfo.RawDSTypes.MultiFile:
-                        capture = new FileMultipleCapture(initData);
-                        break;
-
-                    case DatasetInfo.RawDSTypes.DirectoryExt:
-                        capture = new DirectoryExtCapture(initData);
-                        break;
-
-                    case DatasetInfo.RawDSTypes.DirectoryNoExt:
-                        capture = new DirectoryNoExtCapture(initData);
-                        break;
-
-                    case DatasetInfo.RawDSTypes.BrukerImaging:
-                        capture = new BrukerImagingCapture(initData);
-                        break;
-
-                    case DatasetInfo.RawDSTypes.BrukerSpot:
-                        capture = new BrukerSpotCapture(initData);
-                        break;
-
-                    default:
-                        capture = new UnknownCapture(initData);
-                        break;
-                }
-
+                    InstrumentFileLayout.File => new FileSingleCapture(initData),
+                    InstrumentFileLayout.MultiFile => new FileMultipleCapture(initData),
+                    InstrumentFileLayout.DirectoryExt => new DirectoryExtCapture(initData),
+                    InstrumentFileLayout.DirectoryNoExt => new DirectoryNoExtCapture(initData),
+                    InstrumentFileLayout.BrukerImaging => new BrukerImagingCapture(initData),
+                    InstrumentFileLayout.BrukerSpot => new BrukerSpotCapture(initData),
+                    _ => new UnknownCapture(initData),
+                };
                 capture.Capture(out msg, returnData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath, copyWithResume, instrumentClass, instrumentName, taskParams);
             }
 
             if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS &&
-                datasetInfo.DatasetType is not (DatasetInfo.RawDSTypes.BrukerImaging or DatasetInfo.RawDSTypes.BrukerSpot))
+                datasetInfo.DatasetType is not (InstrumentFileLayout.BrukerImaging or InstrumentFileLayout.BrukerSpot))
             {
                 // Capture possible LC data
                 var lcCapture = new LCDataCapture(mMgrParams);
@@ -1203,7 +1181,7 @@ namespace CaptureToolPlugin
         private bool ValidateWithInstrumentClass(
             string dataset,
             string sourceDirectoryPath,
-            InstrumentClassInfo.InstrumentClass instrumentClass,
+            InstrumentClass instrumentClass,
             DatasetInfo datasetInfo,
             ToolReturnData returnData)
         {
@@ -1211,12 +1189,12 @@ namespace CaptureToolPlugin
 
             var entityDescription = datasetInfo.DatasetType switch
             {
-                DatasetInfo.RawDSTypes.File => "a file",
-                DatasetInfo.RawDSTypes.DirectoryNoExt => "a directory",
-                DatasetInfo.RawDSTypes.DirectoryExt => "a directory",
-                DatasetInfo.RawDSTypes.BrukerImaging => "a directory",
-                DatasetInfo.RawDSTypes.BrukerSpot => "a directory",
-                DatasetInfo.RawDSTypes.MultiFile => "multiple files",
+                InstrumentFileLayout.File => "a file",
+                InstrumentFileLayout.DirectoryNoExt => "a directory",
+                InstrumentFileLayout.DirectoryExt => "a directory",
+                InstrumentFileLayout.BrukerImaging => "a directory",
+                InstrumentFileLayout.BrukerSpot => "a directory",
+                InstrumentFileLayout.MultiFile => "multiple files",
                 _ => "an unknown entity"
             };
 
@@ -1224,15 +1202,15 @@ namespace CaptureToolPlugin
             // See table T_Instrument_Class for allowed types
             switch (instrumentClass)
             {
-                case InstrumentClassInfo.InstrumentClass.Finnigan_Ion_Trap:
-                case InstrumentClassInfo.InstrumentClass.GC_QExactive:
-                case InstrumentClassInfo.InstrumentClass.LTQ_FT:
-                case InstrumentClassInfo.InstrumentClass.Thermo_Exactive:
-                case InstrumentClassInfo.InstrumentClass.Triple_Quad:
-                case InstrumentClassInfo.InstrumentClass.Shimadzu_GC:
-                    if (datasetInfo.DatasetType != DatasetInfo.RawDSTypes.File)
+                case InstrumentClass.Finnigan_Ion_Trap:
+                case InstrumentClass.GC_QExactive:
+                case InstrumentClass.LTQ_FT:
+                case InstrumentClass.Thermo_Exactive:
+                case InstrumentClass.Triple_Quad:
+                case InstrumentClass.Shimadzu_GC:
+                    if (datasetInfo.DatasetType != InstrumentFileLayout.File)
                     {
-                        if (datasetInfo.DatasetType == DatasetInfo.RawDSTypes.DirectoryNoExt)
+                        if (datasetInfo.DatasetType == InstrumentFileLayout.DirectoryNoExt)
                         {
                             // ReSharper disable once CommentTypo
                             // Datasets from LAESI-HMS datasets will have a directory named after the dataset, and inside that directory will be a single .raw file
@@ -1263,7 +1241,7 @@ namespace CaptureToolPlugin
                             break;
                         }
 
-                        if (datasetInfo.DatasetType == DatasetInfo.RawDSTypes.MultiFile)
+                        if (datasetInfo.DatasetType == InstrumentFileLayout.MultiFile)
                         {
                             var sourceDirectory = new DirectoryInfo(Path.Combine(sourceDirectoryPath));
                             var foundFiles = sourceDirectory.GetFiles(datasetInfo.FileOrDirectoryName + ".*").ToList();
@@ -1306,7 +1284,7 @@ namespace CaptureToolPlugin
                                 {
                                     LogMessage("Ignoring sequence file " + datasetInfo.FileOrDirectoryName + ".sld");
 
-                                    datasetInfo.DatasetType = DatasetInfo.RawDSTypes.File;
+                                    datasetInfo.DatasetType = InstrumentFileLayout.File;
                                     datasetInfo.FileOrDirectoryName = datasetInfo.DatasetName + ".raw";
 
                                     datasetInfo.FileList.Clear();
@@ -1326,42 +1304,42 @@ namespace CaptureToolPlugin
                     }
                     break;
 
-                case InstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging_V2:
-                    if (datasetInfo.DatasetType != DatasetInfo.RawDSTypes.DirectoryNoExt)
+                case InstrumentClass.BrukerMALDI_Imaging_V2:
+                    if (datasetInfo.DatasetType != InstrumentFileLayout.DirectoryNoExt)
                     {
                         // Dataset name matched a file; must be a directory with the dataset name, and inside the directory is a .D directory (and typically some jpg files)
                         returnData.CloseoutMsg = "Dataset name matched " + entityDescription + "; must be a directory with the dataset name, and inside the directory is a .D directory (and typically some jpg files)";
                     }
                     break;
 
-                case InstrumentClassInfo.InstrumentClass.Bruker_Amazon_Ion_Trap:
-                case InstrumentClassInfo.InstrumentClass.BrukerFT_BAF:
-                case InstrumentClassInfo.InstrumentClass.BrukerTOF_BAF:
-                case InstrumentClassInfo.InstrumentClass.BrukerTOF_TDF:
-                case InstrumentClassInfo.InstrumentClass.Agilent_Ion_Trap:
-                case InstrumentClassInfo.InstrumentClass.Agilent_TOF_V2:
-                case InstrumentClassInfo.InstrumentClass.PrepHPLC:
+                case InstrumentClass.Bruker_Amazon_Ion_Trap:
+                case InstrumentClass.BrukerFT_BAF:
+                case InstrumentClass.BrukerTOF_BAF:
+                case InstrumentClass.BrukerTOF_TDF:
+                case InstrumentClass.Agilent_Ion_Trap:
+                case InstrumentClass.Agilent_TOF_V2:
+                case InstrumentClass.PrepHPLC:
 
-                    if (datasetInfo.DatasetType != DatasetInfo.RawDSTypes.DirectoryExt)
+                    if (datasetInfo.DatasetType != InstrumentFileLayout.DirectoryExt)
                     {
                         // Dataset name matched a file; must be a .d directory
                         returnData.CloseoutMsg = "Dataset name matched " + entityDescription + "; must be a .d directory";
                     }
                     break;
 
-                case InstrumentClassInfo.InstrumentClass.BrukerMALDI_Imaging:
-                case InstrumentClassInfo.InstrumentClass.BrukerMALDI_Spot:
-                case InstrumentClassInfo.InstrumentClass.FT_Booster_Data:
+                case InstrumentClass.BrukerMALDI_Imaging:
+                case InstrumentClass.BrukerMALDI_Spot:
+                case InstrumentClass.FT_Booster_Data:
 
-                    if (datasetInfo.DatasetType != DatasetInfo.RawDSTypes.DirectoryNoExt)
+                    if (datasetInfo.DatasetType != InstrumentFileLayout.DirectoryNoExt)
                     {
                         // Dataset name matched a file; must be a directory with the dataset name
                         returnData.CloseoutMsg = "Dataset name matched " + entityDescription + "; must be a directory with the dataset name";
                     }
                     break;
 
-                case InstrumentClassInfo.InstrumentClass.Sciex_TripleTOF:
-                    if (datasetInfo.DatasetType != DatasetInfo.RawDSTypes.File)
+                case InstrumentClass.Sciex_TripleTOF:
+                    if (datasetInfo.DatasetType != InstrumentFileLayout.File)
                     {
                         // Dataset name matched a directory; must be a file
                         // Dataset name matched multiple files; must be a file
@@ -1369,11 +1347,11 @@ namespace CaptureToolPlugin
                     }
                     break;
 
-                case InstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_UIMF:
-                case InstrumentClassInfo.InstrumentClass.IMS_Agilent_TOF_DotD:
-                    if (datasetInfo.DatasetType != DatasetInfo.RawDSTypes.File)
+                case InstrumentClass.IMS_Agilent_TOF_UIMF:
+                case InstrumentClass.IMS_Agilent_TOF_DotD:
+                    if (datasetInfo.DatasetType != InstrumentFileLayout.File)
                     {
-                        if (datasetInfo.DatasetType == DatasetInfo.RawDSTypes.DirectoryExt)
+                        if (datasetInfo.DatasetType == InstrumentFileLayout.DirectoryExt)
                         {
                             // IMS08_AgQTOF05 collects data as .D directories, which the capture pipeline will then convert to a .uimf file
                             // Make sure the matched directory is a .d file
@@ -1383,7 +1361,7 @@ namespace CaptureToolPlugin
                             }
                         }
 
-                        if (datasetInfo.DatasetType == DatasetInfo.RawDSTypes.DirectoryNoExt)
+                        if (datasetInfo.DatasetType == InstrumentFileLayout.DirectoryNoExt)
                         {
                             // IMS04_AgTOF05 and similar instruments collect data into a directory named after the dataset
                             // The directory contains a .UIMF file plus several related files
@@ -1415,9 +1393,9 @@ namespace CaptureToolPlugin
                             break;
                         }
 
-                        if (datasetInfo.DatasetType != DatasetInfo.RawDSTypes.DirectoryExt &&
-                            datasetInfo.DatasetType != DatasetInfo.RawDSTypes.DirectoryNoExt &&
-                            datasetInfo.DatasetType != DatasetInfo.RawDSTypes.MultiFile)
+                        if (datasetInfo.DatasetType != InstrumentFileLayout.DirectoryExt &&
+                            datasetInfo.DatasetType != InstrumentFileLayout.DirectoryNoExt &&
+                            datasetInfo.DatasetType != InstrumentFileLayout.MultiFile)
                         {
                             LogWarning("datasetInfo.DatasetType was not DirectoryExt, DirectoryNoExt, or MultiFile; this is unexpected: " + datasetInfo.DatasetType);
                         }
