@@ -264,7 +264,7 @@ namespace DatasetInfoPlugin
                 return returnData;
             }
 
-            var rawDataTypeName = InstrumentClassInfo.GetRawDataTypeName(rawDataType);
+            var rawDataTypeName = InstrumentClassInfo.GetDataFormatName(rawDataType);
             var instClass = InstrumentClassInfo.GetInstrumentClassName(instrumentClass);
 
             if (totalDatasetFilesOrDirectories > 0 && fileOrDirectoryRelativePaths.First() == INVALID_FILE_TYPE)
@@ -1254,7 +1254,7 @@ namespace DatasetInfoPlugin
                 return new List<string> { UNKNOWN_FILE_TYPE };
             }
 
-            rawDataType = InstrumentClassInfo.GetRawDataType(rawDataTypeName);
+            rawDataType = InstrumentClassInfo.GetDataFormat(rawDataTypeName);
 
             if (rawDataType == DataFormat.Unknown)
             {
