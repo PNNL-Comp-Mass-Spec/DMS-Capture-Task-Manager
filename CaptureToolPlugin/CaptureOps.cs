@@ -570,27 +570,10 @@ namespace CaptureToolPlugin
         public bool DoOperation(ITaskParams taskParams, ToolReturnData returnData)
         {
             var datasetName = taskParams.GetParam("Dataset");
-            var jobNum = taskParams.GetParam("Job", 0);
-            var sourceVol = taskParams.GetParam("Source_Vol").Trim();                       // Example: \\exact04.bionet\
-            var sourcePath = taskParams.GetParam("Source_Path").Trim();                     // Example: ProteomicsData\
-
-            // Capture_Subdirectory is typically an empty string, but could be a partial path like: "CapDev" or "Smith\2014"
-            var legacyCaptureSubfolder = taskParams.GetParam("Capture_Subfolder").Trim();
-            var captureSubdirectory = taskParams.GetParam("Capture_Subdirectory", legacyCaptureSubfolder);
-
-            var storageVol = taskParams.GetParam("Storage_Vol").Trim();                     // Example: E:\
-            var storagePath = taskParams.GetParam("Storage_Path").Trim();                   // Example: Exact04\2012_1\
-            var storageVolExternal = taskParams.GetParam("Storage_Vol_External").Trim();    // Example: \\proto-5\
 
             var instClassName = taskParams.GetParam("Instrument_Class");                    // Examples: Finnigan_Ion_Trap, LTQ_FT, Triple_Quad, IMS_Agilent_TOF, Agilent_Ion_Trap
             var instrumentClass = InstrumentClassInfo.GetInstrumentClass(instClassName);    // Enum of instrument class type
             var instrumentName = taskParams.GetParam("Instrument_Name");                    // Instrument name
-
-            var computerName = System.Net.Dns.GetHostName();
-
-            var maxFileCountToAllowResume = 0;
-            var maxInstrumentDirCountToAllowResume = 0;
-            var maxNonInstrumentDirCountToAllowResume = 0;
 
             // Confirm that the dataset name has no spaces
             if (datasetName.IndexOf(' ') >= 0)
@@ -614,22 +597,118 @@ namespace CaptureToolPlugin
             switch (instrumentClass)
             {
                 case InstrumentClass.BrukerFT_BAF:
-                    copyWithResume = true;
-                    break;
                 case InstrumentClass.BrukerMALDI_Imaging:
                 case InstrumentClass.BrukerMALDI_Imaging_V2:
                     copyWithResume = true;
-                    maxFileCountToAllowResume = 20;
-                    maxInstrumentDirCountToAllowResume = 20;
-                    maxNonInstrumentDirCountToAllowResume = 1;
                     break;
             }
 
-            var pwd = CTMUtilities.DecodePassword(mPassword);
+            LogDebug("Started CaptureOps.DoOperation()");
+
+            if (!PrepareTargetDirectory(taskParams, returnData, datasetName, instrumentClass, copyWithResume, out var datasetDirectoryPath, out var pendingRenames))
+            {
+                return false;
+            }
+
+            if (!CheckSourceFiles(taskParams, returnData, datasetName, instrumentClass, out var sourceDirectoryPath, out var datasetInfo))
+            {
+                return false;
+            }
+
+            // Now that the source has been verified, perform any pending renames
+            var renameSuccess = MarkSupersededFiles(datasetDirectoryPath, pendingRenames);
+            if (!renameSuccess)
+            {
+                if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+
+                if (string.IsNullOrEmpty(returnData.CloseoutMsg))
+                {
+                    returnData.CloseoutMsg = "MarkSupersededFiles returned false";
+                }
+                return false;
+            }
+
+            var initData = new CaptureInitData(mToolState, mMgrParams, mFileTools, mShareConnection, mTraceMode);
+
+            // Perform copy based on source type
+            CaptureBase capture = datasetInfo.DatasetType switch
+            {
+                InstrumentFileLayout.File => new FileSingleCapture(initData),
+                InstrumentFileLayout.MultiFile => new FileMultipleCapture(initData),
+                InstrumentFileLayout.DirectoryExt => new DirectoryExtCapture(initData),
+                InstrumentFileLayout.DirectoryNoExt => new DirectoryNoExtCapture(initData),
+                InstrumentFileLayout.BrukerImaging => new BrukerImagingCapture(initData),
+                InstrumentFileLayout.BrukerSpot => new BrukerSpotCapture(initData),
+                _ => new UnknownCapture(initData),
+            };
+
+            capture.Capture(out var msg, returnData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath, copyWithResume, instrumentClass, instrumentName, taskParams);
+
+            if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS &&
+                datasetInfo.DatasetType is not (InstrumentFileLayout.BrukerImaging or InstrumentFileLayout.BrukerSpot))
+            {
+                // Capture possible LC data
+                var lcCapture = new LCDataCapture(mMgrParams);
+                var success = lcCapture.CaptureLCMethodFile(datasetInfo.DatasetName, datasetDirectoryPath);
+
+                // If LC Method capture failed, need make sure returnData.CloseoutType is not CLOSEOUT_SUCCESS
+                if (!success && returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+            }
+
+            PossiblyStoreErrorMessage(returnData);
+
+            if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return true;
+            }
+
+            if (string.IsNullOrWhiteSpace(returnData.CloseoutMsg))
+            {
+                if (string.IsNullOrWhiteSpace(msg))
+                {
+                    returnData.CloseoutMsg = "Unknown error performing capture";
+                }
+                else
+                {
+                    returnData.CloseoutMsg = msg;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Prepare the target directory for data capture
+        /// </summary>
+        /// <param name="taskParams">Task parameters</param>
+        /// <param name="returnData">Return data class; update CloseoutMsg or EvalMsg with text to store in T_Task_Step_Params</param>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="instrumentClass">Instrument class - used for <paramref name="copyWithResume"/> support</param>
+        /// <param name="copyWithResume">If 'copy with resume' is supported for the instrument class</param>
+        /// <param name="datasetDirectoryPath">Directory path files should be copied to</param>
+        /// <param name="pendingRenames">Files and/or directories to rename</param>
+        /// <returns>False if error, and processing should exit.  returnData includes addition details on errors</returns>
+        public bool PrepareTargetDirectory(ITaskParams taskParams, ToolReturnData returnData, string datasetName, InstrumentClass instrumentClass, bool copyWithResume, out string datasetDirectoryPath, out IReadOnlyDictionary<FileSystemInfo, string> pendingRenames)
+        {
+            var storageVol = taskParams.GetParam("Storage_Vol").Trim();                     // Example: E:\
+            var storagePath = taskParams.GetParam("Storage_Path").Trim();                   // Example: Exact04\2012_1\
+            var storageVolExternal = taskParams.GetParam("Storage_Vol_External").Trim();    // Example: \\proto-5\
+
+            var instrumentName = taskParams.GetParam("Instrument_Name");                    // Instrument name
+
+            var computerName = System.Net.Dns.GetHostName();
+
+            datasetDirectoryPath = "";
+            var pendingRenamesMap = new Dictionary<FileSystemInfo, string>();
+            pendingRenames = pendingRenamesMap;
 
             string tempVol;
-
-            LogDebug("Started CaptureOps.DoOperation()");
 
             // Setup Destination directory based on client/server switch, mClientServer
             // True means MgrParam "perspective" =  "client" which means we will use paths like \\proto-5\Exact04\2012_1
@@ -718,8 +797,6 @@ namespace CaptureToolPlugin
                 return false;
             }
 
-            string datasetDirectoryPath;
-
             if (!string.IsNullOrWhiteSpace(taskParams.GetParam("Storage_Folder_Name")))
             {
                 // Storage_Folder_Name is defined, use it instead of datasetName
@@ -762,12 +839,21 @@ namespace CaptureToolPlugin
                 }
             }
 
-            var pendingRenames = new Dictionary<FileSystemInfo, string>();
-
             // Verify that dataset directory path doesn't already exist or is empty
             // Example: \\proto-9\VOrbiETD02\2011_2\PTO_Na_iTRAQ_2_17May11_Owl_11-05-09
             if (ValidateDirectoryPath(datasetDirectoryPath))
             {
+                var maxFileCountToAllowResume = 0;
+                var maxInstrumentDirCountToAllowResume = 0;
+                var maxNonInstrumentDirCountToAllowResume = 0;
+
+                if (instrumentClass is InstrumentClass.BrukerMALDI_Imaging or InstrumentClass.BrukerMALDI_Imaging_V2)
+                {
+                    maxFileCountToAllowResume = 20;
+                    maxInstrumentDirCountToAllowResume = 20;
+                    maxNonInstrumentDirCountToAllowResume = 1;
+                }
+
                 // Dataset directory exists, so take action specified in configuration
                 if (!PerformDSExistsActions(datasetDirectoryPath,
                                             copyWithResume,
@@ -775,7 +861,7 @@ namespace CaptureToolPlugin
                                             maxInstrumentDirCountToAllowResume,
                                             maxNonInstrumentDirCountToAllowResume,
                                             returnData,
-                                            pendingRenames))
+                                            pendingRenamesMap))
                 {
                     PossiblyStoreErrorMessage(returnData);
                     if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
@@ -791,11 +877,38 @@ namespace CaptureToolPlugin
                 }
             }
 
+            return true;
+        }
+
+        /// <summary>
+        /// Check the source files/directory in preparation for copying
+        /// </summary>
+        /// <param name="taskParams">Task parameters</param>
+        /// <param name="returnData">Return data class; update CloseoutMsg or EvalMsg with text to store in T_Task_Step_Params</param>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="instrumentClass">Instrument class to determine what the data format should be</param>
+        /// <param name="sourceDirectoryPath">The determined path for the file/directory that should be copied</param>
+        /// <param name="datasetInfo">Details on the files to be copied</param>
+        /// <returns>False if error, and processing should exit.  returnData includes addition details on errors</returns>
+        public bool CheckSourceFiles(ITaskParams taskParams, ToolReturnData returnData, string datasetName, InstrumentClass instrumentClass, out string sourceDirectoryPath, out DatasetInfo datasetInfo)
+        {
+            var jobNum = taskParams.GetParam("Job", 0);
+            var sourceVol = taskParams.GetParam("Source_Vol").Trim();                       // Example: \\exact04.bionet\
+            var sourcePath = taskParams.GetParam("Source_Path").Trim();                     // Example: ProteomicsData\
+
+            // Capture_Subdirectory is typically an empty string, but could be a partial path like: "CapDev" or "Smith\2014"
+            var legacyCaptureSubfolder = taskParams.GetParam("Capture_Subfolder").Trim();
+            var captureSubdirectory = taskParams.GetParam("Capture_Subdirectory", legacyCaptureSubfolder);
+
+            datasetInfo = null;
+
+            var pwd = CTMUtilities.DecodePassword(mPassword);
+
             mDatasetFileSearchTool.VerifyRelativeSourcePath(sourceVol, ref sourcePath, ref captureSubdirectory);
 
             // Construct the path to the dataset on the instrument
             // Determine if source dataset exists, and if it is a file or a directory
-            var sourceDirectoryPath = Path.Combine(sourceVol, sourcePath);
+            sourceDirectoryPath = Path.Combine(sourceVol, sourcePath);
 
             // Confirm that the source directory has no invalid characters
             if (NameHasInvalidCharacter(sourceDirectoryPath, "Source directory path", false, returnData))
@@ -899,7 +1012,7 @@ namespace CaptureToolPlugin
                 }
             }
 
-            var datasetInfo = mDatasetFileSearchTool.FindDatasetFileOrDirectory(sourceDirectoryPath, datasetName, instrumentClass);
+            datasetInfo = mDatasetFileSearchTool.FindDatasetFileOrDirectory(sourceDirectoryPath, datasetName, instrumentClass);
 
             if (!string.Equals(datasetInfo.DatasetName, datasetName))
             {
@@ -947,80 +1060,17 @@ namespace CaptureToolPlugin
                 sourceIsValid = ValidateWithInstrumentClass(datasetName, sourceDirectoryPath, instrumentClass, datasetInfo, returnData);
             }
 
-            string msg;
-
             if (!sourceIsValid)
             {
-                msg = "Dataset type (" + datasetInfo.DatasetType + ") is not valid for the instrument class (" + instrumentClass + ")";
-            }
-            else
-            {
-                // Now that the source has been verified, perform any pending renames
-                var renameSuccess = MarkSupersededFiles(datasetDirectoryPath, pendingRenames);
-                if (!renameSuccess)
+                if (string.IsNullOrWhiteSpace(returnData.CloseoutMsg))
                 {
-                    if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
-                    {
-                        returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                    }
-
-                    if (string.IsNullOrEmpty(returnData.CloseoutMsg))
-                    {
-                        returnData.CloseoutMsg = "MarkSupersededFiles returned false";
-                    }
-                    return false;
+                    returnData.CloseoutMsg = "Dataset type (" + datasetInfo.DatasetType + ") is not valid for the instrument class (" + instrumentClass + ")";
                 }
 
-                var initData = new CaptureInitData(mToolState, mMgrParams, mFileTools, mShareConnection, mTraceMode);
-
-                // Perform copy based on source type
-                CaptureBase capture = datasetInfo.DatasetType switch
-                {
-                    InstrumentFileLayout.File => new FileSingleCapture(initData),
-                    InstrumentFileLayout.MultiFile => new FileMultipleCapture(initData),
-                    InstrumentFileLayout.DirectoryExt => new DirectoryExtCapture(initData),
-                    InstrumentFileLayout.DirectoryNoExt => new DirectoryNoExtCapture(initData),
-                    InstrumentFileLayout.BrukerImaging => new BrukerImagingCapture(initData),
-                    InstrumentFileLayout.BrukerSpot => new BrukerSpotCapture(initData),
-                    _ => new UnknownCapture(initData),
-                };
-                capture.Capture(out msg, returnData, datasetInfo, sourceDirectoryPath, datasetDirectoryPath, copyWithResume, instrumentClass, instrumentName, taskParams);
+                return false;
             }
 
-            if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS &&
-                datasetInfo.DatasetType is not (InstrumentFileLayout.BrukerImaging or InstrumentFileLayout.BrukerSpot))
-            {
-                // Capture possible LC data
-                var lcCapture = new LCDataCapture(mMgrParams);
-                var success = lcCapture.CaptureLCMethodFile(datasetInfo.DatasetName, datasetDirectoryPath);
-
-                // If LC Method capture failed, need make sure returnData.CloseoutType is not CLOSEOUT_SUCCESS
-                if (!success && returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                }
-            }
-
-            PossiblyStoreErrorMessage(returnData);
-
-            if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
-            {
-                return true;
-            }
-
-            if (string.IsNullOrWhiteSpace(returnData.CloseoutMsg))
-            {
-                if (string.IsNullOrWhiteSpace(msg))
-                {
-                    returnData.CloseoutMsg = "Unknown error performing capture";
-                }
-                else
-                {
-                    returnData.CloseoutMsg = msg;
-                }
-            }
-
-            return false;
+            return true;
         }
 
         /// <summary>
