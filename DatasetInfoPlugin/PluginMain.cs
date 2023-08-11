@@ -369,8 +369,10 @@ namespace DatasetInfoPlugin
 
                 string pathToProcess;
                 bool fileCopiedLocally;
+                bool directoryCopiedLocally;
 
                 var datasetFile = new FileInfo(remoteFileOrDirectoryPath);
+
                 if (datasetFile.Exists && datasetFile.Extension.Equals(InstrumentClassInfo.DOT_RAW_EXTENSION, StringComparison.OrdinalIgnoreCase))
                 {
                     LogMessage("Copying instrument file to local disk: " + datasetFile.FullName, false, false);
@@ -390,11 +392,36 @@ namespace DatasetInfoPlugin
 
                     pathToProcess = localFilePath;
                     fileCopiedLocally = true;
+                    directoryCopiedLocally = false;
+                }
+                else if (instrumentClass == InstrumentClass.BrukerTOF_TDF)
+                {
+                    // Copy the timsTOF .d directory locally to avoid network glitches during processing
+
+                    var localDirectoryPath = Path.Combine(mWorkDir, datasetFileOrDirectory);
+
+                    try
+                    {
+                        mFileTools.CopyDirectory(remoteFileOrDirectoryPath, localDirectoryPath, true);
+                    }
+                    catch (Exception ex)
+                    {
+                        returnData.CloseoutMsg = string.Format("Error copying remote .D directory to local working directory ({0} to {1})", remoteFileOrDirectoryPath, mWorkDir);
+                        returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+
+                        LogError(returnData.CloseoutMsg, ex);
+                        return returnData;
+                    }
+
+                    pathToProcess = localDirectoryPath;
+                    fileCopiedLocally = false;
+                    directoryCopiedLocally = true;
                 }
                 else
                 {
                     pathToProcess = remoteFileOrDirectoryPath;
                     fileCopiedLocally = false;
+                    directoryCopiedLocally = false;
                 }
 
                 var currentOutputDirectory = ConstructOutputDirectoryPath(
@@ -491,6 +518,10 @@ namespace DatasetInfoPlugin
                 if (fileCopiedLocally)
                 {
                     mFileTools.DeleteFileWithRetry(new FileInfo(pathToProcess), 2, out _);
+                }
+                else if (directoryCopiedLocally)
+                {
+                    mFileTools.DeleteDirectory(pathToProcess);
                 }
 
                 var mzMinValidationError = mMsFileScanner.ErrorCode == iMSFileInfoScanner.MSFileScannerErrorCodes.MS2MzMinValidationError;
@@ -685,7 +716,7 @@ namespace DatasetInfoPlugin
             returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
             returnData.CloseoutMsg = AppendToComment(returnData.CloseoutMsg,
                                                   "QC graphics were saved locally for debugging purposes; " +
-                                                  "need to run this job step with a manager that has write access to the storage server");
+                                                  "this job step needs to be processed by a manager that has write access to the storage server");
 
             return returnData;
         }
