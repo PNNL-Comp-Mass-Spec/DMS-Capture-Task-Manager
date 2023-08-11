@@ -1378,7 +1378,6 @@ namespace DatasetInfoPlugin
 
                 case DataFormat.BrukerTOFTdf:
                     fileOrDirectoryName = mDataset + InstrumentClassInfo.DOT_D_EXTENSION;
-                    qcPlotMode = QCPlottingModes.BpiAndTicOnly;
                     isFile = false;
                     break;
 
