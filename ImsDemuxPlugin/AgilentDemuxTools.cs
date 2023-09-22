@@ -860,7 +860,7 @@ namespace ImsDemuxPlugin
                 }
 
                 // Processing end time
-                if (line.StartsWith("End time:") && DateTime.TryParse(line.Replace("End time:", "").Trim(' ', '-'), out var endTime))
+                if (line.StartsWith("End time:") && DateTime.TryParse(line.Replace("End time:", string.Empty).Trim(' ', '-'), out var endTime))
                 {
                     lastDate = endTime;
                     foundFinish = false;

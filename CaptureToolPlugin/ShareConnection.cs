@@ -53,14 +53,9 @@ namespace CaptureToolPlugin
             // Determine whether the connector class should be used to connect to Bionet
             // This is defined by manager parameter ShareConnectorType
             // Default in October 2014 is PRISM
-            if (string.Equals(shareConnectorType, "dotnet", StringComparison.OrdinalIgnoreCase))
-            {
-                mConnectionTypeToUse = ConnectionType.DotNET;
-            }
-            else
-            {
-                mConnectionTypeToUse = ConnectionType.Prism;
-            }
+            mConnectionTypeToUse = string.Equals(shareConnectorType, "dotnet", StringComparison.OrdinalIgnoreCase)
+                ? ConnectionType.DotNET
+                : ConnectionType.Prism;
         }
 
         /// <summary>
@@ -206,7 +201,7 @@ namespace CaptureToolPlugin
                     directorySharePath = directorySharePath.Substring(0, directorySharePath.Length - 1);
                 }
 
-                var accessCredentials = new System.Net.NetworkCredential(userName, password, "");
+                var accessCredentials = new System.Net.NetworkCredential(userName, password, string.Empty);
 
                 myConn = new NetworkConnection(directorySharePath, accessCredentials);
 
