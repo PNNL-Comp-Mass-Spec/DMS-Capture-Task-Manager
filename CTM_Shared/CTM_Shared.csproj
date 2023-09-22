@@ -98,7 +98,7 @@
       <Version>1.0.111</Version>
     </PackageReference>
     <PackageReference Include="UIMFLibrary">
-      <Version>3.8.15</Version>
+      <Version>3.8.26</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
