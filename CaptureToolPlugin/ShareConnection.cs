@@ -6,7 +6,7 @@ namespace CaptureToolPlugin
 {
     internal class ShareConnection : LoggerBase
     {
-        // Ignore Spelling: bionet, dotnet, fso, secfso, Username
+        // Ignore Spelling: bio, bionet, dotnet, fso, secfso, Username
 
         public enum ConnectionType
         {

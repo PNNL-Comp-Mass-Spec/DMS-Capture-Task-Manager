@@ -18,7 +18,7 @@ namespace ImsDemuxPlugin
     /// </summary>
     public class SQLiteTools : EventNotifier
     {
-        // Ignore Spelling: demultiplexing, demux, mux
+        // Ignore Spelling: demultiplexing, demux, ims, mux, uimf
 
         // TODO: Update for newer version UIMF files, with the mux sequence stored directly in MultiplexingEncodingSequence.
 

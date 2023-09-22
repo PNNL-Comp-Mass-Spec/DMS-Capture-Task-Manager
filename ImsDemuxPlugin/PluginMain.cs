@@ -28,7 +28,7 @@ namespace ImsDemuxPlugin
     // ReSharper disable once UnusedMember.Global
     public class PluginMain : ToolRunnerBase
     {
-        // Ignore Spelling: Demultiplexer, demux, demultiplexing, demultiplexed, uimf, desc
+        // Ignore Spelling: Demultiplexer, demux, demultiplexing, demultiplexed, ims, uimf, desc
 
         public const int MANAGER_UPDATE_INTERVAL_MINUTES = 10;
         private const string COULD_NOT_OBTAIN_GOOD_CALIBRATION = "Could not obtain a good calibration";
