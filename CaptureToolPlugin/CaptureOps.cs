@@ -55,7 +55,7 @@ namespace CaptureToolPlugin
         /// </summary>
         private readonly string mPassword = string.Empty;
 
-        private readonly SharedState mToolState = new SharedState();
+        private readonly SharedState mToolState = new();
         private readonly ShareConnection mShareConnection;
 
         private readonly DatasetFileSearchTool mDatasetFileSearchTool;
