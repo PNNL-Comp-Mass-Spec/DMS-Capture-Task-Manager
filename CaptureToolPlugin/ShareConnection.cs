@@ -15,22 +15,15 @@ namespace CaptureToolPlugin
             DotNET
         }
 
-        private readonly bool mUseBioNet;
-
         /// <summary>
         /// Username for connecting to bionet
         /// </summary>
         private readonly string mUserName = string.Empty;
 
-        /// <summary>
-        /// Encoded password for the bionet user
-        /// </summary>
-        private readonly string mPassword = string.Empty;
-
         private ShareConnector mShareConnectorPRISM;
         private NetworkConnection mShareConnectorDotNET;
         private ConnectionType mConnectionType = ConnectionType.NotConnected;
-        private readonly ConnectionType mConnectionTypeToUse = ConnectionType.NotConnected;
+        private readonly ConnectionType mConnectionTypeToUse;
         private readonly SharedState mToolState;
 
         /// <summary>
@@ -44,11 +37,9 @@ namespace CaptureToolPlugin
             mToolState = toolState;
 
             // Setup for Bionet use, if applicable
-            mUseBioNet = useBioNet;
-            if (mUseBioNet)
+            if (useBioNet)
             {
                 mUserName = mgrParams.GetParam("BionetUser");
-                mPassword = mgrParams.GetParam("BionetPwd");
 
                 if (!mUserName.Contains(@"\"))
                 {
