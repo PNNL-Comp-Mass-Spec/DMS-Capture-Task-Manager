@@ -90,14 +90,14 @@ namespace CaptureToolPlugin
         /// Connect to a Bionet share using either mShareConnectorPRISM or mShareConnectorDotNET
         /// </summary>
         /// <param name="userName">Username</param>
-        /// <param name="pwd">Password</param>
+        /// <param name="password">Password</param>
         /// <param name="directorySharePath">Share path</param>
         /// <param name="closeoutType">Closeout code (output)</param>
         /// <param name="evalCode"></param>
         /// <returns>True if success, false if an error</returns>
         public bool ConnectToShare(
             string userName,
-            string pwd,
+            string password,
             string directorySharePath,
             out EnumCloseOutType closeoutType,
             out EnumEvalCode evalCode)
@@ -107,12 +107,12 @@ namespace CaptureToolPlugin
             // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
             if (mConnectionTypeToUse == ConnectionType.DotNET)
             {
-                success = ConnectToShare(userName, pwd, directorySharePath, out mShareConnectorDotNET, out closeoutType, out evalCode);
+                success = ConnectToShare(userName, password, directorySharePath, out mShareConnectorDotNET, out closeoutType, out evalCode);
             }
             else
             {
                 // Assume Prism Connector
-                success = ConnectToShare(userName, pwd, directorySharePath, out mShareConnectorPRISM, out closeoutType, out evalCode);
+                success = ConnectToShare(userName, password, directorySharePath, out mShareConnectorPRISM, out closeoutType, out evalCode);
             }
 
             return success;
@@ -123,7 +123,7 @@ namespace CaptureToolPlugin
         /// Uses class PRISM.ShareConnector
         /// </summary>
         /// <param name="userName">Username</param>
-        /// <param name="pwd">Password</param>
+        /// <param name="password">Password</param>
         /// <param name="shareDirectoryPath">Share path</param>
         /// <param name="myConn">Connection object (output)</param>
         /// <param name="closeoutType">Closeout code (output)</param>
@@ -131,7 +131,7 @@ namespace CaptureToolPlugin
         /// <returns>True if success, false if an error</returns>
         private bool ConnectToShare(
             string userName,
-            string pwd,
+            string password,
             string shareDirectoryPath,
             out ShareConnector myConn,
             out EnumCloseOutType closeoutType,
@@ -140,7 +140,7 @@ namespace CaptureToolPlugin
             closeoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
             evalCode = EnumEvalCode.EVAL_CODE_SUCCESS;
 
-            myConn = new ShareConnector(userName, pwd)
+            myConn = new ShareConnector(userName, password)
             {
                 Share = shareDirectoryPath
             };
@@ -190,7 +190,7 @@ namespace CaptureToolPlugin
         /// Uses class CaptureTaskManager.NetworkConnection
         /// </summary>
         /// <param name="userName">Username</param>
-        /// <param name="pwd">Password</param>
+        /// <param name="password">Password</param>
         /// <param name="directorySharePath">Remote share path</param>
         /// <param name="myConn">Connection object (output)</param>
         /// <param name="closeoutType">Closeout code (output)</param>
@@ -198,7 +198,7 @@ namespace CaptureToolPlugin
         /// <returns>True if success, false if an error</returns>
         private bool ConnectToShare(
             string userName,
-            string pwd,
+            string password,
             string directorySharePath,
             out NetworkConnection myConn,
             out EnumCloseOutType closeoutType,
@@ -215,7 +215,7 @@ namespace CaptureToolPlugin
                     directorySharePath = directorySharePath.Substring(0, directorySharePath.Length - 1);
                 }
 
-                var accessCredentials = new System.Net.NetworkCredential(userName, pwd, "");
+                var accessCredentials = new System.Net.NetworkCredential(userName, password, "");
 
                 myConn = new NetworkConnection(directorySharePath, accessCredentials);
 

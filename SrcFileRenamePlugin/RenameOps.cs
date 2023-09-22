@@ -21,14 +21,14 @@ namespace SrcFileRenamePlugin
     {
         // ReSharper disable CommentTypo
 
-        // Ignore Spelling: Bio, Bionet, Pwd, prepend, Username, Subfolder, secfso, fso, chromooff, flatline, LCmethod, plugsplit, slowsplit
+        // Ignore Spelling: Bio, Bionet, prepend, Username, Subfolder, secfso, fso, chromooff, flatline, LCmethod, plugsplit, slowsplit
 
         // ReSharper restore CommentTypo
 
         private string mMsg = string.Empty;
         private readonly bool mUseBioNet;
         private readonly string mUserName = string.Empty;
-        private readonly string mPwd = string.Empty;
+        private readonly string mPassword = string.Empty;
         private ShareConnector mShareConnector;
         private bool mConnected;
 
@@ -46,7 +46,7 @@ namespace SrcFileRenamePlugin
             if (mUseBioNet)
             {
                 mUserName = mgrParams.GetParam("BionetUser");
-                mPwd = mgrParams.GetParam("BionetPwd");
+                mPassword = mgrParams.GetParam("BionetPwd");
 
                 if (!mUserName.Contains(@"\"))
                 {
@@ -80,7 +80,7 @@ namespace SrcFileRenamePlugin
 
             var instrumentFileHash = taskParams.GetParam("Instrument_File_Hash");
 
-            var pwd = CTMUtilities.DecodePassword(mPwd);
+            var password = CTMUtilities.DecodePassword(mPassword);
 
             OnDebugEvent("Started RenameOps.DoOperation()");
 
@@ -96,7 +96,7 @@ namespace SrcFileRenamePlugin
             {
                 OnDebugEvent("Bionet connection required for " + sourceVol);
 
-                mShareConnector = new ShareConnector(mUserName, pwd)
+                mShareConnector = new ShareConnector(mUserName, password)
                 {
                     Share = sourceDirectoryPath
                 };

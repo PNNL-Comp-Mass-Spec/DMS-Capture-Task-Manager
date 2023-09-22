@@ -902,7 +902,7 @@ namespace CaptureToolPlugin
 
             datasetInfo = null;
 
-            var pwd = CTMUtilities.DecodePassword(mPassword);
+            var password = CTMUtilities.DecodePassword(mPassword);
 
             mDatasetFileSearchTool.VerifyRelativeSourcePath(sourceVol, ref sourcePath, ref captureSubdirectory);
 
@@ -921,7 +921,7 @@ namespace CaptureToolPlugin
             {
                 LogDebug("Bionet connection required for " + sourceVol);
 
-                if (!mShareConnection.ConnectToShare(mUserName, pwd, sourceDirectoryPath, out var closeoutType, out var evalCode))
+                if (!mShareConnection.ConnectToShare(mUserName, password, sourceDirectoryPath, out var closeoutType, out var evalCode))
                 {
                     returnData.CloseoutType = closeoutType;
                     returnData.EvalCode = evalCode;
