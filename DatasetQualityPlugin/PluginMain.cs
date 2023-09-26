@@ -26,7 +26,8 @@ namespace DatasetQualityPlugin
     {
         // Ignore Spelling: Quameter, utf, frac, Lumos, orbi, Roc, idfree, monoisotope, Filepath, cpus, cfg, cmd
 
-        private const int MAX_QUAMETER_RUNTIME_MINUTES = 150;
+        private const int MAX_QUAMETER_RUNTIME_HOURS = 6;
+        private const int MAX_QUAMETER_RUNTIME_MINUTES = 60 * MAX_QUAMETER_RUNTIME_HOURS;
 
         private const string STORE_QUAMETER_RESULTS_SP_NAME = "store_quameter_results";
         private const string QUAMETER_IDFREE_METRICS_FILE = "Quameter_IDFree.tsv";
