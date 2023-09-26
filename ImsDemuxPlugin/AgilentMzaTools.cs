@@ -191,7 +191,7 @@ namespace ImsDemuxPlugin
 
         private void CmdRunner_Timeout()
         {
-            OnErrorEvent("CmdRunner timeout reported");
+            OnErrorEvent("cmdRunner timeout reported (the MZA converter has been running for over {0} minutes", MAX_RUNTIME_MINUTES);
         }
 
         private void CmdRunner_LoopWaiting()

@@ -701,7 +701,7 @@ namespace ImsDemuxPlugin
 
         private void CmdRunner_Timeout()
         {
-            OnErrorEvent("cmdRunner timeout reported");
+            OnErrorEvent("cmdRunner timeout reported (the AgilentToUimfConverter has been running for over {0} minutes", MAX_AGILENT_TO_UIMF_RUNTIME_MINUTES);
         }
 
         private void CmdRunner_LoopWaiting()

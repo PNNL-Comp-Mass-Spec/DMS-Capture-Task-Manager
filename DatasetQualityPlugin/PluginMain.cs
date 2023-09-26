@@ -1488,7 +1488,7 @@ namespace DatasetQualityPlugin
 
         private void CmdRunner_Timeout()
         {
-            LogError("CmdRunner timeout reported");
+            LogError("CmdRunner timeout reported (Quameter has been running for over {0} HOURS)", MAX_QUAMETER_RUNTIME_HOURS);
         }
 
         private void CmdRunner_LoopWaiting()

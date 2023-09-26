@@ -2752,7 +2752,7 @@ namespace DatasetIntegrityPlugin
 
         private void CmdRunner_Timeout()
         {
-            LogError("cmdRunner timeout reported");
+            LogError("cmdRunner timeout reported (OpenChrom has been running for over {0} minutes", MAX_AGILENT_TO_CDF_RUNTIME_MINUTES);
         }
 
         private void CmdRunner_LoopWaiting()

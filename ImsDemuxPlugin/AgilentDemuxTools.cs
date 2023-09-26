@@ -20,7 +20,8 @@ namespace ImsDemuxPlugin
         public const string ENCODED_dotD_SUFFIX = "_muxed.d";
 
         // Set the max runtime at 5 days
-        private const int MAX_DEMUX_RUNTIME_MINUTES = 1440 * 5;
+        private const int MAX_DEMUX_RUNTIME_DAYS = 5;
+        private const int MAX_DEMUX_RUNTIME_MINUTES = 1440 * MAX_DEMUX_RUNTIME_DAYS;
 
         private string mDataset;
         private string mDatasetDirectoryPathRemote = string.Empty;
@@ -904,7 +905,7 @@ namespace ImsDemuxPlugin
 
         private void CmdRunner_Timeout()
         {
-            OnErrorEvent("CmdRunner timeout reported");
+            OnErrorEvent("CmdRunner timeout reported (the PNNL-PreProcessor has been running for over {0} days)", MAX_DEMUX_RUNTIME_DAYS);
         }
 
         private void CmdRunner_LoopWaiting()

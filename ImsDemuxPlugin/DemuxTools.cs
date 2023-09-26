@@ -32,7 +32,8 @@ namespace ImsDemuxPlugin
         private const string DECODED_UIMF_SUFFIX = "_decoded.uimf";
 
         // Set the max runtime at 5 days
-        private const int MAX_DEMUX_RUNTIME_MINUTES = 1440 * 5;
+        private const int MAX_DEMUX_RUNTIME_DAYS = 5;
+        private const int MAX_DEMUX_RUNTIME_MINUTES = 1440 * MAX_DEMUX_RUNTIME_DAYS;
 
         // Calibration should be fast (typically just a second a two)
         private const int MAX_CALIBRATION_RUNTIME_MINUTES = 5;
@@ -1547,7 +1548,7 @@ namespace ImsDemuxPlugin
 
         private void CmdRunner_Timeout()
         {
-            OnErrorEvent("CmdRunner timeout reported");
+            OnErrorEvent("CmdRunner timeout reported (the UIMF Demultiplexer has been running for over {0} days)", MAX_DEMUX_RUNTIME_DAYS);
         }
 
         private void CmdRunner_LoopWaiting()
