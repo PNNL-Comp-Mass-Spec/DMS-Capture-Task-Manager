@@ -205,13 +205,13 @@ namespace ImsDemuxPlugin
 
             ParseConsoleOutputFile();
 
-            if (DateTime.UtcNow.Subtract(mLastProgressMessageTime).TotalSeconds >= 90)
-            {
-                mLastProgressMessageTime = DateTime.UtcNow;
-                OnDebugEvent("{0} running; {1:F1} minutes elapsed",
-                    "MZA",
-                    DateTime.UtcNow.Subtract(mStartTime).TotalMinutes);
-            }
+            if (DateTime.UtcNow.Subtract(mLastProgressMessageTime).TotalSeconds < 90)
+                return;
+
+            mLastProgressMessageTime = DateTime.UtcNow;
+            OnDebugEvent("{0} running; {1:F1} minutes elapsed",
+                "MZA",
+                DateTime.UtcNow.Subtract(mStartTime).TotalMinutes);
         }
     }
 }

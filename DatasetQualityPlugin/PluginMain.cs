@@ -1500,17 +1500,17 @@ namespace DatasetQualityPlugin
                 return;
             }
 
-            if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalMinutes >= mStatusUpdateIntervalMinutes)
-            {
-                mLastStatusUpdate = DateTime.UtcNow;
-                LogMessage("Quameter running; {0:F1} minutes elapsed",
-                    DateTime.UtcNow.Subtract(mProcessingStartTime).TotalMinutes);
+            if (DateTime.UtcNow.Subtract(mLastStatusUpdate).TotalMinutes < mStatusUpdateIntervalMinutes)
+                return;
 
-                // Increment mStatusUpdateIntervalMinutes by 5 minutes every time the status is logged, up to a maximum of 30
-                if (mStatusUpdateIntervalMinutes < 30)
-                {
-                    mStatusUpdateIntervalMinutes += 5;
-                }
+            mLastStatusUpdate = DateTime.UtcNow;
+            LogMessage("Quameter running; {0:F1} minutes elapsed",
+                DateTime.UtcNow.Subtract(mProcessingStartTime).TotalMinutes);
+
+            // Increment mStatusUpdateIntervalMinutes by 5 minutes every time the status is logged, up to a maximum of 30
+            if (mStatusUpdateIntervalMinutes < 30)
+            {
+                mStatusUpdateIntervalMinutes += 5;
             }
         }
     }

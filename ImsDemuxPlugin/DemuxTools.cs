@@ -1574,14 +1574,14 @@ namespace ImsDemuxPlugin
                 DemuxProgress?.Invoke(mDemuxProgressPercentComplete);
             }
 
-            if (DateTime.UtcNow.Subtract(mLastProgressMessageTime).TotalSeconds >= 300)
-            {
-                mLastProgressMessageTime = DateTime.UtcNow;
-                OnDebugEvent("{0} running; {1:F1} minutes elapsed, {2:F1}% complete",
-                    toolName,
-                    DateTime.UtcNow.Subtract(mDemuxStartTime).TotalMinutes,
-                    mDemuxProgressPercentComplete);
-            }
+            if (DateTime.UtcNow.Subtract(mLastProgressMessageTime).TotalSeconds < 300)
+                return;
+
+            mLastProgressMessageTime = DateTime.UtcNow;
+            OnDebugEvent("{0} running; {1:F1} minutes elapsed, {2:F1}% complete",
+                toolName,
+                DateTime.UtcNow.Subtract(mDemuxStartTime).TotalMinutes,
+                mDemuxProgressPercentComplete);
         }
 
         private void BinCentricTableCreator_ProgressEvent(object sender, ProgressEventArgs e)
