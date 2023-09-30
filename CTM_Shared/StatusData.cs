@@ -25,7 +25,7 @@ namespace CaptureTaskManager
             set
             {
                 // Filter out routine startup and shutdown messages
-                if (value.Contains("=== Started") || (value.Contains("===== Closing")))
+                if (value.Contains("=== Started") || value.Contains("===== Closing"))
                 {
                     // Do nothing
                 }
@@ -38,10 +38,10 @@ namespace CaptureTaskManager
 
         public static Queue<string> ErrorQueue { get; } = new();
 
-        public static void AddErrorMessage(string ErrMsg)
+        public static void AddErrorMessage(string errorMessage)
         {
             // Add the most recent error message
-            ErrorQueue.Enqueue(ErrMsg);
+            ErrorQueue.Enqueue(errorMessage);
 
             // If there are > 4 entries in the queue, delete the oldest ones
             while (ErrorQueue.Count > 4)
