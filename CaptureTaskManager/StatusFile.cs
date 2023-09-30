@@ -278,39 +278,6 @@ namespace CaptureTaskManager
             return File.Exists(flagFilePath);
         }
 
-        /// <summary>
-        /// Writes the status file
-        /// </summary>
-        public void WriteStatusFile()
-        {
-            var lastUpdate = DateTime.UtcNow;
-            var runTimeHours = GetRunTime();
-            var processId = GetProcessID();
-
-            const int cpuUtilization = 0;
-            const float freeMemoryMB = 0;
-
-            string xmlText;
-
-            try
-            {
-                xmlText = GenerateStatusXML(this, lastUpdate,processId, cpuUtilization, freeMemoryMB, runTimeHours);
-
-                WriteStatusFileToDisk(xmlText);
-            }
-            catch (Exception ex)
-            {
-                OnWarningEvent("Error generating status info: " + ex.Message);
-                xmlText = string.Empty;
-            }
-
-            if (LogToMsgQueue)
-            {
-                // Send the XML text to a message queue
-                LogStatusToMessageQueue(xmlText);
-            }
-        }
-
         private string GenerateStatusXML(
             StatusFile status,
             DateTime lastUpdate,
@@ -398,6 +365,40 @@ namespace CaptureTaskManager
             memStream.Close();
 
             return xmlText;
+        }
+
+
+        /// <summary>
+        /// Writes the status file
+        /// </summary>
+        public void WriteStatusFile()
+        {
+            var lastUpdate = DateTime.UtcNow;
+            var runTimeHours = GetRunTime();
+            var processId = GetProcessID();
+
+            const int cpuUtilization = 0;
+            const float freeMemoryMB = 0;
+
+            string xmlText;
+
+            try
+            {
+                xmlText = GenerateStatusXML(this, lastUpdate, processId, cpuUtilization, freeMemoryMB, runTimeHours);
+
+                WriteStatusFileToDisk(xmlText);
+            }
+            catch (Exception ex)
+            {
+                OnWarningEvent("Error generating status info: " + ex.Message);
+                xmlText = string.Empty;
+            }
+
+            if (LogToMsgQueue)
+            {
+                // Send the XML text to a message queue
+                LogStatusToMessageQueue(xmlText);
+            }
         }
 
         private void WriteStatusFileToDisk(string xmlText)
