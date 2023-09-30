@@ -296,11 +296,10 @@ namespace CaptureTaskManager
             // Create a new memory stream in which to write the XML
             var memStream = new MemoryStream();
 
-            using var writer = new XmlTextWriter(memStream, System.Text.Encoding.UTF8)
-            {
-                Formatting = Formatting.Indented,
-                Indentation = 2
-            };
+            using var writer = new XmlTextWriter(memStream, System.Text.Encoding.UTF8);
+
+            writer.Formatting = Formatting.Indented;
+            writer.Indentation = 2;
 
             // Create the XML document in memory
             writer.WriteStartDocument(true);
@@ -309,8 +308,8 @@ namespace CaptureTaskManager
             // Root level element
             writer.WriteStartElement("Root");
             writer.WriteStartElement("Manager");
-            writer.WriteElementString("MgrName", status.MgrName);
-            writer.WriteElementString("MgrStatus", status.ConvertMgrStatusToString(status.MgrStatus));
+            writer.WriteElementString("MgrName", ValidateTextLength(status.MgrName, 128));
+            writer.WriteElementString("MgrStatus", ValidateTextLength(status.ConvertMgrStatusToString(status.MgrStatus), 50));
 
             writer.WriteComment("Local status log time: " + lastUpdate.ToLocalTime().ToString(LOCAL_TIME_FORMAT));
             writer.WriteComment("Local last start time: " + status.TaskStartTime.ToLocalTime().ToString(LOCAL_TIME_FORMAT));
@@ -327,32 +326,32 @@ namespace CaptureTaskManager
 
             foreach (var errMsg in StatusData.ErrorQueue)
             {
-                writer.WriteElementString("ErrMsg", errMsg);
+                writer.WriteElementString("ErrMsg", ValidateTextLength(errMsg, 2000));
             }
 
             writer.WriteEndElement(); // RecentErrorMessages
             writer.WriteEndElement(); // Manager
 
             writer.WriteStartElement("Task");
-            writer.WriteElementString("Tool", status.Tool);
-            writer.WriteElementString("Status", status.ConvertTaskStatusToString(status.TaskStatus));
+            writer.WriteElementString("Tool", ValidateTextLength(status.Tool, 128));
+            writer.WriteElementString("Status", ValidateTextLength(status.ConvertTaskStatusToString(status.TaskStatus), 50));
             writer.WriteElementString("Duration", runTimeHours.ToString("0.00"));
             writer.WriteElementString("DurationMinutes", (runTimeHours * 60).ToString("0.0"));
             writer.WriteElementString("Progress", status.Progress.ToString("##0.00"));
-            writer.WriteElementString("CurrentOperation", status.CurrentOperation);
+            writer.WriteElementString("CurrentOperation", ValidateTextLength(status.CurrentOperation, 255));
 
             writer.WriteStartElement("TaskDetails");
             writer.WriteElementString("Status", status.ConvertTaskStatusDetailToString(status.TaskStatusDetail));
             writer.WriteElementString("Job", status.JobNumber.ToString());
             writer.WriteElementString("Step", status.JobStep.ToString());
-            writer.WriteElementString("Dataset", status.Dataset);
-            writer.WriteElementString("MostRecentLogMessage", StatusData.MostRecentLogMessage);
-            writer.WriteElementString("MostRecentJobInfo", status.MostRecentJobInfo);
+            writer.WriteElementString("Dataset", ValidateTextLength(status.Dataset, 255));
+            writer.WriteElementString("MostRecentLogMessage", ValidateTextLength(StatusData.MostRecentLogMessage, 2000));
+            writer.WriteElementString("MostRecentJobInfo", ValidateTextLength(status.MostRecentJobInfo, 255));
             writer.WriteEndElement(); // TaskDetails
             writer.WriteEndElement(); // Task
             writer.WriteEndElement(); // Root
 
-            // Close out the XML document (but do not close writer yet)
+            // Close out the XML document (but do not close the writer yet)
             writer.WriteEndDocument();
             writer.Flush();
 
@@ -367,6 +366,19 @@ namespace CaptureTaskManager
             return xmlText;
         }
 
+        /// <summary>
+        /// Examines the length of value; if longer than maxLength characters, the return value is truncated
+        /// </summary>
+        /// <param name="value">Text value to examine</param>
+        /// <param name="maxLength">Maximum allowed number of characters</param>
+        /// <returns>Either the original value, or the value truncated to maxLength characters</returns>
+        private static string ValidateTextLength(string value, int maxLength)
+        {
+            if (string.IsNullOrEmpty(value))
+                return string.Empty;
+
+            return value.Length <= maxLength ? value : value.Substring(0, maxLength);
+        }
 
         /// <summary>
         /// Writes the status file
