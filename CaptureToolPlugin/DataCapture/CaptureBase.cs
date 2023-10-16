@@ -208,7 +208,10 @@ namespace CaptureToolPlugin.DataCapture
                     return true;
                 }
 
-                LogMessage("File size changed from " + initialFileSize + " bytes to " + finalFileSize + " bytes: " + filePath);
+                returnData.CloseoutMsg =
+                    string.Format("File size changed from {0:##,###} bytes to {1:##,###} bytes: {2}", initialFileSize, finalFileSize, filePath);
+
+                LogMessage(returnData.CloseoutMsg);
 
                 return false;
             }
