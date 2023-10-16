@@ -66,6 +66,7 @@ namespace ImsDemuxPlugin
 
             // Perform base class operations, if any
             mRetData = base.RunTool();
+
             if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
             {
                 return mRetData;
@@ -123,6 +124,7 @@ namespace ImsDemuxPlugin
                     uimfFile.Refresh();
                     var fileSizeGBEnd = uimfFile.Length / 1024.0 / 1024.0 / 1024.0;
                     double foldIncrease = 0;
+
                     if (fileSizeGBStart > 0)
                     {
                         foldIncrease = fileSizeGBEnd / fileSizeGBStart;
@@ -325,6 +327,7 @@ namespace ImsDemuxPlugin
                     if (mRetData.CloseoutType != EnumCloseOutType.CLOSEOUT_FAILED)
                     {
                         mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+
                         if (string.IsNullOrEmpty(mRetData.CloseoutMsg))
                         {
                             mRetData.CloseoutMsg = "Out of memory";
@@ -348,6 +351,7 @@ namespace ImsDemuxPlugin
             if (!uimfFile.Exists)
             {
                 string msg;
+
                 if (mNeedToDemultiplex)
                 {
                     msg = "UIMF File not found after demultiplexing: " + mUimfFilePath;
@@ -520,6 +524,7 @@ namespace ImsDemuxPlugin
                     if (mRetData.CloseoutType != EnumCloseOutType.CLOSEOUT_FAILED)
                     {
                         mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+
                         if (string.IsNullOrEmpty(mRetData.CloseoutMsg))
                         {
                             mRetData.CloseoutMsg = "Out of memory";
@@ -659,11 +664,13 @@ namespace ImsDemuxPlugin
                 while (logEntriesReader.Read())
                 {
                     var message = logEntriesReader.GetString(0);
+
                     if (message.StartsWith("New calibration coefficients"))
                     {
                         // Extract out the coefficients
                         var coefficientsMatcher = new Regex("slope = ([0-9.+-]+), intercept = ([0-9.+-]+)", RegexOptions.IgnoreCase);
                         var match = coefficientsMatcher.Match(message);
+
                         if (match.Success)
                         {
                             double.TryParse(match.Groups[1].Value, out calibrationSlope);
@@ -747,6 +754,7 @@ namespace ImsDemuxPlugin
                 if (!uimfFile.Exists)
                 {
                     string msg;
+
                     if (mNeedToDemultiplex)
                     {
                         msg = "UIMF File not found after demultiplexing: " + mUimfFilePath;
@@ -906,6 +914,7 @@ namespace ImsDemuxPlugin
             var toolVersionInfo = string.Empty;
 
             var uimfDemultiplexerExePath = GetUimfDemultiplexerPath();
+
             if (string.IsNullOrEmpty(uimfDemultiplexerExePath))
             {
                 return false;
@@ -922,6 +931,7 @@ namespace ImsDemuxPlugin
 
             // Lookup the version of UIMFDemultiplexer_Console
             var success = StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, uimfDemultiplexer.FullName);
+
             if (!success)
             {
                 return false;
@@ -930,6 +940,7 @@ namespace ImsDemuxPlugin
             // Lookup the version of the IMSDemultiplexer (in the UIMFDemultiplexer folder)
             var demultiplexerPath = Path.Combine(uimfDemultiplexer.DirectoryName, "IMSDemultiplexer.dll");
             success = StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, demultiplexerPath);
+
             if (!success)
             {
                 return false;
@@ -937,6 +948,7 @@ namespace ImsDemuxPlugin
 
             var autoCalibrateUIMFPath = Path.Combine(uimfDemultiplexer.DirectoryName, "AutoCalibrateUIMF.dll");
             success = StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, autoCalibrateUIMFPath);
+
             if (!success)
             {
                 return false;
@@ -944,6 +956,7 @@ namespace ImsDemuxPlugin
 
             var uimfLibraryPath = Path.Combine(uimfDemultiplexer.DirectoryName, "UIMFLibrary.dll");
             success = StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, uimfLibraryPath);
+
             if (!success)
             {
                 return false;
@@ -987,6 +1000,7 @@ namespace ImsDemuxPlugin
             // Lookup the version of the Capture tool plugin
             var pluginPath = Path.Combine(appDirectoryPath, "ImsDemuxPlugin.dll");
             var success = StoreToolVersionInfoOneFile(ref toolVersionInfo, pluginPath);
+
             if (!success)
             {
                 return false;
@@ -994,6 +1008,7 @@ namespace ImsDemuxPlugin
 
             // Determine the full path to PNNL-PreProcessor.exe
             var preprocessorExePath = GetPNNLPreProcessorPath();
+
             if (string.IsNullOrEmpty(preprocessorExePath))
             {
                 mRetData.CloseoutMsg = "Manager parameter PNNLPreProcessorProgLoc is not defined";
@@ -1010,6 +1025,7 @@ namespace ImsDemuxPlugin
 
             // Lookup the version of PNNL-Preprocessor.exe
             success = StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, preprocessor.FullName);
+
             if (!success)
             {
                 mRetData.CloseoutMsg = "Error storing tool version info for " + preprocessor.FullName;
@@ -1019,6 +1035,7 @@ namespace ImsDemuxPlugin
             // Lookup the version of the IMSDemultiplexer (in the PNNL-PreProcessor directory)
             var demultiplexerPath = Path.Combine(preprocessor.DirectoryName, "IMSDemultiplexer.dll");
             success = StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, demultiplexerPath);
+
             if (!success)
             {
                 mRetData.CloseoutMsg = "Error storing tool version info for " + demultiplexerPath;
@@ -1028,6 +1045,7 @@ namespace ImsDemuxPlugin
             // Lookup the version of SQLite
             var sqLitePath = Path.Combine(appDirectoryPath, "System.Data.SQLite.dll");
             success = StoreToolVersionInfoOneFile(ref toolVersionInfo, sqLitePath);
+
             if (!success)
             {
                 mRetData.CloseoutMsg = "Error storing tool version info for " + sqLitePath;
@@ -1037,6 +1055,7 @@ namespace ImsDemuxPlugin
             //var uimfLibraryPath = Path.Combine(preprocessor.DirectoryName, "UIMFLibrary.dll");
             var uimfLibraryPath = Path.Combine(appDirectoryPath, "UIMFLibrary.dll");
             success = StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, uimfLibraryPath);
+
             if (!success)
             {
                 mRetData.CloseoutMsg = "Error storing tool version info for " + uimfLibraryPath;
@@ -1046,6 +1065,7 @@ namespace ImsDemuxPlugin
             foreach (var path in additionalPaths)
             {
                 success = StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, path);
+
                 if (!success)
                 {
                     mRetData.CloseoutMsg = "Error storing tool version info for " + path;
@@ -1055,6 +1075,7 @@ namespace ImsDemuxPlugin
 
             // Determine the full path to mza.exe
             var mzaExePath = GetMzaConverterPath();
+
             if (string.IsNullOrEmpty(mzaExePath))
             {
                 mRetData.CloseoutMsg = "Manager parameter MzaProgLoc is not defined";

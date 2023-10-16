@@ -59,6 +59,7 @@ namespace CaptureToolPlugin.DataCapture
 
             // Check to see if the directories have been zipped
             var zipFileList = Directory.GetFiles(sourceDirectory.FullName, "*.zip");
+
             if (zipFileList.Length < 1)
             {
                 // Data files haven't been zipped, so throw error

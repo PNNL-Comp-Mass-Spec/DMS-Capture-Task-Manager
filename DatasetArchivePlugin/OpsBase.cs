@@ -214,6 +214,7 @@ namespace DatasetArchivePlugin
                 var messageParam = dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
 
                 var successCount = 0;
+
                 foreach (var subdirectoryName in subdirectoryNames)
                 {
                     resultsDirectoryParam.Value = subdirectoryName;
@@ -430,9 +431,11 @@ namespace DatasetArchivePlugin
                 var elapsedTime = DateTime.UtcNow.Subtract(startTime);
 
                 statusMessage = "Upload of " + mDatasetName + " completed in " + elapsedTime.TotalSeconds.ToString("0.0") + " seconds";
+
                 if (!success)
                 {
                     statusMessage += " (success=false)";
+
                     if (CTMUtilities.BytesToGB(myEMSLUploader.MetadataContainer.TotalFileSizeToUpload) > LARGE_DATASET_THRESHOLD_GB_NO_RETRY)
                     {
                         mErrMsg = LARGE_DATASET_UPLOAD_ERROR;
@@ -487,6 +490,7 @@ namespace DatasetArchivePlugin
                 }
 
                 var skippedSubdirectories = myEMSLUploader.MetadataContainer.SkippedDatasetArchiveSubdirectories;
+
                 if (skippedSubdirectories.Count == 0)
                 {
                     return true;
@@ -611,6 +615,7 @@ namespace DatasetArchivePlugin
         private string GetFilenameFromStatus(string statusMessage)
         {
             var colonIndex = statusMessage.IndexOf(':');
+
             if (colonIndex >= 0)
             {
                 return statusMessage.Substring(colonIndex + 1).Trim();
@@ -631,6 +636,7 @@ namespace DatasetArchivePlugin
             // Raise an event with the stats, though only if errorCode is non-zero or FileCountNew or FileCountUpdated are positive
 
             var errorCode = ex.Message.GetHashCode();
+
             if (errorCode == 0)
             {
                 errorCode = 1;

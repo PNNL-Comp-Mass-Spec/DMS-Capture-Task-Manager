@@ -126,6 +126,7 @@ namespace ImsDemuxPlugin
                 // Locate data file on storage server
                 // Don't copy it locally yet
                 var uimfFilePath = GetRemoteUIMFFilePath(returnData);
+
                 if (string.IsNullOrEmpty(uimfFilePath))
                 {
                     if (returnData != null && returnData.CloseoutType != EnumCloseOutType.CLOSEOUT_FAILED)
@@ -154,6 +155,7 @@ namespace ImsDemuxPlugin
                 var uimfFileName = mDataset + ".uimf";
 
                 returnData = CopyUIMFToWorkDir(uimfFileName, returnData, out _, out var uimfLocalFileNamePath);
+
                 if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
                 {
                     return returnData;
@@ -256,6 +258,7 @@ namespace ImsDemuxPlugin
             // Copy the UIMF file to working directory
             OnDebugEvent("Copying file from storage server");
             const int retryCount = 0;
+
             if (!CopyFileWithRetry(uimfRemoteFileNamePath, uimfLocalFileNamePath, false, retryCount))
             {
                 returnData.CloseoutMsg = CTMUtilities.AppendToString(returnData.CloseoutMsg, "Error copying UIMF file to working directory");
@@ -314,6 +317,7 @@ namespace ImsDemuxPlugin
             // Locate data file on storage server
             // Don't copy it locally; just work with it over the network
             var uimfFilePath = GetRemoteUIMFFilePath(returnData);
+
             if (string.IsNullOrEmpty(uimfFilePath))
             {
                 if (returnData != null && returnData.CloseoutType != EnumCloseOutType.CLOSEOUT_FAILED)
@@ -392,6 +396,7 @@ namespace ImsDemuxPlugin
                     {
                         // No calibration frames were found
                         var calibrationTables = uimfReader.GetCalibrationTableNames();
+
                         if (calibrationTables.Count == 0)
                         {
                             OnWarningEvent("Skipping calibration since .UIMF file does not contain any calibration frames or calibration tables");
@@ -497,6 +502,7 @@ namespace ImsDemuxPlugin
                 // Locate data file on storage server
                 // Don't copy it locally; just work with it over the network
                 var uimfFilePath = GetRemoteUIMFFilePath(returnData);
+
                 if (string.IsNullOrEmpty(uimfFilePath))
                 {
                     if (returnData != null && returnData.CloseoutType != EnumCloseOutType.CLOSEOUT_FAILED)
@@ -602,6 +608,7 @@ namespace ImsDemuxPlugin
             // Copy the UIMF file from the storage server to the working directory
 
             CopyUIMFToWorkDir(uimfFileName, returnData, out var uimfRemoteEncodedFileNamePath, out var uimfLocalEncodedFileNamePath);
+
             if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
             {
                 return;
@@ -627,6 +634,7 @@ namespace ImsDemuxPlugin
             {
                 // Copy _decoded.uimf.tmp file to working directory so that we can resume demultiplexing where we left off
                 const int retryCount = 0;
+
                 if (CopyFileWithRetry(tmpUIMFRemoteFileNamePath, tmpUIMFLocalFileNamePath, false, retryCount))
                 {
                     OnStatusEvent(".tmp decoded file found at " + tmpUIMFRemoteFileNamePath + "; will resume demultiplexing");
@@ -869,6 +877,7 @@ namespace ImsDemuxPlugin
             OnDebugEvent("Copying {0} file to storage server", fileDescription);
 
             const int retryCount = 3;
+
             if (!CopyFileWithRetry(localUimfDecodedFilePath, Path.Combine(mDatasetDirectoryPathRemote, mDataset + ".uimf"), true, retryCount))
             {
                 returnData.CloseoutMsg = CTMUtilities.AppendToString(returnData.CloseoutMsg, "Error copying " + fileDescription + " file to storage server");
@@ -895,6 +904,7 @@ namespace ImsDemuxPlugin
             if (!File.Exists(calibrationLogFilePath))
             {
                 msg = "CalibrationLog.txt not found at " + mWorkDir;
+
                 if (File.Exists(targetFilePath))
                 {
                     msg += "; this is OK since " + CALIBRATION_LOG_FILE + " exists at " + mDatasetDirectoryPathRemote;
@@ -912,6 +922,7 @@ namespace ImsDemuxPlugin
                 OnDebugEvent(msg);
                 const int retryCount = 3;
                 const bool backupDestFileBeforeCopy = true;
+
                 if (!CopyFileWithRetry(calibrationLogFilePath, targetFilePath, true, retryCount, backupDestFileBeforeCopy))
                 {
                     returnData.CloseoutMsg = "Error copying CalibrationLog.txt file to storage server";
@@ -1010,6 +1021,7 @@ namespace ImsDemuxPlugin
                 if (demuxOptions.ResumeDemultiplexing)
                 {
                     var tempUIMFFilePath = outputFilePath + ".tmp";
+
                     if (!File.Exists(tempUIMFFilePath))
                     {
                         errorMessage = "Resuming demultiplexing, but .tmp UIMF file not found at " + tempUIMFFilePath;
@@ -1019,6 +1031,7 @@ namespace ImsDemuxPlugin
                     else
                     {
                         var maxDemultiplexedFrameNum = uimfLogEntryAccessor.GetMaxDemultiplexedFrame(tempUIMFFilePath, out var logEntryAccessorMsg);
+
                         if (maxDemultiplexedFrameNum > 0)
                         {
                             resumeStartFrame = maxDemultiplexedFrameNum + 1;
@@ -1029,6 +1042,7 @@ namespace ImsDemuxPlugin
                         {
                             errorMessage = "Error looking up max demultiplexed frame number from the Log_Entries table";
                             msg = errorMessage + " in " + tempUIMFFilePath;
+
                             if (!string.IsNullOrEmpty(logEntryAccessorMsg))
                             {
                                 msg += "; " + logEntryAccessorMsg;
@@ -1444,6 +1458,7 @@ namespace ImsDemuxPlugin
             {
                 returnData.CloseoutMsg = "Demultiplexing finished message not found in Log_Entries table";
                 msg = returnData.CloseoutMsg + " in " + localUimfDecodedFilePath;
+
                 if (!string.IsNullOrEmpty(logEntryAccessorMsg))
                 {
                     msg += "; " + logEntryAccessorMsg;
@@ -1464,6 +1479,7 @@ namespace ImsDemuxPlugin
                 {
                     returnData.CloseoutMsg = "Demultiplexing finished message in Log_Entries table is more than 5 minutes old";
                     msg = returnData.CloseoutMsg + ": " + demultiplexingFinished + "; assuming this is a demultiplexing failure";
+
                     if (!string.IsNullOrEmpty(logEntryAccessorMsg))
                     {
                         msg += "; " + logEntryAccessorMsg;
@@ -1497,6 +1513,7 @@ namespace ImsDemuxPlugin
             {
                 const string logMessage = "Applied calibration message not found in Log_Entries table";
                 msg = logMessage + " in " + localUimfDecodedFilePath;
+
                 if (!string.IsNullOrEmpty(logEntryAccessorMsg))
                 {
                     msg += "; " + logEntryAccessorMsg;
@@ -1518,6 +1535,7 @@ namespace ImsDemuxPlugin
                 {
                     const string logMessage = "Applied calibration message in Log_Entries table is more than 5 minutes old";
                     msg = logMessage + ": " + calibrationApplied + "; assuming this is a calibration failure";
+
                     if (!string.IsNullOrEmpty(logEntryAccessorMsg))
                     {
                         msg += "; " + logEntryAccessorMsg;

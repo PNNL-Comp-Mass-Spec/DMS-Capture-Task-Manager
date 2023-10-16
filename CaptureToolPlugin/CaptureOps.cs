@@ -92,6 +92,7 @@ namespace CaptureToolPlugin
 
             // Setup for Bionet use, if applicable
             mUseBioNet = useBioNet;
+
             if (mUseBioNet)
             {
                 mUserName = mMgrParams.GetParam("BionetUser");
@@ -244,6 +245,7 @@ namespace CaptureToolPlugin
                     {
                         case FileInfo fileToRename:
                             var newFilePath = fileOrDirectoryToRename.Value;
+
                             if (string.IsNullOrWhiteSpace(newFilePath))
                             {
                                 LogWarning("New name not defined in pendingRenames for {0}; cannot mark file as superseded",
@@ -264,6 +266,7 @@ namespace CaptureToolPlugin
 
                         case DirectoryInfo directoryToRename:
                             var newDirectoryPath = fileOrDirectoryToRename.Value;
+
                             if (string.IsNullOrWhiteSpace(newDirectoryPath))
                             {
                                 LogWarning("New name not defined in pendingRenames for {0}; cannot mark directory as superseded",
@@ -534,6 +537,7 @@ namespace CaptureToolPlugin
             try
             {
                 var targetDirectory = new DirectoryInfo(directoryPath);
+
                 if (targetDirectory.Parent == null)
                 {
                     return true;
@@ -617,6 +621,7 @@ namespace CaptureToolPlugin
 
             // Now that the source has been verified, perform any pending renames
             var renameSuccess = MarkSupersededFiles(datasetDirectoryPath, pendingRenames);
+
             if (!renameSuccess)
             {
                 if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
@@ -723,6 +728,7 @@ namespace CaptureToolPlugin
                 {
                     var autoEnableFlag = "AutoEnableClientServer_for_" + computerName;
                     var autoEnabledParamValue = mMgrParams.GetParam(autoEnableFlag, string.Empty);
+
                     if (string.IsNullOrEmpty(autoEnabledParamValue))
                     {
                         // Using a Manager Parameter to assure that the following log message is only logged once per session
@@ -767,6 +773,7 @@ namespace CaptureToolPlugin
             // Validate that storagePath includes both an instrument name and subdirectory name
             // Furthermore, the instrument name should match the current instrument add exceptions in the future if this becomes required)
             var storagePathParts = storagePath.Split(Path.DirectorySeparatorChar).ToList();
+
             if (storagePathParts.Count > 1)
             {
                 if (!ValidateStoragePathInstrument(instrumentName, storagePath, storagePathParts, returnData))
@@ -777,6 +784,7 @@ namespace CaptureToolPlugin
             else
             {
                 var storagePathPartsAlt = storagePath.Split(Path.AltDirectorySeparatorChar).ToList();
+
                 if (!ValidateStoragePathInstrument(instrumentName, storagePath, storagePathPartsAlt, returnData))
                 {
                     return false;
@@ -864,6 +872,7 @@ namespace CaptureToolPlugin
                                             pendingRenamesMap))
                 {
                     PossiblyStoreErrorMessage(returnData);
+
                     if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
                     {
                         returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -927,6 +936,7 @@ namespace CaptureToolPlugin
                     returnData.EvalCode = evalCode;
 
                     PossiblyStoreErrorMessage(returnData);
+
                     if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
                     {
                         returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
@@ -1106,6 +1116,7 @@ namespace CaptureToolPlugin
             if (!string.IsNullOrWhiteSpace(mToolState.ErrorMessage) && string.IsNullOrWhiteSpace(returnData.CloseoutMsg))
             {
                 returnData.CloseoutMsg = mToolState.ErrorMessage;
+
                 if (mTraceMode)
                 {
                     ToolRunnerBase.ShowTraceMessage(mToolState.ErrorMessage);
@@ -1123,6 +1134,7 @@ namespace CaptureToolPlugin
             try
             {
                 var targetDirectory = new DirectoryInfo(directoryPath);
+
                 if (!targetDirectory.Exists)
                 {
                     return "Error: directory not found, " + directoryPath;
@@ -1135,6 +1147,7 @@ namespace CaptureToolPlugin
                 foreach (var file in filesInDirectory)
                 {
                     totalSizeKB += file.Length / 1024.0f;
+
                     if (file.Length > largestFileInfo.Key)
                     {
                         largestFileInfo = new KeyValuePair<long, string>(file.Length, file.Name);
@@ -1268,6 +1281,7 @@ namespace CaptureToolPlugin
 
                             var sourceDirectory = new DirectoryInfo(Path.Combine(sourceDirectoryPath, datasetInfo.FileOrDirectoryName));
                             var foundFiles = sourceDirectory.GetFiles("*.raw").ToList();
+
                             if (foundFiles.Count == 1)
                             {
                                 break;
@@ -1295,6 +1309,7 @@ namespace CaptureToolPlugin
                         {
                             var sourceDirectory = new DirectoryInfo(Path.Combine(sourceDirectoryPath));
                             var foundFiles = sourceDirectory.GetFiles(datasetInfo.FileOrDirectoryName + ".*").ToList();
+
                             if (foundFiles.Count == 2)
                             {
                                 // On the 21T each .raw file can have a corresponding .tsv file
@@ -1419,6 +1434,7 @@ namespace CaptureToolPlugin
 
                             var sourceDirectory = new DirectoryInfo(Path.Combine(sourceDirectoryPath, datasetInfo.FileOrDirectoryName));
                             var foundFiles = sourceDirectory.GetFiles("*.uimf").ToList();
+
                             if (foundFiles.Count == 1)
                             {
                                 break;

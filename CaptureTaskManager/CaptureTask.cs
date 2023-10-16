@@ -381,6 +381,7 @@ namespace CaptureTaskManager
         public override void CloseTask(EnumCloseOutType taskResult, string closeoutMsg, EnumEvalCode evalCode, string evalMsg)
         {
             var success = SetCaptureTaskComplete((int)taskResult, closeoutMsg, (int)evalCode, evalMsg);
+
             if (!success)
             {
                 LogError("Error setting task complete in database, job " + GetParam("Job", "??"));

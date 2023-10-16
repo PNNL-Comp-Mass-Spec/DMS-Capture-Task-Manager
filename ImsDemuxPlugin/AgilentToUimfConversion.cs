@@ -141,6 +141,7 @@ namespace ImsDemuxPlugin
                 if (!dotDDirectoryLocal.Exists)
                 {
                     var directoryCopiedFromRemote = CopyDotDDirectoryToLocal(mFileTools, datasetDirectoryPath, dotDDirectoryLocal.Name, dotDDirectoryLocal.FullName, true, mRetData);
+
                     if (!directoryCopiedFromRemote)
                     {
                         return false;
@@ -167,6 +168,7 @@ namespace ImsDemuxPlugin
                         foreach (var altDir in dotDDirectoryAlt)
                         {
                             var acqDataDirAlt = altDir.GetDirectories("AcqData");
+
                             if (acqDataDirAlt.Length > 0)
                             {
                                 dotDDirectoryPathLocal = altDir.FullName;
@@ -272,6 +274,7 @@ namespace ImsDemuxPlugin
 
                 // Copy the .UIMF file to the dataset directory
                 var directoryCopiedToRemote = CopyUIMFToDatasetDirectory(mFileTools, datasetDirectoryPath);
+
                 if (!directoryCopiedToRemote)
                 {
                     return false;
@@ -345,6 +348,7 @@ namespace ImsDemuxPlugin
                 var missingFiles = requiredFiles.Where(requiredFile => !fileNames.Contains(requiredFile)).ToList();
 
                 var errorMessage = string.Empty;
+
                 if (missingFiles.Count == 1)
                 {
                     errorMessage = "Cannot convert .d to .UIMF; missing file " + missingFiles.First();
@@ -472,6 +476,7 @@ namespace ImsDemuxPlugin
                     }
 
                     var match = progressMatcher.Match(dataLine);
+
                     if (match.Success)
                     {
                         var framesProcessed = int.Parse(match.Groups["FramesProcessed"].Value);

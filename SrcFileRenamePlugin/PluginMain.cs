@@ -17,6 +17,7 @@ namespace SrcFileRenamePlugin
     public class PluginMain : ToolRunnerBase
     {
         // Ignore Spelling: Bionet, secfso
+
         /// <summary>
         /// Runs the source file rename tool
         /// </summary>
@@ -27,6 +28,7 @@ namespace SrcFileRenamePlugin
 
             // Perform base class operations, if any
             var returnData = base.RunTool();
+
             if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
             {
                 return returnData;
@@ -111,6 +113,7 @@ namespace SrcFileRenamePlugin
             // Lookup the version of the Source File Rename plugin
             var pluginPath = System.IO.Path.Combine(appDirectory, "SrcFileRenamePlugin.dll");
             var success = StoreToolVersionInfoOneFile(ref toolVersionInfo, pluginPath);
+
             if (!success)
             {
                 return false;
@@ -119,6 +122,7 @@ namespace SrcFileRenamePlugin
             // Lookup the version of the Capture task manager
             var ctmPath = System.IO.Path.Combine(appDirectory, "CaptureTaskManager.exe");
             success = StoreToolVersionInfoOneFile(ref toolVersionInfo, ctmPath);
+
             if (!success)
             {
                 return false;

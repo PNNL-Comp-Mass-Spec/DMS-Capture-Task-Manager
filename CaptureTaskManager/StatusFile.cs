@@ -434,6 +434,7 @@ namespace CaptureTaskManager
             mLastFileWriteTime = DateTime.UtcNow;
 
             var success = WriteStatusFileToDisk(tempStatusFilePath, xmlText);
+
             if (success)
             {
                 try

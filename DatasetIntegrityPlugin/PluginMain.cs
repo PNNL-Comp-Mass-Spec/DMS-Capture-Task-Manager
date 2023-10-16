@@ -91,6 +91,7 @@ namespace DatasetIntegrityPlugin
 
             // Perform base class operations, if any
             mRetData = base.RunTool();
+
             if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
             {
                 return mRetData;
@@ -293,6 +294,7 @@ namespace DatasetIntegrityPlugin
                 var dotDDirectoryPathLocal = Path.Combine(mWorkDir, dotDDirectoryName);
 
                 var success = CopyDotDDirectoryToLocal(mFileTools, datasetDirectoryPath, dotDDirectoryName, dotDDirectoryPathLocal, false, out _);
+
                 if (!success)
                 {
                     return false;
@@ -302,6 +304,7 @@ namespace DatasetIntegrityPlugin
                 // This is an XML file with the information required by OpenChrom to create CDF file from the .d directory
 
                 var batchJobFilePath = CreateOpenChromCDFJobFile(dotDDirectoryPathLocal);
+
                 if (string.IsNullOrEmpty(batchJobFilePath))
                 {
                     return false;
@@ -377,6 +380,7 @@ namespace DatasetIntegrityPlugin
 
                 // Copy the .CDF file to the dataset directory
                 success = CopyCDFToDatasetDirectory(mFileTools, datasetDirectoryPath);
+
                 if (!success)
                 {
                     return false;
@@ -458,6 +462,7 @@ namespace DatasetIntegrityPlugin
                 var missingFiles = requiredFiles.Where(requiredFile => !fileNames.Contains(requiredFile)).ToList();
 
                 var errorMessage = string.Empty;
+
                 if (missingFiles.Count == 1)
                 {
                     errorMessage = "Cannot convert .d to .UIMF; missing file " + missingFiles.First();
@@ -717,9 +722,11 @@ namespace DatasetIntegrityPlugin
         private float GetLargestFileSizeKB(IEnumerable<FileInfo> filesToCheck)
         {
             var largestSizeKB = 0.0f;
+
             foreach (var file in filesToCheck)
             {
                 var fileSizeKB = GetFileSize(file);
+
                 if (fileSizeKB > largestSizeKB)
                 {
                     largestSizeKB = fileSizeKB;
@@ -797,6 +804,7 @@ namespace DatasetIntegrityPlugin
                 }
 
                 var newPath = Path.Combine(instrumentFile.Directory.Parent.FullName, instrumentFile.Name);
+
                 if (File.Exists(newPath))
                 {
                     continue;
@@ -840,6 +848,7 @@ namespace DatasetIntegrityPlugin
                     }
 
                     var match = progressMatcher.Match(dataLine);
+
                     if (match.Success)
                     {
                         var framesProcessed = int.Parse(match.Groups["FramesProcessed"].Value);
@@ -1029,6 +1038,7 @@ namespace DatasetIntegrityPlugin
             // Lookup the version of the Capture tool plugin
             var pluginPath = Path.Combine(appDirectoryPath, "DatasetIntegrityPlugin.dll");
             var success = StoreToolVersionInfoOneFile(ref toolVersionInfo, pluginPath);
+
             if (!success)
             {
                 return false;
@@ -1037,6 +1047,7 @@ namespace DatasetIntegrityPlugin
             // Lookup the version of SQLite
             var sqLitePath = Path.Combine(appDirectoryPath, "System.Data.SQLite.dll");
             success = StoreToolVersionInfoOneFile(ref toolVersionInfo, sqLitePath);
+
             if (!success)
             {
                 return false;
@@ -1045,6 +1056,7 @@ namespace DatasetIntegrityPlugin
             // Lookup the version of the UIMFLibrary
             var uimfLibraryPath = Path.Combine(appDirectoryPath, "UIMFLibrary.dll");
             success = StoreToolVersionInfoOneFile(ref toolVersionInfo, uimfLibraryPath);
+
             if (!success)
             {
                 return false;
@@ -1100,6 +1112,7 @@ namespace DatasetIntegrityPlugin
 
             // Look for Data.MS file in the .d directory
             var instrumentData = PathUtils.FindFilesWildcard(dotDDirectories[0], "DATA.MS");
+
             if (PathUtils.FindFilesWildcard(dotDDirectories[0], "DATA.MS").Count == 0)
             {
                 mRetData.EvalMsg = "Invalid dataset: DATA.MS file not found in the .d directory";
@@ -1109,6 +1122,7 @@ namespace DatasetIntegrityPlugin
 
             // Verify size of the DATA.MS file
             var dataFileSizeKB = GetFileSize(instrumentData.First());
+
             if (dataFileSizeKB < AGILENT_DATA_MS_FILE_MIN_SIZE_KB)
             {
                 ReportFileSizeTooSmall("DATA.MS", instrumentData.First().FullName, dataFileSizeKB, AGILENT_DATA_MS_FILE_MIN_SIZE_KB);
@@ -1148,6 +1162,7 @@ namespace DatasetIntegrityPlugin
 
             // Look for the AcqData directory below the first .d directory
             var acqDataDirectories = dotDDirectories[0].GetDirectories("AcqData").ToList();
+
             if (acqDataDirectories.Count < 1)
             {
                 mRetData.EvalMsg = "Invalid dataset: .d directory does not contain an AcqData subdirectory";
@@ -1232,10 +1247,12 @@ namespace DatasetIntegrityPlugin
 
             // Verify size of the MSScan.bin file
             var msScanBinFileSizeKB = GetFileSize(msScanFile.First());
+
             if (msScanBinFileSizeKB < AGILENT_MS_SCAN_BIN_FILE_SMALL_SIZE_KB)
             {
                 // Allow a small MSScan.bin file if the MSPeak.bin file is also small
                 var msPeakBinFileSizeKB = GetFileSize(msDataFile);
+
                 if (msPeakBinFileSizeKB < AGILENT_MS_PEAK_BIN_FILE_MIN_SIZE_KB)
                 {
                     ReportFileSizeTooSmall(msDataFile.Name, msDataFile.FullName, msPeakBinFileSizeKB, AGILENT_MS_PEAK_BIN_FILE_MIN_SIZE_KB);
@@ -1277,6 +1294,7 @@ namespace DatasetIntegrityPlugin
 
             // The AcqData directory should contain file MSTS.xml
             var mstsFiles = PathUtils.FindFilesWildcard(acqDataDirectories[0], "MSTS.xml").ToList();
+
             if (mstsFiles.Count == 0)
             {
                 mRetData.EvalMsg = "Invalid dataset: MSTS.xml file not found in the AcqData directory";
@@ -1286,6 +1304,7 @@ namespace DatasetIntegrityPlugin
 
             // Check to see if a .M directory exists
             var methodDirectories = acqDataDirectories[0].GetDirectories("*.m").ToList();
+
             if (methodDirectories.Count < 1)
             {
                 if (!requireMethodDirectory)
@@ -1317,6 +1336,7 @@ namespace DatasetIntegrityPlugin
         {
             // Verify .wiff file exists in storage directory
             var tempFileNamePath = Path.Combine(dataFileNamePath, datasetName + InstrumentClassInfo.DOT_WIFF_EXTENSION);
+
             if (!File.Exists(tempFileNamePath))
             {
                 mRetData.EvalMsg = "Data file " + tempFileNamePath + " not found";
@@ -1336,6 +1356,7 @@ namespace DatasetIntegrityPlugin
 
             // Verify .wiff.scan file exists in storage directory
             tempFileNamePath = Path.Combine(dataFileNamePath, datasetName + ".wiff.scan");
+
             if (!File.Exists(tempFileNamePath))
             {
                 mRetData.EvalMsg = "Data file " + tempFileNamePath + " not found";
@@ -1444,6 +1465,7 @@ namespace DatasetIntegrityPlugin
                 foreach (var altExtension in alternateExtensions)
                 {
                     var dataFileNamePathAlt = Path.ChangeExtension(dataFileNamePath, altExtension);
+
                     if (File.Exists(dataFileNamePathAlt))
                     {
                         mRetData.EvalMsg = "Raw file not found, but ." + altExtension + " file exists";
@@ -1534,6 +1556,7 @@ namespace DatasetIntegrityPlugin
 
             // Verify that file acqus exists
             var serDirectoryPath = Path.Combine(datasetDirectoryPath, "0.ser");
+
             if (!File.Exists(Path.Combine(serDirectoryPath, "acqus")))
             {
                 mRetData.EvalMsg = "Invalid dataset: acqus file not found";
@@ -1543,6 +1566,7 @@ namespace DatasetIntegrityPlugin
 
             // Verify size of the acqus file
             var dataFileSizeKB = GetFileSize(Path.Combine(serDirectoryPath, "acqus"));
+
             if (dataFileSizeKB <= 0F)
             {
                 mRetData.EvalMsg = "Invalid dataset: acqus file contains no data";
@@ -1560,6 +1584,7 @@ namespace DatasetIntegrityPlugin
 
             // Verify the size of the ser file
             dataFileSizeKB = GetFileSize(Path.Combine(serDirectoryPath, "ser"));
+
             if (dataFileSizeKB < 100)
             {
                 mRetData.EvalMsg = "Invalid dataset: ser file too small";
@@ -1642,6 +1667,7 @@ namespace DatasetIntegrityPlugin
                 var minimumFileSizeKB = requiredFile.Value;
 
                 var foundFiles = PathUtils.FindFilesWildcard(dotDDirectories[0], requiredFileName).ToList();
+
                 if (foundFiles.Count == 0)
                 {
                     mRetData.EvalMsg = string.Format("Invalid dataset: {0} file not found", requiredFileName);
@@ -1651,6 +1677,7 @@ namespace DatasetIntegrityPlugin
 
                 // Verify size of the instrument file
                 var dataFileSizeKB = GetFileSize(foundFiles.First());
+
                 if (dataFileSizeKB < minimumFileSizeKB)
                 {
                     ReportFileSizeTooSmall(requiredFileName, foundFiles.First().FullName, dataFileSizeKB, minimumFileSizeKB);
@@ -1660,6 +1687,7 @@ namespace DatasetIntegrityPlugin
 
             // Check to see if at least one .M directory exists
             var methodDirectories = dotDDirectories[0].GetDirectories("*.m").ToList();
+
             if (methodDirectories.Count < 1)
             {
                 if (!requireMethodDirectory)
@@ -1678,6 +1706,7 @@ namespace DatasetIntegrityPlugin
                 // Multiple .M directories
                 // This is OK for the Bruker Imaging instruments and for Maxis_01
                 var instrumentNameLCase = instrumentName.ToLower();
+
                 if (!instrumentNameLCase.Contains("imaging") && !instrumentNameLCase.Contains("maxis"))
                 {
                     // It's also OK if there are two directories, and one contains _neg and one contains _pos
@@ -1692,6 +1721,7 @@ namespace DatasetIntegrityPlugin
 
             // Determine if at least one .method file exists
             var methodFiles = PathUtils.FindFilesWildcard(methodDirectories.First(), "*.method").ToList();
+
             if (methodFiles.Count == 0)
             {
                 mRetData.EvalMsg = "Invalid dataset: No .method files found";
@@ -1739,6 +1769,7 @@ namespace DatasetIntegrityPlugin
             if (dotDDirectories.Count == 1)
             {
                 var baseName = Path.GetFileNameWithoutExtension(dotDDirectories[0].Name);
+
                 if (!string.Equals(mDataset, baseName, StringComparison.OrdinalIgnoreCase))
                 {
                     mRetData.EvalMsg = string.Format(
@@ -1809,6 +1840,7 @@ namespace DatasetIntegrityPlugin
                     // This is sometimes the case for 15T_FTICR_Imaging
                     var serCount = 0;
                     var bafCount = 0;
+
                     foreach (var dotDDirectory in dotDDirectories)
                     {
                         if (PathUtils.FindFilesWildcard(dotDDirectory, "ser").Count == 1)
@@ -1851,6 +1883,7 @@ namespace DatasetIntegrityPlugin
             {
                 // Verify size of the analysis.baf file
                 dataFileSizeKB = GetFileSize(bafFilesFirstDotD.First());
+
                 if (dataFileSizeKB < BAF_FILE_MIN_SIZE_KB)
                 {
                     ReportFileSizeTooSmall("Analysis.baf", bafFilesFirstDotD.First().FullName, dataFileSizeKB, BAF_FILE_MIN_SIZE_KB);
@@ -1893,6 +1926,7 @@ namespace DatasetIntegrityPlugin
             {
                 // Verify size of the largest .mcf file
                 float minSizeKB;
+
                 if (string.Equals(mctFileName, "Storage.mcf_idx", StringComparison.OrdinalIgnoreCase))
                 {
                     minSizeKB = 4;
@@ -1918,6 +1952,7 @@ namespace DatasetIntegrityPlugin
             {
                 // ser file found; verify its size
                 dataFileSizeKB = GetFileSize(serFile.First());
+
                 if (dataFileSizeKB < SER_FILE_MIN_SIZE_KB)
                 {
                     // If on the 15T and the ser file is small but the .mcf file is not empty, then this is OK
@@ -1939,10 +1974,12 @@ namespace DatasetIntegrityPlugin
 
                 // Check to see if a fid file exists instead of a ser file
                 var fidFile = PathUtils.FindFilesWildcard(dotDDirectories[0], "fid").ToList();
+
                 if (fidFile.Count > 0)
                 {
                     // fid file found; verify size
                     dataFileSizeKB = GetFileSize(fidFile.First());
+
                     if (dataFileSizeKB < FID_FILE_MIN_SIZE_KB)
                     {
                         ReportFileSizeTooSmall("fid", fidFile.First().FullName, dataFileSizeKB, FID_FILE_MIN_SIZE_KB);
@@ -1962,9 +1999,11 @@ namespace DatasetIntegrityPlugin
                     }
 
                     var saveFidFiles = false;
+
                     foreach (var methodFile in methodFiles)
                     {
                         var paramValue = LookupBrukerMethodParamValue(methodFile, "SaveFid");
+
                         if (!int.TryParse(paramValue, out var saveFid))
                         {
                             mRetData.EvalMsg = string.Format(
@@ -1987,6 +2026,7 @@ namespace DatasetIntegrityPlugin
                     if (methodFiles.Count == 0 || saveFidFiles)
                     {
                         mRetData.EvalMsg = "Invalid dataset: No ser or fid file found";
+
                         if (bafFileSizeKB is > 0 and < 100)
                         {
                             mRetData.EvalMsg += "; additionally, the analysis.baf file is quite small";
@@ -2016,6 +2056,7 @@ namespace DatasetIntegrityPlugin
 
             // Check to see if a .M directory exists
             var methodDirectories = dotDDirectories[0].GetDirectories("*.m").ToList();
+
             if (methodDirectories.Count < 1)
             {
                 if (string.Equals(instrumentName, "15T_FTICR", StringComparison.OrdinalIgnoreCase))
@@ -2050,6 +2091,7 @@ namespace DatasetIntegrityPlugin
 
             // Determine if apexAcquisition.method file exists and meets minimum size requirements
             var apexAcqMethod = PathUtils.FindFilesWildcard(methodDirectories.First(), "apexAcquisition.method").ToList();
+
             if (apexAcqMethod.Count == 0)
             {
                 mRetData.EvalMsg = "Invalid dataset: apexAcquisition.method file not found";
@@ -2058,6 +2100,7 @@ namespace DatasetIntegrityPlugin
             }
 
             dataFileSizeKB = GetFileSize(apexAcqMethod.First());
+
             if (dataFileSizeKB < ACQ_METHOD_FILE_MIN_SIZE_KB)
             {
                 ReportFileSizeTooSmall("apexAcquisition.method", apexAcqMethod.First().FullName, dataFileSizeKB, ACQ_METHOD_FILE_MIN_SIZE_KB);
@@ -2080,6 +2123,7 @@ namespace DatasetIntegrityPlugin
             var datasetDirectory = new DirectoryInfo(datasetDirectoryPath);
 
             var fileList = PathUtils.FindFilesWildcard(datasetDirectory, "*.zip");
+
             if (fileList.Count < 1)
             {
                 mRetData.EvalMsg = "Invalid dataset: No zip files found";
@@ -2102,6 +2146,7 @@ namespace DatasetIntegrityPlugin
             var datasetDirectory = new DirectoryInfo(datasetDirectoryPath);
 
             var zipFiles = PathUtils.FindFilesWildcard(datasetDirectory, "*.zip");
+
             if (zipFiles.Count > 0)
             {
                 mRetData.EvalMsg = "Zip files found in dataset directory " + datasetDirectoryPath;
@@ -2134,6 +2179,7 @@ namespace DatasetIntegrityPlugin
                     LogDebug("Test directory " + subdirectory + " against RegEx " + maldiSpotDirMatcher);
 
                     var subdirectoryName = Path.GetFileName(subdirectory);
+
                     if (subdirectoryName != null && !maldiSpotDirMatcher.IsMatch(subdirectoryName, 0))
                     {
                         mRetData.EvalMsg = string.Format("Dataset directory contains multiple subdirectories, " +
@@ -2165,6 +2211,7 @@ namespace DatasetIntegrityPlugin
             try
             {
                 var sourceFile = new FileInfo(gzipFilePath);
+
                 if (!sourceFile.Exists)
                 {
                     errorMessage = "File not found: " + gzipFilePath;
@@ -2186,6 +2233,7 @@ namespace DatasetIntegrityPlugin
                 while (reader.CanRead)
                 {
                     var newBytes = reader.Read(buffer, 0, BYTES_PER_READ);
+
                     if (newBytes <= 0)
                     {
                         break;
@@ -2360,6 +2408,7 @@ namespace DatasetIntegrityPlugin
             if (dotRawDirectories.Count == 1)
             {
                 var baseName = Path.GetFileNameWithoutExtension(dotRawDirectories[0].Name);
+
                 if (!string.Equals(mDataset, baseName, StringComparison.OrdinalIgnoreCase))
                 {
                     mRetData.EvalMsg = string.Format(

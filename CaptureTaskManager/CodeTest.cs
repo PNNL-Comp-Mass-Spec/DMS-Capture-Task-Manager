@@ -47,6 +47,7 @@ namespace CaptureTaskManager
                     Console.WriteLine("Instantiated DirectoryInfo object: " + shareDirectory.FullName);
 
                     var iteration = 0;
+
                     foreach (var remoteFile in shareDirectory.GetFiles())
                     {
                         Console.WriteLine("File: " + remoteFile.Name + " size " + remoteFile.Length + " bytes");
@@ -61,6 +62,7 @@ namespace CaptureTaskManager
                     Console.WriteLine("Files Done");
 
                     iteration = 0;
+
                     foreach (var subdirectory in shareDirectory.GetDirectories())
                     {
                         Console.WriteLine("Folder: " + subdirectory.Name + " modified " +
@@ -103,6 +105,7 @@ namespace CaptureTaskManager
             var updatedPath = Path.Combine(sourceVol, sourcePath, captureSubdirectory);
 
             Console.WriteLine();
+
             if (pathVariablesUpdated)
             {
                 Console.WriteLine("Path updated");

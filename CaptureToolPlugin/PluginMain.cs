@@ -33,6 +33,7 @@ namespace CaptureToolPlugin
 
             // Perform base class operations, if any
             var returnData = base.RunTool();
+
             if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
             {
                 return returnData;
@@ -71,6 +72,7 @@ namespace CaptureToolPlugin
                 if (capOpTool.NeedToAbortProcessing)
                 {
                     mNeedToAbortProcessing = true;
+
                     if (returnData.CloseoutType != EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING)
                     {
                         returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_NEED_TO_ABORT_PROCESSING;
@@ -143,6 +145,7 @@ namespace CaptureToolPlugin
             // Lookup the version of the Capture tool plugin
             var pluginPath = Path.Combine(appDirectory, "CaptureToolPlugin.dll");
             var success = StoreToolVersionInfoOneFile(ref toolVersionInfo, pluginPath);
+
             if (!success)
             {
                 return false;
@@ -151,6 +154,7 @@ namespace CaptureToolPlugin
             // Lookup the version of the Capture task manager
             var ctmPath = Path.Combine(appDirectory, "CaptureTaskManager.exe");
             success = StoreToolVersionInfoOneFile(ref toolVersionInfo, ctmPath);
+
             if (!success)
             {
                 return false;

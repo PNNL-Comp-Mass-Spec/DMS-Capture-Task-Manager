@@ -146,6 +146,7 @@ namespace CaptureToolPlugin.DataCapture
                     if (foundFiles.Count == 1)
                     {
                         var firstSkippedFile = foundFiles.FirstOrDefault();
+
                         if (firstSkippedFile != null)
                         {
                             LogMessage("Skipping " + searchItem.Value + ": " + firstSkippedFile.Name);
@@ -208,6 +209,7 @@ namespace CaptureToolPlugin.DataCapture
                 else
                 {
                     var uimfFiles = sourceDirectory.GetFiles("*.uimf");
+
                     if (uimfFiles.Any(uimfFile => uimfFile.Length == 0))
                     {
                         sourceDirectoryErrorMessage = "Source directory has a zero-byte UIMF file";
@@ -304,6 +306,7 @@ namespace CaptureToolPlugin.DataCapture
                 catch (UnauthorizedAccessException ex)
                 {
                     string msg;
+
                     if (string.IsNullOrWhiteSpace(mFileTools.CurrentSourceFile))
                     {
                         msg = "Access denied while copying directory: ";
@@ -333,6 +336,7 @@ namespace CaptureToolPlugin.DataCapture
                 catch (Exception ex)
                 {
                     string msg;
+
                     if (string.IsNullOrWhiteSpace(mFileTools.CurrentSourceFile))
                     {
                         msg = "Error while copying directory: ";
@@ -356,11 +360,13 @@ namespace CaptureToolPlugin.DataCapture
                     LogError(msg);
 
                     doCopy = false;
+
                     if (mFileTools.CurrentCopyStatus is FileTools.CopyStatus.BufferedCopy or FileTools.CopyStatus.BufferedCopyResume)
                     {
                         // Exception occurred during the middle of a buffered copy
                         // If at least 10 seconds have elapsed, auto-retry the copy again
                         var elapsedTime = DateTime.UtcNow.Subtract(copyStart).TotalSeconds;
+
                         if (elapsedTime >= 10)
                         {
                             doCopy = true;

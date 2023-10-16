@@ -54,6 +54,7 @@ namespace CaptureToolPlugin
                 }
 
                 var sourceDirectory = new DirectoryInfo(methodDirectoryBasePath);
+
                 if (!sourceDirectory.Exists)
                 {
                     LogWarning("LCMethods directory not found: " + methodDirectoryBasePath, true);
@@ -104,6 +105,7 @@ namespace CaptureToolPlugin
                     foreach (var directoryName in directoryNamesToSearch)
                     {
                         var sourceSubdirectory = new DirectoryInfo(Path.Combine(sourceDirectory.FullName, directoryName));
+
                         if (sourceSubdirectory.Exists)
                         {
                             // Look for files that match lcMethodSearchSpec
@@ -203,6 +205,7 @@ namespace CaptureToolPlugin
             }
 
             var currentTime = DateTime.Now;
+
             if (currentTime.Hour is 18 or 19 || System.Net.Dns.GetHostName().StartsWith("WE43320", StringComparison.OrdinalIgnoreCase))
             {
                 // Time is between 6 pm and 7:59 pm
@@ -226,6 +229,7 @@ namespace CaptureToolPlugin
             try
             {
                 var lcMethodsDirectory = new DirectoryInfo(lcMethodsDirectoryPath);
+
                 if (!lcMethodsDirectory.Exists)
                 {
                     return;

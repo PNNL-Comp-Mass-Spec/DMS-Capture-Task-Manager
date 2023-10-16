@@ -90,6 +90,7 @@ namespace ImsDemuxPlugin
             // Copy the UIMF file to working directory
             OnDebugEvent("Copying file from storage server");
             const int retryCount = 0;
+
             if (!CopyDirectoryWithRetry(dotDRemoteFileNamePath, dotDLocalFileNamePath, false, retryCount))
             {
                 returnData.CloseoutMsg = CTMUtilities.AppendToString(returnData.CloseoutMsg, "Error copying Agilent IMS .D directory to working directory");
@@ -138,6 +139,7 @@ namespace ImsDemuxPlugin
             // Copy the .D directory from the storage server to the working directory
 
             CopyDotDToWorkDir(remoteDotDirName, returnData, out var dotDRemoteEncodedFileNamePath, out var dotDLocalEncodedFileNamePath);
+
             if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
             {
                 return;
@@ -261,6 +263,7 @@ namespace ImsDemuxPlugin
                 {
                     // Error deleting files; don't treat this as a fatal error
                     OnErrorEvent("Exception deleting working directory file(s): " + ex.Message);
+
                     if (i < 2)
                     {
                         System.Threading.Thread.Sleep(3000);
@@ -599,6 +602,7 @@ namespace ImsDemuxPlugin
             try
             {
                 var targetDirectory = new DirectoryInfo(targetDirectoryPath);
+
                 if (!targetDirectory.Exists)
                 {
                     // Treat this as success
@@ -798,6 +802,7 @@ namespace ImsDemuxPlugin
             {
                 returnData.CloseoutMsg = "Demultiplexing finished message not found in PNNL-PreProcessorLog.txt file";
                 msg = returnData.CloseoutMsg + " in " + localDotDDecodedFilePath;
+
                 if (!string.IsNullOrEmpty(message))
                 {
                     msg += "; " + message;
@@ -816,6 +821,7 @@ namespace ImsDemuxPlugin
 
             returnData.CloseoutMsg = "Demultiplexing finished message in PNNL-PreProcessorLog.txt file is more than 10 minutes old";
             msg = returnData.CloseoutMsg + ": " + demultiplexingFinished + "; assuming this is a demultiplexing failure";
+
             if (!string.IsNullOrEmpty(message))
             {
                 msg += "; " + message;

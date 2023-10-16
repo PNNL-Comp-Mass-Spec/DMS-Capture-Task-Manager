@@ -61,6 +61,7 @@ namespace DatasetQualityPlugin
 
             // Perform base class operations, if any
             mRetData = base.RunTool();
+
             if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
             {
                 return mRetData;
@@ -131,6 +132,7 @@ namespace DatasetQualityPlugin
             LogDebug("Instrument class: " + instClassName);
 
             var instrumentClass = InstrumentClassInfo.GetInstrumentClass(instClassName);
+
             if (instrumentClass == InstrumentClass.Unknown)
             {
                 mRetData.CloseoutMsg = "Instrument class not recognized: " + instClassName;
@@ -219,6 +221,7 @@ namespace DatasetQualityPlugin
             }
 
             var instrumentDataFile = new FileInfo(dataFilePathRemote);
+
             if (!instrumentDataFile.Exists)
             {
                 // File has likely been purged from the storage server
@@ -229,6 +232,7 @@ namespace DatasetQualityPlugin
                 var dataFilePathArchive = Path.Combine(mTaskParams.GetParam("Archive_Network_Share_Path"), datasetDirectoryName, instrumentDataFile.Name);
 
                 var archiveFile = new FileInfo(dataFilePathArchive);
+
                 if (archiveFile.Exists)
                 {
                     // Update dataFilePathRemote using the archive file path
@@ -586,6 +590,7 @@ namespace DatasetQualityPlugin
             using var reader = new StreamReader(new FileStream(ResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
             string headerLine;
+
             if (!reader.EndOfStream)
             {
                 // Read the header line
@@ -607,6 +612,7 @@ namespace DatasetQualityPlugin
             var headerNames = headerLine.Split('\t');
 
             string dataLine;
+
             if (!reader.EndOfStream)
             {
                 // Read the data line
@@ -638,6 +644,7 @@ namespace DatasetQualityPlugin
             // Store the results by stepping through the arrays
             // Skip the first two items provided they are "filename" and "StartTimeStamp")
             var indexStart = 0;
+
             if (string.Equals(headerNames[indexStart], "filename", StringComparison.OrdinalIgnoreCase))
             {
                 indexStart++;
@@ -668,6 +675,7 @@ namespace DatasetQualityPlugin
                     var headerName = headerNames[index].Trim().Replace("-", "_");
 
                     string dataItem;
+
                     if (string.IsNullOrWhiteSpace(dataValues[index]))
                     {
                         dataItem = string.Empty;
@@ -918,6 +926,7 @@ namespace DatasetQualityPlugin
 
                 var startIndex = xmlResults.IndexOf("?>", StringComparison.Ordinal);
                 string xmlResultsClean;
+
                 if (startIndex > 0)
                 {
                     xmlResultsClean = xmlResults.Substring(startIndex + 2).Trim();
@@ -1010,6 +1019,7 @@ namespace DatasetQualityPlugin
                     // Using the 64-bit version of quameter
                     // Look for the .cfg file up one directory
                     var parentFolder = quameterProgram.Directory?.Parent;
+
                     if (parentFolder != null)
                     {
                         configFilePathSource = Path.Combine(parentFolder.FullName, configFileNameSource);
@@ -1058,6 +1068,7 @@ namespace DatasetQualityPlugin
                 // Determine the first scan that is MS1 and the last scan number
                 // Prior to September 2018, this was required for .raw files that start with MS2 spectra
                 var scanInfoSuccess = ExamineThermoRawFileScans(dataFilePathLocal, out var firstMS1Scan, out var lastScan);
+
                 if (!scanInfoSuccess)
                 {
                     if (string.IsNullOrEmpty(mRetData.CloseoutMsg))
@@ -1089,6 +1100,7 @@ namespace DatasetQualityPlugin
                     if (mTaskParams.HasParam("IgnoreQuameterErrors"))
                     {
                         var ignoreQuameterErrors = mTaskParams.GetParam("IgnoreQuameterErrors", false);
+
                         if (ignoreQuameterErrors)
                         {
                             mRetData.CloseoutMsg = "Quameter failed; ignoring because job parameter IgnoreQuameterErrors is True";
@@ -1403,6 +1415,7 @@ namespace DatasetQualityPlugin
             // Lookup the version of the dataset quality plugin
             var pluginPath = Path.Combine(appDirectory, "DatasetQualityPlugin.dll");
             var success = StoreToolVersionInfoOneFile(ref toolVersionInfo, pluginPath);
+
             if (!success)
             {
                 return false;

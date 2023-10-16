@@ -232,6 +232,7 @@ namespace CaptureTaskManager
                 try
                 {
                     holdoffMilliseconds = Convert.ToInt32(holdoffSeconds * 1000);
+
                     if (holdoffMilliseconds < 100)
                     {
                         holdoffMilliseconds = 100;
@@ -385,6 +386,7 @@ namespace CaptureTaskManager
 
             // Error should have already been logged during the call to GetIngestStatus
             returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+
             if (string.IsNullOrWhiteSpace(errorMessage))
             {
                 returnData.CloseoutMsg = "Ingest failed; unknown reason";
@@ -446,6 +448,7 @@ namespace CaptureTaskManager
             foreach (var fileToFind in filesToFind)
             {
                 var foundFiles = datasetDirectory.GetFiles(fileToFind, SearchOption.AllDirectories).ToList();
+
                 if (foundFiles.Count == 0)
                     continue;
 
@@ -514,6 +517,7 @@ namespace CaptureTaskManager
                 while (!reader.EndOfStream)
                 {
                     var dataLine = reader.ReadLine();
+
                     if (string.IsNullOrWhiteSpace(dataLine))
                     {
                         continue;
@@ -542,6 +546,7 @@ namespace CaptureTaskManager
                             break;
                         case "version":
                             version = value;
+
                             if (string.IsNullOrWhiteSpace(version))
                             {
                                 LogError("Empty version line in Version Info file for " +
@@ -806,6 +811,7 @@ namespace CaptureTaskManager
                 var oFileVersionInfo = FileVersionInfo.GetVersionInfo(dllFilePath);
 
                 var name = oFileVersionInfo.FileDescription;
+
                 if (string.IsNullOrEmpty(name))
                 {
                     name = oFileVersionInfo.InternalName;
@@ -822,6 +828,7 @@ namespace CaptureTaskManager
                 }
 
                 var version = oFileVersionInfo.FileVersion;
+
                 if (string.IsNullOrEmpty(version))
                 {
                     version = oFileVersionInfo.ProductVersion;

@@ -116,6 +116,7 @@ namespace CaptureToolPlugin.DataCapture
                 }
 
                 success = FindFilesToSkip(sourceDirectory, datasetInfo, searchSpecList, returnData, out filesToSkip);
+
                 if (!success)
                 {
                     msg = "Error looking for journal files to skip";
@@ -175,6 +176,7 @@ namespace CaptureToolPlugin.DataCapture
                 // or           \\Server.bionet\ProteomicsData\SDI_42___l_a_MRM_CE10_5a.d\SDI_42  _l_a_MRM_CE10_5a.d
 
                 var matchSpec = "*" + sourceDirectory.Extension;
+
                 if (mTraceMode)
                 {
                     ToolRunnerBase.ShowTraceMessage("Looking for directories matching {0} at {1}",
@@ -182,6 +184,7 @@ namespace CaptureToolPlugin.DataCapture
                 }
 
                 var subdirectories = sourceDirectory.GetDirectories(matchSpec);
+
                 if (subdirectories.Length > 1)
                 {
                     LogWarning("Source directory has multiple subdirectories with extension {0}; see {1}",
@@ -208,6 +211,7 @@ namespace CaptureToolPlugin.DataCapture
                     {
                         var logMessage = string.Format("Copying files from {0} instead of the parent directory; name similarity score: {1:F2}",
                                                        sourceDirectoryToUse.FullName, similarityScore);
+
                         if (mTraceMode)
                         {
                             ToolRunnerBase.ShowTraceMessage(logMessage);
@@ -451,6 +455,7 @@ namespace CaptureToolPlugin.DataCapture
                     // Delete this zero-byte file
                     candidateFile.Delete();
                     fileCountDeleted++;
+
                     if (string.IsNullOrEmpty(deletedFileList))
                     {
                         deletedFileList = candidateFile.Name;

@@ -29,6 +29,7 @@ namespace ArchiveStatusCheckPlugin
 
             // Perform base class operations, if any
             mRetData = base.RunTool();
+
             if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
             {
                 return mRetData;
@@ -150,6 +151,7 @@ namespace ArchiveStatusCheckPlugin
             }
 
             var firstUnverified = "??";
+
             if (unverifiedURIs.Count > 0)
             {
                 firstUnverified = unverifiedURIs.First().Value;
@@ -240,6 +242,7 @@ namespace ArchiveStatusCheckPlugin
                 catch (Exception ex)
                 {
                     exceptionCount++;
+
                     if (exceptionCount < 3)
                     {
                         LogWarning("Exception verifying archive status for job " + mJob + ": " + ex.Message);
@@ -335,6 +338,7 @@ namespace ArchiveStatusCheckPlugin
         private byte GetMaxIngestStepCompleted(IEnumerable<int> statusNums, IReadOnlyDictionary<int, IngestStatusInfo> statusData)
         {
             byte ingestStepsCompleted = 0;
+
             foreach (var statusNum in statusNums)
             {
                 if (statusData.TryGetValue(statusNum, out var statusInfo))
@@ -433,6 +437,7 @@ namespace ArchiveStatusCheckPlugin
                 var statusNum = row[0].CastDBVal<int>();
 
                 var uri = row[1].CastDBVal(string.Empty);
+
                 if (string.IsNullOrEmpty(uri))
                 {
                     continue;

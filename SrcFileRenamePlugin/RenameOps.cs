@@ -43,6 +43,7 @@ namespace SrcFileRenamePlugin
         {
             // Setup for Bionet use, if applicable
             mUseBioNet = useBioNet;
+
             if (mUseBioNet)
             {
                 mUserName = mgrParams.GetParam("BionetUser");

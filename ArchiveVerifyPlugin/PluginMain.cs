@@ -33,6 +33,7 @@ namespace ArchiveVerifyPlugin
 
             // Perform base class operations, if any
             mRetData = base.RunTool();
+
             if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
             {
                 return mRetData;
@@ -106,6 +107,7 @@ namespace ArchiveVerifyPlugin
             else if (statusNum > 0)
             {
                 UpdateIngestStepsCompletedOneTask(statusNum, ingestStepsCompleted, 0, fatalError);
+
                 if (fatalError)
                 {
                     if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
@@ -145,6 +147,7 @@ namespace ArchiveVerifyPlugin
                         "(Job " + mJob + " on " + mMgrName + ")", true);
 
                     mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
+
                     if (string.IsNullOrWhiteSpace(mRetData.CloseoutMsg))
                     {
                         mRetData.CloseoutMsg = "Unknown reason";
@@ -252,6 +255,7 @@ namespace ArchiveVerifyPlugin
             try
             {
                 var transferDirectoryPathBase = mTaskParams.GetParam("TransferDirectoryPath", mTaskParams.GetParam("TransferFolderPath"));
+
                 if (!ParameterDefined("TransferDirectoryPath", transferDirectoryPathBase))
                 {
                     return false;
@@ -267,6 +271,7 @@ namespace ArchiveVerifyPlugin
                 var transferDirectoryPath = Path.Combine(transferDirectoryPathBase, mDataset);
 
                 var jobNumber = mTaskParams.GetParam("Job", string.Empty);
+
                 if (!ParameterDefined("Job", jobNumber))
                 {
                     return false;
@@ -686,6 +691,7 @@ namespace ArchiveVerifyPlugin
             try
             {
                 var datasetInstrument = mTaskParams.GetParam("Instrument_Name");
+
                 if (!ParameterDefined("Instrument_Name", datasetInstrument))
                 {
                     return false;
@@ -1026,6 +1032,7 @@ namespace ArchiveVerifyPlugin
             try
             {
                 string targetFilePath;
+
                 if (useTempFile)
                 {
                     // Create a new Hash results file that we'll use to replace hashResultsFilePath
@@ -1043,6 +1050,7 @@ namespace ArchiveVerifyPlugin
                     foreach (var item in hashResults)
                     {
                         var dataLine = item.Value.HashCode + " " + item.Key;
+
                         if (!string.IsNullOrEmpty(item.Value.MyEMSLFileID))
                         {
                             dataLine += "\t" + item.Value.MyEMSLFileID;

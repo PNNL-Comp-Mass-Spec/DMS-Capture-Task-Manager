@@ -32,6 +32,7 @@ namespace ImsDemuxPlugin
             }
 
             var status = MultiplexingStatus.NonMultiplexed;
+
             foreach (var method in methodInfo)
             {
                 // Empty ImsMuxSequence string means not multiplexed, demux not required
@@ -143,6 +144,7 @@ namespace ImsDemuxPlugin
                     // Parse each method separately
                     var methodMuxProcessing = 0; // bad value
                     var methodMuxSequence = "";
+
                     foreach (XmlNode node2 in node.ChildNodes)
                     {
                         switch (node2.Name)

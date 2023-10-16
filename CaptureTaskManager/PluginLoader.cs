@@ -82,6 +82,7 @@ namespace CaptureTaskManager
             {
 #if PLUGIN_DEBUG_MODE_ENABLED
                 myToolRunner = DebugModeGetToolRunner(className);
+
                 if (myToolRunner != null)
                 {
                     return myToolRunner;
@@ -174,6 +175,7 @@ namespace CaptureTaskManager
         private static string GetPluginInfoFilePath(string PluginInfoFileName)
         {
             var fi = new FileInfo(PRISM.AppUtils.GetAppPath());
+
             if (fi.DirectoryName == null)
             {
                 throw new DirectoryNotFoundException("Could not determine parent folder path for the exe");

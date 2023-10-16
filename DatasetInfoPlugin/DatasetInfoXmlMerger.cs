@@ -233,6 +233,7 @@ namespace DatasetInfoPlugin
                 {
                     KeyValuePair<string, string> scanTypeKey;
                     int scanTypeScanCount;
+
                     if (node.Attributes != null)
                     {
                         var scanFilterText = node.Attributes["ScanFilterText"].Value;
@@ -272,6 +273,7 @@ namespace DatasetInfoPlugin
             acqInfo.ScanCountDIA += currentEntryScanCountDIA;
 
             var elutionTimeMax = GetXmlValue(xmlDoc, "DatasetInfo/AcquisitionInfo/Elution_Time_Max", 0.0);
+
             if (elutionTimeMax > acqInfo.ElutionTimeMax)
             {
                 acqInfo.ElutionTimeMax = elutionTimeMax;
@@ -287,6 +289,7 @@ namespace DatasetInfoPlugin
             if (DateTime.TryParse(startTimeText, out var startTime))
             {
                 startTimeValid = true;
+
                 if (acqInfo.StartTime == DateTime.MinValue)
                 {
                     acqInfo.StartTime = startTime;

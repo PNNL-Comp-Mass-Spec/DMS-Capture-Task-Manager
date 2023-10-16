@@ -73,6 +73,7 @@ namespace CaptureToolPlugin.DataCapture
 
             // Verify the directory doesn't contain a group of ".d" directories
             var dotDDirectories = sourceDirectory.GetDirectories("*.d", SearchOption.TopDirectoryOnly);
+
             if (dotDDirectories.Length > 1)
             {
                 var allowMultipleDirectories = false;
@@ -83,6 +84,7 @@ namespace CaptureToolPlugin.DataCapture
                     // This is sometimes the case for the 15T_FTICR_Imaging
                     var serCount = 0;
                     var bafCount = 0;
+
                     foreach (var directory in dotDDirectories)
                     {
                         if (directory.GetFiles("ser", SearchOption.TopDirectoryOnly).Length == 1)
@@ -264,6 +266,7 @@ namespace CaptureToolPlugin.DataCapture
                 while (!reader.EndOfStream)
                 {
                     var dataLine = reader.ReadLine();
+
                     if (string.IsNullOrWhiteSpace(dataLine))
                     {
                         continue;

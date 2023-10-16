@@ -77,6 +77,7 @@ namespace DatasetInfoPlugin
 
             // Perform base class operations, if any
             var returnData = base.RunTool();
+
             if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
             {
                 return returnData;
@@ -117,6 +118,7 @@ namespace DatasetInfoPlugin
                 else
                 {
                     var newInstance = LoadObject(MsDataFileReaderClass, msFileInfoScannerDLLPath);
+
                     if (newInstance != null)
                     {
                         msFileInfoScanner = (iMSFileInfoScanner)newInstance;
@@ -168,6 +170,7 @@ namespace DatasetInfoPlugin
             base.Setup(mgrParams, taskParams, statusTools);
 
             var msFileInfoScannerDLLPath = GetMSFileInfoScannerDLLPath();
+
             if (string.IsNullOrEmpty(msFileInfoScannerDLLPath))
             {
                 throw new NotSupportedException("Manager parameter 'MSFileInfoScannerDir' is not defined");
@@ -786,6 +789,7 @@ namespace DatasetInfoPlugin
             }
 
             iMSFileInfoScanner.MSFileScannerErrorCodes errorCode;
+
             if (successPosting)
             {
                 errorCode = iMSFileInfoScanner.MSFileScannerErrorCodes.NoError;
@@ -905,6 +909,7 @@ namespace DatasetInfoPlugin
                 {
                     var subdirectoryInfo = new DirectoryInfo(Path.Combine(outputPathBase, subdirectoryName));
                     var htmlFiles = subdirectoryInfo.GetFiles("index.html");
+
                     if (htmlFiles.Length == 0)
                     {
                         continue;
@@ -920,6 +925,7 @@ namespace DatasetInfoPlugin
                     while (!htmlReader.EndOfStream)
                     {
                         var dataLine = htmlReader.ReadLine();
+
                         if (string.IsNullOrWhiteSpace(dataLine))
                         {
                             continue;
@@ -1104,6 +1110,7 @@ namespace DatasetInfoPlugin
                 // have a scan range that starts below the minimum reporter ion m/z
 
                 var reporterIonMzMinText = mTaskParams.GetParam("Meta_Experiment_labelling_reporter_mz_min", string.Empty);
+
                 if (!string.IsNullOrEmpty(reporterIonMzMinText))
                 {
                     if (float.TryParse(reporterIonMzMinText, out var reporterIonMzMin))
@@ -1138,6 +1145,7 @@ namespace DatasetInfoPlugin
             var tmtMatcher = new Regex("_TMT[0-9-]*_", RegexOptions.IgnoreCase);
 
             var iTRAQMatch = iTRAQMatcher.Match(mDataset);
+
             if (iTRAQMatch.Success)
             {
                 msFileInfoScanner.Options.MS2MzMin = 113;
@@ -1146,6 +1154,7 @@ namespace DatasetInfoPlugin
             }
 
             var tmtMatch = tmtMatcher.Match(mDataset);
+
             if (tmtMatch.Success)
             {
                 msFileInfoScanner.Options.MS2MzMin = 126;
@@ -1178,9 +1187,11 @@ namespace DatasetInfoPlugin
             if (totalDatasetFilesOrDirectories > 1)
             {
                 var subDirectory = Path.GetFileNameWithoutExtension(datasetFileOrDirectory);
+
                 if (string.IsNullOrWhiteSpace(subDirectory))
                 {
                     var subdirectoryToUse = mDataset + "_" + nextSubdirectorySuffix;
+
                     while (outputDirectoryNames.Contains(subdirectoryToUse))
                     {
                         nextSubdirectorySuffix++;
@@ -1193,6 +1204,7 @@ namespace DatasetInfoPlugin
                 else
                 {
                     var subdirectoryToUse = subDirectory;
+
                     while (outputDirectoryNames.Contains(subdirectoryToUse))
                     {
                         subdirectoryToUse = subDirectory + "_" + nextSubdirectorySuffix;
@@ -1278,6 +1290,7 @@ namespace DatasetInfoPlugin
             var rawDataTypeName = mTaskParams.GetParam("RawDataType", "UnknownRawDataType");
 
             instrumentClass = InstrumentClassInfo.GetInstrumentClass(instClassName);
+
             if (instrumentClass == InstrumentClass.Unknown)
             {
                 mMsg = "Instrument class not recognized: " + instClassName;
@@ -1329,6 +1342,7 @@ namespace DatasetInfoPlugin
                     // however, instead of an analysis.baf file, they might have a .mcf file and a ser file
 
                     isFile = true;
+
                     if (instrumentClass == InstrumentClass.Bruker_Amazon_Ion_Trap)
                     {
                         fileOrDirectoryName = Path.Combine(mDataset + InstrumentClassInfo.DOT_D_EXTENSION, "analysis.yep");
@@ -1342,6 +1356,7 @@ namespace DatasetInfoPlugin
                     if (!File.Exists(Path.Combine(datasetDirectory.FullName, fileOrDirectoryName)))
                     {
                         var zipFileName = CheckForBrukerImagingZipFiles(datasetDirectory);
+
                         if (!string.IsNullOrWhiteSpace(string.Empty))
                         {
                             fileOrDirectoryName = zipFileName;
@@ -1582,6 +1597,7 @@ namespace DatasetInfoPlugin
         private string GetMSFileInfoScannerDLLPath()
         {
             var msFileInfoScannerDir = mMgrParams.GetParam("MSFileInfoScannerDir", string.Empty);
+
             if (string.IsNullOrEmpty(msFileInfoScannerDir))
             {
                 return string.Empty;
@@ -1689,6 +1705,7 @@ namespace DatasetInfoPlugin
             // Lookup the version of the dataset info plugin
             var pluginPath = Path.Combine(appDirectory, "DatasetInfoPlugin.dll");
             var success = StoreToolVersionInfoOneFile(ref toolVersionInfo, pluginPath);
+
             if (!success)
             {
                 return false;
@@ -1696,9 +1713,11 @@ namespace DatasetInfoPlugin
 
             // Lookup the version of the MSFileInfoScanner DLL
             var msFileInfoScannerDLLPath = GetMSFileInfoScannerDLLPath();
+
             if (!string.IsNullOrEmpty(msFileInfoScannerDLLPath))
             {
                 success = StoreToolVersionInfoOneFile(ref toolVersionInfo, msFileInfoScannerDLLPath);
+
                 if (!success)
                 {
                     return false;
@@ -1708,6 +1727,7 @@ namespace DatasetInfoPlugin
             // Lookup the version of the UIMFLibrary DLL
             var uimfLibraryPath = Path.Combine(appDirectory, "UIMFLibrary.dll");
             success = StoreToolVersionInfoOneFile(ref toolVersionInfo, uimfLibraryPath);
+
             if (!success)
             {
                 return false;
@@ -1762,6 +1782,7 @@ namespace DatasetInfoPlugin
             if (pngFiles.Length == 0)
             {
                 const string errMsg = "No PNG files were created";
+
                 if (primaryFileOrDirectoryProcessed)
                 {
                     LogWarning(errMsg);
@@ -1836,6 +1857,7 @@ namespace DatasetInfoPlugin
                 if (message.StartsWith("Unable to load data for scan"))
                 {
                     mErrorCountLoadDataForScan++;
+
                     if (mErrorCountLoadDataForScan > 25 && mErrorCountLoadDataForScan % 1000 != 0)
                     {
                         ConsoleMsgUtils.ShowWarning("Error running MSFileInfoScanner: " + message);
@@ -1845,6 +1867,7 @@ namespace DatasetInfoPlugin
                 else if (message.StartsWith("Unknown format for Scan Filter"))
                 {
                     mErrorCountUnknownScanFilterFormat++;
+
                     if (mErrorCountUnknownScanFilterFormat > 25 && mErrorCountUnknownScanFilterFormat % 1000 != 0)
                     {
                         ConsoleMsgUtils.ShowWarning("Error running MSFileInfoScanner: " + message);

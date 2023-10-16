@@ -51,6 +51,7 @@
         public override string ToString()
         {
             string description;
+
             if (string.IsNullOrEmpty(HashCode))
             {
                 description = "#No Hash#";

@@ -184,6 +184,7 @@ namespace CaptureToolPlugin.DataCapture
 
                 // Get the initial size of the file
                 var remoteFile = new FileInfo(filePath);
+
                 if (!remoteFile.Exists)
                 {
                     // File not found, but return true anyway
@@ -255,6 +256,7 @@ namespace CaptureToolPlugin.DataCapture
                 }
 
                 nextStatusTime = nextStatusTime.AddSeconds(STATUS_MESSAGE_INTERVAL);
+
                 if (mTraceMode)
                 {
                     ToolRunnerBase.ShowTraceMessage("{0:0} seconds remaining", verificationEndTime.Subtract(DateTime.UtcNow).TotalSeconds);

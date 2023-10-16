@@ -55,6 +55,7 @@ namespace CaptureTaskManager
         public string AutoFixFilename(string datasetName, string fileName, IReadOnlyDictionary<char, string> charsToFind)
         {
             var matchFound = charsToFind.Keys.Any(item => fileName.IndexOf(item) >= 0);
+
             if (!matchFound)
             {
                 return fileName;
@@ -411,6 +412,7 @@ namespace CaptureTaskManager
             OnStatusEvent($"Updating Share Path, Old: '{sourceVol}' '{sourcePath}' '{captureSubdirectory}'");
 
             var sourcePathParts = sourcePath.Trim('\\', '.').Split('\\');
+
             if (sourcePathParts.Length == 1)
             {
                 var captureSubWork = captureSubdirectory.TrimStart('\\', '.');

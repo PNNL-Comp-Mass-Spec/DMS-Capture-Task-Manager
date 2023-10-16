@@ -41,6 +41,7 @@ namespace DatasetArchivePlugin
 
             // Perform base class operations, if any
             var returnData = base.RunTool();
+
             if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
             {
                 return returnData;
@@ -74,6 +75,7 @@ namespace DatasetArchivePlugin
             archOpTool.MyEMSLUploadComplete += MyEMSLUploadCompleteHandler;
 
             LogMessage("Starting {0}, job {1}, dataset {2}", archiveOpDescription, mJob, mDataset);
+
             if (archOpTool.PerformTask())
             {
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
@@ -224,6 +226,7 @@ namespace DatasetArchivePlugin
             // Lookup the version of the Dataset Archive plugin
             var pluginPath = Path.Combine(appDirectory, "DatasetArchivePlugin.dll");
             var success = StoreToolVersionInfoOneFile(ref toolVersionInfo, pluginPath);
+
             if (!success)
             {
                 return false;

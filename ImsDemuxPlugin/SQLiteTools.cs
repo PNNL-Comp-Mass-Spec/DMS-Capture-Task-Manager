@@ -64,6 +64,7 @@ namespace ImsDemuxPlugin
             // Evaluate results. If any of the frames has a filename containing "bit", demultiplexing is required
             // In addition, parse the "bit" value to determine numBitsForEncoding
             var deMuxRequired = false;
+
             foreach (var encodingSequence in encodingSequenceList)
             {
                 // Empty string means demux not required
@@ -78,6 +79,7 @@ namespace ImsDemuxPlugin
                 var multiplexFilename = Path.GetFileName(encodingSequence).ToLower();
 
                 var filenameMatch = bitValueMatcher.Match(multiplexFilename);
+
                 if (!filenameMatch.Success)
                 {
                     continue;
@@ -102,9 +104,11 @@ namespace ImsDemuxPlugin
                 var bitValueMatcher2 = new Regex(@"(_(\d)bit_|_(\d)bit$)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
                 var fileName = Path.GetFileNameWithoutExtension(uimfFilePath);
+
                 if (fileName != null)
                 {
                     var filenameMatch = bitValueMatcher2.Match(fileName);
+
                     if (filenameMatch.Success)
                     {
                         // Filename contains "bit", so demultiplexing is required

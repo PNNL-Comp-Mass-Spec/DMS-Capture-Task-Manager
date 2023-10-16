@@ -162,6 +162,7 @@ namespace CaptureTaskManager
             {
                 // If successful, delete FlagFile.txt
                 success = mStatusFile.DeleteStatusFlagFile();
+
                 if (!success)
                 {
                     failureMessage = "error deleting " + StatusFile.FLAG_FILE_NAME;
@@ -224,6 +225,7 @@ namespace CaptureTaskManager
             catch (Exception ex)
             {
                 string errorMessage;
+
                 if (mMgrConfigDBConnectionString == null)
                 {
                     errorMessage = "Exception calling " + SP_NAME_REPORT_MGR_CLEANUP + " in ReportManagerErrorCleanup; empty connection string";

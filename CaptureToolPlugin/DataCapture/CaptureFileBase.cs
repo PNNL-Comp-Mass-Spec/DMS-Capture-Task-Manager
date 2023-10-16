@@ -64,7 +64,9 @@ namespace CaptureToolPlugin.DataCapture
             if (validFiles.Count < fileNames.Count)
             {
                 LogWarning("Dataset '" + datasetName + "' not ready; source file's size changed (or authentication error)");
+
                 mShareConnection.DisconnectShareIfRequired();
+
                 if (errorMessages.Count > 0)
                 {
                     returnData.CloseoutMsg = errorMessages[0];
@@ -123,6 +125,7 @@ namespace CaptureToolPlugin.DataCapture
                     }
 
                     var sourceFile = new FileInfo(sourceFilePath);
+
                     if (!File.Exists(sourceFilePath))
                     {
                         msg = "source file not found at " + sourceFilePath;

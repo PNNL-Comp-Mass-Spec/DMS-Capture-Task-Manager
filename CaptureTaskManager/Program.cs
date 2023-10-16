@@ -127,6 +127,7 @@ namespace CaptureTaskManager
 
             // Initiate automated analysis
             var restart = true;
+
             do
             {
                 try

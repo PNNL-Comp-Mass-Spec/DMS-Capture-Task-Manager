@@ -263,6 +263,7 @@ namespace CaptureTaskManager
                     var configFileSettings = LoadMgrSettingsFromFile();
 
                     var settingsClass = mMgrSettings;
+
                     if (settingsClass != null)
                     {
                         RegisterEvents(settingsClass);
@@ -273,6 +274,7 @@ namespace CaptureTaskManager
                     mMgrSettings.ValidatePgPass(configFileSettings);
 
                     var success = mMgrSettings.LoadSettings(configFileSettings);
+
                     if (!success)
                     {
                         if (!string.IsNullOrEmpty(mMgrSettings.ErrMsg))
@@ -357,6 +359,7 @@ namespace CaptureTaskManager
             LogMessage(startupMsg);
 
             var configFileName = mMgrSettings.GetParam("ConfigFileName");
+
             if (string.IsNullOrEmpty(configFileName))
             {
                 // Manager parameter error; log an error and exit
@@ -448,6 +451,7 @@ namespace CaptureTaskManager
 
             // Get the most recent job history
             var historyFilePath = Path.Combine(mMgrSettings.GetParam("ApplicationPath"), "History.txt");
+
             if (!File.Exists(historyFilePath))
             {
                 return true;
@@ -461,6 +465,7 @@ namespace CaptureTaskManager
                 while (!reader.EndOfStream)
                 {
                     var dataLine = reader.ReadLine();
+
                     if (string.IsNullOrWhiteSpace(dataLine))
                     {
                         continue;
@@ -528,6 +533,7 @@ namespace CaptureTaskManager
             using var reader = new StreamReader(new FileStream(messageCacheFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
             var lineCount = 0;
+
             while (!reader.EndOfStream)
             {
                 var dataLine = reader.ReadLine();
@@ -814,6 +820,7 @@ namespace CaptureTaskManager
 
                             // Increment and test the task counter
                             taskCount++;
+
                             if (taskCount > mMgrSettings.GetParam("MaxRepetitions", 1))
                             {
                                 mRunning = false;
@@ -955,6 +962,7 @@ namespace CaptureTaskManager
 
                     case EnumCloseOutType.CLOSEOUT_NOT_READY:
                         string msg;
+
                         if (mStepTool is "ArchiveVerify" or "ArchiveStatusCheck")
                         {
                             msg = "Dataset not ready, tool " + mStepTool + ", job " + mJob + ": " + toolResult.CloseoutMsg;
@@ -1078,6 +1086,7 @@ namespace CaptureTaskManager
                 }
 
                 var tempDirectory = new DirectoryInfo(tempDirectoryPath);
+
                 if (!tempDirectory.Exists)
                 {
                     LogWarning("Directory not found: " + tempDirectoryPath);
@@ -1088,6 +1097,7 @@ namespace CaptureTaskManager
                 foreach (var spec in searchSpecs)
                 {
                     var deleteCount = 0;
+
                     foreach (var file in tempDirectory.GetFiles(spec))
                     {
                         try
@@ -1127,6 +1137,7 @@ namespace CaptureTaskManager
         {
             // Load the tool runner
             mCapTool = PluginLoader.GetToolRunner(stepToolName);
+
             if (mCapTool == null)
             {
                 LogError("Unable to load tool runner for StepTool " + stepToolName + ": " + PluginLoader.ErrMsg);
@@ -1246,6 +1257,7 @@ namespace CaptureTaskManager
                 }
 
                 var flagFile = new FileInfo(mStatusFile.FlagFilePath);
+
                 if (flagFile.Directory == null)
                 {
                     errorMessage = "Flag file exists in the manager folder";
@@ -1351,6 +1363,7 @@ namespace CaptureTaskManager
             // Make sure storagePath only contains the root folder, not several folders
             // In other words, if storagePath = "VOrbiETD03\2011_4" change it to just "VOrbiETD03"
             var slashLoc = storagePath.IndexOf(Path.DirectorySeparatorChar);
+
             if (slashLoc > 0)
             {
                 storagePath = storagePath.Substring(0, slashLoc);
@@ -1399,6 +1412,7 @@ namespace CaptureTaskManager
             RegisterEvents(mgrSettings);
 
             var valueFound = mgrSettings.GetXmlConfigFileSetting(configFilePaths, settingName, out var settingValue);
+
             if (valueFound)
             {
                 return settingValue;

@@ -59,6 +59,7 @@ namespace CaptureTaskManager
                 // Define the target folder name to be Dataset_Job_Step
 
                 var targetDirectoryPath = mTaskParams.GetParam("Dataset");
+
                 if (string.IsNullOrEmpty(targetDirectoryPath))
                 {
                     targetDirectoryPath = "Unknown_Dataset";
@@ -103,6 +104,7 @@ namespace CaptureTaskManager
                     LogMessage("Copying data files to failed results archive: " + resultsDirectoryPath);
 
                     var errorCount = 0;
+
                     foreach (var sourceFile in sourceDirectory.GetFiles())
                     {
                         try
