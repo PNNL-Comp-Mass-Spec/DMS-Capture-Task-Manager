@@ -137,7 +137,7 @@ namespace DatasetArchivePlugin
 
             // Path to dataset on storage server
             var storagePath = mTaskParams.GetParam("Storage_Path");
-            var datasetDirectory = mTaskParams.GetParam(mTaskParams.HasParam("Directory") ? "Directory" : "Folder");
+            var datasetDirectory = mTaskParams.GetParam("Directory");
 
             mDSNamePath = Path.Combine(Path.Combine(baseStoragePath, storagePath, datasetDirectory));
 

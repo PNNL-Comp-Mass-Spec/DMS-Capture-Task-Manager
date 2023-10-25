@@ -215,7 +215,7 @@ namespace DatasetInfoPlugin
 
             // Set up the rest of the paths
             var sourceDirectoryBase = Path.Combine(remoteSharePath, mTaskParams.GetParam("Storage_Path"));
-            var datasetDirectory = mTaskParams.GetParam(mTaskParams.HasParam("Directory") ? "Directory" : "Folder");
+            var datasetDirectory = mTaskParams.GetParam("Directory");
 
             var datasetDirectoryPath = Path.Combine(sourceDirectoryBase, datasetDirectory);
             var outputPathBase = Path.Combine(datasetDirectoryPath, "QC");

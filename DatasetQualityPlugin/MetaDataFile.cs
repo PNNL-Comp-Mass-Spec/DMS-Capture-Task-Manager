@@ -74,7 +74,7 @@ namespace DatasetQualityPlugin
 
             // Write the string to the output file
             var remoteSharePath = Path.Combine(taskParams.GetParam("Storage_Vol_External"), taskParams.GetParam("Storage_Path"));
-            var datasetDirectory = taskParams.GetParam(taskParams.HasParam("Directory") ? "Directory" : "Folder");
+            var datasetDirectory = taskParams.GetParam("Directory");
 
             var datasetDirectoryPath = Path.Combine(remoteSharePath, datasetDirectory);
             var metadataFile = new FileInfo(Path.Combine(datasetDirectoryPath, META_FILE_NAME));

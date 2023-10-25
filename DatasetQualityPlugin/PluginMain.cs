@@ -226,7 +226,7 @@ namespace DatasetQualityPlugin
             {
                 // File has likely been purged from the storage server
 
-                var datasetDirectoryName = mTaskParams.GetParam(mTaskParams.HasParam("Directory") ? "Directory" : "Folder");
+                var datasetDirectoryName = mTaskParams.GetParam("Directory");
 
                 // Look in the Aurora archive (aurora.emsl.pnl.gov) using samba; was previously a2.emsl.pnl.gov
                 var dataFilePathArchive = Path.Combine(mTaskParams.GetParam("Archive_Network_Share_Path"), datasetDirectoryName, instrumentDataFile.Name);

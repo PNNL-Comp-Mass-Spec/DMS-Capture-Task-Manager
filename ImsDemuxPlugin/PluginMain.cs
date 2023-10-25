@@ -180,7 +180,7 @@ namespace ImsDemuxPlugin
 
             // Locate data file on storage server
             var svrPath = Path.Combine(mTaskParams.GetParam("Storage_Vol_External"), mTaskParams.GetParam("Storage_Path"));
-            var datasetDirectory = mTaskParams.GetParam(mTaskParams.HasParam("Directory") ? "Directory" : "Folder");
+            var datasetDirectory = mTaskParams.GetParam("Directory");
 
             var datasetDirectoryPath = Path.Combine(svrPath, datasetDirectory);
 
@@ -405,7 +405,7 @@ namespace ImsDemuxPlugin
 
             // Locate data file on storage server
             var svrPath = Path.Combine(mTaskParams.GetParam("Storage_Vol_External"), mTaskParams.GetParam("Storage_Path"));
-            var datasetDirectoryName = mTaskParams.GetParam(mTaskParams.HasParam("Directory") ? "Directory" : "Folder");
+            var datasetDirectoryName = mTaskParams.GetParam("Directory");
 
             var datasetDirectoryInfo = new DirectoryInfo(Path.Combine(svrPath, datasetDirectoryName));
 
