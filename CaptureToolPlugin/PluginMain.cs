@@ -21,6 +21,11 @@ namespace CaptureToolPlugin
         // Ignore Spelling: Bionet, secfso, Logon
 
         /// <summary>
+        /// Property to flag if this is being run specifically for LC data capture
+        /// </summary>
+        protected virtual bool IsLcDataCapture => false;
+
+        /// <summary>
         /// Runs the capture step tool
         /// </summary>
         /// <returns>ToolReturnData object containing tool operation results</returns>
@@ -57,7 +62,7 @@ namespace CaptureToolPlugin
             ResetTimestampForQueueWaitTimeLogging();
 
             // Create the object that will perform capture operation
-            var capOpTool = new CaptureOps(mMgrParams, mFileTools, useBionet, mTraceMode);
+            var capOpTool = new CaptureOps(mMgrParams, mFileTools, useBionet, mTraceMode, IsLcDataCapture);
             try
             {
                 LogDebug("PluginMain.RunTool(): Starting capture operation");

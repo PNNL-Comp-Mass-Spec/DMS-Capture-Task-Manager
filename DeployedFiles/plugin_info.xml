@@ -56,5 +56,15 @@
 			Class="ArchiveStatusCheckPlugin.PluginMain"
 			AssemblyFile="ArchiveStatusCheckPlugin.dll"
 		/>
+		<ToolRunner
+			Tool="lcdatasetcapture"
+			Class="CaptureToolPlugin.PluginMainLC"
+			AssemblyFile="CaptureToolPlugin.dll"
+		/>
+		<ToolRunner
+			Tool="lcdatasetinfo"
+			Class="DatasetInfoPlugin.PluginMainLC"
+			AssemblyFile="DatasetInfoPlugin.dll"
+		/>
 	</ToolRunners>
 </Plugins>

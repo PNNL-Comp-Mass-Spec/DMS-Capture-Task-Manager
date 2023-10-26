@@ -66,6 +66,11 @@ namespace DatasetInfoPlugin
         private int mStatusUpdateIntervalMinutes;
 
         /// <summary>
+        /// Property to flag if this is being run specifically for LC data capture
+        /// </summary>
+        protected virtual bool IsLcDataCapture => false;
+
+        /// <summary>
         /// Runs the dataset info step tool
         /// </summary>
         /// <returns>Enum indicating success or failure</returns>
@@ -682,6 +687,12 @@ namespace DatasetInfoPlugin
             {
                 success = false;
                 errorMessage = "Dataset info XML is an empty string";
+            }
+            else if (IsLcDataCapture)
+            {
+                // Do not post Dataset info XML to the database, since it is only LC data
+                success = true;
+                errorMessage = "";
             }
             else
             {

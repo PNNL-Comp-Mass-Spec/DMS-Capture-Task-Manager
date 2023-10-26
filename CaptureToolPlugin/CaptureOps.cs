@@ -66,6 +66,7 @@ namespace CaptureToolPlugin
         private string mLastProgressFileName = string.Empty;
         private float mLastProgressPercent = -1;
         private bool mFileCopyEventsWired;
+        private readonly bool mIsLcDataCapture;
 
         /// <summary>
         /// Set to true if an error occurs connecting to the source computer
@@ -79,10 +80,12 @@ namespace CaptureToolPlugin
         /// <param name="fileTools">Instance of FileTools</param>
         /// <param name="useBioNet">Flag to indicate if source instrument is on Bionet</param>
         /// <param name="traceMode">When true, show debug messages at the console</param>
-        public CaptureOps(IMgrParams mgrParams, FileTools fileTools, bool useBioNet, bool traceMode)
+        /// <param name="isLcCapture">Bool to flag if this is a LC data capture operation</param>
+        public CaptureOps(IMgrParams mgrParams, FileTools fileTools, bool useBioNet, bool traceMode, bool isLcCapture)
         {
             mMgrParams = mgrParams;
             mTraceMode = traceMode;
+            mIsLcDataCapture = isLcCapture;
 
             // Get client/server perspective
             //   True means MgrParam "perspective" =  "client" which means we will use paths like \\proto-5\Exact04\2012_1
@@ -578,6 +581,34 @@ namespace CaptureToolPlugin
             var instClassName = taskParams.GetParam("Instrument_Class");                    // Examples: Finnigan_Ion_Trap, LTQ_FT, Triple_Quad, IMS_Agilent_TOF, Agilent_Ion_Trap
             var instrumentClass = InstrumentClassInfo.GetInstrumentClass(instClassName);    // Enum of instrument class type
             var instrumentName = taskParams.GetParam("Instrument_Name");                    // Instrument name
+
+            // Acquisition times and length; invalid and unused for MS data capture, needed for LC data capture
+            var acqStartTime = taskParams.GetParamAsDate("Acq_Time_Start", DateTime.MinValue);
+            var acqEndTime = taskParams.GetParamAsDate("Acq_Time_End", DateTime.MinValue);
+            var acqLengthMinutes = acqEndTime.Subtract(acqStartTime).TotalMinutes;
+
+            if (mIsLcDataCapture)
+            {
+                if (acqStartTime == DateTime.MinValue || acqEndTime == DateTime.MinValue)
+                {
+                    // acq start and end times must be set for the MS dataset before running LC data capture
+                    returnData.CloseoutMsg = $"MS acq start or end time is invalid: start '{taskParams.GetParam("Acq_Time_Start")}', end '{taskParams.GetParam("Acq_Time_Start")}'";
+                    returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    return false;
+                }
+
+                if (acqEndTime.AddMinutes(30 + acqLengthMinutes) > DateTime.Now)
+                {
+                    // Don't run yet
+                    // Assumptions that aren't always correct, but are good enough for this use:
+                    // * All runs require column equilibration time (infusion and some other instrument runs don't need this)
+                    // * Column equilibration is run after the MS acquisition (it can be run before MS acquisition)
+                    // * Column equilibration time is the same as the MS run time (it can often be shorter, but rarely longer)
+                    returnData.CloseoutMsg = "Minimum post-acq delay for LC data capture (MS acq length + 30 minutes) not reached";
+                    returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
+                    return false;
+                }
+            }
 
             // Confirm that the dataset name has no spaces
             if (datasetName.IndexOf(' ') >= 0)

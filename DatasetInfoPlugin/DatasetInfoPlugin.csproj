@@ -51,6 +51,7 @@
     <Compile Include="DatasetInfoXmlMerger.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="PluginMain.cs" />
+    <Compile Include="PluginMainLC.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
