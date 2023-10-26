@@ -7,6 +7,7 @@
 
 using System;
 using System.Data;
+using System.Globalization;
 using System.Reflection;
 using PRISM;
 using PRISMDatabaseUtils;
@@ -135,6 +136,21 @@ namespace CaptureTaskManager
                 }
 
                 return valueIfMissing;
+            }
+
+            return valueIfMissing;
+        }
+
+        public DateTime GetParamAsDate(string name, DateTime valueIfMissing = default, string dateFormat = "yyyy-MM-dd HH:mm:ss")
+        {
+            //"yyyy-MM-dd HH:mm:ss";
+            if (mJobParams.TryGetValue(name, out var valueText))
+            {
+                if (DateTime.TryParseExact(valueText, dateFormat, CultureInfo.InvariantCulture,
+                        DateTimeStyles.AssumeLocal, out var dateTime))
+                {
+                    return dateTime;
+                }
             }
 
             return valueIfMissing;

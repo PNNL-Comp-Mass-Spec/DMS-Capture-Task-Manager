@@ -7,6 +7,8 @@
 
 // ReSharper disable UnusedMember.Global
 
+using System;
+
 namespace CaptureTaskManager
 {
     /// <summary>
@@ -21,6 +23,7 @@ namespace CaptureTaskManager
         bool GetParam(string name, bool valueIfMissing);
         float GetParam(string name, float valueIfMissing);
         int GetParam(string name, int valueIfMissing);
+        DateTime GetParamAsDate(string name, DateTime valueIfMissing = default, string dateFormat = "yyyy-MM-dd HH:mm:ss");
 
         bool HasParam(string name);
 
