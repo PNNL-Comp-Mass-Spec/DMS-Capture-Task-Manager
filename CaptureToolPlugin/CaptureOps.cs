@@ -706,6 +706,7 @@ namespace CaptureToolPlugin
             var storageVolExternal = taskParams.GetParam("Storage_Vol_External").Trim();    // Example: \\proto-5\
 
             var instrumentName = taskParams.GetParam("Instrument_Name");                    // Instrument name
+            var datasetDirectory = taskParams.GetParam("Directory");
 
             var computerName = System.Net.Dns.GetHostName();
 
@@ -714,6 +715,22 @@ namespace CaptureToolPlugin
             pendingRenames = pendingRenamesMap;
 
             string tempVol;
+
+            if (string.IsNullOrWhiteSpace(datasetDirectory) ||
+                (!datasetDirectory.Equals(datasetName, StringComparison.OrdinalIgnoreCase) &&
+                 !(datasetDirectory.Split('\\', '/')[0]).Equals(datasetName, StringComparison.OrdinalIgnoreCase)))
+            {
+                // datasetDirectory should either equal datasetName or be a path that starts with datasetName
+                // e.g. for datasetName 'test': 'test' and 'test\subDir' are valid, 'test2' and test2\subDir are not
+                returnData.CloseoutMsg = string.Format(
+                    "Provided dataset directory '{0}' does not start with dataset name '{1}'",
+                    datasetDirectory, datasetName);
+
+                LogError(returnData.CloseoutMsg);
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+
+                return false;
+            }
 
             // Setup Destination directory based on client/server switch, mClientServer
             // True means MgrParam "perspective" =  "client" which means we will use paths like \\proto-5\Exact04\2012_1
@@ -814,7 +831,7 @@ namespace CaptureToolPlugin
             else
             {
                 // Dataset directory complete path
-                datasetDirectoryPath = Path.Combine(storageDirectoryPath, datasetName);
+                datasetDirectoryPath = Path.Combine(storageDirectoryPath, datasetDirectory);
             }
 
             // Confirm that the target dataset directory path has no invalid characters

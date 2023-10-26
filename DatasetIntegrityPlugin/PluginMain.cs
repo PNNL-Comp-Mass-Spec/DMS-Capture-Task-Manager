@@ -135,7 +135,8 @@ namespace DatasetIntegrityPlugin
             // Set up the file paths
             var storageVolExt = mTaskParams.GetParam("Storage_Vol_External");
             var storagePath = mTaskParams.GetParam("Storage_Path");
-            var datasetDirectory = Path.Combine(storageVolExt, Path.Combine(storagePath, mDataset));
+            var datasetDirectory = mTaskParams.GetParam("Directory");
+            var datasetDirectoryPath = Path.Combine(storageVolExt, Path.Combine(storagePath, datasetDirectory));
             string dataFileNamePath;
 
             // Select which tests will be performed based on instrument class
@@ -153,17 +154,17 @@ namespace DatasetIntegrityPlugin
             switch (instrumentClass)
             {
                 case InstrumentClass.Finnigan_Ion_Trap:
-                    dataFileNamePath = Path.Combine(datasetDirectory, mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION);
+                    dataFileNamePath = Path.Combine(datasetDirectoryPath, mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION);
                     mRetData.CloseoutType = TestFinniganIonTrapFile(dataFileNamePath);
                     break;
 
                 case InstrumentClass.GC_QExactive:
-                    dataFileNamePath = Path.Combine(datasetDirectory, mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION);
+                    dataFileNamePath = Path.Combine(datasetDirectoryPath, mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION);
                     mRetData.CloseoutType = TestGQExactiveFile(dataFileNamePath);
                     break;
 
                 case InstrumentClass.LTQ_FT:
-                    dataFileNamePath = Path.Combine(datasetDirectory, mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION);
+                    dataFileNamePath = Path.Combine(datasetDirectoryPath, mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION);
 
                     // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
                     if (instrumentName.StartsWith("21T", StringComparison.OrdinalIgnoreCase))
@@ -178,65 +179,65 @@ namespace DatasetIntegrityPlugin
                     break;
 
                 case InstrumentClass.BrukerFTMS:
-                    mRetData.CloseoutType = TestBrukerDirectory(datasetDirectory);
+                    mRetData.CloseoutType = TestBrukerDirectory(datasetDirectoryPath);
                     break;
 
                 case InstrumentClass.Thermo_Exactive:
-                    dataFileNamePath = Path.Combine(datasetDirectory, mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION);
+                    dataFileNamePath = Path.Combine(datasetDirectoryPath, mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION);
                     mRetData.CloseoutType = TestThermoExactiveFile(dataFileNamePath);
                     break;
 
                 case InstrumentClass.Triple_Quad:
-                    dataFileNamePath = Path.Combine(datasetDirectory, mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION);
+                    dataFileNamePath = Path.Combine(datasetDirectoryPath, mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION);
                     mRetData.CloseoutType = TestTripleQuadFile(dataFileNamePath);
                     break;
 
                 case InstrumentClass.IMS_Agilent_TOF_UIMF:
-                    dataFileNamePath = Path.Combine(datasetDirectory, mDataset + InstrumentClassInfo.DOT_UIMF_EXTENSION);
+                    dataFileNamePath = Path.Combine(datasetDirectoryPath, mDataset + InstrumentClassInfo.DOT_UIMF_EXTENSION);
                     mRetData.CloseoutType = TestIMSAgilentTOF(dataFileNamePath, instrumentName);
                     break;
 
                 case InstrumentClass.IMS_Agilent_TOF_DotD:
-                    mRetData.CloseoutType = TestAgilentTOFv2Directory(datasetDirectory, false);
+                    mRetData.CloseoutType = TestAgilentTOFv2Directory(datasetDirectoryPath, false);
                     break;
 
                 case InstrumentClass.BrukerFT_BAF:
-                    mRetData.CloseoutType = TestBrukerFT_Directory(datasetDirectory, requireBafOrSerFile: true, requireMCFFile: false, requireSerFile: false, instrumentClass: instrumentClass, instrumentName: instrumentName);
+                    mRetData.CloseoutType = TestBrukerFT_Directory(datasetDirectoryPath, requireBafOrSerFile: true, requireMCFFile: false, requireSerFile: false, instrumentClass: instrumentClass, instrumentName: instrumentName);
                     break;
 
                 case InstrumentClass.BrukerMALDI_Imaging:
                     // Note: Datasets from this instrument were last used in 2012
-                    mRetData.CloseoutType = TestBrukerMaldiImagingDirectory(datasetDirectory);
+                    mRetData.CloseoutType = TestBrukerMaldiImagingDirectory(datasetDirectoryPath);
                     break;
 
                 case InstrumentClass.BrukerMALDI_Imaging_V2:
-                    mRetData.CloseoutType = TestBrukerFT_Directory(datasetDirectory, requireBafOrSerFile: false, requireMCFFile: false, requireSerFile: true, instrumentClass: instrumentClass, instrumentName: instrumentName);
+                    mRetData.CloseoutType = TestBrukerFT_Directory(datasetDirectoryPath, requireBafOrSerFile: false, requireMCFFile: false, requireSerFile: true, instrumentClass: instrumentClass, instrumentName: instrumentName);
                     break;
 
                 case InstrumentClass.BrukerMALDI_Spot:
-                    mRetData.CloseoutType = TestBrukerMaldiSpotDirectory(datasetDirectory);
+                    mRetData.CloseoutType = TestBrukerMaldiSpotDirectory(datasetDirectoryPath);
                     break;
 
                 case InstrumentClass.BrukerTOF_BAF:
-                    mRetData.CloseoutType = TestBrukerTof_BafDirectory(datasetDirectory, instrumentName);
+                    mRetData.CloseoutType = TestBrukerTof_BafDirectory(datasetDirectoryPath, instrumentName);
                     break;
 
                 case InstrumentClass.BrukerTOF_TDF:
-                    mRetData.CloseoutType = TestBrukerTof_TdfDirectory(datasetDirectory, instrumentName);
+                    mRetData.CloseoutType = TestBrukerTof_TdfDirectory(datasetDirectoryPath, instrumentName);
                     break;
 
                 case InstrumentClass.Sciex_QTrap:
-                    mRetData.CloseoutType = TestSciexQTrapFile(datasetDirectory, mDataset);
+                    mRetData.CloseoutType = TestSciexQTrapFile(datasetDirectoryPath, mDataset);
                     break;
 
                 case InstrumentClass.Agilent_Ion_Trap:
                     // .d directory with a DATA.MS file
-                    mRetData.CloseoutType = TestAgilentIonTrapDirectory(datasetDirectory);
+                    mRetData.CloseoutType = TestAgilentIonTrapDirectory(datasetDirectoryPath);
 
                     if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
                     {
                         // Convert the .d directory to a .CDF file
-                        if (!ConvertAgilentDotDDirectoryToCDF(datasetDirectory, openChromProgPath))
+                        if (!ConvertAgilentDotDDirectoryToCDF(datasetDirectoryPath, openChromProgPath))
                         {
                             if (string.IsNullOrEmpty(mRetData.CloseoutMsg))
                             {
@@ -250,20 +251,20 @@ namespace DatasetIntegrityPlugin
                     break;
 
                 case InstrumentClass.Agilent_TOF_V2:
-                    mRetData.CloseoutType = TestAgilentTOFv2Directory(datasetDirectory);
+                    mRetData.CloseoutType = TestAgilentTOFv2Directory(datasetDirectoryPath);
                     break;
 
                 case InstrumentClass.Illumina_Sequencer:
-                    mRetData.CloseoutType = TestIlluminaSequencerDirectory(datasetDirectory);
+                    mRetData.CloseoutType = TestIlluminaSequencerDirectory(datasetDirectoryPath);
                     break;
 
                 case InstrumentClass.Shimadzu_GC:
-                    dataFileNamePath = Path.Combine(datasetDirectory, mDataset + InstrumentClassInfo.DOT_QGD_EXTENSION);
+                    dataFileNamePath = Path.Combine(datasetDirectoryPath, mDataset + InstrumentClassInfo.DOT_QGD_EXTENSION);
                     mRetData.CloseoutType = TestShimadzuQGDFile(dataFileNamePath);
                     break;
 
                 case InstrumentClass.Waters_IMS:
-                    mRetData.CloseoutType = TestWatersDotRawDirectory(datasetDirectory);
+                    mRetData.CloseoutType = TestWatersDotRawDirectory(datasetDirectoryPath);
                     break;
 
                 default:
