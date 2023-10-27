@@ -626,13 +626,19 @@ namespace CaptureToolPlugin
             // Determine whether or not we will use Copy with Resume for all files for this dataset
             // This determines whether or not we add x_ to an existing file or directory,
             // and determines whether we use CopyDirectory or CopyDirectoryWithResume/CopyFileWithResume
-            var copyWithResume = false;
+            bool copyWithResume;
+
+            // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
             switch (instrumentClass)
             {
                 case InstrumentClass.BrukerFT_BAF:
                 case InstrumentClass.BrukerMALDI_Imaging:
                 case InstrumentClass.BrukerMALDI_Imaging_V2:
                     copyWithResume = true;
+                    break;
+
+                default:
+                    copyWithResume = false;
                     break;
             }
 
@@ -739,7 +745,6 @@ namespace CaptureToolPlugin
 
             var computerName = System.Net.Dns.GetHostName();
 
-            datasetDirectoryPath = "";
             var pendingRenamesMap = new Dictionary<FileSystemInfo, string>();
             pendingRenames = pendingRenamesMap;
 
@@ -759,6 +764,7 @@ namespace CaptureToolPlugin
                 LogError(returnData.CloseoutMsg);
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 
+                datasetDirectoryPath = string.Empty;
                 return false;
             }
 
@@ -794,6 +800,7 @@ namespace CaptureToolPlugin
                 // Example: \\proto-5\
                 if (!ValidateStoragePath(storageVolExternal, "Parameter Storage_Vol_External", @"\\proto-5", returnData))
                 {
+                    datasetDirectoryPath = string.Empty;
                     return false;
                 }
 
@@ -804,6 +811,7 @@ namespace CaptureToolPlugin
                 // Example: E:\
                 if (!ValidateStoragePath(storageVol, "Parameter Storage_Vol", @"E:\", returnData))
                 {
+                    datasetDirectoryPath = string.Empty;
                     return false;
                 }
 
@@ -814,6 +822,7 @@ namespace CaptureToolPlugin
 
             if (!ValidateStoragePath(storagePath, "Parameter Storage_Path", @"Lumos01\2020_3", returnData))
             {
+                datasetDirectoryPath = string.Empty;
                 return false;
             }
 
@@ -825,6 +834,7 @@ namespace CaptureToolPlugin
             {
                 if (!ValidateStoragePathInstrument(instrumentName, storagePath, storagePathParts, returnData))
                 {
+                    datasetDirectoryPath = string.Empty;
                     return false;
                 }
             }
@@ -834,6 +844,7 @@ namespace CaptureToolPlugin
 
                 if (!ValidateStoragePathInstrument(instrumentName, storagePath, storagePathPartsAlt, returnData))
                 {
+                    datasetDirectoryPath = string.Empty;
                     return false;
                 }
             }
@@ -844,11 +855,13 @@ namespace CaptureToolPlugin
             // Confirm that the storage share has no invalid characters
             if (NameHasInvalidCharacter(storageDirectoryPath, "Storage share path", false, returnData))
             {
+                datasetDirectoryPath = string.Empty;
                 return false;
             }
 
             if (!ValidateStoragePath(storageDirectoryPath, "Path.Combine(tempVol, storagePath)", @"\\proto-8\Eclipse01\2020_3\", returnData))
             {
+                datasetDirectoryPath = string.Empty;
                 return false;
             }
 
