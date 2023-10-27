@@ -747,7 +747,7 @@ namespace CaptureToolPlugin
 
             if (string.IsNullOrWhiteSpace(datasetDirectory) ||
                 (!datasetDirectory.Equals(datasetName, StringComparison.OrdinalIgnoreCase) &&
-                 !(datasetDirectory.Split('\\', '/')[0]).Equals(datasetName, StringComparison.OrdinalIgnoreCase)))
+                 !(datasetDirectory.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)[0]).Equals(datasetName, StringComparison.OrdinalIgnoreCase)))
             {
                 // datasetDirectory should either equal datasetName or be a path that starts with datasetName
                 // e.g. for datasetName 'test': 'test' and 'test\subDir' are valid, 'test2' and test2\subDir are not
