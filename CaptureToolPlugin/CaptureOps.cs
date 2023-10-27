@@ -751,9 +751,10 @@ namespace CaptureToolPlugin
             {
                 // datasetDirectory should either equal datasetName or be a path that starts with datasetName
                 // e.g. for datasetName 'test': 'test' and 'test\subDir' are valid, 'test2' and test2\subDir are not
+
                 returnData.CloseoutMsg = string.Format(
-                    "Provided dataset directory '{0}' does not start with dataset name '{1}'",
-                    datasetDirectory, datasetName);
+                    "The Directory task parameter is invalid since it does not start with the dataset name; expecting \"{0}\" but actually \"{1}\"",
+                    datasetName, datasetDirectory);
 
                 LogError(returnData.CloseoutMsg);
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
