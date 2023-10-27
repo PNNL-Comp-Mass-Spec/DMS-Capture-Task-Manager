@@ -1290,6 +1290,12 @@ namespace CaptureToolPlugin
             IReadOnlyCollection<string> storagePathParts,
             ToolReturnData returnData)
         {
+            if (mIsLcDataCapture)
+            {
+                // Check will generally fail for LC data capture.
+                return true;
+            }
+
             if (storagePathParts.Count >= 2 && storagePathParts.First().Equals(instrumentName))
             {
                 return true;
