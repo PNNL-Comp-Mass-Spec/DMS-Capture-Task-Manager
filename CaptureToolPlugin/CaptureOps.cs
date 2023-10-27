@@ -734,7 +734,14 @@ namespace CaptureToolPlugin
         /// <param name="datasetDirectoryPath">Directory path files should be copied to</param>
         /// <param name="pendingRenames">Files and/or directories to rename</param>
         /// <returns>False if error, and processing should exit.  returnData includes addition details on errors</returns>
-        public bool PrepareTargetDirectory(ITaskParams taskParams, ToolReturnData returnData, string datasetName, InstrumentClass instrumentClass, bool copyWithResume, out string datasetDirectoryPath, out IReadOnlyDictionary<FileSystemInfo, string> pendingRenames)
+        public bool PrepareTargetDirectory(
+            ITaskParams taskParams,
+            ToolReturnData returnData,
+            string datasetName,
+            InstrumentClass instrumentClass,
+            bool copyWithResume,
+            out string datasetDirectoryPath,
+            out IReadOnlyDictionary<FileSystemInfo, string> pendingRenames)
         {
             var storageVol = taskParams.GetParam("Storage_Vol").Trim();                     // Example: E:\
             var storagePath = taskParams.GetParam("Storage_Path").Trim();                   // Example: Exact04\2012_1\
