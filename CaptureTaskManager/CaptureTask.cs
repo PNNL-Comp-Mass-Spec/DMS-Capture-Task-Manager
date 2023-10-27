@@ -131,9 +131,15 @@ namespace CaptureTaskManager
             return valueIfMissing;
         }
 
+        /// <summary>
+        /// Converts a date stored as a string to a DateTime instance
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="valueIfMissing"></param>
+        /// <param name="dateFormat">Required date format</param>
+        /// <returns>The converted date, or valueIfMissing if not a valid date</returns>
         public DateTime GetParamAsDate(string name, DateTime valueIfMissing = default, string dateFormat = "yyyy-MM-dd HH:mm:ss")
         {
-            //"yyyy-MM-dd HH:mm:ss";
             if (mJobParams.TryGetValue(name, out var valueText) &&
                 DateTime.TryParseExact(valueText, dateFormat, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var dateTime))
             {

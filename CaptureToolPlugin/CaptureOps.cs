@@ -78,7 +78,7 @@ namespace CaptureToolPlugin
         /// <param name="fileTools">Instance of FileTools</param>
         /// <param name="useBioNet">Flag to indicate if source instrument is on Bionet</param>
         /// <param name="traceMode">When true, show debug messages at the console</param>
-        /// <param name="isLcCapture">Bool to flag if this is a LC data capture operation</param>
+        /// <param name="isLcCapture">When true, this is an LC data capture operation</param>
         public CaptureOps(IMgrParams mgrParams, FileTools fileTools, bool useBioNet, bool traceMode, bool isLcCapture)
         {
             mMgrParams = mgrParams;
@@ -599,9 +599,9 @@ namespace CaptureToolPlugin
                 {
                     // Don't run yet
                     // Assumptions that aren't always correct, but are good enough for this use:
-                    // * All runs require column equilibration time (infusion and some other instrument runs don't need this)
-                    // * Column equilibration is run after the MS acquisition (it can be run before MS acquisition)
-                    // * Column equilibration time is the same as the MS run time (it can often be shorter, but rarely longer)
+                    // - All runs require column equilibration time (infusion and some other instrument runs don't need this)
+                    // - Column equilibration is run after the MS acquisition (it can be run before MS acquisition)
+                    // - Column equilibration time is the same as the MS run time (it can often be shorter, but rarely longer)
                     returnData.CloseoutMsg = "Minimum post-acq delay for LC data capture (MS acq length + 30 minutes) not reached";
                     returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
                     return false;
