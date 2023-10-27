@@ -1355,6 +1355,7 @@ namespace CaptureToolPlugin
                 case InstrumentClass.Thermo_Exactive:
                 case InstrumentClass.Triple_Quad:
                 case InstrumentClass.Shimadzu_GC:
+                case InstrumentClass.Thermo_SII_LC:
                     if (datasetInfo.DatasetType != InstrumentFileLayout.File)
                     {
                         if (datasetInfo.DatasetType == InstrumentFileLayout.DirectoryNoExt)

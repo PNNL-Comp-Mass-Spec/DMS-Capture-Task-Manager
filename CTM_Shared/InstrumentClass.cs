@@ -31,5 +31,6 @@ public enum InstrumentClass
     Shimadzu_GC = 26,               // Shimadzu_GC_MS_01
     BrukerTOF_TDF = 27,             // Bruker_timsTOF
     FT_Booster_Data = 28,           // 21T_Booster
-    IMS_Agilent_TOF_DotD = 29       // Data is acquired natively as .D directories: IMS08, IMS09, IMS10, IMS11
+    IMS_Agilent_TOF_DotD = 29,      // Data is acquired natively as .D directories: IMS08, IMS09, IMS10, IMS11
+    Thermo_SII_LC = 30              // Thermo LC data files from SII (Standard Instrument Integration) for Xcalibur
 }

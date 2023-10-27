@@ -163,6 +163,7 @@ namespace DatasetIntegrityPlugin
                     mRetData.CloseoutType = TestGQExactiveFile(dataFileNamePath);
                     break;
 
+                case InstrumentClass.Thermo_SII_LC: // Use the same logic as LTQ_FT; we don't currently have a reason to change what is checked for the LC data files
                 case InstrumentClass.LTQ_FT:
                     dataFileNamePath = Path.Combine(datasetDirectoryPath, mDataset + InstrumentClassInfo.DOT_RAW_EXTENSION);
 
