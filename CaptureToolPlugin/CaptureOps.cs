@@ -897,44 +897,55 @@ namespace CaptureToolPlugin
 
             // Verify that dataset directory path doesn't already exist or is empty
             // Example: \\proto-9\VOrbiETD02\2011_2\PTO_Na_iTRAQ_2_17May11_Owl_11-05-09
-            if (ValidateDirectoryPath(datasetDirectoryPath))
+
+            if (!ValidateDirectoryPath(datasetDirectoryPath))
             {
-                var maxFileCountToAllowResume = 0;
-                var maxInstrumentDirCountToAllowResume = 0;
-                var maxNonInstrumentDirCountToAllowResume = 0;
-
-                if (instrumentClass is InstrumentClass.BrukerMALDI_Imaging or InstrumentClass.BrukerMALDI_Imaging_V2)
-                {
-                    maxFileCountToAllowResume = 20;
-                    maxInstrumentDirCountToAllowResume = 20;
-                    maxNonInstrumentDirCountToAllowResume = 1;
-                }
-
-                // Dataset directory exists, so take action specified in configuration
-                if (!PerformDSExistsActions(datasetDirectoryPath,
-                                            copyWithResume,
-                                            maxFileCountToAllowResume,
-                                            maxInstrumentDirCountToAllowResume,
-                                            maxNonInstrumentDirCountToAllowResume,
-                                            returnData,
-                                            pendingRenamesMap))
-                {
-                    PossiblyStoreErrorMessage(returnData);
-
-                    if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
-                    {
-                        returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                    }
-
-                    if (string.IsNullOrEmpty(returnData.CloseoutMsg))
-                    {
-                        returnData.CloseoutMsg = "PerformDSExistsActions returned false";
-                    }
-                    return false;
-                }
+                // The directory does not exist
+                return true;
             }
 
-            return true;
+            int maxFileCountToAllowResume;
+            int maxInstrumentDirCountToAllowResume;
+            int maxNonInstrumentDirCountToAllowResume;
+
+            if (instrumentClass is InstrumentClass.BrukerMALDI_Imaging or InstrumentClass.BrukerMALDI_Imaging_V2)
+            {
+                maxFileCountToAllowResume = 20;
+                maxInstrumentDirCountToAllowResume = 20;
+                maxNonInstrumentDirCountToAllowResume = 1;
+            }
+            else
+            {
+                maxFileCountToAllowResume = 0;
+                maxInstrumentDirCountToAllowResume = 0;
+                maxNonInstrumentDirCountToAllowResume = 0;
+            }
+
+            // Dataset directory exists, so take action specified in configuration
+            if (PerformDSExistsActions(
+                    datasetDirectoryPath,
+                    copyWithResume,
+                    maxFileCountToAllowResume,
+                    maxInstrumentDirCountToAllowResume,
+                    maxNonInstrumentDirCountToAllowResume,
+                    returnData,
+                    pendingRenamesMap))
+            {
+                return true;
+            }
+
+            PossiblyStoreErrorMessage(returnData);
+
+            if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
+            {
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+            }
+
+            if (string.IsNullOrEmpty(returnData.CloseoutMsg))
+            {
+                returnData.CloseoutMsg = "PerformDSExistsActions returned false";
+            }
+            return false;
         }
 
         /// <summary>

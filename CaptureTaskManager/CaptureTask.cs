@@ -109,12 +109,7 @@ namespace CaptureTaskManager
         {
             if (mJobParams.TryGetValue(name, out var valueText))
             {
-                if (float.TryParse(valueText, out var value))
-                {
-                    return value;
-                }
-
-                return valueIfMissing;
+                return float.TryParse(valueText, out var value) ? value : valueIfMissing;
             }
 
             return valueIfMissing;
@@ -130,12 +125,7 @@ namespace CaptureTaskManager
         {
             if (mJobParams.TryGetValue(name, out var valueText))
             {
-                if (int.TryParse(valueText, out var value))
-                {
-                    return value;
-                }
-
-                return valueIfMissing;
+                return int.TryParse(valueText, out var value) ? value : valueIfMissing;
             }
 
             return valueIfMissing;
@@ -144,13 +134,10 @@ namespace CaptureTaskManager
         public DateTime GetParamAsDate(string name, DateTime valueIfMissing = default, string dateFormat = "yyyy-MM-dd HH:mm:ss")
         {
             //"yyyy-MM-dd HH:mm:ss";
-            if (mJobParams.TryGetValue(name, out var valueText))
+            if (mJobParams.TryGetValue(name, out var valueText) &&
+                DateTime.TryParseExact(valueText, dateFormat, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var dateTime))
             {
-                if (DateTime.TryParseExact(valueText, dateFormat, CultureInfo.InvariantCulture,
-                        DateTimeStyles.AssumeLocal, out var dateTime))
-                {
-                    return dateTime;
-                }
+                return dateTime;
             }
 
             return valueIfMissing;
