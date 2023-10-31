@@ -651,6 +651,13 @@ namespace CaptureToolPlugin
 
             if (!CheckSourceFiles(taskParams, returnData, datasetName, instrumentClass, out var sourceDirectoryPath, out var datasetInfo))
             {
+                if (mIsLcDataCapture)
+                {
+                    // Capture possible LC data, even if no LC data file was found
+                    var lcCapture = new LCDataCapture(mMgrParams);
+                    lcCapture.CaptureLCMethodFile(datasetInfo.DatasetName, datasetDirectoryPath);
+                }
+
                 return false;
             }
 
@@ -1141,6 +1148,13 @@ namespace CaptureToolPlugin
                 }
 
                 LogError(returnData.CloseoutMsg + " (" + datasetName + ", job " + jobNum + "); " + directoryStatsMsg);
+
+                if (mIsLcDataCapture)
+                {
+                    // For LC Data capture, if there is no dataset file we do not fail the capture, so report 'skipped'
+                    returnData.EvalCode = EnumEvalCode.EVAL_CODE_SKIPPED;
+                }
+
                 sourceIsValid = false;
             }
             else
