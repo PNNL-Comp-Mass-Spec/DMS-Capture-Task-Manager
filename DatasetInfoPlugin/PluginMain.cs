@@ -290,6 +290,15 @@ namespace DatasetInfoPlugin
                 return returnData;
             }
 
+            if (IsLcDataCapture && rawDataType == DataFormat.WatersRawFolder)
+            {
+                // We currently cannot extract chromatograms from Waters Raw datasets, so report the step 'Skipped'
+                returnData.CloseoutMsg = string.Empty;
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                returnData.EvalCode = EnumEvalCode.EVAL_CODE_SKIPPED;
+                returnData.EvalMsg = $"Dataset info is not implemented for data type {rawDataTypeName}, instrument class {instClass}";
+            }
+
             if (totalDatasetFilesOrDirectories == 0 || string.IsNullOrEmpty(fileOrDirectoryRelativePaths.First()))
             {
                 // There was a problem with getting the file name; Details reported by called method
