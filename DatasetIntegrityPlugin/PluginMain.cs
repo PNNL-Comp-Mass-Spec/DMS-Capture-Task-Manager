@@ -268,6 +268,10 @@ namespace DatasetIntegrityPlugin
                     mRetData.CloseoutType = TestWatersDotRawDirectory(datasetDirectoryPath);
                     break;
 
+                case InstrumentClass.Waters_Acquity_LC:
+                    mRetData.CloseoutType = TestWatersLCDotRawDirectory(datasetDirectoryPath);
+                    break;
+
                 default:
                     mRetData.EvalMsg = "No integrity test available for instrument class " + instClassName;
                     LogWarning(mRetData.EvalMsg);
@@ -2496,6 +2500,85 @@ namespace DatasetIntegrityPlugin
 
             // ReSharper disable once StringLiteralTypo
             const string errorMessage = "Invalid dataset: _FUNCTNS.INF file not found";
+            LogError(errorMessage);
+            mRetData.EvalMsg = AppendToComment(mRetData.EvalMsg, errorMessage);
+
+            return EnumCloseOutType.CLOSEOUT_FAILED;
+        }
+
+        /// <summary>
+        /// Tests the integrity of a Waters LC .raw directory
+        /// </summary>
+        /// <param name="datasetDirectoryPath"></param>
+        private EnumCloseOutType TestWatersLCDotRawDirectory(string datasetDirectoryPath)
+        {
+            // There should be one .raw directory in the dataset
+            var datasetDirectory = new DirectoryInfo(datasetDirectoryPath);
+            var dotRawDirectories = datasetDirectory.GetDirectories("*.raw").ToList();
+
+            if (dotRawDirectories.Count < 1)
+            {
+                mRetData.EvalMsg = "Invalid dataset: No .raw directories found";
+                LogError(mRetData.EvalMsg);
+                return EnumCloseOutType.CLOSEOUT_FAILED;
+            }
+
+            if (dotRawDirectories.Count == 1)
+            {
+                var baseName = Path.GetFileNameWithoutExtension(dotRawDirectories[0].Name);
+
+                if (!string.Equals(mDataset, baseName, StringComparison.OrdinalIgnoreCase))
+                {
+                    mRetData.EvalMsg = string.Format(
+                        "Invalid dataset: directory name {0} does not match the dataset name",
+                        dotRawDirectories[0].Name);
+
+                    LogError(mRetData.EvalMsg);
+                    return EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+            }
+
+            if (dotRawDirectories.Count > 1)
+            {
+                mRetData.EvalMsg = "Invalid dataset: Multiple .raw directories found";
+                LogError(mRetData.EvalMsg);
+                return EnumCloseOutType.CLOSEOUT_FAILED;
+            }
+
+            // Verify that at least one _CHRO000.DAT or _CHRO001.DAT file exists
+            var datFiles = PathUtils.FindFilesWildcard(dotRawDirectories[0], "_CHRO*.DAT").ToList();
+
+            var fileExists = datFiles.Count > 0;
+
+            if (!fileExists)
+            {
+                mRetData.EvalMsg = "Invalid dataset: _CHRO001.DAT file not found";
+                LogError(mRetData.EvalMsg);
+                return EnumCloseOutType.CLOSEOUT_FAILED;
+            }
+
+            // Verify the size of the .dat file(s)
+            var largestDatFileKB = GetLargestFileSizeKB(datFiles);
+
+            if (largestDatFileKB < WATERS_FUNC_DAT_FILE_MIN_SIZE_KB)
+            {
+                ReportFileSizeTooSmall(datFiles.First().Name, datFiles.First().FullName, largestDatFileKB, WATERS_FUNC_DAT_FILE_MIN_SIZE_KB);
+                return EnumCloseOutType.CLOSEOUT_FAILED;
+            }
+
+            // ReSharper disable CommentTypo
+            // Verify that the _CHROMS.INF exists
+            // ReSharper restore CommentTypo
+
+            var infFile = new FileInfo(Path.Combine(dotRawDirectories[0].FullName, "_CHRO<S.INF"));
+
+            if (infFile.Exists)
+            {
+                return EnumCloseOutType.CLOSEOUT_SUCCESS;
+            }
+
+            // ReSharper disable once StringLiteralTypo
+            const string errorMessage = "Invalid dataset: _CHROMS.INF file not found";
             LogError(errorMessage);
             mRetData.EvalMsg = AppendToComment(mRetData.EvalMsg, errorMessage);
 
