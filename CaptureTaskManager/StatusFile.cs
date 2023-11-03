@@ -9,6 +9,8 @@ using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Xml;
 using PRISM;
 
@@ -22,6 +24,10 @@ namespace CaptureTaskManager
         // Ignore Spelling: yyyy-MM-dd, hh:mm:ss tt, tcp
 
         public const string FLAG_FILE_NAME = "flagFile.txt";
+
+        private static readonly Regex mFindAmpersand = new("[&]", RegexOptions.Compiled);
+
+        private static readonly Regex mFindLessThanOrGreaterThan = new("[<>]", RegexOptions.Compiled);
 
         private DateTime mLastFileWriteTime;
 
@@ -296,10 +302,15 @@ namespace CaptureTaskManager
             // Create a new memory stream in which to write the XML
             var memStream = new MemoryStream();
 
-            using var writer = new XmlTextWriter(memStream, System.Text.Encoding.UTF8);
+            var settings = new XmlWriterSettings
+            {
+                Encoding = Encoding.UTF8,
+                Indent = true,
+                IndentChars = "  ",
+                NewLineHandling = NewLineHandling.None
+            };
 
-            writer.Formatting = Formatting.Indented;
-            writer.Indentation = 2;
+            using var writer = XmlWriter.Create(memStream, settings);
 
             // Create the XML document in memory
             writer.WriteStartDocument(true);
@@ -326,7 +337,7 @@ namespace CaptureTaskManager
 
             foreach (var errMsg in StatusData.ErrorQueue)
             {
-                writer.WriteElementString("ErrMsg", ValidateTextLength(errMsg, 2000));
+                writer.WriteElementString("ErrMsg", ValidateTextLength(errMsg, 1950));
             }
 
             writer.WriteEndElement(); // RecentErrorMessages
@@ -345,7 +356,7 @@ namespace CaptureTaskManager
             writer.WriteElementString("Job", status.JobNumber.ToString());
             writer.WriteElementString("Step", status.JobStep.ToString());
             writer.WriteElementString("Dataset", ValidateTextLength(status.Dataset, 255));
-            writer.WriteElementString("MostRecentLogMessage", ValidateTextLength(StatusData.MostRecentLogMessage, 2000));
+            writer.WriteElementString("MostRecentLogMessage", ValidateTextLength(StatusData.MostRecentLogMessage, 1950));
             writer.WriteElementString("MostRecentJobInfo", ValidateTextLength(status.MostRecentJobInfo, 255));
             writer.WriteEndElement(); // TaskDetails
             writer.WriteEndElement(); // Task
@@ -371,13 +382,34 @@ namespace CaptureTaskManager
         /// </summary>
         /// <param name="value">Text value to examine</param>
         /// <param name="maxLength">Maximum allowed number of characters</param>
+        /// <param name="accountForXmlEscaping">When true, assume that the text will be converted to XML and less than and greater than signs will be converted to &lt; and &gt;</param>
         /// <returns>Either the original value, or the value truncated to maxLength characters</returns>
-        private static string ValidateTextLength(string value, int maxLength)
+        public static string ValidateTextLength(string value, int maxLength, bool accountForXmlEscaping = true)
         {
             if (string.IsNullOrEmpty(value))
                 return string.Empty;
 
-            return value.Length <= maxLength ? value : value.Substring(0, maxLength);
+            var textLength = value.Length;
+
+            int effectiveLength;
+
+            if (accountForXmlEscaping)
+            {
+                var textToCheck = textLength <= maxLength ? value : value.Substring(0, maxLength);
+
+                var matches1 = mFindAmpersand.Matches(textToCheck);
+                var matches2 = mFindLessThanOrGreaterThan.Matches(textToCheck);
+
+                // & will be replaced with &amp; so add 4 for each character found
+                // < and > will be replaced with &lt; and &gt; so add 3 for each character found
+                effectiveLength = textLength + matches1.Count * 4 + matches2.Count * 3;
+            }
+            else
+            {
+                effectiveLength = textLength;
+            }
+
+            return effectiveLength <= maxLength ? value : value.Substring(0, maxLength - (effectiveLength - textLength));
         }
 
         /// <summary>
