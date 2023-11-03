@@ -2570,7 +2570,7 @@ namespace DatasetIntegrityPlugin
             // Verify that the _CHROMS.INF exists
             // ReSharper restore CommentTypo
 
-            var infFile = new FileInfo(Path.Combine(dotRawDirectories[0].FullName, "_CHRO<S.INF"));
+            var infFile = new FileInfo(Path.Combine(dotRawDirectories[0].FullName, "_CHROMS.INF"));
 
             if (infFile.Exists)
             {
