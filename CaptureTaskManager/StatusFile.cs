@@ -138,19 +138,6 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Configure the Message Queue logging settings
-        /// </summary>
-        /// <param name="logStatusToMessageQueue"></param>
-        /// <param name="msgQueueURI"></param>
-        /// <param name="messageQueueTopicMgrStatus"></param>
-        public void ConfigureMessageQueueLogging(bool logStatusToMessageQueue, string msgQueueURI, string messageQueueTopicMgrStatus)
-        {
-            LogToMsgQueue = logStatusToMessageQueue;
-            MessageQueueURI = msgQueueURI;
-            MessageQueueTopic = messageQueueTopicMgrStatus;
-        }
-
-        /// <summary>
         /// Returns the directory path that contains the program .exe
         /// </summary>
         private string AppDirectoryPath()
@@ -175,6 +162,19 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
+        /// Configure the Message Queue logging settings
+        /// </summary>
+        /// <param name="logStatusToMessageQueue"></param>
+        /// <param name="msgQueueURI"></param>
+        /// <param name="messageQueueTopicMgrStatus"></param>
+        public void ConfigureMessageQueueLogging(bool logStatusToMessageQueue, string msgQueueURI, string messageQueueTopicMgrStatus)
+        {
+            LogToMsgQueue = logStatusToMessageQueue;
+            MessageQueueURI = msgQueueURI;
+            MessageQueueTopic = messageQueueTopicMgrStatus;
+        }
+
+        /// <summary>
         /// Converts the manager status enum to a string value
         /// </summary>
         /// <param name="statusEnum">An IStatusFile.EnumMgrStatus object</param>
@@ -195,7 +195,7 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Converts the manager status enum to a string value
+        /// Converts the task status detail enum to a string value
         /// </summary>
         /// <param name="statusEnum">An IStatusFile.EnumTaskStatusDetail object</param>
         /// <returns>String representation of input object</returns>
@@ -239,38 +239,6 @@ namespace CaptureTaskManager
                 OnErrorEvent("DeleteStatusFlagFile, " + ex.Message);
                 return false;
             }
-        }
-
-        /// <summary>
-        /// Return the ProcessID of the Analysis manager
-        /// </summary>
-        public int GetProcessID()
-        {
-            return Process.GetCurrentProcess().Id;
-        }
-
-        /// <summary>
-        /// Get the directory path for the status file tracked by FileNamePath
-        /// </summary>
-        private string GetStatusFileDirectory()
-        {
-            var statusFileDirectory = Path.GetDirectoryName(FileNamePath);
-
-            if (string.IsNullOrWhiteSpace(statusFileDirectory))
-            {
-                return ".";
-            }
-
-            return statusFileDirectory;
-        }
-
-        /// <summary>
-        /// Writes the status to the message queue
-        /// </summary>
-        /// <param name="statusXML">A string containing the XML to write</param>
-        private void LogStatusToMessageQueue(string statusXML)
-        {
-            MonitorUpdateRequired?.Invoke(statusXML);
         }
 
         /// <summary>
@@ -375,6 +343,132 @@ namespace CaptureTaskManager
             memStream.Close();
 
             return xmlText;
+        }
+
+        /// <summary>
+        /// Return the ProcessID of the Analysis manager
+        /// </summary>
+        public int GetProcessID()
+        {
+            return Process.GetCurrentProcess().Id;
+        }
+
+        /// <summary>
+        /// Total time the job has been running
+        /// </summary>
+        /// <returns>Number of hours manager has been processing job</returns>
+        private float GetRunTime()
+        {
+            return (float)DateTime.UtcNow.Subtract(TaskStartTime).TotalHours;
+        }
+
+        /// <summary>
+        /// Get the directory path for the status file tracked by FileNamePath
+        /// </summary>
+        private string GetStatusFileDirectory()
+        {
+            var statusFileDirectory = Path.GetDirectoryName(FileNamePath);
+
+            if (string.IsNullOrWhiteSpace(statusFileDirectory))
+            {
+                return ".";
+            }
+
+            return statusFileDirectory;
+        }
+
+        /// <summary>
+        /// Writes the status to the message queue
+        /// </summary>
+        /// <param name="statusXML">A string containing the XML to write</param>
+        private void LogStatusToMessageQueue(string statusXML)
+        {
+            MonitorUpdateRequired?.Invoke(statusXML);
+        }
+
+        /// <summary>
+        /// Updates status file
+        /// (Overload to update when completion percentage is the only change)
+        /// </summary>
+        /// <param name="percentComplete">Job completion percentage (value between 0 and 100)</param>
+        public void UpdateAndWrite(float percentComplete)
+        {
+            Progress = percentComplete;
+            WriteStatusFile();
+        }
+
+        /// <summary>
+        /// Updates status file
+        /// (Overload to update file when status and completion percentage change)
+        /// </summary>
+        /// <param name="status">Job status enum</param>
+        /// <param name="percentComplete">Job completion percentage (value between 0 and 100)</param>
+        public void UpdateAndWrite(EnumTaskStatusDetail status, float percentComplete)
+        {
+            TaskStatusDetail = status;
+            Progress = percentComplete;
+
+            WriteStatusFile();
+        }
+
+        /// <summary>
+        /// Sets status file to show manager not running
+        /// </summary>
+        /// <param name="mgrError">TRUE if manager not running due to error; FALSE otherwise</param>
+        public void UpdateStopped(bool mgrError)
+        {
+            ClearCachedInfo();
+
+            if (mgrError)
+            {
+                MgrStatus = EnumMgrStatus.Stopped_Error;
+            }
+            else
+            {
+                MgrStatus = EnumMgrStatus.Stopped;
+            }
+
+            TaskStatus = EnumTaskStatus.No_Task;
+            TaskStatusDetail = EnumTaskStatusDetail.No_Task;
+
+            WriteStatusFile();
+        }
+
+        /// <summary>
+        /// Updates status file to show manager disabled
+        /// </summary>
+        /// <param name="disabledLocally">TRUE if manager disabled locally, otherwise FALSE</param>
+        public void UpdateDisabled(bool disabledLocally)
+        {
+            ClearCachedInfo();
+
+            if (disabledLocally)
+            {
+                MgrStatus = EnumMgrStatus.Disabled_Local;
+            }
+            else
+            {
+                MgrStatus = EnumMgrStatus.Disabled_MC;
+            }
+
+            TaskStatus = EnumTaskStatus.No_Task;
+            TaskStatusDetail = EnumTaskStatusDetail.No_Task;
+
+            WriteStatusFile();
+        }
+
+        /// <summary>
+        /// Updates status file to show manager in idle state
+        /// </summary>
+        public void UpdateIdle()
+        {
+            ClearCachedInfo();
+
+            MgrStatus = EnumMgrStatus.Running;
+            TaskStatus = EnumTaskStatus.No_Task;
+            TaskStatusDetail = EnumTaskStatusDetail.No_Task;
+
+            WriteStatusFile();
         }
 
         /// <summary>
@@ -539,100 +633,6 @@ namespace CaptureTaskManager
             }
 
             return success;
-        }
-
-        /// <summary>
-        /// Updates status file
-        /// (Overload to update when completion percentage is the only change)
-        /// </summary>
-        /// <param name="percentComplete">Job completion percentage (value between 0 and 100)</param>
-        public void UpdateAndWrite(float percentComplete)
-        {
-            Progress = percentComplete;
-            WriteStatusFile();
-        }
-
-        /// <summary>
-        /// Updates status file
-        /// (Overload to update file when status and completion percentage change)
-        /// </summary>
-        /// <param name="status">Job status enum</param>
-        /// <param name="percentComplete">Job completion percentage (value between 0 and 100)</param>
-        public void UpdateAndWrite(EnumTaskStatusDetail status, float percentComplete)
-        {
-            TaskStatusDetail = status;
-            Progress = percentComplete;
-
-            WriteStatusFile();
-        }
-
-        /// <summary>
-        /// Sets status file to show manager not running
-        /// </summary>
-        /// <param name="mgrError">TRUE if manager not running due to error; FALSE otherwise</param>
-        public void UpdateStopped(bool mgrError)
-        {
-            ClearCachedInfo();
-
-            if (mgrError)
-            {
-                MgrStatus = EnumMgrStatus.Stopped_Error;
-            }
-            else
-            {
-                MgrStatus = EnumMgrStatus.Stopped;
-            }
-
-            TaskStatus = EnumTaskStatus.No_Task;
-            TaskStatusDetail = EnumTaskStatusDetail.No_Task;
-
-            WriteStatusFile();
-        }
-
-        /// <summary>
-        /// Updates status file to show manager disabled
-        /// </summary>
-        /// <param name="disabledLocally">TRUE if manager disabled locally, otherwise FALSE</param>
-        public void UpdateDisabled(bool disabledLocally)
-        {
-            ClearCachedInfo();
-
-            if (disabledLocally)
-            {
-                MgrStatus = EnumMgrStatus.Disabled_Local;
-            }
-            else
-            {
-                MgrStatus = EnumMgrStatus.Disabled_MC;
-            }
-
-            TaskStatus = EnumTaskStatus.No_Task;
-            TaskStatusDetail = EnumTaskStatusDetail.No_Task;
-
-            WriteStatusFile();
-        }
-
-        /// <summary>
-        /// Updates status file to show manager in idle state
-        /// </summary>
-        public void UpdateIdle()
-        {
-            ClearCachedInfo();
-
-            MgrStatus = EnumMgrStatus.Running;
-            TaskStatus = EnumTaskStatus.No_Task;
-            TaskStatusDetail = EnumTaskStatusDetail.No_Task;
-
-            WriteStatusFile();
-        }
-
-        /// <summary>
-        /// Total time the job has been running
-        /// </summary>
-        /// <returns>Number of hours manager has been processing job</returns>
-        private float GetRunTime()
-        {
-            return (float)DateTime.UtcNow.Subtract(TaskStartTime).TotalHours;
         }
 
         public event StatusMonitorUpdateReceived MonitorUpdateRequired;
