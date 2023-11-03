@@ -8,7 +8,8 @@ using System.Diagnostics.CodeAnalysis;
 
 [assembly: SuppressMessage("Design", "RCS1075:Avoid empty catch clause that catches System.Exception.", Justification = "Safe to ignore connection closure issues", Scope = "member", Target = "~M:CaptureTaskManager.MessageSender.DestroyConnection")]
 [assembly: SuppressMessage("Design", "RCS1075:Avoid empty catch clause that catches System.Exception.", Justification = "Safe to ignore connection closure issues", Scope = "member", Target = "~M:CaptureTaskManager.MessageSender.Dispose")]
-[assembly: SuppressMessage("Readability", "RCS1123:Add parentheses when necessary.", Justification = "Parentheses not required", Scope = "member", Target = "~M:CaptureTaskManager.MainProgram.PerformMainLoop~System.Boolean")]
+[assembly: SuppressMessage("Readability", "RCS1123:Add parentheses when necessary.", Justification = "Parentheses not needed", Scope = "member", Target = "~M:CaptureTaskManager.MainProgram.PerformMainLoop~System.Boolean")]
+[assembly: SuppressMessage("Roslynator", "RCS1123:Add parentheses when necessary.", Justification = "Parentheses not needed", Scope = "member", Target = "~M:CaptureTaskManager.StatusFile.ValidateTextLength(System.String,System.Int32,System.Boolean)~System.String")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable name", Scope = "type", Target = "~T:CaptureTaskManager.CaptureTask")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable name", Scope = "type", Target = "~T:CaptureTaskManager.CaptureTaskMgrSettings")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable name", Scope = "type", Target = "~T:CaptureTaskManager.CleanupMgrErrors")]
