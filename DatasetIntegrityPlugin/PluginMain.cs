@@ -2554,6 +2554,7 @@ namespace DatasetIntegrityPlugin
             {
                 mRetData.EvalMsg = "Invalid dataset: _CHRO001.DAT file not found";
                 LogError(mRetData.EvalMsg);
+                mRetData.EvalCode = EnumEvalCode.EVAL_CODE_SKIPPED; // Report a 'skipped' code, rather than just failing
                 return EnumCloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -2581,6 +2582,7 @@ namespace DatasetIntegrityPlugin
             const string errorMessage = "Invalid dataset: _CHROMS.INF file not found";
             LogError(errorMessage);
             mRetData.EvalMsg = AppendToComment(mRetData.EvalMsg, errorMessage);
+            mRetData.EvalCode = EnumEvalCode.EVAL_CODE_SKIPPED; // Report a 'skipped' code, rather than just failing
 
             return EnumCloseOutType.CLOSEOUT_FAILED;
         }
