@@ -654,7 +654,19 @@ namespace CaptureToolPlugin
                 // No data file to copy from a remote computer (except Proto-5)
                 // Capture possible LC data
                 var lcCapture = new LCDataCapture(mMgrParams);
-                return lcCapture.CaptureLCMethodFile(datasetName, datasetDirectoryPath);
+                var noError = lcCapture.CaptureLCMethodFile(datasetName, datasetDirectoryPath, out var fileCopied);
+
+                // CaptureLCMethodFile only returns false if a matching file was found but the copy failed
+                // Make sure the state is set appropriately if no matching .lcmethod file was found.
+                if (noError && !fileCopied)
+                {
+                    returnData.EvalCode = EnumEvalCode.EVAL_CODE_SKIPPED;
+                    returnData.EvalMsg = $"No .lcmethod file found for dataset {datasetName}";
+                    returnData.CloseoutMsg = returnData.EvalMsg;
+                    returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                }
+
+                return noError;
             }
 
             if (!CheckSourceFiles(taskParams, returnData, datasetName, instrumentClass, out var sourceDirectoryPath, out var datasetInfo))

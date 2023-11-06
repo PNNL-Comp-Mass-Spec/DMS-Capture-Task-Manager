@@ -28,11 +28,26 @@ namespace CaptureToolPlugin
         /// <remarks>Returns true if the .lcmethod file is not found</remarks>
         /// <param name="datasetName"></param>
         /// <param name="datasetDirectoryPath"></param>
-        /// <returns>True if file found and copied; false if an error</returns>
+        /// <returns>True if file found and copied; false if an error; actually only returns false if a matching file was found but the copy failed.</returns>
         public bool CaptureLCMethodFile(string datasetName, string datasetDirectoryPath)
+        {
+            return CaptureLCMethodFile(datasetName, datasetDirectoryPath, out _);
+        }
+
+        /// <summary>
+        /// Looks for the LCMethod file for this dataset
+        /// Copies this file to the dataset directory
+        /// </summary>
+        /// <remarks>Returns true if the .lcmethod file is not found</remarks>
+        /// <param name="datasetName"></param>
+        /// <param name="datasetDirectoryPath"></param>
+        /// <param name="fileCopied">returns true if a file was found and copied</param>
+        /// <returns>True if file found and copied; false if an error; actually only returns false if a matching file was found but the copy failed.</returns>
+        public bool CaptureLCMethodFile(string datasetName, string datasetDirectoryPath, out bool fileCopied)
         {
             const string DEFAULT_METHOD_FOLDER_BASE_PATH = @"\\proto-5\BionetXfer\Run_Complete_Trigger\MethodFiles";
 
+            fileCopied = false;
             var success = true;
             var methodDirectoryBasePath = string.Empty;
 
@@ -152,6 +167,7 @@ namespace CaptureToolPlugin
                     {
                         var targetFilePath = Path.Combine(datasetDirectoryPath, methodFile.Name);
                         methodFile.CopyTo(targetFilePath, true);
+                        fileCopied = true;
                     }
                     catch (Exception ex)
                     {
