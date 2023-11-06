@@ -1467,6 +1467,14 @@ namespace DatasetInfoPlugin
                     isFile = false;
                     break;
 
+                case DataFormat.LCMSNetLCMethod:
+                    // 	LCMSNet .lcmethod file: no data to do anything with anyway
+                    //fileOrDirectoryName = mDataset + InstrumentClassInfo.DOT_LCMETHOD_EXTENSION;
+                    //isFile = true;
+
+                    LogMessage("Skipping MSFileInfoScanner since LCMSNet .lcmethod file");
+                    return new List<string> { INVALID_FILE_TYPE };
+
                 default:
                     // Other instruments; do not process them with MSFileInfoScanner
 

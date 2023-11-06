@@ -85,5 +85,10 @@ public enum DataFormat
     /// <summary>
     /// Used by Bruker timsTOF; Instead the .D directory is the analysis.tdf file
     /// </summary>
-    BrukerTOFTdf = 16
+    BrukerTOFTdf = 16,
+
+    /// <summary>
+    /// Used by LCMSNet LCs with no available pump method/pressure data
+    /// </summary>
+    LCMSNetLCMethod = 17
 }

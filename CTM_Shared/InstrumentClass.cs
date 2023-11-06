@@ -33,5 +33,6 @@ public enum InstrumentClass
     FT_Booster_Data = 28,           // 21T_Booster
     IMS_Agilent_TOF_DotD = 29,      // Data is acquired natively as .D directories: IMS08, IMS09, IMS10, IMS11
     Thermo_SII_LC = 30,             // Thermo LC data files from SII (Standard Instrument Integration) for Xcalibur
-    Waters_Acquity_LC = 31          // Waters Acquity LC data files from MassLynx
+    Waters_Acquity_LC = 31,         // Waters Acquity LC data files from MassLynx
+    LCMSNet_LC = 32                 // LCMSNet LC with no available pump method/pressure data
 }

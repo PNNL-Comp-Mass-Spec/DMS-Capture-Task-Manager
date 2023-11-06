@@ -273,6 +273,7 @@ namespace DatasetIntegrityPlugin
                     break;
 
                 default:
+                    // NOTE: used for InstrumentClass.LCMSNet_LC
                     mRetData.EvalMsg = "No integrity test available for instrument class " + instClassName;
                     LogWarning(mRetData.EvalMsg);
                     mRetData.EvalCode = EnumEvalCode.EVAL_CODE_NOT_EVALUATED;

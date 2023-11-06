@@ -6,7 +6,7 @@ namespace CaptureTaskManager
     // Used in the DatasetIntegrityPlugin and elsewhere
     public static class InstrumentClassInfo
     {
-        // Ignore Spelling: Bruker, Illumina, Micromass, Sciex, Shimadzu, Synapt
+        // Ignore Spelling: Bruker, Illumina, Micromass, Sciex, Shimadzu, Synapt, LCMSNET
         // Ignore Spelling: acqu, baf, cdf, fid, gz, maldi, mgf, MzML, MzXML, qgd, ser, tdf, tims, tof, uimf, wiff
 
         // Note: All of the RAW_DATA_TYPE constants need to be all lowercase
@@ -70,6 +70,9 @@ namespace CaptureTaskManager
         // The following is used by instrument External_Illumina
         public const string DATA_FORMAT_ILLUMINA_FOLDER = "illumina_folder";
 
+        // The following is used by LCMSNet LCs with no available pump method/pressure data
+        public const string DATA_FORMAT_LCMSNET_LCMETHOD = "lcmsnet_lcmethod";
+
         public const string DOT_WIFF_EXTENSION = ".wiff";
         public const string DOT_D_EXTENSION = ".d";
         public const string DOT_RAW_EXTENSION = ".raw";
@@ -80,6 +83,7 @@ namespace CaptureTaskManager
         public const string DOT_CDF_EXTENSION = ".cdf";
         public const string DOT_TXT_GZ_EXTENSION = ".txt.gz";
         public const string DOT_QGD_EXTENSION = ".qgd";
+        public const string DOT_LCMETHOD_EXTENSION = ".lcmethod";
 
         public static InstrumentClass GetInstrumentClass(string instrumentClassName)
         {
@@ -132,6 +136,7 @@ namespace CaptureTaskManager
                 DATA_FORMAT_BRUKER_TOF_TDF_DIRECTORY => DataFormat.BrukerTOFTdf,
                 DATA_FORMAT_ILLUMINA_FOLDER => DataFormat.IlluminaFolder,
                 DATA_FORMAT_DOT_QGD_FILES => DataFormat.ShimadzuQGDFile,
+                DATA_FORMAT_LCMSNET_LCMETHOD => DataFormat.LCMSNetLCMethod,
                 _ => DataFormat.Unknown
             };
         }
@@ -155,6 +160,7 @@ namespace CaptureTaskManager
                 DataFormat.BrukerTOFBaf => DATA_FORMAT_BRUKER_TOF_BAF_DIRECTORY,
                 DataFormat.BrukerTOFTdf => DATA_FORMAT_BRUKER_TOF_TDF_DIRECTORY,
                 DataFormat.IlluminaFolder => DATA_FORMAT_ILLUMINA_FOLDER,
+                DataFormat.LCMSNetLCMethod => DATA_FORMAT_LCMSNET_LCMETHOD,
                 _ => "Unknown"
             };
         }

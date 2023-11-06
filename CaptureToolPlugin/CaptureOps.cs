@@ -649,6 +649,14 @@ namespace CaptureToolPlugin
                 return false;
             }
 
+            if (mIsLcDataCapture && instrumentClass == InstrumentClass.LCMSNet_LC)
+            {
+                // No data file to copy from a remote computer (except Proto-5)
+                // Capture possible LC data
+                var lcCapture = new LCDataCapture(mMgrParams);
+                lcCapture.CaptureLCMethodFile(datasetName, datasetDirectoryPath);
+            }
+
             if (!CheckSourceFiles(taskParams, returnData, datasetName, instrumentClass, out var sourceDirectoryPath, out var datasetInfo))
             {
                 if (mIsLcDataCapture)
