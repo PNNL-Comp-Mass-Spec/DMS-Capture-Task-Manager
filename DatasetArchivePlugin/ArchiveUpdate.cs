@@ -57,7 +57,7 @@ namespace DatasetArchivePlugin
             mMostRecentLogTime = DateTime.UtcNow;
             mLastStatusUpdateTime = DateTime.UtcNow;
 
-            const int iMaxMyEMSLUploadAttempts = 2;
+            const int MaxMyEMSLUploadAttempts = 2;
 
             // Prior to the use of MyEMSL, the option to recurse subdirectories was determined using task parameter "MyEMSLRecurse", which is now obsolete
 
@@ -92,7 +92,7 @@ namespace DatasetArchivePlugin
             {
                 const bool USE_TEST_INSTANCE_FALSE = false;
 
-                var copySuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts, recurse, debugMode,
+                var copySuccess = UploadToMyEMSLWithRetry(MaxMyEMSLUploadAttempts, recurse, debugMode,
                                                           USE_TEST_INSTANCE_FALSE,
                                                           out allowRetry, out criticalErrorMessage);
 
@@ -150,7 +150,7 @@ namespace DatasetArchivePlugin
 
             const bool USE_TEST_INSTANCE_TRUE = true;
 
-            var testCopySuccess = UploadToMyEMSLWithRetry(iMaxMyEMSLUploadAttempts, recurse, debugMode,
+            var testCopySuccess = UploadToMyEMSLWithRetry(MaxMyEMSLUploadAttempts, recurse, debugMode,
                                                           USE_TEST_INSTANCE_TRUE,
                                                           out allowRetry, out criticalErrorMessage);
 
