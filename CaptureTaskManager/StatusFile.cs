@@ -306,7 +306,7 @@ namespace CaptureTaskManager
 
             foreach (var errMsg in StatusData.ErrorQueue)
             {
-                writer.WriteElementString("ErrMsg", ValidateTextLength(errMsg, 1900));
+                writer.WriteElementString("ErrMsg", ValidateTextLength(errMsg, 1850));
             }
 
             writer.WriteEndElement(); // RecentErrorMessages
