@@ -448,6 +448,12 @@
             Server response
             </summary>
         </member>
+        <member name="M:Pacifica.Core.UploadCompletedEventArgs.#ctor(System.String)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="serverResponse"></param>
+        </member>
         <member name="M:Pacifica.Core.ExtensionMethods.GetDescription``1(System.Object)">
             <summary>
             Determine the Description attribute of a given enum value
