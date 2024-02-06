@@ -21,7 +21,7 @@ namespace CaptureTaskManager
 
             var sharePath = @"\\15T_FTICR.bionet\ProteomicsData";
 
-            // Make sure sharePath does not end in a back slash
+            // Make sure sharePath does not end in a backslash
             if (sharePath.EndsWith(@"\"))
             {
                 sharePath = sharePath.Substring(0, sharePath.Length - 1);

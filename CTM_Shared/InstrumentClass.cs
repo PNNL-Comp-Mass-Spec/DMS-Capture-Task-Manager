@@ -4,7 +4,7 @@ public enum InstrumentClass
 {
     Unknown = 0,
     Finnigan_Ion_Trap = 1,          // LCQ_C1, LTQ_1, LTQ_ETD_1
-    LTQ_FT = 2,                     // LTQ_FT1, LTQ_Orb_1, VOrbiETD01, VOrbi05, QExact01, QExactHF03
+    LTQ_FT = 2,                     // LTQ_FT1, LTQ_Orb_1, VOrbiETD01, VOrbi05, QExact01, QExactHF03, Lumos01, Ascend01, Astral01
     Triple_Quad = 3,                // TSQ_1, Thermo_GC_MS_01
     Thermo_Exactive = 4,            // Exact01, Exact02, ...
     Agilent_Ion_Trap = 5,           // Agilent_XCT1, Agilent_GC_01, Agilent_GC_MS_01, BSF_GCMS01
