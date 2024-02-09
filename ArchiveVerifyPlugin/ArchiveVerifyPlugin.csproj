@@ -22,7 +22,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <NoWarn>IDE0028, IDE0290, IDE0300</NoWarn>
+    <NoWarn>IDE0028, IDE0290, IDE0300, IDE0305</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -32,7 +32,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <NoWarn>IDE0028, IDE0290, IDE0300</NoWarn>
+    <NoWarn>IDE0028, IDE0290, IDE0300, IDE0305</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="CTM_Shared">
