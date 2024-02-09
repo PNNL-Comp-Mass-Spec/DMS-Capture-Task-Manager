@@ -155,7 +155,7 @@ namespace ImsDemuxPlugin
                 return;
             }
 
-            // Determine whether or not calibration should be performed
+            // Determine whether calibration should be performed
             //
             // Note that stored procedure get_task_param_table in the DMS_Capture database
             // sets this value based on the value in column Perform_Calibration of table T_Instrument_Name in the DMS5 database

@@ -6,10 +6,10 @@ namespace CaptureTaskManager
     // Used in the DatasetIntegrityPlugin and elsewhere
     public static class InstrumentClassInfo
     {
-        // Ignore Spelling: Bruker, Illumina, Micromass, Sciex, Shimadzu, Synapt, LCMSNET
+        // Ignore Spelling: Bruker, Illumina, LCMethod, Micromass, Sciex, Shimadzu, Synapt, LCMSNET
         // Ignore Spelling: acqu, baf, cdf, fid, gz, maldi, mgf, MzML, MzXML, qgd, ser, tdf, tims, tof, uimf, wiff
 
-        // Note: All of the RAW_DATA_TYPE constants need to be all lowercase
+        // Note: the RAW_DATA_TYPE constants need to be all lowercase
 
         // Agilent ion trap data, Agilent TOF data
         public const string DATA_FORMAT_DOT_D_FOLDERS = "dot_d_folders";

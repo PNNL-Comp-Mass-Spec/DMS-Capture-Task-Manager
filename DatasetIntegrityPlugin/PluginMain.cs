@@ -920,7 +920,7 @@ namespace DatasetIntegrityPlugin
 
             if (directoryList.Count == 2)
             {
-                // If two directories are present and one starts with x_ and all of the files
+                // If two directories are present and one starts with x_ and all the files
                 // inside the one that start with x_ are also in the directory without x_,
                 // delete the x_ directory
                 const bool deleteIfSuperseded = true;

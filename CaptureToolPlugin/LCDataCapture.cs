@@ -255,7 +255,7 @@ namespace CaptureToolPlugin
                 {
                     var safeToDelete = true;
 
-                    // Make sure all of the files in the directory are at least 14 days old
+                    // Make sure all the files in the directory are at least 14 days old
                     foreach (var fileOrDirectory in subdirectory.GetFileSystemInfos())
                     {
                         if (DateTime.UtcNow.Subtract(fileOrDirectory.LastWriteTimeUtc).TotalDays <= 14)

@@ -95,7 +95,7 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Evaluates the LoopExitCode to determine whether or not manager can request another task
+        /// Evaluates the LoopExitCode to determine whether the manager can request another task
         /// </summary>
         /// <param name="loopExitCode"></param>
         /// <returns>True if OK to request another task</returns>

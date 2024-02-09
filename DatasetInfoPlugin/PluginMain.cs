@@ -884,7 +884,7 @@ namespace DatasetInfoPlugin
             {
                 var pngMatcher = new Regex(@"""(?<Filename>[^""]+\.png)""", RegexOptions.IgnoreCase);
 
-                // Create an index.html file that shows all of the plots in the subdirectories
+                // Create an index.html file that shows all the plots in the subdirectories
                 var indexHtmlFilePath = Path.Combine(outputPathBase, "index.html");
 
                 using var htmlWriter = new StreamWriter(new FileStream(indexHtmlFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
@@ -1126,7 +1126,7 @@ namespace DatasetInfoPlugin
             if (!string.IsNullOrEmpty(sampleLabelling))
             {
                 // Check whether this label has a reporter ion minimum m/z value defined
-                // If it does, instruct the MSFileInfoScanner to validate that all of the MS/MS spectra
+                // If it does, instruct the MSFileInfoScanner to validate that all MS/MS spectra
                 // have a scan range that starts below the minimum reporter ion m/z
 
                 var reporterIonMzMinText = mTaskParams.GetParam("Meta_Experiment_labelling_reporter_mz_min", string.Empty);

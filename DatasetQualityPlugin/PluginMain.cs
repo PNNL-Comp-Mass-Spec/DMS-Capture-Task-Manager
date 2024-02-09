@@ -114,9 +114,9 @@ namespace DatasetQualityPlugin
         }
 
         /// <summary>
-        /// Determine whether or not we will run Quameter
+        /// Determine whether we will run Quameter
         /// </summary>
-        /// <remarks>At present we only process Thermo .Raw files. Furthermore, if the file only contains MS/MS spectra, then it cannot be processed with Quameter</remarks>
+        /// <remarks>At present, we only process Thermo .Raw files. Furthermore, if the file only contains MS/MS spectra, then it cannot be processed with Quameter</remarks>
         /// <returns>True if success (including if Quameter was skipped); false if an error</returns>
         private bool ConditionallyRunQuameter()
         {

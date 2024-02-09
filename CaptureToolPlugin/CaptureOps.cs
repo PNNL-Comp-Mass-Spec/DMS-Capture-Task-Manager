@@ -110,7 +110,7 @@ namespace CaptureToolPlugin
 
             mFileTools = fileTools;
 
-            // Note that all of the events and methods in FileTools are static
+            // Note that all the events and methods in FileTools are static
             if (!mFileCopyEventsWired)
             {
                 mFileCopyEventsWired = true;
@@ -623,8 +623,8 @@ namespace CaptureToolPlugin
                 return false;
             }
 
-            // Determine whether or not we will use Copy with Resume for all files for this dataset
-            // This determines whether or not we add x_ to an existing file or directory,
+            // Determine whether we will use Copy with Resume for all files for this dataset
+            // This determines if we add x_ to an existing file or directory,
             // and determines whether we use CopyDirectory or CopyDirectoryWithResume/CopyFileWithResume
             bool copyWithResume;
 

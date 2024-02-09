@@ -243,7 +243,7 @@ namespace ArchiveVerifyPlugin
         /// <param name="remoteFiles"></param>
         /// <param name="metadataFilePath"></param>
         /// <param name="transactionId">The TransactionID used by the majority of the matching files</param>
-        /// <returns>True if all of the files match, false if a mismatch or an error</returns>
+        /// <returns>True if all the files match, false if a mismatch or an error</returns>
         private bool CompareArchiveFilesToExpectedFiles(
             IReadOnlyCollection<MyEMSLReader.ArchivedFileInfo> remoteFiles,
             out string metadataFilePath,
