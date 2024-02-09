@@ -69,7 +69,7 @@ namespace CaptureTaskManager
 
                 var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, ManagerName);
 
-                ShowTrace("AckManagerUpdateRequired using " + connectionStringToUse);
+                ShowTrace("Call ack_manager_update_required using " + connectionStringToUse);
 
                 var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
                 RegisterEvents(dbTools);
@@ -81,7 +81,13 @@ namespace CaptureTaskManager
                 dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
 
                 // Execute the SP
-                cmd.ExecuteNonQuery();
+                var resCode = dbTools.ExecuteSP(cmd);
+
+                if (resCode != 0)
+                {
+                    OnErrorEvent("ExecuteSP() reported result code {0} calling {1}",
+                        resCode, SP_NAME_ACK_MANAGER_UPDATE);
+                }
             }
             catch (Exception ex)
             {
