@@ -329,6 +329,11 @@ namespace DatasetInfoPlugin
                     break;
             }
 
+            if (IsLcDataCapture)
+            {
+                mMsFileScanner.Options.HideEmptyHTMLSections = true;
+            }
+
             // Make the output directory
             if (!Directory.Exists(outputPathBase))
             {
@@ -1564,6 +1569,10 @@ namespace DatasetInfoPlugin
             if (!msFileScanner.Options.SaveTICAndBPIPlots)
             {
                 argumentList.Add("/NoTIC");
+            }
+            else if (IsLcDataCapture)
+            {
+                argumentList.Add("/HideEmpty");
             }
 
             if (msFileScanner.Options.SaveLCMS2DPlots)
