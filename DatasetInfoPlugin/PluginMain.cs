@@ -293,8 +293,9 @@ namespace DatasetInfoPlugin
             if (IsLcDataCapture && rawDataType == DataFormat.WatersRawFolder)
             {
                 // We currently cannot extract chromatograms from Waters Raw datasets, so report the step 'Skipped'
+                // However, still run the MSFileInfoScanner so that it creates the DatasetInfo.xml file
                 returnData.CloseoutMsg = string.Empty;
-                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
                 returnData.EvalCode = EnumEvalCode.EVAL_CODE_SKIPPED;
                 returnData.EvalMsg = $"Dataset info is not implemented for data type {rawDataTypeName}, instrument class {instClass}";
             }
@@ -521,13 +522,15 @@ namespace DatasetInfoPlugin
 
                     if (logWarning)
                     {
-                        returnData.EvalMsg = AppendToComment(
-                            returnData.EvalMsg,
-                            "Dataset has no spectra; file format not supported by MSFileInfoScanner");
+                        returnData.EvalMsg = AppendToComment(returnData.EvalMsg, "Dataset has no spectra; file format not supported by MSFileInfoScanner");
 
                         LogWarning(returnData.EvalMsg);
 
                         qcPlotMode = QCPlottingModes.NoPlots;
+                    }
+                    else if (returnData.EvalCode == EnumEvalCode.EVAL_CODE_SKIPPED && IsLcDataCapture)
+                    {
+                        successProcessing = true;
                     }
                     else
                     {
@@ -562,7 +565,11 @@ namespace DatasetInfoPlugin
 
                 bool validQcGraphics;
 
-                if (successProcessing && qcPlotMode == QCPlottingModes.AllPlots)
+                if (returnData.EvalCode == EnumEvalCode.EVAL_CODE_SKIPPED)
+                {
+                    validQcGraphics = true;
+                }
+                else if (successProcessing && qcPlotMode == QCPlottingModes.AllPlots)
                 {
                     validQcGraphics = ValidateQCGraphics(currentOutputDirectory, primaryFileOrDirectoryProcessed, returnData);
 
@@ -628,17 +635,20 @@ namespace DatasetInfoPlugin
                 }
                 else
                 {
-                    if (string.IsNullOrEmpty(mMsg))
+                    if (returnData.EvalCode != EnumEvalCode.EVAL_CODE_SKIPPED)
                     {
-                        mMsg = "ProcessMSFileOrFolder returned false. Message = " +
-                                mMsFileScanner.GetErrorMessage() +
-                                " returnData code = " + (int)mMsFileScanner.ErrorCode;
+                        if (string.IsNullOrEmpty(mMsg))
+                        {
+                            mMsg = "ProcessMSFileOrFolder returned false. Message = " +
+                                   mMsFileScanner.GetErrorMessage() +
+                                   " returnData code = " + (int)mMsFileScanner.ErrorCode;
+                        }
+
+                        LogError(mMsg);
+
+                        returnData.CloseoutMsg = mMsg;
+                        returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     }
-
-                    LogError(mMsg);
-
-                    returnData.CloseoutMsg = mMsg;
-                    returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
 
                     if (!string.IsNullOrWhiteSpace(mMsFileScanner.DatasetInfoXML))
                     {
@@ -706,7 +716,7 @@ namespace DatasetInfoPlugin
             {
                 // Do not post Dataset info XML to the database, since it is only LC data
                 success = true;
-                errorMessage = "";
+                errorMessage = string.Empty;
             }
             else
             {
