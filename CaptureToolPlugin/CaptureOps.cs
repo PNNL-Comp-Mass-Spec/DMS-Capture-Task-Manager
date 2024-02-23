@@ -576,9 +576,9 @@ namespace CaptureToolPlugin
         {
             var datasetName = taskParams.GetParam("Dataset");
 
-            var instClassName = taskParams.GetParam("Instrument_Class");                    // Examples: Finnigan_Ion_Trap, LTQ_FT, Triple_Quad, IMS_Agilent_TOF, Agilent_Ion_Trap
-            var instrumentClass = InstrumentClassInfo.GetInstrumentClass(instClassName);    // Enum of instrument class type
-            var instrumentName = taskParams.GetParam("Instrument_Name");                    // Instrument name
+            var instClassName = taskParams.GetParam("Instrument_Class");                // Examples: Finnigan_Ion_Trap, LTQ_FT, Triple_Quad, IMS_Agilent_TOF, Agilent_Ion_Trap
+            var instrumentClass = InstrumentClassInfo.GetInstrumentClass(instClassName);     // Enum of instrument class type
+            var instrumentName = taskParams.GetParam("Instrument_Name");                // Instrument name
 
             // Acquisition times and length; invalid and unused for MS data capture, needed for LC data capture
             var acqStartTime = taskParams.GetParamAsDate("Acq_Time_Start", DateTime.MinValue);
@@ -589,7 +589,7 @@ namespace CaptureToolPlugin
             {
                 if (acqStartTime == DateTime.MinValue || acqEndTime == DateTime.MinValue)
                 {
-                    // acq start and end times must be set for the MS dataset before running LC data capture
+                    // Acquisition start and end times must be set for the MS dataset before running LC data capture
                     returnData.CloseoutMsg = $"MS acq start or end time is invalid: start '{taskParams.GetParam("Acq_Time_Start")}', end '{taskParams.GetParam("Acq_Time_Start")}'";
                     returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
                     return false;
@@ -1059,7 +1059,7 @@ namespace CaptureToolPlugin
                 LogDebug("Bionet connection not required for " + sourceVol);
             }
 
-            // If Source_Folder_Name is non-blank, use it. Otherwise use dataset name
+            // If Source_Folder_Name is non-blank, use it. Otherwise, use dataset name
             var sourceFolderName = taskParams.GetParam("Source_Folder_Name");
 
             if (!string.IsNullOrWhiteSpace(sourceFolderName))
@@ -1076,7 +1076,7 @@ namespace CaptureToolPlugin
             {
                 var sourceFolderOrDatasetName = string.IsNullOrWhiteSpace(sourceFolderName) ? datasetName : sourceFolderName;
 
-                // However, if the subdirectory name matches the dataset name, this was probably an error on the operator's part
+                // However, if the subdirectory name matches the dataset name, this was probably an error on the operator's part,
                 // and we likely do not want to use the subfolder name
                 if (captureSubdirectory.EndsWith(Path.DirectorySeparatorChar + sourceFolderOrDatasetName, StringComparison.OrdinalIgnoreCase) ||
                     captureSubdirectory.Equals(sourceFolderOrDatasetName, StringComparison.OrdinalIgnoreCase))

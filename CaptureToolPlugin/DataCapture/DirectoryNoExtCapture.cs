@@ -80,7 +80,7 @@ namespace CaptureToolPlugin.DataCapture
 
                 if (dotDDirectories.Length == 2)
                 {
-                    // If one directory contains a ser file and the other directory contains an analysis.baf, we'll allow this
+                    // If one directory contains a ser file and the other directory contains an analysis.baf, we'll allow it
                     // This is sometimes the case for the 15T_FTICR_Imaging
                     var serCount = 0;
                     var bafCount = 0;

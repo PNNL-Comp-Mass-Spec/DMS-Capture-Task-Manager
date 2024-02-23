@@ -47,7 +47,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="datasetName"></param>
+        /// <param name="datasetName">Dataset name</param>
         public DatasetInfo(string datasetName)
         {
             DatasetName = datasetName;
