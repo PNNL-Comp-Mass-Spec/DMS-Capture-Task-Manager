@@ -1175,10 +1175,7 @@ namespace CaptureToolPlugin
                     return false;
                 }
 
-                if (mTraceMode)
-                {
-                    ToolRunnerBase.ShowTraceMessage("LCDatasetCapture with capture subdirectory starting with '..'; attempting share connection again without share redirection.");
-                }
+                LogMessage("LCDatasetCapture with capture subdirectory starting with '..'; attempting share connection again without share redirection.");
 
                 // split the original capture subdirectory on path separator characters
                 var captureSubdirectorySplit = captureSubdirectoryCopy.Split(Path.PathSeparator);
