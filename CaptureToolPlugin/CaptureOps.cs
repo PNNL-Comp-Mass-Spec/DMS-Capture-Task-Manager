@@ -675,7 +675,7 @@ namespace CaptureToolPlugin
                 {
                     // Capture possible LC data, even if no LC data file was found
                     var lcCapture = new LCDataCapture(mMgrParams);
-                    lcCapture.CaptureLCMethodFile(datasetInfo.DatasetName, datasetDirectoryPath);
+                    lcCapture.CaptureLCMethodFile(datasetName, datasetDirectoryPath);
                 }
 
                 return false;
@@ -1175,7 +1175,7 @@ namespace CaptureToolPlugin
                     return false;
                 }
 
-                LogMessage("LCDatasetCapture with capture subdirectory starting with '..'; attempting share connection again without share redirection.");
+                LogMessage("LCDatasetCapture with capture subdirectory starting with '..'; attempting share connection again without share redirection");
 
                 // split the original capture subdirectory on path separator characters
                 var captureSubdirectorySplit = captureSubdirectoryCopy.Split(Path.PathSeparator);
@@ -1183,10 +1183,11 @@ namespace CaptureToolPlugin
                 // re-create the capture subdirectory without the first 2 items in the path
                 captureSubdirectory = string.Join(Path.DirectorySeparatorChar.ToString(), captureSubdirectorySplit.Skip(2));
 
-                // Reset return data
+                // Reset return data and tool state
                 returnData.CloseoutMsg = "";
                 returnData.EvalCode = EnumEvalCode.EVAL_CODE_SUCCESS;
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+                mToolState.ResetAbortProcessing();
 
                 // Try connecting again
                 return GetSourceDirectoryPath(taskParams, returnData, ref captureSubdirectory, out sourceDirectoryPath);

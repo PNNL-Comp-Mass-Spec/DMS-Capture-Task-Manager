@@ -17,6 +17,11 @@ namespace CaptureToolPlugin
             NeedToAbortProcessing = true;
         }
 
+        internal void ResetAbortProcessing()
+        {
+            NeedToAbortProcessing = false;
+        }
+
         public void HandleCopyException(ToolReturnData returnData, Exception ex)
         {
             if (ex.Message.Contains("An unexpected network error occurred") ||
