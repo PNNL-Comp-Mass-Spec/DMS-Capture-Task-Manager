@@ -1007,56 +1007,12 @@ namespace CaptureToolPlugin
         public bool CheckSourceFiles(ITaskParams taskParams, ToolReturnData returnData, string datasetName, InstrumentClass instrumentClass, out string sourceDirectoryPath, out DatasetInfo datasetInfo)
         {
             var jobNum = taskParams.GetParam("Job", 0);
-            var sourceVol = taskParams.GetParam("Source_Vol").Trim();                       // Example: \\exact04.bionet\
-            var sourcePath = taskParams.GetParam("Source_Path").Trim();                     // Example: ProteomicsData\
-
-            // Capture_Subdirectory is typically an empty string, but could be a partial path like: "CapDev" or "Smith\2014"
-            var legacyCaptureSubfolder = taskParams.GetParam("Capture_Subfolder").Trim();
-            var captureSubdirectory = taskParams.GetParam("Capture_Subdirectory", legacyCaptureSubfolder);
 
             datasetInfo = null;
 
-            var password = CTMUtilities.DecodePassword(mPassword);
-
-            mDatasetFileSearchTool.VerifyRelativeSourcePath(sourceVol, ref sourcePath, ref captureSubdirectory);
-
-            // Construct the path to the dataset on the instrument
-            // Determine if source dataset exists, and if it is a file or a directory
-            sourceDirectoryPath = Path.Combine(sourceVol, sourcePath);
-
-            // Confirm that the source directory has no invalid characters
-            if (NameHasInvalidCharacter(sourceDirectoryPath, "Source directory path", false, returnData))
+            if (!GetCapturePaths(taskParams, returnData, out var captureSubdirectory, out sourceDirectoryPath))
             {
                 return false;
-            }
-
-            // Connect to Bionet if necessary
-            if (mUseBioNet)
-            {
-                LogDebug("Bionet connection required for " + sourceVol);
-
-                if (!mShareConnection.ConnectToShare(mUserName, password, sourceDirectoryPath, out var closeoutType, out var evalCode))
-                {
-                    returnData.CloseoutType = closeoutType;
-                    returnData.EvalCode = evalCode;
-
-                    PossiblyStoreErrorMessage(returnData);
-
-                    if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
-                    {
-                        returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                    }
-
-                    if (string.IsNullOrEmpty(returnData.CloseoutMsg))
-                    {
-                        returnData.CloseoutMsg = "Error connecting to Bionet share";
-                    }
-                    return false;
-                }
-            }
-            else
-            {
-                LogDebug("Bionet connection not required for " + sourceVol);
             }
 
             // If Source_Folder_Name is non-blank, use it. Otherwise, use dataset name
@@ -1190,6 +1146,112 @@ namespace CaptureToolPlugin
                 }
 
                 return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Get the source directory and capture subdirectory, with handling for LCDataCapture vs. original dataset capture share redirection
+        /// </summary>
+        /// <param name="taskParams"></param>
+        /// <param name="returnData"></param>
+        /// <param name="captureSubdirectory"></param>
+        /// <param name="sourceDirectoryPath"></param>
+        /// <returns></returns>
+        private bool GetCapturePaths(ITaskParams taskParams, ToolReturnData returnData, out string captureSubdirectory, out string sourceDirectoryPath)
+        {
+            // Capture_Subdirectory is typically an empty string, but could be a partial path like: "CapDev" or "Smith\2014"
+            var legacyCaptureSubfolder = taskParams.GetParam("Capture_Subfolder").Trim();
+            captureSubdirectory = taskParams.GetParam("Capture_Subdirectory", legacyCaptureSubfolder);
+            var captureSubdirectoryCopy = captureSubdirectory;
+
+            if (!GetSourceDirectoryPath(taskParams, returnData, ref captureSubdirectory, out sourceDirectoryPath))
+            {
+                // Usually a failure is caused by a connection failure on bionet; this can be because the share name doesn't exist (at least for LcDataCapture steps)
+                // for LCDataCapture jobs with a capture subdirectory that is a different share, we should try removing the share change first.
+                if (!mIsLcDataCapture || !captureSubdirectoryCopy.StartsWith(".."))
+                {
+                    return false;
+                }
+
+                if (mTraceMode)
+                {
+                    ToolRunnerBase.ShowTraceMessage("LCDatasetCapture with capture subdirectory starting with '..'; attempting share connection again without share redirection.");
+                }
+
+                // split the original capture subdirectory on path separator characters
+                var captureSubdirectorySplit = captureSubdirectoryCopy.Split(Path.PathSeparator);
+
+                // re-create the capture subdirectory without the first 2 items in the path
+                captureSubdirectory = string.Join(Path.DirectorySeparatorChar.ToString(), captureSubdirectorySplit.Skip(2));
+
+                // Reset return data
+                returnData.CloseoutMsg = "";
+                returnData.EvalCode = EnumEvalCode.EVAL_CODE_SUCCESS;
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+
+                // Try connecting again
+                return GetSourceDirectoryPath(taskParams, returnData, ref captureSubdirectory, out sourceDirectoryPath);
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Get the source directory path, and connect to the bionet share (if needed)
+        /// </summary>
+        /// <param name="taskParams"></param>
+        /// <param name="returnData"></param>
+        /// <param name="captureSubdirectory"></param>
+        /// <param name="sourceDirectoryPath"></param>
+        /// <returns></returns>
+        private bool GetSourceDirectoryPath(ITaskParams taskParams, ToolReturnData returnData, ref string captureSubdirectory, out string sourceDirectoryPath)
+        {
+            var sourceVol = taskParams.GetParam("Source_Vol").Trim();                       // Example: \\exact04.bionet\
+            var sourcePath = taskParams.GetParam("Source_Path").Trim();                     // Example: ProteomicsData\
+
+            var password = CTMUtilities.DecodePassword(mPassword);
+
+            mDatasetFileSearchTool.VerifyRelativeSourcePath(sourceVol, ref sourcePath, ref captureSubdirectory);
+
+            // Construct the path to the dataset on the instrument
+            // Determine if source dataset exists, and if it is a file or a directory
+            sourceDirectoryPath = Path.Combine(sourceVol, sourcePath);
+
+            // Confirm that the source directory has no invalid characters
+            if (NameHasInvalidCharacter(sourceDirectoryPath, "Source directory path", false, returnData))
+            {
+                return false;
+            }
+
+            // Connect to Bionet if necessary
+            if (mUseBioNet)
+            {
+                LogDebug("Bionet connection required for " + sourceVol);
+
+                if (!mShareConnection.ConnectToShare(mUserName, password, sourceDirectoryPath, out var closeoutType, out var evalCode))
+                {
+                    returnData.CloseoutType = closeoutType;
+                    returnData.EvalCode = evalCode;
+
+                    PossiblyStoreErrorMessage(returnData);
+
+                    if (returnData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
+                    {
+                        returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    }
+
+                    if (string.IsNullOrEmpty(returnData.CloseoutMsg))
+                    {
+                        returnData.CloseoutMsg = "Error connecting to Bionet share";
+                    }
+                    return false;
+                }
+            }
+            else
+            {
+                LogDebug("Bionet connection not required for " + sourceVol);
             }
 
             return true;
