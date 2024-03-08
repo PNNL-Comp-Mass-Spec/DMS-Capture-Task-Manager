@@ -106,6 +106,25 @@ namespace DatasetInfoPlugin
             return returnData;
         }
 
+        private bool CopyRemoteDirectoryToLocal(FileSystemInfo remoteDirectory, string localDirectoryPath, ToolReturnData returnData)
+        {
+            try
+            {
+                mFileTools.CopyDirectory(remoteDirectory.FullName, localDirectoryPath, true);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                returnData.CloseoutMsg = string.Format("Error copying remote .D directory to local working directory ({0} to {1})",
+                    remoteDirectory.FullName, mWorkDir);
+
+                returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+
+                LogError(returnData.CloseoutMsg, ex);
+                return false;
+            }
+        }
+
         private iMSFileInfoScanner LoadMSFileInfoScanner(string msFileInfoScannerDLLPath)
         {
             const string MsDataFileReaderClass = "MSFileInfoScanner.MSFileInfoScanner";
@@ -391,8 +410,11 @@ namespace DatasetInfoPlugin
                 var remoteFileOrDirectoryPath = Path.Combine(datasetDirectoryPath, datasetFileOrDirectory);
 
                 string pathToProcess;
+
                 bool fileCopiedLocally;
                 bool directoryCopiedLocally;
+
+                string localDirectoryPath;
 
                 var datasetFile = new FileInfo(remoteFileOrDirectoryPath);
 
@@ -416,27 +438,58 @@ namespace DatasetInfoPlugin
                     pathToProcess = localFilePath;
                     fileCopiedLocally = true;
                     directoryCopiedLocally = false;
+                    localDirectoryPath = string.Empty;
+                }
+                else if (instrumentClass == InstrumentClass.BrukerFT_BAF && datasetFile.Exists)
+                {
+                    // ReSharper disable CommentTypo
+
+                    // If the .D directory has file chromatography-data.sqlite, copy the directory locally so that MSFileInfoScanner can extract the EIC data from the SQLite file
+                    // For example, see SciMax dataset QC_SRFAII_23_01_10ppm_WEOM_r2_Mag_04Mar24_300SA_p01_54_1_16858
+                    // Even though MSFileInfoScanner includes "Read Only=true" in the connection string, the SQLite database cannot be opened if the field is read-only
+
+                    // ReSharper restore CommentTypo
+
+                    // datasetFileOrDirectory has a relative path to a file
+                    var remoteDirectory = new DirectoryInfo(Path.Combine(datasetDirectoryPath, Path.GetDirectoryName(datasetFileOrDirectory)));
+
+                    var sqliteFile = new FileInfo(Path.Combine(remoteDirectory.FullName, "chromatography-data.sqlite"));
+
+                    if (!sqliteFile.Exists)
+                    {
+                        pathToProcess = remoteFileOrDirectoryPath;
+                        fileCopiedLocally = false;
+                        directoryCopiedLocally = false;
+                        localDirectoryPath = string.Empty;
+                    }
+                    else
+                    {
+                        localDirectoryPath = Path.Combine(mWorkDir, remoteDirectory.Name);
+                        pathToProcess = Path.Combine(mWorkDir, datasetFileOrDirectory);
+
+                        if (!CopyRemoteDirectoryToLocal(remoteDirectory, localDirectoryPath, returnData))
+                        {
+                            return returnData;
+                        }
+
+                        fileCopiedLocally = false;
+                        directoryCopiedLocally = true;
+                    }
                 }
                 else if (instrumentClass == InstrumentClass.BrukerTOF_TDF)
                 {
-                    // Copy the timsTOF .d directory locally to avoid network glitches during processing
+                    // BrukerTOF_TDF is the timsTOF; copy the .d directory locally to avoid network glitches during processing
 
-                    var localDirectoryPath = Path.Combine(mWorkDir, datasetFileOrDirectory);
+                    // datasetFileOrDirectory has a relative path to a directory
+                    var remoteDirectory = new DirectoryInfo(remoteFileOrDirectoryPath);
+                    localDirectoryPath = Path.Combine(mWorkDir, datasetFileOrDirectory);
+                    pathToProcess = localDirectoryPath;
 
-                    try
+                    if (!CopyRemoteDirectoryToLocal(remoteDirectory, localDirectoryPath, returnData))
                     {
-                        mFileTools.CopyDirectory(remoteFileOrDirectoryPath, localDirectoryPath, true);
-                    }
-                    catch (Exception ex)
-                    {
-                        returnData.CloseoutMsg = string.Format("Error copying remote .D directory to local working directory ({0} to {1})", remoteFileOrDirectoryPath, mWorkDir);
-                        returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-
-                        LogError(returnData.CloseoutMsg, ex);
                         return returnData;
                     }
 
-                    pathToProcess = localDirectoryPath;
                     fileCopiedLocally = false;
                     directoryCopiedLocally = true;
                 }
@@ -445,6 +498,7 @@ namespace DatasetInfoPlugin
                     pathToProcess = remoteFileOrDirectoryPath;
                     fileCopiedLocally = false;
                     directoryCopiedLocally = false;
+                    localDirectoryPath = string.Empty;
                 }
 
                 var currentOutputDirectory = ConstructOutputDirectoryPath(
@@ -546,7 +600,7 @@ namespace DatasetInfoPlugin
                 }
                 else if (directoryCopiedLocally)
                 {
-                    mFileTools.DeleteDirectory(pathToProcess);
+                    mFileTools.DeleteDirectory(localDirectoryPath);
                 }
 
                 var mzMinValidationError = mMsFileScanner.ErrorCode == iMSFileInfoScanner.MSFileScannerErrorCodes.MS2MzMinValidationError;
