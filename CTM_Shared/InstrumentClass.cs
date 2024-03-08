@@ -4,14 +4,14 @@ public enum InstrumentClass
 {
     Unknown = 0,
     Finnigan_Ion_Trap = 1,          // LCQ_C1, LTQ_1, LTQ_ETD_1
-    LTQ_FT = 2,                     // LTQ_FT1, LTQ_Orb_1, VOrbiETD01, VOrbi05, QExact01, QExactHF03, Lumos01, Ascend01, Astral01
+    LTQ_FT = 2,                     // LTQ_FT1, LTQ_Orb_1, VOrbiETD01, VOrbi05, QExact01, QExactHF03, QEHFX01, Lumos01, Eclipse01, Exploris02, Ascend01, Astral01
     Triple_Quad = 3,                // TSQ_1, Thermo_GC_MS_01
     Thermo_Exactive = 4,            // Exact01, Exact02, ...
     Agilent_Ion_Trap = 5,           // Agilent_XCT1, Agilent_GC_01, Agilent_GC_MS_01, BSF_GCMS01
     Agilent_TOF = 6,                // AgTOF01, AgTOF02                     (last used in 2012)
     Agilent_TOF_V2 = 7,             // AgQTOF03, AgQTOF04, AgTOF05, Agilent_QQQ_04
     Bruker_Amazon_Ion_Trap = 8,     // Bruker_FT_IonTrap01                  (last used in 2012)
-    BrukerFT_BAF = 9,               // 9T_FTICR_B, 12T_FTICR_B, 15T_FTICR,
+    BrukerFT_BAF = 9,               // 9T_FTICR_B, 12T_FTICR_B, 15T_FTICR, 12T_FTICR_P, 15T_FTICR_I, SciMax01
     BrukerFTMS = 10,                // 9T_FTICR, 11T_FTICR_B, 12T_FTICR     (last used in 2010)
     BrukerMALDI_Imaging = 11,       // 9T_FTICR_Imaging                     (last used in 2012)
     BrukerMALDI_Spot = 12,          // BrukerTOF_01
