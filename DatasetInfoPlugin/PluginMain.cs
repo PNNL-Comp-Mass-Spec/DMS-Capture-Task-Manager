@@ -713,9 +713,16 @@ namespace DatasetInfoPlugin
                     {
                         string jobParamNote;
 
+                        var instrumentName = mTaskParams.GetParam("Instrument_Name");
+
                         if (mDataset.Contains("SRM_TMT"))
                         {
                             jobParamNote = "Ignoring m/z validation error since an SRM TMT dataset";
+                            returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+                        }
+                        else if (instrumentName.StartsWith("Altis", StringComparison.OrdinalIgnoreCase))
+                        {
+                            jobParamNote = "Ignoring m/z validation error since an Altis MRM dataset";
                             returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
                         }
                         else
