@@ -719,11 +719,21 @@ namespace DatasetInfoPlugin
                         {
                             jobParamNote = "Ignoring m/z validation error since an SRM TMT dataset";
                             returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+
+                            if (successCount < 1)
+                            {
+                                successCount = 1;
+                            }
                         }
                         else if (instrumentName.StartsWith("Altis", StringComparison.OrdinalIgnoreCase))
                         {
                             jobParamNote = "Ignoring m/z validation error since an Altis MRM dataset";
                             returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
+
+                            if (successCount < 1)
+                            {
+                                successCount = 1;
+                            }
                         }
                         else
                         {
