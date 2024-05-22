@@ -20,7 +20,7 @@ namespace CaptureToolPlugin
     /// </summary>
     public class CaptureOps : LoggerBase
     {
-        // Ignore Spelling: bio, bionet, Bruker, dotnet, fso, idx, jpg, lcMethod, mcf, na, prepend, Pwd, secfso, ser, Subfolder, Unsubscribe, Username
+        // Ignore Spelling: acq, bio, bionet, Bruker, dotnet, fso, idx, jpg, lcMethod, mcf, na, prepend, Pwd, secfso, ser, Subfolder, Unsubscribe, Username
 
         private enum DatasetDirectoryState
         {
@@ -578,9 +578,9 @@ namespace CaptureToolPlugin
         {
             var datasetName = taskParams.GetParam("Dataset");
 
-            var instClassName = taskParams.GetParam("Instrument_Class");                // Examples: Finnigan_Ion_Trap, LTQ_FT, Triple_Quad, IMS_Agilent_TOF, Agilent_Ion_Trap
-            var instrumentClass = InstrumentClassInfo.GetInstrumentClass(instClassName);     // Enum of instrument class type
-            var instrumentName = taskParams.GetParam("Instrument_Name");                // Instrument name
+            var instClassName = taskParams.GetParam("Instrument_Class");                    // Examples: Finnigan_Ion_Trap, LTQ_FT, Triple_Quad, IMS_Agilent_TOF, Agilent_Ion_Trap
+            var instrumentClass = InstrumentClassInfo.GetInstrumentClass(instClassName);    // Enum of instrument class type
+            var instrumentName = taskParams.GetParam("Instrument_Name");                    // Instrument name
 
             if (mIsLcDataCapture)
             {
@@ -620,15 +620,20 @@ namespace CaptureToolPlugin
                     acqLengthMinutesToUse = requestLengthMinutes;
                 }
 
-                if (acqEndTimeToUse.AddMinutes(30 + acqLengthMinutesToUse) > DateTime.Now)
+                var dateTimeThreshold = acqEndTimeToUse.AddMinutes(30 + acqLengthMinutesToUse);
+
+                if (dateTimeThreshold > DateTime.Now)
                 {
                     // Don't run yet
                     // Assumptions that aren't always correct, but are good enough for this use:
                     // - All runs require column equilibration time (infusion and some other instrument runs don't need this)
                     // - Column equilibration is run after the MS acquisition (it can be run before MS acquisition)
                     // - Column equilibration time is the same as the MS run time (it can often be shorter, but rarely longer)
-                    returnData.CloseoutMsg = "Minimum post-acq delay for LC data capture (MS acq length + 30 minutes) not reached";
+                    returnData.CloseoutMsg = string.Format("Minimum post-acq delay for LC data capture not reached: " +
+                                                           "{0:yyyy-MM-dd hh:mm:ss tt} (MS acq length + 30 minutes)", dateTimeThreshold);
                     returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
+
+                    LogMessage(returnData.CloseoutMsg);
                     return false;
                 }
             }
