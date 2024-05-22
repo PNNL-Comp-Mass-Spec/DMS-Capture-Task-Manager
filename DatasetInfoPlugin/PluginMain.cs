@@ -1261,7 +1261,7 @@ namespace DatasetInfoPlugin
 
             var tmtMatch = tmtMatcher.Match(mDataset);
 
-            if (tmtMatch.Success)
+            if (tmtMatch.Success && mDataset.IndexOf("NanoPOTS_mTIFF_TMT_24_01", StringComparison.OrdinalIgnoreCase) < 0)
             {
                 msFileInfoScanner.Options.MS2MzMin = 126;
                 LogMessage("Verifying that MS/MS spectra have minimum m/z values below {0:N0} since the dataset name contains {1}",
