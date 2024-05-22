@@ -629,7 +629,7 @@ namespace CaptureToolPlugin
                     // - All runs require column equilibration time (infusion and some other instrument runs don't need this)
                     // - Column equilibration is run after the MS acquisition (it can be run before MS acquisition)
                     // - Column equilibration time is the same as the MS run time (it can often be shorter, but rarely longer)
-                    returnData.CloseoutMsg = string.Format("Minimum post-acq delay for LC data capture not reached: " +
+                    returnData.CloseoutMsg = string.Format("Minimum post-acq delay for LC data capture not reached; wait until " +
                                                            "{0:yyyy-MM-dd hh:mm:ss tt} (MS acq length + 30 minutes)", dateTimeThreshold);
                     returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
 
