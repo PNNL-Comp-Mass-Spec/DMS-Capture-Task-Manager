@@ -1217,14 +1217,11 @@ namespace DatasetInfoPlugin
 
                 var reporterIonMzMinText = mTaskParams.GetParam("Meta_Experiment_labelling_reporter_mz_min", string.Empty);
 
-                if (!string.IsNullOrEmpty(reporterIonMzMinText))
+                if (!string.IsNullOrEmpty(reporterIonMzMinText) && float.TryParse(reporterIonMzMinText, out var reporterIonMzMin))
                 {
-                    if (float.TryParse(reporterIonMzMinText, out var reporterIonMzMin))
-                    {
-                        msFileInfoScanner.Options.MS2MzMin = (int)Math.Floor(reporterIonMzMin);
-                        LogMessage("Verifying that MS/MS spectra have minimum m/z values below {0:N0} since experiment {1} has {2} labelling",
-                            msFileInfoScanner.Options.MS2MzMin, experimentName, sampleLabelling);
-                    }
+                    msFileInfoScanner.Options.MS2MzMin = (int)Math.Floor(reporterIonMzMin);
+                    LogMessage("Verifying that MS/MS spectra have minimum m/z values below {0:N0} since experiment {1} has {2} labelling",
+                        msFileInfoScanner.Options.MS2MzMin, experimentName, sampleLabelling);
                 }
             }
 
