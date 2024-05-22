@@ -582,22 +582,45 @@ namespace CaptureToolPlugin
             var instrumentClass = InstrumentClassInfo.GetInstrumentClass(instClassName);     // Enum of instrument class type
             var instrumentName = taskParams.GetParam("Instrument_Name");                // Instrument name
 
-            // Acquisition times and length; invalid and unused for MS data capture, needed for LC data capture
-            var acqStartTime = taskParams.GetParamAsDate("Acq_Time_Start", DateTime.MinValue);
-            var acqEndTime = taskParams.GetParamAsDate("Acq_Time_End", DateTime.MinValue);
-            var acqLengthMinutes = acqEndTime.Subtract(acqStartTime).TotalMinutes;
-
             if (mIsLcDataCapture)
             {
-                if (acqStartTime == DateTime.MinValue || acqEndTime == DateTime.MinValue)
+                // Acquisition times and length; invalid and unused for MS data capture, needed for LC data capture
+                var acqStartTime = taskParams.GetParamAsDate("Acq_Time_Start", DateTime.MinValue);
+                var acqEndTime = taskParams.GetParamAsDate("Acq_Time_End", DateTime.MinValue);
+                var acqLengthMinutes = acqEndTime.Subtract(acqStartTime).TotalMinutes;
+
+                DateTime acqEndTimeToUse;
+                double acqLengthMinutesToUse;
+
+                if (acqStartTime > DateTime.MinValue && acqEndTime > DateTime.MinValue)
                 {
-                    // Acquisition start and end times must be set for the MS dataset before running LC data capture
-                    returnData.CloseoutMsg = $"MS acq start or end time is invalid: start '{taskParams.GetParam("Acq_Time_Start")}', end '{taskParams.GetParam("Acq_Time_Start")}'";
-                    returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                    return false;
+                    acqEndTimeToUse = acqEndTime;
+                    acqLengthMinutesToUse = acqLengthMinutes;
+                }
+                else
+                {
+                    // Examine the start and end times tracked in T_Requested_Run
+                    var requestStartTime = taskParams.GetParamAsDate("Request_Run_Start", DateTime.MinValue);
+                    var requestEndTime = taskParams.GetParamAsDate("Request_Run_Finish", DateTime.MinValue);
+                    var requestLengthMinutes = requestEndTime.Subtract(requestStartTime).TotalMinutes;
+
+                    if (requestStartTime == DateTime.MinValue || requestEndTime == DateTime.MinValue)
+                    {
+                        // Acquisition start and end times must be set for the MS dataset before running LC data capture
+
+                        returnData.CloseoutMsg = string.Format("MS acq start or end time is invalid: start '{0}', end '{1}'",
+                                                               taskParams.GetParam("Acq_Time_Start"),
+                                                               taskParams.GetParam("Acq_Time_End"));
+
+                        returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                        return false;
+                    }
+
+                    acqEndTimeToUse = requestEndTime;
+                    acqLengthMinutesToUse = requestLengthMinutes;
                 }
 
-                if (acqEndTime.AddMinutes(30 + acqLengthMinutes) > DateTime.Now)
+                if (acqEndTimeToUse.AddMinutes(30 + acqLengthMinutesToUse) > DateTime.Now)
                 {
                     // Don't run yet
                     // Assumptions that aren't always correct, but are good enough for this use:
