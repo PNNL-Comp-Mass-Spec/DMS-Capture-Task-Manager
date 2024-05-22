@@ -171,7 +171,7 @@ namespace CaptureToolPlugin
 
                     if (fileToRename.Name.StartsWith("x_") && foundFiles.Length == 1)
                     {
-                        // File was previously renamed and it is the only file in this directory; don't rename it again
+                        // File was previously renamed, and it is the only file in this directory; don't rename it again
                         continue;
                     }
 
@@ -191,7 +191,7 @@ namespace CaptureToolPlugin
                 {
                     if (subdirectoryToRename.Name.StartsWith("x_") && targetSubdirectories.Length == 1)
                     {
-                        // Subdirectory was previously renamed and it is the only Subdirectory in this directory; don't rename it again
+                        // Subdirectory was previously renamed, and it is the only Subdirectory in this directory; don't rename it again
                         continue;
                     }
 
@@ -359,7 +359,7 @@ namespace CaptureToolPlugin
             }
             catch (Exception ex)
             {
-                // Something really bad happened
+                // Something bad happened
                 mToolState.ErrorMessage = "Error checking for empty dataset directory";
 
                 LogError(mToolState.ErrorMessage + ": " + directoryPath, true);
@@ -370,6 +370,8 @@ namespace CaptureToolPlugin
             // If we got to here, the directory is empty
             return DatasetDirectoryState.Empty;
         }
+
+        // ReSharper disable once GrammarMistakeInComment
 
         /// <summary>
         /// Performs action specified by DSFolderExistsAction manager parameter if a dataset directory already exists
@@ -451,7 +453,7 @@ namespace CaptureToolPlugin
                             {
                                 if (copyWithResume)
                                 {
-                                    // Do not rename the directory or file; leave as-is and we'll resume the copy
+                                    // Do not rename the directory or file; leave as-is, and we'll resume the copy
                                     switchResult = true;
                                 }
                                 else
@@ -861,7 +863,7 @@ namespace CaptureToolPlugin
             }
 
             // Validate that storagePath includes both an instrument name and subdirectory name
-            // Furthermore, the instrument name should match the current instrument add exceptions in the future if this becomes required)
+            // Furthermore, the instrument name should match the current instrument add exceptions in the future if this becomes required
             var storagePathParts = storagePath.Split(Path.DirectorySeparatorChar).ToList();
 
             if (storagePathParts.Count > 1)
@@ -1406,6 +1408,8 @@ namespace CaptureToolPlugin
             return false;
         }
 
+        // ReSharper disable once GrammarMistakeInComment
+
         /// <summary>
         /// Make sure that we matched a file for instruments that save data as a file, or a directory for instruments that save data to a directory
         /// </summary>
@@ -1477,7 +1481,7 @@ namespace CaptureToolPlugin
                             }
                             else
                             {
-                                // Dataset name matched a directory but it does not have a .raw file
+                                // Dataset name matched a directory, but it does not have a .raw file
                                 returnData.CloseoutMsg = "Dataset name matched " + entityDescription + " but it does not have a .raw file";
                             }
 
@@ -1630,7 +1634,7 @@ namespace CaptureToolPlugin
                             }
                             else
                             {
-                                // Dataset name matched a directory but it does not have a .uimf file
+                                // Dataset name matched a directory, but it does not have a .uimf file
                                 returnData.CloseoutMsg = "Dataset name matched " + entityDescription + " but it does not have a .uimf file";
                                 LogWarning("Directory  " + sourceDirectory.FullName + " does not have any .uimf files");
                             }
