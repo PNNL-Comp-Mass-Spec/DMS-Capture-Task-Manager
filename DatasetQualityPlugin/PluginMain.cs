@@ -26,7 +26,7 @@ namespace DatasetQualityPlugin
     {
         // Ignore Spelling: Quameter, utf, frac, Lumos, orbi, Roc, idfree, monoisotope, Filepath, cpus, cfg, cmd
 
-        private const int MAX_QUAMETER_RUNTIME_HOURS = 6;
+        private const int MAX_QUAMETER_RUNTIME_HOURS = 24;
         private const int MAX_QUAMETER_RUNTIME_MINUTES = 60 * MAX_QUAMETER_RUNTIME_HOURS;
 
         private const string STORE_QUAMETER_RESULTS_SP_NAME = "store_quameter_results";
@@ -1501,7 +1501,7 @@ namespace DatasetQualityPlugin
 
         private void CmdRunner_Timeout()
         {
-            LogError("CmdRunner timeout reported (Quameter has been running for over {0} HOURS)", MAX_QUAMETER_RUNTIME_HOURS);
+            LogError("CmdRunner timeout reported (Quameter has been running for over {0} hours)", MAX_QUAMETER_RUNTIME_HOURS);
         }
 
         private void CmdRunner_LoopWaiting()
