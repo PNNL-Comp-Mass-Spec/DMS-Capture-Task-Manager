@@ -2,7 +2,7 @@
 // Written by Dave Clark and Matthew Monroe for the Department of Energy (PNNL, Richland, WA) in 2009
 //
 // E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov
-// Website: https://github.com/PNNL-Comp-Mass-Spec/ or https://panomics.pnnl.gov/ or https://www.pnnl.gov/integrative-omics
+// Website: https://github.com/PNNL-Comp-Mass-Spec/ or https://www.pnnl.gov/integrative-omics
 // -------------------------------------------------------------------------------
 //
 // Licensed under the 2-Clause BSD License; you may not use this file except
@@ -61,7 +61,7 @@ namespace CaptureTaskManager
                                   "Normal operation is to run the program without any command line switches.",
                     ContactInfo = "Program written by Dave Clark and Matthew Monroe for the Department of Energy (PNNL, Richland, WA)" + Environment.NewLine +
                                   "E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov" + Environment.NewLine +
-                                  "Website: https://github.com/PNNL-Comp-Mass-Spec/ or https://panomics.pnnl.gov/ or https://www.pnnl.gov/integrative-omics" + Environment.NewLine + Environment.NewLine +
+                                  "Website: https://github.com/PNNL-Comp-Mass-Spec/ or https://www.pnnl.gov/integrative-omics" + Environment.NewLine + Environment.NewLine +
                                   "Licensed under the 2-Clause BSD License; you may not use this file except in compliance with the License.  " +
                                   "You may obtain a copy of the License at https://opensource.org/licenses/BSD-2-Clause"
                 };
