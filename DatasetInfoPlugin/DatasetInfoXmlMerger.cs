@@ -112,6 +112,8 @@ namespace DatasetInfoPlugin
         /// </summary>
         public List<string> AcqTimeWarnings { get; }
 
+        // ReSharper disable once GrammarMistakeInComment
+
         /// <summary>
         /// List of instruments files that MSFileInfoScanner computed a SHA-1 hash of the file contents
         /// </summary>

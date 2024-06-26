@@ -416,7 +416,7 @@ namespace CaptureTaskManager
             dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
             var returnCodeParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.InputOutput);
 
-            // Execute the Stored Procedure (retry the call up to 3 times)
+            // Execute the Stored Procedure (retry the call, up to 3 times)
             var resCode = mCaptureTaskDBProcedureExecutor.ExecuteSP(cmd, 3);
 
             var returnCode = DBToolsBase.GetReturnCode(returnCodeParam);

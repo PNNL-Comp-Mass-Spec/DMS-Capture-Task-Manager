@@ -1,5 +1,7 @@
 ﻿namespace CaptureTaskManager;
 
+// ReSharper disable UnusedMember.Global
+
 public enum InstrumentClass
 {
     Unknown = 0,
@@ -32,7 +34,10 @@ public enum InstrumentClass
     BrukerTOF_TDF = 27,             // Bruker_timsTOF
     FT_Booster_Data = 28,           // 21T_Booster
     IMS_Agilent_TOF_DotD = 29,      // Data is acquired natively as .D directories: IMS08, IMS09, IMS10, IMS11
+    // ReSharper disable once CommentTypo
     Thermo_SII_LC = 30,             // Thermo LC data files from SII (Standard Instrument Integration) for Xcalibur
     Waters_Acquity_LC = 31,         // Waters Acquity LC data files from MassLynx
     LCMSNet_LC = 32                 // LCMSNet LC with no available pump method/pressure data
 }
+
+// ReSharper restore UnusedMember.Global

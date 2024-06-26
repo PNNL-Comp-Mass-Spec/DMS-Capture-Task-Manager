@@ -84,7 +84,7 @@ namespace CaptureToolPlugin.DataCapture
                 }
                 else
                 {
-                    // Fail safe code; this shouldn't typically be reached
+                    // Fail-safe code; this shouldn't typically be reached
                     LogWarning("Unable to determine the parent directory of {0} in AutoFixFilesWithInvalidChars",
                         datasetFileOrDirectory.FullName);
 
