@@ -109,140 +109,6 @@ namespace CaptureToolPlugin.DataCapture
             }
         }
 
-        /// <summary>
-        /// Find files to skip based on filename match specs in searchSpec
-        /// </summary>
-        /// <param name="sourceDirectory"></param>
-        /// <param name="datasetInfo"></param>
-        /// <param name="searchSpecList">Dictionary where keys are file specs to pass to .GetFiles() and values are the description of each key</param>
-        /// <param name="returnData"></param>
-        /// <param name="filesToSkip">Output: List of file names to skip</param>
-        /// <returns>True if successful, false if an error</returns>
-        protected bool FindFilesToSkip(
-            DirectoryInfo sourceDirectory,
-            DatasetInfo datasetInfo,
-            Dictionary<string, string> searchSpecList,
-            ToolReturnData returnData,
-            out SortedSet<string> filesToSkip)
-        {
-            filesToSkip = new SortedSet<string>();
-
-            try
-            {
-                foreach (var searchItem in searchSpecList)
-                {
-                    var searchSpec = searchItem.Key;
-
-                    var foundFiles = sourceDirectory.GetFiles(searchSpec, SearchOption.AllDirectories).ToList();
-
-                    foreach (var file in foundFiles)
-                    {
-                        if (!filesToSkip.Contains(file.Name))
-                        {
-                            filesToSkip.Add(file.Name);
-                        }
-                    }
-
-                    if (foundFiles.Count == 1)
-                    {
-                        var firstSkippedFile = foundFiles.FirstOrDefault();
-
-                        if (firstSkippedFile != null)
-                        {
-                            LogMessage("Skipping " + searchItem.Value + ": " + firstSkippedFile.Name);
-                        }
-                    }
-                    else if (foundFiles.Count > 1)
-                    {
-                        var firstSkippedFile = foundFiles.FirstOrDefault();
-                        var lastSkippedFile = foundFiles.LastOrDefault();
-
-                        if (firstSkippedFile != null && lastSkippedFile != null)
-                        {
-                            LogMessage("Skipping " + foundFiles.Count + " " + searchItem.Value + "s: " +
-                                       "(" + firstSkippedFile.Name + " through " + lastSkippedFile.Name + ")");
-                        }
-                    }
-                }
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                returnData.CloseoutMsg = "Exception getting list of files to skip";
-                LogError(returnData.CloseoutMsg + " for dataset " + datasetInfo.DatasetName, true);
-                LogError("Stack trace", ex);
-
-                mShareConnection.DisconnectShareIfRequired();
-
-                mToolState.HandleCopyException(returnData, ex);
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Look for an incomplete .UIMF file, which is either 0 bytes in size or has a corresponding .uimf-journal file
-        /// </summary>
-        /// <param name="directoryPath"></param>
-        /// <param name="msg">Output: error message</param>
-        /// <param name="returnData">Input/output: Return data</param>
-        /// <returns>True if an incomplete .uimf file is found</returns>
-        protected bool IsIncompleteUimfFound(
-            string directoryPath,
-            out string msg,
-            ToolReturnData returnData)
-        {
-            msg = string.Empty;
-
-            try
-            {
-                var sourceDirectory = new DirectoryInfo(directoryPath);
-
-                var uimfJournalFiles = sourceDirectory.GetFiles("*.uimf-journal");
-                string sourceDirectoryErrorMessage = null;
-
-                if (uimfJournalFiles.Length > 0)
-                {
-                    sourceDirectoryErrorMessage =
-                        "Source directory has SQLite journal files, indicating data acquisition is in progress";
-                }
-                else
-                {
-                    var uimfFiles = sourceDirectory.GetFiles("*.uimf");
-
-                    if (uimfFiles.Any(uimfFile => uimfFile.Length == 0))
-                    {
-                        sourceDirectoryErrorMessage = "Source directory has a zero-byte UIMF file";
-                    }
-                }
-
-                if (!string.IsNullOrEmpty(sourceDirectoryErrorMessage))
-                {
-                    returnData.CloseoutMsg = sourceDirectoryErrorMessage;
-                    msg = returnData.CloseoutMsg + " at " + directoryPath;
-                    LogError(msg);
-
-                    mShareConnection.DisconnectShareIfRequired();
-                    returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
-                    return true;
-                }
-            }
-            catch (Exception ex)
-            {
-                returnData.CloseoutMsg = "Exception checking for zero-byte dataset files";
-                msg = returnData.CloseoutMsg + " at " + directoryPath;
-                LogError(msg, true);
-                LogError("Stack trace", ex);
-
-                mShareConnection.DisconnectShareIfRequired();
-
-                mToolState.HandleCopyException(returnData, ex);
-                return true;
-            }
-
-            return false;
-        }
-
         protected bool CopyDirectoryWithResume(
             string sourceDirectoryPath,
             string targetDirectoryPath,
@@ -387,6 +253,137 @@ namespace CaptureToolPlugin.DataCapture
             }
 
             return success;
+        }
+
+        /// <summary>
+        /// Find files to skip based on filename match specs in searchSpec
+        /// </summary>
+        /// <param name="sourceDirectory">Source directory</param>
+        /// <param name="datasetInfo">Dataset info</param>
+        /// <param name="searchSpecList">Dictionary where keys are file specs to pass to .GetFiles() and values are the description of each key</param>
+        /// <param name="returnData">Return data</param>
+        /// <param name="filesToSkip">Output: List of file names to skip</param>
+        /// <returns>True if successful, false if an error</returns>
+        protected bool FindFilesToSkip(
+            DirectoryInfo sourceDirectory,
+            DatasetInfo datasetInfo,
+            Dictionary<string, string> searchSpecList,
+            ToolReturnData returnData,
+            out SortedSet<string> filesToSkip)
+        {
+            filesToSkip = new SortedSet<string>();
+
+            try
+            {
+                foreach (var searchItem in searchSpecList)
+                {
+                    var searchSpec = searchItem.Key;
+
+                    var foundFiles = sourceDirectory.GetFiles(searchSpec, SearchOption.AllDirectories).ToList();
+
+                    foreach (var file in foundFiles)
+                    {
+                        filesToSkip.Add(file.Name);
+                    }
+
+                    if (foundFiles.Count == 1)
+                    {
+                        var firstSkippedFile = foundFiles.FirstOrDefault();
+
+                        if (firstSkippedFile != null)
+                        {
+                            LogMessage("Skipping " + searchItem.Value + ": " + firstSkippedFile.Name);
+                        }
+                    }
+                    else if (foundFiles.Count > 1)
+                    {
+                        var firstSkippedFile = foundFiles.FirstOrDefault();
+                        var lastSkippedFile = foundFiles.LastOrDefault();
+
+                        if (firstSkippedFile != null && lastSkippedFile != null)
+                        {
+                            LogMessage("Skipping " + foundFiles.Count + " " + searchItem.Value + "s: " +
+                                       "(" + firstSkippedFile.Name + " through " + lastSkippedFile.Name + ")");
+                        }
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                returnData.CloseoutMsg = "Exception getting list of files to skip";
+                LogError(returnData.CloseoutMsg + " for dataset " + datasetInfo.DatasetName, true);
+                LogError("Stack trace", ex);
+
+                mShareConnection.DisconnectShareIfRequired();
+
+                mToolState.HandleCopyException(returnData, ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Look for an incomplete .UIMF file, which is either 0 bytes in size or has a corresponding .uimf-journal file
+        /// </summary>
+        /// <param name="directoryPath">Source directory path to examine</param>
+        /// <param name="msg">Output: error message</param>
+        /// <param name="returnData">Input/output: Return data</param>
+        /// <returns>True if an incomplete .uimf file is found</returns>
+        protected bool IsIncompleteUimfFound(
+            string directoryPath,
+            out string msg,
+            ToolReturnData returnData)
+        {
+            msg = string.Empty;
+
+            try
+            {
+                var sourceDirectory = new DirectoryInfo(directoryPath);
+
+                var uimfJournalFiles = sourceDirectory.GetFiles("*.uimf-journal");
+                string sourceDirectoryErrorMessage = null;
+
+                if (uimfJournalFiles.Length > 0)
+                {
+                    sourceDirectoryErrorMessage =
+                        "Source directory has SQLite journal files, indicating data acquisition is in progress";
+                }
+                else
+                {
+                    var uimfFiles = sourceDirectory.GetFiles("*.uimf");
+
+                    if (uimfFiles.Any(uimfFile => uimfFile.Length == 0))
+                    {
+                        sourceDirectoryErrorMessage = "Source directory has a zero-byte UIMF file";
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(sourceDirectoryErrorMessage))
+                {
+                    returnData.CloseoutMsg = sourceDirectoryErrorMessage;
+                    msg = returnData.CloseoutMsg + " at " + directoryPath;
+                    LogError(msg);
+
+                    mShareConnection.DisconnectShareIfRequired();
+                    returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                returnData.CloseoutMsg = "Exception checking for zero-byte dataset files";
+                msg = returnData.CloseoutMsg + " at " + directoryPath;
+                LogError(msg, true);
+                LogError("Stack trace", ex);
+
+                mShareConnection.DisconnectShareIfRequired();
+
+                mToolState.HandleCopyException(returnData, ex);
+                return true;
+            }
+
+            return false;
         }
     }
 }
