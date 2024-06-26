@@ -246,12 +246,39 @@ namespace CaptureToolPlugin.DataCapture
 
             if (success)
             {
+                DeleteSqliteJournalFiles(targetDirectoryPath);
+
                 // CloseoutType may have been set to CLOSEOUT_FAILED by HandleCopyException; reset it to CLOSEOUT_SUCCESS
                 returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_SUCCESS;
                 returnData.EvalCode = EnumEvalCode.EVAL_CODE_SUCCESS;
             }
 
             return success;
+        }
+
+        /// <summary>
+        /// Delete zero-byte .sqlite-journal files in the target directory
+        /// </summary>
+        /// <param name="directoryPath">Target directory path</param>
+        private void DeleteSqliteJournalFiles(string directoryPath)
+        {
+            try
+            {
+                var targetDirectory = new DirectoryInfo(directoryPath);
+
+                foreach (var journalFile in targetDirectory.GetFiles("*.sqlite-journal", SearchOption.AllDirectories))
+                {
+                    if (journalFile.Length != 0)
+                        continue;
+
+                    LogMessage("Deleting zero-byte .sqlite-journal file from the dataset directory: {0}", journalFile.FullName);
+                    journalFile.Delete();
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception deleting zero-byte SQLite journal files: {0}", ex.Message);
+            }
         }
 
         /// <summary>
