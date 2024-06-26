@@ -54,12 +54,11 @@ namespace CaptureToolPlugin.DataCapture
 
             foreach (var datasetFileOrDirectory in candidateFiles)
             {
-                if (processedFiles.Contains(datasetFileOrDirectory.FullName))
+                if (!processedFiles.Add(datasetFileOrDirectory.FullName))
                 {
+                    // The file is already present in processedFiles
                     continue;
                 }
-
-                processedFiles.Add(datasetFileOrDirectory.FullName);
 
                 var updatedName = mDatasetFileSearchTool.AutoFixFilename(datasetName, datasetFileOrDirectory.Name);
 
