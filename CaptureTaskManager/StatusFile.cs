@@ -304,9 +304,19 @@ namespace CaptureTaskManager
             writer.WriteElementString("ProcessID", processId.ToString());
             writer.WriteStartElement("RecentErrorMessages");
 
+            // Error messages from MyEMSL typically include backslashes that will need to be escaped when the XML is sent to the database;
+            // Limit these messages to 1750 characters to avoid the SQL server error "String or binary data would be truncated"
+
+            // ReSharper disable CommentTypo
+
+            // Example error message:
+            // Response from https://ingestdms.my.emsl.pnl.gov/get_state?job_id=3176440: {"status": "500 Internal Server Error", "message": "The server encountered an unexpected condition which prevented it from fulfilling the request.", "traceback": "Traceback (most recent call last):\n  File \"/opt/pacifica/lib64/python3.6/site-packages/peewee.py\", line 3035, in connect\n    self._state.set_connection(self._connect())\n  File \"/opt/pacifica/lib64/python3.6/site-packages/peewee.py\", line 3730, in _connect\n    conn = psycopg2.connect(database=self.database, **self.connect_params)\n  File \"/opt/pacifica/lib64/python3.6/site-packages/psycopg2/__init__.py\", line 127, in connect\n    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)\npsycopg2.OperationalError: FATAL:  remaining connection slots are reserved for non-replication superuser connections\n\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/opt/pacifica/lib64/python3.6/site-packages/cherrypy/_cprequest.py\", line 638, in respond\n    self._do_respond(path_info)\n  File \"/opt/pacifica/lib64/python3.6/site-packages/cherrypy/_cprequest.py\", line 697, in _do_respond\n    response.body = self.handler()\n  File \"/opt/pacifica/lib64/python3.6/site-packages/cherrypy/lib/encoding.py\", line 219, in __call__\n    self.body = self.oldhandler(*args, **kwargs)\n  File \"/opt/pacifica/lib64/python3.6/site-packages/cherrypy/lib/jsontools.py\", line 59, in json_handler\n    value = cherrypy.serving.request._json_inner_handler(*args, **kwargs)\n  File \"/opt/pacifica/lib64/python3.6/site-packages/cherrypy/_cpdispatch.py\", line 54, in __call__\n    return self.callable(*self.args, **self.kwargs)\n  File \"/opt/pacifica/lib64/python3.6/site-packages/pacifica/ingest/rest.py\", l
+
+            // ReSharper restore CommentTypo
+
             foreach (var errMsg in StatusData.ErrorQueue)
             {
-                writer.WriteElementString("ErrMsg", ValidateTextLength(errMsg, 1850));
+                writer.WriteElementString("ErrMsg", ValidateTextLength(errMsg, 1750));
             }
 
             writer.WriteEndElement(); // RecentErrorMessages
@@ -325,7 +335,7 @@ namespace CaptureTaskManager
             writer.WriteElementString("Job", status.JobNumber.ToString());
             writer.WriteElementString("Step", status.JobStep.ToString());
             writer.WriteElementString("Dataset", ValidateTextLength(status.Dataset, 255));
-            writer.WriteElementString("MostRecentLogMessage", ValidateTextLength(StatusData.MostRecentLogMessage, 1950));
+            writer.WriteElementString("MostRecentLogMessage", ValidateTextLength(StatusData.MostRecentLogMessage, 1850));
             writer.WriteElementString("MostRecentJobInfo", ValidateTextLength(status.MostRecentJobInfo, 255));
             writer.WriteEndElement(); // TaskDetails
             writer.WriteEndElement(); // Task
