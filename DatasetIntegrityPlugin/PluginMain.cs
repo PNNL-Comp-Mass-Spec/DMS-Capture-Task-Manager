@@ -42,6 +42,8 @@ namespace DatasetIntegrityPlugin
         private const float BAF_FILE_MIN_SIZE_KB = 16;
         private const float TDF_FILE_MIN_SIZE_KB = 50;
         private const float TDF_BIN_FILE_MIN_SIZE_KB = 50;
+        private const float TSF_FILE_MIN_SIZE_KB = 16;
+        private const float TSF_BIN_FILE_MIN_SIZE_KB = 16;
         private const float SER_FILE_MIN_SIZE_KB = 16;
         private const float FID_FILE_MIN_SIZE_KB = 16;
         private const float ACQ_METHOD_FILE_MIN_SIZE_KB = 5;
@@ -213,6 +215,10 @@ namespace DatasetIntegrityPlugin
 
                 case InstrumentClass.BrukerMALDI_Imaging_V2:
                     mRetData.CloseoutType = TestBrukerFT_Directory(datasetDirectoryPath, requireBafOrSerFile: false, requireMCFFile: false, requireSerFile: true, instrumentClass: instrumentClass, instrumentName: instrumentName);
+                    break;
+
+                case InstrumentClass.TimsTOF_MALDI_Imaging:
+                    mRetData.CloseoutType = TestBrukerTof_ImagingTsfDirectory(datasetDirectoryPath, instrumentName);
                     break;
 
                 case InstrumentClass.BrukerMALDI_Spot:
@@ -1629,6 +1635,22 @@ namespace DatasetIntegrityPlugin
             var requiredFiles = new Dictionary<string, float> {
                 { "analysis.tdf", TDF_FILE_MIN_SIZE_KB},
                 { "analysis.tdf_bin", TDF_BIN_FILE_MIN_SIZE_KB}
+            };
+
+            return TestBrukerTof_Directory(datasetDirectoryPath, instrumentName, requiredFiles, false);
+        }
+
+        /// <summary>
+        /// Tests a BrukerTOF_ImagingTSF directory for integrity
+        /// </summary>
+        /// <param name="datasetDirectoryPath">Fully qualified path to the dataset directory</param>
+        /// <param name="instrumentName"></param>
+        /// <returns>Enum indicating test result</returns>
+        private EnumCloseOutType TestBrukerTof_ImagingTsfDirectory(string datasetDirectoryPath, string instrumentName)
+        {
+            var requiredFiles = new Dictionary<string, float> {
+                { "analysis.tsf", TSF_FILE_MIN_SIZE_KB},
+                { "analysis.tsf_bin", TSF_BIN_FILE_MIN_SIZE_KB}
             };
 
             return TestBrukerTof_Directory(datasetDirectoryPath, instrumentName, requiredFiles, false);

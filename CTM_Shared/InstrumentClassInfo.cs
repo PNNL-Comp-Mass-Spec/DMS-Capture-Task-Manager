@@ -73,6 +73,10 @@ namespace CaptureTaskManager
         // The following is used by LCMSNet LCs with no available pump method/pressure data
         public const string DATA_FORMAT_LCMSNET_LCMETHOD = "lcmsnet_lcmethod";
 
+        // The following is used by Bruker timsTOF instruments with MALDI imaging capability
+        // Ins
+        public const string DATA_FORMAT_TIMSTOF_MALDI_IMAGING = "timstof_maldi_imaging";
+
         public const string DOT_WIFF_EXTENSION = ".wiff";
         public const string DOT_D_EXTENSION = ".d";
         public const string DOT_RAW_EXTENSION = ".raw";

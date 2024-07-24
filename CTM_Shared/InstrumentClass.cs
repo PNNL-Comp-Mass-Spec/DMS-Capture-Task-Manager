@@ -37,7 +37,8 @@ public enum InstrumentClass
     // ReSharper disable once CommentTypo
     Thermo_SII_LC = 30,             // Thermo LC data files from SII (Standard Instrument Integration) for Xcalibur
     Waters_Acquity_LC = 31,         // Waters Acquity LC data files from MassLynx
-    LCMSNet_LC = 32                 // LCMSNet LC with no available pump method/pressure data
+    LCMSNet_LC = 32,                // LCMSNet LC with no available pump method/pressure data
+    TimsTOF_MALDI_Imaging = 33      // Bruker timsTOF MALDI Imaging
 }
 
 // ReSharper restore UnusedMember.Global
