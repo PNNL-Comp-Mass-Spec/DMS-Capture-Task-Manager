@@ -1588,6 +1588,14 @@ namespace CaptureToolPlugin
                     }
                     break;
 
+                case InstrumentClass.TimsTOF_MALDI_Imaging:
+                    if (datasetInfo.DatasetType != InstrumentFileLayout.DirectoryNoExt)
+                    {
+                        // Dataset name matched a file; must be a directory with the dataset name, and inside the directory is a .D directory (and typically some jpg files)
+                        returnData.CloseoutMsg = "Dataset name matched " + entityDescription + "; must be a directory with the dataset name, and inside the directory is a .D directory (and typically some jpg files)";
+                    }
+                    break;
+
                 case InstrumentClass.Bruker_Amazon_Ion_Trap:
                 case InstrumentClass.BrukerFT_BAF:
                 case InstrumentClass.BrukerTOF_BAF:

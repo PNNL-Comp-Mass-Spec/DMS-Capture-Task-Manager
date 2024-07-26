@@ -1530,6 +1530,13 @@ namespace DatasetInfoPlugin
                     isFile = false;
                     break;
 
+                case DataFormat.BrukerTOFTsf:
+                    // Current only known usage of this is Bruker timsTOF Flex MALDI Imaging data files; treat them similar to BrukerFTFolder, which is used for FTICR imaging
+                    fileOrDirectoryName = Path.Combine(mDataset + InstrumentClassInfo.DOT_D_EXTENSION, "analysis.tsf");
+                    isFile = true;
+                    brukerDotDBaf = true;
+                    break;
+
                 case DataFormat.IlluminaFolder:
                     // fileOrDirectoryName = mDataset + InstrumentClassInfo.DOT_TXT_GZ_EXTENSION;
                     // isFile = true;
@@ -1601,7 +1608,7 @@ namespace DatasetInfoPlugin
                 if (brukerDotDBaf && datasetDirectory.GetDirectories("*.D", SearchOption.AllDirectories).Length > 0)
                 {
                     mMsg = string.Format(
-                        "analysis.baf not found in the expected .d directory; to include all .D subdirectories, use " +
+                        "analysis.baf/.tsf not found in the expected .d directory; to include all .D subdirectories, use " +
                         "Exec add_update_task_parameter {0}, 'StepParameters', 'LooseMatchDotD', 'true'",
                         mJob);
 

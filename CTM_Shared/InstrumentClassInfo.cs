@@ -67,15 +67,15 @@ namespace CaptureTaskManager
         // Inside the .D directory is the analysis.tdf file; there is also .m subdirectory that has a microTOFQImpacTemAcquisition.method file; there is not a ser or fid file
         public const string DATA_FORMAT_BRUKER_TOF_TDF_DIRECTORY = "bruker_tof_tdf";
 
+        // The following is used by Bruker timsTOF instruments with MALDI imaging capability
+        // Inside the .D directory is the analysis.tsf file; there is also .m subdirectory that has a microTOFQImpacTemAcquisition.method file; there is not a ser or fid file
+        public const string DATA_FORMAT_BRUKER_TOF_TSF_DIRECTORY = "bruker_tof_tsf";
+
         // The following is used by instrument External_Illumina
         public const string DATA_FORMAT_ILLUMINA_FOLDER = "illumina_folder";
 
         // The following is used by LCMSNet LCs with no available pump method/pressure data
         public const string DATA_FORMAT_LCMSNET_LCMETHOD = "lcmsnet_lcmethod";
-
-        // The following is used by Bruker timsTOF instruments with MALDI imaging capability
-        // Ins
-        public const string DATA_FORMAT_TIMSTOF_MALDI_IMAGING = "timstof_maldi_imaging";
 
         public const string DOT_WIFF_EXTENSION = ".wiff";
         public const string DOT_D_EXTENSION = ".d";
@@ -138,6 +138,7 @@ namespace CaptureTaskManager
                 DATA_FORMAT_BRUKER_MALDI_IMAGING => DataFormat.BrukerMALDIImaging,
                 DATA_FORMAT_BRUKER_TOF_BAF_DIRECTORY => DataFormat.BrukerTOFBaf,
                 DATA_FORMAT_BRUKER_TOF_TDF_DIRECTORY => DataFormat.BrukerTOFTdf,
+                DATA_FORMAT_BRUKER_TOF_TSF_DIRECTORY => DataFormat.BrukerTOFTsf,
                 DATA_FORMAT_ILLUMINA_FOLDER => DataFormat.IlluminaFolder,
                 DATA_FORMAT_DOT_QGD_FILES => DataFormat.ShimadzuQGDFile,
                 DATA_FORMAT_LCMSNET_LCMETHOD => DataFormat.LCMSNetLCMethod,
@@ -163,6 +164,7 @@ namespace CaptureTaskManager
                 DataFormat.BrukerMALDIImaging => DATA_FORMAT_BRUKER_MALDI_IMAGING,
                 DataFormat.BrukerTOFBaf => DATA_FORMAT_BRUKER_TOF_BAF_DIRECTORY,
                 DataFormat.BrukerTOFTdf => DATA_FORMAT_BRUKER_TOF_TDF_DIRECTORY,
+                DataFormat.BrukerTOFTsf => DATA_FORMAT_BRUKER_TOF_TSF_DIRECTORY,
                 DataFormat.IlluminaFolder => DATA_FORMAT_ILLUMINA_FOLDER,
                 DataFormat.LCMSNetLCMethod => DATA_FORMAT_LCMSNET_LCMETHOD,
                 _ => "Unknown"

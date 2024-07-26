@@ -83,12 +83,17 @@ public enum DataFormat
     ShimadzuQGDFile = 15,
 
     /// <summary>
-    /// Used by Bruker timsTOF; Instead the .D directory is the analysis.tdf file
+    /// Used by Bruker timsTOF; Inside the .D directory is the analysis.tdf file
     /// </summary>
     BrukerTOFTdf = 16,
 
     /// <summary>
     /// Used by LCMSNet LCs with no available pump method/pressure data
     /// </summary>
-    LCMSNetLCMethod = 17
+    LCMSNetLCMethod = 17,
+
+    /// <summary>
+    /// Used by Bruker timsTOF Imaging; directory with .jpg and .mis files, and .D directory with an analysis.tsf file
+    /// </summary>
+    BrukerTOFTsf = 18
 }
