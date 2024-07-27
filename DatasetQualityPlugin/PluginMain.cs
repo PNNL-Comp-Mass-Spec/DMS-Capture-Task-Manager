@@ -492,9 +492,9 @@ namespace DatasetQualityPlugin
             var instrumentName = mTaskParams.GetParam("Instrument_Name");
 
             var sql =
-                " SELECT instrument_group" +
-                " FROM V_Instrument_List_Export" +
-                " WHERE name = '" + instrumentName + "'";
+                "SELECT instrument_group " +
+                "FROM V_Instrument_List_Export " +
+                "WHERE name = '" + instrumentName + "'";
 
             if (dbTools.GetQueryResults(sql, out var results) && results.Count > 0)
             {
@@ -517,9 +517,9 @@ namespace DatasetQualityPlugin
             RegisterEvents(dbTools);
 
             var sql =
-                " SELECT scan_type, scan_count" +
-                " FROM " + mMgrParams.DMSCaptureSchema + "v_dms_dataset_scans " +
-                " WHERE dataset_id = " + datasetID;
+                "SELECT scan_type, scan_count " +
+                "FROM " + mMgrParams.DMSCaptureSchema + "v_dms_dataset_scans " +
+                "WHERE dataset_id = " + datasetID;
 
             scanCount = 0;
             scanCountMS = 0;
