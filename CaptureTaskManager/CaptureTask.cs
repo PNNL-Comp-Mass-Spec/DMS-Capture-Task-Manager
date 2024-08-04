@@ -259,11 +259,13 @@ namespace CaptureTaskManager
                 var cmd = dbTools.CreateCommand(SP_NAME_REQUEST_TASK, CommandType.StoredProcedure);
 
                 dbTools.AddParameter(cmd, "@processorName", SqlType.VarChar, 128, ManagerName);
-                dbTools.AddParameter(cmd, "@jobNumber", SqlType.Int, ParameterDirection.InputOutput);
+                var jobParam = dbTools.AddParameter(cmd, "@job", SqlType.Int, ParameterDirection.InputOutput);
                 var messageParam = dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
-                dbTools.AddTypedParameter(cmd, "@infoOnly", SqlType.TinyInt, value: 0);
+                dbTools.AddTypedParameter(cmd, "@infoLevel", SqlType.TinyInt, value: 0);
                 dbTools.AddParameter(cmd, "@managerVersion", SqlType.VarChar, 128, appVersion ?? "(unknown version)");
                 dbTools.AddTypedParameter(cmd, "@jobCountToPreview", SqlType.Int, value: 10);
+
+                jobParam.Value = 0;
 
                 // Uncomment if required (this class never assigned a value to this parameter, though the procedure supports limiting assigned capture jobs if manager parameter "perspective" is "server")
                 // dbTools.AddTypedParameter(cmd, "@serverPerspectiveEnabled", SqlType.TinyInt, value: serverPerspectiveEnabled);
