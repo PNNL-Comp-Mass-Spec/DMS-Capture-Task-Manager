@@ -1290,6 +1290,11 @@
             </summary>
             <remarks>Written by Matthew Monroe for PNNL in 2013.</remarks>
         </member>
+        <member name="F:MyEMSLReader.Reader.DEFAULT_DMS_CONNECTION_STRING">
+            <summary>
+            Default DMS connection string
+            </summary>
+        </member>
         <member name="P:MyEMSLReader.Reader.DMSConnectionString">
             <summary>
             DMS Connection string
