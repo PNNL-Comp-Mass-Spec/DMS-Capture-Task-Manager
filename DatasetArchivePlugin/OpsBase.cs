@@ -554,7 +554,7 @@ namespace DatasetArchivePlugin
                     var jobNumber = mTaskParams.GetParam("Job", 0);
 
                     mErrMsg += string.Format(
-                        " (to ignore this error, use Exec add_update_task_parameter {0}, 'StepParameters', 'IgnoreMaxFileLimit', '1')", jobNumber);
+                        " ; to ignore this error, use Call cap.add_update_task_parameter ({0}, 'StepParameters', 'IgnoreMaxFileLimit', '1');", jobNumber);
 
                     // Do not retry the upload; it will fail again due to the same error
                     allowRetry = false;

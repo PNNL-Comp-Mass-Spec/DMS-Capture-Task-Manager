@@ -330,7 +330,7 @@ namespace DatasetInfoPlugin
             if (mTaskParams.GetParam("SkipPlots", false))
             {
                 // To add parameter SkipPlots for job 123456, use:
-                // Exec add_update_task_parameter 123456, 'JobParameters', 'SkipPlots', 'true'
+                // Call cap.add_update_task_parameter (123456, 'JobParameters', 'SkipPlots', 'true');
                 qcPlotMode = QCPlottingModes.NoPlots;
             }
 
@@ -738,7 +738,7 @@ namespace DatasetInfoPlugin
                         else
                         {
                             jobParamNote = string.Format(
-                                "To ignore this error, use Exec add_update_task_parameter {0}, 'JobParameters', 'SkipMinimumMzValidation', 'true'",
+                                "To ignore this error, use Call cap.add_update_task_parameter ({0}, 'JobParameters', 'SkipMinimumMzValidation', 'true');",
                                 mJob);
                         }
 
@@ -1609,7 +1609,7 @@ namespace DatasetInfoPlugin
                 {
                     mMsg = string.Format(
                         "analysis.baf/.tsf not found in the expected .d directory; to include all .D subdirectories, use " +
-                        "Exec add_update_task_parameter {0}, 'StepParameters', 'LooseMatchDotD', 'true'",
+                        "Call cap.add_update_task_parameter ({0}, 'StepParameters', 'LooseMatchDotD', 'true');",
                         mJob);
 
                     LogWarning(mMsg);
