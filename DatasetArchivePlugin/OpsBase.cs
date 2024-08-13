@@ -223,7 +223,7 @@ namespace DatasetArchivePlugin
 
                     LogTools.LogMessage("Creating archive update job for " + datasetAndDirectory);
 
-                    // Execute the SP (retry the call up to 4 times)
+                    // Execute the SP (retry the call, up to 4 times)
                     mCaptureDbProcedureExecutor.ExecuteSP(cmd, 4);
 
                     var returnCode = DBToolsBase.GetReturnCode(returnParam);
