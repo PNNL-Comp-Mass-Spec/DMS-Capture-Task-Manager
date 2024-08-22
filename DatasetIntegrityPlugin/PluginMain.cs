@@ -218,14 +218,14 @@ namespace DatasetIntegrityPlugin
                     break;
 
                 case InstrumentClass.TimsTOF_MALDI_Imaging:
-                    // Note: These can contain either analysis.tsf/.tsf.bin, or analysis.tdf/.tdf.bin, so we need to check both
-                    mRetData.CloseoutType = TestBrukerTof_ImagingTsfDirectory(datasetDirectoryPath, instrumentName);
-                    if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
+                    // Note: These can contain either analysis.tsf/.tsf_bin, or analysis.tdf/.tdf_bin, so we need to check both
+                    mRetData.CloseoutType = TestBrukerTof_ImagingTsfDirectory(datasetDirectoryPath, instrumentName, instrumentClass);
+                    if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED && mRetData.EvalMsg.EndsWith(".tsf file not found"))
                     {
                         // Cache/clear the last error message
                         var evalMsg = mRetData.EvalMsg;
                         mRetData.EvalMsg = string.Empty;
-                        mRetData.CloseoutType = TestBrukerTof_TdfDirectory(datasetDirectoryPath, instrumentName);
+                        mRetData.CloseoutType = TestBrukerTof_TdfDirectory(datasetDirectoryPath, instrumentName, instrumentClass);
 
                         // if the check failed, keep both eval messages
                         if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
@@ -241,11 +241,11 @@ namespace DatasetIntegrityPlugin
                     break;
 
                 case InstrumentClass.BrukerTOF_BAF:
-                    mRetData.CloseoutType = TestBrukerTof_BafDirectory(datasetDirectoryPath, instrumentName);
+                    mRetData.CloseoutType = TestBrukerTof_BafDirectory(datasetDirectoryPath, instrumentName, instrumentClass);
                     break;
 
                 case InstrumentClass.BrukerTOF_TDF:
-                    mRetData.CloseoutType = TestBrukerTof_TdfDirectory(datasetDirectoryPath, instrumentName);
+                    mRetData.CloseoutType = TestBrukerTof_TdfDirectory(datasetDirectoryPath, instrumentName, instrumentClass);
                     break;
 
                 case InstrumentClass.Sciex_QTrap:
@@ -1629,14 +1629,15 @@ namespace DatasetIntegrityPlugin
         /// </summary>
         /// <param name="datasetDirectoryPath">Fully qualified path to the dataset directory</param>
         /// <param name="instrumentName"></param>
+        /// <param name="instrumentClass">Instrument class</param>
         /// <returns>Enum indicating test result</returns>
-        private EnumCloseOutType TestBrukerTof_BafDirectory(string datasetDirectoryPath, string instrumentName)
+        private EnumCloseOutType TestBrukerTof_BafDirectory(string datasetDirectoryPath, string instrumentName, InstrumentClass instrumentClass)
         {
             var requiredFiles = new Dictionary<string, float> {
                 { "analysis.baf", BAF_FILE_MIN_SIZE_KB}
             };
 
-            return TestBrukerTof_Directory(datasetDirectoryPath, instrumentName, requiredFiles);
+            return TestBrukerTof_Directory(datasetDirectoryPath, instrumentName, requiredFiles, instrumentClass);
         }
 
         /// <summary>
@@ -1644,15 +1645,16 @@ namespace DatasetIntegrityPlugin
         /// </summary>
         /// <param name="datasetDirectoryPath">Fully qualified path to the dataset directory</param>
         /// <param name="instrumentName"></param>
+        /// <param name="instrumentClass">Instrument class</param>
         /// <returns>Enum indicating test result</returns>
-        private EnumCloseOutType TestBrukerTof_TdfDirectory(string datasetDirectoryPath, string instrumentName)
+        private EnumCloseOutType TestBrukerTof_TdfDirectory(string datasetDirectoryPath, string instrumentName, InstrumentClass instrumentClass)
         {
             var requiredFiles = new Dictionary<string, float> {
                 { "analysis.tdf", TDF_FILE_MIN_SIZE_KB},
                 { "analysis.tdf_bin", TDF_BIN_FILE_MIN_SIZE_KB}
             };
 
-            return TestBrukerTof_Directory(datasetDirectoryPath, instrumentName, requiredFiles, false);
+            return TestBrukerTof_Directory(datasetDirectoryPath, instrumentName, requiredFiles, instrumentClass, false);
         }
 
         /// <summary>
@@ -1660,15 +1662,16 @@ namespace DatasetIntegrityPlugin
         /// </summary>
         /// <param name="datasetDirectoryPath">Fully qualified path to the dataset directory</param>
         /// <param name="instrumentName"></param>
+        /// <param name="instrumentClass">Instrument class</param>
         /// <returns>Enum indicating test result</returns>
-        private EnumCloseOutType TestBrukerTof_ImagingTsfDirectory(string datasetDirectoryPath, string instrumentName)
+        private EnumCloseOutType TestBrukerTof_ImagingTsfDirectory(string datasetDirectoryPath, string instrumentName, InstrumentClass instrumentClass)
         {
             var requiredFiles = new Dictionary<string, float> {
                 { "analysis.tsf", TSF_FILE_MIN_SIZE_KB},
                 { "analysis.tsf_bin", TSF_BIN_FILE_MIN_SIZE_KB}
             };
 
-            return TestBrukerTof_Directory(datasetDirectoryPath, instrumentName, requiredFiles, false);
+            return TestBrukerTof_Directory(datasetDirectoryPath, instrumentName, requiredFiles, instrumentClass, false);
         }
 
         /// <summary>
@@ -1677,12 +1680,14 @@ namespace DatasetIntegrityPlugin
         /// <param name="datasetDirectoryPath">Fully qualified path to the dataset directory</param>
         /// <param name="instrumentName"></param>
         /// <param name="requiredInstrumentFiles">Dictionary listing the required file(s); keys are filename and values are minimum size in KB</param>
+        /// <param name="instrumentClass">Instrument class</param>
         /// <param name="requireMethodDirectory">When true, a subdirectory ending in .m must exist</param>
         /// <returns>Enum indicating test result</returns>
         private EnumCloseOutType TestBrukerTof_Directory(
             string datasetDirectoryPath,
             string instrumentName,
             Dictionary<string, float> requiredInstrumentFiles,
+            InstrumentClass instrumentClass,
             bool requireMethodDirectory = true)
         {
             // Verify only one .d directory in the dataset
@@ -1698,7 +1703,52 @@ namespace DatasetIntegrityPlugin
 
             if (dotDDirectories.Count > 1)
             {
-                if (!PossiblyRenameSupersededDirectory(dotDDirectories, InstrumentClassInfo.DOT_D_EXTENSION))
+                if (instrumentClass == InstrumentClass.TimsTOF_MALDI_Imaging)
+                {
+                    // Each .d directory should have an analysis.tsf[_bin] or analysis.tdf[_bin] file; don't check the extension here, just make sure each .d directory has a matching pair of them.
+                    // NOTE: Skipping the first one, because that is checked below.
+                    foreach (var dotDDirectory in dotDDirectories.Skip(1))
+                    {
+                        var tsf = PathUtils.FindFilesWildcard(dotDDirectory, "analysis.tsf").Count == 1;
+                        var tsfBin = PathUtils.FindFilesWildcard(dotDDirectory, "analysis.tsf_bin").Count == 1;
+                        var tdf = PathUtils.FindFilesWildcard(dotDDirectory, "analysis.tdf").Count == 1;
+                        var tdfBin = PathUtils.FindFilesWildcard(dotDDirectory, "analysis.tdf_bin").Count == 1;
+                        var tsfValid = tsf && tsfBin;
+                        var tdfValid = tdf && tdfBin;
+                        var noTsf = !tsf && !tsfBin;
+                        var noTdf = !tdf && !tdfBin;
+                        var error = true;
+
+                        if (noTsf && noTdf)
+                        {
+                            mRetData.EvalMsg = "Invalid dataset: analysis.tsf or analysis.tdf (and respective _bin) files not found in " + dotDDirectory.Name;
+                        }
+                        else if ((tsf || tsfBin) && (tdf || tdfBin))
+                        {
+                            mRetData.EvalMsg = "Invalid dataset: both analysis.tdf* and analysis.tsf* files found in " + dotDDirectory.Name;
+                        }
+                        else if (!tsfValid && noTdf)
+                        {
+                            mRetData.EvalMsg = "Invalid dataset: missing either analysis.tsf or analysis.tsf_bin file in " + dotDDirectory.Name;
+                        }
+                        else if (!tdfValid && noTsf)
+                        {
+                            mRetData.EvalMsg = "Invalid dataset: missing either analysis.tdf or analysis.tdf_bin file in " + dotDDirectory.Name;
+                        }
+                        else
+                        {
+                            error = false;
+                        }
+
+                        if (error)
+                        {
+                            LogError(mRetData.EvalMsg);
+                            return EnumCloseOutType.CLOSEOUT_FAILED;
+                        }
+
+                    }
+                }
+                else if (!PossiblyRenameSupersededDirectory(dotDDirectories, InstrumentClassInfo.DOT_D_EXTENSION))
                 {
                     return EnumCloseOutType.CLOSEOUT_FAILED;
                 }
