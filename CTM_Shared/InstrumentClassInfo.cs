@@ -7,7 +7,7 @@ namespace CaptureTaskManager
     public static class InstrumentClassInfo
     {
         // Ignore Spelling: Bruker, Illumina, LCMethod, Micromass, Sciex, Shimadzu, Synapt, LCMSNET
-        // Ignore Spelling: acqu, baf, cdf, fid, gz, maldi, mgf, MzML, MzXML, qgd, ser, tdf, tims, tof, uimf, wiff
+        // Ignore Spelling: acqu, baf, cdf, fid, gz, maldi, mgf, MzML, MzXML, qgd, ser, tdf, tims, tof, TSF, uimf, wiff
 
         // Note: the RAW_DATA_TYPE constants need to be all lowercase
 
