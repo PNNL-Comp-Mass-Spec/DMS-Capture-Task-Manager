@@ -316,7 +316,7 @@ namespace CaptureToolPlugin
         /// </summary>
         /// <param name="directoryPath">Full path specifying directory to be checked</param>
         /// <param name="fileCount">Output parameter: number of files</param>
-        /// <param name="instrumentDataDirCount">Output parameter: number of instrument directories (typically .D directories)</param>
+        /// <param name="instrumentDataDirCount">Output parameter: number of instrument directories (typically .d directories)</param>
         /// <param name="nonInstrumentDataDirCount">Output parameter: number of directories (excluding directories included in instrumentDataDirCount)</param>
         /// <returns>
         /// 0 if directory is empty
@@ -340,7 +340,7 @@ namespace CaptureToolPlugin
                 // Check for files
                 fileCount = datasetDirectory.GetFiles().Length;
 
-                // Check for .D directories
+                // Check for .d directories
                 // (Future: check for other directory extensions)
                 instrumentDataDirCount = datasetDirectory.GetDirectories("*.d").Length;
 
@@ -385,7 +385,7 @@ namespace CaptureToolPlugin
         /// <param name="maxFileCountToAllowResume">
         /// Maximum number of files that can exist in the dataset directory if we are going to allow CopyWithResume to be used</param>
         /// <param name="maxInstrumentDirCountToAllowResume">
-        /// Maximum number of instrument subdirectories (at present, .D directories) that can exist in the dataset directory
+        /// Maximum number of instrument subdirectories (at present, .d directories) that can exist in the dataset directory
         /// if we are going to allow CopyWithResume to be used
         /// </param>
         /// <param name="maxNonInstrumentDirCountToAllowResume">
@@ -1583,16 +1583,16 @@ namespace CaptureToolPlugin
                 case InstrumentClass.BrukerMALDI_Imaging_V2:
                     if (datasetInfo.DatasetType != InstrumentFileLayout.DirectoryNoExt)
                     {
-                        // Dataset name matched a file; must be a directory with the dataset name, and inside the directory is a .D directory (and typically some jpg files)
-                        returnData.CloseoutMsg = "Dataset name matched " + entityDescription + "; must be a directory with the dataset name, and inside the directory is a .D directory (and typically some jpg files)";
+                        // Dataset name matched a file; must be a directory with the dataset name, and inside the directory is a .d directory (and typically some jpg files)
+                        returnData.CloseoutMsg = "Dataset name matched " + entityDescription + "; must be a directory with the dataset name, and inside the directory is a .d directory (and typically some jpg files)";
                     }
                     break;
 
                 case InstrumentClass.TimsTOF_MALDI_Imaging:
                     if (datasetInfo.DatasetType != InstrumentFileLayout.DirectoryNoExt)
                     {
-                        // Dataset name matched a file; must be a directory with the dataset name, and inside the directory is a .D directory (and typically some jpg files)
-                        returnData.CloseoutMsg = "Dataset name matched " + entityDescription + "; must be a directory with the dataset name, and inside the directory is a .D directory (and typically some jpg files)";
+                        // Dataset name matched a file; must be a directory with the dataset name, and inside the directory is a .d directory (and typically some jpg files)
+                        returnData.CloseoutMsg = "Dataset name matched " + entityDescription + "; must be a directory with the dataset name, and inside the directory is a .d directory (and typically some jpg files)";
                     }
                     break;
 
@@ -1637,7 +1637,7 @@ namespace CaptureToolPlugin
                     {
                         if (datasetInfo.DatasetType == InstrumentFileLayout.DirectoryExt)
                         {
-                            // IMS08_AgQTOF05 collects data as .D directories, which the capture pipeline will then convert to a .uimf file
+                            // IMS08_AgQTOF05 collects data as .d directories, which the capture pipeline will then convert to a .uimf file
                             // Make sure the matched directory is a .d file
                             if (datasetInfo.FileOrDirectoryName.EndsWith(".d", StringComparison.OrdinalIgnoreCase))
                             {

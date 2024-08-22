@@ -113,7 +113,7 @@ namespace CaptureToolPlugin.DataCapture
 
                 if (!allowMultipleDirectories)
                 {
-                    returnData.CloseoutMsg = "Multiple .D subdirectories found in dataset directory";
+                    returnData.CloseoutMsg = "Multiple .d subdirectories found in dataset directory";
                     msg = returnData.CloseoutMsg + " " + sourceDirectory.FullName;
                     LogError(msg);
                     returnData.CloseoutType = EnumCloseOutType.CLOSEOUT_FAILED;

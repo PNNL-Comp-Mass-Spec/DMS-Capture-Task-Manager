@@ -51,7 +51,7 @@ namespace CaptureToolPlugin.DataCapture
         }
 
         /// <summary>
-        /// Capture a dataset directory that has an extension like .D or .Raw
+        /// Capture a dataset directory that has an extension like .d or .raw
         /// </summary>
         /// <param name="msg">Output: error message</param>
         /// <param name="returnData">Input/output: Return data</param>

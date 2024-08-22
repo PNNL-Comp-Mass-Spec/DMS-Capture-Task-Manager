@@ -38,7 +38,7 @@ namespace CaptureToolPlugin.DataCapture
         }
 
         /// <summary>
-        /// Capture a dataset directory that has an extension like .D or .Raw
+        /// Capture a dataset directory that has an extension like .d or .raw
         /// </summary>
         /// <param name="msg">Output: error message</param>
         /// <param name="returnData">Input/output: Return data</param>
@@ -88,7 +88,7 @@ namespace CaptureToolPlugin.DataCapture
 
             if (datasetInfo.FileOrDirectoryName.EndsWith(".d", StringComparison.OrdinalIgnoreCase))
             {
-                // Bruker .D directory (common for the 12T and 15T)
+                // Bruker .d directory (common for the 12T and 15T)
                 // Look for journal files, which we can never copy because they are always locked
 
                 brukerDotDDirectory = true;
@@ -285,7 +285,7 @@ namespace CaptureToolPlugin.DataCapture
                     AutoFixFilesWithInvalidChars(datasetInfo.DatasetName, targetDirectory);
 
                     // Make sure the target directory does not have the System attribute set
-                    // Agilent instruments enable the System attribute for .D directories, and this makes it harder to manage things on the storage server
+                    // Agilent instruments enable the System attribute for .d directories, and this makes it harder to manage things on the storage server
                     if ((targetDirectory.Attributes & FileAttributes.System) == FileAttributes.System)
                     {
                         LogDebug("Removing the system flag from " + targetDirectory.FullName);
