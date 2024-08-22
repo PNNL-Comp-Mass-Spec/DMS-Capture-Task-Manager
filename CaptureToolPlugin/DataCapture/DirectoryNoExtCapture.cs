@@ -104,10 +104,10 @@ namespace CaptureToolPlugin.DataCapture
                     }
                 }
 
-                if (!allowMultipleDirectories && instrumentClass == InstrumentClass.BrukerMALDI_Imaging_V2)
+                if (!allowMultipleDirectories && instrumentClass is InstrumentClass.BrukerMALDI_Imaging_V2 or InstrumentClass.TimsTOF_MALDI_Imaging)
                 {
-                    // Effective July 2016, we allow Bruker Imaging datasets to have multiple .D subdirectories
-                    // They typically each have their own ser file
+                    // Bruker Imaging datasets can have multiple .d subdirectories; they typically each have their own ser file
+                    // timsTOF Imaging datasets can have multiple .d subdirectories (though this is not always the case)
                     allowMultipleDirectories = true;
                 }
 
