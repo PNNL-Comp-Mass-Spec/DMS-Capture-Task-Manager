@@ -218,7 +218,22 @@ namespace DatasetIntegrityPlugin
                     break;
 
                 case InstrumentClass.TimsTOF_MALDI_Imaging:
+                    // Note: These can contain either analysis.tsf/.tsf.bin, or analysis.tdf/.tdf.bin, so we need to check both
                     mRetData.CloseoutType = TestBrukerTof_ImagingTsfDirectory(datasetDirectoryPath, instrumentName);
+                    if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
+                    {
+                        // Cache/clear the last error message
+                        var evalMsg = mRetData.EvalMsg;
+                        mRetData.EvalMsg = string.Empty;
+                        mRetData.CloseoutType = TestBrukerTof_TdfDirectory(datasetDirectoryPath, instrumentName);
+
+                        // if the check failed, keep both eval messages
+                        if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_FAILED)
+                        {
+                            mRetData.EvalMsg = evalMsg + "; " + mRetData.EvalMsg;
+                        }
+                    }
+
                     break;
 
                 case InstrumentClass.BrukerMALDI_Spot:
