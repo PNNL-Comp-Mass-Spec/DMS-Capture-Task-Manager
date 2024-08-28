@@ -294,7 +294,7 @@ namespace DatasetIntegrityPlugin
                     break;
 
                 default:
-                    // NOTE: used for InstrumentClass.LCMSNet_LC
+                    // Note: used for InstrumentClass.LCMSNet_LC
                     mRetData.EvalMsg = "No integrity test available for instrument class " + instClassName;
                     LogWarning(mRetData.EvalMsg);
                     mRetData.EvalCode = EnumEvalCode.EVAL_CODE_NOT_EVALUATED;
@@ -1705,8 +1705,8 @@ namespace DatasetIntegrityPlugin
             {
                 if (instrumentClass == InstrumentClass.TimsTOF_MALDI_Imaging)
                 {
-                    // Each .d directory should have an analysis.tsf[_bin] or analysis.tdf[_bin] file; don't check the extension here, just make sure each .d directory has a matching pair of them.
-                    // NOTE: Skipping the first one, because that is checked below.
+                    // Each .d directory should have an analysis.tsf[_bin] or analysis.tdf[_bin] file; don't check the extension here, just make sure each .d directory has a matching pair of them
+                    // Note: Skipping the first one, because that is checked below
                     foreach (var dotDDirectory in dotDDirectories.Skip(1))
                     {
                         var tsf = PathUtils.FindFilesWildcard(dotDDirectory, "analysis.tsf").Count == 1;

@@ -435,7 +435,7 @@ namespace ImsDemuxPlugin
                 return false;
             }
 
-            // NOTE: PNNL-PreProcessor does not allow setting the output file path.
+            // Note: PNNL-PreProcessor does not allow setting the output file path
             var outputFilePath = Path.Combine(directoryName, datasetName + DECODED_dotD_SUFFIX);
 
             try
@@ -713,7 +713,7 @@ namespace ImsDemuxPlugin
                 // Demultiplexing
 
                 // Output file name
-                // NOTE: PNNL-PreProcessor does not allow setting the output file path.
+                // Note: PNNL-PreProcessor does not allow setting the output file path
                 //arguments += " /N:" + Conversion.PossiblyQuotePath(outputFile.Name);
 
                 arguments += " -demux";

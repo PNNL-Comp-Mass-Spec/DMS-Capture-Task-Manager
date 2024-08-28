@@ -302,7 +302,7 @@ namespace DatasetInfoPlugin
                 returnData.EvalMsg = AppendToComment(
                     returnData.EvalMsg,
                     string.Format(
-                        "Dataset info test not implemented for data type {0}, instrument class {1}",
+                        "Dataset info analysis is not implemented for data type {0}, instrument class {1}",
                         rawDataTypeName, instClass));
 
                 returnData.EvalCode = EnumEvalCode.EVAL_CODE_NOT_EVALUATED;
@@ -1531,8 +1531,8 @@ namespace DatasetInfoPlugin
                     break;
 
                 case DataFormat.BrukerTOFTsf:
-                    // Current only known usage of this is Bruker timsTOF Flex MALDI Imaging data files; treat them similar to BrukerFTFolder, which is used for FTICR imaging
-                    // NOTE: this can be a .tsf or a .tdf file, so check both.
+                    // This is used by Bruker timsTOF Flex MALDI Imaging datasets; treat it like BrukerFTFolder, which is used for FTICR imaging
+                    // Note: this can be a .tsf or a .tdf file, so check both
                     var fileNameBase = Path.Combine(mDataset + InstrumentClassInfo.DOT_D_EXTENSION, "analysis");
                     fileOrDirectoryName = fileNameBase + (File.Exists(Path.Combine(datasetDirectory.FullName, fileNameBase + ".tdf")) ? ".tdf" : ".tsf");
 
