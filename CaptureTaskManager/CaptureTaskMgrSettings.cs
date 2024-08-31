@@ -80,7 +80,7 @@ namespace CaptureTaskManager
                 dbTools.AddParameter(cmd, "@managerName", SqlType.VarChar, 128, ManagerName);
                 dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
 
-                // Execute the SP
+                // Call the procedure
                 var resCode = dbTools.ExecuteSP(cmd);
 
                 if (resCode != 0)

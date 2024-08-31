@@ -279,7 +279,7 @@ namespace CaptureTaskManager
                     PrintCommandParams(cmd);
                 }
 
-                // Execute the SP
+                // Call the procedure
                 var resCode = mCaptureTaskDBProcedureExecutor.ExecuteSPData(cmd, out var results);
 
                 var returnCode = DBToolsBase.GetReturnCode(returnCodeParam);
@@ -471,7 +471,7 @@ namespace CaptureTaskManager
                     PrintCommandParams(cmd);
                 }
 
-                // Execute the SP
+                // Call the procedure
                 var resCode = mCaptureTaskDBProcedureExecutor.ExecuteSP(cmd);
 
                 var returnCode = DBToolsBase.GetReturnCode(returnCodeParam);

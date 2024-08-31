@@ -189,7 +189,7 @@ namespace DatasetArchivePlugin
                 dbTools.AddParameter(cmd, "@eusProposalID", SqlType.VarChar, 10, eusProjectID);
                 dbTools.AddParameter(cmd, "@eusUploaderID", SqlType.Int).Value = eusUploaderID;
 
-                // Execute the SP (retry the call, up to 4 times)
+                // Call the procedure (retry the call, up to 4 times)
                 dbTools.ExecuteSP(cmd, 4);
 
                 var returnCode = DBToolsBase.GetReturnCode(returnParam);

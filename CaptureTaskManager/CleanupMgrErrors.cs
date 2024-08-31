@@ -219,7 +219,7 @@ namespace CaptureTaskManager
                 dbTools.AddParameter(cmd, "@failureMsg", SqlType.VarChar, 512, failureMessage);
                 dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
 
-                // Execute the SP
+                // Call the procedure
                 dbTools.ExecuteSP(cmd);
             }
             catch (Exception ex)
