@@ -329,55 +329,62 @@
             Return the MyEMSL file ID
             </summary>
         </member>
-        <member name="T:MyEMSLReader.DatasetListInfoByID">
+        <member name="T:MyEMSLReader.DatasetInfo">
             <summary>
-            Tracks the dataset info for multiple datasets (by dataset ID)
+            Tracks the dataset info for a single dataset (by dataset name)
             </summary>
         </member>
-        <member name="P:MyEMSLReader.DatasetListInfoByID.DatasetIDs">
+        <member name="P:MyEMSLReader.DatasetInfo.DatasetID">
             <summary>
-            Dataset IDs
+            Dataset ID
             </summary>
         </member>
-        <member name="P:MyEMSLReader.DatasetListInfoByID.DatasetsAndSubDirs">
+        <member name="P:MyEMSLReader.DatasetInfo.DatasetName">
             <summary>
-            Keys are dataset IDs, values are the optional Subdirectory name to filter on for the given dataset
+            Dataset name
             </summary>
         </member>
-        <member name="M:MyEMSLReader.DatasetListInfoByID.#ctor">
+        <member name="M:MyEMSLReader.DatasetInfo.#ctor(System.String)">
             <summary>
             Constructor
             </summary>
+            <param name="datasetName"></param>
         </member>
-        <member name="M:MyEMSLReader.DatasetListInfoByID.AddDataset(System.Int32)">
+        <member name="M:MyEMSLReader.DatasetInfo.AddFileToDownloadQueue(System.Int64)">
             <summary>
-            Add a dataset ID to search for in MyEMSL
+            Queue a file to be downloaded
             </summary>
-            <param name="datasetID">Dataset ID</param>
+            <param name="myEMSLFileID">MyEMSL file ID</param>
         </member>
-        <member name="M:MyEMSLReader.DatasetListInfoByID.AddDataset(System.Int32,System.String)">
+        <member name="M:MyEMSLReader.DatasetInfo.AddFileToDownloadQueue(System.Int64,System.Boolean)">
             <summary>
-            Add a dataset ID to search for in MyEMSL
+            Queue a file to be downloaded
             </summary>
-            <param name="datasetID">Dataset ID</param>
-            <param name="subDir">Subdirectory name to filter on</param>
+            <param name="myEMSLFileID">MyEMSL file ID</param>
+            <param name="unzipRequired">
+            True if the file will need to be unzipped after the download
+            (this DLL will not unzip the file; it will simply include this in event FileDownloadedEventArgs)
+            </param>
         </member>
-        <member name="M:MyEMSLReader.DatasetListInfoByID.Clear">
+        <member name="M:MyEMSLReader.DatasetInfo.RefreshInfo">
             <summary>
-            Clear DatasetsAndSubDirs and set mCacheIsStale to true
-            </summary>
-        </member>
-        <member name="M:MyEMSLReader.DatasetListInfoByID.ContainsDataset(System.Int32)">
-            <summary>
-            Return true if DatasetsAndSubDirs has the given dataset
-            </summary>
-            <param name="datasetID"></param>
-        </member>
-        <member name="M:MyEMSLReader.DatasetListInfoByID.RefreshInfo">
-            <summary>
-            Contact the metadata server to find the files associated with datasets added via AddDataset
+            Contact the metadata server to find the files associated with this instance's dataset
             </summary>
             <returns>True if successful, false if an error</returns>
+        </member>
+        <member name="M:MyEMSLReader.DatasetInfo.RefreshInfo(System.String)">
+            <summary>
+            Contact the metadata server to find the files associated with the given dataset
+            </summary>
+            <param name="datasetName">Dataset name to lookup</param>
+            <returns>True if successful, false if an error</returns>
+        </member>
+        <member name="M:MyEMSLReader.DatasetInfo.UpdateDatasetName(System.String)">
+            <summary>
+            Update the dataset name associated with this instance
+            </summary>
+            <remarks>Use RefreshInfo to find the files tracked by MyEMSL for this dataset</remarks>
+            <param name="datasetName"></param>
         </member>
         <member name="T:MyEMSLReader.DatasetInfoBase">
             <summary>
@@ -750,6 +757,56 @@
             <param name="datasetName"></param>
         </member>
         <member name="M:MyEMSLReader.DatasetListInfo.RefreshInfo">
+            <summary>
+            Contact the metadata server to find the files associated with datasets added via AddDataset
+            </summary>
+            <returns>True if successful, false if an error</returns>
+        </member>
+        <member name="T:MyEMSLReader.DatasetListInfoByID">
+            <summary>
+            Tracks the dataset info for multiple datasets (by dataset ID)
+            </summary>
+        </member>
+        <member name="P:MyEMSLReader.DatasetListInfoByID.DatasetIDs">
+            <summary>
+            Dataset IDs
+            </summary>
+        </member>
+        <member name="P:MyEMSLReader.DatasetListInfoByID.DatasetsAndSubDirs">
+            <summary>
+            Keys are dataset IDs, values are the optional Subdirectory name to filter on for the given dataset
+            </summary>
+        </member>
+        <member name="M:MyEMSLReader.DatasetListInfoByID.#ctor">
+            <summary>
+            Constructor
+            </summary>
+        </member>
+        <member name="M:MyEMSLReader.DatasetListInfoByID.AddDataset(System.Int32)">
+            <summary>
+            Add a dataset ID to search for in MyEMSL
+            </summary>
+            <param name="datasetID">Dataset ID</param>
+        </member>
+        <member name="M:MyEMSLReader.DatasetListInfoByID.AddDataset(System.Int32,System.String)">
+            <summary>
+            Add a dataset ID to search for in MyEMSL
+            </summary>
+            <param name="datasetID">Dataset ID</param>
+            <param name="subDir">Subdirectory name to filter on</param>
+        </member>
+        <member name="M:MyEMSLReader.DatasetListInfoByID.Clear">
+            <summary>
+            Clear DatasetsAndSubDirs and set mCacheIsStale to true
+            </summary>
+        </member>
+        <member name="M:MyEMSLReader.DatasetListInfoByID.ContainsDataset(System.Int32)">
+            <summary>
+            Return true if DatasetsAndSubDirs has the given dataset
+            </summary>
+            <param name="datasetID"></param>
+        </member>
+        <member name="M:MyEMSLReader.DatasetListInfoByID.RefreshInfo">
             <summary>
             Contact the metadata server to find the files associated with datasets added via AddDataset
             </summary>
@@ -1223,63 +1280,6 @@
             </summary>
             <param name="sender"></param>
             <param name="e"></param>
-        </member>
-        <member name="T:MyEMSLReader.DatasetInfo">
-            <summary>
-            Tracks the dataset info for a single dataset (by dataset name)
-            </summary>
-        </member>
-        <member name="P:MyEMSLReader.DatasetInfo.DatasetID">
-            <summary>
-            Dataset ID
-            </summary>
-        </member>
-        <member name="P:MyEMSLReader.DatasetInfo.DatasetName">
-            <summary>
-            Dataset name
-            </summary>
-        </member>
-        <member name="M:MyEMSLReader.DatasetInfo.#ctor(System.String)">
-            <summary>
-            Constructor
-            </summary>
-            <param name="datasetName"></param>
-        </member>
-        <member name="M:MyEMSLReader.DatasetInfo.AddFileToDownloadQueue(System.Int64)">
-            <summary>
-            Queue a file to be downloaded
-            </summary>
-            <param name="myEMSLFileID">MyEMSL file ID</param>
-        </member>
-        <member name="M:MyEMSLReader.DatasetInfo.AddFileToDownloadQueue(System.Int64,System.Boolean)">
-            <summary>
-            Queue a file to be downloaded
-            </summary>
-            <param name="myEMSLFileID">MyEMSL file ID</param>
-            <param name="unzipRequired">
-            True if the file will need to be unzipped after the download
-            (this DLL will not unzip the file; it will simply include this in event FileDownloadedEventArgs)
-            </param>
-        </member>
-        <member name="M:MyEMSLReader.DatasetInfo.RefreshInfo">
-            <summary>
-            Contact the metadata server to find the files associated with this instance's dataset
-            </summary>
-            <returns>True if successful, false if an error</returns>
-        </member>
-        <member name="M:MyEMSLReader.DatasetInfo.RefreshInfo(System.String)">
-            <summary>
-            Contact the metadata server to find the files associated with the given dataset
-            </summary>
-            <param name="datasetName">Dataset name to lookup</param>
-            <returns>True if successful, false if an error</returns>
-        </member>
-        <member name="M:MyEMSLReader.DatasetInfo.UpdateDatasetName(System.String)">
-            <summary>
-            Update the dataset name associated with this instance
-            </summary>
-            <remarks>Use RefreshInfo to find the files tracked by MyEMSL for this dataset</remarks>
-            <param name="datasetName"></param>
         </member>
         <member name="T:MyEMSLReader.Reader">
             <summary>

@@ -39,10 +39,10 @@
       <HintPath>..\DeployedFiles\CTM_Shared.dll</HintPath>
     </Reference>
     <Reference Include="MyEMSLReader">
-      <HintPath>..\RefLib\MyEMSLReader.dll</HintPath>
+      <HintPath>..\RefLib\net48\MyEMSLReader.dll</HintPath>
     </Reference>
     <Reference Include="Pacifica">
-      <HintPath>..\RefLib\Pacifica.dll</HintPath>
+      <HintPath>..\RefLib\net48\Pacifica.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
