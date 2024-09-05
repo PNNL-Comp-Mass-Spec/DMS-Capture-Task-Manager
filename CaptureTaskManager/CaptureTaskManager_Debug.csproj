@@ -124,12 +124,6 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>
-if exist "$(TargetDir)SQLite.Interop.dll" (del "$(TargetDir)SQLite.Interop.dll")
-rem if not exist "$(TargetDir)x86" mkdir "$(TargetDir)x86"
-rem if not exist "$(TargetDir)x64" mkdir "$(TargetDir)x64"
-rem xcopy "$(ProjectDir)..\RefLib\x86\SQLite.Interop.dll" "$(TargetDir)x86" /D /Y
-rem xcopy "$(ProjectDir)..\RefLib\x64\SQLite.Interop.dll" "$(TargetDir)x64" /D /Y
-
 xcopy "$(ProjectDir)..\RefLib\DLLVersionInspector*.exe" "$(TargetDir)" /D /Y
 
 xcopy "$(TargetPath)" "$(ProjectDir)..\DeployedFiles" /D /Y
@@ -141,11 +135,9 @@ xcopy "$(TargetDir)Apache.NMS.dll" "$(ProjectDir)..\DeployedFiles" /D /Y
 xcopy "$(TargetDir)ICSharpCode.SharpZipLib.dll" "$(ProjectDir)..\DeployedFiles" /D /Y
 xcopy "$(TargetDir)Newtonsoft.Json.dll" "$(ProjectDir)..\DeployedFiles" /D /Y
 xcopy "$(TargetDir)MathNet.Numerics.dll" "$(ProjectDir)..\DeployedFiles" /D /Y
-xcopy "$(TargetDir)PNNLOmics.dll" "$(ProjectDir)..\DeployedFiles" /D /Y
 xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\DeployedFiles" /D /Y
 xcopy "$(TargetDir)PRISMWin.dll" "$(ProjectDir)..\DeployedFiles" /D /Y
 xcopy "$(TargetDir)plugin_info.xml" "$(ProjectDir)..\DeployedFiles" /D /Y
-xcopy "$(ProjectDir)..\RefLib\PNNLOmics.dll" "$(TargetDir)" /D /Y
 </PostBuildEvent>
   </PropertyGroup>
 </Project>
