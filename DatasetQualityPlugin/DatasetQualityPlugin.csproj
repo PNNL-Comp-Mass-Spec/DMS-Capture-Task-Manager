@@ -1,81 +1,55 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{E99901C3-ABF3-4061-BF19-F290EEF65935}</ProjectGuid>
+    <TargetFrameworks>net48</TargetFrameworks>
     <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>DatasetQualityPlugin</RootNamespace>
     <AssemblyName>DatasetQualityPlugin</AssemblyName>
-    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
+    <Company>PNNL</Company>
+    <Product>DatasetQualityPlugin</Product>
+    <Copyright>Copyright © PNNL 2009</Copyright>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+
+  <PropertyGroup>
     <NoWarn>IDE0028, IDE0290, IDE0300, IDE0305</NoWarn>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <NoWarn>IDE0028, IDE0290, IDE0300, IDE0305</NoWarn>
-  </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="CTM_Shared">
-      <HintPath>..\DeployedFiles\CTM_Shared.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
+    <Compile Remove="Properties\**" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="GlobalSuppressions.cs" />
-    <Compile Include="MetaDataFile.cs" />
-    <Compile Include="PluginMain.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
+
   <ItemGroup>
     <None Include="..\version.json">
       <Link>Properties\version.json</Link>
     </None>
   </ItemGroup>
+
   <ItemGroup>
-    <PackageReference Include="Nerdbank.GitVersioning">
-      <Version>3.6.141</Version>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    <PackageReference Include="Nerdbank.GitVersioning" Version="3.6.141">
       <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="PRISM-DatabaseUtils">
-      <Version>1.4.32</Version>
-    </PackageReference>
-    <PackageReference Include="PRISM-Library">
-      <Version>2.8.32</Version>
-    </PackageReference>
-    <PackageReference Include="ThermoRawFileReader">
-      <Version>4.2.31</Version>
-    </PackageReference>
+    <PackageReference Include="PRISM-DatabaseUtils" Version="1.4.32" />
+    <PackageReference Include="PRISM-Library" Version="2.8.32" />
+    <PackageReference Include="ThermoRawFileReader" Version="4.2.31" />
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="CTM_Shared">
+      <HintPath>..\DeployedFiles\CTM_Shared.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="xcopy &quot;$(TargetPath)&quot; &quot;$(ProjectDir)..\DeployedFiles&quot; /Y /I&#xD;&#xA;xcopy &quot;$(TargetDir)$(TargetName).pdb&quot; &quot;$(ProjectDir)..\DeployedFiles&quot; /Y&#xD;&#xA;xcopy &quot;$(TargetDir)*.*&quot; &quot;$(ProjectDir)..\CaptureTaskManager\bin\Debug&quot; /D /Y /I&#xD;&#xA;xcopy &quot;$(TargetDir)*.dll&quot; &quot;$(ProjectDir)..\DeployedFiles&quot; /D /Y /I" />
+  </Target>
+
+<!--  <PropertyGroup>
     <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\DeployedFiles" /Y /I
 xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\DeployedFiles" /Y
 xcopy "$(TargetDir)*.*" "$(ProjectDir)..\CaptureTaskManager\bin\Debug" /D /Y /I
 xcopy "$(TargetDir)*.dll" "$(ProjectDir)..\DeployedFiles" /D /Y /I
 </PostBuildEvent>
-  </PropertyGroup>
+  </PropertyGroup>-->
 </Project>

@@ -1,0 +1,56 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33424.131
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CaptureTaskManager_Debug_Archive", "CaptureTaskManager\CaptureTaskManager_NET48_Debug_Archive.csproj", "{5188F87C-12F1-4629-BD78-8E1004FF0B6E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CTM_Shared", "CTM_Shared\CTM_Shared_NET48.csproj", "{7D07F054-0D29-45DD-9B22-71D0768BC3C3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DatasetArchivePlugin", "DatasetArchivePlugin\DatasetArchivePlugin_NET48.csproj", "{FC0E683A-38BE-494C-93F1-65747197DCD7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pacifica", "..\MyEMSL_Reader\Pacifica\Pacifica_NET48.csproj", "{CB910F22-9338-4339-A015-F7F29DCB2489}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArchiveVerifyPlugin", "ArchiveVerifyPlugin\ArchiveVerifyPlugin_NET48.csproj", "{2016D3F6-9AF1-45D8-A0B2-49202D5376D5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArchiveStatusCheckPlugin", "ArchiveStatusCheckPlugin\ArchiveStatusCheckPlugin_NET48.csproj", "{D63AD810-5835-49D6-B14F-334E6EA2CB40}"
+EndProject
+
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5188F87C-12F1-4629-BD78-8E1004FF0B6E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5188F87C-12F1-4629-BD78-8E1004FF0B6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5188F87C-12F1-4629-BD78-8E1004FF0B6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5188F87C-12F1-4629-BD78-8E1004FF0B6E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7D07F054-0D29-45DD-9B22-71D0768BC3C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D07F054-0D29-45DD-9B22-71D0768BC3C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7D07F054-0D29-45DD-9B22-71D0768BC3C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7D07F054-0D29-45DD-9B22-71D0768BC3C3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FC0E683A-38BE-494C-93F1-65747197DCD7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FC0E683A-38BE-494C-93F1-65747197DCD7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FC0E683A-38BE-494C-93F1-65747197DCD7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FC0E683A-38BE-494C-93F1-65747197DCD7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2016D3F6-9AF1-45D8-A0B2-49202D5376D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2016D3F6-9AF1-45D8-A0B2-49202D5376D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2016D3F6-9AF1-45D8-A0B2-49202D5376D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2016D3F6-9AF1-45D8-A0B2-49202D5376D5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D63AD810-5835-49D6-B14F-334E6EA2CB40}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D63AD810-5835-49D6-B14F-334E6EA2CB40}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D63AD810-5835-49D6-B14F-334E6EA2CB40}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D63AD810-5835-49D6-B14F-334E6EA2CB40}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CB910F22-9338-4339-A015-F7F29DCB2489}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CB910F22-9338-4339-A015-F7F29DCB2489}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CB910F22-9338-4339-A015-F7F29DCB2489}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CB910F22-9338-4339-A015-F7F29DCB2489}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3D18AB1F-66E4-4EBA-8455-D8FE038F9DF2}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,90 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{1B2E1580-C202-4991-A2E9-E2F1A54FA73D}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>CaptureToolPlugin</RootNamespace>
+    <AssemblyName>CaptureToolPlugin</AssemblyName>
+    <IntermediateOutputPath>$(SolutionDir)\obj\NET48\$(Configuration)\</IntermediateOutputPath>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <NoWarn>IDE0028, IDE0290, IDE0300, IDE0305</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <NoWarn>IDE0028, IDE0290, IDE0300, IDE0305</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="CTM_Shared">
+      <HintPath>..\DeployedFiles\CTM_Shared.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="CaptureOps.cs" />
+    <Compile Include="DataCapture\BrukerImagingCapture.cs" />
+    <Compile Include="DataCapture\BrukerSpotCapture.cs" />
+    <Compile Include="DataCapture\CaptureBase.cs" />
+    <Compile Include="DataCapture\CaptureDirectoryBase.cs" />
+    <Compile Include="DataCapture\CaptureFileBase.cs" />
+    <Compile Include="DataCapture\CaptureInitData.cs" />
+    <Compile Include="DataCapture\DirectoryExtCapture.cs" />
+    <Compile Include="DataCapture\DirectoryNoExtCapture.cs" />
+    <Compile Include="DataCapture\FileMultipleCapture.cs" />
+    <Compile Include="DataCapture\FileSingleCapture.cs" />
+    <Compile Include="DataCapture\UnknownCapture.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="LCDataCapture.cs" />
+    <Compile Include="PluginMain.cs" />
+    <Compile Include="PluginMainLC.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ShareConnection.cs" />
+    <Compile Include="SharedState.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\version.json">
+      <Link>Properties\version.json</Link>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Nerdbank.GitVersioning">
+      <Version>3.6.141</Version>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="PRISM-Library">
+      <Version>2.8.32</Version>
+    </PackageReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\DeployedFiles" /Y /I
+xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\DeployedFiles" /Y
+xcopy "$(TargetDir)*.*" "$(ProjectDir)..\CaptureTaskManager\bin\Debug" /D /Y /I
+</PostBuildEvent>
+  </PropertyGroup>
+</Project>

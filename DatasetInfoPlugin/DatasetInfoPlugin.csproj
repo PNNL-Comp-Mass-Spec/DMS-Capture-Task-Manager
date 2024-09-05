@@ -1,39 +1,39 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{4C1F0E64-B3F7-4826-98D5-95EC14146F95}</ProjectGuid>
+    <TargetFrameworks>net48</TargetFrameworks>
     <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>DatasetInfoPlugin</RootNamespace>
     <AssemblyName>DatasetInfoPlugin</AssemblyName>
-    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
+    <Company>PNNL</Company>
+    <Product>DatasetInfoPlugin</Product>
+    <Copyright>Copyright © PNNL 2009</Copyright>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+
+  <PropertyGroup>
     <NoWarn>IDE0028, IDE0290, IDE0300, IDE0305</NoWarn>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <NoWarn>IDE0028, IDE0290, IDE0300, IDE0305</NoWarn>
-  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Properties\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\version.json">
+      <Link>Properties\version.json</Link>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Nerdbank.GitVersioning" Version="3.6.141">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="PRISM-DatabaseUtils" Version="1.4.32" />
+    <PackageReference Include="PRISM-Library" Version="2.8.32" />
+  </ItemGroup>
+
   <ItemGroup>
     <Reference Include="CTM_Shared">
       <HintPath>..\DeployedFiles\CTM_Shared.dll</HintPath>
@@ -41,42 +41,17 @@
     <Reference Include="MSFileInfoScannerInterfaces">
       <HintPath>..\RefLib\MSFileInfoScannerInterfaces.dll</HintPath>
     </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="DatasetInfoXmlMerger.cs" />
-    <Compile Include="GlobalSuppressions.cs" />
-    <Compile Include="PluginMain.cs" />
-    <Compile Include="PluginMainLC.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\version.json">
-      <Link>Properties\version.json</Link>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Nerdbank.GitVersioning">
-      <Version>3.6.141</Version>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
-    <PackageReference Include="PRISM-DatabaseUtils">
-      <Version>1.4.32</Version>
-    </PackageReference>
-    <PackageReference Include="PRISM-Library">
-      <Version>2.8.32</Version>
-    </PackageReference>
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="xcopy &quot;$(TargetDir)MSFileInfoScannerInterfaces.dll&quot; &quot;$(ProjectDir)..\DeployedFiles&quot; /D /Y /I&#xD;&#xA;xcopy &quot;$(TargetPath)&quot; &quot;$(ProjectDir)..\DeployedFiles&quot; /Y /I&#xD;&#xA;xcopy &quot;$(TargetDir)$(TargetName).pdb&quot; &quot;$(ProjectDir)..\DeployedFiles&quot; /Y&#xD;&#xA;xcopy &quot;$(TargetDir)*.*&quot; &quot;$(ProjectDir)..\CaptureTaskManager\bin\Debug&quot; /D /Y /I" />
+  </Target>
+
+<!--  <PropertyGroup>
     <PostBuildEvent>xcopy "$(TargetDir)MSFileInfoScannerInterfaces.dll" "$(ProjectDir)..\DeployedFiles" /D /Y /I
 xcopy "$(TargetPath)" "$(ProjectDir)..\DeployedFiles" /Y /I
 xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\DeployedFiles" /Y
 xcopy "$(TargetDir)*.*" "$(ProjectDir)..\CaptureTaskManager\bin\Debug" /D /Y /I
 </PostBuildEvent>
-  </PropertyGroup>
+  </PropertyGroup>-->
 </Project>
