@@ -26,13 +26,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Nerdbank.GitVersioning" Version="3.6.141">
+    <PackageReference Include="Nerdbank.GitVersioning" Version="3.6.143">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="PRISM-DatabaseUtils" Version="1.4.32" />
-    <PackageReference Include="PRISM-Library" Version="2.8.32" />
-    <PackageReference Include="ThermoRawFileReader" Version="4.2.31" />
+    <PackageReference Include="PRISM-DatabaseUtils" Version="1.4.33" />
+    <PackageReference Include="PRISM-Library" Version="2.8.34" />
+    <PackageReference Include="ThermoRawFileReader" Version="4.2.32" />
   </ItemGroup>
 
   <ItemGroup>
