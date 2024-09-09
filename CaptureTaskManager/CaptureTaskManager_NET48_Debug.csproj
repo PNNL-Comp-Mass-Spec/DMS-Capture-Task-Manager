@@ -80,7 +80,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\CTM_Shared\CTM_Shared.csproj">
+    <ProjectReference Include="..\CTM_Shared\CTM_Shared_NET48.csproj">
       <Project>{7d07f054-0d29-45dd-9b22-71d0768bc3c3}</Project>
       <Name>CTM_Shared</Name>
     </ProjectReference>

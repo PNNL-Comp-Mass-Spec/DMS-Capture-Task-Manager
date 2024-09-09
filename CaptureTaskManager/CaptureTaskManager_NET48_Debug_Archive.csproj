@@ -80,15 +80,15 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DatasetArchivePlugin\DatasetArchivePlugin.csproj">
+    <ProjectReference Include="..\DatasetArchivePlugin\DatasetArchivePlugin_NET48.csproj">
       <Project>{FC0E683A-38BE-494C-93F1-65747197DCD7}</Project>
       <Name>DatasetArchivePlugin</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\MyEMSL_Reader\Pacifica\Pacifica.csproj">
+    <ProjectReference Include="..\..\MyEMSL_Reader\Pacifica\Pacifica_NET48.csproj">
       <Project>{CB910F22-9338-4339-A015-F7F29DCB2489}</Project>
       <Name>Pacifica</Name>
     </ProjectReference>
-    <ProjectReference Include="..\CTM_Shared\CTM_Shared.csproj">
+    <ProjectReference Include="..\CTM_Shared\CTM_Shared_NET48.csproj">
       <Project>{7D07F054-0D29-45DD-9B22-71D0768BC3C3}</Project>
       <Name>CTM_Shared</Name>
     </ProjectReference>
@@ -101,7 +101,7 @@
       <Version>5.0.0</Version>
     </PackageReference>
     <PackageReference Include="Nerdbank.GitVersioning">
-      <Version>3.6.139</Version>
+      <Version>3.6.141</Version>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
@@ -132,8 +132,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>xcopy "$(ProjectDir)..\..\MyEMSL_Reader\Pacifica\bin\Debug\Pacifica.dll" "$(ProjectDir)..\RefLib" /D /Y
-xcopy "$(ProjectDir)..\..\MyEMSL_Reader\Pacifica\bin\Debug\Pacifica.pdb" "$(ProjectDir)..\RefLib" /D /Y
+    <PostBuildEvent>xcopy "$(ProjectDir)..\..\MyEMSL_Reader\Pacifica\bin\Debug\Pacifica.dll" "$(ProjectDir)..\RefLib\net48" /D /Y
+xcopy "$(ProjectDir)..\..\MyEMSL_Reader\Pacifica\bin\Debug\Pacifica.pdb" "$(ProjectDir)..\RefLib\net48" /D /Y
 xcopy "$(ProjectDir)..\..\MyEMSL_Reader\Pacifica\bin\Debug\Pacifica.dll" "$(ProjectDir)..\DeployedFiles" /D /Y
 xcopy "$(ProjectDir)..\..\MyEMSL_Reader\Pacifica\bin\Debug\Pacifica.pdb" "$(ProjectDir)..\DeployedFiles" /D /Y
 

@@ -26,6 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="MyEMSL-Pacifica" Version="2.1.100" />
     <PackageReference Include="Nerdbank.GitVersioning" Version="3.6.143">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -38,9 +39,6 @@
   <ItemGroup>
     <Reference Include="CTM_Shared">
       <HintPath>..\DeployedFiles\CTM_Shared.dll</HintPath>
-    </Reference>
-    <Reference Include="Pacifica">
-      <HintPath>..\RefLib\$(TargetFramework)\Pacifica.dll</HintPath>
     </Reference>
   </ItemGroup>
 

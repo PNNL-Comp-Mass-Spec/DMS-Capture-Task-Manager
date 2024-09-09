@@ -39,12 +39,6 @@
     <Reference Include="CTM_Shared">
       <HintPath>..\DeployedFiles\CTM_Shared.dll</HintPath>
     </Reference>
-    <Reference Include="MyEMSLReader">
-      <HintPath>..\RefLib\net48\MyEMSLReader.dll</HintPath>
-    </Reference>
-    <Reference Include="Pacifica">
-      <HintPath>..\RefLib\net48\Pacifica.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
@@ -62,6 +56,12 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="MyEMSL-Pacifica">
+      <Version>2.1.100</Version>
+    </PackageReference>
+    <PackageReference Include="MyEMSL-Reader">
+      <Version>2.1.100</Version>
+    </PackageReference>
     <PackageReference Include="Nerdbank.GitVersioning">
       <Version>3.6.141</Version>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
