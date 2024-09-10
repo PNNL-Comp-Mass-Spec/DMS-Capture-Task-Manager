@@ -38,25 +38,19 @@
 
   <ItemGroup>
     <Reference Include="CTM_Shared">
-      <HintPath>..\DeployedFiles\CTM_Shared.dll</HintPath>
+      <HintPath>..\DeployedFiles\$(TargetFramework)\CTM_Shared.dll</HintPath>
     </Reference>
     <Reference Include="UIMFDemultiplexer, Version=2.0.5386.28933, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\RefLib\UIMFDemultiplexer.dll</HintPath>
+      <HintPath>..\RefLib\net48\UIMFDemultiplexer.dll</HintPath>
     </Reference>
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy &quot;$(TargetPath)&quot; &quot;$(ProjectDir)..\DeployedFiles&quot; /Y&#xD;&#xA;xcopy &quot;$(TargetDir)$(TargetName).pdb&quot; &quot;$(ProjectDir)..\DeployedFiles&quot; /Y&#xD;&#xA;xcopy &quot;$(TargetDir)IMSDemultiplexer*.dll&quot; &quot;$(ProjectDir)..\DeployedFiles&quot; /D /Y /I&#xD;&#xA;xcopy &quot;$(TargetDir)MathNet*.dll&quot; &quot;$(ProjectDir)..\DeployedFiles&quot; /D /Y /I&#xD;&#xA;xcopy &quot;$(TargetDir)*UIMF*.dll&quot; &quot;$(ProjectDir)..\DeployedFiles&quot; /D /Y /I&#xD;&#xA;xcopy &quot;$(TargetDir)*.*&quot; &quot;$(ProjectDir)..\CaptureTaskManager\bin\Debug&quot; /D /Y /I" />
+    <Exec Command="xcopy &quot;$(TargetPath)&quot; &quot;$(ProjectDir)..\DeployedFiles\\$(TargetFramework)&quot; /Y" />
+    <Exec Command="xcopy &quot;$(TargetDir)$(TargetName).pdb&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\&quot; /Y" />
+    <Exec Command="xcopy &quot;$(TargetDir)*.*&quot; &quot;$(ProjectDir)..\CaptureTaskManager\bin\Debug\$(TargetFramework)&quot; /D /Y /I" />
+    <Exec Command="xcopy &quot;$(TargetDir)*.dll&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y /I" />
   </Target>
 
-<!--  <PropertyGroup>
-    <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\DeployedFiles" /Y
-xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\DeployedFiles" /Y
-xcopy "$(TargetDir)IMSDemultiplexer*.dll" "$(ProjectDir)..\DeployedFiles" /D /Y /I
-xcopy "$(TargetDir)MathNet*.dll" "$(ProjectDir)..\DeployedFiles" /D /Y /I
-xcopy "$(TargetDir)*UIMF*.dll" "$(ProjectDir)..\DeployedFiles" /D /Y /I
-xcopy "$(TargetDir)*.*" "$(ProjectDir)..\CaptureTaskManager\bin\Debug" /D /Y /I
-</PostBuildEvent>
-  </PropertyGroup>-->
 </Project>

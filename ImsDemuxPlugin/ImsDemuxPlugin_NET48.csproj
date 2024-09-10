@@ -45,7 +45,7 @@
     <Reference Include="System.Xml" />
     <Reference Include="UIMFDemultiplexer, Version=2.0.5386.28933, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\RefLib\UIMFDemultiplexer.dll</HintPath>
+      <HintPath>..\RefLib\net48\UIMFDemultiplexer.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

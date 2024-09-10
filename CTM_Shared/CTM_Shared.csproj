@@ -41,18 +41,9 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy &quot;$(TargetPath)&quot; &quot;$(ProjectDir)..\DeployedFiles&quot; /Y /I&#xD;&#xA;xcopy &quot;$(TargetDir)$(TargetName).pdb&quot; &quot;$(ProjectDir)..\DeployedFiles&quot; /Y&#xD;&#xA;&#xD;&#xA;xcopy &quot;$(TargetDir)PRISM.dll&quot; &quot;$(ProjectDir)..\DeployedFiles&quot; /Y /d&#xD;&#xA;xcopy &quot;$(TargetDir)PRISMWin.dll&quot; &quot;$(ProjectDir)..\DeployedFiles&quot; /Y /d&#xD;&#xA;xcopy &quot;$(TargetDir)PRISMDatabaseUtils.dll&quot; &quot;$(ProjectDir)..\DeployedFiles&quot; /Y /d&#xD;&#xA;xcopy &quot;$(TargetDir)UIMFLibrary.dll&quot; &quot;$(ProjectDir)..\DeployedFiles&quot; /Y /d&#xD;&#xA;xcopy &quot;$(TargetDir)System.Data.SQLite.dll&quot; &quot;$(ProjectDir)..\DeployedFiles&quot; /Y /d&#xD;&#xA;" />
+    <Exec Command="xcopy &quot;$(TargetPath)&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y /I" />
+    <Exec Command="xcopy &quot;$(TargetDir)$(TargetName).pdb&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y" />
+    <Exec Command="xcopy &quot;$(TargetDir)*.dll&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y /I" />
   </Target>
 
-<!--  <PropertyGroup>
-    <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\DeployedFiles" /Y /I
-xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\DeployedFiles" /Y
-
-xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\DeployedFiles" /Y /d
-xcopy "$(TargetDir)PRISMWin.dll" "$(ProjectDir)..\DeployedFiles" /Y /d
-xcopy "$(TargetDir)PRISMDatabaseUtils.dll" "$(ProjectDir)..\DeployedFiles" /Y /d
-xcopy "$(TargetDir)UIMFLibrary.dll" "$(ProjectDir)..\DeployedFiles" /Y /d
-xcopy "$(TargetDir)System.Data.SQLite.dll" "$(ProjectDir)..\DeployedFiles" /Y /d
-</PostBuildEvent>
-  </PropertyGroup>-->
 </Project>

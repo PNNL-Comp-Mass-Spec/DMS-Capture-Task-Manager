@@ -47,6 +47,8 @@
   <ItemGroup>
     <PackageReference Include="Apache.NMS.ActiveMQ" Version="2.1.0" />
     <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
+    <PackageReference Include="MyEMSL-Pacifica" Version="2.1.100" />
+    <PackageReference Include="MyEMSL-Reader" Version="2.1.100" />
     <PackageReference Include="Nerdbank.GitVersioning" Version="3.6.143">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -68,25 +70,23 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy &quot;$(ProjectDir)..\..\MyEMSL_Reader\Pacifica\bin\Debug\Pacifica.dll&quot; &quot;$(ProjectDir)..\RefLib&quot; /D /Y&#xD;&#xA;xcopy &quot;$(ProjectDir)..\..\MyEMSL_Reader\Pacifica\bin\Debug\Pacifica.pdb&quot; &quot;$(ProjectDir)..\RefLib&quot; /D /Y&#xD;&#xA;xcopy &quot;$(ProjectDir)..\..\MyEMSL_Reader\Pacifica\bin\Debug\Pacifica.dll&quot; &quot;$(ProjectDir)..\DeployedFiles&quot; /D /Y&#xD;&#xA;xcopy &quot;$(ProjectDir)..\..\MyEMSL_Reader\Pacifica\bin\Debug\Pacifica.pdb&quot; &quot;$(ProjectDir)..\DeployedFiles&quot; /D /Y&#xD;&#xA;&#xD;&#xA;xcopy &quot;$(TargetPath)&quot; &quot;$(ProjectDir)..\DeployedFiles&quot; /D /Y&#xD;&#xA;xcopy &quot;$(TargetDir)$(TargetName).pdb&quot; &quot;$(ProjectDir)..\DeployedFiles&quot; /D /Y&#xD;&#xA;xcopy &quot;$(TargetDir)*.config&quot; &quot;$(ProjectDir)..\DeployedFiles&quot; /D /Y /I&#xD;&#xA;xcopy &quot;$(TargetDir)Apache.NMS.ActiveMQ.dll&quot; &quot;$(ProjectDir)..\DeployedFiles&quot; /D /Y&#xD;&#xA;xcopy &quot;$(TargetDir)Apache.NMS.dll&quot; &quot;$(ProjectDir)..\DeployedFiles&quot; /D /Y&#xD;&#xA;xcopy &quot;$(TargetDir)Newtonsoft.Json.dll&quot; &quot;$(ProjectDir)..\DeployedFiles&quot; /D /Y&#xD;&#xA;xcopy &quot;$(TargetDir)MathNet.Numerics.dll&quot; &quot;$(ProjectDir)..\DeployedFiles&quot; /D /Y&#xD;&#xA;xcopy &quot;$(TargetDir)PRISM.dll&quot; &quot;$(ProjectDir)..\DeployedFiles&quot; /D /Y&#xD;&#xA;xcopy &quot;$(TargetDir)PRISMWin.dll&quot; &quot;$(ProjectDir)..\DeployedFiles&quot; /D /Y&#xD;&#xA;xcopy &quot;$(TargetDir)plugin_info.xml&quot; &quot;$(ProjectDir)..\DeployedFiles&quot; /D /Y" />
+    <Exec Command="xcopy &quot;$(TargetPath)&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y /I" />
+    <Exec Command="xcopy &quot;$(TargetDir)$(TargetName).pdb&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y" />
+    <Exec Command="xcopy &quot;$(TargetDir)$(TargetName).*&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y /I" />
+
+    <Exec Command="xcopy &quot;$(TargetDir)*.config&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y /I" />
+    <Exec Command="xcopy &quot;$(TargetDir)*.dll&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y /I" />
+    <Exec Command="xcopy &quot;$(TargetDir)plugin_info.xml&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y /I" />
   </Target>
 
-<!--  <PropertyGroup>
-    <PostBuildEvent>xcopy "$(ProjectDir)..\..\MyEMSL_Reader\Pacifica\bin\Debug\Pacifica.dll" "$(ProjectDir)..\RefLib" /D /Y
-xcopy "$(ProjectDir)..\..\MyEMSL_Reader\Pacifica\bin\Debug\Pacifica.pdb" "$(ProjectDir)..\RefLib" /D /Y
-xcopy "$(ProjectDir)..\..\MyEMSL_Reader\Pacifica\bin\Debug\Pacifica.dll" "$(ProjectDir)..\DeployedFiles" /D /Y
-xcopy "$(ProjectDir)..\..\MyEMSL_Reader\Pacifica\bin\Debug\Pacifica.pdb" "$(ProjectDir)..\DeployedFiles" /D /Y
+  <Target Name="PostBuildnet48" AfterTargets="PostBuildEvent" Condition="'$(TargetFramework)'=='net48'">
+    <Exec Command="xcopy &quot;$(ProjectDir)..\..\MyEMSL_Reader\Pacifica\bin\Debug\$(TargetFramework)\Pacifica.*&quot; &quot;$(ProjectDir)..\RefLib\$(TargetFramework)&quot; /D /Y /I" />
+    <Exec Command="xcopy &quot;$(ProjectDir)..\..\MyEMSL_Reader\Pacifica\bin\Debug\$(TargetFramework)\Pacifica.*&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y /I" />
+  </Target>
 
-xcopy "$(TargetPath)" "$(ProjectDir)..\DeployedFiles" /D /Y
-xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\DeployedFiles" /D /Y
-xcopy "$(TargetDir)*.config" "$(ProjectDir)..\DeployedFiles" /D /Y /I
-xcopy "$(TargetDir)Apache.NMS.ActiveMQ.dll" "$(ProjectDir)..\DeployedFiles" /D /Y
-xcopy "$(TargetDir)Apache.NMS.dll" "$(ProjectDir)..\DeployedFiles" /D /Y
-xcopy "$(TargetDir)Newtonsoft.Json.dll" "$(ProjectDir)..\DeployedFiles" /D /Y
-xcopy "$(TargetDir)MathNet.Numerics.dll" "$(ProjectDir)..\DeployedFiles" /D /Y
-xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\DeployedFiles" /D /Y
-xcopy "$(TargetDir)PRISMWin.dll" "$(ProjectDir)..\DeployedFiles" /D /Y
-xcopy "$(TargetDir)plugin_info.xml" "$(ProjectDir)..\DeployedFiles" /D /Y
-</PostBuildEvent>
-  </PropertyGroup>-->
+  <Target Name="PostBuildnet8.0" AfterTargets="PostBuildEvent" Condition="'$(TargetFramework)'=='net8.0-windows'">
+    <Exec Command="xcopy &quot;$(ProjectDir)..\..\MyEMSL_Reader\Pacifica\bin\Debug\net8.0\Pacifica.*&quot; &quot;$(ProjectDir)..\RefLib\net8.0&quot; /D /Y /I" />
+    <Exec Command="xcopy &quot;$(ProjectDir)..\..\MyEMSL_Reader\Pacifica\bin\Debug\net8.0\Pacifica.*&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y /I" />
+  </Target>
+
 </Project>

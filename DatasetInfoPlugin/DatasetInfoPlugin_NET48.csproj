@@ -40,7 +40,7 @@
       <HintPath>..\DeployedFiles\CTM_Shared.dll</HintPath>
     </Reference>
     <Reference Include="MSFileInfoScannerInterfaces">
-      <HintPath>..\RefLib\MSFileInfoScannerInterfaces.dll</HintPath>
+      <HintPath>..\RefLib\net48\MSFileInfoScannerInterfaces.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
