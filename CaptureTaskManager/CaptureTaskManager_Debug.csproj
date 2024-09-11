@@ -9,6 +9,7 @@
     <Product>CaptureTaskManager</Product>
     <Copyright>Copyright © PNNL 2009</Copyright>
     <LangVersion>latest</LangVersion>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies> <!-- Causes nuget dependencies to be copied to the output directory -->
   </PropertyGroup>
 
   <PropertyGroup>
@@ -47,8 +48,6 @@
   <ItemGroup>
     <PackageReference Include="Apache.NMS.ActiveMQ" Version="2.1.0" />
     <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
-    <PackageReference Include="MyEMSL-Pacifica" Version="2.1.100" />
-    <PackageReference Include="MyEMSL-Reader" Version="2.1.100" />
     <PackageReference Include="Nerdbank.GitVersioning" Version="3.6.143">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -77,6 +76,15 @@
     <Exec Command="xcopy &quot;$(TargetDir)*.config&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y /I" />
     <Exec Command="xcopy &quot;$(TargetDir)*.dll&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y /I" />
     <Exec Command="xcopy &quot;$(TargetDir)plugin_info.xml&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y /I" />
+  </Target>
+
+  <Target Name="PostBuildNet48" AfterTargets="PostBuildEvent" Condition="'$(TargetFramework)'!='net8.0-windows'">
+    <Exec Command="xcopy &quot;$(TargetDir)x86&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\x86&quot; /S /D /Y /I" />
+    <Exec Command="xcopy &quot;$(TargetDir)x64&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\x64&quot; /S /D /Y /I" />
+  </Target>
+
+  <Target Name="PostBuildNet80" AfterTargets="PostBuildEvent" Condition="'$(TargetFramework)'=='net8.0-windows'">
+    <Exec Command="xcopy &quot;$(TargetDir)runtimes&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\runtimes&quot; /S /D /Y /I" />
   </Target>
 
 </Project>

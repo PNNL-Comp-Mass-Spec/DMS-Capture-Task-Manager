@@ -9,6 +9,7 @@
     <Product>CaptureToolPlugin</Product>
     <Copyright>Copyright © PNNL 2009</Copyright>
     <LangVersion>latest</LangVersion>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies> <!-- Causes nuget dependencies to be copied to the output directory -->
   </PropertyGroup>
 
   <PropertyGroup>
