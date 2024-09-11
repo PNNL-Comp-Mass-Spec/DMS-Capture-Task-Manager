@@ -740,7 +740,7 @@ namespace CaptureTaskManager
         // ReSharper disable once UnusedMember.Global
         protected virtual bool StoreToolVersionInfoOneFile(ref string toolVersionInfo, string dllFilePath)
         {
-            bool success;
+            var success = false;
 
             try
             {
@@ -752,15 +752,28 @@ namespace CaptureTaskManager
                     return false;
                 }
 
-                var oAssemblyName = Assembly.LoadFrom(dllFile.FullName).GetName();
+                //var assemblyName = Assembly.LoadFrom(dllFile.FullName).GetName(); // Throws BadImageFormatException if x86/x64 don't match, or not a valid assembly; loads the assembly into the current domain
+                var assemblyName = AssemblyName.GetAssemblyName(dllFile.FullName); // Throws BadImageFormatException if not a valid assembly; does not load the assembly into the current domain
 
-                var nameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version;
-                toolVersionInfo = AppendToComment(toolVersionInfo, nameAndVersion);
-
-                return true;
+                if (!string.IsNullOrWhiteSpace(assemblyName.Name) && assemblyName.Version != null)
+                {
+                    var nameAndVersion = assemblyName.Name + ", Version=" + assemblyName.Version;
+                    toolVersionInfo = AppendToComment(toolVersionInfo, nameAndVersion);
+                    return true;
+                }
             }
             catch (BadImageFormatException)
             {
+                // If the exe is a .NET Core app host, there is not a valid manifest (it's a native binary); get the version from the respective dll
+                if (dllFilePath.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                {
+                    var dllPath = Path.ChangeExtension(dllFilePath, ".dll");
+                    if (File.Exists(dllPath))
+                    {
+                        return StoreToolVersionInfoOneFile(ref toolVersionInfo, dllPath);
+                    }
+                }
+
                 // Most likely trying to read a 64-bit DLL (if this program is running as 32-bit)
                 // Or, if this program is AnyCPU and running as 64-bit, the target DLL or Exe must be 32-bit
 
