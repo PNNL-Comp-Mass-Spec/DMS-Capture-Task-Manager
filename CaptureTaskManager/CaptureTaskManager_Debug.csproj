@@ -69,22 +69,26 @@
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <Exec Command="xcopy &quot;$(ProjectDir)..\RefLib\DLLVersionInspector*.exe&quot; &quot;$(TargetDir)&quot; /D /Y" />
 
-    <Exec Command="xcopy &quot;$(TargetPath)&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y /I" />
+    <Exec Command="if not exist &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; mkdir &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot;" />
+    <Exec Command="xcopy &quot;$(TargetPath)&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y" />
     <Exec Command="xcopy &quot;$(TargetDir)$(TargetName).pdb&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y" />
-    <Exec Command="xcopy &quot;$(TargetDir)$(TargetName).*&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y /I" />
+    <Exec Command="xcopy &quot;$(TargetDir)$(TargetName).*&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y" />
 
-    <Exec Command="xcopy &quot;$(TargetDir)*.config&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y /I" />
-    <Exec Command="xcopy &quot;$(TargetDir)*.dll&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y /I" />
-    <Exec Command="xcopy &quot;$(TargetDir)plugin_info.xml&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y /I" />
+    <Exec Command="xcopy &quot;$(TargetDir)*.config&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y" />
+    <Exec Command="xcopy &quot;$(TargetDir)*.dll&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y" />
+    <Exec Command="xcopy &quot;$(TargetDir)plugin_info.xml&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y" />
   </Target>
 
   <Target Name="PostBuildNet48" AfterTargets="PostBuildEvent" Condition="'$(TargetFramework)'!='net8.0-windows'">
-    <Exec Command="xcopy &quot;$(TargetDir)x86&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\x86&quot; /S /D /Y /I" />
-    <Exec Command="xcopy &quot;$(TargetDir)x64&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\x64&quot; /S /D /Y /I" />
+    <Exec Command="if not exist &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\x86&quot; mkdir &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\x86&quot;" />
+    <Exec Command="if not exist &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\x64&quot; mkdir &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\x64&quot;" />
+    <Exec Command="xcopy &quot;$(TargetDir)x86&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\x86&quot; /S /D /Y" />
+    <Exec Command="xcopy &quot;$(TargetDir)x64&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\x64&quot; /S /D /Y" />
   </Target>
 
   <Target Name="PostBuildNet80" AfterTargets="PostBuildEvent" Condition="'$(TargetFramework)'=='net8.0-windows'">
-    <Exec Command="xcopy &quot;$(TargetDir)runtimes&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\runtimes&quot; /S /D /Y /I" />
+    <Exec Command="if not exist &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\runtimes&quot; mkdir &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\runtimes&quot;" />
+    <Exec Command="xcopy &quot;$(TargetDir)runtimes&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\runtimes&quot; /S /D /Y" />
   </Target>
 
 </Project>
