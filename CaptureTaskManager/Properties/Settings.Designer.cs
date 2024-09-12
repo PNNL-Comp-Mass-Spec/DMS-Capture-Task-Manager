@@ -43,7 +43,7 @@ namespace CaptureTaskManager.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("Data Source=proteinseqs;Initial Catalog=Manager_Control;Integrated Security=SSPI")]
+        [global::System.Configuration.DefaultSettingValueAttribute("host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dmsI")]
         public string MgrCnfgDbConnectStr {
             get {
                 return ((string)(this["MgrCnfgDbConnectStr"]));
@@ -61,7 +61,7 @@ namespace CaptureTaskManager.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI")]
+        [global::System.Configuration.DefaultSettingValueAttribute("host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms")]
         public string DefaultDMSConnString {
             get {
                 return ((string)(this["DefaultDMSConnString"]));
