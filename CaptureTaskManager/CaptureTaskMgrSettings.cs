@@ -28,7 +28,7 @@ namespace CaptureTaskManager
         private const string SP_NAME_ACK_MANAGER_UPDATE = "ack_manager_update_required";
 
         /// <summary>
-        /// Connection string to DMS5
+        /// Connection string to the DMS database on prismdb2 (previously, DMS5 on Gigasax)
         /// </summary>
         public const string MGR_PARAM_DEFAULT_DMS_CONN_STRING = "DefaultDMSConnString";
 

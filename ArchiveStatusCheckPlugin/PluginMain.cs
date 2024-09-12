@@ -71,7 +71,7 @@ namespace ArchiveStatusCheckPlugin
             {
                 // Files are not yet verified
                 // Return completionCode CLOSEOUT_NOT_READY=2
-                // which will tell the DMS_Capture DB to reset the task to state 2 and bump up the Next_Try value by 60 minutes
+                // which will tell the DMS database to reset the task to state 2 and bump up the Next_Try value by 60 minutes
                 if (mRetData.CloseoutType == EnumCloseOutType.CLOSEOUT_SUCCESS)
                 {
                     mRetData.CloseoutType = EnumCloseOutType.CLOSEOUT_NOT_READY;
@@ -418,7 +418,7 @@ namespace ArchiveStatusCheckPlugin
         /// <param name="retryCount"></param>
         private void GetStatusURIsAndSubdirectories(string sql, IDictionary<int, IngestStatusInfo> statusData, int retryCount = 2)
         {
-            // This connection string points to the DMS_Capture database
+            // This connection string points to the DMS database on prismdb2 (previously, DMS_Capture on Gigasax)
             var connectionString = mMgrParams.GetParam("ConnectionString");
 
             var applicationName = string.Format("{0}_ArchiveStatus", mMgrParams.ManagerName);

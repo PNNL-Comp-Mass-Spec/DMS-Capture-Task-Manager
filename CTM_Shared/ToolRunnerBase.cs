@@ -110,7 +110,7 @@ namespace CaptureTaskManager
 
             mMgrName = mMgrParams.GetParam("MgrName", "CaptureTaskManager");
 
-            // This connection string points to the DMS_Capture database
+            // This connection string points to the DMS database on prismdb2 (previously, DMS_Capture on Gigasax)
             var connectionString = mMgrParams.GetParam("ConnectionString");
 
             var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, mMgrName);

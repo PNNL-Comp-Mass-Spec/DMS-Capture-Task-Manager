@@ -109,7 +109,7 @@ namespace DatasetArchivePlugin
                 mArchiveOrUpdate = UPDATE;
             }
 
-            // This connection string points to the DMS_Capture database
+            // This connection string points to the DMS database on prismdb2 (previously, DMS_Capture on Gigasax)
             var connectionString = mMgrParams.GetParam("ConnectionString");
 
             var applicationName = string.Format("{0}_DatasetArchive", mMgrParams.ManagerName);

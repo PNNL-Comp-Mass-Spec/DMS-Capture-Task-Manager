@@ -218,7 +218,7 @@ namespace CaptureTaskManager
             // This will get updated below
             LogTools.CreateFileLogger(DEFAULT_BASE_LOGFILE_NAME, BaseLogger.LogLevels.DEBUG);
 
-            // Create a database logger connected to DMS5
+            // Create a database logger connected to the DMS database on prismdb2 (previously, DMS5 on Gigasax)
             // Once the initial parameters have been successfully read,
             // we update the dbLogger to use the connection string read from the Manager Control DB
             string defaultDmsConnectionString;
@@ -228,7 +228,7 @@ namespace CaptureTaskManager
 
             if (string.IsNullOrWhiteSpace(dmsConnectionStringFromConfig))
             {
-                // Use the hard-coded default that points to Gigasax
+                // Use the hard-coded default that points to the DMS database on prismdb2 (previously, DMS5 on Gigasax)
                 defaultDmsConnectionString = Properties.Settings.Default.DefaultDMSConnString;
             }
             else
@@ -327,10 +327,10 @@ namespace CaptureTaskManager
             // Give the file logger a chance to zip old log files by year
             FileLogger.ArchiveOldLogFilesNow();
 
-            // Store the connection string that points to the DMS5 database
+            // Store the connection string that points to the DMS database on prismdb2 (previously, DMS5 on Gigasax)
             mMgrSettings.SetParam("DMSConnectionString", defaultDmsConnectionString);
 
-            // This connection string points to the DMS_Capture database
+            // This connection string points to the DMS database on prismdb2 (previously, DMS_Capture on Gigasax)
             var logCnStr = mMgrSettings.GetParam("ConnectionString");
 
             var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(logCnStr, mMgrName);

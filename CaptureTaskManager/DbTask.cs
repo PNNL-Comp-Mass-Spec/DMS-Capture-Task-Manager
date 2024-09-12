@@ -81,7 +81,7 @@ namespace CaptureTaskManager
 
             ManagerName = mMgrParams.GetParam("MgrName", System.Net.Dns.GetHostName() + "_Undefined-Manager");
 
-            // Gigasax.DMS_Capture
+            // DMS database on prismdb2 (previously, DMS_Capture on Gigasax)
             var connectionString = mMgrParams.GetParam("ConnectionString");
 
             mConnStr = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, ManagerName);

@@ -163,7 +163,7 @@ namespace ArchiveVerifyPlugin
         /// <summary>
         /// Examine the upload status
         /// If not complete, this manager will return completionCode CLOSEOUT_NOT_READY (2)
-        /// which will tell the DMS_Capture DB to reset the task to state 2 and bump up the Next_Try value by 30 minutes
+        /// which will tell the DMS database to reset the task to state 2 and bump up the Next_Try value by 30 minutes
         /// </summary>
         /// <param name="statusNum"></param>
         /// <param name="ingestStepsCompleted"></param>

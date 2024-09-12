@@ -35,7 +35,7 @@ namespace CaptureToolPlugin
         // False means MgrParam "perspective" = "server" which means we use paths like E:\Exact04\2012_1
         //
         // The capture task managers running on the Proto-x servers have "perspective" = "server"
-        // Capture tasks that occur on the Proto-x servers should be limited to certain instruments via table T_Processor_Instrument in the DMS_Capture DB
+        // Capture tasks that occur on the Proto-x servers should be limited to certain instruments via table T_Processor_Instrument in the DMS database
         // If a capture task manager running on a Proto-x server has the DatasetCapture tool enabled, yet does not have an entry in T_Processor_Instrument,
         //  then no capture tasks are allowed to be assigned to avoid drive path problems
         private bool mClientServer;

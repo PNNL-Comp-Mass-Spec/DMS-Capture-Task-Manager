@@ -157,8 +157,8 @@ namespace ImsDemuxPlugin
 
             // Determine whether calibration should be performed
             //
-            // Note that stored procedure get_task_param_table in the DMS_Capture database
-            // sets this value based on the value in column Perform_Calibration of table T_Instrument_Name in the DMS5 database
+            // Note that stored procedure get_task_param_table in the DMS database
+            // sets this value based on the value in column Perform_Calibration of table T_Instrument_Name in the DMS database
             //
             // Furthermore, if the value for Perform_Calibration is changed for a given instrument, you must update the job parameters
             // using update_parameters_for_task for any jobs that need to be re-run

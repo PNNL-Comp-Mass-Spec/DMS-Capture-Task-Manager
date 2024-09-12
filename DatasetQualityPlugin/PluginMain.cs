@@ -479,7 +479,7 @@ namespace DatasetQualityPlugin
 
         private string GetDatasetInstrumentGroup()
         {
-            // This connection string points to the DMS5 database
+            // This connection string points to the DMS database on prismdb2 (previously, DMS5 on Gigasax)
             var connectionString = mMgrParams.GetParam("DMSConnectionString");
 
             var applicationName = string.Format("{0}_DatasetQuality", mMgrParams.ManagerName);
@@ -506,7 +506,7 @@ namespace DatasetQualityPlugin
 
         private void GetDatasetScanCountsFromDB(int datasetID, out int scanCount, out int scanCountMS, out List<string> scanTypes)
         {
-            // This connection string points to the DMS_Capture database
+            // This connection string points to the DMS database on prismdb2 (previously, DMS_Capture on Gigasax)
             var connectionString = mMgrParams.GetParam("ConnectionString");
 
             var applicationName = string.Format("{0}_DatasetQuality", mMgrParams.ManagerName);
@@ -936,7 +936,7 @@ namespace DatasetQualityPlugin
                     xmlResultsClean = xmlResults;
                 }
 
-                // Call stored procedure store_quameter_results in the DMS_Capture database
+                // Call stored procedure store_quameter_results in the DMS database on prismdb2 (previously, DMS_Capture on Gigasax)
                 var dbTools = mCaptureDbProcedureExecutor;
                 var cmd = dbTools.CreateCommand(STORE_QUAMETER_RESULTS_SP_NAME, CommandType.StoredProcedure);
 
