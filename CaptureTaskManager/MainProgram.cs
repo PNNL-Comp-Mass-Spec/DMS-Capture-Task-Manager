@@ -228,6 +228,11 @@ namespace CaptureTaskManager
 
             if (string.IsNullOrWhiteSpace(dmsConnectionStringFromConfig))
             {
+                LogError("Did not find setting {0} in {1} or {2}",
+                    CaptureTaskMgrSettings.MGR_PARAM_DEFAULT_DMS_CONN_STRING,
+                    "CaptureTaskManager.exe.db.config",
+                    "CaptureTaskManager.exe.config");
+
                 // Use the hard-coded default that points to the DMS database on prismdb2 (previously, DMS5 on Gigasax)
                 defaultDmsConnectionString = Properties.Settings.Default.DefaultDMSConnString;
             }
@@ -1377,7 +1382,7 @@ namespace CaptureTaskManager
         }
 
         /// <summary>
-        /// Extract the value DefaultDMSConnString from CaptureTaskManager.exe.config
+        /// Extract the value DefaultDMSConnString from CaptureTaskManager.exe.db.config or CaptureTaskManager.exe.config
         /// </summary>
         /// <returns>DMS connection string</returns>
         private string GetXmlConfigDefaultConnectionString()
