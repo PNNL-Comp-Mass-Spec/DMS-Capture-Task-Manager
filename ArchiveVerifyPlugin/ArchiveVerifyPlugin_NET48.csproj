@@ -62,7 +62,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="MyEMSL-Pacifica">
-      <Version>2.1.100</Version>
+      <Version>2.1.113</Version>
     </PackageReference>
     <PackageReference Include="MyEMSL-Reader">
       <Version>2.1.113</Version>
