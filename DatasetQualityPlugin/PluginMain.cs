@@ -480,7 +480,7 @@ namespace DatasetQualityPlugin
         private string GetDatasetInstrumentGroup()
         {
             // This connection string points to the DMS database on prismdb2 (previously, DMS5 on Gigasax)
-            var connectionString = mMgrParams.GetParam("DMSConnectionString");
+            var connectionString = mMgrParams.GetParam(DMS_CONNECTION_STRING_MANAGER_PARAM);
 
             var applicationName = string.Format("{0}_DatasetQuality", mMgrParams.ManagerName);
             string connectionStringToUse;

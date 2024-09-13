@@ -426,7 +426,7 @@ namespace CaptureTaskManager
             FileLogger.ArchiveOldLogFilesNow();
 
             // Store the connection string that points to the DMS database on prismdb2 (previously, DMS5 on Gigasax)
-            mMgrSettings.SetParam("DMSConnectionString", defaultDmsConnectionString);
+            mMgrSettings.SetParam(ToolRunnerBase.DMS_CONNECTION_STRING_MANAGER_PARAM, defaultDmsConnectionString);
 
             // This connection string points to the DMS database on prismdb2 (previously, DMS_Capture on Gigasax)
             var logCnStr = mMgrSettings.GetParam("ConnectionString");

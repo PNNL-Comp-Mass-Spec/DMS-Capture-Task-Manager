@@ -28,9 +28,11 @@ namespace CaptureTaskManager
     /// <remarks>Used in CaptureTaskManager.MainProgram</remarks>
     public class ToolRunnerBase : LoggerBase, IToolRunner
     {
-        // Ignore Spelling: addnl, holdoff, yyyy-MM-dd hh:mm:ss tt, Lockfile
+        // Ignore Spelling: addnl, DMS, holdoff, yyyy-MM-dd hh:mm:ss tt, Lockfile
 
         protected const string DEFAULT_DMS_CONNECTION_STRING = "Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms";
+
+        public const string DMS_CONNECTION_STRING_MANAGER_PARAM = "DMSConnectionString";
 
         public const string EXCEPTION_CREATING_OUTPUT_DIRECTORY = "Exception creating output directory";
 
