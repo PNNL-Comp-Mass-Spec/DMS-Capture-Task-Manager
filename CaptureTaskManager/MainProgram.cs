@@ -14,6 +14,7 @@ using PRISM;
 using PRISM.AppSettings;
 using PRISM.Logging;
 using PRISMDatabaseUtils;
+using PRISMDatabaseUtils.Logging;
 using PRISMWin;
 
 namespace CaptureTaskManager
@@ -92,6 +93,34 @@ namespace CaptureTaskManager
             var exeInfo = new FileInfo(AppUtils.GetAppPath());
             mMgrExeName = exeInfo.Name;
             mMgrDirectoryPath = exeInfo.DirectoryName;
+        }
+
+        /// <summary>
+        /// Initializes the database logger in static class PRISM.Logging.LogTools
+        /// </summary>
+        /// <remarks>Supports both SQL Server and Postgres connection strings</remarks>
+        /// <param name="connectionString">Database connection string</param>
+        /// <param name="moduleName">Module name used by logger</param>
+        /// <param name="traceMode">When true, show additional debug messages at the console</param>
+        /// <param name="logLevel">Log threshold level</param>
+        private void CreateDbLogger(
+            string connectionString,
+            string moduleName,
+            bool traceMode = false,
+            BaseLogger.LogLevels logLevel = BaseLogger.LogLevels.INFO)
+        {
+            var databaseType = DbToolsFactory.GetServerTypeFromConnectionString(connectionString);
+
+            DatabaseLogger dbLogger = databaseType switch
+            {
+                DbServerTypes.MSSQLServer => new SQLServerDatabaseLogger(),
+                DbServerTypes.PostgreSQL => new PostgresDatabaseLogger(),
+                _ => throw new Exception("Unsupported database connection string: should be SQL Server or Postgres")
+            };
+
+            dbLogger.ChangeConnectionInfo(moduleName, connectionString);
+
+            LogTools.SetDbLogger(dbLogger, logLevel, traceMode);
         }
 
         /// <summary>
@@ -313,8 +342,7 @@ namespace CaptureTaskManager
 
             ShowTrace("Instantiate a DbLogger using " + dbLoggerConnectionString);
 
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-            LogTools.CreateDbLogger(dbLoggerConnectionString, "CaptureTaskMan: " + hostName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
+            CreateDbLogger(dbLoggerConnectionString, "CaptureTaskMan: " + hostName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
 
             LogTools.MessageLogged += MessageLoggedHandler;
 
@@ -406,7 +434,7 @@ namespace CaptureTaskManager
             var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(logCnStr, mMgrName);
 
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-            LogTools.CreateDbLogger(connectionStringToUse, "CaptureTaskMan: " + mMgrName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
+            CreateDbLogger(connectionStringToUse, "CaptureTaskMan: " + mMgrName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
 
             // Make the initial log entry
             var relativeLogFilePath = LogTools.CurrentLogFilePath;
