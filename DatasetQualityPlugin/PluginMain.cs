@@ -480,20 +480,16 @@ namespace DatasetQualityPlugin
         private string GetDatasetInstrumentGroup()
         {
             // This connection string points to the DMS database on prismdb2 (previously, DMS5 on Gigasax)
-            var connectionString = mMgrParams.GetParam(DMS_CONNECTION_STRING_MANAGER_PARAM);
+            var connectionString = mMgrParams.GetParam("DMSConnectionString");
 
             var applicationName = string.Format("{0}_DatasetQuality", mMgrParams.ManagerName);
-            string connectionStringToUse;
 
             if (string.IsNullOrWhiteSpace(connectionString))
             {
-                LogError("Manager parameter 'DMSConnectionString' is an empty string in mMgrParams; defaulting to use {0}", DEFAULT_DMS_CONNECTION_STRING);
-                connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(DEFAULT_DMS_CONNECTION_STRING, applicationName);
+                throw new Exception("Manager parameter 'DMSConnectionString' is an empty string in mMgrParams");
             }
-            else
-            {
-                connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
-            }
+
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
 
             var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: mTraceMode);
             RegisterEvents(dbTools);
@@ -1141,7 +1137,7 @@ namespace DatasetQualityPlugin
         /// <param name="datasetID">Dataset ID</param>
         /// <param name="datasetName">Dataset name</param>
         /// <param name="datasetDirectoryPath">Dataset directory path</param>
-        /// <param name="skipReason"></param>
+        /// <param name="skipReason">Output: reason for skipping Quameter</param>
         /// <returns>True if the file can be processed, otherwise false</returns>
         private bool QuameterCanProcessDataset(int datasetID, string datasetName, string datasetDirectoryPath, out string skipReason)
         {
