@@ -1,5 +1,5 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net48;net8.0-windows</TargetFrameworks>
     <OutputType>Library</OutputType>
@@ -9,43 +9,37 @@
     <Product>SrcFileRenamePlugin</Product>
     <Copyright>Copyright © PNNL 2009</Copyright>
     <LangVersion>latest</LangVersion>
-    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies> <!-- Causes nuget dependencies to be copied to the output directory -->
+    <!-- When true, copy NuGet dependencies to the output directory -->
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
-
   <PropertyGroup>
     <NoWarn>IDE0028, IDE0290, IDE0300, IDE0305</NoWarn>
   </PropertyGroup>
-
   <ItemGroup>
     <Compile Remove="Properties\**" />
   </ItemGroup>
-
   <ItemGroup>
     <None Include="..\version.json">
       <Link>Properties\version.json</Link>
     </None>
   </ItemGroup>
-
   <ItemGroup>
-    <PackageReference Include="MyEMSL-Pacifica" Version="2.1.113" />
+    <PackageReference Include="MyEMSL-Pacifica" Version="2.1.114" />
     <PackageReference Include="Nerdbank.GitVersioning" Version="3.6.143">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="PRISM-Library" Version="2.8.34" />
+    <PackageReference Include="PRISM-Library" Version="2.8.36" />
   </ItemGroup>
-
   <ItemGroup>
     <Reference Include="CTM_Shared">
       <HintPath>..\DeployedFiles\$(TargetFramework)\CTM_Shared.dll</HintPath>
     </Reference>
   </ItemGroup>
-
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <Exec Command="xcopy &quot;$(TargetPath)&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /Y /I" />
     <Exec Command="xcopy &quot;$(TargetDir)$(TargetName).pdb&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /Y" />
     <Exec Command="xcopy &quot;$(TargetDir)*.*&quot; &quot;$(ProjectDir)..\CaptureTaskManager\bin\Debug\$(TargetFramework)&quot; /D /Y /I" />
     <Exec Command="xcopy &quot;$(TargetDir)*.dll&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y /I" />
   </Target>
-
 </Project>
