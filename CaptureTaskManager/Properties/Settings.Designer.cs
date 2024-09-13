@@ -52,7 +52,7 @@ namespace CaptureTaskManager.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms")]
+        [global::System.Configuration.DefaultSettingValueAttribute("Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms")]
         public string DefaultDMSConnString {
             get {
                 return ((string)(this["DefaultDMSConnString"]));
@@ -61,7 +61,7 @@ namespace CaptureTaskManager.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms")]
+        [global::System.Configuration.DefaultSettingValueAttribute("Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms")]
         public string MgrCnfgDbConnectStr {
             get {
                 return ((string)(this["MgrCnfgDbConnectStr"]));
