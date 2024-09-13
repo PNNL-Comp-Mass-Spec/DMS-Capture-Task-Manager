@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "CaptureTaskManager_Debug": {
+      "commandName": "Project",
+      "commandLineArgs": "/trace"
+    }
+  }
+}
