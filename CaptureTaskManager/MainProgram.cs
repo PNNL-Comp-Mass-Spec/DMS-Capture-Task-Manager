@@ -206,6 +206,71 @@ namespace CaptureTaskManager
             return restartOK;
         }
 
+        protected string GetStoragePathBase()
+        {
+            var storagePath = mTask.GetParam("Storage_Path");
+
+            // Make sure storagePath only contains the root folder, not several folders
+            // In other words, if storagePath = "VOrbiETD03\2011_4" change it to just "VOrbiETD03"
+            var slashLoc = storagePath.IndexOf(Path.DirectorySeparatorChar);
+
+            if (slashLoc > 0)
+            {
+                storagePath = storagePath.Substring(0, slashLoc);
+            }
+
+            // Always use the UNC path defined by Storage_Vol_External when checking drive free space
+            // Example path is: \\Proto-7\
+            var storageVolume = mTask.GetParam("Storage_Vol_External");
+
+            return Path.Combine(storageVolume, storagePath);
+        }
+
+        /// <summary>
+        /// Extract the value DefaultDMSConnString from CaptureTaskManager.exe.db.config or CaptureTaskManager.exe.config
+        /// </summary>
+        /// <returns>DMS connection string</returns>
+        private string GetXmlConfigDefaultConnectionString()
+        {
+            return GetXmlConfigFileSetting(CaptureTaskMgrSettings.MGR_PARAM_DEFAULT_DMS_CONN_STRING);
+        }
+
+        /// <summary>
+        /// Extract the value for the given setting from CaptureTaskManager.exe.config
+        /// If the setting name is MgrCnfgDbConnectStr or DefaultDMSConnString, first checks file CaptureTaskManager.exe.db.config
+        /// </summary>
+        /// <remarks>Uses a simple text reader in case the file has malformed XML</remarks>
+        /// <returns>Setting value if found, otherwise an empty string</returns>
+        private string GetXmlConfigFileSetting(string settingName)
+        {
+            if (string.IsNullOrWhiteSpace(settingName))
+            {
+                throw new ArgumentException("Setting name cannot be blank", nameof(settingName));
+            }
+
+            var configFilePaths = new List<string>();
+
+            if (settingName.Equals("MgrCnfgDbConnectStr", StringComparison.OrdinalIgnoreCase) ||
+                settingName.Equals("DefaultDMSConnString", StringComparison.OrdinalIgnoreCase))
+            {
+                configFilePaths.Add(Path.Combine(mMgrDirectoryPath, mMgrExeName + ".db.config"));
+            }
+
+            configFilePaths.Add(Path.Combine(mMgrDirectoryPath, mMgrExeName + ".config"));
+
+            var mgrSettings = new MgrSettings();
+            RegisterEvents(mgrSettings);
+
+            var valueFound = mgrSettings.GetXmlConfigFileSetting(configFilePaths, settingName, out var settingValue);
+
+            if (valueFound)
+            {
+                return settingValue;
+            }
+
+            return string.Empty;
+        }
+
         /// <summary>
         /// Initializes the manager
         /// </summary>
@@ -1359,71 +1424,6 @@ namespace CaptureTaskManager
                 LogError("Error re-loading manager settings", ex);
                 return false;
             }
-        }
-
-        protected string GetStoragePathBase()
-        {
-            var storagePath = mTask.GetParam("Storage_Path");
-
-            // Make sure storagePath only contains the root folder, not several folders
-            // In other words, if storagePath = "VOrbiETD03\2011_4" change it to just "VOrbiETD03"
-            var slashLoc = storagePath.IndexOf(Path.DirectorySeparatorChar);
-
-            if (slashLoc > 0)
-            {
-                storagePath = storagePath.Substring(0, slashLoc);
-            }
-
-            // Always use the UNC path defined by Storage_Vol_External when checking drive free space
-            // Example path is: \\Proto-7\
-            var storageVolume = mTask.GetParam("Storage_Vol_External");
-
-            return Path.Combine(storageVolume, storagePath);
-        }
-
-        /// <summary>
-        /// Extract the value DefaultDMSConnString from CaptureTaskManager.exe.db.config or CaptureTaskManager.exe.config
-        /// </summary>
-        /// <returns>DMS connection string</returns>
-        private string GetXmlConfigDefaultConnectionString()
-        {
-            return GetXmlConfigFileSetting(CaptureTaskMgrSettings.MGR_PARAM_DEFAULT_DMS_CONN_STRING);
-        }
-
-        /// <summary>
-        /// Extract the value for the given setting from CaptureTaskManager.exe.config
-        /// If the setting name is MgrCnfgDbConnectStr or DefaultDMSConnString, first checks file CaptureTaskManager.exe.db.config
-        /// </summary>
-        /// <remarks>Uses a simple text reader in case the file has malformed XML</remarks>
-        /// <returns>Setting value if found, otherwise an empty string</returns>
-        private string GetXmlConfigFileSetting(string settingName)
-        {
-            if (string.IsNullOrWhiteSpace(settingName))
-            {
-                throw new ArgumentException("Setting name cannot be blank", nameof(settingName));
-            }
-
-            var configFilePaths = new List<string>();
-
-            if (settingName.Equals("MgrCnfgDbConnectStr", StringComparison.OrdinalIgnoreCase) ||
-                settingName.Equals("DefaultDMSConnString", StringComparison.OrdinalIgnoreCase))
-            {
-                configFilePaths.Add(Path.Combine(mMgrDirectoryPath, mMgrExeName + ".db.config"));
-            }
-
-            configFilePaths.Add(Path.Combine(mMgrDirectoryPath, mMgrExeName + ".config"));
-
-            var mgrSettings = new MgrSettings();
-            RegisterEvents(mgrSettings);
-
-            var valueFound = mgrSettings.GetXmlConfigFileSetting(configFilePaths, settingName, out var settingValue);
-
-            if (valueFound)
-            {
-                return settingValue;
-            }
-
-            return string.Empty;
         }
 
         /// <summary>
