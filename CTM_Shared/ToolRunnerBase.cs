@@ -30,6 +30,8 @@ namespace CaptureTaskManager
     {
         // Ignore Spelling: addnl, holdoff, yyyy-MM-dd hh:mm:ss tt, Lockfile
 
+        protected const string DEFAULT_DMS_CONNECTION_STRING = "prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms";
+
         public const string EXCEPTION_CREATING_OUTPUT_DIRECTORY = "Exception creating output directory";
 
         private const string SP_NAME_SET_TASK_TOOL_VERSION = "set_ctm_step_task_tool_version";

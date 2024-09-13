@@ -483,8 +483,17 @@ namespace DatasetQualityPlugin
             var connectionString = mMgrParams.GetParam("DMSConnectionString");
 
             var applicationName = string.Format("{0}_DatasetQuality", mMgrParams.ManagerName);
+            string connectionStringToUse;
 
-            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
+            if (string.IsNullOrWhiteSpace(connectionString))
+            {
+                LogError("Manager parameter 'DMSConnectionString' is an empty string in mMgrParams; defaulting to use {0}", DEFAULT_DMS_CONNECTION_STRING);
+                connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(DEFAULT_DMS_CONNECTION_STRING, applicationName);
+            }
+            else
+            {
+                connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
+            }
 
             var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: mTraceMode);
             RegisterEvents(dbTools);
