@@ -368,6 +368,8 @@ namespace CaptureTaskManager
                         settingsClass.CriticalErrorEvent += CriticalErrorEvent;
                     }
 
+                    // Store the loaded settings, then retrieve manager parameters from the database
+
                     Console.WriteLine();
                     mMgrSettings.ValidatePgPass(configFileSettings);
 
@@ -381,6 +383,12 @@ namespace CaptureTaskManager
                         }
 
                         throw new ApplicationException("Unable to initialize manager settings class: unknown error");
+                    }
+
+                    if (!mMgrSettings.HasParam("DMSConnectionString"))
+                    {
+                        LogError("Manager parameters loaded from the database are missing parameter {0}", "DMSConnectionString");
+                        return false;
                     }
 
                     ShowTrace("Initialized MgrParams");
@@ -424,9 +432,6 @@ namespace CaptureTaskManager
 
             // Give the file logger a chance to zip old log files by year
             FileLogger.ArchiveOldLogFilesNow();
-
-            // Store the connection string that points to the DMS database on prismdb2 (previously, DMS5 on Gigasax)
-            mMgrSettings.SetParam(ToolRunnerBase.DMS_CONNECTION_STRING_MANAGER_PARAM, defaultDmsConnectionString);
 
             // This connection string points to the DMS database on prismdb2 (previously, DMS_Capture on Gigasax)
             var logCnStr = mMgrSettings.GetParam("ConnectionString");
@@ -1301,7 +1306,7 @@ namespace CaptureTaskManager
         /// <summary>
         /// Looks for flag file; auto cleans if ManagerErrorCleanupMode is >= 1
         /// </summary>
-        /// <returns>True if a flag file exists and it was not auto-cleaned; false if no problems</returns>
+        /// <returns>True if a flag file exists, and it was not auto-cleaned; false if no problems</returns>
         private bool StatusFlagFileError(bool clearWorkDirectory)
         {
             var cleanupModeVal = mMgrSettings.GetParam("ManagerErrorCleanupMode", 0);
@@ -1427,15 +1432,13 @@ namespace CaptureTaskManager
 
                 LogDebug("Updating manager settings using Manager Control database");
 
-                // Cache the default DMS connection string (since it is defined by this program, and is not loaded from the database)
-                var defaultDmsConnectionString = mMgrSettings.GetParam(ToolRunnerBase.DMS_CONNECTION_STRING_MANAGER_PARAM);
-
-                // Store the new settings then retrieve updated settings from the database
+                // Store the new settings, then retrieve updated settings from the database
                 if (mMgrSettings.LoadSettings(configFileSettings, true))
                 {
-                    if (!mMgrSettings.HasParam(ToolRunnerBase.DMS_CONNECTION_STRING_MANAGER_PARAM))
+                    if (!mMgrSettings.HasParam("DMSConnectionString"))
                     {
-                        mMgrSettings.SetParam(ToolRunnerBase.DMS_CONNECTION_STRING_MANAGER_PARAM, defaultDmsConnectionString);
+                        LogError("After reloading manager parameters, parameter {0} is missing", "DMSConnectionString");
+                        return false;
                     }
 
                     UpdateLogLevel(mMgrSettings);
