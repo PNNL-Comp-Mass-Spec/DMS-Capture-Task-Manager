@@ -466,7 +466,7 @@ namespace CaptureTaskManager
                 return false;
             }
 
-            // Setup a file watcher for the config file
+            // Set up a file watcher for the config file
 
             mFileWatcher = new FileSystemWatcher
             {
@@ -990,7 +990,7 @@ namespace CaptureTaskManager
                 mDataset = mTask.GetParam("Dataset");
                 var stepNumber = mTask.GetParam("Step");
 
-                LogDebug("Job " + mJob + ", step " + stepNumber + " assigned");
+                LogMessage("Processing job {0}, step {1}; running {2} for {3}", mJob, stepNumber, mStepTool, mDataset);
 
                 // Update the status
                 mStatusFile.JobNumber = int.Parse(mJob);
@@ -1263,7 +1263,7 @@ namespace CaptureTaskManager
                     mMgrSettings.SetParam("TraceMode", "True");
                 }
 
-                // Setup the new tool runner
+                // Set up the new tool runner
                 mCapTool.Setup(mMgrSettings, mTask, mStatusFile);
             }
             catch (Exception ex)
