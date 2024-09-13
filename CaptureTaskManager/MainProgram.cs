@@ -1427,9 +1427,17 @@ namespace CaptureTaskManager
 
                 LogDebug("Updating manager settings using Manager Control database");
 
+                // Cache the default DMS connection string (since it is defined by this program, and is not loaded from the database)
+                var defaultDmsConnectionString = mMgrSettings.GetParam(ToolRunnerBase.DMS_CONNECTION_STRING_MANAGER_PARAM);
+
                 // Store the new settings then retrieve updated settings from the database
                 if (mMgrSettings.LoadSettings(configFileSettings, true))
                 {
+                    if (!mMgrSettings.HasParam(ToolRunnerBase.DMS_CONNECTION_STRING_MANAGER_PARAM))
+                    {
+                        mMgrSettings.SetParam(ToolRunnerBase.DMS_CONNECTION_STRING_MANAGER_PARAM, defaultDmsConnectionString);
+                    }
+
                     UpdateLogLevel(mMgrSettings);
                     return true;
                 }
