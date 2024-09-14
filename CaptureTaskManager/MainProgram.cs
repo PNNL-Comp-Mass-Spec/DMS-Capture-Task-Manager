@@ -338,11 +338,11 @@ namespace CaptureTaskManager
 
             var applicationDirectory = new DirectoryInfo(mMgrDirectoryPath);
 
-            var dbLoggerConnectionString = DbToolsFactory.AddApplicationNameToConnectionString(defaultDmsConnectionString, applicationDirectory.Name);
+            var defaultDbLoggerConnectionString = DbToolsFactory.AddApplicationNameToConnectionString(defaultDmsConnectionString, applicationDirectory.Name);
 
-            ShowTrace("Instantiate a DbLogger using " + dbLoggerConnectionString);
+            ShowTrace("Instantiate a DbLogger using " + defaultDbLoggerConnectionString);
 
-            CreateDbLogger(dbLoggerConnectionString, "CaptureTaskMan: " + hostName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
+            CreateDbLogger(defaultDbLoggerConnectionString, "CaptureTaskMan: " + hostName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
 
             LogTools.MessageLogged += MessageLoggedHandler;
 
@@ -436,10 +436,10 @@ namespace CaptureTaskManager
             // This connection string points to the DMS database on prismdb2 (previously, DMS_Capture on Gigasax)
             var logCnStr = mMgrSettings.GetParam("ConnectionString");
 
-            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(logCnStr, mMgrName);
+            var dbLoggerConnectionString = DbToolsFactory.AddApplicationNameToConnectionString(logCnStr, mMgrName);
 
             // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-            CreateDbLogger(connectionStringToUse, "CaptureTaskMan: " + mMgrName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
+            CreateDbLogger(dbLoggerConnectionString, "CaptureTaskMan: " + mMgrName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
 
             // Make the initial log entry
             var relativeLogFilePath = LogTools.CurrentLogFilePath;
