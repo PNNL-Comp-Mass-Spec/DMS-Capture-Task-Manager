@@ -1,52 +1,64 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.28917.181
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35219.272
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CaptureTaskManager_Debug", "CaptureTaskManager\CaptureTaskManager_Debug.csproj", "{93485E0E-3A78-4118-B36B-BA71334752AF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CaptureTaskManager_Debug", "CaptureTaskManager\CaptureTaskManager_Debug.csproj", "{93485E0E-3A78-4118-B36B-BA71334752AF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CTM_Shared", "CTM_Shared\CTM_Shared.csproj", "{7D07F054-0D29-45DD-9B22-71D0768BC3C3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CTM_Shared", "CTM_Shared\CTM_Shared.csproj", "{7D07F054-0D29-45DD-9B22-71D0768BC3C3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CaptureToolPlugin", "CaptureToolPlugin\CaptureToolPlugin.csproj", "{1B2E1580-C202-4991-A2E9-E2F1A54FA73D}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArchiveStatusCheckPlugin", "ArchiveStatusCheckPlugin\ArchiveStatusCheckPlugin.csproj", "{D63AD810-5835-49D6-B14F-334E6EA2CB40}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CaptureToolPlugin", "CaptureToolPlugin\CaptureToolPlugin.csproj", "{1B2E1580-C202-4991-A2E9-E2F1A54FA73D}"
 	ProjectSection(ProjectDependencies) = postProject
 		{7D07F054-0D29-45DD-9B22-71D0768BC3C3} = {7D07F054-0D29-45DD-9B22-71D0768BC3C3}
+		{93485E0E-3A78-4118-B36B-BA71334752AF} = {93485E0E-3A78-4118-B36B-BA71334752AF}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArchiveVerifyPlugin", "ArchiveVerifyPlugin\ArchiveVerifyPlugin.csproj", "{2016D3F6-9AF1-45D8-A0B2-49202D5376D5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ArchiveStatusCheckPlugin", "ArchiveStatusCheckPlugin\ArchiveStatusCheckPlugin.csproj", "{D63AD810-5835-49D6-B14F-334E6EA2CB40}"
 	ProjectSection(ProjectDependencies) = postProject
 		{7D07F054-0D29-45DD-9B22-71D0768BC3C3} = {7D07F054-0D29-45DD-9B22-71D0768BC3C3}
+		{93485E0E-3A78-4118-B36B-BA71334752AF} = {93485E0E-3A78-4118-B36B-BA71334752AF}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DatasetArchivePlugin", "DatasetArchivePlugin\DatasetArchivePlugin.csproj", "{FC0E683A-38BE-494C-93F1-65747197DCD7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ArchiveVerifyPlugin", "ArchiveVerifyPlugin\ArchiveVerifyPlugin.csproj", "{2016D3F6-9AF1-45D8-A0B2-49202D5376D5}"
 	ProjectSection(ProjectDependencies) = postProject
 		{7D07F054-0D29-45DD-9B22-71D0768BC3C3} = {7D07F054-0D29-45DD-9B22-71D0768BC3C3}
+		{93485E0E-3A78-4118-B36B-BA71334752AF} = {93485E0E-3A78-4118-B36B-BA71334752AF}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DatasetInfoPlugin", "DatasetInfoPlugin\DatasetInfoPlugin.csproj", "{4C1F0E64-B3F7-4826-98D5-95EC14146F95}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatasetArchivePlugin", "DatasetArchivePlugin\DatasetArchivePlugin.csproj", "{FC0E683A-38BE-494C-93F1-65747197DCD7}"
 	ProjectSection(ProjectDependencies) = postProject
 		{7D07F054-0D29-45DD-9B22-71D0768BC3C3} = {7D07F054-0D29-45DD-9B22-71D0768BC3C3}
+		{93485E0E-3A78-4118-B36B-BA71334752AF} = {93485E0E-3A78-4118-B36B-BA71334752AF}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DatasetIntegrityPlugin", "DatasetIntegrityPlugin\DatasetIntegrityPlugin.csproj", "{F876BBF0-1E1C-4780-BE02-945E1FD80E8B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatasetInfoPlugin", "DatasetInfoPlugin\DatasetInfoPlugin.csproj", "{4C1F0E64-B3F7-4826-98D5-95EC14146F95}"
 	ProjectSection(ProjectDependencies) = postProject
 		{7D07F054-0D29-45DD-9B22-71D0768BC3C3} = {7D07F054-0D29-45DD-9B22-71D0768BC3C3}
+		{93485E0E-3A78-4118-B36B-BA71334752AF} = {93485E0E-3A78-4118-B36B-BA71334752AF}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DatasetQualityPlugin", "DatasetQualityPlugin\DatasetQualityPlugin.csproj", "{E99901C3-ABF3-4061-BF19-F290EEF65935}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatasetIntegrityPlugin", "DatasetIntegrityPlugin\DatasetIntegrityPlugin.csproj", "{F876BBF0-1E1C-4780-BE02-945E1FD80E8B}"
 	ProjectSection(ProjectDependencies) = postProject
 		{7D07F054-0D29-45DD-9B22-71D0768BC3C3} = {7D07F054-0D29-45DD-9B22-71D0768BC3C3}
+		{93485E0E-3A78-4118-B36B-BA71334752AF} = {93485E0E-3A78-4118-B36B-BA71334752AF}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImsDemuxPlugin", "ImsDemuxPlugin\ImsDemuxPlugin.csproj", "{E0998604-16D1-4525-8414-A65EF7BC15C8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatasetQualityPlugin", "DatasetQualityPlugin\DatasetQualityPlugin.csproj", "{E99901C3-ABF3-4061-BF19-F290EEF65935}"
 	ProjectSection(ProjectDependencies) = postProject
 		{7D07F054-0D29-45DD-9B22-71D0768BC3C3} = {7D07F054-0D29-45DD-9B22-71D0768BC3C3}
+		{93485E0E-3A78-4118-B36B-BA71334752AF} = {93485E0E-3A78-4118-B36B-BA71334752AF}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SrcFileRenamePlugin", "SrcFileRenamePlugin\SrcFileRenamePlugin.csproj", "{D630AA92-126B-46B9-BC68-3FF277445ACE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImsDemuxPlugin", "ImsDemuxPlugin\ImsDemuxPlugin.csproj", "{E0998604-16D1-4525-8414-A65EF7BC15C8}"
 	ProjectSection(ProjectDependencies) = postProject
 		{7D07F054-0D29-45DD-9B22-71D0768BC3C3} = {7D07F054-0D29-45DD-9B22-71D0768BC3C3}
+		{93485E0E-3A78-4118-B36B-BA71334752AF} = {93485E0E-3A78-4118-B36B-BA71334752AF}
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SrcFileRenamePlugin", "SrcFileRenamePlugin\SrcFileRenamePlugin.csproj", "{D630AA92-126B-46B9-BC68-3FF277445ACE}"
+	ProjectSection(ProjectDependencies) = postProject
+		{7D07F054-0D29-45DD-9B22-71D0768BC3C3} = {7D07F054-0D29-45DD-9B22-71D0768BC3C3}
+		{93485E0E-3A78-4118-B36B-BA71334752AF} = {93485E0E-3A78-4118-B36B-BA71334752AF}
 	EndProjectSection
 EndProject
 Global
