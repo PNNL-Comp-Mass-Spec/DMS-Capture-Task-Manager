@@ -14,6 +14,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <NoWarn>IDE0028, IDE0290, IDE0300, IDE0305</NoWarn>
+    <StartupObject>CaptureTaskManager.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="Properties\AssemblyInfo.cs" />
