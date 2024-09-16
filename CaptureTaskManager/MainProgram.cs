@@ -313,6 +313,7 @@ namespace CaptureTaskManager
             LogTools.CreateFileLogger(DEFAULT_BASE_LOGFILE_NAME, BaseLogger.LogLevels.DEBUG);
 
             // Create a database logger connected to the DMS database on prismdb2 (previously, DMS5 on Gigasax)
+
             // Once the initial parameters have been successfully read,
             // we update the dbLogger to use the connection string read from the Manager Control DB
             string defaultDmsConnectionString;
