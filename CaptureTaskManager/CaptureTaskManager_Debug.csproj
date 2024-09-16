@@ -71,13 +71,14 @@
     <Exec Command="xcopy &quot;$(TargetDir)*.dll&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y" />
     <Exec Command="xcopy &quot;$(TargetDir)plugin_info.xml&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)&quot; /D /Y" />
   </Target>
-  <Target Name="PostBuildNet48" AfterTargets="PostBuildEvent" Condition="'$(TargetFramework)'!='net8.0-windows'">
+  <!-- Target 'CopySQLiteInteropFiles' is only defined for net48 usages of System.Data.SQLite.Core, and appears to execute later than the post-build step usually -->
+  <Target Name="PostBuildSQLiteNet48" AfterTargets="PostBuildEvent" DependsOnTargets="CopySQLiteInteropFiles" Condition="'$(TargetFramework)'!='net8.0-windows'">
     <Exec Command="if not exist &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\x86&quot; mkdir &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\x86&quot;" />
     <Exec Command="if not exist &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\x64&quot; mkdir &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\x64&quot;" />
     <Exec Command="xcopy &quot;$(TargetDir)x86&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\x86&quot; /S /D /Y" />
     <Exec Command="xcopy &quot;$(TargetDir)x64&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\x64&quot; /S /D /Y" />
   </Target>
-  <Target Name="PostBuildNet80" AfterTargets="PostBuildEvent" Condition="'$(TargetFramework)'=='net8.0-windows'">
+  <Target Name="PostBuildSQLiteNet80" AfterTargets="PostBuildEvent" Condition="'$(TargetFramework)'=='net8.0-windows'">
     <Exec Command="if not exist &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\runtimes&quot; mkdir &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\runtimes&quot;" />
     <Exec Command="xcopy &quot;$(TargetDir)runtimes&quot; &quot;$(ProjectDir)..\DeployedFiles\$(TargetFramework)\runtimes&quot; /S /D /Y" />
   </Target>
